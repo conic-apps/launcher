@@ -1,38 +1,43 @@
 <template>
-  <div class="input-data mini">
-    <input type="text" :title="name" :placeholder="placeholder" required :value="value" />
-    <div class="underline"></div>
+  <div class="search-bar ">
+    <i class="magnifying-glass"></i>
+    <input type="text" v-model="value" @input="$emit('search', value)" placeholder="按名称搜索"/>
   </div>
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  name?: string,
-  placeholder?: string,
-  value?: string,
-  type?: string,
-}>(), {
-  type: "text"
-})
-
+import { ref } from 'vue'
+let value = ref("")
 </script>
 
 <style lang="less" scoped>
-.input-data {
+.search-bar {
   border-radius: var(--border-radius-small);
-    margin-left: auto;
-    width: 400px;
-    overflow: hidden;
-    box-shadow: 0 0 0 1px rgba(var(--theme-color), 0.2);
-    height: 30px;
-    flex-shrink: 0;
-    padding: 0 8px 2px 8px;
-    font-size: 1rem;
-    transition: all 0.1s ease;
-    pointer-events: all;
-    background: rgba(255, 255, 255, 0.2);
+  margin-left: auto;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(var(--theme-color), 0.2);
+  height: 30px;
+  padding: 0 8px 2px 8px;
+  font-size: 1rem;
+  transition: all 0.1s ease;
+  pointer-events: all;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
 }
-.input-data div.input {
+
+.search-bar i {
+  font-family: 'fa-pro';
+  font-style: normal;
+  margin-right: 10px;
+}
+
+.search-bar:hover i {
+  color: rgba(var(--theme-color), 1);
+}
+
+.search-bar div.input {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -42,7 +47,7 @@ withDefaults(defineProps<{
   pointer-events: none;
 }
 
-.input-data input {
+.search-bar input {
   border: none;
   outline: none;
   border-bottom: 2px #000000;
@@ -54,8 +59,8 @@ withDefaults(defineProps<{
   z-index: 10;
 }
 
-.input-data:hover {
-  background:  rgba(var(--theme-color), 0.01);
+.search-bar:hover {
+  background: rgba(var(--theme-color), 0.01);
 }
 
 .underline {
@@ -77,4 +82,5 @@ input:focus~.underline {
 
 input:focus::-webkit-input-placeholder {
   color: #00000000;
-}</style>
+}
+</style>

@@ -53,7 +53,7 @@ div.input {
   width: calc(100% + 16px);
   transform: scale(0, 1);
   opacity: 0;
-  border-radius: var(--border-radius-medium);
+  border-radius: var(--border-radius-small);
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
@@ -64,7 +64,7 @@ div.input {
 }
 
 .input-box {
-  border-radius: var(--border-radius-medium);
+  border-radius: var(--border-radius-small);
   margin-left: auto;
   width: 400px;
   overflow: hidden;

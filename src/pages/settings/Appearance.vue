@@ -7,15 +7,13 @@
       <button-bar name="主题色" text="更改" @click="openColorChooser"></button-bar>
     </expander>
     <expander :canSwap=false title="背景" description="" icon="window-flip">
-      
   </expander>
 </div></template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import ButtonBar from '@/components/ButtonBar.vue';
 import Expander from '@/components/Expander.vue';
-import CardLink from '@/components/CardLink.vue';
+
 function openColorChooser() {
 
 }

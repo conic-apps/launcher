@@ -1,6 +1,8 @@
 <template>
   <div class="title-bar" data-tauri-drag-region>
-    <div class="title" data-tauri-drag-region>Magical Launcher</div>
+    <div class="title" data-tauri-drag-region>Magical Launcher<tag text="Beta" :color="['255', '255', '255']"
+        text-color="#fff" :round="true" :border="true" style="transform: scale(0.8) translate(-1px, -6px);"></tag>
+    </div>
     <div class="button">
       <div class="window-btn" id="min" @click="minimize"></div>
       <div class="window-btn" id="close" @click="close"></div>
@@ -23,7 +25,7 @@
     <div class="page" id="main">
       <Transition :name=" transitionName " mode="out-in">
         <KeepAlive>
-          <component :is=" activeComponent " @back-to-home=" back "></component>
+          <component :is=" activeComponent " @back-to-home=" back " @jump=" jumpTo "></component>
         </KeepAlive>
       </Transition>
     </div>
@@ -37,8 +39,10 @@ import WareHouse from './pages/Game.vue';
 import Settings from './pages/Settings.vue';
 import Newspaper from './pages/Newspaper.vue';
 import Community from './pages/Community.vue';
-import $ from 'jquery';
+import NewInstance from './pages/NewInstance.vue';
+import Tag from './components/Tag.vue';
 import { invoke, window, } from '@tauri-apps/api'
+
 function minimize() {
   window.getCurrent().minimize()
 }
@@ -60,7 +64,8 @@ const pages: any = reactive({
   settings: markRaw(Settings),
   wareHouse: markRaw(WareHouse),
   newspaper: markRaw(Newspaper),
-  community: markRaw(Community)
+  community: markRaw(Community),
+  newInstance: markRaw(NewInstance),
 })
 const activeComponent = shallowRef(pages.wareHouse)
 let transitionName = ref('entrance')
@@ -68,11 +73,13 @@ let sidebarInlineStyle = ref('')
 let last: any
 function switchPage(event: any, component: any) {
   sidebarClose()
-  if (component === 'settings') {
+  if (component === 'settings' || component === 'newInstance') {
     transitionName.value = 'zoom-out'
-    sidebarInlineStyle.value = 'width: 0px !important'
+    if (component === 'settings') sidebarInlineStyle.value = 'width: 0px !important'
   } else {
-    if (JSON.stringify(activeComponent.value) == JSON.stringify(pages.settings)) {
+    let isSettingPage = JSON.stringify(activeComponent.value) == JSON.stringify(pages.settings);
+    let isNewInstancePage = JSON.stringify(activeComponent.value) == JSON.stringify(pages.newInstance)
+    if (isSettingPage || isNewInstancePage) {
       transitionName.value = 'zoom-in'
     } else {
       transitionName.value = 'entrance'
@@ -94,6 +101,9 @@ function sidebarClose() {
 function back() {
   switchPage(null, last)
 }
+function jumpTo(name: string) {
+  switchPage(null, name)
+}
 </script>
 
 <style lang="less" scoped>
@@ -103,7 +113,7 @@ function back() {
   display: flex;
   justify-content: space-between;
   color: #fff;
-  background-image: linear-gradient(135deg, #026180 0%, #04688d 50%, #026180 100%);
+  background-image: linear-gradient(135deg, #00688b 0%, #06759e 50%, #00688b 100%);
   animation: 3s background-position cubic-bezier(1, 1, 0, 0) infinite;
   align-items: center;
 }
@@ -148,12 +158,15 @@ function back() {
   transition: all 0.15s ease;
   transform: scale(0.8);
 }
+
 .window-btn:hover {
   background-color: #ffffff14;
 }
+
 .window-btn:active {
   transform: scale(0.7);
 }
+
 main.page {
   padding-left: 60px;
   box-sizing: border-box;
@@ -254,7 +267,7 @@ div.main-sidebar span {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--border-radius-medium);
+  border-radius: var(--border-radius-small);
   margin-left: 1.6px;
 }
 

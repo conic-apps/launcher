@@ -19,7 +19,6 @@ import { ref } from 'vue'
 import Expander from '@/components/Expander.vue';
 import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
 import SelectBar from '@/components/SelectBar.vue';
-
 </script>
 
 <style lang="less" scoped></style>

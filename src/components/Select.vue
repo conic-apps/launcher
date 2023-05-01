@@ -1,10 +1,10 @@
 <template>
-  <div class="select">
+  <div class="select" :style="`width: ${width}px;`">
     <div class="selected" @click="toggleOpened()">{{ selected }}</div>
     <div style="position: relative;">
       <Transition @before-enter="beforeEnter" @enter="enter" @after-enter="afterEnter" @before-leave="beforeLeave"
         @leave="leave" @after-leave="afterLeave">
-        <ul class="options" v-if="opened" @click="opened = false">
+        <ul class="options" :style="`width: ${width}px;`" v-if="opened" @click="opened = false">
           <Transition name="fade">
             <div v-if="opened">
               <select-option v-for="(option, index) in options" :key="index" @click="changeSelection(index)"
@@ -19,14 +19,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import SelectOption from './SelectOption.vue';
-import { load } from '@/utils/ConfigLoader';
 import $ from 'jquery'
 const props = withDefaults(defineProps<{
   options: string[],
-  // config: string,
-  default?: number | null
+  default?: number | null,
+  width?: string
 }>(), {
   default: null
 })
@@ -86,7 +85,7 @@ function toggleOpened() {
 
 .selected {
   width: 100%;
-  border-radius: var(--border-radius-medium);
+  border-radius: var(--border-radius-small);
   border: 1px solid rgba(var(--theme-color), 0.2);
   padding: 8px 12px;
   transition: opacity 100ms ease;

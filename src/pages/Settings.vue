@@ -1,16 +1,9 @@
 <template>
-  <div class="settings" style="padding-left: 10px;">
+  <div class="settings" style="display: flex;padding-left: 10px;">
     <div class="sidebar">
       <ul>
         <li @click="switchComponent(item, index)" :class="[activeComponentIndex == index ? 'active' : '']"
           v-for="(item, index) in components" :key="index"><i :class="item.icon"></i>{{ item.name }}</li>
-        <!-- <li class="active" @click="setActiveComponent($event, 'general')"><i class="house"></i>常规</li>
-        <li @click="setActiveComponent($event, 'game')"><i class="gamepad"></i>游戏</li>
-        <li @click="setActiveComponent($event,'accountSetting',3)"><i class="user"></i>帐户</li>
-        <li @click="setActiveComponent($event, 'advanced')"><i class="pro-settings"></i>高级</li>
-        <li @click="setActiveComponent($event, 'appearance')"><i class="palette"></i>个性化</li>
-        <li @click="setActiveComponent($event, 'download')"><i class="download"></i>下载</li>
-        <li @click="setActiveComponent($event, 'easyToUse')"><i class="arrows-spin"></i>辅助功能</li> -->
       </ul>
       <li @click="$emit('backToHome')" style="margin-bottom: -9px;" class="backtoHome"><i class="arrow-left"></i>返回</li>
     </div>
@@ -85,9 +78,6 @@ function switchComponent(item: any, index: number) {
   }
   activeComponentIndex.value = index
 }
-function backtoHome(): void {
-
-}
 </script>
   
 <style lang="less">
@@ -96,6 +86,7 @@ function backtoHome(): void {
   padding-right: 30px;
   padding-top: 10px;
   overflow-y: overlay;
+  overflow-x: visible;
 }
 
 .content>div {
@@ -139,7 +130,7 @@ function backtoHome(): void {
   line-height: 1.3;
   width: 100%;
   margin: 0.1rem 0;
-  border-radius: var(--border-radius-medium);
+  border-radius: var(--border-radius-small);
   padding: 7px 7px;
   display: flex;
   align-items: center;
