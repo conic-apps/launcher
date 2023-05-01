@@ -1,12 +1,15 @@
 <template>
   <dialog-vue :visible="show" width="460" height="480">
     <div style="position: relative;margin: 12px 14px; width: calc(100% - 28px);">
-      <div class="info">
-        <div class="icon"></div>
-        <div class="text">
-          <h4 class="name"><span>{{ instanceName }}</span>中的存档</h4>
-          <p>共 {{ worlds.length }} 个存档</p>
+      <div style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
+        <div class="info">
+          <div class="icon"></div>
+          <div class="text">
+            <h4 class="name"><span>{{ instanceName }}</span>中的存档</h4>
+            <p>共安装有 {{ worlds.length }} 个存档</p>
+          </div>
         </div>
+        <div class="buttons"><dialog-button icon="close" @click="$emit('close')"></dialog-button></div>
       </div>
       <search-bar style="margin-bottom: 8px; position: sticky;"></search-bar>
       <TransitionGroup>
@@ -107,8 +110,6 @@ const props = withDefaults(defineProps<{
 .info {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  border-bottom: 2px solid rgba(var(--theme-color), 0.6);
   padding-bottom: 6px;
 }
 
