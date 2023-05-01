@@ -123,7 +123,7 @@ function toggleOpened() {
   margin-top: 4px;
   border-radius: var(--border-radius-medium);
   border: 1px solid rgba(var(--theme-color), 0.2);
-  background: rgba(var(--theme-color), 0.04);
+  background: #ffffff94;
   z-index: 50000;
 }
 

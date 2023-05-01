@@ -19,10 +19,10 @@ defineProps<{
 }
 
 .select-option:hover {
-    background: #ffffff54;
+    background: #0101010b;
 }
 
 .select-option:active {
-    background: #ffffff1f;
+    background: #0000001f;
 }
 </style>

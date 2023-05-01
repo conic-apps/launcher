@@ -1,9 +1,11 @@
 <template>
   <KeepAlive>
     <div>
-      <expander :expander-header=false>
+      <!-- <expander :expander-header=false>
         <p>如果你不清楚这些选项的作用，请不要乱动它们。你可以使用右上角的重置按钮将此页设置恢复为默认值</p>
-      </expander>
+      </expander> -->
+      <tip-bar  type="danger" style="margin-bottom: 8px;font-size: 14px;">如果你不清楚这些选项的作用，请不要乱动它们</tip-bar>
+      <tip-bar style="font-size: 14px;">你可以使用右上角的重置按钮将此页设置恢复为默认值</tip-bar>
       <expander :canSwap=false title="高级设置" description="自定义游戏启动行为" icon="pro-settings">
         <toggle-switch-bar name="检查游戏库文件完整性" config="globle.advanced.checklib"></toggle-switch-bar>
         <select-bar name="Java 垃圾回收器" config=""
@@ -25,6 +27,7 @@ import ButtonBar from '@/components/ButtonBar.vue';
 import Expander from '@/components/Expander.vue';
 import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
 import SelectBar from '@/components/SelectBar.vue';
+import TipBar from '@/components/TipBar.vue';
 
 function openDevtools() {
 

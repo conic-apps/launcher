@@ -51,7 +51,7 @@ span.name {
   height: 20px;
   display: flex;
   justify-content: space-between;
-  margin: 0 6px;
+  margin: 0 0;
   pointer-events: all;
 }
 
