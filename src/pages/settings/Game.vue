@@ -1,8 +1,15 @@
 <template>
   <div>
-    <expander :canSwap=false title="Java 路径" description="自定义游戏运行所需Java的位置" icon="java-logo fa-brands">
+    <expander :canSwap=false title="Java 虚拟机" description="设置游戏运行所需 Java 的位置或安装 Java" icon="java-logo fa-brands">
       <toggle-switch-bar name="自动选择合适的 Java"></toggle-switch-bar>
+      <button-bar name="手动选择 Java 虚拟机" text="查找已安装的 Java"></button-bar>
       <!-- todo: input file -->
+      <card-link margin="0,0,6,-4" title="安装 Java 17" description="将 Java 17 安装在当前游戏目录下" icon="java-logo fa-brands"
+        :box-shadow="false" padding="8,10,8,10"></card-link>
+      <card-link margin="0,0,6,-4" title="安装 Java 11" description="将 Java 11 安装在当前游戏目录下" icon="java-logo fa-brands"
+        :box-shadow="false" padding="8,10,8,10"></card-link>
+      <card-link margin="0,0,0,-4" title="安装 Java 8" description="将 Java 8 安装在当前游戏目录下" icon="java-logo fa-brands"
+        :box-shadow="false" padding="8,10,8,10"></card-link>
     </expander>
     <expander :canSwap=false title="启动选项" description="自定义游戏启动行为" icon="start-game">
       <text-input-bar name="游戏窗口标题" placeholder="默认"></text-input-bar>
@@ -45,6 +52,8 @@ import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
 import TextInputBar from '@/components/TextInputBar.vue';
 import TextInputBox from '@/components/TextInputBox.vue';
 import SelectBar from '@/components/SelectBar.vue';
+import CardLink from '@/components/CardLink.vue';
+import ButtonBar from '@/components/ButtonBar.vue';
 </script>
 
 <style lang="less" scoped></style>

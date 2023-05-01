@@ -7,28 +7,33 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 const props = defineProps<{
-  type?: 'seccess' | 'fail' | 'warn' | 'accent'
+  type?: 'seccess' | 'danger' | 'attention' | 'accent'
 }>()
 let style = computed(() => {
   let borderStyle
   let backgroundStyle
+  let textStyle
   if (props.type === 'seccess') {
     borderStyle = 'border: 1px solid var(--color-success-muted);'
     backgroundStyle = 'background: var(--color-success-subtle)'
-  } else if (props.type === 'fail') {
-    borderStyle = 'border: 1px solid var(--color-fail-muted);'
-    backgroundStyle = 'background: var(--color-fail-subtle)'
-  } else if (props.type === 'warn') {
-    borderStyle = 'border: 1px solid var(--color-warn-muted);'
-    backgroundStyle = 'background: var(--color-warn-subtle)'
+    textStyle = `color: var(--color-seccess-emphasis);`
+  } else if (props.type === 'danger') {
+    borderStyle = 'border: 1px solid var(--color-danger-muted);'
+    backgroundStyle = 'background: var(--color-danger-subtle)'
+    textStyle = `color: var(--color-danger-emphasis);`
+  } else if (props.type === 'attention') {
+    borderStyle = 'border: 1px solid var(--color-attention-muted);'
+    backgroundStyle = 'background: var(--color-attention-subtle)'
+    textStyle = `color: var(--color-attention-emphasis);`
   } else {
     borderStyle = 'border: 1px solid var(--color-accent-muted);'
     backgroundStyle = 'background: var(--color-accent-subtle)'
+    textStyle = `color: var(--color-accent-emphasis);`
   }
   return `
     border-radius: var(--border-radius-small);
     width: 100%;
-    padding: 12px 16px;
+    padding: 16px 20px;
     ${borderStyle}
     ${backgroundStyle}
   `
