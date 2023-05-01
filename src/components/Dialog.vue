@@ -48,7 +48,7 @@ opacity: 1;
 }
 .dialog-enter-from .content,
 .dialog-leave-to .content {
-  transform: scale(1.16);
+  transform: scale(1.1);
   opacity: 0;
 }
 

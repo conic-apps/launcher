@@ -88,6 +88,7 @@ defineProps<{
   color: #0000006f;
   font-size: 14px;
   margin-left: 4px;
+  display: flex;
 }
 
 .list-item p {
