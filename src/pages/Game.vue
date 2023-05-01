@@ -37,26 +37,43 @@
       </div>
       <div class="assets">
         <div>
-          <card-link icon="map" title="地图存档" description="正在加载..." margin="0,0,8,0"></card-link>
-          <card-link icon="puzzle-piece" title="模组" description="正在加载..." margin="0,0,8,0"></card-link>
+          <card-link icon="map" title="地图存档" description="正在加载..." margin="0,0,8,0"
+            @click="show.worlds = true"></card-link>
+          <card-link icon="puzzle-piece" title="模组" description="正在加载..." margin="0,0,8,0"
+            @click="show.mods = true"></card-link>
           <card-link icon="puzzle-piece" title="截图" description="正在加载..." margin="0,0,0,0"></card-link>
         </div>
         <div>
-          <card-link icon="palette" title="资源包" description="正在加载..." margin="0,0,8,0"></card-link>
-          <card-link icon="lightbulb-on" title="光影包" description="正在加载..." margin="0,0,8,0"></card-link>
+          <card-link icon="palette" title="资源包" description="正在加载..." margin="0,0,8,0"
+            @click="show.resourcepacks = true"></card-link>
+          <card-link icon="lightbulb-on" title="光影包" description="正在加载..." margin="0,0,8,0"
+            @click="show.shaderpacks = true"></card-link>
           <card-link icon="puzzle-piece" title="日志" description="正在加载..." margin="0,0,0,0"></card-link>
         </div>
       </div>
     </div>
+    <worlds :show="show.worlds" instance-name="未命名配置" @close="show.worlds = false"></worlds>
+    <mods :show="show.mods" instance-name="未命名配置" @close="show.mods = false"></mods>
+    <resourcepacks :show="show.resourcepacks" instance-name="未命名配置" @close="show.resourcepacks = false"></resourcepacks>
+    <shaderpacks :show="show.shaderpacks" instance-name="未命名配置" @close="show.shaderpacks = false"></shaderpacks>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import cardLink from '@/components/CardLink.vue'
-import Select from '@/components/Select.vue'
 import SearchBar from '@/components/SearchBar.vue'
+import Worlds from './dialogs/Worlds.vue'
+import Mods from './dialogs/Mods.vue'
+import Resourcepacks from './dialogs/Resourcepacks.vue'
+import Shaderpacks from './dialogs/Shaderpacks.vue'
 
+let show = reactive({
+  worlds: false,
+  mods: false,
+  resourcepacks: false,
+  shaderpacks: false
+})
 let banner = ref("background-image: linear-gradient(0deg, rgb(0 0 0 / 83%), rgb(0 0 0 / 0%)), url(./src/assets/images/banners/1.18.webp);")
 let instanceName = "Minecraft 1.18.2 with fabric"
 let minecraftVersion = ref("1.18.2")
@@ -192,7 +209,7 @@ ul.gamelist {
   width: 280px;
   flex-shrink: 0;
   margin-left: -60px;
-  padding: 20px 0px 0 82px;
+  padding: 30px 0px 0 82px;
   // background-color: #ffffff8b;
 }
 
@@ -259,6 +276,5 @@ ul.gamelist li:active {
 
 .new:active {
   transform: scale(0.9);
-}
-</style>
+}</style>
 <!-- treasure-chest -->

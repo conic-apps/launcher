@@ -1,7 +1,8 @@
 <template>
   <dialog-vue :visible="show" width="460" height="480">
     <div style="position: relative;margin: 12px 14px; width: calc(100% - 28px);">
-      <div style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
+      <div
+        style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
         <div class="info">
           <div class="icon"></div>
           <div class="text">
@@ -13,8 +14,8 @@
       </div>
       <search-bar style="margin-bottom: 8px; position: sticky;"></search-bar>
       <TransitionGroup>
-        <list-item v-for="(shadeerpack, index) in shaderpacks" :key="index" :title="shadeerpack"
-         :click-able="false" :buttons="['circle-info', 'folders', 'trash-can']">
+        <list-item v-for="(shadeerpack, index) in shaderpacks" :key="index" :title="shadeerpack" :click-able="false"
+          :buttons="['circle-info', 'folders', 'trash-can']">
         </list-item>
       </TransitionGroup>
     </div>
@@ -27,6 +28,7 @@ import DialogVue from '@/components/Dialog.vue';
 import ListItem from '@/components/ListItem.vue';
 import Tag from '@/components/Tag.vue';
 import SearchBar from '@/components/SearchBar.vue';
+import DialogButton from '@/components/DialogButton.vue';
 
 const props = withDefaults(defineProps<{
   show: boolean,

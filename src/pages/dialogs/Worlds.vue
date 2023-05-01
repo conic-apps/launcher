@@ -15,8 +15,9 @@
       <TransitionGroup>
         <list-item v-for="(world, index) in worlds" :key="index" :title="world.name" :logo="world.icon" :click-able="true"
           :buttons="['circle-info', 'folders', 'trash-can']">
-          <template #subtitle v-if="world.type == 'broken'">
-            <tag text="损坏" :color="['255', '129', '120']" style="transform: scale(0.9);" :background="true"></tag>
+          <template #subtitle>
+            <tag :text="world.version" :color="['180','180','180']" text-color="#00000080" style="transform: scale(0.9);" :border="true"></tag>
+            <tag v-if="world.allowCheat" text="允许作弊" :color="['180','180','180']" text-color="#00000080" style="transform: scale(0.9);" :border="true"></tag>
           </template>
           {{ world.description }}
         </list-item>
@@ -31,6 +32,7 @@ import DialogVue from '@/components/Dialog.vue';
 import ListItem from '@/components/ListItem.vue';
 import Tag from '@/components/Tag.vue';
 import SearchBar from '@/components/SearchBar.vue';
+import DialogButton from '@/components/DialogButton.vue';
 
 const props = withDefaults(defineProps<{
   show: boolean,
@@ -43,64 +45,9 @@ const props = withDefaults(defineProps<{
         name: 'a',
         description: 'bbbbbbb',
         icon: '/test.svg',
+        version: '1.18.2',
+        allowCheat: true
       },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg',
-        type: 'broken'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg'
-      }, {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg',
-        type: 'lib'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg',
-        type: 'broken'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.svg'
-      }
     ]
   }
 })
