@@ -38,6 +38,12 @@ let cardStyle = `margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3
   align-items: center;
   transition: all 0.1s ease;
   padding: 16px 18px;
+  border-radius: var(--border-radius-large);
+  background-color: #ffffffb9;
+  border: 1px solid  #0000002e;
+  box-shadow: 0 0 10px #00000015;
+  margin: 15px 0 15px 0;
+  transition: all 0.1s ease;
 }
 
 :active {

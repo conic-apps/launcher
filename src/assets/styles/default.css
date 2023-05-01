@@ -1,10 +1,14 @@
 :root {
-    --theme-color: 2, 84, 111;
-    --border-radius-large: 8px;
-    --border-radius-medium: 6px;
+    --theme-color: 0, 105, 140;
+    --border-radius-large: 10px;
+    --border-radius-medium: 8px;
+    --border-radius-small: 6px;
     --expander-border-color: #bec3ca;
     --expander-background-color: #ffffff76;
     --text-color: #000000;
+}
+.aaa {
+    color: rgb(0, 105, 140);
 }
 
 * {
@@ -113,7 +117,8 @@ body {
     /* background-image: linear-gradient(to top, #1e3c72 0%, #1e3c72 1%, #2a5298 100%); */
     /* background: url(https://drscdn.500px.org/photo/29113281/q%3D80_h%3D600/v2?sig=d2154aab82d4596020a8b022661bb4209bd2347b7907b90f1eca2dc0fe23d8af) no-repeat center; */
     /* background-size: cover; */
-    background-image: linear-gradient(135deg, #b7ccce 0%, #e4f1f7 100%);
+    --background-opacity: 0.94;
+    background-image: linear-gradient(135deg, rgba(202, 214, 215, var(--background-opacity)) 0%, rgba(228, 241, 247, var(--background-opacity)) 100%);
     /* background: #000000b5; */
     transition: all 0.25s ease-in;
 }
@@ -400,6 +405,16 @@ i.screwdriver-wrench::before {
 
 i.folders::before {
     content: "\f660";
+}
+
+i.magnifying-glass::before {
+    content: '\f002';
+}
+i.grid-2::before {
+    content: '\e196';
+}
+i.cubes-stacked::before {
+    content: '\e4e6';
 }
 
 i#newspaper::before,

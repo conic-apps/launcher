@@ -16,10 +16,10 @@ invoke('greet', { name: 'World' })
   // `invoke` 返回的是一个 Promise
   .then((response) => console.log(response))
 
-window.getCurrent().setAlwaysOnTop(true)
-window.getCurrent().setResizable(false)
+// window.getCurrent().setAlwaysOnTop(true)
+// window.getCurrent().setResizable(false)
 const webview = new window.WebviewWindow('theUniqueLabel', {
-  url: 'https://login.live.com/oauth20_authorize.srf?client_id=00000000402b5328&response_type=code&prompt=select_account&scope=service%3A%3Auser.auth.xboxlive.com%3A%3AMBI_SSL&redirect_uri=https%3A%2F%2Flogin.live.com%2Foauth20_desktop.srf',
+  url: 'https://',
   resizable: false,
   focus: true,
   alwaysOnTop: true,
@@ -29,4 +29,5 @@ const webview = new window.WebviewWindow('theUniqueLabel', {
   height: 300,
   x: (await window.getCurrent().innerPosition()).x,
   y: (await window.getCurrent().innerPosition()).y
-});
+},);
+

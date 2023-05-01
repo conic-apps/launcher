@@ -6,17 +6,20 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+withDefaults(defineProps<{
   name?: string,
   placeholder?: string,
-  value?: string
-}>()
+  value?: string,
+  type?: string,
+}>(), {
+  type: "text"
+})
 
 </script>
 
 <style lang="less" scoped>
 .input-data {
-  border-radius: var(--border-radius-medium);
+  border-radius: var(--border-radius-small);
     margin-left: auto;
     width: 400px;
     overflow: hidden;

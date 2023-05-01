@@ -12,11 +12,12 @@ defineProps<{
 <style lang="less" scoped>
 .select-option {
     padding: 6px 8px;
-    border-radius: var(--border-radius-medium);
+    border-radius: var(--border-radius-small);
     position: relative;
     z-index: 10001;
     transition: all 100ms ease;
 }
+
 .select-option:hover {
     background: #ffffff54;
 }

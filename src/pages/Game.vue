@@ -1,53 +1,61 @@
 <template>
-    <div>
-      <ul class="gamelist" id="gamelist">
-        <TransitionGroup name="list-item">
-          <li v-for="(instance, index) in instances" :key="index">
-            <img src="@/assets/images/Grass_Block.webp">{{ instance.name }}
-          </li>
-        </TransitionGroup>
-        <p v-if="instances.length == 0">此视图筛选条件无匹配结果</p>
-      </ul>
-      <div class="content">
-        <div class="version" :style="banner">
-          <div>
-            <div class="minecraft-version"><img src="@/assets/images/minecraft.webp">Minecraft {{ minecraftVersion }}
-            </div>
-          </div>
-          <div style="display: flex; justify-content: space-between;">
-            <p style="font-size: 22px;">{{ instanceName }}</p>
-            <div style="display: flex; align-items: center;">
-              <i class="button gear"></i>
-              <i class="button circle-info"></i>
-              <i class="button star"></i>
-              <div class="start-game" v-if="installed" @click="launchGame"><i class="play"
-                  style="font-family: 'fa-pro'; font-style: normal; margin-right: 5px; font-weight: 100;"></i>开始游戏
-              </div>
-              <div class="install-game" v-else @click="installGame"><i class="download"
-                  style="font-family: 'fa-pro'; font-style: normal; margin-right: 5px; font-weight: 400;"></i>安装
-              </div>
-            </div>
+  <div>
+    <ul class="gamelist" id="gamelist">
+      <div style="display: flex; align-items: center; margin-bottom: 8px;">
+        <search-bar style="width: auto;"></search-bar>
+        <i style="flex-shrink: 0;margin-left: 6px; margin-right: 4px;" @click="$emit('jump', 'allInstances')"
+          class="grid-2 new"></i>
+        <i style="flex-shrink: 0;" @click="$emit('jump', 'newInstance')" class="plus new"></i>
+      </div>
+      <TransitionGroup name="list-item">
+        <li v-for="(instance, index) in instances" :key="index">
+          <img src="@/assets/images/Grass_Block.webp">{{ instance.name }}
+        </li>
+      </TransitionGroup>
+      <p v-if="instances.length == 0">此视图筛选条件无匹配结果</p>
+    </ul>
+    <div class="content">
+      <div class="version" :style="banner">
+        <div>
+          <div class="minecraft-version"><img src="@/assets/images/minecraft.webp">Minecraft {{ minecraftVersion }}
           </div>
         </div>
-        <div class="assets">
-          <div>
-            <card-link icon="map" title="地图存档" description="正在加载..." margin="0,0,8,0"></card-link>
-            <card-link icon="puzzle-piece" title="模组" description="正在加载..." margin="0,0,8,0"></card-link>
-            <card-link icon="puzzle-piece" title="截图" description="正在加载..." margin="0,0,0,0"></card-link>
-          </div>
-          <div>
-            <card-link icon="palette" title="资源包" description="正在加载..." margin="0,0,8,0"></card-link>
-            <card-link icon="lightbulb-on" title="光影包" description="正在加载..." margin="0,0,8,0"></card-link>
-            <card-link icon="puzzle-piece" title="日志" description="正在加载..." margin="0,0,0,0"></card-link>
+        <div style="display: flex; justify-content: space-between;">
+          <p style="font-size: 22px;">{{ instanceName }}</p>
+          <div style="display: flex; align-items: center;">
+            <i class="button gear"></i>
+            <i class="button circle-info"></i>
+            <i class="button star"></i>
+            <div class="start-game" v-if="installed" @click="launchGame"><i class="play"
+                style="font-family: 'fa-pro'; font-style: normal; margin-right: 5px; font-weight: 100;"></i>开始游戏
+            </div>
+            <div class="install-game" v-else @click="installGame"><i class="download"
+                style="font-family: 'fa-pro'; font-style: normal; margin-right: 5px; font-weight: 400;"></i>安装
+            </div>
           </div>
         </div>
       </div>
+      <div class="assets">
+        <div>
+          <card-link icon="map" title="地图存档" description="正在加载..." margin="0,0,8,0"></card-link>
+          <card-link icon="puzzle-piece" title="模组" description="正在加载..." margin="0,0,8,0"></card-link>
+          <card-link icon="puzzle-piece" title="截图" description="正在加载..." margin="0,0,0,0"></card-link>
+        </div>
+        <div>
+          <card-link icon="palette" title="资源包" description="正在加载..." margin="0,0,8,0"></card-link>
+          <card-link icon="lightbulb-on" title="光影包" description="正在加载..." margin="0,0,8,0"></card-link>
+          <card-link icon="puzzle-piece" title="日志" description="正在加载..." margin="0,0,0,0"></card-link>
+        </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import cardLink from '@/components/CardLink.vue'
+import Select from '@/components/Select.vue'
+import SearchBar from '@/components/SearchBar.vue'
 
 let banner = ref("background-image: linear-gradient(0deg, rgb(0 0 0 / 83%), rgb(0 0 0 / 0%)), url(./src/assets/images/banners/1.18.webp);")
 let instanceName = "Minecraft 1.18.2 with fabric"
@@ -80,6 +88,7 @@ instances.value = [
     banner: '@/assets/images/banners/1.13.webp'
   }
 ]
+
 function launchGame() {
 
 }
@@ -91,7 +100,7 @@ function installGame() {
 
 <style lang="less" scoped>
 .content {
-  padding: 30px 34px 0 18px;
+  padding: 20px 34px 0 18px;
 }
 
 .version {
@@ -180,14 +189,16 @@ i.button::before {
 }
 
 ul.gamelist {
-  width: 200px;
+  width: 280px;
   flex-shrink: 0;
-  margin: 28px 0 0 28px;
+  margin-left: -60px;
+  padding: 20px 0px 0 82px;
+  // background-color: #ffffff8b;
 }
 
 ul.gamelist img {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   margin-right: 4px;
 }
 
@@ -196,16 +207,17 @@ ul.gamelist li {
   display: flex;
   align-items: center;
   padding: 8px 10px;
-  border-radius: var(--border-radius-medium);
+  border-radius: var(--border-radius-small);
   transition: all 50ms ease;
+  font-size: 15px;
 }
 
 ul.gamelist li:hover {
-  background: #ffffff29;
+  background: #00000012;
 }
 
 ul.gamelist li:active {
-  background-color: #ffffff15;
+  background-color: #00000015;
 }
 
 .assets {
@@ -222,9 +234,31 @@ ul.gamelist li:active {
 .assets>div:first-child {
   margin-right: 4px;
 }
+
 .assets>div:last-child {
   margin-left: 4px;
 }
 
+.new {
+  font-family: 'fa-pro';
+  width: 8px;
+  height: 8px;
+  font-style: normal;
+  // margin-left: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10000px;
+  padding: 10px;
+  transition: all 200ms ease;
+}
+
+.new:hover {
+  color: rgba(var(--theme-color), 1);
+}
+
+.new:active {
+  transform: scale(0.9);
+}
 </style>
 <!-- treasure-chest -->
