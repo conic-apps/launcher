@@ -1,12 +1,15 @@
 <template>
   <dialog-vue :visible="show" width="460" height="480">
     <div style="position: relative;margin: 12px 14px; width: calc(100% - 28px);">
-      <div class="info">
-        <div class="icon"></div>
-        <div class="text">
-          <h4 class="name"><span>{{ instanceName }}</span>中的模组</h4>
-          <p>共安装有 {{ mods.length }} 个模组</p>
+      <div style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
+        <div class="info">
+          <div class="icon"></div>
+          <div class="text">
+            <h4 class="name"><span>{{ instanceName }}</span>中的模组</h4>
+            <p>共安装有 {{ mods.length }} 个模组</p>
+          </div>
         </div>
+        <div class="buttons"><dialog-button icon="close" @click="$emit('close')"></dialog-button></div>
       </div>
       <search-bar style="margin-bottom: 8px; position: sticky;"></search-bar>
       <TransitionGroup>
@@ -28,6 +31,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import DialogVue from '@/components/Dialog.vue';
+import DialogButton from '@/components/DialogButton.vue';
 import ListItem from '@/components/ListItem.vue';
 import Tag from '@/components/Tag.vue';
 import SearchBar from '@/components/SearchBar.vue';
@@ -111,8 +115,6 @@ const props = withDefaults(defineProps<{
 .info {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  border-bottom: 2px solid rgba(var(--theme-color), 0.6);
   padding-bottom: 6px;
 }
 
