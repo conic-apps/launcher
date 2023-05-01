@@ -19,12 +19,17 @@ const props = withDefaults(defineProps<{
   title: string,
   description: string,
   icon: string,
-  margin?: string
+  margin?: string,
+  boxShadow?: boolean,
+  padding?: string
 }>(), {
-  margin: ''
+  margin: '',
+  boxShadow: true,
+  padding: '16,18,16,18'
 })
 let margin = props.margin.split(',')
-let cardStyle = `margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px;`
+let padding = props.padding.split(',')
+let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px;`
 </script>
 
 <style lang="less" scoped>
@@ -37,18 +42,17 @@ let cardStyle = `margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3
   justify-content: space-between;
   align-items: center;
   transition: all 0.1s ease;
-  padding: 16px 18px;
   border-radius: var(--border-radius-large);
   background-color: #ffffffb9;
-  border: 1px solid  #0000002e;
-  box-shadow: 0 0 10px #00000015;
+  border: 1px solid #0000002e;
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
 }
 
 :active {
-    opacity: 0.8;
+  opacity: 0.8;
 }
+
 .title {
   display: flex;
 }
@@ -86,7 +90,8 @@ let cardStyle = `margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3
 i.chevron-right {
   transition: transform .2s ease;
 }
+
 .card-link:hover i.chevron-right {
-    transform: translate(4px, 0px);
+  transform: translate(4px, 0px);
 }
 </style>
