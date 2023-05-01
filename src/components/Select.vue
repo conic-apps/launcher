@@ -97,7 +97,7 @@ function toggleOpened() {
 }
 
 .selected:hover {
-  background: rgba(var(--theme-color), 0.04);
+  background: #ffffffce;
 }
 
 .selected::after {

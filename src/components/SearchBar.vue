@@ -21,7 +21,7 @@ let value = ref("")
   font-size: 1rem;
   transition: all 0.1s ease;
   pointer-events: all;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.658);
   display: flex;
   align-items: center;
   margin-bottom: 4px;
@@ -60,7 +60,7 @@ let value = ref("")
 }
 
 .search-bar:hover {
-  background: rgba(var(--theme-color), 0.01);
+  background: #fff;
 }
 
 .underline {
