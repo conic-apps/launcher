@@ -10,9 +10,10 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-  checked: boolean
-}>()
+// const props = defineProps<{
+//   checked: boolean
+// }>()
+let checked = false
 </script>
 
 <style lang="less" scoped>
@@ -57,6 +58,10 @@ const props = defineProps<{
 .input-box label input:checked~span {
   outline: 1px solid rgba(var(--theme-color), 1);
   background-color: rgba(var(--theme-color), 1);
+}
+
+.input-box:hover span {
+  background: #ffffffce;
 }
 
 .input-box:hover span>div {

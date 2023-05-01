@@ -20,18 +20,19 @@ withDefaults(defineProps<{
 <style lang="less" scoped>
 .input-data {
   border-radius: var(--border-radius-small);
-    margin-left: auto;
-    width: 400px;
-    overflow: hidden;
-    box-shadow: 0 0 0 1px rgba(var(--theme-color), 0.2);
-    height: 30px;
-    flex-shrink: 0;
-    padding: 0 8px 2px 8px;
-    font-size: 1rem;
-    transition: all 0.1s ease;
-    pointer-events: all;
-    background: rgba(255, 255, 255, 0.2);
+  margin-left: auto;
+  width: 400px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(var(--theme-color), 0.2);
+  height: 30px;
+  flex-shrink: 0;
+  padding: 0 8px 2px 8px;
+  font-size: 1rem;
+  transition: all 0.1s ease;
+  pointer-events: all;
+  background: rgba(255, 255, 255, 0.2);
 }
+
 .input-data div.input {
   display: flex;
   justify-content: space-between;
@@ -55,7 +56,7 @@ withDefaults(defineProps<{
 }
 
 .input-data:hover {
-  background:  rgba(var(--theme-color), 0.01);
+  background: #ffffffce;
 }
 
 .underline {

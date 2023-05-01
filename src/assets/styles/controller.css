@@ -12,7 +12,7 @@ button.command-button {
 }
 
 button.command-button:hover {
-    background: rgba(var(--theme-color), 0.05);
+    background: #ffffffce;
 }
 
 button.command-button:active {

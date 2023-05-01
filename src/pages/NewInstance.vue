@@ -1,5 +1,5 @@
 <template>
-  <div class="settings" style="display: flex;padding-left: 10px;">
+  <div style="display: flex;padding-left: 20px;">
     <div class="sidebar">
       <ul>
         <li @click="switchComponent(item, index)" :class="[activeComponentIndex == index ? 'active' : '']"
@@ -19,27 +19,26 @@
 
 <script setup lang="ts">
 import { markRaw, reactive, ref, shallowRef } from 'vue'
+import CreateNew from './newInstance/CreateNew.vue'
+
 const components = reactive([
   {
     name: '新建配置',
-    icon: 'house',
-    component: markRaw(General)
+    icon: 'folder-plus',
+    component: markRaw(CreateNew)
   },
-  {
-    name: '导入备份',
-    icon: 'gamepad',
-    component: markRaw(Game)
-  },
-  {
-    name: '从其他启动器导入',
-    icon: 'pro-settings',
-    component: markRaw(Advance)
-  },
-  {
-    name: ''
-  }
+  // {
+  //   name: '导入备份',
+  //   icon: 'folders',
+  //   component: markRaw(Game)
+  // },
+  // {
+  //   name: '从其他启动器导入',
+  //   icon: 'arrow-down-to-square',
+  //   component: markRaw(Advance)
+  // },
 ])
-const activeComponent = shallowRef(General)
+const activeComponent = shallowRef(CreateNew)
 let activeComponentIndex = ref(0)
 let transitionName = ref('')
 const content = ref<any>(null)
@@ -54,4 +53,8 @@ function switchComponent(item: any, index: number) {
 }
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+.content {
+  padding-right: 20px;
+}
+</style>

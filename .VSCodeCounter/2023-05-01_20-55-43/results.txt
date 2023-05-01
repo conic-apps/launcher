@@ -1,0 +1,112 @@
+Date : 2023-05-01 20:55:43
+Directory : /home/brokendeer/桌面/mc2/magical-launcher
+Total : 60 files,  30556 codes, 63 comments, 515 blanks, all 31134 lines
+
+Languages
++--------------------+------------+------------+------------+------------+------------+
+| language           | files      | code       | comment    | blank      | total      |
++--------------------+------------+------------+------------+------------+------------+
+| JSON               |          6 |     26,818 |          9 |          2 |     26,829 |
+| Vue                |         35 |      2,657 |          4 |        322 |      2,983 |
+| CSS                |          3 |        810 |         29 |        160 |        999 |
+| XML                |          2 |        119 |          0 |          0 |        119 |
+| TypeScript         |          6 |         51 |         15 |         15 |         81 |
+| JavaScript         |          2 |         32 |          1 |          2 |         35 |
+| TOML               |          1 |         19 |          5 |          5 |         29 |
+| Rust               |          2 |         17 |          0 |          3 |         20 |
+| HTML               |          1 |         15 |          0 |          3 |         18 |
+| JSON with Comments |          1 |         14 |          0 |          1 |         15 |
+| Markdown           |          1 |          4 |          0 |          2 |          6 |
++--------------------+------------+------------+------------+------------+------------+
+
+Directories
++-------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                          | files      | code       | comment    | blank      | total      |
++-------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                             |         60 |     30,556 |         63 |        515 |     31,134 |
+| . (Files)                                                                     |         12 |        150 |         17 |         15 |        182 |
+| public                                                                        |          1 |     26,683 |          0 |          0 |     26,683 |
+| src                                                                           |         43 |      3,615 |         41 |        492 |      4,148 |
+| src (Files)                                                                   |          3 |        303 |          6 |         40 |        349 |
+| src-tauri                                                                     |          4 |        108 |          5 |          8 |        121 |
+| src-tauri (Files)                                                             |          3 |         94 |          5 |          6 |        105 |
+| src-tauri/src                                                                 |          1 |         14 |          0 |          2 |         16 |
+| src/assets                                                                    |          5 |        929 |         29 |        160 |      1,118 |
+| src/assets/images                                                             |          2 |        119 |          0 |          0 |        119 |
+| src/assets/styles                                                             |          3 |        810 |         29 |        160 |        999 |
+| src/components                                                                |         19 |      1,554 |          0 |        192 |      1,746 |
+| src/pages                                                                     |         15 |        822 |          4 |         97 |        923 |
+| src/pages (Files)                                                             |          5 |        559 |          2 |         58 |        619 |
+| src/pages/dialogs                                                             |          1 |          7 |          0 |          5 |         12 |
+| src/pages/game                                                                |          1 |         31 |          0 |          7 |         38 |
+| src/pages/newInstance                                                         |          1 |         52 |          0 |          5 |         57 |
+| src/pages/settings                                                            |          7 |        173 |          2 |         22 |        197 |
+| src/utils                                                                     |          1 |          7 |          2 |          3 |         12 |
++-------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| filename                                                                      | language           | code       | comment    | blank      | total      |
++-------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| /home/brokendeer/桌面/mc2/magical-launcher/.eslintrc.cjs                        | JavaScript         |         17 |          1 |          2 |         20 |
+| /home/brokendeer/桌面/mc2/magical-launcher/README.md                            | Markdown           |          4 |          0 |          2 |          6 |
+| /home/brokendeer/桌面/mc2/magical-launcher/env.d.ts                             | TypeScript         |          0 |          1 |          1 |          2 |
+| /home/brokendeer/桌面/mc2/magical-launcher/index.html                           | HTML               |         15 |          0 |          3 |         18 |
+| /home/brokendeer/桌面/mc2/magical-launcher/package.json                         | JSON               |         42 |          0 |          0 |         42 |
+| /home/brokendeer/桌面/mc2/magical-launcher/public/articles.json                 | JSON               |     26,683 |          0 |          0 |     26,683 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src-tauri/Cargo.toml                 | TOML               |         19 |          5 |          5 |         29 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src-tauri/build.rs                   | Rust               |          3 |          0 |          1 |          4 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src-tauri/src/main.rs                | Rust               |         14 |          0 |          2 |         16 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src-tauri/tauri.conf.json            | JSON               |         72 |          0 |          0 |         72 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/Main.vue                         | Vue                |        281 |          0 |         33 |        314 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/assets/images/loading.svg        | XML                |        118 |          0 |          0 |        118 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/assets/images/quilt.svg          | XML                |          1 |          0 |          0 |          1 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/assets/styles/controller.css     | CSS                |         19 |          0 |          2 |         21 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/assets/styles/default.css        | CSS                |        645 |         25 |        120 |        790 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/assets/styles/transitions.css    | CSS                |        146 |          4 |         38 |        188 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/bootstrap.ts                     | TypeScript         |         21 |          6 |          7 |         34 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/ButtonBar.vue         | Vue                |         18 |          0 |          4 |         22 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/CardLink.vue          | Vue                |         82 |          0 |         10 |         92 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/Dialog.vue            | Vue                |         73 |          0 |          5 |         78 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/Expander.vue          | Vue                |        216 |          0 |         23 |        239 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/IconButton.vue        | Vue                |         28 |          0 |          4 |         32 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/ListItem.vue          | Vue                |        118 |          0 |         14 |        132 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/ProgressBar.vue       | Vue                |         88 |          0 |         15 |        103 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/SearchBar.vue         | Vue                |         76 |          0 |         10 |         86 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/Select.vue            | Vue                |        123 |          0 |         10 |        133 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/SelectBar.vue         | Vue                |         29 |          0 |          3 |         32 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/SelectOption.vue      | Vue                |         24 |          0 |          4 |         28 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/SidebarItem.vue       | Vue                |        104 |          0 |         19 |        123 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/SliderBar.vue         | Vue                |        190 |          0 |         21 |        211 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/Tag.vue               | Vue                |         29 |          0 |          4 |         33 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/TextInputBar.vue      | Vue                |         79 |          0 |          9 |         88 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/TextInputBox.vue      | Vue                |         72 |          0 |          9 |         81 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/TipBar.vue            | Vue                |         40 |          0 |          3 |         43 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/ToggleSwitch.vue      | Vue                |         72 |          0 |         11 |         83 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/components/ToggleSwitchBar.vue   | Vue                |         93 |          0 |         14 |        107 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/jquery.d.ts                      | TypeScript         |          1 |          0 |          0 |          1 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/Community.vue              | Vue                |          7 |          0 |          3 |         10 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/Game.vue                   | Vue                |        234 |          1 |         29 |        264 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/NewInstance.vue            | Vue                |         57 |          0 |          3 |         60 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/Newspaper.vue              | Vue                |         77 |          1 |          7 |         85 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/Settings.vue               | Vue                |        184 |          0 |         16 |        200 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/dialogs/AddAccount.vue     | Vue                |          7 |          0 |          5 |         12 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/game/AccountManager.vue    | Vue                |         31 |          0 |          7 |         38 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/newInstance/CreateNew.vue  | Vue                |         52 |          0 |          5 |         57 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/settings/Accessibility.vue | Vue                |         22 |          0 |          2 |         24 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/settings/Advance.vue       | Vue                |         32 |          0 |          5 |         37 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/settings/Appearance.vue    | Vue                |         18 |          0 |          4 |         22 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/settings/Download.vue      | Vue                |         18 |          1 |          3 |         22 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/settings/Extend.vue        | Vue                |         13 |          0 |          3 |         16 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/settings/Game.vue          | Vue                |         47 |          1 |          2 |         50 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/pages/settings/General.vue       | Vue                |         23 |          0 |          3 |         26 |
+| /home/brokendeer/桌面/mc2/magical-launcher/src/utils/ConfigLoader.ts            | TypeScript         |          7 |          2 |          3 |         12 |
+| /home/brokendeer/桌面/mc2/magical-launcher/tsconfig.app.json                    | JSON               |          4 |          9 |          0 |         13 |
+| /home/brokendeer/桌面/mc2/magical-launcher/tsconfig.json                        | JSON with Comments |         14 |          0 |          1 |         15 |
+| /home/brokendeer/桌面/mc2/magical-launcher/tsconfig.node.json                   | JSON               |          8 |          0 |          1 |          9 |
+| /home/brokendeer/桌面/mc2/magical-launcher/tsconfig.vitest.json                 | JSON               |          9 |          0 |          1 |         10 |
+| /home/brokendeer/桌面/mc2/magical-launcher/vite.config.ts                       | TypeScript         |         12 |          1 |          3 |         16 |
+| /home/brokendeer/桌面/mc2/magical-launcher/vitest.config.ts                     | TypeScript         |         10 |          5 |          1 |         16 |
+| /home/brokendeer/桌面/mc2/magical-launcher/vue.config.js                        | JavaScript         |         15 |          0 |          0 |         15 |
+| Total                                                                         |                    |     30,556 |         63 |        515 |     31,134 |
++-------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
