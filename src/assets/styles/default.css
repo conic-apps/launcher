@@ -8,51 +8,51 @@
     --text-color: #000000;
     --color-neutral-emphasis-plus: #24292f;
     --color-neutral-emphasis: #6e7781;
-    --color-neutral-muted: rgba(175,184,193,0.2);
-    --color-neutral-subtle: rgba(234,238,242,0.5);
+    --color-neutral-muted: rgba(175, 184, 193, 0.2);
+    --color-neutral-subtle: rgba(234, 238, 242, 0.5);
     --color-accent-fg: #0969da;
     --color-accent-emphasis: #0969da;
-    --color-accent-muted: rgba(84,174,255,0.4);
+    --color-accent-muted: rgba(84, 174, 255, 0.4);
     --color-accent-subtle: #ddf4ff;
     --color-success-fg: #1a7f37;
     --color-success-emphasis: #1f883d;
-    --color-success-muted: rgba(74,194,107,0.4);
+    --color-success-muted: rgba(74, 194, 107, 0.4);
     --color-success-subtle: #dafbe1;
     --color-attention-fg: #9a6700;
     --color-attention-emphasis: #9a6700;
-    --color-attention-muted: rgba(212,167,44,0.4);
+    --color-attention-muted: rgba(212, 167, 44, 0.4);
     --color-attention-subtle: #fff8c5;
     --color-severe-fg: #bc4c00;
     --color-severe-emphasis: #bc4c00;
-    --color-severe-muted: rgba(251,143,68,0.4);
+    --color-severe-muted: rgba(251, 143, 68, 0.4);
     --color-severe-subtle: #fff1e5;
     --color-danger-fg: #d1242f;
     --color-danger-emphasis: #cf222e;
-    --color-danger-muted: rgba(255,129,130,0.4);
+    --color-danger-muted: rgba(255, 129, 130, 0.4);
     --color-danger-subtle: #ffebe9;
     --color-open-fg: #1a7f37;
     --color-open-emphasis: #1f883d;
-    --color-open-muted: rgba(74,194,107,0.4);
+    --color-open-muted: rgba(74, 194, 107, 0.4);
     --color-open-subtle: #dafbe1;
     --color-closed-fg: #d1242f;
     --color-closed-emphasis: #cf222e;
-    --color-closed-muted: rgba(255,129,130,0.4);
+    --color-closed-muted: rgba(255, 129, 130, 0.4);
     --color-closed-subtle: #ffebe9;
     --color-done-fg: #8250df;
     --color-done-emphasis: #8250df;
-    --color-done-muted: rgba(194,151,255,0.4);
+    --color-done-muted: rgba(194, 151, 255, 0.4);
     --color-done-subtle: #fbefff;
     --color-sponsors-fg: #bf3989;
     --color-sponsors-emphasis: #bf3989;
-    --color-sponsors-muted: rgba(255,128,200,0.4);
+    --color-sponsors-muted: rgba(255, 128, 200, 0.4);
     --color-sponsors-subtle: #ffeff7;
     --color-primer-fg-disabled: #8c959f;
-    --color-primer-canvas-backdrop: rgba(31,35,40,0.5);
-    --color-primer-canvas-sticky: rgba(255,255,255,0.95);
+    --color-primer-canvas-backdrop: rgba(31, 35, 40, 0.5);
+    --color-primer-canvas-sticky: rgba(255, 255, 255, 0.95);
     --color-primer-border-active: #fd8c73;
-    --color-primer-border-contrast: rgba(31,35,40,0.1);
-    --color-primer-shadow-highlight: inset 0 1px 0 rgba(255,255,255,0.25);
-    --color-primer-shadow-inset: inset 0 1px 0 rgba(208,215,222,0.2);
+    --color-primer-border-contrast: rgba(31, 35, 40, 0.1);
+    --color-primer-shadow-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    --color-primer-shadow-inset: inset 0 1px 0 rgba(208, 215, 222, 0.2);
     --color-scale-black: #1F2328;
     --color-scale-white: #ffffff;
     --color-scale-gray-0: #f6f8fa;
@@ -146,6 +146,7 @@
     --color-scale-coral-8: #691105;
     --color-scale-coral-9: #510901;
 }
+
 .aaa {
     color: rgb(0, 105, 140);
 }
@@ -549,9 +550,11 @@ i.folders::before {
 i.magnifying-glass::before {
     content: '\f002';
 }
+
 i.grid-2::before {
     content: '\e196';
 }
+
 i.cubes-stacked::before {
     content: '\e4e6';
 }

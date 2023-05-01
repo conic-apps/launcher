@@ -30,6 +30,10 @@
       </Transition>
     </div>
   </main>
+  <!-- <mods :show="show" instance-name="未命名配置"></mods> -->
+  <!-- <worlds :show="show" instance-name="未命名配置"></worlds> -->
+  <resourcepacks :show=" show " instance-name="未命名配置"></resourcepacks>
+  <!-- <shaderpacks :show="show" instance-name="未命名配置"></shaderpacks> -->
 </template>
 
 <script setup lang="ts">
@@ -42,7 +46,15 @@ import Community from './pages/Community.vue';
 import NewInstance from './pages/NewInstance.vue';
 import Tag from './components/Tag.vue';
 import { invoke, window, } from '@tauri-apps/api'
+import Mods from './pages/dialogs/Mods.vue';
+import Worlds from './pages/dialogs/Worlds.vue';
+import Resourcepacks from './pages/dialogs/Resourcepacks.vue';
+import Shaderpacks from './pages/dialogs/Shaderpacks.vue';
 
+let show = ref(false)
+setTimeout(() => {
+  show.value = true
+}, 1000);
 function minimize() {
   window.getCurrent().minimize()
 }
