@@ -30,7 +30,8 @@ let value = ref("")
 .search-bar i {
   font-family: 'fa-pro';
   font-style: normal;
-  margin-right: 10px;
+  font-size: 14px;
+  margin-right: 6px;
 }
 
 .search-bar:hover i {
