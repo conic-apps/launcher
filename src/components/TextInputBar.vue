@@ -79,7 +79,7 @@ div.input {
 }
 
 .input-box:hover {
-  background: rgba(var(--theme-color), 0.01);
+  background: #ffffffce;
 }
 
 input:focus::-webkit-input-placeholder {

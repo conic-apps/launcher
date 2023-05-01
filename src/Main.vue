@@ -99,6 +99,11 @@ function sidebarClose() {
 }
 
 function back() {
+  let isSettingPage = JSON.stringify(last) == JSON.stringify(pages.settings);
+  if (isSettingPage) {
+    switchPage(null, 'wareHouse')
+    return
+  }
   switchPage(null, last)
 }
 function jumpTo(name: string) {
