@@ -1,12 +1,14 @@
 <template>
   <div :class="expanderClass" :style="expanderStyle">
-    <!-- <expander-header @click="expander($event)" v-if="this.expanderHeader" :title="title" :description="description" :icon="icon" :canSwap="canSwap" :logoPixelated="logoPixelated"></expander-header> -->
     <div class="expander-header" v-if="expanderHeader" @click="expander()" :style="headerStyle" ref="head">
       <div class="expander-title">
         <div class="expander-icon"><i :class="icon" :style="iconStyle"></i></div>
         <div>
-          <h4 id="text">{{ title }}</h4>
-          <p id="text">{{ description }}</p>
+          <h4>{{ title }}<div class="sub-title">
+              <slot name="subtitle"></slot>
+            </div>
+          </h4>
+          <p>{{ description }}</p>
         </div>
       </div>
       <div class="expander-button" :style="expanderButton"><i></i></div>
@@ -39,7 +41,7 @@ const props = withDefaults(defineProps<{
   icon?: string,
   logoPixelated?: boolean,
   expanderHeader?: boolean,
-  padding?: Array<number>
+  padding?: Array<number>,
 }>(), {
   canSwap: true,
   isSwaped: false,
@@ -102,8 +104,9 @@ function expander() {
 <style lang="less" scoped>
 .expander {
   border-radius: var(--border-radius-large);
-  background-color: var(--expander-background-color);
-  border: 1px solid var(--expander-border-color);
+  background-color: #ffffffb9;
+  border: 1px solid #0000002e;
+  box-shadow: 0 0 10px #00000015;
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
 }
@@ -190,8 +193,15 @@ function expander() {
 .expander-header h4 {
   font-weight: 100;
   height: 20.5px;
+  display: flex;
+  align-items: center;
 }
-
+.expander-header h4>div {
+  color: #0000006f;
+  display: inline-block;
+  font-size: 14px;
+  margin-left: 4px;
+}
 .expander-header p {
   font-size: 12.3px;
   color: var(--text-color);

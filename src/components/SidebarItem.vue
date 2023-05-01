@@ -17,9 +17,11 @@ defineProps<{
 .sidebar-item {
   margin-bottom: 2px;
 }
+
 .sidebar-item i {
   pointer-events: none;
 }
+
 div.main-sidebar>div {
   margin: 16px 8px 7px 8px;
   height: calc(100% - 26px);
@@ -84,7 +86,7 @@ div.main-sidebar span {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--border-radius-medium);
+  border-radius: var(--border-radius-small);
   margin-left: 1.6px;
 }
 
