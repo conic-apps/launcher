@@ -74,5 +74,9 @@ opacity: 1;
   width: fit-content;
   height: fit-content;
   border-radius: var(--border-radius-large);
+  max-width: calc(100vw - 20px);
+  max-height: calc(100vh - 20px);
+  overflow-x: visible;
+  overflow-y: overlay;
 }
 </style>
