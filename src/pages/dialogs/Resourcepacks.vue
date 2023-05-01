@@ -1,26 +1,32 @@
 <template>
   <dialog-vue :visible="show" width="460" height="480">
     <div style="position: relative;margin: 12px 14px; width: calc(100% - 28px);">
-      <div class="info">
-        <div class="icon"></div>
-        <div class="text">
-          <h4 class="name"><span>{{ instanceName }}</span>中的资源包</h4>
-          <p>共安装有 {{ resourcepacks.length }} 个资源包</p>
+      <div style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
+        <div class="info">
+          <div class="icon"></div>
+          <div class="text">
+            <h4 class="name"><span>{{ instanceName }}</span>中的资源包</h4>
+            <p>共安装有 {{ resourcepacks.length }} 个资源包</p>
+          </div>
         </div>
+        <div class="buttons"><dialog-button icon="close" @click="$emit('close')"></dialog-button></div>
       </div>
       <search-bar style="margin-bottom: 8px; position: sticky;"></search-bar>
       <TransitionGroup>
         <list-item v-for="(resourcepack, index) in resourcepacks" :key="index" :title="resourcepack.name"
           :logo="resourcepack.icon" :click-able="true" :buttons="['circle-info', 'folders', 'trash-can']">
           <template #subtitle v-if="resourcepack.type == 'texture'">
-            <tag text="纹理包" :color="['74', '194', '107']" style="transform: scale(0.9);" :border="true" text-color="#1f883d"></tag>
+            <tag text="纹理包" :color="['74', '194', '107']" style="transform: scale(0.9);" :border="true"
+              text-color="#1f883d"></tag>
           </template>
           <template #subtitle v-else-if="resourcepack.type == 'data'">
-            <tag text="数据包" :color="['200', '200', '0']" style="transform: scale(0.9);" :border="true" text-color="#9a6700">
+            <tag text="数据包" :color="['200', '200', '0']" style="transform: scale(0.9);" :border="true"
+              text-color="#9a6700">
             </tag>
           </template>
           <template #subtitle v-else>
-            <tag text="未知" :color="['200', '200', '200']" style="transform: scale(0.9);" :border="true" text-color="#000000d0"></tag>
+            <tag text="未知" :color="['200', '200', '200']" style="transform: scale(0.9);" :border="true"
+              text-color="#000000d0"></tag>
           </template>
           {{ resourcepack.description }}
         </list-item>
@@ -35,6 +41,7 @@ import DialogVue from '@/components/Dialog.vue';
 import ListItem from '@/components/ListItem.vue';
 import Tag from '@/components/Tag.vue';
 import SearchBar from '@/components/SearchBar.vue';
+import DialogButton from '@/components/DialogButton.vue';
 
 const props = withDefaults(defineProps<{
   show: boolean,
@@ -115,8 +122,6 @@ const props = withDefaults(defineProps<{
 .info {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  border-bottom: 2px solid rgba(var(--theme-color), 0.6);
   padding-bottom: 6px;
 }
 

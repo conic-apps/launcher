@@ -486,6 +486,10 @@ div.title-bar>div.button #close::before {
     transform: scale(1.1);
 }
 
+i.close::before {
+    content: "\f00d";
+}
+
 i#user-add:before {
     content: "\f3fd";
 }

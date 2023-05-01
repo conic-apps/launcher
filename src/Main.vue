@@ -32,7 +32,7 @@
   </main>
   <!-- <mods :show="show" instance-name="未命名配置"></mods> -->
   <!-- <worlds :show="show" instance-name="未命名配置"></worlds> -->
-  <resourcepacks :show=" show " instance-name="未命名配置"></resourcepacks>
+  <resourcepacks :show=" show " instance-name="未命名配置" @close="show = false"></resourcepacks>
   <!-- <shaderpacks :show="show" instance-name="未命名配置"></shaderpacks> -->
 </template>
 
