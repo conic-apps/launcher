@@ -1,6 +1,6 @@
 <template>
   <div class="tag" :style="`${border ? `border: 1px solid rgb(${color[0]}, ${color[1]}, ${color[2]}); ` : ''}
-    ${background ? `background: rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.4);` : ''} 
+    ${background ? `background: rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.2);` : ''} 
     color: ${textColor}; font-size: ${fontSize}px;
     ${round ? 'border-radius: 10000px' : ''}`">
     {{ text }}
