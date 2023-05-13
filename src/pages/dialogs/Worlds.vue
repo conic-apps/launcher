@@ -1,23 +1,27 @@
 <template>
   <dialog-vue :visible="show" width="460" height="480">
     <div style="position: relative;margin: 12px 14px; width: calc(100% - 28px);">
-      <div style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
+      <div
+        style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
         <div class="info">
           <div class="icon"></div>
           <div class="text">
             <h4 class="name"><span>{{ instanceName }}</span>中的存档</h4>
-            <p>共安装有 {{ worlds.length }} 个存档</p>
+            <p>共有 {{ worlds.length }} 个存档</p>
           </div>
         </div>
         <div class="buttons"><dialog-button icon="close" @click="$emit('close')"></dialog-button></div>
       </div>
-      <search-bar style="margin-bottom: 8px; position: sticky;"></search-bar>
+      <search-bar
+        style="margin-bottom: 8px; position: sticky; top: 0; right: 0; bottom: 0; left: 0; z-index: 1000; background: #fff; border: 1px solid #00000028; box-shadow: 0 0 10px #00000012;"></search-bar>
       <TransitionGroup>
-        <list-item v-for="(world, index) in worlds" :key="index" :title="world.name" :logo="world.icon" :click-able="false"
-          :buttons="['circle-info', 'folders', 'trash-can']">
+        <list-item v-for="(world, index) in worlds" :key="index" :title="world.name" :logo="world.icon"
+          :click-able="false" :buttons="['circle-info', 'folders', 'trash-can']">
           <template #subtitle>
-            <tag :text="world.version" :color="['180','180','180']" text-color="#00000080" style="transform: scale(0.9);" :border="true"></tag>
-            <tag v-if="world.allowCheat" text="允许作弊" :color="['180','180','180']" text-color="#00000080" style="transform: scale(0.9);" :border="true"></tag>
+            <tag :text="world.version" :color="['180', '180', '180']" text-color="#00000080" style="transform: scale(0.9);"
+              :border="true"></tag>
+            <tag v-if="world.allowCheat" text="允许作弊" :color="['180', '180', '180']" text-color="#00000080"
+              style="transform: scale(0.9);" :border="true"></tag>
           </template>
           {{ world.description }}
         </list-item>
@@ -44,7 +48,7 @@ const props = withDefaults(defineProps<{
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg',
+        icon: '/test.webp',
         version: '1.18.2',
         allowCheat: true
       },
@@ -85,6 +89,4 @@ const props = withDefaults(defineProps<{
 .info p {
   color: #000000a0;
   font-size: 13px;
-}
-</style>
-  
+}</style>

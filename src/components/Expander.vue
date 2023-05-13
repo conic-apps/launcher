@@ -104,9 +104,9 @@ function expander() {
 <style lang="less" scoped>
 .expander {
   border-radius: var(--border-radius-large);
-  background-color: #ffffffb9;
-  border: 1px solid #0000002e;
-  box-shadow: 0 0 10px #00000015;
+  background-color: #ffffff77;
+  border: 1px solid #ffffff9a;
+  box-shadow: 0 0 10px #ffffff15;
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
 }
@@ -134,7 +134,7 @@ function expander() {
 }
 
 .expander-header {
-  border-bottom: 1px solid #c3cbd4;
+  border-bottom: 1px solid #ffffffbf;
   display: flex;
   justify-content: space-between;
   align-items: center;

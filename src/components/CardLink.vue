@@ -43,10 +43,16 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   align-items: center;
   transition: all 0.1s ease;
   border-radius: var(--border-radius-large);
-  background-color: #ffffffb9;
-  border: 1px solid #0000002e;
+  background-color: #ffffff77;
+  border: 1px solid #ffffff6c;
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
+}
+
+
+.dialog .card-link {
+  background-color: #ffffffb9;
+  border: 1px solid #0000002e;
 }
 
 :active {

@@ -182,7 +182,7 @@ i.button::before {
 .start-game,
 .install-game {
   margin-left: 8px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 15px;
   padding: 8px 20px;
   color: #fff;
