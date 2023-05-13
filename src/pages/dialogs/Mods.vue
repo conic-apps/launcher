@@ -1,7 +1,8 @@
 <template>
   <dialog-vue :visible="show" width="460" height="480">
-    <div style="position: relative;margin: 12px 14px; width: calc(100% - 28px);">
-      <div style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
+    <div style="position: relative;margin: 12px 14px;width: calc(100% - 28px);">
+      <div
+        style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
         <div class="info">
           <div class="icon"></div>
           <div class="text">
@@ -11,12 +12,14 @@
         </div>
         <div class="buttons"><dialog-button icon="close" @click="$emit('close')"></dialog-button></div>
       </div>
-      <search-bar style="margin-bottom: 8px; position: sticky;"></search-bar>
+      <search-bar
+        style="margin-bottom: 8px; position: sticky; top: 0; right: 0; bottom: 0; left: 0; z-index: 1000; background: #fff; border: 1px solid #00000028; box-shadow: 0 0 10px #00000012;"></search-bar>
       <TransitionGroup>
         <list-item v-for="(mod, index) in mods" :key="index" :title="mod.name" :logo="mod.icon" :click-able="false"
           :buttons="['circle-info', 'folders', 'trash-can']">
           <template #subtitle v-if="mod.type == 'broken'">
-            <tag text="损坏" :color="['255', '129', '120']" style="transform: scale(0.9);" :background="true" :border="true"></tag>
+            <tag text="损坏" :color="['255', '129', '120']" style="transform: scale(0.9);" :background="true"
+              :border="true"></tag>
           </template>
           <template #subtitle v-else-if="mod.type == 'lib'">
             <tag text="支持库" :color="['200', '200', '0']" style="transform: scale(0.9);" :border="true"></tag>
@@ -46,65 +49,65 @@ const props = withDefaults(defineProps<{
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg',
+        icon: '/test.webp',
         type: 'lib'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg',
+        icon: '/test.webp',
         type: 'broken'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       }, {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg',
+        icon: '/test.webp',
         type: 'lib'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg',
+        icon: '/test.webp',
         type: 'broken'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       }
     ]
   }
@@ -143,4 +146,5 @@ const props = withDefaults(defineProps<{
 .info p {
   color: #000000a0;
   font-size: 13px;
-}</style>
+}
+</style>

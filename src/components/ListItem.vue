@@ -49,6 +49,11 @@ defineProps<{
   background-color: #ffffff71;
 }
 
+.dialog .list-item {
+  background-color: #ffffffb9;
+  border: 1px solid #0000002e;
+}
+
 .list-item>div {
   display: flex;
   align-items: center;
@@ -102,10 +107,13 @@ defineProps<{
 
 .icon {
   flex-shrink: 0;
-  width: 31px;
+  width: 32px;
   height: 32px;
   background-size: cover;
+  background-position: center;
+  margin-left: 2px;
   margin-right: 6px;
+  // box-shadow: 0 0 2px #00000088;
   overflow: hidden;
   border-radius: var(--border-radius-medium);
   background-image: url(@/assets/images/Unknown_server.webp);

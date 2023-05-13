@@ -1,7 +1,7 @@
 <template>
   <div class="title-bar" data-tauri-drag-region>
-    <div class="title" data-tauri-drag-region>Magical Launcher<tag text="Beta" :color="['255', '255', '255']"
-        text-color="#fff" :round="true" :border="true" style="transform: scale(0.8) translate(-1px, -6px);"></tag>
+    <div class="title" data-tauri-drag-region>Magical Launcher<tag text="Beta" :color="['0', '0', '0']" text-color="#000"
+        :round="true" :border="true" style="transform: scale(0.8) translate(-1px, -6px);"></tag>
     </div>
     <div class="button">
       <div class="window-btn" id="min" @click="minimize"></div>
@@ -10,8 +10,8 @@
   </div>
   <div :class="sidebarClassName" :style="sidebarInlineStyle">
     <div>
-      <div class="sidebar-button" @click="sidebar"><i></i></div>
       <ul class="sidebar-links">
+        <sidebar-item title="帐户" icon="brokendeer" @click="switchPage($event, 'wareHouse')"></sidebar-item>
         <sidebar-item title="游戏" icon="gamepad" @click="switchPage($event, 'wareHouse')"></sidebar-item>
         <sidebar-item title="新闻" icon="newspaper" @click="switchPage($event, 'newspaper')"></sidebar-item>
         <sidebar-item title="社区" icon="church" @click="switchPage($event, 'community')"></sidebar-item>
@@ -21,16 +21,15 @@
       </ul>
     </div>
   </div>
-  <main class="page" @click=" sidebarClose ">
+  <main class="page" @click="sidebarClose">
     <div class="page" id="main">
-      <Transition :name=" transitionName " mode="out-in">
+      <Transition :name="transitionName" mode="out-in">
         <KeepAlive>
-          <component :is=" activeComponent " @back-to-home=" back " @jump=" jumpTo "></component>
+          <component :is=" activeComponent " @back-to-home="back" @jump="jumpTo"></component>
         </KeepAlive>
       </Transition>
     </div>
   </main>
-
 </template>
 
 <script setup lang="ts">
@@ -52,15 +51,6 @@ function close() {
 }
 let sidebarClassName = ref('main-sidebar sidebar-close')
 let sidebarClosed: boolean = true
-function sidebar() {
-  if (sidebarClosed) {
-    sidebarClassName.value = 'main-sidebar'
-  } else {
-    sidebarClassName.value = 'main-sidebar sidebar-close'
-  }
-  sidebarClosed = !sidebarClosed
-}
-
 const pages: any = reactive({
   settings: markRaw(Settings),
   wareHouse: markRaw(WareHouse),
@@ -118,10 +108,11 @@ function jumpTo(name: string) {
   -webkit-app-region: drag;
   display: flex;
   justify-content: space-between;
-  color: #fff;
-  background-image: linear-gradient(135deg, #00688b 0%, #06759e 50%, #00688b 100%);
+  color: #000;
+  // background-image: linear-gradient(135deg, #00688b 0%, #06759e 50%, #00688b 100%);
   animation: 3s background-position cubic-bezier(1, 1, 0, 0) infinite;
   align-items: center;
+  border-bottom: 1px solid #ffffff39;
 }
 
 @keyframes background-position {
@@ -140,7 +131,8 @@ function jumpTo(name: string) {
   margin-top: -3px;
   align-items: center;
   padding: 0 20px;
-  font-family: 'minecraft_ten';
+  font-family: 'Harmony-re';
+  font-weight: 500;
   font-size: 1.3rem;
 }
 
@@ -198,13 +190,13 @@ div.page>div {
 }
 
 .main-sidebar {
-  background-color: #ffffffcf;
-  width: 230px;
+  // background-color: #ffffffcf;
+  width: 60px;
   height: calc(100% - 50px);
   overflow: hidden;
   transition: all 300ms cubic-bezier(0.48, 0.01, 0.12, 1);
   display: inline-block;
-  margin-right: -500px;
+  margin-right: -60px;
   position: sticky;
   z-index: 114514;
 }
@@ -260,13 +252,6 @@ div.main-sidebar .sidebar-links i {
   padding-left: 3px;
 }
 
-div.main-sidebar span {
-  display: inline-block;
-  white-space: nowrap;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
 .sidebar-button {
   width: 40px;
   height: 36px;
@@ -299,17 +284,12 @@ div.main-sidebar span {
   transform: scale(0.7, 1);
 }
 
-.sidebar-close {
-  width: 60px !important;
-  margin-right: -60px !important;
-}
-
-.sidebar-close span {
-  opacity: 0;
-}
-
 .main-sidebar-active {
   color: rgb(var(--theme-color));
   background: rgba(var(--theme-color), 0.1);
+}
+
+#main>div {
+  background: #ffffff5e;
 }
 </style>

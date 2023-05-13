@@ -1,7 +1,8 @@
 <template>
   <dialog-vue :visible="show" width="460" height="480">
-    <div style="position: relative;margin: 12px 14px; width: calc(100% - 28px);">
-      <div style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
+    <div style="position: relative;margin: 12px 14px;width: calc(100% - 28px);">
+      <div
+        style="display: flex; justify-content: space-between; border-bottom: 2px solid rgba(var(--theme-color), 0.6);margin-bottom: 10px;">
         <div class="info">
           <div class="icon"></div>
           <div class="text">
@@ -11,7 +12,8 @@
         </div>
         <div class="buttons"><dialog-button icon="close" @click="$emit('close')"></dialog-button></div>
       </div>
-      <search-bar style="margin-bottom: 8px; position: sticky;"></search-bar>
+      <search-bar
+        style="margin-bottom: 8px; position: sticky; top: 0; right: 0; bottom: 0; left: 0; z-index: 1000; background: #fff; border: 1px solid #00000028; box-shadow: 0 0 10px #00000012;"></search-bar>
       <TransitionGroup>
         <list-item v-for="(resourcepack, index) in resourcepacks" :key="index" :title="resourcepack.name"
           :logo="resourcepack.icon" :click-able="false" :buttons="['circle-info', 'folders', 'trash-can']">
@@ -53,65 +55,67 @@ const props = withDefaults(defineProps<{
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg',
+        icon: '/test.webp',
         type: 'data'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg',
-        type: 'texture'
+        icon: '/test.webp',
+        type: 'texture',
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp',
+        type: 'texture',
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp',
+        type: 'texture',
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       }, {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg',
+        icon: '/test.webp',
         type: 'lib'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg',
+        icon: '/test.webp',
         type: 'broken'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       },
       {
         name: 'a',
         description: 'bbbbbbb',
-        icon: '/test.svg'
+        icon: '/test.webp'
       }
     ]
   }

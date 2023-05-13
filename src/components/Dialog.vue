@@ -1,5 +1,5 @@
 <template>
-  <Transition :duration="500" name="dialog">
+  <Transition name="dialog">
     <div v-if="visible" class="dialog" data-tauri-drag-region>
       <div class="content" :style="contentStyle">
         <slot></slot>
@@ -44,7 +44,7 @@ opacity: 1;
   transition: all 200ms ease;
 }
 .dialog-leave-active{
-  transition-delay: 300ms;
+  transition-delay: 100ms;
 }
 .dialog-enter-from .content,
 .dialog-leave-to .content {
@@ -69,7 +69,7 @@ opacity: 1;
 
 .content {
   padding: 16px;
-  background-color: #fff;
+  background-color: #ffffff;
   box-shadow: 0 0 50px 0px #00000033;
   width: fit-content;
   height: fit-content;

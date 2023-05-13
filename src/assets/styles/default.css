@@ -3,9 +3,10 @@
     --border-radius-large: 10px;
     --border-radius-medium: 8px;
     --border-radius-small: 6px;
-    --expander-border-color: #bec3ca;
-    --expander-background-color: #ffffff76;
+    /* --expander-border-color: #ffffff;
+    --expander-background-color: #ffffff71; */
     --text-color: #000000;
+    /* from githib */
     --color-neutral-emphasis-plus: #24292f;
     --color-neutral-emphasis: #6e7781;
     --color-neutral-muted: rgba(175, 184, 193, 0.2);
@@ -238,7 +239,7 @@ body {
 }
 
 #window {
-    border-radius: var(--border-radius-large);
+    border-radius: 14px;
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -258,8 +259,11 @@ body {
     /* background: url(https://drscdn.500px.org/photo/29113281/q%3D80_h%3D600/v2?sig=d2154aab82d4596020a8b022661bb4209bd2347b7907b90f1eca2dc0fe23d8af) no-repeat center; */
     /* background-size: cover; */
     --background-opacity: 0.94;
-    background-image: linear-gradient(135deg, rgba(227, 236, 237, var(--background-opacity)) 0%, rgba(228, 241, 247, var(--background-opacity)) 100%);
+    /* background-image: linear-gradient(135deg, rgba(227, 236, 237, var(--background-opacity)) 0%, rgba(228, 241, 247, var(--background-opacity)) 100%); */
     /* background: #000000b5; */
+
+    background: #ffffff7d;
+    backdrop-filter: blur(10px);
     transition: all 0.25s ease-in;
 }
 
@@ -794,4 +798,14 @@ span.name {
 span.name {
     display: flex;
     align-items: center;
+}
+
+#brokendeer {
+    background-image: url(/src/assets/images/BrokenDeer.webp);
+    background-size: cover;
+    background-position: center;
+    border-radius: 100px;
+    width: 32px;
+    height: 32px;
+    margin-left: -3px;
 }
