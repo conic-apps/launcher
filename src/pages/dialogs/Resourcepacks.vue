@@ -14,7 +14,7 @@
       <search-bar style="margin-bottom: 8px; position: sticky;"></search-bar>
       <TransitionGroup>
         <list-item v-for="(resourcepack, index) in resourcepacks" :key="index" :title="resourcepack.name"
-          :logo="resourcepack.icon" :click-able="true" :buttons="['circle-info', 'folders', 'trash-can']">
+          :logo="resourcepack.icon" :click-able="false" :buttons="['circle-info', 'folders', 'trash-can']">
           <template #subtitle v-if="resourcepack.type == 'texture'">
             <tag text="纹理包" :color="['74', '194', '107']" style="transform: scale(0.9);" :border="true"
               text-color="#1f883d"></tag>

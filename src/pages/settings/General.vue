@@ -9,7 +9,6 @@
         <toggle-switch-bar name="使用预览版启动器" config="globle.update.beta"></toggle-switch-bar>
         <toggle-switch-bar name="自动更新" config="globle.update.auto"></toggle-switch-bar>
         <toggle-switch-bar name="检查更新时同时检查扩展更新" config="globle.update.ext"></toggle-switch-bar>
-        <toggle-switch-bar name="有重大安全更新时自动更新" config="globle.update.safe"></toggle-switch-bar>
         <button-bar name="立即检查更新" text="检查更新"></button-bar>
       </expander>
     </div>
@@ -21,6 +20,7 @@ import Expander from '@/components/Expander.vue';
 import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
 import ButtonBar from '@/components/ButtonBar.vue';
 import TipBar from '@/components/TipBar.vue';
+
 </script>
     
 <style lang="less"></style>
