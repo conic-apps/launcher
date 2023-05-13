@@ -13,7 +13,7 @@
       </div>
       <search-bar style="margin-bottom: 8px; position: sticky;"></search-bar>
       <TransitionGroup>
-        <list-item v-for="(world, index) in worlds" :key="index" :title="world.name" :logo="world.icon" :click-able="true"
+        <list-item v-for="(world, index) in worlds" :key="index" :title="world.name" :logo="world.icon" :click-able="false"
           :buttons="['circle-info', 'folders', 'trash-can']">
           <template #subtitle>
             <tag :text="world.version" :color="['180','180','180']" text-color="#00000080" style="transform: scale(0.9);" :border="true"></tag>
@@ -52,7 +52,7 @@ const props = withDefaults(defineProps<{
   }
 })
 </script>
-  
+
 <style lang="less" scoped>
 .info {
   display: flex;

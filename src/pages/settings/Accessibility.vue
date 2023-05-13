@@ -8,8 +8,8 @@
     </expander>
     <expander :can-swap="false" title="无障碍" description="无障碍功能优化" icon="wheelchair">
       <toggle-switch-bar name="禁用所有动画"></toggle-switch-bar>
-      <toggle-switch-bar name="为屏幕阅读器优化"></toggle-switch-bar>
-      <toggle-switch-bar name="高对比度模式"></toggle-switch-bar>
+      <!-- <toggle-switch-bar name="为屏幕阅读器优化"></toggle-switch-bar> -->
+      <!-- <toggle-switch-bar name="高对比度模式"></toggle-switch-bar> -->
     </expander>
   </div>
 </template>
