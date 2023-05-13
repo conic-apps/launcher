@@ -1,7 +1,6 @@
 <template>
   <li class="sidebar-item" :onclick="click">
     <i class="fa-regular nav-icon" :id="icon"></i>
-    <span>{{ title }}</span>
   </li>
 </template>
 

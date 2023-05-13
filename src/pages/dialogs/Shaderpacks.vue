@@ -12,7 +12,8 @@
         </div>
         <div class="buttons"><dialog-button icon="close" @click="$emit('close')"></dialog-button></div>
       </div>
-      <search-bar style="margin-bottom: 8px; position: sticky;"></search-bar>
+      <search-bar
+        style="margin-bottom: 8px; position: sticky; top: 0; right: 0; bottom: 0; left: 0; z-index: 1000; background: #fff; border: 1px solid #00000028; box-shadow: 0 0 10px #00000012;"></search-bar>
       <TransitionGroup>
         <list-item v-for="(shadeerpack, index) in shaderpacks" :key="index" :title="shadeerpack" :click-able="false"
           :buttons="['circle-info', 'folders', 'trash-can']">

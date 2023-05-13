@@ -21,6 +21,10 @@ import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
 import ButtonBar from '@/components/ButtonBar.vue';
 import TipBar from '@/components/TipBar.vue';
 
+import { useConfigStore } from '@/storage/configs';
+
+const get = useConfigStore()
+// console.log(get(""))
 </script>
     
 <style lang="less"></style>
