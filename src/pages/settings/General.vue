@@ -1,7 +1,7 @@
 <template>
   <keep-alive>
     <div>
-      <tip-bar style="padding:24px 34px;font-size: 14px;">
+      <tip-bar style="padding:24px 34px;font-size: calc(14px - var(--font-size-error));">
         <p>Magical Launcher 是一个优雅、开源、可扩展的 Minecraft 启动器，由 Broken_Deer 用 ❤️ 制作，您的赞助将帮助 Magical Launcher 获得更好的发展</p>
         <p>Magical Launcher 本体的所有内容都是免费的，扩展收取费用与启动器作者无关（见免责声明）</p>
       </tip-bar>

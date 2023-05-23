@@ -60,7 +60,7 @@ div.main-sidebar li:hover {
 }
 
 div.main-sidebar .sidebar-links i {
-  font-size: 1.1rem;
+  font-size: calc(17.6px - var(--font-size-error) );
   font-weight: 400;
   font-family: "fa-pro";
   font-style: normal;
@@ -75,7 +75,7 @@ div.main-sidebar .sidebar-links i {
 div.main-sidebar span {
   display: inline-block;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: calc(14px - var(--font-size-error));
   transition: all 0.2s ease;
 }
 
@@ -98,7 +98,7 @@ div.main-sidebar span {
 }
 
 .sidebar-button i {
-  font-size: 1rem;
+  font-size: calc(16px - var(--font-size-error));
   font-family: "fa-pro";
   font-style: normal;
   height: 1em;

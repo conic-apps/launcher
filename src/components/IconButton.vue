@@ -17,7 +17,7 @@ let classes = `${props.icon} icon-btn`
     align-items: center;
     pointer-events: all;
     transition: all .2s ease;
-    font-size: 15px;
+    font-size: calc(15px - var(--font-size-error));
     margin: 0 6px;
     z-index: 1;
 }

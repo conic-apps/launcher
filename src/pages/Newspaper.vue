@@ -63,7 +63,7 @@ onMounted(() => {
   padding-top: 30px;
   color: #fff;
   font-family: 'minecraft_ten';
-  font-size: 20px;
+  font-size: calc(20px - var(--font-size-error));
   opacity: 1;
   background: #0000008f;
   transition: all 200ms ease;
@@ -78,7 +78,7 @@ onMounted(() => {
   display: block;
   width: 70%;
   margin: 0 auto;
-  font-size: 12px;
+  font-size: calc(12px - var(--font-size-error));
   color: #aeaeae;
   font-family: 'minecraft';
 }

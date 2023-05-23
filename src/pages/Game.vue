@@ -21,7 +21,7 @@
           </div>
         </div>
         <div style="display: flex; justify-content: space-between;">
-          <p style="font-size: 22px;">{{ instanceName }}</p>
+          <p style="font-size: calc(22px - var(--font-size-error));">{{ instanceName }}</p>
           <div style="display: flex; align-items: center;">
             <i class="button gear"></i>
             <i class="button circle-info"></i>
@@ -145,6 +145,7 @@ function installGame() {
   padding: 5px 14px;
   width: fit-content;
   border-radius: 6px;
+  font-size: calc(15px - var(--font-size-error));
 }
 
 .minecraft-version img {
@@ -156,7 +157,7 @@ function installGame() {
 i.button {
   font-family: 'fa-pro';
   font-style: normal;
-  font-size: 20px;
+  font-size: calc(20px - var(--font-size-error));
   border-radius: 100px;
   margin: 0 2px;
   width: 44px;
@@ -183,7 +184,7 @@ i.button::before {
 .install-game {
   margin-left: 8px;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: calc(15px - var(--font-size-error));
   padding: 8px 20px;
   color: #fff;
   cursor: pointer;
@@ -226,7 +227,7 @@ ul.gamelist li {
   padding: 8px 10px;
   border-radius: var(--border-radius-small);
   transition: all 50ms ease;
-  font-size: 15px;
+  font-size: calc(15px - var(--font-size-error));
 }
 
 ul.gamelist li:hover {

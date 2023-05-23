@@ -76,7 +76,7 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
 .icon i {
   font-family: 'fa-pro';
   font-style: normal;
-  font-size: 23px;
+  font-size: calc(23px - var(--font-size-error));
   font-weight: 500;
 }
 
@@ -87,7 +87,7 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
 }
 
 .title p {
-  font-size: 12.3px;
+  font-size: calc(12.5px - var(--font-size-error));
   color: var(--text-color);
   opacity: 0.6;
   margin: 0;

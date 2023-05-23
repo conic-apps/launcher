@@ -79,7 +79,7 @@ defineProps<{
 
 .list-item h4 {
   font-weight: normal;
-  font-size: 15px;
+  font-size: calc(15px - var(--font-size-error));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -91,13 +91,13 @@ defineProps<{
 
 .list-item .sub-title {
   color: #0000006f;
-  font-size: 14px;
+  font-size: calc(14px - var(--font-size-error));
   margin-left: 4px;
   display: flex;
 }
 
 .list-item p {
-  font-size: 14px;
+  font-size: calc(14px - var(--font-size-error));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -126,7 +126,7 @@ defineProps<{
   align-items: center;
   pointer-events: all;
   transition: all .2s ease;
-  font-size: 15px;
+  font-size: calc(15px - var(--font-size-error));
   margin: 0 6px;
   z-index: 1;
 }

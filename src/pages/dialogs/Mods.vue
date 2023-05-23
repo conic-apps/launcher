@@ -135,7 +135,7 @@ const props = withDefaults(defineProps<{
 
 .info h4 {
   font-weight: 400;
-  font-size: 18px;
+  font-size: calc(18px - var(--font-size-error));
   margin-bottom: 2px;
 }
 
@@ -145,6 +145,6 @@ const props = withDefaults(defineProps<{
 
 .info p {
   color: #000000a0;
-  font-size: 13px;
+  font-size: calc(13px - var(--font-size-error));
 }
 </style>
