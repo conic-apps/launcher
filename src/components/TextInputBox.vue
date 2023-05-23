@@ -27,7 +27,7 @@ withDefaults(defineProps<{
   height: 30px;
   flex-shrink: 0;
   padding: 0 8px 2px 8px;
-  font-size: 1rem;
+  font-size: calc(16px - var(--font-size-error));
   transition: all 0.1s ease;
   pointer-events: all;
   background: rgba(255, 255, 255, 0.2);

@@ -18,7 +18,7 @@ let value = ref("")
   box-shadow: 0 0 0 1px rgba(var(--theme-color), 0.2);
   height: 30px;
   padding: 0 8px 2px 8px;
-  font-size: 1rem;
+  font-size: calc(16px - var(--font-size-error));
   transition: all 0.1s ease;
   pointer-events: all;
   background: rgba(255, 255, 255, 0.658);
@@ -30,7 +30,7 @@ let value = ref("")
 .search-bar i {
   font-family: 'fa-pro';
   font-style: normal;
-  font-size: 14px;
+  font-size: calc(14px - var(--font-size-error));
   margin-right: 6px;
 }
 
@@ -58,6 +58,7 @@ let value = ref("")
   width: 100%;
   text-align: inherit;
   z-index: 10;
+  font-size: calc(14px - var(--font-size-error));
 }
 
 .search-bar:hover {
