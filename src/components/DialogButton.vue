@@ -35,7 +35,7 @@ defineProps<{
 .dialog-button i {
     font-family: 'fa-pro';
     font-style: normal;
-    font-size: 16px;
+    font-size: calc(16px - var(--font-size-error));
     display: flex;
     justify-content: center;
     align-items: center;

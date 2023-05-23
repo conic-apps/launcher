@@ -146,6 +146,11 @@
     --color-scale-coral-7: #801f0f;
     --color-scale-coral-8: #691105;
     --color-scale-coral-9: #510901;
+    /* font-size: calc(16px - var(--font-size-error)); */
+}
+
+h4 {
+    font-size: calc(16px - var(--font-size-error));
 }
 
 .aaa {
@@ -223,6 +228,7 @@ span,
 button {
     text-decoration: none;
     user-select: none;
+    font-size: calc(13.33px - var(--font-size-error));
 }
 
 .dont_display *,
@@ -388,7 +394,7 @@ body {
 }
 
 span.text {
-    font-size: 0.8rem;
+    font-size: calc(1.28px - var(--font-size-error));
     /* height: 1em; */
     line-height: 2.2;
 }
@@ -422,7 +428,7 @@ i.java-logo::before {
     content: "\f4e4";
     font-family: "fa";
     font-style: normal;
-    font-size: 1.9rem;
+    font-size: calc(30.4px - var(--font-size-error));
 }
 
 i.arrows-rotate {
@@ -478,14 +484,14 @@ i.spinner-third::after {
 
 div.title-bar>div.button #min::before {
     content: "\f068";
-    font-size: 1.4rem;
+    font-size: calc(22.4px - var(--font-size-error));
     line-height: 2.7;
     transform: scale(1.05, 1.1);
 }
 
 div.title-bar>div.button #close::before {
     content: "\f00d";
-    font-size: 1.4rem;
+    font-size: calc(22.4px - var(--font-size-error));
     line-height: 2.2;
     transform: scale(1.1);
 }
@@ -535,7 +541,7 @@ i.folder-arrow-down::before {
     content: "\f019";
     font-style: normal;
     font-weight: 400;
-    font-size: 30px;
+    font-size: calc(30px - var(--font-size-error));
     margin-right: 20px;
 }
 
@@ -697,7 +703,7 @@ i.xmark-large::before {
 i.chevron-right::before {
     content: '\f054';
     font-family: 'fa-pro';
-    font-size: 14px;
+    font-size: calc(14px - var(--font-size-error));
     font-style: normal;
 }
 
@@ -775,7 +781,7 @@ input:focus::-webkit-input-placeholder {
 }
 
 span.name {
-    font-size: 14px;
+    font-size: calc(14px - var(--font-size-error));
     /* height: 1.4em; */
     min-width: 10em;
     margin-right: 14px;
@@ -791,7 +797,7 @@ span.name {
     width: 100%;
     opacity: 0.4;
     font-style: italic;
-    font-size: 14px;
+    font-size: calc(14px - var(--font-size-error));
     text-align: center;
 }
 

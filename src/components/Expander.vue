@@ -123,7 +123,7 @@ function expander() {
 .expander-icon i {
   font-family: 'fa-pro';
   font-style: normal;
-  font-size: 23px;
+  font-size: calc(23px - var(--font-size-error));
   font-weight: 500;
 }
 
@@ -159,7 +159,7 @@ function expander() {
   font-style: normal;
   width: 100%;
   height: 100%;
-  font-size: 0.9em;
+  font-size: calc(0.9em - var(--font-size-error));
   display: flex;
   justify-content: center;
   align-items: center;
@@ -199,11 +199,11 @@ function expander() {
 .expander-header h4>div {
   color: #0000006f;
   display: inline-block;
-  font-size: 14px;
+  font-size: calc(14px - var(--font-size-error));
   margin-left: 4px;
 }
 .expander-header p {
-  font-size: 12.3px;
+  font-size: calc(12.3px - var(--font-size-error));
   color: var(--text-color);
   opacity: 0.6;
   margin: 0;
@@ -218,7 +218,7 @@ function expander() {
 
 .expander-body>div {
   margin: 24px 34px;
-  font-size: 14px;
+  font-size: calc(14px - var(--font-size-error));
 }
 
 .expander-not-expanded .expander-header {

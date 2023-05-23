@@ -42,6 +42,25 @@ import Community from './pages/Community.vue';
 import NewInstance from './pages/NewInstance.vue';
 import Tag from './components/Tag.vue';
 import { invoke, window, } from '@tauri-apps/api'
+import $ from 'jquery'
+
+// fix webkitgtk error
+let fontSizeError = 0
+const fixWebkitgtk = document.getElementById('fix-webkitgtk') as HTMLElement
+fixWebkitgtk.innerHTML = /* css */ `    
+  :root {
+    --font-size-error: ${fontSizeError}px;
+  }`
+console.log($('#font-test').outerHeight())
+if ($('#font-test').outerHeight() > 17.78) {
+  fontSizeError = 14 - (17.78 / $('#font-test').outerHeight()) * 15
+  console.log(fontSizeError)
+  console.log(fontSizeError)
+  fixWebkitgtk.innerHTML = /* css */ `    
+    :root {
+      --font-size-error: ${fontSizeError}px;
+    }`
+}
 
 function minimize() {
   window.getCurrent().minimize()
@@ -112,7 +131,7 @@ function jumpTo(name: string) {
   // background-image: linear-gradient(135deg, #00688b 0%, #06759e 50%, #00688b 100%);
   animation: 3s background-position cubic-bezier(1, 1, 0, 0) infinite;
   align-items: center;
-  border-bottom: 1px solid #ffffff39;
+  // border-bottom: 1px solid #ffffff39;
 }
 
 @keyframes background-position {
@@ -133,7 +152,7 @@ function jumpTo(name: string) {
   padding: 0 20px;
   font-family: 'Harmony-re';
   font-weight: 500;
-  font-size: 1.3rem;
+  font-size: calc(20.8px - var(--font-size-error));
 }
 
 .button {
@@ -240,7 +259,7 @@ div.main-sidebar li:hover {
 }
 
 div.main-sidebar .sidebar-links i {
-  font-size: 1.1rem;
+  font-size: calc(17.6px - var(--font-size-error));
   font-weight: 400;
   font-family: "fa-pro";
   font-style: normal;
@@ -271,7 +290,7 @@ div.main-sidebar .sidebar-links i {
 }
 
 .sidebar-button i {
-  font-size: 1rem;
+  font-size: calc(16px - var(--font-size-error));
   font-family: "fa-pro";
   font-style: normal;
   height: 1em;
@@ -291,5 +310,6 @@ div.main-sidebar .sidebar-links i {
 
 #main>div {
   background: #ffffff5e;
+  border-radius: var(--border-radius-large);
 }
 </style>

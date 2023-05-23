@@ -39,7 +39,7 @@ div.input {
 }
 
 span.name {
-  font-size: 14px;
+  font-size: calc(14px - var(--font-size-error));
   /* height: 1.4em; */
   min-width: 10em;
   margin-right: 14px;
