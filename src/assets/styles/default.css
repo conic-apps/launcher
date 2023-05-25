@@ -207,6 +207,10 @@ img {
     pointer-events: none;
 }
 
+input {
+    font-size: calc(14px - var(--font-size-error));
+}
+
 ::-webkit-scrollbar {
     width: 2.5px;
     height: 2.5px;
@@ -228,6 +232,9 @@ span,
 button {
     text-decoration: none;
     user-select: none;
+}
+
+button {
     font-size: calc(13.33px - var(--font-size-error));
 }
 
@@ -270,6 +277,7 @@ body {
 
     background: #ffffff7d;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     transition: all 0.25s ease-in;
 }
 
