@@ -1,11 +1,11 @@
 <template>
   <div class="articles-page">
-    <div v-for="(article, index) in articles" :key="index" class="article">
+    <a v-for="(article, index) in articles" :key="index" class="article">
       <div class="image"
         :style="'background-image: url(https://minecraft.net' + article.default_tile.image.imageURL + ')'">
       </div>
       <p>{{ article.default_tile.title }} <span>{{ article.default_tile.sub_header }}</span></p>
-    </div>
+    </a>
   </div>
 </template>
 <!-- :style="'background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.83), rgba(0, 0, 0, 0)), url(https://minecraft.net' + article.default_tile.image.imageURL + ')'" -->

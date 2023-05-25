@@ -8,9 +8,9 @@
       <div class="window-btn" id="close" @click="close"></div>
     </div>
   </div>
-  <div :class="sidebarClassName" :style="sidebarInlineStyle">
+  <div :class="sidebarClassName" :style="sidebarInlineStyle" data-tauri-drag-region>
     <div>
-      <ul class="sidebar-links">
+      <ul class="sidebar-links" data-tauri-drag-region>
         <sidebar-item title="帐户" icon="brokendeer" @click="switchPage($event, 'wareHouse')"></sidebar-item>
         <sidebar-item title="游戏" icon="gamepad" @click="switchPage($event, 'wareHouse')"></sidebar-item>
         <sidebar-item title="新闻" icon="newspaper" @click="switchPage($event, 'newspaper')"></sidebar-item>
@@ -44,23 +44,22 @@ import Tag from './components/Tag.vue';
 import { invoke, window, } from '@tauri-apps/api'
 import $ from 'jquery'
 
-// fix webkitgtk error
-let fontSizeError = 0
-const fixWebkitgtk = document.getElementById('fix-webkitgtk') as HTMLElement
-fixWebkitgtk.innerHTML = /* css */ `    
+// 修复webkitgtk的奇怪问题
+setTimeout(() => {
+  let fontSizeError = 0
+  const fixWebkitgtk = document.getElementById('fix-webkitgtk') as HTMLElement
+  fixWebkitgtk.innerHTML = /* css */ `    
   :root {
     --font-size-error: ${fontSizeError}px;
   }`
-console.log($('#font-test').outerHeight())
-if ($('#font-test').outerHeight() > 17.78) {
-  fontSizeError = 14 - (17.78 / $('#font-test').outerHeight()) * 15
-  console.log(fontSizeError)
-  console.log(fontSizeError)
-  fixWebkitgtk.innerHTML = /* css */ `    
+  if ($('#font-test').outerHeight() > 17.78) {
+    fontSizeError = 13.5 - (17.78 / $('#font-test').outerHeight()) * 15
+    fixWebkitgtk.innerHTML = /* css */ `    
     :root {
       --font-size-error: ${fontSizeError}px;
     }`
-}
+  }
+}, 48);
 
 function minimize() {
   window.getCurrent().minimize()
@@ -69,7 +68,6 @@ function close() {
   window.getCurrent().close()
 }
 let sidebarClassName = ref('main-sidebar sidebar-close')
-let sidebarClosed: boolean = true
 const pages: any = reactive({
   settings: markRaw(Settings),
   wareHouse: markRaw(WareHouse),
@@ -104,7 +102,6 @@ function switchPage(event: any, component: any) {
   }
 }
 function sidebarClose() {
-  sidebarClosed = true
   sidebarClassName.value = 'main-sidebar sidebar-close'
 }
 

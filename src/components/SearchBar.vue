@@ -58,7 +58,6 @@ let value = ref("")
   width: 100%;
   text-align: inherit;
   z-index: 10;
-  font-size: calc(14px - var(--font-size-error));
 }
 
 .search-bar:hover {
