@@ -1,6 +1,6 @@
 <template>
   <Transition name="dialog">
-    <div v-if="visible" class="dialog" data-tauri-drag-region>
+    <div v-if="visible" class="dialog">
       <div class="content" :style="contentStyle">
         <slot></slot>
       </div>
@@ -79,7 +79,7 @@ const contentStyle = `width: ${props.width}px; height: ${props.height}px;`
   padding: 16px;
   backdrop-filter: blur(19px);
   -webkit-backdrop-filter: blur(19px);
-  background-color: #ffffffbd;
+  background-color: #ffffffeb;
   box-shadow: 0 0 50px 0px #00000033;
   width: fit-content;
   height: fit-content;
