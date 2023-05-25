@@ -18,10 +18,9 @@
         <list-item v-for="(world, index) in worlds" :key="index" :title="world.name" :logo="world.icon"
           :click-able="false" :buttons="['circle-info', 'folders', 'trash-can']">
           <template #subtitle>
-            <tag :text="world.version" :color="['180', '180', '180']" text-color="#00000080" style="transform: scale(0.9);"
-              :border="true"></tag>
-            <tag v-if="world.allowCheat" text="允许作弊" :color="['180', '180', '180']" text-color="#00000080"
-              style="transform: scale(0.9);" :border="true"></tag>
+            <tag :text="world.version" :color="['180', '180', '180']" text-color="#00000080" :border="true"></tag>
+            <tag v-if="world.allowCheat" text="允许作弊" :color="['180', '180', '180']" text-color="#00000080" :border="true">
+            </tag>
           </template>
           {{ world.description }}
         </list-item>
@@ -89,4 +88,5 @@ const props = withDefaults(defineProps<{
 .info p {
   color: #000000a0;
   font-size: calc(13px - var(--font-size-error));
-}</style>
+}
+</style>
