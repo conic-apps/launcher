@@ -18,11 +18,11 @@
         <list-item v-for="(mod, index) in mods" :key="index" :title="mod.name" :logo="mod.icon" :click-able="false"
           :buttons="['circle-info', 'folders', 'trash-can']">
           <template #subtitle v-if="mod.type == 'broken'">
-            <tag text="损坏" :color="['255', '129', '120']" style="transform: scale(0.9);" :background="true"
+            <tag text="损坏" :color="['255', '129', '120']" :background="true"
               :border="true"></tag>
           </template>
           <template #subtitle v-else-if="mod.type == 'lib'">
-            <tag text="支持库" :color="['200', '200', '0']" style="transform: scale(0.9);" :border="true"></tag>
+            <tag text="支持库" :color="['200', '200', '0']" :border="true"></tag>
           </template>
           {{ mod.description }}
         </list-item>

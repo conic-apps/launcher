@@ -9,8 +9,7 @@
       <!-- <select-bar name="下载源" :options="['自动选择 (最快最稳定)','官方源', 'BMCLAPI (MCBBS)', 'BMCLAPI (传统)']" :default="0"></select-bar> -->
       <!-- <text-input-bar name="自定义下载源" placeholder="填写以覆盖上个选项，自定义源必须符合条件，详见帮助文档"></text-input-bar> -->
       <button-bar name="下载源" text="管理下载源" @click="show_sources_manager"></button-bar>
-      <dialog-vue :visible="show">
-      </dialog-vue>
+      <download-sources-manager :show="show" @close="show= false"></download-sources-manager>
     </expander>
   </div>
 </template>
@@ -22,9 +21,9 @@ import { ref } from 'vue'
 import SliderBar from '@/components/SliderBar.vue';
 import TipBar from '@/components/TipBar.vue';
 import ButtonBar from '@/components/ButtonBar.vue';
-import DialogVue from '@/components/Dialog.vue';
+import DownloadSourcesManager from '../dialogs/DownloadSourcesManager.vue';
 
-let show = ref(false)
+let show = ref(true)
 function show_sources_manager() {
   show.value = true
 }
