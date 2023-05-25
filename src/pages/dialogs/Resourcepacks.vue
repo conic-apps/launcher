@@ -27,7 +27,7 @@
             </tag>
           </template>
           <template #subtitle v-else>
-            <tag text="未知" :color="['200', '200', '200']" style="transform: scale(0.9);" :border="true"
+            <tag text="未知" :color="['200', '200', '200']" :border="true"
               text-color="#000000d0"></tag>
           </template>
           {{ resourcepack.description }}
