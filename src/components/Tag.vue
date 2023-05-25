@@ -25,6 +25,7 @@ const props = withDefaults(defineProps<{
 
 <style lang="less" scoped>
 .tag {
+  margin-right: 2px;
   width: fit-content;
   height: fit-content;
   font-size: calc(11px - var(--font-size-error));
