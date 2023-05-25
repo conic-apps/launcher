@@ -83,7 +83,7 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
 .title h4 {
   font-weight: 100;
   height: 20.5px;
-
+  font-size: calc(15px - var(--font-size-error));
 }
 
 .title p {

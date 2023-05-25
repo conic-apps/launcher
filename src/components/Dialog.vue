@@ -34,29 +34,37 @@ const contentStyle = `width: ${props.width}px; height: ${props.height}px;`
   height: 100%;
   background-color: #00000042;
 }
-.dialog-enter-from, .dialog-leave-to {
+
+.dialog-enter-from,
+.dialog-leave-to {
   opacity: 0;
 }
-.dialog-enter-to, .dialog-leave-from {
-opacity: 1;
+
+.dialog-enter-to,
+.dialog-leave-from {
+  opacity: 1;
 }
-.dialog-enter-active , .dialog-leave-active{
+
+.dialog-enter-active,
+.dialog-leave-active {
   transition: all 200ms ease;
 }
-.dialog-leave-active{
+
+.dialog-leave-active {
   transition-delay: 100ms;
 }
+
 .dialog-enter-from .content,
 .dialog-leave-to .content {
   transform: scale(1.1);
   opacity: 0;
 }
 
-.dialog-enter-active .content
- {
+.dialog-enter-active .content {
   transition-delay: 200ms;
   transition: all 300ms cubic-bezier(0, 0.47, 0.25, 1);
 }
+
 .dialog-leave-active .content {
   transition: all 180ms cubic-bezier(0.47, 0, 1, 0.75);
 }
@@ -69,7 +77,9 @@ opacity: 1;
 
 .content {
   padding: 16px;
-  background-color: #ffffff;
+  backdrop-filter: blur(19px);
+  -webkit-backdrop-filter: blur(19px);
+  background-color: #ffffffbd;
   box-shadow: 0 0 50px 0px #00000033;
   width: fit-content;
   height: fit-content;
@@ -78,5 +88,4 @@ opacity: 1;
   max-height: calc(100vh - 20px);
   overflow-x: visible;
   overflow-y: overlay;
-}
-</style>
+}</style>

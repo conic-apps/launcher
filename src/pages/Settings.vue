@@ -1,5 +1,5 @@
 <template>
-  <div class="settings" style="display: flex;padding-left: 10px;">
+  <div class="settings" style="display: flex;padding-left: 10px;border-radius: 0px;">
     <div class="sidebar">
       <ul>
         <li @click="switchComponent(item, index)" :class="[activeComponentIndex == index ? 'active' : '']"
