@@ -249,6 +249,9 @@ body {
     width: 100vw;
     height: 100vh;
     padding: 5px;
+    /* background-image: url(/413114.jpg);
+    background-position: center;
+    background-size: cover; */
 }
 
 #window {
@@ -269,14 +272,17 @@ body {
     /* background-image: linear-gradient(to right, #434343 0%, black 100%); */
     /* background-image: linear-gradient(to top, #f77062 0%, #fe5196 100%); */
     /* background-image: linear-gradient(to top, #1e3c72 0%, #1e3c72 1%, #2a5298 100%); */
-    /* background: url(https://drscdn.500px.org/photo/29113281/q%3D80_h%3D600/v2?sig=d2154aab82d4596020a8b022661bb4209bd2347b7907b90f1eca2dc0fe23d8af) no-repeat center; */
+    /* background-image: linear-gradient(#ffffff7d, #ffffff7d), url(/413114.jpg); */
+    background-image: linear-gradient(#ffffff7d, #ffffff7d), url(/1168337.jpg);
+    background-position: center;
+    background-size: cover;
     /* background-size: cover; */
     --background-opacity: 0.94;
     /* background-image: linear-gradient(135deg, rgba(227, 236, 237, var(--background-opacity)) 0%, rgba(228, 241, 247, var(--background-opacity)) 100%); */
     /* background: #000000b5; */
 
-    background: #ffffff7d;
-    backdrop-filter: blur(10px);
+    /* background: #ffffff7d; */
+    backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(10px);
     transition: all 0.25s ease-in;
 }

@@ -83,7 +83,7 @@ function switchPage(event: any, component: any) {
   sidebarClose()
   if (component === 'settings' || component === 'newInstance') {
     transitionName.value = 'zoom-out'
-    if (component === 'settings') sidebarInlineStyle.value = 'width: 0px !important'
+    if (component === 'settings') sidebarInlineStyle.value = 'width: 0px !important;overflow: hidden;'
   } else {
     let isSettingPage = JSON.stringify(activeComponent.value) == JSON.stringify(pages.settings);
     let isNewInstancePage = JSON.stringify(activeComponent.value) == JSON.stringify(pages.newInstance)
@@ -209,7 +209,7 @@ div.page>div {
   // background-color: #ffffffcf;
   width: 60px;
   height: calc(100% - 50px);
-  overflow: hidden;
+  // overflow: hidden;
   transition: all 300ms cubic-bezier(0.48, 0.01, 0.12, 1);
   display: inline-block;
   margin-right: -60px;
@@ -251,10 +251,6 @@ div.main-sidebar li {
 }
 
 
-div.main-sidebar li:hover {
-  background-color: #aeaeae45;
-}
-
 div.main-sidebar .sidebar-links i {
   font-size: calc(17.6px - var(--font-size-error));
   font-weight: 400;
@@ -278,13 +274,6 @@ div.main-sidebar .sidebar-links i {
   margin-left: 1.6px;
 }
 
-.sidebar-button:hover {
-  background-color: #aeaeae45;
-}
-
-.sidebar-button:active {
-  background-color: #90909045;
-}
 
 .sidebar-button i {
   font-size: calc(16px - var(--font-size-error));
