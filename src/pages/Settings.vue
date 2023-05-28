@@ -139,7 +139,7 @@ function switchComponent(item: any, index: number) {
 }
 
 .sidebar li:hover {
-  background-color: #aeaeae45;
+  background-color: #ffffff45;
 }
 
 .sidebar li:active {
