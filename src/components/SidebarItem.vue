@@ -1,15 +1,26 @@
 <template>
-  <li class="sidebar-item" :onclick="click">
+  <li class="sidebar-item" @mousedown="onMousedown($event)">
     <i class="fa-regular nav-icon" :id="icon"></i>
+    <div class="tooltip" v-if="title">{{ title }}</div>
   </li>
 </template>
 
 <script setup lang="ts">
+import $ from 'jquery'
 defineProps<{
-  title: string,
+  title?: string,
   icon: string,
-  click?: string,
+  // click?: string,
 }>()
+
+function onMousedown(event: MouseEvent) {
+  let htmlElement = event.target as HTMLLIElement
+  $(htmlElement.lastElementChild).addClass('tooltip-hidden')
+  console.log(htmlElement.lastElementChild)
+  setTimeout(() => {
+    $(htmlElement.lastElementChild).removeClass('tooltip-hidden')
+  }, 500);
+}
 </script>
 
 <style lang="less">
@@ -52,15 +63,15 @@ div.main-sidebar li {
   white-space: nowrap;
   display: flex;
   padding-left: 7.5px;
+  position: relative;
 }
 
-
 div.main-sidebar li:hover {
-  background-color: #aeaeae45;
+  background-color: #ffffff52;
 }
 
 div.main-sidebar .sidebar-links i {
-  font-size: calc(17.6px - var(--font-size-error) );
+  font-size: calc(17.6px - var(--font-size-error));
   font-weight: 400;
   font-family: "fa-pro";
   font-style: normal;
@@ -89,14 +100,6 @@ div.main-sidebar span {
   margin-left: 1.6px;
 }
 
-.sidebar-button:hover {
-  background-color: #aeaeae45;
-}
-
-.sidebar-button:active {
-  background-color: #90909045;
-}
-
 .sidebar-button i {
   font-size: calc(16px - var(--font-size-error));
   font-family: "fa-pro";
@@ -119,4 +122,36 @@ div.main-sidebar span {
 .sidebar-close span {
   opacity: 0;
 }
+
+.tooltip {
+  display: flex;
+  padding: 6px;
+  background: #fff;
+  border-radius: var(--border-radius-small);
+  position: fixed;
+  margin-left: 38px;
+  box-shadow: 0 0 10px #cacaca;
+  font-size: calc(13px - var(--font-size-error));
+  opacity: 0;
+  z-index: 1145141;
+  transform: scale(0.9);
+  transition: all 200ms ease;
+  pointer-events: none;
+}
+
+.sidebar-item:hover .tooltip {
+
+  opacity: 1;
+  transform: scale(1);
+}
+
+.tooltip-hidden {
+  opacity: 0 !important;
+  transform: scale(1) !important;
+}
+
+// .sidebar-item:active .tooltip {
+// opacity: 0;
+// transform: scale(1);
+// }
 </style>
