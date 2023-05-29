@@ -18,12 +18,14 @@ Please go to the  [official website](https://launcher.btlcraft.top) to download 
 - **Mod download** You can download mods from Curseforge, Modrinth, FTB directly from the launcher
 
 ## License
-The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) with additional terms.
+The software is distributed under [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html) with additional terms.
 
 ### Additional terms under GPLv3 Section 7
-1. When you distribute a modified version of the software, you must change the software name or the version number in a reasonable way in order to distinguish it from the original version. (Under [GPLv3, 7(c)](./LICENSE#L372-L374))
+1. When you distribute a modified version of the software, you must change the software name or the version number in a reasonable way in order to distinguish it from the original version. (Under [GPL-3.0, 7(c)](./LICENSE#L372-L374))
 
 You need to find all the words related to the name of this program in the source code and replace them with the name of your own program
 
 
-2. You must not remove the copyright declaration displayed in the software. (Under [GPLv3, 7(b)](./LICENSE#L368-L370))
+2. You must not remove the copyright declaration displayed in the software. (Under [GPL-3.0, 7(b)](./LICENSE#L368-L370))
+
+

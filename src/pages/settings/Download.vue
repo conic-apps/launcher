@@ -23,7 +23,7 @@ import TipBar from '@/components/TipBar.vue';
 import ButtonBar from '@/components/ButtonBar.vue';
 import DownloadSourcesManager from '../dialogs/DownloadSourcesManager.vue';
 
-let show = ref(true)
+let show = ref(false)
 function show_sources_manager() {
   show.value = true
 }

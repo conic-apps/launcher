@@ -40,7 +40,7 @@ let checked = false
   align-items: center;
   padding: 0 3px;
   transition: 0.5s;
-  background-color: #fff;
+  background-color: #f6f6f61c;
   border-radius: 200px;
   outline: 1px solid #5a5a5ab7;
   transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
