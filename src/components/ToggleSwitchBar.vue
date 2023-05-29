@@ -68,7 +68,7 @@ span.name {
   display: flex;
   align-items: center;
   padding: 0 3px;
-  background-color: #f6f6f6;
+  background-color: #f6f6f61c;
   box-shadow: 0 0 0 1px #868585;
   border-radius: 200px;
   transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
