@@ -104,4 +104,8 @@ span.name {
 .input-box input {
   display: none;
 }
+
+.input-box:hover span {
+  background: #ffffffd9;
+}
 </style>
