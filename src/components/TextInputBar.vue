@@ -44,6 +44,7 @@ div.input {
   width: 100%;
   text-align: inherit;
   z-index: 10;
+  font-size: calc(13px - var(--font-size-error));
 }
 
 .input-text .underline {

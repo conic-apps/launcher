@@ -18,10 +18,6 @@ let checked = false
 
 <style lang="less" scoped>
 .input-box {
-  width: 40px;
-  height: 20px;
-  display: flex;
-  justify-content: space-between;
   margin: 0 6px;
   pointer-events: all;
 }
@@ -79,5 +75,9 @@ let checked = false
 
 .input-box input {
   display: none;
+}
+
+.input-box:hover span {
+  background: #ffffffd9;
 }
 </style>
