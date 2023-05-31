@@ -63,4 +63,4 @@ Next, simply run the following command to complete the build:
 yarn tauri build
 ```
 
-If you want to contribute to this project, run ``yarn tauri dev`` to debug the application and see the details at [here](https://tauri.app/zh-cn/v1/guides/).
+If you want to contribute to this project, run `yarn tauri dev` to debug the application and see the details at [here](https://tauri.app/zh-cn/v1/guides/).

@@ -1,6 +1,6 @@
 <template>
   <div class="title-bar" data-tauri-drag-region>
-    <div class="title" data-tauri-drag-region>Magical Launcher<tag text="Beta" :color="['0', '0', '0']" text-color="#000"
+    <div class="title" data-tauri-drag-region>Magical Launcher<tag text="Beta" :color="['255', '255', '255']" text-color="#fff"
         :round="true" :border="true" style="transform: scale(0.8) translate(-1px, -6px);"></tag>
     </div>
     <div class="button">
@@ -124,8 +124,8 @@ function jumpTo(name: string) {
   -webkit-app-region: drag;
   display: flex;
   justify-content: space-between;
-  color: #000;
-  // background-image: linear-gradient(135deg, #00688b 0%, #06759e 50%, #00688b 100%);
+  color: #fff;
+  // background-image: linear-gradient(135deg, #3c8aa4 0%, #06759e 50%, #3c8aa4 100%);
   animation: 3s background-position cubic-bezier(1, 1, 0, 0) infinite;
   align-items: center;
   // border-bottom: 1px solid #ffffff39;
@@ -215,6 +215,7 @@ div.page>div {
   margin-right: -60px;
   position: sticky;
   z-index: 114514;
+  color: #fff;
 }
 
 .main-sidebar>div {
@@ -295,7 +296,9 @@ div.main-sidebar .sidebar-links i {
 }
 
 #main>div {
-  background: #ffffff5e;
+  background-image: linear-gradient(135deg,#e0dcfb, #efeefd);
+  border-left: 1px solid #00000026;
+  border-top: 1px solid #00000026;
   border-radius: var(--border-radius-large);
 }
 </style>
