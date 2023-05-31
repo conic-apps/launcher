@@ -1,5 +1,5 @@
 :root {
-    --theme-color: 0, 105, 140;
+    --theme-color: 78, 64, 186;
     --border-radius-large: 10px;
     --border-radius-medium: 8px;
     --border-radius-small: 6px;
@@ -275,7 +275,7 @@ body {
     /* background-image: linear-gradient(#ffffff7d, #ffffff7d), url(/413114.jpg); */
     /* background-image: linear-gradient(#ffffff7d, #ffffff7d), url(/1168337.jpg); */
     /* background-image: url(/1168337.jpg); */
-    background: #6250e9;
+    background-image: linear-gradient(45deg,#4e40ba, #5848d2);
     /* background-image: url(/palm-leaf.webp); */
     background-position: center;
     
