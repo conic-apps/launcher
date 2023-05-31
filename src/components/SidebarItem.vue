@@ -125,10 +125,11 @@ div.main-sidebar span {
 
 .tooltip {
   display: flex;
-  padding: 6px;
+  padding: 6px 8px;
   background: #fff;
   border-radius: var(--border-radius-small);
   position: fixed;
+  color: #000;
   margin-left: 38px;
   box-shadow: 0 0 10px #cacaca;
   font-size: calc(13px - var(--font-size-error));
