@@ -3,8 +3,7 @@
     windows_subsystem = "windows"
 )]
 
-use std::{sync::atomic::Ordering, thread, time::Duration};
-
+// use std::{sync::atomic::Ordering, thread, time::Duration};
 // use mgl_core::{installer::vanilla, utils::folder::MinecraftLocation};
 
 fn main() {
