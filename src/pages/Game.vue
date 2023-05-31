@@ -20,8 +20,8 @@
           <div class="minecraft-version"><img src="@/assets/images/minecraft.webp">Minecraft {{ minecraftVersion }}
           </div>
         </div>
-        <div style="display: flex; justify-content: space-between;">
-          <p style="font-size: calc(22px - var(--font-size-error));">{{ instanceName }}</p>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <p>{{ instanceName }}</p>
           <div style="display: flex; align-items: center;">
             <i class="button gear"></i>
             <i class="button circle-info"></i>
@@ -37,16 +37,16 @@
       </div>
       <div class="assets">
         <div>
-          <card-link icon="map" title="地图存档" description="正在加载..." margin="0,0,8,0"
+          <card-link icon="map" title="地图存档" description="正在加载..." margin="0,0,10,0"
             @click="show.worlds = true"></card-link>
-          <card-link icon="puzzle-piece" title="模组" description="正在加载..." margin="0,0,8,0"
+          <card-link icon="puzzle-piece" title="模组" description="正在加载..." margin="0,0,10,0"
             @click="show.mods = true"></card-link>
           <card-link icon="puzzle-piece" title="截图" description="正在加载..." margin="0,0,0,0"></card-link>
         </div>
         <div>
-          <card-link icon="palette" title="资源包" description="正在加载..." margin="0,0,8,0"
+          <card-link icon="palette" title="资源包" description="正在加载..." margin="0,0,10,0"
             @click="show.resourcepacks = true"></card-link>
-          <card-link icon="lightbulb-on" title="光影包" description="正在加载..." margin="0,0,8,0"
+          <card-link icon="lightbulb-on" title="光影包" description="正在加载..." margin="0,0,10,0"
             @click="show.shaderpacks = true"></card-link>
           <card-link icon="puzzle-piece" title="日志" description="正在加载..." margin="0,0,0,0"></card-link>
         </div>
@@ -148,16 +148,20 @@ function installGame() {
   font-size: calc(15px - var(--font-size-error));
 }
 
+
 .minecraft-version img {
   width: 22px;
   height: 22px;
   margin-right: 4px;
 }
+.version>div:last-child p {
+  font-size: calc(20px - var(--font-size-error));
+}
 
 i.button {
   font-family: 'fa-pro';
   font-style: normal;
-  font-size: calc(20px - var(--font-size-error));
+  font-size: calc(18px - var(--font-size-error));
   border-radius: 100px;
   margin: 0 2px;
   width: 44px;
@@ -240,7 +244,7 @@ ul.gamelist li:active {
 
 .assets {
   display: flex;
-  margin-top: 10px;
+  margin-top: 14px;
 }
 
 .assets>div {
@@ -250,19 +254,20 @@ ul.gamelist li:active {
 }
 
 .assets>div:first-child {
-  margin-right: 4px;
+  margin-right: 5px;
 }
 
 .assets>div:last-child {
-  margin-left: 4px;
+  margin-left: 5px;
 }
 
 .new {
   font-family: 'fa-pro';
   width: 8px;
   height: 8px;
+  font-size: calc(16px - var(--font-size-error));
   font-style: normal;
-  // margin-left: 10px;
+  margin-left: 2px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -278,4 +283,3 @@ ul.gamelist li:active {
 .new:active {
   transform: scale(0.9);
 }</style>
-<!-- treasure-chest -->

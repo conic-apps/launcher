@@ -1,7 +1,7 @@
 <template>
   <div class="search-bar ">
     <i class="magnifying-glass"></i>
-    <input type="text" v-model="value" @input="$emit('search', value)" placeholder="按名称搜索"/>
+    <input type="text" v-model="value" @input="$emit('search', value)" placeholder="按名称搜索" />
   </div>
 </template>
 
@@ -58,6 +58,7 @@ let value = ref("")
   width: 100%;
   text-align: inherit;
   z-index: 10;
+  font-size: calc(13px - --font-size-error);
 }
 
 .search-bar:hover {
