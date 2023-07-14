@@ -83,7 +83,7 @@ let sources = ref([
     bmcl: true
   },
   {
-    name: "Magical Launcher API",
+    name: "Amethyst Launcher API",
     description: '包括一些丢失的版本',
     type: sourceTypes.built,
   },

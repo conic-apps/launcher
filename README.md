@@ -1,6 +1,6 @@
-# Magical Launcher
+# Amethyst Launcher
 
-[![Magical Launcher Auto Build](https://github.com/Broken-Deer/magical-launcher/actions/workflows/build.yml/badge.svg)](https://github.com/Broken-Deer/magical-launcher/actions/workflows/build.yml)
+[![Amethyst Launcher Auto Build](https://github.com/Broken-Deer/amethyst-launcher/actions/workflows/build.yml/badge.svg)](https://github.com/Broken-Deer/amethyst-launcher/actions/workflows/build.yml)
 [![License](https://img.shields.io/github/license/Rene8028/carpet-iee-addition.svg)](https://www.gnu.org/licenses/quick-guide-gplv3.html)
 ![](https://img.shields.io/badge/V%20Me-50-red)
 ![](https://img.shields.io/badge/WE%20ARE-POOR-yellow)
@@ -47,8 +47,8 @@ Make sure you have completed [prep](https://tauri.app/zh-cn/v1/guides/getting-st
 Execute the following command to pull the code:
 
 ```bash
-git clone https://github.com/Broken-Deer/magical-launcher.git
-cd magical-launcher
+git clone https://github.com/Broken-Deer/amethyst-launcher.git
+cd amethyst-launcher
 ```
 
 Execute the following command to install the dependencies (in the project folder):

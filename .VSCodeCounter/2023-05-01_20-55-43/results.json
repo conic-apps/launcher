@@ -1,1 +1,362 @@
-{"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/tsconfig.node.json":{"language":"JSON","code":8,"comment":0,"blank":1},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/tsconfig.json":{"language":"JSON with Comments","code":14,"comment":0,"blank":1},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/.eslintrc.cjs":{"language":"JavaScript","code":17,"comment":1,"blank":2},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/index.html":{"language":"HTML","code":15,"comment":0,"blank":3},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/tsconfig.vitest.json":{"language":"JSON","code":9,"comment":0,"blank":1},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/package.json":{"language":"JSON","code":42,"comment":0,"blank":0},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/README.md":{"language":"Markdown","code":4,"comment":0,"blank":2},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src-tauri/Cargo.toml":{"language":"TOML","code":19,"comment":5,"blank":5},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/vue.config.js":{"language":"JavaScript","code":15,"comment":0,"blank":0},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/Settings.vue":{"language":"Vue","code":184,"comment":0,"blank":16},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/ToggleSwitch.vue":{"language":"Vue","code":72,"comment":0,"blank":11},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/ButtonBar.vue":{"language":"Vue","code":18,"comment":0,"blank":4},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/ListItem.vue":{"language":"Vue","code":118,"comment":0,"blank":14},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/Tag.vue":{"language":"Vue","code":29,"comment":0,"blank":4},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/CardLink.vue":{"language":"Vue","code":82,"comment":0,"blank":10},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/Community.vue":{"language":"Vue","code":7,"comment":0,"blank":3},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/TipBar.vue":{"language":"Vue","code":40,"comment":0,"blank":3},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/Expander.vue":{"language":"Vue","code":216,"comment":0,"blank":23},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/ToggleSwitchBar.vue":{"language":"Vue","code":93,"comment":0,"blank":14},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/Dialog.vue":{"language":"Vue","code":73,"comment":0,"blank":5},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/SelectOption.vue":{"language":"Vue","code":24,"comment":0,"blank":4},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/TextInputBar.vue":{"language":"Vue","code":79,"comment":0,"blank":9},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/SidebarItem.vue":{"language":"Vue","code":104,"comment":0,"blank":19},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/Newspaper.vue":{"language":"Vue","code":77,"comment":1,"blank":7},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/Select.vue":{"language":"Vue","code":123,"comment":0,"blank":10},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/SearchBar.vue":{"language":"Vue","code":76,"comment":0,"blank":10},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/SelectBar.vue":{"language":"Vue","code":29,"comment":0,"blank":3},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/SliderBar.vue":{"language":"Vue","code":190,"comment":0,"blank":21},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/NewInstance.vue":{"language":"Vue","code":57,"comment":0,"blank":3},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/newInstance/CreateNew.vue":{"language":"Vue","code":52,"comment":0,"blank":5},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/Game.vue":{"language":"Vue","code":234,"comment":1,"blank":29},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/settings/Download.vue":{"language":"Vue","code":18,"comment":1,"blank":3},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/settings/Appearance.vue":{"language":"Vue","code":18,"comment":0,"blank":4},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/settings/Game.vue":{"language":"Vue","code":47,"comment":1,"blank":2},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/vitest.config.ts":{"language":"TypeScript","code":10,"comment":5,"blank":1},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/settings/Advance.vue":{"language":"Vue","code":32,"comment":0,"blank":5},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/settings/General.vue":{"language":"Vue","code":23,"comment":0,"blank":3},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/settings/Accessibility.vue":{"language":"Vue","code":22,"comment":0,"blank":2},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/settings/Extend.vue":{"language":"Vue","code":13,"comment":0,"blank":3},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/game/AccountManager.vue":{"language":"Vue","code":31,"comment":0,"blank":7},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/TextInputBox.vue":{"language":"Vue","code":72,"comment":0,"blank":9},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/pages/dialogs/AddAccount.vue":{"language":"Vue","code":7,"comment":0,"blank":5},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src-tauri/tauri.conf.json":{"language":"JSON","code":72,"comment":0,"blank":0},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/assets/styles/transitions.css":{"language":"CSS","code":146,"comment":4,"blank":38},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/assets/styles/default.css":{"language":"CSS","code":645,"comment":25,"blank":120},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/assets/styles/controller.css":{"language":"CSS","code":19,"comment":0,"blank":2},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/assets/images/quilt.svg":{"language":"XML","code":1,"comment":0,"blank":0},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/IconButton.vue":{"language":"Vue","code":28,"comment":0,"blank":4},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src-tauri/build.rs":{"language":"Rust","code":3,"comment":0,"blank":1},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/Main.vue":{"language":"Vue","code":281,"comment":0,"blank":33},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/env.d.ts":{"language":"TypeScript","code":0,"comment":1,"blank":1},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/bootstrap.ts":{"language":"TypeScript","code":21,"comment":6,"blank":7},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/tsconfig.app.json":{"language":"JSON","code":4,"comment":9,"blank":0},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/vite.config.ts":{"language":"TypeScript","code":12,"comment":1,"blank":3},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/components/ProgressBar.vue":{"language":"Vue","code":88,"comment":0,"blank":15},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src-tauri/src/main.rs":{"language":"Rust","code":14,"comment":0,"blank":2},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/jquery.d.ts":{"language":"TypeScript","code":1,"comment":0,"blank":0},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/assets/images/loading.svg":{"language":"XML","code":118,"comment":0,"blank":0},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/public/articles.json":{"language":"JSON","code":26683,"comment":0,"blank":0},"file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/magical-launcher/src/utils/ConfigLoader.ts":{"language":"TypeScript","code":7,"comment":2,"blank":3}}
+{
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/tsconfig.node.json": {
+        "language": "JSON",
+        "code": 8,
+        "comment": 0,
+        "blank": 1
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/tsconfig.json": {
+        "language": "JSON with Comments",
+        "code": 14,
+        "comment": 0,
+        "blank": 1
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/.eslintrc.cjs": {
+        "language": "JavaScript",
+        "code": 17,
+        "comment": 1,
+        "blank": 2
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/index.html": {
+        "language": "HTML",
+        "code": 15,
+        "comment": 0,
+        "blank": 3
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/tsconfig.vitest.json": {
+        "language": "JSON",
+        "code": 9,
+        "comment": 0,
+        "blank": 1
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/package.json": {
+        "language": "JSON",
+        "code": 42,
+        "comment": 0,
+        "blank": 0
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/README.md": {
+        "language": "Markdown",
+        "code": 4,
+        "comment": 0,
+        "blank": 2
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src-tauri/Cargo.toml": {
+        "language": "TOML",
+        "code": 19,
+        "comment": 5,
+        "blank": 5
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/vue.config.js": {
+        "language": "JavaScript",
+        "code": 15,
+        "comment": 0,
+        "blank": 0
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/Settings.vue": {
+        "language": "Vue",
+        "code": 184,
+        "comment": 0,
+        "blank": 16
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/ToggleSwitch.vue": {
+        "language": "Vue",
+        "code": 72,
+        "comment": 0,
+        "blank": 11
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/ButtonBar.vue": {
+        "language": "Vue",
+        "code": 18,
+        "comment": 0,
+        "blank": 4
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/ListItem.vue": {
+        "language": "Vue",
+        "code": 118,
+        "comment": 0,
+        "blank": 14
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/Tag.vue": {
+        "language": "Vue",
+        "code": 29,
+        "comment": 0,
+        "blank": 4
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/CardLink.vue": {
+        "language": "Vue",
+        "code": 82,
+        "comment": 0,
+        "blank": 10
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/Community.vue": {
+        "language": "Vue",
+        "code": 7,
+        "comment": 0,
+        "blank": 3
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/TipBar.vue": {
+        "language": "Vue",
+        "code": 40,
+        "comment": 0,
+        "blank": 3
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/Expander.vue": {
+        "language": "Vue",
+        "code": 216,
+        "comment": 0,
+        "blank": 23
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/ToggleSwitchBar.vue": {
+        "language": "Vue",
+        "code": 93,
+        "comment": 0,
+        "blank": 14
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/Dialog.vue": {
+        "language": "Vue",
+        "code": 73,
+        "comment": 0,
+        "blank": 5
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/SelectOption.vue": {
+        "language": "Vue",
+        "code": 24,
+        "comment": 0,
+        "blank": 4
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/TextInputBar.vue": {
+        "language": "Vue",
+        "code": 79,
+        "comment": 0,
+        "blank": 9
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/SidebarItem.vue": {
+        "language": "Vue",
+        "code": 104,
+        "comment": 0,
+        "blank": 19
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/Newspaper.vue": {
+        "language": "Vue",
+        "code": 77,
+        "comment": 1,
+        "blank": 7
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/Select.vue": {
+        "language": "Vue",
+        "code": 123,
+        "comment": 0,
+        "blank": 10
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/SearchBar.vue": {
+        "language": "Vue",
+        "code": 76,
+        "comment": 0,
+        "blank": 10
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/SelectBar.vue": {
+        "language": "Vue",
+        "code": 29,
+        "comment": 0,
+        "blank": 3
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/SliderBar.vue": {
+        "language": "Vue",
+        "code": 190,
+        "comment": 0,
+        "blank": 21
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/NewInstance.vue": {
+        "language": "Vue",
+        "code": 57,
+        "comment": 0,
+        "blank": 3
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/newInstance/CreateNew.vue": {
+        "language": "Vue",
+        "code": 52,
+        "comment": 0,
+        "blank": 5
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/Game.vue": {
+        "language": "Vue",
+        "code": 234,
+        "comment": 1,
+        "blank": 29
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/settings/Download.vue": {
+        "language": "Vue",
+        "code": 18,
+        "comment": 1,
+        "blank": 3
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/settings/Appearance.vue": {
+        "language": "Vue",
+        "code": 18,
+        "comment": 0,
+        "blank": 4
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/settings/Game.vue": {
+        "language": "Vue",
+        "code": 47,
+        "comment": 1,
+        "blank": 2
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/vitest.config.ts": {
+        "language": "TypeScript",
+        "code": 10,
+        "comment": 5,
+        "blank": 1
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/settings/Advance.vue": {
+        "language": "Vue",
+        "code": 32,
+        "comment": 0,
+        "blank": 5
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/settings/General.vue": {
+        "language": "Vue",
+        "code": 23,
+        "comment": 0,
+        "blank": 3
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/settings/Accessibility.vue": {
+        "language": "Vue",
+        "code": 22,
+        "comment": 0,
+        "blank": 2
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/settings/Extend.vue": {
+        "language": "Vue",
+        "code": 13,
+        "comment": 0,
+        "blank": 3
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/game/AccountManager.vue": {
+        "language": "Vue",
+        "code": 31,
+        "comment": 0,
+        "blank": 7
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/TextInputBox.vue": {
+        "language": "Vue",
+        "code": 72,
+        "comment": 0,
+        "blank": 9
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/pages/dialogs/AddAccount.vue": {
+        "language": "Vue",
+        "code": 7,
+        "comment": 0,
+        "blank": 5
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src-tauri/tauri.conf.json": {
+        "language": "JSON",
+        "code": 72,
+        "comment": 0,
+        "blank": 0
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/assets/styles/transitions.css": {
+        "language": "CSS",
+        "code": 146,
+        "comment": 4,
+        "blank": 38
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/assets/styles/default.css": {
+        "language": "CSS",
+        "code": 645,
+        "comment": 25,
+        "blank": 120
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/assets/styles/controller.css": {
+        "language": "CSS",
+        "code": 19,
+        "comment": 0,
+        "blank": 2
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/assets/images/quilt.svg": {
+        "language": "XML",
+        "code": 1,
+        "comment": 0,
+        "blank": 0
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/IconButton.vue": {
+        "language": "Vue",
+        "code": 28,
+        "comment": 0,
+        "blank": 4
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src-tauri/build.rs": {
+        "language": "Rust",
+        "code": 3,
+        "comment": 0,
+        "blank": 1
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/Main.vue": {
+        "language": "Vue",
+        "code": 281,
+        "comment": 0,
+        "blank": 33
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/env.d.ts": {
+        "language": "TypeScript",
+        "code": 0,
+        "comment": 1,
+        "blank": 1
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/bootstrap.ts": {
+        "language": "TypeScript",
+        "code": 21,
+        "comment": 6,
+        "blank": 7
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/tsconfig.app.json": {
+        "language": "JSON",
+        "code": 4,
+        "comment": 9,
+        "blank": 0
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/vite.config.ts": {
+        "language": "TypeScript",
+        "code": 12,
+        "comment": 1,
+        "blank": 3
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/components/ProgressBar.vue": {
+        "language": "Vue",
+        "code": 88,
+        "comment": 0,
+        "blank": 15
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src-tauri/src/main.rs": {
+        "language": "Rust",
+        "code": 14,
+        "comment": 0,
+        "blank": 2
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/jquery.d.ts": {
+        "language": "TypeScript",
+        "code": 1,
+        "comment": 0,
+        "blank": 0
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/assets/images/loading.svg": {
+        "language": "XML",
+        "code": 118,
+        "comment": 0,
+        "blank": 0
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/public/articles.json": {
+        "language": "JSON",
+        "code": 26683,
+        "comment": 0,
+        "blank": 0
+    },
+    "file:///home/brokendeer/%E6%A1%8C%E9%9D%A2/mc2/amethyst-launcher/src/utils/ConfigLoader.ts": {
+        "language": "TypeScript",
+        "code": 7,
+        "comment": 2,
+        "blank": 3
+    }
+}

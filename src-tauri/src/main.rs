@@ -10,17 +10,17 @@ fn main() {
     tauri::Builder::default()
         // .invoke_handler(tauri::generate_handler![get_user_config])
         .run(tauri::generate_context!())
-        .expect("error while running magical launcher!");
+        .expect("error while running amethyst launcher!");
 }
 
 // #[tauri::command]
 // fn get_user_config() -> String {
 // return "".to_string();
-// if !fs::metadata("/home/brokendeer/桌面/mc2/magical-launcher/test/test.json").is_ok() {
-//     fs::File::create("/home/brokendeer/桌面/mc2/magical-launcher/test/test.json").unwrap();
+// if !fs::metadata("/home/brokendeer/桌面/mc2/amethyst-launcher/test/test.json").is_ok() {
+//     fs::File::create("/home/brokendeer/桌面/mc2/amethyst-launcher/test/test.json").unwrap();
 //     return "".to_string();
 // }
-// fs::read_to_string("/home/brokendeer/桌面/mc2/magical-launcher/test/test.json").unwrap()
+// fs::read_to_string("/home/brokendeer/桌面/mc2/amethyst-launcher/test/test.json").unwrap()
 // }
 
 // #[tokio::test]
