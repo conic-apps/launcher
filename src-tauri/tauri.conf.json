@@ -7,7 +7,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "magical-launcher",
+    "productName": "amethyst-launcher",
     "version": "0.1.0"
   },
   "tauri": {
@@ -32,7 +32,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.magical.launcher",
+      "identifier": "com.amethyst.launcher",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -61,7 +61,7 @@
         "fullscreen": false,
         "height": 600,
         "resizable": false,
-        "title": "Magical Launcher",
+        "title": "Amethyst Launcher",
         "width": 970,
         "focus": true,
         "transparent": true,

@@ -1,7 +1,7 @@
 <template>
   <div class="title-bar" data-tauri-drag-region>
-    <div class="title" data-tauri-drag-region>Magical Launcher<tag text="Beta" :color="['255', '255', '255']" text-color="#fff"
-        :round="true" :border="true" style="transform: scale(0.8) translate(-1px, -6px);"></tag>
+    <div class="title" data-tauri-drag-region>Amethyst Launcher<tag text="Beta" :color="['255', '255', '255']"
+        text-color="#fff" :round="true" :border="true" style="transform: scale(0.8) translate(-1px, -6px);"></tag>
     </div>
     <div class="button">
       <div class="window-btn" id="min" @click="minimize"></div>
@@ -40,7 +40,6 @@ import Settings from './pages/Settings.vue';
 import Newspaper from './pages/Newspaper.vue';
 import Community from './pages/Community.vue';
 import NewInstance from './pages/NewInstance.vue';
-import Tag from './components/Tag.vue';
 import { invoke, window, } from '@tauri-apps/api'
 import $ from 'jquery'
 
@@ -296,7 +295,7 @@ div.main-sidebar .sidebar-links i {
 }
 
 #main>div {
-  background-image: linear-gradient(135deg,#e0dcfb, #efeefd);
+  background-image: linear-gradient(135deg, #e0dcfb, #efeefd);
   border-left: 1px solid #00000026;
   border-top: 1px solid #00000026;
   border-radius: var(--border-radius-large);
