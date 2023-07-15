@@ -40,6 +40,7 @@ import Settings from './pages/Settings.vue';
 import Newspaper from './pages/Newspaper.vue';
 import Community from './pages/Community.vue';
 import NewInstance from './pages/NewInstance.vue';
+import Tag from './components/Tag.vue';
 import { invoke, window, } from '@tauri-apps/api'
 import $ from 'jquery'
 

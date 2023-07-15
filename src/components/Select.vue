@@ -1,7 +1,7 @@
 <template>
   <div class="select" :style="`width: ${width}px;`">
     <div class="selected" @click="toggleOpened()">{{ selected }}</div>
-    <div style="position: relative;">
+    <div>
       <Transition @before-enter="beforeEnter" @enter="enter" @after-enter="afterEnter" @before-leave="beforeLeave"
         @leave="leave" @after-leave="afterLeave">
         <ul class="options" :style="`width: ${width}px;`" v-if="opened" @click="opened = false">
@@ -80,7 +80,7 @@ function toggleOpened() {
   height: 26px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .selected {
@@ -119,12 +119,12 @@ function toggleOpened() {
 
 .options {
   width: 200px;
-  position: absolute;
   margin-top: 4px;
   border-radius: var(--border-radius-medium);
   border: 1px solid rgba(var(--theme-color), 0.2);
-  background: #ffffff94;
-  z-index: 50000;
+  background: #ffffff;
+  box-shadow: 0px 0px 10px #4500611d;
+  transform: scale3d(1, 1, 192.7);
 }
 
 .options>div:first-child {

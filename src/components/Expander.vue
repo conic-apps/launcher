@@ -105,7 +105,7 @@ function expander() {
 .expander {
   border-radius: var(--border-radius-large);
   background-color: #ffffff77;
-  border: 1px solid #ffffff9a;
+  border: 1px solid #5000851d;
   box-shadow: 0 0 10px #ffffff15;
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
@@ -134,7 +134,7 @@ function expander() {
 }
 
 .expander-header {
-  border-bottom: 1px solid #ffffffbf;
+  border-bottom: 1px solid #5000851d;
   display: flex;
   justify-content: space-between;
   align-items: center;
