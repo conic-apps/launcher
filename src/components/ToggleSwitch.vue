@@ -23,7 +23,6 @@ let checked = false
 }
 
 .input-box label {
-  position: relative;
   /* cursor: pointer; */
   display: flex;
   align-items: center;

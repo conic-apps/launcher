@@ -1,13 +1,14 @@
 <template>
-  <div class="search-bar ">
+  <div class="search-bar">
     <i class="magnifying-glass"></i>
-    <input type="text" v-model="value" @input="$emit('search', value)" placeholder="按名称搜索" />
+    <input type="text" v-model="value" @input="$emit('search', value)" placeholder="搜索" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 let value = ref("")
+// todo: 添加search in 属性，搜索用的算法全部在这个组件中进行
 </script>
 
 <style lang="less" scoped>

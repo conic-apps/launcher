@@ -6,9 +6,13 @@
 // use std::{sync::atomic::Ordering, thread, time::Duration};
 // use mgl_core::{installer::vanilla, utils::folder::MinecraftLocation};
 
+pub mod instance;
+
+use instance::{add_instance, get_version_list};
+
 fn main() {
     tauri::Builder::default()
-        // .invoke_handler(tauri::generate_handler![get_user_config])
+        .invoke_handler(tauri::generate_handler![add_instance, get_version_list])
         .run(tauri::generate_context!())
         .expect("error while running amethyst launcher!");
 }
