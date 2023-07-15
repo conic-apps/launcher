@@ -1,7 +1,7 @@
 <template>
     <div class="select-bar">
         <span class="name">{{ name }}</span>
-        <selecter :options="options" :default="props.default"></selecter>
+        <Selecter :options="options" :default="props.default"></Selecter>
     </div>
 </template>
 
@@ -27,6 +27,5 @@ const props = withDefaults(defineProps<{
 }
 .select-bar>div:last-child {
     margin-left: auto;
-    padding-top: 8px;
 }
 </style>

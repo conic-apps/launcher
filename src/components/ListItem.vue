@@ -3,6 +3,7 @@
     <div :style="buttons ? '' : 'justify-content: start;width: 100%'">
       <div class="icon"
         :style="logo ? `background-image: url(${logo}); ${logoPixelated ? 'image-rendering: pixelated;' : ''}` : 'display: none;'">
+      <slot name="icon"></slot>
       </div>
       <div>
         <h4>{{ title }} <div class="sub-title">
@@ -47,6 +48,16 @@ defineProps<{
   // flex-direction: row-reverse;
   overflow: hidden;
   background-color: #ffffff71;
+  pointer-events: all;
+}
+
+.list-item:hover {
+  background-color: #0000002e;
+}
+
+.list-item:active {
+  opacity: 0.6;
+  transform: scale(0.99);
 }
 
 .dialog .list-item {
