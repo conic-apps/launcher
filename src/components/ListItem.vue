@@ -1,9 +1,9 @@
 <template>
   <li class="list-item">
-    <div :style="buttons ? '' : 'justify-content: start;width: 100%'">
+    <div :style="`${buttons ? '' : 'justify-content: start;width: 100%;'}${clickAble ? 'pointer-events: all;' : ''}`">
       <div class="icon"
         :style="logo ? `background-image: url(${logo}); ${logoPixelated ? 'image-rendering: pixelated;' : ''}` : 'display: none;'">
-      <slot name="icon"></slot>
+        <slot name="icon"></slot>
       </div>
       <div>
         <h4>{{ title }} <div class="sub-title">
@@ -11,13 +11,14 @@
           </div>
         </h4>
         <p>
+          {{ description ? description : '' }}
           <slot></slot>
         </p>
       </div>
     </div>
-    <div v-if="buttons">
+    <div v-if="buttons" class="list-item-buttons">
       <i v-for="(item, index) in buttons" :key="index" class="list-item-button" :class="item"
-        @click="$emit(`event-${item}`)"></i>
+        @click.stop="$emit(`event-${item}`)"></i>
     </div>
   </li>
 </template>
@@ -30,7 +31,7 @@ defineProps<{
   description?: string,
   logoPixelated?: boolean,
   buttons?: string[], // 图标名称对应点击后触发的事件名称
-  clickAble: boolean,
+  clickAble?: boolean,
 }>()
 
 </script>
@@ -48,17 +49,10 @@ defineProps<{
   // flex-direction: row-reverse;
   overflow: hidden;
   background-color: #ffffff71;
-  pointer-events: all;
+  pointer-events: none;
 }
 
-.list-item:hover {
-  background-color: #0000002e;
-}
 
-.list-item:active {
-  opacity: 0.6;
-  transform: scale(0.99);
-}
 
 .dialog .list-item {
   background-color: #ffffffb9;
@@ -73,6 +67,15 @@ defineProps<{
 
 .list-item>div:first-child {
   width: 100%;
+  transition: all .1s ease;
+}
+
+// .list-item>div:first-child:hover {
+//   opacity: 0.6;
+// }
+
+.list-item>div:first-child:active {
+  opacity: 0.6;
 }
 
 .list-item>div:last-child {
@@ -139,7 +142,7 @@ defineProps<{
   transition: all .2s ease;
   font-size: calc(15px - var(--font-size-error));
   margin: 0 6px;
-  z-index: 1;
+  transform: scale3d(1, 1, 500);
 }
 
 .list-item-button:hover {

@@ -18,7 +18,7 @@
         <list-item v-for="(mod, index) in mods" :key="index" :title="mod.name" :logo="mod.icon" :click-able="false"
           :buttons="['circle-info', 'folders', 'trash-can']">
           <template #subtitle v-if="mod.type == 'broken'">
-            <tag text="损坏" :color="['255', '129', '120']" :background="true"
+            <tag text="无法识别" :color="['255', '129', '120']" :background="true"
               :border="true"></tag>
           </template>
           <template #subtitle v-else-if="mod.type == 'lib'">

@@ -166,11 +166,12 @@ function jumpTo(name: string) {
   display: flex;
   justify-content: center;
   font-family: "fa-pro" !important;
-  align-content: center;
+  align-items: center;
   -webkit-app-region: no-drag;
   border-radius: 50%;
   transition: all 0.15s ease;
   transform: scale(0.8);
+  
 }
 
 .window-btn:hover {

@@ -3,16 +3,24 @@
     windows_subsystem = "windows"
 )]
 
-// use std::{sync::atomic::Ordering, thread, time::Duration};
-// use mgl_core::{installer::vanilla, utils::folder::MinecraftLocation};
-
+pub mod folder;
 pub mod instance;
 
-use instance::{add_instance, get_version_list};
+use instance::{
+    check_repeated_instance_name, create_instance, get_fabric_version_list, get_forge_version_list,
+    get_minecraft_version_list, get_quilt_version_list,
+};
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![add_instance, get_version_list])
+        .invoke_handler(tauri::generate_handler![
+            create_instance,
+            get_minecraft_version_list,
+            get_fabric_version_list,
+            get_forge_version_list,
+            get_quilt_version_list,
+            check_repeated_instance_name
+        ])
         .run(tauri::generate_context!())
         .expect("error while running amethyst launcher!");
 }

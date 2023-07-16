@@ -1,6 +1,6 @@
 <template>
   <Transition name="dialog">
-    <div v-if="visible" class="dialog">
+    <div v-if="visible" class="dialog"  data-tauri-drag-region>
       <div class="content" :style="contentStyle">
         <slot></slot>
       </div>
