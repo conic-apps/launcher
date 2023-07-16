@@ -2,12 +2,12 @@
   <div class="input input-text">
     <span class="name">{{ name }}</span>
     <div class="input-box">
-      <input type="text" :title="name" :placeholder="placeholder" @blur="updateData" required v-model="text" />
+      <input type="text" :title="name" :placeholder="placeholder" @blur="updateData" required v-model="value" @input="input" />
       <div class="underline"></div>
     </div>
   </div>
 </template>
-
+              
 <script setup lang="ts">
 import { load, update } from '@/utils/ConfigLoader';
 import { ref, type Ref } from 'vue'
@@ -17,6 +17,12 @@ const props = defineProps<{
   placeholder?: string,
   // config: string
 }>()
+let value = ref('')
+
+const emit = defineEmits(['update:modelValue'])
+const input = () => {
+  emit('update:modelValue', value.value)
+}
 let text: Ref<string> = ref("")
 function updateData(): void {
   // update(props.config, text)

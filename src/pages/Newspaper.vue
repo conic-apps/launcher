@@ -30,6 +30,7 @@ onMounted(() => {
   padding: 10px;
   flex-wrap: wrap;
   justify-content: center;
+  overflow: auto;
 }
 
 .article {

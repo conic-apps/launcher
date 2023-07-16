@@ -21,6 +21,7 @@ tauri = { version = "1.4.1", features = ["api-all"] }
 aml_core = { path="/home/brokendeer/桌面/magical-launcher-core" }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
+toml = "0.7.6"
 
 [features]
 # by default Tauri runs in production mode

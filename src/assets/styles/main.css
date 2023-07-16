@@ -514,15 +514,16 @@ i.spinner-third::after {
 div.title-bar>div.button #min::before {
     content: "\f068";
     font-size: calc(22.4px - var(--font-size-error));
-    line-height: 2.7;
     transform: scale(1.05, 1.1);
+    height: min-content;
 }
 
 div.title-bar>div.button #close::before {
     content: "\f00d";
     font-size: calc(22.4px - var(--font-size-error));
-    line-height: 2.2;
     transform: scale(1.1);
+    display: flex;
+    align-items: center;
 }
 
 i.close::before {
@@ -791,6 +792,10 @@ i.quilt {
 
 i.clock::before {
     content: '\f017';
+}
+
+i.floppy-disk::before {
+    content: '\f0c7';
 }
 
 /* 小型控件 */
