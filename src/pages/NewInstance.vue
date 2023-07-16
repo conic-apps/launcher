@@ -10,7 +10,7 @@
     <div class="content" ref="content">
       <Transition :name="transitionName" mode="out-in">
         <KeepAlive>
-          <component :is="activeComponent"></component>
+          <component :is="activeComponent" @backToHome="$emit('backToHome')"></component>
         </KeepAlive>
       </Transition>
     </div>
