@@ -7,7 +7,7 @@
           <div class="icon"></div>
           <div class="text">
             <h4 class="name"><span>{{ instanceName }}</span>中的模组</h4>
-            <p>共安装有 {{ mods.length }} 个模组</p>
+            <p>共安装有 {{ datas.length }} 个模组</p>
           </div>
         </div>
         <div class="buttons"><dialog-button icon="close" @click="$emit('close')"></dialog-button></div>
@@ -15,9 +15,12 @@
       <search-bar
         style="margin-bottom: 8px; position: sticky; top: 0; right: 0; bottom: 0; left: 0; z-index: 1000; background: #fff; border: 1px solid #00000028; box-shadow: 0 0 10px #00000012;"></search-bar>
       <TransitionGroup>
-        <list-item v-for="(mod, index) in mods" :key="index" :title="mod.name" :logo="mod.icon" :click-able="false"
+        <list-item v-for="(mod, index) in datas" :key="index" :title="mod.name ? mod.name : mod.version" :logo="mod.icon ? mod.icon : '1'" :click-able="false"
           :buttons="['circle-info', 'folders', 'trash-can']">
-          <template #subtitle v-if="mod.type == 'broken'">
+          <template #icon v-if="!mod.icon">
+            <img src="@/assets/images/Unknown_server.webp" alt="" style="width: 100%; height: 100%;">
+          </template>
+          <template #subtitle v-if="!mod.name">
             <tag text="无法识别" :color="['255', '129', '120']" :background="true"
               :border="true"></tag>
           </template>
@@ -39,79 +42,11 @@ import ListItem from '@/components/ListItem.vue';
 import Tag from '@/components/Tag.vue';
 import SearchBar from '@/components/SearchBar.vue';
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   show: boolean,
-  mods?: any,
   instanceName: string
-}>(), {
-  mods: () => {
-    return [
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp',
-        type: 'lib'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp',
-        type: 'broken'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp'
-      }, {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp',
-        type: 'lib'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp',
-        type: 'broken'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp'
-      },
-      {
-        name: 'a',
-        description: 'bbbbbbb',
-        icon: '/test.webp'
-      }
-    ]
-  }
-})
+  datas: any[],
+}>()
 </script>
 
 <style lang="less" scoped>

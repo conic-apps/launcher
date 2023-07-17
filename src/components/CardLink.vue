@@ -4,7 +4,7 @@
       <div class="icon"><i :class="icon"></i></div>
       <div>
         <h4 id="text">{{ title }}</h4>
-        <p id="text">{{ description }}</p>
+        <p v-if="description" id="text">{{ description }}</p>
       </div>
     </div>
     <div style="width: 36px;height: 36px;display: flex;align-items: center;justify-content: center;"><i
@@ -17,7 +17,7 @@ import { ref } from 'vue'
 
 const props = withDefaults(defineProps<{
   title: string,
-  description: string,
+  description?: string,
   icon: string,
   margin?: string,
   boxShadow?: boolean,
@@ -78,6 +78,13 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   font-style: normal;
   font-size: calc(23px - var(--font-size-error));
   font-weight: 500;
+}
+
+.title > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .title h4 {
