@@ -7,8 +7,9 @@
           class="grid-2 new"></i>
         <i style="flex-shrink: 0;" @click="$emit('jump', 'newInstance')" class="plus new"></i>
       </div>
-      <TransitionGroup name="list-item">
-        <li v-for="(instance, index) in instances" :key="index">
+      <TransitionGroup name="list-item" tag="ul">
+        <li v-for="(instance, index) in instances" :key="instance.name"
+          :class="activeInstance.name == instance.name ? 'active' : ''" @click="activeInstance = instance">
           <img src="@/assets/images/Grass_Block.webp">{{ instance.name }}
         </li>
       </TransitionGroup>
@@ -37,36 +38,35 @@
       </div>
       <div class="assets">
         <div>
-          <card-link icon="map" title="地图存档" description="正在加载..." margin="0,0,10,0"
-            @click="show.worlds = true"></card-link>
-          <card-link icon="puzzle-piece" title="模组" description="正在加载..." margin="0,0,10,0"
-            @click="show.mods = true"></card-link>
-          <card-link icon="puzzle-piece" title="截图" description="正在加载..." margin="0,0,0,0"></card-link>
+          <card-link icon="map" title="地图存档" margin="0,0,10,0" :description="savesManagerDesc" @click="show.worlds = true"></card-link>
+          <card-link icon="puzzle-piece" title="模组" :description="modManagerDesc" margin="0,0,10,0" @click="show.mods = true"></card-link>
+          <card-link icon="puzzle-piece" title="截图" margin="0,0,0,0"></card-link>
         </div>
         <div>
-          <card-link icon="palette" title="资源包" description="正在加载..." margin="0,0,10,0"
-            @click="show.resourcepacks = true"></card-link>
-          <card-link icon="lightbulb-on" title="光影包" description="正在加载..." margin="0,0,10,0"
-            @click="show.shaderpacks = true"></card-link>
-          <card-link icon="puzzle-piece" title="日志" description="正在加载..." margin="0,0,0,0"></card-link>
+          <card-link icon="palette" title="资源包" :description="resourcepacksManagerDesc" margin="0,0,10,0" @click="show.resourcepacks = true"></card-link>
+          <card-link icon="lightbulb-on" title="光影包" :description="shaderpacksManagerDesc" margin="0,0,10,0" @click="show.shaderpacks = true"></card-link>
+          <card-link icon="puzzle-piece" title="日志" margin="0,0,0,0"></card-link>
         </div>
       </div>
     </div>
-    <worlds :show="show.worlds" instance-name="未命名配置" @close="show.worlds = false"></worlds>
-    <mods :show="show.mods" instance-name="未命名配置" @close="show.mods = false"></mods>
-    <resourcepacks :show="show.resourcepacks" instance-name="未命名配置" @close="show.resourcepacks = false"></resourcepacks>
-    <shaderpacks :show="show.shaderpacks" instance-name="未命名配置" @close="show.shaderpacks = false"></shaderpacks>
+    <worlds :show="show.worlds" :datas="saves" instance-name="未命名配置" @close="show.worlds = false"></worlds>
+    <mods :show="show.mods" :datas="mods" instance-name="未命名配置" @close="show.mods = false"></mods>
+    <resourcepacks :show="show.resourcepacks" :datas="resourcepacks" instance-name="未命名配置"
+      @close="show.resourcepacks = false"></resourcepacks>
+    <shaderpacks :show="show.shaderpacks" :datas="shaderpacks" instance-name="未命名配置" @close="show.shaderpacks = false">
+    </shaderpacks>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import cardLink from '@/components/CardLink.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import Worlds from './dialogs/Worlds.vue'
 import Mods from './dialogs/Mods.vue'
 import Resourcepacks from './dialogs/Resourcepacks.vue'
 import Shaderpacks from './dialogs/Shaderpacks.vue'
+import { event, invoke } from '@tauri-apps/api'
 
 let show = reactive({
   worlds: false,
@@ -78,38 +78,87 @@ let banner = ref("background-image: linear-gradient(0deg, rgb(0 0 0 / 83%), rgb(
 let instanceName = "Minecraft 1.18.2 with fabric"
 let minecraftVersion = ref("1.18.2")
 let installed = ref(false)
-let instances: any = ref([])
-instances.value = [
-  {
-    name: "未命名配置",
-    metadata: JSON.parse('{"name":"未命名配置","runtime":{"minecraft":"1.19.4","forge":"","liteloader":"","fabricLoader":"","optifine":"","quilt":""},"author":"","version":"1.19.4","tags":[],"icon":"","broken":false}'),
-    installed: false,
-    banner: '@/assets/images/banners/1.13.webp'
-  },
-  {
-    name: "未命名配置",
-    metadata: JSON.parse('{"name":"未命名配置","runtime":{"minecraft":"1.19.4","forge":"","liteloader":"","fabricLoader":"","optifine":"","quilt":""},"author":"","version":"1.19.4","tags":[],"icon":"","broken":false}'),
-    installed: false,
-    banner: '@/assets/images/banners/1.13.webp'
-  },
-  {
-    name: "未命名配置",
-    metadata: JSON.parse('{"name":"未命名配置","runtime":{"minecraft":"1.19.4","forge":"","liteloader":"","fabricLoader":"","optifine":"","quilt":""},"author":"","version":"1.19.4","tags":[],"icon":"","broken":false}'),
-    installed: false,
-    banner: '@/assets/images/banners/1.13.webp'
-  },
-  {
-    name: "未命名配置",
-    metadata: JSON.parse('{"name":"未命名配置","runtime":{"minecraft":"1.19.4","forge":"","liteloader":"","fabricLoader":"","optifine":"","quilt":""},"author":"","version":"1.19.4","tags":[],"icon":"","broken":false}'),
-    installed: false,
-    banner: '@/assets/images/banners/1.13.webp'
+let instances = ref<any>([])
+let activeInstance = ref<any>({})
+
+let mods = ref<any>([])
+let saves = ref<any>([])
+let resourcepacks = ref<any>([])
+let shaderpacks = ref<any>([])
+
+watch(activeInstance, async (newValue) => {
+  console.log(newValue.name)
+  await invoke("set_active_instance", {
+    instanceName: newValue.name
+  })
+  modIsLoading.value = true
+  resourcepacksIsLoading.value = true
+  shaderpackIsLoading.value = true
+  savesIsLoading.value = true
+  invoke("scan_mod_folder").then((res: any) => {
+    mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name))
+    modIsLoading.value = false
+  })
+  invoke('scan_saves_folder').then((res: any) => {
+    saves.value = res
+    savesIsLoading.value = false
+  })
+  console.log(mods)
+  // banner.value = `background-image: linear-gradient(0deg, rgb(0 0 0 / 83%), rgb(0 0 0 / 0%)), url(./src/assets/images/banners/${val}.webp)`
+})
+
+let resourcepacksIsLoading = ref(true)
+let modIsLoading = ref(true)
+let shaderpackIsLoading = ref(true)
+let savesIsLoading = ref(true)
+
+let modManagerDesc = computed(() => {
+  // todo: 不过滤无法识别的模组，因为这会导致用户不能禁用某些废物的不规范模组
+  if (modIsLoading.value) {
+    return "正在加载..."
+  } else {
+    return `已安装 ${mods.value.length} 个模组`
   }
-]
+})
+let resourcepacksManagerDesc = computed(() => {
+  if (resourcepacksIsLoading.value) {
+    return "正在加载..."
+  } else {
+    return `已安装 ${resourcepacks.value.length} 个资源包`
+  }
+})
+let shaderpacksManagerDesc = computed(() => {
+  if (shaderpackIsLoading.value) {
+    return "正在加载..."
+  } else {
+    return `已安装 ${shaderpacks.value.length} 个光影包`
+  }
+})
+let savesManagerDesc = computed(() => {
+  if (savesIsLoading.value) {
+    return "正在加载..."
+  } else {
+    return `共有 ${saves.value.length} 个存档`
+  }
+})
+
+invoke("watch_instances_folder")
+
+function update() {
+  invoke("scan_instances_folder").then((res: any) => {
+    instances.value = res
+  })
+}
+
+update()
+
+event.listen("instances_changed", (data: any) => {
+  update()
+})
 
 function launchGame() {
 
 }
-
 function installGame() {
 
 }
@@ -154,6 +203,7 @@ function installGame() {
   height: 22px;
   margin-right: 4px;
 }
+
 .version>div:last-child p {
   font-size: calc(20px - var(--font-size-error));
 }
@@ -218,6 +268,11 @@ ul.gamelist {
   // background-color: #ffffff8b;
 }
 
+ul.gamelist>ul {
+  overflow: overlay;
+  height: calc(100% - 54px);
+}
+
 ul.gamelist img {
   width: 18px;
   height: 18px;
@@ -240,6 +295,30 @@ ul.gamelist li:hover {
 
 ul.gamelist li:active {
   background-color: #00000015;
+}
+
+ul.gamelist li.active {
+  background: rgba(var(--theme-color), 0.09);
+  box-shadow: 0 0 0 1px rgba(var(--theme-color), 0.1);
+  pointer-events: none;
+  color: rgba(var(--theme-color), 0.9);
+}
+
+ul.gamelist li::before {
+  background-color: #007bff00;
+  content: "";
+  height: 14px;
+  width: 4px;
+  position: relative;
+  left: -7px;
+  border-radius: 5px;
+  transition: all 0.15s ease;
+}
+
+ul.gamelist li.active::before {
+  background-color: rgba(var(--theme-color), 1);
+  content: "";
+  height: 18px;
 }
 
 .assets {
@@ -282,4 +361,5 @@ ul.gamelist li:active {
 
 .new:active {
   transform: scale(0.9);
-}</style>
+}
+</style>
