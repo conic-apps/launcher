@@ -49,6 +49,7 @@ const props = withDefaults(defineProps<{
   show: boolean,
   resourcepacks?: any,
   instanceName: string
+  datas: any[],
 }>(), {
   resourcepacks: () => {
     return [

@@ -4,7 +4,9 @@
       <div class="info-bar">
         <div class="icon"></div>
         <div class="info">
-          <h4>{{ instanceName }} <tag v-if="repeated" text="实例名不得与已有实例名相同" :color="['255', '129', '120']" :background="true" :border="true"></tag></h4>
+          <h4>{{ instanceName }} <tag v-if="repeated" text="实例名不得与已有实例名相同" :color="['255', '129', '120']"
+              :background="true" :border="true"></tag>
+          </h4>
           <p>
             <span v-if="select.minecraft">Minecraft {{ select.minecraft }}</span>
             <span v-if="select.forge">, Forge {{ select.forge }}</span>
@@ -12,7 +14,8 @@
             <span v-if="select.quilt">, Quilt {{ select.quilt }}</span>
           </p>
         </div>
-        <button :class="select.minecraft && !repeated ? 'command-button' : 'command-button disabled'" @click="create">保存配置</button>
+        <button :class="select.minecraft && !repeated ? 'command-button' : 'command-button disabled'"
+          @click="create">创建</button>
       </div>
       <text-input-bar name="实例名称" :placeholder="instanceNameDefault" v-model="instanceNameValue"></text-input-bar>
     </expander>
@@ -45,7 +48,7 @@
 </template>
   
 <script setup lang="ts">
-import { markRaw, ref, shallowRef, type Ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import Expander from '@/components/Expander.vue';
 import TextInputBar from '@/components/TextInputBar.vue';
 import CardLink from '@/components/CardLink.vue';
@@ -163,7 +166,7 @@ let select = reactive({
 })
 
 let instanceNameDefault = computed(() => {
-  return `${select.minecraft ? 'Minecraft ' + select.minecraft : '未命名配置'}${select.forge ? '-forge ' + select.forge : ''}${select.fabric ? '-fabric ' + select.fabric : ''}${select.quilt ? '-quilt ' + select.quilt : ''}`
+  return `${select.minecraft ? select.minecraft : '未命名配置'}${select.forge ? '-forge ' + select.forge : ''}${select.fabric ? '-fabric ' + select.fabric : ''}${select.quilt ? '-quilt ' + select.quilt : ''}`
 })
 
 let instanceName = computed(() => {
@@ -215,10 +218,15 @@ function create() {
         optifine: ''
       }
     },
-    datafolderPath: "test",
   }).then((res: any) => {
     emit('backToHome')
-    console.log(res)
+    setTimeout(() => {
+      select.minecraft = ''
+      select.forge = ''
+      select.fabric = ''
+      select.quilt = ''
+      instanceNameValue.value = ''
+    }, 500);
   }).catch((err: any) => {
     console.log(err)
   })
@@ -227,7 +235,6 @@ function create() {
 watch(instanceName, (newValue) => {
   invoke('check_repeated_instance_name', {
     instanceName: newValue,
-    datafolderPath: "test",
   }).then((res: any) => {
     console.log(res)
     repeated.value = !!res
@@ -259,7 +266,7 @@ watch(instanceName, (newValue) => {
   display: flex;
 }
 
-.info h4 >div {
+.info h4>div {
   color: rgb(172, 0, 0);
   margin-left: 10px;
 }
@@ -271,5 +278,4 @@ watch(instanceName, (newValue) => {
 .disabled {
   opacity: 0.5;
   pointer-events: none;
-}
-</style>
+}</style>

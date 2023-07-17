@@ -181,6 +181,7 @@ h4,
 h5,
 p {
     height: fit-content;
+    line-height: 1;
 }
 
 li {
@@ -841,11 +842,15 @@ span.name {
 }
 
 #brokendeer {
-    background-image: url(/src/assets/images/BrokenDeer.webp);
+    background-image: url(@/assets/images/BrokenDeer.webp);
     background-size: cover;
     background-position: center;
     border-radius: 100px;
     width: 32px;
     height: 32px;
     margin-left: -3px;
+}
+
+.banner-default {
+    background-image: url(@/assets/images/banners/BrokenDeer.webp);
 }

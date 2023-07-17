@@ -35,6 +35,7 @@ const props = withDefaults(defineProps<{
   show: boolean,
   shaderpacks?: any,
   instanceName: string
+  datas: any[],
 }>(), {
   shaderpacks: () => {
     return [

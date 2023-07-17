@@ -6,21 +6,48 @@
 pub mod folder;
 pub mod instance;
 
-use instance::{
+use std::sync::{Arc, Mutex};
+
+use crate::instance::{
     check_repeated_instance_name, create_instance, get_fabric_version_list, get_forge_version_list,
-    get_minecraft_version_list, get_quilt_version_list,
+    get_minecraft_version_list, get_quilt_version_list, scan_instances_folder, scan_mod_folder,
+    scan_saves_folder, set_active_instance, watch_instances_folder,
 };
+use folder::DataLocation;
+use once_cell::sync::OnceCell;
+use tauri::{Manager, Window};
+
+/// use MAIN_WINDOW.emit() to send message to main window
+static MAIN_WINDOW: OnceCell<Window> = OnceCell::new();
+static DATA_LOCATION: OnceCell<DataLocation> = OnceCell::new();
+
+pub struct Storage {
+    pub active_instance: Arc<Mutex<String>>,
+}
 
 fn main() {
+    DATA_LOCATION.set(DataLocation::new("test")).unwrap();
     tauri::Builder::default()
+        .manage(Storage {
+            active_instance: Arc::new(Mutex::new("".to_string())),
+        })
         .invoke_handler(tauri::generate_handler![
             create_instance,
             get_minecraft_version_list,
             get_fabric_version_list,
             get_forge_version_list,
             get_quilt_version_list,
-            check_repeated_instance_name
+            check_repeated_instance_name,
+            scan_instances_folder,
+            watch_instances_folder,
+            set_active_instance,
+            scan_mod_folder,
+            scan_saves_folder
         ])
+        .setup(|app| {
+            MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running amethyst launcher!");
 }
