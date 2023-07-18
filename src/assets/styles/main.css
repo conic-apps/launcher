@@ -450,8 +450,16 @@ i.setting::before {
     content: "\f013";
 }
 
+i.keyboard::before {
+    content: "\f11c";
+}
+
 i.debug-settings::before {
     content: "\f0ad";
+}
+
+i.filter::before {
+    content: "\f0b0";
 }
 
 i.java-logo::before {

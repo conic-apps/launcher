@@ -1,8 +1,4 @@
-use std::{
-    sync::mpsc::channel,
-    thread,
-    time::Duration,
-};
+use std::{sync::mpsc::channel, thread, time::Duration};
 
 use aml_core::{
     core::version::VersionManifest,
@@ -35,6 +31,12 @@ pub struct InstanceRuntime {
     pub forge: String,
     pub quilt: String,
     pub optifine: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Instance {
+    pub config: InstanceConfig,
+    pub installed: bool,
 }
 
 #[tauri::command(async)]
@@ -86,9 +88,9 @@ pub async fn check_repeated_instance_name(instance_name: String) -> bool {
 }
 
 #[tauri::command(async)]
-pub async fn scan_instances_folder() -> Option<Vec<InstanceConfig>> {
+pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
     println!("123");
-    async fn scan() -> Result<Vec<InstanceConfig>> {
+    async fn scan() -> Result<Vec<Instance>> {
         let datafolder_path = DATA_LOCATION.get().unwrap();
         let instances_folder = &datafolder_path.instances;
         let mut folder_entries = tokio::fs::read_dir(instances_folder).await?;
@@ -123,7 +125,10 @@ pub async fn scan_instances_folder() -> Option<Vec<InstanceConfig>> {
             {
                 continue;
             }
-            results.push(config)
+            results.push(Instance {
+                config,
+                installed: fs::File::open(path.join("install.lock")).await.is_ok(),
+            })
         }
         Ok(results)
     }
@@ -291,8 +296,3 @@ pub async fn scan_saves_folder(
         Err(_) => Err(()),
     }
 }
-
-// pub fn get_active_instance() -> String {
-//     let main_window =MAIN_WINDOW.get().unwrap();
-//     // main_window.emit("get_active_instance", "")
-// }

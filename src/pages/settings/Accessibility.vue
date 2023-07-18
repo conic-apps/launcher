@@ -9,7 +9,13 @@
     <expander :can-swap="false" title="无障碍" description="无障碍功能优化" icon="wheelchair">
       <toggle-switch-bar name="禁用所有动画"></toggle-switch-bar>
       <!-- <toggle-switch-bar name="为屏幕阅读器优化"></toggle-switch-bar> -->
-      <!-- <toggle-switch-bar name="高对比度模式"></toggle-switch-bar> -->
+      <!-- <toggle-switch-bar name="高对比度模式"></toggle-switch-bar> 高对比度主题 -->
+    </expander>
+    <expander :can-swap="false" title="快捷键" description="设置各项常用操作的快捷键" icon="keyboard">
+
+    </expander>
+    <expander :can-swap="false" title="默认搜索过滤器" description="指定各搜索框中的默认过滤参数，以便过滤掉不常用的项" icon="filter">
+
     </expander>
   </div>
 </template>
