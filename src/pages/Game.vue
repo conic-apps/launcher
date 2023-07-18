@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ul class="gamelist" id="gamelist">
+    <ul :class="canChangeInstance ? 'gamelist' : 'disabled gamelist'" style="transition: opacity .3s ease;" id="gamelist">
       <div style="display: flex; align-items: center; margin-bottom: 8px;">
         <search-bar style="width: auto;"></search-bar>
         <i style="flex-shrink: 0;margin-left: 6px; margin-right: 4px;" @click="$emit('jump', 'allInstances')"
@@ -8,9 +8,9 @@
         <i style="flex-shrink: 0;" @click="$emit('jump', 'newInstance')" class="plus new"></i>
       </div>
       <TransitionGroup name="list-item" tag="ul">
-        <li v-for="(instance, index) in instances" :key="instance.name"
-          :class="activeInstance.name == instance.name ? 'active' : ''" @click="activeInstance = instance">
-          <img src="@/assets/images/Grass_Block.webp">{{ instance.name }}
+        <li v-for="(instance, index) in instances" :key="instance.config.name"
+          :class="activeInstance.config?.name == instance.config.name ? 'active' : ''" @click="activeInstance = instance">
+          <img src="@/assets/images/Grass_Block.webp">{{ instance.config.name }}
         </li>
       </TransitionGroup>
       <p v-if="instances.length == 0">此视图筛选条件无匹配结果</p>
@@ -22,7 +22,7 @@
           </div>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <p>{{ instanceName }}</p>
+          <p>{{ activeInstance.config?.name }}</p>
           <div style="display: flex; align-items: center;">
             <i class="button gear"></i>
             <i class="button circle-info"></i>
@@ -38,22 +38,26 @@
       </div>
       <div class="assets">
         <div>
-          <card-link icon="map" title="地图存档" margin="0,0,10,0" :description="savesManagerDesc" @click="show.worlds = true"></card-link>
-          <card-link icon="puzzle-piece" title="模组" :description="modManagerDesc" margin="0,0,10,0" @click="show.mods = true"></card-link>
+          <card-link icon="map" title="地图存档" :class="savesIsLoading ? 'disabled' : ''" margin="0,0,10,0" :description="savesManagerDesc"
+            @click="show.worlds = true"></card-link>
+          <card-link icon="puzzle-piece" title="模组" :class="modIsLoading ? 'disabled' : ''" :description="modManagerDesc" margin="0,0,10,0"
+            @click="show.mods = true"></card-link>
           <card-link icon="puzzle-piece" title="截图" margin="0,0,0,0"></card-link>
         </div>
         <div>
-          <card-link icon="palette" title="资源包" :description="resourcepacksManagerDesc" margin="0,0,10,0" @click="show.resourcepacks = true"></card-link>
-          <card-link icon="lightbulb-on" title="光影包" :description="shaderpacksManagerDesc" margin="0,0,10,0" @click="show.shaderpacks = true"></card-link>
+          <card-link icon="palette" title="资源包" :class="resourcepacksIsLoading ? 'disabled' : ''" :description="resourcepacksManagerDesc" margin="0,0,10,0"
+            @click="show.resourcepacks = true"></card-link>
+          <card-link icon="lightbulb-on" title="光影包" :class="shaderpackIsLoading ? 'disabled' : ''" :description="shaderpacksManagerDesc" margin="0,0,10,0"
+            @click="show.shaderpacks = true"></card-link>
           <card-link icon="puzzle-piece" title="日志" margin="0,0,0,0"></card-link>
         </div>
       </div>
     </div>
-    <worlds :show="show.worlds" :datas="saves" instance-name="未命名配置" @close="show.worlds = false"></worlds>
-    <mods :show="show.mods" :datas="mods" instance-name="未命名配置" @close="show.mods = false"></mods>
-    <resourcepacks :show="show.resourcepacks" :datas="resourcepacks" instance-name="未命名配置"
+    <worlds :show="show.worlds" :datas="saves" :instance-name="activeInstance.config?.name" @close="show.worlds = false"></worlds>
+    <mods :show="show.mods" :datas="mods" :instance-name="activeInstance.config?.name" @close="show.mods = false"></mods>
+    <resourcepacks :show="show.resourcepacks" :datas="resourcepacks" :instance-name="activeInstance.config?.name"
       @close="show.resourcepacks = false"></resourcepacks>
-    <shaderpacks :show="show.shaderpacks" :datas="shaderpacks" instance-name="未命名配置" @close="show.shaderpacks = false">
+    <shaderpacks :show="show.shaderpacks" :datas="shaderpacks" :instance-name="activeInstance.config?.name" @close="show.shaderpacks = false">
     </shaderpacks>
   </div>
 </template>
@@ -75,11 +79,11 @@ let show = reactive({
   shaderpacks: false
 })
 let banner = ref("background-image: linear-gradient(0deg, rgb(0 0 0 / 83%), rgb(0 0 0 / 0%)), url(./src/assets/images/banners/1.18.webp);")
-let instanceName = "Minecraft 1.18.2 with fabric"
 let minecraftVersion = ref("1.18.2")
 let installed = ref(false)
 let instances = ref<any>([])
 let activeInstance = ref<any>({})
+let canChangeInstance = ref(true) // 当安装或启动游戏时,禁止更改视图以防止数据竞争
 
 let mods = ref<any>([])
 let saves = ref<any>([])
@@ -87,23 +91,11 @@ let resourcepacks = ref<any>([])
 let shaderpacks = ref<any>([])
 
 watch(activeInstance, async (newValue) => {
-  console.log(newValue.name)
   await invoke("set_active_instance", {
-    instanceName: newValue.name
+    instanceName: newValue.config.name
   })
-  modIsLoading.value = true
-  resourcepacksIsLoading.value = true
-  shaderpackIsLoading.value = true
-  savesIsLoading.value = true
-  invoke("scan_mod_folder").then((res: any) => {
-    mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name))
-    modIsLoading.value = false
-  })
-  invoke('scan_saves_folder').then((res: any) => {
-    saves.value = res
-    savesIsLoading.value = false
-  })
-  console.log(mods)
+  installed.value = newValue.installed
+  updateData()
   // banner.value = `background-image: linear-gradient(0deg, rgb(0 0 0 / 83%), rgb(0 0 0 / 0%)), url(./src/assets/images/banners/${val}.webp)`
 })
 
@@ -152,15 +144,31 @@ function update() {
 
 update()
 
+function updateData() {
+  modIsLoading.value = true
+  resourcepacksIsLoading.value = true
+  shaderpackIsLoading.value = true
+  savesIsLoading.value = true
+  invoke("scan_mod_folder").then((res: any) => {
+    mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name))
+    modIsLoading.value = false
+  })
+  invoke('scan_saves_folder').then((res: any) => {
+    saves.value = res
+    savesIsLoading.value = false
+  })
+}
+
 event.listen("instances_changed", (data: any) => {
   update()
+  updateData()
 })
 
 function launchGame() {
-
+  canChangeInstance.value = false
 }
 function installGame() {
-
+  canChangeInstance.value = false
 }
 </script>
 
@@ -361,5 +369,10 @@ ul.gamelist li.active::before {
 
 .new:active {
   transform: scale(0.9);
+}
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 </style>
