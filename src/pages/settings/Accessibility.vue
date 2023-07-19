@@ -14,7 +14,7 @@
     <expander :can-swap="false" title="快捷键" description="设置各项常用操作的快捷键" icon="keyboard">
 
     </expander>
-    <expander :can-swap="false" title="默认搜索过滤器" description="指定各搜索框中的默认过滤参数，以便过滤掉不常用的项" icon="filter">
+    <expander :can-swap="false" title="默认搜索筛选器" description="指定各搜索框中的默认筛选参数，以便筛选掉不常用的项" icon="filter">
 
     </expander>
   </div>

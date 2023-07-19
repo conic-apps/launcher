@@ -157,6 +157,7 @@ pub fn watch_instances_folder() {
         // The notification back-end is selected based on the platform.
         let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
 
+        std::fs::create_dir_all(&DATA_LOCATION.get().unwrap().instances).unwrap();
         // Add a path to be watched. All files and directories at that path and
         // below will be monitored for changes.
         watcher
