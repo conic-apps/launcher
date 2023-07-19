@@ -850,7 +850,7 @@ span.name {
 }
 
 #OakChaser {
-    background-image: url(@/assets/images/OakChaser.webp);
+    /* background-image: url(@/assets/images/OakChaser.webp); */
     background-size: cover;
     background-position: center;
     border-radius: 100px;
@@ -860,5 +860,5 @@ span.name {
 }
 
 .banner-default {
-    background-image: url(@/assets/images/banners/OakChaser.webp);
+    /* background-image: url(@/assets/images/banners/OakChaser.webp); */
 }
