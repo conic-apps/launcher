@@ -1,5 +1,6 @@
 <template>
   <div class="progress" :style="widthStyle">
+    <p v-if="text">{{ text }}</p>
     <div class="progress-bar" :style="loadingStyle"></div>
     <div class="progress-loading" :style="loadingStyle"></div>
     <progress max="100" :value="value" :style="progressStyle"></progress>
@@ -13,6 +14,7 @@ const props = withDefaults(defineProps<{
   loading: boolean,
   value: string,
   width: string,
+  text?: string
 }>(), {
   width: () => "100"
 })
@@ -55,7 +57,7 @@ let progressStyle = computed(() => {
   width: inherit;
   position: absolute;
   z-index: -1;
-  background-color: rgba(0, 0, 0, 0.242);
+  background-color: rgba(255, 255, 255, 0.242);
 }
 
 @keyframes progress-loading {
@@ -63,11 +65,11 @@ let progressStyle = computed(() => {
     left: -85%;
   }
 
-  65% {
+  50% {
     left: 85%;
   }
 
-  65.01% {
+  50.01% {
     left: -85%;
   }
 
@@ -86,7 +88,7 @@ let progressStyle = computed(() => {
 .progress progress::-webkit-progress-bar {
   appearance: none;
   height: 1px;
-  background-color: rgba(0, 0, 0, 0.242);
+  background-color: rgba(255, 255, 255, 0.242);
   display: flex;
   align-items: center;
   border-radius: 100px;

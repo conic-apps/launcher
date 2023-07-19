@@ -5,6 +5,7 @@ use std::{
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DataLocation {
+    pub root: PathBuf,
     pub instances: PathBuf,
     pub jre: PathBuf,
     pub resources: PathBuf,
@@ -14,6 +15,7 @@ impl DataLocation {
     pub fn new<S: AsRef<OsStr> + ?Sized>(data_folder: &S) -> Self {
         let data_folder = Path::new(data_folder);
         Self {
+            root: data_folder.to_path_buf(),
             instances: data_folder.join("instances"),
             jre: data_folder.join("jre"),
             resources: data_folder.join("resources"),
