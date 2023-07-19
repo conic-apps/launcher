@@ -1,22 +1,34 @@
-use std::{sync::mpsc::channel, thread, time::Duration};
+use std::{
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        mpsc::channel,
+        Arc,
+    },
+    thread,
+    time::Duration,
+};
 
 use aml_core::{
-    core::version::VersionManifest,
+    core::{folder::MinecraftLocation, version::VersionManifest},
     install::{
         fabric::LoaderArtifactList,
         forge::version_list::ForgeVersionList,
+        generate_download_list,
         quilt::{version_list::get_quilt_version_list_from_mcversion, QuiltVersion},
     },
     mod_parser::ResolvedMod,
     saves::level::LevelData,
+    utils::download::Download,
 };
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose, Engine};
+use futures::StreamExt;
 use notify::{watcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
-use tokio::fs;
+use tokio::{fs, io::AsyncWriteExt};
 
-use crate::{Storage, DATA_LOCATION, MAIN_WINDOW};
+use crate::{Storage, DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct InstanceConfig {
@@ -127,7 +139,7 @@ pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
             }
             results.push(Instance {
                 config,
-                installed: fs::File::open(path.join("install.lock")).await.is_ok(),
+                installed: fs::File::open(path.join(".aml-ok")).await.is_ok(),
             })
         }
         Ok(results)
@@ -295,4 +307,161 @@ pub async fn scan_saves_folder(
         Ok(results) => Ok(results),
         Err(_) => Err(()),
     }
+}
+
+#[tauri::command(async)]
+pub async fn get_instance_config(
+    storage: tauri::State<'_, Storage>,
+) -> std::result::Result<InstanceConfig, ()> {
+    let instance_name = storage.active_instance.lock().unwrap().clone();
+    let config_path = DATA_LOCATION
+        .get()
+        .unwrap()
+        .get_instance_root(&instance_name)
+        .join("instance.toml");
+    match config_path.metadata() {
+        Ok(_) => {
+            let config_content = match fs::read_to_string(config_path).await {
+                Err(_) => return Err(()),
+                Ok(content) => content,
+            };
+            match toml::from_str::<InstanceConfig>(&config_content) {
+                Ok(config) => Ok(config),
+                Err(_) => Err(()),
+            }
+        }
+        Err(_) => Err(()),
+    }
+}
+
+#[tauri::command(async)]
+pub async fn get_instance_config_from_string(instance_name: &str) -> Result<InstanceConfig, ()> {
+    let config_path = DATA_LOCATION
+        .get()
+        .unwrap()
+        .get_instance_root(&instance_name)
+        .join("instance.toml");
+    match config_path.metadata() {
+        Ok(_) => {
+            let config_content = match fs::read_to_string(config_path).await {
+                Err(_) => return Err(()),
+                Ok(content) => content,
+            };
+            match toml::from_str::<InstanceConfig>(&config_content) {
+                Ok(config) => Ok(config),
+                Err(_) => Err(()),
+            }
+        }
+        Err(_) => Err(()),
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DownloadProgress {
+    pub completed: usize,
+    pub total: usize,
+    pub step: usize,
+}
+
+async fn download_files(download_list: Vec<Download<String>>) {
+    let main_window = MAIN_WINDOW.get().unwrap();
+    main_window
+        .emit(
+            "install_progress",
+            DownloadProgress {
+                completed: 0,
+                total: 0,
+                step: 2,
+            },
+        )
+        .unwrap();
+    let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+    let total = download_list.len();
+    futures::stream::iter(download_list)
+        .map(|task| {
+            let counter = counter.clone();
+            async move {
+                let file_path = PathBuf::from(task.file);
+                fs::create_dir_all(file_path.parent().unwrap())
+                    .await
+                    .unwrap();
+                let mut response = HTTP_CLIENT
+                    .get()
+                    .unwrap()
+                    .get(task.url)
+                    .send()
+                    .await
+                    .unwrap();
+                let mut file = fs::File::create(&file_path).await.unwrap();
+                while let Some(chunk) = response.chunk().await.unwrap() {
+                    file.write_all(&chunk).await.unwrap();
+                }
+                counter.fetch_add(1, Ordering::SeqCst);
+            }
+        })
+        .buffer_unordered(16)
+        .for_each_concurrent(None, |_| async {
+            let counter = counter.clone().load(Ordering::SeqCst);
+            println!("Progress: {counter} / {total}");
+            main_window
+                .emit(
+                    "install_progress",
+                    DownloadProgress {
+                        completed: counter,
+                        total,
+                        step: 3,
+                    },
+                )
+                .unwrap();
+        })
+        .await;
+    if counter.load(Ordering::SeqCst) != total {
+        main_window
+            .emit(
+                "install_progress",
+                DownloadProgress {
+                    completed: total,
+                    total,
+                    step: 4,
+                },
+            )
+            .unwrap();
+    }
+}
+
+#[tauri::command(async)]
+pub async fn install_command(storage: tauri::State<'_, Storage>) -> std::result::Result<(), ()> {
+    let main_window = MAIN_WINDOW.get().unwrap();
+    main_window
+        .emit(
+            "install_progress",
+            DownloadProgress {
+                completed: 0,
+                total: 0,
+                step: 1,
+            },
+        )
+        .unwrap();
+    let active_instance = storage.active_instance.lock().unwrap().clone();
+    let data_location = DATA_LOCATION.get().unwrap();
+    let instance_config = get_instance_config_from_string(&active_instance)
+        .await
+        .unwrap();
+    let runtime = instance_config.runtime;
+    let download_list = generate_download_list(
+        &runtime.minecraft,
+        MinecraftLocation::new(&data_location.root),
+    )
+    .await
+    .unwrap();
+    download_files(download_list).await;
+    let mut lock_file = fs::File::create(
+        data_location
+            .get_instance_root(active_instance)
+            .join(".aml-ok"),
+    )
+    .await
+    .unwrap();
+    lock_file.write_all(b"ok").await.unwrap();
+    Ok(())
 }

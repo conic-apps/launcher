@@ -8,7 +8,7 @@
         <i style="flex-shrink: 0;" @click="$emit('jump', 'newInstance')" class="plus new"></i>
       </div>
       <TransitionGroup name="list-item" tag="ul">
-        <li v-for="(instance, index) in instances" :key="instance.config.name"
+        <li v-for="(instance, index) in instances" :key="index"
           :class="activeInstance.config?.name == instance.config.name ? 'active' : ''" @click="activeInstance = instance">
           <img src="@/assets/images/Grass_Block.webp">{{ instance.config.name }}
         </li>
@@ -17,8 +17,12 @@
     </ul>
     <div class="content">
       <div class="version" :style="banner">
-        <div>
+        <div style="display: flex; align-items:start; justify-content: space-between;">
           <div class="minecraft-version"><img src="@/assets/images/minecraft.webp">Minecraft {{ minecraftVersion }}
+          </div>
+          <div class="progress-info" :style="!canChangeInstance ? `` : `opacity: 0;`">
+            <p>{{ progressMessage }}</p>
+            <progress-bar :loading="progressLoading" :value="progressValue" width="180"></progress-bar>
           </div>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -27,7 +31,10 @@
             <i class="button gear"></i>
             <i class="button circle-info"></i>
             <i class="button star"></i>
-            <div class="start-game" v-if="installed" @click="launchGame"><i class="play"
+            <div class="installing" v-if="!canChangeInstance">
+              <div class="button-loading"></div>
+            </div>
+            <div class="start-game" v-else-if="installed" @click="launchGame"><i class="play"
                 style="font-family: 'fa-pro'; font-style: normal; margin-right: 5px; font-weight: 100;"></i>开始游戏
             </div>
             <div class="install-game" v-else @click="installGame"><i class="download"
@@ -38,26 +45,28 @@
       </div>
       <div class="assets">
         <div>
-          <card-link icon="map" title="地图存档" :class="savesIsLoading ? 'disabled' : ''" margin="0,0,10,0" :description="savesManagerDesc"
-            @click="show.worlds = true"></card-link>
-          <card-link icon="puzzle-piece" title="模组" :class="modIsLoading ? 'disabled' : ''" :description="modManagerDesc" margin="0,0,10,0"
-            @click="show.mods = true"></card-link>
+          <card-link icon="map" title="地图存档" :class="savesIsLoading ? 'disabled' : ''" margin="0,0,10,0"
+            :description="savesManagerDesc" @click="show.worlds = true"></card-link>
+          <card-link icon="puzzle-piece" title="模组" :class="modIsLoading ? 'disabled' : ''" :description="modManagerDesc"
+            margin="0,0,10,0" @click="show.mods = true"></card-link>
           <card-link icon="puzzle-piece" title="截图" margin="0,0,0,0"></card-link>
         </div>
         <div>
-          <card-link icon="palette" title="资源包" :class="resourcepacksIsLoading ? 'disabled' : ''" :description="resourcepacksManagerDesc" margin="0,0,10,0"
-            @click="show.resourcepacks = true"></card-link>
-          <card-link icon="lightbulb-on" title="光影包" :class="shaderpackIsLoading ? 'disabled' : ''" :description="shaderpacksManagerDesc" margin="0,0,10,0"
-            @click="show.shaderpacks = true"></card-link>
+          <card-link icon="palette" title="资源包" :class="resourcepacksIsLoading ? 'disabled' : ''"
+            :description="resourcepacksManagerDesc" margin="0,0,10,0" @click="show.resourcepacks = true"></card-link>
+          <card-link icon="lightbulb-on" title="光影包" :class="shaderpackIsLoading ? 'disabled' : ''"
+            :description="shaderpacksManagerDesc" margin="0,0,10,0" @click="show.shaderpacks = true"></card-link>
           <card-link icon="puzzle-piece" title="日志" margin="0,0,0,0"></card-link>
         </div>
       </div>
     </div>
-    <worlds :show="show.worlds" :datas="saves" :instance-name="activeInstance.config?.name" @close="show.worlds = false"></worlds>
+    <worlds :show="show.worlds" :datas="saves" :instance-name="activeInstance.config?.name" @close="show.worlds = false">
+    </worlds>
     <mods :show="show.mods" :datas="mods" :instance-name="activeInstance.config?.name" @close="show.mods = false"></mods>
     <resourcepacks :show="show.resourcepacks" :datas="resourcepacks" :instance-name="activeInstance.config?.name"
       @close="show.resourcepacks = false"></resourcepacks>
-    <shaderpacks :show="show.shaderpacks" :datas="shaderpacks" :instance-name="activeInstance.config?.name" @close="show.shaderpacks = false">
+    <shaderpacks :show="show.shaderpacks" :datas="shaderpacks" :instance-name="activeInstance.config?.name"
+      @close="show.shaderpacks = false">
     </shaderpacks>
   </div>
 </template>
@@ -71,7 +80,7 @@ import Mods from './dialogs/Mods.vue'
 import Resourcepacks from './dialogs/Resourcepacks.vue'
 import Shaderpacks from './dialogs/Shaderpacks.vue'
 import { event, invoke } from '@tauri-apps/api'
-
+import ProgressBar from '@/components/ProgressBar.vue'
 let show = reactive({
   worlds: false,
   mods: false,
@@ -159,9 +168,50 @@ function updateData() {
   })
 }
 
+let progressMessage = ref("")
+let progressValue = ref("")
+let progressLoading = ref(false)
+
+interface InstallProgress {
+  completed: number,
+  total: number,
+  step: number
+}
+
 event.listen("instances_changed", (data: any) => {
   update()
   updateData()
+})
+event.listen("install_progress", (data: any) => {
+  progressMessage.value = JSON.stringify(data.payload)
+  let progress = data.payload as InstallProgress;
+  switch (progress.step) {
+    case 1:
+      canChangeInstance.value = false
+      progressMessage.value = "正在准备安装"
+      progressValue.value = progress.completed.toString()
+      progressLoading.value = true
+      break
+    case 2:
+      canChangeInstance.value = false
+      progressMessage.value = "正在准备安装"
+      progressValue.value = progress.completed.toString()
+      progressLoading.value = true
+      break
+    case 3:
+      canChangeInstance.value = false
+      progressMessage.value = `正在下载: ${(progress.completed / progress.total * 100).toFixed(2)}%`
+      progressValue.value = (progress.completed / progress.total * 100).toString()
+      progressLoading.value = false
+  }
+  if (progress.completed == progress.total && progress.step == 3) {
+    progressMessage.value = "安装完成"
+    setTimeout(() => {
+      canChangeInstance.value = true
+      update()
+      installed.value = true
+    }, 1000);
+  }
 })
 
 function launchGame() {
@@ -169,6 +219,7 @@ function launchGame() {
 }
 function installGame() {
   canChangeInstance.value = false
+  invoke("install_command", {})
 }
 </script>
 
@@ -191,7 +242,8 @@ function installGame() {
   color: #fff;
 }
 
-.minecraft-version {
+.minecraft-version,
+.progress-info {
   display: flex;
   align-items: center;
   justify-items: center;
@@ -203,6 +255,7 @@ function installGame() {
   width: fit-content;
   border-radius: 6px;
   font-size: calc(15px - var(--font-size-error));
+  transition: opacity .3s ease;
 }
 
 
@@ -243,7 +296,8 @@ i.button::before {
 }
 
 .start-game,
-.install-game {
+.install-game,
+.installing {
   margin-left: 8px;
   border-radius: 8px;
   font-size: calc(15px - var(--font-size-error));
@@ -260,12 +314,20 @@ i.button::before {
   background-image: linear-gradient(248deg, #18b14e, #4fc82f);
 }
 
-.install-game {
+.install-game,
+.installing {
   width: 116.25px;
   height: 36px;
   background-image: linear-gradient(248deg, #235dce, #399bed);
   letter-spacing: 1px;
   text-align: center;
+}
+
+.installing {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: default;
 }
 
 ul.gamelist {
@@ -374,5 +436,69 @@ ul.gamelist li.active::before {
 .disabled {
   opacity: 0.5;
   pointer-events: none;
+}
+
+.progress-info {
+  width: 220px; // remove
+  flex-direction: column;
+  align-items: start;
+  justify-self: center;
+  padding: 12px 18px;
+}
+
+.progress-info p {
+  font-size: calc(15px - var(--font-size-error));
+  padding-bottom: 4px;
+}
+
+
+
+// .progress progress::-webkit-progress-value {
+
+// }
+.button-loading,
+.button-loading::before,
+.button-loading::after {
+  width: 5px;
+  height: 5px;
+  background-color: rgba(255, 255, 255, 0.2);
+  animation: 0.8s button-loading infinite linear alternate;
+}
+
+.button-loading {
+  position: relative;
+  animation-delay: 1.2s
+}
+
+.button-loading::before,
+.button-loading::after {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  top: 0;
+}
+
+.button-loading::after {
+  left: -6.5px;
+  animation-delay: 1s
+}
+
+.button-loading::before {
+  left: 6.5px;
+  animation-delay: 1.4s
+}
+
+@keyframes button-loading {
+  0% {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  70% {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  100% {
+    background-color: rgba(255, 255, 255, 0.75);
+  }
 }
 </style>
