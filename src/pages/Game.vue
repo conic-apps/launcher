@@ -13,7 +13,7 @@
           <img src="@/assets/images/Grass_Block.webp">{{ instance.config.name }}
         </li>
       </TransitionGroup>
-      <p v-if="instances.length == 0">此视图筛选条件无匹配结果</p>
+      <p v-if="instances.length == 0">未找到任何实例，通常不应该发生这种情况，可能是启动器损坏</p>
     </ul>
     <div class="content">
       <div class="version" :style="banner">
