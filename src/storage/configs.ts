@@ -1,5 +1,13 @@
-// import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api";
 import { defineStore } from "pinia";
+
+enum GarbageCollector {
+    G1 = 'G1',
+    Serial = 'Serial',
+    Parallel = 'Parallel',
+    ParallelOld = 'ParallelOld',
+    Z = 'Z',
+}
 
 const defaultConfig = {
     general: {
@@ -14,36 +22,39 @@ const defaultConfig = {
             autoSelectJVM: true,
         },
         launch: {
-            gameWindowTitle: '',
-            launcherName: '',
-            serverIP: '',
-            processPriority: 0, // 0 highest 4 lowest
-            width: '',
-            height: '',
+            gameWindowTitle: "Minecraft ${mc_version}",
+            launcherName: 'AmethystLauncher',
+            serverIP: null,
+            processPriority: 2, // support 0-4, 0 highest 4 lowest 2 middle
+            width: 854,
+            height: 480,
             autoAllocateMemory: true,
             memory: 2048
         },
         advance: {
-            gameArgs: '',
-            execBeforeLaunch: '',
-            wrapCommand: '',
-            execAfterLaunch: '',
-            JVMArgs: '',
-            permanentMemoryArea: ''
+            extraMinecraftArgs: null,
+            extraJVMArgs: null,
+            isDemo: false,
+            execBeforeLaunch: null,
+            wrapCommand: null,
+            execAfterLaunch: null,
+            permanentMemoryArea: null
         },
         debug: {
-            lwjgl: '',
+            lwjglPath: null,
+            renderer: 'OpenGL', // can be OpenGL, Vulkan, Software, DirectX 12
             dontCheckJVMArgs: false,
             dontCheckResourceFile: false,
             dontCheckJVMCompatibility: false,
-            useSystemGLFW: false,
-            useSystemOpenAL: false
+            //todo: dontAttemptNativeLib, false
+            useSystemGLFW: false, // Linux Only
+            useSystemOpenAL: false // Linux Only
         }
     },
     advance: {
         game: {
             checkLibraries: true,
-            garbageCollector: 0
+            garbageCollector: GarbageCollector
         },
         debug: {
             saveLauncherLogs: false,
@@ -68,13 +79,15 @@ const defaultConfig = {
     }
 }
 
-// const userConfig = JSON.parse(await invoke('get_user_config')) as object
+alert(defaultConfig.advance.game.garbageCollector)
+
+const userConfig = JSON.parse(await invoke('get_user_config')) as object
 
 export const useConfigStore = defineStore('configs', {
     state: () => {
         return {
             ...defaultConfig,
-            // ...userConfig,
+            ...userConfig,
         }
     },
     actions: {
