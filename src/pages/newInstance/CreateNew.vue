@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import Expander from '@/components/Expander.vue';
-import TextInputBar from '@/components/TextInputBar.vue';
+// import TextInputBar from '@/components/controllers/TextInputBar.vue';
 import CardLink from '@/components/CardLink.vue';
 import MinecraftChoose from '../dialogs/MinecraftChoose.vue';
 import FabricChoose from '../dialogs/FabricChoose.vue';

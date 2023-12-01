@@ -16,7 +16,6 @@
 </template>
 
 <script setup lang="ts">
-import { load, update } from '@/utils/ConfigLoader'
 import { computed, ref, type ComputedRef, type Ref, onMounted } from 'vue'
 import TextInputBox from './TextInputBox.vue'
 import $ from 'jquery'
