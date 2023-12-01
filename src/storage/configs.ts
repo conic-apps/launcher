@@ -79,7 +79,7 @@ const defaultConfig = {
     }
 }
 
-alert(defaultConfig.advance.game.garbageCollector)
+// alert(defaultConfig.advance.game.garbageCollector)
 
 const userConfig = JSON.parse(await invoke('get_user_config')) as object
 

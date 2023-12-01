@@ -52,8 +52,10 @@ setTimeout(() => {
   :root {
     --font-size-error: ${fontSizeError}px;
   }`
-  if ($('#font-test').outerHeight() > 17.78) {
-    fontSizeError = 13.5 - (17.78 / $('#font-test').outerHeight()) * 15
+  
+  if ($('#font-test').outerHeight() > 15.78) {
+    console.log((15.78 / $('#font-test').outerHeight()) * 15)
+    fontSizeError = 13.5 - (15.78 / $('#font-test').outerHeight()) * 15
     fixWebkitgtk.innerHTML = /* css */ `    
     :root {
       --font-size-error: ${fontSizeError}px;
