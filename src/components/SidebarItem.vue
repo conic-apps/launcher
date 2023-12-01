@@ -1,7 +1,7 @@
 <template>
   <li class="sidebar-item" @mousedown="onMousedown($event)">
     <i class="fa-regular nav-icon" :id="icon"></i>
-    <div class="tooltip" v-if="title">{{ title }}</div>
+    <div class="text" v-if="title">{{ title }}</div>
   </li>
 </template>
 
@@ -26,6 +26,8 @@ function onMousedown(event: MouseEvent) {
 <style lang="less">
 .sidebar-item {
   margin-bottom: 2px;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-item i {
@@ -123,21 +125,10 @@ div.main-sidebar span {
   opacity: 0;
 }
 
-.tooltip {
-  display: flex;
-  padding: 6px 8px;
-  background: #fff;
-  border-radius: var(--border-radius-small);
-  position: fixed;
-  color: #000;
-  margin-left: 38px;
-  box-shadow: 0 0 10px #cacaca;
-  font-size: calc(13px - var(--font-size-error));
-  opacity: 0;
-  z-index: 1145141;
-  transform: scale(0.9);
-  transition: all 200ms ease;
-  pointer-events: none;
+.text {
+  font-size: 12px;
+  width: 100%;
+  
 }
 
 .sidebar-item:hover .tooltip {
