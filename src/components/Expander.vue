@@ -196,12 +196,14 @@ function expander() {
   display: flex;
   align-items: center;
 }
+
 .expander-header h4>div {
   color: #0000006f;
   display: inline-block;
   font-size: calc(14px - var(--font-size-error));
   margin-left: 4px;
 }
+
 .expander-header p {
   font-size: calc(12.3px - var(--font-size-error));
   color: var(--text-color);
@@ -214,6 +216,8 @@ function expander() {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  border-radius: 0 0 var(--border-radius-large) var(--border-radius-large);
+  background-color: rgba(0, 0, 0, 0.011);
 }
 
 .expander-body>div {
