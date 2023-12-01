@@ -11,9 +11,7 @@
   <div :class="sidebarClassName" :style="sidebarInlineStyle" data-tauri-drag-region>
     <div>
       <ul class="sidebar-links" data-tauri-drag-region>
-        <sidebar-item title="帐户" icon="brokendeer" @click="switchPage($event, 'wareHouse')"></sidebar-item>
         <sidebar-item title="游戏" icon="gamepad" @click="switchPage($event, 'wareHouse')"></sidebar-item>
-        <sidebar-item title="新闻" icon="newspaper" @click="switchPage($event, 'newspaper')"></sidebar-item>
         <sidebar-item title="社区" icon="church" @click="switchPage($event, 'community')"></sidebar-item>
         <sidebar-item title="设置" icon="nav-5" @click="switchPage($event, 'settings')"
           style="margin-top: auto;"></sidebar-item>
@@ -37,7 +35,6 @@ import { markRaw, reactive, ref, shallowRef, type Ref } from 'vue';
 import SidebarItem from './components/SidebarItem.vue';
 import WareHouse from './pages/Game.vue';
 import Settings from './pages/Settings.vue';
-import Newspaper from './pages/Newspaper.vue';
 import Community from './pages/Community.vue';
 import NewInstance from './pages/NewInstance.vue';
 import Tag from './components/Tag.vue';
@@ -73,7 +70,6 @@ let sidebarClassName = ref('main-sidebar sidebar-close')
 const pages: any = reactive({
   settings: markRaw(Settings),
   wareHouse: markRaw(WareHouse),
-  newspaper: markRaw(Newspaper),
   community: markRaw(Community),
   newInstance: markRaw(NewInstance),
 })
