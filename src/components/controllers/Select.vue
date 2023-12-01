@@ -81,6 +81,7 @@ function toggleOpened() {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  font-size: calc(14px - var(--font-size-error));
 }
 
 .selected {
@@ -125,6 +126,8 @@ function toggleOpened() {
   background: #ffffff;
   box-shadow: 0px 0px 10px #4500611d;
   transform: scale3d(1, 1, 192.7);
+  font-size: calc(14px - var(--font-size-error));
+
 }
 
 .options>div:first-child {

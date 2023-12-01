@@ -446,6 +446,10 @@ i.chevron-down::before {
     content: '\f078';
 }
 
+i.circle-up::before {
+    content: "\f35b";
+}
+
 i.setting::before {
     content: "\f013";
 }
@@ -799,6 +803,10 @@ i.quilt {
     background-size: cover;
 }
 
+i.radio::before {
+    content: '\f8d7';
+}
+
 i.clock::before {
     content: '\f017';
 }
@@ -861,4 +869,16 @@ span.name {
 
 .banner-default {
     /* background-image: url(@/assets/images/banners/BrokenDeer.webp); */
+}
+
+.setting-page-title {
+    font-family: unset;
+    font-weight: 500;
+    font-size: 34px;
+}
+
+.setting-group-title {
+    font-family: unset;
+    font-weight: 500;
+    margin: 10px 6px;
 }
