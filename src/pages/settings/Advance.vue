@@ -1,5 +1,5 @@
 <template>
-  <KeepAlive>
+  <!-- <KeepAlive>
     <div>
       <tip-bar  type="danger" style="margin-bottom: 8px;font-size: calc(14px - var(--font-size-error));">如果你不清楚这些选项的作用，请不要乱动它们</tip-bar>
       <tip-bar style="font-size: calc(14px - var(--font-size-error));">你可以使用右上角的重置按钮将此页设置恢复为默认值</tip-bar>
@@ -15,23 +15,23 @@
         <button-bar name="打开开发人员工具" text="启动 DevTools" @click="openDevtools"></button-bar>
       </expander>
     </div>
-  </KeepAlive>
+  </KeepAlive> -->
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import ButtonBar from '@/components/ButtonBar.vue';
-import Expander from '@/components/Expander.vue';
-import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
-import SelectBar from '@/components/SelectBar.vue';
-import TipBar from '@/components/TipBar.vue';
+// import { ref } from 'vue'
+// import ButtonBar from '@/components/ButtonBar.vue';
+// import Expander from '@/components/Expander.vue';
+// import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
+// import SelectBar from '@/components/SelectBar.vue';
+// import TipBar from '@/components/TipBar.vue';
 
-function openDevtools() {
+// function openDevtools() {
 
-}
-function updateData(a: any, b: any) {
+// }
+// function updateData(a: any, b: any) {
 
-}
+// }
 </script>
 
 <style lang="less" scoped></style>

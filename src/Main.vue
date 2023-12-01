@@ -41,7 +41,7 @@ import Newspaper from './pages/Newspaper.vue';
 import Community from './pages/Community.vue';
 import NewInstance from './pages/NewInstance.vue';
 import Tag from './components/Tag.vue';
-import { invoke, window, } from '@tauri-apps/api'
+import { window } from '@tauri-apps/api'
 import $ from 'jquery'
 
 // 修复webkitgtk的奇怪问题
@@ -52,7 +52,7 @@ setTimeout(() => {
   :root {
     --font-size-error: ${fontSizeError}px;
   }`
-  
+
   if ($('#font-test').outerHeight() > 15.78) {
     console.log((15.78 / $('#font-test').outerHeight()) * 15)
     fontSizeError = 13.5 - (15.78 / $('#font-test').outerHeight()) * 15
@@ -173,7 +173,7 @@ function jumpTo(name: string) {
   border-radius: 50%;
   transition: all 0.15s ease;
   transform: scale(0.8);
-  
+
 }
 
 .window-btn:hover {

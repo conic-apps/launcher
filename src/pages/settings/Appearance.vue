@@ -11,12 +11,12 @@
 </template>
 
 <script setup lang="ts">
-import ButtonBar from '@/components/ButtonBar.vue';
-import Expander from '@/components/Expander.vue';
+// import ButtonBar from '@/components/ButtonBar.vue';
+// import Expander from '@/components/Expander.vue';
 
-function openColorChooser() {
+// function openColorChooser() {
 
-}
+// }
 </script>
 
 <style lang="less" scoped></style>
