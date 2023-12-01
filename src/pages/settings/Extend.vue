@@ -1,8 +1,8 @@
 <template>
   <div>
-    <expander title="常规" icon="house" :can-swap="false" description="基本扩展设置">
+    <!-- <expander title="常规" icon="house" :can-swap="false" description="基本扩展设置">
       <toggle-switch-bar name="启用所有扩展"></toggle-switch-bar>
-    </expander>
+    </expander> -->
   </div>
 </template>
 
