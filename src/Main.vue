@@ -1,5 +1,18 @@
 <template>
   <div class="title-bar" data-tauri-drag-region>
+    
+  </div>
+</template>
+
+<script setup lang="ts">
+
+</script>
+
+<style lang="less" scoped>
+
+</style>
+<!-- <template>
+  <div class="title-bar" data-tauri-drag-region>
     <div class="title" data-tauri-drag-region>Amethyst Launcher<tag text="Beta" :color="['255', '255', '255']"
         text-color="#fff" :round="true" :border="true" style="transform: scale(0.8) translate(-1px, -6px);"></tag>
     </div>
@@ -300,4 +313,4 @@ div.main-sidebar .sidebar-links i {
   border-top: 1px solid #00000026;
   border-radius: var(--border-radius-large);
 }
-</style>
+</style> -->
