@@ -3,10 +3,10 @@ import { createPinia } from 'pinia'
 import App from './Main.vue'
 import $ from 'jquery'
 
-$("#window").attr(
-    "style",
-    "transform: scale(1); opacity: 1; transition: all 250ms cubic-bezier(0.04, 0.47, 0.47, 0.98)"
-);
+// $("#window").attr(
+//     "style",
+//     "transform: scale(1); opacity: 1; transition: all 250ms cubic-bezier(0.04, 0.47, 0.47, 0.98)"
+// );
 
 const app = createApp(App)
 
