@@ -291,7 +291,8 @@ i.map::before {
     content: "\f279";
 }
 
-i.puzzle-piece::before {
+i.puzzle-piece::before,
+i#puzzle-piece::before {
     content: "\f12e";
 }
 

@@ -11,7 +11,9 @@
 </head>
 
 <body>
-  <div id="window" style="position: relative; transform: scale(0.92); opacity: 0; outline: 1px solid #f00;"></div>
+  <!-- <div id="window" style="position: relative; transform: scale(0.92); opacity: 0; outline: 1px solid #f00;" data-tauri-drag-region> -->
+  <div id="window" data-tauri-drag-region>
+  </div>
   <script type="module" src="./src/bootstrap.ts"></script>
   <div style="position: fixed; top: -100px; left: 0px;">
     <div id="font-test" style="font-size: calc(15px - var(--font-size-error));">Magical</div>

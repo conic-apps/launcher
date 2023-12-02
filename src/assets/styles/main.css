@@ -194,10 +194,10 @@ body {
     background-color: rgba(255, 255, 255, 0);
     width: 100vw;
     height: 100vh;
-    padding: 5px;
-    /* background-image: url(/413114.jpg);
-    background-position: center;
-    background-size: cover; */
+    background-image:
+        radial-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)),
+        linear-gradient(rgba(94, 106, 210, 0.2), rgb(0, 0, 0, 0.2)),
+        linear-gradient(#000, #000)
 }
 
 #window {
@@ -221,16 +221,11 @@ body {
     /* background-image: linear-gradient(#ffffff7d, #ffffff7d), url(/413114.jpg); */
     /* background-image: linear-gradient(#ffffff7d, #ffffff7d), url(/1168337.jpg); */
     /* background-image: url(/1168337.jpg); */
-    background-image: linear-gradient(45deg, #4e40ba, #5848d2);
+    /* background-image: linear-gradient(45deg, #4e40ba, #5848d2); */
     /* background-image: url(/palm-leaf.webp); */
-    background-position: center;
-
-    background-size: cover;
-    --background-opacity: 0.94;
-    /* background-image: linear-gradient(135deg, rgba(227, 236, 237, var(--background-opacity)) 0%, rgba(228, 241, 247, var(--background-opacity)) 100%); */
-    /* background: #000000b5; */
-
-    /* background: #ffffff7d; */
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 16px;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(10px);
     transition: all 0.25s ease-in;
