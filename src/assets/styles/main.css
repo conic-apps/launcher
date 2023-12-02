@@ -223,7 +223,7 @@ body {
     /* background-image: url(/1168337.jpg); */
     /* background-image: linear-gradient(45deg, #4e40ba, #5848d2); */
     /* background-image: url(/palm-leaf.webp); */
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 16px;
     backdrop-filter: blur(4px);
