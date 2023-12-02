@@ -13,8 +13,8 @@ const props = withDefaults(defineProps<{
   height?: string,
   placeholder?: string
 }>(), {
-  width: '300px',
-  height: '34px',
+  width: '',
+  height: '',
   placeholder: '搜索'
 });
 let style = `width: ${props.width}; height: ${props.height};`
@@ -29,6 +29,16 @@ let style = `width: ${props.width}; height: ${props.height};`
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 0px 10px;
+  width: 472px;
+  height: 34px;
+  position: relative;
+  margin: 0 auto;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  z-index: 10;
+  transition: all .3s ease;
 }
 
 .search-bar i {

@@ -194,10 +194,63 @@ body {
     background-color: rgba(255, 255, 255, 0);
     width: 100vw;
     height: 100vh;
-    background-image:
+    /* background-image:
         radial-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)),
-        linear-gradient(rgba(94, 106, 210, 0.2), rgb(0, 0, 0, 0.2)),
-        linear-gradient(#000, #000)
+        linear-gradient(rgba(128, 59, 255, 0.208), rgb(0, 0, 0, 0.3)),
+        linear-gradient(#000, #000); */
+    background: #050505;
+}
+
+.ball-a,
+.ball-b {
+    position: fixed;
+    z-index: -1;
+}
+
+.ball-a {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background-color: rgba(0, 60, 255, 0.422);
+    filter: blur(200px);
+    bottom: -10px;
+    right: 200px;
+    /* animation: 10s  ball-a-move cubic-bezier(1, 1, 0, 0) alternate infinite; */
+}
+
+.ball-b {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background-color: rgba(0, 213, 255, 0.469);
+    filter: blur(200px);
+    top: -10px;
+    left: 200px;
+    /* animation: 10s  ball-b-move cubic-bezier(1, 1, 0, 0) alternate infinite; */
+}
+
+@keyframes ball-a-move {
+    from {
+        top: -10px;
+        right: 200px;
+    }
+
+    to {
+        top: calc(100vh + 10px);
+        right: 200px;
+    }
+}
+
+@keyframes ball-b-move {
+    from {
+        bottom: -10px;
+        left: 200px;
+    }
+
+    to {
+        bottom: calc(100vh + 10px);
+        left: 200px;
+    }
 }
 
 #window {
@@ -224,7 +277,7 @@ body {
     /* background-image: linear-gradient(45deg, #4e40ba, #5848d2); */
     /* background-image: url(/palm-leaf.webp); */
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    /* border: 1px solid rgba(255, 255, 255, 0.16); */
     border-radius: 16px;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(10px);
@@ -234,6 +287,7 @@ body {
 /* font */
 * {
     /* font-family: Harmony-re; */
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .fa-brands,
@@ -245,4 +299,13 @@ body {
 .hidden *,
 .hidden {
     display: none !important;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.075);
+    /* border: 1px solid rgba(255, 255, 255, 0.09); */
+    border-radius: 12px;
+    border-top: 1.6px solid rgba(255, 255, 255, 0.235);
+    /* backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); */
 }

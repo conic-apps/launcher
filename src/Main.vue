@@ -2,7 +2,7 @@
   <div class="window" data-tauri-drag-region>
     <div class="title-bar" data-tauri-drag-region>
       <div></div>
-      <search-bar width="472px" placeholder="在 Amethyst 中搜索，或输入命令"></search-bar>
+      <search-bar @click="openSearchPanel" id="global-search" placeholder="在 Amethyst 中搜索，或输入命令"></search-bar>
       <div class="win-btn">
         <div class="min" @click="minimize"><i></i></div>
         <div class="max" @click="maximize"><i></i></div>
@@ -26,7 +26,10 @@
           <component :is=" currentComponent " @back-to-home="back" @jump="jumpTo"></component>
         </KeepAlive>
       </Transition>
+
     </main>
+    <div class="line">
+    </div>
   </div>
 </template>
 
@@ -125,6 +128,30 @@ function back() {
 function jumpTo(name: string) {
   changePage(null, name)
 }
+
+function moveLine(position: number[]) {
+  // todo
+}
+
+function openSearchPanel() {
+  $('#global-search').attr('style',/* css */ `
+  top: 300px; 
+  height: 400px; 
+  width: 500px; 
+  background: #000; 
+  z-index: 10001;
+  border-radius: 16px;
+  `).children('*').hide()
+  $('#model-shadow').attr('style', 'opacity: 1; z-index: 10000;')
+  setTimeout(() => {
+    closeSearchPanel()
+  }, 1000);
+}
+
+function closeSearchPanel() {
+  $('#global-search').attr('style', '').children('*').show()
+  $('#model-shadow').attr('style', '')
+}
 </script>
 
 <style lang="less" scoped>
@@ -148,20 +175,19 @@ function jumpTo(name: string) {
 .win-btn {
   display: flex;
   align-items: center;
-  // border: 1px solid #f00;
   margin-right: 20px;
 }
 
 .win-btn>div {
   width: 20px;
   height: 20px;
-  // border: 1px solid #f00;
   border-radius: 50%;
-  margin-left: 10px;
+  margin-left: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 100ms;
+  background: #ffffff34;
 }
 
 .win-btn>div>i {
@@ -192,7 +218,7 @@ function jumpTo(name: string) {
 }
 
 .win-btn>div.min {
-  background: rgb(117, 121, 0);
+  // background: rgb(117, 121, 0);
 }
 
 .win-btn>div.min>i::before {
@@ -202,7 +228,7 @@ function jumpTo(name: string) {
 }
 
 .win-btn>div.max {
-  background: rgb(2, 136, 0);
+  // background: rgb(2, 136, 0);
 }
 
 .win-btn>div.max>i::before {
@@ -213,7 +239,7 @@ function jumpTo(name: string) {
 }
 
 .win-btn>div.close {
-  background: rgba(158, 0, 0, 0.677);
+  // background: rgba(158, 0, 0, 0.677);
 }
 
 .win-btn>div.close>i::before {
@@ -273,13 +299,14 @@ main.main {
   bottom: 0;
   height: calc(100vh - 56px);
   width: calc(100vw - 80px);
-  border: 1px solid rgba(255, 255, 255, 16%);
+  border: 1px solid 303241;
   border-radius: 16px;
   border-bottom: unset;
   border-right: unset;
   border-bottom-left-radius: unset;
   border-top-right-radius: unset;
-  background-color: #ffffff04;
+  // border-top: 1.6px solid rgba(255, 255, 255, 0.235);
+  background-color: #ffffff0f;
   transition: all .3s ease;
 }
 
@@ -287,6 +314,16 @@ main.main-large {
   width: 100vw;
   border-radius: 0px;
   border-left: none;
+}
+
+.line {
+  width: 1px;
+  height: calc(100vh - 140px);
+  background-color: rgba(255, 255, 255, 0.12);
+  position: fixed;
+  right: 328px;
+  top: 100px;
+  transition: all .3s ease;
 }
 </style>
 <!-- <template>

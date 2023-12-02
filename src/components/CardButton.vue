@@ -1,5 +1,5 @@
 <template>
-  <div class="card-link" :style="cardStyle">
+  <div class="card-button" :style="cardStyle">
     <div class="title">
       <div class="icon"><i :class="icon"></i></div>
       <div>
@@ -11,7 +11,7 @@
         class="chevron-right"></i></div>
   </div>
 </template>
-
+  
 <script setup lang="ts">
 import { ref } from 'vue'
 
@@ -31,9 +31,9 @@ let margin = props.margin.split(',')
 let padding = props.padding.split(',')
 let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px;`
 </script>
-
+  
 <style lang="less" scoped>
-.card-link {
+.card-button {
   border-radius: var(--border-radius-large);
   background-color: var(--expander-background-color);
   border: 1px solid var(--expander-border-color);
@@ -43,21 +43,21 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   align-items: center;
   transition: all 0.1s ease;
   border-radius: var(--border-radius-large);
-  background-color: #ffffff77;
-  border: 1px solid #5000851d;
+  background-color: rgba(255, 255, 255, 0.056);
+  border: 1px solid #ffffff16;
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
 }
 
-
-.dialog .card-link {
-  background-color: #ffffffb9;
-  border: 1px solid #0000002e;
-}
-
-:active {
+.card-button:active {
   opacity: 0.8;
 }
+// .dialog .card-button {
+//   background-color: #ffffffb9;
+//   border: 1px solid #0000002e;
+// }
+
+
 
 .title {
   display: flex;
@@ -68,36 +68,37 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 2rem;
-  height: 2em;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   margin-right: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .icon i {
   font-family: 'fa-pro';
   font-style: normal;
-  font-size: calc(23px - var(--font-size-error));
+  font-size: 20px;
   font-weight: 500;
 }
 
-.title > div {
+.title>div {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-start;
 }
 
 .title h4 {
-  font-weight: 100;
+  font-weight: normal;
   height: 20.5px;
-  font-size: calc(15px - var(--font-size-error));
+  font-size: 15px;
 }
 
 .title p {
-  font-size: calc(12.5px - var(--font-size-error));
-  color: var(--text-color);
+  font-size: 12.5px;
+  color: #ffffffb7;
   opacity: 0.6;
-  margin: 0;
+  margin-top: 4px;
 }
 
 i.chevron-right {
