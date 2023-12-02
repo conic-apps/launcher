@@ -60,10 +60,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
-        "resizable": false,
+        "height": 640,
+        "resizable": true,
         "title": "Amethyst Launcher",
-        "width": 970,
+        "width": 1080,
         "focus": true,
         "transparent": true,
         "decorations": false

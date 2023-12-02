@@ -2,6 +2,7 @@
   <li class="sidebar-item" @mousedown="onMousedown($event)">
     <i class="fa-regular nav-icon" :id="icon"></i>
     <div class="text" v-if="title">{{ title }}</div>
+    <!-- todo: button active style -->
   </li>
 </template>
 
@@ -13,133 +14,53 @@ defineProps<{
   // click?: string,
 }>()
 
-function onMousedown(event: MouseEvent) {
-  let htmlElement = event.target as HTMLLIElement
-  $(htmlElement.lastElementChild).addClass('tooltip-hidden')
-  console.log(htmlElement.lastElementChild)
-  setTimeout(() => {
-    $(htmlElement.lastElementChild).removeClass('tooltip-hidden')
-  }, 500);
-}
+// function onMousedown(event: MouseEvent) {
+//   let htmlElement = event.target as HTMLLIElement
+//   $(htmlElement.lastElementChild).addClass('tooltip-hidden')
+//   console.log(htmlElement.lastElementChild)
+//   setTimeout(() => {
+//     $(htmlElement.lastElementChild).removeClass('tooltip-hidden')
+//   }, 500);
+// }
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
 .sidebar-item {
-  margin-bottom: 2px;
+  width: 58px;
+  height: 56px;
+  color: rgba(255, 255, 255, 0.6);
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  border-radius: 10px;
+  transition: all 50ms;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-item:active {
+  opacity: 0.6;
+  transform: scale(0.97);
+}
+
+.sidebar-item .text {
+  font-size: 12px;
+  margin-top: 4px;
 }
 
 .sidebar-item i {
-  pointer-events: none;
-}
-
-div.main-sidebar>div {
-  margin: 16px 8px 7px 8px;
-  height: calc(100% - 26px);
-  display: flex;
-  flex-direction: column;
-}
-
-div.main-sidebar ul.sidebar-links {
-  display: flex;
-  justify-content: space-between;
-  flex-grow: 1;
-  flex-direction: column;
-}
-
-div.main-sidebar ul.sidebar-links>div {
-  width: 100%;
-}
-
-div.main-sidebar li:active {
-  transform: scale(0.94);
-}
-
-div.main-sidebar li {
-  transition: transform 0.17s ease;
-  width: 100%;
-  height: 36px;
-  align-items: center;
-  border-radius: 6px;
-  white-space: nowrap;
-  display: flex;
-  padding-left: 7.5px;
-  position: relative;
-}
-
-div.main-sidebar li:hover {
-  background-color: #ffffff52;
-}
-
-div.main-sidebar .sidebar-links i {
-  font-size: calc(17.6px - var(--font-size-error));
-  font-weight: 400;
-  font-family: "fa-pro";
-  font-style: normal;
-  width: 24px;
-  display: inline-block;
-  margin-right: 0.7rem;
-  text-align: center;
-  flex-shrink: 0;
-  padding-left: 3px;
-}
-
-div.main-sidebar span {
-  display: inline-block;
-  white-space: nowrap;
-  font-size: calc(14px - var(--font-size-error));
-  transition: all 0.2s ease;
-}
-
-.sidebar-button {
-  width: 40px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--border-radius-small);
-  margin-left: 1.6px;
-}
-
-.sidebar-button i {
-  font-size: calc(16px - var(--font-size-error));
+  transform: scale(1.2);
   font-family: "fa-pro";
   font-style: normal;
   height: 1em;
-  width: 1em;
+  width: 100%;
   text-align: center;
   transition: all 0.2s cubic-bezier(0, 0.61, 0.16, 0.98);
-}
-
-.sidebar-button:active i {
-  transform: scale(0.7, 1);
-}
-
-.sidebar-close {
-  width: 60px !important;
-  margin-right: -60px !important;
-}
-
-.sidebar-close span {
-  opacity: 0;
-}
-
-.text {
-  font-size: 12px;
-  width: 100%;
-  
-}
-
-.sidebar-item:hover .tooltip {
-
-  opacity: 1;
-  transform: scale(1);
-}
-
-.tooltip-hidden {
-  opacity: 0 !important;
-  transform: scale(1) !important;
 }
 
 // .sidebar-item:active .tooltip {

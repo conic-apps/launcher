@@ -1,89 +1,57 @@
 <template>
-  <div class="search-bar">
+  <div class="search-bar" :style="style">
     <i class="magnifying-glass"></i>
-    <input type="text" v-model="value" @input="$emit('search', value)" placeholder="搜索" />
+    <input type="text" v-model="value" @input="$emit('search', value)" :placeholder="props.placeholder" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 let value = ref("")
+const props = withDefaults(defineProps<{
+  width?: string,
+  height?: string,
+  placeholder?: string
+}>(), {
+  width: '300px',
+  height: '34px',
+  placeholder: '搜索'
+});
+let style = `width: ${props.width}; height: ${props.height};`
 // todo: 添加search in 属性，搜索用的算法全部在这个组件中进行
 </script>
 
 <style lang="less" scoped>
 .search-bar {
-  border-radius: var(--border-radius-small);
-  margin-left: auto;
-  overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(var(--theme-color), 0.2);
-  height: 30px;
-  padding: 0 8px 2px 8px;
-  font-size: calc(16px - var(--font-size-error));
-  transition: all 0.1s ease;
-  pointer-events: all;
-  background: rgba(255, 255, 255, 0.658);
   display: flex;
   align-items: center;
-  margin-bottom: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0px 10px;
 }
 
 .search-bar i {
   font-family: 'fa-pro';
   font-style: normal;
-  font-size: calc(14px - var(--font-size-error));
+  font-size: calc(12px - var(--font-size-error));
   margin-right: 6px;
+  color: #808080;
+  transform: scale(0.95);
 }
 
-.search-bar:hover i {
-  color: rgba(var(--theme-color), 1);
-}
-
-.search-bar div.input {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.6rem;
-  position: relative;
-  height: 32px;
-  pointer-events: none;
-}
 
 .search-bar input {
   border: none;
-  outline: none;
-  border-bottom: 2px #000000;
   background: none;
-  padding: 0;
-  height: 100%;
+  outline: none;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
   width: 100%;
-  text-align: inherit;
-  z-index: 10;
-  font-size: calc(13px - --font-size-error);
+  margin-left: 6px;
 }
 
-.search-bar:hover {
-  background: #fff;
-}
-
-.underline {
-  background: rgba(var(--theme-color), 1);
-  margin-left: -8px;
-  height: 2px;
-  width: calc(100% + 16px);
-  transform: scale(0, 1);
-  opacity: 0;
-  border-radius: var(--border-radius-medium);
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-input:focus~.underline {
-  transform: scale(1);
-  opacity: 1;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-input:focus::-webkit-input-placeholder {
-  color: #00000000;
+.search-bar input::placeholder {
+  display: none;
 }
 </style>

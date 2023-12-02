@@ -1,15 +1,175 @@
 <template>
-  <div class="title-bar" data-tauri-drag-region>
-    
+  <div class="window" data-tauri-drag-region>
+    <div class="title-bar" data-tauri-drag-region>
+      <div></div>
+      <search-bar width="472px" placeholder="在 Amethyst 中搜索，或输入命令"></search-bar>
+      <div class="win-btn">
+        <div class="min"><i></i></div>
+        <div class="max"><i></i></div>
+        <div class="close"><i></i></div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div class="logo">
+      </div>
+      <ul class="sidebar-btns">
+        <sidebar-item title="游戏" icon="gamepad" @click="switchPage($event, 'wareHouse')"></sidebar-item>
+        <sidebar-item title="扩展" icon="puzzle-piece" @click="switchPage($event, 'community')"></sidebar-item>
+        <sidebar-item title="设置" icon="nav-5" @click="switchPage($event, 'settings')"
+          style="margin-top: auto;"></sidebar-item>
+        <sidebar-item title="更多" icon="cube" @click="switchPage($event, '#more');"></sidebar-item>
+      </ul>
+    </div>
+    <main class="main">
+
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import SearchBar from './components/SearchBar.vue';
+import SidebarItem from './components/SidebarItem.vue';
 
+function switchPage(_a: any, _b: any) {
+
+}
 </script>
 
 <style lang="less" scoped>
+.window {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
 
+.title-bar {
+  height: 56px;
+  width: calc(100% - 80px);
+  position: absolute;
+  left: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.win-btn {
+  display: flex;
+  align-items: center;
+  // border: 1px solid #f00;
+  margin-right: 20px;
+}
+
+.win-btn>div {
+  width: 20px;
+  height: 20px;
+  // border: 1px solid #f00;
+  border-radius: 50%;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 100ms;
+}
+
+.win-btn>div>i {
+  font-style: normal;
+  font-family: 'fa-pro';
+  font-weight: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.win-btn>div>i::before {
+  line-height: 1;
+  color: #ffffffb7;
+  opacity: 0;
+}
+
+.win-btn>div:hover>i::before {
+  opacity: 1;
+}
+
+.win-btn>div:active {
+  transform: scale(0.9);
+}
+
+.win-btn>div:active>i {
+  opacity: 0.9;
+}
+
+.win-btn>div.min {
+  background: rgb(117, 121, 0);
+}
+
+.win-btn>div.min>i::before {
+  content: '\f068';
+  font-size: 12px;
+  margin-top: 1px;
+}
+
+.win-btn>div.max {
+  background: rgb(2, 136, 0);
+}
+
+.win-btn>div.max>i::before {
+  content: '\f065';
+  font-size: 12px;
+  margin-top: 1.6px;
+  margin-left: 0.8px;
+}
+
+.win-btn>div.close {
+  background: rgba(158, 0, 0, 0.677);
+}
+
+.win-btn>div.close>i::before {
+  content: '\f00d';
+  font-size: 14px;
+  margin-top: 1px;
+  margin-left: 0.6px;
+}
+
+.sidebar {
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar .logo {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 30%);
+  border-radius: 50%;
+  margin-top: 16px;
+  flex-shrink: 0;
+}
+
+.sidebar .sidebar-btns {
+  width: 100%;
+  height: 100%;
+  margin-top: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+main.main {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: calc(100vh - 56px);
+  width: calc(100vw - 80px);
+  border: 1px solid rgba(255, 255, 255, 16%);
+  border-radius: 16px;
+  border-bottom: unset;
+  border-right: unset;
+  border-bottom-left-radius: unset;
+  border-top-right-radius: unset;
+}
 </style>
 <!-- <template>
   <div class="title-bar" data-tauri-drag-region>
