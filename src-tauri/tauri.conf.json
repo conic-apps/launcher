@@ -61,7 +61,7 @@
       {
         "fullscreen": false,
         "height": 640,
-        "resizable": true,
+        "resizable": false,
         "title": "Amethyst Launcher",
         "width": 1080,
         "focus": true,

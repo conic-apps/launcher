@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ul :class="canChangeInstance ? 'gamelist' : 'disabled gamelist'" style="transition: opacity .3s ease;" id="gamelist">
+    <!-- <ul :class="canChangeInstance ? 'gamelist' : 'disabled gamelist'" style="transition: opacity .3s ease;" id="gamelist">
       <div style="display: flex; align-items: center; margin-bottom: 8px;">
         <search-bar style="width: auto;"></search-bar>
         <i style="flex-shrink: 0;margin-left: 6px; margin-right: 4px;" @click="$emit('jump', 'allInstances')"
@@ -14,7 +14,7 @@
         </li>
       </TransitionGroup>
       <p v-if="instances.length == 0">启动器损坏</p>
-    </ul>
+    </ul> -->
     <div class="content">
       <div class="version" :style="banner">
         <div style="display: flex; align-items:start; justify-content: space-between;">
@@ -73,7 +73,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import cardLink from '@/components/CardLink.vue'
+import cardLink from '@/components/CardButton.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import Worlds from './dialogs/Worlds.vue'
 import Mods from './dialogs/Mods.vue'
@@ -307,7 +307,6 @@ i.button::before {
   transition: all 100ms ease;
   display: inline-block;
   overflow: hidden;
-  font-family: 'Harmony-light';
 }
 
 .start-game {

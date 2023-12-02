@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div>
     <expander :padding="[22, 24, 22, 24]" :expander-header="false">
       <div class="info-bar">
@@ -279,4 +279,4 @@ watch(instanceName, (newValue) => {
   opacity: 0.5;
   pointer-events: none;
 }
-</style>
+</style> -->

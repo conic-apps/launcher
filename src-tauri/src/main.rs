@@ -34,14 +34,13 @@ pub struct Storage {
 
 #[tokio::main]
 async fn main() {
+    println!("1");
+    let start = std::time::Instant::now();
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    tokio::spawn(initialize_application());
 
-    DATA_LOCATION.set(DataLocation::new("test")).unwrap();
-    PLATFORM_INFO.set(PlatformInfo::new().await).unwrap();
-    HTTP_CLIENT
-        .set(reqwest::ClientBuilder::new().build().unwrap())
-        .unwrap();
-    initialize_application_data().await;
+    let time = start.elapsed().clone();
+    println!("第一阶段加载用时: {:?}", time);
     tauri::Builder::default()
         .manage(Storage {
             active_instance: Arc::new(Mutex::new("".to_string())),
@@ -63,14 +62,30 @@ async fn main() {
             get_instance_config_from_string,
             install_command,
         ])
-        .setup(|app| {
+        .setup(move |app| {
             MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
+            let time = start.elapsed().clone();
+            println!("第二阶段加载用时: {:?}", time);
+            println!("窗口已加载");
+            println!(
+                "启动器正于{name}环境中运行",
+                name = PLATFORM_INFO.get().unwrap().name
+            );
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running amethyst launcher!");
 }
 
+async fn initialize_application() {
+    DATA_LOCATION.set(DataLocation::new("test")).unwrap();
+    PLATFORM_INFO.set(PlatformInfo::new().await).unwrap();
+    HTTP_CLIENT
+        .set(reqwest::ClientBuilder::new().build().unwrap())
+        .unwrap();
+    initialize_application_data().await;
+    println!("初始化完成");
+}
 async fn initialize_application_data() {
     let platform_info = PLATFORM_INFO.get().unwrap();
     match platform_info.os_type {

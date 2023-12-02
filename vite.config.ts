@@ -13,6 +13,7 @@ export default defineConfig({
     }
   },
   build: {
-    target: 'chrome89'
+    minify: 'esbuild',
+    target: 'chrome89',
   }
 })

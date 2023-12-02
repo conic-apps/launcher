@@ -1,5 +1,5 @@
 <template>
-  <li class="sidebar-item" @mousedown="onMousedown($event)">
+  <li class="sidebar-item">
     <i class="fa-regular nav-icon" :id="icon"></i>
     <div class="text" v-if="title">{{ title }}</div>
     <!-- todo: button active style -->
@@ -28,7 +28,7 @@ defineProps<{
 .sidebar-item {
   width: 58px;
   height: 56px;
-  color: rgba(255, 255, 255, 0.6);
+  // color: rgba(255, 255, 255, 0.6);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,7 +40,7 @@ defineProps<{
 
 .sidebar-item:hover {
   background: rgba(255, 255, 255, 0.13);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .sidebar-item:active {
