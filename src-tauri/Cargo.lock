@@ -81,6 +81,7 @@ dependencies = [
 [[package]]
 name = "aml_core"
 version = "0.1.0"
+source = "git+https://github.com/Broken-Deer/Amethyst-Launcher-Core#0c0aefa12eaf2ada6ab6efce0072a76cb16ebb03"
 dependencies = [
  "anyhow",
  "async-trait",
