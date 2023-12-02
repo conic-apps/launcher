@@ -68,12 +68,12 @@ let iconStyle = computed(() => {
 
 const transitionStyle = 'all 250ms ease';
 function beforeEnter(element: HTMLElement) {
-  $(element.firstElementChild).removeClass('hidden')
+  $(element.firstElementChild!).removeClass('hidden')
   element.style.transition = transitionStyle
   element.style.height = '0px'
 }
 function enter(element: HTMLElement) {
-  const height = $(element.firstElementChild).outerHeight(true)
+  const height = $(element.firstElementChild!).outerHeight(true)
   element.style.height = `${height}px`
   element.style.overflow = 'hidden'
 }
@@ -84,7 +84,7 @@ function afterEnter(element: HTMLElement) {
 }
 function beforeLeave(element: HTMLElement) {
   element.style.transition = transitionStyle
-  const height = $(element.firstElementChild).outerHeight(true)
+  const height = $(element.firstElementChild!).outerHeight(true)
   element.style.height = `${height}px`
   element.style.overflow = 'hidden'
 }

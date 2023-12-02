@@ -51,7 +51,7 @@ let orbit: ComputedRef<string> = computed((): string => {
   if (lessThanMinimum) {
     return 'width: 0px;';
   } else {
-    return `width: ${(value.value - 1 - min) / (max - min) * (sliderOuterWidth - 20) + 10}px;`
+    return `width: ${(value.value - 1 - min) / (max - min) * (sliderOuterWidth! - 20) + 10}px;`
   }
 })
 

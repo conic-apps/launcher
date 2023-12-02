@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import CardLink from '@/components/CardLink.vue';
+import CardLink from '@/components/CardButton.vue';
 import IconButton from '@/components/IconButton.vue';
 
 let loading = ref(false)

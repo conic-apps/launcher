@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <dialog-vue :visible="show" width="460" height="480">
     <div class="title">
       <p>管理下载源</p>
@@ -120,4 +120,4 @@ let sources = ref([
 .command-button {
   margin: 0 4px;
 }
-</style>
+</style> -->

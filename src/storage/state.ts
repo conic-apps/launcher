@@ -1,1 +1,0 @@
-// todo: launched, launching, installing, and some error state
