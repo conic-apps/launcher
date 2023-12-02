@@ -4,8 +4,21 @@ on:
     branches:
       - master
 
+env:
+  VERSION: 0.1.0
+
 jobs:
+  generate-release-body: 
+    name: Generate release body
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+    outputs: 
+      release-body: "1"
   release:
+    needs: ['generate-release-body']
     permissions:
       contents: write
     strategy:
@@ -48,8 +61,268 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v0.x # This only works if your workflow triggers on new tags.
+          tagName: ${{ env.VERSION }} # This only works if your workflow triggers on new tags.
           releaseName: 'Magical launcher v__VERSION__' # tauri-action replaces \_\_VERSION\_\_ with the app version.
-          releaseBody: ''
+          releaseBody: ${{ needs.generate-release-body.outputs.release-body }}
           releaseDraft: true
-          prerelease: false
+          prerelease: true
+
+# name: Amethyst Launcher Auto Build
+# on:
+#   push:
+#     branches:
+#       - master
+
+# # We need this to be able to create releases.
+# permissions:
+#   contents: write
+
+# env:
+#   VERSION: '0.1.0'
+
+# jobs:
+#     # The create-release job runs purely to initialize the GitHub release itself,
+#   # and names the release after the `x.y.z` tag that was pushed. It's separate
+#   # from building the release so that we only create the release once.
+#   create-release:
+#     name: create-release
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       # - name: Get the release version from the tag
+#       #   if: env.VERSION == ''
+#       #   run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+#       # - name: Show the version
+#       #   run: |
+#       #     echo "version is: $VERSION"
+#       # - name: Check that tag version and Cargo.toml version are the same
+#       #   shell: bash
+#       #   run: |
+#       #     if ! grep -q "version = \"$VERSION\"" Cargo.toml; then
+#       #       echo "version does not match Cargo.toml" >&2
+#       #       exit 1
+#       #     fi
+#       - name: Create GitHub release
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         run: | 
+#           echo "version is: $VERSION" && gh release create $VERSION --draft --title $VERSION
+#     # outputs:
+#     #   version: ${{ env.VERSION }}
+
+#   build-release:
+#     name: test
+#     needs: ['create-release']
+#     runs-on: ${{ matrix.os }}
+#     env:
+#       # For some builds, we use cross to test on 32-bit and big-endian
+#       # systems.
+#       CARGO: cargo
+#       # When CARGO is set to CROSS, this is set to `--target matrix.target`.
+#       TARGET_FLAGS:
+#       # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
+#       TARGET_DIR: ./target
+#       # Bump this as appropriate. We pin to a version to make sure CI
+#       # continues to work as cross releases in the past have broken things
+#       # in subtle ways.
+#       CROSS_VERSION: v0.2.5
+#       # Emit backtraces on panics.
+#       RUST_BACKTRACE: 1
+#       # Build static releases with PCRE2.
+#       PCRE2_SYS_STATIC: 1
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         include:
+#         - build: linux
+#           os: ubuntu-20.04
+#           rust: nightly
+#           target: x86_64-unknown-linux-musl
+#           strip: x86_64-linux-musl-strip
+#         # - build: stable-x86
+#         #   os: ubuntu-20.04
+#         #   rust: stable
+#         #   target: i686-unknown-linux-gnu
+#         #   strip: x86_64-linux-gnu-strip
+#         #   qemu: i386
+#         # - build: stable-aarch64
+#         #   os: ubuntu-20.04
+#         #   rust: stable
+#         #   target: aarch64-unknown-linux-gnu
+#         #   strip: aarch64-linux-gnu-strip
+#         #   qemu: qemu-aarch64
+#         # - build: stable-powerpc64
+#         #   os: ubuntu-20.04
+#         #   rust: stable
+#         #   target: powerpc64-unknown-linux-gnu
+#         #   strip: powerpc64-linux-gnu-strip
+#         #   qemu: qemu-ppc64
+#         # - build: stable-s390x
+#         #   os: ubuntu-20.04
+#         #   rust: stable
+#         #   target: s390x-unknown-linux-gnu
+#         #   strip: s390x-linux-gnu-strip
+#         #   qemu: qemu-s390x
+#         # - build: macos
+#         #   os: macos-latest
+#         #   rust: nightly
+#         #   target: x86_64-apple-darwin
+#         # - build: win-msvc
+#         #   os: windows-latest
+#         #   rust: nightly
+#         #   target: x86_64-pc-windows-msvc
+#         # - build: win-gnu
+#         #   os: windows-latest
+#         #   rust: nightly-x86_64-gnu
+#         #   target: x86_64-pc-windows-gnu
+#         # - build: win32-msvc
+#         #   os: windows-latest
+#         #   rust: nightly
+#         #   target: i686-pc-windows-msvc
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Install dependencies (ubuntu only)
+#         if: matrix.os == 'ubuntu-20.04'
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev librsvg2-dev
+      
+#       - name: Set target variables
+#         shell: bash
+#         run: |
+#           echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
+#           echo "TARGET_DIR=./src-tauri/${{ matrix.target }}" >> $GITHUB_ENV
+
+#       - name: Build release binary
+#         shell: bash
+#         run: |
+#           echo "cargo command is: ${{ env.CARGO }}"
+#           echo "target flag is: ${{ env.TARGET_FLAGS }}"
+#           echo "target dir is: ${{ env.TARGET_DIR }}"
+#           ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
+#           if [ "${{ matrix.os }}" = "windows-latest" ]; then
+#             bin="src-tauri/${{ matrix.target }}/release/amethyst-launcher.exe"
+#           else
+#             bin="src-tauri/${{ matrix.target }}/release/amethyst-launcher"
+#           fi
+#           echo "BIN=$bin" >> $GITHUB_ENV
+
+#           ls src-tauri
+#           ls src-tauri/target
+#           ls src-tauri/target/release
+#       # - name: Generate Test File
+#       #   shell: bash
+#       #   run:  echo 111 >> ./1.test
+      
+#       # - name: Upload Release
+#       #   env:
+#       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#       #   shell: bash
+#       #   run: |
+#       #     echo "version is: $VERSION" && gh release upload $VERSION ./1.test --clobber
+
+# # jobs:
+# #   release:
+# #     permissions:
+# #       contents: write
+    
+# #     strategy:
+# #       fail-fast: false
+# #       matrix:
+# #         include:
+# #         - build: linux
+# #           os: ubuntu-20.04
+# #           rust: nightly
+# #           target: x86_64-unknown-linux-musl
+# #           strip: x86_64-linux-musl-strip
+# #         - build: stable-x86
+# #           os: ubuntu-20.04
+# #           rust: stable
+# #           target: i686-unknown-linux-gnu
+# #           strip: x86_64-linux-gnu-strip
+# #           qemu: i386
+# #         - build: stable-aarch64
+# #           os: ubuntu-20.04
+# #           rust: stable
+# #           target: aarch64-unknown-linux-gnu
+# #           strip: aarch64-linux-gnu-strip
+# #           qemu: qemu-aarch64
+# #         - build: stable-powerpc64
+# #           os: ubuntu-20.04
+# #           rust: stable
+# #           target: powerpc64-unknown-linux-gnu
+# #           strip: powerpc64-linux-gnu-strip
+# #           qemu: qemu-ppc64
+# #         - build: stable-s390x
+# #           os: ubuntu-20.04
+# #           rust: stable
+# #           target: s390x-unknown-linux-gnu
+# #           strip: s390x-linux-gnu-strip
+# #           qemu: qemu-s390x
+# #         - build: macos
+# #           os: macos-latest
+# #           rust: nightly
+# #           target: x86_64-apple-darwin
+# #         - build: win-msvc
+# #           os: windows-latest
+# #           rust: nightly
+# #           target: x86_64-pc-windows-msvc
+# #         - build: win-gnu
+# #           os: windows-latest
+# #           rust: nightly-x86_64-gnu
+# #           target: x86_64-pc-windows-gnu
+# #         - build: win32-msvc
+# #           os: windows-latest
+# #           rust: nightly
+# #           target: i686-pc-windows-msvc
+# #     runs-on: ${{ matrix.os }}
+
+# #     steps:
+# #       - name: Checkout repository
+# #         uses: actions/checkout@v3
+
+# #       - name: Install dependencies (ubuntu only)
+# #         if: matrix.os == 'ubuntu-20.04'
+# #         run: |
+# #           sudo apt-get update
+# #           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev librsvg2-dev
+
+# #       - name: Rust setup
+# #         uses: dtolnay/rust-toolchain@stable
+
+# #       - name: Rust cache
+# #         uses: swatinem/rust-cache@v2
+# #         with:
+# #           workspaces: './src-tauri -> target'
+
+# #       - name: Sync node version and setup cache
+# #         uses: actions/setup-node@v3
+# #         with:
+# #           node-version: 'lts/*'
+# #           cache: 'yarn' # Set this to npm, yarn or pnpm.
+
+# #       - name: Install frontend dependencies
+# #         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
+# #         run: yarn install # Change this to npm, yarn or pnpm.
+
+# #       - name: Build the app
+# #         run: |
+# #         cargo build --target ${{ env.TARGET }}
+# #         bin="target/${{ env.TARGET }}/debug/rg"
+# #         echo "BIN=$bin" >> $GITHUB_ENV
+        
+# #       # - name: Build the app
+# #       #   uses: tauri-apps/tauri-action@v0
+
+# #       #   env:
+# #       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+# #       #   with:
+# #       #     tagName: v0.x # This only works if your workflow triggers on new tags.
+# #       #     releaseName: 'Magical launcher v__VERSION__' # tauri-action replaces \_\_VERSION\_\_ with the app version.
+# #       #     releaseBody: ''
+# #       #     releaseDraft: true
+# #       #     prerelease: false
+
