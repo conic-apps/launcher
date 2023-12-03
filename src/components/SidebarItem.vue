@@ -40,7 +40,7 @@ defineProps<{
 
 .sidebar-item:hover {
   background: rgba(255, 255, 255, 0.13);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  // border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .sidebar-item:active {
@@ -60,7 +60,7 @@ defineProps<{
   height: 1em;
   width: 100%;
   text-align: center;
-  transition: all 0.2s cubic-bezier(0, 0.61, 0.16, 0.98);
+  // transition: all 0.2s cubic-bezier(0, 0.61, 0.16, 0.98);
 }
 
 // .sidebar-item:active .tooltip {

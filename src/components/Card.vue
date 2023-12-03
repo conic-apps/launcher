@@ -1,39 +1,42 @@
 <template>
-  <div class="card-button" :style="cardStyle">
+  <div class="card" :style="cardStyle">
     <div class="title">
-      <div class="icon"><i :class="icon"></i></div>
+      <div class="icon" :style="iconStyle"><i :class="icon"></i></div>
       <div>
         <h4 id="text">{{ title }}</h4>
         <p v-if="description" id="text">{{ description }}</p>
       </div>
     </div>
-    <div style="width: 36px;height: 36px;display: flex;align-items: center;justify-content: center;"><i
-        class="chevron-right"></i></div>
+    <div style="width: 36px;height: 36px;display: flex;align-items: center;justify-content: center;">
+      <!-- <slot></slot>  // todo: controll buttons  -->
+    </div>
   </div>
 </template>
-  
-<script setup lang="ts">
-import { ref } from 'vue'
 
+<script setup lang="ts">
 const props = withDefaults(defineProps<{
   title: string,
   description?: string,
-  icon: string,
+  icon?: string,
   margin?: string,
   boxShadow?: boolean,
-  padding?: string
+  padding?: string,
+  iconSize?: string
 }>(), {
   margin: '',
   boxShadow: true,
-  padding: '16,18,16,18'
+  padding: '16,18,16,18',
+  icon: '',
 })
 let margin = props.margin.split(',')
 let padding = props.padding.split(',')
 let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px;`
+let iconSize = props.iconSize?.split(',')
+let iconStyle = iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px` : ''
 </script>
-  
+
 <style lang="less" scoped>
-.card-button {
+.card {
   border-radius: var(--border-radius-large);
   background-color: var(--expander-background-color);
   border: 1px solid var(--expander-border-color);
@@ -49,15 +52,9 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   transition: all 0.1s ease;
 }
 
-.card-button:active {
+.card:active {
   opacity: 0.8;
 }
-// .dialog .card-button {
-//   background-color: #ffffffb9;
-//   border: 1px solid #0000002e;
-// }
-
-
 
 .title {
   display: flex;
@@ -70,9 +67,13 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   align-items: center;
   width: 48px;
   height: 48px;
-  border-radius: 10px;
+  border-radius: 6px;
   margin-right: 6px;
   background-color: rgba(255, 255, 255, 0.1);
+  background-position: center;
+  background-size: contain;
+  background-repeat: none;
+  image-rendering:pixelated;
 }
 
 .icon i {
@@ -102,9 +103,5 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
 
 i.chevron-right {
   transition: transform .2s ease;
-}
-
-.card-button:hover i.chevron-right {
-  transform: translate(4px, 0px);
 }
 </style>
