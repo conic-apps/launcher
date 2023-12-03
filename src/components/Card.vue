@@ -21,18 +21,21 @@ const props = withDefaults(defineProps<{
   margin?: string,
   boxShadow?: boolean,
   padding?: string,
-  iconSize?: string
+  iconSize?: string,
+  iconBackground?: boolean,
 }>(), {
   margin: '',
   boxShadow: true,
   padding: '16,18,16,18',
   icon: '',
+  iconBackground: true
 })
 let margin = props.margin.split(',')
 let padding = props.padding.split(',')
 let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px;`
 let iconSize = props.iconSize?.split(',')
-let iconStyle = iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px` : ''
+let iconStyle = (iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px;` : '') + (props.iconBackground ? '' : 'background: none;')
+
 </script>
 
 <style lang="less" scoped>

@@ -7,13 +7,20 @@
         <assets-manager :instance-name="currentInstance" style="margin-top: 20px;"></assets-manager>
       </div>
       <div class="row-2">
-        <div class="group-name">
+        <div class="group-name"> <!--todo: move to a component-->
           <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
             <p style="margin-left: 4px;">帐户</p>
             <button class="group-button" style="margin-right: 6px;">查看全部 <i class="chevron-right" style="font-size: 12px;"></i></button>
           </div>
         </div>
         <account-manager></account-manager>
+        <div class="group-name">
+          <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
+            <p style="margin-left: 4px;"></p>
+            <button class="group-button" style="margin-right: 6px;">查看全部 <i class="chevron-right" style="font-size: 12px;"></i></button>
+          </div>
+        </div>
+        <instance-manager></instance-manager>
       </div>
     </div>
   </keep-alive>
@@ -23,6 +30,7 @@
 import InstanceInfo from '@/components/InstanceInfo.vue';
 import AssetsManager from '@/components/AssetsManager.vue';
 import AccountManager from '@/components/AccountManager.vue';
+import InstanceManager from '@/components/InstanceManager.vue';
 
 import { ref } from 'vue';
 
