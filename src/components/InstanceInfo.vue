@@ -17,7 +17,7 @@
         <i class="button circle-info"></i>
         <i class="button star"></i>
         <button class="game-button"><i class="play"
-                style="font-family: 'fa-pro'; font-style: normal; margin-right: 5px; font-weight: 100;"></i>开始游戏</button>
+            style="font-family: 'fa-pro'; font-style: normal; margin-right: 5px; font-weight: 100;"></i>开始游戏</button>
       </div>
     </div>
   </div>
@@ -84,6 +84,8 @@ switch (props.gameButtonType) {
 
 .instance-name {
   font-size: 22px;
+  display: flex;
+  align-items: center;
 }
 
 .line-a,

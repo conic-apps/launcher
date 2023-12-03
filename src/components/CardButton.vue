@@ -90,22 +90,21 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
 
 .title h4 {
   font-weight: normal;
-  height: 20.5px;
-  font-size: 15px;
+  font-size: 15.5px;
 }
 
 .title p {
   font-size: 12.5px;
   color: #ffffffb7;
   opacity: 0.6;
-  margin-top: 4px;
+  margin-top: 0px;
 }
 
 i.chevron-right {
   transition: transform .2s ease;
 }
 
-.card-link:hover i.chevron-right {
+.card-button:hover i.chevron-right {
   transform: translate(4px, 0px);
 }
 </style>

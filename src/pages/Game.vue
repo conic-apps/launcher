@@ -8,8 +8,12 @@
       </div>
       <div class="row-2">
         <div class="group-name">
-          帐户
+          <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
+            <p style="margin-left: 4px;">帐户</p>
+            <button class="group-button" style="margin-right: 6px;">查看全部 <i class="chevron-right" style="font-size: 12px;"></i></button>
+          </div>
         </div>
+        <account-manager></account-manager>
       </div>
     </div>
   </keep-alive>
@@ -18,6 +22,8 @@
 <script setup lang="ts">
 import InstanceInfo from '@/components/InstanceInfo.vue';
 import AssetsManager from '@/components/AssetsManager.vue';
+import AccountManager from '@/components/AccountManager.vue';
+
 import { ref } from 'vue';
 
 let currentInstance = ref("1.20")
@@ -48,9 +54,20 @@ let currentInstance = ref("1.20")
   flex-shrink: 0;
 }
 
+// todo: move to main.css
 .group-name {
   width: 100%;
   height: 32px;
-  font-size: 16px;
+  font-size: 15.5px;
+  margin-bottom: 8px;
+}
 
-}</style>
+.group-button {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+</style>

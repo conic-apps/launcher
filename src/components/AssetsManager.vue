@@ -1,13 +1,13 @@
 <template>
   <div class="assets">
-    <div>
+    <div class="first-row">
       <card-button icon="map" title="地图存档" :class="savesIsLoading ? 'disabled' : ''" margin="0,0,10,0"
         :description="savesManagerDesc" @click="show.worlds = true"></card-button>
       <card-button icon="puzzle-piece" title="模组" :class="modIsLoading ? 'disabled' : ''" :description="modManagerDesc"
         margin="0,0,10,0" @click="show.mods = true"></card-button>
       <card-button icon="puzzle-piece" title="截图" margin="0,0,0,0" description="正在加载"></card-button>
     </div>
-    <div>
+    <div class="second-row">
       <card-button icon="palette" title="资源包" :class="resourcepacksIsLoading ? 'disabled' : ''"
         :description="resourcepacksManagerDesc" margin="0,0,10,0" @click="show.resourcepacks = true"></card-button>
       <card-button icon="lightbulb-on" title="光影包" :class="shaderpackIsLoading ? 'disabled' : ''"
@@ -37,11 +37,11 @@
   width: 100%;
 }
 
-.assets>div:first-child {
+.assets>div.first-row {
   margin-right: 5px;
 }
 
-.assets>div:last-child {
+.assets>div.second-row {
   margin-left: 5px;
 }
 </style>
