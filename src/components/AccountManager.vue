@@ -15,8 +15,6 @@ setTimeout(() => {
 </script>
 
 <style lang="less" scoped>
-div.account-manager {}
-
 div.account-manager .icon {
   background-position: center;
   background-size:contain;
