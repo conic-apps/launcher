@@ -299,7 +299,7 @@ main.main {
   bottom: 0;
   height: calc(100vh - 56px);
   width: calc(100vw - 80px);
-  border: 1px solid 303241;
+  border: 1px solid #303241;
   border-radius: 16px;
   border-bottom: unset;
   border-right: unset;
