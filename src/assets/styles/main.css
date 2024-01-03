@@ -4,13 +4,9 @@
     src: url(../fonts/HarmonyOS_Sans_SC_Regular.ttf);
 }
 
-/* @font-face {
-    font-family: 'harmony';
-    font-weight: lighter;
-    src: url(../fonts/HarmonyOS_Sans_SC_Light.ttf);
-} */
-
 :root {
+    /* todo: if our theme is light, we must change this to 100% */
+    --picture-brightness: 108%;
     --theme-color: 78, 64, 186;
     --border-radius-large: 10px;
     --border-radius-medium: 8px;
@@ -216,6 +212,7 @@ body {
     /* padding: 5px; */
     position: relative;
     background: #05050500;
+    color-scheme: dark;
 }
 
 .ball-a,
@@ -293,7 +290,8 @@ body {
     /* background-image: url(/1168337.jpg); */
     /* background-image: linear-gradient(45deg, #4e40ba, #5848d2); */
     /* background-image: url(/palm-leaf.webp); */
-    background-image: linear-gradient(rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)), linear-gradient(#050505, #050505);
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)), linear-gradient(to bottom right, rgb(0 20 8), rgb(0, 0, 0), rgb(0 20 44));
     /* border: 1px solid rgba(255, 255, 255, 0.16); */
     /* backdrop-filter: blur(4px); */
     /* -webkit-backdrop-filter: blur(10px); */

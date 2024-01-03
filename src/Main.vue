@@ -28,8 +28,8 @@
       </Transition>
 
     </main>
-    <div class="line">
-    </div>
+    <!-- <div class="line">
+    </div> -->
   </div>
 </template>
 
@@ -187,7 +187,7 @@ function closeSearchPanel() {
   align-items: center;
   justify-content: center;
   transition: transform 100ms;
-  background: #ffffff34;
+  background: #ffffff40;
 }
 
 .win-btn>div>i {
@@ -299,13 +299,12 @@ main.main {
   bottom: 0;
   height: calc(100vh - 56px);
   width: calc(100vw - 80px);
-  border: 1px solid #303241;
+  // border: 1px solid #303241;
   border-radius: 16px;
   border-bottom: unset;
   border-right: unset;
   border-bottom-left-radius: unset;
   border-top-right-radius: unset;
-  // border-top: 1.6px solid rgba(255, 255, 255, 0.235);
   background-color: #ffffff0f;
   transition: all .3s ease;
 }

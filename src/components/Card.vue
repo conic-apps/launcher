@@ -50,7 +50,7 @@ let iconStyle = (iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px;`
   transition: all 0.1s ease;
   border-radius: var(--border-radius-large);
   background-color: rgba(255, 255, 255, 0.056);
-  border: 1px solid #ffffff16;
+  border: 1px solid #ffffff08;
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
 }

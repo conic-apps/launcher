@@ -311,6 +311,7 @@ i.grass-block {
     height: 100%;
     background-image: url(../images/Grass_Block.webp);
     background-size: cover;
+    filter: brightness(var(--picture-brightness));
 }
 
 i.crafting-table {
