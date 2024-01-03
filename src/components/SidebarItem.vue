@@ -11,17 +11,7 @@ import $ from 'jquery'
 defineProps<{
   title?: string,
   icon: string,
-  // click?: string,
 }>()
-
-// function onMousedown(event: MouseEvent) {
-//   let htmlElement = event.target as HTMLLIElement
-//   $(htmlElement.lastElementChild).addClass('tooltip-hidden')
-//   console.log(htmlElement.lastElementChild)
-//   setTimeout(() => {
-//     $(htmlElement.lastElementChild).removeClass('tooltip-hidden')
-//   }, 500);
-// }
 </script>
 
 <style lang="less" scoped>
@@ -35,11 +25,11 @@ defineProps<{
   justify-content: center;
   margin-top: 8px;
   border-radius: 10px;
-  transition: all 50ms;
+  transition: all 100ms;
 }
 
 .sidebar-item:hover {
-  background: rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.08);
   // border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
@@ -50,7 +40,7 @@ defineProps<{
 
 .sidebar-item .text {
   font-size: 12px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .sidebar-item i {
