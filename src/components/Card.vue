@@ -94,7 +94,9 @@ let iconStyle = (iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px;`
 
 .title h4 {
   font-weight: normal;
-  font-size: 15.5px;
+  font-size: 14.5px;
+  margin-bottom:0.15em;
+  margin-top: 0.08em;
 }
 
 .title p {

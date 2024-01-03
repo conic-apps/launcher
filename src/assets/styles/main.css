@@ -1,3 +1,15 @@
+@font-face {
+    font-family: 'harmony';
+    /* font-weight: normal; */
+    src: url(../fonts/HarmonyOS_Sans_SC_Regular.ttf);
+}
+
+/* @font-face {
+    font-family: 'harmony';
+    font-weight: lighter;
+    src: url(../fonts/HarmonyOS_Sans_SC_Light.ttf);
+} */
+
 :root {
     --theme-color: 78, 64, 186;
     --border-radius-large: 10px;
@@ -168,6 +180,8 @@ h4 {
     -webkit-user-select: none;
     cursor: default;
     /* color: #f2f6fa; */
+    font-family: harmony;
+    line-height: 1;
 }
 
 *::selection {
@@ -199,7 +213,7 @@ body {
         linear-gradient(rgba(128, 59, 255, 0.208), rgb(0, 0, 0, 0.3)),
         linear-gradient(#000, #000); */
     border-radius: 16px;
-    padding: 5px;
+    /* padding: 5px; */
     position: relative;
     background: #05050500;
 }
@@ -215,7 +229,7 @@ body {
     height: 160px;
     border-radius: 50%;
     background-color: rgba(0, 60, 255, 0.422);
-    filter: blur(200px);
+    /* filter: blur(200px); */
     bottom: -10px;
     right: 200px;
     /* animation: 10s  ball-a-move cubic-bezier(1, 1, 0, 0) alternate infinite; */
@@ -226,7 +240,7 @@ body {
     height: 200px;
     border-radius: 50%;
     background-color: rgba(0, 213, 255, 0.469);
-    filter: blur(200px);
+    /* filter: blur(200px); */
     top: -10px;
     left: 200px;
     /* animation: 10s  ball-b-move cubic-bezier(1, 1, 0, 0) alternate infinite; */
@@ -281,8 +295,8 @@ body {
     /* background-image: url(/palm-leaf.webp); */
     background-image: linear-gradient(rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)), linear-gradient(#050505, #050505);
     /* border: 1px solid rgba(255, 255, 255, 0.16); */
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(10px);
+    /* backdrop-filter: blur(4px); */
+    /* -webkit-backdrop-filter: blur(10px); */
     transition: all 0.25s ease-in;
 }
 
