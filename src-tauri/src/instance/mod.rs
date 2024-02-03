@@ -1,14 +1,4 @@
-use std::{
-    path::PathBuf,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        mpsc::channel,
-        Arc,
-    },
-    thread,
-    time::Duration,
-};
-
+use crate::{Storage, DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
 use aml_core::{
     core::{folder::MinecraftLocation, version::VersionManifest},
     install::{
@@ -26,9 +16,17 @@ use base64::{engine::general_purpose, Engine};
 use futures::StreamExt;
 use notify::{watcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
+use std::{
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        mpsc::channel,
+        Arc,
+    },
+    thread,
+    time::Duration,
+};
 use tokio::{fs, io::AsyncWriteExt};
-
-use crate::{Storage, DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct InstanceConfig {
