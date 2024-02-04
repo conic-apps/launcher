@@ -45,7 +45,7 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   align-items: center;
   transition: all 0.1s ease;
   // border-radius: var(--border-radius-large);
-  background-color: #f8f8f8;
+  background-color: #08080800;
   border-bottom: 1px solid #5000851d;
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
@@ -53,7 +53,7 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
 
 
 .dialog .setting-item {
-  background-color: #ffffffb9;
+  background-color: #000000b9;
   border: 1px solid #0000002e;
 }
 

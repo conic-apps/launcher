@@ -13,7 +13,6 @@ const app = createApp(App)
 app.use(createPinia())
 
 app.mount('#window')
-// import { invoke, window, } from '@tauri-apps/api'
 
 // // 调用命令
 // // 在应用窗口中右键，打开开发者工具
@@ -36,4 +35,11 @@ app.mount('#window')
 //   x: (await window.getCurrent().innerPosition()).x,
 //   y: (await window.getCurrent().innerPosition()).y
 // },);
+import { event } from '@tauri-apps/api'
 
+window.onload = () => {
+    console.log(
+        `Amethyst Launcher`
+    )
+    event.emit("fontend-loaded")
+}

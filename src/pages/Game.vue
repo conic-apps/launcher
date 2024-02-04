@@ -7,20 +7,26 @@
         <assets-manager :instance-name="currentInstance" style="margin-top: 20px;"></assets-manager>
       </div>
       <div class="row-2">
-        <div class="group-name"> <!--todo: move to a component-->
+        <!-- <div class="group-name"> 
           <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
             <p style="margin-left: 4px;">帐户</p>
-            <button class="group-button" style="margin-right: 6px;">查看全部 <i class="chevron-right" style="font-size: 12px;"></i></button>
+            <button class="group-button" style="margin-right: 6px;"><i class="chevron-right" style="font-size: 12px;"></i></button>
           </div>
         </div>
-        <account-manager></account-manager>
-        <div class="group-name">
+        <account-manager></account-manager> -->
+        <div class="group-name"> <!--todo: move to a component-->
           <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
-            <p style="margin-left: 4px;"></p>
-            <button class="group-button" style="margin-right: 6px;">查看全部 <i class="chevron-right" style="font-size: 12px;"></i></button>
+            <p style="margin-left: 4px;">游戏</p>
+            <button class="group-button" style="margin-right: 6px;"><i class="chevron-right" style="font-size: 12px;"></i></button>
           </div>
         </div>
         <instance-manager></instance-manager>
+                <div class="group-name"> 
+          <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
+            <p style="margin-left: 4px;">好友</p>
+            <button class="group-button" style="margin-right: 6px;"><i class="chevron-right" style="font-size: 12px;"></i></button>
+          </div>
+        </div>
       </div>
     </div>
   </keep-alive>
@@ -50,15 +56,16 @@ let currentInstance = ref("1.20")
   display: flex;
   flex-direction: column;
   // border: 1px solid #fff;
-  padding: 24px 24px;
 }
 
 .row-1 {
+  padding: 24px 24px;
   width: 100%;
 }
 
 .row-2 {
   width: 328px;
+  padding: 24px 24px 24px 0 ;
   flex-shrink: 0;
 }
 
@@ -66,7 +73,7 @@ let currentInstance = ref("1.20")
 .group-name {
   width: 100%;
   height: 32px;
-  font-size: 15.5px;
+  font-size: 14.5px;
   margin-bottom: 8px;
 }
 
@@ -74,8 +81,16 @@ let currentInstance = ref("1.20")
   background: rgba(255, 255, 255, 0.08);
   border: none;
   border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 12px;
+  height: 20px;
+  width:  20px;
+  font-size: 10px;
+}
+
+.group-button, .group-button * {
   cursor: pointer;
+}
+
+.group-button i::before {
+ transform: scale(0.7)
 }
 </style>

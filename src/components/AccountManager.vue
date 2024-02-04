@@ -1,6 +1,6 @@
 <template>
   <div class="account-manager">
-    <card id="xxxxx" title="Broken_Deer" description="UUID: xxxxxxxxxxxx" icon="" padding="10,12,10,12" margin="0,0,10,0"></card> <!-- id is uuid-->
+    <card class="overview" id="xxxxx" title="Broken_Deer" description="UUID: xxxxxxxxxxxx" icon="" padding="10,12,10,12" margin="0,0,10,0"></card> <!-- id is uuid-->
   </div>
 </template>
 

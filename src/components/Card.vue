@@ -3,8 +3,9 @@
     <div class="title">
       <div class="icon" :style="iconStyle"><i :class="icon"></i></div>
       <div>
-        <h4 id="text">{{ title }}</h4>
-        <p v-if="description" id="text">{{ description }}</p>
+        <h4 id="text" :style="props.titleFontSize ? `font-size: ${props.titleFontSize}` : ''">{{ title }}</h4>
+        <p v-if="description" id="text"
+          :style="props.descriptionFontSize ? `font-size: ${props.descriptionFontSize}` : ''">{{ description }}</p>
       </div>
     </div>
     <div style="width: 36px;height: 36px;display: flex;align-items: center;justify-content: center;">
@@ -23,6 +24,8 @@ const props = withDefaults(defineProps<{
   padding?: string,
   iconSize?: string,
   iconBackground?: boolean,
+  titleFontSize?: string,
+  descriptionFontSize?: string,
 }>(), {
   margin: '',
   boxShadow: true,
@@ -71,12 +74,12 @@ let iconStyle = (iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px;`
   width: 48px;
   height: 48px;
   border-radius: 6px;
-  margin-right: 6px;
+  margin: auto 6px auto auto;
   background-color: rgba(255, 255, 255, 0.1);
   background-position: center;
   background-size: contain;
   background-repeat: none;
-  image-rendering:pixelated;
+  image-rendering: pixelated;
 }
 
 .icon i {

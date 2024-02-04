@@ -28,6 +28,7 @@ notify = "4.0.12"
 base64 = "0.21.2"
 reqwest = { version = "0.11", features = ["json"] }
 dirs = "3.0"
+log4rs = "1.2.0"
 
 [features]
 # by default Tauri runs in production mode
