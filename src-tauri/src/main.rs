@@ -36,7 +36,10 @@ pub struct Storage {
 
 #[tokio::main]
 async fn main() {
-    // let start = std::time::Instant::now();
+    
+    println!("1");
+    let start = std::time::Instant::now();
+    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     tokio::spawn(initialize_application());
 
     tauri::Builder::default()
@@ -62,6 +65,17 @@ async fn main() {
         ])
         .setup(move |app| {
             MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
+            let time = start.elapsed().clone();
+            println!("第二阶段加载用时: {:?}", time);
+            println!("窗口已加载");
+            println!(
+                "启动器正于{name}环境中运行",
+                name = PLATFORM_INFO.get().unwrap().name
+            );
+            let time = start.elapsed().clone();
+            app.listen_global("fontend-loaded", move |_| {
+                println!("第三阶段加载用时: {:?}", time)
+            });
             Ok(())
         })
         .run(tauri::generate_context!())
