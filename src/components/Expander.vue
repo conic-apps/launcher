@@ -104,7 +104,7 @@ function expander() {
 <style lang="less" scoped>
 .expander {
   border-radius: var(--border-radius-large);
-  background-color: #ffffffdd;
+  background-color: #00000000;
   border: 1px solid #5000851d;
   box-shadow: 0 0 10px #ffffff15;
   margin: 15px 0 15px 0;

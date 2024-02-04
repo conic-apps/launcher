@@ -12,7 +12,7 @@
         :description="resourcepacksManagerDesc" margin="0,0,10,0" @click="show.resourcepacks = true"></card-button>
       <card-button icon="lightbulb-on" title="光影包" :class="shaderpackIsLoading ? 'disabled' : ''"
         :description="shaderpacksManagerDesc" margin="0,0,10,0" @click="show.shaderpacks = true"></card-button>
-      <card-button icon="puzzle-piece" title="日志" margin="0,0,0,0" description="正在加载"></card-button>
+      <card-button icon="puzzle-piece" title="投影" margin="0,0,0,0" description="正在加载"></card-button>
     </div>
     <worlds :show="show.worlds" :datas="saves" :instance-name="props.instanceName" @close="show.worlds = false">
     </worlds>

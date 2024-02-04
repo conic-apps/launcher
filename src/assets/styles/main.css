@@ -187,7 +187,7 @@ h4 {
 ::-webkit-scrollbar {
     width: 2.5px;
     height: 2.5px;
-    opacity: 0;
+    /* opacity: 0; */
 }
 
 :hover::-webkit-scrollbar {
@@ -195,7 +195,7 @@ h4 {
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #00000026;
+    background-color: #ffffff26;
     border-radius: 10px;
 }
 
@@ -209,7 +209,7 @@ body {
         linear-gradient(rgba(128, 59, 255, 0.208), rgb(0, 0, 0, 0.3)),
         linear-gradient(#000, #000); */
     border-radius: 16px;
-    /* padding: 5px; */
+    /* padding: 5px; todo: linux is 0, windows is 5px */
     position: relative;
     background: #05050500;
     color-scheme: dark;
