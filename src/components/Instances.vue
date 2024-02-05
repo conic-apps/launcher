@@ -1,15 +1,16 @@
 <template>
-  <div class="instance-manager">
+  <div class="instances">
     <div class="overview">
-      <card id="xx" title="最新版本" description="Minecraft 1.20.3" icon="grass-block" padding="10,12,10,12" margin="0,0,10,0"
+      <!-- <card id="xx" title="最新版本" description="Minecraft 1.20.3" icon="grass-block" padding="10,12,10,12" margin="0,0,10,0"
         icon-size="32,32" :icon-background="false" title-font-size="14.2px">
       </card>
       <card id="xxx" title="最新快照" description="Minecraft 1.20.3" icon="command-block" padding="10,12,10,12"
         icon-size="32,32" margin="0,0,10,0" :icon-background="false" title-font-size="14.2px">
-      </card>
-      <card v-for="instance in instances" :key="instance.id" :id="instance.id" :title="instance.name"
-        description="Minecraft 1.20.3" icon="command-block" padding="10,12,10,12" icon-size="32,32" margin="0,0,10,0"
-        :icon-background="false" title-font-size="14.2px">
+      </card> -->
+      <card v-for="instance in props.instances" :key="instance.config.name" :id="instance.config.name"
+        :title="instance.config.name" :description="generateDescription(instance)" icon="command-block"
+        padding="10,12,10,12" icon-size="32,32" margin="0,0,10,0" :icon-background="false" title-font-size="14.2px"
+        @click="$emit('select', instance)">
       </card>
     </div>
     <!-- <card id="xx" cla/ss="overview" :title="instance.name" :description="generateDescription(instance)" padding="10,12,10,12" -->
@@ -23,53 +24,37 @@
 import { ref, type Ref } from 'vue';
 import Card from './Card.vue';
 interface Instance {
-  name: string;
-  icon: string;
-  id: string;
+  config: {
+    name: string,
+    runtime: string,
+  },
+  installed: boolean
 }
 
-const instances: Ref<Instance[]> = ref([
-  {
-    name: " 1.18.2 加小浣熊",
-    icon: "grass-block",
-    id: "xx",
-  },
-  {
-    name: "1.20",
-    icon: "grass-block",
-    id: "xx",
-  },
-  {
-    name: "1.20",
-    icon: "grass-block",
-    id: "xx",
-  },
-  {
-    name: "1.20",
-    icon: "grass-block",
-    id: "xx",
-  },
-  {
-    name: "1.20",
-    icon: "grass-block",
-    id: "xx",
-  },
-])
+interface InstanceGroup {
+  name: string,
+  instances: Instance[]
+}
+
+const props = defineProps<{
+  // instances: InstanceGroup[], todo: group
+  instances: Instance[]
+}>()
 
 function generateDescription(instance: Instance): string {
-  return instance.name
+  return instance.config.name
 }
 
 </script>
   
 <style lang="less" scoped>
-div.instance-manager .icon {
+div.instances .icon {
   background-position: center;
   background-size: contain;
   background-repeat: none;
 }
 
-div.instance-manager .overview {
+div.instances .overview {
   overflow: auto;
   padding-right: 5px; // scroll
   max-height: 240px;

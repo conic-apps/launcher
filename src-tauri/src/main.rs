@@ -16,10 +16,9 @@ use crate::instance::{
     check_repeated_instance_name, create_instance, get_fabric_version_list, get_forge_version_list,
     get_instance_config, get_instance_config_from_string, get_minecraft_version_list,
     get_quilt_version_list, install_command, scan_instances_folder, scan_mod_folder,
-    scan_saves_folder, set_active_instance, watch_instances_folder,
+    scan_saves_folder, set_current_instance, watch_instances_folder,
 };
 use aml_core::core::{OsType, PlatformInfo};
-use download_task::init_task_manager;
 use folder::DataLocation;
 use once_cell::sync::OnceCell;
 use tauri::{Manager, Window};
@@ -31,20 +30,17 @@ static PLATFORM_INFO: OnceCell<PlatformInfo> = OnceCell::new();
 static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
 static APPLICATION_DATA: OnceCell<PathBuf> = OnceCell::new();
 pub struct Storage {
-    pub active_instance: Arc<Mutex<String>>,
+    pub current_instance: Arc<Mutex<String>>,
 }
 
 #[tokio::main]
 async fn main() {
-    
-    println!("1");
-    let start = std::time::Instant::now();
+    // let start = std::time::Instant::now();
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     tokio::spawn(initialize_application());
-
     tauri::Builder::default()
         .manage(Storage {
-            active_instance: Arc::new(Mutex::new("".to_string())),
+            current_instance: Arc::new(Mutex::new("".to_string())),
         })
         .invoke_handler(tauri::generate_handler![
             get_user_config,
@@ -56,7 +52,7 @@ async fn main() {
             check_repeated_instance_name,
             scan_instances_folder,
             watch_instances_folder,
-            set_active_instance,
+            set_current_instance,
             scan_mod_folder,
             scan_saves_folder,
             get_instance_config,
@@ -65,16 +61,7 @@ async fn main() {
         ])
         .setup(move |app| {
             MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
-            let time = start.elapsed().clone();
-            println!("第二阶段加载用时: {:?}", time);
-            println!("窗口已加载");
-            println!(
-                "启动器正于{name}环境中运行",
-                name = PLATFORM_INFO.get().unwrap().name
-            );
-            let time = start.elapsed().clone();
             app.listen_global("fontend-loaded", move |_| {
-                println!("第三阶段加载用时: {:?}", time)
             });
             Ok(())
         })
@@ -90,7 +77,6 @@ async fn initialize_application() {
         .set(reqwest::ClientBuilder::new().build().unwrap())
         .unwrap();
     initialize_application_data().await;
-    init_task_manager();
 }
 
 async fn initialize_application_data() {

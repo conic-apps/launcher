@@ -16,8 +16,9 @@
         <i class="button gear"></i>
         <i class="button circle-info"></i>
         <i class="button star"></i>
-        <button class="game-button"><i class="play"
-            style="font-family: 'fa-pro'; font-style: normal; margin-right: 5px; font-weight: 100;"></i>开始游戏</button>
+        <button class="game-button" :class="`${gameButtonType}-game-button`" @click="$emit('button-clicked')"><i :class="props.gameButtonType"
+            style="font-family: 'fa-pro'; font-style: normal; margin-right: 5px; font-weight: 100;"></i>{{ gameButtonText()
+            }}</button>
       </div>
     </div>
   </div>
@@ -31,17 +32,19 @@ const props = defineProps<{
   gameButtonType: "installing" | "launching" | "install" | "launch" | "error",
 }>()
 let banner = ""
-switch (props.gameButtonType) {
-  case "installing":
-    break;
-  case "error":
-    break;
-  case "install":
-    break;
-  case 'launching':
-    break;
-  case 'launch':
-    break;
+function gameButtonText() {
+  switch (props.gameButtonType) {
+    case "installing":
+      return "..."
+    case "error":
+      return "错误"
+    case "install":
+      return "安装"
+    case 'launching':
+      return "..."
+    case 'launch':
+      return "开始游戏"
+  }
 
 }
 </script>
@@ -141,5 +144,22 @@ button.game-button {
   display: inline-block;
   overflow: hidden;
   background-image: linear-gradient(248deg, #18b14e, #4fc82f);
+  transition: all .2s ease;
+}
+
+button.error-game-button{
+  background: #f00;
+}
+button.launch-game-button{
+  // background-image: ;
+}
+button.launching-game-button{
+  // background-image: ;
+}
+button.install-game-button{
+  background-image: linear-gradient(248deg, #235dce, #399bed);
+}
+button.installing-game-button{
+  // background-image: ;
 }
 </style>

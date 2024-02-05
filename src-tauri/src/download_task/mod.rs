@@ -1,52 +1,36 @@
-use core::time;
-use std::{fmt::Debug, thread};
+use futures::{stream, StreamExt};
+use once_cell::sync::Lazy;
+use std::{
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+};
+use tokio::io::AsyncWriteExt;
 
-use once_cell::sync::OnceCell;
+use aml_core::{core::Download, utils::sha1::calculate_sha1_from_read};
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
 
-use crate::MAIN_WINDOW;
-
-pub struct Task {
-    statue: TaskStatue,
-    // command_sender: Option<a>,
-    f: Option<Box<dyn Fn() + Send + Sync>>,
+/// To save download task progress
+#[derive(Debug, Clone)]
+pub struct DownloadTasks {
+    pub completed: Option<usize>,
+    pub total: Option<usize>,
+    // pub progress_unit: ProgressUnit,
+    pub statue: State,
+    pub download_info: Vec<Download>,
+    pub instance_id: String,
 }
 
-impl Debug for Task {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        println!("Progress: {:#?}", self.statue);
-        Ok(())
-    }
-}
+// #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+// pub enum ProgressUnit {
+//     Mib,
+//     File,
+// }
 
-impl Clone for Task {
-    fn clone(&self) -> Self {
-        Self {
-            statue: self.statue.clone(),
-            f: None,
-        }
-    }
-}
-
-impl Task {
-    pub fn start(&self, tasks: Arc<Mutex<Vec<Task>>>, index: usize) {
-        let tasks_lock = tasks.l
-        let mut task = tasks.get_mut(index).unwrap();
-        task.statue.statue = State::Active;
-        (self.f.as_ref()).unwrap()();
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct TaskStatue {
-    progress: Option<(u64, u64)>,
-    progress_unit: Option<String>,
-    statue: State,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-enum State {
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum State {
     Paused,
     Active,
     Success,
@@ -55,81 +39,88 @@ enum State {
     Waiting,
 }
 
-fn task_can_start(task: &Task) -> bool {
-    true
+impl DownloadTasks {
+    pub fn new(instance_id: String, download_info: Vec<Download>) -> Self {
+        Self {
+            completed: None,
+            total: None,
+            statue: State::Waiting,
+            download_info,
+            instance_id,
+        }
+    }
+
+    pub async fn start(&mut self, verify_exists: bool) -> anyhow::Result<()> {
+        self.statue = State::Active;
+        let download_tasks = filtrate_download_tasks(&self.download_info, verify_exists);
+        self.total = Some(download_tasks.len());
+        let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+        let stream = stream::iter(download_tasks)
+            .map(|download_task| {
+                let counter = Arc::clone(&counter);
+                async move {
+                    let result = download(&download_task).await;
+                    counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                    result
+                }
+            })
+            .buffer_unordered(16);
+        stream
+            .for_each_concurrent(1, |_| async {
+                Some(Arc::clone(&counter).load(Ordering::SeqCst));
+            })
+            .await;
+        if counter.load(Ordering::SeqCst) == self.total.unwrap() {
+            // success
+        } else {
+            // failed
+        }
+        Ok(())
+    }
 }
 
-fn task_spawn(tasks: Arc<Mutex<Vec<Task>>>, index: usize) {
-    thread::spawn(move || {
-        let mut tasks_lock = tasks.lock().unwrap();
-        let current_task = tasks_lock.get(index).unwrap();
-        current_task.start(tasks, index);
-    });
+fn verify_file(download_task: &Download) -> bool {
+    let mut file = match std::fs::File::open(&download_task.file) {
+        Ok(file) => file,
+        Err(_) => return false,
+    };
+    let file_sha1 = calculate_sha1_from_read(&mut file);
+    let sha1 = match &download_task.sha1 {
+        Some(sha1) => sha1,
+        None => return false,
+    };
+    &file_sha1 == sha1
 }
 
-static TASKS: OnceCell<Arc<Mutex<Vec<Task>>>> = OnceCell::new();
-
-pub fn init_task_manager() /* -> Result<()>  */
-{
-    let tasks = Arc::new(Mutex::new(Vec::new()));
-    TASKS.set(Arc::clone(&tasks)).unwrap();
-    thread::spawn(move || loop {
-        thread::sleep(time::Duration::from_millis(200));
-
-        let tasks_arc = Arc::clone(&tasks);
-        let tasks = tasks_arc.lock().unwrap();
-        for (index, task) in tasks.iter().enumerate() {
-            if !task_can_start(&task) {
-                continue;
+fn filtrate_download_tasks(download_tasks: &Vec<Download>, verify_exists: bool) -> Vec<&Download> {
+    download_tasks
+        .into_iter()
+        .filter(|download_task| {
+            match std::fs::metadata(&download_task.file) {
+                Err(_) => return true,
+                Ok(_) => (),
             }
-            task_spawn(Arc::clone(TASKS.get().unwrap()), index);
-            // tasks.remove(index);
-            // tasks.insert(index, task)
-        }
-        MAIN_WINDOW
-            .get()
-            .unwrap()
-            .emit(
-                "download_tasks",
-                tasks.iter().map(|x| &x.statue).collect::<Vec<_>>(),
-            )
-            .unwrap();
-        // println!("{:#?}", tasks.try_lock().unwrap())
-    });
-    // test
-    test()
+            if !verify_exists {
+                return false;
+            };
+            verify_file(&download_task);
+            true
+        })
+        .collect()
 }
 
-fn test() {
-    let tasks = Arc::clone(TASKS.get().unwrap());
-    let mut tasks = tasks.lock().unwrap();
-    let f = Box::new(|| {
-        for _ in 0..5 {
-            thread::sleep(time::Duration::from_millis(1000));
-            println!("~1");
-        }
-    });
-    let f2 = Box::new(|| {
-        for _ in 0..5 {
-            thread::sleep(time::Duration::from_millis(1000));
-            println!("!1");
-        }
-    });
-    tasks.push(Task {
-        statue: TaskStatue {
-            progress: Some((0, 0)),
-            progress_unit: Some("".to_string()),
-            statue: State::Waiting,
-        },
-        f: Some(f),
-    });
-    tasks.push(Task {
-        statue: TaskStatue {
-            progress: Some((0, 0)),
-            progress_unit: Some("".to_string()),
-            statue: State::Waiting,
-        },
-        f: Some(f2),
-    });
-    println!("{:#?}", tasks)
+pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| reqwest::Client::new());
+
+async fn download(download: &Download) -> anyhow::Result<reqwest::Response> {
+    let file_path = PathBuf::from(&download.file);
+    let direction = file_path.parent().unwrap();
+    if !direction.exists() {
+        tokio::fs::create_dir_all(&direction).await?
+    }
+    let mut response = HTTP_CLIENT.get(&download.url).send().await?;
+    let mut file = tokio::fs::File::create(&download.file).await?;
+    while let Some(chunk) = response.chunk().await? {
+        file.write_all(&chunk).await?;
+    }
+    Ok(response)
 }
