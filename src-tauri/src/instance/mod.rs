@@ -1,15 +1,13 @@
 use crate::{Storage, DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
 use aml_core::{
-    core::{folder::MinecraftLocation, version::VersionManifest},
+    core::{folder::MinecraftLocation, version::VersionManifest, Download},
+    game_data::mods::ResolvedMod,
+    game_data::saves::level::LevelData,
     install::{
         fabric::LoaderArtifactList,
-        forge::version_list::ForgeVersionList,
         generate_download_list,
         quilt::{version_list::get_quilt_version_list_from_mcversion, QuiltVersion},
     },
-    mod_parser::ResolvedMod,
-    saves::level::LevelData,
-    utils::download::Download,
 };
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose, Engine};
@@ -60,8 +58,10 @@ pub async fn get_fabric_version_list(mcversion: String) -> Option<LoaderArtifact
 }
 
 #[tauri::command(async)]
-pub async fn get_forge_version_list(mcversion: String) -> Option<ForgeVersionList> {
-    ForgeVersionList::from_mcversion(&mcversion).await.ok()
+pub async fn get_forge_version_list(_mcversion: String) -> Option<LoaderArtifactList> /* Option<ForgeVersionList> */
+{
+    // ForgeVersionList::from_mcversion(&mcversion).await.ok()
+    None
 }
 
 #[tauri::command(async)]
@@ -99,7 +99,7 @@ pub async fn check_repeated_instance_name(instance_name: String) -> bool {
 
 #[tauri::command(async)]
 pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
-    println!("123");
+    println!("Scanning Instances Folder...");
     async fn scan() -> Result<Vec<Instance>> {
         let datafolder_path = DATA_LOCATION.get().unwrap();
         let instances_folder = &datafolder_path.instances;
@@ -139,7 +139,8 @@ pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
                 config,
                 installed: fs::File::open(path.join(".aml-ok")).await.is_ok(),
             })
-        }
+        };
+        println!("Done");
         Ok(results)
     }
     scan().await.ok()
@@ -179,16 +180,17 @@ pub fn watch_instances_folder() {
 }
 
 #[tauri::command]
-pub fn set_active_instance(instance_name: String, storage: tauri::State<Storage>) {
-    let mut active_instance = storage.active_instance.lock().unwrap();
-    *active_instance = instance_name;
+pub fn set_current_instance(instance_name: String, storage: tauri::State<Storage>) {
+    let mut current_instance = storage.current_instance.lock().unwrap();
+    println!("Setting current instance to {}", instance_name);
+    *current_instance = instance_name;
 }
 
 #[tauri::command(async)]
 pub async fn scan_mod_folder(
     storage: tauri::State<'_, Storage>,
 ) -> std::result::Result<Vec<ResolvedMod>, ()> {
-    let instance_name = storage.active_instance.lock().unwrap().clone();
+    let instance_name = storage.current_instance.lock().unwrap().clone();
 
     async fn scan(
         instance_name: String,
@@ -206,7 +208,7 @@ pub async fn scan_mod_folder(
                 Err(_) => continue,
                 Ok(file_type) => file_type,
             };
-            let active_instance = storage.active_instance.lock().unwrap().clone();
+            let active_instance = storage.current_instance.lock().unwrap().clone();
             if &active_instance != &instance_name {
                 return Err(anyhow!("stopped")); // if user change the active instance, stop scanning
             }
@@ -217,7 +219,8 @@ pub async fn scan_mod_folder(
             if path.metadata().is_err() {
                 continue;
             }
-            let parser_task = tokio::task::spawn_blocking(|| aml_core::mod_parser::parse_mod(path));
+            let parser_task =
+                tokio::task::spawn_blocking(|| aml_core::game_data::mods::parse_mod(path));
 
             results.push(match parser_task.await {
                 Err(_) => continue,
@@ -249,7 +252,7 @@ pub struct Saves {
 pub async fn scan_saves_folder(
     storage: tauri::State<'_, Storage>,
 ) -> std::result::Result<Vec<Saves>, ()> {
-    let instance_name = storage.active_instance.lock().unwrap().clone();
+    let instance_name = storage.current_instance.lock().unwrap().clone();
 
     async fn scan(instance_name: String, storage: tauri::State<'_, Storage>) -> Result<Vec<Saves>> {
         let data_location = DATA_LOCATION.get().unwrap();
@@ -264,7 +267,7 @@ pub async fn scan_saves_folder(
                 Err(_) => continue,
                 Ok(file_type) => file_type,
             };
-            let active_instance = storage.active_instance.lock().unwrap().clone();
+            let active_instance = storage.current_instance.lock().unwrap().clone();
             if &active_instance != &instance_name {
                 return Err(anyhow!("stopped")); // if user change the active instance, stop scanning
             }
@@ -276,8 +279,9 @@ pub async fn scan_saves_folder(
                 continue;
             }
             let level_path = path.join("level.dat");
-            let parser_task =
-                tokio::task::spawn_blocking(|| aml_core::saves::level::get_level_data(level_path));
+            let parser_task = tokio::task::spawn_blocking(|| {
+                aml_core::game_data::saves::level::get_level_data(level_path)
+            });
 
             results.push(Saves {
                 icon: {
@@ -312,7 +316,7 @@ pub async fn scan_saves_folder(
 pub async fn get_instance_config(
     storage: tauri::State<'_, Storage>,
 ) -> std::result::Result<InstanceConfig, ()> {
-    let instance_name = storage.active_instance.lock().unwrap().clone();
+    let instance_name = storage.current_instance.lock().unwrap().clone();
     let config_path = DATA_LOCATION
         .get()
         .unwrap()
@@ -362,7 +366,7 @@ pub struct DownloadProgress {
     pub step: usize,
 }
 
-async fn download_files(download_list: Vec<Download<String>>) {
+async fn download_files(download_list: Vec<Download>) {
     let main_window = MAIN_WINDOW.get().unwrap();
     main_window
         .emit(
@@ -441,7 +445,7 @@ pub async fn install_command(storage: tauri::State<'_, Storage>) -> std::result:
             },
         )
         .unwrap();
-    let active_instance = storage.active_instance.lock().unwrap().clone();
+    let active_instance = storage.current_instance.lock().unwrap().clone();
     let data_location = DATA_LOCATION.get().unwrap();
     let instance_config = get_instance_config_from_string(&active_instance)
         .await

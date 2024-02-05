@@ -243,6 +243,10 @@ i.xmark-large::before {
     content: '\e59b';
 }
 
+i.boxes-stacked::before {
+    content: '\f468';
+}
+
 i.chevron-right {
     font-family: 'fa-pro';
     font-size: 14px;
