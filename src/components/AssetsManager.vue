@@ -105,9 +105,9 @@ let savesManagerDesc = computed(() => {
   }
 })
 
-watch(props, (newValue) => {
-  alert(newValue.instanceName)
-})
+// watch(props, (newValue) => {
+//   alert(newValue.instanceName)
+// })
 
 watch(show, (newValue) => {
   if (newValue.mods) {

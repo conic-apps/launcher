@@ -1,17 +1,17 @@
 <template>
   <keep-alive>
     <div>
-      <expander :canSwap=false title="Java 虚拟机" description="设置游戏运行所需 Java 的位置或安装 Java" icon="java-logo fa-brands">
-      <setting-item title="自动选择合适的 Java"></setting-item>
-      <button-bar name="手动选择 Java 虚拟机" text="查找已安装的 Java"></button-bar>
-      todo: input file
-      <card-link margin="0,0,6,-4" title="安装 Java 17" description="将 Java 17 安装在当前游戏目录下" icon="java-logo fa-brands"
-        :box-shadow="false" padding="8,10,8,10"></card-link>
-      <card-link margin="0,0,6,-4" title="安装 Java 11" description="将 Java 11 安装在当前游戏目录下" icon="java-logo fa-brands"
-        :box-shadow="false" padding="8,10,8,10"></card-link>
-      <card-link margin="0,0,0,-4" title="安装 Java 8" description="将 Java 8 安装在当前游戏目录下" icon="java-logo fa-brands"
-        :box-shadow="false" padding="8,10,8,10"></card-link>
-    </expander>
+      <expander :canSwap="false" title="Java 虚拟机" description="设置游戏运行所需 Java 的位置或安装 Java" icon="java-logo fa-brands">
+        <setting-item title="自动选择合适的 Java"></setting-item>
+        <button-bar name="手动选择 Java 虚拟机" text="查找已安装的 Java"></button-bar>
+        todo: input file
+        <card-link margin="0,0,6,-4" title="安装 Java 17" description="将 Java 17 安装在当前游戏目录下" icon="java-logo fa-brands"
+          :box-shadow="false" padding="8,10,8,10"></card-link>
+        <card-link margin="0,0,6,-4" title="安装 Java 11" description="将 Java 11 安装在当前游戏目录下" icon="java-logo fa-brands"
+          :box-shadow="false" padding="8,10,8,10"></card-link>
+        <card-link margin="0,0,0,-4" title="安装 Java 8" description="将 Java 8 安装在当前游戏目录下" icon="java-logo fa-brands"
+          :box-shadow="false" padding="8,10,8,10"></card-link>
+      </expander>
     </div>
   </keep-alive>
   <!-- <div>
@@ -61,8 +61,9 @@
 </template>
 
 <script setup lang="ts">
-import Expander from '@/components/Expander.vue';
-import SettingItem from '@/components/SettingItem.vue';
+import Expander from "@/components/Expander.vue";
+import SettingItem from "@/components/SettingItem.vue";
+import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
 // import { ref } from 'vue'
 // import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
 // import TextInputBar from '@/components/TextInputBar.vue';
