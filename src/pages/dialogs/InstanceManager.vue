@@ -1,68 +1,91 @@
 <template>
   <dialog-vue :visible="props.show" width="860" height="520">
     <div class="instance-manager">
-      <div class="title" style="position: relative;">
-        <div style="display: flex; align-items: center;">
-          <div class="icon">
-            <i class="boxes-stacked"></i>
+      <div style="width: 100%; height: 100%">
+        <div class="title" style="position: relative">
+          <div style="display: flex; align-items: center">
+            <div class="icon">
+              <i class="boxes-stacked"></i>
+            </div>
+            <div>
+              <h4 v-if="currentComponent == pages.view">管理游戏档案</h4>
+              <p v-if="currentComponent == pages.view">
+                创建、删除或修改你的游戏档案
+              </p>
+              <h4 v-if="currentComponent == pages.create">创建游戏档案</h4>
+              <p v-if="currentComponent == pages.create">
+                选择好合适的选项后，点击“创建”按钮
+              </p>
+            </div>
           </div>
-          <div>
-            <h4>管理游戏档案</h4>
-            <p>创建、删除或修改你的游戏档案</p>
+          <div class="button" style="position: absolute; right: 0" @click="
+            currentComponent = pages.view;
+          $emit('close');
+          ">
+            <i></i>
           </div>
         </div>
-        <div class="button" style="position: absolute; right: 0;" @click="$emit('close')"><i></i></div>
-      </div>
 
-      <div class="content">
-        <!-- <div class="group" v-for="group in props.instances" :key="group.name">
+        <div class="content">
+          <Transition :name="transitionName" mode="out-in">
+            <component :instances="props.instances" :is="currentComponent" @create="createInstance"
+              @created="instanceCreated"></component>
+          </Transition>
+          <!-- <div class="group" v-for="group in props.instances" :key="group.name">
           <div class="instance" v-for="instance in group.instances" :key="instance.name">
             <p>{{ instance.name }}</p>
           </div>
         </div> todo: group -->
-
-        <div class="instance" v-for="instance in props.instances" :key="instance.config.name">
-          <img src="@/assets/images/Grass_Block.webp">
-          <p>{{ instance.config.name }}</p>
-        </div>
-        <div class="instance">
-          <i class="plus"></i>
         </div>
       </div>
     </div>
-
   </dialog-vue>
 </template>
 
 <script setup lang="ts">
 import DialogVue from "@/components/Dialog.vue";
-import DialogButton from "@/components/DialogButton.vue";
-import { tauri } from "@tauri-apps/api";
-import { watch } from "vue";
+import { markRaw, reactive, ref, shallowRef } from "vue";
+import View from "@/pages/dialogs/instance/View.vue";
+import Create from "@/pages/dialogs/instance/Create.vue";
 
+let emit = defineEmits(["close", "update"]);
+let transitionName = ref("slide-left");
 interface Instance {
   config: {
-    name: string,
-    runtime: string,
-  },
-  installed: boolean
+    name: string;
+    runtime: string;
+  };
+  installed: boolean;
 }
 
 interface InstanceGroup {
-  name: string,
-  instances: Instance[]
+  name: string;
+  instances: Instance[];
 }
 
 const props = defineProps<{
-  show: boolean,
+  show: boolean;
   // instances: InstanceGroup[], todo: group
-  instances: Instance[]
-}>()
+  instances: Instance[];
+}>();
 
-watch(props, (newValue) => {
-  console.log(newValue.instances)
-})
+const pages: any = reactive({
+  view: markRaw(View),
+  create: markRaw(Create),
+});
 
+const currentComponent = shallowRef(pages.view);
+
+function createInstance() {
+  transitionName.value = "slide-left";
+  currentComponent.value = pages.create;
+}
+
+function instanceCreated() {
+  transitionName.value = "slide-right";
+  emit("update");
+  currentComponent.value = pages.view;
+}
 </script>
 
 <style lang="less" scoped>
@@ -95,7 +118,7 @@ watch(props, (newValue) => {
 .instance-manager .title .icon i::before {
   font-size: 36px;
   font-style: normal;
-  font-family: 'fa-pro';
+  font-family: "fa-pro";
 }
 
 .instance-manager h4 {
@@ -123,12 +146,12 @@ watch(props, (newValue) => {
 }
 
 .instance-manager .button i::before {
-  content: '\f00d';
+  content: "\f00d";
   font-size: 12px;
   margin-top: 1px;
   margin-left: 0.6px;
   font-style: normal;
-  font-family: 'fa-pro';
+  font-family: "fa-pro";
   opacity: 0;
   transition: all 70ms ease;
 }
@@ -145,80 +168,7 @@ watch(props, (newValue) => {
   opacity: 0.7;
 }
 
-
-.instance-manager .commands {
-  width: fit-content;
-  height: 60px;
-  display: flex;
-  height: 100%;
-  align-items: center;
-  padding-right: 20px;
-}
-
-.instance-manager .commands>div {
-  font-size: 14px;
-  border: 1px solid #ffffff39;
-  padding: 8px 10px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-
-}
-
-.instance-manager .commands i::before {
-  font-size: 16px;
-  font-style: normal;
-  font-family: 'fa-pro';
-  line-height: 1;
-  text-align: center
-}
-
-.instance-manager .content {
-  display: flex;
-  padding-top: 10px;
-}
-
-.instance-manager .content .instance {
-  display: flex;
-  width: 100px;
-  height: 100px;
-  align-items: center;
-  flex-direction: column;
-  justify-content: center;
-  margin: 4px;
-  border-radius: 10px;
-}
-
-.instance-manager .content .instance:hover {
-  background: #ffffff0c;
-
-}
-
-.instance-manager .content .instance img {
-  width: 48px;
-  height: 48px;
-}
-
-.instance-manager .content .instance i {
-  font-family: 'fa-pro';
-  font-style: normal;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px dotted #ffffffba;
-  width: 40px;
-  height: 40px;
-  opacity: 0.6;
-  border-radius: 10px;
-}
-
-.instance-manager .content .instance p {
-  text-align: center;
-  margin-top:8px;
-  font-size: 13px;
+.instance-manager {
+  overflow: hidden;
 }
 </style>

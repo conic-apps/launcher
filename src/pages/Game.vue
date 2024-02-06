@@ -3,7 +3,13 @@
     <div class="game-page-main">
       <div class="row-1">
         <instance-info minecraft-version="1.20.1" :instance-name="currentInstance.config.name" :installed="true"
-          :game-button-type="gameButtonType"></instance-info>
+          :game-button-type="gameButtonType" @game-button="() => {
+            if (gameButtonType === 'launch') {
+              tauri.invoke('launch')
+            } else if (gameButtonType === 'install') {
+              tauri.invoke('install')
+            }
+          }" :error-type="errorType"></instance-info>
         <assets-manager :instance-name="currentInstance.config.name" style="margin-top: 20px;"></assets-manager>
       </div>
       <div class="row-2">
@@ -23,7 +29,7 @@
         </div>
         <Instances :instances="instances" @select="setCurrentInstance"></Instances>
         <instance-manager :show="show.instanceManager" @close="show.instanceManager = false"
-          :instances="instances"></instance-manager>
+          :instances="instances" @update="update"></instance-manager>
         <div class="group-name">
           <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
             <p style="margin-left: 4px;">好友</p>
@@ -61,10 +67,11 @@ let currentInstance = ref<Instance>({
   installed: false
 })
 let show = ref({
-  instanceManager: false
+  instanceManager: true
 })
 let instances = ref([])
 let gameButtonType: Ref<"installing" | "launching" | "install" | "launch" | "error"> = ref("error")
+let errorType: Ref<"launch" | "install" | undefined> = ref()
 
 function update() {
   tauri.invoke("scan_instances_folder").then((res: any) => {
