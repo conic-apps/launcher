@@ -4,7 +4,6 @@
 )]
 
 pub mod config;
-pub mod download_task;
 pub mod folder;
 pub mod instance;
 
@@ -15,8 +14,8 @@ use crate::config::get_user_config;
 use crate::instance::{
     check_repeated_instance_name, create_instance, get_fabric_version_list, get_forge_version_list,
     get_instance_config, get_instance_config_from_string, get_minecraft_version_list,
-    get_quilt_version_list, install_command, scan_instances_folder, scan_mod_folder,
-    scan_saves_folder, set_current_instance, watch_instances_folder,
+    get_quilt_version_list, install, scan_instances_folder, scan_mod_folder, scan_saves_folder,
+    set_current_instance, watch_instances_folder,
 };
 use aml_core::core::{OsType, PlatformInfo};
 use folder::DataLocation;
@@ -29,6 +28,7 @@ static DATA_LOCATION: OnceCell<DataLocation> = OnceCell::new();
 static PLATFORM_INFO: OnceCell<PlatformInfo> = OnceCell::new();
 static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
 static APPLICATION_DATA: OnceCell<PathBuf> = OnceCell::new();
+
 pub struct Storage {
     pub current_instance: Arc<Mutex<String>>,
 }
@@ -57,12 +57,11 @@ async fn main() {
             scan_saves_folder,
             get_instance_config,
             get_instance_config_from_string,
-            install_command,
+            install,
         ])
         .setup(move |app| {
             MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
-            app.listen_global("fontend-loaded", move |_| {
-            });
+            app.listen_global("fontend-loaded", move |_| {});
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -84,7 +83,10 @@ async fn initialize_application_data() {
     match platform_info.os_type {
         OsType::Windows => {
             APPLICATION_DATA
-                .set(PathBuf::from("C:\\Users\\").join("aml"))
+                .set(
+                    PathBuf::from(std::env::var("APP_DATA").expect("No APP_DATA directory"))
+                        .join("aml"),
+                )
                 .unwrap();
         }
         OsType::Linux => {

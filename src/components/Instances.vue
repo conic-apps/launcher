@@ -7,11 +7,17 @@
       <card id="xxx" title="最新快照" description="Minecraft 1.20.3" icon="command-block" padding="10,12,10,12"
         icon-size="32,32" margin="0,0,10,0" :icon-background="false" title-font-size="14.2px">
       </card> -->
-      <card v-for="instance in props.instances" :key="instance.config.name" :id="instance.config.name"
+      <!-- <card v-for="instance in props.instances" :key="instance.config.name" :id="instance.config.name"
         :title="instance.config.name" :description="generateDescription(instance)" icon="command-block"
         padding="10,12,10,12" icon-size="32,32" margin="0,0,10,0" :icon-background="false" title-font-size="14.2px"
         @click="$emit('select', instance)">
-      </card>
+      </card> -->
+      <div class="instance" @click="$emit('select', instance)" v-for="instance in props.instances" :key="instance.config.name">
+        <img src="@/assets/images/minecraft-icon.svg">
+        <div class="title">
+          <p>{{ instance.config.name }}</p>
+        </div>
+      </div>
     </div>
     <!-- <card id="xx" cla/ss="overview" :title="instance.name" :description="generateDescription(instance)" padding="10,12,10,12" -->
     <!-- :icon="instance.icon" v-for="(instance, index) in instances" :key="index"> -->
@@ -55,9 +61,40 @@ div.instances .icon {
 }
 
 div.instances .overview {
+  padding-left: 10px;
   overflow: auto;
-  padding-right: 5px; // scroll
   max-height: 240px;
+  margin-bottom: 10px;
+}
+
+div.instance {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  transition: all 100ms cubic-bezier(0, 0, 0.2, 1);
+  
+  img {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+  }
+  .title {
+    p {
+      margin: 0;
+    }
+  }
+}
+
+div.instance:hover{
+  background-color: #3d3d3d;
+  box-shadow: 0px 0px 3px #0000004c;
+  border-radius: 8px;
+  // transition: background-color 0ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+div.instance:active {
+  transform: scale(0.96);
+  opacity: 0.7;
 }
 </style>
   

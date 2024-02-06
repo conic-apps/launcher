@@ -43,8 +43,8 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   align-items: center;
   transition: all 0.1s ease;
   border-radius: var(--border-radius-large);
-  background-color: rgba(255, 255, 255, 0.056);
-  border: 1px solid #ffffff16;
+  background-color: rgb(46, 49, 53);
+  border: 1px solid #ffffff04;
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
 }

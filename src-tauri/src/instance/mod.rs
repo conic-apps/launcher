@@ -5,7 +5,7 @@ use aml_core::{
     game_data::saves::level::LevelData,
     install::{
         fabric::LoaderArtifactList,
-        generate_download_list,
+        generate_download_info,
         quilt::{version_list::get_quilt_version_list_from_mcversion, QuiltVersion},
     },
 };
@@ -86,15 +86,21 @@ pub async fn create_instance(instance_name: String, config: InstanceConfig) -> O
 
 #[tauri::command(async)]
 pub async fn check_repeated_instance_name(instance_name: String) -> bool {
-    let config_path = DATA_LOCATION
+    let instance_root = DATA_LOCATION
         .get()
         .unwrap()
-        .get_instance_root(instance_name)
-        .join("instance.toml");
-    match config_path.metadata() {
-        Ok(_) => true,
-        Err(_) => false,
+        .get_instance_root(&instance_name);
+    let config = match get_instance_config_from_string(&instance_name).await {
+        Ok(x) => x,
+        Err(_) => return true,
+    };
+    let folder_name = match instance_root.file_name() {
+        None => return true,
+        Some(x) => x,
     }
+    .to_string_lossy()
+    .to_string();
+    (config.name == instance_name) || (folder_name == instance_name)
 }
 
 #[tauri::command(async)]
@@ -114,8 +120,18 @@ pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
                 continue;
             }
             let path = entry.path();
+            let folder_name = match path.file_name() {
+                None => continue,
+                Some(x) => x,
+            }
+            .to_string_lossy()
+            .to_string();
             let instance_config = path.join("instance.toml");
-            if instance_config.metadata().is_err() || !instance_config.is_file() {
+            let metadata = match instance_config.metadata() {
+                Err(_) => continue,
+                Ok(result) => result,
+            };
+            if metadata.len() > 2000000  || !instance_config.is_file() {
                 continue;
             }
             let config_content = match fs::read_to_string(instance_config).await {
@@ -135,11 +151,14 @@ pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
             {
                 continue;
             }
+            if folder_name != config.name {
+                continue;
+            }
             results.push(Instance {
                 config,
                 installed: fs::File::open(path.join(".aml-ok")).await.is_ok(),
             })
-        };
+        }
         println!("Done");
         Ok(results)
     }
@@ -149,6 +168,7 @@ pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
 #[tauri::command]
 pub fn watch_instances_folder() {
     let main_window = MAIN_WINDOW.get().unwrap().clone();
+    println!("Watching instances folder...");
     thread::spawn(move || {
         let (tx, rx) = channel();
 
@@ -433,7 +453,7 @@ async fn download_files(download_list: Vec<Download>) {
 }
 
 #[tauri::command(async)]
-pub async fn install_command(storage: tauri::State<'_, Storage>) -> std::result::Result<(), ()> {
+pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<(), ()> {
     let main_window = MAIN_WINDOW.get().unwrap();
     main_window
         .emit(
@@ -451,7 +471,7 @@ pub async fn install_command(storage: tauri::State<'_, Storage>) -> std::result:
         .await
         .unwrap();
     let runtime = instance_config.runtime;
-    let download_list = generate_download_list(
+    let download_list = generate_download_info(
         &runtime.minecraft,
         MinecraftLocation::new(&data_location.root),
     )
