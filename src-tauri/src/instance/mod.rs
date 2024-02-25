@@ -1,6 +1,5 @@
-use crate::{Storage, DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
-use aml_core::{
-    core::{folder::MinecraftLocation, version::VersionManifest, Download},
+use crate::core::{folder::MinecraftLocation, version::VersionManifest, Download};
+use crate::{
     game_data::mods::ResolvedMod,
     game_data::saves::level::LevelData,
     install::{
@@ -9,6 +8,7 @@ use aml_core::{
         quilt::{version_list::get_quilt_version_list_from_mcversion, QuiltVersion},
     },
 };
+use crate::{Storage, DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose, Engine};
 use futures::StreamExt;
@@ -131,7 +131,7 @@ pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
                 Err(_) => continue,
                 Ok(result) => result,
             };
-            if metadata.len() > 2000000  || !instance_config.is_file() {
+            if metadata.len() > 2000000 || !instance_config.is_file() {
                 continue;
             }
             let config_content = match fs::read_to_string(instance_config).await {
@@ -240,7 +240,7 @@ pub async fn scan_mod_folder(
                 continue;
             }
             let parser_task =
-                tokio::task::spawn_blocking(|| aml_core::game_data::mods::parse_mod(path));
+                tokio::task::spawn_blocking(|| crate::game_data::mods::parse_mod(path));
 
             results.push(match parser_task.await {
                 Err(_) => continue,
@@ -300,7 +300,7 @@ pub async fn scan_saves_folder(
             }
             let level_path = path.join("level.dat");
             let parser_task = tokio::task::spawn_blocking(|| {
-                aml_core::game_data::saves::level::get_level_data(level_path)
+                crate::game_data::saves::level::get_level_data(level_path)
             });
 
             results.push(Saves {
