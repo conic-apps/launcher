@@ -4,8 +4,11 @@
 )]
 
 pub mod config;
-pub mod folder;
+pub mod core;
+pub mod game_data;
+pub mod install;
 pub mod instance;
+pub mod utils;
 
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -17,8 +20,8 @@ use crate::instance::{
     get_quilt_version_list, install, scan_instances_folder, scan_mod_folder, scan_saves_folder,
     set_current_instance, watch_instances_folder,
 };
-use aml_core::core::{OsType, PlatformInfo};
-use folder::DataLocation;
+use core::folder::DataLocation;
+use core::{OsType, PlatformInfo};
 use once_cell::sync::OnceCell;
 use tauri::{Manager, Window};
 
