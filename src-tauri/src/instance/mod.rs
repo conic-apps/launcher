@@ -30,6 +30,7 @@ use tokio::{fs, io::AsyncWriteExt};
 pub struct InstanceConfig {
     pub name: String,
     pub runtime: InstanceRuntime,
+    pub group: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

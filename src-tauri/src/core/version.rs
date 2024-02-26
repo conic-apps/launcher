@@ -110,7 +110,8 @@ pub struct VersionManifest {
 impl VersionManifest {
     pub async fn new() -> Result<VersionManifest> {
         let response =
-            reqwest::get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json").await?;
+            reqwest::get("https://bmclapi2.bangbang93.com/mc/game/version_manifest_v2.json")
+                .await?;
         Ok(response.json::<VersionManifest>().await?)
     }
 }
