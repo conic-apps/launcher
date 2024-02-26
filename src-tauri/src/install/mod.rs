@@ -59,7 +59,7 @@ pub(crate) fn generate_libraries_downloads(
                 library.download_info.url
             } else {
                 format!(
-                    "https://download.mcbbs.net/maven/{}",
+                    "https://libraries.minecraft.net/{}",
                     library.download_info.path
                 )
             },
@@ -84,7 +84,7 @@ pub(crate) async fn generate_assets_downloads(
         .into_iter()
         .map(|obj| Download {
             url: format!(
-                "https://download.mcbbs.net/assets/{}/{}",
+                "https://resources.download.minecraft.net/assets/{}/{}",
                 &obj.1.hash[0..2],
                 obj.1.hash
             ),
@@ -181,10 +181,24 @@ pub async fn generate_download_info(
     file.write_all(version_json_raw.as_bytes()).await?;
 
     let mut download_list = vec![];
+    // download_list.push(Download {
+    //     url: format!("https://download.mcbbs.net/version/{version_id}/client"),
+    //     file: minecraft_location.versions.join(format!("{id}/{id}.jar")),
+    //     sha1: None,
+    // });
+    let downloads = version
+        .downloads
+        .clone()
+        .ok_or(anyhow!("No downloads found!"))?;
+    let client = downloads.get("client").ok_or(anyhow!("No client found!"))?;
+
     download_list.push(Download {
-        url: format!("https://download.mcbbs.net/version/{version_id}/client"),
+        url: format!(
+            "https://piston-data.mojang.com/v1/objects/{}/client.jar",
+            client.sha1
+        ),
         file: minecraft_location.versions.join(format!("{id}/{id}.jar")),
-        sha1: None,
+        sha1: Some(client.sha1.to_string()),
     });
 
     download_list.extend(generate_libraries_downloads(
