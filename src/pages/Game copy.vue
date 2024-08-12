@@ -282,7 +282,7 @@ function installGame() {
   padding: 5px 14px;
   width: fit-content;
   border-radius: 6px;
-  font-size: calc(15px - var(--font-size-error));
+  font-size: 15px;
   transition: opacity 0.3s ease;
 }
 
@@ -293,13 +293,13 @@ function installGame() {
 }
 
 .version>div:last-child p {
-  font-size: calc(20px - var(--font-size-error));
+  font-size: 20px;
 }
 
 i.button {
   font-family: "fa-pro";
   font-style: normal;
-  font-size: calc(18px - var(--font-size-error));
+  font-size: 18px;
   border-radius: 100px;
   margin: 0 2px;
   width: 44px;
@@ -327,7 +327,7 @@ i.button::before {
 .installing {
   margin-left: 8px;
   border-radius: 8px;
-  font-size: calc(15px - var(--font-size-error));
+  font-size: 15px;
   padding: 8px 20px;
   color: #fff;
   cursor: pointer;
@@ -382,7 +382,7 @@ ul.gamelist li {
   padding: 8px 10px;
   border-radius: var(--border-radius-small);
   transition: all 50ms ease;
-  font-size: calc(15px - var(--font-size-error));
+  font-size: 15px;
 }
 
 ul.gamelist li:hover {
@@ -440,7 +440,7 @@ ul.gamelist li.active::before {
   font-family: "fa-pro";
   width: 8px;
   height: 8px;
-  font-size: calc(16px - var(--font-size-error));
+  font-size: 16px;
   font-style: normal;
   margin-left: 2px;
   display: flex;
@@ -473,7 +473,7 @@ ul.gamelist li.active::before {
 }
 
 .progress-info p {
-  font-size: calc(15px - var(--font-size-error));
+  font-size: 15px;
   padding-bottom: 4px;
 }
 

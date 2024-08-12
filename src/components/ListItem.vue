@@ -55,7 +55,7 @@ defineProps<{
 }
 
 .dialog .list-item {
-  background-color: #ffffffb9;
+  background-color: #00000000;
   border: 1px solid #0000002e;
 }
 
@@ -93,7 +93,7 @@ defineProps<{
 
 .list-item h4 {
   font-weight: normal;
-  font-size: calc(15px - var(--font-size-error));
+  font-size: 15px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -105,18 +105,18 @@ defineProps<{
 
 .list-item .sub-title {
   color: #0000006f;
-  font-size: calc(14px - var(--font-size-error));
+  font-size: 14px;
   margin-left: 4px;
   display: flex;
 }
 
 .list-item p {
-  font-size: calc(14px - var(--font-size-error));
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   width: fit-content;
-  color: rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .icon {
@@ -140,7 +140,7 @@ defineProps<{
   align-items: center;
   pointer-events: all;
   transition: all 0.2s ease;
-  font-size: calc(15px - var(--font-size-error));
+  font-size: 15px;
   margin: 0 6px;
   transform: scale3d(1, 1, 500);
 }

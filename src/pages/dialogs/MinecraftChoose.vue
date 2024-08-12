@@ -1,7 +1,7 @@
 <template>
   <dialog-vue :visible="show" width="460" height="480">
     <div class="main">
-      <search-bar style="margin-bottom: 10px"> </search-bar>
+      <search-bar style="margin-bottom: 10px; width: 100%"> </search-bar>
       <TransitionGroup>
         <list-item v-for="(version, index) in versions" :key="index" :title="`Minecraft ${version.id}`" logo="1"
           :click-able="true" @click="$emit('select', version.id)" :buttons="['circle-info', 'floppy-disk']"

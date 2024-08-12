@@ -1,5 +1,5 @@
 @font-face {
-    font-family: 'harmony';
+    font-family: "harmony";
     /* font-weight: normal; */
     src: url(../fonts/HarmonyOS_Sans_SC_Regular.ttf);
 }
@@ -62,7 +62,7 @@
     --color-primer-border-contrast: rgba(31, 35, 40, 0.1);
     --color-primer-shadow-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.25);
     --color-primer-shadow-inset: inset 0 1px 0 rgba(208, 215, 222, 0.2);
-    --color-scale-black: #1F2328;
+    --color-scale-black: #1f2328;
     --color-scale-white: #ffffff;
     --color-scale-gray-0: #f6f8fa;
     --color-scale-gray-1: #eaeef2;
@@ -154,11 +154,10 @@
     --color-scale-coral-7: #801f0f;
     --color-scale-coral-8: #691105;
     --color-scale-coral-9: #510901;
-    /* font-size: calc(16px - var(--font-size-error)); */
 }
 
 h4 {
-    font-size: calc(16px - var(--font-size-error));
+    font-size: 16px;
 }
 
 .aaa {
@@ -172,10 +171,8 @@ h4 {
     box-sizing: border-box;
     user-select: none;
     outline: none;
-    /* -moz-user-select: none; */
     -webkit-user-select: none;
     cursor: default;
-    /* color: #f2f6fa; */
     font-family: harmony;
     line-height: 1;
 }
@@ -240,7 +237,7 @@ body {
     filter: blur(200px);
     top: -10px;
     left: 200px;
-    animation: 10s  ball-b-move cubic-bezier(1, 1, 0, 0) alternate infinite;
+    animation: 10s ball-b-move cubic-bezier(1, 1, 0, 0) alternate infinite;
 }
 
 @keyframes ball-a-move {
@@ -290,7 +287,9 @@ body {
     /* background-image: url(/1168337.jpg); */
     /* background-image: linear-gradient(45deg, #4e40ba, #5848d2); */
     /* background-image: url(/palm-leaf.webp); */
-    background-image: linear-gradient(rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)), linear-gradient(to bottom right, rgb(0 20 8), rgb(0, 0, 0), rgb(0 20 44));
+    background-image: linear-gradient(rgba(255, 255, 255, 0.06),
+            rgba(255, 255, 255, 0.06)),
+        linear-gradient(to bottom right, rgb(0 20 8), rgb(0, 0, 0), rgb(0 20 44));
     /* border: 1px solid rgba(255, 255, 255, 0.16); */
     /* backdrop-filter: blur(4px); */
     /* -webkit-backdrop-filter: blur(10px); */

@@ -104,7 +104,7 @@ let sources = ref([
 }
 
 .title p {
-  font-size: calc(19px - var(--font-size-error));
+  font-size: 19px;
 }
 
 .content {
