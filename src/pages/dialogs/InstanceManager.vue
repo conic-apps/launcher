@@ -5,7 +5,18 @@
         <div class="title" style="position: relative">
           <div style="display: flex; align-items: center">
             <div class="icon">
-              <i class="boxes-stacked"></i>
+              <i
+                class="boxes-stacked"
+                v-if="currentComponent == pages.view"
+              ></i>
+              <i
+                class="arrow-left back"
+                v-if="currentComponent == pages.create"
+                @click="
+                  transitionName = 'slide-right';
+                  currentComponent = pages.view;
+                "
+              ></i>
             </div>
             <div>
               <h4 v-if="currentComponent == pages.view">管理游戏档案</h4>
@@ -18,18 +29,26 @@
               </p>
             </div>
           </div>
-          <div class="button" style="position: absolute; right: 0" @click="
-            currentComponent = pages.view;
-          $emit('close');
-          ">
+          <div
+            class="button"
+            style="position: absolute; right: 0"
+            @click="
+              currentComponent = pages.view;
+              $emit('close');
+            "
+          >
             <i></i>
           </div>
         </div>
 
         <div class="content">
           <Transition :name="transitionName" mode="out-in">
-            <component :instances="props.instances" :is="currentComponent" @create="createInstance"
-              @created="instanceCreated"></component>
+            <component
+              :instances="props.instances"
+              :is="currentComponent"
+              @create="createInstance"
+              @created="instanceCreated"
+            ></component>
           </Transition>
           <!-- <div class="group" v-for="group in props.instances" :key="group.name">
           <div class="instance" v-for="instance in group.instances" :key="instance.name">
@@ -105,6 +124,9 @@ function instanceCreated() {
 .instance-manager .title .icon {
   width: 80px;
   height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .instance-manager .title i {
@@ -170,5 +192,20 @@ function instanceCreated() {
 
 .instance-manager {
   overflow: hidden;
+}
+
+.instance-manager .title .icon .back {
+  border-radius: 1000px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+}
+
+.instance-manager .title .icon .back:active {
+  opacity: 0.7;
+}
+
+.instance-manager .title .icon i.back::before {
+  font-size: 20px;
 }
 </style>

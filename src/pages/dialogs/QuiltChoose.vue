@@ -2,7 +2,8 @@
   <dialog-vue :visible="show" width="460" height="480">
     <div class="main">
       <search-bar style="margin-bottom: 10px"> </search-bar>
-      <TransitionGroup>
+      <div
+        style="border-radius: 10px; overflow: hidden ;border: 1px solid rgba(0,0,0, 0.16); box-shadow: rgba(0,0,0, 0.16) 0 0 10px;">
         <list-item title="不选择 Quilt" :click-able="true" @click="$emit('select', '')" :key="0"></list-item>
         <list-item v-for="(version, index) in versions" :key="index + 1" :title="version.loader.version" logo="1"
           :click-able="true" @click="$emit('select', version.loader.version)" :buttons="['circle-info', 'floppy-disk']"
@@ -12,7 +13,7 @@
           </template>
           <template #subtitle> </template>
         </list-item>
-      </TransitionGroup>
+      </div>
     </div>
   </dialog-vue>
 </template>
@@ -29,7 +30,7 @@ const props = defineProps<{
   show?: boolean;
   minecraft: string;
 }>();
-const emit = defineEmits(["no-version", "loaded"]);
+const emit = defineEmits(["no-version", "loaded", "select"]);
 
 let versions = ref<Array<any>>([]);
 

@@ -2,12 +2,14 @@
   <keep-alive>
     <div class="game-page-main">
       <div class="row-1">
+        <install-progress :installing="false" :instance-name="currentInstance.config.name"></install-progress>
         <instance-info minecraft-version="1.20.1" :instance-name="currentInstance.config.name" :installed="true"
-          :game-button-type="gameButtonType" @game-button="() => {
+          :game-button-type="gameButtonType" @game-button-click="() => {
               if (gameButtonType === 'launch') {
                 invoke('launch');
               } else if (gameButtonType === 'install') {
                 invoke('install');
+                
               }
             }
             " :error-type="errorType"></instance-info>
@@ -59,6 +61,7 @@
 <script setup lang="ts">
 import InstanceInfo from "@/components/InstanceInfo.vue";
 import AssetsManager from "@/components/AssetsManager.vue";
+import InstallProgress from "./dialogs/InstallProgress.vue";
 import AccountManager from "@/components/AccountManager.vue";
 import Instances from "@/components/Instances.vue";
 import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
@@ -81,12 +84,12 @@ let currentInstance = ref<Instance>({
   installed: false,
 });
 let show = ref({
-  instanceManager: true,
+  instanceManager: false,
 });
 let instances = ref([]);
 let gameButtonType: Ref<
   "installing" | "launching" | "install" | "launch" | "error"
-> = ref("error");
+> = ref("install");
 let errorType: Ref<"launch" | "install" | undefined> = ref();
 
 function update() {

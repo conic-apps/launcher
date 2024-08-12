@@ -9,6 +9,7 @@ pub mod instance;
 pub mod utils;
 
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 use crate::config::get_user_config;
@@ -21,11 +22,11 @@ use crate::instance::{
 use core::folder::DataLocation;
 use core::{OsType, PlatformInfo};
 use once_cell::sync::OnceCell;
-use tauri::{Listener, Manager, WebviewWindow};
+use tauri::{webview, Listener, Manager, Url, WebviewUrl, WebviewWindow, Window};
 use tauri_plugin_http::reqwest;
 
 /// use MAIN_WINDOW.emit() to send message to main window
-static MAIN_WINDOW: OnceCell<WebviewWindow> = OnceCell::new();
+static MAIN_WINDOW: OnceCell<Window> = OnceCell::new();
 static DATA_LOCATION: OnceCell<DataLocation> = OnceCell::new();
 static PLATFORM_INFO: OnceCell<PlatformInfo> = OnceCell::new();
 static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
@@ -59,12 +60,10 @@ async fn main() {
             install,
         ])
         .manage(Storage {
-            current_instance: Arc::new(Mutex::new("".to_string())) 
+            current_instance: Arc::new(Mutex::new("".to_string())),
         })
         .setup(move |app| {
-            MAIN_WINDOW
-                .set(app.get_webview_window("main").unwrap())
-                .unwrap();
+            MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
             app.listen_any("fontend-loaded", move |_| {});
             Ok(())
         })
@@ -74,12 +73,15 @@ async fn main() {
 
 async fn initialize_application() {
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-    DATA_LOCATION.set(DataLocation::new("test")).unwrap();
     PLATFORM_INFO.set(PlatformInfo::new().await).unwrap();
+    initialize_application_data().await;
+    DATA_LOCATION
+        .set(DataLocation::new(APPLICATION_DATA.get().unwrap()))
+        .unwrap();
     HTTP_CLIENT
         .set(reqwest::ClientBuilder::new().build().unwrap())
         .unwrap();
-    initialize_application_data().await;
+    instance::update_latest_instance().await;
 }
 
 async fn initialize_application_data() {
@@ -88,14 +90,20 @@ async fn initialize_application_data() {
         OsType::Windows => {
             APPLICATION_DATA
                 .set(
-                    PathBuf::from(std::env::var("APP_DATA").expect("No APP_DATA directory"))
-                        .join("aml"),
+                    PathBuf::from(
+                        std::env::var("APP_DATA").expect("Could not found APP_DATA directory"),
+                    )
+                    .join("aml"),
                 )
                 .unwrap();
         }
         OsType::Linux => {
+            println!("{:#?}", std::env::var("HOME"));
             APPLICATION_DATA
-                .set(PathBuf::from("/home/").join("aml"))
+                .set(
+                    PathBuf::from(std::env::var("HOME").expect("Could not found home"))
+                        .join(".aml"),
+                )
                 .unwrap();
         }
         OsType::Osx => {

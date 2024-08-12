@@ -36,6 +36,7 @@ const contentStyle = `width: ${props.width}px; height: ${props.height}px;`;
   width: 100%;
   height: 100%;
   background-color: #00000042;
+  border-radius: 16px;
 }
 
 .dialog-enter-from,

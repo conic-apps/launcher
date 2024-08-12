@@ -11,9 +11,13 @@
   "app": {
     "windows": [
       {
-        "title": "amethyst-launcher",
-        "width": 800,
-        "height": 600
+        "title": "Amethyst Launcher",
+        "minWidth": 1080,
+        "minHeight": 640,
+        "focus": true,
+        "transparent": true,
+        "decorations": false,
+        "fullscreen": false
       }
     ],
     "security": {

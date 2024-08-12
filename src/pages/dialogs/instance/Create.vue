@@ -1,30 +1,24 @@
 <template>
   <div>
-    <expander :padding="[22, 24, 22, 24]" :expander-header="false">
-      <div class="info-bar">
-        <div class="icon"></div>
-        <div class="info">
-          <h4>
-            {{ instanceName }}
-            <tag v-if="repeated" text="实例名不得与已有实例名相同" :color="['255', '129', '120']" :background="true" :border="true">
-            </tag>
-          </h4>
-          <p>
-            <span v-if="select.minecraft">Minecraft {{ select.minecraft }}</span>
-            <span v-if="select.forge">, Forge {{ select.forge }}</span>
-            <span v-if="select.fabric">, Fabric {{ select.fabric }}</span>
-            <span v-if="select.quilt">, Quilt {{ select.quilt }}</span>
-          </p>
-        </div>
-        <button :class="select.minecraft && !repeated
-            ? 'command-button'
-            : 'command-button disabled'
-          " @click="create">
-          创建
-        </button>
+    <div class="info-bar">
+      <div class="icon"></div>
+      <div class="info" style="display: flex; align-items: center">
+        <!-- <h4>
+          {{ instanceName }}
+          
+        </h4> -->
+        <text-input-box :error="true" class="instance-name-input" style="width: 300px; margin-left: 10px;" name="实例名称" :placeholder="instanceNameDefault" v-model="instanceNameValue"></text-input-box>
+        <tag v-if="repeated" text="名称不能重复" :color="['255', '129', '120']" text-color="rgba(255,255,255, 0.7)" :background="true" :border="true" style="margin-left: 10px;">
+        </tag>
       </div>
-      <text-input-box name="实例名称" :placeholder="instanceNameDefault" v-model="instanceNameValue"></text-input-box>
-    </expander>
+      <vue-button text="创建" :disabled="!select.minecraft || repeated" @click="create"></vue-button>
+      <!-- <button style="margin-left: auto;" :class="select.minecraft && !repeated
+          ? 'command-button'
+          : 'command-button disabled'
+        " >
+        创建
+      </button> -->
+    </div>
     <div style="display: flex">
       <div style="width: 100%; margin-right: 4px">
         <card-link margin="0,0,8,0" title="Minecraft" :description="select.minecraft
@@ -80,6 +74,7 @@ import FabricChoose from "../FabricChoose.vue";
 import ForgeChoose from "../ForgeChoose.vue";
 import QuiltChoose from "../QuiltChoose.vue";
 import { invoke } from "@tauri-apps/api/core";
+import VueButton from "@/components/controllers/Button.vue";
 import Tag from "@/components/Tag.vue";
 
 const emit = defineEmits(["created"]);
@@ -257,7 +252,7 @@ watch(instanceName, (newValue) => {
     instanceName: newValue,
   }).then((res: any) => {
     console.log(res);
-    repeated.value = !res;
+    repeated.value = res;
   });
 });
 </script>
@@ -266,12 +261,16 @@ watch(instanceName, (newValue) => {
 .info-bar {
   display: flex;
   margin-bottom: 12px;
-  height: 40px;
+  padding:20px 24px;
+  margin-top: 10px;
   align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+
 }
 
 .info-bar .icon {
-  background-image: url(@/assets/images/Ancient_Debris.webp);
+  background-image: url(@/assets/images/minecraft-icon.svg);
   background-size: cover;
   width: 36px;
   height: 36px;
@@ -280,8 +279,7 @@ watch(instanceName, (newValue) => {
 
 .info h4 {
   font-weight: 500;
-  font-size: 15px;
-  // color: rgb(var(--theme-color));
+  font-size: 17px;
   line-height: 1;
   display: flex;
 }
@@ -293,10 +291,15 @@ watch(instanceName, (newValue) => {
 
 .info p {
   opacity: 0.6;
+  text-align: left;
+  padding-left: 2px;
 }
 
 .disabled {
   opacity: 0.5;
   pointer-events: none;
+}.instance-name-input input {
+padding: 0 !important;
+outline: none !important;
 }
 </style>

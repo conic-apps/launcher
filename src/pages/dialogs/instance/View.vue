@@ -59,7 +59,7 @@ const props = defineProps<{
 
   .instance:active {
     opacity: 0.9;
-    transform: scale(0.96);
+    // transform: scale(0.96);
     transition: transform 100ms cubic-bezier(0, 0, 0.2, 1);
   }
 
