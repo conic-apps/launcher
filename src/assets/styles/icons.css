@@ -83,10 +83,6 @@ i.folder-arrow-down {
 
 i.folder-arrow-down::before {
     content: "\f019";
-    font-style: normal;
-    font-weight: 400;
-    font-size: 30px;
-    margin-right: 20px;
 }
 
 .sidebar-button i::before {
@@ -284,29 +280,29 @@ i.arrow-down-to-square::before {
 }
 
 i.minecraft {
-    width: 100%;
-    height: 100%;
+    width: 80%;
+    height: 80%;
     background-image: url(../images/minecraft.webp);
     background-size: cover;
 }
 
 i.forge {
-    width: 100%;
-    height: 100%;
+    width: 85%;
+    height: 85%;
     background-image: url(../images/Anvil_JE3_BE3.webp);
     background-size: cover;
 }
 
 i.fabric {
-    width: 100%;
-    height: 100%;
+    width: 80%;
+    height: 80%;
     background-image: url(../images/fabric.webp);
     background-size: cover;
 }
 
 i.quilt {
-    width: 100%;
-    height: 100%;
+    width: 80%;
+    height: 80%;
     background-image: url(../images/quilt.svg);
     background-size: cover;
 }

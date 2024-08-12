@@ -25,9 +25,9 @@
         <i class="button gear"></i>
         <i class="button circle-info"></i>
         <i class="button star"></i>
-        <button class="game-button" :class="`${gameButtonType}-game-button`" @click="$emit('game-button')">
+        <button class="game-button" :class="`${gameButtonType}-game-button`" @click="$emit('game-button-click')">
           <i :class="props.gameButtonType" style="
-              font-family: &quot;fa-pro&quot;;
+              font-family: fa-pro;
               font-style: normal;
               margin-right: 5px;
               font-weight: 100;
@@ -184,26 +184,26 @@ button.game-button {
 }
 
 button.game-button:active {
-opacity: 0.8;
+  opacity: 0.8;
 }
 
 button.error-game-button {
   background-image: linear-gradient(248deg, #d11919, #d62f2f);
 }
 
-button.launch-game-button {
-  // background-image: ;
-}
+// button.launch-game-button {
+//   // background-image: ;
+// }
 
-button.launching-game-button {
-  // background-image: ;
-}
+// button.launching-game-button {
+//   // background-image: ;
+// }
 
 button.install-game-button {
   background-image: linear-gradient(248deg, #235dce, #399bed);
 }
 
-button.installing-game-button {
-  // background-image: ;
-}
+// button.installing-game-button {
+//   // background-image: ;
+// }
 </style>
