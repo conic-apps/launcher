@@ -44,7 +44,7 @@ let style = `width: ${props.width}; height: ${props.height};`
 .search-bar i {
   font-family: 'fa-pro';
   font-style: normal;
-  font-size: calc(12px - var(--font-size-error));
+  font-size: 12px;
   margin-right: 6px;
   color: #808080;
   transform: scale(0.95);

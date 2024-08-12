@@ -100,7 +100,7 @@ function switchComponent(item: any, index: number) {
 
 .sidebar {
   width: 220px;
-  font-size: calc(16px - var(--font-size-error));
+  font-size: 16px;
   margin-bottom: 20px;
   margin-right: 20px;
   transition: all 0.2s cubic-bezier(0, 0.83, 0.47, 1);
@@ -125,7 +125,7 @@ function switchComponent(item: any, index: number) {
 
 .sidebar li {
   list-style: none;
-  font-size: calc(13.5px - var(--font-size-error));
+  font-size: 13.5px;
   font-weight: 500;
   line-height: 1.3;
   width: 100%;
@@ -174,7 +174,7 @@ function switchComponent(item: any, index: number) {
   font-family: "fa-pro";
   border-radius: 100px;
   font-style: normal;
-  font-size: calc(16px - var(--font-size-error));
+  font-size: 16px;
   font-weight: 400;
   margin-right: 7px;
   width: 21px;
@@ -192,7 +192,7 @@ function switchComponent(item: any, index: number) {
 }
 
 .sidebar>div>p {
-  font-size: calc(14px - var(--font-size-error));
+  font-size: 14px;
   margin: 10px 2px;
   display: inline;
   width: fit-content;
