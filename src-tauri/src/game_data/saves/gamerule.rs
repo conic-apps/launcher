@@ -42,7 +42,7 @@ pub struct GameRules {
 
     /// Controls the maximum number of blocks changed when using /clone, /fill, or /fillbiome
     pub command_modification_block_limit: Option<String>,
-    
+
     /// Whether the server should skip checking player speed when the player is wearing elytra.
     /// Often helps with jittering due to lag in multiplayer.
     pub disable_elytra_movement_check: Option<String>,
@@ -61,8 +61,8 @@ pub struct GameRules {
 
     /// Whether phantoms can spawn in the nighttime
     pub do_insomnia: Option<String>,
-    
-    /// Players respawn immediately without showing the death screen	
+
+    /// Players respawn immediately without showing the death screen
     pub do_immediate_respawn: Option<String>,
 
     /// Whether players can craft only those recipes that they have unlocked
@@ -86,8 +86,8 @@ pub struct GameRules {
     /// Whether vines can spread to other blocks. Cave vines, weeping vines, and twisting vines are
     /// not affected.
     pub do_vines_spread: Option<String>,
-    
-    /// Whether the weather can change naturally. The /weather command can still change weather.	
+
+    /// Whether the weather can change naturally. The /weather command can still change weather.
     pub do_weather_cycle: Option<String>,
 
     /// Whether wardens can spawn

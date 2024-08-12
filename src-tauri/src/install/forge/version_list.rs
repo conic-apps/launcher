@@ -19,6 +19,7 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tauri_plugin_http::reqwest;
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct ForgeVersionListItem {

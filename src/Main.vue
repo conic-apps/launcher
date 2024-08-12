@@ -10,23 +10,21 @@
       </div>
     </div>
     <div class="sidebar" data-tauri-drag-region="">
-      <div class="logo">
-      </div>
+      <div class="logo"></div>
       <ul class="sidebar-btns" data-tauri-drag-region>
         <sidebar-item title="游戏" icon="gamepad" @click="changePage($event, 'wareHouse')"></sidebar-item>
         <sidebar-item title="扩展" icon="puzzle-piece" @click="changePage($event, 'community')"></sidebar-item>
         <sidebar-item title="设置" icon="nav-5" @click="changePage($event, 'settings')"
-          style="margin-top: auto;"></sidebar-item>
+          style="margin-top: auto"></sidebar-item>
         <!-- <sidebar-item title="更多" icon="cube" @click="switchPage($event, '#more');"></sidebar-item> -->
       </ul>
     </div>
     <main class="main" style="transition: none">
       <Transition :name="transitionName" mode="out-in">
         <KeepAlive>
-          <component :is=" currentComponent " @back-to-home="back" @jump="jumpTo"></component>
+          <component :is="currentComponent" @back-to-home="back" @jump="jumpTo"></component>
         </KeepAlive>
       </Transition>
-
     </main>
     <!-- <div class="line">
     </div> todo: line -->
@@ -34,123 +32,112 @@
 </template>
 
 <script setup lang="ts">
-import { markRaw, reactive, ref, shallowRef } from 'vue';
-import SearchBar from './components/SearchBar.vue';
-import SidebarItem from './components/SidebarItem.vue';
-import { window } from '@tauri-apps/api';
-import $ from 'jquery';
-import Settings from './pages/Settings.vue';
-import Game from './pages/Game.vue';
-
-// setTimeout(() => {
-//   let fontSizeError = 0
-//   const fixWebkitgtk = document.getElementById('fix-webkitgtk') as HTMLElement
-//   fixWebkitgtk.innerHTML = /* css */ `    
-//   :root {
-//     --font-size-error: ${fontSizeError}px;
-//   }`
-
-//   if ($('#font-test').outerHeight()! > 15.78) {
-//     console.log((15.78 / $('#font-test').outerHeight()!) * 15)
-//     fontSizeError = 13.5 - (15.78 / $('#font-test').outerHeight()!) * 15
-//     fixWebkitgtk.innerHTML = /* css */ `    
-//     :root {
-//       --font-size-error: ${fontSizeError}px;
-//     }`
-//   }
-// }, 48);
+import { markRaw, reactive, ref, shallowRef } from "vue";
+import SearchBar from "./components/SearchBar.vue";
+import SidebarItem from "./components/SidebarItem.vue";
+import { window } from "@tauri-apps/api";
+import $ from "jquery";
+import Settings from "./pages/Settings.vue";
+import Game from "./pages/Game.vue";
 
 function minimize() {
-  window.getCurrent().minimize()
+  window.getCurrentWindow().minimize();
 }
 function maximize() {
-  window.getCurrent().maximize()
+  window.getCurrentWindow().maximize();
 }
 function close() {
-  window.getCurrent().close()
+  window.getCurrentWindow().close();
 }
 
 const pages: any = reactive({
   settings: markRaw(Settings),
   game: markRaw(Game),
-})
+});
 
-let transitionName = ref('entrance')
-const currentComponent = shallowRef(pages.game)
-let last: any
-function changePage(event: any, component: any) {
-  if (component === 'settings') {
-    transitionName.value = 'zoom-out'
-    hideSidebar()
+let transitionName = ref("entrance");
+const currentComponent = shallowRef(pages.game);
+let last: any;
+function changePage(_event: any, component: any) {
+  if (component === "settings") {
+    transitionName.value = "zoom-out";
+    hideSidebar();
   } else {
-    showSidebar()
-    let isSettingPage = JSON.stringify(currentComponent.value) == JSON.stringify(pages.settings);
+    showSidebar();
+    let isSettingPage =
+      JSON.stringify(currentComponent.value) == JSON.stringify(pages.settings);
     if (isSettingPage) {
-      transitionName.value = 'zoom-in'
+      transitionName.value = "zoom-in";
     } else {
-      transitionName.value = 'entrance'
+      transitionName.value = "entrance";
     }
   }
-  last = currentComponent.value
-  if (typeof component == 'string') {
+  last = currentComponent.value;
+  if (typeof component == "string") {
     currentComponent.value = pages[component];
   } else {
-    currentComponent.value = component
+    currentComponent.value = component;
   }
 }
 
 function hideSidebar() {
-  $('.main').attr('style', '')
-  $('.sidebar').addClass('sidebar-hidden')
-  $('.main').addClass('main-large')
+  $(".main").attr("style", "");
+  $(".sidebar").addClass("sidebar-hidden");
+  $(".main").addClass("main-large");
   setTimeout(() => {
-    $('.main').attr('style', 'transition: none')
+    $(".main").attr("style", "transition: none");
   }, 300);
 }
 
 function showSidebar() {
-  $('.main').attr('style', '')
-  $('.sidebar').removeClass('sidebar-hidden')
-  $('.main').removeClass('main-large')
+  $(".main").attr("style", "");
+  $(".sidebar").removeClass("sidebar-hidden");
+  $(".main").removeClass("main-large");
   setTimeout(() => {
-    $('.main').attr('style', 'transition: none')
-  }, 300)
+    $(".main").attr("style", "transition: none");
+  }, 300);
 }
 
 function back() {
   let isSettingPage = JSON.stringify(last) == JSON.stringify(pages.settings);
   if (isSettingPage) {
-    changePage(null, 'wareHouse')
-    return
+    changePage(null, "wareHouse");
+    return;
   }
-  changePage(null, last)
+  changePage(null, last);
 }
 function jumpTo(name: string) {
-  changePage(null, name)
+  changePage(null, name);
 }
 
-function moveLine(position: number[]) {
+function _moveLine(position: number[]) {
   // todo
 }
 
 function openSearchPanel() {
-  $('#global-search').attr('style',/* css */ `
+  $("#global-search")
+    .attr(
+      "style",
+      /* css */ `
   top: 300px; 
   height: 400px; 
   width: 500px; 
   background: #000; 
   z-index: 10001;
   border-radius: 16px;
-  `).children('*').hide()
-  $('#model-shadow').attr('style', 'opacity: 1; z-index: 10000;')
+  `,
+    )
+    .children("*")
+    .hide();
+  $("#model-shadow").attr("style", "opacity: 1; z-index: 10000;");
   setTimeout(() => {
-    closeSearchPanel()
+    closeSearchPanel();
   }, 1000);
 }
 
 function closeSearchPanel() {
-  $('#global-search').attr('style', '').children('*').show()
-  $('#model-shadow').attr('style', '')
+  $("#global-search").attr("style", "").children("*").show();
+  $("#model-shadow").attr("style", "");
 }
 </script>
 
@@ -170,7 +157,6 @@ function closeSearchPanel() {
   align-items: center;
   justify-content: space-between;
 }
-
 
 .win-btn {
   display: flex;
@@ -192,7 +178,7 @@ function closeSearchPanel() {
 
 .win-btn>div>i {
   font-style: normal;
-  font-family: 'fa-pro';
+  font-family: "fa-pro";
   font-weight: 100;
   display: flex;
   align-items: center;
@@ -222,7 +208,7 @@ function closeSearchPanel() {
 }
 
 .win-btn>div.min>i::before {
-  content: '\f068';
+  content: "\f068";
   font-size: 12px;
   margin-top: 1px;
 }
@@ -232,7 +218,7 @@ function closeSearchPanel() {
 }
 
 .win-btn>div.max>i::before {
-  content: '\f065';
+  content: "\f065";
   font-size: 12px;
   margin-top: 1.6px;
   margin-left: 0.8px;
@@ -243,7 +229,7 @@ function closeSearchPanel() {
 }
 
 .win-btn>div.close>i::before {
-  content: '\f00d';
+  content: "\f00d";
   font-size: 14px;
   margin-top: 1px;
   margin-left: 0.6px;
@@ -265,7 +251,7 @@ function closeSearchPanel() {
   flex-shrink: 0;
   position: absolute;
   top: 0;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 
 .sidebar .sidebar-btns {
@@ -279,7 +265,7 @@ function closeSearchPanel() {
 }
 
 .sidebar>* {
-  transition: opacity .3s ease;
+  transition: opacity 0.3s ease;
 }
 
 .sidebar-hidden>* {
@@ -306,7 +292,7 @@ main.main {
   border-bottom-left-radius: unset;
   border-top-right-radius: unset;
   background-color: #ffffff0f;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 
 main.main-large {
@@ -322,7 +308,7 @@ main.main-large {
   position: fixed;
   right: 328px;
   top: 100px;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 </style>
 <!-- <template>

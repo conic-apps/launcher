@@ -19,8 +19,8 @@
 use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
-use reqwest::Url;
 use serde_json::Value;
+use tauri_plugin_http::reqwest;
 use tokio::io::AsyncWriteExt;
 
 use crate::core::version::ResolvedLibrary;
@@ -75,7 +75,7 @@ pub(crate) async fn generate_assets_downloads(
     asset_index: AssetIndex,
     minecraft_location: &MinecraftLocation,
 ) -> Result<Vec<Download>> {
-    let asset_index_url = Url::parse((&asset_index.url).as_ref())?;
+    let asset_index_url = reqwest::Url::parse((&asset_index.url).as_ref())?;
     let asset_index_raw = reqwest::get(asset_index_url).await?.text().await?;
     let asset_index_json: Value = serde_json::from_str((&asset_index_raw).as_ref())?;
     let asset_index_object: AssetIndexObject =

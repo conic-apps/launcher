@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use anyhow::Result;
-
 use super::{QuiltArtifactVersion, QuiltVersion, DEFAULT_META_URL};
+use anyhow::Result;
+use tauri_plugin_http::reqwest;
 
 pub async fn get_quilt_version_list(remote: Option<String>) -> Result<Vec<QuiltArtifactVersion>> {
     let remote = match remote {
