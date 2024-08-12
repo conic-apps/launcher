@@ -1,17 +1,21 @@
 <template>
   <li class="list-item">
     <div :style="`${buttons ? '' : 'justify-content: start;width: 100%;'}${clickAble ? 'pointer-events: all;' : ''}`">
-      <div class="icon"
-        :style="logo ? `background-image: url(${logo}); ${logoPixelated ? 'image-rendering: pixelated;' : ''}` : 'display: none;'">
+      <div class="icon" :style="logo
+          ? `background-image: url(${logo}); ${logoPixelated ? 'image-rendering: pixelated;' : ''}`
+          : 'display: none;'
+        ">
         <slot name="icon"></slot>
       </div>
       <div>
-        <h4>{{ title }} <div class="sub-title">
+        <h4>
+          {{ title }}
+          <div class="sub-title">
             <slot name="subtitle"></slot>
           </div>
         </h4>
         <p>
-          {{ description ? description : '' }}
+          {{ description ? description : "" }}
           <slot></slot>
         </p>
       </div>
@@ -24,16 +28,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 defineProps<{
-  logo?: string,
-  title: string,
-  description?: string,
-  logoPixelated?: boolean,
-  buttons?: string[], // 图标名称对应点击后触发的事件名称
-  clickAble?: boolean,
-}>()
-
+  logo?: string;
+  title: string;
+  description?: string;
+  logoPixelated?: boolean;
+  buttons?: string[]; // 图标名称对应点击后触发的事件名称
+  clickAble?: boolean;
+}>();
 </script>
 
 <style lang="less" scoped>
@@ -41,7 +43,7 @@ defineProps<{
   display: flex;
   padding: 10px 12px;
   border-radius: var(--border-radius-medium);
-  transition: all .1s cubic-bezier(0, 0.43, 0.25, 1);
+  transition: all 0.1s cubic-bezier(0, 0.43, 0.25, 1);
   justify-content: space-between;
   border: 1px solid var(--expander-border-color);
   margin-bottom: 6px;
@@ -51,8 +53,6 @@ defineProps<{
   background-color: #ffffff71;
   pointer-events: none;
 }
-
-
 
 .dialog .list-item {
   background-color: #ffffffb9;
@@ -67,7 +67,7 @@ defineProps<{
 
 .list-item>div:first-child {
   width: 100%;
-  transition: all .1s ease;
+  transition: all 0.1s ease;
 }
 
 // .list-item>div:first-child:hover {
@@ -134,12 +134,12 @@ defineProps<{
 }
 
 .list-item-button {
-  font-family: 'fa-pro';
+  font-family: "fa-pro";
   font-style: normal;
   display: flex;
   align-items: center;
   pointer-events: all;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
   font-size: calc(15px - var(--font-size-error));
   margin: 0 6px;
   transform: scale3d(1, 1, 500);

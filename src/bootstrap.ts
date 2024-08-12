@@ -1,25 +1,18 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import App from './Main.vue'
-import $ from 'jquery'
+import { createApp } from "vue";
+// import { createPinia } from 'pinia'
+import App from "./Main.vue";
+// import $ from "jquery";
 
 // $("#window").attr(
 //     "style",
 //     "transform: scale(1); opacity: 1; transition: all 250ms cubic-bezier(0.04, 0.47, 0.47, 0.98)"
 // );
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(createPinia())
+// app.use(createPinia())
 
-app.mount('#window')
-
-// // 调用命令
-// // 在应用窗口中右键，打开开发者工具
-// // 你会看到控制台上输出了 "Hello, World!"！
-// invoke('greet', { name: 'World' })
-//   // `invoke` 返回的是一个 Promise
-//   .then((response) => console.log(response))
+app.mount("#window");
 
 // // window.getCurrent().setAlwaysOnTop(true)
 // // window.getCurrent().setResizable(false)
@@ -35,11 +28,9 @@ app.mount('#window')
 //   x: (await window.getCurrent().innerPosition()).x,
 //   y: (await window.getCurrent().innerPosition()).y
 // },);
-import { event } from '@tauri-apps/api'
+import { event } from "@tauri-apps/api";
 
-window.onload = () => {
-    console.log(
-        `Amethyst Launcher`
-    )
-    event.emit("fontend-loaded")
-}
+globalThis.onload = () => {
+  console.log(`Amethyst Launcher`);
+  event.emit("fontend-loaded");
+};

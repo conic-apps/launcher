@@ -1,7 +1,5 @@
-#![cfg_attr(
-    all(not(debug_assertions), target_os = "windows"),
-    windows_subsystem = "windows"
-)]
+// Prevents additional console window on Windows in release.
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 pub mod config;
 pub mod core;
@@ -23,10 +21,11 @@ use crate::instance::{
 use core::folder::DataLocation;
 use core::{OsType, PlatformInfo};
 use once_cell::sync::OnceCell;
-use tauri::{Manager, Window};
+use tauri::{Listener, Manager, WebviewWindow};
+use tauri_plugin_http::reqwest;
 
 /// use MAIN_WINDOW.emit() to send message to main window
-static MAIN_WINDOW: OnceCell<Window> = OnceCell::new();
+static MAIN_WINDOW: OnceCell<WebviewWindow> = OnceCell::new();
 static DATA_LOCATION: OnceCell<DataLocation> = OnceCell::new();
 static PLATFORM_INFO: OnceCell<PlatformInfo> = OnceCell::new();
 static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
@@ -35,16 +34,13 @@ static APPLICATION_DATA: OnceCell<PathBuf> = OnceCell::new();
 pub struct Storage {
     pub current_instance: Arc<Mutex<String>>,
 }
-
 #[tokio::main]
 async fn main() {
-    // let start = std::time::Instant::now();
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     tokio::spawn(initialize_application());
     tauri::Builder::default()
-        .manage(Storage {
-            current_instance: Arc::new(Mutex::new("".to_string())),
-        })
+        .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             get_user_config,
             create_instance,
@@ -62,13 +58,18 @@ async fn main() {
             get_instance_config_from_string,
             install,
         ])
+        .manage(Storage {
+            current_instance: Arc::new(Mutex::new("".to_string())) 
+        })
         .setup(move |app| {
-            MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
-            app.listen_global("fontend-loaded", move |_| {});
+            MAIN_WINDOW
+                .set(app.get_webview_window("main").unwrap())
+                .unwrap();
+            app.listen_any("fontend-loaded", move |_| {});
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("error while running amethyst launcher!");
+        .expect("error while running tauri application");
 }
 
 async fn initialize_application() {

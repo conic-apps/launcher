@@ -27,7 +27,7 @@ use std::{
 
 use anyhow::Result;
 use regex::Regex;
-use reqwest::Response;
+use tauri_plugin_http::reqwest;
 use tokio::io::AsyncWriteExt;
 use zip::ZipArchive;
 
@@ -53,7 +53,7 @@ async fn download_forge_installer(
     required_version: RequiredVersion,
     minecraft: &MinecraftLocation,
     _options: &Option<InstallForgeOptions>,
-) -> Result<(String, Response)> {
+) -> Result<(String, reqwest::Response)> {
     let url = find_download_link(&required_version.version, &required_version.mcversion).await?;
     let path = url.replace("https://maven.minecraftforge.net/", "");
     // let forge_maven_path = path.replace("/maven", "").replace("maven", "");

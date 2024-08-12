@@ -7,11 +7,10 @@
 </template>
 
 <script setup lang="ts">
-import $ from 'jquery'
 defineProps<{
-  title?: string,
-  icon: string,
-}>()
+  title?: string;
+  icon: string;
+}>();
 </script>
 
 <style lang="less" scoped>
@@ -56,5 +55,4 @@ defineProps<{
 // .sidebar-item:active .tooltip {
 // opacity: 0;
 // transform: scale(1);
-// }
-</style>
+// }</style>
