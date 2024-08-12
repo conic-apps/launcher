@@ -34,6 +34,22 @@ pub struct InstanceConfig {
     pub group: Option<Vec<String>>,
 }
 
+impl InstanceConfig {
+    pub fn new(instance_name: &str, minecraft_version: &str) -> Self {
+        Self {
+            name: instance_name.to_string(),
+            runtime: InstanceRuntime {
+                minecraft: minecraft_version.to_string(),
+                fabric: "".to_string(),
+                forge: "".to_string(),
+                quilt: "".to_string(),
+                optifine: "".to_string(),
+            },
+            group: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct InstanceRuntime {
     pub minecraft: String,
@@ -94,7 +110,7 @@ pub async fn check_repeated_instance_name(instance_name: String) -> bool {
         .get_instance_root(&instance_name);
     let config = match get_instance_config_from_string(&instance_name).await {
         Ok(x) => x,
-        Err(_) => return true,
+        Err(_) => return false,
     };
     let folder_name = match instance_root.file_name() {
         None => return true,
@@ -488,4 +504,16 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
     .unwrap();
     lock_file.write_all(b"ok").await.unwrap();
     Ok(())
+}
+
+pub async fn update_latest_instance() {
+    if !check_repeated_instance_name("Latest Release".to_string()).await {
+        create_instance(
+            "Latest Release".to_string(),
+            InstanceConfig::new("Latest Release", ""),
+        )
+        .await;
+    };
+    // let latest_minecraft_version = get_minecraft_version_list().await.unwrap().latest.release;
+    // println!("{}", latest_minecraft_version);
 }

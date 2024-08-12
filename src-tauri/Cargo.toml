@@ -15,7 +15,7 @@ edition = "2021"
 tauri-build = { version = "2.0.0-rc", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.0-rc", features = [] }
+tauri = { version = "2.0.0-rc", features = ["unstable"] }
 tauri-plugin-shell = "2.0.0-rc"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
@@ -33,6 +33,3 @@ deflate = "1.0.0"
 uuid = { version = "1.4.0", features = ["v4", "fast-rng", "macro-diagnostics", ] }
 hematite-nbt = "0.5.2"
 tauri-plugin-http = "2.0.0-rc.0"
-
-
-

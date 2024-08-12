@@ -34,18 +34,13 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   
 <style lang="less" scoped>
 .card-button {
-  border-radius: var(--border-radius-large);
-  background-color: var(--expander-background-color);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--expander-border-color);
   margin: 15px 0 15px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: all 0.1s ease;
-  border-radius: var(--border-radius-large);
-  background-color: rgb(46, 49, 53);
-  border: 1px solid #ffffff04;
-  margin: 15px 0 15px 0;
   transition: all 0.1s ease;
 }
 
@@ -88,16 +83,16 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   justify-content: center;
 }
 
-.title h4 {
+.title h4#text {
   font-weight: normal;
-  font-size: 15.5px;
+  font-size: 17px;
 }
 
-.title p {
+.title p#text {
   font-size: 12.5px;
   color: #ffffffb7;
   opacity: 0.6;
-  margin-top: 0px;
+  margin-top: 7px;
 }
 
 i.chevron-right {

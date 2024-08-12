@@ -14,7 +14,7 @@
             <slot name="subtitle"></slot>
           </div>
         </h4>
-        <p>
+        <p id="text">
           {{ description ? description : "" }}
           <slot></slot>
         </p>
@@ -42,21 +42,16 @@ defineProps<{
 .list-item {
   display: flex;
   padding: 10px 12px;
-  border-radius: var(--border-radius-medium);
+  // border-radius: var(--border-radius-medium);
   transition: all 0.1s cubic-bezier(0, 0.43, 0.25, 1);
   justify-content: space-between;
-  border: 1px solid var(--expander-border-color);
-  margin-bottom: 6px;
+  // border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1px;
   position: relative;
   // flex-direction: row-reverse;
   overflow: hidden;
-  background-color: #ffffff71;
+  background-color: rgba(255, 255, 255, 0.08);
   pointer-events: none;
-}
-
-.dialog .list-item {
-  background-color: #00000000;
-  border: 1px solid #0000002e;
 }
 
 .list-item>div {
@@ -110,13 +105,14 @@ defineProps<{
   display: flex;
 }
 
-.list-item p {
+.list-item p#text {
   font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   width: fit-content;
   color: rgba(255, 255, 255, 0.6);
+  margin-top: 0;
 }
 
 .icon {

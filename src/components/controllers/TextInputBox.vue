@@ -1,81 +1,65 @@
 <template>
-  <div class="input-data mini">
-    <input type="text" :title="name" :placeholder="placeholder" required :value="value" />
-    <div class="underline"></div>
+  <div class="input-box">
+    <input
+      type="text"
+      :title="name"
+      :placeholder="placeholder"
+      required
+      v-model="model"
+      :style="error ? 'outline: rgb(127,0,0)' : ''"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  name?: string,
-  placeholder?: string,
-  value?: string,
-  type?: string,
-}>(), {
-  type: "text"
-})
+withDefaults(
+  defineProps<{
+    name?: string;
+    placeholder?: string;
+    type?: string;
+    error?: boolean;
+  }>(),
+  {
+    type: "text",
+  },
+);
 
+const model = defineModel();
 </script>
 
 <style lang="less" scoped>
-.input-data {
+.input-box {
   border-radius: var(--border-radius-small);
   margin-left: auto;
   width: 400px;
   overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(var(--theme-color), 0.2);
   height: 30px;
   flex-shrink: 0;
-  padding: 0 8px 2px 8px;
-  font-size: 16px;
+  padding: 0;
+  font-size: 15px;
   transition: all 0.1s ease;
   pointer-events: all;
-  background: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.input-data div.input {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.6rem;
-  position: relative;
-  height: 32px;
-  pointer-events: none;
-}
-
-.input-data input {
+.input-box input {
   border: none;
-  outline: none;
-  border-bottom: 2px #000000;
-  background: none;
+  background-color: #00000000;
   padding: 0;
   height: 100%;
   width: 100%;
+  margin: 0;
+  padding: 2px 8px;
   text-align: inherit;
-  z-index: 10;
 }
 
-.input-data:hover {
-  background: #ffffffce;
+.input-box:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.underline {
-  background: rgba(var(--theme-color), 1);
-  margin-left: -8px;
-  height: 2px;
-  width: calc(100% + 16px);
-  transform: scale(0, 1);
-  opacity: 0;
-  border-radius: var(--border-radius-medium);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+.input-box:focus-within {
+  outline: 1px solid #4493f8;
+  background-color: rgba(255, 255, 255, 0.05);
 }
-
-input:focus~.underline {
-  transform: scale(1);
-  opacity: 1;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-input:focus::-webkit-input-placeholder {
-  color: #00000000;
-}</style>
+</style>
