@@ -78,7 +78,7 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
 .icon i {
   font-family: 'fa-pro';
   font-style: normal;
-  font-size: calc(24px - var(--font-size-error));
+  font-size: 24px;
   font-weight: 500;
   margin: 0;
 }
@@ -97,12 +97,12 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
 .title h4 {
   font-weight: normal;
   height: 20.5px;
-  font-size: calc(15px - var(--font-size-error));
+  font-size: 15px;
   line-height: 20.5px;
 }
 
 .title p {
-  font-size: calc(12.5px - var(--font-size-error));
+  font-size: 12.5px;
   color: var(--text-color);
   opacity: 0.6;
   margin-top: 4px;
