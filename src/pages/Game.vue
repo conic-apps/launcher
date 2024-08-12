@@ -4,13 +4,14 @@
       <div class="row-1">
         <instance-info minecraft-version="1.20.1" :instance-name="currentInstance.config.name" :installed="true"
           :game-button-type="gameButtonType" @game-button="() => {
-            if (gameButtonType === 'launch') {
-              tauri.invoke('launch')
-            } else if (gameButtonType === 'install') {
-              tauri.invoke('install')
+              if (gameButtonType === 'launch') {
+                invoke('launch');
+              } else if (gameButtonType === 'install') {
+                invoke('install');
+              }
             }
-          }" :error-type="errorType"></instance-info>
-        <assets-manager :instance-name="currentInstance.config.name" style="margin-top: 20px;"></assets-manager>
+            " :error-type="errorType"></instance-info>
+        <assets-manager :instance-name="currentInstance.config.name" style="margin-top: 20px"></assets-manager>
       </div>
       <div class="row-2">
         <!-- <div class="group-name"> 
@@ -20,21 +21,34 @@
           </div>
         </div>
         <account-manager></account-manager> -->
-        <div class="group-name"> <!--todo: move to a component-->
-          <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
-            <p style="margin-left: 4px;">游戏</p>
-            <button class="group-button" @click="show.instanceManager = true" style="margin-right: 6px;"><i
-                class="chevron-right" style="font-size: 12px;"></i></button>
+        <div class="group-name">
+          <!--todo: move to a component-->
+          <div style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              height: 100%;
+            ">
+            <p style="margin-left: 4px">游戏</p>
+            <button class="group-button" @click="show.instanceManager = true" style="margin-right: 6px">
+              <i class="chevron-right" style="font-size: 12px"></i>
+            </button>
           </div>
         </div>
         <Instances :instances="instances" @select="setCurrentInstance"></Instances>
-        <instance-manager :show="show.instanceManager" @close="show.instanceManager = false"
-          :instances="instances" @update="update"></instance-manager>
+        <instance-manager :show="show.instanceManager" @close="show.instanceManager = false" :instances="instances"
+          @update="update"></instance-manager>
         <div class="group-name">
-          <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
-            <p style="margin-left: 4px;">好友</p>
-            <button class="group-button" style="margin-right: 6px;"><i class="chevron-right"
-                style="font-size: 12px;"></i></button>
+          <div style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              height: 100%;
+            ">
+            <p style="margin-left: 4px">好友</p>
+            <button class="group-button" style="margin-right: 6px">
+              <i class="chevron-right" style="font-size: 12px"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -43,74 +57,77 @@
 </template>
 
 <script setup lang="ts">
-import InstanceInfo from '@/components/InstanceInfo.vue';
-import AssetsManager from '@/components/AssetsManager.vue';
-import AccountManager from '@/components/AccountManager.vue';
-import Instances from '@/components/Instances.vue';
+import InstanceInfo from "@/components/InstanceInfo.vue";
+import AssetsManager from "@/components/AssetsManager.vue";
+import AccountManager from "@/components/AccountManager.vue";
+import Instances from "@/components/Instances.vue";
 import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
-import { reactive, ref, type Ref } from 'vue';
-import { tauri } from '@tauri-apps/api';
+import { reactive, ref, type Ref } from "vue";
+import { invoke } from "@tauri-apps/api/core";
 
 interface Instance {
   config: {
-    name: string,
-    runtime: string,
-  },
-  installed: boolean
+    name: string;
+    runtime: string;
+  };
+  installed: boolean;
 }
 
 let currentInstance = ref<Instance>({
   config: {
     name: "",
-    runtime: ""
+    runtime: "",
   },
-  installed: false
-})
+  installed: false,
+});
 let show = ref({
-  instanceManager: true
-})
-let instances = ref([])
-let gameButtonType: Ref<"installing" | "launching" | "install" | "launch" | "error"> = ref("error")
-let errorType: Ref<"launch" | "install" | undefined> = ref()
+  instanceManager: true,
+});
+let instances = ref([]);
+let gameButtonType: Ref<
+  "installing" | "launching" | "install" | "launch" | "error"
+> = ref("error");
+let errorType: Ref<"launch" | "install" | undefined> = ref();
 
 function update() {
-  tauri.invoke("scan_instances_folder").then((res: any) => {
-    instances.value = res
-    console.log(instances.value)
-  })
+  invoke("scan_instances_folder").then((res: any) => {
+    instances.value = res;
+    console.log(instances.value);
+  });
 }
 
-update()
-let modIsLoading = ref(false)
-let resourcepacksIsLoading = ref(false)
-let shaderpackIsLoading = ref(false)
-let savesIsLoading = ref(false)
-let mods = ref([])
-let resourcepacks = ref([])
-let shaderpacks = ref([])
-let saves = ref([])
+update();
+let modIsLoading = ref(false);
+let resourcepacksIsLoading = ref(false);
+let shaderpackIsLoading = ref(false);
+let savesIsLoading = ref(false);
+let mods = ref([]);
+let resourcepacks = ref([]);
+let shaderpacks = ref([]);
+let saves = ref([]);
 
 function updateData() {
-  modIsLoading.value = true
-  resourcepacksIsLoading.value = true
-  shaderpackIsLoading.value = true
-  savesIsLoading.value = true
-  tauri.invoke("scan_mod_folder").then((res: any) => {
-    mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name))
-    modIsLoading.value = false
-  })
-  tauri.invoke('scan_saves_folder').then((res: any) => {
-    saves.value = res
-    savesIsLoading.value = false
-  })
+  modIsLoading.value = true;
+  resourcepacksIsLoading.value = true;
+  shaderpackIsLoading.value = true;
+  savesIsLoading.value = true;
+  invoke("scan_mod_folder").then((res: any) => {
+    mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name));
+    modIsLoading.value = false;
+  });
+  invoke("scan_saves_folder").then((res: any) => {
+    saves.value = res;
+    savesIsLoading.value = false;
+  });
 }
 
 function setCurrentInstance(instance: Instance) {
-  currentInstance.value = instance
-  gameButtonType.value = instance.installed ? "launch" : "install"
-  tauri.invoke('set_current_instance', { instanceName: instance.config.name })
+  currentInstance.value = instance;
+  gameButtonType.value = instance.installed ? "launch" : "install";
+  invoke("set_current_instance", {
+    instanceName: instance.config.name,
+  });
 }
-
 
 // tauri.invoke("scan_instances_folder").then((res: any) => {
 //   instances.value = res
@@ -166,6 +183,6 @@ function setCurrentInstance(instance: Instance) {
 }
 
 .group-button i::before {
-  transform: scale(0.7)
+  transform: scale(0.7);
 }
 </style>

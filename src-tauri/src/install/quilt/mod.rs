@@ -63,7 +63,7 @@ pub struct QuiltLibraries {
 pub struct QuiltLauncherMeta {
     pub version: u32,
     pub libraries: QuiltLibraries,
-    pub main_class: QuiltMainClass
+    pub main_class: QuiltMainClass,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,7 +71,7 @@ pub struct QuiltLauncherMeta {
 pub struct QuiltMainClass {
     pub client: Option<String>,
     pub server: Option<String>,
-    pub server_launcher: Option<String>
+    pub server_launcher: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,5 +80,5 @@ pub struct QuiltVersion {
     pub loader: QuiltArtifactVersion,
     pub hashed: QuiltVersionHashed,
     pub intermediary: QuiltVersionIntermediary,
-    pub launcher_meta: QuiltLauncherMeta
+    pub launcher_meta: QuiltLauncherMeta,
 }

@@ -24,6 +24,7 @@ use std::{
     thread,
     time::Duration,
 };
+use tauri::Emitter;
 use tokio::{fs, io::AsyncWriteExt};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -303,25 +304,24 @@ pub async fn scan_saves_folder(
             let parser_task = tokio::task::spawn_blocking(|| {
                 crate::game_data::saves::level::get_level_data(level_path)
             });
-
-            results.push(Saves {
-                icon: {
-                    let icon_path = path.join("icon.png");
-                    match fs::read(icon_path).await {
-                        Err(_) => "".to_string(),
-                        Ok(content) => format!(
-                            "data:image/png;base64,{}",
-                            general_purpose::STANDARD_NO_PAD.encode(content)
-                        ),
-                    }
-                },
-                level_data: match parser_task.await {
+            let icon_path = path.join("icon.png");
+            let icon = match fs::read(icon_path).await {
+                Err(_) => "".to_string(),
+                Ok(content) => format!(
+                    "data:image/png;base64,{}",
+                    general_purpose::STANDARD_NO_PAD.encode(content)
+                ),
+            };
+            let level_data = match parser_task.await {
+                Err(_) => continue,
+                Ok(result) => match result {
                     Err(_) => continue,
-                    Ok(result) => match result {
-                        Err(_) => continue,
-                        Ok(result) => result,
-                    },
+                    Ok(result) => result,
                 },
+            };
+            results.push(Saves {
+                icon,
+                level_data,
                 dir_name: path.file_name().unwrap().to_string_lossy().to_string(),
             });
         }

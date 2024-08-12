@@ -17,8 +17,8 @@
  */
 
 pub mod gamerule;
-pub mod player;
 pub mod level;
+pub mod player;
 
 pub struct PlayerData {
     // todo

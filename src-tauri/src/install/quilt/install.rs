@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use tauri_plugin_http::reqwest;
 use tokio::fs::{self, create_dir_all};
 
 use crate::core::{folder::MinecraftLocation, version::Version};

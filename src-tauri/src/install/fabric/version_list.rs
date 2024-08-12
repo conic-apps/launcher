@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use anyhow::Result;
-
 use super::*;
+use anyhow::Result;
+use tauri_plugin_http::reqwest;
 
 impl FabricArtifacts {
     /// get fabric artifacts

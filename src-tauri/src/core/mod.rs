@@ -62,15 +62,15 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
 use once_cell::sync::Lazy;
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use tauri_plugin_http::reqwest;
 use tokio::process::Command;
 
 pub mod folder;
 // pub mod task;
 pub mod version;
 
-pub static HTTP_CLIENT: Lazy<Client> = Lazy::new(|| Client::new());
+pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| reqwest::Client::new());
 /// May not actually be used
 pub static DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("./launcher_profile.json");
 

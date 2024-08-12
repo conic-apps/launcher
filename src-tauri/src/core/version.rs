@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{collections::HashMap, fs::read_to_string, path::PathBuf, str::FromStr};
-
 use anyhow::Result;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::{collections::HashMap, fs::read_to_string, path::PathBuf, str::FromStr};
+use tauri_plugin_http::reqwest;
 
 use crate::core::folder::MinecraftLocation;
 
