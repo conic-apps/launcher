@@ -2,9 +2,17 @@
   <keep-alive>
     <div class="game-page-main">
       <div class="row-1">
-        <install-progress :installing="installing" :instance-name="currentInstance.config.name"></install-progress>
-        <instance-info minecraft-version="1.20.1" :instance-name="currentInstance.config.name" :installed="true"
-          :game-button-type="gameButtonType" @game-button-click="() => {
+        <install-progress
+          :installing="installing"
+          :instance-name="currentInstance.config.name"
+        ></install-progress>
+        <instance-info
+          minecraft-version="1.20.1"
+          :instance-name="currentInstance.config.name"
+          :installed="true"
+          :game-button-type="gameButtonType"
+          @game-button-click="
+            () => {
               if (gameButtonType === 'launch') {
                 invoke('launch');
               } else if (gameButtonType === 'install') {
@@ -12,8 +20,13 @@
                 invoke('install');
               }
             }
-            " :error-type="errorType"></instance-info>
-        <assets-manager :instance-name="currentInstance.config.name" style="margin-top: 20px"></assets-manager>
+          "
+          :error-type="errorType"
+        ></instance-info>
+        <assets-manager
+          :instance-name="currentInstance.config.name"
+          style="margin-top: 20px"
+        ></assets-manager>
       </div>
       <div class="row-2">
         <!-- <div class="group-name"> 
@@ -25,28 +38,43 @@
         <account-manager></account-manager> -->
         <div class="group-name">
           <!--todo: move to a component-->
-          <div style="
+          <div
+            style="
               display: flex;
               justify-content: space-between;
               align-items: center;
               height: 100%;
-            ">
+            "
+          >
             <p style="margin-left: 4px">游戏</p>
-            <button class="group-button" @click="show.instanceManager = true" style="margin-right: 6px">
+            <button
+              class="group-button"
+              @click="show.instanceManager = true"
+              style="margin-right: 6px"
+            >
               <i class="chevron-right" style="font-size: 12px"></i>
             </button>
           </div>
         </div>
-        <Instances :instances="instances" @select="setCurrentInstance"></Instances>
-        <instance-manager :show="show.instanceManager" @close="show.instanceManager = false" :instances="instances"
-          @update="update"></instance-manager>
+        <Instances
+          :instances="instances"
+          @select="setCurrentInstance"
+        ></Instances>
+        <instance-manager
+          :show="show.instanceManager"
+          @close="show.instanceManager = false"
+          :instances="instances"
+          @update="update"
+        ></instance-manager>
         <div class="group-name">
-          <div style="
+          <div
+            style="
               display: flex;
               justify-content: space-between;
               align-items: center;
               height: 100%;
-            ">
+            "
+          >
             <p style="margin-left: 4px">好友</p>
             <button class="group-button" style="margin-right: 6px">
               <i class="chevron-right" style="font-size: 12px"></i>
@@ -67,6 +95,7 @@ import Instances from "@/components/Instances.vue";
 import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
 import { reactive, ref, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
 let installing = ref(false);
 
@@ -133,6 +162,14 @@ function setCurrentInstance(instance: Instance) {
     instanceName: instance.config.name,
   });
 }
+
+listen("install_success", (event) => {
+  gameButtonType.value = "launch";
+  setTimeout(() => {
+    installing.value = false;
+  }, 3000);
+  update();
+});
 
 // tauri.invoke("scan_instances_folder").then((res: any) => {
 //   instances.value = res
