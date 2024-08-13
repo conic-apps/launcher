@@ -84,7 +84,7 @@ pub(crate) async fn generate_assets_downloads(
         .into_iter()
         .map(|obj| Download {
             url: format!(
-                "https://resources.download.minecraft.net/assets/{}/{}",
+                "https://resources.download.minecraft.net/{}/{}",
                 &obj.1.hash[0..2],
                 obj.1.hash
             ),

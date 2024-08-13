@@ -8,32 +8,101 @@
           </div>
           <div>
             <h4>正在安装{{ props.instanceName }}</h4>
-            <p>请稍等片刻</p>
+            <p style="display: flex; align-items: center">
+              <i
+                class="stopwatch"
+                style="
+                  font-family: fa-pro;
+                  font-style: normal;
+                  margin-right: 0.2em;
+                "
+              ></i>
+              <span style="width: 76px">{{ computedTime }} </span>
+              <span
+                :style="
+                  installProgress.step == 3
+                    ? 'transition: all .2s ease'
+                    : 'transition: all .2s ease;opacity: 0'
+                "
+                ><i
+                  class="gauge-high"
+                  style="
+                    font-family: fa-pro;
+                    font-style: normal;
+                    margin-right: 0.2em;
+                  "
+                ></i>
+                {{ speed }}</span
+              >
+            </p>
           </div>
         </div>
       </div>
       <div class="progress">
-        <div class="step" :style="getVersionInfoStatus == 'success' ||
+        <div
+          class="step"
+          :style="
+            getVersionInfoStatus == 'success' ||
             getVersionInfoStatus == 'pending'
-            ? 'opacity: 0.8'
-            : 'background: rgba(255, 255, 255, 0.08);'
-          ">
+              ? 'opacity: 0.8'
+              : 'background: rgba(255, 255, 255, 0.08);'
+          "
+        >
           <item-loading-icon :status="getVersionInfoStatus"></item-loading-icon>
           <p>获取版本信息</p>
         </div>
-        <div class="step" :style="downloadVanillaGameStatus == 'success' ||
+        <div
+          class="step"
+          :style="
+            checkExistFilesStatus == 'success' ||
+            checkExistFilesStatus == 'pending'
+              ? 'opacity: 0.8'
+              : 'background: rgba(255, 255, 255, 0.08)'
+          "
+        >
+          <item-loading-icon
+            :status="checkExistFilesStatus"
+          ></item-loading-icon>
+          <p>检查已有游戏文件</p>
+          <i
+            style="font-size: 13px; margin-left: auto; opacity: 0.7"
+            v-if="checkExistFilesStatus == 'in-progress'"
+            >已检查 {{ installProgress.completed }} 个文件</i
+          >
+        </div>
+        <div
+          class="step"
+          :style="
+            downloadVanillaGameStatus == 'success' ||
             downloadVanillaGameStatus == 'pending'
-            ? 'opacity: 0.8'
-            : 'background: rgba(255, 255, 255, 0.08)'
-          ">
-          <item-loading-icon :status="downloadVanillaGameStatus"></item-loading-icon>
+              ? 'opacity: 0.8'
+              : 'background: rgba(255, 255, 255, 0.08)'
+          "
+        >
+          <item-loading-icon
+            :status="downloadVanillaGameStatus"
+          ></item-loading-icon>
           <p>下载原版游戏文件</p>
-          <progress-bar v-if="installProgress.step == 2 || installProgress.step == 3" width="300"
-            style="margin-left: auto" :loading="installProgress.step == 2" :value="installProgress.completed.toString()"
-            :total="installProgress.total.toString()"></progress-bar>
-          <p v-if="installProgress.step == 2 || installProgress.step == 3" style="width: 80px; text-align: right">
-            {{ installProgress.completed }} / {{ installProgress.total }}
-          </p>
+          <progress-bar
+            v-if="installProgress.step == 3"
+            width="260"
+            style="margin-left: auto"
+            :loading="false"
+            :value="installProgress.completed.toString()"
+            :total="installProgress.total.toString()"
+          ></progress-bar>
+          <i
+            v-if="installProgress.step == 3"
+            style="
+              min-width: 146px;
+              text-align: right;
+              font-size: 13px;
+              opacity: 0.7;
+            "
+          >
+            已下载 {{ installProgress.completed }} 个文件，共
+            {{ installProgress.total }} 个
+          </i>
         </div>
         <!-- TODO: install mod loader and optifine -->
       </div>
@@ -46,12 +115,32 @@ import DialogVue from "@/components/Dialog.vue";
 import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
 import ProgressBar from "@/components/ProgressBar.vue";
 import { listen } from "@tauri-apps/api/event";
-import { computed, Ref, ref } from "vue";
+import { computed, Ref, ref, watch } from "vue";
+
+let time = ref(1145141919810);
+let timer: number;
+const computedTime = computed(() => {
+  function doubleNum(n: any) {
+    return n < 10 ? `0${n}` : n.toString();
+  }
+  let second = doubleNum((time.value % 600) / 10);
+  let minute = doubleNum(Math.floor(time.value / 600) % 60);
+  let hour = doubleNum(Math.floor(time.value / 36000) % 24);
+  return `${hour}:${minute}:${second}`;
+});
 
 const props = defineProps<{
   installing: boolean;
   instanceName: string;
 }>();
+watch(props, (val) => {
+  if (val.installing == true) {
+    time.value = 0;
+    timer = setInterval(() => {
+      time.value++;
+    }, 100);
+  }
+});
 let installProgress: Ref<InstallProgress> = ref({
   completed: 0,
   total: 0,
@@ -64,6 +153,9 @@ interface InstallProgress {
 }
 listen("install_progress", (event) => {
   installProgress.value = event.payload as InstallProgress;
+  if (installProgress.value.step != 3) {
+    speed.value = "0 B/s";
+  }
 });
 interface InstallError {
   step: number;
@@ -74,9 +166,11 @@ let installError: Ref<InstallError> = ref({
 });
 listen("install_error", (event) => {
   installError.value = event.payload as InstallError;
+  clearInterval(timer);
 });
-listen("install_success", (event) => {
+listen("install_success", (_event) => {
   installProgress.value.step = 1000;
+  clearInterval(timer);
 });
 
 const getVersionInfoStatus = computed(() => {
@@ -91,18 +185,43 @@ const getVersionInfoStatus = computed(() => {
   }
   return "pending";
 });
+const checkExistFilesStatus = computed(() => {
+  if (installError.value.step == 2) {
+    return "error";
+  }
+  if (installProgress.value.step == 2) {
+    return "in-progress";
+  }
+  if (installProgress.value.step > 2) {
+    return "success";
+  }
+  return "pending";
+});
 const downloadVanillaGameStatus = computed(() => {
-  if (installError.value.step == 2 || installError.value.step == 3) {
+  if (installError.value.step == 3) {
     return "error";
     // TODO: show error message
   }
-  if (installProgress.value.step == 2 || installProgress.value.step == 3) {
+  if (installProgress.value.step == 3) {
     return "in-progress";
   }
   if (installProgress.value.step > 3) {
     return "success";
   }
   return "pending";
+});
+let speed = ref("");
+listen("download_speed", (event) => {
+  let payload = (event.payload as number) * 2;
+  if (payload < 1024) {
+    speed.value = payload + "B/s";
+  } else if (payload < 1024 * 1024) {
+    speed.value = (payload / 1024).toFixed(2) + "KB/s";
+  } else if (payload < 1024 * 1024 * 1024) {
+    speed.value = (payload / 1024 / 1024).toFixed(2) + "MB/s";
+  } else {
+    speed.value = (payload / 1024 / 1024 / 1024).toFixed(2) + "GB/s";
+  }
 });
 </script>
 
@@ -119,6 +238,7 @@ const downloadVanillaGameStatus = computed(() => {
 .install-progress-vue .title h4 {
   font-weight: normal;
   font-size: 22px;
+  margin-bottom: 4px;
 }
 
 .install-progress-vue .title p {
@@ -126,6 +246,10 @@ const downloadVanillaGameStatus = computed(() => {
   margin-top: 4px;
   opacity: 0.7;
   font-weight: normal;
+}
+
+.install-progress-vue .title p i {
+  font-size: 13.6px;
 }
 
 .install-progress-vue .title .icon {
@@ -153,6 +277,7 @@ const downloadVanillaGameStatus = computed(() => {
 
 .install-progress-vue .progress {
   width: 100%;
+  padding: 10px;
 }
 
 .install-progress-vue .progress .step {

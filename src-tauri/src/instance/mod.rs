@@ -12,17 +12,15 @@ use crate::{Storage, DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose, Engine};
 use futures::StreamExt;
-use notify::{watcher, RecursiveMode, Watcher};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
+use std::io::Read;
+use std::sync::{mpsc, Arc};
+use std::thread;
+use std::time::Duration;
 use std::{
     path::PathBuf,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        mpsc::channel,
-        Arc,
-    },
-    thread,
-    time::Duration,
+    sync::atomic::{AtomicUsize, Ordering},
 };
 use tauri::Emitter;
 use tokio::{fs, io::AsyncWriteExt};
@@ -182,40 +180,41 @@ pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
     }
     scan().await.ok()
 }
-
-#[tauri::command]
-pub fn watch_instances_folder() {
-    let main_window = MAIN_WINDOW.get().unwrap().clone();
-    println!("Watching instances folder...");
-    thread::spawn(move || {
-        let (tx, rx) = channel();
-
-        // Create a watcher object, delivering debounced events.
-        // The notification back-end is selected based on the platform.
-        let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
-
-        std::fs::create_dir_all(&DATA_LOCATION.get().unwrap().instances).unwrap();
-        // Add a path to be watched. All files and directories at that path and
-        // below will be monitored for changes.
-        watcher
-            .watch(
-                &DATA_LOCATION.get().unwrap().instances,
-                RecursiveMode::Recursive,
-            )
-            .unwrap();
-
-        loop {
-            match rx.recv() {
-                Ok(event) => {
-                    main_window
-                        .emit("instances_changed", format!("{:#?}", event))
-                        .unwrap();
-                }
-                Err(e) => println!("watch error: {:?}", e),
-            }
-        }
-    });
-}
+// TODO: watcher
+//
+// #[tauri::command]
+// pub fn watch_instances_folder() {
+//     let main_window = MAIN_WINDOW.get().unwrap().clone();
+//     println!("Watching instances folder...");
+//     thread::spawn(move || {
+//         let (tx, rx) = channel();
+//
+//         // Create a watcher object, delivering debounced events.
+//         // The notification back-end is selected based on the platform.
+//         let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
+//
+//         std::fs::create_dir_all(&DATA_LOCATION.get().unwrap().instances).unwrap();
+//         // Add a path to be watched. All files and directories at that path and
+//         // below will be monitored for changes.
+//         watcher
+//             .watch(
+//                 &DATA_LOCATION.get().unwrap().instances,
+//                 RecursiveMode::Recursive,
+//             )
+//             .unwrap();
+//
+//         loop {
+//             match rx.recv() {
+//                 Ok(event) => {
+//                     main_window
+//                         .emit("instances_changed", format!("{:#?}", event))
+//                         .unwrap();
+//                 }
+//                 Err(e) => println!("watch error: {:?}", e),
+//             }
+//         }
+//     });
+// }
 
 #[tauri::command]
 pub fn set_current_instance(instance_name: String, storage: tauri::State<Storage>) {
@@ -408,7 +407,7 @@ pub struct DownloadError {
     pub step: usize,
 }
 
-async fn download_files(download_list: Vec<Download>) {
+async fn download_files(downloads: Vec<Download>) {
     let main_window = MAIN_WINDOW.get().unwrap();
     main_window
         .emit(
@@ -421,33 +420,79 @@ async fn download_files(download_list: Vec<Download>) {
         )
         .unwrap();
     let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    let total = download_list.len();
-    futures::stream::iter(download_list)
+    let downloads: Vec<_> = downloads
+        .into_par_iter()
+        .filter(|download| {
+            if let Err(_) = std::fs::metadata(&download.file) {
+                return true;
+            }
+            let mut file = match std::fs::File::open(&download.file) {
+                Ok(file) => file,
+                Err(_) => {
+                    return true;
+                }
+            };
+            if let None = download.sha1 {
+                return false;
+            };
+            let file_hash = calculate_sha1_from_read(&mut file);
+            counter.clone().fetch_add(1, Ordering::SeqCst);
+            main_window
+                .emit(
+                    "install_progress",
+                    DownloadProgress {
+                        completed: counter.load(Ordering::SeqCst),
+                        total: 0,
+                        step: 2,
+                    },
+                )
+                .unwrap();
+            &file_hash != download.sha1.as_ref().unwrap()
+        })
+        .collect();
+    let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+    let total = downloads.len();
+    let client = HTTP_CLIENT.get().unwrap();
+    let speed_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+    let speed_counter_clone = speed_counter.clone();
+    let (tx, rx) = mpsc::channel();
+    let speed_thread = thread::spawn(move || {
+        let counter = speed_counter_clone;
+        loop {
+            let message = rx.try_recv();
+            if message == Ok("terminate") {
+                break;
+            }
+            thread::sleep(Duration::from_millis(500));
+            main_window
+                .emit("download_speed", counter.load(Ordering::SeqCst))
+                .unwrap();
+            counter.store(0, Ordering::SeqCst);
+        }
+    });
+
+    futures::stream::iter(downloads)
         .map(|task| {
             let counter = counter.clone();
+            let speed_counter = speed_counter.clone();
             async move {
-                let file_path = PathBuf::from(task.file);
+                let file_path = PathBuf::from(task.file.clone());
                 fs::create_dir_all(file_path.parent().unwrap())
                     .await
                     .unwrap();
-                let mut response = HTTP_CLIENT
-                    .get()
-                    .unwrap()
-                    .get(task.url)
-                    .send()
-                    .await
-                    .unwrap();
+                let mut response = client.get(task.url.clone()).send().await.unwrap();
                 let mut file = fs::File::create(&file_path).await.unwrap();
                 while let Some(chunk) = response.chunk().await.unwrap() {
                     file.write_all(&chunk).await.unwrap();
+                    speed_counter.fetch_add(chunk.len(), Ordering::SeqCst);
                 }
                 counter.fetch_add(1, Ordering::SeqCst);
             }
         })
-        .buffer_unordered(16)
+        .buffer_unordered(100)
         .for_each_concurrent(None, |_| async {
             let counter = counter.clone().load(Ordering::SeqCst);
-            println!("Progress: {counter} / {total}");
+            // println!("Progress: {counter} / {total}");
             main_window
                 .emit(
                     "install_progress",
@@ -460,18 +505,8 @@ async fn download_files(download_list: Vec<Download>) {
                 .unwrap();
         })
         .await;
-    if counter.load(Ordering::SeqCst) != total {
-        main_window
-            .emit(
-                "install_progress",
-                DownloadProgress {
-                    completed: total,
-                    total,
-                    step: 4,
-                },
-            )
-            .unwrap();
-    }
+    tx.send("terminate").unwrap();
+    speed_thread.join().unwrap();
 }
 
 #[tauri::command(async)]
@@ -524,6 +559,7 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
     .await
     .unwrap();
     lock_file.write_all(b"ok").await.unwrap();
+    main_window.emit("install_success", "").unwrap();
     Ok(())
 }
 
@@ -537,4 +573,17 @@ pub async fn update_latest_instance() {
     };
     // let latest_minecraft_version = get_minecraft_version_list().await.unwrap().latest.release;
     // println!("{}", latest_minecraft_version);
+}
+
+fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
+    let mut hasher = sha1_smol::Sha1::new();
+    let mut buffer = [0; 1024];
+    loop {
+        let bytes_read = source.read(&mut buffer).unwrap();
+        if bytes_read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..bytes_read]);
+    }
+    hasher.digest().to_string()
 }
