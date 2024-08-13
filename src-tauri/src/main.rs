@@ -10,13 +10,14 @@ pub mod utils;
 
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use crate::config::get_user_config;
 use crate::instance::{
     check_repeated_instance_name, create_instance, get_fabric_version_list, get_forge_version_list,
     get_instance_config, get_instance_config_from_string, get_minecraft_version_list,
     get_quilt_version_list, install, scan_instances_folder, scan_mod_folder, scan_saves_folder,
-    set_current_instance, watch_instances_folder,
+    set_current_instance, /* watch_instances_folder, */
 };
 use core::folder::DataLocation;
 use core::{OsType, PlatformInfo};
@@ -50,7 +51,7 @@ async fn main() {
             get_quilt_version_list,
             check_repeated_instance_name,
             scan_instances_folder,
-            watch_instances_folder,
+            // watch_instances_folder,
             set_current_instance,
             scan_mod_folder,
             scan_saves_folder,
@@ -63,7 +64,25 @@ async fn main() {
         })
         .setup(move |app| {
             MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
-            app.listen_any("fontend-loaded", move |_| {});
+            app.listen_any("fontend-loaded", move |_| {
+                println!(
+                    "
+ █████╗ ███╗   ███╗███████╗████████╗██╗  ██╗██╗   ██╗███████╗████████╗    
+██╔══██╗████╗ ████║██╔════╝╚══██╔══╝██║  ██║╚██╗ ██╔╝██╔════╝╚══██╔══╝    
+███████║██╔████╔██║█████╗     ██║   ███████║ ╚████╔╝ ███████╗   ██║       
+██╔══██║██║╚██╔╝██║██╔══╝     ██║   ██╔══██║  ╚██╔╝  ╚════██║   ██║       
+██║  ██║██║ ╚═╝ ██║███████╗   ██║   ██║  ██║   ██║   ███████║   ██║       
+╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚══════╝   ╚═╝       
+                                                                          
+██╗      █████╗ ██╗   ██╗███╗   ██╗ ██████╗██╗  ██╗███████╗██████╗        
+██║     ██╔══██╗██║   ██║████╗  ██║██╔════╝██║  ██║██╔════╝██╔══██╗       
+██║     ███████║██║   ██║██╔██╗ ██║██║     ███████║█████╗  ██████╔╝       
+██║     ██╔══██║██║   ██║██║╚██╗██║██║     ██╔══██║██╔══╝  ██╔══██╗       
+███████╗██║  ██║╚██████╔╝██║ ╚████║╚██████╗██║  ██║███████╗██║  ██║       
+╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝       
+             "
+                )
+            });
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -78,7 +97,13 @@ async fn initialize_application() {
         .set(DataLocation::new(APPLICATION_DATA.get().unwrap()))
         .unwrap();
     HTTP_CLIENT
-        .set(reqwest::ClientBuilder::new().build().unwrap())
+        .set(
+            reqwest::ClientBuilder::new()
+                .pool_idle_timeout(Duration::from_secs(30))
+                .pool_max_idle_per_host(1)
+                .build()
+                .unwrap(),
+        )
         .unwrap();
     instance::update_latest_instance().await;
 }
@@ -97,7 +122,6 @@ async fn initialize_application_data() {
                 .unwrap();
         }
         OsType::Linux => {
-            println!("{:#?}", std::env::var("HOME"));
             APPLICATION_DATA
                 .set(
                     PathBuf::from(std::env::var("HOME").expect("Could not found home"))
