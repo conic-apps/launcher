@@ -403,6 +403,11 @@ pub struct DownloadProgress {
     pub step: usize,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DownloadError {
+    pub step: usize,
+}
+
 async fn download_files(download_list: Vec<Download>) {
     let main_window = MAIN_WINDOW.get().unwrap();
     main_window
@@ -484,16 +489,32 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
         .unwrap();
     let active_instance = storage.current_instance.lock().unwrap().clone();
     let data_location = DATA_LOCATION.get().unwrap();
-    let instance_config = get_instance_config_from_string(&active_instance)
-        .await
-        .unwrap();
+    let instance_config = match get_instance_config_from_string(&active_instance).await {
+        Ok(x) => x,
+        Err(_) => {
+            main_window
+                .emit("install_error", DownloadError { step: 1 })
+                .unwrap();
+            return Err(());
+        }
+    };
+
     let runtime = instance_config.runtime;
-    let download_list = generate_download_info(
+    let download_list = match generate_download_info(
         &runtime.minecraft,
         MinecraftLocation::new(&data_location.root),
     )
     .await
-    .unwrap();
+    {
+        Ok(x) => x,
+        Err(_) => {
+            main_window
+                .emit("install_error", DownloadError { step: 1 })
+                .unwrap();
+            return Err(());
+        }
+    };
+
     download_files(download_list).await;
     let mut lock_file = fs::File::create(
         data_location

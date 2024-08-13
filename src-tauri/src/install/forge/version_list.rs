@@ -60,12 +60,3 @@ impl ForgeVersionList {
         .await?)
     }
 }
-
-// #[tokio::test]
-// async fn test123123123() {
-//     // let minecraft_version = "1.20.1"
-//     let forge_version_list = ForgeVersionList::new().await.unwrap();
-//     let a = serde_json::to_string_pretty(&forge_version_list).unwrap();
-//     tokio::fs::write("1.json", a).await.unwrap();
-//     println!("{:#?}", forge_version_list);
-// }

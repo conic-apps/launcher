@@ -395,3 +395,11 @@ i.java-logo::before {
     font-style: normal;
     font-size: 30.4px;
 }
+
+i.spinner-third::before {
+    content: "\f3f4";
+}
+
+i.spinner-third::after {
+    content: "\f3f4\f3f4";
+}
