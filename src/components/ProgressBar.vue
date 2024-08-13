@@ -3,32 +3,35 @@
     <p v-if="text">{{ text }}</p>
     <div class="progress-bar" :style="loadingStyle"></div>
     <div class="progress-loading" :style="loadingStyle"></div>
-    <progress max="100" :value="value" :style="progressStyle"></progress>
+    <progress :max="total" :value="value" :style="progressStyle"></progress>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref } from "vue";
 
-const props = withDefaults(defineProps<{
-  loading: boolean,
-  value: string,
-  width: string,
-  text?: string
-}>(), {
-  width: () => "100"
-})
+const props = withDefaults(
+  defineProps<{
+    loading: boolean;
+    value: string;
+    total: string;
+    width: string;
+    text?: string;
+  }>(),
+  {
+    width: () => "100",
+  },
+);
 
 let widthStyle = computed(() => {
-  return `width: ${props.width}px`
-})
+  return `width: ${props.width}px`;
+});
 let loadingStyle = computed(() => {
-  return props.loading ? '' : 'display: none'
-})
+  return props.loading ? "" : "display: none";
+});
 let progressStyle = computed(() => {
-  return props.loading ? 'display: none' : ''
-})
-
+  return props.loading ? "display: none" : "";
+});
 </script>
 
 <style lang="less" scoped>
@@ -99,7 +102,6 @@ let progressStyle = computed(() => {
   height: 3px;
   background: #f0f0f0;
   border-radius: 100px;
-  transition: all .2s cubic-bezier(0, 0.62, 0.36, 1);
-
+  transition: all 0.2s cubic-bezier(0, 0.62, 0.36, 1);
 }
 </style>

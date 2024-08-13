@@ -9,7 +9,6 @@ pub mod instance;
 pub mod utils;
 
 use std::path::PathBuf;
-use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 use crate::config::get_user_config;
@@ -22,7 +21,7 @@ use crate::instance::{
 use core::folder::DataLocation;
 use core::{OsType, PlatformInfo};
 use once_cell::sync::OnceCell;
-use tauri::{webview, Listener, Manager, Url, WebviewUrl, WebviewWindow, Window};
+use tauri::{Listener, Manager, Window};
 use tauri_plugin_http::reqwest;
 
 /// use MAIN_WINDOW.emit() to send message to main window

@@ -2,14 +2,14 @@
   <keep-alive>
     <div class="game-page-main">
       <div class="row-1">
-        <install-progress :installing="false" :instance-name="currentInstance.config.name"></install-progress>
+        <install-progress :installing="installing" :instance-name="currentInstance.config.name"></install-progress>
         <instance-info minecraft-version="1.20.1" :instance-name="currentInstance.config.name" :installed="true"
           :game-button-type="gameButtonType" @game-button-click="() => {
               if (gameButtonType === 'launch') {
                 invoke('launch');
               } else if (gameButtonType === 'install') {
+                installing = true;
                 invoke('install');
-                
               }
             }
             " :error-type="errorType"></instance-info>
@@ -67,6 +67,8 @@ import Instances from "@/components/Instances.vue";
 import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
 import { reactive, ref, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+
+let installing = ref(false);
 
 interface Instance {
   config: {

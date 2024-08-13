@@ -21,5 +21,5 @@ pub mod level;
 pub mod player;
 
 pub struct PlayerData {
-    // todo
+    // TODO: player data
 }
