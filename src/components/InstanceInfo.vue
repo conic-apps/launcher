@@ -1,6 +1,7 @@
 <template>
   <div class="instance-info-main card" :style="banner">
-    <div style="
+    <div
+      style="
         position: absolute;
         width: 100%;
         height: 100%;
@@ -10,7 +11,9 @@
           rgba(0, 0, 0, 0.824),
           rgba(0, 0, 0, 0),
           rgba(0, 0, 0, 0.882)
-        );     "></div>
+        );
+      "
+    ></div>
     <div class="line-a">
       <div class="minecraft-version">
         <img src="@/assets/images/minecraft-icon.svg" fill="#fff" />Minecraft
@@ -19,19 +22,27 @@
     </div>
     <div class="line-b">
       <div class="instance-name">
-        {{ instanceName }}
+        {{ computedInstanceName }}
       </div>
       <div class="controll-btns">
         <i class="button gear"></i>
         <i class="button circle-info"></i>
         <i class="button star"></i>
-        <button class="game-button" :class="`${gameButtonType}-game-button`" @click="$emit('game-button-click')">
-          <i :class="props.gameButtonType" style="
+        <button
+          class="game-button"
+          :class="`${gameButtonType}-game-button`"
+          @click="$emit('game-button-click')"
+        >
+          <i
+            :class="props.gameButtonType"
+            style="
               font-family: fa-pro;
               font-style: normal;
               margin-right: 5px;
               font-weight: 100;
-            "></i>{{ gameButtonText }}
+            "
+          ></i
+          >{{ gameButtonText }}
         </button>
       </div>
     </div>
@@ -39,44 +50,53 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from "vue";
 
 const props = defineProps<{
   minecraftVersion: String;
   instanceName: String;
   installed: Boolean;
   gameButtonType: "installing" | "launching" | "install" | "launch" | "error";
-  errorType?: "install" | "launch"
+  errorType?: "install" | "launch";
 }>();
+
+let computedInstanceName = computed(() => {
+  if (props.instanceName == "Latest Release") {
+    return "最新版本";
+  }
+  if (props.instanceName == "Latest Snapshot") {
+    return "最新快照";
+  }
+  return props.instanceName;
+});
+
 let banner = "";
 let gameButtonText = computed(() => {
   switch (props.gameButtonType) {
     case "installing":
-      return "..."
+      return "...";
     case "error":
       switch (props.errorType) {
         case undefined || null:
-          return ""
+          return "";
         case "install":
-          return "安装失败"
+          return "安装失败";
         case "launch":
-          return "启动失败"
+          return "启动失败";
         default:
-          return ""
+          return "";
       }
     // return "失败";
     case "install":
-      return "安装"
+      return "安装";
     case "launching":
-      return "..."
+      return "...";
     case "launch":
-      return "开始游戏"
+      return "开始游戏";
     default:
-      return ""
+      return "";
   }
-
-})
-
+});
 </script>
 
 <style lang="less" scoped>
