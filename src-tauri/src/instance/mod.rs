@@ -466,7 +466,7 @@ async fn download_files(downloads: Vec<Download>) {
             if message == Ok("terminate") {
                 break;
             }
-            thread::sleep(Duration::from_millis(500));
+            thread::sleep(Duration::from_millis(2000));
             main_window
                 .emit("download_speed", counter.load(Ordering::SeqCst))
                 .unwrap();

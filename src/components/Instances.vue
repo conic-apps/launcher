@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import { computed, ref, type Ref } from "vue";
 import Card from "./Card.vue";
+
 interface Instance {
   config: {
     name: string;
@@ -30,7 +31,6 @@ interface Instance {
   };
   installed: boolean;
 }
-
 interface InstanceGroup {
   name: string;
   instances: Instance[];
