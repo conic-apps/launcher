@@ -4,325 +4,204 @@ on:
     branches:
       - master
 
-env:
-  VERSION: 0.1.0
-
 jobs:
-  generate-release-body: 
-    name: Generate release body
-    runs-on: ubuntu-latest
+  get-version:
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-    outputs: 
-      release-body: "1"
-  release:
-    needs: ['generate-release-body']
+      - name: Get app version
+        id: step
+        run: |
+          echo "text=$(jq -r .version src-tauri/tauri.conf.json)" >> "$GITHUB_OUTPUT"
+    outputs:
+      app_version: ${{ steps.step.outputs.text }}
+
+  build-arm-linux:
+    needs: [get-version]
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [aarch64, armv7l]
+        include:
+          - arch: aarch64
+            cpu: cortex-a72
+            base_image: https://dietpi.com/downloads/images/DietPi_RPi-ARMv8-Bookworm.img.xz
+            deb: arm64
+            rpm: aarch64
+            appimage: aarch64
+          - arch: armv7l
+            cpu: cortex-a53
+            deb: armhfp
+            rpm: arm
+            appimage: armhf
+            base_image: https://dietpi.com/downloads/images/DietPi_RPi-ARMv7-Bookworm.img.xz
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-on-failure: true
+
+      - name: Build app
+        uses: pguyot/arm-runner-action@v2.6.5
+        with:
+          base_image: ${{ matrix.base_image }}
+          cpu: ${{ matrix.cpu }}
+          bind_mount_repository: true
+          image_additional_mb: 10240
+          optimize_image: no
+          exit_on_fail: no
+          commands: |
+            # Prevent Rust from complaining about $HOME not matching eid home
+            export HOME=/root
+
+            # Workaround to CI worker being stuck on Updating crates.io index
+            export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+
+            # Install setup prerequisites
+            apt-get update -y --allow-releaseinfo-change
+            apt-get autoremove -y
+            apt-get install -y --no-install-recommends --no-install-suggests curl libwebkit2gtk-4.1-dev build-essential libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf libfuse2 wget file
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+            . "$HOME/.cargo/env"
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | bash
+            apt-get install -y nodejs
+
+            # Install yarn
+            npm install -g yarn
+
+            # Install frontend dependencies
+            yarn install
+
+            # Build the application
+            yarn tauri build -- --verbose
+
+      - name: Upload deb bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Debian Bundle
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.deb }}.deb
+
+      - name: Upload rpm bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: RPM Bundle
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.${{ matrix.rpm }}.rpm
+
+      - name: Upload appimage bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppImage Bundle
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.appimage }}.AppImage
+  build-other:
+    needs: [get-version]
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-20.04, windows-latest]
+        include:
+          - platform: "macos-latest" # for Arm based macs (M1 and above).
+            args: "--target aarch64-apple-darwin"
+            arch: "aarch64"
+            target: "aarch64"
+          - platform: "macos-latest" # for Intel based macs.
+            args: "--target x86_64-apple-darwin"
+            arch: "x64"
+            target: "x86_64"
+          - platform: "ubuntu-22.04"
+            args: ""
+          - platform: "windows-latest"
+            args: ""
+
     runs-on: ${{ matrix.platform }}
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-20.04'
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
         run: |
+          echo ${{ needs.get-version.outputs.app_version }}
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev librsvg2-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf tree
 
-      - name: Rust setup
-        uses: dtolnay/rust-toolchain@stable
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "yarn" # Set this to npm, yarn or pnpm.
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable # Set this to dtolnay/rust-toolchain@nightly
+        with:
+          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './src-tauri -> target'
+          workspaces: "./src-tauri -> target"
+          cache-on-failure: true
+      # TODO:
+      - name: install tree
+        if: matrix.platform == 'macos-latest'
+        run: brew install tree
 
-      - name: Sync node version and setup cache
-        uses: actions/setup-node@v3
-        with:
-          node-version: 'lts/*'
-          cache: 'yarn' # Set this to npm, yarn or pnpm.
-
-      - name: Install frontend dependencies
+      - name: install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
-        run: yarn install # Change this to npm, yarn or pnpm.
+        run: yarn install # change this to npm or pnpm depending on which one you use.
 
       - name: Build the app
-        uses: tauri-apps/tauri-action@v0
+        run: |
+          yarn tauri build -- ${{ matrix.args }}
+      - name: show files
+        run: |
+          tree ${{ github.workspace }}/src-tauri/target
 
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Upload the macos artifacts
+      - name: Upload deb bundle
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'ubuntu-22.04'
         with:
-          tagName: ${{ env.VERSION }} # This only works if your workflow triggers on new tags.
-          releaseName: 'Magical launcher v__VERSION__' # tauri-action replaces \_\_VERSION\_\_ with the app version.
-          releaseBody: ${{ needs.generate-release-body.outputs.release-body }}
-          releaseDraft: true
-          prerelease: true
+          name: Debian Bundle
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.deb
 
-# name: Amethyst Launcher Auto Build
-# on:
-#   push:
-#     branches:
-#       - master
+      - name: Upload rpm bundle
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'ubuntu-22.04'
+        with:
+          name: RPM Bundle
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.x86_64.rpm
 
-# # We need this to be able to create releases.
-# permissions:
-#   contents: write
+      - name: Upload appimage bundle
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'ubuntu-22.04'
+        with:
+          name: AppImage Bundle
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage
 
-# env:
-#   VERSION: '0.1.0'
+      - name: Upload msi bundle
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'windows-latest'
+        with:
+          name: Windows Bundle(msi)
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/msi/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi
 
-# jobs:
-#     # The create-release job runs purely to initialize the GitHub release itself,
-#   # and names the release after the `x.y.z` tag that was pushed. It's separate
-#   # from building the release so that we only create the release once.
-#   create-release:
-#     name: create-release
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
-#       # - name: Get the release version from the tag
-#       #   if: env.VERSION == ''
-#       #   run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
-#       # - name: Show the version
-#       #   run: |
-#       #     echo "version is: $VERSION"
-#       # - name: Check that tag version and Cargo.toml version are the same
-#       #   shell: bash
-#       #   run: |
-#       #     if ! grep -q "version = \"$VERSION\"" Cargo.toml; then
-#       #       echo "version does not match Cargo.toml" >&2
-#       #       exit 1
-#       #     fi
-#       - name: Create GitHub release
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#         run: | 
-#           echo "version is: $VERSION" && gh release create $VERSION --draft --title $VERSION
-#     # outputs:
-#     #   version: ${{ env.VERSION }}
+      - name: Upload exe bundle
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'windows-latest'
+        with:
+          name: Windows Bundle(exe)
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/nsis/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe
 
-#   build-release:
-#     name: test
-#     needs: ['create-release']
-#     runs-on: ${{ matrix.os }}
-#     env:
-#       # For some builds, we use cross to test on 32-bit and big-endian
-#       # systems.
-#       CARGO: cargo
-#       # When CARGO is set to CROSS, this is set to `--target matrix.target`.
-#       TARGET_FLAGS:
-#       # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
-#       TARGET_DIR: ./target
-#       # Bump this as appropriate. We pin to a version to make sure CI
-#       # continues to work as cross releases in the past have broken things
-#       # in subtle ways.
-#       CROSS_VERSION: v0.2.5
-#       # Emit backtraces on panics.
-#       RUST_BACKTRACE: 1
-#       # Build static releases with PCRE2.
-#       PCRE2_SYS_STATIC: 1
-#     strategy:
-#       fail-fast: false
-#       matrix:
-#         include:
-#         - build: linux
-#           os: ubuntu-20.04
-#           rust: nightly
-#           target: x86_64-unknown-linux-musl
-#           strip: x86_64-linux-musl-strip
-#         # - build: stable-x86
-#         #   os: ubuntu-20.04
-#         #   rust: stable
-#         #   target: i686-unknown-linux-gnu
-#         #   strip: x86_64-linux-gnu-strip
-#         #   qemu: i386
-#         # - build: stable-aarch64
-#         #   os: ubuntu-20.04
-#         #   rust: stable
-#         #   target: aarch64-unknown-linux-gnu
-#         #   strip: aarch64-linux-gnu-strip
-#         #   qemu: qemu-aarch64
-#         # - build: stable-powerpc64
-#         #   os: ubuntu-20.04
-#         #   rust: stable
-#         #   target: powerpc64-unknown-linux-gnu
-#         #   strip: powerpc64-linux-gnu-strip
-#         #   qemu: qemu-ppc64
-#         # - build: stable-s390x
-#         #   os: ubuntu-20.04
-#         #   rust: stable
-#         #   target: s390x-unknown-linux-gnu
-#         #   strip: s390x-linux-gnu-strip
-#         #   qemu: qemu-s390x
-#         # - build: macos
-#         #   os: macos-latest
-#         #   rust: nightly
-#         #   target: x86_64-apple-darwin
-#         # - build: win-msvc
-#         #   os: windows-latest
-#         #   rust: nightly
-#         #   target: x86_64-pc-windows-msvc
-#         # - build: win-gnu
-#         #   os: windows-latest
-#         #   rust: nightly-x86_64-gnu
-#         #   target: x86_64-pc-windows-gnu
-#         # - build: win32-msvc
-#         #   os: windows-latest
-#         #   rust: nightly
-#         #   target: i686-pc-windows-msvc
-
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v4
-
-#       - name: Install dependencies (ubuntu only)
-#         if: matrix.os == 'ubuntu-20.04'
-#         run: |
-#           sudo apt-get update
-#           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev librsvg2-dev
-      
-#       - name: Set target variables
-#         shell: bash
-#         run: |
-#           echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
-#           echo "TARGET_DIR=./src-tauri/${{ matrix.target }}" >> $GITHUB_ENV
-
-#       - name: Build release binary
-#         shell: bash
-#         run: |
-#           echo "cargo command is: ${{ env.CARGO }}"
-#           echo "target flag is: ${{ env.TARGET_FLAGS }}"
-#           echo "target dir is: ${{ env.TARGET_DIR }}"
-#           ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
-#           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-#             bin="src-tauri/${{ matrix.target }}/release/amethyst-launcher.exe"
-#           else
-#             bin="src-tauri/${{ matrix.target }}/release/amethyst-launcher"
-#           fi
-#           echo "BIN=$bin" >> $GITHUB_ENV
-
-#           ls src-tauri
-#           ls src-tauri/target
-#           ls src-tauri/target/release
-#       # - name: Generate Test File
-#       #   shell: bash
-#       #   run:  echo 111 >> ./1.test
-      
-#       # - name: Upload Release
-#       #   env:
-#       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#       #   shell: bash
-#       #   run: |
-#       #     echo "version is: $VERSION" && gh release upload $VERSION ./1.test --clobber
-
-# # jobs:
-# #   release:
-# #     permissions:
-# #       contents: write
-    
-# #     strategy:
-# #       fail-fast: false
-# #       matrix:
-# #         include:
-# #         - build: linux
-# #           os: ubuntu-20.04
-# #           rust: nightly
-# #           target: x86_64-unknown-linux-musl
-# #           strip: x86_64-linux-musl-strip
-# #         - build: stable-x86
-# #           os: ubuntu-20.04
-# #           rust: stable
-# #           target: i686-unknown-linux-gnu
-# #           strip: x86_64-linux-gnu-strip
-# #           qemu: i386
-# #         - build: stable-aarch64
-# #           os: ubuntu-20.04
-# #           rust: stable
-# #           target: aarch64-unknown-linux-gnu
-# #           strip: aarch64-linux-gnu-strip
-# #           qemu: qemu-aarch64
-# #         - build: stable-powerpc64
-# #           os: ubuntu-20.04
-# #           rust: stable
-# #           target: powerpc64-unknown-linux-gnu
-# #           strip: powerpc64-linux-gnu-strip
-# #           qemu: qemu-ppc64
-# #         - build: stable-s390x
-# #           os: ubuntu-20.04
-# #           rust: stable
-# #           target: s390x-unknown-linux-gnu
-# #           strip: s390x-linux-gnu-strip
-# #           qemu: qemu-s390x
-# #         - build: macos
-# #           os: macos-latest
-# #           rust: nightly
-# #           target: x86_64-apple-darwin
-# #         - build: win-msvc
-# #           os: windows-latest
-# #           rust: nightly
-# #           target: x86_64-pc-windows-msvc
-# #         - build: win-gnu
-# #           os: windows-latest
-# #           rust: nightly-x86_64-gnu
-# #           target: x86_64-pc-windows-gnu
-# #         - build: win32-msvc
-# #           os: windows-latest
-# #           rust: nightly
-# #           target: i686-pc-windows-msvc
-# #     runs-on: ${{ matrix.os }}
-
-# #     steps:
-# #       - name: Checkout repository
-# #         uses: actions/checkout@v3
-
-# #       - name: Install dependencies (ubuntu only)
-# #         if: matrix.os == 'ubuntu-20.04'
-# #         run: |
-# #           sudo apt-get update
-# #           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev librsvg2-dev
-
-# #       - name: Rust setup
-# #         uses: dtolnay/rust-toolchain@stable
-
-# #       - name: Rust cache
-# #         uses: swatinem/rust-cache@v2
-# #         with:
-# #           workspaces: './src-tauri -> target'
-
-# #       - name: Sync node version and setup cache
-# #         uses: actions/setup-node@v3
-# #         with:
-# #           node-version: 'lts/*'
-# #           cache: 'yarn' # Set this to npm, yarn or pnpm.
-
-# #       - name: Install frontend dependencies
-# #         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
-# #         run: yarn install # Change this to npm, yarn or pnpm.
-
-# #       - name: Build the app
-# #         run: |
-# #         cargo build --target ${{ env.TARGET }}
-# #         bin="target/${{ env.TARGET }}/debug/rg"
-# #         echo "BIN=$bin" >> $GITHUB_ENV
-        
-# #       # - name: Build the app
-# #       #   uses: tauri-apps/tauri-action@v0
-
-# #       #   env:
-# #       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-# #       #   with:
-# #       #     tagName: v0.x # This only works if your workflow triggers on new tags.
-# #       #     releaseName: 'Magical launcher v__VERSION__' # tauri-action replaces \_\_VERSION\_\_ with the app version.
-# #       #     releaseBody: ''
-# #       #     releaseDraft: true
-# #       #     prerelease: false
-
+      - name: Upload dmg bundle
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'macos-latest'
+        with:
+          name: MacOS ${{ matrix.arch }} bundle(dmg)
+          path: ${{ github.workspace }}/src-tauri/target/${{matrix.target}}-apple-darwin/release/bundle/dmg/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg

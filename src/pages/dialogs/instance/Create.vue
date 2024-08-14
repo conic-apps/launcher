@@ -7,11 +7,30 @@
           {{ instanceName }}
           
         </h4> -->
-        <text-input-box :error="true" class="instance-name-input" style="width: 300px; margin-left: 10px;" name="实例名称" :placeholder="instanceNameDefault" v-model="instanceNameValue"></text-input-box>
-        <tag v-if="repeated" text="名称不能重复" :color="['255', '129', '120']" text-color="rgba(255,255,255, 0.7)" :background="true" :border="true" style="margin-left: 10px;">
+        <text-input-box
+          :error="true"
+          class="instance-name-input"
+          style="width: 300px; margin-left: 10px"
+          name="实例名称"
+          :placeholder="instanceNameDefault"
+          v-model="instanceNameValue"
+        ></text-input-box>
+        <tag
+          v-if="repeated"
+          text="名称不能重复"
+          :color="['255', '129', '120']"
+          text-color="rgba(255,255,255, 0.7)"
+          :background="true"
+          :border="true"
+          style="margin-left: 10px"
+        >
         </tag>
       </div>
-      <vue-button text="创建" :disabled="!select.minecraft || repeated" @click="create"></vue-button>
+      <vue-button
+        text="创建"
+        :disabled="!select.minecraft || repeated"
+        @click="create"
+      ></vue-button>
       <!-- <button style="margin-left: auto;" :class="select.minecraft && !repeated
           ? 'command-button'
           : 'command-button disabled'
@@ -21,44 +40,92 @@
     </div>
     <div style="display: flex">
       <div style="width: 100%; margin-right: 4px">
-        <card-link margin="0,0,8,0" title="Minecraft" :description="select.minecraft
-            ? `已选择 ${select.minecraft}`
-            : `选择 Minecraft 版本`
-          " icon="minecraft" @click="showMinecraft = true"></card-link>
-        <minecraft-choose :show="showMinecraft" @select="setMinecraft"></minecraft-choose>
-        <card-link :class="select.minecraft &&
+        <card-link
+          margin="0,0,8,0"
+          title="Minecraft"
+          :description="
+            select.minecraft
+              ? `已选择 ${select.minecraft}`
+              : `选择 Minecraft 版本`
+          "
+          icon="minecraft"
+          @click="showMinecraft = true"
+        ></card-link>
+        <minecraft-choose
+          :show="showMinecraft"
+          @select="setMinecraft"
+        ></minecraft-choose>
+        <card-link
+          :class="
+            select.minecraft &&
             !select.fabric &&
             !select.quilt &&
             !noForge &&
             !forgeLoading
-            ? ''
-            : 'disabled'
-          " margin="0,0,0,0" title="Forge" @click="showForge = true" :description="forgeDesc" icon="forge"></card-link>
-        <forge-choose :show="showForge" @select="setForge" @no-version="noForge = true" @loaded="forgeLoading = false"
-          :minecraft="select.minecraft"></forge-choose>
+              ? ''
+              : 'disabled'
+          "
+          margin="0,0,0,0"
+          title="Forge"
+          @click="showForge = true"
+          :description="forgeDesc"
+          icon="forge"
+        ></card-link>
+        <forge-choose
+          :show="showForge"
+          @select="setForge"
+          @no-version="noForge = true"
+          @loaded="forgeLoading = false"
+          :minecraft="select.minecraft"
+        ></forge-choose>
       </div>
       <div style="width: 100%; margin-left: 4px">
-        <card-link :class="select.minecraft &&
+        <card-link
+          :class="
+            select.minecraft &&
             !select.forge &&
             !select.quilt &&
             !noFabric &&
             !fabricLoading
-            ? ''
-            : 'disabled'
-          " @click="showFabric = true" margin="0,0,8,0" title="Fabric" :description="fabricDesc"
-          icon="fabric"></card-link>
-        <fabric-choose :show="showFabric" @select="setFabric" @no-version="noFabric = true"
-          @loaded="fabricLoading = false" :minecraft="select.minecraft"></fabric-choose>
-        <card-link @click="showQuilt = true" :class="select.minecraft &&
+              ? ''
+              : 'disabled'
+          "
+          @click="showFabric = true"
+          margin="0,0,8,0"
+          title="Fabric"
+          :description="fabricDesc"
+          icon="fabric"
+        ></card-link>
+        <fabric-choose
+          :show="showFabric"
+          @select="setFabric"
+          @no-version="noFabric = true"
+          @loaded="fabricLoading = false"
+          :minecraft="select.minecraft"
+        ></fabric-choose>
+        <card-link
+          @click="showQuilt = true"
+          :class="
+            select.minecraft &&
             !select.forge &&
             !select.fabric &&
             !noQuilt &&
             !quiltLoading
-            ? ''
-            : 'disabled'
-          " margin="0,0,0,0" title="Quilt" :description="quiltDesc" icon="quilt"></card-link>
-        <quilt-choose :show="showQuilt" @select="setQuilt" @no-version="noQuilt = true" @loaded="quiltLoading = false"
-          :minecraft="select.minecraft"></quilt-choose>
+              ? ''
+              : 'disabled'
+          "
+          margin="0,0,0,0"
+          title="Quilt"
+          :description="quiltDesc"
+          icon="quilt"
+        ></card-link>
+        <quilt-choose
+          :show="showQuilt"
+          @select="setQuilt"
+          @no-version="noQuilt = true"
+          @loaded="quiltLoading = false"
+          :minecraft="select.minecraft"
+        ></quilt-choose>
       </div>
     </div>
   </div>
@@ -217,6 +284,13 @@ function setQuilt(versionId: string) {
   showQuilt.value = false;
 }
 function create() {
+  if (
+    select.minecraft == "" ||
+    instanceName.value.trim() == "" ||
+    repeated.value
+  ) {
+    return;
+  }
   invoke("create_instance", {
     instanceName: instanceName.value,
     config: {
@@ -261,12 +335,11 @@ watch(instanceName, (newValue) => {
 .info-bar {
   display: flex;
   margin-bottom: 12px;
-  padding:20px 24px;
+  padding: 20px 24px;
   margin-top: 10px;
   align-items: center;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 10px;
-
 }
 
 .info-bar .icon {
@@ -284,7 +357,7 @@ watch(instanceName, (newValue) => {
   display: flex;
 }
 
-.info h4>div {
+.info h4 > div {
   color: rgb(172, 0, 0);
   margin-left: 10px;
 }
@@ -298,8 +371,10 @@ watch(instanceName, (newValue) => {
 .disabled {
   opacity: 0.5;
   pointer-events: none;
-}.instance-name-input input {
-padding: 0 !important;
-outline: none !important;
+}
+
+.instance-name-input input {
+  padding: 0 !important;
+  outline: none !important;
 }
 </style>
