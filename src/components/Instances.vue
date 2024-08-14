@@ -1,19 +1,13 @@
 <template>
   <div class="instances">
     <div class="overview">
-      <!-- <card id="xx" title="最新版本" description="Minecraft 1.20.3" icon="grass-block" padding="10,12,10,12" margin="0,0,10,0"
-        icon-size="32,32" :icon-background="false" title-font-size="14.2px">
-      </card>
-      <card id="xxx" title="最新快照" description="Minecraft 1.20.3" icon="command-block" padding="10,12,10,12"
-        icon-size="32,32" margin="0,0,10,0" :icon-background="false" title-font-size="14.2px">
-      </card> -->
-      <!-- <card v-for="instance in props.instances" :key="instance.config.name" :id="instance.config.name"
-        :title="instance.config.name" :description="generateDescription(instance)" icon="command-block"
-        padding="10,12,10,12" icon-size="32,32" margin="0,0,10,0" :icon-background="false" title-font-size="14.2px"
-        @click="$emit('select', instance)">
-      </card> -->
-      <div class="instance" @click="$emit('select', instance)" v-for="instance in props.instances" :key="instance.config.name">
-        <img src="@/assets/images/minecraft-icon.svg">
+      <div
+        class="instance"
+        @click="$emit('select', instance)"
+        v-for="instance in computedInstances"
+        :key="instance.config.name"
+      >
+        <img src="@/assets/images/minecraft-icon.svg" />
         <div class="title">
           <p>{{ instance.config.name }}</p>
         </div>
@@ -25,34 +19,49 @@
     <!-- id is random sha1-->
   </div>
 </template>
-  
+
 <script setup lang="ts">
-import { ref, type Ref } from 'vue';
-import Card from './Card.vue';
+import { computed, ref, type Ref } from "vue";
+import Card from "./Card.vue";
 interface Instance {
   config: {
-    name: string,
-    runtime: string,
-  },
-  installed: boolean
+    name: string;
+    runtime: string;
+  };
+  installed: boolean;
 }
 
 interface InstanceGroup {
-  name: string,
-  instances: Instance[]
+  name: string;
+  instances: Instance[];
 }
 
 const props = defineProps<{
   // instances: InstanceGroup[], todo: group
-  instances: Instance[]
-}>()
+  instances: Instance[];
+}>();
 
+const computedInstances = computed(() => {
+  let systemInstances = props.instances.filter((value) => {
+    return (
+      value.config.name == "Latest Release" ||
+      value.config.name == "Latest Snapshot"
+    );
+  });
+  let userInstances = props.instances.filter((value) => {
+    return (
+      value.config.name != "Latest Release" &&
+      value.config.name != "Latest Snapshot"
+    );
+  });
+  systemInstances.push(...userInstances);
+  return systemInstances;
+});
 function generateDescription(instance: Instance): string {
-  return instance.config.name
+  return instance.config.name;
 }
-
 </script>
-  
+
 <style lang="less" scoped>
 div.instances .icon {
   background-position: center;
@@ -72,12 +81,13 @@ div.instance {
   align-items: center;
   padding: 6px 8px;
   transition: all 100ms cubic-bezier(0, 0, 0.2, 1);
-  
+
   img {
     width: 24px;
     height: 24px;
     margin-right: 10px;
   }
+
   .title {
     p {
       margin: 0;
@@ -85,7 +95,7 @@ div.instance {
   }
 }
 
-div.instance:hover{
+div.instance:hover {
   background-color: #3d3d3d;
   box-shadow: 0px 0px 3px #0000004c;
   border-radius: 8px;
@@ -97,4 +107,3 @@ div.instance:active {
   opacity: 0.7;
 }
 </style>
-  
