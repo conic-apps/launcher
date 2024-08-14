@@ -7,7 +7,7 @@
             <i class="folder-arrow-down"></i>
           </div>
           <div>
-            <h4>正在安装{{ props.instanceName }}</h4>
+            <h4>正在安装"{{ props.instanceName }}"</h4>
             <p style="display: flex; align-items: center">
               <i
                 class="stopwatch"

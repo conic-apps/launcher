@@ -167,7 +167,7 @@ listen("install_success", (event) => {
   gameButtonType.value = "launch";
   setTimeout(() => {
     installing.value = false;
-  }, 3000);
+  }, 1500);
   update();
 });
 
