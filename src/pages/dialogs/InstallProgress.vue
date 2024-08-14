@@ -212,15 +212,15 @@ const downloadVanillaGameStatus = computed(() => {
 });
 let speed = ref("");
 listen("download_speed", (event) => {
-  let payload = (event.payload as number) * 2;
+  let payload = (event.payload as number) / 2;
   if (payload < 1024) {
-    speed.value = payload + "B/s";
+    speed.value = payload + " B/s";
   } else if (payload < 1024 * 1024) {
-    speed.value = (payload / 1024).toFixed(2) + "KB/s";
+    speed.value = (payload / 1024).toFixed(2) + " KB/s";
   } else if (payload < 1024 * 1024 * 1024) {
-    speed.value = (payload / 1024 / 1024).toFixed(2) + "MB/s";
+    speed.value = (payload / 1024 / 1024).toFixed(2) + " MB/s";
   } else {
-    speed.value = (payload / 1024 / 1024 / 1024).toFixed(2) + "GB/s";
+    speed.value = (payload / 1024 / 1024 / 1024).toFixed(2) + " GB/s";
   }
 });
 </script>
