@@ -1,7 +1,7 @@
 {
   "productName": "amethyst-launcher",
   "version": "0.0.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "top.btlcraft.launcher",
   "build": {
     "beforeDevCommand": "yarn dev",
     "devUrl": "http://localhost:5173",

@@ -117,7 +117,7 @@ let currentInstance = ref<Instance>({
 let show = ref({
   instanceManager: false,
 });
-let instances = ref([]);
+let instances: Ref<Instance[]> = ref([]);
 let gameButtonType: Ref<
   "installing" | "launching" | "install" | "launch" | "error"
 > = ref("install");
@@ -129,8 +129,15 @@ function update() {
     console.log(instances.value);
   });
 }
+invoke("scan_instances_folder").then((res) => {
+  instances.value = res as Instance[];
+  if (instances.value[0].config.name == "Latest Release") {
+    setCurrentInstance(instances.value[0]);
+  } else if (instances.value[1].config.name == "Latest Release") {
+    setCurrentInstance(instances.value[1]);
+  }
+});
 
-update();
 let modIsLoading = ref(false);
 let resourcepacksIsLoading = ref(false);
 let shaderpackIsLoading = ref(false);
@@ -167,7 +174,7 @@ listen("install_success", (event) => {
   gameButtonType.value = "launch";
   setTimeout(() => {
     installing.value = false;
-  }, 3000);
+  }, 1500);
   update();
 });
 
