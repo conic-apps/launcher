@@ -9,7 +9,6 @@ use crate::{
     },
 };
 use crate::{Storage, DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
-use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose, Engine};
 use futures::StreamExt;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -23,6 +22,7 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 use tauri::Emitter;
+use tauri_plugin_http::reqwest;
 use tokio::{fs, io::AsyncWriteExt};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -89,7 +89,7 @@ pub async fn get_quilt_version_list(mcversion: String) -> Option<Vec<QuiltVersio
 
 #[tauri::command(async)]
 pub async fn create_instance(instance_name: String, config: InstanceConfig) -> Option<()> {
-    async fn create_instance(instance_name: String, config: InstanceConfig) -> Result<()> {
+    async fn create_instance(instance_name: String, config: InstanceConfig) -> anyhow::Result<()> {
         let data_location = DATA_LOCATION.get().unwrap();
         let instance_root = data_location.get_instance_root(&instance_name);
         let config_file = instance_root.join("instance.toml");
@@ -122,7 +122,7 @@ pub async fn check_repeated_instance_name(instance_name: String) -> bool {
 #[tauri::command(async)]
 pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
     println!("Scanning Instances Folder...");
-    async fn scan() -> Result<Vec<Instance>> {
+    async fn scan() -> anyhow::Result<Vec<Instance>> {
         let datafolder_path = DATA_LOCATION.get().unwrap();
         let instances_folder = &datafolder_path.instances;
         let mut folder_entries = tokio::fs::read_dir(instances_folder).await?;
@@ -232,7 +232,7 @@ pub async fn scan_mod_folder(
     async fn scan(
         instance_name: String,
         storage: tauri::State<'_, Storage>,
-    ) -> Result<Vec<ResolvedMod>> {
+    ) -> anyhow::Result<Vec<ResolvedMod>> {
         let data_location = DATA_LOCATION.get().unwrap();
         let mod_packs_root = data_location.get_modpacks_root(&instance_name);
 
@@ -247,7 +247,7 @@ pub async fn scan_mod_folder(
             };
             let active_instance = storage.current_instance.lock().unwrap().clone();
             if &active_instance != &instance_name {
-                return Err(anyhow!("stopped")); // if user change the active instance, stop scanning
+                return Err(anyhow::anyhow!("stopped")); // if user change the active instance, stop scanning
             }
             if !file_type.is_file() {
                 continue;
@@ -291,7 +291,10 @@ pub async fn scan_saves_folder(
 ) -> std::result::Result<Vec<Saves>, ()> {
     let instance_name = storage.current_instance.lock().unwrap().clone();
 
-    async fn scan(instance_name: String, storage: tauri::State<'_, Storage>) -> Result<Vec<Saves>> {
+    async fn scan(
+        instance_name: String,
+        storage: tauri::State<'_, Storage>,
+    ) -> anyhow::Result<Vec<Saves>> {
         let data_location = DATA_LOCATION.get().unwrap();
         let saves_root = data_location.get_saves_root(&instance_name);
 
@@ -306,7 +309,7 @@ pub async fn scan_saves_folder(
             };
             let active_instance = storage.current_instance.lock().unwrap().clone();
             if &active_instance != &instance_name {
-                return Err(anyhow!("stopped")); // if user change the active instance, stop scanning
+                return Err(anyhow::anyhow!("stopped")); // if user change the active instance, stop scanning
             }
             if !file_type.is_dir() {
                 continue;
@@ -463,7 +466,7 @@ async fn download_files(downloads: Vec<Download>) {
             if message == Ok("terminate") {
                 break;
             }
-            thread::sleep(Duration::from_millis(500));
+            thread::sleep(Duration::from_millis(2000));
             main_window
                 .emit("download_speed", counter.load(Ordering::SeqCst))
                 .unwrap();
@@ -476,17 +479,25 @@ async fn download_files(downloads: Vec<Download>) {
             let counter = counter.clone();
             let speed_counter = speed_counter.clone();
             async move {
-                let file_path = PathBuf::from(task.file.clone());
-                fs::create_dir_all(file_path.parent().unwrap())
-                    .await
-                    .unwrap();
-                let mut response = client.get(task.url.clone()).send().await.unwrap();
-                let mut file = fs::File::create(&file_path).await.unwrap();
-                while let Some(chunk) = response.chunk().await.unwrap() {
-                    file.write_all(&chunk).await.unwrap();
-                    speed_counter.fetch_add(chunk.len(), Ordering::SeqCst);
+                let mut retries = 0;
+                let task = task;
+                loop {
+                    let speed_counter = speed_counter.clone();
+                    match download_file(&client, &task, &counter, &speed_counter).await {
+                        Ok(_) => break,
+                        Err(_) => (),
+                    }
+                    println!("Downloaded failed: {}, retrying...", &task.url);
+                    if retries >= 5 {
+                        MAIN_WINDOW
+                            .get()
+                            .unwrap()
+                            .emit("install_error", "")
+                            .unwrap();
+                        break;
+                    }
+                    retries += 1;
                 }
-                counter.fetch_add(1, Ordering::SeqCst);
             }
         })
         .buffer_unordered(100)
@@ -507,6 +518,27 @@ async fn download_files(downloads: Vec<Download>) {
         .await;
     tx.send("terminate").unwrap();
     speed_thread.join().unwrap();
+}
+
+pub async fn download_file(
+    client: &reqwest::Client,
+    task: &Download,
+    counter: &Arc<AtomicUsize>,
+    speed_counter: &Arc<AtomicUsize>,
+) -> anyhow::Result<()> {
+    let file_path = PathBuf::from(task.file.clone());
+    fs::create_dir_all(file_path.parent().ok_or(anyhow::Error::msg(
+        "Unknown Error in instance/mod.rs".to_string(),
+    ))?)
+    .await?;
+    let mut response = client.get(task.url.clone()).send().await?;
+    let mut file = fs::File::create(&file_path).await?;
+    while let Some(chunk) = response.chunk().await? {
+        file.write_all(&chunk).await?;
+        speed_counter.fetch_add(chunk.len(), Ordering::SeqCst);
+    }
+    counter.fetch_add(1, Ordering::SeqCst);
+    Ok(())
 }
 
 #[tauri::command(async)]
@@ -564,15 +596,25 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
 }
 
 pub async fn update_latest_instance() {
+    let version_list = VersionManifest::new().await;
+    if version_list.is_err() {
+        return;
+    };
+    let version_list = version_list.unwrap();
     if !check_repeated_instance_name("Latest Release".to_string()).await {
         create_instance(
             "Latest Release".to_string(),
-            InstanceConfig::new("Latest Release", ""),
+            InstanceConfig::new("Latest Release", &version_list.latest.release),
         )
         .await;
     };
-    // let latest_minecraft_version = get_minecraft_version_list().await.unwrap().latest.release;
-    // println!("{}", latest_minecraft_version);
+    if !check_repeated_instance_name("Latest Snapshot".to_string()).await {
+        create_instance(
+            "Latest Snapshot".to_string(),
+            InstanceConfig::new("Latest Snapshot", &version_list.latest.snapshot),
+        )
+        .await;
+    };
 }
 
 fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
