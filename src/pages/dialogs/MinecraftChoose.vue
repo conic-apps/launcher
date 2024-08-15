@@ -65,38 +65,38 @@
 </template>
 
 <script setup lang="ts">
-import DialogVue from "@/components/Dialog.vue"
-import SearchBar from "@/components/SearchBar.vue"
-import { ref } from "vue"
-import { invoke } from "@tauri-apps/api/core"
-import ListItem from "@/components/ListItem.vue"
-import Tag from "@/components/Tag.vue"
+import DialogVue from "@/components/Dialog.vue";
+import SearchBar from "@/components/SearchBar.vue";
+import { ref } from "vue";
+import { invoke } from "@tauri-apps/api/core";
+import ListItem from "@/components/ListItem.vue";
+import Tag from "@/components/Tag.vue";
 
 const props = withDefaults(
   defineProps<{
-    show: boolean
+    show: boolean;
   }>(),
   {
     show: false,
   },
-)
+);
 
-let versions = ref<Array<any>>([])
+let versions = ref<Array<any>>([]);
 invoke("get_minecraft_version_list")
   .then((res: any) => {
     if (res != null) {
-      versions.value = res.versions
+      versions.value = res.versions;
     } else {
-      throw "get_version_list failed!"
+      throw "get_version_list failed!";
     }
   })
   .catch((err) => {
-    console.log(err)
-  })
+    console.log(err);
+  });
 
 function parseTime(time: string) {
-  let date = new Date(time)
-  return `发布于 ${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+  let date = new Date(time);
+  return `发布于 ${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
 }
 </script>
 

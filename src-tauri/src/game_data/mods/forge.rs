@@ -18,6 +18,7 @@
 
 use std::fs::File;
 use std::path::Path;
+use std::str::FromStr;
 use std::{ffi::OsStr, io::Read};
 
 use anyhow::Result;
@@ -133,14 +134,15 @@ pub struct ForgeModTOMLData {
     pub version: Option<String>,
 }
 
-impl ForgeModTOMLData {
-    pub fn from_str(str: &str) -> Result<ForgeModTOMLData> {
+impl FromStr for ForgeModTOMLData {
+    type Err = anyhow::Error;
+    fn from_str(str: &str) -> Result<ForgeModTOMLData> {
         let raw: ForgeModTOMLData = toml::from_str(str)?;
 
         match raw.mods.clone() {
             None => Ok(raw),
             Some(v) => {
-                let mod_info = v.get(0);
+                let mod_info = v.first();
                 match mod_info {
                     None => Ok(raw),
                     Some(mod_info) => Ok(ForgeModTOMLData {
@@ -198,7 +200,7 @@ impl ForgeModMcmodInfo {
             .replace("\n", "");
         let info: Vec<ForgeModMcmodInfo> = serde_json::from_str(&file_content)?;
         Ok(info
-            .get(0)
+            .first()
             .ok_or(anyhow::Error::new(std::io::Error::from(
                 std::io::ErrorKind::NotFound,
             )))?
@@ -228,17 +230,18 @@ pub struct ManifestMetadata {
     pub url: Option<String>,
 }
 
-impl ManifestMetadata {
-    pub fn from_str(str: &str) -> Result<ManifestMetadata> {
+impl FromStr for ManifestMetadata {
+    type Err = anyhow::Error;
+    fn from_str(str: &str) -> Result<ManifestMetadata> {
         let str = str
             .to_string()
             .lines()
-            .into_iter()
             .map(|line| {
                 let regex = Regex::new(r"\:").unwrap();
                 if regex.is_match(line) {
                     let line = line.replace(": ", ":");
                     let kv = line.split(":").collect::<Vec<&str>>();
+                    #[allow(clippy::get_first)]
                     let key = kv.get(0).unwrap().replace("-", "").to_string();
                     let value = kv.get(1).unwrap();
                     format!("{}=\"{}\"", key, value)
@@ -249,20 +252,13 @@ impl ManifestMetadata {
             .collect::<Vec<String>>()
             .join("\n");
         let raw: RawManifest = toml::from_str(&str)?;
-        let mod_id = match raw.tweak_meta_file {
-            Some(v) => Some(v.replace(".json", "")),
-            None => None,
-        };
+        let mod_id = raw.tweak_meta_file.map(|v| v.replace(".json", ""));
         Ok(ManifestMetadata {
-            name: match raw.tweak_name {
-                Some(v) => Some(v),
-                None => None,
-            },
+            name: raw.tweak_name,
             mod_id,
-            authors: match raw.tweak_author {
-                Some(v) => Some(v.split(",").map(|v| v.to_string()).collect()),
-                None => None,
-            },
+            authors: raw
+                .tweak_author
+                .map(|v| v.split(",").map(|v| v.to_string()).collect()),
             description: None,
             url: None,
         })

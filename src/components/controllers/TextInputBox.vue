@@ -13,17 +13,17 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    name?: string
-    placeholder?: string
-    type?: string
-    error?: boolean
+    name?: string;
+    placeholder?: string;
+    type?: string;
+    error?: boolean;
   }>(),
   {
     type: "text",
   },
-)
+);
 
-const model = defineModel()
+const model = defineModel();
 </script>
 
 <style lang="less" scoped>

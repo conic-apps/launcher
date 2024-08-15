@@ -75,19 +75,19 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue"
-import DialogVue from "@/components/Dialog.vue"
-import ListItem from "@/components/ListItem.vue"
-import Tag from "@/components/Tag.vue"
-import SearchBar from "@/components/SearchBar.vue"
-import DialogButton from "@/components/DialogButton.vue"
+import { reactive, ref } from "vue";
+import DialogVue from "@/components/Dialog.vue";
+import ListItem from "@/components/ListItem.vue";
+import Tag from "@/components/Tag.vue";
+import SearchBar from "@/components/SearchBar.vue";
+import DialogButton from "@/components/DialogButton.vue";
 
 const props = withDefaults(
   defineProps<{
-    show: boolean
-    resourcepacks?: any
-    instanceName: string
-    datas: any[]
+    show: boolean;
+    resourcepacks?: any;
+    instanceName: string;
+    datas: any[];
   }>(),
   {
     resourcepacks: () => {
@@ -158,10 +158,10 @@ const props = withDefaults(
           description: "bbbbbbb",
           icon: "/test.webp",
         },
-      ]
+      ];
     },
   },
-)
+);
 </script>
 
 <style lang="less" scoped>

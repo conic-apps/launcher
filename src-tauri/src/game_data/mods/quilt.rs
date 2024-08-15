@@ -127,7 +127,7 @@ impl Parse for QuiltModMetadata {
                     license
                         .as_array()
                         .unwrap()
-                        .into_iter()
+                        .iter()
                         .map(|v| v.as_str().unwrap().to_string())
                         .collect::<Vec<String>>(),
                 )
@@ -174,10 +174,7 @@ impl Parse for QuiltModMetadata {
                 mod_loader: loader_depend,
                 java: java_depend,
             },
-            authors: match parsed_authors {
-                Some(v) => v,
-                None => vec![],
-            },
+            authors: parsed_authors.unwrap_or_default(),
             license,
             icon: self.icon,
         }

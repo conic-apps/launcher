@@ -37,24 +37,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type Ref } from "vue"
-import $ from "jquery"
+import { computed, ref, type Ref } from "vue";
+import $ from "jquery";
 
 const props = withDefaults(
   defineProps<{
-    title?: string
-    description?: string
-    canSwap?: boolean
-    isSwaped?: boolean
-    width?: string
-    height?: string
-    margin?: string
-    flex?: string
-    flexStart?: boolean
-    icon?: string
-    logoPixelated?: boolean
-    expanderHeader?: boolean
-    padding?: Array<number>
+    title?: string;
+    description?: string;
+    canSwap?: boolean;
+    isSwaped?: boolean;
+    width?: string;
+    height?: string;
+    margin?: string;
+    flex?: string;
+    flexStart?: boolean;
+    icon?: string;
+    logoPixelated?: boolean;
+    expanderHeader?: boolean;
+    padding?: Array<number>;
   }>(),
   {
     canSwap: true,
@@ -63,58 +63,58 @@ const props = withDefaults(
     logoPixelated: false,
     margin: "",
   },
-)
-let margin = props.margin.split(",")
-let isSwapping = ref(!!props.isSwaped)
-const expanderStyle = `margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px`
-const bodyClassName = props.flexStart ? "expander-body flex-start" : "expander-body"
-const bodyStyle = `width: ${props.width}px;height: ${props.height}px;${props.isSwaped ? "height: 0;overflow: hidden;" : ""};`
+);
+let margin = props.margin.split(",");
+let isSwapping = ref(!!props.isSwaped);
+const expanderStyle = `margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px`;
+const bodyClassName = props.flexStart ? "expander-body flex-start" : "expander-body";
+const bodyStyle = `width: ${props.width}px;height: ${props.height}px;${props.isSwaped ? "height: 0;overflow: hidden;" : ""};`;
 const contentStyle = props.padding
   ? `margin: ${props.padding[0]}px ${props.padding[1]}px ${props.padding[2]}px ${props.padding[3]}px;`
-  : ""
-const contentClassName = props.isSwaped ? "hidden" : ""
-const expanderButton = props.canSwap ? "" : `display: none;`
-const headerStyle = props.canSwap ? "" : "pointer-events: none;"
-const head = ref<any>(null)
+  : "";
+const contentClassName = props.isSwaped ? "hidden" : "";
+const expanderButton = props.canSwap ? "" : `display: none;`;
+const headerStyle = props.canSwap ? "" : "pointer-events: none;";
+const head = ref<any>(null);
 let expanderClass = computed(() => {
-  return isSwapping.value ? "expander expander-not-expanded" : "expander"
-})
+  return isSwapping.value ? "expander expander-not-expanded" : "expander";
+});
 let iconStyle = computed(() => {
-  return props.logoPixelated ? "image-rendering: pixelated;" : ""
-})
+  return props.logoPixelated ? "image-rendering: pixelated;" : "";
+});
 
-const transitionStyle = "all 250ms ease"
+const transitionStyle = "all 250ms ease";
 function beforeEnter(element: HTMLElement) {
-  $(element.firstElementChild!).removeClass("hidden")
-  element.style.transition = transitionStyle
-  element.style.height = "0px"
+  $(element.firstElementChild!).removeClass("hidden");
+  element.style.transition = transitionStyle;
+  element.style.height = "0px";
 }
 function enter(element: HTMLElement) {
-  const height = $(element.firstElementChild!).outerHeight(true)
-  element.style.height = `${height}px`
-  element.style.overflow = "hidden"
+  const height = $(element.firstElementChild!).outerHeight(true);
+  element.style.height = `${height}px`;
+  element.style.overflow = "hidden";
 }
 function afterEnter(element: HTMLElement) {
-  element.style.transition = ""
-  element.style.height = ""
-  element.style.overflow = ""
+  element.style.transition = "";
+  element.style.height = "";
+  element.style.overflow = "";
 }
 function beforeLeave(element: HTMLElement) {
-  element.style.transition = transitionStyle
-  const height = $(element.firstElementChild!).outerHeight(true)
-  element.style.height = `${height}px`
-  element.style.overflow = "hidden"
+  element.style.transition = transitionStyle;
+  const height = $(element.firstElementChild!).outerHeight(true);
+  element.style.height = `${height}px`;
+  element.style.overflow = "hidden";
 }
 function leave(element: HTMLElement) {
-  element.style.height = "0px"
-  head.value.style["border-bottom"] = ""
+  element.style.height = "0px";
+  head.value.style["border-bottom"] = "";
 }
 function afterLeave(element: HTMLElement) {
-  element.style.transition = ""
-  element.style.height = ""
+  element.style.transition = "";
+  element.style.height = "";
 }
 function expander() {
-  isSwapping.value = !isSwapping.value
+  isSwapping.value = !isSwapping.value;
 }
 </script>
 

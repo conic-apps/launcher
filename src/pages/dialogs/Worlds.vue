@@ -70,31 +70,31 @@
 </template>
 
 <script setup lang="ts">
-import DialogVue from "@/components/Dialog.vue"
-import ListItem from "@/components/ListItem.vue"
-import Tag from "@/components/Tag.vue"
-import SearchBar from "@/components/SearchBar.vue"
-import DialogButton from "@/components/DialogButton.vue"
+import DialogVue from "@/components/Dialog.vue";
+import ListItem from "@/components/ListItem.vue";
+import Tag from "@/components/Tag.vue";
+import SearchBar from "@/components/SearchBar.vue";
+import DialogButton from "@/components/DialogButton.vue";
 
 const props = defineProps<{
-  show: boolean
-  worlds?: any
-  instanceName: string
-  datas: any[]
-}>()
+  show: boolean;
+  worlds?: any;
+  instanceName: string;
+  datas: any[];
+}>();
 
 function gameType(type: number): string {
   switch (type) {
     case 0:
-      return "生存模式"
+      return "生存模式";
     case 1:
-      return "创造模式"
+      return "创造模式";
     case 2:
-      return "冒险模式"
+      return "冒险模式";
     case 3:
-      return "旁观模式"
+      return "旁观模式";
     default:
-      return ""
+      return "";
   }
 }
 </script>

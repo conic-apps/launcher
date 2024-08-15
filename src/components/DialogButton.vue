@@ -5,10 +5,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref } from "vue";
 defineProps<{
-  icon: string
-}>()
+  icon: string;
+}>();
 </script>
 
 <style lang="less" scoped>

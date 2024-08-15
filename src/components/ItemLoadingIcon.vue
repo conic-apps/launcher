@@ -53,8 +53,8 @@
 </template>
 <script lang="ts" setup>
 const props = defineProps<{
-  status: "in-progress" | "pending" | "success" | "error"
-}>()
+  status: "in-progress" | "pending" | "success" | "error";
+}>();
 </script>
 <style lang="less">
 .in-progress {

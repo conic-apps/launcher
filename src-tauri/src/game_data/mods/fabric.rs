@@ -115,7 +115,7 @@ impl Parse for FabricModMetadata {
                     license
                         .as_array()
                         .unwrap()
-                        .into_iter()
+                        .iter()
                         .map(|v| v.as_str().unwrap().to_string())
                         .collect::<Vec<String>>(),
                 )
@@ -162,10 +162,7 @@ impl Parse for FabricModMetadata {
                 mod_loader: fabric_loader_depend,
                 java: java_depend,
             },
-            authors: match parsed_authors {
-                Some(v) => v,
-                None => vec![],
-            },
+            authors: parsed_authors.unwrap_or_default(),
             license,
             icon: self.icon,
         }

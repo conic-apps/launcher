@@ -83,118 +83,119 @@
 </template>
 
 <script setup lang="ts">
-import DialogVue from "@/components/Dialog.vue"
-import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue"
-import ProgressBar from "@/components/ProgressBar.vue"
-import { listen } from "@tauri-apps/api/event"
-import { computed, Ref, ref, watch } from "vue"
+import DialogVue from "@/components/Dialog.vue";
+import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
+import ProgressBar from "@/components/ProgressBar.vue";
+import { listen } from "@tauri-apps/api/event";
+import { computed, ref, watch } from "vue";
+import type { Ref } from "vue";
 
-let time = ref(1145141919810)
-let timer: number
+let time = ref(1145141919810);
+let timer: number;
 const computedTime = computed(() => {
   function doubleNum(n: any) {
-    return n < 10 ? `0${n}` : n.toString()
+    return n < 10 ? `0${n}` : n.toString();
   }
-  let second = doubleNum((time.value % 600) / 10)
-  let minute = doubleNum(Math.floor(time.value / 600) % 60)
-  let hour = doubleNum(Math.floor(time.value / 36000) % 24)
-  return `${hour}:${minute}:${second}`
-})
+  let second = doubleNum((time.value % 600) / 10);
+  let minute = doubleNum(Math.floor(time.value / 600) % 60);
+  let hour = doubleNum(Math.floor(time.value / 36000) % 24);
+  return `${hour}:${minute}:${second}`;
+});
 
 const props = defineProps<{
-  installing: boolean
-  instanceName: string
-}>()
+  installing: boolean;
+  instanceName: string;
+}>();
 watch(props, (val) => {
   if (val.installing == true) {
-    time.value = 0
+    time.value = 0;
     timer = setInterval(() => {
-      time.value++
-    }, 100)
+      time.value++;
+    }, 100);
   }
-})
+});
 let installProgress: Ref<InstallProgress> = ref({
   completed: 0,
   total: 0,
   step: 0,
-})
+});
 interface InstallProgress {
-  completed: number
-  total: number
-  step: number
+  completed: number;
+  total: number;
+  step: number;
 }
 listen("install_progress", (event) => {
-  installProgress.value = event.payload as InstallProgress
+  installProgress.value = event.payload as InstallProgress;
   if (installProgress.value.step != 3) {
-    speed.value = "0 B/s"
+    speed.value = "0 B/s";
   }
-})
+});
 interface InstallError {
-  step: number
+  step: number;
   // TODO: error type
 }
 let installError: Ref<InstallError> = ref({
   step: 0,
-})
+});
 listen("install_error", (event) => {
-  installError.value = event.payload as InstallError
-  clearInterval(timer)
-})
+  installError.value = event.payload as InstallError;
+  clearInterval(timer);
+});
 listen("install_success", (_event) => {
-  installProgress.value.step = 1000
-  clearInterval(timer)
-})
+  installProgress.value.step = 1000;
+  clearInterval(timer);
+});
 
 const getVersionInfoStatus = computed(() => {
   if (installError.value.step == 1) {
-    return "error"
+    return "error";
   }
   if (installProgress.value.step == 1) {
-    return "in-progress"
+    return "in-progress";
   }
   if (installProgress.value.step > 1) {
-    return "success"
+    return "success";
   }
-  return "pending"
-})
+  return "pending";
+});
 const checkExistFilesStatus = computed(() => {
   if (installError.value.step == 2) {
-    return "error"
+    return "error";
   }
   if (installProgress.value.step == 2) {
-    return "in-progress"
+    return "in-progress";
   }
   if (installProgress.value.step > 2) {
-    return "success"
+    return "success";
   }
-  return "pending"
-})
+  return "pending";
+});
 const downloadVanillaGameStatus = computed(() => {
   if (installError.value.step == 3) {
-    return "error"
+    return "error";
     // TODO: show error message
   }
   if (installProgress.value.step == 3) {
-    return "in-progress"
+    return "in-progress";
   }
   if (installProgress.value.step > 3) {
-    return "success"
+    return "success";
   }
-  return "pending"
-})
-let speed = ref("")
+  return "pending";
+});
+let speed = ref("");
 listen("download_speed", (event) => {
-  let payload = (event.payload as number) / 2
+  let payload = (event.payload as number) / 2;
   if (payload < 1024) {
-    speed.value = payload + " B/s"
+    speed.value = payload + " B/s";
   } else if (payload < 1024 * 1024) {
-    speed.value = (payload / 1024).toFixed(2) + " KB/s"
+    speed.value = (payload / 1024).toFixed(2) + " KB/s";
   } else if (payload < 1024 * 1024 * 1024) {
-    speed.value = (payload / 1024 / 1024).toFixed(2) + " MB/s"
+    speed.value = (payload / 1024 / 1024).toFixed(2) + " MB/s";
   } else {
-    speed.value = (payload / 1024 / 1024 / 1024).toFixed(2) + " GB/s"
+    speed.value = (payload / 1024 / 1024 / 1024).toFixed(2) + " GB/s";
   }
-})
+});
 </script>
 
 <style lang="less">

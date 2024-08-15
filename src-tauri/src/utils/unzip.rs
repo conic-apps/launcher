@@ -55,10 +55,7 @@ impl Entry {
             version_name_by: zip_file.version_made_by(),
             name: zip_file.name().to_string(),
             mangled_name: zip_file.mangled_name().to_path_buf(),
-            enclosed_name: match zip_file.enclosed_name() {
-                None => None,
-                Some(value) => Some(value.to_path_buf()),
-            },
+            enclosed_name: zip_file.enclosed_name().map(|x| x.to_path_buf()),
             comment: zip_file.comment().to_string(),
             compression: zip_file.compression(),
             compressed_size: zip_file.compressed_size(),
@@ -73,10 +70,7 @@ impl Entry {
             },
             unix_mode: zip_file.unix_mode(),
             crc32: zip_file.crc32(),
-            extra_data: match zip_file.extra_data() {
-                None => None,
-                Some(x) => Some(x.to_vec()),
-            },
+            extra_data: zip_file.extra_data().map(|x| x.to_vec()),
             data_start: zip_file.data_start(),
             header_start: zip_file.header_start(),
             central_header_start: zip_file.central_header_start(),

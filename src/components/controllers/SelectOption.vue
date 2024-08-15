@@ -3,10 +3,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref } from "vue";
 defineProps<{
-  text: string
-}>()
+  text: string;
+}>();
 </script>
 
 <style lang="less" scoped>

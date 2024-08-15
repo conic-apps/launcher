@@ -11,6 +11,12 @@
             "options": {
                 "tabWidth": 2
             }
+        },
+        {
+            "files": ["*.vue"],
+            "options": {
+                "semi": true
+            }
         }
     ]
 }

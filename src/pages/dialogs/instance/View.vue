@@ -13,16 +13,16 @@
 <script setup lang="ts">
 interface Instance {
   config: {
-    name: string
-    runtime: string
-    group: string[]
-  }
-  installed: boolean
+    name: string;
+    runtime: string;
+    group: string[];
+  };
+  installed: boolean;
 }
 
 const props = defineProps<{
-  instances: Instance[]
-}>()
+  instances: Instance[];
+}>();
 </script>
 
 <style lang="less">

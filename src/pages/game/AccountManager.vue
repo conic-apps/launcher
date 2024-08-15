@@ -32,12 +32,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
-import CardLink from "@/components/CardButton.vue"
-import IconButton from "@/components/IconButton.vue"
+import { ref } from "vue";
+import CardLink from "@/components/CardButton.vue";
+import IconButton from "@/components/IconButton.vue";
 
-let loading = ref(false)
-let accounts: any = []
+let loading = ref(false);
+let accounts: any = [];
 function addMicrosoftAccount() {}
 
 function addOfflineAccount() {}

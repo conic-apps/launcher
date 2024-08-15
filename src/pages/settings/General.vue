@@ -36,10 +36,10 @@
 </template>
 
 <script setup lang="ts">
-import SettingItem from "@/components/SettingItem.vue"
-import SelectVue from "@/components/controllers/Select.vue"
-import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue"
-import Expander from "@/components/Expander.vue"
+import SettingItem from "@/components/SettingItem.vue";
+import SelectVue from "@/components/controllers/Select.vue";
+import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
+import Expander from "@/components/Expander.vue";
 // import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
 // import ButtonBar from '@/components/ButtonBar.vue';
 // import TipBar from '@/components/TipBar.vue';
