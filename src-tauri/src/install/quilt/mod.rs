@@ -23,7 +23,7 @@ pub mod version_list;
 
 const DEFAULT_META_URL: &str = "https://meta.quiltmc.org";
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct QuiltArtifactVersion {
     separator: String,
     build: u32,
@@ -33,32 +33,32 @@ pub struct QuiltArtifactVersion {
     version: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct QuiltVersionHashed {
     pub maven: String,
     pub version: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct QuiltVersionIntermediary {
     pub maven: String,
     pub version: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct QuiltLibrary {
     pub name: String,
     pub url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct QuiltLibraries {
     pub client: Vec<QuiltLibrary>,
     pub common: Vec<QuiltLibrary>,
     pub server: Vec<QuiltLibrary>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct QuiltLauncherMeta {
     pub version: u32,
@@ -66,7 +66,7 @@ pub struct QuiltLauncherMeta {
     pub main_class: QuiltMainClass,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct QuiltMainClass {
     pub client: Option<String>,
@@ -74,7 +74,7 @@ pub struct QuiltMainClass {
     pub server_launcher: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct QuiltVersion {
     pub loader: QuiltArtifactVersion,

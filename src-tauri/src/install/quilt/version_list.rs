@@ -16,29 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{QuiltArtifactVersion, QuiltVersion, DEFAULT_META_URL};
+use super::{QuiltVersion, DEFAULT_META_URL};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use tauri_plugin_http::reqwest;
-
-pub async fn get_quilt_version_list(remote: Option<String>) -> Result<Vec<QuiltArtifactVersion>> {
-    let remote = match remote {
-        None => DEFAULT_META_URL.to_string(),
-        Some(remote) => remote,
-    };
-    let url = format!("{remote}/v3/versions/loader");
-    let response = reqwest::get(url).await?;
-    Ok(response.json().await?)
-}
-
-pub async fn get_quilt_version_list_from_mcversion(
-    remote: Option<String>,
-    mcversion: &str,
-) -> Result<Vec<QuiltVersion>> {
-    let remote = match remote {
-        None => DEFAULT_META_URL.to_string(),
-        Some(remote) => remote,
-    };
-    let url = format!("{remote}/v3/versions/loader/{mcversion}");
-    let response = reqwest::get(url).await?;
-    Ok(response.json().await?)
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct QuiltVersionList(Vec<QuiltVersion>);
+impl QuiltVersionList {
+    pub async fn from_mcversion(remote: Option<String>, mcversion: &str) -> Result<Self> {
+        let remote = match remote {
+            None => DEFAULT_META_URL.to_string(),
+            Some(remote) => remote,
+        };
+        let url = format!("{remote}/v3/versions/loader/{mcversion}");
+        let response = reqwest::get(url).await?;
+        Ok(response.json().await?)
+    }
 }

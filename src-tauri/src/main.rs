@@ -2,26 +2,33 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 pub mod config;
-pub mod core;
+pub mod download;
+pub mod folder;
 pub mod game_data;
 pub mod install;
 pub mod instance;
+pub mod platform;
 pub mod utils;
+pub mod version;
 
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use crate::config::get_user_config;
-use crate::instance::{
-    check_repeated_instance_name, create_instance, get_fabric_version_list, get_forge_version_list,
-    get_instance_config, get_instance_config_from_string, get_minecraft_version_list,
-    get_quilt_version_list, install, scan_instances_folder, scan_mod_folder, scan_saves_folder,
-    set_current_instance, /* watch_instances_folder, */
+use crate::game_data::{scan_mod_folder, scan_saves_folder};
+use crate::install::install;
+use crate::install::{
+    get_fabric_version_list, get_forge_version_list, get_minecraft_version_list,
+    get_quilt_version_list,
 };
-use core::folder::DataLocation;
-use core::{OsType, PlatformInfo};
+use crate::instance::{
+    check_repeated_instance_name, create_instance, get_instance_config,
+    get_instance_config_from_string, scan_instances_folder, set_current_instance,
+};
+use folder::DataLocation;
 use once_cell::sync::OnceCell;
+use platform::{OsType, PlatformInfo};
 use tauri::{Listener, Manager, Window};
 use tauri_plugin_http::reqwest;
 
@@ -31,7 +38,7 @@ static DATA_LOCATION: OnceCell<DataLocation> = OnceCell::new();
 static PLATFORM_INFO: OnceCell<PlatformInfo> = OnceCell::new();
 static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
 static APPLICATION_DATA: OnceCell<PathBuf> = OnceCell::new();
-
+static DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("./launcher_profile.json");
 pub struct Storage {
     pub current_instance: Arc<Mutex<String>>,
 }
