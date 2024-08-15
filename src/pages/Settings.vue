@@ -25,14 +25,14 @@
 </template>
 
 <script setup lang="ts">
-import { markRaw, reactive, ref, shallowRef } from "vue"
-import General from "./settings/General.vue"
-import Game from "./settings/Game.vue"
-import Advance from "./settings/Advance.vue"
-import Appearance from "./settings/Appearance.vue"
-import Download from "./settings/Download.vue"
-import Accessibility from "./settings/Accessibility.vue"
-import Extend from "./settings/Extend.vue"
+import { markRaw, reactive, ref, shallowRef } from "vue";
+import General from "./settings/General.vue";
+import Game from "./settings/Game.vue";
+import Advance from "./settings/Advance.vue";
+import Appearance from "./settings/Appearance.vue";
+import Download from "./settings/Download.vue";
+import Accessibility from "./settings/Accessibility.vue";
+import Extend from "./settings/Extend.vue";
 
 const components = reactive([
   {
@@ -70,19 +70,19 @@ const components = reactive([
     icon: "cubes",
     component: markRaw(Extend),
   },
-])
-const currentComponent = shallowRef(General)
-let activeComponentIndex = ref(0)
-let transitionName = ref("")
-const content = ref<any>(null)
+]);
+const currentComponent = shallowRef(General);
+let activeComponentIndex = ref(0);
+let transitionName = ref("");
+const content = ref<any>(null);
 function switchComponent(item: any, index: number) {
-  currentComponent.value = item.component
+  currentComponent.value = item.component;
   if (activeComponentIndex.value < index) {
-    transitionName.value = "slide-up"
+    transitionName.value = "slide-up";
   } else {
-    transitionName.value = "slide-down"
+    transitionName.value = "slide-down";
   }
-  activeComponentIndex.value = index
+  activeComponentIndex.value = index;
 }
 </script>
 

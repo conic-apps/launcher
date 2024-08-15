@@ -271,6 +271,7 @@ fn parse_version(s: &str) -> Result<MinecraftVersion> {
     if s.contains(".") {
         let split = s.split(".").collect::<Vec<&str>>();
         Ok(MinecraftVersion::Release(
+            #[allow(clippy::get_first)]
             split.get(0).ok_or(anyhow::anyhow!(""))?.parse()?,
             split.get(1).ok_or(anyhow::anyhow!(""))?.parse()?,
             match split.get(2) {
@@ -282,9 +283,9 @@ fn parse_version(s: &str) -> Result<MinecraftVersion> {
         let split = s.split("w").collect::<Vec<&str>>();
         let minor_version = split.get(1).ok_or(anyhow::anyhow!(""))?;
         Ok(MinecraftVersion::Snapshot(
-            split.get(0).ok_or(anyhow::anyhow!(""))?.parse()?,
-            (&minor_version[..2]).parse()?,
-            (&minor_version[2..]).to_string(),
+            split.first().ok_or(anyhow::anyhow!(""))?.parse()?,
+            (minor_version[..2]).parse()?,
+            (minor_version[2..]).to_string(),
         ))
     } else {
         Ok(MinecraftVersion::Unknown(s.to_string()))
@@ -432,7 +433,7 @@ impl Version {
             .join(format!("{}.json", version_name));
 
         let raw = read_to_string(path)?;
-        let version: Version = serde_json::from_str((&raw).as_ref())?;
+        let version: Version = serde_json::from_str((raw).as_ref())?;
         Ok(version)
     }
 
@@ -456,7 +457,7 @@ impl Version {
                 .join(format!("{}.json", inherits_from_unwrap.clone()));
             path_chain.push(path.clone());
             let version_json = read_to_string(path)?;
-            let version_json: Version = serde_json::from_str((&version_json).as_ref())?;
+            let version_json: Version = serde_json::from_str((version_json).as_ref())?;
 
             versions.push(version_json.clone());
             inherits_from = version_json.inherits_from;
@@ -480,8 +481,7 @@ impl Version {
         let mut libraries_raw = Vec::new();
         let mut downloads = HashMap::new();
 
-        while versions.len() != 0 {
-            let version = versions.pop().unwrap();
+        while let Some(version) = versions.pop() {
             minimum_launcher_version = std::cmp::max(
                 version.minimum_launcher_version.unwrap_or(0),
                 minimum_launcher_version,
@@ -490,7 +490,7 @@ impl Version {
             release_time = version.release_time.unwrap_or(release_time);
             time = version.time.unwrap_or(time);
             logging = if let Some(logging_) = version.logging {
-                if logging_.len() == 0 {
+                if !logging_.is_empty() {
                     logging
                 } else {
                     logging_.clone()
@@ -510,10 +510,9 @@ impl Version {
             if let Some(libraries) = version.libraries {
                 libraries_raw.splice(0..0, libraries);
             }
-            match version.downloads {
-                Some(v) => downloads.extend(v),
-                None => (),
-            };
+            if let Some(v) = version.downloads {
+                downloads.extend(v)
+            }
         }
         let main_class_is_empty = main_class.is_empty();
         let assets_index_is_empty = asset_index
@@ -523,7 +522,7 @@ impl Version {
                 id: "".to_string(),
                 total_size: 0,
             });
-        let downloads_is_empty = downloads.len() == 0;
+        let downloads_is_empty = !downloads.is_empty();
         if main_class_is_empty || assets_index_is_empty || downloads_is_empty {
             return Err(anyhow::anyhow!("Bad Version JSON"));
         }
@@ -571,7 +570,7 @@ async fn resolve_libraries(libraries: Vec<Value>, platform: &PlatformInfo) -> Ve
         let rules = library["rules"].as_array();
         // check rules
         if let Some(rules) = rules {
-            if !check_allowed(rules.clone(), &platform) {
+            if !check_allowed(rules.clone(), platform) {
                 continue;
             }
         }
@@ -599,10 +598,7 @@ async fn resolve_libraries(libraries: Vec<Value>, platform: &PlatformInfo) -> Ve
             };
             result.push(ResolvedLibrary {
                 download_info: LibraryDownload {
-                    sha1: match classifier["sha1"].as_str() {
-                        Some(sha1) => Some(sha1.to_string()),
-                        None => None,
-                    },
+                    sha1: classifier["sha1"].as_str().map(|sha1| sha1.to_string()),
                     size: classifier["size"].as_u64(),
                     url,
                     path,
@@ -628,6 +624,7 @@ async fn resolve_libraries(libraries: Vec<Value>, platform: &PlatformInfo) -> Ve
         if name.len() != 3 {
             continue;
         }
+        #[allow(clippy::get_first)]
         let package = name.get(0).unwrap().replace(".", "/");
         let version = name.get(2).unwrap();
         let name = name.get(1).unwrap();
@@ -683,7 +680,7 @@ fn check_allowed(rules: Vec<Value>, platform: &PlatformInfo) -> bool {
         let version = os["version"].as_str().unwrap();
         if Regex::is_match(
             &Regex::new(version).unwrap(),
-            (&platform.version.to_string()).as_ref(),
+            (platform.version.to_string()).as_ref(),
         ) {
             allow = action;
         }
@@ -711,6 +708,7 @@ pub struct LibraryInfo {
     pub name: String,
 }
 
+#[allow(clippy::get_first)]
 impl LibraryInfo {
     /// Get the base info of the library from its name
     /// * `lib` - The name of library of the library itself

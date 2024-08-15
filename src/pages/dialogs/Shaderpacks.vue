@@ -49,19 +49,19 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue"
-import DialogVue from "@/components/Dialog.vue"
-import ListItem from "@/components/ListItem.vue"
-import Tag from "@/components/Tag.vue"
-import SearchBar from "@/components/SearchBar.vue"
-import DialogButton from "@/components/DialogButton.vue"
+import { reactive, ref } from "vue";
+import DialogVue from "@/components/Dialog.vue";
+import ListItem from "@/components/ListItem.vue";
+import Tag from "@/components/Tag.vue";
+import SearchBar from "@/components/SearchBar.vue";
+import DialogButton from "@/components/DialogButton.vue";
 
 const props = withDefaults(
   defineProps<{
-    show: boolean
-    shaderpacks?: any
-    instanceName: string
-    datas: any[]
+    show: boolean;
+    shaderpacks?: any;
+    instanceName: string;
+    datas: any[];
   }>(),
   {
     shaderpacks: () => {
@@ -92,10 +92,10 @@ const props = withDefaults(
         "aaa",
         "aaa",
         "aaa",
-      ]
+      ];
     },
   },
-)
+);
 </script>
 
 <style lang="less" scoped>

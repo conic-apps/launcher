@@ -326,7 +326,7 @@ pub fn get_level_data<P: AsRef<Path>>(level_path: P) -> Result<LevelData> {
 /// Modify level
 ///
 /// * `value_path` - You need to use a colon to connect the path. For example, if you want to modify the
-/// seed, you should use `world_gen_settings:seed` or `Data:world_gen_settings:seed`.
+///   seed, you should use `world_gen_settings:seed` or `Data:world_gen_settings:seed`.
 pub fn modify_level<P: AsRef<Path>>(world_path: P, value_path: &str, value: Value) -> Result<()> {
     let level_path = world_path.as_ref().to_path_buf().join("level.dat");
 
@@ -370,7 +370,7 @@ pub fn get_all_levels<P: AsRef<Path>>(path: P) -> Result<HashMap<String, Level>>
         let file = dir_entry.path().join("level.dat");
         let name = dir_entry.file_name().to_string_lossy().to_string();
         let file = fs::File::open(file);
-        if let Err(_) = file {
+        if file.is_err() {
             continue;
         }
         let file = file.unwrap();

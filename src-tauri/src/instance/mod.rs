@@ -14,13 +14,10 @@ use futures::StreamExt;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use std::io::Read;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Duration;
-use std::{
-    path::PathBuf,
-    sync::atomic::{AtomicUsize, Ordering},
-};
 use tauri::Emitter;
 use tauri_plugin_http::reqwest;
 use tokio::{fs, io::AsyncWriteExt};
@@ -246,7 +243,7 @@ pub async fn scan_mod_folder(
                 Ok(file_type) => file_type,
             };
             let active_instance = storage.current_instance.lock().unwrap().clone();
-            if &active_instance != &instance_name {
+            if active_instance != instance_name {
                 return Err(anyhow::anyhow!("stopped")); // if user change the active instance, stop scanning
             }
             if !file_type.is_file() {
@@ -308,7 +305,7 @@ pub async fn scan_saves_folder(
                 Ok(file_type) => file_type,
             };
             let active_instance = storage.current_instance.lock().unwrap().clone();
-            if &active_instance != &instance_name {
+            if active_instance != instance_name {
                 return Err(anyhow::anyhow!("stopped")); // if user change the active instance, stop scanning
             }
             if !file_type.is_dir() {
@@ -381,7 +378,7 @@ pub async fn get_instance_config_from_string(instance_name: &str) -> Result<Inst
     let config_path = DATA_LOCATION
         .get()
         .unwrap()
-        .get_instance_root(&instance_name)
+        .get_instance_root(instance_name)
         .join("instance.toml");
     match config_path.metadata() {
         Ok(_) => {
@@ -426,7 +423,7 @@ async fn download_files(downloads: Vec<Download>) {
     let downloads: Vec<_> = downloads
         .into_par_iter()
         .filter(|download| {
-            if let Err(_) = std::fs::metadata(&download.file) {
+            if std::fs::metadata(&download.file).is_err() {
                 return true;
             }
             let mut file = match std::fs::File::open(&download.file) {
@@ -435,7 +432,7 @@ async fn download_files(downloads: Vec<Download>) {
                     return true;
                 }
             };
-            if let None = download.sha1 {
+            if download.sha1.is_none() {
                 return false;
             };
             let file_hash = calculate_sha1_from_read(&mut file);
@@ -483,9 +480,11 @@ async fn download_files(downloads: Vec<Download>) {
                 let task = task;
                 loop {
                     let speed_counter = speed_counter.clone();
-                    match download_file(&client, &task, &counter, &speed_counter).await {
-                        Ok(_) => break,
-                        Err(_) => (),
+                    if download_file(client, &task, &counter, &speed_counter)
+                        .await
+                        .is_ok()
+                    {
+                        break;
                     }
                     println!("Downloaded failed: {}, retrying...", &task.url);
                     if retries >= 5 {
@@ -526,7 +525,7 @@ pub async fn download_file(
     counter: &Arc<AtomicUsize>,
     speed_counter: &Arc<AtomicUsize>,
 ) -> anyhow::Result<()> {
-    let file_path = PathBuf::from(task.file.clone());
+    let file_path = task.file.clone();
     fs::create_dir_all(file_path.parent().ok_or(anyhow::Error::msg(
         "Unknown Error in instance/mod.rs".to_string(),
     ))?)

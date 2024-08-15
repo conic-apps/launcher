@@ -70,7 +70,7 @@ pub mod folder;
 // pub mod task;
 pub mod version;
 
-pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| reqwest::Client::new());
+pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(reqwest::Client::new);
 /// May not actually be used
 pub static DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("./launcher_profile.json");
 
@@ -133,7 +133,7 @@ impl PlatformInfo {
                 #[cfg(not(windows))]
                 {
                     let mut command = Command::new("uname");
-                    command.args(&["-r"]);
+                    command.args(["-r"]);
                     let output = command.output().await.unwrap();
                     String::from_utf8(output.stdout).unwrap()
                 }

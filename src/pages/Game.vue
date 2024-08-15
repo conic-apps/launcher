@@ -13,10 +13,10 @@
           @game-button-click="
             () => {
               if (gameButtonType === 'launch') {
-                invoke('launch')
+                invoke('launch');
               } else if (gameButtonType === 'install') {
-                installing = true
-                invoke('install')
+                installing = true;
+                invoke('install');
               }
             }
           "
@@ -77,24 +77,24 @@
 </template>
 
 <script setup lang="ts">
-import InstanceInfo from "@/components/InstanceInfo.vue"
-import AssetsManager from "@/components/AssetsManager.vue"
-import InstallProgress from "./dialogs/InstallProgress.vue"
-import AccountManager from "@/components/AccountManager.vue"
-import Instances from "@/components/Instances.vue"
-import InstanceManager from "@/pages/dialogs/InstanceManager.vue"
-import { reactive, ref, type Ref } from "vue"
-import { invoke } from "@tauri-apps/api/core"
-import { listen } from "@tauri-apps/api/event"
+import InstanceInfo from "@/components/InstanceInfo.vue";
+import AssetsManager from "@/components/AssetsManager.vue";
+import InstallProgress from "./dialogs/InstallProgress.vue";
+import AccountManager from "@/components/AccountManager.vue";
+import Instances from "@/components/Instances.vue";
+import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
+import { reactive, ref, type Ref } from "vue";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
-let installing = ref(false)
+let installing = ref(false);
 
 interface Instance {
   config: {
-    name: string
-    runtime: string
-  }
-  installed: boolean
+    name: string;
+    runtime: string;
+  };
+  installed: boolean;
 }
 
 let currentInstance = ref<Instance>({
@@ -103,69 +103,69 @@ let currentInstance = ref<Instance>({
     runtime: "",
   },
   installed: false,
-})
+});
 let show = ref({
   instanceManager: false,
-})
-let instances: Ref<Instance[]> = ref([])
+});
+let instances: Ref<Instance[]> = ref([]);
 let gameButtonType: Ref<"installing" | "launching" | "install" | "launch" | "error"> =
-  ref("install")
-let errorType: Ref<"launch" | "install" | undefined> = ref()
+  ref("install");
+let errorType: Ref<"launch" | "install" | undefined> = ref();
 
 function update() {
   invoke("scan_instances_folder").then((res: any) => {
-    instances.value = res
-    console.log(instances.value)
-  })
+    instances.value = res;
+    console.log(instances.value);
+  });
 }
 invoke("scan_instances_folder").then((res) => {
-  instances.value = res as Instance[]
+  instances.value = res as Instance[];
   if (instances.value[0].config.name == "Latest Release") {
-    setCurrentInstance(instances.value[0])
+    setCurrentInstance(instances.value[0]);
   } else if (instances.value[1].config.name == "Latest Release") {
-    setCurrentInstance(instances.value[1])
+    setCurrentInstance(instances.value[1]);
   }
-})
+});
 
-let modIsLoading = ref(false)
-let resourcepacksIsLoading = ref(false)
-let shaderpackIsLoading = ref(false)
-let savesIsLoading = ref(false)
-let mods = ref([])
-let resourcepacks = ref([])
-let shaderpacks = ref([])
-let saves = ref([])
+let modIsLoading = ref(false);
+let resourcepacksIsLoading = ref(false);
+let shaderpackIsLoading = ref(false);
+let savesIsLoading = ref(false);
+let mods = ref([]);
+let resourcepacks = ref([]);
+let shaderpacks = ref([]);
+let saves = ref([]);
 
 function updateData() {
-  modIsLoading.value = true
-  resourcepacksIsLoading.value = true
-  shaderpackIsLoading.value = true
-  savesIsLoading.value = true
+  modIsLoading.value = true;
+  resourcepacksIsLoading.value = true;
+  shaderpackIsLoading.value = true;
+  savesIsLoading.value = true;
   invoke("scan_mod_folder").then((res: any) => {
-    mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name))
-    modIsLoading.value = false
-  })
+    mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name));
+    modIsLoading.value = false;
+  });
   invoke("scan_saves_folder").then((res: any) => {
-    saves.value = res
-    savesIsLoading.value = false
-  })
+    saves.value = res;
+    savesIsLoading.value = false;
+  });
 }
 
 function setCurrentInstance(instance: Instance) {
-  currentInstance.value = instance
-  gameButtonType.value = instance.installed ? "launch" : "install"
+  currentInstance.value = instance;
+  gameButtonType.value = instance.installed ? "launch" : "install";
   invoke("set_current_instance", {
     instanceName: instance.config.name,
-  })
+  });
 }
 
 listen("install_success", (event) => {
-  gameButtonType.value = "launch"
+  gameButtonType.value = "launch";
   setTimeout(() => {
-    installing.value = false
-  }, 1500)
-  update()
-})
+    installing.value = false;
+  }, 1500);
+  update();
+});
 
 // tauri.invoke("scan_instances_folder").then((res: any) => {
 //   instances.value = res

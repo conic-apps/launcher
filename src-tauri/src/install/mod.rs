@@ -47,12 +47,12 @@ pub struct NetworkOptions {
 }
 
 pub(crate) fn generate_libraries_downloads(
-    libraries: &Vec<ResolvedLibrary>,
+    libraries: &[ResolvedLibrary],
     minecraft_location: &MinecraftLocation,
 ) -> Vec<Download> {
     libraries
-        .clone()
-        .into_iter()
+        .iter()
+        .cloned()
         .map(|library| Download {
             url: if library.is_native_library {
                 println!("find native library url: {}", &library.download_info.url);
@@ -75,9 +75,9 @@ pub(crate) async fn generate_assets_downloads(
     asset_index: AssetIndex,
     minecraft_location: &MinecraftLocation,
 ) -> Result<Vec<Download>> {
-    let asset_index_url = reqwest::Url::parse((&asset_index.url).as_ref())?;
+    let asset_index_url = reqwest::Url::parse(asset_index.url.as_ref())?;
     let asset_index_raw = reqwest::get(asset_index_url).await?.text().await?;
-    let asset_index_json: Value = serde_json::from_str((&asset_index_raw).as_ref())?;
+    let asset_index_json: Value = serde_json::from_str(asset_index_raw.as_ref())?;
     let asset_index_object: AssetIndexObject =
         serde_json::from_value(asset_index_json["objects"].clone())?;
     let mut assets: Vec<_> = asset_index_object
@@ -164,7 +164,7 @@ pub async fn generate_download_info(
     if version_metadata.len() != 1 {
         panic!("Bad version manifest!!!")
     };
-    let version_metadata = version_metadata.get(0).unwrap();
+    let version_metadata = version_metadata.first().unwrap();
 
     let version_json_raw = reqwest::get(version_metadata.url.clone())
         .await?

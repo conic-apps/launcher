@@ -89,63 +89,63 @@
 </style>
 
 <script setup lang="ts">
-import { invoke } from "@tauri-apps/api/core"
-import { computed, reactive, ref, watch } from "vue"
-import CardButton from "./CardButton.vue"
-import Worlds from "@/pages/dialogs/Worlds.vue"
-import Mods from "@/pages/dialogs/Mods.vue"
-import Resourcepacks from "@/pages/dialogs/Resourcepacks.vue"
-import Shaderpacks from "@/pages/dialogs/Shaderpacks.vue"
+import { invoke } from "@tauri-apps/api/core";
+import { computed, reactive, ref, watch } from "vue";
+import CardButton from "./CardButton.vue";
+import Worlds from "@/pages/dialogs/Worlds.vue";
+import Mods from "@/pages/dialogs/Mods.vue";
+import Resourcepacks from "@/pages/dialogs/Resourcepacks.vue";
+import Shaderpacks from "@/pages/dialogs/Shaderpacks.vue";
 
 const props = defineProps<{
-  instanceName: string
-}>()
+  instanceName: string;
+}>();
 let show = reactive({
   worlds: false,
   mods: false,
   resourcepacks: false,
   shaderpacks: false,
-})
+});
 
-let mods = ref<any>([])
-let saves = ref<any>([])
-let resourcepacks = ref<any>([])
-let shaderpacks = ref<any>([])
+let mods = ref<any>([]);
+let saves = ref<any>([]);
+let resourcepacks = ref<any>([]);
+let shaderpacks = ref<any>([]);
 
-let resourcepacksIsLoading = ref(true)
-let modIsLoading = ref(true)
-let shaderpackIsLoading = ref(true)
-let savesIsLoading = ref(true)
+let resourcepacksIsLoading = ref(true);
+let modIsLoading = ref(true);
+let shaderpackIsLoading = ref(true);
+let savesIsLoading = ref(true);
 
 let modManagerDesc = computed(() => {
   // todo: 不过滤无法识别的模组，因为这会导致用户不能禁用某些废物的不规范模组
   if (modIsLoading.value) {
-    return "正在加载..."
+    return "正在加载...";
   } else {
-    return `已安装 ${mods.value.length} 个模组`
+    return `已安装 ${mods.value.length} 个模组`;
   }
-})
+});
 let resourcepacksManagerDesc = computed(() => {
   if (resourcepacksIsLoading.value) {
-    return "正在加载..."
+    return "正在加载...";
   } else {
-    return `已安装 ${resourcepacks.value.length} 个资源包`
+    return `已安装 ${resourcepacks.value.length} 个资源包`;
   }
-})
+});
 let shaderpacksManagerDesc = computed(() => {
   if (shaderpackIsLoading.value) {
-    return "正在加载..."
+    return "正在加载...";
   } else {
-    return `已安装 ${shaderpacks.value.length} 个光影包`
+    return `已安装 ${shaderpacks.value.length} 个光影包`;
   }
-})
+});
 let savesManagerDesc = computed(() => {
   if (savesIsLoading.value) {
-    return "正在加载..."
+    return "正在加载...";
   } else {
-    return `共有 ${saves.value.length} 个存档`
+    return `共有 ${saves.value.length} 个存档`;
   }
-})
+});
 
 // watch(props, (newValue) => {
 //   alert(newValue.instanceName)
@@ -157,17 +157,17 @@ let savesManagerDesc = computed(() => {
 // });
 
 function updateData() {
-  modIsLoading.value = true
-  resourcepacksIsLoading.value = true
-  shaderpackIsLoading.value = true
-  savesIsLoading.value = true
+  modIsLoading.value = true;
+  resourcepacksIsLoading.value = true;
+  shaderpackIsLoading.value = true;
+  savesIsLoading.value = true;
   invoke("scan_mod_folder").then((res: any) => {
-    mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name))
-    modIsLoading.value = false
-  })
+    mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name));
+    modIsLoading.value = false;
+  });
   invoke("scan_saves_folder").then((res: any) => {
-    saves.value = res
-    savesIsLoading.value = false
-  })
+    saves.value = res;
+    savesIsLoading.value = false;
+  });
 }
 </script>
