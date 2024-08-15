@@ -1,7 +1,11 @@
 <template>
   <keep-alive>
     <div>
-      <expander :canSwap=false title="更新与安全" description="当前版本: 0.1.0 上次检查时间: 2022/11/27 18:03" icon="arrows-rotate"
+      <expander
+        :canSwap="false"
+        title="更新与安全"
+        description="当前版本: 0.1.0 上次检查时间: 2022/11/27 18:03"
+        icon="arrows-rotate"
         :padding="[0, 0, 0, 0]">
         <setting-item title="更新通道" description="控制启动器获取更新的频率" icon="radio">
           <select-vue :options="['Weekly', 'Snapshot', 'Release']" :default="2"></select-vue>
@@ -10,7 +14,7 @@
           <toggle-switch></toggle-switch>
         </setting-item>
         <setting-item title="立即检查更新" icon="circle-up" :last="true">
-          <i class="chevron-right" style="margin-right: 10px;"></i>
+          <i class="chevron-right" style="margin-right: 10px"></i>
         </setting-item>
       </expander>
     </div>
@@ -32,10 +36,10 @@
 </template>
 
 <script setup lang="ts">
-import SettingItem from '@/components/SettingItem.vue';
-import SelectVue from '@/components/controllers/Select.vue';
-import ToggleSwitch from '@/components/controllers/ToggleSwitch.vue';
-import Expander from '@/components/Expander.vue';
+import SettingItem from "@/components/SettingItem.vue"
+import SelectVue from "@/components/controllers/Select.vue"
+import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue"
+import Expander from "@/components/Expander.vue"
 // import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
 // import ButtonBar from '@/components/ButtonBar.vue';
 // import TipBar from '@/components/TipBar.vue';
@@ -45,5 +49,5 @@ import Expander from '@/components/Expander.vue';
 // const get = useConfigStore()
 // // console.log(get(""))
 </script>
-    
+
 <style lang="less"></style>

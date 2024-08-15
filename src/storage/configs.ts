@@ -1,5 +1,5 @@
-import { invoke } from "@tauri-apps/api/core";
-import { defineStore } from "pinia";
+import { invoke } from "@tauri-apps/api/core"
+import { defineStore } from "pinia"
 
 enum GarbageCollector {
     G1 = "G1",
@@ -77,37 +77,36 @@ const defaultConfig = {
     extend: {
         enableAll: false,
     },
-};
+}
 
 // alert(defaultConfig.advance.game.garbageCollector)
 
-const userConfig = JSON.parse(await invoke("get_user_config")) as object;
+const userConfig = JSON.parse(await invoke("get_user_config")) as object
 
 export const useConfigStore = defineStore("configs", {
     state: () => {
         return {
             ...defaultConfig,
             ...userConfig,
-        };
+        }
     },
     actions: {
         get(key: string) {
-            const keys = key.split(".");
-            let result;
+            const keys = key.split(".")
+            let result
             for (let index = 0; index < keys.length; index++) {
-                const key = keys[index];
+                const key = keys[index]
                 if (index === 0) {
-                    result = this.$state as any;
-                    continue;
+                    result = this.$state as any
+                    continue
                 }
-                result = result[key];
+                result = result[key]
                 if (typeof result === "undefined") {
-                    break;
+                    break
                 }
             }
-            return result;
+            return result
         },
-        set() {
-        },
+        set() {},
     },
-});
+})

@@ -1,22 +1,20 @@
 {
-  "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": [
-    "main"
-  ],
-  "permissions": [
-    "core:window:default",
-    "shell:allow-open",
-    "core:window:allow-start-dragging",
-    "core:window:allow-minimize",
-    "core:window:allow-maximize",
-    "core:window:allow-close",
-    "http:default",
-    "core:event:default",
-    "core:event:allow-emit",
-    "core:webview:allow-create-webview",
-    "core:webview:allow-webview-size",
-    "core:webview:default"
-  ]
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "default",
+    "description": "Capability for the main window",
+    "windows": ["main"],
+    "permissions": [
+        "core:window:default",
+        "shell:allow-open",
+        "core:window:allow-start-dragging",
+        "core:window:allow-minimize",
+        "core:window:allow-maximize",
+        "core:window:allow-close",
+        "http:default",
+        "core:event:default",
+        "core:event:allow-emit",
+        "core:webview:allow-create-webview",
+        "core:webview:allow-webview-size",
+        "core:webview:default"
+    ]
 }

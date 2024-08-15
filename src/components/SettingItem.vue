@@ -14,25 +14,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue"
 
-const props = withDefaults(defineProps<{
-  title: string,
-  description?: string,
-  icon?: string,
-  margin?: string,
-  boxShadow?: boolean,
-  padding?: string
-  last?: boolean
-}>(), {
-  margin: '0,0,0,0',
-  boxShadow: false,
-  padding: '12,14,12,14',
-  last: false
-})
-let margin = props.margin.split(',')
-let padding = props.padding.split(',')
-let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px; ${props.last ? 'border-bottom: none; border-radius: 0 0 var(--border-radius-large) var(--border-radius-large)' : ''}`
+const props = withDefaults(
+  defineProps<{
+    title: string
+    description?: string
+    icon?: string
+    margin?: string
+    boxShadow?: boolean
+    padding?: string
+    last?: boolean
+  }>(),
+  {
+    margin: "0,0,0,0",
+    boxShadow: false,
+    padding: "12,14,12,14",
+    last: false,
+  },
+)
+let margin = props.margin.split(",")
+let padding = props.padding.split(",")
+let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px; ${props.last ? "border-bottom: none; border-radius: 0 0 var(--border-radius-large) var(--border-radius-large)" : ""}`
 </script>
 
 <style lang="less" scoped>
@@ -50,7 +53,6 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
 }
-
 
 .dialog .setting-item {
   background-color: #000000b9;
@@ -76,21 +78,21 @@ let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}mar
 }
 
 .icon i {
-  font-family: 'fa-pro';
+  font-family: "fa-pro";
   font-style: normal;
   font-size: 24px;
   font-weight: 500;
   margin: 0;
 }
 
-.title>div {
+.title > div {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
 
-.title>div:last-child {
+.title > div:last-child {
   align-items: flex-start;
 }
 

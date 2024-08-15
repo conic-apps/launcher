@@ -1,5 +1,10 @@
 <template>
-  <button class="button" :style="disabled ? 'opacity: 0.5; pointer-events: none;' : ''" v-bind="$attrs">{{ text }}</button>
+  <button
+    class="button"
+    :style="disabled ? 'opacity: 0.5; pointer-events: none;' : ''"
+    v-bind="$attrs">
+    {{ text }}
+  </button>
 </template>
 
 <script setup lang="ts">

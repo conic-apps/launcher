@@ -6,25 +6,24 @@
       :placeholder="placeholder"
       required
       v-model="model"
-      :style="error ? 'outline: rgb(127,0,0)' : ''"
-    />
+      :style="error ? 'outline: rgb(127,0,0)' : ''" />
   </div>
 </template>
 
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    name?: string;
-    placeholder?: string;
-    type?: string;
-    error?: boolean;
+    name?: string
+    placeholder?: string
+    type?: string
+    error?: boolean
   }>(),
   {
     type: "text",
   },
-);
+)
 
-const model = defineModel();
+const model = defineModel()
 </script>
 
 <style lang="less" scoped>

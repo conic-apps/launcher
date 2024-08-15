@@ -8,30 +8,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref } from "vue"
 
 const props = withDefaults(
   defineProps<{
-    loading: boolean;
-    value: string;
-    total: string;
-    width: string;
-    text?: string;
+    loading: boolean
+    value: string
+    total: string
+    width: string
+    text?: string
   }>(),
   {
     width: () => "100",
   },
-);
+)
 
 let widthStyle = computed(() => {
-  return `width: ${props.width}px`;
-});
+  return `width: ${props.width}px`
+})
 let loadingStyle = computed(() => {
-  return props.loading ? "" : "display: none";
-});
+  return props.loading ? "" : "display: none"
+})
 let progressStyle = computed(() => {
-  return props.loading ? "display: none" : "";
-});
+  return props.loading ? "display: none" : ""
+})
 </script>
 
 <style lang="less" scoped>

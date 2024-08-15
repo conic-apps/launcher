@@ -5,8 +5,7 @@
       <search-bar
         @click="openSearchPanel"
         id="global-search"
-        placeholder="在 Amethyst 中搜索，或输入命令"
-      ></search-bar>
+        placeholder="在 Amethyst 中搜索，或输入命令"></search-bar>
       <div class="win-btn">
         <div class="min" @click="minimize"><i></i></div>
         <div class="max" @click="maximize"><i></i></div>
@@ -19,30 +18,23 @@
         <sidebar-item
           title="游戏"
           icon="gamepad"
-          @click="changePage($event, 'wareHouse')"
-        ></sidebar-item>
+          @click="changePage($event, 'wareHouse')"></sidebar-item>
         <sidebar-item
           title="扩展"
           icon="puzzle-piece"
-          @click="changePage($event, 'community')"
-        ></sidebar-item>
+          @click="changePage($event, 'community')"></sidebar-item>
         <sidebar-item
           title="设置"
           icon="nav-5"
           @click="changePage($event, 'settings')"
-          style="margin-top: auto"
-        ></sidebar-item>
+          style="margin-top: auto"></sidebar-item>
         <!-- <sidebar-item title="更多" icon="cube" @click="switchPage($event, '#more');"></sidebar-item> -->
       </ul>
     </div>
     <main class="main" style="transition: none">
       <Transition :name="transitionName" mode="out-in">
         <KeepAlive>
-          <component
-            :is="currentComponent"
-            @back-to-home="back"
-            @jump="jumpTo"
-          ></component>
+          <component :is="currentComponent" @back-to-home="back" @jump="jumpTo"></component>
         </KeepAlive>
       </Transition>
     </main>
@@ -50,84 +42,83 @@
     </div> TODO: line -->
   </div>
 </template>
-
+2
 <script setup lang="ts">
-import { markRaw, reactive, ref, shallowRef } from "vue";
-import SearchBar from "./components/SearchBar.vue";
-import SidebarItem from "./components/SidebarItem.vue";
-import { window } from "@tauri-apps/api";
-import $ from "jquery";
-import Settings from "./pages/Settings.vue";
-import Game from "./pages/Game.vue";
+import { markRaw, reactive, ref, shallowRef } from "vue"
+import SearchBar from "./components/SearchBar.vue"
+import SidebarItem from "./components/SidebarItem.vue"
+import { window } from "@tauri-apps/api"
+import $ from "jquery"
+import Settings from "./pages/Settings.vue"
+import Game from "./pages/Game.vue"
 
 function minimize() {
-  window.getCurrentWindow().minimize();
+  window.getCurrentWindow().minimize()
 }
 function maximize() {
-  window.getCurrentWindow().maximize();
+  window.getCurrentWindow().maximize()
 }
 function close() {
-  window.getCurrentWindow().close();
+  window.getCurrentWindow().close()
 }
 
 const pages: any = reactive({
   settings: markRaw(Settings),
   game: markRaw(Game),
-});
+})
 
-let transitionName = ref("entrance");
-const currentComponent = shallowRef(pages.game);
-let last: any;
+let transitionName = ref("entrance")
+const currentComponent = shallowRef(pages.game)
+let last: any
 function changePage(_event: any, component: any) {
   if (component === "settings") {
-    transitionName.value = "zoom-out";
-    hideSidebar();
+    transitionName.value = "zoom-out"
+    hideSidebar()
   } else {
-    showSidebar();
-    let isSettingPage =
-      JSON.stringify(currentComponent.value) == JSON.stringify(pages.settings);
+    showSidebar()
+    let isSettingPage = JSON.stringify(currentComponent.value) == JSON.stringify(pages.settings)
     if (isSettingPage) {
-      transitionName.value = "zoom-in";
+      transitionName.value = "zoom-in"
     } else {
-      transitionName.value = "entrance";
+      transitionName.value = "entrance"
     }
   }
-  last = currentComponent.value;
+  last = currentComponent.value
   if (typeof component == "string") {
-    currentComponent.value = pages[component];
+    currentComponent.value = pages[component]
   } else {
-    currentComponent.value = component;
+    currentComponent.value = component
   }
 }
 
 function hideSidebar() {
-  $(".main").attr("style", "");
-  $(".sidebar").addClass("sidebar-hidden");
-  $(".main").addClass("main-large");
+  $(".main").attr("style", "")
+  $(".sidebar").addClass("sidebar-hidden")
+  $(".main").addClass("main-large")
   setTimeout(() => {
-    $(".main").attr("style", "transition: none");
-  }, 300);
+    $(".main").attr("style", "transition: none")
+  }, 300)
 }
 
 function showSidebar() {
-  $(".main").attr("style", "");
-  $(".sidebar").removeClass("sidebar-hidden");
-  $(".main").removeClass("main-large");
+  $(".main").attr("style", "")
+  $(".sidebar").removeClass("sidebar-hidden")
+  $(".main").removeClass("main-large")
   setTimeout(() => {
-    $(".main").attr("style", "transition: none");
-  }, 300);
+    $(".main").attr("style", "transition: none")
+  }, 300)
 }
 
 function back() {
-  let isSettingPage = JSON.stringify(last) == JSON.stringify(pages.settings);
+  let isSettingPage = JSON.stringify(last) == JSON.stringify(pages.settings)
   if (isSettingPage) {
-    changePage(null, "wareHouse");
-    return;
+    changePage(null, "wareHouse")
+    return
   }
-  changePage(null, last);
+  changePage(null, last)
 }
 function jumpTo(name: string) {
-  changePage(null, name);
+  changePage(null, name)
 }
 
 function moveLine(position: number[]) {
@@ -148,16 +139,16 @@ function openSearchPanel() {
   `,
     )
     .children("*")
-    .hide();
-  $("#model-shadow").attr("style", "opacity: 1; z-index: 10000;");
+    .hide()
+  $("#model-shadow").attr("style", "opacity: 1; z-index: 10000;")
   setTimeout(() => {
-    closeSearchPanel();
-  }, 1000);
+    closeSearchPanel()
+  }, 1000)
 }
 
 function closeSearchPanel() {
-  $("#global-search").attr("style", "").children("*").show();
-  $("#model-shadow").attr("style", "");
+  $("#global-search").attr("style", "").children("*").show()
+  $("#model-shadow").attr("style", "")
 }
 </script>
 
