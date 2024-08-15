@@ -19,7 +19,7 @@
 use anyhow::Result;
 use tokio::fs;
 
-use crate::core::folder::MinecraftLocation;
+use crate::folder::MinecraftLocation;
 
 use super::*;
 
