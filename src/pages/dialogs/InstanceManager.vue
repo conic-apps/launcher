@@ -5,38 +5,29 @@
         <div class="title" style="position: relative">
           <div style="display: flex; align-items: center">
             <div class="icon">
-              <i
-                class="boxes-stacked"
-                v-if="currentComponent == pages.view"
-              ></i>
+              <i class="boxes-stacked" v-if="currentComponent == pages.view"></i>
               <i
                 class="arrow-left back"
                 v-if="currentComponent == pages.create"
                 @click="
-                  transitionName = 'slide-right';
-                  currentComponent = pages.view;
-                "
-              ></i>
+                  transitionName = 'slide-right'
+                  currentComponent = pages.view
+                "></i>
             </div>
             <div>
               <h4 v-if="currentComponent == pages.view">管理游戏档案</h4>
-              <p v-if="currentComponent == pages.view">
-                创建、删除或修改你的游戏档案
-              </p>
+              <p v-if="currentComponent == pages.view">创建、删除或修改你的游戏档案</p>
               <h4 v-if="currentComponent == pages.create">创建游戏档案</h4>
-              <p v-if="currentComponent == pages.create">
-                选择好合适的选项后，点击“创建”按钮
-              </p>
+              <p v-if="currentComponent == pages.create">选择好合适的选项后，点击“创建”按钮</p>
             </div>
           </div>
           <div
             class="button"
             style="position: absolute; right: 0"
             @click="
-              currentComponent = pages.view;
-              $emit('close');
-            "
-          >
+              currentComponent = pages.view
+              $emit('close')
+            ">
             <i></i>
           </div>
         </div>
@@ -47,8 +38,7 @@
               :instances="props.instances"
               :is="currentComponent"
               @create="createInstance"
-              @created="instanceCreated"
-            ></component>
+              @created="instanceCreated"></component>
           </Transition>
           <!-- <div class="group" v-for="group in props.instances" :key="group.name">
           <div class="instance" v-for="instance in group.instances" :key="instance.name">
@@ -62,48 +52,48 @@
 </template>
 
 <script setup lang="ts">
-import DialogVue from "@/components/Dialog.vue";
-import { markRaw, reactive, ref, shallowRef } from "vue";
-import View from "@/pages/dialogs/instance/View.vue";
-import Create from "@/pages/dialogs/instance/Create.vue";
+import DialogVue from "@/components/Dialog.vue"
+import { markRaw, reactive, ref, shallowRef } from "vue"
+import View from "@/pages/dialogs/instance/View.vue"
+import Create from "@/pages/dialogs/instance/Create.vue"
 
-let emit = defineEmits(["close", "update"]);
-let transitionName = ref("slide-left");
+let emit = defineEmits(["close", "update"])
+let transitionName = ref("slide-left")
 interface Instance {
   config: {
-    name: string;
-    runtime: string;
-  };
-  installed: boolean;
+    name: string
+    runtime: string
+  }
+  installed: boolean
 }
 
 interface InstanceGroup {
-  name: string;
-  instances: Instance[];
+  name: string
+  instances: Instance[]
 }
 
 const props = defineProps<{
-  show: boolean;
+  show: boolean
   // instances: InstanceGroup[], todo: group
-  instances: Instance[];
-}>();
+  instances: Instance[]
+}>()
 
 const pages: any = reactive({
   view: markRaw(View),
   create: markRaw(Create),
-});
+})
 
-const currentComponent = shallowRef(pages.view);
+const currentComponent = shallowRef(pages.view)
 
 function createInstance() {
-  transitionName.value = "slide-left";
-  currentComponent.value = pages.create;
+  transitionName.value = "slide-left"
+  currentComponent.value = pages.create
 }
 
 function instanceCreated() {
-  transitionName.value = "slide-right";
-  emit("update");
-  currentComponent.value = pages.view;
+  transitionName.value = "slide-right"
+  emit("update")
+  currentComponent.value = pages.view
 }
 </script>
 

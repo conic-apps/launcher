@@ -1,11 +1,18 @@
 <template>
-  <div class="settings" style="display: flex;padding-left: 10px;border-radius: 0px;">
+  <div class="settings" style="display: flex; padding-left: 10px; border-radius: 0px">
     <div class="sidebar">
       <ul>
-        <li @click="switchComponent(item, index)" :class="[activeComponentIndex == index ? 'active' : '']"
-          v-for="(item, index) in components" :key="index"><i :class="item.icon"></i>{{ item.name }}</li>
+        <li
+          @click="switchComponent(item, index)"
+          :class="[activeComponentIndex == index ? 'active' : '']"
+          v-for="(item, index) in components"
+          :key="index">
+          <i :class="item.icon"></i>{{ item.name }}
+        </li>
       </ul>
-      <li @click="$emit('backToHome')" style="margin-bottom: -9px;" class="backtoHome"><i class="arrow-left"></i>返回</li>
+      <li @click="$emit('backToHome')" style="margin-bottom: -9px" class="backtoHome">
+        <i class="arrow-left"></i>返回
+      </li>
     </div>
     <div class="content" ref="content">
       <Transition :name="transitionName" mode="out-in">
@@ -16,70 +23,70 @@
     </div>
   </div>
 </template>
-  
+
 <script setup lang="ts">
-import { reactive, ref, shallowRef, type Ref, markRaw } from 'vue'
-import $ from 'jquery'
-import General from './settings/General.vue'
-import Game from './settings/Game.vue'
-import Advance from './settings/Advance.vue'
-import Appearance from './settings/Appearance.vue'
-import Download from './settings/Download.vue'
-import Accessibility from './settings/Accessibility.vue'
-import Extend from './settings/Extend.vue'
+import { reactive, ref, shallowRef, type Ref, markRaw } from "vue"
+import $ from "jquery"
+import General from "./settings/General.vue"
+import Game from "./settings/Game.vue"
+import Advance from "./settings/Advance.vue"
+import Appearance from "./settings/Appearance.vue"
+import Download from "./settings/Download.vue"
+import Accessibility from "./settings/Accessibility.vue"
+import Extend from "./settings/Extend.vue"
 
 const components = reactive([
   {
-    name: '常规',
-    icon: 'house',
-    component: markRaw(General)
+    name: "常规",
+    icon: "house",
+    component: markRaw(General),
   },
   {
-    name: '游戏',
-    icon: 'gamepad',
-    component: markRaw(Game)
+    name: "游戏",
+    icon: "gamepad",
+    component: markRaw(Game),
   },
   {
-    name: '高级',
-    icon: 'pro-settings',
-    component: markRaw(Advance)
+    name: "高级",
+    icon: "pro-settings",
+    component: markRaw(Advance),
   },
   {
-    name: '个性化',
-    icon: 'palette',
-    component: markRaw(Appearance)
+    name: "个性化",
+    icon: "palette",
+    component: markRaw(Appearance),
   },
   {
-    name: '下载',
-    icon: 'download',
-    component: markRaw(Download)
+    name: "下载",
+    icon: "download",
+    component: markRaw(Download),
   },
   {
-    name: '辅助功能',
-    icon: 'arrows-spin',
-    component: markRaw(Accessibility)
+    name: "辅助功能",
+    icon: "arrows-spin",
+    component: markRaw(Accessibility),
   },
   {
-    name: '扩展',
-    icon: 'cubes',
-    component: markRaw(Extend)
-  }
+    name: "扩展",
+    icon: "cubes",
+    component: markRaw(Extend),
+  },
 ])
 const activeComponent = shallowRef(General)
 let activeComponentIndex = ref(0)
-let transitionName = ref('')
+let transitionName = ref("")
 const content = ref<any>(null)
 function switchComponent(item: any, index: number) {
   activeComponent.value = item.component
   if (activeComponentIndex.value < index) {
-    transitionName.value = 'slide-up'
+    transitionName.value = "slide-up"
   } else {
-    transitionName.value = 'slide-down'
+    transitionName.value = "slide-down"
   }
   activeComponentIndex.value = index
 }
 </script>
-  
+
 <style lang="less">
 .content {
   width: 100%;
@@ -89,7 +96,7 @@ function switchComponent(item: any, index: number) {
   overflow-x: visible;
 }
 
-.content>div {
+.content > div {
   width: 100%;
 }
 
@@ -184,14 +191,14 @@ function switchComponent(item: any, index: number) {
   transition: all 80ms ease;
 }
 
-.sidebar>div {
+.sidebar > div {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-direction: row;
 }
 
-.sidebar>div>p {
+.sidebar > div > p {
   font-size: 14px;
   margin: 10px 2px;
   display: inline;

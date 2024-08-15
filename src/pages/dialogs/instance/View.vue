@@ -1,10 +1,6 @@
 <template>
   <div class="instance-view">
-    <div
-      class="instance"
-      v-for="instance in props.instances"
-      :key="instance.config.name"
-    >
+    <div class="instance" v-for="instance in props.instances" :key="instance.config.name">
       <img src="@/assets/images/minecraft-icon.svg" />
       <p>{{ instance.config.name }}</p>
     </div>
@@ -17,16 +13,16 @@
 <script setup lang="ts">
 interface Instance {
   config: {
-    name: string;
-    runtime: string;
-    group: string[];
-  };
-  installed: boolean;
+    name: string
+    runtime: string
+    group: string[]
+  }
+  installed: boolean
 }
 
 const props = defineProps<{
-  instances: Instance[];
-}>();
+  instances: Instance[]
+}>()
 </script>
 
 <style lang="less">
