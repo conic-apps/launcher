@@ -24,9 +24,9 @@ use serde_json::Value;
 use std::{collections::HashMap, fs::read_to_string, path::PathBuf, str::FromStr};
 use tauri_plugin_http::reqwest;
 
-use crate::core::folder::MinecraftLocation;
+use crate::folder::MinecraftLocation;
 
-use super::PlatformInfo;
+use crate::platform::PlatformInfo;
 
 static DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     vec![

@@ -19,7 +19,7 @@
 use tauri_plugin_http::reqwest;
 use tokio::fs::{self, create_dir_all};
 
-use crate::core::{folder::MinecraftLocation, version::Version};
+use crate::{folder::MinecraftLocation, version::Version};
 
 use super::DEFAULT_META_URL;
 
