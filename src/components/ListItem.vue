@@ -37,13 +37,13 @@
 
 <script setup lang="ts">
 defineProps<{
-  logo?: string
-  title: string
-  description?: string
-  logoPixelated?: boolean
-  buttons?: string[] // 图标名称对应点击后触发的事件名称
-  clickAble?: boolean
-}>()
+  logo?: string;
+  title: string;
+  description?: string;
+  logoPixelated?: boolean;
+  buttons?: string[]; // 图标名称对应点击后触发的事件名称
+  clickAble?: boolean;
+}>();
 </script>
 
 <style lang="less" scoped>

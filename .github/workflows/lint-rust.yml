@@ -1,0 +1,61 @@
+name: lint rust
+
+on:
+    push:
+      paths:
+        - '.github/workflows/lint-rust.yml'
+        - 'src-tauri/**'
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_PROFILE_DEV_DEBUG: 0 # This would add unnecessary bloat to the target folder, decreasing cache efficiency.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust and rustfmt
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Run cargo fmt
+        run: cd src-tauri && cargo fmt --all -- --check
+
+  clippy:
+          runs-on: ubuntu-latest
+          strategy:
+            matrix:
+              clippy:
+                - { args: '', key: 'empty' }
+                - { args: '--all-features', key: 'all' }      
+          steps:
+            - uses: actions/checkout@v4
+      
+            - name: install dependencies
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y webkit2gtk-4.1 libayatana-appindicator3-dev
+      
+            - name: install Rust stable with clippy
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                components: clippy
+      
+            - uses: Swatinem/rust-cache@v2
+              with:
+                workspaces: ./src-tauri -> target
+                save-if: ${{ matrix.clippy.key == 'all' }}
+      
+            - name: Run clippy - ${{ matrix.clippy.key }}
+              run: cargo clippy --manifest-path ./src-tauri/Cargo.toml --all-targets ${{ matrix.clippy.args }} -- -D warnings

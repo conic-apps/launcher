@@ -24,7 +24,7 @@ use nbt::Value;
 /// # Args
 /// * `nbt` - nbt value, for more info, see [hematite-nbt crate](https://crates.io/crates/hematite-nbt)
 /// * `target` - You need to use `:` to connect the path. For example, if you want to modify the
-/// value of `seed`, you can to use `Data:world_gen_settings:seed` or ``.
+///   value of `seed`, you can to use `Data:world_gen_settings:seed` or ``.
 pub fn get_value(nbt_value: Value, target: &str) -> Result<Value> {
     let mut result = nbt_value.clone();
     for name in target.split(":") {
@@ -43,7 +43,7 @@ pub fn get_value(nbt_value: Value, target: &str) -> Result<Value> {
 /// # Args
 /// * `nbt_value` - nbt value, for more info, see [hematite-nbt crate](https://crates.io/crates/hematite-nbt)
 /// * `target` - You need to use `:` to connect the path. For example, if you want to modify the
-/// value of `seed`, you can to use `Data:world_gen_settings:seed` or ``.
+///   value of `seed`, you can to use `Data:world_gen_settings:seed` or ``.
 /// * `value` - The value you want to modify
 pub fn modify_nbt(nbt_value: Value, target: &str, value: Value) -> Result<Value> {
     let mut nbt_value_map = match nbt_value.clone() {

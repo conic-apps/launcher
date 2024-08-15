@@ -103,160 +103,160 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from "vue"
-import Expander from "@/components/Expander.vue"
-import TextInputBox from "@/components/controllers/TextInputBox.vue"
-import CardLink from "@/components/CardButton.vue"
-import MinecraftChoose from "../MinecraftChoose.vue"
-import FabricChoose from "../FabricChoose.vue"
-import ForgeChoose from "../ForgeChoose.vue"
-import QuiltChoose from "../QuiltChoose.vue"
-import { invoke } from "@tauri-apps/api/core"
-import VueButton from "@/components/controllers/Button.vue"
-import Tag from "@/components/Tag.vue"
+import { ref, reactive, computed, watch } from "vue";
+import Expander from "@/components/Expander.vue";
+import TextInputBox from "@/components/controllers/TextInputBox.vue";
+import CardLink from "@/components/CardButton.vue";
+import MinecraftChoose from "../MinecraftChoose.vue";
+import FabricChoose from "../FabricChoose.vue";
+import ForgeChoose from "../ForgeChoose.vue";
+import QuiltChoose from "../QuiltChoose.vue";
+import { invoke } from "@tauri-apps/api/core";
+import VueButton from "@/components/controllers/Button.vue";
+import Tag from "@/components/Tag.vue";
 
-const emit = defineEmits(["created"])
+const emit = defineEmits(["created"]);
 interface Instance {
   config: {
-    name: string
-    runtime: string
-  }
-  installed: boolean
+    name: string;
+    runtime: string;
+  };
+  installed: boolean;
 }
 const props = defineProps<{
-  instances: Instance[]
-}>()
+  instances: Instance[];
+}>();
 
-let showMinecraft = ref(false)
-let showForge = ref(false)
-let showFabric = ref(false)
-let showQuilt = ref(false)
+let showMinecraft = ref(false);
+let showForge = ref(false);
+let showFabric = ref(false);
+let showQuilt = ref(false);
 
-let noFabric = ref(false)
-let noForge = ref(false)
-let noQuilt = ref(false)
+let noFabric = ref(false);
+let noForge = ref(false);
+let noQuilt = ref(false);
 
-let forgeLoading = ref(false)
-let fabricLoading = ref(false)
-let quiltLoading = ref(false)
+let forgeLoading = ref(false);
+let fabricLoading = ref(false);
+let quiltLoading = ref(false);
 
 let forgeDesc = computed(() => {
   if (select.forge) {
-    return `已选择 ${select.forge}`
+    return `已选择 ${select.forge}`;
   } else {
     if (select.minecraft) {
       if (select.fabric) {
-        return `与 Fabric 不兼容`
+        return `与 Fabric 不兼容`;
       } else if (select.quilt) {
-        return `与 Quilt 不兼容`
+        return `与 Quilt 不兼容`;
       } else if (noForge.value) {
-        return "无可用版本"
+        return "无可用版本";
       } else if (forgeLoading.value) {
-        return "正在加载..."
+        return "正在加载...";
       } else {
-        return "选择 Forge 版本"
+        return "选择 Forge 版本";
       }
     } else {
-      return "请先选择 Minecraft 版本"
+      return "请先选择 Minecraft 版本";
     }
   }
-})
+});
 
 let fabricDesc = computed(() => {
   if (select.fabric) {
-    return `已选择 ${select.fabric}`
+    return `已选择 ${select.fabric}`;
   } else {
     if (select.minecraft) {
       if (select.forge) {
-        return `与 Forge 不兼容`
+        return `与 Forge 不兼容`;
       } else if (select.quilt) {
-        return `与 Quilt 不兼容`
+        return `与 Quilt 不兼容`;
       } else if (noFabric.value) {
-        return "无可用版本"
+        return "无可用版本";
       } else if (fabricLoading.value) {
-        return "正在加载..."
+        return "正在加载...";
       } else {
-        return "选择 Fabric 版本"
+        return "选择 Fabric 版本";
       }
     } else {
-      return "请先选择 Minecraft 版本"
+      return "请先选择 Minecraft 版本";
     }
   }
-})
+});
 let quiltDesc = computed(() => {
   if (select.quilt) {
-    return `已选择 ${select.quilt}`
+    return `已选择 ${select.quilt}`;
   } else {
     if (select.minecraft) {
       if (select.fabric) {
-        return `与 Fabric 不兼容`
+        return `与 Fabric 不兼容`;
       } else if (select.forge) {
-        return `与 Forge 不兼容`
+        return `与 Forge 不兼容`;
       } else if (noQuilt.value) {
-        return "无可用版本"
+        return "无可用版本";
       } else if (quiltLoading.value) {
-        return "正在加载..."
+        return "正在加载...";
       } else {
-        return "选择 Quilt 版本"
+        return "选择 Quilt 版本";
       }
     } else {
-      return "请先选择 Minecraft 版本"
+      return "请先选择 Minecraft 版本";
     }
   }
-})
+});
 
-let instanceNameValue = ref("")
+let instanceNameValue = ref("");
 
 let select = reactive({
   minecraft: "",
   forge: "",
   fabric: "",
   quilt: "",
-})
+});
 
 let instanceNameDefault = computed(() => {
-  return `${select.minecraft ? select.minecraft : "未命名配置"}${select.forge ? "-forge " + select.forge : ""}${select.fabric ? "-fabric " + select.fabric : ""}${select.quilt ? "-quilt " + select.quilt : ""}`
-})
+  return `${select.minecraft ? select.minecraft : "未命名配置"}${select.forge ? "-forge " + select.forge : ""}${select.fabric ? "-fabric " + select.fabric : ""}${select.quilt ? "-quilt " + select.quilt : ""}`;
+});
 
 let instanceName = computed(() => {
   if (instanceNameValue.value.trim() === "") {
-    return instanceNameDefault.value
+    return instanceNameDefault.value;
   } else {
-    return instanceNameValue.value.trim()
+    return instanceNameValue.value.trim();
   }
-})
+});
 //todo: get version list & choose version
 function setMinecraft(versionId: string) {
-  let old = select.minecraft
-  showMinecraft.value = false
+  let old = select.minecraft;
+  showMinecraft.value = false;
   if (old != versionId) {
-    select.minecraft = versionId
-    select.fabric = ""
-    select.forge = ""
-    select.quilt = ""
-    noFabric.value = false
-    noForge.value = false
-    noQuilt.value = false
-    fabricLoading.value = true
-    forgeLoading.value = true
-    quiltLoading.value = true
+    select.minecraft = versionId;
+    select.fabric = "";
+    select.forge = "";
+    select.quilt = "";
+    noFabric.value = false;
+    noForge.value = false;
+    noQuilt.value = false;
+    fabricLoading.value = true;
+    forgeLoading.value = true;
+    quiltLoading.value = true;
   }
 }
 function setForge(versionId: string) {
-  select.forge = versionId
-  showForge.value = false
+  select.forge = versionId;
+  showForge.value = false;
 }
 function setFabric(versionId: string) {
-  select.fabric = versionId
-  showFabric.value = false
+  select.fabric = versionId;
+  showFabric.value = false;
 }
 function setQuilt(versionId: string) {
-  select.quilt = versionId
-  showQuilt.value = false
+  select.quilt = versionId;
+  showQuilt.value = false;
 }
 function create() {
   if (select.minecraft == "" || instanceName.value.trim() == "" || repeated.value) {
-    return
+    return;
   }
   invoke("create_instance", {
     instanceName: instanceName.value,
@@ -272,30 +272,30 @@ function create() {
     },
   })
     .then((res: any) => {
-      emit("created")
+      emit("created");
       setTimeout(() => {
-        select.minecraft = ""
-        select.forge = ""
-        select.fabric = ""
-        select.quilt = ""
-        instanceNameValue.value = ""
-      }, 500)
+        select.minecraft = "";
+        select.forge = "";
+        select.fabric = "";
+        select.quilt = "";
+        instanceNameValue.value = "";
+      }, 500);
     })
     .catch((err: any) => {
-      console.log(err)
-    })
+      console.log(err);
+    });
 }
 
-let repeated = ref(false)
+let repeated = ref(false);
 
 watch(instanceName, (newValue) => {
   invoke("check_repeated_instance_name", {
     instanceName: newValue,
   }).then((res: any) => {
-    console.log(res)
-    repeated.value = res
-  })
-})
+    console.log(res);
+    repeated.value = res;
+  });
+});
 </script>
 
 <style lang="less" scoped>

@@ -80,9 +80,9 @@
 </template>
 
 <script setup lang="ts">
-import Expander from "@/components/Expander.vue"
-import SettingItem from "@/components/SettingItem.vue"
-import InstanceManager from "@/pages/dialogs/InstanceManager.vue"
+import Expander from "@/components/Expander.vue";
+import SettingItem from "@/components/SettingItem.vue";
+import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
 // import { ref } from 'vue'
 // import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
 // import TextInputBar from '@/components/TextInputBar.vue';

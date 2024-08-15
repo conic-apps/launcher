@@ -42,53 +42,53 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed } from "vue";
 
 const props = defineProps<{
-  minecraftVersion: String
-  instanceName: String
-  installed: Boolean
-  gameButtonType: "installing" | "launching" | "install" | "launch" | "error"
-  errorType?: "install" | "launch"
-}>()
+  minecraftVersion: String;
+  instanceName: String;
+  installed: Boolean;
+  gameButtonType: "installing" | "launching" | "install" | "launch" | "error";
+  errorType?: "install" | "launch";
+}>();
 
 let computedInstanceName = computed(() => {
   if (props.instanceName == "Latest Release") {
-    return "最新版本"
+    return "最新版本";
   }
   if (props.instanceName == "Latest Snapshot") {
-    return "最新快照"
+    return "最新快照";
   }
-  return props.instanceName
-})
+  return props.instanceName;
+});
 
-let banner = ""
+let banner = "";
 let gameButtonText = computed(() => {
   switch (props.gameButtonType) {
     case "installing":
-      return "..."
+      return "...";
     case "error":
       switch (props.errorType) {
         case undefined || null:
-          return ""
+          return "";
         case "install":
-          return "安装失败"
+          return "安装失败";
         case "launch":
-          return "启动失败"
+          return "启动失败";
         default:
-          return ""
+          return "";
       }
     // return "失败";
     case "install":
-      return "安装"
+      return "安装";
     case "launching":
-      return "..."
+      return "...";
     case "launch":
-      return "开始游戏"
+      return "开始游戏";
     default:
-      return ""
+      return "";
   }
-})
+});
 </script>
 
 <style lang="less" scoped>

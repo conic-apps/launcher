@@ -78,8 +78,8 @@ pub async fn install_fabric_version_json(
             minecraft_version = loader.intermediary.version;
         }
     }
-    if let None = id {
-        if let Some(_) = yarn.clone() {
+    if id.is_none() {
+        if yarn.is_some() {
             id = Some(format!(
                 "{}-loader{}",
                 minecraft_version, loader.loader.version
@@ -128,7 +128,7 @@ pub async fn install_fabric_version_json(
     };
     let inherits_from = options.inherits_from.unwrap_or(minecraft_version);
 
-    let json_file_path = minecraft_location.get_version_json(&id.clone().unwrap());
+    let json_file_path = minecraft_location.get_version_json(id.clone().unwrap());
     fs::create_dir_all(json_file_path.parent().unwrap()).await?;
     if let Ok(metadata) = fs::metadata(&json_file_path).await {
         if metadata.is_file() {

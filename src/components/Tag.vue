@@ -10,22 +10,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref } from "vue";
 
 const props = withDefaults(
   defineProps<{
-    text: string
-    color: string[]
-    border?: boolean
-    background?: boolean
-    textColor?: string
-    fontSize?: string
-    round?: boolean
+    text: string;
+    color: string[];
+    border?: boolean;
+    background?: boolean;
+    textColor?: string;
+    fontSize?: string;
+    round?: boolean;
   }>(),
   {
     fontSize: "11",
   },
-)
+);
 </script>
 
 <style lang="less" scoped>

@@ -37,36 +37,36 @@
 </template>
 
 <script setup lang="ts">
-import DialogVue from "@/components/Dialog.vue"
-import SearchBar from "@/components/SearchBar.vue"
-import { ref, watch } from "vue"
-import { invoke } from "@tauri-apps/api/core"
-import ListItem from "@/components/ListItem.vue"
-import Tag from "@/components/Tag.vue"
+import DialogVue from "@/components/Dialog.vue";
+import SearchBar from "@/components/SearchBar.vue";
+import { ref, watch } from "vue";
+import { invoke } from "@tauri-apps/api/core";
+import ListItem from "@/components/ListItem.vue";
+import Tag from "@/components/Tag.vue";
 
 const props = defineProps<{
-  show?: boolean
-  minecraft: string
-}>()
-const emit = defineEmits(["no-version", "loaded", "select"])
+  show?: boolean;
+  minecraft: string;
+}>();
+const emit = defineEmits(["no-version", "loaded", "select"]);
 
-let versions = ref<Array<any>>([])
+let versions = ref<Array<any>>([]);
 
 watch(props, (newValue) => {
   if (newValue.minecraft != "") {
     invoke("get_forge_version_list", {
       mcversion: newValue.minecraft,
     }).then((res: any) => {
-      console.log(res)
+      console.log(res);
       if (res != null && res.length > 0) {
-        versions.value = res
-        emit("loaded")
+        versions.value = res;
+        emit("loaded");
       } else {
-        emit("no-version")
+        emit("no-version");
       }
-    })
+    });
   }
-})
+});
 </script>
 
 <style lang="less" scoped>

@@ -67,18 +67,18 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue"
-import DialogVue from "@/components/Dialog.vue"
-import DialogButton from "@/components/DialogButton.vue"
-import ListItem from "@/components/ListItem.vue"
-import Tag from "@/components/Tag.vue"
-import SearchBar from "@/components/SearchBar.vue"
+import { reactive, ref } from "vue";
+import DialogVue from "@/components/Dialog.vue";
+import DialogButton from "@/components/DialogButton.vue";
+import ListItem from "@/components/ListItem.vue";
+import Tag from "@/components/Tag.vue";
+import SearchBar from "@/components/SearchBar.vue";
 
 const props = defineProps<{
-  show: boolean
-  instanceName: string
-  datas: any[]
-}>()
+  show: boolean;
+  instanceName: string;
+  datas: any[];
+}>();
 </script>
 
 <style lang="less" scoped>

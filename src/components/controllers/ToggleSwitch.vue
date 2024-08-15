@@ -13,7 +13,7 @@
 // const props = defineProps<{
 //   checked: boolean
 // }>()
-let checked = false
+let checked = false;
 </script>
 
 <style lang="less" scoped>

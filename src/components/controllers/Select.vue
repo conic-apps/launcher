@@ -35,59 +35,59 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
-import SelectOption from "./SelectOption.vue"
-import $ from "jquery"
+import { ref } from "vue";
+import SelectOption from "./SelectOption.vue";
+import $ from "jquery";
 const props = withDefaults(
   defineProps<{
-    options: string[]
-    default?: number | null
-    width?: string
+    options: string[];
+    default?: number | null;
+    width?: string;
   }>(),
   {
     default: null,
   },
-)
-let selected = ref(typeof props.default == "number" ? props.options[props.default] : "")
+);
+let selected = ref(typeof props.default == "number" ? props.options[props.default] : "");
 function beforeEnter(element: HTMLElement) {
-  $(element.firstElementChild!).removeClass("hidden")
-  element.style.transition = transitionStyle
-  element.style.height = "0px"
+  $(element.firstElementChild!).removeClass("hidden");
+  element.style.transition = transitionStyle;
+  element.style.height = "0px";
 }
 
-const transitionStyle = "all 200ms ease"
+const transitionStyle = "all 200ms ease";
 function enter(element: HTMLElement) {
-  const height = $(element.firstElementChild!).outerHeight(true)
-  element.style.height = `${height}px`
-  element.style.overflow = "hidden"
+  const height = $(element.firstElementChild!).outerHeight(true);
+  element.style.height = `${height}px`;
+  element.style.overflow = "hidden";
 }
 function afterEnter(element: HTMLElement) {
-  element.style.transition = ""
-  element.style.height = ""
-  element.style.overflow = ""
+  element.style.transition = "";
+  element.style.height = "";
+  element.style.overflow = "";
 }
 function beforeLeave(element: HTMLElement) {
-  element.style.transition = transitionStyle
-  const height = $(element.firstElementChild!).outerHeight(true)
-  element.style.height = `${height}px`
-  element.style.overflow = "hidden"
+  element.style.transition = transitionStyle;
+  const height = $(element.firstElementChild!).outerHeight(true);
+  element.style.height = `${height}px`;
+  element.style.overflow = "hidden";
 }
 function leave(element: HTMLElement) {
-  element.style.height = "0px"
+  element.style.height = "0px";
 }
 function afterLeave(element: HTMLElement) {
-  element.style.transition = ""
-  element.style.height = ""
+  element.style.transition = "";
+  element.style.height = "";
 }
 function changeSelection(index: number) {
-  selected.value = props.options[index]
+  selected.value = props.options[index];
 }
 // onMounted(async () => {
 //   selected.value = await load(props.config)
 // })
-let opened = ref(false)
+let opened = ref(false);
 function toggleOpened() {
-  opened.value = !opened.value
+  opened.value = !opened.value;
 }
 </script>
 

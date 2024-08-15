@@ -10,21 +10,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
-let value = ref("")
+import { ref } from "vue";
+let value = ref("");
 const props = withDefaults(
   defineProps<{
-    width?: string
-    height?: string
-    placeholder?: string
+    width?: string;
+    height?: string;
+    placeholder?: string;
   }>(),
   {
     width: "",
     height: "",
     placeholder: "搜索",
   },
-)
-let style = `width: ${props.width}; height: ${props.height};`
+);
+let style = `width: ${props.width}; height: ${props.height};`;
 // todo: 添加search in 属性，搜索用的算法全部在这个组件中进行
 </script>
 

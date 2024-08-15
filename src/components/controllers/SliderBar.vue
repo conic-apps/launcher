@@ -29,54 +29,54 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type ComputedRef, type Ref, onMounted } from "vue"
-import TextInputBox from "./TextInputBox.vue"
-import $ from "jquery"
+import { computed, ref, type ComputedRef, type Ref, onMounted } from "vue";
+import TextInputBox from "./TextInputBox.vue";
+import $ from "jquery";
 const props = withDefaults(
   defineProps<{
-    name: string
-    config?: string
-    max: string
-    min: string
-    step: string
-    text?: string
-    AllowExceeding?: boolean
+    name: string;
+    config?: string;
+    max: string;
+    min: string;
+    step: string;
+    text?: string;
+    AllowExceeding?: boolean;
   }>(),
   {
     AllowExceeding: false,
   },
-)
-const slider = ref<any>(null)
+);
+const slider = ref<any>(null);
 onMounted(() => {
-  console.log()
-})
+  console.log();
+});
 // let value: Ref<number> = ref(await load(props.config))
-let value = ref(Number(props.min))
+let value = ref(Number(props.min));
 function setValue(newValue: number) {
-  value.value = newValue
+  value.value = newValue;
 }
 let orbit: ComputedRef<string> = computed((): string => {
-  const min = Number(props.min)
-  const max = Number(props.max)
-  const sliderOuterWidth = $(slider.value).outerWidth(true)
-  let exceeded = value.value > max - min + 1
+  const min = Number(props.min);
+  const max = Number(props.max);
+  const sliderOuterWidth = $(slider.value).outerWidth(true);
+  let exceeded = value.value > max - min + 1;
   if (exceeded && props.AllowExceeding == false) {
-    setValue(max)
+    setValue(max);
   }
-  let lessThanMinimum = value.value - 1 - min < 0
+  let lessThanMinimum = value.value - 1 - min < 0;
   if (lessThanMinimum) {
-    return "width: 0px;"
+    return "width: 0px;";
   } else {
-    return `width: ${((value.value - 1 - min) / (max - min)) * (sliderOuterWidth! - 20) + 10}px;`
+    return `width: ${((value.value - 1 - min) / (max - min)) * (sliderOuterWidth! - 20) + 10}px;`;
   }
-})
+});
 
 function onBlur(): void {
   if (!/^\d+$/.test(String(value.value))) {
-    value.value = Number(props.min)
+    value.value = Number(props.min);
   }
   if (value.value - 1 - Number(props.min) < 0) {
-    value.value = Number(props.min)
+    value.value = Number(props.min);
   }
   // update(props.config, value.value)
 }

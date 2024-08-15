@@ -8,9 +8,9 @@
 
 <script setup lang="ts">
 defineProps<{
-  title?: string
-  icon: string
-}>()
+  title?: string;
+  icon: string;
+}>();
 </script>
 
 <style lang="less" scoped>

@@ -13,16 +13,16 @@
 </template>
 
 <script setup lang="ts">
-import Card from "./Card.vue"
-import $ from "jquery"
+import Card from "./Card.vue";
+import $ from "jquery";
 
-console.log($("#xxxxx .icon"))
+console.log($("#xxxxx .icon"));
 setTimeout(() => {
   $("#xxxxx .icon").attr(
     "style",
     /* css */ `background-image: url(/steve_avatar.webp); width: 36px; height: 36px; margin-right: 10px`,
-  )
-}, 1)
+  );
+}, 1);
 </script>
 
 <style lang="less" scoped>

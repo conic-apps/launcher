@@ -9,9 +9,9 @@
 
 <script setup lang="ts">
 defineProps<{
-  text: string
-  disabled?: boolean
-}>()
+  text: string;
+  disabled?: boolean;
+}>();
 </script>
 
 <style lang="less" scoped>
