@@ -3,42 +3,59 @@
     <div class="title">
       <div class="icon" :style="iconStyle"><i :class="icon"></i></div>
       <div>
-        <h4 id="text" :style="props.titleFontSize ? `font-size: ${props.titleFontSize}` : ''">{{ title }}</h4>
-        <p v-if="description" id="text"
-          :style="props.descriptionFontSize ? `font-size: ${props.descriptionFontSize}` : ''">{{ description }}</p>
+        <h4 id="text" :style="props.titleFontSize ? `font-size: ${props.titleFontSize}` : ''">
+          {{ title }}
+        </h4>
+        <p
+          v-if="description"
+          id="text"
+          :style="props.descriptionFontSize ? `font-size: ${props.descriptionFontSize}` : ''">
+          {{ description }}
+        </p>
       </div>
     </div>
-    <div style="width: 36px;height: 36px;display: flex;align-items: center;justify-content: center;">
+    <div
+      style="
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
       <!-- <slot></slot>  // todo: controll buttons  -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const props = withDefaults(defineProps<{
-  title: string,
-  description?: string,
-  icon?: string,
-  margin?: string,
-  boxShadow?: boolean,
-  padding?: string,
-  iconSize?: string,
-  iconBackground?: boolean,
-  titleFontSize?: string,
-  descriptionFontSize?: string,
-}>(), {
-  margin: '',
-  boxShadow: true,
-  padding: '16,18,16,18',
-  icon: '',
-  iconBackground: true
-})
-let margin = props.margin.split(',')
-let padding = props.padding.split(',')
-let cardStyle = `${props.boxShadow ? ' box-shadow: 0 0 10px #00000015;' : ''}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px;`
-let iconSize = props.iconSize?.split(',')
-let iconStyle = (iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px;` : '') + (props.iconBackground ? '' : 'background: none;')
-
+const props = withDefaults(
+  defineProps<{
+    title: string
+    description?: string
+    icon?: string
+    margin?: string
+    boxShadow?: boolean
+    padding?: string
+    iconSize?: string
+    iconBackground?: boolean
+    titleFontSize?: string
+    descriptionFontSize?: string
+  }>(),
+  {
+    margin: "",
+    boxShadow: true,
+    padding: "16,18,16,18",
+    icon: "",
+    iconBackground: true,
+  },
+)
+let margin = props.margin.split(",")
+let padding = props.padding.split(",")
+let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px;`
+let iconSize = props.iconSize?.split(",")
+let iconStyle =
+  (iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px;` : "") +
+  (props.iconBackground ? "" : "background: none;")
 </script>
 
 <style lang="less" scoped>
@@ -83,13 +100,13 @@ let iconStyle = (iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px;`
 }
 
 .icon i {
-  font-family: 'fa-pro';
+  font-family: "fa-pro";
   font-style: normal;
   font-size: 20px;
   font-weight: 500;
 }
 
-.title>div {
+.title > div {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -98,7 +115,7 @@ let iconStyle = (iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px;`
 .title h4 {
   font-weight: normal;
   font-size: 14.5px;
-  margin-bottom:0.15em;
+  margin-bottom: 0.15em;
   margin-top: 0.08em;
 }
 
@@ -110,6 +127,6 @@ let iconStyle = (iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px;`
 }
 
 i.chevron-right {
-  transition: transform .2s ease;
+  transition: transform 0.2s ease;
 }
 </style>

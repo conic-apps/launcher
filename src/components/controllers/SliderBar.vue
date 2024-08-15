@@ -1,13 +1,26 @@
 <template>
   <div class="input input-text input-slider">
     <span class="name">{{ name }}</span>
-    <div style="display: flex; line-height: 1.7;width: 100%;justify-content: flex-end;">
+    <div style="display: flex; line-height: 1.7; width: 100%; justify-content: flex-end">
       <div class="slider" ref="slider">
         <div :style="orbit"></div>
-        <input ref="element" type="range" :max="max" :min="min" :step="step" v-model="value" @blur="onBlur">
+        <input
+          ref="element"
+          type="range"
+          :max="max"
+          :min="min"
+          :step="step"
+          v-model="value"
+          @blur="onBlur" />
       </div>
-      <div class="input-data mini" style="margin-right: 0;">
-        <input type="number" :title="name" required v-model="value" placeholder="默认" @blur="onBlur" />
+      <div class="input-data mini" style="margin-right: 0">
+        <input
+          type="number"
+          :title="name"
+          required
+          v-model="value"
+          placeholder="默认"
+          @blur="onBlur" />
         <div class="underline"></div>
       </div>
       <span class="text">{{ text }}</span>
@@ -16,20 +29,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type ComputedRef, type Ref, onMounted } from 'vue'
-import TextInputBox from './TextInputBox.vue'
-import $ from 'jquery'
-const props = withDefaults(defineProps<{
-  name: string,
-  config?: string,
-  max: string,
-  min: string,
-  step: string,
-  text?: string,
-  AllowExceeding?: boolean,
-}>(), {
-  AllowExceeding: false
-})
+import { computed, ref, type ComputedRef, type Ref, onMounted } from "vue"
+import TextInputBox from "./TextInputBox.vue"
+import $ from "jquery"
+const props = withDefaults(
+  defineProps<{
+    name: string
+    config?: string
+    max: string
+    min: string
+    step: string
+    text?: string
+    AllowExceeding?: boolean
+  }>(),
+  {
+    AllowExceeding: false,
+  },
+)
 const slider = ref<any>(null)
 onMounted(() => {
   console.log()
@@ -49,9 +65,9 @@ let orbit: ComputedRef<string> = computed((): string => {
   }
   let lessThanMinimum = value.value - 1 - min < 0
   if (lessThanMinimum) {
-    return 'width: 0px;';
+    return "width: 0px;"
   } else {
-    return `width: ${(value.value - 1 - min) / (max - min) * (sliderOuterWidth! - 20) + 10}px;`
+    return `width: ${((value.value - 1 - min) / (max - min)) * (sliderOuterWidth! - 20) + 10}px;`
   }
 })
 
@@ -80,11 +96,11 @@ function onBlur(): void {
   position: relative;
 }
 
-.slider>* {
+.slider > * {
   position: absolute;
 }
 
-.slider>div {
+.slider > div {
   background: rgba(var(--theme-color), 1);
   height: 3.5px;
   width: 4px;
@@ -94,7 +110,7 @@ function onBlur(): void {
   pointer-events: none;
 }
 
-.slider>div.slider_btn>div {
+.slider > div.slider_btn > div {
   width: 53%;
   height: 53%;
   background: rgba(var(--theme-color), 1);
@@ -102,7 +118,7 @@ function onBlur(): void {
   transition: all 0.2s ease;
 }
 
-.slider input[type=range] {
+.slider input[type="range"] {
   appearance: none;
   outline: none;
   width: 100%;
@@ -113,7 +129,7 @@ function onBlur(): void {
   pointer-events: all;
 }
 
-.slider input[type=range]::-webkit-slider-thumb {
+.slider input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   width: 20px;
   height: 20px;
@@ -122,30 +138,29 @@ function onBlur(): void {
   background: rgba(var(--theme-color), 1);
   box-shadow: inset 0 0 0 5px #ffffff;
   pointer-events: all;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 }
 
-.slider input[type=range]::-webkit-slider-thumb:hover {
+.slider input[type="range"]::-webkit-slider-thumb:hover {
   box-shadow: inset 0 0 0 3.7px #ffffff;
 }
 
-.slider input[type=range]:active::-webkit-slider-thumb {
+.slider input[type="range"]:active::-webkit-slider-thumb {
   box-shadow: inset 0 0 0 6px #ffffff;
 }
 
-.slider input[type=range]::-webkit-slider-runnable-track {
+.slider input[type="range"]::-webkit-slider-runnable-track {
   appearance: none;
   height: 3.5px;
   border-radius: 10px;
-  background-color: #00000045
+  background-color: #00000045;
 }
 
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button {
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
   appearance: none;
   margin: 0;
 }
-
 
 .input-data {
   border-radius: var(--border-radius-small);
@@ -195,13 +210,17 @@ input[type=number]::-webkit-outer-spin-button {
   transform: scale(0, 1);
   opacity: 0;
   border-radius: var(--border-radius-small);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
 }
 
-input:focus~.underline {
+input:focus ~ .underline {
   transform: scale(1);
   opacity: 1;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
 }
 
 input:focus::-webkit-input-placeholder {

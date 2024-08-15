@@ -1,7 +1,8 @@
 <template>
   <dialog-vue :visible="show" width="460" height="480">
     <div style="position: relative; margin: 12px 14px; width: calc(100% - 28px)">
-      <div style="
+      <div
+        style="
           display: flex;
           justify-content: space-between;
           border-bottom: 2px solid rgba(var(--theme-color), 0.6);
@@ -11,7 +12,8 @@
           <div class="icon"></div>
           <div class="text">
             <h4 class="name">
-              <span>{{ instanceName }}</span>中的存档
+              <span>{{ instanceName }}</span
+              >中的存档
             </h4>
             <p>共有 {{ datas.length }} 个存档</p>
           </div>
@@ -20,7 +22,8 @@
           <dialog-button icon="close" @click="$emit('close')"></dialog-button>
         </div>
       </div>
-      <search-bar style="
+      <search-bar
+        style="
           margin-bottom: 8px;
           position: sticky;
           top: 0;
@@ -33,14 +36,30 @@
           box-shadow: 0 0 10px #00000012;
         "></search-bar>
       <TransitionGroup>
-        <list-item v-for="(world, index) in datas" :key="index" :title="world.level_data.LevelName" :logo="world.icon"
-          :click-able="false" :buttons="['circle-info', 'folders', 'arrow-up-right-from-square']">
+        <list-item
+          v-for="(world, index) in datas"
+          :key="index"
+          :title="world.level_data.LevelName"
+          :logo="world.icon"
+          :click-able="false"
+          :buttons="['circle-info', 'folders', 'arrow-up-right-from-square']">
           <template #subtitle>
-            <tag :text="world.level_data.Version.Name" :color="['180', '180', '180']" text-color="#00000080"
+            <tag
+              :text="world.level_data.Version.Name"
+              :color="['180', '180', '180']"
+              text-color="#00000080"
               :border="true"></tag>
-            <tag v-if="world.level_data.allowCommands" text="允许作弊" :color="['180', '180', '180']" text-color="#00000080"
+            <tag
+              v-if="world.level_data.allowCommands"
+              text="允许作弊"
+              :color="['180', '180', '180']"
+              text-color="#00000080"
               :border="true"></tag>
-            <tag v-if="world.level_data.hardcore" text="极限模式" :color="['180', '180', '180']" text-color="#00000080"
+            <tag
+              v-if="world.level_data.hardcore"
+              text="极限模式"
+              :color="['180', '180', '180']"
+              text-color="#00000080"
               :border="true"></tag>
           </template>
           {{ world.dir_name }}
@@ -51,31 +70,31 @@
 </template>
 
 <script setup lang="ts">
-import DialogVue from "@/components/Dialog.vue";
-import ListItem from "@/components/ListItem.vue";
-import Tag from "@/components/Tag.vue";
-import SearchBar from "@/components/SearchBar.vue";
-import DialogButton from "@/components/DialogButton.vue";
+import DialogVue from "@/components/Dialog.vue"
+import ListItem from "@/components/ListItem.vue"
+import Tag from "@/components/Tag.vue"
+import SearchBar from "@/components/SearchBar.vue"
+import DialogButton from "@/components/DialogButton.vue"
 
 const props = defineProps<{
-  show: boolean;
-  worlds?: any;
-  instanceName: string;
-  datas: any[];
-}>();
+  show: boolean
+  worlds?: any
+  instanceName: string
+  datas: any[]
+}>()
 
 function gameType(type: number): string {
   switch (type) {
     case 0:
-      return "生存模式";
+      return "生存模式"
     case 1:
-      return "创造模式";
+      return "创造模式"
     case 2:
-      return "冒险模式";
+      return "冒险模式"
     case 3:
-      return "旁观模式";
+      return "旁观模式"
     default:
-      return "";
+      return ""
   }
 }
 </script>

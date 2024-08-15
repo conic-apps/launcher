@@ -1,9 +1,13 @@
 <template>
   <li class="list-item">
-    <div :style="`${buttons ? '' : 'justify-content: start;width: 100%;'}${clickAble ? 'pointer-events: all;' : ''}`">
-      <div class="icon" :style="logo
-          ? `background-image: url(${logo}); ${logoPixelated ? 'image-rendering: pixelated;' : ''}`
-          : 'display: none;'
+    <div
+      :style="`${buttons ? '' : 'justify-content: start;width: 100%;'}${clickAble ? 'pointer-events: all;' : ''}`">
+      <div
+        class="icon"
+        :style="
+          logo
+            ? `background-image: url(${logo}); ${logoPixelated ? 'image-rendering: pixelated;' : ''}`
+            : 'display: none;'
         ">
         <slot name="icon"></slot>
       </div>
@@ -21,7 +25,11 @@
       </div>
     </div>
     <div v-if="buttons" class="list-item-buttons">
-      <i v-for="(item, index) in buttons" :key="index" class="list-item-button" :class="item"
+      <i
+        v-for="(item, index) in buttons"
+        :key="index"
+        class="list-item-button"
+        :class="item"
         @click.stop="$emit(`event-${item}`)"></i>
     </div>
   </li>
@@ -29,13 +37,13 @@
 
 <script setup lang="ts">
 defineProps<{
-  logo?: string;
-  title: string;
-  description?: string;
-  logoPixelated?: boolean;
-  buttons?: string[]; // 图标名称对应点击后触发的事件名称
-  clickAble?: boolean;
-}>();
+  logo?: string
+  title: string
+  description?: string
+  logoPixelated?: boolean
+  buttons?: string[] // 图标名称对应点击后触发的事件名称
+  clickAble?: boolean
+}>()
 </script>
 
 <style lang="less" scoped>
@@ -54,13 +62,13 @@ defineProps<{
   pointer-events: none;
 }
 
-.list-item>div {
+.list-item > div {
   display: flex;
   align-items: center;
   overflow: hidden;
 }
 
-.list-item>div:first-child {
+.list-item > div:first-child {
   width: 100%;
   transition: all 0.1s ease;
 }
@@ -69,11 +77,11 @@ defineProps<{
 //   opacity: 0.6;
 // }
 
-.list-item>div:first-child:active {
+.list-item > div:first-child:active {
   opacity: 0.6;
 }
 
-.list-item>div:last-child {
+.list-item > div:last-child {
   flex-shrink: 0;
   /* overflow-x: hidden; */
   width: fit-content;
@@ -81,7 +89,7 @@ defineProps<{
   justify-content: flex-end;
 }
 
-.list-item>div>div:last-child {
+.list-item > div > div:last-child {
   max-width: inherit;
   width: 100%;
 }

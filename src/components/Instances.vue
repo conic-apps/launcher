@@ -5,8 +5,7 @@
         class="instance"
         @click="$emit('select', instance)"
         v-for="instance in computedInstances"
-        :key="instance.config.name"
-      >
+        :key="instance.config.name">
         <img src="@/assets/images/minecraft-icon.svg" />
         <div class="title">
           <p>{{ instance.config.name }}</p>
@@ -21,44 +20,38 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type Ref } from "vue";
-import Card from "./Card.vue";
+import { computed, ref, type Ref } from "vue"
+import Card from "./Card.vue"
 
 interface Instance {
   config: {
-    name: string;
-    runtime: string;
-  };
-  installed: boolean;
+    name: string
+    runtime: string
+  }
+  installed: boolean
 }
 interface InstanceGroup {
-  name: string;
-  instances: Instance[];
+  name: string
+  instances: Instance[]
 }
 
 const props = defineProps<{
   // instances: InstanceGroup[], todo: group
-  instances: Instance[];
-}>();
+  instances: Instance[]
+}>()
 
 const computedInstances = computed(() => {
   let systemInstances = props.instances.filter((value) => {
-    return (
-      value.config.name == "Latest Release" ||
-      value.config.name == "Latest Snapshot"
-    );
-  });
+    return value.config.name == "Latest Release" || value.config.name == "Latest Snapshot"
+  })
   let userInstances = props.instances.filter((value) => {
-    return (
-      value.config.name != "Latest Release" &&
-      value.config.name != "Latest Snapshot"
-    );
-  });
-  systemInstances.push(...userInstances);
-  return systemInstances;
-});
+    return value.config.name != "Latest Release" && value.config.name != "Latest Snapshot"
+  })
+  systemInstances.push(...userInstances)
+  return systemInstances
+})
 function generateDescription(instance: Instance): string {
-  return instance.config.name;
+  return instance.config.name
 }
 </script>
 

@@ -8,14 +8,14 @@
     </label>
   </div>
 </template>
-  
+
 <script setup lang="ts">
 // const props = defineProps<{
 //   checked: boolean
 // }>()
 let checked = false
 </script>
-  
+
 <style lang="less" scoped>
 .input-box {
   margin: 0 6px;
@@ -41,7 +41,7 @@ let checked = false
   transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
 }
 
-.input-box label span>div {
+.input-box label span > div {
   width: 13.5px;
   height: 13.5px;
   border-radius: 200px;
@@ -50,7 +50,7 @@ let checked = false
   transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
 }
 
-.input-box label input:checked~span {
+.input-box label input:checked ~ span {
   outline: 1px solid rgba(var(--theme-color), 1);
   background-color: rgba(var(--theme-color), 1);
 }
@@ -59,15 +59,15 @@ let checked = false
   background: #ffffffce;
 }
 
-.input-box:hover span>div {
+.input-box:hover span > div {
   transform: scale(1.1);
 }
 
-.input-box:active span>div {
+.input-box:active span > div {
   transform: scale(0.85);
 }
 
-.input-box label input:checked~span>div {
+.input-box label input:checked ~ span > div {
   background-color: #fff !important;
   margin-left: 19px;
 }

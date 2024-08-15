@@ -1,6 +1,6 @@
-import { createApp } from "vue";
+import { createApp } from "vue"
 // import { createPinia } from 'pinia'
-import App from "./Main.vue";
+import App from "./Main.vue"
 // import $ from "jquery";
 
 // $("#window").attr(
@@ -8,11 +8,11 @@ import App from "./Main.vue";
 //     "transform: scale(1); opacity: 1; transition: all 250ms cubic-bezier(0.04, 0.47, 0.47, 0.98)"
 // );
 
-const app = createApp(App);
+const app = createApp(App)
 
 // app.use(createPinia())
 
-app.mount("#window");
+app.mount("#window")
 
 // // window.getCurrent().setAlwaysOnTop(true)
 // // window.getCurrent().setResizable(false)
@@ -28,10 +28,10 @@ app.mount("#window");
 //   x: (await window.getCurrent().innerPosition()).x,
 //   y: (await window.getCurrent().innerPosition()).y
 // },);
-import { event } from "@tauri-apps/api";
+import { event } from "@tauri-apps/api"
 
 globalThis.onload = () => {
-  console.log(`
+    console.log(`
  █████╗ ███╗   ███╗███████╗████████╗██╗  ██╗██╗   ██╗███████╗████████╗    
 ██╔══██╗████╗ ████║██╔════╝╚══██╔══╝██║  ██║╚██╗ ██╔╝██╔════╝╚══██╔══╝    
 ███████║██╔████╔██║█████╗     ██║   ███████║ ╚████╔╝ ███████╗   ██║       
@@ -46,6 +46,6 @@ globalThis.onload = () => {
 ███████╗██║  ██║╚██████╔╝██║ ╚████║╚██████╗██║  ██║███████╗██║  ██║       
 ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝       
                                                                           
-`);
-  event.emit("fontend-loaded");
-};
+`)
+    event.emit("fontend-loaded")
+}

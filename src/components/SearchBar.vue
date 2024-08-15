@@ -1,22 +1,29 @@
 <template>
   <div class="search-bar" :style="style">
     <i class="magnifying-glass"></i>
-    <input type="text" v-model="value" @input="$emit('search', value)" :placeholder="props.placeholder" />
+    <input
+      type="text"
+      v-model="value"
+      @input="$emit('search', value)"
+      :placeholder="props.placeholder" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue"
 let value = ref("")
-const props = withDefaults(defineProps<{
-  width?: string,
-  height?: string,
-  placeholder?: string
-}>(), {
-  width: '',
-  height: '',
-  placeholder: '搜索'
-});
+const props = withDefaults(
+  defineProps<{
+    width?: string
+    height?: string
+    placeholder?: string
+  }>(),
+  {
+    width: "",
+    height: "",
+    placeholder: "搜索",
+  },
+)
 let style = `width: ${props.width}; height: ${props.height};`
 // todo: 添加search in 属性，搜索用的算法全部在这个组件中进行
 </script>
@@ -38,18 +45,17 @@ let style = `width: ${props.width}; height: ${props.height};`
   left: 0px;
   right: 0px;
   z-index: 10;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 
 .search-bar i {
-  font-family: 'fa-pro';
+  font-family: "fa-pro";
   font-style: normal;
   font-size: 12px;
   margin-right: 6px;
   color: #808080;
   transform: scale(0.95);
 }
-
 
 .search-bar input {
   border: none;

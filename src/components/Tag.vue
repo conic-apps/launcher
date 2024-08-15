@@ -1,5 +1,7 @@
 <template>
-  <div class="tag" :style="`${border ? `border: 1px solid rgb(${color[0]}, ${color[1]}, ${color[2]}); ` : ''}
+  <div
+    class="tag"
+    :style="`${border ? `border: 1px solid rgb(${color[0]}, ${color[1]}, ${color[2]}); ` : ''}
       ${background ? `background: rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.2);` : ''} 
       color: ${textColor}; font-size: ${fontSize}px;
       ${round ? 'border-radius: 10000px' : ''}`">
@@ -8,22 +10,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref } from "vue"
 
 const props = withDefaults(
   defineProps<{
-    text: string;
-    color: string[];
-    border?: boolean;
-    background?: boolean;
-    textColor?: string;
-    fontSize?: string;
-    round?: boolean;
+    text: string
+    color: string[]
+    border?: boolean
+    background?: boolean
+    textColor?: string
+    fontSize?: string
+    round?: boolean
   }>(),
   {
     fontSize: "11",
   },
-);
+)
 </script>
 
 <style lang="less" scoped>

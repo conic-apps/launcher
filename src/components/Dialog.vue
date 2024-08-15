@@ -11,17 +11,17 @@
 <script setup lang="ts">
 const props = withDefaults(
   defineProps<{
-    visible?: boolean;
-    width?: string;
-    height?: string;
+    visible?: boolean
+    width?: string
+    height?: string
   }>(),
   {
     visible: false,
     width: "",
     height: "",
   },
-);
-const contentStyle = `width: ${props.width}px; height: ${props.height}px;`;
+)
+const contentStyle = `width: ${props.width}px; height: ${props.height}px;`
 </script>
 
 <style lang="less" scoped>
