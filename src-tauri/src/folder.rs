@@ -37,8 +37,10 @@ use std::{
     ffi::OsStr,
     fmt::Display,
     format,
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, str::FromStr,
 };
+
+use uuid::Uuid;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GameDataLocation {
@@ -158,8 +160,9 @@ impl MinecraftLocation {
 pub struct DataLocation {
     pub root: PathBuf,
     pub instances: PathBuf,
-    pub jre: PathBuf,
+    pub default_jre: PathBuf,
     pub resources: PathBuf,
+    pub temp: PathBuf,
 }
 
 impl DataLocation {
@@ -168,8 +171,11 @@ impl DataLocation {
         Self {
             root: data_folder.to_path_buf(),
             instances: data_folder.join("instances"),
-            jre: data_folder.join("jre"),
+            // default_jre: data_folder.join("default_jre").join("bin").join("java"),
+            default_jre: PathBuf::from_str("/bin/java").unwrap(),
             resources: data_folder.join("resources"),
+            temp: std::env::temp_dir()
+                .join(format!("amethyst-launcher-{}", Uuid::new_v4().to_string())),
         }
     }
 

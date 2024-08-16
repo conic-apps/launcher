@@ -16,12 +16,85 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use anyhow::Result;
-use tokio::fs;
+use std::{io::BufRead, path::PathBuf, process::Stdio};
 
-use crate::folder::MinecraftLocation;
+use anyhow::Result;
+use tokio::io::AsyncWriteExt;
+
+use crate::{DATA_LOCATION, HTTP_CLIENT};
 
 use super::*;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
+pub struct FabricInstaller {
+    pub url: String,
+    pub maven: String,
+    pub version: String,
+    pub stable: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
+pub struct FabricInstallers(Vec<FabricInstaller>);
+
+impl FabricInstallers {
+    pub async fn new() -> anyhow::Result<Self> {
+        anyhow::Result::Ok(
+            HTTP_CLIENT
+                .get()
+                .unwrap()
+                .get("https://meta.fabricmc.net/v2/versions/installer")
+                .send()
+                .await?
+                .json()
+                .await?,
+        )
+    }
+    pub async fn download_latest(
+        &self,
+        file_location: &PathBuf,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let latest_installer = self
+            .0
+            .first()
+            .ok_or(anyhow::Error::msg("Bad fabric installer list"))?;
+        tokio::fs::create_dir_all(
+            file_location
+                .parent()
+                .ok_or(anyhow::Error::msg("Unknown Error"))?,
+        )
+        .await?;
+        let mut file = tokio::fs::File::create(file_location).await?;
+        let response = HTTP_CLIENT
+            .get()
+            .unwrap()
+            .get(latest_installer.url.clone())
+            .send()
+            .await?;
+        let src = response.bytes().await?;
+        file.write_all(&src).await?;
+        anyhow::Result::Ok(())
+    }
+}
+
+pub enum LauncherType {
+    Win32,
+    MicrosoftStore,
+}
+impl ToString for LauncherType {
+    fn to_string(&self) -> String {
+        match self {
+            Self::MicrosoftStore => "microsoft_store".to_string(),
+            Self::Win32 => "win32".to_string(),
+        }
+    }
+}
+/// fabric-installer.jar arguments
+pub struct FabricInstallOptions {
+    pub mcversion: String,
+    pub launcher_type: LauncherType,
+    pub install_dir: PathBuf,
+    pub loader: String,
+}
 
 /// Generate the fabric version JSON file to disk according to yarn and loader.
 ///
@@ -45,137 +118,48 @@ use super::*;
 ///     install_fabric(loader.unwrap(), minecraft_location, options).await;
 /// }
 /// ```
-pub async fn install_fabric_version_json(
-    loader: FabricLoaderArtifact,
-    minecraft_location: MinecraftLocation,
-    options: Option<FabricInstallOptions>,
-) -> Result<String> {
-    let options = match options {
-        None => FabricInstallOptions {
-            inherits_from: None,
-            version_id: None,
-            size: None,
-            yarn_version: None,
-        },
-        Some(options) => options,
-    };
-    let yarn: Option<String>;
-    let side = options.size.unwrap_or(FabricInstallSide::Client);
-    let mut id = options.version_id;
-    let mut minecraft_version = "".to_string();
-
-    match options.yarn_version {
-        Some(yarn_version) => match yarn_version {
-            YarnVersion::String(yarn_version) => {
-                yarn = Some(yarn_version);
-            }
-            YarnVersion::FabricArtifactVersion(yarn_version) => {
-                yarn = Some(yarn_version.version);
-            }
-        },
-        None => {
-            yarn = None;
-            minecraft_version = loader.intermediary.version;
+pub async fn install(options: FabricInstallOptions) -> Result<()> {
+    let fabric_installers = FabricInstallers::new().await?;
+    let fabric_installer_path = DATA_LOCATION
+        .get()
+        .unwrap()
+        .temp
+        .join("fabric-installer.jar");
+    fabric_installers
+        .download_latest(&fabric_installer_path)
+        .await?;
+    let java = DATA_LOCATION.get().unwrap().default_jre.clone();
+    let mut command = std::process::Command::new(java)
+        .arg("-jar")
+        .arg(&fabric_installer_path)
+        .arg("client")
+        .arg("-dir")
+        .arg(options.install_dir)
+        .arg("-mcversion")
+        .arg(options.mcversion)
+        .arg("-loader")
+        .arg(options.loader)
+        .arg("-launcher")
+        .arg(options.launcher_type.to_string())
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
+    println!("Running fabric installer");
+    let out = command.stdout.take().unwrap();
+    let mut out = std::io::BufReader::new(out);
+    let mut s = String::new();
+    while let Ok(_) = out.read_line(&mut s) {
+        // 进程退出后结束循环
+        if let Ok(Some(_)) = command.try_wait() {
+            break;
         }
+        println!("{}", s);
     }
-    if id.is_none() {
-        if yarn.is_some() {
-            id = Some(format!(
-                "{}-loader{}",
-                minecraft_version, loader.loader.version
-            ));
-        } else {
-            id = Some(format!(
-                "{}-fabric{}",
-                minecraft_version, loader.loader.version
-            ))
-        }
+    let installer_output = command.wait_with_output().unwrap();
+    if !installer_output.status.success() {
+        tokio::fs::remove_file(fabric_installer_path).await?;
+        return Err(anyhow::Error::msg("Fabric installer failed"));
     }
-    let mut libraries = vec![
-        LauncherMetaLibrariesItems {
-            name: Some(loader.loader.maven.clone()),
-            url: Some(String::from("https://maven.fabricmc.net/")),
-        },
-        LauncherMetaLibrariesItems {
-            name: Some(loader.intermediary.maven.clone()),
-            url: Some(String::from("https://maven.fabricmc.net/")),
-        },
-    ];
-    if let Some(yarn) = yarn.clone() {
-        libraries.push(LauncherMetaLibrariesItems {
-            name: Some(format!("net.fabricmc:yarn:{}", yarn)),
-            url: Some(String::from("https://maven.fabricmc.net/")),
-        });
-    }
-    libraries.extend(loader.launcher_meta.libraries.common.iter().cloned());
-    match side {
-        FabricInstallSide::Client => {
-            libraries.extend(loader.launcher_meta.libraries.client.iter().cloned())
-        }
-        FabricInstallSide::Server => {
-            libraries.extend(loader.launcher_meta.libraries.server.iter().cloned())
-        }
-    }
-    let main_class = match side {
-        FabricInstallSide::Client => loader.launcher_meta.main_class["client"]
-            .as_str()
-            .unwrap_or(loader.launcher_meta.main_class.as_str().unwrap_or(""))
-            .to_string(),
-        FabricInstallSide::Server => loader.launcher_meta.main_class["server"]
-            .as_str()
-            .unwrap_or(loader.launcher_meta.main_class.as_str().unwrap_or(""))
-            .to_string(),
-    };
-    let inherits_from = options.inherits_from.unwrap_or(minecraft_version);
-
-    let json_file_path = minecraft_location.get_version_json(id.clone().unwrap());
-    fs::create_dir_all(json_file_path.parent().unwrap()).await?;
-    if let Ok(metadata) = fs::metadata(&json_file_path).await {
-        if metadata.is_file() {
-            fs::remove_file(&json_file_path).await?;
-        } else {
-            fs::remove_dir_all(&json_file_path).await?;
-        }
-    }
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct FabricVersionJSON {
-        id: String,
-        inherits_from: String,
-        main_class: String,
-        libraries: String,
-        arguments: FabricVersionJSONArg,
-        release_time: String,
-        time: String,
-    }
-    #[derive(Serialize)]
-    struct FabricVersionJSONArg {
-        game: Vec<i32>,
-        jvm: Vec<i32>,
-    }
-    let version_json = FabricVersionJSON {
-        id: id.clone().unwrap_or("".to_string()),
-        inherits_from,
-        main_class,
-        libraries: serde_json::to_string(&libraries).unwrap_or("".to_string()),
-        arguments: FabricVersionJSONArg {
-            game: vec![],
-            jvm: vec![],
-        },
-        release_time: "2023-05-13T15:58:54.493Z".to_string(),
-        time: "2023-05-13T15:58:54.493Z".to_string(),
-    };
-    let json_data = serde_json::to_string_pretty(&version_json)
-        .unwrap_or("".to_string())
-        .to_string();
-    tokio::fs::write(json_file_path, json_data).await?;
-
-    Ok(id.unwrap_or("".to_string()))
+    tokio::fs::remove_file(fabric_installer_path).await?;
+    Ok(())
 }
-
-// #[tokio::test]
-// async fn test() {
-//     let artifact = FabricLoaderArtifact::new("1.19.4", "0.1.0.48").await;
-//     let location = MinecraftLocation::new("test");
-//     install_fabric(artifact, location, None).await.unwrap();
-// }

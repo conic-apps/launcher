@@ -24,8 +24,8 @@ use vanilla::generate_download_info;
 
 use crate::{
     download::{download_files, DownloadError, DownloadProgress},
-    folder::MinecraftLocation,
-    instance::get_instance_config_from_string,
+    folder::{DataLocation, MinecraftLocation},
+    instance::{get_instance_config_from_string, InstanceRuntime, ModLoaderType},
     version::VersionManifest,
     Storage, DATA_LOCATION, MAIN_WINDOW,
 };
@@ -42,15 +42,13 @@ pub async fn get_minecraft_version_list() -> Option<VersionManifest> {
 
 #[tauri::command(async)]
 pub async fn get_fabric_version_list(mcversion: String) -> Option<fabric::LoaderArtifactList> {
-    fabric::LoaderArtifactList::from_mcversion(&mcversion)
-        .await
-        .ok()
+    fabric::LoaderArtifactList::new(&mcversion).await.ok()
 }
 
 #[tauri::command(async)]
 pub async fn get_forge_version_list(mcversion: String) -> Option<ForgeVersionList> /* Option<ForgeVersionList> */
 {
-    ForgeVersionList::from_mcversion(&mcversion).await.ok()
+    ForgeVersionList::new(&mcversion).await.ok()
 }
 
 #[tauri::command(async)]
@@ -102,6 +100,20 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
     };
 
     download_files(download_list).await;
+    if runtime.mod_loader_type.is_some() {
+        main_window.emit(
+            "install_progress",
+            DownloadProgress {
+                completed: 0,
+                total: 0,
+                step: 4,
+            },
+        ).unwrap();
+        match install_mod_loader(runtime, data_location).await {
+            Ok(_) => (),
+            Err(_) => return Err(()),
+        };
+    }
     let mut lock_file = tokio::fs::File::create(
         data_location
             .get_instance_root(active_instance)
@@ -114,27 +126,28 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
     Ok(())
 }
 
-// #[cfg(test)]
-// mod test {
-//     use super::*;
-//     use crate::core::folder::MinecraftLocation;
-//     use crate::core::HTTP_CLIENT;
-//     #[tokio::test]
-//     async fn test() {
-//         let platform = PlatformInfo::new().await;
-//         let downloads = generate_download_info("1.19.3", MinecraftLocation::new("test"), &platform)
-//             .await
-//             .unwrap();
-//         for (index, download) in downloads.into_iter().enumerate() {
-//             println!("{}", index);
-//             let mut response = HTTP_CLIENT.get(download.url).send().await.unwrap();
-//             tokio::fs::create_dir_all(download.file.parent().unwrap())
-//                 .await
-//                 .unwrap();
-//             let mut file = tokio::fs::File::create(download.file).await.unwrap();
-//             while let Some(chunk) = response.chunk().await.unwrap() {
-//                 file.write_all(&chunk).await.unwrap();
-//             }
-//         }
-//     }
-// }
+async fn install_mod_loader(
+    runtime: InstanceRuntime,
+    data_location: &DataLocation,
+) -> anyhow::Result<()> {
+    let mod_loader_type = runtime.mod_loader_type.unwrap();
+    let mod_loader_version = runtime
+        .mod_loader_version
+        .ok_or(anyhow::Error::msg("bad instance.toml file!"))?;
+    match mod_loader_type {
+        ModLoaderType::Fabric => {
+            fabric::install(fabric::install::FabricInstallOptions {
+                mcversion: runtime.minecraft,
+                launcher_type: fabric::install::LauncherType::Win32,
+                install_dir: data_location.root.clone(),
+                loader: mod_loader_version,
+            })
+            .await?;
+        }
+        ModLoaderType::Quilt => {}
+        ModLoaderType::Forge => {}
+        ModLoaderType::Neoforge => {}
+    }
+
+    anyhow::Ok(())
+}

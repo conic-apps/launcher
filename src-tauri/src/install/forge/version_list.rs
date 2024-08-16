@@ -44,14 +44,7 @@ pub struct ForgeInstallerFile {
 pub struct ForgeVersionList(Vec<ForgeVersionListItem>);
 
 impl ForgeVersionList {
-    pub async fn new() -> Result<Self> {
-        Ok(reqwest::get("https://bmclapi2.bangbang93.com/forge/list/0")
-            .await?
-            .json::<Self>()
-            .await?)
-    }
-
-    pub async fn from_mcversion(mcversion: &str) -> Result<Self> {
+    pub async fn new(mcversion: &str) -> Result<Self> {
         Ok(reqwest::get(format!(
             "https://bmclapi2.bangbang93.com/forge/minecraft/{mcversion}"
         ))
