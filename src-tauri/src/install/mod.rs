@@ -23,9 +23,9 @@ use tokio::io::AsyncWriteExt;
 use vanilla::generate_download_info;
 
 use crate::{
+    config::instance::{InstanceConfig, InstanceRuntime, ModLoaderType},
     download::{download_files, DownloadError, DownloadProgress},
     folder::{DataLocation, MinecraftLocation},
-    instance::{get_instance_config_from_string, InstanceRuntime, ModLoaderType},
     version::VersionManifest,
     Storage, DATA_LOCATION, MAIN_WINDOW,
 };
@@ -73,7 +73,7 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
         .unwrap();
     let active_instance = storage.current_instance.lock().unwrap().clone();
     let data_location = DATA_LOCATION.get().unwrap();
-    let instance_config = match get_instance_config_from_string(&active_instance).await {
+    let instance_config = match InstanceConfig::get(&active_instance).await {
         Ok(x) => x,
         Err(_) => {
             main_window
@@ -101,14 +101,16 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
 
     download_files(download_list).await;
     if runtime.mod_loader_type.is_some() {
-        main_window.emit(
-            "install_progress",
-            DownloadProgress {
-                completed: 0,
-                total: 0,
-                step: 4,
-            },
-        ).unwrap();
+        main_window
+            .emit(
+                "install_progress",
+                DownloadProgress {
+                    completed: 0,
+                    total: 0,
+                    step: 4,
+                },
+            )
+            .unwrap();
         match install_mod_loader(runtime, data_location).await {
             Ok(_) => (),
             Err(_) => return Err(()),
@@ -138,7 +140,6 @@ async fn install_mod_loader(
         ModLoaderType::Fabric => {
             fabric::install(fabric::install::FabricInstallOptions {
                 mcversion: runtime.minecraft,
-                launcher_type: fabric::install::LauncherType::Win32,
                 install_dir: data_location.root.clone(),
                 loader: mod_loader_version,
             })
