@@ -56,6 +56,9 @@ jobs:
               with:
                 workspaces: ./src-tauri -> target
                 save-if: ${{ matrix.clippy.key == 'all' }}
-      
+            
+            - name: Run cargo check
+              run: cargo check
+            
             - name: Run clippy - ${{ matrix.clippy.key }}
               run: cargo clippy --manifest-path ./src-tauri/Cargo.toml --all-targets ${{ matrix.clippy.args }} -- -D warnings

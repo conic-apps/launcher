@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - ci-test
 
 jobs:
   get-version:
@@ -16,88 +17,40 @@ jobs:
           echo "text=$(jq -r .version src-tauri/tauri.conf.json)" >> "$GITHUB_OUTPUT"
     outputs:
       app_version: ${{ steps.step.outputs.text }}
-  # TODO: wait for github support aarch64
-  # build-arm-linux:
-  #   needs: [get-version]
-  #   runs-on: ubuntu-22.04
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       arch: [aarch64, armv7l]
-  #       include:
-  #         - arch: aarch64
-  #           cpu: cortex-a72
-  #           base_image: https://dietpi.com/downloads/images/DietPi_RPi-ARMv8-Bookworm.img.xz
-  #           deb: arm64
-  #           rpm: aarch64
-  #           appimage: aarch64
-  #         - arch: armv7l
-  #           cpu: cortex-a53
-  #           deb: armhfp
-  #           rpm: arm
-  #           appimage: armhf
-  #           base_image: https://dietpi.com/downloads/images/DietPi_RPi-ARMv7-Bookworm.img.xz
+  build-arm-linux:
+    needs: [get-version]
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
 
-  #   steps:
-  #     - uses: actions/checkout@v4
+      - name: Install frontend dependencies
+        run: |
+          yarn install
 
-  #     - name: Cache rust build artifacts
-  #       uses: Swatinem/rust-cache@v2
-  #       with:
-  #         workspaces: src-tauri
-  #         cache-on-failure: true
+      - name: Build the app
+        run: |
+          yarn tauri build -- --verbose
+      - name: show files
+        run: |
+          tree ${{ github.workspace }}/src-tauri/target
 
-  #     - name: Build app
-  #       uses: pguyot/arm-runner-action@v2.6.5
-  #       with:
-  #         base_image: ${{ matrix.base_image }}
-  #         cpu: ${{ matrix.cpu }}
-  #         bind_mount_repository: true
-  #         image_additional_mb: 10240
-  #         optimize_image: no
-  #         exit_on_fail: no
-  #         commands: |
-  #           # Prevent Rust from complaining about $HOME not matching eid home
-  #           export HOME=/root
+      - name: Upload deb bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Debian bundle(aarch64)
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_arm64.deb
 
-  #           # Workaround to CI worker being stuck on Updating crates.io index
-  #           export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+      - name: Upload rpm bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: RPM bundle(aarch64)
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.aarch64.rpm
 
-  #           # Install setup prerequisites
-  #           apt-get update -y --allow-releaseinfo-change
-  #           apt-get autoremove -y
-  #           apt-get install -y --no-install-recommends --no-install-suggests curl libwebkit2gtk-4.1-dev build-essential libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf libfuse2 wget file
-  #           curl https://sh.rustup.rs -sSf | sh -s -- -y
-  #           . "$HOME/.cargo/env"
-  #           curl -fsSL https://deb.nodesource.com/setup_lts.x | bash
-  #           apt-get install -y nodejs
-
-  #           # Install yarn
-  #           npm install -g yarn
-
-  #           # Install frontend dependencies
-  #           yarn install
-
-  #           # Build the application
-  #           yarn tauri build -- --verbose
-
-  #     - name: Upload deb bundle
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: Debian Bundle
-  #         path: ${{ github.workspace }}/src-tauri/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.deb }}.deb
-
-  #     - name: Upload rpm bundle
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: RPM Bundle
-  #         path: ${{ github.workspace }}/src-tauri/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.${{ matrix.rpm }}.rpm
-
-  #     - name: Upload appimage bundle
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: AppImage Bundle
-  #         path: ${{ github.workspace }}/src-tauri/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.appimage }}.AppImage
+      - name: Upload appimage bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppImage bundle(aarch64)
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage
 
   build-other:
     needs: [get-version]
@@ -169,35 +122,35 @@ jobs:
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
-          name: Debian Bundle
+          name: Debian bundle(amd64)
           path: ${{ github.workspace }}/src-tauri/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
-          name: RPM Bundle
+          name: RPM bundle(x86_64)
           path: ${{ github.workspace }}/src-tauri/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.x86_64.rpm
 
       - name: Upload appimage bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
-          name: AppImage Bundle
+          name: AppImage bundle(amd64)
           path: ${{ github.workspace }}/src-tauri/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage
 
-      - name: Upload msi bundle
+      - name: Upload Microsoft Installer bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
-          name: Windows Bundle(msi)
+          name: Microsoft Installer bundle(64-bit)
           path: ${{ github.workspace }}/src-tauri/target/release/bundle/msi/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi
 
-      - name: Upload exe bundle
+      - name: Upload NSIS bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
-          name: Windows Bundle(exe)
+          name: NSIS bundle(64-bit)
           path: ${{ github.workspace }}/src-tauri/target/release/bundle/nsis/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe
 
       - name: Upload dmg bundle
