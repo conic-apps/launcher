@@ -76,22 +76,9 @@ impl FabricInstallers {
     }
 }
 
-pub enum LauncherType {
-    Win32,
-    MicrosoftStore,
-}
-impl ToString for LauncherType {
-    fn to_string(&self) -> String {
-        match self {
-            Self::MicrosoftStore => "microsoft_store".to_string(),
-            Self::Win32 => "win32".to_string(),
-        }
-    }
-}
 /// fabric-installer.jar arguments
 pub struct FabricInstallOptions {
     pub mcversion: String,
-    pub launcher_type: LauncherType,
     pub install_dir: PathBuf,
     pub loader: String,
 }
@@ -140,7 +127,7 @@ pub async fn install(options: FabricInstallOptions) -> Result<()> {
         .arg("-loader")
         .arg(options.loader)
         .arg("-launcher")
-        .arg(options.launcher_type.to_string())
+        .arg("win32")
         .stdout(Stdio::piped())
         .spawn()
         .unwrap();

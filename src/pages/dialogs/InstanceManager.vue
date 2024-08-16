@@ -59,10 +59,15 @@ import Create from "@/pages/dialogs/instance/Create.vue";
 
 let emit = defineEmits(["close", "update"]);
 let transitionName = ref("slide-left");
+
 interface Instance {
   config: {
     name: string;
-    runtime: string;
+    runtime: {
+      minecraft: string;
+      modLoaderType: "fabric" | "quilt" | "forge" | "neoforge" | null;
+      modLoaderVersion: string | null
+    };
   };
   installed: boolean;
 }

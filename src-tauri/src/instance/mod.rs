@@ -1,42 +1,7 @@
+use crate::config::instance::InstanceConfig;
 use crate::version::VersionManifest;
 use crate::{Storage, DATA_LOCATION};
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct InstanceConfig {
-    pub name: String,
-    pub runtime: InstanceRuntime,
-    pub group: Option<Vec<String>>,
-}
-
-impl InstanceConfig {
-    pub fn new(instance_name: &str, minecraft_version: &str) -> Self {
-        Self {
-            name: instance_name.to_string(),
-            runtime: InstanceRuntime {
-                minecraft: minecraft_version.to_string(),
-                mod_loader_type: None,
-                mod_loader_version: None,
-            },
-            group: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
-pub enum ModLoaderType {
-    Fabric,
-    Forge,
-    Quilt,
-    Neoforge,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct InstanceRuntime {
-    pub minecraft: String,
-    pub mod_loader_type: Option<ModLoaderType>,
-    pub mod_loader_version: Option<String>,
-}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Instance {
@@ -64,7 +29,7 @@ pub async fn check_repeated_instance_name(instance_name: String) -> bool {
         .get()
         .unwrap()
         .get_instance_root(&instance_name);
-    let config = match get_instance_config_from_string(&instance_name).await {
+    let config = match InstanceConfig::get(&instance_name).await {
         Ok(x) => x,
         Err(_) => return false,
     };
@@ -142,53 +107,6 @@ pub fn set_current_instance(instance_name: String, storage: tauri::State<Storage
     let mut current_instance = storage.current_instance.lock().unwrap();
     println!("Setting current instance to {}", instance_name);
     *current_instance = instance_name;
-}
-
-#[tauri::command(async)]
-pub async fn get_instance_config(
-    storage: tauri::State<'_, Storage>,
-) -> std::result::Result<InstanceConfig, ()> {
-    let instance_name = storage.current_instance.lock().unwrap().clone();
-    let config_path = DATA_LOCATION
-        .get()
-        .unwrap()
-        .get_instance_root(&instance_name)
-        .join("instance.toml");
-    match config_path.metadata() {
-        Ok(_) => {
-            let config_content = match tokio::fs::read_to_string(config_path).await {
-                Err(_) => return Err(()),
-                Ok(content) => content,
-            };
-            match toml::from_str::<InstanceConfig>(&config_content) {
-                Ok(config) => Ok(config),
-                Err(_) => Err(()),
-            }
-        }
-        Err(_) => Err(()),
-    }
-}
-
-#[tauri::command(async)]
-pub async fn get_instance_config_from_string(instance_name: &str) -> Result<InstanceConfig, ()> {
-    let config_path = DATA_LOCATION
-        .get()
-        .unwrap()
-        .get_instance_root(instance_name)
-        .join("instance.toml");
-    match config_path.metadata() {
-        Ok(_) => {
-            let config_content = match tokio::fs::read_to_string(config_path).await {
-                Err(_) => return Err(()),
-                Ok(content) => content,
-            };
-            match toml::from_str::<InstanceConfig>(&config_content) {
-                Ok(config) => Ok(config),
-                Err(_) => Err(()),
-            }
-        }
-        Err(_) => Err(()),
-    }
 }
 
 pub async fn update_latest_instance() {
