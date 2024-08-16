@@ -18,9 +18,10 @@
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tauri_plugin_http::reqwest;
 
 pub mod install;
-pub mod version_list;
+pub use install::install;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -111,6 +112,19 @@ pub struct YarnArtifactList(Vec<FabricArtifactVersion>);
 #[serde(rename_all = "camelCase")]
 pub struct LoaderArtifactList(Vec<FabricLoaderArtifact>);
 
+impl LoaderArtifactList {
+    /// get loader artifacts
+    pub async fn new(mcversion: &str) -> anyhow::Result<Self> {
+        Ok(reqwest::get(format!(
+            "https://meta.fabricmc.net/v2/versions/loader/{}",
+            mcversion
+        ))
+        .await?
+        .json()
+        .await?)
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LauncherMeta {
@@ -130,24 +144,4 @@ pub struct LauncherMetaLibraries {
 pub struct LauncherMetaLibrariesItems {
     pub name: Option<String>,
     pub url: Option<String>,
-}
-
-pub enum FabricInstallSide {
-    Client,
-    Server,
-}
-
-pub enum YarnVersion {
-    String(String),
-    FabricArtifactVersion(FabricArtifactVersion),
-}
-
-pub struct FabricInstallOptions {
-    /// 当你想要在另一个版本的基础上安装一个版本时。
-    pub inherits_from: Option<String>,
-
-    /// 覆盖新安装的版本 id。
-    pub version_id: Option<String>,
-    pub size: Option<FabricInstallSide>,
-    pub yarn_version: Option<YarnVersion>,
 }

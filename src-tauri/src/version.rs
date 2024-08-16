@@ -110,8 +110,7 @@ pub struct VersionManifest {
 impl VersionManifest {
     pub async fn new() -> Result<VersionManifest> {
         let response =
-            reqwest::get("https://bmclapi2.bangbang93.com/mc/game/version_manifest_v2.json")
-                .await?;
+            reqwest::get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json").await?;
         Ok(response.json::<VersionManifest>().await?)
     }
 }
@@ -522,7 +521,7 @@ impl Version {
                 id: "".to_string(),
                 total_size: 0,
             });
-        let downloads_is_empty = !downloads.is_empty();
+        let downloads_is_empty = downloads.is_empty();
         if main_class_is_empty || assets_index_is_empty || downloads_is_empty {
             return Err(anyhow::anyhow!("Bad Version JSON"));
         }
