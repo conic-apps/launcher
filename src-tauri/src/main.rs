@@ -15,7 +15,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use crate::config::get_user_config;
+use crate::config::instance::{get_instance_config, get_instance_config_by_name};
 use crate::game_data::{scan_mod_folder, scan_saves_folder};
 use crate::install::install;
 use crate::install::{
@@ -23,8 +23,7 @@ use crate::install::{
     get_quilt_version_list,
 };
 use crate::instance::{
-    check_repeated_instance_name, create_instance, get_instance_config,
-    get_instance_config_from_string, scan_instances_folder, set_current_instance,
+    check_repeated_instance_name, create_instance, scan_instances_folder, set_current_instance,
 };
 use folder::DataLocation;
 use once_cell::sync::OnceCell;
@@ -51,7 +50,6 @@ async fn main() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
-            get_user_config,
             create_instance,
             get_minecraft_version_list,
             get_fabric_version_list,
@@ -64,7 +62,7 @@ async fn main() {
             scan_mod_folder,
             scan_saves_folder,
             get_instance_config,
-            get_instance_config_from_string,
+            get_instance_config_by_name,
             install,
         ])
         .manage(Storage {

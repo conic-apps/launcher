@@ -26,10 +26,15 @@ import Card from "./Card.vue";
 interface Instance {
   config: {
     name: string;
-    runtime: string;
+    runtime: {
+      minecraft: string;
+      modLoaderType: "fabric" | "quilt" | "forge" | "neoforge" | null;
+      modLoaderVersion: string | null
+    };
   };
   installed: boolean;
 }
+
 interface InstanceGroup {
   name: string;
   instances: Instance[];
