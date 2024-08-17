@@ -1,6 +1,6 @@
 # Amethyst Launcher
 
-[![Amethyst Launcher Auto Build](https://github.com/Broken-Deer/amethyst-launcher/actions/workflows/build.yml/badge.svg)](https://github.com/Broken-Deer/amethyst-launcher/actions/workflows/build.yml)
+[![Amethyst Launcher Auto Build](https://github.com/Conic-Sections/amethyst-launcher/actions/workflows/build.yml/badge.svg)](https://github.com/Conic-Sections/amethyst-launcher/actions/workflows/build.yml)
 [![License](https://img.shields.io/github/license/Rene8028/carpet-iee-addition.svg)](https://www.gnu.org/licenses/quick-guide-gplv3.html)
 ![](https://img.shields.io/badge/V%20Me-50-red)
 ![](https://img.shields.io/badge/WE%20ARE-POOR-yellow)
