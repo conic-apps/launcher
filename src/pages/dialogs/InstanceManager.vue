@@ -65,8 +65,8 @@ interface Instance {
     name: string;
     runtime: {
       minecraft: string;
-      modLoaderType: "fabric" | "quilt" | "forge" | "neoforge" | null;
-      modLoaderVersion: string | null
+      mod_loader_type: "Fabric" | "Quilt" | "Forge" | "Neoforge" | undefined;
+      mod_loader_version: string | undefined
     };
   };
   installed: boolean;
