@@ -7,10 +7,21 @@
           {{ instanceName }}
           
         </h4> -->
-        <text-input-box :error="true" class="instance-name-input" style="width: 300px; margin-left: 10px" name="实例名称"
-          :placeholder="defaultInstanceName" v-model="instanceNameValue"></text-input-box>
-        <tag v-if="repeated" text="名称不能重复" :color="['255', '129', '120']" text-color="rgba(255,255,255, 0.7)"
-          :background="true" :border="true" style="margin-left: 10px">
+        <text-input-box
+          :error="true"
+          class="instance-name-input"
+          style="width: 300px; margin-left: 10px"
+          name="实例名称"
+          :placeholder="defaultInstanceName"
+          v-model="instanceNameValue"></text-input-box>
+        <tag
+          v-if="repeated"
+          text="名称不能重复"
+          :color="['255', '129', '120']"
+          text-color="rgba(255,255,255, 0.7)"
+          :background="true"
+          :border="true"
+          style="margin-left: 10px">
         </tag>
       </div>
       <vue-button text="创建" :disabled="!select.minecraft || repeated" @click="create"></vue-button>
@@ -211,23 +222,23 @@ function create() {
     return;
   }
   // TODO: rewrite this ui, choose mod loader type,then choose version
-  let mod_loader_type: string | null
-  let mod_loader_version: string | null
+  let mod_loader_type: string | null;
+  let mod_loader_version: string | null;
   if (select.fabric) {
-    mod_loader_type = "Fabric"
-    mod_loader_version = select.fabric
+    mod_loader_type = "Fabric";
+    mod_loader_version = select.fabric;
   } else if (select.quilt) {
-    mod_loader_type = "Quilt"
-    mod_loader_version = select.quilt
+    mod_loader_type = "Quilt";
+    mod_loader_version = select.quilt;
   } else if (select.forge) {
-    mod_loader_type = "Forge"
-    mod_loader_version = select.forge
+    mod_loader_type = "Forge";
+    mod_loader_version = select.forge;
   } else if (select.neoforge) {
-    mod_loader_type = "Neoforge"
-    mod_loader_version = select.neoforge
+    mod_loader_type = "Neoforge";
+    mod_loader_version = select.neoforge;
   } else {
-    mod_loader_type = null
-    mod_loader_version = null
+    mod_loader_type = null;
+    mod_loader_version = null;
   }
   invoke("create_instance", {
     instanceName: instanceName.value,
