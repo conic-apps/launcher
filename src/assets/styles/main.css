@@ -181,10 +181,9 @@ h4 {
     background: rgba(45, 170, 219, 0.3);
 }
 
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
     width: 2.5px;
     height: 2.5px;
-    /* opacity: 0; */
 }
 
 :hover::-webkit-scrollbar {
@@ -194,7 +193,7 @@ h4 {
 ::-webkit-scrollbar-thumb {
     background-color: #ffffff26;
     border-radius: 10px;
-}
+} */
 
 body {
     overflow: hidden;

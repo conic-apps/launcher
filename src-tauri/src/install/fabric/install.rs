@@ -16,136 +16,32 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{io::BufRead, path::PathBuf, process::Stdio};
+use crate::{folder::MinecraftLocation, version::Version};
+use tauri_plugin_http::reqwest;
 
-use anyhow::Result;
-use tokio::io::AsyncWriteExt;
+pub async fn install(
+    mcversion: &str,
+    quilt_version: &str,
+    minecraft: MinecraftLocation,
+) -> anyhow::Result<()> {
+    let url = format!(
+        "https://meta.fabricmc.net/v2/versions/loader/{mcversion}/{quilt_version}/profile/json"
+    );
+    let response = reqwest::get(url).await.unwrap();
+    let fabric_version_json: Version = response.json().await.unwrap();
+    let version_name = fabric_version_json.id.clone();
+    let json_path = minecraft.get_version_json(&version_name);
+    // let libraries = quilt_version.libraries.clone().unwrap();
+    // let hashed = libraries.iter().find(|l| match l["name"].as_str() {
+    //     None => false,
+    //     Some(name) => name.starts_with("org.quiltmc:hashed"),
+    // });
 
-use crate::{DATA_LOCATION, HTTP_CLIENT};
-
-use super::*;
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
-pub struct FabricInstaller {
-    pub url: String,
-    pub maven: String,
-    pub version: String,
-    pub stable: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
-pub struct FabricInstallers(Vec<FabricInstaller>);
-
-impl FabricInstallers {
-    pub async fn new() -> anyhow::Result<Self> {
-        anyhow::Result::Ok(
-            HTTP_CLIENT
-                .get()
-                .unwrap()
-                .get("https://meta.fabricmc.net/v2/versions/installer")
-                .send()
-                .await?
-                .json()
-                .await?,
-        )
-    }
-    pub async fn download_latest(
-        &self,
-        file_location: &PathBuf,
-    ) -> anyhow::Result<(), anyhow::Error> {
-        let latest_installer = self
-            .0
-            .first()
-            .ok_or(anyhow::Error::msg("Bad fabric installer list"))?;
-        tokio::fs::create_dir_all(
-            file_location
-                .parent()
-                .ok_or(anyhow::Error::msg("Unknown Error"))?,
-        )
-        .await?;
-        let mut file = tokio::fs::File::create(file_location).await?;
-        let response = HTTP_CLIENT
-            .get()
-            .unwrap()
-            .get(latest_installer.url.clone())
-            .send()
-            .await?;
-        let src = response.bytes().await?;
-        file.write_all(&src).await?;
-        anyhow::Result::Ok(())
-    }
-}
-
-/// fabric-installer.jar arguments
-pub struct FabricInstallOptions {
-    pub mcversion: String,
-    pub install_dir: PathBuf,
-    pub loader: String,
-}
-
-/// Generate the fabric version JSON file to disk according to yarn and loader.
-///
-/// ### Arguments
-///
-/// * `loader` - The fabric loader version.
-/// * `minecraft_location` - The minecraft location.
-/// * `options` - The install options.
-///
-/// ### Example
-///
-/// ```rust
-/// use aml_core::install::fabric::install::install_fabric;
-/// use aml_core::core::folder::MinecraftLocation;
-/// use aml_core::install::fabric::FabricLoaderArtifact;
-///
-/// async fn fn_name() {
-///     let loader = FabricLoaderArtifact::new("1.19.4", "xxx").await; // xxx is your fabric loader version
-///     let minecraft_location = MinecraftLocation::new("test");
-///     let options = None;
-///     install_fabric(loader.unwrap(), minecraft_location, options).await;
-/// }
-/// ```
-pub async fn install(options: FabricInstallOptions) -> Result<()> {
-    let fabric_installers = FabricInstallers::new().await?;
-    let fabric_installer_path = DATA_LOCATION
-        .get()
-        .unwrap()
-        .temp
-        .join("fabric-installer.jar");
-    fabric_installers
-        .download_latest(&fabric_installer_path)
-        .await?;
-    let java = DATA_LOCATION.get().unwrap().default_jre.clone();
-    let mut command = std::process::Command::new(java)
-        .arg("-jar")
-        .arg(&fabric_installer_path)
-        .arg("client")
-        .arg("-dir")
-        .arg(options.install_dir)
-        .arg("-mcversion")
-        .arg(options.mcversion)
-        .arg("-loader")
-        .arg(options.loader)
-        .arg("-launcher")
-        .arg("win32")
-        .stdout(Stdio::piped())
-        .spawn()
-        .unwrap();
-    println!("Running fabric installer");
-    let out = command.stdout.take().unwrap();
-    let mut out = std::io::BufReader::new(out);
-    let mut buf = String::new();
-    while let Ok(_) = out.read_line(&mut buf) {
-        if let Ok(Some(_)) = command.try_wait() {
-            break;
-        }
-        println!("{}", buf);
-    }
-    let installer_output = command.wait_with_output().unwrap();
-    if !installer_output.status.success() {
-        tokio::fs::remove_file(fabric_installer_path).await?;
-        return Err(anyhow::Error::msg("Fabric installer failed"));
-    }
-    tokio::fs::remove_file(fabric_installer_path).await?;
+    tokio::fs::create_dir_all(json_path.parent().unwrap()).await?;
+    tokio::fs::write(
+        json_path,
+        serde_json::to_string_pretty(&fabric_version_json).unwrap(),
+    )
+    .await?;
     Ok(())
 }
