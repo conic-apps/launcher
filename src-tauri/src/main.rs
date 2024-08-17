@@ -45,8 +45,8 @@ pub struct Storage {
 #[tokio::main]
 async fn main() {
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-    tokio::spawn(initialize_application());
-    tauri::Builder::default()
+    initialize_application().await;
+    match tauri::Builder::default()
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
@@ -92,7 +92,16 @@ async fn main() {
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    {
+        Ok(_) => {
+            tokio::fs::remove_dir_all(&DATA_LOCATION.get().unwrap().temp)
+                .await
+                .expect("error while clear temp foler!");
+        }
+        Err(_) => {
+            panic!("error while running tauri application!")
+        }
+    };
 }
 
 async fn initialize_application() {

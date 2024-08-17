@@ -50,18 +50,20 @@ fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
     hasher.digest().to_string()
 }
 
-pub async fn download_files(downloads: Vec<Download>) {
+pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_error: bool) {
     let main_window = MAIN_WINDOW.get().unwrap();
-    main_window
-        .emit(
-            "install_progress",
-            DownloadProgress {
-                completed: 0,
-                total: 0,
-                step: 2,
-            },
-        )
-        .unwrap();
+    if send_progress {
+        main_window
+            .emit(
+                "install_progress",
+                DownloadProgress {
+                    completed: 0,
+                    total: 0,
+                    step: 2,
+                },
+            )
+            .unwrap();
+    }
     let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let downloads: Vec<_> = downloads
         .into_par_iter()
@@ -80,16 +82,18 @@ pub async fn download_files(downloads: Vec<Download>) {
             };
             let file_hash = calculate_sha1_from_read(&mut file);
             counter.clone().fetch_add(1, Ordering::SeqCst);
-            main_window
-                .emit(
-                    "install_progress",
-                    DownloadProgress {
-                        completed: counter.load(Ordering::SeqCst),
-                        total: 0,
-                        step: 2,
-                    },
-                )
-                .unwrap();
+            if send_progress {
+                main_window
+                    .emit(
+                        "install_progress",
+                        DownloadProgress {
+                            completed: counter.load(Ordering::SeqCst),
+                            total: 0,
+                            step: 2,
+                        },
+                    )
+                    .unwrap();
+            }
             &file_hash != download.sha1.as_ref().unwrap()
         })
         .collect();
@@ -131,13 +135,13 @@ pub async fn download_files(downloads: Vec<Download>) {
                     }
                     println!("Downloaded failed: {}, retrying...", &task.url);
                     if retries >= 5 {
-                        MAIN_WINDOW
-                            .get()
-                            .unwrap()
-                            .emit("install_error", DownloadError {
-                                step: 3
-                            })
-                            .unwrap();
+                        if send_error {
+                            MAIN_WINDOW
+                                .get()
+                                .unwrap()
+                                .emit("install_error", DownloadError { step: 3 })
+                                .unwrap();
+                        }
                         break;
                     }
                     retries += 1;
@@ -148,16 +152,18 @@ pub async fn download_files(downloads: Vec<Download>) {
         .for_each_concurrent(None, |_| async {
             let counter = counter.clone().load(Ordering::SeqCst);
             // println!("Progress: {counter} / {total}");
-            main_window
-                .emit(
-                    "install_progress",
-                    DownloadProgress {
-                        completed: counter,
-                        total,
-                        step: 3,
-                    },
-                )
-                .unwrap();
+            if send_progress {
+                main_window
+                    .emit(
+                        "install_progress",
+                        DownloadProgress {
+                            completed: counter,
+                            total,
+                            step: 3,
+                        },
+                    )
+                    .unwrap();
+            }
         })
         .await;
     tx.send("terminate").unwrap();
