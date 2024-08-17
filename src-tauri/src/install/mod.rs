@@ -96,7 +96,7 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
             return Err(());
         }
     };
-    download_files(download_list).await;
+    download_files(download_list, true, true).await;
     if runtime.mod_loader_type.is_some() {
         main_window
             .emit(
@@ -150,7 +150,32 @@ async fn install_mod_loader(
             )
             .await?
         }
-        ModLoaderType::Forge => {}
+        ModLoaderType::Forge => {
+            forge::install(
+                &DATA_LOCATION.get().unwrap().root,
+                &mod_loader_version,
+                &runtime.minecraft,
+            )
+            .await?
+            // forge::install(
+            //     RequiredVersion {
+            //         installer: None,
+            //         mcversion: runtime.minecraft.clone(),
+            //         version: mod_loader_version.clone(),
+            //     },
+            //     MinecraftLocation::new(&data_location.root),
+            //     InstallForgeOptions {
+            //         maven_host: None,
+            //         version_id: Some(format!(
+            //             "forge-{}-{}",
+            //             runtime.minecraft, mod_loader_version
+            //         )),
+            //         inherits_from: Some(runtime.minecraft),
+            //         java: None,
+            //     },
+            // )
+            // .await?
+        }
         ModLoaderType::Neoforge => {}
     }
 
