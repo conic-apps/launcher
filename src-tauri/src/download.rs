@@ -134,7 +134,9 @@ pub async fn download_files(downloads: Vec<Download>) {
                         MAIN_WINDOW
                             .get()
                             .unwrap()
-                            .emit("install_error", "")
+                            .emit("install_error", DownloadError {
+                                step: 3
+                            })
                             .unwrap();
                         break;
                     }

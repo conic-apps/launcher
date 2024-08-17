@@ -5,8 +5,8 @@
         <install-progress
           :installing="installing"
           :instance-name="currentInstance.config.name"
-          :mod-loader-type="currentInstance.config.runtime.modLoaderType"
-          :mod-loader-version="currentInstance.config.runtime.modLoaderVersion"></install-progress>
+          :mod-loader-type="currentInstance.config.runtime.mod_loader_type"
+          :mod-loader-version="currentInstance.config.runtime.mod_loader_version"></install-progress>
         <instance-info
           minecraft-version="1.20.1"
           :instance-name="currentInstance.config.name"
@@ -96,8 +96,8 @@ interface Instance {
     name: string;
     runtime: {
       minecraft: string;
-      modLoaderType: "fabric" | "quilt" | "forge" | "neoforge" | null;
-      modLoaderVersion: string | null
+      mod_loader_type: "Fabric" | "Quilt" | "Forge" | "Neoforge" | undefined;
+      mod_loader_version: string | undefined
     };
   };
   installed: boolean;
@@ -108,8 +108,8 @@ let currentInstance = ref<Instance>({
     name: "",
     runtime: {
       minecraft: "",
-      modLoaderType: null,
-      modLoaderVersion: null
+      mod_loader_type: undefined,
+      mod_loader_version: undefined
     },
   },
   installed: false,
