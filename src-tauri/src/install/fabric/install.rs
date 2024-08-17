@@ -134,12 +134,12 @@ pub async fn install(options: FabricInstallOptions) -> Result<()> {
     println!("Running fabric installer");
     let out = command.stdout.take().unwrap();
     let mut out = std::io::BufReader::new(out);
-    let mut s = String::new();
-    while let Ok(_) = out.read_line(&mut s) {
+    let mut buf = String::new();
+    while let Ok(_) = out.read_line(&mut buf) {
         if let Ok(Some(_)) = command.try_wait() {
             break;
         }
-        println!("{}", s);
+        println!("{}", buf);
     }
     let installer_output = command.wait_with_output().unwrap();
     if !installer_output.status.success() {
