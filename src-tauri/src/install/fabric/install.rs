@@ -136,7 +136,6 @@ pub async fn install(options: FabricInstallOptions) -> Result<()> {
     let mut out = std::io::BufReader::new(out);
     let mut s = String::new();
     while let Ok(_) = out.read_line(&mut s) {
-        // 进程退出后结束循环
         if let Ok(Some(_)) = command.try_wait() {
             break;
         }

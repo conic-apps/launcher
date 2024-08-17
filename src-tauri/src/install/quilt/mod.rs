@@ -17,11 +17,9 @@
  */
 
 use serde::{Deserialize, Serialize};
+use tauri_plugin_http::reqwest;
 
-pub mod install;
-pub mod version_list;
-
-const DEFAULT_META_URL: &str = "https://meta.quiltmc.org";
+use crate::{folder::MinecraftLocation, version::Version, HTTP_CLIENT};
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct QuiltArtifactVersion {
@@ -81,4 +79,41 @@ pub struct QuiltVersion {
     pub hashed: QuiltVersionHashed,
     pub intermediary: QuiltVersionIntermediary,
     pub launcher_meta: QuiltLauncherMeta,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct QuiltVersionList(Vec<QuiltVersion>);
+impl QuiltVersionList {
+    pub async fn new(mcversion: &str) -> anyhow::Result<Self> {
+        let url = format!("https://meta.quiltmc.org/v3/versions/loader/{mcversion}");
+        let response = HTTP_CLIENT.get().unwrap().get(url).send().await?;
+        Ok(response.json().await?)
+    }
+}
+
+pub async fn install(
+    mcversion: &str,
+    quilt_version: &str,
+    minecraft: MinecraftLocation,
+) -> anyhow::Result<()> {
+    let url = format!(
+        "https://meta.quiltmc.org/v3/versions/loader/{mcversion}/{quilt_version}/profile/json"
+    );
+    let response = reqwest::get(url).await.unwrap();
+    let quilt_version_json: Version = response.json().await.unwrap();
+    let version_name = quilt_version_json.id.clone();
+    let json_path = minecraft.get_version_json(&version_name);
+    // let libraries = quilt_version.libraries.clone().unwrap();
+    // let hashed = libraries.iter().find(|l| match l["name"].as_str() {
+    //     None => false,
+    //     Some(name) => name.starts_with("org.quiltmc:hashed"),
+    // });
+
+    tokio::fs::create_dir_all(json_path.parent().unwrap()).await?;
+    tokio::fs::write(
+        json_path,
+        serde_json::to_string_pretty(&quilt_version_json).unwrap(),
+    )
+    .await?;
+    Ok(())
 }

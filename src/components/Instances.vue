@@ -29,7 +29,7 @@ interface Instance {
     runtime: {
       minecraft: string;
       mod_loader_type: "Fabric" | "Quilt" | "Forge" | "Neoforge" | undefined;
-      mod_loader_version: string | undefined
+      mod_loader_version: string | undefined;
     };
   };
   installed: boolean;

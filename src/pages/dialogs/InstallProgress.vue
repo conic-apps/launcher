@@ -49,8 +49,14 @@
             已下载 {{ installProgress.completed }} 个文件，共 {{ installProgress.total }} 个
           </i>
         </div>
-        <div class="step" v-if="!!modLoaderType"
-          :style="installModLoaderStatus == 'success' || installModLoaderStatus == 'pending' ? 'opacity: 0.8' : 'background: rgba(255, 255, 255, 0.08)'">
+        <div
+          class="step"
+          v-if="!!modLoaderType"
+          :style="
+            installModLoaderStatus == 'success' || installModLoaderStatus == 'pending'
+              ? 'opacity: 0.8'
+              : 'background: rgba(255, 255, 255, 0.08)'
+          ">
           <item-loading-icon :status="installModLoaderStatus"></item-loading-icon>
           <p>安装 {{ modLoaderType }}</p>
         </div>
@@ -82,7 +88,7 @@ const computedTime = computed(() => {
 const props = defineProps<{
   installing: boolean;
   instanceName: string;
-  modLoaderType: 'Fabric' | 'Forge' | 'Neoforge' | 'Quilt' | undefined
+  modLoaderType: "Fabric" | "Forge" | "Neoforge" | "Quilt" | undefined;
 }>();
 watch(props, (val) => {
   if (val.installing == true) {
@@ -166,13 +172,13 @@ const installModLoaderStatus = computed(() => {
     return "error";
   }
   if (installProgress.value.step == 4) {
-    return "in-progress"
+    return "in-progress";
   }
   if (installProgress.value.step > 4) {
     return "success";
   }
   return "pending";
-})
+});
 let speed = ref("");
 listen("download_speed", (event) => {
   let payload = (event.payload as number) / 2;

@@ -17,7 +17,7 @@
  */
 
 use forge::version_list::ForgeVersionList;
-use quilt::version_list::QuiltVersionList;
+use quilt::QuiltVersionList;
 use tauri::Emitter;
 use tokio::io::AsyncWriteExt;
 use vanilla::generate_download_info;
@@ -53,9 +53,7 @@ pub async fn get_forge_version_list(mcversion: String) -> Option<ForgeVersionLis
 
 #[tauri::command(async)]
 pub async fn get_quilt_version_list(mcversion: String) -> Option<QuiltVersionList> {
-    QuiltVersionList::from_mcversion(None, &mcversion)
-        .await
-        .ok()
+    QuiltVersionList::new(&mcversion).await.ok()
 }
 
 #[tauri::command(async)]
@@ -98,7 +96,6 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
             return Err(());
         }
     };
-
     download_files(download_list).await;
     if runtime.mod_loader_type.is_some() {
         main_window
@@ -143,9 +140,16 @@ async fn install_mod_loader(
                 install_dir: data_location.root.clone(),
                 loader: mod_loader_version,
             })
-            .await?;
+            .await?
         }
-        ModLoaderType::Quilt => {}
+        ModLoaderType::Quilt => {
+            quilt::install(
+                &runtime.minecraft,
+                &mod_loader_version,
+                MinecraftLocation::new(&data_location.root),
+            )
+            .await?
+        }
         ModLoaderType::Forge => {}
         ModLoaderType::Neoforge => {}
     }
