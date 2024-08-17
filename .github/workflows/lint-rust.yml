@@ -1,10 +1,10 @@
 name: lint rust
 
 on:
-    push:
-      paths:
-        - '.github/workflows/lint-rust.yml'
-        - 'src-tauri/**'
+  push:
+    paths:
+      - ".github/workflows/lint-rust.yml"
+      - "src-tauri/**"
 
 env:
   RUST_BACKTRACE: 1
@@ -33,32 +33,32 @@ jobs:
         run: cd src-tauri && cargo fmt --all -- --check
 
   clippy:
-          runs-on: ubuntu-latest
-          strategy:
-            matrix:
-              clippy:
-                - { args: '', key: 'empty' }
-                - { args: '--all-features', key: 'all' }      
-          steps:
-            - uses: actions/checkout@v4
-      
-            - name: install dependencies
-              run: |
-                sudo apt-get update
-                sudo apt-get install -y webkit2gtk-4.1 libayatana-appindicator3-dev
-      
-            - name: install Rust stable with clippy
-              uses: dtolnay/rust-toolchain@stable
-              with:
-                components: clippy
-      
-            - uses: Swatinem/rust-cache@v2
-              with:
-                workspaces: ./src-tauri -> target
-                save-if: ${{ matrix.clippy.key == 'all' }}
-            
-            - name: Run cargo check
-              run: cargo check
-            
-            - name: Run clippy - ${{ matrix.clippy.key }}
-              run: cargo clippy --manifest-path ./src-tauri/Cargo.toml --all-targets ${{ matrix.clippy.args }} -- -D warnings
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        clippy:
+          - { args: "", key: "empty" }
+          - { args: "--all-features", key: "all" }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y webkit2gtk-4.1 libayatana-appindicator3-dev
+
+      - name: install Rust stable with clippy
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+          save-if: ${{ matrix.clippy.key == 'all' }}
+
+      - name: Run cargo check
+        run: cargo check
+
+      - name: Run clippy - ${{ matrix.clippy.key }}
+        run: cargo clippy --manifest-path ./src-tauri/Cargo.toml --all-targets ${{ matrix.clippy.args }} -- -D warnings

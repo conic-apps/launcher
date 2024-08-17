@@ -97,7 +97,7 @@ interface Instance {
     runtime: {
       minecraft: string;
       mod_loader_type: "Fabric" | "Quilt" | "Forge" | "Neoforge" | undefined;
-      mod_loader_version: string | undefined
+      mod_loader_version: string | undefined;
     };
   };
   installed: boolean;
@@ -109,7 +109,7 @@ let currentInstance = ref<Instance>({
     runtime: {
       minecraft: "",
       mod_loader_type: undefined,
-      mod_loader_version: undefined
+      mod_loader_version: undefined,
     },
   },
   installed: false,
