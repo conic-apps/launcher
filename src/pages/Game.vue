@@ -6,7 +6,9 @@
           :installing="installing"
           :instance-name="currentInstance.config.name"
           :mod-loader-type="currentInstance.config.runtime.mod_loader_type"
-          :mod-loader-version="currentInstance.config.runtime.mod_loader_version"></install-progress>
+          :mod-loader-version="
+            currentInstance.config.runtime.mod_loader_version
+          "></install-progress>
         <instance-info
           minecraft-version="1.20.1"
           :instance-name="currentInstance.config.name"
@@ -15,7 +17,9 @@
           @game-button-click="
             () => {
               if (gameButtonType === 'launch') {
-                invoke('launch');
+                invoke('launch', {
+                  instanceName: currentInstance.config.name,
+                });
               } else if (gameButtonType === 'install') {
                 installing = true;
                 invoke('install');

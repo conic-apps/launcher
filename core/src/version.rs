@@ -299,21 +299,21 @@ fn parse_version(s: &str) -> Result<MinecraftVersion> {
 pub struct ResolvedVersion {
     /// The id of the version, should be identical to the version folder.
     pub id: String,
-    pub arguments: Option<ResolvedArguments>,
+    pub arguments: ResolvedArguments,
 
     /// The main class full qualified name.
-    pub main_class: String,
+    pub main_class: Option<String>,
     pub asset_index: Option<AssetIndex>,
 
     /// The asset index id of this version. Should be something like `1.14`, `1.12`.
-    pub assets: String,
-    pub downloads: Option<HashMap<String, Download>>,
+    pub assets: Option<String>,
+    pub downloads: HashMap<String, Download>,
     pub libraries: Vec<ResolvedLibrary>,
     pub minimum_launcher_version: i32,
-    pub release_time: String,
-    pub time: String,
-    pub version_type: String,
-    pub logging: Option<HashMap<String, Logging>>,
+    pub release_time: Option<String>,
+    pub time: Option<String>,
+    pub version_type: Option<String>,
+    pub logging: HashMap<String, Logging>,
 
     /// Recommended java version.
     pub java_version: JavaVersion,
@@ -329,6 +329,104 @@ pub struct ResolvedVersion {
     /// It's the chain of inherits json path. The root json will be the last element of the array.
     /// The first element is the user provided version.
     pub path_chain: Vec<PathBuf>,
+}
+
+impl Default for ResolvedVersion {
+    // TODO: use None, dont use empty string
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            arguments: ResolvedArguments::default(),
+            main_class: None,
+            asset_index: None,
+            assets: None,
+            downloads: HashMap::new(),
+            libraries: Vec::new(),
+            minimum_launcher_version: 0,
+            release_time: None,
+            time: None,
+            version_type: None,
+            logging: HashMap::new(),
+            java_version: JavaVersion {
+                component: "jre-legacy".to_string(),
+                major_version: 8,
+            },
+            inheritances: Vec::new(),
+            path_chain: Vec::new(),
+        }
+    }
+}
+
+impl ResolvedVersion {
+    fn id(&mut self, id: String) -> &mut Self {
+        if !id.is_empty() {
+            self.id = id
+        }
+        self
+    }
+    fn minimum_launcher_version(&mut self, version: Option<i32>) -> &mut Self {
+        self.minimum_launcher_version =
+            std::cmp::max(version.unwrap_or(0), self.minimum_launcher_version);
+        self
+    }
+    fn release_time(&mut self, release_time: Option<String>) -> &mut Self {
+        if release_time.is_some() {
+            self.time = release_time
+        }
+        self
+    }
+    fn time(&mut self, time: Option<String>) -> &mut Self {
+        if time.is_some() {
+            self.time = time
+        }
+        self
+    }
+    fn logging(&mut self, logging: Option<HashMap<String, Logging>>) -> &mut Self {
+        if let Some(logging) = logging {
+            if !logging.is_empty() {
+                self.logging = logging
+            } else {
+                self.logging = logging.clone()
+            }
+        };
+        self
+    }
+    fn assets(&mut self, assets: Option<String>) -> &mut Self {
+        if assets.is_some() {
+            self.assets = assets
+        }
+        self
+    }
+    fn version_type(&mut self, version_type: Option<String>) -> &mut Self {
+        if version_type.is_some() {
+            self.version_type = version_type
+        }
+        self
+    }
+    fn main_class(&mut self, main_class: Option<String>) -> &mut Self {
+        if main_class.is_some() {
+            self.main_class = main_class
+        }
+        self
+    }
+    fn java_version(&mut self, java_version: Option<JavaVersion>) -> &mut Self {
+        if let Some(java_version) = java_version {
+            self.java_version = java_version
+        }
+        self
+    }
+    fn asset_index(&mut self, asset_index: Option<AssetIndex>) -> &mut Self {
+        if asset_index.is_some() {
+            self.asset_index = asset_index
+        }
+        self
+    }
+    fn downloads(&mut self, downloads: Option<HashMap<String, Download>>) -> &mut Self {
+        if let Some(downloads) = downloads {
+            self.downloads.extend(downloads)
+        }
+        self
+    }
 }
 
 /// The raw json format provided by Minecraft.
@@ -445,16 +543,17 @@ impl Version {
         let mut inherits_from = self.inherits_from.clone();
         let versions_folder = &minecraft.versions;
         let mut versions = Vec::new();
-        let mut inheritances = Vec::new();
-        let mut path_chain = Vec::new();
+        let mut resolved_version = ResolvedVersion::default();
         versions.push(self.clone());
         while let Some(inherits_from_unwrap) = inherits_from {
-            inheritances.push(inherits_from_unwrap.clone());
+            resolved_version
+                .inheritances
+                .push(inherits_from_unwrap.clone());
 
             let path = versions_folder
                 .join(inherits_from_unwrap.clone())
                 .join(format!("{}.json", inherits_from_unwrap.clone()));
-            path_chain.push(path.clone());
+            resolved_version.path_chain.push(path.clone());
             let version_json = read_to_string(path)?;
             let version_json: Version = serde_json::from_str((version_json).as_ref())?;
 
@@ -462,92 +561,35 @@ impl Version {
             inherits_from = version_json.inherits_from;
         }
 
-        let mut assets = "".to_string();
-        let mut minimum_launcher_version = 0;
-
-        let game_args = DEFAULT_GAME_ARGS.clone();
-        let jvm_args = DEFAULT_JVM_ARGS.clone();
-        let mut release_time = "".to_string();
-        let mut time = "".to_string();
-        let mut version_type = "".to_string();
-        let mut logging = HashMap::new();
-        let mut main_class = "".to_string();
-        let mut asset_index = None;
-        let mut java_version = JavaVersion {
-            component: "jre-legacy".to_string(),
-            major_version: 8,
-        };
         let mut libraries_raw = Vec::new();
-        let mut downloads = HashMap::new();
 
         while let Some(version) = versions.pop() {
-            minimum_launcher_version = std::cmp::max(
-                version.minimum_launcher_version.unwrap_or(0),
-                minimum_launcher_version,
-            );
-
-            release_time = version.release_time.unwrap_or(release_time);
-            time = version.time.unwrap_or(time);
-            logging = if let Some(logging_) = version.logging {
-                if !logging_.is_empty() {
-                    logging
-                } else {
-                    logging_.clone()
-                }
-            } else {
-                logging
-            };
-            assets = version.assets.unwrap_or(assets);
-            version_type = version.r#type.unwrap_or(version_type);
-            main_class = version.main_class.unwrap_or(main_class);
-            asset_index = match version.asset_index {
-                Some(asset_index) => Some(asset_index),
-                None => asset_index,
-            };
-            java_version = version.java_version.unwrap_or(java_version);
+            resolved_version
+                .id(version.id)
+                .minimum_launcher_version(version.minimum_launcher_version)
+                .release_time(version.release_time)
+                .time(version.time)
+                .logging(version.logging)
+                .assets(version.assets)
+                .version_type(version.r#type)
+                .main_class(version.main_class)
+                .java_version(version.java_version)
+                .asset_index(version.asset_index)
+                .downloads(version.downloads);
 
             if let Some(libraries) = version.libraries {
                 libraries_raw.splice(0..0, libraries);
             }
-            if let Some(v) = version.downloads {
-                downloads.extend(v)
-            }
         }
-        let main_class_is_empty = main_class.is_empty();
-        let assets_index_is_empty = asset_index
-            == Some(AssetIndex {
-                size: 0,
-                url: "".to_string(),
-                id: "".to_string(),
-                total_size: 0,
-            });
-        let downloads_is_empty = downloads.is_empty();
-        if main_class_is_empty || assets_index_is_empty || downloads_is_empty {
+        resolved_version.libraries = resolve_libraries(libraries_raw, platform).await;
+        if resolved_version.main_class.is_none()
+            || resolved_version.asset_index.is_none()
+            || resolved_version.downloads.is_empty()
+            || resolved_version.libraries.is_empty()
+        {
             return Err(anyhow::anyhow!("Bad Version JSON"));
         }
-        Ok(ResolvedVersion {
-            id: self.id.clone(),
-            arguments: Some(ResolvedArguments {
-                game: game_args,
-                jvm: jvm_args,
-            }),
-            main_class,
-            asset_index,
-            assets,
-            downloads: Some(downloads),
-            libraries: resolve_libraries(libraries_raw, platform).await,
-            minimum_launcher_version,
-            release_time,
-            time,
-            version_type,
-            logging: Some(logging),
-            java_version: self.java_version.clone().unwrap_or(JavaVersion {
-                component: "jre-legacy".to_string(),
-                major_version: 8,
-            }),
-            inheritances,
-            path_chain,
-        })
+        Ok(resolved_version)
     }
 }
 
@@ -555,6 +597,15 @@ impl Version {
 pub struct ResolvedArguments {
     pub game: Vec<String>,
     pub jvm: Vec<String>,
+}
+
+impl Default for ResolvedArguments {
+    fn default() -> Self {
+        ResolvedArguments {
+            game: DEFAULT_GAME_ARGS.clone(),
+            jvm: DEFAULT_JVM_ARGS.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
