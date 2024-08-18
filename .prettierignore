@@ -1,3 +1,3 @@
-src-tauri/target
+core/target
 **/assets
 **/.gitignore
