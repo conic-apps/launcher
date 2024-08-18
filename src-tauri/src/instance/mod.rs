@@ -1,6 +1,7 @@
 use crate::config::instance::InstanceConfig;
 use crate::version::VersionManifest;
 use crate::{Storage, DATA_LOCATION};
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -18,6 +19,7 @@ pub async fn create_instance(instance_name: String, config: InstanceConfig) -> O
         tokio::fs::create_dir_all(config_file.parent().ok_or(anyhow::anyhow!("Path Error"))?)
             .await?;
         tokio::fs::write(config_file, toml::to_string_pretty(&config)?).await?;
+        info!("Created instance: {}", instance_name);
         Ok(())
     }
     create_instance(instance_name, config).await.ok()
@@ -25,6 +27,7 @@ pub async fn create_instance(instance_name: String, config: InstanceConfig) -> O
 
 #[tauri::command(async)]
 pub async fn check_repeated_instance_name(instance_name: String) -> bool {
+    debug!("Checking repeated: {}", instance_name);
     let instance_root = DATA_LOCATION
         .get()
         .unwrap()
@@ -44,7 +47,7 @@ pub async fn check_repeated_instance_name(instance_name: String) -> bool {
 
 #[tauri::command(async)]
 pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
-    println!("Scanning Instances...");
+    info!("Refreshing all instances");
     scan().await.ok()
 }
 
@@ -68,6 +71,7 @@ async fn scan() -> anyhow::Result<Vec<Instance>> {
         }
         .to_string_lossy()
         .to_string();
+        debug!("Checking {}", folder_name);
         let instance_config = path.join("instance.toml");
         let metadata = match instance_config.metadata() {
             Err(_) => continue,
@@ -105,7 +109,7 @@ async fn scan() -> anyhow::Result<Vec<Instance>> {
 #[tauri::command]
 pub fn set_current_instance(instance_name: String, storage: tauri::State<Storage>) {
     let mut current_instance = storage.current_instance.lock().unwrap();
-    println!("Setting current instance to {}", instance_name);
+    debug!("Selected {}", instance_name);
     *current_instance = instance_name;
 }
 

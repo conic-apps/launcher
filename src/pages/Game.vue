@@ -225,10 +225,18 @@ listen("install_success", (event) => {
   font-size: 10px;
 }
 
-.group-button,
-.group-button * {
-  cursor: pointer;
+.group-button:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
+
+.group-button:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+// .group-button,
+// .group-button * {
+//   cursor: pointer;
+// }
 
 .group-button i::before {
   transform: scale(0.7);

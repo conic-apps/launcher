@@ -1,6 +1,6 @@
 use std::{io::BufRead, path::PathBuf, process::Stdio};
 
-use log::{debug, info};
+use log::{debug, error, info};
 use tokio::io::AsyncWriteExt;
 
 use crate::{platform::DELIMITER, DATA_LOCATION, HTTP_CLIENT};
@@ -40,9 +40,8 @@ pub async fn install(
     }
     let java = DATA_LOCATION.get().unwrap().default_jre.clone();
     info!("Starting installer");
-    let mut command =match bootstrapper {
-        Some(_) => {
-            std::process::Command::new(java)
+    let mut command = match bootstrapper {
+        Some(_) => std::process::Command::new(java)
             .arg("-cp")
             .arg(format!(
                 "{}{}{}",
@@ -54,24 +53,21 @@ pub async fn install(
             .arg(install_dir)
             .stdout(Stdio::piped())
             .spawn()
-            .unwrap()
-        },
-        None => {
-            std::process::Command::new(java)
+            .unwrap(),
+        None => std::process::Command::new(java)
             .arg("-jar")
             .arg(&installer_path)
             .arg("--installClient")
             .arg(install_dir)
             .stdout(Stdio::piped())
             .spawn()
-            .unwrap()
-        }
+            .unwrap(),
     };
     let out = command.stdout.take().unwrap();
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
     let mut success = false;
-    while let Ok(_) = out.read_line(&mut buf) {
+    while out.read_line(&mut buf).is_ok() {
         if let Ok(Some(_)) = command.try_wait() {
             break;
         }
@@ -88,7 +84,8 @@ pub async fn install(
     let output = command.wait_with_output().unwrap();
     if (!success && bootstrapper.is_some()) || !output.status.success() {
         tokio::fs::remove_file(installer_path).await?;
-        return Err(anyhow::Error::msg("Forge installer failed"));
+        error!("Failed to ran forge installer");
+        return Err(anyhow::Error::msg("Failed to ran forge installer"));
     }
     tokio::fs::remove_file(installer_path).await?;
     Ok(())

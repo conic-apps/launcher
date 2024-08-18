@@ -13,16 +13,6 @@ use crate::{
     version::{self, AssetIndex, AssetIndexObject, ResolvedVersion, VersionManifest},
 };
 
-/// todo
-pub struct NetworkOptions {
-    pub use_proxy: bool,
-    pub minecraft_remote: String,
-    pub forge_remote: String,
-    pub fabric_remote: String,
-    pub optifine_remote: String,
-    pub quilt_remote: String,
-}
-
 pub(crate) fn generate_libraries_downloads(
     libraries: &[ResolvedLibrary],
     minecraft_location: &MinecraftLocation,
@@ -82,32 +72,6 @@ pub(crate) async fn generate_assets_downloads(
         sha1: None,
     });
     Ok(assets)
-}
-
-/// check game integrity and try to repair files
-///
-/// This is usually done in situations where the integrity of the game is uncertain,
-/// such as launching for the first time after installation
-pub async fn generate_dependencies_downloads(
-    version: ResolvedVersion,
-    minecraft_location: MinecraftLocation,
-) -> Result<()> {
-    let mut download_list = Vec::new();
-
-    download_list.extend(generate_libraries_downloads(
-        &version.libraries,
-        &minecraft_location,
-    ));
-    download_list.extend(
-        generate_assets_downloads(version.asset_index.clone().unwrap(), &minecraft_location)
-            .await?,
-    );
-    let log4j2 = generate_log4j2_configuration_download(&version, &minecraft_location);
-    if let Ok(log4j2) = log4j2 {
-        download_list.push(log4j2);
-    }
-
-    Ok(())
 }
 
 pub fn generate_log4j2_configuration_download(

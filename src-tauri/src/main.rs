@@ -11,6 +11,7 @@ pub mod platform;
 pub mod utils;
 pub mod version;
 
+use std::io::Write;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -25,7 +26,9 @@ use crate::install::{
 use crate::instance::{
     check_repeated_instance_name, create_instance, scan_instances_folder, set_current_instance,
 };
+use env_logger::fmt::style::{Color, Style};
 use folder::DataLocation;
+use log::{debug, error, info, Level, LevelFilter};
 use once_cell::sync::OnceCell;
 use platform::{OsType, PlatformInfo};
 use tauri::{Listener, Manager, Window};
@@ -44,9 +47,13 @@ pub struct Storage {
 }
 #[tokio::main]
 async fn main() {
+    initialize_logger();
+    print_title();
+    info!("Amethyst Launcher is starting up");
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     initialize_application().await;
-    match tauri::Builder::default()
+    info!("Amethyst Launcher is open source, You can view the source code on Github: https://github.com/Conic-Sections/Amethyst-Launcher");
+    let result = tauri::Builder::default()
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
@@ -70,38 +77,97 @@ async fn main() {
         })
         .setup(move |app| {
             MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
-            app.listen_any("fontend-loaded", move |_| {
-                println!(
-                    "
- █████╗ ███╗   ███╗███████╗████████╗██╗  ██╗██╗   ██╗███████╗████████╗    
-██╔══██╗████╗ ████║██╔════╝╚══██╔══╝██║  ██║╚██╗ ██╔╝██╔════╝╚══██╔══╝    
-███████║██╔████╔██║█████╗     ██║   ███████║ ╚████╔╝ ███████╗   ██║       
-██╔══██║██║╚██╔╝██║██╔══╝     ██║   ██╔══██║  ╚██╔╝  ╚════██║   ██║       
-██║  ██║██║ ╚═╝ ██║███████╗   ██║   ██║  ██║   ██║   ███████║   ██║       
-╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚══════╝   ╚═╝       
-                                                                          
-██╗      █████╗ ██╗   ██╗███╗   ██╗ ██████╗██╗  ██╗███████╗██████╗        
-██║     ██╔══██╗██║   ██║████╗  ██║██╔════╝██║  ██║██╔════╝██╔══██╗       
-██║     ███████║██║   ██║██╔██╗ ██║██║     ███████║█████╗  ██████╔╝       
-██║     ██╔══██║██║   ██║██║╚██╗██║██║     ██╔══██║██╔══╝  ██╔══██╗       
-███████╗██║  ██║╚██████╔╝██║ ╚████║╚██████╗██║  ██║███████╗██║  ██║       
-╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝       
-             "
-                )
-            });
+            info!("Main window loaded");
+            app.listen_any("fontend-loaded", |_| info!("Frontend loaded"));
             Ok(())
         })
-        .run(tauri::generate_context!())
-    {
-        Ok(_) => {
-            tokio::fs::remove_dir_all(&DATA_LOCATION.get().unwrap().temp)
-                .await
-                .expect("error while clear temp foler!");
-        }
+        .run(tauri::generate_context!());
+    match result {
+        Ok(_) => match tokio::fs::remove_dir_all(&DATA_LOCATION.get().unwrap().temp).await {
+            Ok(_) => info!("Temporary files cleared"),
+            Err(_) => {
+                error!("Could not clear temp foler")
+            }
+        },
         Err(_) => {
-            panic!("error while running tauri application!")
+            error!("Fatal Error while running tauri application!")
         }
     };
+}
+
+fn initialize_logger() {
+    let env = env_logger::Env::default()
+        .filter("LOG_LEVEL")
+        .write_style("LOG_STYLE");
+    env_logger::Builder::from_env(env)
+        .filter_level(LevelFilter::Trace)
+        .format(|buf, record| {
+            let warn_style = buf.default_level_style(Level::Warn);
+            let error_style = buf.default_level_style(Level::Error);
+            let info_style = buf.default_level_style(Level::Info);
+            let debug_style = buf.default_level_style(Level::Debug);
+            let debug_text_style = Style::new().fg_color(Some(Color::Ansi(env_logger::fmt::style::AnsiColor::BrightBlack)));
+            let trace_style = buf.default_level_style(Level::Trace);
+            let timestamp = buf.timestamp();
+            let level = record.level();
+let target = record.target();
+            match level {
+                Level::Debug => {
+                    writeln!(
+                        buf,
+                    "[{timestamp}] [{target}/{debug_style}DEBUG{debug_style:#}]: {debug_text_style}{}{debug_text_style:#}",
+                        record.args()
+                    )
+                }
+                Level::Info => {
+                    writeln!(
+                        buf,
+                        "[{timestamp}] [{target}/{info_style}INFO{info_style:#}]: {}",
+                        record.args()
+                    )
+                }
+                Level::Error => {
+                    writeln!(
+                        buf,
+                        "[{timestamp}] [{target}/{error_style}ERROR{error_style:#}]: {error_style}{}{error_style:#}",
+                        record.args()
+                    )
+                }
+                Level::Warn => {
+                    writeln!(
+                        buf,
+                        "[{timestamp}] [{target}/{warn_style}WARN{warn_style:#}]: {}",
+                        record.args()
+                    )
+                }
+                Level::Trace => {
+                    writeln!(
+                        buf,
+                        "[{timestamp}] [{target}/{trace_style}TRACE{trace_style:#}]: {}",
+                        record.args()
+                    )
+                }
+            }
+        })
+        .init();
+    // let env = env_logger::Env::default()
+    //     .filter("MY_LOG_LEVEL")
+    //     .write_style("MY_LOG_STYLE");
+
+    // env_logger::Builder::from_env(env)
+    //     .format(|buf, record| {
+    //         // We are reusing `anstyle` but there are `anstyle-*` crates to adapt it to your
+    //         // preferred styling crate.
+    //         let warn_style = buf.default_level_style(log::Level::Warn);
+    //         let timestamp = buf.timestamp();
+
+    //         writeln!(
+    //             buf,
+    //             "My formatted log ({timestamp}): {warn_style}{}{warn_style:#}",
+    //             record.args()
+    //         )
+    //     })
+    //     .init();
 }
 
 async fn initialize_application() {
@@ -115,7 +181,7 @@ async fn initialize_application() {
         .set(
             reqwest::ClientBuilder::new()
                 .pool_idle_timeout(Duration::from_secs(30))
-                .pool_max_idle_per_host(1)
+                .pool_max_idle_per_host(100)
                 .build()
                 .unwrap(),
         )
@@ -134,6 +200,14 @@ async fn initialize_application() {
 
 async fn initialize_application_data() {
     let platform_info = PLATFORM_INFO.get().unwrap();
+    match platform_info.os_type {
+        OsType::Linux => info!("The program is running on Linux {}", platform_info.version),
+        OsType::Osx => info!("The program is running on macOS {}", platform_info.version),
+        OsType::Windows => info!(
+            "The program is running on fucking Windows {}",
+            platform_info.version
+        ),
+    }
     match platform_info.os_type {
         OsType::Windows => {
             APPLICATION_DATA
@@ -159,4 +233,24 @@ async fn initialize_application_data() {
                 .unwrap();
         }
     }
+    info!(
+        "Application data path: {}",
+        APPLICATION_DATA.get().unwrap().to_string_lossy()
+    );
+}
+
+fn print_title() {
+    debug!("  █████╗ ███╗   ███╗███████╗████████╗██╗  ██╗██╗   ██╗███████╗████████╗ ");
+    debug!(" ██╔══██╗████╗ ████║██╔════╝╚══██╔══╝██║  ██║╚██╗ ██╔╝██╔════╝╚══██╔══╝ ");
+    debug!(" ███████║██╔████╔██║█████╗     ██║   ███████║ ╚████╔╝ ███████╗   ██║    ");
+    debug!(" ██╔══██║██║╚██╔╝██║██╔══╝     ██║   ██╔══██║  ╚██╔╝  ╚════██║   ██║    ");
+    debug!(" ██║  ██║██║ ╚═╝ ██║███████╗   ██║   ██║  ██║   ██║   ███████║   ██║    ");
+    debug!(" ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚══════╝   ╚═╝    ");
+    debug!("");
+    debug!(" ██╗      █████╗ ██╗   ██╗███╗   ██╗ ██████╗██╗  ██╗███████╗██████╗     ");
+    debug!(" ██║     ██╔══██╗██║   ██║████╗  ██║██╔════╝██║  ██║██╔════╝██╔══██╗    ");
+    debug!(" ██║     ███████║██║   ██║██╔██╗ ██║██║     ███████║█████╗  ██████╔╝    ");
+    debug!(" ██║     ██╔══██║██║   ██║██║╚██╗██║██║     ██╔══██║██╔══╝  ██╔══██╗    ");
+    debug!(" ███████╗██║  ██║╚██████╔╝██║ ╚████║╚██████╗██║  ██║███████╗██║  ██║    ");
+    debug!(" ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ");
 }

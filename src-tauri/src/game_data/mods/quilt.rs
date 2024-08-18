@@ -199,7 +199,7 @@ pub fn parse_folder<S: AsRef<OsStr> + ?Sized>(folder: &S) -> Result<Vec<Resolved
         if path.is_dir() {
             continue;
         }
-        println!("{:?}", path);
+        // println!("{:?}", path);
         let raw_metadata = match QuiltModMetadata::from_path(path) {
             Ok(v) => v,
             Err(_) => continue,
