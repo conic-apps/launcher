@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{Storage, DATA_LOCATION};
@@ -8,6 +10,25 @@ pub enum ModLoaderType {
     Forge,
     Quilt,
     Neoforge,
+}
+
+impl fmt::Display for ModLoaderType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Fabric => {
+                write!(f, "Fabric")
+            }
+            Self::Quilt => {
+                write!(f, "Quilt")
+            }
+            Self::Forge => {
+                write!(f, "Forge")
+            }
+            Self::Neoforge => {
+                write!(f, "Neoforged")
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -43,7 +64,7 @@ impl InstanceConfig {
         let config_path = DATA_LOCATION
             .get()
             .unwrap()
-            .get_instance_root(&instance_name)
+            .get_instance_root(instance_name)
             .join("instance.toml");
         if config_path.metadata().is_err() {
             return anyhow::Result::Err(anyhow::Error::msg("message"));
@@ -63,7 +84,7 @@ pub async fn get_instance_config(
     let instance_name = storage.current_instance.lock().unwrap().clone();
     match InstanceConfig::get(&instance_name).await {
         anyhow::Result::Ok(x) => Ok(x),
-        anyhow::Result::Err(_) => Err(())
+        anyhow::Result::Err(_) => Err(()),
     }
 }
 
@@ -71,6 +92,6 @@ pub async fn get_instance_config(
 pub async fn get_instance_config_by_name(instance_name: &str) -> Result<InstanceConfig, ()> {
     match InstanceConfig::get(instance_name).await {
         anyhow::Result::Ok(x) => Ok(x),
-        anyhow::Result::Err(_) => Err(())
+        anyhow::Result::Err(_) => Err(()),
     }
 }

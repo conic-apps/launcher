@@ -17,6 +17,7 @@
  */
 
 use crate::{folder::MinecraftLocation, version::Version};
+use log::info;
 use tauri_plugin_http::reqwest;
 
 pub async fn install(
@@ -24,6 +25,7 @@ pub async fn install(
     quilt_version: &str,
     minecraft: MinecraftLocation,
 ) -> anyhow::Result<()> {
+    info!("Saving version metadata file");
     let url = format!(
         "https://meta.fabricmc.net/v2/versions/loader/{mcversion}/{quilt_version}/profile/json"
     );

@@ -2,7 +2,7 @@ use std::{
     io::Read,
     path::PathBuf,
     sync::{
-        atomic::{AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
         mpsc, Arc,
     },
     thread,
@@ -10,6 +10,7 @@ use std::{
 };
 
 use futures::StreamExt;
+use log::warn;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use tauri::Emitter;
@@ -26,14 +27,14 @@ pub struct Download {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct DownloadProgress {
+pub struct Progress {
     pub completed: usize,
     pub total: usize,
     pub step: usize,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct DownloadError {
+pub struct ProgressError {
     pub step: usize,
 }
 
@@ -56,7 +57,7 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
         main_window
             .emit(
                 "install_progress",
-                DownloadProgress {
+                Progress {
                     completed: 0,
                     total: 0,
                     step: 2,
@@ -86,7 +87,7 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
                 main_window
                     .emit(
                         "install_progress",
-                        DownloadProgress {
+                        Progress {
                             completed: counter.load(Ordering::SeqCst),
                             total: 0,
                             step: 2,
@@ -117,15 +118,21 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
             counter.store(0, Ordering::SeqCst);
         }
     });
-
+    let error = Arc::new(AtomicBool::new(false));
     futures::stream::iter(downloads)
         .map(|task| {
             let counter = counter.clone();
             let speed_counter = speed_counter.clone();
+            let error = error.clone();
             async move {
-                let mut retries = 0;
+                let error = error;
+                if error.load(Ordering::SeqCst) {
+                    return;
+                }
+                let mut retried = 0;
                 let task = task;
                 loop {
+                    retried += 1;
                     let speed_counter = speed_counter.clone();
                     if download_file(client, &task, &counter, &speed_counter)
                         .await
@@ -133,18 +140,18 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
                     {
                         break;
                     }
-                    println!("Downloaded failed: {}, retrying...", &task.url);
-                    if retries >= 5 {
+                    warn!("Downloaded failed: {}, retried: {}", &task.url, retried);
+                    if retried >= 5 {
+                        error.store(true, Ordering::SeqCst);
                         if send_error {
                             MAIN_WINDOW
                                 .get()
                                 .unwrap()
-                                .emit("install_error", DownloadError { step: 3 })
+                                .emit("install_error", ProgressError { step: 3 })
                                 .unwrap();
                         }
                         break;
                     }
-                    retries += 1;
                 }
             }
         })
@@ -156,7 +163,7 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
                 main_window
                     .emit(
                         "install_progress",
-                        DownloadProgress {
+                        Progress {
                             completed: counter,
                             total,
                             step: 3,
