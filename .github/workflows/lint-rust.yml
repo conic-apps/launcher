@@ -4,7 +4,9 @@ on:
   push:
     paths:
       - ".github/workflows/lint-rust.yml"
-      - "src-tauri/**"
+      - "core/**"
+  pull_request:
+    branches: ["master"]
 
 env:
   RUST_BACKTRACE: 1
@@ -27,10 +29,10 @@ jobs:
           components: rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: ./src-tauri -> target
+          workspaces: ./core -> target
 
       - name: Run cargo fmt
-        run: cd src-tauri && cargo fmt --all -- --check
+        run: cd core && cargo fmt --all -- --check
 
   clippy:
     runs-on: ubuntu-latest
@@ -54,11 +56,11 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: ./src-tauri -> target
+          workspaces: ./core -> target
           save-if: ${{ matrix.clippy.key == 'all' }}
 
       - name: Run cargo check
         run: cargo check
 
       - name: Run clippy - ${{ matrix.clippy.key }}
-        run: cargo clippy --manifest-path ./src-tauri/Cargo.toml --all-targets ${{ matrix.clippy.args }} -- -D warnings
+        run: cargo clippy --manifest-path ./core/Cargo.toml --all-targets ${{ matrix.clippy.args }} -- -D warnings

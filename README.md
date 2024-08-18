@@ -1,9 +1,11 @@
 # Amethyst Launcher
 
-[![Amethyst Launcher Auto Build](https://github.com/Conic-Sections/amethyst-launcher/actions/workflows/build.yml/badge.svg)](https://github.com/Conic-Sections/amethyst-launcher/actions/workflows/build.yml)
-[![License](https://img.shields.io/github/license/Rene8028/carpet-iee-addition.svg)](https://www.gnu.org/licenses/quick-guide-gplv3.html)
-![](https://img.shields.io/badge/V%20Me-50-red)
-![](https://img.shields.io/badge/WE%20ARE-POOR-yellow)
+[![status](https://img.shields.io/badge/status-stable-blue.svg)](https://github.com/tauri-apps/tauri/tree/dev)
+[![Amethyst Launcher Auto Build](https://img.shields.io/github/actions/workflow/status/Conic-Sections/Amethyst-Launcher/build.yml?label=build%20app&logo=github)](https://github.com/Conic-Sections/amethyst-launcher/actions/workflows/build.yml)
+[![License](https://img.shields.io/github/license/Conic-Sections/Amethyst-Launcher.svg)](https://www.gnu.org/licenses/quick-guide-GPL-3.0.html)
+![Contributors](https://img.shields.io/github/contributors/Conic-Sections/Amethyst-Launcher?color=2green)
+[![website](https://img.shields.io/badge/website-launcher.btlcraft.top-purple.svg)](https://launcher.btlcraft.top)
+[![https://good-labs.github.io/greater-good-affirmation/assets/images/badge.svg](https://good-labs.github.io/greater-good-affirmation/assets/images/badge.svg)](https://good-labs.github.io/greater-good-affirmation)
 
 [简体中文](./README.zh.md)
 
