@@ -14,7 +14,7 @@ jobs:
       - name: Get app version
         id: step
         run: |
-          echo "text=$(jq -r .version src-tauri/tauri.conf.json)" >> "$GITHUB_OUTPUT"
+          echo "text=$(jq -r .version core/tauri.conf.json)" >> "$GITHUB_OUTPUT"
     outputs:
       app_version: ${{ steps.step.outputs.text }}
   build-arm-linux:
@@ -32,25 +32,25 @@ jobs:
           yarn tauri build -- --verbose
       - name: show files
         run: |
-          tree ${{ github.workspace }}/src-tauri/target
+          tree ${{ github.workspace }}/core/target
 
       - name: Upload deb bundle
         uses: actions/upload-artifact@v4
         with:
           name: Debian bundle(aarch64)
-          path: ${{ github.workspace }}/src-tauri/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_arm64.deb
+          path: ${{ github.workspace }}/core/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_arm64.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v4
         with:
           name: RPM bundle(aarch64)
-          path: ${{ github.workspace }}/src-tauri/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.aarch64.rpm
+          path: ${{ github.workspace }}/core/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.aarch64.rpm
 
       - name: Upload appimage bundle
         uses: actions/upload-artifact@v4
         with:
           name: AppImage bundle(aarch64)
-          path: ${{ github.workspace }}/src-tauri/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage
+          path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage
 
   build-other:
     needs: [get-version]
@@ -99,7 +99,7 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: "./src-tauri -> target"
+          workspaces: "./core -> target"
           cache-on-failure: true
       # TODO:
       - name: install tree
@@ -115,7 +115,7 @@ jobs:
           yarn tauri build -- ${{ matrix.args }}
       - name: show files
         run: |
-          tree ${{ github.workspace }}/src-tauri/target
+          tree ${{ github.workspace }}/core/target
 
         # Upload the macos artifacts
       - name: Upload deb bundle
@@ -123,39 +123,39 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: Debian bundle(amd64)
-          path: ${{ github.workspace }}/src-tauri/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.deb
+          path: ${{ github.workspace }}/core/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: RPM bundle(x86_64)
-          path: ${{ github.workspace }}/src-tauri/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.x86_64.rpm
+          path: ${{ github.workspace }}/core/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.x86_64.rpm
 
       - name: Upload appimage bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: AppImage bundle(amd64)
-          path: ${{ github.workspace }}/src-tauri/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage
+          path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage
 
       - name: Upload Microsoft Installer bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: Microsoft Installer bundle(64-bit)
-          path: ${{ github.workspace }}/src-tauri/target/release/bundle/msi/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi
+          path: ${{ github.workspace }}/core/target/release/bundle/msi/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi
 
       - name: Upload NSIS bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: NSIS bundle(64-bit)
-          path: ${{ github.workspace }}/src-tauri/target/release/bundle/nsis/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe
+          path: ${{ github.workspace }}/core/target/release/bundle/nsis/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe
 
       - name: Upload dmg bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'macos-latest'
         with:
           name: MacOS ${{ matrix.arch }} bundle(dmg)
-          path: ${{ github.workspace }}/src-tauri/target/${{matrix.target}}-apple-darwin/release/bundle/dmg/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg
+          path: ${{ github.workspace }}/core/target/${{matrix.target}}-apple-darwin/release/bundle/dmg/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg

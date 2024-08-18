@@ -5,6 +5,8 @@ on:
     paths:
       - ".github/workflows/lint-js.yml"
       - "src/*"
+  pull_request:
+    branches: ["master"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
