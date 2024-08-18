@@ -1,8 +1,10 @@
-use std::fmt;
+use std::{fmt, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
 use crate::{Storage, DATA_LOCATION};
+
+use super::launch::{ProcessPriority, Server, GC};
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub enum ModLoaderType {
@@ -39,10 +41,70 @@ pub struct InstanceRuntime {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct InstanceLaunchConfig {
+    /// Min memory, this will add a jvm flag -XMS to the command result
+    pub(crate) min_memory: Option<u32>,
+
+    /// Max memory, this will add a jvm flag -Xmx to the command result
+    pub(crate) max_memory: Option<u32>,
+    pub(crate) server: Option<Server>,
+    /// window width
+    pub(crate) width: Option<u32>,
+
+    /// window height
+    pub(crate) height: Option<u32>,
+
+    pub(crate) fullscreen: Option<bool>,
+
+    /// User custom additional java virtual machine command line arguments.
+    pub(crate) extra_jvm_args: Option<Vec<String>>,
+
+    /// User custom additional minecraft command line arguments.
+    pub(crate) extra_mc_args: Option<Vec<String>>,
+
+    pub(crate) is_demo: Option<bool>,
+    /// Game process priority, invalid on windows
+    pub(crate) process_priority: Option<ProcessPriority>,
+
+    /// Add `-Dfml.ignoreInvalidMinecraftCertificates=true` to jvm argument
+    pub(crate) ignore_invalid_minecraft_certificates: Option<bool>,
+
+    /// Add `-Dfml.ignorePatchDiscrepancies=true` to jvm argument
+    pub(crate) ignore_patch_discrepancies: Option<bool>,
+
+    /// Add extra classpath
+    pub(crate) extra_class_paths: Option<Vec<String>>,
+
+    pub(crate) gc: Option<GC>,
+}
+
+impl Default for InstanceLaunchConfig {
+    fn default() -> Self {
+        Self {
+            min_memory: None,
+            max_memory: None,
+            server: None,
+            width: None,
+            height: None,
+            fullscreen: None,
+            extra_jvm_args: None,
+            extra_mc_args: None,
+            is_demo: None,
+            process_priority: None,
+            ignore_invalid_minecraft_certificates: None,
+            ignore_patch_discrepancies: None,
+            extra_class_paths: None,
+            gc: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct InstanceConfig {
     pub name: String,
     pub runtime: InstanceRuntime,
     pub group: Option<Vec<String>>,
+    pub launch_config: InstanceLaunchConfig,
 }
 
 impl InstanceConfig {
@@ -55,6 +117,7 @@ impl InstanceConfig {
                 mod_loader_version: None,
             },
             group: None,
+            launch_config: InstanceLaunchConfig::default(),
         }
     }
     pub async fn write(self, _instance_name: &str) -> anyhow::Result<()> {
@@ -74,6 +137,40 @@ impl InstanceConfig {
     }
     pub async fn remove(_instance_name: &str) -> anyhow::Result<()> {
         Ok(())
+    }
+    pub fn get_version_id(&self) -> String {
+        match self.runtime.mod_loader_type.as_ref() {
+            Some(mod_loader_type) => match mod_loader_type {
+                ModLoaderType::Fabric => {
+                    format!(
+                        "fabric-loader-{}",
+                        self.runtime.mod_loader_version.as_ref().unwrap()
+                    )
+                }
+                ModLoaderType::Quilt => {
+                    format!(
+                        "quilt-loader-{}",
+                        self.runtime.mod_loader_version.as_ref().unwrap()
+                    )
+                }
+                ModLoaderType::Forge => {
+                    format!(
+                        "forge-{}",
+                        self.runtime.mod_loader_version.as_ref().unwrap()
+                    )
+                }
+                ModLoaderType::Neoforge => {
+                    format!(
+                        "neoforge-{}",
+                        self.runtime.mod_loader_version.as_ref().unwrap()
+                    )
+                }
+            },
+            None => self.runtime.minecraft.to_string(),
+        }
+    }
+    pub fn get_instance_root(&self) -> PathBuf {
+        DATA_LOCATION.get().unwrap().instances.join(&self.name)
     }
 }
 

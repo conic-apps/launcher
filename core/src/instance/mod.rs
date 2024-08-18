@@ -99,10 +99,12 @@ async fn scan() -> anyhow::Result<Vec<Instance>> {
         }
         results.push(Instance {
             config,
-            installed: tokio::fs::File::open(path.join(".aml-ok")).await.is_ok(),
+            installed: tokio::fs::File::open(path.join(".install.lock"))
+                .await
+                .is_ok(),
         })
     }
-    println!("Done");
+    info!("Found {} instances", results.len());
     Ok(results)
 }
 
