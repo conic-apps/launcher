@@ -7,11 +7,11 @@ use tokio::io::AsyncWriteExt;
 
 use crate::download::Download;
 use crate::version::ResolvedLibrary;
-use crate::PLATFORM_INFO;
 use crate::{
     folder::MinecraftLocation,
     version::{self, AssetIndex, AssetIndexObject, ResolvedVersion, VersionManifest},
 };
+use crate::{HTTP_CLIENT, PLATFORM_INFO};
 
 pub(crate) fn generate_libraries_downloads(
     libraries: &[ResolvedLibrary],
@@ -78,8 +78,8 @@ pub fn generate_log4j2_configuration_download(
     version: &ResolvedVersion,
     minecraft_location: &MinecraftLocation,
 ) -> Result<Download> {
-    let logging = version.logging.clone().ok_or(anyhow!("No logging found"))?;
-    let logging_client = logging
+    let logging_client = version
+        .logging
         .get("client")
         .ok_or(anyhow!("No logging client found"))?
         .clone();
@@ -103,11 +103,14 @@ pub async fn generate_download_info(
         .filter(|v| v.id == version_id)
         .collect();
     if version_metadata.len() != 1 {
-        panic!("Bad version manifest!!!")
+        return Err(anyhow!("Bad version manifest"));
     };
     let version_metadata = version_metadata.first().unwrap();
-
-    let version_json_raw = reqwest::get(version_metadata.url.clone())
+    let version_json_raw = HTTP_CLIENT
+        .get()
+        .unwrap()
+        .get(version_metadata.url.clone())
+        .send()
         .await?
         .text()
         .await?;
@@ -122,17 +125,8 @@ pub async fn generate_download_info(
     file.write_all(version_json_raw.as_bytes()).await?;
 
     let mut download_list = vec![];
-    // download_list.push(Download {
-    //     url: format!("https://download.mcbbs.net/version/{version_id}/client"),
-    //     file: minecraft_location.versions.join(format!("{id}/{id}.jar")),
-    //     sha1: None,
-    // });
-    let downloads = version
-        .downloads
-        .clone()
-        .ok_or(anyhow!("No downloads found!"))?;
+    let downloads = version.downloads.clone();
     let client = downloads.get("client").ok_or(anyhow!("No client found!"))?;
-
     download_list.push(Download {
         url: format!(
             "https://piston-data.mojang.com/v1/objects/{}/client.jar",
@@ -141,7 +135,6 @@ pub async fn generate_download_info(
         file: minecraft_location.versions.join(format!("{id}/{id}.jar")),
         sha1: Some(client.sha1.to_string()),
     });
-
     download_list.extend(generate_libraries_downloads(
         &version.libraries,
         &minecraft_location,

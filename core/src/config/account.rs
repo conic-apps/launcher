@@ -1,0 +1,1 @@
+// By default, access token shouldn't save to config file

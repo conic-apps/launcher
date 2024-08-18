@@ -7,6 +7,7 @@ pub mod folder;
 pub mod game_data;
 pub mod install;
 pub mod instance;
+pub mod launch;
 pub mod platform;
 pub mod utils;
 pub mod version;
@@ -26,6 +27,7 @@ use crate::install::{
 use crate::instance::{
     check_repeated_instance_name, create_instance, scan_instances_folder, set_current_instance,
 };
+use crate::launch::launch;
 use env_logger::fmt::style::{Color, Style};
 use folder::DataLocation;
 use log::{debug, error, info, Level, LevelFilter};
@@ -36,6 +38,7 @@ use tauri_plugin_http::reqwest;
 
 /// use MAIN_WINDOW.emit() to send message to main window
 static MAIN_WINDOW: OnceCell<Window> = OnceCell::new();
+static APP_VERSION: OnceCell<String> = OnceCell::new();
 static DATA_LOCATION: OnceCell<DataLocation> = OnceCell::new();
 static PLATFORM_INFO: OnceCell<PlatformInfo> = OnceCell::new();
 static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
@@ -71,12 +74,16 @@ async fn main() {
             get_instance_config,
             get_instance_config_by_name,
             install,
+            launch,
         ])
         .manage(Storage {
             current_instance: Arc::new(Mutex::new("".to_string())),
         })
         .setup(move |app| {
             MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
+            APP_VERSION
+                .set(app.package_info().version.to_string())
+                .unwrap();
             info!("Main window loaded");
             app.listen_any("fontend-loaded", |_| info!("Frontend loaded"));
             Ok(())

@@ -137,7 +137,7 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
     let mut lock_file = tokio::fs::File::create(
         data_location
             .get_instance_root(active_instance)
-            .join(".aml-ok"),
+            .join(".install.lock"),
     )
     .await
     .unwrap();
