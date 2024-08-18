@@ -17,6 +17,7 @@
  */
 
 use forge::version_list::ForgeVersionList;
+use log::{debug, error, info};
 use quilt::QuiltVersionList;
 use tauri::Emitter;
 use tokio::io::AsyncWriteExt;
@@ -24,7 +25,7 @@ use vanilla::generate_download_info;
 
 use crate::{
     config::instance::{InstanceConfig, InstanceRuntime, ModLoaderType},
-    download::{download_files, DownloadError, DownloadProgress},
+    download::{download_files, Progress, ProgressError},
     folder::{DataLocation, MinecraftLocation},
     version::VersionManifest,
     Storage, DATA_LOCATION, MAIN_WINDOW,
@@ -62,7 +63,7 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
     main_window
         .emit(
             "install_progress",
-            DownloadProgress {
+            Progress {
                 completed: 0,
                 total: 0,
                 step: 1,
@@ -70,18 +71,29 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
         )
         .unwrap();
     let active_instance = storage.current_instance.lock().unwrap().clone();
+    info!("Start installing the game for instance {}", active_instance);
     let data_location = DATA_LOCATION.get().unwrap();
     let instance_config = match InstanceConfig::get(&active_instance).await {
         Ok(x) => x,
         Err(_) => {
             main_window
-                .emit("install_error", DownloadError { step: 1 })
+                .emit("install_error", ProgressError { step: 1 })
                 .unwrap();
             return Err(());
         }
     };
-
     let runtime = instance_config.runtime;
+    info!("------------- Instance runtime config -------------");
+    info!("-> Minecraft: {}", runtime.minecraft);
+    match &runtime.mod_loader_type {
+        Some(x) => info!("-> Mod loader: {x}"),
+        None => info!("-> Mod loader: none"),
+    };
+    match &runtime.mod_loader_version {
+        Some(x) => info!("-> Mod loader version: {x}"),
+        None => info!("-> Mod loader version: none"),
+    };
+    info!("Generating download task...");
     let download_list = match generate_download_info(
         &runtime.minecraft,
         MinecraftLocation::new(&data_location.root),
@@ -91,17 +103,19 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
         Ok(x) => x,
         Err(_) => {
             main_window
-                .emit("install_error", DownloadError { step: 1 })
+                .emit("install_error", ProgressError { step: 1 })
                 .unwrap();
             return Err(());
         }
     };
+    info!("Start downloading file");
     download_files(download_list, true, true).await;
     if runtime.mod_loader_type.is_some() {
+        info!("Install mod loader");
         main_window
             .emit(
                 "install_progress",
-                DownloadProgress {
+                Progress {
                     completed: 0,
                     total: 0,
                     step: 4,
@@ -110,9 +124,16 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
             .unwrap();
         match install_mod_loader(runtime, data_location).await {
             Ok(_) => (),
-            Err(_) => return Err(()),
+            Err(_) => {
+                error!("Failed to install mod loader");
+                main_window
+                    .emit("install_error", ProgressError { step: 4 })
+                    .unwrap();
+                return Err(());
+            }
         };
     }
+    debug!("Saving lock file");
     let mut lock_file = tokio::fs::File::create(
         data_location
             .get_instance_root(active_instance)
@@ -135,11 +156,11 @@ async fn install_mod_loader(
         .ok_or(anyhow::Error::msg("bad instance.toml file!"))?;
     match mod_loader_type {
         ModLoaderType::Fabric => {
-            fabric::install(fabric::install::FabricInstallOptions {
-                mcversion: runtime.minecraft,
-                install_dir: data_location.root.clone(),
-                loader: mod_loader_version,
-            })
+            fabric::install(
+                &runtime.minecraft,
+                &mod_loader_version,
+                MinecraftLocation::new(&data_location.root),
+            )
             .await?
         }
         ModLoaderType::Quilt => {
@@ -157,24 +178,6 @@ async fn install_mod_loader(
                 &runtime.minecraft,
             )
             .await?
-            // forge::install(
-            //     RequiredVersion {
-            //         installer: None,
-            //         mcversion: runtime.minecraft.clone(),
-            //         version: mod_loader_version.clone(),
-            //     },
-            //     MinecraftLocation::new(&data_location.root),
-            //     InstallForgeOptions {
-            //         maven_host: None,
-            //         version_id: Some(format!(
-            //             "forge-{}-{}",
-            //             runtime.minecraft, mod_loader_version
-            //         )),
-            //         inherits_from: Some(runtime.minecraft),
-            //         java: None,
-            //     },
-            // )
-            // .await?
         }
         ModLoaderType::Neoforge => {}
     }

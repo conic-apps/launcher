@@ -37,7 +37,8 @@ use std::{
     ffi::OsStr,
     fmt::Display,
     format,
-    path::{Path, PathBuf}, str::FromStr,
+    path::{Path, PathBuf},
+    str::FromStr,
 };
 
 use uuid::Uuid;
@@ -174,8 +175,7 @@ impl DataLocation {
             // default_jre: data_folder.join("default_jre").join("bin").join("java"),
             default_jre: PathBuf::from_str("/bin/java").unwrap(),
             resources: data_folder.join("resources"),
-            temp: std::env::temp_dir()
-                .join(format!("amethyst-launcher-{}", Uuid::new_v4().to_string())),
+            temp: std::env::temp_dir().join(format!("amethyst-launcher-{}", Uuid::new_v4())),
         }
     }
 
