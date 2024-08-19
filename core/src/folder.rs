@@ -152,8 +152,8 @@ impl MinecraftLocation {
             .join(format!("{version_assets}.json"))
     }
 
-    pub fn get_log_config<P: AsRef<Path>>(&self, file: P) -> PathBuf {
-        self.assets.join("log_configs").join(file)
+    pub fn get_log_config<P: AsRef<Path>>(&self, version: P) -> PathBuf {
+        self.get_version_root(version).join("log4j2.xml")
     }
 }
 
