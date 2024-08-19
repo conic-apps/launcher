@@ -74,22 +74,18 @@ pub(crate) async fn generate_assets_downloads(
     Ok(assets)
 }
 
-pub fn generate_log4j2_configuration_download(
+const LOF4J2_CONFIGURATION: &[u8] = include_bytes!("./log4j2.xml");
+
+pub async fn generate_log4j2_configuration_file(
     version: &ResolvedVersion,
     minecraft_location: &MinecraftLocation,
-) -> Result<Download> {
-    let logging_client = version
-        .logging
-        .get("client")
-        .ok_or(anyhow!("No logging client found"))?
-        .clone();
-    Ok(Download {
-        url: logging_client.file.url,
-        file: minecraft_location
-            .get_version_root(version.id.clone())
-            .join("log4j2.xml"),
-        sha1: Some(logging_client.file.sha1),
-    })
+) -> Result<()> {
+    tokio::fs::write(
+        minecraft_location.get_log_config(version.id.clone()),
+        LOF4J2_CONFIGURATION,
+    )
+    .await?;
+    Ok(())
 }
 
 pub async fn generate_download_info(
@@ -149,9 +145,6 @@ pub async fn generate_download_info(
         )
         .await?,
     );
-    let log4j2 = generate_log4j2_configuration_download(&version, &minecraft_location);
-    if let Ok(log4j2) = log4j2 {
-        download_list.push(log4j2);
-    }
+    let _ = generate_log4j2_configuration_file(&version, &minecraft_location).await;
     Ok(download_list)
 }

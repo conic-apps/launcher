@@ -154,10 +154,22 @@ static DEFAULT_GAME_ICON: &[u8] = include_bytes!("./assets/minecraft.icns");
 
 #[tauri::command(async)]
 pub async fn launch(instance_name: String) {
+    println!("Starting Minecraft client, instance: {}", instance_name);
     let platform = PLATFORM_INFO.get().unwrap();
     let instance = InstanceConfig::get(&instance_name).await.unwrap();
+    info!("------------- Instance runtime config -------------");
+    info!("-> Minecraft: {}", instance.runtime.minecraft);
+    match &instance.runtime.mod_loader_type {
+        Some(x) => info!("-> Mod loader: {x}"),
+        None => info!("-> Mod loader: none"),
+    };
+    match &instance.runtime.mod_loader_version {
+        Some(x) => info!("-> Mod loader version: {x}"),
+        None => info!("-> Mod loader version: none"),
+    };
     let launch_options = LaunchOptions::get(instance.clone());
     let minecraft_location = launch_options.minecraft_location.clone();
+    info!("Generating startup parameters");
     let game_icon = minecraft_location.assets.join("minecraft.icns");
     let version =
         Version::from_versions_folder(minecraft_location.clone(), &instance.get_version_id())
@@ -184,8 +196,12 @@ pub async fn launch(instance_name: String) {
             game_icon = game_icon.to_string_lossy()
         ));
     }
-    command_arguments.push(format!("-Xms{}M", launch_options.min_memory));
-    command_arguments.push(format!("-Xmx{}M", launch_options.max_memory));
+    if launch_options.min_memory > 0 {
+        command_arguments.push(format!("-Xms{}M", launch_options.min_memory));
+    }
+    if launch_options.max_memory > 0 {
+        command_arguments.push(format!("-Xmx{}M", launch_options.max_memory));
+    }
 
     if launch_options.ignore_invalid_minecraft_certificates {
         command_arguments.push("-Dfml.ignoreInvalidMinecraftCertificates=true".to_string());
@@ -197,11 +213,11 @@ pub async fn launch(instance_name: String) {
         GC::G1 => {
             command_arguments.extend([
                 "-XX:+UseG1GC".to_string(),
-                // "-XX:+UnlockExperimentalVMOptions".to_string(),
-                // "-XX:G1NewSizePercent=20".to_string(),
-                // "-XX:G1ReservePercent=20".to_string(),
-                // "-XX:MaxGCPauseMillis=50".to_string(),
-                // "-XX:G1HeapRegionSize=16M".to_string(),
+                "-XX:+UnlockExperimentalVMOptions".to_string(),
+                "-XX:G1NewSizePercent=20".to_string(),
+                "-XX:G1ReservePercent=20".to_string(),
+                "-XX:MaxGCPauseMillis=50".to_string(),
+                "-XX:G1HeapRegionSize=16M".to_string(),
             ]);
         }
         GC::Parallel => {
@@ -341,7 +357,6 @@ pub async fn launch(instance_name: String) {
     if launch_options.is_demo {
         command_arguments.push("--demo".to_string());
     };
-    println!("{:#?}", command_arguments);
     let version_id = version.id;
     let process_priority = launch_options.process_priority;
     thread::spawn(move || {
@@ -391,7 +406,8 @@ fn spawn_minecraft_process(
         };
     }
     // todo(after java exec): add -Dfile.encoding=encoding.name() and other
-    let mut launch_command = "java".to_string();
+    let mut launch_command =
+        "/usr/lib/jvm/java-21-openjdk-21.0.4.0.7-2.fc40.x86_64/bin/java".to_string();
     for arg in command_arguments.clone() {
         launch_command.push(' ');
         launch_command = format!("{}{}", launch_command, arg);
@@ -411,7 +427,7 @@ fn spawn_minecraft_process(
 
     std::fs::create_dir_all(script_path.parent().unwrap()).unwrap();
     std::fs::write(&script_path, command).unwrap();
-
+    info!("The startup script is written to {}", script_path.display());
     let mut minecraft = match platform.os_type {
         OsType::Windows => {
             let vars = std::env::vars().find(|v| v.0 == "PATH").unwrap();
@@ -432,6 +448,7 @@ fn spawn_minecraft_process(
             )
         }
         _ => {
+            info!("Running chmod +x {}", script_path.display());
             let mut chmod = Command::new("chmod");
             chmod.args(&["+x", script_path.to_string_lossy().to_string().as_ref()]);
             chmod.status().unwrap();
@@ -442,6 +459,7 @@ fn spawn_minecraft_process(
     .stdout(Stdio::piped())
     .spawn()
     .unwrap();
+    info!("Spawning minecraft process");
     let out = minecraft.stdout.take().unwrap();
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
@@ -457,38 +475,9 @@ fn spawn_minecraft_process(
     let output = minecraft.wait_with_output().unwrap();
     if !output.status.success() {
         error!("Minecraft exits with error code {}", output.status);
+    } else {
+        info!("Minecraft exits with error code {}", output.status);
     }
-    // let mut command = "java".to_string();
-    // for arg in command_arguments.clone() {
-    //     command.push(' ');
-    //     command = format!("{}{}", command, arg);
-    // }
-    // debug!("{}", command);
-    // // let mut minecraft = Command::new(command)
-    // //     .stdout(Stdio::piped())
-    // //     .spawn()
-    // //     .unwrap();
-    // let mut minecraft = Command::new("java")
-    //     .args(command_arguments)
-    //     .stdout(Stdio::piped())
-    //     .spawn()
-    //     .unwrap();
-    // let out = minecraft.stdout.take().unwrap();
-    // let mut out = std::io::BufReader::new(out);
-    // let mut buf = String::new();
-    // while out.read_line(&mut buf).is_ok() {
-    //     if let Ok(Some(_)) = minecraft.try_wait() {
-    //         break;
-    //     }
-    //     let lines: Vec<_> = buf.split("\n").collect();
-    //     if let Some(last) = lines.get(lines.len() - 2) {
-    //         debug!("{}", last);
-    //     }
-    // }
-    // let output = minecraft.wait_with_output().unwrap();
-    // if !output.status.success() {
-    //     error!("Minecraft exits with error code {}", output.status);
-    // }
 }
 
 fn resolve_classpath(
@@ -510,7 +499,6 @@ fn resolve_classpath(
                     }
                 }
             }
-            // true
             !lib.is_native_library
         })
         .map(|lib| {
