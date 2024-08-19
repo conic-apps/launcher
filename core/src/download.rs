@@ -79,7 +79,7 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
                 }
             };
             if download.sha1.is_none() {
-                return false;
+                return true;
             };
             let file_hash = calculate_sha1_from_read(&mut file);
             counter.clone().fetch_add(1, Ordering::SeqCst);
