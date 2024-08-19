@@ -21,14 +21,11 @@ pub(crate) fn generate_libraries_downloads(
         .iter()
         .cloned()
         .map(|library| Download {
-            url: if library.is_native_library {
-                println!("find native library url: {}", &library.download_info.url);
+            url: {
+                if library.is_native_library {
+                    println!("find native library url: {}", &library.download_info.url);
+                }
                 library.download_info.url
-            } else {
-                format!(
-                    "https://libraries.minecraft.net/{}",
-                    library.download_info.path
-                )
             },
             file: minecraft_location
                 .libraries
@@ -38,7 +35,7 @@ pub(crate) fn generate_libraries_downloads(
         .collect()
 }
 
-pub(crate) async fn generate_assets_downloads(
+pub async fn generate_assets_downloads(
     asset_index: AssetIndex,
     minecraft_location: &MinecraftLocation,
 ) -> Result<Vec<Download>> {
