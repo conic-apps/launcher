@@ -24,10 +24,11 @@ use std::{
 };
 
 use arguments::generate_command_arguments;
+use complete::complete_files;
 use log::{debug, error, info};
 use options::LaunchOptions;
 mod arguments;
-mod check;
+mod complete;
 mod options;
 use crate::{
     config::{instance::InstanceConfig, launch::ProcessPriority},
@@ -54,13 +55,13 @@ pub async fn launch(instance_name: String) {
     };
     let launch_options = LaunchOptions::get(instance.clone());
     let minecraft_location = launch_options.minecraft_location.clone();
+    complete_files(instance.clone(), minecraft_location.clone()).await;
     info!("Generating startup parameters");
-    let version =
-        Version::from_versions_folder(minecraft_location.clone(), &instance.get_version_id())
-            .unwrap()
-            .parse(&minecraft_location, platform)
-            .await
-            .unwrap();
+    let version = Version::from_versions_folder(&minecraft_location, &instance.get_version_id())
+        .unwrap()
+        .parse(&minecraft_location, platform)
+        .await
+        .unwrap();
     let command_arguments = generate_command_arguments(
         &minecraft_location,
         instance,
@@ -186,6 +187,7 @@ fn spawn_minecraft_process(
     }
     let output = minecraft.wait_with_output().unwrap();
     if !output.status.success() {
+        // TODO: log analysis and remove libraries lock file
         error!("Minecraft exits with error code {}", output.status);
     } else {
         info!("Minecraft exits with error code {}", output.status);

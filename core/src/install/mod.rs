@@ -34,7 +34,7 @@ use crate::{
 mod fabric;
 mod forge;
 mod quilt;
-mod vanilla;
+pub mod vanilla;
 
 #[tauri::command(async)]
 pub async fn get_minecraft_version_list() -> Option<VersionManifest> {

@@ -521,11 +521,11 @@ impl Version {
     }
 
     pub fn from_versions_folder(
-        minecraft: MinecraftLocation,
+        minecraft: &MinecraftLocation,
         version_name: &str,
     ) -> Result<Version, std::io::Error> {
-        let versions_folder = minecraft.versions;
-        let path = versions_folder
+        let path = minecraft
+            .versions
             .join(version_name)
             .join(format!("{}.json", version_name));
 
