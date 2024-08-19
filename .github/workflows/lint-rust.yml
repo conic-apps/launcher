@@ -60,7 +60,9 @@ jobs:
           save-if: ${{ matrix.clippy.key == 'all' }}
 
       - name: Run cargo check
+        working-directory: ./core
         run: cargo check
 
       - name: Run clippy - ${{ matrix.clippy.key }}
-        run: cargo clippy --manifest-path ./core/Cargo.toml --all-targets ${{ matrix.clippy.args }} -- -D warnings
+        working-directory: ./core
+        run: cargo clippy --manifest-path ./Cargo.toml --all-targets ${{ matrix.clippy.args }} -- -D warnings
