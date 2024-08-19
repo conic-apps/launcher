@@ -122,19 +122,22 @@ impl InstanceConfig {
             Some(mod_loader_type) => match mod_loader_type {
                 ModLoaderType::Fabric => {
                     format!(
-                        "fabric-loader-{}",
-                        self.runtime.mod_loader_version.as_ref().unwrap()
+                        "fabric-loader-{}-{}",
+                        self.runtime.mod_loader_version.as_ref().unwrap(),
+                        self.runtime.minecraft
                     )
                 }
                 ModLoaderType::Quilt => {
                     format!(
-                        "quilt-loader-{}",
-                        self.runtime.mod_loader_version.as_ref().unwrap()
+                        "quilt-loader-{}-{}",
+                        self.runtime.mod_loader_version.as_ref().unwrap(),
+                        self.runtime.minecraft
                     )
                 }
                 ModLoaderType::Forge => {
                     format!(
-                        "forge-{}",
+                        "{}-forge-{}",
+                        self.runtime.minecraft,
                         self.runtime.mod_loader_version.as_ref().unwrap()
                     )
                 }
