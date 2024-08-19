@@ -28,7 +28,7 @@ use crate::folder::MinecraftLocation;
 
 use crate::platform::PlatformInfo;
 
-static DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
+const DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     vec![
         "--username".to_string(),
         "${auth_player_name}".to_string(),
@@ -59,7 +59,7 @@ static DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     ]
 });
 
-static DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
+const DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     vec![
         "\"-Djava.library.path=${natives_directory}\"".to_string(),
         // "\"-Djna.tmpdir=${natives_directory}\"".to_string(),

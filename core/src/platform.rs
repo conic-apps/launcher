@@ -17,9 +17,9 @@ pub struct PlatformInfo {
 }
 
 #[cfg(windows)]
-pub static DELIMITER: &str = ";";
+pub const  DELIMITER: &str = ";";
 #[cfg(not(windows))]
-pub static DELIMITER: &str = ":";
+pub const  DELIMITER: &str = ":";
 
 impl PlatformInfo {
     /// get platform information
