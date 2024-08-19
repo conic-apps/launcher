@@ -40,7 +40,7 @@ pub struct InstanceRuntime {
     pub mod_loader_version: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct InstanceLaunchConfig {
     /// Min memory, this will add a jvm flag -XMS to the command result
     pub(crate) min_memory: Option<u32>,
@@ -76,27 +76,6 @@ pub struct InstanceLaunchConfig {
     pub(crate) extra_class_paths: Option<Vec<String>>,
 
     pub(crate) gc: Option<GC>,
-}
-
-impl Default for InstanceLaunchConfig {
-    fn default() -> Self {
-        Self {
-            min_memory: None,
-            max_memory: None,
-            server: None,
-            width: None,
-            height: None,
-            fullscreen: None,
-            extra_jvm_args: None,
-            extra_mc_args: None,
-            is_demo: None,
-            process_priority: None,
-            ignore_invalid_minecraft_certificates: None,
-            ignore_patch_discrepancies: None,
-            extra_class_paths: None,
-            gc: None,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

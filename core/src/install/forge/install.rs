@@ -7,7 +7,7 @@ use crate::{platform::DELIMITER, DATA_LOCATION, HTTP_CLIENT};
 
 /// Forge Install Bootstrapper - By bangbang93
 /// [Github Repo](https://github.com/bangbang93/forge-install-bootstrapper)
-static FORGE_INSTALL_BOOTSTRAPPER: &[u8] = include_bytes!("./forge-install-bootstrapper.jar");
+const FORGE_INSTALL_BOOTSTRAPPER: &[u8] = include_bytes!("./forge-install-bootstrapper.jar");
 
 pub async fn install(
     install_dir: &PathBuf,
