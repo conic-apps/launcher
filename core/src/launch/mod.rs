@@ -170,16 +170,12 @@ pub async fn launch(instance_name: String) {
     let launch_options = LaunchOptions::get(instance.clone());
     let minecraft_location = launch_options.minecraft_location.clone();
     info!("Generating startup parameters");
-    let game_icon = minecraft_location.assets.join("minecraft.icns");
     let version =
         Version::from_versions_folder(minecraft_location.clone(), &instance.get_version_id())
             .unwrap()
             .parse(&minecraft_location, platform)
             .await
             .unwrap();
-    tokio::fs::write(&game_icon, DEFAULT_GAME_ICON)
-        .await
-        .unwrap();
 
     let mut command_arguments = Vec::new();
 
@@ -189,11 +185,23 @@ pub async fn launch(instance_name: String) {
             .get_version_jar(&instance.runtime.minecraft, None)
             .to_string_lossy()
     ));
+    let game_icon = minecraft_location
+        .assets
+        .join("minecraft.icns")
+        .to_string_lossy()
+        .to_string();
+    tokio::fs::write(&game_icon, DEFAULT_GAME_ICON)
+        .await
+        .unwrap();
     if platform.os_type == OsType::Osx {
         command_arguments.push("-Xdock:name=Minecraft".to_string());
         command_arguments.push(format!(
             "-Xdock:icon={game_icon}",
-            game_icon = game_icon.to_string_lossy()
+            game_icon = if game_icon.contains(" ") {
+                format!("\"{}\"", game_icon)
+            } else {
+                game_icon
+            }
         ));
     }
     if launch_options.min_memory > 0 {
@@ -202,7 +210,6 @@ pub async fn launch(instance_name: String) {
     if launch_options.max_memory > 0 {
         command_arguments.push(format!("-Xmx{}M", launch_options.max_memory));
     }
-
     if launch_options.ignore_invalid_minecraft_certificates {
         command_arguments.push("-Dfml.ignoreInvalidMinecraftCertificates=true".to_string());
     }
@@ -238,6 +245,15 @@ pub async fn launch(instance_name: String) {
         GC::Z => {
             command_arguments.push("-XX:+UseZGC".to_string());
         }
+    }
+    match platform.os_type {
+        OsType::Osx => {
+            command_arguments.push("XstartOnFirstThread".to_string());
+        }
+        OsType::Windows => {
+            command_arguments.push("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump".to_string());
+        }
+        _ => (),
     }
     // TODO: support yggdrasil
     //         if let Some(ygg) = launch_options.yggdrasil_agent.clone() {
@@ -289,15 +305,13 @@ pub async fn launch(instance_name: String) {
     command_arguments.extend(
         jvm_arguments
             .iter()
-            .map(|arg| format(arg, jvm_options.clone())),
+            .map(|arg| format(arg, jvm_options.clone(), false)),
     );
-
     command_arguments.push(
         version
             .main_class
             .unwrap_or("net.minecraft.client.main.Main".to_string()),
     );
-
     let mut game_options: HashMap<&str, String> = HashMap::with_capacity(13);
     let assets_dir = minecraft_location.assets.clone();
     game_options.insert("version_name", version.id.clone());
@@ -324,13 +338,12 @@ pub async fn launch(instance_name: String) {
     game_options.insert("user_type", "mojang".to_string());
     game_options.insert("resolution_width", launch_options.width.to_string());
     game_options.insert("resolution_height", launch_options.height.to_string());
-
     command_arguments.extend(
         version
             .arguments
             .game
             .iter()
-            .map(|arg| format(arg, game_options.clone())),
+            .map(|arg| format(arg, game_options.clone(), true)),
     );
     command_arguments.extend(launch_options.extra_mc_args);
     if let Some(server) = launch_options.server {
@@ -525,14 +538,18 @@ fn resolve_classpath(
     classpath.join(DELIMITER)
 }
 
-fn format(template: &str, args: HashMap<&str, String>) -> String {
+fn format(template: &str, args: HashMap<&str, String>, is_game_option: bool) -> String {
     let regex = Regex::new(r"\$\{(.*?)}").unwrap();
 
     regex
         .replace_all(&template, |caps: &regex::Captures| {
             let key = String::from(&caps[1]);
             let value = args.get(&caps[1]).unwrap_or(&key);
-            value.to_string()
+            if value.contains(" ") && is_game_option {
+                format!("\"{}\"", value)
+            } else {
+                value.to_string()
+            }
         })
         .to_string()
 }
