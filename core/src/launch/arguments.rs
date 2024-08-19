@@ -250,13 +250,21 @@ fn resolve_classpath(
         .into_iter()
         .collect::<Vec<String>>();
 
-    classpath.push(
-        minecraft
-            .get_version_jar(version.inheritances.last().unwrap(), None)
-            .to_str()
-            .unwrap()
-            .to_string(),
-    );
+    if let Some(inheritance) = version.inheritances.last() {
+        classpath.push(
+            minecraft
+                .get_version_jar(inheritance, None)
+                .to_string_lossy()
+                .to_string(),
+        );
+    } else {
+        classpath.push(
+            minecraft
+                .get_version_jar(&version.id, None)
+                .to_string_lossy()
+                .to_string(),
+        );
+    }
 
     if !extra_class_paths.is_empty() {
         classpath.extend(extra_class_paths);
