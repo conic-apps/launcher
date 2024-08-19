@@ -252,7 +252,7 @@ fn resolve_classpath(
 
     classpath.push(
         minecraft
-            .get_version_jar(version.id.clone(), None)
+            .get_version_jar(version.inheritances.last().unwrap(), None)
             .to_str()
             .unwrap()
             .to_string(),
