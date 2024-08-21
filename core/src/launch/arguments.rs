@@ -1,3 +1,7 @@
+// Amethyst Launcher
+// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use std::collections::{HashMap, HashSet};
 
 use regex::Regex;
@@ -129,7 +133,7 @@ pub async fn generate_command_arguments(
         "classpath",
         resolve_classpath(
             &version,
-            &minecraft_location,
+            minecraft_location,
             launch_options.extra_class_paths.clone(),
         ),
     );
@@ -201,10 +205,9 @@ pub async fn generate_command_arguments(
     if launch_options.fullscreen {
         command_arguments.push("--fullscreen".to_string());
     }
-    let no_width_arguments = command_arguments
+    let no_width_arguments = !command_arguments
         .iter()
-        .find(|v| v == &&"--width".to_string())
-        .is_none();
+        .any(|v| &v == &&"--width".to_string());
     if no_width_arguments && !launch_options.fullscreen {
         command_arguments.extend(vec![
             "--width".to_string(),

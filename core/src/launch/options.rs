@@ -1,4 +1,15 @@
-use crate::{config::{instance::InstanceConfig, launch::{LaunchConfig, ProcessPriority, Server, GC}}, folder::MinecraftLocation, DATA_LOCATION};
+// Amethyst Launcher
+// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+use crate::{
+    config::{
+        instance::InstanceConfig,
+        launch::{LaunchConfig, ProcessPriority, Server, GC},
+    },
+    folder::MinecraftLocation,
+    DATA_LOCATION,
+};
 
 #[derive(Debug, Clone)]
 pub struct GameProfile {

@@ -1,3 +1,7 @@
+// Amethyst Launcher
+// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
@@ -17,9 +21,9 @@ pub struct PlatformInfo {
 }
 
 #[cfg(windows)]
-pub const  DELIMITER: &str = ";";
+pub const DELIMITER: &str = ";";
 #[cfg(not(windows))]
-pub const  DELIMITER: &str = ":";
+pub const DELIMITER: &str = ":";
 
 impl PlatformInfo {
     /// get platform information

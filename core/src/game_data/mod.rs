@@ -1,3 +1,7 @@
+// Amethyst Launcher
+// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use base64::{engine::general_purpose, Engine};
 use mods::ResolvedMod;
 use saves::level::LevelData;

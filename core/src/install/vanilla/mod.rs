@@ -1,3 +1,7 @@
+// Amethyst Launcher
+// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
@@ -21,12 +25,7 @@ pub(crate) fn generate_libraries_downloads(
         .iter()
         .cloned()
         .map(|library| Download {
-            url: {
-                if library.is_native_library {
-                    println!("find native library url: {}", &library.download_info.url);
-                }
-                library.download_info.url
-            },
+            url: library.download_info.url,
             file: minecraft_location
                 .libraries
                 .join(library.download_info.path),

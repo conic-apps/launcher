@@ -1,3 +1,7 @@
+// Amethyst Launcher
+// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use std::io::Read;
 
 use anyhow::anyhow;
@@ -20,7 +24,10 @@ pub async fn complete_files(instance: InstanceConfig, minecraft_location: Minecr
     let libraries_lock_file = instance.get_instance_root().join(".aml-libraries-ok");
     if std::fs::metadata(&assets_lock_file).is_ok() {
         info!("No need to check assets files.");
-        info!("helps: you can remove {} file to enable file checking manually.", assets_lock_file.display());
+        info!(
+            "helps: you can remove {} file to enable file checking manually.",
+            assets_lock_file.display()
+        );
     } else {
         info!("Checking and completing assets files");
         complete_assets_files(instance.clone(), minecraft_location.clone()).await;
@@ -29,7 +36,10 @@ pub async fn complete_files(instance: InstanceConfig, minecraft_location: Minecr
     }
     if std::fs::metadata(&libraries_lock_file).is_ok() {
         info!("No need to check libraries files.");
-        info!("helps: you can remove {} file to enable file checking manually.", libraries_lock_file.display());
+        info!(
+            "helps: you can remove {} file to enable file checking manually.",
+            libraries_lock_file.display()
+        );
     } else {
         info!("Checking and completing libraries files");
         complete_libraries_files(instance.clone(), minecraft_location.clone()).await;
@@ -45,7 +55,7 @@ pub async fn complete_assets_files(
     let platform = PLATFORM_INFO.get().unwrap();
     let version =
         Version::from_versions_folder(&minecraft_location, &instance.get_version_id()).unwrap();
-    let version = version.parse(&minecraft_location, &platform).await.unwrap();
+    let version = version.parse(&minecraft_location, platform).await.unwrap();
     let assets_downloads =
         generate_assets_downloads(version.asset_index.unwrap(), &minecraft_location)
             .await
@@ -64,7 +74,7 @@ pub async fn complete_libraries_files(
     let platform = PLATFORM_INFO.get().unwrap();
     let version =
         Version::from_versions_folder(&minecraft_location, &instance.get_version_id()).unwrap();
-    let version = version.parse(&minecraft_location, &platform).await.unwrap();
+    let version = version.parse(&minecraft_location, platform).await.unwrap();
     let library_downloads = generate_libraries_downloads(&version.libraries, &minecraft_location);
     let downloads = filter_correct_files(library_downloads).await;
     if !downloads.is_empty() {

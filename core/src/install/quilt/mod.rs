@@ -1,20 +1,6 @@
-/*
- * Amethyst Launcher Core
- * Copyright (C) 2023 Broken-Deer <old_driver__@outlook.com> and contributors
- *
- * This program is free software, you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// Amethyst Launcher
+// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
 
 use serde::{Deserialize, Serialize};
 use tauri_plugin_http::reqwest;
@@ -103,12 +89,6 @@ pub async fn install(
     let quilt_version_json: Version = response.json().await.unwrap();
     let version_name = quilt_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);
-    // let libraries = quilt_version.libraries.clone().unwrap();
-    // let hashed = libraries.iter().find(|l| match l["name"].as_str() {
-    //     None => false,
-    //     Some(name) => name.starts_with("org.quiltmc:hashed"),
-    // });
-
     tokio::fs::create_dir_all(json_path.parent().unwrap()).await?;
     tokio::fs::write(
         json_path,

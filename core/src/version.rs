@@ -1,20 +1,6 @@
-/*
- * Amethyst Launcher Core
- * Copyright (C) 2023 Broken-Deer <old_driver__@outlook.com> and contributors
- *
- * This program is free software, you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// Amethyst Launcher
+// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
 
 use anyhow::Result;
 use once_cell::sync::Lazy;
@@ -28,7 +14,7 @@ use crate::folder::MinecraftLocation;
 
 use crate::platform::PlatformInfo;
 
-const DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
+static DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     vec![
         "--username".to_string(),
         "${auth_player_name}".to_string(),
@@ -59,7 +45,7 @@ const DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     ]
 });
 
-const DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
+static DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     vec![
         "\"-Djava.library.path=${natives_directory}\"".to_string(),
         // "\"-Djna.tmpdir=${natives_directory}\"".to_string(),
