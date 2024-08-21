@@ -1,3 +1,7 @@
+// Amethyst Launcher
+// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 // Prevents additional console window on Windows in release.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 

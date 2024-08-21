@@ -2,20 +2,14 @@
   <keep-alive>
     <div class="game-page-main">
       <div class="row-1">
-        <install-progress
-          :installing="installing"
-          :instance-name="currentInstance.config.name"
+        <install-progress :installing="installing" :instance-name="currentInstance.config.name"
+          :mod-loader-type="currentInstance.config.runtime.mod_loader_type" :mod-loader-version="currentInstance.config.runtime.mod_loader_version
+            "></install-progress>
+        <instance-info :minecraft-version="currentInstance.config.runtime.minecraft"
           :mod-loader-type="currentInstance.config.runtime.mod_loader_type"
-          :mod-loader-version="
-            currentInstance.config.runtime.mod_loader_version
-          "></install-progress>
-        <instance-info
-          minecraft-version="1.20.1"
-          :instance-name="currentInstance.config.name"
-          :installed="true"
-          :game-button-type="gameButtonType"
-          @game-button-click="
-            () => {
+          :mod-loader-version="currentInstance.config.runtime.mod_loader_version"
+          :instance-name="currentInstance.config.name" :installed="true" :game-button-type="gameButtonType"
+          @game-button-click="() => {
               if (gameButtonType === 'launch') {
                 invoke('launch', {
                   instanceName: currentInstance.config.name,
@@ -25,11 +19,8 @@
                 invoke('install');
               }
             }
-          "
-          :error-type="errorType"></instance-info>
-        <assets-manager
-          :instance-name="currentInstance.config.name"
-          style="margin-top: 20px"></assets-manager>
+            " :error-type="errorType"></instance-info>
+        <assets-manager :instance-name="currentInstance.config.name" style="margin-top: 20px"></assets-manager>
       </div>
       <div class="row-2">
         <!-- <div class="group-name"> 
@@ -41,31 +32,23 @@
         <account-manager></account-manager> -->
         <div class="group-name">
           <!--todo: move to a component-->
-          <div
-            style="
+          <div style="
               display: flex;
               justify-content: space-between;
               align-items: center;
               height: 100%;
             ">
             <p style="margin-left: 4px">游戏</p>
-            <button
-              class="group-button"
-              @click="show.instanceManager = true"
-              style="margin-right: 6px">
+            <button class="group-button" @click="show.instanceManager = true" style="margin-right: 6px">
               <i class="chevron-right" style="font-size: 12px"></i>
             </button>
           </div>
         </div>
         <Instances :instances="instances" @select="setCurrentInstance"></Instances>
-        <instance-manager
-          :show="show.instanceManager"
-          @close="show.instanceManager = false"
-          :instances="instances"
+        <instance-manager :show="show.instanceManager" @close="show.instanceManager = false" :instances="instances"
           @update="update"></instance-manager>
         <div class="group-name">
-          <div
-            style="
+          <div style="
               display: flex;
               justify-content: space-between;
               align-items: center;
