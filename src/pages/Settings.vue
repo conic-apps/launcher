@@ -7,7 +7,7 @@
           :class="[activeComponentIndex == index ? 'active' : '']"
           v-for="(item, index) in components"
           :key="index">
-          <i :class="item.icon"></i>{{ item.name }}
+          <i :class="`${item.icon} fa-pro`"></i>{{ item.name }}
         </li>
       </ul>
       <div class="go-home" @click="$emit('back-to-home')">
@@ -15,11 +15,9 @@
       </div>
     </div>
     <div class="rol-2">
-      <Transition :name="transitionName" mode="out-in">
-        <KeepAlive>
-          <component :is="currentComponent"></component>
-        </KeepAlive>
-      </Transition>
+      <!-- <Transition name="entrance" mode="out-in"> -->
+      <component :is="currentComponent"></component>
+      <!-- </Transition> -->
     </div>
   </div>
 </template>
@@ -33,8 +31,9 @@ import Appearance from "./settings/Appearance.vue";
 import Download from "./settings/Download.vue";
 import Accessibility from "./settings/Accessibility.vue";
 import Extend from "./settings/Extend.vue";
+import About from "./settings/About.vue";
 
-const components = reactive([
+const components = ref([
   {
     name: "常规",
     icon: "house",
@@ -51,7 +50,7 @@ const components = reactive([
     component: markRaw(Advance),
   },
   {
-    name: "个性化",
+    name: "外观",
     icon: "palette",
     component: markRaw(Appearance),
   },
@@ -70,18 +69,26 @@ const components = reactive([
     icon: "cubes",
     component: markRaw(Extend),
   },
+  {
+    name: "关于",
+    icon: "circle-exclamation",
+    component: markRaw(About),
+  },
 ]);
-const currentComponent = shallowRef(General);
+const currentComponent = shallowRef(components.value[0].component);
 let activeComponentIndex = ref(0);
-let transitionName = ref("");
+let transitionName = ref("slide-up");
 const content = ref<any>(null);
 function switchComponent(item: any, index: number) {
+  console.log(item);
+  console.log(currentComponent);
+  // console.log(currentComponent);
+  // if (activeComponentIndex.value < index) {
+  //   transitionName.value = "slide-up";
+  // } else {
+  //   transitionName.value = "slide-down";
+  // }
   currentComponent.value = item.component;
-  if (activeComponentIndex.value < index) {
-    transitionName.value = "slide-up";
-  } else {
-    transitionName.value = "slide-down";
-  }
   activeComponentIndex.value = index;
 }
 </script>
@@ -99,21 +106,44 @@ function switchComponent(item: any, index: number) {
 }
 
 .rol-1 {
-  border: 1px solid #f00;
-  width: 240px;
+  width: 260px;
   flex-shrink: 0;
-  padding: 24px;
+  padding: 30px 0px 16px 24px;
 }
 
 .rol-2 {
-  border: 1px solid #0f0;
   width: 100%;
   padding: 24px 24px 24px 0;
+  padding-left: 16px;
+  overflow: auto;
 }
 
 .rol-1 .settings-menu {
-  border: 1px solid #00f;
   height: calc(100% - 40px);
+}
+
+.settings-menu i {
+  font-style: normal;
+  font-family: "fa-pro";
+  font-size: 16.6px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  margin-right: 8px;
+}
+
+.settings-menu li {
+  height: 40px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  font-size: 14.5px;
+  border-radius: 8px;
+}
+
+.settings-menu li:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .go-home {
@@ -121,7 +151,7 @@ function switchComponent(item: any, index: number) {
   height: 40px;
   width: 40px;
   border-radius: 50%;
-  background: rgba(var(--theme-color), 0.6);
+  background: rgba(255, 255, 255, 0.116);
   transition: all 100ms;
 }
 
@@ -138,7 +168,7 @@ function switchComponent(item: any, index: number) {
 }
 
 .go-home:hover {
-  background: rgba(var(--theme-color), 0.8);
+  background: rgba(255, 255, 255, 0.151);
 }
 
 .go-home:active {
