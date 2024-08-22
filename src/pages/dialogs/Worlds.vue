@@ -1,70 +1,63 @@
 <template>
-  <dialog-vue :visible="show" width="460" height="480">
-    <div style="position: relative; margin: 12px 14px; width: calc(100% - 28px)">
-      <div
-        style="
-          display: flex;
-          justify-content: space-between;
-          border-bottom: 2px solid rgba(var(--theme-color), 0.6);
-          margin-bottom: 10px;
-        ">
-        <div class="info">
-          <div class="icon"></div>
-          <div class="text">
-            <h4 class="name">
-              <span>{{ instanceName }}</span
-              >中的存档
-            </h4>
-            <p>共有 {{ datas.length }} 个存档</p>
+  <dialog-vue :visible="props.show" width="860" height="520">
+    <div class="worlds">
+      <div style="width: 100%; height: 100%">
+        <div class="title">
+          <div style="display: flex; align-items: center">
+            <div class="icon">
+              <i class="map"></i>
+            </div>
+            <div>
+              <h4>地图存档</h4>
+              <p>共有 {{ props.datas.length }} 个世界，实例使用独立的存档文件夹</p>
+            </div>
+          </div>
+          <div class="button" style="position: absolute; right: 0" @click="$emit('close')">
+            <i></i>
           </div>
         </div>
-        <div class="buttons">
-          <dialog-button icon="close" @click="$emit('close')"></dialog-button>
+
+        <div class="content">
+          <div class="row1">
+            <div>
+              <list-item
+                v-for="(world, index) in datas"
+                :key="index"
+                :title="world.levelData.LevelName"
+                :logo="world.icon"
+                :click-able="false"
+                :buttons="['circle-info', 'folders', 'arrow-up-right-from-square']">
+                <template #subtitle>
+                  <tag
+                    :text="world.levelData.Version.Name"
+                    :color="['180', '180', '180']"
+                    text-color="#fffffff0"
+                    :border="true"
+                    :round="true"></tag>
+                  <tag
+                    v-if="world.levelData.allowCommands"
+                    text="允许作弊"
+                    :color="['180', '180', '180']"
+                    text-color="#fffffff0"
+                    :border="true"
+                    :round="true"></tag>
+                  <tag
+                    v-if="world.levelData.hardcore"
+                    text="极限模式"
+                    :color="['180', '180', '180']"
+                    text-color="#fffffff0"
+                    :border="true"
+                    :round="true"></tag>
+                </template>
+                {{ world.folderName }}
+              </list-item>
+            </div>
+          </div>
+          <div class="row2">
+            <p>在左侧选择存档以预览地图</p>
+          </div>
         </div>
       </div>
-      <search-bar
-        style="
-          margin-bottom: 8px;
-          position: sticky;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          left: 0;
-          z-index: 1000;
-          background: #fff;
-          border: 1px solid #00000028;
-          box-shadow: 0 0 10px #00000012;
-        "></search-bar>
-      <TransitionGroup>
-        <list-item
-          v-for="(world, index) in datas"
-          :key="index"
-          :title="world.level_data.LevelName"
-          :logo="world.icon"
-          :click-able="false"
-          :buttons="['circle-info', 'folders', 'arrow-up-right-from-square']">
-          <template #subtitle>
-            <tag
-              :text="world.level_data.Version.Name"
-              :color="['180', '180', '180']"
-              text-color="#00000080"
-              :border="true"></tag>
-            <tag
-              v-if="world.level_data.allowCommands"
-              text="允许作弊"
-              :color="['180', '180', '180']"
-              text-color="#00000080"
-              :border="true"></tag>
-            <tag
-              v-if="world.level_data.hardcore"
-              text="极限模式"
-              :color="['180', '180', '180']"
-              text-color="#00000080"
-              :border="true"></tag>
-          </template>
-          {{ world.dir_name }}
-        </list-item>
-      </TransitionGroup>
     </div>
   </dialog-vue>
 </template>
@@ -73,63 +66,158 @@
 import DialogVue from "@/components/Dialog.vue";
 import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
-import SearchBar from "@/components/SearchBar.vue";
-import DialogButton from "@/components/DialogButton.vue";
 
 const props = defineProps<{
   show: boolean;
-  worlds?: any;
   instanceName: string;
-  datas: any[];
+  datas: Save[];
 }>();
 
-function gameType(type: number): string {
-  switch (type) {
-    case 0:
-      return "生存模式";
-    case 1:
-      return "创造模式";
-    case 2:
-      return "冒险模式";
-    case 3:
-      return "旁观模式";
-    default:
-      return "";
-  }
-}
+export type Save = {
+  icon: string;
+  levelData: any;
+  folderName: string;
+};
 </script>
 
 <style lang="less" scoped>
-.info {
-  display: flex;
-  align-items: center;
-  padding-bottom: 6px;
-}
+.worlds {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 
-.info .icon {
-  width: 40px;
-  height: 40px;
-  background: url(@/assets/images/Ancient_Debris.webp);
-  background-position: center;
-  background-size: cover;
-}
+  .title {
+    border-bottom: 1px solid #ffffff18;
+    width: 100%;
+    height: 80px;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
 
-.info .text {
-  margin-left: 6px;
-}
+    .icon {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-.info h4 {
-  font-weight: 400;
-  font-size: 18px;
-  margin-bottom: 2px;
-}
+      .back {
+        border-radius: 1000px;
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.38);
+      }
 
-.info span {
-  color: rgb(var(--theme-color));
-}
+      .back:active {
+        opacity: 0.7;
+      }
 
-.info p {
-  color: #000000a0;
-  font-size: 13px;
+      .back::before {
+        font-size: 20px;
+      }
+    }
+
+    i {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    i::before {
+      font-size: 36px;
+      font-style: normal;
+      font-family: "fa-pro";
+    }
+
+    h4 {
+      font-size: 22px;
+      font-weight: normal;
+    }
+
+    p {
+      font-size: 14px;
+      margin-top: 4px;
+      opacity: 0.7;
+      font-weight: normal;
+    }
+
+    .button {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-left: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 100ms;
+      background: #ffffff40;
+
+      i {
+        transition: all 100ms ease;
+      }
+
+      i::before {
+        content: "\f00d";
+        font-size: 12px;
+        margin-top: 1px;
+        margin-left: 0.6px;
+        font-style: normal;
+        font-family: "fa-pro";
+        opacity: 0;
+        transition: all 70ms ease;
+      }
+    }
+
+    .button:hover {
+      i::before {
+        opacity: 1;
+      }
+    }
+
+    .button:active {
+      i {
+        opacity: 0.7;
+      }
+    }
+  }
+
+  .content {
+    display: flex;
+    height: calc(100% - 80px);
+    padding-top: 16px;
+
+    .row1 {
+      width: 50%;
+      height: 100%;
+      padding: 0 12px;
+      overflow: auto;
+
+      > div {
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .list-item {
+        width: 100%;
+      }
+    }
+
+    .row2 {
+      width: 50%;
+      height: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      p {
+        font-style: italic;
+        opacity: 0.6;
+      }
+    }
+  }
 }
 </style>

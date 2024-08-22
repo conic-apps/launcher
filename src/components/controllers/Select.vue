@@ -93,7 +93,7 @@ function toggleOpened() {
 
 <style lang="less" scoped>
 .select {
-  width: 200px;
+  width: 240px;
   height: 26px;
   display: flex;
   flex-direction: column;
@@ -101,21 +101,25 @@ function toggleOpened() {
   font-size: 14px;
 }
 
+.select li {
+  list-style: none;
+}
+
 .selected {
   width: 100%;
   border-radius: var(--border-radius-small);
-  border: 1px solid rgba(var(--theme-color), 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 8px 12px;
   transition: opacity 100ms ease;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: all 70ms ease;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .selected:hover {
-  background: #ffffffce;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .selected::after {
@@ -136,14 +140,15 @@ function toggleOpened() {
 }
 
 .options {
-  width: 200px;
+  width: 240px;
   margin-top: 4px;
   border-radius: var(--border-radius-medium);
-  border: 1px solid rgba(var(--theme-color), 0.2);
-  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgb(54, 54, 54);
   box-shadow: 0px 0px 10px #4500611d;
   transform: scale3d(1, 1, 192.7);
   font-size: 14px;
+  z-index: 100000;
 }
 
 .options > div:first-child {

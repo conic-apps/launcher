@@ -60,68 +60,68 @@ defineProps<{
   overflow: hidden;
   background-color: rgba(255, 255, 255, 0.08);
   pointer-events: none;
-}
 
-.list-item > div {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-}
+  > div {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
 
-.list-item > div:first-child {
-  width: 100%;
-  transition: all 0.1s ease;
+    > div:last-child {
+      max-width: inherit;
+      width: 100%;
+    }
+  }
+
+  > div:first-child {
+    width: 100%;
+    transition: all 0.1s ease;
+  }
+
+  > div:first-child:active {
+    opacity: 0.6;
+  }
+
+  > div:last-child {
+    flex-shrink: 0;
+    /* overflow-x: hidden; */
+    width: fit-content;
+    overflow-y: visible;
+    justify-content: flex-end;
+  }
+
+  h4 {
+    font-weight: normal;
+    font-size: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: fit-content;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+  }
+
+  .sub-title {
+    color: #0000006f;
+    font-size: 14px;
+    margin-left: 4px;
+    display: flex;
+  }
+
+  p#text {
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: fit-content;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0;
+  }
 }
 
 // .list-item>div:first-child:hover {
 //   opacity: 0.6;
 // }
-
-.list-item > div:first-child:active {
-  opacity: 0.6;
-}
-
-.list-item > div:last-child {
-  flex-shrink: 0;
-  /* overflow-x: hidden; */
-  width: fit-content;
-  overflow-y: visible;
-  justify-content: flex-end;
-}
-
-.list-item > div > div:last-child {
-  max-width: inherit;
-  width: 100%;
-}
-
-.list-item h4 {
-  font-weight: normal;
-  font-size: 15px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: fit-content;
-  margin-bottom: 3px;
-  display: flex;
-  align-items: center;
-}
-
-.list-item .sub-title {
-  color: #0000006f;
-  font-size: 14px;
-  margin-left: 4px;
-  display: flex;
-}
-
-.list-item p#text {
-  font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: fit-content;
-  color: rgba(255, 255, 255, 0.6);
-  margin-top: 0;
-}
 
 .icon {
   flex-shrink: 0;
@@ -147,10 +147,11 @@ defineProps<{
   font-size: 15px;
   margin: 0 6px;
   transform: scale3d(1, 1, 500);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .list-item-button:hover {
-  color: rgba(var(--theme-color), 1);
+  color: rgba(255, 255, 255, 1);
 }
 
 .list-item-button:active {

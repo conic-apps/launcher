@@ -1,7 +1,9 @@
 <template>
   <div class="window" data-tauri-drag-region>
     <div class="title-bar" data-tauri-drag-region>
-      <div></div>
+      <div>
+        <p v-if="currentComponent.name === 'settings'">设置</p>
+      </div>
       <search-bar
         @click="openSearchPanel"
         id="global-search"
@@ -13,12 +15,12 @@
       </div>
     </div>
     <div class="sidebar" data-tauri-drag-region="">
-      <div class="logo"></div>
+      <div class="avatar"></div>
       <ul class="sidebar-btns" data-tauri-drag-region>
         <sidebar-item
           title="游戏"
           icon="gamepad"
-          @click="changePage($event, 'wareHouse')"></sidebar-item>
+          @click="changePage($event, 'game')"></sidebar-item>
         <sidebar-item
           title="扩展"
           icon="puzzle-piece"
@@ -71,24 +73,30 @@ let transitionName = ref("entrance");
 const currentComponent = shallowRef(pages.game);
 let last: any;
 function changePage(_event: any, component: any) {
-  if (component === "settings") {
-    transitionName.value = "zoom-out";
-    hideSidebar();
-  } else {
-    showSidebar();
-    let isSettingPage = JSON.stringify(currentComponent.value) == JSON.stringify(pages.settings);
-    if (isSettingPage) {
-      transitionName.value = "zoom-in";
-    } else {
-      transitionName.value = "entrance";
-    }
-  }
-  last = currentComponent.value;
+  console.log(component);
   if (typeof component == "string") {
     currentComponent.value = pages[component];
   } else {
     currentComponent.value = component;
   }
+  // if (component === "settings") {
+  //   transitionName.value = "zoom-out";
+  //   hideSidebar();
+  // } else {
+  //   showSidebar();
+  //   let isSettingPage = JSON.stringify(currentComponent.value) == JSON.stringify(pages.settings);
+  //   if (isSettingPage) {
+  //     transitionName.value = "zoom-in";
+  //   } else {
+  //     transitionName.value = "entrance";
+  //   }
+  // }
+  // last = currentComponent.value;
+  // if (typeof component == "string") {
+  //   currentComponent.value = pages[component];
+  // } else {
+  //   currentComponent.value = component;
+  // }
 }
 
 function hideSidebar() {
@@ -214,9 +222,17 @@ function closeSearchPanel() {
   opacity: 0.9;
 }
 
-.win-btn > div.min {
-  // background: rgb(117, 121, 0);
-}
+// .win-btn>div.min {
+//   background: rgb(117, 121, 0);
+// }
+
+// .win-btn>div.max {
+//   background: rgb(2, 136, 0);
+// }
+
+// .win-btn>div.close {
+//   background: rgba(158, 0, 0, 0.677);
+// }
 
 .win-btn > div.min > i::before {
   content: "\f068";
@@ -224,19 +240,11 @@ function closeSearchPanel() {
   margin-top: 1px;
 }
 
-.win-btn > div.max {
-  // background: rgb(2, 136, 0);
-}
-
 .win-btn > div.max > i::before {
   content: "\f065";
   font-size: 12px;
   margin-top: 1.6px;
   margin-left: 0.8px;
-}
-
-.win-btn > div.close {
-  // background: rgba(158, 0, 0, 0.677);
 }
 
 .win-btn > div.close > i::before {
@@ -253,17 +261,35 @@ function closeSearchPanel() {
   align-items: center;
 }
 
-.sidebar .logo {
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 30%);
-  border-radius: 50%;
+.sidebar .avatar {
+  width: 36px;
+  height: 36px;
+  top: 13px;
+  // background: rgba(255, 255, 255, 30%);
+  background: url(@/assets/images/steve_avatar.webp);
+  background-position: center;
+  background-size: contain;
+  border-radius: 16px;
   margin-top: 16px;
   flex-shrink: 0;
   position: absolute;
-  top: 0;
+  // top: 0;
   transition: all 0.3s ease;
 }
+
+// .sidebar-hidden .avatar {
+//   opacity: 1;
+//   position: absolute;
+//   transform: scale(0.76);
+//   top: 0px;
+//   background: none;
+//   font-size: 28px;
+// }
+
+// .sidebar-hidden .avatar::before {
+//   font-family: fa-pro;
+//   content: "\f013";
+// }
 
 .sidebar .sidebar-btns {
   width: 100%;
@@ -281,13 +307,6 @@ function closeSearchPanel() {
 
 .sidebar-hidden > * {
   opacity: 0;
-}
-
-.sidebar-hidden .logo {
-  opacity: 1;
-  position: absolute;
-  transform: scale(0.76);
-  top: -13px;
 }
 
 main.main {

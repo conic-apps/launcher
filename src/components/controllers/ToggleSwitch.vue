@@ -20,12 +20,12 @@ let checked = false;
 .input-box {
   margin: 0 6px;
   pointer-events: all;
-}
 
-.input-box label {
-  /* cursor: pointer; */
-  display: flex;
-  align-items: center;
+  label {
+    /* cursor: pointer; */
+    display: flex;
+    align-items: center;
+  }
 }
 
 .input-box label span {
@@ -35,28 +35,27 @@ let checked = false;
   align-items: center;
   padding: 0 3px;
   transition: 0.5s;
-  background-color: #f6f6f61c;
+  background-color: #00000000;
   border-radius: 200px;
-  outline: 1px solid #5a5a5ab7;
+  outline: 1px solid #ffffffb7;
   transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
-}
 
-.input-box label span > div {
-  width: 13.5px;
-  height: 13.5px;
-  border-radius: 200px;
-  position: absolute;
-  background-color: #5a5a5a;
-  transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
+  div {
+    width: 13.5px;
+    height: 13.5px;
+    border-radius: 200px;
+    background-color: #ffffffb7;
+    transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
+  }
 }
 
 .input-box label input:checked ~ span {
-  outline: 1px solid rgba(var(--theme-color), 1);
-  background-color: rgba(var(--theme-color), 1);
+  outline: 1px solid var(--color-scale-blue-4);
+  background-color: var(--color-scale-blue-4);
 }
 
 .input-box:hover span {
-  background: #ffffffce;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .input-box:hover span > div {
@@ -74,9 +73,5 @@ let checked = false;
 
 .input-box input {
   display: none;
-}
-
-.input-box:hover span {
-  background: #ffffffd9;
 }
 </style>

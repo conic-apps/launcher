@@ -114,15 +114,9 @@ import QuiltChoose from "../QuiltChoose.vue";
 import { invoke } from "@tauri-apps/api/core";
 import VueButton from "@/components/controllers/Button.vue";
 import Tag from "@/components/Tag.vue";
+import { Instance } from "@/components/Instances.vue";
 
 const emit = defineEmits(["created"]);
-interface Instance {
-  config: {
-    name: string;
-    runtime: string;
-  };
-  installed: boolean;
-}
 const props = defineProps<{
   instances: Instance[];
 }>();
