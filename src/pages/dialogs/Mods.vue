@@ -48,7 +48,7 @@
             </div>
           </div>
           <div class="row2">
-            <p>在左侧选择存档以预览地图</p>
+            <p>TODO</p>
           </div>
         </div>
       </div>

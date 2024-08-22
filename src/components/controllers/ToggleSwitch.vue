@@ -1,7 +1,7 @@
 <template>
   <div class="input-box">
     <label>
-      <input type="checkbox" v-model="checked" />
+      <input type="checkbox" v-model="model" />
       <span>
         <div></div>
       </span>
@@ -13,7 +13,7 @@
 // const props = defineProps<{
 //   checked: boolean
 // }>()
-let checked = false;
+const model = defineModel();
 </script>
 
 <style lang="less" scoped>

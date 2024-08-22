@@ -51,10 +51,10 @@ pub struct LaunchConfig {
     pub(crate) fullscreen: bool,
 
     /// User custom additional java virtual machine command line arguments.
-    pub(crate) extra_jvm_args: Vec<String>,
+    pub(crate) extra_jvm_args: String,
 
     /// User custom additional minecraft command line arguments.
-    pub(crate) extra_mc_args: Vec<String>,
+    pub(crate) extra_mc_args: String,
 
     pub(crate) is_demo: bool,
     /// Game process priority, invalid on windows
@@ -67,34 +67,39 @@ pub struct LaunchConfig {
     pub(crate) ignore_patch_discrepancies: bool,
 
     /// Add extra classpath
-    pub(crate) extra_class_paths: Vec<String>,
+    pub(crate) extra_class_paths: String,
 
     pub(crate) gc: GC,
+
+    pub(crate) launcher_name: String,
+    pub wrap_command: String,
+
+    pub execute_before_launch: String,
+
+    pub execute_after_launch: String,
 }
 
 impl Default for LaunchConfig {
     fn default() -> Self {
         Self {
             min_memory: 0,
-            max_memory: 1024,
+            max_memory: 2048,
             server: None,
             width: 854,
             height: 480,
             fullscreen: false,
-            extra_jvm_args: vec![],
-            extra_mc_args: vec![],
+            extra_jvm_args: String::new(),
+            extra_mc_args: String::new(),
             is_demo: false,
             process_priority: ProcessPriority::Normal,
             ignore_invalid_minecraft_certificates: false,
             ignore_patch_discrepancies: false,
-            extra_class_paths: vec![],
+            extra_class_paths: String::new(),
             gc: GC::G1,
+            launcher_name: "Amethyst_Launcher".to_string(),
+            wrap_command: String::new(),
+            execute_after_launch: String::new(),
+            execute_before_launch: String::new(),
         }
-    }
-}
-
-impl LaunchConfig {
-    pub fn get() -> Self {
-        Self::default()
     }
 }

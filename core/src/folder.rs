@@ -94,7 +94,7 @@ impl MinecraftLocation {
     }
 
     pub fn get_natives_root<P: AsRef<Path>>(&self, version: P) -> PathBuf {
-        self.get_version_root(version).join("cvl-natives")
+        self.get_version_root(version).join("aml-natives")
     }
 
     pub fn get_version_root<P: AsRef<Path>>(&self, version: P) -> PathBuf {

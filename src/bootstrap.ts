@@ -1,16 +1,19 @@
-import { createApp } from "vue"
-// import { createPinia } from 'pinia'
+import { createApp, watch } from "vue"
+import { createPinia } from "pinia"
 import App from "./Main.vue"
+import { type Config, useConfigStore } from "./config.ts"
+import { invoke } from "@tauri-apps/api/core"
+import { event } from "@tauri-apps/api"
 // import $ from "jquery";
 
 // $("#window").attr(
 //     "style",
 //     "transform: scale(1); opacity: 1; transition: all 250ms cubic-bezier(0.04, 0.47, 0.47, 0.98)"
 // );
-
+const pinia = createPinia()
 const app = createApp(App)
 
-// app.use(createPinia())
+app.use(pinia)
 
 app.mount("#window")
 
@@ -28,7 +31,6 @@ app.mount("#window")
 //   x: (await window.getCurrent().innerPosition()).x,
 //   y: (await window.getCurrent().innerPosition()).y
 // },);
-import { event } from "@tauri-apps/api"
 
 globalThis.onload = () => {
     console.log(`

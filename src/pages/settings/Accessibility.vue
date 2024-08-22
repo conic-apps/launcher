@@ -29,9 +29,9 @@
           <toggle-switch></toggle-switch>
         </setting-item>
         <setting-item
-          title="首次启动游戏语言"
+          title="自动更改游戏语言"
           description="在首次启动游戏时将游戏语言设置为你的启动器语言"
-          icon="eye-slash"
+          icon="language"
           :last="true">
           <toggle-switch></toggle-switch>
         </setting-item>
