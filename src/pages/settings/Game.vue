@@ -52,11 +52,15 @@
             width="100px"
             style="display: inline-block; margin-right: 16px"
             placeholder="宽"
+            :number-only="true"
+            :disabled="config.launch.fullscreen"
             v-model.number="config.launch.width"></TextInputBox>
           <TextInputBox
             width="100px"
             style="display: inline-block"
             placeholder="高"
+            :number-only="true"
+            :disabled="config.launch.fullscreen"
             v-model.number="config.launch.height">
           </TextInputBox>
         </setting-item>

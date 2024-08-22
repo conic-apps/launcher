@@ -15,11 +15,11 @@
         :description="modManagerDesc"
         margin="0,0,10,0"
         @click="show.mods = true"></card-button>
-      <card-button
-        icon="puzzle-piece"
-        title="截图"
-        margin="0,0,0,0"
-        description="正在加载"></card-button>
+      <!-- <card-button -->
+      <!--   icon="puzzle-piece" -->
+      <!--   title="截图" -->
+      <!--   margin="0,0,0,0" -->
+      <!--   description="正在加载"></card-button> -->
     </div>
     <div class="second-row">
       <card-button
@@ -29,18 +29,18 @@
         :description="resourcepacksManagerDesc"
         margin="0,0,10,0"
         @click="show.resourcepacks = true"></card-button>
-      <card-button
-        icon="lightbulb-on"
-        title="光影包"
-        :class="shaderpackIsLoading ? 'disabled' : ''"
-        :description="shaderpacksManagerDesc"
-        margin="0,0,10,0"
-        @click="show.shaderpacks = true"></card-button>
-      <card-button
-        icon="puzzle-piece"
-        title="投影"
-        margin="0,0,0,0"
-        description="正在加载"></card-button>
+      <!-- <card-button -->
+      <!--   icon="lightbulb-on" -->
+      <!--   title="光影包" -->
+      <!--   :class="shaderpackIsLoading ? 'disabled' : ''" -->
+      <!--   :description="shaderpacksManagerDesc" -->
+      <!--   margin="0,0,10,0" -->
+      <!--   @click="show.shaderpacks = true"></card-button> -->
+      <!-- <card-button -->
+      <!--   icon="puzzle-piece" -->
+      <!--   title="投影" -->
+      <!--   margin="0,0,0,0" -->
+      <!--   description="正在加载"></card-button> -->
     </div>
     <worlds
       :show="show.worlds"
