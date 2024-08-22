@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { markRaw, reactive, ref, shallowRef } from "vue";
+import { markRaw, ref, shallowRef } from "vue";
 import General from "./settings/General.vue";
 import Game from "./settings/Game.vue";
 import Advance from "./settings/Advance.vue";
@@ -32,6 +32,8 @@ import Download from "./settings/Download.vue";
 import Accessibility from "./settings/Accessibility.vue";
 import Extend from "./settings/Extend.vue";
 import About from "./settings/About.vue";
+import { useConfigStore } from "@/config";
+const config = useConfigStore();
 
 const components = ref([
   {

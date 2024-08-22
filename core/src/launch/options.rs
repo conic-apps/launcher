@@ -5,7 +5,8 @@
 use crate::{
     config::{
         instance::InstanceConfig,
-        launch::{LaunchConfig, ProcessPriority, Server, GC},
+        launch::{ProcessPriority, Server, GC},
+        read_config_file,
     },
     folder::MinecraftLocation,
     DATA_LOCATION,
@@ -47,10 +48,10 @@ pub struct LaunchOptions {
     /// User custom additional java virtual machine command line arguments.
     ///
     /// If this is empty, the `DEFAULT_EXTRA_JVM_ARGS` will be used.
-    pub(crate) extra_jvm_args: Vec<String>,
+    pub(crate) extra_jvm_args: String,
 
     /// User custom additional minecraft command line arguments.
-    pub(crate) extra_mc_args: Vec<String>,
+    pub(crate) extra_mc_args: String,
 
     pub(crate) is_demo: bool,
 
@@ -61,7 +62,7 @@ pub struct LaunchOptions {
     pub(crate) ignore_patch_discrepancies: bool,
 
     /// Add extra classpath
-    pub(crate) extra_class_paths: Vec<String>,
+    pub(crate) extra_class_paths: String,
 
     /// Game process priority, invalid on windows
     pub(crate) process_priority: ProcessPriority,
@@ -71,13 +72,32 @@ pub struct LaunchOptions {
     pub(crate) gc: GC,
 
     pub(crate) minecraft_location: MinecraftLocation,
+    pub(crate) launcher_name: String,
+
+    pub wrap_command: String,
+
+    pub execute_before_launch: String,
+
+    pub execute_after_launch: String,
 }
 
 impl LaunchOptions {
     pub fn get(instance_config: InstanceConfig) -> Self {
-        let global_config = LaunchConfig::get();
+        let global_config = read_config_file().launch;
         let instance_config = instance_config.launch_config.clone();
         Self {
+            wrap_command: instance_config
+                .wrap_command
+                .unwrap_or(global_config.wrap_command),
+            execute_before_launch: instance_config
+                .execute_before_launch
+                .unwrap_or(global_config.execute_before_launch),
+            execute_after_launch: instance_config
+                .execute_after_launch
+                .unwrap_or(global_config.execute_after_launch),
+            launcher_name: instance_config
+                .launcher_name
+                .unwrap_or(global_config.launcher_name),
             game_profile: GameProfile {
                 name: "Steve".to_string(),
                 uuid: "00000000-0000-0000-0000-000000011111".to_string(),

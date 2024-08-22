@@ -1,5 +1,5 @@
 <template>
-  <div class="setting-item" :style="clickAble ? '' : 'background-color: #08080800 !important;'">
+  <div class="setting-item" :style="style">
     <div class="title">
       <div class="icon" v-if="icon"><i :class="icon"></i></div>
       <div>
@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -23,13 +23,26 @@ const props = withDefaults(
     icon?: string;
     boxShadow?: boolean;
     clickAble?: boolean;
+    disabled?: boolean;
   }>(),
   {
     boxShadow: false,
     last: false,
     clickAble: false,
+    disabled: false,
   },
 );
+
+const style = computed(() => {
+  let result = "";
+  if (!props.clickAble) {
+    result += "background-color: #08080800 !important;";
+  }
+  if (props.disabled) {
+    result += "opacity: 0.5;";
+  }
+  return result;
+});
 </script>
 
 <style lang="less" scoped>

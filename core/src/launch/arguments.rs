@@ -127,7 +127,7 @@ pub async fn generate_command_arguments(
             .to_string_lossy()
             .to_string(),
     );
-    jvm_options.insert("launcher_name", "Amethyst Launcher".to_string());
+    jvm_options.insert("launcher_name", launch_options.launcher_name.clone());
     jvm_options.insert("launcher_version", APP_VERSION.get().unwrap().to_string());
     jvm_options.insert(
         "classpath",
@@ -151,7 +151,7 @@ pub async fn generate_command_arguments(
         }
     }
     jvm_arguments.extend(version.arguments.jvm);
-    command_arguments.extend(launch_options.extra_jvm_args.clone());
+    command_arguments.push(launch_options.extra_jvm_args.clone());
     command_arguments.extend(
         jvm_arguments
             .iter()
@@ -195,7 +195,7 @@ pub async fn generate_command_arguments(
             .iter()
             .map(|arg| format(arg, game_options.clone(), true)),
     );
-    command_arguments.extend(launch_options.extra_mc_args.clone());
+    command_arguments.push(launch_options.extra_mc_args.clone());
     if let Some(server) = launch_options.server.clone() {
         command_arguments.extend(vec!["--server".to_string(), server.ip]);
         if let Some(port) = server.port {
@@ -225,7 +225,7 @@ pub async fn generate_command_arguments(
 fn resolve_classpath(
     version: &ResolvedVersion,
     minecraft: &MinecraftLocation,
-    extra_class_paths: Vec<String>,
+    extra_class_paths: String,
 ) -> String {
     let mut classpath = version
         .libraries
@@ -253,6 +253,10 @@ fn resolve_classpath(
         .into_iter()
         .collect::<Vec<String>>();
 
+    if !extra_class_paths.is_empty() {
+        classpath.push(extra_class_paths);
+    }
+
     if let Some(inheritance) = version.inheritances.last() {
         classpath.push(
             minecraft
@@ -269,9 +273,6 @@ fn resolve_classpath(
         );
     }
 
-    if !extra_class_paths.is_empty() {
-        classpath.extend(extra_class_paths);
-    }
     classpath.join(DELIMITER)
 }
 

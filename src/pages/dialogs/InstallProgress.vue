@@ -24,6 +24,22 @@
                   style="font-family: fa-pro; font-style: normal; margin-right: 0.2em"></i>
                 {{ speed }}</span
               >
+              <span
+                :style="
+                  installProgress.step == 3
+                    ? 'margin-left: 8px; transition: all .2s ease'
+                    : 'margin-left: 8px; transition: all .2s ease;opacity: 0'
+                "
+                >正在下载: {{ running }}</span
+              >
+              <span
+                :style="
+                  installProgress.step == 3
+                    ? 'margin-left: 8px; transition: all .2s ease'
+                    : 'margin-left: 8px; transition: all .2s ease;opacity: 0'
+                "
+                >等待中: {{ pending }}</span
+              >
             </p>
           </div>
         </div>
@@ -208,7 +224,7 @@ const installModLoaderStatus = computed(() => {
 });
 let speed = ref("");
 listen("download_speed", (event) => {
-  let payload = (event.payload as number) / 2;
+  let payload = (event.payload as number) / 4;
   if (payload < 1024) {
     speed.value = payload + " B/s";
   } else if (payload < 1024 * 1024) {
@@ -217,6 +233,19 @@ listen("download_speed", (event) => {
     speed.value = (payload / 1024 / 1024).toFixed(2) + " MB/s";
   } else {
     speed.value = (payload / 1024 / 1024 / 1024).toFixed(2) + " GB/s";
+  }
+});
+const running = ref(0);
+listen("running_download_task", (event) => {
+  let payload = event.payload as number;
+  running.value = payload;
+});
+const pending = computed(() => {
+  let pending = installProgress.value.total - installProgress.value.completed - running.value;
+  if (pending <= 0) {
+    return 0;
+  } else {
+    return pending;
   }
 });
 </script>

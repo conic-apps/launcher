@@ -22,7 +22,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use crate::config::instance::{get_instance_config, get_instance_config_by_name};
-use crate::game_data::{scan_mod_folder, scan_saves_folder};
+use crate::game_data::{scan_mod_folder, scan_resourcepack_folder, scan_saves_folder};
 use crate::install::install;
 use crate::install::{
     get_fabric_version_list, get_forge_version_list, get_minecraft_version_list,
@@ -32,6 +32,7 @@ use crate::instance::{
     check_repeated_instance_name, create_instance, scan_instances_folder, set_current_instance,
 };
 use crate::launch::launch;
+use config::{read_config_file, save_config, update_config, Config};
 use env_logger::fmt::style::{Color, Style};
 use folder::DataLocation;
 use log::{debug, error, info, Level, LevelFilter};
@@ -51,6 +52,7 @@ const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("./launcher_profiles.json
 
 pub struct Storage {
     pub current_instance: Arc<Mutex<String>>,
+    pub config: Arc<Mutex<Config>>,
 }
 #[tokio::main]
 async fn main() {
@@ -75,13 +77,18 @@ async fn main() {
             set_current_instance,
             scan_mod_folder,
             scan_saves_folder,
+            scan_resourcepack_folder,
             get_instance_config,
             get_instance_config_by_name,
             install,
             launch,
+            read_config_file,
+            update_config,
+            save_config,
         ])
         .manage(Storage {
             current_instance: Arc::new(Mutex::new("".to_string())),
+            config: Arc::new(Mutex::new(read_config_file())),
         })
         .setup(move |app| {
             MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();

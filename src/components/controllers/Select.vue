@@ -16,7 +16,7 @@
                 v-for="(option, index) in options"
                 :key="index"
                 @click="changeSelection(index)"
-                :text="option"></select-option>
+                :text="displayName[index]"></select-option>
             </div>
           </Transition>
           <div
@@ -38,17 +38,18 @@
 import { ref } from "vue";
 import SelectOption from "./SelectOption.vue";
 import $ from "jquery";
-const props = withDefaults(
-  defineProps<{
-    options: string[];
-    default?: number | null;
-    width?: string;
-  }>(),
-  {
-    default: null,
-  },
-);
-let selected = ref(typeof props.default == "number" ? props.options[props.default] : "");
+const props = defineProps<{
+  options: string[];
+  width?: string;
+  displayName: string[];
+}>();
+const model = defineModel();
+let selected = ref("");
+props.options.map((value, index) => {
+  if (value == model.value) {
+    selected.value = props.displayName[index];
+  }
+});
 function beforeEnter(element: HTMLElement) {
   $(element.firstElementChild!).removeClass("hidden");
   element.style.transition = transitionStyle;
@@ -80,7 +81,8 @@ function afterLeave(element: HTMLElement) {
   element.style.height = "";
 }
 function changeSelection(index: number) {
-  selected.value = props.options[index];
+  selected.value = props.displayName[index];
+  model.value = props.options[index];
 }
 // onMounted(async () => {
 //   selected.value = await load(props.config)

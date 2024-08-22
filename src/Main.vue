@@ -53,6 +53,8 @@ import { window } from "@tauri-apps/api";
 import $ from "jquery";
 import Settings from "./pages/Settings.vue";
 import Game from "./pages/Game.vue";
+import { invoke } from "@tauri-apps/api/core";
+import { useConfigStore } from "./config";
 
 function minimize() {
   window.getCurrentWindow().minimize();
@@ -61,7 +63,9 @@ function maximize() {
   window.getCurrentWindow().maximize();
 }
 function close() {
-  window.getCurrentWindow().close();
+  invoke("save_config").then(() => {
+    window.getCurrentWindow().close();
+  });
 }
 
 const pages: any = reactive({
@@ -72,13 +76,23 @@ const pages: any = reactive({
 let transitionName = ref("entrance");
 const currentComponent = shallowRef(pages.game);
 let last: any;
+const configStore = useConfigStore();
+configStore.syncFromFile().then(() => {
+  console.log(configStore.launch);
+});
 function changePage(_event: any, component: any) {
-  console.log(component);
-  if (typeof component == "string") {
-    currentComponent.value = pages[component];
-  } else {
-    currentComponent.value = component;
-  }
+  const config = useConfigStore();
+  console.log(config);
+  // save config to file when leaving setting page
+  invoke("update_config", { config: config }).then(() => {
+    invoke("save_config").then(() => {
+      if (typeof component == "string") {
+        currentComponent.value = pages[component];
+      } else {
+        currentComponent.value = component;
+      }
+    });
+  });
   // if (component === "settings") {
   //   transitionName.value = "zoom-out";
   //   hideSidebar();
