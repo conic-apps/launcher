@@ -121,16 +121,16 @@ function expander() {
 <style lang="less" scoped>
 .expander {
   border-radius: var(--border-radius-large);
-  background-color: #00000000;
+  background-color: #ffffff0a;
   border: 1px solid #5000851d;
-  box-shadow: 0 0 10px #ffffff15;
+  box-shadow: 0 0 10px #00000015;
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
 }
 
 .expander-icon {
-  width: 2rem;
-  height: 2em;
+  width: 20px;
+  height: 20px;
   margin-right: 6px;
   display: flex;
   justify-content: center;
@@ -141,7 +141,7 @@ function expander() {
   font-family: "fa-pro";
   font-style: normal;
   font-size: calc(23px - var(--));
-  font-weight: 500;
+  font-size: 24px;
 }
 
 .expander-header,
@@ -215,7 +215,7 @@ function expander() {
 }
 
 .expander-header h4 > div {
-  color: #0000006f;
+  color: #ffffff6f;
   display: inline-block;
   font-size: 14px;
   margin-left: 4px;
@@ -223,7 +223,7 @@ function expander() {
 
 .expander-header p {
   font-size: 12.3px;
-  color: var(--text-color);
+  color: rgba(255, 255, 255, 0.011);
   opacity: 0.6;
   margin: 0;
 }
@@ -234,7 +234,6 @@ function expander() {
   flex-direction: column;
   justify-content: flex-end;
   border-radius: 0 0 var(--border-radius-large) var(--border-radius-large);
-  background-color: rgba(0, 0, 0, 0.011);
 }
 
 .expander-body > div {

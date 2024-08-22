@@ -1,10 +1,10 @@
 <template>
-  <div class="setting-item" :style="cardStyle">
+  <div class="setting-item" :style="clickAble ? '' : 'background-color: #08080800 !important;'">
     <div class="title">
-      <div class="icon"><i :class="icon"></i></div>
+      <div class="icon" v-if="icon"><i :class="icon"></i></div>
       <div>
         <h4 id="text">{{ title }}</h4>
-        <p v-if="description" id="text">{{ description }}</p>
+        <p v-if="description" id="text" style="max-width: 560px" v-html="description"></p>
       </div>
     </div>
     <div>
@@ -21,46 +21,42 @@ const props = withDefaults(
     title: string;
     description?: string;
     icon?: string;
-    margin?: string;
     boxShadow?: boolean;
-    padding?: string;
-    last?: boolean;
+    clickAble?: boolean;
   }>(),
   {
-    margin: "0,0,0,0",
     boxShadow: false,
-    padding: "12,14,12,14",
     last: false,
+    clickAble: false,
   },
 );
-let margin = props.margin.split(",");
-let padding = props.padding.split(",");
-let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px; ${props.last ? "border-bottom: none; border-radius: 0 0 var(--border-radius-large) var(--border-radius-large)" : ""}`;
 </script>
 
 <style lang="less" scoped>
 .setting-item {
-  background-color: var(--expander-background-color);
-  border: 1px solid var(--expander-border-color);
-  margin: 15px 0 15px 0;
+  padding: 16px 18px 16px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: all 0.1s ease;
   // border-radius: var(--border-radius-large);
   background-color: #08080800;
-  border-bottom: 1px solid #5000851d;
-  margin: 15px 0 15px 0;
-  transition: all 0.1s ease;
+  border-bottom: 1px solid #00000079;
+  margin: 0;
+  transition: all 50ms ease;
+}
+
+.setting-item:hover {
+  background-color: #ffffff0c;
+}
+
+.setting-item:active {
+  background-color: #ffffff1f;
 }
 
 .dialog .setting-item {
   background-color: #000000b9;
   border: 1px solid #0000002e;
-}
-
-:active {
-  opacity: 0.8;
 }
 
 .title {
@@ -72,15 +68,15 @@ let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}mar
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 2.3rem;
-  height: 2.3rem;
-  margin-right: 4px;
+  width: 40px;
+  height: inherit;
+  margin-right: 8px;
 }
 
 .icon i {
   font-family: "fa-pro";
   font-style: normal;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 500;
   margin: 0;
 }
@@ -105,8 +101,9 @@ let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}mar
 
 .title p {
   font-size: 12.5px;
-  color: var(--text-color);
+  color: rgba(255, 255, 255, 0.849);
   opacity: 0.6;
   margin-top: 4px;
+  line-height: 1.1;
 }
 </style>

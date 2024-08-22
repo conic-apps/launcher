@@ -2,7 +2,7 @@
   <dialog-vue :visible="props.show" width="860" height="520">
     <div class="instance-manager">
       <div style="width: 100%; height: 100%">
-        <div class="title" style="position: relative">
+        <div class="title">
           <div style="display: flex; align-items: center">
             <div class="icon">
               <i class="boxes-stacked" v-if="currentComponent == pages.view"></i>
@@ -114,6 +114,7 @@ function instanceCreated() {
   height: 80px;
   display: flex;
   justify-content: space-between;
+  position: relative;
 }
 
 .instance-manager .title .icon {
