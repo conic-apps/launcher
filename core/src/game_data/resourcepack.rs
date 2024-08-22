@@ -12,7 +12,7 @@ pub struct PackMetadata {
     pub description: String,
     pub pack_format: u8,
     #[serde(flatten)]
-    pub other: Option<serde_json::Value>
+    pub other: Option<serde_json::Value>,
 }
 
 pub fn get_metadata<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<PackMetadata> {

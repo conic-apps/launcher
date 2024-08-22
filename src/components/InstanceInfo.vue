@@ -1,6 +1,7 @@
 <template>
   <div class="instance-info-main card" :style="banner">
-    <div style="
+    <div
+      style="
         position: absolute;
         width: 100%;
         height: 100%;
@@ -14,14 +15,17 @@
       "></div>
     <div class="line-a">
       <div class="minecraft-version" v-if="minecraftVersion">
-        <img src="@/assets/images/minecraft-icon.svg" fill="#fff" />Minecraft
+        <img src="@/assets/images/Grass_Block_JE2.webp" fill="#fff" />Minecraft
         {{ minecraftVersion }}
       </div>
       <div class="mod-loader-version" v-if="modLoaderType && modLoaderVersion">
         <img src="@/assets/images/fabric.webp" fill="#fff" v-if="modLoaderType === 'Fabric'" />
         <img src="@/assets/images/quilt.svg" fill="#fff" v-if="modLoaderType === 'Quilt'" />
         <img src="@/assets/images/neoforged.png" fill="#fff" v-if="modLoaderType === 'Neoforge'" />
-        <img src="@/assets/images/Anvil_JE3_BE3.webp" fill="#fff" v-if="modLoaderType === 'Forge'" />
+        <img
+          src="@/assets/images/Anvil_JE3_BE3.webp"
+          fill="#fff"
+          v-if="modLoaderType === 'Forge'" />
         {{ modLoaderType }} {{ modLoaderVersion }}
       </div>
     </div>
@@ -33,10 +37,14 @@
         <i class="button gear"></i>
         <i class="button circle-info"></i>
         <i class="button star"></i>
-        <button class="game-button" :class="`${gameButtonType}-game-button`" @click="$emit('game-button-click')">
-          <i :class="props.gameButtonType"
-            style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i>{{ gameButtonText
-          }}
+        <button
+          class="game-button"
+          :class="`${gameButtonType}-game-button`"
+          @click="$emit('game-button-click')">
+          <i
+            :class="props.gameButtonType"
+            style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i
+          >{{ gameButtonText }}
         </button>
       </div>
     </div>
@@ -117,6 +125,7 @@ let gameButtonText = computed(() => {
   border: none;
   position: relative;
   overflow: hidden;
+
   // border: 4px solid rgba(255, 255, 255, 0.174);
 }
 
@@ -140,12 +149,7 @@ let gameButtonText = computed(() => {
 .minecraft-version img,
 .mod-loader-version img {
   width: 22px;
-  opacity: 0.7;
   margin-right: 6px;
-}
-
-.mod-loader-version img {
-  opacity: 1;
 }
 
 .instance-name {
@@ -238,4 +242,5 @@ button.install-game-button {
 
 // button.installing-game-button {
 //   // background-image: ;
-// }</style>
+// }
+</style>

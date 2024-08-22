@@ -1,5 +1,5 @@
 <template>
-  <div class="input-box">
+  <div class="input-box" :style="`width: ${width};`">
     <input
       type="text"
       :title="name"
@@ -17,9 +17,11 @@ withDefaults(
     placeholder?: string;
     type?: string;
     error?: boolean;
+    width?: string;
   }>(),
   {
     type: "text",
+    width: "400px",
   },
 );
 
@@ -30,7 +32,6 @@ const model = defineModel();
 .input-box {
   border-radius: var(--border-radius-small);
   margin-left: auto;
-  width: 400px;
   overflow: hidden;
   height: 30px;
   flex-shrink: 0;

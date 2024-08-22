@@ -45,23 +45,23 @@
     <worlds
       :show="show.worlds"
       :datas="saves"
-      :instance-name="props.instanceName"
+      :instance-name="instance.config.name"
       @close="show.worlds = false">
     </worlds>
     <mods
       :show="show.mods"
       :datas="mods"
-      :instance-name="props.instanceName"
+      :instance-name="instance.config.name"
       @close="show.mods = false"></mods>
     <resourcepacks
       :show="show.resourcepacks"
       :datas="resourcepacks"
-      :instance-name="props.instanceName"
+      :instance-name="instance.config.name"
       @close="show.resourcepacks = false"></resourcepacks>
     <shaderpacks
       :show="show.shaderpacks"
       :datas="shaderpacks"
-      :instance-name="props.instanceName"
+      :instance-name="instance.config.name"
       @close="show.shaderpacks = false">
     </shaderpacks>
   </div>
@@ -93,12 +93,14 @@ import { invoke } from "@tauri-apps/api/core";
 import { computed, reactive, ref, watch } from "vue";
 import CardButton from "./CardButton.vue";
 import Worlds from "@/pages/dialogs/Worlds.vue";
+import { Save } from "@/pages/dialogs/Worlds.vue";
 import Mods from "@/pages/dialogs/Mods.vue";
 import Resourcepacks from "@/pages/dialogs/Resourcepacks.vue";
 import Shaderpacks from "@/pages/dialogs/Shaderpacks.vue";
+import { Instance } from "./Instances.vue";
 
 const props = defineProps<{
-  instanceName: string;
+  instance: Instance;
 }>();
 let show = reactive({
   worlds: false,
@@ -108,7 +110,7 @@ let show = reactive({
 });
 
 let mods = ref<any>([]);
-let saves = ref<any>([]);
+let saves = ref<Save[]>([]);
 let resourcepacks = ref<any>([]);
 let shaderpacks = ref<any>([]);
 
@@ -147,9 +149,9 @@ let savesManagerDesc = computed(() => {
   }
 });
 
-// watch(props, (newValue) => {
-//   alert(newValue.instanceName)
-// })
+watch(props, (newValue) => {
+  updateData();
+});
 
 // watch(show, (newValue) => {
 //   if (newValue.mods) {
@@ -170,4 +172,5 @@ function updateData() {
     savesIsLoading.value = false;
   });
 }
+updateData();
 </script>

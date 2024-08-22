@@ -11,14 +11,7 @@
 </template>
 
 <script setup lang="ts">
-interface Instance {
-  config: {
-    name: string;
-    runtime: string;
-    group: string[];
-  };
-  installed: boolean;
-}
+import { Instance } from "@/components/Instances.vue";
 
 const props = defineProps<{
   instances: Instance[];
