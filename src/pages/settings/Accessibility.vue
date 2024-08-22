@@ -1,30 +1,64 @@
 <template>
-  <!-- <div>
-    <expander :can-swap="false" title="辅助功能" description="使你的启动器更易于使用" icon="hand">
-      <toggle-switch-bar name="正式版更新提示"></toggle-switch-bar>
-      <toggle-switch-bar name="快照版更新提示"></toggle-switch-bar>
-      <toggle-switch-bar name="默认设置为系统语言"></toggle-switch-bar>
-      <select-bar name="动画速度" :options="['特别慢', '慢', '正常', '快', '特别快']" :default="2"></select-bar>
-    </expander>
-    <expander :can-swap="false" title="无障碍" description="无障碍功能优化" icon="wheelchair">
-      <toggle-switch-bar name="禁用所有动画"></toggle-switch-bar>
-      <toggle-switch-bar name="为屏幕阅读器优化"></toggle-switch-bar>
-      <toggle-switch-bar name="高对比度模式"></toggle-switch-bar> 高对比度主题
-    </expander>
-    <expander :can-swap="false" title="快捷键" description="设置各项常用操作的快捷键" icon="keyboard">
-
-    </expander>
-    <expander :can-swap="false" title="默认搜索筛选器" description="指定各搜索框中的默认筛选参数，以便筛选掉不常用的项" icon="filter">
-
-    </expander>
-  </div> -->
+  <keep-alive>
+    <div>
+      <setting-group title="辅助功能">
+        <setting-item
+          title="正式版更新提示"
+          description="当 Miencraft 正式版发布时弹窗提示"
+          icon="circle-exclamation">
+          <toggle-switch></toggle-switch>
+        </setting-item>
+        <setting-item
+          title="快照版更新提示"
+          description="当 Miencraft 快照版发布时弹窗提示"
+          icon="circle-exclamation">
+          <toggle-switch></toggle-switch>
+        </setting-item>
+        <setting-item
+          title='隐藏"最新版本"'
+          description='不在游戏列表中显示"最新版本"'
+          icon="eye-slash"
+          :last="true">
+          <toggle-switch></toggle-switch>
+        </setting-item>
+        <setting-item
+          title='隐藏"最新快照"'
+          description='不在游戏列表中显示"最新快照"'
+          icon="eye-slash"
+          :last="true">
+          <toggle-switch></toggle-switch>
+        </setting-item>
+        <setting-item
+          title="首次启动游戏语言"
+          description="在首次启动游戏时将游戏语言设置为你的启动器语言"
+          icon="eye-slash"
+          :last="true">
+          <toggle-switch></toggle-switch>
+        </setting-item>
+      </setting-group>
+      <setting-group title="无障碍">
+        <setting-item
+          title="禁用所有动画"
+          description="眨眼和闪烁的动画对于有认知问题的人来说是有问题的，比如注意力缺陷多动障碍 (ADHD)。此外，某些动画效果可以触发前庭神经紊乱、癫痫、偏头痛和暗点敏感性。"
+          icon="pause">
+          <toggle-switch></toggle-switch>
+        </setting-item>
+        <setting-item
+          title="高对比度模式"
+          description="启用当前主题的高对比度模式（如果可用）"
+          icon="laptop"
+          :last="true">
+          <toggle-switch></toggle-switch>
+        </setting-item>
+      </setting-group>
+    </div>
+  </keep-alive>
 </template>
 
 <script setup lang="ts">
-// import { ref } from 'vue'
-// import Expander from '@/components/Expander.vue';
-// import ToggleSwitchBar from '@/components/ToggleSwitchBar.vue';
-// import SelectBar from '@/components/SelectBar.vue';
+import SettingItem from "@/components/SettingItem.vue";
+import SettingGroup from "@/components/SettingGroup.vue";
+import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
 </script>
 
 <style lang="less" scoped></style>
