@@ -207,7 +207,7 @@ pub async fn generate_command_arguments(
     }
     let no_width_arguments = !command_arguments
         .iter()
-        .any(|v| &v == &&"--width".to_string());
+        .any(|v| v == &"--width".to_string());
     if no_width_arguments && !launch_options.fullscreen {
         command_arguments.extend(vec![
             "--width".to_string(),

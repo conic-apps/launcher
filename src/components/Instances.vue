@@ -23,7 +23,7 @@
 import { computed, ref, type Ref } from "vue";
 import Card from "./Card.vue";
 
-interface Instance {
+export interface Instance {
   config: {
     name: string;
     runtime: {

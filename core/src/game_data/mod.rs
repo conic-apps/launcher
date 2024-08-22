@@ -10,7 +10,9 @@ use serde::{Deserialize, Serialize};
 use crate::{Storage, DATA_LOCATION};
 
 pub mod mods;
+pub mod resourcepack;
 pub mod saves;
+
 #[tauri::command(async)]
 pub async fn scan_mod_folder(
     storage: tauri::State<'_, Storage>,
@@ -69,7 +71,9 @@ pub async fn scan_mod_folder(
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Saves {
     pub icon: String,
+    #[serde(rename = "levelData")]
     pub level_data: LevelData,
+    #[serde(rename = "folderName")]
     pub folder_name: String,
 }
 

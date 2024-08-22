@@ -2,7 +2,7 @@
   <div
     class="tag"
     :style="`${border ? `border: 1px solid rgb(${color[0]}, ${color[1]}, ${color[2]}); ` : ''}
-      ${background ? `background: rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.2);` : ''} 
+      ${background ? `background: rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.3);` : ''} 
       color: ${textColor}; font-size: ${fontSize}px;
       ${round ? 'border-radius: 10000px' : ''}`">
     {{ text }}
@@ -10,9 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-
-const props = withDefaults(
+withDefaults(
   defineProps<{
     text: string;
     color: string[];

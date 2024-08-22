@@ -11,8 +11,6 @@
 
 Please go to the [official website](https://launcher.btlcraft.top) to download the launcher!
 
-Translated with www.DeepL.com/Translator (free version)
-
 ## Features
 
 -   You can install `Minecraft`, `Forge`, `Fabric`, `Optifine`, `Quilt`
