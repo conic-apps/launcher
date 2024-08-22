@@ -21,10 +21,10 @@
           title="游戏"
           icon="gamepad"
           @click="changePage($event, 'game')"></sidebar-item>
-        <sidebar-item
-          title="扩展"
-          icon="puzzle-piece"
-          @click="changePage($event, 'community')"></sidebar-item>
+        <!-- <sidebar-item -->
+        <!--   title="扩展" -->
+        <!--   icon="puzzle-piece" -->
+        <!--   @click="changePage($event, 'community')"></sidebar-item> -->
         <sidebar-item
           title="设置"
           icon="nav-5"

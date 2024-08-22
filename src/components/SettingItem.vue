@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -39,7 +39,7 @@ const style = computed(() => {
     result += "background-color: #08080800 !important;";
   }
   if (props.disabled) {
-    result += "opacity: 0.5;";
+    result += "opacity: 0.5; pointer-events: none;";
   }
   return result;
 });
@@ -52,7 +52,6 @@ const style = computed(() => {
   justify-content: space-between;
   align-items: center;
   transition: all 0.1s ease;
-  // border-radius: var(--border-radius-large);
   background-color: #08080800;
   border-bottom: 1px solid #00000079;
   margin: 0;
