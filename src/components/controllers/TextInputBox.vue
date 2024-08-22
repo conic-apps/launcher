@@ -1,31 +1,52 @@
 <template>
   <div class="input-box" :style="`width: ${width};`">
-    <input
-      type="text"
-      :title="name"
-      :placeholder="placeholder"
-      required
-      v-model="model"
-      :style="error ? 'outline: rgb(127,0,0)' : ''" />
+    <input @focusin="updateOld" @focusout="checkValue" :type="numberOnly ? 'number' : 'text'" :title="name" :placeholder="placeholder" required
+      v-model="model" :style="error ? 'outline: rgb(127,0,0)' : ''" :disabled="disabled" />
   </div>
 </template>
 
 <script setup lang="ts">
-withDefaults(
+import { computed } from "vue";
+import { watch } from "vue";
+
+const props = withDefaults(
   defineProps<{
     name?: string;
     placeholder?: string;
     type?: string;
     error?: boolean;
     width?: string;
+    numberOnly?: boolean;
+    disabled?: boolean;
   }>(),
   {
     type: "text",
     width: "400px",
+    numberOnly: false,
+    disabled: false
   },
 );
 
 const model = defineModel();
+let oldValue: number
+function updateOld(event: any) {
+  if (props.numberOnly) {
+    oldValue = model.value as number
+    console.log(oldValue)
+  }
+}
+function checkValue(event: any) {
+    console.log(event.target.value.trim())
+    if (!props.numberOnly) {
+    return;
+  }
+  let value = event.target.value.trim();
+    console.log(oldValue)
+    if (!/^[1-9]\d*$|^$/.test(value) || value.length == 0) {
+    model.value = oldValue;
+    event.target.value = oldValue
+  }
+}
 </script>
 
 <style lang="less" scoped>
@@ -38,7 +59,6 @@ const model = defineModel();
   padding: 0;
   font-size: 15px;
   transition: all 0.1s ease;
-  pointer-events: all;
   background-color: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }

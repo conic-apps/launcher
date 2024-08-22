@@ -76,6 +76,7 @@
               <i class="chevron-right" style="font-size: 12px"></i>
             </button>
           </div>
+          <list-item style="border-radius: 10px;" title="Broken Deer" description="愚蠢" logo="https://launcher.btlcraft.top/assets/brokendeer.webp"></list-item>
         </div>
       </div>
     </div>
@@ -92,6 +93,7 @@ import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
 import { reactive, ref, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import ListItem from "@/components/ListItem.vue"
 
 let installing = ref(false);
 
