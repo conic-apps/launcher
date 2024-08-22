@@ -171,6 +171,14 @@ function updateData() {
     saves.value = res;
     savesIsLoading.value = false;
   });
+  invoke("scan_resourcepack_folder").then((res: any) => {
+    resourcepacks.value = res;
+    resourcepacksIsLoading.value = false;
+  });
+  invoke("scan_shaderpack_folder").then((res: any) => {
+    shaderpacks.value = res;
+    shaderpackIsLoading.value = false;
+  });
 }
 updateData();
 </script>

@@ -95,7 +95,15 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
         }
     };
     info!("Start downloading file");
-    download_files(download_list, true, true).await;
+    let config = storage.config.lock().unwrap().clone();
+    download_files(
+        download_list,
+        true,
+        true,
+        config.max_connection,
+        config.max_download_speed,
+    )
+    .await;
     if runtime.mod_loader_type.is_some() {
         info!("Install mod loader");
         main_window

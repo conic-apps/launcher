@@ -4,6 +4,7 @@
 
 use base64::{engine::general_purpose, Engine};
 use mods::ResolvedMod;
+use resourcepack::Resourcepack;
 use saves::level::LevelData;
 use serde::{Deserialize, Serialize};
 
@@ -139,6 +140,51 @@ pub async fn scan_saves_folder(
     }
     match scan(instance_name, storage).await {
         Ok(results) => Ok(results),
+        Err(_) => Err(()),
+    }
+}
+
+#[tauri::command(async)]
+pub async fn scan_resourcepack_folder(
+    storage: tauri::State<'_, Storage>,
+) -> Result<Vec<Resourcepack>, ()> {
+    let instance_name = storage.current_instance.lock().unwrap().clone();
+    async fn scan(
+        instance_name: String,
+        storage: tauri::State<'_, Storage>,
+    ) -> anyhow::Result<Vec<Resourcepack>> {
+        let data_location = DATA_LOCATION.get().unwrap();
+        let resourcespacks_root = data_location.get_resourcespacks_root(&instance_name);
+
+        tokio::fs::create_dir_all(&resourcespacks_root).await?;
+
+        let mut folder_entries = tokio::fs::read_dir(resourcespacks_root).await?;
+        let mut results = Vec::new();
+        while let Some(entry) = folder_entries.next_entry().await? {
+            let file_type = match entry.file_type().await {
+                Err(_) => continue,
+                Ok(file_type) => file_type,
+            };
+            let active_instance = storage.current_instance.lock().unwrap().clone();
+            if active_instance != instance_name {
+                return Err(anyhow::anyhow!("stopped")); // if user change the active instance, stop scanning
+            }
+            if !file_type.is_file() {
+                continue;
+            }
+            let path = entry.path();
+            if path.metadata().is_err() {
+                continue;
+            }
+            results.push(match resourcepack::parse_resourcepack(&path) {
+                Err(_) => continue,
+                Ok(result) => result,
+            });
+        }
+        Ok(results)
+    }
+    match scan(instance_name, storage).await {
+        Ok(x) => Ok(x),
         Err(_) => Err(()),
     }
 }

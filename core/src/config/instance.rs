@@ -61,10 +61,10 @@ pub struct InstanceLaunchConfig {
     pub(crate) fullscreen: Option<bool>,
 
     /// User custom additional java virtual machine command line arguments.
-    pub(crate) extra_jvm_args: Option<Vec<String>>,
+    pub(crate) extra_jvm_args: Option<String>,
 
     /// User custom additional minecraft command line arguments.
-    pub(crate) extra_mc_args: Option<Vec<String>>,
+    pub(crate) extra_mc_args: Option<String>,
 
     pub(crate) is_demo: Option<bool>,
     /// Game process priority, invalid on windows
@@ -77,9 +77,16 @@ pub struct InstanceLaunchConfig {
     pub(crate) ignore_patch_discrepancies: Option<bool>,
 
     /// Add extra classpath
-    pub(crate) extra_class_paths: Option<Vec<String>>,
+    pub(crate) extra_class_paths: Option<String>,
 
     pub(crate) gc: Option<GC>,
+
+    pub(crate) launcher_name: Option<String>,
+    pub wrap_command: Option<String>,
+
+    pub execute_before_launch: Option<String>,
+
+    pub execute_after_launch: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

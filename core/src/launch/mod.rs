@@ -57,12 +57,11 @@ pub async fn launch(instance_name: String) {
     )
     .await;
     let version_id = version.id;
-    let process_priority = launch_options.process_priority;
     thread::spawn(move || {
         spawn_minecraft_process(
             command_arguments,
             minecraft_location,
-            process_priority,
+            launch_options,
             version_id,
         )
     });
@@ -71,20 +70,22 @@ pub async fn launch(instance_name: String) {
 fn spawn_minecraft_process(
     command_arguments: Vec<String>,
     minecraft_location: MinecraftLocation,
-    process_priority: ProcessPriority,
+    launch_options: LaunchOptions,
     version_id: String,
 ) {
+    let process_priority = launch_options.process_priority;
     let platform = PLATFORM_INFO.get().unwrap();
     let native_root = minecraft_location.get_natives_root(&version_id);
     let version_root = minecraft_location.get_version_root(version_id);
     let mut command = format!("cd {}\n", version_root.to_string_lossy());
-    match platform.os_type {
-        OsType::Windows => {}
-        _ => command.push_str("nice "),
-    };
+    command.push_str(&format!("{}\n", launch_options.execute_before_launch));
 
-    if let OsType::Windows = platform.os_type {
-        command.push_str(" -c ");
+    command.push_str(&format!("{} ", launch_options.wrap_command));
+
+    if platform.os_type == OsType::Windows {
+        command.push_str(" -c "); // TODO: fix it on windows
+    } else {
+        command.push_str("nice ")
     }
 
     if platform.os_type != OsType::Windows {
@@ -116,8 +117,9 @@ fn spawn_minecraft_process(
         OsType::Windows => {
             command.push_str(&format!("\ndel /F /Q {}\n", native_root.to_string_lossy()))
         }
-        _ => command.push_str(&format!("\nrm -rf {}", native_root.to_string_lossy())),
+        _ => command.push_str(&format!("\nrm -rf {}\n", native_root.to_string_lossy())),
     }
+    command.push_str(&format!("{}\n", launch_options.execute_after_launch));
     let script_path = match platform.os_type {
         OsType::Linux => version_root.join(".cache").join("launch.sh"),
         OsType::Osx => version_root.join(".cache").join("launch.sh"),

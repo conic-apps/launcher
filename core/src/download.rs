@@ -55,7 +55,13 @@ fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
     hasher.digest().to_string()
 }
 
-pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_error: bool) {
+pub async fn download_files(
+    downloads: Vec<Download>,
+    send_progress: bool,
+    send_error: bool,
+    max_connections: usize,
+    max_download_speed: usize,
+) {
     let main_window = MAIN_WINDOW.get().unwrap();
     if send_progress {
         main_window
@@ -107,11 +113,30 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
     let client = HTTP_CLIENT.get().unwrap();
     let speed_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let speed_counter_clone = speed_counter.clone();
+    let running_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+    let running_counter_clone = running_counter.clone();
     let (tx, rx) = mpsc::channel();
+    let (tx2, rx2) = mpsc::channel();
+    let running_counter_thread = thread::spawn(move || {
+        let running_counter = running_counter_clone;
+        loop {
+            let message = rx.try_recv();
+            if message == Ok("terminate") {
+                break;
+            }
+            main_window
+                .emit(
+                    "running_download_task",
+                    running_counter.load(Ordering::SeqCst),
+                )
+                .unwrap();
+            thread::sleep(Duration::from_millis(100))
+        }
+    });
     let speed_thread = thread::spawn(move || {
         let counter = speed_counter_clone;
         loop {
-            let message = rx.try_recv();
+            let message = rx2.try_recv();
             if message == Ok("terminate") {
                 break;
             }
@@ -123,13 +148,26 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
         }
     });
     let error = Arc::new(AtomicBool::new(false));
+    main_window
+        .emit(
+            "install_progress",
+            Progress {
+                completed: 0,
+                total,
+                step: 3,
+            },
+        )
+        .unwrap();
     futures::stream::iter(downloads)
         .map(|task| {
             let counter = counter.clone();
             let speed_counter = speed_counter.clone();
             let error = error.clone();
+            let running_counter = running_counter.clone();
             async move {
                 let error = error;
+                let running_counter = running_counter;
+                running_counter.fetch_add(1, Ordering::SeqCst);
                 if error.load(Ordering::SeqCst) {
                     return;
                 }
@@ -138,7 +176,7 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
                 loop {
                     retried += 1;
                     let speed_counter = speed_counter.clone();
-                    if download_file(client, &task, &counter, &speed_counter)
+                    if download_file(client, &task, &counter, &speed_counter, max_download_speed)
                         .await
                         .is_ok()
                     {
@@ -159,10 +197,11 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
                 }
             }
         })
-        .buffer_unordered(100)
+        .buffer_unordered(max_connections)
         .for_each_concurrent(None, |_| async {
             let counter = counter.clone().load(Ordering::SeqCst);
             // println!("Progress: {counter} / {total}");
+            running_counter.fetch_sub(1, Ordering::SeqCst);
             if send_progress {
                 main_window
                     .emit(
@@ -178,7 +217,9 @@ pub async fn download_files(downloads: Vec<Download>, send_progress: bool, send_
         })
         .await;
     tx.send("terminate").unwrap();
+    tx2.send("terminate").unwrap();
     speed_thread.join().unwrap();
+    running_counter_thread.join().unwrap();
 }
 
 pub async fn download_file(
@@ -186,6 +227,7 @@ pub async fn download_file(
     task: &Download,
     counter: &Arc<AtomicUsize>,
     speed_counter: &Arc<AtomicUsize>,
+    max_download_speed: usize,
 ) -> anyhow::Result<()> {
     let file_path = task.file.clone();
     tokio::fs::create_dir_all(file_path.parent().ok_or(anyhow::Error::msg(
@@ -195,6 +237,11 @@ pub async fn download_file(
     let mut response = client.get(task.url.clone()).send().await?;
     let mut file = tokio::fs::File::create(&file_path).await?;
     while let Some(chunk) = response.chunk().await? {
+        if max_download_speed > 1024 {
+            while speed_counter.load(Ordering::SeqCst) > max_download_speed {
+                tokio::time::sleep(Duration::from_millis(100)).await;
+            }
+        }
         file.write_all(&chunk).await?;
         speed_counter.fetch_add(chunk.len(), Ordering::SeqCst);
     }
