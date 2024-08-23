@@ -2,16 +2,23 @@
   <keep-alive>
     <div>
       <setting-group>
-        <setting-item title="语言" icon="language">
-          <select-vue :options="['English', '简体中文']" :default="1"></select-vue>
+        <setting-item :title="$t('settings.general.language')" :description="$t('settings.general.languageDesc')" icon="language">
+          <select-vue :display-name="['English', '简体中文', 'Русский']" :options="['en', 'zh_cn', 'ru_ru']"
+            v-model="config.language" :default="1"></select-vue>
         </setting-item>
-        <setting-item title="更新通道" description="控制启动器获取更新的频率" icon="radio">
-          <select-vue :options="['Weekly', 'Snapshot', 'Release']" :default="2"></select-vue>
+        <setting-item :title="$t('settings.general.updateChannel')"
+          :description="$t('settings.general.updateChannelDesc')" icon="radio">
+          <select-vue :display-name="[
+            $t('settings.general.weekly'),
+            $t('settings.general.snapshot'),
+            $t('settings.general.release'),
+          ]" :options="['Weekly', 'Snapshot', 'Release']" v-model="config.update_channel" :default="2"></select-vue>
         </setting-item>
-        <setting-item title="自动更新" description="有更新可用时自动下载并安装" icon="clock">
-          <toggle-switch></toggle-switch>
+        <setting-item :title="$t('settings.general.autoUpdate')" :description="$t('settings.general.autoUpdateDesc')"
+          icon="clock">
+          <toggle-switch v-model="config.auto_update"></toggle-switch>
         </setting-item>
-        <setting-item title="立即检查更新" icon="circle-up" :clickAble="true">
+        <setting-item :title="$t('settings.general.checkUpdate')" icon="circle-up" :clickAble="true">
           <i class="chevron-right" style="margin-right: 10px"></i>
         </setting-item>
       </setting-group>
@@ -24,6 +31,9 @@ import SettingItem from "@/components/SettingItem.vue";
 import SelectVue from "@/components/controllers/Select.vue";
 import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
+import { useConfigStore } from "@/config";
+
+const config = useConfigStore();
 </script>
 
 <style lang="less"></style>

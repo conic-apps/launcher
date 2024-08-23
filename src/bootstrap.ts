@@ -1,21 +1,35 @@
-import { createApp, watch } from "vue"
-import { createPinia } from "pinia"
-import App from "./Main.vue"
-import { type Config, useConfigStore } from "./config.ts"
-import { invoke } from "@tauri-apps/api/core"
-import { event } from "@tauri-apps/api"
+import { createApp, watch } from "vue";
+import { createPinia } from "pinia";
+import App from "./Main.vue";
+import { event } from "@tauri-apps/api";
+import { createI18n } from "vue-i18n";
+import en from "./i18n/en";
+import zh_cn from "./i18n/zh_cn";
+import ru_ru from "./i18n/ru_ru";
+
+const pinia = createPinia();
+const i18n = createI18n({
+    legacy: false,
+    locale: "zh_cn",
+    fallbackLocale: "en",
+    messages: {
+        en,
+        zh_cn,
+        ru_ru,
+    },
+});
+const app = createApp(App);
+
+app.use(pinia);
+app.use(i18n);
+
+app.mount("#window");
 // import $ from "jquery";
 
 // $("#window").attr(
 //     "style",
 //     "transform: scale(1); opacity: 1; transition: all 250ms cubic-bezier(0.04, 0.47, 0.47, 0.98)"
 // );
-const pinia = createPinia()
-const app = createApp(App)
-
-app.use(pinia)
-
-app.mount("#window")
 
 // // window.getCurrent().setAlwaysOnTop(true)
 // // window.getCurrent().setResizable(false)
@@ -48,6 +62,6 @@ globalThis.onload = () => {
 ███████╗██║  ██║╚██████╔╝██║ ╚████║╚██████╗██║  ██║███████╗██║  ██║       
 ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝       
                                                                           
-`)
-    event.emit("fontend-loaded")
-}
+`);
+    event.emit("fontend-loaded");
+};

@@ -8,8 +8,8 @@
               <i class="map"></i>
             </div>
             <div>
-              <h4>地图存档</h4>
-              <p>共有 {{ props.datas.length }} 个世界，实例使用独立的存档文件夹</p>
+              <h4>{{ $t("game.gameData.saves") }}</h4>
+              <p>{{ $t("game.saves.description", { counts: props.datas.length }) }}</p>
             </div>
           </div>
           <div class="button" style="position: absolute; right: 0" @click="$emit('close')">
@@ -20,41 +20,23 @@
         <div class="content">
           <div class="row1">
             <div>
-              <list-item
-                v-for="(world, index) in datas"
-                :key="index"
-                :title="world.levelData.LevelName"
-                :logo="world.icon"
-                :click-able="false"
+              <list-item v-for="(world, index) in datas" :key="index" :title="world.levelData.LevelName"
+                :logo="world.icon" :click-able="false"
                 :buttons="['circle-info', 'folders', 'arrow-up-right-from-square']">
                 <template #subtitle>
-                  <tag
-                    :text="world.levelData.Version.Name"
-                    :color="['180', '180', '180']"
-                    text-color="#fffffff0"
-                    :border="true"
-                    :round="true"></tag>
-                  <tag
-                    v-if="world.levelData.allowCommands"
-                    text="允许作弊"
-                    :color="['180', '180', '180']"
-                    text-color="#fffffff0"
-                    :border="true"
-                    :round="true"></tag>
-                  <tag
-                    v-if="world.levelData.hardcore"
-                    text="极限模式"
-                    :color="['180', '180', '180']"
-                    text-color="#fffffff0"
-                    :border="true"
-                    :round="true"></tag>
+                  <tag :text="world.levelData.Version.Name" :color="['180', '180', '180']" text-color="#fffffff0"
+                    :border="true" :round="true"></tag>
+                  <tag v-if="world.levelData.allowCommands" :text="$('game.saves.allowCheat')"
+                    :color="['180', '180', '180']" text-color="#fffffff0" :border="true" :round="true"></tag>
+                  <tag v-if="world.levelData.hardcore" :text="$t('game.saves.hardcore')" :color="['180', '180', '180']"
+                    text-color="#fffffff0" :border="true" :round="true"></tag>
                 </template>
                 {{ world.folderName }}
               </list-item>
             </div>
           </div>
           <div class="row2">
-            <p>在左侧选择存档以预览地图</p>
+            <p>{{ $t("game.saves.showMap") }}</p>
           </div>
         </div>
       </div>
@@ -194,7 +176,7 @@ export type Save = {
       padding: 0 12px;
       overflow: auto;
 
-      > div {
+      >div {
         border-radius: 8px;
         overflow: hidden;
       }

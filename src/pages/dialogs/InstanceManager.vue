@@ -6,38 +6,37 @@
           <div style="display: flex; align-items: center">
             <div class="icon">
               <i class="boxes-stacked" v-if="currentComponent == pages.view"></i>
-              <i
-                class="arrow-left back"
-                v-if="currentComponent == pages.create"
-                @click="
-                  transitionName = 'slide-right';
-                  currentComponent = pages.view;
-                "></i>
+              <i class="arrow-left back" v-if="currentComponent == pages.create" @click="
+                transitionName = 'slide-right';
+              currentComponent = pages.view;
+              "></i>
             </div>
             <div>
-              <h4 v-if="currentComponent == pages.view">管理游戏档案</h4>
-              <p v-if="currentComponent == pages.view">创建、删除或修改你的游戏档案</p>
-              <h4 v-if="currentComponent == pages.create">创建游戏档案</h4>
-              <p v-if="currentComponent == pages.create">选择好合适的选项后，点击“创建”按钮</p>
+              <h4 v-if="currentComponent == pages.view">
+                {{ $t("game.instanceManager.view.title") }}
+              </h4>
+              <p v-if="currentComponent == pages.view">
+                {{ $t("game.instanceManager.view.description") }}
+              </p>
+              <h4 v-if="currentComponent == pages.create">
+                {{ $t("game.instanceManager.create.title") }}
+              </h4>
+              <p v-if="currentComponent == pages.create">
+                {{ $t("game.instanceManager.create.description") }}
+              </p>
             </div>
           </div>
-          <div
-            class="button"
-            style="position: absolute; right: 0"
-            @click="
-              currentComponent = pages.view;
-              $emit('close');
-            ">
+          <div class="button" style="position: absolute; right: 0" @click="
+            currentComponent = pages.view;
+          $emit('close');
+          ">
             <i></i>
           </div>
         </div>
 
         <div class="content">
           <Transition :name="transitionName" mode="out-in">
-            <component
-              :instances="props.instances"
-              :is="currentComponent"
-              @create="createInstance"
+            <component :instances="props.instances" :is="currentComponent" @create="createInstance"
               @created="instanceCreated"></component>
           </Transition>
           <!-- <div class="group" v-for="group in props.instances" :key="group.name">
