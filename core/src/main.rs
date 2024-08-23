@@ -62,7 +62,7 @@ async fn main() {
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     initialize_application().await;
     info!("Amethyst Launcher is open source, You can view the source code on Github: https://github.com/Conic-Sections/Amethyst-Launcher");
-    let result = tauri::Builder::default()
+    tauri::Builder::default()
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
@@ -104,7 +104,7 @@ async fn main() {
                 return;
             };
             match event {
-                tauri::WindowEvent::CloseRequested { api, .. } => {
+                tauri::WindowEvent::CloseRequested { .. } => {
                     match std::fs::remove_dir_all(&DATA_LOCATION.get().unwrap().temp) {
                         Ok(_) => info!("Temporary files cleared"),
                         Err(_) => {
@@ -116,7 +116,8 @@ async fn main() {
                 _ => {}
             }
         })
-        .run(tauri::generate_context!());
+        .run(tauri::generate_context!())
+        .expect("Failed to run app");
 }
 
 fn initialize_logger() {
@@ -219,7 +220,7 @@ async fn initialize_application() {
     tokio::fs::write(&launch_profiles_path, DEFAULT_LAUNCHER_PROFILE)
         .await
         .expect("C");
-    instance::update_latest_instance().await;
+    tokio::spawn(instance::update_latest_instance());
 }
 
 async fn initialize_application_data() {
