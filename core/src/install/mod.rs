@@ -100,8 +100,8 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
         download_list,
         true,
         true,
-        config.max_connection,
-        config.max_download_speed,
+        config.download.max_connection,
+        config.download.max_download_speed,
     )
     .await;
     if runtime.mod_loader_type.is_some() {

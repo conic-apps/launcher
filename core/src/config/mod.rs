@@ -1,27 +1,37 @@
-// Amethyst Launcher
-// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
-// SPDX-License-Identifier: GPL-3.0-only
-
 use serde::{Deserialize, Serialize};
 
 use crate::{Storage, DATA_LOCATION};
 
+pub mod download;
 pub mod instance;
 pub mod launch;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+pub enum UpdateChannel {
+    Weekly,
+    Release,
+    Snapshot,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
 pub struct Config {
+    pub auto_update: bool,
+    pub language: String,
+    pub update_channel: UpdateChannel,
     pub launch: launch::LaunchConfig,
-    pub max_connection: usize,
-    pub max_download_speed: usize,
+    pub download: download::DownloadConfig,
 }
 
 impl Default for Config {
     fn default() -> Self {
+        let locale = sys_locale::get_locale().unwrap();
+        log::info!("System locale is {}", locale);
         Self {
+            auto_update: true,
+            language: locale.replace("-", "_").to_lowercase(),
+            update_channel: UpdateChannel::Release,
             launch: launch::LaunchConfig::default(),
-            max_connection: 100,
-            max_download_speed: 0,
+            download: download::DownloadConfig::default(),
         }
     }
 }

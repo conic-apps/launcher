@@ -1,53 +1,35 @@
 <template>
   <keep-alive>
     <div>
-      <setting-group title="辅助功能">
-        <setting-item
-          title="正式版更新提示"
-          description="当 Miencraft 正式版发布时弹窗提示"
-          icon="circle-exclamation">
+      <setting-group :title="$t('settings.accessibility.extraFeatures')">
+        <setting-item :title="$t('settings.accessibility.releaseReminder')"
+          :description="$t('settings.accessibility.releaseReminderDesc')" icon="circle-exclamation">
           <toggle-switch></toggle-switch>
         </setting-item>
-        <setting-item
-          title="快照版更新提示"
-          description="当 Miencraft 快照版发布时弹窗提示"
-          icon="circle-exclamation">
+        <setting-item :title="$t('settings.accessibility.snapshotReminder')"
+          :description="$t('settings.accessibility.snapshotReminderDesc')" icon="circle-exclamation">
           <toggle-switch></toggle-switch>
         </setting-item>
-        <setting-item
-          title='隐藏"最新版本"'
-          description='不在游戏列表中显示"最新版本"'
-          icon="eye-slash"
-          :last="true">
+        <setting-item :title="$t('settings.accessibility.hideLatestRelease')"
+          :description="$t('settings.accessibility.hideLatestReleaseDesc')" icon="eye-slash" :last="true">
           <toggle-switch></toggle-switch>
         </setting-item>
-        <setting-item
-          title='隐藏"最新快照"'
-          description='不在游戏列表中显示"最新快照"'
-          icon="eye-slash"
-          :last="true">
+        <setting-item :title="$t('settings.accessibility.hideLatestSnapshot')"
+          :description="$t('settings.accessibility.hideLatestSnapshotDesc')" icon="eye-slash" :last="true">
           <toggle-switch></toggle-switch>
         </setting-item>
-        <setting-item
-          title="自动更改游戏语言"
-          description="在首次启动游戏时将游戏语言设置为你的启动器语言"
-          icon="language"
-          :last="true">
+        <setting-item :title="$t('settings.accessibility.changeGameLanguage')"
+          :description="$t('settings.accessibility.changeGameLanguageDesc')" icon="language" :last="true">
           <toggle-switch></toggle-switch>
         </setting-item>
       </setting-group>
-      <setting-group title="无障碍">
-        <setting-item
-          title="禁用所有动画"
-          description="眨眼和闪烁的动画对于有认知问题的人来说是有问题的，比如注意力缺陷多动障碍 (ADHD)。此外，某些动画效果可以触发前庭神经紊乱、癫痫、偏头痛和暗点敏感性。"
-          icon="pause">
+      <setting-group :title="$t('settings.accessibility.accessibility')">
+        <setting-item :title="$t('settings.accessibility.disableAllAnimations')"
+          :description="$t('settings.accessibility.disableAllAnimationsDesc')" icon="pause">
           <toggle-switch></toggle-switch>
         </setting-item>
-        <setting-item
-          title="高对比度模式"
-          description="启用当前主题的高对比度模式（如果可用）"
-          icon="laptop"
-          :last="true">
+        <setting-item :title="$t('settings.accessibility.highContrastMode')"
+          :description="$t('settings.accessibility.highContrastModeDesc')" icon="laptop" :last="true">
           <toggle-switch></toggle-switch>
         </setting-item>
       </setting-group>

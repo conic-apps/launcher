@@ -1,10 +1,7 @@
 <template>
   <div class="instances">
     <div class="overview">
-      <div
-        class="instance"
-        @click="$emit('select', instance)"
-        v-for="instance in computedInstances"
+      <div class="instance" @click="$emit('select', instance)" v-for="instance in computedInstances"
         :key="instance.config.name">
         <img src="@/assets/images/minecraft-icon.svg" />
         <div class="title">

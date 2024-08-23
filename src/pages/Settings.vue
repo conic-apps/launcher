@@ -2,11 +2,8 @@
   <div class="settings">
     <div class="rol-1">
       <ul class="settings-menu">
-        <li
-          @click="switchComponent(item, index)"
-          :class="[activeComponentIndex == index ? 'active' : '']"
-          v-for="(item, index) in components"
-          :key="index">
+        <li @click="switchComponent(item, index)" :class="[activeComponentIndex == index ? 'active' : '']"
+          v-for="(item, index) in components" :key="index">
           <i :class="`${item.icon} fa-pro`"></i>{{ item.name }}
         </li>
       </ul>
@@ -33,46 +30,48 @@ import Accessibility from "./settings/Accessibility.vue";
 import Extend from "./settings/Extend.vue";
 import About from "./settings/About.vue";
 import { useConfigStore } from "@/config";
+import { useI18n } from "vue-i18n";
+const i18n = useI18n();
 const config = useConfigStore();
 
 const components = ref([
   {
-    name: "常规",
+    name: i18n.t("settings.general.sidebar"),
     icon: "house",
     component: markRaw(General),
   },
   {
-    name: "游戏",
+    name: i18n.t("settings.game.sidebar"),
     icon: "gamepad",
     component: markRaw(Game),
   },
   {
-    name: "高级",
+    name: i18n.t("settings.advance.sidebar"),
     icon: "pro-settings",
     component: markRaw(Advance),
   },
   {
-    name: "外观",
+    name: i18n.t("settings.appearance.sidebar"),
     icon: "palette",
     component: markRaw(Appearance),
   },
   {
-    name: "下载",
+    name: i18n.t("settings.download.sidebar"),
     icon: "download",
     component: markRaw(Download),
   },
   {
-    name: "辅助功能",
+    name: i18n.t("settings.accessibility.sidebar"),
     icon: "arrows-spin",
     component: markRaw(Accessibility),
   },
   {
-    name: "扩展",
+    name: i18n.t("settings.extend.sidebar"),
     icon: "cubes",
     component: markRaw(Extend),
   },
   {
-    name: "关于",
+    name: i18n.t("settings.about.sidebar"),
     icon: "circle-exclamation",
     component: markRaw(About),
   },

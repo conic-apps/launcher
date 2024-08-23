@@ -1,14 +1,19 @@
 <template>
   <div class="input-box" :style="`width: ${width};`">
-    <input @focusin="updateOld" @focusout="checkValue" :type="numberOnly ? 'number' : 'text'" :title="name" :placeholder="placeholder" required
-      v-model="model" :style="error ? 'outline: rgb(127,0,0)' : ''" :disabled="disabled" />
+    <input
+      @focusin="updateOld"
+      @focusout="checkValue"
+      :type="numberOnly ? 'number' : 'text'"
+      :title="name"
+      :placeholder="placeholder"
+      required
+      v-model="model"
+      :style="error ? 'outline: rgb(127,0,0)' : ''"
+      :disabled="disabled" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { watch } from "vue";
-
 const props = withDefaults(
   defineProps<{
     name?: string;
@@ -23,28 +28,28 @@ const props = withDefaults(
     type: "text",
     width: "400px",
     numberOnly: false,
-    disabled: false
+    disabled: false,
   },
 );
 
 const model = defineModel();
-let oldValue: number
+let oldValue: number;
 function updateOld(event: any) {
   if (props.numberOnly) {
-    oldValue = model.value as number
-    console.log(oldValue)
+    oldValue = model.value as number;
+    console.log(oldValue);
   }
 }
 function checkValue(event: any) {
-    console.log(event.target.value.trim())
-    if (!props.numberOnly) {
+  console.log(event.target.value.trim());
+  if (!props.numberOnly) {
     return;
   }
   let value = event.target.value.trim();
-    console.log(oldValue)
-    if (!/^[1-9]\d*$|^$/.test(value) || value.length == 0) {
+  console.log(oldValue);
+  if (!/^[1-9]\d*$|^$/.test(value) || value.length == 0) {
     model.value = oldValue;
-    event.target.value = oldValue
+    event.target.value = oldValue;
   }
 }
 </script>

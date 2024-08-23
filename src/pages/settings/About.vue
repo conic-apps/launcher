@@ -2,54 +2,36 @@
   <keep-alive>
     <div>
       <div class="info sponsor">
-        <h2 style="margin-bottom: 8px">Amethyst Sponsor</h2>
-        Amethyst Launcher 是一个免费、开源、跨平台的 Minecraft 启动器。由 Broken_Deer
-        及其他贡献者开发和维护，您的赞助或贡献将帮助 Amethyst Launcher 获得更好的发展。
+        <h2 style="margin-bottom: 8px">{{ $t("settings.about.sponsorTitle") }}</h2>
+        {{ $t("settings.about.sponsorDesc") }}
       </div>
-      <SettingGroup title="鸣谢"> </SettingGroup>
-      <SettingGroup title="第三方库">
-        <setting-item
-          title="Tauri"
+      <SettingGroup :title="$t('settings.about.thanks')"> </SettingGroup>
+      <SettingGroup :title="$t('settings.about.thirdPartyLibraries')">
+        <setting-item title="Tauri"
           description="Copyright 2022 Tauri Programme within The Commons Conservancy<br> Licensed under the Apache-2.0 License or MIT Licenses"
           icon="tauri"></setting-item>
-        <setting-item
-          title="Vue"
+        <setting-item title="Vue"
           description="Copyright (c) 2018-present, Yuxi (Evan) You and Vue contributors<br> Licensed under the MIT License"
           icon="vuejs"></setting-item>
-        <setting-item
-          title="jQuery"
+        <setting-item title="jQuery"
           description="Copyright 2024 OpenJS Foundation and jQuery contributors.<br> Licensed under the MIT License"
           icon="jquery"></setting-item>
-        <setting-item
-          title="vite"
+        <setting-item title="vite"
           description="Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors<br> Licensed under the MIT License"
           icon="vite"></setting-item>
-        <setting-item
-          title="Less"
+        <setting-item title="Less"
           description="Copyright (c) 2009-2017 Alexis Sellier & The Core Less Team<br> Licensed under the Apache License."
           icon="less"></setting-item>
-        <setting-item
-          title="Tokio"
+        <setting-item title="Tokio"
           description="Copyright (c) 2019 The Tokio Project Developers<br> Licensed under the MIT License."
           icon="tokio"></setting-item>
-        <setting-item
-          title="Serde"
-          description="Licensed under Apache-2.0 or MIT license."></setting-item>
-        <setting-item
-          title="Anyhow"
-          description="Licensed under Apache-2.0 or MIT license."></setting-item>
-        <setting-item
-          title="OneCell"
-          description="Licensed under Apache-2.0 or MIT license."></setting-item>
-        <setting-item
-          title="Rejex"
-          description="Licensed under Apache-2.0 or MIT license."></setting-item>
-        <setting-item
-          title="Rayon"
+        <setting-item title="Serde" description="Licensed under Apache-2.0 or MIT license."></setting-item>
+        <setting-item title="Anyhow" description="Licensed under Apache-2.0 or MIT license."></setting-item>
+        <setting-item title="OneCell" description="Licensed under Apache-2.0 or MIT license."></setting-item>
+        <setting-item title="Rejex" description="Licensed under Apache-2.0 or MIT license."></setting-item>
+        <setting-item title="Rayon"
           description="Rayon is distributed under the terms of both the MIT license and the Apache License (Version 2.0)."></setting-item>
-        <setting-item
-          title="env_logger"
-          description="Licensed under Apache-2.0 or MIT license."></setting-item>
+        <setting-item title="env_logger" description="Licensed under Apache-2.0 or MIT license."></setting-item>
       </SettingGroup>
     </div>
   </keep-alive>

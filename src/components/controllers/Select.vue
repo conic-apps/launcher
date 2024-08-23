@@ -2,25 +2,16 @@
   <div class="select" :style="`width: ${width}px;`">
     <div class="selected" @click="toggleOpened()">{{ selected }}</div>
     <div>
-      <Transition
-        @before-enter="beforeEnter"
-        @enter="enter"
-        @after-enter="afterEnter"
-        @before-leave="beforeLeave"
-        @leave="leave"
-        @after-leave="afterLeave">
+      <Transition @before-enter="beforeEnter" @enter="enter" @after-enter="afterEnter" @before-leave="beforeLeave"
+        @leave="leave" @after-leave="afterLeave">
         <ul class="options" :style="`width: ${width}px;`" v-if="opened" @click="opened = false">
           <Transition name="fade">
             <div v-if="opened">
-              <select-option
-                v-for="(option, index) in options"
-                :key="index"
-                @click="changeSelection(index)"
+              <select-option v-for="(option, index) in options" :key="index" @click="changeSelection(index)"
                 :text="displayName[index]"></select-option>
             </div>
           </Transition>
-          <div
-            style="
+          <div style="
               width: 100vw;
               height: 100vh;
               position: fixed;
@@ -153,7 +144,7 @@ function toggleOpened() {
   z-index: 100000;
 }
 
-.options > div:first-child {
+.options>div:first-child {
   margin: 10px 12px;
 }
 </style>
