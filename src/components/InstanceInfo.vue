@@ -1,7 +1,6 @@
 <template>
   <div class="instance-info-main card" :style="banner">
-    <div
-      style="
+    <div style="
         position: absolute;
         width: 100%;
         height: 100%;
@@ -22,10 +21,7 @@
         <img src="@/assets/images/fabric.webp" fill="#fff" v-if="modLoaderType === 'Fabric'" />
         <img src="@/assets/images/quilt.svg" fill="#fff" v-if="modLoaderType === 'Quilt'" />
         <img src="@/assets/images/neoforged.png" fill="#fff" v-if="modLoaderType === 'Neoforge'" />
-        <img
-          src="@/assets/images/Anvil_JE3_BE3.webp"
-          fill="#fff"
-          v-if="modLoaderType === 'Forge'" />
+        <img src="@/assets/images/Anvil_JE3_BE3.webp" fill="#fff" v-if="modLoaderType === 'Forge'" />
         {{ modLoaderType }} {{ modLoaderVersion }}
       </div>
     </div>
@@ -37,14 +33,10 @@
         <i class="button gear"></i>
         <i class="button circle-info"></i>
         <i class="button star"></i>
-        <button
-          class="game-button"
-          :class="`${gameButtonType}-game-button`"
-          @click="$emit('game-button-click')">
-          <i
-            :class="props.gameButtonType"
-            style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i
-          >{{ gameButtonText }}
+        <button class="game-button" :class="`${gameButtonType}-game-button`" @click="$emit('game-button-click')">
+          <i :class="props.gameButtonType"
+            style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i>{{ gameButtonText
+          }}
         </button>
       </div>
     </div>
@@ -53,6 +45,8 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+const i18n = useI18n();
 
 const props = defineProps<{
   minecraftVersion: String;
@@ -66,10 +60,10 @@ const props = defineProps<{
 
 let computedInstanceName = computed(() => {
   if (props.instanceName == "Latest Release") {
-    return "最新版本";
+    return i18n.t("game.latestRelease");
   }
   if (props.instanceName == "Latest Snapshot") {
-    return "最新快照";
+    return i18n.t("game.latestSnapshot");
   }
   return props.instanceName;
 });
@@ -92,11 +86,11 @@ let gameButtonText = computed(() => {
       }
     // return "失败";
     case "install":
-      return "安装";
+      return i18n.t("game.install");
     case "launching":
       return "...";
     case "launch":
-      return "开始游戏";
+      return i18n.t("game.launch");
     default:
       return "";
   }
@@ -242,5 +236,4 @@ button.install-game-button {
 
 // button.installing-game-button {
 //   // background-image: ;
-// }
-</style>
+// }</style>

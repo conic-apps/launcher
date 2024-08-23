@@ -99,18 +99,24 @@ async fn main() {
             app.listen_any("fontend-loaded", |_| info!("Frontend loaded"));
             Ok(())
         })
-        .run(tauri::generate_context!());
-    match result {
-        Ok(_) => match tokio::fs::remove_dir_all(&DATA_LOCATION.get().unwrap().temp).await {
-            Ok(_) => info!("Temporary files cleared"),
-            Err(_) => {
-                error!("Could not clear temp foler")
+        .on_window_event(|window, event| {
+            if window.label() != "main" {
+                return;
+            };
+            match event {
+                tauri::WindowEvent::CloseRequested { api, .. } => {
+                    match std::fs::remove_dir_all(&DATA_LOCATION.get().unwrap().temp) {
+                        Ok(_) => info!("Temporary files cleared"),
+                        Err(_) => {
+                            error!("Could not clear temp foler")
+                        }
+                    };
+                    window.close().unwrap();
+                }
+                _ => {}
             }
-        },
-        Err(_) => {
-            error!("Fatal Error while running tauri application!")
-        }
-    };
+        })
+        .run(tauri::generate_context!());
 }
 
 fn initialize_logger() {

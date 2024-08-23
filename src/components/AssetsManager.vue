@@ -1,67 +1,29 @@
 <template>
   <div class="assets">
     <div class="first-row">
-      <card-button
-        icon="map"
-        title="地图存档"
-        :class="savesIsLoading ? 'disabled' : ''"
-        margin="0,0,10,0"
-        :description="savesManagerDesc"
-        @click="show.worlds = true"></card-button>
-      <card-button
-        icon="puzzle-piece"
-        title="模组"
-        :class="modIsLoading ? 'disabled' : ''"
-        :description="modManagerDesc"
-        margin="0,0,10,0"
-        @click="show.mods = true"></card-button>
-      <!-- <card-button -->
-      <!--   icon="puzzle-piece" -->
-      <!--   title="截图" -->
-      <!--   margin="0,0,0,0" -->
-      <!--   description="正在加载"></card-button> -->
+      <card-button icon="map" :title="$t('game.gameData.saves')" :class="savesIsLoading ? 'disabled' : ''"
+        margin="0,0,10,0" :description="savesManagerDesc" @click="show.worlds = true"></card-button>
+      <card-button icon="puzzle-piece" :title="$t('game.gameData.mods')" :class="modIsLoading ? 'disabled' : ''"
+        :description="modManagerDesc" margin="0,0,10,0" @click="show.mods = true"></card-button>
+      <card-button icon="puzzle-piece" :title="$t('game.gameData.resourcepacks')" margin="0,0,0,0"
+        :description="$t('game.gameData.loading')"></card-button>
     </div>
     <div class="second-row">
-      <card-button
-        icon="palette"
-        title="资源包"
-        :class="resourcepacksIsLoading ? 'disabled' : ''"
-        :description="resourcepacksManagerDesc"
-        margin="0,0,10,0"
+      <card-button icon="palette" :title="$t('game.gameData.resourcepacks')"
+        :class="resourcepacksIsLoading ? 'disabled' : ''" :description="resourcepacksManagerDesc" margin="0,0,10,0"
         @click="show.resourcepacks = true"></card-button>
-      <!-- <card-button -->
-      <!--   icon="lightbulb-on" -->
-      <!--   title="光影包" -->
-      <!--   :class="shaderpackIsLoading ? 'disabled' : ''" -->
-      <!--   :description="shaderpacksManagerDesc" -->
-      <!--   margin="0,0,10,0" -->
-      <!--   @click="show.shaderpacks = true"></card-button> -->
-      <!-- <card-button -->
-      <!--   icon="puzzle-piece" -->
-      <!--   title="投影" -->
-      <!--   margin="0,0,0,0" -->
-      <!--   description="正在加载"></card-button> -->
+      <card-button icon="lightbulb-on" :title="$t('game.gameData.shaderpacks')"
+        :class="shaderpackIsLoading ? 'disabled' : ''" :description="shaderpacksManagerDesc" margin="0,0,10,0"
+        @click="show.shaderpacks = true"></card-button>
+      <card-button icon="puzzle-piece" :title="$t('game.gameData.schematics')" margin="0,0,0,0"
+        description="正在加载"></card-button>
     </div>
-    <worlds
-      :show="show.worlds"
-      :datas="saves"
-      :instance-name="instance.config.name"
-      @close="show.worlds = false">
+    <worlds :show="show.worlds" :datas="saves" :instance-name="instance.config.name" @close="show.worlds = false">
     </worlds>
-    <mods
-      :show="show.mods"
-      :datas="mods"
-      :instance-name="instance.config.name"
-      @close="show.mods = false"></mods>
-    <resourcepacks
-      :show="show.resourcepacks"
-      :datas="resourcepacks"
-      :instance-name="instance.config.name"
+    <mods :show="show.mods" :datas="mods" :instance-name="instance.config.name" @close="show.mods = false"></mods>
+    <resourcepacks :show="show.resourcepacks" :datas="resourcepacks" :instance-name="instance.config.name"
       @close="show.resourcepacks = false"></resourcepacks>
-    <shaderpacks
-      :show="show.shaderpacks"
-      :datas="shaderpacks"
-      :instance-name="instance.config.name"
+    <shaderpacks :show="show.shaderpacks" :datas="shaderpacks" :instance-name="instance.config.name"
       @close="show.shaderpacks = false">
     </shaderpacks>
   </div>
@@ -73,17 +35,17 @@
   margin-top: 14px;
 }
 
-.assets > div {
+.assets>div {
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
-.assets > div.first-row {
+.assets>div.first-row {
   margin-right: 5px;
 }
 
-.assets > div.second-row {
+.assets>div.second-row {
   margin-left: 5px;
 }
 </style>
@@ -98,6 +60,8 @@ import Mods from "@/pages/dialogs/Mods.vue";
 import Resourcepacks from "@/pages/dialogs/Resourcepacks.vue";
 import Shaderpacks from "@/pages/dialogs/Shaderpacks.vue";
 import { Instance } from "./Instances.vue";
+import { useI18n } from "vue-i18n";
+const i18n = useI18n();
 
 const props = defineProps<{
   instance: Instance;
@@ -118,34 +82,33 @@ let resourcepacksIsLoading = ref(true);
 let modIsLoading = ref(true);
 let shaderpackIsLoading = ref(true);
 let savesIsLoading = ref(true);
-
 let modManagerDesc = computed(() => {
   // todo: 不过滤无法识别的模组，因为这会导致用户不能禁用某些废物的不规范模组
   if (modIsLoading.value) {
-    return "正在加载...";
+    return i18n.t("game.gameData.loading");
   } else {
-    return `已安装 ${mods.value.length} 个模组`;
+    return i18n.t("game.gameData.modsCount", { count: mods.value.length });
   }
 });
 let resourcepacksManagerDesc = computed(() => {
   if (resourcepacksIsLoading.value) {
-    return "正在加载...";
+    return i18n.t("game.gameData.loading");
   } else {
-    return `已安装 ${resourcepacks.value.length} 个资源包`;
+    return i18n.t("game.gameData.resourcepacksCount", { count: resourcepacks.value.length });
   }
 });
 let shaderpacksManagerDesc = computed(() => {
   if (shaderpackIsLoading.value) {
-    return "正在加载...";
+    return i18n.t("game.gameData.loading");
   } else {
-    return `已安装 ${shaderpacks.value.length} 个光影包`;
+    return i18n.t("game.gameData.shaderpacksCount", { count: shaderpacks.value.length });
   }
 });
 let savesManagerDesc = computed(() => {
   if (savesIsLoading.value) {
-    return "正在加载...";
+    return i18n.t("game.gameData.loading");
   } else {
-    return `共有 ${saves.value.length} 个存档`;
+    return i18n.t("game.gameData.savesCount", { count: saves.value.length });
   }
 });
 

@@ -1,28 +1,34 @@
 <template>
   <keep-alive>
     <div>
-      <setting-group title="Java 虚拟机设置">
-        <setting-item title="选择 Java" icon="java" :clickAble="true">
-          <span style="font-size: 14px; opacity: 0.8; margin-right: 8px">已选择 Java 17</span>
+      <setting-group :title="$t('settings.game.jvmTitle')">
+        <setting-item :title="$t('settings.game.chooseJava')" icon="java" :clickAble="true">
+          <span style="font-size: 14px; opacity: 0.8; margin-right: 8px">{{
+            $t("settings.game.selectedJava", {
+              selected: "Java 17",
+            })
+          }}</span>
           <i class="chevron-right" style="margin-right: 10px"></i>
         </setting-item>
-        <setting-item title="安装或导入 Java" description="" icon="download" :clickAble="true">
+        <setting-item :title="$t('settings.game.addJava')" description="" icon="download" :clickAble="true">
           <i class="chevron-right" style="margin-right: 10px"></i>
         </setting-item>
         <!-- <setting-item title="Java 内存"></setting-item> -->
       </setting-group>
-      <setting-group title="启动选项">
-        <setting-item title="自定义启动器名称" description="不知道这东西有什么用" icon="signature">
+      <setting-group :title="$t('settings.game.launchOptions')">
+        <setting-item :title="$t('settings.game.launcherName')" :description="$t('settings.game.launcherNameDesc')"
+          icon="signature">
           <TextInputBox width="360px" v-model="config.launch.launcher_name"></TextInputBox>
         </setting-item>
-        <setting-item
-          title="进程优先级"
-          description="设置游戏进程的优先级，仅在 Linux 中有效"
-          icon="chart-simple">
-          <select-vue
-            :display-name="['高', '较高', '中', '较低', '低']"
-            :options="['High', 'AboveNormal', 'Normal', 'BelowNormal', 'Low']"
-            :default="2"
+        <setting-item :title="$t('settings.game.processPriority')"
+          :description="$t('settings.game.processPriorityDesc')" icon="chart-simple">
+          <select-vue :display-name="[
+            $t('settings.game.processPriorityHigh'),
+            $t('settings.game.processPriorityAboveNormal'),
+            $t('settings.game.processPriorityNormal'),
+            $t('settings.game.processPriorityBelowNormal'),
+            $t('settings.game.processPriorityLow'),
+          ]" :options="['High', 'AboveNormal', 'Normal', 'BelowNormal', 'Low']" :default="2"
             v-model="config.launch.process_priority"></select-vue>
         </setting-item>
         <!-- TODO:<setting-item title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
@@ -37,40 +43,28 @@
         <!--     placeholder="端口" -->
         <!--     style="display: inline-block"></TextInputBox> -->
         <!-- </setting-item> -->
-        <setting-item title="存档名称(TODO)" description="启动后自动进入存档" icon="floppy-disk">
-          <TextInputBox width="360px" placeholder="存档文件夹的名称"></TextInputBox>
+        <setting-item :title="$t('settings.game.worldName')" :description="$t('settings.game.worldNameDesc')"
+          icon="floppy-disk">
+          <TextInputBox width="360px" :placeholder="$t('settings.game.worldNamePlaceholder')"></TextInputBox>
         </setting-item>
-        <setting-item title="全屏" description="启动游戏后自动让游戏全屏" icon="window-maximize">
+        <setting-item :title="$t('settings.game.fullscreen')" :description="$t('settings.game.fullscreenDesc')"
+          icon="window-maximize">
           <ToggleSwitch v-model="config.launch.fullscreen"></ToggleSwitch>
         </setting-item>
-        <setting-item
-          :disabled="config.launch.fullscreen"
-          title="窗口大小"
-          description="游戏窗口的初始大小"
-          icon="window">
-          <TextInputBox
-            width="100px"
-            style="display: inline-block; margin-right: 16px"
-            placeholder="宽"
-            :number-only="true"
-            :disabled="config.launch.fullscreen"
-            v-model.number="config.launch.width"></TextInputBox>
-          <TextInputBox
-            width="100px"
-            style="display: inline-block"
-            placeholder="高"
-            :number-only="true"
-            :disabled="config.launch.fullscreen"
-            v-model.number="config.launch.height">
+        <setting-item :disabled="config.launch.fullscreen" :title="$t('settings.game.windowSize')"
+          :description="$t('settings.game.windowSizeDesc')" icon="window">
+          <TextInputBox width="100px" style="display: inline-block; margin-right: 16px"
+            :placeholder="$t('settings.game.windowSizeWidth')" :number-only="true" :disabled="config.launch.fullscreen"
+            v-model.number="config.launch.width">
+          </TextInputBox>
+          <TextInputBox width="100px" style="display: inline-block" :placeholder="$t('settings.game.windowSizeHeight')"
+            :number-only="true" :disabled="config.launch.fullscreen" v-model.number="config.launch.height">
           </TextInputBox>
         </setting-item>
-        <setting-item title="启动游戏后隐藏启动器(TODO)" icon="eye-slash">
+        <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-slash">
           <toggle-switch></toggle-switch>
         </setting-item>
-        <setting-item
-          title="演示模式"
-          description="在单一的世界中游玩100分钟（5个游戏日），在此之后地图就会被锁定"
-          icon="">
+        <setting-item :title="$t('settings.game.demo')" :description="$t('settings.game.demoDesc')" icon="">
           <toggle-switch v-model="config.launch.is_demo"></toggle-switch>
         </setting-item>
       </setting-group>
