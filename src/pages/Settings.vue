@@ -2,19 +2,23 @@
   <div class="settings">
     <div class="rol-1">
       <ul class="settings-menu">
-        <li @click="switchComponent(item, index)" :class="[activeComponentIndex == index ? 'active' : '']"
-          v-for="(item, index) in components" :key="index">
+        <li
+          @click="switchComponent(item, index)"
+          :class="[activeComponentIndex == index ? 'active' : '']"
+          v-for="(item, index) in components"
+          :key="index">
           <i :class="`${item.icon} fa-pro`"></i>{{ item.name }}
         </li>
       </ul>
-      <div class="go-home" @click="$emit('back-to-home')">
-        <i class="house"></i>
-      </div>
     </div>
     <div class="rol-2">
-      <!-- <Transition name="entrance" mode="out-in"> -->
-      <component :is="currentComponent"></component>
-      <!-- </Transition> -->
+      <Transition :name="transitionName" mode="out-in">
+        <KeepAlive>
+
+        <component :is="currentComponent"></component>
+        </KeepAlive>
+
+      </Transition>
     </div>
   </div>
 </template>
@@ -81,14 +85,11 @@ let activeComponentIndex = ref(0);
 let transitionName = ref("slide-up");
 const content = ref<any>(null);
 function switchComponent(item: any, index: number) {
-  console.log(item);
-  console.log(currentComponent);
-  // console.log(currentComponent);
-  // if (activeComponentIndex.value < index) {
-  //   transitionName.value = "slide-up";
-  // } else {
-  //   transitionName.value = "slide-down";
-  // }
+  if (activeComponentIndex.value < index) {
+    transitionName.value = "slide-up";
+  } else {
+    transitionName.value = "slide-down";
+  }
   currentComponent.value = item.component;
   activeComponentIndex.value = index;
 }

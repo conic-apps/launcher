@@ -1,4 +1,4 @@
-<template>敬请期待</template>
+<template><div>敬请期待</div></template>
 
 <script setup lang="ts"></script>
 

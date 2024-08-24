@@ -11,7 +11,7 @@ const pinia = createPinia();
 const i18n = createI18n({
     legacy: false,
     locale: "zh_cn",
-    fallbackLocale: "en",
+    fallbackLocale: "en_us",
     messages: {
         en_us,
         zh_cn,

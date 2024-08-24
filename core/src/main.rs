@@ -16,6 +16,7 @@ pub mod platform;
 pub mod utils;
 pub mod version;
 
+use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -56,11 +57,11 @@ pub struct Storage {
 }
 #[tokio::main]
 async fn main() {
+    initialize_application().await;
     initialize_logger();
     print_title();
     info!("Amethyst Launcher is starting up");
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-    initialize_application().await;
     info!("Amethyst Launcher is open source, You can view the source code on Github: https://github.com/Conic-Sections/Amethyst-Launcher");
     tauri::Builder::default()
         .plugin(tauri_plugin_http::init())
@@ -121,10 +122,15 @@ async fn main() {
 }
 
 fn initialize_logger() {
+    let target = Box::new(
+        File::create(DATA_LOCATION.get().unwrap().root.join("aml.latest.log"))
+            .expect("Can't create file"),
+    );
     let env = env_logger::Env::default()
         .filter("LOG_LEVEL")
         .write_style("LOG_STYLE");
-    env_logger::Builder::from_env(env)
+    let mut builder = env_logger::Builder::from_env(env);
+    builder.target(env_logger::Target::Pipe(target))
         .filter_level(LevelFilter::Trace)
         .format(|buf, record| {
             let warn_style = buf.default_level_style(Level::Warn);
@@ -135,7 +141,7 @@ fn initialize_logger() {
             let trace_style = buf.default_level_style(Level::Trace);
             let timestamp = buf.timestamp();
             let level = record.level();
-let target = record.target();
+            let target = record.target();
             match level {
                 Level::Debug => {
                     writeln!(
@@ -173,8 +179,12 @@ let target = record.target();
                     )
                 }
             }
-        })
-        .init();
+        });
+    #[cfg(debug_assertions)]
+    {
+        builder.target(env_logger::Target::Stdout);
+    }
+    builder.init();
     // let env = env_logger::Env::default()
     //     .filter("MY_LOG_LEVEL")
     //     .write_style("MY_LOG_STYLE");
