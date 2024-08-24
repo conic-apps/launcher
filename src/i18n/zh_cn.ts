@@ -101,7 +101,7 @@ export default {
             exportLauncherLogs: "导出启动器日志(TODO)",
             exportLauncherLogsDesc:
                 "将启动器运行日志保存到文件，以便报告问题时使用",
-            openDevTools: "打开开发人员工具(TODO)",
+            reload: "重新加载窗口",
             launchArgs: "高级启动选项",
             gc: "Java 垃圾回收器",
             extraJVMArgs: "添加 JVM 参数",
@@ -168,10 +168,13 @@ export default {
         about: {
             sidebar: "关于",
             sponsorTitle: "赞助 Amethyst Launcher",
+            report: "报告问题",
+            reportDesc: "打开一个 GitHub Issue，记得上传启动器日志",
             sponsorDesc:
                 "Amethyst Launcher 是一个免费、开源、跨平台的 Minecraft 启动器。由 Broken_Deer 及其他贡献者开发和维护，您的赞助或贡献将帮助 Amethyst Launcher 获得更好的发展。",
             thanks: "鸣谢",
             thirdPartyLibraries: "第三方库",
+            
         },
     },
 };

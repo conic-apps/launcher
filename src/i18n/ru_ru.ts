@@ -104,7 +104,7 @@ export default {
             exportLauncherLogs: "Экспорт журналов запуска(TODO)",
             exportLauncherLogsDesc:
                 "Сохраните журналы запуска в файл, чтобы использовать их при отчете о проблеме.",
-            openDevTools: "Открыть инструменты разработчика(TODO)",
+            reload: "Перезагрузить окно",
             launchArgs: "Расширенные параметры запуска",
             gc: "Java сборщик мусора",
             extraJVMArgs: "Добавить аргументы JVM",
@@ -173,6 +173,8 @@ export default {
         },
         about: {
             sidebar: "О программе",
+            report: "Сообщить о проблеме",
+            reportDesc: " Сообщить об ошибках или пожеланиях к программе",
             sponsorTitle: "Поддержать Amethyst Launcher",
             sponsorDesc:
                 "Amethyst Launcher - это бесплатный, открытый, кросс-платформенный лаунчер для Minecraft. Разработан и поддерживается Broken_Deer и другими участниками сообщества. Ваша поддержка или вклад помогут Amethyst Launcher развиваться лучше.",

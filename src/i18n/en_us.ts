@@ -106,7 +106,7 @@ export default {
             exportLauncherLogs: "Export Launcher Log",
             exportLauncherLogsDesc:
                 "Export launcher log to file for reporting problems.",
-            openDevTools: "Open Developer Tools",
+            reload: "Reload Window",
             launchArgs: "Advance Launch Options",
             gc: "GC",
             extraJVMArgs: "Extra JVM Arguments",
@@ -180,6 +180,8 @@ export default {
         },
         about: {
             sidebar: "About",
+            report: "Report an Issue",
+            reportDesc: "Open an issue on GitHub, please upload launcher log.",
             sponsorTitle: "Amethyst Sponsor",
             sponsorDesc:
                 "Amethyst Launcher is a free, open-source, cross-platform Minecraft launcher. The program is built by Broken_Deer and other contributors. Your support will help us.",

@@ -2,11 +2,7 @@
   <keep-alive>
     <div>
       <setting-group>
-        <setting-item :title="$t('settings.advance.exportLauncherLogs')"
-          :description="$t('settings.advance.exportLauncherLogsDesc')" :clickAble="true" icon="scroll">
-          <i class="chevron-right" style="margin-right: 10px"></i>
-        </setting-item>
-        <setting-item :title="$t('settings.advance.openDevTools')" icon="code-simple" :clickAble="true">
+        <setting-item :title="$t('settings.advance.reload')" icon="arrows-rotate" @click="reload" :clickAble="true">
           <i class="chevron-right" style="margin-right: 10px"></i>
         </setting-item>
       </setting-group>
@@ -63,6 +59,9 @@ import TextInputBox from "@/components/controllers/TextInputBox.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/config";
 const config = useConfigStore();
+function reload() {
+  location.reload()
+}
 </script>
 
 <style lang="less"></style>

@@ -5,6 +5,11 @@
         <h2 style="margin-bottom: 8px">{{ $t("settings.about.sponsorTitle") }}</h2>
         {{ $t("settings.about.sponsorDesc") }}
       </div>
+      <setting-group>
+        <setting-item :title="$t('settings.about.report')" :description="$t('settings.about.reportDesc')" icon="bug" :clickAble="true">
+          <i class="chevron-right" style="margin-right: 10px"></i>
+        </setting-item>
+      </setting-group>
       <SettingGroup :title="$t('settings.about.thanks')"> </SettingGroup>
       <SettingGroup :title="$t('settings.about.thirdPartyLibraries')">
         <setting-item title="Tauri"
