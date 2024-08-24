@@ -9,7 +9,7 @@
             </div>
             <div>
               <h4>{{ $t("game.gameData.saves") }}</h4>
-              <p>{{ $t("game.saves.description", { counts: props.datas.length }) }}</p>
+              <p>{{ $tc("game.saves.description", { counts: props.datas.length }) }}</p>
             </div>
           </div>
           <div class="button" style="position: absolute; right: 0" @click="$emit('close')">
@@ -26,7 +26,7 @@
                 <template #subtitle>
                   <tag :text="world.levelData.Version.Name" :color="['180', '180', '180']" text-color="#fffffff0"
                     :border="true" :round="true"></tag>
-                  <tag v-if="world.levelData.allowCommands" :text="$('game.saves.allowCheat')"
+                  <tag v-if="world.levelData.allowCommands" :text="$t('game.saves.allowCheat')"
                     :color="['180', '180', '180']" text-color="#fffffff0" :border="true" :round="true"></tag>
                   <tag v-if="world.levelData.hardcore" :text="$t('game.saves.hardcore')" :color="['180', '180', '180']"
                     text-color="#fffffff0" :border="true" :round="true"></tag>

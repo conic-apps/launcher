@@ -32,7 +32,7 @@
       <div class="controll-btns">
         <i class="button gear"></i>
         <i class="button circle-info"></i>
-        <i class="button star"></i>
+        <i class="button star" id="star" @click="star"></i>
         <button class="game-button" :class="`${gameButtonType}-game-button`" @click="$emit('game-button-click')">
           <i :class="props.gameButtonType"
             style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i>{{ gameButtonText
@@ -46,6 +46,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import $ from "jquery";
+import gsap from "gsap";
+
 const i18n = useI18n();
 
 const props = defineProps<{
@@ -95,6 +98,19 @@ let gameButtonText = computed(() => {
       return "";
   }
 });
+
+function star() {
+  let star = $("#star");
+  if (star.hasClass("activated")) {
+    star.removeClass("activated");
+    return;
+  }
+  star.addClass("activated");
+  star.attr("style", "transform: scale(1.18)");
+  setTimeout(() => {
+    star.removeAttr("style");
+  }, 100);
+}
 </script>
 
 <style lang="less" scoped>
@@ -178,10 +194,11 @@ let gameButtonText = computed(() => {
   height: 24px;
   margin-right: 16px;
   display: inline-flex;
-  transition: all 50ms ease-in-out;
+  transition: all 100ms ease-in-out;
   align-items: center;
   justify-content: center;
   opacity: 0.8;
+  background-color: rgba(255, 255, 255, 0);
 }
 
 i.button::before {
@@ -192,8 +209,22 @@ i.button:hover {
   opacity: 1;
 }
 
+i.star:hover {
+  color: rgba(227, 179, 65);
+}
+
+i.activated {
+  opacity: 1 !important;
+}
+
+i.activated::before {
+  color: rgba(227, 179, 65);
+  font-weight: 100;
+}
+
 i.button:active {
   opacity: 0.86;
+  transform: scale(0.9);
 }
 
 button.game-button {
