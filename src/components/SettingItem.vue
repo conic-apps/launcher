@@ -36,7 +36,7 @@ const props = withDefaults(
 const style = computed(() => {
   let result = "";
   if (!props.clickAble) {
-    result += "background-color: #08080800 !important;";
+    result += "background: var(--setting-item-background);";
   }
   if (props.disabled) {
     result += "opacity: 0.5; pointer-events: none;";
@@ -52,23 +52,19 @@ const style = computed(() => {
   justify-content: space-between;
   align-items: center;
   transition: all 0.1s ease;
-  background-color: #08080800;
-  border-bottom: 1px solid #00000079;
+  background: var(--setting-item-background);
+  // border-bottom: 1px solid #00000079;
   margin: 0;
+  margin-bottom: 1px;
   transition: all 50ms ease;
 }
 
 .setting-item:hover {
-  background-color: #ffffff0c;
+  background: var(--setting-item-background-hover);
 }
 
 .setting-item:active {
-  background-color: #ffffff1f;
-}
-
-.dialog .setting-item {
-  background-color: #000000b9;
-  border: 1px solid #0000002e;
+  background-color:  var(--setting-item-background);
 }
 
 .title {
@@ -113,7 +109,7 @@ const style = computed(() => {
 
 .title p {
   font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.849);
+  color: rgba(var(--default-text-color), 0.849);
   opacity: 0.6;
   margin-top: 4px;
   line-height: 1.1;

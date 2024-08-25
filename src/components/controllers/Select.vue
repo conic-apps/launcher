@@ -100,7 +100,7 @@ function toggleOpened() {
 
 .selected {
   width: 100%;
-  border-radius: var(--border-radius-small);
+  border-radius: var(--controllers-border-radius);
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 8px 12px;
   transition: opacity 100ms ease;
@@ -108,11 +108,11 @@ function toggleOpened() {
   justify-content: space-between;
   align-items: center;
   transition: all 70ms ease;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--controllers-background);
 }
 
 .selected:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--controllers-background-hover);
 }
 
 .selected::after {
@@ -135,9 +135,9 @@ function toggleOpened() {
 .options {
   width: 240px;
   margin-top: 4px;
-  border-radius: var(--border-radius-medium);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgb(54, 54, 54);
+  border-radius: var(--controllers-border-radius);
+  border: var(--controllers-border);
+  background: var(--dialog-background);
   box-shadow: 0px 0px 10px #4500611d;
   transform: scale3d(1, 1, 192.7);
   font-size: 14px;
