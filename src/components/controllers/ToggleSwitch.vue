@@ -35,7 +35,7 @@ const model = defineModel();
   align-items: center;
   padding: 0 3px;
   transition: 0.5s;
-  background: var(--controllsers-background);
+  background: var(--toggle-switch-background);
   border-radius: 200px;
   outline: var(--toggle-switch-outline);
   transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);

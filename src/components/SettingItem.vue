@@ -52,11 +52,11 @@ const style = computed(() => {
   justify-content: space-between;
   align-items: center;
   transition: all 0.1s ease;
-  background: var(--setting-item-background);
   // border-bottom: 1px solid #00000079;
   margin: 0;
   margin-bottom: 1px;
   transition: all 50ms ease;
+  background: var(--setting-item-background);
 }
 
 .setting-item:hover {
@@ -64,7 +64,7 @@ const style = computed(() => {
 }
 
 .setting-item:active {
-  background-color:  var(--setting-item-background);
+  background-color: var(--setting-item-background);
 }
 
 .title {

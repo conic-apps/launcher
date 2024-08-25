@@ -5,6 +5,18 @@ export type Config = {
     language: string;
     update_channel: "Weekly" | "Snapshot" | "Release";
     auto_update: boolean;
+    appearance: {
+        theme: string;
+    };
+    accessibility: {
+        release_reminder: boolean;
+        snapshot_reminder: boolean;
+        hide_latest_release: boolean;
+        hide_latest_snapshot: boolean;
+        change_game_language: boolean;
+        disable_animations: boolean;
+        high_contrast_mode: boolean;
+    };
     download: {
         max_connection: number;
         max_download_speed: number;
@@ -45,6 +57,18 @@ export const useConfigStore = defineStore("global_config", {
             language: "en",
             update_channel: "Release",
             auto_update: false,
+            appearance: {
+                theme: "Dark",
+            },
+            accessibility: {
+                release_reminder: true,
+                snapshot_reminder: true,
+                hide_latest_release: true,
+                hide_latest_snapshot: true,
+                change_game_language: true,
+                disable_animations: true,
+                high_contrast_mode: true,
+            },
             download: {
                 max_connection: 0,
                 max_download_speed: 0,
