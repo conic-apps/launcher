@@ -1,0 +1,74 @@
+:root {
+    --theme-color: rgb(0, 80, 145);
+    --window-background: var(--theme-color);
+    --main-background: #ececec;
+    --min-btn-background: rgb(233, 218, 0);
+    --max-btn-background: rgb(6, 192, 0);
+    --close-btn-background: rgb(219, 0, 0);
+    --window-btn-icon-color: #00000000;
+    --default-text-color: 0,0,0;
+    --card-background: rgba(255, 255, 255, 0.479);
+    --card-border-radius: 8px;
+    --card-border:  1px solid #00000018;
+    --card-icon-background: rgba(0, 0, 0, 0.041);
+    --card-icon-border-radius: 6px;
+    --sidebar-item-background: rgba(255, 255, 255, 0);
+    --sidebar-item-background-hover: rgba(255, 255, 255, 0.08);
+    --dialog-border-radius: 10px;
+    --dialog-background: #f0f0f0;
+    --tag-border-radius: 4px;
+    --list-item-background: rgba(255, 255, 255, 0.08);
+    --setting-item-background: var(--card-background);
+    --setting-item-background-hover: #ffffff36;
+    --controllers-border-radius: 4px;
+    --controllers-border: 1px solid rgba(0, 0, 0, 0.18);
+    --controllers-background: rgba(0, 0, 0, 0.0);
+    --controllers-background-hover: rgba(0, 0, 0, 0.0);
+    --controllers-background-focus: rgba(255, 255, 255, 0.05);
+    --toggle-switch-outline: 1px solid #ffffffb7;
+    --toggle-switch-background: rgba(255, 255, 255, 0.05);
+    --toggle-switch-button: #ffffffb7;
+    --toggle-switch-active: var(--theme-color);
+}
+
+code {
+    padding: 2px 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-radius: 4px;
+}
+
+.sidebar-item *, #global-search *{
+    color: #fff !important;
+}
+
+#global-search *::placeholder {
+    --controllers-background-hover: rgba(255, 255, 255, 0.05);
+    --controllers-border: 1px solid rgba(255, 255, 255, 0.08);
+    --controllers-background-focus: rgba(255, 255, 255, 0.05);
+    --controllers-background: rgba(255, 255, 255, 0.05);
+    color: #ffffffc2 !important;
+}
+
+.instance-info * {
+color: #fff !important;
+}
+
+.instance-info {
+    background-image: url(@/assets/images/banners/1.18.webp) !important;
+}
+
+.instance:hover {
+    background: rgba(255, 255, 255, 0.562) !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.group-button:hover {
+    background: rgba(0, 0, 0, 0.1) !important;
+}
+
+.setting-menu li:hover {
+    background: rgba(0, 0, 0, 0.562) !important;
+}

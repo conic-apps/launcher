@@ -35,23 +35,23 @@ const model = defineModel();
   align-items: center;
   padding: 0 3px;
   transition: 0.5s;
-  background-color: #00000000;
+  background: var(--controllsers-background);
   border-radius: 200px;
-  outline: 1px solid #ffffffb7;
+  outline: var(--toggle-switch-outline);
   transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
 
   div {
     width: 13.5px;
     height: 13.5px;
     border-radius: 200px;
-    background-color: #ffffffb7;
+    background: var(--toggle-switch-button);
     transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
   }
 }
 
 .input-box label input:checked ~ span {
-  outline: 1px solid var(--color-scale-blue-4);
-  background-color: var(--color-scale-blue-4);
+  outline: 1px solid var(--toggle-switch-active);
+  background: var(--toggle-switch-active);
 }
 
 .input-box:hover span {
@@ -67,7 +67,7 @@ const model = defineModel();
 }
 
 .input-box label input:checked ~ span > div {
-  background-color: #fff !important;
+  background-color: #fff;
   margin-left: 19px;
 }
 

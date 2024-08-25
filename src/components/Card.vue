@@ -60,17 +60,14 @@ let iconStyle =
 
 <style lang="less" scoped>
 .card {
-  border-radius: var(--border-radius-large);
-  background-color: var(--expander-background-color);
-  border: 1px solid var(--expander-border-color);
   margin: 15px 0 15px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: all 0.1s ease;
-  border-radius: var(--border-radius-large);
-  background-color: rgba(255, 255, 255, 0.056);
-  border: 1px solid #ffffff08;
+  border-radius: var(--card-border-radius);
+  background: var(--card-background);
+  border: var(--card-border);
   margin: 15px 0 15px 0;
   transition: all 0.1s ease;
 }
@@ -90,9 +87,9 @@ let iconStyle =
   align-items: center;
   width: 48px;
   height: 48px;
-  border-radius: 6px;
+  border-radius: var(--card-border-radius);
   margin: auto 6px auto auto;
-  background-color: rgba(255, 255, 255, 0.1);
+  background: var(--card-icon-background);
   background-position: center;
   background-size: contain;
   background-repeat: none;
@@ -121,7 +118,7 @@ let iconStyle =
 
 .title p {
   font-size: 12.5px;
-  color: #ffffffb7;
+  color: rgba(var(--default-text-color) 0.7);
   opacity: 0.6;
   margin-top: 0px;
 }

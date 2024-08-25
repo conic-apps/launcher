@@ -25,10 +25,11 @@ defineProps<{
   margin-top: 8px;
   border-radius: 10px;
   transition: all 100ms;
+  background: var(--sidebar-item-background);
 }
 
 .sidebar-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--sidebar-item-background-hover);
   // border: 1px solid rgba(0, 0, 0, 0.06);
 }
 

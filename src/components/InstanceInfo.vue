@@ -1,5 +1,5 @@
 <template>
-  <div class="instance-info-main card" :style="banner">
+  <div class="instance-info card" :style="banner">
     <div style="
         position: absolute;
         width: 100%;
@@ -114,11 +114,7 @@ function star() {
 </script>
 
 <style lang="less" scoped>
-.instance-info-main * {
-  color: #fff;
-}
-
-.instance-info-main {
+.instance-info {
   width: 100%;
   height: 240px;
   height: 50%;
@@ -235,7 +231,7 @@ button.game-button {
   border-radius: 8px;
   font-size: 14px;
   padding: 8px 10px;
-  color: #fff;
+  color: rgb(var(--default-text-color));
   // cursor: pointer;
   transition: all 100ms ease;
   display: inline-block;

@@ -32,9 +32,9 @@ let style = `width: ${props.width}; height: ${props.height};`;
 .search-bar {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  background: var(--controllers-background);
+  border: var(--controllers-border);
+  border-radius: var(--controllers-border-radius); 
   padding: 0px 10px;
   width: 472px;
   height: 34px;
@@ -53,7 +53,7 @@ let style = `width: ${props.width}; height: ${props.height};`;
   font-style: normal;
   font-size: 12px;
   margin-right: 6px;
-  color: #808080;
+  color: rgba(var(--default-text-color), 0.8);
   transform: scale(0.95);
 }
 
@@ -62,12 +62,13 @@ let style = `width: ${props.width}; height: ${props.height};`;
   background: none;
   outline: none;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--default-text-color), 0.8);
   width: 100%;
   margin-left: 6px;
 }
 
 .search-bar input::placeholder {
+  color: rgba(var(--default-text-color), 0.8);
   display: none;
 }
 </style>

@@ -4,17 +4,13 @@
     src: url(../fonts/HarmonyOS_Sans_SC_Regular.ttf);
 }
 
-:root {
-    /* todo: if our theme is light, we must change this to 100% */
+/* :root {
     --picture-brightness: 108%;
     --theme-color: 78, 64, 186;
     --border-radius-large: 10px;
     --border-radius-medium: 8px;
     --border-radius-small: 6px;
-    /* --expander-border-color: #ffffff;
-    --expander-background-color: #ffffff71; */
     --text-color: #000000;
-    /* from githib */
     --color-neutral-emphasis-plus: #24292f;
     --color-neutral-emphasis: #6e7781;
     --color-neutral-muted: rgba(175, 184, 193, 0.2);
@@ -154,7 +150,7 @@
     --color-scale-coral-7: #801f0f;
     --color-scale-coral-8: #691105;
     --color-scale-coral-9: #510901;
-}
+} */
 
 h4 {
     font-size: 16px;
@@ -199,7 +195,6 @@ h4 {
 
 body {
     overflow: hidden;
-    background-color: rgba(255, 255, 255, 0);
     width: 100vw;
     height: 100vh;
     /* background-image:
@@ -209,7 +204,6 @@ body {
     border-radius: 16px;
     /* padding: 5px; todo: linux is 0, windows is 5px */
     position: relative;
-    background: #05050500;
     color-scheme: dark;
 }
 
@@ -259,7 +253,7 @@ body {
             rgba(255, 255, 255, 0.06)),
         linear-gradient(to bottom right, rgb(0 20 8), rgb(0, 0, 0), rgb(0 20 44)); */
     /* background: linear-gradient(to right, rgb(15, 12, 41), rgb(26, 24, 55), rgb(36, 36, 62)); */
-    background: #1d1d1d;
+    background: var(--window-background);
     /* background-image: linear-gradient(var(--color-scale-purple-9), var(--color-scale-purple-8)); */
     border: 1px solid rgba(255, 255, 255, 0.16);
     /* backdrop-filter: blur(4px); */
@@ -271,7 +265,7 @@ body {
 /* font */
 * {
     /* font-family: Harmony-re; */
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(var(--default-text-color), 0.9);
     line-height: 1;
 }
 
@@ -295,10 +289,3 @@ body {
     -webkit-backdrop-filter: blur(12px); */
 }
 
-code {
-    padding: 2px 4px;
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-    border-radius: 4px;
-}

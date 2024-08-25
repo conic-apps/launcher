@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="sidebar" data-tauri-drag-region="">
-      <div class="avatar"></div>
+      <div class="logo"></div>
       <ul class="sidebar-btns" data-tauri-drag-region>
         <sidebar-item
           :title="$t('sidebar.game')"
@@ -220,7 +220,6 @@ watch(config, (value) => {
   align-items: center;
   justify-content: center;
   transition: transform 100ms;
-  background: #ffffff40;
 }
 
 .win-btn > div > i {
@@ -234,7 +233,7 @@ watch(config, (value) => {
 
 .win-btn > div > i::before {
   line-height: 1;
-  color: #ffffffb7;
+  color: var(--window-btn-icon-color);
   opacity: 0;
 }
 
@@ -248,6 +247,18 @@ watch(config, (value) => {
 
 .win-btn > div:active > i {
   opacity: 0.9;
+}
+
+.win-btn>div.min {
+  background: var(--min-btn-background);
+}
+
+.win-btn>div.max {
+  background: var(--max-btn-background);
+}
+
+.win-btn>div.close {
+  background: var(--close-btn-background);
 }
 
 // .win-btn>div.min {
@@ -289,7 +300,7 @@ watch(config, (value) => {
   align-items: center;
 }
 
-.sidebar .avatar {
+.sidebar .logo {
   width: 36px;
   height: 36px;
   top: 13px;
@@ -349,7 +360,7 @@ main.main {
   border-right: unset;
   border-bottom-left-radius: unset;
   border-top-right-radius: unset;
-  background-color: #ffffff0f;
+  background: var(--main-background);
   transition: all 0.3s ease;
 }
 
@@ -357,15 +368,5 @@ main.main-large {
   width: 100vw;
   border-radius: 0px;
   border-left: none;
-}
-
-.line {
-  width: 1px;
-  height: calc(100vh - 140px);
-  background-color: rgba(255, 255, 255, 0.12);
-  position: fixed;
-  right: 328px;
-  top: 100px;
-  transition: all 0.3s ease;
 }
 </style>

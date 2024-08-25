@@ -45,9 +45,9 @@ let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}mar
 
 <style lang="less" scoped>
 .card-button {
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--expander-border-color);
+  border-radius: var(--card-border-radius);
+  background: var(--card-background);
+  border: var(--card-border);
   margin: 15px 0 15px 0;
   display: flex;
   justify-content: space-between;
@@ -76,7 +76,7 @@ let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}mar
   height: 48px;
   border-radius: 10px;
   margin-right: 6px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background: var(--card-icon-background);
 }
 
 .icon i {
@@ -99,7 +99,7 @@ let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}mar
 
 .title p#text {
   font-size: 12.5px;
-  color: #ffffffb7;
+  color: rgba(var(--default-text-color) 0.7);
   opacity: 0.6;
   margin-top: 7px;
 }

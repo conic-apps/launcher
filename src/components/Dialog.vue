@@ -35,7 +35,7 @@ const contentStyle = `width: ${props.width}px; height: ${props.height}px;`;
   z-index: 11451419;
   width: 100%;
   height: 100%;
-  background-color: #00000042;
+  background: #00000042;
   border-radius: 16px;
 }
 
@@ -81,12 +81,12 @@ const contentStyle = `width: ${props.width}px; height: ${props.height}px;`;
 
 .content {
   padding: 16px;
-  background-color: #2c2c2c;
+  background: var(--dialog-background);
   border: 1px solid #ffffff0f;
   box-shadow: 0 0 50px 0px #00000071;
   width: fit-content;
   height: fit-content;
-  border-radius: var(--border-radius-large);
+  border-radius: var(--dialog-border-radius);
   max-width: calc(100vw - 20px);
   max-height: calc(100vh - 20px);
   overflow-x: visible;
