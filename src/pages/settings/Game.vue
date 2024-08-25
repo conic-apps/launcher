@@ -10,25 +10,36 @@
           }}</span>
           <i class="chevron-right" style="margin-right: 10px"></i>
         </setting-item>
-        <setting-item :title="$t('settings.game.addJava')" description="" icon="download" :clickAble="true">
+        <setting-item
+          :title="$t('settings.game.addJava')"
+          description=""
+          icon="download"
+          :clickAble="true">
           <i class="chevron-right" style="margin-right: 10px"></i>
         </setting-item>
         <!-- <setting-item title="Java 内存"></setting-item> -->
       </setting-group>
       <setting-group :title="$t('settings.game.launchOptions')">
-        <setting-item :title="$t('settings.game.launcherName')" :description="$t('settings.game.launcherNameDesc')"
+        <setting-item
+          :title="$t('settings.game.launcherName')"
+          :description="$t('settings.game.launcherNameDesc')"
           icon="signature">
           <TextInputBox width="360px" v-model="config.launch.launcher_name"></TextInputBox>
         </setting-item>
-        <setting-item :title="$t('settings.game.processPriority')"
-          :description="$t('settings.game.processPriorityDesc')" icon="chart-simple">
-          <select-vue :display-name="[
-            $t('settings.game.processPriorityHigh'),
-            $t('settings.game.processPriorityAboveNormal'),
-            $t('settings.game.processPriorityNormal'),
-            $t('settings.game.processPriorityBelowNormal'),
-            $t('settings.game.processPriorityLow'),
-          ]" :options="['High', 'AboveNormal', 'Normal', 'BelowNormal', 'Low']" :default="2"
+        <setting-item
+          :title="$t('settings.game.processPriority')"
+          :description="$t('settings.game.processPriorityDesc')"
+          icon="chart-simple">
+          <select-vue
+            :display-name="[
+              $t('settings.game.processPriorityHigh'),
+              $t('settings.game.processPriorityAboveNormal'),
+              $t('settings.game.processPriorityNormal'),
+              $t('settings.game.processPriorityBelowNormal'),
+              $t('settings.game.processPriorityLow'),
+            ]"
+            :options="['High', 'AboveNormal', 'Normal', 'BelowNormal', 'Low']"
+            :default="2"
             v-model="config.launch.process_priority"></select-vue>
         </setting-item>
         <!-- TODO:<setting-item title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
@@ -43,28 +54,49 @@
         <!--     placeholder="端口" -->
         <!--     style="display: inline-block"></TextInputBox> -->
         <!-- </setting-item> -->
-        <setting-item :title="$t('settings.game.worldName')" :description="$t('settings.game.worldNameDesc')"
+        <setting-item
+          :title="$t('settings.game.worldName')"
+          :description="$t('settings.game.worldNameDesc')"
           icon="floppy-disk">
-          <TextInputBox width="360px" :placeholder="$t('settings.game.worldNamePlaceholder')"></TextInputBox>
+          <TextInputBox
+            width="360px"
+            :placeholder="$t('settings.game.worldNamePlaceholder')"></TextInputBox>
         </setting-item>
-        <setting-item :title="$t('settings.game.fullscreen')" :description="$t('settings.game.fullscreenDesc')"
+        <setting-item
+          :title="$t('settings.game.fullscreen')"
+          :description="$t('settings.game.fullscreenDesc')"
           icon="window-maximize">
           <ToggleSwitch v-model="config.launch.fullscreen"></ToggleSwitch>
         </setting-item>
-        <setting-item :disabled="config.launch.fullscreen" :title="$t('settings.game.windowSize')"
-          :description="$t('settings.game.windowSizeDesc')" icon="window">
-          <TextInputBox width="100px" style="display: inline-block; margin-right: 16px"
-            :placeholder="$t('settings.game.windowSizeWidth')" :number-only="true" :disabled="config.launch.fullscreen"
+        <setting-item
+          :disabled="config.launch.fullscreen"
+          :title="$t('settings.game.windowSize')"
+          :description="$t('settings.game.windowSizeDesc')"
+          icon="window">
+          <TextInputBox
+            width="100px"
+            style="display: inline-block; margin-right: 16px"
+            :placeholder="$t('settings.game.windowSizeWidth')"
+            :number-only="true"
+            :disabled="config.launch.fullscreen"
             v-model.number="config.launch.width">
           </TextInputBox>
-          <TextInputBox width="100px" style="display: inline-block" :placeholder="$t('settings.game.windowSizeHeight')"
-            :number-only="true" :disabled="config.launch.fullscreen" v-model.number="config.launch.height">
+          <TextInputBox
+            width="100px"
+            style="display: inline-block"
+            :placeholder="$t('settings.game.windowSizeHeight')"
+            :number-only="true"
+            :disabled="config.launch.fullscreen"
+            v-model.number="config.launch.height">
           </TextInputBox>
         </setting-item>
         <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-slash">
           <toggle-switch></toggle-switch>
         </setting-item>
-        <setting-item :title="$t('settings.game.demo')" :description="$t('settings.game.demoDesc')" icon="">
+        <setting-item
+          :title="$t('settings.game.demo')"
+          :description="$t('settings.game.demoDesc')"
+          icon="">
           <toggle-switch v-model="config.launch.is_demo"></toggle-switch>
         </setting-item>
       </setting-group>

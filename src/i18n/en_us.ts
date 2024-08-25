@@ -35,11 +35,9 @@ export default {
             mods: "Mods",
             modsCount: "No mods | One mod | {count} mods",
             resourcepacks: "Resourcepacks",
-            resourcepacksCount:
-                "No resourcepacks | One resourcepack | {count} resourcepacks",
+            resourcepacksCount: "No resourcepacks | One resourcepack | {count} resourcepacks",
             shaderpacks: "Shaderpacks",
-            shaderpacksCount:
-                "No shaderpacks | One shaderpack | {count} shaderpacks",
+            shaderpacksCount: "No shaderpacks | One shaderpack | {count} shaderpacks",
             screenshots: "Screenshots",
             schematics: "Schematics",
             loading: "Loading...",
@@ -66,8 +64,7 @@ export default {
             snapshot: "Snapshot",
             release: "Release",
             autoUpdate: "Auto Update",
-            autoUpdateDesc:
-                "Automatically download and install updates when available",
+            autoUpdateDesc: "Automatically download and install updates when available",
             checkUpdate: "Check Update",
         },
         game: {
@@ -80,8 +77,7 @@ export default {
             launcherName: "Launcher Name",
             launcherNameDesc: "<i>I don't know what this is.</i>",
             processPriority: "Process Priority",
-            processPriorityDesc:
-                "Set the game process priority, only available on Linux.",
+            processPriorityDesc: "Set the game process priority, only available on Linux.",
             processPriorityHigh: "High",
             processPriorityAboveNormal: "Above Normal",
             processPriorityNormal: "Normal",
@@ -104,31 +100,24 @@ export default {
         advance: {
             sidebar: "Advance",
             exportLauncherLogs: "Export Launcher Log",
-            exportLauncherLogsDesc:
-                "Export launcher log to file for reporting problems.",
+            exportLauncherLogsDesc: "Export launcher log to file for reporting problems.",
             reload: "Reload Window",
             launchArgs: "Advance Launch Options",
             gc: "GC",
             extraJVMArgs: "Extra JVM Arguments",
-            extraJVMArgsDesc:
-                "This will be put at the end of the default JVM arguments.",
+            extraJVMArgsDesc: "This will be put at the end of the default JVM arguments.",
             extraMinecraftArgs: "Extra Minecraft Arguments",
             extraMinecraftArgsDesc:
                 "This will be put at the end of the default Minecraft arguments.",
             extraClassPaths: "Extra Class Paths",
-            extraClassPathsDesc:
-                "This will be put at the end of the default class paths.",
+            extraClassPathsDesc: "This will be put at the end of the default class paths.",
             executeBeforeLaunch: "Pre-launch Command",
-            executeBeforeLaunchDesc:
-                "This will be put at the beginning of the launch script.",
+            executeBeforeLaunchDesc: "This will be put at the beginning of the launch script.",
             wrapCommand: "Wrapper Command",
-            wrapCommandDesc:
-                "This will be put at the beginning of the launch command.",
+            wrapCommandDesc: "This will be put at the beginning of the launch command.",
             executeAfterLaunch: "Post-exit Command",
-            executeAfterLaunchDesc:
-                "This will be put at the end of the launch script.",
-            ignoreInvalidMinecraftCertificates:
-                "Ignore invalid Minecraft certificates",
+            executeAfterLaunchDesc: "This will be put at the end of the launch script.",
+            ignoreInvalidMinecraftCertificates: "Ignore invalid Minecraft certificates",
             ignoreInvalidMinecraftCertificatesDesc:
                 "Add <code>-Dfml.ignoreInvalidMinecraftCertificates=true</code> to JVM arguments.",
             ignorePatchDiscrepancies: "Ignore Path Discrepancies",
@@ -145,8 +134,7 @@ export default {
             maxConnectionsDesc:
                 "<strong>Too many connections may decrease the download speed,</strong> and your download speed may be affected by your ISP and download servers.",
             maxDownloadSpeed: "Limit Download Speed",
-            maxDownloadSpeedDesc:
-                "Set the limit of download speed in B/s. 0 for no limit.",
+            maxDownloadSpeedDesc: "Set the limit of download speed in B/s. 0 for no limit.",
             mirrorServer: "Mirror Server",
             mirrorServerDesc: "Download game files from mirror server.",
             proxy: "Proxy",
@@ -189,4 +177,4 @@ export default {
             thirdPartyLibraries: "Third-Party Libraries",
         },
     },
-};
+}

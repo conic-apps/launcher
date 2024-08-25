@@ -2,18 +2,32 @@
   <keep-alive>
     <div>
       <setting-group>
-        <setting-item :title="$t('settings.download.maxConnections')"
-          :description="$t('settings.download.maxConnectionsDesc')" icon="link">
-          <TextInputBox width="100px" :number-only="true" v-model.number="config.download.max_connection">
+        <setting-item
+          :title="$t('settings.download.maxConnections')"
+          :description="$t('settings.download.maxConnectionsDesc')"
+          icon="link">
+          <TextInputBox
+            width="100px"
+            :number-only="true"
+            v-model.number="config.download.max_connection">
           </TextInputBox>
         </setting-item>
-        <setting-item :title="$t('settings.download.maxDownloadSpeed')"
-          :description="$t('settings.download.maxDownloadSpeedDesc')" icon="gauge">
-          <TextInputBox width="100px" :number-only="true" v-model.number="config.download.max_download_speed">
+        <setting-item
+          :title="$t('settings.download.maxDownloadSpeed')"
+          :description="$t('settings.download.maxDownloadSpeedDesc')"
+          icon="gauge">
+          <TextInputBox
+            width="100px"
+            :number-only="true"
+            v-model.number="config.download.max_download_speed">
           </TextInputBox>
         </setting-item>
-        <setting-item :title="$t('settings.download.mirrorServer')" :clickAble="true"
-          :description="$t('settings.download.mirrorServerDesc')" icon="server" :last="true">
+        <setting-item
+          :title="$t('settings.download.mirrorServer')"
+          :clickAble="true"
+          :description="$t('settings.download.mirrorServerDesc')"
+          icon="server"
+          :last="true">
           <i class="chevron-right" style="margin-right: 10px"></i>
         </setting-item>
       </setting-group>

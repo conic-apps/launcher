@@ -24,12 +24,7 @@ app.use(pinia);
 app.use(i18n);
 
 app.mount("#window");
-// import $ from "jquery";
-
-// $("#window").attr(
-//     "style",
-//     "transform: scale(1); opacity: 1; transition: all 250ms cubic-bezier(0.04, 0.47, 0.47, 0.98)"
-// );
+import $ from "jquery";
 
 // // window.getCurrent().setAlwaysOnTop(true)
 // // window.getCurrent().setResizable(false)
@@ -64,4 +59,11 @@ globalThis.onload = () => {
                                                                           
 `);
     event.emit("fontend-loaded");
+    $("body").attr(
+        "style",
+        "transform: scale(1); opacity: 1;transition: all 250ms cubic-bezier(0, 0.74, 0.65, 1); ",
+    );
+    setTimeout(() => {
+        $("body").attr("style", "");
+    }, 500);
 };

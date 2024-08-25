@@ -34,7 +34,7 @@ let style = `width: ${props.width}; height: ${props.height};`;
   align-items: center;
   background: var(--controllers-background);
   border: var(--controllers-border);
-  border-radius: var(--controllers-border-radius); 
+  border-radius: var(--controllers-border-radius);
   padding: 0px 10px;
   width: 472px;
   height: 34px;

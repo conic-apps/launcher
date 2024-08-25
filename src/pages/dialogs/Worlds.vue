@@ -20,16 +20,34 @@
         <div class="content">
           <div class="row1">
             <div>
-              <list-item v-for="(world, index) in datas" :key="index" :title="world.levelData.LevelName"
-                :logo="world.icon" :click-able="false"
+              <list-item
+                v-for="(world, index) in datas"
+                :key="index"
+                :title="world.levelData.LevelName"
+                :logo="world.icon"
+                :click-able="false"
                 :buttons="['circle-info', 'folders', 'arrow-up-right-from-square']">
                 <template #subtitle>
-                  <tag :text="world.levelData.Version.Name" :color="['180', '180', '180']" text-color="#fffffff0"
-                    :border="true" :round="true"></tag>
-                  <tag v-if="world.levelData.allowCommands" :text="$t('game.saves.allowCheat')"
-                    :color="['180', '180', '180']" text-color="#fffffff0" :border="true" :round="true"></tag>
-                  <tag v-if="world.levelData.hardcore" :text="$t('game.saves.hardcore')" :color="['180', '180', '180']"
-                    text-color="#fffffff0" :border="true" :round="true"></tag>
+                  <tag
+                    :text="world.levelData.Version.Name"
+                    :color="['180', '180', '180']"
+                    text-color="#fffffff0"
+                    :border="true"
+                    :round="true"></tag>
+                  <tag
+                    v-if="world.levelData.allowCommands"
+                    :text="$t('game.saves.allowCheat')"
+                    :color="['180', '180', '180']"
+                    text-color="#fffffff0"
+                    :border="true"
+                    :round="true"></tag>
+                  <tag
+                    v-if="world.levelData.hardcore"
+                    :text="$t('game.saves.hardcore')"
+                    :color="['180', '180', '180']"
+                    text-color="#fffffff0"
+                    :border="true"
+                    :round="true"></tag>
                 </template>
                 {{ world.folderName }}
               </list-item>
@@ -176,7 +194,7 @@ export type Save = {
       padding: 0 12px;
       overflow: auto;
 
-      >div {
+      > div {
         border-radius: 8px;
         overflow: hidden;
       }

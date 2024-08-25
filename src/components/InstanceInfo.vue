@@ -1,6 +1,7 @@
 <template>
   <div class="instance-info card" :style="banner">
-    <div style="
+    <div
+      style="
         position: absolute;
         width: 100%;
         height: 100%;
@@ -21,7 +22,10 @@
         <img src="@/assets/images/fabric.webp" fill="#fff" v-if="modLoaderType === 'Fabric'" />
         <img src="@/assets/images/quilt.svg" fill="#fff" v-if="modLoaderType === 'Quilt'" />
         <img src="@/assets/images/neoforged.png" fill="#fff" v-if="modLoaderType === 'Neoforge'" />
-        <img src="@/assets/images/Anvil_JE3_BE3.webp" fill="#fff" v-if="modLoaderType === 'Forge'" />
+        <img
+          src="@/assets/images/Anvil_JE3_BE3.webp"
+          fill="#fff"
+          v-if="modLoaderType === 'Forge'" />
         {{ modLoaderType }} {{ modLoaderVersion }}
       </div>
     </div>
@@ -33,10 +37,14 @@
         <i class="button gear"></i>
         <i class="button circle-info"></i>
         <i class="button star" id="star" @click="star"></i>
-        <button class="game-button" :class="`${gameButtonType}-game-button`" @click="$emit('game-button-click')">
-          <i :class="props.gameButtonType"
-            style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i>{{ gameButtonText
-          }}
+        <button
+          class="game-button"
+          :class="`${gameButtonType}-game-button`"
+          @click="$emit('game-button-click')">
+          <i
+            :class="props.gameButtonType"
+            style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i
+          >{{ gameButtonText }}
         </button>
       </div>
     </div>
@@ -239,6 +247,14 @@ button.game-button {
   // background-image: linear-gradient(248deg, #18b14e, #4fc82f); light mod
   background-image: linear-gradient(248deg, #189e47, #41a126);
   transition: all 0.1s ease;
+
+  i.launch::before {
+    content: "\f04b";
+  }
+
+  i.install::before {
+    content: "\f019";
+  }
 }
 
 button.game-button:active {
@@ -263,4 +279,5 @@ button.install-game-button {
 
 // button.installing-game-button {
 //   // background-image: ;
-// }</style>
+// }
+</style>
