@@ -1,0 +1,39 @@
+:root {
+    --window-background: #1d1d1d;
+    --main-background: #ffffff0f;
+    --min-btn-background: #ffffff40;
+    --max-btn-background: #ffffff40;
+    --close-btn-background: #ffffff40;
+    --window-btn-icon-color: #ffffffb7;
+    --default-text-color: 255,255,255;
+    --card-background: rgba(255, 255, 255, 0.04);
+    --card-border-radius: 8px;
+    --card-border:  1px solid #ffffff08;
+    --card-icon-background: rgba(255, 255, 255, 0.1);
+    --card-icon-border-radius: 6px;
+    --sidebar-item-background: rgba(255, 255, 255, 0);
+    --sidebar-item-background-hover: rgba(255, 255, 255, 0.08);
+    --dialog-border-radius: 10px;
+    --dialog-background: #2c2c2c;
+    --tag-border-radius: 4px;
+    --list-item-background: rgba(255, 255, 255, 0.08);
+    --setting-item-background: rgba(255, 255, 255, 0.08);
+    --setting-item-background-hover: #ffffff0c;
+    --controllers-border-radius: 6px;
+    --controllers-border: 1px solid rgba(255, 255, 255, 0.08);
+    --controllers-background: rgba(255, 255, 255, 0.05);
+    --controllers-background-hover: rgba(255, 255, 255, 0.05);
+    --controllers-background-focus: rgba(255, 255, 255, 0.05);
+    --toggle-switch-outline: 1px solid #ffffffb7;
+    --toggle-switch-background: rgba(255, 255, 255, 0.05);
+    --toggle-switch-button: #ffffffb7;
+    --toggle-switch-active: rgb(24, 170, 255);
+}
+
+code {
+    padding: 2px 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-radius: 4px;
+}

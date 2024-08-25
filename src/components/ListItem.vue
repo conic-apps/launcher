@@ -50,15 +50,13 @@ defineProps<{
 .list-item {
   display: flex;
   padding: 10px 12px;
-  // border-radius: var(--border-radius-medium);
   transition: all 0.1s cubic-bezier(0, 0.43, 0.25, 1);
   justify-content: space-between;
-  // border: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 1px;
   position: relative;
   // flex-direction: row-reverse;
   overflow: hidden;
-  background-color: rgba(255, 255, 255, 0.08);
+  background: var(--list-item-background);
   pointer-events: none;
 
   > div {

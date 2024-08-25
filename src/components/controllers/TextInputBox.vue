@@ -56,7 +56,7 @@ function checkValue(event: any) {
 
 <style lang="less" scoped>
 .input-box {
-  border-radius: var(--border-radius-small);
+  border-radius: var(--controllers-border-radius);
   margin-left: auto;
   overflow: hidden;
   height: 30px;
@@ -64,8 +64,8 @@ function checkValue(event: any) {
   padding: 0;
   font-size: 15px;
   transition: all 0.1s ease;
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--controllers-background);
+  border: var(--controllers-border);
 }
 
 .input-box input {
@@ -79,12 +79,16 @@ function checkValue(event: any) {
   text-align: inherit;
 }
 
+.input-box input::placeholder {
+  color: rgba(var(--default-text-color), 0.8);
+}
+
 .input-box:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
 .input-box:focus-within {
   outline: 1px solid #4493f8;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--controllers-background-focus);
 }
 </style>

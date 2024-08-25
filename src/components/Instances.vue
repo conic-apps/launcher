@@ -81,6 +81,7 @@ div.instance {
     width: 24px;
     height: 24px;
     margin-right: 10px;
+    fill: aqua
   }
 
   .title {

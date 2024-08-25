@@ -33,6 +33,6 @@ withDefaults(
   height: fit-content;
   font-size: 11px;
   padding: 2px 4px;
-  border-radius: var(--border-radius-small);
+  border-radius: var(--tag-border-radius);
 }
 </style>

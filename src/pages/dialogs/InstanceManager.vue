@@ -159,7 +159,7 @@ function instanceCreated() {
   align-items: center;
   justify-content: center;
   transition: transform 100ms;
-  background: #ffffff40;
+  background: var(--close-btn-background);
 }
 
 .instance-manager .button i::before {
