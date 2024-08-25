@@ -1,29 +1,67 @@
 <template>
   <div class="assets">
     <div class="first-row">
-      <card-button icon="map" :title="$t('game.gameData.saves')" :class="savesIsLoading ? 'disabled' : ''"
-        margin="0,0,10,0" :description="savesManagerDesc" @click="show.worlds = true"></card-button>
-      <card-button icon="puzzle-piece" :title="$t('game.gameData.mods')" :class="modIsLoading ? 'disabled' : ''"
-        :description="modManagerDesc" margin="0,0,10,0" @click="show.mods = true"></card-button>
-      <card-button icon="puzzle-piece" :title="$t('game.gameData.resourcepacks')" margin="0,0,0,0"
+      <card-button
+        icon="map"
+        :title="$t('game.gameData.saves')"
+        :class="savesIsLoading ? 'disabled' : ''"
+        margin="0,0,10,0"
+        :description="savesManagerDesc"
+        @click="show.worlds = true"></card-button>
+      <card-button
+        icon="puzzle-piece"
+        :title="$t('game.gameData.mods')"
+        :class="modIsLoading ? 'disabled' : ''"
+        :description="modManagerDesc"
+        margin="0,0,10,0"
+        @click="show.mods = true"></card-button>
+      <card-button
+        icon="puzzle-piece"
+        :title="$t('game.gameData.resourcepacks')"
+        margin="0,0,0,0"
         :description="$t('game.gameData.loading')"></card-button>
     </div>
     <div class="second-row">
-      <card-button icon="palette" :title="$t('game.gameData.resourcepacks')"
-        :class="resourcepacksIsLoading ? 'disabled' : ''" :description="resourcepacksManagerDesc" margin="0,0,10,0"
+      <card-button
+        icon="palette"
+        :title="$t('game.gameData.resourcepacks')"
+        :class="resourcepacksIsLoading ? 'disabled' : ''"
+        :description="resourcepacksManagerDesc"
+        margin="0,0,10,0"
         @click="show.resourcepacks = true"></card-button>
-      <card-button icon="lightbulb-on" :title="$t('game.gameData.shaderpacks')"
-        :class="shaderpackIsLoading ? 'disabled' : ''" :description="shaderpacksManagerDesc" margin="0,0,10,0"
+      <card-button
+        icon="lightbulb-on"
+        :title="$t('game.gameData.shaderpacks')"
+        :class="shaderpackIsLoading ? 'disabled' : ''"
+        :description="shaderpacksManagerDesc"
+        margin="0,0,10,0"
         @click="show.shaderpacks = true"></card-button>
-      <card-button icon="puzzle-piece" :title="$t('game.gameData.schematics')" margin="0,0,0,0"
+      <card-button
+        icon="puzzle-piece"
+        :title="$t('game.gameData.schematics')"
+        margin="0,0,0,0"
         description="正在加载"></card-button>
     </div>
-    <worlds :show="show.worlds" :datas="saves" :instance-name="instance.config.name" @close="show.worlds = false">
+    <worlds
+      :show="show.worlds"
+      :datas="saves"
+      :instance-name="instance.config.name"
+      @close="show.worlds = false">
     </worlds>
-    <mods :show="show.mods" :datas="mods" :instance-name="instance.config.name" @close="show.mods = false"></mods>
-    <resourcepacks :show="show.resourcepacks" :datas="resourcepacks" :instance-name="instance.config.name"
+    <mods
+      :show="show.mods"
+      :datas="mods"
+      :instance-name="instance.config.name"
+      @close="show.mods = false"></mods>
+    <resourcepacks
+      :show="show.resourcepacks"
+      :datas="resourcepacks"
+      :instance-name="instance.config.name"
       @close="show.resourcepacks = false"></resourcepacks>
-    <shaderpacks :show="show.shaderpacks" :datas="shaderpacks" :instance-name="instance.config.name"
+    <shaderpacks
+      :show="show.shaderpacks"
+      :datas="shaderpacks"
+      :instance-name="instance.config.name"
       @close="show.shaderpacks = false">
     </shaderpacks>
   </div>
@@ -35,17 +73,17 @@
   margin-top: 14px;
 }
 
-.assets>div {
+.assets > div {
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
-.assets>div.first-row {
+.assets > div.first-row {
   margin-right: 5px;
 }
 
-.assets>div.second-row {
+.assets > div.second-row {
   margin-left: 5px;
 }
 </style>

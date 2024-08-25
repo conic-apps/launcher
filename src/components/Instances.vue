@@ -18,7 +18,8 @@
 
 <script setup lang="ts">
 import { computed, ref, type Ref } from "vue";
-import Card from "./Card.vue";
+import { useConfigStore } from "@/config";
+const config = useConfigStore();
 
 export interface Instance {
   config: {
@@ -43,14 +44,24 @@ const props = defineProps<{
 }>();
 
 const computedInstances = computed(() => {
-  let systemInstances = props.instances.filter((value) => {
+  let result = props.instances.filter((value) => {
     return value.config.name == "Latest Release" || value.config.name == "Latest Snapshot";
   });
   let userInstances = props.instances.filter((value) => {
     return value.config.name != "Latest Release" && value.config.name != "Latest Snapshot";
   });
-  systemInstances.push(...userInstances);
-  return systemInstances;
+  result.push(...userInstances);
+  if (config.accessibility.hide_latest_release) {
+    result = result.filter((value) => {
+      return value.config.name != "Latest Release";
+    });
+  }
+  if (config.accessibility.hide_latest_snapshot) {
+    result = result.filter((value) => {
+      return value.config.name != "Latest Snapshot";
+    });
+  }
+  return result;
 });
 function generateDescription(instance: Instance): string {
   return instance.config.name;
@@ -81,7 +92,7 @@ div.instance {
     width: 24px;
     height: 24px;
     margin-right: 10px;
-    fill: aqua
+    fill: aqua;
   }
 
   .title {

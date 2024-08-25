@@ -14,8 +14,48 @@ pub enum UpdateChannel {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+pub struct AccessibilityConfig {
+    pub release_reminder: bool,
+    pub snapshot_reminder: bool,
+    pub hide_latest_release: bool,
+    pub hide_latest_snapshot: bool,
+    pub change_game_language: bool,
+    pub disable_animations: bool,
+    pub high_contrast_mode: bool,
+}
+
+impl Default for AccessibilityConfig {
+    fn default() -> Self {
+        Self {
+            release_reminder: true,
+            snapshot_reminder: true,
+            hide_latest_release: false,
+            hide_latest_snapshot: false,
+            change_game_language: true,
+            disable_animations: false,
+            high_contrast_mode: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+pub struct AppearanceConfig {
+    pub theme: String,
+}
+
+impl Default for AppearanceConfig {
+    fn default() -> Self {
+        Self {
+            theme: "dark".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
 pub struct Config {
     pub auto_update: bool,
+    pub appearance: AppearanceConfig,
+    pub accessibility: AccessibilityConfig,
     pub language: String,
     pub update_channel: UpdateChannel,
     pub launch: launch::LaunchConfig,
@@ -27,6 +67,8 @@ impl Default for Config {
         let locale = sys_locale::get_locale().unwrap();
         log::info!("System locale is {}", locale);
         Self {
+            appearance: AppearanceConfig::default(),
+            accessibility: AccessibilityConfig::default(),
             auto_update: true,
             language: locale.replace("-", "_").to_lowercase(),
             update_channel: UpdateChannel::Release,

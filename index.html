@@ -9,11 +9,16 @@
   <link rel="stylesheet" href="./src/assets/styles/main.css" />
   <link rel="stylesheet" href="./src/assets/styles/icons.css" />
   <link rel="stylesheet" href="./src/assets/styles/transitions.css" />
+  <!-- Default themes -->
   <link rel="stylesheet" href="./src/assets/styles/dark-theme.css" />
-  <!-- <link rel="stylesheet" href="./src/assets/styles/light-theme.css" /> -->
+  <link rel="stylesheet" href="./src/assets/styles/high-contrast-dark.css" />
+  <link rel="stylesheet" href="./src/assets/styles/light-theme.css" />
+  <style>
+    body {}
+  </style>
 </head>
 
-<body>
+<body style="transform: scale(0.93); opacity: 0">
   <!-- <div id="window" style="position: relative; transform: scale(0.92); opacity: 0; outline: 1px solid #f00;" data-tauri-drag-region> -->
   <div id="window" data-tauri-drag-region></div>
   <script type="module" src="./src/bootstrap.ts"></script>
@@ -33,6 +38,12 @@
       z-index: -1;
       transition: all 0.3s ease;
       opacity: 0;
+    }
+  </style>
+  <style id="no-animations">
+    .no-animations * {
+      animation: none !important;
+      transition: none !important;
     }
   </style>
   <script>

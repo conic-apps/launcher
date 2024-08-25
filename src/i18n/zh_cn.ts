@@ -93,14 +93,12 @@ export default {
             windowSizeHeight: "高",
             hideLauncherAfterLaunch: "启动游戏后隐藏启动器(TODO)",
             demo: "演示模式",
-            demoDesc:
-                "在单一的世界中游玩100分钟（5个游戏日），在此之后地图就会被锁定",
+            demoDesc: "在单一的世界中游玩100分钟（5个游戏日），在此之后地图就会被锁定",
         },
         advance: {
             sidebar: "高级",
             exportLauncherLogs: "导出启动器日志(TODO)",
-            exportLauncherLogsDesc:
-                "将启动器运行日志保存到文件，以便报告问题时使用",
+            exportLauncherLogsDesc: "将启动器运行日志保存到文件，以便报告问题时使用",
             reload: "重新加载窗口",
             launchArgs: "高级启动选项",
             gc: "Java 垃圾回收器",
@@ -152,8 +150,7 @@ export default {
             hideLatestSnapshot: '隐藏"最新快照"',
             hideLatestSnapshotDesc: '不在游戏列表中显示"最新快照"',
             changeGameLanguage: "自动更改游戏语言",
-            changeGameLanguageDesc:
-                "在首次启动游戏时将游戏语言设置为你的启动器语言",
+            changeGameLanguageDesc: "在首次启动游戏时将游戏语言设置为你的启动器语言",
             accessibility: "无障碍",
             disableAllAnimations: "禁用所有动画",
 
@@ -174,7 +171,6 @@ export default {
                 "Amethyst Launcher 是一个免费、开源、跨平台的 Minecraft 启动器。由 Broken_Deer 及其他贡献者开发和维护，您的赞助或贡献将帮助 Amethyst Launcher 获得更好的发展。",
             thanks: "鸣谢",
             thirdPartyLibraries: "第三方库",
-            
         },
     },
-};
+}

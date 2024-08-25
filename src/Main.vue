@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="sidebar" data-tauri-drag-region="">
-      <div class="logo"></div>
+      <div class="logo"><img src="@/assets/images/app-icon.png" alt="app-icon" /></div>
       <ul class="sidebar-btns" data-tauri-drag-region>
         <sidebar-item
           :title="$t('sidebar.game')"
@@ -52,6 +52,10 @@ import Settings from "./pages/Settings.vue";
 import Game from "./pages/Game.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useConfigStore } from "./config";
+import { watch } from "vue";
+import { useI18n } from "vue-i18n";
+import gsap from "gsap";
+import { reloadTheme } from "./theme";
 
 function minimize() {
   window.getCurrentWindow().minimize();
@@ -73,18 +77,20 @@ const pages: any = reactive({
 let transitionName = ref("slide-up");
 const currentComponent = shallowRef(pages.game);
 let last: any;
-const configStore = useConfigStore();
-configStore.syncFromFile().then(() => {
-  console.log(configStore.launch);
+const config = useConfigStore();
+config.syncFromFile().then(() => {
+  reloadTheme(config);
 });
+const i18n = useI18n();
+i18n.locale.value = config.language;
+watch(config, (value) => {
+  i18n.locale.value = config.language;
+});
+
 function changePage(event: any, component: any) {
   console.log(event.currentTarget);
   if (component == "settings") {
-    gsap.fromTo(
-      event.currentTarget.querySelector("i"),
-      { rotate: "0deg" },
-      { rotate: `120deg` },
-    );
+    gsap.fromTo(event.currentTarget.querySelector("i"), { rotate: "0deg" }, { rotate: `120deg` });
   }
   const config = useConfigStore();
   // save config to file when leaving setting page
@@ -176,16 +182,6 @@ function closeSearchPanel() {
   $("#global-search").attr("style", "").children("*").show();
   $("#model-shadow").attr("style", "");
 }
-import { watch } from "vue";
-import { useI18n } from "vue-i18n";
-import gsap from "gsap";
-
-const i18n = useI18n();
-const config = useConfigStore();
-i18n.locale.value = config.language;
-watch(config, (value) => {
-  i18n.locale.value = config.language;
-});
 </script>
 
 <style lang="less" scoped>
@@ -249,15 +245,15 @@ watch(config, (value) => {
   opacity: 0.9;
 }
 
-.win-btn>div.min {
+.win-btn > div.min {
   background: var(--min-btn-background);
 }
 
-.win-btn>div.max {
+.win-btn > div.max {
   background: var(--max-btn-background);
 }
 
-.win-btn>div.close {
+.win-btn > div.close {
   background: var(--close-btn-background);
 }
 
@@ -301,19 +297,24 @@ watch(config, (value) => {
 }
 
 .sidebar .logo {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   top: 13px;
-  // background: rgba(255, 255, 255, 30%);
-  background: url(@/assets/images/steve_avatar.webp);
-  background-position: center;
-  background-size: contain;
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 160px;
   margin-top: 16px;
   flex-shrink: 0;
   position: absolute;
   // top: 0;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 30px;
+    height: 30px;
+  }
 }
 
 // .sidebar-hidden .avatar {
@@ -361,7 +362,6 @@ main.main {
   border-bottom-left-radius: unset;
   border-top-right-radius: unset;
   background: var(--main-background);
-  transition: all 0.3s ease;
 }
 
 main.main-large {
