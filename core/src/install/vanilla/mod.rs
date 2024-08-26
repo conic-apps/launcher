@@ -72,6 +72,7 @@ pub async fn generate_assets_downloads(
 
 const LOF4J2_CONFIGURATION: &[u8] = include_bytes!("./log4j2.xml");
 
+/// Save the log4j2 configuration file
 pub async fn generate_log4j2_configuration_file(
     version: &ResolvedVersion,
     minecraft_location: &MinecraftLocation,
@@ -84,6 +85,7 @@ pub async fn generate_log4j2_configuration_file(
     Ok(())
 }
 
+/// Get all the files you need to download
 pub async fn generate_download_info(
     version_id: &str,
     minecraft_location: MinecraftLocation,
