@@ -113,6 +113,8 @@ async fn scan() -> anyhow::Result<Vec<Instance>> {
 }
 
 #[tauri::command]
+/// The program use a global storage to store the current instance. TODO: remove it
+// TODO: remove it to support global search or commands
 pub fn set_current_instance(instance_name: String, storage: tauri::State<Storage>) {
     let mut current_instance = storage.current_instance.lock().unwrap();
     debug!("Selected {}", instance_name);

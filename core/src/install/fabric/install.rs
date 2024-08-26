@@ -6,6 +6,9 @@ use crate::{folder::MinecraftLocation, version::Version};
 use log::info;
 use tauri_plugin_http::reqwest;
 
+/// Save fabric version.json
+///
+/// Note: You'll need to recheck the library integrity before launching the game.
 pub async fn install(
     mcversion: &str,
     quilt_version: &str,
