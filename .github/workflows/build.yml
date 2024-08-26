@@ -59,6 +59,12 @@ jobs:
           name: AppImage bundle(aarch64)
           path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage
 
+      - name: Upload updater signature
+        uses: actions/upload-artifact@v4
+        with:
+          name: Updater signature(aarch64-appimage)
+          path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage.sig
+
   build-other:
     needs: [get-version]
     permissions:
@@ -115,9 +121,15 @@ jobs:
 
       - name: install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: yarn install # change this to npm or pnpm depending on which one you use.
 
       - name: Build the app
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           yarn tauri build -- ${{ matrix.args }}
       - name: show files
@@ -146,12 +158,26 @@ jobs:
           name: AppImage bundle(amd64)
           path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage
 
+      - name: Upload appimage updater signature
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'ubuntu-22.04'
+        with:
+          name: Updater signature(amd64-appimage)
+          path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage.sig
+
       - name: Upload Microsoft Installer bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: Microsoft Installer bundle(64-bit)
           path: ${{ github.workspace }}/core/target/release/bundle/msi/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi
+
+      - name: Upload Microsoft Installer bundle
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'windows-latest'
+        with:
+          name: Updater signature(64-bit-msi)
+          path: ${{ github.workspace }}/core/target/release/bundle/msi/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi.sig
 
       - name: Upload NSIS bundle
         uses: actions/upload-artifact@v4
@@ -160,9 +186,30 @@ jobs:
           name: NSIS bundle(64-bit)
           path: ${{ github.workspace }}/core/target/release/bundle/nsis/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe
 
+      - name: Upload NSIS updater signature
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'windows-latest'
+        with:
+          name: Updater signature(64-bit-nsis)
+          path: ${{ github.workspace }}/core/target/release/bundle/nsis/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe.sig
+
       - name: Upload dmg bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'macos-latest'
         with:
           name: MacOS ${{ matrix.arch }} bundle(dmg)
           path: ${{ github.workspace }}/core/target/${{matrix.target}}-apple-darwin/release/bundle/dmg/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg
+
+      - name: Upload macos updater bundle
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'macos-latest'
+        with:
+          name: MacOS ${{ matrix.arch }} updater bundle
+          path: ${{ github.workspace }}/core/target/${{matrix.target}}-apple-darwin/release/bundle/macos/amethyst-launcher.app.tar.gz
+
+      - name: Upload macos updater signature
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'macos-latest'
+        with:
+          name: MacOS ${{ matrix.arch }} updater signature
+          path: ${{ github.workspace }}/core/target/${{matrix.target}}-apple-darwin/release/bundle/macos/amethyst-launcher.app.tar.gz.sig

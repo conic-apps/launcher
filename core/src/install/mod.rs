@@ -52,7 +52,7 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
             Progress {
                 completed: 0,
                 total: 0,
-                step: 1,
+                step: 1, // Step 1 is get version info
             },
         )
         .unwrap();

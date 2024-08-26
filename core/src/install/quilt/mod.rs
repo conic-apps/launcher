@@ -77,6 +77,7 @@ impl QuiltVersionList {
     }
 }
 
+/// Save the quilt `version.json`
 pub async fn install(
     mcversion: &str,
     quilt_version: &str,

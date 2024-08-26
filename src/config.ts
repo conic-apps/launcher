@@ -1,61 +1,56 @@
-import { invoke } from "@tauri-apps/api/core";
-import { defineStore } from "pinia";
+import { invoke } from "@tauri-apps/api/core"
+import { defineStore } from "pinia"
 
 export type Config = {
-    language: string;
-    update_channel: "Weekly" | "Snapshot" | "Release";
-    auto_update: boolean;
+    language: string
+    update_channel: "Weekly" | "Snapshot" | "Release"
+    auto_update: boolean
     accounts: Array<{
-        profile_name: string;
-        uuid: string;
-        account_type: "Microsoft" | "Offline";
-        avatar: string;
-    }>;
+        profile_name: string
+        uuid: string
+        account_type: "Microsoft" | "Offline"
+        avatar: string
+    }>
     appearance: {
-        theme: string;
-    };
+        theme: string
+    }
     accessibility: {
-        release_reminder: boolean;
-        snapshot_reminder: boolean;
-        hide_latest_release: boolean;
-        hide_latest_snapshot: boolean;
-        change_game_language: boolean;
-        disable_animations: boolean;
-        high_contrast_mode: boolean;
-    };
+        release_reminder: boolean
+        snapshot_reminder: boolean
+        hide_latest_release: boolean
+        hide_latest_snapshot: boolean
+        change_game_language: boolean
+        disable_animations: boolean
+        high_contrast_mode: boolean
+    }
     download: {
-        max_connection: number;
-        max_download_speed: number;
-    };
+        max_connection: number
+        max_download_speed: number
+    }
     launch: {
-        min_memory: number;
-        max_memory: number;
+        min_memory: number
+        max_memory: number
         server?: {
-            ip: string;
-            port: number;
-        };
-        width: number;
-        height: number;
-        fullscreen: boolean;
-        extra_jvm_args: string;
-        extra_mc_args: string;
-        is_demo: boolean;
-        process_priority:
-            | "High"
-            | "AboveNormal"
-            | "Normal"
-            | "BelowNormal"
-            | "Low";
-        ignore_invalid_minecraft_certificates: boolean;
-        ignore_patch_discrepancies: boolean;
-        extra_class_paths: string;
-        gc: "Serial" | "Parallel" | "ParallelOld" | "G1" | "Z";
-        launcher_name: string;
-        wrap_command: string;
-        execute_before_launch: string;
-        execute_after_launch: string;
-    };
-};
+            ip: string
+            port: number
+        }
+        width: number
+        height: number
+        fullscreen: boolean
+        extra_jvm_args: string
+        extra_mc_args: string
+        is_demo: boolean
+        process_priority: "High" | "AboveNormal" | "Normal" | "BelowNormal" | "Low"
+        ignore_invalid_minecraft_certificates: boolean
+        ignore_patch_discrepancies: boolean
+        extra_class_paths: string
+        gc: "Serial" | "Parallel" | "ParallelOld" | "G1" | "Z"
+        launcher_name: string
+        wrap_command: string
+        execute_before_launch: string
+        execute_after_launch: string
+    }
+}
 
 export const useConfigStore = defineStore("global_config", {
     state: (): Config => {
@@ -103,19 +98,19 @@ export const useConfigStore = defineStore("global_config", {
                 execute_before_launch: "",
                 execute_after_launch: "",
             },
-        };
+        }
     },
     actions: {
         async syncFromFile() {
-            await syncFromFile();
+            await syncFromFile()
         },
     },
-});
+})
 
 /** 将渲染进程和主进程存储的配置与文件同步 */
 async function syncFromFile() {
-    const Config = useConfigStore();
-    const config: Config = await invoke("read_config_file");
-    Config.$patch(config);
-    await invoke("update_config", { config: config });
+    const Config = useConfigStore()
+    const config: Config = await invoke("read_config_file")
+    Config.$patch(config)
+    await invoke("update_config", { config: config })
 }

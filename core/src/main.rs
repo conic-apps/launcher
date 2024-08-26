@@ -105,17 +105,14 @@ async fn main() {
             if window.label() != "main" {
                 return;
             };
-            match event {
-                tauri::WindowEvent::CloseRequested { .. } => {
-                    match std::fs::remove_dir_all(&DATA_LOCATION.get().unwrap().temp) {
-                        Ok(_) => info!("Temporary files cleared"),
-                        Err(_) => {
-                            error!("Could not clear temp foler")
-                        }
-                    };
-                    window.close().unwrap();
-                }
-                _ => {}
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                match std::fs::remove_dir_all(&DATA_LOCATION.get().unwrap().temp) {
+                    Ok(_) => info!("Temporary files cleared"),
+                    Err(_) => {
+                        error!("Could not clear temp foler")
+                    }
+                };
+                window.close().unwrap();
             }
         })
         .run(tauri::generate_context!())
