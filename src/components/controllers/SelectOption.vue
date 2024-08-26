@@ -3,7 +3,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
 defineProps<{
   text: string;
 }>();
@@ -12,7 +11,7 @@ defineProps<{
 <style lang="less" scoped>
 .select-option {
   padding: 10px 16px;
-  border-radius: var(--border-radius-small);
+  border-radius: var(--controllers-border-radius);
   position: relative;
   z-index: 10001;
   transition: all 30ms ease;

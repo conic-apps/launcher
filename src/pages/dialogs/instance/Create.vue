@@ -309,7 +309,6 @@ watch(instanceName, (newValue) => {
   invoke("check_repeated_instance_name", {
     instanceName: newValue,
   }).then((res: any) => {
-    console.log(res);
     repeated.value = res;
   });
 });
@@ -322,8 +321,9 @@ watch(instanceName, (newValue) => {
   padding: 20px 24px;
   margin-top: 10px;
   align-items: center;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
+  background: var(--card-background);
+  border: var(--card-border);
+  border-radius: var(--card-border-radius);
 }
 
 .info-bar .icon {

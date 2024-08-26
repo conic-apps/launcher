@@ -47,9 +47,6 @@ const props = withDefaults(
   },
 );
 const slider = ref<any>(null);
-onMounted(() => {
-  console.log();
-});
 // let value: Ref<number> = ref(await load(props.config))
 let value = ref(Number(props.min));
 function setValue(newValue: number) {

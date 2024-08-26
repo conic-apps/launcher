@@ -88,7 +88,6 @@ watch(config, (value) => {
 });
 
 function changePage(event: any, component: any) {
-  console.log(event.currentTarget);
   if (component == "settings") {
     gsap.fromTo(event.currentTarget.querySelector("i"), { rotate: "0deg" }, { rotate: `120deg` });
   }
@@ -355,7 +354,7 @@ main.main {
   bottom: 0;
   height: calc(100vh - 56px);
   width: calc(100vw - 80px);
-  // border: 1px solid #303241;
+  border: var(--main-border);
   border-radius: 16px;
   border-bottom: unset;
   border-right: unset;
