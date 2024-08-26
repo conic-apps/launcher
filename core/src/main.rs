@@ -5,6 +5,7 @@
 // Prevents additional console window on Windows in release.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+pub mod account;
 pub mod config;
 pub mod download;
 pub mod folder;

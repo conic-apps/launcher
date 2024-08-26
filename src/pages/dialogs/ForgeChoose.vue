@@ -57,7 +57,6 @@ watch(props, (newValue) => {
     invoke("get_forge_version_list", {
       mcversion: newValue.minecraft,
     }).then((res: any) => {
-      console.log(res);
       if (res != null && res.length > 0) {
         versions.value = res;
         emit("loaded");

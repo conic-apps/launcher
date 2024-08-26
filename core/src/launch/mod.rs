@@ -13,6 +13,8 @@ use arguments::generate_command_arguments;
 use complete::complete_files;
 use log::{debug, error, info};
 use options::LaunchOptions;
+use serde::{Deserialize, Serialize};
+use tauri::Emitter;
 mod arguments;
 mod complete;
 mod options;
@@ -21,8 +23,15 @@ use crate::{
     folder::MinecraftLocation,
     platform::OsType,
     version::Version,
-    PLATFORM_INFO,
+    MAIN_WINDOW, PLATFORM_INFO,
 };
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Log {
+    #[serde(rename = "instanceName")]
+    pub instance_name: String,
+    pub content: String,
+}
 
 #[tauri::command(async)]
 pub async fn launch(instance_name: String) {
@@ -63,6 +72,7 @@ pub async fn launch(instance_name: String) {
             minecraft_location,
             launch_options,
             version_id,
+            &instance_name,
         )
     });
 }
@@ -72,6 +82,7 @@ fn spawn_minecraft_process(
     minecraft_location: MinecraftLocation,
     launch_options: LaunchOptions,
     version_id: String,
+    instance_name: &str,
 ) {
     let process_priority = launch_options.process_priority;
     let platform = PLATFORM_INFO.get().unwrap();
@@ -83,7 +94,7 @@ fn spawn_minecraft_process(
     command.push_str(&format!("{} ", launch_options.wrap_command));
 
     if platform.os_type == OsType::Windows {
-        command.push_str(" -c "); // TODO: fix it on windows
+        command.push_str(" -c "); // FIXME: on windows
     } else {
         command.push_str("nice ")
     }
@@ -133,7 +144,7 @@ fn spawn_minecraft_process(
         OsType::Windows => {
             let vars = std::env::vars().find(|v| v.0 == "PATH").unwrap();
 
-            let path_vars = vars.1.as_str().split(";").collect::<Vec<&str>>(); // todo: test it in windows
+            let path_vars = vars.1.as_str().split(";").collect::<Vec<&str>>(); // TODO: test it in windows
             let powershell_folder = PathBuf::from(
                 path_vars
                     .into_iter()
@@ -164,6 +175,8 @@ fn spawn_minecraft_process(
     let out = minecraft.stdout.take().unwrap();
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
+    let main_window = MAIN_WINDOW.get().unwrap();
+    main_window.emit("launch_success", instance_name).unwrap();
     while out.read_line(&mut buf).is_ok() {
         if let Ok(Some(_)) = minecraft.try_wait() {
             break;
@@ -171,6 +184,15 @@ fn spawn_minecraft_process(
         let lines: Vec<_> = buf.split("\n").collect();
         if let Some(last) = lines.get(lines.len() - 2) {
             debug!("{}", last);
+            main_window
+                .emit(
+                    "log",
+                    Log {
+                        instance_name: instance_name.to_string(),
+                        content: last.to_string(),
+                    },
+                )
+                .unwrap();
         }
     }
     let output = minecraft.wait_with_output().unwrap();

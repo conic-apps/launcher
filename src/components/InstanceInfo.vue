@@ -14,20 +14,26 @@
         );
       "></div>
     <div class="line-a">
-      <div class="minecraft-version" v-if="minecraftVersion">
-        <img src="@/assets/images/Grass_Block_JE2.webp" fill="#fff" />Minecraft
-        {{ minecraftVersion }}
+      <div>
+        <div class="minecraft-version" v-if="minecraftVersion">
+          <img src="@/assets/images/Grass_Block_JE2.webp" fill="#fff" />Minecraft
+          {{ minecraftVersion }}
+        </div>
+        <div class="mod-loader-version" v-if="modLoaderType && modLoaderVersion">
+          <img src="@/assets/images/fabric.webp" fill="#fff" v-if="modLoaderType === 'Fabric'" />
+          <img src="@/assets/images/quilt.svg" fill="#fff" v-if="modLoaderType === 'Quilt'" />
+          <img
+            src="@/assets/images/neoforged.png"
+            fill="#fff"
+            v-if="modLoaderType === 'Neoforge'" />
+          <img
+            src="@/assets/images/Anvil_JE3_BE3.webp"
+            fill="#fff"
+            v-if="modLoaderType === 'Forge'" />
+          {{ modLoaderType }} {{ modLoaderVersion }}
+        </div>
       </div>
-      <div class="mod-loader-version" v-if="modLoaderType && modLoaderVersion">
-        <img src="@/assets/images/fabric.webp" fill="#fff" v-if="modLoaderType === 'Fabric'" />
-        <img src="@/assets/images/quilt.svg" fill="#fff" v-if="modLoaderType === 'Quilt'" />
-        <img src="@/assets/images/neoforged.png" fill="#fff" v-if="modLoaderType === 'Neoforge'" />
-        <img
-          src="@/assets/images/Anvil_JE3_BE3.webp"
-          fill="#fff"
-          v-if="modLoaderType === 'Forge'" />
-        {{ modLoaderType }} {{ modLoaderVersion }}
-      </div>
+      <i class="button scroll" @click="$emit('showLogs')"></i>
     </div>
     <div class="line-b">
       <div class="instance-name">
@@ -40,11 +46,20 @@
         <button
           class="game-button"
           :class="`${gameButtonType}-game-button`"
-          @click="$emit('game-button-click')">
+          @click="$emit('game-button-click')"
+          v-if="!buttonLoading">
           <i
             :class="props.gameButtonType"
             style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i
           >{{ gameButtonText }}
+        </button>
+        <button
+          class="game-button loading"
+          :class="`${gameButtonType}-game-button`"
+          v-if="buttonLoading">
+          <div class="a"></div>
+          <div class="b"></div>
+          <div class="c"></div>
         </button>
       </div>
     </div>
@@ -52,10 +67,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import $ from "jquery";
 import gsap from "gsap";
+import { listen } from "@tauri-apps/api/event";
 
 const i18n = useI18n();
 
@@ -65,7 +81,8 @@ const props = defineProps<{
   modLoaderType: "Fabric" | "Forge" | "Quilt" | "Neoforge" | undefined;
   instanceName: String;
   installed: Boolean;
-  gameButtonType: "installing" | "launching" | "install" | "launch" | "error";
+  gameButtonType: "install" | "launch" | "error";
+  buttonLoading: boolean;
   errorType?: "install" | "launch";
 }>();
 
@@ -82,24 +99,8 @@ let computedInstanceName = computed(() => {
 let banner = "";
 let gameButtonText = computed(() => {
   switch (props.gameButtonType) {
-    case "installing":
-      return "...";
-    case "error":
-      switch (props.errorType) {
-        case undefined || null:
-          return "";
-        case "install":
-          return "安装失败";
-        case "launch":
-          return "启动失败";
-        default:
-          return "";
-      }
-    // return "失败";
     case "install":
       return i18n.t("game.install");
-    case "launching":
-      return "...";
     case "launch":
       return i18n.t("game.launch");
     default:
@@ -129,22 +130,20 @@ function star() {
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  // background-image: url("@/assets/images/banners/default.webp");
-  background-image: url("https://zh.minecraft.wiki/images/Java_Launcher_legacy_background.png?beffd&format=original");
+  background-image: url("@/assets/images/Java_Launcher_legacy_background.webp");
   background-position: center;
   background-repeat: none;
   background-size: cover;
   filter: brightness(0.94);
   justify-content: space-between;
-  border: none;
+  outline: var(--card-border);
   position: relative;
   overflow: hidden;
-
-  // border: 4px solid rgba(255, 255, 255, 0.174);
 }
 
 .minecraft-version,
-.mod-loader-version {
+.mod-loader-version,
+.launch-progress {
   width: fit-content;
   height: 32px;
   display: flex;
@@ -180,6 +179,7 @@ function star() {
 .line-a {
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 .line-b {
@@ -187,7 +187,7 @@ function star() {
   justify-content: space-between;
 }
 
-.line-b .button {
+.button {
   font-style: normal;
   font-family: "fa-pro";
   font-weight: 400;
@@ -231,6 +231,11 @@ i.button:active {
   transform: scale(0.9);
 }
 
+div.controll-btns {
+  display: flex;
+  align-items: center;
+}
+
 button.game-button {
   border: none;
   width: 120px;
@@ -244,7 +249,6 @@ button.game-button {
   transition: all 100ms ease;
   display: inline-block;
   overflow: hidden;
-  // background-image: linear-gradient(248deg, #18b14e, #4fc82f); light mod
   background-image: linear-gradient(248deg, #189e47, #41a126);
   transition: all 0.1s ease;
 
@@ -265,19 +269,24 @@ button.error-game-button {
   background-image: linear-gradient(248deg, #d11919, #d62f2f);
 }
 
-// button.launch-game-button {
-//   // background-image: ;
-// }
-
-// button.launching-game-button {
-//   // background-image: ;
-// }
-
 button.install-game-button {
   background-image: linear-gradient(248deg, #235dce, #399bed);
 }
 
-// button.installing-game-button {
-//   // background-image: ;
-// }
+button.loading {
+  pointer-events: none;
+
+  > div {
+    width: 5px;
+    height: 5px;
+    background: #fff;
+    opacity: 0.5;
+    display: inline-block;
+    margin: 0 1px;
+    margin-bottom: 2px;
+  }
+
+  .a {
+  }
+}
 </style>

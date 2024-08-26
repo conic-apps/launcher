@@ -5,6 +5,12 @@ export type Config = {
     language: string;
     update_channel: "Weekly" | "Snapshot" | "Release";
     auto_update: boolean;
+    accounts: Array<{
+        profile_name: string;
+        uuid: string;
+        account_type: "Microsoft" | "Offline";
+        avatar: string;
+    }>;
     appearance: {
         theme: string;
     };
@@ -57,6 +63,7 @@ export const useConfigStore = defineStore("global_config", {
             language: "en",
             update_channel: "Release",
             auto_update: false,
+            accounts: [],
             appearance: {
                 theme: "Dark",
             },
