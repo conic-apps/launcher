@@ -16,9 +16,13 @@
           :instance-name="currentInstance.config.name"
           :installed="true"
           :game-button-type="gameButtonType"
+          :button-loading="buttonLoading"
+          @showLogs="logViewerOpen = true"
           @game-button-click="
             () => {
               if (gameButtonType === 'launch') {
+                buttonLoading = true;
+                logViewerOpen = true;
                 invoke('launch', {
                   instanceName: currentInstance.config.name,
                 });
@@ -46,7 +50,7 @@
             </button>
           </div>
         </div>
-        <account-manager></account-manager>
+        <accounts></accounts>
         <div class="group-name">
           <div
             style="
@@ -70,26 +74,12 @@
           @close="show.instanceManager = false"
           :instances="instances"
           @update="update"></instance-manager>
-        <div class="group-name">
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              height: 100%;
-            ">
-            <p style="margin-left: 4px">{{ $t("game.friends") }}</p>
-            <button class="group-button" style="margin-right: 6px">
-              <i class="chevron-right" style="font-size: 12px"></i>
-            </button>
-          </div>
-          <list-item
-            style="border-radius: 10px"
-            title="Broken Deer"
-            description="愚蠢"
-            logo="https://launcher.btlcraft.top/assets/brokendeer.webp"></list-item>
-        </div>
       </div>
+      <LogViewer
+        :instance-name="currentInstance.config.name"
+        :visible="logViewerOpen"
+        @close="logViewerOpen = false">
+      </LogViewer>
     </div>
   </keep-alive>
 </template>
@@ -98,15 +88,18 @@
 import InstanceInfo from "@/components/InstanceInfo.vue";
 import AssetsManager from "@/components/AssetsManager.vue";
 import InstallProgress from "./dialogs/InstallProgress.vue";
-import AccountManager from "@/components/AccountManager.vue";
+import Accounts from "@/components/Accounts.vue";
 import Instances from "@/components/Instances.vue";
 import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
-import { reactive, ref, type Ref } from "vue";
+import LogViewer from "./dialogs/LogViewer.vue";
+import { ref, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import ListItem from "@/components/ListItem.vue";
 
-let installing = ref(false);
+const installing = ref(false);
+
+const buttonLoading = ref(false);
+const logViewerOpen = ref(false);
 
 interface Instance {
   config: {
@@ -135,8 +128,7 @@ let show = ref({
   instanceManager: false,
 });
 let instances: Ref<Instance[]> = ref([]);
-let gameButtonType: Ref<"installing" | "launching" | "install" | "launch" | "error"> =
-  ref("install");
+let gameButtonType: Ref<"install" | "launch" | "error"> = ref("install");
 let errorType: Ref<"launch" | "install" | undefined> = ref();
 
 function update() {
@@ -185,7 +177,7 @@ function setCurrentInstance(instance: Instance) {
   });
 }
 
-listen("install_success", (event) => {
+listen("install_success", () => {
   gameButtonType.value = "launch";
   setTimeout(() => {
     installing.value = false;
@@ -193,9 +185,11 @@ listen("install_success", (event) => {
   update();
 });
 
-// tauri.invoke("scan_instances_folder").then((res: any) => {
-//   instances.value = res
-// })
+listen("launch_success", () => {
+  setTimeout(() => {
+    buttonLoading.value = false;
+  }, 10000);
+});
 </script>
 
 <style lang="less" scoped>

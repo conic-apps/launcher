@@ -37,6 +37,20 @@ const contentStyle = `width: ${props.width}px; height: ${props.height}px;`;
   height: 100%;
   background: #00000042;
   border-radius: 16px;
+
+  .content {
+    padding: 16px;
+    background: var(--dialog-background);
+    border: var(--dialog-border);
+    box-shadow: 0 0 50px 0px #00000071;
+    width: fit-content;
+    height: fit-content;
+    border-radius: var(--dialog-border-radius);
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    overflow-x: visible;
+    overflow-y: overlay;
+  }
 }
 
 .dialog-enter-from,
@@ -77,19 +91,5 @@ const contentStyle = `width: ${props.width}px; height: ${props.height}px;`;
 .dialog-leave-from {
   transform: scale(1);
   opacity: 1;
-}
-
-.content {
-  padding: 16px;
-  background: var(--dialog-background);
-  border: 1px solid #ffffff0f;
-  box-shadow: 0 0 50px 0px #00000071;
-  width: fit-content;
-  height: fit-content;
-  border-radius: var(--dialog-border-radius);
-  max-width: calc(100vw - 20px);
-  max-height: calc(100vh - 20px);
-  overflow-x: visible;
-  overflow-y: overlay;
 }
 </style>

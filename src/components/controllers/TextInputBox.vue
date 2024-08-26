@@ -37,16 +37,13 @@ let oldValue: number;
 function updateOld(event: any) {
   if (props.numberOnly) {
     oldValue = model.value as number;
-    console.log(oldValue);
   }
 }
 function checkValue(event: any) {
-  console.log(event.target.value.trim());
   if (!props.numberOnly) {
     return;
   }
   let value = event.target.value.trim();
-  console.log(oldValue);
   if (!/^[1-9]\d*$|^$/.test(value) || value.length == 0) {
     model.value = oldValue;
     event.target.value = oldValue;

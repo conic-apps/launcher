@@ -1,20 +1,22 @@
 body {
-    --window-background: #1d1d1d;
-    --main-background: #ffffff0f;
+    --window-background: rgba(15, 1, 1);
+    --main-background: rgba(44, 48, 57, 0.6);
+    --main-border: 1px solid rgba(56, 59, 65, 1);
     --min-btn-background: #ffffff40;
     --max-btn-background: #ffffff40;
     --close-btn-background: #ffffff40;
     --window-btn-icon-color: #ffffffb7;
     --default-text-color: 255, 255, 255;
-    --card-background: rgba(255, 255, 255, 0.04);
+    --card-background: rgba(255, 255, 255, 0.03);
     --card-border-radius: 8px;
-    --card-border: 1px solid #ffffff08;
+    --card-border: 1px solid rgba(255, 255, 255, 0.1);
     --card-icon-background: rgba(255, 255, 255, 0.1);
     --card-icon-border-radius: 6px;
     --sidebar-item-background: rgba(255, 255, 255, 0);
     --sidebar-item-background-hover: rgba(255, 255, 255, 0.08);
+    --dialog-border: 1px solid rgb(56, 59, 65);
     --dialog-border-radius: 10px;
-    --dialog-background: #2c2c2c;
+    --dialog-background: rgb(27, 28, 31);
     --tag-border-radius: 4px;
     --list-item-background: rgba(255, 255, 255, 0.08);
     --setting-item-background: rgba(255, 255, 255, 0.08);
