@@ -1,4 +1,4 @@
-import { createApp, watch } from "vue"
+import { createApp } from "vue"
 import { createPinia } from "pinia"
 import App from "./Main.vue"
 import { event } from "@tauri-apps/api"
@@ -26,22 +26,22 @@ app.use(i18n)
 app.mount("#window")
 import $ from "jquery"
 
-// // window.getCurrent().setAlwaysOnTop(true)
-// // window.getCurrent().setResizable(false)
-// const webview = new window.WebviewWindow('theUniqueLabel', {
-//   url: 'https://',
-//   resizable: false,
-//   focus: true,
-//   alwaysOnTop: true,
-//   skipTaskbar: true,
-//   decorations: false,
-//   width: 400,
-//   height: 300,
-//   x: (await window.getCurrent().innerPosition()).x,
-//   y: (await window.getCurrent().innerPosition()).y
-// },);
+// window.getCurrent().setAlwaysOnTop(true)
+// window.getCurrent().setResizable(false)
+// const webview = new WebviewWindow("theUniqueLabel", {
+//     url: "https://",
+//     resizable: false,
+//     focus: true,
+//     alwaysOnTop: true,
+//     skipTaskbar: true,
+//     decorations: false,
+//     width: 400,
+//     height: 300,
+//     x: (await window.getCurrent().innerPosition()).x,
+//     y: (await window.getCurrent().innerPosition()).y,
+// })
 
-globalThis.onload = () => {
+window.onload = () => {
     console.log(`
  █████╗ ███╗   ███╗███████╗████████╗██╗  ██╗██╗   ██╗███████╗████████╗    
 ██╔══██╗████╗ ████║██╔════╝╚══██╔══╝██║  ██║╚██╗ ██╔╝██╔════╝╚══██╔══╝    

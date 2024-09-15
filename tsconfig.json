@@ -12,6 +12,12 @@
         }
     ],
     "compilerOptions": {
-        "types": ["jquery"]
+        "lib": [
+            "esnext",
+            "dom"
+        ],
+        "types": [
+            "jquery"
+        ]
     }
 }
