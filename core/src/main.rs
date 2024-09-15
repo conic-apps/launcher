@@ -5,17 +5,17 @@
 // Prevents additional console window on Windows in release.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-pub mod account;
-pub mod config;
-pub mod download;
-pub mod folder;
-pub mod game_data;
-pub mod install;
-pub mod instance;
-pub mod launch;
-pub mod platform;
-pub mod utils;
-pub mod version;
+mod account;
+mod config;
+mod download;
+mod folder;
+mod game_data;
+mod install;
+mod instance;
+mod launch;
+mod platform;
+mod utils;
+mod version;
 
 use std::fs::File;
 use std::io::Write;
@@ -207,9 +207,11 @@ async fn initialize_application() {
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     PLATFORM_INFO.set(PlatformInfo::new().await).unwrap();
     initialize_application_data().await;
-    DATA_LOCATION
-        .set(DataLocation::new(APPLICATION_DATA.get().unwrap()))
-        .unwrap();
+    let data_location = DataLocation::new(APPLICATION_DATA.get().unwrap());
+    tokio::fs::create_dir_all(&data_location.root)
+        .await
+        .expect("Could not create appliaction data folder");
+    DATA_LOCATION.set(data_location).unwrap();
     HTTP_CLIENT
         .set(
             reqwest::ClientBuilder::new()
@@ -219,15 +221,15 @@ async fn initialize_application() {
                 .unwrap(),
         )
         .unwrap();
-    let launch_profiles_path = DATA_LOCATION
+    let launcher_profiles_path = DATA_LOCATION
         .get()
         .unwrap()
         .root
         .join("launcher_profiles.json");
-    let _ = tokio::fs::remove_file(&launch_profiles_path).await;
-    tokio::fs::write(&launch_profiles_path, DEFAULT_LAUNCHER_PROFILE)
+    let _ = tokio::fs::remove_file(&launcher_profiles_path).await;
+    tokio::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE)
         .await
-        .expect("C");
+        .expect("Could not create launcher profile");
     tokio::spawn(instance::update_latest_instance());
 }
 
