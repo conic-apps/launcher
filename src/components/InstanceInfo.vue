@@ -1,6 +1,7 @@
 <template>
   <div class="instance-info card" :style="banner">
-    <div style="
+    <div
+      style="
         position: absolute;
         width: 100%;
         height: 100%;
@@ -21,12 +22,17 @@
         <div class="mod-loader-version" v-if="modLoaderType && modLoaderVersion">
           <img src="@/assets/images/fabric.webp" fill="#fff" v-if="modLoaderType === 'Fabric'" />
           <img src="@/assets/images/quilt.svg" fill="#fff" v-if="modLoaderType === 'Quilt'" />
-          <img src="@/assets/images/neoforged.png" fill="#fff" v-if="modLoaderType === 'Neoforge'" />
-          <img src="@/assets/images/Anvil_JE3_BE3.webp" fill="#fff" v-if="modLoaderType === 'Forge'" />
+          <img
+            src="@/assets/images/neoforged.png"
+            fill="#fff"
+            v-if="modLoaderType === 'Neoforge'" />
+          <img
+            src="@/assets/images/Anvil_JE3_BE3.webp"
+            fill="#fff"
+            v-if="modLoaderType === 'Forge'" />
           {{ modLoaderType }} {{ modLoaderVersion }}
         </div>
       </div>
-      <i class="button scroll" @click="$emit('showLogs')"></i>
     </div>
     <div class="line-b">
       <div class="instance-name">
@@ -36,13 +42,20 @@
         <i class="button gear"></i>
         <i class="button circle-info"></i>
         <i class="button star" id="star" @click="star"></i>
-        <button class="game-button" :class="`${gameButtonType}-game-button`" @click="$emit('game-button-click')"
+        <button
+          class="game-button"
+          :class="`${gameButtonType}-game-button`"
+          @click="$emit('game-button-click')"
           v-if="!buttonLoading">
-          <i :class="props.gameButtonType"
-            style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i>{{ gameButtonText
-          }}
+          <i
+            :class="props.gameButtonType"
+            style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i
+          >{{ gameButtonText }}
         </button>
-        <button class="game-button loading" :class="`${gameButtonType}-game-button`" v-if="buttonLoading">
+        <button
+          class="game-button loading"
+          :class="`${gameButtonType}-game-button`"
+          v-if="buttonLoading">
           <div class="a"></div>
           <div class="b"></div>
           <div class="c"></div>
@@ -53,11 +66,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import $ from "jquery";
-import gsap from "gsap";
-import { listen } from "@tauri-apps/api/event";
 
 const i18n = useI18n();
 
@@ -262,7 +273,7 @@ button.install-game-button {
 button.loading {
   pointer-events: none;
 
-  >div {
+  > div {
     width: 5px;
     height: 5px;
     background: #fff;

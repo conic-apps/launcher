@@ -17,23 +17,26 @@
         <setting-item
           :title="$t('settings.accessibility.hideLatestRelease')"
           :description="$t('settings.accessibility.hideLatestReleaseDesc')"
-          icon="eye-slash"
-          :last="true">
+          icon="eye-slash">
           <toggle-switch v-model="config.accessibility.hide_latest_release"></toggle-switch>
         </setting-item>
         <setting-item
           :title="$t('settings.accessibility.hideLatestSnapshot')"
           :description="$t('settings.accessibility.hideLatestSnapshotDesc')"
-          icon="eye-slash"
-          :last="true">
+          icon="eye-slash">
           <toggle-switch v-model="config.accessibility.hide_latest_snapshot"></toggle-switch>
         </setting-item>
         <setting-item
           :title="$t('settings.accessibility.changeGameLanguage')"
           :description="$t('settings.accessibility.changeGameLanguageDesc')"
-          icon="language"
-          :last="true">
-          <toggle-switch v-mode="config.accessibility.change_game_language"></toggle-switch>
+          icon="language">
+          <toggle-switch v-model="config.accessibility.change_game_language"></toggle-switch>
+        </setting-item>
+        <setting-item
+          :title="$t('settings.accessibility.autoOpenLogViewer')"
+          :description="$t('settings.accessibility.autoOpenLogViewerDesc')"
+          icon="scroll">
+          <toggle-switch v-model="config.accessibility.open_log_viewer"></toggle-switch>
         </setting-item>
       </setting-group>
       <setting-group :title="$t('settings.accessibility.accessibility')">
@@ -46,8 +49,7 @@
         <setting-item
           :title="$t('settings.accessibility.highContrastMode')"
           :description="$t('settings.accessibility.highContrastModeDesc')"
-          icon="laptop"
-          :last="true">
+          icon="laptop">
           <toggle-switch
             @click="reloadTheme(config)"
             v-model="config.accessibility.high_contrast_mode"></toggle-switch>

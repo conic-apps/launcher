@@ -17,21 +17,7 @@
           :installed="true"
           :game-button-type="gameButtonType"
           :button-loading="buttonLoading"
-          @showLogs="logViewerOpen = true"
-          @game-button-click="
-            () => {
-              if (gameButtonType === 'launch') {
-                buttonLoading = true;
-                logViewerOpen = true;
-                invoke('launch', {
-                  instanceName: currentInstance.config.name,
-                });
-              } else if (gameButtonType === 'install') {
-                installing = true;
-                invoke('install');
-              }
-            }
-          "
+          @game-button-click="gameButtonClick"
           :error-type="errorType"></instance-info>
         <assets-manager :instance="currentInstance" style="margin-top: 20px"></assets-manager>
       </div>
@@ -95,6 +81,9 @@ import LogViewer from "./dialogs/LogViewer.vue";
 import { ref, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { useConfigStore } from "@/config";
+
+const config = useConfigStore();
 
 const installing = ref(false);
 
@@ -132,8 +121,8 @@ let gameButtonType: Ref<"install" | "launch" | "error"> = ref("install");
 let errorType: Ref<"launch" | "install" | undefined> = ref();
 
 function update() {
-  invoke("scan_instances_folder").then((res: any) => {
-    instances.value = res;
+  invoke("scan_instances_folder").then((res) => {
+    instances.value = res as Instance[];
   });
 }
 invoke("scan_instances_folder").then((res) => {
@@ -175,6 +164,21 @@ function setCurrentInstance(instance: Instance) {
   invoke("set_current_instance", {
     instanceName: instance.config.name,
   });
+}
+
+function gameButtonClick() {
+  if (gameButtonType.value === "launch") {
+    buttonLoading.value = true;
+    if (config.accessibility.open_log_viewer) {
+      logViewerOpen.value = true;
+    }
+    invoke("launch", {
+      instanceName: currentInstance.value.config.name,
+    });
+  } else if (gameButtonType.value === "install") {
+    installing.value = true;
+    invoke("install");
+  }
 }
 
 listen("install_success", () => {
@@ -242,11 +246,6 @@ listen("launch_success", () => {
 .group-button:active {
   background: rgba(255, 255, 255, 0.08);
 }
-
-// .group-button,
-// .group-button * {
-//   cursor: pointer;
-// }
 
 .group-button i::before {
   transform: scale(0.7);

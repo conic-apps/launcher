@@ -21,6 +21,7 @@ pub struct AccessibilityConfig {
     pub hide_latest_release: bool,
     pub hide_latest_snapshot: bool,
     pub change_game_language: bool,
+    pub open_log_viewer: bool,
     pub disable_animations: bool,
     pub high_contrast_mode: bool,
 }
@@ -33,6 +34,7 @@ impl Default for AccessibilityConfig {
             hide_latest_release: false,
             hide_latest_snapshot: false,
             change_game_language: true,
+            open_log_viewer: false,
             disable_animations: false,
             high_contrast_mode: false,
         }
