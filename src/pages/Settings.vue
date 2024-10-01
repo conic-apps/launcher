@@ -2,12 +2,9 @@
   <div class="settings">
     <div class="rol-1">
       <ul class="settings-menu">
-        <li
-          @click="switchComponent(item, index)"
-          :class="[activeComponentIndex == index ? 'active' : '']"
-          v-for="(item, index) in components"
-          :key="index">
-          <i :class="`${item.icon} fa-pro`"></i>{{ item.name }}
+        <li @click="switchComponent(item, index)" :class="[activeComponentIndex == index ? 'active' : '']"
+          v-for="(item, index) in components" :key="index">
+          <i :class="`${item.icon} fa-pro`"></i>{{ $t(item.name) }}
         </li>
       </ul>
     </div>
@@ -22,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { markRaw, ref, shallowRef } from "vue";
+import { markRaw, ref, shallowRef, watch } from "vue";
 import General from "./settings/General.vue";
 import Game from "./settings/Game.vue";
 import Advance from "./settings/Advance.vue";
@@ -33,47 +30,55 @@ import Extend from "./settings/Extend.vue";
 import About from "./settings/About.vue";
 import { useConfigStore } from "@/config";
 import { useI18n } from "vue-i18n";
+import { invoke } from "@tauri-apps/api/core";
 const i18n = useI18n();
 const config = useConfigStore();
 
+let language = config.language;
+watch(config, () => {
+  invoke("update_config", { config: config }).then(() => {
+    invoke("save_config");
+  });
+});
+
 const components = ref([
   {
-    name: i18n.t("settings.general.sidebar"),
+    name: "settings.general.sidebar",
     icon: "house",
     component: markRaw(General),
   },
   {
-    name: i18n.t("settings.game.sidebar"),
+    name: "settings.game.sidebar",
     icon: "gamepad",
     component: markRaw(Game),
   },
   {
-    name: i18n.t("settings.advance.sidebar"),
+    name: "settings.advance.sidebar",
     icon: "pro-settings",
     component: markRaw(Advance),
   },
   {
-    name: i18n.t("settings.appearance.sidebar"),
+    name: "settings.appearance.sidebar",
     icon: "palette",
     component: markRaw(Appearance),
   },
   {
-    name: i18n.t("settings.download.sidebar"),
+    name: "settings.download.sidebar",
     icon: "download",
     component: markRaw(Download),
   },
   {
-    name: i18n.t("settings.accessibility.sidebar"),
+    name: "settings.accessibility.sidebar",
     icon: "arrows-spin",
     component: markRaw(Accessibility),
   },
   {
-    name: i18n.t("settings.extend.sidebar"),
+    name: "settings.extend.sidebar",
     icon: "cubes",
     component: markRaw(Extend),
   },
   {
-    name: i18n.t("settings.about.sidebar"),
+    name: "settings.about.sidebar",
     icon: "circle-exclamation",
     component: markRaw(About),
   },
@@ -81,7 +86,6 @@ const components = ref([
 const currentComponent = shallowRef(components.value[0].component);
 let activeComponentIndex = ref(0);
 let transitionName = ref("slide-up");
-const content = ref<any>(null);
 function switchComponent(item: any, index: number) {
   if (activeComponentIndex.value < index) {
     transitionName.value = "slide-up";

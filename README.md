@@ -9,7 +9,7 @@
 
 [简体中文](./README.zh.md)
 
-Please go to the [official website](https://launcher.btlcraft.top) to download the launcher!
+Please go to the [official website](https://amethyst.btlcraft.top) to download the launcher!
 
 ## Features
 
@@ -43,12 +43,12 @@ You need to find all the words related to the name of this program in the source
 
 ## Manual build
 
-Make sure you have completed [prep](https://tauri.app/zh-cn/v1/guides/getting-started/prerequisites) first.
+Make sure you have completed [prep](https://v2.tauri.app/start/prerequisites) first.
 
 Execute the following command to pull the code:
 
 ```bash
-git clone https://github.com/Broken-Deer/amethyst-launcher.git
+git clone https://github.com/Conic-Sections/amethyst-launcher.git
 cd amethyst-launcher
 ```
 

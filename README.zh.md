@@ -9,7 +9,7 @@
 
 [English README](./README.md)
 
-请到 [官网](https://launcher.btlcraft.top) 下载启动器！
+请到 [官网](https://amethyst.btlcraft.top) 下载启动器！
 
 ## 特性
 
@@ -45,12 +45,12 @@
 
 ## 手动构建
 
-请先确保已完成[预先准备](https://tauri.app/zh-cn/v1/guides/getting-started/prerequisites)。
+请先确保已完成[预先准备](https://v2.tauri.app/start/prerequisites)。
 
 执行以下命令来拉取代码：
 
 ```bash
-git clone https://github.com/Broken-Deer/amethyst-launcher.git
+git clone https://github.com/Conic-Sections/amethyst-launcher.git
 cd amethyst-launcher
 ```
 
