@@ -2,8 +2,11 @@
   <div class="settings">
     <div class="rol-1">
       <ul class="settings-menu">
-        <li @click="switchComponent(item, index)" :class="[activeComponentIndex == index ? 'active' : '']"
-          v-for="(item, index) in components" :key="index">
+        <li
+          @click="switchComponent(item, index)"
+          :class="[activeComponentIndex == index ? 'active' : '']"
+          v-for="(item, index) in components"
+          :key="index">
           <i :class="`${item.icon} fa-pro`"></i>{{ $t(item.name) }}
         </li>
       </ul>
@@ -34,7 +37,6 @@ import { invoke } from "@tauri-apps/api/core";
 const i18n = useI18n();
 const config = useConfigStore();
 
-let language = config.language;
 watch(config, () => {
   invoke("update_config", { config: config }).then(() => {
     invoke("save_config");

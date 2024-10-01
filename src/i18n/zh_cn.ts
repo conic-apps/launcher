@@ -151,6 +151,8 @@ export default {
             hideLatestSnapshotDesc: '不在游戏列表中显示"最新快照"',
             changeGameLanguage: "自动更改游戏语言",
             changeGameLanguageDesc: "在首次启动游戏时将游戏语言设置为你的启动器语言",
+            autoOpenLogViewer: "自动打开日志查看器",
+            autoOpenLogViewerDesc: "在启动游戏后打开日志查看器",
             accessibility: "无障碍",
             disableAllAnimations: "禁用所有动画",
 

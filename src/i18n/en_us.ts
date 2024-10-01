@@ -154,6 +154,8 @@ export default {
             changeGameLanguage: "Auto Change Game Language",
             changeGameLanguageDesc:
                 "Change the game language to the same as the launcher's language when launching the game at first time.",
+            autoOpenLogViewer: "Automatically open log viewer",
+            autoOpenLogViewerDesc: "Open the log viewer after launching the game.",
             accessibility: "Accessibility",
             disableAllAnimations: "Disable All Animations",
 
