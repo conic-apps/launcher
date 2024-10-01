@@ -20,6 +20,7 @@ export type Config = {
         hide_latest_release: boolean
         hide_latest_snapshot: boolean
         change_game_language: boolean
+        open_log_viewer: boolean
         disable_animations: boolean
         high_contrast_mode: boolean
     }
@@ -68,6 +69,7 @@ export const useConfigStore = defineStore("global_config", {
                 hide_latest_release: true,
                 hide_latest_snapshot: true,
                 change_game_language: true,
+                open_log_viewer: false,
                 disable_animations: true,
                 high_contrast_mode: true,
             },
