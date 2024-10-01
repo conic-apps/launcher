@@ -12,6 +12,7 @@ export default {
         install: "安装",
         launch: "开始游戏",
         instances: "游戏",
+        playtime: "游戏时长",
         accounts: "帐户",
         friends: "好友",
         instanceManager: {

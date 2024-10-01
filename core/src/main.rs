@@ -40,8 +40,9 @@ use folder::DataLocation;
 use log::{debug, error, info, Level, LevelFilter};
 use once_cell::sync::OnceCell;
 use platform::{OsType, PlatformInfo};
-use tauri::{Listener, Manager, Window};
+use tauri::{Emitter, Manager, Window};
 use tauri_plugin_http::reqwest;
+use version::VersionManifest;
 
 /// use MAIN_WINDOW.emit() to send message to main window
 static MAIN_WINDOW: OnceCell<Window> = OnceCell::new();
@@ -87,6 +88,7 @@ async fn main() {
             read_config_file,
             update_config,
             save_config,
+            on_frontend_loaded
         ])
         .manage(Storage {
             current_instance: Arc::new(Mutex::new("".to_string())),
@@ -98,10 +100,10 @@ async fn main() {
                 .set(app.package_info().version.to_string())
                 .unwrap();
             info!("Main window loaded");
-            app.listen_any("fontend-loaded", |_| info!("Frontend loaded"));
             Ok(())
         })
         .on_window_event(|window, event| {
+            // Do something after app closed
             if window.label() != "main" {
                 return;
             };
@@ -183,24 +185,6 @@ fn initialize_logger() {
         builder.target(env_logger::Target::Stdout);
     }
     builder.init();
-    // let env = env_logger::Env::default()
-    //     .filter("MY_LOG_LEVEL")
-    //     .write_style("MY_LOG_STYLE");
-
-    // env_logger::Builder::from_env(env)
-    //     .format(|buf, record| {
-    //         // We are reusing `anstyle` but there are `anstyle-*` crates to adapt it to your
-    //         // preferred styling crate.
-    //         let warn_style = buf.default_level_style(log::Level::Warn);
-    //         let timestamp = buf.timestamp();
-
-    //         writeln!(
-    //             buf,
-    //             "My formatted log ({timestamp}): {warn_style}{}{warn_style:#}",
-    //             record.args()
-    //         )
-    //     })
-    //     .init();
 }
 
 async fn initialize_application() {
@@ -272,6 +256,35 @@ async fn initialize_application_data() {
         "Application data path: {}",
         APPLICATION_DATA.get().unwrap().to_string_lossy()
     );
+}
+
+#[tauri::command(async)]
+async fn on_frontend_loaded(storage: tauri::State<'_, Storage>) -> std::result::Result<(), ()> {
+    info!("Frontend loaded");
+    let config = &storage.config.lock().unwrap().clone();
+    let _ = remind_minecraft_latest(config).await;
+    Ok(())
+}
+
+async fn remind_minecraft_latest(config: &Config) -> anyhow::Result<()> {
+    let data_location = DATA_LOCATION.get().unwrap();
+    let (latest, cache_file) = if config.accessibility.snapshot_reminder {
+        let latest = VersionManifest::new().await?.latest.snapshot;
+        let cache_file = data_location.cache.join("latest_release");
+        (latest, cache_file)
+    } else if config.accessibility.release_reminder {
+        let latest = VersionManifest::new().await?.latest.release;
+        let cache_file = data_location.cache.join("latest_snapshot");
+        (latest, cache_file)
+    } else {
+        return Ok(());
+    };
+    let cache = tokio::fs::read_to_string(&cache_file).await?;
+    tokio::fs::write(&cache_file, &latest).await?;
+    if latest != cache {
+        let _ = MAIN_WINDOW.get().unwrap().emit("remind_update", latest);
+    }
+    Ok(())
 }
 
 fn print_title() {

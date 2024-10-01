@@ -39,6 +39,7 @@
         </KeepAlive>
       </Transition>
     </main>
+    <update-reminder></update-reminder>
   </div>
 </template>
 
@@ -50,6 +51,7 @@ import { window } from "@tauri-apps/api";
 import $ from "jquery";
 import Settings from "./pages/Settings.vue";
 import Game from "./pages/Game.vue";
+import UpdateReminder from "./pages/dialogs/UpdateReminder.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useConfigStore } from "./config";
 import { watch } from "vue";
