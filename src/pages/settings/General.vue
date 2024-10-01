@@ -7,8 +7,8 @@
           :description="$t('settings.general.languageDesc')"
           icon="language">
           <select-vue
-            :display-name="['English', '简体中文', 'Русский']"
-            :options="['en_us', 'zh_cn', 'ru_ru']"
+            :display-name="['English', '简体中文']"
+            :options="['en_us', 'zh_cn']"
             v-model="config.language"
             :default="1"></select-vue>
         </setting-item>

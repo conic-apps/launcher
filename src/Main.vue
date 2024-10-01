@@ -1,9 +1,7 @@
 <template>
   <div class="window" data-tauri-drag-region>
     <div class="title-bar" data-tauri-drag-region>
-      <search-bar
-        @click="openSearchPanel"
-        id="global-search"
+      <search-bar @click="openSearchPanel" id="global-search"
         :placeholder="$t('globalSearch.placeholder')"></search-bar>
       <div class="win-btn">
         <div class="min" @click="minimize"><i></i></div>
@@ -14,21 +12,14 @@
     <div class="sidebar" data-tauri-drag-region="">
       <div class="logo"><img src="@/assets/images/app-icon.png" alt="app-icon" /></div>
       <ul class="sidebar-btns" data-tauri-drag-region>
-        <sidebar-item
-          :title="$t('sidebar.game')"
-          icon="gamepad"
-          @click="changePage($event, 'game')"
+        <sidebar-item :title="$t('sidebar.game')" icon="gamepad" @click="changePage($event, 'game')"
           id="sidebar-game"></sidebar-item>
         <!-- <sidebar-item -->
         <!--   title="扩展" -->
         <!--   icon="puzzle-piece" -->
         <!--   @click="changePage($event, 'community')"></sidebar-item> -->
-        <sidebar-item
-          :title="$t('sidebar.settings')"
-          icon="nav-5"
-          @click="changePage($event, 'settings')"
-          id="sidebar-settings"
-          style="margin-top: auto"></sidebar-item>
+        <sidebar-item :title="$t('sidebar.settings')" icon="nav-5" @click="changePage($event, 'settings')"
+          id="sidebar-settings" style="margin-top: auto"></sidebar-item>
         <!-- <sidebar-item title="更多" icon="cube" @click="switchPage($event, '#more');"></sidebar-item> -->
       </ul>
     </div>
@@ -83,7 +74,7 @@ config.syncFromFile().then(() => {
 });
 const i18n = useI18n();
 i18n.locale.value = config.language;
-watch(config, (value) => {
+watch(config, () => {
   i18n.locale.value = config.language;
 });
 
@@ -91,53 +82,11 @@ function changePage(event: any, component: any) {
   if (component == "settings") {
     gsap.fromTo(event.currentTarget.querySelector("i"), { rotate: "0deg" }, { rotate: `120deg` });
   }
-  const config = useConfigStore();
-  // save config to file when leaving setting page
-  invoke("update_config", { config: config }).then(() => {
-    invoke("save_config").then(() => {
-      if (typeof component == "string") {
-        currentComponent.value = pages[component];
-      } else {
-        currentComponent.value = component;
-      }
-    });
-  });
-  // if (component === "settings") {
-  //   transitionName.value = "zoom-out";
-  //   hideSidebar();
-  // } else {
-  //   showSidebar();
-  //   let isSettingPage = JSON.stringify(currentComponent.value) == JSON.stringify(pages.settings);
-  //   if (isSettingPage) {
-  //     transitionName.value = "zoom-in";
-  //   } else {
-  //     transitionName.value = "entrance";
-  //   }
-  // }
-  // last = currentComponent.value;
-  // if (typeof component == "string") {
-  //   currentComponent.value = pages[component];
-  // } else {
-  //   currentComponent.value = component;
-  // }
-}
-
-function hideSidebar() {
-  $(".main").attr("style", "");
-  $(".sidebar").addClass("sidebar-hidden");
-  $(".main").addClass("main-large");
-  setTimeout(() => {
-    $(".main").attr("style", "transition: none");
-  }, 300);
-}
-
-function showSidebar() {
-  $(".main").attr("style", "");
-  $(".sidebar").removeClass("sidebar-hidden");
-  $(".main").removeClass("main-large");
-  setTimeout(() => {
-    $(".main").attr("style", "transition: none");
-  }, 300);
+  if (typeof component == "string") {
+    currentComponent.value = pages[component];
+  } else {
+    currentComponent.value = component;
+  }
 }
 
 function back() {
@@ -150,10 +99,6 @@ function back() {
 }
 function jumpTo(name: string) {
   changePage(null, name);
-}
-
-function moveLine(position: number[]) {
-  // todo
 }
 
 function openSearchPanel() {
@@ -206,7 +151,7 @@ function closeSearchPanel() {
   margin-right: 20px;
 }
 
-.win-btn > div {
+.win-btn>div {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -217,7 +162,7 @@ function closeSearchPanel() {
   transition: transform 100ms;
 }
 
-.win-btn > div > i {
+.win-btn>div>i {
   font-style: normal;
   font-family: "fa-pro";
   font-weight: 100;
@@ -226,62 +171,50 @@ function closeSearchPanel() {
   justify-content: center;
 }
 
-.win-btn > div > i::before {
+.win-btn>div>i::before {
   line-height: 1;
   color: var(--window-btn-icon-color);
   opacity: 0;
 }
 
-.win-btn > div:hover > i::before {
+.win-btn>div:hover>i::before {
   opacity: 1;
 }
 
-.win-btn > div:active {
+.win-btn>div:active {
   transform: scale(0.9);
 }
 
-.win-btn > div:active > i {
+.win-btn>div:active>i {
   opacity: 0.9;
 }
 
-.win-btn > div.min {
+.win-btn>div.min {
   background: var(--min-btn-background);
 }
 
-.win-btn > div.max {
+.win-btn>div.max {
   background: var(--max-btn-background);
 }
 
-.win-btn > div.close {
+.win-btn>div.close {
   background: var(--close-btn-background);
 }
 
-// .win-btn>div.min {
-//   background: rgb(117, 121, 0);
-// }
-
-// .win-btn>div.max {
-//   background: rgb(2, 136, 0);
-// }
-
-// .win-btn>div.close {
-//   background: rgba(158, 0, 0, 0.677);
-// }
-
-.win-btn > div.min > i::before {
+.win-btn>div.min>i::before {
   content: "\f068";
   font-size: 12px;
   margin-top: 1px;
 }
 
-.win-btn > div.max > i::before {
+.win-btn>div.max>i::before {
   content: "\f065";
   font-size: 12px;
   margin-top: 1.6px;
   margin-left: 0.8px;
 }
 
-.win-btn > div.close > i::before {
+.win-btn>div.close>i::before {
   content: "\f00d";
   font-size: 14px;
   margin-top: 1px;
@@ -316,20 +249,6 @@ function closeSearchPanel() {
   }
 }
 
-// .sidebar-hidden .avatar {
-//   opacity: 1;
-//   position: absolute;
-//   transform: scale(0.76);
-//   top: 0px;
-//   background: none;
-//   font-size: 28px;
-// }
-
-// .sidebar-hidden .avatar::before {
-//   font-family: fa-pro;
-//   content: "\f013";
-// }
-
 .sidebar .sidebar-btns {
   width: 100%;
   height: 100%;
@@ -340,11 +259,11 @@ function closeSearchPanel() {
   margin-bottom: 22px;
 }
 
-.sidebar > * {
+.sidebar>* {
   transition: opacity 0.3s ease;
 }
 
-.sidebar-hidden > * {
+.sidebar-hidden>* {
   opacity: 0;
 }
 

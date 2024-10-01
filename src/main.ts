@@ -5,7 +5,6 @@ import { event } from "@tauri-apps/api"
 import { createI18n } from "vue-i18n"
 import en_us from "./i18n/en_us"
 import zh_cn from "./i18n/zh_cn"
-import ru_ru from "./i18n/ru_ru"
 
 const pinia = createPinia()
 const i18n = createI18n({
@@ -15,7 +14,6 @@ const i18n = createI18n({
     messages: {
         en_us,
         zh_cn,
-        ru_ru,
     },
 })
 const app = createApp(App)
