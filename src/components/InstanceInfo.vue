@@ -33,6 +33,7 @@
           {{ modLoaderType }} {{ modLoaderVersion }}
         </div>
       </div>
+      <div class="playtime"><i class="clock"></i>{{ $t("game.playtime") }}: 110.5h</div>
     </div>
     <div class="line-b">
       <div class="instance-name">
@@ -140,7 +141,8 @@ function star() {
 
 .minecraft-version,
 .mod-loader-version,
-.launch-progress {
+.launch-progress,
+.playtime {
   width: fit-content;
   height: 32px;
   display: flex;
@@ -160,6 +162,12 @@ function star() {
 .mod-loader-version img {
   width: 22px;
   margin-right: 6px;
+}
+
+.playtime i {
+  font-family: "fa-pro";
+  font-style: normal;
+  margin-right: 4px;
 }
 
 .instance-name {

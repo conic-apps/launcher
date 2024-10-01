@@ -114,10 +114,9 @@ jobs:
         with:
           workspaces: "./core -> target"
           cache-on-failure: true
-      # TODO:
-      - name: install tree
-        if: matrix.platform == 'macos-latest'
-        run: brew install tree
+      # - name: install tree
+      #   if: matrix.platform == 'macos-latest'
+      #   run: brew install tree
 
       - name: install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
@@ -132,11 +131,11 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           yarn tauri build -- ${{ matrix.args }}
-      - name: show files
-        run: |
-          tree ${{ github.workspace }}/core/target
+      # - name: show files
+      #   run: |
+      #     tree ${{ github.workspace }}/core/target
 
-        # Upload the macos artifacts
+      # Upload the macos artifacts
       - name: Upload deb bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'

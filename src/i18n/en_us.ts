@@ -12,6 +12,7 @@ export default {
         install: "Install Game",
         launch: "Launch Game",
         instances: "Instances",
+        playtime: "Playtime",
         accounts: "Accounts",
         friends: "Friends",
         instanceManager: {

@@ -23,6 +23,7 @@ app.use(i18n)
 
 app.mount("#window")
 import $ from "jquery"
+import { invoke } from "@tauri-apps/api/core"
 
 // window.getCurrent().setAlwaysOnTop(true)
 // window.getCurrent().setResizable(false)
@@ -56,7 +57,7 @@ window.onload = () => {
 ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝       
                                                                           
 `)
-    event.emit("fontend-loaded")
+    invoke("on_frontend_loaded")
     $("body").attr(
         "style",
         "transform: scale(1); opacity: 1;transition: all 250ms cubic-bezier(0, 0.74, 0.65, 1); ",
