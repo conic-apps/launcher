@@ -29,6 +29,8 @@ use std::{
 
 use uuid::Uuid;
 
+use crate::{platform::OsType, PLATFORM_INFO};
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GameDataLocation {
     pub root: PathBuf,
@@ -147,6 +149,7 @@ impl MinecraftLocation {
 pub struct DataLocation {
     pub root: PathBuf,
     pub instances: PathBuf,
+    pub cache: PathBuf,
     pub default_jre: PathBuf,
     pub resources: PathBuf,
     pub temp: PathBuf,
@@ -154,14 +157,22 @@ pub struct DataLocation {
 
 impl DataLocation {
     pub fn new<S: AsRef<OsStr> + ?Sized>(data_folder: &S) -> Self {
-        let data_folder = Path::new(data_folder);
+        let data_folder_root = Path::new(data_folder).to_path_buf();
         Self {
-            root: data_folder.to_path_buf(),
-            instances: data_folder.join("instances"),
+            instances: data_folder_root.join("instances"),
+            cache: match PLATFORM_INFO.get().unwrap().os_type {
+                OsType::Linux => {
+                    PathBuf::from(std::env::var("HOME").expect("Could not found home"))
+                        .join(".cache/aml")
+                }
+                OsType::Osx => data_folder_root.join(".cache"),
+                OsType::Windows => data_folder_root.join(".cache"),
+            },
             // default_jre: data_folder.join("default_jre").join("bin").join("java"),
             default_jre: PathBuf::from_str("/bin/java").unwrap(),
-            resources: data_folder.join("resources"),
+            resources: data_folder_root.join("resources"),
             temp: std::env::temp_dir().join(format!("amethyst-launcher-{}", Uuid::new_v4())),
+            root: data_folder_root,
         }
     }
 
