@@ -1,5 +1,5 @@
 <template>
-  <div class="account-manager">
+  <div class="account-manager-component">
     <card
       v-for="account in config.accounts"
       class="overview"
@@ -10,6 +10,7 @@
       padding="10,12,10,12"
       margin="0,0,10,0"
       :key="account.uuid"></card>
+    <p v-if="config.accounts.length === 0">无游戏帐户，点击此处以添加帐户</p>
   </div>
 </template>
 
@@ -29,9 +30,17 @@ setTimeout(() => {
 </script>
 
 <style lang="less" scoped>
-div.account-manager .icon {
+div.account-manager-component .icon {
   background-position: center;
   background-size: contain;
   background-repeat: none;
+}
+
+div.account-manager-component > p {
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  font-style: italic;
+  opacity: 0.7;
 }
 </style>

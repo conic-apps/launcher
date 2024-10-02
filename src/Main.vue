@@ -1,10 +1,20 @@
 <template>
   <div class="window" data-tauri-drag-region>
     <div class="title-bar" data-tauri-drag-region>
-      <search-bar
-        @click="openSearchPanel"
-        id="global-search"
-        :placeholder="$t('globalSearch.placeholder')"></search-bar>
+      <div></div>
+      <div></div>
+      <div style="display: flex; width: fit-content; align-items: center">
+        <search-bar
+          @click="openSearchPanel"
+          id="global-search"
+          :placeholder="$t('globalSearch.placeholder')"></search-bar>
+      </div>
+      <div class="account" @click="showAccountManager = true">
+        <div class="avatar">
+          <img src="@/assets/images/steve_avatar.webp" alt="player avatar" />
+        </div>
+        <span>Broken_Deer</span>
+      </div>
       <div class="win-btn">
         <div class="min" @click="minimize"><i></i></div>
         <div class="max" @click="maximize"><i></i></div>
@@ -12,8 +22,12 @@
       </div>
     </div>
     <div class="sidebar" data-tauri-drag-region="">
-      <div class="logo"><img src="@/assets/images/app-icon.png" alt="app-icon" /></div>
       <ul class="sidebar-btns" data-tauri-drag-region>
+        <sidebar-item
+          title="家"
+          icon="church"
+          @click="changePage($event, 'home')"
+          id="sidebar-home"></sidebar-item>
         <sidebar-item
           :title="$t('sidebar.game')"
           icon="gamepad"
@@ -24,12 +38,16 @@
         <!--   icon="puzzle-piece" -->
         <!--   @click="changePage($event, 'community')"></sidebar-item> -->
         <sidebar-item
+          title="市场"
+          icon="shop"
+          @click="changePage($event, 'market')"
+          id="sidebar-market"></sidebar-item>
+        <sidebar-item
           :title="$t('sidebar.settings')"
           icon="nav-5"
           @click="changePage($event, 'settings')"
           id="sidebar-settings"
           style="margin-top: auto"></sidebar-item>
-        <!-- <sidebar-item title="更多" icon="cube" @click="switchPage($event, '#more');"></sidebar-item> -->
       </ul>
     </div>
     <main class="main" style="transition: none">
@@ -40,6 +58,9 @@
       </Transition>
     </main>
     <update-reminder></update-reminder>
+    <account-manager
+      :show="showAccountManager"
+      @close="showAccountManager = false"></account-manager>
   </div>
 </template>
 
@@ -47,6 +68,7 @@
 import { markRaw, reactive, ref, shallowRef } from "vue";
 import SearchBar from "./components/SearchBar.vue";
 import SidebarItem from "./components/SidebarItem.vue";
+import AccountManager from "./pages/dialogs/AccountManager.vue";
 import { window } from "@tauri-apps/api";
 import $ from "jquery";
 import Settings from "./pages/Settings.vue";
@@ -58,6 +80,7 @@ import { watch } from "vue";
 import { useI18n } from "vue-i18n";
 import gsap from "gsap";
 import { reloadTheme } from "./theme";
+import Home from "./pages/Home.vue";
 
 function minimize() {
   window.getCurrentWindow().minimize();
@@ -73,10 +96,11 @@ function close() {
 
 const pages: any = reactive({
   settings: markRaw(Settings),
+  home: markRaw(Home),
   game: markRaw(Game),
 });
 
-let transitionName = ref("slide-up");
+const transitionName = ref("slide-up");
 const currentComponent = shallowRef(pages.game);
 let last: any;
 const config = useConfigStore();
@@ -137,6 +161,8 @@ function closeSearchPanel() {
   $("#global-search").attr("style", "").children("*").show();
   $("#model-shadow").attr("style", "");
 }
+
+const showAccountManager = ref(false);
 </script>
 
 <style lang="less" scoped>
@@ -154,6 +180,45 @@ function closeSearchPanel() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  .account {
+    background: var(--controllers-background);
+    border: var(--controllers-border);
+    border-radius: var(--controllers-border-radius);
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+
+    .avatar {
+      width: 22px;
+      height: 22px;
+      top: 13px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 160px;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      margin-right: 8px;
+
+      img {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .avatar:active {
+      transform: scale(0.92);
+    }
+
+    span {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+  }
 }
 
 .win-btn {
@@ -239,31 +304,10 @@ function closeSearchPanel() {
   align-items: center;
 }
 
-.sidebar .logo {
-  width: 42px;
-  height: 42px;
-  top: 13px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 160px;
-  margin-top: 16px;
-  flex-shrink: 0;
-  position: absolute;
-  // top: 0;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  img {
-    width: 30px;
-    height: 30px;
-  }
-}
-
 .sidebar .sidebar-btns {
   width: 100%;
   height: 100%;
-  margin-top: 72px;
+  margin-top: 32px;
   display: flex;
   flex-direction: column;
   align-items: center;

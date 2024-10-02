@@ -22,21 +22,24 @@
         <assets-manager :instance="currentInstance" style="margin-top: 20px"></assets-manager>
       </div>
       <div class="row-2">
-        <div class="group-name">
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              height: 100%;
-            ">
-            <p style="margin-left: 4px">{{ $t("game.accounts") }}</p>
-            <button class="group-button" style="margin-right: 6px">
-              <i class="chevron-right" style="font-size: 12px"></i>
-            </button>
-          </div>
-        </div>
-        <accounts></accounts>
+        <!-- <div class="group-name"> -->
+        <!--   <div -->
+        <!--     style=" -->
+        <!--       display: flex; -->
+        <!--       justify-content: space-between; -->
+        <!--       align-items: center; -->
+        <!--       height: 100%; -->
+        <!--     "> -->
+        <!--     <p style="margin-left: 4px">{{ $t("game.accounts") }}</p> -->
+        <!--     <button -->
+        <!--       @click="$emit('jump', 'accounts')" -->
+        <!--       class="group-button" -->
+        <!--       style="margin-right: 6px"> -->
+        <!--       <i class="chevron-right" style="font-size: 12px"></i> -->
+        <!--     </button> -->
+        <!--   </div> -->
+        <!-- </div> -->
+        <!-- <accounts></accounts> -->
         <div class="group-name">
           <div
             style="

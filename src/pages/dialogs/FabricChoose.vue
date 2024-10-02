@@ -1,5 +1,5 @@
 <template>
-  <dialog-vue :visible="show" width="460" height="480">
+  <dialog-vue :visible="show" :width="460" :height="480">
     <div class="main">
       <search-bar style="margin-bottom: 10px"> </search-bar>
       <div

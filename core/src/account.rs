@@ -2,12 +2,237 @@
 // Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use anyhow::anyhow;
+use base64::{engine::general_purpose, Engine};
+use log::info;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tauri::Emitter;
 use tauri_plugin_http::reqwest;
 
-use crate::config::account::Profile;
+use crate::{DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+pub struct Skin {
+    pub id: String,
+    pub state: String,
+    #[serde(rename(serialize = "textureKey", deserialize = "textureKey"))]
+    pub texture_key: String,
+    pub url: String,
+    pub variant: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+pub struct Cape {
+    pub alias: String,
+    pub id: String,
+    pub state: String,
+    pub url: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+pub struct Profile {
+    pub profile_name: String,
+    pub uuid: String,
+    pub skins: Vec<Skin>,
+    pub capes: Vec<Cape>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+pub enum AccountType {
+    Microsoft,
+    Offline,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+pub struct Account {
+    pub refresh_token: Option<String>,
+    pub access_token: Option<String>,
+    pub token_deadline: Option<u64>,
+    pub profile: Profile,
+    pub account_type: AccountType,
+}
+
+#[tauri::command]
+pub fn get_accounts() -> Result<Vec<Account>, ()> {
+    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    if !path.exists() {
+        return Ok(vec![]);
+    }
+    let data = std::fs::read_to_string(path).unwrap();
+    Ok(serde_json::from_str::<Vec<Account>>(&data).unwrap())
+}
+
+fn add_account(account: Account) -> anyhow::Result<()> {
+    let mut accounts = get_accounts().unwrap();
+    accounts.push(account);
+    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    let contents = serde_json::to_string_pretty(&accounts).unwrap();
+    std::fs::write(&path, &contents).unwrap();
+    println!("{:#?}", path);
+    MAIN_WINDOW
+        .get()
+        .unwrap()
+        .emit("refresh_accounts_list", "")
+        .unwrap();
+    Ok(())
+}
+
+#[tauri::command(async)]
+pub async fn delete_account(uuid: String) {
+    let accounts = get_accounts().unwrap();
+    let result = accounts
+        .into_iter()
+        .filter(|x| x.profile.uuid != uuid)
+        .collect::<Vec<Account>>();
+    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    let contents = serde_json::to_string_pretty(&result).unwrap();
+    std::fs::write(&path, &contents).unwrap();
+    MAIN_WINDOW
+        .get()
+        .unwrap()
+        .emit("refresh_accounts_list", "")
+        .unwrap();
+}
+
+#[tauri::command(async)]
+/// A command to add a microsoft account
+pub async fn add_microsoft_account(code: String) -> std::result::Result<(), ()> {
+    async fn add_microsoft_account(code: String) -> anyhow::Result<()> {
+        info!("Signing in through Microsoft");
+        let account = microsoft_login(LoginPayload::AccessCode(code)).await?;
+        println!("{:#?}", account);
+        add_account(account)?;
+        Ok(())
+    }
+    match add_microsoft_account(code).await {
+        anyhow::Result::Ok(x) => Ok(x),
+        anyhow::Result::Err(_) => Err(()),
+    }
+}
+
+#[tauri::command]
+pub fn add_offline_account(_username: String) -> std::result::Result<(), ()> {
+    Ok(())
+}
+
+#[tauri::command(async)]
+pub async fn refresh_microsoft_account_by_uuid(uuid: String) {
+    let accounts = get_accounts().unwrap();
+    let mut result = vec![];
+    for account in accounts {
+        if account.profile.uuid != uuid
+            || account.refresh_token.is_none()
+            || account.account_type != AccountType::Microsoft
+        {
+            result.push(account)
+        } else {
+            result.push(
+                microsoft_login(LoginPayload::RefreshToken(
+                    account.refresh_token.unwrap_or_default(),
+                ))
+                .await
+                .unwrap(),
+            )
+        }
+    }
+    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    let contents = serde_json::to_string_pretty(&result).unwrap();
+    std::fs::write(&path, &contents).unwrap();
+    MAIN_WINDOW
+        .get()
+        .unwrap()
+        .emit("refresh_accounts_list", "")
+        .unwrap();
+}
+
+#[tauri::command(async)]
+pub async fn refresh_all_microsoft_account() {
+    let accounts = get_accounts().unwrap();
+    let mut result = vec![];
+    for account in accounts {
+        if account.refresh_token.is_none() || account.account_type != AccountType::Microsoft {
+            result.push(account)
+        } else {
+            result.push(
+                microsoft_login(LoginPayload::RefreshToken(
+                    account.refresh_token.unwrap_or_default(),
+                ))
+                .await
+                .unwrap(),
+            )
+        }
+    }
+    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    let contents = serde_json::to_string_pretty(&result).unwrap();
+    std::fs::write(&path, &contents).unwrap();
+    MAIN_WINDOW
+        .get()
+        .unwrap()
+        .emit("refresh_accounts_list", "")
+        .unwrap();
+}
+
+/// Login or refresh login.
+///
+/// Note: Shouldn't save refresh token to config file
+pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<Account> {
+    // let client = HTTP_CLIENT.get().unwrap();
+    let client = reqwest::Client::new();
+    let access_token_response = match payload {
+        LoginPayload::RefreshToken(token) => get_access_token_from_refresh_token(&client, &token)
+            .await
+            .unwrap(),
+        LoginPayload::AccessCode(code) => get_access_token(&client, &code).await.unwrap(),
+    };
+    info!("Successfully get Microsoft access token");
+    let access_token = access_token_response["access_token"]
+        .as_str()
+        .ok_or(anyhow!("No access token"))
+        .unwrap()
+        .to_string();
+    let expires_in = access_token_response["expires_in"]
+        .as_u64()
+        .ok_or(anyhow!("No expires_in"))
+        .unwrap();
+    let refresh_token = access_token_response["refresh_token"]
+        .as_str()
+        .ok_or(anyhow!("No refresh token"))
+        .unwrap()
+        .to_string();
+
+    let xbox_auth_response = xbox_authenticate(&client, &access_token).await.unwrap();
+    info!("Successfully login Xbox");
+    let xsts_token = xsts_authenticate(&client, &xbox_auth_response.xbl_token)
+        .await
+        .unwrap();
+    info!("Successfully verify XSTS");
+    let minecraft_access_token =
+        minecraft_authenticate(&client, &xbox_auth_response.xbl_uhs, &xsts_token)
+            .await
+            .unwrap();
+    info!("Successfully get Minecraft access token");
+    check_game(&client, &minecraft_access_token).await.unwrap();
+    info!("Successfully check ownership");
+    let player_info = get_player_infomations(&client, &minecraft_access_token)
+        .await
+        .unwrap();
+    info!("Successfully get game profile");
+    Ok(Account {
+        refresh_token: Some(refresh_token),
+        access_token: Some(access_token),
+        token_deadline: Some(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + expires_in),
+        profile: Profile {
+            profile_name: serde_json::from_value(player_info["name"].clone())?,
+            uuid: serde_json::from_value(player_info["id"].clone())?,
+            skins: resolve_skins(serde_json::from_value(player_info["skins"].clone())?).await,
+            capes: serde_json::from_value(player_info["capes"].clone())?,
+        },
+        account_type: AccountType::Microsoft,
+    })
+}
 
 async fn get_access_token(client: &reqwest::Client, code: &str) -> anyhow::Result<Value> {
     Ok(client
@@ -223,59 +448,39 @@ async fn get_player_infomations(
         .await?)
 }
 
-pub enum LoginMethod {
-    RefreshToken,
-    AccessCode,
+pub enum LoginPayload {
+    RefreshToken(String),
+    AccessCode(String),
 }
 
-/// Login or refresh login.
-///
-/// Note: Shouldn't save refresh token to config file
-pub async fn microsoft_login(
-    code_or_token: &str,
-    method: LoginMethod,
-) -> anyhow::Result<(String, Profile)> {
-    // let client = HTTP_CLIENT.get().unwrap();
-    let client = reqwest::Client::new();
-    let access_token_response = match method {
-        LoginMethod::RefreshToken => get_access_token_from_refresh_token(&client, code_or_token)
-            .await
-            .unwrap(),
-        LoginMethod::AccessCode => get_access_token(&client, code_or_token).await.unwrap(),
-    };
-    println!("{:#?}", access_token_response);
-    let access_token = access_token_response["access_token"]
-        .as_str()
-        .ok_or(anyhow!("No access token"))
-        .unwrap()
-        .to_string();
-    let refresh_token = access_token_response["refresh_token"]
-        .as_str()
-        .ok_or(anyhow!("No refresh token"))
-        .unwrap()
-        .to_string();
+async fn resolve_skins(skins: Vec<Skin>) -> Vec<Skin> {
+    let mut result = Vec::with_capacity(skins.len());
+    for skin in skins {
+        let mut skin = skin.clone();
+        skin.url = resolve_skin(&skin.url).await;
+        result.push(skin);
+    }
+    result
+}
 
-    let xbox_auth_response = xbox_authenticate(&client, &access_token).await.unwrap();
-    let xsts_token = xsts_authenticate(&client, &xbox_auth_response.xbl_token)
-        .await
-        .unwrap();
-    let minecraft_access_token =
-        minecraft_authenticate(&client, &xbox_auth_response.xbl_uhs, &xsts_token)
-            .await
-            .unwrap();
-    check_game(&client, &minecraft_access_token).await.unwrap();
-    let player_info = get_player_infomations(&client, &minecraft_access_token)
-        .await
-        .unwrap();
-    println!("{:#?}", player_info);
-    println!("{:#?}", refresh_token);
-    Ok((
-        refresh_token,
-        Profile {
-            profile_name: serde_json::from_value(player_info["name"].clone())?,
-            uuid: serde_json::from_value(player_info["id"].clone())?,
-            skins: serde_json::from_value(player_info["skins"].clone())?,
-            capes: serde_json::from_value(player_info["capes"].clone())?,
-        },
-    ))
+async fn resolve_skin(url: &str) -> String {
+    async fn download_skin(url: &str) -> anyhow::Result<Vec<u8>> {
+        Ok(HTTP_CLIENT
+            .get()
+            .unwrap()
+            .get(url)
+            .send()
+            .await?
+            .bytes()
+            .await?
+            .to_vec())
+    }
+    if let Ok(content) = download_skin(url).await {
+        format!(
+            "data:image/png;base64,{}",
+            general_purpose::STANDARD_NO_PAD.encode(content)
+        )
+    } else {
+        url.to_string()
+    }
 }
