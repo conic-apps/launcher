@@ -1,5 +1,5 @@
 <!-- <template>
-  <dialog-vue :visible="show" width="460" height="480">
+  <dialog-vue :visible="show" :width="460" :height="480">
     <div class="title">
       <p>管理下载源</p>
       <dialog-button icon="close" @click="$emit('close')"></dialog-button>

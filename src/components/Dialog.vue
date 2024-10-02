@@ -9,19 +9,21 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+
 const props = withDefaults(
   defineProps<{
     visible?: boolean;
-    width?: string;
-    height?: string;
+    width?: number;
+    height?: number;
   }>(),
   {
     visible: false,
-    width: "",
-    height: "",
   },
 );
-const contentStyle = `width: ${props.width}px; height: ${props.height}px;`;
+const contentStyle = computed(() => {
+  return `width: ${props.width}px; height: ${props.height}px;`;
+});
 </script>
 
 <style lang="less" scoped>
@@ -50,6 +52,7 @@ const contentStyle = `width: ${props.width}px; height: ${props.height}px;`;
     max-height: calc(100vh - 20px);
     overflow-x: visible;
     overflow-y: overlay;
+    transition: all 0.4s ease;
   }
 }
 

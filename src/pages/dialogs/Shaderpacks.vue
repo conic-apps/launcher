@@ -1,5 +1,5 @@
 <template>
-  <dialog-vue :visible="show" width="460" height="480">
+  <dialog-vue :visible="show" :width="460" :height="480">
     <div style="position: relative; margin: 12px 14px; width: calc(100% - 28px)">
       <div
         style="

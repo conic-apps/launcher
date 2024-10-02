@@ -14,7 +14,7 @@
         );
       "></div>
     <div class="line-a">
-      <div>
+      <div style="display: flex">
         <div class="minecraft-version" v-if="minecraftVersion">
           <img src="@/assets/images/Grass_Block_JE2.webp" fill="#fff" />Minecraft
           {{ minecraftVersion }}

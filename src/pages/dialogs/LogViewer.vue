@@ -1,5 +1,5 @@
 <template>
-  <dialog-vue :visible="props.visible" width="860" height="520">
+  <dialog-vue :visible="props.visible" :width="860" :height="520">
     <div class="log-viewer">
       <div class="title">
         <div style="display: flex; align-items: center">

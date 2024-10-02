@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Storage, DATA_LOCATION};
 
-pub mod account;
 pub mod download;
 pub mod instance;
 pub mod launch;
@@ -58,7 +57,6 @@ impl Default for AppearanceConfig {
 pub struct Config {
     pub auto_update: bool,
     pub appearance: AppearanceConfig,
-    pub accounts: Vec<account::Profile>,
     pub accessibility: AccessibilityConfig,
     pub language: String,
     pub update_channel: UpdateChannel,
@@ -73,7 +71,6 @@ impl Default for Config {
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
-            accounts: vec![],
             auto_update: true,
             language: locale.replace("-", "_").to_lowercase(),
             update_channel: UpdateChannel::Release,

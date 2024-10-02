@@ -23,6 +23,10 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use crate::account::{
+    add_microsoft_account, add_offline_account, delete_account, get_accounts,
+    refresh_all_microsoft_account, refresh_microsoft_account_by_uuid,
+};
 use crate::config::instance::{get_instance_config, get_instance_config_by_name};
 use crate::game_data::{scan_mod_folder, scan_resourcepack_folder, scan_saves_folder};
 use crate::install::install;
@@ -88,7 +92,13 @@ async fn main() {
             read_config_file,
             update_config,
             save_config,
-            on_frontend_loaded
+            on_frontend_loaded,
+            add_microsoft_account,
+            add_offline_account,
+            get_accounts,
+            refresh_microsoft_account_by_uuid,
+            refresh_all_microsoft_account,
+            delete_account
         ])
         .manage(Storage {
             current_instance: Arc::new(Mutex::new("".to_string())),

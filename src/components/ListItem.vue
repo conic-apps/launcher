@@ -1,14 +1,7 @@
 <template>
   <li class="list-item">
-    <div
-      :style="`${buttons ? '' : 'justify-content: start;width: 100%;'}${clickAble ? 'pointer-events: all;' : ''}`">
-      <div
-        class="icon"
-        :style="
-          logo
-            ? `background-image: url(${logo}); ${logoPixelated ? 'image-rendering: pixelated;' : ''}`
-            : 'display: none;'
-        ">
+    <div :style="`${buttons ? '' : 'justify-content: start;width: 100%;'}${clickAble ? 'pointer-events: all;' : ''}`">
+      <div class="icon" :style="computedLogo">
         <slot name="icon"></slot>
       </div>
       <div>
@@ -18,25 +11,23 @@
             <slot name="subtitle"></slot>
           </div>
         </h4>
-        <p id="text">
+        <p class="text">
           {{ description ? description : "" }}
           <slot></slot>
         </p>
       </div>
     </div>
     <div v-if="buttons" class="list-item-buttons">
-      <i
-        v-for="(item, index) in buttons"
-        :key="index"
-        class="list-item-button"
-        :class="item"
-        @click.stop="$emit(`event-${item}`)"></i>
+      <i v-for="(item, index) in buttons" :key="index" class="list-item-button" :class="item"
+        @click.stop="$emit(`click-${item}`)"></i>
     </div>
   </li>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from "vue";
+
+const props = defineProps<{
   logo?: string;
   title: string;
   description?: string;
@@ -44,6 +35,12 @@ defineProps<{
   buttons?: string[]; // 图标名称对应点击后触发的事件名称
   clickAble?: boolean;
 }>();
+
+const computedLogo = computed(() => {
+  return props.logo
+    ? `background-image: url(${props.logo}); ${props.logoPixelated ? "image-rendering: pixelated;" : ""}`
+    : "display: none;";
+});
 </script>
 
 <style lang="less" scoped>
@@ -59,27 +56,27 @@ defineProps<{
   background: var(--list-item-background);
   pointer-events: none;
 
-  > div {
+  >div {
     display: flex;
     align-items: center;
     overflow: hidden;
 
-    > div:last-child {
+    >div:last-child {
       max-width: inherit;
       width: 100%;
     }
   }
 
-  > div:first-child {
+  >div:first-child {
     width: 100%;
     transition: all 0.1s ease;
   }
 
-  > div:first-child:active {
+  >div:first-child:active {
     opacity: 0.6;
   }
 
-  > div:last-child {
+  >div:last-child {
     flex-shrink: 0;
     /* overflow-x: hidden; */
     width: fit-content;
@@ -106,8 +103,8 @@ defineProps<{
     display: flex;
   }
 
-  p#text {
-    font-size: 14px;
+  p.text {
+    font-size: 13px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -128,11 +125,14 @@ defineProps<{
   background-size: cover;
   background-position: center;
   margin-left: 2px;
-  margin-right: 6px;
+  margin-right: 10px;
   // box-shadow: 0 0 2px #00000088;
   overflow: hidden;
-  border-radius: var(--border-radius-medium);
+  border-radius: 8px;
   background-image: url(@/assets/images/Unknown_server.webp);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .list-item-button {

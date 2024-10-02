@@ -1,5 +1,5 @@
 <template>
-  <dialog-vue :visible="props.installing" width="660" height="420">
+  <dialog-vue :visible="props.installing" :width="660" :height="420">
     <div class="install-progress-vue">
       <div class="title">
         <div style="display: flex; align-items: center">
