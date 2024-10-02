@@ -1,5 +1,5 @@
 <template>
-  <dialog-vue :visible="show" width="420" height="200">
+  <dialog-vue :visible="show" :width="420" :height="200">
     <div class="main">
       <div class="title">
         <h4>发现新的 Minecraft 版本</h4>

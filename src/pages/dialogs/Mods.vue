@@ -1,5 +1,5 @@
 <template>
-  <dialog-vue :visible="props.show" width="860" height="520">
+  <dialog-vue :visible="props.show" :width="860" :height="520">
     <div class="worlds">
       <div style="width: 100%; height: 100%">
         <div class="title">

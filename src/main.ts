@@ -11,6 +11,8 @@ const i18n = createI18n({
     legacy: false,
     locale: "zh_cn",
     fallbackLocale: "en_us",
+    warnHtmlMessage: false,
+    missingWarn: false,
     messages: {
         en_us,
         zh_cn,

@@ -1,5 +1,5 @@
 <template>
-  <dialog-vue :visible="props.show" width="860" height="520">
+  <dialog-vue :visible="props.show" :width="860" :height="520">
     <div class="instance-manager">
       <div style="width: 100%; height: 100%">
         <div class="title">
@@ -65,8 +65,8 @@ import { markRaw, reactive, ref, shallowRef } from "vue";
 import View from "@/pages/dialogs/instance/View.vue";
 import Create from "@/pages/dialogs/instance/Create.vue";
 
-let emit = defineEmits(["close", "update"]);
-let transitionName = ref("slide-left");
+const emit = defineEmits(["close", "update"]);
+const transitionName = ref("slide-left");
 
 interface Instance {
   config: {

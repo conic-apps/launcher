@@ -114,7 +114,8 @@ i.grid-2::before {
     content: "\e196";
 }
 
-i.cubes-stacked::before {
+i.cubes-stacked::before,
+i#cubes-stacked::before {
     content: "\e4e6";
 }
 
@@ -135,6 +136,11 @@ i#gamepad::before {
 i#house-heart::before,
 i.house-heart::before {
     content: "\f4c9";
+}
+
+i.shop::before,
+i#shop::before {
+    content: "\f54f"
 }
 
 i.church::before,
@@ -255,13 +261,21 @@ i.chevron-right {
     font-style: normal;
 }
 
+i.trash::before {
+    content: "\f1f8"
+}
+
+i.badge-check::before {
+    content: "\f336"
+}
+
 i.chevron-right::before {
     content: "\f054";
 }
 
 i.microsoft::before {
     content: "\f3ca";
-    font-weight: 600;
+    font-family: "fa-brands";
 }
 
 i.link-slash::before {
@@ -289,6 +303,17 @@ i.minecraft {
     height: 80%;
     background-image: url(../images/minecraft.webp);
     background-size: cover;
+}
+
+i.user-plus::before,
+.list-item-user-plus div.icon::before {
+    content: "\f234"
+}
+
+.list-item-user-plus div.icon::before {
+    font-family: fa-pro;
+    font-size: 17px;
+
 }
 
 i.forge {
@@ -416,7 +441,7 @@ i.gauge-high::before {
 }
 
 i.window::before {
-    content: "\f40e"
+    content: "\f40e";
 }
 
 i.heading::before {
@@ -436,11 +461,11 @@ i.chart-simple::before {
 }
 
 i.input-text::before {
-    content: "\e1bf"
+    content: "\e1bf";
 }
 
 i.square-terminal::before {
-    content: "\e32a"
+    content: "\e32a";
 }
 
 i.lwjgl {
@@ -464,7 +489,7 @@ i.code-simple::before {
 }
 
 i.gauge::before {
-    content: "\f624"
+    content: "\f624";
 }
 
 i.link::before {
@@ -495,13 +520,17 @@ i.globe::before {
     content: "\f0ac";
 }
 
+i.box-open-full::before,
+i#box-open-full::before {
+    content: "\f49c"
+}
+
 i.vuejs {
     background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij4KICA8c3R5bGU+CiAgICAuc3QwIHsgZmlsbDogIzQyQjg4MzsgfQogICAgLnN0MSB7IGZpbGw6ICMzNTQ5NUU7IH0KICA8L3N0eWxlPgogIDxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik03OC44LDEwTDY0LDM1LjRMNDkuMiwxMEgwbDY0LDExMGw2NC0xMTBDMTI4LDEwLDc4LjgsMTAsNzguOCwxMHoiIC8+CiAgPHBhdGggY2xhc3M9InN0MSIgZD0iTTc4LjgsMTBMNjQsMzUuNEw0OS4yLDEwSDI1LjZMNjQsNzZsMzguNC02Nkg3OC44eiIgLz4KPC9zdmc+Cg==);
     width: 70%;
     height: 70%;
     background-repeat: no-repeat;
     background-position: center;
-
 }
 
 i.jquery {
