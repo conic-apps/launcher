@@ -20,9 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
 import { useConfigStore } from "@/config";
 import { watch } from "vue";
 import $ from "jquery";
