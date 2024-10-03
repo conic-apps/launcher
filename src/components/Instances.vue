@@ -4,11 +4,19 @@
       <div
         class="instance"
         @click="$emit('select', instance)"
-        v-for="instance in computedInstances"
+        v-for="(instance, index) in computedInstances"
         :key="instance.config.name">
         <img src="@/assets/images/minecraft-icon.svg" />
         <div class="title">
-          <p>{{ instance.config.name }}</p>
+          <p v-if="instance.config.name == 'Latest Release' && index <= 1">
+            {{ $t("game.latestRelease") }}
+          </p>
+          <p v-else-if="instance.config.name == 'Latest Snapshot' && index <= 1">
+            {{ $t("game.latestSnapshot") }}
+          </p>
+          <p v-else>
+            {{ instance.config.name }}
+          </p>
         </div>
       </div>
     </div>
@@ -66,9 +74,6 @@ const computedInstances = computed(() => {
   }
   return result;
 });
-function generateDescription(instance: Instance): string {
-  return instance.config.name;
-}
 </script>
 
 <style lang="less" scoped>
