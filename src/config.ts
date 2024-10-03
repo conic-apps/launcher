@@ -45,6 +45,8 @@ export type Config = {
         wrap_command: string
         execute_before_launch: string
         execute_after_launch: string
+        skip_refresh_account: boolean
+        skip_check_files: boolean
     }
 }
 
@@ -94,6 +96,8 @@ export const useConfigStore = defineStore("global_config", {
                 wrap_command: "",
                 execute_before_launch: "",
                 execute_after_launch: "",
+                skip_refresh_account: false,
+                skip_check_files: false,
             },
         }
     },

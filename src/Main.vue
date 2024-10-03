@@ -1,12 +1,18 @@
 <template>
   <div class="window" data-tauri-drag-region>
     <div class="title-bar" data-tauri-drag-region>
-      <div></div>
-      <div></div>
-      <div style="display: flex; width: fit-content; align-items: center">
+      <div
+        style="
+          display: flex;
+          width: calc(100vw - 560px);
+          margin-left: 120px;
+          flex-shrink: 0;
+          align-items: center;
+        ">
         <search-bar
           @click="openSearchPanel"
           id="global-search"
+          style="width: 100%"
           :placeholder="$t('globalSearch.placeholder')"></search-bar>
       </div>
       <div class="account" @click="showAccountManager = true">

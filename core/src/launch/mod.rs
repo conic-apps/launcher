@@ -7,6 +7,7 @@ use std::{
     path::PathBuf,
     process::{Command, Stdio},
     thread,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use arguments::generate_command_arguments;
@@ -19,7 +20,7 @@ mod arguments;
 mod complete;
 mod options;
 use crate::{
-    account,
+    account::{self, refresh_microsoft_account_by_uuid, Account},
     config::{instance::InstanceConfig, launch::ProcessPriority},
     folder::MinecraftLocation,
     platform::OsType,
@@ -34,9 +35,29 @@ pub struct Log {
     pub content: String,
 }
 
+async fn check_account(account: &Account) -> anyhow::Result<()> {
+    info!("Checking account: {}", account.profile.uuid);
+    let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+    const AHEAD: u64 = 3600 * 4;
+    let token_deadline = match account.token_deadline {
+        Some(x) => x,
+        None => return Ok(()),
+    };
+    if now > token_deadline - AHEAD {
+        info!("The access token will expire in 4 hours");
+        refresh_microsoft_account_by_uuid(account.profile.uuid.to_string()).await;
+    } else {
+        info!(
+            "The access token will expire in {} seconds, no need to refresh.",
+            token_deadline - now
+        );
+    }
+    Ok(())
+}
+
 #[tauri::command(async)]
 pub async fn launch(storage: tauri::State<'_, Storage>, instance_name: String) -> Result<(), ()> {
-    println!("Starting Minecraft client, instance: {}", instance_name);
+    info!("Starting Minecraft client, instance: {}", instance_name);
     let platform = PLATFORM_INFO.get().unwrap();
     let instance = InstanceConfig::get(&instance_name).await.unwrap();
     info!("------------- Instance runtime config -------------");
@@ -49,11 +70,23 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance_name: String) -
         Some(x) => info!("-> Mod loader version: {x}"),
         None => info!("-> Mod loader version: none"),
     };
-    let accounts = account::get_account_by_uuid(&storage.config.lock().unwrap().current_account);
-    let account = accounts.first().unwrap();
-    let launch_options = LaunchOptions::get(instance.clone(), account);
+    let config = storage.config.lock().unwrap().clone();
+    let selected_account = account::get_account_by_uuid(&config.current_account);
+    let selected_account = selected_account.first().unwrap();
+    if config.launch.skip_refresh_account {
+        info!("Account refresh disabled by user")
+    } else {
+        check_account(selected_account).await.unwrap();
+    }
+
+    let launch_options = LaunchOptions::get(instance.clone(), selected_account);
     let minecraft_location = launch_options.minecraft_location.clone();
-    complete_files(instance.clone(), minecraft_location.clone()).await;
+    if config.launch.skip_check_files {
+        info!("File checking disabled by user")
+    } else {
+        complete_files(instance.clone(), minecraft_location.clone()).await;
+    }
+
     info!("Generating startup parameters");
     let version = Version::from_versions_folder(&minecraft_location, &instance.get_version_id())
         .unwrap()
