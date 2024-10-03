@@ -16,7 +16,7 @@
         <span>{{ currentAccountProfile.name }}</span>
         <tag
           style="margin-left: 8px"
-          -if="now > currentAccountProfile.tokenDeadline"
+          v-if="now > currentAccountProfile.tokenDeadline"
           text="需要刷新"
           :color="['249', '226', '175']"
           text-color="#f9e2af"
@@ -190,17 +190,19 @@ watch(
     invoke("get_account_by_uuid", {
       uuid: value.current_account,
     }).then((res) => {
-      const account = (res as Account[])[0];
-      getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
-        currentAccountProfile.value = {
-          name: account.profile.profile_name,
-          avatar,
-          tokenDeadline: account.token_deadline,
-        };
-      });
       invoke("update_config", { config: config }).then(() => {
         invoke("save_config");
       });
+      const account = (res as Account[])[0];
+      if (account != undefined) {
+        getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
+          currentAccountProfile.value = {
+            name: account.profile.profile_name,
+            avatar,
+            tokenDeadline: account.token_deadline,
+          };
+        });
+      }
     });
   },
   { immediate: true },
