@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Storage, DATA_LOCATION};
+use crate::{account::get_accounts, Storage, DATA_LOCATION};
 
 pub mod download;
 pub mod instance;
@@ -56,6 +56,7 @@ impl Default for AppearanceConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
 pub struct Config {
     pub auto_update: bool,
+    pub current_account: String,
     pub appearance: AppearanceConfig,
     pub accessibility: AccessibilityConfig,
     pub language: String,
@@ -71,6 +72,13 @@ impl Default for Config {
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
+            current_account: get_accounts()
+                .unwrap()
+                .first()
+                .unwrap()
+                .profile
+                .uuid
+                .clone(),
             auto_update: true,
             language: locale.replace("-", "_").to_lowercase(),
             update_channel: UpdateChannel::Release,

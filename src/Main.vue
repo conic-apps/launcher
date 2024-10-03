@@ -11,9 +11,19 @@
       </div>
       <div class="account" @click="showAccountManager = true">
         <div class="avatar">
-          <img src="@/assets/images/steve_avatar.webp" alt="player avatar" />
+          <img :src="currentAccountProfile.avatar" alt="player avatar" />
         </div>
-        <span>Broken_Deer</span>
+        <span>{{ currentAccountProfile.name }}</span>
+        <tag
+          style="margin-left: 8px"
+          -if="now > currentAccountProfile.tokenDeadline"
+          text="需要刷新"
+          :color="['249', '226', '175']"
+          text-color="#f9e2af"
+          :background="false"
+          :border="true"
+          font-size="10"
+          :round="true"></tag>
       </div>
       <div class="win-btn">
         <div class="min" @click="minimize"><i></i></div>
@@ -81,6 +91,10 @@ import { useI18n } from "vue-i18n";
 import gsap from "gsap";
 import { reloadTheme } from "./theme";
 import Home from "./pages/Home.vue";
+import { Account } from "./pages/dialogs/account/View.vue";
+import { getAvatar } from "./avatar";
+import Tag from "./components/Tag.vue";
+import { listen } from "@tauri-apps/api/event";
 
 function minimize() {
   window.getCurrentWindow().minimize();
@@ -163,6 +177,53 @@ function closeSearchPanel() {
 }
 
 const showAccountManager = ref(false);
+
+const currentAccountProfile = ref({
+  name: "Steve",
+  avatar: "@/assets/images/steve_avatar.webp",
+  tokenDeadline: 0,
+});
+
+watch(
+  config,
+  (value) => {
+    invoke("get_account_by_uuid", {
+      uuid: value.current_account,
+    }).then((res) => {
+      const account = (res as Account[])[0];
+      getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
+        currentAccountProfile.value = {
+          name: account.profile.profile_name,
+          avatar,
+          tokenDeadline: account.token_deadline,
+        };
+      });
+      invoke("update_config", { config: config }).then(() => {
+        invoke("save_config");
+      });
+    });
+  },
+  { immediate: true },
+);
+const now = ref(Math.round(new Date().getTime() / 1000));
+setInterval(() => {
+  now.value = Math.round(new Date().getTime() / 1000);
+}, 1000);
+
+listen("refresh_accounts_list", () => {
+  invoke("get_account_by_uuid", {
+    uuid: config.current_account,
+  }).then((res) => {
+    const account = (res as Account[])[0];
+    getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
+      currentAccountProfile.value = {
+        name: account.profile.profile_name,
+        avatar,
+        tokenDeadline: account.token_deadline,
+      };
+    });
+  });
+});
 </script>
 
 <style lang="less" scoped>

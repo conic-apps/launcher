@@ -502,10 +502,6 @@ impl FromStr for Version {
 }
 
 impl Version {
-    pub fn from_value(raw: Value) -> Result<Version, serde_json::Error> {
-        serde_json::from_value(raw)
-    }
-
     pub fn from_versions_folder(
         minecraft: &MinecraftLocation,
         version_name: &str,
@@ -665,11 +661,17 @@ async fn resolve_libraries(libraries: Vec<Value>, platform: &PlatformInfo) -> Ve
         let version = name.get(2).unwrap();
         let name = name.get(1).unwrap();
 
-        let url = if let Some(url) = library["url"].as_str() {
-            url
-        } else {
-            "https://libraries.minecraft.net/"
-        };
+        // NOTE: URL in mod loader version.json is NOT include path
+        // For example:
+        // "libraries": [
+        //     {
+        //       "name": "net.fabricmc:tiny-mappings-parser:0.3.0+build.17",
+        //       "url": "https://maven.fabricmc.net/"
+        //     },
+        //   ]
+        let url = library["url"]
+            .as_str()
+            .unwrap_or("https://libraries.minecraft.net/");
         let path = format!("{package}/{name}/{version}/{name}-{version}.jar");
         result.push(ResolvedLibrary {
             download_info: LibraryDownload {
@@ -723,56 +725,4 @@ fn check_allowed(rules: Vec<Value>, platform: &PlatformInfo) -> bool {
         // todo: check `features`
     }
     allow
-}
-
-pub struct LibraryInfo {
-    pub group_id: String,
-    pub artifact_id: String,
-    pub version: String,
-    pub is_snapshot: bool,
-
-    /// The file extension. Default is `jar`. Some files in forge are `zip`.
-    pub r#type: String,
-
-    /// The classifier. Normally, this is empty. For forge, it can be like `universal`, `installer`.
-    pub classifier: String,
-
-    /// The maven path.
-    pub path: String,
-
-    /// The original maven name of this library
-    pub name: String,
-}
-
-#[allow(clippy::get_first)]
-impl LibraryInfo {
-    /// Get the base info of the library from its name
-    /// * `lib` - The name of library of the library itself
-    pub fn from_value(lib: &Value) -> Self {
-        let name = lib["name"].as_str().unwrap().to_string();
-        let split_name = name.split("@").collect::<Vec<&str>>();
-        let body = split_name.get(0).unwrap().split(":").collect::<Vec<&str>>();
-        let r#type = split_name.get(1).unwrap_or(&"jar").to_string();
-        let group_id = body.get(0).unwrap().to_string();
-        let artifact_id = body.get(1).unwrap().to_string();
-        let version = body.get(2).unwrap().to_string();
-        let is_snapshot = version.ends_with("SNAPSHOT");
-        let group_path = group_id.replace(".", "/");
-        let base = format!("{group_path}/{artifact_id}/{version}/{artifact_id}-{version}");
-        let classifier = match body.get(3) {
-            Some(classifier) => format!("{base}-{classifier}"),
-            None => "".to_string(),
-        };
-        let path = format!("{base}.{type}");
-        Self {
-            group_id,
-            artifact_id,
-            version,
-            is_snapshot,
-            r#type,
-            classifier,
-            path,
-            name,
-        }
-    }
 }

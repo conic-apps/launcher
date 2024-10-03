@@ -9,12 +9,12 @@ mod account;
 mod config;
 mod download;
 mod folder;
-mod game_data;
+pub mod game_data;
 mod install;
 mod instance;
 mod launch;
 mod platform;
-mod utils;
+pub mod utils;
 mod version;
 
 use std::fs::File;
@@ -24,7 +24,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use crate::account::{
-    add_microsoft_account, add_offline_account, delete_account, get_accounts,
+    add_microsoft_account, delete_account, get_account_by_uuid, get_accounts,
     refresh_all_microsoft_account, refresh_microsoft_account_by_uuid,
 };
 use crate::config::instance::{get_instance_config, get_instance_config_by_name};
@@ -61,6 +61,7 @@ pub struct Storage {
     pub current_instance: Arc<Mutex<String>>,
     pub config: Arc<Mutex<Config>>,
 }
+
 #[tokio::main]
 async fn main() {
     initialize_application().await;
@@ -94,11 +95,11 @@ async fn main() {
             save_config,
             on_frontend_loaded,
             add_microsoft_account,
-            add_offline_account,
             get_accounts,
             refresh_microsoft_account_by_uuid,
             refresh_all_microsoft_account,
-            delete_account
+            delete_account,
+            get_account_by_uuid
         ])
         .manage(Storage {
             current_instance: Arc::new(Mutex::new("".to_string())),

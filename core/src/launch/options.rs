@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use crate::{
+    account::Account,
     config::{
         instance::InstanceConfig,
         launch::{ProcessPriority, Server, GC},
@@ -82,7 +83,7 @@ pub struct LaunchOptions {
 }
 
 impl LaunchOptions {
-    pub fn get(instance_config: InstanceConfig) -> Self {
+    pub fn get(instance_config: InstanceConfig, account: &Account) -> Self {
         let global_config = read_config_file().launch;
         let instance_config = instance_config.launch_config.clone();
         Self {
@@ -99,10 +100,10 @@ impl LaunchOptions {
                 .launcher_name
                 .unwrap_or(global_config.launcher_name),
             game_profile: GameProfile {
-                name: "Steve".to_string(),
-                uuid: "00000000-0000-0000-0000-000000011111".to_string(),
+                name: account.profile.profile_name.clone(),
+                uuid: account.profile.uuid.clone(),
             },
-            access_token: "00000000000000000000000000000000".to_string(),
+            access_token: account.access_token.clone().unwrap_or_default(),
             min_memory: instance_config
                 .min_memory
                 .unwrap_or(global_config.min_memory),

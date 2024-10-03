@@ -39,7 +39,7 @@ import { invoke } from "@tauri-apps/api/core";
 const props = defineProps<{
   show: boolean;
 }>();
-const emit = defineEmits(["close", "update"]);
+const emit = defineEmits(["close", "update", "choose-account"]);
 
 const width = ref(720);
 const height = ref(420);
