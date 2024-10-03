@@ -23,11 +23,7 @@ pub async fn complete_files(instance: InstanceConfig, minecraft_location: Minecr
     let assets_lock_file = instance.get_instance_root().join(".aml-assets-ok");
     let libraries_lock_file = instance.get_instance_root().join(".aml-libraries-ok");
     if std::fs::metadata(&assets_lock_file).is_ok() {
-        info!("No need to check assets files.");
-        info!(
-            "helps: you can remove {} file to enable file checking manually.",
-            assets_lock_file.display()
-        );
+        info!("Found file \".aml-assets-ok\", no need to check assets files.");
     } else {
         info!("Checking and completing assets files");
         complete_assets_files(instance.clone(), minecraft_location.clone()).await;
@@ -35,11 +31,7 @@ pub async fn complete_files(instance: InstanceConfig, minecraft_location: Minecr
         std::fs::write(assets_lock_file, "ok").unwrap();
     }
     if std::fs::metadata(&libraries_lock_file).is_ok() {
-        info!("No need to check libraries files.");
-        info!(
-            "helps: you can remove {} file to enable file checking manually.",
-            libraries_lock_file.display()
-        );
+        info!("Found file \".aml-libraries-ok\", no need to check libraries files.");
     } else {
         info!("Checking and completing libraries files");
         complete_libraries_files(instance.clone(), minecraft_location.clone()).await;

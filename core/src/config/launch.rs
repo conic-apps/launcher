@@ -77,6 +77,12 @@ pub struct LaunchConfig {
     pub execute_before_launch: String,
 
     pub execute_after_launch: String,
+
+    /// Skip refresh account before launch
+    pub skip_refresh_account: bool,
+
+    /// Skip check game file integrity
+    pub skip_check_files: bool,
 }
 
 impl Default for LaunchConfig {
@@ -100,6 +106,8 @@ impl Default for LaunchConfig {
             wrap_command: String::new(),
             execute_after_launch: String::new(),
             execute_before_launch: String::new(),
+            skip_refresh_account: false,
+            skip_check_files: false,
         }
     }
 }
