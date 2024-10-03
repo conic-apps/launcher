@@ -1,6 +1,7 @@
 <template>
   <li class="list-item">
-    <div :style="`${buttons ? '' : 'justify-content: start;width: 100%;'}${clickAble ? 'pointer-events: all;' : ''}`">
+    <div
+      :style="`${buttons ? '' : 'justify-content: start;width: 100%;'}${clickAble ? 'pointer-events: all;' : ''}`">
       <div class="icon" :style="computedLogo">
         <slot name="icon"></slot>
       </div>
@@ -18,7 +19,11 @@
       </div>
     </div>
     <div v-if="buttons" class="list-item-buttons">
-      <i v-for="(item, index) in buttons" :key="index" class="list-item-button" :class="item"
+      <i
+        v-for="(item, index) in buttons"
+        :key="index"
+        class="list-item-button"
+        :class="item"
         @click.stop="$emit(`click-${item}`)"></i>
     </div>
   </li>
@@ -56,27 +61,27 @@ const computedLogo = computed(() => {
   background: var(--list-item-background);
   pointer-events: none;
 
-  >div {
+  > div {
     display: flex;
     align-items: center;
     overflow: hidden;
 
-    >div:last-child {
+    > div:last-child {
       max-width: inherit;
       width: 100%;
     }
   }
 
-  >div:first-child {
+  > div:first-child {
     width: 100%;
     transition: all 0.1s ease;
   }
 
-  >div:first-child:active {
+  > div:first-child:active {
     opacity: 0.6;
   }
 
-  >div:last-child {
+  > div:last-child {
     flex-shrink: 0;
     /* overflow-x: hidden; */
     width: fit-content;

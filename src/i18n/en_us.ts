@@ -9,8 +9,8 @@ export default {
     game: {
         latestRelease: "Latest Release",
         latestSnapshot: "Latest Snapshot",
-        install: "Install Game",
-        launch: "Launch Game",
+        install: "Install",
+        launch: "Launch",
         instances: "Instances",
         playtime: "Playtime",
         accounts: "Accounts",
