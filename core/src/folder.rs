@@ -32,50 +32,6 @@ use uuid::Uuid;
 use crate::{platform::OsType, PLATFORM_INFO};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct GameDataLocation {
-    pub root: PathBuf,
-    pub resourcepacks: PathBuf,
-    pub mods: PathBuf,
-    pub logs: PathBuf,
-    pub latest_log: PathBuf,
-    pub saves: PathBuf,
-    pub options: PathBuf,
-    pub screenshots: PathBuf,
-}
-
-impl GameDataLocation {
-    pub fn new<S: AsRef<OsStr> + ?Sized>(root: &S) -> Self {
-        let root = Path::new(root);
-        Self {
-            root: root.to_path_buf(),
-            resourcepacks: root.join("resourcepacks"),
-            mods: root.join("mods"),
-            logs: root.join("logs"),
-            latest_log: root.join("logs").join("latest.log"),
-            saves: root.join("resourcepacks"),
-            options: root.join("options.txt"),
-            screenshots: root.join("screenshots"),
-        }
-    }
-
-    pub fn get_resource_pack<P: AsRef<Path>>(&self, file_name: P) -> PathBuf {
-        self.resourcepacks.join(file_name)
-    }
-
-    pub fn get_mod<P: AsRef<Path>>(&self, file_name: P) -> PathBuf {
-        self.mods.join(file_name)
-    }
-
-    pub fn get_log<P: AsRef<Path>>(&self, file_name: P) -> PathBuf {
-        self.logs.join(file_name)
-    }
-
-    pub fn get_level_file<P: AsRef<Path>>(&self, world_name: P) -> PathBuf {
-        self.saves.join(world_name).join("level.dat")
-    }
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 /// The Minecraft folder structure. All method will return the path related to a minecraft root like .minecraft.
 pub struct MinecraftLocation {
     pub root: PathBuf,
@@ -120,14 +76,6 @@ impl MinecraftLocation {
             self.get_version_root(&version)
                 .join(format!("{version}-{}.jar", r#type.unwrap()))
         }
-    }
-
-    pub fn get_version_all<P: AsRef<Path> + Display>(&self, version: P) -> Vec<PathBuf> {
-        vec![
-            self.versions.join(&version),
-            self.versions.join(&version).join(format!("{version}.json")),
-            self.versions.join(&version).join(format!("{version}.jar")),
-        ]
     }
 
     pub fn get_library_by_path<P: AsRef<Path>>(&self, library_path: P) -> PathBuf {
@@ -192,7 +140,7 @@ impl DataLocation {
         self.instances.join(instance_name).join("saves")
     }
 
-    pub fn get_shaderpacks_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
+    pub fn _get_shaderpacks_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
         self.instances.join(instance_name).join("shaderpacks")
     }
 }

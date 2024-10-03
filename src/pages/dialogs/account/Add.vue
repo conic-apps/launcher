@@ -48,7 +48,7 @@ watch(redirect, (value) => {
   padding: 0 12px;
   overflow: auto;
 
-  >div {
+  > div {
     border-radius: 8px;
     overflow: hidden;
   }

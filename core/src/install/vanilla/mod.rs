@@ -61,10 +61,7 @@ pub async fn generate_assets_downloads(
         .collect();
     assets.push(Download {
         url: asset_index.url,
-        file: minecraft_location
-            .assets
-            .join("indexes")
-            .join(format!("{}.json", asset_index.id)),
+        file: minecraft_location.get_assets_index(&asset_index.id),
         sha1: None,
     });
     Ok(assets)

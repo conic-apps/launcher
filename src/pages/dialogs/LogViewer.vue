@@ -163,7 +163,7 @@ function isNormal(log: string) {
       span {
         user-select: text;
         -webkit-user-select: text;
-        font-family: consolas;
+        font-family: "FiraCode Nerd Font", "Consolas", monospace;
       }
 
       padding: 2px;

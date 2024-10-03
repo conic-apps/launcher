@@ -19,11 +19,12 @@ mod arguments;
 mod complete;
 mod options;
 use crate::{
+    account,
     config::{instance::InstanceConfig, launch::ProcessPriority},
     folder::MinecraftLocation,
     platform::OsType,
     version::Version,
-    MAIN_WINDOW, PLATFORM_INFO,
+    Storage, MAIN_WINDOW, PLATFORM_INFO,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,7 +35,7 @@ pub struct Log {
 }
 
 #[tauri::command(async)]
-pub async fn launch(instance_name: String) {
+pub async fn launch(storage: tauri::State<'_, Storage>, instance_name: String) -> Result<(), ()> {
     println!("Starting Minecraft client, instance: {}", instance_name);
     let platform = PLATFORM_INFO.get().unwrap();
     let instance = InstanceConfig::get(&instance_name).await.unwrap();
@@ -48,7 +49,9 @@ pub async fn launch(instance_name: String) {
         Some(x) => info!("-> Mod loader version: {x}"),
         None => info!("-> Mod loader version: none"),
     };
-    let launch_options = LaunchOptions::get(instance.clone());
+    let accounts = account::get_account_by_uuid(&storage.config.lock().unwrap().current_account);
+    let account = accounts.first().unwrap();
+    let launch_options = LaunchOptions::get(instance.clone(), account);
     let minecraft_location = launch_options.minecraft_location.clone();
     complete_files(instance.clone(), minecraft_location.clone()).await;
     info!("Generating startup parameters");
@@ -75,6 +78,7 @@ pub async fn launch(instance_name: String) {
             &instance_name,
         )
     });
+    Ok(())
 }
 
 fn spawn_minecraft_process(

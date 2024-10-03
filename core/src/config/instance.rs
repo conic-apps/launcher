@@ -110,9 +110,7 @@ impl InstanceConfig {
             launch_config: InstanceLaunchConfig::default(),
         }
     }
-    pub async fn write(self, _instance_name: &str) -> anyhow::Result<()> {
-        Ok(())
-    }
+
     pub async fn get(instance_name: &str) -> anyhow::Result<Self> {
         let config_path = DATA_LOCATION
             .get()
@@ -125,9 +123,7 @@ impl InstanceConfig {
         let config_content = tokio::fs::read_to_string(config_path).await?;
         Ok(toml::from_str::<InstanceConfig>(&config_content)?)
     }
-    pub async fn remove(_instance_name: &str) -> anyhow::Result<()> {
-        Ok(())
-    }
+
     pub fn get_version_id(&self) -> String {
         match self.runtime.mod_loader_type.as_ref() {
             Some(mod_loader_type) => match mod_loader_type {
@@ -162,6 +158,7 @@ impl InstanceConfig {
             None => self.runtime.minecraft.to_string(),
         }
     }
+
     pub fn get_instance_root(&self) -> PathBuf {
         DATA_LOCATION.get().unwrap().instances.join(&self.name)
     }

@@ -65,6 +65,20 @@ pub fn get_accounts() -> Result<Vec<Account>, ()> {
     Ok(serde_json::from_str::<Vec<Account>>(&data).unwrap())
 }
 
+#[tauri::command]
+pub fn get_account_by_uuid(uuid: &str) -> Vec<Account> {
+    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    if !path.exists() {
+        return vec![];
+    }
+    let data = std::fs::read_to_string(path).unwrap();
+    let accounts = serde_json::from_str::<Vec<Account>>(&data).unwrap();
+    accounts
+        .into_iter()
+        .filter(|x| x.profile.uuid == uuid)
+        .collect()
+}
+
 fn add_account(account: Account) -> anyhow::Result<()> {
     let mut accounts = get_accounts().unwrap();
     accounts.push(account);
@@ -113,11 +127,6 @@ pub async fn add_microsoft_account(code: String) -> std::result::Result<(), ()> 
     }
 }
 
-#[tauri::command]
-pub fn add_offline_account(_username: String) -> std::result::Result<(), ()> {
-    Ok(())
-}
-
 #[tauri::command(async)]
 pub async fn refresh_microsoft_account_by_uuid(uuid: String) {
     let accounts = get_accounts().unwrap();
@@ -127,16 +136,16 @@ pub async fn refresh_microsoft_account_by_uuid(uuid: String) {
             || account.refresh_token.is_none()
             || account.account_type != AccountType::Microsoft
         {
-            result.push(account)
-        } else {
-            result.push(
-                microsoft_login(LoginPayload::RefreshToken(
-                    account.refresh_token.unwrap_or_default(),
-                ))
-                .await
-                .unwrap(),
-            )
+            result.push(account);
+            continue;
         }
+        result.push(
+            microsoft_login(LoginPayload::RefreshToken(
+                account.refresh_token.unwrap_or_default(),
+            ))
+            .await
+            .unwrap(),
+        )
     }
     let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&result).unwrap();
@@ -154,16 +163,16 @@ pub async fn refresh_all_microsoft_account() {
     let mut result = vec![];
     for account in accounts {
         if account.refresh_token.is_none() || account.account_type != AccountType::Microsoft {
-            result.push(account)
-        } else {
-            result.push(
-                microsoft_login(LoginPayload::RefreshToken(
-                    account.refresh_token.unwrap_or_default(),
-                ))
-                .await
-                .unwrap(),
-            )
+            result.push(account);
+            continue;
         }
+        result.push(
+            microsoft_login(LoginPayload::RefreshToken(
+                account.refresh_token.unwrap_or_default(),
+            ))
+            .await
+            .unwrap(),
+        )
     }
     let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&result).unwrap();

@@ -37,12 +37,6 @@ import { invoke } from "@tauri-apps/api/core";
 const i18n = useI18n();
 const config = useConfigStore();
 
-watch(config, () => {
-  invoke("update_config", { config: config }).then(() => {
-    invoke("save_config");
-  });
-});
-
 const components = ref([
   {
     name: "settings.general.sidebar",

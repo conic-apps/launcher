@@ -2,19 +2,39 @@
   <div class="account-view">
     <div class="row1">
       <div>
-        <list-item v-for="(account, index) in accounts" :key="index" :title="account.profile.profile_name"
-          :logo="account.profile.avatar" :click-able="false" :buttons="['arrows-rotate', 'trash']"
-          @click-arrows-rotate="refreshLogin(account.profile.uuid)" @click-trash="deleteAccount(account.profile.uuid)">
+        <list-item
+          v-for="(account, index) in accounts"
+          :key="index"
+          :title="account.profile.profile_name"
+          :logo="account.profile.avatar"
+          :click-able="true"
+          :buttons="['arrows-rotate', 'trash']"
+          @click-arrows-rotate="refreshLogin(account.profile.uuid)"
+          @click-trash="deleteAccount(account.profile.uuid)"
+          @click="chooseAccount(account)">
           <template #subtitle>
-            <tag v-if="!tokenValid(account)" text="需要刷新" :color="['249', '226', '175']" text-color="#f9e2af"
-              :background="false" :border="true" font-size="10" :round="true"></tag>
+            <tag
+              v-if="now > account.token_deadline"
+              text="需要刷新"
+              :color="['249', '226', '175']"
+              text-color="#f9e2af"
+              :background="false"
+              :border="true"
+              font-size="10"
+              :round="true"></tag>
           </template>
-          <i class="badge-check" style="color: #74c7ec; font-style: normal; font-family: fa-pro"></i>
+          <i
+            class="badge-check"
+            style="color: #74c7ec; font-style: normal; font-family: fa-pro"></i>
           微软（验证服务）
         </list-item>
       </div>
       <div style="margin-top: 8px">
-        <list-item class="list-item-user-plus" title="添加帐号" logo="user-plus" @click="$emit('add')"
+        <list-item
+          class="list-item-user-plus"
+          title="添加帐号"
+          logo="user-plus"
+          @click="$emit('add')"
           :click-able="true"></list-item>
       </div>
     </div>
@@ -30,6 +50,10 @@ import Tag from "@/components/Tag.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { ref } from "vue";
+import { useConfigStore } from "@/config";
+import { getAvatar } from "@/avatar";
+
+const config = useConfigStore();
 
 const emit = defineEmits(["add"]);
 
@@ -68,55 +92,13 @@ async function getAccounts() {
   accounts.value = res;
 }
 
-getAccounts().then(() => { });
-function tokenValid(account: Account) {
-  const now = Math.round(new Date().getTime() / 1000);
-  return account.token_deadline > now;
-}
+const now = ref(Math.round(new Date().getTime() / 1000));
+setInterval(() => {
+  now.value = Math.round(new Date().getTime() / 1000);
+}, 1000);
 
-async function getAvatar(src: string, size: number) {
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (ctx == null) {
-    return "";
-  }
-  const img = new Image();
-  img.src = src;
-  await new Promise<void>((reslove) => {
-    img.onload = function () {
-      const scale = img.width / 64;
-      const faceOffset = Math.round(size / 18.0);
-      ctx.imageSmoothingEnabled = false;
-      /* Inspired by HMCL */
-      ctx.drawImage(
-        img,
-        8 * scale,
-        8 * scale,
-        16 * scale - 8 * scale,
-        16 * scale - 8 * scale,
-        faceOffset,
-        faceOffset,
-        size - faceOffset - faceOffset,
-        size - faceOffset - faceOffset,
-      );
-      ctx.drawImage(
-        img,
-        40 * scale,
-        8 * scale,
-        48 * scale - 40 * scale,
-        16 * scale - 8 * scale,
-        0,
-        0,
-        size,
-        size,
-      );
-      reslove();
-    };
-  });
-  return canvas.toDataURL("image/png");
-}
+getAccounts().then(() => {});
+
 listen("refresh_accounts_list", () => {
   getAccounts();
 });
@@ -129,6 +111,10 @@ function refreshLogin(uuid: string) {
   invoke("refresh_microsoft_account_by_uuid", {
     uuid,
   });
+}
+
+function chooseAccount(account: Account) {
+  config.current_account = account.profile.uuid;
 }
 </script>
 
@@ -145,7 +131,7 @@ function refreshLogin(uuid: string) {
   padding: 0 12px;
   overflow: auto;
 
-  >div {
+  > div {
     border-radius: 8px;
     overflow: hidden;
   }
