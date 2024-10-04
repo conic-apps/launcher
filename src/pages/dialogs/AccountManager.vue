@@ -28,13 +28,10 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, markRaw, reactive, ref, shallowRef } from "vue";
+import { markRaw, reactive, ref, shallowRef } from "vue";
 import DialogVue from "@/components/Dialog.vue";
-import ListItem from "@/components/ListItem.vue";
-import Tag from "@/components/Tag.vue";
 import View from "./account/View.vue";
 import Add from "./account/Add.vue";
-import { invoke } from "@tauri-apps/api/core";
 
 const props = defineProps<{
   show: boolean;

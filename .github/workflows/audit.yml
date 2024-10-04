@@ -11,6 +11,9 @@ on:
       - "**/Cargo.toml"
       - "**/package.json"
       - "**/yarn.lock"
+  pull_request:
+    branches: ["master"]
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -20,8 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: rust audit
-        uses: rustsec/audit-check@v1
+        uses: rustsec/audit-check@v2.0.0
         with:
+          working-directory: ./core
           token: ${{ secrets.GITHUB_TOKEN }}
 
   audit-js:
