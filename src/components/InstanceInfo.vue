@@ -57,9 +57,7 @@
           class="game-button loading"
           :class="`${gameButtonType}-game-button`"
           v-if="buttonLoading">
-          <div class="a"></div>
-          <div class="b"></div>
-          <div class="c"></div>
+          <item-loading-icon status="in-progress"></item-loading-icon>
         </button>
       </div>
     </div>
@@ -70,6 +68,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import $ from "jquery";
+import ItemLoadingIcon from "./ItemLoadingIcon.vue";
 
 const i18n = useI18n();
 
@@ -252,7 +251,9 @@ button.game-button {
   color: rgb(var(--default-text-color));
   // cursor: pointer;
   transition: all 100ms ease;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   background-image: linear-gradient(248deg, #189e47, #41a126);
   transition: all 0.1s ease;
@@ -280,15 +281,5 @@ button.install-game-button {
 
 button.loading {
   pointer-events: none;
-
-  > div {
-    width: 5px;
-    height: 5px;
-    background: #fff;
-    opacity: 0.5;
-    display: inline-block;
-    margin: 0 1px;
-    margin-bottom: 2px;
-  }
 }
 </style>

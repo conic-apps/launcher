@@ -176,10 +176,10 @@ function updateData() {
     resourcepacks.value = res;
     resourcepacksIsLoading.value = false;
   });
-  invoke("scan_shaderpack_folder").then((res: any) => {
-    shaderpacks.value = res;
-    shaderpackIsLoading.value = false;
-  });
+  // invoke("scan_shaderpack_folder").then((res: any) => {
+  //   shaderpacks.value = res;
+  //   shaderpackIsLoading.value = false;
+  // });
 }
 updateData();
 </script>

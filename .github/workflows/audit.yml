@@ -19,8 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          cd core
       - name: rust audit
         uses: rustsec/audit-check@v1
         with:

@@ -50,6 +50,8 @@ export type Config = {
     }
 }
 
+// const config = (await invoke("read_config_file")) as Config
+// console.log(await invoke("read_config_file"))
 export const useConfigStore = defineStore("global_config", {
     state: (): Config => {
         return {
@@ -110,8 +112,8 @@ export const useConfigStore = defineStore("global_config", {
 
 /** 将渲染进程和主进程存储的配置与文件同步 */
 async function syncFromFile() {
-    const Config = useConfigStore()
+    const configStore = useConfigStore()
     const config: Config = await invoke("read_config_file")
-    Config.$patch(config)
+    configStore.$patch(config)
     await invoke("update_config", { config: config })
 }
