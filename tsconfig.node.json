@@ -2,8 +2,12 @@
     "extends": "@vue/tsconfig/tsconfig.node.json",
     "include": ["vite.config.*", "vitest.config.*", "cypress.config.*", "playwright.config.*"],
     "compilerOptions": {
+        "preserveValueImports": false,
+        "importsNotUsedAsValues": "remove",
+        "verbatimModuleSyntax": false,
         "ignoreDeprecations": "5.0",
         "composite": true,
-        "types": ["node", "jquery"]
+        "types": ["node", "jquery"],
+        "lib": ["esnext", "dom"]
     }
 }

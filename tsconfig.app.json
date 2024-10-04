@@ -3,11 +3,15 @@
     "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
     "exclude": ["src/**/__tests__/*"],
     "compilerOptions": {
+        "preserveValueImports": false,
+        "importsNotUsedAsValues": "remove",
+        "verbatimModuleSyntax": false,
         "ignoreDeprecations": "5.0",
         "composite": true,
         "baseUrl": ".",
         "paths": {
             "@/*": ["./src/*"]
         }
-    }
+    },
+    "lib": ["esnext", "dom"]
 }

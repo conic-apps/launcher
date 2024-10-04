@@ -468,14 +468,6 @@ i.square-terminal::before {
     content: "\e32a";
 }
 
-i.lwjgl {
-    width: 80%;
-    height: 80%;
-    background-image: url(@/assets/images/LWJGL_logo.svg);
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
 i.scroll::before {
     content: "\f70e";
 }
