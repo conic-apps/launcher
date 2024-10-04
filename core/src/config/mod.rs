@@ -1,7 +1,10 @@
-use log::debug;
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 
-use crate::{account::get_accounts, Storage, DATA_LOCATION};
+use crate::{
+    account::{get_accounts, Account},
+    Storage, DATA_LOCATION,
+};
 
 pub mod download;
 pub mod instance;
@@ -69,17 +72,23 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         let locale = sys_locale::get_locale().unwrap();
-        log::info!("System locale is {}", locale);
+        info!("System locale is {}", locale);
+        let accounts = get_accounts().unwrap();
+        let default_account = match accounts.first() {
+            Some(x) => x.to_owned(),
+            None => {
+                let default_account = Account::default();
+                let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+                let contents =
+                    serde_json::to_string_pretty(&vec![default_account.clone()]).unwrap();
+                std::fs::write(path, contents).unwrap();
+                default_account
+            }
+        };
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
-            current_account: get_accounts()
-                .unwrap()
-                .first()
-                .unwrap()
-                .profile
-                .uuid
-                .clone(),
+            current_account: default_account.profile.uuid,
             auto_update: true,
             language: locale.replace("-", "_").to_lowercase(),
             update_channel: UpdateChannel::Release,
@@ -101,6 +110,7 @@ pub fn save_config(storage: tauri::State<'_, Storage>) {
 pub fn read_config_file() -> Config {
     let path = DATA_LOCATION.get().unwrap().root.join(".aml.toml");
     if !path.exists() {
+        info!("No config file, using default config");
         let default_config = Config::default();
         let data = toml::to_string_pretty(&default_config).unwrap();
         std::fs::write(&path, data).unwrap();

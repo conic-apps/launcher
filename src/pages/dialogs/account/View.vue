@@ -14,7 +14,10 @@
           @click="chooseAccount(account)">
           <template #subtitle>
             <tag
-              v-if="now > account.token_deadline"
+              v-if="
+                now > (account.token_deadline ? account.token_deadline : now + 100000) &&
+                account.account_type === 'Microsoft'
+              "
               text="需要刷新"
               :color="['249', '226', '175']"
               text-color="#f9e2af"
@@ -61,7 +64,7 @@ const accounts = ref<Account[]>([]);
 export type Account = {
   refresh_token?: string;
   access_token?: string;
-  token_deadline: number;
+  token_deadline?: number;
   profile: {
     avatar: string;
     profile_name: string;

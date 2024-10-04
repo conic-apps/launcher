@@ -38,7 +38,6 @@
         "@types/web": "^0.0.163",
         "@vitejs/plugin-vue": "^5.0.5",
         "@vitejs/plugin-vue-jsx": "^3.0.0",
-        "@vue/devtools": "^6.6.3",
         "@vue/eslint-config-typescript": "^11.0.2",
         "@vue/tsconfig": "^0.1.3",
         "eslint": "^8.34.0",

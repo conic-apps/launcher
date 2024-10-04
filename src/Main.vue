@@ -22,7 +22,9 @@
         <span>{{ currentAccountProfile.name }}</span>
         <tag
           style="margin-left: 8px"
-          v-if="now > currentAccountProfile.tokenDeadline"
+          v-if="
+            now > currentAccountProfile.tokenDeadline && currentAccountProfile.type === 'Microsoft'
+          "
           text="需要刷新"
           :color="['249', '226', '175']"
           text-color="#f9e2af"
@@ -183,10 +185,16 @@ function closeSearchPanel() {
 
 const showAccountManager = ref(false);
 
-const currentAccountProfile = ref({
+const currentAccountProfile = ref<{
+  name: string;
+  avatar: string;
+  tokenDeadline: number;
+  type: "Microsoft" | "Offline";
+}>({
   name: "Steve",
   avatar: "@/assets/images/steve_avatar.webp",
   tokenDeadline: 0,
+  type: "Offline",
 });
 
 watch(
@@ -201,7 +209,8 @@ watch(
           currentAccountProfile.value = {
             name: account.profile.profile_name,
             avatar,
-            tokenDeadline: account.token_deadline,
+            tokenDeadline: account.token_deadline ? account.token_deadline : -1,
+            type: account.account_type,
           };
         });
       }
@@ -234,7 +243,8 @@ listen("refresh_accounts_list", () => {
       currentAccountProfile.value = {
         name: account.profile.profile_name,
         avatar,
-        tokenDeadline: account.token_deadline,
+        tokenDeadline: account.token_deadline ? account.token_deadline : -1,
+        type: account.account_type,
       };
     });
   });
