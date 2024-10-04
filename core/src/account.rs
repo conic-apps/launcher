@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::anyhow;
 use base64::{engine::general_purpose, Engine};
-use log::info;
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::Emitter;
@@ -85,7 +85,6 @@ fn add_account(account: Account) -> anyhow::Result<()> {
     let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&accounts).unwrap();
     std::fs::write(&path, &contents).unwrap();
-    println!("{:#?}", path);
     MAIN_WINDOW
         .get()
         .unwrap()
@@ -117,9 +116,13 @@ pub async fn add_microsoft_account(code: String) -> std::result::Result<(), ()> 
     async fn add_microsoft_account(code: String) -> anyhow::Result<()> {
         info!("Signing in through Microsoft");
         let account = microsoft_login(LoginPayload::AccessCode(code)).await?;
-        println!("{:#?}", account);
-        add_account(account)?;
-        Ok(())
+        if get_account_by_uuid(&account.profile.uuid).is_empty() {
+            add_account(account)?;
+            Ok(())
+        } else {
+            error!("The account has already been added");
+            Err(anyhow::anyhow!("This account has already been added"))
+        }
     }
     match add_microsoft_account(code).await {
         anyhow::Result::Ok(x) => Ok(x),
@@ -165,15 +168,15 @@ pub async fn refresh_all_microsoft_account() {
     for account in accounts {
         if account.refresh_token.is_none() || account.account_type != AccountType::Microsoft {
             result.push(account);
-            continue;
+        } else {
+            result.push(
+                microsoft_login(LoginPayload::RefreshToken(
+                    account.refresh_token.unwrap_or_default(),
+                ))
+                .await
+                .unwrap(),
+            )
         }
-        result.push(
-            microsoft_login(LoginPayload::RefreshToken(
-                account.refresh_token.unwrap_or_default(),
-            ))
-            .await
-            .unwrap(),
-        )
     }
     let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&result).unwrap();
@@ -189,13 +192,12 @@ pub async fn refresh_all_microsoft_account() {
 ///
 /// Note: Shouldn't save refresh token to config file
 pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<Account> {
-    // let client = HTTP_CLIENT.get().unwrap();
-    let client = reqwest::Client::new();
+    let client = HTTP_CLIENT.get().unwrap();
     let access_token_response = match payload {
-        LoginPayload::RefreshToken(token) => get_access_token_from_refresh_token(&client, &token)
+        LoginPayload::RefreshToken(token) => get_access_token_from_refresh_token(client, &token)
             .await
             .unwrap(),
-        LoginPayload::AccessCode(code) => get_access_token(&client, &code).await.unwrap(),
+        LoginPayload::AccessCode(code) => get_access_token(client, &code).await.unwrap(),
     };
     info!("Successfully get Microsoft access token");
     let access_token = access_token_response["access_token"]
@@ -213,20 +215,20 @@ pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<Account> {
         .unwrap()
         .to_string();
 
-    let xbox_auth_response = xbox_authenticate(&client, &access_token).await.unwrap();
+    let xbox_auth_response = xbox_authenticate(client, &access_token).await.unwrap();
     info!("Successfully login Xbox");
-    let xsts_token = xsts_authenticate(&client, &xbox_auth_response.xbl_token)
+    let xsts_token = xsts_authenticate(client, &xbox_auth_response.xbl_token)
         .await
         .unwrap();
     info!("Successfully verify XSTS");
     let minecraft_access_token =
-        minecraft_authenticate(&client, &xbox_auth_response.xbl_uhs, &xsts_token)
+        minecraft_authenticate(client, &xbox_auth_response.xbl_uhs, &xsts_token)
             .await
             .unwrap();
     info!("Successfully get Minecraft access token");
-    check_game(&client, &minecraft_access_token).await.unwrap();
+    check_game(client, &minecraft_access_token).await.unwrap();
     info!("Successfully check ownership");
-    let player_info = get_player_infomations(&client, &minecraft_access_token)
+    let player_info = get_player_infomations(client, &minecraft_access_token)
         .await
         .unwrap();
     info!("Successfully get game profile");

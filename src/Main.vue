@@ -37,7 +37,8 @@
         <div class="close" @click="close"><i></i></div>
       </div>
     </div>
-    <div class="sidebar" data-tauri-drag-region="">
+    <div class="sidebar" data-tauri-drag-region>
+      <img class="logo" src="@/assets/images/tauri-favicon.svg" />
       <ul class="sidebar-btns" data-tauri-drag-region>
         <sidebar-item
           title="家"
@@ -109,9 +110,7 @@ function maximize() {
   window.getCurrentWindow().maximize();
 }
 function close() {
-  invoke("save_config").then(() => {
-    window.getCurrentWindow().close();
-  });
+  window.getCurrentWindow().close();
 }
 
 const pages: any = reactive({
@@ -196,9 +195,6 @@ watch(
     invoke("get_account_by_uuid", {
       uuid: value.current_account,
     }).then((res) => {
-      invoke("update_config", { config: config }).then(() => {
-        invoke("save_config");
-      });
       const account = (res as Account[])[0];
       if (account != undefined) {
         getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
@@ -211,8 +207,19 @@ watch(
       }
     });
   },
-  { immediate: true },
+  { immediate: false },
 );
+
+watch(
+  config,
+  (value) => {
+    invoke("update_config", { config: value }).then(() => {
+      invoke("save_config");
+    });
+  },
+  { immediate: false },
+);
+
 const now = ref(Math.round(new Date().getTime() / 1000));
 setInterval(() => {
   now.value = Math.round(new Date().getTime() / 1000);
@@ -232,6 +239,8 @@ listen("refresh_accounts_list", () => {
     });
   });
 });
+
+invoke("refresh_all_microsoft_account");
 </script>
 
 <style lang="less" scoped>
@@ -371,15 +380,22 @@ listen("refresh_accounts_list", () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  .logo {
+    width: 40px;
+    height: 40px;
+    margin-top: 20px;
+    pointer-events: none;
+  }
 }
 
 .sidebar .sidebar-btns {
   width: 100%;
   height: 100%;
-  margin-top: 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 8px;
   margin-bottom: 22px;
 }
 

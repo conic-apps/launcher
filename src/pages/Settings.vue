@@ -31,11 +31,6 @@ import Download from "./settings/Download.vue";
 import Accessibility from "./settings/Accessibility.vue";
 import Extend from "./settings/Extend.vue";
 import About from "./settings/About.vue";
-import { useConfigStore } from "@/config";
-import { useI18n } from "vue-i18n";
-import { invoke } from "@tauri-apps/api/core";
-const i18n = useI18n();
-const config = useConfigStore();
 
 const components = ref([
   {
