@@ -71,8 +71,16 @@ async fn main() {
     std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     info!("Amethyst Launcher is open source, You can view the source code on Github: https://github.com/Conic-Sections/Amethyst-Launcher");
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _, _| {
+            let windows = app.webview_windows();
+            windows
+                .values()
+                .next()
+                .expect("Sorry, no window found")
+                .set_focus()
+                .expect("Can't Bring Window to Focus");
+        }))
         .plugin(tauri_plugin_http::init())
-        .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             create_instance,
             get_minecraft_version_list,
