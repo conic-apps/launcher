@@ -1,8 +1,7 @@
-@font-face {
-    font-family: "harmony";
-    /* font-weight: normal; */
-    src: url(../fonts/HarmonyOS_Sans_SC_Regular.ttf);
-}
+/* @font-face { */
+/*     font-family: "harmony"; */
+/*     src: url(../fonts/HarmonyOS_Sans_SC_Regular.ttf); */
+/* } */
 
 h4 {
     font-size: 16px;
@@ -21,7 +20,7 @@ h4 {
     outline: none;
     -webkit-user-select: none;
     cursor: default;
-    font-family: harmony;
+    /* font-family: harmony; */
     line-height: 1;
     content-visibility: auto;
     -webkit-content-visibility: auto;
