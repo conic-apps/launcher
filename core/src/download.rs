@@ -112,41 +112,47 @@ pub async fn download_files(
     let total = downloads.len();
     let client = HTTP_CLIENT.get().unwrap();
     let speed_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    let speed_counter_clone = speed_counter.clone();
     let running_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    let running_counter_clone = running_counter.clone();
     let (tx, rx) = mpsc::channel();
     let (tx2, rx2) = mpsc::channel();
-    let running_counter_thread = thread::spawn(move || {
-        let running_counter = running_counter_clone;
-        loop {
-            let message = rx.try_recv();
-            if message == Ok("terminate") {
-                break;
+    let running_counter_closure = {
+        let running_counter = running_counter.clone();
+        move || {
+            let running_counter = running_counter;
+            loop {
+                let message = rx.try_recv();
+                if message == Ok("terminate") {
+                    break;
+                }
+                main_window
+                    .emit(
+                        "running_download_task",
+                        running_counter.load(Ordering::SeqCst),
+                    )
+                    .unwrap();
+                thread::sleep(Duration::from_millis(100))
             }
-            main_window
-                .emit(
-                    "running_download_task",
-                    running_counter.load(Ordering::SeqCst),
-                )
-                .unwrap();
-            thread::sleep(Duration::from_millis(100))
         }
-    });
-    let speed_thread = thread::spawn(move || {
-        let counter = speed_counter_clone;
-        loop {
-            let message = rx2.try_recv();
-            if message == Ok("terminate") {
-                break;
+    };
+    let running_counter_thread = thread::spawn(running_counter_closure);
+    let speed_thread_closure = {
+        let speed_counter = speed_counter.clone();
+        move || {
+            let counter = speed_counter;
+            loop {
+                let message = rx2.try_recv();
+                if message == Ok("terminate") {
+                    break;
+                }
+                thread::sleep(Duration::from_millis(2000));
+                main_window
+                    .emit("download_speed", counter.load(Ordering::SeqCst))
+                    .unwrap();
+                counter.store(0, Ordering::SeqCst);
             }
-            thread::sleep(Duration::from_millis(2000));
-            main_window
-                .emit("download_speed", counter.load(Ordering::SeqCst))
-                .unwrap();
-            counter.store(0, Ordering::SeqCst);
         }
-    });
+    };
+    let speed_thread = thread::spawn(speed_thread_closure);
     let error = Arc::new(AtomicBool::new(false));
     main_window
         .emit(
@@ -176,9 +182,16 @@ pub async fn download_files(
                 loop {
                     retried += 1;
                     let speed_counter = speed_counter.clone();
-                    if download_file(client, &task, &counter, &speed_counter, max_download_speed)
-                        .await
-                        .is_ok()
+                    if download_file(
+                        client,
+                        &task,
+                        &counter,
+                        &speed_counter,
+                        max_download_speed,
+                        error.clone(),
+                    )
+                    .await
+                    .is_ok()
                     {
                         break;
                     }
@@ -200,7 +213,6 @@ pub async fn download_files(
         .buffer_unordered(max_connections)
         .for_each_concurrent(None, |_| async {
             let counter = counter.clone().load(Ordering::SeqCst);
-            // println!("Progress: {counter} / {total}");
             running_counter.fetch_sub(1, Ordering::SeqCst);
             if send_progress {
                 main_window
@@ -222,12 +234,13 @@ pub async fn download_files(
     running_counter_thread.join().unwrap();
 }
 
-pub async fn download_file(
+async fn download_file(
     client: &reqwest::Client,
     task: &Download,
     counter: &Arc<AtomicUsize>,
     speed_counter: &Arc<AtomicUsize>,
     max_download_speed: usize,
+    error: Arc<AtomicBool>,
 ) -> anyhow::Result<()> {
     let file_path = task.file.clone();
     tokio::fs::create_dir_all(file_path.parent().ok_or(anyhow::Error::msg(
@@ -241,6 +254,10 @@ pub async fn download_file(
             while speed_counter.load(Ordering::SeqCst) > max_download_speed {
                 tokio::time::sleep(Duration::from_millis(100)).await;
             }
+        }
+        if error.load(Ordering::SeqCst) {
+            // Return `Ok(())` because we have already sent an error to the frontend
+            return Ok(());
         }
         file.write_all(&chunk).await?;
         speed_counter.fetch_add(chunk.len(), Ordering::SeqCst);
