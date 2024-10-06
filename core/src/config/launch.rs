@@ -2,10 +2,6 @@
 // Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// TODO: launch options
-
-// now just use default launch config
-
 use serde::{Deserialize, Serialize};
 
 /// Game process priority, invalid on windows

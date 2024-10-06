@@ -1,0 +1,39 @@
+# Amethyst Launcher
+# Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+# SPDX-License-Identifier: GPL-3.0-only
+
+name: 💡 Feature Request
+title: "[New Feature] "
+description: Suggest an idea
+labels: ["type: feature request"]
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Describe the problem or need
+      description: A clear description of the problem this feature would solve
+      placeholder: "I'm always frustrated when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: "Describe the solution you'd like"
+      description: A clear description of what change you would like
+      placeholder: "I would like to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: "Any alternative solutions you've considered"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
