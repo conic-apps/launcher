@@ -55,7 +55,7 @@ static DATA_LOCATION: OnceCell<DataLocation> = OnceCell::new();
 static PLATFORM_INFO: OnceCell<PlatformInfo> = OnceCell::new();
 static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
 static APPLICATION_DATA: OnceCell<PathBuf> = OnceCell::new();
-const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("./launcher_profiles.json");
+const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("../assets/launcher_profiles.json");
 
 pub struct Storage {
     pub current_instance: Arc<Mutex<String>>,
@@ -127,13 +127,15 @@ async fn main() {
                 return;
             };
             if let tauri::WindowEvent::CloseRequested { .. } = event {
+                window.close().unwrap();
                 match std::fs::remove_dir_all(&DATA_LOCATION.get().unwrap().temp) {
                     Ok(_) => info!("Temporary files cleared"),
-                    Err(_) => {
-                        error!("Could not clear temp foler")
+                    Err(x) => {
+                        if x.kind() != std::io::ErrorKind::NotFound {
+                            error!("Could not clear temp foler")
+                        }
                     }
                 };
-                window.close().unwrap();
             }
         })
         .run(tauri::generate_context!())
