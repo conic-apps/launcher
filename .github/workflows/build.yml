@@ -163,6 +163,13 @@ jobs:
           name: Updater signature(amd64-appimage)
           path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage.sig
 
+      - name: Upload Windows installation-free exe
+        uses: actions/upload-artifact@v4
+        if: matrix.platform == 'windows-latest'
+        with:
+          name: Windows Installation-free(64-bit-exe)
+          path: ${{ github.workspace }}/core/target/release/amethyst-launcher.exe
+
       - name: Upload Microsoft Installer bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
@@ -170,7 +177,7 @@ jobs:
           name: Microsoft Installer bundle(64-bit)
           path: ${{ github.workspace }}/core/target/release/bundle/msi/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi
 
-      - name: Upload Microsoft Installer bundle
+      - name: Upload Microsoft Installer signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
