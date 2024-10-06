@@ -18,7 +18,7 @@ use crate::{
 
 use super::options::LaunchOptions;
 
-const DEFAULT_GAME_ICON: &[u8] = include_bytes!("./assets/minecraft.icns");
+const DEFAULT_GAME_ICON: &[u8] = include_bytes!("../../assets/minecraft.icns");
 
 pub async fn generate_command_arguments(
     minecraft_location: &MinecraftLocation,

@@ -106,6 +106,8 @@ pub struct DataLocation {
 impl DataLocation {
     pub fn new<S: AsRef<OsStr> + ?Sized>(data_folder: &S) -> Self {
         let data_folder_root = Path::new(data_folder).to_path_buf();
+        let temp_path = std::env::temp_dir().join(format!("amethyst-launcher-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(&temp_path).expect("Could not create temp dir");
         Self {
             instances: data_folder_root.join("instances"),
             cache: match PLATFORM_INFO.get().unwrap().os_type {
@@ -119,7 +121,7 @@ impl DataLocation {
             // default_jre: data_folder.join("default_jre").join("bin").join("java"),
             default_jre: PathBuf::from_str("/bin/java").unwrap(),
             resources: data_folder_root.join("resources"),
-            temp: std::env::temp_dir().join(format!("amethyst-launcher-{}", Uuid::new_v4())),
+            temp: temp_path,
             root: data_folder_root,
         }
     }
