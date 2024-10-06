@@ -1,0 +1,39 @@
+name: test rust
+
+on:
+  push:
+    paths:
+      - ".github/workflows/test-rust.yml"
+      - "core/**"
+  pull_request:
+    branches: ["master"]
+    path:
+      - ".github/workflows/test-rust.yml"
+      - "core/**"
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_PROFILE_DEV_DEBUG: 0 # This would add unnecessary bloat to the target folder, decreasing cache efficiency.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf tree
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./core -> target
+
+      - name: Run tests
+        run: cd core && cargo test
