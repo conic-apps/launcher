@@ -60,6 +60,11 @@ const computedLogo = computed(() => {
   overflow: hidden;
   background: var(--list-item-background);
   pointer-events: none;
+  height: 53px;
+
+  * {
+    content-visibility: auto;
+  }
 
   > div {
     display: flex;
