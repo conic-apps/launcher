@@ -69,15 +69,15 @@ async fn main() {
     print_title();
     #[cfg(target_os = "linux")]
     {
-        if std::path::Path::new("/dev/dri").exists()
-            && std::env::var("WAYLAND_DISPLAY").is_err()
-            && std::env::var("XDG_SESSION_TYPE").unwrap_or_default() == "x11"
-        {
-            // SAFETY: There's potential for race conditions in a multi-threaded context.
-            unsafe {
-                std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-            }
+        // if std::path::Path::new("/dev/dri").exists()
+        //     && std::env::var("WAYLAND_DISPLAY").is_err()
+        //     && std::env::var("XDG_SESSION_TYPE").unwrap_or_default() == "x11"
+        // {
+        // SAFETY: There's potential for race conditions in a multi-threaded context.
+        unsafe {
+            std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
         }
+        // }
     }
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
