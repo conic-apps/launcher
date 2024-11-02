@@ -208,7 +208,9 @@ pub async fn refresh_all_microsoft_account() {
 
 #[cfg(debug_assertions)]
 #[tauri::command(async)]
-pub async fn refresh_all_microsoft_account() {}
+pub async fn refresh_all_microsoft_account() {
+    info!("Accounts are not refreshed on app launch in debug mode.")
+}
 
 /// Login or refresh login.
 ///
@@ -256,7 +258,7 @@ pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<Account> {
     info!("Successfully get game profile");
     Ok(Account {
         refresh_token: Some(refresh_token),
-        access_token: Some(access_token),
+        access_token: Some(minecraft_access_token),
         token_deadline: Some(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + expires_in),
         profile: Profile {
             profile_name: serde_json::from_value(player_info["name"].clone())?,
