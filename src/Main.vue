@@ -43,7 +43,7 @@
       <img class="logo" src="@/assets/images/tauri-favicon.svg" />
       <ul class="sidebar-btns" data-tauri-drag-region>
         <sidebar-item
-          title="家"
+          :title="$t('sidebar.home')"
           icon="church"
           @click="changePage($event, 'home')"
           id="sidebar-home"></sidebar-item>
@@ -57,7 +57,7 @@
         <!--   icon="puzzle-piece" -->
         <!--   @click="changePage($event, 'community')"></sidebar-item> -->
         <sidebar-item
-          title="市场"
+          :title="$t('sidebar.market')"
           icon="shop"
           @click="changePage($event, 'market')"
           id="sidebar-market"></sidebar-item>

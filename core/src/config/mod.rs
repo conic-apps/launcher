@@ -121,7 +121,7 @@ pub fn read_config_file() -> Config {
         return default_config;
     }
     let data = std::fs::read(path).unwrap();
-    debug!("Loaded config from file");
+    info!("Loaded config from file");
     toml::from_str::<Config>(String::from_utf8(data).unwrap().as_ref()).unwrap()
 }
 

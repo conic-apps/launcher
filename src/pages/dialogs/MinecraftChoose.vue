@@ -8,6 +8,7 @@
           overflow: hidden;
           border: 1px solid rgba(0, 0, 0, 0.16);
           box-shadow: rgba(0, 0, 0, 0.16) 0 0 10px;
+          content-visibility: auto;
         ">
         <TransitionGroup>
           <list-item
@@ -22,17 +23,17 @@
             <template #icon>
               <img
                 v-if="version.type == `release`"
-                style="width: 100%; height: 100%"
+                style="width: 100%; height: 100%; content-visibility: auto"
                 src="@/assets/images/Grass_Block.webp"
                 alt="" />
               <img
                 v-else-if="version.type == `snapshot`"
-                style="width: 100%; height: 100%"
+                style="width: 100%; height: 100%; content-visibility: auto"
                 src="@/assets/images/Command_Block.webp"
                 alt="" />
               <img
                 v-else
-                style="width: 100%; height: 100%"
+                style="width: 100%; height: 100%; content-visibility: auto"
                 src="@/assets/images/Ancient_Debris.webp"
                 alt="" />
             </template>
@@ -41,21 +42,24 @@
                 text="正式版"
                 :color="['74', '194', '107']"
                 :background="true"
-                :border="true"></tag>
+                :border="true"
+                :round="true"></tag>
             </template>
             <template #subtitle v-else-if="version.type == 'snapshot'">
               <tag
                 text="测试版"
                 :color="['200', '200', '0']"
                 :background="true"
-                :border="true"></tag>
+                :border="true"
+                :round="true"></tag>
             </template>
             <template #subtitle v-else>
               <tag
                 text="远古版"
                 :color="['255', '129', '120']"
                 :background="true"
-                :border="true"></tag>
+                :border="true"
+                :round="true"></tag>
             </template>
           </list-item>
         </TransitionGroup>

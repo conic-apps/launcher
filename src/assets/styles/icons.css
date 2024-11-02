@@ -561,3 +561,15 @@ i.tokio {
 i.window-maximize::before {
     content: "\f2d0";
 }
+
+i.user-check::before {
+    content: "\f4fc"
+}
+
+i.file-check::before {
+    content: "\f316"
+}
+
+i.lock::before {
+    content: "\f023"
+}
