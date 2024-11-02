@@ -178,6 +178,7 @@ pub async fn refresh_microsoft_account_by_uuid(uuid: String) {
         .unwrap();
 }
 
+#[cfg(not(debug_assertions))]
 #[tauri::command(async)]
 pub async fn refresh_all_microsoft_account() {
     let accounts = get_accounts().unwrap();
@@ -204,6 +205,10 @@ pub async fn refresh_all_microsoft_account() {
         .emit("refresh_accounts_list", "")
         .unwrap();
 }
+
+#[cfg(debug_assertions)]
+#[tauri::command(async)]
+pub async fn refresh_all_microsoft_account() {}
 
 /// Login or refresh login.
 ///

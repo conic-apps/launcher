@@ -154,8 +154,7 @@ fn spawn_minecraft_process(
         };
     }
     // todo(after java exec): add -Dfile.encoding=encoding.name() and other
-    let mut launch_command =
-        "/usr/lib/jvm/java-21-openjdk-21.0.4.0.7-2.fc40.x86_64/bin/java".to_string();
+    let mut launch_command = "java".to_string();
     for arg in command_arguments.clone() {
         launch_command.push(' ');
         launch_command = format!("{}{}", launch_command, arg);

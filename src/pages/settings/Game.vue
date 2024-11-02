@@ -94,21 +94,21 @@
           <toggle-switch></toggle-switch>
         </setting-item>
         <setting-item
-          title="跳过帐户刷新"
-          description="如果登录凭据过期，启动器会在启动游戏前刷新登录。开启此选项来跳过这个步骤"
-          icon="">
+          :title="$t('settings.game.autoRefreshAccount')"
+          :description="$t('settings.game.autoRefreshAccountDesc')"
+          icon="user-check">
           <toggle-switch v-model="config.launch.skip_refresh_account"></toggle-switch>
         </setting-item>
         <setting-item
-          title="跳过文件检查"
-          description="如果游戏异常退出，下次启动前会尝试补全游戏文件。开启此选项来跳过这个步骤"
-          icon="">
+          :title="$t('settings.game.autoCompleteGameFiles')"
+          :description="$t('settings.game.autoCompleteGameFilesDesc')"
+          icon="file-check">
           <toggle-switch v-model="config.launch.skip_check_files"></toggle-switch>
         </setting-item>
         <setting-item
           :title="$t('settings.game.demo')"
           :description="$t('settings.game.demoDesc')"
-          icon="">
+          icon="lock">
           <toggle-switch v-model="config.launch.is_demo"></toggle-switch>
         </setting-item>
       </setting-group>
@@ -123,7 +123,6 @@ import SettingGroup from "@/components/SettingGroup.vue";
 import TextInputBox from "@/components/controllers/TextInputBox.vue";
 import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
 import { useConfigStore } from "@/config";
-import { ref, watch } from "vue";
 const config = useConfigStore();
 </script>
 

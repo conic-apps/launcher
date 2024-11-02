@@ -3,7 +3,9 @@ export default {
         placeholder: "在 Amethyst 中搜索，或输入命令",
     },
     sidebar: {
+        home: "家",
         game: "游戏",
+        market: "市场",
         settings: "设置",
     },
     game: {
@@ -11,6 +13,7 @@ export default {
         latestSnapshot: "最新快照",
         install: "安装",
         launch: "开始游戏",
+        launchDemo: "开始试玩",
         instances: "游戏",
         playtime: "游戏时长",
         accounts: "帐户",
@@ -93,7 +96,11 @@ export default {
             windowSizeWidth: "宽",
             windowSizeHeight: "高",
             hideLauncherAfterLaunch: "启动游戏后隐藏启动器(TODO)",
-            demo: "演示模式",
+            autoRefreshAccount: "自动刷新帐户",
+            autoRefreshAccountDesc: "如果登录凭据过期，启动器会在启动游戏前刷新登录",
+            autoCompleteGameFiles: "自动补全游戏文件",
+            autoCompleteGameFilesDesc: "在需要的时候自动检查并补全游戏运行所需的文件",
+            demo: "试玩模式",
             demoDesc: "在单一的世界中游玩100分钟（5个游戏日），在此之后地图就会被锁定",
         },
         advance: {
