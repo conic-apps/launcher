@@ -165,7 +165,7 @@ pub async fn generate_command_arguments(
     let mut game_options: HashMap<&str, String> = HashMap::with_capacity(13);
     let assets_dir = minecraft_location.assets.clone();
     game_options.insert("version_name", version.id.clone());
-    game_options.insert("version_type", version.version_type.unwrap());
+    game_options.insert("version_type", launch_options.launcher_name.clone());
     game_options.insert("assets_root", assets_dir.to_string_lossy().to_string());
     game_options.insert(
         "game_assets",
@@ -185,7 +185,7 @@ pub async fn generate_command_arguments(
     game_options.insert("auth_uuid", launch_options.game_profile.uuid.clone());
     game_options.insert("auth_access_token", launch_options.access_token.clone());
     game_options.insert("user_properties", launch_options.properties.clone());
-    game_options.insert("user_type", "mojang".to_string());
+    game_options.insert("user_type", "msa".to_string());
     game_options.insert("resolution_width", launch_options.width.to_string());
     game_options.insert("resolution_height", launch_options.height.to_string());
     command_arguments.extend(
