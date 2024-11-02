@@ -306,7 +306,7 @@ function create() {
 let repeated = ref(false);
 
 watch(instanceName, (newValue) => {
-  invoke("check_repeated_instance_name", {
+  invoke("check_instance_existance", {
     instanceName: newValue,
   }).then((res: any) => {
     repeated.value = res;

@@ -13,7 +13,8 @@
         "lint": "eslint \"src/**\" --ignore-pattern \"src/assets\"",
         "lint:fix": "eslint \"src/**\" --ignore-pattern \"src/assets\" --fix",
         "format": "yarn prettier --write .",
-        "format:check": "yarn prettier --check ."
+        "format:check": "yarn prettier --check .",
+        "clean-app-data": "rm -rf ~/.aml"
     },
     "license": "GPL-3.0-only",
     "dependencies": {

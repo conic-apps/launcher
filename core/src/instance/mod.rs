@@ -30,7 +30,7 @@ pub async fn create_instance(instance_name: String, config: InstanceConfig) -> O
 }
 
 #[tauri::command(async)]
-pub async fn check_repeated_instance_name(instance_name: String) -> bool {
+pub async fn check_instance_existance(instance_name: String) -> bool {
     debug!("Checking repeated: {}", instance_name);
     let instance_root = DATA_LOCATION
         .get()
@@ -127,14 +127,14 @@ pub async fn update_latest_instance() {
         return;
     };
     let version_list = version_list.unwrap();
-    if !check_repeated_instance_name("Latest Release".to_string()).await {
+    if !check_instance_existance("Latest Release".to_string()).await {
         create_instance(
             "Latest Release".to_string(),
             InstanceConfig::new("Latest Release", &version_list.latest.release),
         )
         .await;
     };
-    if !check_repeated_instance_name("Latest Snapshot".to_string()).await {
+    if !check_instance_existance("Latest Snapshot".to_string()).await {
         create_instance(
             "Latest Snapshot".to_string(),
             InstanceConfig::new("Latest Snapshot", &version_list.latest.snapshot),
