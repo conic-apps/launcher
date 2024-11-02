@@ -8,7 +8,7 @@ use resourcepack::Resourcepack;
 use saves::level::LevelData;
 use serde::{Deserialize, Serialize};
 
-use crate::{Storage, DATA_LOCATION};
+use crate::{instance::check_instance_existance, Storage, DATA_LOCATION};
 
 pub mod mods;
 pub mod resourcepack;
@@ -25,8 +25,10 @@ pub async fn scan_mod_folder(
         storage: tauri::State<'_, Storage>,
     ) -> anyhow::Result<Vec<ResolvedMod>> {
         let data_location = DATA_LOCATION.get().unwrap();
+        if !check_instance_existance(instance_name.clone()).await {
+            return Err(anyhow::anyhow!("Invalid instance_name"));
+        }
         let mod_packs_root = data_location.get_modpacks_root(&instance_name);
-
         tokio::fs::create_dir_all(&mod_packs_root).await?;
 
         let mut folder_entries = tokio::fs::read_dir(mod_packs_root).await?;
@@ -38,7 +40,7 @@ pub async fn scan_mod_folder(
             };
             let active_instance = storage.current_instance.lock().unwrap().clone();
             if active_instance != instance_name {
-                return Err(anyhow::anyhow!("stopped")); // if user change the active instance, stop scanning
+                return Err(anyhow::anyhow!("Current instance changed"));
             }
             if !file_type.is_file() {
                 continue;
@@ -89,8 +91,10 @@ pub async fn scan_saves_folder(
         storage: tauri::State<'_, Storage>,
     ) -> anyhow::Result<Vec<Saves>> {
         let data_location = DATA_LOCATION.get().unwrap();
+        if !check_instance_existance(instance_name.clone()).await {
+            return Err(anyhow::anyhow!("Instance name is invalid"));
+        }
         let saves_root = data_location.get_saves_root(&instance_name);
-
         tokio::fs::create_dir_all(&saves_root).await?;
 
         let mut folder_entries = tokio::fs::read_dir(saves_root).await?;
@@ -102,7 +106,7 @@ pub async fn scan_saves_folder(
             };
             let active_instance = storage.current_instance.lock().unwrap().clone();
             if active_instance != instance_name {
-                return Err(anyhow::anyhow!("stopped")); // if user change the active instance, stop scanning
+                return Err(anyhow::anyhow!("Current instance changed"));
             }
             if !file_type.is_dir() {
                 continue;
@@ -154,8 +158,10 @@ pub async fn scan_resourcepack_folder(
         storage: tauri::State<'_, Storage>,
     ) -> anyhow::Result<Vec<Resourcepack>> {
         let data_location = DATA_LOCATION.get().unwrap();
+        if !check_instance_existance(instance_name.clone()).await {
+            return Err(anyhow::anyhow!("Instance name is invalid"));
+        }
         let resourcespacks_root = data_location.get_resourcespacks_root(&instance_name);
-
         tokio::fs::create_dir_all(&resourcespacks_root).await?;
 
         let mut folder_entries = tokio::fs::read_dir(resourcespacks_root).await?;
@@ -167,7 +173,7 @@ pub async fn scan_resourcepack_folder(
             };
             let active_instance = storage.current_instance.lock().unwrap().clone();
             if active_instance != instance_name {
-                return Err(anyhow::anyhow!("stopped")); // if user change the active instance, stop scanning
+                return Err(anyhow::anyhow!("Current instance changed"));
             }
             if !file_type.is_file() {
                 continue;

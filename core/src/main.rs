@@ -35,7 +35,7 @@ use crate::install::{
     get_quilt_version_list,
 };
 use crate::instance::{
-    check_repeated_instance_name, create_instance, scan_instances_folder, set_current_instance,
+    check_instance_existance, create_instance, scan_instances_folder, set_current_instance,
 };
 use crate::launch::launch;
 use config::{read_config_file, save_config, update_config, Config};
@@ -96,7 +96,7 @@ async fn main() {
             get_fabric_version_list,
             get_forge_version_list,
             get_quilt_version_list,
-            check_repeated_instance_name,
+            check_instance_existance,
             scan_instances_folder,
             set_current_instance,
             scan_mod_folder,
