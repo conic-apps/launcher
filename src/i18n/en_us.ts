@@ -3,14 +3,17 @@ export default {
         placeholder: "Search in Amethyst, or use commands",
     },
     sidebar: {
+        home: "Home",
         game: "Game",
+        market: "Market",
         settings: "Settings",
     },
     game: {
         latestRelease: "Latest Release",
         latestSnapshot: "Latest Snapshot",
         install: "Install",
-        launch: "Launch",
+        launch: "Play",
+        launchDemo: "Trial Play",
         instances: "Instances",
         playtime: "Playtime",
         accounts: "Accounts",
@@ -94,6 +97,12 @@ export default {
             windowSizeWidth: "Width",
             windowSizeHeight: "Height",
             hideLauncherAfterLaunch: "Hide launcher after launch game",
+            autoRefreshAccount: "Automatically refresh account",
+            autoRefreshAccountDesc:
+                "If login credentials expire, the launcher refreshes the login before launching the game.",
+            autoCompleteGameFiles: "Autocomplete game files",
+            autoCompleteGameFilesDesc:
+                "Automatically check and complete files required for game operation when needed.",
             demo: "Demo mode",
             demoDesc:
                 "Try the game for 100 minutes (5 game days) in a single world. If you haven't purchased the game, this option is forcefully enabled.",

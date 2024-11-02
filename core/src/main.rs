@@ -67,9 +67,18 @@ async fn main() {
     initialize_application().await;
     initialize_logger();
     print_title();
-    info!("Amethyst Launcher is starting up");
-    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-    info!("Amethyst Launcher is open source, You can view the source code on Github: https://github.com/Conic-Sections/Amethyst-Launcher");
+    #[cfg(target_os = "linux")]
+    {
+        if std::path::Path::new("/dev/dri").exists()
+            && std::env::var("WAYLAND_DISPLAY").is_err()
+            && std::env::var("XDG_SESSION_TYPE").unwrap_or_default() == "x11"
+        {
+            // SAFETY: There's potential for race conditions in a multi-threaded context.
+            unsafe {
+                std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+            }
+        }
+    }
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             let windows = app.webview_windows();
@@ -89,7 +98,6 @@ async fn main() {
             get_quilt_version_list,
             check_repeated_instance_name,
             scan_instances_folder,
-            // watch_instances_folder,
             set_current_instance,
             scan_mod_folder,
             scan_saves_folder,
@@ -209,7 +217,6 @@ fn initialize_logger() {
 }
 
 async fn initialize_application() {
-    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     PLATFORM_INFO.set(PlatformInfo::new().await).unwrap();
     initialize_application_data().await;
     let data_location = DataLocation::new(APPLICATION_DATA.get().unwrap());
@@ -322,4 +329,6 @@ fn print_title() {
     debug!(" ██║     ██╔══██║██║   ██║██║╚██╗██║██║     ██╔══██║██╔══╝  ██╔══██╗    ");
     debug!(" ███████╗██║  ██║╚██████╔╝██║ ╚████║╚██████╗██║  ██║███████╗██║  ██║    ");
     debug!(" ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ");
+    info!("Amethyst Launcher is starting up");
+    info!("Amethyst Launcher is open source, You can view the source code on Github: https://github.com/Conic-Sections/Amethyst-Launcher");
 }

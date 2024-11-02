@@ -69,8 +69,10 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import $ from "jquery";
 import ItemLoadingIcon from "./ItemLoadingIcon.vue";
+import { useConfigStore } from "@/config";
 
 const i18n = useI18n();
+const config = useConfigStore();
 
 const props = defineProps<{
   minecraftVersion: String;
@@ -99,7 +101,11 @@ let gameButtonText = computed(() => {
     case "install":
       return i18n.t("game.install");
     case "launch":
-      return i18n.t("game.launch");
+      if (config.launch.is_demo) {
+        return i18n.t("game.launchDemo");
+      } else {
+        return i18n.t("game.launch");
+      }
     default:
       return "";
   }
