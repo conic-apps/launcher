@@ -176,7 +176,7 @@ listen("install_success", () => {
 listen("launch_success", () => {
   setTimeout(() => {
     buttonLoading.value = false;
-  }, 10000);
+  }, 1000);
 });
 </script>
 

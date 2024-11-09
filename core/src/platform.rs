@@ -51,7 +51,7 @@ impl PlatformInfo {
 
                     let mut command = Command::new("C:\\Windows\\System32\\cmd.exe");
                     command.creation_flags(0x08000000);
-                    command.args(&[
+                    command.args([
                         "/C",
                         r#"powershell -c [System.Environment]::OSVersion.Version"#,
                     ]);

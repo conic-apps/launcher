@@ -260,7 +260,7 @@ async fn initialize_application_data() {
             APPLICATION_DATA
                 .set(
                     PathBuf::from(
-                        std::env::var("APP_DATA").expect("Could not found APP_DATA directory"),
+                        std::env::var("APPDATA").expect("Could not found APP_DATA directory"),
                     )
                     .join("aml"),
                 )
