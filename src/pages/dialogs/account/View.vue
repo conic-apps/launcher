@@ -15,7 +15,8 @@
           <template #subtitle>
             <tag
               v-if="
-                now > (account.token_deadline ? account.token_deadline : now + 100000) &&
+                currentTime.now >
+                  (account.token_deadline ? account.token_deadline : currentTime.now + 100000) &&
                 account.account_type === 'Microsoft'
               "
               text="需要刷新"
@@ -52,9 +53,10 @@ import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { ref } from "vue";
-import { useConfigStore } from "@/config";
+import { computed, ref } from "vue";
+import { useConfigStore } from "@/store/config";
 import { getAvatar } from "@/avatar";
+import { useTimeStore } from "@/store/time";
 
 const config = useConfigStore();
 
@@ -95,10 +97,7 @@ async function getAccounts() {
   accounts.value = res;
 }
 
-const now = ref(Math.round(new Date().getTime() / 1000));
-setInterval(() => {
-  now.value = Math.round(new Date().getTime() / 1000);
-}, 1000);
+const currentTime = useTimeStore();
 
 getAccounts().then(() => {});
 

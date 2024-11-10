@@ -65,7 +65,7 @@ import LogViewer from "./dialogs/LogViewer.vue";
 import { ref, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { useConfigStore } from "@/config";
+import { useConfigStore } from "@/store/config";
 
 const config = useConfigStore();
 

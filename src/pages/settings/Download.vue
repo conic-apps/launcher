@@ -45,7 +45,7 @@ import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
 import TextInputBox from "@/components/controllers/TextInputBox.vue";
-import { useConfigStore } from "@/config";
+import { useConfigStore } from "@/store/config";
 const config = useConfigStore();
 </script>
 

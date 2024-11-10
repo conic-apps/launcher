@@ -69,7 +69,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import $ from "jquery";
 import ItemLoadingIcon from "./ItemLoadingIcon.vue";
-import { useConfigStore } from "@/config";
+import { useConfigStore } from "@/store/config";
 
 const i18n = useI18n();
 const config = useConfigStore();
