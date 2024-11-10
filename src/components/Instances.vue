@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { computed, ref, type Ref } from "vue";
-import { useConfigStore } from "@/config";
+import { useConfigStore } from "@/store/config";
 const config = useConfigStore();
 
 export interface Instance {

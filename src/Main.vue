@@ -23,7 +23,8 @@
         <tag
           style="margin-left: 8px"
           v-if="
-            now > currentAccountProfile.tokenDeadline && currentAccountProfile.type === 'Microsoft'
+            currentTime.now > currentAccountProfile.tokenDeadline &&
+            currentAccountProfile.type === 'Microsoft'
           "
           text="需要刷新"
           :color="['249', '226', '175']"
@@ -94,7 +95,7 @@ import Settings from "./pages/Settings.vue";
 import Game from "./pages/Game.vue";
 import UpdateReminder from "./pages/dialogs/UpdateReminder.vue";
 import { invoke } from "@tauri-apps/api/core";
-import { useConfigStore } from "./config";
+import { useConfigStore } from "./store/config";
 import { watch } from "vue";
 import { useI18n } from "vue-i18n";
 import gsap from "gsap";
@@ -104,6 +105,7 @@ import { Account } from "./pages/dialogs/account/View.vue";
 import { getAvatar } from "./avatar";
 import Tag from "./components/Tag.vue";
 import { listen } from "@tauri-apps/api/event";
+import { useTimeStore } from "./store/time";
 
 function minimize() {
   window.getCurrentWindow().minimize();
@@ -229,10 +231,10 @@ watch(
   { immediate: false },
 );
 
-const now = ref(Math.round(new Date().getTime() / 1000));
+const currentTime = useTimeStore();
 setInterval(() => {
-  now.value = Math.round(new Date().getTime() / 1000);
-}, 1000);
+  currentTime.now = Math.round(new Date().getTime() / 1000);
+}, 3000);
 
 listen("refresh_accounts_list", () => {
   invoke("get_account_by_uuid", {

@@ -63,7 +63,7 @@
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
-import { useConfigStore } from "@/config";
+import { useConfigStore } from "@/store/config";
 import { watch } from "vue";
 import $ from "jquery";
 import { reloadTheme } from "@/theme";

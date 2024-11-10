@@ -1,4 +1,4 @@
-import { useConfigStore } from "./config"
+import { useConfigStore } from "./store/config"
 import $ from "jquery"
 
 let changeAfterLoad = false
