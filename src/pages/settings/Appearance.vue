@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import SettingGroup from "@/components/SettingGroup.vue";
-import { useConfigStore } from "@/config";
+import { useConfigStore } from "@/store/config";
 import { watch } from "vue";
 import $ from "jquery";
 import { reloadTheme } from "@/theme";
