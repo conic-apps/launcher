@@ -11,7 +11,7 @@ use std::{
 
 use arguments::generate_command_arguments;
 use complete::complete_files;
-use log::{debug, error, info};
+use log::{error, info, trace};
 use options::LaunchOptions;
 use serde::{Deserialize, Serialize};
 use tauri::Emitter;
@@ -187,7 +187,7 @@ fn spawn_minecraft_process(
     std::fs::create_dir_all(script_path.parent().unwrap()).unwrap();
     std::fs::write(&script_path, commands).unwrap();
     info!("The startup script is written to {}", script_path.display());
-    let mut minecraft = match platform.os_type {
+    let mut minecraft_process = match platform.os_type {
         OsType::Windows => std::process::Command::new(script_path),
         _ => {
             info!("Running chmod +x {}", script_path.display());
@@ -203,17 +203,18 @@ fn spawn_minecraft_process(
     .spawn()
     .unwrap();
     info!("Spawning minecraft process");
-    let out = minecraft.stdout.take().unwrap();
+    let out = minecraft_process.stdout.take().unwrap();
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
     let main_window = MAIN_WINDOW.get().unwrap();
+    let id = minecraft_process.id();
     while out.read_line(&mut buf).is_ok() {
-        if let Ok(Some(_)) = minecraft.try_wait() {
+        if let Ok(Some(_)) = minecraft_process.try_wait() {
             break;
         }
         let lines: Vec<_> = buf.split("\n").collect();
         if let Some(last) = lines.get(lines.len() - 2) {
-            debug!("{}", last);
+            trace!("[{}] {}", id, last);
             if last.to_lowercase().contains("lwjgl version") {
                 main_window.emit("launch_success", instance_name).unwrap();
                 info!("Found LWJGL version, the game seems to have started successfully.");
@@ -229,7 +230,7 @@ fn spawn_minecraft_process(
                 .unwrap();
         }
     }
-    let output = minecraft.wait_with_output().unwrap();
+    let output = minecraft_process.wait_with_output().unwrap();
     if !output.status.success() {
         // TODO: log analysis and remove libraries lock file
         error!("Minecraft exits with error code {}", output.status);
