@@ -17,8 +17,6 @@ mod platform;
 pub mod utils;
 mod version;
 
-use std::fs::File;
-use std::io::Write;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -39,13 +37,14 @@ use crate::instance::{
 };
 use crate::launch::launch;
 use config::{read_config_file, save_config, update_config, Config};
-use env_logger::fmt::style::{Color, Style};
 use folder::DataLocation;
-use log::{debug, error, info, Level, LevelFilter};
+use log::{debug, error, info};
 use once_cell::sync::OnceCell;
 use platform::{OsType, PlatformInfo};
 use tauri::{Emitter, Manager, Window};
 use tauri_plugin_http::reqwest;
+use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
+use tauri_plugin_log::{Target, TargetKind};
 use version::VersionManifest;
 
 /// use MAIN_WINDOW.emit() to send message to main window
@@ -64,9 +63,32 @@ pub struct Storage {
 
 #[tokio::main]
 async fn main() {
-    initialize_application().await;
-    initialize_logger();
-    print_title();
+    PLATFORM_INFO.set(PlatformInfo::new().await).unwrap();
+    initialize_application_data().await;
+    let data_location = DataLocation::new(APPLICATION_DATA.get().unwrap());
+    tokio::fs::create_dir_all(&data_location.root)
+        .await
+        .expect("Could not create appliaction data folder");
+    DATA_LOCATION.set(data_location).unwrap();
+    HTTP_CLIENT
+        .set(
+            reqwest::ClientBuilder::new()
+                .pool_idle_timeout(Duration::from_secs(30))
+                .pool_max_idle_per_host(100)
+                .build()
+                .unwrap(),
+        )
+        .unwrap();
+    let launcher_profiles_path = DATA_LOCATION
+        .get()
+        .unwrap()
+        .root
+        .join("launcher_profiles.json");
+    let _ = tokio::fs::remove_file(&launcher_profiles_path).await;
+    tokio::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE)
+        .await
+        .expect("Could not create launcher profile");
+    tokio::spawn(instance::update_latest_instance());
     #[cfg(target_os = "linux")]
     {
         // if std::path::Path::new("/dev/dri").exists()
@@ -80,6 +102,7 @@ async fn main() {
         // }
     }
     tauri::Builder::default()
+        .plugin(init_log_builder().build())
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             let windows = app.webview_windows();
             windows
@@ -122,6 +145,7 @@ async fn main() {
             config: Arc::new(Mutex::new(read_config_file())),
         })
         .setup(move |app| {
+            print_title();
             MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
             APP_VERSION
                 .set(app.package_info().version.to_string())
@@ -150,101 +174,6 @@ async fn main() {
         .expect("Failed to run app");
 }
 
-fn initialize_logger() {
-    let target = Box::new(
-        File::create(DATA_LOCATION.get().unwrap().root.join("aml.latest.log"))
-            .expect("Can't create file"),
-    );
-    let env = env_logger::Env::default()
-        .filter("LOG_LEVEL")
-        .write_style("LOG_STYLE");
-    let mut builder = env_logger::Builder::from_env(env);
-    builder.target(env_logger::Target::Pipe(target))
-        .filter_level(LevelFilter::Trace)
-        .format(|buf, record| {
-            let warn_style = buf.default_level_style(Level::Warn);
-            let error_style = buf.default_level_style(Level::Error);
-            let info_style = buf.default_level_style(Level::Info);
-            let debug_style = buf.default_level_style(Level::Debug);
-            let debug_text_style = Style::new().fg_color(Some(Color::Ansi(env_logger::fmt::style::AnsiColor::BrightBlack)));
-            let trace_style = buf.default_level_style(Level::Trace);
-            let timestamp = buf.timestamp();
-            let level = record.level();
-            let target = record.target();
-            match level {
-                Level::Debug => {
-                    writeln!(
-                        buf,
-                    "[{timestamp}] [{target}/{debug_style}DEBUG{debug_style:#}]: {debug_text_style}{}{debug_text_style:#}",
-                        record.args()
-                    )
-                }
-                Level::Info => {
-                    writeln!(
-                        buf,
-                        "[{timestamp}] [{target}/{info_style}INFO{info_style:#}]: {}",
-                        record.args()
-                    )
-                }
-                Level::Error => {
-                    writeln!(
-                        buf,
-                        "[{timestamp}] [{target}/{error_style}ERROR{error_style:#}]: {error_style}{}{error_style:#}",
-                        record.args()
-                    )
-                }
-                Level::Warn => {
-                    writeln!(
-                        buf,
-                        "[{timestamp}] [{target}/{warn_style}WARN{warn_style:#}]: {}",
-                        record.args()
-                    )
-                }
-                Level::Trace => {
-                    writeln!(
-                        buf,
-                        "[{timestamp}] [{target}/{trace_style}TRACE{trace_style:#}]: {}",
-                        record.args()
-                    )
-                }
-            }
-        });
-    #[cfg(debug_assertions)]
-    {
-        builder.target(env_logger::Target::Stdout);
-    }
-    builder.init();
-}
-
-async fn initialize_application() {
-    PLATFORM_INFO.set(PlatformInfo::new().await).unwrap();
-    initialize_application_data().await;
-    let data_location = DataLocation::new(APPLICATION_DATA.get().unwrap());
-    tokio::fs::create_dir_all(&data_location.root)
-        .await
-        .expect("Could not create appliaction data folder");
-    DATA_LOCATION.set(data_location).unwrap();
-    HTTP_CLIENT
-        .set(
-            reqwest::ClientBuilder::new()
-                .pool_idle_timeout(Duration::from_secs(30))
-                .pool_max_idle_per_host(100)
-                .build()
-                .unwrap(),
-        )
-        .unwrap();
-    let launcher_profiles_path = DATA_LOCATION
-        .get()
-        .unwrap()
-        .root
-        .join("launcher_profiles.json");
-    let _ = tokio::fs::remove_file(&launcher_profiles_path).await;
-    tokio::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE)
-        .await
-        .expect("Could not create launcher profile");
-    tokio::spawn(instance::update_latest_instance());
-}
-
 async fn initialize_application_data() {
     let platform_info = PLATFORM_INFO.get().unwrap();
     match platform_info.os_type {
@@ -255,6 +184,10 @@ async fn initialize_application_data() {
             platform_info.version
         ),
     }
+    #[cfg(not(debug_assertions))]
+    let application_folder_name = "aml";
+    #[cfg(debug_assertions)]
+    let application_folder_name = "aml-debug";
     match platform_info.os_type {
         OsType::Windows => {
             APPLICATION_DATA
@@ -262,7 +195,7 @@ async fn initialize_application_data() {
                     PathBuf::from(
                         std::env::var("APPDATA").expect("Could not found APP_DATA directory"),
                     )
-                    .join("aml"),
+                    .join(application_folder_name),
                 )
                 .unwrap();
         }
@@ -270,13 +203,13 @@ async fn initialize_application_data() {
             APPLICATION_DATA
                 .set(
                     PathBuf::from(std::env::var("HOME").expect("Could not found home"))
-                        .join(".aml"),
+                        .join(format!(".{}", application_folder_name)),
                 )
                 .unwrap();
         }
         OsType::Osx => {
             APPLICATION_DATA
-                .set(PathBuf::from("/Users/").join("aml"))
+                .set(PathBuf::from("/Users/").join(application_folder_name))
                 .unwrap();
         }
     }
@@ -313,6 +246,30 @@ async fn remind_minecraft_latest(config: &Config) -> anyhow::Result<()> {
         let _ = MAIN_WINDOW.get().unwrap().emit("remind_update", latest);
     }
     Ok(())
+}
+
+fn init_log_builder() -> tauri_plugin_log::Builder {
+    let log_builder = tauri_plugin_log::Builder::new()
+        .clear_targets()
+        .targets([
+            Target::new(TargetKind::Stdout),
+            Target::new(TargetKind::Webview),
+            Target::new(TargetKind::Folder {
+                path: DATA_LOCATION.get().unwrap().logs.clone(),
+                file_name: None,
+            }),
+        ])
+        .max_file_size(50_000)
+        .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll);
+    #[cfg(debug_assertions)]
+    let log_builder = log_builder.with_colors(ColoredLevelConfig {
+        error: Color::Red,
+        warn: Color::Yellow,
+        info: Color::Green,
+        debug: Color::Blue,
+        trace: Color::Cyan,
+    });
+    log_builder
 }
 
 fn print_title() {

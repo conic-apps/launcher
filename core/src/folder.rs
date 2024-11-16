@@ -99,6 +99,7 @@ pub struct DataLocation {
     pub instances: PathBuf,
     pub cache: PathBuf,
     pub default_jre: PathBuf,
+    pub logs: PathBuf,
     pub resources: PathBuf,
     pub temp: PathBuf,
 }
@@ -121,6 +122,7 @@ impl DataLocation {
             // default_jre: data_folder.join("default_jre").join("bin").join("java"),
             default_jre: PathBuf::from_str("/bin/java").unwrap(),
             resources: data_folder_root.join("resources"),
+            logs: data_folder_root.join("logs"),
             temp: temp_path,
             root: data_folder_root,
         }
