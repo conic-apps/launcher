@@ -53,10 +53,6 @@
           icon="gamepad"
           @click="changePage($event, 'game')"
           id="sidebar-game"></sidebar-item>
-        <!-- <sidebar-item -->
-        <!--   title="扩展" -->
-        <!--   icon="puzzle-piece" -->
-        <!--   @click="changePage($event, 'community')"></sidebar-item> -->
         <sidebar-item
           :title="$t('sidebar.market')"
           icon="shop"
@@ -106,6 +102,7 @@ import { getAvatar } from "./avatar";
 import Tag from "./components/Tag.vue";
 import { listen } from "@tauri-apps/api/event";
 import { useTimeStore } from "./store/time";
+import Market from "./pages/Market.vue";
 
 function minimize() {
   window.getCurrentWindow().minimize();
@@ -120,6 +117,7 @@ function close() {
 const pages: any = reactive({
   settings: markRaw(Settings),
   home: markRaw(Home),
+  market: markRaw(Market),
   game: markRaw(Game),
 });
 
@@ -253,6 +251,9 @@ listen("refresh_accounts_list", () => {
 });
 
 invoke("refresh_all_microsoft_account");
+listen("add-account", () => {
+  showAccountManager.value = true;
+});
 </script>
 
 <style lang="less" scoped>

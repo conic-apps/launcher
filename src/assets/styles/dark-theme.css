@@ -18,7 +18,8 @@ body {
     --dialog-border-radius: 10px;
     --dialog-background: rgb(27, 28, 31);
     --tag-border-radius: 4px;
-    --list-item-background: rgba(255, 255, 255, 0.08);
+    --list-item-background: rgba(255, 255, 255, 0.04);
+    --list-border-radius: 10px;
     --setting-item-background: rgba(255, 255, 255, 0.08);
     --setting-item-background-hover: rgba(255, 255, 255, 0.12);
     --controllers-border-radius: 6px;

@@ -5,10 +5,7 @@
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    account::{get_accounts, Account},
-    Storage, DATA_LOCATION,
-};
+use crate::{account::get_accounts, Storage, DATA_LOCATION};
 
 pub mod download;
 pub mod instance;
@@ -78,21 +75,13 @@ impl Default for Config {
         let locale = sys_locale::get_locale().unwrap();
         info!("System locale is {}", locale);
         let accounts = get_accounts().unwrap();
-        let default_account = match accounts.first() {
-            Some(x) => x.to_owned(),
-            None => {
-                let default_account = Account::default();
-                let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
-                let contents =
-                    serde_json::to_string_pretty(&vec![default_account.clone()]).unwrap();
-                std::fs::write(path, contents).unwrap();
-                default_account
-            }
-        };
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
-            current_account: default_account.profile.uuid,
+            current_account: match accounts.first() {
+                Some(x) => x.to_owned().profile.uuid,
+                None => "00000000-0000-0000-0000-000000000000".to_string(),
+            },
             auto_update: true,
             language: locale.replace("-", "_").to_lowercase(),
             update_channel: UpdateChannel::Release,

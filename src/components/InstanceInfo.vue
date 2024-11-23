@@ -16,7 +16,7 @@
     <div class="line-a">
       <div style="display: flex">
         <div class="minecraft-version" v-if="minecraftVersion">
-          <img src="@/assets/images/Grass_Block_JE2.webp" fill="#fff" />Minecraft
+          <img src="@/assets/images/minecraft.webp" fill="#fff" />Minecraft
           {{ minecraftVersion }}
         </div>
         <div class="mod-loader-version" v-if="modLoaderType && modLoaderVersion">

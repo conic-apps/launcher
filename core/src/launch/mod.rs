@@ -71,7 +71,18 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance_name: String) -
     };
     let config = storage.config.lock().unwrap().clone();
     let selected_account = account::get_account_by_uuid(&config.current_account);
-    let selected_account = selected_account.first().unwrap();
+    let selected_account = match selected_account.first() {
+        Some(x) => x,
+        None => {
+            error!("The selected account not been found, opening account manager");
+            MAIN_WINDOW
+                .get()
+                .unwrap()
+                .emit("add-account", "add-account")
+                .unwrap();
+            return Err(());
+        }
+    };
     if config.launch.skip_refresh_account {
         info!("Account refresh disabled by user")
     } else {
