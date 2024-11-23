@@ -55,23 +55,6 @@ pub struct Account {
     pub account_type: AccountType,
 }
 
-impl Default for Account {
-    fn default() -> Self {
-        Self {
-            refresh_token: None,
-            access_token: None,
-            token_deadline: None,
-            profile: Profile {
-                profile_name: "Steve".to_string(),
-                uuid: "00000000-0000-0000-0000-000000000000".to_string(),
-                skins: vec![],
-                capes: vec![],
-            },
-            account_type: AccountType::Offline,
-        }
-    }
-}
-
 #[tauri::command]
 pub fn get_accounts() -> Result<Vec<Account>, ()> {
     let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");

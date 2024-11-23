@@ -1,35 +1,60 @@
 <template>
   <div class="instances">
     <div class="overview">
-      <div
-        class="instance"
+      <list-item
         @click="$emit('select', instance)"
         v-for="(instance, index) in computedInstances"
-        :key="instance.config.name">
-        <img src="@/assets/images/minecraft-icon.svg" />
-        <div class="title">
-          <p v-if="instance.config.name == 'Latest Release' && index <= 1">
-            {{ $t("game.latestRelease") }}
-          </p>
-          <p v-else-if="instance.config.name == 'Latest Snapshot' && index <= 1">
-            {{ $t("game.latestSnapshot") }}
-          </p>
-          <p v-else>
-            {{ instance.config.name }}
-          </p>
-        </div>
-      </div>
+        :key="index"
+        logo="1"
+        :title="instanceDisplayName(instance.config.name, index)"
+        :click-able="true"
+        :buttons="['arrow-up-right-from-square']">
+        <template #icon>
+          <img
+            style="width: 100%; height: 100%; content-visibility: auto"
+            src="@/assets/images/minecraft-icon.svg"
+            alt="" />
+        </template>
+        <template #default>
+          <div class="tag">
+            <img src="@/assets/images/minecraft.webp" width="14px" height="14px" /><span>{{
+              instance.config.runtime.minecraft
+            }}</span>
+          </div>
+          <div class="tag" v-if="!!instance.config.runtime.mod_loader_type">
+            <img
+              src="@/assets/images/quilt.svg"
+              width="14px"
+              height="14px"
+              v-if="instance.config.runtime.mod_loader_type == 'Quilt'" />
+            <img
+              src="@/assets/images/fabric.webp"
+              width="14px"
+              height="14px"
+              v-if="instance.config.runtime.mod_loader_type == 'Fabric'" />
+            <img
+              src="@/assets/images/neoforged.png"
+              width="14px"
+              height="14px"
+              v-if="instance.config.runtime.mod_loader_type == 'Neoforge'" />
+            <img
+              src="@/assets/images/forge.svg"
+              width="14px"
+              height="14px"
+              v-if="instance.config.runtime.mod_loader_type == 'Forge'" />
+            <span>{{ instance.config.runtime.mod_loader_version }}</span>
+          </div>
+        </template>
+      </list-item>
     </div>
-    <!-- <card id="xx" cla/ss="overview" :title="instance.name" :description="generateDescription(instance)" padding="10,12,10,12" -->
-    <!-- :icon="instance.icon" v-for="(instance, index) in instances" :key="index"> -->
-    <!-- </card> -->
-    <!-- id is random sha1-->
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type Ref } from "vue";
+import { computed } from "vue";
 import { useConfigStore } from "@/store/config";
+import ListItem from "./ListItem.vue";
+import { useI18n } from "vue-i18n";
 const config = useConfigStore();
 
 export interface Instance {
@@ -74,6 +99,17 @@ const computedInstances = computed(() => {
   }
   return result;
 });
+const i18n = useI18n();
+
+function instanceDisplayName(instanceName: string, vueForIndex: number) {
+  if (instanceName == "Latest Release" && vueForIndex <= 1) {
+    return i18n.t("game.latestRelease");
+  } else if (instanceName == "Latest Snapshot" && vueForIndex <= 1) {
+    return i18n.t("game.latestSnapshot");
+  } else {
+    return instanceName;
+  }
+}
 </script>
 
 <style lang="less" scoped>
@@ -84,9 +120,9 @@ div.instances .icon {
 }
 
 div.instances .overview {
-  padding-left: 6px;
-  overflow: auto;
-  max-height: 240px;
+  margin-left: 6px;
+  overflow: hidden;
+  border-radius: var(--list-border-radius);
   margin-bottom: 10px;
 }
 
@@ -120,5 +156,19 @@ div.instance:hover {
 div.instance:active {
   transform: scale(0.96);
   opacity: 0.7;
+}
+
+div.tag {
+  display: inline-flex;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  border: var(--controllers-border);
+  border-radius: 100px;
+  margin-right: 4px;
+
+  span {
+    margin-left: 3px;
+  }
 }
 </style>

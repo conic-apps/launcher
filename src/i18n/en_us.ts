@@ -14,7 +14,7 @@ export default {
         install: "Install",
         launch: "Play",
         launchDemo: "Trial Play",
-        instances: "Instances",
+        instances: "Games",
         playtime: "Playtime",
         accounts: "Accounts",
         friends: "Friends",
