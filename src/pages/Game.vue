@@ -2,6 +2,31 @@
   <keep-alive>
     <div class="game-page-main">
       <div class="row-1">
+        <div class="side-name">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              height: 100%;
+            ">
+            <p style="margin-left: 4px">{{ $t("game.instances") }}</p>
+            <button
+              class="side-button"
+              @click="show.instanceManager = true"
+              style="margin-right: 6px">
+              <i class="chevron-right" style="font-size: 12px"></i>
+            </button>
+          </div>
+        </div>
+        <Instances :instances="instances" @select="setCurrentInstance"></Instances>
+        <instance-manager
+          :show="show.instanceManager"
+          @close="show.instanceManager = false"
+          :instances="instances"
+          @update="update"></instance-manager>
+      </div>
+      <div class="row-2">
         <install-progress
           :installing="installing"
           :instance-name="currentInstance.config.name"
@@ -20,31 +45,6 @@
           @game-button-click="gameButtonClick"
           :error-type="errorType"></instance-info>
         <assets-manager :instance="currentInstance" style="margin-top: 20px"></assets-manager>
-      </div>
-      <div class="row-2">
-        <div class="group-name">
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              height: 100%;
-            ">
-            <p style="margin-left: 4px">{{ $t("game.instances") }}</p>
-            <button
-              class="group-button"
-              @click="show.instanceManager = true"
-              style="margin-right: 6px">
-              <i class="chevron-right" style="font-size: 12px"></i>
-            </button>
-          </div>
-        </div>
-        <Instances :instances="instances" @select="setCurrentInstance"></Instances>
-        <instance-manager
-          :show="show.instanceManager"
-          @close="show.instanceManager = false"
-          :instances="instances"
-          @update="update"></instance-manager>
       </div>
       <LogViewer
         :instance-name="currentInstance.config.name"
@@ -196,25 +196,25 @@ listen("launch_success", () => {
 }
 
 .row-1 {
-  padding: 24px 24px;
-  width: 100%;
-}
-
-.row-2 {
   width: 328px;
-  padding: 24px 24px 24px 0;
+  padding: 24px 24px;
   flex-shrink: 0;
 }
 
+.row-2 {
+  width: 100%;
+  padding: 24px 24px 24px 0;
+}
+
 // todo: move to main.css
-.group-name {
+.side-name {
   width: 100%;
   height: 32px;
   font-size: 14.5px;
   margin-bottom: 8px;
 }
 
-.group-button {
+.side-button {
   background: rgba(255, 255, 255, 0.08);
   border: none;
   border-radius: 4px;
@@ -223,15 +223,15 @@ listen("launch_success", () => {
   font-size: 10px;
 }
 
-.group-button:hover {
+.side-button:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
-.group-button:active {
+.side-button:active {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.group-button i::before {
+.side-button i::before {
   transform: scale(0.7);
 }
 </style>

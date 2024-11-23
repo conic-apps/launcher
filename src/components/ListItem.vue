@@ -151,12 +151,17 @@ const computedLogo = computed(() => {
   display: flex;
   align-items: center;
   pointer-events: all;
-  transition: all 0.2s ease;
+  transition: all 100ms ease;
   font-size: 15px;
   margin: 0 6px;
   transform: scale3d(1, 1, 500);
   color: rgba(255, 255, 255, 0.6);
+  // opacity: 0;
 }
+
+// .list-item:hover .list-item-button {
+//   opacity: 1;
+// }
 
 .list-item-button:hover {
   color: rgba(255, 255, 255, 1);

@@ -4,7 +4,7 @@
       <search-bar style="margin-bottom: 10px; width: 100%"> </search-bar>
       <div
         style="
-          border-radius: 10px;
+          border-radius: var(--list-border-radius);
           overflow: hidden;
           border: 1px solid rgba(0, 0, 0, 0.16);
           box-shadow: rgba(0, 0, 0, 0.16) 0 0 10px;
