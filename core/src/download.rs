@@ -76,6 +76,28 @@ pub async fn download_files(
             .unwrap();
     }
     let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+    let check_files_finished: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    let counter_sender_thread = {
+        let check_files_finished = check_files_finished.clone();
+        let counter = counter.clone();
+        thread::spawn(move || {
+            while !check_files_finished.load(Ordering::SeqCst) {
+                thread::sleep(Duration::from_millis(500));
+                if send_progress {
+                    main_window
+                        .emit(
+                            "install_progress",
+                            Progress {
+                                completed: counter.load(Ordering::SeqCst),
+                                total: 0,
+                                step: 2,
+                            },
+                        )
+                        .unwrap();
+                }
+            }
+        })
+    };
     let downloads: Vec<_> = downloads
         .into_par_iter()
         .filter(|download| {
@@ -93,21 +115,11 @@ pub async fn download_files(
             };
             let file_hash = calculate_sha1_from_read(&mut file);
             counter.clone().fetch_add(1, Ordering::SeqCst);
-            if send_progress {
-                main_window
-                    .emit(
-                        "install_progress",
-                        Progress {
-                            completed: counter.load(Ordering::SeqCst),
-                            total: 0,
-                            step: 2,
-                        },
-                    )
-                    .unwrap();
-            }
             &file_hash != download.sha1.as_ref().unwrap()
         })
         .collect();
+    check_files_finished.store(true, Ordering::SeqCst);
+    counter_sender_thread.join().unwrap();
     let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let total = downloads.len();
     let client = HTTP_CLIENT.get().unwrap();
