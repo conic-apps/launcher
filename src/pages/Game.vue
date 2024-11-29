@@ -19,7 +19,7 @@
             </button>
           </div>
         </div>
-        <Instances :instances="instances" @select="setCurrentInstance"></Instances>
+        <instance-list :instances="instances" @select="setCurrentInstance"></instance-list>
         <instance-manager
           :show="show.instanceManager"
           @close="show.instanceManager = false"
@@ -59,13 +59,14 @@
 import InstanceInfo from "@/components/InstanceInfo.vue";
 import AssetsManager from "@/components/AssetsManager.vue";
 import InstallProgress from "./dialogs/InstallProgress.vue";
-import Instances from "@/components/Instances.vue";
+import InstanceList from "@/components/InstanceList.vue";
 import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
 import LogViewer from "./dialogs/LogViewer.vue";
 import { ref, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/store/config";
+import { Instance } from "@/types/instance";
 
 const config = useConfigStore();
 
@@ -73,18 +74,6 @@ const installing = ref(false);
 
 const buttonLoading = ref(false);
 const logViewerOpen = ref(false);
-
-interface Instance {
-  config: {
-    name: string;
-    runtime: {
-      minecraft: string;
-      mod_loader_type: "Fabric" | "Quilt" | "Forge" | "Neoforge" | undefined;
-      mod_loader_version: string | undefined;
-    };
-  };
-  installed: boolean;
-}
 
 const currentInstance = ref<Instance>({
   config: {
