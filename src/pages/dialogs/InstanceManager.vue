@@ -64,26 +64,10 @@ import DialogVue from "@/components/Dialog.vue";
 import { markRaw, reactive, ref, shallowRef } from "vue";
 import View from "@/pages/dialogs/instance/View.vue";
 import Create from "@/pages/dialogs/instance/Create.vue";
+import { Instance } from "@/types/instance";
 
 const emit = defineEmits(["close", "update"]);
 const transitionName = ref("slide-left");
-
-interface Instance {
-  config: {
-    name: string;
-    runtime: {
-      minecraft: string;
-      mod_loader_type: "Fabric" | "Quilt" | "Forge" | "Neoforge" | undefined;
-      mod_loader_version: string | undefined;
-    };
-  };
-  installed: boolean;
-}
-
-interface InstanceGroup {
-  name: string;
-  instances: Instance[];
-}
 
 const props = defineProps<{
   show: boolean;

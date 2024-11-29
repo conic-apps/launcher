@@ -213,8 +213,11 @@ invoke("get_account_by_uuid", {
 watch(
   config,
   (value) => {
+    $("body").addClass("saving-config");
     invoke("update_config", { config: value }).then(() => {
-      invoke("save_config");
+      invoke("save_config").then(() => {
+        $("body").removeClass("saving-config");
+      });
     });
   },
   { immediate: false },
