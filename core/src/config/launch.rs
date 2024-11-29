@@ -4,22 +4,6 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Game process priority, invalid on windows
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
-pub enum ProcessPriority {
-    High,
-    AboveNormal,
-    Normal,
-    BelowNormal,
-    Low,
-}
-
-impl Default for ProcessPriority {
-    fn default() -> Self {
-        Self::Normal
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
 pub struct Server {
     pub ip: String,
@@ -74,10 +58,6 @@ pub struct LaunchConfig {
 
     #[serde(default)]
     pub(crate) is_demo: bool,
-
-    #[serde(default)]
-    /// Game process priority, invalid on windows
-    pub(crate) process_priority: ProcessPriority,
 
     #[serde(default)]
     /// Add `-Dfml.ignoreInvalidMinecraftCertificates=true` to jvm argument
@@ -143,7 +123,6 @@ impl Default for LaunchConfig {
             extra_jvm_args: String::new(),
             extra_mc_args: String::new(),
             is_demo: false,
-            process_priority: ProcessPriority::default(),
             ignore_invalid_minecraft_certificates: false,
             ignore_patch_discrepancies: false,
             extra_class_paths: String::new(),
