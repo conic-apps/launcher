@@ -47,16 +47,16 @@ pub struct InstanceRuntime {
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct InstanceLaunchConfig {
     /// Min memory, this will add a jvm flag -XMS to the command result
-    pub(crate) min_memory: Option<u32>,
+    pub(crate) min_memory: Option<usize>,
 
     /// Max memory, this will add a jvm flag -Xmx to the command result
-    pub(crate) max_memory: Option<u32>,
+    pub(crate) max_memory: Option<usize>,
     pub(crate) server: Option<Server>,
     /// window width
-    pub(crate) width: Option<u32>,
+    pub(crate) width: Option<usize>,
 
     /// window height
-    pub(crate) height: Option<u32>,
+    pub(crate) height: Option<usize>,
 
     pub(crate) fullscreen: Option<bool>,
 
