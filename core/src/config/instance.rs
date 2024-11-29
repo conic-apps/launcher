@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Storage, DATA_LOCATION};
 
-use super::launch::{ProcessPriority, Server, GC};
+use super::launch::{Server, GC};
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub enum ModLoaderType {
@@ -67,8 +67,6 @@ pub struct InstanceLaunchConfig {
     pub(crate) extra_mc_args: Option<String>,
 
     pub(crate) is_demo: Option<bool>,
-    /// Game process priority, invalid on windows
-    pub(crate) process_priority: Option<ProcessPriority>,
 
     /// Add `-Dfml.ignoreInvalidMinecraftCertificates=true` to jvm argument
     pub(crate) ignore_invalid_minecraft_certificates: Option<bool>,

@@ -20,7 +20,7 @@ mod complete;
 mod options;
 use crate::{
     account::{self, refresh_microsoft_account_by_uuid, Account},
-    config::{instance::InstanceConfig, launch::ProcessPriority},
+    config::instance::InstanceConfig,
     folder::MinecraftLocation,
     platform::OsType,
     version::Version,
@@ -131,7 +131,6 @@ fn spawn_minecraft_process(
     version_id: String,
     instance_name: &str,
 ) {
-    let process_priority = launch_options.process_priority;
     let platform = PLATFORM_INFO.get().unwrap();
     let native_root = minecraft_location.get_natives_root(&version_id);
     let instance_root = DATA_LOCATION
@@ -156,24 +155,6 @@ fn spawn_minecraft_process(
     commands.push_str(&format!("{}\n", launch_options.execute_before_launch));
     if !launch_options.wrap_command.trim().is_empty() {
         commands.push_str(&format!("{} ", launch_options.wrap_command));
-    }
-    if platform.os_type != OsType::Windows {
-        commands.push_str("nice ");
-        match process_priority {
-            ProcessPriority::High => {
-                commands.push_str("-n 0 ");
-            }
-            ProcessPriority::AboveNormal => {
-                commands.push_str("-n 5 ");
-            }
-            ProcessPriority::Normal => (), // nothing to do
-            ProcessPriority::BelowNormal => {
-                commands.push_str("-n 15 ");
-            }
-            ProcessPriority::Low => {
-                commands.push_str("-n 19 ");
-            }
-        };
     }
     // todo(after java exec): add -Dfile.encoding=encoding.name() and other
     let mut launch_command = "java".to_string();

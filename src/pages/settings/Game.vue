@@ -26,22 +26,6 @@
           icon="signature">
           <TextInputBox width="360px" v-model="config.launch.launcher_name"></TextInputBox>
         </setting-item>
-        <setting-item
-          :title="$t('settings.game.processPriority')"
-          :description="$t('settings.game.processPriorityDesc')"
-          icon="chart-simple">
-          <select-vue
-            :display-name="[
-              $t('settings.game.processPriorityHigh'),
-              $t('settings.game.processPriorityAboveNormal'),
-              $t('settings.game.processPriorityNormal'),
-              $t('settings.game.processPriorityBelowNormal'),
-              $t('settings.game.processPriorityLow'),
-            ]"
-            :options="['High', 'AboveNormal', 'Normal', 'BelowNormal', 'Low']"
-            :default="2"
-            v-model="config.launch.process_priority"></select-vue>
-        </setting-item>
         <!-- TODO:<setting-item title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
         <!--   <TextInputBox -->
         <!--     width="240px" -->

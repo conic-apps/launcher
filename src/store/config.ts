@@ -36,7 +36,6 @@ export type Config = {
         extra_jvm_args: string
         extra_mc_args: string
         is_demo: boolean
-        process_priority: "High" | "AboveNormal" | "Normal" | "BelowNormal" | "Low"
         ignore_invalid_minecraft_certificates: boolean
         ignore_patch_discrepancies: boolean
         extra_class_paths: string
