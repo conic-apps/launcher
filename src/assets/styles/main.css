@@ -142,3 +142,8 @@ body {
 .changing-theme {
     transition: all 0.3s ease !important;
 }
+
+.saving-config,
+.saving-config * {
+    pointer-events: none !important
+}

@@ -55,24 +55,8 @@ import { computed } from "vue";
 import { useConfigStore } from "@/store/config";
 import ListItem from "./ListItem.vue";
 import { useI18n } from "vue-i18n";
+import { Instance } from "@/types/instance";
 const config = useConfigStore();
-
-export interface Instance {
-  config: {
-    name: string;
-    runtime: {
-      minecraft: string;
-      mod_loader_type: "Fabric" | "Quilt" | "Forge" | "Neoforge" | undefined;
-      mod_loader_version: string | undefined;
-    };
-  };
-  installed: boolean;
-}
-
-interface InstanceGroup {
-  name: string;
-  instances: Instance[];
-}
 
 const props = defineProps<{
   // instances: InstanceGroup[], todo: group
