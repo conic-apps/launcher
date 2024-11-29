@@ -6,7 +6,7 @@ use crate::{
     account::Account,
     config::{
         instance::InstanceConfig,
-        launch::{ProcessPriority, Server, GC},
+        launch::{Server, GC},
         read_config_file,
     },
     folder::MinecraftLocation,
@@ -64,9 +64,6 @@ pub struct LaunchOptions {
 
     /// Add extra classpath
     pub(crate) extra_class_paths: String,
-
-    /// Game process priority, invalid on windows
-    pub(crate) process_priority: ProcessPriority,
 
     // /// TODO: Support yushi's yggdrasil agent <https://github.com/to2mbn/authlib-injector/wiki>
     // pub(crate) yggdrasil_agent: Option<YggdrasilAgent>,
@@ -132,9 +129,6 @@ impl LaunchOptions {
             extra_class_paths: instance_config
                 .extra_class_paths
                 .unwrap_or(global_config.extra_class_paths),
-            process_priority: instance_config
-                .process_priority
-                .unwrap_or(global_config.process_priority),
             gc: instance_config.gc.unwrap_or(global_config.gc),
             minecraft_location: MinecraftLocation::new(&DATA_LOCATION.get().unwrap().root),
             properties: "{}".to_string(),
