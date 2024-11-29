@@ -30,19 +30,19 @@ pub struct LaunchOptions {
     pub(crate) access_token: String,
 
     /// Min memory, this will add a jvm flag -XMS to the command result
-    pub(crate) min_memory: u32,
+    pub(crate) min_memory: usize,
 
     /// Max memory, this will add a jvm flag -Xmx to the command result
-    pub(crate) max_memory: u32,
+    pub(crate) max_memory: usize,
 
     /// Directly launch to a server. TODO: support 1.21.1
     pub(crate) server: Option<Server>,
 
     /// window width
-    pub(crate) width: u32,
+    pub(crate) width: usize,
 
     /// window height
-    pub(crate) height: u32,
+    pub(crate) height: usize,
 
     pub(crate) fullscreen: bool,
 

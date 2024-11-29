@@ -102,6 +102,7 @@ pub struct DataLocation {
     pub logs: PathBuf,
     pub resources: PathBuf,
     pub temp: PathBuf,
+    pub config: PathBuf,
 }
 
 impl DataLocation {
@@ -124,6 +125,7 @@ impl DataLocation {
             resources: data_folder_root.join("resources"),
             logs: data_folder_root.join("logs"),
             temp: temp_path,
+            config: data_folder_root.join("config.toml"),
             root: data_folder_root,
         }
     }
