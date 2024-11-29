@@ -2,7 +2,7 @@
 // Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use log::{debug, error, info};
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 
 use crate::{account::get_accounts, Storage, DATA_LOCATION};
@@ -177,7 +177,6 @@ pub fn save_config(storage: tauri::State<'_, Storage>) {
 #[tauri::command]
 pub fn read_config_file() -> Config {
     let config_file_path = &DATA_LOCATION.get().unwrap().config;
-    error!("Loading Config");
     if !config_file_path.exists() {
         info!("No config file, using default config");
         let default_config = Config::default();

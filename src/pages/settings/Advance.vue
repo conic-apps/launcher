@@ -1,15 +1,6 @@
 <template>
   <keep-alive>
     <div>
-      <setting-group>
-        <setting-item
-          :title="$t('settings.advance.reload')"
-          icon="arrows-rotate"
-          @click="reload"
-          :clickAble="true">
-          <i class="chevron-right" style="margin-right: 10px"></i>
-        </setting-item>
-      </setting-group>
       <setting-group :title="$t('settings.advance.launchArgs')">
         <setting-item :title="$t('settings.advance.gc')">
           <select-vue

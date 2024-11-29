@@ -158,12 +158,15 @@ function isNormal(log: string) {
   .logs {
     width: 100%;
     padding: 10px;
+    height: calc(100% - 92px);
+    overflow-y: auto;
 
     .log {
       span {
         user-select: text;
         -webkit-user-select: text;
         font-family: "FiraCode Nerd Font", "Consolas", monospace;
+        cursor: text;
       }
 
       padding: 2px;

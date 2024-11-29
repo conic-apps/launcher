@@ -101,6 +101,17 @@ async fn main() {
         }
         // }
     }
+    let config = read_config_file();
+    let init_config_js_script = "
+        Object.defineProperty(window, '__APPLICATION_CONFIG__', {
+            value: JSON.parse(`"
+        .to_string()
+        + serde_json::to_string_pretty(&config).unwrap().as_ref()
+        + "`)
+        })
+    "
+        .to_string()
+        .as_ref();
     tauri::Builder::default()
         .plugin(init_log_builder().build())
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
@@ -142,8 +153,9 @@ async fn main() {
         ])
         .manage(Storage {
             current_instance: Arc::new(Mutex::new("".to_string())),
-            config: Arc::new(Mutex::new(read_config_file())),
+            config: Arc::new(Mutex::new(config.clone())),
         })
+        .append_invoke_initialization_script(init_config_js_script)
         .setup(move |app| {
             print_title();
             MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
