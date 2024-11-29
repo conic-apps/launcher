@@ -95,7 +95,7 @@ import { useConfigStore } from "./store/config";
 import { watch } from "vue";
 import { useI18n } from "vue-i18n";
 import gsap from "gsap";
-import { reloadTheme } from "./theme";
+import { loadTheme } from "./theme";
 import Home from "./pages/Home.vue";
 import { Account } from "./pages/dialogs/account/View.vue";
 import { getAvatar } from "./avatar";
@@ -125,9 +125,7 @@ const transitionName = ref("slide-up");
 const currentComponent = shallowRef(pages.game);
 let last: any;
 const config = useConfigStore();
-config.syncFromFile().then(() => {
-  reloadTheme(config);
-});
+loadTheme(config);
 const i18n = useI18n();
 i18n.locale.value = config.language;
 watch(config, () => {
@@ -197,28 +195,21 @@ const currentAccountProfile = ref<{
   type: "Offline",
 });
 
-watch(
-  config,
-  (value) => {
-    invoke("get_account_by_uuid", {
-      uuid: value.current_account,
-    }).then((res) => {
-      const account = (res as Account[])[0];
-      if (account != undefined) {
-        getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
-          currentAccountProfile.value = {
-            name: account.profile.profile_name,
-            avatar,
-            tokenDeadline: account.token_deadline ? account.token_deadline : -1,
-            type: account.account_type,
-          };
-        });
-      }
+invoke("get_account_by_uuid", {
+  uuid: config.current_account,
+}).then((res) => {
+  const account = (res as Account[])[0];
+  if (account != undefined) {
+    getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
+      currentAccountProfile.value = {
+        name: account.profile.profile_name,
+        avatar,
+        tokenDeadline: account.token_deadline ? account.token_deadline : -1,
+        type: account.account_type,
+      };
     });
-  },
-  { immediate: false },
-);
-
+  }
+});
 watch(
   config,
   (value) => {
