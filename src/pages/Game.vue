@@ -34,7 +34,7 @@
           :mod-loader-version="
             currentInstance.config.runtime.mod_loader_version
           "></install-progress>
-        <instance-info
+        <instance-card
           :minecraft-version="currentInstance.config.runtime.minecraft"
           :mod-loader-type="currentInstance.config.runtime.mod_loader_type"
           :mod-loader-version="currentInstance.config.runtime.mod_loader_version"
@@ -43,8 +43,8 @@
           :game-button-type="gameButtonType"
           :button-loading="buttonLoading"
           @game-button-click="gameButtonClick"
-          :error-type="errorType"></instance-info>
-        <assets-manager :instance="currentInstance" style="margin-top: 20px"></assets-manager>
+          :error-type="errorType"></instance-card>
+        <assets-manager :instance="currentInstance" style="margin-top: 16px"></assets-manager>
       </div>
       <LogViewer
         :instance-name="currentInstance.config.name"
@@ -56,10 +56,10 @@
 </template>
 
 <script setup lang="ts">
-import InstanceInfo from "@/components/InstanceInfo.vue";
-import AssetsManager from "@/components/AssetsManager.vue";
+import InstanceCard from "./game/InstanceCard.vue";
+import AssetsManager from "./game/AssetsManager.vue";
 import InstallProgress from "./dialogs/InstallProgress.vue";
-import InstanceList from "@/components/InstanceList.vue";
+import InstanceList from "./game/InstanceList.vue";
 import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
 import LogViewer from "./dialogs/LogViewer.vue";
 import { ref, type Ref } from "vue";
@@ -107,29 +107,29 @@ invoke("scan_instances_folder").then((res) => {
   });
 });
 
-let modIsLoading = ref(false);
-let resourcepacksIsLoading = ref(false);
-let shaderpackIsLoading = ref(false);
-let savesIsLoading = ref(false);
-let mods = ref([]);
-let resourcepacks = ref([]);
-let shaderpacks = ref([]);
-let saves = ref([]);
-
-function updateData() {
-  modIsLoading.value = true;
-  resourcepacksIsLoading.value = true;
-  shaderpackIsLoading.value = true;
-  savesIsLoading.value = true;
-  invoke("scan_mod_folder").then((res: any) => {
-    mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name));
-    modIsLoading.value = false;
-  });
-  invoke("scan_saves_folder").then((res: any) => {
-    saves.value = res;
-    savesIsLoading.value = false;
-  });
-}
+// let modIsLoading = ref(false);
+// let resourcepacksIsLoading = ref(false);
+// let shaderpackIsLoading = ref(false);
+// let savesIsLoading = ref(false);
+// let mods = ref([]);
+// let resourcepacks = ref([]);
+// let shaderpacks = ref([]);
+// let saves = ref([]);
+//
+// function updateData() {
+//   modIsLoading.value = true;
+//   resourcepacksIsLoading.value = true;
+//   shaderpackIsLoading.value = true;
+//   savesIsLoading.value = true;
+//   invoke("scan_mod_folder").then((res: any) => {
+//     mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name));
+//     modIsLoading.value = false;
+//   });
+//   invoke("scan_saves_folder").then((res: any) => {
+//     saves.value = res;
+//     savesIsLoading.value = false;
+//   });
+// }
 
 function setCurrentInstance(instance: Instance) {
   currentInstance.value = instance;
@@ -176,12 +176,10 @@ listen("launch_success", () => {
   display: flex;
 }
 
-.row-1,
-.row-2 {
+.row-1 {
   height: 100%;
   display: flex;
   flex-direction: column;
-  // border: 1px solid #fff;
 }
 
 .row-1 {
@@ -192,10 +190,10 @@ listen("launch_success", () => {
 
 .row-2 {
   width: 100%;
+  overflow-y: auto;
   padding: 24px 24px 24px 0;
 }
 
-// todo: move to main.css
 .side-name {
   width: 100%;
   height: 32px;

@@ -73,6 +73,7 @@ const computedLogo = computed(() => {
 
     > div:last-child {
       max-width: inherit;
+      overflow: hidden;
       width: 100%;
     }
   }
@@ -88,9 +89,7 @@ const computedLogo = computed(() => {
 
   > div:last-child {
     flex-shrink: 0;
-    /* overflow-x: hidden; */
     width: fit-content;
-    overflow-y: visible;
     justify-content: flex-end;
   }
 
