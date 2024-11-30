@@ -18,6 +18,13 @@ export default {
         playtime: "游戏时长",
         accounts: "帐户",
         friends: "好友",
+        assets: {
+            info: "基本信息",
+            worlds: "存档",
+            mods: "模组",
+            packs: "附加包",
+            settings: "实例设置",
+        },
         instanceManager: {
             view: {
                 title: "管理游戏实例",
@@ -49,7 +56,7 @@ export default {
         saves: {
             description: "共有 {counts} 个世界，实例使用独立的存档文件夹",
             showMap: "在左侧选择存档以预览地图",
-            allowCheat: "允许作弊",
+            allowCheat: "命令",
             hardcore: "极限模式",
         },
         resourcepacks: {

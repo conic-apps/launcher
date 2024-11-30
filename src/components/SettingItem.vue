@@ -7,7 +7,7 @@
         <p v-if="description" id="text" style="max-width: 560px" v-html="description"></p>
       </div>
     </div>
-    <div>
+    <div style="display: flex; align-items: center">
       <slot></slot>
     </div>
   </div>

@@ -57,11 +57,7 @@
           window.event.keyCode = 505
         }
       }
-      // 禁止右键
-      // document.oncontextmenu = function (event) {
-      //   if (window.event) {
-      //     event = window.event
-      //   }
+      // document.addEventListener("contextmenu", (event) => {
       //   try {
       //     var the = event.srcElement
       //     if (
@@ -70,14 +66,14 @@
       //         the.tagName == "TEXTAREA"
       //       )
       //     ) {
-      //       return false
+      //       event.preventDefault()
+      //       return
       //     }
       //     return true
       //   } catch (e) {
-      //     return false
+      //     event.preventDefault()
       //   }
-      // }
+      // })
     </script>
-    <!-- <script src="http://localhost:8098"></script> -->
   </body>
 </html>
