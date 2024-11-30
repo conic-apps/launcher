@@ -1,7 +1,7 @@
 <template>
   <div class="playtime">
     <div class="content">
-      <p class="value">2,048</p>
+      <p class="value">2,048h</p>
       <p class="title">Total Playtime</p>
       <p class="date">Aug 10, 2016 - Present</p>
     </div>
@@ -57,8 +57,8 @@
 
   > div.line {
     width: 1px;
-    background: rgba(255, 255, 255, 0.08);
-    height: 60%;
+    background: rgba(255, 255, 255, 0.1);
+    height: 100px;
   }
 }
 </style>

@@ -142,3 +142,13 @@ pub async fn update_latest_instance() {
         .await;
     };
 }
+
+#[tauri::command]
+pub async fn delete_instance(instance_name: String) {
+    info!("Deleting {}", instance_name);
+    let data_location = DATA_LOCATION.get().unwrap();
+    tokio::fs::remove_dir_all(data_location.get_instance_root(&instance_name))
+        .await
+        .unwrap();
+    info!("Deleted {}", instance_name);
+}

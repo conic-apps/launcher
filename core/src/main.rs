@@ -33,7 +33,8 @@ use crate::install::{
     get_quilt_version_list,
 };
 use crate::instance::{
-    check_instance_existance, create_instance, scan_instances_folder, set_current_instance,
+    check_instance_existance, create_instance, delete_instance, scan_instances_folder,
+    set_current_instance,
 };
 use crate::launch::launch;
 use config::{read_config_file, save_config, update_config, Config};
@@ -126,6 +127,7 @@ async fn main() {
         .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![
             create_instance,
+            delete_instance,
             get_minecraft_version_list,
             get_fabric_version_list,
             get_forge_version_list,

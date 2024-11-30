@@ -44,7 +44,10 @@
           :button-loading="buttonLoading"
           @game-button-click="gameButtonClick"
           :error-type="errorType"></instance-card>
-        <assets-manager :instance="currentInstance" style="margin-top: 16px"></assets-manager>
+        <assets-manager
+          :instance="currentInstance"
+          style="margin-top: 16px"
+          @update-instance-list="update"></assets-manager>
       </div>
       <LogViewer
         :instance-name="currentInstance.config.name"
@@ -62,7 +65,7 @@ import InstallProgress from "./dialogs/InstallProgress.vue";
 import InstanceList from "./game/InstanceList.vue";
 import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
 import LogViewer from "./dialogs/LogViewer.vue";
-import { ref, type Ref } from "vue";
+import { onMounted, ref, watch, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/store/config";
@@ -95,41 +98,61 @@ const errorType: Ref<"launch" | "install" | undefined> = ref();
 
 function update() {
   invoke("scan_instances_folder").then((res) => {
-    instances.value = res as Instance[];
-  });
-}
-invoke("scan_instances_folder").then((res) => {
-  instances.value = res as Instance[];
-  instances.value.map((instance) => {
-    if (instance.config.name == "Latest Release") {
-      setCurrentInstance(instance);
+    instances.value = [];
+    let userInstances: Instance[] = [];
+    (res as Instance[]).forEach((v) => {
+      if (v.config.name === "Latest Release") {
+        instances.value[0] = v;
+      } else if (v.config.name === "Latest Snapshot") {
+        instances.value[1] = v;
+      } else {
+        userInstances.push(v);
+      }
+    });
+    instances.value.push(...userInstances);
+    if (
+      !instances.value.find((value) => {
+        return value.config.name === currentInstance.value.config.name;
+      })
+    ) {
+      if (!config.accessibility.hide_latest_release) {
+        setCurrentInstance(instances.value[0]);
+      } else if (!config.accessibility.hide_latest_snapshot) {
+        setCurrentInstance(instances.value[1]);
+      } else {
+        setCurrentInstance(instances.value[2]);
+      }
     }
   });
+}
+
+onMounted(() => {
+  update();
 });
 
-// let modIsLoading = ref(false);
-// let resourcepacksIsLoading = ref(false);
-// let shaderpackIsLoading = ref(false);
-// let savesIsLoading = ref(false);
-// let mods = ref([]);
-// let resourcepacks = ref([]);
-// let shaderpacks = ref([]);
-// let saves = ref([]);
-//
-// function updateData() {
-//   modIsLoading.value = true;
-//   resourcepacksIsLoading.value = true;
-//   shaderpackIsLoading.value = true;
-//   savesIsLoading.value = true;
-//   invoke("scan_mod_folder").then((res: any) => {
-//     mods.value = res.sort((a: any, b: any) => a.name.localeCompare(b.name));
-//     modIsLoading.value = false;
-//   });
-//   invoke("scan_saves_folder").then((res: any) => {
-//     saves.value = res;
-//     savesIsLoading.value = false;
-//   });
-// }
+let hide_latest_release = config.accessibility.hide_latest_release;
+let hide_latest_snapshot = config.accessibility.hide_latest_snapshot;
+
+watch(config, (value) => {
+  if (
+    value.accessibility.hide_latest_release !== hide_latest_release ||
+    value.accessibility.hide_latest_snapshot !== hide_latest_snapshot
+  ) {
+    hide_latest_release = value.accessibility.hide_latest_release;
+    hide_latest_snapshot = value.accessibility.hide_latest_snapshot;
+    let currentInstanceName = currentInstance.value.config.name;
+    if (currentInstanceName !== "Latest Release" && currentInstanceName !== "Latest Snapshot") {
+      return;
+    }
+    if (!config.accessibility.hide_latest_release) {
+      setCurrentInstance(instances.value[0]);
+    } else if (!config.accessibility.hide_latest_snapshot) {
+      setCurrentInstance(instances.value[1]);
+    } else {
+      setCurrentInstance(instances.value[2]);
+    }
+  }
+});
 
 function setCurrentInstance(instance: Instance) {
   currentInstance.value = instance;

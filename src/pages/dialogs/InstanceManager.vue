@@ -71,7 +71,6 @@ const transitionName = ref("slide-left");
 
 const props = defineProps<{
   show: boolean;
-  // instances: InstanceGroup[], todo: group
   instances: Instance[];
 }>();
 
