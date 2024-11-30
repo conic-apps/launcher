@@ -1,6 +1,7 @@
 <template>
-  <div class="instance-card" :style="banner">
+  <div class="instance-card" :class="expand ? '' : 'instance-card-unexpand'" :style="banner">
     <div
+      v-if="expand"
       style="
         position: absolute;
         width: 100%;
@@ -33,7 +34,10 @@
           {{ modLoaderType }} {{ modLoaderVersion }}
         </div>
       </div>
-      <div class="playtime"><i class="clock"></i>{{ $t("game.playtime") }}: 110.5h</div>
+      <div class="expand-this-card" @click="expand = !expand">
+        <i v-if="expand" class="arrows-to-dotted-line"></i>
+        <i v-else class="arrows-from-dotted-line"></i>
+      </div>
     </div>
     <div class="line-b">
       <div class="instance-name">
@@ -65,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import $ from "jquery";
 import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
@@ -73,6 +77,8 @@ import { useConfigStore } from "@/store/config";
 
 const i18n = useI18n();
 const config = useConfigStore();
+
+const expand = ref(true);
 
 const props = defineProps<{
   minecraftVersion: String;
@@ -144,10 +150,20 @@ function star() {
   border-radius: var(--card-border-radius);
 }
 
+.instance-card-unexpand {
+  height: 76px;
+
+  background: var(--card-background);
+
+  .line-a {
+    display: none;
+  }
+}
+
 .minecraft-version,
 .mod-loader-version,
 .launch-progress,
-.playtime {
+.expand-this-card {
   width: fit-content;
   height: 32px;
   display: flex;
@@ -169,10 +185,9 @@ function star() {
   margin-right: 6px;
 }
 
-.playtime i {
+.expand-this-card i {
   font-family: "fa-pro";
   font-style: normal;
-  margin-right: 4px;
 }
 
 .instance-name {

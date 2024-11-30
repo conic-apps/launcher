@@ -1,27 +1,36 @@
 <template>
-  <button
-    class="button"
-    :style="disabled ? 'opacity: 0.5; pointer-events: none;' : ''"
-    v-bind="$attrs">
+  <button class="button" :style="style" v-bind="$attrs">
     {{ text }}
   </button>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from "vue";
+
+const props = defineProps<{
   text: string;
   disabled?: boolean;
+  color?: string;
 }>();
+const style = computed(() => {
+  let result = "";
+  if (props.disabled) {
+    result += "opacity: 0.5; pointer-events: none;";
+  }
+  if (props.color) {
+    result += `color: ${props.color}`;
+  }
+  return result;
+});
 </script>
 
 <style lang="less" scoped>
 button.button {
   width: 100%;
   height: 30px;
-  max-width: 130px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--border-radius-small);
+  background: var(--controllers-background);
+  border: var(--controllers-border);
+  border-radius: var(--controllers-border-radius);
   margin-left: auto;
 }
 
