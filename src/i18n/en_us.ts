@@ -18,6 +18,13 @@ export default {
         playtime: "Playtime",
         accounts: "Accounts",
         friends: "Friends",
+        assets: {
+            info: "Infomations",
+            worlds: "Saves",
+            mods: "Mods",
+            packs: "Packs",
+            settings: "Settings",
+        },
         instanceManager: {
             view: {
                 title: "Manage Instances",
@@ -50,7 +57,7 @@ export default {
             description:
                 "You don't have any worlds, each instance uses an independent save folder. | You have one world, each instance uses an independent save folder. | You have {count} worlds, each instance uses an independent save folder.",
             showMap: "Select a world to preview it",
-            allowCheat: "Allow Cheat",
+            allowCheat: "Allow Commands",
             hardcore: "Hardcore",
         },
         resourcepacks: {

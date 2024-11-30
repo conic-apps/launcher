@@ -570,6 +570,18 @@ i.file-check::before {
     content: "\f316"
 }
 
+i.check::before {
+    content: "\f00c"
+}
+
 i.lock::before {
     content: "\f023"
+}
+
+i.file-zipper::before {
+    content: "\f1c6"
+}
+
+i.icon::before {
+    content: "\f86d"
 }

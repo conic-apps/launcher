@@ -67,7 +67,7 @@
           <i
             style="font-size: 13px; margin-left: auto; opacity: 0.7"
             v-if="checkExistFilesStatus == 'in-progress'"
-            >已检查 {{ installProgress.completed }} 个文件</i
+            >已检查 {{ tweened.number.toFixed(0) }} 个文件</i
           >
         </div>
         <div
@@ -113,8 +113,9 @@ import DialogVue from "@/components/Dialog.vue";
 import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
 import ProgressBar from "@/components/ProgressBar.vue";
 import { listen } from "@tauri-apps/api/event";
-import { computed, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import type { Ref } from "vue";
+import gsap from "gsap";
 
 let time = ref(1145141919810);
 let timer: number;
@@ -247,6 +248,14 @@ const pending = computed(() => {
   } else {
     return pending;
   }
+});
+const tweened = reactive({
+  number: 0,
+});
+
+watch(installProgress, (n) => {
+  console.log(111);
+  gsap.to(tweened, { duration: 0.5, number: Number(n.completed) || 0 });
 });
 </script>
 

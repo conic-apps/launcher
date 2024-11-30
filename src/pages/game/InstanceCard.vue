@@ -1,5 +1,5 @@
 <template>
-  <div class="instance-info card" :style="banner">
+  <div class="instance-card" :style="banner">
     <div
       style="
         position: absolute;
@@ -68,7 +68,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import $ from "jquery";
-import ItemLoadingIcon from "./ItemLoadingIcon.vue";
+import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
 import { useConfigStore } from "@/store/config";
 
 const i18n = useI18n();
@@ -126,10 +126,9 @@ function star() {
 </script>
 
 <style lang="less" scoped>
-.instance-info {
+.instance-card {
   width: 100%;
-  height: 240px;
-  height: 50%;
+  height: 220px;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
@@ -142,6 +141,7 @@ function star() {
   outline: var(--card-border);
   position: relative;
   overflow: hidden;
+  border-radius: var(--card-border-radius);
 }
 
 .minecraft-version,

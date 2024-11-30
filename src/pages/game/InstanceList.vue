@@ -7,8 +7,7 @@
         :key="index"
         logo="1"
         :title="instanceDisplayName(instance.config.name, index)"
-        :click-able="true"
-        :buttons="['arrow-up-right-from-square']">
+        :click-able="true">
         <template #icon>
           <img
             style="width: 100%; height: 100%; content-visibility: auto"
@@ -53,7 +52,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useConfigStore } from "@/store/config";
-import ListItem from "./ListItem.vue";
+import ListItem from "@/components/ListItem.vue";
 import { useI18n } from "vue-i18n";
 import { Instance } from "@/types/instance";
 const config = useConfigStore();
@@ -97,17 +96,25 @@ function instanceDisplayName(instanceName: string, vueForIndex: number) {
 </script>
 
 <style lang="less" scoped>
-div.instances .icon {
-  background-position: center;
-  background-size: contain;
-  background-repeat: none;
-}
+div.instances {
+  height: calc(100% - 21px);
+  width: calc(100% + 8px);
+  padding-right: 16px;
+  overflow-y: auto;
 
-div.instances .overview {
-  margin-left: 6px;
-  overflow: hidden;
-  border-radius: var(--list-border-radius);
-  margin-bottom: 10px;
+  .icon {
+    background-position: center;
+    background-size: contain;
+    background-repeat: none;
+  }
+
+  .overview {
+    margin-left: 6px;
+    border-radius: var(--list-border-radius);
+    overflow: hidden;
+    height: fit-content;
+    margin-bottom: 10px;
+  }
 }
 
 div.instance {
@@ -115,6 +122,7 @@ div.instance {
   align-items: center;
   padding: 6px 8px;
   transition: all 50ms cubic-bezier(0, 0, 0.2, 1);
+  overflow-y: auto;
 
   img {
     width: 24px;
