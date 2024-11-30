@@ -63,13 +63,7 @@ const props = defineProps<{
 }>();
 
 const computedInstances = computed(() => {
-  let result = props.instances.filter((value) => {
-    return value.config.name == "Latest Release" || value.config.name == "Latest Snapshot";
-  });
-  let userInstances = props.instances.filter((value) => {
-    return value.config.name != "Latest Release" && value.config.name != "Latest Snapshot";
-  });
-  result.push(...userInstances);
+  let result = props.instances;
   if (config.accessibility.hide_latest_release) {
     result = result.filter((value) => {
       return value.config.name != "Latest Release";

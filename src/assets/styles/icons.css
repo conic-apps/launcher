@@ -585,3 +585,12 @@ i.file-zipper::before {
 i.icon::before {
     content: "\f86d"
 }
+
+i.arrows-from-dotted-line::before {
+    content: "\e0a3"
+
+}
+
+i.arrows-to-dotted-line::before {
+    content: "\e0a6"
+}

@@ -54,7 +54,6 @@ function checkValue(event: any) {
 <style lang="less" scoped>
 .input-box {
   border-radius: var(--controllers-border-radius);
-  margin-left: auto;
   overflow: hidden;
   height: 30px;
   flex-shrink: 0;
