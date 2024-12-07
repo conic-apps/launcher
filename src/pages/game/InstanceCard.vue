@@ -16,7 +16,7 @@
       "></div>
     <div class="line-a">
       <div style="display: flex">
-        <div class="minecraft-version" v-if="minecraftVersion">
+        <div class="minecraft-version">
           <img src="@/assets/images/minecraft.webp" fill="#fff" />Minecraft
           {{ minecraftVersion }}
         </div>
@@ -74,6 +74,7 @@ import { useI18n } from "vue-i18n";
 import $ from "jquery";
 import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
 import { useConfigStore } from "@/store/config";
+import { useInstanceStore } from "@/store/instance";
 
 const i18n = useI18n();
 const config = useConfigStore();
@@ -81,24 +82,36 @@ const config = useConfigStore();
 const expand = ref(true);
 
 const props = defineProps<{
-  minecraftVersion: String;
-  modLoaderVersion: String | undefined;
-  modLoaderType: "Fabric" | "Forge" | "Quilt" | "Neoforge" | undefined;
-  instanceName: String;
-  installed: Boolean;
   gameButtonType: "install" | "launch" | "error";
   buttonLoading: boolean;
   errorType?: "install" | "launch";
 }>();
 
+const instanceStore = useInstanceStore();
+
+const currentInstance = computed(() => {
+  return instanceStore.currentInstance;
+});
+
+const minecraftVersion = computed(() => {
+  return instanceStore.currentInstance.config.runtime.minecraft;
+});
+const modLoaderType = computed(() => {
+  return instanceStore.currentInstance.config.runtime.mod_loader_type;
+});
+const modLoaderVersion = computed(() => {
+  return instanceStore.currentInstance.config.runtime.mod_loader_version;
+});
+
 let computedInstanceName = computed(() => {
-  if (props.instanceName == "Latest Release") {
+  let name = currentInstance.value.config.name;
+  if (name == "Latest Release") {
     return i18n.t("game.latestRelease");
   }
-  if (props.instanceName == "Latest Snapshot") {
+  if (name == "Latest Snapshot") {
     return i18n.t("game.latestSnapshot");
   }
-  return props.instanceName;
+  return name;
 });
 
 let banner = "";

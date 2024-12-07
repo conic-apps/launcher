@@ -118,12 +118,8 @@ import QuiltChoose from "../QuiltChoose.vue";
 import { invoke } from "@tauri-apps/api/core";
 import VueButton from "@/components/controllers/Button.vue";
 import Tag from "@/components/Tag.vue";
-import { Instance } from "@/types/instance";
 
 const emit = defineEmits(["created"]);
-const props = defineProps<{
-  instances: Instance[];
-}>();
 
 let showMinecraft = ref(false);
 let showForge = ref(false);

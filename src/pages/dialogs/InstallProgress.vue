@@ -1,5 +1,5 @@
 <template>
-  <dialog-vue :visible="props.installing" :width="660" :height="420">
+  <dialog-vue :visible="props.visible" :width="660" :height="420">
     <div class="install-progress-vue">
       <div class="title">
         <div style="display: flex; align-items: center">
@@ -7,7 +7,7 @@
             <i class="folder-arrow-down"></i>
           </div>
           <div>
-            <h4>正在安装"{{ props.instanceName }}"</h4>
+            <h4>正在安装"{{ instanceStore.currentInstance.config.name }}"</h4>
             <p style="display: flex; align-items: center">
               <i
                 class="stopwatch"
@@ -101,7 +101,7 @@
               : 'background: rgba(255, 255, 255, 0.08)'
           ">
           <item-loading-icon :status="installModLoaderStatus"></item-loading-icon>
-          <p>安装 {{ modLoaderType }}</p>
+          <p>安装 {{}}</p>
         </div>
       </div>
     </div>
@@ -116,6 +116,7 @@ import { listen } from "@tauri-apps/api/event";
 import { computed, reactive, ref, watch } from "vue";
 import type { Ref } from "vue";
 import gsap from "gsap";
+import { useInstanceStore } from "@/store/instance";
 
 let time = ref(1145141919810);
 let timer: number;
@@ -130,12 +131,17 @@ const computedTime = computed(() => {
 });
 
 const props = defineProps<{
-  installing: boolean;
-  instanceName: string;
-  modLoaderType: "Fabric" | "Forge" | "Neoforge" | "Quilt" | undefined;
+  visible: boolean;
 }>();
+
+const instanceStore = useInstanceStore();
+
+const modLoaderType = computed(() => {
+  return instanceStore.currentInstance.config.runtime.mod_loader_type;
+});
+
 watch(props, (val) => {
-  if (val.installing == true) {
+  if (val.visible == true) {
     time.value = 0;
     timer = setInterval(() => {
       time.value++;

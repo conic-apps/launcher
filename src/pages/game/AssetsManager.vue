@@ -18,7 +18,6 @@
       <component
         :is="currentComponent"
         style="padding: 16px 8px; width: 100%; height: fit-content"
-        :instance="props.instance"
         @update-instance-list="$emit('update-instance-list')"></component>
     </Transition>
     <!-- <worlds :show="show.worlds" :datas="saves" :instance-name="instance.config.name" @close="show.worlds = false"> -->
@@ -34,7 +33,6 @@
 
 <script setup lang="ts">
 import { computed, markRaw, ref } from "vue";
-import { Instance } from "@/types/instance";
 import Tabs from "@/components/Tabs.vue";
 import Info from "./Info.vue";
 import Worlds from "./Worlds.vue";
@@ -44,10 +42,6 @@ import Settings from "./Settings.vue";
 import { useI18n } from "vue-i18n";
 
 const i18n = useI18n();
-
-const props = defineProps<{
-  instance: Instance;
-}>();
 
 defineEmits(["update-instance-list"]);
 

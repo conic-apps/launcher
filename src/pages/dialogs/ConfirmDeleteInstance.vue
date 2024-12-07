@@ -26,29 +26,29 @@
           alt="" />
       </div>
       <p class="instance-name">
-        {{ instance.config.name }}
+        {{ currentInstance.config.name }}
         <i :class="copied ? 'check' : 'copy'" @click="copyInstanceName"></i>
       </p>
       <div class="instance-info">
         <div>
           <img src="@/assets/images/minecraft.webp" /><span>{{
-            instance.config.runtime.minecraft
+            currentInstance.config.runtime.minecraft
           }}</span>
         </div>
         <div style="margin-left: 16px">
           <img
             src="@/assets/images/quilt.svg"
-            v-if="instance.config.runtime.mod_loader_type == 'Quilt'" />
+            v-if="currentInstance.config.runtime.mod_loader_type == 'Quilt'" />
           <img
             src="@/assets/images/fabric.webp"
-            v-if="instance.config.runtime.mod_loader_type == 'Fabric'" />
+            v-if="currentInstance.config.runtime.mod_loader_type == 'Fabric'" />
           <img
             src="@/assets/images/neoforged.png"
-            v-if="instance.config.runtime.mod_loader_type == 'Neoforge'" />
+            v-if="currentInstance.config.runtime.mod_loader_type == 'Neoforge'" />
           <img
             src="@/assets/images/forge.svg"
-            v-if="instance.config.runtime.mod_loader_type == 'Forge'" />
-          <span>{{ instance.config.runtime.mod_loader_version }}</span>
+            v-if="currentInstance.config.runtime.mod_loader_type == 'Forge'" />
+          <span>{{ currentInstance.config.runtime.mod_loader_version }}</span>
         </div>
         <div style="margin-left: 16px">
           <i class="clock"></i>
@@ -56,7 +56,7 @@
         </div>
       </div>
       <p style="user-select: text; -webkit-user-select: text; cursor: text">
-        To confirm, type "{{ instance.config.name }}" in the box below
+        To confirm, type "{{ currentInstance.config.name }}" in the box below
       </p>
       <TextInputBox
         width="100%"
@@ -76,7 +76,7 @@
           :text="deleting ? 'Deleting...' : 'Delete this instance'"
           style="width: 100%; font-weight: bold"
           @click="confirmDelete"
-          :disabled="confirmInputText !== instance.config.name || deleting"
+          :disabled="confirmInputText !== currentInstance.config.name || deleting"
           color="rgb(210, 15, 57)"></button-vue>
       </div>
     </div>
@@ -85,17 +85,22 @@
 
 <script setup lang="ts">
 import DialogVue from "@/components/Dialog.vue";
-import { Instance } from "@/types/instance";
 import TextInputBox from "@/components/controllers/TextInputBox.vue";
 import ButtonVue from "@/components/controllers/Button.vue";
 import { computed, ref, useTemplateRef } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { useInstanceStore } from "@/store/instance";
 
 const props = defineProps<{
   visible: boolean;
-  instance: Instance;
 }>();
+
+const instanceStore = useInstanceStore();
+
+const currentInstance = computed(() => {
+  return instanceStore.currentInstance;
+});
 
 const confirmInputText = ref("");
 
@@ -104,7 +109,7 @@ const emit = defineEmits(["close", "deleted"]);
 const deleting = ref(false);
 const confirmDelete = () => {
   deleting.value = true;
-  invoke("delete_instance", { instanceName: props.instance.config.name }).then(() => {
+  invoke("delete_instance", { instanceName: currentInstance.value.config.name }).then(() => {
     deleting.value = false;
     confirmInputText.value = "";
     emit("deleted");
@@ -125,7 +130,7 @@ const copied = ref(false);
 
 function copyInstanceName() {
   copied.value = true;
-  writeText(props.instance.config.name).then(() => {
+  writeText(currentInstance.value.config.name).then(() => {
     setTimeout(() => {
       copied.value = false;
     }, 2000);

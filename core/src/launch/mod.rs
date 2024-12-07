@@ -20,8 +20,8 @@ mod complete;
 mod options;
 use crate::{
     account::{self, refresh_microsoft_account_by_uuid, Account},
-    config::instance::InstanceConfig,
     folder::MinecraftLocation,
+    instance::Instance,
     platform::OsType,
     version::Version,
     Storage, DATA_LOCATION, MAIN_WINDOW, PLATFORM_INFO,
@@ -57,17 +57,20 @@ async fn check_and_refresh_account(account: &Account) -> anyhow::Result<Account>
 }
 
 #[tauri::command(async)]
-pub async fn launch(storage: tauri::State<'_, Storage>, instance_name: String) -> Result<(), ()> {
-    info!("Starting Minecraft client, instance: {}", instance_name);
+pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> Result<(), ()> {
+    info!(
+        "Starting Minecraft client, instance: {}",
+        instance.config.name
+    );
     let platform = PLATFORM_INFO.get().unwrap();
-    let instance = InstanceConfig::get(&instance_name).await.unwrap();
+    let instance_config = instance.config;
     info!("------------- Instance runtime config -------------");
-    info!("-> Minecraft: {}", instance.runtime.minecraft);
-    match &instance.runtime.mod_loader_type {
+    info!("-> Minecraft: {}", instance_config.runtime.minecraft);
+    match &instance_config.runtime.mod_loader_type {
         Some(x) => info!("-> Mod loader: {x}"),
         None => info!("-> Mod loader: none"),
     };
-    match &instance.runtime.mod_loader_version {
+    match &instance_config.runtime.mod_loader_version {
         Some(x) => info!("-> Mod loader version: {x}"),
         None => info!("-> Mod loader version: none"),
     };
@@ -92,23 +95,24 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance_name: String) -
         check_and_refresh_account(selected_account).await.unwrap()
     };
 
-    let launch_options = LaunchOptions::get(instance.clone(), selected_account);
+    let launch_options = LaunchOptions::get(&instance_config, selected_account);
     let minecraft_location = launch_options.minecraft_location.clone();
     if config.launch.skip_check_files {
         info!("File checking disabled by user")
     } else {
-        complete_files(instance.clone(), minecraft_location.clone()).await;
+        complete_files(&instance_config, &minecraft_location).await;
     }
 
     info!("Generating startup parameters");
-    let version = Version::from_versions_folder(&minecraft_location, &instance.get_version_id())
-        .unwrap()
-        .parse(&minecraft_location, platform)
-        .await
-        .unwrap();
+    let version =
+        Version::from_versions_folder(&minecraft_location, &instance_config.get_version_id())
+            .unwrap()
+            .parse(&minecraft_location, platform)
+            .await
+            .unwrap();
     let command_arguments = generate_command_arguments(
         &minecraft_location,
-        instance,
+        &instance_config,
         platform,
         &launch_options,
         version.clone(),
@@ -121,7 +125,7 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance_name: String) -
             minecraft_location,
             launch_options,
             version_id,
-            &instance_name,
+            &instance_config.name,
         )
     });
     Ok(())

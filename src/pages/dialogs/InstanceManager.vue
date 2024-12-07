@@ -43,16 +43,10 @@
         <div class="content">
           <Transition :name="transitionName" mode="out-in">
             <component
-              :instances="props.instances"
               :is="currentComponent"
               @create="createInstance"
               @created="instanceCreated"></component>
           </Transition>
-          <!-- <div class="group" v-for="group in props.instances" :key="group.name">
-          <div class="instance" v-for="instance in group.instances" :key="instance.name">
-            <p>{{ instance.name }}</p>
-          </div>
-        </div> todo: group -->
         </div>
       </div>
     </div>
@@ -64,15 +58,16 @@ import DialogVue from "@/components/Dialog.vue";
 import { markRaw, reactive, ref, shallowRef } from "vue";
 import View from "@/pages/dialogs/instance/View.vue";
 import Create from "@/pages/dialogs/instance/Create.vue";
-import { Instance } from "@/types/instance";
+import { useInstanceStore } from "@/store/instance";
 
 const emit = defineEmits(["close", "update"]);
 const transitionName = ref("slide-left");
 
 const props = defineProps<{
   show: boolean;
-  instances: Instance[];
 }>();
+
+const instanceStore = useInstanceStore();
 
 const pages: any = reactive({
   view: markRaw(View),
