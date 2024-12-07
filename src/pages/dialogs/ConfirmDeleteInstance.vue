@@ -1,6 +1,6 @@
 <template>
-  <dialog-vue :visible="props.visible" :width="500" :height="300">
-    <div class="confirm-delete-instance">
+  <dialog-vue :visible="props.visible" :width="500" :height="height">
+    <div class="confirm-delete-instance" ref="main">
       <p
         style="
           margin-top: -4px;
@@ -87,7 +87,7 @@ import DialogVue from "@/components/Dialog.vue";
 import { Instance } from "@/types/instance";
 import TextInputBox from "@/components/controllers/TextInputBox.vue";
 import ButtonVue from "@/components/controllers/Button.vue";
-import { ref } from "vue";
+import { computed, ref, useTemplateRef } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 
 const props = defineProps<{
@@ -108,6 +108,16 @@ const confirmDelete = () => {
     emit("deleted");
   });
 };
+
+const main = useTemplateRef("main");
+
+const height = computed(() => {
+  if (typeof main.value === "undefined" || main.value === null) {
+    return 300;
+  } else {
+    return main.value.offsetHeight + 48;
+  }
+});
 </script>
 
 <style lang="less" scoped>

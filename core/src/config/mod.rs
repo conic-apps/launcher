@@ -36,8 +36,6 @@ pub struct AccessibilityConfig {
     pub hide_latest_snapshot: bool,
     #[serde(default = "default_change_game_language")]
     pub change_game_language: bool,
-    #[serde(default = "default_open_log_viewer")]
-    pub open_log_viewer: bool,
     #[serde(default = "default_disable_animations")]
     pub disable_animations: bool,
     #[serde(default = "default_high_contrast_mode")]
@@ -64,10 +62,6 @@ fn default_change_game_language() -> bool {
     true
 }
 
-fn default_open_log_viewer() -> bool {
-    false
-}
-
 fn default_disable_animations() -> bool {
     false
 }
@@ -84,7 +78,6 @@ impl Default for AccessibilityConfig {
             hide_latest_release: default_hide_latest_release(),
             hide_latest_snapshot: default_hide_latest_snapshot(),
             change_game_language: default_change_game_language(),
-            open_log_viewer: default_open_log_viewer(),
             disable_animations: default_disable_animations(),
             high_contrast_mode: default_high_contrast_mode(),
         }
