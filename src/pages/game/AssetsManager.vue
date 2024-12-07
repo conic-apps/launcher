@@ -15,13 +15,11 @@
       @choose-tab="chooseTab">
     </tabs>
     <Transition :name="transitionName" mode="out-in">
-      <KeepAlive>
-        <component
-          :is="currentComponent"
-          style="padding: 16px 8px; width: 100%; height: fit-content"
-          :instance="props.instance"
-          @update-instance-list="$emit('update-instance-list')"></component>
-      </KeepAlive>
+      <component
+        :is="currentComponent"
+        style="padding: 16px 8px; width: 100%; height: fit-content"
+        :instance="props.instance"
+        @update-instance-list="$emit('update-instance-list')"></component>
     </Transition>
     <!-- <worlds :show="show.worlds" :datas="saves" :instance-name="instance.config.name" @close="show.worlds = false"> -->
     <!-- </worlds> -->

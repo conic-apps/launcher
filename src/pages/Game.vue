@@ -1,56 +1,47 @@
 <template>
-  <keep-alive>
-    <div class="game-page-main">
-      <div class="row-1">
-        <div class="side-name">
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              height: 100%;
-            ">
-            <p style="margin-left: 4px">{{ $t("game.instances") }}</p>
-            <button
-              class="side-button"
-              @click="show.instanceManager = true"
-              style="margin-right: 6px">
-              <i class="chevron-right" style="font-size: 12px"></i>
-            </button>
-          </div>
+  <div class="game-page-main">
+    <div class="row-1">
+      <div class="side-name">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; height: 100%">
+          <p style="margin-left: 4px">{{ $t("game.instances") }}</p>
+          <button
+            class="side-button"
+            @click="show.instanceManager = true"
+            style="margin-right: 6px">
+            <i class="chevron-right" style="font-size: 12px"></i>
+          </button>
         </div>
-        <instance-list :instances="instances" @select="setCurrentInstance"></instance-list>
-        <instance-manager
-          :show="show.instanceManager"
-          @close="show.instanceManager = false"
-          :instances="instances"
-          @update="update"></instance-manager>
       </div>
-      <div class="row-2">
-        <install-progress
-          :installing="installing"
-          :instance-name="currentInstance.config.name"
-          :mod-loader-type="currentInstance.config.runtime.mod_loader_type"
-          :mod-loader-version="
-            currentInstance.config.runtime.mod_loader_version
-          "></install-progress>
-        <instance-card
-          :minecraft-version="currentInstance.config.runtime.minecraft"
-          :mod-loader-type="currentInstance.config.runtime.mod_loader_type"
-          :mod-loader-version="currentInstance.config.runtime.mod_loader_version"
-          :instance-name="currentInstance.config.name"
-          :installed="true"
-          :game-button-type="gameButtonType"
-          :button-loading="buttonLoading"
-          @game-button-click="gameButtonClick"
-          :error-type="errorType"></instance-card>
-        <assets-manager
-          :instance="currentInstance"
-          style="margin-top: 16px"
-          @update-instance-list="update"></assets-manager>
-      </div>
+      <instance-list :instances="instances" @select="setCurrentInstance"></instance-list>
+      <instance-manager
+        :show="show.instanceManager"
+        @close="show.instanceManager = false"
+        :instances="instances"
+        @update="update"></instance-manager>
     </div>
-  </keep-alive>
+    <div class="row-2">
+      <install-progress
+        :installing="installing"
+        :instance-name="currentInstance.config.name"
+        :mod-loader-type="currentInstance.config.runtime.mod_loader_type"
+        :mod-loader-version="currentInstance.config.runtime.mod_loader_version"></install-progress>
+      <instance-card
+        :minecraft-version="currentInstance.config.runtime.minecraft"
+        :mod-loader-type="currentInstance.config.runtime.mod_loader_type"
+        :mod-loader-version="currentInstance.config.runtime.mod_loader_version"
+        :instance-name="currentInstance.config.name"
+        :installed="true"
+        :game-button-type="gameButtonType"
+        :button-loading="buttonLoading"
+        @game-button-click="gameButtonClick"
+        :error-type="errorType"></instance-card>
+      <assets-manager
+        :instance="currentInstance"
+        style="margin-top: 16px"
+        @update-instance-list="update"></assets-manager>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">

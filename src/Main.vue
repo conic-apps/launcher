@@ -68,9 +68,7 @@
     </div>
     <main class="main" style="transition: none">
       <Transition :name="transitionName" mode="out-in">
-        <KeepAlive>
-          <component :is="currentComponent" @back-to-home="back" @jump="jumpTo"></component>
-        </KeepAlive>
+        <component :is="currentComponent" @back-to-home="back" @jump="jumpTo"></component>
       </Transition>
     </main>
     <update-reminder></update-reminder>
