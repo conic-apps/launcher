@@ -131,7 +131,7 @@ pub async fn add_microsoft_account(code: String) -> std::result::Result<(), ()> 
 }
 
 #[tauri::command(async)]
-pub async fn refresh_microsoft_account_by_uuid(uuid: String) {
+pub async fn refresh_microsoft_account_by_uuid(uuid: String) -> Account {
     info!("Start refreshing the account: {}", uuid);
     let accounts = get_accounts().unwrap();
     let mut result = vec![];
@@ -159,6 +159,7 @@ pub async fn refresh_microsoft_account_by_uuid(uuid: String) {
         .unwrap()
         .emit("refresh_accounts_list", "")
         .unwrap();
+    result.first().unwrap().clone()
 }
 
 #[cfg(not(debug_assertions))]

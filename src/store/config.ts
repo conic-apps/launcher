@@ -1,4 +1,3 @@
-import { invoke } from "@tauri-apps/api/core"
 import { defineStore } from "pinia"
 
 export type Config = {
@@ -15,7 +14,6 @@ export type Config = {
         hide_latest_release: boolean
         hide_latest_snapshot: boolean
         change_game_language: boolean
-        open_log_viewer: boolean
         disable_animations: boolean
         high_contrast_mode: boolean
     }

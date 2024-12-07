@@ -49,11 +49,6 @@
           style="margin-top: 16px"
           @update-instance-list="update"></assets-manager>
       </div>
-      <LogViewer
-        :instance-name="currentInstance.config.name"
-        :visible="logViewerOpen"
-        @close="logViewerOpen = false">
-      </LogViewer>
     </div>
   </keep-alive>
 </template>
@@ -64,7 +59,6 @@ import AssetsManager from "./game/AssetsManager.vue";
 import InstallProgress from "./dialogs/InstallProgress.vue";
 import InstanceList from "./game/InstanceList.vue";
 import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
-import LogViewer from "./dialogs/LogViewer.vue";
 import { onMounted, ref, watch, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -76,7 +70,6 @@ const config = useConfigStore();
 const installing = ref(false);
 
 const buttonLoading = ref(false);
-const logViewerOpen = ref(false);
 
 const currentInstance = ref<Instance>({
   config: {
@@ -165,9 +158,6 @@ function setCurrentInstance(instance: Instance) {
 function gameButtonClick() {
   if (gameButtonType.value === "launch") {
     buttonLoading.value = true;
-    if (config.accessibility.open_log_viewer) {
-      logViewerOpen.value = true;
-    }
     invoke("launch", {
       instanceName: currentInstance.value.config.name,
     });

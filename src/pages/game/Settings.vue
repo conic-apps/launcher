@@ -154,6 +154,14 @@
       <setting-item :title="$t('settings.advance.lwjglSettings')" description="" :clickAble="true">
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>
+      <setting-item
+        title="Open Log Viewer"
+        description="The Description of Open Log Viewer "
+        icon="scroll"
+        :clickAble="true"
+        @click="logViewerOpen = true">
+        <i class="chevron-right" style="margin-right: 10px"></i>
+      </setting-item>
     </setting-group>
     <setting-group title="Danger Zone" :danger="true">
       <setting-item
@@ -184,6 +192,11 @@
         confirmDeleteInstanceVisible = false;
         $emit('update-instance-list');
       "></confirm-delete-instance>
+    <LogViewer
+      :instance-name="props.instance.config.name"
+      :visible="logViewerOpen"
+      @close="logViewerOpen = false">
+    </LogViewer>
   </div>
 </template>
 
@@ -197,6 +210,7 @@ import { computed, ref } from "vue";
 import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
 import ConfirmDeleteInstance from "../dialogs/ConfirmDeleteInstance.vue";
 import SelectVue from "@/components/controllers/Select.vue";
+import LogViewer from "../dialogs/LogViewer.vue";
 
 const props = defineProps<{
   instance: Instance;
@@ -211,6 +225,8 @@ const instanceName = computed(() => {
 const config = useConfigStore();
 
 const confirmDeleteInstanceVisible = ref(false);
+
+const logViewerOpen = ref(false);
 </script>
 
 <style lang="less" scoped>
