@@ -13,9 +13,7 @@
     </div>
     <div class="rol-2">
       <Transition :name="transitionName" mode="out-in">
-        <KeepAlive>
-          <component :is="currentComponent"></component>
-        </KeepAlive>
+        <component :is="currentComponent"></component>
       </Transition>
     </div>
   </div>
