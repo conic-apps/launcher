@@ -114,6 +114,7 @@ async fn main() {
         .to_string()
         .as_ref();
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(init_log_builder().build())
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             let windows = app.webview_windows();

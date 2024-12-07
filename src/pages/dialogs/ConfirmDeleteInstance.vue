@@ -27,6 +27,7 @@
       </div>
       <p class="instance-name">
         {{ instance.config.name }}
+        <i :class="copied ? 'check' : 'copy'" @click="copyInstanceName"></i>
       </p>
       <div class="instance-info">
         <div>
@@ -89,6 +90,7 @@ import TextInputBox from "@/components/controllers/TextInputBox.vue";
 import ButtonVue from "@/components/controllers/Button.vue";
 import { computed, ref, useTemplateRef } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 
 const props = defineProps<{
   visible: boolean;
@@ -118,6 +120,17 @@ const height = computed(() => {
     return main.value.offsetHeight + 48;
   }
 });
+
+const copied = ref(false);
+
+function copyInstanceName() {
+  copied.value = true;
+  writeText(props.instance.config.name).then(() => {
+    setTimeout(() => {
+      copied.value = false;
+    }, 2000);
+  });
+}
 </script>
 
 <style lang="less" scoped>
@@ -142,6 +155,22 @@ const height = computed(() => {
     font-size: 22px;
     text-align: center;
     margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      font-family: fa-pro;
+      font-style: normal;
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 4px;
+    }
   }
 
   .instance-info {
