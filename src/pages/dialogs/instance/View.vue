@@ -1,6 +1,6 @@
 <template>
   <div class="instance-view">
-    <div class="instance" v-for="instance in props.instances" :key="instance.config.name">
+    <div class="instance" v-for="instance in instanceStore.instances" :key="instance.config.name">
       <img src="@/assets/images/minecraft-icon.svg" />
       <p>{{ instance.config.name }}</p>
     </div>
@@ -11,11 +11,9 @@
 </template>
 
 <script setup lang="ts">
-import { Instance } from "@/types/instance";
+import { useInstanceStore } from "@/store/instance";
 
-const props = defineProps<{
-  instances: Instance[];
-}>();
+const instanceStore = useInstanceStore();
 </script>
 
 <style lang="less">
