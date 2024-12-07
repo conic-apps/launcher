@@ -4,12 +4,13 @@
 
 // Prevents additional console window on Windows in release.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// #![deny(clippy::unwrap_used)]
 
 mod account;
 mod config;
 mod download;
 mod folder;
-pub mod game_data;
+// mod game_data;
 mod install;
 mod instance;
 mod launch;
@@ -21,23 +22,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use crate::account::{
-    add_microsoft_account, delete_account, get_account_by_uuid, get_accounts,
-    refresh_all_microsoft_account, refresh_microsoft_account_by_uuid,
-};
-use crate::config::instance::{get_instance_config, get_instance_config_by_name};
-use crate::game_data::{scan_mod_folder, scan_resourcepack_folder, scan_saves_folder};
-use crate::install::install;
-use crate::install::{
-    get_fabric_version_list, get_forge_version_list, get_minecraft_version_list,
-    get_quilt_version_list,
-};
-use crate::instance::{
-    check_instance_existance, create_instance, delete_instance, scan_instances_folder,
-    set_current_instance,
-};
-use crate::launch::launch;
-use config::{read_config_file, save_config, update_config, Config};
+use config::{read_config_file, Config};
 use folder::DataLocation;
 use log::{debug, error, info};
 use once_cell::sync::OnceCell;
@@ -89,7 +74,6 @@ async fn main() {
     tokio::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE)
         .await
         .expect("Could not create launcher profile");
-    tokio::spawn(instance::update_latest_instance());
     #[cfg(target_os = "linux")]
     {
         // if std::path::Path::new("/dev/dri").exists()
@@ -127,32 +111,27 @@ async fn main() {
         }))
         .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![
-            create_instance,
-            delete_instance,
-            get_minecraft_version_list,
-            get_fabric_version_list,
-            get_forge_version_list,
-            get_quilt_version_list,
-            check_instance_existance,
-            scan_instances_folder,
-            set_current_instance,
-            scan_mod_folder,
-            scan_saves_folder,
-            scan_resourcepack_folder,
-            get_instance_config,
-            get_instance_config_by_name,
-            install,
-            launch,
-            read_config_file,
-            update_config,
-            save_config,
             on_frontend_loaded,
-            add_microsoft_account,
-            get_accounts,
-            refresh_microsoft_account_by_uuid,
-            refresh_all_microsoft_account,
-            delete_account,
-            get_account_by_uuid
+            instance::create_instance,
+            instance::read_all_instances,
+            instance::update_instance,
+            instance::delete_instance,
+            instance::set_current_instance,
+            install::install,
+            install::get_minecraft_version_list,
+            install::get_fabric_version_list,
+            install::get_forge_version_list,
+            install::get_quilt_version_list,
+            launch::launch,
+            config::read_config_file,
+            config::update_config,
+            config::save_config,
+            account::add_microsoft_account,
+            account::get_accounts,
+            account::refresh_microsoft_account_by_uuid,
+            account::refresh_all_microsoft_account,
+            account::delete_account,
+            account::get_account_by_uuid
         ])
         .manage(Storage {
             current_instance: Arc::new(Mutex::new("".to_string())),

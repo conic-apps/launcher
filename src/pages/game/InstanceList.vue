@@ -54,16 +54,13 @@ import { computed } from "vue";
 import { useConfigStore } from "@/store/config";
 import ListItem from "@/components/ListItem.vue";
 import { useI18n } from "vue-i18n";
-import { Instance } from "@/types/instance";
+import { useInstanceStore } from "@/store/instance";
 const config = useConfigStore();
 
-const props = defineProps<{
-  // instances: InstanceGroup[], todo: group
-  instances: Instance[];
-}>();
+const instanceStore = useInstanceStore();
 
 const computedInstances = computed(() => {
-  let result = props.instances;
+  let result = instanceStore.instances;
   if (config.accessibility.hide_latest_release) {
     result = result.filter((value) => {
       return value.config.name != "Latest Release";

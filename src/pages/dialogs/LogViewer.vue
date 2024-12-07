@@ -35,13 +35,19 @@
 
 <script setup lang="ts">
 import DialogVue from "@/components/Dialog.vue";
+import { useInstanceStore } from "@/store/instance";
 import { listen } from "@tauri-apps/api/event";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps<{
-  instanceName: string;
   visible: boolean;
 }>();
+
+const instanceStore = useInstanceStore();
+
+const instanceName = computed(() => {
+  return instanceStore.currentInstance.config.name;
+});
 
 type Log = {
   instanceName: string;

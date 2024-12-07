@@ -13,33 +13,20 @@
           </button>
         </div>
       </div>
-      <instance-list :instances="instances" @select="setCurrentInstance"></instance-list>
+      <instance-list @select="setCurrentInstance"></instance-list>
       <instance-manager
         :show="show.instanceManager"
         @close="show.instanceManager = false"
-        :instances="instances"
         @update="update"></instance-manager>
     </div>
     <div class="row-2">
-      <install-progress
-        :installing="installing"
-        :instance-name="currentInstance.config.name"
-        :mod-loader-type="currentInstance.config.runtime.mod_loader_type"
-        :mod-loader-version="currentInstance.config.runtime.mod_loader_version"></install-progress>
+      <install-progress :visible="installing"></install-progress>
       <instance-card
-        :minecraft-version="currentInstance.config.runtime.minecraft"
-        :mod-loader-type="currentInstance.config.runtime.mod_loader_type"
-        :mod-loader-version="currentInstance.config.runtime.mod_loader_version"
-        :instance-name="currentInstance.config.name"
-        :installed="true"
         :game-button-type="gameButtonType"
         :button-loading="buttonLoading"
         @game-button-click="gameButtonClick"
         :error-type="errorType"></instance-card>
-      <assets-manager
-        :instance="currentInstance"
-        style="margin-top: 16px"
-        @update-instance-list="update"></assets-manager>
+      <assets-manager style="margin-top: 16px" @update-instance-list="update"></assets-manager>
     </div>
   </div>
 </template>
@@ -54,7 +41,7 @@ import { onMounted, ref, watch, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/store/config";
-import { Instance } from "@/types/instance";
+import { Instance, useInstanceStore } from "@/store/instance";
 
 const config = useConfigStore();
 
@@ -62,49 +49,30 @@ const installing = ref(false);
 
 const buttonLoading = ref(false);
 
-const currentInstance = ref<Instance>({
-  config: {
-    name: "",
-    runtime: {
-      minecraft: "",
-      mod_loader_type: undefined,
-      mod_loader_version: undefined,
-    },
-  },
-  installed: false,
-});
 const show = ref({
   instanceManager: false,
 });
-const instances: Ref<Instance[]> = ref([]);
 const gameButtonType: Ref<"install" | "launch" | "error"> = ref("install");
 const errorType: Ref<"launch" | "install" | undefined> = ref();
 
+const instanceStore = useInstanceStore();
+
 function update() {
-  invoke("scan_instances_folder").then((res) => {
-    instances.value = [];
-    let userInstances: Instance[] = [];
-    (res as Instance[]).forEach((v) => {
-      if (v.config.name === "Latest Release") {
-        instances.value[0] = v;
-      } else if (v.config.name === "Latest Snapshot") {
-        instances.value[1] = v;
-      } else {
-        userInstances.push(v);
-      }
-    });
-    instances.value.push(...userInstances);
+  invoke("read_all_instances", { sortBy: "Name" }).then((res) => {
+    instanceStore.instances = res as Instance[];
+    let currentInstance = instanceStore.currentInstance;
+    let instances = instanceStore.instances;
     if (
-      !instances.value.find((value) => {
-        return value.config.name === currentInstance.value.config.name;
+      !instances.find((value) => {
+        return value.config.name === currentInstance.config.name;
       })
     ) {
       if (!config.accessibility.hide_latest_release) {
-        setCurrentInstance(instances.value[0]);
+        setCurrentInstance(instances[0]);
       } else if (!config.accessibility.hide_latest_snapshot) {
-        setCurrentInstance(instances.value[1]);
+        setCurrentInstance(instances[1]);
       } else {
-        setCurrentInstance(instances.value[2]);
+        setCurrentInstance(instances[2]);
       }
     }
   });
@@ -124,22 +92,23 @@ watch(config, (value) => {
   ) {
     hide_latest_release = value.accessibility.hide_latest_release;
     hide_latest_snapshot = value.accessibility.hide_latest_snapshot;
-    let currentInstanceName = currentInstance.value.config.name;
+    let currentInstanceName = instanceStore.currentInstance.config.name;
     if (currentInstanceName !== "Latest Release" && currentInstanceName !== "Latest Snapshot") {
       return;
     }
+    let instances = instanceStore.instances;
     if (!config.accessibility.hide_latest_release) {
-      setCurrentInstance(instances.value[0]);
+      setCurrentInstance(instances[0]);
     } else if (!config.accessibility.hide_latest_snapshot) {
-      setCurrentInstance(instances.value[1]);
+      setCurrentInstance(instances[1]);
     } else {
-      setCurrentInstance(instances.value[2]);
+      setCurrentInstance(instances[2]);
     }
   }
 });
 
 function setCurrentInstance(instance: Instance) {
-  currentInstance.value = instance;
+  instanceStore.currentInstance = instance;
   gameButtonType.value = instance.installed ? "launch" : "install";
   invoke("set_current_instance", {
     instanceName: instance.config.name,
@@ -150,11 +119,11 @@ function gameButtonClick() {
   if (gameButtonType.value === "launch") {
     buttonLoading.value = true;
     invoke("launch", {
-      instanceName: currentInstance.value.config.name,
+      instance: instanceStore.currentInstance,
     });
   } else if (gameButtonType.value === "install") {
     installing.value = true;
-    invoke("install");
+    invoke("install", { instance: instanceStore.currentInstance });
   }
 }
 

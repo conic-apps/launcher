@@ -2,65 +2,61 @@
 // Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! CRUD implementation for game instance
+
 use crate::config::instance::InstanceConfig;
 use crate::version::VersionManifest;
 use crate::{Storage, DATA_LOCATION};
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+static LATEST_RELEASE_INSTANCE_NAME: &str = "Latest Release";
+static LATEST_SNAPSHOT_INSTANCE_NAME: &str = "Latest Snapshot";
+
+#[derive(Deserialize, Serialize)]
 pub struct Instance {
     pub config: InstanceConfig,
     pub installed: bool,
 }
 
 #[tauri::command(async)]
-pub async fn create_instance(instance_name: String, config: InstanceConfig) -> Option<()> {
-    async fn create_instance(instance_name: String, config: InstanceConfig) -> anyhow::Result<()> {
-        let data_location = DATA_LOCATION.get().unwrap();
-        let instance_root = data_location.get_instance_root(&instance_name);
-        let config_file = instance_root.join("instance.toml");
-        tokio::fs::create_dir_all(config_file.parent().ok_or(anyhow::anyhow!("Path Error"))?)
-            .await?;
-        tokio::fs::write(config_file, toml::to_string_pretty(&config)?).await?;
-        info!("Created instance: {}", instance_name);
-        Ok(())
-    }
-    create_instance(instance_name, config).await.ok()
+pub async fn create_instance(
+    instance_name: String,
+    config: InstanceConfig,
+) -> (String, InstanceConfig) {
+    #[allow(clippy::unwrap_used)]
+    let data_location = DATA_LOCATION.get().unwrap();
+    let instance_root = data_location.get_instance_root(&instance_name);
+    let config_file = instance_root.join("instance.toml");
+    tokio::fs::create_dir_all(
+        config_file
+            .parent()
+            .ok_or(anyhow::anyhow!("Path Error"))
+            .unwrap(),
+    )
+    .await
+    .unwrap();
+    tokio::fs::write(config_file, toml::to_string_pretty(&config).unwrap())
+        .await
+        .unwrap();
+    info!("Created instance: {}", instance_name);
+    (instance_name, config)
+}
+
+#[derive(Deserialize)]
+pub enum SortBy {
+    Name,
 }
 
 #[tauri::command(async)]
-pub async fn check_instance_existance(instance_name: String) -> bool {
-    debug!("Checking repeated: {}", instance_name);
-    let instance_root = DATA_LOCATION
-        .get()
-        .unwrap()
-        .get_instance_root(&instance_name);
-    let config = match InstanceConfig::get(&instance_name).await {
-        Ok(x) => x,
-        Err(_) => return false,
-    };
-    let folder_name = match instance_root.file_name() {
-        None => return true,
-        Some(x) => x,
-    }
-    .to_string_lossy()
-    .to_string();
-    (config.name == instance_name) || (folder_name == instance_name)
-}
-
-#[tauri::command(async)]
-pub async fn scan_instances_folder() -> Option<Vec<Instance>> {
-    info!("Refreshing all instances");
-    scan().await.ok()
-}
-
-async fn scan() -> anyhow::Result<Vec<Instance>> {
-    let datafolder_path = DATA_LOCATION.get().unwrap();
-    let instances_folder = &datafolder_path.instances;
-    let mut folder_entries = tokio::fs::read_dir(instances_folder).await?;
-    let mut results = Vec::new();
-    while let Some(entry) = folder_entries.next_entry().await? {
+pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
+    let data_location = DATA_LOCATION.get().unwrap();
+    let instances_folder = &data_location.instances;
+    let mut folder_entries = tokio::fs::read_dir(instances_folder).await.unwrap();
+    let mut latest_release_instance = None;
+    let mut latest_snapshot_instance = None;
+    let mut user_created_instance = Vec::new();
+    while let Some(entry) = folder_entries.next_entry().await.unwrap() {
         let file_type = match entry.file_type().await {
             Err(_) => continue,
             Ok(file_type) => file_type,
@@ -92,55 +88,71 @@ async fn scan() -> anyhow::Result<Vec<Instance>> {
             Ok(config) => config,
             Err(_) => continue,
         };
-        let runtime = &config.runtime;
-        if (runtime.mod_loader_type.is_none() && runtime.mod_loader_version.is_some())
-            || runtime.mod_loader_type.is_some() && runtime.mod_loader_version.is_none()
-        {
-            continue;
-        }
         if folder_name != config.name {
             continue;
         }
-        results.push(Instance {
-            config,
-            installed: tokio::fs::File::open(path.join(".install.lock"))
-                .await
-                .is_ok(),
-        })
+        let installed = matches!(tokio::fs::try_exists(".install.lock").await, Ok(true));
+        if config.name == LATEST_RELEASE_INSTANCE_NAME {
+            latest_release_instance = Some(Instance { config, installed });
+        } else if config.name == LATEST_SNAPSHOT_INSTANCE_NAME {
+            latest_snapshot_instance = Some(Instance { config, installed });
+        } else {
+            user_created_instance.push(Instance { config, installed })
+        }
     }
-    info!("Found {} instances", results.len());
-    Ok(results)
+    let mut version_manifest = None;
+    if latest_release_instance.is_none() {
+        if version_manifest.is_none() {
+            version_manifest = Some(VersionManifest::new().await.unwrap());
+        };
+        #[allow(clippy::unwrap_used)]
+        let instance_config = InstanceConfig::new(
+            LATEST_RELEASE_INSTANCE_NAME,
+            &version_manifest.as_ref().unwrap().latest.release,
+        );
+        let instance_config =
+            create_instance(LATEST_RELEASE_INSTANCE_NAME.to_string(), instance_config)
+                .await
+                .1;
+        latest_release_instance = Some(Instance {
+            config: instance_config,
+            installed: false,
+        });
+    };
+    if latest_snapshot_instance.is_none() {
+        if version_manifest.is_none() {
+            version_manifest = Some(VersionManifest::new().await.unwrap());
+        };
+        #[allow(clippy::unwrap_used)]
+        let instance_config = InstanceConfig::new(
+            LATEST_SNAPSHOT_INSTANCE_NAME,
+            &version_manifest.unwrap().latest.snapshot,
+        );
+        let instance_config =
+            create_instance(LATEST_SNAPSHOT_INSTANCE_NAME.to_string(), instance_config)
+                .await
+                .1;
+        latest_snapshot_instance = Some(Instance {
+            config: instance_config,
+            installed: false,
+        });
+    }
+    let mut result = vec![
+        latest_release_instance.unwrap(),
+        latest_snapshot_instance.unwrap(),
+    ];
+    match sort_by {
+        SortBy::Name => {
+            user_created_instance.sort_by_key(|instance| instance.config.name.clone());
+        }
+    }
+    result.extend(user_created_instance);
+    result
 }
 
 #[tauri::command]
-/// The program use a global storage to store the current instance. TODO: remove it
-// TODO: remove it to support global search or commands
-pub fn set_current_instance(instance_name: String, storage: tauri::State<Storage>) {
-    let mut current_instance = storage.current_instance.lock().unwrap();
-    debug!("Selected {}", instance_name);
-    *current_instance = instance_name;
-}
-
-pub async fn update_latest_instance() {
-    let version_list = VersionManifest::new().await;
-    if version_list.is_err() {
-        return;
-    };
-    let version_list = version_list.unwrap();
-    if !check_instance_existance("Latest Release".to_string()).await {
-        create_instance(
-            "Latest Release".to_string(),
-            InstanceConfig::new("Latest Release", &version_list.latest.release),
-        )
-        .await;
-    };
-    if !check_instance_existance("Latest Snapshot".to_string()).await {
-        create_instance(
-            "Latest Snapshot".to_string(),
-            InstanceConfig::new("Latest Snapshot", &version_list.latest.snapshot),
-        )
-        .await;
-    };
+pub async fn update_instance(instance_name: String, config: InstanceConfig) {
+    create_instance(instance_name, config).await;
 }
 
 #[tauri::command]
@@ -151,4 +163,13 @@ pub async fn delete_instance(instance_name: String) {
         .await
         .unwrap();
     info!("Deleted {}", instance_name);
+}
+
+#[tauri::command]
+/// The program use a global storage to store the current instance. TODO: remove it
+// TODO: remove it to support global search or commands
+pub fn set_current_instance(instance_name: String, storage: tauri::State<Storage>) {
+    let mut current_instance = storage.current_instance.lock().unwrap();
+    debug!("Selected {}", instance_name);
+    *current_instance = instance_name;
 }

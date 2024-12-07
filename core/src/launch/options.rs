@@ -80,7 +80,7 @@ pub struct LaunchOptions {
 }
 
 impl LaunchOptions {
-    pub fn get(instance_config: InstanceConfig, account: Account) -> Self {
+    pub fn get(instance_config: &InstanceConfig, account: Account) -> Self {
         let global_config = read_config_file().launch;
         let instance_config = instance_config.launch_config.clone();
         Self {

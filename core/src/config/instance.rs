@@ -6,11 +6,11 @@ use std::{fmt, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Storage, DATA_LOCATION};
+use crate::DATA_LOCATION;
 
 use super::launch::{Server, GC};
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Deserialize, Serialize, PartialEq)]
 pub enum ModLoaderType {
     Fabric,
     Forge,
@@ -37,7 +37,7 @@ impl fmt::Display for ModLoaderType {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct InstanceRuntime {
     pub minecraft: String,
     pub mod_loader_type: Option<ModLoaderType>,
@@ -87,7 +87,7 @@ pub struct InstanceLaunchConfig {
     pub execute_after_launch: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct InstanceConfig {
     pub name: String,
     pub runtime: InstanceRuntime,
@@ -107,19 +107,6 @@ impl InstanceConfig {
             group: None,
             launch_config: InstanceLaunchConfig::default(),
         }
-    }
-
-    pub async fn get(instance_name: &str) -> anyhow::Result<Self> {
-        let config_path = DATA_LOCATION
-            .get()
-            .unwrap()
-            .get_instance_root(instance_name)
-            .join("instance.toml");
-        if config_path.metadata().is_err() {
-            return anyhow::Result::Err(anyhow::Error::msg("message"));
-        }
-        let config_content = tokio::fs::read_to_string(config_path).await?;
-        Ok(toml::from_str::<InstanceConfig>(&config_content)?)
     }
 
     pub fn get_version_id(&self) -> String {
@@ -159,24 +146,5 @@ impl InstanceConfig {
 
     pub fn get_instance_root(&self) -> PathBuf {
         DATA_LOCATION.get().unwrap().instances.join(&self.name)
-    }
-}
-
-#[tauri::command(async)]
-pub async fn get_instance_config(
-    storage: tauri::State<'_, Storage>,
-) -> std::result::Result<InstanceConfig, ()> {
-    let instance_name = storage.current_instance.lock().unwrap().clone();
-    match InstanceConfig::get(&instance_name).await {
-        anyhow::Result::Ok(x) => Ok(x),
-        anyhow::Result::Err(_) => Err(()),
-    }
-}
-
-#[tauri::command(async)]
-pub async fn get_instance_config_by_name(instance_name: &str) -> Result<InstanceConfig, ()> {
-    match InstanceConfig::get(instance_name).await {
-        anyhow::Result::Ok(x) => Ok(x),
-        anyhow::Result::Err(_) => Err(()),
     }
 }

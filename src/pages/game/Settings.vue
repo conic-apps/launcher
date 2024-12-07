@@ -12,14 +12,14 @@
         <i class="chevron-right" style="margin-right: 10px; margin-left: 8px"></i>
       </setting-item>
       <setting-item
-        v-if="props.instance.config.name === 'Latest Release'"
+        v-if="instanceName === 'Latest Release'"
         :title="$t('settings.accessibility.hideLatestRelease')"
         :description="$t('settings.accessibility.hideLatestReleaseDesc')"
         icon="eye-slash">
         <toggle-switch v-model="config.accessibility.hide_latest_release"></toggle-switch>
       </setting-item>
       <setting-item
-        v-if="props.instance.config.name === 'Latest Snapshot'"
+        v-if="instanceName === 'Latest Snapshot'"
         :title="$t('settings.accessibility.hideLatestSnapshot')"
         :description="$t('settings.accessibility.hideLatestSnapshotDesc')"
         icon="eye-slash">
@@ -170,10 +170,7 @@
         icon="trash-can"
         :clickAble="true"
         @click="confirmDeleteInstanceVisible = true"
-        :disabled="
-          props.instance.config.name === 'Latest Release' ||
-          props.instance.config.name === 'Latest Snapshot'
-        ">
+        :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'">
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>
       <setting-item
@@ -186,17 +183,12 @@
     </setting-group>
     <confirm-delete-instance
       :visible="confirmDeleteInstanceVisible"
-      :instance="props.instance"
       @close="confirmDeleteInstanceVisible = false"
       @deleted="
         confirmDeleteInstanceVisible = false;
         $emit('update-instance-list');
       "></confirm-delete-instance>
-    <LogViewer
-      :instance-name="props.instance.config.name"
-      :visible="logViewerOpen"
-      @close="logViewerOpen = false">
-    </LogViewer>
+    <LogViewer :visible="logViewerOpen" @close="logViewerOpen = false"> </LogViewer>
   </div>
 </template>
 
@@ -205,21 +197,19 @@ import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 import TextInputBox from "@/components/controllers/TextInputBox.vue";
-import { Instance } from "@/types/instance";
 import { computed, ref } from "vue";
 import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
 import ConfirmDeleteInstance from "../dialogs/ConfirmDeleteInstance.vue";
 import SelectVue from "@/components/controllers/Select.vue";
 import LogViewer from "../dialogs/LogViewer.vue";
-
-const props = defineProps<{
-  instance: Instance;
-}>();
+import { useInstanceStore } from "@/store/instance";
 
 defineEmits(["update-instance-list"]);
 
+const instanceStore = useInstanceStore();
+
 const instanceName = computed(() => {
-  return props.instance.config.name;
+  return instanceStore.currentInstance.config.name;
 });
 
 const config = useConfigStore();

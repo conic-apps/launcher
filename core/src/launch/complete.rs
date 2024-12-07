@@ -19,14 +19,14 @@ use crate::{
     HTTP_CLIENT, PLATFORM_INFO,
 };
 
-pub async fn complete_files(instance: InstanceConfig, minecraft_location: MinecraftLocation) {
+pub async fn complete_files(instance: &InstanceConfig, minecraft_location: &MinecraftLocation) {
     let assets_lock_file = instance.get_instance_root().join(".aml-assets-ok");
     let libraries_lock_file = instance.get_instance_root().join(".aml-libraries-ok");
     if std::fs::metadata(&assets_lock_file).is_ok() {
         info!("Found file \".aml-assets-ok\", no need to check assets files.");
     } else {
         info!("Checking and completing assets files");
-        complete_assets_files(instance.clone(), minecraft_location.clone()).await;
+        complete_assets_files(instance, minecraft_location).await;
         info!("Saving assets lock file");
         std::fs::write(assets_lock_file, "ok").unwrap();
     }
@@ -34,22 +34,19 @@ pub async fn complete_files(instance: InstanceConfig, minecraft_location: Minecr
         info!("Found file \".aml-libraries-ok\", no need to check libraries files.");
     } else {
         info!("Checking and completing libraries files");
-        complete_libraries_files(instance.clone(), minecraft_location.clone()).await;
+        complete_libraries_files(instance, minecraft_location).await;
         info!("Saving libraries lock file");
         std::fs::write(libraries_lock_file, "ok").unwrap();
     }
 }
 
-pub async fn complete_assets_files(
-    instance: InstanceConfig,
-    minecraft_location: MinecraftLocation,
-) {
+async fn complete_assets_files(instance: &InstanceConfig, minecraft_location: &MinecraftLocation) {
     let platform = PLATFORM_INFO.get().unwrap();
     let version =
-        Version::from_versions_folder(&minecraft_location, &instance.get_version_id()).unwrap();
-    let version = version.parse(&minecraft_location, platform).await.unwrap();
+        Version::from_versions_folder(minecraft_location, &instance.get_version_id()).unwrap();
+    let version = version.parse(minecraft_location, platform).await.unwrap();
     let assets_downloads =
-        generate_assets_downloads(version.asset_index.unwrap(), &minecraft_location)
+        generate_assets_downloads(version.asset_index.unwrap(), minecraft_location)
             .await
             .unwrap();
 
@@ -59,15 +56,15 @@ pub async fn complete_assets_files(
     }
 }
 
-pub async fn complete_libraries_files(
-    instance: InstanceConfig,
-    minecraft_location: MinecraftLocation,
+async fn complete_libraries_files(
+    instance: &InstanceConfig,
+    minecraft_location: &MinecraftLocation,
 ) {
     let platform = PLATFORM_INFO.get().unwrap();
     let version =
-        Version::from_versions_folder(&minecraft_location, &instance.get_version_id()).unwrap();
-    let version = version.parse(&minecraft_location, platform).await.unwrap();
-    let library_downloads = generate_libraries_downloads(&version.libraries, &minecraft_location);
+        Version::from_versions_folder(minecraft_location, &instance.get_version_id()).unwrap();
+    let version = version.parse(minecraft_location, platform).await.unwrap();
+    let library_downloads = generate_libraries_downloads(&version.libraries, minecraft_location);
     let downloads = filter_correct_files(library_downloads).await;
     if !downloads.is_empty() {
         download_files(downloads).await.unwrap();

@@ -134,15 +134,15 @@ impl DataLocation {
         self.instances.join(instance_name)
     }
 
-    pub fn get_modpacks_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
+    pub fn _get_modpacks_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
         self.instances.join(instance_name).join("mods")
     }
 
-    pub fn get_resourcespacks_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
+    pub fn _get_resourcespacks_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
         self.instances.join(instance_name).join("resourcepacks")
     }
 
-    pub fn get_saves_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
+    pub fn _get_saves_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
         self.instances.join(instance_name).join("saves")
     }
 

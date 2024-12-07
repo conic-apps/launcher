@@ -10,9 +10,10 @@ use tokio::io::AsyncWriteExt;
 use vanilla::generate_download_info;
 
 use crate::{
-    config::instance::{InstanceConfig, InstanceRuntime, ModLoaderType},
+    config::instance::{InstanceRuntime, ModLoaderType},
     download::{download_files, Progress, ProgressError},
     folder::{DataLocation, MinecraftLocation},
+    instance::Instance,
     version::VersionManifest,
     Storage, DATA_LOCATION, MAIN_WINDOW,
 };
@@ -44,7 +45,10 @@ pub async fn get_quilt_version_list(mcversion: String) -> Option<QuiltVersionLis
 }
 
 #[tauri::command(async)]
-pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<(), ()> {
+pub async fn install(
+    storage: tauri::State<'_, Storage>,
+    instance: Instance,
+) -> std::result::Result<(), ()> {
     let main_window = MAIN_WINDOW.get().unwrap();
     main_window
         .emit(
@@ -59,15 +63,7 @@ pub async fn install(storage: tauri::State<'_, Storage>) -> std::result::Result<
     let active_instance = storage.current_instance.lock().unwrap().clone();
     info!("Start installing the game for instance {}", active_instance);
     let data_location = DATA_LOCATION.get().unwrap();
-    let instance_config = match InstanceConfig::get(&active_instance).await {
-        Ok(x) => x,
-        Err(_) => {
-            main_window
-                .emit("install_error", ProgressError { step: 1 })
-                .unwrap();
-            return Err(());
-        }
-    };
+    let instance_config = instance.config;
     let runtime = instance_config.runtime;
     info!("------------- Instance runtime config -------------");
     info!("-> Minecraft: {}", runtime.minecraft);
