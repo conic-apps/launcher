@@ -1,7 +1,5 @@
 <template>
-  <keep-alive>
-    <div class="home-page-main">home</div>
-  </keep-alive>
+  <div class="home-page-main">home</div>
 </template>
 
 <script setup lang="ts"></script>

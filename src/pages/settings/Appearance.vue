@@ -1,22 +1,20 @@
 <template>
-  <keep-alive>
-    <div>
-      <setting-group title="默认主题">
-        <div class="color-style">
-          <div
-            :class="{ dark: true, selected: config.appearance.theme == 'dark' }"
-            @click="chooseDark">
-            <p>深色</p>
-          </div>
-          <div
-            :class="{ light: true, selected: config.appearance.theme == 'light' }"
-            @click="chooseLight">
-            <p>浅色</p>
-          </div>
+  <div>
+    <setting-group title="默认主题">
+      <div class="color-style">
+        <div
+          :class="{ dark: true, selected: config.appearance.theme == 'dark' }"
+          @click="chooseDark">
+          <p>深色</p>
         </div>
-      </setting-group>
-    </div>
-  </keep-alive>
+        <div
+          :class="{ light: true, selected: config.appearance.theme == 'light' }"
+          @click="chooseLight">
+          <p>浅色</p>
+        </div>
+      </div>
+    </setting-group>
+  </div>
 </template>
 
 <script setup lang="ts">
