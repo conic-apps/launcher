@@ -34,24 +34,26 @@ pub struct Log {
     pub content: String,
 }
 
-async fn check_account(account: &Account) -> anyhow::Result<()> {
+async fn check_and_refresh_account(account: &Account) -> anyhow::Result<Account> {
     info!("Checking account: {}", account.profile.uuid);
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
     const AHEAD: u64 = 3600 * 4;
     let token_deadline = match account.token_deadline {
         Some(x) => x,
-        None => return Ok(()),
+        None => return Ok(account.clone()),
     };
     if now > token_deadline - AHEAD {
         info!("The access token will expire in 4 hours");
-        refresh_microsoft_account_by_uuid(account.profile.uuid.to_string()).await;
+        let refreshed_account =
+            refresh_microsoft_account_by_uuid(account.profile.uuid.to_string()).await;
+        Ok(refreshed_account)
     } else {
         info!(
             "The access token will expire in {} seconds, no need to refresh.",
             token_deadline - now
         );
+        Ok(account.clone())
     }
-    Ok(())
 }
 
 #[tauri::command(async)]
@@ -83,11 +85,12 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance_name: String) -
             return Err(());
         }
     };
-    if config.launch.skip_refresh_account {
-        info!("Account refresh disabled by user")
+    let selected_account = if config.launch.skip_refresh_account {
+        info!("Account refresh disabled by user");
+        selected_account.clone()
     } else {
-        check_account(selected_account).await.unwrap();
-    }
+        check_and_refresh_account(selected_account).await.unwrap()
+    };
 
     let launch_options = LaunchOptions::get(instance.clone(), selected_account);
     let minecraft_location = launch_options.minecraft_location.clone();

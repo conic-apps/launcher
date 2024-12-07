@@ -32,12 +32,6 @@
           icon="language">
           <toggle-switch v-model="config.accessibility.change_game_language"></toggle-switch>
         </setting-item>
-        <setting-item
-          :title="$t('settings.accessibility.autoOpenLogViewer')"
-          :description="$t('settings.accessibility.autoOpenLogViewerDesc')"
-          icon="scroll">
-          <toggle-switch v-model="config.accessibility.open_log_viewer"></toggle-switch>
-        </setting-item>
       </setting-group>
       <setting-group :title="$t('settings.accessibility.accessibility')">
         <setting-item

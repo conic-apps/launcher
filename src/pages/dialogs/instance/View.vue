@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { Instance } from "@/components/Instances.vue";
+import { Instance } from "@/types/instance";
 
 const props = defineProps<{
   instances: Instance[];
