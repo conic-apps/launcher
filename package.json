@@ -19,6 +19,7 @@
     "license": "GPL-3.0-only",
     "dependencies": {
         "@tauri-apps/api": ">=2.0.0-rc.0",
+        "@tauri-apps/plugin-clipboard-manager": "^2.0.1",
         "@tauri-apps/plugin-http": "^2.0.0-rc.0",
         "@tauri-apps/plugin-log": "~2",
         "@tauri-apps/plugin-shell": ">=2.0.0-rc.0",

@@ -18,6 +18,8 @@
     "core:webview:allow-create-webview",
     "core:webview:allow-webview-size",
     "core:webview:default",
-    "log:default"
+    "log:default",
+    "clipboard-manager:default",
+    "clipboard-manager:allow-write-text"
   ]
 }

@@ -594,3 +594,7 @@ i.arrows-from-dotted-line::before {
 i.arrows-to-dotted-line::before {
     content: "\e0a6"
 }
+
+i.copy::before {
+    content: "\f0c5"
+}
