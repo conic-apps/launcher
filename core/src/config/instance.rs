@@ -37,15 +37,16 @@ impl fmt::Display for ModLoaderType {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct InstanceRuntime {
     pub minecraft: String,
     pub mod_loader_type: Option<ModLoaderType>,
     pub mod_loader_version: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct InstanceLaunchConfig {
+    pub enable_instance_specific_settings: bool,
     /// Min memory, this will add a jvm flag -XMS to the command result
     pub(crate) min_memory: Option<usize>,
 
@@ -87,11 +88,13 @@ pub struct InstanceLaunchConfig {
     pub execute_after_launch: Option<String>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct InstanceConfig {
     pub name: String,
     pub runtime: InstanceRuntime,
+    #[serde(default)]
     pub group: Option<Vec<String>>,
+    #[serde(default)]
     pub launch_config: InstanceLaunchConfig,
 }
 

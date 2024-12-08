@@ -19,7 +19,6 @@ const model = defineModel();
 <style lang="less" scoped>
 .input-box {
   margin: 0 6px;
-  pointer-events: all;
 
   label {
     /* cursor: pointer; */

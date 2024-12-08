@@ -135,6 +135,8 @@ body {
 }
 
 .saving-config,
-.saving-config * {
+.saving-instance-settings,
+.saving-config *,
+.saving-instance-settings * {
     pointer-events: none !important
 }

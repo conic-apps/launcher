@@ -95,7 +95,7 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> R
         check_and_refresh_account(selected_account).await.unwrap()
     };
 
-    let launch_options = LaunchOptions::get(&instance_config, selected_account);
+    let launch_options = LaunchOptions::new(&instance_config, selected_account);
     let minecraft_location = launch_options.minecraft_location.clone();
     if config.launch.skip_check_files {
         info!("File checking disabled by user")

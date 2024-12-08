@@ -80,21 +80,25 @@ pub struct LaunchOptions {
 }
 
 impl LaunchOptions {
-    pub fn get(instance_config: &InstanceConfig, account: Account) -> Self {
+    pub fn new(instance_config: &InstanceConfig, account: Account) -> Self {
         let global_config = read_config_file().launch;
-        let instance_config = instance_config.launch_config.clone();
+        let instance_config = &instance_config.launch_config;
         Self {
             wrap_command: instance_config
                 .wrap_command
+                .clone()
                 .unwrap_or(global_config.wrap_command),
             execute_before_launch: instance_config
                 .execute_before_launch
+                .clone()
                 .unwrap_or(global_config.execute_before_launch),
             execute_after_launch: instance_config
                 .execute_after_launch
+                .clone()
                 .unwrap_or(global_config.execute_after_launch),
             launcher_name: instance_config
                 .launcher_name
+                .clone()
                 .unwrap_or(global_config.launcher_name),
             game_profile: GameProfile {
                 name: account.profile.profile_name.clone(),
@@ -107,7 +111,8 @@ impl LaunchOptions {
             max_memory: instance_config
                 .max_memory
                 .unwrap_or(global_config.max_memory),
-            server: instance_config.server,
+            // TODO:
+            server: instance_config.server.clone(),
             width: instance_config.width.unwrap_or(global_config.width),
             height: instance_config.height.unwrap_or(global_config.height),
             fullscreen: instance_config
@@ -115,9 +120,11 @@ impl LaunchOptions {
                 .unwrap_or(global_config.fullscreen),
             extra_jvm_args: instance_config
                 .extra_jvm_args
+                .clone()
                 .unwrap_or(global_config.extra_jvm_args),
             extra_mc_args: instance_config
                 .extra_mc_args
+                .clone()
                 .unwrap_or(global_config.extra_mc_args),
             is_demo: instance_config.is_demo.unwrap_or(global_config.is_demo),
             ignore_invalid_minecraft_certificates: instance_config
@@ -128,8 +135,9 @@ impl LaunchOptions {
                 .unwrap_or(global_config.ignore_patch_discrepancies),
             extra_class_paths: instance_config
                 .extra_class_paths
+                .clone()
                 .unwrap_or(global_config.extra_class_paths),
-            gc: instance_config.gc.unwrap_or(global_config.gc),
+            gc: instance_config.gc.clone().unwrap_or(global_config.gc),
             minecraft_location: MinecraftLocation::new(&DATA_LOCATION.get().unwrap().root),
             properties: "{}".to_string(),
         }
