@@ -58,7 +58,6 @@ import DialogVue from "@/components/Dialog.vue";
 import { markRaw, reactive, ref, shallowRef } from "vue";
 import View from "@/pages/dialogs/instance/View.vue";
 import Create from "@/pages/dialogs/instance/Create.vue";
-import { useInstanceStore } from "@/store/instance";
 
 const emit = defineEmits(["close", "update"]);
 const transitionName = ref("slide-left");
@@ -66,8 +65,6 @@ const transitionName = ref("slide-left");
 const props = defineProps<{
   show: boolean;
 }>();
-
-const instanceStore = useInstanceStore();
 
 const pages: any = reactive({
   view: markRaw(View),

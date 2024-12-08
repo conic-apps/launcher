@@ -43,7 +43,7 @@ static APPLICATION_DATA: OnceCell<PathBuf> = OnceCell::new();
 const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("../assets/launcher_profiles.json");
 
 pub struct Storage {
-    pub current_instance: Arc<Mutex<String>>,
+    pub current_instance: Arc<Mutex<instance::Instance>>,
     pub config: Arc<Mutex<Config>>,
 }
 
@@ -134,7 +134,7 @@ async fn main() {
             account::get_account_by_uuid
         ])
         .manage(Storage {
-            current_instance: Arc::new(Mutex::new("".to_string())),
+            current_instance: Arc::new(Mutex::new(instance::Instance::default())),
             config: Arc::new(Mutex::new(config.clone())),
         })
         .append_invoke_initialization_script(init_config_js_script)

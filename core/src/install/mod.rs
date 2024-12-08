@@ -60,11 +60,13 @@ pub async fn install(
             },
         )
         .unwrap();
-    let active_instance = storage.current_instance.lock().unwrap().clone();
-    info!("Start installing the game for instance {}", active_instance);
+    info!(
+        "Start installing the game for instance {}",
+        instance.config.name
+    );
+    #[allow(clippy::unwrap_used)]
     let data_location = DATA_LOCATION.get().unwrap();
-    let instance_config = instance.config;
-    let runtime = instance_config.runtime;
+    let runtime = instance.config.runtime;
     info!("------------- Instance runtime config -------------");
     info!("-> Minecraft: {}", runtime.minecraft);
     match &runtime.mod_loader_type {
@@ -126,7 +128,7 @@ pub async fn install(
     debug!("Saving lock file");
     let mut lock_file = tokio::fs::File::create(
         data_location
-            .get_instance_root(active_instance)
+            .get_instance_root(&instance.config.name)
             .join(".install.lock"),
     )
     .await

@@ -5,7 +5,12 @@
         title="Instance Name"
         description="The name of this game instance."
         icon="signature">
-        <TextInputBox width="300px" v-model="instanceName"></TextInputBox>
+        <TextInputBox
+          width="300px"
+          v-model="instanceStore.currentInstance.config.name"
+          :disabled="
+            instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'
+          "></TextInputBox>
       </setting-item>
       <setting-item title="Icon" description="The name of this game instance." icon="icon">
         <img width="32px" height="32px" src="@/assets/images/Grass_Block.webp" alt="" />
@@ -25,13 +30,25 @@
         icon="eye-slash">
         <toggle-switch v-model="config.accessibility.hide_latest_snapshot"></toggle-switch>
       </setting-item>
+      <setting-item title="Enable Instance-specific Settings" description="Description" icon="gear">
+        <toggle-switch
+          v-model="
+            instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings
+          "></toggle-switch>
+      </setting-item>
     </setting-group>
-    <setting-group :title="$t('settings.game.launchOptions')">
+    <setting-group
+      :title="$t('settings.game.launchOptions')"
+      :disabled="!enableInstanceSpecificSettings">
       <setting-item
         :title="$t('settings.game.launcherName')"
         :description="$t('settings.game.launcherNameDesc')"
         icon="signature">
-        <TextInputBox width="300px" v-model="config.launch.launcher_name"></TextInputBox>
+        <TextInputBox
+          width="300px"
+          v-model="instanceStore.currentInstance.config.launch_config.launcher_name"
+          :placeholder="config.launch.launcher_name">
+        </TextInputBox>
       </setting-item>
       <!-- TODO:<setting-item title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
       <!--   <TextInputBox -->
@@ -57,10 +74,11 @@
         :title="$t('settings.game.fullscreen')"
         :description="$t('settings.game.fullscreenDesc')"
         icon="window-maximize">
-        <ToggleSwitch v-model="config.launch.fullscreen"></ToggleSwitch>
+        <ToggleSwitch
+          v-model="instanceStore.currentInstance.config.launch_config.fullscreen"></ToggleSwitch>
       </setting-item>
       <setting-item
-        :disabled="config.launch.fullscreen"
+        :disabled="instanceStore.currentInstance.config.launch_config.fullscreen"
         :title="$t('settings.game.windowSize')"
         :description="$t('settings.game.windowSizeDesc')"
         icon="window">
@@ -69,87 +87,102 @@
           style="display: inline-block; margin-right: 16px"
           :placeholder="$t('settings.game.windowSizeWidth')"
           :number-only="true"
-          :disabled="config.launch.fullscreen"
-          v-model.number="config.launch.width">
+          :disabled="instanceStore.currentInstance.config.launch_config.fullscreen"
+          v-model.number="instanceStore.currentInstance.config.launch_config.width">
         </TextInputBox>
         <TextInputBox
           width="100px"
           style="display: inline-block"
           :placeholder="$t('settings.game.windowSizeHeight')"
           :number-only="true"
-          :disabled="config.launch.fullscreen"
-          v-model.number="config.launch.height">
+          :disabled="instanceStore.currentInstance.config.launch_config.fullscreen"
+          v-model.number="instanceStore.currentInstance.config.launch_config.height">
         </TextInputBox>
       </setting-item>
       <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-slash">
         <toggle-switch></toggle-switch>
       </setting-item>
       <setting-item
-        :title="$t('settings.game.autoRefreshAccount')"
-        :description="$t('settings.game.autoRefreshAccountDesc')"
-        icon="user-check">
-        <toggle-switch v-model="config.launch.skip_refresh_account"></toggle-switch>
-      </setting-item>
-      <setting-item
-        :title="$t('settings.game.autoCompleteGameFiles')"
-        :description="$t('settings.game.autoCompleteGameFilesDesc')"
-        icon="file-check">
-        <toggle-switch v-model="config.launch.skip_check_files"></toggle-switch>
-      </setting-item>
-      <setting-item
         :title="$t('settings.game.demo')"
         :description="$t('settings.game.demoDesc')"
         icon="lock">
-        <toggle-switch v-model="config.launch.is_demo"></toggle-switch>
+        <toggle-switch
+          v-model="instanceStore.currentInstance.config.launch_config.is_demo"></toggle-switch>
       </setting-item>
     </setting-group>
-    <setting-group :title="$t('settings.advance.launchArgs')">
+    <setting-group
+      :title="$t('settings.advance.launchArgs')"
+      :disabled="!enableInstanceSpecificSettings">
       <setting-item :title="$t('settings.advance.gc')">
         <select-vue
           :display-name="['G1GC', 'ZGC', 'ParallelGC', 'ParallelOldGC', 'SerialGC']"
           :options="['G1', 'Z', 'Parallel', 'ParallelOld', 'Serial']"
-          v-model="config.launch.gc"
+          v-model="instanceStore.currentInstance.config.launch_config.gc"
           :default="0"></select-vue>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.extraJVMArgs')"
         :description="$t('settings.advance.extraJVMArgsDesc')">
-        <TextInputBox width="300px" v-model="config.launch.extra_jvm_args"></TextInputBox>
+        <TextInputBox
+          width="300px"
+          v-model="instanceStore.currentInstance.config.launch_config.extra_jvm_args">
+        </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.extraMinecraftArgs')"
         :description="$t('settings.advance.extraMinecraftArgsDesc')">
-        <TextInputBox width="300px" v-model="config.launch.extra_mc_args"></TextInputBox>
+        <TextInputBox
+          width="300px"
+          v-model="instanceStore.currentInstance.config.launch_config.extra_mc_args">
+        </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.extraClassPaths')"
         :description="$t('settings.advance.extraClassPathsDesc')">
-        <TextInputBox width="300px" v-model="config.launch.extra_class_paths"></TextInputBox>
+        <TextInputBox
+          width="300px"
+          v-model="instanceStore.currentInstance.config.launch_config.extra_class_paths">
+        </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.executeBeforeLaunch')"
         :description="$t('settings.advance.executeBeforeLaunchDesc')">
-        <TextInputBox width="300px" v-model="config.launch.execute_before_launch"></TextInputBox>
+        <TextInputBox
+          width="300px"
+          v-model="instanceStore.currentInstance.config.launch_config.execute_before_launch">
+        </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.wrapCommand')"
         :description="$t('settings.advance.wrapCommandDesc')">
-        <TextInputBox width="300px" v-model="config.launch.wrap_command"></TextInputBox>
+        <TextInputBox
+          width="300px"
+          v-model="instanceStore.currentInstance.config.launch_config.wrap_command">
+        </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.executeAfterLaunch')"
         :description="$t('settings.advance.executeAfterLaunchDesc')">
-        <TextInputBox width="300px" v-model="config.launch.execute_after_launch"></TextInputBox>
+        <TextInputBox
+          width="300px"
+          v-model="instanceStore.currentInstance.config.launch_config.execute_after_launch">
+        </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.ignoreInvalidMinecraftCertificates')"
         :description="$t('settings.advance.ignoreInvalidMinecraftCertificatesDesc')">
-        <ToggleSwitch v-model="config.launch.ignore_invalid_minecraft_certificates"></ToggleSwitch>
+        <ToggleSwitch
+          v-model="
+            instanceStore.currentInstance.config.launch_config.ignore_invalid_minecraft_certificates
+          ">
+        </ToggleSwitch>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.ignorePatchDiscrepancies')"
         :description="$t('settings.advance.ignorePatchDiscrepanciesDesc')">
-        <ToggleSwitch v-model="config.launch.ignore_patch_discrepancies"></ToggleSwitch>
+        <ToggleSwitch
+          v-model="instanceStore.currentInstance.config.launch_config.ignore_patch_discrepanicies">
+        </ToggleSwitch>
       </setting-item>
       <setting-item :title="$t('settings.advance.lwjglSettings')" description="" :clickAble="true">
         <i class="chevron-right" style="margin-right: 10px"></i>
@@ -197,12 +230,14 @@ import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 import TextInputBox from "@/components/controllers/TextInputBox.vue";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
 import ConfirmDeleteInstance from "../dialogs/ConfirmDeleteInstance.vue";
 import SelectVue from "@/components/controllers/Select.vue";
 import LogViewer from "../dialogs/LogViewer.vue";
-import { useInstanceStore } from "@/store/instance";
+import { Instance, useInstanceStore } from "@/store/instance";
+import { invoke } from "@tauri-apps/api/core";
+import $ from "jquery";
 
 defineEmits(["update-instance-list"]);
 
@@ -214,9 +249,66 @@ const instanceName = computed(() => {
 
 const config = useConfigStore();
 
+const enableInstanceSpecificSettings = computed(() => {
+  return instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings;
+});
+
 const confirmDeleteInstanceVisible = ref(false);
 
 const logViewerOpen = ref(false);
+
+let oldEnabledSpecificSettings =
+  instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings;
+
+watch(instanceStore.currentInstance.config, (v) => {
+  $("body").addClass("saving-instance-settings");
+  console.log(v);
+  console.log(v.launch_config.enable_instance_specific_settings);
+  if (v.launch_config.enable_instance_specific_settings && !oldEnabledSpecificSettings) {
+    instanceStore.currentInstance.config.launch_config = {
+      enable_instance_specific_settings: true,
+      min_memory: config.launch.min_memory,
+      max_memory: config.launch.max_memory,
+      server:
+        config.launch.server && config.launch.server.ip
+          ? {
+              ip: config.launch.server?.ip,
+              port: config.launch.server?.port,
+            }
+          : undefined,
+      width: config.launch.width,
+      height: config.launch.height,
+      fullscreen: config.launch.fullscreen,
+      extra_jvm_args: config.launch.extra_jvm_args,
+      extra_mc_args: config.launch.extra_mc_args,
+      is_demo: config.launch.is_demo,
+      ignore_invalid_minecraft_certificates: config.launch.ignore_invalid_minecraft_certificates,
+      ignore_patch_discrepanicies: config.launch.ignore_patch_discrepancies,
+      extra_class_paths: config.launch.extra_class_paths,
+      gc: config.launch.gc,
+      launcher_name: config.launch.launcher_name,
+      wrap_command: config.launch.wrap_command,
+      execute_before_launch: config.launch.execute_before_launch,
+      execute_after_launch: config.launch.execute_after_launch,
+    };
+    alert(instanceStore.currentInstance.config.launch_config);
+    $("body").removeClass("saving-instance-settings");
+    oldEnabledSpecificSettings = v.launch_config.enable_instance_specific_settings;
+    return;
+  }
+  if (!v.launch_config.enable_instance_specific_settings && oldEnabledSpecificSettings) {
+    instanceStore.currentInstance.config.launch_config = {
+      enable_instance_specific_settings: false,
+    };
+    $("body").removeClass("saving-instance-settings");
+    oldEnabledSpecificSettings = v.launch_config.enable_instance_specific_settings;
+    return;
+  }
+  oldEnabledSpecificSettings = v.launch_config.enable_instance_specific_settings;
+  invoke("update_instance", { config: v }).then(() => {
+    $("body").removeClass("saving-instance-settings");
+  });
+});
 </script>
 
 <style lang="less" scoped>

@@ -28,12 +28,6 @@
         :text="$t('game.instanceManager.create.createButton')"
         :disabled="!select.minecraft || repeated"
         @click="create"></vue-button>
-      <!-- <button style="margin-left: auto;" :class="select.minecraft && !repeated
-          ? 'command-button'
-          : 'command-button disabled'
-        " >
-        创建
-      </button> -->
     </div>
     <div style="display: flex">
       <div style="width: 100%; margin-right: 4px">
@@ -273,7 +267,6 @@ function create() {
     mod_loader_version = null;
   }
   invoke("create_instance", {
-    instanceName: instanceName.value,
     config: {
       name: instanceName.value,
       runtime: {
@@ -281,7 +274,9 @@ function create() {
         mod_loader_type,
         mod_loader_version,
       },
-      launch_config: {},
+      launch_config: {
+        enable_instance_specific_settings: false,
+      },
     },
   })
     .then((res: any) => {
