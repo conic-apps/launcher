@@ -13,20 +13,17 @@ use serde::{Deserialize, Serialize};
 static LATEST_RELEASE_INSTANCE_NAME: &str = "Latest Release";
 static LATEST_SNAPSHOT_INSTANCE_NAME: &str = "Latest Snapshot";
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct Instance {
     pub config: InstanceConfig,
     pub installed: bool,
 }
 
 #[tauri::command(async)]
-pub async fn create_instance(
-    instance_name: String,
-    config: InstanceConfig,
-) -> (String, InstanceConfig) {
+pub async fn create_instance(config: InstanceConfig) -> InstanceConfig {
     #[allow(clippy::unwrap_used)]
     let data_location = DATA_LOCATION.get().unwrap();
-    let instance_root = data_location.get_instance_root(&instance_name);
+    let instance_root = data_location.get_instance_root(&config.name);
     let config_file = instance_root.join("instance.toml");
     tokio::fs::create_dir_all(
         config_file
@@ -39,8 +36,8 @@ pub async fn create_instance(
     tokio::fs::write(config_file, toml::to_string_pretty(&config).unwrap())
         .await
         .unwrap();
-    info!("Created instance: {}", instance_name);
-    (instance_name, config)
+    info!("Created instance: {}", config.name);
+    config
 }
 
 #[derive(Deserialize)]
@@ -110,10 +107,7 @@ pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
             LATEST_RELEASE_INSTANCE_NAME,
             &version_manifest.as_ref().unwrap().latest.release,
         );
-        let instance_config =
-            create_instance(LATEST_RELEASE_INSTANCE_NAME.to_string(), instance_config)
-                .await
-                .1;
+        let instance_config = create_instance(instance_config).await;
         latest_release_instance = Some(Instance {
             config: instance_config,
             installed: false,
@@ -128,10 +122,7 @@ pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
             LATEST_SNAPSHOT_INSTANCE_NAME,
             &version_manifest.unwrap().latest.snapshot,
         );
-        let instance_config =
-            create_instance(LATEST_SNAPSHOT_INSTANCE_NAME.to_string(), instance_config)
-                .await
-                .1;
+        let instance_config = create_instance(instance_config).await;
         latest_snapshot_instance = Some(Instance {
             config: instance_config,
             installed: false,
@@ -151,8 +142,19 @@ pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
 }
 
 #[tauri::command]
-pub async fn update_instance(instance_name: String, config: InstanceConfig) {
-    create_instance(instance_name, config).await;
+pub async fn update_instance(config: InstanceConfig) {
+    #[allow(clippy::unwrap_used)]
+    let data_location = DATA_LOCATION.get().unwrap();
+    let instance_root = data_location.get_instance_root(&config.name);
+    let config_file = instance_root.join("instance.toml");
+    println!(
+        "{:#?}",
+        config.launch_config.enable_instance_specific_settings
+    );
+    tokio::fs::write(config_file, toml::to_string_pretty(&config).unwrap())
+        .await
+        .unwrap();
+    info!("Updated instance: {}", config.name);
 }
 
 #[tauri::command]
@@ -168,8 +170,8 @@ pub async fn delete_instance(instance_name: String) {
 #[tauri::command]
 /// The program use a global storage to store the current instance. TODO: remove it
 // TODO: remove it to support global search or commands
-pub fn set_current_instance(instance_name: String, storage: tauri::State<Storage>) {
+pub fn set_current_instance(instance: Instance, storage: tauri::State<Storage>) {
     let mut current_instance = storage.current_instance.lock().unwrap();
-    debug!("Selected {}", instance_name);
-    *current_instance = instance_name;
+    debug!("Selected {}", instance.config.name);
+    *current_instance = instance;
 }

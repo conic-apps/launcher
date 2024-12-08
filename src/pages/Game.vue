@@ -59,6 +59,7 @@ const instanceStore = useInstanceStore();
 
 function update() {
   invoke("read_all_instances", { sortBy: "Name" }).then((res) => {
+    console.log(res);
     instanceStore.instances = res as Instance[];
     let currentInstance = instanceStore.currentInstance;
     let instances = instanceStore.instances;
@@ -111,7 +112,7 @@ function setCurrentInstance(instance: Instance) {
   instanceStore.currentInstance = instance;
   gameButtonType.value = instance.installed ? "launch" : "install";
   invoke("set_current_instance", {
-    instanceName: instance.config.name,
+    instance: instance,
   });
 }
 
