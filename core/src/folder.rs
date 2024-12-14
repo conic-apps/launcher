@@ -27,11 +27,12 @@ use std::{
     str::FromStr,
 };
 
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{platform::OsType, PLATFORM_INFO};
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 /// The Minecraft folder structure. All method will return the path related to a minecraft root like .minecraft.
 pub struct MinecraftLocation {
     pub root: PathBuf,
@@ -93,7 +94,7 @@ impl MinecraftLocation {
     }
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataLocation {
     pub root: PathBuf,
     pub instances: PathBuf,

@@ -14,7 +14,7 @@ use tauri_plugin_http::reqwest;
 
 use crate::{DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Skin {
     pub id: String,
     pub state: String,
@@ -24,7 +24,7 @@ pub struct Skin {
     pub variant: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Cape {
     pub alias: String,
     pub id: String,
@@ -32,7 +32,7 @@ pub struct Cape {
     pub url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Profile {
     pub profile_name: String,
     pub uuid: String,
@@ -40,13 +40,13 @@ pub struct Profile {
     pub capes: Vec<Cape>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum AccountType {
     Microsoft,
     Offline,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Account {
     pub refresh_token: Option<String>,
     pub access_token: Option<String>,
@@ -298,7 +298,7 @@ struct XboxAuth {
     xbl_uhs: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 struct XboxAuthProperties {
     #[serde(rename = "AuthMethod")]
     auth_method: String,
@@ -308,7 +308,7 @@ struct XboxAuthProperties {
     rps_ticket: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 struct XboxAuthBody {
     #[serde(rename = "Properties")]
     properties: XboxAuthProperties,
@@ -357,7 +357,7 @@ async fn xbox_authenticate(
     })
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 struct XSTSAuthProperties {
     #[serde(rename = "SandboxId")]
     sandbox_id: String,
@@ -365,7 +365,7 @@ struct XSTSAuthProperties {
     user_tokens: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 struct XSTSAuthBody {
     #[serde(rename = "Properties")]
     properties: XSTSAuthProperties,
@@ -404,7 +404,7 @@ async fn xsts_authenticate(client: &reqwest::Client, xbl_token: &str) -> anyhow:
         .to_string())
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 struct MinecraftAuthBody {
     #[serde(rename = "identityToken")]
     identity_token: String,

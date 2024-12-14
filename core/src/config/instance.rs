@@ -10,7 +10,7 @@ use crate::DATA_LOCATION;
 
 use super::launch::{Server, GC};
 
-#[derive(Deserialize, Serialize, PartialEq)]
+#[derive(Deserialize, Serialize)]
 pub enum ModLoaderType {
     Fabric,
     Forge,

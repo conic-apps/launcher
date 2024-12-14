@@ -13,13 +13,11 @@ use crate::{
     DATA_LOCATION,
 };
 
-#[derive(Debug, Clone)]
 pub struct GameProfile {
     pub name: String,
     pub uuid: String,
 }
 
-#[derive(Debug, Clone)]
 pub struct LaunchOptions {
     /// User selected game profile.
     ///
