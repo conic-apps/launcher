@@ -37,3 +37,8 @@ body:
     attributes:
       label: Additional context
       description: Add any other context about the problem here.
+
+  - type: input
+    id: continue_use
+    attributes:
+      label: Is this feature a reason for you to continue using Amethyst Launcher?
