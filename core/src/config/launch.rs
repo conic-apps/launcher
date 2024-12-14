@@ -4,14 +4,14 @@
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Server {
     pub ip: String,
     pub port: Option<u16>,
 }
 
 /// User custom jvm gc
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum GC {
     Serial,
     Parallel,
@@ -26,7 +26,7 @@ impl Default for GC {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct LaunchConfig {
     #[serde(default)]
     /// Min memory, this will add a jvm flag -XMS to the command result

@@ -29,6 +29,7 @@ use once_cell::sync::OnceCell;
 use platform::{OsType, PlatformInfo};
 use tauri::{Emitter, Manager, Window};
 use tauri_plugin_http::reqwest;
+#[cfg(debug_assertions)]
 use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
 use tauri_plugin_log::{Target, TargetKind};
 use version::VersionManifest;

@@ -23,21 +23,21 @@ use tokio::io::AsyncWriteExt;
 
 use crate::{HTTP_CLIENT, MAIN_WINDOW};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Download {
     pub url: String,
     pub file: PathBuf,
     pub sha1: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Progress {
     pub completed: usize,
     pub total: usize,
     pub step: usize,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct ProgressError {
     pub step: usize,
 }

@@ -102,7 +102,7 @@ impl Default for AppearanceConfig {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Config {
     #[serde(default = "default_auto_update")]
     pub auto_update: bool,

@@ -9,15 +9,6 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use arguments::generate_command_arguments;
-use complete::complete_files;
-use log::{error, info, trace};
-use options::LaunchOptions;
-use serde::{Deserialize, Serialize};
-use tauri::Emitter;
-mod arguments;
-mod complete;
-mod options;
 use crate::{
     account::{self, refresh_microsoft_account_by_uuid, Account},
     folder::MinecraftLocation,
@@ -26,8 +17,18 @@ use crate::{
     version::Version,
     Storage, DATA_LOCATION, MAIN_WINDOW, PLATFORM_INFO,
 };
+use arguments::generate_command_arguments;
+use complete::complete_files;
+use log::{error, info, trace};
+use options::LaunchOptions;
+use serde::Serialize;
+use tauri::Emitter;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+mod arguments;
+mod complete;
+mod options;
+
+#[derive(Clone, Serialize)]
 pub struct Log {
     #[serde(rename = "instanceName")]
     pub instance_name: String,

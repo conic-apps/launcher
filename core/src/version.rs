@@ -69,13 +69,13 @@ static DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     ]
 });
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct LatestVersion {
     pub release: String,
     pub snapshot: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VersionInfo {
     pub id: String,
@@ -87,7 +87,7 @@ pub struct VersionInfo {
     pub compliance_level: u8,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct VersionManifest {
     pub latest: LatestVersion,
     pub versions: Vec<VersionInfo>,
@@ -101,14 +101,14 @@ impl VersionManifest {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Download {
     pub sha1: String,
     pub size: u64,
     pub url: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AssetIndex {
     // pub sha1: String,
@@ -118,16 +118,15 @@ pub struct AssetIndex {
     pub total_size: u64,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct AssetIndexObjectInfo {
     pub hash: String,
     pub size: u32,
 }
 
-// #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub type AssetIndexObject = HashMap<String, AssetIndexObjectInfo>;
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct LibraryDownload {
     pub sha1: Option<String>,
     pub size: Option<u64>,
@@ -135,32 +134,32 @@ pub struct LibraryDownload {
     pub path: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct LoggingFile {
     pub size: u64,
     pub url: String,
     pub id: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct NormalLibrary {
     pub name: String,
     pub downloads: HashMap<String, LibraryDownload>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Rule {
     pub action: String,
     pub os: Option<Platform>,
     pub features: Option<HashMap<String, bool>>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Extract {
     pub exclude: Vec<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct NativeLibrary {
     pub name: String,
     pub downloads: HashMap<String, LibraryDownload>,
@@ -170,14 +169,14 @@ pub struct NativeLibrary {
     pub natives: HashMap<String, String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct PlatformSpecificLibrary {
     pub name: String,
     pub downloads: HashMap<String, LibraryDownload>,
     pub rules: Vec<Rule>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct LegacyLibrary {
     pub name: String,
     pub url: Option<String>,
@@ -186,7 +185,7 @@ pub struct LegacyLibrary {
     pub checksums: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum Library {
     Normal(NormalLibrary),
     Native(NativeLibrary),
@@ -194,33 +193,33 @@ pub enum Library {
     Legacy(LegacyLibrary),
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum LaunchArgument {
     String(String),
     Object(serde_json::map::Map<String, Value>),
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Platform {
     pub name: String,
     pub version: Option<String>,
     // Add other platform properties if needed
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Arguments {
     pub game: Option<Vec<Value>>,
     pub jvm: Option<Vec<Value>>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Logging {
     pub file: LoggingFileDownload,
     pub argument: String,
     pub r#type: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct LoggingFileDownload {
     pub id: String,
     pub sha1: String,
@@ -228,17 +227,26 @@ pub struct LoggingFileDownload {
     pub url: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JavaVersion {
     pub component: String,
     pub major_version: i32,
 }
 
+impl Default for JavaVersion {
+    fn default() -> Self {
+        Self {
+            component: "jre-legacy".to_string(),
+            major_version: 8,
+        }
+    }
+}
+
 /// Minecraft Version
 ///
 /// It used to compare the version of the game
-#[derive(Debug, Clone, Serialize)]
+#[derive(Clone, Serialize)]
 pub enum MinecraftVersion {
     Release(u8, u8, Option<u8>),
     Snapshot(u8, u8, String),
@@ -281,7 +289,7 @@ fn parse_version(s: &str) -> Result<MinecraftVersion> {
 ///
 /// Use `new` to parse a Minecraft version json, and see the detail info of the version,
 /// equivalent to `crate::core::version::Version::parse`.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Clone, Serialize, Default)]
 pub struct ResolvedVersion {
     /// The id of the version, should be identical to the version folder.
     pub id: String,
@@ -315,32 +323,6 @@ pub struct ResolvedVersion {
     /// It's the chain of inherits json path. The root json will be the last element of the array.
     /// The first element is the user provided version.
     pub path_chain: Vec<PathBuf>,
-}
-
-impl Default for ResolvedVersion {
-    // TODO: use None, dont use empty string
-    fn default() -> Self {
-        Self {
-            id: String::new(),
-            arguments: ResolvedArguments::default(),
-            main_class: None,
-            asset_index: None,
-            assets: None,
-            downloads: HashMap::new(),
-            libraries: Vec::new(),
-            minimum_launcher_version: 0,
-            release_time: None,
-            time: None,
-            version_type: None,
-            logging: HashMap::new(),
-            java_version: JavaVersion {
-                component: "jre-legacy".to_string(),
-                major_version: 8,
-            },
-            inheritances: Vec::new(),
-            path_chain: Vec::new(),
-        }
-    }
 }
 
 impl ResolvedVersion {
@@ -470,7 +452,7 @@ impl ResolvedVersion {
 ///     println!("{:#?}", resolved_version);
 /// }
 /// ```
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Version {
     pub id: String,
@@ -575,7 +557,7 @@ impl Version {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Clone, Serialize)]
 pub struct ResolvedArguments {
     pub game: Vec<String>,
     pub jvm: Vec<String>,
@@ -590,7 +572,7 @@ impl Default for ResolvedArguments {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Clone, Serialize)]
 pub struct ResolvedLibrary {
     pub download_info: LibraryDownload,
     pub is_native_library: bool,

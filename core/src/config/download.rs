@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct DownloadConfig {
     #[serde(default = "default_max_connection")]
     pub max_connection: usize,
