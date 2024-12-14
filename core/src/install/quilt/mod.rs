@@ -7,7 +7,7 @@ use tauri_plugin_http::reqwest;
 
 use crate::{folder::MinecraftLocation, version::Version, HTTP_CLIENT};
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct QuiltArtifactVersion {
     separator: String,
     build: u32,
@@ -17,32 +17,32 @@ pub struct QuiltArtifactVersion {
     version: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct QuiltVersionHashed {
     pub maven: String,
     pub version: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct QuiltVersionIntermediary {
     pub maven: String,
     pub version: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct QuiltLibrary {
     pub name: String,
     pub url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct QuiltLibraries {
     pub client: Vec<QuiltLibrary>,
     pub common: Vec<QuiltLibrary>,
     pub server: Vec<QuiltLibrary>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuiltLauncherMeta {
     pub version: u32,
@@ -50,7 +50,7 @@ pub struct QuiltLauncherMeta {
     pub main_class: QuiltMainClass,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuiltMainClass {
     pub client: Option<String>,
@@ -58,7 +58,7 @@ pub struct QuiltMainClass {
     pub server_launcher: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuiltVersion {
     pub loader: QuiltArtifactVersion,
@@ -67,7 +67,7 @@ pub struct QuiltVersion {
     pub launcher_meta: QuiltLauncherMeta,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct QuiltVersionList(Vec<QuiltVersion>);
 impl QuiltVersionList {
     pub async fn new(mcversion: &str) -> anyhow::Result<Self> {

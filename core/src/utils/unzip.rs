@@ -14,7 +14,6 @@ use anyhow::Result;
 use tokio::fs::create_dir_all;
 use zip::{read::ZipFile, CompressionMethod, DateTime, ZipArchive};
 
-#[derive(Debug, Clone)]
 pub struct Entry {
     pub version_name_by: (u8, u8),
     pub name: String,
@@ -85,7 +84,6 @@ impl Entry {
     }
 }
 
-#[derive(Debug, Clone)]
 pub enum EntryType {
     Dir,
     File,

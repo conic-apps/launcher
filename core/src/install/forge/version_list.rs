@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri_plugin_http::reqwest;
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct ForgeVersionListItem {
     pub _id: String,
     pub build: u32,
@@ -19,14 +19,14 @@ pub struct ForgeVersionListItem {
     pub branch: Option<Value>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct ForgeInstallerFile {
     pub format: String,
     pub category: String,
     pub hash: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct ForgeVersionList(Vec<ForgeVersionListItem>);
 
 impl ForgeVersionList {
