@@ -37,7 +37,7 @@ import AssetsManager from "./game/AssetsManager.vue";
 import InstallProgress from "./dialogs/InstallProgress.vue";
 import InstanceList from "./game/InstanceList.vue";
 import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
-import { onMounted, ref, watch, type Ref } from "vue";
+import { computed, onMounted, ref, watch, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/store/config";
@@ -52,7 +52,13 @@ const buttonLoading = ref(false);
 const show = ref({
   instanceManager: false,
 });
-const gameButtonType: Ref<"install" | "launch" | "error"> = ref("install");
+const gameButtonType = computed(() => {
+  if (instanceStore.currentInstance.installed) {
+    return "launch";
+  } else {
+    return "install";
+  }
+});
 const errorType: Ref<"launch" | "install" | undefined> = ref();
 
 const instanceStore = useInstanceStore();
@@ -63,11 +69,12 @@ function update() {
     instanceStore.instances = res as Instance[];
     let currentInstance = instanceStore.currentInstance;
     let instances = instanceStore.instances;
-    if (
-      !instances.find((value) => {
-        return value.config.name === currentInstance.config.name;
-      })
-    ) {
+    let foundCurrentInstance = instances.find((value) => {
+      return value.config.name === currentInstance.config.name;
+    });
+    if (foundCurrentInstance) {
+      instanceStore.currentInstance = foundCurrentInstance;
+    } else {
       if (!config.accessibility.hide_latest_release) {
         setCurrentInstance(instances[0]);
       } else if (!config.accessibility.hide_latest_snapshot) {
@@ -110,7 +117,6 @@ watch(config, (value) => {
 
 function setCurrentInstance(instance: Instance) {
   instanceStore.currentInstance = instance;
-  gameButtonType.value = instance.installed ? "launch" : "install";
   invoke("set_current_instance", {
     instance: instance,
   });
@@ -129,7 +135,6 @@ function gameButtonClick() {
 }
 
 listen("install_success", () => {
-  gameButtonType.value = "launch";
   setTimeout(() => {
     installing.value = false;
   }, 1500);

@@ -67,11 +67,11 @@ body.theme-light #global-search *::placeholder {
     }
 }
 
-body.theme-light .instance-info * {
+body.theme-light .instance-card * {
     color: #fff !important;
 }
 
-body.theme-light .instance-info {
+body.theme-light .instance-card {
     background-image: url(@/assets/images/banners/1.18.webp) !important;
 }
 

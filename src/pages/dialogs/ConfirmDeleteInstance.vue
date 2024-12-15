@@ -65,19 +65,21 @@
       </TextInputBox>
       <div class="buttons">
         <button-vue
-          text="Cancel"
           style="width: 100%; margin-right: 8px"
           :disabled="deleting"
           @click="
             confirmInputText = '';
             $emit('close');
-          "></button-vue>
+          "
+          >Cancel</button-vue
+        >
         <button-vue
-          :text="deleting ? 'Deleting...' : 'Delete this instance'"
           style="width: 100%; font-weight: bold"
           @click="confirmDelete"
           :disabled="confirmInputText !== currentInstance.config.name || deleting"
-          color="rgb(210, 15, 57)"></button-vue>
+          color="rgb(210, 15, 57)"
+          >{{ deleting ? "Deleting..." : "Delete this instance" }}</button-vue
+        >
       </div>
     </div>
   </dialog-vue>

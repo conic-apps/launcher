@@ -41,7 +41,6 @@
               width="14px"
               height="14px"
               v-if="instance.config.runtime.mod_loader_type == 'Forge'" />
-            <span>{{ instance.config.runtime.mod_loader_version }}</span>
           </div>
         </template>
       </list-item>
