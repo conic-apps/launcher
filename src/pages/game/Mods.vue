@@ -30,13 +30,9 @@
 <script setup lang="ts">
 import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
-import { Instance } from "@/types/instance";
+import { useInstanceStore } from "@/store/instance";
 import { invoke } from "@tauri-apps/api/core";
 import { ref, watch } from "vue";
-
-const props = defineProps<{
-  instance: Instance;
-}>();
 
 type Mod = {
   name: string;
@@ -51,10 +47,12 @@ type Mod = {
   icon: string | null;
 };
 
+const instanceStore = useInstanceStore();
+
 const mods = ref<Mod[]>([]);
 
 watch(
-  props,
+  instanceStore.currentInstance,
   () => {
     invoke("scan_mods_folder").then((res: any) => {
       mods.value = res as Mod[];

@@ -88,7 +88,10 @@ pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
         if folder_name != config.name {
             continue;
         }
-        let installed = matches!(tokio::fs::try_exists(".install.lock").await, Ok(true));
+        let installed = matches!(
+            tokio::fs::try_exists(path.join(".install.lock")).await,
+            Ok(true)
+        );
         if config.name == LATEST_RELEASE_INSTANCE_NAME {
             latest_release_instance = Some(Instance { config, installed });
         } else if config.name == LATEST_SNAPSHOT_INSTANCE_NAME {

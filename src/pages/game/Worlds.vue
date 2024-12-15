@@ -39,23 +39,22 @@
 <script setup lang="ts">
 import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
-import { Instance } from "@/types/instance";
+import { useInstanceStore } from "@/store/instance";
 import { invoke } from "@tauri-apps/api/core";
 import { onMounted, onUnmounted, ref, watch } from "vue";
 
-const props = defineProps<{
-  instance: Instance;
-}>();
 type Save = {
   icon: string;
   levelData: any;
   folderName: string;
 };
 
+const instanceStore = useInstanceStore();
+
 const saves = ref<Save[]>([]);
 
 watch(
-  props,
+  instanceStore.currentInstance,
   () => {
     invoke("scan_saves_folder").then((res: any) => {
       saves.value = res as Save[];
