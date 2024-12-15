@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { defineStore } from "pinia"
-import { watch } from "vue"
 
 export type Instance = {
     config: {
@@ -44,6 +43,7 @@ export type Instance = {
 type InstanceStore = {
     currentInstance: Instance
     instances: Instance[]
+    installing: Instance[]
 }
 
 export const useInstanceStore = defineStore("instance", {
@@ -64,6 +64,7 @@ export const useInstanceStore = defineStore("instance", {
                 installed: true,
             },
             instances: [],
+            installing: [],
         }
     },
 })

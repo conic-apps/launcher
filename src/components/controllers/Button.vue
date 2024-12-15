@@ -1,6 +1,6 @@
 <template>
   <button class="button" :style="style" v-bind="$attrs">
-    {{ text }}
+    <slot></slot>
   </button>
 </template>
 
@@ -8,7 +8,6 @@
 import { computed } from "vue";
 
 const props = defineProps<{
-  text: string;
   disabled?: boolean;
   color?: string;
 }>();
@@ -32,6 +31,10 @@ button.button {
   border: var(--controllers-border);
   border-radius: var(--controllers-border-radius);
   margin-left: auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 button.button:hover {

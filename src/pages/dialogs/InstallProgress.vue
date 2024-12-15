@@ -101,7 +101,7 @@
               : 'background: rgba(255, 255, 255, 0.08)'
           ">
           <item-loading-icon :status="installModLoaderStatus"></item-loading-icon>
-          <p>安装 {{}}</p>
+          <p>安装 {{ modLoaderType }}</p>
         </div>
       </div>
     </div>

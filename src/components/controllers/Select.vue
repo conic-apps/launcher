@@ -1,5 +1,5 @@
 <template>
-  <div class="select" :style="`width: ${width}px;`">
+  <div class="select" :style="`width: ${width}px;`" tabindex="0" @blur="opened = false">
     <div class="selected" @click="toggleOpened()">{{ selected }}</div>
     <div>
       <Transition
@@ -10,24 +10,23 @@
         @leave="leave"
         @after-leave="afterLeave">
         <ul class="options" :style="`width: ${width}px;`" v-if="opened" @click="opened = false">
-          <Transition name="fade">
-            <div v-if="opened">
-              <select-option
-                v-for="(option, index) in options"
-                :key="index"
-                @click="changeSelection(index)"
-                :text="displayName[index]"></select-option>
-            </div>
-          </Transition>
-          <div
-            style="
-              width: 100vw;
-              height: 100vh;
-              position: fixed;
-              top: 0;
-              left: 0;
-              z-index: 10000;
-            "></div>
+          <div v-if="opened">
+            <li
+              class="select-option"
+              v-for="(_, index) in options"
+              :key="index"
+              @click="changeSelection(index)">
+              {{ displayName[index] }}
+            </li>
+          </div>
+          <!-- <div style=" -->
+          <!--     width: 100vw; -->
+          <!--     height: 100vh; -->
+          <!--     position: fixed; -->
+          <!--     top: 0; -->
+          <!--     left: 0; -->
+          <!--     z-index: 10000; -->
+          <!--   "></div> -->
         </ul>
       </Transition>
     </div>
@@ -35,8 +34,11 @@
 </template>
 
 <script setup lang="ts">
+function a() {
+  alert(1);
+}
+
 import { ref } from "vue";
-import SelectOption from "./SelectOption.vue";
 import $ from "jquery";
 const props = defineProps<{
   options: string[];
@@ -151,9 +153,28 @@ function toggleOpened() {
   transform: scale3d(1, 1, 192.7);
   font-size: 14px;
   z-index: 100000;
+  display: flex;
+  align-items: flex-end;
 }
 
 .options > div:first-child {
   margin: 10px 12px;
+  width: 100%;
+}
+
+.select-option {
+  padding: 10px 16px;
+  border-radius: var(--controllers-border-radius);
+  // position: relative;
+  z-index: 10001;
+  transition: all 30ms ease;
+}
+
+.select-option:hover {
+  background: #ffffff1f;
+}
+
+.select-option:active {
+  background: #ffffff15;
 }
 </style>

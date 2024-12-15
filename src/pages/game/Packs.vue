@@ -41,13 +41,9 @@
 <script setup lang="ts">
 import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
-import { Instance } from "@/types/instance";
+import { useInstanceStore } from "@/store/instance";
 import { invoke } from "@tauri-apps/api/core";
 import { ref, watch } from "vue";
-
-const props = defineProps<{
-  instance: Instance;
-}>();
 
 type Resourcepack = {
   icon: string;
@@ -60,10 +56,12 @@ type Resourcepack = {
   type: "unknown" | "texture" | "data";
 };
 
+const instanceStore = useInstanceStore();
+
 const resourcepacks = ref<Resourcepack[]>([]);
 
 watch(
-  props,
+  instanceStore.currentInstance,
   () => {
     invoke("scan_resourcepack_folder").then((res: any) => {
       resourcepacks.value = res as Resourcepack[];

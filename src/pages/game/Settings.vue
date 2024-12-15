@@ -21,14 +21,14 @@
         :title="$t('settings.accessibility.hideLatestRelease')"
         :description="$t('settings.accessibility.hideLatestReleaseDesc')"
         icon="eye-slash">
-        <toggle-switch v-model="config.accessibility.hide_latest_release"></toggle-switch>
+        <button-vue @click="config.accessibility.hide_latest_release = true">Hide it</button-vue>
       </setting-item>
       <setting-item
         v-if="instanceName === 'Latest Snapshot'"
         :title="$t('settings.accessibility.hideLatestSnapshot')"
         :description="$t('settings.accessibility.hideLatestSnapshotDesc')"
         icon="eye-slash">
-        <toggle-switch v-model="config.accessibility.hide_latest_snapshot"></toggle-switch>
+        <button-vue @click="config.accessibility.hide_latest_snapshot = true">Hide it</button-vue>
       </setting-item>
       <setting-item title="Enable Instance-specific Settings" description="Description" icon="gear">
         <toggle-switch
@@ -235,9 +235,10 @@ import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
 import ConfirmDeleteInstance from "../dialogs/ConfirmDeleteInstance.vue";
 import SelectVue from "@/components/controllers/Select.vue";
 import LogViewer from "../dialogs/LogViewer.vue";
-import { Instance, useInstanceStore } from "@/store/instance";
+import { useInstanceStore } from "@/store/instance";
 import { invoke } from "@tauri-apps/api/core";
 import $ from "jquery";
+import ButtonVue from "@/components/controllers/Button.vue";
 
 defineEmits(["update-instance-list"]);
 
