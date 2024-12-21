@@ -1,6 +1,7 @@
 <template>
-  <div class="assets">
+  <div class="instance-details">
     <tabs
+      v-if="instanceStore.currentInstance.installed"
       :tabs="
         components.map((n) => {
           return i18n.t(n.name);
@@ -14,6 +15,7 @@
       "
       @choose-tab="chooseTab">
     </tabs>
+    <tabs v-else :tabs="['Install Progress']" :icons="['folder-arrow-down']" :active="0"> </tabs>
     <Transition :name="transitionName" mode="out-in">
       <component
         :is="currentComponent"
@@ -39,9 +41,12 @@ import Worlds from "./Worlds.vue";
 import Mods from "./Mods.vue";
 import Packs from "./Packs.vue";
 import Settings from "./Settings.vue";
+import InstallProgress from "./InstallProgress.vue";
 import { useI18n } from "vue-i18n";
+import { useInstanceStore } from "@/store/instance";
 
 const i18n = useI18n();
+const instanceStore = useInstanceStore();
 
 defineEmits(["update-instance-list"]);
 
@@ -74,6 +79,8 @@ const components = ref([
 ]);
 const activeTab = ref(0);
 
+const transitionName = ref("slide-left");
+
 function chooseTab(tab: number) {
   if (activeTab.value < tab) {
     transitionName.value = "slide-left";
@@ -83,29 +90,31 @@ function chooseTab(tab: number) {
   activeTab.value = tab;
 }
 const currentComponent = computed(() => {
-  return components.value[activeTab.value].component;
+  if (instanceStore.currentInstance.installed) {
+    return components.value[activeTab.value].component;
+  } else {
+    return markRaw(InstallProgress);
+  }
 });
-
-const transitionName = ref("slide-left");
 </script>
 
 <style lang="less" scoped>
-.assets {
+.instance-details {
   margin-top: 14px;
   width: 100%;
   overflow-x: hidden;
-}
 
-.assets > div {
-  display: flex;
-  width: 100%;
-}
+  > div {
+    display: flex;
+    width: 100%;
+  }
 
-.assets > div.first-row {
-  margin-right: 5px;
-}
+  > div.first-row {
+    margin-right: 5px;
+  }
 
-.assets > div.second-row {
-  margin-left: 5px;
+  > div.second-row {
+    margin-left: 5px;
+  }
 }
 </style>

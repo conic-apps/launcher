@@ -43,9 +43,21 @@ export type Instance = {
 type InstanceStore = {
     currentInstance: Instance
     instances: Instance[]
-    installing: Instance[]
+    // installProgress: {
+    //     instanceName: string
+    //     step: number
+    //     completed: number
+    //     total: number
+    // }[]
+    installProgress: Map<string, { step: number; completed: number; total: number }>
+    launchedInstances: Map<
+        string,
+        {
+            launchAt: Date
+            running: number
+        }
+    >
 }
-
 export const useInstanceStore = defineStore("instance", {
     state: (): InstanceStore => {
         return {
@@ -64,7 +76,8 @@ export const useInstanceStore = defineStore("instance", {
                 installed: true,
             },
             instances: [],
-            installing: [],
+            installProgress: new Map(),
+            launchedInstances: new Map(),
         }
     },
 })
