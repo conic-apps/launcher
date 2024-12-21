@@ -50,10 +50,10 @@
         <button
           class="game-button"
           :class="`${gameButtonType}-game-button`"
-          @click="$emit('game-button-click')"
+          @click="$emit(gameButtonType)"
           v-if="!buttonLoading">
           <i
-            :class="props.gameButtonType"
+            :class="gameButtonType"
             style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i
           >{{ gameButtonText }}
         </button>
@@ -82,7 +82,6 @@ const config = useConfigStore();
 const expand = ref(true);
 
 const props = defineProps<{
-  gameButtonType: "install" | "launch" | "error";
   buttonLoading: boolean;
   errorType?: "install" | "launch";
 }>();
@@ -103,6 +102,14 @@ const modLoaderVersion = computed(() => {
   return instanceStore.currentInstance.config.runtime.mod_loader_version;
 });
 
+const gameButtonType = computed(() => {
+  if (instanceStore.currentInstance.installed) {
+    return "launch";
+  } else {
+    return "install";
+  }
+});
+
 let computedInstanceName = computed(() => {
   let name = currentInstance.value.config.name;
   if (name == "Latest Release") {
@@ -116,7 +123,7 @@ let computedInstanceName = computed(() => {
 
 let banner = "";
 let gameButtonText = computed(() => {
-  switch (props.gameButtonType) {
+  switch (gameButtonType.value) {
     case "install":
       return i18n.t("game.install");
     case "launch":
