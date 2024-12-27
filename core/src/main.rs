@@ -1,4 +1,4 @@
-// Amethyst Launcher
+// Conic Launcher
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
@@ -180,9 +180,9 @@ async fn initialize_application_data() {
         ),
     }
     #[cfg(not(debug_assertions))]
-    let application_folder_name = "aml";
+    let application_folder_name = "conic";
     #[cfg(debug_assertions)]
-    let application_folder_name = "aml-debug";
+    let application_folder_name = "conic-debug";
     match platform_info.os_type {
         OsType::Windows => {
             APPLICATION_DATA
@@ -281,6 +281,6 @@ fn print_title() {
     debug!(" ██║     ██╔══██║██║   ██║██║╚██╗██║██║     ██╔══██║██╔══╝  ██╔══██╗    ");
     debug!(" ███████╗██║  ██║╚██████╔╝██║ ╚████║╚██████╗██║  ██║███████╗██║  ██║    ");
     debug!(" ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ");
-    info!("Amethyst Launcher is starting up");
-    info!("Amethyst Launcher is open source, You can view the source code on Github: https://github.com/Conic-Sections/Amethyst-Launcher");
+    info!("Conic Launcher is starting up");
+    info!("Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher");
 }

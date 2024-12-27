@@ -1,10 +1,10 @@
-// Amethyst Launcher
+// Conic Launcher
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 export default {
     globalSearch: {
-        placeholder: "在 Amethyst 中搜索，或输入命令",
+        placeholder: "按 / 搜索，或按 ; 输入命令",
     },
     sidebar: {
         home: "家",
@@ -185,11 +185,11 @@ export default {
         },
         about: {
             sidebar: "关于",
-            sponsorTitle: "赞助 Amethyst Launcher",
+            sponsorTitle: "赞助 Conic Launcher",
             report: "报告问题",
             reportDesc: "打开一个 GitHub Issue，记得上传启动器日志",
             sponsorDesc:
-                "Amethyst Launcher 是一个免费、开源、跨平台的 Minecraft 启动器。由 Broken_Deer 及其他贡献者开发和维护，您的赞助或贡献将帮助 Amethyst Launcher 获得更好的发展。",
+                "Conic Launcher 是一个免费、开源、跨平台的 Minecraft 启动器。由 Broken_Deer 及其他贡献者开发和维护，您的赞助或贡献将帮助 Conic Launcher 获得更好的发展。",
             thanks: "鸣谢",
             thirdPartyLibraries: "第三方库",
         },

@@ -1,4 +1,4 @@
-# Amethyst Launcher
+# Conic Launcher
 # Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -12,8 +12,8 @@ body:
     attributes:
       value: |
         ## First of all
-        1. Please search for [existing issues](https://github.com/Conic-Sections/Amethyst-Launcher/issues?q=is%3Aissue) about this problem first.
-        2. Make sure it's an issue with Amethyst Launcher and not something else you are using.
+        1. Please search for [existing issues](https://github.com/conic-apps/launcher/issues?q=is%3Aissue) about this problem first.
+        2. Make sure it's an issue with Conic Launcher and not something else you are using.
         3. Remember to follow our community guidelines and be friendly.
 
   - type: markdown

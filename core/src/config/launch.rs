@@ -1,4 +1,4 @@
-// Amethyst Launcher
+// Conic Launcher
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
@@ -108,7 +108,7 @@ fn default_height() -> usize {
 }
 
 fn default_launcher_name() -> String {
-    "Amethyst_Launcher".to_string()
+    "Conic_Launcher".to_string()
 }
 
 impl Default for LaunchConfig {

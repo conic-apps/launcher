@@ -1,4 +1,4 @@
-// Amethyst Launcher
+// Conic Launcher
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
@@ -53,7 +53,7 @@ impl MinecraftLocation {
     }
 
     pub fn get_natives_root<P: AsRef<Path>>(&self, version: P) -> PathBuf {
-        self.get_version_root(version).join("aml-natives")
+        self.get_version_root(version).join("conic-natives")
     }
 
     pub fn get_version_root<P: AsRef<Path>>(&self, version: P) -> PathBuf {
@@ -109,14 +109,14 @@ pub struct DataLocation {
 impl DataLocation {
     pub fn new<S: AsRef<OsStr> + ?Sized>(data_folder: &S) -> Self {
         let data_folder_root = Path::new(data_folder).to_path_buf();
-        let temp_path = std::env::temp_dir().join(format!("amethyst-launcher-{}", Uuid::new_v4()));
+        let temp_path = std::env::temp_dir().join(format!("conic-launcher-{}", Uuid::new_v4()));
         std::fs::create_dir_all(&temp_path).expect("Could not create temp dir");
         Self {
             instances: data_folder_root.join("instances"),
             cache: match PLATFORM_INFO.get().unwrap().os_type {
                 OsType::Linux => {
                     PathBuf::from(std::env::var("HOME").expect("Could not found home"))
-                        .join(".cache/aml")
+                        .join(".cache/conic")
                 }
                 OsType::Osx => data_folder_root.join(".cache"),
                 OsType::Windows => data_folder_root.join(".cache"),

@@ -1,10 +1,10 @@
-// Amethyst Launcher
+// Conic Launcher
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 export default {
     globalSearch: {
-        placeholder: "Search in Amethyst, or use commands",
+        placeholder: "Type / to search, or type ; to use commands",
     },
     sidebar: {
         home: "Home",
@@ -193,9 +193,9 @@ export default {
             sidebar: "About",
             report: "Report an Issue",
             reportDesc: "Open an issue on GitHub, please upload launcher log.",
-            sponsorTitle: "Amethyst Sponsor",
+            sponsorTitle: "Conic Sponsor",
             sponsorDesc:
-                "Amethyst Launcher is a free, open-source, cross-platform Minecraft launcher. The program is built by Broken_Deer and other contributors. Your support will help us.",
+                "Conic Launcher is a free, open-source, cross-platform Minecraft launcher. The program is built by Broken_Deer and other contributors. Your support will help us.",
             thanks: "Thanks",
             thirdPartyLibraries: "Third-Party Libraries",
         },

@@ -1,4 +1,4 @@
-# Amethyst Launcher
+# Conic Launcher
 # Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -41,4 +41,4 @@ body:
   - type: input
     id: continue_use
     attributes:
-      label: Is this feature a reason for you to continue using Amethyst Launcher?
+      label: Is this feature a reason for you to continue using Conic Launcher?

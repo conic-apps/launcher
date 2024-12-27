@@ -1,4 +1,4 @@
-<!-- Amethyst Launcher -->
+<!-- Conic Launcher -->
 <!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
@@ -87,7 +87,7 @@ let sources = ref([
     bmcl: true
   },
   {
-    name: "Amethyst Launcher API",
+    name: "Conic Launcher API",
     description: '包括一些丢失的版本',
     type: sourceTypes.built,
   },

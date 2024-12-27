@@ -1,4 +1,4 @@
-// Amethyst Launcher
+// Conic Launcher
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
@@ -20,10 +20,10 @@ use crate::{
 };
 
 pub async fn complete_files(instance: &InstanceConfig, minecraft_location: &MinecraftLocation) {
-    let assets_lock_file = instance.get_instance_root().join(".aml-assets-ok");
-    let libraries_lock_file = instance.get_instance_root().join(".aml-libraries-ok");
+    let assets_lock_file = instance.get_instance_root().join(".conic-assets-ok");
+    let libraries_lock_file = instance.get_instance_root().join(".conic-libraries-ok");
     if std::fs::metadata(&assets_lock_file).is_ok() {
-        info!("Found file \".aml-assets-ok\", no need to check assets files.");
+        info!("Found file \".conic-assets-ok\", no need to check assets files.");
     } else {
         info!("Checking and completing assets files");
         complete_assets_files(instance, minecraft_location).await;
@@ -31,7 +31,7 @@ pub async fn complete_files(instance: &InstanceConfig, minecraft_location: &Mine
         std::fs::write(assets_lock_file, "ok").unwrap();
     }
     if std::fs::metadata(&libraries_lock_file).is_ok() {
-        info!("Found file \".aml-libraries-ok\", no need to check libraries files.");
+        info!("Found file \".conic-libraries-ok\", no need to check libraries files.");
     } else {
         info!("Checking and completing libraries files");
         complete_libraries_files(instance, minecraft_location).await;
