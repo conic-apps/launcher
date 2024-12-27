@@ -1,3 +1,7 @@
+<!-- Amethyst Launcher -->
+<!-- Copyright 2022-2026 OakChaser and contributors. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div class="setting-group" :class="classNames">
     <p v-if="title" style="margin-bottom: 10px; padding-left: 8px">{{ title }}</p>
