@@ -1,3 +1,7 @@
+<!-- Amethyst Launcher -->
+<!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div>
     <div class="info-bar">
@@ -102,15 +106,14 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue";
-import Expander from "@/components/Expander.vue";
-import TextInputBox from "@/components/controllers/TextInputBox.vue";
+import TextInputBox from "@/components/TextInputBox.vue";
 import CardLink from "@/components/CardButton.vue";
 import MinecraftChoose from "../MinecraftChoose.vue";
 import FabricChoose from "../FabricChoose.vue";
 import ForgeChoose from "../ForgeChoose.vue";
 import QuiltChoose from "../QuiltChoose.vue";
 import { invoke } from "@tauri-apps/api/core";
-import VueButton from "@/components/controllers/Button.vue";
+import VueButton from "@/components/Button.vue";
 import Tag from "@/components/Tag.vue";
 
 const emit = defineEmits(["created"]);

@@ -1,3 +1,7 @@
+// Amethyst Launcher
+// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log"
 import $ from "jquery"
 import { invoke } from "@tauri-apps/api/core"

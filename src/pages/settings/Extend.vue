@@ -1,3 +1,7 @@
+<!-- Amethyst Launcher -->
+<!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div>
     <!-- <expander title="常规" icon="house" :can-swap="false" description="基本扩展设置">

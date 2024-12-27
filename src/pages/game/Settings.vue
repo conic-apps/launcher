@@ -1,3 +1,7 @@
+<!-- Amethyst Launcher -->
+<!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div class="settings">
     <setting-group>
@@ -229,16 +233,16 @@
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
-import TextInputBox from "@/components/controllers/TextInputBox.vue";
+import TextInputBox from "@/components/TextInputBox.vue";
 import { computed, ref, watch } from "vue";
-import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
+import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import ConfirmDeleteInstance from "../dialogs/ConfirmDeleteInstance.vue";
-import SelectVue from "@/components/controllers/Select.vue";
+import SelectVue from "@/components/Select.vue";
 import LogViewer from "../dialogs/LogViewer.vue";
 import { useInstanceStore } from "@/store/instance";
 import { invoke } from "@tauri-apps/api/core";
 import $ from "jquery";
-import ButtonVue from "@/components/controllers/Button.vue";
+import ButtonVue from "@/components/Button.vue";
 
 defineEmits(["update-instance-list"]);
 

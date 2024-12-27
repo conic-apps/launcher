@@ -1,3 +1,7 @@
+<!-- Amethyst Launcher -->
+<!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div>
     <setting-group :title="$t('settings.accessibility.extraFeatures')">
@@ -54,7 +58,7 @@
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
+import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { watch } from "vue";
 import $ from "jquery";

@@ -1,3 +1,7 @@
+<!-- Amethyst Launcher -->
+<!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div>
     <setting-group :title="$t('settings.advance.launchArgs')">
@@ -57,9 +61,9 @@
 
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
-import SelectVue from "@/components/controllers/Select.vue";
-import ToggleSwitch from "@/components/controllers/ToggleSwitch.vue";
-import TextInputBox from "@/components/controllers/TextInputBox.vue";
+import SelectVue from "@/components/Select.vue";
+import ToggleSwitch from "@/components/ToggleSwitch.vue";
+import TextInputBox from "@/components/TextInputBox.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 const config = useConfigStore();

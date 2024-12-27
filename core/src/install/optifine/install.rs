@@ -1,5 +1,5 @@
 // Amethyst Launcher
-// Copyright 2022-2024 Broken-Deer and contributors. All rights reserved.
+// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 use std::{ffi::OsStr, fmt::Display, path::Path};
@@ -7,11 +7,11 @@ use std::{ffi::OsStr, fmt::Display, path::Path};
 use anyhow::Result;
 use tokio::{fs, io::AsyncWriteExt};
 
+use crate::core::DELIMITER;
 use crate::{
     core::folder::MinecraftLocation,
     utils::download::{download, Download},
 };
-use crate::core::DELIMITER;
 
 use super::{InstallOptifineOptions, DEFAULT_META_URL};
 
@@ -25,9 +25,9 @@ pub async fn download_optifine_installer<P, D>(
     dest_path: P,
     remote: Option<D>,
 ) -> Result<()>
-    where
-        P: AsRef<Path> + AsRef<OsStr>,
-        D: Display,
+where
+    P: AsRef<Path> + AsRef<OsStr>,
+    D: Display,
 {
     let url = match remote {
         None => format!("{DEFAULT_META_URL}/{minecraft_version}/{optifine_type}/{optifine_patch}"),
@@ -38,7 +38,7 @@ pub async fn download_optifine_installer<P, D>(
         file: dest_path,
         sha1: None,
     })
-        .await?;
+    .await?;
 
     Ok(())
 }
@@ -78,23 +78,20 @@ pub async fn install_optifine(
         full_path,
         options.remote,
     )
-        .await?;
+    .await?;
 
     let installer_path = minecraft
         .get_library_by_path("net/stevexmh/optifine-installer/0.0.0/optifine-installer.jar");
     let installer_path = installer_path.to_str().unwrap();
 
-    fs::create_dir_all(Path::new(&installer_path).parent().unwrap())
-        .await
-        ?;
+    fs::create_dir_all(Path::new(&installer_path).parent().unwrap()).await?;
 
     let mut file = fs::OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(true)
         .open(installer_path)
-        .await
-        ?;
+        .await?;
     file.write_all(OPTIFINE_INSTALL_HELPER).await?;
     file.flush().await?;
     file.sync_all().await?;

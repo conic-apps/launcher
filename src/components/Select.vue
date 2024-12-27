@@ -1,3 +1,7 @@
+<!-- Amethyst Launcher -->
+<!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div class="select" :style="`width: ${width}px;`" tabindex="0" @blur="opened = false">
     <div class="selected" @click="toggleOpened()">{{ selected }}</div>

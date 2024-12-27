@@ -1,3 +1,7 @@
+<!-- Amethyst Launcher -->
+<!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div class="card-button" :style="cardStyle">
     <div class="title">
@@ -58,6 +62,7 @@ let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}mar
 .card-button:active {
   opacity: 0.8;
 }
+
 // .dialog .card-button {
 //   background-color: #ffffffb9;
 //   border: 1px solid #0000002e;
