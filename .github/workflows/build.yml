@@ -1,4 +1,4 @@
-name: Amethyst Launcher Auto Build
+name: Conic Launcher Auto Build
 on:
   push:
     branches:
@@ -45,25 +45,25 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Debian bundle(aarch64)
-          path: ${{ github.workspace }}/core/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_arm64.deb
+          path: ${{ github.workspace }}/core/target/release/bundle/deb/conic-launcher_${{ needs.get-version.outputs.app_version }}_arm64.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v4
         with:
           name: RPM bundle(aarch64)
-          path: ${{ github.workspace }}/core/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.aarch64.rpm
+          path: ${{ github.workspace }}/core/target/release/bundle/rpm/conic-launcher-${{ needs.get-version.outputs.app_version }}-1.aarch64.rpm
 
       - name: Upload appimage bundle
         uses: actions/upload-artifact@v4
         with:
           name: AppImage bundle(aarch64)
-          path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage
+          path: ${{ github.workspace }}/core/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage
 
       - name: Upload updater signature
         uses: actions/upload-artifact@v4
         with:
           name: Updater signature(aarch64-appimage)
-          path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage.sig
+          path: ${{ github.workspace }}/core/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage.sig
 
   build-other:
     needs: [get-version]
@@ -140,81 +140,81 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: Debian bundle(amd64)
-          path: ${{ github.workspace }}/core/target/release/bundle/deb/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.deb
+          path: ${{ github.workspace }}/core/target/release/bundle/deb/conic-launcher_${{ needs.get-version.outputs.app_version }}_amd64.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: RPM bundle(x86_64)
-          path: ${{ github.workspace }}/core/target/release/bundle/rpm/amethyst-launcher-${{ needs.get-version.outputs.app_version }}-1.x86_64.rpm
+          path: ${{ github.workspace }}/core/target/release/bundle/rpm/conic-launcher-${{ needs.get-version.outputs.app_version }}-1.x86_64.rpm
 
       - name: Upload appimage bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: AppImage bundle(amd64)
-          path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage
+          path: ${{ github.workspace }}/core/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage
 
       - name: Upload appimage updater signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: Updater signature(amd64-appimage)
-          path: ${{ github.workspace }}/core/target/release/bundle/appimage/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage.sig
+          path: ${{ github.workspace }}/core/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage.sig
 
       - name: Upload Windows installation-free exe
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: Windows Installation-free(64-bit-exe)
-          path: ${{ github.workspace }}/core/target/release/amethyst-launcher.exe
+          path: ${{ github.workspace }}/core/target/release/conic-launcher.exe
 
       - name: Upload Microsoft Installer bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: Microsoft Installer bundle(64-bit)
-          path: ${{ github.workspace }}/core/target/release/bundle/msi/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi
+          path: ${{ github.workspace }}/core/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi
 
       - name: Upload Microsoft Installer signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: Updater signature(64-bit-msi)
-          path: ${{ github.workspace }}/core/target/release/bundle/msi/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi.sig
+          path: ${{ github.workspace }}/core/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi.sig
 
       - name: Upload NSIS bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: NSIS bundle(64-bit)
-          path: ${{ github.workspace }}/core/target/release/bundle/nsis/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe
+          path: ${{ github.workspace }}/core/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe
 
       - name: Upload NSIS updater signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: Updater signature(64-bit-nsis)
-          path: ${{ github.workspace }}/core/target/release/bundle/nsis/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe.sig
+          path: ${{ github.workspace }}/core/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe.sig
 
       - name: Upload dmg bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'macos-latest'
         with:
           name: MacOS ${{ matrix.arch }} bundle(dmg)
-          path: ${{ github.workspace }}/core/target/${{matrix.target}}-apple-darwin/release/bundle/dmg/amethyst-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg
+          path: ${{ github.workspace }}/core/target/${{matrix.target}}-apple-darwin/release/bundle/dmg/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg
 
       - name: Upload macos updater bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'macos-latest'
         with:
           name: MacOS ${{ matrix.arch }} updater bundle
-          path: ${{ github.workspace }}/core/target/${{matrix.target}}-apple-darwin/release/bundle/macos/amethyst-launcher.app.tar.gz
+          path: ${{ github.workspace }}/core/target/${{matrix.target}}-apple-darwin/release/bundle/macos/conic-launcher.app.tar.gz
 
       - name: Upload macos updater signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'macos-latest'
         with:
           name: MacOS ${{ matrix.arch }} updater signature
-          path: ${{ github.workspace }}/core/target/${{matrix.target}}-apple-darwin/release/bundle/macos/amethyst-launcher.app.tar.gz.sig
+          path: ${{ github.workspace }}/core/target/${{matrix.target}}-apple-darwin/release/bundle/macos/conic-launcher.app.tar.gz.sig
