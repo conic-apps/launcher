@@ -1,9 +1,9 @@
-# Amethyst Launcher
+# Conic Launcher
 
 [![status](https://img.shields.io/badge/status-stable-blue.svg)](https://github.com/tauri-apps/tauri/tree/dev)
-[![Amethyst Launcher Auto Build](https://img.shields.io/github/actions/workflow/status/Conic-Sections/Amethyst-Launcher/build.yml?label=build%20app&logo=github)](https://github.com/Conic-Sections/amethyst-launcher/actions/workflows/build.yml)
-[![License](https://img.shields.io/github/license/Conic-Sections/Amethyst-Launcher.svg)](https://www.gnu.org/licenses/quick-guide-GPL-3.0.html)
-![Contributors](https://img.shields.io/github/contributors/Conic-Sections/Amethyst-Launcher?color=2green)
+[![Conic Launcher Auto Build](https://img.shields.io/github/actions/workflow/status/conic-apps/launcher/build.yml?label=build%20app&logo=github)](https://github.com/conic-apps/launcher/actions/workflows/build.yml)
+[![License](https://img.shields.io/github/license/conic-apps/launcher.svg)](https://www.gnu.org/licenses/quick-guide-GPL-3.0.html)
+![Contributors](https://img.shields.io/github/contributors/conic-apps/launcher?color=2green)
 [![website](https://img.shields.io/badge/website-launcher.btlcraft.top-purple.svg)](https://launcher.btlcraft.top)
 [![https://good-labs.github.io/greater-good-affirmation/assets/images/badge.svg](https://good-labs.github.io/greater-good-affirmation/assets/images/badge.svg)](https://good-labs.github.io/greater-good-affirmation)
 
@@ -50,8 +50,8 @@
 执行以下命令来拉取代码：
 
 ```bash
-git clone https://github.com/Conic-Sections/amethyst-launcher.git
-cd amethyst-launcher
+git clone https://github.com/conic-apps/launcher.git
+cd launcher
 ```
 
 执行以下命令来安装依赖（在项目文件夹下）：

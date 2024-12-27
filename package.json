@@ -1,5 +1,5 @@
 {
-    "name": "amethyst-launcher",
+    "name": "conic-launcher",
     "private": true,
     "version": "0.0.0",
     "type": "module",
@@ -14,7 +14,7 @@
         "lint:fix": "eslint \"src/**\" --ignore-pattern \"src/assets\" --fix",
         "format": "yarn prettier --write .",
         "format:check": "yarn prettier --check .",
-        "clean-app-data": "rm -rf ~/.aml-debug"
+        "clean-app-data": "rm -rf ~/.conic-debug"
     },
     "license": "GPL-3.0-only",
     "dependencies": {
