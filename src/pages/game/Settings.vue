@@ -12,9 +12,9 @@
         <TextInputBox
           width="300px"
           v-model="instanceStore.currentInstance.config.name"
-          :disabled="
-            instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'
-          "></TextInputBox>
+          :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'"
+          :lazy-update-model="true">
+        </TextInputBox>
       </setting-item>
       <setting-item title="Icon" description="The name of this game instance." icon="icon">
         <img width="32px" height="32px" src="@/assets/images/Grass_Block.webp" alt="" />
@@ -51,7 +51,8 @@
         <TextInputBox
           width="300px"
           v-model="instanceStore.currentInstance.config.launch_config.launcher_name"
-          :placeholder="config.launch.launcher_name">
+          :placeholder="config.launch.launcher_name"
+          :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <!-- TODO:<setting-item title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
@@ -59,12 +60,12 @@
       <!--     width="240px" -->
       <!--     v-model="config.launch.server!.ip" -->
       <!--     style="display: inline-block; margin-right: 16px" -->
-      <!--     placeholder="IP 或域名"></TextInputBox> -->
+      <!--     placeholder="IP 或域名" :lazy-update-model="true"></TextInputBox> -->
       <!--   <TextInputBox -->
       <!--     width="100px" -->
       <!--     v-model="config.launch.server!.port" -->
       <!--     placeholder="端口" -->
-      <!--     style="display: inline-block"></TextInputBox> -->
+      <!--     style="display: inline-block" :lazy-update-model="true"></TextInputBox> -->
       <!-- </setting-item> -->
       <setting-item
         :title="$t('settings.game.worldName')"
@@ -72,7 +73,9 @@
         icon="floppy-disk">
         <TextInputBox
           width="300px"
-          :placeholder="$t('settings.game.worldNamePlaceholder')"></TextInputBox>
+          :placeholder="$t('settings.game.worldNamePlaceholder')"
+          :lazy-update-model="true">
+        </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.game.fullscreen')"
@@ -92,7 +95,8 @@
           :placeholder="$t('settings.game.windowSizeWidth')"
           :number-only="true"
           :disabled="instanceStore.currentInstance.config.launch_config.fullscreen"
-          v-model.number="instanceStore.currentInstance.config.launch_config.width">
+          v-model.number="instanceStore.currentInstance.config.launch_config.width"
+          :lazy-update-model="true">
         </TextInputBox>
         <TextInputBox
           width="100px"
@@ -100,7 +104,8 @@
           :placeholder="$t('settings.game.windowSizeHeight')"
           :number-only="true"
           :disabled="instanceStore.currentInstance.config.launch_config.fullscreen"
-          v-model.number="instanceStore.currentInstance.config.launch_config.height">
+          v-model.number="instanceStore.currentInstance.config.launch_config.height"
+          :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-slash">
@@ -129,7 +134,8 @@
         :description="$t('settings.advance.extraJVMArgsDesc')">
         <TextInputBox
           width="300px"
-          v-model="instanceStore.currentInstance.config.launch_config.extra_jvm_args">
+          v-model="instanceStore.currentInstance.config.launch_config.extra_jvm_args"
+          :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <setting-item
@@ -137,7 +143,8 @@
         :description="$t('settings.advance.extraMinecraftArgsDesc')">
         <TextInputBox
           width="300px"
-          v-model="instanceStore.currentInstance.config.launch_config.extra_mc_args">
+          v-model="instanceStore.currentInstance.config.launch_config.extra_mc_args"
+          :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <setting-item
@@ -145,7 +152,8 @@
         :description="$t('settings.advance.extraClassPathsDesc')">
         <TextInputBox
           width="300px"
-          v-model="instanceStore.currentInstance.config.launch_config.extra_class_paths">
+          v-model="instanceStore.currentInstance.config.launch_config.extra_class_paths"
+          :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <setting-item
@@ -153,7 +161,8 @@
         :description="$t('settings.advance.executeBeforeLaunchDesc')">
         <TextInputBox
           width="300px"
-          v-model="instanceStore.currentInstance.config.launch_config.execute_before_launch">
+          v-model="instanceStore.currentInstance.config.launch_config.execute_before_launch"
+          :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <setting-item
@@ -161,7 +170,8 @@
         :description="$t('settings.advance.wrapCommandDesc')">
         <TextInputBox
           width="300px"
-          v-model="instanceStore.currentInstance.config.launch_config.wrap_command">
+          v-model="instanceStore.currentInstance.config.launch_config.wrap_command"
+          :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <setting-item
@@ -169,7 +179,8 @@
         :description="$t('settings.advance.executeAfterLaunchDesc')">
         <TextInputBox
           width="300px"
-          v-model="instanceStore.currentInstance.config.launch_config.execute_after_launch">
+          v-model="instanceStore.currentInstance.config.launch_config.execute_after_launch"
+          :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <setting-item
@@ -267,8 +278,6 @@ let oldEnabledSpecificSettings =
 
 watch(instanceStore.currentInstance.config, (v) => {
   $("body").addClass("saving-instance-settings");
-  console.log(v);
-  console.log(v.launch_config.enable_instance_specific_settings);
   if (v.launch_config.enable_instance_specific_settings && !oldEnabledSpecificSettings) {
     instanceStore.currentInstance.config.launch_config = {
       enable_instance_specific_settings: true,

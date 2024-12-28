@@ -52,7 +52,6 @@ export type Config = {
 }
 
 // const config = (await invoke("read_config_file")) as Config
-// console.log(await invoke("read_config_file"))
 export const useConfigStore = defineStore("global_config", {
     state: (): Config => {
         return window.__APPLICATION_CONFIG__

@@ -197,7 +197,6 @@ const tweened = reactive({
 });
 
 watch(installProgress, (n) => {
-  console.log(111);
   gsap.to(tweened, { duration: 0.5, number: Number(n.completed) || 0 });
 });
 </script>

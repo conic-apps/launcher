@@ -10,7 +10,6 @@ use log::{error, info};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::Emitter;
-use tauri_plugin_http::reqwest;
 
 use crate::{DATA_LOCATION, HTTP_CLIENT, MAIN_WINDOW};
 
@@ -200,12 +199,11 @@ pub async fn refresh_all_microsoft_account() {
 ///
 /// Note: Shouldn't save refresh token to config file
 pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<Account> {
-    let client = HTTP_CLIENT.get().unwrap();
     let access_token_response = match payload {
-        LoginPayload::RefreshToken(token) => get_access_token_from_refresh_token(client, &token)
-            .await
-            .unwrap(),
-        LoginPayload::AccessCode(code) => get_access_token(client, &code).await.unwrap(),
+        LoginPayload::RefreshToken(token) => {
+            get_access_token_from_refresh_token(&token).await.unwrap()
+        }
+        LoginPayload::AccessCode(code) => get_access_token(&code).await.unwrap(),
     };
     info!("Successfully get Microsoft access token");
     let access_token = access_token_response["access_token"]
@@ -223,20 +221,19 @@ pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<Account> {
         .unwrap()
         .to_string();
 
-    let xbox_auth_response = xbox_authenticate(client, &access_token).await.unwrap();
+    let xbox_auth_response = xbox_authenticate(&access_token).await.unwrap();
     info!("Successfully login Xbox");
-    let xsts_token = xsts_authenticate(client, &xbox_auth_response.xbl_token)
+    let xsts_token = xsts_authenticate(&xbox_auth_response.xbl_token)
         .await
         .unwrap();
     info!("Successfully verify XSTS");
-    let minecraft_access_token =
-        minecraft_authenticate(client, &xbox_auth_response.xbl_uhs, &xsts_token)
-            .await
-            .unwrap();
+    let minecraft_access_token = minecraft_authenticate(&xbox_auth_response.xbl_uhs, &xsts_token)
+        .await
+        .unwrap();
     info!("Successfully get Minecraft access token");
-    check_game(client, &minecraft_access_token).await.unwrap();
+    check_game(&minecraft_access_token).await.unwrap();
     info!("Successfully check ownership");
-    let player_info = get_player_infomations(client, &minecraft_access_token)
+    let player_info = get_player_infomations(&minecraft_access_token)
         .await
         .unwrap();
     info!("Successfully get game profile");
@@ -254,8 +251,8 @@ pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<Account> {
     })
 }
 
-async fn get_access_token(client: &reqwest::Client, code: &str) -> anyhow::Result<Value> {
-    Ok(client
+async fn get_access_token(code: &str) -> anyhow::Result<Value> {
+    Ok(HTTP_CLIENT
         .post("https://login.live.com/oauth20_token.srf")
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(
@@ -272,11 +269,8 @@ async fn get_access_token(client: &reqwest::Client, code: &str) -> anyhow::Resul
         .await?)
 }
 
-async fn get_access_token_from_refresh_token(
-    client: &reqwest::Client,
-    refresh_token: &str,
-) -> anyhow::Result<Value> {
-    Ok(client
+async fn get_access_token_from_refresh_token(refresh_token: &str) -> anyhow::Result<Value> {
+    Ok(HTTP_CLIENT
         .post("https://login.live.com/oauth20_token.srf")
         .header("Content-type", "application/x-www-form-urlencoded")
         .body(
@@ -332,11 +326,8 @@ impl XboxAuthBody {
     }
 }
 
-async fn xbox_authenticate(
-    client: &reqwest::Client,
-    access_token: &str,
-) -> anyhow::Result<XboxAuth> {
-    let response: Value = client
+async fn xbox_authenticate(access_token: &str) -> anyhow::Result<XboxAuth> {
+    let response: Value = HTTP_CLIENT
         .post("https://user.auth.xboxlive.com/user/authenticate")
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
@@ -388,8 +379,8 @@ impl XSTSAuthBody {
     }
 }
 
-async fn xsts_authenticate(client: &reqwest::Client, xbl_token: &str) -> anyhow::Result<String> {
-    let response: Value = client
+async fn xsts_authenticate(xbl_token: &str) -> anyhow::Result<String> {
+    let response: Value = HTTP_CLIENT
         .post("https://xsts.auth.xboxlive.com/xsts/authorize")
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
@@ -418,12 +409,8 @@ impl MinecraftAuthBody {
     }
 }
 
-async fn minecraft_authenticate(
-    client: &reqwest::Client,
-    xbl_uhs: &str,
-    xsts_token: &str,
-) -> anyhow::Result<String> {
-    let response: Value = client
+async fn minecraft_authenticate(xbl_uhs: &str, xsts_token: &str) -> anyhow::Result<String> {
+    let response: Value = HTTP_CLIENT
         .post("https://api.minecraftservices.com/authentication/login_with_xbox")
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
@@ -440,8 +427,8 @@ async fn minecraft_authenticate(
         .to_string())
 }
 
-async fn check_game(client: &reqwest::Client, minecraft_access_token: &str) -> anyhow::Result<()> {
-    let response = client
+async fn check_game(minecraft_access_token: &str) -> anyhow::Result<()> {
+    let response = HTTP_CLIENT
         .get("https://api.minecraftservices.com/entitlements/mcstore")
         .header("Content-Type", "application/json")
         .header("Authorization", format!("Bearer {minecraft_access_token}"))
@@ -454,11 +441,8 @@ async fn check_game(client: &reqwest::Client, minecraft_access_token: &str) -> a
     }
 }
 
-async fn get_player_infomations(
-    client: &reqwest::Client,
-    minecraft_access_token: &str,
-) -> anyhow::Result<Value> {
-    Ok(client
+async fn get_player_infomations(minecraft_access_token: &str) -> anyhow::Result<Value> {
+    Ok(HTTP_CLIENT
         .get("https://api.minecraftservices.com/minecraft/profile")
         .header("Content-Type", "application/json")
         .header("Authorization", format!("Bearer {minecraft_access_token}"))
@@ -485,15 +469,7 @@ async fn resolve_skins(skins: Vec<Skin>) -> Vec<Skin> {
 
 async fn resolve_skin(url: &str) -> String {
     async fn download_skin(url: &str) -> anyhow::Result<Vec<u8>> {
-        Ok(HTTP_CLIENT
-            .get()
-            .unwrap()
-            .get(url)
-            .send()
-            .await?
-            .bytes()
-            .await?
-            .to_vec())
+        Ok(HTTP_CLIENT.get(url).send().await?.bytes().await?.to_vec())
     }
     if let Ok(content) = download_skin(url).await {
         format!(

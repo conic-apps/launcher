@@ -25,7 +25,7 @@ use std::time::Duration;
 use config::{read_config_file, Config};
 use folder::DataLocation;
 use log::{debug, error, info};
-use once_cell::sync::OnceCell;
+use once_cell::sync::{Lazy, OnceCell};
 use platform::{OsType, PlatformInfo};
 use tauri::{Emitter, Manager, Window};
 use tauri_plugin_http::reqwest;
@@ -39,7 +39,14 @@ static MAIN_WINDOW: OnceCell<Window> = OnceCell::new();
 static APP_VERSION: OnceCell<String> = OnceCell::new();
 static DATA_LOCATION: OnceCell<DataLocation> = OnceCell::new();
 static PLATFORM_INFO: OnceCell<PlatformInfo> = OnceCell::new();
-static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
+// static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
+static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
+    reqwest::ClientBuilder::new()
+        .pool_idle_timeout(Duration::from_secs(10))
+        .pool_max_idle_per_host(10)
+        .build()
+        .expect("Failed to build HTTP client")
+});
 static APPLICATION_DATA: OnceCell<PathBuf> = OnceCell::new();
 const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("../assets/launcher_profiles.json");
 
@@ -57,15 +64,6 @@ async fn main() {
         .await
         .expect("Could not create appliaction data folder");
     DATA_LOCATION.set(data_location).unwrap();
-    HTTP_CLIENT
-        .set(
-            reqwest::ClientBuilder::new()
-                .pool_idle_timeout(Duration::from_secs(30))
-                .pool_max_idle_per_host(100)
-                .build()
-                .unwrap(),
-        )
-        .unwrap();
     let launcher_profiles_path = DATA_LOCATION
         .get()
         .unwrap()

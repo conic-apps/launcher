@@ -27,7 +27,10 @@
         :title="$t('settings.game.launcherName')"
         :description="$t('settings.game.launcherNameDesc')"
         icon="signature">
-        <TextInputBox width="360px" v-model="config.launch.launcher_name"></TextInputBox>
+        <TextInputBox
+          width="360px"
+          v-model="config.launch.launcher_name"
+          :lazy-update-value="true"></TextInputBox>
       </setting-item>
       <!-- TODO:<setting-item title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
       <!--   <TextInputBox -->
@@ -47,7 +50,9 @@
         icon="floppy-disk">
         <TextInputBox
           width="360px"
-          :placeholder="$t('settings.game.worldNamePlaceholder')"></TextInputBox>
+          :placeholder="$t('settings.game.worldNamePlaceholder')"
+          :lazy-update-value="true">
+        </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.game.fullscreen')"
@@ -66,7 +71,8 @@
           :placeholder="$t('settings.game.windowSizeWidth')"
           :number-only="true"
           :disabled="config.launch.fullscreen"
-          v-model.number="config.launch.width">
+          v-model.number="config.launch.width"
+          :lazy-update-value="true">
         </TextInputBox>
         <TextInputBox
           width="100px"
@@ -74,7 +80,8 @@
           :placeholder="$t('settings.game.windowSizeHeight')"
           :number-only="true"
           :disabled="config.launch.fullscreen"
-          v-model.number="config.launch.height">
+          v-model.number="config.launch.height"
+          :lazy-update-value="true">
         </TextInputBox>
       </setting-item>
       <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-slash">
