@@ -72,7 +72,7 @@ pub struct QuiltVersionList(Vec<QuiltVersion>);
 impl QuiltVersionList {
     pub async fn new(mcversion: &str) -> anyhow::Result<Self> {
         let url = format!("https://meta.quiltmc.org/v3/versions/loader/{mcversion}");
-        let response = HTTP_CLIENT.get().unwrap().get(url).send().await?;
+        let response = HTTP_CLIENT.get(url).send().await?;
         Ok(response.json().await?)
     }
 }

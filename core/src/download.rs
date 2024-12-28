@@ -18,7 +18,6 @@ use log::warn;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use tauri::Emitter;
-use tauri_plugin_http::reqwest;
 use tokio::io::AsyncWriteExt;
 
 use crate::{HTTP_CLIENT, MAIN_WINDOW};
@@ -122,7 +121,6 @@ pub async fn download_files(
     counter_sender_thread.join().unwrap();
     let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let total = downloads.len();
-    let client = HTTP_CLIENT.get().unwrap();
     let speed_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let running_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let (tx, rx) = mpsc::channel();
@@ -195,7 +193,6 @@ pub async fn download_files(
                     retried += 1;
                     let speed_counter = speed_counter.clone();
                     if download_file(
-                        client,
                         &task,
                         &counter,
                         &speed_counter,
@@ -247,7 +244,6 @@ pub async fn download_files(
 }
 
 async fn download_file(
-    client: &reqwest::Client,
     task: &Download,
     counter: &Arc<AtomicUsize>,
     speed_counter: &Arc<AtomicUsize>,
@@ -259,7 +255,7 @@ async fn download_file(
         "Unknown Error in instance/mod.rs".to_string(),
     ))?)
     .await?;
-    let mut response = client.get(task.url.clone()).send().await?;
+    let mut response = HTTP_CLIENT.get(task.url.clone()).send().await?;
     let mut file = tokio::fs::File::create(&file_path).await?;
     while let Some(chunk) = response.chunk().await? {
         if max_download_speed > 1024 {

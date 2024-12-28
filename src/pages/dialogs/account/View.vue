@@ -97,7 +97,6 @@ async function getAccounts() {
   for (let i = 0; i <= res.length - 1; i++) {
     res[i].profile.avatar = await getAvatar(res[i].profile.skins[0].url, 32);
   }
-  console.log(res);
   accounts.value = res;
 }
 

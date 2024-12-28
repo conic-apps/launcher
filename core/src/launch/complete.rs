@@ -7,7 +7,6 @@ use std::io::Read;
 use anyhow::anyhow;
 use log::{info, warn};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use tauri_plugin_http::reqwest::Client;
 use tokio::io::AsyncWriteExt;
 
 use crate::{
@@ -107,12 +106,11 @@ fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
 }
 
 async fn download_files(downloads: Vec<Download>) -> anyhow::Result<()> {
-    let client = HTTP_CLIENT.get().unwrap();
     for download in downloads {
         let mut retried = 0;
         while retried <= 5 {
             retried += 1;
-            match download_and_check(client, &download).await {
+            match download_and_check(&download).await {
                 Ok(_) => break,
                 Err(_) => warn!("Downloaded failed: {}, retried: {}", &download.url, retried),
             }
@@ -121,13 +119,13 @@ async fn download_files(downloads: Vec<Download>) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn download_and_check(client: &Client, download: &Download) -> anyhow::Result<()> {
+async fn download_and_check(download: &Download) -> anyhow::Result<()> {
     let file_path = download.file.clone();
     tokio::fs::create_dir_all(file_path.parent().ok_or(anyhow::Error::msg(
         "Unknown Error in instance/mod.rs".to_string(),
     ))?)
     .await?;
-    let mut response = client.get(download.url.clone()).send().await?;
+    let mut response = HTTP_CLIENT.get(download.url.clone()).send().await?;
     if !response.status().is_success() {
         return Err(anyhow!("Downloaded failed"));
     }

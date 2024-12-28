@@ -15,32 +15,52 @@
       <setting-item
         :title="$t('settings.advance.extraJVMArgs')"
         :description="$t('settings.advance.extraJVMArgsDesc')">
-        <TextInputBox width="360px" v-model="config.launch.extra_jvm_args"></TextInputBox>
+        <TextInputBox
+          width="360px"
+          v-model="config.launch.extra_jvm_args"
+          :lazy-update-model="true"></TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.extraMinecraftArgs')"
         :description="$t('settings.advance.extraMinecraftArgsDesc')">
-        <TextInputBox width="360px" v-model="config.launch.extra_mc_args"></TextInputBox>
+        <TextInputBox
+          width="360px"
+          v-model="config.launch.extra_mc_args"
+          :lazy-update-model="true"></TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.extraClassPaths')"
         :description="$t('settings.advance.extraClassPathsDesc')">
-        <TextInputBox width="360px" v-model="config.launch.extra_class_paths"></TextInputBox>
+        <TextInputBox
+          width="360px"
+          v-model="config.launch.extra_class_paths"
+          :lazy-update-model="true"></TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.executeBeforeLaunch')"
         :description="$t('settings.advance.executeBeforeLaunchDesc')">
-        <TextInputBox width="360px" v-model="config.launch.execute_before_launch"></TextInputBox>
+        <TextInputBox
+          width="360px"
+          v-model="config.launch.execute_before_launch"
+          :lazy-update-model="true">
+        </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.wrapCommand')"
         :description="$t('settings.advance.wrapCommandDesc')">
-        <TextInputBox width="360px" v-model="config.launch.wrap_command"></TextInputBox>
+        <TextInputBox
+          width="360px"
+          v-model="config.launch.wrap_command"
+          :lazy-update-model="true"></TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.executeAfterLaunch')"
         :description="$t('settings.advance.executeAfterLaunchDesc')">
-        <TextInputBox width="360px" v-model="config.launch.execute_after_launch"></TextInputBox>
+        <TextInputBox
+          width="360px"
+          v-model="config.launch.execute_after_launch"
+          :lazy-update-model="true">
+        </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.ignoreInvalidMinecraftCertificates')"
