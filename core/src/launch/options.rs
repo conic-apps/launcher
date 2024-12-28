@@ -5,11 +5,11 @@
 use crate::{
     account::Account,
     config::{
-        instance::InstanceConfig,
         launch::{Server, GC},
         read_config_file,
     },
     folder::MinecraftLocation,
+    instance::Instance,
     DATA_LOCATION,
 };
 
@@ -78,23 +78,23 @@ pub struct LaunchOptions {
 }
 
 impl LaunchOptions {
-    pub fn new(instance_config: &InstanceConfig, account: Account) -> Self {
+    pub fn new(instance: &Instance, account: Account) -> Self {
         let global_config = read_config_file().launch;
-        let instance_config = &instance_config.launch_config;
+        let launch_config = &instance.config.launch_config;
         Self {
-            wrap_command: instance_config
+            wrap_command: launch_config
                 .wrap_command
                 .clone()
                 .unwrap_or(global_config.wrap_command),
-            execute_before_launch: instance_config
+            execute_before_launch: launch_config
                 .execute_before_launch
                 .clone()
                 .unwrap_or(global_config.execute_before_launch),
-            execute_after_launch: instance_config
+            execute_after_launch: launch_config
                 .execute_after_launch
                 .clone()
                 .unwrap_or(global_config.execute_after_launch),
-            launcher_name: instance_config
+            launcher_name: launch_config
                 .launcher_name
                 .clone()
                 .unwrap_or(global_config.launcher_name),
@@ -103,40 +103,34 @@ impl LaunchOptions {
                 uuid: account.profile.uuid.clone(),
             },
             access_token: account.access_token.clone().unwrap_or_default(),
-            min_memory: instance_config
-                .min_memory
-                .unwrap_or(global_config.min_memory),
-            max_memory: instance_config
-                .max_memory
-                .unwrap_or(global_config.max_memory),
+            min_memory: launch_config.min_memory.unwrap_or(global_config.min_memory),
+            max_memory: launch_config.max_memory.unwrap_or(global_config.max_memory),
             // TODO:
-            server: instance_config.server.clone(),
-            width: instance_config.width.unwrap_or(global_config.width),
-            height: instance_config.height.unwrap_or(global_config.height),
-            fullscreen: instance_config
-                .fullscreen
-                .unwrap_or(global_config.fullscreen),
-            extra_jvm_args: instance_config
+            server: launch_config.server.clone(),
+            width: launch_config.width.unwrap_or(global_config.width),
+            height: launch_config.height.unwrap_or(global_config.height),
+            fullscreen: launch_config.fullscreen.unwrap_or(global_config.fullscreen),
+            extra_jvm_args: launch_config
                 .extra_jvm_args
                 .clone()
                 .unwrap_or(global_config.extra_jvm_args),
-            extra_mc_args: instance_config
+            extra_mc_args: launch_config
                 .extra_mc_args
                 .clone()
                 .unwrap_or(global_config.extra_mc_args),
-            is_demo: instance_config.is_demo.unwrap_or(global_config.is_demo),
-            ignore_invalid_minecraft_certificates: instance_config
+            is_demo: launch_config.is_demo.unwrap_or(global_config.is_demo),
+            ignore_invalid_minecraft_certificates: launch_config
                 .ignore_invalid_minecraft_certificates
                 .unwrap_or(global_config.ignore_invalid_minecraft_certificates),
-            ignore_patch_discrepancies: instance_config
+            ignore_patch_discrepancies: launch_config
                 .ignore_patch_discrepancies
                 .unwrap_or(global_config.ignore_patch_discrepancies),
-            extra_class_paths: instance_config
+            extra_class_paths: launch_config
                 .extra_class_paths
                 .clone()
                 .unwrap_or(global_config.extra_class_paths),
-            gc: instance_config.gc.clone().unwrap_or(global_config.gc),
-            minecraft_location: MinecraftLocation::new(&DATA_LOCATION.get().unwrap().root),
+            gc: launch_config.gc.clone().unwrap_or(global_config.gc),
+            minecraft_location: MinecraftLocation::new(&DATA_LOCATION.root),
             properties: "{}".to_string(),
         }
     }

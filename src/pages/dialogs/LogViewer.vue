@@ -12,7 +12,9 @@
           </div>
           <div>
             <h4>日志查看器</h4>
-            <p style="display: flex; align-items: center">正在查看 {{ instanceName }} 的日志</p>
+            <p style="display: flex; align-items: center">
+              正在查看 {{ instanceStore.currentInstance.config.name }} 的日志
+            </p>
           </div>
           <div class="button" style="position: absolute; right: 0" @click="$emit('close')">
             <i></i>
@@ -21,7 +23,10 @@
       </div>
       <div class="logs">
         <transition-group>
-          <div class="log" v-for="(log, index) in logCollector.get(instanceName)" :key="index">
+          <div
+            class="log"
+            v-for="(log, index) in logCollector.get(instanceStore.currentInstance.id)"
+            :key="index">
             <div v-if="isNormal(log)">
               <span class="time">{{ getTime(log) }}</span>
               <span :class="getLevelClass(getLevel(log) as string)">{{ getLevel(log) }}</span>
@@ -41,7 +46,7 @@
 import DialogVue from "@/components/Dialog.vue";
 import { useInstanceStore } from "@/store/instance";
 import { listen } from "@tauri-apps/api/event";
-import { computed, ref } from "vue";
+import { ref } from "vue";
 
 const props = defineProps<{
   visible: boolean;
@@ -49,12 +54,8 @@ const props = defineProps<{
 
 const instanceStore = useInstanceStore();
 
-const instanceName = computed(() => {
-  return instanceStore.currentInstance.config.name;
-});
-
 type Log = {
-  instanceName: string;
+  instanceId: string;
   content: string;
 };
 // log collector
@@ -62,17 +63,17 @@ let logCollector = ref(new Map());
 
 listen("log", (event) => {
   let payload = event.payload as Log;
-  let instanceLog = logCollector.value.get(payload.instanceName);
+  let instanceLog = logCollector.value.get(payload.instanceId);
   if (typeof instanceLog == "undefined") {
-    logCollector.value.set(payload.instanceName, [payload.content]);
+    logCollector.value.set(payload.instanceId, [payload.content]);
     return;
   }
-  let newValue = logCollector.value.get(payload.instanceName);
+  let newValue = logCollector.value.get(payload.instanceId);
   if (payload.content.trim().length == 0) {
     return;
   }
   newValue.push(payload.content);
-  logCollector.value.set(payload.instanceName, newValue);
+  logCollector.value.set(payload.instanceId, newValue);
 });
 
 function getTime(log: string) {

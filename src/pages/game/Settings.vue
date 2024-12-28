@@ -8,11 +8,24 @@
       <setting-item
         title="Instance Name"
         description="The name of this game instance."
+        :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'"
         icon="signature">
         <TextInputBox
+          v-if="instanceName == 'Latest Release'"
+          width="300px"
+          value="111"
+          :lazy-update-model="true">
+        </TextInputBox>
+        <TextInputBox
+          v-else-if="instanceName == 'Latest Snapshot'"
+          width="300px"
+          value="222"
+          :lazy-update-model="true">
+        </TextInputBox>
+        <TextInputBox
+          v-else
           width="300px"
           v-model="instanceStore.currentInstance.config.name"
-          :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'"
           :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
@@ -305,7 +318,6 @@ watch(instanceStore.currentInstance.config, (v) => {
       execute_before_launch: config.launch.execute_before_launch,
       execute_after_launch: config.launch.execute_after_launch,
     };
-    alert(instanceStore.currentInstance.config.launch_config);
     $("body").removeClass("saving-instance-settings");
     oldEnabledSpecificSettings = v.launch_config.enable_instance_specific_settings;
     return;
@@ -319,7 +331,10 @@ watch(instanceStore.currentInstance.config, (v) => {
     return;
   }
   oldEnabledSpecificSettings = v.launch_config.enable_instance_specific_settings;
-  invoke("update_instance", { config: v }).then(() => {
+  invoke("update_instance", {
+    config: v,
+    id: instanceStore.currentInstance.id,
+  }).then(() => {
     $("body").removeClass("saving-instance-settings");
   });
 });

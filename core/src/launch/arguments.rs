@@ -8,12 +8,13 @@ use regex::Regex;
 use zip::ZipArchive;
 
 use crate::{
-    config::{instance::InstanceConfig, launch::GC},
+    config::launch::GC,
     folder::MinecraftLocation,
+    instance::Instance,
     platform::{OsType, PlatformInfo, DELIMITER},
     utils::unzip::decompression_all,
     version::ResolvedVersion,
-    APP_VERSION,
+    APP_VERSION, DATA_LOCATION,
 };
 
 use super::options::LaunchOptions;
@@ -22,7 +23,7 @@ const DEFAULT_GAME_ICON: &[u8] = include_bytes!("../../assets/minecraft.icns");
 
 pub async fn generate_command_arguments(
     minecraft_location: &MinecraftLocation,
-    instance: &InstanceConfig,
+    instance: &Instance,
     platform: &PlatformInfo,
     launch_options: &LaunchOptions,
     version: ResolvedVersion,
@@ -32,7 +33,7 @@ pub async fn generate_command_arguments(
     command_arguments.push(format!(
         "\"-Dminecraft.client.jar={version_jar}\"",
         version_jar = minecraft_location
-            .get_version_jar(&instance.runtime.minecraft, None)
+            .get_version_jar(&instance.config.runtime.minecraft, None)
             .to_string_lossy()
     ));
     let game_icon = minecraft_location
@@ -179,7 +180,10 @@ pub async fn generate_command_arguments(
     game_options.insert("assets_index_name", version.assets.unwrap());
     game_options.insert(
         "game_directory",
-        instance.get_instance_root().to_string_lossy().to_string(),
+        DATA_LOCATION
+            .get_instance_root(&instance.id)
+            .to_string_lossy()
+            .to_string(),
     );
     game_options.insert("auth_player_name", launch_options.game_profile.name.clone());
     game_options.insert("auth_uuid", launch_options.game_profile.uuid.clone());
