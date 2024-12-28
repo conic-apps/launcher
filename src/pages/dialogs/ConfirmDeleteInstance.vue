@@ -115,7 +115,7 @@ const emit = defineEmits(["close", "deleted"]);
 const deleting = ref(false);
 const confirmDelete = () => {
   deleting.value = true;
-  invoke("delete_instance", { instanceName: currentInstance.value.config.name }).then(() => {
+  invoke("delete_instance", { instanceId: currentInstance.value.id }).then(() => {
     deleting.value = false;
     confirmInputText.value = "";
     emit("deleted");

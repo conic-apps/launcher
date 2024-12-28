@@ -56,7 +56,7 @@ pub struct Account {
 
 #[tauri::command]
 pub fn get_accounts() -> Result<Vec<Account>, ()> {
-    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    let path = DATA_LOCATION.root.join("accounts.json");
     if !path.exists() {
         return Ok(vec![]);
     }
@@ -66,7 +66,7 @@ pub fn get_accounts() -> Result<Vec<Account>, ()> {
 
 #[tauri::command]
 pub fn get_account_by_uuid(uuid: &str) -> Vec<Account> {
-    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    let path = DATA_LOCATION.root.join("accounts.json");
     if !path.exists() {
         return vec![];
     }
@@ -81,7 +81,7 @@ pub fn get_account_by_uuid(uuid: &str) -> Vec<Account> {
 fn add_account(account: Account) -> anyhow::Result<()> {
     let mut accounts = get_accounts().unwrap();
     accounts.push(account);
-    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    let path = DATA_LOCATION.root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&accounts).unwrap();
     std::fs::write(&path, &contents).unwrap();
     MAIN_WINDOW
@@ -99,7 +99,7 @@ pub async fn delete_account(uuid: String) {
         .into_iter()
         .filter(|x| x.profile.uuid != uuid)
         .collect::<Vec<Account>>();
-    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    let path = DATA_LOCATION.root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&result).unwrap();
     std::fs::write(&path, &contents).unwrap();
     MAIN_WINDOW
@@ -150,7 +150,7 @@ pub async fn refresh_microsoft_account_by_uuid(uuid: String) -> Account {
             .unwrap(),
         )
     }
-    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    let path = DATA_LOCATION.root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&result).unwrap();
     std::fs::write(&path, &contents).unwrap();
     MAIN_WINDOW

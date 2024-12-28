@@ -131,23 +131,7 @@ impl DataLocation {
         }
     }
 
-    pub fn get_instance_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
-        self.instances.join(instance_name)
-    }
-
-    pub fn _get_modpacks_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
-        self.instances.join(instance_name).join("mods")
-    }
-
-    pub fn _get_resourcespacks_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
-        self.instances.join(instance_name).join("resourcepacks")
-    }
-
-    pub fn _get_saves_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
-        self.instances.join(instance_name).join("saves")
-    }
-
-    pub fn _get_shaderpacks_root<P: AsRef<Path>>(&self, instance_name: P) -> PathBuf {
-        self.instances.join(instance_name).join("shaderpacks")
+    pub fn get_instance_root(&self, instance_id: &Uuid) -> PathBuf {
+        self.instances.join(instance_id.to_string())
     }
 }

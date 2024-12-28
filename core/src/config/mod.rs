@@ -162,14 +162,14 @@ fn default_current_account() -> String {
 #[tauri::command]
 pub fn save_config(storage: tauri::State<'_, Storage>) {
     let data = toml::to_string_pretty(&storage.config.lock().unwrap().clone()).unwrap();
-    let config_file_path = &DATA_LOCATION.get().unwrap().config;
+    let config_file_path = &DATA_LOCATION.config;
     std::fs::write(config_file_path, data).unwrap();
     debug!("Saved config to file");
 }
 
 #[tauri::command]
 pub fn read_config_file() -> Config {
-    let config_file_path = &DATA_LOCATION.get().unwrap().config;
+    let config_file_path = &DATA_LOCATION.config;
     if !config_file_path.exists() {
         info!("No config file, using default config");
         let default_config = Config::default();

@@ -12,7 +12,7 @@ use vanilla::generate_download_info;
 use crate::{
     config::instance::{InstanceRuntime, ModLoaderType},
     download::{download_files, Progress, ProgressError},
-    folder::{DataLocation, MinecraftLocation},
+    folder::MinecraftLocation,
     instance::Instance,
     version::VersionManifest,
     Storage, DATA_LOCATION, MAIN_WINDOW,
@@ -65,7 +65,6 @@ pub async fn install(
         instance.config.name
     );
     #[allow(clippy::unwrap_used)]
-    let data_location = DATA_LOCATION.get().unwrap();
     let runtime = instance.config.runtime;
     info!("------------- Instance runtime config -------------");
     info!("-> Minecraft: {}", runtime.minecraft);
@@ -80,7 +79,7 @@ pub async fn install(
     info!("Generating download task...");
     let download_list = match generate_download_info(
         &runtime.minecraft,
-        MinecraftLocation::new(&data_location.root),
+        MinecraftLocation::new(&DATA_LOCATION.root),
     )
     .await
     {
@@ -114,7 +113,7 @@ pub async fn install(
                 },
             )
             .unwrap();
-        match install_mod_loader(runtime, data_location).await {
+        match install_mod_loader(runtime).await {
             Ok(_) => (),
             Err(_) => {
                 error!("Failed to install mod loader");
@@ -127,8 +126,8 @@ pub async fn install(
     }
     debug!("Saving lock file");
     let mut lock_file = tokio::fs::File::create(
-        data_location
-            .get_instance_root(&instance.config.name)
+        DATA_LOCATION
+            .get_instance_root(&instance.id)
             .join(".install.lock"),
     )
     .await
@@ -138,10 +137,7 @@ pub async fn install(
     Ok(())
 }
 
-async fn install_mod_loader(
-    runtime: InstanceRuntime,
-    data_location: &DataLocation,
-) -> anyhow::Result<()> {
+async fn install_mod_loader(runtime: InstanceRuntime) -> anyhow::Result<()> {
     let mod_loader_type = runtime.mod_loader_type.unwrap();
     let mod_loader_version = runtime
         .mod_loader_version
@@ -151,7 +147,7 @@ async fn install_mod_loader(
             fabric::install(
                 &runtime.minecraft,
                 &mod_loader_version,
-                MinecraftLocation::new(&data_location.root),
+                MinecraftLocation::new(&DATA_LOCATION.root),
             )
             .await?
         }
@@ -159,17 +155,12 @@ async fn install_mod_loader(
             quilt::install(
                 &runtime.minecraft,
                 &mod_loader_version,
-                MinecraftLocation::new(&data_location.root),
+                MinecraftLocation::new(&DATA_LOCATION.root),
             )
             .await?
         }
         ModLoaderType::Forge => {
-            forge::install(
-                &DATA_LOCATION.get().unwrap().root,
-                &mod_loader_version,
-                &runtime.minecraft,
-            )
-            .await?
+            forge::install(&DATA_LOCATION.root, &mod_loader_version, &runtime.minecraft).await?
         }
         ModLoaderType::Neoforge => {}
     }

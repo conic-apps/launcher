@@ -31,6 +31,7 @@ const props = withDefaults(
     numberOnly?: boolean;
     disabled?: boolean;
     lazyUpdateModel?: boolean;
+    value?: any;
   }>(),
   {
     type: "text",
@@ -49,6 +50,17 @@ if (!props.lazyUpdateModel) {
   });
 }
 
+if (props.value) {
+  watch(
+    props,
+    (newValue) => {
+      inputBoxValue.value = props.value;
+    },
+    {
+      immediate: true,
+    },
+  );
+}
 function updateModel() {
   if (props.lazyUpdateModel) {
     model.value = inputBoxValue.value;

@@ -38,6 +38,7 @@ export type Instance = {
         }
     }
     installed: boolean
+    id: string
 }
 
 type InstanceStore = {
@@ -74,6 +75,7 @@ export const useInstanceStore = defineStore("instance", {
                     },
                 },
                 installed: true,
+                id: "",
             },
             instances: [],
             installProgress: new Map(),

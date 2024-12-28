@@ -23,6 +23,7 @@ use log::{error, info, trace};
 use options::LaunchOptions;
 use serde::Serialize;
 use tauri::Emitter;
+use uuid::Uuid;
 
 mod arguments;
 mod complete;
@@ -31,7 +32,7 @@ mod options;
 #[derive(Clone, Serialize)]
 pub struct Log {
     #[serde(rename = "instanceName")]
-    pub instance_name: String,
+    pub instance_id: Uuid,
     pub content: String,
 }
 
@@ -64,14 +65,13 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> R
         instance.config.name
     );
     let platform = PLATFORM_INFO.get().unwrap();
-    let instance_config = instance.config;
     info!("------------- Instance runtime config -------------");
-    info!("-> Minecraft: {}", instance_config.runtime.minecraft);
-    match &instance_config.runtime.mod_loader_type {
+    info!("-> Minecraft: {}", instance.config.runtime.minecraft);
+    match &instance.config.runtime.mod_loader_type {
         Some(x) => info!("-> Mod loader: {x}"),
         None => info!("-> Mod loader: none"),
     };
-    match &instance_config.runtime.mod_loader_version {
+    match &instance.config.runtime.mod_loader_version {
         Some(x) => info!("-> Mod loader version: {x}"),
         None => info!("-> Mod loader version: none"),
     };
@@ -96,24 +96,23 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> R
         check_and_refresh_account(selected_account).await.unwrap()
     };
 
-    let launch_options = LaunchOptions::new(&instance_config, selected_account);
+    let launch_options = LaunchOptions::new(&instance, selected_account);
     let minecraft_location = launch_options.minecraft_location.clone();
     if config.launch.skip_check_files {
         info!("File checking disabled by user")
     } else {
-        complete_files(&instance_config, &minecraft_location).await;
+        complete_files(&instance, &minecraft_location).await;
     }
 
     info!("Generating startup parameters");
-    let version =
-        Version::from_versions_folder(&minecraft_location, &instance_config.get_version_id())
-            .unwrap()
-            .parse(&minecraft_location, platform)
-            .await
-            .unwrap();
+    let version = Version::from_versions_folder(&minecraft_location, &instance.get_version_id())
+        .unwrap()
+        .parse(&minecraft_location, platform)
+        .await
+        .unwrap();
     let command_arguments = generate_command_arguments(
         &minecraft_location,
-        &instance_config,
+        &instance,
         platform,
         &launch_options,
         version.clone(),
@@ -126,7 +125,7 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> R
             minecraft_location,
             launch_options,
             version_id,
-            &instance_config.name,
+            instance,
         )
     });
     Ok(())
@@ -137,14 +136,11 @@ fn spawn_minecraft_process(
     minecraft_location: MinecraftLocation,
     launch_options: LaunchOptions,
     version_id: String,
-    instance_name: &str,
+    instance: Instance,
 ) {
     let platform = PLATFORM_INFO.get().unwrap();
     let native_root = minecraft_location.get_natives_root(&version_id);
-    let instance_root = DATA_LOCATION
-        .get()
-        .unwrap()
-        .get_instance_root(instance_name);
+    let instance_root = DATA_LOCATION.get_instance_root(&instance.id);
     let mut commands = String::new();
     if platform.os_type == OsType::Linux {
         commands.push_str("#!/bin/bash\n\n");
@@ -207,23 +203,23 @@ fn spawn_minecraft_process(
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
     let main_window = MAIN_WINDOW.get().unwrap();
-    let id = minecraft_process.id();
+    let pid = minecraft_process.id();
     while out.read_line(&mut buf).is_ok() {
         if let Ok(Some(_)) = minecraft_process.try_wait() {
             break;
         }
         let lines: Vec<_> = buf.split("\n").collect();
         if let Some(last) = lines.get(lines.len() - 2) {
-            trace!("[{}] {}", id, last);
+            trace!("[{}] {}", pid, last);
             if last.to_lowercase().contains("lwjgl version") {
-                main_window.emit("launch_success", instance_name).unwrap();
+                main_window.emit("launch_success", instance.id).unwrap();
                 info!("Found LWJGL version, the game seems to have started successfully.");
             }
             main_window
                 .emit(
                     "log",
                     Log {
-                        instance_name: instance_name.to_string(),
+                        instance_id: instance.id,
                         content: last.to_string(),
                     },
                 )

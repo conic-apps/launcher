@@ -2,11 +2,9 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{fmt, path::PathBuf};
+use std::fmt;
 
 use serde::{Deserialize, Serialize};
-
-use crate::DATA_LOCATION;
 
 use super::launch::{Server, GC};
 
@@ -110,44 +108,5 @@ impl InstanceConfig {
             group: None,
             launch_config: InstanceLaunchConfig::default(),
         }
-    }
-
-    pub fn get_version_id(&self) -> String {
-        match self.runtime.mod_loader_type.as_ref() {
-            Some(mod_loader_type) => match mod_loader_type {
-                ModLoaderType::Fabric => {
-                    format!(
-                        "fabric-loader-{}-{}",
-                        self.runtime.mod_loader_version.as_ref().unwrap(),
-                        self.runtime.minecraft
-                    )
-                }
-                ModLoaderType::Quilt => {
-                    format!(
-                        "quilt-loader-{}-{}",
-                        self.runtime.mod_loader_version.as_ref().unwrap(),
-                        self.runtime.minecraft
-                    )
-                }
-                ModLoaderType::Forge => {
-                    format!(
-                        "{}-forge-{}",
-                        self.runtime.minecraft,
-                        self.runtime.mod_loader_version.as_ref().unwrap()
-                    )
-                }
-                ModLoaderType::Neoforge => {
-                    format!(
-                        "neoforge-{}",
-                        self.runtime.mod_loader_version.as_ref().unwrap()
-                    )
-                }
-            },
-            None => self.runtime.minecraft.to_string(),
-        }
-    }
-
-    pub fn get_instance_root(&self) -> PathBuf {
-        DATA_LOCATION.get().unwrap().instances.join(&self.name)
     }
 }

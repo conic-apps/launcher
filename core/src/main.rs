@@ -37,7 +37,8 @@ use version::VersionManifest;
 /// use MAIN_WINDOW.emit() to send message to main window
 static MAIN_WINDOW: OnceCell<Window> = OnceCell::new();
 static APP_VERSION: OnceCell<String> = OnceCell::new();
-static DATA_LOCATION: OnceCell<DataLocation> = OnceCell::new();
+static DATA_LOCATION: Lazy<DataLocation> =
+    Lazy::new(|| DataLocation::new(APPLICATION_DATA.get().unwrap()));
 static PLATFORM_INFO: OnceCell<PlatformInfo> = OnceCell::new();
 // static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
 static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
@@ -59,16 +60,10 @@ pub struct Storage {
 async fn main() {
     PLATFORM_INFO.set(PlatformInfo::new().await).unwrap();
     initialize_application_data().await;
-    let data_location = DataLocation::new(APPLICATION_DATA.get().unwrap());
-    tokio::fs::create_dir_all(&data_location.root)
+    tokio::fs::create_dir_all(&DATA_LOCATION.root)
         .await
         .expect("Could not create appliaction data folder");
-    DATA_LOCATION.set(data_location).unwrap();
-    let launcher_profiles_path = DATA_LOCATION
-        .get()
-        .unwrap()
-        .root
-        .join("launcher_profiles.json");
+    let launcher_profiles_path = DATA_LOCATION.root.join("launcher_profiles.json");
     let _ = tokio::fs::remove_file(&launcher_profiles_path).await;
     tokio::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE)
         .await
@@ -153,7 +148,7 @@ async fn main() {
             };
             if let tauri::WindowEvent::CloseRequested { .. } = event {
                 window.close().unwrap();
-                match std::fs::remove_dir_all(&DATA_LOCATION.get().unwrap().temp) {
+                match std::fs::remove_dir_all(&DATA_LOCATION.temp) {
                     Ok(_) => info!("Temporary files cleared"),
                     Err(x) => {
                         if x.kind() != std::io::ErrorKind::NotFound {
@@ -221,14 +216,13 @@ async fn on_frontend_loaded(storage: tauri::State<'_, Storage>) -> std::result::
 }
 
 async fn remind_minecraft_latest(config: &Config) -> anyhow::Result<()> {
-    let data_location = DATA_LOCATION.get().unwrap();
     let (latest, cache_file) = if config.accessibility.snapshot_reminder {
         let latest = VersionManifest::new().await?.latest.snapshot;
-        let cache_file = data_location.cache.join("latest_release");
+        let cache_file = DATA_LOCATION.cache.join("latest_release");
         (latest, cache_file)
     } else if config.accessibility.release_reminder {
         let latest = VersionManifest::new().await?.latest.release;
-        let cache_file = data_location.cache.join("latest_snapshot");
+        let cache_file = DATA_LOCATION.cache.join("latest_snapshot");
         (latest, cache_file)
     } else {
         return Ok(());
@@ -248,7 +242,7 @@ fn init_log_builder() -> tauri_plugin_log::Builder {
             Target::new(TargetKind::Stdout),
             Target::new(TargetKind::Webview),
             Target::new(TargetKind::Folder {
-                path: DATA_LOCATION.get().unwrap().logs.clone(),
+                path: DATA_LOCATION.logs.clone(),
                 file_name: None,
             }),
         ])
