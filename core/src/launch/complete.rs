@@ -10,17 +10,21 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use tokio::io::AsyncWriteExt;
 
 use crate::{
-    config::instance::InstanceConfig,
     download::Download,
     folder::MinecraftLocation,
     install::vanilla::{generate_assets_downloads, generate_libraries_downloads},
+    instance::Instance,
     version::Version,
-    HTTP_CLIENT, PLATFORM_INFO,
+    DATA_LOCATION, HTTP_CLIENT, PLATFORM_INFO,
 };
 
-pub async fn complete_files(instance: &InstanceConfig, minecraft_location: &MinecraftLocation) {
-    let assets_lock_file = instance.get_instance_root().join(".conic-assets-ok");
-    let libraries_lock_file = instance.get_instance_root().join(".conic-libraries-ok");
+pub async fn complete_files(instance: &Instance, minecraft_location: &MinecraftLocation) {
+    let assets_lock_file = DATA_LOCATION
+        .get_instance_root(&instance.id)
+        .join(".conic-assets-ok");
+    let libraries_lock_file = DATA_LOCATION
+        .get_instance_root(&instance.id)
+        .join(".conic-libraries-ok");
     if std::fs::metadata(&assets_lock_file).is_ok() {
         info!("Found file \".conic-assets-ok\", no need to check assets files.");
     } else {
@@ -39,7 +43,7 @@ pub async fn complete_files(instance: &InstanceConfig, minecraft_location: &Mine
     }
 }
 
-async fn complete_assets_files(instance: &InstanceConfig, minecraft_location: &MinecraftLocation) {
+async fn complete_assets_files(instance: &Instance, minecraft_location: &MinecraftLocation) {
     let platform = PLATFORM_INFO.get().unwrap();
     let version =
         Version::from_versions_folder(minecraft_location, &instance.get_version_id()).unwrap();
@@ -55,10 +59,7 @@ async fn complete_assets_files(instance: &InstanceConfig, minecraft_location: &M
     }
 }
 
-async fn complete_libraries_files(
-    instance: &InstanceConfig,
-    minecraft_location: &MinecraftLocation,
-) {
+async fn complete_libraries_files(instance: &Instance, minecraft_location: &MinecraftLocation) {
     let platform = PLATFORM_INFO.get().unwrap();
     let version =
         Version::from_versions_folder(minecraft_location, &instance.get_version_id()).unwrap();

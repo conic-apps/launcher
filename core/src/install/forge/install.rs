@@ -34,15 +34,11 @@ pub async fn install(
     info!("Start downloading the installer");
     let installer_path = download_installer(mcversion, forge_version).await?;
     info!("Saving bootstrapper");
-    let bootstrapper_path = DATA_LOCATION
-        .get()
-        .unwrap()
-        .temp
-        .join("forge-install-bootstrapper.jar");
+    let bootstrapper_path = DATA_LOCATION.temp.join("forge-install-bootstrapper.jar");
     if let Some(bootstrapper) = bootstrapper {
         tokio::fs::write(&bootstrapper_path, bootstrapper).await?;
     }
-    let java = DATA_LOCATION.get().unwrap().default_jre.clone();
+    let java = DATA_LOCATION.default_jre.clone();
     info!("Starting installer");
     let mut command = match bootstrapper {
         Some(_) => std::process::Command::new(java)
@@ -98,11 +94,7 @@ pub async fn install(
 async fn download_installer(mcversion: &str, forge_version: &str) -> anyhow::Result<PathBuf> {
     let installer_url  = format!("https://maven.minecraftforge.net/net/minecraftforge/forge/{mcversion}-{forge_version}/forge-{mcversion}-{forge_version}-installer.jar");
     info!("The installer url is: {installer_url}");
-    let installer_path = DATA_LOCATION
-        .get()
-        .unwrap()
-        .temp
-        .join("forge-installer.jar");
+    let installer_path = DATA_LOCATION.temp.join("forge-installer.jar");
     tokio::fs::create_dir_all(
         installer_path
             .parent()
