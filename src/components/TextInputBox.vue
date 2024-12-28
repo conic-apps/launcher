@@ -7,17 +7,20 @@
     <input
       @focusin="updateOld"
       @focusout="checkValue"
+      @blur="updateModel"
       :type="numberOnly ? 'number' : 'text'"
       :title="name"
       :placeholder="placeholder"
       required
-      v-model="model"
+      v-model="inputBoxValue"
       :style="error ? 'outline: rgb(127,0,0)' : ''"
       :disabled="disabled" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from "vue";
+
 const props = withDefaults(
   defineProps<{
     name?: string;
@@ -27,6 +30,7 @@ const props = withDefaults(
     width?: string;
     numberOnly?: boolean;
     disabled?: boolean;
+    lazyUpdateModel?: boolean;
   }>(),
   {
     type: "text",
@@ -37,6 +41,20 @@ const props = withDefaults(
 );
 
 const model = defineModel();
+const inputBoxValue = ref(model.value);
+
+if (!props.lazyUpdateModel) {
+  watch(inputBoxValue, (newValue) => {
+    model.value = newValue;
+  });
+}
+
+function updateModel() {
+  if (props.lazyUpdateModel) {
+    model.value = inputBoxValue.value;
+  }
+}
+
 let oldValue: number;
 function updateOld(event: any) {
   if (props.numberOnly) {

@@ -49,6 +49,7 @@ pub enum SortBy {
 pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
     let data_location = DATA_LOCATION.get().unwrap();
     let instances_folder = &data_location.instances;
+    tokio::fs::create_dir_all(instances_folder).await.unwrap();
     let mut folder_entries = tokio::fs::read_dir(instances_folder).await.unwrap();
     let mut latest_release_instance = None;
     let mut latest_snapshot_instance = None;

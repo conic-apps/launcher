@@ -98,8 +98,6 @@ pub async fn generate_download_info(
     };
     let version_metadata = version_metadata.first().unwrap();
     let version_json_raw = HTTP_CLIENT
-        .get()
-        .unwrap()
         .get(version_metadata.url.clone())
         .send()
         .await?

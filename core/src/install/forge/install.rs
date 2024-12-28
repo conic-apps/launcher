@@ -110,7 +110,7 @@ async fn download_installer(mcversion: &str, forge_version: &str) -> anyhow::Res
     )
     .await?;
     let mut file = tokio::fs::File::create(&installer_path).await?;
-    let response = HTTP_CLIENT.get().unwrap().get(installer_url).send().await?;
+    let response = HTTP_CLIENT.get(installer_url).send().await?;
     if !response.status().is_success() {
         return Err(anyhow::Error::msg("Forge website return 404"));
     }

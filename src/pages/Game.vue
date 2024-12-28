@@ -60,7 +60,6 @@ const instanceStore = useInstanceStore();
 
 function update() {
   invoke("read_all_instances", { sortBy: "Name" }).then((res) => {
-    console.log(res);
     instanceStore.instances = res as Instance[];
     let currentInstance = instanceStore.currentInstance;
     let instances = instanceStore.instances;

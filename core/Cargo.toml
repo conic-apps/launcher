@@ -34,6 +34,7 @@ num_cpus = "1.16.0"
 sys-locale = "0.3.1"
 tauri-plugin-log = { version = "2", features = ["colored"] }
 tauri-plugin-clipboard-manager = "2.0.2"
+os_info = "3.9.1"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.

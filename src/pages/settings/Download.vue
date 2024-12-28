@@ -12,7 +12,8 @@
         <TextInputBox
           width="100px"
           :number-only="true"
-          v-model.number="config.download.max_connection">
+          v-model.number="config.download.max_connection"
+          :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <setting-item
@@ -22,7 +23,8 @@
         <TextInputBox
           width="100px"
           :number-only="true"
-          v-model.number="config.download.max_download_speed">
+          v-model.number="config.download.max_download_speed"
+          :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <setting-item
