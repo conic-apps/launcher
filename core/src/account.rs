@@ -179,7 +179,7 @@ pub async fn refresh_all_microsoft_account() {
             )
         }
     }
-    let path = DATA_LOCATION.get().unwrap().root.join("accounts.json");
+    let path = DATA_LOCATION.root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&result).unwrap();
     std::fs::write(&path, &contents).unwrap();
     MAIN_WINDOW
