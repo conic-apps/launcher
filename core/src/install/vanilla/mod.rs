@@ -11,11 +11,11 @@ use tokio::io::AsyncWriteExt;
 
 use crate::download::Download;
 use crate::version::ResolvedLibrary;
+use crate::HTTP_CLIENT;
 use crate::{
     folder::MinecraftLocation,
     version::{self, AssetIndex, AssetIndexObject, ResolvedVersion, VersionManifest},
 };
-use crate::{HTTP_CLIENT, PLATFORM_INFO};
 
 pub(crate) fn generate_libraries_downloads(
     libraries: &[ResolvedLibrary],
@@ -87,7 +87,6 @@ pub async fn generate_download_info(
     version_id: &str,
     minecraft_location: MinecraftLocation,
 ) -> Result<Vec<Download>> {
-    let platform = PLATFORM_INFO.get().unwrap();
     let versions = VersionManifest::new().await?.versions;
     let version_metadata: Vec<_> = versions
         .into_iter()
@@ -104,7 +103,7 @@ pub async fn generate_download_info(
         .text()
         .await?;
     let version = version::Version::from_str(&version_json_raw)?
-        .parse(&minecraft_location, platform)
+        .parse(&minecraft_location)
         .await?;
     let id = &version.id;
 

@@ -64,7 +64,6 @@ impl Instance {
 
 #[tauri::command(async)]
 pub async fn create_instance(config: InstanceConfig) -> Instance {
-    #[allow(clippy::unwrap_used)]
     let id = if config.name == LATEST_RELEASE_INSTANCE_NAME {
         uuid::Uuid::from_u128(114514)
     } else if config.name == LATEST_SNAPSHOT_INSTANCE_NAME {
@@ -201,7 +200,6 @@ pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
 
 #[tauri::command]
 pub async fn update_instance(config: InstanceConfig, id: Uuid) {
-    #[allow(clippy::unwrap_used)]
     let instance_root = DATA_LOCATION.get_instance_root(&id);
     let config_file = instance_root.join("instance.toml");
     println!(
