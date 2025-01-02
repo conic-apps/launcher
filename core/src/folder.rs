@@ -3,21 +3,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The game folders parser
-//!
-//! # Example
-//!
-//! ```
-//! use std::path::Path;
-//! use aml_core::core::folder::MinecraftLocation;
-//!
-//! let minecraft_location = MinecraftLocation::new(".minecraft");
-//!
-//! assert_eq!(Path::new(".minecraft/mods").to_path_buf(), minecraft_location.mods);
-//! assert_eq!(
-//!     Path::new(".minecraft/versions/1.19.4/1.19.4.json").to_path_buf(),
-//!     minecraft_location.get_version_json("1.19.4")
-//! );
-//! ```
 
 use std::{
     ffi::OsStr,
@@ -113,7 +98,7 @@ impl DataLocation {
         std::fs::create_dir_all(&temp_path).expect("Could not create temp dir");
         Self {
             instances: data_folder_root.join("instances"),
-            cache: match PLATFORM_INFO.get().unwrap().os_type {
+            cache: match PLATFORM_INFO.os_type {
                 OsType::Linux => {
                     PathBuf::from(std::env::var("HOME").expect("Could not found home"))
                         .join(".cache/conic")
@@ -133,5 +118,24 @@ impl DataLocation {
 
     pub fn get_instance_root(&self, instance_id: &Uuid) -> PathBuf {
         self.instances.join(instance_id.to_string())
+    }
+}
+
+impl Default for DataLocation {
+    fn default() -> Self {
+        #[cfg(not(debug_assertions))]
+        let application_folder_name = "conic";
+        #[cfg(debug_assertions)]
+        let application_folder_name = "conic-debug";
+        let application_data_path = match PLATFORM_INFO.os_type {
+            OsType::Windows => {
+                PathBuf::from(std::env::var("APPDATA").expect("Could not found APP_DATA directory"))
+                    .join(application_folder_name)
+            }
+            OsType::Linux => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
+                .join(format!(".{}", application_folder_name)),
+            OsType::Osx => PathBuf::from("/Users/").join(application_folder_name),
+        };
+        Self::new(&application_data_path)
     }
 }

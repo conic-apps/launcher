@@ -84,11 +84,7 @@ fn add_account(account: Account) -> anyhow::Result<()> {
     let path = DATA_LOCATION.root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&accounts).unwrap();
     std::fs::write(&path, &contents).unwrap();
-    MAIN_WINDOW
-        .get()
-        .unwrap()
-        .emit("refresh_accounts_list", "")
-        .unwrap();
+    MAIN_WINDOW.emit("refresh_accounts_list", "").unwrap();
     Ok(())
 }
 
@@ -102,11 +98,7 @@ pub async fn delete_account(uuid: String) {
     let path = DATA_LOCATION.root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&result).unwrap();
     std::fs::write(&path, &contents).unwrap();
-    MAIN_WINDOW
-        .get()
-        .unwrap()
-        .emit("refresh_accounts_list", "")
-        .unwrap();
+    MAIN_WINDOW.emit("refresh_accounts_list", "").unwrap();
 }
 
 #[tauri::command(async)]
@@ -153,11 +145,7 @@ pub async fn refresh_microsoft_account_by_uuid(uuid: String) -> Account {
     let path = DATA_LOCATION.root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&result).unwrap();
     std::fs::write(&path, &contents).unwrap();
-    MAIN_WINDOW
-        .get()
-        .unwrap()
-        .emit("refresh_accounts_list", "")
-        .unwrap();
+    MAIN_WINDOW.emit("refresh_accounts_list", "").unwrap();
     result.first().unwrap().clone()
 }
 

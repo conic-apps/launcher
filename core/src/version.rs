@@ -12,7 +12,7 @@ use tauri_plugin_http::reqwest;
 
 use crate::folder::MinecraftLocation;
 
-use crate::platform::PlatformInfo;
+use crate::PLATFORM_INFO;
 
 static DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     vec![
@@ -402,56 +402,6 @@ impl ResolvedVersion {
 /// Use `parse` to parse a Minecraft version json, and see the detail info of the version.
 ///
 /// With `ResolvedVersion`, you can use the resolved version to launch the game.
-///
-/// ### Example
-///
-/// usage 1:
-///
-/// ```rust
-/// use aml_core::core::version::Version;
-///
-/// async fn fn_name() {
-///     let version = reqwest::get("https://piston-meta.mojang.com/v1/packages/715ccf3330885e75b205124f09f8712542cbe7e0/1.20.1.json")
-///         .await
-///         .unwrap()
-///         .json::<Version>()
-///         .await
-///         .unwrap();
-///     println!("{:#?}", version);
-/// }
-/// ```
-///
-/// usage 2:
-///
-/// ```rust
-/// use std::str::FromStr;
-/// use aml_core::core::version::Version;
-///
-/// async fn fn_name() {
-///     let response = reqwest::get("https://piston-meta.mojang.com/v1/packages/715ccf3330885e75b205124f09f8712542cbe7e0/1.20.1.json")
-///         .await
-///         .unwrap()
-///         .text()
-///         .await
-///         .unwrap();
-///     let version = Version::from_str(&response).unwrap();
-///     println!("{:#?}", version);
-/// }
-/// ```
-///
-/// usage 3:
-///
-/// ```rust
-/// use aml_core::core::version::Version;
-/// use aml_core::core::folder::MinecraftLocation;
-/// use aml_core::core::PlatformInfo;
-///
-/// async fn fn_name(version: Version) {
-///     let platform = PlatformInfo::new().await;
-///     let resolved_version = version.parse(&MinecraftLocation::new("test"), &platform).await;
-///     println!("{:#?}", resolved_version);
-/// }
-/// ```
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Version {
@@ -499,11 +449,7 @@ impl Version {
     }
 
     /// parse a Minecraft version json
-    pub async fn parse(
-        &self,
-        minecraft: &MinecraftLocation,
-        platform: &PlatformInfo,
-    ) -> Result<ResolvedVersion> {
+    pub async fn parse(&self, minecraft: &MinecraftLocation) -> Result<ResolvedVersion> {
         let mut inherits_from = self.inherits_from.clone();
         let versions_folder = &minecraft.versions;
         let mut versions = Vec::new();
@@ -545,7 +491,7 @@ impl Version {
                 libraries_raw.splice(0..0, libraries);
             }
         }
-        resolved_version.libraries = resolve_libraries(libraries_raw, platform).await;
+        resolved_version.libraries = resolve_libraries(libraries_raw).await;
         if resolved_version.main_class.is_none()
             || resolved_version.asset_index.is_none()
             || resolved_version.downloads.is_empty()
@@ -578,13 +524,13 @@ pub struct ResolvedLibrary {
     pub is_native_library: bool,
 }
 
-async fn resolve_libraries(libraries: Vec<Value>, platform: &PlatformInfo) -> Vec<ResolvedLibrary> {
+async fn resolve_libraries(libraries: Vec<Value>) -> Vec<ResolvedLibrary> {
     let mut result = Vec::new();
     for library in libraries {
         let rules = library["rules"].as_array();
         // check rules
         if let Some(rules) = rules {
-            if !check_allowed(rules.clone(), platform) {
+            if !check_allowed(rules.clone()) {
                 continue;
             }
         }
@@ -594,7 +540,7 @@ async fn resolve_libraries(libraries: Vec<Value>, platform: &PlatformInfo) -> Ve
         if classifiers.is_some() && natives.is_some() {
             let classifiers = classifiers.unwrap();
             let natives = natives.unwrap();
-            let classifier_key = match natives[&platform.name].as_str() {
+            let classifier_key = match natives[&PLATFORM_INFO.name].as_str() {
                 None => continue,
                 Some(x) => x,
             };
@@ -669,7 +615,7 @@ async fn resolve_libraries(libraries: Vec<Value>, platform: &PlatformInfo) -> Ve
 }
 
 /// Check if all the rules in Rule[] are acceptable in certain OS platform and features.
-fn check_allowed(rules: Vec<Value>, platform: &PlatformInfo) -> bool {
+fn check_allowed(rules: Vec<Value>) -> bool {
     // by default it's allowed
     if rules.is_empty() {
         return true;
@@ -687,7 +633,7 @@ fn check_allowed(rules: Vec<Value>, platform: &PlatformInfo) -> bool {
             allow = action;
             continue;
         }
-        if platform.name != os["name"].as_str().unwrap() {
+        if PLATFORM_INFO.name != os["name"].as_str().unwrap() {
             continue;
         }
         if os["features"].is_object() {
@@ -700,7 +646,7 @@ fn check_allowed(rules: Vec<Value>, platform: &PlatformInfo) -> bool {
         let version = os["version"].as_str().unwrap();
         if Regex::is_match(
             &Regex::new(version).unwrap(),
-            (platform.version.to_string()).as_ref(),
+            (PLATFORM_INFO.version.to_string()).as_ref(),
         ) {
             allow = action;
         }

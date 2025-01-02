@@ -20,6 +20,7 @@
     "core:webview:default",
     "log:default",
     "clipboard-manager:default",
-    "clipboard-manager:allow-write-text"
+    "clipboard-manager:allow-write-text",
+    "dialog:default"
   ]
 }

@@ -61,9 +61,8 @@ pub async fn download_files(
     max_connections: usize,
     max_download_speed: usize,
 ) {
-    let main_window = MAIN_WINDOW.get().unwrap();
     if send_progress {
-        main_window
+        MAIN_WINDOW
             .emit(
                 "install_progress",
                 Progress {
@@ -83,7 +82,7 @@ pub async fn download_files(
             while !check_files_finished.load(Ordering::SeqCst) {
                 thread::sleep(Duration::from_millis(500));
                 if send_progress {
-                    main_window
+                    MAIN_WINDOW
                         .emit(
                             "install_progress",
                             Progress {
@@ -134,7 +133,7 @@ pub async fn download_files(
                 if message == Ok("terminate") {
                     break;
                 }
-                main_window
+                MAIN_WINDOW
                     .emit(
                         "running_download_task",
                         running_counter.load(Ordering::SeqCst),
@@ -155,7 +154,7 @@ pub async fn download_files(
                     break;
                 }
                 thread::sleep(Duration::from_millis(2000));
-                main_window
+                MAIN_WINDOW
                     .emit("download_speed", counter.load(Ordering::SeqCst))
                     .unwrap();
                 counter.store(0, Ordering::SeqCst);
@@ -164,7 +163,7 @@ pub async fn download_files(
     };
     let speed_thread = thread::spawn(speed_thread_closure);
     let error = Arc::new(AtomicBool::new(false));
-    main_window
+    MAIN_WINDOW
         .emit(
             "install_progress",
             Progress {
@@ -209,8 +208,6 @@ pub async fn download_files(
                         error.store(true, Ordering::SeqCst);
                         if send_error {
                             MAIN_WINDOW
-                                .get()
-                                .unwrap()
                                 .emit("install_error", ProgressError { step: 3 })
                                 .unwrap();
                         }
@@ -224,7 +221,7 @@ pub async fn download_files(
             let counter = counter.clone().load(Ordering::SeqCst);
             running_counter.fetch_sub(1, Ordering::SeqCst);
             if send_progress {
-                main_window
+                MAIN_WINDOW
                     .emit(
                         "install_progress",
                         Progress {

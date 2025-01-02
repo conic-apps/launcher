@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use serde::{Deserialize, Serialize};
-use tokio::process::Command;
+use std::process::Command;
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub enum OsType {
@@ -27,7 +27,7 @@ pub const DELIMITER: &str = ":";
 
 impl PlatformInfo {
     /// get platform information
-    pub async fn new() -> Self {
+    pub fn new() -> Self {
         let os_type = if cfg!(target_os = "windows") {
             OsType::Windows
         } else if cfg!(target_os = "linux") {
@@ -55,7 +55,7 @@ impl PlatformInfo {
                         "/C",
                         r#"powershell -c [System.Environment]::OSVersion.Version"#,
                     ]);
-                    let output = command.output().await.unwrap();
+                    let output = command.output().unwrap();
                     let stdout = String::from_utf8(output.stdout).unwrap();
 
                     let regex = Regex::new(r"\s+").unwrap();
@@ -65,7 +65,7 @@ impl PlatformInfo {
                 {
                     let mut command = Command::new("uname");
                     command.args(["-r"]);
-                    let output = command.output().await.unwrap();
+                    let output = command.output().unwrap();
                     String::from_utf8(output.stdout).unwrap()
                 }
             },

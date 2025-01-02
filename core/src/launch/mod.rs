@@ -64,7 +64,6 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> R
         "Starting Minecraft client, instance: {}",
         instance.config.name
     );
-    let platform = PLATFORM_INFO.get().unwrap();
     info!("------------- Instance runtime config -------------");
     info!("-> Minecraft: {}", instance.config.runtime.minecraft);
     match &instance.config.runtime.mod_loader_type {
@@ -81,11 +80,7 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> R
         Some(x) => x,
         None => {
             error!("The selected account not been found, opening account manager");
-            MAIN_WINDOW
-                .get()
-                .unwrap()
-                .emit("add-account", "add-account")
-                .unwrap();
+            MAIN_WINDOW.emit("add-account", "add-account").unwrap();
             return Err(());
         }
     };
@@ -107,13 +102,12 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> R
     info!("Generating startup parameters");
     let version = Version::from_versions_folder(&minecraft_location, &instance.get_version_id())
         .unwrap()
-        .parse(&minecraft_location, platform)
+        .parse(&minecraft_location)
         .await
         .unwrap();
     let command_arguments = generate_command_arguments(
         &minecraft_location,
         &instance,
-        platform,
         &launch_options,
         version.clone(),
     )
@@ -138,14 +132,13 @@ fn spawn_minecraft_process(
     version_id: String,
     instance: Instance,
 ) {
-    let platform = PLATFORM_INFO.get().unwrap();
     let native_root = minecraft_location.get_natives_root(&version_id);
     let instance_root = DATA_LOCATION.get_instance_root(&instance.id);
     let mut commands = String::new();
-    if platform.os_type == OsType::Linux {
+    if PLATFORM_INFO.os_type == OsType::Linux {
         commands.push_str("#!/bin/bash\n\n");
     }
-    let comment_prefix = match platform.os_type {
+    let comment_prefix = match PLATFORM_INFO.os_type {
         OsType::Windows => "::",
         _ => "#",
     };
@@ -167,14 +160,14 @@ fn spawn_minecraft_process(
         launch_command = format!("{}{}", launch_command, arg);
     }
     commands.push_str(&launch_command);
-    match platform.os_type {
+    match PLATFORM_INFO.os_type {
         OsType::Windows => {
             commands.push_str(&format!("\ndel /F /Q {}\n", native_root.to_string_lossy()))
         }
         _ => commands.push_str(&format!("\nrm -rf {}\n", native_root.to_string_lossy())),
     }
     commands.push_str(&format!("{}\n", launch_options.execute_after_launch));
-    let script_path = match platform.os_type {
+    let script_path = match PLATFORM_INFO.os_type {
         OsType::Linux => instance_root.join(".cache").join("launch.sh"),
         OsType::Osx => instance_root.join(".cache").join("launch.sh"),
         OsType::Windows => instance_root.join(".cache").join("launch.bat"),
@@ -183,7 +176,7 @@ fn spawn_minecraft_process(
     std::fs::create_dir_all(script_path.parent().unwrap()).unwrap();
     std::fs::write(&script_path, commands).unwrap();
     info!("The startup script is written to {}", script_path.display());
-    let mut minecraft_process = match platform.os_type {
+    let mut minecraft_process = match PLATFORM_INFO.os_type {
         OsType::Windows => std::process::Command::new(script_path),
         _ => {
             info!("Running chmod +x {}", script_path.display());
@@ -202,7 +195,6 @@ fn spawn_minecraft_process(
     let out = minecraft_process.stdout.take().unwrap();
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
-    let main_window = MAIN_WINDOW.get().unwrap();
     let pid = minecraft_process.id();
     while out.read_line(&mut buf).is_ok() {
         if let Ok(Some(_)) = minecraft_process.try_wait() {
@@ -212,10 +204,10 @@ fn spawn_minecraft_process(
         if let Some(last) = lines.get(lines.len() - 2) {
             trace!("[{}] {}", pid, last);
             if last.to_lowercase().contains("lwjgl version") {
-                main_window.emit("launch_success", instance.id).unwrap();
+                MAIN_WINDOW.emit("launch_success", instance.id).unwrap();
                 info!("Found LWJGL version, the game seems to have started successfully.");
             }
-            main_window
+            MAIN_WINDOW
                 .emit(
                     "log",
                     Log {
