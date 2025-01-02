@@ -49,8 +49,7 @@ pub async fn install(
     storage: tauri::State<'_, Storage>,
     instance: Instance,
 ) -> std::result::Result<(), ()> {
-    let main_window = MAIN_WINDOW.get().unwrap();
-    main_window
+    MAIN_WINDOW
         .emit(
             "install_progress",
             Progress {
@@ -64,7 +63,6 @@ pub async fn install(
         "Start installing the game for instance {}",
         instance.config.name
     );
-    #[allow(clippy::unwrap_used)]
     let runtime = instance.config.runtime;
     info!("------------- Instance runtime config -------------");
     info!("-> Minecraft: {}", runtime.minecraft);
@@ -85,7 +83,7 @@ pub async fn install(
     {
         Ok(x) => x,
         Err(_) => {
-            main_window
+            MAIN_WINDOW
                 .emit("install_error", ProgressError { step: 1 })
                 .unwrap();
             return Err(());
@@ -103,7 +101,7 @@ pub async fn install(
     .await;
     if runtime.mod_loader_type.is_some() {
         info!("Install mod loader");
-        main_window
+        MAIN_WINDOW
             .emit(
                 "install_progress",
                 Progress {
@@ -117,7 +115,7 @@ pub async fn install(
             Ok(_) => (),
             Err(_) => {
                 error!("Failed to install mod loader");
-                main_window
+                MAIN_WINDOW
                     .emit("install_error", ProgressError { step: 4 })
                     .unwrap();
                 return Err(());
@@ -133,7 +131,7 @@ pub async fn install(
     .await
     .unwrap();
     lock_file.write_all(b"ok").await.unwrap();
-    main_window.emit("install_success", "").unwrap();
+    MAIN_WINDOW.emit("install_success", "").unwrap();
     Ok(())
 }
 

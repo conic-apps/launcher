@@ -4,6 +4,7 @@ version = "0.0.0"
 description = "A Minecraft Launcher"
 authors = ["Broken Deer"]
 edition = "2021"
+license = "GPL-3.0-only"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,7 +16,10 @@ tauri = { version = "2.0.1", features = ["unstable"] }
 tauri-plugin-shell = "2.0.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", default-features = false, features = [
+  "fs",
+  "io-util",
+] }
 futures = "0.3.21"
 anyhow = "1.0"
 toml = "0.8"
@@ -35,6 +39,7 @@ sys-locale = "0.3.1"
 tauri-plugin-log = { version = "2", features = ["colored"] }
 tauri-plugin-clipboard-manager = "2.0.2"
 os_info = "3.9.1"
+tauri-plugin-dialog = "2"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.

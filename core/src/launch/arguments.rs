@@ -11,10 +11,10 @@ use crate::{
     config::launch::GC,
     folder::MinecraftLocation,
     instance::Instance,
-    platform::{OsType, PlatformInfo, DELIMITER},
+    platform::{OsType, DELIMITER},
     utils::unzip::decompression_all,
     version::ResolvedVersion,
-    APP_VERSION, DATA_LOCATION,
+    APP_VERSION, DATA_LOCATION, PLATFORM_INFO,
 };
 
 use super::options::LaunchOptions;
@@ -24,7 +24,6 @@ const DEFAULT_GAME_ICON: &[u8] = include_bytes!("../../assets/minecraft.icns");
 pub async fn generate_command_arguments(
     minecraft_location: &MinecraftLocation,
     instance: &Instance,
-    platform: &PlatformInfo,
     launch_options: &LaunchOptions,
     version: ResolvedVersion,
 ) -> Vec<String> {
@@ -44,7 +43,7 @@ pub async fn generate_command_arguments(
     tokio::fs::write(&game_icon, DEFAULT_GAME_ICON)
         .await
         .unwrap();
-    if platform.os_type == OsType::Osx {
+    if PLATFORM_INFO.os_type == OsType::Osx {
         command_arguments.push("-Xdock:name=Minecraft".to_string());
         command_arguments.push(format!(
             "-Xdock:icon={game_icon}",
@@ -97,7 +96,7 @@ pub async fn generate_command_arguments(
             command_arguments.push("-XX:+UseZGC".to_string());
         }
     }
-    match platform.os_type {
+    match PLATFORM_INFO.os_type {
         OsType::Osx => {
             command_arguments.push("XstartOnFirstThread".to_string());
         }

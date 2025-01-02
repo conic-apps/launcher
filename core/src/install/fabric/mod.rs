@@ -21,19 +21,6 @@ pub struct FabricArtifactVersion {
 }
 
 /// Fabric Artifacts
-///
-/// # Example
-///
-/// basic usage:
-///
-/// ```rust
-/// use aml_core::install::fabric::FabricArtifacts;
-///
-/// async fn fn_name() {
-///     let artifacts = FabricArtifacts::new().await;
-///     println!("{:#?}", artifacts);
-/// }
-/// ```
 #[derive(Deserialize, Serialize)]
 pub struct FabricArtifacts {
     pub mappings: Vec<FabricArtifactVersion>,
@@ -41,19 +28,6 @@ pub struct FabricArtifacts {
 }
 
 /// Fabric Loader Artifact
-///
-/// # Example
-///
-/// basic usage:
-///
-/// ```rust
-/// use aml_core::install::fabric::FabricLoaderArtifact;
-///
-/// async fn fn_name() {
-///     let artifact = FabricLoaderArtifact::new("1.19.4", "0.1.0.48").await;
-///     println!("{:#?}", artifact);
-/// }
-/// ```
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FabricLoaderArtifact {
@@ -63,37 +37,11 @@ pub struct FabricLoaderArtifact {
 }
 
 /// Yarn Artifacts
-///
-/// # Example
-///
-/// basic usage:
-///
-/// ```rust
-/// use aml_core::install::fabric::YarnArtifactList;
-///
-/// async fn fn_name() {
-///     let artifacts = YarnArtifactList::new().await;
-///     println!("{:#?}", artifacts);
-/// }
-/// ```
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct YarnArtifactList(Vec<FabricArtifactVersion>);
 
 /// Loader Artifacts
-///
-/// # Example
-///
-/// basic usage:
-///
-/// ```rust
-/// use aml_core::install::fabric::LoaderArtifactList;
-///
-/// async fn fn_name() {
-///     let artifacts = LoaderArtifactList::new().await;
-///     println!("{:#?}", artifacts);
-/// }
-/// ```
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoaderArtifactList(Vec<FabricLoaderArtifact>);

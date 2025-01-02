@@ -18,7 +18,8 @@ mod platform;
 pub mod utils;
 mod version;
 
-use std::path::PathBuf;
+use std::panic::{set_hook, PanicHookInfo};
+use std::process::exit;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -27,7 +28,8 @@ use folder::DataLocation;
 use log::{debug, error, info};
 use once_cell::sync::{Lazy, OnceCell};
 use platform::{OsType, PlatformInfo};
-use tauri::{Emitter, Manager, Window};
+use tauri::{AppHandle, Emitter, Manager, Window};
+use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use tauri_plugin_http::reqwest;
 #[cfg(debug_assertions)]
 use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
@@ -35,11 +37,12 @@ use tauri_plugin_log::{Target, TargetKind};
 use version::VersionManifest;
 
 /// use MAIN_WINDOW.emit() to send message to main window
-static MAIN_WINDOW: OnceCell<Window> = OnceCell::new();
 static APP_VERSION: OnceCell<String> = OnceCell::new();
-static DATA_LOCATION: Lazy<DataLocation> =
-    Lazy::new(|| DataLocation::new(APPLICATION_DATA.get().unwrap()));
-static PLATFORM_INFO: OnceCell<PlatformInfo> = OnceCell::new();
+static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
+static MAIN_WINDOW: Lazy<Window> =
+    Lazy::new(|| APP_HANDLE.get().unwrap().get_window("main").unwrap());
+static DATA_LOCATION: Lazy<DataLocation> = Lazy::new(DataLocation::default);
+static PLATFORM_INFO: Lazy<PlatformInfo> = Lazy::new(PlatformInfo::new);
 // static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
 static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
     reqwest::ClientBuilder::new()
@@ -48,7 +51,6 @@ static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
         .build()
         .expect("Failed to build HTTP client")
 });
-static APPLICATION_DATA: OnceCell<PathBuf> = OnceCell::new();
 const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("../assets/launcher_profiles.json");
 
 pub struct Storage {
@@ -58,8 +60,6 @@ pub struct Storage {
 
 #[tokio::main]
 async fn main() {
-    PLATFORM_INFO.set(PlatformInfo::new().await).unwrap();
-    initialize_application_data().await;
     tokio::fs::create_dir_all(&DATA_LOCATION.root)
         .await
         .expect("Could not create appliaction data folder");
@@ -88,10 +88,9 @@ async fn main() {
         + serde_json::to_string_pretty(&config).unwrap().as_ref()
         + "`)
         })
-    "
-        .to_string()
-        .as_ref();
+    ";
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(init_log_builder().build())
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
@@ -134,11 +133,35 @@ async fn main() {
         .append_invoke_initialization_script(init_config_js_script)
         .setup(move |app| {
             print_title();
-            MAIN_WINDOW.set(app.get_window("main").unwrap()).unwrap();
+            match PLATFORM_INFO.os_type {
+                OsType::Linux => info!("The program is running on Linux {}", PLATFORM_INFO.version),
+                OsType::Osx => info!("The program is running on macOS {}", PLATFORM_INFO.version),
+                OsType::Windows => info!(
+                    "The program is running on fucking Windows {}",
+                    PLATFORM_INFO.version
+                ),
+            }
+            info!(
+                "Application data will be saved at: {}",
+                DATA_LOCATION.root.display()
+            );
             APP_VERSION
                 .set(app.package_info().version.to_string())
                 .unwrap();
             info!("Main window loaded");
+            APP_HANDLE.set(app.app_handle().clone()).unwrap();
+            set_hook(Box::new(|info: &PanicHookInfo| {
+                APP_HANDLE
+                    .get()
+                    .unwrap()
+                    .dialog()
+                    .message(info.to_string())
+                    .kind(MessageDialogKind::Error)
+                    .title("Fatal Error")
+                    .blocking_show();
+                let _ = MAIN_WINDOW.close();
+                exit(1);
+            }));
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -160,51 +183,6 @@ async fn main() {
         })
         .run(tauri::generate_context!())
         .expect("Failed to run app");
-}
-
-async fn initialize_application_data() {
-    let platform_info = PLATFORM_INFO.get().unwrap();
-    match platform_info.os_type {
-        OsType::Linux => info!("The program is running on Linux {}", platform_info.version),
-        OsType::Osx => info!("The program is running on macOS {}", platform_info.version),
-        OsType::Windows => info!(
-            "The program is running on fucking Windows {}",
-            platform_info.version
-        ),
-    }
-    #[cfg(not(debug_assertions))]
-    let application_folder_name = "conic";
-    #[cfg(debug_assertions)]
-    let application_folder_name = "conic-debug";
-    match platform_info.os_type {
-        OsType::Windows => {
-            APPLICATION_DATA
-                .set(
-                    PathBuf::from(
-                        std::env::var("APPDATA").expect("Could not found APP_DATA directory"),
-                    )
-                    .join(application_folder_name),
-                )
-                .unwrap();
-        }
-        OsType::Linux => {
-            APPLICATION_DATA
-                .set(
-                    PathBuf::from(std::env::var("HOME").expect("Could not found home"))
-                        .join(format!(".{}", application_folder_name)),
-                )
-                .unwrap();
-        }
-        OsType::Osx => {
-            APPLICATION_DATA
-                .set(PathBuf::from("/Users/").join(application_folder_name))
-                .unwrap();
-        }
-    }
-    info!(
-        "Application data path: {}",
-        APPLICATION_DATA.get().unwrap().to_string_lossy()
-    );
 }
 
 #[tauri::command(async)]
@@ -230,7 +208,7 @@ async fn remind_minecraft_latest(config: &Config) -> anyhow::Result<()> {
     let cache = tokio::fs::read_to_string(&cache_file).await?;
     tokio::fs::write(&cache_file, &latest).await?;
     if latest != cache {
-        let _ = MAIN_WINDOW.get().unwrap().emit("remind_update", latest);
+        let _ = MAIN_WINDOW.emit("remind_update", latest);
     }
     Ok(())
 }
