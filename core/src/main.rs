@@ -19,10 +19,10 @@ pub mod utils;
 mod version;
 
 use std::panic::{set_hook, PanicHookInfo};
-use std::process::exit;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use backtrace::Backtrace;
 use config::{read_config_file, Config};
 use folder::DataLocation;
 use log::{debug, error, info};
@@ -144,16 +144,23 @@ async fn main() {
             info!("Main window loaded");
             APP_HANDLE.set(app.app_handle().clone()).unwrap();
             set_hook(Box::new(|info: &PanicHookInfo| {
+                let backtrace = format!("{:#?}", Backtrace::new());
+                let backtrace_first_ten_lines: Vec<&str> = backtrace.lines().take(12).collect();
+                println!("{:#?}", backtrace);
                 APP_HANDLE
                     .get()
                     .unwrap()
                     .dialog()
-                    .message(info.to_string())
+                    .message(format!(
+                        "{}\nBacktrace:\n{}\nmore {} lines not shown...",
+                        info,
+                        backtrace_first_ten_lines.join("\n"),
+                        backtrace.lines().count() - 12
+                    ))
                     .kind(MessageDialogKind::Error)
                     .title("Fatal Error")
                     .blocking_show();
                 let _ = MAIN_WINDOW.close();
-                exit(1);
             }));
             Ok(())
         })
