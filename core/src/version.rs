@@ -540,7 +540,7 @@ async fn resolve_libraries(libraries: Vec<Value>) -> Vec<ResolvedLibrary> {
         if classifiers.is_some() && natives.is_some() {
             let classifiers = classifiers.unwrap();
             let natives = natives.unwrap();
-            let classifier_key = match natives[&PLATFORM_INFO.name].as_str() {
+            let classifier_key = match natives[&PLATFORM_INFO.os_family.to_string()].as_str() {
                 None => continue,
                 Some(x) => x,
             };
@@ -633,7 +633,7 @@ fn check_allowed(rules: Vec<Value>) -> bool {
             allow = action;
             continue;
         }
-        if PLATFORM_INFO.name != os["name"].as_str().unwrap() {
+        if PLATFORM_INFO.os_family.to_string() != os["name"].as_str().unwrap() {
             continue;
         }
         if os["features"].is_object() {
@@ -646,7 +646,7 @@ fn check_allowed(rules: Vec<Value>) -> bool {
         let version = os["version"].as_str().unwrap();
         if Regex::is_match(
             &Regex::new(version).unwrap(),
-            (PLATFORM_INFO.version.to_string()).as_ref(),
+            (PLATFORM_INFO.os_version.to_string()).as_ref(),
         ) {
             allow = action;
         }
