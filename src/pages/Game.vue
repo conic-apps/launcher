@@ -64,7 +64,7 @@ function update() {
     let currentInstance = instanceStore.currentInstance;
     let instances = instanceStore.instances;
     let foundCurrentInstance = instances.find((value) => {
-      return value.config.name === currentInstance.config.name;
+      return value.id === currentInstance.id;
     });
     if (foundCurrentInstance) {
       instanceStore.currentInstance = foundCurrentInstance;
