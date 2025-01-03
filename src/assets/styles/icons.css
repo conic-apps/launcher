@@ -274,6 +274,12 @@ i.arrow-rotate-right::before {
     content: "\f01e";
 }
 
+i.plus {
+    font-family: "fa-pro";
+    font-size: 14px;
+    font-style: normal;
+}
+
 i.plus::before {
     content: "\2b";
 }
@@ -322,6 +328,13 @@ i.quilt {
     width: 80%;
     height: 80%;
     background-image: url(../images/quilt.svg);
+    background-size: cover;
+}
+
+i.neoforged {
+    width: 80%;
+    height: 80%;
+    background-image: url(../images/neoforged.png);
     background-size: cover;
 }
 
@@ -597,4 +610,8 @@ i.arrows-to-dotted-line::before {
 
 i.copy::before {
     content: "\f0c5"
+}
+
+i.ban::before {
+    content: "\f05e"
 }

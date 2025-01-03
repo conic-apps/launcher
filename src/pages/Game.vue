@@ -9,19 +9,16 @@
         <div
           style="display: flex; justify-content: space-between; align-items: center; height: 100%">
           <p style="margin-left: 4px">{{ $t("game.instances") }}</p>
-          <button
-            class="side-button"
-            @click="show.instanceManager = true"
-            style="margin-right: 6px">
-            <i class="chevron-right" style="font-size: 12px"></i>
+          <button class="side-button" @click="showCreateInstance = true" style="margin-right: 6px">
+            <i class="plus" style="font-size: 12px"></i>
           </button>
         </div>
       </div>
       <instance-list @select="setCurrentInstance"></instance-list>
-      <instance-manager
-        :show="show.instanceManager"
-        @close="show.instanceManager = false"
-        @update="update"></instance-manager>
+      <CreateInstance
+        :show="showCreateInstance"
+        @close="showCreateInstance = false"
+        @update="update"></CreateInstance>
     </div>
     <div class="row-2">
       <instance-card
@@ -38,12 +35,12 @@
 import InstanceCard from "./game/InstanceCard.vue";
 import InstanceDetails from "./game/InstanceDetails.vue";
 import InstanceList from "./game/InstanceList.vue";
-import InstanceManager from "@/pages/dialogs/InstanceManager.vue";
 import { onMounted, ref, watch, type Ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/store/config";
 import { Instance, useInstanceStore } from "@/store/instance";
+import CreateInstance from "./dialogs/CreateInstance.vue";
 
 const config = useConfigStore();
 
@@ -51,9 +48,8 @@ const installing = ref(false);
 
 const buttonLoading = ref(false);
 
-const show = ref({
-  instanceManager: false,
-});
+const showCreateInstance = ref(false);
+
 const errorType: Ref<"launch" | "install" | undefined> = ref();
 
 const instanceStore = useInstanceStore();
