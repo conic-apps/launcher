@@ -830,6 +830,7 @@ name = "conic-launcher"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "backtrace",
  "base64 0.22.1",
  "env_logger",
  "futures",
