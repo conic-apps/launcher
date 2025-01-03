@@ -112,6 +112,12 @@
             :versions="forgeVersionList"
             @select="setForge">
           </ForgeChoose>
+          <NeoforgedChoose
+            v-else-if="currentComponent == 'choose-neoforged'"
+            :minecraft="minecraftVersion"
+            :versions="neoforgedVersionList"
+            @select="setNeoforged">
+          </NeoforgedChoose>
         </Transition>
       </div>
     </div>
@@ -130,6 +136,7 @@ import MinecraftChoose from "./create/MinecraftChoose.vue";
 import QuiltChoose from "./create/QuiltChoose.vue";
 import FabricChoose from "./create/FabricChoose.vue";
 import ForgeChoose from "./create/ForgeChoose.vue";
+import NeoforgedChoose from "./create/NeoforgedChoose.vue";
 import { invoke } from "@tauri-apps/api/core";
 
 const emit = defineEmits(["close", "update"]);
@@ -148,10 +155,10 @@ const defaultInstanceName = computed(() => {
       modLoaderTypeText = "fabric";
       break;
     case 3:
-      modLoaderTypeText = "forge";
+      modLoaderTypeText = "neoforged";
       break;
     case 4:
-      modLoaderTypeText = "neo";
+      modLoaderTypeText = "forged";
       break;
   }
   return `${minecraftVersion.value ? minecraftVersion.value : "未命名配置"}${modLoaderTypeText ? "-" + modLoaderTypeText + modLoaderVersion.value : ""}`;
@@ -184,6 +191,10 @@ const setFabric = (version: string) => {
   back();
 };
 const setForge = (version: string) => {
+  modLoaderVersion.value = version;
+  back();
+};
+const setNeoforged = (version: string) => {
   modLoaderVersion.value = version;
   back();
 };
@@ -227,9 +238,7 @@ watchEffect(async () => {
       });
     } catch (e) {
       fabricVersionList.value = [];
-      console.log(e);
     }
-    console.log(fabricVersionList.value);
   }
   fabricIsLoading.value = false;
 });
@@ -242,9 +251,7 @@ watchEffect(async () => {
       });
     } catch (e) {
       quiltVersionList.value = [];
-      console.log(e);
     }
-    console.log(quiltVersionList.value);
   }
   quiltIsLoading.value = false;
 });
@@ -257,19 +264,23 @@ watchEffect(async () => {
       });
     } catch (e) {
       forgeVersionList.value = [];
-      console.log(e);
     }
-    console.log(forgeVersionList.value);
   }
   forgeIsLoading.value = false;
 });
-// watchEffect(async () => {
-//   if (minecraftVersion.value) {
-//     neoforgedVersionList.value = await invoke("get_neoforged_version_list", {
-//       mcversion: minecraftVersion,
-//     });
-//   }
-// });
+watchEffect(async () => {
+  neoforgedIsLoading.value = true;
+  if (minecraftVersion.value) {
+    try {
+      neoforgedVersionList.value = await invoke("get_neoforged_version_list", {
+        mcversion: minecraftVersion.value,
+      });
+    } catch (e) {
+      neoforgedVersionList.value = [];
+    }
+  }
+  neoforgedIsLoading.value = false;
+});
 
 const disabledModLoaderId = computed(() => {
   let result = [];
@@ -301,10 +312,10 @@ const createInstance = () => {
       parsedModLoaderType = "Fabric";
       break;
     case 3:
-      parsedModLoaderType = "Forge";
+      parsedModLoaderType = "Neoforged";
       break;
     case 4:
-      parsedModLoaderType = "Neo";
+      parsedModLoaderType = "Forge";
       break;
   }
   creating.value = true;

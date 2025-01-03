@@ -13,7 +13,7 @@ pub enum ModLoaderType {
     Fabric,
     Forge,
     Quilt,
-    Neoforge,
+    Neoforged,
 }
 
 impl fmt::Display for ModLoaderType {
@@ -28,7 +28,7 @@ impl fmt::Display for ModLoaderType {
             Self::Forge => {
                 write!(f, "Forge")
             }
-            Self::Neoforge => {
+            Self::Neoforged => {
                 write!(f, "Neoforged")
             }
         }

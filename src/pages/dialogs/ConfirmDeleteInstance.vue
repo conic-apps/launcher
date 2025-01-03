@@ -48,7 +48,7 @@
             v-if="currentInstance.config.runtime.mod_loader_type == 'Fabric'" />
           <img
             src="@/assets/images/neoforged.png"
-            v-if="currentInstance.config.runtime.mod_loader_type == 'Neoforge'" />
+            v-if="currentInstance.config.runtime.mod_loader_type == 'Neoforged'" />
           <img
             src="@/assets/images/forge.svg"
             v-if="currentInstance.config.runtime.mod_loader_type == 'Forge'" />

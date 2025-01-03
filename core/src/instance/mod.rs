@@ -50,9 +50,9 @@ impl Instance {
                         config.runtime.mod_loader_version.as_ref().unwrap()
                     )
                 }
-                ModLoaderType::Neoforge => {
+                ModLoaderType::Neoforged => {
                     format!(
-                        "neoforge-{}",
+                        "neoforged-{}",
                         config.runtime.mod_loader_version.as_ref().unwrap()
                     )
                 }

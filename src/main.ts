@@ -65,7 +65,7 @@ function forwardConsole(
     const original = console[fnName]
     console[fnName] = (message) => {
         original(message)
-        logger(message)
+        logger(typeof message === "string" ? message : JSON.stringify(message))
     }
 }
 
