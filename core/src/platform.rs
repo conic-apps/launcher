@@ -2,22 +2,36 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use std::fmt::Display;
+
+use os_info::{Type, Version};
 use serde::{Deserialize, Serialize};
-use std::process::Command;
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
-pub enum OsType {
+pub enum OsFamily {
     Windows,
     Linux,
-    Osx,
+    Macos,
+}
+
+impl Display for OsFamily {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Windows => write!(f, "windows"),
+            Self::Linux => write!(f, "linux"),
+            Self::Macos => write!(f, "macos"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct PlatformInfo {
     pub arch: String,
-    pub name: String,
-    pub os_type: OsType,
-    pub version: String,
+    pub arch_from_uname: Option<String>,
+    pub os_type: Type,
+    pub os_family: OsFamily,
+    pub os_version: Version,
+    pub edition: Option<String>,
 }
 
 #[cfg(windows)]
@@ -28,47 +42,20 @@ pub const DELIMITER: &str = ":";
 impl PlatformInfo {
     /// get platform information
     pub fn new() -> Self {
-        let os_type = if cfg!(target_os = "windows") {
-            OsType::Windows
+        let os_family = if cfg!(target_os = "windows") {
+            OsFamily::Windows
         } else if cfg!(target_os = "linux") {
-            OsType::Linux
+            OsFamily::Linux
         } else if cfg!(target_os = "macos") {
-            OsType::Osx
+            OsFamily::Macos
         } else {
             panic!("Sorry, but this program does not support your system!")
         };
+        let os_info = os_info::get();
         Self {
-            name: match os_type {
-                OsType::Windows => "windows".to_string(),
-                OsType::Linux => "linux".to_string(),
-                OsType::Osx => "osx".to_string(),
-            },
-            os_type,
-            version: {
-                #[cfg(windows)]
-                {
-                    use regex::Regex;
-
-                    let mut command = Command::new("C:\\Windows\\System32\\cmd.exe");
-                    command.creation_flags(0x08000000);
-                    command.args([
-                        "/C",
-                        r#"powershell -c [System.Environment]::OSVersion.Version"#,
-                    ]);
-                    let output = command.output().unwrap();
-                    let stdout = String::from_utf8(output.stdout).unwrap();
-
-                    let regex = Regex::new(r"\s+").unwrap();
-                    regex.replace_all(&stdout, ".").to_string()
-                }
-                #[cfg(not(windows))]
-                {
-                    let mut command = Command::new("uname");
-                    command.args(["-r"]);
-                    let output = command.output().unwrap();
-                    String::from_utf8(output.stdout).unwrap()
-                }
-            },
+            arch_from_uname: os_info.architecture().map(|x| x.to_owned()),
+            os_family,
+            os_version: os_info.version().to_owned(),
             arch: if cfg!(target_arch = "x86_64") {
                 "x64"
             } else if cfg!(target_arch = "x86") {
@@ -87,6 +74,8 @@ impl PlatformInfo {
                 "unknown"
             }
             .to_string(),
+            os_type: os_info.os_type(),
+            edition: os_info.edition().map(|x| x.to_owned()),
         }
     }
 }

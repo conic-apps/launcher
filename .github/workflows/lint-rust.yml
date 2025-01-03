@@ -40,7 +40,7 @@ jobs:
       matrix:
         clippy:
           - { args: "", key: "empty" }
-          - { args: "--all-features", key: "all" }
+          - { args: "--release", key: "release" }
     steps:
       - uses: actions/checkout@v4
 
