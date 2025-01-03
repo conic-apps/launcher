@@ -39,7 +39,7 @@
               src="@/assets/images/neoforged.png"
               width="14px"
               height="14px"
-              v-if="instance.config.runtime.mod_loader_type == 'Neoforge'" />
+              v-if="instance.config.runtime.mod_loader_type == 'Neoforged'" />
             <img
               src="@/assets/images/forge.svg"
               width="14px"

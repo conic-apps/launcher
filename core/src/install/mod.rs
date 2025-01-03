@@ -4,6 +4,7 @@
 
 use forge::version_list::ForgeVersionList;
 use log::{debug, error, info};
+use neoforged::NeoforgedVersionList;
 use quilt::QuiltVersionList;
 use tauri::Emitter;
 use tokio::io::AsyncWriteExt;
@@ -20,6 +21,7 @@ use crate::{
 
 mod fabric;
 mod forge;
+mod neoforged;
 mod quilt;
 pub mod vanilla;
 
@@ -42,6 +44,27 @@ pub async fn get_forge_version_list(mcversion: String) -> Option<ForgeVersionLis
 #[tauri::command(async)]
 pub async fn get_quilt_version_list(mcversion: String) -> Option<QuiltVersionList> {
     QuiltVersionList::new(&mcversion).await.ok()
+}
+
+#[tauri::command(async)]
+pub async fn get_neoforged_version_list(mcversion: String) -> Option<Vec<String>> {
+    let version_list = NeoforgedVersionList::new().await.ok()?;
+    let splited_mcversion: Vec<&str> = mcversion.split('.').collect();
+    Some(
+        version_list
+            .versions
+            .into_iter()
+            .rev()
+            .filter(|x| {
+                let splited_version: Vec<&str> = x.split('.').collect();
+                #[allow(clippy::get_first)]
+                return splited_version.get(0) == splited_mcversion.get(1)
+                    && (splited_version.get(1) == splited_mcversion.get(2)
+                        || (splited_version.get(1) == Some(&"0")
+                            && splited_mcversion.get(2).is_none()));
+            })
+            .collect(),
+    )
 }
 
 #[tauri::command(async)]
@@ -160,7 +183,7 @@ async fn install_mod_loader(runtime: InstanceRuntime) -> anyhow::Result<()> {
         ModLoaderType::Forge => {
             forge::install(&DATA_LOCATION.root, &mod_loader_version, &runtime.minecraft).await?
         }
-        ModLoaderType::Neoforge => {}
+        ModLoaderType::Neoforged => {}
     }
 
     anyhow::Ok(())

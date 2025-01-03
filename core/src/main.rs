@@ -115,6 +115,7 @@ async fn main() {
             install::get_fabric_version_list,
             install::get_forge_version_list,
             install::get_quilt_version_list,
+            install::get_neoforged_version_list,
             launch::launch,
             config::read_config_file,
             config::update_config,
