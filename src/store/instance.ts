@@ -9,7 +9,7 @@ export type Instance = {
         name: string
         runtime: {
             minecraft: string
-            mod_loader_type: "Fabric" | "Quilt" | "Forge" | "Neoforge" | null
+            mod_loader_type: "Fabric" | "Quilt" | "Forge" | "Neoforged" | null
             mod_loader_version: string | null
         }
         group?: string

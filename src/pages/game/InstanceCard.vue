@@ -30,7 +30,7 @@
           <img
             src="@/assets/images/neoforged.png"
             fill="#fff"
-            v-if="modLoaderType === 'Neoforge'" />
+            v-if="modLoaderType === 'Neoforged'" />
           <img
             src="@/assets/images/Anvil_JE3_BE3.webp"
             fill="#fff"
