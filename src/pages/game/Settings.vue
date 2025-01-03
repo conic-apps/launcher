@@ -13,20 +13,22 @@
         <TextInputBox
           v-if="instanceName == 'Latest Release'"
           width="300px"
-          value="111"
+          :value="$t('game.latestRelease')"
           :lazy-update-model="true">
         </TextInputBox>
         <TextInputBox
           v-else-if="instanceName == 'Latest Snapshot'"
           width="300px"
-          value="222"
+          :value="$t('game.latestSnapshot')"
           :lazy-update-model="true">
         </TextInputBox>
         <TextInputBox
           v-else
           width="300px"
           v-model="instanceStore.currentInstance.config.name"
-          :lazy-update-model="true">
+          :non-empty="true"
+          :lazy-update-model="true"
+          @updated="$emit('update-instance-list')">
         </TextInputBox>
       </setting-item>
       <setting-item title="Icon" description="The name of this game instance." icon="icon">
@@ -258,7 +260,7 @@ import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 import TextInputBox from "@/components/TextInputBox.vue";
-import { computed, ref, watch } from "vue";
+import { computed, ref, watchEffect } from "vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import ConfirmDeleteInstance from "../dialogs/ConfirmDeleteInstance.vue";
 import SelectVue from "@/components/Select.vue";
@@ -289,9 +291,13 @@ const logViewerOpen = ref(false);
 let oldEnabledSpecificSettings =
   instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings;
 
-watch(instanceStore.currentInstance.config, (v) => {
+watchEffect(() => {
+  const currentInstanceConfig = instanceStore.currentInstance.config;
   $("body").addClass("saving-instance-settings");
-  if (v.launch_config.enable_instance_specific_settings && !oldEnabledSpecificSettings) {
+  if (
+    currentInstanceConfig.launch_config.enable_instance_specific_settings &&
+    !oldEnabledSpecificSettings
+  ) {
     instanceStore.currentInstance.config.launch_config = {
       enable_instance_specific_settings: true,
       min_memory: config.launch.min_memory,
@@ -319,20 +325,24 @@ watch(instanceStore.currentInstance.config, (v) => {
       execute_after_launch: config.launch.execute_after_launch,
     };
     $("body").removeClass("saving-instance-settings");
-    oldEnabledSpecificSettings = v.launch_config.enable_instance_specific_settings;
-    return;
+    oldEnabledSpecificSettings =
+      currentInstanceConfig.launch_config.enable_instance_specific_settings;
   }
-  if (!v.launch_config.enable_instance_specific_settings && oldEnabledSpecificSettings) {
+  if (
+    !currentInstanceConfig.launch_config.enable_instance_specific_settings &&
+    oldEnabledSpecificSettings
+  ) {
     instanceStore.currentInstance.config.launch_config = {
       enable_instance_specific_settings: false,
     };
     $("body").removeClass("saving-instance-settings");
-    oldEnabledSpecificSettings = v.launch_config.enable_instance_specific_settings;
-    return;
+    oldEnabledSpecificSettings =
+      currentInstanceConfig.launch_config.enable_instance_specific_settings;
   }
-  oldEnabledSpecificSettings = v.launch_config.enable_instance_specific_settings;
+  oldEnabledSpecificSettings =
+    currentInstanceConfig.launch_config.enable_instance_specific_settings;
   invoke("update_instance", {
-    config: v,
+    config: currentInstanceConfig,
     id: instanceStore.currentInstance.id,
   }).then(() => {
     $("body").removeClass("saving-instance-settings");
