@@ -27,7 +27,7 @@ use config::{read_config_file, Config};
 use folder::DataLocation;
 use log::{debug, error, info};
 use once_cell::sync::{Lazy, OnceCell};
-use platform::{OsType, PlatformInfo};
+use platform::PlatformInfo;
 use tauri::{AppHandle, Emitter, Manager, Window};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use tauri_plugin_http::reqwest;
@@ -133,18 +133,11 @@ async fn main() {
         .append_invoke_initialization_script(init_config_js_script)
         .setup(move |app| {
             print_title();
-            match PLATFORM_INFO.os_type {
-                OsType::Linux => info!("The program is running on Linux {}", PLATFORM_INFO.version),
-                OsType::Osx => info!("The program is running on macOS {}", PLATFORM_INFO.version),
-                OsType::Windows => info!(
-                    "The program is running on fucking Windows {}",
-                    PLATFORM_INFO.version
-                ),
-            }
-            info!(
-                "Application data will be saved at: {}",
-                DATA_LOCATION.root.display()
-            );
+            std::fs::write(
+                DATA_LOCATION.root.join("platform.json"),
+                serde_json::to_string_pretty(&PLATFORM_INFO.clone()).unwrap(),
+            )
+            .unwrap();
             APP_VERSION
                 .set(app.package_info().version.to_string())
                 .unwrap();

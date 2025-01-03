@@ -11,7 +11,7 @@ use crate::{
     config::launch::GC,
     folder::MinecraftLocation,
     instance::Instance,
-    platform::{OsType, DELIMITER},
+    platform::{OsFamily, DELIMITER},
     utils::unzip::decompression_all,
     version::ResolvedVersion,
     APP_VERSION, DATA_LOCATION, PLATFORM_INFO,
@@ -43,7 +43,7 @@ pub async fn generate_command_arguments(
     tokio::fs::write(&game_icon, DEFAULT_GAME_ICON)
         .await
         .unwrap();
-    if PLATFORM_INFO.os_type == OsType::Osx {
+    if PLATFORM_INFO.os_family == OsFamily::Macos {
         command_arguments.push("-Xdock:name=Minecraft".to_string());
         command_arguments.push(format!(
             "-Xdock:icon={game_icon}",
@@ -96,14 +96,11 @@ pub async fn generate_command_arguments(
             command_arguments.push("-XX:+UseZGC".to_string());
         }
     }
-    match PLATFORM_INFO.os_type {
-        OsType::Osx => {
-            command_arguments.push("XstartOnFirstThread".to_string());
-        }
-        OsType::Windows => {
-            command_arguments.push("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump".to_string());
-        }
-        _ => (),
+    if PLATFORM_INFO.os_family == OsFamily::Macos {
+        command_arguments.push("XstartOnFirstThread".to_string());
+    }
+    if PLATFORM_INFO.os_family == OsFamily::Windows {
+        command_arguments.push("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump".to_string());
     }
     // TODO: support yggdrasil
     //         if let Some(ygg) = launch_options.yggdrasil_agent.clone() {

@@ -15,7 +15,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{platform::OsType, PLATFORM_INFO};
+use crate::{platform::OsFamily, PLATFORM_INFO};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// The Minecraft folder structure. All method will return the path related to a minecraft root like .minecraft.
@@ -98,13 +98,13 @@ impl DataLocation {
         std::fs::create_dir_all(&temp_path).expect("Could not create temp dir");
         Self {
             instances: data_folder_root.join("instances"),
-            cache: match PLATFORM_INFO.os_type {
-                OsType::Linux => {
+            cache: match PLATFORM_INFO.os_family {
+                OsFamily::Macos => data_folder_root.join(".cache"),
+                OsFamily::Windows => data_folder_root.join(".cache"),
+                OsFamily::Linux => {
                     PathBuf::from(std::env::var("HOME").expect("Could not found home"))
                         .join(".cache/conic")
                 }
-                OsType::Osx => data_folder_root.join(".cache"),
-                OsType::Windows => data_folder_root.join(".cache"),
             },
             // default_jre: data_folder.join("default_jre").join("bin").join("java"),
             default_jre: PathBuf::from_str("/bin/java").unwrap(),
@@ -127,14 +127,14 @@ impl Default for DataLocation {
         let application_folder_name = "conic";
         #[cfg(debug_assertions)]
         let application_folder_name = "conic-debug";
-        let application_data_path = match PLATFORM_INFO.os_type {
-            OsType::Windows => {
+        let application_data_path = match PLATFORM_INFO.os_family {
+            OsFamily::Windows => {
                 PathBuf::from(std::env::var("APPDATA").expect("Could not found APP_DATA directory"))
                     .join(application_folder_name)
             }
-            OsType::Linux => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
+            OsFamily::Macos => PathBuf::from("/Users/").join(application_folder_name),
+            OsFamily::Linux => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
                 .join(format!(".{}", application_folder_name)),
-            OsType::Osx => PathBuf::from("/Users/").join(application_folder_name),
         };
         Self::new(&application_data_path)
     }
