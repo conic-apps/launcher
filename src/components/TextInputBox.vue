@@ -5,8 +5,7 @@
 <template>
   <div class="input-box" :style="`width: ${width};`">
     <input
-      @focusin="updateOld"
-      @focusout="checkValue"
+      @focus="updateOld"
       @blur="updateModel"
       :type="numberOnly ? 'number' : 'text'"
       :title="name"
@@ -32,6 +31,7 @@ const props = withDefaults(
     disabled?: boolean;
     lazyUpdateModel?: boolean;
     value?: any;
+    nonEmpty?: boolean;
   }>(),
   {
     type: "text",
@@ -43,12 +43,17 @@ const props = withDefaults(
 
 const model = defineModel();
 const inputBoxValue = ref(model.value);
+const emits = defineEmits(["updated"]);
 
 if (!props.lazyUpdateModel) {
   watch(inputBoxValue, (newValue) => {
     model.value = newValue;
   });
 }
+
+watch(model, (newValue) => {
+  inputBoxValue.value = newValue;
+});
 
 if (props.value) {
   watch(
@@ -61,28 +66,41 @@ if (props.value) {
     },
   );
 }
-function updateModel() {
+function updateModel(event: any) {
   if (props.lazyUpdateModel) {
     model.value = inputBoxValue.value;
   }
 }
 
-let oldValue: number;
-function updateOld(event: any) {
+let oldValue: string | number;
+function updateOld() {
   if (props.numberOnly) {
     oldValue = model.value as number;
+  } else {
+    oldValue = model.value as string;
   }
 }
 function checkValue(event: any) {
-  if (!props.numberOnly) {
-    return;
-  }
+  let result: boolean = true;
   let value = event.target.value.trim();
-  if (!/^[1-9]\d*$|^$/.test(value) || value.length == 0) {
+  if (props.numberOnly) {
+    if (!/^[1-9]\d*$|^$/.test(value) || value.length == 0) {
+      model.value = oldValue;
+      event.target.value = oldValue;
+      result = false;
+    }
+  }
+  if (props.nonEmpty && value.length === 0) {
     model.value = oldValue;
     event.target.value = oldValue;
+    result = false;
   }
+  return result;
 }
+
+watch(model, () => {
+  emits("updated");
+});
 </script>
 
 <style lang="less" scoped>
