@@ -1,4 +1,5 @@
 body {
+    --theme-color: 24, 170, 255;
     --window-background: rgba(15, 1, 1);
     --main-background: rgba(44, 48, 57, 0.6);
     --main-border: 1px solid rgba(56, 59, 65, 1);
@@ -30,7 +31,7 @@ body {
     --toggle-switch-outline: 1px solid #ffffffb7;
     --toggle-switch-background: rgba(255, 255, 255, 0.05);
     --toggle-switch-button: #ffffffb7;
-    --toggle-switch-active: rgb(24, 170, 255);
+    --toggle-switch-active: rgb(var(--theme-color));
 }
 
 body code {
