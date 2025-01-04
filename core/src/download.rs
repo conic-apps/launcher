@@ -257,21 +257,19 @@ pub async fn download_files(downloads: Vec<Download>, send_error: bool, config: 
         })
     };
     Progress::send(0, total, 3);
-    let f = |task| {
-        let running_counter = running_counter.clone();
-        download_file_future(
-            &mirror_usage,
-            &error,
-            &speed_counter,
-            running_counter,
-            &counter,
-            task,
-            config.max_download_speed,
-            send_error,
-        )
-    };
+
     futures::stream::iter(downloads)
-        .map(f)
+        .map(|task| {
+            download_file_future(
+                &mirror_usage,
+                &error,
+                &speed_counter,
+                &counter,
+                task,
+                config.max_download_speed,
+                send_error,
+            )
+        })
         .buffer_unordered(config.max_connections)
         .for_each_concurrent(None, |_| async {
             let counter = counter.clone().load(Ordering::SeqCst);
@@ -299,22 +297,16 @@ fn speed_counter_loop(counter: Arc<AtomicUsize>, rx: Receiver<&str>) {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 async fn download_file_future(
     mirror_usage: &MirrorUsage,
     error: &Arc<AtomicBool>,
     speed_counter: &Arc<AtomicUsize>,
-    running_counter: Arc<AtomicUsize>,
     counter: &Arc<AtomicUsize>,
     task: Download,
     max_download_speed: usize,
     send_error: bool,
 ) {
     let mut disabled_mirrors = vec![];
-    running_counter.fetch_add(1, Ordering::SeqCst);
-    if error.load(Ordering::SeqCst) {
-        return;
-    }
     let mut retried = 0;
     loop {
         retried += 1;
