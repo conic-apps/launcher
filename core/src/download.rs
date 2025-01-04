@@ -3,11 +3,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use std::{
+    collections::HashMap,
     io::Read,
     path::PathBuf,
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
-        mpsc, Arc,
+        mpsc::{self, Receiver},
+        Arc,
     },
     thread,
     time::Duration,
@@ -17,16 +19,131 @@ use futures::StreamExt;
 use log::warn;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
-use tauri::Emitter;
+use tauri::{Emitter, Url};
 use tokio::io::AsyncWriteExt;
 
-use crate::{HTTP_CLIENT, MAIN_WINDOW};
+use crate::{
+    config::download::{DownloadConfig, MirrorConfig},
+    HTTP_CLIENT, MAIN_WINDOW,
+};
+
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub enum DownloadType {
+    VersionInfo,
+    Assets,
+    Libraries,
+    MojangJava,
+    Unknown,
+}
+
+struct Mirror(String, Arc<AtomicUsize>);
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct MirrorUsage {
+    libraries: HashMap<String, Arc<AtomicUsize>>,
+    assets: HashMap<String, Arc<AtomicUsize>>,
+}
+
+impl MirrorUsage {
+    fn new(mirror_config: MirrorConfig) -> Self {
+        Self {
+            libraries: mirror_config
+                .libraries
+                .iter()
+                .map(|x| (x.to_string(), Arc::new(AtomicUsize::new(0))))
+                .collect(),
+            assets: mirror_config
+                .assets
+                .iter()
+                .map(|x| (x.to_string(), Arc::new(AtomicUsize::new(0))))
+                .collect(),
+        }
+    }
+    // TODO: 设置镜像被使用的频率，实现方式：y.1.load.... 乘一个数放在cmp右面
+    /// Get a fewest connections libraries mirror
+    fn get_libraries_mirror(&self, disabled: &[String]) -> Option<Mirror> {
+        let (k, v) = self
+            .libraries
+            .iter()
+            .filter(|x| !disabled.iter().any(|y| x.0 == y))
+            .min_by(|x, y| x.1.load(Ordering::SeqCst).cmp(&y.1.load(Ordering::SeqCst)))?;
+        Some(Mirror(k.clone(), v.clone()))
+    }
+    /// Get a fewest connections assets mirror
+    fn get_assets_mirror(&self, disabled: &[String]) -> Option<Mirror> {
+        let (k, v) = self
+            .assets
+            .iter()
+            .filter(|x| !disabled.iter().any(|y| x.0 == y))
+            .min_by(|x, y| x.1.load(Ordering::SeqCst).cmp(&y.1.load(Ordering::SeqCst)))?;
+        Some(Mirror(k.clone(), v.clone()))
+    }
+}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Download {
     pub url: String,
     pub file: PathBuf,
     pub sha1: Option<String>,
+    pub r#type: DownloadType,
+}
+
+impl Download {
+    pub fn classify(self) -> Self {
+        if self.r#type != DownloadType::Unknown {
+            return self.clone();
+        };
+        let url = Url::parse(&self.url).unwrap();
+        let host = if let Some(host) = url.host_str() {
+            host
+        } else {
+            return self.clone();
+        };
+        let download_type = match host {
+            "resources.download.minecraft.net" => DownloadType::Assets,
+            "libraries.minecraft.net" => DownloadType::Libraries,
+            _ => DownloadType::Unknown,
+        };
+        Self {
+            r#type: download_type,
+            ..self
+        }
+    }
+    fn assignment_mirror(
+        self,
+        mirror_usage: &MirrorUsage,
+        disabled: &[String],
+    ) -> Option<(Download, Mirror)> {
+        match self.r#type {
+            DownloadType::Libraries => {
+                let mirror = mirror_usage.get_libraries_mirror(disabled)?;
+                mirror.1.fetch_add(1, Ordering::SeqCst);
+                Some((
+                    Download {
+                        url: self
+                            .url
+                            .replace("https://libraries.minecraft.net", &mirror.0),
+                        ..self
+                    },
+                    mirror,
+                ))
+            }
+            DownloadType::Assets => {
+                let mirror = mirror_usage.get_assets_mirror(disabled)?;
+                mirror.1.fetch_add(1, Ordering::SeqCst);
+                Some((
+                    Download {
+                        url: self
+                            .url
+                            .replace("https://resources.download.minecraft.net", &mirror.0),
+                        ..self
+                    },
+                    mirror,
+                ))
+            }
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -36,9 +153,30 @@ pub struct Progress {
     pub step: usize,
 }
 
+impl Progress {
+    fn send(completed: usize, total: usize, step: usize) {
+        MAIN_WINDOW
+            .emit(
+                "install_progress",
+                Progress {
+                    completed,
+                    total,
+                    step,
+                },
+            )
+            .expect("Could not send message to main window");
+    }
+}
+
 #[derive(Clone, Deserialize, Serialize)]
 pub struct ProgressError {
     pub step: usize,
+}
+
+impl ProgressError {
+    fn send(step: usize) {
+        MAIN_WINDOW.emit("install_error", Self { step }).unwrap();
+    }
 }
 
 fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
@@ -54,190 +192,166 @@ fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
     hasher.digest().to_string()
 }
 
-pub async fn download_files(
-    downloads: Vec<Download>,
-    send_progress: bool,
-    send_error: bool,
-    max_connections: usize,
-    max_download_speed: usize,
-) {
-    if send_progress {
-        MAIN_WINDOW
-            .emit(
-                "install_progress",
-                Progress {
-                    completed: 0,
-                    total: 0,
-                    step: 2,
-                },
-            )
-            .unwrap();
-    }
+fn verify_existing_files(downloads: Vec<Download>) -> Vec<Download> {
+    let finished: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
     let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    let check_files_finished: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
     let counter_sender_thread = {
-        let check_files_finished = check_files_finished.clone();
+        let check_files_finished = finished.clone();
         let counter = counter.clone();
         thread::spawn(move || {
             while !check_files_finished.load(Ordering::SeqCst) {
                 thread::sleep(Duration::from_millis(500));
-                if send_progress {
-                    MAIN_WINDOW
-                        .emit(
-                            "install_progress",
-                            Progress {
-                                completed: counter.load(Ordering::SeqCst),
-                                total: 0,
-                                step: 2,
-                            },
-                        )
-                        .unwrap();
-                }
+                Progress::send(counter.load(Ordering::SeqCst), 0, 2);
             }
         })
     };
-    let downloads: Vec<_> = downloads
-        .into_par_iter()
-        .filter(|download| {
-            if std::fs::metadata(&download.file).is_err() {
+    let filter_op = |download: &Download| {
+        if std::fs::metadata(&download.file).is_err() {
+            return true;
+        }
+        let mut file = match std::fs::File::open(&download.file) {
+            Ok(file) => file,
+            Err(_) => {
                 return true;
             }
-            let mut file = match std::fs::File::open(&download.file) {
-                Ok(file) => file,
-                Err(_) => {
-                    return true;
-                }
-            };
-            if download.sha1.is_none() {
-                return true;
-            };
-            let file_hash = calculate_sha1_from_read(&mut file);
-            counter.clone().fetch_add(1, Ordering::SeqCst);
-            &file_hash != download.sha1.as_ref().unwrap()
-        })
-        .collect();
-    check_files_finished.store(true, Ordering::SeqCst);
+        };
+        if download.sha1.is_none() {
+            return true;
+        };
+        let file_hash = calculate_sha1_from_read(&mut file);
+        counter.clone().fetch_add(1, Ordering::SeqCst);
+        &file_hash != download.sha1.as_ref().unwrap()
+    };
+    let downloads: Vec<_> = downloads.into_par_iter().filter(filter_op).collect();
+    finished.store(true, Ordering::SeqCst);
     counter_sender_thread.join().unwrap();
+    downloads
+}
+
+pub async fn download_files(downloads: Vec<Download>, send_error: bool, config: DownloadConfig) {
+    let downloads: Vec<Download> = verify_existing_files(downloads)
+        .into_iter()
+        .map(|x| x.classify())
+        .collect();
+
     let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let total = downloads.len();
     let speed_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let running_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let (tx, rx) = mpsc::channel();
     let (tx2, rx2) = mpsc::channel();
-    let running_counter_closure = {
-        let running_counter = running_counter.clone();
-        move || {
-            let running_counter = running_counter;
-            loop {
-                let message = rx.try_recv();
-                if message == Ok("terminate") {
-                    break;
-                }
-                MAIN_WINDOW
-                    .emit(
-                        "running_download_task",
-                        running_counter.load(Ordering::SeqCst),
-                    )
-                    .unwrap();
-                thread::sleep(Duration::from_millis(100))
-            }
-        }
-    };
-    let running_counter_thread = thread::spawn(running_counter_closure);
-    let speed_thread_closure = {
+    let speed_thread = {
         let speed_counter = speed_counter.clone();
-        move || {
-            let counter = speed_counter;
-            loop {
-                let message = rx2.try_recv();
-                if message == Ok("terminate") {
-                    break;
-                }
-                thread::sleep(Duration::from_millis(2000));
-                MAIN_WINDOW
-                    .emit("download_speed", counter.load(Ordering::SeqCst))
-                    .unwrap();
-                counter.store(0, Ordering::SeqCst);
-            }
-        }
+        thread::spawn(|| speed_counter_loop(speed_counter, rx))
     };
-    let speed_thread = thread::spawn(speed_thread_closure);
     let error = Arc::new(AtomicBool::new(false));
-    MAIN_WINDOW
-        .emit(
-            "install_progress",
-            Progress {
-                completed: 0,
-                total,
-                step: 3,
-            },
-        )
-        .unwrap();
-    futures::stream::iter(downloads)
-        .map(|task| {
-            let counter = counter.clone();
-            let speed_counter = speed_counter.clone();
-            let error = error.clone();
-            let running_counter = running_counter.clone();
-            async move {
-                let error = error;
-                let running_counter = running_counter;
-                running_counter.fetch_add(1, Ordering::SeqCst);
-                if error.load(Ordering::SeqCst) {
-                    return;
-                }
-                let mut retried = 0;
-                let task = task;
-                loop {
-                    retried += 1;
-                    let speed_counter = speed_counter.clone();
-                    if download_file(
-                        &task,
-                        &counter,
-                        &speed_counter,
-                        max_download_speed,
-                        error.clone(),
-                    )
-                    .await
-                    .is_ok()
-                    {
-                        break;
-                    }
-                    warn!("Downloaded failed: {}, retried: {}", &task.url, retried);
-                    if retried >= 5 {
-                        error.store(true, Ordering::SeqCst);
-                        if send_error {
-                            MAIN_WINDOW
-                                .emit("install_error", ProgressError { step: 3 })
-                                .unwrap();
-                        }
-                        break;
-                    }
-                }
+    let mirror_usage = MirrorUsage::new(config.mirror);
+    let mirror_usage_sender_thread = {
+        let mirror_usage = mirror_usage.clone();
+        thread::spawn(move || loop {
+            if rx2.try_recv() == Ok("terminate") {
+                break;
             }
+            MAIN_WINDOW.emit("mirror_usage", &mirror_usage).unwrap();
+            thread::sleep(Duration::from_millis(500));
         })
-        .buffer_unordered(max_connections)
+    };
+    Progress::send(0, total, 3);
+    let f = |task| {
+        let running_counter = running_counter.clone();
+        download_file_future(
+            &mirror_usage,
+            &error,
+            &speed_counter,
+            running_counter,
+            &counter,
+            task,
+            config.max_download_speed,
+            send_error,
+        )
+    };
+    futures::stream::iter(downloads)
+        .map(f)
+        .buffer_unordered(config.max_connections)
         .for_each_concurrent(None, |_| async {
             let counter = counter.clone().load(Ordering::SeqCst);
             running_counter.fetch_sub(1, Ordering::SeqCst);
-            if send_progress {
-                MAIN_WINDOW
-                    .emit(
-                        "install_progress",
-                        Progress {
-                            completed: counter,
-                            total,
-                            step: 3,
-                        },
-                    )
-                    .unwrap();
-            }
+            Progress::send(counter, total, 3);
         })
         .await;
     tx.send("terminate").unwrap();
     tx2.send("terminate").unwrap();
     speed_thread.join().unwrap();
-    running_counter_thread.join().unwrap();
+    mirror_usage_sender_thread.join().unwrap();
+}
+
+fn speed_counter_loop(counter: Arc<AtomicUsize>, rx: Receiver<&str>) {
+    loop {
+        let message = rx.try_recv();
+        if message == Ok("terminate") {
+            break;
+        }
+        MAIN_WINDOW
+            .emit("download_speed", counter.load(Ordering::SeqCst))
+            .unwrap();
+        counter.store(0, Ordering::SeqCst);
+        thread::sleep(Duration::from_millis(2000));
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn download_file_future(
+    mirror_usage: &MirrorUsage,
+    error: &Arc<AtomicBool>,
+    speed_counter: &Arc<AtomicUsize>,
+    running_counter: Arc<AtomicUsize>,
+    counter: &Arc<AtomicUsize>,
+    task: Download,
+    max_download_speed: usize,
+    send_error: bool,
+) {
+    let mut disabled_mirrors = vec![];
+    running_counter.fetch_add(1, Ordering::SeqCst);
+    if error.load(Ordering::SeqCst) {
+        return;
+    }
+    let mut retried = 0;
+    loop {
+        retried += 1;
+        let speed_counter = speed_counter.clone();
+        let (task, mirror) = match task
+            .clone()
+            .assignment_mirror(mirror_usage, &disabled_mirrors)
+        {
+            Some(x) => (x.0, Some(x.1)),
+            None => (task.clone(), None),
+        };
+        let result = download_file(
+            &task,
+            counter,
+            &speed_counter,
+            max_download_speed,
+            error.clone(),
+        )
+        .await;
+        if let Some(mirror) = &mirror {
+            mirror.1.fetch_sub(1, Ordering::SeqCst);
+        }
+        if result.is_ok() {
+            break;
+        }
+        warn!("Downloaded failed: {}, retried: {}", &task.url, retried);
+        if let Some(mirror) = mirror {
+            disabled_mirrors.push(mirror.0);
+        }
+        if retried >= 5 {
+            error.store(true, Ordering::SeqCst);
+            if send_error {
+                ProgressError::send(3);
+            }
+            break;
+        }
+    }
 }
 
 async fn download_file(

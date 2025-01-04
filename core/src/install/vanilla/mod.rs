@@ -9,7 +9,7 @@ use serde_json::Value;
 use tauri_plugin_http::reqwest;
 use tokio::io::AsyncWriteExt;
 
-use crate::download::Download;
+use crate::download::{Download, DownloadType};
 use crate::version::ResolvedLibrary;
 use crate::HTTP_CLIENT;
 use crate::{
@@ -30,6 +30,7 @@ pub(crate) fn generate_libraries_downloads(
                 .libraries
                 .join(library.download_info.path),
             sha1: library.download_info.sha1,
+            r#type: DownloadType::Unknown,
         })
         .collect()
 }
@@ -57,12 +58,14 @@ pub async fn generate_assets_downloads(
                 .join(&obj.1.hash[0..2])
                 .join(&obj.1.hash),
             sha1: Some(obj.1.hash),
+            r#type: DownloadType::Unknown,
         })
         .collect();
     assets.push(Download {
         url: asset_index.url,
         file: minecraft_location.get_assets_index(&asset_index.id),
         sha1: None,
+        r#type: DownloadType::Unknown,
     });
     Ok(assets)
 }
@@ -122,6 +125,7 @@ pub async fn generate_download_info(
         ),
         file: minecraft_location.versions.join(format!("{id}/{id}.jar")),
         sha1: Some(client.sha1.to_string()),
+        r#type: DownloadType::Unknown,
     });
     download_list.extend(generate_libraries_downloads(
         &version.libraries,
