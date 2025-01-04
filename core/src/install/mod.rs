@@ -21,6 +21,7 @@ use crate::{
 
 mod fabric;
 mod forge;
+mod java;
 mod neoforged;
 mod quilt;
 pub mod vanilla;
@@ -115,6 +116,10 @@ pub async fn install(
     info!("Start downloading file");
     let config = storage.config.lock().unwrap().clone();
     download_files(download_list, true, config.download).await;
+    let java_version_list = java::MojangJavaVersionList::new().await.unwrap();
+    let java_for_current_platform = java_version_list.get_current_platform().unwrap();
+    info!("Installing Java");
+    java::group_install(&DATA_LOCATION.root.join("java"), java_for_current_platform).await;
     if runtime.mod_loader_type.is_some() {
         info!("Install mod loader");
         MAIN_WINDOW
