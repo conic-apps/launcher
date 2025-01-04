@@ -22,7 +22,7 @@ export type Config = {
         high_contrast_mode: boolean
     }
     download: {
-        max_connection: number
+        max_connections: number
         max_download_speed: number
     }
     launch: {
