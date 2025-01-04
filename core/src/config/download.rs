@@ -5,22 +5,57 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct DownloadConfig {
-    #[serde(default = "default_max_connection")]
-    pub max_connection: usize,
-    #[serde(default)]
-    pub max_download_speed: usize,
+pub struct MirrorConfig {
+    #[serde(default = "default_libraries")]
+    pub libraries: Vec<String>,
+    #[serde(default = "default_assets")]
+    pub assets: Vec<String>,
 }
 
-fn default_max_connection() -> usize {
+impl Default for MirrorConfig {
+    fn default() -> Self {
+        Self {
+            libraries: default_libraries(),
+            assets: default_assets(),
+        }
+    }
+}
+
+fn default_assets() -> Vec<String> {
+    vec![
+        "https://resources.download.minecraft.net".to_string(),
+        "https://bmclapi2.bangbang93.com/assets".to_string(),
+    ]
+}
+
+fn default_libraries() -> Vec<String> {
+    vec![
+        "https://libraries.minecraft.net".to_string(),
+        "https://bmclapi2.bangbang93.com/maven".to_string(),
+    ]
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct DownloadConfig {
+    #[serde(default = "default_max_connections")]
+    pub max_connections: usize,
+    #[serde(default)]
+    pub max_download_speed: usize,
+    #[serde(default)]
+    /// User custom mirrors
+    pub mirror: MirrorConfig,
+}
+
+fn default_max_connections() -> usize {
     100
 }
 
 impl Default for DownloadConfig {
     fn default() -> Self {
         Self {
-            max_connection: default_max_connection(),
+            max_connections: default_max_connections(),
             max_download_speed: 0,
+            mirror: MirrorConfig::default(),
         }
     }
 }

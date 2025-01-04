@@ -114,14 +114,7 @@ pub async fn install(
     };
     info!("Start downloading file");
     let config = storage.config.lock().unwrap().clone();
-    download_files(
-        download_list,
-        true,
-        true,
-        config.download.max_connection,
-        config.download.max_download_speed,
-    )
-    .await;
+    download_files(download_list, true, config.download).await;
     if runtime.mod_loader_type.is_some() {
         info!("Install mod loader");
         MAIN_WINDOW
