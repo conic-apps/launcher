@@ -14,7 +14,7 @@ use crate::folder::MinecraftLocation;
 
 use crate::PLATFORM_INFO;
 
-static _DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
+static DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     vec![
         "--username".to_string(),
         "${auth_player_name}".to_string(),
@@ -45,7 +45,7 @@ static _DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     ]
 });
 
-static _DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
+static DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     vec![
         "\"-Djava.library.path=${natives_directory}\"".to_string(),
         // "\"-Djna.tmpdir=${natives_directory}\"".to_string(),
@@ -380,6 +380,11 @@ impl ResolvedVersion {
         arguments: Option<Arguments>,
         enabled_features: &[String],
     ) -> &mut Self {
+        if self.minimum_launcher_version < 21 {
+            self.arguments.jvm = DEFAULT_JVM_ARGS.clone();
+            self.arguments.game = DEFAULT_GAME_ARGS.clone();
+            return self;
+        }
         if let Some(arguments) = arguments {
             let resolved = arguments.resolve(enabled_features);
             self.arguments.jvm.extend(resolved.jvm);
@@ -513,7 +518,7 @@ impl Version {
     /// parse a Minecraft version json
     ///
     /// If you are not use this to launch the game, you can set `enabled_features` to `&vec![]`
-    pub async fn parse(
+    pub async fn resolve(
         &self,
         minecraft: &MinecraftLocation,
         enabled_features: &[String],
@@ -560,7 +565,7 @@ impl Version {
                 libraries_raw.splice(0..0, libraries);
             }
         }
-        resolved_version.libraries = resolve_libraries(libraries_raw, enabled_features).await;
+        resolved_version.libraries = resolve_libraries(libraries_raw).await;
         if resolved_version.main_class.is_none()
             || resolved_version.asset_index.is_none()
             || resolved_version.downloads.is_empty()
@@ -593,16 +598,13 @@ pub struct ResolvedLibrary {
     pub is_native_library: bool,
 }
 
-async fn resolve_libraries(
-    libraries: Vec<Value>,
-    enabled_features: &[String],
-) -> Vec<ResolvedLibrary> {
+async fn resolve_libraries(libraries: Vec<Value>) -> Vec<ResolvedLibrary> {
     let mut result = Vec::new();
     for library in libraries {
         let rules = library["rules"].as_array();
         // check rules
         if let Some(rules) = rules {
-            if !check_allowed(rules.clone(), enabled_features) {
+            if !check_allowed(rules.clone(), &[]) {
                 continue;
             }
         }
@@ -610,7 +612,9 @@ async fn resolve_libraries(
         let classifiers = library["downloads"]["classifiers"].as_object();
         let natives = library["natives"].as_object();
         if classifiers.is_some() && natives.is_some() {
+            #[allow(clippy::unwrap_used)]
             let classifiers = classifiers.unwrap();
+            #[allow(clippy::unwrap_used)]
             let natives = natives.unwrap();
             let classifier_key = match natives[&PLATFORM_INFO.os_family.to_string()].as_str() {
                 None => continue,
@@ -637,6 +641,7 @@ async fn resolve_libraries(
                 },
                 is_native_library: true,
             });
+            continue;
         }
         // resolve common lib
         if library["downloads"]["artifact"].is_object() {
@@ -732,7 +737,16 @@ fn check_os(rule: &Value) -> bool {
         } else {
             true
         };
-        name_check_passed && version_check_passed
+        let arch_check_passed = if let Some(arch) = os.get("arch") {
+            if let Some(arch) = arch.as_str() {
+                PLATFORM_INFO.arch == arch
+            } else {
+                true
+            }
+        } else {
+            true
+        };
+        name_check_passed && version_check_passed && arch_check_passed
     } else {
         true
     }
