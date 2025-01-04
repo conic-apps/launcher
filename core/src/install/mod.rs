@@ -183,7 +183,9 @@ async fn install_mod_loader(runtime: InstanceRuntime) -> anyhow::Result<()> {
         ModLoaderType::Forge => {
             forge::install(&DATA_LOCATION.root, &mod_loader_version, &runtime.minecraft).await?
         }
-        ModLoaderType::Neoforged => {}
+        ModLoaderType::Neoforged => {
+            neoforged::install(&DATA_LOCATION.root, &mod_loader_version).await?
+        }
     }
 
     anyhow::Ok(())
