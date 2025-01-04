@@ -14,7 +14,7 @@ use crate::folder::MinecraftLocation;
 
 use crate::PLATFORM_INFO;
 
-static DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
+static _DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     vec![
         "--username".to_string(),
         "${auth_player_name}".to_string(),
@@ -45,7 +45,7 @@ static DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     ]
 });
 
-static DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
+static _DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     vec![
         "\"-Djava.library.path=${natives_directory}\"".to_string(),
         // "\"-Djna.tmpdir=${natives_directory}\"".to_string(),
@@ -212,6 +212,55 @@ pub struct Arguments {
     pub jvm: Option<Vec<Value>>,
 }
 
+impl Arguments {
+    fn resolve(&self, enabled_features: &[String]) -> ResolvedArguments {
+        let mut resolved_game_args = vec![];
+        let mut resolved_jvm_args = vec![];
+        if let Some(game_args) = &self.game {
+            for arg in game_args {
+                resolved_game_args.extend(resolve_argument(arg, enabled_features));
+            }
+        }
+        if let Some(jvm_args) = &self.jvm {
+            for arg in jvm_args {
+                resolved_jvm_args.extend(resolve_argument(arg, enabled_features));
+            }
+        }
+        ResolvedArguments {
+            game: resolved_game_args,
+            jvm: resolved_jvm_args,
+        }
+    }
+}
+
+fn resolve_argument(argument: &Value, enabled_features: &[String]) -> Vec<String> {
+    if argument.is_string() {
+        match argument.as_str() {
+            Some(x) => return vec![x.to_string()],
+            None => return vec![],
+        }
+    }
+    let rules = match argument["rules"].as_array() {
+        Some(x) => x.clone(),
+        None => return vec![],
+    };
+    let allow = check_allowed(rules, enabled_features);
+    if allow {
+        if argument["value"].is_array() {
+            serde_json::from_value::<Vec<String>>(argument["value"].clone()).unwrap_or_default()
+        } else if argument["value"].is_string() {
+            match argument["value"].as_str() {
+                Some(x) => vec![x.to_string()],
+                None => vec![],
+            }
+        } else {
+            vec![]
+        }
+    } else {
+        vec![]
+    }
+}
+
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Logging {
     pub file: LoggingFileDownload,
@@ -326,30 +375,43 @@ pub struct ResolvedVersion {
 }
 
 impl ResolvedVersion {
-    fn id(&mut self, id: String) -> &mut Self {
+    fn join_arguments(
+        &mut self,
+        arguments: Option<Arguments>,
+        enabled_features: &[String],
+    ) -> &mut Self {
+        if let Some(arguments) = arguments {
+            let resolved = arguments.resolve(enabled_features);
+            self.arguments.jvm.extend(resolved.jvm);
+            self.arguments.game.extend(resolved.game);
+        }
+        self
+    }
+
+    fn join_id(&mut self, id: String) -> &mut Self {
         if !id.is_empty() {
             self.id = id
         }
         self
     }
-    fn minimum_launcher_version(&mut self, version: Option<i32>) -> &mut Self {
+    fn join_minimum_launcher_version(&mut self, version: Option<i32>) -> &mut Self {
         self.minimum_launcher_version =
             std::cmp::max(version.unwrap_or(0), self.minimum_launcher_version);
         self
     }
-    fn release_time(&mut self, release_time: Option<String>) -> &mut Self {
+    fn join_release_time(&mut self, release_time: Option<String>) -> &mut Self {
         if release_time.is_some() {
             self.time = release_time
         }
         self
     }
-    fn time(&mut self, time: Option<String>) -> &mut Self {
+    fn join_time(&mut self, time: Option<String>) -> &mut Self {
         if time.is_some() {
             self.time = time
         }
         self
     }
-    fn logging(&mut self, logging: Option<HashMap<String, Logging>>) -> &mut Self {
+    fn join_logging(&mut self, logging: Option<HashMap<String, Logging>>) -> &mut Self {
         if let Some(logging) = logging {
             if !logging.is_empty() {
                 self.logging = logging
@@ -359,37 +421,37 @@ impl ResolvedVersion {
         };
         self
     }
-    fn assets(&mut self, assets: Option<String>) -> &mut Self {
+    fn join_assets(&mut self, assets: Option<String>) -> &mut Self {
         if assets.is_some() {
             self.assets = assets
         }
         self
     }
-    fn version_type(&mut self, version_type: Option<String>) -> &mut Self {
+    fn join_version_type(&mut self, version_type: Option<String>) -> &mut Self {
         if version_type.is_some() {
             self.version_type = version_type
         }
         self
     }
-    fn main_class(&mut self, main_class: Option<String>) -> &mut Self {
+    fn join_main_class(&mut self, main_class: Option<String>) -> &mut Self {
         if main_class.is_some() {
             self.main_class = main_class
         }
         self
     }
-    fn java_version(&mut self, java_version: Option<JavaVersion>) -> &mut Self {
+    fn join_java_version(&mut self, java_version: Option<JavaVersion>) -> &mut Self {
         if let Some(java_version) = java_version {
             self.java_version = java_version
         }
         self
     }
-    fn asset_index(&mut self, asset_index: Option<AssetIndex>) -> &mut Self {
+    fn join_asset_index(&mut self, asset_index: Option<AssetIndex>) -> &mut Self {
         if asset_index.is_some() {
             self.asset_index = asset_index
         }
         self
     }
-    fn downloads(&mut self, downloads: Option<HashMap<String, Download>>) -> &mut Self {
+    fn join_downloads(&mut self, downloads: Option<HashMap<String, Download>>) -> &mut Self {
         if let Some(downloads) = downloads {
             self.downloads.extend(downloads)
         }
@@ -449,7 +511,13 @@ impl Version {
     }
 
     /// parse a Minecraft version json
-    pub async fn parse(&self, minecraft: &MinecraftLocation) -> Result<ResolvedVersion> {
+    ///
+    /// If you are not use this to launch the game, you can set `enabled_features` to `&vec![]`
+    pub async fn parse(
+        &self,
+        minecraft: &MinecraftLocation,
+        enabled_features: &[String],
+    ) -> Result<ResolvedVersion> {
         let mut inherits_from = self.inherits_from.clone();
         let versions_folder = &minecraft.versions;
         let mut versions = Vec::new();
@@ -475,23 +543,24 @@ impl Version {
 
         while let Some(version) = versions.pop() {
             resolved_version
-                .id(version.id)
-                .minimum_launcher_version(version.minimum_launcher_version)
-                .release_time(version.release_time)
-                .time(version.time)
-                .logging(version.logging)
-                .assets(version.assets)
-                .version_type(version.r#type)
-                .main_class(version.main_class)
-                .java_version(version.java_version)
-                .asset_index(version.asset_index)
-                .downloads(version.downloads);
+                .join_id(version.id)
+                .join_minimum_launcher_version(version.minimum_launcher_version)
+                .join_release_time(version.release_time)
+                .join_time(version.time)
+                .join_logging(version.logging)
+                .join_assets(version.assets)
+                .join_version_type(version.r#type)
+                .join_main_class(version.main_class)
+                .join_java_version(version.java_version)
+                .join_asset_index(version.asset_index)
+                .join_downloads(version.downloads)
+                .join_arguments(version.arguments, enabled_features);
 
             if let Some(libraries) = version.libraries {
                 libraries_raw.splice(0..0, libraries);
             }
         }
-        resolved_version.libraries = resolve_libraries(libraries_raw).await;
+        resolved_version.libraries = resolve_libraries(libraries_raw, enabled_features).await;
         if resolved_version.main_class.is_none()
             || resolved_version.asset_index.is_none()
             || resolved_version.downloads.is_empty()
@@ -503,20 +572,20 @@ impl Version {
     }
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Default)]
 pub struct ResolvedArguments {
     pub game: Vec<String>,
     pub jvm: Vec<String>,
 }
 
-impl Default for ResolvedArguments {
-    fn default() -> Self {
-        ResolvedArguments {
-            game: DEFAULT_GAME_ARGS.clone(),
-            jvm: DEFAULT_JVM_ARGS.clone(),
-        }
-    }
-}
+// impl Default for ResolvedArguments {
+//     fn default() -> Self {
+//         ResolvedArguments {
+//             game: DEFAULT_GAME_ARGS.clone(),
+//             jvm: DEFAULT_JVM_ARGS.clone(),
+//         }
+//     }
+// }
 
 #[derive(Clone, Serialize)]
 pub struct ResolvedLibrary {
@@ -524,13 +593,16 @@ pub struct ResolvedLibrary {
     pub is_native_library: bool,
 }
 
-async fn resolve_libraries(libraries: Vec<Value>) -> Vec<ResolvedLibrary> {
+async fn resolve_libraries(
+    libraries: Vec<Value>,
+    enabled_features: &[String],
+) -> Vec<ResolvedLibrary> {
     let mut result = Vec::new();
     for library in libraries {
         let rules = library["rules"].as_array();
         // check rules
         if let Some(rules) = rules {
-            if !check_allowed(rules.clone()) {
+            if !check_allowed(rules.clone(), enabled_features) {
                 continue;
             }
         }
@@ -615,7 +687,7 @@ async fn resolve_libraries(libraries: Vec<Value>) -> Vec<ResolvedLibrary> {
 }
 
 /// Check if all the rules in Rule[] are acceptable in certain OS platform and features.
-fn check_allowed(rules: Vec<Value>) -> bool {
+fn check_allowed(rules: Vec<Value>, enabled_features: &[String]) -> bool {
     // by default it's allowed
     if rules.is_empty() {
         return true;
@@ -623,34 +695,59 @@ fn check_allowed(rules: Vec<Value>) -> bool {
     // else it's disallow by default
     let mut allow = false;
     for rule in rules {
-        let action = rule["action"].as_str().unwrap() == "allow";
-        let os = rule["os"].clone();
-        if !os.is_object() {
-            allow = action;
+        let action = if let Some(action) = rule["action"].as_str() {
+            action == "allow"
+        } else {
             continue;
+        };
+        let os_passed = check_os(&rule);
+        let features_passed = check_features(&rule, enabled_features);
+        if os_passed && features_passed {
+            allow = action
         }
-        if !os["name"].is_string() {
-            allow = action;
-            continue;
-        }
-        if PLATFORM_INFO.os_family.to_string() != os["name"].as_str().unwrap() {
-            continue;
-        }
-        if os["features"].is_object() {
-            return false;
-        }
-        if !os["version"].is_string() {
-            allow = action;
-            continue;
-        }
-        let version = os["version"].as_str().unwrap();
-        if Regex::is_match(
-            &Regex::new(version).unwrap(),
-            (PLATFORM_INFO.os_version.to_string()).as_ref(),
-        ) {
-            allow = action;
-        }
-        // todo: check `features`
     }
     allow
+}
+
+fn check_os(rule: &Value) -> bool {
+    if let Some(os) = rule["os"].as_object() {
+        let name_check_passed = if let Some(name) = os.get("name") {
+            if let Some(name) = name.as_str() {
+                PLATFORM_INFO.os_family.to_string() == name
+            } else {
+                true
+            }
+        } else {
+            true
+        };
+        let version_check_passed = if let Some(version) = os.get("version") {
+            if let Some(version) = version.as_str() {
+                Regex::is_match(
+                    &Regex::new(version).unwrap(),
+                    (PLATFORM_INFO.os_version.to_string()).as_ref(),
+                )
+            } else {
+                true
+            }
+        } else {
+            true
+        };
+        name_check_passed && version_check_passed
+    } else {
+        true
+    }
+}
+
+fn check_features(rule: &Value, enabled_features: &[String]) -> bool {
+    if let Some(features) = rule["features"].as_object() {
+        let mut enabled_features_iter = enabled_features.iter();
+        features
+            .iter()
+            .filter(|x| enabled_features_iter.any(|y| x.0 == y) && x.1.as_bool().unwrap_or(false))
+            .collect::<Vec<_>>()
+            .len()
+            == features.len()
+    } else {
+        true
+    }
 }
