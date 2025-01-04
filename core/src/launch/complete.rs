@@ -46,7 +46,7 @@ pub async fn complete_files(instance: &Instance, minecraft_location: &MinecraftL
 async fn complete_assets_files(instance: &Instance, minecraft_location: &MinecraftLocation) {
     let version =
         Version::from_versions_folder(minecraft_location, &instance.get_version_id()).unwrap();
-    let version = version.parse(minecraft_location).await.unwrap();
+    let version = version.parse(minecraft_location, &[]).await.unwrap();
     let assets_downloads =
         generate_assets_downloads(version.asset_index.unwrap(), minecraft_location)
             .await
@@ -61,7 +61,7 @@ async fn complete_assets_files(instance: &Instance, minecraft_location: &Minecra
 async fn complete_libraries_files(instance: &Instance, minecraft_location: &MinecraftLocation) {
     let version =
         Version::from_versions_folder(minecraft_location, &instance.get_version_id()).unwrap();
-    let version = version.parse(minecraft_location).await.unwrap();
+    let version = version.parse(minecraft_location, &[]).await.unwrap();
     let library_downloads = generate_libraries_downloads(&version.libraries, minecraft_location);
     let downloads = filter_correct_files(library_downloads).await;
     if !downloads.is_empty() {

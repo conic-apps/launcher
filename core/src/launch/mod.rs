@@ -102,7 +102,7 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> R
     info!("Generating startup parameters");
     let version = Version::from_versions_folder(&minecraft_location, &instance.get_version_id())
         .unwrap()
-        .parse(&minecraft_location)
+        .parse(&minecraft_location, &launch_options.get_enabled_features())
         .await
         .unwrap();
     let command_arguments = generate_command_arguments(

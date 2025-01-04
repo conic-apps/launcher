@@ -63,6 +63,9 @@ pub struct LaunchOptions {
     /// Add extra classpath
     pub(crate) extra_class_paths: String,
 
+    /// Add other features flags
+    pub(crate) extra_enabled_features: Vec<String>,
+
     // /// TODO: Support yushi's yggdrasil agent <https://github.com/to2mbn/authlib-injector/wiki>
     // pub(crate) yggdrasil_agent: Option<YggdrasilAgent>,
     pub(crate) gc: GC,
@@ -129,9 +132,19 @@ impl LaunchOptions {
                 .extra_class_paths
                 .clone()
                 .unwrap_or(global_config.extra_class_paths),
+            extra_enabled_features: vec![],
             gc: launch_config.gc.clone().unwrap_or(global_config.gc),
             minecraft_location: MinecraftLocation::new(&DATA_LOCATION.root),
             properties: "{}".to_string(),
         }
+    }
+
+    pub fn get_enabled_features(&self) -> Vec<String> {
+        let mut result = vec!["has_custom_resolution".to_string()];
+        if self.is_demo {
+            result.push("is_demo_user".to_string())
+        }
+        result.extend(self.extra_enabled_features.clone());
+        result
     }
 }

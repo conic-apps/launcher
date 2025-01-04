@@ -103,7 +103,7 @@ pub async fn generate_download_info(
         .text()
         .await?;
     let version = version::Version::from_str(&version_json_raw)?
-        .parse(&minecraft_location)
+        .parse(&minecraft_location, &[])
         .await?;
     let id = &version.id;
 

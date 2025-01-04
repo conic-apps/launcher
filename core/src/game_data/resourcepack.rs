@@ -71,7 +71,7 @@ pub fn parse_resourcepack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<Resourcepac
         name: path
             .file_name()
             .ok_or(anyhow!("No File name"))?
-            .to_string_lossy()
+            .display()
             .to_string(),
         r#type: pack_type,
     })

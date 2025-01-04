@@ -354,7 +354,7 @@ pub fn get_all_levels<P: AsRef<Path>>(path: P) -> Result<HashMap<String, Level>>
         }
 
         let file = dir_entry.path().join("level.dat");
-        let name = dir_entry.file_name().to_string_lossy().to_string();
+        let name = dir_entry.file_name().display().to_string();
         let file = fs::File::open(file);
         if file.is_err() {
             continue;
