@@ -134,6 +134,11 @@ pub async fn generate_command_arguments(
             launch_options.extra_class_paths.clone(),
         ),
     );
+    jvm_options.insert("version_name", version.id.clone());
+    jvm_options.insert(
+        "library_directory",
+        DATA_LOCATION.root.join("libraries").display().to_string(),
+    );
     let mut jvm_arguments = Vec::new();
     if let Some(client) = version.logging.get("client") {
         let argument = &client.argument;
