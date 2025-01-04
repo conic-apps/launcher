@@ -81,8 +81,8 @@ let versions = ref<Array<any>>([]);
 invoke("get_minecraft_version_list")
   .then((res: any) => {
     if (res != null) {
-      versions.value = res.versions;
-      // versions.value = res.versions.filter((i: any) => i.type == 'release')
+      // versions.value = res.versions;
+      versions.value = res.versions.filter((i: any) => i.type == "release");
     } else {
       throw "get_version_list failed!";
     }

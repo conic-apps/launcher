@@ -4,6 +4,7 @@
 
 use std::collections::{HashMap, HashSet};
 
+use log::info;
 use regex::Regex;
 use zip::ZipArchive;
 
@@ -95,12 +96,6 @@ pub async fn generate_command_arguments(
         GC::Z => {
             command_arguments.push("-XX:+UseZGC".to_string());
         }
-    }
-    if PLATFORM_INFO.os_family == OsFamily::Macos {
-        command_arguments.push("XstartOnFirstThread".to_string());
-    }
-    if PLATFORM_INFO.os_family == OsFamily::Windows {
-        command_arguments.push("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump".to_string());
     }
     // TODO: support yggdrasil
     //         if let Some(ygg) = launch_options.yggdrasil_agent.clone() {
@@ -239,7 +234,7 @@ fn resolve_classpath(
             if lib.is_native_library {
                 let path = minecraft.get_library_by_path(&lib.download_info.path);
                 let native_folder = minecraft.get_natives_root(&version.id);
-                println!("{:#?},{:#?}", path, native_folder);
+                info!("Unzip native library {:#?} to {:#?}", path, native_folder);
                 if let Ok(file) = std::fs::File::open(path) {
                     if let Ok(mut zip_archive) = ZipArchive::new(file) {
                         decompression_all(&mut zip_archive, &native_folder).unwrap_or(());
