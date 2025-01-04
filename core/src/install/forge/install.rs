@@ -4,8 +4,9 @@
 
 use std::{io::BufRead, path::PathBuf, process::Stdio};
 
-use log::{debug, error, info};
+use log::{error, info, trace};
 use tokio::io::AsyncWriteExt;
+use uuid::Uuid;
 
 use crate::{platform::DELIMITER, DATA_LOCATION, HTTP_CLIENT};
 
@@ -31,7 +32,7 @@ pub async fn install(
         info!("Using bootstrapper");
         Some(FORGE_INSTALL_BOOTSTRAPPER)
     };
-    info!("Start downloading the installer");
+    info!("Start downloading the forge installer");
     let installer_path = download_installer(mcversion, forge_version).await?;
     info!("Saving bootstrapper");
     let bootstrapper_path = DATA_LOCATION.temp.join("forge-install-bootstrapper.jar");
@@ -39,7 +40,7 @@ pub async fn install(
         tokio::fs::write(&bootstrapper_path, bootstrapper).await?;
     }
     let java = DATA_LOCATION.default_jre.clone();
-    info!("Starting installer");
+    info!("Running installer");
     let mut command = match bootstrapper {
         Some(_) => std::process::Command::new(java)
             .arg("-cp")
@@ -67,6 +68,7 @@ pub async fn install(
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
     let mut success = false;
+    let pid = command.id();
     while out.read_line(&mut buf).is_ok() {
         if let Ok(Some(_)) = command.try_wait() {
             break;
@@ -77,7 +79,7 @@ pub async fn install(
         } else {
             let lines: Vec<_> = buf.split("\n").collect();
             if let Some(last) = lines.get(lines.len() - 2) {
-                debug!("{}", last);
+                trace!("[{}] {}", pid, last);
             }
         }
     }
@@ -94,7 +96,7 @@ pub async fn install(
 async fn download_installer(mcversion: &str, forge_version: &str) -> anyhow::Result<PathBuf> {
     let installer_url  = format!("https://maven.minecraftforge.net/net/minecraftforge/forge/{mcversion}-{forge_version}/forge-{mcversion}-{forge_version}-installer.jar");
     info!("The installer url is: {installer_url}");
-    let installer_path = DATA_LOCATION.temp.join("forge-installer.jar");
+    let installer_path = DATA_LOCATION.temp.join(format!("{}.jar", Uuid::new_v4()));
     tokio::fs::create_dir_all(
         installer_path
             .parent()
@@ -104,7 +106,7 @@ async fn download_installer(mcversion: &str, forge_version: &str) -> anyhow::Res
     let mut file = tokio::fs::File::create(&installer_path).await?;
     let response = HTTP_CLIENT.get(installer_url).send().await?;
     if !response.status().is_success() {
-        return Err(anyhow::Error::msg("Forge website return 404"));
+        return Err(anyhow::Error::msg("Forge website return error"));
     }
     let src = response.bytes().await?;
     file.write_all(&src).await?;
