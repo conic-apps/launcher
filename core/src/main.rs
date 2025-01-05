@@ -15,6 +15,7 @@ mod install;
 mod instance;
 mod launch;
 mod platform;
+mod task;
 pub mod utils;
 mod version;
 
