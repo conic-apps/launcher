@@ -2,10 +2,11 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{collections::HashMap, io::Read, os::unix::fs::PermissionsExt, path::Path};
-
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
+#[cfg(not(windows))]
+use std::os::unix::fs::PermissionsExt;
+use std::{collections::HashMap, io::Read, path::Path};
 use tokio::io::AsyncWriteExt;
 
 use crate::{
