@@ -150,8 +150,8 @@ impl JavaRuntimeInfo {
         let downloads = generate_downloads(install_directory, &manifest.files);
         download_files(downloads).await.unwrap();
         info!("Creating links and setting permissions");
+        #[cfg(not(windows))]
         for (path, file_info) in manifest.files {
-            #[cfg(not(windows))]
             if let JavaFileInfo::Link { target } = file_info {
                 let path = install_directory.join(path);
                 tokio::fs::create_dir_all(path.parent().unwrap())
@@ -161,7 +161,6 @@ impl JavaRuntimeInfo {
                 tokio::fs::symlink(target, path).await.unwrap();
                 continue;
             }
-            #[cfg(not(windows))]
             if let JavaFileInfo::File {
                 executable: true, ..
             } = &file_info
