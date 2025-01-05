@@ -2,10 +2,11 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{collections::HashMap, io::Read, os::unix::fs::PermissionsExt, path::Path};
-
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
+#[cfg(not(windows))]
+use std::os::unix::fs::PermissionsExt;
+use std::{collections::HashMap, io::Read, path::Path};
 use tokio::io::AsyncWriteExt;
 
 use crate::{
@@ -149,6 +150,7 @@ impl JavaRuntimeInfo {
         let downloads = generate_downloads(install_directory, &manifest.files);
         download_files(downloads).await.unwrap();
         info!("Creating links and setting permissions");
+        #[cfg(not(windows))]
         for (path, file_info) in manifest.files {
             if let JavaFileInfo::Link { target } = file_info {
                 let path = install_directory.join(path);
@@ -157,14 +159,17 @@ impl JavaRuntimeInfo {
                     .unwrap();
                 let _ = tokio::fs::remove_file(&path).await;
                 tokio::fs::symlink(target, path).await.unwrap();
-            } else if let JavaFileInfo::File {
+                continue;
+            }
+            if let JavaFileInfo::File {
                 executable: true, ..
             } = &file_info
             {
                 let path = install_directory.join(path);
                 let mut perm = tokio::fs::metadata(&path).await.unwrap().permissions();
                 perm.set_mode(0o755);
-                tokio::fs::set_permissions(path, perm).await.unwrap()
+                tokio::fs::set_permissions(path, perm).await.unwrap();
+                continue;
             }
         }
     }
