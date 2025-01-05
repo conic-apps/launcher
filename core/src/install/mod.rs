@@ -2,8 +2,17 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread,
+    time::Duration,
+};
+
 use forge::version_list::ForgeVersionList;
-use log::{debug, error, info};
+use log::{debug, info};
 use neoforged::NeoforgedVersionList;
 use quilt::QuiltVersionList;
 use tauri::Emitter;
@@ -12,9 +21,10 @@ use vanilla::generate_download_info;
 
 use crate::{
     config::instance::{InstanceRuntime, ModLoaderType},
-    download::{download_files, Progress, ProgressError},
+    download::download_files,
     folder::MinecraftLocation,
     instance::Instance,
+    task::{Progress, Task},
     version::VersionManifest,
     Storage, DATA_LOCATION, MAIN_WINDOW,
 };
@@ -73,16 +83,23 @@ pub async fn install(
     storage: tauri::State<'_, Storage>,
     instance: Instance,
 ) -> std::result::Result<(), ()> {
-    MAIN_WINDOW
-        .emit(
-            "install_progress",
-            Progress {
-                completed: 0,
-                total: 0,
-                step: 1, // Step 1 is get version info
-            },
-        )
-        .unwrap();
+    let progress = Progress::new();
+    let finished = Arc::new(AtomicBool::new(false));
+    let progress_sender_thread = {
+        let progress = progress.clone();
+        let finished = finished.clone();
+        thread::spawn(move || {
+            while !finished.load(Ordering::SeqCst) {
+                progress.send();
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        })
+    };
+    {
+        #[allow(clippy::unwrap_used)]
+        let mut task = progress.task.lock().unwrap();
+        *task = Task::PrepareInstallGame;
+    }
     info!(
         "Start installing the game for instance {}",
         instance.config.name
@@ -99,50 +116,35 @@ pub async fn install(
         None => info!("-> Mod loader version: none"),
     };
     info!("Generating download task...");
-    let download_list = match generate_download_info(
+    let download_list = generate_download_info(
         &runtime.minecraft,
         MinecraftLocation::new(&DATA_LOCATION.root),
     )
     .await
-    {
-        Ok(x) => x,
-        Err(_) => {
-            MAIN_WINDOW
-                .emit("install_error", ProgressError { step: 1 })
-                .unwrap();
-            return Err(());
-        }
-    };
+    .unwrap();
     info!("Start downloading file");
     let config = storage.config.lock().unwrap().clone();
-    download_files(download_list, true, config.download).await;
+    download_files(download_list, &progress, config.download, false)
+        .await
+        .unwrap();
+    info!("Installing Java");
+    {
+        #[allow(clippy::unwrap_used)]
+        let mut task = progress.task.lock().unwrap();
+        *task = Task::InstallJava;
+    }
     let java_version_list = java::MojangJavaVersionList::new().await.unwrap();
     let java_for_current_platform = java_version_list.get_current_platform().unwrap();
-    info!("Installing Java");
     java::group_install(&DATA_LOCATION.root.join("java"), java_for_current_platform).await;
     if runtime.mod_loader_type.is_some() {
         info!("Install mod loader");
-        MAIN_WINDOW
-            .emit(
-                "install_progress",
-                Progress {
-                    completed: 0,
-                    total: 0,
-                    step: 4,
-                },
-            )
-            .unwrap();
-        match install_mod_loader(runtime).await {
-            Ok(_) => (),
-            Err(_) => {
-                error!("Failed to install mod loader");
-                MAIN_WINDOW
-                    .emit("install_error", ProgressError { step: 4 })
-                    .unwrap();
-                return Err(());
-            }
+        {
+            #[allow(clippy::unwrap_used)]
+            let mut task = progress.task.lock().unwrap();
+            *task = Task::InstallModLoader;
         };
-    }
+        install_mod_loader(runtime).await.unwrap();
+    };
     debug!("Saving lock file");
     let mut lock_file = tokio::fs::File::create(
         DATA_LOCATION
@@ -153,6 +155,7 @@ pub async fn install(
     .unwrap();
     lock_file.write_all(b"ok").await.unwrap();
     MAIN_WINDOW.emit("install_success", "").unwrap();
+    let _ = progress_sender_thread.join();
     Ok(())
 }
 
