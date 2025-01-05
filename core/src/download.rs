@@ -8,22 +8,22 @@ use std::{
     path::PathBuf,
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
-        mpsc::{self, Receiver},
         Arc,
     },
     thread,
     time::Duration,
 };
 
-use futures::StreamExt;
+use futures::{StreamExt, TryStreamExt};
 use log::warn;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use tauri::{Emitter, Url};
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 
 use crate::{
     config::download::{DownloadConfig, MirrorConfig},
+    task::{Progress, Task},
     HTTP_CLIENT, MAIN_WINDOW,
 };
 
@@ -59,7 +59,6 @@ impl MirrorUsage {
                 .collect(),
         }
     }
-    // TODO: 设置镜像被使用的频率，实现方式：y.1.load.... 乘一个数放在cmp右面
     /// Get a fewest connections libraries mirror
     fn get_libraries_mirror(&self, disabled: &[String]) -> Option<Mirror> {
         let (k, v) = self
@@ -146,65 +145,43 @@ impl Download {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize)]
-pub struct Progress {
-    pub completed: usize,
-    pub total: usize,
-    pub step: usize,
-}
-
-impl Progress {
-    fn send(completed: usize, total: usize, step: usize) {
-        MAIN_WINDOW
-            .emit(
-                "install_progress",
-                Progress {
-                    completed,
-                    total,
-                    step,
-                },
-            )
-            .expect("Could not send message to main window");
-    }
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct ProgressError {
-    pub step: usize,
-}
-
-impl ProgressError {
-    fn send(step: usize) {
-        MAIN_WINDOW.emit("install_error", Self { step }).unwrap();
-    }
-}
-
-fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
+async fn calculate_sha1_from_read<R>(source: &mut R) -> anyhow::Result<String>
+where
+    R: AsyncRead + Unpin,
+{
     let mut hasher = sha1_smol::Sha1::new();
     let mut buffer = [0; 1024];
     loop {
-        let bytes_read = source.read(&mut buffer).unwrap();
+        let bytes_read = source.read(&mut buffer).await?;
         if bytes_read == 0 {
             break;
         }
         hasher.update(&buffer[..bytes_read]);
     }
-    hasher.digest().to_string()
+    Ok(hasher.digest().to_string())
 }
 
-fn verify_existing_files(downloads: Vec<Download>) -> Vec<Download> {
-    let finished: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-    let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    let counter_sender_thread = {
-        let check_files_finished = finished.clone();
-        let counter = counter.clone();
-        thread::spawn(move || {
-            while !check_files_finished.load(Ordering::SeqCst) {
-                thread::sleep(Duration::from_millis(500));
-                Progress::send(counter.load(Ordering::SeqCst), 0, 2);
-            }
-        })
-    };
+fn calculate_sha1_from_read_sync<R: Read>(source: &mut R) -> anyhow::Result<String> {
+    let mut hasher = sha1_smol::Sha1::new();
+    let mut buffer = [0; 1024];
+    loop {
+        let bytes_read = source.read(&mut buffer)?;
+        if bytes_read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..bytes_read]);
+    }
+    Ok(hasher.digest().to_string())
+}
+
+fn verify_existing_files(downloads: Vec<Download>, progress: &Progress) -> Vec<Download> {
+    let completed = progress.completed.clone();
+    {
+        #[allow(clippy::unwrap_used)]
+        let mut task = progress.task.lock().unwrap();
+        *task = Task::VerifyExistingFiles;
+    }
+    progress.total.store(0, Ordering::SeqCst);
     let filter_op = |download: &Download| {
         if std::fs::metadata(&download.file).is_err() {
             return true;
@@ -218,77 +195,19 @@ fn verify_existing_files(downloads: Vec<Download>) -> Vec<Download> {
         if download.sha1.is_none() {
             return true;
         };
-        let file_hash = calculate_sha1_from_read(&mut file);
-        counter.clone().fetch_add(1, Ordering::SeqCst);
+        let file_hash = match calculate_sha1_from_read_sync(&mut file) {
+            Ok(x) => x,
+            Err(_) => return true,
+        };
+        completed.fetch_add(1, Ordering::SeqCst);
         &file_hash != download.sha1.as_ref().unwrap()
     };
     let downloads: Vec<_> = downloads.into_par_iter().filter(filter_op).collect();
-    finished.store(true, Ordering::SeqCst);
-    counter_sender_thread.join().unwrap();
     downloads
 }
 
-pub async fn download_files(downloads: Vec<Download>, send_error: bool, config: DownloadConfig) {
-    let downloads: Vec<Download> = verify_existing_files(downloads)
-        .into_iter()
-        .map(|x| x.classify())
-        .collect();
-
-    let counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    let total = downloads.len();
-    let speed_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    let running_counter: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    let (tx, rx) = mpsc::channel();
-    let (tx2, rx2) = mpsc::channel();
-    let speed_thread = {
-        let speed_counter = speed_counter.clone();
-        thread::spawn(|| speed_counter_loop(speed_counter, rx))
-    };
-    let error = Arc::new(AtomicBool::new(false));
-    let mirror_usage = MirrorUsage::new(config.mirror);
-    let mirror_usage_sender_thread = {
-        let mirror_usage = mirror_usage.clone();
-        thread::spawn(move || loop {
-            if rx2.try_recv() == Ok("terminate") {
-                break;
-            }
-            MAIN_WINDOW.emit("mirror_usage", &mirror_usage).unwrap();
-            thread::sleep(Duration::from_millis(500));
-        })
-    };
-    Progress::send(0, total, 3);
-
-    futures::stream::iter(downloads)
-        .map(|task| {
-            download_file_future(
-                &mirror_usage,
-                &error,
-                &speed_counter,
-                &counter,
-                task,
-                config.max_download_speed,
-                send_error,
-            )
-        })
-        .buffer_unordered(config.max_connections)
-        .for_each_concurrent(None, |_| async {
-            let counter = counter.clone().load(Ordering::SeqCst);
-            running_counter.fetch_sub(1, Ordering::SeqCst);
-            Progress::send(counter, total, 3);
-        })
-        .await;
-    tx.send("terminate").unwrap();
-    tx2.send("terminate").unwrap();
-    speed_thread.join().unwrap();
-    mirror_usage_sender_thread.join().unwrap();
-}
-
-fn speed_counter_loop(counter: Arc<AtomicUsize>, rx: Receiver<&str>) {
-    loop {
-        let message = rx.try_recv();
-        if message == Ok("terminate") {
-            break;
-        }
+fn speed_counter_loop(counter: Arc<AtomicUsize>, finished: Arc<AtomicBool>) {
+    while finished.load(Ordering::SeqCst) {
         MAIN_WINDOW
             .emit("download_speed", counter.load(Ordering::SeqCst))
             .unwrap();
@@ -297,20 +216,76 @@ fn speed_counter_loop(counter: Arc<AtomicUsize>, rx: Receiver<&str>) {
     }
 }
 
+fn mirror_usage_sender_loop(mirror_usage: MirrorUsage, finished: Arc<AtomicBool>) {
+    while finished.load(Ordering::SeqCst) {
+        MAIN_WINDOW.emit("mirror_usage", &mirror_usage).unwrap();
+        thread::sleep(Duration::from_millis(500));
+    }
+}
+
+pub async fn download_files(
+    downloads: Vec<Download>,
+    progress: &Progress,
+    config: DownloadConfig,
+    verify_checksum: bool,
+) -> anyhow::Result<()> {
+    let downloads: Vec<Download> = verify_existing_files(downloads, progress)
+        .into_iter()
+        .map(|x| x.classify())
+        .collect();
+
+    let finished = Arc::new(AtomicBool::new(false));
+    let speed_thread = {
+        let speed_counter = progress.speed.clone();
+        let finished = finished.clone();
+        thread::spawn(move || speed_counter_loop(speed_counter, finished))
+    };
+
+    let mirror_usage = MirrorUsage::new(config.mirror);
+    let mirror_usage_sender_thread = {
+        let mirror_usage = mirror_usage.clone();
+        let finished = finished.clone();
+        thread::spawn(move || mirror_usage_sender_loop(mirror_usage, finished))
+    };
+
+    progress.completed.store(0, Ordering::SeqCst);
+    progress.total.store(downloads.len(), Ordering::SeqCst);
+    {
+        #[allow(clippy::unwrap_used)]
+        let mut task = progress.task.lock().unwrap();
+        *task = Task::DownloadFiles;
+    }
+
+    let result = futures::stream::iter(downloads)
+        .map(|task| {
+            download_file_future(
+                task,
+                config.max_download_speed,
+                &mirror_usage,
+                progress,
+                verify_checksum,
+            )
+        })
+        .buffer_unordered(config.max_connections)
+        .try_for_each_concurrent(None, |_| async { Ok(()) })
+        .await;
+    finished.store(true, Ordering::SeqCst);
+    let _ = speed_thread.join();
+    let _ = mirror_usage_sender_thread.join();
+    result
+}
+
 async fn download_file_future(
-    mirror_usage: &MirrorUsage,
-    error: &Arc<AtomicBool>,
-    speed_counter: &Arc<AtomicUsize>,
-    counter: &Arc<AtomicUsize>,
     task: Download,
     max_download_speed: usize,
-    send_error: bool,
-) {
+    mirror_usage: &MirrorUsage,
+    progress: &Progress,
+    verify_checksum: bool,
+) -> anyhow::Result<()> {
     let mut disabled_mirrors = vec![];
     let mut retried = 0;
     loop {
         retried += 1;
-        let speed_counter = speed_counter.clone();
         let (task, mirror) = match task
             .clone()
             .assignment_mirror(mirror_usage, &disabled_mirrors)
@@ -318,40 +293,34 @@ async fn download_file_future(
             Some(x) => (x.0, Some(x.1)),
             None => (task.clone(), None),
         };
-        let result = download_file(
-            &task,
-            counter,
-            &speed_counter,
-            max_download_speed,
-            error.clone(),
-        )
-        .await;
+        let result =
+            download_file(&task, max_download_speed, progress.clone(), verify_checksum).await;
         if let Some(mirror) = &mirror {
             mirror.1.fetch_sub(1, Ordering::SeqCst);
         }
         if result.is_ok() {
             break;
         }
+        let error = match result {
+            Ok(_) => break,
+            Err(x) => x,
+        };
         warn!("Downloaded failed: {}, retried: {}", &task.url, retried);
         if let Some(mirror) = mirror {
             disabled_mirrors.push(mirror.0);
         }
         if retried >= 5 {
-            error.store(true, Ordering::SeqCst);
-            if send_error {
-                ProgressError::send(3);
-            }
-            break;
+            return Err(error);
         }
     }
+    Ok(())
 }
 
-async fn download_file(
+pub async fn download_file(
     task: &Download,
-    counter: &Arc<AtomicUsize>,
-    speed_counter: &Arc<AtomicUsize>,
     max_download_speed: usize,
-    error: Arc<AtomicBool>,
+    progress: Progress,
+    verify_checksum: bool,
 ) -> anyhow::Result<()> {
     let file_path = task.file.clone();
     tokio::fs::create_dir_all(file_path.parent().ok_or(anyhow::Error::msg(
@@ -361,18 +330,23 @@ async fn download_file(
     let mut response = HTTP_CLIENT.get(task.url.clone()).send().await?;
     let mut file = tokio::fs::File::create(&file_path).await?;
     while let Some(chunk) = response.chunk().await? {
-        if max_download_speed > 1024 {
-            while speed_counter.load(Ordering::SeqCst) > max_download_speed {
-                tokio::time::sleep(Duration::from_millis(100)).await;
-            }
-        }
-        if error.load(Ordering::SeqCst) {
-            // Return `Ok(())` because we have already sent an error to the frontend
-            return Ok(());
+        while progress.speed.load(Ordering::SeqCst) > max_download_speed
+            && max_download_speed > 1024
+        {
+            tokio::time::sleep(Duration::from_millis(100)).await;
         }
         file.write_all(&chunk).await?;
-        speed_counter.fetch_add(chunk.len(), Ordering::SeqCst);
+        progress.speed.fetch_add(chunk.len(), Ordering::SeqCst);
     }
-    counter.fetch_add(1, Ordering::SeqCst);
+    file.sync_all().await?;
+    if let Some(sha1) = task.sha1.clone() {
+        #[allow(clippy::collapsible_if)]
+        if verify_checksum {
+            if calculate_sha1_from_read(&mut file).await? != sha1 {
+                return Err(anyhow::Error::msg("sha1 check failed".to_string()));
+            }
+        }
+    }
+    progress.completed.fetch_add(1, Ordering::SeqCst);
     Ok(())
 }
