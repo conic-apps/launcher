@@ -157,14 +157,18 @@ impl JavaRuntimeInfo {
                     .unwrap();
                 let _ = tokio::fs::remove_file(&path).await;
                 tokio::fs::symlink(target, path).await.unwrap();
-            } else if let JavaFileInfo::File {
+                continue;
+            }
+            #[cfg(not(windows))]
+            if let JavaFileInfo::File {
                 executable: true, ..
             } = &file_info
             {
                 let path = install_directory.join(path);
                 let mut perm = tokio::fs::metadata(&path).await.unwrap().permissions();
                 perm.set_mode(0o755);
-                tokio::fs::set_permissions(path, perm).await.unwrap()
+                tokio::fs::set_permissions(path, perm).await.unwrap();
+                continue;
             }
         }
     }
