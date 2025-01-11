@@ -35,16 +35,17 @@ jobs:
         run: cd core && cargo fmt --all -- --check
 
   clippy:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        clippy:
-          - { args: "", key: "empty" }
-          - { args: "--release", key: "release" }
+        include:
+          - platform: "ubuntu-latest"
+          - platform: "windows-latest"
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
       - name: install dependencies
+        if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y webkit2gtk-4.1 libayatana-appindicator3-dev
@@ -57,12 +58,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ./core -> target
-          save-if: ${{ matrix.clippy.key == 'all' }}
 
       - name: Run cargo check
         working-directory: ./core
         run: cargo check
 
-      - name: Run clippy - ${{ matrix.clippy.key }}
+      - name: Run clippy
         working-directory: ./core
-        run: cargo clippy --manifest-path ./Cargo.toml --all-targets ${{ matrix.clippy.args }} -- -D warnings
+        run: cargo clippy --manifest-path ./Cargo.toml --all-targets --release -- -D warnings
