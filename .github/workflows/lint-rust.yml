@@ -35,7 +35,9 @@ jobs:
         run: cd core && cargo fmt --all -- --check
 
   clippy:
-    runs-on: ["ubuntu-latest", "windows-latest"]
+    runs-on:
+      - ubuntu-latest
+      - windows-latest
     strategy:
       matrix:
         clippy:
