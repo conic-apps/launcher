@@ -21,10 +21,12 @@ concurrency:
 
 jobs:
   test:
-    runs-on:
-      - ubuntu-latest
-      - windows-latest
-
+    strategy:
+      matrix:
+        include:
+          - platform: "ubuntu-latest"
+          - platform: "windows-latest"
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
