@@ -19,7 +19,7 @@ jobs:
       app_version: ${{ steps.step.outputs.text }}
   build-arm-linux:
     needs: [get-version]
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux-arm64]
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +29,12 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           yarn install
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./core -> target"
+          cache-on-failure: true
 
       - name: Build the app
         env:
@@ -113,9 +119,6 @@ jobs:
         with:
           workspaces: "./core -> target"
           cache-on-failure: true
-      # - name: install tree
-      #   if: matrix.platform == 'macos-latest'
-      #   run: brew install tree
 
       - name: install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
