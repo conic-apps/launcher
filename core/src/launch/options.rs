@@ -13,11 +13,21 @@ use crate::{
     DATA_LOCATION,
 };
 
+/// Represents a game profile used for launching Minecraft.
+///
+/// Contains player name and UUID.
 pub struct GameProfile {
+    /// The player's in-game name.
     pub name: String,
+
+    /// The UUID associated with the game profile.
     pub uuid: String,
 }
 
+/// Represents all launch options required to start a Minecraft instance.
+///
+/// These include memory settings, screen resolution, authentication tokens,
+/// optional server connection info, and custom JVM/MC arguments.
 pub struct LaunchOptions {
     /// User selected game profile.
     ///
@@ -33,7 +43,7 @@ pub struct LaunchOptions {
     /// Max memory, this will add a jvm flag -Xmx to the command result
     pub(crate) max_memory: usize,
 
-    /// Directly launch to a server. TODO: support 1.21.1
+    /// Enter a server after launch. TODO: support 1.21.1
     pub(crate) server: Option<Server>,
 
     /// window width
@@ -52,18 +62,21 @@ pub struct LaunchOptions {
     /// User custom additional minecraft command line arguments.
     pub(crate) extra_mc_args: String,
 
+    /// Launch game in demo mode, I don't know who want it:)
+    /// NOTE: Should NOT allow user who don't have the game access this launcher because legal
+    /// issues
     pub(crate) is_demo: bool,
 
-    /// Add `-Dfml.ignoreInvalidMinecraftCertificates=true` to jvm argument
+    /// Adds `-Dfml.ignoreInvalidMinecraftCertificates=true` to jvm argument
     pub(crate) ignore_invalid_minecraft_certificates: bool,
 
-    /// Add `-Dfml.ignorePatchDiscrepancies=true` to jvm argument
+    /// Adds `-Dfml.ignorePatchDiscrepancies=true` to jvm argument
     pub(crate) ignore_patch_discrepancies: bool,
 
-    /// Add extra classpath
+    /// Adds extra classpath
     pub(crate) extra_class_paths: String,
 
-    /// Add other features flags
+    /// Adds other features flags
     pub(crate) extra_enabled_features: Vec<String>,
 
     // /// TODO: Support yushi's yggdrasil agent <https://github.com/to2mbn/authlib-injector/wiki>
@@ -73,14 +86,28 @@ pub struct LaunchOptions {
     pub(crate) minecraft_location: MinecraftLocation,
     pub(crate) launcher_name: String,
 
+    /// Optional command used to wrap the final launch command.
     pub wrap_command: String,
 
+    /// Shell command to execute before the game launches.
     pub execute_before_launch: String,
 
+    /// Shell command to execute after the game exits.
     pub execute_after_launch: String,
 }
 
 impl LaunchOptions {
+    /// Creates a new [`LaunchOptions`] instance from the given Minecraft instance and account.
+    ///
+    /// Launch configuration is resolved from both global and per-instance settings,
+    /// with per-instance settings taking priority when defined.
+    ///
+    /// # Arguments
+    /// * `instance` - The Minecraft instance to launch.
+    /// * `account` - The account used to authenticate the session.
+    ///
+    /// # Returns
+    /// A fully populated `LaunchOptions` struct used for launching the game.
     pub fn new(instance: &Instance, account: Account) -> Self {
         let global_config = read_config_file().launch;
         let launch_config = &instance.config.launch_config;
@@ -139,6 +166,11 @@ impl LaunchOptions {
         }
     }
 
+    /// Returns a list of enabled feature flags for the current launch configuration.
+    ///
+    /// By default, includes `has_custom_resolution`, and may include:
+    /// - `is_demo_user` if `is_demo` is true
+    /// - Any features listed in `extra_enabled_features`
     pub fn get_enabled_features(&self) -> Vec<String> {
         let mut result = vec!["has_custom_resolution".to_string()];
         if self.is_demo {

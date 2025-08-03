@@ -15,12 +15,14 @@ use crate::{
     HTTP_CLIENT, PLATFORM_INFO,
 };
 
+/// Represents the availability group and progress index of a Java runtime version.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Availability {
     group: usize,
     progress: usize,
 }
 
+/// Contains metadata for downloading a Java runtime manifest.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ManifestDownloadInfo {
     sha1: String,
@@ -28,12 +30,14 @@ struct ManifestDownloadInfo {
     url: String,
 }
 
+/// Contains the name and release date of a Java runtime version.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Version {
     name: String,
     released: String,
 }
 
+/// Represents the Mojang-provided Java version list for all supported platforms.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MojangJavaVersionList {
     gamecore: HashMap<String, Vec<JavaRuntimeInfo>>,
@@ -53,9 +57,12 @@ pub struct MojangJavaVersionList {
 }
 
 impl MojangJavaVersionList {
+    /// Downloads and returns the full Java version list manifest from Mojang servers.
     pub async fn new() -> anyhow::Result<Self> {
         Ok(HTTP_CLIENT.get("https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json").send().await?.json().await?)
     }
+
+    /// Returns the Java runtime list for the current platform and architecture.
     pub fn get_current_platform(self) -> Option<HashMap<String, Vec<JavaRuntimeInfo>>> {
         match PLATFORM_INFO.os_family {
             OsFamily::Linux => {
@@ -91,6 +98,7 @@ impl MojangJavaVersionList {
     }
 }
 
+/// Raw file metadata used in the Java runtime manifest.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct JavaFileRaw {
     sha1: String,
@@ -98,6 +106,7 @@ struct JavaFileRaw {
     url: String,
 }
 
+/// LZMA-compressed file metadata used in the Java runtime manifest.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct JavaFileLZMA {
     sha1: String,
@@ -105,12 +114,14 @@ struct JavaFileLZMA {
     url: String,
 }
 
+/// Describes both raw and optionally compressed downloads for a Java file.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct JavaFileDownloads {
     lzma: Option<JavaFileLZMA>,
     raw: JavaFileRaw,
 }
 
+/// Enum describing the type and metadata of each Java runtime file.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 enum JavaFileInfo {
@@ -125,11 +136,13 @@ enum JavaFileInfo {
     Link { target: String },
 }
 
+/// Represents the complete manifest structure for a Java runtime version.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Manifest {
     files: HashMap<String, JavaFileInfo>,
 }
 
+/// Holds all data required to download and install a single Java runtime version.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JavaRuntimeInfo {
     availability: Availability,
@@ -138,6 +151,7 @@ pub struct JavaRuntimeInfo {
 }
 
 impl JavaRuntimeInfo {
+    /// Downloads and installs this Java runtime into the given install directory.
     pub(super) async fn install(self, install_directory: &Path) {
         let manifest = HTTP_CLIENT
             .get(self.manifest.url)
@@ -175,12 +189,13 @@ impl JavaRuntimeInfo {
     }
 }
 
+/// Installs all Java runtimes in the provided map into the target installation directory.
 pub(super) async fn group_install(
     install_directory: &Path,
     java_runtimes: HashMap<String, Vec<JavaRuntimeInfo>>,
 ) {
     for (name, runtime_info) in java_runtimes {
-        info!("Installing Java: {}", name);
+        info!("Installing Java: {name}");
         if let Some(runtime_info) = runtime_info.first() {
             runtime_info
                 .clone()
@@ -190,6 +205,7 @@ pub(super) async fn group_install(
     }
 }
 
+/// Generates a list of files to be downloaded based on the manifest.
 fn generate_downloads(
     install_directory: &Path,
     files: &HashMap<String, JavaFileInfo>,
@@ -208,6 +224,7 @@ fn generate_downloads(
     result
 }
 
+/// Downloads all files in the given download list and verifies them.
 async fn download_files(downloads: Vec<Download>) -> anyhow::Result<()> {
     for download in downloads {
         let mut retried = 0;
@@ -221,6 +238,8 @@ async fn download_files(downloads: Vec<Download>) -> anyhow::Result<()> {
     }
     Ok(())
 }
+
+/// Downloads a single file and verifies its SHA1 checksum if provided.
 async fn download_and_check(download: &Download) -> anyhow::Result<()> {
     let file_path = download.file.clone();
     info!("Downloading {}", download.url);
@@ -247,6 +266,8 @@ async fn download_and_check(download: &Download) -> anyhow::Result<()> {
     }
     Ok(())
 }
+
+/// Computes the SHA1 hash of the content read from a readable source.
 fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
     let mut hasher = sha1_smol::Sha1::new();
     let mut buffer = [0; 1024];
