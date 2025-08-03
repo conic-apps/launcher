@@ -134,7 +134,7 @@ impl Default for DataLocation {
             }
             OsFamily::Macos => PathBuf::from("/Users/").join(application_folder_name),
             OsFamily::Linux => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
-                .join(format!(".{}", application_folder_name)),
+                .join(format!(".{application_folder_name}")),
         };
         Self::new(&application_data_path)
     }

@@ -55,8 +55,6 @@ const className = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: all 0.1s ease;
-  // border-bottom: 1px solid #00000079;
   margin: 0;
   margin-bottom: 1px;
   background: var(--setting-item-background);

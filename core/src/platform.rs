@@ -7,10 +7,19 @@ use std::fmt::Display;
 use os_info::{Type, Version};
 use serde::{Deserialize, Serialize};
 
+/// Represents the high-level operating system family.
+///
+/// This is an abstraction over detailed OS types (e.g., Ubuntu, Windows 10) to group
+/// them by family: Windows, Linux, or macOS.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub enum OsFamily {
+    /// Microsoft Windows OS family
     Windows,
+
+    /// Linux-based distributions (e.g., Ubuntu, Arch, Debian)
     Linux,
+
+    /// Apple macOS family
     Macos,
 }
 
@@ -24,23 +33,48 @@ impl Display for OsFamily {
     }
 }
 
+/// Contains detailed platform-related information, such as architecture,
+/// OS type, version, and edition.
+///
+/// Typically used for environment-specific behavior or diagnostics.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct PlatformInfo {
+    /// The target CPU architecture (e.g., "x64", "arm").
     pub arch: String,
+
+    /// The architecture string as reported by `uname`, if available.
     pub arch_from_uname: Option<String>,
+
+    /// The operating system type, as reported by the `os_info` crate.
     pub os_type: Type,
+
+    /// The general OS family classification (Windows/Linux/macOS).
     pub os_family: OsFamily,
+
+    /// The version of the OS (e.g., 10.15.7, 22.04, etc.).
     pub os_version: Version,
+
+    /// The edition of the OS (e.g., "Home", "Professional"), if available.
     pub edition: Option<String>,
 }
 
+/// The path delimiter character used in environment variables like `PATH`.
+///
+/// On Windows, this is `";"`, and on other systems it is `":"`.
 #[cfg(windows)]
 pub const DELIMITER: &str = ";";
 #[cfg(not(windows))]
 pub const DELIMITER: &str = ":";
 
 impl PlatformInfo {
-    /// get platform information
+    /// Constructs a new [`PlatformInfo`] instance using compile-time and runtime system data.
+    ///
+    /// - Detects architecture using `cfg!(target_arch)`
+    /// - Detects OS family using `cfg!(target_os)`
+    /// - Uses `os_info` crate to get detailed version, type, and edition info
+    ///
+    /// # Panics
+    /// Panics if the OS is not supported by the program.
     pub fn new() -> Self {
         let os_family = if cfg!(target_os = "windows") {
             OsFamily::Windows

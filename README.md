@@ -13,19 +13,19 @@ Please go to the [official website](https://amethyst.btlcraft.top) to download t
 
 ## Features
 
--   You can install `Minecraft`, `Forge`, `Fabric`, `Optifine`, `Quilt`
--   **Cross-platform**, Launcher written in rust that runs on Windows, MacOS, and GNU/Linux
--   **Cosmic unbeatable download speed**, It even takes only 15 seconds to install the game on a system with the Linux kernel
--   **Instance management**, Supports grouping and other functions to easily manage multiple instances
--   **Mod download**, You can download mods from Curseforge, Modrinth, FTB directly from the launcher
+- You can install `Minecraft`, `Forge`, `Fabric`, `Optifine`, `Quilt`
+- **Cross-platform**, Launcher written in rust that runs on Windows, MacOS, and GNU/Linux
+- **Cosmic unbeatable download speed**, It even takes only 15 seconds to install the game on a system with the Linux kernel
+- **Instance management**, Supports grouping and other functions to easily manage multiple instances
+- **Mod download**, You can download mods from Curseforge, Modrinth, FTB directly from the launcher
 
 ## Advantages
 
--   **Save storage space**, the same material packs enabled in multiple instances are only stored once
--   **Automatically test for modules that will not start**, you can automatically test which modules will cause crashes when the game starts
--   **Customize the appearance of the launcher**, every inch of the launcher can be customized
--   **Modify the game rules of the archive in the launcher**, no need to enter commands in the game
--   **Custom download source**, you can use self-built mirror source without compiling it yourself
+- **Save storage space**, the same material packs enabled in multiple instances are only stored once
+- **Automatically test for modules that will not start**, you can automatically test which modules will cause crashes when the game starts
+- **Customize the appearance of the launcher**, every inch of the launcher can be customized
+- **Modify the game rules of the archive in the launcher**, no need to enter commands in the game
+- **Custom download source**, you can use self-built mirror source without compiling it yourself
 
 ## License
 

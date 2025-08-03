@@ -51,7 +51,7 @@ pub fn modify_nbt(nbt_value: Value, target: &str, value: Value) -> Result<Value>
         if is_first {
             buf = value.clone();
             last_name = name.to_string();
-            nbt_path_mut = nbt_path_mut.replace(format!(":{}", name).as_str(), "");
+            nbt_path_mut = nbt_path_mut.replace(format!(":{name}").as_str(), "");
             continue;
         }
         let old = get_value(nbt_value.clone(), &nbt_path_mut).unwrap();
@@ -63,7 +63,7 @@ pub fn modify_nbt(nbt_value: Value, target: &str, value: Value) -> Result<Value>
         buf = Value::Compound(old);
         last_name = name.to_string();
         if !is_last {
-            nbt_path_mut = nbt_path_mut.replace(format!(":{}", name).as_str(), "");
+            nbt_path_mut = nbt_path_mut.replace(format!(":{name}").as_str(), "");
             continue;
         }
         result = if let Value::Compound(map) = nbt_value.clone() {

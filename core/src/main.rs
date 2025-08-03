@@ -148,7 +148,7 @@ async fn main() {
             set_hook(Box::new(|info: &PanicHookInfo| {
                 let backtrace = format!("{:#?}", Backtrace::new());
                 let backtrace_first_ten_lines: Vec<&str> = backtrace.lines().take(12).collect();
-                println!("{:#?}", backtrace);
+                println!("{backtrace:#?}");
                 APP_HANDLE
                     .get()
                     .unwrap()

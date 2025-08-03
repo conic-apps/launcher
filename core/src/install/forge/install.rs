@@ -10,10 +10,30 @@ use uuid::Uuid;
 
 use crate::{platform::DELIMITER, DATA_LOCATION, HTTP_CLIENT};
 
-/// Forge Install Bootstrapper - By bangbang93
-/// [Github Repo](https://github.com/bangbang93/forge-install-bootstrapper)
+/// Forge Install Bootstrapper - by bangbang93
+/// [GitHub Repository](https://github.com/bangbang93/forge-install-bootstrapper)
+///
+/// Embedded JAR file used for bootstrapping Forge installation on newer Forge versions.
 const FORGE_INSTALL_BOOTSTRAPPER: &[u8] = include_bytes!("./forge-install-bootstrapper.jar");
 
+/// Installs the specified Forge version for the given Minecraft version into the target directory.
+///
+/// This function downloads the Forge installer, optionally uses the bootstrapper JAR for Forge
+/// versions 25 and above, and executes the installer to install Forge.
+///
+/// # Arguments
+///
+/// * `install_dir` - The directory where Forge should be installed.
+/// * `forge_version` - The Forge version string to install (e.g., "1.20.1-47.1.0").
+/// * `mcversion` - The Minecraft version string associated with this Forge version.
+///
+/// # Errors
+///
+/// Returns an error if downloading the installer, writing files, or running the installer process fails.
+///
+/// # Notes
+///
+/// The function manages temporary files, logging progress and errors throughout the installation.
 pub async fn install(
     install_dir: &PathBuf,
     forge_version: &str,
@@ -75,24 +95,40 @@ pub async fn install(
         }
         if buf.ends_with("\ntrue\n") {
             success = true;
-            info!("Successfully ran the fucking forge installer")
+            info!("Successfully ran the forge installer")
         } else {
             let lines: Vec<_> = buf.split("\n").collect();
             if let Some(last) = lines.get(lines.len() - 2) {
-                trace!("[{}] {}", pid, last);
+                trace!("[{pid}] {last}");
             }
         }
     }
     let output = command.wait_with_output().unwrap();
     if (!success && bootstrapper.is_some()) || !output.status.success() {
         tokio::fs::remove_file(installer_path).await?;
-        error!("Failed to ran forge installer");
-        return Err(anyhow::Error::msg("Failed to ran forge installer"));
+        error!("Failed to run forge installer");
+        return Err(anyhow::Error::msg("Failed to run forge installer"));
     }
     tokio::fs::remove_file(installer_path).await?;
     Ok(())
 }
 
+/// Downloads the Forge installer JAR for the specified Minecraft and Forge versions.
+///
+/// Saves the installer to a temporary file and returns the file path.
+///
+/// # Arguments
+///
+/// * `mcversion` - The Minecraft version string.
+/// * `forge_version` - The Forge version string.
+///
+/// # Returns
+///
+/// A `PathBuf` pointing to the downloaded installer JAR.
+///
+/// # Errors
+///
+/// Returns an error if the download fails or the file cannot be written.
 async fn download_installer(mcversion: &str, forge_version: &str) -> anyhow::Result<PathBuf> {
     let installer_url  = format!("https://maven.minecraftforge.net/net/minecraftforge/forge/{mcversion}-{forge_version}/forge-{mcversion}-{forge_version}-installer.jar");
     info!("The installer url is: {installer_url}");
