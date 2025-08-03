@@ -58,36 +58,6 @@ body {
     color-scheme: dark;
 }
 
-.ball-a,
-.ball-b {
-    position: absolute;
-    z-index: -1;
-}
-
-@keyframes ball-a-move {
-    from {
-        top: -10px;
-        right: 200px;
-    }
-
-    to {
-        top: calc(100vh + 10px);
-        right: 200px;
-    }
-}
-
-@keyframes ball-b-move {
-    from {
-        bottom: -10px;
-        left: 200px;
-    }
-
-    to {
-        bottom: calc(100vh + 10px);
-        left: 200px;
-    }
-}
-
 #window {
     border-radius: 14px;
     width: 100%;
