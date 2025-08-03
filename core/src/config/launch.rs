@@ -4,19 +4,28 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Represents a Minecraft server configuration, the game will enter the
+/// server automatically.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Server {
+    /// The IP address or hostname of the server.
     pub ip: String,
+    /// Optional port number of the server, default is 25565.
     pub port: Option<u16>,
 }
 
-/// User custom jvm gc
+/// Enum representing the Java Garbage Collection algorithms.
 #[derive(Clone, Serialize, Deserialize)]
 pub enum GC {
+    /// Serial GC.
     Serial,
+    /// Parallel GC (young generation).
     Parallel,
+    /// Parallel GC (old generation).
     ParallelOld,
+    /// G1 Garbage Collector (default).
     G1,
+    /// Z Garbage Collector.
     Z,
 }
 
@@ -26,74 +35,83 @@ impl Default for GC {
     }
 }
 
+/// Represents a configuration object for launching a Minecraft instance.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct LaunchConfig {
+    /// Minimum memory to allocate (MB), passed as `-Xms`.
     #[serde(default)]
-    /// Min memory, this will add a jvm flag -XMS to the command result
     pub(crate) min_memory: usize,
 
+    /// Maximum memory to allocate (MB), passed as `-Xmx`.
     #[serde(default = "default_max_memory")]
-    /// Max memory, this will add a jvm flag -Xmx to the command result
     pub(crate) max_memory: usize,
+
+    /// Optional server to connect to when the game launches.
     #[serde(default)]
     pub(crate) server: Option<Server>,
+
+    /// Width of the game window in pixels.
     #[serde(default = "default_width")]
-    /// window width
     pub(crate) width: usize,
 
+    /// Height of the game window in pixels.
     #[serde(default = "default_height")]
-    /// window height
     pub(crate) height: usize,
 
+    /// Whether to launch the game in fullscreen mode.
     #[serde(default)]
     pub(crate) fullscreen: bool,
 
+    /// Additional JVM arguments specified by the user.
     #[serde(default)]
-    /// User custom additional java virtual machine command line arguments.
     pub(crate) extra_jvm_args: String,
 
+    /// Additional Minecraft command-line arguments specified by the user.
     #[serde(default)]
-    /// User custom additional minecraft command line arguments.
     pub(crate) extra_mc_args: String,
 
+    /// Whether to launch in demo mode.
     #[serde(default)]
     pub(crate) is_demo: bool,
 
+    /// Adds `-Dfml.ignoreInvalidMinecraftCertificates=true` to JVM args.
     #[serde(default)]
-    /// Add `-Dfml.ignoreInvalidMinecraftCertificates=true` to jvm argument
     pub(crate) ignore_invalid_minecraft_certificates: bool,
 
+    /// Adds `-Dfml.ignorePatchDiscrepancies=true` to JVM args.
     #[serde(default)]
-    /// Add `-Dfml.ignorePatchDiscrepancies=true` to jvm argument
     pub(crate) ignore_patch_discrepancies: bool,
 
+    /// Additional classpath entries to include.
     #[serde(default)]
-    /// Add extra classpath
     pub(crate) extra_class_paths: String,
 
+    /// Selected Java Garbage Collector.
     #[serde(default)]
-    /// Choose Java Garbage Collection
     pub(crate) gc: GC,
 
+    /// The name of the launcher, passed to the game.
     #[serde(default = "default_launcher_name")]
     pub(crate) launcher_name: String,
 
+    /// A command prefix to wrap around the launch command.
     #[serde(default)]
-    /// Add this to the front of launch command
     pub wrap_command: String,
 
+    /// Script or command to execute before launching the game.
     #[serde(default)]
     pub execute_before_launch: String,
 
+    /// Script or command to execute after the game exits.
     #[serde(default)]
     pub execute_after_launch: String,
 
+    /// If true, skips refreshing the account before launch.
     #[serde(default)]
-    /// Skip refresh account before launch
     pub skip_refresh_account: bool,
 
+    /// If true, skips integrity checks of the game files.
     #[serde(default)]
-    /// Skip check game file integrity
     pub skip_check_files: bool,
 }
 

@@ -17,6 +17,16 @@ use crate::{
     version::{self, AssetIndex, AssetIndexObject, ResolvedVersion, VersionManifest},
 };
 
+/// Generate download entries for all resolved libraries.
+///
+/// # Arguments
+///
+/// * `libraries` - A slice of resolved libraries to download.
+/// * `minecraft_location` - The Minecraft installation directory.
+///
+/// # Returns
+///
+/// A vector of [`Download`] objects describing library files to download.
 pub(crate) fn generate_libraries_downloads(
     libraries: &[ResolvedLibrary],
     minecraft_location: &MinecraftLocation,
@@ -35,6 +45,16 @@ pub(crate) fn generate_libraries_downloads(
         .collect()
 }
 
+/// Generate download entries for all asset files from the asset index.
+///
+/// # Arguments
+///
+/// * `asset_index` - The asset index containing metadata of assets.
+/// * `minecraft_location` - The Minecraft installation directory.
+///
+/// # Returns
+///
+/// A vector of [`Download`] objects for assets, including the index file itself.
 pub async fn generate_assets_downloads(
     asset_index: AssetIndex,
     minecraft_location: &MinecraftLocation,
@@ -72,7 +92,16 @@ pub async fn generate_assets_downloads(
 
 const LOF4J2_CONFIGURATION: &[u8] = include_bytes!("./log4j2.xml");
 
-/// Save the log4j2 configuration file
+/// Override the `log4j2.xml` configuration file for the given version.
+///
+/// # Arguments
+///
+/// * `version` - The resolved Minecraft version.
+/// * `minecraft_location` - The Minecraft installation directory.
+///
+/// # Returns
+///
+/// An empty [`Result`] indicating success or failure.
 pub async fn override_log4j2_configuration_file(
     version: &ResolvedVersion,
     minecraft_location: &MinecraftLocation,
@@ -85,7 +114,17 @@ pub async fn override_log4j2_configuration_file(
     Ok(())
 }
 
-/// Get all the files you need to download
+/// Generate a complete list of required files to download for the specified Minecraft version,
+/// including version metadata, libraries, assets, and client JAR.
+///
+/// # Arguments
+///
+/// * `version_id` - The Minecraft version ID (e.g., `"1.20.1"`).
+/// * `minecraft_location` - The root location of the Minecraft installation.
+///
+/// # Returns
+///
+/// A vector of [`Download`] entries describing what files need to be downloaded.
 pub async fn generate_download_info(
     version_id: &str,
     minecraft_location: MinecraftLocation,

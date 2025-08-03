@@ -9,45 +9,67 @@ use tauri_plugin_http::reqwest;
 pub mod install;
 pub use install::install;
 
+/// Represents a specific version of a Fabric artifact.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FabricArtifactVersion {
+    /// The Minecraft game version this artifact targets.
     pub game_version: Option<String>,
+    /// A separator string used in versioning.
     pub separator: Option<String>,
+    /// The build number associated with this artifact version.
     pub build: Option<usize>,
+    /// The Maven coordinate string identifying the artifact.
     pub maven: String,
+    /// The version string of this artifact.
     pub version: String,
+    /// Whether this artifact version is considered stable.
     pub stable: bool,
 }
 
-/// Fabric Artifacts
+/// Collection of Fabric artifact versions grouped by type.
+///
+/// Includes mappings and loader artifacts.
 #[derive(Deserialize, Serialize)]
 pub struct FabricArtifacts {
+    /// List of mapping artifact versions.
     pub mappings: Vec<FabricArtifactVersion>,
+    /// List of loader artifact versions.
     pub loader: Vec<FabricArtifactVersion>,
 }
 
-/// Fabric Loader Artifact
+/// Represents Fabric loader artifacts including loader, intermediary, and launcher metadata.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FabricLoaderArtifact {
+    /// The Fabric loader artifact version.
     pub loader: FabricArtifactVersion,
+    /// The intermediary artifact version.
     pub intermediary: FabricArtifactVersion,
+    /// Metadata for the launcher.
     pub launcher_meta: LauncherMeta,
 }
 
-/// Yarn Artifacts
+/// Wrapper for a list of Yarn artifact versions.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct YarnArtifactList(Vec<FabricArtifactVersion>);
 
-/// Loader Artifacts
+/// Wrapper for a list of Fabric loader artifacts.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoaderArtifactList(Vec<FabricLoaderArtifact>);
 
 impl LoaderArtifactList {
-    /// get loader artifacts
+    /// Asynchronously fetches loader artifacts list for a given Minecraft version.
+    ///
+    /// # Arguments
+    ///
+    /// * `mcversion` - The Minecraft version string to query loader artifacts for.
+    ///
+    /// # Returns
+    ///
+    /// An `anyhow::Result` containing the loaded `LoaderArtifactList` on success.
     pub async fn new(mcversion: &str) -> anyhow::Result<Self> {
         Ok(reqwest::get(format!(
             "https://meta.fabricmc.net/v2/versions/loader/{mcversion}"
@@ -58,14 +80,20 @@ impl LoaderArtifactList {
     }
 }
 
+/// Metadata information for the Fabric launcher.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LauncherMeta {
+    /// Version number of the launcher metadata.
     pub version: usize,
+
     pub libraries: LauncherMetaLibraries,
+
+    /// Main class entry point of the launcher, stored as JSON value to accommodate varying formats.
     pub main_class: Value,
 }
 
+/// Grouping of launcher libraries categorized by usage context.
 #[derive(Deserialize, Serialize)]
 pub struct LauncherMetaLibraries {
     pub client: Vec<LauncherMetaLibrariesItems>,
@@ -73,8 +101,13 @@ pub struct LauncherMetaLibraries {
     pub server: Vec<LauncherMetaLibrariesItems>,
 }
 
+/// Represents an individual launcher library item.
+///
+/// Each item may have an optional name and URL.
 #[derive(Deserialize, Serialize, Clone)]
 pub struct LauncherMetaLibrariesItems {
+    /// Optional name of the library.
     pub name: Option<String>,
+    /// Optional URL to the library resource.
     pub url: Option<String>,
 }

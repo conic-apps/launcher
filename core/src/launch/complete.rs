@@ -18,6 +18,17 @@ use crate::{
     DATA_LOCATION, HTTP_CLIENT,
 };
 
+/// Completes and verifies all assets and libraries files for the given instance and Minecraft location.
+///
+/// This function checks if lock files exist to skip redundant verification. If lock files are missing,
+/// it will verify and download missing or corrupted assets and libraries, then create the lock files.
+/// > NOTE: If game crashed, the lock file should be delete!
+/// > TODO: Write create date in lock file, auto delete when passing 10 days
+///
+/// # Arguments
+///
+/// * `instance` - The Minecraft instance whose files to verify.
+/// * `minecraft_location` - The Minecraft location to resolve file paths.
 pub async fn complete_files(instance: &Instance, minecraft_location: &MinecraftLocation) {
     let assets_lock_file = DATA_LOCATION
         .get_instance_root(&instance.id)
@@ -43,6 +54,7 @@ pub async fn complete_files(instance: &Instance, minecraft_location: &MinecraftL
     }
 }
 
+/// Completes missing or corrupted asset files for the given instance.
 async fn complete_assets_files(instance: &Instance, minecraft_location: &MinecraftLocation) {
     let version =
         Version::from_versions_folder(minecraft_location, &instance.get_version_id()).unwrap();
@@ -58,6 +70,7 @@ async fn complete_assets_files(instance: &Instance, minecraft_location: &Minecra
     }
 }
 
+/// Completes missing or corrupted library files for the given instance.
 async fn complete_libraries_files(instance: &Instance, minecraft_location: &MinecraftLocation) {
     let version =
         Version::from_versions_folder(minecraft_location, &instance.get_version_id()).unwrap();
@@ -69,6 +82,17 @@ async fn complete_libraries_files(instance: &Instance, minecraft_location: &Mine
     }
 }
 
+/// Filters out downloads that already exist and match the expected SHA1 hash.
+///
+/// Uses parallel iteration for efficiency.
+///
+/// # Arguments
+///
+/// * `downloads` - A vector of Download structs representing files to verify.
+///
+/// # Returns
+///
+/// A vector of Download structs that need to be downloaded or re-downloaded.
 pub async fn filter_correct_files(downloads: Vec<Download>) -> Vec<Download> {
     downloads
         .into_par_iter()
@@ -91,6 +115,15 @@ pub async fn filter_correct_files(downloads: Vec<Download>) -> Vec<Download> {
         .collect()
 }
 
+/// Calculates the SHA1 hash string from a readable source.
+///
+/// # Arguments
+///
+/// * `source` - A mutable reference to an object implementing `Read`.
+///
+/// # Returns
+///
+/// A hexadecimal SHA1 hash string.
 fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
     let mut hasher = sha1_smol::Sha1::new();
     let mut buffer = [0; 1024];
@@ -104,6 +137,17 @@ fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
     hasher.digest().to_string()
 }
 
+/// Downloads the list of files, retrying each up to 5 times on failure.
+///
+/// > NOTE: This function do NOT support parallel download
+///
+/// # Arguments
+///
+/// * `downloads` - Vector of Download structs to download.
+///
+/// # Errors
+///
+/// Returns an error if any download fails after retries.
 async fn download_files(downloads: Vec<Download>) -> anyhow::Result<()> {
     for download in downloads {
         let mut retried = 0;
@@ -118,6 +162,15 @@ async fn download_files(downloads: Vec<Download>) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Downloads a single file and checks its SHA1 hash if available.
+///
+/// # Arguments
+///
+/// * `download` - The Download struct containing URL, file path, and expected SHA1.
+///
+/// # Errors
+///
+/// Returns an error if download fails or SHA1 verification fails.
 async fn download_and_check(download: &Download) -> anyhow::Result<()> {
     let file_path = download.file.clone();
     tokio::fs::create_dir_all(file_path.parent().ok_or(anyhow::Error::msg(

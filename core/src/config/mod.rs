@@ -7,42 +7,65 @@ use serde::{Deserialize, Serialize};
 
 use crate::{account::get_accounts, Storage, DATA_LOCATION};
 
+/// Module for download configuration.
 pub mod download;
+/// Module for game instance configuration.
 pub mod instance;
+/// Module for launch settings and parameters.
 pub mod launch;
 
+/// Represents the update channel selection.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
 pub enum UpdateChannel {
+    /// Weekly builds, potentially unstable.
     Weekly,
+    /// Official release builds.
     Release,
+    /// Snapshot builds for testing.
     Snapshot,
 }
 
 impl Default for UpdateChannel {
+    /// Returns the default update channel, which is `Release`.
     fn default() -> Self {
         Self::Release
     }
 }
 
+/// Configuration options related to accessibility.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
 pub struct AccessibilityConfig {
+    /// Whether to show reminders for new releases.
     #[serde(default = "default_release_reminder")]
     pub release_reminder: bool,
+
+    /// Whether to show reminders for new snapshots.
     #[serde(default = "default_snapshot_reminder")]
     pub snapshot_reminder: bool,
+
+    /// Whether to hide the latest release instance.
     #[serde(default = "default_hide_latest_release")]
     pub hide_latest_release: bool,
+
+    /// Whether to hide the latest snapshot instance.
     #[serde(default = "default_hide_latest_snapshot")]
     pub hide_latest_snapshot: bool,
+
+    /// Whether to changing the game language to local language on first time.
     #[serde(default = "default_change_game_language")]
     pub change_game_language: bool,
+
+    /// Whether to disable UI animations.
     #[serde(default = "default_disable_animations")]
     pub disable_animations: bool,
+
+    /// Whether to enable high contrast mode.
     #[serde(default = "default_high_contrast_mode")]
     pub high_contrast_mode: bool,
 }
 
 impl Default for AccessibilityConfig {
+    /// Returns the default values for accessibility configuration.
     fn default() -> Self {
         Self {
             release_reminder: default_release_reminder(),
@@ -56,8 +79,10 @@ impl Default for AccessibilityConfig {
     }
 }
 
+/// Configuration options related to UI appearance.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
 pub struct AppearanceConfig {
+    /// Theme name, e.g., "dark".
     #[serde(default = "default_theme")]
     pub theme: String,
 }
@@ -67,6 +92,7 @@ fn default_theme() -> String {
 }
 
 impl Default for AppearanceConfig {
+    /// Returns the default appearance configuration.
     fn default() -> Self {
         Self {
             theme: default_theme(),
@@ -74,22 +100,38 @@ impl Default for AppearanceConfig {
     }
 }
 
+/// The main application configuration structure.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Config {
+    /// Whether automatic updates are enabled.
     #[serde(default = "default_auto_update")]
     pub auto_update: bool,
+
+    /// The UUID of the currently selected account.
     #[serde(default = "default_current_account")]
     pub current_account: String,
+
+    /// Appearance-related settings.
     #[serde(default)]
     pub appearance: AppearanceConfig,
+
+    /// Accessibility-related settings.
     #[serde(default)]
     pub accessibility: AccessibilityConfig,
+
+    /// The UI language code (e.g., "en_us").
     #[serde(default = "default_language")]
     pub language: String,
+
+    /// The selected update channel.
     #[serde(default)]
     pub update_channel: UpdateChannel,
+
+    /// Launch-related configuration.
     #[serde(default)]
     pub launch: launch::LaunchConfig,
+
+    /// Download-related configuration.
     #[serde(default)]
     pub download: download::DownloadConfig,
 }
@@ -99,6 +141,7 @@ fn default_auto_update() -> bool {
 }
 
 impl Default for Config {
+    /// Returns the default configuration, using system locale and the first available account.
     fn default() -> Self {
         let locale = sys_locale::get_locale().unwrap();
         info!("System locale is {}", locale);
@@ -119,11 +162,12 @@ impl Default for Config {
     }
 }
 
-/// Get system locale for serde default value
+/// Returns the system locale as the default language.
 fn default_language() -> String {
     sys_locale::get_locale().unwrap()
 }
 
+/// Returns the UUID of the first account, or a dummy UUID if none exists.
 fn default_current_account() -> String {
     match get_accounts().unwrap().first() {
         Some(x) => x.to_owned().profile.uuid,
@@ -131,6 +175,7 @@ fn default_current_account() -> String {
     }
 }
 
+/// Saves the current configuration to the configuration file.
 #[tauri::command]
 pub fn save_config(storage: tauri::State<'_, Storage>) {
     let data = toml::to_string_pretty(&storage.config.lock().unwrap().clone()).unwrap();
@@ -139,6 +184,13 @@ pub fn save_config(storage: tauri::State<'_, Storage>) {
     debug!("Saved config to file");
 }
 
+/// Reads the configuration file from disk.
+///
+/// If the file does not exist, a default configuration is generated and saved.
+///
+/// # Returns
+///
+/// The loaded or default configuration.
 #[tauri::command]
 pub fn read_config_file() -> Config {
     let config_file_path = &DATA_LOCATION.config;
@@ -157,6 +209,11 @@ pub fn read_config_file() -> Config {
     result
 }
 
+/// Updates the in-memory configuration with a new value received from the frontend.
+///
+/// # Arguments
+///
+/// * `config` - The new configuration to apply.
 #[tauri::command]
 pub fn update_config(storage: tauri::State<'_, Storage>, config: Config) {
     let mut storage_config = storage.config.lock().unwrap();

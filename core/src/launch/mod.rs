@@ -29,13 +29,26 @@ mod arguments;
 mod complete;
 mod options;
 
+/// Represents a log message associated with a specific instance.
 #[derive(Clone, Serialize)]
 pub struct Log {
+    /// The UUID of the instance this log belongs to.
     #[serde(rename = "instanceName")]
     pub instance_id: Uuid,
+
+    /// The content of the log message.
     pub content: String,
 }
 
+/// Checks whether the given account's access token is close to expiration,
+/// and refreshes it if necessary.
+///
+/// # Arguments
+/// * `account` - A reference to the account to check.
+///
+/// # Returns
+/// * `Ok(Account)` - The original or refreshed account depending on the token's validity.
+/// * `Err(anyhow::Error)` - If the system time could not be retrieved or other error occurs.
 async fn check_and_refresh_account(account: &Account) -> anyhow::Result<Account> {
     info!("Checking account: {}", account.profile.uuid);
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
@@ -58,6 +71,20 @@ async fn check_and_refresh_account(account: &Account) -> anyhow::Result<Account>
     }
 }
 
+/// Launches a Minecraft instance asynchronously via the Tauri command system.
+///
+/// # Arguments
+/// * `storage` - Application state that holds shared configuration and data.
+/// * `instance` - The Minecraft instance to launch.
+///
+/// # Returns
+/// * `Ok(())` - If the instance was successfully launched.
+/// * `Err(())` - If there was an error during launch (e.g., account not found).
+///
+/// # Side Effects
+/// * Refreshes the selected account if configured to do so.
+/// * Optionally checks files before launch.
+/// * Spawns the Minecraft process and generates launch script.
 #[tauri::command(async)]
 pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> Result<(), ()> {
     info!(
@@ -125,6 +152,22 @@ pub async fn launch(storage: tauri::State<'_, Storage>, instance: Instance) -> R
     Ok(())
 }
 
+/// Spawns the Minecraft process by generating and executing a launch script,
+/// customized per operating system and instance configuration.
+///
+/// # Arguments
+/// * `command_arguments` - A list of parsed arguments.
+/// * `minecraft_location` - Path to the Minecraft game files.
+/// * `launch_options` - Launch customization options (pre/post-execution hooks, wrappers, etc.).
+/// * `version_id` - The Minecraft version to launch.
+/// * `instance` - The instance metadata and configuration.
+///
+/// # Behavior
+/// * Creates a platform-specific shell script/batch file for launching the game.
+/// * Runs the generated script using a subprocess.
+/// * Streams stdout to detect key launch indicators and forward logs to the frontend.
+/// * Emits `launch_success` event once LWJGL is detected.
+/// * Handles cleanup of native libraries after game launch completes.
 fn spawn_minecraft_process(
     command_arguments: Vec<String>,
     minecraft_location: MinecraftLocation,

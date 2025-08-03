@@ -17,14 +17,21 @@ use uuid::Uuid;
 static LATEST_RELEASE_INSTANCE_NAME: &str = "Latest Release";
 static LATEST_SNAPSHOT_INSTANCE_NAME: &str = "Latest Snapshot";
 
+/// Represents a game instance, including its configuration,
+/// installation status, and unique ID.
 #[derive(Deserialize, Serialize, Default)]
 pub struct Instance {
+    /// The configuration of the instance.
     pub config: InstanceConfig,
+    /// Whether the instance has been installed.
     pub installed: bool,
+    /// Unique identifier of the instance.
     pub id: uuid::Uuid,
 }
 
 impl Instance {
+    /// Returns the complete version identifier string for the instance,
+    /// based on its mod loader type and version.
     pub fn get_version_id(&self) -> String {
         let config = &self.config;
         match config.runtime.mod_loader_type.as_ref() {
@@ -62,6 +69,7 @@ impl Instance {
     }
 }
 
+/// Creates a new game instance using the provided configuration.
 #[tauri::command(async)]
 pub async fn create_instance(config: InstanceConfig) -> Instance {
     let id = if config.name == LATEST_RELEASE_INSTANCE_NAME {
@@ -97,11 +105,19 @@ pub async fn create_instance(config: InstanceConfig) -> Instance {
     }
 }
 
+/// Enum representing different sorting strategies for listing instances.
 #[derive(Deserialize)]
 pub enum SortBy {
+    /// Sort by instance name.
     Name,
+    // TODO: Other sort strategies, such as createdon, last played at, play frequency...
 }
 
+/// Reads all instances stored in the data directory,
+/// creates default instances for latest release and snapshot if missing,
+/// and returns a sorted list.
+///
+/// Default instances are created if not found.
 #[tauri::command(async)]
 pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
     let instances_folder = &DATA_LOCATION.instances;
@@ -198,6 +214,8 @@ pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
     result
 }
 
+/// Updates the configuration file of an existing instance
+/// specified by the given UUID.
 #[tauri::command]
 pub async fn update_instance(config: InstanceConfig, id: Uuid) {
     let instance_root = DATA_LOCATION.get_instance_root(&id);
@@ -212,6 +230,7 @@ pub async fn update_instance(config: InstanceConfig, id: Uuid) {
     info!("Updated instance: {}", config.name);
 }
 
+/// Deletes the instance directory corresponding to the given UUID.
 #[tauri::command]
 pub async fn delete_instance(instance_id: Uuid) {
     tokio::fs::remove_dir_all(DATA_LOCATION.get_instance_root(&instance_id))
@@ -220,8 +239,11 @@ pub async fn delete_instance(instance_id: Uuid) {
     info!("Deleted {}", instance_id);
 }
 
+/// Sets the currently selected instance in the global storage.
+///
+/// > NOTE: Global instance is used internally and should be replaced
+/// in the future to support broader features.
 #[tauri::command]
-/// The program use a global storage to store the current instance. TODO: remove it
 // TODO: remove it to support global search or commands
 pub fn set_current_instance(instance: Instance, storage: tauri::State<Storage>) {
     let mut current_instance = storage.current_instance.lock().unwrap();

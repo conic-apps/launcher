@@ -22,6 +22,18 @@ use super::options::LaunchOptions;
 
 const DEFAULT_GAME_ICON: &[u8] = include_bytes!("../../assets/minecraft.icns");
 
+/// Generates the full list of command-line arguments to launch Minecraft.
+///
+/// # Arguments
+///
+/// * `minecraft_location` - Reference to MinecraftLocation struct for file paths.
+/// * `instance` - The game instance configuration and info.
+/// * `launch_options` - User specified launch options and settings.
+/// * `version` - The resolved Minecraft version data.
+///
+/// # Returns
+///
+/// A vector of strings representing the full command-line arguments to pass to the Java launcher.
 pub async fn generate_command_arguments(
     minecraft_location: &MinecraftLocation,
     instance: &Instance,
@@ -222,6 +234,20 @@ pub async fn generate_command_arguments(
     command_arguments
 }
 
+/// Resolves the classpath string needed for the Java launch command.
+///
+/// This includes library paths (unzipping native libraries if needed),
+/// extra classpaths, and the version jar or inheritance jars.
+///
+/// # Arguments
+///
+/// * `version` - The resolved Minecraft version metadata.
+/// * `minecraft` - Reference to MinecraftLocation for path resolving.
+/// * `extra_class_paths` - Additional class paths as a string.
+///
+/// # Returns
+///
+/// A string with the complete classpath, joined by platform-specific delimiter.
 fn resolve_classpath(
     version: &ResolvedVersion,
     minecraft: &MinecraftLocation,

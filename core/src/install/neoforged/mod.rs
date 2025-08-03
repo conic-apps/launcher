@@ -11,14 +11,23 @@ use uuid::Uuid;
 
 use crate::{DATA_LOCATION, HTTP_CLIENT};
 
+/// Represents the list of Neoforged versions.
 #[derive(Deserialize, Serialize, Clone)]
 pub struct NeoforgedVersionList {
+    /// Whether the version is a snapshot.
     #[serde(rename = "isSnapshot")]
     pub is_snapshot: bool,
+
+    /// The list of available Neoforged versions.
     pub versions: Vec<String>,
 }
 
 impl NeoforgedVersionList {
+    /// Fetches the Neoforged version list from the remote API.
+    ///
+    /// # Returns
+    /// * `Ok(Self)` on success.
+    /// * `Err(anyhow::Error)` if the request fails or the data cannot be parsed.
     pub async fn new() -> anyhow::Result<Self> {
         Ok(HTTP_CLIENT
             .get("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge")
@@ -29,6 +38,18 @@ impl NeoforgedVersionList {
     }
 }
 
+/// Installs the specified version of Neoforged.
+///
+/// Downloads the installer, runs it using the bundled Java Runtime,
+/// and then cleans up the temporary installer file.
+///
+/// # Arguments
+/// * `install_dir` - The target directory where the client will be installed.
+/// * `neoforged_version` - The version of Neoforged to install.
+///
+/// # Returns
+/// * `Ok(())` on successful installation.
+/// * `Err(anyhow::Error)` if installation fails.
 pub async fn install(install_dir: &PathBuf, neoforged_version: &str) -> anyhow::Result<()> {
     info!("Start downloading the neoforged installer");
     let installer_path = download_installer(neoforged_version).await?;
@@ -77,6 +98,14 @@ pub async fn install(install_dir: &PathBuf, neoforged_version: &str) -> anyhow::
     Ok(())
 }
 
+/// Downloads the Neoforged installer JAR for the given version.
+///
+/// # Arguments
+/// * `neoforged_version` - The version to download.
+///
+/// # Returns
+/// * `Ok(PathBuf)` containing the path to the downloaded installer.
+/// * `Err(anyhow::Error)` if downloading fails.
 async fn download_installer(neoforged_version: &str) -> anyhow::Result<PathBuf> {
     let installer_url  = format!(
         "https://maven.neoforged.net/releases/net/neoforged/neoforge/{neoforged_version}/neoforge-{neoforged_version}-installer.jar"

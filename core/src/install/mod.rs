@@ -36,26 +36,54 @@ mod neoforged;
 mod quilt;
 pub mod vanilla;
 
+/// Returns the full list of available Minecraft versions.
+///
+/// This fetches the version manifest from Mojang's API.
+/// Returns `None` if the request fails.
 #[tauri::command(async)]
 pub async fn get_minecraft_version_list() -> Option<VersionManifest> {
+    // TODO: Use cache, 2 hours
     VersionManifest::new().await.ok()
 }
 
+/// Returns the available Fabric loader versions for the specified Minecraft version.
+///
+/// # Arguments
+/// * `mcversion` - The target Minecraft version string.
+/// Returns `None` if the request fails.
 #[tauri::command(async)]
 pub async fn get_fabric_version_list(mcversion: String) -> Option<fabric::LoaderArtifactList> {
+    //TODO: all error handle, avoid use anyhow
     fabric::LoaderArtifactList::new(&mcversion).await.ok()
 }
 
+/// Returns the available Forge versions for the specified Minecraft version.
+///
+/// # Arguments
+/// * `mcversion` - The target Minecraft version string.
+/// Returns `None` if the request fails.
 #[tauri::command(async)]
 pub async fn get_forge_version_list(mcversion: String) -> Option<ForgeVersionList> {
     ForgeVersionList::new(&mcversion).await.ok()
 }
 
+/// Returns the available Quilt loader versions for the specified Minecraft version.
+///
+/// # Arguments
+/// * `mcversion` - The target Minecraft version string.
+/// Returns `None` if the request fails.
 #[tauri::command(async)]
 pub async fn get_quilt_version_list(mcversion: String) -> Option<QuiltVersionList> {
     QuiltVersionList::new(&mcversion).await.ok()
 }
 
+/// Returns the available NeoForged loader versions matching the given Minecraft version.
+///
+/// Filters versions to match the major and minor parts of the Minecraft version.
+///
+/// # Arguments
+/// * `mcversion` - The target Minecraft version string (e.g., "1.20.1").
+/// Returns a reversed (latest-first) list of matching NeoForged versions.
 #[tauri::command(async)]
 pub async fn get_neoforged_version_list(mcversion: String) -> Option<Vec<String>> {
     let version_list = NeoforgedVersionList::new().await.ok()?;
@@ -77,6 +105,18 @@ pub async fn get_neoforged_version_list(mcversion: String) -> Option<Vec<String>
     )
 }
 
+/// Installs Minecraft, Java, and optionally a mod loader for the given instance.
+///
+/// This function runs a full installation pipeline including:
+/// - Downloading Minecraft game files
+/// - Installing Java
+/// - Installing a mod loader (Fabric, Forge, Quilt, NeoForged)
+///
+/// # Arguments
+/// * `storage` - Shared application storage (configuration).
+/// * `instance` - The instance configuration.
+///
+/// Emits `"install_success"` on completion.
 #[tauri::command(async)]
 pub async fn install(
     storage: tauri::State<'_, Storage>,
@@ -158,6 +198,15 @@ pub async fn install(
     Ok(())
 }
 
+/// Installs the specified mod loader for the provided runtime configuration.
+///
+/// # Arguments
+/// * `runtime` - Instance runtime configuration containing loader type/version.
+///
+/// # Errors
+/// Returns an error if:
+/// - The loader type/version is missing or malformed.
+/// - The underlying installation function fails.
 async fn install_mod_loader(runtime: InstanceRuntime) -> anyhow::Result<()> {
     let mod_loader_type = runtime.mod_loader_type.unwrap();
     let mod_loader_version = runtime
