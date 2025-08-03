@@ -144,7 +144,7 @@ impl Default for Config {
     /// Returns the default configuration, using system locale and the first available account.
     fn default() -> Self {
         let locale = sys_locale::get_locale().unwrap();
-        info!("System locale is {}", locale);
+        info!("System locale is {locale}");
         let accounts = get_accounts().unwrap();
         Self {
             appearance: AppearanceConfig::default(),

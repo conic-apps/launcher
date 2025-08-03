@@ -245,7 +245,7 @@ fn spawn_minecraft_process(
         }
         let lines: Vec<_> = buf.split("\n").collect();
         if let Some(last) = lines.get(lines.len() - 2) {
-            trace!("[{}] {}", pid, last);
+            trace!("[{pid}] {last}");
             if last.to_lowercase().contains("lwjgl version") {
                 MAIN_WINDOW.emit("launch_success", instance.id).unwrap();
                 info!("Found LWJGL version, the game seems to have started successfully.");

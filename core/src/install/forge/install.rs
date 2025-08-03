@@ -99,7 +99,7 @@ pub async fn install(
         } else {
             let lines: Vec<_> = buf.split("\n").collect();
             if let Some(last) = lines.get(lines.len() - 2) {
-                trace!("[{}] {}", pid, last);
+                trace!("[{pid}] {last}");
             }
         }
     }

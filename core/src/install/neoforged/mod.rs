@@ -82,7 +82,7 @@ pub async fn install(install_dir: &PathBuf, neoforged_version: &str) -> anyhow::
         } else {
             let lines: Vec<_> = buf.split('\n').collect();
             if let Some(last) = lines.get(lines.len() - 2) {
-                trace!("[{}] {}", pid, last);
+                trace!("[{pid}] {last}");
             }
         }
     }

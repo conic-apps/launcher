@@ -195,7 +195,7 @@ pub(super) async fn group_install(
     java_runtimes: HashMap<String, Vec<JavaRuntimeInfo>>,
 ) {
     for (name, runtime_info) in java_runtimes {
-        info!("Installing Java: {}", name);
+        info!("Installing Java: {name}");
         if let Some(runtime_info) = runtime_info.first() {
             runtime_info
                 .clone()

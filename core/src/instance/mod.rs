@@ -141,7 +141,7 @@ pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
         }
         .to_string_lossy()
         .to_string();
-        debug!("Checking {}", folder_name);
+        debug!("Checking {folder_name}");
         let instance_config = path.join("instance.toml");
         let metadata = match instance_config.metadata() {
             Err(_) => continue,
@@ -236,7 +236,7 @@ pub async fn delete_instance(instance_id: Uuid) {
     tokio::fs::remove_dir_all(DATA_LOCATION.get_instance_root(&instance_id))
         .await
         .unwrap();
-    info!("Deleted {}", instance_id);
+    info!("Deleted {instance_id}");
 }
 
 /// Sets the currently selected instance in the global storage.
