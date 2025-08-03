@@ -49,7 +49,7 @@ pub async fn generate_command_arguments(
         command_arguments.push(format!(
             "-Xdock:icon={game_icon}",
             game_icon = if game_icon.contains(" ") {
-                format!("\"{}\"", game_icon)
+                format!("\"{game_icon}\"")
             } else {
                 game_icon
             }
@@ -284,7 +284,7 @@ fn format(template: &str, args: HashMap<&str, String>, is_game_option: bool) -> 
             let key = String::from(&caps[1]);
             let value = args.get(&caps[1]).unwrap_or(&key);
             if value.contains(" ") && is_game_option {
-                format!("\"{}\"", value)
+                format!("\"{value}\"")
             } else {
                 value.to_string()
             }

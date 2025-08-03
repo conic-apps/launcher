@@ -11,12 +11,12 @@ use tauri_plugin_http::reqwest;
 /// Note: You'll need to recheck the library integrity before launching the game.
 pub async fn install(
     mcversion: &str,
-    quilt_version: &str,
+    fabric_version: &str,
     minecraft: MinecraftLocation,
 ) -> anyhow::Result<()> {
     info!("Saving version metadata file");
     let url = format!(
-        "https://meta.fabricmc.net/v2/versions/loader/{mcversion}/{quilt_version}/profile/json"
+        "https://meta.fabricmc.net/v2/versions/loader/{mcversion}/{fabric_version}/profile/json"
     );
     let response = reqwest::get(url).await.unwrap();
     let fabric_version_json: Version = response.json().await.unwrap();

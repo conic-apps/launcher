@@ -19,18 +19,10 @@ pub enum ModLoaderType {
 impl fmt::Display for ModLoaderType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Fabric => {
-                write!(f, "Fabric")
-            }
-            Self::Quilt => {
-                write!(f, "Quilt")
-            }
-            Self::Forge => {
-                write!(f, "Forge")
-            }
-            Self::Neoforged => {
-                write!(f, "Neoforged")
-            }
+            Self::Fabric => write!(f, "Fabric"),
+            Self::Quilt => write!(f, "Quilt"),
+            Self::Forge => write!(f, "Forge"),
+            Self::Neoforged => write!(f, "Neoforged"),
         }
     }
 }

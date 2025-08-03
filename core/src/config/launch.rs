@@ -100,9 +100,11 @@ pub struct LaunchConfig {
 fn default_max_memory() -> usize {
     2048
 }
+
 fn default_width() -> usize {
     854
 }
+
 fn default_height() -> usize {
     480
 }

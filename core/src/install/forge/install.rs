@@ -75,7 +75,7 @@ pub async fn install(
         }
         if buf.ends_with("\ntrue\n") {
             success = true;
-            info!("Successfully ran the fucking forge installer")
+            info!("Successfully ran the forge installer")
         } else {
             let lines: Vec<_> = buf.split("\n").collect();
             if let Some(last) = lines.get(lines.len() - 2) {
@@ -86,8 +86,8 @@ pub async fn install(
     let output = command.wait_with_output().unwrap();
     if (!success && bootstrapper.is_some()) || !output.status.success() {
         tokio::fs::remove_file(installer_path).await?;
-        error!("Failed to ran forge installer");
-        return Err(anyhow::Error::msg("Failed to ran forge installer"));
+        error!("Failed to run forge installer");
+        return Err(anyhow::Error::msg("Failed to run forge installer"));
     }
     tokio::fs::remove_file(installer_path).await?;
     Ok(())

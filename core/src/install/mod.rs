@@ -47,8 +47,7 @@ pub async fn get_fabric_version_list(mcversion: String) -> Option<fabric::Loader
 }
 
 #[tauri::command(async)]
-pub async fn get_forge_version_list(mcversion: String) -> Option<ForgeVersionList> /* Option<ForgeVersionList> */
-{
+pub async fn get_forge_version_list(mcversion: String) -> Option<ForgeVersionList> {
     ForgeVersionList::new(&mcversion).await.ok()
 }
 

@@ -95,6 +95,7 @@ pub struct VersionManifest {
 
 impl VersionManifest {
     pub async fn new() -> Result<VersionManifest> {
+        // Not allow custom source to avoid attack
         let response =
             reqwest::get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json").await?;
         Ok(response.json::<VersionManifest>().await?)
@@ -508,7 +509,7 @@ impl Version {
         let path = minecraft
             .versions
             .join(version_name)
-            .join(format!("{}.json", version_name));
+            .join(format!("{version_name}.json"));
 
         let raw = read_to_string(path)?;
         let version: Version = serde_json::from_str((raw).as_ref())?;

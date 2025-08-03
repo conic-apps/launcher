@@ -158,7 +158,7 @@ fn spawn_minecraft_process(
     let mut launch_command = "java".to_string();
     for arg in command_arguments.clone() {
         launch_command.push(' ');
-        launch_command = format!("{}{}", launch_command, arg);
+        launch_command = format!("{launch_command}{arg}");
     }
     commands.push_str(&launch_command);
     if PLATFORM_INFO.os_family == OsFamily::Windows {

@@ -50,8 +50,7 @@ impl LoaderArtifactList {
     /// get loader artifacts
     pub async fn new(mcversion: &str) -> anyhow::Result<Self> {
         Ok(reqwest::get(format!(
-            "https://meta.fabricmc.net/v2/versions/loader/{}",
-            mcversion
+            "https://meta.fabricmc.net/v2/versions/loader/{mcversion}"
         ))
         .await?
         .json()

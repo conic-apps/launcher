@@ -42,34 +42,6 @@ pub struct AccessibilityConfig {
     pub high_contrast_mode: bool,
 }
 
-fn default_release_reminder() -> bool {
-    true
-}
-
-fn default_snapshot_reminder() -> bool {
-    true
-}
-
-fn default_hide_latest_release() -> bool {
-    false
-}
-
-fn default_hide_latest_snapshot() -> bool {
-    false
-}
-
-fn default_change_game_language() -> bool {
-    true
-}
-
-fn default_disable_animations() -> bool {
-    false
-}
-
-fn default_high_contrast_mode() -> bool {
-    false
-}
-
 impl Default for AccessibilityConfig {
     fn default() -> Self {
         Self {
@@ -189,5 +161,33 @@ pub fn read_config_file() -> Config {
 pub fn update_config(storage: tauri::State<'_, Storage>, config: Config) {
     let mut storage_config = storage.config.lock().unwrap();
     *storage_config = config;
-    debug!("Configuration was synchronized with the front end");
+    debug!("Synchronized configuration with frontend");
+}
+
+fn default_release_reminder() -> bool {
+    true
+}
+
+fn default_snapshot_reminder() -> bool {
+    true
+}
+
+fn default_hide_latest_release() -> bool {
+    false
+}
+
+fn default_hide_latest_snapshot() -> bool {
+    false
+}
+
+fn default_change_game_language() -> bool {
+    true
+}
+
+fn default_disable_animations() -> bool {
+    false
+}
+
+fn default_high_contrast_mode() -> bool {
+    false
 }

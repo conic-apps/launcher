@@ -73,7 +73,7 @@ pub async fn generate_assets_downloads(
 const LOF4J2_CONFIGURATION: &[u8] = include_bytes!("./log4j2.xml");
 
 /// Save the log4j2 configuration file
-pub async fn generate_log4j2_configuration_file(
+pub async fn override_log4j2_configuration_file(
     version: &ResolvedVersion,
     minecraft_location: &MinecraftLocation,
 ) -> Result<()> {
@@ -141,6 +141,6 @@ pub async fn generate_download_info(
         )
         .await?,
     );
-    let _ = generate_log4j2_configuration_file(&version, &minecraft_location).await;
+    let _ = override_log4j2_configuration_file(&version, &minecraft_location).await;
     Ok(download_list)
 }

@@ -2,6 +2,7 @@
     "name": "conic-launcher",
     "private": true,
     "version": "0.0.0",
+    "license": "GPL-3.0-only",
     "type": "module",
     "main": "main.ts",
     "scripts": {
@@ -16,7 +17,6 @@
         "format:check": "yarn prettier --check .",
         "clean-app-data": "rm -rf ~/.conic-debug"
     },
-    "license": "GPL-3.0-only",
     "dependencies": {
         "@tauri-apps/api": ">=2.0.0-rc.0",
         "@tauri-apps/plugin-clipboard-manager": "^2.0.1",
