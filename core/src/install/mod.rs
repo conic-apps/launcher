@@ -11,7 +11,7 @@ use std::{
     time::Duration,
 };
 
-use forge::version_list::ForgeVersionList;
+use forge::ForgeVersionList;
 use log::{debug, info};
 use neoforged::NeoforgedVersionList;
 use quilt::QuiltVersionList;
