@@ -4,7 +4,10 @@ on:
   push:
     paths:
       - ".github/workflows/lint-rust.yml"
+      - "crates/**"
       - "core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
   pull_request:
     branches: ["master"]
 
@@ -27,12 +30,11 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
+
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ./core -> target
 
       - name: Run cargo fmt
-        run: cd core && cargo fmt --all -- --check
+        run: cargo fmt --all -- --check
 
   clippy:
     strategy:
@@ -56,13 +58,9 @@ jobs:
           components: clippy
 
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ./core -> target
 
       - name: Run cargo check
-        working-directory: ./core
         run: cargo check
 
       - name: Run clippy
-        working-directory: ./core
         run: cargo clippy --manifest-path ./Cargo.toml --all-targets --release -- -D warnings

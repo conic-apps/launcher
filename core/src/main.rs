@@ -6,56 +6,20 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 // #![deny(clippy::unwrap_used)]
 
-mod account;
-mod config;
-mod download;
-mod folder;
-// mod game_data;
-mod install;
-mod instance;
-mod launch;
-mod platform;
-mod task;
-mod version;
-
-use std::panic::{set_hook, PanicHookInfo};
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::panic::{PanicHookInfo, set_hook};
 
 use backtrace::Backtrace;
-use config::{read_config_file, Config};
-use folder::DataLocation;
+use config::{Config, load_config_file};
+use folder::DATA_LOCATION;
 use log::{debug, error, info};
-use once_cell::sync::{Lazy, OnceCell};
-use platform::PlatformInfo;
-use tauri::{AppHandle, Emitter, Manager, Window};
+use platform::PLATFORM_INFO;
+use shared::{APP_HANDLE, MAIN_WINDOW};
+use tauri::{Emitter, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
-use tauri_plugin_http::reqwest;
 #[cfg(debug_assertions)]
 use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
 use tauri_plugin_log::{Target, TargetKind};
 use version::VersionManifest;
-
-/// use MAIN_WINDOW.emit() to send message to main window
-static APP_VERSION: OnceCell<String> = OnceCell::new();
-static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
-static MAIN_WINDOW: Lazy<Window> =
-    Lazy::new(|| APP_HANDLE.get().unwrap().get_window("main").unwrap());
-static DATA_LOCATION: Lazy<DataLocation> = Lazy::new(DataLocation::default);
-static PLATFORM_INFO: Lazy<PlatformInfo> = Lazy::new(PlatformInfo::new);
-// static HTTP_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
-static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
-    reqwest::ClientBuilder::new()
-        .pool_idle_timeout(Duration::from_secs(10))
-        .pool_max_idle_per_host(10)
-        .build()
-        .expect("Failed to build HTTP client")
-});
-
-pub struct Storage {
-    pub current_instance: Arc<Mutex<instance::Instance>>,
-    pub config: Arc<Mutex<Config>>,
-}
 
 #[tokio::main]
 async fn main() {
@@ -65,9 +29,11 @@ async fn main() {
         .expect("Could not init data folder");
     #[cfg(target_os = "linux")]
     {
-        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        unsafe {
+            std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        }
     }
-    let config = read_config_file();
+    let config = load_config_file();
     let init_config_js_script = "
         Object.defineProperty(window, '__APPLICATION_CONFIG__', {
             value: JSON.parse(`"
@@ -90,34 +56,6 @@ async fn main() {
                 .expect("Can't Bring Window to Focus");
         }))
         .plugin(tauri_plugin_http::init())
-        .invoke_handler(tauri::generate_handler![
-            on_frontend_loaded,
-            instance::create_instance,
-            instance::read_all_instances,
-            instance::update_instance,
-            instance::delete_instance,
-            instance::set_current_instance,
-            install::install,
-            install::get_minecraft_version_list,
-            install::get_fabric_version_list,
-            install::get_forge_version_list,
-            install::get_quilt_version_list,
-            install::get_neoforged_version_list,
-            launch::launch,
-            config::read_config_file,
-            config::update_config,
-            config::save_config,
-            account::add_microsoft_account,
-            account::get_accounts,
-            account::refresh_microsoft_account_by_uuid,
-            account::refresh_all_microsoft_account,
-            account::delete_account,
-            account::get_account_by_uuid
-        ])
-        .manage(Storage {
-            current_instance: Arc::new(Mutex::new(instance::Instance::default())),
-            config: Arc::new(Mutex::new(config.clone())),
-        })
         .append_invoke_initialization_script(init_config_js_script)
         .setup(move |app| {
             print_title();
@@ -126,9 +64,6 @@ async fn main() {
                 serde_json::to_string_pretty(&PLATFORM_INFO.clone()).unwrap(),
             )
             .unwrap();
-            APP_VERSION
-                .set(app.package_info().version.to_string())
-                .unwrap();
             info!("Main window loaded");
             APP_HANDLE.set(app.app_handle().clone()).unwrap();
             set_hook(Box::new(|info: &PanicHookInfo| {
@@ -174,14 +109,13 @@ async fn main() {
 }
 
 #[tauri::command]
-async fn on_frontend_loaded(storage: tauri::State<'_, Storage>) -> std::result::Result<(), ()> {
+async fn _on_frontend_loaded(config: Config) -> std::result::Result<(), ()> {
     info!("Frontend loaded");
-    let config = &storage.config.lock().unwrap().clone();
-    let _ = remind_minecraft_latest(config).await;
+    let _ = _remind_minecraft_latest(&config).await;
     Ok(())
 }
 
-async fn remind_minecraft_latest(config: &Config) -> anyhow::Result<()> {
+async fn _remind_minecraft_latest(config: &Config) -> anyhow::Result<()> {
     let (latest, cache_file) = if config.accessibility.snapshot_reminder {
         let latest = VersionManifest::new().await?.latest.snapshot;
         let cache_file = DATA_LOCATION.cache.join("latest_release");
@@ -240,5 +174,7 @@ fn print_title() {
     debug!(" ███████╗██║  ██║╚██████╔╝██║ ╚████║╚██████╗██║  ██║███████╗██║  ██║    ");
     debug!(" ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ");
     info!("Conic Launcher is starting up");
-    info!("Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher");
+    info!(
+        "Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher"
+    );
 }
