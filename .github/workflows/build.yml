@@ -210,4 +210,3 @@ jobs:
         with:
           name: MacOS ${{ matrix.arch }} updater signature
           path: ${{ github.workspace }}/target/${{matrix.target}}-apple-darwin/release/bundle/macos/conic-launcher.app.tar.gz.sig
-
