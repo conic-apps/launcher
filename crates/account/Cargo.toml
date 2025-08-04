@@ -1,0 +1,21 @@
+[package]
+name = "account"
+version = "0.0.0"
+authors = ["Broken-Deer"]
+description = "Account manager"
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+shared.workspace = true
+folder.workspace = true
+
+anyhow.workspace = true
+base64.workspace = true
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tauri.workspace = true

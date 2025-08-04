@@ -1,0 +1,14 @@
+[package]
+name = "platform"
+version = "0.0.0"
+authors = ["Broken-Deer"]
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+os_info.workspace = true
+serde.workspace = true
+once_cell.workspace = true

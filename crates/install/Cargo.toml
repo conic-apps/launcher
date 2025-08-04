@@ -1,0 +1,29 @@
+[package]
+name = "install"
+version = "0.0.0"
+authors = ["Broken-Deer"]
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+shared.workspace = true
+folder.workspace = true
+config.workspace = true
+instance.workspace = true
+task.workspace = true
+download.workspace = true
+platform.workspace = true
+version.workspace = true
+
+log.workspace = true
+anyhow.workspace = true
+tokio.workspace = true
+uuid.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tauri-plugin-http.workspace = true
+sha1_smol.workspace = true
+tauri.workspace = true

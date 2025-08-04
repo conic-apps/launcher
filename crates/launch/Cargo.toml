@@ -1,0 +1,33 @@
+[package]
+name = "launch"
+version = "0.0.0"
+authors = ["Broken-Deer"]
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+shared.workspace = true
+config.workspace = true
+account.workspace = true
+folder.workspace = true
+instance.workspace = true
+install.workspace = true
+platform.workspace = true
+version.workspace = true
+download.workspace = true
+
+regex.workspace = true
+zip.workspace = true
+log.workspace = true
+tauri.workspace = true
+uuid.workspace = true
+serde.workspace = true
+tokio.workspace = true
+num_cpus.workspace = true
+anyhow.workspace = true
+rayon.workspace = true
+sha1_smol.workspace = true
+

@@ -1,0 +1,24 @@
+[package]
+name = "config"
+version = "0.0.0"
+authors = ["Broken-Deer"]
+description = "User config"
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+links = "config"
+
+[dependencies]
+account.workspace = true
+folder.workspace = true
+
+serde.workspace = true
+log.workspace = true
+tauri.workspace = true
+sys-locale.workspace = true
+toml.workspace = true
+
+[build-dependencies]
+tauri-plugin = { version = "2.3.1", features = ["build"] }

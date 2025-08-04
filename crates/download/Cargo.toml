@@ -1,0 +1,24 @@
+[package]
+name = "download"
+version = "0.0.0"
+authors = ["Broken-Deer"]
+description = "Download utils"
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+config.workspace = true
+shared.workspace = true
+task.workspace = true
+
+futures.workspace = true
+log.workspace = true
+rayon.workspace = true
+serde.workspace = true
+tauri.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+sha1_smol.workspace = true
