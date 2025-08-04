@@ -2,6 +2,8 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+// TODO: Support Optifine auto install
+
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},

@@ -17,6 +17,8 @@ use uuid::Uuid;
 
 use crate::{platform::OsFamily, PLATFORM_INFO};
 
+const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("../assets/launcher_profiles.json");
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// The Minecraft folder structure. All method will return the path related to a minecraft root like .minecraft.
 pub struct MinecraftLocation {
@@ -118,6 +120,14 @@ impl DataLocation {
 
     pub fn get_instance_root(&self, instance_id: &Uuid) -> PathBuf {
         self.instances.join(instance_id.to_string())
+    }
+
+    pub async fn init(&self) -> anyhow::Result<()> {
+        tokio::fs::create_dir_all(&self.root).await?;
+        let launcher_profiles_path = self.root.join("launcher_profiles.json");
+        let _ = tokio::fs::remove_file(&launcher_profiles_path).await;
+        tokio::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE).await?;
+        Ok(())
     }
 }
 
