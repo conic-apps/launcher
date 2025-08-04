@@ -41,6 +41,10 @@ tauri-plugin-clipboard-manager = "2.3.0"
 os_info = "3.12.0"
 tauri-plugin-dialog = "2"
 backtrace = "0.3.74"
+# TODO: Typescript invoke type safe
+# specta-typescript = "0.0.9"
+# tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
+# specta = {version = "=2.0.0-rc.22", features = ["uuid", "serde_json", "serde", "derive"]}
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.

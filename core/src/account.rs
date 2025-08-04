@@ -56,6 +56,7 @@ pub struct Account {
 
 #[tauri::command]
 pub fn get_accounts() -> Result<Vec<Account>, ()> {
+    // TODO: rename to list_accounts()
     let path = DATA_LOCATION.root.join("accounts.json");
     if !path.exists() {
         return Ok(vec![]);
@@ -121,7 +122,7 @@ pub async fn add_microsoft_account(code: String) -> std::result::Result<(), ()> 
     }
 }
 
-#[tauri::command(async)]
+#[tauri::command]
 pub async fn refresh_microsoft_account_by_uuid(uuid: String) -> Account {
     info!("Start refreshing the account: {uuid}");
     let accounts = get_accounts().unwrap();
@@ -150,7 +151,7 @@ pub async fn refresh_microsoft_account_by_uuid(uuid: String) -> Account {
 }
 
 #[cfg(not(debug_assertions))]
-#[tauri::command(async)]
+#[tauri::command]
 pub async fn refresh_all_microsoft_account() {
     let accounts = get_accounts().unwrap();
     let mut result = vec![];
@@ -174,7 +175,7 @@ pub async fn refresh_all_microsoft_account() {
 }
 
 #[cfg(debug_assertions)]
-#[tauri::command(async)]
+#[tauri::command]
 pub async fn refresh_all_microsoft_account() {
     info!("Accounts are not refreshed on app launch in debug mode.")
 }
@@ -189,7 +190,6 @@ pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<Account> {
         }
         LoginPayload::AccessCode(code) => get_access_token(&code).await.unwrap(),
     };
-    info!("Successfully get Microsoft access token");
     let access_token = access_token_response["access_token"]
         .as_str()
         .ok_or(anyhow!("No access token"))
@@ -204,32 +204,36 @@ pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<Account> {
         .ok_or(anyhow!("No refresh token"))
         .unwrap()
         .to_string();
+    info!("Successfully get Microsoft access token");
 
     let xbox_auth_response = xbox_authenticate(&access_token).await.unwrap();
     info!("Successfully login Xbox");
+
     let xsts_token = xsts_authenticate(&xbox_auth_response.xbl_token)
         .await
         .unwrap();
     info!("Successfully verify XSTS");
+
     let minecraft_access_token = minecraft_authenticate(&xbox_auth_response.xbl_uhs, &xsts_token)
         .await
         .unwrap();
     info!("Successfully get Minecraft access token");
-    check_game(&minecraft_access_token).await.unwrap();
+
+    check_ownership(&minecraft_access_token).await.unwrap();
     info!("Successfully check ownership");
-    let player_info = get_player_infomations(&minecraft_access_token)
-        .await
-        .unwrap();
+
+    let game_profile = get_game_profile(&minecraft_access_token).await.unwrap();
     info!("Successfully get game profile");
+
     Ok(Account {
         refresh_token: Some(refresh_token),
         access_token: Some(minecraft_access_token),
         token_deadline: Some(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + expires_in),
         profile: Profile {
-            profile_name: serde_json::from_value(player_info["name"].clone())?,
-            uuid: serde_json::from_value(player_info["id"].clone())?,
-            skins: resolve_skins(serde_json::from_value(player_info["skins"].clone())?).await,
-            capes: serde_json::from_value(player_info["capes"].clone())?,
+            profile_name: serde_json::from_value(game_profile["name"].clone())?,
+            uuid: serde_json::from_value(game_profile["id"].clone())?,
+            skins: resolve_skins(serde_json::from_value(game_profile["skins"].clone())?).await,
+            capes: serde_json::from_value(game_profile["capes"].clone())?,
         },
         account_type: AccountType::Microsoft,
     })
@@ -411,7 +415,7 @@ async fn minecraft_authenticate(xbl_uhs: &str, xsts_token: &str) -> anyhow::Resu
         .to_string())
 }
 
-async fn check_game(minecraft_access_token: &str) -> anyhow::Result<()> {
+async fn check_ownership(minecraft_access_token: &str) -> anyhow::Result<()> {
     let response = HTTP_CLIENT
         .get("https://api.minecraftservices.com/entitlements/mcstore")
         .header("Content-Type", "application/json")
@@ -425,7 +429,7 @@ async fn check_game(minecraft_access_token: &str) -> anyhow::Result<()> {
     }
 }
 
-async fn get_player_infomations(minecraft_access_token: &str) -> anyhow::Result<Value> {
+async fn get_game_profile(minecraft_access_token: &str) -> anyhow::Result<Value> {
     Ok(HTTP_CLIENT
         .get("https://api.minecraftservices.com/minecraft/profile")
         .header("Content-Type", "application/json")
