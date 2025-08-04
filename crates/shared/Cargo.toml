@@ -1,0 +1,15 @@
+[package]
+name = "shared"
+version = "0.0.0"
+authors = ["Broken-Deer"]
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+once_cell.workspace = true
+tauri.workspace = true
+tauri-plugin-http.workspace = true
+

@@ -1,0 +1,42 @@
+[package]
+name = "conic-launcher"
+description = "A Minecraft Launcher"
+authors = ["Broken-Deer"]
+version = "0.0.0"
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+account.workspace = true
+version.workspace = true
+platform.workspace = true
+folder.workspace = true
+instance.workspace = true
+config.workspace = true
+install.workspace = true
+launch.workspace = true
+shared.workspace = true
+
+once_cell.workspace = true
+tauri.workspace = true
+log.workspace = true
+tokio.workspace = true
+tauri-plugin-http.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+
+backtrace = "0.3.74"
+tauri-plugin-log = { version = "2", features = ["colored"] }
+tauri-plugin-clipboard-manager = "2.3.0"
+tauri-plugin-dialog = "2"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
