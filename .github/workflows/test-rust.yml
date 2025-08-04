@@ -5,11 +5,13 @@ on:
     paths:
       - ".github/workflows/test-rust.yml"
       - "core/**"
+      - "crates/**"
   pull_request:
     branches: ["master"]
     path:
       - ".github/workflows/test-rust.yml"
       - "core/**"
+      - "crates/**"
 
 env:
   RUST_BACKTRACE: 1
@@ -37,8 +39,6 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf tree
 
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ./core -> target
 
       - name: Run tests
-        run: cd core && cargo test
+        run: cargo test

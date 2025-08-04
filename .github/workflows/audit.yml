@@ -25,14 +25,12 @@ jobs:
       - name: rust audit
         uses: rustsec/audit-check@v2.0.0
         with:
-          working-directory: ./core
           token: ${{ secrets.GITHUB_TOKEN }}
 
   audit-js:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: audit workspace
-        run: yarn audit
-      - name: audit app
+      # TODO: Audit plugins
+      - name: Audit
         run: yarn audit
