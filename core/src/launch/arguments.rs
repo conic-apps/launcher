@@ -2,7 +2,12 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    ffi::OsStr,
+    io::{self, Read},
+    path::Path,
+};
 
 use log::info;
 use regex::Regex;
@@ -13,7 +18,6 @@ use crate::{
     folder::MinecraftLocation,
     instance::Instance,
     platform::{OsFamily, DELIMITER},
-    utils::unzip::decompression_all,
     version::ResolvedVersion,
     APP_VERSION, DATA_LOCATION, PLATFORM_INFO,
 };
@@ -316,4 +320,28 @@ fn format(template: &str, args: HashMap<&str, String>, is_game_option: bool) -> 
             }
         })
         .to_string()
+}
+
+fn decompression_all<R: Read + io::Seek, S: AsRef<OsStr> + ?Sized>(
+    zip_archive: &mut ZipArchive<R>,
+    to: &S,
+) -> anyhow::Result<()> {
+    let to = Path::new(to).to_path_buf();
+    for i in 0..zip_archive.len() {
+        let mut zip_file = zip_archive.by_index(i).unwrap();
+        let name = zip_file.name().to_string();
+        let path = to.join(&name);
+        let mut entry_content = vec![];
+        zip_file.read_to_end(&mut entry_content).unwrap();
+        if zip_file.is_dir() {
+            std::fs::create_dir_all(zip_file.name()).unwrap();
+            continue;
+        }
+        std::fs::create_dir_all(
+            path.parent()
+                .ok_or(std::io::Error::from(std::io::ErrorKind::NotFound))?,
+        )?;
+        std::fs::write(path, entry_content).unwrap();
+    }
+    Ok(())
 }
