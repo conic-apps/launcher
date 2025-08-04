@@ -16,7 +16,6 @@ mod instance;
 mod launch;
 mod platform;
 mod task;
-pub mod utils;
 mod version;
 
 use std::panic::{set_hook, PanicHookInfo};
