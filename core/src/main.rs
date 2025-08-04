@@ -51,7 +51,6 @@ static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
         .build()
         .expect("Failed to build HTTP client")
 });
-const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("../assets/launcher_profiles.json");
 
 pub struct Storage {
     pub current_instance: Arc<Mutex<instance::Instance>>,
@@ -60,25 +59,13 @@ pub struct Storage {
 
 #[tokio::main]
 async fn main() {
-    tokio::fs::create_dir_all(&DATA_LOCATION.root)
+    DATA_LOCATION
+        .init()
         .await
-        .expect("Could not create appliaction data folder");
-    let launcher_profiles_path = DATA_LOCATION.root.join("launcher_profiles.json");
-    let _ = tokio::fs::remove_file(&launcher_profiles_path).await;
-    tokio::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE)
-        .await
-        .expect("Could not create launcher profile");
+        .expect("Could not init data folder");
     #[cfg(target_os = "linux")]
     {
-        // if std::path::Path::new("/dev/dri").exists()
-        //     && std::env::var("WAYLAND_DISPLAY").is_err()
-        //     && std::env::var("XDG_SESSION_TYPE").unwrap_or_default() == "x11"
-        // {
-        // SAFETY: There's potential for race conditions in a multi-threaded context.
-        unsafe {
-            std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-        }
-        // }
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     }
     let config = read_config_file();
     let init_config_js_script = "
@@ -186,7 +173,7 @@ async fn main() {
         .expect("Failed to run app");
 }
 
-#[tauri::command(async)]
+#[tauri::command]
 async fn on_frontend_loaded(storage: tauri::State<'_, Storage>) -> std::result::Result<(), ()> {
     info!("Frontend loaded");
     let config = &storage.config.lock().unwrap().clone();
