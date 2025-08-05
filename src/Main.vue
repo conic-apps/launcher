@@ -99,12 +99,12 @@ import { useI18n } from "vue-i18n";
 import gsap from "gsap";
 import { loadTheme } from "./theme";
 import Home from "./pages/Home.vue";
-import { Account } from "./pages/dialogs/account/View.vue";
 import { getAvatar } from "./avatar";
 import Tag from "./components/Tag.vue";
 import { listen } from "@tauri-apps/api/event";
 import { useTimeStore } from "./store/time";
 import Market from "./pages/Market.vue";
+import { Account } from "@conic/account";
 
 function minimize() {
   window.getCurrentWindow().minimize();

@@ -36,6 +36,24 @@ impl NeoforgedVersionList {
             .json()
             .await?)
     }
+
+    pub async fn from_mcversion(mcversion: &str) -> anyhow::Result<Vec<String>> {
+        let version_list = NeoforgedVersionList::new().await?;
+        let splited_mcversion: Vec<&str> = mcversion.split('.').collect();
+        Ok(version_list
+            .versions
+            .into_iter()
+            .rev()
+            .filter(|x| {
+                let splited_version: Vec<&str> = x.split('.').collect();
+                #[allow(clippy::get_first)]
+                return splited_version.get(0) == splited_mcversion.get(1)
+                    && (splited_version.get(1) == splited_mcversion.get(2)
+                        || (splited_version.get(1) == Some(&"0")
+                            && splited_mcversion.get(2).is_none()));
+            })
+            .collect::<Vec<String>>())
+    }
 }
 
 /// Installs the specified version of Neoforged.

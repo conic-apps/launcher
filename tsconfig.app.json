@@ -1,6 +1,6 @@
 {
     "extends": "@vue/tsconfig/tsconfig.web.json",
-    "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+    "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "crates/**/*.ts"],
     "exclude": ["src/**/__tests__/*"],
     "compilerOptions": {
         "preserveValueImports": false,
@@ -10,7 +10,11 @@
         "composite": true,
         "baseUrl": ".",
         "paths": {
-            "@/*": ["./src/*"]
+            "@/*": ["./src/*"],
+            "@conic/config": ["./crates/config"],
+            "@conic/account": ["./crates/account"],
+            "@conic/install": ["./crates/install"],
+            "@conic/instance": ["./crates/instance"]
         }
     },
     "lib": ["esnext", "dom"]

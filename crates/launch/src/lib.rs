@@ -20,13 +20,28 @@ use options::LaunchOptions;
 use platform::{OsFamily, PLATFORM_INFO};
 use serde::Serialize;
 use shared::MAIN_WINDOW;
-use tauri::Emitter;
+use tauri::{
+    Emitter, Runtime, command,
+    plugin::{Builder, TauriPlugin},
+};
 use uuid::Uuid;
 use version::Version;
 
 mod arguments;
 mod complete;
 mod options;
+
+/// Initializes the plugin.
+pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    Builder::new("launch")
+        .invoke_handler(tauri::generate_handler![cmd_launch])
+        .build()
+}
+
+#[command]
+async fn cmd_launch(config: Config, instance: Instance) {
+    let _ = launch(config, instance).await;
+}
 
 /// Represents a log message associated with a specific instance.
 #[derive(Clone, Serialize)]
@@ -48,7 +63,7 @@ pub struct Log {
 /// # Returns
 /// * `Ok(Account)` - The original or refreshed account depending on the token's validity.
 /// * `Err(anyhow::Error)` - If the system time could not be retrieved or other error occurs.
-async fn check_and_refresh_account(account: &Account) -> anyhow::Result<Account> {
+pub async fn check_and_refresh_account(account: &Account) -> anyhow::Result<Account> {
     info!("Checking account: {}", account.profile.uuid);
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
     const AHEAD: u64 = 3600 * 4;

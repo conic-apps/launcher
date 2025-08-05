@@ -61,36 +61,13 @@ import { computed, ref } from "vue";
 import { useConfigStore } from "@/store/config";
 import { getAvatar } from "@/avatar";
 import { useTimeStore } from "@/store/time";
+import { Account } from "@conic/account";
 
 const config = useConfigStore();
 
 const emit = defineEmits(["add"]);
 
 const accounts = ref<Account[]>([]);
-export type Account = {
-  refresh_token?: string;
-  access_token?: string;
-  token_deadline?: number;
-  profile: {
-    avatar: string;
-    profile_name: string;
-    uuid: string;
-    skins: {
-      id: string;
-      state: string;
-      textureKey: string;
-      url: string;
-      variant: string;
-    }[];
-    capes: {
-      alias: string;
-      id: string;
-      state: string;
-      url: string;
-    }[];
-  };
-  account_type: "Microsoft" | "Offline";
-};
 
 async function getAccounts() {
   let res: Account[] = await invoke("get_accounts");
