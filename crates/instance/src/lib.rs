@@ -11,62 +11,44 @@ use config::instance::{InstanceConfig, ModLoaderType};
 use folder::DATA_LOCATION;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
+use tauri::plugin::{Builder, TauriPlugin};
+use tauri::{Runtime, command};
 use uuid::Uuid;
 use version::VersionManifest;
 
 static LATEST_RELEASE_INSTANCE_NAME: &str = "Latest Release";
 static LATEST_SNAPSHOT_INSTANCE_NAME: &str = "Latest Snapshot";
 
-/// Represents a game instance, including its configuration,
-/// installation status, and unique ID.
-#[derive(Deserialize, Serialize, Default)]
-pub struct Instance {
-    /// The configuration of the instance.
-    pub config: InstanceConfig,
-    /// Whether the instance has been installed.
-    pub installed: bool,
-    /// Unique identifier of the instance.
-    pub id: uuid::Uuid,
+/// Initializes the plugin.
+pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    Builder::new("instance")
+        .invoke_handler(tauri::generate_handler![
+            cmd_create_instance,
+            cmd_list_instances,
+            cmd_update_instance,
+            cmd_delete_instance
+        ])
+        .build()
 }
 
-impl Instance {
-    /// Returns the complete version identifier string for the instance,
-    /// based on its mod loader type and version.
-    pub fn get_version_id(&self) -> String {
-        let config = &self.config;
-        match config.runtime.mod_loader_type.as_ref() {
-            Some(mod_loader_type) => match mod_loader_type {
-                ModLoaderType::Fabric => {
-                    format!(
-                        "fabric-loader-{}-{}",
-                        config.runtime.mod_loader_version.as_ref().unwrap(),
-                        config.runtime.minecraft
-                    )
-                }
-                ModLoaderType::Quilt => {
-                    format!(
-                        "quilt-loader-{}-{}",
-                        config.runtime.mod_loader_version.as_ref().unwrap(),
-                        config.runtime.minecraft
-                    )
-                }
-                ModLoaderType::Forge => {
-                    format!(
-                        "{}-forge-{}",
-                        config.runtime.minecraft,
-                        config.runtime.mod_loader_version.as_ref().unwrap()
-                    )
-                }
-                ModLoaderType::Neoforged => {
-                    format!(
-                        "neoforged-{}",
-                        config.runtime.mod_loader_version.as_ref().unwrap()
-                    )
-                }
-            },
-            None => config.runtime.minecraft.to_string(),
-        }
-    }
+#[command]
+async fn cmd_create_instance(config: InstanceConfig) -> Instance {
+    create_instance(config).await
+}
+
+#[command]
+async fn cmd_list_instances(sort_by: SortBy) -> Vec<Instance> {
+    list_instances(sort_by).await
+}
+
+#[command]
+async fn cmd_update_instance(config: InstanceConfig, id: Uuid) {
+    update_instance(config, id).await
+}
+
+#[command]
+async fn cmd_delete_instance(id: Uuid) {
+    delete_instance(id).await
 }
 
 /// Creates a new game instance using the provided configuration.
@@ -117,7 +99,7 @@ pub enum SortBy {
 /// and returns a sorted list.
 ///
 /// Default instances are created if not found.
-pub async fn read_all_instances(sort_by: SortBy) -> Vec<Instance> {
+pub async fn list_instances(sort_by: SortBy) -> Vec<Instance> {
     let instances_folder = &DATA_LOCATION.instances;
     tokio::fs::create_dir_all(instances_folder).await.unwrap();
     let mut folder_entries = tokio::fs::read_dir(instances_folder).await.unwrap();
@@ -228,9 +210,59 @@ pub async fn update_instance(config: InstanceConfig, id: Uuid) {
 }
 
 /// Deletes the instance directory corresponding to the given UUID.
-pub async fn delete_instance(instance_id: Uuid) {
-    tokio::fs::remove_dir_all(DATA_LOCATION.get_instance_root(&instance_id))
+pub async fn delete_instance(id: Uuid) {
+    tokio::fs::remove_dir_all(DATA_LOCATION.get_instance_root(&id))
         .await
         .unwrap();
-    info!("Deleted {instance_id}");
+    info!("Deleted {id}");
+}
+
+/// Represents a game instance, including its configuration,
+/// installation status, and unique ID.
+#[derive(Deserialize, Serialize, Default)]
+pub struct Instance {
+    /// The configuration of the instance.
+    pub config: InstanceConfig,
+    /// Whether the instance has been installed.
+    pub installed: bool,
+    /// Unique identifier of the instance.
+    pub id: uuid::Uuid,
+}
+
+impl Instance {
+    pub fn get_version_id(&self) -> String {
+        let config = &self.config;
+        match config.runtime.mod_loader_type.as_ref() {
+            Some(mod_loader_type) => match mod_loader_type {
+                ModLoaderType::Fabric => {
+                    format!(
+                        "fabric-loader-{}-{}",
+                        config.runtime.mod_loader_version.as_ref().unwrap(),
+                        config.runtime.minecraft
+                    )
+                }
+                ModLoaderType::Quilt => {
+                    format!(
+                        "quilt-loader-{}-{}",
+                        config.runtime.mod_loader_version.as_ref().unwrap(),
+                        config.runtime.minecraft
+                    )
+                }
+                ModLoaderType::Forge => {
+                    format!(
+                        "{}-forge-{}",
+                        config.runtime.minecraft,
+                        config.runtime.mod_loader_version.as_ref().unwrap()
+                    )
+                }
+                ModLoaderType::Neoforged => {
+                    format!(
+                        "neoforged-{}",
+                        config.runtime.mod_loader_version.as_ref().unwrap()
+                    )
+                }
+            },
+            None => config.runtime.minecraft.to_string(),
+        }
+    }
 }
