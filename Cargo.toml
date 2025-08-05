@@ -53,17 +53,12 @@ env_logger = "0.11.5"
 num_cpus = "1"
 sys-locale = "0.3.2"
 os_info = "3.12.0"
-# TODO: Typescript invoke type safe
-# specta-typescript = "0.0.9"
-# tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
-# specta = {version = "=2.0.0-rc.22", features = ["uuid", "serde_json", "serde", "derive"]}
 
 [profile.dev]
-incremental = true # Compile your binary in smaller steps.
+incremental = true
 
 [profile.release]
-codegen-units = 1 # Allows LLVM to perform better optimization.
-lto = true        # Enables link-time-optimizations.
-opt-level = "z"   # Prioritizes small binary size. Use `3` if you prefer speed.
-# panic = "abort"   # Higher performance by disabling panic handlers.
-strip = true # Ensures debug symbols are removed.
+codegen-units = 1
+lto = true
+opt-level = "z"
+strip = true

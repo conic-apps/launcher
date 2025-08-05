@@ -3480,6 +3480,7 @@ dependencies = [
  "once_cell",
  "os_info",
  "serde",
+ "tauri",
 ]
 
 [[package]]

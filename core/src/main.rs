@@ -56,6 +56,12 @@ async fn main() {
                 .expect("Can't Bring Window to Focus");
         }))
         .plugin(tauri_plugin_http::init())
+        .plugin(config::init())
+        .plugin(account::init())
+        .plugin(instance::init())
+        .plugin(install::init())
+        .plugin(launch::init())
+        .plugin(platform::init())
         .append_invoke_initialization_script(init_config_js_script)
         .setup(move |app| {
             print_title();
