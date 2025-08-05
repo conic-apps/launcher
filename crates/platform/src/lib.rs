@@ -7,9 +7,24 @@ use std::fmt::Display;
 use once_cell::sync::Lazy;
 use os_info::{Type, Version};
 use serde::{Deserialize, Serialize};
+use tauri::{
+    Runtime, command,
+    plugin::{Builder, TauriPlugin},
+};
 
 pub static PLATFORM_INFO: Lazy<PlatformInfo> = Lazy::new(PlatformInfo::new);
 
+/// Initializes the plugin.
+pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    Builder::new("platform")
+        .invoke_handler(tauri::generate_handler![cmd_get_platform_info])
+        .build()
+}
+
+#[command]
+fn cmd_get_platform_info() -> PlatformInfo {
+    PLATFORM_INFO.clone()
+}
 /// Represents the high-level operating system family.
 ///
 /// This is an abstraction over detailed OS types (e.g., Ubuntu, Windows 10) to group

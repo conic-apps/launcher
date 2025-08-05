@@ -6,7 +6,7 @@ use folder::DATA_LOCATION;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 
-use account::get_accounts;
+use account::list_accounts;
 use tauri::{
     Runtime, command,
     plugin::{Builder, TauriPlugin},
@@ -202,7 +202,7 @@ impl Default for Config {
     fn default() -> Self {
         let locale = sys_locale::get_locale().unwrap();
         info!("System locale is {locale}");
-        let accounts = get_accounts();
+        let accounts = list_accounts();
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
@@ -226,7 +226,7 @@ fn default_language() -> String {
 
 /// Returns the UUID of the first account, or a dummy UUID if none exists.
 fn default_current_account() -> String {
-    match get_accounts().first() {
+    match list_accounts().first() {
         Some(x) => x.to_owned().profile.uuid,
         None => "00000000-0000-0000-0000-000000000000".to_string(),
     }

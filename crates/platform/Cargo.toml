@@ -12,3 +12,4 @@ repository.workspace = true
 os_info.workspace = true
 serde.workspace = true
 once_cell.workspace = true
+tauri.workspace = true

@@ -9,10 +9,45 @@ use base64::{Engine, engine::general_purpose};
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri::Emitter;
+use tauri::{
+    Emitter, Runtime, command,
+    plugin::{Builder, TauriPlugin},
+};
 
 use folder::DATA_LOCATION;
 use shared::{HTTP_CLIENT, MAIN_WINDOW};
+
+/// Initializes the plugin.
+pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    Builder::new("account")
+        .invoke_handler(tauri::generate_handler![
+            cmd_list_accounts,
+            cmd_get_account_by_uuid,
+            cmd_add_microsoft_account,
+            cmd_delete_accout
+        ])
+        .build()
+}
+
+#[command]
+fn cmd_list_accounts() -> Vec<Account> {
+    list_accounts()
+}
+
+#[command]
+fn cmd_get_account_by_uuid(uuid: String) -> Vec<Account> {
+    get_account_by_uuid(&uuid)
+}
+
+#[command]
+async fn cmd_add_microsoft_account(code: String) -> Option<()> {
+    add_microsoft_account(code).await.ok()
+}
+
+#[command]
+fn cmd_delete_accout(uuid: String) {
+    delete_account(uuid)
+}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Skin {
@@ -55,8 +90,7 @@ pub struct Account {
     pub account_type: AccountType,
 }
 
-pub fn get_accounts() -> Vec<Account> {
-    // TODO: rename to list_accounts()
+pub fn list_accounts() -> Vec<Account> {
     let path = DATA_LOCATION.root.join("accounts.json");
     if !path.exists() {
         return vec![];
@@ -79,7 +113,7 @@ pub fn get_account_by_uuid(uuid: &str) -> Vec<Account> {
 }
 
 fn add_account(account: Account) -> anyhow::Result<()> {
-    let mut accounts = get_accounts();
+    let mut accounts = list_accounts();
     accounts.push(account);
     let path = DATA_LOCATION.root.join("accounts.json");
     let contents = serde_json::to_string_pretty(&accounts).unwrap();
@@ -88,8 +122,8 @@ fn add_account(account: Account) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn delete_account(uuid: String) {
-    let accounts = get_accounts();
+pub fn delete_account(uuid: String) {
+    let accounts = list_accounts();
     let result = accounts
         .into_iter()
         .filter(|x| x.profile.uuid != uuid)
@@ -101,27 +135,21 @@ pub async fn delete_account(uuid: String) {
 }
 
 /// A command to add a microsoft account
-pub async fn add_microsoft_account(code: String) -> std::result::Result<(), ()> {
-    async fn add_microsoft_account(code: String) -> anyhow::Result<()> {
-        info!("Signing in through Microsoft");
-        let account = microsoft_login(LoginPayload::AccessCode(code)).await?;
-        if get_account_by_uuid(&account.profile.uuid).is_empty() {
-            add_account(account)?;
-            Ok(())
-        } else {
-            error!("The account has already been added");
-            Err(anyhow::anyhow!("This account has already been added"))
-        }
-    }
-    match add_microsoft_account(code).await {
-        anyhow::Result::Ok(x) => Ok(x),
-        anyhow::Result::Err(_) => Err(()),
+pub async fn add_microsoft_account(code: String) -> anyhow::Result<()> {
+    info!("Signing in through Microsoft");
+    let account = microsoft_login(LoginPayload::AccessCode(code)).await?;
+    if get_account_by_uuid(&account.profile.uuid).is_empty() {
+        add_account(account)?;
+        Ok(())
+    } else {
+        error!("The account has already been added");
+        Err(anyhow::anyhow!("This account has already been added"))
     }
 }
 
 pub async fn refresh_microsoft_account_by_uuid(uuid: String) -> Account {
     info!("Start refreshing the account: {uuid}");
-    let accounts = get_accounts();
+    let accounts = list_accounts();
     let mut result = vec![];
     for account in accounts {
         if account.profile.uuid != uuid
@@ -148,7 +176,7 @@ pub async fn refresh_microsoft_account_by_uuid(uuid: String) -> Account {
 
 #[cfg(not(debug_assertions))]
 pub async fn refresh_all_microsoft_account() {
-    let accounts = get_accounts();
+    let accounts = list_accounts();
     let mut result = vec![];
     for account in accounts {
         if account.refresh_token.is_none() || account.account_type != AccountType::Microsoft {

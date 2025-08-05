@@ -11,6 +11,7 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": fileURLToPath(new URL("./src", import.meta.url)),
+            "@conic": fileURLToPath(new URL("./crates", import.meta.url)),
         },
     },
     build: {
