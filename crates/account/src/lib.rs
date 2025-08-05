@@ -176,7 +176,7 @@ pub async fn refresh_microsoft_account_by_uuid(uuid: String) -> Account {
 
 #[cfg(not(debug_assertions))]
 pub async fn refresh_all_microsoft_account() {
-    let accounts = get_accounts();
+    let accounts = list_accounts();
     let mut result = vec![];
     for account in accounts {
         if account.refresh_token.is_none() || account.account_type != AccountType::Microsoft {
