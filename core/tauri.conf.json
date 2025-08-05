@@ -45,9 +45,6 @@
             "endpoints": [
                 "https://conic.btlcraft.top/latest.json"
             ]
-        },
-        "config": {
-            "allowed": true
         }
     }
 }
