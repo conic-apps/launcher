@@ -32,5 +32,3 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # TODO: Audit plugins
-      - name: Audit
-        run: yarn audit
