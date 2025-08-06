@@ -35,7 +35,6 @@
 import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
 import { useInstanceStore } from "@/store/instance";
-import { invoke } from "@tauri-apps/api/core";
 import { ref, watch } from "vue";
 
 type Mod = {
@@ -58,9 +57,7 @@ const mods = ref<Mod[]>([]);
 watch(
   instanceStore.currentInstance,
   () => {
-    invoke("scan_mods_folder").then((res: any) => {
-      mods.value = res as Mod[];
-    });
+    // todo: scan mod folder
   },
   {
     immediate: true,
