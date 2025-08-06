@@ -4,7 +4,6 @@
 
 import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log"
 import $ from "jquery"
-import { invoke } from "@tauri-apps/api/core"
 import { createApp } from "vue"
 import { createPinia } from "pinia"
 import App from "./Main.vue"
@@ -52,16 +51,16 @@ loadConfigFile().then((v) => {
     console.log(v)
 })
 
-// window.onload = () => {
-//     invoke("on_frontend_loaded")
-//     $("body").attr(
-//         "style",
-//         "transform: scale(1); opacity: 1;transition: all 250ms cubic-bezier(0, 0.74, 0.65, 1); ",
-//     )
-//     setTimeout(() => {
-//         $("body").attr("style", "")
-//     }, 500)
-// }
+window.onload = () => {
+    // invoke("on_frontend_loaded")
+    $("body").attr(
+        "style",
+        "transform: scale(1); opacity: 1;transition: all 250ms cubic-bezier(0, 0.74, 0.65, 1); ",
+    )
+    setTimeout(() => {
+        $("body").attr("style", "")
+    }, 500)
+}
 
 function forwardConsole(
     fnName: "log" | "debug" | "info" | "warn" | "error",

@@ -55,13 +55,17 @@
 <script lang="ts" setup>
 import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
-import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import { useConfigStore } from "@/store/config";
 import { getAvatar } from "@/avatar";
 import { useTimeStore } from "@/store/time";
-import { Account } from "@conic/account";
+import {
+  Account,
+  deleteAccount,
+  listAccounts,
+  refreshMicrosoftAccountByUuid,
+} from "@conic/account";
 
 const config = useConfigStore();
 
@@ -70,7 +74,7 @@ const emit = defineEmits(["add"]);
 const accounts = ref<Account[]>([]);
 
 async function getAccounts() {
-  let res: Account[] = await invoke("get_accounts");
+  let res: Account[] = await listAccounts();
   for (let i = 0; i <= res.length - 1; i++) {
     res[i].profile.avatar = await getAvatar(res[i].profile.skins[0].url, 32);
   }
@@ -85,14 +89,8 @@ listen("refresh_accounts_list", () => {
   getAccounts();
 });
 
-function deleteAccount(uuid: string) {
-  invoke("delete_account", { uuid });
-}
-
 function refreshLogin(uuid: string) {
-  invoke("refresh_microsoft_account_by_uuid", {
-    uuid,
-  });
+  refreshMicrosoftAccountByUuid(uuid);
 }
 
 function chooseAccount(account: Account) {

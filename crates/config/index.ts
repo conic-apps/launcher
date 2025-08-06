@@ -1,11 +1,15 @@
+// Conic Launcher
+// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 import { invoke } from "@tauri-apps/api/core"
 
 export async function loadConfigFile(): Promise<Config> {
-    return await invoke("plugin:config|cmd_load_config_file").then((r) => r as Config)
+    return await invoke("plugin:config|cmd_load_config_file")
 }
 
 export async function saveConfigToFile(config: Config): Promise<void> {
-    return await invoke("plugin:config|cmd_save_config", { payload: { config } })
+    return await invoke("plugin:config|cmd_save_config", { config })
 }
 
 export type Config = {

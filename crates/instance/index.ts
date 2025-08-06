@@ -1,3 +1,7 @@
+// Conic Launcher
+// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 import { invoke } from "@tauri-apps/api/core"
 
 export type InstanceRuntime = {
@@ -40,24 +44,18 @@ export type Instance = {
     id: string
 }
 
-export async function createInstance(config: InstanceConfig): Promise<Instance> {
-    return await invoke("plugin:instance|cmd_create_instance", { payload: { config } })
+export async function createInstance(instanceConfig: InstanceConfig): Promise<Instance> {
+    return await invoke("plugin:instance|cmd_create_instance", { config: instanceConfig })
 }
 
 export async function listInstances(sortBy: "Name"): Promise<Instance[]> {
-    return await invoke("plugin:instance|cmd_list_instance", {
-        payload: { sort_by: sortBy },
-    })
+    return await invoke("plugin:instance|cmd_list_instance", { sort_by: sortBy })
 }
 
 export async function updateInstance(config: InstanceConfig, id: string): Promise<Instance[]> {
-    return await invoke("plugin:instance|cmd_update_instance", {
-        payload: { config, id },
-    })
+    return await invoke("plugin:instance|cmd_update_instance", { config, id })
 }
 
 export async function deleteInstance(id: string): Promise<Instance[]> {
-    return await invoke("plugin:instance|cmd_delete_instance", {
-        payload: { id },
-    })
+    return await invoke("plugin:instance|cmd_delete_instance", { id })
 }
