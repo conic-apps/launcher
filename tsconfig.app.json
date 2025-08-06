@@ -17,7 +17,6 @@
             "@conic/instance": ["./crates/instance"],
             "@conic/launch": ["./crates/launch"],
             "@conic/platform": ["./crates/platform"]
-
         }
     },
     "lib": ["esnext", "dom"]
