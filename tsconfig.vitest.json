@@ -1,12 +1,10 @@
 {
     "extends": "./tsconfig.app.json",
+    "include": ["src/**/__tests__/*", "env.d.ts"],
     "exclude": [],
     "compilerOptions": {
-        "preserveValueImports": false,
-        "importsNotUsedAsValues": "remove",
-        "verbatimModuleSyntax": false,
-        "composite": true,
-        "lib": ["esnext", "dom"],
-        "types": ["node"]
+        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.vitest.tsbuildinfo",
+        "lib": [],
+        "types": ["node", "jsdom"]
     }
 }

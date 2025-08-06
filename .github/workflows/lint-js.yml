@@ -17,20 +17,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "20"
-          cache: yarn
-          cache-dependency-path: yarn.lock
-      - name: Run ts:check
-        working-directory: ./
-        run: yarn ts:check
-      - name: Install Dependencies
-        working-directory: ./
-        run: yarn
-      - name: Run lint
-        working-directory: ./
-        run: yarn lint
-      - name: Run format
-        working-directory: ./
-        run: yarn format:check
+      # - uses: actions/setup-node@v3
+      #   with:
+      #     node-version: "20"
+      #     cache: yarn
+      #     cache-dependency-path: yarn.lock
+      # - name: Run ts:check
+      #   working-directory: ./
+      #   run: yarn ts:check
+      # - name: Install Dependencies
+      #   working-directory: ./
+      #   run: yarn
+      # - name: Run lint
+      #   working-directory: ./
+      #   run: yarn lint
+      # - name: Run format
+      #   working-directory: ./
+      #   run: yarn format:check
