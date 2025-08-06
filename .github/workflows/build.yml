@@ -1,9 +1,11 @@
 name: Conic Launcher Auto Build
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/build.yml"
   push:
     branches:
       - master
-      - ci-test
 
 jobs:
   get-version:
@@ -23,12 +25,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install pnpm
+        run: |
+          npm install -g pnpm
+
       - name: Install frontend dependencies
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          yarn install
+          pnpm install
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -40,7 +46,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          yarn tauri build -- --verbose
+          pnpm run tauri build -- --verbose
 
       - name: Upload deb bundle
         uses: actions/upload-artifact@v4
@@ -95,13 +101,13 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf tree
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: setup node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
-          cache: "yarn"
+          node-version: "22.18.0"
+          cache: "pnpm"
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -118,14 +124,14 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: yarn install
+        run: pnpm install
 
       - name: Build the app
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          yarn tauri build -- ${{ matrix.args }}
+          pnpm run tauri build -- ${{ matrix.args }}
 
       - name: Upload deb bundle
         uses: actions/upload-artifact@v4
