@@ -10,9 +10,5 @@
         {
             "path": "./tsconfig.vitest.json"
         }
-    ],
-    "compilerOptions": {
-        "lib": ["esnext", "dom"],
-        "types": ["jquery"]
-    }
+    ]
 }
