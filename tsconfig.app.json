@@ -14,7 +14,10 @@
             "@conic/config": ["./crates/config"],
             "@conic/account": ["./crates/account"],
             "@conic/install": ["./crates/install"],
-            "@conic/instance": ["./crates/instance"]
+            "@conic/instance": ["./crates/instance"],
+            "@conic/launch": ["./crates/launch"],
+            "@conic/platform": ["./crates/platform"]
+
         }
     },
     "lib": ["esnext", "dom"]

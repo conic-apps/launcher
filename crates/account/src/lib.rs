@@ -24,7 +24,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_list_accounts,
             cmd_get_account_by_uuid,
             cmd_add_microsoft_account,
-            cmd_delete_accout,
+            cmd_delete_account,
             cmd_refresh_all_microsoft_accounts,
             cmd_refresh_microsoft_account_by_uuid
         ])
@@ -47,7 +47,7 @@ async fn cmd_add_microsoft_account(code: String) -> Option<()> {
 }
 
 #[command]
-fn cmd_delete_accout(uuid: String) {
+fn cmd_delete_account(uuid: String) {
     delete_account(uuid)
 }
 

@@ -22,10 +22,12 @@
         "config:allow-cmd-load-config-file",
         "config:allow-cmd-save-config",
         "account:allow-cmd-list-accounts",
-        "account:allow-cmd-get-account-by-id",
+        "account:allow-cmd-get-account-by-uuid",
         "account:allow-cmd-add-microsoft-account",
         "account:allow-cmd-delete-account",
-        "install:cmd-get-minecraft-version-list",
+        "account:allow-cmd-refresh-all-microsoft-accounts",
+        "account:allow-cmd-refresh-microsoft-account-by-uuid",
+        "install:allow-cmd-get-minecraft-version-list",
         "install:allow-cmd-get-fabric-version-list",
         "install:allow-cmd-get-quilt-version-list",
         "install:allow-cmd-get-forge-version-list",
@@ -33,10 +35,10 @@
         "install:allow-cmd-install",
         "platform:allow-cmd-get-platform-info",
         "launch:allow-cmd-launch",
-        "instance:llow-create-instance",
-        "instance:llow-list-instances",
-        "instance:llow-update-instance",
-        "instance:llow-delete-instance"
+        "instance:allow-cmd-create-instance",
+        "instance:allow-cmd-list-instances",
+        "instance:allow-cmd-update-instance",
+        "instance:allow-cmd-delete-instance"
     ]
 }
 

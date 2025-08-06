@@ -42,7 +42,7 @@ import { useInstanceStore } from "@/store/instance";
 import CreateInstance from "./dialogs/CreateInstance.vue";
 import { Instance, listInstances } from "@conic/instance";
 import { install as conicInstall } from "@conic/install";
-import { launch as conicLaunch } from "crates/launch";
+import { launch as conicLaunch } from "@conic/launch";
 
 const config = useConfigStore();
 const installing = ref(false);

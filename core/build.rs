@@ -16,7 +16,9 @@ fn main() {
                 "cmd_list_accounts",
                 "cmd_get_account_by_uuid",
                 "cmd_add_microsoft_account",
-                "cmd_delete_accout",
+                "cmd_delete_account",
+                "cmd_refresh_all_microsoft_accounts",
+                "cmd_refresh_microsoft_account_by_uuid",
             ]),
         )
         .plugin(
