@@ -3,9 +3,9 @@
     "version": "0.0.0",
     "identifier": "top.btlcraft.launcher",
     "build": {
-        "beforeDevCommand": "yarn dev",
+        "beforeDevCommand": "pnpm dev",
         "devUrl": "http://localhost:5173",
-        "beforeBuildCommand": "yarn build",
+        "beforeBuildCommand": "pnpm build",
         "frontendDist": "../dist"
     },
     "app": {
