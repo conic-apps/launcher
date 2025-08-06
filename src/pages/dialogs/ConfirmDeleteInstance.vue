@@ -94,9 +94,9 @@ import DialogVue from "@/components/Dialog.vue";
 import TextInputBox from "@/components/TextInputBox.vue";
 import ButtonVue from "@/components/Button.vue";
 import { computed, ref, useTemplateRef } from "vue";
-import { invoke } from "@tauri-apps/api/core";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { useInstanceStore } from "@/store/instance";
+import { deleteInstance } from "@conic/instance";
 
 const props = defineProps<{
   visible: boolean;
@@ -115,7 +115,7 @@ const emit = defineEmits(["close", "deleted"]);
 const deleting = ref(false);
 const confirmDelete = () => {
   deleting.value = true;
-  invoke("delete_instance", { instanceId: currentInstance.value.id }).then(() => {
+  deleteInstance(currentInstance.value.id).then(() => {
     deleting.value = false;
     confirmInputText.value = "";
     emit("deleted");

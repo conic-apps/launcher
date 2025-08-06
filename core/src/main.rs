@@ -6,16 +6,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 // #![deny(clippy::unwrap_used)]
 
-use std::panic::{PanicHookInfo, set_hook};
-
-use backtrace::Backtrace;
 use config::{Config, load_config_file};
 use folder::DATA_LOCATION;
-use log::{debug, error, info};
+use log::{error, info};
 use platform::PLATFORM_INFO;
-use shared::{APP_HANDLE, MAIN_WINDOW};
-use tauri::{Emitter, Manager};
-use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+use shared::MAIN_WINDOW;
+use tauri::{AppHandle, Emitter, Manager};
 #[cfg(debug_assertions)]
 use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
 use tauri_plugin_log::{Target, TargetKind};
@@ -42,19 +38,24 @@ async fn main() {
         + "`)
         })
     ";
+    info!("Conic Launcher is starting up");
+    info!(
+        "Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher"
+    );
+    let single_instance_closure = |app: &AppHandle, _, _| {
+        let windows = app.webview_windows();
+        windows
+            .values()
+            .next()
+            .expect("Sorry, no window found")
+            .set_focus()
+            .expect("Can't Bring Window to Focus");
+    };
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(init_log_builder().build())
-        .plugin(tauri_plugin_single_instance::init(|app, _, _| {
-            let windows = app.webview_windows();
-            windows
-                .values()
-                .next()
-                .expect("Sorry, no window found")
-                .set_focus()
-                .expect("Can't Bring Window to Focus");
-        }))
+        .plugin(tauri_plugin_single_instance::init(single_instance_closure))
         .plugin(tauri_plugin_http::init())
         .plugin(config::init())
         .plugin(account::init())
@@ -63,34 +64,13 @@ async fn main() {
         .plugin(launch::init())
         .plugin(platform::init())
         .append_invoke_initialization_script(init_config_js_script)
-        .setup(move |app| {
-            print_title();
+        .setup(|_app| {
             std::fs::write(
                 DATA_LOCATION.root.join("platform.json"),
                 serde_json::to_string_pretty(&PLATFORM_INFO.clone()).unwrap(),
             )
             .unwrap();
             info!("Main window loaded");
-            APP_HANDLE.set(app.app_handle().clone()).unwrap();
-            set_hook(Box::new(|info: &PanicHookInfo| {
-                let backtrace = format!("{:#?}", Backtrace::new());
-                let backtrace_first_ten_lines: Vec<&str> = backtrace.lines().take(12).collect();
-                println!("{backtrace:#?}");
-                APP_HANDLE
-                    .get()
-                    .unwrap()
-                    .dialog()
-                    .message(format!(
-                        "{}\nBacktrace:\n{}\nmore {} lines not shown...",
-                        info,
-                        backtrace_first_ten_lines.join("\n"),
-                        backtrace.lines().count() - 12
-                    ))
-                    .kind(MessageDialogKind::Error)
-                    .title("Fatal Error")
-                    .blocking_show();
-                let _ = MAIN_WINDOW.close();
-            }));
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -163,24 +143,4 @@ fn init_log_builder() -> tauri_plugin_log::Builder {
         trace: Color::Cyan,
     });
     log_builder
-}
-
-fn print_title() {
-    debug!("  █████╗ ███╗   ███╗███████╗████████╗██╗  ██╗██╗   ██╗███████╗████████╗ ");
-    debug!(" ██╔══██╗████╗ ████║██╔════╝╚══██╔══╝██║  ██║╚██╗ ██╔╝██╔════╝╚══██╔══╝ ");
-    debug!(" ███████║██╔████╔██║█████╗     ██║   ███████║ ╚████╔╝ ███████╗   ██║    ");
-    debug!(" ██╔══██║██║╚██╔╝██║██╔══╝     ██║   ██╔══██║  ╚██╔╝  ╚════██║   ██║    ");
-    debug!(" ██║  ██║██║ ╚═╝ ██║███████╗   ██║   ██║  ██║   ██║   ███████║   ██║    ");
-    debug!(" ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚══════╝   ╚═╝    ");
-    debug!("");
-    debug!(" ██╗      █████╗ ██╗   ██╗███╗   ██╗ ██████╗██╗  ██╗███████╗██████╗     ");
-    debug!(" ██║     ██╔══██╗██║   ██║████╗  ██║██╔════╝██║  ██║██╔════╝██╔══██╗    ");
-    debug!(" ██║     ███████║██║   ██║██╔██╗ ██║██║     ███████║█████╗  ██████╔╝    ");
-    debug!(" ██║     ██╔══██║██║   ██║██║╚██╗██║██║     ██╔══██║██╔══╝  ██╔══██╗    ");
-    debug!(" ███████╗██║  ██║╚██████╔╝██║ ╚████║╚██████╗██║  ██║███████╗██║  ██║    ");
-    debug!(" ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ");
-    info!("Conic Launcher is starting up");
-    info!(
-        "Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher"
-    );
 }

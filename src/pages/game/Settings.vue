@@ -211,7 +211,7 @@
         :title="$t('settings.advance.ignorePatchDiscrepancies')"
         :description="$t('settings.advance.ignorePatchDiscrepanciesDesc')">
         <ToggleSwitch
-          v-model="instanceStore.currentInstance.config.launch_config.ignore_patch_discrepanicies">
+          v-model="instanceStore.currentInstance.config.launch_config.ignore_patch_discrepancies">
         </ToggleSwitch>
       </setting-item>
       <setting-item :title="$t('settings.advance.lwjglSettings')" description="" :clickAble="true">
@@ -266,9 +266,9 @@ import ConfirmDeleteInstance from "../dialogs/ConfirmDeleteInstance.vue";
 import SelectVue from "@/components/Select.vue";
 import LogViewer from "../dialogs/LogViewer.vue";
 import { useInstanceStore } from "@/store/instance";
-import { invoke } from "@tauri-apps/api/core";
 import $ from "jquery";
 import ButtonVue from "@/components/Button.vue";
+import { updateInstance } from "@conic/instance";
 
 defineEmits(["update-instance-list"]);
 
@@ -316,7 +316,7 @@ watchEffect(() => {
       extra_mc_args: config.launch.extra_mc_args,
       is_demo: config.launch.is_demo,
       ignore_invalid_minecraft_certificates: config.launch.ignore_invalid_minecraft_certificates,
-      ignore_patch_discrepanicies: config.launch.ignore_patch_discrepancies,
+      ignore_patch_discrepancies: config.launch.ignore_patch_discrepancies,
       extra_class_paths: config.launch.extra_class_paths,
       gc: config.launch.gc,
       launcher_name: config.launch.launcher_name,
@@ -341,10 +341,7 @@ watchEffect(() => {
   }
   oldEnabledSpecificSettings =
     currentInstanceConfig.launch_config.enable_instance_specific_settings;
-  invoke("update_instance", {
-    config: currentInstanceConfig,
-    id: instanceStore.currentInstance.id,
-  }).then(() => {
+  updateInstance(currentInstanceConfig, instanceStore.currentInstance.id).then(() => {
     $("body").removeClass("saving-instance-settings");
   });
 });

@@ -137,7 +137,16 @@ import QuiltChoose from "./create/QuiltChoose.vue";
 import FabricChoose from "./create/FabricChoose.vue";
 import ForgeChoose from "./create/ForgeChoose.vue";
 import NeoforgedChoose from "./create/NeoforgedChoose.vue";
-import { invoke } from "@tauri-apps/api/core";
+import {
+  FabricLoaderArtifact,
+  ForgeVersionItem,
+  getFabricVersionList,
+  getForgeVersionList,
+  getNeoforgedVersionList,
+  getQuiltVersionList,
+  QuiltVersion,
+} from "@conic/install";
+import { createInstance as conicCreateInstance } from "@conic/instance";
 
 const emit = defineEmits(["close", "update"]);
 
@@ -211,10 +220,10 @@ watch(minecraftVersion, () => {
   forgeVersionList.value = [];
 });
 
-const forgeVersionList = ref([]);
-const quiltVersionList = ref([]);
-const fabricVersionList = ref([]);
-const neoforgedVersionList = ref([]);
+const forgeVersionList = ref<ForgeVersionItem[]>([]);
+const quiltVersionList = ref<QuiltVersion[]>([]);
+const fabricVersionList = ref<FabricLoaderArtifact[]>([]);
+const neoforgedVersionList = ref<string[]>([]);
 
 const forgeIsLoading = ref(false);
 const fabricIsLoading = ref(false);
@@ -233,9 +242,7 @@ watchEffect(async () => {
   fabricIsLoading.value = true;
   if (minecraftVersion.value) {
     try {
-      fabricVersionList.value = await invoke("get_fabric_version_list", {
-        mcversion: minecraftVersion.value,
-      });
+      fabricVersionList.value = await getFabricVersionList(minecraftVersion.value);
     } catch (e) {
       fabricVersionList.value = [];
     }
@@ -246,9 +253,7 @@ watchEffect(async () => {
   quiltIsLoading.value = true;
   if (minecraftVersion.value) {
     try {
-      quiltVersionList.value = await invoke("get_quilt_version_list", {
-        mcversion: minecraftVersion.value,
-      });
+      quiltVersionList.value = await getQuiltVersionList(minecraftVersion.value);
     } catch (e) {
       quiltVersionList.value = [];
     }
@@ -259,9 +264,7 @@ watchEffect(async () => {
   forgeIsLoading.value = true;
   if (minecraftVersion.value) {
     try {
-      forgeVersionList.value = await invoke("get_forge_version_list", {
-        mcversion: minecraftVersion.value,
-      });
+      forgeVersionList.value = await getForgeVersionList(minecraftVersion.value);
     } catch (e) {
       forgeVersionList.value = [];
     }
@@ -272,9 +275,7 @@ watchEffect(async () => {
   neoforgedIsLoading.value = true;
   if (minecraftVersion.value) {
     try {
-      neoforgedVersionList.value = await invoke("get_neoforged_version_list", {
-        mcversion: minecraftVersion.value,
-      });
+      neoforgedVersionList.value = await getNeoforgedVersionList(minecraftVersion.value);
     } catch (e) {
       neoforgedVersionList.value = [];
     }
@@ -303,7 +304,7 @@ const disabledModLoaderId = computed(() => {
 const creating = ref(false);
 
 const createInstance = () => {
-  let parsedModLoaderType = null;
+  let parsedModLoaderType: "Quilt" | "Fabric" | "Neoforged" | "Forge" | undefined = undefined;
   switch (modLoaderType.value) {
     case 1:
       parsedModLoaderType = "Quilt";
@@ -319,19 +320,18 @@ const createInstance = () => {
       break;
   }
   creating.value = true;
-  invoke("create_instance", {
-    config: {
-      name: instanceNameValue.value ? instanceNameValue.value : defaultInstanceName.value,
-      runtime: {
-        minecraft: minecraftVersion.value,
-        mod_loader_type: parsedModLoaderType,
-        mod_loader_version: parsedModLoaderType ? modLoaderVersion.value : null,
-      },
-      launch_config: {
-        enable_instance_specific_settings: false,
-      },
+  const newInstanceConfig = {
+    name: instanceNameValue.value ? instanceNameValue.value : defaultInstanceName.value,
+    runtime: {
+      minecraft: minecraftVersion.value,
+      mod_loader_type: parsedModLoaderType,
+      mod_loader_version: parsedModLoaderType ? modLoaderVersion.value : undefined,
     },
-  })
+    launch_config: {
+      enable_instance_specific_settings: false,
+    },
+  };
+  conicCreateInstance(newInstanceConfig)
     .then(() => {
       emit("update");
       close();

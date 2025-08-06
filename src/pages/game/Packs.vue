@@ -46,7 +46,6 @@
 import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
 import { useInstanceStore } from "@/store/instance";
-import { invoke } from "@tauri-apps/api/core";
 import { ref, watch } from "vue";
 
 type Resourcepack = {
@@ -67,9 +66,7 @@ const resourcepacks = ref<Resourcepack[]>([]);
 watch(
   instanceStore.currentInstance,
   () => {
-    invoke("scan_resourcepack_folder").then((res: any) => {
-      resourcepacks.value = res as Resourcepack[];
-    });
+    // TODO: scan packs
   },
   {
     immediate: true,

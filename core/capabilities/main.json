@@ -18,7 +18,27 @@
         "log:default",
         "clipboard-manager:default",
         "clipboard-manager:allow-write-text",
-        "dialog:default"
+        "dialog:default",
+        "config:allow-cmd-load-config-file",
+        "config:allow-cmd-save-config",
+        "account:allow-cmd-list-accounts",
+        "account:allow-cmd-get-account-by-uuid",
+        "account:allow-cmd-add-microsoft-account",
+        "account:allow-cmd-delete-account",
+        "account:allow-cmd-refresh-all-microsoft-accounts",
+        "account:allow-cmd-refresh-microsoft-account-by-uuid",
+        "install:allow-cmd-get-minecraft-version-list",
+        "install:allow-cmd-get-fabric-version-list",
+        "install:allow-cmd-get-quilt-version-list",
+        "install:allow-cmd-get-forge-version-list",
+        "install:allow-cmd-get-neoforged-version-list",
+        "install:allow-cmd-install",
+        "platform:allow-cmd-get-platform-info",
+        "launch:allow-cmd-launch",
+        "instance:allow-cmd-create-instance",
+        "instance:allow-cmd-list-instances",
+        "instance:allow-cmd-update-instance",
+        "instance:allow-cmd-delete-instance"
     ]
 }
 

@@ -36,26 +36,23 @@ import InstanceCard from "./game/InstanceCard.vue";
 import InstanceDetails from "./game/InstanceDetails.vue";
 import InstanceList from "./game/InstanceList.vue";
 import { onMounted, ref, watch, type Ref } from "vue";
-import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/store/config";
-import { Instance, useInstanceStore } from "@/store/instance";
+import { useInstanceStore } from "@/store/instance";
 import CreateInstance from "./dialogs/CreateInstance.vue";
+import { Instance, listInstances } from "@conic/instance";
+import { install as conicInstall } from "@conic/install";
+import { launch as conicLaunch } from "@conic/launch";
 
 const config = useConfigStore();
-
 const installing = ref(false);
-
 const buttonLoading = ref(false);
-
 const showCreateInstance = ref(false);
-
 const errorType: Ref<"launch" | "install" | undefined> = ref();
-
 const instanceStore = useInstanceStore();
 
 function update() {
-  invoke("read_all_instances", { sortBy: "Name" }).then((res) => {
+  listInstances("Name").then((res) => {
     instanceStore.instances = res as Instance[];
     let currentInstance = instanceStore.currentInstance;
     let instances = instanceStore.instances;
@@ -107,9 +104,6 @@ watch(config, (value) => {
 
 function setCurrentInstance(instance: Instance) {
   instanceStore.currentInstance = instance;
-  invoke("set_current_instance", {
-    instance: instance,
-  });
 }
 
 const install = () => {
@@ -119,13 +113,11 @@ const install = () => {
     completed: 0,
     total: 0,
   });
-  invoke("install", { instance: instanceStore.currentInstance });
+  conicInstall(config, instanceStore.currentInstance);
 };
 const launch = () => {
   buttonLoading.value = true;
-  invoke("launch", {
-    instance: instanceStore.currentInstance,
-  });
+  conicLaunch(config, instanceStore.currentInstance);
 };
 
 listen("install_success", () => {

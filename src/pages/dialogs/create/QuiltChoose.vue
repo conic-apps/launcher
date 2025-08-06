@@ -32,8 +32,6 @@
 
 <script setup lang="ts">
 import SearchBar from "@/components/SearchBar.vue";
-import { ref, watchEffect } from "vue";
-import { invoke } from "@tauri-apps/api/core";
 import ListItem from "@/components/ListItem.vue";
 
 const props = defineProps<{

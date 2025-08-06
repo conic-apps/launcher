@@ -92,7 +92,6 @@ import $ from "jquery";
 import Settings from "./pages/Settings.vue";
 import Game from "./pages/Game.vue";
 import UpdateReminder from "./pages/dialogs/UpdateReminder.vue";
-import { invoke } from "@tauri-apps/api/core";
 import { useConfigStore } from "./store/config";
 import { watch } from "vue";
 import { useI18n } from "vue-i18n";
@@ -104,7 +103,8 @@ import Tag from "./components/Tag.vue";
 import { listen } from "@tauri-apps/api/event";
 import { useTimeStore } from "./store/time";
 import Market from "./pages/Market.vue";
-import { Account } from "@conic/account";
+import { Account, getAccountByUuid, refreshAllMicrosoftAccounts } from "@conic/account";
+import { saveConfigToFile } from "@conic/config";
 
 function minimize() {
   window.getCurrentWindow().minimize();
@@ -197,9 +197,7 @@ const currentAccountProfile = ref<{
   type: "Offline",
 });
 
-invoke("get_account_by_uuid", {
-  uuid: config.current_account,
-}).then((res) => {
+getAccountByUuid(config.current_account).then((res) => {
   const account = (res as Account[])[0];
   if (account != undefined) {
     getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
@@ -214,13 +212,10 @@ invoke("get_account_by_uuid", {
 });
 watch(
   config,
-  (value) => {
+  async (value) => {
     $("body").addClass("saving-config");
-    invoke("update_config", { config: value }).then(() => {
-      invoke("save_config").then(() => {
-        $("body").removeClass("saving-config");
-      });
-    });
+    await saveConfigToFile(value);
+    $("body").removeClass("saving-config");
   },
   { immediate: false },
 );
@@ -230,23 +225,19 @@ setInterval(() => {
   currentTime.now = Math.round(new Date().getTime() / 1000);
 }, 3000);
 
-listen("refresh_accounts_list", () => {
-  invoke("get_account_by_uuid", {
-    uuid: config.current_account,
-  }).then((res) => {
-    const account = (res as Account[])[0];
-    getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
-      currentAccountProfile.value = {
-        name: account.profile.profile_name,
-        avatar,
-        tokenDeadline: account.token_deadline ? account.token_deadline : -1,
-        type: account.account_type,
-      };
-    });
+listen("refresh_accounts_list", async () => {
+  const account = (await getAccountByUuid(config.current_account))[0];
+  getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
+    currentAccountProfile.value = {
+      name: account.profile.profile_name,
+      avatar,
+      tokenDeadline: account.token_deadline ? account.token_deadline : -1,
+      type: account.account_type,
+    };
   });
 });
 
-invoke("refresh_all_microsoft_account");
+refreshAllMicrosoftAccounts();
 listen("add-account", () => {
   showAccountManager.value = true;
 });

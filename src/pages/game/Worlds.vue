@@ -44,8 +44,7 @@
 import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
 import { useInstanceStore } from "@/store/instance";
-import { invoke } from "@tauri-apps/api/core";
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 
 type Save = {
   icon: string;
@@ -60,20 +59,12 @@ const saves = ref<Save[]>([]);
 watch(
   instanceStore.currentInstance,
   () => {
-    invoke("scan_saves_folder").then((res: any) => {
-      saves.value = res as Save[];
-    });
+    // TODO: scan saves folder
   },
   {
     immediate: true,
   },
 );
-
-// onMounted(() => {
-//   invoke("scan_saves_folder").then((res: any) => {
-//     saves.value = res as Save[];
-//   });
-// });
 </script>
 
 <style lang="less" scoped>

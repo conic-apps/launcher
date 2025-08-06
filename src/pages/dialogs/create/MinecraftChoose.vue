@@ -73,13 +73,13 @@
 <script setup lang="ts">
 import SearchBar from "@/components/SearchBar.vue";
 import { ref } from "vue";
-import { invoke } from "@tauri-apps/api/core";
 import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
+import { getMinecrafVersionManifest } from "@conic/install";
 
 let versions = ref<Array<any>>([]);
-invoke("get_minecraft_version_list")
-  .then((res: any) => {
+getMinecrafVersionManifest()
+  .then((res) => {
     if (res != null) {
       // versions.value = res.versions;
       versions.value = res.versions.filter((i: any) => i.type == "release");
