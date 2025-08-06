@@ -1,7 +1,18 @@
 {
-    "extends": "@vue/tsconfig/tsconfig.node.json",
-    "include": ["vite.config.*", "vitest.config.*", "cypress.config.*", "playwright.config.*"],
+    "extends": "@tsconfig/node22/tsconfig.json",
+    "include": [
+        "vite.config.*",
+        "vitest.config.*",
+        "cypress.config.*",
+        "nightwatch.conf.*",
+        "playwright.config.*",
+        "eslint.config.*"
+    ],
     "compilerOptions": {
+        "noEmit": true,
+        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
         "preserveValueImports": false,
         "importsNotUsedAsValues": "remove",
         "verbatimModuleSyntax": false,
