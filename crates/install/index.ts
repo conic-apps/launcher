@@ -1,3 +1,7 @@
+// Conic Launcher
+// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 import { Config } from "@conic/config"
 import { Instance } from "@conic/instance"
 import { invoke } from "@tauri-apps/api/core"
@@ -18,7 +22,7 @@ export type VersionManifest = {
     }[]
 }
 
-export async function getMinecrafVersionManifest(): Promise<VersionManifest> {
+export async function getMinecrafVersionManifest(): Promise<VersionManifest | null> {
     return await invoke("plugin:config|cmd_get_minecraft_version_list")
 }
 
@@ -37,27 +41,16 @@ export type FabricLoaderArtifact = {
     launcher_meta: {
         version: number
         libraries: {
-            client: {
-                name?: string
-                url?: string
-            }[]
-            common: {
-                name?: string
-                url?: string
-            }[]
-            server: {
-                name?: string
-                url?: string
-            }[]
+            client: { name?: string; url?: string }[]
+            common: { name?: string; url?: string }[]
+            server: { name?: string; url?: string }[]
         }
         main_class: NonNullable<any>
     }
 }
 
 export async function getFabricVersionList(mcversion: string): Promise<FabricLoaderArtifact[]> {
-    return await invoke("plugin:config|cmd_get_fabric_version_list", {
-        payload: { mcversion },
-    })
+    return await invoke("plugin:config|cmd_get_fabric_version_list", { mcversion })
 }
 
 export type QuiltVersion = {
@@ -91,9 +84,7 @@ export type QuiltVersion = {
 }
 
 export async function getQuiltVersionList(mcversion: string): Promise<QuiltVersion[]> {
-    return await invoke("plugin:config|cmd_get_quilt_version_list", {
-        payload: { mcversion },
-    })
+    return await invoke("plugin:config|cmd_get_quilt_version_list", { mcversion })
 }
 export type ForgeVersionItem = {
     _id: string
@@ -110,20 +101,14 @@ export type ForgeVersionItem = {
     branch: any
 }
 
-export async function getForgeVersionList(mcversion: string): Promise<QuiltVersion[]> {
-    return await invoke("plugin:config|cmd_get_forge_version_list", {
-        payload: { mcversion },
-    })
+export async function getForgeVersionList(mcversion: string): Promise<ForgeVersionItem[]> {
+    return await invoke("plugin:config|cmd_get_forge_version_list", { mcversion })
 }
 
 export async function getNeoforgedVersionList(mcversion: string): Promise<string[]> {
-    return await invoke("plugin:config|cmd_get_neoforged_version_list", {
-        payload: { mcversion },
-    })
+    return await invoke("plugin:config|cmd_get_neoforged_version_list", { mcversion })
 }
 
 export async function install(config: Config, instance: Instance) {
-    return await invoke("plugin:config|cmd_install", {
-        payload: { config, instance },
-    })
+    return await invoke("plugin:config|cmd_install", { config, instance })
 }

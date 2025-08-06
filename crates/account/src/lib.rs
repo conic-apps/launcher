@@ -24,7 +24,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_list_accounts,
             cmd_get_account_by_uuid,
             cmd_add_microsoft_account,
-            cmd_delete_accout
+            cmd_delete_account,
+            cmd_refresh_all_microsoft_accounts,
+            cmd_refresh_microsoft_account_by_uuid
         ])
         .build()
 }
@@ -45,8 +47,18 @@ async fn cmd_add_microsoft_account(code: String) -> Option<()> {
 }
 
 #[command]
-fn cmd_delete_accout(uuid: String) {
+fn cmd_delete_account(uuid: String) {
     delete_account(uuid)
+}
+
+#[command]
+async fn cmd_refresh_all_microsoft_accounts() {
+    refresh_all_microsoft_accounts().await
+}
+
+#[command]
+async fn cmd_refresh_microsoft_account_by_uuid(uuid: String) -> Account {
+    refresh_microsoft_account_by_uuid(uuid).await
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -175,7 +187,7 @@ pub async fn refresh_microsoft_account_by_uuid(uuid: String) -> Account {
 }
 
 #[cfg(not(debug_assertions))]
-pub async fn refresh_all_microsoft_account() {
+pub async fn refresh_all_microsoft_accounts() {
     let accounts = list_accounts();
     let mut result = vec![];
     for account in accounts {
@@ -198,7 +210,7 @@ pub async fn refresh_all_microsoft_account() {
 }
 
 #[cfg(debug_assertions)]
-pub async fn refresh_all_microsoft_account() {
+pub async fn refresh_all_microsoft_accounts() {
     info!("Accounts are not refreshed on app launch in debug mode.")
 }
 

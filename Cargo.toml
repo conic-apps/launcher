@@ -58,6 +58,7 @@ os_info = "3.12.0"
 incremental = true
 
 [profile.release]
+panic = "abort"
 codegen-units = 1
 lto = true
 opt-level = "z"
