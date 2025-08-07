@@ -133,7 +133,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          pnpm run tauri build -- -- ${{ matrix.args }}
+          pnpm run tauri build ${{ matrix.args }}
 
 
       - name: Upload deb bundle
