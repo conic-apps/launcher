@@ -22,8 +22,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "20"
-          cache: "pnpm"
           cache-dependency-path: "pnpm-lock.yaml"
+
+      - name: Enable Corepack and install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
       - name: Install Dependencies
         working-directory: ./
         run: pnpm install

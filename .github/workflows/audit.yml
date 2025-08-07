@@ -36,8 +36,12 @@ jobs:
       - name: setup node
         uses: actions/setup-node@v4
         with:
-          node-version: "22.18.0"
-          cache: "pnpm"
+          node-version: 22
+
+      - name: Enable Corepack and install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
 
       - name: Audit
         run: pnpm audit --registry=https://registry.npmjs.org
