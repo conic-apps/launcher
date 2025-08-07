@@ -125,6 +125,9 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
+      - name: install tree
+        run: |
+          brew install tree
       - name: Build the app
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -132,10 +135,6 @@ jobs:
         run: |
           pnpm run tauri build -- ${{ matrix.args }}
 
-      - name: install frontend dependencies
-        run: |
-          brew install tree
-          tree ${{ github.workspace }}/target
 
       - name: Upload deb bundle
         uses: actions/upload-artifact@v4
