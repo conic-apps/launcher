@@ -1,6 +1,6 @@
 name: Conic Launcher Auto Build
 on:
-  pull_request_target:
+  pull_request:
     paths:
       - ".github/workflows/build.yml"
   push:
