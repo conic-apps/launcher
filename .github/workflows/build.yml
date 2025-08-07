@@ -8,6 +8,17 @@ on:
       - master
 
 jobs:
+  get-version:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get app version
+        id: step
+        run: |
+          echo "text=$(jq -r .version core/tauri.conf.json)" >> "$GITHUB_OUTPUT"
+    outputs:
+      app_version: ${{ steps.step.outputs.text }}
   build:
     permissions:
       contents: write
@@ -30,13 +41,15 @@ jobs:
             appimage: "amd64"
           - platform: "ubuntu-22.04-arm"
             args: ""
-            rpm: "x86_64"
-            deb: "amd64"
-            appimage: "amd64"
+            deb: "arm64"
+            rpm: "aarch64"
+            appimage: "aarch64"
           - platform: "windows-latest"
             args: ""
+            arch: "x64"
           - platform: "windows-11-arm"
             args: ""
+            arch: "arm64"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -85,78 +98,75 @@ jobs:
           echo $TAURI_SIGNING_PRIVATE_KEY_PASSWORD
           pnpm run tauri build ${{ matrix.args }}
 
-      - name: Get app version
-        run: echo "APP_VERSION=$(jq -r .version core/tauri.conf.json)" >> $GITHUB_ENV
-
       - name: Upload deb bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: Debian bundle(amd64)
-          path: ${{ github.workspace }}/target/release/bundle/deb/conic-launcher_${{ env.APP_VERSION }}_${{ matrix.deb }}.deb
+          path: ${{ github.workspace }}/target/release/bundle/deb/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.deb }}.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: RPM bundle(x86_64)
-          path: ${{ github.workspace }}/target/release/bundle/rpm/conic-launcher-${{ env.APP_VERSION }}-1.${{ matrix.rpm }}.rpm
+          path: ${{ github.workspace }}/target/release/bundle/rpm/conic-launcher-${{ needs.get-version.outputs.app_version }}-1.${{ matrix.rpm }}.rpm
 
       - name: Upload appimage bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: AppImage bundle(amd64)
-          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ env.APP_VERSION }}_${{ matrix.appimage }}.AppImage
+          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.appimage }}.AppImage
 
       - name: Upload appimage updater signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: Updater signature(amd64-appimage)
-          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ env.APP_VERSION }}_${{ matrix.appimage }}.AppImage.sig
+          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.appimage }}.AppImage.sig
 
       - name: Upload Windows installation-free exe
         uses: actions/upload-artifact@v4
-        if: matrix.platform == 'windows-latest'
+        if: matrix.platform == 'windows-latest' || matrix.platform == 'windows-11-arm'
         with:
           name: Windows Installation-free(64-bit-exe)
           path: ${{ github.workspace }}/target/release/conic-launcher.exe
 
       - name: Upload Microsoft Installer bundle
         uses: actions/upload-artifact@v4
-        if: matrix.platform == 'windows-latest'
+        if: matrix.platform == 'windows-latest' || matrix.platform == 'windows-11-arm'
         with:
           name: Microsoft Installer bundle(64-bit)
-          path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ env.APP_VERSION }}_x64_en-US.msi
+          path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}_en-US.msi
 
       - name: Upload Microsoft Installer signature
         uses: actions/upload-artifact@v4
-        if: matrix.platform == 'windows-latest'
+        if: matrix.platform == 'windows-latest' || matrix.platform == 'windows-11-arm'
         with:
           name: Updater signature(64-bit-msi)
-          path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ env.APP_VERSION }}_x64_en-US.msi.sig
+          path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}_en-US.msi.sig
 
       - name: Upload NSIS bundle
         uses: actions/upload-artifact@v4
-        if: matrix.platform == 'windows-latest'
+        if: matrix.platform == 'windows-latest' || matrix.platform == 'windows-11-arm'
         with:
           name: NSIS bundle(64-bit)
-          path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ env.APP_VERSION }}_x64-setup.exe
+          path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}-setup.exe
 
       - name: Upload NSIS updater signature
         uses: actions/upload-artifact@v4
-        if: matrix.platform == 'windows-latest'
+        if: matrix.platform == 'windows-latest' || matrix.platform == 'windows-11-arm'
         with:
           name: Updater signature(64-bit-nsis)
-          path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ env.APP_VERSION }}_x64-setup.exe.sig
+          path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}-setup.exe.sig
 
       - name: Upload dmg bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'macos-latest'
         with:
           name: MacOS ${{ matrix.arch }} bundle(dmg)
-          path: ${{ github.workspace }}/target/${{matrix.target}}-apple-darwin/release/bundle/dmg/conic-launcher_${{ env.APP_VERSION }}_${{ matrix.arch }}.dmg
+          path: ${{ github.workspace }}/target/${{matrix.target}}-apple-darwin/release/bundle/dmg/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg
 
       - name: Upload macos updater bundle
         uses: actions/upload-artifact@v4
