@@ -27,7 +27,7 @@ jobs:
             appimage: armhf
             base_image: https://dietpi.com/downloads/images/DietPi_RPi-ARMv7-Bookworm.img.xz
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Cache rust build artifacts
         uses: Swatinem/rust-cache@v2
@@ -89,7 +89,6 @@ jobs:
           path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ env.APP_VERSION }}_aarch64.AppImage.sig
 
   build-other:
-    needs: [get-version]
     permissions:
       contents: write
     strategy:
