@@ -41,7 +41,7 @@
     },
     "plugins": {
         "updater": {
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE2NTVGNDYxMkExMkJBNUMKUldSY3VoSXFZZlJWRm5yMGpqbi9kc0tPdStZV0VOKzkyc1E4WXlqNE9kdFNBTDNqT09ZRGM2U00K",
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhCRjg1NDA1MkE1NzYwNkUKUldSdVlGY3FCVlQ0aTFVOWRpYW85My9zMlFNVnZYVWFIYjhjci9rVTZYWWNkTk9UcEpVZUxNRmUK",
             "endpoints": [
                 "https://conic.btlcraft.top/latest.json"
             ]
