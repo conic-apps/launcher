@@ -123,7 +123,7 @@ jobs:
           cache-on-failure: true
 
       - name: install frontend dependencies
-        run: tree ${{ github.workspace }}/target
+        run: pnpm install
 
       - name: Build the app
         env:
@@ -131,6 +131,11 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           pnpm run tauri build -- ${{ matrix.args }}
+
+      - name: install frontend dependencies
+        run: |
+          brew install tree
+          tree ${{ github.workspace }}/target
 
       - name: Upload deb bundle
         uses: actions/upload-artifact@v4
