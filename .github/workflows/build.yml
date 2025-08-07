@@ -52,10 +52,8 @@ jobs:
             . "$HOME/.cargo/env"
             curl -fsSL https://deb.nodesource.com/setup_lts.x | bash
             apt-get install -y nodejs
-
             npm i -g pnpm
             pnpm install
-
             export TAURI_SIGNING_PRIVATE_KEY=dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5THZzOE1QK1JrRWxjb3VOZ3dHQ2cvdWNhaXVRb09Ycm1pakllaFQvUlFya0FBQkFBQUFBQUFBQUFBQUlBQUFBQUc3MVlnU0tYMmtjcjc0V0pZeVBxMklMRkhya2F3MnAycjd6OGxnYTJURlNJSmk1SEVURmxzaGxYL2NXZW0xVVV1cTB2dHBkMGtFc3N3WkpxYjBPaDdsVzZyVTFBRi9LOXdRUThEcEQvWmFQVURDcXZXTlRNL0Nla1VSUWZVRFBjUkJSTzdkS08rY0U9Cg
             export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=abcd
             # export TAURI_SIGNING_PRIVATE_KEY=${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
