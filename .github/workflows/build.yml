@@ -123,7 +123,7 @@ jobs:
           cache-on-failure: true
 
       - name: install frontend dependencies
-        run: pnpm install
+        run: tree ${{ github.workspace }}/target
 
       - name: Build the app
         env:
