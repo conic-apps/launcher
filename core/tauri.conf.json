@@ -6,7 +6,8 @@
         "beforeDevCommand": "pnpm dev",
         "devUrl": "http://localhost:5173",
         "beforeBuildCommand": "pnpm build",
-        "frontendDist": "../dist"
+        "frontendDist": "../dist",
+        "binaryPath": "../target/release/conic-launcher"
     },
     "app": {
         "windows": [
