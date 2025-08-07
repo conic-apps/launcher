@@ -1,7 +1,6 @@
 <!-- Conic Launcher -->
 <!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
-
 <template>
   <div class="window" data-tauri-drag-region>
     <div class="title-bar" data-tauri-drag-region>
@@ -72,7 +71,7 @@
     </div>
     <main class="main" style="transition: none">
       <Transition :name="transitionName" mode="out-in">
-        <component :is="currentComponent" @back-to-home="back" @jump="jumpTo"></component>
+        <component :is="currentComponent" @jump="jumpTo"></component>
       </Transition>
     </main>
     <update-reminder></update-reminder>
@@ -116,7 +115,7 @@ function close() {
   window.getCurrentWindow().close();
 }
 
-const pages: any = reactive({
+const pages = reactive({
   settings: markRaw(Settings),
   home: markRaw(Home),
   market: markRaw(Market),
@@ -125,7 +124,6 @@ const pages: any = reactive({
 
 const transitionName = ref("slide-up");
 const currentComponent = shallowRef(pages.game);
-let last: any;
 const config = useConfigStore();
 loadTheme(config);
 const i18n = useI18n();
@@ -134,26 +132,24 @@ watch(config, () => {
   i18n.locale.value = config.language;
 });
 
-function changePage(event: any, component: any) {
+type ComponentName = "home" | "settings" | "game" | "market";
+
+function changePage(event: MouseEvent | null, component: ComponentName) {
   if (component == "settings") {
-    gsap.fromTo(event.currentTarget.querySelector("i"), { rotate: "0deg" }, { rotate: `120deg` });
+    gsap.fromTo(
+      (event?.currentTarget as HTMLElement).querySelector("i"),
+      { rotate: "0deg" },
+      { rotate: `120deg` },
+    );
   }
-  if (typeof component == "string") {
+  if (typeof component === "string") {
     currentComponent.value = pages[component];
   } else {
     currentComponent.value = component;
   }
 }
 
-function back() {
-  let isSettingPage = JSON.stringify(last) == JSON.stringify(pages.settings);
-  if (isSettingPage) {
-    changePage(null, "wareHouse");
-    return;
-  }
-  changePage(null, last);
-}
-function jumpTo(name: string) {
+function jumpTo(name: ComponentName) {
   changePage(null, name);
 }
 
@@ -162,10 +158,10 @@ function openSearchPanel() {
     .attr(
       "style",
       /* css */ `
-  top: 300px; 
-  height: 400px; 
-  width: 500px; 
-  background: #000; 
+  top: 300px;
+  height: 400px;
+  width: 500px;
+  background: #000;
   z-index: 10001;
   border-radius: 16px;
   `,

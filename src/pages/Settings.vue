@@ -7,7 +7,7 @@
     <div class="rol-1">
       <ul class="settings-menu">
         <li
-          @click="switchComponent(item, index)"
+          @click="switchComponent(item.component, index)"
           :class="[activeComponentIndex == index ? 'active' : '']"
           v-for="(item, index) in components"
           :key="index">
@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { markRaw, ref, shallowRef, watch } from "vue";
+import { Component, markRaw, Ref, ref, shallowRef } from "vue";
 import General from "./settings/General.vue";
 import Game from "./settings/Game.vue";
 import Advance from "./settings/Advance.vue";
@@ -34,7 +34,7 @@ import Accessibility from "./settings/Accessibility.vue";
 import Extend from "./settings/Extend.vue";
 import About from "./settings/About.vue";
 
-const components = ref([
+const components: Ref<{ name: string; icon: string; component: Component }[]> = ref([
   {
     name: "settings.general.sidebar",
     icon: "house",
@@ -77,15 +77,15 @@ const components = ref([
   },
 ]);
 const currentComponent = shallowRef(components.value[0].component);
-let activeComponentIndex = ref(0);
-let transitionName = ref("slide-up");
-function switchComponent(item: any, index: number) {
+const activeComponentIndex = ref(0);
+const transitionName = ref("slide-up");
+function switchComponent(component: Component, index: number) {
   if (activeComponentIndex.value < index) {
     transitionName.value = "slide-up";
   } else {
     transitionName.value = "slide-down";
   }
-  currentComponent.value = item.component;
+  currentComponent.value = component;
   activeComponentIndex.value = index;
 }
 </script>

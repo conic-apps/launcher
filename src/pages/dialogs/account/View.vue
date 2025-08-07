@@ -69,12 +69,12 @@ import {
 
 const config = useConfigStore();
 
-const emit = defineEmits(["add"]);
+defineEmits(["add"]);
 
 const accounts = ref<Account[]>([]);
 
 async function getAccounts() {
-  let res: Account[] = await listAccounts();
+  const res: Account[] = await listAccounts();
   for (let i = 0; i <= res.length - 1; i++) {
     res[i].profile.avatar = await getAvatar(res[i].profile.skins[0].url, 32);
   }
