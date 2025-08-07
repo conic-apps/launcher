@@ -6,7 +6,6 @@
         "beforeDevCommand": "pnpm dev",
         "devUrl": "http://localhost:5173",
         "beforeBuildCommand": "pnpm build",
-        "beforeBundleCommand": "pnpm tree",
         "frontendDist": "../dist"
     },
     "app": {

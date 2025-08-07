@@ -8,66 +8,87 @@ on:
       - master
 
 jobs:
-  get-version:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Get app version
-        id: step
-        run: |
-          echo "text=$(jq -r .version core/tauri.conf.json)" >> "$GITHUB_OUTPUT"
-    outputs:
-      app_version: ${{ steps.step.outputs.text }}
   build-arm-linux:
-    needs: [get-version]
-    runs-on: [self-hosted, linux-arm64]
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        arch: [aarch64, armv7l]
+        include:
+          - arch: aarch64
+            cpu: cortex-a72
+            base_image: https://dietpi.com/downloads/images/DietPi_RPi5-ARMv8-Bookworm.img.xz
+            deb: arm64
+            rpm: aarch64
+            appimage: aarch64
+          - arch: armv7l
+            cpu: cortex-a53
+            deb: armhfp
+            rpm: arm
+            appimage: armhf
+            base_image: https://dietpi.com/downloads/images/DietPi_RPi-ARMv7-Bookworm.img.xz
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Install pnpm
-        run: |
-          npm install -g pnpm
-
-      - name: Install frontend dependencies
-        run: |
-          pnpm install
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
+      - name: Cache rust build artifacts
+        uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
 
-      - name: Build the app
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: |
-          pnpm run tauri build --verbose
+      - name: Build app
+        uses: pguyot/arm-runner-action@v2.6.5
+        with:
+          base_image: ${{ matrix.base_image }}
+          cpu: ${{ matrix.cpu }}
+          bind_mount_repository: true
+          image_additional_mb: 10240
+          optimize_image: no
+          commands: |
+            export HOME=/root
+            export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+            apt-get update -y --allow-releaseinfo-change
+            apt-get autoremove -y
+            apt-get install -y --no-install-recommends --no-install-suggests curl libwebkit2gtk-4.1-dev build-essential libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf libfuse2 file
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+            . "$HOME/.cargo/env"
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | bash
+            apt-get install -y nodejs
+
+            npm i -g pnpm
+            pnpm install
+
+            export TAURI_SIGNING_PRIVATE_KEY=dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5THZzOE1QK1JrRWxjb3VOZ3dHQ2cvdWNhaXVRb09Ycm1pakllaFQvUlFya0FBQkFBQUFBQUFBQUFBQUlBQUFBQUc3MVlnU0tYMmtjcjc0V0pZeVBxMklMRkhya2F3MnAycjd6OGxnYTJURlNJSmk1SEVURmxzaGxYL2NXZW0xVVV1cTB2dHBkMGtFc3N3WkpxYjBPaDdsVzZyVTFBRi9LOXdRUThEcEQvWmFQVURDcXZXTlRNL0Nla1VSUWZVRFBjUkJSTzdkS08rY0U9Cg
+            export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=abcd
+            # export TAURI_SIGNING_PRIVATE_KEY=${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+            # export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+            # Build the application
+            pnpm run tauri build --verbose
+
+      - name: Get app version
+        run: echo "APP_VERSION=$(jq -r .version core/tauri.conf.json)" >> $GITHUB_ENV
 
       - name: Upload deb bundle
         uses: actions/upload-artifact@v4
         with:
           name: Debian bundle(aarch64)
-          path: ${{ github.workspace }}/target/release/bundle/deb/conic-launcher_${{ needs.get-version.outputs.app_version }}_arm64.deb
+          path: ${{ github.workspace }}/target/release/bundle/deb/conic-launcher_${{ env.APP_VERSION }}_arm64.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v4
         with:
           name: RPM bundle(aarch64)
-          path: ${{ github.workspace }}/target/release/bundle/rpm/conic-launcher-${{ needs.get-version.outputs.app_version }}-1.aarch64.rpm
+          path: ${{ github.workspace }}/target/release/bundle/rpm/conic-launcher-${{ env.APP_VERSION }}-1.aarch64.rpm
 
       - name: Upload appimage bundle
         uses: actions/upload-artifact@v4
         with:
           name: AppImage bundle(aarch64)
-          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage
+          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ env.APP_VERSION }}_aarch64.AppImage
 
       - name: Upload updater signature
         uses: actions/upload-artifact@v4
         with:
           name: Updater signature(aarch64-appimage)
-          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_aarch64.AppImage.sig
+          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ env.APP_VERSION }}_aarch64.AppImage.sig
 
   build-other:
     needs: [get-version]
@@ -125,9 +146,6 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
-      - name: install tree
-        run: |
-          brew install tree
       - name: Build the app
         env:
           TAURI_SIGNING_PRIVATE_KEY: dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5THZzOE1QK1JrRWxjb3VOZ3dHQ2cvdWNhaXVRb09Ycm1pakllaFQvUlFya0FBQkFBQUFBQUFBQUFBQUlBQUFBQUc3MVlnU0tYMmtjcjc0V0pZeVBxMklMRkhya2F3MnAycjd6OGxnYTJURlNJSmk1SEVURmxzaGxYL2NXZW0xVVV1cTB2dHBkMGtFc3N3WkpxYjBPaDdsVzZyVTFBRi9LOXdRUThEcEQvWmFQVURDcXZXTlRNL0Nla1VSUWZVRFBjUkJSTzdkS08rY0U9Cg==
@@ -140,33 +158,36 @@ jobs:
           echo $TAURI_SIGNING_PRIVATE_KEY_PASSWORD
           pnpm run tauri build ${{ matrix.args }}
 
+      - name: Get app version
+        run: echo "APP_VERSION=$(jq -r .version core/tauri.conf.json)" >> $GITHUB_ENV
+
       - name: Upload deb bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: Debian bundle(amd64)
-          path: ${{ github.workspace }}/target/release/bundle/deb/conic-launcher_${{ needs.get-version.outputs.app_version }}_amd64.deb
+          path: ${{ github.workspace }}/target/release/bundle/deb/conic-launcher_${{ env.APP_VERSION }}_amd64.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: RPM bundle(x86_64)
-          path: ${{ github.workspace }}/target/release/bundle/rpm/conic-launcher-${{ needs.get-version.outputs.app_version }}-1.x86_64.rpm
+          path: ${{ github.workspace }}/target/release/bundle/rpm/conic-launcher-${{ env.APP_VERSION }}-1.x86_64.rpm
 
       - name: Upload appimage bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: AppImage bundle(amd64)
-          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage
+          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ env.APP_VERSION }}_amd64.AppImage
 
       - name: Upload appimage updater signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: Updater signature(amd64-appimage)
-          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_amd64.AppImage.sig
+          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ env.APP_VERSION }}_amd64.AppImage.sig
 
       - name: Upload Windows installation-free exe
         uses: actions/upload-artifact@v4
@@ -180,35 +201,35 @@ jobs:
         if: matrix.platform == 'windows-latest'
         with:
           name: Microsoft Installer bundle(64-bit)
-          path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi
+          path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ env.APP_VERSION }}_x64_en-US.msi
 
       - name: Upload Microsoft Installer signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: Updater signature(64-bit-msi)
-          path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_x64_en-US.msi.sig
+          path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ env.APP_VERSION }}_x64_en-US.msi.sig
 
       - name: Upload NSIS bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: NSIS bundle(64-bit)
-          path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe
+          path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ env.APP_VERSION }}_x64-setup.exe
 
       - name: Upload NSIS updater signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         with:
           name: Updater signature(64-bit-nsis)
-          path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_x64-setup.exe.sig
+          path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ env.APP_VERSION }}_x64-setup.exe.sig
 
       - name: Upload dmg bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'macos-latest'
         with:
           name: MacOS ${{ matrix.arch }} bundle(dmg)
-          path: ${{ github.workspace }}/target/${{matrix.target}}-apple-darwin/release/bundle/dmg/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg
+          path: ${{ github.workspace }}/target/${{matrix.target}}-apple-darwin/release/bundle/dmg/conic-launcher_${{ env.APP_VERSION }}_${{ matrix.arch }}.dmg
 
       - name: Upload macos updater bundle
         uses: actions/upload-artifact@v4
