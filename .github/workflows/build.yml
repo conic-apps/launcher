@@ -20,6 +20,7 @@ jobs:
     outputs:
       app_version: ${{ steps.step.outputs.text }}
   build:
+    needs: [get-version]
     permissions:
       contents: write
     strategy:
@@ -130,35 +131,35 @@ jobs:
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest' || matrix.platform == 'windows-11-arm'
         with:
-          name: Windows Installation-free(64-bit-exe)
+          name: Windows Installation-free(${{ matrix.arch }}-exe)
           path: ${{ github.workspace }}/target/release/conic-launcher.exe
 
       - name: Upload Microsoft Installer bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest' || matrix.platform == 'windows-11-arm'
         with:
-          name: Microsoft Installer bundle(64-bit)
+          name: Microsoft Installer bundle(${{ matrix.arch }})
           path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}_en-US.msi
 
       - name: Upload Microsoft Installer signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest' || matrix.platform == 'windows-11-arm'
         with:
-          name: Updater signature(64-bit-msi)
+          name: Updater signature(${{ matrix.arch }}-msi)
           path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}_en-US.msi.sig
 
       - name: Upload NSIS bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest' || matrix.platform == 'windows-11-arm'
         with:
-          name: NSIS bundle(64-bit)
+          name: NSIS bundle(${{ matrix.arch }})
           path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}-setup.exe
 
       - name: Upload NSIS updater signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest' || matrix.platform == 'windows-11-arm'
         with:
-          name: Updater signature(64-bit-nsis)
+          name: Updater signature(${{ matrix.arch }}-nsis)
           path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}-setup.exe.sig
 
       - name: Upload dmg bundle
