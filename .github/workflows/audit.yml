@@ -32,5 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.18.0"
+          cache: "pnpm"
+
       - name: Audit
-        run: pnpm audit
+        run: pnpm audit --registry=https://registry.npmjs.org

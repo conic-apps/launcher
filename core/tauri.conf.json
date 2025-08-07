@@ -1,13 +1,12 @@
 {
     "productName": "conic-launcher",
     "version": "0.0.0",
-    "identifier": "top.btlcraft.launcher",
+    "identifier": "app.conicmc.launcher",
     "build": {
         "beforeDevCommand": "pnpm dev",
         "devUrl": "http://localhost:5173",
         "beforeBuildCommand": "pnpm build",
-        "frontendDist": "../dist",
-        "binaryPath": "../target/release/conic-launcher"
+        "frontendDist": "../dist"
     },
     "app": {
         "windows": [
@@ -31,6 +30,7 @@
     "bundle": {
         "active": true,
         "targets": "all",
+        "beforeBundleCommand": "pnpm tree",
         "icon": [
             "icons/32x32.png",
             "icons/128x128.png",
