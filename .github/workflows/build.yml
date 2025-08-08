@@ -12,13 +12,20 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 2
       - name: Get app version
-        id: step
+        id: current_version
         run: |
           echo "text=$(jq -r .version core/tauri.conf.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Get previous version
+        id: previous_version
+        run: |
+          echo "text=$(git show HEAD~1:core/tauri.conf.json | jq -r .version)" >> $GITHUB_OUTPUT
     outputs:
-      app_version: ${{ steps.step.outputs.text }}
+      app_version: ${{ steps.current_version.outputs.text }}
+      previous_app_version: ${{ steps.previous_version.outputs.text }}
   build:
     needs: [get-version]
     permissions:
@@ -173,3 +180,49 @@ jobs:
         with:
           name: MacOS ${{ matrix.arch }} updater signature
           path: ${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz.sig
+
+  release:
+    needs: [get-version]
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    if: needs.get-version.outputs.app_version != needs.get-version.outputs.previous_app_version
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release_files
+
+      - name: Detect prerelease
+        id: detect
+        run: |
+          if [[ "${{ needs.get-version.outputs.app_version }}" == *"alpha"* || "${{ needs.get-version.outputs.app_version }}" == *"beta"* || "${{ needs.get-version.outputs.app_version }}" == *"rc"* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create release
+        id: drafter
+        uses: release-drafter/release-drafter@v6
+        with:
+          version: ${{ needs.get-version.outputs.app_version }}
+          prerelease: ${{ steps.current_version.outputs.text }}
+          publish: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release_files
+
+      - name: Upload files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: v${{ needs.get-version.outputs.app_version }}
+        run: |
+          for file in release_files/*; do
+            echo "Uploading $file to release $TAG_NAME"
+            gh release upload "$TAG_NAME" "$file" --clobber
+          done
