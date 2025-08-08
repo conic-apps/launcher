@@ -12,11 +12,7 @@
           flex-shrink: 0;
           align-items: center;
         ">
-        <search-bar
-          @click="openSearchPanel"
-          id="global-search"
-          style="width: 100%"
-          :placeholder="$t('globalSearch.placeholder')"></search-bar>
+        <search-bar style="width: 100%" :placeholder="$t('globalSearch.placeholder')"></search-bar>
       </div>
       <div class="account" @click="showAccountManager = true">
         <div class="avatar">
@@ -87,7 +83,6 @@ import SearchBar from "./components/SearchBar.vue";
 import SidebarItem from "./components/SidebarItem.vue";
 import AccountManager from "./pages/dialogs/AccountManager.vue";
 import { window } from "@tauri-apps/api";
-import $ from "jquery";
 import Settings from "./pages/Settings.vue";
 import Game from "./pages/Game.vue";
 import UpdateReminder from "./pages/dialogs/UpdateReminder.vue";
@@ -153,32 +148,6 @@ function jumpTo(name: ComponentName) {
   changePage(null, name);
 }
 
-function openSearchPanel() {
-  $("#global-search")
-    .attr(
-      "style",
-      /* css */ `
-  top: 300px;
-  height: 400px;
-  width: 500px;
-  background: #000;
-  z-index: 10001;
-  border-radius: 16px;
-  `,
-    )
-    .children("*")
-    .hide();
-  $("#model-shadow").attr("style", "opacity: 1; z-index: 10000;");
-  setTimeout(() => {
-    closeSearchPanel();
-  }, 1000);
-}
-
-function closeSearchPanel() {
-  $("#global-search").attr("style", "").children("*").show();
-  $("#model-shadow").attr("style", "");
-}
-
 const showAccountManager = ref(false);
 
 const currentAccountProfile = ref<{
@@ -209,9 +178,9 @@ getAccountByUuid(config.current_account).then((res) => {
 watch(
   config,
   async (value) => {
-    $("body").addClass("saving-config");
+    document.body.classList.add("saving-config");
     await saveConfigToFile(value);
-    $("body").removeClass("saving-config");
+    document.body.classList.remove("saving-config");
   },
   { immediate: false },
 );

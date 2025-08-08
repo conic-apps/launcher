@@ -1,6 +1,6 @@
 {
     "productName": "conic-launcher",
-    "version": "0.0.0",
+    "version": "0.1.0-alpha.1",
     "identifier": "app.conicmc.launcher",
     "build": {
         "beforeDevCommand": "pnpm dev",

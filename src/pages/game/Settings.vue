@@ -266,7 +266,6 @@ import ConfirmDeleteInstance from "../dialogs/ConfirmDeleteInstance.vue";
 import SelectVue from "@/components/Select.vue";
 import LogViewer from "../dialogs/LogViewer.vue";
 import { useInstanceStore } from "@/store/instance";
-import $ from "jquery";
 import ButtonVue from "@/components/Button.vue";
 import { updateInstance } from "@conic/instance";
 
@@ -293,7 +292,7 @@ let oldEnabledSpecificSettings =
 
 watchEffect(() => {
   const currentInstanceConfig = instanceStore.currentInstance.config;
-  $("body").addClass("saving-instance-settings");
+  document.body.classList.add("saving-instance-settings");
   if (
     currentInstanceConfig.launch_config.enable_instance_specific_settings &&
     !oldEnabledSpecificSettings
@@ -324,7 +323,7 @@ watchEffect(() => {
       execute_before_launch: config.launch.execute_before_launch,
       execute_after_launch: config.launch.execute_after_launch,
     };
-    $("body").removeClass("saving-instance-settings");
+    document.body.classList.remove("saving-instance-settings");
     oldEnabledSpecificSettings =
       currentInstanceConfig.launch_config.enable_instance_specific_settings;
   }
@@ -335,14 +334,14 @@ watchEffect(() => {
     instanceStore.currentInstance.config.launch_config = {
       enable_instance_specific_settings: false,
     };
-    $("body").removeClass("saving-instance-settings");
+    document.body.classList.remove("saving-instance-settings");
     oldEnabledSpecificSettings =
       currentInstanceConfig.launch_config.enable_instance_specific_settings;
   }
   oldEnabledSpecificSettings =
     currentInstanceConfig.launch_config.enable_instance_specific_settings;
   updateInstance(currentInstanceConfig, instanceStore.currentInstance.id).then(() => {
-    $("body").removeClass("saving-instance-settings");
+    document.body.classList.remove("saving-instance-settings");
   });
 });
 </script>

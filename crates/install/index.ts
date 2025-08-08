@@ -102,13 +102,13 @@ export type ForgeVersionItem = {
 }
 
 export async function getForgeVersionList(mcversion: string): Promise<ForgeVersionItem[]> {
-    return await invoke("plugin:config|cmd_get_forge_version_list", { mcversion })
+    return await invoke("plugin:install|cmd_get_forge_version_list", { mcversion })
 }
 
 export async function getNeoforgedVersionList(mcversion: string): Promise<string[]> {
-    return await invoke("plugin:config|cmd_get_neoforged_version_list", { mcversion })
+    return await invoke("plugin:install|cmd_get_neoforged_version_list", { mcversion })
 }
 
 export async function install(config: Config, instance: Instance) {
-    return await invoke("plugin:config|cmd_install", { config, instance })
+    return await invoke("plugin:install|cmd_install", { config, instance })
 }
