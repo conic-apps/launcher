@@ -1,7 +1,7 @@
 name-template: "Conic Launcher v$RESOLVED_VERSION"
 tag-template: "v$RESOLVED_VERSION"
 categories:
-  - title: "🚀 Features"
+  - title: "✨ Features"
     labels:
       - "feature"
       - "enhancement"
@@ -10,9 +10,17 @@ categories:
       - "fix"
       - "bugfix"
       - "bug"
-  - title: "🏗️ Maintenance"
-    label: "chore"
+  - title: "🚀 Performance"
+    labels:
+      - "performance"
 change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
-change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
+change-title-escapes: '\<*_&'
+exclude-labels:
+  - "ci"
+  - "chore"
+  - "documentation"
+  - "refactor"
+  - "test"
+  - "style"
 template: |
   $CHANGES

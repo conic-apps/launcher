@@ -23,7 +23,8 @@ jobs:
               'refactor': 'refactor',
               'perf': 'performance',
               'test': 'test',
-              'chore': 'chore'
+              'chore': 'chore',
+              'ci': 'ci'
             };
 
             let labelToAdd = null;
