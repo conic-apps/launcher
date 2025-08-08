@@ -61,7 +61,6 @@ import SettingGroup from "@/components/SettingGroup.vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { watch } from "vue";
-import $ from "jquery";
 import { reloadTheme } from "@/theme";
 const config = useConfigStore();
 
@@ -69,9 +68,9 @@ watch(
   config,
   () => {
     if (config.accessibility.disable_animations) {
-      $("body").addClass("no-animations");
+      document.body.classList.add("no-animations");
     } else {
-      $("body").removeClass("no-animations");
+      document.body.classList.remove("no-animations");
     }
   },
   {},

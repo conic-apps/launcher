@@ -50,7 +50,7 @@
       <div class="controll-btns">
         <i class="button gear"></i>
         <i class="button circle-info"></i>
-        <i class="button star" id="star" @click="star"></i>
+        <i class="button star" ref="star-button" @click="toggleStar"></i>
         <button
           class="game-button"
           :class="`${gameButtonType}-game-button`"
@@ -73,9 +73,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
-import $ from "jquery";
 import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
 import { useConfigStore } from "@/store/config";
 import { useInstanceStore } from "@/store/instance";
@@ -141,16 +140,19 @@ const gameButtonText = computed(() => {
   }
 });
 
-function star() {
-  const star = $("#star");
-  if (star.hasClass("activated")) {
-    star.removeClass("activated");
+const starRef = useTemplateRef("star-button");
+function toggleStar() {
+  if (starRef.value?.classList.contains("activated")) {
+    starRef.value.classList.remove("activated");
     return;
   }
-  star.addClass("activated");
-  star.attr("style", "transform: scale(1.18)");
+  if (!starRef.value) {
+    return;
+  }
+  starRef.value.classList.add("activated");
+  starRef.value.style.transform = "scale(1.18)";
   setTimeout(() => {
-    star.removeAttr("style");
+    starRef.value?.removeAttribute("style");
   }, 100);
 }
 </script>
