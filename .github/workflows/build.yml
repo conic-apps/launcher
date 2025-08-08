@@ -224,5 +224,5 @@ jobs:
         run: |
           find ./release_files -type f -print0 | while IFS= read -r -d '' file; do
             echo "Uploading $file to release $TAG_NAME"
-            gh release upload v1.0.0 "$file"
+            gh release upload "$TAG_NAME" "$file" --repo conic-apps/launcher
           done
