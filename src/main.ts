@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log"
-import $ from "jquery"
 import { createApp } from "vue"
 import { createPinia } from "pinia"
 import App from "./Main.vue"
 import { createI18n } from "vue-i18n"
 import en_us from "./i18n/en_us"
 import zh_cn from "./i18n/zh_cn"
-import { loadConfigFile } from "@conic/config"
 
 const pinia = createPinia()
 const i18n = createI18n({
@@ -47,18 +45,12 @@ app.mount("#window")
 //     y: (await window.getCurrent().innerPosition()).y,
 // })
 
-loadConfigFile().then((v) => {
-    console.log(v)
-})
-
 window.onload = () => {
-    // invoke("on_frontend_loaded")
-    $("body").attr(
-        "style",
-        "transform: scale(1); opacity: 1;transition: all 250ms cubic-bezier(0, 0.74, 0.65, 1); ",
-    )
+    console.log("Frontend loaded")
+    document.body.style.cssText =
+        "transform: scale(1); opacity: 1;transition: all 250ms cubic-bezier(0, 0.74, 0.65, 1); "
     setTimeout(() => {
-        $("body").attr("style", "")
+        document.body.style.cssText = ""
     }, 500)
 }
 

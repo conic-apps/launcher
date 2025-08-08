@@ -18,7 +18,7 @@
         "verbatimModuleSyntax": false,
         "ignoreDeprecations": "5.0",
         "composite": true,
-        "types": ["node", "jquery"],
+        "types": ["node"],
         "lib": ["esnext", "dom"]
     }
 }

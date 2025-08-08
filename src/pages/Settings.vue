@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { Component, markRaw, Ref, ref, shallowRef } from "vue";
+import { type Component, markRaw, Ref, ref, shallowRef } from "vue";
 import General from "./settings/General.vue";
 import Game from "./settings/Game.vue";
 import Advance from "./settings/Advance.vue";

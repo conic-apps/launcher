@@ -5,9 +5,9 @@
 import { invoke } from "@tauri-apps/api/core"
 
 export type InstanceRuntime = {
-    minecraft: String
+    minecraft: string
     mod_loader_type?: "Quilt" | "Fabric" | "Neoforged" | "Forge"
-    mod_loader_version?: String
+    mod_loader_version?: string
 }
 export type InstanceConfig = {
     name: string
@@ -49,7 +49,7 @@ export async function createInstance(instanceConfig: InstanceConfig): Promise<In
 }
 
 export async function listInstances(sortBy: "Name"): Promise<Instance[]> {
-    return await invoke("plugin:instance|cmd_list_instance", { sort_by: sortBy })
+    return await invoke("plugin:instance|cmd_list_instances", { sortBy })
 }
 
 export async function updateInstance(config: InstanceConfig, id: string): Promise<Instance[]> {

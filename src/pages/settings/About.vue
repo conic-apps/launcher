@@ -28,10 +28,6 @@
         description="Copyright (c) 2018-present, Yuxi (Evan) You and Vue contributors<br> Licensed under the MIT License"
         icon="vuejs"></setting-item>
       <setting-item
-        title="jQuery"
-        description="Copyright 2024 OpenJS Foundation and jQuery contributors.<br> Licensed under the MIT License"
-        icon="jquery"></setting-item>
-      <setting-item
         title="vite"
         description="Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors<br> Licensed under the MIT License"
         icon="vite"></setting-item>
