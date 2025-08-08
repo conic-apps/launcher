@@ -59,16 +59,16 @@ type Log = {
   content: string;
 };
 // log collector
-let logCollector = ref(new Map());
+const logCollector = ref(new Map());
 
 listen("log", (event) => {
-  let payload = event.payload as Log;
-  let instanceLog = logCollector.value.get(payload.instanceId);
+  const payload = event.payload as Log;
+  const instanceLog = logCollector.value.get(payload.instanceId);
   if (typeof instanceLog == "undefined") {
     logCollector.value.set(payload.instanceId, [payload.content]);
     return;
   }
-  let newValue = logCollector.value.get(payload.instanceId);
+  const newValue = logCollector.value.get(payload.instanceId);
   if (payload.content.trim().length == 0) {
     return;
   }

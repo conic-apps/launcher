@@ -37,11 +37,12 @@ import Tag from "@/components/Tag.vue";
 import { useInstanceStore } from "@/store/instance";
 import { ref, watch } from "vue";
 
+// TODO: move this to @conic/game_data
 type Mod = {
   name: string;
   description: string | null;
   version: string | null;
-  depends: any; // TODO: show depends
+  depends: object[]; // TODO: show depends
   authors: {
     name: string;
     contact: Map<string, string>;

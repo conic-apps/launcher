@@ -85,7 +85,7 @@ const config = useConfigStore();
 
 const expand = ref(true);
 
-const props = defineProps<{
+defineProps<{
   buttonLoading: boolean;
   errorType?: "install" | "launch";
 }>();
@@ -114,8 +114,8 @@ const gameButtonType = computed(() => {
   }
 });
 
-let computedInstanceName = computed(() => {
-  let name = currentInstance.value.config.name;
+const computedInstanceName = computed(() => {
+  const name = currentInstance.value.config.name;
   if (name == "Latest Release") {
     return i18n.t("game.latestRelease");
   }
@@ -125,8 +125,8 @@ let computedInstanceName = computed(() => {
   return name;
 });
 
-let banner = "";
-let gameButtonText = computed(() => {
+const banner = "";
+const gameButtonText = computed(() => {
   switch (gameButtonType.value) {
     case "install":
       return i18n.t("game.install");
@@ -142,7 +142,7 @@ let gameButtonText = computed(() => {
 });
 
 function star() {
-  let star = $("#star");
+  const star = $("#star");
   if (star.hasClass("activated")) {
     star.removeClass("activated");
     return;

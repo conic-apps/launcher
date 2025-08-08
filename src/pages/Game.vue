@@ -54,9 +54,9 @@ const instanceStore = useInstanceStore();
 function update() {
   listInstances("Name").then((res) => {
     instanceStore.instances = res as Instance[];
-    let currentInstance = instanceStore.currentInstance;
-    let instances = instanceStore.instances;
-    let foundCurrentInstance = instances.find((value) => {
+    const currentInstance = instanceStore.currentInstance;
+    const instances = instanceStore.instances;
+    const foundCurrentInstance = instances.find((value) => {
       return value.id === currentInstance.id;
     });
     if (foundCurrentInstance) {
@@ -87,11 +87,11 @@ watch(config, (value) => {
   ) {
     hide_latest_release = value.accessibility.hide_latest_release;
     hide_latest_snapshot = value.accessibility.hide_latest_snapshot;
-    let currentInstanceName = instanceStore.currentInstance.config.name;
+    const currentInstanceName = instanceStore.currentInstance.config.name;
     if (currentInstanceName !== "Latest Release" && currentInstanceName !== "Latest Snapshot") {
       return;
     }
-    let instances = instanceStore.instances;
+    const instances = instanceStore.instances;
     if (!config.accessibility.hide_latest_release) {
       setCurrentInstance(instances[0]);
     } else if (!config.accessibility.hide_latest_snapshot) {

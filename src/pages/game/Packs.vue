@@ -48,12 +48,13 @@ import Tag from "@/components/Tag.vue";
 import { useInstanceStore } from "@/store/instance";
 import { ref, watch } from "vue";
 
+// TODO: move this to @conic/game_data
 type Resourcepack = {
   icon: string;
   metadata: {
     description: string;
     pack_format: number;
-    other: any;
+    other: object;
   };
   name: string;
   type: "unknown" | "texture" | "data";

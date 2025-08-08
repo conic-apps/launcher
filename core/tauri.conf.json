@@ -1,11 +1,11 @@
 {
     "productName": "conic-launcher",
     "version": "0.0.0",
-    "identifier": "top.btlcraft.launcher",
+    "identifier": "app.conicmc.launcher",
     "build": {
-        "beforeDevCommand": "yarn dev",
+        "beforeDevCommand": "pnpm dev",
         "devUrl": "http://localhost:5173",
-        "beforeBuildCommand": "yarn build",
+        "beforeBuildCommand": "pnpm build",
         "frontendDist": "../dist"
     },
     "app": {
@@ -41,9 +41,9 @@
     },
     "plugins": {
         "updater": {
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE2NTVGNDYxMkExMkJBNUMKUldSY3VoSXFZZlJWRm5yMGpqbi9kc0tPdStZV0VOKzkyc1E4WXlqNE9kdFNBTDNqT09ZRGM2U00K",
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE3OENDNkQwMkM3RjUyREYKUldUZlVuOHMwTWFNcDBDU3pCaFFnRlEyL3ZWSHR2bm1wQzVYZTR4a1YzVUF4OTJmRFE3bWJqaXUK",
             "endpoints": [
-                "https://conic.btlcraft.top/latest.json"
+                "https://api.conicmc.app/latest.json"
             ]
         }
     }

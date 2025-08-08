@@ -10,7 +10,6 @@
 const props = defineProps<{
   icon: string;
 }>();
-let classes = `${props.icon} icon-btn`;
 </script>
 
 <style lang="less" scoped>

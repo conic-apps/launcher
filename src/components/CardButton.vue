@@ -25,8 +25,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-
 const props = withDefaults(
   defineProps<{
     title: string;
@@ -42,9 +40,9 @@ const props = withDefaults(
     padding: "16,18,16,18",
   },
 );
-let margin = props.margin.split(",");
-let padding = props.padding.split(",");
-let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px;`;
+const margin = props.margin.split(",");
+const padding = props.padding.split(",");
+const cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px;`;
 </script>
 
 <style lang="less" scoped>

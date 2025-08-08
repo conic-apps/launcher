@@ -37,9 +37,9 @@ import ListItem from "@/components/ListItem.vue";
 const props = defineProps<{
   show?: boolean;
   minecraft: string;
-  versions: any[];
+  versions: string[];
 }>();
-const emit = defineEmits(["no-version", "loaded", "select"]);
+defineEmits(["no-version", "loaded", "select"]);
 </script>
 
 <style lang="less" scoped>

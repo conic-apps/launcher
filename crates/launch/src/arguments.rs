@@ -265,10 +265,10 @@ fn resolve_classpath(
                 let path = minecraft.get_library_by_path(&lib.download_info.path);
                 let native_folder = minecraft.get_natives_root(&version.id);
                 info!("Unzip native library {path:#?} to {native_folder:#?}");
-                if let Ok(file) = std::fs::File::open(path) {
-                    if let Ok(mut zip_archive) = ZipArchive::new(file) {
-                        decompression_all(&mut zip_archive, &native_folder).unwrap_or(());
-                    }
+                if let Ok(file) = std::fs::File::open(path)
+                    && let Ok(mut zip_archive) = ZipArchive::new(file)
+                {
+                    decompression_all(&mut zip_archive, &native_folder).unwrap_or(());
                 }
             }
             !lib.is_native_library

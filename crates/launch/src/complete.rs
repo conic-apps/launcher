@@ -186,10 +186,10 @@ async fn download_and_check(download: &Download) -> anyhow::Result<()> {
     file.sync_all().await?;
     drop(file);
     let mut file = std::fs::File::open(&file_path).unwrap();
-    if let Some(sha1) = download.sha1.clone() {
-        if calculate_sha1_from_read(&mut file) != sha1 {
-            return Err(anyhow::Error::msg("SHA1 check failed".to_string()));
-        }
+    if let Some(sha1) = download.sha1.clone()
+        && calculate_sha1_from_read(&mut file) != sha1
+    {
+        return Err(anyhow::Error::msg("SHA1 check failed".to_string()));
     }
     Ok(())
 }
