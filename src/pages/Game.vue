@@ -77,16 +77,16 @@ onMounted(() => {
   update();
 });
 
-let hide_latest_release = config.accessibility.hide_latest_release;
-let hide_latest_snapshot = config.accessibility.hide_latest_snapshot;
+let hideLatestRelease = config.accessibility.hide_latest_release;
+let hideLatestSnapshot = config.accessibility.hide_latest_snapshot;
 
 watch(config, (value) => {
   if (
-    value.accessibility.hide_latest_release !== hide_latest_release ||
-    value.accessibility.hide_latest_snapshot !== hide_latest_snapshot
+    value.accessibility.hide_latest_release !== hideLatestRelease ||
+    value.accessibility.hide_latest_snapshot !== hideLatestSnapshot
   ) {
-    hide_latest_release = value.accessibility.hide_latest_release;
-    hide_latest_snapshot = value.accessibility.hide_latest_snapshot;
+    hideLatestRelease = value.accessibility.hide_latest_release;
+    hideLatestSnapshot = value.accessibility.hide_latest_snapshot;
     const currentInstanceName = instanceStore.currentInstance.config.name;
     if (currentInstanceName !== "Latest Release" && currentInstanceName !== "Latest Snapshot") {
       return;

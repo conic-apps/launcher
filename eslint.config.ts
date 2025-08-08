@@ -23,9 +23,47 @@ const config: TSESLint.FlatConfig.Config[] = defineConfigWithVueTs(
     },
     skipFormatting,
     {
-        files: ["src/**"], // 或你想禁用的具体文件路径
+        files: ["src/**"],
         rules: {
             "vue/multi-word-component-names": "off",
+        },
+    },
+    {
+        files: ["src/**"],
+        rules: {
+            "@typescript-eslint/naming-convention": [
+                "warn",
+                {
+                    selector: "variable",
+                    modifiers: ["const"],
+                    format: ["camelCase"],
+                },
+                {
+                    selector: "variable",
+                    modifiers: ["const"],
+                    filter: {
+                        regex: "^[A-Z0-9_]+$",
+                        match: true,
+                    },
+                    format: ["UPPER_CASE"],
+                },
+                {
+                    selector: "variableLike",
+                    format: ["camelCase"],
+                },
+                {
+                    selector: "typeLike",
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: "interface",
+                    format: ["PascalCase"],
+                    custom: {
+                        regex: "^I[A-Z]",
+                        match: true,
+                    },
+                },
+            ],
         },
     },
 )
