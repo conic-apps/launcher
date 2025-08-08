@@ -31,23 +31,37 @@ jobs:
             args: "--target aarch64-apple-darwin"
             arch: "aarch64"
             target: "aarch64"
+
           - platform: "macos-latest"
             args: "--target x86_64-apple-darwin"
             arch: "x64"
             target: "x86_64"
+
           - platform: "ubuntu-22.04"
             args: ""
+            target: ""
             rpm: "x86_64"
             deb: "amd64"
             appimage: "amd64"
+
           - platform: "ubuntu-22.04-arm"
             args: ""
+            target: ""
             deb: "arm64"
             rpm: "aarch64"
             appimage: "aarch64"
+
+          - platform: "ubuntu-22.04-arm"
+            args: "--target armv7-unknown-linux-gnueabihf"
+            target: ""
+            deb: "armhfp"
+            rpm: "arm"
+            appimage: "armhf"
+
           - platform: "windows-latest"
             args: ""
             arch: "x64"
+
           - platform: "windows-11-arm"
             args: ""
             arch: "arm64"
@@ -87,6 +101,11 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
+      - name: add rust target
+        if: matrix.args == "--target armv7-unknown-linux-gnueabihf"
+        run: |
+          rustup target add armv7-unknown-linux-gnueabihf
+
       - name: Build the app
         env:
           TAURI_SIGNING_PRIVATE_KEY: dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5THZzOE1QK1JrRWxjb3VOZ3dHQ2cvdWNhaXVRb09Ycm1pakllaFQvUlFya0FBQkFBQUFBQUFBQUFBQUlBQUFBQUc3MVlnU0tYMmtjcjc0V0pZeVBxMklMRkhya2F3MnAycjd6OGxnYTJURlNJSmk1SEVURmxzaGxYL2NXZW0xVVV1cTB2dHBkMGtFc3N3WkpxYjBPaDdsVzZyVTFBRi9LOXdRUThEcEQvWmFQVURDcXZXTlRNL0Nla1VSUWZVRFBjUkJSTzdkS08rY0U9Cg==
@@ -124,7 +143,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
-          name: Updater signature(amd64-appimage)
+          name: Updater signature(${{ matrix.appimage }}-appimage)
           path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.appimage }}.AppImage.sig
 
       - name: Upload Windows installation-free exe
