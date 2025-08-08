@@ -15,7 +15,7 @@
       ">
       <TransitionGroup>
         <list-item
-          v-for="(version, index) in versions"
+          v-for="(version, index) in filteredVersions"
           :key="index"
           :title="`Minecraft ${version.id}`"
           logo="1"
@@ -72,17 +72,16 @@
 
 <script setup lang="ts">
 import SearchBar from "@/components/SearchBar.vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import ListItem from "@/components/ListItem.vue";
 import Tag from "@/components/Tag.vue";
-import { getMinecrafVersionManifest } from "@conic/install";
+import { getMinecrafVersionManifest, VersionManifest } from "@conic/install";
 
-let versions = ref<Array<any>>([]);
+const versions = ref<VersionManifest>();
 getMinecrafVersionManifest()
   .then((res) => {
-    if (res != null) {
-      // versions.value = res.versions;
-      versions.value = res.versions.filter((i: any) => i.type == "release");
+    if (res) {
+      versions.value = res;
     } else {
       throw "get_version_list failed!";
     }
@@ -91,8 +90,11 @@ getMinecrafVersionManifest()
     console.log(err);
   });
 
+const filteredVersions = computed(() => {
+  return versions.value?.versions.filter((version) => version.type === "release");
+});
 function parseTime(time: string) {
-  let date = new Date(time);
+  const date = new Date(time);
   return `发布于 ${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
 }
 </script>

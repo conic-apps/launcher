@@ -53,11 +53,11 @@ const props = withDefaults(
     iconBackground: true,
   },
 );
-let margin = props.margin.split(",");
-let padding = props.padding.split(",");
-let cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px;`;
-let iconSize = props.iconSize?.split(",");
-let iconStyle =
+const margin = props.margin.split(",");
+const padding = props.padding.split(",");
+const cardStyle = `${props.boxShadow ? " box-shadow: 0 0 10px #00000015;" : ""}margin: ${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px; padding: ${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px;`;
+const iconSize = props.iconSize?.split(",");
+const iconStyle =
   (iconSize ? `width: ${iconSize[0]}px; height: ${iconSize[1]}px;` : "") +
   (props.iconBackground ? "" : "background: none;");
 </script>

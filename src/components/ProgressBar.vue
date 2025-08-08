@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -27,13 +27,13 @@ const props = withDefaults(
   },
 );
 
-let widthStyle = computed(() => {
+const widthStyle = computed(() => {
   return `width: ${props.width}px`;
 });
-let loadingStyle = computed(() => {
+const loadingStyle = computed(() => {
   return props.loading ? "" : "display: none";
 });
-let progressStyle = computed(() => {
+const progressStyle = computed(() => {
   return props.loading ? "display: none" : "";
 });
 </script>

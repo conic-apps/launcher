@@ -243,7 +243,7 @@ watchEffect(async () => {
   if (minecraftVersion.value) {
     try {
       fabricVersionList.value = await getFabricVersionList(minecraftVersion.value);
-    } catch (e) {
+    } catch {
       fabricVersionList.value = [];
     }
   }
@@ -254,7 +254,7 @@ watchEffect(async () => {
   if (minecraftVersion.value) {
     try {
       quiltVersionList.value = await getQuiltVersionList(minecraftVersion.value);
-    } catch (e) {
+    } catch {
       quiltVersionList.value = [];
     }
   }
@@ -265,7 +265,7 @@ watchEffect(async () => {
   if (minecraftVersion.value) {
     try {
       forgeVersionList.value = await getForgeVersionList(minecraftVersion.value);
-    } catch (e) {
+    } catch {
       forgeVersionList.value = [];
     }
   }
@@ -276,7 +276,7 @@ watchEffect(async () => {
   if (minecraftVersion.value) {
     try {
       neoforgedVersionList.value = await getNeoforgedVersionList(minecraftVersion.value);
-    } catch (e) {
+    } catch {
       neoforgedVersionList.value = [];
     }
   }
@@ -284,7 +284,7 @@ watchEffect(async () => {
 });
 
 const disabledModLoaderId = computed(() => {
-  let result = [];
+  const result = [];
   if (quiltVersionList.value.length === 0) {
     result.push(1);
   }

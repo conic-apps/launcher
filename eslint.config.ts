@@ -4,12 +4,9 @@ import pluginVue from "eslint-plugin-vue"
 import pluginVitest from "@vitest/eslint-plugin"
 import skipFormatting from "@vue/eslint-config-prettier/skip-formatting"
 
-// To allow more languages other than `ts` in `.vue` files, uncomment the following lines:
-// import { configureVueProject } from '@vue/eslint-config-typescript'
-// configureVueProject({ scriptLangs: ['ts', 'tsx'] })
-// More info at https://github.com/vuejs/eslint-config-typescript/#advanced-setup
+import { TSESLint } from "@typescript-eslint/utils"
 
-export default defineConfigWithVueTs(
+const config: TSESLint.FlatConfig.Config[] = defineConfigWithVueTs(
     {
         name: "app/files-to-lint",
         files: ["**/*.{ts,mts,tsx,vue}"],
@@ -25,4 +22,12 @@ export default defineConfigWithVueTs(
         files: ["src/**/__tests__/*"],
     },
     skipFormatting,
+    {
+        files: ["src/**"], // 或你想禁用的具体文件路径
+        rules: {
+            "vue/multi-word-component-names": "off",
+        },
+    },
 )
+
+export default config

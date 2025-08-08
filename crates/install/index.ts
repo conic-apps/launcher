@@ -16,13 +16,13 @@ export type VersionManifest = {
         type: string
         url: string
         time: string
-        release_time: string
+        releaseTime: string
         sha1: string
-        compliance_level: number
+        complianceLevel: number
     }[]
 }
 
-export async function getMinecrafVersionManifest(): Promise<VersionManifest | null> {
+export async function getMinecrafVersionManifest(): Promise<VersionManifest> {
     return await invoke("plugin:config|cmd_get_minecraft_version_list")
 }
 
@@ -45,7 +45,7 @@ export type FabricLoaderArtifact = {
             common: { name?: string; url?: string }[]
             server: { name?: string; url?: string }[]
         }
-        main_class: NonNullable<any>
+        main_class: NonNullable<object>
     }
 }
 
@@ -98,7 +98,7 @@ export type ForgeVersionItem = {
         category: string
         hash?: string
     }[]
-    branch: any
+    branch: object
 }
 
 export async function getForgeVersionList(mcversion: string): Promise<ForgeVersionItem[]> {

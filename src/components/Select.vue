@@ -38,7 +38,7 @@ const props = defineProps<{
   displayName: string[];
 }>();
 const model = defineModel();
-let selected = ref("");
+const selected = ref("");
 props.options.map((value, index) => {
   if (value == model.value) {
     selected.value = props.displayName[index];
@@ -85,7 +85,7 @@ function changeSelection(index: number) {
 // onMounted(async () => {
 //   selected.value = await load(props.config)
 // })
-let opened = ref(false);
+const opened = ref(false);
 function toggleOpened() {
   opened.value = !opened.value;
 }

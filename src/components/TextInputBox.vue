@@ -5,7 +5,6 @@
 <template>
   <div class="input-box" :style="`width: ${width};`">
     <input
-      @focus="updateOld"
       @blur="updateModel"
       :type="numberOnly ? 'number' : 'text'"
       :title="name"
@@ -30,7 +29,7 @@ const props = withDefaults(
     numberOnly?: boolean;
     disabled?: boolean;
     lazyUpdateModel?: boolean;
-    value?: any;
+    value?: string;
     nonEmpty?: boolean;
   }>(),
   {
@@ -59,43 +58,17 @@ if (props.value) {
   watch(
     props,
     (newValue) => {
-      inputBoxValue.value = props.value;
+      inputBoxValue.value = newValue;
     },
     {
       immediate: true,
     },
   );
 }
-function updateModel(event: any) {
+function updateModel() {
   if (props.lazyUpdateModel) {
     model.value = inputBoxValue.value;
   }
-}
-
-let oldValue: string | number;
-function updateOld() {
-  if (props.numberOnly) {
-    oldValue = model.value as number;
-  } else {
-    oldValue = model.value as string;
-  }
-}
-function checkValue(event: any) {
-  let result: boolean = true;
-  let value = event.target.value.trim();
-  if (props.numberOnly) {
-    if (!/^[1-9]\d*$|^$/.test(value) || value.length == 0) {
-      model.value = oldValue;
-      event.target.value = oldValue;
-      result = false;
-    }
-  }
-  if (props.nonEmpty && value.length === 0) {
-    model.value = oldValue;
-    event.target.value = oldValue;
-    result = false;
-  }
-  return result;
 }
 
 watch(model, () => {

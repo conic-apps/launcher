@@ -33,13 +33,14 @@
 <script setup lang="ts">
 import SearchBar from "@/components/SearchBar.vue";
 import ListItem from "@/components/ListItem.vue";
+import { FabricLoaderArtifact } from "@conic/install";
 
 const props = defineProps<{
   show?: boolean;
   minecraft: string;
-  versions: any[];
+  versions: FabricLoaderArtifact[];
 }>();
-const emit = defineEmits(["no-version", "loaded", "select"]);
+defineEmits(["no-version", "loaded", "select"]);
 </script>
 
 <style lang="less" scoped>
