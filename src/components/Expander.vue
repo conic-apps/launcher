@@ -42,7 +42,6 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from "vue";
-import $ from "jquery";
 
 const props = withDefaults(
   defineProps<{
@@ -90,13 +89,13 @@ const iconStyle = computed(() => {
 const transitionStyle = "all 250ms ease";
 function beforeEnter(el: Element) {
   const element = el as HTMLElement;
-  $(element.firstElementChild!).removeClass("hidden");
+  element.firstElementChild?.classList.remove("hidden");
   element.style.transition = transitionStyle;
   element.style.height = "0px";
 }
 function enter(el: Element) {
   const element = el as HTMLElement;
-  const height = $(element.firstElementChild!).outerHeight(true);
+  const height = outerHeight(element.firstElementChild as HTMLElement);
   element.style.height = `${height}px`;
   element.style.overflow = "hidden";
 }
@@ -109,7 +108,7 @@ function afterEnter(el: Element) {
 function beforeLeave(el: Element) {
   const element = el as HTMLElement;
   element.style.transition = transitionStyle;
-  const height = $(element.firstElementChild!).outerHeight(true);
+  const height = outerHeight(element.firstElementChild as HTMLElement);
   element.style.height = `${height}px`;
   element.style.overflow = "hidden";
 }
@@ -127,6 +126,13 @@ function afterLeave(el: Element) {
 }
 function expander() {
   isSwapping.value = !isSwapping.value;
+}
+function outerHeight(el: HTMLElement) {
+  if (!el) return 0;
+  let height = el.getBoundingClientRect().height; // content + padding + border
+  const style = getComputedStyle(el);
+  height += parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+  return height;
 }
 </script>
 

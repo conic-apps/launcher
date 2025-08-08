@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { Component, markRaw, reactive, Ref, ref, shallowRef } from "vue";
+import { type Component, markRaw, reactive, Ref, ref, shallowRef } from "vue";
 import DialogVue from "@/components/Dialog.vue";
 import View from "./account/View.vue";
 import Add from "./account/Add.vue";

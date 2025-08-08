@@ -3,20 +3,28 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { useConfigStore } from "./store/config"
-import $ from "jquery"
 
 export function reloadTheme(config: ReturnType<typeof useConfigStore>) {
-    $("*").addClass("changing-theme")
+    document.querySelectorAll("*").forEach((el) => {
+        el.classList.add("changing-theme")
+    })
     loadTheme(config)
     setTimeout(() => {
-        $("*").removeClass("changing-theme")
+        document.querySelectorAll("*").forEach((el) => {
+            el.classList.remove("changing-theme")
+        })
     }, 300)
 }
 
 export function loadTheme(config: ReturnType<typeof useConfigStore>) {
+    document.body.classList.forEach((cls) => {
+        if (cls.startsWith("theme")) {
+            document.body.classList.remove(cls)
+        }
+    })
     if (config.accessibility.high_contrast_mode) {
-        $("body").attr("class", `theme-${config.appearance.theme}-hc`)
+        document.body.classList.add(`theme-${config.appearance.theme}-hc`)
     } else {
-        $("body").attr("class", `theme-${config.appearance.theme}`)
+        document.body.classList.add(`theme-${config.appearance.theme}`)
     }
 }

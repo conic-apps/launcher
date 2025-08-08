@@ -13,7 +13,12 @@
         @before-leave="beforeLeave"
         @leave="leave"
         @after-leave="afterLeave">
-        <ul class="options" :style="`width: ${width}px;`" v-if="opened" @click="opened = false">
+        <ul
+          ref="options"
+          class="options"
+          :style="`width: ${width}px;`"
+          v-if="opened"
+          @click="opened = false">
           <div v-if="opened">
             <li
               class="select-option"
@@ -30,8 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import $ from "jquery";
+import { ref, useTemplateRef } from "vue";
 const props = defineProps<{
   options: string[];
   width?: string;
@@ -39,6 +43,8 @@ const props = defineProps<{
 }>();
 const model = defineModel();
 const selected = ref("");
+
+const optionsList = useTemplateRef("options");
 props.options.map((value, index) => {
   if (value == model.value) {
     selected.value = props.displayName[index];
@@ -46,7 +52,7 @@ props.options.map((value, index) => {
 });
 function beforeEnter(element: Element) {
   const html_element = element as HTMLElement;
-  $(html_element.firstElementChild!).removeClass("hidden");
+  optionsList.value?.classList.remove("hidden");
   html_element.style.transition = transitionStyle;
   html_element.style.height = "0px";
 }
@@ -54,7 +60,7 @@ function beforeEnter(element: Element) {
 const transitionStyle = "all 200ms ease";
 function enter(element: Element) {
   const html_element = element as HTMLElement;
-  const height = $(html_element.firstElementChild!).outerHeight(true);
+  const height = outerHeight(optionsList.value!);
   html_element.style.height = `${height}px`;
   html_element.style.overflow = "hidden";
 }
@@ -67,7 +73,7 @@ function afterEnter(element: Element) {
 function beforeLeave(element: Element) {
   const html_element = element as HTMLElement;
   html_element.style.transition = transitionStyle;
-  const height = $(html_element.firstElementChild!).outerHeight(true);
+  const height = outerHeight(optionsList.value!);
   html_element.style.height = `${height}px`;
   html_element.style.overflow = "hidden";
 }
@@ -88,6 +94,13 @@ function changeSelection(index: number) {
 const opened = ref(false);
 function toggleOpened() {
   opened.value = !opened.value;
+}
+function outerHeight(el: HTMLElement) {
+  if (!el) return 0;
+  let height = el.getBoundingClientRect().height; // content + padding + border
+  const style = getComputedStyle(el);
+  height += parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+  return height;
 }
 </script>
 
