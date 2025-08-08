@@ -51,31 +51,31 @@ props.options.map((value, index) => {
   }
 });
 function beforeEnter(element: Element) {
-  const html_element = element as HTMLElement;
+  const htmlElement = element as HTMLElement;
   optionsList.value?.classList.remove("hidden");
-  html_element.style.transition = transitionStyle;
-  html_element.style.height = "0px";
+  htmlElement.style.transition = transitionStyle;
+  htmlElement.style.height = "0px";
 }
 
 const transitionStyle = "all 200ms ease";
 function enter(element: Element) {
-  const html_element = element as HTMLElement;
+  const htmlElement = element as HTMLElement;
   const height = outerHeight(optionsList.value!);
-  html_element.style.height = `${height}px`;
-  html_element.style.overflow = "hidden";
+  htmlElement.style.height = `${height}px`;
+  htmlElement.style.overflow = "hidden";
 }
 function afterEnter(element: Element) {
-  const html_element = element as HTMLElement;
-  html_element.style.transition = "";
-  html_element.style.height = "";
-  html_element.style.overflow = "";
+  const htmlElement = element as HTMLElement;
+  htmlElement.style.transition = "";
+  htmlElement.style.height = "";
+  htmlElement.style.overflow = "";
 }
 function beforeLeave(element: Element) {
-  const html_element = element as HTMLElement;
-  html_element.style.transition = transitionStyle;
+  const htmlElement = element as HTMLElement;
+  htmlElement.style.transition = transitionStyle;
   const height = outerHeight(optionsList.value!);
-  html_element.style.height = `${height}px`;
-  html_element.style.overflow = "hidden";
+  htmlElement.style.height = `${height}px`;
+  htmlElement.style.overflow = "hidden";
 }
 function leave(element: Element) {
   (element as HTMLElement).style.height = "0px";
