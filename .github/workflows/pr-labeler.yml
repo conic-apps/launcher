@@ -1,0 +1,47 @@
+name: PR Labeler by Conventional Commits
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label PR based on title
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prTitle = context.payload.pull_request.title.toLowerCase();
+
+            const labelsMap = {
+              'feat': 'feature',
+              'fix': 'bug',
+              'docs': 'documentation',
+              'style': 'style',
+              'refactor': 'refactor',
+              'perf': 'performance',
+              'test': 'test',
+              'chore': 'chore'
+            };
+
+            let labelToAdd = null;
+            for (const [prefix, label] of Object.entries(labelsMap)) {
+              if (prTitle.startsWith(prefix + ':') || prTitle.startsWith(prefix + '(')) {
+                labelToAdd = label;
+                break;
+              }
+            }
+
+            if (labelToAdd) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: [labelToAdd]
+              });
+              console.log(`Added label: ${labelToAdd}`);
+            } else {
+              console.log('No matching label found for PR title');
+            }
