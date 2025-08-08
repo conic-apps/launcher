@@ -222,7 +222,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: v${{ needs.get-version.outputs.app_version }}
         run: |
-          for file in $(find ./release_files -type f); do
+          find ./release_files -type f -print0 | while IFS= read -r -d '' file; do
             echo "Uploading $file to release $TAG_NAME"
-            gh release upload "$TAG_NAME" "$file" --clobber --repo conic-apps/launcher
+            gh release upload v1.0.0 "$file"
           done
