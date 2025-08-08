@@ -43,7 +43,7 @@
         "updater": {
             "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDkzRkVBQTk5QThCMkQ0QwpSV1JNTFl1YXFlby9DVVo0Zi9KenYxNGI1d1o3QnRkWkJUNTc2L21TdGNiM09xcGo4VGFaVndCZgo=",
             "endpoints": [
-                "https://conic.btlcraft.top/latest.json"
+                "https://api.conicmc.app/latest.json"
             ]
         }
     }
