@@ -1,6 +1,6 @@
 {
     "productName": "conic-launcher",
-    "version": "0.1.0-alpha.1",
+    "version": "0.0.1-alpha.1",
     "identifier": "app.conicmc.launcher",
     "build": {
         "beforeDevCommand": "pnpm dev",
@@ -37,7 +37,12 @@
             "icons/icon.icns",
             "icons/icon.ico"
         ],
-        "createUpdaterArtifacts": true
+        "createUpdaterArtifacts": true,
+        "windows": {
+            "wix": {
+                "version": "0.0.1-1"
+            }
+        }
     },
     "plugins": {
         "updater": {

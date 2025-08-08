@@ -182,7 +182,7 @@ jobs:
           path: ${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz.sig
 
   release:
-    needs: [get-version]
+    needs: [build, get-version]
     permissions:
       contents: write
     runs-on: ubuntu-22.04
@@ -224,5 +224,5 @@ jobs:
         run: |
           for file in release_files/*; do
             echo "Uploading $file to release $TAG_NAME"
-            gh release upload "$TAG_NAME" "$file" --clobber
+            gh release upload "$TAG_NAME" "$file" --clobber --repo conic-apps/launcher
           done
