@@ -102,7 +102,7 @@ jobs:
         run: pnpm install
 
       - name: add rust target
-        if: matrix.args == "--target armv7-unknown-linux-gnueabihf"
+        if: matrix.args == '--target armv7-unknown-linux-gnueabihf'
         run: |
           rustup target add armv7-unknown-linux-gnueabihf
 
