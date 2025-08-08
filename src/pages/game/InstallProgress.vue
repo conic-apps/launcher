@@ -92,21 +92,22 @@ const installProgress: Ref<InstallProgress> = ref({
   total: 0,
   step: 0,
 });
-interface InstallProgress {
+// TODO: use tauri channel
+type InstallProgress = {
   completed: number;
   total: number;
   step: number;
-}
+};
 listen("install_progress", (event) => {
   installProgress.value = event.payload as InstallProgress;
   if (installProgress.value.step != 3) {
     speed.value = "0 B/s";
   }
 });
-interface InstallError {
+type InstallError = {
   step: number;
   // TODO: error type
-}
+};
 const installError: Ref<InstallError> = ref({
   step: 0,
 });
