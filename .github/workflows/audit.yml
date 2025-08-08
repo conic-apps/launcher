@@ -10,7 +10,8 @@ on:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
       - "**/package.json"
-      - "**/yarn.lock"
+      - "**/pnpm-lock.yaml"
+      - "**/pnpm-workspace.yaml"
   pull_request:
     branches: ["master"]
 
@@ -31,4 +32,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # TODO: Audit plugins
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack and install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Audit
+        run: pnpm audit --registry=https://registry.npmjs.org

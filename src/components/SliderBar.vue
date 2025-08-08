@@ -33,8 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type ComputedRef, type Ref, onMounted } from "vue";
-import $ from "jquery";
+import { computed, ref, useTemplateRef, type ComputedRef } from "vue";
 const props = withDefaults(
   defineProps<{
     name: string;
@@ -49,21 +48,21 @@ const props = withDefaults(
     AllowExceeding: false,
   },
 );
-const slider = ref<any>(null);
+const slider = useTemplateRef("slider");
 // let value: Ref<number> = ref(await load(props.config))
-let value = ref(Number(props.min));
+const value = ref(Number(props.min));
 function setValue(newValue: number) {
   value.value = newValue;
 }
-let orbit: ComputedRef<string> = computed((): string => {
+const orbit: ComputedRef<string> = computed((): string => {
   const min = Number(props.min);
   const max = Number(props.max);
-  const sliderOuterWidth = $(slider.value).outerWidth(true);
-  let exceeded = value.value > max - min + 1;
+  const sliderOuterWidth = slider.value?.offsetWidth;
+  const exceeded = value.value > max - min + 1;
   if (exceeded && props.AllowExceeding == false) {
     setValue(max);
   }
-  let lessThanMinimum = value.value - 1 - min < 0;
+  const lessThanMinimum = value.value - 1 - min < 0;
   if (lessThanMinimum) {
     return "width: 0px;";
   } else {

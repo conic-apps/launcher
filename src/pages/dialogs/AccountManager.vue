@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { markRaw, reactive, ref, shallowRef } from "vue";
+import { Component, markRaw, reactive, Ref, ref, shallowRef } from "vue";
 import DialogVue from "@/components/Dialog.vue";
 import View from "./account/View.vue";
 import Add from "./account/Add.vue";
@@ -40,7 +40,7 @@ import Add from "./account/Add.vue";
 const props = defineProps<{
   show: boolean;
 }>();
-const emit = defineEmits(["close", "update", "choose-account"]);
+defineEmits(["close", "update", "choose-account"]);
 
 const width = ref(720);
 const height = ref(420);
@@ -49,7 +49,7 @@ const pages = reactive({
   view: markRaw(View),
   add: markRaw(Add),
 });
-const currentComponent: any = shallowRef(pages.view);
+const currentComponent: Ref<Component> = shallowRef(pages.view);
 const transitionName = ref("slide-left");
 
 function addAccount() {

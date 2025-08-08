@@ -46,8 +46,10 @@ import Tag from "@/components/Tag.vue";
 import { useInstanceStore } from "@/store/instance";
 import { ref, watch } from "vue";
 
+// TODO: move this to @conic/game_data
 type Save = {
   icon: string;
+  // eslint-disable-next-line
   levelData: any;
   folderName: string;
 };

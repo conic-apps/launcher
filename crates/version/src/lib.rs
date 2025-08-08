@@ -604,19 +604,17 @@ async fn resolve_libraries(libraries: Vec<Value>) -> Vec<ResolvedLibrary> {
     for library in libraries {
         let rules = library["rules"].as_array();
         // check rules
-        if let Some(rules) = rules {
-            if !check_allowed(rules.clone(), &[]) {
-                continue;
-            }
+        if let Some(rules) = rules
+            && !check_allowed(rules.clone(), &[])
+        {
+            continue;
         }
         // resolve native lib
         let classifiers = library["downloads"]["classifiers"].as_object();
         let natives = library["natives"].as_object();
-        if classifiers.is_some() && natives.is_some() {
-            #[allow(clippy::unwrap_used)]
-            let classifiers = classifiers.unwrap();
-            #[allow(clippy::unwrap_used)]
-            let natives = natives.unwrap();
+        if let Some(classifiers) = classifiers
+            && let Some(natives) = natives
+        {
             let classifier_key = match natives[&PLATFORM_INFO.os_family.to_string()].as_str() {
                 None => continue,
                 Some(x) => x,

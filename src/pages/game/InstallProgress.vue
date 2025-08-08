@@ -87,7 +87,7 @@ const modLoaderType = computed(() => {
   return instanceStore.currentInstance.config.runtime.mod_loader_type;
 });
 
-let installProgress: Ref<InstallProgress> = ref({
+const installProgress: Ref<InstallProgress> = ref({
   completed: 0,
   total: 0,
   step: 0,
@@ -107,13 +107,13 @@ interface InstallError {
   step: number;
   // TODO: error type
 }
-let installError: Ref<InstallError> = ref({
+const installError: Ref<InstallError> = ref({
   step: 0,
 });
 listen("install_error", (event) => {
   installError.value = event.payload as InstallError;
 });
-listen("install_success", (_event) => {
+listen("install_success", () => {
   installProgress.value.step = 1000;
 });
 
@@ -166,9 +166,9 @@ const installModLoaderStatus = computed(() => {
   }
   return "pending";
 });
-let speed = ref("");
+const speed = ref("");
 listen("download_speed", (event) => {
-  let payload = (event.payload as number) / 4;
+  const payload = (event.payload as number) / 4;
   if (payload < 1024) {
     speed.value = payload + " B/s";
   } else if (payload < 1024 * 1024) {
@@ -181,17 +181,17 @@ listen("download_speed", (event) => {
 });
 const running = ref(0);
 listen("running_download_task", (event) => {
-  let payload = event.payload as number;
+  const payload = event.payload as number;
   running.value = payload;
 });
-const pending = computed(() => {
-  let pending = installProgress.value.total - installProgress.value.completed - running.value;
-  if (pending <= 0) {
-    return 0;
-  } else {
-    return pending;
-  }
-});
+// const pending = computed(() => {
+//   let pending = installProgress.value.total - installProgress.value.completed - running.value;
+//   if (pending <= 0) {
+//     return 0;
+//   } else {
+//     return pending;
+//   }
+// });
 const tweened = reactive({
   number: 0,
 });
