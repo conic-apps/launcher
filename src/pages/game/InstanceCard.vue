@@ -24,6 +24,7 @@
           <img src="@/assets/images/minecraft.webp" fill="#fff" />Minecraft
           {{ minecraftVersion }}
         </div>
+        <!-- TODO: split this to a component -->
         <div class="mod-loader-version" v-if="modLoaderType && modLoaderVersion">
           <img src="@/assets/images/fabric.webp" fill="#fff" v-if="modLoaderType === 'Fabric'" />
           <img src="@/assets/images/quilt.svg" fill="#fff" v-if="modLoaderType === 'Quilt'" />
@@ -38,27 +39,25 @@
           {{ modLoaderType }} {{ modLoaderVersion }}
         </div>
       </div>
-      <div class="expand-this-card" @click="expand = !expand">
-        <i v-if="expand" class="arrows-to-dotted-line"></i>
-        <i v-else class="arrows-from-dotted-line"></i>
-      </div>
     </div>
     <div class="line-b">
       <div class="instance-name">
         {{ computedInstanceName }}
       </div>
       <div class="controll-btns">
-        <i class="button gear"></i>
-        <i class="button circle-info"></i>
-        <i class="button star" ref="star-button" @click="toggleStar"></i>
         <button
           class="game-button"
           :class="`${gameButtonType}-game-button`"
           @click="$emit(gameButtonType)"
           v-if="!buttonLoading">
-          <i
-            :class="gameButtonType"
-            style="font-family: fa-pro; font-style: normal; margin-right: 5px; font-weight: 100"></i
+          <AppIcon
+            name="play"
+            v-if="gameButtonType === 'launch'"
+            style="margin-right: 4px"></AppIcon>
+          <AppIcon
+            name="download"
+            v-else-if="gameButtonType === 'install'"
+            style="margin-right: 4px"></AppIcon
           >{{ gameButtonText }}
         </button>
         <button
@@ -73,11 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
 import { useConfigStore } from "@/store/config";
 import { useInstanceStore } from "@/store/instance";
+import AppIcon from "@/components/AppIcon.vue";
 
 const i18n = useI18n();
 const config = useConfigStore();
@@ -139,22 +139,6 @@ const gameButtonText = computed(() => {
       return "";
   }
 });
-
-const starRef = useTemplateRef("star-button");
-function toggleStar() {
-  if (starRef.value?.classList.contains("activated")) {
-    starRef.value.classList.remove("activated");
-    return;
-  }
-  if (!starRef.value) {
-    return;
-  }
-  starRef.value.classList.add("activated");
-  starRef.value.style.transform = "scale(1.18)";
-  setTimeout(() => {
-    starRef.value?.removeAttribute("style");
-  }, 100);
-}
 </script>
 
 <style lang="less" scoped>

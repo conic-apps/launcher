@@ -5,10 +5,16 @@
 <template>
   <div class="setting-item" :class="className">
     <div class="title">
-      <div class="icon" v-if="icon"><i :class="icon"></i></div>
+      <div class="icon" v-if="icon">
+        <AppIcon :name="icon" :size="iconSize" :fill="iconFill"></AppIcon>
+      </div>
       <div>
         <h4 id="text">{{ title }}</h4>
-        <p v-if="description" id="text" style="max-width: 560px" v-html="description"></p>
+        <p
+          v-if="description"
+          id="text"
+          style="max-width: 560px; line-height: 1.5"
+          v-html="description"></p>
       </div>
     </div>
     <div style="display: flex; align-items: center">
@@ -19,12 +25,15 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import AppIcon from "./AppIcon.vue";
 
 const props = withDefaults(
   defineProps<{
     title: string;
     description?: string;
     icon?: string;
+    iconSize?: number | string;
+    iconFill?: string;
     boxShadow?: boolean;
     clickAble?: boolean;
     disabled?: boolean;
@@ -32,6 +41,7 @@ const props = withDefaults(
   {
     boxShadow: false,
     last: false,
+    iconSize: 26,
     clickAble: false,
     disabled: false,
   },

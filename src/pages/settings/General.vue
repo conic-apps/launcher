@@ -18,7 +18,7 @@
       <setting-item
         :title="$t('settings.general.updateChannel')"
         :description="$t('settings.general.updateChannelDesc')"
-        icon="radio">
+        icon="branch">
         <select-vue
           :display-name="[
             $t('settings.general.weekly'),
@@ -32,7 +32,7 @@
       <setting-item
         :title="$t('settings.general.autoUpdate')"
         :description="$t('settings.general.autoUpdateDesc')"
-        icon="clock">
+        icon="time">
         <toggle-switch v-model="config.auto_update"></toggle-switch>
       </setting-item>
       <setting-item :title="$t('settings.general.checkUpdate')" icon="circle-up" :clickAble="true">

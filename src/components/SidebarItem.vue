@@ -4,13 +4,15 @@
 
 <template>
   <li class="sidebar-item">
-    <i class="fa-regular nav-icon" :id="icon"></i>
+    <AppIcon :name="icon" :size="24"></AppIcon>
     <div class="text" v-if="title">{{ title }}</div>
     <!-- todo: button active style -->
   </li>
 </template>
 
 <script setup lang="ts">
+import AppIcon from "./AppIcon.vue";
+
 defineProps<{
   title?: string;
   icon: string;
@@ -46,19 +48,4 @@ defineProps<{
   font-size: 12px;
   margin-top: 6px;
 }
-
-.sidebar-item i {
-  transform: scale(1.2);
-  font-family: "fa-pro";
-  font-style: normal;
-  height: 1em;
-  width: 100%;
-  text-align: center;
-  // transition: all 0.2s cubic-bezier(0, 0.61, 0.16, 0.98);
-}
-
-// .sidebar-item:active .tooltip {
-// opacity: 0;
-// transform: scale(1);
-// }
 </style>
