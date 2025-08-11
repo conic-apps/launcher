@@ -14,13 +14,13 @@
           :click-able="true"
           :buttons="['refresh', 'trash']"
           @click-refresh="refreshLogin(account.profile.uuid)"
-          @click-trash="deleteAccount(account.profile.uuid)"
+          @click-trash="deleteMicrosoftAccount(account.profile.uuid)"
           @click="chooseAccount(account)">
           <template #subtitle>
             <tag
               v-if="
                 currentTime.now >
-                  (account.token_deadline ? account.token_deadline : currentTime.now + 100000) &&
+                  (account.expires_on ? account.expires_on : currentTime.now + 100000) &&
                 account.account_type === 'Microsoft'
               "
               text="需要刷新"
@@ -61,28 +61,28 @@ import Tag from "@/components/Tag.vue";
 import { listen } from "@tauri-apps/api/event";
 import { ref } from "vue";
 import { useConfigStore } from "@/store/config";
-import { getAvatar } from "@/avatar";
 import { useTimeStore } from "@/store/time";
-import {
-  Account,
-  deleteAccount,
-  listAccounts,
-  refreshMicrosoftAccountByUuid,
-} from "@conic/account";
 import AppIcon from "@/components/AppIcon.vue";
+import {
+  deleteMicrosoftAccount,
+  getAvatar,
+  listAccounts,
+  MicrosoftAccount,
+  refreshMicrosoftAccount,
+} from "@conic/account";
 
 const config = useConfigStore();
 
 defineEmits(["add"]);
 
-const accounts = ref<Account[]>([]);
+const accounts = ref<MicrosoftAccount[]>([]);
 
 async function getAccounts() {
-  const res: Account[] = await listAccounts();
-  for (let i = 0; i <= res.length - 1; i++) {
-    res[i].profile.avatar = await getAvatar(res[i].profile.skins[0].url, 32);
+  const msAccounts = (await listAccounts()).microsoft;
+  for (let i = 0; i <= msAccounts.length - 1; i++) {
+    msAccounts[i].profile.avatar = await getAvatar(msAccounts[i].profile.skins[0].url, 32);
   }
-  accounts.value = res;
+  accounts.value = msAccounts;
 }
 
 const currentTime = useTimeStore();
@@ -94,10 +94,10 @@ listen("refresh_accounts_list", () => {
 });
 
 function refreshLogin(uuid: string) {
-  refreshMicrosoftAccountByUuid(uuid);
+  refreshMicrosoftAccount(uuid);
 }
 
-function chooseAccount(account: Account) {
+function chooseAccount(account: MicrosoftAccount) {
   config.current_account = account.profile.uuid;
 }
 </script>
