@@ -9,7 +9,7 @@
         <div class="title">
           <div style="display: flex; align-items: center">
             <div class="icon">
-              <i class="user"></i>
+              <AppIcon name="user-circle" size="36"></AppIcon>
             </div>
             <div>
               <h4>管理游戏帐号</h4>
@@ -36,6 +36,7 @@ import { type Component, markRaw, reactive, Ref, ref, shallowRef } from "vue";
 import DialogVue from "@/components/Dialog.vue";
 import View from "./account/View.vue";
 import Add from "./account/Add.vue";
+import AppIcon from "@/components/AppIcon.vue";
 
 const props = defineProps<{
   show: boolean;

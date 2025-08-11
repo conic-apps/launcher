@@ -11,7 +11,7 @@
           :class="[activeComponentIndex == index ? 'active' : '']"
           v-for="(item, index) in components"
           :key="index">
-          <i :class="`${item.icon} fa-pro`"></i>{{ $t(item.name) }}
+          <AppIcon :name="item.icon"></AppIcon><span>{{ $t(item.name) }}</span>
         </li>
       </ul>
     </div>
@@ -33,6 +33,7 @@ import Download from "./settings/Download.vue";
 import Accessibility from "./settings/Accessibility.vue";
 import Extend from "./settings/Extend.vue";
 import About from "./settings/About.vue";
+import AppIcon from "@/components/AppIcon.vue";
 
 const components: Ref<{ name: string; icon: string; component: Component }[]> = ref([
   {
@@ -47,7 +48,7 @@ const components: Ref<{ name: string; icon: string; component: Component }[]> = 
   },
   {
     name: "settings.advance.sidebar",
-    icon: "pro-settings",
+    icon: "build",
     component: markRaw(Advance),
   },
   {
@@ -57,22 +58,22 @@ const components: Ref<{ name: string; icon: string; component: Component }[]> = 
   },
   {
     name: "settings.download.sidebar",
-    icon: "download",
+    icon: "cloud-download",
     component: markRaw(Download),
   },
   {
     name: "settings.accessibility.sidebar",
-    icon: "arrows-spin",
+    icon: "accessibility",
     component: markRaw(Accessibility),
   },
   {
     name: "settings.extend.sidebar",
-    icon: "cubes",
+    icon: "extension-puzzle",
     component: markRaw(Extend),
   },
   {
     name: "settings.about.sidebar",
-    icon: "circle-exclamation",
+    icon: "about",
     component: markRaw(About),
   },
 ]);
@@ -119,14 +120,8 @@ function switchComponent(component: Component, index: number) {
   height: calc(100% - 40px);
 }
 
-.settings-menu i {
-  font-style: normal;
-  font-family: "fa-pro";
-  font-size: 16.6px;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  margin-right: 8px;
+.settings-menu span {
+  margin-left: 8px;
 }
 
 .settings-menu li {

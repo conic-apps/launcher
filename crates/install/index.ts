@@ -23,7 +23,7 @@ export type VersionManifest = {
 }
 
 export async function getMinecrafVersionManifest(): Promise<VersionManifest> {
-    return await invoke("plugin:config|cmd_get_minecraft_version_list")
+    return await invoke("plugin:install|cmd_get_minecraft_version_list")
 }
 
 type FabricArtifactVersion = {
@@ -50,7 +50,7 @@ export type FabricLoaderArtifact = {
 }
 
 export async function getFabricVersionList(mcversion: string): Promise<FabricLoaderArtifact[]> {
-    return await invoke("plugin:config|cmd_get_fabric_version_list", { mcversion })
+    return await invoke("plugin:install|cmd_get_fabric_version_list", { mcversion })
 }
 
 export type QuiltVersion = {
@@ -84,7 +84,7 @@ export type QuiltVersion = {
 }
 
 export async function getQuiltVersionList(mcversion: string): Promise<QuiltVersion[]> {
-    return await invoke("plugin:config|cmd_get_quilt_version_list", { mcversion })
+    return await invoke("plugin:install|cmd_get_quilt_version_list", { mcversion })
 }
 export type ForgeVersionItem = {
     _id: string

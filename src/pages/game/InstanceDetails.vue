@@ -57,27 +57,27 @@ defineEmits(["update-instance-list"]);
 const components = ref([
   {
     name: "game.assets.info",
-    icon: "circle-info",
+    icon: "about",
     component: markRaw(Info),
   },
   {
     name: "game.assets.worlds",
-    icon: "map",
+    icon: "save",
     component: markRaw(Worlds),
   },
   {
     name: "game.assets.mods",
-    icon: "puzzle-piece",
+    icon: "extension-puzzle",
     component: markRaw(Mods),
   },
   {
     name: "game.assets.packs",
-    icon: "file-zipper",
+    icon: "folder",
     component: markRaw(Packs),
   },
   {
     name: "game.assets.settings",
-    icon: "gear",
+    icon: "settings",
     component: markRaw(Settings),
   },
 ]);

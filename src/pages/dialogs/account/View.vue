@@ -12,8 +12,8 @@
           :title="account.profile.profile_name"
           :logo="account.profile.avatar"
           :click-able="true"
-          :buttons="['arrows-rotate', 'trash']"
-          @click-arrows-rotate="refreshLogin(account.profile.uuid)"
+          :buttons="['refresh', 'trash']"
+          @click-refresh="refreshLogin(account.profile.uuid)"
           @click-trash="deleteAccount(account.profile.uuid)"
           @click="chooseAccount(account)">
           <template #subtitle>
@@ -31,9 +31,12 @@
               font-size="10"
               :round="true"></tag>
           </template>
-          <i
-            class="badge-check"
-            style="color: #74c7ec; font-style: normal; font-family: fa-pro"></i>
+          <AppIcon
+            name="badge-check"
+            stroke="#74c7ec"
+            fill="none"
+            size="18"
+            style="margin-right: 4px"></AppIcon>
           微软（验证服务）
         </list-item>
       </div>
@@ -41,7 +44,7 @@
         <list-item
           class="list-item-user-plus"
           title="添加帐号"
-          logo="user-plus"
+          logo="user-add"
           @click="$emit('add')"
           :click-able="true"></list-item>
       </div>
@@ -66,6 +69,7 @@ import {
   listAccounts,
   refreshMicrosoftAccountByUuid,
 } from "@conic/account";
+import AppIcon from "@/components/AppIcon.vue";
 
 const config = useConfigStore();
 

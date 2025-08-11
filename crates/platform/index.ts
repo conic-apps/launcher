@@ -9,7 +9,7 @@ export type PlatformInfo = {
     arch_from_uname?: string
     os_type: string
     os_family: "Windows" | "Linux" | "Macos"
-    os_version: NonNullable<any>
+    os_version: NonNullable<object>
     edition?: string
 }
 

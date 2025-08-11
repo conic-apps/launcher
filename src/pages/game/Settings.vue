@@ -9,7 +9,7 @@
         title="Instance Name"
         description="The name of this game instance."
         :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'"
-        icon="signature">
+        icon="tag">
         <TextInputBox
           v-if="instanceName == 'Latest Release'"
           width="300px"
@@ -31,7 +31,7 @@
           @updated="$emit('update-instance-list')">
         </TextInputBox>
       </setting-item>
-      <setting-item title="Icon" description="The name of this game instance." icon="icon">
+      <setting-item title="Icon" description="The name of this game instance." icon="icons">
         <img width="32px" height="32px" src="@/assets/images/Grass_Block.webp" alt="" />
         <i class="chevron-right" style="margin-right: 10px; margin-left: 8px"></i>
       </setting-item>
@@ -39,17 +39,20 @@
         v-if="instanceName === 'Latest Release'"
         :title="$t('settings.accessibility.hideLatestRelease')"
         :description="$t('settings.accessibility.hideLatestReleaseDesc')"
-        icon="eye-slash">
+        icon="eye-off">
         <button-vue @click="config.accessibility.hide_latest_release = true">Hide it</button-vue>
       </setting-item>
       <setting-item
         v-if="instanceName === 'Latest Snapshot'"
         :title="$t('settings.accessibility.hideLatestSnapshot')"
         :description="$t('settings.accessibility.hideLatestSnapshotDesc')"
-        icon="eye-slash">
+        icon="eye-off">
         <button-vue @click="config.accessibility.hide_latest_snapshot = true">Hide it</button-vue>
       </setting-item>
-      <setting-item title="Enable Instance-specific Settings" description="Description" icon="gear">
+      <setting-item
+        title="Enable Instance-specific Settings"
+        description="Description"
+        icon="settings">
         <toggle-switch
           v-model="
             instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings
@@ -62,7 +65,7 @@
       <setting-item
         :title="$t('settings.game.launcherName')"
         :description="$t('settings.game.launcherNameDesc')"
-        icon="signature">
+        icon="tag">
         <TextInputBox
           width="300px"
           v-model="instanceStore.currentInstance.config.launch_config.launcher_name"
@@ -83,19 +86,19 @@
       <!--     style="display: inline-block" :lazy-update-model="true"></TextInputBox> -->
       <!-- </setting-item> -->
       <setting-item
-        :title="$t('settings.game.worldName')"
-        :description="$t('settings.game.worldNameDesc')"
-        icon="floppy-disk">
+        :title="$t('settings.game.enterWorldAfterLaunch')"
+        :description="$t('settings.game.enterWorldAfterLaunchDesc')"
+        icon="enter">
         <TextInputBox
           width="300px"
-          :placeholder="$t('settings.game.worldNamePlaceholder')"
+          :placeholder="$t('settings.game.enterWorldAfterLaunchPlaceholder')"
           :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.game.fullscreen')"
         :description="$t('settings.game.fullscreenDesc')"
-        icon="window-maximize">
+        icon="expand">
         <ToggleSwitch
           v-model="instanceStore.currentInstance.config.launch_config.fullscreen"></ToggleSwitch>
       </setting-item>
@@ -103,7 +106,7 @@
         :disabled="instanceStore.currentInstance.config.launch_config.fullscreen"
         :title="$t('settings.game.windowSize')"
         :description="$t('settings.game.windowSizeDesc')"
-        icon="window">
+        icon="resize">
         <TextInputBox
           width="100px"
           style="display: inline-block; margin-right: 16px"
@@ -123,7 +126,7 @@
           :lazy-update-model="true">
         </TextInputBox>
       </setting-item>
-      <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-slash">
+      <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-off">
         <toggle-switch></toggle-switch>
       </setting-item>
       <setting-item
@@ -220,7 +223,7 @@
       <setting-item
         title="Open Log Viewer"
         description="The Description of Open Log Viewer "
-        icon="scroll"
+        icon="document-text"
         :clickAble="true"
         @click="logViewerOpen = true">
         <i class="chevron-right" style="margin-right: 10px"></i>
@@ -230,7 +233,7 @@
       <setting-item
         title="Delete This Instance"
         description="Once you delete a instance, there is no going back. Please be certain."
-        icon="trash-can"
+        icon="trash"
         :clickAble="true"
         @click="confirmDeleteInstanceVisible = true"
         :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'">
@@ -239,7 +242,7 @@
       <setting-item
         title="Reset This Instance"
         description="Clear all data in this instance, including worlds, packages, and modules"
-        icon="arrow-rotate-right"
+        icon="refresh"
         :clickAble="true">
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>

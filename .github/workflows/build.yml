@@ -188,6 +188,7 @@ jobs:
     runs-on: ubuntu-22.04
     if: needs.get-version.outputs.app_version != needs.get-version.outputs.previous_app_version
     steps:
+      - uses: actions/checkout@v4
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
