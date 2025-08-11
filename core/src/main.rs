@@ -6,16 +6,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 // #![deny(clippy::unwrap_used)]
 
-use config::{Config, load_config_file};
+use config::load_config_file;
 use folder::DATA_LOCATION;
 use log::{error, info};
 use platform::PLATFORM_INFO;
-use shared::MAIN_WINDOW;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 #[cfg(debug_assertions)]
 use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
 use tauri_plugin_log::{Target, TargetKind};
-use version::VersionManifest;
 
 #[tokio::main]
 async fn main() {
@@ -93,33 +91,6 @@ async fn main() {
         })
         .run(tauri::generate_context!())
         .expect("Failed to run app");
-}
-
-#[tauri::command]
-async fn _on_frontend_loaded(config: Config) -> std::result::Result<(), ()> {
-    info!("Frontend loaded");
-    let _ = _remind_minecraft_latest(&config).await;
-    Ok(())
-}
-
-async fn _remind_minecraft_latest(config: &Config) -> anyhow::Result<()> {
-    let (latest, cache_file) = if config.accessibility.snapshot_reminder {
-        let latest = VersionManifest::new().await?.latest.snapshot;
-        let cache_file = DATA_LOCATION.cache.join("latest_release");
-        (latest, cache_file)
-    } else if config.accessibility.release_reminder {
-        let latest = VersionManifest::new().await?.latest.release;
-        let cache_file = DATA_LOCATION.cache.join("latest_snapshot");
-        (latest, cache_file)
-    } else {
-        return Ok(());
-    };
-    let cache = tokio::fs::read_to_string(&cache_file).await?;
-    tokio::fs::write(&cache_file, &latest).await?;
-    if latest != cache {
-        let _ = MAIN_WINDOW.emit("remind_update", latest);
-    }
-    Ok(())
 }
 
 fn init_log_builder() -> tauri_plugin_log::Builder {

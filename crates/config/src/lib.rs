@@ -12,7 +12,6 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
 };
 
-/// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("config")
         .invoke_handler(tauri::generate_handler![

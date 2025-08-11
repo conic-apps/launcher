@@ -78,14 +78,14 @@ impl MirrorUsage {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Download {
+pub struct DownloadTask {
     pub url: String,
     pub file: PathBuf,
     pub sha1: Option<String>,
     pub r#type: DownloadType,
 }
 
-impl Download {
+impl DownloadTask {
     pub fn classify(self) -> Self {
         if self.r#type != DownloadType::Unknown {
             return self.clone();
@@ -110,13 +110,13 @@ impl Download {
         self,
         mirror_usage: &MirrorUsage,
         disabled: &[String],
-    ) -> Option<(Download, Mirror)> {
+    ) -> Option<(DownloadTask, Mirror)> {
         match self.r#type {
             DownloadType::Libraries => {
                 let mirror = mirror_usage.get_libraries_mirror(disabled)?;
                 mirror.1.fetch_add(1, Ordering::SeqCst);
                 Some((
-                    Download {
+                    DownloadTask {
                         url: self
                             .url
                             .replace("https://libraries.minecraft.net", &mirror.0),
@@ -129,7 +129,7 @@ impl Download {
                 let mirror = mirror_usage.get_assets_mirror(disabled)?;
                 mirror.1.fetch_add(1, Ordering::SeqCst);
                 Some((
-                    Download {
+                    DownloadTask {
                         url: self
                             .url
                             .replace("https://resources.download.minecraft.net", &mirror.0),
@@ -172,7 +172,7 @@ fn calculate_sha1_from_read_sync<R: Read>(source: &mut R) -> anyhow::Result<Stri
     Ok(hasher.digest().to_string())
 }
 
-fn verify_existing_files(downloads: Vec<Download>, progress: &Progress) -> Vec<Download> {
+fn verify_existing_files(downloads: Vec<DownloadTask>, progress: &Progress) -> Vec<DownloadTask> {
     let completed = progress.completed.clone();
     {
         #[allow(clippy::unwrap_used)]
@@ -180,7 +180,7 @@ fn verify_existing_files(downloads: Vec<Download>, progress: &Progress) -> Vec<D
         *task = Task::VerifyExistingFiles;
     }
     progress.total.store(0, Ordering::SeqCst);
-    let filter_op = |download: &Download| {
+    let filter_op = |download: &DownloadTask| {
         if std::fs::metadata(&download.file).is_err() {
             return true;
         }
@@ -222,12 +222,12 @@ fn mirror_usage_sender_loop(mirror_usage: MirrorUsage, finished: Arc<AtomicBool>
 }
 
 pub async fn download_files(
-    downloads: Vec<Download>,
+    downloads: Vec<DownloadTask>,
     progress: &Progress,
     config: DownloadConfig,
     verify_checksum: bool,
 ) -> anyhow::Result<()> {
-    let downloads: Vec<Download> = verify_existing_files(downloads, progress)
+    let downloads: Vec<DownloadTask> = verify_existing_files(downloads, progress)
         .into_iter()
         .map(|x| x.classify())
         .collect();
@@ -274,7 +274,7 @@ pub async fn download_files(
 }
 
 async fn download_file_future(
-    task: Download,
+    task: DownloadTask,
     max_download_speed: usize,
     mirror_usage: &MirrorUsage,
     progress: &Progress,
@@ -315,7 +315,7 @@ async fn download_file_future(
 }
 
 pub async fn download_file(
-    task: &Download,
+    task: &DownloadTask,
     max_download_speed: usize,
     progress: Progress,
     verify_checksum: bool,

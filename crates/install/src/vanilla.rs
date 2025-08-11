@@ -10,10 +10,134 @@ use shared::HTTP_CLIENT;
 use tauri_plugin_http::reqwest;
 use tokio::io::AsyncWriteExt;
 
-use download::{Download, DownloadType};
+use download::{DownloadTask, DownloadType};
 use folder::MinecraftLocation;
-use version::ResolvedLibrary;
-use version::{self, AssetIndex, AssetIndexObject, ResolvedVersion, VersionManifest};
+use version::{self, AssetIndexObject, ResolvedVersion};
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Deserialize, Serialize)]
+pub struct VersionManifest {
+    pub latest: LatestVersion,
+    pub versions: Vec<VersionInfo>,
+}
+
+impl VersionManifest {
+    pub async fn new() -> anyhow::Result<VersionManifest> {
+        // Not allow custom source to avoid attack
+        let response =
+            reqwest::get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json").await?;
+        Ok(response.json::<VersionManifest>().await?)
+    }
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+pub struct LatestVersion {
+    pub release: String,
+    pub snapshot: String,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VersionInfo {
+    pub id: String,
+    pub r#type: String,
+    pub url: String,
+    pub time: String,
+    pub release_time: String,
+    pub sha1: String,
+    pub compliance_level: u8,
+}
+
+/// Generate a complete list of required files to download for the specified Minecraft version,
+/// including version metadata, libraries, assets, and client JAR.
+///
+/// # Arguments
+///
+/// * `version_id` - The Minecraft version ID (e.g., `"1.20.1"`).
+/// * `minecraft_location` - The root location of the Minecraft installation.
+///
+/// # Returns
+///
+/// A vector of [`Download`] entries describing what files need to be downloaded.
+pub async fn generate_download_info(
+    version_id: &str,
+    minecraft_location: MinecraftLocation,
+) -> anyhow::Result<Vec<DownloadTask>> {
+    let raw_version_json = get_version_json(version_id).await?;
+    let resolved_version = version::Version::from_str(&raw_version_json)?
+        .resolve(&minecraft_location, &[])
+        .await?;
+    let resolved_version_id = &resolved_version.id;
+
+    save_version_json(&minecraft_location, resolved_version_id, &raw_version_json).await?;
+
+    let client_download_task =
+        generate_client_download_task(&minecraft_location, &resolved_version)?;
+    let libraries_download_task =
+        generate_libraries_downloads(&minecraft_location, &resolved_version);
+    let assets_download_task =
+        generate_assets_downloads(&minecraft_location, &resolved_version).await?;
+
+    let mut download_info = vec![];
+    download_info.push(client_download_task);
+    download_info.extend(libraries_download_task);
+    download_info.extend(assets_download_task);
+
+    override_log4j2_configuration_file(&minecraft_location, &resolved_version).await?;
+
+    Ok(download_info)
+}
+
+async fn get_version_json(version_id: &str) -> anyhow::Result<String> {
+    let versions = VersionManifest::new().await?.versions;
+    let version_metadata: Vec<_> = versions
+        .into_iter()
+        .filter(|v| v.id == version_id)
+        .collect();
+    let version_metadata = match version_metadata.first() {
+        Some(version_metadata) => version_metadata,
+        None => return Err(anyhow!("Bad version manifest or version id")),
+    };
+    Ok(HTTP_CLIENT
+        .get(version_metadata.url.clone())
+        .send()
+        .await?
+        .text()
+        .await?)
+}
+
+async fn save_version_json(
+    minecraft_location: &MinecraftLocation,
+    resolved_version_id: &str,
+    raw_version_json: &str,
+) -> anyhow::Result<()> {
+    let version_json_path = minecraft_location
+        .versions
+        .join(format!("{resolved_version_id}/{resolved_version_id}.json"));
+    tokio::fs::create_dir_all(version_json_path.parent().unwrap()).await?;
+    let mut file = tokio::fs::File::create(&version_json_path).await?;
+    file.write_all(raw_version_json.as_bytes()).await?;
+    Ok(())
+}
+
+fn generate_client_download_task(
+    minecraft_location: &MinecraftLocation,
+    resolved_version: &ResolvedVersion,
+) -> anyhow::Result<DownloadTask> {
+    let downloads = resolved_version.downloads.clone();
+    let client = downloads.get("client").ok_or(anyhow!("No client found!"))?;
+    let id = &resolved_version.id;
+    Ok(DownloadTask {
+        url: format!(
+            "https://piston-data.mojang.com/v1/objects/{}/client.jar",
+            client.sha1
+        ),
+        file: minecraft_location.versions.join(format!("{id}/{id}.jar")),
+        sha1: Some(client.sha1.to_string()),
+        r#type: DownloadType::Unknown,
+    })
+}
 
 /// Generate download entries for all resolved libraries.
 ///
@@ -26,13 +150,14 @@ use version::{self, AssetIndex, AssetIndexObject, ResolvedVersion, VersionManife
 ///
 /// A vector of [`Download`] objects describing library files to download.
 pub fn generate_libraries_downloads(
-    libraries: &[ResolvedLibrary],
     minecraft_location: &MinecraftLocation,
-) -> Vec<Download> {
+    resolved_version: &ResolvedVersion,
+) -> Vec<DownloadTask> {
+    let libraries = resolved_version.libraries.clone();
     libraries
         .iter()
         .cloned()
-        .map(|library| Download {
+        .map(|library| DownloadTask {
             url: library.download_info.url,
             file: minecraft_location
                 .libraries
@@ -54,9 +179,13 @@ pub fn generate_libraries_downloads(
 ///
 /// A vector of [`Download`] objects for assets, including the index file itself.
 pub async fn generate_assets_downloads(
-    asset_index: AssetIndex,
     minecraft_location: &MinecraftLocation,
-) -> Result<Vec<Download>> {
+    resolved_version: &ResolvedVersion,
+) -> Result<Vec<DownloadTask>> {
+    let asset_index = resolved_version
+        .asset_index
+        .clone()
+        .ok_or(anyhow!("Asset index not found"))?;
     let asset_index_url = reqwest::Url::parse(asset_index.url.as_ref())?;
     let asset_index_raw = reqwest::get(asset_index_url).await?.text().await?;
     let asset_index_json: Value = serde_json::from_str(asset_index_raw.as_ref())?;
@@ -64,7 +193,7 @@ pub async fn generate_assets_downloads(
         serde_json::from_value(asset_index_json["objects"].clone())?;
     let mut assets: Vec<_> = asset_index_object
         .into_iter()
-        .map(|obj| Download {
+        .map(|obj| DownloadTask {
             url: format!(
                 "https://resources.download.minecraft.net/{}/{}",
                 &obj.1.hash[0..2],
@@ -79,7 +208,7 @@ pub async fn generate_assets_downloads(
             r#type: DownloadType::Unknown,
         })
         .collect();
-    assets.push(Download {
+    assets.push(DownloadTask {
         url: asset_index.url,
         file: minecraft_location.get_assets_index(&asset_index.id),
         sha1: None,
@@ -101,8 +230,8 @@ const LOF4J2_CONFIGURATION: &[u8] = include_bytes!("./log4j2.xml");
 ///
 /// An empty [`Result`] indicating success or failure.
 pub async fn override_log4j2_configuration_file(
-    version: &ResolvedVersion,
     minecraft_location: &MinecraftLocation,
+    version: &ResolvedVersion,
 ) -> Result<()> {
     tokio::fs::write(
         minecraft_location.get_log_config(version.id.clone()),
@@ -110,74 +239,4 @@ pub async fn override_log4j2_configuration_file(
     )
     .await?;
     Ok(())
-}
-
-/// Generate a complete list of required files to download for the specified Minecraft version,
-/// including version metadata, libraries, assets, and client JAR.
-///
-/// # Arguments
-///
-/// * `version_id` - The Minecraft version ID (e.g., `"1.20.1"`).
-/// * `minecraft_location` - The root location of the Minecraft installation.
-///
-/// # Returns
-///
-/// A vector of [`Download`] entries describing what files need to be downloaded.
-pub async fn generate_download_info(
-    version_id: &str,
-    minecraft_location: MinecraftLocation,
-) -> Result<Vec<Download>> {
-    let versions = VersionManifest::new().await?.versions;
-    let version_metadata: Vec<_> = versions
-        .into_iter()
-        .filter(|v| v.id == version_id)
-        .collect();
-    if version_metadata.len() != 1 {
-        return Err(anyhow!("Bad version manifest"));
-    };
-    let version_metadata = version_metadata.first().unwrap();
-    let version_json_raw = HTTP_CLIENT
-        .get(version_metadata.url.clone())
-        .send()
-        .await?
-        .text()
-        .await?;
-    let version = version::Version::from_str(&version_json_raw)?
-        .resolve(&minecraft_location, &[])
-        .await?;
-    let id = &version.id;
-
-    let version_json_path = minecraft_location.versions.join(format!("{id}/{id}.json"));
-    tokio::fs::create_dir_all(version_json_path.parent().unwrap()).await?;
-    let mut file = tokio::fs::File::create(&version_json_path).await?;
-    file.write_all(version_json_raw.as_bytes()).await?;
-
-    let mut download_list = vec![];
-    let downloads = version.downloads.clone();
-    let client = downloads.get("client").ok_or(anyhow!("No client found!"))?;
-    download_list.push(Download {
-        url: format!(
-            "https://piston-data.mojang.com/v1/objects/{}/client.jar",
-            client.sha1
-        ),
-        file: minecraft_location.versions.join(format!("{id}/{id}.jar")),
-        sha1: Some(client.sha1.to_string()),
-        r#type: DownloadType::Unknown,
-    });
-    download_list.extend(generate_libraries_downloads(
-        &version.libraries,
-        &minecraft_location,
-    ));
-    download_list.extend(
-        generate_assets_downloads(
-            version
-                .asset_index
-                .clone()
-                .ok_or(std::io::Error::from(std::io::ErrorKind::NotFound))?,
-            &minecraft_location,
-        )
-        .await?,
-    );
-    let _ = override_log4j2_configuration_file(&version, &minecraft_location).await;
-    Ok(download_list)
 }
