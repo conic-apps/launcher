@@ -2,7 +2,6 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use account::Account;
 use config::{
     Config,
     launch::{GC, Server},
@@ -96,14 +95,7 @@ impl LaunchOptions {
     ///
     /// Launch configuration is resolved from both global and per-instance settings,
     /// with per-instance settings taking priority when defined.
-    ///
-    /// # Arguments
-    /// * `instance` - The Minecraft instance to launch.
-    /// * `account` - The account used to authenticate the session.
-    ///
-    /// # Returns
-    /// A fully populated `LaunchOptions` struct used for launching the game.
-    pub fn new(config: &Config, instance: &Instance, account: Account) -> Self {
+    pub fn new(config: &Config, instance: &Instance, account: &account::AccountLaunchInfo) -> Self {
         let global_launch_config = config.launch.clone();
         let launch_config = &instance.config.launch_config;
         Self {
@@ -124,10 +116,10 @@ impl LaunchOptions {
                 .clone()
                 .unwrap_or(global_launch_config.launcher_name),
             game_profile: GameProfile {
-                name: account.profile.profile_name.clone(),
-                uuid: account.profile.uuid.clone(),
+                name: account.name.clone(),
+                uuid: account.uuid.clone(),
             },
-            access_token: account.access_token.clone().unwrap_or_default(),
+            access_token: account.access_token.clone(),
             min_memory: launch_config
                 .min_memory
                 .unwrap_or(global_launch_config.min_memory),

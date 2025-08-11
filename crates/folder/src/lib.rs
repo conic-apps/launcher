@@ -136,6 +136,8 @@ impl DataLocation {
 
 impl Default for DataLocation {
     fn default() -> Self {
+        #[cfg(test)]
+        let application_folder_name = "conic-test";
         #[cfg(not(debug_assertions))]
         let application_folder_name = "conic";
         #[cfg(debug_assertions)]
@@ -149,6 +151,11 @@ impl Default for DataLocation {
             OsFamily::Linux => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
                 .join(format!(".{application_folder_name}")),
         };
+        #[cfg(test)]
+        {
+            std::fs::remove_dir_all(&application_data_path).unwrap();
+            std::fs::create_dir_all(&application_data_path).unwrap();
+        }
         Self::new(&application_data_path)
     }
 }
