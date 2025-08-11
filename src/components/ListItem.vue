@@ -23,18 +23,21 @@
       </div>
     </div>
     <div v-if="buttons" class="list-item-buttons">
-      <i
+      <div
         v-for="(item, index) in buttons"
         :key="index"
         class="list-item-button"
         :class="item"
-        @click.stop="$emit(`click-${item}`)"></i>
+        @click.stop="$emit(`click-${item}`)">
+        <AppIcon :name="item" size="16"></AppIcon>
+      </div>
     </div>
   </li>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
+import AppIcon from "./AppIcon.vue";
 
 const props = defineProps<{
   logo?: string;
@@ -117,6 +120,8 @@ const computedLogo = computed(() => {
   }
 
   p.text {
+    display: flex;
+    align-items: center;
     font-size: 13px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -155,22 +160,18 @@ const computedLogo = computed(() => {
   align-items: center;
   pointer-events: all;
   transition: all 100ms ease;
-  font-size: 15px;
   margin: 0 6px;
   transform: scale3d(1, 1, 500);
-  color: rgba(255, 255, 255, 0.6);
-  // opacity: 0;
+  svg {
+    opacity: 0.8;
+  }
 }
 
-// .list-item:hover .list-item-button {
-//   opacity: 1;
-// }
-
-.list-item-button:hover {
-  color: rgba(255, 255, 255, 1);
+.list-item-button:hover svg {
+  opacity: 1;
 }
 
-.list-item-button:active {
+.list-item-button:active svg {
   transform: scale(0.86);
 }
 </style>

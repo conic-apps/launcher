@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <dialog-vue :visible="props.show" :width="560" :height="450">
+  <dialog-vue :visible="props.show" :width="560" :height="468">
     <div class="create-instance">
       <p
         style="
