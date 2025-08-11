@@ -2,11 +2,11 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use account::AccountType;
 use folder::DATA_LOCATION;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 
-use account::list_accounts;
 use tauri::{
     Runtime, command,
     plugin::{Builder, TauriPlugin},
@@ -165,7 +165,11 @@ pub struct Config {
 
     /// The UUID of the currently selected account.
     #[serde(default = "default_current_account")]
-    pub current_account: String,
+    pub current_account_uuid: String,
+
+    /// The UUID of the currently selected account.
+    #[serde(default = "default_current_account_type")]
+    pub current_account_type: AccountType,
 
     /// Appearance-related settings.
     #[serde(default)]
@@ -201,14 +205,15 @@ impl Default for Config {
     fn default() -> Self {
         let locale = sys_locale::get_locale().unwrap();
         info!("System locale is {locale}");
-        let accounts = list_accounts();
+        let accounts = account::microsoft::list_accounts();
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
-            current_account: match accounts.first() {
+            current_account_uuid: match accounts.first() {
                 Some(x) => x.to_owned().profile.uuid,
                 None => "00000000-0000-0000-0000-000000000000".to_string(),
             },
+            current_account_type: AccountType::Microsoft,
             auto_update: true,
             language: locale.replace("-", "_").to_lowercase(),
             update_channel: UpdateChannel::Release,
@@ -218,17 +223,19 @@ impl Default for Config {
     }
 }
 
-/// Returns the system locale as the default language.
 fn default_language() -> String {
     sys_locale::get_locale().unwrap()
 }
 
-/// Returns the UUID of the first account, or a dummy UUID if none exists.
 fn default_current_account() -> String {
-    match list_accounts().first() {
+    match account::microsoft::list_accounts().first() {
         Some(x) => x.to_owned().profile.uuid,
         None => "00000000-0000-0000-0000-000000000000".to_string(),
     }
+}
+
+fn default_current_account_type() -> AccountType {
+    AccountType::Microsoft
 }
 
 fn default_release_reminder() -> bool {
