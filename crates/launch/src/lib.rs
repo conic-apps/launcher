@@ -7,10 +7,9 @@ use std::{
     process::{Command, Stdio},
     str::FromStr,
     thread,
-    time::{SystemTime, UNIX_EPOCH},
 };
 
-use account::{self, Account, refresh_microsoft_account_by_uuid};
+use account::check_and_refresh_account;
 use arguments::generate_command_arguments;
 use complete::complete_files;
 use config::Config;
@@ -54,37 +53,6 @@ pub struct Log {
     pub content: String,
 }
 
-/// Checks whether the given account's access token is close to expiration,
-/// and refreshes it if necessary.
-///
-/// # Arguments
-/// * `account` - A reference to the account to check.
-///
-/// # Returns
-/// * `Ok(Account)` - The original or refreshed account depending on the token's validity.
-/// * `Err(anyhow::Error)` - If the system time could not be retrieved or other error occurs.
-pub async fn check_and_refresh_account(account: &Account) -> anyhow::Result<Account> {
-    info!("Checking account: {}", account.profile.uuid);
-    let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-    const AHEAD: u64 = 3600 * 4;
-    let token_deadline = match account.token_deadline {
-        Some(x) => x,
-        None => return Ok(account.clone()),
-    };
-    if now > token_deadline - AHEAD {
-        info!("The access token will expire in 4 hours");
-        let refreshed_account =
-            refresh_microsoft_account_by_uuid(account.profile.uuid.to_string()).await;
-        Ok(refreshed_account)
-    } else {
-        info!(
-            "The access token will expire in {} seconds, no need to refresh.",
-            token_deadline - now
-        );
-        Ok(account.clone())
-    }
-}
-
 /// Launches a Minecraft instance asynchronously via the Tauri command system.
 ///
 /// # Arguments
@@ -114,24 +82,20 @@ pub async fn launch(config: Config, instance: Instance) -> Result<(), ()> {
         Some(x) => info!("-> Mod loader version: {x}"),
         None => info!("-> Mod loader version: none"),
     };
-    let selected_account = account::get_account_by_uuid(&config.current_account);
-    let selected_account = match selected_account.first() {
-        Some(x) => x,
-        None => {
-            error!("The selected account not been found, opening account manager");
-            MAIN_WINDOW.emit("add-account", "add-account").unwrap();
-            return Err(());
-        }
-    };
-    let selected_account = if config.launch.skip_refresh_account {
-        info!("Account refresh disabled by user");
-        selected_account.clone()
-    } else {
-        check_and_refresh_account(selected_account).await.unwrap()
-    };
 
-    let launch_options = LaunchOptions::new(&config, &instance, selected_account);
+    if !config.launch.skip_refresh_account {
+        check_and_refresh_account(&config.current_account_uuid, &config.current_account_type)
+            .await
+            .unwrap();
+    } else {
+        info!("Account refresh disabled by user");
+    };
+    let selected_account =
+        account::AccountLaunchInfo::new(&config.current_account_uuid, &config.current_account_type);
+
+    let launch_options = LaunchOptions::new(&config, &instance, &selected_account);
     let minecraft_location = launch_options.minecraft_location.clone();
+
     if config.launch.skip_check_files {
         info!("File checking disabled by user")
     } else {

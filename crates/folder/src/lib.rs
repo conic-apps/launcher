@@ -137,9 +137,13 @@ impl DataLocation {
 impl Default for DataLocation {
     fn default() -> Self {
         #[cfg(not(debug_assertions))]
+        #[allow(unused_variables)]
         let application_folder_name = "conic";
         #[cfg(debug_assertions)]
+        #[allow(unused_variables)]
         let application_folder_name = "conic-debug";
+        #[cfg(test)]
+        let application_folder_name = "conic-test";
         let application_data_path = match PLATFORM_INFO.os_family {
             OsFamily::Windows => {
                 PathBuf::from(std::env::var("APPDATA").expect("Could not found APP_DATA directory"))
@@ -149,6 +153,11 @@ impl Default for DataLocation {
             OsFamily::Linux => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
                 .join(format!(".{application_folder_name}")),
         };
+        #[cfg(test)]
+        {
+            std::fs::remove_dir_all(&application_data_path).unwrap();
+            std::fs::create_dir_all(&application_data_path).unwrap();
+        }
         Self::new(&application_data_path)
     }
 }
