@@ -98,12 +98,11 @@ import { watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { loadTheme } from "./theme";
 import Home from "./pages/Home.vue";
-import { getAvatar } from "./avatar";
 import Tag from "./components/Tag.vue";
 import { listen } from "@tauri-apps/api/event";
 import { useTimeStore } from "./store/time";
 import Market from "./pages/Market.vue";
-import { Account, getAccountByUuid, refreshAllMicrosoftAccounts } from "@conic/account";
+import { getAvatar, getMicrosoftAccount, refreshAllMicrosoftAccounts } from "@conic/account";
 import { saveConfigToFile } from "@conic/config";
 import AppIcon from "./components/AppIcon.vue";
 import Logo from "@/assets/logo.svg";
@@ -163,14 +162,17 @@ const currentAccountProfile = ref<{
   type: "Offline",
 });
 
-getAccountByUuid(config.current_account).then((res) => {
-  const account = (res as Account[])[0];
+getMicrosoftAccount(config.current_account).then((res) => {
+  if (!res[0]) {
+    return;
+  }
+  const account = res[0];
   if (account != undefined) {
     getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
       currentAccountProfile.value = {
         name: account.profile.profile_name,
         avatar,
-        tokenDeadline: account.token_deadline ? account.token_deadline : -1,
+        tokenDeadline: account.expires_on ? account.expires_on : -1,
         type: account.account_type,
       };
     });
@@ -192,12 +194,12 @@ setInterval(() => {
 }, 3000);
 
 listen("refresh_accounts_list", async () => {
-  const account = (await getAccountByUuid(config.current_account))[0];
+  const account = (await getMicrosoftAccount(config.current_account))[0];
   getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
     currentAccountProfile.value = {
       name: account.profile.profile_name,
       avatar,
-      tokenDeadline: account.token_deadline ? account.token_deadline : -1,
+      tokenDeadline: account.expires_on ? account.expires_on : -1,
       type: account.account_type,
     };
   });
