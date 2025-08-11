@@ -5,6 +5,7 @@
 use std::{
     io::BufRead,
     process::{Command, Stdio},
+    str::FromStr,
     thread,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -31,7 +32,6 @@ mod arguments;
 mod complete;
 mod options;
 
-/// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("launch")
         .invoke_handler(tauri::generate_handler![cmd_launch])
@@ -139,19 +139,21 @@ pub async fn launch(config: Config, instance: Instance) -> Result<(), ()> {
     }
 
     info!("Generating startup parameters");
-    let version = Version::from_versions_folder(&minecraft_location, &instance.get_version_id())
+    let version_json_path = minecraft_location.get_version_json(instance.get_version_id());
+    let raw_version_json = tokio::fs::read_to_string(version_json_path).await.unwrap();
+    let resolved_version = Version::from_str(&raw_version_json)
         .unwrap()
-        .resolve(&minecraft_location, &launch_options.get_enabled_features())
+        .resolve(&minecraft_location, &[])
         .await
         .unwrap();
+    let version_id = resolved_version.id.clone();
     let command_arguments = generate_command_arguments(
         &minecraft_location,
         &instance,
         &launch_options,
-        version.clone(),
+        resolved_version,
     )
     .await;
-    let version_id = version.id;
     thread::spawn(move || {
         spawn_minecraft_process(
             command_arguments,

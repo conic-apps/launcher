@@ -10,7 +10,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::{collections::HashMap, io::Read, path::Path};
 use tokio::io::AsyncWriteExt;
 
-use download::{Download, DownloadType};
+use download::{DownloadTask, DownloadType};
 use platform::{OsFamily, PLATFORM_INFO};
 
 /// Represents the availability group and progress index of a Java runtime version.
@@ -207,11 +207,11 @@ pub(super) async fn group_install(
 fn generate_downloads(
     install_directory: &Path,
     files: &HashMap<String, JavaFileInfo>,
-) -> Vec<Download> {
+) -> Vec<DownloadTask> {
     let mut result = vec![];
     files.iter().for_each(|(path, file_info)| {
         if let JavaFileInfo::File { downloads, .. } = file_info {
-            result.push(Download {
+            result.push(DownloadTask {
                 url: downloads.raw.url.clone(),
                 file: install_directory.join(path),
                 sha1: Some(downloads.raw.sha1.clone()),
@@ -223,7 +223,7 @@ fn generate_downloads(
 }
 
 /// Downloads all files in the given download list and verifies them.
-async fn download_files(downloads: Vec<Download>) -> anyhow::Result<()> {
+async fn download_files(downloads: Vec<DownloadTask>) -> anyhow::Result<()> {
     for download in downloads {
         let mut retried = 0;
         while retried <= 5 {
@@ -238,7 +238,7 @@ async fn download_files(downloads: Vec<Download>) -> anyhow::Result<()> {
 }
 
 /// Downloads a single file and verifies its SHA1 checksum if provided.
-async fn download_and_check(download: &Download) -> anyhow::Result<()> {
+async fn download_and_check(download: &DownloadTask) -> anyhow::Result<()> {
     let file_path = download.file.clone();
     info!("Downloading {}", download.url);
     tokio::fs::create_dir_all(file_path.parent().ok_or(anyhow::Error::msg(

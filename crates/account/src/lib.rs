@@ -17,7 +17,6 @@ use tauri::{
 use folder::DATA_LOCATION;
 use shared::{HTTP_CLIENT, MAIN_WINDOW};
 
-/// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("account")
         .invoke_handler(tauri::generate_handler![

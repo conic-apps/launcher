@@ -2,7 +2,7 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::io::Read;
+use std::{io::Read, str::FromStr};
 
 use anyhow::anyhow;
 use log::{info, warn};
@@ -10,7 +10,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use shared::HTTP_CLIENT;
 use tokio::io::AsyncWriteExt;
 
-use download::Download;
+use download::DownloadTask;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use install::vanilla::{generate_assets_downloads, generate_libraries_downloads};
 use instance::Instance;
@@ -54,14 +54,17 @@ pub async fn complete_files(instance: &Instance, minecraft_location: &MinecraftL
 
 /// Completes missing or corrupted asset files for the given instance.
 async fn complete_assets_files(instance: &Instance, minecraft_location: &MinecraftLocation) {
-    let version =
-        Version::from_versions_folder(minecraft_location, &instance.get_version_id()).unwrap();
-    let version = version.resolve(minecraft_location, &[]).await.unwrap();
-    let assets_downloads =
-        generate_assets_downloads(version.asset_index.unwrap(), minecraft_location)
-            .await
-            .unwrap();
+    let version_json_path = minecraft_location.get_version_json(instance.get_version_id());
+    let raw_version_json = tokio::fs::read_to_string(version_json_path).await.unwrap();
+    let resolved_version = Version::from_str(&raw_version_json)
+        .unwrap()
+        .resolve(minecraft_location, &[])
+        .await
+        .unwrap();
 
+    let assets_downloads = generate_assets_downloads(minecraft_location, &resolved_version)
+        .await
+        .unwrap();
     let downloads = filter_correct_files(assets_downloads).await;
     if !downloads.is_empty() {
         download_files(downloads).await.unwrap();
@@ -70,10 +73,15 @@ async fn complete_assets_files(instance: &Instance, minecraft_location: &Minecra
 
 /// Completes missing or corrupted library files for the given instance.
 async fn complete_libraries_files(instance: &Instance, minecraft_location: &MinecraftLocation) {
-    let version =
-        Version::from_versions_folder(minecraft_location, &instance.get_version_id()).unwrap();
-    let version = version.resolve(minecraft_location, &[]).await.unwrap();
-    let library_downloads = generate_libraries_downloads(&version.libraries, minecraft_location);
+    let version_json_path = minecraft_location.get_version_json(instance.get_version_id());
+    let raw_version_json = tokio::fs::read_to_string(version_json_path).await.unwrap();
+    let resolved_version = Version::from_str(&raw_version_json)
+        .unwrap()
+        .resolve(minecraft_location, &[])
+        .await
+        .unwrap();
+
+    let library_downloads = generate_libraries_downloads(minecraft_location, &resolved_version);
     let downloads = filter_correct_files(library_downloads).await;
     if !downloads.is_empty() {
         download_files(downloads).await.unwrap();
@@ -91,7 +99,7 @@ async fn complete_libraries_files(instance: &Instance, minecraft_location: &Mine
 /// # Returns
 ///
 /// A vector of Download structs that need to be downloaded or re-downloaded.
-pub async fn filter_correct_files(downloads: Vec<Download>) -> Vec<Download> {
+pub async fn filter_correct_files(downloads: Vec<DownloadTask>) -> Vec<DownloadTask> {
     downloads
         .into_par_iter()
         .filter(|download| {
@@ -146,7 +154,7 @@ fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
 /// # Errors
 ///
 /// Returns an error if any download fails after retries.
-async fn download_files(downloads: Vec<Download>) -> anyhow::Result<()> {
+async fn download_files(downloads: Vec<DownloadTask>) -> anyhow::Result<()> {
     for download in downloads {
         let mut retried = 0;
         while retried <= 5 {
@@ -169,7 +177,7 @@ async fn download_files(downloads: Vec<Download>) -> anyhow::Result<()> {
 /// # Errors
 ///
 /// Returns an error if download fails or SHA1 verification fails.
-async fn download_and_check(download: &Download) -> anyhow::Result<()> {
+async fn download_and_check(download: &DownloadTask) -> anyhow::Result<()> {
     let file_path = download.file.clone();
     tokio::fs::create_dir_all(file_path.parent().ok_or(anyhow::Error::msg(
         "Unknown Error in instance/mod.rs".to_string(),
