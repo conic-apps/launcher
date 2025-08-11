@@ -8,9 +8,10 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
 };
 
-use crate::microsoft::MicrosoftAccount;
+use crate::{microsoft::MicrosoftAccount, offline::OfflineAccount};
 
 pub mod microsoft;
+pub mod offline;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum AccountType {
@@ -18,15 +19,25 @@ pub enum AccountType {
     Offline,
 }
 
+#[command]
+fn cmd_test() -> AccountType {
+    AccountType::Microsoft
+}
+
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("account")
         .invoke_handler(tauri::generate_handler![
+            cmd_test,
             cmd_list_accounts,
             cmd_add_microsoft_account,
             cmd_delete_microsoft_account,
             cmd_refresh_all_microsoft_accounts,
             cmd_refresh_microsoft_account,
             cmd_get_microsoft_account,
+            cmd_add_offline_account,
+            cmd_delete_offline_account,
+            cmd_update_offline_account,
+            cmd_get_offline_account,
         ])
         .build()
 }
@@ -34,13 +45,14 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 #[derive(Serialize, Deserialize)]
 struct Accounts {
     microsoft: Vec<MicrosoftAccount>,
-    // TODO: Offline accounts
+    offline: Vec<OfflineAccount>,
 }
 
 #[command]
 fn cmd_list_accounts() -> Accounts {
     Accounts {
         microsoft: microsoft::list_accounts(),
+        offline: offline::list_accounts(),
     }
 }
 
@@ -111,5 +123,24 @@ async fn cmd_add_microsoft_account(code: String) {
     microsoft::add_account(code).await.unwrap();
 }
 
+#[command]
+fn cmd_add_offline_account(name: String) {
+    offline::add_account(&name);
+}
+
+#[command]
+fn cmd_delete_offline_account(uuid: String) {
+    offline::delete_account(&uuid);
+}
+
+#[command]
+fn cmd_update_offline_account(account: OfflineAccount) {
+    offline::update_account(account);
+}
+
+#[command]
+fn cmd_get_offline_account(uuid: String) -> Vec<OfflineAccount> {
+    offline::get_account(&uuid)
+}
+
 // TODO: add yggdrasil account
-// TODO: add offline account
