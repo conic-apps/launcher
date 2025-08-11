@@ -12,33 +12,36 @@
       <setting-item
         :title="$t('settings.about.report')"
         :description="$t('settings.about.reportDesc')"
-        icon="bug"
-        :clickAble="true">
+        icon="flag"
+        :clickAble="true"
+        @click="reportBug">
+        <i class="chevron-right" style="margin-right: 10px"></i>
+      </setting-item>
+      <setting-item
+        :title="$t('settings.about.viewSourceCode')"
+        :description="$t('settings.about.viewSourceCodeDesc')"
+        icon="github"
+        :clickAble="true"
+        @click="viewSourceCode">
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>
     </setting-group>
-    <SettingGroup :title="$t('settings.about.thanks')"> </SettingGroup>
     <SettingGroup :title="$t('settings.about.thirdPartyLibraries')">
       <setting-item
         title="Tauri"
-        description="Copyright 2022 Tauri Programme within The Commons Conservancy<br> Licensed under the Apache-2.0 License or MIT Licenses"
-        icon="tauri"></setting-item>
+        description="Copyright 2022 Tauri Programme within The Commons Conservancy<br> Licensed under the Apache-2.0 License or MIT Licenses"></setting-item>
       <setting-item
         title="Vue"
-        description="Copyright (c) 2018-present, Yuxi (Evan) You and Vue contributors<br> Licensed under the MIT License"
-        icon="vuejs"></setting-item>
+        description="Copyright (c) 2018-present, Yuxi (Evan) You and Vue contributors<br> Licensed under the MIT License"></setting-item>
       <setting-item
         title="vite"
-        description="Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors<br> Licensed under the MIT License"
-        icon="vite"></setting-item>
+        description="Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors<br> Licensed under the MIT License"></setting-item>
       <setting-item
         title="Less"
-        description="Copyright (c) 2009-2017 Alexis Sellier & The Core Less Team<br> Licensed under the Apache License."
-        icon="less"></setting-item>
+        description="Copyright (c) 2009-2017 Alexis Sellier & The Core Less Team<br> Licensed under the Apache License."></setting-item>
       <setting-item
         title="Tokio"
-        description="Copyright (c) 2019 The Tokio Project Developers<br> Licensed under the MIT License."
-        icon="tokio"></setting-item>
+        description="Copyright (c) 2019 The Tokio Project Developers<br> Licensed under the MIT License."></setting-item>
       <setting-item
         title="Serde"
         description="Licensed under Apache-2.0 or MIT license."></setting-item>
@@ -64,6 +67,15 @@
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
+import { openUrl } from "@tauri-apps/plugin-opener";
+
+function viewSourceCode() {
+  openUrl("https://github.com/conic-apps/launcher");
+}
+
+function reportBug() {
+  openUrl("https://github.com/conic-apps/launcher/issues/new/choose");
+}
 </script>
 
 <style lang="less" scoped>
@@ -80,7 +92,6 @@ import SettingGroup from "@/components/SettingGroup.vue";
 }
 
 .sponsor {
-  background: url(@/assets/images/bg-1.jpg);
   background-size: cover;
   background-repeat: no-repeat;
   border: 1px solid #ffffff18;
