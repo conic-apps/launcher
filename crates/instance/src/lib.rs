@@ -14,12 +14,10 @@ use serde::{Deserialize, Serialize};
 use tauri::plugin::{Builder, TauriPlugin};
 use tauri::{Runtime, command};
 use uuid::Uuid;
-use version::VersionManifest;
 
 static LATEST_RELEASE_INSTANCE_NAME: &str = "Latest Release";
 static LATEST_SNAPSHOT_INSTANCE_NAME: &str = "Latest Snapshot";
 
-/// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("instance")
         .invoke_handler(tauri::generate_handler![
@@ -103,9 +101,8 @@ pub async fn list_instances(sort_by: SortBy) -> Vec<Instance> {
     let instances_folder = &DATA_LOCATION.instances;
     tokio::fs::create_dir_all(instances_folder).await.unwrap();
     let mut folder_entries = tokio::fs::read_dir(instances_folder).await.unwrap();
-    let mut latest_release_instance = None;
-    let mut latest_snapshot_instance = None;
-    let mut user_created_instance = Vec::new();
+    let mut instances = Vec::new();
+
     while let Some(entry) = folder_entries.next_entry().await.unwrap() {
         let file_type = match entry.file_type().await {
             Err(_) => continue,
@@ -148,50 +145,14 @@ pub async fn list_instances(sort_by: SortBy) -> Vec<Instance> {
                 Err(_) => continue,
             },
         };
-        if instance.config.name == LATEST_RELEASE_INSTANCE_NAME {
-            latest_release_instance = Some(instance);
-        } else if instance.config.name == LATEST_SNAPSHOT_INSTANCE_NAME {
-            latest_snapshot_instance = Some(instance);
-        } else {
-            user_created_instance.push(instance)
-        }
+        instances.push(instance);
     }
-    let mut version_manifest = None;
-    if latest_release_instance.is_none() {
-        if version_manifest.is_none() {
-            version_manifest = Some(VersionManifest::new().await.unwrap());
-        };
-        #[allow(clippy::unwrap_used)]
-        let instance_config = InstanceConfig::new(
-            LATEST_RELEASE_INSTANCE_NAME,
-            &version_manifest.as_ref().unwrap().latest.release,
-        );
-        let instance = create_instance(instance_config).await;
-        latest_release_instance = Some(instance);
-    };
-    if latest_snapshot_instance.is_none() {
-        if version_manifest.is_none() {
-            version_manifest = Some(VersionManifest::new().await.unwrap());
-        };
-        #[allow(clippy::unwrap_used)]
-        let instance_config = InstanceConfig::new(
-            LATEST_SNAPSHOT_INSTANCE_NAME,
-            &version_manifest.unwrap().latest.snapshot,
-        );
-        let instance = create_instance(instance_config).await;
-        latest_snapshot_instance = Some(instance);
-    }
-    let mut result = vec![
-        latest_release_instance.unwrap(),
-        latest_snapshot_instance.unwrap(),
-    ];
     match sort_by {
         SortBy::Name => {
-            user_created_instance.sort_by_key(|instance| instance.config.name.clone());
+            instances.sort_by_key(|instance| instance.config.name.clone());
         }
     }
-    result.extend(user_created_instance);
-    result
+    instances
 }
 
 /// Updates the configuration file of an existing instance

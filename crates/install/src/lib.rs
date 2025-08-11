@@ -33,7 +33,8 @@ use download::download_files;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::Instance;
 use task::{Progress, Task};
-use version::VersionManifest;
+
+use crate::vanilla::VersionManifest;
 
 pub mod fabric;
 pub mod forge;
@@ -42,7 +43,6 @@ pub mod neoforged;
 pub mod quilt;
 pub mod vanilla;
 
-/// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("install")
         .invoke_handler(tauri::generate_handler![
