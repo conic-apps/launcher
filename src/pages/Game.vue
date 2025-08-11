@@ -10,7 +10,7 @@
           style="display: flex; justify-content: space-between; align-items: center; height: 100%">
           <p style="margin-left: 4px">{{ $t("game.instances") }}</p>
           <button class="side-button" @click="showCreateInstance = true" style="margin-right: 6px">
-            <i class="plus" style="font-size: 12px"></i>
+            <AppIcon name="add" :size="16"></AppIcon>
           </button>
         </div>
       </div>
@@ -43,6 +43,7 @@ import CreateInstance from "./dialogs/CreateInstance.vue";
 import { Instance, listInstances } from "@conic/instance";
 import { install as conicInstall } from "@conic/install";
 import { launch as conicLaunch } from "@conic/launch";
+import AppIcon from "@/components/AppIcon.vue";
 
 const config = useConfigStore();
 const installing = ref(false);

@@ -5,7 +5,11 @@
 <template>
   <div>
     <setting-group :title="$t('settings.game.jvmTitle')">
-      <setting-item :title="$t('settings.game.chooseJava')" icon="java" :clickAble="true">
+      <setting-item
+        :title="$t('settings.game.chooseJava')"
+        icon="java"
+        :icon-size="36"
+        :clickAble="true">
         <span style="font-size: 14px; opacity: 0.8; margin-right: 8px">{{
           $t("settings.game.selectedJava", {
             selected: "Java 17",
@@ -15,8 +19,8 @@
       </setting-item>
       <setting-item
         :title="$t('settings.game.addJava')"
-        description=""
-        icon="download"
+        :description="$t('settings.game.addJavaDesc')"
+        icon="cloud-download"
         :clickAble="true">
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>
@@ -26,7 +30,7 @@
       <setting-item
         :title="$t('settings.game.launcherName')"
         :description="$t('settings.game.launcherNameDesc')"
-        icon="signature">
+        icon="tag">
         <TextInputBox
           width="360px"
           v-model="config.launch.launcher_name"
@@ -45,26 +49,26 @@
       <!--     style="display: inline-block"></TextInputBox> -->
       <!-- </setting-item> -->
       <setting-item
-        :title="$t('settings.game.worldName')"
-        :description="$t('settings.game.worldNameDesc')"
-        icon="floppy-disk">
+        :title="$t('settings.game.enterWorldAfterLaunch')"
+        :description="$t('settings.game.enterWorldAfterLaunchDesc')"
+        icon="enter">
         <TextInputBox
           width="360px"
-          :placeholder="$t('settings.game.worldNamePlaceholder')"
+          :placeholder="$t('settings.game.enterWorldAfterLaunchPlaceholder')"
           :lazy-update-value="true">
         </TextInputBox>
       </setting-item>
       <setting-item
         :title="$t('settings.game.fullscreen')"
         :description="$t('settings.game.fullscreenDesc')"
-        icon="window-maximize">
+        icon="expand">
         <ToggleSwitch v-model="config.launch.fullscreen"></ToggleSwitch>
       </setting-item>
       <setting-item
         :disabled="config.launch.fullscreen"
         :title="$t('settings.game.windowSize')"
         :description="$t('settings.game.windowSizeDesc')"
-        icon="window">
+        icon="resize">
         <TextInputBox
           width="100px"
           style="display: inline-block; margin-right: 16px"
@@ -84,19 +88,19 @@
           :lazy-update-value="true">
         </TextInputBox>
       </setting-item>
-      <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-slash">
+      <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-off">
         <toggle-switch></toggle-switch>
       </setting-item>
       <setting-item
         :title="$t('settings.game.autoRefreshAccount')"
         :description="$t('settings.game.autoRefreshAccountDesc')"
-        icon="user-check">
+        icon="refresh">
         <toggle-switch v-model="config.launch.skip_refresh_account"></toggle-switch>
       </setting-item>
       <setting-item
         :title="$t('settings.game.autoCompleteGameFiles')"
         :description="$t('settings.game.autoCompleteGameFilesDesc')"
-        icon="file-check">
+        icon="build">
         <toggle-switch v-model="config.launch.skip_check_files"></toggle-switch>
       </setting-item>
       <setting-item

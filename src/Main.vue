@@ -1,6 +1,7 @@
 <!-- Conic Launcher -->
 <!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div class="window" data-tauri-drag-region>
     <div class="title-bar" data-tauri-drag-region>
@@ -34,17 +35,23 @@
           :round="true"></tag>
       </div>
       <div class="win-btn">
-        <div class="min" @click="minimize"><i></i></div>
-        <div class="max" @click="maximize"><i></i></div>
-        <div class="close" @click="close"><i></i></div>
+        <div class="min" @click="minimize">
+          <AppIcon name="minus" :size="16"></AppIcon>
+        </div>
+        <div class="max" @click="maximize">
+          <AppIcon name="expand-2" :size="16"></AppIcon>
+        </div>
+        <div class="close" @click="close">
+          <AppIcon name="xmark" :size="16"></AppIcon>
+        </div>
       </div>
     </div>
     <div class="sidebar" data-tauri-drag-region>
-      <img class="logo" src="@/assets/images/tauri-favicon.svg" />
+      <component :is="Logo" height="60" style="margin-top: 24px"></component>
       <ul class="sidebar-btns" data-tauri-drag-region>
         <sidebar-item
           :title="$t('sidebar.home')"
-          icon="church"
+          icon="house"
           @click="changePage($event, 'home')"
           id="sidebar-home"></sidebar-item>
         <sidebar-item
@@ -54,12 +61,12 @@
           id="sidebar-game"></sidebar-item>
         <sidebar-item
           :title="$t('sidebar.market')"
-          icon="shop"
+          icon="earth"
           @click="changePage($event, 'market')"
           id="sidebar-market"></sidebar-item>
         <sidebar-item
           :title="$t('sidebar.settings')"
-          icon="nav-5"
+          icon="settings"
           @click="changePage($event, 'settings')"
           id="sidebar-settings"
           style="margin-top: auto"></sidebar-item>
@@ -89,7 +96,6 @@ import UpdateReminder from "./pages/dialogs/UpdateReminder.vue";
 import { useConfigStore } from "./store/config";
 import { watch } from "vue";
 import { useI18n } from "vue-i18n";
-import gsap from "gsap";
 import { loadTheme } from "./theme";
 import Home from "./pages/Home.vue";
 import { getAvatar } from "./avatar";
@@ -99,6 +105,8 @@ import { useTimeStore } from "./store/time";
 import Market from "./pages/Market.vue";
 import { Account, getAccountByUuid, refreshAllMicrosoftAccounts } from "@conic/account";
 import { saveConfigToFile } from "@conic/config";
+import AppIcon from "./components/AppIcon.vue";
+import Logo from "@/assets/logo.svg";
 
 function minimize() {
   window.getCurrentWindow().minimize();
@@ -130,13 +138,6 @@ watch(config, () => {
 type ComponentName = "home" | "settings" | "game" | "market";
 
 function changePage(event: MouseEvent | null, component: ComponentName) {
-  if (component == "settings") {
-    gsap.fromTo(
-      (event?.currentTarget as HTMLElement).querySelector("i"),
-      { rotate: "0deg" },
-      { rotate: `120deg` },
-    );
-  }
   if (typeof component === "string") {
     currentComponent.value = pages[component];
   } else {
@@ -290,13 +291,11 @@ listen("add-account", () => {
   justify-content: center;
 }
 
-.win-btn > div > i::before {
-  line-height: 1;
-  color: var(--window-btn-icon-color);
+.win-btn > div > svg {
   opacity: 0;
 }
 
-.win-btn > div:hover > i::before {
+.win-btn > div:hover > svg {
   opacity: 1;
 }
 
@@ -304,8 +303,8 @@ listen("add-account", () => {
   transform: scale(0.9);
 }
 
-.win-btn > div:active > i {
-  opacity: 0.9;
+.win-btn > div:active > svg {
+  opacity: 0.8;
 }
 
 .win-btn > div.min {
@@ -318,26 +317,6 @@ listen("add-account", () => {
 
 .win-btn > div.close {
   background: var(--close-btn-background);
-}
-
-.win-btn > div.min > i::before {
-  content: "\f068";
-  font-size: 12px;
-  margin-top: 1px;
-}
-
-.win-btn > div.max > i::before {
-  content: "\f065";
-  font-size: 12px;
-  margin-top: 1.6px;
-  margin-left: 0.8px;
-}
-
-.win-btn > div.close > i::before {
-  content: "\f00d";
-  font-size: 14px;
-  margin-top: 1px;
-  margin-left: 0.6px;
 }
 
 .sidebar {

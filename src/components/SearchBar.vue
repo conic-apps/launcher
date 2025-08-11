@@ -4,7 +4,7 @@
 
 <template>
   <div class="search-bar" :style="style">
-    <i class="magnifying-glass"></i>
+    <AppIcon name="search"></AppIcon>
     <input
       type="text"
       v-model="value"
@@ -14,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from "./AppIcon.vue";
 import { ref } from "vue";
 const value = ref("");
 const props = withDefaults(

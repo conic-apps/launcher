@@ -19,7 +19,7 @@
       <setting-item
         :title="$t('settings.download.maxDownloadSpeed')"
         :description="$t('settings.download.maxDownloadSpeedDesc')"
-        icon="gauge">
+        icon="speedometer">
         <TextInputBox
           width="100px"
           :number-only="true"
@@ -32,6 +32,7 @@
         :clickAble="true"
         :description="$t('settings.download.mirrorServerDesc')"
         icon="server"
+        icon-fill="none"
         :last="true">
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>

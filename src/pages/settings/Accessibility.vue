@@ -8,25 +8,27 @@
       <setting-item
         :title="$t('settings.accessibility.releaseReminder')"
         :description="$t('settings.accessibility.releaseReminderDesc')"
-        icon="circle-exclamation">
+        icon="bell"
+        icon-fill="none">
         <toggle-switch v-model="config.accessibility.release_reminder"></toggle-switch>
       </setting-item>
       <setting-item
         :title="$t('settings.accessibility.snapshotReminder')"
         :description="$t('settings.accessibility.snapshotReminderDesc')"
-        icon="circle-exclamation">
+        icon="bell"
+        icon-fill="none">
         <toggle-switch v-model="config.accessibility.snapshot_reminder"></toggle-switch>
       </setting-item>
       <setting-item
         :title="$t('settings.accessibility.hideLatestRelease')"
         :description="$t('settings.accessibility.hideLatestReleaseDesc')"
-        icon="eye-slash">
+        icon="eye-off">
         <toggle-switch v-model="config.accessibility.hide_latest_release"></toggle-switch>
       </setting-item>
       <setting-item
         :title="$t('settings.accessibility.hideLatestSnapshot')"
         :description="$t('settings.accessibility.hideLatestSnapshotDesc')"
-        icon="eye-slash">
+        icon="eye-off">
         <toggle-switch v-model="config.accessibility.hide_latest_snapshot"></toggle-switch>
       </setting-item>
       <setting-item
@@ -46,7 +48,7 @@
       <setting-item
         :title="$t('settings.accessibility.highContrastMode')"
         :description="$t('settings.accessibility.highContrastModeDesc')"
-        icon="laptop">
+        icon="contrast">
         <toggle-switch
           @click="reloadTheme(config)"
           v-model="config.accessibility.high_contrast_mode"></toggle-switch>

@@ -10,13 +10,15 @@
       v-for="(item, index) in props.tabs"
       :key="index"
       @click="$emit('choose-tab', index)">
-      <i :class="props.icons[index]"></i>
+      <AppIcon :name="props.icons[index]" :size="16"></AppIcon>
       <span>{{ item }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import AppIcon from "./AppIcon.vue";
+
 const props = defineProps<{
   tabs: string[];
   icons: string[];
@@ -40,13 +42,8 @@ defineEmits(["choose-tab"]);
     margin: 0px 4px;
     opacity: 0.6;
     font-size: 14px;
-
-    i {
-      font-family: "fa-pro";
-      font-size: 0.8em;
-      font-style: normal;
-      margin-right: 4px;
-      margin-top: 2px;
+    span {
+      margin-left: 4px;
     }
   }
 
