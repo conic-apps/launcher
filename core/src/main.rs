@@ -10,12 +10,16 @@ use config::load_config_file;
 use folder::DATA_LOCATION;
 use log::{error, info};
 use platform::PLATFORM_INFO;
+use shared::APP_VERSION;
 use tauri::{AppHandle, Manager};
 #[cfg(debug_assertions)]
 use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
 use tauri_plugin_log::{Target, TargetKind};
 
 fn main() {
+    APP_VERSION
+        .set(env!("CARGO_PKG_VERSION").to_string())
+        .unwrap();
     DATA_LOCATION.init().expect("Could not init data folder");
     #[cfg(target_os = "linux")]
     {
