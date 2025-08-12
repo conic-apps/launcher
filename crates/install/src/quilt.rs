@@ -4,7 +4,6 @@
 
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
-use tauri_plugin_http::reqwest;
 
 use folder::MinecraftLocation;
 use version::Version;
@@ -119,7 +118,7 @@ pub async fn install(
     let url = format!(
         "https://meta.quiltmc.org/v3/versions/loader/{mcversion}/{quilt_version}/profile/json"
     );
-    let response = reqwest::get(url).await.unwrap();
+    let response = HTTP_CLIENT.get(url).send().await.unwrap();
     let quilt_version_json: Version = response.json().await.unwrap();
     let version_name = quilt_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);

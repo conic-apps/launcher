@@ -5,9 +5,9 @@
 use log::info;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri_plugin_http::reqwest;
 
 use folder::MinecraftLocation;
+use shared::HTTP_CLIENT;
 use version::Version;
 
 /// Represents a specific version of a Fabric artifact.
@@ -72,12 +72,14 @@ impl LoaderArtifactList {
     ///
     /// An `anyhow::Result` containing the loaded `LoaderArtifactList` on success.
     pub async fn new(mcversion: &str) -> anyhow::Result<Self> {
-        Ok(reqwest::get(format!(
-            "https://meta.fabricmc.net/v2/versions/loader/{mcversion}"
-        ))
-        .await?
-        .json()
-        .await?)
+        Ok(HTTP_CLIENT
+            .get(format!(
+                "https://meta.fabricmc.net/v2/versions/loader/{mcversion}"
+            ))
+            .send()
+            .await?
+            .json()
+            .await?)
     }
 }
 
@@ -142,7 +144,7 @@ pub async fn install(
     let url = format!(
         "https://meta.fabricmc.net/v2/versions/loader/{mcversion}/{fabric_version}/profile/json"
     );
-    let response = reqwest::get(url).await.unwrap();
+    let response = HTTP_CLIENT.get(url).send().await.unwrap();
     let fabric_version_json: Version = response.json().await.unwrap();
     let version_name = fabric_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);

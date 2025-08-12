@@ -7,7 +7,12 @@
 //! This module re-exports the `install` function from the `install` submodule,
 //! and exposes the `version_list` submodule for managing Forge versions.
 
-use std::{io::BufRead, path::PathBuf, process::Stdio};
+use std::{
+    io::BufRead,
+    path::PathBuf,
+    process::Stdio,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use anyhow::Result;
 use folder::DATA_LOCATION;
@@ -15,7 +20,6 @@ use log::{error, info, trace};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use shared::HTTP_CLIENT;
-use tauri_plugin_http::reqwest;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
@@ -57,12 +61,14 @@ impl ForgeVersionList {
     ///
     /// A `ForgeVersionList` containing all available Forge versions for the specified Minecraft version.
     pub async fn new(mcversion: &str) -> Result<Self> {
-        Ok(reqwest::get(format!(
-            "https://bmclapi2.bangbang93.com/forge/minecraft/{mcversion}"
-        ))
-        .await?
-        .json::<Self>()
-        .await?)
+        Ok(HTTP_CLIENT
+            .get(format!(
+                "https://bmclapi2.bangbang93.com/forge/minecraft/{mcversion}"
+            ))
+            .send()
+            .await?
+            .json::<Self>()
+            .await?)
     }
 }
 
@@ -190,7 +196,15 @@ pub async fn download_installer(mcversion: &str, forge_version: &str) -> anyhow:
         "https://maven.minecraftforge.net/net/minecraftforge/forge/{mcversion}-{forge_version}/forge-{mcversion}-{forge_version}-installer.jar"
     );
     info!("The installer url is: {installer_url}");
-    let installer_path = DATA_LOCATION.temp.join(format!("{}.jar", Uuid::new_v4()));
+    let installer_path = DATA_LOCATION.temp.join(format!(
+        "{}.jar",
+        Uuid::from_u128(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos(),
+        )
+    ));
     tokio::fs::create_dir_all(
         installer_path
             .parent()

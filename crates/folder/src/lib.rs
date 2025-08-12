@@ -10,6 +10,7 @@ use std::{
     format,
     path::{Path, PathBuf},
     str::FromStr,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use once_cell::sync::Lazy;
@@ -99,7 +100,15 @@ pub struct DataLocation {
 impl DataLocation {
     pub fn new<S: AsRef<OsStr> + ?Sized>(data_folder: &S) -> Self {
         let data_folder_root = Path::new(data_folder).to_path_buf();
-        let temp_path = std::env::temp_dir().join(format!("conic-launcher-{}", Uuid::new_v4()));
+        let temp_path = std::env::temp_dir().join(format!(
+            "conic-launcher-{}",
+            uuid::Uuid::from_u128(
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos(),
+            )
+        ));
         std::fs::create_dir_all(&temp_path).expect("Could not create temp dir");
         Self {
             instances: data_folder_root.join("instances"),
@@ -125,11 +134,11 @@ impl DataLocation {
         self.instances.join(instance_id.to_string())
     }
 
-    pub async fn init(&self) -> anyhow::Result<()> {
-        tokio::fs::create_dir_all(&self.root).await?;
+    pub fn init(&self) -> anyhow::Result<()> {
+        std::fs::create_dir_all(&self.root)?;
         let launcher_profiles_path = self.root.join("launcher_profiles.json");
-        let _ = tokio::fs::remove_file(&launcher_profiles_path).await;
-        tokio::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE).await?;
+        let _ = std::fs::remove_file(&launcher_profiles_path);
+        std::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE)?;
         Ok(())
     }
 }

@@ -15,12 +15,8 @@ use tauri::{AppHandle, Manager};
 use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
 use tauri_plugin_log::{Target, TargetKind};
 
-#[tokio::main]
-async fn main() {
-    DATA_LOCATION
-        .init()
-        .await
-        .expect("Could not init data folder");
+fn main() {
+    DATA_LOCATION.init().expect("Could not init data folder");
     #[cfg(target_os = "linux")]
     {
         unsafe {
@@ -51,11 +47,9 @@ async fn main() {
     };
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(init_log_builder().build())
         .plugin(tauri_plugin_single_instance::init(single_instance_closure))
-        .plugin(tauri_plugin_http::init())
         .plugin(config::init())
         .plugin(account::init())
         .plugin(instance::init())
