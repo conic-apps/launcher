@@ -16,7 +16,7 @@
       </div>
       <instance-list @select="setCurrentInstance"></instance-list>
       <CreateInstance
-        :show="showCreateInstance"
+        :visible="showCreateInstance"
         @close="showCreateInstance = false"
         @update="update"></CreateInstance>
     </div>
@@ -39,7 +39,7 @@ import { onMounted, ref, watch, type Ref } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/store/config";
 import { useInstanceStore } from "@/store/instance";
-import CreateInstance from "./dialogs/CreateInstance.vue";
+import CreateInstance from "@/dialogs/CreateInstance.vue";
 import { Instance, listInstances } from "@conic/instance";
 import { install as conicInstall } from "@conic/install";
 import { launch as conicLaunch } from "@conic/launch";

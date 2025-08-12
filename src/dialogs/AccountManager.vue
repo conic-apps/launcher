@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <dialog-vue :visible="props.show" :width="width" :height="height">
+  <dialog-vue :visible="props.visible" :width="width" :height="height">
     <div class="account-manager">
       <div style="width: 100%; height: 100%">
         <div class="title">
@@ -39,7 +39,7 @@ import Add from "./account/Add.vue";
 import AppIcon from "@/components/AppIcon.vue";
 
 const props = defineProps<{
-  show: boolean;
+  visible: boolean;
 }>();
 defineEmits(["close", "update", "choose-account"]);
 
