@@ -11,7 +11,7 @@ use folder::DATA_LOCATION;
 use log::{error, info};
 use platform::PLATFORM_INFO;
 use shared::APP_VERSION;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Window, WindowEvent};
 #[cfg(debug_assertions)]
 use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
 use tauri_plugin_log::{Target, TargetKind};
@@ -70,23 +70,7 @@ fn main() {
             info!("Main window loaded");
             Ok(())
         })
-        .on_window_event(|window, event| {
-            // Do something after app closed
-            if window.label() != "main" {
-                return;
-            };
-            if let tauri::WindowEvent::CloseRequested { .. } = event {
-                window.close().unwrap();
-                match std::fs::remove_dir_all(&DATA_LOCATION.temp) {
-                    Ok(_) => info!("Temporary files cleared"),
-                    Err(x) => {
-                        if x.kind() != std::io::ErrorKind::NotFound {
-                            error!("Could not clear temp foler")
-                        }
-                    }
-                };
-            }
-        })
+        .on_window_event(window_event_handler)
         .run(tauri::generate_context!())
         .expect("Failed to run app");
 }
@@ -113,4 +97,20 @@ fn init_log_builder() -> tauri_plugin_log::Builder {
         trace: Color::Cyan,
     });
     log_builder
+}
+
+fn window_event_handler(window: &Window, event: &WindowEvent) {
+    if window.label() != "main" {
+        return;
+    };
+    if let tauri::WindowEvent::CloseRequested { .. } = event {
+        match std::fs::remove_dir_all(&DATA_LOCATION.temp) {
+            Ok(_) => info!("Temporary files cleared"),
+            Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
+                error!("Could not clear temp foler")
+            }
+            _ => (),
+        };
+        window.close().unwrap();
+    }
 }

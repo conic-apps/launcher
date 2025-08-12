@@ -58,10 +58,6 @@ const config: TSESLint.FlatConfig.Config[] = defineConfigWithVueTs(
                 {
                     selector: "interface",
                     format: ["PascalCase"],
-                    custom: {
-                        regex: "^I[A-Z]",
-                        match: true,
-                    },
                 },
             ],
         },

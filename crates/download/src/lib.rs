@@ -106,14 +106,15 @@ impl DownloadTask {
             ..self
         }
     }
+
     fn assignment_mirror(
         self,
         mirror_usage: &MirrorUsage,
-        disabled: &[String],
+        disabled_mirrors: &[String],
     ) -> Option<(DownloadTask, Mirror)> {
         match self.r#type {
             DownloadType::Libraries => {
-                let mirror = mirror_usage.get_libraries_mirror(disabled)?;
+                let mirror = mirror_usage.get_libraries_mirror(disabled_mirrors)?;
                 mirror.1.fetch_add(1, Ordering::SeqCst);
                 Some((
                     DownloadTask {
@@ -126,7 +127,7 @@ impl DownloadTask {
                 ))
             }
             DownloadType::Assets => {
-                let mirror = mirror_usage.get_assets_mirror(disabled)?;
+                let mirror = mirror_usage.get_assets_mirror(disabled_mirrors)?;
                 mirror.1.fetch_add(1, Ordering::SeqCst);
                 Some((
                     DownloadTask {
@@ -224,50 +225,50 @@ fn mirror_usage_sender_loop(mirror_usage: MirrorUsage, finished: Arc<AtomicBool>
 pub async fn download_files(
     downloads: Vec<DownloadTask>,
     progress: &Progress,
-    config: DownloadConfig,
+    download_config: DownloadConfig,
     verify_checksum: bool,
 ) -> anyhow::Result<()> {
-    let downloads: Vec<DownloadTask> = verify_existing_files(downloads, progress)
+    let download_tasks: Vec<DownloadTask> = verify_existing_files(downloads, progress)
         .into_iter()
         .map(|x| x.classify())
         .collect();
 
-    let finished = Arc::new(AtomicBool::new(false));
+    let is_finished = Arc::new(AtomicBool::new(false));
     let speed_thread = {
         let speed_counter = progress.speed.clone();
-        let finished = finished.clone();
-        thread::spawn(move || speed_counter_loop(speed_counter, finished))
+        let is_finished_cloned = is_finished.clone();
+        thread::spawn(move || speed_counter_loop(speed_counter, is_finished_cloned))
     };
 
-    let mirror_usage = MirrorUsage::new(config.mirror);
+    let mirror_usage = MirrorUsage::new(download_config.mirror);
     let mirror_usage_sender_thread = {
-        let mirror_usage = mirror_usage.clone();
-        let finished = finished.clone();
-        thread::spawn(move || mirror_usage_sender_loop(mirror_usage, finished))
+        let mirror_usage_cloned = mirror_usage.clone();
+        let is_finished_cloned = is_finished.clone();
+        thread::spawn(move || mirror_usage_sender_loop(mirror_usage_cloned, is_finished_cloned))
     };
 
     progress.completed.store(0, Ordering::SeqCst);
-    progress.total.store(downloads.len(), Ordering::SeqCst);
+    progress.total.store(download_tasks.len(), Ordering::SeqCst);
     {
         #[allow(clippy::unwrap_used)]
         let mut task = progress.task.lock().unwrap();
         *task = Task::DownloadFiles;
     }
 
-    let result = futures::stream::iter(downloads)
+    let result = futures::stream::iter(download_tasks)
         .map(|task| {
             download_file_future(
                 task,
-                config.max_download_speed,
+                download_config.max_download_speed,
                 &mirror_usage,
                 progress,
                 verify_checksum,
             )
         })
-        .buffer_unordered(config.max_connections)
+        .buffer_unordered(download_config.max_connections)
         .try_for_each_concurrent(None, |_| async { Ok(()) })
         .await;
-    finished.store(true, Ordering::SeqCst);
+    is_finished.store(true, Ordering::SeqCst);
     let _ = speed_thread.join();
     let _ = mirror_usage_sender_thread.join();
     result
@@ -341,7 +342,7 @@ pub async fn download_file(
         #[allow(clippy::collapsible_if)]
         if verify_checksum {
             if calculate_sha1_from_read(&mut file).await? != sha1 {
-                return Err(anyhow::Error::msg("sha1 check failed".to_string()));
+                return Err(anyhow::anyhow!("sha1 check failed"));
             }
         }
     }
