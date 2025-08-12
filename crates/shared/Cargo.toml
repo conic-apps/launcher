@@ -11,5 +11,4 @@ repository.workspace = true
 [dependencies]
 once_cell.workspace = true
 tauri.workspace = true
-tauri-plugin-http.workspace = true
-
+reqwest.workspace = true

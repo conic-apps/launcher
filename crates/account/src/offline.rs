@@ -25,7 +25,7 @@ impl OfflineAccount {
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
-                    .as_millis(),
+                    .as_nanos(),
             )
             .to_string(),
             skin: None,

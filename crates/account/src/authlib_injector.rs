@@ -185,7 +185,7 @@ pub fn add_account(account: AuthlibInjectorAccount) {
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
-                .as_micros(),
+                .as_nanos(),
         ),
         account,
     );

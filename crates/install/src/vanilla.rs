@@ -7,7 +7,6 @@ use std::str::FromStr;
 use anyhow::{Result, anyhow};
 use serde_json::Value;
 use shared::HTTP_CLIENT;
-use tauri_plugin_http::reqwest;
 use tokio::io::AsyncWriteExt;
 
 use download::{DownloadTask, DownloadType};
@@ -25,9 +24,12 @@ pub struct VersionManifest {
 impl VersionManifest {
     pub async fn new() -> anyhow::Result<VersionManifest> {
         // Not allow custom source to avoid attack
-        let response =
-            reqwest::get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json").await?;
-        Ok(response.json::<VersionManifest>().await?)
+        Ok(HTTP_CLIENT
+            .get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
+            .send()
+            .await?
+            .json()
+            .await?)
     }
 }
 
@@ -186,8 +188,13 @@ pub async fn generate_assets_downloads(
         .asset_index
         .clone()
         .ok_or(anyhow!("Asset index not found"))?;
-    let asset_index_url = reqwest::Url::parse(asset_index.url.as_ref())?;
-    let asset_index_raw = reqwest::get(asset_index_url).await?.text().await?;
+    let asset_index_url = url::Url::parse(asset_index.url.as_ref())?;
+    let asset_index_raw = HTTP_CLIENT
+        .get(asset_index_url)
+        .send()
+        .await?
+        .text()
+        .await?;
     let asset_index_json: Value = serde_json::from_str(asset_index_raw.as_ref())?;
     let asset_index_object: AssetIndexObject =
         serde_json::from_value(asset_index_json["objects"].clone())?;

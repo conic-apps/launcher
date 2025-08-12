@@ -24,6 +24,6 @@ tokio.workspace = true
 uuid.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-tauri-plugin-http.workspace = true
 sha1_smol.workspace = true
 tauri.workspace = true
+url.workspace = true
