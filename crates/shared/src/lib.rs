@@ -23,6 +23,8 @@ pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
     reqwest::ClientBuilder::new()
         .pool_idle_timeout(Duration::from_secs(10))
         .pool_max_idle_per_host(10)
+        .use_rustls_tls()
+        .user_agent(format!("ConicApps/{}", APP_VERSION.get().unwrap()))
         .build()
         .expect("Failed to build HTTP client")
 });
