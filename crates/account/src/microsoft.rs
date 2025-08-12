@@ -454,3 +454,31 @@ async fn resolve_skin(url: &str) -> String {
         url.to_string()
     }
 }
+
+pub async fn relogin_account(uuid: String, code: String) {
+    info!("Signing in through Microsoft");
+    let new_account = microsoft_login(LoginPayload::AccessCode(code))
+        .await
+        .unwrap();
+
+    let is_different_account = uuid != new_account.profile.uuid;
+    if is_different_account {
+        delete_account(uuid);
+        save_account(new_account).unwrap();
+        return;
+    };
+
+    let accounts = list_accounts();
+    let mut result = Vec::with_capacity(accounts.len());
+
+    for account in accounts {
+        if account.profile.uuid == new_account.profile.uuid {
+            result.push(new_account.clone());
+        } else {
+            result.push(account)
+        }
+    }
+    let path = DATA_LOCATION.root.join("accounts.microsoft.json");
+    let contents = serde_json::to_string_pretty(&result).unwrap();
+    std::fs::write(&path, &contents).unwrap();
+}
