@@ -7,9 +7,17 @@ import { invoke } from "@tauri-apps/api/core"
 invoke("plugin:account|cmd_test").then((res) => {
     console.log(res)
 })
+
 export type Accounts = {
     microsoft: MicrosoftAccount[]
     offline: OfflineAccount[]
+    authlib_injector: Map<string, AuthlibInjectorAccount>
+}
+
+export enum AccountType {
+    Microsoft = "Microsoft",
+    Offline = "Offline",
+    AuthlibInjector = "AuthlibInjector",
 }
 
 export type MicrosoftAccount = {
@@ -83,7 +91,90 @@ export async function getOfflineAccount(uuid: string): Promise<OfflineAccount[]>
     return await invoke("plugin:account|cmd_get_offline_account", { uuid })
 }
 
-export async function getAvatar(src: string, size: number) {
+export async function addYggdrasilServer(apiRoot: string) {
+    await invoke("plugin:account|cmd_add_yggdrasil_server", { apiRoot })
+}
+
+export async function deleteYggdrasilServer(indexToDelete: number) {
+    await invoke("plugin:account|cmd_delete_yggdrasil_server", { indexToDelete })
+}
+
+export async function listYggdrasilServer(): Promise<string[]> {
+    return await invoke("plugin:account|cmd_list_yggdrasil_server")
+}
+
+export async function getYggdrasilServerInfo(apiRoot: string): Promise<YggdrasilServerInfo> {
+    return await invoke("plugin:account|cmd_get_yggdrasil_server_info", { apiRoot })
+}
+
+export type YggdrasilServerInfo = {
+    // eslint-disable-next-line
+    meta: NonNullable<any>
+    skinDomains: string[]
+    signaturePublicKey: string
+}
+
+export async function yggdrasilLogin(
+    apiRoot: string,
+    username: string,
+    password: string,
+): Promise<LoginResponse> {
+    return await invoke("plugin:account|cmd_yggdrasil_login", { apiRoot, username, password })
+}
+
+export type LoginResponse = {
+    accessToken: string
+    clientToken: string
+    availableProfiles: {
+        id: string
+        name: string
+    }[]
+    selectedProfile?: {
+        id: string
+        name: string
+    }
+}
+
+export async function addAuthlibAccount(account: AuthlibInjectorAccount) {
+    await invoke("plugin:account|cmd_add_authlib_account", { account })
+}
+
+export type AuthlibInjectorAccount = {
+    api_root: string
+    account_identifier: string
+    access_token: string
+    client_token: string
+    profile_name: string
+    profile_uuid: string
+    added_at: number
+}
+
+export async function deleteAuthlibAccount(accountKey: string) {
+    await invoke("plugin:account|cmd_delete_authlib_account", { accountKey })
+}
+
+export async function getAuthlibProfileInfo(apiRoot: string, uuid: string): Promise<Profile> {
+    return await invoke("plugin:account|cmd_get_authlib_profile_info", { apiRoot, uuid })
+}
+
+export type Profile = {
+    id: string
+    name: string
+    properties: {
+        name: string
+        value: string
+    }[]
+}
+
+export async function getAuthlibAccount(accountKey: string): Promise<AuthlibInjectorAccount> {
+    return await invoke("plugin:account|cmd_get_authlib_account", { accountKey })
+}
+
+export async function reloginAccount(uuid: string, accountType: AccountType, credential: string) {
+    await invoke("plugin:account|cmd_relogin_account", { uuid, accountType, credential })
+}
+
+export async function getAvatar(src: string, size: number): Promise<string> {
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
