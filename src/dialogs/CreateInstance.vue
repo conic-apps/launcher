@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <dialog-vue :visible="props.show" :width="560" :height="468">
+  <dialog-vue :visible="props.visible" :width="560" :height="468">
     <div class="create-instance">
       <p
         style="
@@ -151,7 +151,7 @@ import { createInstance as conicCreateInstance } from "@conic/instance";
 const emit = defineEmits(["close", "update"]);
 
 const props = defineProps<{
-  show: boolean;
+  visible: boolean;
 }>();
 
 const defaultInstanceName = computed(() => {

@@ -2,6 +2,7 @@
 <!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
+<!-- TODO: Support tab, can switch to different instance to view log, then change name to LogBrowser -->
 <template>
   <dialog-vue :visible="props.visible" :width="860" :height="520">
     <div class="log-viewer">

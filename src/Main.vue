@@ -15,35 +15,16 @@
         ">
         <search-bar style="width: 100%" :placeholder="$t('globalSearch.placeholder')"></search-bar>
       </div>
-      <div class="account" @click="showAccountManager = true">
-        <div class="avatar">
-          <img :src="currentAccountProfile.avatar" alt="player avatar" />
-        </div>
-        <span>{{ currentAccountProfile.name }}</span>
-        <tag
-          style="margin-left: 8px"
-          v-if="
-            currentTime.now > currentAccountProfile.tokenDeadline &&
-            currentAccountProfile.type === 'Microsoft'
-          "
-          text="需要刷新"
-          :color="['249', '226', '175']"
-          text-color="#f9e2af"
-          :background="false"
-          :border="true"
-          font-size="10"
-          :round="true"></tag>
-      </div>
-      <div class="win-btn">
-        <div class="min" @click="minimize">
-          <AppIcon name="minus" :size="16"></AppIcon>
-        </div>
-        <div class="max" @click="maximize">
-          <AppIcon name="expand-2" :size="16"></AppIcon>
-        </div>
-        <div class="close" @click="close">
-          <AppIcon name="xmark" :size="16"></AppIcon>
-        </div>
+      <AccountStatus></AccountStatus>
+      <div style="display: flex; align-items: center; margin-right: 20px">
+        <!-- TODO: Move to right and change ordering on macos -->
+        <WindowButton
+          button-type="minimize"
+          @minimize="window.getCurrentWindow().minimize()"></WindowButton>
+        <WindowButton
+          button-type="maximize"
+          @maximize="window.getCurrentWindow().maximize()"></WindowButton>
+        <WindowButton button-type="close" @close="window.getCurrentWindow().close()"></WindowButton>
       </div>
     </div>
     <div class="sidebar" data-tauri-drag-region>
@@ -77,10 +58,7 @@
         <component :is="currentComponent" @jump="jumpTo"></component>
       </Transition>
     </main>
-    <update-reminder></update-reminder>
-    <account-manager
-      :show="showAccountManager"
-      @close="showAccountManager = false"></account-manager>
+    <DialogRoot></DialogRoot>
   </div>
 </template>
 
@@ -88,34 +66,24 @@
 import { markRaw, reactive, ref, shallowRef } from "vue";
 import SearchBar from "./components/SearchBar.vue";
 import SidebarItem from "./components/SidebarItem.vue";
-import AccountManager from "./pages/dialogs/AccountManager.vue";
 import { window } from "@tauri-apps/api";
 import Settings from "./pages/Settings.vue";
 import Game from "./pages/Game.vue";
-import UpdateReminder from "./pages/dialogs/UpdateReminder.vue";
 import { useConfigStore } from "./store/config";
 import { watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { loadTheme } from "./theme";
 import Home from "./pages/Home.vue";
-import Tag from "./components/Tag.vue";
-import { listen } from "@tauri-apps/api/event";
 import { useTimeStore } from "./store/time";
 import Market from "./pages/Market.vue";
-import { getAvatar, getMicrosoftAccount, refreshAllMicrosoftAccounts } from "@conic/account";
 import { saveConfigToFile } from "@conic/config";
-import AppIcon from "./components/AppIcon.vue";
 import Logo from "@/assets/logo.svg";
+import WindowButton from "./components/WindowButton.vue";
+import AccountStatus from "./components/AccountStatus.vue";
+import DialogRoot from "./DialogRoot.vue";
 
-function minimize() {
-  window.getCurrentWindow().minimize();
-}
-function maximize() {
-  window.getCurrentWindow().maximize();
-}
-function close() {
-  window.getCurrentWindow().close();
-}
+const config = useConfigStore();
+loadTheme(config);
 
 const pages = reactive({
   settings: markRaw(Settings),
@@ -123,11 +91,9 @@ const pages = reactive({
   market: markRaw(Market),
   game: markRaw(Game),
 });
-
 const transitionName = ref("slide-up");
 const currentComponent = shallowRef(pages.game);
-const config = useConfigStore();
-loadTheme(config);
+
 const i18n = useI18n();
 i18n.locale.value = config.language;
 watch(config, () => {
@@ -137,6 +103,7 @@ watch(config, () => {
 type ComponentName = "home" | "settings" | "game" | "market";
 
 function changePage(event: MouseEvent | null, component: ComponentName) {
+  // TODO: Add class active for event element
   if (typeof component === "string") {
     currentComponent.value = pages[component];
   } else {
@@ -148,36 +115,6 @@ function jumpTo(name: ComponentName) {
   changePage(null, name);
 }
 
-const showAccountManager = ref(false);
-
-const currentAccountProfile = ref<{
-  name: string;
-  avatar: string;
-  tokenDeadline: number;
-  type: "Microsoft" | "Offline";
-}>({
-  name: "Steve",
-  avatar: "@/assets/images/steve_avatar.webp",
-  tokenDeadline: 0,
-  type: "Offline",
-});
-
-getMicrosoftAccount(config.current_account).then((res) => {
-  if (!res[0]) {
-    return;
-  }
-  const account = res[0];
-  if (account != undefined) {
-    getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
-      currentAccountProfile.value = {
-        name: account.profile.profile_name,
-        avatar,
-        tokenDeadline: account.expires_on ? account.expires_on : -1,
-        type: account.account_type,
-      };
-    });
-  }
-});
 watch(
   config,
   async (value) => {
@@ -192,23 +129,6 @@ const currentTime = useTimeStore();
 setInterval(() => {
   currentTime.now = Math.round(new Date().getTime() / 1000);
 }, 3000);
-
-listen("refresh_accounts_list", async () => {
-  const account = (await getMicrosoftAccount(config.current_account))[0];
-  getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
-    currentAccountProfile.value = {
-      name: account.profile.profile_name,
-      avatar,
-      tokenDeadline: account.expires_on ? account.expires_on : -1,
-      type: account.account_type,
-    };
-  });
-});
-
-refreshAllMicrosoftAccounts();
-listen("add-account", () => {
-  showAccountManager.value = true;
-});
 </script>
 
 <style lang="less" scoped>
@@ -265,60 +185,6 @@ listen("add-account", () => {
       font-size: 14px;
     }
   }
-}
-
-.win-btn {
-  display: flex;
-  align-items: center;
-  margin-right: 20px;
-}
-
-.win-btn > div {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  margin-left: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 100ms;
-}
-
-.win-btn > div > i {
-  font-style: normal;
-  font-family: "fa-pro";
-  font-weight: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.win-btn > div > svg {
-  opacity: 0;
-}
-
-.win-btn > div:hover > svg {
-  opacity: 1;
-}
-
-.win-btn > div:active {
-  transform: scale(0.9);
-}
-
-.win-btn > div:active > svg {
-  opacity: 0.8;
-}
-
-.win-btn > div.min {
-  background: var(--min-btn-background);
-}
-
-.win-btn > div.max {
-  background: var(--max-btn-background);
-}
-
-.win-btn > div.close {
-  background: var(--close-btn-background);
 }
 
 .sidebar {
