@@ -1,9 +1,9 @@
-name: lint js
+name: Check frontend
 
 on:
   push:
     paths:
-      - ".github/workflows/lint-js.yml"
+      - ".github/workflows/check-frontend.yml"
       - "src/*"
       - "*.ts"
       - "crates/**/*.ts"
@@ -28,15 +28,18 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@latest --activate
+
       - name: Install Dependencies
-        working-directory: ./
         run: pnpm install
+
       - name: Run ts:check
-        working-directory: ./
         run: pnpm run ts:check
+
       - name: Run lint
-        working-directory: ./
         run: pnpm run lint
-      - name: Run format
-        working-directory: ./
+
+      - name: Run format:check
         run: pnpm run format:check
+
+      - name: Run Build
+        run: pnpm build
