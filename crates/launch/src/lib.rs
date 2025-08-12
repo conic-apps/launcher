@@ -84,9 +84,7 @@ pub async fn launch(config: Config, instance: Instance) -> Result<(), ()> {
     };
 
     if !config.launch.skip_refresh_account {
-        check_and_refresh_account(&config.current_account_uuid, &config.current_account_type)
-            .await
-            .unwrap();
+        check_and_refresh_account(&config.current_account_uuid, &config.current_account_type).await;
     } else {
         info!("Account refresh disabled by user");
     };

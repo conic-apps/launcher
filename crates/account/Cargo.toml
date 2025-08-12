@@ -20,3 +20,4 @@ serde.workspace = true
 serde_json.workspace = true
 tauri.workspace = true
 uuid.workspace = true
+url.workspace = true

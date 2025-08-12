@@ -2,7 +2,10 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    fs::create_dir_all,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
@@ -34,17 +37,13 @@ pub fn add_account(name: &str) {
     let new_account = OfflineAccount::new(name);
     let mut accounts = list_accounts();
     accounts.push(new_account);
-    let path = DATA_LOCATION.root.join("accounts.offline.json");
-    let content = serde_json::to_string(&accounts).unwrap();
-    std::fs::write(path, content).unwrap();
+    save_accounts(&accounts);
 }
 
 pub fn delete_account(uuid: &str) {
     let accounts = list_accounts();
     let result: Vec<OfflineAccount> = accounts.into_iter().filter(|x| x.uuid != uuid).collect();
-    let path = DATA_LOCATION.root.join("accounts.offline.json");
-    let contents = serde_json::to_string(&result).unwrap();
-    std::fs::write(path, contents).unwrap();
+    save_accounts(&result);
 }
 
 pub fn update_account(account: OfflineAccount) {
@@ -57,14 +56,23 @@ pub fn update_account(account: OfflineAccount) {
             result.push(old_account);
         }
     }
+    save_accounts(&result);
+}
+
+fn save_accounts(accounts: &Vec<OfflineAccount>) {
     let path = DATA_LOCATION.root.join("accounts.offline.json");
-    let contents = serde_json::to_string(&result).unwrap();
-    std::fs::write(path, contents).unwrap();
+    create_dir_all(path.parent().unwrap()).unwrap();
+    let content = serde_json::to_string(accounts).unwrap();
+    std::fs::write(path, content).unwrap();
 }
 
 pub fn list_accounts() -> Vec<OfflineAccount> {
     let path = DATA_LOCATION.root.join("accounts.offline.json");
-    let data = std::fs::read_to_string(path).unwrap();
+    create_dir_all(path.parent().unwrap()).unwrap();
+    let data = match std::fs::read_to_string(path) {
+        Ok(x) => x,
+        Err(_) => return vec![],
+    };
     serde_json::from_str(&data).unwrap()
 }
 
