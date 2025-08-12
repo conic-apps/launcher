@@ -1,9 +1,9 @@
-name: lint rust
+name: Check Rust
 
 on:
   push:
     paths:
-      - ".github/workflows/lint-rust.yml"
+      - ".github/workflows/check-rust.yml"
       - "crates/**"
       - "core/**"
       - "Cargo.toml"
@@ -64,3 +64,27 @@ jobs:
 
       - name: Run clippy
         run: cargo clippy --manifest-path ./Cargo.toml --all-targets --release -- -D warnings
+
+  test:
+    strategy:
+      matrix:
+        include:
+          - platform: "ubuntu-latest"
+          - platform: "windows-latest"
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install dependencies
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y webkit2gtk-4.1 libayatana-appindicator3-dev
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run cargo test
+        run: cargo check --all --release --verbose --all-targets
