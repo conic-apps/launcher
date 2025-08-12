@@ -2,14 +2,18 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{io::BufRead, path::PathBuf, process::Stdio};
+use std::{
+    io::BufRead,
+    path::PathBuf,
+    process::Stdio,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use folder::DATA_LOCATION;
 use log::{error, info, trace};
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
 use tokio::io::AsyncWriteExt;
-use uuid::Uuid;
 
 /// Represents the list of Neoforged versions.
 #[derive(Deserialize, Serialize, Clone)]
@@ -130,7 +134,15 @@ async fn download_installer(neoforged_version: &str) -> anyhow::Result<PathBuf> 
     );
     info!("The installer url is: {installer_url}");
 
-    let installer_path = DATA_LOCATION.temp.join(format!("{}.jar", Uuid::new_v4()));
+    let installer_path = DATA_LOCATION.temp.join(format!(
+        "{}.jar",
+        uuid::Uuid::from_u128(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos(),
+        )
+    ));
     tokio::fs::create_dir_all(
         installer_path
             .parent()

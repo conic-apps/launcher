@@ -246,5 +246,3 @@ async fn cmd_get_authlib_profile_info(api_root: String, uuid: String) -> Profile
 fn cmd_get_authlib_account(account_key: Uuid) -> AuthlibInjectorAccount {
     authlib_injector::get_account(account_key).unwrap()
 }
-
-// TODO: add yggdrasil account
