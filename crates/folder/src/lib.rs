@@ -14,7 +14,11 @@ use std::{
 };
 
 use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use tauri::{
+    Runtime, command,
+    plugin::{Builder, TauriPlugin},
+};
 use uuid::Uuid;
 
 use platform::{OsFamily, PLATFORM_INFO};
@@ -23,7 +27,7 @@ pub static DATA_LOCATION: Lazy<DataLocation> = Lazy::new(DataLocation::default);
 
 const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("./launcher_profiles.json");
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 /// The Minecraft folder structure. All method will return the path related to a minecraft root like .minecraft.
 pub struct MinecraftLocation {
     pub root: PathBuf,
@@ -85,7 +89,7 @@ impl MinecraftLocation {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct DataLocation {
     pub root: PathBuf,
     pub instances: PathBuf,
@@ -169,4 +173,15 @@ impl Default for DataLocation {
         }
         Self::new(&application_data_path)
     }
+}
+
+pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    Builder::new("folder")
+        .invoke_handler(tauri::generate_handler![cmd_get_data_location])
+        .build()
+}
+
+#[command]
+fn cmd_get_data_location() -> DataLocation {
+    DATA_LOCATION.clone()
 }

@@ -225,7 +225,7 @@
         description="The Description of Open Log Viewer "
         icon="document-text"
         :clickAble="true"
-        @click="logViewerOpen = true">
+        @click="dialogStore.logViewer.visible = true">
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>
     </setting-group>
@@ -235,7 +235,7 @@
         description="Once you delete a instance, there is no going back. Please be certain."
         icon="trash"
         :clickAble="true"
-        @click="confirmDeleteInstanceVisible = true"
+        @click="dialogStore.confirmDeleteInstance.visible = true"
         :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'">
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>
@@ -247,14 +247,6 @@
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>
     </setting-group>
-    <confirm-delete-instance
-      :visible="confirmDeleteInstanceVisible"
-      @close="confirmDeleteInstanceVisible = false"
-      @deleted="
-        confirmDeleteInstanceVisible = false;
-        $emit('update-instance-list');
-      "></confirm-delete-instance>
-    <LogViewer :visible="logViewerOpen" @close="logViewerOpen = false"> </LogViewer>
   </div>
 </template>
 
@@ -263,18 +255,16 @@ import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 import TextInputBox from "@/components/TextInputBox.vue";
-import { computed, ref, watchEffect } from "vue";
+import { computed, watchEffect } from "vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
-import ConfirmDeleteInstance from "@/dialogs/ConfirmDeleteInstance.vue";
 import SelectVue from "@/components/Select.vue";
-import LogViewer from "@/dialogs/LogViewer.vue";
 import { useInstanceStore } from "@/store/instance";
 import ButtonVue from "@/components/Button.vue";
 import { updateInstance } from "@conic/instance";
-
-defineEmits(["update-instance-list"]);
+import { useDialogStore } from "@/store/dialog";
 
 const instanceStore = useInstanceStore();
+const dialogStore = useDialogStore();
 
 const instanceName = computed(() => {
   return instanceStore.currentInstance.config.name;
@@ -285,10 +275,6 @@ const config = useConfigStore();
 const enableInstanceSpecificSettings = computed(() => {
   return instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings;
 });
-
-const confirmDeleteInstanceVisible = ref(false);
-
-const logViewerOpen = ref(false);
 
 let oldEnabledSpecificSettings =
   instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings;
