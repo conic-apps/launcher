@@ -84,12 +84,15 @@ pub async fn launch(config: Config, instance: Instance) -> Result<(), ()> {
     };
 
     if !config.launch.skip_refresh_account {
-        check_and_refresh_account(&config.current_account_uuid, &config.current_account_type).await;
+        check_and_refresh_account(config.current_account_uuid, &config.current_account_type)
+            .await
+            .unwrap();
     } else {
         info!("Account refresh disabled by user");
     };
     let selected_account =
-        account::AccountLaunchInfo::new(&config.current_account_uuid, &config.current_account_type);
+        account::AccountLaunchInfo::new(config.current_account_uuid, &config.current_account_type)
+            .unwrap();
 
     let launch_options = LaunchOptions::new(&config, &instance, &selected_account);
     let minecraft_location = launch_options.minecraft_location.clone();

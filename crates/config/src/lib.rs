@@ -11,6 +11,7 @@ use tauri::{
     Runtime, command,
     plugin::{Builder, TauriPlugin},
 };
+use uuid::Uuid;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("config")
@@ -165,7 +166,7 @@ pub struct Config {
 
     /// The UUID of the currently selected account.
     #[serde(default = "default_current_account")]
-    pub current_account_uuid: String,
+    pub current_account_uuid: Uuid,
 
     /// The UUID of the currently selected account.
     #[serde(default = "default_current_account_type")]
@@ -205,13 +206,13 @@ impl Default for Config {
     fn default() -> Self {
         let locale = sys_locale::get_locale().unwrap();
         info!("System locale is {locale}");
-        let accounts = account::microsoft::list_accounts();
+        let accounts = account::microsoft::list_accounts().unwrap();
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
             current_account_uuid: match accounts.first() {
                 Some(x) => x.to_owned().profile.uuid,
-                None => "00000000-0000-0000-0000-000000000000".to_string(),
+                None => uuid::uuid!("00000000-0000-0000-0000-000000000000"),
             },
             current_account_type: AccountType::Microsoft,
             auto_update: true,
@@ -227,10 +228,10 @@ fn default_language() -> String {
     sys_locale::get_locale().unwrap()
 }
 
-fn default_current_account() -> String {
-    match account::microsoft::list_accounts().first() {
+fn default_current_account() -> Uuid {
+    match account::microsoft::list_accounts().unwrap().first() {
         Some(x) => x.to_owned().profile.uuid,
-        None => "00000000-0000-0000-0000-000000000000".to_string(),
+        None => uuid::uuid!("00000000-0000-0000-0000-000000000000"),
     }
 }
 

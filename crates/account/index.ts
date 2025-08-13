@@ -4,9 +4,19 @@
 
 import { invoke } from "@tauri-apps/api/core"
 
-invoke("plugin:account|cmd_test").then((res) => {
-    console.log(res)
-})
+export type AccountError = {
+    kind:
+        | "Io"
+        | "UrlParse"
+        | "JsonParse"
+        | "ToStr"
+        | "Network"
+        | "AccountNotfound"
+        | "ProfileUnavailable"
+        | "OwnershipCheckFailed"
+        | "MicrosoftResponseMissingKey"
+    message: string
+}
 
 export type Accounts = {
     microsoft: MicrosoftAccount[]

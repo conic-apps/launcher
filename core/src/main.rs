@@ -62,7 +62,8 @@ fn main() {
         .plugin(folder::init())
         .plugin(platform::init())
         .append_invoke_initialization_script(init_config_js_script)
-        .setup(|_app| {
+        .setup(|app| {
+            shared::APP_HANDLE.set(app.app_handle().clone()).unwrap();
             std::fs::write(
                 DATA_LOCATION.root.join("platform.json"),
                 serde_json::to_string_pretty(&PLATFORM_INFO.clone()).unwrap(),
