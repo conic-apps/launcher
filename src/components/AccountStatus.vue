@@ -1,5 +1,5 @@
 <template>
-  <div class="account" @click="dialogStore.accountManager = true">
+  <div class="account" @click="dialogStore.accountManager.visible = true">
     <div class="avatar">
       <img :src="currentAccountProfile.avatar" alt="player avatar" />
     </div>
@@ -60,6 +60,8 @@ getMicrosoftAccount(configStore.current_account).then((res) => {
     });
   }
 });
+
+// TODO: Use new API
 listen("refresh_accounts_list", async () => {
   const account = (await getMicrosoftAccount(configStore.current_account))[0];
   getAvatar(account.profile.skins[0].url, 32).then((avatar) => {
@@ -73,7 +75,7 @@ listen("refresh_accounts_list", async () => {
 });
 refreshAllMicrosoftAccounts();
 listen("add-account", () => {
-  dialogStore.accountManager = true;
+  dialogStore.accountManager.visible = true;
 });
 const currentTime = useTimeStore();
 </script>

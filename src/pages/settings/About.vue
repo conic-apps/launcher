@@ -15,6 +15,7 @@
         icon="flag"
         :clickAble="true"
         @click="reportBug">
+        <!-- TODO: Replace it to new icon component -->
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>
       <setting-item

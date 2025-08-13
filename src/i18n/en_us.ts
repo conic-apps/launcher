@@ -121,8 +121,9 @@ export default {
         },
         advance: {
             sidebar: "Advance",
-            exportLauncherLogs: "Export Launcher Log",
-            exportLauncherLogsDesc: "Export launcher log to file for reporting problems.",
+            viewLauncherLogs: "Open Launcher Log Folder",
+            viewLauncherLogsDesc:
+                "View launcher log. If you are reporting problems, please upload it.",
             reload: "Reload Window",
             launchArgs: "Advance Launch Options",
             gc: "GC",
@@ -203,4 +204,4 @@ export default {
             thirdPartyLibraries: "Third-Party Libraries",
         },
     },
-}
+} as const

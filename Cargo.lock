@@ -1308,6 +1308,7 @@ dependencies = [
  "once_cell",
  "platform",
  "serde",
+ "tauri",
  "tokio",
  "uuid",
 ]

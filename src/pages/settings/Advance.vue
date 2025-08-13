@@ -4,6 +4,16 @@
 
 <template>
   <div>
+    <setting-group>
+      <setting-item
+        :title="$t('settings.advance.viewLauncherLogs')"
+        :description="$t('settings.advance.viewLauncherLogsDesc')"
+        icon="document-text"
+        :clickAble="true"
+        @click="openLogFolder">
+        <i class="chevron-right" style="margin-right: 10px"></i>
+      </setting-item>
+    </setting-group>
     <setting-group :title="$t('settings.advance.launchArgs')">
       <setting-item :title="$t('settings.advance.gc')">
         <select-vue
@@ -86,7 +96,14 @@ import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import TextInputBox from "@/components/TextInputBox.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
+import { openPath } from "@tauri-apps/plugin-opener";
+import { getDataLocation } from "@conic/folder";
 const config = useConfigStore();
+
+async function openLogFolder() {
+  const dataLocation = await getDataLocation();
+  openPath(dataLocation.logs);
+}
 </script>
 
 <style lang="less"></style>

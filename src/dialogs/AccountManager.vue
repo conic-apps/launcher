@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <dialog-vue :visible="props.visible" :width="width" :height="height">
+  <dialog-vue :visible="dialogStore.accountManager.visible" :width="width" :height="height">
     <div class="account-manager">
       <div style="width: 100%; height: 100%">
         <div class="title">
@@ -16,7 +16,10 @@
               <p>添加、删除或选择要使用的游戏帐号</p>
             </div>
           </div>
-          <div class="button" style="position: absolute; right: 0" @click="$emit('close')">
+          <div
+            class="button"
+            style="position: absolute; right: 0"
+            @click="dialogStore.accountManager.visible = false">
             <i></i>
           </div>
         </div>
@@ -37,11 +40,9 @@ import DialogVue from "@/components/Dialog.vue";
 import View from "./account/View.vue";
 import Add from "./account/Add.vue";
 import AppIcon from "@/components/AppIcon.vue";
+import { useDialogStore } from "@/store/dialog";
 
-const props = defineProps<{
-  visible: boolean;
-}>();
-defineEmits(["close", "update", "choose-account"]);
+const dialogStore = useDialogStore();
 
 const width = ref(720);
 const height = ref(420);

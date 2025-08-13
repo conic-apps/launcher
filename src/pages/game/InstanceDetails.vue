@@ -23,8 +23,7 @@
     <Transition :name="transitionName" mode="out-in">
       <component
         :is="currentComponent"
-        style="padding: 16px 8px; width: 100%; height: fit-content"
-        @update-instance-list="$emit('update-instance-list')"></component>
+        style="padding: 16px 8px; width: 100%; height: fit-content"></component>
     </Transition>
     <!-- <worlds :show="show.worlds" :datas="saves" :instance-name="instance.config.name" @close="show.worlds = false"> -->
     <!-- </worlds> -->
@@ -51,8 +50,6 @@ import { useInstanceStore } from "@/store/instance";
 
 const i18n = useI18n();
 const instanceStore = useInstanceStore();
-
-defineEmits(["update-instance-list"]);
 
 const components = ref([
   {

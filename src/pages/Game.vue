@@ -9,16 +9,15 @@
         <div
           style="display: flex; justify-content: space-between; align-items: center; height: 100%">
           <p style="margin-left: 4px">{{ $t("game.instances") }}</p>
-          <button class="side-button" @click="showCreateInstance = true" style="margin-right: 6px">
+          <button
+            class="side-button"
+            @click="dialogStore.createInstance.visible = true"
+            style="margin-right: 6px">
             <AppIcon name="add" :size="16"></AppIcon>
           </button>
         </div>
       </div>
       <instance-list @select="setCurrentInstance"></instance-list>
-      <CreateInstance
-        :visible="showCreateInstance"
-        @close="showCreateInstance = false"
-        @update="update"></CreateInstance>
     </div>
     <div class="row-2">
       <instance-card
@@ -26,7 +25,7 @@
         @launch="launch"
         @install="install"
         :error-type="errorType"></instance-card>
-      <instance-details style="margin-top: 16px" @update-instance-list="update"></instance-details>
+      <instance-details style="margin-top: 16px"></instance-details>
     </div>
   </div>
 </template>
@@ -39,19 +38,21 @@ import { onMounted, ref, watch, type Ref } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/store/config";
 import { useInstanceStore } from "@/store/instance";
-import CreateInstance from "@/dialogs/CreateInstance.vue";
 import { Instance, listInstances } from "@conic/instance";
 import { install as conicInstall } from "@conic/install";
 import { launch as conicLaunch } from "@conic/launch";
 import AppIcon from "@/components/AppIcon.vue";
+import { useDialogStore } from "@/store/dialog";
 
 const config = useConfigStore();
-const installing = ref(false);
-const buttonLoading = ref(false);
-const showCreateInstance = ref(false);
-const errorType: Ref<"launch" | "install" | undefined> = ref();
+const dialogStore = useDialogStore();
 const instanceStore = useInstanceStore();
 
+const installing = ref(false);
+const buttonLoading = ref(false);
+const errorType: Ref<"launch" | "install" | undefined> = ref();
+
+// TODO: move this to instance store
 function update() {
   listInstances("Name").then((res) => {
     instanceStore.instances = res as Instance[];
@@ -73,6 +74,20 @@ function update() {
     }
   });
 }
+
+// TODO: remove this, invoke update in dialog components
+watch(
+  () => dialogStore.createInstance.visible,
+  () => {
+    update();
+  },
+);
+watch(
+  () => dialogStore.confirmDeleteInstance.visible,
+  () => {
+    update();
+  },
+);
 
 onMounted(() => {
   update();

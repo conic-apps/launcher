@@ -17,6 +17,7 @@
             "@conic/install": ["./crates/install"],
             "@conic/instance": ["./crates/instance"],
             "@conic/launch": ["./crates/launch"],
+            "@conic/folder": ["./crates/folder"],
             "@conic/platform": ["./crates/platform"]
         }
     },
