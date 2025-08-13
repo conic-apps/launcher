@@ -4,7 +4,7 @@
 
 <!-- TODO: Support tab, can switch to different instance to view log, then change name to LogBrowser -->
 <template>
-  <dialog-vue :visible="props.visible" :width="860" :height="520">
+  <dialog-vue :visible="dialogStore.logViewer.visible" :width="860" :height="520">
     <div class="log-viewer">
       <div class="title">
         <div style="display: flex; align-items: center">
@@ -17,7 +17,10 @@
               正在查看 {{ instanceStore.currentInstance.config.name }} 的日志
             </p>
           </div>
-          <div class="button" style="position: absolute; right: 0" @click="$emit('close')">
+          <div
+            class="button"
+            style="position: absolute; right: 0"
+            @click="dialogStore.logViewer.visible = false">
             <i></i>
           </div>
         </div>
@@ -45,21 +48,19 @@
 
 <script setup lang="ts">
 import DialogVue from "@/components/Dialog.vue";
+import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
 import { listen } from "@tauri-apps/api/event";
 import { ref } from "vue";
 
-const props = defineProps<{
-  visible: boolean;
-}>();
-
 const instanceStore = useInstanceStore();
+const dialogStore = useDialogStore();
 
 type Log = {
   instanceId: string;
   content: string;
 };
-// log collector
+
 const logCollector = ref(new Map());
 
 listen("log", (event) => {

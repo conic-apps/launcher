@@ -11,7 +11,13 @@ import en_us from "./i18n/en_us"
 import zh_cn from "./i18n/zh_cn"
 
 const pinia = createPinia()
-const i18n = createI18n({
+
+type LooseString<T> = {
+    [K in keyof T]: T[K] extends string ? string : T[K] extends object ? LooseString<T[K]> : T[K]
+}
+type MessageSchema = LooseString<typeof en_us>
+
+const i18n = createI18n<[MessageSchema], "en_us" | "zh_cn">({
     legacy: false,
     locale: "zh_cn",
     fallbackLocale: "en_us",

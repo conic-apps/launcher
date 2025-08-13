@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <dialog-vue :visible="props.visible" :width="560" :height="468">
+  <dialog-vue :visible="dialogStore.createInstance.visible" :width="560" :height="468">
     <div class="create-instance">
       <p
         style="
@@ -147,12 +147,9 @@ import {
   QuiltVersion,
 } from "@conic/install";
 import { createInstance as conicCreateInstance } from "@conic/instance";
+import { useDialogStore } from "@/store/dialog";
 
-const emit = defineEmits(["close", "update"]);
-
-const props = defineProps<{
-  visible: boolean;
-}>();
+const dialogStore = useDialogStore();
 
 const defaultInstanceName = computed(() => {
   let modLoaderTypeText = "";
@@ -306,6 +303,7 @@ const creating = ref(false);
 const createInstance = () => {
   let parsedModLoaderType: "Quilt" | "Fabric" | "Neoforged" | "Forge" | undefined = undefined;
   switch (modLoaderType.value) {
+    // TODO: Dont use magic number
     case 1:
       parsedModLoaderType = "Quilt";
       break;
@@ -333,11 +331,11 @@ const createInstance = () => {
   };
   conicCreateInstance(newInstanceConfig)
     .then(() => {
-      emit("update");
+      // TODO: invoke update
       close();
     })
     .catch(() => {
-      emit("update");
+      // TODO: invoke update
       close();
     });
 };
@@ -347,7 +345,7 @@ const close = () => {
   minecraftVersion.value = "";
   modLoaderType.value = 0;
   modLoaderVersion.value = "";
-  emit("close");
+  dialogStore.createInstance.visible = false;
 };
 </script>
 
