@@ -4,15 +4,15 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anyhow::anyhow;
 use base64::{Engine, engine::general_purpose};
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri::Emitter;
+use uuid::Uuid;
 
+use crate::error::*;
 use folder::DATA_LOCATION;
-use shared::{HTTP_CLIENT, MAIN_WINDOW};
+use shared::HTTP_CLIENT;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct MicrosoftAccount {
@@ -43,81 +43,81 @@ pub struct Cape {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Profile {
     pub profile_name: String,
-    pub uuid: String,
+    pub uuid: Uuid,
     pub skins: Vec<Skin>,
     pub capes: Vec<Cape>,
 }
 
-pub fn list_accounts() -> Vec<MicrosoftAccount> {
+pub fn list_accounts() -> Result<Vec<MicrosoftAccount>> {
     let path = DATA_LOCATION.root.join("accounts.microsoft.json");
     if !path.exists() {
-        return vec![];
+        return Ok(vec![]);
     }
-    let data = std::fs::read_to_string(path).unwrap();
-    serde_json::from_str::<Vec<MicrosoftAccount>>(&data).unwrap()
+    let data = std::fs::read_to_string(path)?;
+    Ok(serde_json::from_str(&data)?)
 }
 
-pub fn get_account(uuid: &str) -> Vec<MicrosoftAccount> {
+pub fn get_account(uuid: Uuid) -> Result<MicrosoftAccount> {
     let path = DATA_LOCATION.root.join("accounts.microsoft.json");
     if !path.exists() {
-        return vec![];
+        return Err(Error::AccountNotfound(uuid));
     }
-    let data = std::fs::read_to_string(path).unwrap();
-    let accounts = serde_json::from_str::<Vec<MicrosoftAccount>>(&data).unwrap();
+    let data = std::fs::read_to_string(path)?;
+    let accounts = serde_json::from_str::<Vec<MicrosoftAccount>>(&data)?;
     accounts
         .into_iter()
         .filter(|x| x.profile.uuid == uuid)
-        .collect()
+        .collect::<Vec<_>>()
+        .first()
+        .ok_or(Error::AccountNotfound(uuid))
+        .cloned()
 }
 
-fn save_account(account: MicrosoftAccount) -> anyhow::Result<()> {
-    let mut accounts = list_accounts();
+fn save_account(account: MicrosoftAccount) -> Result<()> {
+    let mut accounts = list_accounts()?;
     accounts.push(account);
     let path = DATA_LOCATION.root.join("accounts.microsoft.json");
-    let contents = serde_json::to_string_pretty(&accounts).unwrap();
-    std::fs::write(&path, &contents).unwrap();
-    MAIN_WINDOW.emit("refresh_accounts_list", "").unwrap();
+    let contents = serde_json::to_string_pretty(&accounts)?;
+    std::fs::write(&path, &contents)?;
     Ok(())
 }
 
-pub fn delete_account(uuid: String) {
-    let accounts = list_accounts();
+pub fn delete_account(uuid: Uuid) -> Result<()> {
+    let accounts = list_accounts()?;
     let result = accounts
         .into_iter()
         .filter(|x| x.profile.uuid != uuid)
         .collect::<Vec<MicrosoftAccount>>();
     let path = DATA_LOCATION.root.join("accounts.microsoft.json");
-    let contents = serde_json::to_string_pretty(&result).unwrap();
-    std::fs::write(&path, &contents).unwrap();
-    MAIN_WINDOW.emit("refresh_accounts_list", "").unwrap();
+    let contents = serde_json::to_string_pretty(&result)?;
+    std::fs::write(&path, &contents)?;
+    Ok(())
 }
 
-/// A command to add a microsoft account
-pub async fn add_account(code: String) -> anyhow::Result<()> {
+pub async fn add_account(code: String) -> Result<()> {
     info!("Signing in through Microsoft");
     let account = microsoft_login(LoginPayload::AccessCode(code)).await?;
-    if get_account(&account.profile.uuid).is_empty() {
-        save_account(account)?;
-        Ok(())
-    } else {
-        error!("The account has already been added");
-        Err(anyhow::anyhow!("This account has already been added"))
+    if get_account(account.profile.uuid).is_ok() {
+        error!("The account has already been added, replace it.");
+        delete_account(account.profile.uuid)?;
     }
+    save_account(account)?;
+    Ok(())
 }
 
 /// Checks whether the given account's access token is close to expiration,
 /// and refreshes it if necessary.
-pub(crate) async fn check_and_refresh_account(uuid: &str) -> anyhow::Result<MicrosoftAccount> {
+pub(crate) async fn check_and_refresh_account(uuid: Uuid) -> Result<MicrosoftAccount> {
     info!("Checking account: {uuid}");
-    let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Incorrect System Time")
+        .as_secs();
     const AHEAD: u64 = 3600 * 4;
-    let account = get_account(uuid)
-        .first()
-        .ok_or(anyhow::anyhow!("Account not found"))?
-        .clone();
+    let account = get_account(uuid)?;
     if now > account.expires_on - AHEAD {
         info!("The access token will expire in 4 hours");
-        let refreshed_account = refresh_account(account.profile.uuid.to_string()).await;
+        let refreshed_account = refresh_account(account.profile.uuid).await?;
         Ok(refreshed_account)
     } else {
         info!(
@@ -128,94 +128,87 @@ pub(crate) async fn check_and_refresh_account(uuid: &str) -> anyhow::Result<Micr
     }
 }
 
-pub async fn refresh_account(uuid: String) -> MicrosoftAccount {
+pub async fn refresh_account(uuid: Uuid) -> Result<MicrosoftAccount> {
     info!("Start refreshing the account: {uuid}");
-    let accounts = list_accounts();
+    let accounts = list_accounts()?;
     let mut result = vec![];
     for account in accounts {
-        result.push(
-            microsoft_login(LoginPayload::RefreshToken(account.refresh_token))
-                .await
-                .unwrap(),
-        )
+        result.push(microsoft_login(LoginPayload::RefreshToken(account.refresh_token)).await?)
     }
     let path = DATA_LOCATION.root.join("accounts.microsoft.json");
-    let contents = serde_json::to_string_pretty(&result).unwrap();
-    std::fs::write(&path, &contents).unwrap();
-    MAIN_WINDOW.emit("refresh_accounts_list", "").unwrap();
-    result.first().unwrap().clone()
+    let contents = serde_json::to_string_pretty(&result)?;
+    std::fs::write(&path, &contents)?;
+    Ok(result.first().ok_or(Error::AccountNotfound(uuid))?.clone())
 }
 
-pub async fn refresh_all_accounts() {
-    let accounts = list_accounts();
+// #[cfg(not(debug_assertions))]
+pub async fn refresh_all_accounts() -> Result<()> {
+    let accounts = list_accounts()?;
     let mut result = vec![];
     for account in accounts {
-        result.push(
-            microsoft_login(LoginPayload::RefreshToken(account.refresh_token))
-                .await
-                .unwrap(),
-        )
+        result.push(microsoft_login(LoginPayload::RefreshToken(account.refresh_token)).await?)
     }
     let path = DATA_LOCATION.root.join("accounts.microsoft.json");
-    let contents = serde_json::to_string_pretty(&result).unwrap();
-    std::fs::write(&path, &contents).unwrap();
-    MAIN_WINDOW.emit("refresh_accounts_list", "").unwrap();
+    let contents = serde_json::to_string_pretty(&result)?;
+    std::fs::write(&path, &contents)?;
+    Ok(())
 }
 
-#[cfg(debug_assertions)]
-pub async fn refresh_all_microsoft_accounts() {
-    info!("Accounts are not refreshed on app launch in debug mode.")
-}
+// #[cfg(debug_assertions)]
+// pub async fn refresh_all_accounts() -> Result<()> {
+//     info!("Accounts are not refreshed on app launch in debug mode.");
+//     Ok(())
+// }
 
 /// Login or refresh login.
 ///
 /// Note: Shouldn't save refresh token to config file
-pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<MicrosoftAccount> {
+pub async fn microsoft_login(payload: LoginPayload) -> Result<MicrosoftAccount> {
     let access_token_response = match payload {
-        LoginPayload::RefreshToken(token) => {
-            get_access_token_from_refresh_token(&token).await.unwrap()
-        }
-        LoginPayload::AccessCode(code) => get_access_token(&code).await.unwrap(),
+        LoginPayload::RefreshToken(token) => get_access_token_from_refresh_token(&token).await?,
+        LoginPayload::AccessCode(code) => get_access_token(&code).await?,
     };
     let access_token = access_token_response["access_token"]
         .as_str()
-        .ok_or(anyhow!("No access token"))
-        .unwrap()
+        .ok_or(Error::MicrosoftResponseMissingKey(
+            "access_token".to_string(),
+        ))?
         .to_string();
     let expires_in = access_token_response["expires_in"]
         .as_u64()
-        .ok_or(anyhow!("No expires_in"))
-        .unwrap();
+        .ok_or(Error::MicrosoftResponseMissingKey("expires_in".to_string()))?;
     let refresh_token = access_token_response["refresh_token"]
         .as_str()
-        .ok_or(anyhow!("No refresh token"))
-        .unwrap()
+        .ok_or(Error::MicrosoftResponseMissingKey(
+            "refresh_token".to_string(),
+        ))?
         .to_string();
     info!("Successfully get Microsoft access token");
 
-    let xbox_auth_response = xbox_authenticate(&access_token).await.unwrap();
+    let xbox_auth_response = xbox_authenticate(&access_token).await?;
     info!("Successfully login Xbox");
 
-    let xsts_token = xsts_authenticate(&xbox_auth_response.xbl_token)
-        .await
-        .unwrap();
+    let xsts_token = xsts_authenticate(&xbox_auth_response.xbl_token).await?;
     info!("Successfully verify XSTS");
 
-    let minecraft_access_token = minecraft_authenticate(&xbox_auth_response.xbl_uhs, &xsts_token)
-        .await
-        .unwrap();
+    let minecraft_access_token =
+        minecraft_authenticate(&xbox_auth_response.xbl_uhs, &xsts_token).await?;
     info!("Successfully get Minecraft access token");
 
-    check_ownership(&minecraft_access_token).await.unwrap();
+    check_ownership(&minecraft_access_token).await?;
     info!("Successfully check ownership");
 
-    let game_profile = get_game_profile(&minecraft_access_token).await.unwrap();
+    let game_profile = get_game_profile(&minecraft_access_token).await?;
     info!("Successfully get game profile");
 
     Ok(MicrosoftAccount {
         refresh_token,
         access_token: minecraft_access_token,
-        expires_on: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + expires_in,
+        expires_on: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Incorrect System Time")
+            .as_secs()
+            + expires_in,
         profile: Profile {
             profile_name: serde_json::from_value(game_profile["name"].clone())?,
             uuid: serde_json::from_value(game_profile["id"].clone())?,
@@ -225,7 +218,7 @@ pub async fn microsoft_login(payload: LoginPayload) -> anyhow::Result<MicrosoftA
     })
 }
 
-async fn get_access_token(code: &str) -> anyhow::Result<Value> {
+async fn get_access_token(code: &str) -> Result<Value> {
     Ok(HTTP_CLIENT
         .post("https://login.live.com/oauth20_token.srf")
         .header("Content-Type", "application/x-www-form-urlencoded")
@@ -243,7 +236,7 @@ async fn get_access_token(code: &str) -> anyhow::Result<Value> {
         .await?)
 }
 
-async fn get_access_token_from_refresh_token(refresh_token: &str) -> anyhow::Result<Value> {
+async fn get_access_token_from_refresh_token(refresh_token: &str) -> Result<Value> {
     Ok(HTTP_CLIENT
         .post("https://login.live.com/oauth20_token.srf")
         .header("Content-type", "application/x-www-form-urlencoded")
@@ -300,7 +293,7 @@ impl XboxAuthBody {
     }
 }
 
-async fn xbox_authenticate(access_token: &str) -> anyhow::Result<XboxAuth> {
+async fn xbox_authenticate(access_token: &str) -> Result<XboxAuth> {
     let response: Value = HTTP_CLIENT
         .post("https://user.auth.xboxlive.com/user/authenticate")
         .header("Content-Type", "application/json")
@@ -313,11 +306,11 @@ async fn xbox_authenticate(access_token: &str) -> anyhow::Result<XboxAuth> {
     Ok(XboxAuth {
         xbl_token: response["Token"]
             .as_str()
-            .ok_or(anyhow!("No XBL Token".to_string()))?
+            .ok_or(Error::MicrosoftResponseMissingKey("xbl Token".to_string()))?
             .to_string(),
         xbl_uhs: response["DisplayClaims"]["xui"][0]["uhs"]
             .as_str()
-            .ok_or(anyhow!("No XBL UHS"))?
+            .ok_or(Error::MicrosoftResponseMissingKey("xui_uhs".to_string()))?
             .to_string(),
     })
 }
@@ -353,7 +346,7 @@ impl XSTSAuthBody {
     }
 }
 
-async fn xsts_authenticate(xbl_token: &str) -> anyhow::Result<String> {
+async fn xsts_authenticate(xbl_token: &str) -> Result<String> {
     let response: Value = HTTP_CLIENT
         .post("https://xsts.auth.xboxlive.com/xsts/authorize")
         .header("Content-Type", "application/json")
@@ -365,7 +358,7 @@ async fn xsts_authenticate(xbl_token: &str) -> anyhow::Result<String> {
         .await?;
     Ok(response["Token"]
         .as_str()
-        .ok_or(anyhow!("No token".to_string()))?
+        .ok_or(Error::MicrosoftResponseMissingKey("Token".to_string()))?
         .to_string())
 }
 
@@ -383,7 +376,7 @@ impl MinecraftAuthBody {
     }
 }
 
-async fn minecraft_authenticate(xbl_uhs: &str, xsts_token: &str) -> anyhow::Result<String> {
+async fn minecraft_authenticate(xbl_uhs: &str, xsts_token: &str) -> Result<String> {
     let response: Value = HTTP_CLIENT
         .post("https://api.minecraftservices.com/authentication/login_with_xbox")
         .header("Content-Type", "application/json")
@@ -397,11 +390,13 @@ async fn minecraft_authenticate(xbl_uhs: &str, xsts_token: &str) -> anyhow::Resu
         .await?;
     Ok(response["access_token"]
         .as_str()
-        .ok_or(anyhow!("No Access Token"))?
+        .ok_or(Error::MicrosoftResponseMissingKey(
+            "access_token".to_string(),
+        ))?
         .to_string())
 }
 
-async fn check_ownership(minecraft_access_token: &str) -> anyhow::Result<()> {
+async fn check_ownership(minecraft_access_token: &str) -> Result<()> {
     let response = HTTP_CLIENT
         .get("https://api.minecraftservices.com/entitlements/mcstore")
         .header("Content-Type", "application/json")
@@ -411,11 +406,11 @@ async fn check_ownership(minecraft_access_token: &str) -> anyhow::Result<()> {
     if response.status().is_success() {
         Ok(())
     } else {
-        Err(anyhow!("Can't get game profile"))
+        Err(Error::OwnershipCheckFailed)
     }
 }
 
-async fn get_game_profile(minecraft_access_token: &str) -> anyhow::Result<Value> {
+async fn get_game_profile(minecraft_access_token: &str) -> Result<Value> {
     Ok(HTTP_CLIENT
         .get("https://api.minecraftservices.com/minecraft/profile")
         .header("Content-Type", "application/json")
@@ -442,7 +437,7 @@ async fn resolve_skins(skins: Vec<Skin>) -> Vec<Skin> {
 }
 
 async fn resolve_skin(url: &str) -> String {
-    async fn download_skin(url: &str) -> anyhow::Result<Vec<u8>> {
+    async fn download_skin(url: &str) -> Result<Vec<u8>> {
         Ok(HTTP_CLIENT.get(url).send().await?.bytes().await?.to_vec())
     }
     if let Ok(content) = download_skin(url).await {
@@ -455,20 +450,18 @@ async fn resolve_skin(url: &str) -> String {
     }
 }
 
-pub async fn relogin_account(uuid: String, code: String) {
+pub async fn relogin_account(uuid: Uuid, code: String) -> Result<()> {
     info!("Signing in through Microsoft");
-    let new_account = microsoft_login(LoginPayload::AccessCode(code))
-        .await
-        .unwrap();
+    let new_account = microsoft_login(LoginPayload::AccessCode(code)).await?;
 
     let is_different_account = uuid != new_account.profile.uuid;
     if is_different_account {
-        delete_account(uuid);
-        save_account(new_account).unwrap();
-        return;
+        delete_account(uuid)?;
+        save_account(new_account)?;
+        return Ok(());
     };
 
-    let accounts = list_accounts();
+    let accounts = list_accounts()?;
     let mut result = Vec::with_capacity(accounts.len());
 
     for account in accounts {
@@ -479,6 +472,7 @@ pub async fn relogin_account(uuid: String, code: String) {
         }
     }
     let path = DATA_LOCATION.root.join("accounts.microsoft.json");
-    let contents = serde_json::to_string_pretty(&result).unwrap();
-    std::fs::write(&path, &contents).unwrap();
+    let contents = serde_json::to_string_pretty(&result)?;
+    std::fs::write(&path, &contents)?;
+    Ok(())
 }
