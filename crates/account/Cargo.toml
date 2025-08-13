@@ -21,4 +21,6 @@ serde_json.workspace = true
 tauri.workspace = true
 uuid.workspace = true
 url.workspace = true
+reqwest.workspace = true
 thiserror.workspace = true
+serde_with.workspace = true
