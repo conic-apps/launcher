@@ -15,8 +15,8 @@ export default defineConfig({
     },
     server: {
         watch: {
-            ignored: ['**/target/**']
-        }
+            ignored: ["**/target/**"],
+        },
     },
     build: {
         minify: "esbuild",
