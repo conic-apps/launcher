@@ -18,9 +18,8 @@ use forge::ForgeVersionList;
 use log::{debug, info};
 use neoforged::NeoforgedVersionList;
 use quilt::QuiltVersionList;
-use shared::MAIN_WINDOW;
 use tauri::{
-    Emitter, Runtime, command,
+    Runtime, command,
     plugin::{Builder, TauriPlugin},
 };
 use vanilla::generate_download_info;
@@ -35,12 +34,15 @@ use task::{Progress, Task};
 
 use crate::vanilla::VersionManifest;
 
+pub mod error;
 pub mod fabric;
 pub mod forge;
 pub mod java;
 pub mod neoforged;
 pub mod quilt;
 pub mod vanilla;
+
+use error::*;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("install")
@@ -56,35 +58,35 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 }
 
 #[command]
-async fn cmd_get_minecraft_version_list() -> Option<VersionManifest> {
+async fn cmd_get_minecraft_version_list() -> Result<VersionManifest> {
     // TODO: Use cache, 2 hours
-    VersionManifest::new().await.ok()
+    VersionManifest::new().await
 }
 
 #[command]
-async fn cmd_get_fabric_version_list(mcversion: String) -> Option<fabric::LoaderArtifactList> {
+async fn cmd_get_fabric_version_list(mcversion: String) -> Result<fabric::LoaderArtifactList> {
     //TODO: all error handle, avoid use anyhow
-    fabric::LoaderArtifactList::new(&mcversion).await.ok()
+    fabric::LoaderArtifactList::new(&mcversion).await
 }
 
 #[command]
-async fn cmd_get_forge_version_list(mcversion: String) -> Option<ForgeVersionList> {
-    ForgeVersionList::new(&mcversion).await.ok()
+async fn cmd_get_forge_version_list(mcversion: String) -> Result<ForgeVersionList> {
+    ForgeVersionList::new(&mcversion).await
 }
 
 #[command]
-async fn cmd_get_quilt_version_list(mcversion: String) -> Option<QuiltVersionList> {
-    QuiltVersionList::new(&mcversion).await.ok()
+async fn cmd_get_quilt_version_list(mcversion: String) -> Result<QuiltVersionList> {
+    QuiltVersionList::new(&mcversion).await
 }
 
 #[command]
-async fn cmd_get_neoforged_version_list(mcversion: String) -> Option<Vec<String>> {
-    NeoforgedVersionList::from_mcversion(&mcversion).await.ok()
+async fn cmd_get_neoforged_version_list(mcversion: String) -> Result<Vec<String>> {
+    NeoforgedVersionList::from_mcversion(&mcversion).await
 }
 
 #[command]
-async fn cmd_install(config: Config, instance: Instance) -> Option<()> {
-    install(config, instance).await.ok()
+async fn cmd_install(config: Config, instance: Instance) -> Result<()> {
+    install(config, instance).await
 }
 
 /// Installs Minecraft, Java, and optionally a mod loader for the given instance.
@@ -99,7 +101,7 @@ async fn cmd_install(config: Config, instance: Instance) -> Option<()> {
 /// * `instance` - The instance configuration.
 ///
 /// Emits `"install_success"` on completion.
-pub async fn install(config: Config, instance: Instance) -> std::result::Result<(), ()> {
+pub async fn install(config: Config, instance: Instance) -> Result<()> {
     let progress = Progress::default();
     let finished = Arc::new(AtomicBool::new(false));
     let progress_sender_thread = {
@@ -113,8 +115,10 @@ pub async fn install(config: Config, instance: Instance) -> std::result::Result<
         })
     };
     {
-        #[allow(clippy::unwrap_used)]
-        let mut task = progress.task.lock().unwrap();
+        let mut task = progress
+            .task
+            .lock()
+            .expect("Internal error: another thread hold lock and panic");
         *task = Task::PrepareInstallGame;
     }
     info!(
@@ -137,29 +141,32 @@ pub async fn install(config: Config, instance: Instance) -> std::result::Result<
         &runtime.minecraft,
         MinecraftLocation::new(&DATA_LOCATION.root),
     )
-    .await
-    .unwrap();
+    .await?;
     info!("Start downloading file");
-    download_concurrent(download_list, &progress, config.download)
-        .await
-        .unwrap();
+    download_concurrent(download_list, &progress, config.download).await?;
     info!("Installing Java");
     {
-        #[allow(clippy::unwrap_used)]
-        let mut task = progress.task.lock().unwrap();
+        let mut task = progress
+            .task
+            .lock()
+            .expect("Internal error: another thread hold lock and panic");
         *task = Task::InstallJava;
     }
-    let java_version_list = java::MojangJavaVersionList::new().await.unwrap();
-    let java_for_current_platform = java_version_list.get_current_platform().unwrap();
-    java::group_install(&DATA_LOCATION.root.join("java"), java_for_current_platform).await;
+    let java_version_list = java::MojangJavaVersionList::new().await?;
+    let java_for_current_platform = java_version_list
+        .get_current_platform()
+        .ok_or(Error::NoSupportedJavaRuntime)?;
+    java::group_install(&DATA_LOCATION.root.join("java"), java_for_current_platform).await?;
     if runtime.mod_loader_type.is_some() {
         info!("Install mod loader");
         {
-            #[allow(clippy::unwrap_used)]
-            let mut task = progress.task.lock().unwrap();
+            let mut task = progress
+                .task
+                .lock()
+                .expect("Internal error: another thread hold lock and panic");
             *task = Task::InstallModLoader;
         };
-        install_mod_loader(runtime).await.unwrap();
+        install_mod_loader(runtime).await?;
     };
     debug!("Saving lock file");
     async_fs::write(
@@ -168,9 +175,7 @@ pub async fn install(config: Config, instance: Instance) -> std::result::Result<
             .join(".install.lock"),
         b"ok",
     )
-    .await
-    .unwrap();
-    MAIN_WINDOW.emit("install_success", "").unwrap();
+    .await?;
     let _ = progress_sender_thread.join();
     Ok(())
 }
@@ -184,11 +189,9 @@ pub async fn install(config: Config, instance: Instance) -> std::result::Result<
 /// Returns an error if:
 /// - The loader type/version is missing or malformed.
 /// - The underlying installation function fails.
-pub async fn install_mod_loader(runtime: InstanceRuntime) -> anyhow::Result<()> {
-    let mod_loader_type = runtime.mod_loader_type.unwrap();
-    let mod_loader_version = runtime
-        .mod_loader_version
-        .ok_or(anyhow::Error::msg("bad instance.toml file!"))?;
+pub async fn install_mod_loader(runtime: InstanceRuntime) -> Result<()> {
+    let mod_loader_type = runtime.mod_loader_type.ok_or(Error::InstanceBroken)?;
+    let mod_loader_version = runtime.mod_loader_version.ok_or(Error::InstanceBroken)?;
     match mod_loader_type {
         ModLoaderType::Fabric => {
             fabric::install(
@@ -214,5 +217,5 @@ pub async fn install_mod_loader(runtime: InstanceRuntime) -> anyhow::Result<()> 
         }
     }
 
-    anyhow::Ok(())
+    Ok(())
 }

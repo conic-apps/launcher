@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::checks::check_allowed;
+use crate::error::*;
 
 #[derive(Clone, Serialize)]
 pub struct Libraries(Vec<Value>);
@@ -22,7 +23,7 @@ impl Libraries {
         self.0.splice(0..0, libraries);
     }
 
-    pub(crate) fn to_resolved(&self) -> Vec<ResolvedLibrary> {
+    pub(crate) fn to_resolved(&self) -> Result<Vec<ResolvedLibrary>> {
         let mut result = Vec::new();
         for library in self.0.clone() {
             let rules = library["rules"].as_array();
@@ -66,8 +67,9 @@ impl Libraries {
             // resolve common lib
             if library["downloads"]["artifact"].is_object() {
                 result.push(ResolvedLibrary {
-                    download_info: serde_json::from_value(library["downloads"]["artifact"].clone())
-                        .unwrap(),
+                    download_info: serde_json::from_value(
+                        library["downloads"]["artifact"].clone(),
+                    )?,
                     is_native_library: false,
                 });
                 continue;
@@ -82,9 +84,12 @@ impl Libraries {
                 continue;
             }
             #[allow(clippy::get_first)]
-            let package = name.get(0).unwrap().replace(".", "/");
-            let version = name.get(2).unwrap();
-            let name = name.get(1).unwrap();
+            let package = name
+                .get(0)
+                .ok_or(Error::InvalidVersionJson)?
+                .replace(".", "/");
+            let version = name.get(2).ok_or(Error::InvalidVersionJson)?;
+            let name = name.get(1).ok_or(Error::InvalidVersionJson)?;
 
             // NOTE: URL in mod loader version.json is NOT include path
             // For example:
@@ -108,7 +113,7 @@ impl Libraries {
                 is_native_library: false,
             });
         }
-        result
+        Ok(result)
     }
 }
 #[derive(Clone, Deserialize, Serialize)]

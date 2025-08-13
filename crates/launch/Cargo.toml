@@ -26,9 +26,11 @@ log.workspace = true
 tauri.workspace = true
 uuid.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 async-fs.workspace = true
 num_cpus.workspace = true
-anyhow.workspace = true
 rayon.workspace = true
 sha1_smol.workspace = true
-
+thiserror.workspace = true
+serde_with.workspace = true
+reqwest.workspace = true

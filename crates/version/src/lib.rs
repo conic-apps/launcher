@@ -2,7 +2,6 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use anyhow::Result;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -12,9 +11,11 @@ use folder::MinecraftLocation;
 
 pub mod argument;
 mod checks;
+pub mod error;
 pub mod library;
 
 pub use argument::*;
+use error::*;
 pub use library::*;
 
 /// Resolved version.json
@@ -169,9 +170,9 @@ pub struct Version {
 }
 
 impl FromStr for Version {
-    type Err = serde_json::Error;
-    fn from_str(raw: &str) -> Result<Version, serde_json::Error> {
-        serde_json::from_str(raw)
+    type Err = crate::error::Error;
+    fn from_str(raw: &str) -> std::result::Result<Version, crate::error::Error> {
+        Ok(serde_json::from_str(raw)?)
     }
 }
 
@@ -226,13 +227,13 @@ impl Version {
                 libraries_raw.join(libraries);
             }
         }
-        resolved_version.libraries = libraries_raw.to_resolved();
+        resolved_version.libraries = libraries_raw.to_resolved()?;
         if resolved_version.main_class.is_none()
             || resolved_version.asset_index.is_none()
             || resolved_version.downloads.is_empty()
             || resolved_version.libraries.is_empty()
         {
-            return Err(anyhow::anyhow!("Bad Version JSON"));
+            return Err(Error::InvalidVersionJson);
         }
         Ok(resolved_version)
     }
@@ -379,7 +380,7 @@ pub enum MinecraftVersion {
 }
 
 impl FromStr for MinecraftVersion {
-    type Err = anyhow::Error;
+    type Err = Error;
     fn from_str(raw: &str) -> std::result::Result<Self, Self::Err> {
         parse_version(raw)
     }
@@ -390,19 +391,33 @@ fn parse_version(raw: &str) -> Result<MinecraftVersion> {
         let split = raw.split(".").collect::<Vec<&str>>();
         Ok(MinecraftVersion::Release(
             #[allow(clippy::get_first)]
-            split.get(0).ok_or(anyhow::anyhow!(""))?.parse()?,
-            split.get(1).ok_or(anyhow::anyhow!(""))?.parse()?,
+            split
+                .get(0)
+                .ok_or(Error::InvalidMinecraftVersion)?
+                .parse()
+                .map_err(|_| Error::InvalidMinecraftVersion)?,
+            split
+                .get(1)
+                .ok_or(Error::InvalidMinecraftVersion)?
+                .parse()
+                .map_err(|_| Error::InvalidMinecraftVersion)?,
             match split.get(2) {
-                Some(x) => Some(x.parse()?),
+                Some(x) => Some(x.parse().map_err(|_| Error::InvalidMinecraftVersion)?),
                 None => None,
             },
         ))
     } else if raw.contains("w") {
         let split = raw.split("w").collect::<Vec<&str>>();
-        let minor_version = split.get(1).ok_or(anyhow::anyhow!(""))?;
+        let minor_version = split.get(1).ok_or(Error::InvalidMinecraftVersion)?;
         Ok(MinecraftVersion::Snapshot(
-            split.first().ok_or(anyhow::anyhow!(""))?.parse()?,
-            (minor_version[..2]).parse()?,
+            split
+                .first()
+                .ok_or(Error::InvalidMinecraftVersion)?
+                .parse()
+                .map_err(|_| Error::InvalidMinecraftVersion)?,
+            (minor_version[..2])
+                .parse()
+                .map_err(|_| Error::InvalidMinecraftVersion)?,
             (minor_version[2..]).to_string(),
         ))
     } else {
