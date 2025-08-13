@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <dialog-vue :visible="visible" :width="420" :height="200">
+  <dialog-vue :visible="dialogStore.updateReminder.visible" :width="420" :height="200">
     <div class="main">
       <div class="title">
         <h4>发现新的 Minecraft 版本</h4>
@@ -15,16 +15,13 @@
 
 <script lang="ts" setup>
 import DialogVue from "@/components/Dialog.vue";
-import { listen } from "@tauri-apps/api/event";
+import { useDialogStore } from "@/store/dialog";
 import { ref } from "vue";
 
-const visible = ref(false);
 const latest = ref("");
+const dialogStore = useDialogStore();
 
-listen("remind_update", (event) => {
-  visible.value = true;
-  latest.value = event.payload as string;
-});
+// TODO: check new version api, invoke it
 </script>
 
 <style lang="less"></style>

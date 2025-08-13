@@ -118,8 +118,8 @@ export default {
         },
         advance: {
             sidebar: "高级",
-            exportLauncherLogs: "导出启动器日志(TODO)",
-            exportLauncherLogsDesc: "将启动器运行日志保存到文件，以便报告问题时使用",
+            viewLauncherLogs: "查看启动器日志",
+            viewLauncherLogsDesc: "打开启动器日志文件夹，报告问题时请上传日志",
             reload: "重新加载窗口",
             launchArgs: "高级启动选项",
             gc: "Java 垃圾回收器",
@@ -198,4 +198,4 @@ export default {
             thirdPartyLibraries: "第三方库",
         },
     },
-}
+} as const
