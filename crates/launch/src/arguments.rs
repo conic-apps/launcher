@@ -57,7 +57,7 @@ pub async fn generate_command_arguments(
         .join("minecraft.icns")
         .to_string_lossy()
         .to_string();
-    tokio::fs::write(&game_icon, DEFAULT_GAME_ICON)
+    async_fs::write(&game_icon, DEFAULT_GAME_ICON)
         .await
         .unwrap();
     if PLATFORM_INFO.os_family == OsFamily::Macos {
@@ -156,7 +156,7 @@ pub async fn generate_command_arguments(
         let file_path = minecraft_location
             .get_version_root(&version.id)
             .join("log4j2.xml");
-        if tokio::fs::try_exists(&file_path).await.unwrap() {
+        if async_fs::metadata(&file_path).await.is_ok() {
             jvm_arguments.push(format!(
                 "\"{}\"",
                 argument.replace("${path}", file_path.to_string_lossy().as_ref())

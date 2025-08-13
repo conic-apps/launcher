@@ -738,7 +738,6 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
- "tokio",
  "version",
 ]
 
@@ -1069,6 +1068,8 @@ name = "download"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "async-fs",
+ "async-io",
  "config",
  "futures",
  "log",
@@ -1078,7 +1079,6 @@ dependencies = [
  "shared",
  "task",
  "tauri",
- "tokio",
 ]
 
 [[package]]
@@ -1312,7 +1312,6 @@ dependencies = [
  "platform",
  "serde",
  "tauri",
- "tokio",
  "uuid",
 ]
 
@@ -2150,19 +2149,19 @@ name = "install"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "async-fs",
  "config",
  "download",
  "folder",
+ "futures",
  "instance",
  "log",
  "platform",
  "serde",
  "serde_json",
- "sha1_smol",
  "shared",
  "task",
  "tauri",
- "tokio",
  "url",
  "uuid",
  "version",
@@ -2173,13 +2172,14 @@ name = "instance"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "async-fs",
  "config",
  "folder",
+ "futures",
  "log",
  "serde",
  "shared",
  "tauri",
- "tokio",
  "toml 0.9.5",
  "uuid",
  "version",
@@ -2349,6 +2349,7 @@ version = "0.0.0"
 dependencies = [
  "account",
  "anyhow",
+ "async-fs",
  "config",
  "download",
  "folder",
@@ -2362,8 +2363,8 @@ dependencies = [
  "serde",
  "sha1_smol",
  "shared",
+ "task",
  "tauri",
- "tokio",
  "uuid",
  "version",
  "zip",

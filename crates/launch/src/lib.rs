@@ -105,7 +105,7 @@ pub async fn launch(config: Config, instance: Instance) -> Result<(), ()> {
 
     info!("Generating startup parameters");
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id());
-    let raw_version_json = tokio::fs::read_to_string(version_json_path).await.unwrap();
+    let raw_version_json = async_fs::read_to_string(version_json_path).await.unwrap();
     let resolved_version = Version::from_str(&raw_version_json)
         .unwrap()
         .resolve(&minecraft_location, &[])
