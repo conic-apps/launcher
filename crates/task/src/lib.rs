@@ -8,9 +8,6 @@ use std::sync::{
 };
 
 use serde::{Deserialize, Serialize};
-use tauri::Emitter;
-
-use shared::MAIN_WINDOW;
 
 /// Define the task type
 #[derive(Clone, Deserialize, Serialize)]
@@ -48,7 +45,7 @@ impl Default for Progress {
 
 impl Progress {
     pub fn send(&self) {
-        MAIN_WINDOW.emit("task_progress", self).unwrap();
+        //TODO: Send progress
     }
 
     pub fn reset(&self, ordering: Ordering) {

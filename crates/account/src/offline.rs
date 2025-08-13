@@ -66,15 +66,19 @@ pub fn update_account(account: OfflineAccount) -> Result<()> {
 
 fn save_accounts(accounts: &Vec<OfflineAccount>) -> Result<()> {
     let path = DATA_LOCATION.root.join("accounts.offline.json");
-    create_dir_all(path.parent().unwrap()).unwrap();
-    let content = serde_json::to_string(accounts).unwrap();
-    std::fs::write(path, content).unwrap();
+    if let Some(parent) = path.parent() {
+        create_dir_all(parent)?;
+    }
+    let content = serde_json::to_string(accounts)?;
+    std::fs::write(path, content)?;
     Ok(())
 }
 
 pub fn list_accounts() -> Result<Vec<OfflineAccount>> {
     let path = DATA_LOCATION.root.join("accounts.offline.json");
-    create_dir_all(path.parent().unwrap()).unwrap();
+    if let Some(parent) = path.parent() {
+        create_dir_all(parent)?;
+    }
     let data = std::fs::read_to_string(path)?;
     Ok(serde_json::from_str(&data)?)
 }
@@ -84,8 +88,8 @@ pub fn get_account(uuid: Uuid) -> Result<OfflineAccount> {
     if !path.exists() {
         return Err(Error::AccountNotfound(uuid));
     };
-    let data = std::fs::read_to_string(path).unwrap();
-    let accounts = serde_json::from_str::<Vec<OfflineAccount>>(&data).unwrap();
+    let data = std::fs::read_to_string(path)?;
+    let accounts = serde_json::from_str::<Vec<OfflineAccount>>(&data)?;
     accounts
         .into_iter()
         .filter(|x| x.uuid == uuid)

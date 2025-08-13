@@ -4,7 +4,6 @@
 
 use std::str::FromStr;
 
-use anyhow::{Result, anyhow};
 use serde_json::Value;
 use shared::HTTP_CLIENT;
 
@@ -14,6 +13,8 @@ use version::{self, AssetIndexObject, ResolvedVersion};
 
 use serde::{Deserialize, Serialize};
 
+use crate::error::*;
+
 #[derive(Clone, Deserialize, Serialize)]
 pub struct VersionManifest {
     pub latest: LatestVersion,
@@ -21,7 +22,7 @@ pub struct VersionManifest {
 }
 
 impl VersionManifest {
-    pub async fn new() -> anyhow::Result<VersionManifest> {
+    pub async fn new() -> Result<VersionManifest> {
         // Not allow custom source to avoid attack
         Ok(HTTP_CLIENT
             .get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
@@ -64,7 +65,7 @@ pub struct VersionInfo {
 pub async fn generate_download_info(
     version_id: &str,
     minecraft_location: MinecraftLocation,
-) -> anyhow::Result<Vec<DownloadTask>> {
+) -> Result<Vec<DownloadTask>> {
     let raw_version_json = get_version_json(version_id).await?;
     let resolved_version = version::Version::from_str(&raw_version_json)?
         .resolve(&minecraft_location, &[])
@@ -90,16 +91,15 @@ pub async fn generate_download_info(
     Ok(download_info)
 }
 
-async fn get_version_json(version_id: &str) -> anyhow::Result<String> {
+async fn get_version_json(version_id: &str) -> Result<String> {
     let versions = VersionManifest::new().await?.versions;
-    let version_metadata: Vec<_> = versions
+    let filtered_version_metadata = versions
         .into_iter()
         .filter(|v| v.id == version_id)
-        .collect();
-    let version_metadata = match version_metadata.first() {
-        Some(version_metadata) => version_metadata,
-        None => return Err(anyhow!("Bad version manifest or version id")),
-    };
+        .collect::<Vec<_>>();
+    let version_metadata = filtered_version_metadata
+        .first()
+        .ok_or(Error::VersionMetadataNotfound)?;
     Ok(HTTP_CLIENT
         .get(version_metadata.url.clone())
         .send()
@@ -112,11 +112,13 @@ async fn save_version_json(
     minecraft_location: &MinecraftLocation,
     resolved_version_id: &str,
     raw_version_json: &str,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     let version_json_path = minecraft_location
         .versions
         .join(format!("{resolved_version_id}/{resolved_version_id}.json"));
-    async_fs::create_dir_all(version_json_path.parent().unwrap()).await?;
+    if let Some(parent) = version_json_path.parent() {
+        async_fs::create_dir_all(parent).await?;
+    }
     async_fs::write(&version_json_path, raw_version_json.as_bytes()).await?;
     Ok(())
 }
@@ -124,9 +126,11 @@ async fn save_version_json(
 fn generate_client_download_task(
     minecraft_location: &MinecraftLocation,
     resolved_version: &ResolvedVersion,
-) -> anyhow::Result<DownloadTask> {
+) -> Result<DownloadTask> {
     let downloads = resolved_version.downloads.clone();
-    let client = downloads.get("client").ok_or(anyhow!("No client found!"))?;
+    let client = downloads
+        .get("client")
+        .ok_or(Error::InvalidVersionJson("client".to_string()))?;
     let id = &resolved_version.id;
     Ok(DownloadTask {
         url: format!(
@@ -185,10 +189,9 @@ pub async fn generate_assets_downloads(
     let asset_index = resolved_version
         .asset_index
         .clone()
-        .ok_or(anyhow!("Asset index not found"))?;
-    let asset_index_url = url::Url::parse(asset_index.url.as_ref())?;
+        .ok_or(Error::InvalidVersionJson("assetIndex".to_string()))?;
     let asset_index_raw = HTTP_CLIENT
-        .get(asset_index_url)
+        .get(&asset_index.url)
         .send()
         .await?
         .text()
