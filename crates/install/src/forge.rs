@@ -14,7 +14,6 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use anyhow::Result;
 use folder::DATA_LOCATION;
 use futures::AsyncWriteExt;
 use log::{error, info, trace};
@@ -24,6 +23,8 @@ use shared::HTTP_CLIENT;
 use uuid::Uuid;
 
 use platform::DELIMITER;
+
+use crate::error::*;
 
 /// Represents a single Forge version entry returned from the version list API.
 #[derive(Clone, Deserialize, Serialize)]
@@ -96,16 +97,13 @@ const FORGE_INSTALL_BOOTSTRAPPER: &[u8] = include_bytes!("./forge-install-bootst
 /// # Notes
 ///
 /// The function manages temporary files, logging progress and errors throughout the installation.
-pub async fn install(
-    install_dir: &PathBuf,
-    forge_version: &str,
-    mcversion: &str,
-) -> anyhow::Result<()> {
+pub async fn install(install_dir: &PathBuf, forge_version: &str, mcversion: &str) -> Result<()> {
     let splited_forge_version: Vec<_> = forge_version.split(".").collect();
     let bootstrapper = if splited_forge_version
         .first()
-        .ok_or(anyhow::Error::msg("Error forge version"))?
-        .parse::<usize>()?
+        .ok_or(Error::InvalidForgeVersion)?
+        .parse::<usize>()
+        .map_err(|_| Error::InvalidForgeVersion)?
         < 25
     {
         info!("Not using bootstrapper");
@@ -121,32 +119,28 @@ pub async fn install(
     if let Some(bootstrapper) = bootstrapper {
         async_fs::write(&bootstrapper_path, bootstrapper).await?;
     }
-    let java = DATA_LOCATION.default_jre.clone();
+    let java = "/bin/java"; // TODO: use config
+    let mut arg_classpath = bootstrapper_path.into_os_string();
+    arg_classpath.push(DELIMITER);
+    arg_classpath.push(installer_path.clone().into_os_string());
     info!("Running installer");
     let mut command = match bootstrapper {
         Some(_) => std::process::Command::new(java)
             .arg("-cp")
-            .arg(format!(
-                "{}{}{}",
-                bootstrapper_path.to_str().unwrap(),
-                DELIMITER,
-                installer_path.to_str().unwrap()
-            ))
+            .arg(arg_classpath)
             .arg("com.bangbang93.ForgeInstaller")
             .arg(install_dir)
             .stdout(Stdio::piped())
-            .spawn()
-            .unwrap(),
+            .spawn()?,
         None => std::process::Command::new(java)
             .arg("-jar")
             .arg(&installer_path)
             .arg("--installClient")
             .arg(install_dir)
             .stdout(Stdio::piped())
-            .spawn()
-            .unwrap(),
+            .spawn()?,
     };
-    let out = command.stdout.take().unwrap();
+    let out = command.stdout.take().ok_or(Error::ForgeInstallerFailed)?;
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
     let mut success = false;
@@ -165,11 +159,11 @@ pub async fn install(
             }
         }
     }
-    let output = command.wait_with_output().unwrap();
+    let output = command.wait_with_output()?;
     if (!success && bootstrapper.is_some()) || !output.status.success() {
         async_fs::remove_file(installer_path).await?;
         error!("Failed to run forge installer");
-        return Err(anyhow::Error::msg("Failed to run forge installer"));
+        return Err(Error::ForgeInstallerFailed);
     }
     async_fs::remove_file(installer_path).await?;
     Ok(())
@@ -191,7 +185,7 @@ pub async fn install(
 /// # Errors
 ///
 /// Returns an error if the download fails or the file cannot be written.
-pub async fn download_installer(mcversion: &str, forge_version: &str) -> anyhow::Result<PathBuf> {
+pub async fn download_installer(mcversion: &str, forge_version: &str) -> Result<PathBuf> {
     let installer_url = format!(
         "https://maven.minecraftforge.net/net/minecraftforge/forge/{mcversion}-{forge_version}/forge-{mcversion}-{forge_version}-installer.jar"
     );
@@ -201,21 +195,22 @@ pub async fn download_installer(mcversion: &str, forge_version: &str) -> anyhow:
         Uuid::from_u128(
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
-                .unwrap()
+                .expect("Incorrect System Time")
                 .as_nanos(),
         )
     ));
-    async_fs::create_dir_all(
-        installer_path
-            .parent()
-            .ok_or(anyhow::Error::msg("Unknown Error"))?,
-    )
-    .await?;
+    if let Some(parent) = installer_path.parent() {
+        async_fs::create_dir_all(parent).await?;
+    }
     let mut file = async_fs::File::create(&installer_path).await?;
     // TODO: This can also return progress to frontend
     let response = HTTP_CLIENT.get(installer_url).send().await?;
-    if !response.status().is_success() {
-        return Err(anyhow::Error::msg("Forge website return error"));
+    let status = response.status();
+    if !status.is_success() {
+        return Err(Error::HttpResponseNotSuccess(
+            status.as_u16(),
+            status.canonical_reason().unwrap_or("Unknown").to_string(),
+        ));
     }
     let src = response.bytes().await?;
     file.write_all(&src).await?;

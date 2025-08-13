@@ -9,10 +9,10 @@ use std::{
     fmt::Display,
     format,
     path::{Path, PathBuf},
-    str::FromStr,
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use log::error;
 use once_cell::sync::Lazy;
 use serde::Serialize;
 use tauri::{
@@ -63,14 +63,16 @@ impl MinecraftLocation {
     pub fn get_version_jar<P: AsRef<Path> + Display>(
         &self,
         version: P,
-        r#type: Option<&str>,
+        version_jar_type: Option<&str>,
     ) -> PathBuf {
-        if r#type == Some("client") || r#type.is_none() {
+        if let Some(version_jar_type) = version_jar_type
+            && version_jar_type != "client"
+        {
             self.get_version_root(&version)
-                .join(format!("{version}.jar"))
+                .join(format!("{version}-{}.jar", version_jar_type))
         } else {
             self.get_version_root(&version)
-                .join(format!("{version}-{}.jar", r#type.unwrap()))
+                .join(format!("{version}.jar"))
         }
     }
 
@@ -94,7 +96,6 @@ pub struct DataLocation {
     pub root: PathBuf,
     pub instances: PathBuf,
     pub cache: PathBuf,
-    pub default_jre: PathBuf,
     pub logs: PathBuf,
     pub resources: PathBuf,
     pub temp: PathBuf,
@@ -109,7 +110,7 @@ impl DataLocation {
             uuid::Uuid::from_u128(
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
-                    .unwrap()
+                    .expect("Incorrect System Time")
                     .as_nanos(),
             )
         ));
@@ -124,8 +125,6 @@ impl DataLocation {
                         .join(".cache/conic")
                 }
             },
-            // default_jre: data_folder.join("default_jre").join("bin").join("java"),
-            default_jre: PathBuf::from_str("/bin/java").unwrap(),
             resources: data_folder_root.join("resources"),
             logs: data_folder_root.join("logs"),
             temp: temp_path,
@@ -138,12 +137,14 @@ impl DataLocation {
         self.instances.join(instance_id.to_string())
     }
 
-    pub fn init(&self) -> anyhow::Result<()> {
-        std::fs::create_dir_all(&self.root)?;
+    pub fn init(&self) {
+        std::fs::create_dir_all(&self.root).expect("Unable to create application data directory");
         let launcher_profiles_path = self.root.join("launcher_profiles.json");
-        let _ = std::fs::remove_file(&launcher_profiles_path);
-        std::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE)?;
-        Ok(())
+        let override_json_profile_result =
+            std::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE);
+        if override_json_profile_result.is_err() {
+            error!("Unable to override launcher_profile.json, forge may not install properly")
+        }
     }
 }
 
@@ -168,8 +169,8 @@ impl Default for DataLocation {
         };
         #[cfg(test)]
         {
-            std::fs::remove_dir_all(&application_data_path).unwrap();
-            std::fs::create_dir_all(&application_data_path).unwrap();
+            std::fs::remove_dir_all(&application_data_path).expect("Could not clear data folder");
+            std::fs::create_dir_all(&application_data_path).expect("Could not create data folder");
         }
         Self::new(&application_data_path)
     }

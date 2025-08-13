@@ -10,6 +10,8 @@ use folder::MinecraftLocation;
 use shared::HTTP_CLIENT;
 use version::Version;
 
+use crate::error::*;
+
 /// Represents a specific version of a Fabric artifact.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -62,16 +64,7 @@ pub struct YarnArtifactList(Vec<FabricArtifactVersion>);
 pub struct LoaderArtifactList(Vec<FabricLoaderArtifact>);
 
 impl LoaderArtifactList {
-    /// Asynchronously fetches loader artifacts list for a given Minecraft version.
-    ///
-    /// # Arguments
-    ///
-    /// * `mcversion` - The Minecraft version string to query loader artifacts for.
-    ///
-    /// # Returns
-    ///
-    /// An `anyhow::Result` containing the loaded `LoaderArtifactList` on success.
-    pub async fn new(mcversion: &str) -> anyhow::Result<Self> {
+    pub async fn new(mcversion: &str) -> Result<Self> {
         Ok(HTTP_CLIENT
             .get(format!(
                 "https://meta.fabricmc.net/v2/versions/loader/{mcversion}"
@@ -129,7 +122,7 @@ pub struct LauncherMetaLibrariesItems {
 ///
 /// # Returns
 ///
-/// Returns `Ok(())` if the file is successfully written, or an `anyhow::Error` if any step fails.
+/// Returns `Ok(())` if the file is successfully written, or an `Error` if any step fails.
 ///
 /// # Remarks
 ///
@@ -139,19 +132,21 @@ pub async fn install(
     mcversion: &str,
     fabric_version: &str,
     minecraft: MinecraftLocation,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     info!("Saving version metadata file");
     let url = format!(
         "https://meta.fabricmc.net/v2/versions/loader/{mcversion}/{fabric_version}/profile/json"
     );
-    let response = HTTP_CLIENT.get(url).send().await.unwrap();
-    let fabric_version_json: Version = response.json().await.unwrap();
+    let response = HTTP_CLIENT.get(url).send().await?;
+    let fabric_version_json: Version = response.json().await?;
     let version_name = fabric_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);
-    async_fs::create_dir_all(json_path.parent().unwrap()).await?;
+    if let Some(parent) = json_path.parent() {
+        async_fs::create_dir_all(parent).await?;
+    }
     async_fs::write(
         json_path,
-        serde_json::to_string_pretty(&fabric_version_json).unwrap(),
+        serde_json::to_string_pretty(&fabric_version_json)?,
     )
     .await?;
     Ok(())

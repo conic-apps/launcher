@@ -20,5 +20,6 @@ uuid.workspace = true
 tauri.workspace = true
 async-fs.workspace = true
 toml.workspace = true
-anyhow.workspace = true
 futures.workspace = true
+thiserror.workspace = true
+serde_with.workspace = true

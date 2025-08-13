@@ -4,12 +4,11 @@
 
 // Prevents additional console window on Windows in release.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-// #![deny(clippy::unwrap_used)]
+#![deny(clippy::unwrap_used)]
 
 use config::load_config_file;
 use folder::DATA_LOCATION;
 use log::{error, info};
-use platform::PLATFORM_INFO;
 use shared::APP_VERSION;
 use tauri::{AppHandle, Manager, Window, WindowEvent};
 #[cfg(debug_assertions)]
@@ -19,8 +18,8 @@ use tauri_plugin_log::{Target, TargetKind};
 fn main() {
     APP_VERSION
         .set(env!("CARGO_PKG_VERSION").to_string())
-        .unwrap();
-    DATA_LOCATION.init().expect("Could not init data folder");
+        .expect("Could not set app version");
+    DATA_LOCATION.init();
     #[cfg(target_os = "linux")]
     {
         unsafe {
@@ -32,7 +31,9 @@ fn main() {
         Object.defineProperty(window, '__APPLICATION_CONFIG__', {
             value: JSON.parse(`"
         .to_string()
-        + serde_json::to_string_pretty(&config).unwrap().as_ref()
+        + serde_json::to_string_pretty(&config)
+            .expect("The program is broken")
+            .as_ref()
         + "`)
         })
     ";
@@ -63,12 +64,9 @@ fn main() {
         .plugin(platform::init())
         .append_invoke_initialization_script(init_config_js_script)
         .setup(|app| {
-            shared::APP_HANDLE.set(app.app_handle().clone()).unwrap();
-            std::fs::write(
-                DATA_LOCATION.root.join("platform.json"),
-                serde_json::to_string_pretty(&PLATFORM_INFO.clone()).unwrap(),
-            )
-            .unwrap();
+            shared::APP_HANDLE
+                .set(app.app_handle().clone())
+                .expect("Could not get app handle");
             info!("Main window loaded");
             Ok(())
         })
@@ -113,6 +111,6 @@ fn window_event_handler(window: &Window, event: &WindowEvent) {
             }
             _ => (),
         };
-        window.close().unwrap();
+        window.close().expect("Could not close window");
     }
 }

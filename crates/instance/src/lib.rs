@@ -16,6 +16,10 @@ use tauri::plugin::{Builder, TauriPlugin};
 use tauri::{Runtime, command};
 use uuid::Uuid;
 
+pub mod error;
+
+use error::*;
+
 static LATEST_RELEASE_INSTANCE_NAME: &str = "Latest Release";
 static LATEST_SNAPSHOT_INSTANCE_NAME: &str = "Latest Snapshot";
 
@@ -31,27 +35,27 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 }
 
 #[command]
-async fn cmd_create_instance(config: InstanceConfig) -> Instance {
+async fn cmd_create_instance(config: InstanceConfig) -> Result<()> {
     create_instance(config).await
 }
 
 #[command]
-async fn cmd_list_instances(sort_by: SortBy) -> Vec<Instance> {
+async fn cmd_list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     list_instances(sort_by).await
 }
 
 #[command]
-async fn cmd_update_instance(config: InstanceConfig, id: Uuid) {
+async fn cmd_update_instance(config: InstanceConfig, id: Uuid) -> Result<()> {
     update_instance(config, id).await
 }
 
 #[command]
-async fn cmd_delete_instance(id: Uuid) {
+async fn cmd_delete_instance(id: Uuid) -> Result<()> {
     delete_instance(id).await
 }
 
 /// Creates a new game instance using the provided configuration.
-pub async fn create_instance(config: InstanceConfig) -> Instance {
+pub async fn create_instance(config: InstanceConfig) -> Result<()> {
     let id = if config.name == LATEST_RELEASE_INSTANCE_NAME {
         uuid::Uuid::from_u128(114514)
     } else if config.name == LATEST_SNAPSHOT_INSTANCE_NAME {
@@ -60,29 +64,18 @@ pub async fn create_instance(config: InstanceConfig) -> Instance {
         uuid::Uuid::from_u128(
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
-                .unwrap()
+                .expect("Incorrect System Time")
                 .as_nanos(),
         )
     };
     let instance_root = DATA_LOCATION.get_instance_root(&id);
     let config_file_path = instance_root.join("instance.toml");
-    async_fs::create_dir_all(
-        config_file_path
-            .parent()
-            .ok_or(anyhow::anyhow!("Path Error"))
-            .unwrap(),
-    )
-    .await
-    .unwrap();
-    async_fs::write(config_file_path, toml::to_string_pretty(&config).unwrap())
-        .await
-        .unwrap();
-    info!("Created instance: {}", config.name);
-    Instance {
-        config,
-        installed: false,
-        id,
+    if let Some(parent) = config_file_path.parent() {
+        async_fs::create_dir_all(parent).await?
     }
+    async_fs::write(config_file_path, toml::to_string_pretty(&config)?).await?;
+    info!("Created instance: {}", config.name);
+    Ok(())
 }
 
 /// Enum representing different sorting strategies for listing instances.
@@ -98,13 +91,13 @@ pub enum SortBy {
 /// and returns a sorted list.
 ///
 /// Default instances are created if not found.
-pub async fn list_instances(sort_by: SortBy) -> Vec<Instance> {
+pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     let instances_folder = &DATA_LOCATION.instances;
-    async_fs::create_dir_all(instances_folder).await.unwrap();
-    let mut folder_entries = async_fs::read_dir(instances_folder).await.unwrap();
+    async_fs::create_dir_all(instances_folder).await?;
+    let mut folder_entries = async_fs::read_dir(instances_folder).await?;
     let mut instances = Vec::new();
 
-    while let Some(entry) = folder_entries.try_next().await.unwrap() {
+    while let Some(entry) = folder_entries.try_next().await? {
         let file_type = match entry.file_type().await {
             Err(_) => continue,
             Ok(file_type) => file_type,
@@ -150,30 +143,28 @@ pub async fn list_instances(sort_by: SortBy) -> Vec<Instance> {
             instances.sort_by_key(|instance| instance.config.name.clone());
         }
     }
-    instances
+    Ok(instances)
 }
 
 /// Updates the configuration file of an existing instance
 /// specified by the given UUID.
-pub async fn update_instance(config: InstanceConfig, id: Uuid) {
+pub async fn update_instance(config: InstanceConfig, id: Uuid) -> Result<()> {
     let instance_root = DATA_LOCATION.get_instance_root(&id);
     let config_file = instance_root.join("instance.toml");
     println!(
         "{:#?}",
         config.launch_config.enable_instance_specific_settings
     );
-    async_fs::write(config_file, toml::to_string_pretty(&config).unwrap())
-        .await
-        .unwrap();
+    async_fs::write(config_file, toml::to_string_pretty(&config)?).await?;
     info!("Updated instance: {}", config.name);
+    Ok(())
 }
 
 /// Deletes the instance directory corresponding to the given UUID.
-pub async fn delete_instance(id: Uuid) {
-    async_fs::remove_dir_all(DATA_LOCATION.get_instance_root(&id))
-        .await
-        .unwrap();
+pub async fn delete_instance(id: Uuid) -> Result<()> {
+    async_fs::remove_dir_all(DATA_LOCATION.get_instance_root(&id)).await?;
     info!("Deleted {id}");
+    Ok(())
 }
 
 /// Represents a game instance, including its configuration,
@@ -189,21 +180,29 @@ pub struct Instance {
 }
 
 impl Instance {
-    pub fn get_version_id(&self) -> String {
+    pub fn get_version_id(&self) -> Result<String> {
         let config = &self.config;
-        match config.runtime.mod_loader_type.as_ref() {
+        let version_id = match config.runtime.mod_loader_type.as_ref() {
             Some(mod_loader_type) => match mod_loader_type {
                 ModLoaderType::Fabric => {
                     format!(
                         "fabric-loader-{}-{}",
-                        config.runtime.mod_loader_version.as_ref().unwrap(),
+                        config
+                            .runtime
+                            .mod_loader_version
+                            .as_ref()
+                            .ok_or(Error::InvalidInstanceConfig)?,
                         config.runtime.minecraft
                     )
                 }
                 ModLoaderType::Quilt => {
                     format!(
                         "quilt-loader-{}-{}",
-                        config.runtime.mod_loader_version.as_ref().unwrap(),
+                        config
+                            .runtime
+                            .mod_loader_version
+                            .as_ref()
+                            .ok_or(Error::InvalidInstanceConfig)?,
                         config.runtime.minecraft
                     )
                 }
@@ -211,17 +210,26 @@ impl Instance {
                     format!(
                         "{}-forge-{}",
                         config.runtime.minecraft,
-                        config.runtime.mod_loader_version.as_ref().unwrap()
+                        config
+                            .runtime
+                            .mod_loader_version
+                            .as_ref()
+                            .ok_or(Error::InvalidInstanceConfig)?
                     )
                 }
                 ModLoaderType::Neoforged => {
                     format!(
                         "neoforged-{}",
-                        config.runtime.mod_loader_version.as_ref().unwrap()
+                        config
+                            .runtime
+                            .mod_loader_version
+                            .as_ref()
+                            .ok_or(Error::InvalidInstanceConfig)?
                     )
                 }
             },
             None => config.runtime.minecraft.to_string(),
-        }
+        };
+        Ok(version_id)
     }
 }

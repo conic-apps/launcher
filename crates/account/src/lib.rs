@@ -127,7 +127,7 @@ pub async fn force_refresh_account(uuid: Uuid, account_type: &AccountType) -> Re
 pub async fn check_and_refresh_account(uuid: Uuid, account_type: &AccountType) -> Result<()> {
     match account_type {
         AccountType::Microsoft => {
-            microsoft::check_and_refresh_account(uuid).await.unwrap();
+            microsoft::check_and_refresh_account(uuid).await?;
         }
         AccountType::AuthlibInjector => {
             authlib_injector::check_and_refresh_account(uuid).await?;

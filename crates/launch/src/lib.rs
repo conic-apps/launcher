@@ -19,9 +19,8 @@ use log::{error, info, trace};
 use options::LaunchOptions;
 use platform::{OsFamily, PLATFORM_INFO};
 use serde::Serialize;
-use shared::MAIN_WINDOW;
 use tauri::{
-    Emitter, Runtime, command,
+    Runtime, command,
     plugin::{Builder, TauriPlugin},
 };
 use uuid::Uuid;
@@ -29,7 +28,10 @@ use version::Version;
 
 mod arguments;
 mod complete;
+pub mod error;
 mod options;
+
+use error::*;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("launch")
@@ -38,8 +40,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 }
 
 #[command]
-async fn cmd_launch(config: Config, instance: Instance) {
-    let _ = launch(config, instance).await;
+async fn cmd_launch(config: Config, instance: Instance) -> Result<()> {
+    launch(config, instance).await
 }
 
 /// Represents a log message associated with a specific instance.
@@ -67,7 +69,7 @@ pub struct Log {
 /// * Refreshes the selected account if configured to do so.
 /// * Optionally checks files before launch.
 /// * Spawns the Minecraft process and generates launch script.
-pub async fn launch(config: Config, instance: Instance) -> Result<(), ()> {
+pub async fn launch(config: Config, instance: Instance) -> Result<()> {
     info!(
         "Starting Minecraft client, instance: {}",
         instance.config.name
@@ -85,14 +87,12 @@ pub async fn launch(config: Config, instance: Instance) -> Result<(), ()> {
 
     if !config.launch.skip_refresh_account {
         check_and_refresh_account(config.current_account_uuid, &config.current_account_type)
-            .await
-            .unwrap();
+            .await?;
     } else {
         info!("Account refresh disabled by user");
     };
     let selected_account =
-        account::AccountLaunchInfo::new(config.current_account_uuid, &config.current_account_type)
-            .unwrap();
+        account::AccountLaunchInfo::new(config.current_account_uuid, &config.current_account_type)?;
 
     let launch_options = LaunchOptions::new(&config, &instance, &selected_account);
     let minecraft_location = launch_options.minecraft_location.clone();
@@ -100,17 +100,15 @@ pub async fn launch(config: Config, instance: Instance) -> Result<(), ()> {
     if config.launch.skip_check_files {
         info!("File checking disabled by user")
     } else {
-        complete_files(&instance, &minecraft_location).await;
+        complete_files(&instance, &minecraft_location).await?;
     }
 
     info!("Generating startup parameters");
-    let version_json_path = minecraft_location.get_version_json(instance.get_version_id());
-    let raw_version_json = async_fs::read_to_string(version_json_path).await.unwrap();
-    let resolved_version = Version::from_str(&raw_version_json)
-        .unwrap()
+    let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
+    let raw_version_json = async_fs::read_to_string(version_json_path).await?;
+    let resolved_version = Version::from_str(&raw_version_json)?
         .resolve(&minecraft_location, &[])
-        .await
-        .unwrap();
+        .await?;
     let version_id = resolved_version.id.clone();
     let command_arguments = generate_command_arguments(
         &minecraft_location,
@@ -118,15 +116,19 @@ pub async fn launch(config: Config, instance: Instance) -> Result<(), ()> {
         &launch_options,
         resolved_version,
     )
-    .await;
+    .await?;
     thread::spawn(move || {
-        spawn_minecraft_process(
+        let result = spawn_minecraft_process(
             command_arguments,
             minecraft_location,
             launch_options,
             version_id,
             instance,
-        )
+        );
+        if let Err(e) = result {
+            error!("Minecraft process monitor error: {e}");
+            // TODO: Send error to fronend
+        }
     });
     Ok(())
 }
@@ -153,7 +155,7 @@ fn spawn_minecraft_process(
     launch_options: LaunchOptions,
     version_id: String,
     instance: Instance,
-) {
+) -> Result<()> {
     let native_root = minecraft_location.get_natives_root(&version_id);
     let instance_root = DATA_LOCATION.get_instance_root(&instance.id);
     let mut commands = String::new();
@@ -194,9 +196,10 @@ fn spawn_minecraft_process(
         OsFamily::Macos => instance_root.join(".cache").join("launch.sh"),
         OsFamily::Windows => instance_root.join(".cache").join("launch.bat"),
     };
-
-    std::fs::create_dir_all(script_path.parent().unwrap()).unwrap();
-    std::fs::write(&script_path, commands).unwrap();
+    if let Some(script_path_parent) = script_path.parent() {
+        std::fs::create_dir_all(script_path_parent)?;
+    }
+    std::fs::write(&script_path, commands)?;
     info!("The startup script is written to {}", script_path.display());
     let mut minecraft_process = match PLATFORM_INFO.os_family {
         OsFamily::Windows => std::process::Command::new(script_path),
@@ -204,17 +207,19 @@ fn spawn_minecraft_process(
             info!("Running chmod +x {}", script_path.display());
             let mut chmod = Command::new("chmod");
             chmod.args(["+x", script_path.to_string_lossy().to_string().as_ref()]);
-            chmod.status().unwrap();
+            chmod.status()?;
             let mut command = std::process::Command::new("bash");
             command.arg(script_path);
             command
         }
     }
     .stdout(Stdio::piped())
-    .spawn()
-    .unwrap();
+    .spawn()?;
     info!("Spawning minecraft process");
-    let out = minecraft_process.stdout.take().unwrap();
+    let out = minecraft_process
+        .stdout
+        .take()
+        .ok_or(Error::TakeMinecraftStdoutFailed)?;
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
     let pid = minecraft_process.id();
@@ -226,25 +231,16 @@ fn spawn_minecraft_process(
         if let Some(last) = lines.get(lines.len() - 2) {
             trace!("[{pid}] {last}");
             if last.to_lowercase().contains("lwjgl version") {
-                MAIN_WINDOW.emit("launch_success", instance.id).unwrap();
                 info!("Found LWJGL version, the game seems to have started successfully.");
             }
-            MAIN_WINDOW
-                .emit(
-                    "log",
-                    Log {
-                        instance_id: instance.id,
-                        content: last.to_string(),
-                    },
-                )
-                .unwrap();
         }
     }
-    let output = minecraft_process.wait_with_output().unwrap();
+    let output = minecraft_process.wait_with_output()?;
     if !output.status.success() {
         // TODO: log analysis and remove libraries lock file
         error!("Minecraft exits with error code {}", output.status);
     } else {
         info!("Minecraft exits with error code {}", output.status);
     }
+    Ok(())
 }
