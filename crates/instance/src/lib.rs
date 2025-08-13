@@ -9,6 +9,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use config::instance::{InstanceConfig, ModLoaderType};
 use folder::DATA_LOCATION;
+use futures::TryStreamExt;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use tauri::plugin::{Builder, TauriPlugin};
@@ -65,7 +66,7 @@ pub async fn create_instance(config: InstanceConfig) -> Instance {
     };
     let instance_root = DATA_LOCATION.get_instance_root(&id);
     let config_file_path = instance_root.join("instance.toml");
-    tokio::fs::create_dir_all(
+    async_fs::create_dir_all(
         config_file_path
             .parent()
             .ok_or(anyhow::anyhow!("Path Error"))
@@ -73,7 +74,7 @@ pub async fn create_instance(config: InstanceConfig) -> Instance {
     )
     .await
     .unwrap();
-    tokio::fs::write(config_file_path, toml::to_string_pretty(&config).unwrap())
+    async_fs::write(config_file_path, toml::to_string_pretty(&config).unwrap())
         .await
         .unwrap();
     info!("Created instance: {}", config.name);
@@ -99,11 +100,11 @@ pub enum SortBy {
 /// Default instances are created if not found.
 pub async fn list_instances(sort_by: SortBy) -> Vec<Instance> {
     let instances_folder = &DATA_LOCATION.instances;
-    tokio::fs::create_dir_all(instances_folder).await.unwrap();
-    let mut folder_entries = tokio::fs::read_dir(instances_folder).await.unwrap();
+    async_fs::create_dir_all(instances_folder).await.unwrap();
+    let mut folder_entries = async_fs::read_dir(instances_folder).await.unwrap();
     let mut instances = Vec::new();
 
-    while let Some(entry) = folder_entries.next_entry().await.unwrap() {
+    while let Some(entry) = folder_entries.try_next().await.unwrap() {
         let file_type = match entry.file_type().await {
             Err(_) => continue,
             Ok(file_type) => file_type,
@@ -127,7 +128,7 @@ pub async fn list_instances(sort_by: SortBy) -> Vec<Instance> {
         if metadata.len() > 2_000_000 || !instance_config.is_file() {
             continue;
         }
-        let config_content = match tokio::fs::read_to_string(instance_config).await {
+        let config_content = match async_fs::read_to_string(instance_config).await {
             Err(_) => continue,
             Ok(content) => content,
         };
@@ -136,10 +137,7 @@ pub async fn list_instances(sort_by: SortBy) -> Vec<Instance> {
                 Ok(config) => config,
                 Err(_) => continue,
             },
-            installed: matches!(
-                tokio::fs::try_exists(path.join(".install.lock")).await,
-                Ok(true)
-            ),
+            installed: async_fs::metadata(path.join(".install.lock")).await.is_ok(),
             id: match uuid::Uuid::from_str(&folder_name) {
                 Ok(x) => x,
                 Err(_) => continue,
@@ -164,7 +162,7 @@ pub async fn update_instance(config: InstanceConfig, id: Uuid) {
         "{:#?}",
         config.launch_config.enable_instance_specific_settings
     );
-    tokio::fs::write(config_file, toml::to_string_pretty(&config).unwrap())
+    async_fs::write(config_file, toml::to_string_pretty(&config).unwrap())
         .await
         .unwrap();
     info!("Updated instance: {}", config.name);
@@ -172,7 +170,7 @@ pub async fn update_instance(config: InstanceConfig, id: Uuid) {
 
 /// Deletes the instance directory corresponding to the given UUID.
 pub async fn delete_instance(id: Uuid) {
-    tokio::fs::remove_dir_all(DATA_LOCATION.get_instance_root(&id))
+    async_fs::remove_dir_all(DATA_LOCATION.get_instance_root(&id))
         .await
         .unwrap();
     info!("Deleted {id}");

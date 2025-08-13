@@ -7,10 +7,10 @@ use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
 #[cfg(not(windows))]
 use std::os::unix::fs::PermissionsExt;
-use std::{collections::HashMap, io::Read, path::Path};
-use tokio::io::AsyncWriteExt;
+use std::{collections::HashMap, path::Path};
+use task::Progress;
 
-use download::{DownloadTask, DownloadType};
+use download::{DownloadTask, DownloadType, download_and_check};
 use platform::{OsFamily, PLATFORM_INFO};
 
 /// Represents the availability group and progress index of a Java runtime version.
@@ -166,11 +166,14 @@ impl JavaRuntimeInfo {
         for (path, file_info) in manifest.files {
             if let JavaFileInfo::Link { target } = file_info {
                 let path = install_directory.join(path);
-                tokio::fs::create_dir_all(path.parent().unwrap())
+                async_fs::create_dir_all(path.parent().unwrap())
                     .await
                     .unwrap();
-                let _ = tokio::fs::remove_file(&path).await;
-                tokio::fs::symlink(target, path).await.unwrap();
+                let _ = async_fs::remove_file(&path).await;
+                #[cfg(unix)]
+                async_fs::unix::symlink(target, path).await.unwrap();
+                #[cfg(windows)]
+                async_fs::windows::symlink_file(target, path).await.unwrap();
                 continue;
             }
             if let JavaFileInfo::File {
@@ -178,9 +181,9 @@ impl JavaRuntimeInfo {
             } = &file_info
             {
                 let path = install_directory.join(path);
-                let mut perm = tokio::fs::metadata(&path).await.unwrap().permissions();
+                let mut perm = async_fs::metadata(&path).await.unwrap().permissions();
                 perm.set_mode(0o755);
-                tokio::fs::set_permissions(path, perm).await.unwrap();
+                async_fs::set_permissions(path, perm).await.unwrap();
                 continue;
             }
         }
@@ -223,58 +226,18 @@ fn generate_downloads(
 }
 
 /// Downloads all files in the given download list and verifies them.
+/// TODO: REMOVE THIS, USE DOWNLOAD MODULE
 async fn download_files(downloads: Vec<DownloadTask>) -> anyhow::Result<()> {
     for download in downloads {
         let mut retried = 0;
         while retried <= 5 {
             retried += 1;
-            match download_and_check(&download).await {
+            let progress = Progress::default();
+            match download_and_check(&download, &progress).await {
                 Ok(_) => break,
                 Err(_) => warn!("Downloaded failed: {}, retried: {}", &download.url, retried),
             }
         }
     }
     Ok(())
-}
-
-/// Downloads a single file and verifies its SHA1 checksum if provided.
-async fn download_and_check(download: &DownloadTask) -> anyhow::Result<()> {
-    let file_path = download.file.clone();
-    info!("Downloading {}", download.url);
-    tokio::fs::create_dir_all(file_path.parent().ok_or(anyhow::Error::msg(
-        "Unknown Error in instance/mod.rs".to_string(),
-    ))?)
-    .await?;
-    let mut response = HTTP_CLIENT.get(download.url.clone()).send().await?;
-    if !response.status().is_success() {
-        return Err(anyhow::anyhow!("Downloaded failed"));
-    }
-    let mut file = tokio::fs::File::create(&file_path).await?;
-    while let Some(chunk) = response.chunk().await? {
-        file.write_all(&chunk).await?;
-    }
-    file.sync_all().await?;
-    drop(file);
-    let mut file = std::fs::File::open(&file_path).unwrap();
-    info!("Verifying {}", file_path.display());
-    if let Some(sha1) = download.sha1.clone()
-        && calculate_sha1_from_read(&mut file) != sha1
-    {
-        return Err(anyhow::Error::msg("sha1 check failed".to_string()));
-    }
-    Ok(())
-}
-
-/// Computes the SHA1 hash of the content read from a readable source.
-fn calculate_sha1_from_read<R: Read>(source: &mut R) -> String {
-    let mut hasher = sha1_smol::Sha1::new();
-    let mut buffer = [0; 1024];
-    loop {
-        let bytes_read = source.read(&mut buffer).unwrap();
-        if bytes_read == 0 {
-            break;
-        }
-        hasher.update(&buffer[..bytes_read]);
-    }
-    hasher.digest().to_string()
 }

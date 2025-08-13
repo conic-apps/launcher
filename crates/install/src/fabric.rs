@@ -148,8 +148,8 @@ pub async fn install(
     let fabric_version_json: Version = response.json().await.unwrap();
     let version_name = fabric_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);
-    tokio::fs::create_dir_all(json_path.parent().unwrap()).await?;
-    tokio::fs::write(
+    async_fs::create_dir_all(json_path.parent().unwrap()).await?;
+    async_fs::write(
         json_path,
         serde_json::to_string_pretty(&fabric_version_json).unwrap(),
     )

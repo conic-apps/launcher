@@ -53,7 +53,7 @@ pub struct DownloadConfig {
     ///
     /// A value of `0` disables throttling (unlimited speed).
     #[serde(default)]
-    pub max_download_speed: usize,
+    pub max_download_speed: u64,
 
     /// Custom mirror configuration.
     ///

@@ -12,7 +12,7 @@ const config: TSESLint.FlatConfig.Config[] = defineConfigWithVueTs(
         files: ["**/*.{ts,mts,tsx,vue}"],
     },
 
-    globalIgnores(["**/dist/**", "**/dist-ssr/**", "**/coverage/**"]),
+    globalIgnores(["**/dist/**", "**/dist-ssr/**", "**/coverage/**", "**/target/**"]),
 
     pluginVue.configs["flat/essential"],
     vueTsConfigs.recommended,
