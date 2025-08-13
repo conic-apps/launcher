@@ -22,6 +22,7 @@ use platform::{DELIMITER, OsFamily};
 use shared::APP_VERSION;
 use version::ResolvedVersion;
 
+use super::error::*;
 use super::options::LaunchOptions;
 
 const DEFAULT_GAME_ICON: &[u8] = include_bytes!("./minecraft.icns");
@@ -43,7 +44,7 @@ pub async fn generate_command_arguments(
     instance: &Instance,
     launch_options: &LaunchOptions,
     version: ResolvedVersion,
-) -> Vec<String> {
+) -> Result<Vec<String>> {
     let mut command_arguments = Vec::new();
 
     command_arguments.push(format!(
@@ -57,9 +58,7 @@ pub async fn generate_command_arguments(
         .join("minecraft.icns")
         .to_string_lossy()
         .to_string();
-    async_fs::write(&game_icon, DEFAULT_GAME_ICON)
-        .await
-        .unwrap();
+    async_fs::write(&game_icon, DEFAULT_GAME_ICON).await?;
     if PLATFORM_INFO.os_family == OsFamily::Macos {
         command_arguments.push("-Xdock:name=Minecraft".to_string());
         command_arguments.push(format!(
@@ -136,7 +135,10 @@ pub async fn generate_command_arguments(
             .to_string(),
     );
     jvm_options.insert("launcher_name", launch_options.launcher_name.clone());
-    jvm_options.insert("launcher_version", APP_VERSION.get().unwrap().to_string());
+    jvm_options.insert(
+        "launcher_version",
+        APP_VERSION.get().cloned().unwrap_or("0.0.0".to_string()),
+    );
     jvm_options.insert(
         "classpath",
         resolve_classpath(
@@ -184,12 +186,28 @@ pub async fn generate_command_arguments(
         "game_assets",
         assets_dir
             .join("virtual")
-            .join(version.assets.as_ref().unwrap())
+            .join(
+                version
+                    .assets
+                    .as_ref()
+                    .ok_or(Error::InvalidVersionJson("assets".to_string()))?,
+            )
             .to_string_lossy()
             .to_string(),
     );
-    game_options.insert("asset_index", version.asset_index.unwrap().id);
-    game_options.insert("assets_index_name", version.assets.unwrap());
+    game_options.insert(
+        "asset_index",
+        version
+            .asset_index
+            .ok_or(Error::InvalidVersionJson("assetIndex".to_string()))?
+            .id,
+    );
+    game_options.insert(
+        "assets_index_name",
+        version
+            .assets
+            .ok_or(Error::InvalidVersionJson("assets".to_string()))?,
+    );
     game_options.insert(
         "game_directory",
         DATA_LOCATION
@@ -235,7 +253,7 @@ pub async fn generate_command_arguments(
     if launch_options.is_demo {
         command_arguments.push("--demo".to_string());
     };
-    command_arguments
+    Ok(command_arguments)
 }
 
 /// Resolves the classpath string needed for the Java launch command.
@@ -307,7 +325,7 @@ fn resolve_classpath(
 }
 
 fn format(template: &str, args: HashMap<&str, String>, is_game_option: bool) -> String {
-    let regex = Regex::new(r"\$\{(.*?)}").unwrap();
+    let regex = Regex::new(r"\$\{(.*?)}").expect("Internal Error");
 
     regex
         .replace_all(template, |caps: &regex::Captures| {
@@ -325,23 +343,22 @@ fn format(template: &str, args: HashMap<&str, String>, is_game_option: bool) -> 
 fn decompression_all<R: Read + io::Seek, S: AsRef<OsStr> + ?Sized>(
     zip_archive: &mut ZipArchive<R>,
     to: &S,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     let to = Path::new(to).to_path_buf();
     for i in 0..zip_archive.len() {
-        let mut zip_file = zip_archive.by_index(i).unwrap();
+        let mut zip_file = zip_archive.by_index(i)?;
         let name = zip_file.name().to_string();
         let path = to.join(&name);
         let mut entry_content = vec![];
-        zip_file.read_to_end(&mut entry_content).unwrap();
+        zip_file.read_to_end(&mut entry_content)?;
         if zip_file.is_dir() {
-            std::fs::create_dir_all(zip_file.name()).unwrap();
+            std::fs::create_dir_all(zip_file.name())?;
             continue;
         }
-        std::fs::create_dir_all(
-            path.parent()
-                .ok_or(std::io::Error::from(std::io::ErrorKind::NotFound))?,
-        )?;
-        std::fs::write(path, entry_content).unwrap();
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(path, entry_content)?;
     }
     Ok(())
 }

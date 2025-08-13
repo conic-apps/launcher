@@ -8,6 +8,8 @@ use shared::HTTP_CLIENT;
 use folder::MinecraftLocation;
 use version::Version;
 
+use crate::error::*;
+
 /// Represents a Quilt loader artifact version, including its Maven coordinates and version.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct QuiltArtifactVersion {
@@ -90,7 +92,7 @@ impl QuiltVersionList {
     /// # Returns
     ///
     /// * A `QuiltVersionList` containing all available Quilt versions for the given Minecraft version.
-    pub async fn new(mcversion: &str) -> anyhow::Result<Self> {
+    pub async fn new(mcversion: &str) -> Result<Self> {
         let url = format!("https://meta.quiltmc.org/v3/versions/loader/{mcversion}");
         let response = HTTP_CLIENT.get(url).send().await?;
         Ok(response.json().await?)
@@ -114,18 +116,20 @@ pub async fn install(
     mcversion: &str,
     quilt_version: &str,
     minecraft: MinecraftLocation,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     let url = format!(
         "https://meta.quiltmc.org/v3/versions/loader/{mcversion}/{quilt_version}/profile/json"
     );
-    let response = HTTP_CLIENT.get(url).send().await.unwrap();
-    let quilt_version_json: Version = response.json().await.unwrap();
+    let response = HTTP_CLIENT.get(url).send().await?;
+    let quilt_version_json: Version = response.json().await?;
     let version_name = quilt_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);
-    async_fs::create_dir_all(json_path.parent().unwrap()).await?;
+    if let Some(parent) = json_path.parent() {
+        async_fs::create_dir_all(parent).await?;
+    }
     async_fs::write(
         json_path,
-        serde_json::to_string_pretty(&quilt_version_json).unwrap(),
+        serde_json::to_string_pretty(&quilt_version_json)?,
     )
     .await?;
     Ok(())

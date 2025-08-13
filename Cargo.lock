@@ -6,7 +6,6 @@ version = 4
 name = "account"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "base64 0.22.1",
  "folder",
  "log",
@@ -707,9 +706,11 @@ dependencies = [
  "folder",
  "log",
  "serde",
+ "serde_with",
  "sys-locale",
  "tauri",
  "tauri-plugin",
+ "thiserror 2.0.14",
  "toml 0.9.5",
  "uuid",
 ]
@@ -1067,18 +1068,21 @@ checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 name = "download"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "async-fs",
  "async-io",
  "config",
  "futures",
  "log",
  "rayon",
+ "reqwest",
  "serde",
+ "serde_with",
  "sha1_smol",
  "shared",
  "task",
  "tauri",
+ "thiserror 2.0.14",
+ "url",
 ]
 
 [[package]]
@@ -1308,6 +1312,7 @@ name = "folder"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "log",
  "once_cell",
  "platform",
  "serde",
@@ -2148,7 +2153,6 @@ dependencies = [
 name = "install"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "async-fs",
  "config",
  "download",
@@ -2157,11 +2161,14 @@ dependencies = [
  "instance",
  "log",
  "platform",
+ "reqwest",
  "serde",
  "serde_json",
+ "serde_with",
  "shared",
  "task",
  "tauri",
+ "thiserror 2.0.14",
  "url",
  "uuid",
  "version",
@@ -2171,15 +2178,16 @@ dependencies = [
 name = "instance"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "async-fs",
  "config",
  "folder",
  "futures",
  "log",
  "serde",
+ "serde_with",
  "shared",
  "tauri",
+ "thiserror 2.0.14",
  "toml 0.9.5",
  "uuid",
  "version",
@@ -2348,7 +2356,6 @@ name = "launch"
 version = "0.0.0"
 dependencies = [
  "account",
- "anyhow",
  "async-fs",
  "config",
  "download",
@@ -2360,11 +2367,15 @@ dependencies = [
  "platform",
  "rayon",
  "regex",
+ "reqwest",
  "serde",
+ "serde_json",
+ "serde_with",
  "sha1_smol",
  "shared",
  "task",
  "tauri",
+ "thiserror 2.0.14",
  "uuid",
  "version",
  "zip",
@@ -5383,13 +5394,14 @@ checksum = "943ce29a8a743eb10d6082545d861b24f9d1b160b7d741e0f2cdf726bec909c5"
 name = "version"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "folder",
  "once_cell",
  "platform",
  "regex",
  "serde",
  "serde_json",
+ "serde_with",
+ "thiserror 2.0.14",
 ]
 
 [[package]]

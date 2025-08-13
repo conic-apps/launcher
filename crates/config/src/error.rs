@@ -7,7 +7,6 @@ use std::result;
 use serde::Serialize;
 use serde_with::serde_as;
 use thiserror::Error;
-use uuid::Uuid;
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -21,44 +20,16 @@ pub enum Error {
         #[serde_as(as = "serde_with::DisplayFromStr")]
         std::io::Error,
     ),
-
     #[error(transparent)]
-    UrlParse(
+    TomlSerialize(
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]
-        url::ParseError,
+        toml::ser::Error,
     ),
-
     #[error(transparent)]
-    JsonParse(
+    TomlDeserialize(
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]
-        serde_json::error::Error,
+        toml::de::Error,
     ),
-
-    #[error(transparent)]
-    ToStr(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        reqwest::header::ToStrError,
-    ),
-
-    #[error(transparent)]
-    Network(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        reqwest::Error,
-    ),
-
-    #[error("Account not found: {0}")]
-    AccountNotfound(Uuid),
-
-    #[error("This profile is no longer available")]
-    ProfileUnavailable,
-
-    #[error("Cannot check ownership")]
-    OwnershipCheckFailed,
-
-    #[error("{0}")]
-    MicrosoftResponseMissingKey(String),
 }

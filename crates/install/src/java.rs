@@ -13,6 +13,8 @@ use task::Progress;
 use download::{DownloadTask, DownloadType, download_and_check};
 use platform::{OsFamily, PLATFORM_INFO};
 
+use crate::error::*;
+
 /// Represents the availability group and progress index of a Java runtime version.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Availability {
@@ -56,7 +58,7 @@ pub struct MojangJavaVersionList {
 
 impl MojangJavaVersionList {
     /// Downloads and returns the full Java version list manifest from Mojang servers.
-    pub async fn new() -> anyhow::Result<Self> {
+    pub async fn new() -> Result<Self> {
         Ok(HTTP_CLIENT.get("https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json").send().await?.json().await?)
     }
 
@@ -150,30 +152,28 @@ pub struct JavaRuntimeInfo {
 
 impl JavaRuntimeInfo {
     /// Downloads and installs this Java runtime into the given install directory.
-    pub(super) async fn install(self, install_directory: &Path) {
+    pub(super) async fn install(self, install_directory: &Path) -> Result<()> {
         let manifest = HTTP_CLIENT
             .get(self.manifest.url)
             .send()
-            .await
-            .unwrap()
+            .await?
             .json::<Manifest>()
-            .await
-            .unwrap();
+            .await?;
         let downloads = generate_downloads(install_directory, &manifest.files);
-        download_files(downloads).await.unwrap();
+        download_files(downloads).await?;
         info!("Creating links and setting permissions");
         #[cfg(not(windows))]
         for (path, file_info) in manifest.files {
             if let JavaFileInfo::Link { target } = file_info {
                 let path = install_directory.join(path);
-                async_fs::create_dir_all(path.parent().unwrap())
-                    .await
-                    .unwrap();
+                if let Some(parent) = path.parent() {
+                    async_fs::create_dir_all(parent).await?;
+                }
                 let _ = async_fs::remove_file(&path).await;
                 #[cfg(unix)]
-                async_fs::unix::symlink(target, path).await.unwrap();
+                async_fs::unix::symlink(target, path).await?;
                 #[cfg(windows)]
-                async_fs::windows::symlink_file(target, path).await.unwrap();
+                async_fs::windows::symlink_file(target, path).await?;
                 continue;
             }
             if let JavaFileInfo::File {
@@ -181,12 +181,13 @@ impl JavaRuntimeInfo {
             } = &file_info
             {
                 let path = install_directory.join(path);
-                let mut perm = async_fs::metadata(&path).await.unwrap().permissions();
+                let mut perm = async_fs::metadata(&path).await?.permissions();
                 perm.set_mode(0o755);
-                async_fs::set_permissions(path, perm).await.unwrap();
+                async_fs::set_permissions(path, perm).await?;
                 continue;
             }
         }
+        Ok(())
     }
 }
 
@@ -194,16 +195,17 @@ impl JavaRuntimeInfo {
 pub(super) async fn group_install(
     install_directory: &Path,
     java_runtimes: HashMap<String, Vec<JavaRuntimeInfo>>,
-) {
+) -> Result<()> {
     for (name, runtime_info) in java_runtimes {
         info!("Installing Java: {name}");
         if let Some(runtime_info) = runtime_info.first() {
             runtime_info
                 .clone()
                 .install(&install_directory.join(name))
-                .await;
+                .await?;
         }
     }
+    Ok(())
 }
 
 /// Generates a list of files to be downloaded based on the manifest.
@@ -227,7 +229,7 @@ fn generate_downloads(
 
 /// Downloads all files in the given download list and verifies them.
 /// TODO: REMOVE THIS, USE DOWNLOAD MODULE
-async fn download_files(downloads: Vec<DownloadTask>) -> anyhow::Result<()> {
+async fn download_files(downloads: Vec<DownloadTask>) -> Result<()> {
     for download in downloads {
         let mut retried = 0;
         while retried <= 5 {

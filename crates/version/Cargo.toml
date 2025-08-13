@@ -15,5 +15,6 @@ folder.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 once_cell.workspace = true
-anyhow.workspace = true
 regex.workspace = true
+thiserror.workspace = true
+serde_with.workspace = true

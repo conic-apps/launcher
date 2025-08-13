@@ -42,10 +42,11 @@ pub(crate) fn check_os(rule: &Value) -> bool {
         };
         let version_check_passed = if let Some(version) = os.get("version") {
             if let Some(version) = version.as_str() {
-                Regex::is_match(
-                    &Regex::new(version).unwrap(),
-                    (PLATFORM_INFO.os_version.to_string()).as_ref(),
-                )
+                let regex = match Regex::new(version) {
+                    Ok(regex) => regex,
+                    Err(_) => return false,
+                };
+                regex.is_match(&PLATFORM_INFO.os_version.to_string())
             } else {
                 true
             }

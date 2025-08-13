@@ -18,11 +18,15 @@ use futures::{AsyncWriteExt, StreamExt, TryStreamExt};
 use log::warn;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
-use tauri::{Emitter, Url};
 
 use config::download::{DownloadConfig, MirrorConfig};
-use shared::{HTTP_CLIENT, MAIN_WINDOW};
+use shared::HTTP_CLIENT;
 use task::{Progress, Task};
+
+pub mod error;
+
+use error::*;
+use url::Url;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum DownloadType {
@@ -85,25 +89,25 @@ pub struct DownloadTask {
 }
 
 impl DownloadTask {
-    pub fn classify(self) -> Self {
+    pub fn classify(&self) -> Result<Self> {
         if self.r#type != DownloadType::Unknown {
-            return self.clone();
+            return Ok(self.clone());
         };
-        let url = Url::parse(&self.url).unwrap();
+        let url = Url::parse(&self.url)?;
         let host = if let Some(host) = url.host_str() {
             host
         } else {
-            return self.clone();
+            return Ok(self.clone());
         };
         let download_type = match host {
             "resources.download.minecraft.net" => DownloadType::Assets,
             "libraries.minecraft.net" => DownloadType::Libraries,
             _ => DownloadType::Unknown,
         };
-        Self {
+        Ok(Self {
             r#type: download_type,
-            ..self
-        }
+            ..self.clone()
+        })
     }
 
     fn assignment_mirror(
@@ -143,15 +147,20 @@ impl DownloadTask {
     }
 }
 
-pub async fn download(download: &DownloadTask, progress: Progress) -> anyhow::Result<()> {
+pub async fn download(download: &DownloadTask, progress: Progress) -> Result<()> {
     progress.reset(Ordering::SeqCst);
     let file_path = download.file.clone();
+    let url = download.url.clone();
     if let Some(parent) = file_path.parent() {
         async_fs::create_dir_all(parent).await?
     }
-    let mut response = HTTP_CLIENT.get(download.url.clone()).send().await?;
-    if !response.status().is_success() {
-        return Err(anyhow::anyhow!("Download failed"));
+    let mut response = HTTP_CLIENT.get(&url).send().await?;
+    let status = response.status();
+    if !status.is_success() {
+        return Err(Error::HttpResponseNotSuccess(
+            status.as_u16(),
+            status.canonical_reason().unwrap_or("Unknown").to_string(),
+        ));
     }
     if let Some(len) = response.content_length() {
         progress.total.store(len, Ordering::SeqCst);
@@ -170,18 +179,20 @@ pub async fn download(download: &DownloadTask, progress: Progress) -> anyhow::Re
     Ok(())
 }
 
-pub async fn download_and_check(
-    download: &DownloadTask,
-    progress: &Progress,
-) -> anyhow::Result<()> {
+pub async fn download_and_check(download: &DownloadTask, progress: &Progress) -> Result<()> {
     progress.reset(Ordering::SeqCst);
     let file_path = download.file.clone();
+    let url = download.url.clone();
     if let Some(parent) = file_path.parent() {
         async_fs::create_dir_all(parent).await?
     }
-    let mut response = HTTP_CLIENT.get(download.url.clone()).send().await?;
-    if !response.status().is_success() {
-        return Err(anyhow::anyhow!("Download failed"));
+    let mut response = HTTP_CLIENT.get(&url).send().await?;
+    let status = response.status();
+    if !status.is_success() {
+        return Err(Error::HttpResponseNotSuccess(
+            status.as_u16(),
+            status.canonical_reason().unwrap_or("Unknown").to_string(),
+        ));
     }
     // TODO: Speed
     if let Some(len) = response.content_length() {
@@ -199,7 +210,7 @@ pub async fn download_and_check(
     if let Some(sha1) = download.sha1.as_ref()
         && &hasher.digest().to_string() != sha1
     {
-        return Err(anyhow::Error::msg("SHA1 check failed".to_string()));
+        return Err(Error::Sha1Missmatch(url));
     }
     file.sync_all().await?;
     progress
@@ -212,7 +223,7 @@ pub async fn download_concurrent(
     tasks: Vec<DownloadTask>,
     progress: &Progress,
     download_config: DownloadConfig,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     inner_download_concurrent(tasks, progress, download_config, false).await
 }
 
@@ -220,7 +231,7 @@ pub async fn download_concurrent_and_check(
     tasks: Vec<DownloadTask>,
     progress: &Progress,
     download_config: DownloadConfig,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     inner_download_concurrent(tasks, progress, download_config, true).await
 }
 
@@ -229,11 +240,13 @@ async fn inner_download_concurrent(
     progress: &Progress,
     download_config: DownloadConfig,
     verify_checksum: bool,
-) -> anyhow::Result<()> {
-    let download_tasks: Vec<DownloadTask> = filter_existing_and_verified_files(tasks, progress)
-        .into_iter()
-        .map(|x| x.classify())
-        .collect();
+) -> Result<()> {
+    let download_tasks: Result<Vec<DownloadTask>> =
+        filter_existing_and_verified_files(tasks, progress)
+            .into_iter()
+            .map(|x| x.classify())
+            .collect();
+    let download_tasks = download_tasks?;
 
     let is_finished = Arc::new(AtomicBool::new(false));
     let speed_thread = {
@@ -254,8 +267,10 @@ async fn inner_download_concurrent(
         .total
         .store(download_tasks.len() as u64, Ordering::SeqCst);
     {
-        #[allow(clippy::unwrap_used)]
-        let mut task = progress.task.lock().unwrap();
+        let mut task = progress
+            .task
+            .lock()
+            .expect("Internal error: another thread hold lock and panic");
         *task = Task::DownloadFiles;
     }
 
@@ -284,8 +299,10 @@ pub fn filter_existing_and_verified_files(
 ) -> Vec<DownloadTask> {
     let completed = progress.completed.clone();
     {
-        #[allow(clippy::unwrap_used)]
-        let mut task = progress.task.lock().unwrap();
+        let mut task = progress
+            .task
+            .lock()
+            .expect("Internal error: another thread hold lock and panic");
         *task = Task::VerifyExistingFiles;
     }
     progress.total.store(0, Ordering::SeqCst);
@@ -299,21 +316,22 @@ pub fn filter_existing_and_verified_files(
                 return true;
             }
         };
-        if download.sha1.is_none() {
-            return true;
+        let sha1 = match download.sha1.clone() {
+            Some(sha1) => sha1,
+            None => return true,
         };
         let file_hash = match calculate_sha1_from_read(&mut file) {
             Ok(x) => x,
             Err(_) => return true,
         };
         completed.fetch_add(1, Ordering::SeqCst);
-        &file_hash != download.sha1.as_ref().unwrap()
+        file_hash != sha1
     };
     let downloads: Vec<_> = downloads.into_par_iter().filter(filter_op).collect();
     downloads
 }
 
-fn calculate_sha1_from_read<R: Read>(source: &mut R) -> anyhow::Result<String> {
+fn calculate_sha1_from_read<R: Read>(source: &mut R) -> Result<String> {
     let mut hasher = sha1_smol::Sha1::new();
     let mut buffer = [0; 1024];
     loop {
@@ -328,17 +346,15 @@ fn calculate_sha1_from_read<R: Read>(source: &mut R) -> anyhow::Result<String> {
 
 fn speed_counter_loop(counter: Arc<AtomicU64>, finished: Arc<AtomicBool>) {
     while finished.load(Ordering::SeqCst) {
-        MAIN_WINDOW
-            .emit("download_speed", counter.load(Ordering::SeqCst))
-            .unwrap();
+        // TODO: Send download speed to frontend
         counter.store(0, Ordering::SeqCst);
         thread::sleep(Duration::from_millis(2000));
     }
 }
 
-fn mirror_usage_sender_loop(mirror_usage: MirrorUsage, finished: Arc<AtomicBool>) {
+fn mirror_usage_sender_loop(_mirror_usage: MirrorUsage, finished: Arc<AtomicBool>) {
     while finished.load(Ordering::SeqCst) {
-        MAIN_WINDOW.emit("mirror_usage", &mirror_usage).unwrap();
+        // TODO: Send mirror usage to frontend
         thread::sleep(Duration::from_millis(500));
     }
 }
@@ -349,7 +365,7 @@ async fn inner_download_future(
     mirror_usage: &MirrorUsage,
     progress: &Progress,
     verify_checksum: bool,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     let mut disabled_mirrors = vec![];
     let mut retried = 0;
     loop {
@@ -390,12 +406,20 @@ async fn inner_download_executer(
     max_download_speed: u64,
     progress: Progress,
     verify_checksum: bool,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     let file_path = task.file.clone();
+    let url = task.url.clone();
     if let Some(parent) = file_path.parent() {
         async_fs::create_dir_all(parent).await?;
     }
-    let mut response = HTTP_CLIENT.get(task.url.clone()).send().await?;
+    let mut response = HTTP_CLIENT.get(&url).send().await?;
+    let status = response.status();
+    if !status.is_success() {
+        return Err(Error::HttpResponseNotSuccess(
+            status.as_u16(),
+            status.canonical_reason().unwrap_or("Unknown").to_string(),
+        ));
+    }
     let mut file = async_fs::File::create(&file_path).await?;
     let mut hasher = sha1_smol::Sha1::new();
     while let Some(chunk) = response.chunk().await? {
@@ -417,7 +441,7 @@ async fn inner_download_executer(
         && verify_checksum
         && hasher.digest().to_string() != sha1
     {
-        return Err(anyhow::anyhow!("sha1 check failed"));
+        return Err(Error::Sha1Missmatch(url));
     }
     progress.completed.fetch_add(1, Ordering::SeqCst);
     Ok(())

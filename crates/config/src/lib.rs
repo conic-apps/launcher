@@ -4,7 +4,7 @@
 
 use account::AccountType;
 use folder::DATA_LOCATION;
-use log::{debug, info};
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 
 use tauri::{
@@ -12,6 +12,13 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
 };
 use uuid::Uuid;
+
+pub mod download;
+pub mod error;
+pub mod instance;
+pub mod launch;
+
+use error::*;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("config")
@@ -23,13 +30,13 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 }
 
 #[command]
-fn cmd_load_config_file() -> Config {
+fn cmd_load_config_file() -> Result<Config> {
     load_config_file()
 }
 
 #[command]
-fn cmd_save_config(config: Config) {
-    save_config(config);
+fn cmd_save_config(config: Config) -> Result<()> {
+    save_config(config)
 }
 
 /// Reads the configuration file from disk.
@@ -39,37 +46,46 @@ fn cmd_save_config(config: Config) {
 /// # Returns
 ///
 /// The loaded or default configuration.
-pub fn load_config_file() -> Config {
+pub fn load_config_file() -> Result<Config> {
     let config_file_path = &DATA_LOCATION.config;
     if !config_file_path.exists() {
         info!("No config file, using default config");
-        let default_config = Config::default();
-        let data = toml::to_string_pretty(&default_config).unwrap();
-        std::fs::write(config_file_path, data).unwrap();
-        return default_config;
+        return reset_config();
     }
-    let data = std::fs::read(config_file_path).expect("Could not read the config file!");
-    info!("Loaded config from file");
-    let result = toml::from_str::<Config>(&String::from_utf8(data).unwrap()).unwrap();
-    let write_back_data = toml::to_string_pretty(&result).unwrap();
-    std::fs::write(config_file_path, write_back_data).unwrap();
-    result
+    let data = match std::fs::read_to_string(config_file_path) {
+        Ok(x) => x,
+        Err(_) => {
+            error!("Could not read config file, reset it");
+            return reset_config();
+        }
+    };
+    if let Ok(config) = toml::from_str::<Config>(&data) {
+        info!("Loaded config from file");
+        let write_back_data = toml::to_string_pretty(&config)?;
+        std::fs::write(config_file_path, write_back_data)?;
+        Ok(config)
+    } else {
+        error!("Config file is not a toml file, reset it");
+        reset_config()
+    }
+}
+
+pub fn reset_config() -> Result<Config> {
+    let config_file_path = &DATA_LOCATION.config;
+    let default_config = Config::default();
+    let data = toml::to_string_pretty(&default_config)?;
+    std::fs::write(config_file_path, data)?;
+    Ok(default_config)
 }
 
 /// Saves the current configuration to the configuration file.
-pub fn save_config(config: Config) {
-    let data = toml::to_string_pretty(&config).unwrap();
+pub fn save_config(config: Config) -> Result<()> {
+    let data = toml::to_string_pretty(&config)?;
     let config_file_path = &DATA_LOCATION.config;
-    std::fs::write(config_file_path, data).unwrap();
+    std::fs::write(config_file_path, data)?;
     debug!("Saved config to file");
+    Ok(())
 }
-
-/// Module for download configuration.
-pub mod download;
-/// Module for game instance configuration.
-pub mod instance;
-/// Module for launch settings and parameters.
-pub mod launch;
 
 /// Represents the update channel selection.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
@@ -204,9 +220,7 @@ fn default_auto_update() -> bool {
 impl Default for Config {
     /// Returns the default configuration, using system locale and the first available account.
     fn default() -> Self {
-        let locale = sys_locale::get_locale().unwrap();
-        info!("System locale is {locale}");
-        let accounts = account::microsoft::list_accounts().unwrap();
+        let accounts = account::microsoft::list_accounts().unwrap_or_default();
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
@@ -216,8 +230,8 @@ impl Default for Config {
             },
             current_account_type: AccountType::Microsoft,
             auto_update: true,
-            language: locale.replace("-", "_").to_lowercase(),
-            update_channel: UpdateChannel::Release,
+            language: default_language(),
+            update_channel: UpdateChannel::default(),
             launch: launch::LaunchConfig::default(),
             download: download::DownloadConfig::default(),
         }
@@ -225,11 +239,26 @@ impl Default for Config {
 }
 
 fn default_language() -> String {
-    sys_locale::get_locale().unwrap()
+    let locale = sys_locale::get_locale().unwrap_or("en-US".to_string());
+    if locale.contains(".") {
+        locale
+            .split(".")
+            .collect::<Vec<_>>()
+            .first()
+            .expect("Could not understand system locale string")
+            .to_string()
+            .replace("-", "_")
+            .to_lowercase()
+    } else {
+        locale.replace("-", "_").to_lowercase()
+    }
 }
 
 fn default_current_account() -> Uuid {
-    match account::microsoft::list_accounts().unwrap().first() {
+    match account::microsoft::list_accounts()
+        .unwrap_or_default()
+        .first()
+    {
         Some(x) => x.to_owned().profile.uuid,
         None => uuid::uuid!("00000000-0000-0000-0000-000000000000"),
     }
