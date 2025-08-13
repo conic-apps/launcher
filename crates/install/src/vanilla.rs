@@ -7,7 +7,6 @@ use std::str::FromStr;
 use anyhow::{Result, anyhow};
 use serde_json::Value;
 use shared::HTTP_CLIENT;
-use tokio::io::AsyncWriteExt;
 
 use download::{DownloadTask, DownloadType};
 use folder::MinecraftLocation;
@@ -117,9 +116,8 @@ async fn save_version_json(
     let version_json_path = minecraft_location
         .versions
         .join(format!("{resolved_version_id}/{resolved_version_id}.json"));
-    tokio::fs::create_dir_all(version_json_path.parent().unwrap()).await?;
-    let mut file = tokio::fs::File::create(&version_json_path).await?;
-    file.write_all(raw_version_json.as_bytes()).await?;
+    async_fs::create_dir_all(version_json_path.parent().unwrap()).await?;
+    async_fs::write(&version_json_path, raw_version_json.as_bytes()).await?;
     Ok(())
 }
 
@@ -240,7 +238,7 @@ pub async fn override_log4j2_configuration_file(
     minecraft_location: &MinecraftLocation,
     version: &ResolvedVersion,
 ) -> Result<()> {
-    tokio::fs::write(
+    async_fs::write(
         minecraft_location.get_log_config(version.id.clone()),
         LOF4J2_CONFIGURATION,
     )

@@ -2,7 +2,10 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::sync::{Arc, Mutex, atomic::AtomicUsize};
+use std::sync::{
+    Arc, Mutex,
+    atomic::{AtomicU64, Ordering},
+};
 
 use serde::{Deserialize, Serialize};
 use tauri::Emitter;
@@ -23,21 +26,21 @@ pub enum Task {
 #[derive(Clone, Deserialize, Serialize)]
 /// We use this to store the progress of installation task
 pub struct Progress {
-    pub completed: Arc<AtomicUsize>,
-    pub total: Arc<AtomicUsize>,
+    pub completed: Arc<AtomicU64>,
+    pub total: Arc<AtomicU64>,
     /// Download progress will start from 1001,
     ///
     /// In this program, the code
     pub task: Arc<Mutex<Task>>,
-    pub speed: Arc<AtomicUsize>,
+    pub speed: Arc<AtomicU64>,
 }
 
 impl Default for Progress {
     fn default() -> Self {
         Self {
-            completed: Arc::new(AtomicUsize::new(0)),
-            total: Arc::new(AtomicUsize::new(0)),
-            speed: Arc::new(AtomicUsize::new(0)),
+            completed: Arc::new(AtomicU64::new(0)),
+            total: Arc::new(AtomicU64::new(0)),
+            speed: Arc::new(AtomicU64::new(0)),
             task: Arc::new(Mutex::new(Task::Chore)),
         }
     }
@@ -46,5 +49,11 @@ impl Default for Progress {
 impl Progress {
     pub fn send(&self) {
         MAIN_WINDOW.emit("task_progress", self).unwrap();
+    }
+
+    pub fn reset(&self, ordering: Ordering) {
+        self.completed.store(0, ordering);
+        self.total.store(0, ordering);
+        self.speed.store(0, ordering);
     }
 }

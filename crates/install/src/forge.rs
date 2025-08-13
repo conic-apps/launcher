@@ -16,11 +16,11 @@ use std::{
 
 use anyhow::Result;
 use folder::DATA_LOCATION;
+use futures::AsyncWriteExt;
 use log::{error, info, trace};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use shared::HTTP_CLIENT;
-use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
 use platform::DELIMITER;
@@ -119,7 +119,7 @@ pub async fn install(
     info!("Saving bootstrapper");
     let bootstrapper_path = DATA_LOCATION.temp.join("forge-install-bootstrapper.jar");
     if let Some(bootstrapper) = bootstrapper {
-        tokio::fs::write(&bootstrapper_path, bootstrapper).await?;
+        async_fs::write(&bootstrapper_path, bootstrapper).await?;
     }
     let java = DATA_LOCATION.default_jre.clone();
     info!("Running installer");
@@ -167,11 +167,11 @@ pub async fn install(
     }
     let output = command.wait_with_output().unwrap();
     if (!success && bootstrapper.is_some()) || !output.status.success() {
-        tokio::fs::remove_file(installer_path).await?;
+        async_fs::remove_file(installer_path).await?;
         error!("Failed to run forge installer");
         return Err(anyhow::Error::msg("Failed to run forge installer"));
     }
-    tokio::fs::remove_file(installer_path).await?;
+    async_fs::remove_file(installer_path).await?;
     Ok(())
 }
 
@@ -205,13 +205,14 @@ pub async fn download_installer(mcversion: &str, forge_version: &str) -> anyhow:
                 .as_nanos(),
         )
     ));
-    tokio::fs::create_dir_all(
+    async_fs::create_dir_all(
         installer_path
             .parent()
             .ok_or(anyhow::Error::msg("Unknown Error"))?,
     )
     .await?;
-    let mut file = tokio::fs::File::create(&installer_path).await?;
+    let mut file = async_fs::File::create(&installer_path).await?;
+    // TODO: This can also return progress to frontend
     let response = HTTP_CLIENT.get(installer_url).send().await?;
     if !response.status().is_success() {
         return Err(anyhow::Error::msg("Forge website return error"));
