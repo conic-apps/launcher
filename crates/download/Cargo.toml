@@ -14,11 +14,12 @@ config.workspace = true
 shared.workspace = true
 task.workspace = true
 
-futures.workspace = true
 log.workspace = true
 rayon.workspace = true
 serde.workspace = true
 tauri.workspace = true
-tokio.workspace = true
 anyhow.workspace = true
 sha1_smol.workspace = true
+async-fs.workspace = true
+async-io.workspace = true
+futures.workspace = true

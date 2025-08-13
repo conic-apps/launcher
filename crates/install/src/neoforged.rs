@@ -10,10 +10,10 @@ use std::{
 };
 
 use folder::DATA_LOCATION;
+use futures::AsyncWriteExt;
 use log::{error, info, trace};
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
-use tokio::io::AsyncWriteExt;
 
 /// Represents the list of Neoforged versions.
 #[derive(Deserialize, Serialize, Clone)]
@@ -111,12 +111,12 @@ pub async fn install(install_dir: &PathBuf, neoforged_version: &str) -> anyhow::
 
     let output = command.wait_with_output().unwrap();
     if !success || !output.status.success() {
-        tokio::fs::remove_file(installer_path).await?;
+        async_fs::remove_file(installer_path).await?;
         error!("Failed to ran neoforged installer");
         return Err(anyhow::Error::msg("Failed to ran neoforged installer"));
     }
 
-    tokio::fs::remove_file(installer_path).await?;
+    async_fs::remove_file(installer_path).await?;
     Ok(())
 }
 
@@ -143,19 +143,18 @@ async fn download_installer(neoforged_version: &str) -> anyhow::Result<PathBuf> 
                 .as_nanos(),
         )
     ));
-    tokio::fs::create_dir_all(
+    async_fs::create_dir_all(
         installer_path
             .parent()
             .ok_or(anyhow::Error::msg("Unknown Error"))?,
     )
     .await?;
 
-    let mut file = tokio::fs::File::create(&installer_path).await?;
+    let mut file = async_fs::File::create(&installer_path).await?;
     let response = HTTP_CLIENT.get(installer_url).send().await?;
     if !response.status().is_success() {
         return Err(anyhow::Error::msg("Neoforged website return error"));
     }
-
     let src = response.bytes().await?;
     file.write_all(&src).await?;
     Ok(installer_path)

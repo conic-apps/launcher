@@ -13,6 +13,7 @@ use std::{
     time::Duration,
 };
 
+use download::download_concurrent;
 use forge::ForgeVersionList;
 use log::{debug, info};
 use neoforged::NeoforgedVersionList;
@@ -22,14 +23,12 @@ use tauri::{
     Emitter, Runtime, command,
     plugin::{Builder, TauriPlugin},
 };
-use tokio::io::AsyncWriteExt;
 use vanilla::generate_download_info;
 
 use config::{
     Config,
     instance::{InstanceRuntime, ModLoaderType},
 };
-use download::download_files;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::Instance;
 use task::{Progress, Task};
@@ -141,7 +140,7 @@ pub async fn install(config: Config, instance: Instance) -> std::result::Result<
     .await
     .unwrap();
     info!("Start downloading file");
-    download_files(download_list, &progress, config.download, false)
+    download_concurrent(download_list, &progress, config.download)
         .await
         .unwrap();
     info!("Installing Java");
@@ -163,14 +162,14 @@ pub async fn install(config: Config, instance: Instance) -> std::result::Result<
         install_mod_loader(runtime).await.unwrap();
     };
     debug!("Saving lock file");
-    let mut lock_file = tokio::fs::File::create(
+    async_fs::write(
         DATA_LOCATION
             .get_instance_root(&instance.id)
             .join(".install.lock"),
+        b"ok",
     )
     .await
     .unwrap();
-    lock_file.write_all(b"ok").await.unwrap();
     MAIN_WINDOW.emit("install_success", "").unwrap();
     let _ = progress_sender_thread.join();
     Ok(())
