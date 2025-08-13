@@ -13,6 +13,11 @@ export default defineConfig({
             "@conic": fileURLToPath(new URL("./crates", import.meta.url)),
         },
     },
+    server: {
+        watch: {
+            ignored: ["**/target/**"],
+        },
+    },
     build: {
         minify: "esbuild",
         target: "chrome89",

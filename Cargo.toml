@@ -29,32 +29,33 @@ version = { path = "./crates/version", version = "0.0.0"}
 # NOTE: local crates that aren't published to crates.io. These should not have versions.
 
 # ----- non-local crates -----
-tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression"] }
+anyhow = "1"
+base64 = "0.22"
+env_logger = "0.11.5"
+fastnbt = "2.5.0"
+futures = "0.3"
+log = "0.4.22"
+num_cpus = "1"
+once_cell = "1"
+os_info = "3.12.0"
+rayon = "1"
+regex = { version = "1", default-features = false, features = ["std"] }
 reqwest = {version = "0.12.22", default-features = false, features = ["rustls-tls"]} # NOTE: If it cannot parsr non-utf8 json, add charset feature
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+serde_with = "3.14.0"
+sha1_smol = "1"
+sys-locale = "0.3.2"
+tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression"] }
+thiserror = "2"
 tokio = { version = "1", default-features = false, features = [
   "fs",
   "io-util",
 ] }
-futures = "0.3"
-anyhow = "1"
 toml = "0.9"
-once_cell = "1"
-base64 = "0.22"
-regex = { version = "1", default-features = false, features = ["std"] }
-zip = { version = "4", default-features = false, features = ["deflate"]}
-uuid = "1"
-fastnbt = "2.5.0"
-rayon = "1"
-sha1_smol = "1"
-log = "0.4.22"
-env_logger = "0.11.5"
-num_cpus = "1"
-sys-locale = "0.3.2"
-os_info = "3.12.0"
 url = "2"
-thiserror = "2"
+uuid = "1"
+zip = { version = "4", default-features = false, features = ["deflate"]}
 
 [profile.dev]
 incremental = true

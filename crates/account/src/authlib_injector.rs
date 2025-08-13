@@ -4,11 +4,10 @@
 
 use std::{
     collections::HashMap,
-    fs::{create_dir_all, read_to_string},
+    fs::read_to_string,
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use anyhow::Ok;
 use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -16,16 +15,33 @@ use shared::HTTP_CLIENT;
 use url::Url;
 use uuid::Uuid;
 
-pub async fn add_yggdrasil_server(api_root: &str) {
-    let parsed_api_root = normalize_url(api_root).unwrap();
-    let resolved_api_url = resolve_api_url(parsed_api_root.as_str()).await;
-    let mut servers = list_yggdrasil_server();
+use crate::error::*;
+
+pub async fn add_yggdrasil_server(api_root: &str) -> Result<()> {
+    let parsed_api_root = normalize_url(api_root)?;
+    let resolved_api_url = resolve_api_url(parsed_api_root.as_str()).await?;
+    let mut servers = list_yggdrasil_server()?;
     servers.push(resolved_api_url);
-    save_yggdrasil_servers(servers);
+    save_yggdrasil_servers(servers)?;
+    Ok(())
 }
 
-pub fn delete_yggdrasil_server(index_to_delete: usize) {
-    let servers = list_yggdrasil_server();
+/// If we don't know scheme, use https
+fn normalize_url(input: &str) -> Result<Url> {
+    let s = input.trim();
+    let s_lower = s.to_ascii_lowercase();
+    let fixed = if s_lower.starts_with("http://") || s_lower.starts_with("https://") {
+        s.to_string()
+    } else if s.starts_with("//") {
+        format!("https:{}", s)
+    } else {
+        format!("https://{}", s)
+    };
+    Ok(Url::parse(&fixed)?)
+}
+
+pub fn delete_yggdrasil_server(index_to_delete: usize) -> Result<()> {
+    let servers = list_yggdrasil_server()?;
     let mut result = vec![];
     for (index, server) in servers.iter().enumerate() {
         if index == index_to_delete {
@@ -33,53 +49,36 @@ pub fn delete_yggdrasil_server(index_to_delete: usize) {
         }
         result.push(server.to_string());
     }
-    save_yggdrasil_servers(result);
+    save_yggdrasil_servers(result)?;
+    Ok(())
 }
 
-fn save_yggdrasil_servers(servers: Vec<String>) {
+fn save_yggdrasil_servers(servers: Vec<String>) -> Result<()> {
     let path = DATA_LOCATION.root.join("yggdrasil_servers.json");
-    let contents = serde_json::to_string_pretty(&servers).unwrap();
-    std::fs::write(path, contents).unwrap();
+    let contents = serde_json::to_string_pretty(&servers)?;
+    std::fs::write(path, contents)?;
+    Ok(())
 }
 
-pub fn list_yggdrasil_server() -> Vec<String> {
+pub fn list_yggdrasil_server() -> Result<Vec<String>> {
     let path = DATA_LOCATION.root.join("yggdrasil_servers.json");
-    create_dir_all(path.parent().unwrap()).unwrap();
     if !path.exists() {
-        return vec![];
+        return Ok(vec![]);
     }
-    let data = read_to_string(path).unwrap();
-    serde_json::from_str(&data).unwrap()
+    let data = read_to_string(path)?;
+    Ok(serde_json::from_str(&data)?)
 }
 
-/// If we don't know scheme, use https
-fn normalize_url(input: &str) -> anyhow::Result<Url> {
-    let s = input.trim();
-
-    let s_lower = s.to_ascii_lowercase();
-
-    let fixed = if s_lower.starts_with("http://") || s_lower.starts_with("https://") {
-        s.to_string()
-    } else if s.starts_with("//") {
-        // protocol-relative -> 默认 https
-        format!("https:{}", s)
-    } else {
-        format!("https://{}", s)
-    };
-
-    Ok(Url::parse(&fixed)?)
-}
-
-async fn resolve_api_url(url: &str) -> String {
-    let response = HTTP_CLIENT.get(url).send().await.unwrap();
+async fn resolve_api_url(url: &str) -> Result<String> {
+    let response = HTTP_CLIENT.get(url).send().await?;
     let response_headers = response.headers();
     if let Some(api_location) = response_headers.get("x-authlib-injector-api-location") {
         // TODO: If error ,show a message said
         // server response incorrect, let your
         // server owner fix it
-        return api_location.to_str().unwrap().to_string();
+        return Ok(api_location.to_str()?.to_string());
     };
-    url.to_string()
+    Ok(url.to_string())
 }
 
 #[derive(Serialize, Deserialize)]
@@ -91,15 +90,8 @@ pub struct YggdrasilServerInfo {
     pub signature_public_key: String,
 }
 
-pub async fn get_yggdrasil_server_info(api_root: &str) -> YggdrasilServerInfo {
-    HTTP_CLIENT
-        .get(api_root)
-        .send()
-        .await
-        .unwrap()
-        .json()
-        .await
-        .unwrap()
+pub async fn get_yggdrasil_server_info(api_root: &str) -> Result<YggdrasilServerInfo> {
+    Ok(HTTP_CLIENT.get(api_root).send().await?.json().await?)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -131,7 +123,7 @@ struct ProfileResponse {
     name: String,
 }
 
-pub async fn login(api_root: &str, username: String, password: String) -> LoginResponse {
+pub async fn login(api_root: &str, username: String, password: String) -> Result<LoginResponse> {
     let request_body = LoginRequest {
         username,
         password,
@@ -140,22 +132,16 @@ pub async fn login(api_root: &str, username: String, password: String) -> LoginR
             version: 1,
         },
     };
-    HTTP_CLIENT
-        .post(
-            Url::parse(api_root)
-                .unwrap()
-                .join("authserver")
-                .unwrap()
-                .join("authenticate")
-                .unwrap(),
-        )
+    let request_url = Url::parse(api_root)?
+        .join("authserver")?
+        .join("authenticate")?;
+    Ok(HTTP_CLIENT
+        .post(request_url)
         .json(&request_body)
         .send()
-        .await
-        .unwrap()
+        .await?
         .json()
-        .await
-        .unwrap()
+        .await?)
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -169,8 +155,8 @@ pub struct AuthlibInjectorAccount {
     pub added_at: u64,
 }
 
-pub fn add_account(account: AuthlibInjectorAccount) {
-    let accounts = list_accounts();
+pub fn add_account(account: AuthlibInjectorAccount) -> Result<()> {
+    let accounts = list_accounts()?;
     let mut filtered_accounts = accounts
         .into_iter()
         .filter(|x| {
@@ -184,46 +170,51 @@ pub fn add_account(account: AuthlibInjectorAccount) {
         Uuid::from_u128(
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
-                .unwrap()
+                .expect("Error System Time")
                 .as_nanos(),
         ),
         account,
     );
-    save_accounts(filtered_accounts);
+    save_accounts(filtered_accounts)?;
+    Ok(())
 }
 
-pub async fn delete_account(account_key: Uuid) {
-    let mut accounts = list_accounts();
+pub async fn delete_account(account_key: Uuid) -> Result<()> {
+    let mut accounts = list_accounts()?;
     if let Some(removed_account) = accounts.remove(&account_key) {
         invalidate_token(
             &removed_account.api_root,
             removed_account.access_token,
             removed_account.client_token,
         )
-        .await;
+        .await?;
     };
-    save_accounts(accounts);
+    save_accounts(accounts)?;
+    Ok(())
 }
 
-fn save_accounts(accounts: HashMap<Uuid, AuthlibInjectorAccount>) {
+fn save_accounts(accounts: HashMap<Uuid, AuthlibInjectorAccount>) -> Result<()> {
     let path = DATA_LOCATION.root.join("accounts.authlib-injector.json");
-    let contents = serde_json::to_string_pretty(&accounts).unwrap();
-    std::fs::write(path, contents).unwrap();
+    let contents = serde_json::to_string_pretty(&accounts)?;
+    std::fs::write(path, contents)?;
+    Ok(())
 }
 
-pub fn list_accounts() -> HashMap<Uuid, AuthlibInjectorAccount> {
+pub fn list_accounts() -> Result<HashMap<Uuid, AuthlibInjectorAccount>> {
     let path = DATA_LOCATION.root.join("accounts.authlib-injector.json");
-    create_dir_all(path.parent().unwrap()).unwrap();
     if !path.exists() {
-        return HashMap::new();
+        return Ok(HashMap::new());
     }
-    let data = read_to_string(path).unwrap();
-    serde_json::from_str(&data).unwrap()
+    let data = read_to_string(path)?;
+    Ok(serde_json::from_str(&data)?)
 }
 
-pub fn get_account(account_key: Uuid) -> Option<AuthlibInjectorAccount> {
-    let accounts = list_accounts();
-    accounts.get(&account_key).cloned()
+pub fn get_account(account_key: Uuid) -> Result<AuthlibInjectorAccount> {
+    let accounts = list_accounts()?;
+    accounts
+        .get(&account_key)
+        .ok_or(Error::AccountNotfound(account_key))
+        .cloned()
 }
 
 #[derive(Serialize, Deserialize)]
@@ -239,20 +230,17 @@ pub struct ProfileProperty {
     value: String,
 }
 
-pub async fn get_profile_info(api_root: &str, uuid: &str) -> Profile {
-    HTTP_CLIENT
+pub async fn get_profile_info(api_root: &str, uuid: Uuid) -> Result<Profile> {
+    let uuid = uuid.simple().to_string();
+    Ok(HTTP_CLIENT
         .get(
-            Url::parse(api_root)
-                .unwrap()
-                .join(&format!("sessionserver/session/minecraft/profile/{uuid}"))
-                .unwrap(),
+            Url::parse(api_root)?
+                .join(&format!("sessionserver/session/minecraft/profile/{uuid}"))?,
         )
         .send()
-        .await
-        .unwrap()
+        .await?
         .json()
-        .await
-        .unwrap()
+        .await?)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -279,35 +267,37 @@ struct RefreshResponse {
 }
 
 /// If failed, enter password, then invoke `relogin_account()`
-pub async fn check_and_refresh_account(account_key: Uuid) {
-    let accounts = list_accounts();
-    let selected_account = accounts.get(&account_key).unwrap().clone();
+pub async fn check_and_refresh_account(account_key: Uuid) -> Result<()> {
+    let accounts = list_accounts()?;
+    let selected_account = accounts
+        .get(&account_key)
+        .ok_or(Error::AccountNotfound(account_key))?
+        .clone();
     let request_body = VerifyRequest {
         access_token: selected_account.access_token.clone(),
         client_token: selected_account.client_token.clone(),
     };
+    let request_url = Url::parse(&selected_account.api_root)?.join("authserver/validate")?;
     let status = HTTP_CLIENT
-        .get(
-            Url::parse(&selected_account.api_root)
-                .unwrap()
-                .join("authserver/validate")
-                .unwrap(),
-        )
+        .get(request_url)
         .json(&request_body)
         .send()
-        .await
-        .unwrap()
+        .await?
         .status()
         .as_u16();
     if status == 204 {
-        return;
+        return Ok(());
     }
-    refresh_account(account_key).await;
+    refresh_account(account_key).await?;
+    Ok(())
 }
 
-pub async fn refresh_account(account_key: Uuid) {
-    let mut accounts = list_accounts();
-    let selected_account = accounts.get(&account_key).unwrap().clone();
+pub async fn refresh_account(account_key: Uuid) -> Result<()> {
+    let mut accounts = list_accounts()?;
+    let selected_account = accounts
+        .get(&account_key)
+        .ok_or(Error::AccountNotfound(account_key))?
+        .clone();
 
     let refresh_request = RefreshRequest {
         access_token: selected_account.access_token,
@@ -317,20 +307,14 @@ pub async fn refresh_account(account_key: Uuid) {
             name: selected_account.profile_name,
         },
     };
+    let request_url = Url::parse(&selected_account.api_root)?.join("authserver/refresh")?;
     let refresh_response: RefreshResponse = HTTP_CLIENT
-        .get(
-            Url::parse(&selected_account.api_root)
-                .unwrap()
-                .join("authserver/refresh")
-                .unwrap(),
-        )
+        .get(request_url)
         .json(&refresh_request)
         .send()
-        .await
-        .unwrap()
+        .await?
         .json()
-        .await
-        .unwrap();
+        .await?;
     let new_account = AuthlibInjectorAccount {
         access_token: refresh_response.access_token,
         client_token: refresh_response.client_token,
@@ -341,18 +325,22 @@ pub async fn refresh_account(account_key: Uuid) {
         added_at: selected_account.added_at,
     };
     accounts.insert(account_key, new_account);
-    save_accounts(accounts);
+    save_accounts(accounts)?;
+    Ok(())
 }
 
-pub async fn relogin_account(account_key: Uuid, password: String) -> anyhow::Result<()> {
-    let mut accounts = list_accounts();
-    let selected_account = accounts.get(&account_key).unwrap().clone();
+pub async fn relogin_account(account_key: Uuid, password: String) -> Result<()> {
+    let mut accounts = list_accounts()?;
+    let selected_account = accounts
+        .get(&account_key)
+        .ok_or(Error::AccountNotfound(account_key))?
+        .clone();
     let login_response = login(
         &selected_account.api_root,
         selected_account.account_identifier.clone(),
         password,
     )
-    .await;
+    .await?;
     if let Some(selected_profile) = login_response.selected_profile {
         if selected_profile.id == selected_account.profile_uuid {
             accounts.insert(
@@ -368,7 +356,7 @@ pub async fn relogin_account(account_key: Uuid, password: String) -> anyhow::Res
                 },
             );
         } else {
-            return Err(anyhow::anyhow!("The profile has been removed"));
+            return Err(Error::ProfileUnavailable);
         }
     } else {
         let selected_profile_vec = login_response
@@ -390,10 +378,10 @@ pub async fn relogin_account(account_key: Uuid, password: String) -> anyhow::Res
                 },
             );
         } else {
-            return Err(anyhow::anyhow!("The profile has been removed"));
+            return Err(Error::ProfileUnavailable);
         }
     }
-    save_accounts(accounts);
+    save_accounts(accounts)?;
     Ok(())
 }
 
@@ -404,20 +392,20 @@ struct InvalidateRequest {
     client_token: String,
 }
 
-pub async fn invalidate_token(api_root: &str, access_token: String, client_token: String) {
+pub async fn invalidate_token(
+    api_root: &str,
+    access_token: String,
+    client_token: String,
+) -> Result<()> {
     let request_body = InvalidateRequest {
         access_token,
         client_token,
     };
+    let request_url = Url::parse(api_root)?.join("authserver/invalidate")?;
     HTTP_CLIENT
-        .post(
-            Url::parse(api_root)
-                .unwrap()
-                .join("authserver/invalidate")
-                .unwrap(),
-        )
+        .post(request_url)
         .json(&request_body)
         .send()
-        .await
-        .unwrap();
+        .await?;
+    Ok(())
 }
