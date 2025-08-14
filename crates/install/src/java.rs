@@ -2,15 +2,15 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use download::task::Progress;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
 #[cfg(not(windows))]
 use std::os::unix::fs::PermissionsExt;
 use std::{collections::HashMap, path::Path};
-use task::Progress;
 
-use download::{DownloadTask, DownloadType, download_and_check};
+use download::{DownloadTask, DownloadType};
 use platform::{OsFamily, PLATFORM_INFO};
 
 use crate::error::*;
@@ -235,7 +235,7 @@ async fn download_files(downloads: Vec<DownloadTask>) -> Result<()> {
         while retried <= 5 {
             retried += 1;
             let progress = Progress::default();
-            match download_and_check(&download, &progress).await {
+            match download::download(&download, &progress).await {
                 Ok(_) => break,
                 Err(_) => warn!("Downloaded failed: {}, retried: {}", &download.url, retried),
             }

@@ -50,7 +50,7 @@ pub enum Error {
     ResolveVersionJsonFailed(
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]
-        version::error::Error,
+        version::Error,
     ),
     #[error("{0}")]
     Sha1Missmatch(String),
@@ -64,18 +64,25 @@ pub enum Error {
 
     #[error("No supported java runtime")]
     NoSupportedJavaRuntime,
+
+    #[error(transparent)]
+    Aborted(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        futures::future::Aborted,
+    ),
 }
 
-impl From<download::error::Error> for Error {
-    fn from(value: download::error::Error) -> Self {
+impl From<download::Error> for Error {
+    fn from(value: download::Error) -> Self {
         match value {
-            download::error::Error::Io(error) => Self::Io(error),
-            download::error::Error::Sha1Missmatch(error) => Self::Sha1Missmatch(error),
-            download::error::Error::Network(error) => Self::Network(error),
-            download::error::Error::HttpResponseNotSuccess(code, message) => {
+            download::Error::Io(error) => Self::Io(error),
+            download::Error::Sha1Missmatch(error) => Self::Sha1Missmatch(error),
+            download::Error::Network(error) => Self::Network(error),
+            download::Error::HttpResponseNotSuccess(code, message) => {
                 Self::HttpResponseNotSuccess(code, message)
             }
-            download::error::Error::UrlParse(error) => Self::UrlParse(error),
+            download::Error::UrlParse(error) => Self::UrlParse(error),
         }
     }
 }

@@ -23,29 +23,27 @@ install = { path = "./crates/install", version = "0.0.0"}
 instance = { path = "./crates/instance", version = "0.0.0"}
 launch = { path = "./crates/launch", version = "0.0.0"}
 platform = { path = "./crates/platform", version = "0.0.0"}
-task = { path = "./crates/task", version = "0.0.0"}
 version = { path = "./crates/version", version = "0.0.0"}
 
 # NOTE: local crates that aren't published to crates.io. These should not have versions.
 
 # ----- non-local crates -----
-anyhow = "1"
-async-fs = "2.1.3"
-async-io = "2.5.0"
+async-fs = "2"
+async-io = "2"
 base64 = "0.22"
 env_logger = "0.11.5"
-fastnbt = "2.5.0"
+fastnbt = "2"
 futures = "0.3"
 log = "0.4.22"
 num_cpus = "1"
 once_cell = "1"
-os_info = "3.12.0"
+os_info = "3"
 rayon = "1"
 regex = { version = "1", default-features = false, features = ["std"] }
 reqwest = {version = "0.12.22", default-features = false, features = ["rustls-tls"]} # NOTE: If it cannot parsr non-utf8 json, add charset feature
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_with = "3.14.0"
+serde_with = "3"
 sha1_smol = "1"
 sys-locale = "0.3.2"
 tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression"] }
