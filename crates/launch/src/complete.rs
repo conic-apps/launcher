@@ -8,10 +8,10 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use log::{info, warn};
+use config::download::DownloadConfig;
+use log::info;
 
 use download::task::Progress;
-use download::{DownloadTask, filter_existing_and_verified_files};
 use folder::{DATA_LOCATION, MinecraftLocation};
 use install::vanilla::{generate_assets_downloads, generate_libraries_downloads};
 use instance::Instance;
@@ -33,6 +33,8 @@ use crate::error::*;
 pub async fn complete_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,
+    progress: Progress,
+    config: DownloadConfig,
 ) -> Result<()> {
     // TODO: Parallel
     let assets_lock_file = DATA_LOCATION
@@ -45,7 +47,13 @@ pub async fn complete_files(
         info!("Found file \".conic-assets-ok\", no need to check assets files.");
     } else {
         info!("Checking and completing assets files");
-        complete_assets_files(instance, minecraft_location).await?;
+        complete_assets_files(
+            instance,
+            minecraft_location,
+            progress.clone(),
+            config.clone(),
+        )
+        .await?;
         info!("Saving assets lock file");
         let _ = save_lock_file(&assets_lock_file).await;
     }
@@ -53,7 +61,7 @@ pub async fn complete_files(
         info!("Found file \".conic-libraries-ok\", no need to check libraries files.");
     } else {
         info!("Checking and completing libraries files");
-        complete_libraries_files(instance, minecraft_location).await?;
+        complete_libraries_files(instance, minecraft_location, progress, config).await?;
         info!("Saving libraries lock file");
         let _ = save_lock_file(&libraries_lock_file).await;
     }
@@ -89,6 +97,8 @@ async fn save_lock_file(path: &PathBuf) -> Result<()> {
 async fn complete_assets_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,
+    progress: Progress,
+    config: DownloadConfig,
 ) -> Result<()> {
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
     let raw_version_json = async_fs::read_to_string(version_json_path).await?;
@@ -100,11 +110,7 @@ async fn complete_assets_files(
     .await?;
 
     let assets_downloads = generate_assets_downloads(minecraft_location, &resolved_version).await?;
-    let progress = Progress::default(); // TODO: send it to frontend
-    let downloads = filter_existing_and_verified_files(assets_downloads, &progress);
-    if !downloads.is_empty() {
-        download_files(downloads).await?; // TODO: use download module
-    }
+    download::download_concurrent(assets_downloads, &progress, config).await?; // TODO: use download module
     Ok(())
 }
 
@@ -112,6 +118,8 @@ async fn complete_assets_files(
 async fn complete_libraries_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,
+    progress: Progress,
+    config: DownloadConfig,
 ) -> Result<()> {
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
     let raw_version_json = async_fs::read_to_string(version_json_path).await?;
@@ -123,26 +131,6 @@ async fn complete_libraries_files(
     .await?;
 
     let library_downloads = generate_libraries_downloads(minecraft_location, &resolved_version);
-    let progress = Progress::default(); // TODO: send it to frontend
-    let downloads = filter_existing_and_verified_files(library_downloads, &progress);
-    if !downloads.is_empty() {
-        download_files(downloads).await?; // TODO: use download module
-    }
-    Ok(())
-}
-
-// TODO: Remove this
-async fn download_files(downloads: Vec<DownloadTask>) -> Result<()> {
-    for download in downloads {
-        let mut retried = 0;
-        while retried <= 5 {
-            retried += 1;
-            let progress = Progress::default();
-            match download::download(&download, &progress).await {
-                Ok(_) => break,
-                Err(_) => warn!("Download failed: {}, retried: {}", &download.url, retried),
-            }
-        }
-    }
+    download::download_concurrent(library_downloads, &progress, config).await?;
     Ok(())
 }

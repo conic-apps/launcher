@@ -6,21 +6,29 @@ use std::{
     io::BufRead,
     process::{Command, Stdio},
     str::FromStr,
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
     thread,
+    time::{Duration, Instant},
 };
 
 use account::check_and_refresh_account;
 use arguments::generate_command_arguments;
 use complete::complete_files;
 use config::Config;
-use folder::{DATA_LOCATION, MinecraftLocation};
+use download::task::Progress;
+use folder::DATA_LOCATION;
+use futures::future::{AbortHandle, Abortable};
 use instance::Instance;
 use log::{error, info, trace};
 use options::LaunchOptions;
 use platform::{OsFamily, PLATFORM_INFO};
 use serde::Serialize;
 use tauri::{
-    Runtime, command,
+    Runtime, State, command,
+    ipc::Channel,
     plugin::{Builder, TauriPlugin},
 };
 use uuid::Uuid;
@@ -33,15 +41,80 @@ mod options;
 
 use error::*;
 
+#[derive(Clone, Default)]
+struct PluginState {
+    current_task: Arc<Mutex<Option<AbortHandle>>>,
+}
+
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("launch")
-        .invoke_handler(tauri::generate_handler![cmd_launch])
+        .invoke_handler(tauri::generate_handler![
+            cmd_create_launch_task,
+            cmd_cancel_launch_task
+        ])
         .build()
 }
 
+#[derive(Clone, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "job", content = "progress")]
+pub enum LaunchEvent {
+    Prepare,
+    RefreshAccount,
+    CompleteFiles(Progress),
+    GenerateScriptlet,
+    WaitForLaunch,
+    LogSettingUser,
+    LogLwjglVersion,
+    LogOpenALLoaded,
+    LogTextureLoaded,
+}
+
 #[command]
-async fn cmd_launch(config: Config, instance: Instance) -> Result<()> {
-    launch(config, instance).await
+async fn cmd_create_launch_task(
+    state: State<'_, PluginState>,
+    config: Config,
+    instance: Instance,
+    channel: Channel<LaunchEvent>,
+) -> Result<u32> {
+    if state.current_task.lock().expect("Internal error").is_some() {
+        return Err(Error::AlreadyInLaunching);
+    }
+    let status = Arc::new(Mutex::new(LaunchEvent::Prepare));
+    let (handle, reg) = AbortHandle::new_pair();
+    let future = Abortable::new(launch(config, instance, status.clone()), reg);
+    {
+        let mut current_task = state.current_task.lock().expect("Internal error");
+        *current_task = Some(handle);
+    }
+    let finished = Arc::new(AtomicBool::new(false));
+    let event_sender_thread = {
+        let status_cloned = status.clone();
+        let finished = finished.clone();
+        thread::spawn(move || {
+            while !finished.load(Ordering::SeqCst) {
+                let _ = channel.send(status_cloned.lock().expect("Internal error").clone());
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        })
+    };
+    let result = match future.await {
+        Ok(result) => result,
+        Err(e) => Err(Error::Aborted(e)),
+    };
+    finished.store(true, Ordering::SeqCst);
+    let _ = event_sender_thread.join();
+    result
+}
+
+#[command]
+async fn cmd_cancel_launch_task(state: State<'_, PluginState>) -> Result<()> {
+    let mut current_task = state.current_task.lock().expect("Internal error");
+    if let Some(handle) = current_task.clone() {
+        handle.abort();
+    }
+    *current_task = None;
+    Ok(())
 }
 
 /// Represents a log message associated with a specific instance.
@@ -69,7 +142,11 @@ pub struct Log {
 /// * Refreshes the selected account if configured to do so.
 /// * Optionally checks files before launch.
 /// * Spawns the Minecraft process and generates launch script.
-pub async fn launch(config: Config, instance: Instance) -> Result<()> {
+pub async fn launch(
+    config: Config,
+    instance: Instance,
+    status: Arc<Mutex<LaunchEvent>>,
+) -> Result<u32> {
     info!(
         "Starting Minecraft client, instance: {}",
         instance.config.name
@@ -86,6 +163,10 @@ pub async fn launch(config: Config, instance: Instance) -> Result<()> {
     };
 
     if !config.launch.skip_refresh_account {
+        {
+            let mut status = status.lock().expect("Internal error");
+            *status = LaunchEvent::RefreshAccount;
+        }
         check_and_refresh_account(config.current_account_uuid, &config.current_account_type)
             .await?;
     } else {
@@ -100,10 +181,19 @@ pub async fn launch(config: Config, instance: Instance) -> Result<()> {
     if config.launch.skip_check_files {
         info!("File checking disabled by user")
     } else {
-        complete_files(&instance, &minecraft_location).await?;
+        let progress = Progress::default();
+        {
+            let mut status = status.lock().expect("Internal error");
+            *status = LaunchEvent::CompleteFiles(progress.clone());
+        }
+        complete_files(&instance, &minecraft_location, progress, config.download).await?;
     }
 
     info!("Generating startup parameters");
+    {
+        let mut status = status.lock().expect("Internal error");
+        *status = LaunchEvent::GenerateScriptlet;
+    }
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
     let raw_version_json = async_fs::read_to_string(version_json_path).await?;
     let resolved_version = resolve_version(
@@ -112,7 +202,6 @@ pub async fn launch(config: Config, instance: Instance) -> Result<()> {
         &[],
     )
     .await?;
-    let version_id = resolved_version.id.clone();
     let command_arguments = generate_command_arguments(
         &minecraft_location,
         &instance,
@@ -120,20 +209,12 @@ pub async fn launch(config: Config, instance: Instance) -> Result<()> {
         resolved_version,
     )
     .await?;
-    thread::spawn(move || {
-        let result = spawn_minecraft_process(
-            command_arguments,
-            minecraft_location,
-            launch_options,
-            version_id,
-            instance,
-        );
-        if let Err(e) = result {
-            error!("Minecraft process monitor error: {e}");
-            // TODO: Send error to fronend
-        }
-    });
-    Ok(())
+    let result = spawn_minecraft_process(command_arguments, launch_options, instance, status).await;
+    if let Err(e) = &result {
+        error!("Failed to spawn Minecraft process: {e}");
+        // TODO: Send error to fronend
+    }
+    result
 }
 
 /// Spawns the Minecraft process by generating and executing a launch script,
@@ -152,13 +233,15 @@ pub async fn launch(config: Config, instance: Instance) -> Result<()> {
 /// * Streams stdout to detect key launch indicators and forward logs to the frontend.
 /// * Emits `launch_success` event once LWJGL is detected.
 /// * Handles cleanup of native libraries after game launch completes.
-fn spawn_minecraft_process(
+async fn spawn_minecraft_process(
     command_arguments: Vec<String>,
-    minecraft_location: MinecraftLocation,
     launch_options: LaunchOptions,
-    version_id: String,
     instance: Instance,
-) -> Result<()> {
+    status: Arc<Mutex<LaunchEvent>>,
+) -> Result<u32> {
+    // TODO: 要求 Java 使用高性能显卡
+    let minecraft_location = launch_options.minecraft_location.clone();
+    let version_id = instance.get_version_id()?;
     let native_root = minecraft_location.get_natives_root(&version_id);
     let instance_root = DATA_LOCATION.get_instance_root(&instance.id);
     let mut commands = String::new();
@@ -218,32 +301,67 @@ fn spawn_minecraft_process(
     }
     .stdout(Stdio::piped())
     .spawn()?;
+    {
+        let mut status = status.lock().expect("Internal error");
+        *status = LaunchEvent::WaitForLaunch;
+    }
     info!("Spawning minecraft process");
     let out = minecraft_process
         .stdout
         .take()
         .ok_or(Error::TakeMinecraftStdoutFailed)?;
     let mut out = std::io::BufReader::new(out);
-    let mut buf = String::new();
     let pid = minecraft_process.id();
-    while out.read_line(&mut buf).is_ok() {
-        if let Ok(Some(_)) = minecraft_process.try_wait() {
-            break;
-        }
-        let lines: Vec<_> = buf.split("\n").collect();
-        if let Some(last) = lines.get(lines.len() - 2) {
-            trace!("[{pid}] {last}");
-            if last.to_lowercase().contains("lwjgl version") {
-                info!("Found LWJGL version, the game seems to have started successfully.");
+    let status_cloned = status.clone();
+    thread::spawn(move || {
+        let mut buf = String::new();
+        while out.read_line(&mut buf).is_ok() {
+            if let Ok(Some(_)) = minecraft_process.try_wait() {
+                break;
+            }
+            let lines: Vec<_> = buf.split("\n").collect();
+            if let Some(last) = lines.get(lines.len() - 2) {
+                trace!("[{pid}] {last}");
+                if last.contains("Setting user:") {
+                    let mut status = status.lock().expect("Internal error");
+                    *status = LaunchEvent::LogSettingUser;
+                }
+                if last.to_lowercase().contains("lwjgl version") {
+                    info!("Found LWJGL version, the game seems to have started successfully.");
+                    let mut status = status.lock().expect("Internal error");
+                    *status = LaunchEvent::LogLwjglVersion;
+                }
+                if last.contains("OpenAL initialized") {
+                    let mut status = status.lock().expect("Internal error");
+                    *status = LaunchEvent::LogOpenALLoaded;
+                }
+                if last.contains("Created") {
+                    let mut status = status.lock().expect("Internal error");
+                    *status = LaunchEvent::LogTextureLoaded;
+                }
             }
         }
+        let output = match minecraft_process.wait_with_output() {
+            Ok(output) => output,
+            Err(_) => {
+                error!("Could not get Minecrafr exit code");
+                return;
+            }
+        };
+        if !output.status.success() {
+            // TODO: log analysis and remove libraries lock file
+            // NOTE: Should use tauri global event here
+            // WARN: When failed, frontend should stop all "launching" animation
+            error!("Minecraft exits with error code {}", output.status);
+        } else {
+            info!("Minecraft exits with error code {}", output.status);
+        }
+    });
+    let start = Instant::now();
+    while start.elapsed().as_secs() < 60
+        && *status_cloned.lock().expect("Internal error") != LaunchEvent::LogTextureLoaded
+    {
+        async_io::Timer::after(Duration::from_secs(1)).await;
     }
-    let output = minecraft_process.wait_with_output()?;
-    if !output.status.success() {
-        // TODO: log analysis and remove libraries lock file
-        error!("Minecraft exits with error code {}", output.status);
-    } else {
-        info!("Minecraft exits with error code {}", output.status);
-    }
-    Ok(())
+    Ok(pid)
 }

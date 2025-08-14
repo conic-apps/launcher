@@ -33,3 +33,5 @@ sha1_smol.workspace = true
 thiserror.workspace = true
 serde_with.workspace = true
 reqwest.workspace = true
+futures.workspace = true
+async-io.workspace = true

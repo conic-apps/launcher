@@ -14,6 +14,8 @@ pub type Result<T> = result::Result<T, Error>;
 #[derive(Debug, Error, Serialize)]
 #[serde(tag = "kind", content = "message")]
 pub enum Error {
+    #[error("Another instance is launching")]
+    AlreadyInLaunching,
     #[error(transparent)]
     Io(
         #[from]
@@ -52,6 +54,19 @@ pub enum Error {
     #[error(transparent)]
     AccountError(#[from] account::Error),
 
+    #[error(transparent)]
+    Aborted(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        futures::future::Aborted,
+    ),
+
+    #[error("{0}")]
+    Sha1Missmatch(String),
+
+    #[error("{0} {1}")]
+    HttpResponseNotSuccess(u16, String),
+
     #[error("Unhandled Error")]
     Other,
 }
@@ -88,6 +103,20 @@ impl From<install::Error> for Error {
             install::Error::JsonParse(error) => Self::VersionJsonParse(error),
             install::Error::InvalidVersionJson(error) => Self::InvalidVersionJson(error),
             _ => Self::Other,
+        }
+    }
+}
+
+impl From<download::Error> for Error {
+    fn from(value: download::Error) -> Self {
+        match value {
+            download::Error::Io(e) => Self::Io(e),
+            download::Error::Sha1Missmatch(e) => Self::Sha1Missmatch(e),
+            download::Error::Network(e) => Self::Network(e),
+            download::Error::HttpResponseNotSuccess(code, message) => {
+                Self::HttpResponseNotSuccess(code, message)
+            }
+            download::Error::UrlParse(_) => Self::Other,
         }
     }
 }
