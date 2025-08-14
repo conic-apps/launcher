@@ -9,7 +9,7 @@ use shared::HTTP_CLIENT;
 
 use download::{DownloadTask, DownloadType};
 use folder::MinecraftLocation;
-use version::{self, AssetIndexObject, ResolvedVersion};
+use version::{self, AssetIndexObject, ResolvedLibrary, ResolvedVersion, resolve_version};
 
 use serde::{Deserialize, Serialize};
 
@@ -67,9 +67,12 @@ pub async fn generate_download_info(
     minecraft_location: MinecraftLocation,
 ) -> Result<Vec<DownloadTask>> {
     let raw_version_json = get_version_json(version_id).await?;
-    let resolved_version = version::Version::from_str(&raw_version_json)?
-        .resolve(&minecraft_location, &[])
-        .await?;
+    let resolved_version = resolve_version(
+        &version::Version::from_str(&raw_version_json)?,
+        &minecraft_location,
+        &[],
+    )
+    .await?;
     let resolved_version_id = &resolved_version.id;
 
     save_version_json(&minecraft_location, resolved_version_id, &raw_version_json).await?;
@@ -159,15 +162,20 @@ pub fn generate_libraries_downloads(
 ) -> Vec<DownloadTask> {
     let libraries = resolved_version.libraries.clone();
     libraries
-        .iter()
-        .cloned()
-        .map(|library| DownloadTask {
-            url: library.download_info.url,
-            file: minecraft_location
-                .libraries
-                .join(library.download_info.path),
-            sha1: library.download_info.sha1,
-            r#type: DownloadType::Unknown,
+        .into_iter()
+        .map(|library| {
+            let library_download_info = match library {
+                ResolvedLibrary::Native(download_info) => download_info,
+                ResolvedLibrary::Common(download_info) => download_info,
+            };
+            DownloadTask {
+                url: library_download_info.url,
+                file: minecraft_location
+                    .libraries
+                    .join(library_download_info.path),
+                sha1: library_download_info.sha1,
+                r#type: DownloadType::Libraries,
+            }
         })
         .collect()
 }

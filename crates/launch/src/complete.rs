@@ -6,12 +6,12 @@ use std::str::FromStr;
 
 use log::{info, warn};
 
-use download::{DownloadTask, download_and_check, filter_existing_and_verified_files};
+use download::task::Progress;
+use download::{DownloadTask, filter_existing_and_verified_files};
 use folder::{DATA_LOCATION, MinecraftLocation};
 use install::vanilla::{generate_assets_downloads, generate_libraries_downloads};
 use instance::Instance;
-use task::Progress;
-use version::Version;
+use version::{Version, resolve_version};
 
 use crate::error::*;
 
@@ -63,9 +63,12 @@ async fn complete_assets_files(
 ) -> Result<()> {
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
     let raw_version_json = async_fs::read_to_string(version_json_path).await?;
-    let resolved_version = Version::from_str(&raw_version_json)?
-        .resolve(minecraft_location, &[])
-        .await?;
+    let resolved_version = resolve_version(
+        &Version::from_str(&raw_version_json)?,
+        minecraft_location,
+        &[],
+    )
+    .await?;
 
     let assets_downloads = generate_assets_downloads(minecraft_location, &resolved_version).await?;
     let progress = Progress::default(); // TODO: send it to frontend
@@ -83,9 +86,12 @@ async fn complete_libraries_files(
 ) -> Result<()> {
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
     let raw_version_json = async_fs::read_to_string(version_json_path).await?;
-    let resolved_version = Version::from_str(&raw_version_json)?
-        .resolve(minecraft_location, &[])
-        .await?;
+    let resolved_version = resolve_version(
+        &Version::from_str(&raw_version_json)?,
+        minecraft_location,
+        &[],
+    )
+    .await?;
 
     let library_downloads = generate_libraries_downloads(minecraft_location, &resolved_version);
     let progress = Progress::default(); // TODO: send it to frontend
@@ -103,7 +109,7 @@ async fn download_files(downloads: Vec<DownloadTask>) -> Result<()> {
         while retried <= 5 {
             retried += 1;
             let progress = Progress::default();
-            match download_and_check(&download, &progress).await {
+            match download::download(&download, &progress).await {
                 Ok(_) => break,
                 Err(_) => warn!("Download failed: {}, retried: {}", &download.url, retried),
             }

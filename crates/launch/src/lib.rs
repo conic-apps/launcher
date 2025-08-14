@@ -24,7 +24,7 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
 };
 use uuid::Uuid;
-use version::Version;
+use version::{Version, resolve_version};
 
 mod arguments;
 mod complete;
@@ -106,9 +106,12 @@ pub async fn launch(config: Config, instance: Instance) -> Result<()> {
     info!("Generating startup parameters");
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
     let raw_version_json = async_fs::read_to_string(version_json_path).await?;
-    let resolved_version = Version::from_str(&raw_version_json)?
-        .resolve(&minecraft_location, &[])
-        .await?;
+    let resolved_version = resolve_version(
+        &Version::from_str(&raw_version_json)?,
+        &minecraft_location,
+        &[],
+    )
+    .await?;
     let version_id = resolved_version.id.clone();
     let command_arguments = generate_command_arguments(
         &minecraft_location,

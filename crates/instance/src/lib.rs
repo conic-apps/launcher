@@ -16,9 +16,9 @@ use tauri::plugin::{Builder, TauriPlugin};
 use tauri::{Runtime, command};
 use uuid::Uuid;
 
-pub mod error;
+mod error;
 
-use error::*;
+pub use error::*;
 
 static LATEST_RELEASE_INSTANCE_NAME: &str = "Latest Release";
 static LATEST_SNAPSHOT_INSTANCE_NAME: &str = "Latest Snapshot";

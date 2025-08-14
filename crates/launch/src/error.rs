@@ -50,45 +50,43 @@ pub enum Error {
     TakeMinecraftStdoutFailed,
 
     #[error(transparent)]
-    AccountError(#[from] account::error::Error),
+    AccountError(#[from] account::Error),
 
     #[error("Unhandled Error")]
     Other,
 }
 
-impl From<version::error::Error> for Error {
-    fn from(value: version::error::Error) -> Self {
+impl From<version::Error> for Error {
+    fn from(value: version::Error) -> Self {
         match value {
-            version::error::Error::Io(error) => Self::Io(error),
-            version::error::Error::JsonParse(error) => Self::VersionJsonParse(error),
-            version::error::Error::InvalidVersionJson => Self::InvalidVersionJson("".to_string()),
-            version::error::Error::InvalidMinecraftVersion => Self::InvalidMinecraftVersion,
+            version::Error::Io(error) => Self::Io(error),
+            version::Error::JsonParse(error) => Self::VersionJsonParse(error),
+            version::Error::InvalidVersionJson => Self::InvalidVersionJson("".to_string()),
+            version::Error::InvalidMinecraftVersion => Self::InvalidMinecraftVersion,
         }
     }
 }
 
-impl From<instance::error::Error> for Error {
-    fn from(value: instance::error::Error) -> Self {
+impl From<instance::Error> for Error {
+    fn from(value: instance::Error) -> Self {
         match value {
-            instance::error::Error::Io(error) => Self::Io(error),
-            instance::error::Error::TomlSerialize(error) => {
-                Self::InvalidInstance(error.to_string())
-            }
-            instance::error::Error::InvalidInstanceConfig => {
+            instance::Error::Io(error) => Self::Io(error),
+            instance::Error::TomlSerialize(error) => Self::InvalidInstance(error.to_string()),
+            instance::Error::InvalidInstanceConfig => {
                 Self::InvalidInstance("Invalid instance config".to_string())
             }
         }
     }
 }
 
-impl From<install::error::Error> for Error {
-    fn from(value: install::error::Error) -> Self {
+impl From<install::Error> for Error {
+    fn from(value: install::Error) -> Self {
         match value {
-            install::error::Error::Io(error) => Self::Io(error),
-            install::error::Error::Network(error) => Self::Network(error),
-            install::error::Error::InstanceBroken => Self::InvalidInstance("".to_string()),
-            install::error::Error::JsonParse(error) => Self::VersionJsonParse(error),
-            install::error::Error::InvalidVersionJson(error) => Self::InvalidVersionJson(error),
+            install::Error::Io(error) => Self::Io(error),
+            install::Error::Network(error) => Self::Network(error),
+            install::Error::InstanceBroken => Self::InvalidInstance("".to_string()),
+            install::Error::JsonParse(error) => Self::VersionJsonParse(error),
+            install::Error::InvalidVersionJson(error) => Self::InvalidVersionJson(error),
             _ => Self::Other,
         }
     }

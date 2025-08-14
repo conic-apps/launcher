@@ -7,6 +7,8 @@
 //! This module re-exports the `install` function from the `install` submodule,
 //! and exposes the `version_list` submodule for managing Forge versions.
 
+// TODO: Add other install method to make it faster
+
 use std::{
     io::BufRead,
     path::PathBuf,
