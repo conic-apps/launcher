@@ -2,7 +2,11 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::str::FromStr;
+use std::{
+    path::PathBuf,
+    str::FromStr,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use log::{info, warn};
 
@@ -37,22 +41,47 @@ pub async fn complete_files(
     let libraries_lock_file = DATA_LOCATION
         .get_instance_root(&instance.id)
         .join(".conic-libraries-ok");
-    if std::fs::metadata(&assets_lock_file).is_ok() {
+    if try_load_lock_file(&assets_lock_file).await.is_some() {
         info!("Found file \".conic-assets-ok\", no need to check assets files.");
     } else {
         info!("Checking and completing assets files");
         complete_assets_files(instance, minecraft_location).await?;
         info!("Saving assets lock file");
-        std::fs::write(assets_lock_file, "ok")?;
+        let _ = save_lock_file(&assets_lock_file).await;
     }
-    if std::fs::metadata(&libraries_lock_file).is_ok() {
+    if try_load_lock_file(&libraries_lock_file).await.is_some() {
         info!("Found file \".conic-libraries-ok\", no need to check libraries files.");
     } else {
         info!("Checking and completing libraries files");
         complete_libraries_files(instance, minecraft_location).await?;
         info!("Saving libraries lock file");
-        std::fs::write(libraries_lock_file, "ok")?;
+        let _ = save_lock_file(&libraries_lock_file).await;
     }
+    Ok(())
+}
+
+async fn try_load_lock_file(path: &PathBuf) -> Option<()> {
+    let contents = async_fs::read_to_string(path)
+        .await
+        .ok()?
+        .parse::<u64>()
+        .ok()?;
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Incorrect system time")
+        .as_secs();
+    if now - contents > 14 * 24 * 60 * 60 {
+        return None;
+    };
+    Some(())
+}
+
+async fn save_lock_file(path: &PathBuf) -> Result<()> {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Incorrect system time")
+        .as_secs();
+    std::fs::write(path, now.to_string())?;
     Ok(())
 }
 
