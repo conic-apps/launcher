@@ -2,11 +2,7 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{
-    path::PathBuf,
-    str::FromStr,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::str::FromStr;
 
 use log::{info, warn};
 
@@ -57,12 +53,6 @@ pub async fn complete_files(
         info!("Saving libraries lock file");
         std::fs::write(libraries_lock_file, "ok")?;
     }
-    Ok(())
-}
-
-async fn try_load_lock_file(path: PathBuf) -> Result<()> {
-    let contents = async_fs::read_to_string(path).await?.parse::<u64>();
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     Ok(())
 }
 
