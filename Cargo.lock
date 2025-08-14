@@ -2352,9 +2352,11 @@ version = "0.0.0"
 dependencies = [
  "account",
  "async-fs",
+ "async-io",
  "config",
  "download",
  "folder",
+ "futures",
  "install",
  "instance",
  "log",

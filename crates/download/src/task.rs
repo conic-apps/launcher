@@ -9,7 +9,7 @@ use std::sync::{
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize, PartialEq)]
 pub enum Step {
     VerifyExistingFiles,
     DownloadFiles,
@@ -35,6 +35,15 @@ impl Default for Progress {
             speed: Arc::new(AtomicU64::new(0)),
             step: Arc::new(Mutex::new(Step::DownloadFiles)),
         }
+    }
+}
+
+impl PartialEq for Progress {
+    fn eq(&self, other: &Self) -> bool {
+        self.completed.load(Ordering::SeqCst) == other.completed.load(Ordering::SeqCst)
+            && self.total.load(Ordering::SeqCst) == other.total.load(Ordering::SeqCst)
+            && self.speed.load(Ordering::SeqCst) == other.speed.load(Ordering::SeqCst)
+            && *self.step.lock().expect("") == *other.step.lock().expect("")
     }
 }
 
