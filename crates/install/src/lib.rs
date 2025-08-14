@@ -252,6 +252,7 @@ pub enum InstallJob {
     InstallModLoader,
 }
 
+// TODO: Use enum, like launch crate
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstallEvent {
@@ -282,6 +283,8 @@ pub async fn install(
     let progress = Progress::default();
     let finished = Arc::new(AtomicBool::new(false));
     let install_job = Arc::new(Mutex::new(InstallJob::Prepare));
+    // FIXME: If download failed, this will never stop, it will be a zombie thread. Move this
+    // sender to cmd_ function to fix it.
     let progress_sender_thread = {
         let progress_cloned = progress.clone();
         let finished = finished.clone();
