@@ -14,7 +14,6 @@ type InstanceStore = {
     //     completed: number
     //     total: number
     // }[]
-    installProgress: Map<string, { step: number; completed: number; total: number }>
     launchedInstances: Map<
         string,
         {
@@ -42,7 +41,6 @@ export const useInstanceStore = defineStore("instance", {
                 id: "",
             },
             instances: [],
-            installProgress: new Map(),
             launchedInstances: new Map(),
         }
     },

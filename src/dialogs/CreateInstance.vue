@@ -53,7 +53,7 @@
                 icon="puzzle-piece"
                 :disabled="!minecraftVersion || modLoaderListLoading">
                 <icon-select
-                  :options="['none', 'quilt', 'fabric', 'neoforged', 'forge']"
+                  :options="modLoaderOptions"
                   :icons="['fa-pro ban', 'quilt', 'fabric', 'neoforged', 'forge']"
                   :disabled="disabledModLoaderId"
                   v-model="modLoaderType"></icon-select>
@@ -66,16 +66,16 @@
                 :click-able="true"
                 @click="
                   transitionName = 'slide-left';
-                  if (modLoaderType === 1) {
+                  if (modLoaderType === 'Quilt') {
                     currentComponent = 'choose-quilt';
                   }
-                  if (modLoaderType === 2) {
+                  if (modLoaderType === 'Fabric') {
                     currentComponent = 'choose-fabric';
                   }
-                  if (modLoaderType === 3) {
+                  if (modLoaderType === 'Neoforged') {
                     currentComponent = 'choose-neoforged';
                   }
-                  if (modLoaderType === 4) {
+                  if (modLoaderType === 'Forge') {
                     currentComponent = 'choose-forge';
                   }
                 ">
@@ -151,34 +151,20 @@ import { useDialogStore } from "@/store/dialog";
 
 const dialogStore = useDialogStore();
 
-const defaultInstanceName = computed(() => {
-  let modLoaderTypeText = "";
-  switch (modLoaderType.value) {
-    case 1:
-      modLoaderTypeText = "quilt";
-      break;
-    case 2:
-      modLoaderTypeText = "fabric";
-      break;
-    case 3:
-      modLoaderTypeText = "neoforged";
-      break;
-    case 4:
-      modLoaderTypeText = "forged";
-      break;
-  }
-  return `${minecraftVersion.value ? minecraftVersion.value : "未命名配置"}${modLoaderTypeText ? "-" + modLoaderTypeText + modLoaderVersion.value : ""}`;
-});
-
 const instanceNameValue = ref("");
 
+const modLoaderOptions = ["None", "Quilt", "Fabric", "Neoforged", "Forge"];
+
 const minecraftVersion = ref("");
-const modLoaderType = ref(0);
+const modLoaderType = ref<"None" | "Quilt" | "Fabric" | "Neoforged" | "Forge">("None");
 const modLoaderVersion = ref("");
 
 const currentComponent = ref("settings");
 const transitionName = ref("slide-left");
 
+const defaultInstanceName = computed(() => {
+  return `${minecraftVersion.value ? minecraftVersion.value : "未命名配置"}${modLoaderType.value.toLowerCase() === "none" ? "" : "-" + modLoaderType.value.toLowerCase() + modLoaderVersion.value}`;
+});
 function back() {
   transitionName.value = "slide-right";
   currentComponent.value = "settings";
@@ -210,7 +196,7 @@ watch(modLoaderType, () => {
 });
 
 watch(minecraftVersion, () => {
-  modLoaderType.value = 0;
+  modLoaderType.value = "None";
   modLoaderVersion.value = "";
   quiltVersionList.value = [];
   fabricVersionList.value = [];
@@ -283,16 +269,16 @@ watchEffect(async () => {
 const disabledModLoaderId = computed(() => {
   const result = [];
   if (quiltVersionList.value.length === 0) {
-    result.push(1);
+    result.push("Quilt");
   }
   if (fabricVersionList.value.length === 0) {
-    result.push(2);
+    result.push("Fabric");
   }
   if (neoforgedVersionList.value.length === 0) {
-    result.push(3);
+    result.push("Neoforged");
   }
   if ((forgeVersionList.value, length === 0)) {
-    result.push(4);
+    result.push("Forge");
   }
   console.warn(result);
   return result;
@@ -301,29 +287,13 @@ const disabledModLoaderId = computed(() => {
 const creating = ref(false);
 
 const createInstance = () => {
-  let parsedModLoaderType: "Quilt" | "Fabric" | "Neoforged" | "Forge" | undefined = undefined;
-  switch (modLoaderType.value) {
-    // TODO: Dont use magic number
-    case 1:
-      parsedModLoaderType = "Quilt";
-      break;
-    case 2:
-      parsedModLoaderType = "Fabric";
-      break;
-    case 3:
-      parsedModLoaderType = "Neoforged";
-      break;
-    case 4:
-      parsedModLoaderType = "Forge";
-      break;
-  }
   creating.value = true;
   const newInstanceConfig = {
     name: instanceNameValue.value ? instanceNameValue.value : defaultInstanceName.value,
     runtime: {
       minecraft: minecraftVersion.value,
-      mod_loader_type: parsedModLoaderType,
-      mod_loader_version: parsedModLoaderType ? modLoaderVersion.value : undefined,
+      mod_loader_type: modLoaderType.value == "None" ? undefined : modLoaderType.value,
+      mod_loader_version: modLoaderType.value == "None" ? undefined : modLoaderVersion.value,
     },
     launch_config: {
       enable_instance_specific_settings: false,
@@ -343,7 +313,7 @@ const createInstance = () => {
 const close = () => {
   creating.value = false;
   minecraftVersion.value = "";
-  modLoaderType.value = 0;
+  modLoaderType.value = "None";
   modLoaderVersion.value = "";
   dialogStore.createInstance.visible = false;
 };

@@ -3,20 +3,77 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::Value;
-use std::{collections::HashMap, fs::read_to_string, path::PathBuf, str::FromStr};
+use std::{collections::HashMap, fs::read_to_string, path::PathBuf};
 
 use folder::MinecraftLocation;
 
 pub mod argument;
 mod checks;
-pub mod error;
-pub mod library;
+mod error;
+mod library;
+mod model;
 
-pub use argument::*;
-use error::*;
+pub use crate::model::*;
+use argument::*;
+pub use error::*;
 pub use library::*;
+
+static DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
+    vec![
+        "--username".to_string(),
+        "${auth_player_name}".to_string(),
+        "--version".to_string(),
+        "${version_name}".to_string(),
+        "--gameDir".to_string(),
+        "${game_directory}".to_string(),
+        "--assetsDir".to_string(),
+        "${assets_root}".to_string(),
+        "--assetIndex".to_string(),
+        "${asset_index}".to_string(),
+        "--uuid".to_string(),
+        "${auth_uuid}".to_string(),
+        "--accessToken".to_string(),
+        "${auth_access_token}".to_string(),
+        "--clientId".to_string(),
+        "${clientid}".to_string(),
+        "--xuid".to_string(),
+        "${auth_xuid}".to_string(),
+        "--userType".to_string(),
+        "${user_type}".to_string(),
+        "--versionType".to_string(),
+        "${version_type}".to_string(),
+        "--width".to_string(),
+        "${resolution_width}".to_string(),
+        "--height".to_string(),
+        "${resolution_height}".to_string(),
+    ]
+});
+
+static DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
+    vec![
+        "\"-Djava.library.path=${natives_directory}\"".to_string(),
+        "\"-Djna.tmpdir=${natives_directory}\"".to_string(),
+        "\"-Dorg.lwjgl.system.SharedLibraryExtractPath=${natives_directory}\"".to_string(),
+        "\"-Dio.netty.native.workdir=${natives_directory}\"".to_string(),
+        "\"-Dminecraft.launcher.brand=${launcher_name}\"".to_string(),
+        "\"-Dminecraft.launcher.version=${launcher_version}\"".to_string(),
+        "\"-Dfile.encoding=UTF-8\"".to_string(),
+        "\"-Dsun.stdout.encoding=UTF-8\"".to_string(),
+        "\"-Dsun.stderr.encoding=UTF-8\"".to_string(),
+        "\"-Djava.rmi.server.useCodebaseOnly=true\"".to_string(),
+        "\"-XX:MaxInlineSize=420\"".to_string(),
+        "\"-XX:-UseAdaptiveSizePolicy\"".to_string(),
+        "\"-XX:-OmitStackTraceInFastThrow\"".to_string(),
+        "\"-XX:-DontCompileHugeMethods\"".to_string(),
+        "\"-Dcom.sun.jndi.rmi.object.trustURLCodebase=false\"".to_string(),
+        "\"-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=false\"".to_string(),
+        "\"-Dlog4j2.formatMsgNoLookups=true\"".to_string(),
+        "-cp".to_string(),
+        "${classpath}".to_string(),
+    ]
+});
 
 /// Resolved version.json
 ///
@@ -25,7 +82,8 @@ pub use library::*;
 #[derive(Clone, Serialize, Default)]
 pub struct ResolvedVersion {
     pub id: String,
-    pub arguments: ResolvedArguments,
+    pub game_arguments: Vec<String>,
+    pub jvm_arguments: Vec<String>,
     pub main_class: Option<String>,
     pub asset_index: Option<AssetIndex>,
     pub assets: Option<String>,
@@ -52,20 +110,37 @@ pub struct ResolvedVersion {
 }
 
 impl ResolvedVersion {
-    fn join_arguments(
+    fn join_jvm_arguments(
+        &mut self,
+        arguments: &Option<Arguments>,
+        enabled_features: &[String],
+    ) -> &mut Self {
+        if self.minimum_launcher_version < 21 {
+            self.jvm_arguments = DEFAULT_JVM_ARGS.clone();
+            return self;
+        }
+        if let Some(arguments) = arguments
+            && let Some(raw_jvm_arguments) = &arguments.jvm
+        {
+            let resolved_arguments = resolve_arguments(raw_jvm_arguments, enabled_features);
+            self.jvm_arguments.extend(resolved_arguments);
+        }
+        self
+    }
+    fn join_game_arguments(
         &mut self,
         arguments: Option<Arguments>,
         enabled_features: &[String],
     ) -> &mut Self {
         if self.minimum_launcher_version < 21 {
-            self.arguments.jvm = DEFAULT_JVM_ARGS.clone();
-            self.arguments.game = DEFAULT_GAME_ARGS.clone();
+            self.game_arguments = DEFAULT_GAME_ARGS.clone();
             return self;
         }
-        if let Some(arguments) = arguments {
-            let resolved = arguments.to_resolved(enabled_features);
-            self.arguments.jvm.extend(resolved.jvm);
-            self.arguments.game.extend(resolved.game);
+        if let Some(arguments) = arguments
+            && let Some(raw_game_arguments) = arguments.game
+        {
+            let resolved_arguments = resolve_arguments(&raw_game_arguments, enabled_features);
+            self.game_arguments.extend(resolved_arguments);
         }
         self
     }
@@ -138,289 +213,67 @@ impl ResolvedVersion {
         }
         self
     }
+    fn join_libraries(&mut self, libraries: Option<Vec<Value>>) -> Result<&mut Self> {
+        if let Some(libraries) = libraries {
+            let resolved = resolve_libraries(libraries)?;
+            self.libraries.splice(0..0, resolved);
+        }
+        Ok(self)
+    }
 }
 
-/// The raw json format provided by Minecraft.
+/// parse a Minecraft version json
 ///
-/// Use `parse` to parse a Minecraft version json, and see the detail info of the version.
-///
-/// With `ResolvedVersion`, you can use the resolved version to launch the game.
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Version {
-    pub id: String,
-    pub time: Option<String>,
-    pub r#type: Option<String>,
-    pub release_time: Option<String>,
-    pub inherits_from: Option<String>,
-    pub minimum_launcher_version: Option<i32>,
-    pub minecraft_arguments: Option<String>,
-    pub arguments: Option<Arguments>,
-    pub main_class: Option<String>,
-    pub libraries: Option<Vec<Value>>,
-    pub jar: Option<String>,
-    pub asset_index: Option<AssetIndex>,
-    pub assets: Option<String>,
-    pub downloads: Option<HashMap<String, Download>>,
-    pub client: Option<String>,
-    pub server: Option<String>,
-    pub logging: Option<HashMap<String, Logging>>,
-    pub java_version: Option<JavaVersion>,
-    pub client_version: Option<String>,
-}
+/// If you are not use this to launch the game, you can set `enabled_features` to `&vec![]`
+pub async fn resolve_version(
+    version: &Version,
+    minecraft: &MinecraftLocation,
+    enabled_features: &[String],
+) -> Result<ResolvedVersion> {
+    let mut inherits_from = version.inherits_from.clone();
+    let versions_folder = &minecraft.versions;
+    let mut versions = Vec::new();
+    let mut resolved_version = ResolvedVersion::default();
+    versions.push(version.clone());
+    while let Some(inherits_from_unwrap) = inherits_from {
+        resolved_version
+            .inheritances
+            .push(inherits_from_unwrap.clone());
 
-impl FromStr for Version {
-    type Err = crate::error::Error;
-    fn from_str(raw: &str) -> std::result::Result<Version, crate::error::Error> {
-        Ok(serde_json::from_str(raw)?)
+        let path = versions_folder
+            .join(inherits_from_unwrap.clone())
+            .join(format!("{}.json", inherits_from_unwrap.clone()));
+        resolved_version.path_chain.push(path.clone());
+        let version_json = read_to_string(path)?;
+        let version_json: Version = serde_json::from_str(&version_json)?;
+
+        versions.push(version_json.clone());
+        inherits_from = version_json.inherits_from;
     }
-}
 
-impl Version {
-    /// parse a Minecraft version json
-    ///
-    /// If you are not use this to launch the game, you can set `enabled_features` to `&vec![]`
-    pub async fn resolve(
-        &self,
-        minecraft: &MinecraftLocation,
-        enabled_features: &[String],
-    ) -> Result<ResolvedVersion> {
-        let mut inherits_from = self.inherits_from.clone();
-        let versions_folder = &minecraft.versions;
-        let mut versions = Vec::new();
-        let mut resolved_version = ResolvedVersion::default();
-        versions.push(self.clone());
-        while let Some(inherits_from_unwrap) = inherits_from {
-            resolved_version
-                .inheritances
-                .push(inherits_from_unwrap.clone());
-
-            let path = versions_folder
-                .join(inherits_from_unwrap.clone())
-                .join(format!("{}.json", inherits_from_unwrap.clone()));
-            resolved_version.path_chain.push(path.clone());
-            let version_json = read_to_string(path)?;
-            let version_json: Version = serde_json::from_str((version_json).as_ref())?;
-
-            versions.push(version_json.clone());
-            inherits_from = version_json.inherits_from;
-        }
-
-        let mut libraries_raw = Libraries::new();
-
-        while let Some(version) = versions.pop() {
-            resolved_version
-                .join_id(version.id)
-                .join_minimum_launcher_version(version.minimum_launcher_version)
-                .join_release_time(version.release_time)
-                .join_time(version.time)
-                .join_logging(version.logging)
-                .join_assets(version.assets)
-                .join_version_type(version.r#type)
-                .join_main_class(version.main_class)
-                .join_java_version(version.java_version)
-                .join_asset_index(version.asset_index)
-                .join_downloads(version.downloads)
-                .join_arguments(version.arguments, enabled_features);
-
-            if let Some(libraries) = version.libraries {
-                libraries_raw.join(libraries);
-            }
-        }
-        resolved_version.libraries = libraries_raw.to_resolved()?;
-        if resolved_version.main_class.is_none()
-            || resolved_version.asset_index.is_none()
-            || resolved_version.downloads.is_empty()
-            || resolved_version.libraries.is_empty()
-        {
-            return Err(Error::InvalidVersionJson);
-        }
-        Ok(resolved_version)
+    while let Some(version) = versions.pop() {
+        resolved_version
+            .join_id(version.id)
+            .join_minimum_launcher_version(version.minimum_launcher_version)
+            .join_release_time(version.release_time)
+            .join_time(version.time)
+            .join_logging(version.logging)
+            .join_assets(version.assets)
+            .join_version_type(version.r#type)
+            .join_main_class(version.main_class)
+            .join_java_version(version.java_version)
+            .join_asset_index(version.asset_index)
+            .join_downloads(version.downloads)
+            .join_jvm_arguments(&version.arguments, enabled_features)
+            .join_game_arguments(version.arguments, enabled_features)
+            .join_libraries(version.libraries)?;
     }
-}
-
-static DEFAULT_GAME_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
-    vec![
-        "--username".to_string(),
-        "${auth_player_name}".to_string(),
-        "--version".to_string(),
-        "${version_name}".to_string(),
-        "--gameDir".to_string(),
-        "${game_directory}".to_string(),
-        "--assetsDir".to_string(),
-        "${assets_root}".to_string(),
-        "--assetIndex".to_string(),
-        "${asset_index}".to_string(),
-        "--uuid".to_string(),
-        "${auth_uuid}".to_string(),
-        "--accessToken".to_string(),
-        "${auth_access_token}".to_string(),
-        "--clientId".to_string(),
-        "${clientid}".to_string(),
-        "--xuid".to_string(),
-        "${auth_xuid}".to_string(),
-        "--userType".to_string(),
-        "${user_type}".to_string(),
-        "--versionType".to_string(),
-        "${version_type}".to_string(),
-        "--width".to_string(),
-        "${resolution_width}".to_string(),
-        "--height".to_string(),
-        "${resolution_height}".to_string(),
-    ]
-});
-
-static DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
-    vec![
-        "\"-Djava.library.path=${natives_directory}\"".to_string(),
-        // "\"-Djna.tmpdir=${natives_directory}\"".to_string(),
-        // "\"-Dorg.lwjgl.system.SharedLibraryExtractPath=${natives_directory}\"".to_string(),
-        // "\"-Dio.netty.native.workdir=${natives_directory}\"".to_string(),
-        "\"-Dminecraft.launcher.brand=${launcher_name}\"".to_string(),
-        "\"-Dminecraft.launcher.version=${launcher_version}\"".to_string(),
-        "\"-Dfile.encoding=UTF-8\"".to_string(),
-        "\"-Dsun.stdout.encoding=UTF-8\"".to_string(),
-        "\"-Dsun.stderr.encoding=UTF-8\"".to_string(),
-        "\"-Djava.rmi.server.useCodebaseOnly=true\"".to_string(),
-        "\"-XX:MaxInlineSize=420\"".to_string(),
-        "\"-XX:-UseAdaptiveSizePolicy\"".to_string(),
-        "\"-XX:-OmitStackTraceInFastThrow\"".to_string(),
-        "\"-XX:-DontCompileHugeMethods\"".to_string(),
-        "\"-Dcom.sun.jndi.rmi.object.trustURLCodebase=false\"".to_string(),
-        "\"-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=false\"".to_string(),
-        "\"-Dlog4j2.formatMsgNoLookups=true\"".to_string(),
-        "-cp".to_string(),
-        "${classpath}".to_string(),
-    ]
-});
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct Download {
-    pub sha1: String,
-    pub size: u64,
-    pub url: String,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AssetIndex {
-    // pub sha1: String,
-    pub size: u64,
-    pub url: String,
-    pub id: String,
-    pub total_size: u64,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct AssetIndexObjectInfo {
-    pub hash: String,
-    pub size: u32,
-}
-
-pub type AssetIndexObject = HashMap<String, AssetIndexObjectInfo>;
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct LoggingFile {
-    pub size: u64,
-    pub url: String,
-    pub id: String,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub enum LaunchArgument {
-    String(String),
-    Object(serde_json::map::Map<String, Value>),
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct Platform {
-    pub name: String,
-    pub version: Option<String>,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct Logging {
-    pub file: LoggingFileDownload,
-    pub argument: String,
-    pub r#type: String,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct LoggingFileDownload {
-    pub id: String,
-    pub sha1: String,
-    pub size: u64,
-    pub url: String,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct JavaVersion {
-    pub component: String,
-    pub major_version: i32,
-}
-
-impl Default for JavaVersion {
-    fn default() -> Self {
-        Self {
-            component: "jre-legacy".to_string(),
-            major_version: 8,
-        }
+    if resolved_version.main_class.is_none()
+        || resolved_version.asset_index.is_none()
+        || resolved_version.downloads.is_empty()
+        || resolved_version.libraries.is_empty()
+    {
+        return Err(Error::InvalidVersionJson);
     }
-}
-
-/// Minecraft Version
-///
-/// It used to compare the version of the game
-#[derive(Clone, Serialize)]
-pub enum MinecraftVersion {
-    Release(u8, u8, Option<u8>),
-    Snapshot(u8, u8, String),
-    Unknown(String),
-}
-
-impl FromStr for MinecraftVersion {
-    type Err = Error;
-    fn from_str(raw: &str) -> std::result::Result<Self, Self::Err> {
-        parse_version(raw)
-    }
-}
-
-fn parse_version(raw: &str) -> Result<MinecraftVersion> {
-    if raw.contains(".") {
-        let split = raw.split(".").collect::<Vec<&str>>();
-        Ok(MinecraftVersion::Release(
-            #[allow(clippy::get_first)]
-            split
-                .get(0)
-                .ok_or(Error::InvalidMinecraftVersion)?
-                .parse()
-                .map_err(|_| Error::InvalidMinecraftVersion)?,
-            split
-                .get(1)
-                .ok_or(Error::InvalidMinecraftVersion)?
-                .parse()
-                .map_err(|_| Error::InvalidMinecraftVersion)?,
-            match split.get(2) {
-                Some(x) => Some(x.parse().map_err(|_| Error::InvalidMinecraftVersion)?),
-                None => None,
-            },
-        ))
-    } else if raw.contains("w") {
-        let split = raw.split("w").collect::<Vec<&str>>();
-        let minor_version = split.get(1).ok_or(Error::InvalidMinecraftVersion)?;
-        Ok(MinecraftVersion::Snapshot(
-            split
-                .first()
-                .ok_or(Error::InvalidMinecraftVersion)?
-                .parse()
-                .map_err(|_| Error::InvalidMinecraftVersion)?,
-            (minor_version[..2])
-                .parse()
-                .map_err(|_| Error::InvalidMinecraftVersion)?,
-            (minor_version[2..]).to_string(),
-        ))
-    } else {
-        Ok(MinecraftVersion::Unknown(raw.to_string()))
-    }
+    Ok(resolved_version)
 }

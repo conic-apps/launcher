@@ -4,7 +4,7 @@
 
 import { Config } from "@conic/config"
 import { Instance } from "@conic/instance"
-import { invoke } from "@tauri-apps/api/core"
+import { Channel, invoke } from "@tauri-apps/api/core"
 
 export type VersionManifest = {
     latest: {
@@ -109,6 +109,117 @@ export async function getNeoforgedVersionList(mcversion: string): Promise<string
     return await invoke("plugin:install|cmd_get_neoforged_version_list", { mcversion })
 }
 
-export async function install(config: Config, instance: Instance) {
-    return await invoke("plugin:install|cmd_install", { config, instance })
+export enum Job {
+    Prepare = "Prepare",
+    InstallGame = "InstallGame",
+    InstallJava = "InstallJava",
+    InstallModLoader = "InstallModLoader",
+}
+
+export enum DownloaderStep {
+    VerifyExistingFiles = "VerifyExistingFiles",
+    DownloadFiles = "DownloadFiles",
+}
+
+export enum InstallErrorKind {
+    Io = "Io",
+    Network = "Network",
+    InstanceBroken = "InstanceBroken",
+    InvalidForgeVersion = "InvalidForgeVersion",
+    ForgeInstallerFailed = "ForgeInstallerFailed",
+    NeoforgedInstallerFailed = "NeoforgedInstallerFailed",
+    HttpResponseNotSuccess = "HttpResponseNotSuccess",
+    InvalidVersionJson = "InvalidVersionJson",
+    VersionMetadataNotfound = "VersionMetadataNotfound",
+    JsonParse = "JsonParse",
+    ResolveVersionJsonFailed = "ResolveVersionJsonFailed",
+    Sha1Missmatch = "Sha1Missmatch",
+    UrlParse = "UrlParse",
+    NoSupportedJavaRuntim = "NoSupportedJavaRuntime",
+    Aborted = "Aborted",
+}
+
+export type Progress = {
+    id: `${string}-${string}-${string}-${string}-${string}`
+    completed: number
+    total: number
+    speed: number
+    job: Job
+    downloaderStep: DownloaderStep
+}
+
+export type Callbacks = {
+    onStart?: (id: string) => void
+    onProgress?: (task: Progress) => void
+    onFailed?: (id: string, error: { kind: InstallErrorKind; message: string }) => void
+    onSucceed?: (id: string) => void
+    onPaused?: (id: string) => void
+    onResumed?: (id: string) => void
+    onCancelled?: (id: string) => void
+}
+
+type InstallEvent = {
+    completed: number
+    total: number
+    downloader_step: DownloaderStep
+    speed: number
+    job: Job
+}
+
+export class InstallTask {
+    private _promise?: Promise<void>
+    private _config: Config
+    private _instance: Instance
+    completed: number
+    total: number
+    downloader_step: DownloaderStep
+    speed: number
+    job: Job
+    constructor(config: Config, instance: Instance) {
+        ;((this._config = config), (this._instance = instance))
+        this.completed = 0
+        this.total = 0
+        this.downloader_step = DownloaderStep.DownloadFiles
+        this.speed = 0
+        this.job = Job.Prepare
+    }
+    start(callbacks?: Callbacks) {
+        this._promise = installPromise(this._config, this._instance, callbacks)
+    }
+    cancel() {
+        invoke("plugin:install|cmd_cancel_install_task")
+    }
+}
+
+async function installPromise(config: Config, instance: Instance, callbacks?: Callbacks) {
+    const channel = new Channel<InstallEvent>()
+    const id = crypto.randomUUID()
+    channel.onmessage = (message) => {
+        callbacks?.onProgress?.({
+            id,
+            completed: message.completed,
+            total: message.total,
+            speed: message.speed,
+            job: message.job,
+            downloaderStep: message.downloader_step,
+        })
+    }
+    try {
+        await invoke("plugin:install|cmd_create_install_task", { config, instance, channel })
+        callbacks?.onSucceed?.(id)
+    } catch (error: any) {
+        if (error.kind && error.message) {
+            const kind = error.kind as InstallErrorKind
+            if (kind === InstallErrorKind.Aborted) {
+                callbacks?.onCancelled?.(id)
+            } else {
+                callbacks?.onFailed?.(id, {
+                    kind,
+                    message: error.message as string,
+                })
+            }
+        } else {
+            throw error
+        }
+    }
 }

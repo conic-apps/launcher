@@ -8,24 +8,22 @@
       class="option"
       v-for="(option, index) in props.options"
       :class="
-        (index === model ? 'activated' : '') +
-        (props.disabled.find((v) => v == index) ? ' disabled' : '')
+        (option === model ? 'activated' : '') +
+        (props.disabled.find((v) => v == option) ? ' disabled' : '')
       "
       :key="option"
-      @click="changeValue(index)">
+      @click="changeValue(option)">
       <i :class="props.icons[index]"></i>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const model = defineModel<number>();
-
 const props = withDefaults(
   defineProps<{
     options: string[];
     icons: string[];
-    disabled?: number[];
+    disabled?: string[];
   }>(),
   {
     disabled: () => {
@@ -34,8 +32,10 @@ const props = withDefaults(
   },
 );
 
-const changeValue = (index: number) => {
-  model.value = index;
+type ModelType = (typeof props.options)[number];
+const model = defineModel<ModelType>();
+const changeValue = (option: string) => {
+  model.value = option;
 };
 </script>
 
