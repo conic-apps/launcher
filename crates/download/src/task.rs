@@ -9,15 +9,10 @@ use std::sync::{
 
 use serde::{Deserialize, Serialize};
 
-/// Define the task type
 #[derive(Clone, Deserialize, Serialize)]
-pub enum Task {
-    Chore,
-    PrepareInstallGame,
-    DownloadFiles,
+pub enum Step {
     VerifyExistingFiles,
-    InstallJava,
-    InstallModLoader,
+    DownloadFiles,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -28,7 +23,7 @@ pub struct Progress {
     /// Download progress will start from 1001,
     ///
     /// In this program, the code
-    pub task: Arc<Mutex<Task>>,
+    pub step: Arc<Mutex<Step>>,
     pub speed: Arc<AtomicU64>,
 }
 
@@ -38,16 +33,12 @@ impl Default for Progress {
             completed: Arc::new(AtomicU64::new(0)),
             total: Arc::new(AtomicU64::new(0)),
             speed: Arc::new(AtomicU64::new(0)),
-            task: Arc::new(Mutex::new(Task::Chore)),
+            step: Arc::new(Mutex::new(Step::DownloadFiles)),
         }
     }
 }
 
 impl Progress {
-    pub fn send(&self) {
-        //TODO: Send progress
-    }
-
     pub fn reset(&self, ordering: Ordering) {
         self.completed.store(0, ordering);
         self.total.store(0, ordering);

@@ -16,10 +16,10 @@ use crate::{
     microsoft::MicrosoftAccount,
     offline::OfflineAccount,
 };
-use error::*;
+pub use error::*;
 
 pub mod authlib_injector;
-pub mod error;
+mod error;
 pub mod microsoft;
 pub mod offline;
 

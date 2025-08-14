@@ -21,11 +21,12 @@ use serde::{Deserialize, Serialize};
 
 use config::download::{DownloadConfig, MirrorConfig};
 use shared::HTTP_CLIENT;
-use task::{Progress, Task};
+use task::{Progress, Step};
 
-pub mod error;
+mod error;
+pub mod task;
 
-use error::*;
+pub use error::*;
 use url::Url;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
@@ -147,39 +148,7 @@ impl DownloadTask {
     }
 }
 
-pub async fn download(download: &DownloadTask, progress: Progress) -> Result<()> {
-    progress.reset(Ordering::SeqCst);
-    let file_path = download.file.clone();
-    let url = download.url.clone();
-    if let Some(parent) = file_path.parent() {
-        async_fs::create_dir_all(parent).await?
-    }
-    let mut response = HTTP_CLIENT.get(&url).send().await?;
-    let status = response.status();
-    if !status.is_success() {
-        return Err(Error::HttpResponseNotSuccess(
-            status.as_u16(),
-            status.canonical_reason().unwrap_or("Unknown").to_string(),
-        ));
-    }
-    if let Some(len) = response.content_length() {
-        progress.total.store(len, Ordering::SeqCst);
-    }
-    let mut file = async_fs::File::create(&file_path).await?;
-    while let Some(chunk) = response.chunk().await? {
-        file.write_all(&chunk).await?;
-        progress
-            .completed
-            .fetch_add(chunk.len() as u64, Ordering::SeqCst);
-    }
-    file.sync_all().await?;
-    progress
-        .completed
-        .store(progress.total.load(Ordering::SeqCst), Ordering::SeqCst);
-    Ok(())
-}
-
-pub async fn download_and_check(download: &DownloadTask, progress: &Progress) -> Result<()> {
+pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()> {
     progress.reset(Ordering::SeqCst);
     let file_path = download.file.clone();
     let url = download.url.clone();
@@ -224,22 +193,13 @@ pub async fn download_concurrent(
     progress: &Progress,
     download_config: DownloadConfig,
 ) -> Result<()> {
-    inner_download_concurrent(tasks, progress, download_config, false).await
-}
-
-pub async fn download_concurrent_and_check(
-    tasks: Vec<DownloadTask>,
-    progress: &Progress,
-    download_config: DownloadConfig,
-) -> Result<()> {
-    inner_download_concurrent(tasks, progress, download_config, true).await
+    inner_download_concurrent(tasks, progress, download_config).await
 }
 
 async fn inner_download_concurrent(
     tasks: Vec<DownloadTask>,
     progress: &Progress,
     download_config: DownloadConfig,
-    verify_checksum: bool,
 ) -> Result<()> {
     let download_tasks: Result<Vec<DownloadTask>> =
         filter_existing_and_verified_files(tasks, progress)
@@ -268,10 +228,10 @@ async fn inner_download_concurrent(
         .store(download_tasks.len() as u64, Ordering::SeqCst);
     {
         let mut task = progress
-            .task
+            .step
             .lock()
             .expect("Internal error: another thread hold lock and panic");
-        *task = Task::DownloadFiles;
+        *task = Step::DownloadFiles;
     }
 
     let result = futures::stream::iter(download_tasks)
@@ -281,7 +241,6 @@ async fn inner_download_concurrent(
                 download_config.max_download_speed,
                 &mirror_usage,
                 progress,
-                verify_checksum,
             )
         })
         .buffer_unordered(download_config.max_connections)
@@ -300,10 +259,10 @@ pub fn filter_existing_and_verified_files(
     let completed = progress.completed.clone();
     {
         let mut task = progress
-            .task
+            .step
             .lock()
             .expect("Internal error: another thread hold lock and panic");
-        *task = Task::VerifyExistingFiles;
+        *task = Step::VerifyExistingFiles;
     }
     progress.total.store(0, Ordering::SeqCst);
     let filter_op = |download: &DownloadTask| {
@@ -364,7 +323,6 @@ async fn inner_download_future(
     max_download_speed: u64,
     mirror_usage: &MirrorUsage,
     progress: &Progress,
-    verify_checksum: bool,
 ) -> Result<()> {
     let mut disabled_mirrors = vec![];
     let mut retried = 0;
@@ -377,9 +335,7 @@ async fn inner_download_future(
             Some(x) => (x.0, Some(x.1)),
             None => (task.clone(), None),
         };
-        let result =
-            inner_download_executer(&task, max_download_speed, progress.clone(), verify_checksum)
-                .await;
+        let result = inner_download_executer(&task, max_download_speed, progress.clone()).await;
         if let Some(mirror) = &mirror {
             mirror.1.fetch_sub(1, Ordering::SeqCst);
         }
@@ -405,7 +361,6 @@ async fn inner_download_executer(
     task: &DownloadTask,
     max_download_speed: u64,
     progress: Progress,
-    verify_checksum: bool,
 ) -> Result<()> {
     let file_path = task.file.clone();
     let url = task.url.clone();
@@ -429,7 +384,7 @@ async fn inner_download_executer(
             async_io::Timer::after(Duration::from_millis(100)).await;
         }
         file.write_all(&chunk).await?;
-        if verify_checksum {
+        if task.sha1.is_some() {
             hasher.update(&chunk);
         }
         progress
@@ -438,7 +393,6 @@ async fn inner_download_executer(
     }
     file.sync_all().await?;
     if let Some(sha1) = task.sha1.clone()
-        && verify_checksum
         && hasher.digest().to_string() != sha1
     {
         return Err(Error::Sha1Missmatch(url));

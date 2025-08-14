@@ -28,7 +28,6 @@ tauri.workspace = true
 log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-anyhow.workspace = true
 
 tauri-plugin-log = { version = "2", features = ["colored"] }
 tauri-plugin-clipboard-manager = "2.3.0"

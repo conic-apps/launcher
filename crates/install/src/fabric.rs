@@ -13,7 +13,7 @@ use version::Version;
 use crate::error::*;
 
 /// Represents a specific version of a Fabric artifact.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FabricArtifactVersion {
     /// The Minecraft game version this artifact targets.
@@ -42,7 +42,7 @@ pub struct FabricArtifacts {
 }
 
 /// Represents Fabric loader artifacts including loader, intermediary, and launcher metadata.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FabricLoaderArtifact {
     /// The Fabric loader artifact version.
@@ -59,7 +59,7 @@ pub struct FabricLoaderArtifact {
 pub struct YarnArtifactList(Vec<FabricArtifactVersion>);
 
 /// Wrapper for a list of Fabric loader artifacts.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LoaderArtifactList(Vec<FabricLoaderArtifact>);
 
@@ -77,7 +77,7 @@ impl LoaderArtifactList {
 }
 
 /// Metadata information for the Fabric launcher.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LauncherMeta {
     /// Version number of the launcher metadata.
@@ -90,7 +90,7 @@ pub struct LauncherMeta {
 }
 
 /// Grouping of launcher libraries categorized by usage context.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct LauncherMetaLibraries {
     pub client: Vec<LauncherMetaLibrariesItems>,
     pub common: Vec<LauncherMetaLibrariesItems>,

@@ -18,7 +18,6 @@ install.workspace = true
 platform.workspace = true
 version.workspace = true
 download.workspace = true
-task.workspace = true
 
 regex.workspace = true
 zip.workspace = true

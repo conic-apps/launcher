@@ -13,7 +13,6 @@ shared.workspace = true
 folder.workspace = true
 config.workspace = true
 instance.workspace = true
-task.workspace = true
 download.workspace = true
 platform.workspace = true
 version.workspace = true

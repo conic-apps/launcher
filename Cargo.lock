@@ -720,7 +720,6 @@ name = "conic-launcher"
 version = "0.0.1-alpha.2"
 dependencies = [
  "account",
- "anyhow",
  "config",
  "folder",
  "install",
@@ -1079,7 +1078,6 @@ dependencies = [
  "serde_with",
  "sha1_smol",
  "shared",
- "task",
  "tauri",
  "thiserror 2.0.14",
  "url",
@@ -1311,7 +1309,6 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 name = "folder"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "log",
  "once_cell",
  "platform",
@@ -1487,7 +1484,6 @@ dependencies = [
 name = "game_data"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "base64 0.22.1",
  "regex",
  "serde",
@@ -2166,7 +2162,6 @@ dependencies = [
  "serde_json",
  "serde_with",
  "shared",
- "task",
  "tauri",
  "thiserror 2.0.14",
  "url",
@@ -2373,7 +2368,6 @@ dependencies = [
  "serde_with",
  "sha1_smol",
  "shared",
- "task",
  "tauri",
  "thiserror 2.0.14",
  "uuid",
@@ -4555,15 +4549,6 @@ name = "target-lexicon"
 version = "0.12.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
-
-[[package]]
-name = "task"
-version = "0.0.0"
-dependencies = [
- "serde",
- "shared",
- "tauri",
-]
 
 [[package]]
 name = "tauri"

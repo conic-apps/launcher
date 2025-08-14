@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     ffi::OsStr,
     io::{self, Read},
     path::Path,
@@ -20,7 +20,7 @@ use instance::Instance;
 use platform::PLATFORM_INFO;
 use platform::{DELIMITER, OsFamily};
 use shared::APP_VERSION;
-use version::ResolvedVersion;
+use version::{ResolvedLibrary, ResolvedVersion};
 
 use super::error::*;
 use super::options::LaunchOptions;
@@ -152,20 +152,18 @@ pub async fn generate_command_arguments(
         "library_directory",
         DATA_LOCATION.root.join("libraries").display().to_string(),
     );
-    let mut jvm_arguments = Vec::new();
-    if let Some(client) = version.logging.get("client") {
+    let mut jvm_arguments = Vec::with_capacity(version.jvm_arguments.len() + 1);
+    let log_config_path = minecraft_location.get_log_config(&version.id);
+    if let Some(client) = version.logging.get("client")
+        && async_fs::metadata(&log_config_path).await.is_ok()
+    {
         let argument = &client.argument;
-        let file_path = minecraft_location
-            .get_version_root(&version.id)
-            .join("log4j2.xml");
-        if async_fs::metadata(&file_path).await.is_ok() {
-            jvm_arguments.push(format!(
-                "\"{}\"",
-                argument.replace("${path}", file_path.to_string_lossy().as_ref())
-            ));
-        }
+        jvm_arguments.push(format!(
+            "\"{}\"",
+            argument.replace("${path}", log_config_path.to_string_lossy().as_ref())
+        ));
     }
-    jvm_arguments.extend(version.arguments.jvm);
+    jvm_arguments.extend(version.jvm_arguments);
     command_arguments.push(launch_options.extra_jvm_args.clone());
     command_arguments.extend(
         jvm_arguments
@@ -224,8 +222,7 @@ pub async fn generate_command_arguments(
     game_options.insert("resolution_height", launch_options.height.to_string());
     command_arguments.extend(
         version
-            .arguments
-            .game
+            .game_arguments
             .iter()
             .map(|arg| format(arg, game_options.clone(), true)),
     );
@@ -278,9 +275,9 @@ fn resolve_classpath(
     let mut classpath = version
         .libraries
         .iter()
-        .filter(|lib| {
-            if lib.is_native_library {
-                let path = minecraft.get_library_by_path(&lib.download_info.path);
+        .filter_map(|lib| match lib {
+            ResolvedLibrary::Native(native_library) => {
+                let path = minecraft.get_library_by_path(&native_library.path);
                 let native_folder = minecraft.get_natives_root(&version.id);
                 info!("Unzip native library {path:#?} to {native_folder:#?}");
                 if let Ok(file) = std::fs::File::open(path)
@@ -288,17 +285,15 @@ fn resolve_classpath(
                 {
                     decompression_all(&mut zip_archive, &native_folder).unwrap_or(());
                 }
+                None
             }
-            !lib.is_native_library
+            ResolvedLibrary::Common(common_library) => Some(
+                minecraft
+                    .get_library_by_path(common_library.path.clone())
+                    .to_string_lossy()
+                    .to_string(),
+            ),
         })
-        .map(|lib| {
-            minecraft
-                .get_library_by_path(lib.download_info.path.clone())
-                .to_string_lossy()
-                .to_string()
-        })
-        .collect::<HashSet<String>>()
-        .into_iter()
         .collect::<Vec<String>>();
 
     if !extra_class_paths.is_empty() {

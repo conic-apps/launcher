@@ -12,7 +12,6 @@ repository.workspace = true
 [dependencies]
 config.workspace = true
 shared.workspace = true
-task.workspace = true
 
 log.workspace = true
 rayon.workspace = true

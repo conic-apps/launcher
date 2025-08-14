@@ -44,7 +44,6 @@ import Worlds from "./Worlds.vue";
 import Mods from "./Mods.vue";
 import Packs from "./Packs.vue";
 import Settings from "./Settings.vue";
-import InstallProgress from "./InstallProgress.vue";
 import { useI18n } from "vue-i18n";
 import { useInstanceStore } from "@/store/instance";
 
@@ -91,11 +90,7 @@ function chooseTab(tab: number) {
   activeTab.value = tab;
 }
 const currentComponent = computed(() => {
-  if (instanceStore.currentInstance.installed) {
-    return components.value[activeTab.value].component;
-  } else {
-    return markRaw(InstallProgress);
-  }
+  return components.value[activeTab.value].component;
 });
 </script>
 
