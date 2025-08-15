@@ -16,6 +16,7 @@ pub enum Step {
 }
 
 #[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 /// We use this to store the progress of installation task
 pub struct Progress {
     pub completed: Arc<AtomicU64>,
