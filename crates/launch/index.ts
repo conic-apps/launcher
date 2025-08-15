@@ -18,16 +18,6 @@ enum Job {
     LogTextureLoaded = "LogTextureLoaded",
 }
 
-type Progress = {
-    job: Job
-    progress?: {
-        completed: number
-        total: number
-        step: "VerifyExistingFiles" | "DownloadFiles"
-        speed: number
-    }
-}
-
 enum LaunchErrorKind {
     AlreadyInLaunching = "AlreadyInLaunching",
     Io = "Io",
@@ -45,61 +35,72 @@ enum LaunchErrorKind {
     Other = "Other",
 }
 
-export type Callbacks = {
-    onStart?: (id: string) => void
-    onProgress?: (task: Progress) => void
-    onFailed?: (id: string, error: { kind: LaunchErrorKind; message: string }) => void
-    onSucceed?: (id: string) => void
-    onPaused?: (id: string) => void
-    onResumed?: (id: string) => void
-    onCancelled?: (id: string) => void
+type LaunchProgress = {
+    job: Job
+    progress?: {
+        completed: number
+        total: number
+        step: "VerifyExistingFiles" | "DownloadFiles"
+        speed: number
+    }
 }
 
+/**
+ * Usage:
+ * ```ts
+ * const task = new LaunchTask;
+ * task.callbacks = {
+ *   onProgress: ...
+ * }
+ * await task.start()
+ * ```
+ */
 export class LaunchTask {
-    private _promise?: Promise<void>
     private _config: Config
     private _instance: Instance
+    private _callbacks?: {
+        onStart?: () => void
+        onProgress?: (task: LaunchProgress) => void
+        onFailed?: (error: { kind: LaunchErrorKind; message: string }) => void
+        onSucceed?: () => void
+        onCancelled?: () => void
+    }
     progress?: {}
     job: Job
-    constructor(config: Config, instance: Instance) {
+    constructor(config: Config, instance: Instance, callbacks?: typeof this._callbacks) {
         this._config = config
         this._instance = instance
         this.job = Job.Prepare
+        this._callbacks = callbacks
     }
-    start(callbacks?: Callbacks) {
-        this._promise = launchPromise(this._config, this._instance, callbacks)
-    }
-    async startAndWait(callbacks?: Callbacks) {
-        this._promise = launchPromise(this._config, this._instance, callbacks)
-        await this._promise
-    }
-    cancel() {
-        invoke("plugin:install|cmd_cancel_install_task")
-    }
-}
-
-async function launchPromise(config: Config, instance: Instance, callbacks?: Callbacks) {
-    const channel = new Channel<Progress>()
-    const id = crypto.randomUUID()
-    channel.onmessage = (message) => {
-        callbacks?.onProgress?.(message)
-    }
-    try {
-        await invoke("plugin:install|cmd_create_install_task", { config, instance, channel })
-        callbacks?.onSucceed?.(id)
-    } catch (error: any) {
-        if (error.kind && error.message) {
-            const kind = error.kind as LaunchErrorKind
-            if (kind === LaunchErrorKind.Aborted) {
-                callbacks?.onCancelled?.(id)
-            } else {
-                callbacks?.onFailed?.(id, {
-                    kind,
-                    message: error.message as string,
-                })
-            }
-        } else {
-            throw error
+    async start() {
+        const channel = new Channel<LaunchProgress>()
+        channel.onmessage = (message) => {
+            this._callbacks?.onProgress?.(message)
+            this.progress = message.progress
+            this.job = message.job
         }
+        try {
+            await invoke("plugin:launch|cmd_create_launch_task", {
+                config: this._config,
+                instance: this._instance,
+                channel,
+            })
+            this._callbacks?.onSucceed?.()
+        } catch (error: any) {
+            if (error.kind && error.message) {
+                const kind = error.kind as LaunchErrorKind
+                if (kind === LaunchErrorKind.Aborted) {
+                    this._callbacks?.onCancelled?.()
+                } else {
+                    this._callbacks?.onFailed?.(error)
+                }
+            } else {
+                throw error
+            }
+        }
+    }
+    async cancel() {
+        await invoke("plugin:launch|cmd_cancel_launch_task")
     }
 }

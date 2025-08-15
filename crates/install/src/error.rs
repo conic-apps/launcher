@@ -14,6 +14,8 @@ pub type Result<T> = result::Result<T, Error>;
 #[derive(Debug, Error, Serialize)]
 #[serde(tag = "kind", content = "message")]
 pub enum Error {
+    #[error("Another instance is installing")]
+    AlreadyInstalling,
     #[error(transparent)]
     Io(
         #[from]
