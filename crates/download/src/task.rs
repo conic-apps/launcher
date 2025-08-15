@@ -21,9 +21,6 @@ pub enum Step {
 pub struct Progress {
     pub completed: Arc<AtomicU64>,
     pub total: Arc<AtomicU64>,
-    /// Download progress will start from 1001,
-    ///
-    /// In this program, the code
     pub step: Arc<Mutex<Step>>,
     pub speed: Arc<AtomicU64>,
 }

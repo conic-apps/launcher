@@ -2,8 +2,9 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use config::download::DownloadConfig;
 use download::task::Progress;
-use log::{info, warn};
+use log::info;
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
 #[cfg(not(windows))]
@@ -150,59 +151,67 @@ pub struct JavaRuntimeInfo {
     version: Version,
 }
 
-impl JavaRuntimeInfo {
-    /// Downloads and installs this Java runtime into the given install directory.
-    pub(super) async fn install(self, install_directory: &Path) -> Result<()> {
-        let manifest = HTTP_CLIENT
-            .get(self.manifest.url)
-            .send()
-            .await?
-            .json::<Manifest>()
-            .await?;
-        let downloads = generate_downloads(install_directory, &manifest.files);
-        download_files(downloads).await?;
-        info!("Creating links and setting permissions");
-        #[cfg(not(windows))]
-        for (path, file_info) in manifest.files {
-            if let JavaFileInfo::Link { target } = file_info {
-                let path = install_directory.join(path);
-                if let Some(parent) = path.parent() {
-                    async_fs::create_dir_all(parent).await?;
-                }
-                let _ = async_fs::remove_file(&path).await;
-                #[cfg(unix)]
-                async_fs::unix::symlink(target, path).await?;
-                #[cfg(windows)]
-                async_fs::windows::symlink_file(target, path).await?;
-                continue;
+/// Downloads and installs this Java runtime into the given install directory.
+pub(super) async fn install(
+    runtime: &JavaRuntimeInfo,
+    install_directory: &Path,
+    progress: &Progress,
+    config: DownloadConfig,
+) -> Result<()> {
+    let manifest = HTTP_CLIENT
+        .get(&runtime.manifest.url)
+        .send()
+        .await?
+        .json::<Manifest>()
+        .await?;
+    let downloads = generate_downloads(install_directory, &manifest.files);
+    download::download_concurrent(downloads, progress, config).await?;
+    info!("Creating links and setting permissions");
+    #[cfg(not(windows))]
+    for (path, file_info) in manifest.files {
+        if let JavaFileInfo::Link { target } = file_info {
+            let path = install_directory.join(path);
+            if let Some(parent) = path.parent() {
+                async_fs::create_dir_all(parent).await?;
             }
-            if let JavaFileInfo::File {
-                executable: true, ..
-            } = &file_info
-            {
-                let path = install_directory.join(path);
-                let mut perm = async_fs::metadata(&path).await?.permissions();
-                perm.set_mode(0o755);
-                async_fs::set_permissions(path, perm).await?;
-                continue;
-            }
+            let _ = async_fs::remove_file(&path).await;
+            #[cfg(unix)]
+            async_fs::unix::symlink(target, path).await?;
+            #[cfg(windows)]
+            async_fs::windows::symlink_file(target, path).await?;
+            continue;
         }
-        Ok(())
+        if let JavaFileInfo::File {
+            executable: true, ..
+        } = &file_info
+        {
+            let path = install_directory.join(path);
+            let mut perm = async_fs::metadata(&path).await?.permissions();
+            perm.set_mode(0o755);
+            async_fs::set_permissions(path, perm).await?;
+            continue;
+        }
     }
+    Ok(())
 }
 
 /// Installs all Java runtimes in the provided map into the target installation directory.
 pub(super) async fn group_install(
     install_directory: &Path,
     java_runtimes: HashMap<String, Vec<JavaRuntimeInfo>>,
+    progress: &Progress,
+    config: DownloadConfig,
 ) -> Result<()> {
     for (name, runtime_info) in java_runtimes {
         info!("Installing Java: {name}");
         if let Some(runtime_info) = runtime_info.first() {
-            runtime_info
-                .clone()
-                .install(&install_directory.join(name))
-                .await?;
+            install(
+                runtime_info,
+                &install_directory.join(name),
+                progress,
+                config.clone(),
+            )
+            .await?;
         }
     }
     Ok(())
@@ -225,21 +234,4 @@ fn generate_downloads(
         }
     });
     result
-}
-
-/// Downloads all files in the given download list and verifies them.
-/// TODO: REMOVE THIS, USE DOWNLOAD MODULE
-async fn download_files(downloads: Vec<DownloadTask>) -> Result<()> {
-    for download in downloads {
-        let mut retried = 0;
-        while retried <= 5 {
-            retried += 1;
-            let progress = Progress::default();
-            match download::download(&download, &progress).await {
-                Ok(_) => break,
-                Err(_) => warn!("Downloaded failed: {}, retried: {}", &download.url, retried),
-            }
-        }
-    }
-    Ok(())
 }
