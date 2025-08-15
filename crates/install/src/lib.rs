@@ -37,6 +37,7 @@ use instance::Instance;
 
 use crate::vanilla::VersionManifest;
 
+pub mod authlib_injector;
 mod error;
 pub mod fabric;
 pub mod forge;

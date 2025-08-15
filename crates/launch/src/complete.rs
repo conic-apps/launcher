@@ -24,7 +24,6 @@ use crate::error::*;
 /// This function checks if lock files exist to skip redundant verification. If lock files are missing,
 /// it will verify and download missing or corrupted assets and libraries, then create the lock files.
 /// > NOTE: If game crashed, the lock file should be delete!
-/// > TODO: Write create date in lock file, auto delete when passing 10 days
 ///
 /// # Arguments
 ///
@@ -34,9 +33,8 @@ pub async fn complete_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,
     progress: Progress,
-    config: DownloadConfig,
+    config: &DownloadConfig,
 ) -> Result<()> {
-    // TODO: Parallel
     let assets_lock_file = DATA_LOCATION
         .get_instance_root(&instance.id)
         .join(".conic-assets-ok");
@@ -61,7 +59,7 @@ pub async fn complete_files(
         info!("Found file \".conic-libraries-ok\", no need to check libraries files.");
     } else {
         info!("Checking and completing libraries files");
-        complete_libraries_files(instance, minecraft_location, progress, config).await?;
+        complete_libraries_files(instance, minecraft_location, progress, config.clone()).await?;
         info!("Saving libraries lock file");
         let _ = save_lock_file(&libraries_lock_file).await;
     }
@@ -78,7 +76,7 @@ async fn try_load_lock_file(path: &PathBuf) -> Option<()> {
         .duration_since(UNIX_EPOCH)
         .expect("Incorrect system time")
         .as_secs();
-    if now - contents > 14 * 24 * 60 * 60 {
+    if now - contents > 10 * 24 * 60 * 60 {
         return None;
     };
     Some(())

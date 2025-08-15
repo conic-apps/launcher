@@ -1077,6 +1077,7 @@ dependencies = [
  "serde",
  "serde_with",
  "sha1_smol",
+ "sha2",
  "shared",
  "tauri",
  "thiserror 2.0.14",

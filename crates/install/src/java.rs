@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use config::download::DownloadConfig;
-use download::task::Progress;
+use download::{Checksum, task::Progress};
 use log::info;
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
@@ -228,7 +228,7 @@ fn generate_downloads(
             result.push(DownloadTask {
                 url: downloads.raw.url.clone(),
                 file: install_directory.join(path),
-                sha1: Some(downloads.raw.sha1.clone()),
+                checksum: Checksum::Sha1(downloads.raw.sha1.clone()),
                 r#type: DownloadType::Unknown,
             });
         }
