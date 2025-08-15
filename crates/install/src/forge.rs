@@ -206,14 +206,11 @@ pub async fn download_installer(mcversion: &str, forge_version: &str) -> Result<
     }
     let mut file = async_fs::File::create(&installer_path).await?;
     // TODO: This can also return progress to frontend
-    let response = HTTP_CLIENT.get(installer_url).send().await?;
-    let status = response.status();
-    if !status.is_success() {
-        return Err(Error::HttpResponseNotSuccess(
-            status.as_u16(),
-            status.canonical_reason().unwrap_or("Unknown").to_string(),
-        ));
-    }
+    let response = HTTP_CLIENT
+        .get(installer_url)
+        .send()
+        .await?
+        .error_for_status()?;
     let src = response.bytes().await?;
     file.write_all(&src).await?;
     Ok(installer_path)

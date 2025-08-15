@@ -117,7 +117,6 @@ export enum InstallErrorKind {
     InvalidForgeVersion = "InvalidForgeVersion",
     ForgeInstallerFailed = "ForgeInstallerFailed",
     NeoforgedInstallerFailed = "NeoforgedInstallerFailed",
-    HttpResponseNotSuccess = "HttpResponseNotSuccess",
     InvalidVersionJson = "InvalidVersionJson",
     VersionMetadataNotfound = "VersionMetadataNotfound",
     JsonParse = "JsonParse",

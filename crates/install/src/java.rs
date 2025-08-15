@@ -27,7 +27,7 @@ struct Availability {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ManifestDownloadInfo {
     sha1: String,
-    size: usize,
+    size: u64,
     url: String,
 }
 
@@ -103,7 +103,7 @@ impl MojangJavaVersionList {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct JavaFileRaw {
     sha1: String,
-    size: usize,
+    size: u64,
     url: String,
 }
 
@@ -111,7 +111,7 @@ struct JavaFileRaw {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct JavaFileLZMA {
     sha1: String,
-    size: usize,
+    size: u64,
     url: String,
 }
 
@@ -229,6 +229,7 @@ fn generate_downloads(
                 url: downloads.raw.url.clone(),
                 file: install_directory.join(path),
                 checksum: Checksum::Sha1(downloads.raw.sha1.clone()),
+                size_bytes: Some(downloads.raw.size),
                 r#type: DownloadType::Unknown,
             });
         }
