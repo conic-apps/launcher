@@ -30,6 +30,7 @@ pub async fn install_latest(
     let download_task = DownloadTask {
         url: url.to_string(),
         file: path,
+        size_bytes: None,
         checksum: Checksum::Sha256(sha256.to_string()),
         r#type: DownloadType::AuthlibInjector,
     };

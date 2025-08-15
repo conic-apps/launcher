@@ -141,6 +141,7 @@ fn generate_client_download_task(
             client.sha1
         ),
         file: minecraft_location.versions.join(format!("{id}/{id}.jar")),
+        size_bytes: Some(client.size),
         checksum: Checksum::Sha1(client.sha1.to_string()),
         r#type: DownloadType::Unknown,
     })
@@ -177,6 +178,7 @@ pub fn generate_libraries_downloads(
                     None => Checksum::None,
                     Some(sha1) => Checksum::Sha1(sha1),
                 },
+                size_bytes: library_download_info.size,
                 r#type: DownloadType::Libraries,
             }
         })
@@ -223,6 +225,7 @@ pub async fn generate_assets_downloads(
                 .join("objects")
                 .join(&obj.1.hash[0..2])
                 .join(&obj.1.hash),
+            size_bytes: Some(obj.1.size),
             checksum: Checksum::Sha1(obj.1.hash),
             r#type: DownloadType::Unknown,
         })
@@ -230,6 +233,7 @@ pub async fn generate_assets_downloads(
     assets.push(DownloadTask {
         url: asset_index.url,
         file: minecraft_location.get_assets_index(&asset_index.id),
+        size_bytes: Some(asset_index.size),
         checksum: Checksum::None,
         r#type: DownloadType::Unknown,
     });
