@@ -48,6 +48,9 @@ pub enum Error {
         reqwest::Error,
     ),
 
+    #[error("Chunk length mismatch")]
+    ChunkLengthMismatch,
+
     #[error("Unabled to take Minecraft stdout")]
     TakeMinecraftStdoutFailed,
 
@@ -63,9 +66,6 @@ pub enum Error {
 
     #[error("{0}")]
     Sha1Missmatch(String),
-
-    #[error("{0} {1}")]
-    HttpResponseNotSuccess(u16, String),
 
     #[error("Unhandled Error")]
     Other,
@@ -113,9 +113,7 @@ impl From<download::Error> for Error {
             download::Error::Io(e) => Self::Io(e),
             download::Error::Sha1Missmatch(e) => Self::Sha1Missmatch(e),
             download::Error::Network(e) => Self::Network(e),
-            download::Error::HttpResponseNotSuccess(code, message) => {
-                Self::HttpResponseNotSuccess(code, message)
-            }
+            download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
             download::Error::UrlParse(_) => Self::Other,
         }
     }

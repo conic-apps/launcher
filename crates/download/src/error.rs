@@ -30,13 +30,13 @@ pub enum Error {
         reqwest::Error,
     ),
 
-    #[error("{0} {1}")]
-    HttpResponseNotSuccess(u16, String),
-
     #[error(transparent)]
     UrlParse(
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]
         url::ParseError,
     ),
+
+    #[error("Chunk length mismatch")]
+    ChunkLengthMismatch,
 }

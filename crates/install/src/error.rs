@@ -36,8 +36,6 @@ pub enum Error {
     ForgeInstallerFailed,
     #[error("Failed to run neoforged installer")]
     NeoforgedInstallerFailed,
-    #[error("{0} {1}")]
-    HttpResponseNotSuccess(u16, String),
     #[error("Invalid version.json, missing {0}")]
     InvalidVersionJson(String),
     #[error("Version metadata not found in version manifest")]
@@ -70,6 +68,9 @@ pub enum Error {
     #[error("Invalid authlib version response")]
     InvalidAuthlibResponse,
 
+    #[error("Chunk length mismatch")]
+    ChunkLengthMismatch,
+
     #[error(transparent)]
     Aborted(
         #[from]
@@ -84,10 +85,8 @@ impl From<download::Error> for Error {
             download::Error::Io(error) => Self::Io(error),
             download::Error::Sha1Missmatch(error) => Self::Sha1Missmatch(error),
             download::Error::Network(error) => Self::Network(error),
-            download::Error::HttpResponseNotSuccess(code, message) => {
-                Self::HttpResponseNotSuccess(code, message)
-            }
             download::Error::UrlParse(error) => Self::UrlParse(error),
+            download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
         }
     }
 }
