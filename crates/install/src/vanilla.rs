@@ -7,7 +7,7 @@ use std::str::FromStr;
 use serde_json::Value;
 use shared::HTTP_CLIENT;
 
-use download::{DownloadTask, DownloadType};
+use download::{Checksum, DownloadTask, DownloadType};
 use folder::MinecraftLocation;
 use version::{self, AssetIndexObject, ResolvedLibrary, ResolvedVersion, resolve_version};
 
@@ -141,7 +141,7 @@ fn generate_client_download_task(
             client.sha1
         ),
         file: minecraft_location.versions.join(format!("{id}/{id}.jar")),
-        sha1: Some(client.sha1.to_string()),
+        checksum: Checksum::Sha1(client.sha1.to_string()),
         r#type: DownloadType::Unknown,
     })
 }
@@ -173,7 +173,10 @@ pub fn generate_libraries_downloads(
                 file: minecraft_location
                     .libraries
                     .join(library_download_info.path),
-                sha1: library_download_info.sha1,
+                checksum: match library_download_info.sha1 {
+                    None => Checksum::None,
+                    Some(sha1) => Checksum::Sha1(sha1),
+                },
                 r#type: DownloadType::Libraries,
             }
         })
@@ -220,14 +223,14 @@ pub async fn generate_assets_downloads(
                 .join("objects")
                 .join(&obj.1.hash[0..2])
                 .join(&obj.1.hash),
-            sha1: Some(obj.1.hash),
+            checksum: Checksum::Sha1(obj.1.hash),
             r#type: DownloadType::Unknown,
         })
         .collect();
     assets.push(DownloadTask {
         url: asset_index.url,
         file: minecraft_location.get_assets_index(&asset_index.id),
-        sha1: None,
+        checksum: Checksum::None,
         r#type: DownloadType::Unknown,
     });
     Ok(assets)

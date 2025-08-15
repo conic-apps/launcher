@@ -2,6 +2,7 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use account::AccountLaunchInfo;
 use config::{
     Config,
     launch::{GC, Server},
@@ -10,29 +11,15 @@ use folder::DATA_LOCATION;
 use folder::MinecraftLocation;
 use instance::Instance;
 
-/// Represents a game profile used for launching Minecraft.
-///
-/// Contains player name and UUID.
-pub struct GameProfile {
-    /// The player's in-game name.
-    pub name: String,
-
-    /// The UUID associated with the game profile.
-    pub uuid: String,
-}
-
 /// Represents all launch options required to start a Minecraft instance.
 ///
 /// These include memory settings, screen resolution, authentication tokens,
 /// optional server connection info, and custom JVM/MC arguments.
 pub struct LaunchOptions {
-    /// User selected game profile.
-    ///
-    /// For game display name & uuid
-    pub game_profile: GameProfile,
+    /// User selected account to login the game.
+    pub account_launch_info: AccountLaunchInfo,
 
     pub properties: String,
-    pub access_token: String,
 
     /// Min memory, this will add a jvm flag -XMS to the command result
     pub min_memory: usize,
@@ -73,8 +60,6 @@ pub struct LaunchOptions {
     /// Adds extra classpath
     pub extra_class_paths: String,
 
-    // /// TODO: Support yushi's yggdrasil agent <https://github.com/to2mbn/authlib-injector/wiki>
-    // pub yggdrasil_agent: Option<YggdrasilAgent>,
     pub gc: GC,
 
     pub minecraft_location: MinecraftLocation,
@@ -95,10 +80,11 @@ impl LaunchOptions {
     ///
     /// Launch configuration is resolved from both global and per-instance settings,
     /// with per-instance settings taking priority when defined.
-    pub fn new(config: &Config, instance: &Instance, account: &account::AccountLaunchInfo) -> Self {
+    pub fn new(config: &Config, instance: &Instance, account: account::AccountLaunchInfo) -> Self {
         let global_launch_config = config.launch.clone();
         let launch_config = &instance.config.launch_config;
         Self {
+            account_launch_info: account,
             wrap_command: launch_config
                 .wrap_command
                 .clone()
@@ -115,11 +101,6 @@ impl LaunchOptions {
                 .launcher_name
                 .clone()
                 .unwrap_or(global_launch_config.launcher_name),
-            game_profile: GameProfile {
-                name: account.name.clone(),
-                uuid: account.uuid.clone(),
-            },
-            access_token: account.access_token.clone(),
             min_memory: launch_config
                 .min_memory
                 .unwrap_or(global_launch_config.min_memory),
