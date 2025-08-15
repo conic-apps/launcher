@@ -148,8 +148,10 @@ import {
 } from "@conic/install";
 import { createInstance as conicCreateInstance } from "@conic/instance";
 import { useDialogStore } from "@/store/dialog";
+import { useInstanceStore } from "@/store/instance";
 
 const dialogStore = useDialogStore();
+const instanceStore = useInstanceStore();
 
 const instanceNameValue = ref("");
 
@@ -301,11 +303,11 @@ const createInstance = () => {
   };
   conicCreateInstance(newInstanceConfig)
     .then(() => {
-      // TODO: invoke update
+      instanceStore.fetchInstances();
       close();
     })
     .catch(() => {
-      // TODO: invoke update
+      instanceStore.fetchInstances();
       close();
     });
 };

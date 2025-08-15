@@ -21,6 +21,7 @@ toml.workspace = true
 uuid.workspace = true
 thiserror.workspace = true
 serde_with.workspace = true
+serde_json.workspace = true
 
 [build-dependencies]
 tauri-plugin = { version = "2.3.1", features = ["build"] }

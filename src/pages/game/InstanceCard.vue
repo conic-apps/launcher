@@ -24,7 +24,6 @@
           <img src="@/assets/images/minecraft.webp" fill="#fff" />Minecraft
           {{ minecraftVersion }}
         </div>
-        <!-- TODO: split this to a component -->
         <div class="mod-loader-version" v-if="modLoaderType && modLoaderVersion">
           <img src="@/assets/images/fabric.webp" fill="#fff" v-if="modLoaderType === 'Fabric'" />
           <img src="@/assets/images/quilt.svg" fill="#fff" v-if="modLoaderType === 'Quilt'" />
