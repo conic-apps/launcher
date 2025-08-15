@@ -22,11 +22,29 @@ use error::*;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("config")
+        .js_init_script(get_init_config_script())
         .invoke_handler(tauri::generate_handler![
             cmd_load_config_file,
             cmd_save_config
         ])
         .build()
+}
+
+fn get_init_config_script() -> String {
+    let config = load_config_file().unwrap_or_else(|e| {
+        log::error!("FATAL: Unable to load or reset config file!");
+        panic!("{e}")
+    });
+    "
+        Object.defineProperty(window, '__CONIC_CONFIG__', {
+            value: JSON.parse(`"
+        .to_string()
+        + serde_json::to_string_pretty(&config)
+            .expect("The program is broken")
+            .as_ref()
+        + "`)
+        })
+    "
 }
 
 #[command]

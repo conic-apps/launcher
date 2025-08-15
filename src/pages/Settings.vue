@@ -34,6 +34,8 @@ import Accessibility from "./settings/Accessibility.vue";
 import Extend from "./settings/Extend.vue";
 import About from "./settings/About.vue";
 import AppIcon from "@/components/AppIcon.vue";
+import { useConfigStore } from "@/store/config";
+import { saveConfigToFile } from "@conic/config";
 
 const components: Ref<{ name: string; icon: string; component: Component }[]> = ref([
   {
@@ -89,6 +91,14 @@ function switchComponent(component: Component, index: number) {
   currentComponent.value = component;
   activeComponentIndex.value = index;
 }
+
+let configStore = useConfigStore();
+
+configStore.$subscribe(async (_mutation, state) => {
+  document.body.classList.add("saving-config");
+  await saveConfigToFile(state);
+  document.body.classList.remove("saving-config");
+});
 </script>
 
 <style lang="less" scoped>

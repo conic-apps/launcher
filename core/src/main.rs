@@ -21,10 +21,6 @@ fn main() {
             std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
         }
     }
-    let config = load_config_file().unwrap_or_else(|e| {
-        log::error!("FATAL: Unable to load or reset config file!");
-        panic!("{e}")
-    });
     info!("Conic Launcher is starting up");
     info!(
         "Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher"
@@ -42,7 +38,6 @@ fn main() {
         .plugin(launch::init())
         .plugin(folder::init())
         .plugin(platform::init())
-        .append_invoke_initialization_script(get_init_config_script(&config))
         .setup(|_| Ok(info!("Main window loaded")))
         .on_window_event(window_event_handler)
         .run(tauri::generate_context!())
@@ -83,19 +78,6 @@ fn single_instance_builder() -> TauriPlugin<Wry> {
             .set_focus()
             .expect("Can't Bring Window to Focus");
     })
-}
-
-fn get_init_config_script(config: &Config) -> String {
-    "
-        Object.defineProperty(window, '__APPLICATION_CONFIG__', {
-            value: JSON.parse(`"
-        .to_string()
-        + serde_json::to_string_pretty(config)
-            .expect("The program is broken")
-            .as_ref()
-        + "`)
-        })
-    "
 }
 
 fn window_event_handler(window: &Window, event: &WindowEvent) {

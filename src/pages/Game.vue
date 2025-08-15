@@ -17,7 +17,7 @@
           </button>
         </div>
       </div>
-      <instance-list @select="setCurrentInstance"></instance-list>
+      <instance-list></instance-list>
     </div>
     <div class="row-2">
       <instance-card
@@ -35,90 +35,43 @@ import InstanceCard from "./game/InstanceCard.vue";
 import InstanceDetails from "./game/InstanceDetails.vue";
 import InstanceList from "./game/InstanceList.vue";
 import { onMounted, ref, watch, type Ref } from "vue";
-import { listen } from "@tauri-apps/api/event";
-import { useConfigStore } from "@/store/config";
-import { useInstanceStore } from "@/store/instance";
-import { Instance, listInstances } from "@conic/instance";
 import AppIcon from "@/components/AppIcon.vue";
 import { useDialogStore } from "@/store/dialog";
+import { useInstanceStore } from "@/store/instance";
+import { useConfigStore } from "@/store/config";
 
-const config = useConfigStore();
 const dialogStore = useDialogStore();
 const instanceStore = useInstanceStore();
+const configStore = useConfigStore();
+
+onMounted(() => {
+  instanceStore.fetchInstances();
+});
 
 const installing = ref(false);
 const buttonLoading = ref(false);
 const errorType: Ref<"launch" | "install" | undefined> = ref();
 
-// TODO: move this to instance store
-function update() {
-  listInstances("Name").then((res) => {
-    instanceStore.instances = res as Instance[];
-    const currentInstance = instanceStore.currentInstance;
-    const instances = instanceStore.instances;
-    const foundCurrentInstance = instances.find((value) => {
-      return value.id === currentInstance.id;
-    });
-    if (foundCurrentInstance) {
-      instanceStore.currentInstance = foundCurrentInstance;
-    } else {
-      if (!config.accessibility.hide_latest_release) {
-        setCurrentInstance(instances[0]);
-      } else if (!config.accessibility.hide_latest_snapshot) {
-        setCurrentInstance(instances[1]);
-      } else {
-        setCurrentInstance(instances[2]);
-      }
-    }
-  });
-}
-
-// TODO: remove this, invoke update in dialog components
 watch(
-  () => dialogStore.createInstance.visible,
-  () => {
-    update();
-  },
-);
-watch(
-  () => dialogStore.confirmDeleteInstance.visible,
-  () => {
-    update();
-  },
-);
-
-onMounted(() => {
-  update();
-});
-
-let hideLatestRelease = config.accessibility.hide_latest_release;
-let hideLatestSnapshot = config.accessibility.hide_latest_snapshot;
-
-watch(config, (value) => {
-  if (
-    value.accessibility.hide_latest_release !== hideLatestRelease ||
-    value.accessibility.hide_latest_snapshot !== hideLatestSnapshot
-  ) {
-    hideLatestRelease = value.accessibility.hide_latest_release;
-    hideLatestSnapshot = value.accessibility.hide_latest_snapshot;
+  () => [
+    configStore.accessibility.hide_latest_release,
+    configStore.accessibility.hide_latest_snapshot,
+  ],
+  ([hide_latest_release, hide_latest_snapshot]) => {
     const currentInstanceName = instanceStore.currentInstance.config.name;
     if (currentInstanceName !== "Latest Release" && currentInstanceName !== "Latest Snapshot") {
       return;
     }
     const instances = instanceStore.instances;
-    if (!config.accessibility.hide_latest_release) {
-      setCurrentInstance(instances[0]);
-    } else if (!config.accessibility.hide_latest_snapshot) {
-      setCurrentInstance(instances[1]);
+    if (!hide_latest_release) {
+      instanceStore.currentInstance = instances[1];
+    } else if (!hide_latest_snapshot) {
+      instanceStore.currentInstance = instances[1];
     } else {
-      setCurrentInstance(instances[2]);
+      instanceStore.currentInstance = instances[1];
     }
-  }
-});
-
-function setCurrentInstance(instance: Instance) {
-  instanceStore.currentInstance = instance;
-}
+  },
+);
 
 const install = () => {
   installing.value = true;
@@ -128,19 +81,6 @@ const launch = () => {
   buttonLoading.value = true;
   // TODO: Invoke launch and show progress use new api
 };
-
-listen("install_success", () => {
-  setTimeout(() => {
-    installing.value = false;
-  }, 1500);
-  update();
-});
-
-listen("launch_success", () => {
-  setTimeout(() => {
-    buttonLoading.value = false;
-  }, 1000);
-});
 </script>
 
 <style lang="less" scoped>

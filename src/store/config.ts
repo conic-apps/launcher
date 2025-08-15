@@ -8,6 +8,6 @@ import { defineStore } from "pinia"
 // const config = (await invoke("read_config_file")) as Config
 export const useConfigStore = defineStore("global_config", {
     state: (): Config => {
-        return window.__APPLICATION_CONFIG__
+        return window.__CONIC_CONFIG__
     },
 })

@@ -115,16 +115,6 @@ function jumpTo(name: ComponentName) {
   changePage(null, name);
 }
 
-watch(
-  config,
-  async (value) => {
-    document.body.classList.add("saving-config");
-    await saveConfigToFile(value);
-    document.body.classList.remove("saving-config");
-  },
-  { immediate: false },
-);
-
 const currentTime = useTimeStore();
 setInterval(() => {
   currentTime.now = Math.round(new Date().getTime() / 1000);
