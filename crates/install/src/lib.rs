@@ -215,6 +215,15 @@ async fn cmd_get_neoforged_version_list(
     Ok(result)
 }
 
+#[derive(Clone, Serialize)]
+#[serde(tag = "job", content = "progress")]
+pub enum InstallEvent {
+    Prepare,
+    InstallGame(Progress),
+    InstallJava(Progress),
+    InstallModLoader,
+}
+
 #[command]
 async fn cmd_create_install_task(
     state: State<'_, PluginState>,
@@ -223,15 +232,33 @@ async fn cmd_create_install_task(
     channel: Channel<InstallEvent>,
 ) -> Result<()> {
     if state.current_task.lock().expect("Internal error").is_some() {
-        return Ok(());
+        return Err(Error::AlreadyInstalling);
     }
+    let status = Arc::new(Mutex::new(InstallEvent::Prepare));
     let (handle, reg) = AbortHandle::new_pair();
-    let future = Abortable::new(install(config, instance, channel), reg);
+    let future = Abortable::new(install(config, instance, status.clone()), reg);
     {
         let mut current_task = state.current_task.lock().expect("Internal error");
         *current_task = Some(handle);
     }
-    future.await?
+    let finished = Arc::new(AtomicBool::new(false));
+    let event_sender_thread = {
+        let status_cloned = status.clone();
+        let finished = finished.clone();
+        thread::spawn(move || {
+            while !finished.load(Ordering::SeqCst) {
+                let _ = channel.send(status_cloned.lock().expect("Internal error").clone());
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        })
+    };
+    let result = match future.await {
+        Ok(result) => result,
+        Err(e) => Err(Error::Aborted(e)),
+    };
+    finished.store(true, Ordering::SeqCst);
+    let _ = event_sender_thread.join();
+    result
 }
 
 #[command]
@@ -242,25 +269,6 @@ async fn cmd_cancel_install_task(state: State<'_, PluginState>) -> Result<()> {
     }
     *current_task = None;
     Ok(())
-}
-
-#[derive(Clone, Serialize)]
-pub enum InstallJob {
-    Prepare,
-    InstallGame,
-    InstallJava,
-    InstallModLoader,
-}
-
-// TODO: Use enum, like launch crate
-#[derive(Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InstallEvent {
-    completed: u64,
-    total: u64,
-    downloader_step: download::task::Step,
-    speed: u64,
-    job: InstallJob,
 }
 
 /// Installs Minecraft, Java, and optionally a mod loader for the given instance.
@@ -278,69 +286,64 @@ pub struct InstallEvent {
 pub async fn install(
     config: Config,
     instance: Instance,
-    event_channel: Channel<InstallEvent>,
+    status: Arc<Mutex<InstallEvent>>,
 ) -> Result<()> {
-    let progress = Progress::default();
-    let finished = Arc::new(AtomicBool::new(false));
-    let install_job = Arc::new(Mutex::new(InstallJob::Prepare));
-    // FIXME: If download failed, this will never stop, it will be a zombie thread. Move this
-    // sender to cmd_ function to fix it.
-    let progress_sender_thread = {
-        let progress_cloned = progress.clone();
-        let finished = finished.clone();
-        let install_job_cloned = install_job.clone();
-        thread::spawn(move || {
-            while !finished.load(Ordering::SeqCst) {
-                let downloader_step =
-                    { progress_cloned.step.lock().expect("Internal Error").clone() };
-                let job = { install_job_cloned.lock().expect("Internal Error").clone() };
-                let _ = event_channel.send(InstallEvent {
-                    completed: progress_cloned.completed.load(Ordering::SeqCst),
-                    total: progress_cloned.total.load(Ordering::SeqCst),
-                    speed: progress_cloned.speed.load(Ordering::SeqCst),
-                    downloader_step,
-                    job,
-                });
-                std::thread::sleep(Duration::from_millis(100));
-            }
-        })
-    };
-    // TODO: send state preparing installation
+    {
+        let mut status = status.lock().expect("Internal Error");
+        *status = InstallEvent::Prepare;
+    }
     info!(
         "Start installing the game for instance {}",
         instance.config.name
     );
     let runtime = instance.config.runtime;
-    info!("------------- Instance runtime config -------------");
-    info!("-> Minecraft: {}", runtime.minecraft);
-    match &runtime.mod_loader_type {
-        Some(x) => info!("-> Mod loader: {x}"),
-        None => info!("-> Mod loader: none"),
-    };
-    match &runtime.mod_loader_version {
-        Some(x) => info!("-> Mod loader version: {x}"),
-        None => info!("-> Mod loader version: none"),
-    };
+
+    print_runtime_info(&runtime);
+
     info!("Generating download task...");
     let download_list = generate_download_info(
         &runtime.minecraft,
         MinecraftLocation::new(&DATA_LOCATION.root),
     )
     .await?;
+
+    let progress = Progress::default();
+    {
+        let mut status = status.lock().expect("internal error");
+        *status = InstallEvent::InstallGame(progress.clone())
+    }
     info!("Start downloading file");
-    download_concurrent(download_list, &progress, config.download).await?;
+    download_concurrent(download_list, &progress, config.download.clone()).await?;
+
     info!("Installing Java");
-    // TODO: Send state install java
+    let progress = Progress::default();
+    {
+        let mut status = status.lock().expect("Internal error");
+        *status = InstallEvent::InstallJava(progress.clone())
+    }
     let java_version_list = java::MojangJavaVersionList::new().await?;
     let java_for_current_platform = java_version_list
         .get_current_platform()
         .ok_or(Error::NoSupportedJavaRuntime)?;
-    java::group_install(&DATA_LOCATION.root.join("java"), java_for_current_platform).await?;
+    // TODO: Don't group install java here, show a dialog to install java manually
+    java::group_install(
+        &DATA_LOCATION.root.join("java"),
+        java_for_current_platform,
+        &progress,
+        config.download.clone(),
+    )
+    .await?;
+
     if runtime.mod_loader_type.is_some() {
         info!("Install mod loader");
-        //TODO: Send state install mod loader
+        {
+            let mut status = status.lock().expect("Internal error");
+            *status = InstallEvent::InstallModLoader;
+        }
+        // TODO: mod loader installation progress
         install_mod_loader(runtime).await?;
     };
+
     debug!("Saving lock file");
     async_fs::write(
         DATA_LOCATION
@@ -349,8 +352,20 @@ pub async fn install(
         b"ok",
     )
     .await?;
-    let _ = progress_sender_thread.join();
     Ok(())
+}
+
+fn print_runtime_info(runtime: &InstanceRuntime) {
+    info!("------------- Instance runtime config -------------");
+    info!("-> Minecraft: {}", runtime.minecraft);
+    match &runtime.mod_loader_type {
+        Some(mod_loader_version) => info!("-> Mod loader: {mod_loader_version}"),
+        None => info!("-> Mod loader: none"),
+    };
+    match &runtime.mod_loader_version {
+        Some(mod_loader_version) => info!("-> Mod loader version: {mod_loader_version}"),
+        None => info!("-> Mod loader version: none"),
+    };
 }
 
 /// Installs the specified mod loader for the provided runtime configuration.

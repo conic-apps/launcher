@@ -39,7 +39,6 @@ import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/store/config";
 import { useInstanceStore } from "@/store/instance";
 import { Instance, listInstances } from "@conic/instance";
-import { launch as conicLaunch } from "@conic/launch";
 import AppIcon from "@/components/AppIcon.vue";
 import { useDialogStore } from "@/store/dialog";
 
@@ -127,7 +126,7 @@ const install = () => {
 };
 const launch = () => {
   buttonLoading.value = true;
-  conicLaunch(config, instanceStore.currentInstance);
+  // TODO: Invoke launch and show progress use new api
 };
 
 listen("install_success", () => {
