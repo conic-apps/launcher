@@ -73,10 +73,10 @@ async fn resolve_api_url(url: &str) -> Result<String> {
     let response = HTTP_CLIENT.get(url).send().await?;
     let response_headers = response.headers();
     if let Some(api_location) = response_headers.get("x-authlib-injector-api-location") {
-        // TODO: If error ,show a message said
-        // server response incorrect, let your
-        // server owner fix it
-        return Ok(api_location.to_str()?.to_string());
+        return Ok(api_location
+            .to_str()
+            .map_err(|_| Error::InvalidALIResponse)?
+            .to_string());
     };
     Ok(url.to_string())
 }
