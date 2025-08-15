@@ -76,7 +76,6 @@ import { loadTheme } from "./theme";
 import Home from "./pages/Home.vue";
 import { useTimeStore } from "./store/time";
 import Market from "./pages/Market.vue";
-import { saveConfigToFile } from "@conic/config";
 import Logo from "@/assets/logo.svg";
 import WindowButton from "./components/WindowButton.vue";
 import AccountStatus from "./components/AccountStatus.vue";
@@ -114,16 +113,6 @@ function changePage(event: MouseEvent | null, component: ComponentName) {
 function jumpTo(name: ComponentName) {
   changePage(null, name);
 }
-
-watch(
-  config,
-  async (value) => {
-    document.body.classList.add("saving-config");
-    await saveConfigToFile(value);
-    document.body.classList.remove("saving-config");
-  },
-  { immediate: false },
-);
 
 const currentTime = useTimeStore();
 setInterval(() => {

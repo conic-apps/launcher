@@ -2,8 +2,9 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { Instance } from "@conic/instance"
+import { Instance, listInstances } from "@conic/instance"
 import { defineStore } from "pinia"
+import { useConfigStore } from "./config"
 
 type InstanceStore = {
     currentInstance: Instance
@@ -43,5 +44,25 @@ export const useInstanceStore = defineStore("instance", {
             instances: [],
             launchedInstances: new Map(),
         }
+    },
+    actions: {
+        async fetchInstances() {
+            this.instances = await listInstances("Name")
+            const foundCurrentInstance = this.instances.find((value) => {
+                return value.id === this.currentInstance.id
+            })
+            if (foundCurrentInstance) {
+                this.currentInstance = foundCurrentInstance
+            } else {
+                const config = useConfigStore()
+                if (!config.accessibility.hide_latest_release) {
+                    this.currentInstance = this.instances[0]
+                } else if (!config.accessibility.hide_latest_snapshot) {
+                    this.currentInstance = this.instances[0]
+                } else {
+                    this.currentInstance = this.instances[0]
+                }
+            }
+        },
     },
 })

@@ -6,8 +6,8 @@
   <div class="instances">
     <div class="overview">
       <list-item
-        @click="$emit('select', instance)"
         v-for="(instance, index) in computedInstances"
+        @click="instanceStore.currentInstance = instance"
         :key="index"
         logo="1"
         :title="instanceDisplayName(instance.config.name, index)"
@@ -136,7 +136,6 @@ div.instance:hover {
   background-color: #ffffff1c;
   box-shadow: 0px 0px 3px #0000004c;
   border-radius: 8px;
-  // transition: background-color 0ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 div.instance:active {

@@ -25,14 +25,6 @@
         :is="currentComponent"
         style="padding: 16px 8px; width: 100%; height: fit-content"></component>
     </Transition>
-    <!-- <worlds :show="show.worlds" :datas="saves" :instance-name="instance.config.name" @close="show.worlds = false"> -->
-    <!-- </worlds> -->
-    <!-- <mods :show="show.mods" :datas="mods" :instance-name="instance.config.name" @close="show.mods = false"></mods> -->
-    <!-- <resourcepacks :show="show.resourcepacks" :datas="resourcepacks" :instance-name="instance.config.name" -->
-    <!--   @close="show.resourcepacks = false"></resourcepacks> -->
-    <!-- <shaderpacks :show="show.shaderpacks" :datas="shaderpacks" :instance-name="instance.config.name" -->
-    <!--   @close="show.shaderpacks = false"> -->
-    <!-- </shaderpacks> -->
   </div>
 </template>
 
