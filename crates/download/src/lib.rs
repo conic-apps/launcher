@@ -195,6 +195,28 @@ impl Hasher {
     }
 }
 
+struct ScopedThread {
+    is_aborted: Arc<AtomicBool>,
+}
+
+impl ScopedThread {
+    fn new<F>(f: F) -> Self
+    where
+        F: FnOnce(Arc<AtomicBool>) + Send + 'static,
+    {
+        let is_aborted = Arc::new(AtomicBool::new(false));
+        let is_aborted_cloned = Arc::new(AtomicBool::new(false));
+        thread::spawn(move || f(is_aborted_cloned));
+        Self { is_aborted }
+    }
+}
+
+impl Drop for ScopedThread {
+    fn drop(&mut self) {
+        self.is_aborted.store(true, Ordering::SeqCst);
+    }
+}
+
 pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()> {
     progress.reset(Ordering::SeqCst);
     let file_path = download.file.clone();
@@ -210,7 +232,15 @@ pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()
             status.canonical_reason().unwrap_or("Unknown").to_string(),
         ));
     }
-    // TODO: Speed
+    let speed_counter_input = Arc::new(AtomicU64::new(0));
+    let _speed_thread = {
+        let speed_counter_input = speed_counter_input.clone();
+        let speed_counter_output = progress.speed.clone();
+        ScopedThread::new(move |is_finished| {
+            speed_counter_loop(speed_counter_input, speed_counter_output, is_finished)
+        })
+    };
+
     if let Some(len) = response.content_length() {
         progress.total.store(len, Ordering::SeqCst);
     }
@@ -222,6 +252,7 @@ pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()
         progress
             .completed
             .fetch_add(chunk.len() as u64, Ordering::SeqCst);
+        speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);
     }
     if !hasher.verify(&download.checksum) {
         return Err(Error::Sha1Missmatch(url));
@@ -238,14 +269,6 @@ pub async fn download_concurrent(
     progress: &Progress,
     download_config: DownloadConfig,
 ) -> Result<()> {
-    inner_download_concurrent(tasks, progress, download_config).await
-}
-
-async fn inner_download_concurrent(
-    tasks: Vec<DownloadTask>,
-    progress: &Progress,
-    download_config: DownloadConfig,
-) -> Result<()> {
     let download_tasks: Result<Vec<DownloadTask>> =
         filter_existing_and_verified_files(tasks, progress)
             .into_iter()
@@ -253,19 +276,16 @@ async fn inner_download_concurrent(
             .collect();
     let download_tasks = download_tasks?;
 
-    let is_finished = Arc::new(AtomicBool::new(false));
-    let speed_thread = {
-        let speed_counter = progress.speed.clone();
-        let is_finished_cloned = is_finished.clone();
-        thread::spawn(move || speed_counter_loop(speed_counter, is_finished_cloned))
+    let speed_counter_input = Arc::new(AtomicU64::new(0));
+    let _speed_thread = {
+        let speed_counter_input = speed_counter_input.clone();
+        let speed_counter_output = progress.speed.clone();
+        ScopedThread::new(move |is_finished| {
+            speed_counter_loop(speed_counter_input, speed_counter_output, is_finished)
+        })
     };
 
     let mirror_usage = MirrorUsage::new(download_config.mirror);
-    let mirror_usage_sender_thread = {
-        let mirror_usage_cloned = mirror_usage.clone();
-        let is_finished_cloned = is_finished.clone();
-        thread::spawn(move || mirror_usage_sender_loop(mirror_usage_cloned, is_finished_cloned))
-    };
 
     progress.completed.store(0, Ordering::SeqCst);
     progress
@@ -279,22 +299,19 @@ async fn inner_download_concurrent(
         *task = Step::DownloadFiles;
     }
 
-    let result = futures::stream::iter(download_tasks)
+    futures::stream::iter(download_tasks)
         .map(|task| {
             inner_download_future(
                 task,
                 download_config.max_download_speed,
                 &mirror_usage,
                 progress,
+                speed_counter_input.clone(),
             )
         })
         .buffer_unordered(download_config.max_connections)
         .try_for_each_concurrent(None, |_| async { Ok(()) })
-        .await;
-    is_finished.store(true, Ordering::SeqCst);
-    let _ = speed_thread.join();
-    let _ = mirror_usage_sender_thread.join();
-    result
+        .await
 }
 
 pub fn filter_existing_and_verified_files(
@@ -347,18 +364,15 @@ fn verify_checksum_from_read<R: Read>(source: &mut R, checksum: &Checksum) -> Op
     Some(hasher.verify(checksum))
 }
 
-fn speed_counter_loop(counter: Arc<AtomicU64>, finished: Arc<AtomicBool>) {
+fn speed_counter_loop(input: Arc<AtomicU64>, output: Arc<AtomicU64>, finished: Arc<AtomicBool>) {
+    let mut buffer = Vec::with_capacity(20);
     while finished.load(Ordering::SeqCst) {
-        // TODO: Send download speed to frontend
-        counter.store(0, Ordering::SeqCst);
+        buffer.push(input.swap(0, Ordering::SeqCst));
+        while buffer.len() > 20 {
+            buffer.remove(0);
+        }
+        output.store(buffer.iter().sum(), Ordering::SeqCst);
         thread::sleep(Duration::from_millis(2000));
-    }
-}
-
-fn mirror_usage_sender_loop(_mirror_usage: MirrorUsage, finished: Arc<AtomicBool>) {
-    while finished.load(Ordering::SeqCst) {
-        // TODO: Send mirror usage to frontend
-        thread::sleep(Duration::from_millis(500));
     }
 }
 
@@ -367,6 +381,7 @@ async fn inner_download_future(
     max_download_speed: u64,
     mirror_usage: &MirrorUsage,
     progress: &Progress,
+    speed_counter_input: Arc<AtomicU64>,
 ) -> Result<()> {
     let mut disabled_mirrors = vec![];
     let mut retried = 0;
@@ -379,7 +394,13 @@ async fn inner_download_future(
             Some(x) => (x.0, Some(x.1)),
             None => (task.clone(), None),
         };
-        let result = inner_download_executer(&task, max_download_speed, progress.clone()).await;
+        let result = inner_download_executer(
+            &task,
+            max_download_speed,
+            progress.clone(),
+            speed_counter_input.clone(),
+        )
+        .await;
         if let Some(mirror) = &mirror {
             mirror.1.fetch_sub(1, Ordering::SeqCst);
         }
@@ -405,6 +426,7 @@ async fn inner_download_executer(
     task: &DownloadTask,
     max_download_speed: u64,
     progress: Progress,
+    speed_counter_input: Arc<AtomicU64>,
 ) -> Result<()> {
     let file_path = task.file.clone();
     let url = task.url.clone();
@@ -429,9 +451,7 @@ async fn inner_download_executer(
         }
         file.write_all(&chunk).await?;
         hasher.update(&chunk);
-        progress
-            .speed
-            .fetch_add(chunk.len() as u64, Ordering::SeqCst);
+        speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);
     }
     file.sync_all().await?;
     if !hasher.verify(&task.checksum) {
