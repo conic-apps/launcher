@@ -57,15 +57,15 @@ watch(
     configStore.accessibility.hide_latest_release,
     configStore.accessibility.hide_latest_snapshot,
   ],
-  ([hide_latest_release, hide_latest_snapshot]) => {
+  ([hideLatestRelease, hideLatestSnapshot]) => {
     const currentInstanceName = instanceStore.currentInstance.config.name;
     if (currentInstanceName !== "Latest Release" && currentInstanceName !== "Latest Snapshot") {
       return;
     }
     const instances = instanceStore.instances;
-    if (!hide_latest_release) {
+    if (!hideLatestRelease) {
       instanceStore.currentInstance = instances[1];
-    } else if (!hide_latest_snapshot) {
+    } else if (!hideLatestSnapshot) {
       instanceStore.currentInstance = instances[1];
     } else {
       instanceStore.currentInstance = instances[1];

@@ -92,9 +92,9 @@ function switchComponent(component: Component, index: number) {
   activeComponentIndex.value = index;
 }
 
-let configStore = useConfigStore();
+const configStore = useConfigStore();
 
-configStore.$subscribe(async (_mutation, state) => {
+configStore.$subscribe(async (mutation, state) => {
   document.body.classList.add("saving-config");
   await saveConfigToFile(state);
   document.body.classList.remove("saving-config");
