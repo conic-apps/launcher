@@ -109,19 +109,8 @@ export async function getNeoforgedVersionList(mcversion: string): Promise<string
     return await invoke("plugin:install|cmd_get_neoforged_version_list", { mcversion })
 }
 
-export enum Job {
-    Prepare = "Prepare",
-    InstallGame = "InstallGame",
-    InstallJava = "InstallJava",
-    InstallModLoader = "InstallModLoader",
-}
-
-export enum DownloaderStep {
-    VerifyExistingFiles = "VerifyExistingFiles",
-    DownloadFiles = "DownloadFiles",
-}
-
 export enum InstallErrorKind {
+    AlreadyInstalling = "AlreadyInstalling",
     Io = "Io",
     Network = "Network",
     InstanceBroken = "InstanceBroken",
@@ -135,91 +124,71 @@ export enum InstallErrorKind {
     ResolveVersionJsonFailed = "ResolveVersionJsonFailed",
     Sha1Missmatch = "Sha1Missmatch",
     UrlParse = "UrlParse",
-    NoSupportedJavaRuntim = "NoSupportedJavaRuntime",
+    NoSupportedJavaRuntime = "NoSupportedJavaRuntime",
     Aborted = "Aborted",
 }
 
-export type Progress = {
-    id: `${string}-${string}-${string}-${string}-${string}`
-    completed: number
-    total: number
-    speed: number
-    job: Job
-    downloaderStep: DownloaderStep
+export enum Job {
+    Prepare = "Prepare",
+    InstallGame = "InstallGame",
+    InstallJava = "InstallJava",
+    InstallModLoader = "InstallModLoader",
 }
 
-export type Callbacks = {
-    onStart?: (id: string) => void
-    onProgress?: (task: Progress) => void
-    onFailed?: (id: string, error: { kind: InstallErrorKind; message: string }) => void
-    onSucceed?: (id: string) => void
-    onPaused?: (id: string) => void
-    onResumed?: (id: string) => void
-    onCancelled?: (id: string) => void
-}
-
-type InstallEvent = {
-    completed: number
-    total: number
-    downloader_step: DownloaderStep
-    speed: number
+export type InstallProgress = {
     job: Job
+    progress?: {
+        completed: number
+        total: number
+        step: "VerifyExistingFiles" | "DownloadFiles"
+        speed: number
+    }
 }
 
 export class InstallTask {
-    private _promise?: Promise<void>
-    private _config: Config
-    private _instance: Instance
-    completed: number
-    total: number
-    downloader_step: DownloaderStep
-    speed: number
+    protected _config: Config
+    protected _instance: Instance
     job: Job
-    constructor(config: Config, instance: Instance) {
-        ;((this._config = config), (this._instance = instance))
-        this.completed = 0
-        this.total = 0
-        this.downloader_step = DownloaderStep.DownloadFiles
-        this.speed = 0
+    progress?: InstallProgress
+    protected _callbacks?: {
+        onStart?: () => void
+        onProgress?: (task: InstallProgress) => void
+        onFailed?: (error: { kind: InstallErrorKind; message: string }) => void
+        onSucceed?: () => void
+        onCancelled?: () => void
+    }
+    constructor(config: Config, instance: Instance, callbacks?: typeof this._callbacks) {
+        this._config = config
+        this._instance = instance
         this.job = Job.Prepare
+        this._callbacks = callbacks
     }
-    start(callbacks?: Callbacks) {
-        this._promise = installPromise(this._config, this._instance, callbacks)
-    }
-    cancel() {
-        invoke("plugin:install|cmd_cancel_install_task")
-    }
-}
-
-async function installPromise(config: Config, instance: Instance, callbacks?: Callbacks) {
-    const channel = new Channel<InstallEvent>()
-    const id = crypto.randomUUID()
-    channel.onmessage = (message) => {
-        callbacks?.onProgress?.({
-            id,
-            completed: message.completed,
-            total: message.total,
-            speed: message.speed,
-            job: message.job,
-            downloaderStep: message.downloader_step,
-        })
-    }
-    try {
-        await invoke("plugin:install|cmd_create_install_task", { config, instance, channel })
-        callbacks?.onSucceed?.(id)
-    } catch (error: any) {
-        if (error.kind && error.message) {
-            const kind = error.kind as InstallErrorKind
-            if (kind === InstallErrorKind.Aborted) {
-                callbacks?.onCancelled?.(id)
-            } else {
-                callbacks?.onFailed?.(id, {
-                    kind,
-                    message: error.message as string,
-                })
-            }
-        } else {
-            throw error
+    async start() {
+        const channel = new Channel<InstallProgress>()
+        channel.onmessage = (message) => {
+            this._callbacks?.onProgress?.(message)
         }
+        try {
+            await invoke("plugin:install|cmd_create_install_task", {
+                config: this._config,
+                instance: this._instance,
+                channel,
+            })
+            this._callbacks?.onSucceed?.()
+        } catch (error: any) {
+            if (error.kind && error.message) {
+                const kind = error.kind as InstallErrorKind
+                if (kind === InstallErrorKind.Aborted) {
+                    this._callbacks?.onCancelled?.()
+                } else {
+                    this._callbacks?.onFailed?.(error)
+                }
+            } else {
+                throw error
+            }
+        }
+    }
+    async cancel() {
+        await invoke("plugin:install|cmd_cancel_install_task")
     }
 }
