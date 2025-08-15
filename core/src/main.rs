@@ -5,7 +5,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![deny(clippy::unwrap_used)]
 
-use config::{Config, load_config_file};
 use folder::DATA_LOCATION;
 use log::{error, info};
 use tauri::{AppHandle, Manager, Window, WindowEvent, Wry, plugin::TauriPlugin};
