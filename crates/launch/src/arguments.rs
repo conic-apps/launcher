@@ -145,7 +145,7 @@ pub async fn generate_command_arguments(
     jvm_options.insert(
         "classpath",
         resolve_classpath(
-            &version,
+            version,
             minecraft_location,
             launch_options.extra_class_paths.clone(),
         ),
