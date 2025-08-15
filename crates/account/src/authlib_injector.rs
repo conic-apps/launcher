@@ -94,6 +94,10 @@ pub async fn get_yggdrasil_server_info(api_root: &str) -> Result<YggdrasilServer
     Ok(HTTP_CLIENT.get(api_root).send().await?.json().await?)
 }
 
+pub async fn get_yggdrasil_server_info_raw(api_root: &str) -> Result<String> {
+    Ok(HTTP_CLIENT.get(api_root).send().await?.text().await?)
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct LoginRequest {

@@ -67,6 +67,9 @@ pub enum Error {
     #[error("No supported java runtime")]
     NoSupportedJavaRuntime,
 
+    #[error("Invalid authlib version response")]
+    InvalidAuthlibResponse,
+
     #[error(transparent)]
     Aborted(
         #[from]

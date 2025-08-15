@@ -9,6 +9,7 @@ use std::{
     path::Path,
 };
 
+use account::authlib_injector::get_yggdrasil_server_info_raw;
 use log::info;
 use regex::Regex;
 use zip::ZipArchive;
@@ -43,7 +44,7 @@ pub async fn generate_command_arguments(
     minecraft_location: &MinecraftLocation,
     instance: &Instance,
     launch_options: &LaunchOptions,
-    version: ResolvedVersion,
+    version: &ResolvedVersion,
 ) -> Result<Vec<String>> {
     let mut command_arguments = Vec::new();
 
@@ -112,20 +113,22 @@ pub async fn generate_command_arguments(
             command_arguments.push("-XX:+UseZGC".to_string());
         }
     }
-    // TODO: support yggdrasil
-    //         if let Some(ygg) = launch_options.yggdrasil_agent.clone() {
-    //             command_arguments.push(format!(
-    //                 "-javaagent:{jar}={server}",
-    //                 jar = ygg.jar.to_string_lossy(),
-    //                 server = ygg.server
-    //             ));
-    //             command_arguments.push("-Dauthlibinjector.side=client".to_string());
-    //             if let Some(prefetched) = ygg.prefetched {
-    //                 command_arguments.push(format!(
-    //                     "-Dauthlibinjector.yggdrasil.prefetched={prefetched}"
-    //                 ));
-    //             }
-    //         }
+    if let Some(yggdrasil_api_root) = &launch_options.account_launch_info.yggdrasil_api_root {
+        let authlib_injector_path = minecraft_location.get_authlib_injector(&version.id);
+        command_arguments.push(format!(
+            "-javaagent:{jar}={server}",
+            jar = authlib_injector_path.to_string_lossy(),
+            server = yggdrasil_api_root
+        ));
+        command_arguments.push("-Dauthlibinjector.side=client".to_string());
+        if let Ok(prefetched_yggdrasil_server_metadata) =
+            get_yggdrasil_server_info_raw(yggdrasil_api_root).await
+        {
+            command_arguments.push(format!(
+                "-Dauthlibinjector.yggdrasil.prefetched={prefetched_yggdrasil_server_metadata}"
+            ));
+        }
+    }
     let mut jvm_options: HashMap<&str, String> = HashMap::new();
     jvm_options.insert(
         "natives_directory",
@@ -142,7 +145,7 @@ pub async fn generate_command_arguments(
     jvm_options.insert(
         "classpath",
         resolve_classpath(
-            &version,
+            version,
             minecraft_location,
             launch_options.extra_class_paths.clone(),
         ),
@@ -163,7 +166,7 @@ pub async fn generate_command_arguments(
             argument.replace("${path}", log_config_path.to_string_lossy().as_ref())
         ));
     }
-    jvm_arguments.extend(version.jvm_arguments);
+    jvm_arguments.extend(version.jvm_arguments.clone());
     command_arguments.push(launch_options.extra_jvm_args.clone());
     command_arguments.extend(
         jvm_arguments
@@ -173,6 +176,7 @@ pub async fn generate_command_arguments(
     command_arguments.push(
         version
             .main_class
+            .clone()
             .unwrap_or("net.minecraft.client.main.Main".to_string()),
     );
     let mut game_options: HashMap<&str, String> = HashMap::with_capacity(13);
@@ -197,6 +201,7 @@ pub async fn generate_command_arguments(
         "asset_index",
         version
             .asset_index
+            .clone()
             .ok_or(Error::InvalidVersionJson("assetIndex".to_string()))?
             .id,
     );
@@ -204,6 +209,7 @@ pub async fn generate_command_arguments(
         "assets_index_name",
         version
             .assets
+            .clone()
             .ok_or(Error::InvalidVersionJson("assets".to_string()))?,
     );
     game_options.insert(
@@ -213,9 +219,15 @@ pub async fn generate_command_arguments(
             .to_string_lossy()
             .to_string(),
     );
-    game_options.insert("auth_player_name", launch_options.game_profile.name.clone());
-    game_options.insert("auth_uuid", launch_options.game_profile.uuid.clone());
-    game_options.insert("auth_access_token", launch_options.access_token.clone());
+    game_options.insert(
+        "auth_player_name",
+        launch_options.account_launch_info.name.clone(),
+    );
+    game_options.insert("auth_uuid", launch_options.account_launch_info.uuid.clone());
+    game_options.insert(
+        "auth_access_token",
+        launch_options.account_launch_info.access_token.clone(),
+    );
     game_options.insert("user_properties", launch_options.properties.clone());
     game_options.insert("user_type", "msa".to_string());
     game_options.insert("resolution_width", launch_options.width.to_string());

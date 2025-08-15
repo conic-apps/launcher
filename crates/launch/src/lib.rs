@@ -19,7 +19,7 @@ use arguments::generate_command_arguments;
 use complete::complete_files;
 use config::Config;
 use download::task::Progress;
-use folder::DATA_LOCATION;
+use folder::{DATA_LOCATION, MinecraftLocation};
 use futures::future::{AbortHandle, Abortable};
 use instance::Instance;
 use log::{error, info, trace};
@@ -60,6 +60,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 pub enum LaunchEvent {
     Prepare,
     RefreshAccount,
+    InstallAuthlibInjector(Progress),
     CompleteFiles(Progress),
     GenerateScriptlet,
     WaitForLaunch,
@@ -150,16 +151,8 @@ pub async fn launch(
         "Starting Minecraft client, instance: {}",
         instance.config.name
     );
-    info!("------------- Instance runtime config -------------");
-    info!("-> Minecraft: {}", instance.config.runtime.minecraft);
-    match &instance.config.runtime.mod_loader_type {
-        Some(x) => info!("-> Mod loader: {x}"),
-        None => info!("-> Mod loader: none"),
-    };
-    match &instance.config.runtime.mod_loader_version {
-        Some(x) => info!("-> Mod loader version: {x}"),
-        None => info!("-> Mod loader version: none"),
-    };
+    print_instance_info(&instance);
+    let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
 
     if !config.launch.skip_refresh_account {
         {
@@ -174,9 +167,6 @@ pub async fn launch(
     let selected_account =
         account::AccountLaunchInfo::new(config.current_account_uuid, &config.current_account_type)?;
 
-    let launch_options = LaunchOptions::new(&config, &instance, &selected_account);
-    let minecraft_location = launch_options.minecraft_location.clone();
-
     if config.launch.skip_check_files {
         info!("File checking disabled by user")
     } else {
@@ -185,10 +175,11 @@ pub async fn launch(
             let mut status = status.lock().expect("Internal error");
             *status = LaunchEvent::CompleteFiles(progress.clone());
         }
-        complete_files(&instance, &minecraft_location, progress, config.download).await?;
+        complete_files(&instance, &minecraft_location, progress, &config.download).await?;
     }
 
     info!("Generating startup parameters");
+    let launch_options = LaunchOptions::new(&config, &instance, selected_account);
     {
         let mut status = status.lock().expect("Internal error");
         *status = LaunchEvent::GenerateScriptlet;
@@ -205,15 +196,46 @@ pub async fn launch(
         &minecraft_location,
         &instance,
         &launch_options,
-        resolved_version,
+        &resolved_version,
     )
     .await?;
+    if launch_options
+        .account_launch_info
+        .yggdrasil_api_root
+        .is_some()
+    {
+        info!("Downloading authlib injector");
+        let progress = Progress::default();
+        {
+            let mut status = status.lock().expect("internal error");
+            *status = LaunchEvent::InstallAuthlibInjector(progress.clone());
+        }
+        install::authlib_injector::install_latest(
+            &minecraft_location,
+            &resolved_version.id,
+            &progress,
+        )
+        .await?;
+    }
+
     let result = spawn_minecraft_process(command_arguments, launch_options, instance, status).await;
     if let Err(e) = &result {
         error!("Failed to spawn Minecraft process: {e}");
-        // TODO: Send error to fronend
     }
     result
+}
+
+fn print_instance_info(instance: &Instance) {
+    info!("------------- Instance runtime config -------------");
+    info!("-> Minecraft: {}", instance.config.runtime.minecraft);
+    match &instance.config.runtime.mod_loader_type {
+        Some(x) => info!("-> Mod loader: {x}"),
+        None => info!("-> Mod loader: none"),
+    };
+    match &instance.config.runtime.mod_loader_version {
+        Some(x) => info!("-> Mod loader version: {x}"),
+        None => info!("-> Mod loader version: none"),
+    };
 }
 
 /// Spawns the Minecraft process by generating and executing a launch script,
