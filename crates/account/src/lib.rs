@@ -77,6 +77,7 @@ pub struct AccountLaunchInfo {
     pub access_token: String,
     pub name: String,
     pub uuid: String,
+    pub yggdrasil_api_root: Option<String>,
 }
 
 impl AccountLaunchInfo {
@@ -88,6 +89,7 @@ impl AccountLaunchInfo {
                     access_token: microsoft_account.access_token,
                     name: microsoft_account.profile.profile_name,
                     uuid: microsoft_account.profile.uuid.to_string(),
+                    yggdrasil_api_root: None,
                 }
             }
             AccountType::AuthlibInjector => {
@@ -96,6 +98,7 @@ impl AccountLaunchInfo {
                     access_token: authlib_account.access_token,
                     name: authlib_account.profile_name,
                     uuid: authlib_account.profile_uuid.to_string(),
+                    yggdrasil_api_root: Some(authlib_account.api_root),
                 }
             }
             AccountType::Offline => {
@@ -104,6 +107,7 @@ impl AccountLaunchInfo {
                     access_token: "1145141919810".to_string(),
                     name: offline_account.name,
                     uuid: offline_account.uuid.to_string(),
+                    yggdrasil_api_root: None,
                 }
             }
         };

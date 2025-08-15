@@ -29,7 +29,8 @@ fn main() {
                 "cmd_get_quilt_version_list",
                 "cmd_get_forge_version_list",
                 "cmd_get_neoforged_version_list",
-                "cmd_install",
+                "cmd_create_install_task",
+                "cmd_cancel_install_task",
             ]),
         )
         .plugin(
@@ -41,7 +42,10 @@ fn main() {
                 "cmd_delete_instance",
             ]),
         )
-        .plugin("launch", InlinedPlugin::new().commands(&["cmd_launch"]))
+        .plugin(
+            "launch",
+            InlinedPlugin::new().commands(&["cmd_create_launch_task", "cmd_cancel_launch_task"]),
+        )
         .plugin(
             "platform",
             InlinedPlugin::new().commands(&["cmd_get_platform_info"]),

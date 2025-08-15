@@ -47,17 +47,17 @@ impl MinecraftLocation {
         }
     }
 
-    pub fn get_natives_root<P: AsRef<Path>>(&self, version: P) -> PathBuf {
-        self.get_version_root(version).join("conic-natives")
+    pub fn get_natives_root<P: AsRef<Path>>(&self, version_id: P) -> PathBuf {
+        self.get_version_root(version_id).join("conic-natives")
     }
 
-    pub fn get_version_root<P: AsRef<Path>>(&self, version: P) -> PathBuf {
-        self.versions.join(version)
+    pub fn get_version_root<P: AsRef<Path>>(&self, version_id: P) -> PathBuf {
+        self.versions.join(version_id)
     }
 
-    pub fn get_version_json<P: AsRef<Path> + Display>(&self, version: P) -> PathBuf {
-        self.get_version_root(&version)
-            .join(format!("{version}.json"))
+    pub fn get_version_json<P: AsRef<Path> + Display>(&self, version_id: P) -> PathBuf {
+        self.get_version_root(&version_id)
+            .join(format!("{version_id}.json"))
     }
 
     pub fn get_version_jar<P: AsRef<Path> + Display>(
@@ -86,8 +86,13 @@ impl MinecraftLocation {
             .join(format!("{version_assets}.json"))
     }
 
-    pub fn get_log_config<P: AsRef<Path>>(&self, version: P) -> PathBuf {
-        self.get_version_root(version).join("log4j2.xml")
+    pub fn get_log_config<P: AsRef<Path>>(&self, version_id: P) -> PathBuf {
+        self.get_version_root(version_id).join("log4j2.xml")
+    }
+
+    pub fn get_authlib_injector<P: AsRef<Path>>(&self, version_id: P) -> PathBuf {
+        self.get_version_root(version_id)
+            .join("authlib-injector.jar")
     }
 }
 

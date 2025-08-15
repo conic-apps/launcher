@@ -20,6 +20,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
 use config::download::{DownloadConfig, MirrorConfig};
+use sha2::Digest;
 use shared::HTTP_CLIENT;
 use task::{Progress, Step};
 
@@ -35,6 +36,7 @@ pub enum DownloadType {
     Assets,
     Libraries,
     MojangJava,
+    AuthlibInjector,
     Unknown,
 }
 
@@ -81,11 +83,18 @@ impl MirrorUsage {
     }
 }
 
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub enum Checksum {
+    Sha1(String),
+    Sha256(String),
+    None,
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct DownloadTask {
     pub url: String,
     pub file: PathBuf,
-    pub sha1: Option<String>,
+    pub checksum: Checksum,
     pub r#type: DownloadType,
 }
 
@@ -148,6 +157,44 @@ impl DownloadTask {
     }
 }
 
+enum Hasher {
+    Sha1(sha1_smol::Sha1),
+    Sha256(sha2::Sha256),
+    None,
+}
+
+impl From<&Checksum> for Hasher {
+    fn from(value: &Checksum) -> Self {
+        match value {
+            Checksum::Sha1(_) => Self::Sha1(sha1_smol::Sha1::new()),
+            Checksum::Sha256(_) => Self::Sha256(sha2::Sha256::new()),
+            Checksum::None => Self::None,
+        }
+    }
+}
+
+impl Hasher {
+    fn update(&mut self, data: &[u8]) {
+        match self {
+            Self::Sha1(sha1_hasher) => sha1_hasher.update(data),
+            Self::Sha256(sha256_hasher) => sha256_hasher.update(data),
+            Self::None => (),
+        }
+    }
+    fn verify(self, checksum: &Checksum) -> bool {
+        match (self, checksum) {
+            (Self::Sha1(sha1_hasher), Checksum::Sha1(sha1_checksum)) => {
+                &sha1_hasher.digest().to_string() == sha1_checksum
+            }
+            (Self::Sha256(sha256_hasher), Checksum::Sha256(sha256_checksum)) => {
+                &format!("{:02x}", sha256_hasher.finalize()) == sha256_checksum
+            }
+            (Self::None, Checksum::None) => true,
+            _ => false,
+        }
+    }
+}
+
 pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()> {
     progress.reset(Ordering::SeqCst);
     let file_path = download.file.clone();
@@ -168,7 +215,7 @@ pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()
         progress.total.store(len, Ordering::SeqCst);
     }
     let mut file = async_fs::File::create(&file_path).await?;
-    let mut hasher = sha1_smol::Sha1::new();
+    let mut hasher = Hasher::from(&download.checksum);
     while let Some(chunk) = response.chunk().await? {
         file.write_all(&chunk).await?;
         hasher.update(&chunk);
@@ -176,9 +223,7 @@ pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()
             .completed
             .fetch_add(chunk.len() as u64, Ordering::SeqCst);
     }
-    if let Some(sha1) = download.sha1.as_ref()
-        && &hasher.digest().to_string() != sha1
-    {
+    if !hasher.verify(&download.checksum) {
         return Err(Error::Sha1Missmatch(url));
     }
     file.sync_all().await?;
@@ -275,32 +320,31 @@ pub fn filter_existing_and_verified_files(
                 return true;
             }
         };
-        let sha1 = match download.sha1.clone() {
-            Some(sha1) => sha1,
-            None => return true,
-        };
-        let file_hash = match calculate_sha1_from_read(&mut file) {
-            Ok(x) => x,
-            Err(_) => return true,
-        };
+        let check_result = verify_checksum_from_read(&mut file, &download.checksum);
         completed.fetch_add(1, Ordering::SeqCst);
-        file_hash != sha1
+        match check_result {
+            Some(x) => !x,
+            None => true,
+        }
     };
     let downloads: Vec<_> = downloads.into_par_iter().filter(filter_op).collect();
     downloads
 }
 
-fn calculate_sha1_from_read<R: Read>(source: &mut R) -> Result<String> {
-    let mut hasher = sha1_smol::Sha1::new();
+fn verify_checksum_from_read<R: Read>(source: &mut R, checksum: &Checksum) -> Option<bool> {
+    if checksum == &Checksum::None {
+        return None;
+    }
+    let mut hasher = Hasher::from(checksum);
     let mut buffer = [0; 1024];
     loop {
-        let bytes_read = source.read(&mut buffer)?;
+        let bytes_read = source.read(&mut buffer).ok()?;
         if bytes_read == 0 {
             break;
         }
         hasher.update(&buffer[..bytes_read]);
     }
-    Ok(hasher.digest().to_string())
+    Some(hasher.verify(checksum))
 }
 
 fn speed_counter_loop(counter: Arc<AtomicU64>, finished: Arc<AtomicBool>) {
@@ -376,7 +420,7 @@ async fn inner_download_executer(
         ));
     }
     let mut file = async_fs::File::create(&file_path).await?;
-    let mut hasher = sha1_smol::Sha1::new();
+    let mut hasher = Hasher::from(&task.checksum);
     while let Some(chunk) = response.chunk().await? {
         while progress.speed.load(Ordering::SeqCst) > max_download_speed
             && max_download_speed > 1024
@@ -384,17 +428,13 @@ async fn inner_download_executer(
             async_io::Timer::after(Duration::from_millis(100)).await;
         }
         file.write_all(&chunk).await?;
-        if task.sha1.is_some() {
-            hasher.update(&chunk);
-        }
+        hasher.update(&chunk);
         progress
             .speed
             .fetch_add(chunk.len() as u64, Ordering::SeqCst);
     }
     file.sync_all().await?;
-    if let Some(sha1) = task.sha1.clone()
-        && hasher.digest().to_string() != sha1
-    {
+    if !hasher.verify(&task.checksum) {
         return Err(Error::Sha1Missmatch(url));
     }
     progress.completed.fetch_add(1, Ordering::SeqCst);
