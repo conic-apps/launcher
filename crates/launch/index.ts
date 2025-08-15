@@ -31,7 +31,6 @@ enum LaunchErrorKind {
     AccountError = "AccountError",
     Aborted = "Aborted",
     Sha1Missmatch = "Sha1Missmatch",
-    HttpResponseNotSuccess = "HttpResponseNotSuccess",
     Other = "Other",
 }
 

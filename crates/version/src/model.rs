@@ -99,7 +99,7 @@ impl FromStr for Version {
 #[derive(Clone, Deserialize, Serialize)]
 pub struct AssetIndexObjectInfo {
     pub hash: String,
-    pub size: u32,
+    pub size: u64,
 }
 
 pub type AssetIndexObject = HashMap<String, AssetIndexObjectInfo>;

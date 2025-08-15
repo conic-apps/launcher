@@ -4,7 +4,7 @@
 
 use std::{
     collections::HashMap,
-    io::Read,
+    io::{Read, SeekFrom},
     path::PathBuf,
     sync::{
         Arc,
@@ -14,9 +14,11 @@ use std::{
     time::Duration,
 };
 
-use futures::{AsyncWriteExt, StreamExt, TryStreamExt};
+use async_fs::OpenOptions;
+use futures::{AsyncSeekExt, AsyncWriteExt, StreamExt, TryStreamExt};
 use log::warn;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use reqwest::{IntoUrl, header::ACCEPT_RANGES};
 use serde::{Deserialize, Serialize};
 
 use config::download::{DownloadConfig, MirrorConfig};
@@ -49,7 +51,7 @@ struct MirrorUsage {
 }
 
 impl MirrorUsage {
-    fn new(mirror_config: MirrorConfig) -> Self {
+    fn new(mirror_config: &MirrorConfig) -> Self {
         Self {
             libraries: mirror_config
                 .libraries
@@ -83,17 +85,18 @@ impl MirrorUsage {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Checksum {
     Sha1(String),
     Sha256(String),
     None,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct DownloadTask {
     pub url: String,
     pub file: PathBuf,
+    pub size_bytes: Option<u64>,
     pub checksum: Checksum,
     pub r#type: DownloadType,
 }
@@ -224,14 +227,7 @@ pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()
     if let Some(parent) = file_path.parent() {
         async_fs::create_dir_all(parent).await?
     }
-    let mut response = HTTP_CLIENT.get(&url).send().await?;
-    let status = response.status();
-    if !status.is_success() {
-        return Err(Error::HttpResponseNotSuccess(
-            status.as_u16(),
-            status.canonical_reason().unwrap_or("Unknown").to_string(),
-        ));
-    }
+    let mut response = HTTP_CLIENT.get(&url).send().await?.error_for_status()?;
     let speed_counter_input = Arc::new(AtomicU64::new(0));
     let _speed_thread = {
         let speed_counter_input = speed_counter_input.clone();
@@ -285,7 +281,7 @@ pub async fn download_concurrent(
         })
     };
 
-    let mirror_usage = MirrorUsage::new(download_config.mirror);
+    let mirror_usage = MirrorUsage::new(&download_config.mirror);
 
     progress.completed.store(0, Ordering::SeqCst);
     progress
@@ -300,17 +296,16 @@ pub async fn download_concurrent(
     }
 
     futures::stream::iter(download_tasks)
-        .map(|task| {
+        .map(Ok)
+        .try_for_each_concurrent(download_config.max_connections, |task| {
             inner_download_future(
                 task,
-                download_config.max_download_speed,
+                &download_config,
                 &mirror_usage,
                 progress,
                 speed_counter_input.clone(),
             )
         })
-        .buffer_unordered(download_config.max_connections)
-        .try_for_each_concurrent(None, |_| async { Ok(()) })
         .await
 }
 
@@ -378,7 +373,7 @@ fn speed_counter_loop(input: Arc<AtomicU64>, output: Arc<AtomicU64>, finished: A
 
 async fn inner_download_future(
     task: DownloadTask,
-    max_download_speed: u64,
+    config: &DownloadConfig,
     mirror_usage: &MirrorUsage,
     progress: &Progress,
     speed_counter_input: Arc<AtomicU64>,
@@ -394,13 +389,9 @@ async fn inner_download_future(
             Some(x) => (x.0, Some(x.1)),
             None => (task.clone(), None),
         };
-        let result = inner_download_executer(
-            &task,
-            max_download_speed,
-            progress.clone(),
-            speed_counter_input.clone(),
-        )
-        .await;
+        let result =
+            inner_download_executer(&task, config, progress.clone(), speed_counter_input.clone())
+                .await;
         if let Some(mirror) = &mirror {
             mirror.1.fetch_sub(1, Ordering::SeqCst);
         }
@@ -424,28 +415,27 @@ async fn inner_download_future(
 
 async fn inner_download_executer(
     task: &DownloadTask,
-    max_download_speed: u64,
+    config: &DownloadConfig,
     progress: Progress,
     speed_counter_input: Arc<AtomicU64>,
 ) -> Result<()> {
+    if let Some(length) = task.size_bytes
+        && is_support_range(&task.url).await == Some(true)
+    {
+        return inner_chunk_download_executer(task, length, config, &progress, speed_counter_input)
+            .await;
+    }
     let file_path = task.file.clone();
     let url = task.url.clone();
     if let Some(parent) = file_path.parent() {
         async_fs::create_dir_all(parent).await?;
     }
-    let mut response = HTTP_CLIENT.get(&url).send().await?;
-    let status = response.status();
-    if !status.is_success() {
-        return Err(Error::HttpResponseNotSuccess(
-            status.as_u16(),
-            status.canonical_reason().unwrap_or("Unknown").to_string(),
-        ));
-    }
+    let mut response = HTTP_CLIENT.get(&url).send().await?.error_for_status()?;
     let mut file = async_fs::File::create(&file_path).await?;
     let mut hasher = Hasher::from(&task.checksum);
     while let Some(chunk) = response.chunk().await? {
-        while progress.speed.load(Ordering::SeqCst) > max_download_speed
-            && max_download_speed > 1024
+        while progress.speed.load(Ordering::SeqCst) > config.max_download_speed
+            && config.max_download_speed > 1024
         {
             async_io::Timer::after(Duration::from_millis(100)).await;
         }
@@ -459,4 +449,117 @@ async fn inner_download_executer(
     }
     progress.completed.fetch_add(1, Ordering::SeqCst);
     Ok(())
+}
+
+async fn is_support_range<U: IntoUrl>(url: U) -> Option<bool> {
+    let response = HTTP_CLIENT.head(url).send().await.ok()?;
+    let accept_ranges = response
+        .headers()
+        .get(ACCEPT_RANGES)
+        .and_then(|x| x.to_str().ok())
+        .unwrap_or("");
+    Some(accept_ranges.eq_ignore_ascii_case("bytes"))
+}
+
+async fn inner_chunk_download_executer(
+    task: &DownloadTask,
+    length: u64,
+    config: &DownloadConfig,
+    progress: &Progress,
+    speed_counter_input: Arc<AtomicU64>,
+) -> Result<()> {
+    let chunks = calculate_chunks_length(length);
+    let file_path = task.file.clone();
+    if let Some(parent) = file_path.parent() {
+        async_fs::create_dir_all(parent).await?;
+    }
+    futures::stream::iter(chunks)
+        .map(Ok)
+        .try_for_each_concurrent(4, async |range| {
+            let mut result = Ok(());
+            for retried in 0..10 {
+                match download_slice(
+                    task.clone(),
+                    config,
+                    progress,
+                    speed_counter_input.clone(),
+                    range,
+                )
+                .await
+                {
+                    Ok(()) => return Ok(()),
+                    Err(e) => result = Err(e),
+                };
+                println!("{:?}", result);
+                println!("retried: {retried}");
+            }
+            result
+        })
+        .await?;
+    progress.completed.fetch_add(1, Ordering::SeqCst);
+    Ok(())
+}
+
+fn calculate_chunks_length(length: u64) -> Vec<(u64, u64)> {
+    if length < 4 * 1000 * 1000 {
+        return vec![(0, length - 1)];
+    }
+    let chunk_count = if length < 30 * 1000 * 1000 {
+        length / (2 * 1000 * 1000) + 1
+    } else if length < 100 {
+        length / (4 * 1000 * 1000) + 1
+    } else {
+        length / (10 * 1000 * 1000) + 1
+    };
+    let chunk_size = length / chunk_count;
+    let mut chunks = Vec::with_capacity(chunk_count as usize);
+    for i in 0..chunk_count {
+        if i == chunk_count - 1 {
+            chunks.push((i * chunk_size, length - 1));
+        } else {
+            chunks.push((i * chunk_size, (i + 1) * chunk_size - 1));
+        }
+    }
+    chunks
+}
+
+async fn download_slice(
+    task: DownloadTask,
+    config: &DownloadConfig,
+    progress: &Progress,
+    speed_counter_input: Arc<AtomicU64>,
+    range: (u64, u64),
+) -> Result<()> {
+    let url = task.url.clone();
+    if let Some(parent) = task.file.parent() {
+        async_fs::create_dir_all(parent).await?;
+    }
+    let mut target_file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(task.file)
+        .await?;
+    target_file.seek(SeekFrom::Start(range.0)).await?;
+    let mut response = HTTP_CLIENT
+        .get(&url)
+        .header("Range", format!("bytes={}-{}", range.0, range.1))
+        .send()
+        .await?
+        .error_for_status()?;
+    let mut size = 0u64;
+    while let Some(chunk) = response.chunk().await? {
+        while progress.speed.load(Ordering::SeqCst) > config.max_download_speed
+            && config.max_download_speed > 1024
+        {
+            async_io::Timer::after(Duration::from_millis(100)).await;
+        }
+        target_file.write_all(&chunk).await?;
+        speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);
+        size += chunk.len() as u64;
+    }
+    if size != range.1 - range.0 + 1 {
+        Err(Error::ChunkLengthMismatch)
+    } else {
+        Ok(())
+    }
 }
