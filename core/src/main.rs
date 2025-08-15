@@ -2,23 +2,18 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Prevents additional console window on Windows in release.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![deny(clippy::unwrap_used)]
 
 use config::load_config_file;
 use folder::DATA_LOCATION;
 use log::{error, info};
-use shared::APP_VERSION;
 use tauri::{AppHandle, Manager, Window, WindowEvent};
 #[cfg(debug_assertions)]
 use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
 use tauri_plugin_log::{Target, TargetKind};
 
 fn main() {
-    APP_VERSION
-        .set(env!("CARGO_PKG_VERSION").to_string())
-        .expect("Could not set app version");
     DATA_LOCATION.init();
     #[cfg(target_os = "linux")]
     {

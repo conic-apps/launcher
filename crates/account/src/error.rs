@@ -61,4 +61,7 @@ pub enum Error {
 
     #[error("{0}")]
     MicrosoftResponseMissingKey(String),
+
+    #[error("Unable to parse yggdrasil server api location, please ask your server for help")]
+    InvalidALIResponse,
 }
