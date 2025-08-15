@@ -56,7 +56,6 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 }
 
 #[derive(Clone, Serialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
 #[serde(tag = "job", content = "progress")]
 pub enum LaunchEvent {
     Prepare,
