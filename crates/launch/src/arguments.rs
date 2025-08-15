@@ -138,10 +138,7 @@ pub async fn generate_command_arguments(
             .to_string(),
     );
     jvm_options.insert("launcher_name", launch_options.launcher_name.clone());
-    jvm_options.insert(
-        "launcher_version",
-        APP_VERSION.get().cloned().unwrap_or("0.0.0".to_string()),
-    );
+    jvm_options.insert("launcher_version", APP_VERSION.to_string());
     jvm_options.insert(
         "classpath",
         resolve_classpath(

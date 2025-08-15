@@ -107,7 +107,6 @@ impl LaunchOptions {
             max_memory: launch_config
                 .max_memory
                 .unwrap_or(global_launch_config.max_memory),
-            // TODO:
             server: launch_config.server.clone(),
             width: launch_config.width.unwrap_or(global_launch_config.width),
             height: launch_config.height.unwrap_or(global_launch_config.height),

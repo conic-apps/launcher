@@ -108,7 +108,7 @@ async fn complete_assets_files(
     .await?;
 
     let assets_downloads = generate_assets_downloads(minecraft_location, &resolved_version).await?;
-    download::download_concurrent(assets_downloads, &progress, config).await?; // TODO: use download module
+    download::download_concurrent(assets_downloads, &progress, config).await?;
     Ok(())
 }
 

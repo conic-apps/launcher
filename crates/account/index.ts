@@ -15,6 +15,7 @@ export type AccountError = {
         | "ProfileUnavailable"
         | "OwnershipCheckFailed"
         | "MicrosoftResponseMissingKey"
+        | "InvalidALIResponse"
     message: string
 }
 
