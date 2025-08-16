@@ -9,7 +9,6 @@
 
 <script setup lang="ts">
 import { useDialogStore } from "@/store/dialog";
-import Tag from "./Tag.vue";
 import { getAvatar, getMicrosoftAccount, refreshAllMicrosoftAccounts } from "@conic/account";
 import { ref } from "vue";
 import { useConfigStore } from "@/store/config";

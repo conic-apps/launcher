@@ -42,8 +42,6 @@
 
 <script lang="ts" setup>
 import ListItem from "@/components/ListItem.vue";
-import Tag from "@/components/Tag.vue";
-import { listen } from "@tauri-apps/api/event";
 import { ref } from "vue";
 import { useConfigStore } from "@/store/config";
 import AppIcon from "@/components/AppIcon.vue";
@@ -70,10 +68,6 @@ async function getAccounts() {
 }
 
 getAccounts().then(() => {});
-
-listen("refresh_accounts_list", () => {
-  getAccounts();
-});
 
 function refreshLogin(uuid: string) {
   refreshMicrosoftAccount(uuid);
