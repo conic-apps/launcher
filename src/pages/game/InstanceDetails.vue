@@ -19,7 +19,6 @@
       "
       @choose-tab="chooseTab">
     </tabs>
-    <tabs v-else :tabs="['Install Progress']" :icons="['folder-arrow-down']" :active="0"> </tabs>
     <Transition :name="transitionName" mode="out-in">
       <component
         :is="currentComponent"

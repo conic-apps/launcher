@@ -17,7 +17,7 @@
       </div>
       <AccountStatus></AccountStatus>
       <div style="display: flex; align-items: center; margin-right: 20px">
-        <!-- TODO: Move to right and change ordering on macos -->
+        <!-- TODO: Move to left and change ordering on macos -->
         <WindowButton
           button-type="minimize"
           @minimize="window.getCurrentWindow().minimize()"></WindowButton>
@@ -74,7 +74,6 @@ import { watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { loadTheme } from "./theme";
 import Home from "./pages/Home.vue";
-import { useTimeStore } from "./store/time";
 import Market from "./pages/Market.vue";
 import Logo from "@/assets/logo.svg";
 import WindowButton from "./components/WindowButton.vue";
@@ -113,11 +112,6 @@ function changePage(event: MouseEvent | null, component: ComponentName) {
 function jumpTo(name: ComponentName) {
   changePage(null, name);
 }
-
-const currentTime = useTimeStore();
-setInterval(() => {
-  currentTime.now = Math.round(new Date().getTime() / 1000);
-}, 3000);
 </script>
 
 <style lang="less" scoped>

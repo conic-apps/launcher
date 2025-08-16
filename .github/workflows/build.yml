@@ -123,12 +123,16 @@ jobs:
           name: Updater signature(${{ matrix.appimage }}-appimage)
           path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.appimage }}.AppImage.sig
 
+      - name: Rename Windows installation-free exe
+        if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
+        run: ren "${{ github.workspace }}/target/release/conic-launcher.exe" "${{ github.workspace }}/target/release/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.exe"
+
       - name: Upload Windows installation-free exe
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
         with:
           name: Windows Installation-free(${{ matrix.arch }}-exe)
-          path: ${{ github.workspace }}/target/release/conic-launcher.exe
+          path: ${{ github.workspace }}/target/release/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.exe
 
       - name: Upload Microsoft Installer bundle
         uses: actions/upload-artifact@v4
@@ -165,19 +169,27 @@ jobs:
           name: MacOS ${{ matrix.arch }} bundle(dmg)
           path: ${{ github.workspace }}/target/release/bundle/dmg/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg
 
+      - name: Rename macos updater bundle
+        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
+        run: mv "${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz" "${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz"
+
       - name: Upload macos updater bundle
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
         with:
           name: MacOS ${{ matrix.arch }} updater bundle
-          path: ${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz
+          path: ${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz
+
+      - name: Rename macos updater signature
+        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
+        run: mv "${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz.sig" "${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz.sig"
 
       - name: Upload macos updater signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
         with:
           name: MacOS ${{ matrix.arch }} updater signature
-          path: ${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz.sig
+          path: ${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz.sig
 
   release:
     needs: [build, get-version]

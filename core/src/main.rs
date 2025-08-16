@@ -20,10 +20,6 @@ fn main() {
             std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
         }
     }
-    info!("Conic Launcher is starting up");
-    info!(
-        "Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher"
-    );
     #[allow(clippy::unit_arg)]
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
@@ -37,7 +33,7 @@ fn main() {
         .plugin(launch::init())
         .plugin(folder::init())
         .plugin(platform::init())
-        .setup(|_| Ok(info!("Main window loaded")))
+        .setup(|_| Ok(print_info()))
         .on_window_event(window_event_handler)
         .run(tauri::generate_context!())
         .expect("Failed to run app");
@@ -93,4 +89,12 @@ fn window_event_handler(window: &Window, event: &WindowEvent) {
         };
         window.close().expect("Could not close window");
     }
+}
+
+fn print_info() {
+    info!("Conic Launcher is starting up");
+    info!(
+        "Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher"
+    );
+    info!("Main window loaded")
 }
