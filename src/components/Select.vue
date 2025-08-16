@@ -4,7 +4,7 @@
 
 <template>
   <div class="select" :style="`width: ${width}px;`" tabindex="0" @blur="opened = false">
-    <div class="selected" @click="toggleOpened()">{{ selected }}</div>
+    <div class="selected" @click="toggleOpened()">{{ displayName[selected] }}</div>
     <div>
       <Transition
         @before-enter="beforeEnter"
@@ -42,12 +42,12 @@ const props = defineProps<{
   displayName: string[];
 }>();
 const model = defineModel();
-const selected = ref("");
+const selected = ref(0);
 
 const optionsList = useTemplateRef("options");
-props.options.map((value, index) => {
+props.options.forEach((value, index) => {
   if (value == model.value) {
-    selected.value = props.displayName[index];
+    selected.value = index;
   }
 });
 function beforeEnter(element: Element) {
@@ -85,19 +85,16 @@ function afterLeave(element: Element) {
   (element as HTMLElement).style.height = "";
 }
 function changeSelection(index: number) {
-  selected.value = props.displayName[index];
+  selected.value = index;
   model.value = props.options[index];
 }
-// onMounted(async () => {
-//   selected.value = await load(props.config)
-// })
 const opened = ref(false);
 function toggleOpened() {
   opened.value = !opened.value;
 }
 function outerHeight(el: HTMLElement) {
   if (!el) return 0;
-  let height = el.getBoundingClientRect().height; // content + padding + border
+  let height = el.getBoundingClientRect().height;
   const style = getComputedStyle(el);
   height += parseFloat(style.marginTop) + parseFloat(style.marginBottom);
   return height;
