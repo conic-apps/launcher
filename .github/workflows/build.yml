@@ -126,7 +126,7 @@ jobs:
       - name: Rename Windows installation-free exe
         if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
         run: ren "${{ github.workspace }}/target/release/conic-launcher.exe" "${{ github.workspace }}/target/release/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.exe"
-    
+
       - name: Upload Windows installation-free exe
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
@@ -183,7 +183,7 @@ jobs:
       - name: Rename macos updater signature
         if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
         run: mv "${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz.sig" "${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz.sig"
-        
+
       - name: Upload macos updater signature
         uses: actions/upload-artifact@v4
         if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
