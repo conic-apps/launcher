@@ -11,6 +11,7 @@ import { createI18n } from "vue-i18n"
 import en_us from "./i18n/en_us"
 import zh_cn from "./i18n/zh_cn"
 import App from "./Main.vue"
+import AppIcon from "./components/AppIcon.vue"
 
 type LooseString<T> = {
     [K in keyof T]: T[K] extends string ? string : T[K] extends object ? LooseString<T[K]> : T[K]
@@ -35,13 +36,5 @@ app.use(
 )
 app.use(createPinia())
 
+app.component("AppIcon", AppIcon)
 app.mount("#window")
-
-window.onload = () => {
-    console.log("Frontend loaded")
-    document.body.style.cssText =
-        "transform: scale(1); opacity: 1;transition: all 250ms cubic-bezier(0, 0.74, 0.65, 1); "
-    setTimeout(() => {
-        document.body.style.cssText = ""
-    }, 500)
-}

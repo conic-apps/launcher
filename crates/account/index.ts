@@ -61,7 +61,8 @@ export async function listAccounts(): Promise<Accounts> {
 }
 
 export async function getMicrosoftAccount(uuid: string): Promise<MicrosoftAccount[]> {
-    return await invoke("plugin:account|cmd_get_microsoft_account", { uuid })
+    // return await invoke("plugin:account|cmd_get_microsoft_account", { uuid })
+    return []
 }
 
 export async function deleteMicrosoftAccount(uuid: string) {

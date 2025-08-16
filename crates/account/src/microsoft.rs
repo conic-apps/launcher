@@ -141,7 +141,7 @@ pub async fn refresh_account(uuid: Uuid) -> Result<MicrosoftAccount> {
     Ok(result.first().ok_or(Error::AccountNotfound(uuid))?.clone())
 }
 
-// #[cfg(not(debug_assertions))]
+#[cfg(not(debug_assertions))]
 pub async fn refresh_all_accounts() -> Result<()> {
     let accounts = list_accounts()?;
     let mut result = vec![];
@@ -154,15 +154,13 @@ pub async fn refresh_all_accounts() -> Result<()> {
     Ok(())
 }
 
-// #[cfg(debug_assertions)]
-// pub async fn refresh_all_accounts() -> Result<()> {
-//     info!("Accounts are not refreshed on app launch in debug mode.");
-//     Ok(())
-// }
+#[cfg(debug_assertions)]
+pub async fn refresh_all_accounts() -> Result<()> {
+    info!("Accounts are not refreshed on app launch in debug mode.");
+    Ok(())
+}
 
 /// Login or refresh login.
-///
-/// Note: Shouldn't save refresh token to config file
 pub async fn microsoft_login(payload: LoginPayload) -> Result<MicrosoftAccount> {
     let access_token_response = match payload {
         LoginPayload::RefreshToken(token) => get_access_token_from_refresh_token(&token).await?,
