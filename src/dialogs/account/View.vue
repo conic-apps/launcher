@@ -16,21 +16,6 @@
           @click-refresh="refreshLogin(account.profile.uuid)"
           @click-trash="deleteMicrosoftAccount(account.profile.uuid)"
           @click="chooseAccount(account)">
-          <template #subtitle>
-            <tag
-              v-if="
-                currentTime.now >
-                  (account.expires_on ? account.expires_on : currentTime.now + 100000) &&
-                account.account_type === 'Microsoft'
-              "
-              text="需要刷新"
-              :color="['249', '226', '175']"
-              text-color="#f9e2af"
-              :background="false"
-              :border="true"
-              font-size="10"
-              :round="true"></tag>
-          </template>
           <AppIcon
             name="badge-check"
             stroke="#74c7ec"
@@ -61,7 +46,6 @@ import Tag from "@/components/Tag.vue";
 import { listen } from "@tauri-apps/api/event";
 import { ref } from "vue";
 import { useConfigStore } from "@/store/config";
-import { useTimeStore } from "@/store/time";
 import AppIcon from "@/components/AppIcon.vue";
 import {
   deleteMicrosoftAccount,
@@ -84,8 +68,6 @@ async function getAccounts() {
   }
   accounts.value = msAccounts;
 }
-
-const currentTime = useTimeStore();
 
 getAccounts().then(() => {});
 
