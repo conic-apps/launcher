@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { markRaw, reactive, ref, shallowRef } from "vue";
+import { markRaw, onMounted, reactive, ref, shallowRef } from "vue";
 import SearchBar from "./components/SearchBar.vue";
 import SidebarItem from "./components/SidebarItem.vue";
 import { window } from "@tauri-apps/api";
@@ -112,6 +112,19 @@ function changePage(event: MouseEvent | null, component: ComponentName) {
 function jumpTo(name: ComponentName) {
   changePage(null, name);
 }
+
+onMounted(() => {
+  const body = document.body;
+  document.body.style.transition = "all 250ms cubic-bezier(0, 0.74, 0.65, 1)";
+  document.body.style.transform = "scale(1)";
+  document.body.style.opacity = "1";
+
+  setTimeout(() => {
+    document.body.style.transform = "";
+    document.body.style.transition = "";
+  }, 500);
+  console.log("Frontend loaded");
+});
 </script>
 
 <style lang="less" scoped>

@@ -31,7 +31,6 @@ import Advance from "./settings/Advance.vue";
 import Appearance from "./settings/Appearance.vue";
 import Download from "./settings/Download.vue";
 import Accessibility from "./settings/Accessibility.vue";
-import Extend from "./settings/Extend.vue";
 import About from "./settings/About.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { useConfigStore } from "@/store/config";
@@ -67,11 +66,6 @@ const components: Ref<{ name: string; icon: string; component: Component }[]> = 
     name: "settings.accessibility.sidebar",
     icon: "accessibility",
     component: markRaw(Accessibility),
-  },
-  {
-    name: "settings.extend.sidebar",
-    icon: "extension-puzzle",
-    component: markRaw(Extend),
   },
   {
     name: "settings.about.sidebar",
