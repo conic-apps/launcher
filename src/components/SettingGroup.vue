@@ -37,6 +37,9 @@ const classNames = computed(() => {
   margin: 0 auto;
   width: calc(100% - 16px);
   opacity: 1;
+  > div {
+    border: var(--setting-group-border);
+  }
 }
 
 .danger-setting-group {

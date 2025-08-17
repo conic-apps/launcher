@@ -4,18 +4,25 @@
 
 <template>
   <div>
-    <div class="info sponsor">
-      <h2 style="margin-bottom: 8px">{{ $t("settings.about.sponsorTitle") }}</h2>
+    <info-box :click-able="true" @click="openUrl('https://afdian.com/a/BrokenDeer')">
+      <h2
+        :style="{
+          'margin-bottom': '8px',
+          'background-image': `linear-gradient(-90deg, var(--ctp-${config.appearance.palette.toLowerCase()}-mauve), var(--ctp-${config.appearance.palette.toLowerCase()}-pink))`,
+          'background-clip': 'text',
+          color: '#00000000',
+        }">
+        {{ $t("settings.about.sponsorTitle") }}
+      </h2>
       {{ $t("settings.about.sponsorDesc") }}
-    </div>
+    </info-box>
     <setting-group>
       <setting-item
         :title="$t('settings.about.report')"
         :description="$t('settings.about.reportDesc')"
         icon="flag"
         :clickAble="true"
-        @click="reportBug">
-        <!-- TODO: Replace it to new icon component -->
+        @click="openUrl('https://github.com/conic-apps/launcher')">
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>
       <setting-item
@@ -23,7 +30,7 @@
         :description="$t('settings.about.viewSourceCodeDesc')"
         icon="github"
         :clickAble="true"
-        @click="viewSourceCode">
+        @click="openUrl('https://github.com/conic-apps/launcher/issues/new/choose')">
         <i class="chevron-right" style="margin-right: 10px"></i>
       </setting-item>
     </setting-group>
@@ -68,47 +75,9 @@
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
+import InfoBox from "@/components/InfoBox.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { useConfigStore } from "@/store/config";
 
-function viewSourceCode() {
-  openUrl("https://github.com/conic-apps/launcher");
-}
-
-function reportBug() {
-  openUrl("https://github.com/conic-apps/launcher/issues/new/choose");
-}
+const config = useConfigStore();
 </script>
-
-<style lang="less" scoped>
-.info {
-  width: calc(100% - 16px);
-  margin: 0 auto;
-  margin-bottom: 16px;
-  padding: 20px;
-  border-radius: 10px;
-  line-height: 1.6;
-  background: #ffffff18;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.sponsor {
-  background-size: cover;
-  background-repeat: no-repeat;
-  border: 1px solid #ffffff18;
-  cursor: pointer;
-
-  * {
-    cursor: pointer;
-  }
-}
-
-.sponsor:hover {
-  transform: scale(1.01);
-}
-
-.sponsor:active {
-  transform: scale(0.98);
-  opacity: 0.9;
-}
-</style>

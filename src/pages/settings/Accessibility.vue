@@ -49,9 +49,7 @@
         :title="$t('settings.accessibility.highContrastMode')"
         :description="$t('settings.accessibility.highContrastModeDesc')"
         icon="contrast">
-        <toggle-switch
-          @click="reloadTheme(config)"
-          v-model="config.accessibility.high_contrast_mode"></toggle-switch>
+        <toggle-switch v-model="config.accessibility.high_contrast_mode"></toggle-switch>
       </setting-item>
     </setting-group>
   </div>
@@ -63,19 +61,32 @@ import SettingGroup from "@/components/SettingGroup.vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { watch } from "vue";
-import { reloadTheme } from "@/theme";
+import { reloadPalette } from "@/theme";
 const config = useConfigStore();
 
 watch(
-  config,
-  () => {
-    if (config.accessibility.disable_animations) {
+  () => config.accessibility.disable_animations,
+  (disableAnimations) => {
+    if (disableAnimations) {
       document.body.classList.add("no-animations");
     } else {
       document.body.classList.remove("no-animations");
     }
   },
   {},
+);
+
+watch(
+  () => config.accessibility.high_contrast_mode,
+  (highContrastMode) => {
+    reloadPalette(
+      {
+        palette: config.appearance.palette,
+        paletteFollowSystem: config.appearance.palette_follow_system,
+      },
+      highContrastMode,
+    );
+  },
 );
 </script>
 
