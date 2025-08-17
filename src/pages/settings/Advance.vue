@@ -11,7 +11,7 @@
         icon="document-text"
         :clickAble="true"
         @click="openLogFolder">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
     </setting-group>
     <setting-group :title="$t('settings.advance.launchArgs')">
@@ -83,7 +83,7 @@
         <ToggleSwitch v-model="config.launch.ignore_patch_discrepancies"></ToggleSwitch>
       </setting-item>
       <setting-item :title="$t('settings.advance.lwjglSettings')" description="" :clickAble="true">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
     </setting-group>
   </div>

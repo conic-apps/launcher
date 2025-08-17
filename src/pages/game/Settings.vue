@@ -31,9 +31,9 @@
           @updated="$emit('update-instance-list')">
         </TextInputBox>
       </setting-item>
-      <setting-item title="Icon" description="The name of this game instance." icon="icons">
+      <setting-item title="Icon" description="The icon of this game instance." icon="icons">
         <img width="32px" height="32px" src="@/assets/images/Grass_Block.webp" alt="" />
-        <i class="chevron-right" style="margin-right: 10px; margin-left: 8px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px; margin-left: 4px"></AppIcon>
       </setting-item>
       <setting-item
         v-if="instanceName === 'Latest Release'"
@@ -218,7 +218,7 @@
         </ToggleSwitch>
       </setting-item>
       <setting-item :title="$t('settings.advance.lwjglSettings')" description="" :clickAble="true">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
       <setting-item
         title="Open Log Viewer"
@@ -226,7 +226,7 @@
         icon="document-text"
         :clickAble="true"
         @click="dialogStore.logViewer.visible = true">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
     </setting-group>
     <setting-group title="Danger Zone" :danger="true">
@@ -237,14 +237,14 @@
         :clickAble="true"
         @click="dialogStore.confirmDeleteInstance.visible = true"
         :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
       <setting-item
         title="Reset This Instance"
         description="Clear all data in this instance, including worlds, packages, and modules"
         icon="refresh"
         :clickAble="true">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
     </setting-group>
   </div>
