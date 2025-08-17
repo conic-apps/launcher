@@ -12,3 +12,4 @@ repository.workspace = true
 once_cell.workspace = true
 tauri.workspace = true
 reqwest.workspace = true
+log.workspace = true

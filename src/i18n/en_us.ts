@@ -161,7 +161,7 @@ export default {
             mirrorServer: "Mirror Server",
             mirrorServerDesc: "Download game files from mirror server.",
             proxy: "Proxy",
-            useSystemProxy: "Use System Proxy",
+            useSystemProxy: "Use System Proxy (Takes effect after restart application)",
         },
         accessibility: {
             sidebar: "Easy to Use",
