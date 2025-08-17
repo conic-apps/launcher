@@ -98,11 +98,12 @@ import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { getDataLocation } from "@conic/folder";
+import { invoke } from "@tauri-apps/api/core";
 const config = useConfigStore();
 
 async function openLogFolder() {
   const dataLocation = await getDataLocation();
-  openPath(dataLocation.logs);
+  invoke("open_path", { path: dataLocation.logs });
 }
 </script>
 
