@@ -15,12 +15,12 @@
                 "minWidth": 1080,
                 "minHeight": 640,
                 "focus": true,
+                "center": true,
                 "transparent": true,
                 "decorations": false,
                 "fullscreen": false,
                 "resizable": true,
-                "shadow": true,
-                "theme": "Dark"
+                "shadow": true
             }
         ],
         "security": {
