@@ -56,6 +56,7 @@ div.win-btn {
 
 div.win-btn:hover > svg {
   opacity: 1;
+  fill: var(--window-btn-icon-color);
 }
 
 div.win-btn:active {
