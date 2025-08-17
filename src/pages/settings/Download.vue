@@ -34,7 +34,7 @@
         icon="server"
         icon-fill="none"
         :last="true">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
     </setting-group>
     <setting-group :title="$t('settings.download.proxy')">

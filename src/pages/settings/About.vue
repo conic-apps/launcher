@@ -23,7 +23,7 @@
         icon="flag"
         :clickAble="true"
         @click="openUrl('https://github.com/conic-apps/launcher')">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
       <setting-item
         :title="$t('settings.about.viewSourceCode')"
@@ -31,7 +31,7 @@
         icon="github"
         :clickAble="true"
         @click="openUrl('https://github.com/conic-apps/launcher/issues/new/choose')">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
     </setting-group>
     <SettingGroup :title="$t('settings.about.thirdPartyLibraries')">
@@ -76,6 +76,7 @@
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import InfoBox from "@/components/InfoBox.vue";
+import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useConfigStore } from "@/store/config";
 

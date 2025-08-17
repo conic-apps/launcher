@@ -36,7 +36,7 @@
         <toggle-switch v-model="config.auto_update"></toggle-switch>
       </setting-item>
       <setting-item :title="$t('settings.general.checkUpdate')" icon="circle-up" :clickAble="true">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
     </setting-group>
   </div>
