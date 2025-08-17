@@ -4,7 +4,10 @@
 
 <template>
   <div class="select" :style="`width: ${width}px;`" tabindex="0" @blur="opened = false">
-    <div class="selected" @click="toggleOpened()">{{ displayName[selected] }}</div>
+    <div class="selected" @click="toggleOpened()">
+      {{ displayName[selected] }}
+      <AppIcon name="chevron-down"> </AppIcon>
+    </div>
     <div>
       <Transition
         @before-enter="beforeEnter"
@@ -35,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from "./AppIcon.vue";
 import { ref, useTemplateRef } from "vue";
 const props = defineProps<{
   options: string[];
@@ -130,15 +134,6 @@ function outerHeight(el: HTMLElement) {
 
 .selected:hover {
   background: var(--controllers-background-hover);
-}
-
-.selected::after {
-  content: "\f107";
-  font-family: "fa-pro";
-  width: fit-content;
-  height: fit-content;
-  margin-right: 2px;
-  transition: transform 100ms ease;
 }
 
 .selected:hover::after {

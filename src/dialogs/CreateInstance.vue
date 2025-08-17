@@ -43,7 +43,7 @@
                 <span style="font-size: 14px; opacity: 0.8; margin-right: 8px">{{
                   minecraftVersion
                 }}</span>
-                <i class="chevron-right" style="margin-right: 10px"></i>
+                <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
               </SettingItem>
             </SettingGroup>
             <SettingGroup>
@@ -82,7 +82,7 @@
                 <span style="font-size: 14px; opacity: 0.8; margin-right: 8px">{{
                   modLoaderVersion
                 }}</span>
-                <i class="chevron-right" style="margin-right: 10px"></i>
+                <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
               </SettingItem>
             </SettingGroup>
             <div style="display: flex; padding: 0 8px; margin-top: -8px">
