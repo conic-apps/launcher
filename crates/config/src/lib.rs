@@ -155,20 +155,29 @@ impl Default for AccessibilityConfig {
 /// Configuration options related to UI appearance.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
 pub struct AppearanceConfig {
-    /// Theme name, e.g., "dark".
-    #[serde(default = "default_theme")]
-    pub theme: String,
+    /// If dark, the program will use mocha, else use latte.
+    #[serde(default = "default_palette_follow_system")]
+    pub palette_follow_system: bool,
+
+    /// Palette name, support mocha frappe latte macchiato.
+    #[serde(default = "default_palette")]
+    pub palette: String,
 }
 
-fn default_theme() -> String {
-    "dark".to_string()
+fn default_palette_follow_system() -> bool {
+    true
+}
+
+fn default_palette() -> String {
+    "mocha".to_string()
 }
 
 impl Default for AppearanceConfig {
     /// Returns the default appearance configuration.
     fn default() -> Self {
         Self {
-            theme: default_theme(),
+            palette_follow_system: default_palette_follow_system(),
+            palette: default_palette(),
         }
     }
 }

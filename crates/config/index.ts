@@ -12,13 +12,26 @@ export async function saveConfigToFile(config: Config): Promise<void> {
     return await invoke("plugin:config|cmd_save_config", { config })
 }
 
+export enum UpdateChannel {
+    Weekly = "Weekly",
+    Snapshot = "Snapshot",
+    Release = "Release",
+}
+export enum Palette {
+    Mocha = "Mocha",
+    Latte = "Latte",
+    Frappe = "Frappe",
+    Macchiato = "Macchiato",
+}
+
 export type Config = {
     language: string
-    update_channel: "Weekly" | "Snapshot" | "Release"
+    update_channel: UpdateChannel
     auto_update: boolean
     current_account: string
     appearance: {
-        theme: string
+        palette_follow_system: boolean
+        palette: Palette
     }
     accessibility: {
         release_reminder: boolean
