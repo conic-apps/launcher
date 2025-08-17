@@ -1,0 +1,18 @@
+[licenses]
+allow = [
+    "GPL-3.0-only",
+    "Apache-2.0",
+    "MPL-2.0",
+    "MIT",
+    "Zlib",
+    "CC0-1.0",
+    "Unlicense",
+    "Unicode-3.0",
+    "CDLA-Permissive-2.0",
+    "ISC",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-3-Clause",
+    "BSL-1.0"
+]
+unused-allowed-license = "deny"
+confidence-threshold = 0.8
