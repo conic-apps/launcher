@@ -96,7 +96,6 @@ import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import TextInputBox from "@/components/TextInputBox.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
-import { openPath } from "@tauri-apps/plugin-opener";
 import { getDataLocation } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
 const config = useConfigStore();
