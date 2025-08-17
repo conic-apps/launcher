@@ -15,14 +15,14 @@
             selected: "Java 17",
           })
         }}</span>
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
       <setting-item
         :title="$t('settings.game.addJava')"
         :description="$t('settings.game.addJavaDesc')"
         icon="cloud-download"
         :clickAble="true">
-        <i class="chevron-right" style="margin-right: 10px"></i>
+        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
       </setting-item>
       <!-- <setting-item title="Java 内存"></setting-item> -->
     </setting-group>
