@@ -7,6 +7,7 @@ use folder::DATA_LOCATION;
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 
+use shared::SHOULD_USE_SYSTEM_PROXY;
 use tauri::{
     Runtime, command,
     plugin::{Builder, TauriPlugin},
@@ -31,7 +32,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 
 #[command]
 fn cmd_load_config_file() -> Result<Config> {
-    load_config_file()
+    let config = load_config_file()?;
+    let _ = SHOULD_USE_SYSTEM_PROXY.set(config.download.use_system_proxy);
+    Ok(config)
 }
 
 #[command]

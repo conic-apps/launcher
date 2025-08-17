@@ -12,6 +12,7 @@ repository.workspace = true
 [dependencies]
 account.workspace = true
 folder.workspace = true
+shared.workspace = true
 
 serde.workspace = true
 log.workspace = true

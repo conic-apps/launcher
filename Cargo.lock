@@ -708,6 +708,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
+ "shared",
  "sys-locale",
  "tauri",
  "tauri-plugin",
@@ -4221,6 +4222,7 @@ dependencies = [
 name = "shared"
 version = "0.0.0"
 dependencies = [
+ "log",
  "once_cell",
  "reqwest",
  "tauri",
