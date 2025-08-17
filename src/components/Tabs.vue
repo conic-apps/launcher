@@ -5,7 +5,7 @@
 <template>
   <div class="tabs">
     <div
-      :class="active == index ? 'tab-active' : ''"
+      :class="{ 'tab-active': active == index }"
       class="tab"
       v-for="(item, index) in props.tabs"
       :key="index"

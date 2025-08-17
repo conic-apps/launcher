@@ -63,6 +63,10 @@ fn main() {
         .plugin(
             "platform",
             InlinedPlugin::new().commands(&["cmd_get_platform_info"]),
+        )
+        .plugin(
+            "folder",
+            InlinedPlugin::new().commands(&["cmd_get_data_location"]),
         );
     tauri_build::try_build(attributes).unwrap();
 }
