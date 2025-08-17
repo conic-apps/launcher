@@ -55,6 +55,7 @@
     "instance:allow-cmd-list-instances",
     "instance:allow-cmd-update-instance",
     "instance:allow-cmd-delete-instance",
+    "folder:allow-cmd-get-data-location",
     "opener:default"
   ]
 }
