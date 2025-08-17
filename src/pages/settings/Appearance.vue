@@ -122,6 +122,13 @@ matchMedia.addEventListener("change", (event) => {
     config.accessibility.high_contrast_mode,
   );
 });
+if (config.appearance.palette_follow_system) {
+  if (matchMedia.matches) {
+    currentTheme.value = Palette.Mocha;
+  } else {
+    currentTheme.value = Palette.Latte;
+  }
+}
 </script>
 
 <style lang="less" scoped>
@@ -137,7 +144,7 @@ matchMedia.addEventListener("change", (event) => {
   > div {
     width: 120px;
     height: 74px;
-    margin: 0 20px 0px 20px;
+    margin: -24px 20px 0px 20px;
     background-position: center;
     background-size: 100%;
     border-radius: 6px;
@@ -146,7 +153,7 @@ matchMedia.addEventListener("change", (event) => {
     p {
       width: 100%;
       text-align: center;
-      margin-top: calc(100% - 26px);
+      margin-top: calc(100% - 30px);
     }
   }
 

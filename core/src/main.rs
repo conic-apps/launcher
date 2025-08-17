@@ -33,6 +33,7 @@ fn main() {
         .plugin(launch::init())
         .plugin(folder::init())
         .plugin(platform::init())
+        .invoke_handler(tauri::generate_handler![open_path])
         .setup(|_| Ok(print_info()))
         .on_window_event(window_event_handler)
         .run(tauri::generate_context!())
@@ -97,4 +98,9 @@ fn print_info() {
         "Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher"
     );
     info!("Main window loaded")
+}
+
+#[tauri::command]
+fn open_path(path: String, with: Option<String>) -> Result<(), tauri_plugin_opener::Error> {
+    tauri_plugin_opener::open_path(path, with)
 }

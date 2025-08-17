@@ -16,7 +16,7 @@
       </ul>
     </div>
     <div class="rol-2">
-      <Transition :name="transitionName" mode="out-in" appear>
+      <Transition :name="transitionName" mode="out-in">
         <component :is="currentComponent"></component>
       </Transition>
     </div>
