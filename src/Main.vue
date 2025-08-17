@@ -24,7 +24,7 @@
         <WindowButton
           button-type="maximize"
           @maximize="window.getCurrentWindow().maximize()"></WindowButton>
-        <WindowButton button-type="close" @close="window.getCurrentWindow().close()"></WindowButton>
+        <WindowButton button-type="close" @close="closeWindow()"></WindowButton>
       </div>
     </div>
     <div class="sidebar" data-tauri-drag-region>
@@ -72,7 +72,7 @@ import Game from "./pages/Game.vue";
 import { useConfigStore } from "./store/config";
 import { watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { loadTheme } from "./theme";
+import { loadPalette } from "./theme";
 import Home from "./pages/Home.vue";
 import Market from "./pages/Market.vue";
 import Logo from "@/assets/logo.svg";
@@ -81,7 +81,13 @@ import AccountStatus from "./components/AccountStatus.vue";
 import DialogRoot from "./DialogRoot.vue";
 
 const config = useConfigStore();
-loadTheme(config);
+loadPalette(
+  {
+    palette: config.appearance.palette,
+    paletteFollowSystem: config.appearance.palette_follow_system,
+  },
+  config.accessibility.high_contrast_mode,
+);
 
 const pages = reactive({
   settings: markRaw(Settings),
@@ -124,6 +130,15 @@ onMounted(() => {
   }, 500);
   console.log("Frontend loaded");
 });
+
+function closeWindow() {
+  document.body.style.transition = "all 250ms cubic-bezier(0, 0.74, 0.65, 1)";
+  document.body.style.transform = "scale(0.93)";
+  document.body.style.opacity = "0";
+  setTimeout(() => {
+    window.getCurrentWindow().close();
+  }, 500);
+}
 </script>
 
 <style lang="less" scoped>

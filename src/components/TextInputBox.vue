@@ -105,11 +105,11 @@ watch(model, () => {
 }
 
 .input-box:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--controllers-background-hover);
 }
 
 .input-box:focus-within {
-  outline: 1px solid #4493f8;
+  outline: var(--controllers-outline-focus);
   background-color: var(--controllers-background-focus);
 }
 </style>

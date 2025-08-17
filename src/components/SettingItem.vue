@@ -129,7 +129,7 @@ const className = computed(() => {
 }
 
 .setting-item-click-able:active {
-  background-color: var(--setting-item-background);
+  background-color: var(--setting-item-background-active);
 }
 
 .setting-item-disabled {

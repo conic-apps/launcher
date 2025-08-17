@@ -7,7 +7,6 @@ h4 {
 }
 
 * {
-    /* transition: color 0.1s ease, background-color 0.1s ease; */
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -15,7 +14,6 @@ h4 {
     outline: none;
     -webkit-user-select: none;
     cursor: default;
-    /* font-family: harmony; */
     line-height: 1;
     /* TODO: use this to resolve animation stuck: */
     /* content-visibility: auto; */
@@ -44,12 +42,7 @@ body {
     overflow: hidden;
     width: 100vw;
     height: 100vh;
-    /* background-image:
-        radial-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)),
-        linear-gradient(rgba(128, 59, 255, 0.208), rgb(0, 0, 0, 0.3)),
-        linear-gradient(#000, #000); */
     border-radius: 16px;
-    /* padding: 5px; todo: linux is 0, windows is 5px */
     position: relative;
     color-scheme: dark;
 }
@@ -60,27 +53,11 @@ body {
     height: 100%;
     overflow: hidden;
     box-shadow: 0px 0px 5px #00000047;
-    /* background-image: linear-gradient(to top, #1e3c72 0%, #1e3c72 1%, #2a5298 100%); */
-    /* background-image: linear-gradient(#ffffff7d, #ffffff7d), url(/413114.jpg); */
-    /* background-image: linear-gradient(#ffffff7d, #ffffff7d), url(/1168337.jpg); */
-    /* background-image: url(/1168337.jpg); */
-    /* background-image: linear-gradient(45deg, #4e40ba, #5848d2); */
-    /* background-image: url(/palm-leaf.webp); */
-    /* background-image: linear-gradient(rgba(255, 255, 255, 0.06),
-            rgba(255, 255, 255, 0.06)),
-        linear-gradient(to bottom right, rgb(0 20 8), rgb(0, 0, 0), rgb(0 20 44)); */
-    /* background: linear-gradient(to right, rgb(15, 12, 41), rgb(26, 24, 55), rgb(36, 36, 62)); */
     background: var(--window-background);
-    /* background-image: linear-gradient(var(--color-scale-purple-9), var(--color-scale-purple-8)); */
     border: 1px solid rgba(255, 255, 255, 0.16);
-    /* backdrop-filter: blur(4px); */
-    /* -webkit-backdrop-filter: blur(10px); */
-    /* background-image: #000000; */
 }
 
-/* font */
 * {
-    /* font-family: Harmony-re; */
     color: rgba(var(--default-text-color), 0.9);
     line-height: 1;
 }

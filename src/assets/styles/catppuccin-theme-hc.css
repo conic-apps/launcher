@@ -322,31 +322,32 @@
   --ctp-mocha-crust-hsl: 240.000,22.727%,8.627%;
 }
 
-body.theme-Mocha {
+body.theme-Mocha-hc {
   --window-background: rgb(var(--ctp-mocha-crust-rgb));
   --main-background: rgb(var(--ctp-mocha-base-rgb));
-  --main-border: 1px solid rgba(56, 59, 65, 1);
+  --main-border: 1px solid var(--ctp-mocha-overlay2);
   --min-btn-background: rgba(var(--ctp-mocha-yellow-rgb), 0.5);
   --max-btn-background: rgba(var(--ctp-mocha-green-rgb), 0.5);
   --close-btn-background: rgba(var(--ctp-mocha-red-rgb), 0.5);
   --window-btn-icon-color: var(--ctp-mocha-text);
-  --default-text-color: var(--ctp-mocha-text-rgb);
+  --default-text-color: 255,255,255;
   --card-background: var(--ctp-mocha-surface0);
   --card-border-radius: 8px;
-  --card-border: 1px solid var(--ctp-mocha-surface1);
+  --card-border: 1px solid var(--ctp-mocha-overlay2);
   --sidebar-item-background: rgba(255, 255, 255, 0);
   --sidebar-item-background-hover: var(--ctp-mocha-surface0);
-  --dialog-border: 1px solid rgb(56, 59, 65);
+  --dialog-border: 1px solid var(--ctp-mocha-overlay2);
   --dialog-border-radius: 10px;
   --dialog-background: var(--ctp-mocha-base);
   --tag-border-radius: 4px;
   --list-item-background: var(--ctp-mocha-surface0);
   --setting-item-background: var(--ctp-mocha-surface0);
+    --setting-group-border: 1px solid var(--ctp-latte-overlay2);
   --setting-item-background-hover: var(--ctp-mocha-surface1);
   --setting-item-background-active: var(--ctp-mocha-surface2);
   --controllers-border-radius: 6px;
-  --controllers-border: 1px solid rgba(var(--ctp-mocha-lavender-rgb), 0.18);
-  --controllers-outline-focus: 1px solid var(--ctp-mocha-lavender);
+  --controllers-border: 1px solid var(--ctp-mocha-overlay2);
+  --controllers-outline-focus: 1px solid var(--ctp-mocha-overlay2);
   --controllers-background: var(--ctp-mocha-surface1);
   --controllers-background-hover: var(--ctp-mocha-surface2);
   --controllers-background-focus: var(--ctp-mocha-surface2);
@@ -356,37 +357,38 @@ body.theme-Mocha {
   --toggle-switch-active: var(--ctp-mocha-blue);
 }
 
-body.theme-Mocha .title-bar .search-bar {
+body.theme-Mocha-hc .title-bar .search-bar {
     background: var(--ctp-mocha-surface0)
 }
-body.theme-Mocha .title-bar .account {
+body.theme-Mocha-hc .title-bar .account {
     background: var(--ctp-mocha-surface0)
 }
-body.theme-Macchiato {
+body.theme-Macchiato-hc {
   --window-background: rgb(var(--ctp-macchiato-crust-rgb));
   --main-background: rgb(var(--ctp-macchiato-base-rgb));
-  --main-border: 1px solid rgba(56, 59, 65, 1);
+  --main-border: 1px solid var(--ctp-macchiato-overlay2);
   --min-btn-background: rgba(var(--ctp-macchiato-yellow-rgb), 0.5);
   --max-btn-background: rgba(var(--ctp-macchiato-green-rgb), 0.5);
   --close-btn-background: rgba(var(--ctp-macchiato-red-rgb), 0.5);
   --window-btn-icon-color: var(--ctp-macchiato-text);
-  --default-text-color: var(--ctp-macchiato-text-rgb);
+  --default-text-color: 255,255,255;
   --card-background: var(--ctp-macchiato-surface0);
   --card-border-radius: 8px;
-  --card-border: 1px solid var(--ctp-macchiato-surface1);
+  --card-border: 1px solid var(--ctp-macchiato-overlay2);
   --sidebar-item-background: rgba(255, 255, 255, 0);
   --sidebar-item-background-hover: var(--ctp-macchiato-surface0);
-  --dialog-border: 1px solid rgb(56, 59, 65);
+  --dialog-border: 1px solid var(--ctp-macchiato-overlay2);
   --dialog-border-radius: 10px;
   --dialog-background: var(--ctp-macchiato-base);
   --tag-border-radius: 4px;
   --list-item-background: var(--ctp-macchiato-surface0);
+    --setting-group-border: 1px solid var(--ctp-macchiato-overlay2);
   --setting-item-background: var(--ctp-macchiato-surface0);
   --setting-item-background-hover: var(--ctp-macchiato-surface1);
   --setting-item-background-active: var(--ctp-macchiato-surface2);
   --controllers-border-radius: 6px;
-  --controllers-border: 1px solid rgba(var(--ctp-macchiato-lavender-rgb), 0.48);
-  --controllers-outline-focus: 1px solid var(--ctp-macchiato-lavender);
+  --controllers-border: 1px solid var(--ctp-macchiato-overlay2);
+  --controllers-outline-focus: 1px solid var(--ctp-macchiato-overlay2);
   --controllers-background: var(--ctp-macchiato-surface1);
   --controllers-background-hover: var(--ctp-macchiato-surface2);
   --controllers-background-focus: var(--ctp-macchiato-surface2);
@@ -396,17 +398,17 @@ body.theme-Macchiato {
   --toggle-switch-active: var(--ctp-macchiato-blue);
 }
 
-body.theme-Macchiato .title-bar .search-bar {
+body.theme-Macchiato-hc .title-bar .search-bar {
     background: var(--ctp-macchiato-surface0)
 }
-body.theme-Macchiato .title-bar .account {
+body.theme-Macchiato-hc .title-bar .account {
     background: var(--ctp-macchiato-surface0)
 }
 
-body.theme-Frappe {
+body.theme-Frappe-hc {
   --window-background: rgb(var(--ctp-frappe-crust-rgb));
   --main-background: rgb(var(--ctp-frappe-base-rgb));
-  --main-border: 1px solid rgba(56, 59, 65, 1);
+  --main-border: 1px solid var(--ctp-frappe-overlay2);
   --min-btn-background: rgba(var(--ctp-frappe-yellow-rgb), 0.5);
   --max-btn-background: rgba(var(--ctp-frappe-green-rgb), 0.5);
   --close-btn-background: rgba(var(--ctp-frappe-red-rgb), 0.5);
@@ -414,7 +416,7 @@ body.theme-Frappe {
   --default-text-color: var(--ctp-frappe-text-rgb);
   --card-background: var(--ctp-frappe-surface0);
   --card-border-radius: 8px;
-  --card-border: 1px solid var(--ctp-frappe-surface1);
+  --card-border: 1px solid var(--ctp-frappe-overlay2);
   --sidebar-item-background: rgba(255, 255, 255, 0);
   --sidebar-item-background-hover: var(--ctp-frappe-surface0);
   --dialog-border: 1px solid rgb(56, 59, 65);
@@ -422,12 +424,13 @@ body.theme-Frappe {
   --dialog-background: var(--ctp-frappe-base);
   --tag-border-radius: 4px;
   --list-item-background: var(--ctp-frappe-surface0);
+    --setting-group-border: 1px solid var(--ctp-frappe-overlay2);
   --setting-item-background: var(--ctp-frappe-surface0);
   --setting-item-background-hover: var(--ctp-frappe-surface1);
   --setting-item-background-active: var(--ctp-frappe-surface2);
   --controllers-border-radius: 6px;
-  --controllers-border: 1px solid rgba(var(--ctp-frappe-lavender-rgb), 0.48);
-  --controllers-outline-focus: 1px solid var(--ctp-frappe-lavender);
+  --controllers-border: 1px solid var(--ctp-frappe-overlay2);
+  --controllers-outline-focus: 1px solid var(--ctp-frappe-overlay2);
   --controllers-background: var(--ctp-frappe-surface1);
   --controllers-background-hover: var(--ctp-frappe-surface2);
   --controllers-background-focus: var(--ctp-frappe-surface2);
@@ -437,27 +440,27 @@ body.theme-Frappe {
   --toggle-switch-active: var(--ctp-frappe-blue);
 }
 
-body.theme-Frappe .title-bar .search-bar {
+body.theme-Frappe-hc .title-bar .search-bar {
     background: var(--ctp-frappe-surface0)
 }
 
-body.theme-Frappe .title-bar .account {
+body.theme-Frappe-hc .title-bar .account {
     background: var(--ctp-frappe-surface0)
 }
 
-body.theme-Latte {
+body.theme-Latte-hc {
     --theme-color: var(--ctp-latte-lavender);
     --window-background: var(--ctp-latte-crust);
     --main-background: var(--ctp-latte-base);
-  --main-border: 1px solid #00000000;
+  --main-border: 1px solid var(--ctp-latte-overlay2);
     --min-btn-background: var(--ctp-latte-yellow);
     --max-btn-background: var(--ctp-latte-green);
     --close-btn-background: var(--ctp-latte-red);
     --window-btn-icon-color: var(--ctp-latte-base);
-    --default-text-color: 76,79,105;
+    --default-text-color: 0,0,0;
     --card-background: var(--ctp-latte-mantle);
     --card-border-radius: 8px;
-    --card-border: 1px solid var(--ctp-latte-crust);
+    --card-border: 1px solid var(--ctp-latte-overlay2);
     --card-icon-background: rgba(0, 0, 0, 0.041);
     --card-icon-border-radius: 6px;
     --sidebar-item-background: rgba(255, 255, 255, 0);
@@ -470,10 +473,10 @@ body.theme-Latte {
     --setting-item-background: rgba(var(--ctp-latte-mantle-rgb, 0.8));
     --setting-item-background-hover: var(--ctp-latte-crust);
     --setting-item-background-active: var(--ctp-latte-surface0);
-    --setting-group-border: 1px solid var(--ctp-latte-crust);
+    --setting-group-border: 1px solid var(--ctp-latte-overlay2);
     --controllers-border-radius: 4px;
-    --controllers-border: 1px solid rgba(var(--ctp-latte-lavender-rgb), 0.58);
-    --controllers-border-active: 1px solid rgba(var(--ctp-latte-lavender-rgb), 1);
+    --controllers-border: 1px solid var(--ctp-latte-overlay2);
+    --controllers-border-active: 1px solid var(--ctp-latte-overlay2);
     --controllers-outline-focus: 1px solid var(--ctp-latte-lavender);
     --controllers-background: var(--ctp-latte-crust);
     --controllers-background-hover: var(--ctp-latte-surface0);
@@ -484,7 +487,7 @@ body.theme-Latte {
     --toggle-switch-active: var(--theme-color);
 }
 
-body.theme-Latte code {
+body.theme-Latte-hc code {
     padding: 2px 4px;
     background: var(--ctp-latte-surface1);
     border: 1px solid var(--ctp-latte-surface2);
@@ -493,15 +496,15 @@ body.theme-Latte code {
 }
 
 
-body.theme-Latte .instance-card * {
+body.theme-Latte-hc .instance-card * {
     color: var(--ctp-latte-base) !important;
 }
 
-body.theme-Latte .instance-card {
+body.theme-Latte-hc .instance-card {
     background-image: url(@/assets/images/banners/1.18.webp) !important;
 }
 
-body.theme-Latte .instance:hover {
+body.theme-Latte-hc .instance:hover {
     background: rgba(255, 255, 255, 0.562) !important;
     border: none !important;
     box-shadow: none !important;
