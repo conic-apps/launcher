@@ -8,7 +8,7 @@
       <ul class="settings-menu">
         <li
           @click="switchComponent(item.component, index)"
-          :class="[activeComponentIndex == index ? 'active' : '']"
+          :class="{ active: activeComponentIndex == index }"
           v-for="(item, index) in components"
           :key="index">
           <AppIcon :name="item.icon"></AppIcon><span>{{ $t(item.name) }}</span>
@@ -16,7 +16,7 @@
       </ul>
     </div>
     <div class="rol-2">
-      <Transition :name="transitionName" mode="out-in">
+      <Transition :name="transitionName" mode="out-in" appear>
         <component :is="currentComponent"></component>
       </Transition>
     </div>
@@ -120,54 +120,40 @@ configStore.$subscribe(async (mutation, state) => {
   overflow: auto;
 }
 
-.rol-1 .settings-menu {
+.settings-menu {
   height: calc(100% - 40px);
-}
-
-.settings-menu span {
-  margin-left: 8px;
-}
-
-.settings-menu li {
-  height: 40px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  padding-left: 10px;
-  font-size: 14.5px;
-  border-radius: 8px;
-}
-
-.settings-menu li:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.go-home {
-  display: flex;
-  height: 40px;
-  width: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.116);
-  transition: all 100ms;
-}
-
-.go-home i {
-  font-family: "fa-pro";
-  font-style: normal;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 16.6px;
-  opacity: 0.9;
-}
-
-.go-home:hover {
-  background: rgba(255, 255, 255, 0.151);
-}
-
-.go-home:active {
-  transform: scale(0.9);
+  span {
+    margin-left: 8px;
+  }
+  li {
+    height: 36px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 14.5px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+  }
+  li:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  li.active {
+    background: rgba(255, 255, 255, 0.16);
+  }
+  li::before {
+    content: "";
+    width: 3px;
+    height: 0px;
+    margin-left: -16px;
+    margin-right: 13px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.8);
+    transition: height 100ms ease;
+  }
+  li.active::before {
+    content: "";
+    height: 22px;
+  }
 }
 </style>

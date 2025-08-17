@@ -169,7 +169,7 @@ fn default_palette_follow_system() -> bool {
 }
 
 fn default_palette() -> String {
-    "mocha".to_string()
+    "Mocha".to_string()
 }
 
 impl Default for AppearanceConfig {
