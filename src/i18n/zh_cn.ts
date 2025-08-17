@@ -157,7 +157,7 @@ export default {
             mirrorServer: "镜像服务器",
             mirrorServerDesc: "从其他地方下载游戏文件",
             proxy: "代理",
-            useSystemProxy: "使用系统代理",
+            useSystemProxy: "使用系统代理（重启应用后生效）",
         },
         accessibility: {
             sidebar: "辅助功能",

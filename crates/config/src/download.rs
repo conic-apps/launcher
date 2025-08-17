@@ -60,6 +60,8 @@ pub struct DownloadConfig {
     /// Defines where to download libraries and assets from.
     #[serde(default)]
     pub mirror: MirrorConfig,
+
+    pub use_system_proxy: bool,
 }
 
 impl Default for DownloadConfig {
@@ -68,6 +70,7 @@ impl Default for DownloadConfig {
             max_connections: default_max_connections(),
             max_download_speed: 0,
             mirror: MirrorConfig::default(),
+            use_system_proxy: default_use_system_proxy(),
         }
     }
 }
@@ -88,4 +91,8 @@ fn default_libraries() -> Vec<String> {
         "https://libraries.minecraft.net".to_string(),
         "https://bmclapi2.bangbang93.com/maven".to_string(),
     ]
+}
+
+fn default_use_system_proxy() -> bool {
+    true
 }
