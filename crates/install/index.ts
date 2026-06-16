@@ -22,8 +22,20 @@ export type VersionManifest = {
     }[]
 }
 
+let minecraftVersionManifestCache: VersionManifest | undefined
+let minecraftVersionManifestCacheCreatedTime = 0
+
 export async function getMinecrafVersionManifest(): Promise<VersionManifest> {
-    return await invoke("plugin:install|cmd_get_minecraft_version_list")
+    const now = new Date().getTime()
+    if (minecraftVersionManifestCache && now - minecraftVersionManifestCacheCreatedTime < 3600) {
+        return minecraftVersionManifestCache
+    }
+    const versionManifest: VersionManifest = await invoke(
+        "plugin:install|cmd_get_minecraft_version_list",
+    )
+    minecraftVersionManifestCache = versionManifest
+    minecraftVersionManifestCacheCreatedTime = now
+    return versionManifest
 }
 
 type FabricArtifactVersion = {
