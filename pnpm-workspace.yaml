@@ -1,2 +1,10 @@
+minimumReleaseAgeExclude:
+  - '@typescript-eslint/project-service@8.61.1'
+  - '@typescript-eslint/scope-manager@8.61.1'
+  - '@typescript-eslint/tsconfig-utils@8.61.1'
+  - '@typescript-eslint/types@8.61.1'
+  - '@typescript-eslint/typescript-estree@8.61.1'
+  - '@typescript-eslint/utils@8.61.1'
+  - '@typescript-eslint/visitor-keys@8.61.1'
 onlyBuiltDependencies:
-    - esbuild
+  - esbuild
