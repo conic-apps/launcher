@@ -15,7 +15,7 @@ pub struct Server {
 }
 
 /// Enum representing the Java Garbage Collection algorithms.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub enum GC {
     /// Serial GC.
     Serial,
@@ -24,15 +24,10 @@ pub enum GC {
     /// Parallel GC (old generation).
     ParallelOld,
     /// G1 Garbage Collector (default).
+    #[default]
     G1,
     /// Z Garbage Collector.
     Z,
-}
-
-impl Default for GC {
-    fn default() -> Self {
-        Self::G1
-    }
 }
 
 /// Represents a configuration object for launching a Minecraft instance.
