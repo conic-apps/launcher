@@ -20,14 +20,12 @@ mod error;
 
 pub use error::*;
 
-static LATEST_RELEASE_INSTANCE_NAME: &str = "Latest Release";
-static LATEST_SNAPSHOT_INSTANCE_NAME: &str = "Latest Snapshot";
-
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("instance")
         .invoke_handler(tauri::generate_handler![
             cmd_create_instance,
             cmd_list_instances,
+            cmd_get_instance_by_id,
             cmd_update_instance,
             cmd_delete_instance
         ])
@@ -35,13 +33,18 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 }
 
 #[command]
-async fn cmd_create_instance(config: InstanceConfig) -> Result<()> {
-    create_instance(config).await
+async fn cmd_create_instance(config: InstanceConfig, id: Option<Uuid>) -> Result<()> {
+    create_instance(config, id).await
 }
 
 #[command]
 async fn cmd_list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     list_instances(sort_by).await
+}
+
+#[command]
+async fn cmd_get_instance_by_id(id: Uuid) -> Option<Instance> {
+    get_instance_by_id(id).await
 }
 
 #[command]
@@ -55,19 +58,13 @@ async fn cmd_delete_instance(id: Uuid) -> Result<()> {
 }
 
 /// Creates a new game instance using the provided configuration.
-pub async fn create_instance(config: InstanceConfig) -> Result<()> {
-    let id = if config.name == LATEST_RELEASE_INSTANCE_NAME {
-        uuid::Uuid::from_u128(114514)
-    } else if config.name == LATEST_SNAPSHOT_INSTANCE_NAME {
-        uuid::Uuid::from_u128(1919810)
-    } else {
-        uuid::Uuid::from_u128(
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("Incorrect System Time")
-                .as_nanos(),
-        )
-    };
+pub async fn create_instance(config: InstanceConfig, id: Option<Uuid>) -> Result<()> {
+    let id = id.unwrap_or(uuid::Uuid::from_u128(
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Incorrect System Time")
+            .as_nanos(),
+    ));
     let instance_root = DATA_LOCATION.get_instance_root(&id);
     let config_file_path = instance_root.join("instance.toml");
     if let Some(parent) = config_file_path.parent() {
@@ -86,11 +83,7 @@ pub enum SortBy {
     // TODO: Other sort strategies, such as createdon, last played at, play frequency...
 }
 
-/// Reads all instances stored in the data directory,
-/// creates default instances for latest release and snapshot if missing,
-/// and returns a sorted list.
-///
-/// Default instances are created if not found.
+/// Reads all instances stored in the data directory
 pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     let instances_folder = &DATA_LOCATION.instances;
     async_fs::create_dir_all(instances_folder).await?;
@@ -144,6 +137,24 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
         }
     }
     Ok(instances)
+}
+
+pub async fn get_instance_by_id(id: Uuid) -> Option<Instance> {
+    let instance_root = &DATA_LOCATION.get_instance_root(&id);
+    let config_file = instance_root.join("instance.toml");
+    if let Ok(config_file_content) = async_fs::read_to_string(config_file).await
+        && let Ok(config) = toml::from_str::<InstanceConfig>(&config_file_content)
+    {
+        Some(Instance {
+            config,
+            installed: async_fs::metadata(instance_root.join(".install.lock"))
+                .await
+                .is_ok(),
+            id,
+        })
+    } else {
+        None
+    }
 }
 
 /// Updates the configuration file of an existing instance

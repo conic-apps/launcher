@@ -90,6 +90,7 @@ defineProps<{
 
 const instanceStore = useInstanceStore();
 
+console.log(instanceStore.instances.length);
 const currentInstance = computed(() => {
   return instanceStore.currentInstance;
 });
