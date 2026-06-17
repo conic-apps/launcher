@@ -52,6 +52,7 @@ fn main() {
             InlinedPlugin::new().commands(&[
                 "cmd_create_instance",
                 "cmd_list_instances",
+                "cmd_get_instance_by_id",
                 "cmd_update_instance",
                 "cmd_delete_instance",
             ]),

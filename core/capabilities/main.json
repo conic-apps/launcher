@@ -53,6 +53,7 @@
     "launch:allow-cmd-cancel-launch-task",
     "instance:allow-cmd-create-instance",
     "instance:allow-cmd-list-instances",
+    "instance:allow-cmd-get-instance-by-id",
     "instance:allow-cmd-update-instance",
     "instance:allow-cmd-delete-instance",
     "folder:allow-cmd-get-data-location",

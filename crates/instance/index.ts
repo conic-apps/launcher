@@ -44,12 +44,19 @@ export type Instance = {
     id: string
 }
 
-export async function createInstance(instanceConfig: InstanceConfig): Promise<Instance> {
-    return await invoke("plugin:instance|cmd_create_instance", { config: instanceConfig })
+export async function createInstance(
+    instanceConfig: InstanceConfig,
+    id?: string,
+): Promise<Instance> {
+    return await invoke("plugin:instance|cmd_create_instance", { config: instanceConfig, id })
 }
 
 export async function listInstances(sortBy: "Name"): Promise<Instance[]> {
     return await invoke("plugin:instance|cmd_list_instances", { sortBy })
+}
+
+export async function getInstanceById(id: string): Promise<Instance | null> {
+    return await invoke("plugin:instance|cmd_get_instance_by_id", { id })
 }
 
 export async function updateInstance(config: InstanceConfig, id: string): Promise<Instance[]> {
