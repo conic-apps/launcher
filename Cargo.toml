@@ -13,6 +13,7 @@ rust-version = "1.88"
 
 [workspace.dependencies]
 # ----- local crates -----
+# NOTE: local crates that aren't published to crates.io. These should not have versions.
 shared = { path = "./crates/shared", version = "0.0.0"}
 account = { path = "./crates/account", version = "0.0.0"}
 config = { path = "./crates/config", version = "0.0.0"}
@@ -24,8 +25,6 @@ instance = { path = "./crates/instance", version = "0.0.0"}
 launch = { path = "./crates/launch", version = "0.0.0"}
 platform = { path = "./crates/platform", version = "0.0.0"}
 version = { path = "./crates/version", version = "0.0.0"}
-
-# NOTE: local crates that aren't published to crates.io. These should not have versions.
 
 # ----- non-local crates -----
 async-fs = "2"
