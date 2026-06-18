@@ -37,7 +37,7 @@ jobs:
           - platform: "macos-15"
             arch: "aarch64"
 
-          - platform: "macos-13"
+          - platform: "macos-15-intel"
             arch: "x64"
 
           - platform: "ubuntu-22.04"
