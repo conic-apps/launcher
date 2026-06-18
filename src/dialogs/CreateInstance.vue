@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <dialog-vue :visible="dialogStore.createInstance.visible" :width="560" :height="468">
+  <BaseDialog :visible="dialogStore.createInstance.visible" :width="560" :height="468">
     <div class="create-instance">
       <p
         style="
@@ -23,11 +23,11 @@
           <div class="settings" v-if="currentComponent == 'settings'">
             <SettingGroup>
               <SettingItem title="Instance Name" icon="signature">
-                <TextInputBox
+                <BaseInput
                   width="260px"
                   :placeholder="defaultInstanceName"
                   v-model="instanceNameValue">
-                </TextInputBox>
+                </BaseInput>
               </SettingItem>
             </SettingGroup>
             <SettingGroup>
@@ -86,10 +86,10 @@
               </SettingItem>
             </SettingGroup>
             <div style="display: flex; padding: 0 8px; margin-top: -8px">
-              <ButtonVue style="margin-right: 8px" @click="close">Cancel</ButtonVue>
-              <ButtonVue @click="createInstance" :disabled="creating || !minecraftVersion">
+              <BaseButton style="margin-right: 8px" @click="close">Cancel</BaseButton>
+              <BaseButton @click="createInstance" :disabled="creating || !minecraftVersion">
                 {{ creating ? "Creating..." : "Create Instance" }}
-              </ButtonVue>
+              </BaseButton>
             </div>
           </div>
           <MinecraftChoose
@@ -121,16 +121,16 @@
         </Transition>
       </div>
     </div>
-  </dialog-vue>
+  </BaseDialog>
 </template>
 
 <script setup lang="ts">
-import DialogVue from "@/components/Dialog.vue";
+import BaseDialog from "@/components/base/BaseDialog.vue";
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import TextInputBox from "@/components/TextInputBox.vue";
+import BaseInput from "@/components/base/BaseInput.vue";
 import { computed, ref, watch, watchEffect } from "vue";
-import ButtonVue from "@/components/Button.vue";
+import BaseButton from "@/components/base/BaseButton.vue";
 import IconSelect from "@/components/IconSelect.vue";
 import MinecraftChoose from "./create/MinecraftChoose.vue";
 import QuiltChoose from "./create/QuiltChoose.vue";

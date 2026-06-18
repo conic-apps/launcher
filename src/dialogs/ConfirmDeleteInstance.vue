@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <dialog-vue :visible="dialogStore.confirmDeleteInstance.visible" :width="500" :height="height">
+  <BaseDialog :visible="dialogStore.confirmDeleteInstance.visible" :width="500" :height="height">
     <div class="confirm-delete-instance" ref="main">
       <p
         style="
@@ -62,37 +62,37 @@
       <p style="user-select: text; -webkit-user-select: text; cursor: text">
         To confirm, type "{{ instanceToDelete.config.name }}" in the box below
       </p>
-      <TextInputBox
+      <BaseInput
         width="100%"
         style="border: 1px solid rgba(210, 15, 57, 0.8)"
         v-model="confirmInputText">
-      </TextInputBox>
+      </BaseInput>
       <div class="buttons">
-        <button-vue
+        <BaseButton
           style="width: 100%; margin-right: 8px"
           :disabled="deleting"
           @click="
             confirmInputText = '';
             dialogStore.confirmDeleteInstance.visible = false;
           "
-          >Cancel</button-vue
+          >Cancel</BaseButton
         >
-        <button-vue
+        <BaseButton
           style="width: 100%; font-weight: bold"
           @click="confirmDelete"
           :disabled="confirmInputText !== instanceToDelete.config.name || deleting"
           color="rgb(210, 15, 57)"
-          >{{ deleting ? "Deleting..." : "Delete this instance" }}</button-vue
+          >{{ deleting ? "Deleting..." : "Delete this instance" }}</BaseButton
         >
       </div>
     </div>
-  </dialog-vue>
+  </BaseDialog>
 </template>
 
 <script setup lang="ts">
-import DialogVue from "@/components/Dialog.vue";
-import TextInputBox from "@/components/TextInputBox.vue";
-import ButtonVue from "@/components/Button.vue";
+import BaseDialog from "@/components/base/BaseDialog.vue";
+import BaseInput from "@/components/base/BaseInput.vue";
+import BaseButton from "@/components/base/BaseButton.vue";
 import { computed, ref, useTemplateRef } from "vue";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { deleteInstance } from "@conic/instance";

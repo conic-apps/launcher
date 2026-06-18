@@ -2,15 +2,14 @@
 // copyright 2022-2026 broken-deer and contributors. all rights reserved.
 // spdx-license-identifier: gpl-3.0-only
 
-import { init } from "./log"
-init()
+(await import("./log")).init()
 
 import { createApp } from "vue"
 import { createPinia } from "pinia"
 import { createI18n } from "vue-i18n"
 import en_us from "./i18n/en_us"
 import zh_cn from "./i18n/zh_cn"
-import App from "./Main.vue"
+import App from "./App.vue"
 import AppIcon from "./components/AppIcon.vue"
 
 type LooseString<T> = {
@@ -37,4 +36,5 @@ app.use(
 app.use(createPinia())
 
 app.component("AppIcon", AppIcon)
+
 app.mount("#window")

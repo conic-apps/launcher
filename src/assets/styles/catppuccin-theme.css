@@ -354,6 +354,7 @@ body.theme-Mocha {
   --toggle-switch-background: var(--ctp-mocha-surface1);
   --toggle-switch-button: var(--ctp-mocha-overlay2);
   --toggle-switch-active: var(--ctp-mocha-blue);
+  --selected-text-background: var(--ctp-mocha-mauve);
 }
 
 body.theme-Mocha .title-bar .search-bar {
@@ -394,6 +395,7 @@ body.theme-Macchiato {
   --toggle-switch-background: var(--ctp-macchiato-surface1);
   --toggle-switch-button: var(--ctp-macchiato-overlay2);
   --toggle-switch-active: var(--ctp-macchiato-blue);
+  --selected-text-background: var(--ctp-macchiato-mauve);
 }
 
 body.theme-Macchiato .title-bar .search-bar {
@@ -435,6 +437,7 @@ body.theme-Frappe {
   --toggle-switch-background: var(--ctp-frappe-surface1);
   --toggle-switch-button: var(--ctp-frappe-overlay2);
   --toggle-switch-active: var(--ctp-frappe-blue);
+  --selected-text-background: var(--ctp-frappe-mauve);
 }
 
 body.theme-Frappe .title-bar .search-bar {
@@ -482,6 +485,7 @@ body.theme-Latte {
     --toggle-switch-background: var(--ctp-latte-crust);
     --toggle-switch-button: var(--ctp-latte-overlay2);
     --toggle-switch-active: var(--theme-color);
+    --selected-text-background: var(--ctp-latte-mauve);
 }
 
 body.theme-Latte code {

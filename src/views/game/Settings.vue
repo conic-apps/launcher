@@ -10,26 +10,26 @@
         description="The name of this game instance."
         :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'"
         icon="tag">
-        <TextInputBox
+        <BaseInput
           v-if="instanceName == 'Latest Release'"
           width="300px"
           :value="$t('game.latestRelease')"
           :lazy-update-model="true">
-        </TextInputBox>
-        <TextInputBox
+        </BaseInput>
+        <BaseInput
           v-else-if="instanceName == 'Latest Snapshot'"
           width="300px"
           :value="$t('game.latestSnapshot')"
           :lazy-update-model="true">
-        </TextInputBox>
-        <TextInputBox
+        </BaseInput>
+        <BaseInput
           v-else
           width="300px"
           v-model="instanceStore.currentInstance.config.name"
           :non-empty="true"
           :lazy-update-model="true"
           @updated="$emit('update-instance-list')">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item title="Icon" description="The icon of this game instance." icon="icons">
         <img width="32px" height="32px" src="@/assets/images/Grass_Block.webp" alt="" />
@@ -40,14 +40,14 @@
         :title="$t('settings.accessibility.hideLatestRelease')"
         :description="$t('settings.accessibility.hideLatestReleaseDesc')"
         icon="eye-off">
-        <button-vue @click="config.accessibility.hide_latest_release = true">Hide it</button-vue>
+        <BaseButton @click="config.accessibility.hide_latest_release = true">Hide it</BaseButton>
       </setting-item>
       <setting-item
         v-if="instanceName === 'Latest Snapshot'"
         :title="$t('settings.accessibility.hideLatestSnapshot')"
         :description="$t('settings.accessibility.hideLatestSnapshotDesc')"
         icon="eye-off">
-        <button-vue @click="config.accessibility.hide_latest_snapshot = true">Hide it</button-vue>
+        <BaseButton @click="config.accessibility.hide_latest_snapshot = true">Hide it</BaseButton>
       </setting-item>
       <setting-item
         title="Enable Instance-specific Settings"
@@ -66,34 +66,34 @@
         :title="$t('settings.game.launcherName')"
         :description="$t('settings.game.launcherNameDesc')"
         icon="tag">
-        <TextInputBox
+        <BaseInput
           width="300px"
           v-model="instanceStore.currentInstance.config.launch_config.launcher_name"
           :placeholder="config.launch.launcher_name"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <!-- TODO:<setting-item title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
-      <!--   <TextInputBox -->
+      <!--   <BaseInput -->
       <!--     width="240px" -->
       <!--     v-model="config.launch.server!.ip" -->
       <!--     style="display: inline-block; margin-right: 16px" -->
-      <!--     placeholder="IP 或域名" :lazy-update-model="true"></TextInputBox> -->
-      <!--   <TextInputBox -->
+      <!--     placeholder="IP 或域名" :lazy-update-model="true"></BaseInput> -->
+      <!--   <BaseInput -->
       <!--     width="100px" -->
       <!--     v-model="config.launch.server!.port" -->
       <!--     placeholder="端口" -->
-      <!--     style="display: inline-block" :lazy-update-model="true"></TextInputBox> -->
+      <!--     style="display: inline-block" :lazy-update-model="true"></BaseInput> -->
       <!-- </setting-item> -->
       <setting-item
         :title="$t('settings.game.enterWorldAfterLaunch')"
         :description="$t('settings.game.enterWorldAfterLaunchDesc')"
         icon="enter">
-        <TextInputBox
+        <BaseInput
           width="300px"
           :placeholder="$t('settings.game.enterWorldAfterLaunchPlaceholder')"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.game.fullscreen')"
@@ -107,16 +107,17 @@
         :title="$t('settings.game.windowSize')"
         :description="$t('settings.game.windowSizeDesc')"
         icon="resize">
-        <TextInputBox
+        <BaseInput
           width="100px"
           style="display: inline-block; margin-right: 16px"
           :placeholder="$t('settings.game.windowSizeWidth')"
           :number-only="true"
           :disabled="instanceStore.currentInstance.config.launch_config.fullscreen"
           v-model.number="instanceStore.currentInstance.config.launch_config.width"
-          :lazy-update-model="true">
-        </TextInputBox>
-        <TextInputBox
+          :lazy-update-model="true"> 
+          <!-- BUG: Frontend crash when user clear this input box -->
+        </BaseInput>
+        <BaseInput
           width="100px"
           style="display: inline-block"
           :placeholder="$t('settings.game.windowSizeHeight')"
@@ -124,7 +125,7 @@
           :disabled="instanceStore.currentInstance.config.launch_config.fullscreen"
           v-model.number="instanceStore.currentInstance.config.launch_config.height"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-off">
         <toggle-switch></toggle-switch>
@@ -150,56 +151,56 @@
       <setting-item
         :title="$t('settings.advance.extraJVMArgs')"
         :description="$t('settings.advance.extraJVMArgsDesc')">
-        <TextInputBox
+        <BaseInput
           width="300px"
           v-model="instanceStore.currentInstance.config.launch_config.extra_jvm_args"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.extraMinecraftArgs')"
         :description="$t('settings.advance.extraMinecraftArgsDesc')">
-        <TextInputBox
+        <BaseInput
           width="300px"
           v-model="instanceStore.currentInstance.config.launch_config.extra_mc_args"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.extraClassPaths')"
         :description="$t('settings.advance.extraClassPathsDesc')">
-        <TextInputBox
+        <BaseInput
           width="300px"
           v-model="instanceStore.currentInstance.config.launch_config.extra_class_paths"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.executeBeforeLaunch')"
         :description="$t('settings.advance.executeBeforeLaunchDesc')">
-        <TextInputBox
+        <BaseInput
           width="300px"
           v-model="instanceStore.currentInstance.config.launch_config.execute_before_launch"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.wrapCommand')"
         :description="$t('settings.advance.wrapCommandDesc')">
-        <TextInputBox
+        <BaseInput
           width="300px"
           v-model="instanceStore.currentInstance.config.launch_config.wrap_command"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.executeAfterLaunch')"
         :description="$t('settings.advance.executeAfterLaunchDesc')">
-        <TextInputBox
+        <BaseInput
           width="300px"
           v-model="instanceStore.currentInstance.config.launch_config.execute_after_launch"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.ignoreInvalidMinecraftCertificates')"
@@ -254,12 +255,12 @@
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
-import TextInputBox from "@/components/TextInputBox.vue";
+import BaseInput from "@/components/base/BaseInput.vue";
 import { computed, watchEffect } from "vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import SelectVue from "@/components/Select.vue";
 import { useInstanceStore } from "@/store/instance";
-import ButtonVue from "@/components/Button.vue";
+import BaseButton from "@/components/base/BaseButton.vue";
 import { updateInstance } from "@conic/instance";
 import { useDialogStore } from "@/store/dialog";
 
