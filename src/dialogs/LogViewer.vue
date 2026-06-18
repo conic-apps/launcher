@@ -4,7 +4,7 @@
 
 <!-- TODO: Support tab, can switch to different instance to view log, then change name to LogBrowser -->
 <template>
-  <dialog-vue :visible="dialogStore.logViewer.visible" :width="860" :height="520">
+  <BaseDialog :visible="dialogStore.logViewer.visible" :width="860" :height="520">
     <div class="log-viewer">
       <div class="title">
         <div style="display: flex; align-items: center">
@@ -43,11 +43,11 @@
         </transition-group>
       </div>
     </div>
-  </dialog-vue>
+  </BaseDialog>
 </template>
 
 <script setup lang="ts">
-import DialogVue from "@/components/Dialog.vue";
+import BaseDialog from "@/components/base/BaseDialog.vue";
 import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
 import { listen } from "@tauri-apps/api/event";

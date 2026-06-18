@@ -5,8 +5,18 @@
 <template>
   <li class="list-item">
     <div
-      :style="`${buttons ? '' : 'justify-content: start;width: 100%;'}${clickAble ? 'pointer-events: all;' : ''}`">
-      <div class="icon" :style="computedLogo">
+      :style="{
+        justifyContent: buttons ? 'start' : 'space-between',
+        width: buttons ? '100%' : undefined,
+        pointerEvents: clickAble ? 'all' : 'none',
+      }">
+      <div
+        class="icon"
+        :style="{
+          backgroundImage: props.logo ? `url(${props.logo})` : undefined,
+          imageRendering: props.logo && props.logoPixelated ? 'pixelated' : undefined,
+          display: props.logo ? undefined : 'none',
+        }">
         <slot name="icon"></slot>
       </div>
       <div>
@@ -17,7 +27,7 @@
           </div>
         </h4>
         <p class="text">
-          {{ description ? description : "" }}
+          {{ description ?? "" }}
           <slot></slot>
         </p>
       </div>
@@ -36,7 +46,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
 import AppIcon from "./AppIcon.vue";
 
 const props = defineProps<{
@@ -47,12 +56,6 @@ const props = defineProps<{
   buttons?: string[]; // 图标名称对应点击后触发的事件名称
   clickAble?: boolean;
 }>();
-
-const computedLogo = computed(() => {
-  return props.logo
-    ? `background-image: url(${props.logo}); ${props.logoPixelated ? "image-rendering: pixelated;" : ""}`
-    : "display: none;";
-});
 </script>
 
 <style lang="less" scoped>
@@ -60,13 +63,11 @@ const computedLogo = computed(() => {
   display: flex;
   padding: 10px 12px;
   transition: all 0.1s cubic-bezier(0, 0.43, 0.25, 1);
-  justify-content: space-between;
   margin-bottom: 1px;
   position: relative;
   // flex-direction: row-reverse;
   overflow: hidden;
   background: var(--list-item-background);
-  pointer-events: none;
   height: 53px;
 
   * {

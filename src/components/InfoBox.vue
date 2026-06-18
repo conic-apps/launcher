@@ -1,5 +1,5 @@
 <template>
-  <div class="info" :class="clickAble ? 'click-able' : ''">
+  <div class="info" :class="{ 'click-able': clickAble }">
     <slot></slot>
   </div>
 </template>
