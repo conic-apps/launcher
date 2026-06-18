@@ -26,14 +26,11 @@ use tauri::{
 };
 use vanilla::generate_download_info;
 
-use config::{
-    Config,
-    instance::{InstanceRuntime, ModLoaderType},
-};
+use config::Config;
 use download::download_concurrent;
 use download::task::Progress;
 use folder::{DATA_LOCATION, MinecraftLocation};
-use instance::Instance;
+use instance::{Instance, InstanceRuntime, ModLoaderType};
 
 use crate::vanilla::VersionManifest;
 
