@@ -50,7 +50,7 @@ tauri = { version = "2", default-features = false, features = ["wry", "x11", "co
 thiserror = "2"
 toml = "0.9"
 url = "2"
-uuid = "1"
+uuid = { version = "1", features = ["v4"] }
 zip = { version = "4", default-features = false, features = ["deflate"]}
 
 [profile.dev]
