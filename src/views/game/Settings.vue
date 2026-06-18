@@ -114,7 +114,7 @@
           :number-only="true"
           :disabled="instanceStore.currentInstance.config.launch_config.fullscreen"
           v-model.number="instanceStore.currentInstance.config.launch_config.width"
-          :lazy-update-model="true"> 
+          :lazy-update-model="true">
           <!-- BUG: Frontend crash when user clear this input box -->
         </BaseInput>
         <BaseInput
