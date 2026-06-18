@@ -2,10 +2,6 @@ h4 {
     font-size: 16px;
 }
 
-.aaa {
-    color: rgb(0, 105, 140);
-}
-
 * {
     margin: 0;
     padding: 0;
@@ -21,22 +17,8 @@ h4 {
 }
 
 *::selection {
-    background: rgba(45, 170, 219, 0.3);
+    background: var(--selected-text-background);
 }
-
-/* ::-webkit-scrollbar {
-    width: 2.5px;
-    height: 2.5px;
-}
-
-:hover::-webkit-scrollbar {
-    opacity: 1;
-}
-
-::-webkit-scrollbar-thumb {
-    background-color: #ffffff26;
-    border-radius: 10px;
-} */
 
 body {
     overflow: hidden;

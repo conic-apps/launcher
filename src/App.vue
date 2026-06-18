@@ -67,14 +67,14 @@ import { markRaw, onMounted, reactive, ref, shallowRef } from "vue";
 import SearchBar from "./components/SearchBar.vue";
 import SidebarItem from "./components/SidebarItem.vue";
 import { window } from "@tauri-apps/api";
-import Settings from "./pages/Settings.vue";
-import Game from "./pages/Game.vue";
 import { useConfigStore } from "./store/config";
 import { watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { loadPalette } from "./theme";
-import Home from "./pages/Home.vue";
-import Market from "./pages/Market.vue";
+import HomeView from "./views/HomeView.vue";
+import GameView from "./views/GameView.vue";
+import MarketView from "./views/MarketView.vue";
+import SettingsView from "./views/SettingsView.vue";
 import Logo from "@/assets/logo.svg";
 import WindowButton from "./components/WindowButton.vue";
 import AccountStatus from "./components/AccountStatus.vue";
@@ -90,13 +90,13 @@ loadPalette(
 );
 
 const pages = reactive({
-  settings: markRaw(Settings),
-  home: markRaw(Home),
-  market: markRaw(Market),
-  game: markRaw(Game),
+  settings: markRaw(SettingsView),
+  home: markRaw(HomeView),
+  market: markRaw(MarketView),
+  game: markRaw(GameView),
 });
 const transitionName = ref("slide-up");
-const currentComponent = shallowRef(pages.game);
+const currentComponent = shallowRef(pages.home);
 
 const i18n = useI18n();
 i18n.locale.value = config.language;

@@ -1,8 +1,8 @@
 <template>
   <UpdateReminder></UpdateReminder>
   <AccountManager></AccountManager>
-  <CreateInstance>></CreateInstance>
-  <LogViewer>></LogViewer>
+  <CreateInstance></CreateInstance>
+  <LogViewer></LogViewer>
   <ConfirmDeleteInstance></ConfirmDeleteInstance>
 </template>
 

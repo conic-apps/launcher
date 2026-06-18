@@ -25,52 +25,52 @@
       <setting-item
         :title="$t('settings.advance.extraJVMArgs')"
         :description="$t('settings.advance.extraJVMArgsDesc')">
-        <TextInputBox
+        <BaseInput
           width="360px"
           v-model="config.launch.extra_jvm_args"
-          :lazy-update-model="true"></TextInputBox>
+          :lazy-update-model="true"></BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.extraMinecraftArgs')"
         :description="$t('settings.advance.extraMinecraftArgsDesc')">
-        <TextInputBox
+        <BaseInput
           width="360px"
           v-model="config.launch.extra_mc_args"
-          :lazy-update-model="true"></TextInputBox>
+          :lazy-update-model="true"></BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.extraClassPaths')"
         :description="$t('settings.advance.extraClassPathsDesc')">
-        <TextInputBox
+        <BaseInput
           width="360px"
           v-model="config.launch.extra_class_paths"
-          :lazy-update-model="true"></TextInputBox>
+          :lazy-update-model="true"></BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.executeBeforeLaunch')"
         :description="$t('settings.advance.executeBeforeLaunchDesc')">
-        <TextInputBox
+        <BaseInput
           width="360px"
           v-model="config.launch.execute_before_launch"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.wrapCommand')"
         :description="$t('settings.advance.wrapCommandDesc')">
-        <TextInputBox
+        <BaseInput
           width="360px"
           v-model="config.launch.wrap_command"
-          :lazy-update-model="true"></TextInputBox>
+          :lazy-update-model="true"></BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.executeAfterLaunch')"
         :description="$t('settings.advance.executeAfterLaunchDesc')">
-        <TextInputBox
+        <BaseInput
           width="360px"
           v-model="config.launch.execute_after_launch"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.advance.ignoreInvalidMinecraftCertificates')"
@@ -93,7 +93,7 @@
 import SettingItem from "@/components/SettingItem.vue";
 import SelectVue from "@/components/Select.vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
-import TextInputBox from "@/components/TextInputBox.vue";
+import BaseInput from "@/components/base/BaseInput.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 import { getDataLocation } from "@conic/folder";

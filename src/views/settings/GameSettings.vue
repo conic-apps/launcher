@@ -31,32 +31,32 @@
         :title="$t('settings.game.launcherName')"
         :description="$t('settings.game.launcherNameDesc')"
         icon="tag">
-        <TextInputBox
+        <BaseInput
           width="360px"
           v-model="config.launch.launcher_name"
-          :lazy-update-value="true"></TextInputBox>
+          :lazy-update-value="true"></BaseInput>
       </setting-item>
       <!-- TODO:<setting-item title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
-      <!--   <TextInputBox -->
+      <!--   <BaseInput -->
       <!--     width="240px" -->
       <!--     v-model="config.launch.server!.ip" -->
       <!--     style="display: inline-block; margin-right: 16px" -->
-      <!--     placeholder="IP 或域名"></TextInputBox> -->
-      <!--   <TextInputBox -->
+      <!--     placeholder="IP 或域名"></BaseInput> -->
+      <!--   <BaseInput -->
       <!--     width="100px" -->
       <!--     v-model="config.launch.server!.port" -->
       <!--     placeholder="端口" -->
-      <!--     style="display: inline-block"></TextInputBox> -->
+      <!--     style="display: inline-block"></BaseInput> -->
       <!-- </setting-item> -->
       <setting-item
         :title="$t('settings.game.enterWorldAfterLaunch')"
         :description="$t('settings.game.enterWorldAfterLaunchDesc')"
         icon="enter">
-        <TextInputBox
+        <BaseInput
           width="360px"
           :placeholder="$t('settings.game.enterWorldAfterLaunchPlaceholder')"
           :lazy-update-value="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.game.fullscreen')"
@@ -69,7 +69,7 @@
         :title="$t('settings.game.windowSize')"
         :description="$t('settings.game.windowSizeDesc')"
         icon="resize">
-        <TextInputBox
+        <BaseInput
           width="100px"
           style="display: inline-block; margin-right: 16px"
           :placeholder="$t('settings.game.windowSizeWidth')"
@@ -77,8 +77,8 @@
           :disabled="config.launch.fullscreen"
           v-model.number="config.launch.width"
           :lazy-update-value="true">
-        </TextInputBox>
-        <TextInputBox
+        </BaseInput>
+        <BaseInput
           width="100px"
           style="display: inline-block"
           :placeholder="$t('settings.game.windowSizeHeight')"
@@ -86,7 +86,7 @@
           :disabled="config.launch.fullscreen"
           v-model.number="config.launch.height"
           :lazy-update-value="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-off">
         <toggle-switch></toggle-switch>
@@ -116,7 +116,7 @@
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import TextInputBox from "@/components/TextInputBox.vue";
+import BaseInput from "@/components/base/BaseInput.vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import { useConfigStore } from "@/store/config";
 const config = useConfigStore();

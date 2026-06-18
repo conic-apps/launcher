@@ -7,10 +7,10 @@
     <div
       class="option"
       v-for="(option, index) in props.options"
-      :class="
-        (option === model ? 'activated' : '') +
-        (props.disabled.find((v) => v == option) ? ' disabled' : '')
-      "
+      :class="{
+        activated: option === model,
+        disabled: props.disabled.find((v) => v == option),
+      }"
       :key="option"
       @click="changeValue(option)">
       <i :class="props.icons[index]"></i>

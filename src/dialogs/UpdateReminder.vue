@@ -3,18 +3,18 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <dialog-vue :visible="dialogStore.updateReminder.visible" :width="420" :height="200">
+  <BaseDialog :visible="dialogStore.updateReminder.visible" :width="420" :height="200">
     <div class="main">
       <div class="title">
         <h4>发现新的 Minecraft 版本</h4>
         <p>Minecraft {{ latest }} 已发布！</p>
       </div>
     </div>
-  </dialog-vue>
+  </BaseDialog>
 </template>
 
 <script lang="ts" setup>
-import DialogVue from "@/components/Dialog.vue";
+import BaseDialog from "@/components/base/BaseDialog.vue";
 import { useDialogStore } from "@/store/dialog";
 import { ref } from "vue";
 

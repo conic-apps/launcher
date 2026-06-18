@@ -355,6 +355,7 @@ body.theme-Mocha-hc {
   --toggle-switch-background: var(--ctp-mocha-surface1);
   --toggle-switch-button: var(--ctp-mocha-overlay2);
   --toggle-switch-active: var(--ctp-mocha-blue);
+  --selected-text-background: var(--ctp-mocha-mauve);
 }
 
 body.theme-Mocha-hc .title-bar .search-bar {
@@ -396,6 +397,7 @@ body.theme-Macchiato-hc {
   --toggle-switch-background: var(--ctp-macchiato-surface1);
   --toggle-switch-button: var(--ctp-macchiato-overlay2);
   --toggle-switch-active: var(--ctp-macchiato-blue);
+  --selected-text-background: var(--ctp-macchiato-mauve);
 }
 
 body.theme-Macchiato-hc .title-bar .search-bar {
@@ -424,7 +426,7 @@ body.theme-Frappe-hc {
   --dialog-background: var(--ctp-frappe-base);
   --tag-border-radius: 4px;
   --list-item-background: var(--ctp-frappe-surface0);
-    --setting-group-border: 1px solid var(--ctp-frappe-overlay2);
+  --setting-group-border: 1px solid var(--ctp-frappe-overlay2);
   --setting-item-background: var(--ctp-frappe-surface0);
   --setting-item-background-hover: var(--ctp-frappe-surface1);
   --setting-item-background-active: var(--ctp-frappe-surface2);
@@ -438,6 +440,7 @@ body.theme-Frappe-hc {
   --toggle-switch-background: var(--ctp-frappe-surface1);
   --toggle-switch-button: var(--ctp-frappe-overlay2);
   --toggle-switch-active: var(--ctp-frappe-blue);
+  --selected-text-background: var(--ctp-frappe-mauve);
 }
 
 body.theme-Frappe-hc .title-bar .search-bar {
@@ -452,7 +455,7 @@ body.theme-Latte-hc {
     --theme-color: var(--ctp-latte-lavender);
     --window-background: var(--ctp-latte-crust);
     --main-background: var(--ctp-latte-base);
-  --main-border: 1px solid var(--ctp-latte-overlay2);
+    --main-border: 1px solid var(--ctp-latte-overlay2);
     --min-btn-background: var(--ctp-latte-yellow);
     --max-btn-background: var(--ctp-latte-green);
     --close-btn-background: var(--ctp-latte-red);
@@ -485,6 +488,7 @@ body.theme-Latte-hc {
     --toggle-switch-background: var(--ctp-latte-crust);
     --toggle-switch-button: var(--ctp-latte-overlay2);
     --toggle-switch-active: var(--theme-color);
+    --selected-text-background: var(--ctp-latte-mauve);
 }
 
 body.theme-Latte-hc code {
