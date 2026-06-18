@@ -7,7 +7,6 @@
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use config::instance::{InstanceConfig, ModLoaderType};
 use folder::DATA_LOCATION;
 use futures::TryStreamExt;
 use log::{debug, info};
@@ -16,8 +15,10 @@ use tauri::plugin::{Builder, TauriPlugin};
 use tauri::{Runtime, command};
 use uuid::Uuid;
 
+mod config;
 mod error;
 
+pub use config::*;
 pub use error::*;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {

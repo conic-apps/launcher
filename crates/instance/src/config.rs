@@ -6,7 +6,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use crate::launch::{GC, Server};
+use config::launch::{GC, Server};
 
 /// Represents supported mod loader types.
 #[derive(Deserialize, Serialize)]
@@ -46,6 +46,7 @@ pub struct InstanceRuntime {
 }
 
 /// Configuration for how the instance should be launched.
+/// The global launch config will be override by this.
 #[derive(Deserialize, Serialize, Default)]
 pub struct InstanceLaunchConfig {
     /// Whether to use instance-specific settings
@@ -109,6 +110,8 @@ pub struct InstanceConfig {
     /// Instance name (displayed to user)
     pub name: String,
 
+    pub icon: Option<String>,
+
     /// Minecraft runtime configuration
     pub runtime: InstanceRuntime,
 
@@ -135,6 +138,7 @@ impl InstanceConfig {
     pub fn new(instance_name: &str, minecraft_version: &str) -> Self {
         Self {
             name: instance_name.to_string(),
+            icon: None,
             runtime: InstanceRuntime {
                 minecraft: minecraft_version.to_string(),
                 mod_loader_type: None,
