@@ -326,9 +326,9 @@ body.theme-Mocha-hc {
   --window-background: rgb(var(--ctp-mocha-crust-rgb));
   --main-background: rgb(var(--ctp-mocha-base-rgb));
   --main-border: 1px solid var(--ctp-mocha-overlay2);
-  --min-btn-background: rgba(var(--ctp-mocha-yellow-rgb), 0.5);
-  --max-btn-background: rgba(var(--ctp-mocha-green-rgb), 0.5);
-  --close-btn-background: rgba(var(--ctp-mocha-red-rgb), 0.5);
+  --min-button-background: rgba(var(--ctp-mocha-yellow-rgb), 0.5);
+  --max-button-background: rgba(var(--ctp-mocha-green-rgb), 0.5);
+  --close-button-background: rgba(var(--ctp-mocha-red-rgb), 0.5);
   --window-btn-icon-color: var(--ctp-mocha-text);
   --default-text-color: 255,255,255;
   --card-background: var(--ctp-mocha-surface0);
@@ -356,6 +356,8 @@ body.theme-Mocha-hc {
   --toggle-switch-button: var(--ctp-mocha-overlay2);
   --toggle-switch-active: var(--ctp-mocha-blue);
   --selected-text-background: var(--ctp-mocha-mauve);
+  --game-install-button-background: var(--ctp-mocha-blue);
+  --game-launch-button-background: var(--ctp-mocha-green);
 }
 
 body.theme-Mocha-hc .title-bar .search-bar {
@@ -368,9 +370,9 @@ body.theme-Macchiato-hc {
   --window-background: rgb(var(--ctp-macchiato-crust-rgb));
   --main-background: rgb(var(--ctp-macchiato-base-rgb));
   --main-border: 1px solid var(--ctp-macchiato-overlay2);
-  --min-btn-background: rgba(var(--ctp-macchiato-yellow-rgb), 0.5);
-  --max-btn-background: rgba(var(--ctp-macchiato-green-rgb), 0.5);
-  --close-btn-background: rgba(var(--ctp-macchiato-red-rgb), 0.5);
+  --min-button-background: rgba(var(--ctp-macchiato-yellow-rgb), 0.5);
+  --max-button-background: rgba(var(--ctp-macchiato-green-rgb), 0.5);
+  --close-button-background: rgba(var(--ctp-macchiato-red-rgb), 0.5);
   --window-btn-icon-color: var(--ctp-macchiato-text);
   --default-text-color: 255,255,255;
   --card-background: var(--ctp-macchiato-surface0);
@@ -398,6 +400,8 @@ body.theme-Macchiato-hc {
   --toggle-switch-button: var(--ctp-macchiato-overlay2);
   --toggle-switch-active: var(--ctp-macchiato-blue);
   --selected-text-background: var(--ctp-macchiato-mauve);
+  --game-install-button-background: var(--ctp-macchiato-blue);
+  --game-launch-button-background: var(--ctp-macchiato-green);
 }
 
 body.theme-Macchiato-hc .title-bar .search-bar {
@@ -411,9 +415,9 @@ body.theme-Frappe-hc {
   --window-background: rgb(var(--ctp-frappe-crust-rgb));
   --main-background: rgb(var(--ctp-frappe-base-rgb));
   --main-border: 1px solid var(--ctp-frappe-overlay2);
-  --min-btn-background: rgba(var(--ctp-frappe-yellow-rgb), 0.5);
-  --max-btn-background: rgba(var(--ctp-frappe-green-rgb), 0.5);
-  --close-btn-background: rgba(var(--ctp-frappe-red-rgb), 0.5);
+  --min-button-background: rgba(var(--ctp-frappe-yellow-rgb), 0.5);
+  --max-button-background: rgba(var(--ctp-frappe-green-rgb), 0.5);
+  --close-button-background: rgba(var(--ctp-frappe-red-rgb), 0.5);
   --window-btn-icon-color: var(--ctp-frappe-text);
   --default-text-color: var(--ctp-frappe-text-rgb);
   --card-background: var(--ctp-frappe-surface0);
@@ -441,6 +445,8 @@ body.theme-Frappe-hc {
   --toggle-switch-button: var(--ctp-frappe-overlay2);
   --toggle-switch-active: var(--ctp-frappe-blue);
   --selected-text-background: var(--ctp-frappe-mauve);
+  --game-install-button-background: var(--ctp-frappe-blue);
+  --game-launch-button-background: var(--ctp-frappe-green);
 }
 
 body.theme-Frappe-hc .title-bar .search-bar {
@@ -456,9 +462,9 @@ body.theme-Latte-hc {
     --window-background: var(--ctp-latte-crust);
     --main-background: var(--ctp-latte-base);
     --main-border: 1px solid var(--ctp-latte-overlay2);
-    --min-btn-background: var(--ctp-latte-yellow);
-    --max-btn-background: var(--ctp-latte-green);
-    --close-btn-background: var(--ctp-latte-red);
+    --min-button-background: var(--ctp-latte-yellow);
+    --max-button-background: var(--ctp-latte-green);
+    --close-button-background: var(--ctp-latte-red);
     --window-btn-icon-color: var(--ctp-latte-base);
     --default-text-color: 0,0,0;
     --card-background: var(--ctp-latte-mantle);
@@ -489,6 +495,8 @@ body.theme-Latte-hc {
     --toggle-switch-button: var(--ctp-latte-overlay2);
     --toggle-switch-active: var(--theme-color);
     --selected-text-background: var(--ctp-latte-mauve);
+    --game-install-button-background: var(--ctp-latte-blue);
+    --game-launch-button-background: var(--ctp-latte-green);
 }
 
 body.theme-Latte-hc code {

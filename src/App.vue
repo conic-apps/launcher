@@ -231,8 +231,8 @@ function closeWindow() {
 
 main.main {
   position: absolute;
-  right: 0;
-  bottom: 0;
+  right: 1px;
+  bottom: 1px;
   height: calc(100vh - 56px);
   width: calc(100vw - 80px);
   border: var(--main-border);

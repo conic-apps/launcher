@@ -1,6 +1,6 @@
-// conic launcher
-// copyright 2022-2026 broken-deer and contributors. all rights reserved.
-// spdx-license-identifier: gpl-3.0-only
+// Conic Launcher
+// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
 
 import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log"
 

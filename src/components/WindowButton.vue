@@ -2,21 +2,21 @@
   <div
     class="win-btn"
     v-if="buttonType === 'minimize'"
-    style="background: var(--min-btn-background)"
+    style="background: var(--min-button-background)"
     @click="$emit(buttonType)">
     <AppIcon name="minus" :size="16"></AppIcon>
   </div>
   <div
     class="win-btn"
     v-else-if="buttonType === 'maximize'"
-    style="background: var(--max-btn-background)"
+    style="background: var(--max-button-background)"
     @click="$emit(buttonType)">
     <AppIcon name="expand-2" :size="16"></AppIcon>
   </div>
   <div
     class="win-btn"
     v-else-if="buttonType === 'close'"
-    style="background: var(--close-btn-background)"
+    style="background: var(--close-button-background)"
     @click="$emit(buttonType)">
     <AppIcon name="xmark" :size="16"></AppIcon>
   </div>

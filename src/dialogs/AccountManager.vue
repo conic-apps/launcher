@@ -124,7 +124,7 @@ function addAccount() {
     align-items: center;
     justify-content: center;
     transition: transform 100ms;
-    background: var(--close-btn-background);
+    background: var(--close-button-background);
 
     i::before {
       content: "\f00d";

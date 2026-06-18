@@ -5,7 +5,6 @@
 <template>
   <div class="instance-details">
     <tabs
-      v-if="instanceStore.currentInstance.installed"
       :tabs="
         components.map((n) => {
           return i18n.t(n.name);
@@ -87,7 +86,6 @@ const currentComponent = computed(() => {
 
 <style lang="less" scoped>
 .instance-details {
-  margin-top: 14px;
   width: 100%;
   overflow-x: hidden;
 
