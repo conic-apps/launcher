@@ -330,7 +330,6 @@ fn resolve_classpath(
 
 fn format(template: &str, args: HashMap<&str, String>, is_game_option: bool) -> String {
     let regex = Regex::new(r"\$\{(.*?)}").expect("Internal Error");
-
     regex
         .replace_all(template, |caps: &regex::Captures| {
             let key = String::from(&caps[1]);

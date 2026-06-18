@@ -2,6 +2,8 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! App configuration
+
 use account::AccountType;
 use folder::DATA_LOCATION;
 use log::{debug, error, info};
@@ -16,7 +18,6 @@ use uuid::Uuid;
 
 pub mod download;
 pub mod error;
-pub mod instance;
 pub mod launch;
 
 use error::*;
