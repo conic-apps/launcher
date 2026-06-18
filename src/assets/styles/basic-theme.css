@@ -32,6 +32,7 @@ body {
     --toggle-switch-background: rgba(255, 255, 255, 0.05);
     --toggle-switch-button: #ffffffb7;
     --toggle-switch-active: rgb(var(--theme-color));
+    --selected-text-background: rgba(45, 170, 219, 0.3);
 }
 
 body code {

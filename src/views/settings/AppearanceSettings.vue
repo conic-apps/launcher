@@ -12,15 +12,16 @@
           'background-clip': 'text',
           color: '#00000000',
         }">
-        默认调色板由 Cappuccin 驱动
+        Default pastel theme is Catppuccin
       </h2>
-      Catppuccin 是一款由社区驱动的柔和色调主题，旨在成为低对比度和高对比度主题之间的平衡点。它包含
-      4 种舒缓的暖色调，每种都有 26 种赏心悦目的颜色，点击此处以查看详细信息
+      Catppuccin is a community-driven color scheme meant for coding, designing, and much more.
+      Catppuccin consists of 4 beautiful pastel color palettes, named flavors. You can choose one
+      below. Click here for more information.
     </InfoBox>
     <setting-group title="调色板">
       <setting-item
         title="跟随系统深色设置"
-        description="如果系统设置中设置为浅色，则使用 Latte 调色板，否则使用 Mocha 调色板"
+        description="如果系统设置中设置为浅色，则使用 Latte ，否则使用 Mocha"
         icon="moon"
         icon-fill="none">
         <toggle-switch v-model="config.appearance.palette_follow_system"></toggle-switch>
@@ -52,6 +53,7 @@
         </div>
       </div>
     </setting-group>
+    <!-- TODO: Font settings -->
   </div>
 </template>
 

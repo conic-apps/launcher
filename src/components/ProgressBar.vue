@@ -3,17 +3,18 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="progress" :style="widthStyle">
+  <div class="progress" :style="{ width: `${props.width}px` }">
     <p v-if="text">{{ text }}</p>
-    <div class="progress-bar" :style="loadingStyle"></div>
-    <div class="progress-loading" :style="loadingStyle"></div>
-    <progress :max="total" :value="value" :style="progressStyle"></progress>
+    <div class="progress-bar" :style="{ display: props.loading ? undefined : 'none' }"></div>
+    <div class="progress-loading" :style="{ display: props.loading ? undefined : 'none' }"></div>
+    <progress
+      :max="total"
+      :value="value"
+      :style="{ display: props.loading ? 'none' : undefined }"></progress>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-
 const props = withDefaults(
   defineProps<{
     loading: boolean;
@@ -23,19 +24,9 @@ const props = withDefaults(
     text?: string;
   }>(),
   {
-    width: () => "100",
+    width: "100",
   },
 );
-
-const widthStyle = computed(() => {
-  return `width: ${props.width}px`;
-});
-const loadingStyle = computed(() => {
-  return props.loading ? "" : "display: none";
-});
-const progressStyle = computed(() => {
-  return props.loading ? "display: none" : "";
-});
 </script>
 
 <style lang="less" scoped>

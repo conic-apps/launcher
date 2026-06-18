@@ -24,6 +24,14 @@ defineProps<{
   justify-content: center;
   align-items: center;
   transition: all 200ms ease;
+  i {
+    font-family: "fa-pro";
+    font-style: normal;
+    font-size: calc(16px - var(--));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 }
 
 .dialog-button:hover {
@@ -33,14 +41,5 @@ defineProps<{
 
 .dialog-button:active {
   transform: scale(0.95);
-}
-
-.dialog-button i {
-  font-family: "fa-pro";
-  font-style: normal;
-  font-size: calc(16px - var(--));
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 </style>

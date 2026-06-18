@@ -9,23 +9,23 @@
         :title="$t('settings.download.maxConnections')"
         :description="$t('settings.download.maxConnectionsDesc')"
         icon="link">
-        <TextInputBox
+        <BaseInput
           width="100px"
           :number-only="true"
           v-model.number="config.download.max_connections"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.download.maxDownloadSpeed')"
         :description="$t('settings.download.maxDownloadSpeedDesc')"
         icon="speedometer">
-        <TextInputBox
+        <BaseInput
           width="100px"
           :number-only="true"
           v-model.number="config.download.max_download_speed"
           :lazy-update-model="true">
-        </TextInputBox>
+        </BaseInput>
       </setting-item>
       <setting-item
         :title="$t('settings.download.mirrorServer')"
@@ -49,7 +49,7 @@
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
-import TextInputBox from "@/components/TextInputBox.vue";
+import BaseInput from "@/components/base/BaseInput.vue";
 import { useConfigStore } from "@/store/config";
 const config = useConfigStore();
 </script>

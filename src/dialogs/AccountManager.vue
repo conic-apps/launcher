@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <dialog-vue :visible="dialogStore.accountManager.visible" :width="width" :height="height">
+  <BaseDialog :visible="dialogStore.accountManager.visible" :width="width" :height="height">
     <div class="account-manager">
       <div style="width: 100%; height: 100%">
         <div class="title">
@@ -31,12 +31,12 @@
         </div>
       </div>
     </div>
-  </dialog-vue>
+  </BaseDialog>
 </template>
 
 <script setup lang="ts">
 import { type Component, markRaw, reactive, Ref, ref, shallowRef } from "vue";
-import DialogVue from "@/components/Dialog.vue";
+import BaseDialog from "@/components/base/BaseDialog.vue";
 import View from "./account/View.vue";
 import Add from "./account/Add.vue";
 import AppIcon from "@/components/AppIcon.vue";
