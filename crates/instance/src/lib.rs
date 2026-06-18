@@ -5,7 +5,6 @@
 //! CRUD implementation for game instance
 
 use std::str::FromStr;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use folder::DATA_LOCATION;
 use futures::TryStreamExt;
@@ -60,12 +59,7 @@ async fn cmd_delete_instance(id: Uuid) -> Result<()> {
 
 /// Creates a new game instance using the provided configuration.
 pub async fn create_instance(config: InstanceConfig, id: Option<Uuid>) -> Result<()> {
-    let id = id.unwrap_or(uuid::Uuid::from_u128(
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Incorrect System Time")
-            .as_nanos(),
-    ));
+    let id = id.unwrap_or(Uuid::new_v4());
     let instance_root = DATA_LOCATION.get_instance_root(&id);
     let config_file_path = instance_root.join("instance.toml");
     if let Some(parent) = config_file_path.parent() {
@@ -125,7 +119,7 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
                 Err(_) => continue,
             },
             installed: async_fs::metadata(path.join(".install.lock")).await.is_ok(),
-            id: match uuid::Uuid::from_str(&folder_name) {
+            id: match Uuid::from_str(&folder_name) {
                 Ok(x) => x,
                 Err(_) => continue,
             },
@@ -188,7 +182,7 @@ pub struct Instance {
     /// Whether the instance has been installed.
     pub installed: bool,
     /// Unique identifier of the instance.
-    pub id: uuid::Uuid,
+    pub id: Uuid,
 }
 
 impl Instance {
