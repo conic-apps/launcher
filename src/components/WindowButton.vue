@@ -4,21 +4,21 @@
     v-if="buttonType === 'minimize'"
     style="background: var(--min-btn-background)"
     @click="$emit(buttonType)">
-    <AppIcon name="minus" :size="16"></AppIcon>
+    <AppIcon name="minus" :size="13"></AppIcon>
   </div>
   <div
     class="win-btn"
     v-else-if="buttonType === 'maximize'"
     style="background: var(--max-btn-background)"
     @click="$emit(buttonType)">
-    <AppIcon name="expand-2" :size="16"></AppIcon>
+    <AppIcon name="expand-2" :size="13"></AppIcon>
   </div>
   <div
     class="win-btn"
     v-else-if="buttonType === 'close'"
     style="background: var(--close-btn-background)"
     @click="$emit(buttonType)">
-    <AppIcon name="xmark" :size="16"></AppIcon>
+    <AppIcon name="xmark" :size="13"></AppIcon>
   </div>
 </template>
 
@@ -32,8 +32,8 @@ defineEmits(["minimize", "maximize", "close"]);
 
 <style lang="less" scoped>
 div.win-btn {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   margin-left: 8px;
   display: flex;

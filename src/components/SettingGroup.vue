@@ -3,7 +3,12 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="setting-group" :class="classNames">
+  <div
+    class="setting-group"
+    :class="{
+      'danger-setting-group': props.danger,
+      'setting-group-disabled': props.disabled,
+    }">
     <p v-if="title" style="margin-bottom: 10px; padding-left: 8px">{{ title }}</p>
     <div style="overflow: hidden; border-radius: 8px; margin-bottom: 16px">
       <slot></slot>
@@ -12,27 +17,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-
 const props = defineProps<{
   title?: string;
   danger?: boolean;
   disabled?: boolean;
 }>();
-
-const classNames = computed(() => {
-  let result = "";
-  if (props.danger) {
-    result += "danger-setting-group ";
-  }
-  if (props.disabled) {
-    result += "setting-group-disabled";
-  }
-  return result;
-});
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
 .setting-group {
   margin: 0 auto;
   width: calc(100% - 16px);

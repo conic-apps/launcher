@@ -9,7 +9,7 @@
         <AppIcon :name="icon" :size="iconSize" :fill="iconFill"></AppIcon>
       </div>
       <div>
-        <h4 id="text">{{ title }}</h4>
+        <p id="text">{{ title }}</p>
         <p
           v-if="description"
           id="text"
@@ -61,7 +61,7 @@ const className = computed(() => {
 
 <style lang="less" scoped>
 .setting-item {
-  padding: 16px 18px 16px 14px;
+  padding: 10px 16px 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -108,10 +108,10 @@ const className = computed(() => {
     align-items: flex-start;
   }
 
-  .title h4 {
+  .title p {
     font-weight: normal;
     height: 20.5px;
-    font-size: 15px;
+    font-size: 14px;
     line-height: 20.5px;
   }
 

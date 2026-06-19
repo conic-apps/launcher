@@ -11,7 +11,7 @@
           :class="{ active: activeComponentIndex == index }"
           v-for="(item, index) in components"
           :key="index">
-          <AppIcon :name="item.icon"></AppIcon><span>{{ $t(item.name) }}</span>
+          <AppIcon :name="item.icon" :size="18"></AppIcon><span>{{ $t(item.name) }}</span>
         </li>
       </ul>
     </div>
@@ -106,7 +106,7 @@ configStore.$subscribe(async (mutation, state) => {
   }
 
   .rol-1 {
-    width: 260px;
+    width: 220px;
     flex-shrink: 0;
     padding: 30px 0px 16px 24px;
   }
@@ -124,7 +124,7 @@ configStore.$subscribe(async (mutation, state) => {
       margin-left: 8px;
     }
     li {
-      height: 36px;
+      height: 30px;
       width: 100%;
       display: flex;
       align-items: center;

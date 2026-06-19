@@ -28,7 +28,7 @@
       </div>
     </div>
     <div class="sidebar" data-tauri-drag-region>
-      <component :is="Logo" height="60" style="margin-top: 24px"></component>
+      <component :is="Logo" height="40" style="margin-top: 24px"></component>
       <ul class="sidebar-btns" data-tauri-drag-region>
         <sidebar-item
           :title="$t('sidebar.home')"
@@ -149,10 +149,10 @@ function closeWindow() {
 }
 
 .title-bar {
-  height: 56px;
+  height: 44px;
   width: calc(100% - 80px);
   position: absolute;
-  left: 80px;
+  left: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -198,7 +198,7 @@ function closeWindow() {
 }
 
 .sidebar {
-  width: 80px;
+  width: 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -233,8 +233,8 @@ main.main {
   position: absolute;
   right: 0;
   bottom: 0;
-  height: calc(100vh - 56px);
-  width: calc(100vw - 80px);
+  height: calc(100vh - 44px);
+  width: calc(100vw - 64px);
   border: var(--main-border);
   border-radius: 16px;
   border-bottom: unset;
