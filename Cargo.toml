@@ -22,9 +22,11 @@ folder = { path = "./crates/folder", version = "0.0.0"}
 # game_data = { path = "./crates/game_data", version = "0.0.0"}
 install = { path = "./crates/install", version = "0.0.0"}
 instance = { path = "./crates/instance", version = "0.0.0"}
+modrinth = { path = "./crates/modrinth", version = "0.0.0" }
 launch = { path = "./crates/launch", version = "0.0.0"}
 platform = { path = "./crates/platform", version = "0.0.0"}
 version = { path = "./crates/version", version = "0.0.0"}
+
 
 # ----- non-local crates -----
 async-fs = "2"
@@ -50,7 +52,7 @@ tauri = { version = "2", default-features = false, features = ["wry", "x11", "co
 thiserror = "2"
 toml = "0.9"
 url = "2"
-uuid = "1"
+uuid = { version = "1", features = ["v4"] }
 zip = { version = "4", default-features = false, features = ["deflate"]}
 
 [profile.dev]

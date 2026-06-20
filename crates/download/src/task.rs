@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use std::sync::{
-    Arc, Mutex,
     atomic::{AtomicU64, Ordering},
+    Arc, Mutex,
 };
 
 use serde::{Deserialize, Serialize};
@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 pub enum Step {
     VerifyExistingFiles,
     DownloadFiles,
+    VerifyResult,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
