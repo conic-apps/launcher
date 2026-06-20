@@ -19,7 +19,7 @@ enum Job {
 }
 
 enum LaunchErrorKind {
-    AlreadyInLaunching = "AlreadyInLaunching",
+    AnothorInstanceLaunching = "AnothorInstanceLaunching",
     Io = "Io",
     VersionJsonParse = "VersionJsonParse",
     InvalidVersionJson = "InvalidVersionJson",
@@ -30,7 +30,7 @@ enum LaunchErrorKind {
     TakeMinecraftStdoutFailed = "TakeMinecraftStdoutFailed",
     AccountError = "AccountError",
     Aborted = "Aborted",
-    Sha1Missmatch = "Sha1Missmatch",
+    ChecksumMissmatch = "ChecksumMissmatch",
     Other = "Other",
 }
 
@@ -64,23 +64,19 @@ export class LaunchTask {
         onSucceed?: () => void
         onCancelled?: () => void
     }
-    progress?: {}
-    job: Job
     constructor(config: Config, instance: Instance, callbacks?: typeof this._callbacks) {
         this._config = config
         this._instance = instance
-        this.job = Job.Prepare
         this._callbacks = callbacks
     }
     async start() {
         const channel = new Channel<LaunchProgress>()
         channel.onmessage = (message) => {
             this._callbacks?.onProgress?.(message)
-            this.progress = message.progress
-            this.job = message.job
         }
         try {
-            await invoke("plugin:launch|cmd_create_launch_task", {
+            this._callbacks?.onStart?.()
+            await invoke("plugin:launch|cmd_spawn_launch_task", {
                 config: this._config,
                 instance: this._instance,
                 channel,

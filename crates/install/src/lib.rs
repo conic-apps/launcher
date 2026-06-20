@@ -45,9 +45,11 @@ pub mod vanilla;
 
 pub use error::*;
 
+static CACHE_EXPIRATION_SECONDS: u64 = 1800;
+
 #[derive(Clone, Default)]
 struct PluginState {
-    current_task: Arc<Mutex<Option<AbortHandle>>>,
+    abort_handle: Arc<Mutex<Option<AbortHandle>>>,
     version_manifest_cache: Arc<Mutex<Option<(u64, VersionManifest)>>>,
     fabric_version_list_cache: Arc<Mutex<Option<(u64, fabric::LoaderArtifactList)>>>,
     quilt_version_list_cache: Arc<Mutex<Option<(u64, QuiltVersionList)>>>,
@@ -64,7 +66,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_get_quilt_version_list,
             cmd_get_forge_version_list,
             cmd_get_neoforged_version_list,
-            cmd_create_install_task,
+            cmd_spawn_install_task,
             cmd_cancel_install_task,
         ])
         .setup(|app, _| {
@@ -85,7 +87,7 @@ async fn cmd_get_minecraft_version_list(state: State<'_, PluginState>) -> Result
         .lock()
         .expect("Internal error")
         .clone()
-        && now - cache.0 > 2 * 60 * 60
+        && now - cache.0 > CACHE_EXPIRATION_SECONDS
     {
         return Ok(cache.1);
     }
@@ -111,7 +113,7 @@ async fn cmd_get_fabric_version_list(
         .lock()
         .expect("Internal error")
         .clone()
-        && now - cache.0 > 2 * 60 * 60
+        && now - cache.0 > CACHE_EXPIRATION_SECONDS
     {
         return Ok(cache.1);
     }
@@ -140,7 +142,7 @@ async fn cmd_get_forge_version_list(
         .lock()
         .expect("Internal error")
         .clone()
-        && now - cache.0 > 2 * 60 * 60
+        && now - cache.0 > CACHE_EXPIRATION_SECONDS
     {
         return Ok(cache.1);
     }
@@ -169,7 +171,7 @@ async fn cmd_get_quilt_version_list(
         .lock()
         .expect("Internal error")
         .clone()
-        && now - cache.0 > 2 * 60 * 60
+        && now - cache.0 > CACHE_EXPIRATION_SECONDS
     {
         return Ok(cache.1);
     }
@@ -198,7 +200,7 @@ async fn cmd_get_neoforged_version_list(
         .lock()
         .expect("Internal error")
         .clone()
-        && now - cache.0 > 2 * 60 * 60
+        && now - cache.0 > CACHE_EXPIRATION_SECONDS
     {
         return Ok(cache.1);
     }
@@ -223,25 +225,25 @@ pub enum InstallEvent {
 }
 
 #[command]
-async fn cmd_create_install_task(
+async fn cmd_spawn_install_task(
     state: State<'_, PluginState>,
     config: Config,
     instance: Instance,
     channel: Channel<InstallEvent>,
 ) -> Result<()> {
-    if state.current_task.lock().expect("Internal error").is_some() {
+    if state.abort_handle.lock().expect("Internal error").is_some() {
         return Err(Error::AlreadyInstalling);
     }
-    let status = Arc::new(Mutex::new(InstallEvent::Prepare));
+    let task_status = Arc::new(Mutex::new(InstallEvent::Prepare));
     let (handle, reg) = AbortHandle::new_pair();
-    let future = Abortable::new(install(config, instance, status.clone()), reg);
+    let future = Abortable::new(install(config, instance, task_status.clone()), reg);
     {
-        let mut current_task = state.current_task.lock().expect("Internal error");
+        let mut current_task = state.abort_handle.lock().expect("Internal error");
         *current_task = Some(handle);
     }
     let finished = Arc::new(AtomicBool::new(false));
     let event_sender_thread = {
-        let status_cloned = status.clone();
+        let status_cloned = task_status.clone();
         let finished = finished.clone();
         thread::spawn(move || {
             while !finished.load(Ordering::SeqCst) {
@@ -260,13 +262,12 @@ async fn cmd_create_install_task(
 }
 
 #[command]
-async fn cmd_cancel_install_task(state: State<'_, PluginState>) -> Result<()> {
-    let mut current_task = state.current_task.lock().expect("Internal error");
+fn cmd_cancel_install_task(state: State<'_, PluginState>) {
+    let mut current_task = state.abort_handle.lock().expect("Internal error");
     if let Some(handle) = current_task.clone() {
         handle.abort();
     }
     *current_task = None;
-    Ok(())
 }
 
 /// Installs Minecraft, Java, and optionally a mod loader for the given instance.
@@ -310,7 +311,7 @@ pub async fn install(
         let mut status = status.lock().expect("internal error");
         *status = InstallEvent::InstallGame(progress.clone())
     }
-    info!("Start downloading file");
+    info!("Downloading files");
     download_concurrent(download_list, &progress, config.download.clone()).await?;
 
     info!("Installing Java");

@@ -22,20 +22,8 @@ export type VersionManifest = {
     }[]
 }
 
-let minecraftVersionManifestCache: VersionManifest | undefined
-let minecraftVersionManifestCacheCreatedTime = 0
-
 export async function getMinecrafVersionManifest(): Promise<VersionManifest> {
-    const now = new Date().getTime()
-    if (minecraftVersionManifestCache && now - minecraftVersionManifestCacheCreatedTime < 3600) {
-        return minecraftVersionManifestCache
-    }
-    const versionManifest: VersionManifest = await invoke(
-        "plugin:install|cmd_get_minecraft_version_list",
-    )
-    minecraftVersionManifestCache = versionManifest
-    minecraftVersionManifestCacheCreatedTime = now
-    return versionManifest
+    return await invoke("plugin:install|cmd_get_minecraft_version_list")
 }
 
 type FabricArtifactVersion = {
@@ -133,7 +121,7 @@ export enum InstallErrorKind {
     VersionMetadataNotfound = "VersionMetadataNotfound",
     JsonParse = "JsonParse",
     ResolveVersionJsonFailed = "ResolveVersionJsonFailed",
-    Sha1Missmatch = "Sha1Missmatch",
+    ChecksumMissmatch = "ChecksumMissmatch",
     UrlParse = "UrlParse",
     NoSupportedJavaRuntime = "NoSupportedJavaRuntime",
     Aborted = "Aborted",
@@ -159,8 +147,6 @@ export type InstallProgress = {
 export class InstallTask {
     protected _config: Config
     protected _instance: Instance
-    job: Job
-    progress?: InstallProgress
     protected _callbacks?: {
         onStart?: () => void
         onProgress?: (task: InstallProgress) => void
@@ -171,7 +157,6 @@ export class InstallTask {
     constructor(config: Config, instance: Instance, callbacks?: typeof this._callbacks) {
         this._config = config
         this._instance = instance
-        this.job = Job.Prepare
         this._callbacks = callbacks
     }
     async start() {
@@ -180,7 +165,8 @@ export class InstallTask {
             this._callbacks?.onProgress?.(message)
         }
         try {
-            await invoke("plugin:install|cmd_create_install_task", {
+            this._callbacks?.onStart?.()
+            await invoke("plugin:install|cmd_spawn_install_task", {
                 config: this._config,
                 instance: this._instance,
                 channel,

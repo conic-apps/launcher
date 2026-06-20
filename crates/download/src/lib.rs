@@ -33,12 +33,14 @@ pub use error::*;
 use url::Url;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-pub enum DownloadType {
+pub enum DownloadTaskType {
     VersionInfo,
     Assets,
     Libraries,
     MojangJava,
     AuthlibInjector,
+    ModrinthMod,
+    CurseforgeMod,
     Unknown,
 }
 
@@ -89,6 +91,7 @@ impl MirrorUsage {
 pub enum Checksum {
     Sha1(String),
     Sha256(String),
+    Sha512(String),
     None,
 }
 
@@ -98,12 +101,12 @@ pub struct DownloadTask {
     pub file: PathBuf,
     pub size_bytes: Option<u64>,
     pub checksum: Checksum,
-    pub r#type: DownloadType,
+    pub task_type: DownloadTaskType,
 }
 
 impl DownloadTask {
-    pub fn classify(&self) -> Result<Self> {
-        if self.r#type != DownloadType::Unknown {
+    fn classify(&self) -> Result<Self> {
+        if self.task_type != DownloadTaskType::Unknown {
             return Ok(self.clone());
         };
         let url = Url::parse(&self.url)?;
@@ -113,12 +116,13 @@ impl DownloadTask {
             return Ok(self.clone());
         };
         let download_type = match host {
-            "resources.download.minecraft.net" => DownloadType::Assets,
-            "libraries.minecraft.net" => DownloadType::Libraries,
-            _ => DownloadType::Unknown,
+            "resources.download.minecraft.net" => DownloadTaskType::Assets,
+            "libraries.minecraft.net" => DownloadTaskType::Libraries,
+            "cdn.modrinth.com" => DownloadTaskType::ModrinthMod,
+            _ => DownloadTaskType::Unknown,
         };
         Ok(Self {
-            r#type: download_type,
+            task_type: download_type,
             ..self.clone()
         })
     }
@@ -128,8 +132,8 @@ impl DownloadTask {
         mirror_usage: &MirrorUsage,
         disabled_mirrors: &[String],
     ) -> Option<(DownloadTask, Mirror)> {
-        match self.r#type {
-            DownloadType::Libraries => {
+        match self.task_type {
+            DownloadTaskType::Libraries => {
                 let mirror = mirror_usage.get_libraries_mirror(disabled_mirrors)?;
                 mirror.1.fetch_add(1, Ordering::SeqCst);
                 Some((
@@ -142,7 +146,7 @@ impl DownloadTask {
                     mirror,
                 ))
             }
-            DownloadType::Assets => {
+            DownloadTaskType::Assets => {
                 let mirror = mirror_usage.get_assets_mirror(disabled_mirrors)?;
                 mirror.1.fetch_add(1, Ordering::SeqCst);
                 Some((
@@ -163,6 +167,7 @@ impl DownloadTask {
 enum Hasher {
     Sha1(sha1_smol::Sha1),
     Sha256(sha2::Sha256),
+    Sha512(sha2::Sha512),
     None,
 }
 
@@ -171,6 +176,7 @@ impl From<&Checksum> for Hasher {
         match value {
             Checksum::Sha1(_) => Self::Sha1(sha1_smol::Sha1::new()),
             Checksum::Sha256(_) => Self::Sha256(sha2::Sha256::new()),
+            Checksum::Sha512(_) => Self::Sha512(sha2::Sha512::new()),
             Checksum::None => Self::None,
         }
     }
@@ -181,6 +187,7 @@ impl Hasher {
         match self {
             Self::Sha1(sha1_hasher) => sha1_hasher.update(data),
             Self::Sha256(sha256_hasher) => sha256_hasher.update(data),
+            Self::Sha512(sha512_hasher) => sha512_hasher.update(data),
             Self::None => (),
         }
     }
@@ -191,6 +198,9 @@ impl Hasher {
             }
             (Self::Sha256(sha256_hasher), Checksum::Sha256(sha256_checksum)) => {
                 &format!("{:02x}", sha256_hasher.finalize()) == sha256_checksum
+            }
+            (Self::Sha512(sha512_hasher), Checksum::Sha512(sha512_checksum)) => {
+                &format!("{:02x}", sha512_hasher.finalize()) == sha512_checksum
             }
             (Self::None, Checksum::None) => true,
             _ => false,
@@ -223,6 +233,7 @@ impl Drop for ScopedThread {
 pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()> {
     progress.reset(Ordering::SeqCst);
     let file_path = download.file.clone();
+    let mut file = async_fs::File::create(&file_path).await?;
     let url = download.url.clone();
     if let Some(parent) = file_path.parent() {
         async_fs::create_dir_all(parent).await?
@@ -236,11 +247,21 @@ pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()
             speed_counter_loop(speed_counter_input, speed_counter_output, is_finished)
         })
     };
-
-    if let Some(len) = response.content_length() {
-        progress.total.store(len, Ordering::SeqCst);
-    }
-    let mut file = async_fs::File::create(&file_path).await?;
+    let response_length = response.content_length();
+    if let Some(file_size) = download.size_bytes
+        && response_length.is_none()
+    {
+        progress.total.store(file_size, Ordering::SeqCst);
+    } else if let Some(response_length) = response_length
+        && download.size_bytes.is_none()
+    {
+        progress.total.store(response_length, Ordering::SeqCst);
+    } else if let Some(response_length) = response_length
+        && let Some(file_size) = download.size_bytes
+        && response_length == file_size
+    {
+        progress.total.store(file_size, Ordering::SeqCst);
+    };
     let mut hasher = Hasher::from(&download.checksum);
     while let Some(chunk) = response.chunk().await? {
         file.write_all(&chunk).await?;
@@ -251,7 +272,7 @@ pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()
         speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);
     }
     if !hasher.verify(&download.checksum) {
-        return Err(Error::Sha1Missmatch(url));
+        return Err(Error::ChecksumMissmatch(url));
     }
     file.sync_all().await?;
     progress
@@ -445,7 +466,7 @@ async fn inner_download_executer(
     }
     file.sync_all().await?;
     if !hasher.verify(&task.checksum) {
-        return Err(Error::Sha1Missmatch(url));
+        return Err(Error::ChecksumMissmatch(url));
     }
     progress.completed.fetch_add(1, Ordering::SeqCst);
     Ok(())

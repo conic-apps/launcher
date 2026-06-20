@@ -53,7 +53,7 @@ pub enum Error {
         version::Error,
     ),
     #[error("{0}")]
-    Sha1Missmatch(String),
+    ChecksumMissmatch(String),
 
     #[error(transparent)]
     UrlParse(
@@ -83,7 +83,7 @@ impl From<download::Error> for Error {
     fn from(value: download::Error) -> Self {
         match value {
             download::Error::Io(error) => Self::Io(error),
-            download::Error::Sha1Missmatch(error) => Self::Sha1Missmatch(error),
+            download::Error::ChecksumMissmatch(error) => Self::ChecksumMissmatch(error),
             download::Error::Network(error) => Self::Network(error),
             download::Error::UrlParse(error) => Self::UrlParse(error),
             download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,

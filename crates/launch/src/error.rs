@@ -15,7 +15,7 @@ pub type Result<T> = result::Result<T, Error>;
 #[serde(tag = "kind", content = "message")]
 pub enum Error {
     #[error("Another instance is launching")]
-    AlreadyInLaunching,
+    AnothorInstanceLaunching,
     #[error(transparent)]
     Io(
         #[from]
@@ -65,7 +65,7 @@ pub enum Error {
     ),
 
     #[error("{0}")]
-    Sha1Missmatch(String),
+    ChecksumMissmatch(String),
 
     #[error("Unhandled Error")]
     Other,
@@ -111,7 +111,7 @@ impl From<download::Error> for Error {
     fn from(value: download::Error) -> Self {
         match value {
             download::Error::Io(e) => Self::Io(e),
-            download::Error::Sha1Missmatch(e) => Self::Sha1Missmatch(e),
+            download::Error::ChecksumMissmatch(e) => Self::ChecksumMissmatch(e),
             download::Error::Network(e) => Self::Network(e),
             download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
             download::Error::UrlParse(_) => Self::Other,
