@@ -14,43 +14,17 @@ pub type Result<T> = result::Result<T, Error>;
 #[derive(Debug, Error, Serialize)]
 #[serde(tag = "kind", content = "message")]
 pub enum Error {
-    #[error("Another instance is installing")]
-    AlreadyInstalling,
-    #[error(transparent)]
-    Io(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        std::io::Error,
-    ),
     #[error(transparent)]
     Network(
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]
         reqwest::Error,
     ),
-    #[error("Bad instance.toml file")]
-    InstanceBroken,
-    #[error("Could not understand forge version")]
-    InvalidForgeVersion,
-    #[error("Failed to run forge installer")]
-    ForgeInstallerFailed,
-    #[error("Failed to run neoforged installer")]
-    NeoforgedInstallerFailed,
-    #[error("Invalid version.json, missing {0}")]
-    InvalidVersionJson(String),
-    #[error("Version metadata not found in version manifest")]
-    VersionMetadataNotfound,
     #[error(transparent)]
-    JsonParse(
+    Io(
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]
-        serde_json::Error,
-    ),
-    #[error(transparent)]
-    ResolveVersionJsonFailed(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        version::Error,
+        std::io::Error,
     ),
     #[error("{0}")]
     ChecksumMissmatch(String),
@@ -61,12 +35,6 @@ pub enum Error {
         #[serde_as(as = "serde_with::DisplayFromStr")]
         url::ParseError,
     ),
-
-    #[error("No supported java runtime")]
-    NoSupportedJavaRuntime,
-
-    #[error("Invalid authlib version response")]
-    InvalidAuthlibResponse,
 
     #[error("Chunk length mismatch")]
     ChunkLengthMismatch,
