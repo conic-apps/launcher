@@ -2,7 +2,7 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use download::{Checksum, DownloadTask, DownloadType, task::Progress};
+use download::{Checksum, DownloadTask, DownloadTaskType, task::Progress};
 use folder::MinecraftLocation;
 use serde_json::Value;
 use shared::HTTP_CLIENT;
@@ -32,7 +32,7 @@ pub async fn install_latest(
         file: path,
         size_bytes: None,
         checksum: Checksum::Sha256(sha256.to_string()),
-        r#type: DownloadType::AuthlibInjector,
+        task_type: DownloadTaskType::AuthlibInjector,
     };
     download::download(&download_task, progress).await?;
     Ok(())
