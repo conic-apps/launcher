@@ -43,7 +43,7 @@ fn main() {
                 "cmd_get_quilt_version_list",
                 "cmd_get_forge_version_list",
                 "cmd_get_neoforged_version_list",
-                "cmd_create_install_task",
+                "cmd_spawn_install_task",
                 "cmd_cancel_install_task",
             ]),
         )
@@ -59,7 +59,19 @@ fn main() {
         )
         .plugin(
             "launch",
-            InlinedPlugin::new().commands(&["cmd_create_launch_task", "cmd_cancel_launch_task"]),
+            InlinedPlugin::new().commands(&["cmd_spawn_launch_task", "cmd_cancel_launch_task"]),
+        )
+        .plugin(
+            "modrinth",
+            InlinedPlugin::new().commands(&[
+                "cmd_search_projects",
+                "cmd_get_project",
+                "cmd_get_multiple_projects",
+                "cmd_get_all_dependencies",
+                "cmd_list_project_versions",
+                "cmd_spawn_download_mod_task",
+                "cmd_cancel_download_task",
+            ]),
         )
         .plugin(
             "platform",

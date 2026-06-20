@@ -2538,6 +2538,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "modrinth"
+version = "0.0.0"
+dependencies = [
+ "async-fs",
+ "async-io",
+ "download",
+ "folder",
+ "futures",
+ "log",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "shared",
+ "tauri",
+ "thiserror 2.0.18",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "moxcms"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

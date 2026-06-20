@@ -21,7 +21,7 @@ pub enum Error {
         std::io::Error,
     ),
     #[error("{0}")]
-    Sha1Missmatch(String),
+    ChecksumMissmatch(String),
 
     #[error(transparent)]
     Network(

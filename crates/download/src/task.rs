@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 pub enum Step {
     VerifyExistingFiles,
     DownloadFiles,
+    VerifyResult,
 }
 
 #[derive(Clone, Deserialize, Serialize)]

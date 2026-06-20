@@ -11,7 +11,7 @@ use shared::HTTP_CLIENT;
 use std::os::unix::fs::PermissionsExt;
 use std::{collections::HashMap, path::Path};
 
-use download::{DownloadTask, DownloadType};
+use download::{DownloadTask, DownloadTaskType};
 use platform::{OsFamily, PLATFORM_INFO};
 
 use crate::error::*;
@@ -230,7 +230,7 @@ fn generate_downloads(
                 file: install_directory.join(path),
                 checksum: Checksum::Sha1(downloads.raw.sha1.clone()),
                 size_bytes: Some(downloads.raw.size),
-                r#type: DownloadType::Unknown,
+                task_type: DownloadTaskType::Unknown,
             });
         }
     });

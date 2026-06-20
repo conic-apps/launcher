@@ -23,7 +23,7 @@
         "clean-app-data": "rm -rf ~/.conic-debug"
     },
     "dependencies": {
-        "@tauri-apps/api": "2",
+        "@tauri-apps/api": "^2.11.1",
         "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
         "@tauri-apps/plugin-log": "^2.8.0",
         "@tauri-apps/plugin-opener": "~2.5.4",
@@ -31,7 +31,7 @@
         "gsap": "^3.15.0",
         "pinia": "^3.0.4",
         "vue": "^3.5.38",
-        "vue-i18n": "^11.4.5"
+        "vue-i18n": "^11.4.6"
     },
     "devDependencies": {
         "@tauri-apps/cli": "^2.11.2",
@@ -53,7 +53,7 @@
         "jsdom": "^29.1.1",
         "less": "^4.6.6",
         "npm-run-all2": "^9.0.2",
-        "prettier": "^3.6.2",
+        "prettier": "^3.8.4",
         "typescript": "~6.0.3",
         "vite": "^8.0.16",
         "vite-plugin-vue-devtools": "^8.1.3",
