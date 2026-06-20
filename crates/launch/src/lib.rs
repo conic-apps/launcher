@@ -43,13 +43,13 @@ use error::*;
 
 #[derive(Clone, Default)]
 struct PluginState {
-    current_task: Arc<Mutex<Option<AbortHandle>>>,
+    abort_handle: Arc<Mutex<Option<AbortHandle>>>,
 }
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("launch")
         .invoke_handler(tauri::generate_handler![
-            cmd_create_launch_task,
+            cmd_spawn_launch_task,
             cmd_cancel_launch_task
         ])
         .build()
@@ -71,20 +71,20 @@ pub enum LaunchEvent {
 }
 
 #[command]
-async fn cmd_create_launch_task(
+async fn cmd_spawn_launch_task(
     state: State<'_, PluginState>,
     config: Config,
     instance: Instance,
     channel: Channel<LaunchEvent>,
 ) -> Result<u32> {
-    if state.current_task.lock().expect("Internal error").is_some() {
-        return Err(Error::AlreadyInLaunching);
+    if state.abort_handle.lock().expect("Internal error").is_some() {
+        return Err(Error::AnothorInstanceLaunching);
     }
     let status = Arc::new(Mutex::new(LaunchEvent::Prepare));
     let (handle, reg) = AbortHandle::new_pair();
     let future = Abortable::new(launch(config, instance, status.clone()), reg);
     {
-        let mut current_task = state.current_task.lock().expect("Internal error");
+        let mut current_task = state.abort_handle.lock().expect("Internal error");
         *current_task = Some(handle);
     }
     let finished = Arc::new(AtomicBool::new(false));
@@ -109,7 +109,7 @@ async fn cmd_create_launch_task(
 
 #[command]
 async fn cmd_cancel_launch_task(state: State<'_, PluginState>) -> Result<()> {
-    let mut current_task = state.current_task.lock().expect("Internal error");
+    let mut current_task = state.abort_handle.lock().expect("Internal error");
     if let Some(handle) = current_task.clone() {
         handle.abort();
     }
