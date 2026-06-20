@@ -1,0 +1,27 @@
+[package]
+name = "modrinth"
+version = "0.0.0"
+authors = ["Broken-Deer"]
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+shared.workspace = true
+download.workspace = true
+folder.workspace= true
+
+log.workspace = true
+tauri.workspace = true
+uuid.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+async-fs.workspace = true
+thiserror.workspace = true
+serde_with.workspace = true
+reqwest.workspace = true
+futures.workspace = true
+async-io.workspace = true
+url.workspace = true
