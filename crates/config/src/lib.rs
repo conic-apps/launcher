@@ -26,6 +26,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("config")
         .invoke_handler(tauri::generate_handler![
             cmd_load_config_file,
+            cmd_get_default_config,
             cmd_save_config
         ])
         .build()
@@ -36,6 +37,11 @@ fn cmd_load_config_file() -> Result<Config> {
     let config = load_config_file()?;
     let _ = SHOULD_USE_SYSTEM_PROXY.set(config.download.use_system_proxy);
     Ok(config)
+}
+
+#[command]
+fn cmd_get_default_config() -> Config {
+    Config::default()
 }
 
 #[command]

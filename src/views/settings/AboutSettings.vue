@@ -76,7 +76,6 @@
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import InfoBox from "@/components/InfoBox.vue";
-import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useConfigStore } from "@/store/config";
 

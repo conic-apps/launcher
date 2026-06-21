@@ -103,6 +103,7 @@ import { useConfigStore } from "@/store/config";
 import { getDataLocation } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
 import { computed } from "vue";
+import { getDefaultConfig } from "@conic/config";
 const config = useConfigStore();
 
 async function openLogFolder() {
@@ -125,7 +126,19 @@ const advancedLaunchOptionsChanged = computed(() => {
   return !isDefault;
 });
 
-function resetAdvanceOptions() {}
+async function resetAdvanceOptions() {
+  const defaultConfig = await getDefaultConfig();
+  config.launch.gc = defaultConfig.launch.gc;
+  config.launch.extra_jvm_args = defaultConfig.launch.extra_jvm_args;
+  config.launch.extra_mc_args = defaultConfig.launch.extra_mc_args;
+  config.launch.extra_class_paths = defaultConfig.launch.extra_class_paths;
+  config.launch.execute_before_launch = defaultConfig.launch.execute_before_launch;
+  config.launch.wrap_command = defaultConfig.launch.wrap_command;
+  config.launch.execute_after_launch = defaultConfig.launch.execute_after_launch;
+  config.launch.ignore_invalid_minecraft_certificates =
+    defaultConfig.launch.ignore_invalid_minecraft_certificates;
+  config.launch.ignore_patch_discrepancies = defaultConfig.launch.ignore_patch_discrepancies;
+}
 </script>
 
 <style lang="less"></style>

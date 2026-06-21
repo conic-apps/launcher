@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import AppIcon from "../AppIcon.vue";
-import { ref, useTemplateRef } from "vue";
+import { ref } from "vue";
 const props = defineProps<{
   options: string[];
   width?: string;
@@ -44,21 +44,9 @@ const model = defineModel();
 const selected = ref(props.options.findIndex((value) => value == model.value));
 const opened = ref(false);
 
-const optionsList = useTemplateRef("options");
-
 function changeSelection(index: number) {
   selected.value = index;
   model.value = props.options[index];
-}
-
-function outerHeight(el: HTMLElement) {
-  if (!el) return 0;
-  let height = el.getBoundingClientRect().height;
-  console.log(el);
-  console.log(height);
-  const style = getComputedStyle(el);
-  height += parseFloat(style.marginTop) + parseFloat(style.marginBottom);
-  return height;
 }
 </script>
 

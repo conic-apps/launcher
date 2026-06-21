@@ -4,14 +4,6 @@
 
 import { invoke } from "@tauri-apps/api/core"
 
-export async function loadConfigFile(): Promise<Config> {
-    return await invoke("plugin:config|cmd_load_config_file")
-}
-
-export async function saveConfigToFile(config: Config): Promise<void> {
-    return await invoke("plugin:config|cmd_save_config", { config })
-}
-
 export enum UpdateChannel {
     Weekly = "Weekly",
     Snapshot = "Snapshot",
@@ -75,4 +67,16 @@ export type Config = {
         skip_refresh_account: boolean
         skip_check_files: boolean
     }
+}
+
+export async function loadConfigFile(): Promise<Config> {
+    return await invoke("plugin:config|cmd_load_config_file")
+}
+
+export async function getDefaultConfig(): Promise<Config> {
+    return await invoke("plugin:config|cmd_get_default_config")
+}
+
+export async function saveConfigToFile(config: Config): Promise<void> {
+    return await invoke("plugin:config|cmd_save_config", { config })
 }

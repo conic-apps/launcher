@@ -21,11 +21,11 @@
         icon="branch">
         <BaseSelect
           :display-name="[
-            $t('settings.general.weekly'),
-            $t('settings.general.snapshot'),
             $t('settings.general.release'),
+            $t('settings.general.snapshot'),
+            $t('settings.general.weekly'),
           ]"
-          :options="['Weekly', 'Snapshot', 'Release']"
+          :options="['Release', 'Snapshot', 'Weekly']"
           v-model="config.update_channel"
           :default="2"></BaseSelect>
       </SettingItem>

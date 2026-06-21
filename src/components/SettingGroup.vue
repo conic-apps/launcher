@@ -11,7 +11,7 @@
     }">
     <p v-if="title" class="title">
       {{ title }}
-      <button v-if="props.resetable" class="reset-button">
+      <button v-if="props.resetable" class="reset-button" @click="$emit('reset')">
         <AppIcon name="refresh" :size="16"></AppIcon>
       </button>
     </p>
@@ -31,7 +31,7 @@ const props = defineProps<{
   resetable?: boolean;
 }>();
 
-const emits = defineEmits(["reset"]);
+defineEmits(["reset"]);
 </script>
 
 <style lang="less">
@@ -42,6 +42,7 @@ const emits = defineEmits(["reset"]);
 
   > p.title {
     margin-bottom: 10px;
+    height: 16px;
     padding-left: 8px;
     font-size: 13.5px;
     display: flex;
