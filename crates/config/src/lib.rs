@@ -92,52 +92,40 @@ pub fn save_config(config: Config) -> Result<()> {
 }
 
 /// Represents the update channel selection.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub enum UpdateChannel {
     /// Weekly builds, potentially unstable.
     Weekly,
     /// Official release builds.
+    #[default]
     Release,
     /// Snapshot builds for testing.
     Snapshot,
 }
 
-impl Default for UpdateChannel {
-    /// Returns the default update channel, which is `Release`.
-    fn default() -> Self {
-        Self::Release
-    }
-}
-
 /// Configuration options related to accessibility.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AccessibilityConfig {
     /// Whether to show reminders for new releases.
-    #[serde(default = "default_release_reminder")]
     pub release_reminder: bool,
 
     /// Whether to show reminders for new snapshots.
-    #[serde(default = "default_snapshot_reminder")]
     pub snapshot_reminder: bool,
 
     /// Whether to hide the latest release instance.
-    #[serde(default = "default_hide_latest_release")]
     pub hide_latest_release: bool,
 
     /// Whether to hide the latest snapshot instance.
-    #[serde(default = "default_hide_latest_snapshot")]
     pub hide_latest_snapshot: bool,
 
     /// Whether to changing the game language to local language on first time.
-    #[serde(default = "default_change_game_language")]
     pub change_game_language: bool,
 
     /// Whether to disable UI animations.
-    #[serde(default = "default_disable_animations")]
     pub disable_animations: bool,
 
     /// Whether to enable high contrast mode.
-    #[serde(default = "default_high_contrast_mode")]
     pub high_contrast_mode: bool,
 }
 
@@ -145,105 +133,88 @@ impl Default for AccessibilityConfig {
     /// Returns the default values for accessibility configuration.
     fn default() -> Self {
         Self {
-            release_reminder: default_release_reminder(),
-            snapshot_reminder: default_snapshot_reminder(),
-            hide_latest_release: default_hide_latest_release(),
-            hide_latest_snapshot: default_hide_latest_snapshot(),
-            change_game_language: default_change_game_language(),
-            disable_animations: default_disable_animations(),
-            high_contrast_mode: default_high_contrast_mode(),
+            release_reminder: true,
+            snapshot_reminder: true,
+            hide_latest_release: false,
+            hide_latest_snapshot: false,
+            change_game_language: true,
+            disable_animations: false,
+            high_contrast_mode: false,
         }
     }
 }
 
 /// Configuration options related to UI appearance.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AppearanceConfig {
     /// If dark, the program will use mocha, else use latte.
-    #[serde(default = "default_palette_follow_system")]
     pub palette_follow_system: bool,
 
     /// Palette name, support mocha frappe latte macchiato.
-    #[serde(default = "default_palette")]
     pub palette: String,
-}
-
-fn default_palette_follow_system() -> bool {
-    true
-}
-
-fn default_palette() -> String {
-    "Mocha".to_string()
 }
 
 impl Default for AppearanceConfig {
     /// Returns the default appearance configuration.
     fn default() -> Self {
         Self {
-            palette_follow_system: default_palette_follow_system(),
-            palette: default_palette(),
+            palette_follow_system: true,
+            palette: "Mocha".to_string(),
         }
     }
 }
 
 /// The main application configuration structure.
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Config {
     /// Whether automatic updates are enabled.
-    #[serde(default = "default_auto_update")]
     pub auto_update: bool,
 
     /// The UUID of the currently selected account.
-    #[serde(default = "default_current_account")]
     pub current_account_uuid: Uuid,
 
     /// The UUID of the currently selected account.
-    #[serde(default = "default_current_account_type")]
     pub current_account_type: AccountType,
 
     /// Appearance-related settings.
-    #[serde(default)]
     pub appearance: AppearanceConfig,
 
     /// Accessibility-related settings.
-    #[serde(default)]
     pub accessibility: AccessibilityConfig,
 
     /// The UI language code (e.g., "en_us").
-    #[serde(default = "default_language")]
     pub language: String,
 
     /// The selected update channel.
-    #[serde(default)]
     pub update_channel: UpdateChannel,
 
     /// Launch-related configuration.
-    #[serde(default)]
     pub launch: launch::LaunchConfig,
 
     /// Download-related configuration.
-    #[serde(default)]
     pub download: download::DownloadConfig,
-}
-
-fn default_auto_update() -> bool {
-    true
 }
 
 impl Default for Config {
     /// Returns the default configuration, using system locale and the first available account.
     fn default() -> Self {
-        let accounts = account::microsoft::list_accounts().unwrap_or_default();
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
-            current_account_uuid: match accounts.first() {
-                Some(x) => x.to_owned().profile.uuid,
-                None => uuid::uuid!("00000000-0000-0000-0000-000000000000"),
+            current_account_uuid: {
+                match account::microsoft::list_accounts()
+                    .unwrap_or_default()
+                    .first()
+                {
+                    Some(x) => x.to_owned().profile.uuid,
+                    None => uuid::uuid!("00000000-0000-0000-0000-000000000000"),
+                }
             },
             current_account_type: AccountType::Microsoft,
             auto_update: true,
-            language: default_language(),
+            language: get_system_language(),
             update_channel: UpdateChannel::default(),
             launch: launch::LaunchConfig::default(),
             download: download::DownloadConfig::default(),
@@ -251,7 +222,7 @@ impl Default for Config {
     }
 }
 
-fn default_language() -> String {
+fn get_system_language() -> String {
     let locale = sys_locale::get_locale().unwrap_or("en-US".to_string());
     if locale.contains(".") {
         locale
@@ -265,46 +236,4 @@ fn default_language() -> String {
     } else {
         locale.replace("-", "_").to_lowercase()
     }
-}
-
-fn default_current_account() -> Uuid {
-    match account::microsoft::list_accounts()
-        .unwrap_or_default()
-        .first()
-    {
-        Some(x) => x.to_owned().profile.uuid,
-        None => uuid::uuid!("00000000-0000-0000-0000-000000000000"),
-    }
-}
-
-fn default_current_account_type() -> AccountType {
-    AccountType::Microsoft
-}
-
-fn default_release_reminder() -> bool {
-    true
-}
-
-fn default_snapshot_reminder() -> bool {
-    true
-}
-
-fn default_hide_latest_release() -> bool {
-    false
-}
-
-fn default_hide_latest_snapshot() -> bool {
-    false
-}
-
-fn default_change_game_language() -> bool {
-    true
-}
-
-fn default_disable_animations() -> bool {
-    false
-}
-
-fn default_high_contrast_mode() -> bool {
-    false
 }

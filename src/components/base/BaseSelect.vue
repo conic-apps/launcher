@@ -4,28 +4,23 @@
 
 <template>
   <div class="select" :style="`width: ${width}px;`" tabindex="0" @blur="opened = false">
-    <div class="selected" @click="toggleOpened()">
+    <div class="value-box" @click="opened = !opened">
       {{ displayName[selected] }}
-      <AppIcon name="chevron-down"> </AppIcon>
+      <AppIcon name="chevron-down" :size="14"> </AppIcon>
     </div>
     <div>
-      <Transition
-        @before-enter="beforeEnter"
-        @enter="enter"
-        @after-enter="afterEnter"
-        @before-leave="beforeLeave"
-        @leave="leave"
-        @after-leave="afterLeave">
+      <Transition>
         <ul
           ref="options"
           class="options"
-          :style="`width: ${width}px;`"
+          :style="{ width: '${width}px', top: `-${selected * 30 + 45}px` }"
           v-if="opened"
           @click="opened = false">
-          <div v-if="opened">
+          <div>
             <li
               class="select-option"
               v-for="(_, index) in options"
+              :class="{ selected: selected === index }"
               :key="index"
               @click="changeSelection(index)">
               {{ displayName[index] }}
@@ -38,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import AppIcon from "./AppIcon.vue";
+import AppIcon from "../AppIcon.vue";
 import { ref, useTemplateRef } from "vue";
 const props = defineProps<{
   options: string[];
@@ -46,59 +41,21 @@ const props = defineProps<{
   displayName: string[];
 }>();
 const model = defineModel();
-const selected = ref(0);
+const selected = ref(props.options.findIndex((value) => value == model.value));
+const opened = ref(false);
 
 const optionsList = useTemplateRef("options");
-props.options.forEach((value, index) => {
-  if (value == model.value) {
-    selected.value = index;
-  }
-});
-function beforeEnter(element: Element) {
-  const htmlElement = element as HTMLElement;
-  optionsList.value?.classList.remove("hidden");
-  htmlElement.style.transition = transitionStyle;
-  htmlElement.style.height = "0px";
-}
 
-const transitionStyle = "all 200ms ease";
-function enter(element: Element) {
-  const htmlElement = element as HTMLElement;
-  const height = outerHeight(optionsList.value!);
-  htmlElement.style.height = `${height}px`;
-  htmlElement.style.overflow = "hidden";
-}
-function afterEnter(element: Element) {
-  const htmlElement = element as HTMLElement;
-  htmlElement.style.transition = "";
-  htmlElement.style.height = "";
-  htmlElement.style.overflow = "";
-}
-function beforeLeave(element: Element) {
-  const htmlElement = element as HTMLElement;
-  htmlElement.style.transition = transitionStyle;
-  const height = outerHeight(optionsList.value!);
-  htmlElement.style.height = `${height}px`;
-  htmlElement.style.overflow = "hidden";
-}
-function leave(element: Element) {
-  (element as HTMLElement).style.height = "0px";
-}
-function afterLeave(element: Element) {
-  (element as HTMLElement).style.transition = "";
-  (element as HTMLElement).style.height = "";
-}
 function changeSelection(index: number) {
   selected.value = index;
   model.value = props.options[index];
 }
-const opened = ref(false);
-function toggleOpened() {
-  opened.value = !opened.value;
-}
+
 function outerHeight(el: HTMLElement) {
   if (!el) return 0;
   let height = el.getBoundingClientRect().height;
+  console.log(el);
+  console.log(height);
   const style = getComputedStyle(el);
   height += parseFloat(style.marginTop) + parseFloat(style.marginBottom);
   return height;
@@ -108,39 +65,37 @@ function outerHeight(el: HTMLElement) {
 <style lang="less" scoped>
 .select {
   width: 240px;
-  height: 26px;
+  height: 28px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  font-size: 14px;
+  font-size: 12px;
 }
 
-.select li {
-  list-style: none;
-}
-
-.selected {
+.value-box {
   width: 100%;
+  height: 100%;
   border-radius: var(--controllers-border-radius);
   border: var(--controllers-border);
-  padding: 8px 12px;
+  padding: 4px 8px;
   transition: opacity 100ms ease;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: all 70ms ease;
+  flex-shrink: 0;
   background: var(--controllers-background);
 }
 
-.selected:hover {
+.value-box:hover {
   background: var(--controllers-background-hover);
 }
 
-.selected:hover::after {
+.value-box:hover::after {
   transform: translate(0px, 1px);
 }
 
-.selected:active {
+.value-box:active {
   opacity: 0.8;
 }
 
@@ -151,31 +106,38 @@ function outerHeight(el: HTMLElement) {
   border: var(--controllers-border);
   background: var(--dialog-background);
   box-shadow: 0px 0px 10px #4500611d;
-  transform: scale3d(1, 1, 192.7);
+  position: relative;
   font-size: 14px;
   z-index: 100000;
   display: flex;
   align-items: flex-end;
+  > div:first-child {
+    margin: 8px 10px;
+    width: 100%;
+  }
 }
 
-.options > div:first-child {
-  margin: 10px 12px;
-  width: 100%;
-}
-
-.select-option {
-  padding: 10px 16px;
+li.select-option {
+  height: 26px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
   border-radius: var(--controllers-border-radius);
-  // position: relative;
+  font-size: 12px;
+  list-style: none;
   z-index: 10001;
   transition: all 30ms ease;
 }
 
-.select-option:hover {
+li.select-option:hover {
   background: #ffffff1f;
 }
 
-.select-option:active {
+li.select-option:active {
   background: #ffffff15;
+}
+li.selected {
+  background: #ffffff17;
 }
 </style>

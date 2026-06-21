@@ -8,28 +8,35 @@
       <div
         style="
           display: flex;
-          width: calc(100vw - 560px);
-          margin-left: 120px;
+          width: calc(100vw - 500px);
+          margin-left: 160px;
           flex-shrink: 0;
           align-items: center;
         ">
         <search-bar style="width: 100%" :placeholder="$t('globalSearch.placeholder')"></search-bar>
       </div>
-      <AccountStatus></AccountStatus>
-      <div style="display: flex; align-items: center; margin-right: 20px">
-        <!-- TODO: Move to left and change ordering on macos -->
+      <div class="window-buttons-container window-buttons-container-macos" v-if="isMacOS()">
         <WindowButton
           button-type="minimize"
-          @minimize="window.getCurrentWindow().minimize()"></WindowButton>
+          @minimize="appWindow.getCurrentWindow().minimize()"></WindowButton>
         <WindowButton
           button-type="maximize"
-          @maximize="window.getCurrentWindow().maximize()"></WindowButton>
+          @maximize="appWindow.getCurrentWindow().maximize()"></WindowButton>
+        <WindowButton button-type="close" @close="closeWindow()"></WindowButton>
+      </div>
+      <div class="window-buttons-container" v-else>
+        <WindowButton
+          button-type="minimize"
+          @minimize="appWindow.getCurrentWindow().minimize()"></WindowButton>
+        <WindowButton
+          button-type="maximize"
+          @maximize="appWindow.getCurrentWindow().maximize()"></WindowButton>
         <WindowButton button-type="close" @close="closeWindow()"></WindowButton>
       </div>
     </div>
-    <div class="sidebar" data-tauri-drag-region>
+    <div class="sidebar" :class="{ 'sidebar-macos': isMacOS() }" data-tauri-drag-region>
       <component :is="Logo" height="40" style="margin-top: 24px"></component>
-      <ul class="sidebar-btns" data-tauri-drag-region>
+      <ul class="sidebar-items" data-tauri-drag-region>
         <sidebar-item
           :title="$t('sidebar.home')"
           icon="house"
@@ -63,22 +70,20 @@
 </template>
 
 <script setup lang="ts">
-import { markRaw, onMounted, reactive, ref, shallowRef } from "vue";
+import Logo from "@/assets/logo.svg";
+import WindowButton from "./components/WindowButton.vue";
 import SearchBar from "./components/SearchBar.vue";
 import SidebarItem from "./components/SidebarItem.vue";
-import { window } from "@tauri-apps/api";
-import { useConfigStore } from "./store/config";
-import { watch } from "vue";
-import { useI18n } from "vue-i18n";
-import { loadPalette } from "./theme";
 import HomeView from "./views/HomeView.vue";
 import GameView from "./views/GameView.vue";
 import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
-import Logo from "@/assets/logo.svg";
-import WindowButton from "./components/WindowButton.vue";
-import AccountStatus from "./components/AccountStatus.vue";
 import DialogRoot from "./DialogRoot.vue";
+import { markRaw, onMounted, reactive, ref, shallowRef, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import { useConfigStore } from "./store/config";
+import { loadPalette } from "./theme";
+import { window as appWindow } from "@tauri-apps/api";
 
 const config = useConfigStore();
 loadPalette(
@@ -120,24 +125,30 @@ function jumpTo(name: ComponentName) {
 }
 
 onMounted(() => {
-  document.body.style.transition = "all 250ms cubic-bezier(0, 0.74, 0.65, 1)";
-  document.body.style.transform = "scale(1)";
-  document.body.style.opacity = "1";
-
-  setTimeout(() => {
-    document.body.style.transform = "";
-    document.body.style.transition = "";
-  }, 500);
   console.log("Frontend loaded");
+  requestAnimationFrame(() => {
+    document.body.style.transform = "scale(1)";
+    document.body.style.opacity = "1";
+    setTimeout(() => {
+      document.body.style.transform = "";
+      document.body.style.transition = "";
+    }, 500);
+  });
 });
 
 function closeWindow() {
-  document.body.style.transition = "all 250ms cubic-bezier(0, 0.74, 0.65, 1)";
-  document.body.style.transform = "scale(0.93)";
-  document.body.style.opacity = "0";
-  setTimeout(() => {
-    window.getCurrentWindow().close();
-  }, 500);
+  requestAnimationFrame(() => {
+    document.body.style.transition = "all 250ms cubic-bezier(0, 0.74, 0.65, 1)";
+    document.body.style.transform = "scale(0.93)";
+    document.body.style.opacity = "0";
+    setTimeout(() => {
+      appWindow.getCurrentWindow().close();
+    }, 500);
+  });
+}
+
+function isMacOS() {
+  return window.__PLATFORM__.os_family === "Macos";
 }
 </script>
 
@@ -209,30 +220,25 @@ function closeWindow() {
     margin-top: 20px;
     pointer-events: none;
   }
+  .sidebar-items {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 8px;
+    margin-bottom: 22px;
+  }
 }
 
-.sidebar .sidebar-btns {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 8px;
-  margin-bottom: 22px;
-}
-
-.sidebar > * {
-  transition: opacity 0.3s ease;
-}
-
-.sidebar-hidden > * {
-  opacity: 0;
+.sidebar-macos {
+  padding-top: 24px;
 }
 
 main.main {
-  position: absolute;
-  right: 0;
-  bottom: 0;
+  position: fixed;
+  right: 1px;
+  bottom: 1px;
   height: calc(100vh - 44px);
   width: calc(100vw - 64px);
   border: var(--main-border);
@@ -244,9 +250,17 @@ main.main {
   background: var(--main-background);
 }
 
-main.main-large {
-  width: 100vw;
-  border-radius: 0px;
-  border-left: none;
+.window-buttons-container {
+  position: fixed;
+  right: 24px;
+  top: 0px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.window-buttons-container-macos {
+  right: unset;
+  left: 8px;
 }
 </style>

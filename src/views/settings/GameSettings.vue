@@ -4,39 +4,37 @@
 
 <template>
   <div>
-    <setting-group :title="$t('settings.game.jvmTitle')">
-      <setting-item
+    <SettingGroup :title="$t('settings.game.jvmTitle')">
+      <SettingItem
         :title="$t('settings.game.chooseJava')"
         icon="java"
         :icon-size="36"
-        :clickAble="true">
+        :navigable="true">
         <span style="font-size: 14px; opacity: 0.8; margin-right: 8px">{{
           $t("settings.game.selectedJava", {
             selected: "Java 17",
           })
         }}</span>
-        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.game.addJava')"
         :description="$t('settings.game.addJavaDesc')"
         icon="cloud-download"
-        :clickAble="true">
-        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
-      </setting-item>
-      <!-- <setting-item title="Java 内存"></setting-item> -->
-    </setting-group>
-    <setting-group :title="$t('settings.game.launchOptions')">
-      <setting-item
+        :navigable="true">
+      </SettingItem>
+      <!-- <SettingItem title="Java 内存"></SettingItem> -->
+    </SettingGroup>
+    <SettingGroup :title="$t('settings.game.launchOptions')">
+      <SettingItem
         :title="$t('settings.game.launcherName')"
         :description="$t('settings.game.launcherNameDesc')"
         icon="tag">
         <BaseInput
-          width="360px"
+          width="260px"
           v-model="config.launch.launcher_name"
           :lazy-update-value="true"></BaseInput>
-      </setting-item>
-      <!-- TODO:<setting-item title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
+      </SettingItem>
+      <!-- TODO:<SettingItem title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
       <!--   <BaseInput -->
       <!--     width="240px" -->
       <!--     v-model="config.launch.server!.ip" -->
@@ -47,24 +45,24 @@
       <!--     v-model="config.launch.server!.port" -->
       <!--     placeholder="端口" -->
       <!--     style="display: inline-block"></BaseInput> -->
-      <!-- </setting-item> -->
-      <setting-item
+      <!-- </SettingItem> -->
+      <SettingItem
         :title="$t('settings.game.enterWorldAfterLaunch')"
         :description="$t('settings.game.enterWorldAfterLaunchDesc')"
         icon="enter">
         <BaseInput
-          width="360px"
+          width="260px"
           :placeholder="$t('settings.game.enterWorldAfterLaunchPlaceholder')"
           :lazy-update-value="true">
         </BaseInput>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.game.fullscreen')"
         :description="$t('settings.game.fullscreenDesc')"
         icon="expand">
-        <ToggleSwitch v-model="config.launch.fullscreen"></ToggleSwitch>
-      </setting-item>
-      <setting-item
+        <BaseSwitch v-model="config.launch.fullscreen"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :disabled="config.launch.fullscreen"
         :title="$t('settings.game.windowSize')"
         :description="$t('settings.game.windowSizeDesc')"
@@ -87,29 +85,29 @@
           v-model.number="config.launch.height"
           :lazy-update-value="true">
         </BaseInput>
-      </setting-item>
-      <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-off">
-        <toggle-switch></toggle-switch>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-off">
+        <BaseSwitch></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.game.autoRefreshAccount')"
         :description="$t('settings.game.autoRefreshAccountDesc')"
         icon="refresh">
-        <toggle-switch v-model="config.launch.skip_refresh_account"></toggle-switch>
-      </setting-item>
-      <setting-item
+        <BaseSwitch v-model="config.launch.skip_refresh_account"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.game.autoCompleteGameFiles')"
         :description="$t('settings.game.autoCompleteGameFilesDesc')"
         icon="build">
-        <toggle-switch v-model="config.launch.skip_check_files"></toggle-switch>
-      </setting-item>
-      <setting-item
+        <BaseSwitch v-model="config.launch.skip_check_files"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.game.demo')"
         :description="$t('settings.game.demoDesc')"
         icon="lock">
-        <toggle-switch v-model="config.launch.is_demo"></toggle-switch>
-      </setting-item>
-    </setting-group>
+        <BaseSwitch v-model="config.launch.is_demo"></BaseSwitch>
+      </SettingItem>
+    </SettingGroup>
   </div>
 </template>
 
@@ -117,7 +115,7 @@
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import BaseInput from "@/components/base/BaseInput.vue";
-import ToggleSwitch from "@/components/ToggleSwitch.vue";
+import BaseSwitch from "@/components/base/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 const config = useConfigStore();
 </script>

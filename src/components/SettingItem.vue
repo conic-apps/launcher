@@ -3,28 +3,34 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="setting-item" :class="className">
-    <div class="title">
+  <div
+    class="setting-item"
+    :class="{ 'setting-item-navigable': props.navigable, 'setting-item-disabled': props.disabled }">
+    <div style="display: flex">
       <div class="icon" v-if="icon">
         <AppIcon :name="icon" :size="iconSize" :fill="iconFill"></AppIcon>
       </div>
-      <div>
-        <p id="text">{{ title }}</p>
+      <div class="text">
+        <p class="title">{{ title }}</p>
         <p
           v-if="description"
-          id="text"
+          class="description"
           style="max-width: 560px; line-height: 1.5"
           v-html="description"></p>
       </div>
     </div>
     <div style="display: flex; align-items: center">
-      <slot></slot>
+      <AppIcon
+        name="chevron-forward"
+        style="margin-right: 4px"
+        v-if="props.navigable"
+        :size="17"></AppIcon>
+      <slot v-else></slot>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
 import AppIcon from "./AppIcon.vue";
 
 const props = withDefaults(
@@ -34,29 +40,13 @@ const props = withDefaults(
     icon?: string;
     iconSize?: number | string;
     iconFill?: string;
-    boxShadow?: boolean;
-    clickAble?: boolean;
+    navigable?: boolean;
     disabled?: boolean;
   }>(),
   {
-    boxShadow: false,
-    last: false,
     iconSize: 26,
-    clickAble: false,
-    disabled: false,
   },
 );
-
-const className = computed(() => {
-  let result = "";
-  if (props.clickAble) {
-    result += "setting-item-click-able";
-  }
-  if (props.disabled) {
-    result += " setting-item-disabled";
-  }
-  return result;
-});
 </script>
 
 <style lang="less" scoped>
@@ -68,67 +58,49 @@ const className = computed(() => {
   margin: 0;
   margin-bottom: 1px;
   background: var(--setting-item-background);
-
   transition: all 50ms ease;
 
   > * {
     transition: all 100ms ease;
   }
 
-  .title {
-    display: flex;
-  }
-
-  .icon {
+  .icon,
+  .text {
     display: flex;
     flex-direction: column;
     justify-content: center;
+  }
+
+  .icon {
     align-items: center;
     width: 40px;
     height: inherit;
     margin-right: 8px;
+    flex-shrink: 0;
   }
 
-  .icon i {
-    font-family: "fa-pro";
-    font-style: normal;
-    font-size: 22px;
-    font-weight: 500;
-    margin: 0;
-  }
-
-  .title > div {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .title > div:last-child {
+  .text {
     align-items: flex-start;
   }
 
-  .title p {
+  .text p.title {
     font-weight: normal;
-    height: 20.5px;
-    font-size: 14px;
-    line-height: 20.5px;
+    font-size: 13px;
   }
 
-  .title p {
-    font-size: 12.5px;
+  .text p.description {
+    font-size: 12px;
     color: rgba(var(--default-text-color), 0.849);
     opacity: 0.6;
     margin-top: 4px;
-    line-height: 1.1;
   }
 }
 
-.setting-item-click-able:hover {
+.setting-item-navigable:hover {
   background: var(--setting-item-background-hover);
 }
 
-.setting-item-click-able:active {
+.setting-item-navigable:active {
   background-color: var(--setting-item-background-active);
 }
 

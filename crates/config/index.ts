@@ -45,6 +45,11 @@ export type Config = {
     download: {
         max_connections: number
         max_download_speed: number
+        mirror: {
+            libraries: string[]
+            assets: string[]
+        }
+        use_system_proxy: boolean
     }
     launch: {
         min_memory: number
