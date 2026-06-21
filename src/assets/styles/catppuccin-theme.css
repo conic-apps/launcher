@@ -341,6 +341,7 @@ body.theme-Mocha {
   --dialog-background: var(--ctp-mocha-base);
   --tag-border-radius: 4px;
   --list-item-background: var(--ctp-mocha-surface0);
+  --setting-group-danger-border: 1px solid var(--ctp-mocha-red);
   --setting-item-background: var(--ctp-mocha-surface0);
   --setting-item-background-hover: var(--ctp-mocha-surface1);
   --setting-item-background-active: var(--ctp-mocha-surface2);
@@ -382,6 +383,7 @@ body.theme-Macchiato {
   --dialog-background: var(--ctp-macchiato-base);
   --tag-border-radius: 4px;
   --list-item-background: var(--ctp-macchiato-surface0);
+  --setting-group-danger-border: 1px solid var(--ctp-macchiato-red);
   --setting-item-background: var(--ctp-macchiato-surface0);
   --setting-item-background-hover: var(--ctp-macchiato-surface1);
   --setting-item-background-active: var(--ctp-macchiato-surface2);
@@ -424,6 +426,7 @@ body.theme-Frappe {
   --dialog-background: var(--ctp-frappe-base);
   --tag-border-radius: 4px;
   --list-item-background: var(--ctp-frappe-surface0);
+  --setting-group-danger-border: 1px solid var(--ctp-frappe-red);
   --setting-item-background: var(--ctp-frappe-surface0);
   --setting-item-background-hover: var(--ctp-frappe-surface1);
   --setting-item-background-active: var(--ctp-frappe-surface2);
@@ -452,7 +455,7 @@ body.theme-Latte {
     --theme-color: var(--ctp-latte-lavender);
     --window-background: var(--ctp-latte-crust);
     --main-background: var(--ctp-latte-base);
-  --main-border: 1px solid #00000000;
+    --main-border: 1px solid #00000000;
     --min-btn-background: var(--ctp-latte-yellow);
     --max-btn-background: var(--ctp-latte-green);
     --close-btn-background: var(--ctp-latte-red);
@@ -470,6 +473,7 @@ body.theme-Latte {
     --dialog-background: var(--ctp-latte-crust);
     --tag-border-radius: 4px;
     --list-item-background: rgba(var(--ctp-latte-crust-rgb, 0.6));
+    --setting-group-danger-border: 1px solid var(--ctp-latte-red);
     --setting-item-background: rgba(var(--ctp-latte-mantle-rgb, 0.8));
     --setting-item-background-hover: var(--ctp-latte-crust);
     --setting-item-background-active: var(--ctp-latte-surface0);

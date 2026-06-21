@@ -14,9 +14,6 @@
 </template>
 
 <script setup lang="ts">
-// const props = defineProps<{
-//   checked: boolean
-// }>()
 const model = defineModel();
 </script>
 
@@ -25,15 +22,14 @@ const model = defineModel();
   margin: 0 6px;
 
   label {
-    /* cursor: pointer; */
     display: flex;
     align-items: center;
   }
 }
 
 .input-box label span {
-  width: 39px;
-  height: 20px;
+  width: 32px;
+  height: 16px;
   display: flex;
   align-items: center;
   padding: 0 3px;
@@ -44,8 +40,8 @@ const model = defineModel();
   transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
 
   div {
-    width: 13.5px;
-    height: 13.5px;
+    width: 10.5px;
+    height: 10.5px;
     border-radius: 200px;
     background: var(--toggle-switch-button);
     transition: all 0.3s cubic-bezier(0, 0.6, 0.32, 0.99);
@@ -71,7 +67,7 @@ const model = defineModel();
 
 .input-box label input:checked ~ span > div {
   background-color: #fff;
-  margin-left: 19px;
+  margin-left: 16px;
 }
 
 .input-box input {

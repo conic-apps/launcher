@@ -35,7 +35,7 @@
                 title="Minecraft Version"
                 description="Choose a Minecraft version"
                 icon="minecraft"
-                :click-able="true"
+                :navigable="true"
                 @click="
                   transitionName = 'slide-left';
                   currentComponent = 'choose-minecraft';
@@ -63,7 +63,7 @@
                 description="Choose mod loader version."
                 icon="puzzle-piece"
                 :disabled="!modLoaderType"
-                :click-able="true"
+                :navigable="true"
                 @click="
                   transitionName = 'slide-left';
                   if (modLoaderType === 'Quilt') {

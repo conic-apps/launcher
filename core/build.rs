@@ -8,7 +8,11 @@ fn main() {
     let attributes = tauri_build::Attributes::new()
         .plugin(
             "config",
-            InlinedPlugin::new().commands(&["cmd_load_config_file", "cmd_save_config"]),
+            InlinedPlugin::new().commands(&[
+                "cmd_load_config_file",
+                "cmd_get_default_config",
+                "cmd_save_config",
+            ]),
         )
         .plugin(
             "account",

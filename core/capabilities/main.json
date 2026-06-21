@@ -21,6 +21,7 @@
     "clipboard-manager:allow-write-text",
     "config:allow-cmd-load-config-file",
     "config:allow-cmd-save-config",
+    "config:allow-cmd-get-default-config",
     "account:allow-cmd-list-accounts",
     "account:allow-cmd-add-microsoft-account",
     "account:allow-cmd-delete-microsoft-account",

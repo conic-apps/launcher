@@ -4,8 +4,8 @@
 
 <template>
   <div>
-    <setting-group>
-      <setting-item
+    <SettingGroup>
+      <SettingItem
         :title="$t('settings.download.maxConnections')"
         :description="$t('settings.download.maxConnectionsDesc')"
         icon="link">
@@ -15,8 +15,8 @@
           v-model.number="config.download.max_connections"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.download.maxDownloadSpeed')"
         :description="$t('settings.download.maxDownloadSpeedDesc')"
         icon="speedometer">
@@ -26,30 +26,29 @@
           v-model.number="config.download.max_download_speed"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.download.mirrorServer')"
-        :clickAble="true"
+        :navigable="true"
         :description="$t('settings.download.mirrorServerDesc')"
         icon="server"
         icon-fill="none"
         :last="true">
-        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
-      </setting-item>
-    </setting-group>
-    <setting-group :title="$t('settings.download.proxy')">
-      <setting-item :title="$t('settings.download.useSystemProxy')" icon="globe">
-        <toggle-switch></toggle-switch>
-      </setting-item>
-    </setting-group>
+      </SettingItem>
+    </SettingGroup>
+    <SettingGroup :title="$t('settings.download.proxy')">
+      <SettingItem :title="$t('settings.download.useSystemProxy')" icon="globe">
+        <BaseSwitch v-model="config.download.use_system_proxy"></BaseSwitch>
+      </SettingItem>
+    </SettingGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import BaseInput from "@/components/base/BaseInput.vue";
+import BaseSwitch from "@/components/base/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 const config = useConfigStore();
 </script>

@@ -4,61 +4,61 @@
 
 <template>
   <div>
-    <setting-group :title="$t('settings.accessibility.extraFeatures')">
-      <setting-item
+    <SettingGroup :title="$t('settings.accessibility.extraFeatures')">
+      <SettingItem
         :title="$t('settings.accessibility.releaseReminder')"
         :description="$t('settings.accessibility.releaseReminderDesc')"
         icon="bell"
         icon-fill="none">
-        <toggle-switch v-model="config.accessibility.release_reminder"></toggle-switch>
-      </setting-item>
-      <setting-item
+        <BaseSwitch v-model="config.accessibility.release_reminder"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.accessibility.snapshotReminder')"
         :description="$t('settings.accessibility.snapshotReminderDesc')"
         icon="bell"
         icon-fill="none">
-        <toggle-switch v-model="config.accessibility.snapshot_reminder"></toggle-switch>
-      </setting-item>
-      <setting-item
+        <BaseSwitch v-model="config.accessibility.snapshot_reminder"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.accessibility.hideLatestRelease')"
         :description="$t('settings.accessibility.hideLatestReleaseDesc')"
         icon="eye-off">
-        <toggle-switch v-model="config.accessibility.hide_latest_release"></toggle-switch>
-      </setting-item>
-      <setting-item
+        <BaseSwitch v-model="config.accessibility.hide_latest_release"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.accessibility.hideLatestSnapshot')"
         :description="$t('settings.accessibility.hideLatestSnapshotDesc')"
         icon="eye-off">
-        <toggle-switch v-model="config.accessibility.hide_latest_snapshot"></toggle-switch>
-      </setting-item>
-      <setting-item
+        <BaseSwitch v-model="config.accessibility.hide_latest_snapshot"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.accessibility.changeGameLanguage')"
         :description="$t('settings.accessibility.changeGameLanguageDesc')"
         icon="language">
-        <toggle-switch v-model="config.accessibility.change_game_language"></toggle-switch>
-      </setting-item>
-    </setting-group>
-    <setting-group :title="$t('settings.accessibility.accessibility')">
-      <setting-item
+        <BaseSwitch v-model="config.accessibility.change_game_language"></BaseSwitch>
+      </SettingItem>
+    </SettingGroup>
+    <SettingGroup :title="$t('settings.accessibility.accessibility')">
+      <SettingItem
         :title="$t('settings.accessibility.disableAllAnimations')"
         :description="$t('settings.accessibility.disableAllAnimationsDesc')"
         icon="pause">
-        <toggle-switch v-model="config.accessibility.disable_animations"></toggle-switch>
-      </setting-item>
-      <setting-item
+        <BaseSwitch v-model="config.accessibility.disable_animations"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.accessibility.highContrastMode')"
         :description="$t('settings.accessibility.highContrastModeDesc')"
         icon="contrast">
-        <toggle-switch v-model="config.accessibility.high_contrast_mode"></toggle-switch>
-      </setting-item>
-    </setting-group>
+        <BaseSwitch v-model="config.accessibility.high_contrast_mode"></BaseSwitch>
+      </SettingItem>
+    </SettingGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import ToggleSwitch from "@/components/ToggleSwitch.vue";
+import BaseSwitch from "@/components/base/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { watch } from "vue";
 import { reloadPalette } from "@/theme";

@@ -4,7 +4,7 @@
 
 <template>
   <li class="sidebar-item">
-    <AppIcon :name="icon" :size="24"></AppIcon>
+    <AppIcon :name="icon" :size="20"></AppIcon>
     <div class="text" v-if="title">{{ title }}</div>
     <!-- todo: button active style -->
   </li>
@@ -21,8 +21,8 @@ defineProps<{
 
 <style lang="less" scoped>
 .sidebar-item {
-  width: 58px;
-  height: 56px;
+  width: 48px;
+  height: 46px;
   // color: rgba(255, 255, 255, 0.6);
   display: flex;
   flex-direction: column;
@@ -32,20 +32,18 @@ defineProps<{
   border-radius: 10px;
   transition: all 100ms;
   background: var(--sidebar-item-background);
+  .text {
+    font-size: 10px;
+    margin-top: 6px;
+  }
 }
 
 .sidebar-item:hover {
   background: var(--sidebar-item-background-hover);
-  // border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .sidebar-item:active {
   opacity: 0.6;
   transform: scale(0.97);
-}
-
-.sidebar-item .text {
-  font-size: 12px;
-  margin-top: 6px;
 }
 </style>
