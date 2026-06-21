@@ -4,18 +4,18 @@
 
 <template>
   <div class="settings-view">
-    <div class="rol-1">
+    <div class="column-left">
       <ul class="settings-menu">
         <li
           @click="switchComponent(item.component, index)"
           :class="{ active: activeComponentIndex == index }"
           v-for="(item, index) in components"
           :key="index">
-          <AppIcon :name="item.icon"></AppIcon><span>{{ $t(item.name) }}</span>
+          <AppIcon :name="item.icon" :size="16"></AppIcon><span>{{ $t(item.name) }}</span>
         </li>
       </ul>
     </div>
-    <div class="rol-2">
+    <div class="column-right">
       <Transition :name="transitionName" mode="out-in">
         <component :is="currentComponent"></component>
       </Transition>
@@ -100,18 +100,18 @@ configStore.$subscribe(async (mutation, state) => {
   width: 100%;
   height: 100%;
   display: flex;
-  .rol-1,
-  .rol-2 {
+  .column-left,
+  .column-right {
     height: 100%;
   }
 
-  .rol-1 {
-    width: 260px;
+  .column-left {
+    width: 220px;
     flex-shrink: 0;
     padding: 30px 0px 16px 24px;
   }
 
-  .rol-2 {
+  .column-right {
     width: 100%;
     padding: 24px 24px 24px 0;
     padding-left: 16px;
@@ -124,12 +124,12 @@ configStore.$subscribe(async (mutation, state) => {
       margin-left: 8px;
     }
     li {
-      height: 36px;
+      height: 30px;
       width: 100%;
       display: flex;
       align-items: center;
       padding-left: 10px;
-      font-size: 14.5px;
+      font-size: 13px;
       border-radius: 8px;
       margin-bottom: 4px;
     }

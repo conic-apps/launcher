@@ -12,8 +12,10 @@
         "windows": [
             {
                 "title": "Conic Launcher",
-                "minWidth": 1080,
-                "minHeight": 640,
+                "minWidth": 840,
+                "minHeight": 520,
+                "width": 840,
+                "height": 520,
                 "focus": true,
                 "center": true,
                 "transparent": true,

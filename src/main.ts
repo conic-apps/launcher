@@ -1,6 +1,6 @@
-// conic launcher
-// copyright 2022-2026 broken-deer and contributors. all rights reserved.
-// spdx-license-identifier: gpl-3.0-only
+// Conic Launcher
+// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
 
 ;(await import("./log")).init()
 
@@ -11,6 +11,9 @@ import en_us from "./i18n/en_us"
 import zh_cn from "./i18n/zh_cn"
 import App from "./App.vue"
 import AppIcon from "./components/AppIcon.vue"
+import { getPlatformInfo } from "@conic/platform"
+
+window.__PLATFORM__ = await getPlatformInfo()
 
 type LooseString<T> = {
     [K in keyof T]: T[K] extends string ? string : T[K] extends object ? LooseString<T[K]> : T[K]
