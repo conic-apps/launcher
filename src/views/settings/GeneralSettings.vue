@@ -4,48 +4,47 @@
 
 <template>
   <div>
-    <setting-group>
-      <setting-item
+    <SettingGroup>
+      <SettingItem
         :title="$t('settings.general.language')"
         :description="$t('settings.general.languageDesc')"
         icon="language">
-        <select-vue
+        <BaseSelect
           :display-name="['English', '简体中文']"
           :options="['en_us', 'zh_cn']"
           v-model="config.language"
-          :default="1"></select-vue>
-      </setting-item>
-      <setting-item
+          :default="1"></BaseSelect>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.general.updateChannel')"
         :description="$t('settings.general.updateChannelDesc')"
         icon="branch">
-        <select-vue
+        <BaseSelect
           :display-name="[
-            $t('settings.general.weekly'),
-            $t('settings.general.snapshot'),
             $t('settings.general.release'),
+            $t('settings.general.snapshot'),
+            $t('settings.general.weekly'),
           ]"
-          :options="['Weekly', 'Snapshot', 'Release']"
+          :options="['Release', 'Snapshot', 'Weekly']"
           v-model="config.update_channel"
-          :default="2"></select-vue>
-      </setting-item>
-      <setting-item
+          :default="2"></BaseSelect>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.general.autoUpdate')"
         :description="$t('settings.general.autoUpdateDesc')"
         icon="time">
-        <toggle-switch v-model="config.auto_update"></toggle-switch>
-      </setting-item>
-      <setting-item :title="$t('settings.general.checkUpdate')" icon="circle-up" :clickAble="true">
-        <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
-      </setting-item>
-    </setting-group>
+        <BaseSwitch v-model="config.auto_update"></BaseSwitch>
+      </SettingItem>
+      <SettingItem :title="$t('settings.general.checkUpdate')" icon="circle-up" :navigable="true">
+      </SettingItem>
+    </SettingGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
-import SelectVue from "@/components/Select.vue";
-import ToggleSwitch from "@/components/ToggleSwitch.vue";
+import BaseSelect from "@/components/base/BaseSelect.vue";
+import BaseSwitch from "@/components/base/BaseSwitch.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 

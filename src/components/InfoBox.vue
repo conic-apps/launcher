@@ -19,7 +19,7 @@ defineProps<{
   border-radius: 10px;
   line-height: 1.6;
   background: var(--card-background);
-  font-size: 14px;
+  font-size: 12.5px;
   transition: all 150ms ease;
   border: var(--card-border);
 }

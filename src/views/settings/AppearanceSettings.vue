@@ -5,31 +5,33 @@
 <template>
   <div>
     <InfoBox :click-able="true" @click="openUrl('https://catppuccin.com')">
-      <h2
+      <p
         :style="{
-          'margin-bottom': '8px',
-          'background-image': `linear-gradient(120deg, var(--ctp-${config.appearance.palette.toLowerCase()}-peach), var(--ctp-${config.appearance.palette.toLowerCase()}-mauve))`,
-          'background-clip': 'text',
+          marginBottom: '8px',
+          backgroundImage: `linear-gradient(120deg, var(--ctp-${config.appearance.palette.toLowerCase()}-peach), var(--ctp-${config.appearance.palette.toLowerCase()}-mauve))`,
+          backgroundClip: 'text',
           color: '#00000000',
+          fontSize: '18px',
+          fontWeight: 'bold',
         }">
         Default pastel theme is Catppuccin
-      </h2>
+      </p>
       Catppuccin is a community-driven color scheme meant for coding, designing, and much more.
       Catppuccin consists of 4 beautiful pastel color palettes, named flavors. You can choose one
       below. Click here for more information.
     </InfoBox>
-    <setting-group title="调色板">
-      <setting-item
+    <SettingGroup title="调色板">
+      <SettingItem
         title="跟随系统深色设置"
         description="如果系统设置中设置为浅色，则使用 Latte ，否则使用 Mocha"
         icon="moon"
         icon-fill="none">
-        <toggle-switch v-model="config.appearance.palette_follow_system"></toggle-switch>
-      </setting-item>
+        <BaseSwitch v-model="config.appearance.palette_follow_system"></BaseSwitch>
+      </SettingItem>
       <div
+        class="color-style"
         :class="{
-          'color-style': true,
-          'color-style-unavailable': config.appearance.palette_follow_system,
+          'color-style-disabled': config.appearance.palette_follow_system,
         }">
         <div
           :class="{ latte: true, selected: currentTheme == Palette.Latte }"
@@ -52,7 +54,7 @@
           <p>Mocha</p>
         </div>
       </div>
-    </setting-group>
+    </SettingGroup>
     <!-- TODO: Font settings -->
   </div>
 </template>
@@ -62,7 +64,7 @@
 import SettingGroup from "@/components/SettingGroup.vue";
 import InfoBox from "@/components/InfoBox.vue";
 import SettingItem from "@/components/SettingItem.vue";
-import ToggleSwitch from "@/components/ToggleSwitch.vue";
+import BaseSwitch from "@/components/base/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { ref, watch } from "vue";
 import { reloadPalette } from "@/theme";
@@ -136,17 +138,17 @@ if (config.appearance.palette_follow_system) {
 <style lang="less" scoped>
 .color-style {
   width: 100%;
-  height: 160px;
+  height: 120px;
   display: flex;
-  padding: 0 24px 0 24px;
+  padding: 0 16px;
   align-items: center;
   justify-content: center;
   background: var(--setting-item-background);
 
   > div {
-    width: 120px;
-    height: 74px;
-    margin: -24px 20px 0px 20px;
+    width: 90px;
+    height: 60px;
+    margin: -24px 10px 0px 10px;
     background-position: center;
     background-size: 100%;
     border-radius: 6px;
@@ -155,7 +157,8 @@ if (config.appearance.palette_follow_system) {
     p {
       width: 100%;
       text-align: center;
-      margin-top: calc(100% - 30px);
+      font-size: 12.3px;
+      margin-top: calc(100% - 20px);
     }
   }
 
@@ -179,7 +182,7 @@ if (config.appearance.palette_follow_system) {
     outline: 4px solid rgb(24, 170, 255);
   }
 }
-.color-style-unavailable {
+.color-style-disabled {
   pointer-events: none;
   * {
     opacity: 0.6;

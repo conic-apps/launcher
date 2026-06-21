@@ -342,7 +342,8 @@ body.theme-Mocha-hc {
   --tag-border-radius: 4px;
   --list-item-background: var(--ctp-mocha-surface0);
   --setting-item-background: var(--ctp-mocha-surface0);
-    --setting-group-border: 1px solid var(--ctp-latte-overlay2);
+  --setting-group-border: 1px solid var(--ctp-latte-overlay2);
+  --setting-group-danger-border: 1px solid var(--ctp-mocha-red);
   --setting-item-background-hover: var(--ctp-mocha-surface1);
   --setting-item-background-active: var(--ctp-mocha-surface2);
   --controllers-border-radius: 6px;
@@ -384,6 +385,7 @@ body.theme-Macchiato-hc {
   --tag-border-radius: 4px;
   --list-item-background: var(--ctp-macchiato-surface0);
     --setting-group-border: 1px solid var(--ctp-macchiato-overlay2);
+  --setting-group-danger-border: 1px solid var(--ctp-macchiato-red);
   --setting-item-background: var(--ctp-macchiato-surface0);
   --setting-item-background-hover: var(--ctp-macchiato-surface1);
   --setting-item-background-active: var(--ctp-macchiato-surface2);
@@ -427,6 +429,7 @@ body.theme-Frappe-hc {
   --tag-border-radius: 4px;
   --list-item-background: var(--ctp-frappe-surface0);
   --setting-group-border: 1px solid var(--ctp-frappe-overlay2);
+  --setting-group-danger-border: 1px solid var(--ctp-frappe-red);
   --setting-item-background: var(--ctp-frappe-surface0);
   --setting-item-background-hover: var(--ctp-frappe-surface1);
   --setting-item-background-active: var(--ctp-frappe-surface2);
@@ -477,6 +480,7 @@ body.theme-Latte-hc {
     --setting-item-background-hover: var(--ctp-latte-crust);
     --setting-item-background-active: var(--ctp-latte-surface0);
     --setting-group-border: 1px solid var(--ctp-latte-overlay2);
+    --setting-group-danger-border: 1px solid var(--ctp-latte-red);
     --controllers-border-radius: 4px;
     --controllers-border: 1px solid var(--ctp-latte-overlay2);
     --controllers-border-active: 1px solid var(--ctp-latte-overlay2);

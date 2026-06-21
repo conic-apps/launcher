@@ -21,6 +21,7 @@ body {
     --tag-border-radius: 4px;
     --list-item-background: rgba(255, 255, 255, 0.04);
     --list-border-radius: 10px;
+    --setting-group-danger-border: 1px solid rgba(210, 15, 57, 0.6);
     --setting-item-background: rgba(255, 255, 255, 0.08);
     --setting-item-background-hover: rgba(255, 255, 255, 0.12);
     --controllers-border-radius: 6px;

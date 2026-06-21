@@ -83,7 +83,7 @@ watch(model, () => {
   height: 30px;
   flex-shrink: 0;
   padding: 0;
-  font-size: 15px;
+  font-size: 12.5px;
   transition: all 0.1s ease;
   background: var(--controllers-background);
   border: var(--controllers-border);

@@ -4,8 +4,8 @@
 
 <template>
   <div class="settings">
-    <setting-group>
-      <setting-item
+    <SettingGroup>
+      <SettingItem
         title="Instance Name"
         description="The name of this game instance."
         :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'"
@@ -30,39 +30,39 @@
           :lazy-update-model="true"
           @updated="$emit('update-instance-list')">
         </BaseInput>
-      </setting-item>
-      <setting-item title="Icon" description="The icon of this game instance." icon="icons">
+      </SettingItem>
+      <SettingItem title="Icon" description="The icon of this game instance." icon="icons">
         <img width="32px" height="32px" src="@/assets/images/Grass_Block.webp" alt="" />
         <AppIcon name="chevron-forward" style="margin-right: 4px; margin-left: 4px"></AppIcon>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         v-if="instanceName === 'Latest Release'"
         :title="$t('settings.accessibility.hideLatestRelease')"
         :description="$t('settings.accessibility.hideLatestReleaseDesc')"
         icon="eye-off">
         <BaseButton @click="config.accessibility.hide_latest_release = true">Hide it</BaseButton>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         v-if="instanceName === 'Latest Snapshot'"
         :title="$t('settings.accessibility.hideLatestSnapshot')"
         :description="$t('settings.accessibility.hideLatestSnapshotDesc')"
         icon="eye-off">
         <BaseButton @click="config.accessibility.hide_latest_snapshot = true">Hide it</BaseButton>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         title="Enable Instance-specific Settings"
         description="Description"
         icon="settings">
-        <toggle-switch
+        <BaseSwitch
           v-model="
             instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings
-          "></toggle-switch>
-      </setting-item>
-    </setting-group>
-    <setting-group
+          "></BaseSwitch>
+      </SettingItem>
+    </SettingGroup>
+    <SettingGroup
       :title="$t('settings.game.launchOptions')"
       :disabled="!enableInstanceSpecificSettings">
-      <setting-item
+      <SettingItem
         :title="$t('settings.game.launcherName')"
         :description="$t('settings.game.launcherNameDesc')"
         icon="tag">
@@ -72,8 +72,8 @@
           :placeholder="config.launch.launcher_name"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <!-- TODO:<setting-item title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
+      </SettingItem>
+      <!-- TODO:<SettingItem title="服务器地址" description="启动后自动加入服务器" icon="server"> -->
       <!--   <BaseInput -->
       <!--     width="240px" -->
       <!--     v-model="config.launch.server!.ip" -->
@@ -84,8 +84,8 @@
       <!--     v-model="config.launch.server!.port" -->
       <!--     placeholder="端口" -->
       <!--     style="display: inline-block" :lazy-update-model="true"></BaseInput> -->
-      <!-- </setting-item> -->
-      <setting-item
+      <!-- </SettingItem> -->
+      <SettingItem
         :title="$t('settings.game.enterWorldAfterLaunch')"
         :description="$t('settings.game.enterWorldAfterLaunchDesc')"
         icon="enter">
@@ -94,15 +94,15 @@
           :placeholder="$t('settings.game.enterWorldAfterLaunchPlaceholder')"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.game.fullscreen')"
         :description="$t('settings.game.fullscreenDesc')"
         icon="expand">
-        <ToggleSwitch
-          v-model="instanceStore.currentInstance.config.launch_config.fullscreen"></ToggleSwitch>
-      </setting-item>
-      <setting-item
+        <BaseSwitch
+          v-model="instanceStore.currentInstance.config.launch_config.fullscreen"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :disabled="instanceStore.currentInstance.config.launch_config.fullscreen"
         :title="$t('settings.game.windowSize')"
         :description="$t('settings.game.windowSizeDesc')"
@@ -126,29 +126,29 @@
           v-model.number="instanceStore.currentInstance.config.launch_config.height"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-off">
-        <toggle-switch></toggle-switch>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-off">
+        <BaseSwitch></BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.game.demo')"
         :description="$t('settings.game.demoDesc')"
         icon="lock">
-        <toggle-switch
-          v-model="instanceStore.currentInstance.config.launch_config.is_demo"></toggle-switch>
-      </setting-item>
-    </setting-group>
-    <setting-group
+        <BaseSwitch
+          v-model="instanceStore.currentInstance.config.launch_config.is_demo"></BaseSwitch>
+      </SettingItem>
+    </SettingGroup>
+    <SettingGroup
       :title="$t('settings.advance.launchArgs')"
       :disabled="!enableInstanceSpecificSettings">
-      <setting-item :title="$t('settings.advance.gc')">
-        <select-vue
+      <SettingItem :title="$t('settings.advance.gc')">
+        <BaseSelect
           :display-name="['G1GC', 'ZGC', 'ParallelGC', 'ParallelOldGC', 'SerialGC']"
           :options="['G1', 'Z', 'Parallel', 'ParallelOld', 'Serial']"
           v-model="instanceStore.currentInstance.config.launch_config.gc"
-          :default="0"></select-vue>
-      </setting-item>
-      <setting-item
+          :default="0"></BaseSelect>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.advance.extraJVMArgs')"
         :description="$t('settings.advance.extraJVMArgsDesc')">
         <BaseInput
@@ -156,8 +156,8 @@
           v-model="instanceStore.currentInstance.config.launch_config.extra_jvm_args"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.advance.extraMinecraftArgs')"
         :description="$t('settings.advance.extraMinecraftArgsDesc')">
         <BaseInput
@@ -165,8 +165,8 @@
           v-model="instanceStore.currentInstance.config.launch_config.extra_mc_args"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.advance.extraClassPaths')"
         :description="$t('settings.advance.extraClassPathsDesc')">
         <BaseInput
@@ -174,8 +174,8 @@
           v-model="instanceStore.currentInstance.config.launch_config.extra_class_paths"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.advance.executeBeforeLaunch')"
         :description="$t('settings.advance.executeBeforeLaunchDesc')">
         <BaseInput
@@ -183,8 +183,8 @@
           v-model="instanceStore.currentInstance.config.launch_config.execute_before_launch"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.advance.wrapCommand')"
         :description="$t('settings.advance.wrapCommandDesc')">
         <BaseInput
@@ -192,8 +192,8 @@
           v-model="instanceStore.currentInstance.config.launch_config.wrap_command"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.advance.executeAfterLaunch')"
         :description="$t('settings.advance.executeAfterLaunchDesc')">
         <BaseInput
@@ -201,68 +201,68 @@
           v-model="instanceStore.currentInstance.config.launch_config.execute_after_launch"
           :lazy-update-model="true">
         </BaseInput>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.advance.ignoreInvalidMinecraftCertificates')"
         :description="$t('settings.advance.ignoreInvalidMinecraftCertificatesDesc')">
-        <ToggleSwitch
+        <BaseSwitch
           v-model="
             instanceStore.currentInstance.config.launch_config.ignore_invalid_minecraft_certificates
           ">
-        </ToggleSwitch>
-      </setting-item>
-      <setting-item
+        </BaseSwitch>
+      </SettingItem>
+      <SettingItem
         :title="$t('settings.advance.ignorePatchDiscrepancies')"
         :description="$t('settings.advance.ignorePatchDiscrepanciesDesc')">
-        <ToggleSwitch
+        <BaseSwitch
           v-model="instanceStore.currentInstance.config.launch_config.ignore_patch_discrepancies">
-        </ToggleSwitch>
-      </setting-item>
-      <setting-item :title="$t('settings.advance.lwjglSettings')" description="" :clickAble="true">
+        </BaseSwitch>
+      </SettingItem>
+      <SettingItem :title="$t('settings.advance.lwjglSettings')" description="" :navigable="true">
         <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         title="Open Log Viewer"
         description="The Description of Open Log Viewer "
         icon="document-text"
-        :clickAble="true"
+        :navigable="true"
         @click="dialogStore.logViewer.visible = true">
         <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
-      </setting-item>
-    </setting-group>
-    <setting-group title="Danger Zone" :danger="true">
-      <setting-item
+      </SettingItem>
+    </SettingGroup>
+    <SettingGroup title="Danger Zone" :danger="true">
+      <SettingItem
         title="Delete This Instance"
         description="Once you delete a instance, there is no going back. Please be certain."
         icon="trash"
-        :clickAble="true"
+        :navigable="true"
         @click="dialogStore.confirmDeleteInstance.visible = true"
         :disabled="instanceName === 'Latest Release' || instanceName === 'Latest Snapshot'">
         <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
-      </setting-item>
-      <setting-item
+      </SettingItem>
+      <SettingItem
         title="Reset This Instance"
         description="Clear all data in this instance, including worlds, packages, and modules"
         icon="refresh"
-        :clickAble="true">
+        :navigable="true">
         <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
-      </setting-item>
-    </setting-group>
+      </SettingItem>
+    </SettingGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import { useConfigStore } from "@/store/config";
 import BaseInput from "@/components/base/BaseInput.vue";
-import { computed, watchEffect } from "vue";
-import ToggleSwitch from "@/components/ToggleSwitch.vue";
-import SelectVue from "@/components/Select.vue";
-import { useInstanceStore } from "@/store/instance";
+import BaseSwitch from "@/components/base/BaseSwitch.vue";
+import BaseSelect from "@/components/base/BaseSelect.vue";
 import BaseButton from "@/components/base/BaseButton.vue";
+import { useConfigStore } from "@/store/config";
+import { useInstanceStore } from "@/store/instance";
 import { updateInstance } from "@conic/instance";
 import { useDialogStore } from "@/store/dialog";
+import { computed, watchEffect } from "vue";
 
 const instanceStore = useInstanceStore();
 const dialogStore = useDialogStore();
