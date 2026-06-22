@@ -13,7 +13,10 @@
         <ul
           ref="options"
           class="options"
-          :style="{ width: '${width}px', top: `-${selected * 30 + 45}px` }"
+          :style="{
+            width: '${width}px',
+            top: `-${selected * 30 + 45}px`,
+          }"
           v-if="opened"
           @click="opened = false">
           <div>
@@ -99,6 +102,7 @@ function changeSelection(index: number) {
   z-index: 100000;
   display: flex;
   align-items: flex-end;
+
   > div:first-child {
     margin: 8px 10px;
     width: 100%;

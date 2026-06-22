@@ -79,7 +79,7 @@ fn main() {
         )
         .plugin(
             "platform",
-            InlinedPlugin::new().commands(&["cmd_get_platform_info"]),
+            InlinedPlugin::new().commands(&["cmd_get_platform_info", "cmd_list_fonts"]),
         )
         .plugin(
             "folder",
