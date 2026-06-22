@@ -150,6 +150,11 @@ export default {
         },
         appearance: {
             sidebar: "Appearance",
+            font: {
+                title: "Font",
+                fontFamily: "Font Family",
+                fontFamilyDesc: "Set the launcher font family (CSS font-family value).",
+            },
         },
         download: {
             sidebar: "Download",
