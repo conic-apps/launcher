@@ -50,6 +50,7 @@
     "install:allow-cmd-spawn-install-task",
     "install:allow-cmd-cancel-install-task",
     "platform:allow-cmd-get-platform-info",
+    "platform:allow-cmd-list-fonts",
     "launch:allow-cmd-spawn-launch-task",
     "launch:allow-cmd-cancel-launch-task",
     "instance:allow-cmd-create-instance",

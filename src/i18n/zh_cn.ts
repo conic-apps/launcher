@@ -145,6 +145,11 @@ export default {
         },
         appearance: {
             sidebar: "外观",
+            font: {
+                title: "字体",
+                fontFamily: "字体",
+                fontFamilyDesc: "设置启动器字体 (CSS font-family 值)。",
+            },
         },
         download: {
             sidebar: "下载",

@@ -11,9 +11,10 @@ import en_us from "./i18n/en_us"
 import zh_cn from "./i18n/zh_cn"
 import App from "./App.vue"
 import AppIcon from "./components/AppIcon.vue"
-import { getPlatformInfo } from "@conic/platform"
+import { getPlatformInfo, listFonts } from "@conic/platform"
 
 window.__PLATFORM__ = await getPlatformInfo()
+window.__SYSTEM_FONTS__ = await listFonts()
 
 type LooseString<T> = {
     [K in keyof T]: T[K] extends string ? string : T[K] extends object ? LooseString<T[K]> : T[K]

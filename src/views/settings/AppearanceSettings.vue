@@ -55,22 +55,38 @@
         </div>
       </div>
     </SettingGroup>
-    <!-- TODO: Font settings -->
+    <SettingGroup :title="$t('settings.appearance.font.title')">
+      <SettingItem
+        :title="$t('settings.appearance.font.fontFamily')"
+        :description="$t('settings.appearance.font.fontFamilyDesc')"
+        icon="font"
+        icon-fill="currentColor">
+        <BaseSelect
+          v-model="config.appearance.font_family"
+          :options="fontOptions"
+          :displayName="fontDisplayNames"
+          width="200"></BaseSelect>
+      </SettingItem>
+    </SettingGroup>
   </div>
 </template>
 
 <script setup lang="ts">
-//TODO: 主题色，自定义样式表
 import SettingGroup from "@/components/SettingGroup.vue";
 import InfoBox from "@/components/InfoBox.vue";
 import SettingItem from "@/components/SettingItem.vue";
 import BaseSwitch from "@/components/base/BaseSwitch.vue";
+import BaseSelect from "@/components/base/BaseSelect.vue";
 import { useConfigStore } from "@/store/config";
 import { ref, watch } from "vue";
 import { reloadPalette } from "@/theme";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { Palette } from "@conic/config";
 const config = useConfigStore();
+
+const fonts = window.__SYSTEM_FONTS__;
+const fontOptions = ref<string[]>(["", ...fonts]);
+const fontDisplayNames = ref<string[]>(["System Default", ...fonts]);
 
 const currentTheme = ref<Palette>(config.appearance.palette);
 
@@ -133,6 +149,18 @@ if (config.appearance.palette_follow_system) {
     currentTheme.value = Palette.Latte;
   }
 }
+
+function applyFontFamily(fontFamily: string) {
+  document.body.style.fontFamily = fontFamily || "";
+}
+
+applyFontFamily(config.appearance.font_family);
+watch(
+  () => config.appearance.font_family,
+  (fontFamily) => {
+    applyFontFamily(fontFamily);
+  },
+);
 </script>
 
 <style lang="less" scoped>

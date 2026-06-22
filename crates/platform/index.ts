@@ -16,3 +16,7 @@ export type PlatformInfo = {
 export async function getPlatformInfo(): Promise<PlatformInfo> {
     return await invoke("plugin:platform|cmd_get_platform_info")
 }
+
+export async function listFonts(): Promise<string[]> {
+    return await invoke("plugin:platform|cmd_list_fonts")
+}
