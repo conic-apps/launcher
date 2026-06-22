@@ -18,7 +18,10 @@ pub static PLATFORM_INFO: Lazy<PlatformInfo> = Lazy::new(PlatformInfo::new);
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("platform")
-        .invoke_handler(tauri::generate_handler![cmd_get_platform_info, cmd_list_fonts])
+        .invoke_handler(tauri::generate_handler![
+            cmd_get_platform_info,
+            cmd_list_fonts
+        ])
         .build()
 }
 
