@@ -159,9 +159,6 @@ pub struct AppearanceConfig {
 
     /// Palette name, support mocha frappe latte macchiato.
     pub palette: String,
-
-    /// Font family for the launcher UI.
-    pub font_family: String,
 }
 
 impl Default for AppearanceConfig {
@@ -170,7 +167,6 @@ impl Default for AppearanceConfig {
         Self {
             palette_follow_system: true,
             palette: "Mocha".to_string(),
-            font_family: String::new(),
         }
     }
 }
