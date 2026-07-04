@@ -9,6 +9,7 @@
         "frontendDist": "../dist"
     },
     "app": {
+        "macOSPrivateApi": true,
         "windows": [
             {
                 "title": "Conic Launcher",
@@ -22,7 +23,7 @@
                 "decorations": false,
                 "fullscreen": false,
                 "resizable": true,
-                "shadow": true
+                "shadow": false
             }
         ],
         "security": {
