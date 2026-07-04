@@ -37,7 +37,7 @@ fn main() {
         .setup(|_| Ok(print_info()))
         .on_window_event(window_event_handler)
         .run(tauri::generate_context!())
-        .expect("Failed to run app");
+        .expect("")
 }
 
 fn init_log_builder() -> tauri_plugin_log::Builder {
@@ -88,7 +88,6 @@ fn window_event_handler(window: &Window, event: &WindowEvent) {
             }
             _ => (),
         };
-        window.close().expect("Could not close window");
     }
 }
 
