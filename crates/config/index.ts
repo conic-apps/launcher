@@ -24,7 +24,6 @@ export type Config = {
     appearance: {
         palette_follow_system: boolean
         palette: Palette
-        font_family: string
     }
     accessibility: {
         release_reminder: boolean
