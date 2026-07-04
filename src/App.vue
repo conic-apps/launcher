@@ -16,13 +16,13 @@
         <search-bar style="width: 100%" :placeholder="$t('globalSearch.placeholder')"></search-bar>
       </div>
       <div class="window-buttons-container window-buttons-container-macos" v-if="isMacOS()">
+        <WindowButton button-type="close" @close="closeWindow()"></WindowButton>
         <WindowButton
           button-type="minimize"
           @minimize="appWindow.getCurrentWindow().minimize()"></WindowButton>
         <WindowButton
           button-type="maximize"
           @maximize="appWindow.getCurrentWindow().maximize()"></WindowButton>
-        <WindowButton button-type="close" @close="closeWindow()"></WindowButton>
       </div>
       <div class="window-buttons-container" v-else>
         <WindowButton
