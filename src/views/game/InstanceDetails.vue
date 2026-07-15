@@ -29,22 +29,20 @@
 <script setup lang="ts">
 import { computed, markRaw, ref } from "vue";
 import Tabs from "@/components/Tabs.vue";
-import Info from "./Info.vue";
+import Summary from "./Summary.vue";
 import Worlds from "./Worlds.vue";
 import Mods from "./Mods.vue";
 import Packs from "./Packs.vue";
 import Settings from "./Settings.vue";
 import { useI18n } from "vue-i18n";
-import { useInstanceStore } from "@/store/instance";
 
 const i18n = useI18n();
-const instanceStore = useInstanceStore();
 
 const components = ref([
   {
-    name: "game.assets.info",
+    name: "game.assets.summary",
     icon: "about",
-    component: markRaw(Info),
+    component: markRaw(Summary),
   },
   {
     name: "game.assets.worlds",
