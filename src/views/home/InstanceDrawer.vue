@@ -138,7 +138,9 @@ onBeforeUnmount(() => {
       white-space: nowrap;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.1s ease, transform 0.1s ease;
+      transition:
+        opacity 0.1s ease,
+        transform 0.1s ease;
     }
 
     &:hover .tooltip {
