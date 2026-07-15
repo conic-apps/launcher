@@ -97,7 +97,7 @@ const currentInstance = computed(() => {
         margin-left: 16px;
 
         .title {
-          font-size: 22px;
+          font-size: 20px;
         }
       }
     }
@@ -124,7 +124,7 @@ const currentInstance = computed(() => {
         background-image: linear-gradient(248deg, #235dce, #399bed);
         color: #fff;
         padding: 8px 16px;
-        font-size: 18px;
+        font-size: 16px;
         display: flex;
         align-items: center;
         border-radius: var(--controllers-border-radius);
