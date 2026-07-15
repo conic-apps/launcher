@@ -4,6 +4,9 @@
 
 import { invoke } from "@tauri-apps/api/core"
 
+export const LATEST_RELEASE_INSTANCE_ID = "00000000-0000-0000-0000-00000001bf52"
+export const LATEST_SNAPSHOT_INSTANCE_ID = "00000000-0000-0000-0000-0000001d4b42"
+
 export type InstanceRuntime = {
     minecraft: string
     mod_loader_type?: "Quilt" | "Fabric" | "Neoforged" | "Forge"

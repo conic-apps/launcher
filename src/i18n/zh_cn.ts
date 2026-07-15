@@ -23,7 +23,7 @@ export default {
         accounts: "帐户",
         friends: "好友",
         assets: {
-            info: "基本信息",
+            summary: "概览",
             worlds: "存档",
             mods: "模组",
             packs: "附加包",

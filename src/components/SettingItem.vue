@@ -12,11 +12,7 @@
       </div>
       <div class="text">
         <p class="title">{{ title }}</p>
-        <p
-          v-if="description"
-          class="description"
-          style="max-width: 560px; line-height: 1.5"
-          v-html="description"></p>
+        <p v-if="description" class="description" v-html="description"></p>
       </div>
     </div>
     <div style="display: flex; align-items: center">
@@ -91,6 +87,7 @@ const props = withDefaults(
   .text p.description {
     font-size: 12px;
     color: rgba(var(--default-text-color), 0.849);
+    line-height: 1.1;
     opacity: 0.6;
     margin-top: 4px;
   }
