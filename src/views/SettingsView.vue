@@ -106,7 +106,7 @@ configStore.$subscribe(async (mutation, state) => {
   }
 
   .column-left {
-    width: 220px;
+    width: 200px;
     flex-shrink: 0;
     padding: 30px 0px 16px 24px;
   }

@@ -2,14 +2,17 @@
 // Copyright 2022-2026 OakChaser and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { createInstance, getInstanceById, listInstances } from "@conic/instance"
+import {
+    createInstance,
+    getInstanceById,
+    LATEST_RELEASE_INSTANCE_ID,
+    LATEST_SNAPSHOT_INSTANCE_ID,
+    listInstances,
+} from "@conic/instance"
 import { defineStore } from "pinia"
 import { useConfigStore } from "./config"
 import { ref } from "vue"
 import { getMinecrafVersionManifest } from "@conic/install"
-
-const LATEST_RELEASE_INSTANCE_ID = "00000000-0000-0000-0000-00000001bf52"
-const LATEST_SNAPSHOT_INSTANCE_ID = "00000000-0000-0000-0000-0000001d4b42"
 
 async function ensureLatestInstancesExistance() {
     if (!(await getInstanceById(LATEST_RELEASE_INSTANCE_ID))) {

@@ -76,18 +76,15 @@ function changeSelection(index: number) {
   transition: all 70ms ease;
   flex-shrink: 0;
   background: var(--controllers-background);
-}
-
-.value-box:hover {
-  background: var(--controllers-background-hover);
-}
-
-.value-box:hover::after {
-  transform: translate(0px, 1px);
-}
-
-.value-box:active {
-  opacity: 0.8;
+  &:hover {
+    background: var(--controllers-background-hover);
+  }
+  &:hover::after {
+    transform: translate(0px, 1px);
+  }
+  &:active {
+    opacity: 0.8;
+  }
 }
 
 .options {
@@ -120,15 +117,14 @@ li.select-option {
   list-style: none;
   z-index: 10001;
   transition: all 30ms ease;
+  &:hover {
+    background: #ffffff1f;
+  }
+  &:active {
+    background: #ffffff15;
+  }
 }
 
-li.select-option:hover {
-  background: #ffffff1f;
-}
-
-li.select-option:active {
-  background: #ffffff15;
-}
 li.selected {
   background: #ffffff17;
 }
