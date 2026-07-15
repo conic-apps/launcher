@@ -23,7 +23,7 @@ export default {
         accounts: "Accounts",
         friends: "Friends",
         assets: {
-            info: "Infomations",
+            summary: "Summary",
             worlds: "Saves",
             mods: "Mods",
             packs: "Packs",

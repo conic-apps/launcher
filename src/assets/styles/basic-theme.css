@@ -3,9 +3,9 @@ body {
     --window-background: rgba(15, 1, 1);
     --main-background: rgba(44, 48, 57, 0.6);
     --main-border: 1px solid rgba(56, 59, 65, 1);
-    --min-btn-background: #ffffff40;
-    --max-btn-background: #ffffff40;
-    --close-btn-background: #ffffff40;
+    --min-button-background: #ffffff40;
+    --max-button-background: #ffffff40;
+    --close-button-background: #ffffff40;
     --window-btn-icon-color: #ffffffb7;
     --default-text-color: 255, 255, 255;
     --card-background: rgba(255, 255, 255, 0.03);

@@ -3,27 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="instance-info">
-    <Playtime></Playtime>
-    <div class="title">Recent Played Worlds</div>
-    <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 8px">
-      <div class="recent-world" v-for="(world, index) in recentWorlds" :key="index">
-        <img :src="world.image" />
-        <!-- TODO: Style -->
-        <p class="name">{{ world.name }}</p>
-        <p class="desc">{{ world.latestPlay }}</p>
-      </div>
-    </div>
-    <div class="title">Recent Played Servers</div>
-    <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 8px">
-      <div class="recent-server" v-for="(server, index) in recentServers" :key="index">
-        <img :src="server.image" />
-        <!-- TODO: Style -->
-        <p class="name">{{ server.name }}</p>
-        <p class="desc">{{ server.latestPlay }}</p>
-      </div>
-    </div>
-  </div>
+  <div class="instance-info"></div>
 </template>
 
 <script setup lang="ts">
