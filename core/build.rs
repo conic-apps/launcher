@@ -37,6 +37,8 @@ fn main() {
                 "cmd_get_authlib_profile_info",
                 "cmd_get_authlib_account",
                 "cmd_relogin_account",
+                "cmd_request_device_code",
+                "cmd_poll_device_code",
             ]),
         )
         .plugin(

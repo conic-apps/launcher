@@ -2,6 +2,7 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+import { AccountType } from "@conic/account"
 import { invoke } from "@tauri-apps/api/core"
 
 export enum UpdateChannel {
@@ -20,7 +21,7 @@ export type Config = {
     language: string
     update_channel: UpdateChannel
     auto_update: boolean
-    current_account: string
+    current_account: [string, AccountType]
     appearance: {
         palette_follow_system: boolean
         palette: Palette

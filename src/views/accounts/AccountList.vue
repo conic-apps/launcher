@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="account-view">
+  <div class="account-list">
     <div class="row1">
       <div>
         <list-item
@@ -63,7 +63,10 @@ const avatarMap = ref<Record<string, string>>({});
 async function getAccounts() {
   const msAccounts = (await listAccounts()).microsoft;
   for (let i = 0; i <= msAccounts.length - 1; i++) {
-    avatarMap.value[msAccounts[i].profile.uuid] = await getAvatar(msAccounts[i].profile.skins[0].url, 32);
+    avatarMap.value[msAccounts[i].profile.uuid] = await getAvatar(
+      msAccounts[i].profile.skins[0].url,
+      32,
+    );
   }
   accounts.value = msAccounts;
 }
@@ -74,13 +77,11 @@ function refreshLogin(uuid: string) {
   refreshMicrosoftAccount(uuid);
 }
 
-function chooseAccount(account: MicrosoftAccount) {
-  config.current_account = account.profile.uuid;
-}
+function chooseAccount(account: MicrosoftAccount) {}
 </script>
 
 <style lang="less" scoped>
-.account-view {
+.account-list {
   width: 100%;
   height: 100%;
   display: flex;

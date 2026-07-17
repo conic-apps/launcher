@@ -502,10 +502,10 @@ body.theme-Latte {
     --toggle-switch-button: var(--ctp-latte-overlay2);
     --toggle-switch-active: var(--theme-color);
     --selected-text-background: var(--ctp-latte-mauve);
-  --game-install-button-background: var(--ctp-latte-blue);
-  --game-launch-button-background: var(--ctp-latte-green);
-  --instance-drawer-active: rgba(0, 0, 0, 0.08);
-  --instance-drawer-hover: rgba(0, 0, 0, 0.04);
+    --game-install-button-background: var(--ctp-latte-blue);
+    --game-launch-button-background: var(--ctp-latte-green);
+    --instance-drawer-active: rgba(0, 0, 0, 0.08);
+    --instance-drawer-hover: rgba(0, 0, 0, 0.04);
 }
 
 body.theme-Latte code {

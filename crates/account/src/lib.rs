@@ -12,48 +12,66 @@ use tauri::{
 use uuid::Uuid;
 
 use crate::{
-    authlib_injector::{AuthlibInjectorAccount, LoginResponse, Profile, YggdrasilServerInfo},
-    microsoft::MicrosoftAccount,
+    microsoft::{
+        MicrosoftAccount,
+        device_code::{DeviceCodePollResult, DeviceCodeResponse},
+    },
     offline::OfflineAccount,
+    yggdrasil::{
+        YggdrasilAccount, yggdrasil_server::YggdrasilServerInfo, yggdrasil_user_api::AuthResponse,
+    },
 };
 pub use error::*;
 
-pub mod authlib_injector;
 mod error;
 pub mod microsoft;
 pub mod offline;
+pub mod yggdrasil;
 
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
-pub enum AccountType {
-    Microsoft,
-    Offline,
-    AuthlibInjector,
+#[derive(Clone, Serialize, Deserialize)]
+pub enum Account {
+    Microsoft(MicrosoftAccount),
+    Offline(OfflineAccount),
+    Yggdrasil(YggdrasilAccount),
+}
+
+impl Account {
+    pub fn get_profile_name(&self) -> String {
+        match self {
+            Account::Microsoft(account) => account.profile.profile_name.to_string(),
+            Account::Yggdrasil(account) => account.profile_name.to_string(),
+            Account::Offline(account) => account.name.to_string(),
+        }
+    }
+
+    pub fn get_profile_uuid(&self) -> String {
+        match self {
+            Account::Microsoft(account) => account.profile.uuid.to_string(),
+            Account::Yggdrasil(account) => account.profile_uuid.to_string(),
+            Account::Offline(account) => account.uuid.to_string(),
+        }
+    }
+
+    pub fn get_access_token(&self) -> String {
+        match self {
+            Account::Microsoft(account) => account.minecraft_access_token.to_string(),
+            Account::Yggdrasil(account) => account.access_token.to_string(),
+            Account::Offline(account) => "114514".to_string(),
+        }
+    }
+
+    pub fn get_user_type(&self) -> String {
+        match self {
+            Account::Microsoft(_) => "msa".to_string(),
+            Account::Yggdrasil(_) => "mojang".to_string(),
+            Account::Offline(_) => "mojang".to_string(),
+        }
+    }
 }
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("account")
-        .invoke_handler(tauri::generate_handler![
-            cmd_list_accounts,
-            cmd_add_microsoft_account,
-            cmd_delete_microsoft_account,
-            cmd_refresh_all_microsoft_accounts,
-            cmd_refresh_microsoft_account,
-            cmd_get_microsoft_account,
-            cmd_add_offline_account,
-            cmd_delete_offline_account,
-            cmd_update_offline_account,
-            cmd_get_offline_account,
-            cmd_add_yggdrasil_server,
-            cmd_delete_yggdrasil_server,
-            cmd_list_yggdrasil_server,
-            cmd_get_yggdrasil_server_info,
-            cmd_yggdrasil_login,
-            cmd_add_authlib_account,
-            cmd_delete_authlib_account,
-            cmd_get_authlib_profile_info,
-            cmd_get_authlib_account,
-            cmd_relogin_account,
-        ])
+        .invoke_handler(tauri::generate_handler![])
         .build()
 }
 
@@ -61,123 +79,77 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 struct Accounts {
     microsoft: Vec<MicrosoftAccount>,
     offline: Vec<OfflineAccount>,
-    authlib_injector: HashMap<Uuid, AuthlibInjectorAccount>,
+    third_party_yggdrasil: HashMap<Uuid, YggdrasilAccount>,
 }
 
 #[command]
-fn cmd_list_accounts() -> Result<Accounts> {
+async fn cmd_list_accounts() -> Result<Accounts> {
     Ok(Accounts {
-        microsoft: microsoft::list_accounts()?,
+        microsoft: microsoft::list_accounts().await?,
         offline: offline::list_accounts()?,
-        authlib_injector: authlib_injector::list_accounts()?,
+        third_party_yggdrasil: yggdrasil::list_accounts().await?,
     })
 }
 
-pub struct AccountLaunchInfo {
-    pub access_token: String,
-    pub name: String,
-    pub uuid: String,
-    pub yggdrasil_api_root: Option<String>,
-}
-
-impl AccountLaunchInfo {
-    pub fn new(uuid: Uuid, account_type: &AccountType) -> Result<Self> {
-        let result = match account_type {
-            AccountType::Microsoft => {
-                let microsoft_account = microsoft::get_account(uuid)?;
-                Self {
-                    access_token: microsoft_account.access_token,
-                    name: microsoft_account.profile.profile_name,
-                    uuid: microsoft_account.profile.uuid.to_string(),
-                    yggdrasil_api_root: None,
-                }
-            }
-            AccountType::AuthlibInjector => {
-                let authlib_account = authlib_injector::get_account(uuid)?;
-                Self {
-                    access_token: authlib_account.access_token,
-                    name: authlib_account.profile_name,
-                    uuid: authlib_account.profile_uuid.to_string(),
-                    yggdrasil_api_root: Some(authlib_account.api_root),
-                }
-            }
-            AccountType::Offline => {
-                let offline_account = offline::get_account(uuid)?;
-                Self {
-                    access_token: "1145141919810".to_string(),
-                    name: offline_account.name,
-                    uuid: offline_account.uuid.to_string(),
-                    yggdrasil_api_root: None,
-                }
-            }
-        };
-        Ok(result)
-    }
-}
-
-// TODO: Errors: relogin microsoft, relogin authlib
-pub async fn force_refresh_account(uuid: Uuid, account_type: &AccountType) -> Result<()> {
-    match account_type {
-        AccountType::Microsoft => {
-            microsoft::refresh_account(uuid).await?;
-        }
-        AccountType::AuthlibInjector => authlib_injector::refresh_account(uuid).await?,
-        AccountType::Offline => (),
-    };
-    Ok(())
-}
-
-// TODO: Errors: relogin microsoft, relogin authlib
-pub async fn check_and_refresh_account(uuid: Uuid, account_type: &AccountType) -> Result<()> {
-    match account_type {
-        AccountType::Microsoft => {
-            microsoft::check_and_refresh_account(uuid).await?;
-        }
-        AccountType::AuthlibInjector => {
-            authlib_injector::check_and_refresh_account(uuid).await?;
-        }
-        AccountType::Offline => (),
-    };
-    Ok(())
+#[command]
+async fn cmd_get_microsoft_account(uuid: Uuid) -> Result<MicrosoftAccount> {
+    microsoft::get_account(uuid).await
 }
 
 #[command]
-async fn cmd_relogin_account(
+async fn cmd_delete_microsoft_account(uuid: Uuid) -> Result<()> {
+    microsoft::delete_account(uuid).await
+}
+
+#[command]
+async fn cmd_add_microsoft_account(account: MicrosoftAccount) -> Result<()> {
+    microsoft::add_account(account).await
+}
+
+#[command]
+async fn cmd_update_microsoft_account(uuid: Uuid, account: MicrosoftAccount) -> Result<()> {
+    microsoft::update_account(uuid, &account).await
+}
+
+#[derive(Serialize)]
+struct GetAccessTokenResult {
+    access_token: String,
+    refresh_token: String,
+}
+
+#[command]
+async fn cmd_get_access_token(code: String) -> Result<GetAccessTokenResult> {
+    let (access_token, refresh_token) = microsoft::get_access_token(&code).await?;
+    Ok(GetAccessTokenResult {
+        access_token,
+        refresh_token,
+    })
+}
+
+#[command]
+async fn cmd_microsoft_access_token_auth_flow(
+    access_token: String,
+    refresh_token: String,
+) -> Result<MicrosoftAccount> {
+    microsoft::access_token_auth_flow(&access_token, &refresh_token).await
+}
+
+#[command]
+async fn cmd_refresh_microsoft_account(
     uuid: Uuid,
-    account_type: AccountType,
-    credential: String,
-) -> Result<()> {
-    match account_type {
-        AccountType::Microsoft => microsoft::relogin_account(uuid, credential).await?,
-        AccountType::AuthlibInjector => authlib_injector::relogin_account(uuid, credential).await?,
-        AccountType::Offline => (),
-    };
-    Ok(())
+    force_refresh: bool,
+) -> Result<MicrosoftAccount> {
+    microsoft::refresh_account(uuid, force_refresh).await
 }
 
 #[command]
-fn cmd_get_microsoft_account(uuid: Uuid) -> Result<MicrosoftAccount> {
-    microsoft::get_account(uuid)
+async fn cmd_request_device_code() -> Result<DeviceCodeResponse> {
+    microsoft::device_code::request_device_code().await
 }
 
 #[command]
-fn cmd_delete_microsoft_account(uuid: Uuid) -> Result<()> {
-    microsoft::delete_account(uuid)
-}
-
-#[command]
-async fn cmd_refresh_all_microsoft_accounts() -> Result<()> {
-    microsoft::refresh_all_accounts().await
-}
-
-#[command]
-async fn cmd_refresh_microsoft_account(uuid: Uuid) -> Result<MicrosoftAccount> {
-    microsoft::refresh_account(uuid).await
-}
-
-#[command]
-async fn cmd_add_microsoft_account(code: String) -> Result<()> {
-    microsoft::add_account(code).await
+async fn cmd_poll_device_code(device_code: String) -> Result<DeviceCodePollResult> {
+    microsoft::device_code::poll_device_code(&device_code).await
 }
 
 #[command]
@@ -202,48 +174,81 @@ fn cmd_get_offline_account(uuid: Uuid) -> Result<OfflineAccount> {
 
 #[command]
 async fn cmd_add_yggdrasil_server(api_root: String) -> Result<()> {
-    authlib_injector::add_yggdrasil_server(&api_root).await
+    yggdrasil::yggdrasil_server::add(&api_root).await
 }
 
 #[command]
-fn cmd_delete_yggdrasil_server(index_to_delete: usize) -> Result<()> {
-    authlib_injector::delete_yggdrasil_server(index_to_delete)
+async fn cmd_delete_yggdrasil_server(index_to_delete: usize) -> Result<()> {
+    yggdrasil::yggdrasil_server::delete(index_to_delete).await
 }
 
 #[command]
-fn cmd_list_yggdrasil_server() -> Result<Vec<String>> {
-    authlib_injector::list_yggdrasil_server()
+async fn cmd_list_yggdrasil_server() -> Result<Vec<String>> {
+    yggdrasil::yggdrasil_server::list_all().await
 }
 
 #[command]
 async fn cmd_get_yggdrasil_server_info(api_root: String) -> Result<YggdrasilServerInfo> {
-    authlib_injector::get_yggdrasil_server_info(&api_root).await
+    yggdrasil::yggdrasil_server::get_server_info(&api_root).await
 }
 
 #[command]
-async fn cmd_yggdrasil_login(
+async fn cmd_yggdrasil_authenticate_account(
     api_root: String,
     username: String,
     password: String,
-) -> Result<LoginResponse> {
-    authlib_injector::login(&api_root, username, password).await
+) -> Result<AuthResponse> {
+    yggdrasil::yggdrasil_user_api::authenticate(&api_root, username, password).await
 }
 
 #[command]
-fn cmd_add_authlib_account(account: AuthlibInjectorAccount) -> Result<()> {
-    authlib_injector::add_account(account)
+async fn cmd_yggdrasil_validate_account(account: YggdrasilAccount) -> Result<bool> {
+    yggdrasil::yggdrasil_user_api::is_account_token_valid(account).await
 }
 
 #[command]
-async fn cmd_delete_authlib_account(account_key: Uuid) -> Result<()> {
-    authlib_injector::delete_account(account_key).await
+async fn cmd_yggdrasil_refresh_account(account: YggdrasilAccount) -> Result<YggdrasilAccount> {
+    yggdrasil::yggdrasil_user_api::refresh(account).await
 }
 
 #[command]
-async fn cmd_get_authlib_profile_info(api_root: String, uuid: Uuid) -> Result<Profile> {
-    authlib_injector::get_profile_info(&api_root, uuid).await
+async fn cmd_yggdrasil_invalidate_account(
+    api_root: String,
+    access_token: String,
+    client_token: String,
+) -> Result<()> {
+    yggdrasil::yggdrasil_user_api::invalidate(&api_root, access_token, client_token).await
 }
+
 #[command]
-fn cmd_get_authlib_account(account_key: Uuid) -> Result<AuthlibInjectorAccount> {
-    authlib_injector::get_account(account_key)
+async fn cmd_yggdrasil_get_profile(
+    api_root: &str,
+    uuid: Uuid,
+) -> Result<yggdrasil::yggdrasil_user_api::Profile> {
+    yggdrasil::yggdrasil_user_api::get_profile(api_root, uuid).await
+}
+
+#[command]
+async fn cmd_add_yggdrasil_account(account: YggdrasilAccount) -> Result<()> {
+    yggdrasil::add_account(account).await
+}
+
+#[command]
+async fn cmd_delete_yggdrasil_account(account_key: Uuid) -> Result<()> {
+    yggdrasil::delete_account(account_key).await
+}
+
+#[command]
+async fn cmd_get_yggdrasil_account(account_key: Uuid) -> Result<YggdrasilAccount> {
+    yggdrasil::get_account(account_key).await
+}
+
+#[command]
+async fn cmd_list_yggdrasil_accounts() -> Result<HashMap<Uuid, YggdrasilAccount>> {
+    yggdrasil::list_accounts().await
+}
+
+#[command]
+async fn cmd_update_yggdrasil_account(account_key: Uuid, account: YggdrasilAccount) -> Result<()> {
+    yggdrasil::update_account(account_key, account).await
 }

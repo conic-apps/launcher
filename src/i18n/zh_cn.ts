@@ -11,6 +11,14 @@ export default {
         game: "游戏",
         market: "市场",
         settings: "设置",
+        account: "账户",
+    },
+    home: {
+        showAll: "显示全部",
+    },
+    accounts: {
+        title: "管理游戏帐号",
+        description: "添加、删除或选择要使用的游戏帐号",
     },
     game: {
         latestRelease: "最新版本",

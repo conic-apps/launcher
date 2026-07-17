@@ -42,7 +42,6 @@ async function ensureLatestInstancesExistance() {
 
 await ensureLatestInstancesExistance()
 const listedInstances = await listInstances("Name") // TODO: Error handling, show error dialog
-console.log(listedInstances)
 
 export const useInstanceStore = defineStore("instance", () => {
     const instances = ref(listedInstances)

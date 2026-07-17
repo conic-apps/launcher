@@ -56,9 +56,6 @@ pub enum Error {
     #[error("This profile is no longer available")]
     ProfileUnavailable,
 
-    #[error("Cannot check ownership")]
-    OwnershipCheckFailed,
-
     #[error("{0}")]
     MicrosoftResponseMissingKey(String),
 

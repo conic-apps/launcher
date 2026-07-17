@@ -1,39 +1,50 @@
 <template>
   <div
-    class="win-btn"
+    class="win-btn win-btn-minimize"
     v-if="buttonType === 'minimize'"
-    style="background: var(--min-button-background)"
-    @click="$emit(buttonType)">
-    <AppIcon name="minus" :size="13"></AppIcon>
-  </div>
+    :style="{ background: appWindowFocused ? 'rgb(254,188,46)' : '#4E4E4E' }"
+    @click="$emit(buttonType)"></div>
   <div
-    class="win-btn"
+    class="win-btn win-btn-maximize"
     v-else-if="buttonType === 'maximize'"
-    style="background: var(--max-button-background)"
-    @click="$emit(buttonType)">
-    <AppIcon name="expand-2" :size="13"></AppIcon>
-  </div>
+    :style="{ background: appWindowFocused ? 'rgb(97,197,84)' : '#4E4E4E' }"
+    @click="$emit(buttonType)"></div>
   <div
-    class="win-btn"
+    class="win-btn win-btn-close"
     v-else-if="buttonType === 'close'"
-    style="background: var(--close-button-background)"
-    @click="$emit(buttonType)">
-    <AppIcon name="xmark" :size="13"></AppIcon>
-  </div>
+    :style="{ background: appWindowFocused ? 'rgb(255,95,87)' : '#4E4E4E' }"
+    @click="$emit(buttonType)"></div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { ref } from "vue";
+import { window as appWindow } from "@tauri-apps/api";
+import { Event } from "@tauri-apps/api/event";
+
+const props = defineProps<{
   buttonType: "minimize" | "maximize" | "close";
 }>();
 
 defineEmits(["minimize", "maximize", "close"]);
+
+const appWindowFocused = ref(true);
+
+appWindow
+  .getCurrentWindow()
+  .isFocused()
+  .then((focused) => {
+    appWindowFocused.value = focused;
+  });
+
+appWindow.getCurrentWindow().onFocusChanged((event: Event<boolean>) => {
+  appWindowFocused.value = event.payload;
+});
 </script>
 
 <style lang="less" scoped>
 div.win-btn {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   margin-left: 8px;
   display: flex;
@@ -49,19 +60,7 @@ div.win-btn {
     justify-content: center;
   }
 
-  svg {
-    opacity: 0;
-  }
-}
-
-div.win-btn:hover > svg {
-  opacity: 1;
-  fill: var(--window-btn-icon-color);
-}
-
-div.win-btn:active {
-  transform: scale(0.9);
-  > svg {
+  &:active {
     opacity: 0.8;
   }
 }

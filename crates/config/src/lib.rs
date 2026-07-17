@@ -4,7 +4,7 @@
 
 //! App configuration
 
-use account::AccountType;
+use account::Account;
 use folder::DATA_LOCATION;
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,6 @@ use tauri::{
     Runtime, command,
     plugin::{Builder, TauriPlugin},
 };
-use uuid::Uuid;
 
 pub mod download;
 pub mod error;
@@ -178,11 +177,10 @@ pub struct Config {
     /// Whether automatic updates are enabled.
     pub auto_update: bool,
 
-    /// The UUID of the currently selected account.
-    pub current_account_uuid: Uuid,
-
-    /// The UUID of the currently selected account.
-    pub current_account_type: AccountType,
+    /// The account identifier and type of the currently selected account.
+    /// For yggdrasil account, the identifier is account_key
+    /// For Microsoft and offline account, the identifier is its profile UUID.
+    pub current_account: Option<Account>,
 
     /// Appearance-related settings.
     pub appearance: AppearanceConfig,
@@ -209,16 +207,7 @@ impl Default for Config {
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
-            current_account_uuid: {
-                match account::microsoft::list_accounts()
-                    .unwrap_or_default()
-                    .first()
-                {
-                    Some(x) => x.to_owned().profile.uuid,
-                    None => uuid::uuid!("00000000-0000-0000-0000-000000000000"),
-                }
-            },
-            current_account_type: AccountType::Microsoft,
+            current_account: None,
             auto_update: true,
             language: get_system_language(),
             update_channel: UpdateChannel::default(),

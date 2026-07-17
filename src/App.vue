@@ -5,14 +5,7 @@
 <template>
   <div class="window" data-tauri-drag-region>
     <div class="title-bar" data-tauri-drag-region>
-      <div
-        style="
-          display: flex;
-          width: calc(100vw - 500px);
-          margin-left: 160px;
-          flex-shrink: 0;
-          align-items: center;
-        ">
+      <div class="title-bar-container">
         <search-bar style="width: 100%" :placeholder="$t('globalSearch.placeholder')"></search-bar>
       </div>
       <div class="window-buttons-container window-buttons-container-macos" v-if="isMacOS()">
@@ -22,7 +15,9 @@
           @minimize="appWindow.getCurrentWindow().minimize()"></WindowButton>
         <WindowButton
           button-type="maximize"
-          @maximize="appWindow.getCurrentWindow().maximize()"></WindowButton>
+          @maximize="
+            appWindow.getCurrentWindow().setFullscreen(!appWindow.getCurrentWindow().isFullscreen())
+          "></WindowButton>
       </div>
       <div class="window-buttons-container" v-else>
         <WindowButton
@@ -35,18 +30,17 @@
       </div>
     </div>
     <div class="sidebar" :class="{ 'sidebar-macos': isMacOS() }" data-tauri-drag-region>
-      <component :is="Logo" height="40" style="margin-top: 24px"></component>
       <ul class="sidebar-items" data-tauri-drag-region>
+        <sidebar-item
+          title="Accounts"
+          icon="person-circle-outline"
+          @click="changePage($event, 'accounts')"
+          id="sidebar-home"></sidebar-item>
         <sidebar-item
           :title="$t('sidebar.home')"
           icon="house"
           @click="changePage($event, 'home')"
           id="sidebar-home"></sidebar-item>
-        <sidebar-item
-          :title="$t('sidebar.game')"
-          icon="gamepad"
-          @click="changePage($event, 'game')"
-          id="sidebar-game"></sidebar-item>
         <sidebar-item
           :title="$t('sidebar.market')"
           icon="earth"
@@ -70,20 +64,21 @@
 </template>
 
 <script setup lang="ts">
-import Logo from "@/assets/logo.svg";
 import WindowButton from "./components/WindowButton.vue";
 import SearchBar from "./components/SearchBar.vue";
 import SidebarItem from "./components/SidebarItem.vue";
 import HomeView from "./views/HomeView.vue";
-import GameView from "./views/GameView.vue";
 import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
+import AccountsView from "./views/AccountsView.vue";
 import DialogRoot from "./DialogRoot.vue";
 import { markRaw, onMounted, reactive, ref, shallowRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfigStore } from "./store/config";
 import { loadPalette } from "./theme";
 import { window as appWindow } from "@tauri-apps/api";
+import { listAccounts, getAvatar } from "@conic/account";
+import steveAvatar from "@/assets/images/steve_avatar.webp";
 
 const config = useConfigStore();
 loadPalette(
@@ -94,11 +89,31 @@ loadPalette(
   config.accessibility.high_contrast_mode,
 );
 
+const currentAvatar = ref<string | null>(null);
+
+async function updateAvatar() {
+  if (!config.current_account) {
+    currentAvatar.value = null;
+    return;
+  }
+  try {
+    const accounts = await listAccounts();
+    const account = accounts.microsoft.find((a) => a.profile.uuid === config.current_account[0]);
+    if (account && account.profile.skins.length > 0) {
+      currentAvatar.value = await getAvatar(account.profile.skins[0].url, 32);
+    } else {
+      currentAvatar.value = null;
+    }
+  } catch {
+    currentAvatar.value = null;
+  }
+}
+
 const pages = reactive({
   settings: markRaw(SettingsView),
   home: markRaw(HomeView),
   market: markRaw(MarketView),
-  game: markRaw(GameView),
+  accounts: markRaw(AccountsView),
 });
 const transitionName = ref("slide-up");
 const currentComponent = shallowRef(pages.home);
@@ -109,7 +124,7 @@ watch(config, () => {
   i18n.locale.value = config.language;
 });
 
-type ComponentName = "home" | "settings" | "game" | "market";
+type ComponentName = "home" | "settings" | "market" | "accounts";
 
 function changePage(event: MouseEvent | null, component: ComponentName) {
   // TODO: Add class active for event element
@@ -126,6 +141,7 @@ function jumpTo(name: ComponentName) {
 
 onMounted(() => {
   console.log("Frontend loaded");
+  updateAvatar();
   requestAnimationFrame(() => {
     document.body.style.transform = "scale(1)";
     document.body.style.opacity = "1";
@@ -135,6 +151,11 @@ onMounted(() => {
     }, 500);
   });
 });
+
+watch(
+  () => config.current_account,
+  () => updateAvatar(),
+);
 
 function closeWindow() {
   requestAnimationFrame(() => {
@@ -168,6 +189,14 @@ function isMacOS() {
   align-items: center;
   justify-content: space-between;
 
+  .title-bar-container {
+    display: flex;
+    width: calc(100vw - 500px);
+    margin-left: 160px;
+    flex-shrink: 0;
+    align-items: center;
+  }
+
   .account {
     background: var(--controllers-background);
     border: var(--controllers-border);
@@ -175,36 +204,6 @@ function isMacOS() {
     display: flex;
     align-items: center;
     padding: 4px 8px;
-
-    .avatar {
-      width: 22px;
-      height: 22px;
-      top: 13px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 160px;
-      flex-shrink: 0;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      margin-right: 8px;
-
-      img {
-        width: 100%;
-        height: 100%;
-      }
-    }
-
-    .avatar:active {
-      transform: scale(0.92);
-    }
-
-    span {
-      opacity: 0.9;
-      font-size: 14px;
-    }
   }
 }
 
@@ -214,11 +213,37 @@ function isMacOS() {
   flex-direction: column;
   align-items: center;
 
-  .logo {
-    width: 40px;
-    height: 40px;
-    margin-top: 20px;
-    pointer-events: none;
+  .sidebar-avatar {
+    width: 48px;
+    height: 46px;
+    margin-top: 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    justify-content: center;
+
+    img.avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-default {
+      filter: grayscale(1);
+      image-rendering: pixelated;
+    }
+
+    .text {
+      font-size: 10px;
+      margin-top: 6px;
+    }
+
+    &:active {
+      opacity: 0.6;
+      transform: scale(0.97);
+    }
   }
   .sidebar-items {
     width: 100%;
@@ -232,7 +257,7 @@ function isMacOS() {
 }
 
 .sidebar-macos {
-  padding-top: 24px;
+  padding-top: 36px;
 }
 
 main.main {
@@ -242,11 +267,9 @@ main.main {
   height: calc(100vh - 44px);
   width: calc(100vw - 64px);
   border: var(--main-border);
-  border-radius: 16px;
   border-bottom: unset;
   border-right: unset;
-  border-bottom-left-radius: unset;
-  border-top-right-radius: unset;
+  border-radius: 16px 0 16px 0;
   background: var(--main-background);
 }
 

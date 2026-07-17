@@ -11,6 +11,14 @@ export default {
         game: "Game",
         market: "Market",
         settings: "Settings",
+        account: "Account",
+    },
+    home: {
+        showAll: "Show All",
+    },
+    accounts: {
+        title: "Manage Accounts",
+        description: "Add, remove or select game accounts",
     },
     game: {
         latestRelease: "Latest Release",

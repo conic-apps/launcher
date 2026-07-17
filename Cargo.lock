@@ -6,6 +6,7 @@ version = 4
 name = "account"
 version = "0.0.0"
 dependencies = [
+ "async-fs",
  "base64 0.22.1",
  "folder",
  "log",
@@ -2103,6 +2104,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
+ "sha2",
  "shared",
  "tauri",
  "thiserror 2.0.18",

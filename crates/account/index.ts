@@ -4,39 +4,31 @@
 
 import { invoke } from "@tauri-apps/api/core"
 
-export type AccountError = {
-    kind:
-        | "Io"
-        | "UrlParse"
-        | "JsonParse"
-        | "ToStr"
-        | "Network"
-        | "AccountNotfound"
-        | "ProfileUnavailable"
-        | "OwnershipCheckFailed"
-        | "MicrosoftResponseMissingKey"
-        | "InvalidALIResponse"
-    message: string
-}
+export type AccountError =
+    | { kind: "Io"; message: string }
+    | { kind: "UrlParse"; message: string }
+    | { kind: "JsonParse"; message: string }
+    | { kind: "ToStr"; message: string }
+    | { kind: "Network"; message: string }
+    | { kind: "AccountNotfound"; message: string }
+    | { kind: "ProfileUnavailable"; message: string }
+    | { kind: "OwnershipCheckFailed"; message: string }
+    | { kind: "MicrosoftResponseMissingKey"; message: string }
+    | { kind: "InvalidALIResponse"; message: string }
+
+export type AccountType = "Microsoft" | "Offline" | "AuthlibInjector"
 
 export type Accounts = {
     microsoft: MicrosoftAccount[]
     offline: OfflineAccount[]
-    authlib_injector: Map<string, AuthlibInjectorAccount>
-}
-
-export enum AccountType {
-    Microsoft = "Microsoft",
-    Offline = "Offline",
-    AuthlibInjector = "AuthlibInjector",
+    authlib_injector: Record<string, AuthlibInjectorAccount>
 }
 
 export type MicrosoftAccount = {
-    refresh_token?: string
-    access_token?: string
-    expires_on?: number
+    refresh_token: string
+    access_token: string
+    expires_on: number
     profile: {
-        avatar: string
         profile_name: string
         uuid: string
         skins: {
@@ -53,16 +45,80 @@ export type MicrosoftAccount = {
             url: string
         }[]
     }
-    account_type: "Microsoft" | "Offline"
+}
+
+export type OfflineAccount = {
+    name: string
+    uuid: string
+    skin?: string
+}
+
+export type AuthlibInjectorAccount = {
+    api_root: string
+    account_identifier: string
+    access_token: string
+    client_token: string
+    profile_name: string
+    profile_uuid: string
+    added_at: number
+}
+
+export type YggdrasilServerInfo = {
+    meta: Record<string, unknown>
+    skinDomains: string[]
+    signaturePublicKey: string
+}
+
+export type DeviceCodeResponse = {
+    user_code: string
+    device_code: string
+    verification_uri: string
+    expires_in: number
+    interval: number
+    message: string
+}
+
+export type DeviceCodePollResult = {
+    status:
+        | "success"
+        | "authorization_pending"
+        | "authorization_declined"
+        | "bad_verification_code"
+        | "expired_token"
+        | "slow_down"
+    access_token: string | null
+    refresh_token: string | null
+    expires_in: number | null
+}
+
+export type LoginResponse = {
+    accessToken: string
+    clientToken: string
+    availableProfiles: {
+        id: string
+        name: string
+    }[]
+    selectedProfile?: {
+        id: string
+        name: string
+    }
+}
+
+export type AuthlibProfile = {
+    id: string
+    name: string
+    properties: {
+        name: string
+        value: string
+    }[]
 }
 
 export async function listAccounts(): Promise<Accounts> {
     return await invoke("plugin:account|cmd_list_accounts")
 }
 
-export async function getMicrosoftAccount(uuid: string): Promise<MicrosoftAccount[]> {
-    // return await invoke("plugin:account|cmd_get_microsoft_account", { uuid })
-    return []
+export async function getMicrosoftAccount(uuid: string): Promise<MicrosoftAccount> {
+    return await invoke("plugin:account|cmd_get_microsoft_account", { uuid })
 }
 
 export async function deleteMicrosoftAccount(uuid: string) {
@@ -70,21 +126,23 @@ export async function deleteMicrosoftAccount(uuid: string) {
 }
 
 export async function addMicrosoftAccount(code: string) {
-    return await invoke("plugin:account|cmd_add_microsoft_account", { code })
+    await invoke("plugin:account|cmd_add_microsoft_account", { code })
+}
+
+export async function requestDeviceCode(): Promise<DeviceCodeResponse> {
+    return await invoke("plugin:account|cmd_request_device_code")
+}
+
+export async function pollDeviceCode(deviceCode: string): Promise<DeviceCodePollResult> {
+    return await invoke("plugin:account|cmd_poll_device_code", { deviceCode })
 }
 
 export async function refreshAllMicrosoftAccounts() {
     await invoke("plugin:account|cmd_refresh_all_microsoft_accounts")
 }
 
-export async function refreshMicrosoftAccount(uuid: string) {
-    await invoke("plugin:account|cmd_refresh_microsoft_account", { uuid })
-}
-
-export type OfflineAccount = {
-    name: string
-    uuid: string
-    skin?: string
+export async function refreshMicrosoftAccount(uuid: string): Promise<MicrosoftAccount> {
+    return await invoke("plugin:account|cmd_refresh_microsoft_account", { uuid })
 }
 
 export async function addOfflineAccount(name: string) {
@@ -99,7 +157,7 @@ export async function updateOfflineAccount(account: OfflineAccount) {
     await invoke("plugin:account|cmd_update_offline_account", { account })
 }
 
-export async function getOfflineAccount(uuid: string): Promise<OfflineAccount[]> {
+export async function getOfflineAccount(uuid: string): Promise<OfflineAccount> {
     return await invoke("plugin:account|cmd_get_offline_account", { uuid })
 }
 
@@ -119,13 +177,6 @@ export async function getYggdrasilServerInfo(apiRoot: string): Promise<Yggdrasil
     return await invoke("plugin:account|cmd_get_yggdrasil_server_info", { apiRoot })
 }
 
-export type YggdrasilServerInfo = {
-    // eslint-disable-next-line
-    meta: NonNullable<any>
-    skinDomains: string[]
-    signaturePublicKey: string
-}
-
 export async function yggdrasilLogin(
     apiRoot: string,
     username: string,
@@ -134,48 +185,19 @@ export async function yggdrasilLogin(
     return await invoke("plugin:account|cmd_yggdrasil_login", { apiRoot, username, password })
 }
 
-export type LoginResponse = {
-    accessToken: string
-    clientToken: string
-    availableProfiles: {
-        id: string
-        name: string
-    }[]
-    selectedProfile?: {
-        id: string
-        name: string
-    }
-}
-
 export async function addAuthlibAccount(account: AuthlibInjectorAccount) {
     await invoke("plugin:account|cmd_add_authlib_account", { account })
-}
-
-export type AuthlibInjectorAccount = {
-    api_root: string
-    account_identifier: string
-    access_token: string
-    client_token: string
-    profile_name: string
-    profile_uuid: string
-    added_at: number
 }
 
 export async function deleteAuthlibAccount(accountKey: string) {
     await invoke("plugin:account|cmd_delete_authlib_account", { accountKey })
 }
 
-export async function getAuthlibProfileInfo(apiRoot: string, uuid: string): Promise<Profile> {
+export async function getAuthlibProfileInfo(
+    apiRoot: string,
+    uuid: string,
+): Promise<AuthlibProfile> {
     return await invoke("plugin:account|cmd_get_authlib_profile_info", { apiRoot, uuid })
-}
-
-export type Profile = {
-    id: string
-    name: string
-    properties: {
-        name: string
-        value: string
-    }[]
 }
 
 export async function getAuthlibAccount(accountKey: string): Promise<AuthlibInjectorAccount> {
@@ -196,7 +218,7 @@ export async function getAvatar(src: string, size: number): Promise<string> {
     }
     const img = new Image()
     img.src = src
-    await new Promise<void>((reslove) => {
+    await new Promise<void>((resolve) => {
         img.onload = function () {
             const scale = img.width / 64
             const faceOffset = Math.round(size / 18.0)
@@ -224,7 +246,7 @@ export async function getAvatar(src: string, size: number): Promise<string> {
                 size,
                 size,
             )
-            reslove()
+            resolve()
         }
     })
     return canvas.toDataURL("image/png")

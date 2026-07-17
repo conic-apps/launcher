@@ -89,16 +89,13 @@ impl MinecraftLocation {
     pub fn get_log_config<P: AsRef<Path>>(&self, version_id: P) -> PathBuf {
         self.get_version_root(version_id).join("log4j2.xml")
     }
-
-    pub fn get_authlib_injector<P: AsRef<Path>>(&self, version_id: P) -> PathBuf {
-        self.get_version_root(version_id)
-            .join("authlib-injector.jar")
-    }
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct DataLocation {
     pub root: PathBuf,
+    pub accounts: PathBuf,
+    pub authlib_injector: PathBuf,
     pub instances: PathBuf,
     pub cache: PathBuf,
     pub logs: PathBuf,
@@ -121,6 +118,8 @@ impl DataLocation {
         ));
         std::fs::create_dir_all(&temp_path).expect("Could not create temp dir");
         Self {
+            accounts: data_folder_root.join("accounts"),
+            authlib_injector: data_folder_root.join("authlib-injector.jar"),
             instances: data_folder_root.join("instances"),
             cache: match PLATFORM_INFO.os_family {
                 OsFamily::Macos => data_folder_root.join(".cache"),

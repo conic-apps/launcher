@@ -4,10 +4,9 @@
 
 <template>
   <div class="home-view">
-    <CurrentInstance></CurrentInstance>
-    <!-- <div class="current-instance-details"></div> -->
-    <instance-details style="margin-top: 16px"></instance-details>
-    <InstanceDrawer></InstanceDrawer>
+    <!-- <CurrentInstance></CurrentInstance> -->
+    <!-- <instance-details style="margin-top: 16px"></instance-details> -->
+    <!-- <InstanceDrawer></InstanceDrawer> -->
   </div>
 </template>
 

@@ -42,6 +42,8 @@
     "account:allow-cmd-get-authlib-profile-info",
     "account:allow-cmd-get-authlib-account",
     "account:allow-cmd-relogin-account",
+    "account:allow-cmd-request-device-code",
+    "account:allow-cmd-poll-device-code",
     "install:allow-cmd-get-minecraft-version-list",
     "install:allow-cmd-get-fabric-version-list",
     "install:allow-cmd-get-quilt-version-list",
