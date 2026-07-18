@@ -35,7 +35,7 @@ impl XboxAuthBody {
             properties: XboxAuthProperties {
                 auth_method: "RPS".to_string(),
                 site_name: "user.auth.xboxlive.com".to_string(),
-                rps_ticket: access_token.to_string(),
+                rps_ticket: format!("d={access_token}"),
             },
             relying_party: "http://auth.xboxlive.com".to_string(),
             token_type: "JWT".to_string(),

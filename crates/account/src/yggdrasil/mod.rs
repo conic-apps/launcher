@@ -2,12 +2,9 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{collections::HashMap, fs::read_to_string};
+use std::collections::HashMap;
 
 use folder::DATA_LOCATION;
-use serde::{Deserialize, Serialize};
-use shared::HTTP_CLIENT;
-use url::Url;
 use uuid::Uuid;
 
 use crate::error::*;

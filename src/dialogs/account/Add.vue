@@ -11,7 +11,11 @@
 </template>
 
 <script lang="ts" setup>
-import { addMicrosoftAccount } from "@conic/account";
+import {
+    redeemAccessToken,
+    microsoftAccessTokenAuthFlow,
+    addMicrosoftAccount,
+} from "@conic/account";
 import { ref, watch } from "vue";
 
 // https://login.live.com/oauth20_authorize.srf?client_id=00000000402b5328&response_type=code&prompt=select_account&scope=service%3A%3Auser.auth.xboxlive.com%3A%3AMBI_SSL&redirect_uri=https%3A%2F%2Flogin.live.com%2Foauth20_desktop.srf
@@ -32,7 +36,12 @@ watch(redirect, (value) => {
     return;
   }
   const code = value.substring(PREF.length).split("&")[0].split("=")[1];
-  addMicrosoftAccount(code);
+  const tokenResult = await redeemAccessToken(code);
+  const account = await microsoftAccessTokenAuthFlow(
+    tokenResult.access_token,
+    tokenResult.refresh_token,
+  );
+  await addMicrosoftAccount(account);
 });
 </script>
 

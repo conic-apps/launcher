@@ -5,7 +5,7 @@ use shared::HTTP_CLIENT;
 use crate::error::*;
 
 #[derive(Clone, Serialize, Deserialize)]
-pub(crate) struct DeviceCodeResponse {
+pub struct DeviceCodeResponse {
     pub user_code: String,
     pub device_code: String,
     pub verification_uri: String,
@@ -14,7 +14,7 @@ pub(crate) struct DeviceCodeResponse {
     pub message: String,
 }
 
-pub(crate) async fn request_device_code() -> Result<DeviceCodeResponse> {
+pub async fn request_device_code() -> Result<DeviceCodeResponse> {
     Ok(HTTP_CLIENT
         .post("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode")
         .header("Content-Type", "application/x-www-form-urlencoded")
@@ -29,14 +29,14 @@ pub(crate) async fn request_device_code() -> Result<DeviceCodeResponse> {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub(crate) struct DeviceCodePollResult {
+pub struct DeviceCodePollResult {
     pub status: String,
     pub access_token: Option<String>,
     pub refresh_token: Option<String>,
     pub expires_in: Option<u64>,
 }
 
-pub(crate) async fn poll_device_code(device_code: &str) -> Result<DeviceCodePollResult> {
+pub async fn poll_device_code(device_code: &str) -> Result<DeviceCodePollResult> {
     let response: Value = HTTP_CLIENT
         .post("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
         .header("Content-Type", "application/x-www-form-urlencoded")

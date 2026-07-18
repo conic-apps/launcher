@@ -26,7 +26,7 @@ struct ProfileResponse {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct AuthResponse {
+pub struct AuthResponse {
     access_token: String,
     client_token: String,
     available_profiles: Vec<ProfileResponse>,
@@ -87,7 +87,7 @@ pub async fn is_account_token_valid(account: YggdrasilAccount) -> Result<bool> {
         .await?
         .status()
         .as_u16();
-    return Ok(status == 204);
+    Ok(status == 204)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -157,7 +157,7 @@ pub async fn invalidate(api_root: &str, access_token: String, client_token: Stri
 }
 
 #[derive(Serialize, Deserialize)]
-pub(crate) struct Profile {
+pub struct Profile {
     id: String,
     name: String,
     properties: Vec<ProfileProperty>,

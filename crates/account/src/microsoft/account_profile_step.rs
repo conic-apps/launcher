@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::error::*;
 
 #[derive(Clone, Serialize, Deserialize)]
-struct Skin {
+pub struct Skin {
     pub id: String,
     pub state: String,
     #[serde(rename(serialize = "textureKey", deserialize = "textureKey"))]
@@ -17,7 +17,7 @@ struct Skin {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-struct Cape {
+pub struct Cape {
     pub alias: String,
     pub id: String,
     pub state: String,
@@ -25,14 +25,14 @@ struct Cape {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub(crate) struct Profile {
+pub struct Profile {
     pub profile_name: String,
     pub uuid: Uuid,
     pub skins: Vec<Skin>,
     pub capes: Vec<Cape>,
 }
 
-pub(super) async fn generate_account_profile(minecraft_profile_response: Value) -> Result<Profile> {
+pub async fn generate_account_profile(minecraft_profile_response: Value) -> Result<Profile> {
     Ok(Profile {
         profile_name: serde_json::from_value(minecraft_profile_response["name"].clone())?,
         uuid: serde_json::from_value(minecraft_profile_response["id"].clone())?,

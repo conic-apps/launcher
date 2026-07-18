@@ -66,3 +66,13 @@ body {
 .saving-instance-settings * {
     pointer-events: none !important
 }
+
+a {
+    color: var(--link-color);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a:hover {
+    text-decoration: underline;
+}

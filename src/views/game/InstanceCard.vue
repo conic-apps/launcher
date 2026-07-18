@@ -285,7 +285,7 @@ button.game-button {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background-image: linear-gradient(248deg, #189e47, #41a126);
+  background: var(--game-launch-button-background);
   transition: all 0.1s ease;
 
   i.launch::before {

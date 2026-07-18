@@ -51,7 +51,7 @@ const pages = reactive({
   view: markRaw(View),
   add: markRaw(Add),
 });
-const currentComponent: Ref<Component> = shallowRef(pages.view);
+const currentComponent = shallowRef<Component>(pages.view);
 const transitionName = ref("slide-left");
 
 function addAccount() {

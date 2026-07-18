@@ -155,8 +155,7 @@ const modLoaderLogo = computed(() => {
       opacity: 0.9;
     }
     .game-button-launch {
-      // background-image: linear-gradient(248deg, #189e47, #41a126);
-      background-color: #40a02b;
+      background-color: var(--game-launch-button-background);
     }
   }
 }

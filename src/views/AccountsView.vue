@@ -7,6 +7,7 @@
     <Transition name="entrance" mode="out-in">
       <component
         :is="currentComponent"
+        :accounts="accounts"
         @switch-component-add="currentComponent = components.add"
         @switch-component-back="currentComponent = components.list"></component>
     </Transition>
@@ -14,23 +15,23 @@
 </template>
 
 <script setup lang="ts">
-import { type Component, computed, markRaw, Ref, ref, ShallowRef, shallowRef, watch } from "vue";
+import { type Component, computed, markRaw, ShallowRef, shallowRef, watch } from "vue";
 import AccountList from "./accounts/AccountList.vue";
 import AccountAdd from "./accounts/AccountAdd.vue";
-import { Accounts } from "@conic/account";
-import { useConfigStore } from "@/store/config";
+import { useAccountStore } from "@/store/account";
 
 const components = {
   list: markRaw(AccountList),
   add: markRaw(AccountAdd),
 };
 
-const accounts: Ref<Accounts | null> = ref(null);
-const configStore = useConfigStore();
+const accounts = useAccountStore();
 const hasAccounts = computed(() => {
+  console.log(accounts.third_party_yggdrasil);
+  console.log(accounts.microsoft);
+  console.log(accounts.offline);
   return (
-    accounts.value &&
-    (accounts.value.authlib_injector || accounts.value.microsoft || accounts.value.offline)
+    accounts.third_party_yggdrasil.length || accounts.microsoft.length || accounts.offline.length
   );
 });
 watch(hasAccounts, (value, oldValue) => {

@@ -359,6 +359,9 @@ body.theme-Mocha-hc {
   --selected-text-background: var(--ctp-mocha-mauve);
   --game-install-button-background: var(--ctp-mocha-blue);
   --game-launch-button-background: var(--ctp-mocha-green);
+  --link-color: var(--ctp-mocha-blue);
+  --window-btn-unfocused-color: #4E4E4E;
+  --window-btn-border: none;
 }
 
 body.theme-Mocha-hc .title-bar .search-bar {
@@ -404,6 +407,9 @@ body.theme-Macchiato-hc {
   --selected-text-background: var(--ctp-macchiato-mauve);
   --game-install-button-background: var(--ctp-macchiato-blue);
   --game-launch-button-background: var(--ctp-macchiato-green);
+  --link-color: var(--ctp-macchiato-blue);
+  --window-btn-unfocused-color: #4E4E4E;
+  --window-btn-border: none;
 }
 
 body.theme-Macchiato-hc .title-bar .search-bar {
@@ -450,6 +456,9 @@ body.theme-Frappe-hc {
   --selected-text-background: var(--ctp-frappe-mauve);
   --game-install-button-background: var(--ctp-frappe-blue);
   --game-launch-button-background: var(--ctp-frappe-green);
+  --link-color: var(--ctp-frappe-blue);
+  --window-btn-unfocused-color: #4E4E4E;
+  --window-btn-border: none;
 }
 
 body.theme-Frappe-hc .title-bar .search-bar {
@@ -501,6 +510,9 @@ body.theme-Latte-hc {
     --selected-text-background: var(--ctp-latte-mauve);
     --game-install-button-background: var(--ctp-latte-blue);
     --game-launch-button-background: var(--ctp-latte-green);
+    --link-color: var(--ctp-latte-blue);
+    --window-btn-unfocused-color: #D4D4D4;
+    --window-btn-border: 0.3px solid #bdbdbd;
 }
 
 body.theme-Latte-hc code {

@@ -5,10 +5,7 @@
 <template>
   <div>
     <SettingGroup>
-      <SettingItem
-        :title="$t('settings.general.language')"
-        :description="$t('settings.general.languageDesc')"
-        icon="language">
+      <SettingItem :title="$t('settings.general.language')" icon="language">
         <BaseSelect
           :display-name="['English', '简体中文']"
           :options="['en_us', 'zh_cn']"

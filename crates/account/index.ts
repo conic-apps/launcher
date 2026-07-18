@@ -12,22 +12,21 @@ export type AccountError =
     | { kind: "Network"; message: string }
     | { kind: "AccountNotfound"; message: string }
     | { kind: "ProfileUnavailable"; message: string }
-    | { kind: "OwnershipCheckFailed"; message: string }
     | { kind: "MicrosoftResponseMissingKey"; message: string }
     | { kind: "InvalidALIResponse"; message: string }
 
-export type AccountType = "Microsoft" | "Offline" | "AuthlibInjector"
+export type AccountType = "Microsoft" | "Offline" | "Yggdrasil"
 
 export type Accounts = {
     microsoft: MicrosoftAccount[]
     offline: OfflineAccount[]
-    authlib_injector: Record<string, AuthlibInjectorAccount>
+    third_party_yggdrasil: Record<string, YggdrasilAccount>
 }
 
 export type MicrosoftAccount = {
     refresh_token: string
-    access_token: string
-    expires_on: number
+    minecraft_access_token: string
+    expires_at: number
     profile: {
         profile_name: string
         uuid: string
@@ -53,7 +52,7 @@ export type OfflineAccount = {
     skin?: string
 }
 
-export type AuthlibInjectorAccount = {
+export type YggdrasilAccount = {
     api_root: string
     account_identifier: string
     access_token: string
@@ -91,7 +90,12 @@ export type DeviceCodePollResult = {
     expires_in: number | null
 }
 
-export type LoginResponse = {
+export type RedeemAccessTokenResult = {
+    access_token: string
+    refresh_token: string
+}
+
+export type AuthResponse = {
     accessToken: string
     clientToken: string
     availableProfiles: {
@@ -104,7 +108,7 @@ export type LoginResponse = {
     }
 }
 
-export type AuthlibProfile = {
+export type YggdrasilProfile = {
     id: string
     name: string
     properties: {
@@ -122,11 +126,29 @@ export async function getMicrosoftAccount(uuid: string): Promise<MicrosoftAccoun
 }
 
 export async function deleteMicrosoftAccount(uuid: string) {
-    return await invoke("plugin:account|cmd_delete_microsoft_account", { uuid })
+    await invoke("plugin:account|cmd_delete_microsoft_account", { uuid })
 }
 
-export async function addMicrosoftAccount(code: string) {
-    await invoke("plugin:account|cmd_add_microsoft_account", { code })
+export async function addMicrosoftAccount(account: MicrosoftAccount) {
+    await invoke("plugin:account|cmd_add_microsoft_account", { account })
+}
+
+export async function updateMicrosoftAccount(uuid: string, account: MicrosoftAccount) {
+    await invoke("plugin:account|cmd_update_microsoft_account", { uuid, account })
+}
+
+export async function redeemAccessToken(code: string): Promise<RedeemAccessTokenResult> {
+    return await invoke("plugin:account|cmd_redeem_access_token", { code })
+}
+
+export async function microsoftAccessTokenAuthFlow(
+    accessToken: string,
+    refreshToken: string,
+): Promise<MicrosoftAccount> {
+    return await invoke("plugin:account|cmd_microsoft_access_token_auth_flow", {
+        accessToken,
+        refreshToken,
+    })
 }
 
 export async function requestDeviceCode(): Promise<DeviceCodeResponse> {
@@ -137,12 +159,11 @@ export async function pollDeviceCode(deviceCode: string): Promise<DeviceCodePoll
     return await invoke("plugin:account|cmd_poll_device_code", { deviceCode })
 }
 
-export async function refreshAllMicrosoftAccounts() {
-    await invoke("plugin:account|cmd_refresh_all_microsoft_accounts")
-}
-
-export async function refreshMicrosoftAccount(uuid: string): Promise<MicrosoftAccount> {
-    return await invoke("plugin:account|cmd_refresh_microsoft_account", { uuid })
+export async function refreshMicrosoftAccount(
+    uuid: string,
+    forceRefresh: boolean,
+): Promise<MicrosoftAccount> {
+    return await invoke("plugin:account|cmd_refresh_microsoft_account", { uuid, forceRefresh })
 }
 
 export async function addOfflineAccount(name: string) {
@@ -177,35 +198,59 @@ export async function getYggdrasilServerInfo(apiRoot: string): Promise<Yggdrasil
     return await invoke("plugin:account|cmd_get_yggdrasil_server_info", { apiRoot })
 }
 
-export async function yggdrasilLogin(
+export async function yggdrasilAuthenticateAccount(
     apiRoot: string,
     username: string,
     password: string,
-): Promise<LoginResponse> {
-    return await invoke("plugin:account|cmd_yggdrasil_login", { apiRoot, username, password })
+): Promise<AuthResponse> {
+    return await invoke("plugin:account|cmd_yggdrasil_authenticate_account", {
+        apiRoot,
+        username,
+        password,
+    })
 }
 
-export async function addAuthlibAccount(account: AuthlibInjectorAccount) {
-    await invoke("plugin:account|cmd_add_authlib_account", { account })
+export async function yggdrasilValidateAccount(account: YggdrasilAccount): Promise<boolean> {
+    return await invoke("plugin:account|cmd_yggdrasil_validate_account", { account })
 }
 
-export async function deleteAuthlibAccount(accountKey: string) {
-    await invoke("plugin:account|cmd_delete_authlib_account", { accountKey })
+export async function yggdrasilRefreshAccount(account: YggdrasilAccount): Promise<YggdrasilAccount> {
+    return await invoke("plugin:account|cmd_yggdrasil_refresh_account", { account })
 }
 
-export async function getAuthlibProfileInfo(
+export async function yggdrasilInvalidateAccount(
+    apiRoot: string,
+    accessToken: string,
+    clientToken: string,
+) {
+    await invoke("plugin:account|cmd_yggdrasil_invalidate_account", { apiRoot, accessToken, clientToken })
+}
+
+export async function yggdrasilGetProfile(
     apiRoot: string,
     uuid: string,
-): Promise<AuthlibProfile> {
-    return await invoke("plugin:account|cmd_get_authlib_profile_info", { apiRoot, uuid })
+): Promise<YggdrasilProfile> {
+    return await invoke("plugin:account|cmd_yggdrasil_get_profile", { apiRoot, uuid })
 }
 
-export async function getAuthlibAccount(accountKey: string): Promise<AuthlibInjectorAccount> {
-    return await invoke("plugin:account|cmd_get_authlib_account", { accountKey })
+export async function addYggdrasilAccount(account: YggdrasilAccount) {
+    await invoke("plugin:account|cmd_add_yggdrasil_account", { account })
 }
 
-export async function reloginAccount(uuid: string, accountType: AccountType, credential: string) {
-    await invoke("plugin:account|cmd_relogin_account", { uuid, accountType, credential })
+export async function deleteYggdrasilAccount(accountKey: string) {
+    await invoke("plugin:account|cmd_delete_yggdrasil_account", { accountKey })
+}
+
+export async function getYggdrasilAccount(accountKey: string): Promise<YggdrasilAccount> {
+    return await invoke("plugin:account|cmd_get_yggdrasil_account", { accountKey })
+}
+
+export async function listYggdrasilAccounts(): Promise<Record<string, YggdrasilAccount>> {
+    return await invoke("plugin:account|cmd_list_yggdrasil_accounts")
+}
+
+export async function updateYggdrasilAccount(accountKey: string, account: YggdrasilAccount) {
+    await invoke("plugin:account|cmd_update_yggdrasil_account", { accountKey, account })
 }
 
 export async function getAvatar(src: string, size: number): Promise<string> {

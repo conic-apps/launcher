@@ -53,6 +53,11 @@
             "endpoints": [
                 "https://api.conicmc.app/latest.json"
             ]
+        },
+        "deep-link": {
+            "desktop": {
+                "schemes": ["conic-launcher"]
+            }
         }
     }
 }

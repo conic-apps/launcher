@@ -43,7 +43,6 @@
 <script lang="ts" setup>
 import ListItem from "@/components/ListItem.vue";
 import { ref } from "vue";
-import { useConfigStore } from "@/store/config";
 import AppIcon from "@/components/AppIcon.vue";
 import {
   deleteMicrosoftAccount,
@@ -52,8 +51,6 @@ import {
   MicrosoftAccount,
   refreshMicrosoftAccount,
 } from "@conic/account";
-
-const config = useConfigStore();
 
 defineEmits(["add"]);
 
@@ -74,7 +71,7 @@ async function getAccounts() {
 getAccounts().then(() => {});
 
 function refreshLogin(uuid: string) {
-  refreshMicrosoftAccount(uuid);
+  refreshMicrosoftAccount(uuid, false);
 }
 
 function chooseAccount(account: MicrosoftAccount) {}

@@ -63,7 +63,10 @@ const avatarMap = ref<Record<string, string>>({});
 async function getAccounts() {
   const msAccounts = (await listAccounts()).microsoft;
   for (let i = 0; i <= msAccounts.length - 1; i++) {
-    avatarMap.value[msAccounts[i].profile.uuid] = await getAvatar(msAccounts[i].profile.skins[0].url, 32);
+    avatarMap.value[msAccounts[i].profile.uuid] = await getAvatar(
+      msAccounts[i].profile.skins[0].url,
+      32,
+    );
   }
   accounts.value = msAccounts;
 }
@@ -71,7 +74,7 @@ async function getAccounts() {
 getAccounts().then(() => {});
 
 function refreshLogin(uuid: string) {
-  refreshMicrosoftAccount(uuid);
+  refreshMicrosoftAccount(uuid, false);
 }
 
 function chooseAccount(account: MicrosoftAccount) {

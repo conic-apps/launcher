@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Component, markRaw, Ref, ref, shallowRef } from "vue";
+import { type Component, markRaw, ref, shallowRef } from "vue";
 import GeneralSettings from "./settings/GeneralSettings.vue";
 import GameSettings from "./settings/GameSettings.vue";
 import AdvanceSettings from "./settings/AdvanceSettings.vue";
@@ -36,7 +36,7 @@ import AppIcon from "@/components/AppIcon.vue";
 import { useConfigStore } from "@/store/config";
 import { saveConfigToFile } from "@conic/config";
 
-const components: Ref<{ name: string; icon: string; component: Component }[]> = ref([
+const components = ref<{ name: string; icon: string; component: Component }[]>([
   {
     name: "settings.general.sidebar",
     icon: "house",

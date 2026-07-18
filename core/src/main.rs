@@ -8,8 +8,6 @@
 use folder::DATA_LOCATION;
 use log::{error, info};
 use tauri::{AppHandle, Manager, Window, WindowEvent, Wry, plugin::TauriPlugin};
-#[cfg(debug_assertions)]
-use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
 use tauri_plugin_log::{Target, TargetKind};
 
 fn main() {
@@ -20,8 +18,9 @@ fn main() {
             std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
         }
     }
-    #[allow(clippy::unit_arg)]
+    #[allow(clippy::unit_arg, unused_variables)]
     tauri::Builder::default()
+        .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(init_log_builder().build())
@@ -34,7 +33,15 @@ fn main() {
         .plugin(folder::init())
         .plugin(platform::init())
         .invoke_handler(tauri::generate_handler![open_path])
-        .setup(|_| Ok(print_info()))
+        .setup(|app| {
+            print_info();
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                app.deep_link().register_all()?;
+            }
+            Ok(())
+        })
         .on_window_event(window_event_handler)
         .run(tauri::generate_context!())
         .expect("")
@@ -54,13 +61,17 @@ fn init_log_builder() -> tauri_plugin_log::Builder {
         .max_file_size(50_000)
         .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll);
     #[cfg(debug_assertions)]
-    let log_builder = log_builder.with_colors(ColoredLevelConfig {
-        error: Color::Red,
-        warn: Color::Yellow,
-        info: Color::Green,
-        debug: Color::Blue,
-        trace: Color::Cyan,
-    });
+    {
+        use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
+        return log_builder.with_colors(ColoredLevelConfig {
+            error: Color::Red,
+            warn: Color::Yellow,
+            info: Color::Green,
+            debug: Color::Blue,
+            trace: Color::Cyan,
+        });
+    }
+    #[allow(unreachable_code)]
     log_builder
 }
 

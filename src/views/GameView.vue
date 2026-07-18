@@ -34,7 +34,7 @@
 import InstanceCard from "./game/InstanceCard.vue";
 import InstanceDetails from "./game/InstanceDetails.vue";
 import InstanceList from "./game/InstanceList.vue";
-import { onMounted, ref, watch, type Ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
@@ -50,7 +50,7 @@ onMounted(() => {
 
 const installing = ref(false);
 const buttonLoading = ref(false);
-const errorType: Ref<"launch" | "install" | undefined> = ref();
+const errorType = ref<"launch" | "install" | undefined>();
 
 watch(
   () => [

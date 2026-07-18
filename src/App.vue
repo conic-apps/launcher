@@ -8,31 +8,55 @@
       <div class="title-bar-container">
         <search-bar style="width: 100%" :placeholder="$t('globalSearch.placeholder')"></search-bar>
       </div>
-      <div class="window-buttons-container window-buttons-container-macos" v-if="isMacOS()">
-        <WindowButton button-type="close" @close="closeWindow()"></WindowButton>
+      <div
+        class="window-buttons-container window-buttons-container-macos"
+        @mouseenter="windowButtonHover = true"
+        @mouseleave="windowButtonHover = false"
+        v-if="isMacOS()">
+        <WindowButton
+          button-type="close"
+          @close="closeWindow()"
+          :hover="windowButtonHover"
+          :lit="windowButtonLit"></WindowButton>
         <WindowButton
           button-type="minimize"
+          :lit="windowButtonLit"
+          :hover="windowButtonHover"
           @minimize="appWindow.getCurrentWindow().minimize()"></WindowButton>
         <WindowButton
           button-type="maximize"
+          :lit="windowButtonLit"
+          :hover="windowButtonHover"
           @maximize="
             appWindow.getCurrentWindow().setFullscreen(!appWindow.getCurrentWindow().isFullscreen())
           "></WindowButton>
       </div>
-      <div class="window-buttons-container" v-else>
+      <div
+        class="window-buttons-container"
+        @mouseenter="windowButtonHover = true"
+        @mouseleave="windowButtonHover = false"
+        v-else>
         <WindowButton
           button-type="minimize"
+          :lit="windowButtonLit"
+          :hover="windowButtonHover"
           @minimize="appWindow.getCurrentWindow().minimize()"></WindowButton>
         <WindowButton
+          :lit="windowButtonLit"
+          :hover="windowButtonHover"
           button-type="maximize"
           @maximize="appWindow.getCurrentWindow().maximize()"></WindowButton>
-        <WindowButton button-type="close" @close="closeWindow()"></WindowButton>
+        <WindowButton
+          button-type="close"
+          @close="closeWindow()"
+          :hover="windowButtonHover"
+          :lit="windowButtonLit"></WindowButton>
       </div>
     </div>
     <div class="sidebar" :class="{ 'sidebar-macos': isMacOS() }" data-tauri-drag-region>
       <ul class="sidebar-items" data-tauri-drag-region>
         <sidebar-item
-          title="Accounts"
+          title="未登录"
           icon="person-circle-outline"
           @click="changePage($event, 'accounts')"
           id="sidebar-home"></sidebar-item>
@@ -72,13 +96,14 @@ import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
 import AccountsView from "./views/AccountsView.vue";
 import DialogRoot from "./DialogRoot.vue";
-import { markRaw, onMounted, reactive, ref, shallowRef, watch } from "vue";
+import { computed, markRaw, onMounted, reactive, ref, shallowRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfigStore } from "./store/config";
 import { loadPalette } from "./theme";
 import { window as appWindow } from "@tauri-apps/api";
 import { listAccounts, getAvatar } from "@conic/account";
 import steveAvatar from "@/assets/images/steve_avatar.webp";
+import { Event } from "@tauri-apps/api/event";
 
 const config = useConfigStore();
 loadPalette(
@@ -88,6 +113,24 @@ loadPalette(
   },
   config.accessibility.high_contrast_mode,
 );
+
+const appWindowFocused = ref(true);
+const windowButtonHover = ref(true);
+
+const windowButtonLit = computed(() => {
+  console.log(windowButtonHover.value);
+  return windowButtonHover.value ? true : appWindowFocused.value;
+});
+
+appWindow
+  .getCurrentWindow()
+  .isFocused()
+  .then((focused) => {
+    appWindowFocused.value = focused;
+  });
+appWindow.getCurrentWindow().onFocusChanged((event: Event<boolean>) => {
+  appWindowFocused.value = event.payload;
+});
 
 const currentAvatar = ref<string | null>(null);
 
@@ -276,8 +319,8 @@ main.main {
 .window-buttons-container {
   position: fixed;
   right: 24px;
-  top: 0px;
-  height: 44px;
+  top: 14px;
+  height: fit-content;
   display: flex;
   align-items: center;
 }

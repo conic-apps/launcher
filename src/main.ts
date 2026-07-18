@@ -12,6 +12,7 @@ import zh_cn from "./i18n/zh_cn"
 import App from "./App.vue"
 import AppIcon from "./components/AppIcon.vue"
 import { getPlatformInfo } from "@conic/platform"
+import { onOpenUrl } from "@tauri-apps/plugin-deep-link"
 
 window.__PLATFORM__ = await getPlatformInfo()
 

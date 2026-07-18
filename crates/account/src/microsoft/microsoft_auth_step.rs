@@ -3,7 +3,7 @@ use shared::HTTP_CLIENT;
 
 use crate::error::*;
 
-pub async fn get_access_token(code: &str) -> Result<(String, String)> {
+pub async fn redeem_access_token(code: &str) -> Result<(String, String)> {
     let response: Value = HTTP_CLIENT
         .post("https://login.live.com/oauth20_token.srf")
         .header("Content-Type", "application/x-www-form-urlencoded")
