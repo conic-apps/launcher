@@ -4,6 +4,7 @@
 
 <template>
   <div class="window" data-tauri-drag-region>
+    <AppBackground style="position: fixed"></AppBackground>
     <div class="title-bar" data-tauri-drag-region>
       <div class="title-bar-container">
         <search-bar style="width: 100%" :placeholder="$t('globalSearch.placeholder')"></search-bar>
@@ -61,31 +62,31 @@
           :lit="windowButtonLit"></WindowButton>
       </div>
     </div>
-    <div class="sidebar" :class="{ 'sidebar-macos': isMacOS() }" data-tauri-drag-region>
-      <ul class="sidebar-items" data-tauri-drag-region>
-        <sidebar-item
-          title="未登录"
-          icon="person-circle-outline"
-          @click="changePage($event, 'accounts')"
-          id="sidebar-home"></sidebar-item>
-        <sidebar-item
-          :title="$t('sidebar.home')"
-          icon="house"
-          @click="changePage($event, 'home')"
-          id="sidebar-home"></sidebar-item>
-        <sidebar-item
-          :title="$t('sidebar.market')"
-          icon="earth"
-          @click="changePage($event, 'market')"
-          id="sidebar-market"></sidebar-item>
-        <sidebar-item
-          :title="$t('sidebar.settings')"
-          icon="settings"
-          @click="changePage($event, 'settings')"
-          id="sidebar-settings"
-          style="margin-top: auto"></sidebar-item>
-      </ul>
-    </div>
+    <!-- <div class="sidebar" :class="{ 'sidebar-macos': isMacOS() }" data-tauri-drag-region> -->
+    <!--   <ul class="sidebar-items" data-tauri-drag-region> -->
+    <!--     <sidebar-item -->
+    <!--       title="未登录" -->
+    <!--       icon="person-circle-outline" -->
+    <!--       @click="changePage($event, 'accounts')" -->
+    <!--       id="sidebar-home"></sidebar-item> -->
+    <!--     <sidebar-item -->
+    <!--       :title="$t('sidebar.game')" -->
+    <!--       icon="gamepad" -->
+    <!--       @click="changePage($event, 'game')" -->
+    <!--       id="sidebar-game"></sidebar-item> -->
+    <!--     <sidebar-item -->
+    <!--       :title="$t('sidebar.market')" -->
+    <!--       icon="earth" -->
+    <!--       @click="changePage($event, 'market')" -->
+    <!--       id="sidebar-market"></sidebar-item> -->
+    <!--     <sidebar-item -->
+    <!--       :title="$t('sidebar.settings')" -->
+    <!--       icon="settings" -->
+    <!--       @click="changePage($event, 'settings')" -->
+    <!--       id="sidebar-settings" -->
+    <!--       style="margin-top: auto"></sidebar-item> -->
+    <!--   </ul> -->
+    <!-- </div> -->
     <main class="main" style="transition: none">
       <Transition :name="transitionName" mode="out-in">
         <component :is="currentComponent" @jump="jumpTo"></component>
@@ -99,7 +100,7 @@
 import WindowButton from "./components/WindowButton.vue";
 import SearchBar from "./components/SearchBar.vue";
 import SidebarItem from "./components/SidebarItem.vue";
-import HomeView from "./views/HomeView.vue";
+import GameView from "./views/GameView.vue";
 import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
 import AccountsView from "./views/AccountsView.vue";
@@ -110,6 +111,7 @@ import { useConfigStore } from "./store/config";
 import { loadPalette } from "./theme";
 import { window as appWindow } from "@tauri-apps/api";
 import { Event } from "@tauri-apps/api/event";
+import AppBackground from "./components/AppBackground.vue";
 
 const config = useConfigStore();
 
@@ -143,12 +145,12 @@ const currentProfileName = ref<string | null>(null);
 
 const pages = reactive({
   settings: markRaw(SettingsView),
-  home: markRaw(HomeView),
+  game: markRaw(GameView),
   market: markRaw(MarketView),
   accounts: markRaw(AccountsView),
 });
 const transitionName = ref("slide-up");
-const currentComponent = shallowRef(pages.home);
+const currentComponent = shallowRef(pages.game);
 
 const i18n = useI18n();
 i18n.locale.value = config.language!;
@@ -156,7 +158,7 @@ watch(config, () => {
   i18n.locale.value = config.language!;
 });
 
-type ComponentName = "home" | "settings" | "market" | "accounts";
+type ComponentName = "game" | "settings" | "market" | "accounts";
 
 function changePage(event: MouseEvent | null, component: ComponentName) {
   // TODO: Add class active for event element
@@ -166,6 +168,10 @@ function changePage(event: MouseEvent | null, component: ComponentName) {
     currentComponent.value = component;
   }
 }
+
+window.changeComponent = (component: ComponentName) => {
+  currentComponent.value = pages[component];
+};
 
 function jumpTo(name: ComponentName) {
   changePage(null, name);
@@ -208,12 +214,13 @@ function isMacOS() {
 
 .title-bar {
   height: 44px;
-  width: calc(100% - 80px);
-  position: absolute;
-  left: 64px;
+  width: 100%;
+  position: fixed;
   display: flex;
+  border-radius: 16px 16px 0 0;
   align-items: center;
   justify-content: space-between;
+  // background: var(--ctp-base);
 
   .title-bar-container {
     display: flex;
@@ -233,72 +240,12 @@ function isMacOS() {
   }
 }
 
-.sidebar {
-  width: 64px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  .sidebar-avatar {
-    width: 48px;
-    height: 46px;
-    margin-top: 8px;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    align-content: center;
-    justify-content: center;
-
-    img.avatar {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .avatar-default {
-      filter: grayscale(1);
-      image-rendering: pixelated;
-    }
-
-    .text {
-      font-size: 10px;
-      margin-top: 6px;
-    }
-
-    &:active {
-      opacity: 0.6;
-      transform: scale(0.97);
-    }
-  }
-  .sidebar-items {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 8px;
-    margin-bottom: 22px;
-  }
-}
-
-.sidebar-macos {
-  padding-top: 36px;
-}
-
 main.main {
-  position: fixed;
-  right: 1px;
-  bottom: 1px;
   height: calc(100vh - 44px);
-  width: calc(100vw - 64px);
-  border-bottom: unset;
-  border-right: unset;
-  border-radius: 16px 0 16px 0;
-  will-change: transform;
+  margin-top: 44px;
+  width: 100vw;
+  border-radius: 0 0 16px 16px;
   transform: translateZ(0);
-  background:
-    radial-gradient(circle at 20% -20%, rgba(137, 180, 250, 0.08), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(203, 166, 247, 0.05), transparent 65%) var(--ctp-base);
 }
 
 .window-buttons-container {
