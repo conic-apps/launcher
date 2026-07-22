@@ -2,7 +2,7 @@
 // Copyright 2022-2026 OakChaser and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use account::AccountLaunchInfo;
+use account::Account;
 use config::{
     Config,
     launch::{GC, Server},
@@ -11,15 +11,16 @@ use folder::DATA_LOCATION;
 use folder::MinecraftLocation;
 use instance::Instance;
 
+use crate::error::*;
+
 /// Represents all launch options required to start a Minecraft instance.
 ///
 /// These include memory settings, screen resolution, authentication tokens,
 /// optional server connection info, and custom JVM/MC arguments.
 pub struct LaunchOptions {
-    /// User selected account to login the game.
-    pub account_launch_info: AccountLaunchInfo,
+    pub selected_account: Account,
 
-    pub properties: String,
+    pub user_properties: String,
 
     /// Min memory, this will add a jvm flag -XMS to the command result
     pub min_memory: usize,
@@ -80,11 +81,15 @@ impl LaunchOptions {
     ///
     /// Launch configuration is resolved from both global and per-instance settings,
     /// with per-instance settings taking priority when defined.
-    pub fn new(config: &Config, instance: &Instance, account: account::AccountLaunchInfo) -> Self {
+    pub fn new(config: &Config, instance: &Instance) -> Result<Self> {
         let global_launch_config = config.launch.clone();
         let launch_config = &instance.config.launch_config;
-        Self {
-            account_launch_info: account,
+        let selected_account = match config.current_account.clone() {
+            None => return Err(Error::InvalidProfile),
+            Some(account) => account,
+        };
+        Ok(Self {
+            selected_account,
             wrap_command: launch_config
                 .wrap_command
                 .clone()
@@ -136,7 +141,7 @@ impl LaunchOptions {
                 .unwrap_or(global_launch_config.extra_class_paths),
             gc: launch_config.gc.clone().unwrap_or(global_launch_config.gc),
             minecraft_location: MinecraftLocation::new(&DATA_LOCATION.root),
-            properties: "{}".to_string(),
-        }
+            user_properties: "{}".to_string(),
+        })
     }
 }

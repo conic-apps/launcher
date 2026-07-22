@@ -31,6 +31,9 @@ pub enum Error {
     #[error("Invalid Minecraft version")]
     InvalidMinecraftVersion,
 
+    #[error("Invalid Profile")]
+    InvalidProfile,
+
     #[error("Instance broken: {0}")]
     InvalidInstance(String),
 

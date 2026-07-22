@@ -1,0 +1,216 @@
+// Conic Launcher
+// Copyright 2022-2026 OakChaser and contributors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+export default {
+    globalSearch: {
+        placeholder: "Escribe / para buscar, o ; para usar comandos",
+    },
+    sidebar: {
+        home: "Inicio",
+        game: "Juego",
+        market: "Mercado",
+        settings: "Ajustes",
+        account: "Cuenta",
+    },
+    home: {
+        showAll: "Mostrar todo",
+    },
+    accounts: {
+        title: "Gestionar cuentas",
+        description: "Añadir, eliminar o seleccionar cuentas de juego",
+    },
+    game: {
+        latestRelease: "Último lanzamiento",
+        latestSnapshot: "Último snapshot",
+        install: "Instalar",
+        launch: "Jugar",
+        launchDemo: "Jugar demo",
+        instances: "Juegos",
+        playtime: "Tiempo de juego",
+        accounts: "Cuentas",
+        friends: "Amigos",
+        assets: {
+            summary: "Resumen",
+            worlds: "Mundos",
+            mods: "Mods",
+            packs: "Packs",
+            settings: "Ajustes",
+        },
+        instanceManager: {
+            view: {
+                title: "Gestionar instancias",
+                description: "Crear, eliminar o modificar instancias de juego",
+            },
+            create: {
+                title: "Crear instancia de juego",
+                description: 'Selecciona las opciones deseadas y haz clic en "Crear"',
+                instanceName: "Nombre de la instancia",
+                nameRepeated: "El nombre no puede estar duplicado",
+                createButton: "Crear",
+                chooseMinecraft: "Elegir versión de Minecraft",
+            },
+        },
+        accountsManager: {},
+        gameData: {
+            saves: "Mundos",
+            savesCount: "{count} mundos",
+            mods: "Mods",
+            modsCount: "{count} mods",
+            resourcepacks: "Packs de recursos",
+            resourcepacksCount: "{count} packs de recursos",
+            shaderpacks: "Packs de shaders",
+            shaderpacksCount: "{count} packs de shaders",
+            screenshots: "Capturas de pantalla",
+            schematics: "Esquemáticos",
+            loading: "Cargando...",
+        },
+        saves: {
+            description: "{count} mundos. Cada instancia usa una carpeta de guardado independiente",
+            showMap: "Selecciona un mundo para previsualizar el mapa",
+            allowCheat: "Comandos",
+            hardcore: "Hardcore",
+        },
+        resourcepacks: {
+            description: "",
+        },
+    },
+    settings: {
+        general: {
+            sidebar: "General",
+            language: "Idioma",
+            languageDesc: "Se aplicará completamente después de recargar la página",
+            updateChannel: "Canal de actualización",
+            updateChannelDesc: "Cambiar la frecuencia de actualización",
+            weekly: "Compilación semanal",
+            snapshot: "Snapshot",
+            release: "Lanzamiento",
+            autoUpdate: "Actualización automática",
+            autoUpdateDesc:
+                "Descargar e instalar actualizaciones automáticamente cuando estén disponibles",
+            checkUpdate: "Buscar actualizaciones",
+        },
+        game: {
+            sidebar: "Opciones de inicio",
+            jvmTitle: "Ajustes JVM",
+            chooseJava: "Elegir Java",
+            selectedJava: "Seleccionado: {selected}",
+            addJava: "Instalar entorno de ejecución Java",
+            addJavaDesc: "Descargar e instalar un nuevo entorno de ejecución Java",
+            launchOptions: "Opciones de inicio",
+            launcherName: "Nombre del launcher",
+            launcherNameDesc: "No se sabe para qué sirve esto",
+            processPriority: "Prioridad del proceso",
+            processPriorityDesc:
+                "Establecer la prioridad del proceso del juego (solo disponible en Linux)",
+            processPriorityHigh: "Alta",
+            processPriorityAboveNormal: "Superior a la normal",
+            processPriorityNormal: "Normal",
+            processPriorityBelowNormal: "Inferior a la normal",
+            processPriorityLow: "Baja",
+            enterWorldAfterLaunch: "Entrar en el mundo después del inicio",
+            enterWorldAfterLaunchDesc: "La versión del juego debe ser 1.21 o superior",
+            enterWorldAfterLaunchPlaceholder: "Nombre de la carpeta del mundo",
+            fullscreen: "Pantalla completa",
+            fullscreenDesc: "Abrir el juego en pantalla completa después del inicio",
+            windowSize: "Tamaño de la ventana",
+            windowSizeDesc: "Tamaño inicial de la ventana del juego",
+            windowSizeWidth: "Ancho",
+            windowSizeHeight: "Alto",
+            hideLauncherAfterLaunch: "Ocultar el launcher después del inicio",
+            autoRefreshAccount: "Actualizar cuenta automáticamente",
+            autoRefreshAccountDesc:
+                'Si las credenciales expiran, el launcher actualizará el inicio de sesión antes de lanzar el juego. Si ocurre un error de "Sesión inválida", solo necesitas reiniciar el juego en vez del launcher',
+            autoCompleteGameFiles: "Completar archivos del juego automáticamente",
+            autoCompleteGameFilesDesc:
+                "Verificar y completar automáticamente los archivos necesarios para el funcionamiento del juego cuando sea necesario",
+            demo: "Modo demo",
+            demoDesc:
+                "Juega 100 minutos (5 días de juego) en un solo mundo. Si no has comprado el juego, esta opción se activa forzosamente",
+        },
+        advance: {
+            sidebar: "Avanzado",
+            viewLauncherLogs: "Abrir carpeta de registros del launcher",
+            viewLauncherLogsDesc:
+                "Ver los registros del launcher. Por favor, súbelos al reportar problemas",
+            reload: "Recargar ventana",
+            launchArgs: "Opciones de inicio avanzadas",
+            gc: "GC",
+            extraJVMArgs: "Argumentos JVM adicionales",
+            extraJVMArgsDesc: "Se añadirá al final de los argumentos JVM predeterminados",
+            extraMinecraftArgs: "Argumentos Minecraft adicionales",
+            extraMinecraftArgsDesc:
+                "Se añadirá al final de los argumentos Minecraft predeterminados",
+            extraClassPaths: "Rutas de clase adicionales",
+            extraClassPathsDesc: "Se añadirá al final de las rutas de clase predeterminadas",
+            executeBeforeLaunch: "Comando pre-lanzamiento",
+            executeBeforeLaunchDesc: "Se añadirá al inicio del script de lanzamiento",
+            wrapCommand: "Comando wrapper",
+            wrapCommandDesc: "Se añadirá al inicio del comando de lanzamiento",
+            executeAfterLaunch: "Comando post-salida",
+            executeAfterLaunchDesc: "Se añadirá al final del script de lanzamiento",
+            ignoreInvalidMinecraftCertificates: "Ignorar certificados Minecraft no válidos",
+            ignoreInvalidMinecraftCertificatesDesc:
+                "Añadir <code>-Dfml.ignoreInvalidMinecraftCertificates=true</code> a los argumentos JVM",
+            ignorePatchDiscrepancies: "Ignorar discrepancias de parches",
+            ignorePatchDiscrepanciesDesc:
+                "Añadir <code>-Dfml.ignorePatchDiscrepancies=true</code> a los argumentos JVM",
+            lwjglSettings: "Ajustes LWJGL",
+        },
+        appearance: {
+            sidebar: "Apariencia",
+        },
+        download: {
+            sidebar: "Descargas",
+            maxConnections: "Conexiones máximas",
+            maxConnectionsDesc:
+                "Limita el número de conexiones simultáneas al servidor. Solo válido para descargas de instalación.<strong>¡Demasiadas conexiones pueden reducir la velocidad!</strong>",
+            maxDownloadSpeed: "Velocidad de descarga máxima",
+            maxDownloadSpeedDesc: "Limitar la velocidad de descarga en B/s. 0 = sin límite",
+            mirrorServer: "Servidor espejo",
+            mirrorServerDesc: "Descargar archivos del juego desde un servidor espejo",
+            proxy: "Proxy",
+            useSystemProxy: "Usar proxy del sistema (se aplica tras reiniciar la aplicación)",
+        },
+        accessibility: {
+            sidebar: "Accesibilidad",
+            extraFeatures: "Funciones adicionales",
+            releaseReminder: "Recordatorio de lanzamiento",
+            releaseReminderDesc: "Recordarme cuando se publique una nueva versión estable",
+            snapshotReminder: "Recordatorio de snapshot",
+            snapshotReminderDesc: "Recordarme cuando se publique un nuevo snapshot",
+            hideLatestRelease: 'Ocultar "Último lanzamiento"',
+            hideLatestReleaseDesc: 'Ocultar la instancia "Último lanzamiento"',
+            hideLatestSnapshot: 'Ocultar "Último snapshot"',
+            hideLatestSnapshotDesc: 'Ocultar la instancia "Último snapshot"',
+            changeGameLanguage: "Cambiar idioma del juego automáticamente",
+            changeGameLanguageDesc:
+                "Cambiar el idioma del juego al mismo que el del launcher al iniciar por primera vez",
+            autoOpenLogViewer: "Abrir visor de registros automáticamente",
+            autoOpenLogViewerDesc: "Abrir el visor de registros después de iniciar el juego",
+            accessibility: "Accesibilidad",
+            disableAllAnimations: "Desactivar todas las animaciones",
+            disableAllAnimationsDesc:
+                "Las animaciones parpadeantes y con destellos pueden ser problemáticas para personas con trastornos cognitivos como el TDAH. Además, ciertos tipos de movimiento pueden desencadenar trastornos vestibulares, epilepsia, migrañas y sensibilidad escotópica.",
+            highContrastMode: "Modo de alto contraste",
+            highContrastModeDesc:
+                "Activar el modo de alto contraste para el tema actual (si está disponible)",
+        },
+        extend: {
+            sidebar: "Extensiones",
+        },
+        about: {
+            sidebar: "Acerca de",
+            sponsorTitle: "Patrocinar Conic Launcher",
+            report: "Reportar un problema",
+            reportDesc:
+                "Abre un issue en GitHub. Por favor, sube el registro del launcher al reportar un bug",
+            viewSourceCode: "Ver código fuente",
+            viewSourceCodeDesc: "Ver el código fuente en nuestro repositorio de GitHub",
+            sponsorDesc:
+                "Conic Launcher es un launcher de Minecraft gratuito, de código abierto y multiplataforma. Desarrollado por OakChaser y otros colaboradores. Tu apoyo nos ayuda.",
+            thanks: "Agradecimientos",
+            thirdPartyLibraries: "Bibliotecas de terceros",
+        },
+    },
+} as const

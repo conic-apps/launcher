@@ -11,6 +11,24 @@ export default {
         game: "游戏",
         market: "市场",
         settings: "设置",
+        account: "账户",
+    },
+    home: {
+        showAll: "显示全部",
+    },
+    accounts: {
+        title: "管理游戏帐号",
+        description: "添加、删除或选择要使用的游戏帐号",
+        uploadSkin: {
+            title: "上传皮肤",
+            modelType: "模型类型",
+            slim: "Slim",
+            classic: "Classic",
+            textureType: "上传类型",
+            skin: "皮肤",
+            cape: "披风",
+            confirm: "上传皮肤",
+        },
     },
     game: {
         latestRelease: "最新版本",
@@ -82,8 +100,12 @@ export default {
             checkUpdate: "立即检查更新",
         },
         game: {
-            sidebar: "游戏",
+            sidebar: "启动选项",
+            jvmSidebar: "Java 虚拟机",
             jvmTitle: "Java 虚拟机设置",
+            autoSelectJava: "让 Conic Launcher 自动选择 Java 运行环境",
+            autoSelectJavaDesc: "自动选择和管理 Java 运行环境",
+            selectDefaultJava: "选择默认 Java 运行环境",
             chooseJava: "选择 Java",
             selectedJava: "已选 {selected}",
             addJava: "安装 Java 运行环境",

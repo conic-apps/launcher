@@ -9,7 +9,7 @@ use std::{
     path::Path,
 };
 
-use account::authlib_injector::get_yggdrasil_server_info_raw;
+use account::Account;
 use log::info;
 use regex::Regex;
 use zip::ZipArchive;
@@ -113,16 +113,19 @@ pub async fn generate_command_arguments(
             command_arguments.push("-XX:+UseZGC".to_string());
         }
     }
-    if let Some(yggdrasil_api_root) = &launch_options.account_launch_info.yggdrasil_api_root {
-        let authlib_injector_path = minecraft_location.get_authlib_injector(&version.id);
+    if let Account::Yggdrasil(yggdrasil_account) = &launch_options.selected_account {
+        let authlib_injector_path = DATA_LOCATION.clone().authlib_injector;
         command_arguments.push(format!(
             "-javaagent:{jar}={server}",
             jar = authlib_injector_path.to_string_lossy(),
-            server = yggdrasil_api_root
+            server = yggdrasil_account.api_root
         ));
         command_arguments.push("-Dauthlibinjector.side=client".to_string());
         if let Ok(prefetched_yggdrasil_server_metadata) =
-            get_yggdrasil_server_info_raw(yggdrasil_api_root).await
+            account::yggdrasil::yggdrasil_server::get_server_info_base64(
+                &yggdrasil_account.api_root,
+            )
+            .await
         {
             command_arguments.push(format!(
                 "-Dauthlibinjector.yggdrasil.prefetched={prefetched_yggdrasil_server_metadata}"
@@ -218,15 +221,22 @@ pub async fn generate_command_arguments(
     );
     game_options.insert(
         "auth_player_name",
-        launch_options.account_launch_info.name.clone(),
+        launch_options.selected_account.get_profile_name(),
     );
-    game_options.insert("auth_uuid", launch_options.account_launch_info.uuid.clone());
+    game_options.insert(
+        "auth_uuid",
+        launch_options.selected_account.get_profile_uuid(),
+    );
     game_options.insert(
         "auth_access_token",
-        launch_options.account_launch_info.access_token.clone(),
+        launch_options.selected_account.get_access_token(),
     );
-    game_options.insert("user_properties", launch_options.properties.clone());
-    game_options.insert("user_type", "msa".to_string());
+    game_options.insert(
+        "auth_session",
+        launch_options.selected_account.get_access_token(),
+    );
+    game_options.insert("user_properties", launch_options.user_properties.clone());
+    game_options.insert("user_type", launch_options.selected_account.get_user_type());
     game_options.insert("resolution_width", launch_options.width.to_string());
     game_options.insert("resolution_height", launch_options.height.to_string());
     command_arguments.extend(

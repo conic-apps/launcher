@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="EMPTY_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/account/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/config/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/download/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/folder/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/game_data/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/install/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/instance/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/launch/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/modrinth/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/platform/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/shared/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/version/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

@@ -93,7 +93,6 @@ onBeforeUnmount(() => {
     justify-content: center;
     border-radius: var(--card-border-radius);
     border: 2px solid transparent;
-    cursor: pointer;
     transition: border-color 0.2s ease;
     flex-shrink: 0;
 
@@ -160,7 +159,6 @@ onBeforeUnmount(() => {
     border-radius: var(--card-border-radius);
     border: 2px solid transparent;
     background: none;
-    cursor: pointer;
     flex-shrink: 0;
     transition: background-color 0.2s ease;
 

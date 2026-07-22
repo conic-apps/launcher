@@ -9,7 +9,11 @@
       type="text"
       v-model="value"
       @input="$emit('search', value)"
-      :placeholder="props.placeholder" />
+      :placeholder="props.placeholder"
+      autocapitalize="off"
+      autocomplete="off"
+      autocorrect="off"
+      :spellcheck="false" />
   </div>
 </template>
 

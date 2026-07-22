@@ -87,8 +87,8 @@ button.reset-button:active {
   opacity: 0.8;
 }
 
-.danger-setting-group > div {
-  border: var(--setting-group-danger-border);
+.setting-group.danger-setting-group > div {
+  border: 1px solid var(--ctp-red);
 }
 
 .setting-group-disabled {

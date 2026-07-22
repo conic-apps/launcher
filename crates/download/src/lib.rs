@@ -423,7 +423,7 @@ async fn inner_download_future(
             Ok(_) => break,
             Err(x) => x,
         };
-        warn!("Downloaded failed: {}, retried: {}", &task.url, retried);
+        warn!("Downloaded failed: {}, retried: {}", task.url, retried);
         if let Some(mirror) = mirror {
             disabled_mirrors.push(mirror.0);
         }
@@ -511,8 +511,8 @@ async fn inner_chunk_download_executer(
                     Ok(()) => return Ok(()),
                     Err(e) => result = Err(e),
                 };
-                println!("{:?}", result);
-                println!("retried: {retried}");
+                warn!("{:?}", result);
+                warn!("retried: {retried}");
             }
             result
         })

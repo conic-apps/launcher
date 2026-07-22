@@ -34,6 +34,10 @@ body {
     --toggle-switch-button: #ffffffb7;
     --toggle-switch-active: rgb(var(--theme-color));
     --selected-text-background: rgba(45, 170, 219, 0.3);
+    --game-launch-button-background: #189e47;
+    --window-btn-unfocused-color: #4E4E4E;
+    --window-btn-border: none;
+    --link-color: #89b4fa;
 }
 
 body code {
