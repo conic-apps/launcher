@@ -157,10 +157,6 @@ pub async fn get_instance_by_id(id: Uuid) -> Option<Instance> {
 pub async fn update_instance(config: InstanceConfig, id: Uuid) -> Result<()> {
     let instance_root = DATA_LOCATION.get_instance_root(&id);
     let config_file = instance_root.join("instance.toml");
-    println!(
-        "{:#?}",
-        config.launch_config.enable_instance_specific_settings
-    );
     async_fs::write(config_file, toml::to_string_pretty(&config)?).await?;
     info!("Updated instance: {}", config.name);
     Ok(())

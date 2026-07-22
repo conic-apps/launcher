@@ -2,6 +2,7 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+import { Account } from "@conic/account"
 import { invoke } from "@tauri-apps/api/core"
 
 export enum UpdateChannel {
@@ -17,10 +18,10 @@ export enum Palette {
 }
 
 export type Config = {
-    language: string
+    language?: string
     update_channel: UpdateChannel
     auto_update: boolean
-    current_account: string
+    current_account: Account | null
     appearance: {
         palette_follow_system: boolean
         palette: Palette
@@ -79,4 +80,8 @@ export async function getDefaultConfig(): Promise<Config> {
 
 export async function saveConfigToFile(config: Config): Promise<void> {
     return await invoke("plugin:config|cmd_save_config", { config })
+}
+
+export async function getSystemLanguage(): Promise<string> {
+    return await invoke("plugin:config|cmd_get_system_language")
 }

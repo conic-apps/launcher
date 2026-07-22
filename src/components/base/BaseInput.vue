@@ -3,7 +3,13 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="input-box" :style="`width: ${width};`">
+  <div
+    class="input-box"
+    :style="{
+      width,
+      border: error ? 'none' : '',
+      outline: error ? '1px solid var(--ctp-red)' : '',
+    }">
     <input
       @blur="updateModel"
       :type="numberOnly ? 'number' : 'text'"
@@ -11,8 +17,11 @@
       :placeholder="placeholder"
       required
       v-model="inputBoxValue"
-      :style="error ? 'outline: rgb(127,0,0)' : ''"
-      :disabled="disabled" />
+      :disabled="disabled"
+      autocapitalize="off"
+      autocomplete="off"
+      autocorrect="off"
+      :spellcheck="false" />
   </div>
 </template>
 
@@ -84,7 +93,7 @@ watch(model, () => {
   flex-shrink: 0;
   padding: 0;
   font-size: 12.5px;
-  transition: all 0.1s ease;
+  transition: background 0.1s ease;
   background: var(--controllers-background);
   border: var(--controllers-border);
 }

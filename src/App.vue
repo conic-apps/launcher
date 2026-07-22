@@ -5,48 +5,74 @@
 <template>
   <div class="window" data-tauri-drag-region>
     <div class="title-bar" data-tauri-drag-region>
-      <div
-        style="
-          display: flex;
-          width: calc(100vw - 500px);
-          margin-left: 160px;
-          flex-shrink: 0;
-          align-items: center;
-        ">
+      <div class="title-bar-container">
         <search-bar style="width: 100%" :placeholder="$t('globalSearch.placeholder')"></search-bar>
       </div>
-      <div class="window-buttons-container window-buttons-container-macos" v-if="isMacOS()">
-        <WindowButton button-type="close" @close="closeWindow()"></WindowButton>
+      <div
+        class="window-buttons-container window-buttons-container-macos"
+        @mouseenter="windowButtonHover = true"
+        @mouseleave="windowButtonHover = false"
+        v-if="isMacOS()">
+        <WindowButton
+          button-type="close"
+          @close="closeWindow()"
+          :hover="windowButtonHover"
+          :lit="windowButtonLit"></WindowButton>
         <WindowButton
           button-type="minimize"
+          :lit="windowButtonLit"
+          :hover="windowButtonHover"
           @minimize="appWindow.getCurrentWindow().minimize()"></WindowButton>
         <WindowButton
           button-type="maximize"
-          @maximize="appWindow.getCurrentWindow().maximize()"></WindowButton>
+          :lit="windowButtonLit"
+          :hover="windowButtonHover"
+          @maximize="
+            appWindow.getCurrentWindow().setFullscreen(!appWindow.getCurrentWindow().isFullscreen())
+          "></WindowButton>
+        <div class="title-bar-avatar" v-if="currentAvatar">
+          <div class="tooltip">{{ currentProfileName }}</div>
+          <img :src="currentAvatar" alt="Avatar" />
+        </div>
       </div>
-      <div class="window-buttons-container" v-else>
+      <div
+        class="window-buttons-container"
+        @mouseenter="windowButtonHover = true"
+        @mouseleave="windowButtonHover = false"
+        v-else>
+        <div class="title-bar-avatar" v-if="currentAvatar">
+          <div class="tooltip">{{ currentProfileName }}</div>
+          <img :src="currentAvatar" alt="Avatar" />
+        </div>
         <WindowButton
           button-type="minimize"
+          :lit="windowButtonLit"
+          :hover="windowButtonHover"
           @minimize="appWindow.getCurrentWindow().minimize()"></WindowButton>
         <WindowButton
+          :lit="windowButtonLit"
+          :hover="windowButtonHover"
           button-type="maximize"
           @maximize="appWindow.getCurrentWindow().maximize()"></WindowButton>
-        <WindowButton button-type="close" @close="closeWindow()"></WindowButton>
+        <WindowButton
+          button-type="close"
+          @close="closeWindow()"
+          :hover="windowButtonHover"
+          :lit="windowButtonLit"></WindowButton>
       </div>
     </div>
     <div class="sidebar" :class="{ 'sidebar-macos': isMacOS() }" data-tauri-drag-region>
-      <component :is="Logo" height="40" style="margin-top: 24px"></component>
       <ul class="sidebar-items" data-tauri-drag-region>
+        <sidebar-item
+          title="未登录"
+          icon="person-circle-outline"
+          @click="changePage($event, 'accounts')"
+          id="sidebar-home"></sidebar-item>
         <sidebar-item
           :title="$t('sidebar.home')"
           icon="house"
           @click="changePage($event, 'home')"
           id="sidebar-home"></sidebar-item>
-        <sidebar-item
-          :title="$t('sidebar.game')"
-          icon="gamepad"
-          @click="changePage($event, 'game')"
-          id="sidebar-game"></sidebar-item>
         <sidebar-item
           :title="$t('sidebar.market')"
           icon="earth"
@@ -70,22 +96,23 @@
 </template>
 
 <script setup lang="ts">
-import Logo from "@/assets/logo.svg";
 import WindowButton from "./components/WindowButton.vue";
 import SearchBar from "./components/SearchBar.vue";
 import SidebarItem from "./components/SidebarItem.vue";
 import HomeView from "./views/HomeView.vue";
-import GameView from "./views/GameView.vue";
 import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
+import AccountsView from "./views/AccountsView.vue";
 import DialogRoot from "./DialogRoot.vue";
-import { markRaw, onMounted, reactive, ref, shallowRef, watch } from "vue";
+import { computed, markRaw, onMounted, reactive, ref, shallowRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfigStore } from "./store/config";
 import { loadPalette } from "./theme";
 import { window as appWindow } from "@tauri-apps/api";
+import { Event } from "@tauri-apps/api/event";
 
 const config = useConfigStore();
+
 loadPalette(
   {
     palette: config.appearance.palette,
@@ -94,22 +121,42 @@ loadPalette(
   config.accessibility.high_contrast_mode,
 );
 
+const appWindowFocused = ref(true);
+const windowButtonHover = ref(false);
+
+const windowButtonLit = computed(() => {
+  return windowButtonHover.value ? true : appWindowFocused.value;
+});
+
+appWindow
+  .getCurrentWindow()
+  .isFocused()
+  .then((focused) => {
+    appWindowFocused.value = focused;
+  });
+appWindow.getCurrentWindow().onFocusChanged((event: Event<boolean>) => {
+  appWindowFocused.value = event.payload;
+});
+
+const currentAvatar = ref<string | null>(null);
+const currentProfileName = ref<string | null>(null);
+
 const pages = reactive({
   settings: markRaw(SettingsView),
   home: markRaw(HomeView),
   market: markRaw(MarketView),
-  game: markRaw(GameView),
+  accounts: markRaw(AccountsView),
 });
 const transitionName = ref("slide-up");
 const currentComponent = shallowRef(pages.home);
 
 const i18n = useI18n();
-i18n.locale.value = config.language;
+i18n.locale.value = config.language!;
 watch(config, () => {
-  i18n.locale.value = config.language;
+  i18n.locale.value = config.language!;
 });
 
-type ComponentName = "home" | "settings" | "game" | "market";
+type ComponentName = "home" | "settings" | "market" | "accounts";
 
 function changePage(event: MouseEvent | null, component: ComponentName) {
   // TODO: Add class active for event element
@@ -168,6 +215,14 @@ function isMacOS() {
   align-items: center;
   justify-content: space-between;
 
+  .title-bar-container {
+    display: flex;
+    width: calc(100vw - 500px);
+    margin-left: 160px;
+    flex-shrink: 0;
+    align-items: center;
+  }
+
   .account {
     background: var(--controllers-background);
     border: var(--controllers-border);
@@ -175,36 +230,6 @@ function isMacOS() {
     display: flex;
     align-items: center;
     padding: 4px 8px;
-
-    .avatar {
-      width: 22px;
-      height: 22px;
-      top: 13px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 160px;
-      flex-shrink: 0;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      margin-right: 8px;
-
-      img {
-        width: 100%;
-        height: 100%;
-      }
-    }
-
-    .avatar:active {
-      transform: scale(0.92);
-    }
-
-    span {
-      opacity: 0.9;
-      font-size: 14px;
-    }
   }
 }
 
@@ -214,11 +239,36 @@ function isMacOS() {
   flex-direction: column;
   align-items: center;
 
-  .logo {
-    width: 40px;
-    height: 40px;
-    margin-top: 20px;
-    pointer-events: none;
+  .sidebar-avatar {
+    width: 48px;
+    height: 46px;
+    margin-top: 8px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    justify-content: center;
+
+    img.avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-default {
+      filter: grayscale(1);
+      image-rendering: pixelated;
+    }
+
+    .text {
+      font-size: 10px;
+      margin-top: 6px;
+    }
+
+    &:active {
+      opacity: 0.6;
+      transform: scale(0.97);
+    }
   }
   .sidebar-items {
     width: 100%;
@@ -232,7 +282,7 @@ function isMacOS() {
 }
 
 .sidebar-macos {
-  padding-top: 24px;
+  padding-top: 36px;
 }
 
 main.main {
@@ -241,20 +291,21 @@ main.main {
   bottom: 1px;
   height: calc(100vh - 44px);
   width: calc(100vw - 64px);
-  border: var(--main-border);
-  border-radius: 16px;
   border-bottom: unset;
   border-right: unset;
-  border-bottom-left-radius: unset;
-  border-top-right-radius: unset;
-  background: var(--main-background);
+  border-radius: 16px 0 16px 0;
+  will-change: transform;
+  transform: translateZ(0);
+  background:
+    radial-gradient(circle at 20% -20%, rgba(137, 180, 250, 0.08), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(203, 166, 247, 0.05), transparent 65%) var(--ctp-base);
 }
 
 .window-buttons-container {
   position: fixed;
   right: 24px;
-  top: 0px;
-  height: 44px;
+  top: 14px;
+  height: fit-content;
   display: flex;
   align-items: center;
 }
@@ -262,5 +313,47 @@ main.main {
 .window-buttons-container-macos {
   right: unset;
   left: 8px;
+}
+
+.title-bar-avatar {
+  position: relative;
+  margin-left: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    padding: 4px 10px;
+    background: var(--card-background);
+    color: rgb(var(--default-text-color));
+    border: 1px solid rgba(var(--ctp-mocha-overlay2-rgb), 0.5);
+    border-radius: var(--tag-border-radius);
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition:
+      opacity 0.1s ease,
+      transform 0.1s ease;
+  }
+
+  &:hover .tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 </style>

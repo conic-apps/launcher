@@ -28,7 +28,8 @@
         ],
         "security": {
             "csp": null
-        }
+        },
+        "withGlobalTauri": true
     },
     "bundle": {
         "active": true,
@@ -53,6 +54,11 @@
             "endpoints": [
                 "https://api.conicmc.app/latest.json"
             ]
+        },
+        "deep-link": {
+            "desktop": {
+                "schemes": ["conic-launcher"]
+            }
         }
     }
 }
