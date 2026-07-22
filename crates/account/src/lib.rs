@@ -8,7 +8,6 @@ use tauri::{
     Runtime, command,
     plugin::{Builder, TauriPlugin},
 };
-use uuid::Uuid;
 
 use crate::{microsoft::MicrosoftAccount, offline::OfflineAccount, yggdrasil::YggdrasilAccount};
 pub use error::*;
