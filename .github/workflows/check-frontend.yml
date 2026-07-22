@@ -9,6 +9,11 @@ on:
       - "crates/**/*.ts"
   pull_request:
     branches: ["master"]
+    paths:
+      - ".github/workflows/check-frontend.yml"
+      - "src/*"
+      - "*.ts"
+      - "crates/**/*.ts"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
