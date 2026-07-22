@@ -34,8 +34,6 @@ import DownloadSettings from "./settings/DownloadSettings.vue";
 import AccessibilitySettings from "./settings/AccessibilitySettings.vue";
 import AboutSettings from "./settings/AboutSettings.vue";
 import AppIcon from "@/components/AppIcon.vue";
-import { useConfigStore } from "@/store/config";
-import { saveConfigToFile } from "@conic/config";
 
 const components = ref<{ name: string; icon: string; component: Component }[]>([
   {

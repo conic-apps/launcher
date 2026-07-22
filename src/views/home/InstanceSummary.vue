@@ -78,10 +78,6 @@
 
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
-import FabricLogo from "@/assets/images/fabric.webp";
-import QuiltLogo from "@/assets/images/quilt.svg";
-import NeoforgedLogo from "@/assets/images/neoforged.png";
-import ForgeLogo from "@/assets/images/forge.svg";
 import instanceIconFallback from "@/assets/images/Unknown_server.webp";
 import { useInstanceStore } from "@/store/instance";
 import { computed } from "vue";
@@ -90,18 +86,6 @@ import { LATEST_RELEASE_INSTANCE_ID, LATEST_SNAPSHOT_INSTANCE_ID } from "@conic/
 const instanceStore = useInstanceStore();
 const currentInstance = computed(() => {
   return instanceStore.currentInstance;
-});
-const modLoaderLogo = computed(() => {
-  switch (currentInstance.value.config.runtime.mod_loader_type) {
-    case "Quilt":
-      return QuiltLogo;
-    case "Fabric":
-      return FabricLogo;
-    case "Neoforged":
-      return NeoforgedLogo;
-    case "Forge":
-      return ForgeLogo;
-  }
 });
 </script>
 

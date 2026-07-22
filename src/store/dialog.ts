@@ -30,7 +30,6 @@ export const useDialogStore = defineStore("dialog", () => {
     const confirmDeleteAccount = ref({
         visible: false,
         account: null as Account | null,
-        accountKey: null as string | null,
     })
     const uploadSkin = ref({
         visible: false,

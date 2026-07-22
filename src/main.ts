@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { init } from "./log"
-// init()
+init()
 import { createApp } from "vue"
 import { createPinia } from "pinia"
 import { createI18n } from "vue-i18n"
@@ -22,7 +22,6 @@ import pl_pl from "./i18n/pl_pl"
 import App from "./App.vue"
 import AppIcon from "./components/AppIcon.vue"
 import { getPlatformInfo } from "@conic/platform"
-import { onOpenUrl } from "@tauri-apps/plugin-deep-link"
 
 window.__PLATFORM__ = await getPlatformInfo()
 

@@ -124,7 +124,7 @@ import BaseButton from "@/components/base/BaseButton.vue";
 import { useConfigStore } from "@/store/config";
 import { useAccountStore } from "@/store/account";
 import { useDialogStore } from "@/store/dialog";
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import {
   getDefaultSkin,
   saveSkin,
@@ -325,7 +325,6 @@ function deleteAccount() {
     return;
   }
   dialogStore.confirmDeleteAccount.account = currentAccount.value.raw;
-  dialogStore.confirmDeleteAccount.accountKey = currentAccount.value.accountKey ?? "";
   dialogStore.confirmDeleteAccount.visible = true;
 }
 

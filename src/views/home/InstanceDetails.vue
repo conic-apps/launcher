@@ -123,14 +123,6 @@ const groupedActivity = computed(() => {
   }
   return Object.entries(groups).map(([date, items]) => ({ date, items }));
 });
-
-const contentItems = ref([
-  { icon: "", name: "存档", count: 5 },
-  { icon: "", name: "模组", count: 42 },
-  { icon: "", name: "资源包", count: 3 },
-  { icon: "", name: "光影包", count: 1 },
-  { icon: "", name: "游戏截图", count: 128 },
-]);
 </script>
 
 <style lang="less" scoped>

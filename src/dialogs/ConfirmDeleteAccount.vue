@@ -56,7 +56,7 @@
 import BaseDialog from "@/components/base/BaseDialog.vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import AccountAvatar from "@/components/AccountAvatar.vue";
-import { computed, ref, useTemplateRef } from "vue";
+import { computed, ref } from "vue";
 import {
   deleteMicrosoftAccount,
   deleteOfflineAccount,
@@ -145,7 +145,7 @@ const accountTypeLabelColor = computed(() => {
 });
 
 const deleting = ref(false);
-const confirmDelete = async () => {
+async function confirmDelete() {
   if (!account.value) return;
   deleting.value = true;
   try {
@@ -157,7 +157,7 @@ const confirmDelete = async () => {
         await deleteOfflineAccount(account.value.data.uuid);
         break;
       case "Yggdrasil":
-        await deleteYggdrasilAccount(dialogStore.confirmDeleteAccount.accountKey!);
+        await deleteYggdrasilAccount(account.value.data);
         break;
     }
     await accountStore.reloadFromFile();
@@ -174,7 +174,7 @@ const confirmDelete = async () => {
     deleting.value = false;
     dialogStore.confirmDeleteAccount.visible = false;
   }
-};
+}
 </script>
 
 <style lang="less" scoped>

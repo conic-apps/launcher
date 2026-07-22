@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import AppIcon from "./AppIcon.vue";
 
-const props = defineProps<{
+defineProps<{
   title: string;
   description?: string;
   logoPixelated?: boolean;

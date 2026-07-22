@@ -13,8 +13,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-
 const props = defineProps<{
   disabled?: boolean;
   color?: string;

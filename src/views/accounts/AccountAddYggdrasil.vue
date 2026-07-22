@@ -97,7 +97,6 @@ import {
   addYggdrasilAccount,
   AuthResponse,
   getYggdrasilServerInfo,
-  YggdrasilAccount,
   yggdrasilAuthenticateAccount,
   yggdrasilGetSkinUrl,
   YggdrasilProfile,
