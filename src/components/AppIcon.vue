@@ -28,5 +28,6 @@ const IconComponent = computed(() =>
     :height="size"
     :stroke="stroke"
     :fill="fill"
-    class="inline-block" />
+    class="inline-block"
+    :style="{ stroke, fill }" />
 </template>

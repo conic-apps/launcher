@@ -7,6 +7,5 @@ import { PlatformInfo } from "@conic/platform"
 declare global {
     interface Window {
         __PLATFORM__: PlatformInfo
-        __SYSTEM_FONTS__: string[]
     }
 }

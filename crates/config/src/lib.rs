@@ -4,7 +4,7 @@
 
 //! App configuration
 
-use account::AccountType;
+use account::Account;
 use folder::DATA_LOCATION;
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,6 @@ use tauri::{
     Runtime, command,
     plugin::{Builder, TauriPlugin},
 };
-use uuid::Uuid;
 
 pub mod download;
 pub mod error;
@@ -27,7 +26,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         .invoke_handler(tauri::generate_handler![
             cmd_load_config_file,
             cmd_get_default_config,
-            cmd_save_config
+            cmd_save_config,
+            cmd_get_system_language
         ])
         .build()
 }
@@ -47,6 +47,11 @@ fn cmd_get_default_config() -> Config {
 #[command]
 fn cmd_save_config(config: Config) -> Result<()> {
     save_config(config)
+}
+
+#[command]
+fn cmd_get_system_language() -> String {
+    get_system_language().to_string()
 }
 
 /// Reads the configuration file from disk.
@@ -70,9 +75,9 @@ pub fn load_config_file() -> Result<Config> {
         }
     };
     if let Ok(config) = toml::from_str::<Config>(&data) {
-        info!("Loaded config from file");
         let write_back_data = toml::to_string_pretty(&config)?;
         std::fs::write(config_file_path, write_back_data)?;
+        info!("Loaded config from file");
         Ok(config)
     } else {
         error!("Config file is not a toml file, reset it");
@@ -178,11 +183,10 @@ pub struct Config {
     /// Whether automatic updates are enabled.
     pub auto_update: bool,
 
-    /// The UUID of the currently selected account.
-    pub current_account_uuid: Uuid,
-
-    /// The UUID of the currently selected account.
-    pub current_account_type: AccountType,
+    /// The account identifier and type of the currently selected account.
+    /// For yggdrasil account, the identifier is account_key
+    /// For Microsoft and offline account, the identifier is its profile UUID.
+    pub current_account: Option<Account>,
 
     /// Appearance-related settings.
     pub appearance: AppearanceConfig,
@@ -191,7 +195,7 @@ pub struct Config {
     pub accessibility: AccessibilityConfig,
 
     /// The UI language code (e.g., "en_us").
-    pub language: String,
+    pub language: Option<String>,
 
     /// The selected update channel.
     pub update_channel: UpdateChannel,
@@ -204,23 +208,13 @@ pub struct Config {
 }
 
 impl Default for Config {
-    /// Returns the default configuration, using system locale and the first available account.
     fn default() -> Self {
         Self {
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
-            current_account_uuid: {
-                match account::microsoft::list_accounts()
-                    .unwrap_or_default()
-                    .first()
-                {
-                    Some(x) => x.to_owned().profile.uuid,
-                    None => uuid::uuid!("00000000-0000-0000-0000-000000000000"),
-                }
-            },
-            current_account_type: AccountType::Microsoft,
+            current_account: None,
             auto_update: true,
-            language: get_system_language(),
+            language: None,
             update_channel: UpdateChannel::default(),
             launch: launch::LaunchConfig::default(),
             download: download::DownloadConfig::default(),
@@ -228,18 +222,60 @@ impl Default for Config {
     }
 }
 
-fn get_system_language() -> String {
-    let locale = sys_locale::get_locale().unwrap_or("en-US".to_string());
-    if locale.contains(".") {
-        locale
-            .split(".")
-            .collect::<Vec<_>>()
-            .first()
-            .expect("Could not understand system locale string")
-            .to_string()
-            .replace("-", "_")
-            .to_lowercase()
-    } else {
-        locale.replace("-", "_").to_lowercase()
+pub fn get_system_language() -> &'static str {
+    let locale = sys_locale::get_locale().unwrap_or_else(|| "en-US".to_string());
+
+    let locale = locale.replace('_', "-");
+    let parts: Vec<&str> = locale.split('-').collect();
+
+    let language = parts
+        .first()
+        .map(|s| s.to_ascii_lowercase())
+        .unwrap_or_default();
+
+    let script = parts
+        .iter()
+        .find(|p| p.len() == 4)
+        .map(|s| s.to_ascii_lowercase());
+
+    let region = parts
+        .iter()
+        .find(|p| p.len() == 2 || p.len() == 3)
+        .map(|s| s.to_ascii_lowercase());
+
+    match language.as_str() {
+        "zh" => match script.as_deref() {
+            Some("hant") => "zh_tw",
+            Some("hans") => "zh_cn",
+            _ => match region.as_deref() {
+                Some("tw") | Some("hk") | Some("mo") => "zh_tw",
+                _ => "zh_cn",
+            },
+        },
+
+        "en" => "en_us",
+
+        "ja" => "ja_jp",
+
+        "ko" => "ko_kr",
+
+        "de" => "de_de",
+
+        "fr" => "fr_fr",
+
+        "es" => "es_es",
+
+        "pt" => match region.as_deref() {
+            Some("br") => "pt_br",
+            _ => "pt_br",
+        },
+
+        "ru" => "ru_ru",
+
+        "tr" => "tr_tr",
+
+        "pl" => "pl_pl",
+
+        _ => "en_us",
     }
 }

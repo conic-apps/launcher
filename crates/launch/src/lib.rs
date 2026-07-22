@@ -14,7 +14,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use account::check_and_refresh_account;
+use account::Account;
 use arguments::generate_command_arguments;
 use complete::complete_files;
 use config::Config;
@@ -154,19 +154,6 @@ pub async fn launch(
     print_instance_info(&instance);
     let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
 
-    if !config.launch.skip_refresh_account {
-        {
-            let mut status = status.lock().expect("Internal error");
-            *status = LaunchEvent::RefreshAccount;
-        }
-        check_and_refresh_account(config.current_account_uuid, &config.current_account_type)
-            .await?;
-    } else {
-        info!("Account refresh disabled by user");
-    };
-    let selected_account =
-        account::AccountLaunchInfo::new(config.current_account_uuid, &config.current_account_type)?;
-
     if config.launch.skip_check_files {
         info!("File checking disabled by user")
     } else {
@@ -179,10 +166,14 @@ pub async fn launch(
     }
 
     info!("Generating startup parameters");
-    let launch_options = LaunchOptions::new(&config, &instance, selected_account);
+    let launch_options = LaunchOptions::new(&config, &instance)?;
     {
         let mut status = status.lock().expect("Internal error");
         *status = LaunchEvent::GenerateScriptlet;
+    }
+    if let Account::Yggdrasil(_) = launch_options.selected_account {
+        let progress = Progress::default();
+        install::authlib_injector::ensure_latest(&progress).await?;
     }
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
     let raw_version_json = async_fs::read_to_string(version_json_path).await?;
@@ -199,24 +190,6 @@ pub async fn launch(
         &resolved_version,
     )
     .await?;
-    if launch_options
-        .account_launch_info
-        .yggdrasil_api_root
-        .is_some()
-    {
-        info!("Downloading authlib injector");
-        let progress = Progress::default();
-        {
-            let mut status = status.lock().expect("internal error");
-            *status = LaunchEvent::InstallAuthlibInjector(progress.clone());
-        }
-        install::authlib_injector::install_latest(
-            &minecraft_location,
-            &resolved_version.id,
-            &progress,
-        )
-        .await?;
-    }
 
     let result = spawn_minecraft_process(command_arguments, launch_options, instance, status).await;
     if let Err(e) = &result {

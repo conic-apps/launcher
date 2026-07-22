@@ -5,13 +5,36 @@
 <template>
   <div>
     <SettingGroup>
-      <SettingItem
-        :title="$t('settings.general.language')"
-        :description="$t('settings.general.languageDesc')"
-        icon="language">
+      <SettingItem :title="$t('settings.general.language')" icon="language">
         <BaseSelect
-          :display-name="['English', '简体中文']"
-          :options="['en_us', 'zh_cn']"
+          :display-name="[
+            'English',
+            '简体中文',
+            '繁體中文',
+            '日本語',
+            '한국어',
+            'Deutsch',
+            'Français',
+            'Español',
+            'Português (Brasil)',
+            'Русский',
+            'Türkçe',
+            'Polski',
+          ]"
+          :options="[
+            'en_us',
+            'zh_cn',
+            'zh_tw',
+            'ja_jp',
+            'ko_kr',
+            'de_de',
+            'fr_fr',
+            'es_es',
+            'pt_br',
+            'ru_ru',
+            'tr_tr',
+            'pl_pl',
+          ]"
           v-model="config.language"
           :default="1"></BaseSelect>
       </SettingItem>
@@ -38,6 +61,21 @@
       <SettingItem :title="$t('settings.general.checkUpdate')" icon="circle-up" :navigable="true">
       </SettingItem>
     </SettingGroup>
+    <SettingGroup title="Test DropdownInput">
+      <SettingItem title="Default" icon="language">
+        <BaseDropdownInput
+          width="240px"
+          placeholder="Select or type..."
+          v-model="testValue"
+          :options="['apple', 'banana', 'cherry', 'date', 'elderberry', 'fig', 'grape']"
+          :display-name="['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape']" />
+      </SettingItem>
+      <SettingItem title="Selected value" icon="language">
+        <span style="font-size: 12px; color: rgba(var(--default-text-color), 0.6)">
+          {{ testValue || "(none)" }}
+        </span>
+      </SettingItem>
+    </SettingGroup>
   </div>
 </template>
 
@@ -45,10 +83,13 @@
 import SettingItem from "@/components/SettingItem.vue";
 import BaseSelect from "@/components/base/BaseSelect.vue";
 import BaseSwitch from "@/components/base/BaseSwitch.vue";
+import BaseDropdownInput from "@/components/base/BaseDropdownInput.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
+import { ref } from "vue";
 
 const config = useConfigStore();
+const testValue = ref("");
 </script>
 
 <style lang="less"></style>

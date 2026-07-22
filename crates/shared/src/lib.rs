@@ -6,6 +6,8 @@ use std::time::Duration;
 
 use log::warn;
 use once_cell::sync::{Lazy, OnceCell};
+use thiserror::Error;
+use url::Url;
 
 pub static APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -31,3 +33,37 @@ pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
     };
     builder.build().expect("Failed to build HTTP client")
 });
+
+#[derive(Debug, Error)]
+pub enum UrlExtError {
+    #[error("URL cannot be used as a base URL")]
+    InvalidBaseUrl,
+}
+
+pub trait UrlExt {
+    fn append_path<I, S>(self, segments: I) -> Result<Self, UrlExtError>
+    where
+        Self: Sized,
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>;
+}
+
+impl UrlExt for Url {
+    fn append_path<I, S>(mut self, segments: I) -> Result<Self, UrlExtError>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        {
+            let mut path_segments = self
+                .path_segments_mut()
+                .map_err(|_| UrlExtError::InvalidBaseUrl)?;
+
+            for segment in segments {
+                path_segments.push(segment.as_ref());
+            }
+        }
+
+        Ok(self)
+    }
+}
