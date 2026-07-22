@@ -389,6 +389,7 @@ const uploadSkinButtonText = computed(() => {
     case "Yggdrasil":
       return "上传新材质";
   }
+  return "上传新皮肤";
 });
 </script>
 
