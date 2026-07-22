@@ -363,6 +363,9 @@ const isDefault = computed(() => {
 });
 
 async function saveSkinButton() {
+  if (!currentAccount.value || !currentAccount.value.skinUrl) {
+    return;
+  }
   const path = await save({
     filters: [
       {
@@ -371,12 +374,10 @@ async function saveSkinButton() {
       },
     ],
   });
-  console.log(path);
   if (!path) {
     return;
   }
-  console.log(currentAccount.value?.skinUrl);
-  saveSkin(currentAccount.value?.skinUrl!, path);
+  saveSkin(currentAccount.value?.skinUrl, path);
 }
 
 const uploadSkinButtonText = computed(() => {
