@@ -3,7 +3,11 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <button class="button" :style="style" v-bind="$attrs">
+  <button
+    class="base-button"
+    :class="{ disabled: props.disabled }"
+    :style="{ color: props.color }"
+    v-bind="$attrs">
     <slot></slot>
   </button>
 </template>
@@ -15,20 +19,10 @@ const props = defineProps<{
   disabled?: boolean;
   color?: string;
 }>();
-const style = computed(() => {
-  let result = "";
-  if (props.disabled) {
-    result += "opacity: 0.5; pointer-events: none;";
-  }
-  if (props.color) {
-    result += `color: ${props.color}`;
-  }
-  return result;
-});
 </script>
 
 <style lang="less" scoped>
-button.button {
+button.base-button {
   width: 100%;
   height: 30px;
   background: var(--controllers-background);
@@ -41,11 +35,16 @@ button.button {
   justify-content: center;
 }
 
-button.button:hover {
+button.base-button.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+button.base-button:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
-button.button:active {
+button.base-button:active {
   opacity: 0.8;
 }
 </style>

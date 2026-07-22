@@ -4,6 +4,7 @@
 
 import { defineStore } from "pinia"
 import { ref } from "vue"
+import type { Account } from "@conic/account"
 
 export const useDialogStore = defineStore("dialog", () => {
     const updateReminder = ref({ visible: false })
@@ -26,5 +27,25 @@ export const useDialogStore = defineStore("dialog", () => {
             id: "00000000-0000-0000-0000-000000000000",
         },
     })
-    return { updateReminder, accountManager, logViewer, createInstance, confirmDeleteInstance }
+    const confirmDeleteAccount = ref({
+        visible: false,
+        account: null as Account | null,
+        accountKey: null as string | null,
+    })
+    const uploadSkin = ref({
+        visible: false,
+        accountType: "Microsoft" as Account["type"],
+        skinUrl: "",
+        capeUrl: "",
+        textureType: "skin" as "skin" | "cape",
+    })
+    return {
+        updateReminder,
+        accountManager,
+        logViewer,
+        createInstance,
+        confirmDeleteInstance,
+        confirmDeleteAccount,
+        uploadSkin,
+    }
 })

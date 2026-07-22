@@ -4,15 +4,15 @@
 
 <template>
   <div class="home-view">
-    <CurrentInstance></CurrentInstance>
-    <instance-details style="margin-top: 16px"></instance-details>
+    <InstanceSummary></InstanceSummary>
+    <InstanceDetails style="margin-top: 16px"></InstanceDetails>
     <InstanceDrawer></InstanceDrawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import CurrentInstance from "./home/CurrentInstance.vue";
-import InstanceDetails from "./game/InstanceDetails.vue";
+import InstanceSummary from "./home/InstanceSummary.vue";
+import InstanceDetails from "./home/InstanceDetails.vue";
 import InstanceDrawer from "./home/InstanceDrawer.vue";
 </script>
 
@@ -24,5 +24,7 @@ import InstanceDrawer from "./home/InstanceDrawer.vue";
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-y: auto;
+  padding-bottom: 96px;
 }
 </style>

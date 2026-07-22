@@ -28,6 +28,12 @@ pub enum Error {
         #[serde_as(as = "serde_with::DisplayFromStr")]
         url::ParseError,
     ),
+    #[error(transparent)]
+    InvalidBaseUrl(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        shared::UrlExtError,
+    ),
 
     #[error(transparent)]
     JsonParse(
@@ -61,4 +67,14 @@ pub enum Error {
 
     #[error("Unable to parse yggdrasil server api location, please ask your server for help")]
     InvalidALIResponse,
+
+    #[error("Unable to parse texture")]
+    YggdrasilTextureParseError,
+
+    #[error(transparent)]
+    Base64DecodeError(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        base64::DecodeError,
+    ),
 }

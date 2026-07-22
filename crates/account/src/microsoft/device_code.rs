@@ -50,8 +50,6 @@ pub async fn poll_device_code(device_code: &str) -> Result<DeviceCodePollResult>
         .await?
         .json()
         .await?;
-    println!("{:#?}", response);
-
     if let Some(error) = response["error"].as_str() {
         return Ok(DeviceCodePollResult {
             status: error.to_string(),

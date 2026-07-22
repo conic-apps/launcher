@@ -10,14 +10,8 @@
         width: buttons ? '100%' : undefined,
         pointerEvents: clickAble ? 'all' : 'none',
       }">
-      <div
-        class="icon"
-        :style="{
-          backgroundImage: props.logo ? `url(${props.logo})` : undefined,
-          imageRendering: props.logo && props.logoPixelated ? 'pixelated' : undefined,
-          display: props.logo ? undefined : 'none',
-        }">
-        <slot name="icon"></slot>
+      <div class="icon">
+        <slot name="icon" style="margin-right: 10px"></slot>
       </div>
       <div>
         <h4>
@@ -49,7 +43,6 @@
 import AppIcon from "./AppIcon.vue";
 
 const props = defineProps<{
-  logo?: string;
   title: string;
   description?: string;
   logoPixelated?: boolean;
@@ -139,16 +132,14 @@ const props = defineProps<{
 
 .icon {
   flex-shrink: 0;
-  width: 32px;
+  max-width: 32px;
   height: 32px;
   background-size: cover;
   background-position: center;
   margin-left: 2px;
-  margin-right: 10px;
   // box-shadow: 0 0 2px #00000088;
   overflow: hidden;
   border-radius: 8px;
-  background-image: url(@/assets/images/Unknown_server.webp);
   display: flex;
   align-items: center;
   justify-content: center;

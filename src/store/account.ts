@@ -9,11 +9,24 @@ let accounts: Accounts
 try {
     accounts = await listAccounts()
 } catch (error) {
-    console.error(error)
+    console.debug(error)
+    accounts = {
+        microsoft: [],
+        offline: [],
+        yggdrasil: [],
+    }
 }
 
 export const useAccountStore = defineStore("accounts", {
     state: (): Accounts => {
         return accounts
+    },
+    actions: {
+        async reloadFromFile() {
+            const accounts = await listAccounts()
+            this.microsoft = accounts.microsoft
+            this.yggdrasil = accounts.yggdrasil
+            this.offline = accounts.offline
+        },
     },
 })

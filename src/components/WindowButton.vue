@@ -4,7 +4,10 @@
     v-if="buttonType === 'minimize'"
     @mouseenter="windowButtonHover = true"
     @mouseleave="windowButtonHover = false"
-    :style="{ background: computedLit ? 'rgb(254,188,46)' : 'var(--window-btn-unfocused-color)', border: 'var(--window-btn-border)' }"
+    :style="{
+      background: computedLit ? 'rgb(254,188,46)' : 'var(--window-btn-unfocused-color)',
+      border: 'var(--window-btn-border)',
+    }"
     @click="$emit(buttonType)">
     <AppIcon v-if="showIcon" name="minus" :size="10" />
   </div>
@@ -13,7 +16,10 @@
     v-else-if="buttonType === 'maximize'"
     @mouseenter="windowButtonHover = true"
     @mouseleave="windowButtonHover = false"
-    :style="{ background: computedLit ? 'rgb(97,197,84)' : 'var(--window-btn-unfocused-color)', border: 'var(--window-btn-border)' }"
+    :style="{
+      background: computedLit ? 'rgb(97,197,84)' : 'var(--window-btn-unfocused-color)',
+      border: 'var(--window-btn-border)',
+    }"
     @click="$emit(buttonType)">
     <AppIcon v-if="showIcon" name="expand-2" :size="10" />
   </div>
@@ -22,7 +28,10 @@
     v-else-if="buttonType === 'close'"
     @mouseenter="windowButtonHover = true"
     @mouseleave="windowButtonHover = false"
-    :style="{ background: computedLit ? 'rgb(255,95,87)' : 'var(--window-btn-unfocused-color)', border: 'var(--window-btn-border)' }"
+    :style="{
+      background: computedLit ? 'rgb(255,95,87)' : 'var(--window-btn-unfocused-color)',
+      border: 'var(--window-btn-border)',
+    }"
     @click="$emit(buttonType)">
     <AppIcon v-if="showIcon" name="xmark" :size="10" />
   </div>
@@ -39,7 +48,7 @@ const props = defineProps<{
   hover?: boolean;
 }>();
 defineEmits(["minimize", "maximize", "close"]);
-const windowButtonHover = ref(true);
+const windowButtonHover = ref(false);
 const appWindowFocused = ref(true);
 
 appWindow
@@ -53,7 +62,7 @@ appWindow.getCurrentWindow().onFocusChanged((event: Event<boolean>) => {
   appWindowFocused.value = event.payload;
 });
 const hovered = computed(() =>
-  typeof props.hover === "boolean" ? props.hover : windowButtonHover.value
+  typeof props.hover === "boolean" ? props.hover : windowButtonHover.value,
 );
 const computedLit = computed(() => {
   if (typeof props.lit === "boolean") {

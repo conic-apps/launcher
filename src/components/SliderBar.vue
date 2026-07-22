@@ -24,7 +24,11 @@
           required
           v-model="value"
           placeholder="默认"
-          @blur="onBlur" />
+          @blur="onBlur"
+          autocapitalize="off"
+          autocomplete="off"
+          autocorrect="off"
+          :spellcheck="false" />
         <div class="underline"></div>
       </div>
       <span class="text">{{ text }}</span>

@@ -279,7 +279,6 @@ button.game-button {
   font-size: 14px;
   padding: 8px 10px;
   color: rgb(var(--default-text-color));
-  // cursor: pointer;
   transition: all 100ms ease;
   display: inline-flex;
   align-items: center;

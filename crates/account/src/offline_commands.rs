@@ -8,21 +8,21 @@ use uuid::Uuid;
 use crate::{Result, offline::OfflineAccount};
 
 #[command]
-pub async fn cmd_add_offline_account(name: String) -> Result<()> {
-    crate::offline::add_account(&name).await
+pub(crate) async fn cmd_offline_add_account(name: String, uuid: Uuid) -> Result<()> {
+    crate::offline::add_account(name, uuid).await
 }
 
 #[command]
-pub async fn cmd_delete_offline_account(uuid: Uuid) -> Result<()> {
+pub(crate) async fn cmd_offline_delete_account(uuid: Uuid) -> Result<()> {
     crate::offline::delete_account(uuid).await
 }
 
 #[command]
-pub async fn cmd_update_offline_account(account: OfflineAccount) -> Result<()> {
+pub(crate) async fn cmd_offline_update_account(account: OfflineAccount) -> Result<()> {
     crate::offline::update_account(account).await
 }
 
 #[command]
-pub async fn cmd_get_offline_account(uuid: Uuid) -> Result<OfflineAccount> {
+pub(crate) async fn cmd_offline_get_account(uuid: Uuid) -> Result<OfflineAccount> {
     crate::offline::get_account(uuid).await
 }

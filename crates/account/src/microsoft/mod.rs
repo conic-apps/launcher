@@ -31,20 +31,18 @@ pub struct MicrosoftAccount {
 
 pub async fn list_accounts() -> Result<Vec<MicrosoftAccount>> {
     let accounts_list_file = DATA_LOCATION.accounts.join("microsoft.json");
+    async_fs::create_dir_all(&DATA_LOCATION.accounts).await?;
     if !accounts_list_file.exists() {
         return Ok(vec![]);
     }
-    let serialized_account_list = async_fs::read_to_string(accounts_list_file).await?;
-    Ok(serde_json::from_str(&serialized_account_list)?)
+    let serialized_account_list = async_fs::read_to_string(accounts_list_file)
+        .await
+        .unwrap_or_default();
+    Ok(serde_json::from_str(&serialized_account_list).unwrap_or_default())
 }
 
 pub async fn get_account(uuid: Uuid) -> Result<MicrosoftAccount> {
-    let accounts_list_file = DATA_LOCATION.accounts.join("microsoft.json");
-    if !accounts_list_file.exists() {
-        return Err(Error::AccountNotfound(uuid));
-    }
-    let serialized_accounts_list = async_fs::read_to_string(accounts_list_file).await?;
-    let accounts = serde_json::from_str::<Vec<MicrosoftAccount>>(&serialized_accounts_list)?;
+    let accounts = list_accounts().await?;
     accounts
         .into_iter()
         .filter(|x| x.profile.uuid == uuid)
@@ -55,12 +53,13 @@ pub async fn get_account(uuid: Uuid) -> Result<MicrosoftAccount> {
 }
 
 pub async fn add_account(account: MicrosoftAccount) -> Result<()> {
-    let mut accounts = list_accounts().await?;
+    let mut accounts = list_accounts()
+        .await?
+        .into_iter()
+        .filter(|x| x.profile.uuid != account.profile.uuid)
+        .collect::<Vec<_>>();
     accounts.push(account);
-    let accounts_list_file = DATA_LOCATION.accounts.join("microsoft.json");
-    async_fs::create_dir_all(DATA_LOCATION.accounts.clone()).await?;
-    let serialized_accounts_list = serde_json::to_string_pretty(&accounts)?;
-    async_fs::write(accounts_list_file, serialized_accounts_list).await?;
+    save_accounts(&accounts).await?;
     Ok(())
 }
 
@@ -70,9 +69,7 @@ pub async fn delete_account(uuid: Uuid) -> Result<()> {
         .into_iter()
         .filter(|x| x.profile.uuid != uuid)
         .collect::<Vec<MicrosoftAccount>>();
-    let accounts_list_file = DATA_LOCATION.accounts.join("microsoft.json");
-    let serialized_accounts_list = serde_json::to_string_pretty(&result)?;
-    async_fs::write(accounts_list_file, serialized_accounts_list).await?;
+    save_accounts(&result).await?;
     Ok(())
 }
 
@@ -88,9 +85,7 @@ pub async fn update_account(uuid: Uuid, account: &MicrosoftAccount) -> Result<()
             }
         })
         .collect::<Vec<MicrosoftAccount>>();
-    let accounts_list_file = DATA_LOCATION.accounts.join("microsoft.json");
-    let serialized_accounts_list = serde_json::to_string_pretty(&result)?;
-    async_fs::write(accounts_list_file, serialized_accounts_list).await?;
+    save_accounts(&result).await?;
     Ok(())
 }
 
@@ -119,12 +114,19 @@ pub async fn refresh_account(uuid: Uuid, force_refresh: bool) -> Result<Microsof
     Ok(refreshed_account)
 }
 
+async fn save_accounts(accounts: &Vec<MicrosoftAccount>) -> Result<()> {
+    let accounts_list_file = DATA_LOCATION.accounts.join("microsoft.json");
+    let serialized_accounts_list = serde_json::to_string_pretty(accounts)?;
+    async_fs::create_dir_all(&DATA_LOCATION.accounts).await?;
+    async_fs::write(accounts_list_file, serialized_accounts_list).await?;
+    Ok(())
+}
+
 pub async fn access_token_auth_flow(
     access_token: &str,
     refresh_token: &str,
 ) -> Result<MicrosoftAccount> {
     info!("Starting access token auth flow");
-    println!("Access token: {access_token}");
     let xbox_auth_response = xbox_auth_step::xbox_authenticate(access_token).await?;
     info!("Successfully login Xbox");
 

@@ -19,6 +19,16 @@ export default {
     accounts: {
         title: "Manage Accounts",
         description: "Add, remove or select game accounts",
+        uploadSkin: {
+            title: "Upload Skin",
+            modelType: "Model Type",
+            slim: "Slim",
+            classic: "Classic",
+            textureType: "Texture Type",
+            skin: "Skin",
+            cape: "Cape",
+            confirm: "Upload Skin",
+        },
     },
     game: {
         latestRelease: "Latest Release",
@@ -91,8 +101,13 @@ export default {
             checkUpdate: "Check Update",
         },
         game: {
-            sidebar: "Game",
+            sidebar: "Launch Options",
+            jvmSidebar: "Java Virtual Machine",
             jvmTitle: "JVM Settings",
+            autoSelectJava: "Automatically select Java runtime",
+            autoSelectJavaDesc:
+                "Let Conic Launcher automatically select and manage the Java runtime for you.",
+            selectDefaultJava: "Select default Java runtime",
             chooseJava: "Choose Java",
             selectedJava: "{selected}",
             addJava: "Install Java Runtime",

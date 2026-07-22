@@ -30,12 +30,20 @@
           @maximize="
             appWindow.getCurrentWindow().setFullscreen(!appWindow.getCurrentWindow().isFullscreen())
           "></WindowButton>
+        <div class="title-bar-avatar" v-if="currentAvatar">
+          <div class="tooltip">{{ currentProfileName }}</div>
+          <img :src="currentAvatar" alt="Avatar" />
+        </div>
       </div>
       <div
         class="window-buttons-container"
         @mouseenter="windowButtonHover = true"
         @mouseleave="windowButtonHover = false"
         v-else>
+        <div class="title-bar-avatar" v-if="currentAvatar">
+          <div class="tooltip">{{ currentProfileName }}</div>
+          <img :src="currentAvatar" alt="Avatar" />
+        </div>
         <WindowButton
           button-type="minimize"
           :lit="windowButtonLit"
@@ -101,11 +109,10 @@ import { useI18n } from "vue-i18n";
 import { useConfigStore } from "./store/config";
 import { loadPalette } from "./theme";
 import { window as appWindow } from "@tauri-apps/api";
-import { listAccounts, getAvatar } from "@conic/account";
-import steveAvatar from "@/assets/images/steve_avatar.webp";
 import { Event } from "@tauri-apps/api/event";
 
 const config = useConfigStore();
+
 loadPalette(
   {
     palette: config.appearance.palette,
@@ -115,10 +122,9 @@ loadPalette(
 );
 
 const appWindowFocused = ref(true);
-const windowButtonHover = ref(true);
+const windowButtonHover = ref(false);
 
 const windowButtonLit = computed(() => {
-  console.log(windowButtonHover.value);
   return windowButtonHover.value ? true : appWindowFocused.value;
 });
 
@@ -133,24 +139,7 @@ appWindow.getCurrentWindow().onFocusChanged((event: Event<boolean>) => {
 });
 
 const currentAvatar = ref<string | null>(null);
-
-async function updateAvatar() {
-  if (!config.current_account) {
-    currentAvatar.value = null;
-    return;
-  }
-  try {
-    const accounts = await listAccounts();
-    const account = accounts.microsoft.find((a) => a.profile.uuid === config.current_account[0]);
-    if (account && account.profile.skins.length > 0) {
-      currentAvatar.value = await getAvatar(account.profile.skins[0].url, 32);
-    } else {
-      currentAvatar.value = null;
-    }
-  } catch {
-    currentAvatar.value = null;
-  }
-}
+const currentProfileName = ref<string | null>(null);
 
 const pages = reactive({
   settings: markRaw(SettingsView),
@@ -162,9 +151,9 @@ const transitionName = ref("slide-up");
 const currentComponent = shallowRef(pages.home);
 
 const i18n = useI18n();
-i18n.locale.value = config.language;
+i18n.locale.value = config.language!;
 watch(config, () => {
-  i18n.locale.value = config.language;
+  i18n.locale.value = config.language!;
 });
 
 type ComponentName = "home" | "settings" | "market" | "accounts";
@@ -184,7 +173,6 @@ function jumpTo(name: ComponentName) {
 
 onMounted(() => {
   console.log("Frontend loaded");
-  updateAvatar();
   requestAnimationFrame(() => {
     document.body.style.transform = "scale(1)";
     document.body.style.opacity = "1";
@@ -194,11 +182,6 @@ onMounted(() => {
     }, 500);
   });
 });
-
-watch(
-  () => config.current_account,
-  () => updateAvatar(),
-);
 
 function closeWindow() {
   requestAnimationFrame(() => {
@@ -261,7 +244,6 @@ function isMacOS() {
     height: 46px;
     margin-top: 8px;
     border-radius: 10px;
-    cursor: pointer;
     display: flex;
     flex-direction: column;
     align-content: center;
@@ -309,11 +291,14 @@ main.main {
   bottom: 1px;
   height: calc(100vh - 44px);
   width: calc(100vw - 64px);
-  border: var(--main-border);
   border-bottom: unset;
   border-right: unset;
   border-radius: 16px 0 16px 0;
-  background: var(--main-background);
+  will-change: transform;
+  transform: translateZ(0);
+  background:
+    radial-gradient(circle at 20% -20%, rgba(137, 180, 250, 0.08), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(203, 166, 247, 0.05), transparent 65%) var(--ctp-base);
 }
 
 .window-buttons-container {
@@ -328,5 +313,47 @@ main.main {
 .window-buttons-container-macos {
   right: unset;
   left: 8px;
+}
+
+.title-bar-avatar {
+  position: relative;
+  margin-left: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    padding: 4px 10px;
+    background: var(--card-background);
+    color: rgb(var(--default-text-color));
+    border: 1px solid rgba(var(--ctp-mocha-overlay2-rgb), 0.5);
+    border-radius: var(--tag-border-radius);
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition:
+      opacity 0.1s ease,
+      transform 0.1s ease;
+  }
+
+  &:hover .tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 </style>

@@ -27,6 +27,7 @@
 import { type Component, markRaw, ref, shallowRef } from "vue";
 import GeneralSettings from "./settings/GeneralSettings.vue";
 import GameSettings from "./settings/GameSettings.vue";
+import JvmSettings from "./settings/JvmSettings.vue";
 import AdvanceSettings from "./settings/AdvanceSettings.vue";
 import AppearanceSettings from "./settings/AppearanceSettings.vue";
 import DownloadSettings from "./settings/DownloadSettings.vue";
@@ -46,6 +47,11 @@ const components = ref<{ name: string; icon: string; component: Component }[]>([
     name: "settings.game.sidebar",
     icon: "gamepad",
     component: markRaw(GameSettings),
+  },
+  {
+    name: "settings.game.jvmSidebar",
+    icon: "java",
+    component: markRaw(JvmSettings),
   },
   {
     name: "settings.advance.sidebar",
@@ -85,14 +91,6 @@ function switchComponent(component: Component, index: number) {
   currentComponent.value = component;
   activeComponentIndex.value = index;
 }
-
-const configStore = useConfigStore();
-
-configStore.$subscribe(async (mutation, state) => {
-  document.body.classList.add("saving-config");
-  await saveConfigToFile(state);
-  document.body.classList.remove("saving-config");
-});
 </script>
 
 <style lang="less" scoped>

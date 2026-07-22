@@ -2,8 +2,6 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -18,23 +16,22 @@ pub struct OfflineAccount {
 }
 
 impl OfflineAccount {
-    fn new(name: &str) -> Self {
+    fn new(name: String, uuid: Uuid) -> Self {
         Self {
-            name: name.to_string(),
-            uuid: uuid::Uuid::from_u128(
-                SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .expect("Incorrect System Time")
-                    .as_nanos(),
-            ),
+            name,
+            uuid,
             skin: None,
         }
     }
 }
 
-pub async fn add_account(name: &str) -> Result<()> {
-    let new_account = OfflineAccount::new(name);
-    let mut accounts = list_accounts().await?;
+pub async fn add_account(name: String, uuid: Uuid) -> Result<()> {
+    let new_account = OfflineAccount::new(name, uuid);
+    let mut accounts = list_accounts()
+        .await?
+        .into_iter()
+        .filter(|x| x.uuid != uuid)
+        .collect::<Vec<_>>();
     accounts.push(new_account);
     save_accounts(&accounts).await?;
     Ok(())

@@ -172,7 +172,6 @@ impl Default for DataLocation {
             OsFamily::Linux => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
                 .join(format!(".{application_folder_name}")),
         };
-        println!("{:#?}", application_data_path);
         #[cfg(test)]
         {
             std::fs::remove_dir_all(&application_data_path).expect("Could not clear data folder");

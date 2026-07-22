@@ -1,4 +1,5 @@
 use base64::{Engine, engine::general_purpose};
+use futures::stream::{self, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use shared::HTTP_CLIENT;
@@ -40,7 +41,10 @@ pub async fn generate_account_profile(minecraft_profile_response: Value) -> Resu
             minecraft_profile_response["skins"].clone(),
         )?)
         .await,
-        capes: serde_json::from_value(minecraft_profile_response["capes"].clone())?,
+        capes: resolve_capes(serde_json::from_value(
+            minecraft_profile_response["capes"].clone(),
+        )?)
+        .await,
     })
 }
 
@@ -65,5 +69,33 @@ async fn resolve_skin(url: &str) -> String {
         )
     } else {
         url.to_string()
+    }
+}
+
+async fn resolve_capes(capes: Vec<Cape>) -> Vec<Cape> {
+    let futures: Vec<_> = capes.into_iter().map(resolve_cape).collect();
+    stream::iter(futures)
+        .buffer_unordered(4)
+        .collect::<Vec<_>>()
+        .await
+}
+
+async fn resolve_cape(cape: Cape) -> Cape {
+    async fn download_cape(url: &str) -> Result<Vec<u8>> {
+        Ok(HTTP_CLIENT.get(url).send().await?.bytes().await?.to_vec())
+    }
+    let url = if let Ok(content) = download_cape(&cape.url).await {
+        format!(
+            "data:image/png;base64,{}",
+            general_purpose::STANDARD_NO_PAD.encode(content)
+        )
+    } else {
+        cape.url
+    };
+    Cape {
+        alias: cape.alias,
+        id: cape.id,
+        state: cape.state,
+        url,
     }
 }

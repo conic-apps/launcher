@@ -30,43 +30,37 @@
         </button>
       </div>
       <Transition :name="transitionName" mode="out-in">
-        <component :is="currentComponent"></component>
+        <component
+          :is="currentComponent"
+          @switch-component-manage="$emit('switch-component-manage')"></component>
       </Transition>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { type Component, computed, markRaw, ref, ShallowRef, shallowRef } from "vue";
+import { type Component, markRaw, ref, shallowRef } from "vue";
 import AccountAddMicrosoft from "./AccountAddMicrosoft.vue";
 import AccountAddOffline from "./AccountAddOffline.vue";
 import AccountAddYggdrasil from "./AccountAddYggdrasil.vue";
-import { Accounts } from "@conic/account";
-import IconSelect from "@/components/IconSelect.vue";
-import SettingItem from "@/components/SettingItem.vue";
-import SettingGroup from "@/components/SettingGroup.vue";
 
-const props = defineProps<{
-  accounts: Accounts;
-}>();
+defineEmits(["switch-component-manage"]);
 
 const components = {
   addMicrosoftAccount: {
     component: markRaw(AccountAddMicrosoft),
-    containerSize: { width: "500px", height: "240px" },
+    containerSize: { width: "500px", height: "210px" },
   },
   addYggdrasilAccount: {
     component: markRaw(AccountAddYggdrasil),
-    containerSize: { width: "300px", height: "180px" },
+    containerSize: { width: "500px", height: "280px" },
   },
   addOfflineAccount: {
     component: markRaw(AccountAddOffline),
-    containerSize: { width: "300px", height: "180px" },
+    containerSize: { width: "500px", height: "264px" },
   },
 };
-const currentComponent: ShallowRef<Component> = shallowRef(
-  components.addMicrosoftAccount.component,
-);
+const currentComponent = shallowRef<Component>(components.addMicrosoftAccount.component);
 const containerSize = ref(components.addMicrosoftAccount.containerSize);
 const authServiceType = ref<"microsoft" | "yggdrasil" | "offline">("microsoft");
 function selectAuthService(service: "microsoft" | "yggdrasil" | "offline") {
@@ -79,9 +73,10 @@ function selectAuthService(service: "microsoft" | "yggdrasil" | "offline") {
     transitionName.value = "slide-right";
   } else {
     if (service === "microsoft") {
+      transitionName.value = "slide-right";
+    } else {
       transitionName.value = "slide-left";
-    } else;
-    transitionName.value = "slide-right";
+    }
   }
   authServiceType.value = service;
   switch (service) {
@@ -105,8 +100,7 @@ const transitionName = ref<"slide-left" | "slide-right">("slide-left");
 
 <style lang="less" scoped>
 .account-add {
-  width: 100%;
-  height: 100%;
+  margin: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -118,12 +112,13 @@ const transitionName = ref<"slide-left" | "slide-right">("slide-left");
     height: 180px;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: initial;
     border: var(--card-border);
     border-radius: var(--card-border-radius);
     background: var(--card-background);
-    padding: 10px 20px;
+    padding: 20px 20px;
     transition: all 200ms ease;
+    overflow: hidden;
   }
 
   p.title {
@@ -132,9 +127,12 @@ const transitionName = ref<"slide-left" | "slide-right">("slide-left");
     width: fit-content;
     margin-bottom: 16px;
   }
+
   .selection {
     display: flex;
+    flex-direction: 0;
     margin-bottom: 16px;
+
     .item {
       appearance: none;
       border: none;
@@ -147,11 +145,13 @@ const transitionName = ref<"slide-left" | "slide-right">("slide-left");
       justify-content: center;
       margin: 0 4px;
       transition: background 100ms ease;
+
       p {
         margin-left: 4px;
         font-size: 13px;
       }
     }
+
     .item.active {
       border: 1px solid #ffffff3f;
       background: #ffffff3f;
