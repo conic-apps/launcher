@@ -62,31 +62,6 @@
           :lit="windowButtonLit"></WindowButton>
       </div>
     </div>
-    <!-- <div class="sidebar" :class="{ 'sidebar-macos': isMacOS() }" data-tauri-drag-region> -->
-    <!--   <ul class="sidebar-items" data-tauri-drag-region> -->
-    <!--     <sidebar-item -->
-    <!--       title="未登录" -->
-    <!--       icon="person-circle-outline" -->
-    <!--       @click="changePage($event, 'accounts')" -->
-    <!--       id="sidebar-home"></sidebar-item> -->
-    <!--     <sidebar-item -->
-    <!--       :title="$t('sidebar.game')" -->
-    <!--       icon="gamepad" -->
-    <!--       @click="changePage($event, 'game')" -->
-    <!--       id="sidebar-game"></sidebar-item> -->
-    <!--     <sidebar-item -->
-    <!--       :title="$t('sidebar.market')" -->
-    <!--       icon="earth" -->
-    <!--       @click="changePage($event, 'market')" -->
-    <!--       id="sidebar-market"></sidebar-item> -->
-    <!--     <sidebar-item -->
-    <!--       :title="$t('sidebar.settings')" -->
-    <!--       icon="settings" -->
-    <!--       @click="changePage($event, 'settings')" -->
-    <!--       id="sidebar-settings" -->
-    <!--       style="margin-top: auto"></sidebar-item> -->
-    <!--   </ul> -->
-    <!-- </div> -->
     <main class="main" style="transition: none">
       <Transition :name="transitionName" mode="out-in">
         <component :is="currentComponent" @jump="jumpTo"></component>
@@ -99,7 +74,6 @@
 <script setup lang="ts">
 import WindowButton from "./components/WindowButton.vue";
 import SearchBar from "./components/SearchBar.vue";
-import SidebarItem from "./components/SidebarItem.vue";
 import GameView from "./views/GameView.vue";
 import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";

@@ -75,19 +75,19 @@
       </div>
       <div>
         <AppIcon name="extension-puzzle" />
-        <div><span class="type">模组</span><span class="count">5 个</span></div>
+        <div><span class="type">模组</span><span class="count">1 个</span></div>
       </div>
       <div>
         <AppIcon name="folder" />
-        <div><span class="type">资源包</span><span class="count">1 个</span></div>
+        <div><span class="type">资源包</span><span class="count">4 个</span></div>
       </div>
       <div>
         <AppIcon name="aperture-outline" />
-        <div><span class="type">光影包</span><span class="count">4 个</span></div>
+        <div><span class="type">光影包</span><span class="count">5 个</span></div>
       </div>
       <div>
         <AppIcon name="images-outline" />
-        <div><span class="type">截图</span><span class="count">5 个</span></div>
+        <div><span class="type">截图</span><span class="count">1 个</span></div>
       </div>
     </div>
   </div>
@@ -95,7 +95,6 @@
 
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
-import instanceIconFallback from "@/assets/images/Unknown_server.webp";
 import { useInstanceStore } from "@/store/instance";
 import { computed } from "vue";
 import { LATEST_RELEASE_INSTANCE_ID, LATEST_SNAPSHOT_INSTANCE_ID } from "@conic/instance";
@@ -214,9 +213,6 @@ const currentInstance = computed(() => {
     display: flex;
     align-items: center;
     margin-top: 16px;
-    &:active {
-      opacity: 0.8;
-    }
     > p {
       font-size: 12px;
       display: flex;

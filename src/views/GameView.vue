@@ -5,14 +5,12 @@
 <template>
   <div class="game-view" data-tauri-drag-region>
     <InstanceSummary></InstanceSummary>
-    <!-- <InstanceDetails style="margin-top: 16px"></InstanceDetails> -->
     <InstanceDrawer></InstanceDrawer>
   </div>
 </template>
 
 <script setup lang="ts">
 import InstanceSummary from "./game/InstanceSummary.vue";
-import InstanceDetails from "./game/InstanceDetails.vue";
 import InstanceDrawer from "./game/InstanceDrawer.vue";
 </script>
 
