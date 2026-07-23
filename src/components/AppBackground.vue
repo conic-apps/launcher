@@ -74,7 +74,7 @@ function draw() {
 
   const b = 200;
 
-  const curves = [50, 110, 180, 280];
+  const curves = [40, 110, 180, 280, 420, 640];
 
   const range = Math.max(rect.width, rect.height) * 1.5;
 
@@ -132,6 +132,6 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   display: block;
-  opacity: 0.4;
+  opacity: 0.3;
 }
 </style>
