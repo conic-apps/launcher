@@ -64,7 +64,7 @@
     </div>
     <main class="main" style="transition: none">
       <Transition :name="transitionName" mode="out-in">
-        <component :is="currentComponent" @jump="jumpTo"></component>
+        <component :is="pages[navigation.currentPage]"></component>
       </Transition>
     </main>
     <DialogRoot></DialogRoot>
@@ -79,15 +79,18 @@ import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
 import AccountsView from "./views/AccountsView.vue";
 import DialogRoot from "./DialogRoot.vue";
-import { computed, markRaw, onMounted, reactive, ref, shallowRef, watch } from "vue";
+import { computed, markRaw, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfigStore } from "./store/config";
 import { loadPalette } from "./theme";
 import { window as appWindow } from "@tauri-apps/api";
 import { Event } from "@tauri-apps/api/event";
 import AppBackground from "./components/AppBackground.vue";
+import { useNavigationStore } from "./store/navigation";
+import { getSystemLanguage } from "@conic/config";
 
 const config = useConfigStore();
+const navigation = useNavigationStore();
 
 loadPalette(
   {
@@ -124,32 +127,17 @@ const pages = reactive({
   accounts: markRaw(AccountsView),
 });
 const transitionName = ref("slide-up");
-const currentComponent = shallowRef(pages.game);
 
 const i18n = useI18n();
-i18n.locale.value = config.language!;
-watch(config, () => {
-  i18n.locale.value = config.language!;
+getSystemLanguage().then((systemLanguage) => {
+  i18n.locale.value = config.language ?? systemLanguage;
 });
-
-type ComponentName = "game" | "settings" | "market" | "accounts";
-
-function changePage(event: MouseEvent | null, component: ComponentName) {
-  // TODO: Add class active for event element
-  if (typeof component === "string") {
-    currentComponent.value = pages[component];
-  } else {
-    currentComponent.value = component;
-  }
-}
-
-window.changeComponent = (component: ComponentName) => {
-  currentComponent.value = pages[component];
-};
-
-function jumpTo(name: ComponentName) {
-  changePage(null, name);
-}
+watch(
+  () => config.language,
+  async (value) => {
+    i18n.locale.value = value ?? (await getSystemLanguage());
+  },
+);
 
 onMounted(() => {
   console.log("Frontend loaded");
