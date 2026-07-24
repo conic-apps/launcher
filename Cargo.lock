@@ -327,6 +327,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
+name = "beat_this"
+version = "0.0.0"
+dependencies = [
+ "async-fs",
+ "download",
+ "folder",
+ "futures",
+ "libloader",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sha2",
+ "shared",
+ "tauri",
+ "thiserror 2.0.19",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -662,6 +681,7 @@ name = "conic-launcher"
 version = "0.0.1-alpha.3"
 dependencies = [
  "account",
+ "beat_this",
  "config",
  "folder",
  "install",
@@ -2432,6 +2452,25 @@ name = "libc"
 version = "0.2.186"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
+
+[[package]]
+name = "libloader"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d39e73d63036eb973937a3d247e8c9799b1cd0e131079ae8aba294cb0328073"
+dependencies = [
+ "libloading",
+]
+
+[[package]]
+name = "libloading"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b67380fd3b2fbe7527a606e18729d21c6f3951633d0500574c4dc22d2d638b9f"
+dependencies = [
+ "cfg-if",
+ "winapi",
+]
 
 [[package]]
 name = "libredox"

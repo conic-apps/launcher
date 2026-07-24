@@ -28,6 +28,7 @@ fn main() {
         .plugin(single_instance_builder())
         .plugin(config::init())
         .plugin(account::init())
+        .plugin(beat_this::init())
         .plugin(instance::init())
         .plugin(install::init())
         .plugin(launch::init())
