@@ -16,6 +16,7 @@ rust-version = "1.88"
 # NOTE: local crates that aren't published to crates.io. These should not have versions.
 shared = { path = "./crates/shared", version = "0.0.0"}
 account = { path = "./crates/account", version = "0.0.0"}
+beat_this = { path = "./crates/beat_this", version = "0.0.0"}
 config = { path = "./crates/config", version = "0.0.0"}
 download = { path = "./crates/download", version = "0.0.0"}
 folder = { path = "./crates/folder", version = "0.0.0"}
@@ -55,6 +56,7 @@ url = "2"
 uuid = { version = "1", features = ["v4"] }
 zip = { version = "4", default-features = false, features = ["deflate"]}
 flate2 = {version = "1"}
+libloader = "0.1"
 
 [profile.dev]
 incremental = true

@@ -100,6 +100,7 @@ pub struct DataLocation {
     pub cache: PathBuf,
     pub logs: PathBuf,
     pub resources: PathBuf,
+    pub runtime: PathBuf,
     pub temp: PathBuf,
     pub config: PathBuf,
 }
@@ -121,6 +122,7 @@ impl DataLocation {
             accounts: data_folder_root.join("accounts"),
             authlib_injector: data_folder_root.join("authlib-injector.jar"),
             instances: data_folder_root.join("instances"),
+            runtime: data_folder_root.join("runtime"),
             cache: match PLATFORM_INFO.os_family {
                 OsFamily::Macos => data_folder_root.join(".cache"),
                 OsFamily::Windows => data_folder_root.join(".cache"),

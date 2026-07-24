@@ -41,6 +41,7 @@ pub enum DownloadTaskType {
     AuthlibInjector,
     ModrinthMod,
     CurseforgeMod,
+    BeatThis,
     Unknown,
 }
 
@@ -51,6 +52,8 @@ struct MirrorUsage {
     libraries: HashMap<String, Arc<AtomicU64>>,
     assets: HashMap<String, Arc<AtomicU64>>,
 }
+
+// TODO: concurrent download return total bytes and bytes progress
 
 impl MirrorUsage {
     fn new(mirror_config: &MirrorConfig) -> Self {
@@ -259,6 +262,11 @@ pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()
     } else if let Some(response_length) = response_length
         && let Some(file_size) = download.size_bytes
         && response_length == file_size
+    {
+        progress.total.store(file_size, Ordering::SeqCst);
+    } else if let Some(response_length) = response_length
+        && let Some(file_size) = download.size_bytes
+        && response_length != file_size
     {
         progress.total.store(file_size, Ordering::SeqCst);
     };
