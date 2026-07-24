@@ -92,6 +92,14 @@ fn main() {
         .plugin(
             "folder",
             InlinedPlugin::new().commands(&["cmd_get_data_location"]),
+        )
+        .plugin(
+            "beat",
+            InlinedPlugin::new().commands(&[
+                "cmd_spawn_download_library_task",
+                "cmd_cancel_download_library_task",
+                "cmd_parse_audio_file",
+            ]),
         );
     tauri_build::try_build(attributes).unwrap();
 }

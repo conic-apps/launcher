@@ -74,6 +74,9 @@
     "modrinth:allow-cmd-spawn-download-mod-task",
     "modrinth:allow-cmd-cancel-download-task",
     "folder:allow-cmd-get-data-location",
+    "beat:allow-cmd-spawn-download-library-task",
+    "beat:allow-cmd-cancel-download-library-task",
+    "beat:allow-cmd-parse-audio-file",
     "opener:default",
     "deep-link:default",
     "dialog:default"

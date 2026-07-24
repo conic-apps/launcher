@@ -14,6 +14,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 account.workspace = true
+beat_this.workspace = true
 version.workspace = true
 platform.workspace = true
 folder.workspace = true
