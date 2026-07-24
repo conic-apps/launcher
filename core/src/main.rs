@@ -7,7 +7,7 @@
 
 use folder::DATA_LOCATION;
 use log::{error, info};
-use tauri::{AppHandle, Manager, Window, WindowEvent, Wry, plugin::TauriPlugin};
+use tauri::{plugin::TauriPlugin, AppHandle, Manager, Window, WindowEvent, Wry};
 use tauri_plugin_log::{Target, TargetKind};
 
 fn main() {
@@ -28,6 +28,7 @@ fn main() {
         .plugin(single_instance_builder())
         .plugin(config::init())
         .plugin(account::init())
+        .plugin(beat_this::init())
         .plugin(instance::init())
         .plugin(install::init())
         .plugin(launch::init())
