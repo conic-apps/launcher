@@ -7,7 +7,7 @@
 
 use folder::DATA_LOCATION;
 use log::{error, info};
-use tauri::{plugin::TauriPlugin, AppHandle, Manager, Window, WindowEvent, Wry};
+use tauri::{AppHandle, Manager, Window, WindowEvent, Wry, plugin::TauriPlugin};
 use tauri_plugin_log::{Target, TargetKind};
 
 fn main() {
