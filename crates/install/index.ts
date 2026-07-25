@@ -105,8 +105,8 @@ export async function getForgeVersionList(mcversion: string): Promise<ForgeVersi
     return await invoke("plugin:install|cmd_get_forge_version_list", { mcversion })
 }
 
-export async function getNeoforgedVersionList(mcversion: string): Promise<string[]> {
-    return await invoke("plugin:install|cmd_get_neoforged_version_list", { mcversion })
+export async function getNeoforgeVersionList(mcversion: string): Promise<string[]> {
+    return await invoke("plugin:install|cmd_get_neoforge_version_list", { mcversion })
 }
 
 export enum InstallErrorKind {
@@ -116,7 +116,7 @@ export enum InstallErrorKind {
     InstanceBroken = "InstanceBroken",
     InvalidForgeVersion = "InvalidForgeVersion",
     ForgeInstallerFailed = "ForgeInstallerFailed",
-    NeoforgedInstallerFailed = "NeoforgedInstallerFailed",
+    NeoforgeInstallerFailed = "NeoforgeInstallerFailed",
     InvalidVersionJson = "InvalidVersionJson",
     VersionMetadataNotfound = "VersionMetadataNotfound",
     JsonParse = "JsonParse",

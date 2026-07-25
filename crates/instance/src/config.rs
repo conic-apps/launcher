@@ -17,8 +17,8 @@ pub enum ModLoaderType {
     Quilt,
     /// Forge mod loader
     Forge,
-    /// Neoforged mod loader
-    Neoforged,
+    /// Neoforge mod loader
+    Neoforge,
 }
 
 impl fmt::Display for ModLoaderType {
@@ -27,7 +27,7 @@ impl fmt::Display for ModLoaderType {
             Self::Fabric => write!(f, "Fabric"),
             Self::Quilt => write!(f, "Quilt"),
             Self::Forge => write!(f, "Forge"),
-            Self::Neoforged => write!(f, "Neoforged"),
+            Self::Neoforge => write!(f, "Neoforge"),
         }
     }
 }

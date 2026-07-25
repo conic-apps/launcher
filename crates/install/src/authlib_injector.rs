@@ -4,7 +4,7 @@
 
 use std::io::Read;
 
-use download::{Checksum, DownloadTask, DownloadTaskType, task::Progress};
+use download::{Checksum, DownloadTask, DownloadTaskType, progress::DownloadState};
 use folder::DATA_LOCATION;
 use serde_json::Value;
 use sha2::Digest;
@@ -12,7 +12,7 @@ use shared::HTTP_CLIENT;
 
 use crate::error::*;
 
-pub async fn ensure_latest(progress: &Progress) -> Result<()> {
+pub async fn ensure_latest(progress: &DownloadState) -> Result<()> {
     let path = DATA_LOCATION.clone().authlib_injector;
     let latest_version = HTTP_CLIENT
         .get("https://authlib-injector.yushi.moe/artifact/latest.json")

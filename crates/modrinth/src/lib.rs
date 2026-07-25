@@ -15,7 +15,7 @@ use std::{
     time::Duration,
 };
 
-use download::{Checksum, DownloadTask, DownloadTaskType, task::Progress};
+use download::{Checksum, DownloadTask, DownloadTaskType, progress::DownloadState};
 use error::*;
 use folder::DATA_LOCATION;
 use futures::stream::{AbortHandle, Abortable};
@@ -79,7 +79,7 @@ async fn cmd_list_project_versions(
 #[derive(Serialize, Clone)]
 pub struct DownloadEvent {
     pub task_id: Uuid,
-    pub progress: Progress,
+    pub progress: DownloadState,
 }
 
 #[command]
@@ -90,7 +90,7 @@ async fn cmd_spawn_download_mod_task(
     instance_id: Uuid,
     channel: Channel<DownloadEvent>,
 ) -> Result<()> {
-    let progress = Progress::default();
+    let progress = DownloadState::default();
     let task_status = Arc::new(Mutex::new(DownloadEvent { task_id, progress }));
     let (handle, reg) = AbortHandle::new_pair();
     let future = Abortable::new(

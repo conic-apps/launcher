@@ -9,7 +9,7 @@ export const LATEST_SNAPSHOT_INSTANCE_ID = "00000000-0000-0000-0000-0000001d4b42
 
 export type InstanceRuntime = {
     minecraft: string
-    mod_loader_type?: "Quilt" | "Fabric" | "Neoforged" | "Forge"
+    mod_loader_type?: "Quilt" | "Fabric" | "Neoforge" | "Forge"
     mod_loader_version?: string
 }
 export type InstanceConfig = {
