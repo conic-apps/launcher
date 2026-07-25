@@ -216,10 +216,7 @@ const quiltIsLoading = ref(false);
 const neoforgeIsLoading = ref(false);
 const modLoaderListLoading = computed(() => {
   return (
-    forgeIsLoading.value ||
-    fabricIsLoading.value ||
-    quiltIsLoading.value ||
-    neoforgeIsLoading.value
+    forgeIsLoading.value || fabricIsLoading.value || quiltIsLoading.value || neoforgeIsLoading.value
   );
 });
 
