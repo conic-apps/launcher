@@ -8,7 +8,7 @@ use crate::{
     error::Result,
     metadata::{self, LIBRARY},
 };
-use download::{DownloadTask, task::Progress};
+use download::{DownloadTask, progress::DownloadState};
 use folder::DATA_LOCATION;
 use libloader::libloading::Library;
 use sha2::Digest;
@@ -23,11 +23,11 @@ pub async fn ensure_library() -> Result<()> {
     if checksum_matched {
         return Ok(());
     }
-    let progress = Progress::default();
+    let progress = DownloadState::default();
     download_library(&progress).await
 }
 
-pub async fn download_library(progress: &Progress) -> Result<()> {
+pub async fn download_library(progress: &DownloadState) -> Result<()> {
     let library_path = DATA_LOCATION.runtime.join("native").join(LIBRARY.filename);
     for source in LIBRARY.sources {
         let download_task = DownloadTask {

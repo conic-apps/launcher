@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use config::download::DownloadConfig;
-use download::{Checksum, task::Progress};
+use download::{Checksum, progress::DownloadState};
 use log::info;
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
@@ -12,7 +12,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::{collections::HashMap, path::Path};
 
 use download::{DownloadTask, DownloadTaskType};
-use platform::{OsFamily, PLATFORM_INFO};
+use platform::{OsArch, OsFamily, PLATFORM_INFO};
 
 use crate::error::*;
 
@@ -67,29 +67,29 @@ impl MojangJavaVersionList {
     pub fn get_current_platform(self) -> Option<HashMap<String, Vec<JavaRuntimeInfo>>> {
         match PLATFORM_INFO.os_family {
             OsFamily::Linux => {
-                if PLATFORM_INFO.arch == "x64" {
+                if PLATFORM_INFO.arch == OsArch::X64 {
                     Some(self.linux)
-                } else if PLATFORM_INFO.arch == "x86" {
+                } else if PLATFORM_INFO.arch == OsArch::X86 {
                     Some(self.linux_i386)
                 } else {
                     None
                 }
             }
             OsFamily::Macos => {
-                if PLATFORM_INFO.arch == "x64" {
+                if PLATFORM_INFO.arch == OsArch::X64 {
                     Some(self.mac_os)
-                } else if PLATFORM_INFO.arch == "arm64" {
+                } else if PLATFORM_INFO.arch == OsArch::Aarch64 {
                     Some(self.mac_os_arm64)
                 } else {
                     None
                 }
             }
             OsFamily::Windows => {
-                if PLATFORM_INFO.arch == "x64" {
+                if PLATFORM_INFO.arch == OsArch::X64 {
                     Some(self.windows_x64)
-                } else if PLATFORM_INFO.arch == "x86" {
+                } else if PLATFORM_INFO.arch == OsArch::X86 {
                     Some(self.windows_x86)
-                } else if PLATFORM_INFO.arch == "arm64" {
+                } else if PLATFORM_INFO.arch == OsArch::Aarch64 {
                     Some(self.windows_arm64)
                 } else {
                     None
@@ -155,7 +155,7 @@ pub struct JavaRuntimeInfo {
 pub(super) async fn install(
     runtime: &JavaRuntimeInfo,
     install_directory: &Path,
-    progress: &Progress,
+    progress: &DownloadState,
     config: DownloadConfig,
 ) -> Result<()> {
     let manifest = HTTP_CLIENT
@@ -199,7 +199,7 @@ pub(super) async fn install(
 pub(super) async fn group_install(
     install_directory: &Path,
     java_runtimes: HashMap<String, Vec<JavaRuntimeInfo>>,
-    progress: &Progress,
+    progress: &DownloadState,
     config: DownloadConfig,
 ) -> Result<()> {
     for (name, runtime_info) in java_runtimes {

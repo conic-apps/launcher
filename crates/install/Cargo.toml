@@ -29,3 +29,7 @@ futures.workspace = true
 thiserror.workspace = true
 serde_with.workspace = true
 reqwest.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

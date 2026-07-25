@@ -9,7 +9,9 @@ use shared::HTTP_CLIENT;
 
 use download::{Checksum, DownloadTask, DownloadTaskType};
 use folder::MinecraftLocation;
-use version::{self, AssetIndexObject, ResolvedLibrary, ResolvedVersion, resolve_version};
+use version::{
+    self, AssetIndex, AssetIndexObject, ResolvedLibrary, ResolvedVersion, resolve_version,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -80,9 +82,12 @@ pub async fn generate_download_info(
     let client_download_task =
         generate_client_download_task(&minecraft_location, &resolved_version)?;
     let libraries_download_task =
-        generate_libraries_downloads(&minecraft_location, &resolved_version);
-    let assets_download_task =
-        generate_assets_downloads(&minecraft_location, &resolved_version).await?;
+        generate_libraries_downloads(&minecraft_location, &resolved_version.libraries);
+    let asset_index = resolved_version
+        .asset_index
+        .clone()
+        .ok_or(Error::InvalidVersionJson("assetIndex".to_string()))?;
+    let assets_download_task = generate_assets_downloads(&minecraft_location, &asset_index).await?;
 
     let mut download_info = vec![];
     download_info.push(client_download_task);
@@ -159,22 +164,21 @@ fn generate_client_download_task(
 /// A vector of [`Download`] objects describing library files to download.
 pub fn generate_libraries_downloads(
     minecraft_location: &MinecraftLocation,
-    resolved_version: &ResolvedVersion,
+    resolved_libraries: &[ResolvedLibrary],
 ) -> Vec<DownloadTask> {
-    let libraries = resolved_version.libraries.clone();
-    libraries
-        .into_iter()
+    resolved_libraries
+        .iter()
         .map(|library| {
             let library_download_info = match library {
                 ResolvedLibrary::Native(download_info) => download_info,
                 ResolvedLibrary::Common(download_info) => download_info,
             };
             DownloadTask {
-                url: library_download_info.url,
+                url: library_download_info.url.clone(),
                 file: minecraft_location
                     .libraries
-                    .join(library_download_info.path),
-                checksum: match library_download_info.sha1 {
+                    .join(library_download_info.path.clone()),
+                checksum: match library_download_info.sha1.clone() {
                     None => Checksum::None,
                     Some(sha1) => Checksum::Sha1(sha1),
                 },
@@ -197,12 +201,8 @@ pub fn generate_libraries_downloads(
 /// A vector of [`Download`] objects for assets, including the index file itself.
 pub async fn generate_assets_downloads(
     minecraft_location: &MinecraftLocation,
-    resolved_version: &ResolvedVersion,
+    asset_index: &AssetIndex,
 ) -> Result<Vec<DownloadTask>> {
-    let asset_index = resolved_version
-        .asset_index
-        .clone()
-        .ok_or(Error::InvalidVersionJson("assetIndex".to_string()))?;
     let asset_index_raw = HTTP_CLIENT
         .get(&asset_index.url)
         .send()
@@ -231,7 +231,7 @@ pub async fn generate_assets_downloads(
         })
         .collect();
     assets.push(DownloadTask {
-        url: asset_index.url,
+        url: asset_index.url.clone(),
         file: minecraft_location.get_assets_index(&asset_index.id),
         size_bytes: Some(asset_index.size),
         checksum: Checksum::None,

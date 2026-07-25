@@ -54,7 +54,7 @@
                 :disabled="!minecraftVersion || modLoaderListLoading">
                 <icon-select
                   :options="modLoaderOptions"
-                  :icons="['fa-pro ban', 'quilt', 'fabric', 'neoforged', 'forge']"
+                  :icons="['fa-pro ban', 'quilt', 'fabric', 'neoforge', 'forge']"
                   :disabled="disabledModLoaderId"
                   v-model="modLoaderType"></icon-select>
               </SettingItem>
@@ -72,8 +72,8 @@
                   if (modLoaderType === 'Fabric') {
                     currentComponent = 'choose-fabric';
                   }
-                  if (modLoaderType === 'Neoforged') {
-                    currentComponent = 'choose-neoforged';
+                  if (modLoaderType === 'Neoforge') {
+                    currentComponent = 'choose-neoforge';
                   }
                   if (modLoaderType === 'Forge') {
                     currentComponent = 'choose-forge';
@@ -112,12 +112,12 @@
             :versions="forgeVersionList"
             @select="setForge">
           </ForgeChoose>
-          <NeoforgedChoose
-            v-else-if="currentComponent == 'choose-neoforged'"
+          <NeoforgeChoose
+            v-else-if="currentComponent == 'choose-neoforge'"
             :minecraft="minecraftVersion"
-            :versions="neoforgedVersionList"
-            @select="setNeoforged">
-          </NeoforgedChoose>
+            :versions="neoforgeVersionList"
+            @select="setNeoforge">
+          </NeoforgeChoose>
         </Transition>
       </div>
     </div>
@@ -136,13 +136,13 @@ import MinecraftChoose from "./create/MinecraftChoose.vue";
 import QuiltChoose from "./create/QuiltChoose.vue";
 import FabricChoose from "./create/FabricChoose.vue";
 import ForgeChoose from "./create/ForgeChoose.vue";
-import NeoforgedChoose from "./create/NeoforgedChoose.vue";
+import NeoforgeChoose from "./create/NeoforgeChoose.vue";
 import {
   FabricLoaderArtifact,
   ForgeVersionItem,
   getFabricVersionList,
   getForgeVersionList,
-  getNeoforgedVersionList,
+  getNeoforgeVersionList,
   getQuiltVersionList,
   QuiltVersion,
 } from "@conic/install";
@@ -155,10 +155,10 @@ const instanceStore = useInstanceStore();
 
 const instanceNameValue = ref("");
 
-const modLoaderOptions = ["None", "Quilt", "Fabric", "Neoforged", "Forge"];
+const modLoaderOptions = ["None", "Quilt", "Fabric", "Neoforge", "Forge"];
 
 const minecraftVersion = ref("");
-const modLoaderType = ref<"None" | "Quilt" | "Fabric" | "Neoforged" | "Forge">("None");
+const modLoaderType = ref<"None" | "Quilt" | "Fabric" | "Neoforge" | "Forge">("None");
 const modLoaderVersion = ref("");
 
 const currentComponent = ref("settings");
@@ -188,7 +188,7 @@ const setForge = (version: string) => {
   modLoaderVersion.value = version;
   back();
 };
-const setNeoforged = (version: string) => {
+const setNeoforge = (version: string) => {
   modLoaderVersion.value = version;
   back();
 };
@@ -208,18 +208,18 @@ watch(minecraftVersion, () => {
 const forgeVersionList = ref<ForgeVersionItem[]>([]);
 const quiltVersionList = ref<QuiltVersion[]>([]);
 const fabricVersionList = ref<FabricLoaderArtifact[]>([]);
-const neoforgedVersionList = ref<string[]>([]);
+const neoforgeVersionList = ref<string[]>([]);
 
 const forgeIsLoading = ref(false);
 const fabricIsLoading = ref(false);
 const quiltIsLoading = ref(false);
-const neoforgedIsLoading = ref(false);
+const neoforgeIsLoading = ref(false);
 const modLoaderListLoading = computed(() => {
   return (
     forgeIsLoading.value ||
     fabricIsLoading.value ||
     quiltIsLoading.value ||
-    neoforgedIsLoading.value
+    neoforgeIsLoading.value
   );
 });
 
@@ -257,15 +257,15 @@ watchEffect(async () => {
   forgeIsLoading.value = false;
 });
 watchEffect(async () => {
-  neoforgedIsLoading.value = true;
+  neoforgeIsLoading.value = true;
   if (minecraftVersion.value) {
     try {
-      neoforgedVersionList.value = await getNeoforgedVersionList(minecraftVersion.value);
+      neoforgeVersionList.value = await getNeoforgeVersionList(minecraftVersion.value);
     } catch {
-      neoforgedVersionList.value = [];
+      neoforgeVersionList.value = [];
     }
   }
-  neoforgedIsLoading.value = false;
+  neoforgeIsLoading.value = false;
 });
 
 const disabledModLoaderId = computed(() => {
@@ -276,8 +276,8 @@ const disabledModLoaderId = computed(() => {
   if (fabricVersionList.value.length === 0) {
     result.push("Fabric");
   }
-  if (neoforgedVersionList.value.length === 0) {
-    result.push("Neoforged");
+  if (neoforgeVersionList.value.length === 0) {
+    result.push("Neoforge");
   }
   if ((forgeVersionList.value, length === 0)) {
     result.push("Forge");
