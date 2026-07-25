@@ -11,7 +11,7 @@ use std::{
 use config::download::DownloadConfig;
 use log::info;
 
-use download::task::Progress;
+use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use install::vanilla::{generate_assets_downloads, generate_libraries_downloads};
 use instance::Instance;
@@ -32,7 +32,7 @@ use crate::error::*;
 pub async fn complete_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,
-    progress: Progress,
+    progress: DownloadState,
     config: &DownloadConfig,
 ) -> Result<()> {
     let assets_lock_file = DATA_LOCATION
@@ -95,7 +95,7 @@ async fn save_lock_file(path: &PathBuf) -> Result<()> {
 async fn complete_assets_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,
-    progress: Progress,
+    progress: DownloadState,
     config: DownloadConfig,
 ) -> Result<()> {
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
@@ -106,9 +106,10 @@ async fn complete_assets_files(
         &[],
     )
     .await?;
-
-    let assets_downloads = generate_assets_downloads(minecraft_location, &resolved_version).await?;
-    download::download_concurrent(assets_downloads, &progress, config).await?;
+    if let Some(asset_index) = resolved_version.asset_index {
+        let assets_downloads = generate_assets_downloads(minecraft_location, &asset_index).await?;
+        download::download_concurrent(assets_downloads, &progress, config).await?;
+    };
     Ok(())
 }
 
@@ -116,7 +117,7 @@ async fn complete_assets_files(
 async fn complete_libraries_files(
     instance: &Instance,
     minecraft_location: &MinecraftLocation,
-    progress: Progress,
+    progress: DownloadState,
     config: DownloadConfig,
 ) -> Result<()> {
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
@@ -127,8 +128,8 @@ async fn complete_libraries_files(
         &[],
     )
     .await?;
-
-    let library_downloads = generate_libraries_downloads(minecraft_location, &resolved_version);
+    let library_downloads =
+        generate_libraries_downloads(minecraft_location, &resolved_version.libraries);
     download::download_concurrent(library_downloads, &progress, config).await?;
     Ok(())
 }

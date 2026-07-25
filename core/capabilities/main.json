@@ -55,7 +55,7 @@
     "install:allow-cmd-get-fabric-version-list",
     "install:allow-cmd-get-quilt-version-list",
     "install:allow-cmd-get-forge-version-list",
-    "install:allow-cmd-get-neoforged-version-list",
+    "install:allow-cmd-get-neoforge-version-list",
     "install:allow-cmd-spawn-install-task",
     "install:allow-cmd-cancel-install-task",
     "platform:allow-cmd-get-platform-info",

@@ -30,12 +30,20 @@ pub enum Error {
     ),
     #[error("Bad instance.toml file")]
     InstanceBroken,
+    #[error(transparent)]
+    Zip(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        zip::result::ZipError,
+    ),
+    #[error("No available forge version")]
+    NoAvailableForgeVersion,
     #[error("Could not understand forge version")]
     InvalidForgeVersion,
     #[error("Failed to run forge installer")]
     ForgeInstallerFailed,
-    #[error("Failed to run neoforged installer")]
-    NeoforgedInstallerFailed,
+    #[error("Failed to run neoforge installer")]
+    NeoforgeInstallerFailed,
     #[error("Invalid version.json, missing {0}")]
     InvalidVersionJson(String),
     #[error("Version metadata not found in version manifest")]

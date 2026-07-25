@@ -4,8 +4,6 @@
 
 // TODO: remove this, use cfg and os_info directly
 
-use std::fmt::Display;
-
 use once_cell::sync::Lazy;
 use os_info::{Type, Version};
 use serde::{Deserialize, Serialize};
@@ -27,6 +25,18 @@ fn cmd_get_platform_info() -> PlatformInfo {
     PLATFORM_INFO.clone()
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub enum OsArch {
+    X64,
+    X86,
+    Mips,
+    PowerPC,
+    PowerPC64,
+    Arm,
+    Aarch64,
+    Unknown,
+}
+
 /// Represents the high-level operating system family.
 ///
 /// This is an abstraction over detailed OS types (e.g., Ubuntu, Windows 10) to group
@@ -43,16 +53,6 @@ pub enum OsFamily {
     Macos,
 }
 
-impl Display for OsFamily {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Windows => write!(f, "windows"),
-            Self::Linux => write!(f, "linux"),
-            Self::Macos => write!(f, "macos"),
-        }
-    }
-}
-
 /// Contains detailed platform-related information, such as architecture,
 /// OS type, version, and edition.
 ///
@@ -60,7 +60,7 @@ impl Display for OsFamily {
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct PlatformInfo {
     /// The target CPU architecture (e.g., "x64", "arm").
-    pub arch: String,
+    pub arch: OsArch,
 
     /// The architecture string as reported by `uname`, if available.
     pub arch_from_uname: Option<String>,
@@ -112,23 +112,22 @@ impl PlatformInfo {
             os_family,
             os_version: os_info.version().to_owned(),
             arch: if cfg!(target_arch = "x86_64") {
-                "x64"
+                OsArch::X64
             } else if cfg!(target_arch = "x86") {
-                "x86"
+                OsArch::X86
             } else if cfg!(target_arch = "mips") {
-                "mips"
+                OsArch::Mips
             } else if cfg!(target_arch = "powerpc") {
-                "powerpc"
+                OsArch::PowerPC
             } else if cfg!(target_arch = "powerpc64") {
-                "powerpc64"
+                OsArch::PowerPC64
             } else if cfg!(target_arch = "arm") {
-                "arm"
+                OsArch::Arm
             } else if cfg!(target_arch = "aarch64") {
-                "aarch64"
+                OsArch::Aarch64
             } else {
-                "unknown"
-            }
-            .to_string(),
+                OsArch::Unknown
+            },
             os_type: os_info.os_type(),
             edition: os_info.edition().map(|x| x.to_owned()),
         }

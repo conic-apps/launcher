@@ -18,7 +18,7 @@ use account::Account;
 use arguments::generate_command_arguments;
 use complete::complete_files;
 use config::Config;
-use download::task::Progress;
+use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use futures::future::{AbortHandle, Abortable};
 use instance::Instance;
@@ -60,8 +60,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 pub enum LaunchEvent {
     Prepare,
     RefreshAccount,
-    InstallAuthlibInjector(Progress),
-    CompleteFiles(Progress),
+    InstallAuthlibInjector(DownloadState),
+    CompleteFiles(DownloadState),
     GenerateScriptlet,
     WaitForLaunch,
     LogSettingUser,
@@ -157,7 +157,7 @@ pub async fn launch(
     if config.launch.skip_check_files {
         info!("File checking disabled by user")
     } else {
-        let progress = Progress::default();
+        let progress = DownloadState::default();
         {
             let mut status = status.lock().expect("Internal error");
             *status = LaunchEvent::CompleteFiles(progress.clone());
@@ -172,7 +172,7 @@ pub async fn launch(
         *status = LaunchEvent::GenerateScriptlet;
     }
     if let Account::Yggdrasil(_) = launch_options.selected_account {
-        let progress = Progress::default();
+        let progress = DownloadState::default();
         install::authlib_injector::ensure_latest(&progress).await?;
     }
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);

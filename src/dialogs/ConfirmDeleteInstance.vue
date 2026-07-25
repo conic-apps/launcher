@@ -47,8 +47,8 @@
             src="@/assets/images/fabric.webp"
             v-if="instanceToDelete.config.runtime.mod_loader_type == 'Fabric'" />
           <img
-            src="@/assets/images/neoforged.png"
-            v-if="instanceToDelete.config.runtime.mod_loader_type == 'Neoforged'" />
+            src="@/assets/images/neoforge.png"
+            v-if="instanceToDelete.config.runtime.mod_loader_type == 'Neoforge'" />
           <img
             src="@/assets/images/forge.svg"
             v-if="instanceToDelete.config.runtime.mod_loader_type == 'Forge'" />

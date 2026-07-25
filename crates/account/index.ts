@@ -396,7 +396,6 @@ const DEFAULT_SKINS: DefaultSkin[] = [
 ]
 
 function uuidToLongs(uuid: string): [bigint, bigint] {
-    console.log(uuid)
     const hex = uuid.replace(/-/g, "")
 
     const mostSigBits = BigInt("0x" + hex.slice(0, 16))

@@ -36,19 +36,12 @@ const components = {
 };
 
 const accounts = useAccountStore();
-const hasAccounts = computed(() => {
-  console.log(
-    "hasAccounts",
-    Object.keys(accounts.yggdrasil).length > 0 ||
-      accounts.microsoft.length > 0 ||
-      accounts.offline.length > 0,
-  );
-  return (
+const hasAccounts = computed(
+  () =>
     Object.keys(accounts.yggdrasil).length > 0 ||
     accounts.microsoft.length > 0 ||
-    accounts.offline.length > 0
-  );
-});
+    accounts.offline.length > 0,
+);
 watch(hasAccounts, (value, oldValue) => {
   if (value && !oldValue) {
     currentComponent.value = components.manage;

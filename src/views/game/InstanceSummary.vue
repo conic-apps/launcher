@@ -44,7 +44,7 @@
       </p>
     </div>
     <div class="row-3">
-      <button class="launch-button">
+      <button class="launch-button" @click="navigationStore.navigate('launch')">
         <AppIcon name="play" fill="#fff" style="margin-right: 4px"></AppIcon>
         开始游戏
       </button>
@@ -98,11 +98,14 @@ import AppIcon from "@/components/AppIcon.vue";
 import { useInstanceStore } from "@/store/instance";
 import { computed } from "vue";
 import { LATEST_RELEASE_INSTANCE_ID, LATEST_SNAPSHOT_INSTANCE_ID } from "@conic/instance";
+import { useNavigationStore } from "@/store/navigation";
 
 const instanceStore = useInstanceStore();
 const currentInstance = computed(() => {
   return instanceStore.currentInstance;
 });
+
+const navigationStore = useNavigationStore();
 </script>
 
 <style lang="less" scoped>

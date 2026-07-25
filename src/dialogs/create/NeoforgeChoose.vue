@@ -22,7 +22,7 @@
         :buttons="['circle-info', 'floppy-disk']"
         :description="`适用于 Minecraft ${props.minecraft}`">
         <template #icon>
-          <img style="width: 100%; height: 100%" src="@/assets/images/neoforged.png" alt="" />
+          <img style="width: 100%; height: 100%" src="@/assets/images/neoforge.png" alt="" />
         </template>
         <template #subtitle> </template>
       </list-item>

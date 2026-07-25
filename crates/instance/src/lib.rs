@@ -184,54 +184,32 @@ pub struct Instance {
 impl Instance {
     pub fn get_version_id(&self) -> Result<String> {
         let config = &self.config;
-        let version_id = match config.runtime.mod_loader_type.as_ref() {
-            Some(mod_loader_type) => match mod_loader_type {
-                ModLoaderType::Fabric => {
-                    format!(
-                        "fabric-loader-{}-{}",
-                        config
-                            .runtime
-                            .mod_loader_version
-                            .as_ref()
-                            .ok_or(Error::InvalidInstanceConfig)?,
-                        config.runtime.minecraft
-                    )
-                }
-                ModLoaderType::Quilt => {
-                    format!(
-                        "quilt-loader-{}-{}",
-                        config
-                            .runtime
-                            .mod_loader_version
-                            .as_ref()
-                            .ok_or(Error::InvalidInstanceConfig)?,
-                        config.runtime.minecraft
-                    )
-                }
-                ModLoaderType::Forge => {
-                    format!(
-                        "{}-forge-{}",
-                        config.runtime.minecraft,
-                        config
-                            .runtime
-                            .mod_loader_version
-                            .as_ref()
-                            .ok_or(Error::InvalidInstanceConfig)?
-                    )
-                }
-                ModLoaderType::Neoforged => {
-                    format!(
-                        "neoforged-{}",
-                        config
-                            .runtime
-                            .mod_loader_version
-                            .as_ref()
-                            .ok_or(Error::InvalidInstanceConfig)?
-                    )
-                }
-            },
-            None => config.runtime.minecraft.to_string(),
-        };
-        Ok(version_id)
+        config
+            .runtime
+            .mod_loader_type
+            .as_ref()
+            .map(|mod_loader_type| {
+                let mod_loader_version = config
+                    .runtime
+                    .mod_loader_version
+                    .as_ref()
+                    .ok_or(Error::InvalidInstanceConfig)?;
+                let minecraft_version = &config.runtime.minecraft;
+                Ok(match mod_loader_type {
+                    ModLoaderType::Fabric => {
+                        format!("fabric-loader-{mod_loader_version}-{minecraft_version}")
+                    }
+                    ModLoaderType::Quilt => {
+                        format!("quilt-loader-{mod_loader_version}-{minecraft_version}",)
+                    }
+                    ModLoaderType::Forge => {
+                        format!("{minecraft_version}-forge-{mod_loader_version}",)
+                    }
+                    ModLoaderType::Neoforge => {
+                        format!("neoforge-{mod_loader_version}",)
+                    }
+                })
+            })
+            .unwrap_or(Ok(config.runtime.minecraft.clone()))
     }
 }

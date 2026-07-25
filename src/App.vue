@@ -88,6 +88,7 @@ import { Event } from "@tauri-apps/api/event";
 import AppBackground from "./components/AppBackground.vue";
 import { useNavigationStore } from "./store/navigation";
 import { getSystemLanguage } from "@conic/config";
+import LaunchView from "./views/LaunchView.vue";
 
 const config = useConfigStore();
 const navigation = useNavigationStore();
@@ -123,6 +124,7 @@ const currentProfileName = ref<string | null>(null);
 const pages = reactive({
   settings: markRaw(SettingsView),
   game: markRaw(GameView),
+  launch: markRaw(LaunchView),
   market: markRaw(MarketView),
   accounts: markRaw(AccountsView),
 });

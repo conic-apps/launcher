@@ -57,6 +57,7 @@ uuid = { version = "1", features = ["v4"] }
 zip = { version = "4", default-features = false, features = ["deflate"]}
 flate2 = {version = "1"}
 libloader = "0.1"
+tokio = { version = "1", features = ["macros", "rt"]}
 
 [profile.dev]
 incremental = true

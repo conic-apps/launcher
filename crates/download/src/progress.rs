@@ -9,35 +9,35 @@ use std::sync::{
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Deserialize, Serialize, PartialEq)]
-pub enum Step {
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub enum DownloadPhase {
     VerifyExistingFiles,
     DownloadFiles,
     VerifyResult,
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 /// We use this to store the progress of installation task
-pub struct Progress {
+pub struct DownloadState {
     pub completed: Arc<AtomicU64>,
     pub total: Arc<AtomicU64>,
-    pub step: Arc<Mutex<Step>>,
+    pub step: Arc<Mutex<DownloadPhase>>,
     pub speed: Arc<AtomicU64>,
 }
 
-impl Default for Progress {
+impl Default for DownloadState {
     fn default() -> Self {
         Self {
             completed: Arc::new(AtomicU64::new(0)),
             total: Arc::new(AtomicU64::new(0)),
             speed: Arc::new(AtomicU64::new(0)),
-            step: Arc::new(Mutex::new(Step::DownloadFiles)),
+            step: Arc::new(Mutex::new(DownloadPhase::DownloadFiles)),
         }
     }
 }
 
-impl PartialEq for Progress {
+impl PartialEq for DownloadState {
     fn eq(&self, other: &Self) -> bool {
         self.completed.load(Ordering::SeqCst) == other.completed.load(Ordering::SeqCst)
             && self.total.load(Ordering::SeqCst) == other.total.load(Ordering::SeqCst)
@@ -46,7 +46,7 @@ impl PartialEq for Progress {
     }
 }
 
-impl Progress {
+impl DownloadState {
     pub fn reset(&self, ordering: Ordering) {
         self.completed.store(0, ordering);
         self.total.store(0, ordering);

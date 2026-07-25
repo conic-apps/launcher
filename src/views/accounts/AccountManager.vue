@@ -152,7 +152,6 @@ if (!config.current_account) {
       type: "Microsoft",
     };
   } else if (accountStore.yggdrasil.length > 0) {
-    console.log(accountStore.yggdrasil);
     config.current_account = {
       data: accountStore.yggdrasil[0],
       type: "Yggdrasil",

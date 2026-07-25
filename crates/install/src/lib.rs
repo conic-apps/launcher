@@ -13,10 +13,9 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use forge::ForgeVersionList;
 use futures::future::{AbortHandle, Abortable};
 use log::{debug, info};
-use neoforged::NeoforgedVersionList;
+use neoforge::NeoforgeVersionList;
 use quilt::QuiltVersionList;
 use serde::Serialize;
 use tauri::{
@@ -28,18 +27,18 @@ use vanilla::generate_download_info;
 
 use config::Config;
 use download::download_concurrent;
-use download::task::Progress;
+use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::{Instance, InstanceRuntime, ModLoaderType};
 
-use crate::vanilla::VersionManifest;
+use crate::{forge::ForgeVersionList, vanilla::VersionManifest};
 
 pub mod authlib_injector;
 mod error;
 pub mod fabric;
 pub mod forge;
 pub mod java;
-pub mod neoforged;
+pub mod neoforge;
 pub mod quilt;
 pub mod vanilla;
 
@@ -51,11 +50,9 @@ static CACHE_EXPIRATION_SECONDS: u64 = 1800;
 struct PluginState {
     abort_handle: Arc<Mutex<Option<AbortHandle>>>,
     version_manifest_cache: Arc<Mutex<Option<(u64, VersionManifest)>>>,
-    fabric_version_list_cache: Arc<Mutex<Option<(u64, fabric::LoaderArtifactList)>>>,
-    quilt_version_list_cache: Arc<Mutex<Option<(u64, QuiltVersionList)>>>,
     forge_version_list_cache: Arc<Mutex<Option<(u64, ForgeVersionList)>>>,
     #[allow(clippy::type_complexity)]
-    neoforged_version_list_cache: Arc<Mutex<Option<(u64, Vec<String>)>>>,
+    neoforge_version_list_cache: Arc<Mutex<Option<(u64, Vec<String>)>>>,
 }
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
@@ -65,7 +62,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_get_fabric_version_list,
             cmd_get_quilt_version_list,
             cmd_get_forge_version_list,
-            cmd_get_neoforged_version_list,
+            cmd_get_neoforge_version_list,
             cmd_spawn_install_task,
             cmd_cancel_install_task,
         ])
@@ -100,39 +97,12 @@ async fn cmd_get_minecraft_version_list(state: State<'_, PluginState>) -> Result
 }
 
 #[command]
-async fn cmd_get_fabric_version_list(
-    state: State<'_, PluginState>,
-    mcversion: String,
-) -> Result<fabric::LoaderArtifactList> {
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Incorrect System Time")
-        .as_secs();
-    if let Some(cache) = state
-        .fabric_version_list_cache
-        .lock()
-        .expect("Internal error")
-        .clone()
-        && now - cache.0 > CACHE_EXPIRATION_SECONDS
-    {
-        return Ok(cache.1);
-    }
-    let result = fabric::LoaderArtifactList::new(&mcversion).await?;
-    {
-        let mut cache = state
-            .fabric_version_list_cache
-            .lock()
-            .expect("Internal error");
-        *cache = Some((now, result.clone()))
-    }
-    Ok(result)
+async fn cmd_get_fabric_version_list(mcversion: String) -> Result<fabric::LoaderArtifactList> {
+    fabric::LoaderArtifactList::new(&mcversion).await
 }
 
 #[command]
-async fn cmd_get_forge_version_list(
-    state: State<'_, PluginState>,
-    mcversion: String,
-) -> Result<ForgeVersionList> {
+async fn cmd_get_forge_version_list(state: State<'_, PluginState>) -> Result<ForgeVersionList> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Incorrect System Time")
@@ -146,7 +116,7 @@ async fn cmd_get_forge_version_list(
     {
         return Ok(cache.1);
     }
-    let result = ForgeVersionList::new(&mcversion).await?;
+    let result = ForgeVersionList::new().await?;
     {
         let mut cache = state
             .forge_version_list_cache
@@ -158,36 +128,12 @@ async fn cmd_get_forge_version_list(
 }
 
 #[command]
-async fn cmd_get_quilt_version_list(
-    state: State<'_, PluginState>,
-    mcversion: String,
-) -> Result<QuiltVersionList> {
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Incorrect System Time")
-        .as_secs();
-    if let Some(cache) = state
-        .quilt_version_list_cache
-        .lock()
-        .expect("Internal error")
-        .clone()
-        && now - cache.0 > CACHE_EXPIRATION_SECONDS
-    {
-        return Ok(cache.1);
-    }
-    let result = QuiltVersionList::new(&mcversion).await?;
-    {
-        let mut cache = state
-            .quilt_version_list_cache
-            .lock()
-            .expect("Internal error");
-        *cache = Some((now, result.clone()))
-    }
-    Ok(result)
+async fn cmd_get_quilt_version_list(mcversion: String) -> Result<QuiltVersionList> {
+    QuiltVersionList::new(&mcversion).await
 }
 
 #[command]
-async fn cmd_get_neoforged_version_list(
+async fn cmd_get_neoforge_version_list(
     state: State<'_, PluginState>,
     mcversion: String,
 ) -> Result<Vec<String>> {
@@ -196,7 +142,7 @@ async fn cmd_get_neoforged_version_list(
         .expect("Incorrect System Time")
         .as_secs();
     if let Some(cache) = state
-        .neoforged_version_list_cache
+        .neoforge_version_list_cache
         .lock()
         .expect("Internal error")
         .clone()
@@ -204,10 +150,10 @@ async fn cmd_get_neoforged_version_list(
     {
         return Ok(cache.1);
     }
-    let result = NeoforgedVersionList::from_mcversion(&mcversion).await?;
+    let result = NeoforgeVersionList::from_mcversion(&mcversion).await?;
     {
         let mut cache = state
-            .neoforged_version_list_cache
+            .neoforge_version_list_cache
             .lock()
             .expect("Internal error");
         *cache = Some((now, result.clone()))
@@ -215,12 +161,12 @@ async fn cmd_get_neoforged_version_list(
     Ok(result)
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(tag = "job", content = "progress")]
 pub enum InstallEvent {
     Prepare,
-    InstallGame(Progress),
-    InstallJava(Progress),
+    InstallGame(DownloadState),
+    InstallJava(DownloadState),
     InstallModLoader,
 }
 
@@ -275,7 +221,7 @@ fn cmd_cancel_install_task(state: State<'_, PluginState>) {
 /// This function runs a full installation pipeline including:
 /// - Downloading Minecraft game files
 /// - Installing Java
-/// - Installing a mod loader (Fabric, Forge, Quilt, NeoForged)
+/// - Installing a mod loader (Fabric, Forge, Quilt, NeoForge)
 ///
 /// # Arguments
 /// * `storage` - Shared application storage (configuration).
@@ -306,7 +252,7 @@ pub async fn install(
     )
     .await?;
 
-    let progress = Progress::default();
+    let progress = DownloadState::default();
     {
         let mut status = status.lock().expect("internal error");
         *status = InstallEvent::InstallGame(progress.clone())
@@ -315,7 +261,7 @@ pub async fn install(
     download_concurrent(download_list, &progress, config.download.clone()).await?;
 
     info!("Installing Java");
-    let progress = Progress::default();
+    let progress = DownloadState::default();
     {
         let mut status = status.lock().expect("Internal error");
         *status = InstallEvent::InstallJava(progress.clone())
@@ -397,12 +343,75 @@ pub async fn install_mod_loader(runtime: InstanceRuntime) -> Result<()> {
             .await?
         }
         ModLoaderType::Forge => {
-            forge::install(&DATA_LOCATION.root, &mod_loader_version, &runtime.minecraft).await?
+            forge::install(
+                &MinecraftLocation::new(&DATA_LOCATION.root),
+                &mod_loader_version,
+                &runtime.minecraft,
+            )
+            .await?
         }
-        ModLoaderType::Neoforged => {
-            neoforged::install(&DATA_LOCATION.root, &mod_loader_version).await?
+        ModLoaderType::Neoforge => {
+            neoforge::install(&DATA_LOCATION.root, &mod_loader_version).await?
         }
     }
 
     Ok(())
+}
+#[cfg(test)]
+mod tests {
+    use std::{
+        sync::{
+            Arc, Mutex,
+            atomic::{AtomicBool, Ordering},
+        },
+        thread,
+        time::Duration,
+    };
+
+    use config::Config;
+    use folder::DATA_LOCATION;
+    use instance::{InstanceConfig, ModLoaderType, get_instance_by_id};
+
+    use crate::InstallEvent;
+
+    #[tokio::test]
+    async fn test_install() {
+        DATA_LOCATION.init();
+        let mut config = InstanceConfig::new("Test2", "26.2");
+        config.runtime.mod_loader_type = Some(ModLoaderType::Neoforge);
+        config.runtime.mod_loader_version = Some("26.2.0.32-beta".to_string());
+        println!("{}", config.name);
+        println!("{}", config.runtime.minecraft);
+        if let Some(mod_loader_type) = config.runtime.mod_loader_type.as_ref() {
+            println!("{}", mod_loader_type);
+        }
+        if let Some(mod_loader_version) = config.runtime.mod_loader_version.as_ref() {
+            println!("{}", mod_loader_version);
+        }
+        let instance_id = uuid::Uuid::new_v4();
+        instance::create_instance(config, Some(instance_id))
+            .await
+            .unwrap();
+        let target_instance = get_instance_by_id(instance_id).await.unwrap();
+
+        let task_status = Arc::new(Mutex::new(InstallEvent::Prepare));
+        let finished = Arc::new(AtomicBool::new(false));
+        let event_logger_thread = {
+            let status_cloned = task_status.clone();
+            let finished = finished.clone();
+            thread::spawn(move || {
+                while !finished.load(Ordering::SeqCst)
+                    && *status_cloned.lock().unwrap() != InstallEvent::InstallModLoader
+                {
+                    println!("{:#?}", status_cloned);
+                    std::thread::sleep(Duration::from_millis(100));
+                }
+            })
+        };
+        crate::install(Config::default(), target_instance, task_status)
+            .await
+            .unwrap();
+        finished.store(true, Ordering::SeqCst);
+        let _ = event_logger_thread.join();
+    }
 }

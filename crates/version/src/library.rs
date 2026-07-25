@@ -4,14 +4,14 @@
 
 use std::collections::HashMap;
 
-use platform::PLATFORM_INFO;
+use platform::{OsFamily, PLATFORM_INFO};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::checks::check_allowed;
 use crate::error::*;
 
-pub(crate) fn resolve_libraries(libraries: Vec<Value>) -> Result<Vec<ResolvedLibrary>> {
+pub fn resolve_libraries(libraries: Vec<Value>) -> Result<Vec<ResolvedLibrary>> {
     let mut result = Vec::new();
     for library in libraries {
         let rules = library["rules"].as_array();
@@ -32,16 +32,24 @@ pub(crate) fn resolve_libraries(libraries: Vec<Value>) -> Result<Vec<ResolvedLib
 }
 
 fn resolve_native_libraries(library: &Value) -> Option<ResolvedLibrary> {
+    let os_family_normalized = match PLATFORM_INFO.os_family {
+        OsFamily::Windows => "windows",
+        OsFamily::Linux => "linux",
+        OsFamily::Macos => "osx",
+    };
     if let Some(classifiers) = library["downloads"]["classifiers"].as_object()
         && let Some(natives) = library["natives"].as_object()
-        && let Some(classifier_key) = natives[&PLATFORM_INFO.os_family.to_string()].as_str()
-        && let Some(classifier) = classifiers[classifier_key].as_object()
-        && let Some(url) = classifier["url"].as_str()
-        && let Some(path) = classifier["path"].as_str()
+        && let Some(classifier_key) = natives.get(os_family_normalized).and_then(|v| v.as_str())
+        && let Some(classifier) = classifiers.get(classifier_key).and_then(|v| v.as_object())
+        && let Some(url) = classifier.get("url").and_then(|v| v.as_str())
+        && let Some(path) = classifier.get("path").and_then(|v| v.as_str())
     {
         Some(ResolvedLibrary::Native(LibraryDownloadInfo {
-            sha1: classifier["sha1"].as_str().map(|sha1| sha1.to_string()),
-            size: classifier["size"].as_u64(),
+            sha1: classifier
+                .get("sha1")
+                .and_then(|sha1| sha1.as_str())
+                .map(|sha1| sha1.to_string()),
+            size: classifier.get("size").and_then(|v| v.as_u64()),
             url: url.to_string(),
             path: path.to_string(),
         }))

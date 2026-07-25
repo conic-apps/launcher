@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use std::{
-    collections::HashMap,
     io::{Read, SeekFrom},
     path::PathBuf,
     sync::{
@@ -21,15 +20,19 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use reqwest::{IntoUrl, header::ACCEPT_RANGES};
 use serde::{Deserialize, Serialize};
 
-use config::download::{DownloadConfig, MirrorConfig};
-use sha2::Digest;
+use config::download::DownloadConfig;
+use progress::{DownloadPhase, DownloadState};
 use shared::HTTP_CLIENT;
-use task::{Progress, Step};
 
-mod error;
-pub mod task;
+pub mod checksum;
+pub mod error;
+pub(crate) mod mirror;
+pub mod progress;
+pub mod state;
 
+pub use checksum::*;
 pub use error::*;
+use mirror::*;
 use url::Url;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
@@ -43,59 +46,6 @@ pub enum DownloadTaskType {
     CurseforgeMod,
     BeatThis,
     Unknown,
-}
-
-struct Mirror(String, Arc<AtomicU64>);
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct MirrorUsage {
-    libraries: HashMap<String, Arc<AtomicU64>>,
-    assets: HashMap<String, Arc<AtomicU64>>,
-}
-
-// TODO: concurrent download return total bytes and bytes progress
-
-impl MirrorUsage {
-    fn new(mirror_config: &MirrorConfig) -> Self {
-        Self {
-            libraries: mirror_config
-                .libraries
-                .iter()
-                .map(|x| (x.to_string(), Arc::new(AtomicU64::new(0))))
-                .collect(),
-            assets: mirror_config
-                .assets
-                .iter()
-                .map(|x| (x.to_string(), Arc::new(AtomicU64::new(0))))
-                .collect(),
-        }
-    }
-    /// Get a fewest connections libraries mirror
-    fn get_libraries_mirror(&self, disabled: &[String]) -> Option<Mirror> {
-        let (k, v) = self
-            .libraries
-            .iter()
-            .filter(|x| !disabled.iter().any(|y| x.0 == y))
-            .min_by(|x, y| x.1.load(Ordering::SeqCst).cmp(&y.1.load(Ordering::SeqCst)))?;
-        Some(Mirror(k.clone(), v.clone()))
-    }
-    /// Get a fewest connections assets mirror
-    fn get_assets_mirror(&self, disabled: &[String]) -> Option<Mirror> {
-        let (k, v) = self
-            .assets
-            .iter()
-            .filter(|x| !disabled.iter().any(|y| x.0 == y))
-            .min_by(|x, y| x.1.load(Ordering::SeqCst).cmp(&y.1.load(Ordering::SeqCst)))?;
-        Some(Mirror(k.clone(), v.clone()))
-    }
-}
-
-#[derive(Clone, PartialEq)]
-pub enum Checksum {
-    Sha1(String),
-    Sha256(String),
-    Sha512(String),
-    None,
 }
 
 #[derive(Clone)]
@@ -167,50 +117,6 @@ impl DownloadTask {
     }
 }
 
-enum Hasher {
-    Sha1(sha1_smol::Sha1),
-    Sha256(sha2::Sha256),
-    Sha512(sha2::Sha512),
-    None,
-}
-
-impl From<&Checksum> for Hasher {
-    fn from(value: &Checksum) -> Self {
-        match value {
-            Checksum::Sha1(_) => Self::Sha1(sha1_smol::Sha1::new()),
-            Checksum::Sha256(_) => Self::Sha256(sha2::Sha256::new()),
-            Checksum::Sha512(_) => Self::Sha512(sha2::Sha512::new()),
-            Checksum::None => Self::None,
-        }
-    }
-}
-
-impl Hasher {
-    fn update(&mut self, data: &[u8]) {
-        match self {
-            Self::Sha1(sha1_hasher) => sha1_hasher.update(data),
-            Self::Sha256(sha256_hasher) => sha256_hasher.update(data),
-            Self::Sha512(sha512_hasher) => sha512_hasher.update(data),
-            Self::None => (),
-        }
-    }
-    fn verify(self, checksum: &Checksum) -> bool {
-        match (self, checksum) {
-            (Self::Sha1(sha1_hasher), Checksum::Sha1(sha1_checksum)) => {
-                &sha1_hasher.digest().to_string() == sha1_checksum
-            }
-            (Self::Sha256(sha256_hasher), Checksum::Sha256(sha256_checksum)) => {
-                &format!("{:02x}", sha256_hasher.finalize()) == sha256_checksum
-            }
-            (Self::Sha512(sha512_hasher), Checksum::Sha512(sha512_checksum)) => {
-                &format!("{:02x}", sha512_hasher.finalize()) == sha512_checksum
-            }
-            (Self::None, Checksum::None) => true,
-            _ => false,
-        }
-    }
-}
-
 struct ScopedThread {
     is_aborted: Arc<AtomicBool>,
 }
@@ -233,7 +139,7 @@ impl Drop for ScopedThread {
     }
 }
 
-pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()> {
+pub async fn download(download: &DownloadTask, progress: &DownloadState) -> Result<()> {
     progress.reset(Ordering::SeqCst);
     let file_path = download.file.clone();
     let mut file = async_fs::File::create(&file_path).await?;
@@ -291,7 +197,7 @@ pub async fn download(download: &DownloadTask, progress: &Progress) -> Result<()
 
 pub async fn download_concurrent(
     tasks: Vec<DownloadTask>,
-    progress: &Progress,
+    progress: &DownloadState,
     download_config: DownloadConfig,
 ) -> Result<()> {
     let download_tasks: Result<Vec<DownloadTask>> =
@@ -321,12 +227,12 @@ pub async fn download_concurrent(
             .step
             .lock()
             .expect("Internal error: another thread hold lock and panic");
-        *task = Step::DownloadFiles;
+        *task = DownloadPhase::DownloadFiles;
     }
 
     futures::stream::iter(download_tasks)
         .map(Ok)
-        .try_for_each_concurrent(download_config.max_connections, |task| {
+        .try_for_each_concurrent(8, |task| {
             inner_download_future(
                 task,
                 &download_config,
@@ -340,7 +246,7 @@ pub async fn download_concurrent(
 
 pub fn filter_existing_and_verified_files(
     downloads: Vec<DownloadTask>,
-    progress: &Progress,
+    progress: &DownloadState,
 ) -> Vec<DownloadTask> {
     let completed = progress.completed.clone();
     {
@@ -348,7 +254,7 @@ pub fn filter_existing_and_verified_files(
             .step
             .lock()
             .expect("Internal error: another thread hold lock and panic");
-        *task = Step::VerifyExistingFiles;
+        *task = DownloadPhase::VerifyExistingFiles;
     }
     progress.total.store(0, Ordering::SeqCst);
     let filter_op = |download: &DownloadTask| {
@@ -404,7 +310,7 @@ async fn inner_download_future(
     task: DownloadTask,
     config: &DownloadConfig,
     mirror_usage: &MirrorUsage,
-    progress: &Progress,
+    progress: &DownloadState,
     speed_counter_input: Arc<AtomicU64>,
 ) -> Result<()> {
     let mut disabled_mirrors = vec![];
@@ -445,7 +351,7 @@ async fn inner_download_future(
 async fn inner_download_executer(
     task: &DownloadTask,
     config: &DownloadConfig,
-    progress: Progress,
+    progress: DownloadState,
     speed_counter_input: Arc<AtomicU64>,
 ) -> Result<()> {
     if let Some(length) = task.size_bytes
@@ -494,7 +400,7 @@ async fn inner_chunk_download_executer(
     task: &DownloadTask,
     length: u64,
     config: &DownloadConfig,
-    progress: &Progress,
+    progress: &DownloadState,
     speed_counter_input: Arc<AtomicU64>,
 ) -> Result<()> {
     let chunks = calculate_chunks_length(length);
@@ -555,7 +461,7 @@ fn calculate_chunks_length(length: u64) -> Vec<(u64, u64)> {
 async fn download_slice(
     task: DownloadTask,
     config: &DownloadConfig,
-    progress: &Progress,
+    progress: &DownloadState,
     speed_counter_input: Arc<AtomicU64>,
     range: (u64, u64),
 ) -> Result<()> {
