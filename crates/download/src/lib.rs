@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use std::{
-    io::{Read, SeekFrom},
+    io::Read,
     path::PathBuf,
     sync::{
         Arc,
@@ -13,11 +13,9 @@ use std::{
     time::Duration,
 };
 
-use async_fs::OpenOptions;
-use futures::{AsyncSeekExt, AsyncWriteExt, StreamExt, TryStreamExt};
+use futures::{AsyncWriteExt, StreamExt, TryStreamExt};
 use log::warn;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use reqwest::{IntoUrl, header::ACCEPT_RANGES};
 use serde::{Deserialize, Serialize};
 
 use config::download::DownloadConfig;
@@ -354,12 +352,12 @@ async fn inner_download_executer(
     progress: DownloadState,
     speed_counter_input: Arc<AtomicU64>,
 ) -> Result<()> {
-    if let Some(length) = task.size_bytes
-        && is_support_range(&task.url).await == Some(true)
-    {
-        return inner_chunk_download_executer(task, length, config, &progress, speed_counter_input)
-            .await;
-    }
+    // if let Some(length) = task.size_bytes
+    //     && is_support_range(&task.url).await == Some(true)
+    // {
+    //     return inner_chunk_download_executer(task, length, config, &progress, speed_counter_input)
+    //         .await;
+    // }
     let file_path = task.file.clone();
     let url = task.url.clone();
     if let Some(parent) = file_path.parent() {
@@ -386,115 +384,116 @@ async fn inner_download_executer(
     Ok(())
 }
 
-async fn is_support_range<U: IntoUrl>(url: U) -> Option<bool> {
-    let response = HTTP_CLIENT.head(url).send().await.ok()?;
-    let accept_ranges = response
-        .headers()
-        .get(ACCEPT_RANGES)
-        .and_then(|x| x.to_str().ok())
-        .unwrap_or("");
-    Some(accept_ranges.eq_ignore_ascii_case("bytes"))
-}
+// async fn is_support_range<U: IntoUrl>(url: U) -> Option<bool> {
+//     let response = HTTP_CLIENT.head(url).send().await.ok()?;
+//     let accept_ranges = response
+//         .headers()
+//         .get(ACCEPT_RANGES)
+//         .and_then(|x| x.to_str().ok())
+//         .unwrap_or("");
+//     Some(accept_ranges.eq_ignore_ascii_case("bytes"))
+// }
 
-async fn inner_chunk_download_executer(
-    task: &DownloadTask,
-    length: u64,
-    config: &DownloadConfig,
-    progress: &DownloadState,
-    speed_counter_input: Arc<AtomicU64>,
-) -> Result<()> {
-    let chunks = calculate_chunks_length(length);
-    let file_path = task.file.clone();
-    if let Some(parent) = file_path.parent() {
-        async_fs::create_dir_all(parent).await?;
-    }
-    futures::stream::iter(chunks)
-        .map(Ok)
-        .try_for_each_concurrent(4, async |range| {
-            let mut result = Ok(());
-            for retried in 0..10 {
-                match download_slice(
-                    task.clone(),
-                    config,
-                    progress,
-                    speed_counter_input.clone(),
-                    range,
-                )
-                .await
-                {
-                    Ok(()) => return Ok(()),
-                    Err(e) => result = Err(e),
-                };
-                warn!("{:?}", result);
-                warn!("retried: {retried}");
-            }
-            result
-        })
-        .await?;
-    progress.completed.fetch_add(1, Ordering::SeqCst);
-    Ok(())
-}
+// async fn inner_chunk_download_executer(
+//     task: &DownloadTask,
+//     length: u64,
+//     config: &DownloadConfig,
+//     progress: &DownloadState,
+//     speed_counter_input: Arc<AtomicU64>,
+// ) -> Result<()> {
+//     let chunks = calculate_chunks_length(length);
+//     let file_path = task.file.clone();
+//     if let Some(parent) = file_path.parent() {
+//         async_fs::create_dir_all(parent).await?;
+//     }
+//     futures::stream::iter(chunks)
+//         .map(Ok)
+//         .try_for_each_concurrent(4, async |range| {
+//             let mut result = Ok(());
+//             for retried in 0..10 {
+//                 match download_slice(
+//                     task.clone(),
+//                     config,
+//                     progress,
+//                     speed_counter_input.clone(),
+//                     range,
+//                 )
+//                 .await
+//                 {
+//                     Ok(()) => return Ok(()),
+//                     Err(e) => result = Err(e),
+//                 };
+//                 warn!("{:?}", result);
+//                 warn!("retried: {retried}");
+//             }
+//             result
+//         })
+//         .await?;
+//     progress.completed.fetch_add(1, Ordering::SeqCst);
+//     Ok(())
+// }
 
-fn calculate_chunks_length(length: u64) -> Vec<(u64, u64)> {
-    if length < 4 * 1000 * 1000 {
-        return vec![(0, length - 1)];
-    }
-    let chunk_count = if length < 30 * 1000 * 1000 {
-        length / (2 * 1000 * 1000) + 1
-    } else if length < 100 {
-        length / (4 * 1000 * 1000) + 1
-    } else {
-        length / (10 * 1000 * 1000) + 1
-    };
-    let chunk_size = length / chunk_count;
-    let mut chunks = Vec::with_capacity(chunk_count as usize);
-    for i in 0..chunk_count {
-        if i == chunk_count - 1 {
-            chunks.push((i * chunk_size, length - 1));
-        } else {
-            chunks.push((i * chunk_size, (i + 1) * chunk_size - 1));
-        }
-    }
-    chunks
-}
+// fn calculate_chunks_length(length: u64) -> Vec<(u64, u64)> {
+//     if length < 4 * 1000 * 1000 {
+//         return vec![(0, length - 1)];
+//     }
+//     let chunk_count = if length < 30 * 1000 * 1000 {
+//         length / (2 * 1000 * 1000) + 1
+//     } else if length < 100 {
+//         length / (4 * 1000 * 1000) + 1
+//     } else {
+//         length / (10 * 1000 * 1000) + 1
+//     };
+//     let chunk_size = length / chunk_count;
+//     let mut chunks = Vec::with_capacity(chunk_count as usize);
+//     for i in 0..chunk_count {
+//         if i == chunk_count - 1 {
+//             chunks.push((i * chunk_size, length - 1));
+//         } else {
+//             chunks.push((i * chunk_size, (i + 1) * chunk_size - 1));
+//         }
+//     }
+//     chunks
+// }
 
-async fn download_slice(
-    task: DownloadTask,
-    config: &DownloadConfig,
-    progress: &DownloadState,
-    speed_counter_input: Arc<AtomicU64>,
-    range: (u64, u64),
-) -> Result<()> {
-    let url = task.url.clone();
-    if let Some(parent) = task.file.parent() {
-        async_fs::create_dir_all(parent).await?;
-    }
-    let mut target_file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .open(task.file)
-        .await?;
-    target_file.seek(SeekFrom::Start(range.0)).await?;
-    let mut response = HTTP_CLIENT
-        .get(&url)
-        .header("Range", format!("bytes={}-{}", range.0, range.1))
-        .send()
-        .await?
-        .error_for_status()?;
-    let mut size = 0u64;
-    while let Some(chunk) = response.chunk().await? {
-        while progress.speed.load(Ordering::SeqCst) > config.max_download_speed
-            && config.max_download_speed > 1024
-        {
-            async_io::Timer::after(Duration::from_millis(100)).await;
-        }
-        target_file.write_all(&chunk).await?;
-        speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);
-        size += chunk.len() as u64;
-    }
-    if size != range.1 - range.0 + 1 {
-        Err(Error::ChunkLengthMismatch)
-    } else {
-        Ok(())
-    }
-}
+// async fn download_slice(
+//     task: DownloadTask,
+//     config: &DownloadConfig,
+//     progress: &DownloadState,
+//     speed_counter_input: Arc<AtomicU64>,
+//     range: (u64, u64),
+// ) -> Result<()> {
+//     let url = task.url.clone();
+//     if let Some(parent) = task.file.parent() {
+//         async_fs::create_dir_all(parent).await?;
+//     }
+//     let mut target_file = OpenOptions::new()
+//         .write(true)
+//         .create(true)
+//         .truncate(true)
+//         .open(task.file)
+//         .await?;
+//     target_file.seek(SeekFrom::Start(range.0)).await?;
+//     let mut response = HTTP_CLIENT
+//         .get(&url)
+//         .header("Range", format!("bytes={}-{}", range.0, range.1))
+//         .send()
+//         .await?
+//         .error_for_status()?;
+//     let mut size = 0u64;
+//     while let Some(chunk) = response.chunk().await? {
+//         while progress.speed.load(Ordering::SeqCst) > config.max_download_speed
+//             && config.max_download_speed > 1024
+//         {
+//             async_io::Timer::after(Duration::from_millis(100)).await;
+//         }
+//         target_file.write_all(&chunk).await?;
+//         speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);
+//         size += chunk.len() as u64;
+//     }
+//     if size != range.1 - range.0 + 1 {
+//         Err(Error::ChunkLengthMismatch)
+//     } else {
+//         Ok(())
+//     }
+// }
