@@ -11,7 +11,7 @@ use std::{
     time::Duration,
 };
 
-use download::task::Progress;
+use download::progress::DownloadState;
 use folder::DATA_LOCATION;
 use futures::stream::{AbortHandle, Abortable};
 use tauri::{
@@ -50,9 +50,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 #[command]
 async fn cmd_spawn_download_library_task(
     state: State<'_, PluginState>,
-    channel: Channel<Progress>,
+    channel: Channel<DownloadState>,
 ) -> Result<()> {
-    let progress = Progress::default();
+    let progress = DownloadState::default();
     let (handle, reg) = AbortHandle::new_pair();
     let future = Abortable::new(download_library(&progress), reg);
     {

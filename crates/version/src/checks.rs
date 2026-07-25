@@ -2,7 +2,7 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use platform::PLATFORM_INFO;
+use platform::{OsArch, OsFamily, PLATFORM_INFO};
 use regex::Regex;
 use serde_json::Value;
 
@@ -30,10 +30,15 @@ pub(crate) fn check_allowed(rules: Vec<Value>, enabled_features: &[String]) -> b
 }
 
 pub(crate) fn check_os(rule: &Value) -> bool {
+    let normalized_os_family = match PLATFORM_INFO.os_family {
+        OsFamily::Windows => "windows",
+        OsFamily::Linux => "linux",
+        OsFamily::Macos => "osx",
+    };
     if let Some(os) = rule["os"].as_object() {
         let name_check_passed = if let Some(name) = os.get("name") {
             if let Some(name) = name.as_str() {
-                PLATFORM_INFO.os_family.to_string() == name
+                normalized_os_family == name
             } else {
                 true
             }
@@ -53,9 +58,19 @@ pub(crate) fn check_os(rule: &Value) -> bool {
         } else {
             true
         };
+        let normalized_arch = match PLATFORM_INFO.arch {
+            OsArch::X64 => "x64",
+            OsArch::X86 => "x86",
+            OsArch::Mips => "mips",
+            OsArch::PowerPC => "powerpc",
+            OsArch::PowerPC64 => "powerpc64",
+            OsArch::Arm => "arm",
+            OsArch::Aarch64 => "aarch64",
+            OsArch::Unknown => "unknown",
+        };
         let arch_check_passed = if let Some(arch) = os.get("arch") {
             if let Some(arch) = arch.as_str() {
-                PLATFORM_INFO.arch == arch
+                normalized_arch == arch
             } else {
                 true
             }

@@ -17,19 +17,19 @@ use shared::HTTP_CLIENT;
 
 use crate::error::*;
 
-/// Represents the list of Neoforged versions.
+/// Represents the list of Neoforge versions.
 #[derive(Deserialize, Serialize, Clone)]
-pub struct NeoforgedVersionList {
+pub struct NeoforgeVersionList {
     /// Whether the version is a snapshot.
     #[serde(rename = "isSnapshot")]
     pub is_snapshot: bool,
 
-    /// The list of available Neoforged versions.
+    /// The list of available Neoforge versions.
     pub versions: Vec<String>,
 }
 
-impl NeoforgedVersionList {
-    /// Fetches the Neoforged version list from the remote API.
+impl NeoforgeVersionList {
+    /// Fetches the Neoforge version list from the remote API.
     ///
     /// # Returns
     /// * `Ok(Self)` on success.
@@ -44,7 +44,7 @@ impl NeoforgedVersionList {
     }
 
     pub async fn from_mcversion(mcversion: &str) -> Result<Vec<String>> {
-        let version_list = NeoforgedVersionList::new().await?;
+        let version_list = NeoforgeVersionList::new().await?;
         let splited_mcversion: Vec<&str> = mcversion.split('.').collect();
         Ok(version_list
             .versions
@@ -62,22 +62,22 @@ impl NeoforgedVersionList {
     }
 }
 
-/// Installs the specified version of Neoforged.
+/// Installs the specified version of Neoforge.
 ///
 /// Downloads the installer, runs it using the bundled Java Runtime,
 /// and then cleans up the temporary installer file.
 ///
 /// # Arguments
 /// * `install_dir` - The target directory where the client will be installed.
-/// * `neoforged_version` - The version of Neoforged to install.
+/// * `neoforge_version` - The version of Neoforge to install.
 ///
 /// # Returns
 /// * `Ok(())` on successful installation.
 /// * `Err(Error)` if installation fails.
-pub async fn install(install_dir: &PathBuf, neoforged_version: &str) -> Result<()> {
-    info!("Start downloading the neoforged installer");
-    let installer_path = download_installer(neoforged_version).await?;
-    let java = "/bin/java"; // TODO: Use config file
+pub async fn install(install_dir: &PathBuf, neoforge_version: &str) -> Result<()> {
+    info!("Start downloading the neoforge installer");
+    let installer_path = download_installer(neoforge_version).await?;
+    let java = "/usr/bin/java"; // TODO: Use config file
     info!("Running installer");
 
     let mut command = std::process::Command::new(java)
@@ -91,50 +91,49 @@ pub async fn install(install_dir: &PathBuf, neoforged_version: &str) -> Result<(
     let out = command
         .stdout
         .take()
-        .ok_or(Error::NeoforgedInstallerFailed)?;
+        .ok_or(Error::NeoforgeInstallerFailed)?;
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
     let mut success = false;
     let pid = command.id();
 
-    // Read output and check for success indicator
-    while out.read_line(&mut buf).is_ok() {
-        if let Ok(Some(_)) = command.try_wait() {
+    loop {
+        buf.clear();
+        let size = out.read_line(&mut buf)?;
+        if size == 0 {
             break;
         }
-        if buf.contains("Successfully installed client into launcher") {
+        let line = buf.trim();
+        println!("{:#?}", line);
+        if line.contains("Successfully installed client into launcher") {
             success = true;
-            info!("Successfully ran the neoforged installer")
+            info!("Successfully ran the neoforge installer");
         } else {
-            let lines: Vec<_> = buf.split('\n').collect();
-            if let Some(last) = lines.get(lines.len() - 2) {
-                trace!("[{pid}] {last}");
-            }
+            trace!("[{pid}] {line}");
+            println!("[{pid}] {buf}");
         }
     }
 
     let output = command.wait_with_output()?;
-    if !success || !output.status.success() {
-        async_fs::remove_file(installer_path).await?;
-        error!("Failed to ran neoforged installer");
-        return Err(Error::NeoforgedInstallerFailed);
-    }
-
     async_fs::remove_file(installer_path).await?;
+    if !success || !output.status.success() {
+        error!("Failed to ran neoforge installer");
+        return Err(Error::NeoforgeInstallerFailed);
+    }
     Ok(())
 }
 
-/// Downloads the Neoforged installer JAR for the given version.
+/// Downloads the Neoforge installer JAR for the given version.
 ///
 /// # Arguments
-/// * `neoforged_version` - The version to download.
+/// * `neoforge_version` - The version to download.
 ///
 /// # Returns
 /// * `Ok(PathBuf)` containing the path to the downloaded installer.
 /// * `Err(Error)` if downloading fails.
-async fn download_installer(neoforged_version: &str) -> Result<PathBuf> {
+pub async fn download_installer(neoforge_version: &str) -> Result<PathBuf> {
     let installer_url = format!(
-        "https://maven.neoforged.net/releases/net/neoforged/neoforge/{neoforged_version}/neoforge-{neoforged_version}-installer.jar"
+        "https://maven.neoforged.net/releases/net/neoforged/neoforge/{neoforge_version}/neoforge-{neoforge_version}-installer.jar"
     );
     info!("The installer url is: {installer_url}");
 

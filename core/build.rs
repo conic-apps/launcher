@@ -54,7 +54,7 @@ fn main() {
                 "cmd_get_fabric_version_list",
                 "cmd_get_quilt_version_list",
                 "cmd_get_forge_version_list",
-                "cmd_get_neoforged_version_list",
+                "cmd_get_neoforge_version_list",
                 "cmd_spawn_install_task",
                 "cmd_cancel_install_task",
             ]),
