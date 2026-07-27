@@ -52,6 +52,9 @@ pub struct InstanceLaunchConfig {
     /// Whether to use instance-specific settings
     pub enable_instance_specific_settings: bool,
 
+    /// Override built-in Java environment
+    pub java_path: Option<String>,
+
     /// Minimum allocated memory in MB (adds `-Xms` to JVM args)
     pub min_memory: Option<usize>,
 

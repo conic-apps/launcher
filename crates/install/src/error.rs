@@ -22,6 +22,8 @@ pub enum Error {
         #[serde_as(as = "serde_with::DisplayFromStr")]
         std::io::Error,
     ),
+    #[error("Invalid instance config")]
+    InvalidInstanceConfig,
     #[error(transparent)]
     Network(
         #[from]
