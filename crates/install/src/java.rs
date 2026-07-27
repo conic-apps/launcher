@@ -312,7 +312,8 @@ pub fn get_executable_path(java_component: &str) -> Result<PathBuf> {
             .join("jre.bundle")
             .join("Contents")
             .join("Home")
-            .join("bin")),
+            .join("bin")
+            .join("java")),
         OsFamily::Windows => {
             if java_component == "minecraft-java-exe" {
                 Ok(installation_directory.join("MinecraftJava.exe"))
