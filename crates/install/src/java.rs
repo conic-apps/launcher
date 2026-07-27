@@ -4,12 +4,18 @@
 
 use config::download::DownloadConfig;
 use download::{Checksum, progress::DownloadState};
+use folder::{DATA_LOCATION, MinecraftLocation};
+use instance::Instance;
 use log::info;
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
 #[cfg(not(windows))]
 use std::os::unix::fs::PermissionsExt;
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
+use version::resolve_version;
 
 use download::{DownloadTask, DownloadTaskType};
 use platform::{OsArch, OsFamily, PLATFORM_INFO};
@@ -61,41 +67,6 @@ impl MojangJavaVersionList {
     /// Downloads and returns the full Java version list manifest from Mojang servers.
     pub async fn new() -> Result<Self> {
         Ok(HTTP_CLIENT.get("https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json").send().await?.json().await?)
-    }
-
-    /// Returns the Java runtime list for the current platform and architecture.
-    pub fn get_current_platform(self) -> Option<HashMap<String, Vec<JavaRuntimeInfo>>> {
-        match PLATFORM_INFO.os_family {
-            OsFamily::Linux => {
-                if PLATFORM_INFO.arch == OsArch::X64 {
-                    Some(self.linux)
-                } else if PLATFORM_INFO.arch == OsArch::X86 {
-                    Some(self.linux_i386)
-                } else {
-                    None
-                }
-            }
-            OsFamily::Macos => {
-                if PLATFORM_INFO.arch == OsArch::X64 {
-                    Some(self.mac_os)
-                } else if PLATFORM_INFO.arch == OsArch::Aarch64 {
-                    Some(self.mac_os_arm64)
-                } else {
-                    None
-                }
-            }
-            OsFamily::Windows => {
-                if PLATFORM_INFO.arch == OsArch::X64 {
-                    Some(self.windows_x64)
-                } else if PLATFORM_INFO.arch == OsArch::X86 {
-                    Some(self.windows_x86)
-                } else if PLATFORM_INFO.arch == OsArch::Aarch64 {
-                    Some(self.windows_arm64)
-                } else {
-                    None
-                }
-            }
-        }
     }
 }
 
@@ -152,7 +123,7 @@ pub struct JavaRuntimeInfo {
 }
 
 /// Downloads and installs this Java runtime into the given install directory.
-pub(super) async fn install(
+pub async fn install(
     runtime: &JavaRuntimeInfo,
     install_directory: &Path,
     progress: &DownloadState,
@@ -196,7 +167,7 @@ pub(super) async fn install(
 }
 
 /// Installs all Java runtimes in the provided map into the target installation directory.
-pub(super) async fn group_install(
+pub async fn group_install(
     install_directory: &Path,
     java_runtimes: HashMap<String, Vec<JavaRuntimeInfo>>,
     progress: &DownloadState,
@@ -215,6 +186,141 @@ pub(super) async fn group_install(
         }
     }
     Ok(())
+}
+
+pub async fn install_for_instance(
+    instance: &Instance,
+    progress: &DownloadState,
+    config: DownloadConfig,
+) -> Result<()> {
+    let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
+    let version_json_path = minecraft_location.get_version_json(
+        instance
+            .get_version_id()
+            .map_err(|_| Error::InvalidInstanceConfig)?,
+    );
+    let unresolved_version = serde_json::from_str::<version::Version>(
+        &async_fs::read_to_string(version_json_path).await?,
+    )?;
+    let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[]).await?;
+    let java_version_list = MojangJavaVersionList::new().await?;
+
+    let java_runtime_info = match PLATFORM_INFO.os_family {
+        OsFamily::Windows => match PLATFORM_INFO.arch {
+            OsArch::X64 => java_version_list
+                .windows_x64
+                .get(&resolved_version.java_version.component)
+                .ok_or(Error::NoSupportedJavaRuntime)?
+                .first()
+                .ok_or(Error::NoSupportedJavaRuntime)?,
+            OsArch::X86 => java_version_list
+                .windows_x86
+                .get(&resolved_version.java_version.component)
+                .ok_or(Error::NoSupportedJavaRuntime)?
+                .first()
+                .ok_or(Error::NoSupportedJavaRuntime)?,
+            OsArch::Aarch64 => java_version_list
+                .windows_arm64
+                .get(&resolved_version.java_version.component)
+                .ok_or(Error::NoSupportedJavaRuntime)?
+                .first()
+                .unwrap_or(
+                    java_version_list
+                        .windows_x64
+                        .get(&resolved_version.java_version.component)
+                        .ok_or(Error::NoSupportedJavaRuntime)?
+                        .first()
+                        .ok_or(Error::NoSupportedJavaRuntime)?,
+                ),
+            _ => return Err(Error::NoSupportedJavaRuntime),
+        },
+        OsFamily::Linux => match PLATFORM_INFO.arch {
+            OsArch::X64 => java_version_list
+                .linux
+                .get(&resolved_version.java_version.component)
+                .ok_or(Error::NoSupportedJavaRuntime)?
+                .first()
+                .ok_or(Error::NoSupportedJavaRuntime)?,
+            OsArch::X86 => java_version_list
+                .linux_i386
+                .get(&resolved_version.java_version.component)
+                .ok_or(Error::NoSupportedJavaRuntime)?
+                .first()
+                .ok_or(Error::NoSupportedJavaRuntime)?,
+            _ => return Err(Error::NoSupportedJavaRuntime),
+        },
+        OsFamily::Macos => match PLATFORM_INFO.arch {
+            OsArch::X64 => java_version_list
+                .mac_os
+                .get(&resolved_version.java_version.component)
+                .ok_or(Error::NoSupportedJavaRuntime)?
+                .first()
+                .ok_or(Error::NoSupportedJavaRuntime)?,
+            OsArch::Aarch64 => java_version_list
+                .mac_os_arm64
+                .get(&resolved_version.java_version.component)
+                .ok_or(Error::NoSupportedJavaRuntime)?
+                .first()
+                .unwrap_or(
+                    java_version_list
+                        .mac_os
+                        .get(&resolved_version.java_version.component)
+                        .ok_or(Error::NoSupportedJavaRuntime)?
+                        .first()
+                        .ok_or(Error::NoSupportedJavaRuntime)?,
+                ),
+            _ => return Err(Error::NoSupportedJavaRuntime),
+        },
+    };
+    install(
+        java_runtime_info,
+        &get_installation_directory(&resolved_version.java_version.component)?,
+        progress,
+        config,
+    )
+    .await
+}
+
+pub fn get_installation_directory(java_component: &str) -> Result<PathBuf> {
+    let root = &DATA_LOCATION.runtime;
+    let platform_folder_name = match PLATFORM_INFO.os_family {
+        OsFamily::Windows => match PLATFORM_INFO.arch {
+            OsArch::X64 => "windows_x64",
+            OsArch::X86 => "windows_x86",
+            OsArch::Aarch64 => "windows_arm64",
+            _ => return Err(Error::NoSupportedJavaRuntime),
+        },
+        OsFamily::Linux => match PLATFORM_INFO.arch {
+            OsArch::X64 => "linux_amd64",
+            OsArch::X86 => "linux_i386",
+            _ => return Err(Error::NoSupportedJavaRuntime),
+        },
+        OsFamily::Macos => match PLATFORM_INFO.arch {
+            OsArch::X64 => "macos_x64",
+            OsArch::Aarch64 => "macos_arm64",
+            _ => return Err(Error::NoSupportedJavaRuntime),
+        },
+    };
+    Ok(root.join(platform_folder_name).join(java_component))
+}
+
+pub fn get_executable_path(java_component: &str) -> Result<PathBuf> {
+    let installation_directory = get_installation_directory(java_component)?;
+    match PLATFORM_INFO.os_family {
+        OsFamily::Linux => Ok(installation_directory.join("bin").join("java")),
+        OsFamily::Macos => Ok(installation_directory
+            .join("jre.bundle")
+            .join("Contents")
+            .join("Home")
+            .join("bin")),
+        OsFamily::Windows => {
+            if java_component == "minecraft-java-exe" {
+                Ok(installation_directory.join("MinecraftJava.exe"))
+            } else {
+                Ok(installation_directory.join("bin").join("javaw.exe"))
+            }
+        }
+    }
 }
 
 /// Generates a list of files to be downloaded based on the manifest.
