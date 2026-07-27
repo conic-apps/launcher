@@ -22,7 +22,7 @@ use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use futures::future::{AbortHandle, Abortable};
 use instance::Instance;
-use log::{error, info, trace};
+use log::{error, info, trace, warn};
 use options::LaunchOptions;
 use platform::{OsFamily, PLATFORM_INFO};
 use serde::Serialize;
@@ -121,6 +121,7 @@ async fn cmd_cancel_launch_task(state: State<'_, PluginState>) -> Result<()> {
     if let Some(handle) = current_task.clone() {
         handle.abort();
     }
+    warn!("Cancel launch!");
     *current_task = None;
     Ok(())
 }
