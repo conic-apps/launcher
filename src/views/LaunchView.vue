@@ -49,7 +49,6 @@
 <script setup lang="ts">
 import AccountAvatar from "@/components/AccountAvatar.vue";
 import BaseProgress from "@/components/base/BaseProgress.vue";
-import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
 import { useInstanceStore } from "@/store/instance";
 import { useNavigationStore } from "@/store/navigation";
