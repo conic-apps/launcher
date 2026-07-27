@@ -182,7 +182,13 @@ pub async fn generate_command_arguments(
     let mut game_options: HashMap<&str, String> = HashMap::with_capacity(13);
     let assets_dir = minecraft_location.assets.clone();
     game_options.insert("version_name", version.id.clone());
-    game_options.insert("version_type", version.version_type.clone().unwrap_or("unknown".to_string()));
+    game_options.insert(
+        "version_type",
+        version
+            .version_type
+            .clone()
+            .unwrap_or("unknown".to_string()),
+    );
     game_options.insert("assets_root", assets_dir.to_string_lossy().to_string());
     game_options.insert(
         "game_assets",
