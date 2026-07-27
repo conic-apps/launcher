@@ -105,7 +105,6 @@ import AppIcon from "@/components/AppIcon.vue";
 import { useInstanceStore } from "@/store/instance";
 import { computed, ref } from "vue";
 import { LATEST_RELEASE_INSTANCE_ID, LATEST_SNAPSHOT_INSTANCE_ID } from "@conic/instance";
-import { useNavigationStore } from "@/store/navigation";
 import BaseProgress from "@/components/base/BaseProgress.vue";
 import { InstallTask, Job } from "@conic/install";
 import { useConfigStore } from "@/store/config";
