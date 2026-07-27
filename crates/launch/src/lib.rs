@@ -281,6 +281,7 @@ async fn spawn_minecraft_process(
             .to_string_lossy()
             .to_string(),
     );
+    launch_command.push_str(&java_path);
     for arg in command_arguments.clone() {
         launch_command.push(' ');
         launch_command = format!("{launch_command}{arg}");
