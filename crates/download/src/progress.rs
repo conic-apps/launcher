@@ -13,7 +13,6 @@ use serde::{Deserialize, Serialize};
 pub enum DownloadPhase {
     VerifyExistingFiles,
     DownloadFiles,
-    VerifyResult,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -22,7 +21,7 @@ pub enum DownloadPhase {
 pub struct DownloadState {
     pub completed: Arc<AtomicU64>,
     pub total: Arc<AtomicU64>,
-    pub step: Arc<Mutex<DownloadPhase>>,
+    pub phase: Arc<Mutex<DownloadPhase>>,
     pub speed: Arc<AtomicU64>,
 }
 
@@ -32,7 +31,7 @@ impl Default for DownloadState {
             completed: Arc::new(AtomicU64::new(0)),
             total: Arc::new(AtomicU64::new(0)),
             speed: Arc::new(AtomicU64::new(0)),
-            step: Arc::new(Mutex::new(DownloadPhase::DownloadFiles)),
+            phase: Arc::new(Mutex::new(DownloadPhase::DownloadFiles)),
         }
     }
 }
@@ -42,7 +41,7 @@ impl PartialEq for DownloadState {
         self.completed.load(Ordering::SeqCst) == other.completed.load(Ordering::SeqCst)
             && self.total.load(Ordering::SeqCst) == other.total.load(Ordering::SeqCst)
             && self.speed.load(Ordering::SeqCst) == other.speed.load(Ordering::SeqCst)
-            && *self.step.lock().expect("") == *other.step.lock().expect("")
+            && *self.phase.lock().expect("") == *other.phase.lock().expect("")
     }
 }
 
