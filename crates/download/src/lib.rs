@@ -222,7 +222,7 @@ pub async fn download_concurrent(
         .store(download_tasks.len() as u64, Ordering::SeqCst);
     {
         let mut task = progress
-            .step
+            .phase
             .lock()
             .expect("Internal error: another thread hold lock and panic");
         *task = DownloadPhase::DownloadFiles;
@@ -249,7 +249,7 @@ pub fn filter_existing_and_verified_files(
     let completed = progress.completed.clone();
     {
         let mut task = progress
-            .step
+            .phase
             .lock()
             .expect("Internal error: another thread hold lock and panic");
         *task = DownloadPhase::VerifyExistingFiles;

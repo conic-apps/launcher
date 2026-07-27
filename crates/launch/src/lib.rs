@@ -27,12 +27,12 @@ use options::LaunchOptions;
 use platform::{OsFamily, PLATFORM_INFO};
 use serde::Serialize;
 use tauri::{
-    Runtime, State, command,
+    Manager, Runtime, State, command,
     ipc::Channel,
     plugin::{Builder, TauriPlugin},
 };
 use uuid::Uuid;
-use version::{Version, resolve_version};
+use version::{ResolvedVersion, Version, resolve_version};
 
 mod arguments;
 mod complete;
@@ -52,6 +52,10 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_spawn_launch_task,
             cmd_cancel_launch_task
         ])
+        .setup(|app, _| {
+            app.manage(PluginState::default());
+            Ok(())
+        })
         .build()
 }
 
@@ -103,6 +107,10 @@ async fn cmd_spawn_launch_task(
         Err(e) => Err(Error::Aborted(e)),
     };
     finished.store(true, Ordering::SeqCst);
+    {
+        let mut current_task = state.abort_handle.lock().expect("Internal error");
+        *current_task = None;
+    }
     let _ = event_sender_thread.join();
     result
 }
@@ -191,7 +199,14 @@ pub async fn launch(
     )
     .await?;
 
-    let result = spawn_minecraft_process(command_arguments, launch_options, instance, status).await;
+    let result = spawn_minecraft_process(
+        command_arguments,
+        launch_options,
+        instance,
+        resolved_version,
+        status,
+    )
+    .await;
     if let Err(e) = &result {
         error!("Failed to spawn Minecraft process: {e}");
     }
@@ -231,6 +246,7 @@ async fn spawn_minecraft_process(
     command_arguments: Vec<String>,
     launch_options: LaunchOptions,
     instance: Instance,
+    resolved_version: ResolvedVersion,
     status: Arc<Mutex<LaunchEvent>>,
 ) -> Result<u32> {
     // TODO: 要求 Java 使用高性能显卡
@@ -259,7 +275,13 @@ async fn spawn_minecraft_process(
         commands.push_str(&format!("{} ", launch_options.wrap_command));
     }
     // todo(after java exec): add -Dfile.encoding=encoding.name() and other
-    let mut launch_command = "java".to_string();
+    let mut launch_command = String::new();
+    let java_path = instance.config.launch_config.java_path.unwrap_or(
+        install::java::get_executable_path(&resolved_version.java_version.component)?
+            .to_string_lossy()
+            .to_string(),
+    );
+    launch_command.push_str(&java_path);
     for arg in command_arguments.clone() {
         launch_command.push(' ');
         launch_command = format!("{launch_command}{arg}");
@@ -315,6 +337,7 @@ async fn spawn_minecraft_process(
             }
             let lines: Vec<_> = buf.split("\n").collect();
             if let Some(last) = lines.get(lines.len() - 2) {
+                // FIXME: Unsafe get() method
                 trace!("[{pid}] {last}");
                 if last.contains("Setting user:") {
                     let mut status = status.lock().expect("Internal error");

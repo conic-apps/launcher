@@ -6,18 +6,6 @@ import { Config } from "@conic/config"
 import { Instance } from "@conic/instance"
 import { Channel, invoke } from "@tauri-apps/api/core"
 
-enum Job {
-    Prepare = "Prepare",
-    RefreshAccount = "RefreshAccount",
-    CompleteFiles = "CompleteFiles",
-    GenerateScriptlet = "GenerateScriptlet",
-    WaitForLaunch = "WaitForLaunch",
-    LogSettingUser = "LogSettingUser",
-    LogLwjglVersion = "LogLwjglVersion",
-    LogOpenALLoaded = "LogOpenALLoaded",
-    LogTextureLoaded = "LogTextureLoaded",
-}
-
 enum LaunchErrorKind {
     AnothorInstanceLaunching = "AnothorInstanceLaunching",
     Io = "Io",
@@ -34,15 +22,40 @@ enum LaunchErrorKind {
     Other = "Other",
 }
 
-type LaunchProgress = {
-    job: Job
-    progress?: {
-        completed: number
-        total: number
-        step: "VerifyExistingFiles" | "DownloadFiles"
-        speed: number
-    }
-}
+type LaunchProgress =
+    | {
+          job: "Prepare"
+      }
+    | {
+          job: "RefreshAccount"
+      }
+    | {
+          job: "CompleteFiles"
+          downloadState?: {
+              completed: number
+              total: number
+              phase: "VerifyExistingFiles" | "DownloadFiles"
+              speed: number
+          }
+      }
+    | {
+          job: "GenerateScriptlet"
+      }
+    | {
+          job: "WaitForLaunch"
+      }
+    | {
+          job: "LogSettingUser"
+      }
+    | {
+          job: "LogLwjglVersion"
+      }
+    | {
+          job: "LogOpenALLoaded"
+      }
+    | {
+          job: "LogTextureLoaded"
+      }
 
 /**
  * Usage:
@@ -83,6 +96,7 @@ export class LaunchTask {
             })
             this._callbacks?.onSucceed?.()
         } catch (error: any) {
+            console.log(error)
             if (error.kind && error.message) {
                 const kind = error.kind as LaunchErrorKind
                 if (kind === LaunchErrorKind.Aborted) {

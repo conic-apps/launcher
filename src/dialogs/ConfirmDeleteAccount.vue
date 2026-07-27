@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <BaseDialog :visible="dialogStore.confirmDeleteAccount.visible" :width="500" :height="268">
+  <BaseDialog :visible="dialogStore.confirmDeleteAccount.visible" :width="380" :height="280">
     <div class="confirm-delete-account" ref="main">
       <p
         style="
@@ -215,6 +215,7 @@ async function confirmDelete() {
     margin-top: 8px;
     width: 100%;
     display: flex;
+    margin-top: auto;
   }
 }
 

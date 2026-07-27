@@ -162,7 +162,7 @@ async fn cmd_get_neoforge_version_list(
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(tag = "job", content = "progress")]
+#[serde(tag = "job", content = "downloadState")]
 pub enum InstallEvent {
     Prepare,
     InstallGame(DownloadState),
@@ -241,9 +241,9 @@ pub async fn install(
         "Start installing the game for instance {}",
         instance.config.name
     );
-    let runtime = instance.config.runtime;
+    let runtime = &instance.config.runtime;
 
-    print_runtime_info(&runtime);
+    print_runtime_info(runtime);
 
     info!("Generating download task...");
     let download_list = generate_download_info(
@@ -266,18 +266,10 @@ pub async fn install(
         let mut status = status.lock().expect("Internal error");
         *status = InstallEvent::InstallJava(progress.clone())
     }
-    let java_version_list = java::MojangJavaVersionList::new().await?;
-    let java_for_current_platform = java_version_list
-        .get_current_platform()
-        .ok_or(Error::NoSupportedJavaRuntime)?;
-    // TODO: Don't group install java here, show a dialog to install java manually
-    java::group_install(
-        &DATA_LOCATION.root.join("java"),
-        java_for_current_platform,
-        &progress,
-        config.download.clone(),
-    )
-    .await?;
+
+    if instance.config.launch_config.java_path.is_none() {
+        java::install_for_instance(&instance, &progress, config.download.clone()).await?;
+    }
 
     if runtime.mod_loader_type.is_some() {
         info!("Install mod loader");
@@ -322,14 +314,20 @@ fn print_runtime_info(runtime: &InstanceRuntime) {
 /// Returns an error if:
 /// - The loader type/version is missing or malformed.
 /// - The underlying installation function fails.
-pub async fn install_mod_loader(runtime: InstanceRuntime) -> Result<()> {
-    let mod_loader_type = runtime.mod_loader_type.ok_or(Error::InstanceBroken)?;
-    let mod_loader_version = runtime.mod_loader_version.ok_or(Error::InstanceBroken)?;
+pub async fn install_mod_loader(runtime: &InstanceRuntime) -> Result<()> {
+    let mod_loader_type = runtime
+        .mod_loader_type
+        .as_ref()
+        .ok_or(Error::InstanceBroken)?;
+    let mod_loader_version = runtime
+        .mod_loader_version
+        .as_ref()
+        .ok_or(Error::InstanceBroken)?;
     match mod_loader_type {
         ModLoaderType::Fabric => {
             fabric::install(
                 &runtime.minecraft,
-                &mod_loader_version,
+                mod_loader_version,
                 MinecraftLocation::new(&DATA_LOCATION.root),
             )
             .await?
@@ -337,7 +335,7 @@ pub async fn install_mod_loader(runtime: InstanceRuntime) -> Result<()> {
         ModLoaderType::Quilt => {
             quilt::install(
                 &runtime.minecraft,
-                &mod_loader_version,
+                mod_loader_version,
                 MinecraftLocation::new(&DATA_LOCATION.root),
             )
             .await?
@@ -345,13 +343,13 @@ pub async fn install_mod_loader(runtime: InstanceRuntime) -> Result<()> {
         ModLoaderType::Forge => {
             forge::install(
                 &MinecraftLocation::new(&DATA_LOCATION.root),
-                &mod_loader_version,
+                mod_loader_version,
                 &runtime.minecraft,
             )
             .await?
         }
         ModLoaderType::Neoforge => {
-            neoforge::install(&DATA_LOCATION.root, &mod_loader_version).await?
+            neoforge::install(&DATA_LOCATION.root, mod_loader_version).await?
         }
     }
 

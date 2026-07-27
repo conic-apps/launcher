@@ -86,22 +86,8 @@ export type QuiltVersion = {
 export async function getQuiltVersionList(mcversion: string): Promise<QuiltVersion[]> {
     return await invoke("plugin:install|cmd_get_quilt_version_list", { mcversion })
 }
-export type ForgeVersionItem = {
-    _id: string
-    build: number
-    __v: number
-    version: string
-    modified: string
-    mcversion: string
-    files: {
-        format: string
-        category: string
-        hash?: string
-    }[]
-    branch: object
-}
 
-export async function getForgeVersionList(mcversion: string): Promise<ForgeVersionItem[]> {
+export async function getForgeVersionList(mcversion: string): Promise<Record<string, string[]>> {
     return await invoke("plugin:install|cmd_get_forge_version_list", { mcversion })
 }
 
@@ -125,6 +111,10 @@ export enum InstallErrorKind {
     UrlParse = "UrlParse",
     NoSupportedJavaRuntime = "NoSupportedJavaRuntime",
     Aborted = "Aborted",
+    Zip = "Zip",
+    NoAvailableForgeVersion = "NoAvailableForgeVersion ",
+    InvalidAuthlibResponse = "InvalidAuthlibResponse",
+    ChunkLengthMismatch = "ChunkLengthMismatch",
 }
 
 export enum Job {
@@ -134,22 +124,38 @@ export enum Job {
     InstallModLoader = "InstallModLoader",
 }
 
-export type InstallProgress = {
-    job: Job
-    progress?: {
-        completed: number
-        total: number
-        step: "VerifyExistingFiles" | "DownloadFiles"
-        speed: number
-    }
-}
+export type InstallProgress =
+    | {
+          job: Job.Prepare
+      }
+    | {
+          job: Job.InstallGame
+          downloadState?: {
+              completed: number
+              total: number
+              phase: "VerifyExistingFiles" | "DownloadFiles"
+              speed: number
+          }
+      }
+    | {
+          job: Job.InstallJava
+          downloadState?: {
+              completed: number
+              total: number
+              phase: "VerifyExistingFiles" | "DownloadFiles"
+              speed: number
+          }
+      }
+    | {
+          job: Job.InstallModLoader
+      }
 
 export class InstallTask {
     protected _config: Config
     protected _instance: Instance
     protected _callbacks?: {
         onStart?: () => void
-        onProgress?: (task: InstallProgress) => void
+        onProgress?: (progress: InstallProgress) => void
         onFailed?: (error: { kind: InstallErrorKind; message: string }) => void
         onSucceed?: () => void
         onCancelled?: () => void
