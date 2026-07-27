@@ -14,7 +14,7 @@ use std::{
 };
 
 use futures::future::{AbortHandle, Abortable};
-use log::{debug, info};
+use log::{debug, info, warn};
 use neoforge::NeoforgeVersionList;
 use quilt::QuiltVersionList;
 use serde::Serialize;
@@ -213,6 +213,7 @@ fn cmd_cancel_install_task(state: State<'_, PluginState>) {
     if let Some(handle) = current_task.clone() {
         handle.abort();
     }
+    warn!("Cancel install!");
     *current_task = None;
 }
 
