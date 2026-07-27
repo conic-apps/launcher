@@ -10,7 +10,7 @@ export const useDialogStore = defineStore("dialog", () => {
     const updateReminder = ref({ visible: false })
     const accountManager = ref({ visible: false })
     const logViewer = ref({ visible: false })
-    const createInstance = ref({ visible: true })
+    const createInstance = ref({ visible: false })
     const confirmDeleteInstance = ref({
         visible: false,
         instanceToDelete: {
