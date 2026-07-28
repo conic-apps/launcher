@@ -72,7 +72,11 @@
           :key="instance.id"
           class="instance-card"
           :class="{ selected: instanceStore.currentInstance?.id === instance.id }"
-          :style="instance.config.background ? { backgroundImage: `url(data:image/png;base64,${instance.config.background})` } : {}"
+          :style="
+            instance.config.background
+              ? { backgroundImage: `url(data:image/png;base64,${instance.config.background})` }
+              : {}
+          "
           @click="instanceStore.currentInstance = instance">
           <div class="instance-card-bg" v-if="instance.config.background" />
           <span class="instance-name">{{ instance.config.name }}</span>
@@ -115,18 +119,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from "vue"
-import { useInstanceStore } from "@/store/instance"
-import { useNavigationStore } from "@/store/navigation"
-import { useDialogStore } from "@/store/dialog"
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { useInstanceStore } from "@/store/instance";
+import { useNavigationStore } from "@/store/navigation";
+import { useDialogStore } from "@/store/dialog";
 
-const instanceStore = useInstanceStore()
-const navigation = useNavigationStore()
-const dialog = useDialogStore()
+const instanceStore = useInstanceStore();
+const navigation = useNavigationStore();
+const dialog = useDialogStore();
 
-type CategoryKey = "all" | "vanilla" | "quilt" | "fabric" | "forge" | "neoforge" | "modpack"
-type ViewMode = "grid" | "list"
-type SortMode = "name" | "version"
+type CategoryKey = "all" | "vanilla" | "quilt" | "fabric" | "forge" | "neoforge" | "modpack";
+type ViewMode = "grid" | "list";
+type SortMode = "name" | "version";
 
 const categories: { key: CategoryKey; label: string; icon: string }[] = [
   { key: "all", label: "全部游戏", icon: "gamepad" },
@@ -136,90 +140,91 @@ const categories: { key: CategoryKey; label: string; icon: string }[] = [
   { key: "forge", label: "Forge", icon: "build" },
   { key: "neoforge", label: "Neoforge", icon: "contrast" },
   { key: "modpack", label: "整合包", icon: "package" },
-]
+];
 
-const activeCategory = ref<CategoryKey>("all")
-const searchQuery = ref("")
-const viewMode = ref<ViewMode>("grid")
-const sortMode = ref<SortMode>("name")
-const sortDropdownOpen = ref(false)
-const sortGroupRef = ref<HTMLDivElement>()
+const activeCategory = ref<CategoryKey>("all");
+const searchQuery = ref("");
+const viewMode = ref<ViewMode>("grid");
+const sortMode = ref<SortMode>("name");
+const sortDropdownOpen = ref(false);
+const sortGroupRef = ref<HTMLDivElement>();
 
 const sortOptions: { key: SortMode; label: string }[] = [
   { key: "name", label: "名称" },
   { key: "version", label: "版本" },
-]
+];
 
 const sortLabel = computed(() => {
-  return sortOptions.find((o) => o.key === sortMode.value)?.label ?? ""
-})
+  return sortOptions.find((o) => o.key === sortMode.value)?.label ?? "";
+});
 
 function selectSort(mode: SortMode) {
-  sortMode.value = mode
-  sortDropdownOpen.value = false
+  sortMode.value = mode;
+  sortDropdownOpen.value = false;
 }
 
 function onClickOutside(e: MouseEvent) {
   if (sortGroupRef.value && !sortGroupRef.value.contains(e.target as Node)) {
-    sortDropdownOpen.value = false
+    sortDropdownOpen.value = false;
   }
 }
 
-onMounted(() => document.addEventListener("click", onClickOutside))
-onBeforeUnmount(() => document.removeEventListener("click", onClickOutside))
+onMounted(() => document.addEventListener("click", onClickOutside));
+onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
 
 function compareVersions(a: string, b: string): number {
-  const pa = a.split(".").map(Number)
-  const pb = b.split(".").map(Number)
-  const len = Math.max(pa.length, pb.length)
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  const len = Math.max(pa.length, pb.length);
   for (let i = 0; i < len; i++) {
-    const na = pa[i] ?? 0
-    const nb = pb[i] ?? 0
-    if (na !== nb) return nb - na
+    const na = pa[i] ?? 0;
+    const nb = pb[i] ?? 0;
+    if (na !== nb) return nb - na;
   }
-  return 0
+  return 0;
 }
 
 const filteredInstances = computed(() => {
-  let list = [...(instanceStore.instances ?? [])]
+  let list = [...(instanceStore.instances ?? [])];
 
   if (activeCategory.value === "vanilla") {
-    list = list.filter((i) => !i.config.runtime.mod_loader_type)
+    list = list.filter((i) => !i.config.runtime.mod_loader_type);
   } else if (activeCategory.value !== "all" && activeCategory.value !== "modpack") {
     const loaderMap: Record<string, string> = {
       quilt: "Quilt",
       fabric: "Fabric",
       forge: "Forge",
       neoforge: "Neoforge",
-    }
-    const target = loaderMap[activeCategory.value]
+    };
+    const target = loaderMap[activeCategory.value];
     if (target) {
-      list = list.filter((i) => i.config.runtime.mod_loader_type === target)
+      list = list.filter((i) => i.config.runtime.mod_loader_type === target);
     }
   }
 
   if (searchQuery.value.trim()) {
-    const q = searchQuery.value.trim().toLowerCase()
+    const q = searchQuery.value.trim().toLowerCase();
     list = list.filter(
       (i) =>
         i.config.name.toLowerCase().includes(q) ||
         i.config.runtime.minecraft.toLowerCase().includes(q) ||
-        (i.config.runtime.mod_loader_type && i.config.runtime.mod_loader_type.toLowerCase().includes(q)),
-    )
+        (i.config.runtime.mod_loader_type &&
+          i.config.runtime.mod_loader_type.toLowerCase().includes(q)),
+    );
   }
 
   list.sort((a, b) => {
     if (sortMode.value === "name") {
-      return a.config.name.localeCompare(b.config.name)
+      return a.config.name.localeCompare(b.config.name);
     }
     if (sortMode.value === "version") {
-      return compareVersions(a.config.runtime.minecraft, b.config.runtime.minecraft)
+      return compareVersions(a.config.runtime.minecraft, b.config.runtime.minecraft);
     }
-    return 0
-  })
+    return 0;
+  });
 
-  return list
-})
+  return list;
+});
 </script>
 
 <style lang="less" scoped>
@@ -256,10 +261,12 @@ const filteredInstances = computed(() => {
     gap: 10px;
     padding: 0 12px;
     border-radius: 8px;
-  
+
     font-size: 13px;
     color: var(--ctp-subtext1);
-    transition: background 120ms ease, color 120ms ease;
+    transition:
+      background 120ms ease,
+      color 120ms ease;
     user-select: none;
 
     &:hover {
@@ -291,7 +298,9 @@ const filteredInstances = computed(() => {
   color: var(--ctp-subtext1);
   font-size: 13px;
 
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 
   &:hover {
     background: var(--ctp-surface0);
@@ -366,7 +375,9 @@ const filteredInstances = computed(() => {
   color: var(--ctp-subtext0);
   font-size: 12px;
 
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
   white-space: nowrap;
 
   &:hover {
@@ -406,7 +417,9 @@ const filteredInstances = computed(() => {
   border-radius: 6px;
   font-size: 12px;
   color: var(--ctp-subtext1);
-  transition: background 100ms ease, color 100ms ease;
+  transition:
+    background 100ms ease,
+    color 100ms ease;
 
   &:hover {
     background: var(--ctp-surface1);
@@ -488,7 +501,11 @@ const filteredInstances = computed(() => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(to top, rgba(var(--ctp-base-rgb), 0.85) 0%, rgba(var(--ctp-base-rgb), 0.3) 100%);
+  background: linear-gradient(
+    to top,
+    rgba(var(--ctp-base-rgb), 0.85) 0%,
+    rgba(var(--ctp-base-rgb), 0.3) 100%
+  );
   pointer-events: none;
 }
 
