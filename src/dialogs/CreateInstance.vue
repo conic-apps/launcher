@@ -18,6 +18,11 @@
       <div class="dialog-button" @click="close">
         <i></i>
       </div>
+      <WindowButton
+        button-type="minimize"
+        :lit="windowButtonLit"
+        :hover="windowButtonHover"
+        @minimize="appWindow.getCurrentWindow().minimize()"></WindowButton>
       <div class="content">
         <Transition mode="out-in" :name="transitionName">
           <div class="settings" v-if="currentComponent == 'settings'">
@@ -149,6 +154,8 @@ import {
 import { createInstance as conicCreateInstance } from "@conic/instance";
 import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
+import { window as appWindow } from "@tauri-apps/api";
+import WindowButton from "@/components/WindowButton.vue";
 
 const dialogStore = useDialogStore();
 const instanceStore = useInstanceStore();
@@ -316,6 +323,23 @@ const close = () => {
   modLoaderVersion.value = "";
   dialogStore.createInstance.visible = false;
 };
+
+const appWindowFocused = ref(true);
+const windowButtonHover = ref(false);
+
+const windowButtonLit = computed(() => {
+  return windowButtonHover.value ? true : appWindowFocused.value;
+});
+
+appWindow
+  .getCurrentWindow()
+  .isFocused()
+  .then((focused) => {
+    appWindowFocused.value = focused;
+  });
+appWindow.getCurrentWindow().onFocusChanged((event: Event<boolean>) => {
+  appWindowFocused.value = event.payload;
+});
 </script>
 
 <style lang="less" scoped>

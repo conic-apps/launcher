@@ -13,7 +13,7 @@
       <div class="tooltip">{{ instance.config.name }}</div>
       <img :src="instance.config.icon ?? instanceIconFallback" />
     </div>
-    <button class="show-all" v-if="hasMore">
+    <button class="show-all" @click="goToInstances">
       <AppIcon name="apps-outline" :size="24" />
       <p class="name">{{ $t("home.showAll") }}</p>
     </button>
@@ -23,10 +23,12 @@
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
 import { useInstanceStore } from "@/store/instance";
+import { useNavigationStore } from "@/store/navigation";
 import instanceIconFallback from "@/assets/images/Unknown_server.webp";
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 
 const instanceStore = useInstanceStore();
+const navigation = useNavigationStore();
 const drawerRef = ref<HTMLDivElement>();
 
 const TILE_WIDTH = 52;
@@ -46,9 +48,9 @@ const visibleInstances = computed(() => {
   return instanceStore.instances.slice(0, maxVisible.value);
 });
 
-const hasMore = computed(() => {
-  return instanceStore.instances.length > maxVisible.value;
-});
+function goToInstances() {
+  navigation.navigate("instances");
+}
 
 let resizeObserver: ResizeObserver | null = null;
 
