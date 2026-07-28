@@ -122,9 +122,6 @@ appWindow.getCurrentWindow().onFocusChanged((event: Event<boolean>) => {
   appWindowFocused.value = event.payload;
 });
 
-const currentAvatar = ref<string | null>(null);
-const currentProfileName = ref<string | null>(null);
-
 const pages = reactive({
   settings: markRaw(SettingsView),
   game: markRaw(GameView),

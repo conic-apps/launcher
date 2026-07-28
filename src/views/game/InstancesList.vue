@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { useInstanceStore } from "@/store/instance";
 import { Instance } from "@conic/instance";
-import { nextTick, onMounted, reactive, ref, useTemplateRef } from "vue";
+import { nextTick, onMounted, reactive, useTemplateRef } from "vue";
 
 const instanceStore = useInstanceStore();
 const containerRef = useTemplateRef("container");
