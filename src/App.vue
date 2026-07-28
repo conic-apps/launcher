@@ -31,20 +31,12 @@
           @maximize="
             appWindow.getCurrentWindow().setFullscreen(!appWindow.getCurrentWindow().isFullscreen())
           "></WindowButton>
-        <div class="title-bar-avatar" v-if="currentAvatar">
-          <div class="tooltip">{{ currentProfileName }}</div>
-          <img :src="currentAvatar" alt="Avatar" />
-        </div>
       </div>
       <div
         class="window-buttons-container"
         @mouseenter="windowButtonHover = true"
         @mouseleave="windowButtonHover = false"
         v-else>
-        <div class="title-bar-avatar" v-if="currentAvatar">
-          <div class="tooltip">{{ currentProfileName }}</div>
-          <img :src="currentAvatar" alt="Avatar" />
-        </div>
         <WindowButton
           button-type="minimize"
           :lit="windowButtonLit"
@@ -60,6 +52,17 @@
           @close="closeWindow()"
           :hover="windowButtonHover"
           :lit="windowButtonLit"></WindowButton>
+      </div>
+      <div class="title-bar-actions">
+        <button class="title-bar-action-btn">
+          <AppIcon name="server" :size="18" />
+        </button>
+        <button class="title-bar-action-btn" @click="navigation.navigate('market')">
+          <AppIcon name="earth" :size="18" />
+        </button>
+        <button class="title-bar-action-btn" @click="navigation.navigate('settings')">
+          <AppIcon name="settings" :size="18" />
+        </button>
       </div>
     </div>
     <main class="main" style="transition: none">
@@ -89,6 +92,7 @@ import AppBackground from "./components/AppBackground.vue";
 import { useNavigationStore } from "./store/navigation";
 import { getSystemLanguage } from "@conic/config";
 import LaunchView from "./views/LaunchView.vue";
+import InstancesView from "./views/InstancesView.vue";
 
 const config = useConfigStore();
 const navigation = useNavigationStore();
@@ -118,15 +122,13 @@ appWindow.getCurrentWindow().onFocusChanged((event: Event<boolean>) => {
   appWindowFocused.value = event.payload;
 });
 
-const currentAvatar = ref<string | null>(null);
-const currentProfileName = ref<string | null>(null);
-
 const pages = reactive({
   settings: markRaw(SettingsView),
   game: markRaw(GameView),
   launch: markRaw(LaunchView),
   market: markRaw(MarketView),
   accounts: markRaw(AccountsView),
+  instances: markRaw(InstancesView),
 });
 const transitionName = ref("slide-up");
 
@@ -184,7 +186,7 @@ function isMacOS() {
   border-radius: 16px 16px 0 0;
   align-items: center;
   justify-content: space-between;
-  // background: var(--ctp-base);
+  background: rgba(var(--ctp-surface0-rgb), 0.8);
 
   .title-bar-container {
     display: flex;
@@ -233,7 +235,6 @@ main.main {
   height: 22px;
   border-radius: 50%;
   overflow: hidden;
-  cursor: pointer;
   flex-shrink: 0;
 
   img {
@@ -265,6 +266,34 @@ main.main {
   &:hover .tooltip {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
+  }
+}
+
+.title-bar-actions {
+  position: fixed;
+  right: 10px;
+  top: 8px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.title-bar-action-btn {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--window-btn-icon-color);
+  transition: background 120ms ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
   }
 }
 </style>

@@ -41,7 +41,7 @@
   --ctp-latte-lavender: #7287fd;
   --ctp-latte-lavender-rgb: 114,135,253;
   --ctp-latte-lavender-hsl: 230.935,97.203%,71.961%;
-  --ctp-latte-text: #4c4f69;
+  --ctp-latte-text: #1c1f19;
   --ctp-latte-text-rgb: 76,79,105;
   --ctp-latte-text-hsl: 233.793,16.022%,35.490%;
   --ctp-latte-subtext1: #5c5f77;
@@ -401,6 +401,7 @@ body.theme-Mocha {
   --ctp-crust: var(--ctp-mocha-crust);
   --ctp-crust-rgb: var(--ctp-mocha-crust-rgb);
   --ctp-crust-hsl: var(--ctp-mocha-crust-hsl);
+  --ctp-text-inverse: var(--ctp-latte-text);
   --window-background: rgb(var(--ctp-mocha-crust-rgb));
   --main-background: rgb(var(--ctp-mocha-base-rgb));
   --main-border: 1px solid rgba(56, 59, 65, 1);
@@ -528,6 +529,7 @@ body.theme-Macchiato {
   --ctp-crust: var(--ctp-macchiato-crust);
   --ctp-crust-rgb: var(--ctp-macchiato-crust-rgb);
   --ctp-crust-hsl: var(--ctp-macchiato-crust-hsl);
+  --ctp-text-inverse: var(--ctp-latte-text);
   --window-background: rgb(var(--ctp-macchiato-crust-rgb));
   --main-background: rgb(var(--ctp-macchiato-base-rgb));
   --main-border: 1px solid rgba(56, 59, 65, 1);
@@ -656,6 +658,7 @@ body.theme-Frappe {
   --ctp-crust: var(--ctp-frappe-crust);
   --ctp-crust-rgb: var(--ctp-frappe-crust-rgb);
   --ctp-crust-hsl: var(--ctp-frappe-crust-hsl);
+  --ctp-text-inverse: var(--ctp-latte-text);
   --window-background: rgb(var(--ctp-frappe-crust-rgb));
   --main-background: rgb(var(--ctp-frappe-base-rgb));
   --main-border: 1px solid rgba(56, 59, 65, 1);
@@ -785,6 +788,7 @@ body.theme-Latte {
   --ctp-crust: var(--ctp-latte-crust);
   --ctp-crust-rgb: var(--ctp-latte-crust-rgb);
   --ctp-crust-hsl: var(--ctp-latte-crust-hsl);
+  --ctp-text-inverse: var(--ctp-mocha-text);
     --theme-color: var(--ctp-latte-lavender);
     --window-background: var(--ctp-latte-crust);
     --main-background: var(--ctp-latte-base);
