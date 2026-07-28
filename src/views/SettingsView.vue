@@ -20,11 +20,21 @@
         <component :is="currentComponent"></component>
       </Transition>
     </div>
+    <Transition name="custom-slide-bottom">
+      <div class="back-button" v-if="showBackButton">
+        <button @click="back">
+          <div>
+            <AppIcon name="arrow-back-outline"></AppIcon>
+          </div>
+          <span>返回</span>
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { type Component, markRaw, ref, shallowRef } from "vue";
+import { type Component, markRaw, onMounted, ref, shallowRef } from "vue";
 import GeneralSettings from "./settings/GeneralSettings.vue";
 import GameSettings from "./settings/GameSettings.vue";
 import JvmSettings from "./settings/JvmSettings.vue";
@@ -34,6 +44,9 @@ import DownloadSettings from "./settings/DownloadSettings.vue";
 import AccessibilitySettings from "./settings/AccessibilitySettings.vue";
 import AboutSettings from "./settings/AboutSettings.vue";
 import AppIcon from "@/components/AppIcon.vue";
+import { useNavigationStore } from "@/store/navigation";
+
+const navigationStore = useNavigationStore();
 
 const components = ref<{ name: string; icon: string; component: Component }[]>([
   {
@@ -88,6 +101,18 @@ function switchComponent(component: Component, index: number) {
   }
   currentComponent.value = component;
   activeComponentIndex.value = index;
+}
+
+const showBackButton = ref(false);
+
+onMounted(() => {
+  showBackButton.value = true;
+});
+function back() {
+  showBackButton.value = false;
+  setTimeout(() => {
+    navigationStore.back();
+  }, 300);
 }
 </script>
 
@@ -150,5 +175,63 @@ function switchComponent(component: Component, index: number) {
       height: 22px;
     }
   }
+  .back-button {
+    position: fixed;
+    bottom: 32px;
+    left: 32px;
+    button {
+      appearance: none;
+      background: var(--ctp-latte-lavender);
+      border: none;
+      height: 48px;
+      padding-right: 26px;
+      border-radius: 1000px;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+      transform: scale(1);
+      font-size: 14px;
+      div {
+        background: #ffffff3f;
+        border-radius: 100px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 6px;
+      }
+      span {
+        margin-left: 10px;
+      }
+      &:active {
+        transition: all 0.3s cubic-bezier(0, 0.75, 0.2, 1);
+        transform: scale(0.97);
+      }
+    }
+  }
+}
+.custom-slide-bottom-leave-active {
+  transition: all 0.3s cubic-bezier(0.75, 0, 1, 0.2);
+}
+
+.custom-slide-bottom-enter-active {
+  transition: all 0.3s cubic-bezier(0, 0.75, 0.2, 1);
+}
+
+.custom-slide-bottom-leave-from {
+  transform: translate(0, 0);
+}
+
+.custom-slide-bottom-leave-to {
+  transform: translate(0, 70px);
+}
+
+.custom-slide-bottom-enter-from {
+  transform: translate(0, 70px);
+}
+
+.custom-slide-bottom-enter-to {
+  transform: translate(0, 0);
 }
 </style>

@@ -340,8 +340,8 @@ function back() {
     .instance-info {
       display: flex;
       margin: 16px 0;
-      p:first-child {
-        margin-right: 16px;
+      p:last-child {
+        margin-left: 16px;
       }
     }
     .progress-container {

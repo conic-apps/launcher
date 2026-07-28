@@ -82,10 +82,6 @@
         <div><span class="type">资源包</span><span class="count">4 个</span></div>
       </div>
       <div>
-        <AppIcon name="aperture-outline" />
-        <div><span class="type">光影包</span><span class="count">5 个</span></div>
-      </div>
-      <div>
         <AppIcon name="images-outline" />
         <div><span class="type">截图</span><span class="count">1 个</span></div>
       </div>
