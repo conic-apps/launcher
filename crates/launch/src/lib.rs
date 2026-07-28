@@ -20,7 +20,6 @@ use complete::complete_files;
 use config::Config;
 use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
-use futures::future::{AbortHandle, Abortable};
 use instance::Instance;
 use log::{error, info, trace, warn};
 use options::LaunchOptions;
@@ -43,7 +42,7 @@ use error::*;
 
 #[derive(Clone, Default)]
 struct PluginState {
-    abort_handle: Arc<Mutex<Option<AbortHandle>>>,
+    task: Arc<Mutex<Option<tokio::task::AbortHandle>>>,
 }
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
@@ -81,19 +80,26 @@ async fn cmd_spawn_launch_task(
     instance: Instance,
     channel: Channel<LaunchEvent>,
 ) -> Result<u32> {
-    if state.abort_handle.lock().expect("Internal error").is_some() {
+    if state.task.lock().expect("Internal error").is_some() {
         return Err(Error::AnothorInstanceLaunching);
     }
-    let status = Arc::new(Mutex::new(LaunchEvent::Prepare));
-    let (handle, reg) = AbortHandle::new_pair();
-    let future = Abortable::new(launch(config, instance, status.clone()), reg);
-    {
-        let mut current_task = state.abort_handle.lock().expect("Internal error");
-        *current_task = Some(handle);
-    }
+    let task_status = Arc::new(Mutex::new(LaunchEvent::Prepare));
     let finished = Arc::new(AtomicBool::new(false));
+    let handle = tokio::spawn({
+        let task_status_cloned = task_status.clone();
+        let finished = finished.clone();
+        async move {
+            let result = launch(config, instance, task_status_cloned).await;
+            finished.store(true, Ordering::SeqCst);
+            result
+        }
+    });
+    {
+        let mut current_task = state.task.lock().expect("Internal error");
+        *current_task = Some(handle.abort_handle());
+    }
     let event_sender_thread = {
-        let status_cloned = status.clone();
+        let status_cloned = task_status.clone();
         let finished = finished.clone();
         thread::spawn(move || {
             while !finished.load(Ordering::SeqCst) {
@@ -102,26 +108,28 @@ async fn cmd_spawn_launch_task(
             }
         })
     };
-    let result = match future.await {
+    let result = match handle.await {
         Ok(result) => result,
-        Err(e) => Err(Error::Aborted(e)),
+        Err(e) => {
+            warn!("Launch cancelled");
+            Err(Error::Aborted(e))
+        }
     };
-    finished.store(true, Ordering::SeqCst);
+    let _ = event_sender_thread.join();
     {
-        let mut current_task = state.abort_handle.lock().expect("Internal error");
+        let mut current_task = state.task.lock().expect("Internal error");
         *current_task = None;
     }
-    let _ = event_sender_thread.join();
     result
 }
 
 #[command]
 async fn cmd_cancel_launch_task(state: State<'_, PluginState>) -> Result<()> {
-    let mut current_task = state.abort_handle.lock().expect("Internal error");
+    let mut current_task = state.task.lock().expect("Internal error");
     if let Some(handle) = current_task.clone() {
         handle.abort();
+        warn!("Cancelling launch!");
     }
-    warn!("Cancel launch!");
     *current_task = None;
     Ok(())
 }
