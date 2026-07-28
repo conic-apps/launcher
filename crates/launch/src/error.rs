@@ -64,7 +64,7 @@ pub enum Error {
     Aborted(
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]
-        futures::future::Aborted,
+        tokio::task::JoinError,
     ),
 
     #[error("{0}")]
