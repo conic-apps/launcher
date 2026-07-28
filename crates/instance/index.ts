@@ -15,6 +15,7 @@ export type InstanceRuntime = {
 export type InstanceConfig = {
     name: string
     icon?: Base64URLString
+    background?: string
     runtime: InstanceRuntime
     group?: string[]
     launch_config: {
