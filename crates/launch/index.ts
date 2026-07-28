@@ -6,22 +6,6 @@ import { Config } from "@conic/config"
 import { Instance } from "@conic/instance"
 import { Channel, invoke } from "@tauri-apps/api/core"
 
-enum LaunchErrorKind {
-    AnothorInstanceLaunching = "AnothorInstanceLaunching",
-    Io = "Io",
-    VersionJsonParse = "VersionJsonParse",
-    InvalidVersionJson = "InvalidVersionJson",
-    InvalidMinecraftVersion = "InvalidMinecraftVersion",
-    InvalidInstance = "InvalidInstance",
-    DecompressionFailed = "DecompressionFailed",
-    Network = "Network",
-    TakeMinecraftStdoutFailed = "TakeMinecraftStdoutFailed",
-    AccountError = "AccountError",
-    Aborted = "Aborted",
-    ChecksumMissmatch = "ChecksumMissmatch",
-    Other = "Other",
-}
-
 type LaunchProgress =
     | {
           job: "Prepare"
@@ -71,11 +55,7 @@ export class LaunchTask {
     private _config: Config
     private _instance: Instance
     private _callbacks?: {
-        onStart?: () => void
         onProgress?: (task: LaunchProgress) => void
-        onFailed?: (error: { kind: LaunchErrorKind; message: string }) => void
-        onSucceed?: () => void
-        onCancelled?: () => void
     }
     constructor(config: Config, instance: Instance, callbacks?: typeof this._callbacks) {
         this._config = config
@@ -87,27 +67,11 @@ export class LaunchTask {
         channel.onmessage = (message) => {
             this._callbacks?.onProgress?.(message)
         }
-        try {
-            this._callbacks?.onStart?.()
-            await invoke("plugin:launch|cmd_spawn_launch_task", {
-                config: this._config,
-                instance: this._instance,
-                channel,
-            })
-            this._callbacks?.onSucceed?.()
-        } catch (error: any) {
-            console.log(error)
-            if (error.kind && error.message) {
-                const kind = error.kind as LaunchErrorKind
-                if (kind === LaunchErrorKind.Aborted) {
-                    this._callbacks?.onCancelled?.()
-                } else {
-                    this._callbacks?.onFailed?.(error)
-                }
-            } else {
-                throw error
-            }
-        }
+        await invoke("plugin:launch|cmd_spawn_launch_task", {
+            config: this._config,
+            instance: this._instance,
+            channel,
+        })
     }
     async cancel() {
         await invoke("plugin:launch|cmd_cancel_launch_task")

@@ -154,11 +154,7 @@ export class InstallTask {
     protected _config: Config
     protected _instance: Instance
     protected _callbacks?: {
-        onStart?: () => void
         onProgress?: (progress: InstallProgress) => void
-        onFailed?: (error: { kind: InstallErrorKind; message: string }) => void
-        onSucceed?: () => void
-        onCancelled?: () => void
     }
     constructor(config: Config, instance: Instance, callbacks?: typeof this._callbacks) {
         this._config = config
@@ -170,26 +166,11 @@ export class InstallTask {
         channel.onmessage = (message) => {
             this._callbacks?.onProgress?.(message)
         }
-        try {
-            this._callbacks?.onStart?.()
-            await invoke("plugin:install|cmd_spawn_install_task", {
-                config: this._config,
-                instance: this._instance,
-                channel,
-            })
-            this._callbacks?.onSucceed?.()
-        } catch (error: any) {
-            if (error.kind && error.message) {
-                const kind = error.kind as InstallErrorKind
-                if (kind === InstallErrorKind.Aborted) {
-                    this._callbacks?.onCancelled?.()
-                } else {
-                    this._callbacks?.onFailed?.(error)
-                }
-            } else {
-                throw error
-            }
-        }
+        await invoke("plugin:install|cmd_spawn_install_task", {
+            config: this._config,
+            instance: this._instance,
+            channel,
+        })
     }
     async cancel() {
         await invoke("plugin:install|cmd_cancel_install_task")
