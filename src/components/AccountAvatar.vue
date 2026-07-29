@@ -62,12 +62,16 @@ watch(
 </script>
 
 <template>
-  <img v-if="avatar" :src="avatar" class="avatar" :style="{ width: size, height: size }" />
+  <img
+    v-if="avatar"
+    :src="avatar"
+    class="avatar"
+    :style="{ width: `${size}px`, height: `${size}px` }" />
   <img
     v-else-if="fallbackAvatar"
     :src="fallbackAvatar"
     class="avatar"
-    :style="{ width: size, height: size }" />
+    :style="{ width: `${size}px`, height: `${size}px` }" />
   <div v-else class="avatar placeholder" />
 </template>
 

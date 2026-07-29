@@ -6,12 +6,14 @@
   <div class="game-view" data-tauri-drag-region>
     <InstanceSummary></InstanceSummary>
     <InstancesList></InstancesList>
+    <GameFooterBar></GameFooterBar>
   </div>
 </template>
 
 <script setup lang="ts">
 import InstanceSummary from "./game/InstanceSummary.vue";
 import InstancesList from "./game/InstancesList.vue";
+import GameFooterBar from "./game/GameFooterBar.vue";
 </script>
 
 <style lang="less" scoped>
