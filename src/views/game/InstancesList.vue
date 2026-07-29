@@ -4,7 +4,54 @@
 
 <template>
   <div class="instances-list">
-    <div class="tool-bar"></div>
+    <div class="tool-bar">
+      <div class="search">
+        <div class="search-input"><input type="text" placeholder="搜索..." /></div>
+        <button class="search-button">
+          <AppIcon name="search"></AppIcon>
+        </button>
+      </div>
+      <div class="other">
+        <div class="sort">
+          <div class="head">
+            <div class="label">排序</div>
+            <div class="selected">
+              {{ sortOptions.find((x) => x.key === sortMode)?.label }}
+              <AppIcon name="chevron-down" :size="14" style="margin-left: 12px"></AppIcon>
+            </div>
+          </div>
+          <div class="dropdown" v-if="sortDropdownOpen">
+            <div
+              class="sort-option"
+              v-for="option in sortOptions"
+              :key="option.key"
+              :class="{ active: sortMode === option.key }"
+              @click="selectSort(option.key)">
+              {{ option.label }}
+            </div>
+          </div>
+        </div>
+        <div class="group">
+          <div class="head">
+            <div class="label">分组</div>
+            <div class="selected">
+              {{ sortOptions.find((x) => x.key === sortMode)?.label }}
+              <AppIcon name="chevron-down" :size="14"></AppIcon>
+            </div>
+          </div>
+          <div class="dropdown" v-if="sortDropdownOpen">
+            <div
+              class="sort-option"
+              v-for="option in sortOptions"
+              :key="option.key"
+              :class="{ active: sortMode === option.key }"
+              @click="selectSort(option.key)">
+              {{ option.label }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="scroll-container" ref="container" @scroll="updatePositions">
       <div class="gap-top"></div>
       <div
@@ -37,9 +84,10 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from "@/components/AppIcon.vue";
 import { useInstanceStore } from "@/store/instance";
 import { Instance } from "@conic/instance";
-import { nextTick, onMounted, reactive, useTemplateRef } from "vue";
+import { nextTick, onMounted, reactive, ref, useTemplateRef } from "vue";
 
 const instanceStore = useInstanceStore();
 const containerRef = useTemplateRef("container");
@@ -115,6 +163,22 @@ onMounted(async () => {
   updatePositions();
   scrollToInstance(instanceStore.currentInstance.id, false);
 });
+
+const sortDropdownOpen = ref(false);
+
+type SortMode = "name" | "version" | "playtime" | "lastplay";
+const sortMode = ref<SortMode>("playtime");
+const sortOptions: { key: SortMode; label: string }[] = [
+  { key: "name", label: "名称" },
+  { key: "version", label: "版本" },
+  { key: "playtime", label: "游玩时间" },
+  { key: "lastplay", label: "最后运行日期" },
+];
+
+function selectSort(mode: SortMode) {
+  sortMode.value = mode;
+  sortDropdownOpen.value = false;
+}
 </script>
 
 <style lang="less" scoped>
@@ -124,6 +188,101 @@ onMounted(async () => {
   margin-left: auto;
   transform: translateX(280px);
   overflow: visible;
+  .tool-bar {
+    height: 112px;
+    width: 352px;
+    position: absolute;
+    top: 8px;
+    right: 280px;
+    border-radius: 16px 0 0 16px;
+    background: rgba(var(--ctp-surface0-rgb), 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 114;
+    .search {
+      display: flex;
+      width: 320px;
+      height: 40px;
+      margin-top: 16px;
+      margin-left: 16px;
+    }
+    .search .search-input {
+      background: rgba(var(--ctp-surface0-rgb), 1);
+      border-radius: 8px 0 0 8px;
+      width: 100%;
+      input {
+        appearance: none;
+        border: none;
+        background: none;
+        font-size: 14px;
+        height: 100%;
+        padding-left: 16px;
+      }
+    }
+    .search button.search-button {
+      width: 40px;
+      flex-shrink: 0;
+      appearance: none;
+      border: none;
+      background: rgba(var(--ctp-surface1-rgb), 1);
+      border-radius: 0 8px 8px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s ease;
+      svg {
+        transition: inherit;
+      }
+      &:hover {
+        background: rgba(var(--ctp-surface2-rgb), 0.8);
+      }
+      &:active {
+        background: rgba(var(--ctp-surface2-rgb), 1);
+        svg {
+          transform: scale(0.97);
+        }
+      }
+    }
+    .other {
+      display: flex;
+      width: 320px;
+      margin-left: 16px;
+      margin-top: 12px;
+      > div {
+        display: flex;
+      }
+      .sort {
+        margin-right: 8px;
+        flex-shrink: 0;
+      }
+      .group {
+        width: 100%;
+      }
+      .head {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        font-size: 13px;
+        background: rgba(var(--ctp-surface0-rgb), 1);
+        border-radius: 4px;
+        .label {
+          background: rgba(var(--ctp-surface1-rgb), 1);
+          padding: 6px 12px;
+          border-radius: 4px;
+          flex-shrink: 0;
+        }
+        .selected {
+          padding: 0 12px;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          svg {
+            margin-left: auto;
+          }
+        }
+      }
+    }
+  }
   .scroll-container {
     height: 100%;
     overflow-y: auto;
