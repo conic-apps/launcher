@@ -60,11 +60,11 @@ export type QuiltVersion = {
         maven: string
         version: string
     }
-    hashed: {
+    hashed?: {
         maven: string
         version: string
     }
-    intermediary: {
+    intermediary?: {
         maven: string
         version: string
     }
@@ -87,12 +87,55 @@ export async function getQuiltVersionList(mcversion: string): Promise<QuiltVersi
     return await invoke("plugin:install|cmd_get_quilt_version_list", { mcversion })
 }
 
-export async function getForgeVersionList(mcversion: string): Promise<Record<string, string[]>> {
-    return await invoke("plugin:install|cmd_get_forge_version_list", { mcversion })
+export async function getForgeVersionList(): Promise<Record<string, string[]>> {
+    return await invoke("plugin:install|cmd_get_forge_version_list")
 }
 
-export async function getNeoforgeVersionList(mcversion: string): Promise<string[]> {
-    return await invoke("plugin:install|cmd_get_neoforge_version_list", { mcversion })
+export async function getNeoforgeVersionList(): Promise<string[]> {
+    return await invoke("plugin:install|cmd_get_neoforge_version_list")
+}
+
+interface ParsedNeoforgeVersion {
+    version: string
+    minecraftVersion: string
+}
+
+function parseNeoforgeVersion(version: string): ParsedNeoforgeVersion | null {
+    const newFormat = /^(\d+)\.(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9_]+))?$/.exec(version)
+    if (newFormat) {
+        const [, major, minor, patch] = newFormat
+        let minecraftVersion: string
+        if (patch === "0") {
+            if (minor === "0") {
+                minecraftVersion = major
+            } else {
+                minecraftVersion = `${major}.${minor}`
+            }
+        } else {
+            minecraftVersion = `${major}.${minor}.${patch}`
+        }
+        return {
+            version,
+            minecraftVersion,
+        }
+    }
+    const oldFormat = /^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9_]+))?$/.exec(version)
+    if (oldFormat) {
+        const [, minor, patch] = oldFormat
+        const minecraftVersion = patch === "0" ? `1.${minor}` : `1.${minor}.${patch}`
+        return {
+            version,
+            minecraftVersion,
+        }
+    }
+    return null
+}
+
+export function filterNeoforgeVersionList(mcversion: string, versionList: string[]): string[] {
+    return versionList.filter((version) => {
+        const parsed = parseNeoforgeVersion(version)
+        return parsed !== null && parsed.minecraftVersion === mcversion
+    })
 }
 
 export enum InstallErrorKind {

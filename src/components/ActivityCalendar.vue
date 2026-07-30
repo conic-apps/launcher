@@ -52,7 +52,7 @@ const monthLabels = [
 
 <template>
   <div class="activity-calendar">
-    <div style="overflow-x: auto; width: 100%">
+    <div style="overflow-x: auto; width: 100%; padding-bottom: 8px">
       <div class="months">
         <span v-for="m in monthLabels" :key="m">{{ m }}</span>
       </div>

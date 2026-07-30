@@ -67,6 +67,8 @@ fn main() {
                 "cmd_get_instance_by_id",
                 "cmd_update_instance",
                 "cmd_delete_instance",
+                "cmd_add_background_file",
+                "cmd_get_background_path",
             ]),
         )
         .plugin(

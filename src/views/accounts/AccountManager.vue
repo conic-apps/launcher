@@ -37,6 +37,11 @@
                 {{ getTypeLabel(account) }}
               </span>
             </div>
+            <p
+              v-if="isDefault(account.raw)"
+              style="margin-left: auto; font-size: 11px; opacity: 0.8; margin-right: 4px">
+              默认
+            </p>
           </li>
           <li class="account-item" @click="$emit('switch-component-add')">
             <AppIcon name="user-add"></AppIcon>
@@ -48,12 +53,11 @@
       </div>
     </div>
     <div class="right-panel">
-      <p class="section-title">
+      <p class="section-title" style="margin-top: 24px; margin-left: 16px">
         最近一年内使用此档案启动了 <strong>{{ totalLaunches }}</strong> 次游戏
       </p>
       <div class="section">
         <ActivityCalendar :data="calendarData"></ActivityCalendar>
-        <LaunchBarChart :data="barChartData" style="margin-top: 16px"></LaunchBarChart>
       </div>
 
       <SettingGroup title="皮肤与披风">
@@ -80,21 +84,12 @@
           </div>
         </div>
       </SettingGroup>
-      <SettingGroup title="安全设置">
-        <SettingItem
-          title="禁用 Minecraft 聊天文本追踪与举报"
-          description="此选项可使 Minecraft 发送的聊天文本将无法被用于追踪到你的 Minecraft 帐户"
-          icon="chatbox-ellipses-outline"
-          :disabled="currentAccount?.type !== 'Microsoft'">
-          <BaseSwitch v-model="disableChatReporting"></BaseSwitch>
-        </SettingItem>
-      </SettingGroup>
       <SettingGroup title="默认游戏档案">
         <SettingItem
           title="设为默认档案"
           description="当实例设置没有指定要使用的档案时，默认使用此档案启动游戏"
           :navigable="true"
-          :disabled="isDefault"
+          :disabled="currentIsDefault"
           @click="setDefault">
         </SettingItem>
       </SettingGroup>
@@ -116,10 +111,8 @@ import AccountAvatar from "@/components/AccountAvatar.vue";
 import SkinModel3D from "@/components/SkinModel3D.vue";
 import CapeView from "@/components/CapeView.vue";
 import ActivityCalendar from "@/components/ActivityCalendar.vue";
-import LaunchBarChart from "@/components/LaunchBarChart.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import SettingItem from "@/components/SettingItem.vue";
-import BaseSwitch from "@/components/base/BaseSwitch.vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import { useConfigStore } from "@/store/config";
 import { useAccountStore } from "@/store/account";
@@ -142,8 +135,6 @@ import { save } from "@tauri-apps/plugin-dialog";
 const config = useConfigStore();
 const accountStore = useAccountStore();
 const dialogStore = useDialogStore();
-
-const disableChatReporting = ref(false);
 
 if (!config.current_account) {
   if (accountStore.microsoft.length > 0) {
@@ -334,32 +325,35 @@ function setDefault() {
   config.current_account = currentAccount.value.raw;
 }
 
-const isDefault = computed(() => {
+const currentIsDefault = computed(() => {
   if (!currentAccount.value) {
     return false;
   }
+  return isDefault(currentAccount.value.raw);
+});
 
-  switch (currentAccount.value.type) {
+function isDefault(account: Account) {
+  switch (account.type) {
     case "Microsoft":
-      if (currentAccount.value.type === config.current_account?.type) {
-        return currentAccount.value.uuid === config.current_account?.data.profile.uuid;
+      if (account.type === config.current_account?.type) {
+        return account.data.profile.uuid === config.current_account?.data.profile.uuid;
       } else {
         return false;
       }
     case "Yggdrasil":
-      if (currentAccount.value.type === config.current_account?.type) {
-        return currentAccount.value.uuid === config.current_account?.data.profile.id;
+      if (account.type === config.current_account?.type) {
+        return account.data.profile.id === config.current_account?.data.profile.id;
       } else {
         return false;
       }
     case "Offline":
-      if (currentAccount.value.type === config.current_account?.type) {
-        return currentAccount.value.uuid === config.current_account?.data.uuid;
+      if (account.type === config.current_account?.type) {
+        return account.data.uuid === config.current_account?.data.uuid;
       } else {
         return false;
       }
   }
-});
+}
 
 async function saveSkinButton() {
   if (!currentAccount.value || !currentAccount.value.skinUrl) {
@@ -405,7 +399,7 @@ const uploadSkinButtonText = computed(() => {
     width: 280px;
     height: 100%;
     flex-shrink: 0;
-    background: var(--ctp-surface0);
+    background: rgba(var(--ctp-base-rgb), 0.8);
     border-radius: 12px;
     padding: 16px;
     display: flex;
@@ -475,14 +469,14 @@ const uploadSkinButtonText = computed(() => {
     padding: 8px 10px;
     border-radius: 8px;
     transition: background 0.15s ease;
-    background: var(--ctp-surface1);
+    background: var(--ctp-surface0);
 
     &:hover {
-      background: var(--ctp-surface2);
+      background: var(--ctp-surface1);
     }
 
     &:active {
-      background: var(--ctp-overlay0);
+      background: var(--ctp-surface2);
     }
 
     .item-avatar {
@@ -518,12 +512,14 @@ const uploadSkinButtonText = computed(() => {
     flex-direction: column;
     gap: 16px;
     min-width: 0;
+    background: rgba(var(--ctp-base-rgb), 0.8);
+    border-radius: 16px;
+    padding: 0 8px;
   }
 
   .section {
-    background: var(--ctp-surface0);
     border-radius: 12px;
-    padding: 16px;
+    padding: 0 16px;
 
     .section-title {
       font-size: 14px;
