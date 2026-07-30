@@ -242,3 +242,27 @@
     transform: scale(1);
     opacity: 1;
 }
+
+.back-button-slide-bottom-leave-active {
+  transition: all 0.3s cubic-bezier(0.75, 0, 1, 0.2);
+}
+
+.back-button-slide-bottom-enter-active {
+  transition: all 0.3s cubic-bezier(0, 0.75, 0.2, 1);
+}
+
+.back-button-slide-bottom-leave-from {
+  transform: translate(0, 0);
+}
+
+.back-button-slide-bottom-leave-to {
+  transform: translate(0, 70px);
+}
+
+.back-button-slide-bottom-enter-from {
+  transform: translate(0, 70px);
+}
+
+.back-button-slide-bottom-enter-to {
+  transform: translate(0, 0);
+}

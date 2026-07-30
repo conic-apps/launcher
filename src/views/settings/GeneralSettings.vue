@@ -6,7 +6,7 @@
   <div>
     <SettingGroup>
       <SettingItem :title="$t('settings.general.language')" icon="language">
-        <BaseSelect
+        <BaseDropdownSelect
           :display-name="[
             'English',
             '简体中文',
@@ -36,13 +36,13 @@
             'pl_pl',
           ]"
           v-model="config.language"
-          :default="1"></BaseSelect>
+          :default="1"></BaseDropdownSelect>
       </SettingItem>
       <SettingItem
         :title="$t('settings.general.updateChannel')"
         :description="$t('settings.general.updateChannelDesc')"
         icon="branch">
-        <BaseSelect
+        <BaseDropdownSelect
           :display-name="[
             $t('settings.general.release'),
             $t('settings.general.snapshot'),
@@ -50,7 +50,7 @@
           ]"
           :options="['Release', 'Snapshot', 'Weekly']"
           v-model="config.update_channel"
-          :default="2"></BaseSelect>
+          :default="2"></BaseDropdownSelect>
       </SettingItem>
       <SettingItem
         :title="$t('settings.general.autoUpdate')"
@@ -81,9 +81,9 @@
 
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
-import BaseSelect from "@/components/base/BaseSelect.vue";
 import BaseSwitch from "@/components/base/BaseSwitch.vue";
 import BaseDropdownInput from "@/components/base/BaseDropdownInput.vue";
+import BaseDropdownSelect from "@/components/base/BaseDropdownSelect.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 import { ref } from "vue";

@@ -9,6 +9,7 @@
   <ConfirmDeleteInstance></ConfirmDeleteInstance>
   <ConfirmDeleteAccount></ConfirmDeleteAccount>
   <UploadSkin></UploadSkin>
+  <ConfirmQuitApp></ConfirmQuitApp>
 </template>
 
 <script setup lang="ts">
@@ -18,4 +19,5 @@ import LogViewer from "./dialogs/LogViewer.vue";
 import ConfirmDeleteInstance from "./dialogs/ConfirmDeleteInstance.vue";
 import ConfirmDeleteAccount from "./dialogs/ConfirmDeleteAccount.vue";
 import UploadSkin from "./dialogs/UploadSkin.vue";
+import ConfirmQuitApp from "./dialogs/ConfirmQuitApp.vue";
 </script>

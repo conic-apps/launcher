@@ -49,10 +49,7 @@ export type Instance = {
     id: string
 }
 
-export async function createInstance(
-    instanceConfig: InstanceConfig,
-    id?: string,
-): Promise<Instance> {
+export async function createInstance(instanceConfig: InstanceConfig, id?: string): Promise<string> {
     return await invoke("plugin:instance|cmd_create_instance", { config: instanceConfig, id })
 }
 
@@ -70,4 +67,12 @@ export async function updateInstance(config: InstanceConfig, id: string): Promis
 
 export async function deleteInstance(id: string): Promise<Instance[]> {
     return await invoke("plugin:instance|cmd_delete_instance", { id })
+}
+
+export async function addBackgroundImage(path: string, id: string): Promise<void> {
+    return await invoke("plugin:instance|cmd_add_background_file", { path, id })
+}
+
+export async function getBackgroundPath(id: string): Promise<string> {
+    return await invoke("plugin:instance|cmd_get_background_path", { id })
 }

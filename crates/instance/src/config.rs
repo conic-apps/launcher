@@ -115,10 +115,6 @@ pub struct InstanceConfig {
 
     pub icon: Option<String>,
 
-    /// Base64-encoded background image for the instance card
-    #[serde(default)]
-    pub background: Option<String>,
-
     /// Minecraft runtime configuration
     pub runtime: InstanceRuntime,
 
@@ -146,7 +142,6 @@ impl InstanceConfig {
         Self {
             name: instance_name.to_string(),
             icon: None,
-            background: None,
             runtime: InstanceRuntime {
                 minecraft: minecraft_version.to_string(),
                 mod_loader_type: None,

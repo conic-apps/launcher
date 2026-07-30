@@ -5,12 +5,14 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
 import type { Account } from "@conic/account"
+import { Instance } from "@conic/instance"
 
 export const useDialogStore = defineStore("dialog", () => {
     const updateReminder = ref({ visible: false })
     const accountManager = ref({ visible: false })
     const logViewer = ref({ visible: false })
     const createInstance = ref({ visible: false })
+    const confirmQuitApp = ref({ visible: false })
     const confirmDeleteInstance = ref({
         visible: false,
         instanceToDelete: {
@@ -25,7 +27,7 @@ export const useDialogStore = defineStore("dialog", () => {
             },
             installed: false,
             id: "00000000-0000-0000-0000-000000000000",
-        },
+        } as Instance,
     })
     const confirmDeleteAccount = ref({
         visible: false,
@@ -45,6 +47,7 @@ export const useDialogStore = defineStore("dialog", () => {
         createInstance,
         confirmDeleteInstance,
         confirmDeleteAccount,
+        confirmQuitApp,
         uploadSkin,
     }
 })

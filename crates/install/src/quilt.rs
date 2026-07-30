@@ -73,8 +73,8 @@ pub struct QuiltMainClass {
 #[serde(rename_all = "camelCase")]
 pub struct QuiltVersion {
     pub loader: QuiltArtifactVersion,
-    pub hashed: QuiltVersionHashed,
-    pub intermediary: QuiltVersionIntermediary,
+    pub hashed: Option<QuiltVersionHashed>,
+    pub intermediary: Option<QuiltVersionIntermediary>,
     pub launcher_meta: QuiltLauncherMeta,
 }
 
@@ -94,8 +94,11 @@ impl QuiltVersionList {
     /// * A `QuiltVersionList` containing all available Quilt versions for the given Minecraft version.
     pub async fn new(mcversion: &str) -> Result<Self> {
         let url = format!("https://meta.quiltmc.org/v3/versions/loader/{mcversion}");
-        let response = HTTP_CLIENT.get(url).send().await?;
-        Ok(response.json().await?)
+        let mut response = HTTP_CLIENT.get(url).send().await?.json::<Self>().await?;
+        response
+            .0
+            .sort_by(|a, b| b.loader.version.cmp(&a.loader.version));
+        Ok(response)
     }
 }
 

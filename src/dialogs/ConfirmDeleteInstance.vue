@@ -24,10 +24,7 @@
         <i></i>
       </div>
       <div class="icon">
-        <img
-          style="width: 100%; height: 100%; content-visibility: auto"
-          src="@/assets/images/minecraft-icon.svg"
-          alt="" />
+        <img style="width: 100%; height: 100%" src="@/assets/images/minecraft-icon.svg" alt="" />
       </div>
       <p class="instance-name">
         {{ instanceToDelete.config.name }}

@@ -49,7 +49,7 @@ serde_with = "3"
 sha1_smol = "1"
 sha2 = { version = "0.10", default-features = false }
 sys-locale = "0.3"
-tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression", "macos-private-api"] }
+tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression", "macos-private-api", "protocol-asset"] }
 thiserror = "2"
 toml = "1"
 url = "2"

@@ -1,6 +1,6 @@
 import { defineStore } from "pinia"
 
-export type Page = "game" | "launch" | "settings" | "market" | "accounts" | "instances"
+export type Page = "game" | "launch" | "settings" | "market" | "accounts"
 
 export const useNavigationStore = defineStore("navigation", {
     state: () => ({
@@ -9,7 +9,7 @@ export const useNavigationStore = defineStore("navigation", {
     }),
     actions: {
         navigate(page: Page) {
-            if (this.currentPage !== page) {
+            if (this.currentPage !== page && page != "launch") {
                 this.history.push(this.currentPage)
             }
 

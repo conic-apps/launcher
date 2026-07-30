@@ -14,7 +14,6 @@ use std::{
 };
 
 use log::{debug, info, warn};
-use neoforge::NeoforgeVersionList;
 use quilt::QuiltVersionList;
 use serde::Serialize;
 use tauri::{
@@ -30,7 +29,9 @@ use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::{Instance, InstanceRuntime, ModLoaderType};
 
-use crate::{forge::ForgeVersionList, vanilla::VersionManifest};
+use crate::{
+    forge::ForgeVersionList, neoforge::get_neoforge_version_list, vanilla::VersionManifest,
+};
 
 pub mod authlib_injector;
 mod error;
@@ -132,10 +133,7 @@ async fn cmd_get_quilt_version_list(mcversion: String) -> Result<QuiltVersionLis
 }
 
 #[command]
-async fn cmd_get_neoforge_version_list(
-    state: State<'_, PluginState>,
-    mcversion: String,
-) -> Result<Vec<String>> {
+async fn cmd_get_neoforge_version_list(state: State<'_, PluginState>) -> Result<Vec<String>> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Incorrect System Time")
@@ -149,7 +147,7 @@ async fn cmd_get_neoforge_version_list(
     {
         return Ok(cache.1);
     }
-    let result = NeoforgeVersionList::from_mcversion(&mcversion).await?;
+    let result = get_neoforge_version_list().await?;
     {
         let mut cache = state
             .neoforge_version_list_cache

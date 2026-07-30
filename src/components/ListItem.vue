@@ -8,7 +8,7 @@
       :style="{
         justifyContent: buttons ? 'start' : 'space-between',
         width: buttons ? '100%' : undefined,
-        pointerEvents: clickAble ? 'all' : 'none',
+        pointerEvents: clickable ? 'all' : 'none',
       }">
       <div class="icon">
         <slot name="icon" style="margin-right: 10px"></slot>
@@ -46,8 +46,8 @@ defineProps<{
   title: string;
   description?: string;
   logoPixelated?: boolean;
-  buttons?: string[]; // 图标名称对应点击后触发的事件名称
-  clickAble?: boolean;
+  buttons?: string[];
+  clickable?: boolean;
 }>();
 </script>
 
@@ -60,11 +60,14 @@ defineProps<{
   position: relative;
   // flex-direction: row-reverse;
   overflow: hidden;
-  background: var(--list-item-background);
+  background: var(--ctp-surface0);
   height: 53px;
+  &:hover {
+    background: var(--ctp-surface1);
+  }
 
-  * {
-    content-visibility: auto;
+  &:active {
+    background: var(--ctp-surface2);
   }
 
   > div {
@@ -82,10 +85,6 @@ defineProps<{
   > div:first-child {
     width: 100%;
     transition: all 0.1s ease;
-  }
-
-  > div:first-child:active {
-    opacity: 0.6;
   }
 
   > div:last-child {
@@ -143,6 +142,7 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 8px;
 }
 
 .list-item-button {

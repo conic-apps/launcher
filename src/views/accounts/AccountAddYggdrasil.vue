@@ -61,7 +61,7 @@
               {{ serverName ? "认证服务：" + serverName : "" }}
             </p>
           </div>
-          <BaseInput v-model="apiRoot" width="260px" placeholder="http://localhost:8080" />
+          <BaseInput v-model="apiRoot" width="260px" placeholder="" />
         </div>
         <div class="form-row">
           <div class="form-label">
@@ -173,12 +173,9 @@ function profileDisabled(profile: YggdrasilProfile) {
 }
 
 onMounted(() => {
-  // apiRoot.value = "";
-  // username.value = "";
-  // password.value = "";
-  apiRoot.value = "https://littleskin.cn/api/yggdrasil";
-  username.value = "kxscluabcbook@outlook.com";
-  password.value = "qgBDA.5gC5D_2yN";
+  apiRoot.value = "";
+  username.value = "";
+  password.value = "";
 });
 
 async function login() {

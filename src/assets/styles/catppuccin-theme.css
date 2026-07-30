@@ -41,8 +41,8 @@
   --ctp-latte-lavender: #7287fd;
   --ctp-latte-lavender-rgb: 114,135,253;
   --ctp-latte-lavender-hsl: 230.935,97.203%,71.961%;
-  --ctp-latte-text: #1c1f19;
-  --ctp-latte-text-rgb: 76,79,105;
+  --ctp-latte-text: #000000;
+  --ctp-latte-text-rgb: 0,0,0;
   --ctp-latte-text-hsl: 233.793,16.022%,35.490%;
   --ctp-latte-subtext1: #5c5f77;
   --ctp-latte-subtext1-rgb: 92,95,119;
@@ -842,20 +842,5 @@ body.theme-Latte code {
     border: 1px solid var(--ctp-latte-surface2);
     color: var(--ctp-latte-text);
     border-radius: 4px;
-}
-
-
-body.theme-Latte .instance-card * {
-    color: var(--ctp-latte-base) !important;
-}
-
-body.theme-Latte .instance-card {
-    background-image: url(@/assets/images/banners/1.18.webp) !important;
-}
-
-body.theme-Latte .instance:hover {
-    background: rgba(255, 255, 255, 0.562) !important;
-    border: none !important;
-    box-shadow: none !important;
 }
 
