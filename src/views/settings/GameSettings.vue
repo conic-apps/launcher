@@ -93,11 +93,11 @@
       :resetable="advancedLaunchOptionsChanged"
       @reset="resetAdvanceOptions">
       <SettingItem :title="$t('settings.advance.gc')">
-        <BaseSelect
+        <BaseDropdownSelect
           :display-name="['G1GC', 'ZGC', 'ParallelGC', 'ParallelOldGC', 'SerialGC']"
           :options="['G1', 'Z', 'Parallel', 'ParallelOld', 'Serial']"
           v-model="config.launch.gc"
-          :default="0"></BaseSelect>
+          :default="0"></BaseDropdownSelect>
       </SettingItem>
       <SettingItem
         :title="$t('settings.advance.extraJVMArgs')"
@@ -172,7 +172,6 @@
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import BaseInput from "@/components/base/BaseInput.vue";
-import BaseSelect from "@/components/base/BaseSelect.vue";
 import BaseSwitch from "@/components/base/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { computed } from "vue";

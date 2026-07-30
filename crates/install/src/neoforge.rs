@@ -12,54 +12,30 @@ use std::{
 use folder::DATA_LOCATION;
 use futures::AsyncWriteExt;
 use log::{error, info, trace};
-use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use shared::HTTP_CLIENT;
 
 use crate::error::*;
 
-/// Represents the list of Neoforge versions.
-#[derive(Deserialize, Serialize, Clone)]
-pub struct NeoforgeVersionList {
-    /// Whether the version is a snapshot.
-    #[serde(rename = "isSnapshot")]
-    pub is_snapshot: bool,
-
-    /// The list of available Neoforge versions.
-    pub versions: Vec<String>,
-}
-
-impl NeoforgeVersionList {
-    /// Fetches the Neoforge version list from the remote API.
-    ///
-    /// # Returns
-    /// * `Ok(Self)` on success.
-    /// * `Err(Error)` if the request fails or the data cannot be parsed.
-    pub async fn new() -> Result<Self> {
-        Ok(HTTP_CLIENT
-            .get("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge")
-            .send()
-            .await?
-            .json()
-            .await?)
-    }
-
-    pub async fn from_mcversion(mcversion: &str) -> Result<Vec<String>> {
-        let version_list = NeoforgeVersionList::new().await?;
-        let splited_mcversion: Vec<&str> = mcversion.split('.').collect();
-        Ok(version_list
-            .versions
-            .into_iter()
-            .rev()
-            .filter(|x| {
-                let splited_version: Vec<&str> = x.split('.').collect();
-                #[allow(clippy::get_first)]
-                return splited_version.get(0) == splited_mcversion.get(1)
-                    && (splited_version.get(1) == splited_mcversion.get(2)
-                        || (splited_version.get(1) == Some(&"0")
-                            && splited_mcversion.get(2).is_none()));
-            })
-            .collect::<Vec<String>>())
-    }
+pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
+    let legacy_versions = HTTP_CLIENT
+        .get("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge")
+        .send()
+        .await?
+        .json::<Value>()
+        .await?["versions"]
+        .clone();
+    let legacy_versions = serde_json::from_value::<Vec<String>>(legacy_versions)?;
+    let modern_versions = HTTP_CLIENT
+        .get("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge")
+        .send()
+        .await?
+        .json::<Value>()
+        .await?["versions"]
+        .clone();
+    let mut modern_versions = serde_json::from_value::<Vec<String>>(modern_versions)?;
+    modern_versions.extend(legacy_versions);
+    Ok(modern_versions)
 }
 
 /// Installs the specified version of Neoforge.

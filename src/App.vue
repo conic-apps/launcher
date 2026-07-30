@@ -6,6 +6,26 @@
   <div class="window" data-tauri-drag-region>
     <AppBackground style="position: fixed"></AppBackground>
     <div class="title-bar" data-tauri-drag-region>
+      <div
+        class="title-bar-actions title-bar-actions-left"
+        :class="{ 'title-bar-actions-mac': isMacOS() }">
+        <button
+          class="title-bar-action-btn"
+          :class="{
+            disabled: navigation.history.length === 0 || navigation.currentPage === 'launch',
+          }"
+          @click="navigation.back()">
+          <AppIcon name="arrow-back-outline" :size="18" />
+        </button>
+        <button
+          class="title-bar-action-btn"
+          :class="{
+            disabled: navigation.currentPage === 'game' || navigation.currentPage === 'launch',
+          }"
+          @click="navigation.navigate('game')">
+          <AppIcon name="house" :size="18" />
+        </button>
+      </div>
       <div class="title-bar-container">
         <search-bar style="width: 100%" :placeholder="$t('globalSearch.placeholder')"></search-bar>
       </div>
@@ -54,12 +74,6 @@
           :lit="windowButtonLit"></WindowButton>
       </div>
       <div class="title-bar-actions">
-        <button class="title-bar-action-btn">
-          <AppIcon name="server" :size="18" />
-        </button>
-        <button class="title-bar-action-btn" @click="navigation.navigate('market')">
-          <AppIcon name="earth" :size="18" />
-        </button>
         <button class="title-bar-action-btn" @click="navigation.navigate('settings')">
           <AppIcon name="settings" :size="18" />
         </button>
@@ -92,7 +106,7 @@ import AppBackground from "./components/AppBackground.vue";
 import { useNavigationStore } from "./store/navigation";
 import { getSystemLanguage } from "@conic/config";
 import LaunchView from "./views/LaunchView.vue";
-import InstancesView from "./views/InstancesView.vue";
+import { useDialogStore } from "./store/dialog";
 
 const config = useConfigStore();
 const navigation = useNavigationStore();
@@ -128,7 +142,6 @@ const pages = reactive({
   launch: markRaw(LaunchView),
   market: markRaw(MarketView),
   accounts: markRaw(AccountsView),
-  instances: markRaw(InstancesView),
 });
 const transitionName = ref("slide-up");
 
@@ -155,7 +168,13 @@ onMounted(() => {
   });
 });
 
+const dialogStore = useDialogStore();
+
 function closeWindow() {
+  if (navigation.currentPage === "launch") {
+    dialogStore.confirmQuitApp.visible = true;
+    return;
+  }
   requestAnimationFrame(() => {
     document.body.style.transition = "all 250ms cubic-bezier(0, 0.74, 0.65, 1)";
     document.body.style.transform = "scale(0.93)";
@@ -191,7 +210,7 @@ function isMacOS() {
   .title-bar-container {
     display: flex;
     width: calc(100vw - 500px);
-    margin-left: 160px;
+    margin: auto;
     flex-shrink: 0;
     align-items: center;
   }
@@ -279,6 +298,14 @@ main.main {
   gap: 4px;
 }
 
+.title-bar-actions-left {
+  right: unset;
+  top: unset;
+  left: 10px;
+}
+.title-bar-actions-mac {
+  left: 90px;
+}
 .title-bar-action-btn {
   appearance: none;
   display: flex;
@@ -290,10 +317,20 @@ main.main {
   border-radius: 6px;
   background: transparent;
   color: var(--window-btn-icon-color);
-  transition: background 120ms ease;
+  transform: scale(1);
+  transition:
+    background 120ms ease,
+    transform 120ms eaes;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--ctp-surface2-rgb), 0.7);
   }
+  &:active {
+    background: rgba(var(--ctp-overlay0-rgb), 0.7);
+  }
+}
+.title-bar-action-btn.disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 </style>

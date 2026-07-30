@@ -146,7 +146,7 @@ if (config.appearance.palette_follow_system) {
   > div {
     width: 90px;
     height: 60px;
-    margin: -24px 10px 0px 10px;
+    margin: -24px 12px 0px 12px;
     background-position: center;
     background-size: 100%;
     border-radius: 6px;

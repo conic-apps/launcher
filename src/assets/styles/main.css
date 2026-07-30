@@ -11,9 +11,6 @@ h4 {
     -webkit-user-select: none;
     cursor: default;
     line-height: 1;
-    /* TODO: use this to resolve animation stuck: */
-    /* content-visibility: auto; */
-    /* -webkit-content-visibility: auto; */
 }
 
 *::selection {

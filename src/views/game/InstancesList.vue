@@ -66,7 +66,13 @@
           @click="selectInstance(instance)"
           :data-id="instance.id"
           ref="instances">
-          <p>{{ instance.config.name }}</p>
+          <p v-if="instance.id === LATEST_RELEASE_INSTANCE_ID">
+            {{ $t("game.latestRelease") }}
+          </p>
+          <p v-else-if="instance.id === LATEST_SNAPSHOT_INSTANCE_ID">
+            {{ $t("game.latestSnapshot") }}
+          </p>
+          <p v-else>{{ instance.config.name }}</p>
           <div class="details">
             <span
               :class="`tag ${instance.config.runtime.mod_loader_type.toLowerCase()}`"
@@ -76,6 +82,14 @@
             <span class="tag vanilla" v-else>Vanilla</span>
             <span class="last-play"><span class="label">上次运行：</span>昨天</span>
           </div>
+          <img
+            class="instance-background"
+            v-if="backgroundImagesSrc[instance.id]"
+            v-show="backgroundImagesShow[instance.id]"
+            :src="backgroundImagesSrc[instance.id]"
+            alt=""
+            @load="backgroundImagesShow[instance.id] = true"
+            @error="backgroundImagesShow[instance.id] = false" />
         </div>
       </div>
       <div class="gap-bottom"></div>
@@ -86,8 +100,15 @@
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
 import { useInstanceStore } from "@/store/instance";
-import { Instance } from "@conic/instance";
+import {
+  getBackgroundPath,
+  Instance,
+  LATEST_RELEASE_INSTANCE_ID,
+  LATEST_SNAPSHOT_INSTANCE_ID,
+} from "@conic/instance";
 import { nextTick, onMounted, reactive, ref, useTemplateRef } from "vue";
+import { window as appWindow } from "@tauri-apps/api";
+import { convertFileSrc } from "@tauri-apps/api/core";
 
 const instanceStore = useInstanceStore();
 const containerRef = useTemplateRef("container");
@@ -124,6 +145,7 @@ function updatePositions() {
     });
   }
 }
+
 function scrollToInstance(instanceId: string, smooth: boolean) {
   const container = containerRef.value;
   const elements = items.value;
@@ -159,10 +181,20 @@ async function selectInstance(instance: Instance) {
 }
 
 onMounted(async () => {
+  init();
+});
+
+async function init() {
   await nextTick();
   updatePositions();
   scrollToInstance(instanceStore.currentInstance.id, false);
-});
+  appWindow.getCurrentWindow().onResized(() => {
+    updatePositions();
+  });
+  Object.values(instanceStore.instances).forEach(async (instance) => {
+    backgroundImagesSrc.value[instance.id] = await getBackgroundSrc(instance.id);
+  });
+}
 
 const sortDropdownOpen = ref(false);
 
@@ -179,6 +211,20 @@ function selectSort(mode: SortMode) {
   sortMode.value = mode;
   sortDropdownOpen.value = false;
 }
+
+instanceStore.$subscribe(async () => {
+  await nextTick();
+  init();
+});
+
+const backgroundImagesSrc = ref<Record<string, string>>({});
+
+const backgroundImagesShow = ref<Record<string, boolean>>({});
+
+async function getBackgroundSrc(id: string) {
+  const backgroundPath = await getBackgroundPath(id);
+  return convertFileSrc(backgroundPath);
+}
 </script>
 
 <style lang="less" scoped>
@@ -188,6 +234,7 @@ function selectSort(mode: SortMode) {
   margin-left: auto;
   transform: translateX(280px);
   overflow: visible;
+
   .tool-bar {
     height: 112px;
     width: 352px;
@@ -198,6 +245,7 @@ function selectSort(mode: SortMode) {
     background: rgba(var(--ctp-surface0-rgb), 0.4);
     backdrop-filter: blur(4px);
     z-index: 114;
+
     .search {
       display: flex;
       width: 320px;
@@ -205,10 +253,12 @@ function selectSort(mode: SortMode) {
       margin-top: 16px;
       margin-left: 16px;
     }
+
     .search .search-input {
       background: rgba(var(--ctp-surface0-rgb), 1);
       border-radius: 8px 0 0 8px;
       width: 100%;
+
       input {
         appearance: none;
         border: none;
@@ -218,6 +268,7 @@ function selectSort(mode: SortMode) {
         padding-left: 16px;
       }
     }
+
     .search button.search-button {
       width: 40px;
       flex-shrink: 0;
@@ -229,34 +280,43 @@ function selectSort(mode: SortMode) {
       align-items: center;
       justify-content: center;
       transition: all 0.1s ease;
+
       svg {
         transition: inherit;
       }
+
       &:hover {
         background: rgba(var(--ctp-surface2-rgb), 0.8);
       }
+
       &:active {
         background: rgba(var(--ctp-surface2-rgb), 1);
+
         svg {
           transform: scale(0.97);
         }
       }
     }
+
     .other {
       display: flex;
       width: 320px;
       margin-left: 16px;
       margin-top: 12px;
+
       > div {
         display: flex;
       }
+
       .sort {
         margin-right: 8px;
         flex-shrink: 0;
       }
+
       .group {
         width: 100%;
       }
+
       .head {
         display: flex;
         width: 100%;
@@ -289,13 +349,14 @@ function selectSort(mode: SortMode) {
     overflow-x: hidden;
     padding-left: 200px;
     .gap-top {
-      height: calc(50% - 30px);
+      height: 132px;
     }
     .gap-bottom {
-      height: 30%;
+      height: 100px;
     }
   }
   .instance {
+    position: relative;
     border: 1px solid rgba(var(--ctp-surface1-rgb), 0.8);
     border-left: 16px solid rgba(var(--ctp-surface1-rgb), 0.8);
     background: rgba(var(--ctp-surface0-rgb), 0.4);
@@ -307,6 +368,16 @@ function selectSort(mode: SortMode) {
     transition:
       border-left 200ms ease,
       margin 200ms ease;
+    img.instance-background {
+      mask-image: linear-gradient(to left, black 0%, transparent 100%);
+      width: calc(100% - 200px);
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 100px;
+      border-radius: 0 8px 8px 0;
+    }
     p {
       font-size: 16px;
     }
@@ -317,6 +388,9 @@ function selectSort(mode: SortMode) {
         border-radius: 100px;
         padding: 1px 6px;
         font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
       }
       .tag.quilt {
         background: var(--ctp-mauve);
@@ -324,6 +398,10 @@ function selectSort(mode: SortMode) {
       }
       .tag.fabric {
         background: var(--ctp-yellow);
+        color: var(--ctp-text-inverse);
+      }
+      .tag.forge {
+        background: var(--ctp-blue);
         color: var(--ctp-text-inverse);
       }
       .tag.neoforge {

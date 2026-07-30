@@ -19,6 +19,7 @@
       <AppIcon
         name="chevron-forward"
         style="margin-right: 4px"
+        :fill="props.iconFill"
         v-if="props.navigable"
         :size="17"></AppIcon>
       <slot v-else></slot>

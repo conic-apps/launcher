@@ -27,13 +27,15 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_list_instances,
             cmd_get_instance_by_id,
             cmd_update_instance,
-            cmd_delete_instance
+            cmd_delete_instance,
+            cmd_add_background_file,
+            cmd_get_background_path
         ])
         .build()
 }
 
 #[command]
-async fn cmd_create_instance(config: InstanceConfig, id: Option<Uuid>) -> Result<()> {
+async fn cmd_create_instance(config: InstanceConfig, id: Option<Uuid>) -> Result<Uuid> {
     create_instance(config, id).await
 }
 
@@ -57,8 +59,24 @@ async fn cmd_delete_instance(id: Uuid) -> Result<()> {
     delete_instance(id).await
 }
 
+#[command]
+async fn cmd_add_background_file(path: String, id: Uuid) -> Result<()> {
+    let instance_root = DATA_LOCATION.get_instance_root(&id);
+    async_fs::copy(path, instance_root.join("background")).await?;
+    Ok(())
+}
+
+#[command]
+async fn cmd_get_background_path(id: Uuid) -> String {
+    let instance_root = DATA_LOCATION.get_instance_root(&id);
+    instance_root
+        .join("background")
+        .to_string_lossy()
+        .to_string()
+}
+
 /// Creates a new game instance using the provided configuration.
-pub async fn create_instance(config: InstanceConfig, id: Option<Uuid>) -> Result<()> {
+pub async fn create_instance(config: InstanceConfig, id: Option<Uuid>) -> Result<Uuid> {
     let id = id.unwrap_or(Uuid::new_v4());
     let instance_root = DATA_LOCATION.get_instance_root(&id);
     let config_file_path = instance_root.join("instance.toml");
@@ -67,7 +85,7 @@ pub async fn create_instance(config: InstanceConfig, id: Option<Uuid>) -> Result
     }
     async_fs::write(config_file_path, toml::to_string_pretty(&config)?).await?;
     info!("Created instance: {}", config.name);
-    Ok(())
+    Ok(id)
 }
 
 /// Enum representing different sorting strategies for listing instances.
