@@ -22,8 +22,10 @@ import pl_pl from "./i18n/pl_pl"
 import App from "./App.vue"
 import AppIcon from "./components/AppIcon.vue"
 import { getPlatformInfo } from "@conic/platform"
+import { getDataLocation } from "@conic/folder"
 
 window.__PLATFORM__ = await getPlatformInfo()
+window.__DATA_LOCATION__ = await getDataLocation()
 
 type LooseString<T> = {
     [K in keyof T]: T[K] extends string ? string : T[K] extends object ? LooseString<T[K]> : T[K]

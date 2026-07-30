@@ -66,6 +66,8 @@
     "instance:allow-cmd-get-instance-by-id",
     "instance:allow-cmd-update-instance",
     "instance:allow-cmd-delete-instance",
+    "instance:allow-cmd-add-background-file",
+    "instance:allow-cmd-get-background-path",
     "modrinth:allow-cmd-search-projects",
     "modrinth:allow-cmd-get-project",
     "modrinth:allow-cmd-get-multiple-projects",
