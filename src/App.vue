@@ -73,7 +73,9 @@
           :hover="windowButtonHover"
           :lit="windowButtonLit"></WindowButton>
       </div>
-      <div class="title-bar-actions">
+      <div
+        class="title-bar-actions"
+        :class="{ 'is-macos': isMacOS(), disabled: navigation.currentPage === 'settings' }">
         <button class="title-bar-action-btn" @click="navigation.navigate('settings')">
           <AppIcon name="settings" :size="18" />
         </button>
@@ -186,7 +188,7 @@ function closeWindow() {
 }
 
 function isMacOS() {
-  return window.__PLATFORM__.os_family === "Macos";
+  return window.__PLATFORM__.os_family !== "Macos";
 }
 </script>
 
@@ -235,7 +237,7 @@ main.main {
 
 .window-buttons-container {
   position: fixed;
-  right: 24px;
+  right: 16px;
   top: 14px;
   height: fit-content;
   display: flex;
@@ -290,18 +292,22 @@ main.main {
 
 .title-bar-actions {
   position: fixed;
-  right: 10px;
   top: 8px;
+  right: 88px;
   z-index: 10;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
+.title-bar-actions.is-macos {
+  right: 10px;
+}
+
 .title-bar-actions-left {
   right: unset;
   top: unset;
-  left: 10px;
+  left: 16px;
 }
 .title-bar-actions-mac {
   left: 90px;
