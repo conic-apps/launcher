@@ -34,7 +34,10 @@
       <div class="line"></div>
       <p>
         <span>最后运行日期</span>
-        <span>昨天</span>
+        <span v-if="currentInstance.last_played">{{
+          formatLastPlayed(currentInstance.last_played, zhCN)
+        }}</span>
+        <span v-else>从未运行</span>
       </p>
       <div class="line"></div>
       <AppIcon name="time" :size="22" style="margin-right: 2px"></AppIcon>
@@ -95,8 +98,11 @@ import { useInstanceStore } from "@/store/instance";
 import { computed, ref, watch } from "vue";
 import {
   calculatePlaytime,
+  formatLastPlayed,
+  formatPlayTime,
   LATEST_RELEASE_INSTANCE_ID,
   LATEST_SNAPSHOT_INSTANCE_ID,
+  zhCN,
 } from "@conic/instance";
 import { useNavigationStore } from "@/store/navigation";
 import { getInstanceRoot } from "@conic/folder";
@@ -129,18 +135,6 @@ watch(
   },
   { immediate: true },
 );
-
-function formatPlayTime(seconds: number): string {
-  if (seconds < 60) {
-    return `${Math.floor(seconds)} 秒`;
-  }
-  const format = (value: number) => Number(value.toFixed(1)).toString();
-  const minutes = seconds / 60;
-  if (minutes < 60) {
-    return `${format(minutes)} 分钟`;
-  }
-  return `${format(minutes / 60)} 小时`;
-}
 </script>
 
 <style lang="less" scoped>

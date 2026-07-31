@@ -234,7 +234,7 @@ function confirmCreate() {
       }
     })
     .finally(() => {
-      instanceStore.fetchInstances();
+      instanceStore.loadInstances();
       close();
     });
 }
