@@ -80,7 +80,6 @@ function draw() {
 
   curves.forEach((a, index) => {
     const bodyElement = document.body;
-    console.log(bodyElement.classList.contains("theme-Latte"));
     if (bodyElement.classList.contains("theme-Latte")) {
       ctx.strokeStyle = `rgba(0,0,0,${0.45 - index * 0.055})`;
     } else {

@@ -283,7 +283,6 @@ onMounted(async () => {
       processing.value = true;
       authCodeFlow(code)
         .then(() => {
-          console.log("account added");
           emit("switch-component-manage");
           processing.value = false;
           accountStore.reloadFromFile();

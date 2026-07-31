@@ -7,7 +7,6 @@ import { defineStore } from "pinia"
 import { ref, toRefs, watch } from "vue"
 
 const initialConfig = await loadConfigFile()
-console.log(initialConfig)
 
 export const useConfigStore = defineStore("global_config", () => {
     const config = ref(initialConfig)

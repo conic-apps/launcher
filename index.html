@@ -16,71 +16,12 @@
     <link rel="stylesheet" href="./src/assets/styles/basic-theme.css" />
     <link rel="stylesheet" href="./src/assets/styles/catppuccin-theme.css" />
     <link rel="stylesheet" href="./src/assets/styles/catppuccin-theme-hc.css" />
-    <style>
-      body {
-      }
-    </style>
   </head>
 
-  <body
-    style="
-      transform: scale(0.93);
-      opacity: 0;
-      transition: all 250ms cubic-bezier(0, 0.74, 0.65, 1);
-    ">
-    <!-- <body> -->
+  <body>
     <!-- <div id="window" style="position: relative; transform: scale(0.92); opacity: 0; outline: 1px solid #f00;" data-tauri-drag-region> -->
     <div id="window" data-tauri-drag-region></div>
     <script type="module" src="./src/main.ts"></script>
     <div id="model-shadow"></div>
-    <style>
-      #model-shadow {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: #00000079;
-        z-index: -1;
-        transition: all 0.3s ease;
-        opacity: 0;
-      }
-    </style>
-    <style id="no-animations">
-      .no-animations * {
-        animation: none !important;
-        transition: none !important;
-      }
-    </style>
-    <script>
-      document.onkeydown = (event) => {
-        if (window.event && window.event.keyCode == 123) {
-          event.keyCode = 0
-          event.returnValue = false
-        }
-        if (window.event && window.event.keyCode == 13) {
-          window.event.keyCode = 505
-        }
-      }
-      if (!window.location.protocol === "http:") {
-        document.addEventListener("contextmenu", (event) => {
-          try {
-            var the = event.srcElement
-            if (
-              !(
-                (the.tagName == "INPUT" && the.type.toLowerCase() == "text") ||
-                the.tagName == "TEXTAREA"
-              )
-            ) {
-              event.preventDefault()
-              return
-            }
-            return true
-          } catch (e) {
-            event.preventDefault()
-          }
-        })
-      }
-    </script>
   </body>
 </html>

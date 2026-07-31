@@ -56,13 +56,12 @@ getMinecrafVersionManifest()
   .then((res) => {
     if (res) {
       versions.value = res;
-      console.log(res);
     } else {
       throw "get_version_list failed!";
     }
   })
   .catch((err) => {
-    console.log(err);
+    console.error(err);
   });
 
 const showVersionType = ref<"releases" | "snapshot" | "old" | "special">("releases");
