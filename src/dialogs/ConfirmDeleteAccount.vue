@@ -37,27 +37,13 @@ import {
 import { useDialogStore } from "@/store/dialog";
 import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
-import { useYggdrasilServersStore } from "@/store/yggdrasilServers";
 
 const dialogStore = useDialogStore();
 const accountStore = useAccountStore();
 const config = useConfigStore();
-const yggdrasilServersStore = useYggdrasilServersStore();
 
 const account = computed<Account | null>(() => {
   return dialogStore.confirmDeleteAccount.account;
-});
-
-const accountName = computed(() => {
-  if (!account.value) return "";
-  switch (account.value.type) {
-    case "Microsoft":
-      return account.value.data.profile.profile_name;
-    case "Offline":
-      return account.value.data.name;
-    case "Yggdrasil":
-      return account.value.data.profile.name;
-  }
 });
 
 const accountUuid = computed(() => {
@@ -83,34 +69,6 @@ const accountSkin = computed(() => {
       return account.value.data.skin;
     case "Yggdrasil":
       return yggdrasilGetSkinUrl(account.value.data.profile);
-  }
-});
-
-const accountTypeLabel = computed(() => {
-  if (!account.value) return "";
-  switch (account.value.type) {
-    case "Microsoft":
-      return "微软（正版帐户）";
-    case "Yggdrasil":
-      if (account.value?.type === "Yggdrasil") {
-        return `${yggdrasilServersStore.serverList[account.value?.data.api_root]?.meta?.serverName ?? "Yggdrasil"}（外置登录）`;
-      } else {
-        return "Yggdrasil（外置登录）";
-      }
-    case "Offline":
-      return "无认证服务（离线帐户）";
-  }
-});
-
-const accountTypeLabelColor = computed(() => {
-  if (!account.value) return "";
-  switch (account.value.type) {
-    case "Microsoft":
-      return "var(--ctp-green)";
-    case "Yggdrasil":
-      return "var(--ctp-yellow)";
-    case "Offline":
-      return "var(--ctp-red)";
   }
 });
 

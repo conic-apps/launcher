@@ -19,13 +19,9 @@
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import BaseInput from "@/components/base/BaseInput.vue";
 import BaseSwitch from "@/components/base/BaseSwitch.vue";
-import { useConfigStore } from "@/store/config";
-import { getDataLocation, getInstanceRoot } from "@conic/folder";
-import { openPath } from "@tauri-apps/plugin-opener";
+import { getInstanceRoot } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
-const config = useConfigStore();
 
 async function openMusicFolder(instanceId: string) {
   invoke("open_path", { path: await getInstanceRoot(instanceId) });
