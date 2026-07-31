@@ -21,7 +21,6 @@ watch(
     const skinUrl = defaultSkins[
       `/src/assets/images/skins/${defaultSkin.modelType}/${defaultSkin.textureName}.webp`
     ] as string;
-    console.log(skinUrl);
     fallbackAvatar.value = await getAvatarFromUrl(skinUrl, props.size);
   },
   {

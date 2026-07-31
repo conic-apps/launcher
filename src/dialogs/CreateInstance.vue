@@ -286,7 +286,6 @@ const modLoaderTypeDisabled = computed(() => {
 });
 
 function updateModLoaderVersions() {
-  console.log("updating mod loader");
   for (const key of Object.keys(modLoaderLoading.value) as Array<
     keyof typeof modLoaderLoading.value
   >) {

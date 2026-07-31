@@ -100,7 +100,7 @@ async function launch() {
     }
     await launchGame();
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
@@ -109,7 +109,6 @@ let cancelInstallHandle: () => Promise<void>;
 async function installGame() {
   const installTask = new InstallTask(configStore, instanceStore.currentInstance, {
     onProgress: (task) => {
-      console.log(task);
       if (task.job === Job.Prepare) {
         progressDescription.value = "准备下载";
         progressBarLoading.value = true;
