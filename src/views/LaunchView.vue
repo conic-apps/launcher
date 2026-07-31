@@ -198,6 +198,7 @@ async function launchGame() {
   });
   cancelLaunchHandle = launchTask.cancel;
   await launchTask.start();
+  navigationStore.back();
 }
 
 const backButtonDisabled = ref(false);
@@ -210,6 +211,7 @@ onUnmounted(async () => {
   try {
     await cancelLaunchHandle();
   } catch {}
+  await instanceStore.loadInstances();
 });
 
 function back() {

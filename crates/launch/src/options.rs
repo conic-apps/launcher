@@ -7,8 +7,6 @@ use config::{
     Config,
     launch::{GC, Server},
 };
-use folder::DATA_LOCATION;
-use folder::MinecraftLocation;
 use instance::Instance;
 
 use crate::error::*;
@@ -63,7 +61,6 @@ pub struct LaunchOptions {
 
     pub gc: GC,
 
-    pub minecraft_location: MinecraftLocation,
     pub launcher_name: String,
 
     /// Optional command used to wrap the final launch command.
@@ -140,7 +137,6 @@ impl LaunchOptions {
                 .clone()
                 .unwrap_or(global_launch_config.extra_class_paths),
             gc: launch_config.gc.clone().unwrap_or(global_launch_config.gc),
-            minecraft_location: MinecraftLocation::new(&DATA_LOCATION.root),
             user_properties: "{}".to_string(),
         })
     }

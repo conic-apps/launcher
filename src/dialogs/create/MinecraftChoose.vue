@@ -4,8 +4,13 @@
 
 <template>
   <div class="minecraft-choose">
-    <search-bar style="margin-bottom: 10px; width: 100%"> </search-bar>
-    <div class="filter"></div>
+    <div class="filter">
+      <p>版本分类</p>
+      <base-select
+        :options="['releases', 'snapshot', 'old', 'special']"
+        :display-name="['正式版', '快照版', '远古版', '愚人节版']"
+        v-model="showVersionType"></base-select>
+    </div>
     <div class="list">
       <list-item
         v-for="(version, index) in filteredVersions"
@@ -40,11 +45,11 @@
 </template>
 
 <script setup lang="ts">
-import SearchBar from "@/components/SearchBar.vue";
 import { computed, ref } from "vue";
 import ListItem from "@/components/ListItem.vue";
 import { getMinecrafVersionManifest, VersionManifest } from "@conic/install";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import BaseSelect from "@/components/base/BaseSelect.vue";
 
 const versions = ref<VersionManifest>();
 getMinecrafVersionManifest()
@@ -60,8 +65,21 @@ getMinecrafVersionManifest()
     console.log(err);
   });
 
+const showVersionType = ref<"releases" | "snapshot" | "old" | "special">("releases");
+
 const filteredVersions = computed(() => {
-  return versions.value?.versions.filter((version) => version.type === "release");
+  if (showVersionType.value === "releases") {
+    return versions.value?.versions.filter((version) => version.type === "release");
+  } else if (showVersionType.value === "snapshot") {
+    return versions.value?.versions.filter((version) => version.type === "snapshot");
+  } else if (showVersionType.value === "old") {
+    return versions.value?.versions.filter((version) => version.type.includes("old"));
+  } else if (showVersionType.value === "special") {
+    // TODO: Add spacial version to VersionManifest
+    return versions.value?.versions.filter((version) => version.type.includes("special"));
+  } else {
+    return versions.value?.versions.filter((version) => version.type === "release");
+  }
 });
 function parseTime(time: string) {
   const date = new Date(time);
@@ -90,6 +108,16 @@ function clickAbout(version: string) {
   display: flex;
   flex-direction: column;
   padding-right: 8px;
+  .filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--ctp-surface0);
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
   .list {
     overflow: auto;
     height: 100%;
