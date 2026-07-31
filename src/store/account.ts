@@ -9,7 +9,7 @@ let accounts: Accounts
 try {
     accounts = await listAccounts()
 } catch (error) {
-    console.debug(error)
+    console.error(error)
     accounts = {
         microsoft: [],
         offline: [],

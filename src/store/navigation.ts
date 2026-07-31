@@ -13,7 +13,6 @@ export const useNavigationStore = defineStore("navigation", {
                 this.history.push(this.currentPage)
             }
 
-            console.log(page)
             this.currentPage = page
         },
 

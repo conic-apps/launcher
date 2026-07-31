@@ -19,7 +19,7 @@
             "request": "launch",
             "name": "Tauri Production Debug(lldb)",
             "cargo": {
-                "args": ["build", "--release", "--manifest-path=./src-tauri/Cargo.toml"]
+                "args": ["build", "--release", "--manifest-path=./core/Cargo.toml"]
             },
             // task for the `beforeBuildCommand` if used, must be configured in `.vscode/tasks.json`
             "preLaunchTask": "ui:build"

@@ -163,14 +163,6 @@ watch(
 
 onMounted(() => {
   console.log("Frontend loaded");
-  requestAnimationFrame(() => {
-    document.body.style.transform = "scale(1)";
-    document.body.style.opacity = "1";
-    setTimeout(() => {
-      document.body.style.transform = "";
-      document.body.style.transition = "";
-    }, 500);
-  });
 });
 
 const dialogStore = useDialogStore();
@@ -180,18 +172,21 @@ function closeWindow() {
     dialogStore.confirmQuitApp.visible = true;
     return;
   }
-  requestAnimationFrame(() => {
-    document.body.style.transition = "all 250ms cubic-bezier(0, 0.74, 0.65, 1)";
-    document.body.style.transform = "scale(0.93)";
-    document.body.style.opacity = "0";
-    setTimeout(() => {
-      appWindow.getCurrentWindow().close();
-    }, 500);
-  });
+  appWindow.getCurrentWindow().close();
 }
 
 function isMacOS() {
   return window.__PLATFORM__.os_family === "Macos";
+}
+
+if (import.meta.env.PROD) {
+  document.addEventListener("contextmenu", (event) => {
+    const target = event.target as HTMLElement;
+
+    if (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA") {
+      event.preventDefault();
+    }
+  });
 }
 </script>
 
