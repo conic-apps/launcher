@@ -80,7 +80,13 @@
               >{{ instance.config.runtime.mod_loader_type }}</span
             >
             <span class="tag vanilla" v-else>Vanilla</span>
-            <span class="last-play"><span class="label">上次运行：</span>昨天</span>
+            <span class="last-play"
+              ><span class="label">上次运行：</span>
+              <span v-if="instance.last_played">{{
+                formatLastPlayed(instance.last_played, zhCN)
+              }}</span>
+              <span v-else>从未运行</span>
+            </span>
           </div>
           <img
             class="instance-background"
@@ -101,10 +107,12 @@
 import AppIcon from "@/components/AppIcon.vue";
 import { useInstanceStore } from "@/store/instance";
 import {
+  formatLastPlayed,
   getBackgroundPath,
   Instance,
   LATEST_RELEASE_INSTANCE_ID,
   LATEST_SNAPSHOT_INSTANCE_ID,
+  zhCN,
 } from "@conic/instance";
 import { nextTick, onMounted, reactive, ref, useTemplateRef } from "vue";
 import { window as appWindow } from "@tauri-apps/api";
@@ -412,7 +420,8 @@ async function getBackgroundSrc(id: string) {
         background: var(--ctp-green);
         color: var(--ctp-text-inverse);
       }
-      .last-play {
+      .last-play,
+      .minecraft-version {
         font-size: 11px;
         margin-left: 8px;
         font-weight: 500;

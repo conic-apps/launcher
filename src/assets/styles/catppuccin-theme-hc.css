@@ -835,18 +835,3 @@ body.theme-Latte-hc code {
     border-radius: 4px;
 }
 
-
-body.theme-Latte-hc .instance-card * {
-    color: var(--ctp-latte-base) !important;
-}
-
-body.theme-Latte-hc .instance-card {
-    background-image: url(@/assets/images/banners/1.18.webp) !important;
-}
-
-body.theme-Latte-hc .instance:hover {
-    background: rgba(255, 255, 255, 0.562) !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
