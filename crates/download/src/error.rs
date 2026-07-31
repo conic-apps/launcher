@@ -39,4 +39,11 @@ pub enum Error {
 
     #[error("Chunk length mismatch")]
     ChunkLengthMismatch,
+
+    #[error(transparent)]
+    Aborted(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        tokio::task::JoinError,
+    ),
 }

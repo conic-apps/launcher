@@ -94,8 +94,8 @@
       @reset="resetAdvanceOptions">
       <SettingItem :title="$t('settings.advance.gc')">
         <BaseDropdownSelect
-          :display-name="['G1GC', 'ZGC', 'ParallelGC', 'ParallelOldGC', 'SerialGC']"
-          :options="['G1', 'Z', 'Parallel', 'ParallelOld', 'Serial']"
+          :display-name="['G1GC', 'ZGC', 'ParallelGC', 'SerialGC']"
+          :options="['G1', 'Z', 'Parallel', 'Serial']"
           v-model="config.launch.gc"
           :default="0"></BaseDropdownSelect>
       </SettingItem>
@@ -176,6 +176,7 @@ import BaseSwitch from "@/components/base/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { computed } from "vue";
 import { getDefaultConfig } from "@conic/config";
+import BaseDropdownSelect from "@/components/base/BaseDropdownSelect.vue";
 
 const config = useConfigStore();
 

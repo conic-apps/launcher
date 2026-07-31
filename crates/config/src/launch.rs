@@ -17,16 +17,10 @@ pub struct Server {
 /// Enum representing the Java Garbage Collection algorithms.
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub enum GC {
-    /// Serial GC.
     Serial,
-    /// Parallel GC (young generation).
     Parallel,
-    /// Parallel GC (old generation).
-    ParallelOld,
-    /// G1 Garbage Collector (default).
     #[default]
     G1,
-    /// Z Garbage Collector.
     Z,
 }
 

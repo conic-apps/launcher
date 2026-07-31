@@ -3,50 +3,20 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <BaseDialog :visible="dialogStore.confirmDeleteAccount.visible" :width="380" :height="280">
-    <div class="confirm-delete-account" ref="main">
-      <p
-        style="
-          margin-top: -4px;
-          margin-bottom: 16px;
-          padding-bottom: 16px;
-          border-bottom: var(--card-border);
-        ">
-        是否确认删除此帐户？
-      </p>
-      <div
-        v-if="!deleting"
-        class="dialog-button"
-        @click="dialogStore.confirmDeleteAccount.visible = false">
-        <i></i>
+  <BaseDialog :visible="dialogStore.confirmDeleteAccount.visible" :width="400" :height="138">
+    <div class="confirm-quit-app" ref="main">
+      <div style="display: flex; align-items: center">
+        <AccountAvatar :skin="accountSkin" :uuid="accountUuid" :size="40"></AccountAvatar>
+        <div class="message">
+          <p style="font-size: 16px">是否确认删除此帐户？</p>
+          <p style="font-size: 12px; margin-top: 8px">最后的反悔机会</p>
+        </div>
       </div>
-      <AccountAvatar
-        :skin="accountSkin"
-        :size="64"
-        :uuid="accountUuid"
-        class="avatar"></AccountAvatar>
-      <p class="account-name">{{ accountName }}</p>
-      <p
-        class="account-type"
-        :style="{
-          color: accountTypeLabelColor,
-        }">
-        {{ accountTypeLabel }}
-      </p>
       <div class="buttons">
-        <BaseButton
-          style="width: 100%; margin-right: 8px"
-          :disabled="deleting"
-          @click="dialogStore.confirmDeleteAccount.visible = false"
-          >Cancel</BaseButton
-        >
-        <BaseButton
-          style="width: 100%; font-weight: bold"
-          @click="confirmDelete"
-          :disabled="deleting"
-          color="rgb(210, 15, 57)"
-          >{{ deleting ? "Deleting..." : "Delete this account" }}</BaseButton
-        >
+        <BaseButton class="back" @click="dialogStore.confirmDeleteAccount.visible = false">
+          取消
+        </BaseButton>
+        <BaseButton class="quit" @click="confirmDelete">确认删除</BaseButton>
       </div>
     </div>
   </BaseDialog>
@@ -67,27 +37,13 @@ import {
 import { useDialogStore } from "@/store/dialog";
 import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
-import { useYggdrasilServersStore } from "@/store/yggdrasilServers";
 
 const dialogStore = useDialogStore();
 const accountStore = useAccountStore();
 const config = useConfigStore();
-const yggdrasilServersStore = useYggdrasilServersStore();
 
 const account = computed<Account | null>(() => {
   return dialogStore.confirmDeleteAccount.account;
-});
-
-const accountName = computed(() => {
-  if (!account.value) return "";
-  switch (account.value.type) {
-    case "Microsoft":
-      return account.value.data.profile.profile_name;
-    case "Offline":
-      return account.value.data.name;
-    case "Yggdrasil":
-      return account.value.data.profile.name;
-  }
 });
 
 const accountUuid = computed(() => {
@@ -113,34 +69,6 @@ const accountSkin = computed(() => {
       return account.value.data.skin;
     case "Yggdrasil":
       return yggdrasilGetSkinUrl(account.value.data.profile);
-  }
-});
-
-const accountTypeLabel = computed(() => {
-  if (!account.value) return "";
-  switch (account.value.type) {
-    case "Microsoft":
-      return "微软（正版帐户）";
-    case "Yggdrasil":
-      if (account.value?.type === "Yggdrasil") {
-        return `${yggdrasilServersStore.serverList[account.value?.data.api_root]?.meta?.serverName ?? "Yggdrasil"}（外置登录）`;
-      } else {
-        return "Yggdrasil（外置登录）";
-      }
-    case "Offline":
-      return "无认证服务（离线帐户）";
-  }
-});
-
-const accountTypeLabelColor = computed(() => {
-  if (!account.value) return "";
-  switch (account.value.type) {
-    case "Microsoft":
-      return "var(--ctp-green)";
-    case "Yggdrasil":
-      return "var(--ctp-yellow)";
-    case "Offline":
-      return "var(--ctp-red)";
   }
 });
 
@@ -178,73 +106,41 @@ async function confirmDelete() {
 </script>
 
 <style lang="less" scoped>
-.confirm-delete-account {
-  width: 100%;
-  height: 100%;
-  padding: 12px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-
-  .avatar {
-    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
-  }
-
-  p.account-name {
-    font-size: 22px;
-    text-align: center;
-    margin-top: 8px;
-    font-weight: 500;
-  }
-
-  p.account-type {
-    font-size: 13px;
-    margin-top: 4px;
-    text-align: center;
-  }
-
-  > p {
-    font-size: 16px;
-    margin: 16px 0 8px 0;
-    width: 100%;
-  }
-
-  div.buttons {
-    margin-top: 8px;
-    width: 100%;
+.confirm-quit-app {
+  padding: 8px;
+  .message {
     display: flex;
-    margin-top: auto;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 16px;
   }
-}
-
-.dialog-button {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 100ms;
-  background: var(--close-button-background);
-
-  i::before {
-    content: "\f00d";
-    font-size: 12px;
-    margin-top: 1px;
-    margin-left: 0.6px;
-    font-style: normal;
-    font-family: "fa-pro";
-    opacity: 0;
-    transition: all 70ms ease;
-  }
-
-  i {
-    transition: all 100ms ease;
+  .buttons {
+    display: flex;
+    width: 100%;
+    margin-top: 16px;
+    button {
+      appearance: none;
+      border: none;
+      width: 100%;
+      border-radius: 4px;
+      transition: transform 200ms ease;
+    }
+    button.back {
+      margin-right: 8px;
+      background: var(--ctp-blue);
+      color: var(--ctp-text-inverse);
+      padding: 8px 0;
+    }
+    button.quit {
+      background: var(--ctp-red);
+      color: var(--ctp-text-inverse);
+    }
+    button:hover {
+      transform: scale(1.02);
+    }
+    button:active {
+      transform: scale(0.97);
+    }
   }
 }
 </style>

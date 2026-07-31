@@ -5,6 +5,7 @@
 <template>
   <div class="game-view-footer" data-tauri-drag-region>
     <AccountAvatar
+      v-if="configStore.current_account"
       :skin="accountSkin"
       :uuid="accountUuid"
       :size="56"
@@ -14,9 +15,26 @@
         'offline-account': configStore.current_account?.type === 'Offline',
       }"
       @click="navigationStore.navigate('accounts')"></AccountAvatar>
-    <p class="profile-name">
-      <span @click="navigationStore.navigate('accounts')">{{ profileName }}</span>
-      <button class="account-switch"><AppIcon name="chevron-up"></AppIcon></button>
+    <AccountAvatar
+      v-else
+      :skin="SteveSkin"
+      :uuid="accountUuid"
+      :size="56"
+      class="unlogin"
+      @click="navigationStore.navigate('accounts')"></AccountAvatar>
+    <p
+      class="profile-name"
+      v-if="configStore.current_account"
+      @click="navigationStore.navigate('accounts')">
+      <span>{{ profileName }}</span>
+      <button class="account-switch" @click.stop=""><AppIcon name="chevron-up"></AppIcon></button>
+    </p>
+    <p
+      class="profile-name"
+      v-else
+      style="border-radius: 8px; padding-right: 16px"
+      @click="navigationStore.navigate('accounts')">
+      <span>未登录</span>
     </p>
     <button class="new-instance" @click="dialogStore.createInstance.visible = true">
       <AppIcon name="add" :size="22" style="margin-right: 8px"></AppIcon>
@@ -39,6 +57,7 @@ import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl } from "@conic/account";
 import { computed } from "vue";
+import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
 
 const configStore = useConfigStore();
 const dialogStore = useDialogStore();
@@ -111,12 +130,18 @@ const profileName = computed(() => {
     border: 2px solid var(--ctp-red);
   }
 
+  > img.unlogin {
+    filter: grayscale(1);
+    border: 2px solid var(--ctp-overlay0);
+  }
+
   .profile-name {
     margin-left: -16px;
     margin-bottom: 32px;
     background: var(--ctp-surface0);
     height: 36px;
     border-radius: 8px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     padding: 0 0 0 32px;

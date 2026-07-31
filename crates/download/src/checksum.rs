@@ -2,9 +2,10 @@
 // Copyright 2022-2026 OakChaser and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use serde::Deserialize;
 use sha2::Digest;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Deserialize)]
 pub enum Checksum {
     Sha1(String),
     Sha256(String),

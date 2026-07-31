@@ -4,10 +4,10 @@
 
 <template>
   <div>
-    <SettingGroup>
+    <SettingGroup title="下载选项">
       <SettingItem
-        :title="$t('settings.download.maxConnections')"
-        :description="$t('settings.download.maxConnectionsDesc')"
+        :title="$t('settings.network.maxConnections')"
+        :description="$t('settings.network.maxConnectionsDesc')"
         icon="link">
         <BaseInput
           width="100px"
@@ -17,8 +17,8 @@
         </BaseInput>
       </SettingItem>
       <SettingItem
-        :title="$t('settings.download.maxDownloadSpeed')"
-        :description="$t('settings.download.maxDownloadSpeedDesc')"
+        :title="$t('settings.network.maxDownloadSpeed')"
+        :description="$t('settings.network.maxDownloadSpeedDesc')"
         icon="speedometer">
         <BaseInput
           width="100px"
@@ -28,16 +28,16 @@
         </BaseInput>
       </SettingItem>
       <SettingItem
-        :title="$t('settings.download.mirrorServer')"
+        :title="$t('settings.network.mirrorServer')"
         :navigable="true"
-        :description="$t('settings.download.mirrorServerDesc')"
+        :description="$t('settings.network.mirrorServerDesc')"
         icon="server"
         icon-fill="none"
         :last="true">
       </SettingItem>
     </SettingGroup>
-    <SettingGroup :title="$t('settings.download.proxy')">
-      <SettingItem :title="$t('settings.download.useSystemProxy')" icon="globe">
+    <SettingGroup :title="$t('settings.network.proxy')">
+      <SettingItem :title="$t('settings.network.useSystemProxy')" icon="globe">
         <BaseSwitch v-model="config.download.use_system_proxy"></BaseSwitch>
       </SettingItem>
     </SettingGroup>

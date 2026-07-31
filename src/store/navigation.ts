@@ -9,7 +9,7 @@ export const useNavigationStore = defineStore("navigation", {
     }),
     actions: {
         navigate(page: Page) {
-            if (this.currentPage !== page && page != "launch") {
+            if (this.currentPage !== page && this.currentPage != "launch") {
                 this.history.push(this.currentPage)
             }
 

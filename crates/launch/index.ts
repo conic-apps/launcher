@@ -6,6 +6,15 @@ import { Config } from "@conic/config"
 import { Instance } from "@conic/instance"
 import { Channel, invoke } from "@tauri-apps/api/core"
 
+type DownloadState = {
+    completed_tasks: number
+    total_tasks: number
+    completedBytes: number
+    totalBytes: number
+    phase: "VerifyExistingFiles" | "DownloadFiles"
+    speed: number
+}
+
 type LaunchProgress =
     | {
           job: "Prepare"
@@ -15,12 +24,7 @@ type LaunchProgress =
       }
     | {
           job: "CompleteFiles"
-          downloadState?: {
-              completed: number
-              total: number
-              phase: "VerifyExistingFiles" | "DownloadFiles"
-              speed: number
-          }
+          downloadState?: DownloadState
       }
     | {
           job: "GenerateScriptlet"

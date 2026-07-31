@@ -100,6 +100,7 @@ pub struct DataLocation {
     pub cache: PathBuf,
     pub logs: PathBuf,
     pub resources: PathBuf,
+    pub music: PathBuf,
     pub runtime: PathBuf,
     pub temp: PathBuf,
     pub config: PathBuf,
@@ -123,6 +124,7 @@ impl DataLocation {
             authlib_injector: data_folder_root.join("authlib-injector.jar"),
             instances: data_folder_root.join("instances"),
             runtime: data_folder_root.join("runtime"),
+            music: data_folder_root.join("music"),
             cache: match PLATFORM_INFO.os_family {
                 OsFamily::Macos => data_folder_root.join(".cache"),
                 OsFamily::Windows => data_folder_root.join(".cache"),
@@ -144,7 +146,7 @@ impl DataLocation {
     }
 
     pub fn init(&self) {
-        std::fs::create_dir_all(&self.root).expect("Unable to create application data directory");
+        std::fs::create_dir_all(&self.music).expect("Unable to create application data directory");
         let launcher_profiles_path = self.root.join("launcher_profiles.json");
         let override_json_profile_result =
             std::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE);
@@ -185,11 +187,22 @@ impl Default for DataLocation {
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("folder")
-        .invoke_handler(tauri::generate_handler![cmd_get_data_location])
+        .invoke_handler(tauri::generate_handler![
+            cmd_get_data_location,
+            cmd_get_instance_root
+        ])
         .build()
 }
 
 #[command]
 fn cmd_get_data_location() -> DataLocation {
     DATA_LOCATION.clone()
+}
+
+#[command]
+fn cmd_get_instance_root(instance_id: Uuid) -> String {
+    DATA_LOCATION
+        .get_instance_root(&instance_id)
+        .to_string_lossy()
+        .to_string()
 }

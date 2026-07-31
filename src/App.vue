@@ -77,6 +77,9 @@
         class="title-bar-actions"
         :class="{ 'is-macos': isMacOS(), disabled: navigation.currentPage === 'settings' }">
         <button class="title-bar-action-btn" @click="navigation.navigate('settings')">
+          <AppIcon name="musical-notes" :size="18" />
+        </button>
+        <button class="title-bar-action-btn" @click="navigation.navigate('settings')">
           <AppIcon name="settings" :size="18" />
         </button>
       </div>
@@ -188,7 +191,7 @@ function closeWindow() {
 }
 
 function isMacOS() {
-  return window.__PLATFORM__.os_family !== "Macos";
+  return window.__PLATFORM__.os_family === "Macos";
 }
 </script>
 

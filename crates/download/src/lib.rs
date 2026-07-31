@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use std::{
+    collections::HashMap,
     io::Read,
     path::PathBuf,
     sync::{
-        Arc,
+        Arc, Mutex,
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
     thread,
@@ -26,12 +27,89 @@ pub mod checksum;
 pub mod error;
 pub(crate) mod mirror;
 pub mod progress;
-pub mod state;
+// pub mod state;
 
 pub use checksum::*;
 pub use error::*;
 use mirror::*;
+use tauri::{
+    Runtime, State, command,
+    ipc::Channel,
+    plugin::{Builder, TauriPlugin},
+};
 use url::Url;
+use uuid::Uuid;
+
+#[derive(Clone, Default)]
+struct PluginState {
+    task: Arc<Mutex<HashMap<Uuid, tokio::task::AbortHandle>>>,
+}
+
+pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    Builder::new("download")
+        .invoke_handler(tauri::generate_handler![
+            cmd_spawn_download_task,
+            cmd_cancel_download_task
+        ])
+        .build()
+}
+
+#[command]
+async fn cmd_spawn_download_task(
+    state: State<'_, PluginState>,
+    download_task: DownloadTask,
+    task_id: Uuid,
+    channel: Channel<DownloadState>,
+) -> Result<()> {
+    let task_status = DownloadState::default();
+    let finished = Arc::new(AtomicBool::new(false));
+    let handle = tokio::spawn({
+        let task_status_cloned = task_status.clone();
+        let finished = finished.clone();
+        async move {
+            let result = download(&download_task, &task_status_cloned).await;
+            finished.store(true, Ordering::SeqCst);
+            result
+        }
+    });
+    {
+        let mut current_task = state.task.lock().expect("Internal error");
+        (*current_task).insert(task_id, handle.abort_handle());
+    }
+    let event_sender_thread = {
+        let status_cloned = task_status.clone();
+        let finished = finished.clone();
+        thread::spawn(move || {
+            while !finished.load(Ordering::SeqCst) {
+                let _ = channel.send(status_cloned.clone());
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        })
+    };
+    let result = match handle.await {
+        Ok(result) => result,
+        Err(error) => {
+            warn!("Installation cancelled");
+            Err(Error::Aborted(error))
+        }
+    };
+    let _ = event_sender_thread.join();
+    {
+        let mut current_task = state.task.lock().expect("Internal error");
+        (*current_task).remove(&task_id);
+    }
+    result
+}
+
+#[command]
+fn cmd_cancel_download_task(state: State<'_, PluginState>, task_id: Uuid) {
+    let mut current_task = state.task.lock().expect("Internal error");
+    if let Some(handle) = current_task.get(&task_id) {
+        handle.abort();
+        warn!("Cancelling installation!");
+    }
+    (*current_task).remove(&task_id);
+}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum DownloadTaskType {
@@ -46,7 +124,7 @@ pub enum DownloadTaskType {
     Unknown,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
 pub struct DownloadTask {
     pub url: String,
     pub file: PathBuf,
@@ -139,6 +217,8 @@ impl Drop for ScopedThread {
 
 pub async fn download(download: &DownloadTask, progress: &DownloadState) -> Result<()> {
     progress.reset(Ordering::SeqCst);
+    progress.total_tasks.store(1, Ordering::SeqCst);
+    progress.completed_tasks.store(0, Ordering::SeqCst);
     let file_path = download.file.clone();
     let mut file = async_fs::File::create(&file_path).await?;
     let url = download.url.clone();
@@ -158,28 +238,30 @@ pub async fn download(download: &DownloadTask, progress: &DownloadState) -> Resu
     if let Some(file_size) = download.size_bytes
         && response_length.is_none()
     {
-        progress.total.store(file_size, Ordering::SeqCst);
+        progress.total_bytes.store(file_size, Ordering::SeqCst);
     } else if let Some(response_length) = response_length
         && download.size_bytes.is_none()
     {
-        progress.total.store(response_length, Ordering::SeqCst);
+        progress
+            .total_bytes
+            .store(response_length, Ordering::SeqCst);
     } else if let Some(response_length) = response_length
         && let Some(file_size) = download.size_bytes
         && response_length == file_size
     {
-        progress.total.store(file_size, Ordering::SeqCst);
+        progress.total_bytes.store(file_size, Ordering::SeqCst);
     } else if let Some(response_length) = response_length
         && let Some(file_size) = download.size_bytes
         && response_length != file_size
     {
-        progress.total.store(file_size, Ordering::SeqCst);
+        progress.total_bytes.store(file_size, Ordering::SeqCst);
     };
     let mut hasher = Hasher::from(&download.checksum);
     while let Some(chunk) = response.chunk().await? {
         file.write_all(&chunk).await?;
         hasher.update(&chunk);
         progress
-            .completed
+            .completed_bytes
             .fetch_add(chunk.len() as u64, Ordering::SeqCst);
         speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);
     }
@@ -187,9 +269,11 @@ pub async fn download(download: &DownloadTask, progress: &DownloadState) -> Resu
         return Err(Error::ChecksumMissmatch(url));
     }
     file.sync_all().await?;
-    progress
-        .completed
-        .store(progress.total.load(Ordering::SeqCst), Ordering::SeqCst);
+    progress.completed_bytes.store(
+        progress.total_bytes.load(Ordering::SeqCst),
+        Ordering::SeqCst,
+    );
+    progress.completed_tasks.store(1, Ordering::SeqCst);
     Ok(())
 }
 
@@ -216,10 +300,18 @@ pub async fn download_concurrent(
 
     let mirror_usage = MirrorUsage::new(&download_config.mirror);
 
-    progress.completed.store(0, Ordering::SeqCst);
+    progress.completed_tasks.store(0, Ordering::SeqCst);
     progress
-        .total
+        .total_tasks
         .store(download_tasks.len() as u64, Ordering::SeqCst);
+    progress.completed_bytes.store(0, Ordering::SeqCst);
+    progress.total_bytes.store(
+        download_tasks
+            .iter()
+            .map(|x| x.size_bytes.unwrap_or_default())
+            .sum(),
+        Ordering::SeqCst,
+    );
     {
         let mut task = progress
             .phase
@@ -246,7 +338,7 @@ pub fn filter_existing_and_verified_files(
     downloads: Vec<DownloadTask>,
     progress: &DownloadState,
 ) -> Vec<DownloadTask> {
-    let completed = progress.completed.clone();
+    let completed = progress.completed_tasks.clone();
     {
         let mut task = progress
             .phase
@@ -254,7 +346,7 @@ pub fn filter_existing_and_verified_files(
             .expect("Internal error: another thread hold lock and panic");
         *task = DownloadPhase::VerifyExistingFiles;
     }
-    progress.total.store(0, Ordering::SeqCst);
+    progress.total_tasks.store(0, Ordering::SeqCst);
     let filter_op = |download: &DownloadTask| {
         if std::fs::metadata(&download.file).is_err() {
             return true;
@@ -375,12 +467,15 @@ async fn inner_download_executer(
         file.write_all(&chunk).await?;
         hasher.update(&chunk);
         speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);
+        progress
+            .completed_bytes
+            .fetch_add(chunk.len() as u64, Ordering::SeqCst);
     }
     file.sync_all().await?;
     if !hasher.verify(&task.checksum) {
         return Err(Error::ChecksumMissmatch(url));
     }
-    progress.completed.fetch_add(1, Ordering::SeqCst);
+    progress.completed_tasks.fetch_add(1, Ordering::SeqCst);
     Ok(())
 }
 
