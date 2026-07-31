@@ -34,7 +34,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_delete_instance,
             cmd_add_background_file,
             cmd_get_background_path,
-            cmd_calculate_playtime
+            cmd_calculate_playtime,
         ])
         .build()
 }
@@ -141,16 +141,18 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
             Err(_) => continue,
             Ok(content) => content,
         };
+        let instance_id = match Uuid::from_str(&folder_name) {
+            Ok(x) => x,
+            Err(_) => continue,
+        };
         let instance = Instance {
             config: match toml::from_str::<InstanceConfig>(&config_content) {
                 Ok(config) => config,
                 Err(_) => continue,
             },
             installed: async_fs::metadata(path.join(".install.lock")).await.is_ok(),
-            id: match Uuid::from_str(&folder_name) {
-                Ok(x) => x,
-                Err(_) => continue,
-            },
+            id: instance_id,
+            last_played: get_launch_script_timestamp(instance_id),
         };
         instances.push(instance);
     }
@@ -174,6 +176,7 @@ pub async fn get_instance_by_id(id: Uuid) -> Option<Instance> {
                 .await
                 .is_ok(),
             id,
+            last_played: get_launch_script_timestamp(id),
         })
     } else {
         None
@@ -207,6 +210,7 @@ pub struct Instance {
     pub installed: bool,
     /// Unique identifier of the instance.
     pub id: Uuid,
+    pub last_played: Option<u64>,
 }
 
 impl Instance {
@@ -316,4 +320,30 @@ fn parse_log_time(line: &str) -> Option<u64> {
         return None;
     }
     Some(hour * 3600 + minute * 60 + second)
+}
+
+fn get_launch_script_timestamp(instance_id: Uuid) -> Option<u64> {
+    #[cfg(not(target_os = "windows"))]
+    let script_path = DATA_LOCATION
+        .get_instance_root(&instance_id)
+        .join(".cache")
+        .join("conic-launch.sh");
+    #[cfg(target_os = "windows")]
+    let script_path = DATA_LOCATION
+        .get_instance_root(&instance_id)
+        .join(".cache")
+        .join("conic-launch.bat");
+    let file = std::fs::File::open(script_path).ok()?;
+    let reader = BufReader::new(file);
+    for line in reader.lines().take(10) {
+        let line = line.ok()?;
+        let Some(timestamp) = line.split("created this file at ").nth(1) else {
+            continue;
+        };
+        let timestamp = timestamp.trim_end_matches('.');
+        if let Ok(timestamp) = timestamp.parse() {
+            return Some(timestamp);
+        }
+    }
+    None
 }

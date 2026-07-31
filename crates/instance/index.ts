@@ -47,6 +47,7 @@ export type Instance = {
     config: InstanceConfig
     installed: boolean
     id: string
+    last_played: number
 }
 
 export async function createInstance(instanceConfig: InstanceConfig, id?: string): Promise<string> {
@@ -80,3 +81,79 @@ export async function getBackgroundPath(id: string): Promise<string> {
 export async function calculatePlaytime(id: string): Promise<number> {
     return await invoke("plugin:instance|cmd_calculate_playtime", { id })
 }
+
+export function formatPlayTime(seconds: number): string {
+    if (seconds < 60) {
+        return `${Math.floor(seconds)} 秒`
+    }
+    const format = (value: number) => Number(value.toFixed(1)).toString()
+    const minutes = seconds / 60
+    if (minutes < 60) {
+        return `${format(minutes)} 分钟`
+    }
+    return `${format(minutes / 60)} 小时`
+}
+
+export type TimeFormatter = {
+    justNow: string
+    hoursAgo: (hours: number) => string
+    yesterday: string
+    monthDay: (month: number, day: number) => string
+    yearMonthDay: (year: number, month: number, day: number) => string
+}
+
+export function formatLastPlayed(timestamp: number, formatter: TimeFormatter): string {
+    const date = new Date(timestamp)
+    const now = new Date()
+
+    const sameDay =
+        date.getFullYear() === now.getFullYear() &&
+        date.getMonth() === now.getMonth() &&
+        date.getDate() === now.getDate()
+
+    if (sameDay) {
+        const diff = now.getTime() - timestamp
+        const hours = Math.floor(diff / (1000 * 60 * 60))
+
+        if (hours < 1) {
+            return formatter.justNow
+        }
+
+        return formatter.hoursAgo(hours)
+    }
+
+    const yesterday = new Date(now)
+    yesterday.setDate(now.getDate() - 1)
+
+    const isYesterday =
+        date.getFullYear() === yesterday.getFullYear() &&
+        date.getMonth() === yesterday.getMonth() &&
+        date.getDate() === yesterday.getDate()
+
+    if (isYesterday) {
+        return formatter.yesterday
+    }
+
+    if (date.getFullYear() === now.getFullYear()) {
+        return formatter.monthDay(date.getMonth() + 1, date.getDate())
+    }
+
+    return formatter.yearMonthDay(date.getFullYear(), date.getMonth() + 1, date.getDate())
+}
+
+export const zhCN: TimeFormatter = {
+    justNow: "刚刚",
+    hoursAgo: (hours) => `${hours}小时前`,
+    yesterday: "昨天",
+    monthDay: (month, day) => `${month}月${day}日`,
+    yearMonthDay: (year, month, day) => `${year}年${month}月${day}日`,
+}
+// NOTE: i18n support:
+// const formatter = {
+//   justNow: t("time.justNow"),
+//   hoursAgo: (h) => t("time.hoursAgo", { count: h }),
+//   yesterday: t("time.yesterday"),
+//   monthDay: (m, d) => t("date.monthDay", { month: m, day: d }),
+//   yearMonthDay: (y, m, d) =>
+//     t("date.yearMonthDay", { year: y, month: m, day: d }),
+// };

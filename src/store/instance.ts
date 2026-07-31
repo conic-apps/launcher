@@ -73,7 +73,7 @@ export const useInstanceStore = defineStore("instance", () => {
         instances,
         currentInstance,
         launchedInstances,
-        fetchInstances,
+        loadInstances: fetchInstances,
         ensureCurrentInstanceAvailable,
     }
 })
