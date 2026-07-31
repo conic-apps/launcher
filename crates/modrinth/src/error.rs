@@ -43,7 +43,7 @@ pub enum Error {
     Aborted(
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]
-        futures::future::Aborted,
+        tokio::task::JoinError,
     ),
 }
 
@@ -55,6 +55,7 @@ impl From<download::Error> for Error {
             download::Error::Network(error) => Self::Network(error),
             download::Error::UrlParse(error) => Self::UrlParse(error),
             download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
+            download::Error::Aborted(error) => Self::Aborted(error),
         }
     }
 }

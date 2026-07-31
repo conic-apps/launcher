@@ -31,6 +31,7 @@ button.base-button {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 150ms ease;
 }
 
 button.base-button.disabled {
@@ -39,10 +40,16 @@ button.base-button.disabled {
 }
 
 button.base-button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(var(--ctp-surface2-rgb), 0.85);
 }
 
 button.base-button:active {
-  opacity: 0.8;
+  background: var(--ctp-surface2);
+}
+button.base-button:hover {
+  transform: scale(1.02);
+}
+button.base-button:active {
+  transform: scale(0.97);
 }
 </style>

@@ -28,12 +28,12 @@ import { type Component, markRaw, ref, shallowRef } from "vue";
 import GeneralSettings from "./settings/GeneralSettings.vue";
 import GameSettings from "./settings/GameSettings.vue";
 import JvmSettings from "./settings/JvmSettings.vue";
-import AdvanceSettings from "./settings/AdvanceSettings.vue";
 import AppearanceSettings from "./settings/AppearanceSettings.vue";
 import DownloadSettings from "./settings/DownloadSettings.vue";
 import AccessibilitySettings from "./settings/AccessibilitySettings.vue";
 import AboutSettings from "./settings/AboutSettings.vue";
 import AppIcon from "@/components/AppIcon.vue";
+import AudioSettings from "./settings/AudioSettings.vue";
 
 const components = ref<{ name: string; icon: string; component: Component }[]>([
   {
@@ -52,18 +52,18 @@ const components = ref<{ name: string; icon: string; component: Component }[]>([
     component: markRaw(JvmSettings),
   },
   {
-    name: "settings.advance.sidebar",
-    icon: "build",
-    component: markRaw(AdvanceSettings),
-  },
-  {
     name: "settings.appearance.sidebar",
     icon: "palette",
     component: markRaw(AppearanceSettings),
   },
   {
-    name: "settings.download.sidebar",
-    icon: "cloud-download",
+    name: "音乐与音效",
+    icon: "musical-notes",
+    component: markRaw(AudioSettings),
+  },
+  {
+    name: "settings.network.sidebar",
+    icon: "globe",
     component: markRaw(DownloadSettings),
   },
   {

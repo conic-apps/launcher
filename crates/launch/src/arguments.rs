@@ -103,9 +103,6 @@ pub async fn generate_command_arguments(
                 ),
             ]);
         }
-        GC::ParallelOld => {
-            command_arguments.push("-XX:+UseParallelOldGC".to_string());
-        }
         GC::Serial => {
             command_arguments.push("-XX:+UseSerialGC".to_string());
         }

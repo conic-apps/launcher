@@ -4,11 +4,15 @@
 
 //! CRUD implementation for game instance
 
+use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
 use std::str::FromStr;
 
+use flate2::read::GzDecoder;
 use folder::DATA_LOCATION;
 use futures::TryStreamExt;
 use log::{debug, info};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use tauri::plugin::{Builder, TauriPlugin};
 use tauri::{Runtime, command};
@@ -29,7 +33,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_update_instance,
             cmd_delete_instance,
             cmd_add_background_file,
-            cmd_get_background_path
+            cmd_get_background_path,
+            cmd_calculate_playtime
         ])
         .build()
 }
@@ -73,6 +78,11 @@ async fn cmd_get_background_path(id: Uuid) -> String {
         .join("background")
         .to_string_lossy()
         .to_string()
+}
+
+#[command]
+async fn cmd_calculate_playtime(id: Uuid) -> Result<u64> {
+    calculate_playtime(id)
 }
 
 /// Creates a new game instance using the provided configuration.
@@ -230,4 +240,80 @@ impl Instance {
             })
             .unwrap_or(Ok(config.runtime.minecraft.clone()))
     }
+}
+
+pub fn calculate_playtime(instance_id: Uuid) -> Result<u64> {
+    let instance_root = DATA_LOCATION.get_instance_root(&instance_id);
+    let logs_root = instance_root.join("logs");
+    let total_play_time: u64 = std::fs::read_dir(logs_root)?
+        .filter_map(|entry| {
+            let entry = match entry {
+                Err(_) => return None,
+                Ok(entry) => entry,
+            };
+            let path = entry.path();
+            if path.is_file() { Some(path) } else { None }
+        })
+        .collect::<Vec<_>>()
+        .into_par_iter()
+        .map(|path| match try_read_log_dir_entry(path) {
+            Err(_) => 0,
+            Ok(x) => x.unwrap_or_default(),
+        })
+        .sum();
+    Ok(total_play_time)
+}
+
+fn try_read_log_dir_entry(path: PathBuf) -> Result<Option<u64>> {
+    let file = std::fs::File::open(&path)?;
+    let decoder = GzDecoder::new(file);
+    let reader = BufReader::new(decoder);
+
+    let mut first_time: Option<u64> = None;
+    let mut last_time: Option<u64> = None;
+
+    for line in reader.lines() {
+        let line = line?;
+
+        let Some(time) = parse_log_time(&line) else {
+            continue;
+        };
+
+        match first_time {
+            None => {
+                first_time = Some(time);
+            }
+            Some(first) if time > first => {
+                last_time = Some(time);
+            }
+            _ => {}
+        }
+    }
+    let a = first_time.zip(last_time).map(|(start, end)| end - start);
+    println!("{:#?}", path);
+    println!("{:#?}", a);
+    Ok(a)
+}
+
+fn parse_log_time(line: &str) -> Option<u64> {
+    let bytes = line.as_bytes();
+    if bytes.len() < 10
+        || bytes[0] != b'['
+        || bytes[3] != b':'
+        || bytes[6] != b':'
+        || bytes[9] != b']'
+    {
+        return None;
+    }
+    let digits = [bytes[1], bytes[2], bytes[4], bytes[5], bytes[7], bytes[8]];
+    if digits.iter().any(|c| !c.is_ascii_digit()) {
+        return None;
+    }
+    let hour = (bytes[1] - b'0') as u64 * 10 + (bytes[2] - b'0') as u64;
+    let minute = (bytes[4] - b'0') as u64 * 10 + (bytes[5] - b'0') as u64;
+    let second = (bytes[7] - b'0') as u64 * 10 + (bytes[8] - b'0') as u64;
+    if hour >= 24 || minute >= 60 || second >= 60 {
+        return None;
+    }
+    Some(hour * 3600 + minute * 60 + second)
 }
