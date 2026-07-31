@@ -32,24 +32,19 @@
         }}</span>
         <span v-else>{{ configStore.current_account?.data.name }}</span>
       </div>
-    </div>
-    <Transition name="custom-slide-bottom">
-      <div class="back-button" :class="{ disabled: backButtonDisabled }" v-if="showBackButton">
-        <button @click="back()">
-          <div>
-            <AppIcon name="arrow-back-outline"></AppIcon>
-          </div>
-          <span>取消启动</span>
-        </button>
+      <div class="back-button">
+        <BaseButton :class="{ disabled: backButtonDisabled }" @click="back()">取消启动</BaseButton>
       </div>
-    </Transition>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import AccountAvatar from "@/components/AccountAvatar.vue";
+import BaseButton from "@/components/base/BaseButton.vue";
 import BaseProgress from "@/components/base/BaseProgress.vue";
 import { useConfigStore } from "@/store/config";
+import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
 import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl } from "@conic/account";
@@ -63,6 +58,7 @@ const currentInstance = computed(() => {
 });
 const navigationStore = useNavigationStore();
 const configStore = useConfigStore();
+const dialogStore = useDialogStore();
 
 const progressDescription = ref("正在准备");
 const progressBarLoading = ref(true);
@@ -94,6 +90,10 @@ const accountUuid = computed(() => {
 });
 
 async function launch() {
+  if (!configStore.current_account) {
+    dialogStore.noAccountError.visible = true;
+    return;
+  }
   try {
     if (!instanceStore.currentInstance.installed) {
       await installGame();
@@ -109,6 +109,7 @@ let cancelInstallHandle: () => Promise<void>;
 async function installGame() {
   const installTask = new InstallTask(configStore, instanceStore.currentInstance, {
     onProgress: (task) => {
+      console.log(task);
       if (task.job === Job.Prepare) {
         progressDescription.value = "准备下载";
         progressBarLoading.value = true;
@@ -118,10 +119,10 @@ async function installGame() {
           progressDescription.value = "校验游戏文件";
           progressBarLoading.value = true;
         } else if (task.downloadState?.phase === "DownloadFiles") {
-          progressDescription.value = "下载游戏文件";
+          progressDescription.value = `下载游戏文件 ${task.downloadState.completedBytes} / ${task.downloadState.totalBytes}`;
           progressBarLoading.value = false;
-          progressBarValue.value = task.downloadState.completed;
-          progressBarMax.value = task.downloadState.total;
+          progressBarValue.value = task.downloadState.completedBytes;
+          progressBarMax.value = task.downloadState.totalBytes;
         }
       }
       if (task.job === Job.InstallJava) {
@@ -129,10 +130,10 @@ async function installGame() {
           progressDescription.value = "安装 Java";
           progressBarLoading.value = true;
         } else if (task.downloadState?.phase === "DownloadFiles") {
-          progressDescription.value = "安装 Java";
+          progressDescription.value = `安装 Java ${task.downloadState.completedBytes}/${task.downloadState.totalBytes}`;
           progressBarLoading.value = false;
-          progressBarValue.value = task.downloadState.completed;
-          progressBarMax.value = task.downloadState.total;
+          progressBarValue.value = task.downloadState.completedBytes;
+          progressBarMax.value = task.downloadState.totalBytes;
         }
       }
       if (task.job === Job.InstallModLoader) {
@@ -161,10 +162,10 @@ async function launchGame() {
           progressDescription.value = "校验游戏文件";
           progressBarLoading.value = true;
         } else if (task.downloadState?.phase === "DownloadFiles") {
-          progressDescription.value = "下载游戏文件";
+          progressDescription.value = `下载游戏文件 ${task.downloadState.completedBytes} / ${task.downloadState.totalBytes}`;
           progressBarLoading.value = false;
-          progressBarValue.value = task.downloadState.completed;
-          progressBarMax.value = task.downloadState.total;
+          progressBarValue.value = task.downloadState.completedBytes;
+          progressBarMax.value = task.downloadState.totalBytes;
         }
       } else if (task.job === "GenerateScriptlet") {
         progressDescription.value = "生成启动脚本";
@@ -199,7 +200,6 @@ async function launchGame() {
   await launchTask.start();
 }
 
-const showBackButton = ref(true);
 const backButtonDisabled = ref(false);
 
 onMounted(() => launch());
@@ -213,10 +213,7 @@ onUnmounted(async () => {
 });
 
 function back() {
-  showBackButton.value = false;
-  setTimeout(() => {
-    navigationStore.back();
-  }, 300);
+  navigationStore.back();
 }
 </script>
 
@@ -227,46 +224,6 @@ function back() {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  .back-button {
-    position: fixed;
-    bottom: 32px;
-    left: 32px;
-    button {
-      appearance: none;
-      background: var(--ctp-latte-lavender);
-      border: none;
-      height: 48px;
-      padding-right: 26px;
-      border-radius: 1000px;
-      display: flex;
-      align-items: center;
-      transition: all 0.3s ease;
-      transform: scale(1);
-      font-size: 14px;
-      div {
-        background: #ffffff3f;
-        border-radius: 100px;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-left: 6px;
-      }
-      span {
-        margin-left: 10px;
-      }
-      &:active {
-        transition: all 0.3s cubic-bezier(0, 0.75, 0.2, 1);
-        transform: scale(0.97);
-      }
-    }
-  }
-  .back-button.disabled {
-    pointer-events: none;
-    opacity: 0.6;
-  }
 
   .container {
     > img {
@@ -323,29 +280,26 @@ function back() {
       opacity: 0.8;
     }
   }
-}
-
-.custom-slide-bottom-leave-active {
-  transition: all 0.3s cubic-bezier(0.75, 0, 1, 0.2);
-}
-
-.custom-slide-bottom-enter-active {
-  transition: all 0.3s cubic-bezier(0, 0.75, 0.2, 1);
-}
-
-.custom-slide-bottom-leave-from {
-  transform: translate(0, 0);
-}
-
-.custom-slide-bottom-leave-to {
-  transform: translate(0, 70px);
-}
-
-.custom-slide-bottom-enter-from {
-  transform: translate(0, 70px);
-}
-
-.custom-slide-bottom-enter-to {
-  transform: translate(0, 0);
+  .back-button {
+    width: 240px;
+    margin-top: 36px;
+    button {
+      border: 1px solid var(--ctp-red);
+      color: var(--ctp-red);
+      background: var(--ctp-surface0);
+      transition: all 0.2s ease;
+    }
+    button:hover {
+      background: var(--ctp-red);
+      color: var(--ctp-text-inverse);
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    button.disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+  }
 }
 </style>

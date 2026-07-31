@@ -15,7 +15,7 @@
           class="options"
           :style="{
             width: '${width}px',
-            top: `-${selected * 30 + 45}px`,
+            top: `-px`,
           }"
           v-if="opened"
           @click="opened = false">

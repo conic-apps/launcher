@@ -69,6 +69,7 @@ fn main() {
                 "cmd_delete_instance",
                 "cmd_add_background_file",
                 "cmd_get_background_path",
+                "cmd_calculate_playtime",
             ]),
         )
         .plugin(
@@ -93,7 +94,7 @@ fn main() {
         )
         .plugin(
             "folder",
-            InlinedPlugin::new().commands(&["cmd_get_data_location"]),
+            InlinedPlugin::new().commands(&["cmd_get_data_location", "cmd_get_instance_root"]),
         )
         .plugin(
             "beat",

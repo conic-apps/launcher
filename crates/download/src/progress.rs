@@ -9,37 +9,32 @@ use std::sync::{
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Default)]
 pub enum DownloadPhase {
     VerifyExistingFiles,
+    #[default]
     DownloadFiles,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 /// We use this to store the progress of installation task
 pub struct DownloadState {
-    pub completed: Arc<AtomicU64>,
-    pub total: Arc<AtomicU64>,
+    pub completed_tasks: Arc<AtomicU64>,
+    pub total_tasks: Arc<AtomicU64>,
+    pub completed_bytes: Arc<AtomicU64>,
+    pub total_bytes: Arc<AtomicU64>,
     pub phase: Arc<Mutex<DownloadPhase>>,
     pub speed: Arc<AtomicU64>,
 }
 
-impl Default for DownloadState {
-    fn default() -> Self {
-        Self {
-            completed: Arc::new(AtomicU64::new(0)),
-            total: Arc::new(AtomicU64::new(0)),
-            speed: Arc::new(AtomicU64::new(0)),
-            phase: Arc::new(Mutex::new(DownloadPhase::DownloadFiles)),
-        }
-    }
-}
-
 impl PartialEq for DownloadState {
     fn eq(&self, other: &Self) -> bool {
-        self.completed.load(Ordering::SeqCst) == other.completed.load(Ordering::SeqCst)
-            && self.total.load(Ordering::SeqCst) == other.total.load(Ordering::SeqCst)
+        self.completed_tasks.load(Ordering::SeqCst) == other.completed_tasks.load(Ordering::SeqCst)
+            && self.total_tasks.load(Ordering::SeqCst) == other.total_tasks.load(Ordering::SeqCst)
+            && self.completed_bytes.load(Ordering::SeqCst)
+                == other.completed_bytes.load(Ordering::SeqCst)
+            && self.total_bytes.load(Ordering::SeqCst) == other.total_bytes.load(Ordering::SeqCst)
             && self.speed.load(Ordering::SeqCst) == other.speed.load(Ordering::SeqCst)
             && *self.phase.lock().expect("") == *other.phase.lock().expect("")
     }
@@ -47,8 +42,10 @@ impl PartialEq for DownloadState {
 
 impl DownloadState {
     pub fn reset(&self, ordering: Ordering) {
-        self.completed.store(0, ordering);
-        self.total.store(0, ordering);
+        self.completed_tasks.store(0, ordering);
+        self.total_tasks.store(0, ordering);
+        self.completed_bytes.store(0, ordering);
+        self.total_bytes.store(0, ordering);
         self.speed.store(0, ordering);
     }
 }

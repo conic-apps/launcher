@@ -25,3 +25,4 @@ reqwest.workspace = true
 futures.workspace = true
 async-io.workspace = true
 url.workspace = true
+tokio.workspace = true

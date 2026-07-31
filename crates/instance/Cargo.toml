@@ -22,3 +22,6 @@ toml.workspace = true
 futures.workspace = true
 thiserror.workspace = true
 serde_with.workspace = true
+flate2.workspace = true
+rayon.workspace = true
+tokio.workspace = true

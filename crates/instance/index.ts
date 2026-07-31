@@ -35,7 +35,7 @@ export type InstanceConfig = {
         ignore_invalid_minecraft_certificates?: boolean
         ignore_patch_discrepancies?: boolean
         extra_class_paths?: string
-        gc?: "Serial" | "Parallel" | "ParallelOld" | "G1" | "Z"
+        gc?: "Serial" | "Parallel" | "G1" | "Z"
         launcher_name?: string
         wrap_command?: string
         execute_before_launch?: string
@@ -75,4 +75,8 @@ export async function addBackgroundImage(path: string, id: string): Promise<void
 
 export async function getBackgroundPath(id: string): Promise<string> {
     return await invoke("plugin:instance|cmd_get_background_path", { id })
+}
+
+export async function calculatePlaytime(id: string): Promise<number> {
+    return await invoke("plugin:instance|cmd_calculate_playtime", { id })
 }

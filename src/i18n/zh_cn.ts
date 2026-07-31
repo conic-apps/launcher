@@ -168,7 +168,7 @@ export default {
         appearance: {
             sidebar: "外观",
         },
-        download: {
+        network: {
             sidebar: "下载",
             maxConnections: "最大连接数",
             maxConnectionsDesc:

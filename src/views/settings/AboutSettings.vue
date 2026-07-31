@@ -33,6 +33,13 @@
         :navigable="true"
         @click="openUrl('https://github.com/conic-apps/launcher/issues/new/choose')">
       </SettingItem>
+      <SettingItem
+        :title="$t('settings.advance.viewLauncherLogs')"
+        :description="$t('settings.advance.viewLauncherLogsDesc')"
+        icon="document-text"
+        :navigable="true"
+        @click="openLogFolder">
+      </SettingItem>
     </SettingGroup>
     <SettingGroup :title="$t('settings.about.thirdPartyLibraries')">
       <SettingItem
@@ -78,6 +85,12 @@ import SettingGroup from "@/components/SettingGroup.vue";
 import InfoBox from "@/components/InfoBox.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useConfigStore } from "@/store/config";
+import { getDataLocation } from "@conic/folder";
+import { invoke } from "@tauri-apps/api/core";
 
 const config = useConfigStore();
+async function openLogFolder() {
+  const dataLocation = await getDataLocation();
+  invoke("open_path", { path: dataLocation.logs });
+}
 </script>

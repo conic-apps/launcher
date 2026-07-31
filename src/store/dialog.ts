@@ -13,6 +13,7 @@ export const useDialogStore = defineStore("dialog", () => {
     const logViewer = ref({ visible: false })
     const createInstance = ref({ visible: false })
     const confirmQuitApp = ref({ visible: false })
+    const noAccountError = ref({ visible: false })
     const confirmDeleteInstance = ref({
         visible: false,
         instanceToDelete: {
@@ -48,6 +49,7 @@ export const useDialogStore = defineStore("dialog", () => {
         confirmDeleteInstance,
         confirmDeleteAccount,
         confirmQuitApp,
+        noAccountError,
         uploadSkin,
     }
 })
