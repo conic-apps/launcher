@@ -40,7 +40,7 @@
       <AppIcon name="time" :size="22" style="margin-right: 2px"></AppIcon>
       <p>
         <span>游戏时间</span>
-        <span>1032.2 小时</span>
+        <span>{{ formatPlayTime(playtimeCache[currentInstance.id] ?? 0) }}</span>
       </p>
     </div>
     <div class="row-3">
@@ -57,7 +57,7 @@
           :size="16"></AppIcon>
       </button>
       <div class="actions">
-        <button class="action-button">
+        <button class="action-button" @click="openInstanceFolder">
           <AppIcon name="folder"></AppIcon>
         </button>
         <button class="action-button">
@@ -92,15 +92,55 @@
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
 import { useInstanceStore } from "@/store/instance";
-import { computed } from "vue";
-import { LATEST_RELEASE_INSTANCE_ID, LATEST_SNAPSHOT_INSTANCE_ID } from "@conic/instance";
+import { computed, ref, watch } from "vue";
+import {
+  calculatePlaytime,
+  LATEST_RELEASE_INSTANCE_ID,
+  LATEST_SNAPSHOT_INSTANCE_ID,
+} from "@conic/instance";
 import { useNavigationStore } from "@/store/navigation";
+import { getInstanceRoot } from "@conic/folder";
+import { invoke } from "@tauri-apps/api/core";
 
 const instanceStore = useInstanceStore();
 const navigationStore = useNavigationStore();
 const currentInstance = computed(() => {
   return instanceStore.currentInstance;
 });
+
+async function openInstanceFolder() {
+  invoke("open_path", { path: await getInstanceRoot(currentInstance.value.id) });
+}
+
+const playtimeCache = ref<Record<string, number>>({});
+watch(
+  currentInstance,
+  async (newValue) => {
+    const instanceId = newValue.id;
+    if (!!playtimeCache.value[instanceId]) {
+      return;
+    }
+    try {
+      const playtime = await calculatePlaytime(instanceId);
+      playtimeCache.value[instanceId] = playtime;
+    } catch (error) {
+      console.error(error);
+    }
+  },
+  { immediate: true },
+);
+
+function formatPlayTime(seconds: number): string {
+  if (seconds < 60) {
+    return `${Math.floor(seconds)} 秒`;
+  }
+  const format = (value: number) => Number(value.toFixed(1)).toString();
+  const minutes = seconds / 60;
+  if (minutes < 60) {
+    return `${format(minutes)} 分钟`;
+  }
+  return `${format(minutes / 60)} 小时`;
+}
 </script>
 
 <style lang="less" scoped>

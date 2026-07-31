@@ -167,27 +167,26 @@ export enum Job {
     InstallModLoader = "InstallModLoader",
 }
 
+type DownloadState = {
+    completed_tasks: number
+    total_tasks: number
+    completedBytes: number
+    totalBytes: number
+    phase: "VerifyExistingFiles" | "DownloadFiles"
+    speed: number
+}
+
 export type InstallProgress =
     | {
           job: Job.Prepare
       }
     | {
           job: Job.InstallGame
-          downloadState?: {
-              completed: number
-              total: number
-              phase: "VerifyExistingFiles" | "DownloadFiles"
-              speed: number
-          }
+          downloadState?: DownloadState
       }
     | {
           job: Job.InstallJava
-          downloadState?: {
-              completed: number
-              total: number
-              phase: "VerifyExistingFiles" | "DownloadFiles"
-              speed: number
-          }
+          downloadState?: DownloadState
       }
     | {
           job: Job.InstallModLoader

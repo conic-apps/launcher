@@ -67,7 +67,7 @@
             "使用设备代码登录"
           }}</BaseButton>
           <BaseButton
-            style="background: var(--ctp-latte-lavender); color: #000"
+            style="background: var(--ctp-blue); color: var(--ctp-text-inverse)"
             @click="openUrl(AUTH_CODE_LOGIN_URL)"
             >登录</BaseButton
           >

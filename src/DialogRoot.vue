@@ -10,6 +10,7 @@
   <ConfirmDeleteAccount></ConfirmDeleteAccount>
   <UploadSkin></UploadSkin>
   <ConfirmQuitApp></ConfirmQuitApp>
+  <NoAccountError></NoAccountError>
 </template>
 
 <script setup lang="ts">
@@ -20,4 +21,5 @@ import ConfirmDeleteInstance from "./dialogs/ConfirmDeleteInstance.vue";
 import ConfirmDeleteAccount from "./dialogs/ConfirmDeleteAccount.vue";
 import UploadSkin from "./dialogs/UploadSkin.vue";
 import ConfirmQuitApp from "./dialogs/ConfirmQuitApp.vue";
+import NoAccountError from "./dialogs/NoAccountError.vue";
 </script>
