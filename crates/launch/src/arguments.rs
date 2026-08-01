@@ -49,7 +49,7 @@ pub async fn generate_command_arguments(
     let mut command_arguments = Vec::new();
 
     command_arguments.push(format!(
-        "\"-Dminecraft.client.jar={version_jar}\"",
+        "-Dminecraft.client.jar={version_jar}",
         version_jar = minecraft_location
             .get_version_jar(&instance.config.runtime.minecraft, None)
             .to_string_lossy()
@@ -158,17 +158,14 @@ pub async fn generate_command_arguments(
         && async_fs::metadata(&log_config_path).await.is_ok()
     {
         let argument = &client.argument;
-        jvm_arguments.push(format!(
-            "\"{}\"",
-            argument.replace("${path}", log_config_path.to_string_lossy().as_ref())
-        ));
+        jvm_arguments.push(argument.replace("${path}", log_config_path.to_string_lossy().as_ref()));
     }
     jvm_arguments.extend(version.jvm_arguments.clone());
     command_arguments.push(launch_options.extra_jvm_args.clone());
     command_arguments.extend(
         jvm_arguments
             .iter()
-            .map(|arg| format(arg, jvm_options.clone(), false)),
+            .map(|arg| format(arg, jvm_options.clone())),
     );
     command_arguments.push(
         version
@@ -246,7 +243,7 @@ pub async fn generate_command_arguments(
         version
             .game_arguments
             .iter()
-            .map(|arg| format(arg, game_options.clone(), true)),
+            .map(|arg| format(arg, game_options.clone())),
     );
     command_arguments.push(launch_options.extra_mc_args.clone());
     if let Some(server) = launch_options.server.clone() {
@@ -341,17 +338,12 @@ fn resolve_classpath(
     classpath.join(DELIMITER)
 }
 
-fn format(template: &str, args: HashMap<&str, String>, is_game_option: bool) -> String {
+fn format(template: &str, args: HashMap<&str, String>) -> String {
     let regex = Regex::new(r"\$\{(.*?)}").expect("Internal Error");
     regex
         .replace_all(template, |caps: &regex::Captures| {
             let key = String::from(&caps[1]);
-            let value = args.get(&caps[1]).unwrap_or(&key);
-            if value.contains(" ") && is_game_option {
-                format!("\"{value}\"")
-            } else {
-                value.to_string()
-            }
+            args.get(&caps[1]).unwrap_or(&key).clone()
         })
         .to_string()
 }

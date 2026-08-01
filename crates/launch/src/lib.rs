@@ -21,7 +21,7 @@ use config::Config;
 use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::Instance;
-use log::{error, info, trace, warn};
+use log::{debug, error, info, warn};
 use options::LaunchOptions;
 use platform::{OsFamily, PLATFORM_INFO};
 use serde::Serialize;
@@ -299,10 +299,15 @@ async fn spawn_minecraft_process(
             .to_string_lossy()
             .to_string(),
     );
-    launch_command.push_str(&java_path);
+    launch_command.push_str(&format!("\"{java_path}\""));
+    dbg!(&command_arguments);
     for arg in command_arguments.clone() {
-        launch_command.push(' ');
-        launch_command = format!("{launch_command}{arg}");
+        let arg = if arg.contains(" ") {
+            format!("\"{arg}\"")
+        } else {
+            arg
+        };
+        launch_command.push_str(&format!(" {arg}"));
     }
     commands.push_str(&launch_command);
     let script_path = match PLATFORM_INFO.os_family {
@@ -351,7 +356,7 @@ async fn spawn_minecraft_process(
                 // FIXME: This could
                 // cause panic
                 // FIXME: Unsafe get() method
-                trace!("[{pid}] {last}");
+                debug!("[{pid}] {last}");
                 if last.contains("Setting user:") {
                     let mut status = status.lock().expect("Internal error");
                     *status = LaunchEvent::LogSettingUser;
