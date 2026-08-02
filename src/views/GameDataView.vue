@@ -54,7 +54,7 @@
       </div>
     </div>
     <div class="container">
-      <component></component>
+      <!-- <component></component> -->
     </div>
   </div>
 </template>
@@ -63,26 +63,27 @@
 import AppIcon from "@/components/AppIcon.vue";
 import { useInstanceStore } from "@/store/instance";
 import { LATEST_RELEASE_INSTANCE_ID, LATEST_SNAPSHOT_INSTANCE_ID } from "@conic/instance";
-import { computed, markRaw, ref, shallowRef } from "vue";
-import GameDataWorlds from "./gameData/GameDataWorlds.vue";
-import GameDataMods from "./gameData/GameDataMods.vue";
-import GameDataResourcepacks from "./gameData/GameDataResourcepacks.vue";
-import GameDataScreenshots from "./gameData/GameDataScreenshots.vue";
+import { computed } from "vue";
+// import { computed, markRaw, ref, shallowRef } from "vue";
+// import GameDataWorlds from "./gameData/GameDataWorlds.vue";
+// import GameDataMods from "./gameData/GameDataMods.vue";
+// import GameDataResourcepacks from "./gameData/GameDataResourcepacks.vue";
+// import GameDataScreenshots from "./gameData/GameDataScreenshots.vue";
 
 const instanceStore = useInstanceStore();
 const currentInstance = computed(() => instanceStore.currentInstance);
 
-const props = defineProps<{
-  currentComponent: "mods" | "worlds" | "resourcepacks" | "screenshots";
-}>();
+// const props = defineProps<{
+//   currentComponent: "mods" | "worlds" | "resourcepacks" | "screenshots";
+// }>();
 
-const components = ref({
-  worlds: markRaw(GameDataWorlds),
-  mods: markRaw(GameDataMods),
-  resourcepacks: markRaw(GameDataResourcepacks),
-  screenshots: markRaw(GameDataScreenshots),
-});
-const currentComponent = shallowRef(components.value.mods);
+// const components = ref({
+//   worlds: markRaw(GameDataWorlds),
+//   mods: markRaw(GameDataMods),
+//   resourcepacks: markRaw(GameDataResourcepacks),
+//   screenshots: markRaw(GameDataScreenshots),
+// });
+// const currentComponent = shallowRef(components.value.mods);
 </script>
 
 <style lang="less" scoped>

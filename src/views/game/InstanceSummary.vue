@@ -138,7 +138,7 @@ watch(
 
 async function test() {
   try {
-    let levels = await getAllLevels(currentInstance.value.id);
+    const levels = await getAllLevels(currentInstance.value.id);
     console.log(JSON.stringify(levels));
   } catch (e) {
     console.error(e);

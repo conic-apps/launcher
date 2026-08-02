@@ -4,7 +4,7 @@ export type Page = "game" | "launch" | "settings" | "market" | "accounts" | "gam
 
 export const useNavigationStore = defineStore("navigation", {
     state: () => ({
-        currentPage: "gameData" as Page,
+        currentPage: "game" as Page,
         history: [] as Page[],
     }),
     actions: {
