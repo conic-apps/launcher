@@ -6,7 +6,7 @@
 #![deny(clippy::unwrap_used)]
 
 use folder::DATA_LOCATION;
-use log::{error, info};
+use log::{LevelFilter, error, info};
 use tauri::{AppHandle, Manager, Window, WindowEvent, Wry, plugin::TauriPlugin};
 use tauri_plugin_log::{Target, TargetKind};
 
@@ -34,6 +34,7 @@ fn main() {
         .plugin(launch::init())
         .plugin(folder::init())
         .plugin(platform::init())
+        .plugin(game_data::init())
         .invoke_handler(tauri::generate_handler![open_path])
         .setup(|app| {
             print_info();
@@ -61,7 +62,8 @@ fn init_log_builder() -> tauri_plugin_log::Builder {
             }),
         ])
         .max_file_size(50_000)
-        .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll);
+        .level(LevelFilter::Debug)
+        .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepSome(10));
     #[cfg(debug_assertions)]
     {
         use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};

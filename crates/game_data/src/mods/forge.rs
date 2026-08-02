@@ -7,9 +7,8 @@ use std::path::Path;
 use std::str::FromStr;
 use std::{ffi::OsStr, io::Read};
 
-use anyhow::Result;
-use base64::engine::general_purpose;
 use base64::Engine;
+use base64::engine::general_purpose;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -17,7 +16,6 @@ use toml::Table;
 use zip::ZipArchive;
 
 use super::{Parse, ResolvedAuthorInfo, ResolvedDepends, ResolvedMod};
-use crate::utils::unzip::filter_entries;
 
 /// Represent the forge `mcmod.info` format.
 #[derive(Debug, Clone, Deserialize, Serialize)]
