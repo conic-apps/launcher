@@ -48,6 +48,10 @@ fn main() {
             ]),
         )
         .plugin(
+            "game-data",
+            InlinedPlugin::new().commands(&["cmd_get_all_levels"]),
+        )
+        .plugin(
             "install",
             InlinedPlugin::new().commands(&[
                 "cmd_get_minecraft_version_list",

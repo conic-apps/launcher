@@ -69,6 +69,7 @@
     "instance:allow-cmd-add-background-file",
     "instance:allow-cmd-get-background-path",
     "instance:allow-cmd-calculate-playtime",
+    "game-data:allow-cmd-get-all-levels",
     "modrinth:allow-cmd-search-projects",
     "modrinth:allow-cmd-get-project",
     "modrinth:allow-cmd-get-multiple-projects",

@@ -4,36 +4,23 @@
 
 use std::{ffi::OsStr, fs, io::Read, path::Path};
 
-use anyhow::{anyhow, Result};
+use base64::{Engine, engine::general_purpose};
+use folder::DATA_LOCATION;
+use serde_json::Value;
+use tauri::command;
+use uuid::Uuid;
 use zip::ZipArchive;
 
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-pub struct PackMetadata {
-    pub description: String,
-    pub pack_format: u8,
-    #[serde(flatten)]
-    pub other: Option<serde_json::Value>,
-}
+use crate::error::*;
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-pub struct Resourcepack {
-    pub metadata: PackMetadata,
-    pub icon: String,
+pub struct ResourcePack {
+    pub metadata: Value,
+    pub icon: Option<String>,
     pub name: String,
-    pub r#type: ResourcepackType,
 }
 
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-pub enum ResourcepackType {
-    #[serde(rename = "texture")]
-    Texture,
-    #[serde(rename = "data")]
-    Data,
-    #[serde(rename = "unknown")]
-    Unknown,
-}
-
-pub fn get_metadata<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<PackMetadata> {
+fn get_metadata<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<Value> {
     let path = Path::new(s).to_path_buf();
     let metadata = if path.is_dir() {
         fs::read_to_string(path.join("pack.mcmeta"))?
@@ -48,31 +35,51 @@ pub fn get_metadata<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<PackMetadata> {
     Ok(serde_json::from_str(&metadata)?)
 }
 
-pub fn parse_resourcepack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<Resourcepack> {
+fn get_icon<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<String> {
     let path = Path::new(s).to_path_buf();
-    let pack_type = if let Ok(metadata) = path.join("data").metadata() {
-        if metadata.is_dir() {
-            ResourcepackType::Data
-        } else {
-            return Err(anyhow!("Bad pack"));
-        }
-    } else if let Ok(metadata) = path.join("assets").metadata() {
-        if metadata.is_dir() {
-            ResourcepackType::Texture
-        } else {
-            return Err(anyhow!("Bad pack"));
-        }
+    let icon_bytes = if path.is_dir() {
+        fs::read(path.join("pack.png"))?
     } else {
-        ResourcepackType::Unknown
+        let file = fs::File::open(path)?;
+        let mut zip_archive = ZipArchive::new(file)?;
+        let mut zip_file = zip_archive.by_name("pack.png")?;
+        let mut buf = vec![];
+        zip_file.read_to_end(&mut buf)?;
+        buf
     };
-    Ok(Resourcepack {
+    Ok(format!(
+        "data:image/png;base64,{}",
+        general_purpose::STANDARD_NO_PAD.encode(icon_bytes)
+    ))
+}
+
+pub fn parse_resourcepack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<ResourcePack> {
+    let path = Path::new(s);
+    Ok(ResourcePack {
         metadata: get_metadata(&s)?,
-        icon: "".to_string(), // TODO: icon
+        icon: get_icon(&s).ok(),
         name: path
             .file_name()
-            .ok_or(anyhow!("No File name"))?
+            .ok_or(Error::BadPack)?
             .display()
             .to_string(),
-        r#type: pack_type,
     })
+}
+
+pub fn get_all_resourcepacks<P: AsRef<Path>>(
+    resourcepacks_folder_path: P,
+) -> Result<Vec<ResourcePack>> {
+    Ok(fs::read_dir(resourcepacks_folder_path)?
+        .flatten()
+        .flat_map(|entry| parse_resourcepack(&entry.path()))
+        .collect::<Vec<_>>())
+}
+
+#[command]
+pub(crate) async fn cmd_get_all_resourcepacks(instance_id: Uuid) -> Result<Vec<ResourcePack>> {
+    get_all_resourcepacks(
+        DATA_LOCATION
+            .get_instance_root(&instance_id)
+            .join("resourcepacks"),
+    )
 }

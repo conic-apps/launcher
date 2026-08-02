@@ -20,7 +20,7 @@ beat_this = { path = "./crates/beat_this", version = "0.0.0"}
 config = { path = "./crates/config", version = "0.0.0"}
 download = { path = "./crates/download", version = "0.0.0"}
 folder = { path = "./crates/folder", version = "0.0.0"}
-# game_data = { path = "./crates/game_data", version = "0.0.0"}
+game_data = { path = "./crates/game_data", version = "0.0.0"}
 install = { path = "./crates/install", version = "0.0.0"}
 instance = { path = "./crates/instance", version = "0.0.0"}
 modrinth = { path = "./crates/modrinth", version = "0.0.0" }
@@ -33,7 +33,6 @@ async-fs = "2"
 async-io = "2"
 base64 = "0.22"
 env_logger = "0.11.5"
-fastnbt = "2"
 futures = "0.3"
 log = "0.4"
 num_cpus = "1"
@@ -57,6 +56,8 @@ zip = { version = "4", default-features = false, features = ["deflate"]}
 libloader = "0.1"
 tokio = { version = "1", features = ["macros", "rt"]}
 flate2 = "1"
+fastnbt = "2"
+fastanvil = "0.32"
 
 [profile.dev]
 incremental = true

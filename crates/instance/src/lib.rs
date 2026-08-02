@@ -11,7 +11,7 @@ use std::str::FromStr;
 use flate2::read::GzDecoder;
 use folder::DATA_LOCATION;
 use futures::TryStreamExt;
-use log::{debug, info};
+use log::info;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use tauri::plugin::{Builder, TauriPlugin};
@@ -128,7 +128,6 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
         }
         .to_string_lossy()
         .to_string();
-        debug!("Checking {folder_name}");
         let instance_config = path.join("instance.toml");
         let metadata = match instance_config.metadata() {
             Err(_) => continue,
@@ -161,6 +160,7 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
             instances.sort_by_key(|instance| instance.config.name.clone());
         }
     }
+    info!("Loaded {} instances", instances.len());
     Ok(instances)
 }
 
@@ -293,10 +293,7 @@ fn try_read_log_dir_entry(path: PathBuf) -> Result<Option<u64>> {
             _ => {}
         }
     }
-    let a = first_time.zip(last_time).map(|(start, end)| end - start);
-    println!("{:#?}", path);
-    println!("{:#?}", a);
-    Ok(a)
+    Ok(first_time.zip(last_time).map(|(start, end)| end - start))
 }
 
 fn parse_log_time(line: &str) -> Option<u64> {

@@ -15,6 +15,7 @@
       <sourceFolder url="file://$MODULE_DIR$/crates/platform/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/shared/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/version/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/beat_this/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

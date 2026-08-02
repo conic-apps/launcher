@@ -2,7 +2,6 @@
   <div class="current-instance">
     <div class="row-1">
       <div class="current-instance-info">
-        <!-- TODO: Click here to change Minecraft version -->
         <p class="title" v-if="currentInstance.id === LATEST_RELEASE_INSTANCE_ID">
           {{ $t("game.latestRelease") }}
         </p>
@@ -72,7 +71,7 @@
       </div>
     </div>
     <div class="row-4">
-      <div>
+      <div @click="test">
         <AppIcon name="save"></AppIcon>
         <div><span class="type">存档</span><span class="count">1 个</span></div>
       </div>
@@ -107,6 +106,7 @@ import {
 import { useNavigationStore } from "@/store/navigation";
 import { getInstanceRoot } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
+import { getAllLevels } from "@conic/game_data";
 
 const instanceStore = useInstanceStore();
 const navigationStore = useNavigationStore();
@@ -135,6 +135,15 @@ watch(
   },
   { immediate: true },
 );
+
+async function test() {
+  try {
+    const levels = await getAllLevels(currentInstance.value.id);
+    console.log(JSON.stringify(levels));
+  } catch (e) {
+    console.error(e);
+  }
+}
 </script>
 
 <style lang="less" scoped>
@@ -164,9 +173,37 @@ watch(
       }
     }
   }
+
   .row-2 {
     display: flex;
     align-items: center;
+    margin-top: 16px;
+
+    > p {
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: initial;
+      width: fit-content;
+      padding: 2px 4px;
+
+      :first-child {
+        opacity: 0.8;
+        font-size: 12px;
+      }
+
+      :last-child {
+        margin-top: 2px;
+        font-size: 15px;
+      }
+    }
+
+    div.line {
+      width: 1px;
+      height: 26px;
+      background: var(--ctp-surface2);
+      margin: 0px 8px;
+    }
   }
 
   .row-3 {
@@ -256,37 +293,6 @@ watch(
 
     .launch-button:active {
       opacity: 0.9;
-    }
-  }
-  .row-2 {
-    display: flex;
-    align-items: center;
-    margin-top: 16px;
-
-    > p {
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: initial;
-      width: fit-content;
-      padding: 2px 4px;
-
-      :first-child {
-        opacity: 0.8;
-        font-size: 12px;
-      }
-
-      :last-child {
-        margin-top: 2px;
-        font-size: 15px;
-      }
-    }
-
-    div.line {
-      width: 1px;
-      height: 26px;
-      background: var(--ctp-surface2);
-      margin: 0px 8px;
     }
   }
 
