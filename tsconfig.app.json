@@ -20,7 +20,8 @@
             "@conic/modrinth": ["./crates/modrinth"],
             "@conic/launch": ["./crates/launch"],
             "@conic/folder": ["./crates/folder"],
-            "@conic/platform": ["./crates/platform"]
+            "@conic/platform": ["./crates/platform"],
+            "@conic/game_data": ["./crates/game_data"]
         }
     },
     "lib": ["esnext", "dom"]

@@ -112,6 +112,7 @@ import { useNavigationStore } from "./store/navigation";
 import { getSystemLanguage } from "@conic/config";
 import LaunchView from "./views/LaunchView.vue";
 import { useDialogStore } from "./store/dialog";
+import GameDataView from "./views/GameDataView.vue";
 
 const config = useConfigStore();
 const navigation = useNavigationStore();
@@ -144,6 +145,7 @@ appWindow.getCurrentWindow().onFocusChanged((event: Event<boolean>) => {
 const pages = reactive({
   settings: markRaw(SettingsView),
   game: markRaw(GameView),
+  gameData: markRaw(GameDataView),
   launch: markRaw(LaunchView),
   market: markRaw(MarketView),
   accounts: markRaw(AccountsView),

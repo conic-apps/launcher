@@ -23,6 +23,7 @@ config.workspace = true
 install.workspace = true
 launch.workspace = true
 shared.workspace = true
+game_data.workspace = true
 
 once_cell.workspace = true
 tauri.workspace = true
