@@ -48,6 +48,10 @@ fn main() {
             ]),
         )
         .plugin(
+            "download",
+            InlinedPlugin::new().commands(&["cmd_spawn_download_task", "cmd_cancel_download_task"]),
+        )
+        .plugin(
             "game-data",
             InlinedPlugin::new().commands(&["cmd_get_all_levels"]),
         )
@@ -106,6 +110,14 @@ fn main() {
                 "cmd_spawn_download_library_task",
                 "cmd_cancel_download_library_task",
                 "cmd_parse_audio_file",
+            ]),
+        )
+        .plugin(
+            "terracotta",
+            InlinedPlugin::new().commands(&[
+                "cmd_spawn_download_library_task",
+                "cmd_cancel_download_library_task",
+                "cmd_check_library_valid",
             ]),
         );
     tauri_build::try_build(attributes).unwrap();

@@ -5,7 +5,7 @@
 use serde::Deserialize;
 use sha2::Digest;
 
-#[derive(Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub enum Checksum {
     Sha1(String),
     Sha256(String),

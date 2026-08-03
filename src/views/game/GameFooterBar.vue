@@ -36,6 +36,9 @@
       @click="navigationStore.navigate('accounts')">
       <span>未登录</span>
     </p>
+    <button class="connect" @click="dialogStore.connectExtension.visible = true">
+      <AppIcon name="globe" :size="22"></AppIcon>
+    </button>
     <button class="new-instance" @click="dialogStore.createInstance.visible = true">
       <AppIcon name="add" :size="22" style="margin-right: 8px"></AppIcon>
       创建新游戏
@@ -165,6 +168,10 @@ const profileName = computed(() => {
       }
     }
   }
+  .connect {
+    margin-left: 8px;
+  }
+  .connect,
   .new-instance,
   .install-pack,
   .install-server {
@@ -177,7 +184,7 @@ const profileName = computed(() => {
     align-items: center;
     height: 36px;
     font-size: 14px;
-    padding: 0 16px;
+    padding: 0 12px;
     margin-bottom: 32px;
     &:hover {
       background: var(--ctp-surface2);

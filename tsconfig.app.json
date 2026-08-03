@@ -15,13 +15,15 @@
             "@conic/config": ["./crates/config"],
             "@conic/account": ["./crates/account"],
             "@conic/beat_this": ["./crates/beat_this"],
+            "@conic/download": ["./crates/download"],
             "@conic/install": ["./crates/install"],
             "@conic/instance": ["./crates/instance"],
             "@conic/modrinth": ["./crates/modrinth"],
             "@conic/launch": ["./crates/launch"],
             "@conic/folder": ["./crates/folder"],
             "@conic/platform": ["./crates/platform"],
-            "@conic/game_data": ["./crates/game_data"]
+            "@conic/game_data": ["./crates/game_data"],
+            "@conic/terracotta": ["./crates/terracotta"]
         }
     },
     "lib": ["esnext", "dom"]

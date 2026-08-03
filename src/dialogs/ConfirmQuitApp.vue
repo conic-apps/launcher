@@ -8,7 +8,7 @@
       <div style="display: flex; align-items: center">
         <AppIcon name="warning" :size="50"></AppIcon>
         <div class="message">
-          <p style="font-size: 16px">正在进行的任务将被中止，你确定要退出吗？</p>
+          <p style="font-size: 17px">正在进行的任务将被中止，你确定要退出吗？</p>
           <p style="font-size: 12px; margin-top: 8px">最后的反悔机会</p>
         </div>
       </div>

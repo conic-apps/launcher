@@ -24,6 +24,8 @@
     "config:allow-cmd-load-config-file",
     "config:allow-cmd-save-config",
     "config:allow-cmd-get-default-config",
+    "download:allow-cmd-spawn-download-task",
+    "download:allow-cmd-cancel-download-task",
     "account:allow-cmd-list-accounts",
     "account:allow-cmd-save-skin",
     "account:allow-cmd-microsoft-get-account",
@@ -82,6 +84,9 @@
     "beat:allow-cmd-spawn-download-library-task",
     "beat:allow-cmd-cancel-download-library-task",
     "beat:allow-cmd-parse-audio-file",
+    "terracotta:allow-cmd-spawn-download-library-task",
+    "terracotta:allow-cmd-cancel-download-library-task",
+    "terracotta:allow-cmd-check-library-valid",
     "opener:default",
     "deep-link:default",
     "dialog:default"

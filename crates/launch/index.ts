@@ -3,17 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Config } from "@conic/config"
+import { DownloadState } from "@conic/download"
 import { Instance } from "@conic/instance"
 import { Channel, invoke } from "@tauri-apps/api/core"
-
-type DownloadState = {
-    completed_tasks: number
-    total_tasks: number
-    completedBytes: number
-    totalBytes: number
-    phase: "VerifyExistingFiles" | "DownloadFiles"
-    speed: number
-}
 
 type LaunchProgress =
     | {

@@ -55,6 +55,7 @@ const props = defineProps<{
     left: 0;
     height: 3px;
     background-color: #f0f0f0;
+    transition: width 300ms ease;
   }
 }
 

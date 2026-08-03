@@ -43,7 +43,7 @@
   --ctp-latte-lavender-hsl: 230.935,97.203%,71.961%;
   --ctp-latte-text: #000000;
   --ctp-latte-text-rgb: 0,0,0;
-  --ctp-latte-text-hsl: 233.793,16.022%,35.490%;
+  --ctp-latte-text-hsl: 0,0,0;
   --ctp-latte-subtext1: #5c5f77;
   --ctp-latte-subtext1-rgb: 92,95,119;
   --ctp-latte-subtext1-hsl: 233.333,12.796%,41.373%;
@@ -797,7 +797,7 @@ body.theme-Latte {
     --max-button-background: var(--ctp-latte-green);
     --close-button-background: var(--ctp-latte-red);
     --window-btn-icon-color: var(--ctp-latte-base);
-    --default-text-color: 76,79,105;
+    --default-text-color: var(--ctp-latte-text-rgb);
     --card-background: var(--ctp-latte-mantle);
     --card-border-radius: 8px;
     --card-border: 1px solid var(--ctp-latte-crust);
