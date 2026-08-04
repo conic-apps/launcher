@@ -48,6 +48,10 @@ fn main() {
             ]),
         )
         .plugin(
+            "download",
+            InlinedPlugin::new().commands(&["cmd_spawn_download_task", "cmd_cancel_download_task"]),
+        )
+        .plugin(
             "game-data",
             InlinedPlugin::new().commands(&["cmd_get_all_levels"]),
         )
@@ -81,6 +85,14 @@ fn main() {
             InlinedPlugin::new().commands(&["cmd_spawn_launch_task", "cmd_cancel_launch_task"]),
         )
         .plugin(
+            "multiplayer",
+            InlinedPlugin::new().commands(&[
+                "cmd_spawn_download_library_task",
+                "cmd_cancel_download_library_task",
+                "cmd_check_library_valid",
+            ]),
+        )
+        .plugin(
             "modrinth",
             InlinedPlugin::new().commands(&[
                 "cmd_search_projects",
@@ -99,6 +111,10 @@ fn main() {
         .plugin(
             "folder",
             InlinedPlugin::new().commands(&["cmd_get_data_location", "cmd_get_instance_root"]),
+        )
+        .plugin(
+            "statistics",
+            InlinedPlugin::new().commands(&["cmd_get_statistics", "cmd_get_statistics_by_profile"]),
         )
         .plugin(
             "beat",

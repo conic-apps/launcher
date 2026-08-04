@@ -28,13 +28,16 @@ fn main() {
         .plugin(single_instance_builder())
         .plugin(config::init())
         .plugin(account::init())
+        .plugin(download::init())
         .plugin(beat_this::init())
         .plugin(instance::init())
+        .plugin(multiplayer::init())
         .plugin(install::init())
         .plugin(launch::init())
         .plugin(folder::init())
         .plugin(platform::init())
         .plugin(game_data::init())
+        .plugin(statistics::init())
         .invoke_handler(tauri::generate_handler![open_path])
         .setup(|app| {
             print_info();
