@@ -9,7 +9,6 @@ use std::{
     fmt::Display,
     format,
     path::{Path, PathBuf},
-    time::{SystemTime, UNIX_EPOCH},
 };
 
 use log::error;
@@ -109,15 +108,8 @@ pub struct DataLocation {
 impl DataLocation {
     pub fn new<S: AsRef<OsStr> + ?Sized>(data_folder: &S) -> Self {
         let data_folder_root = Path::new(data_folder).to_path_buf();
-        let temp_path = std::env::temp_dir().join(format!(
-            "conic-launcher-{}",
-            uuid::Uuid::from_u128(
-                SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .expect("Incorrect System Time")
-                    .as_nanos(),
-            )
-        ));
+        let temp_path =
+            std::env::temp_dir().join(format!("conic-launcher-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&temp_path).expect("Could not create temp dir");
         Self {
             accounts: data_folder_root.join("accounts"),

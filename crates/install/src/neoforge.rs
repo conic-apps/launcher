@@ -2,12 +2,7 @@
 // Copyright 2022-2026 OakChaser and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{
-    io::BufRead,
-    path::PathBuf,
-    process::Stdio,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::{io::BufRead, path::PathBuf, process::Stdio};
 
 use folder::DATA_LOCATION;
 use futures::AsyncWriteExt;
@@ -113,15 +108,9 @@ pub async fn download_installer(neoforge_version: &str) -> Result<PathBuf> {
     );
     info!("The installer url is: {installer_url}");
 
-    let installer_path = DATA_LOCATION.temp.join(format!(
-        "{}.jar",
-        uuid::Uuid::from_u128(
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("Incorrect system time")
-                .as_nanos(),
-        )
-    ));
+    let installer_path = DATA_LOCATION
+        .temp
+        .join(format!("{}.jar", uuid::Uuid::new_v4()));
     if let Some(parent) = installer_path.parent() {
         async_fs::create_dir_all(parent).await?;
     }

@@ -33,7 +33,7 @@ pub use checksum::*;
 pub use error::*;
 use mirror::*;
 use tauri::{
-    Runtime, State, command,
+    Manager, Runtime, State, command,
     ipc::Channel,
     plugin::{Builder, TauriPlugin},
 };
@@ -51,6 +51,10 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_spawn_download_task,
             cmd_cancel_download_task
         ])
+        .setup(|app, _| {
+            app.manage(PluginState::default());
+            Ok(())
+        })
         .build()
 }
 
@@ -111,7 +115,7 @@ fn cmd_cancel_download_task(state: State<'_, PluginState>, task_id: Uuid) {
     (*current_task).remove(&task_id);
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum DownloadTaskType {
     VersionInfo,
     Assets,
@@ -121,10 +125,11 @@ pub enum DownloadTaskType {
     ModrinthMod,
     CurseforgeMod,
     BeatThis,
+    ConicNexus,
     Unknown,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct DownloadTask {
     pub url: String,
     pub file: PathBuf,
@@ -220,11 +225,11 @@ pub async fn download(download: &DownloadTask, progress: &DownloadState) -> Resu
     progress.total_tasks.store(1, Ordering::SeqCst);
     progress.completed_tasks.store(0, Ordering::SeqCst);
     let file_path = download.file.clone();
-    let mut file = async_fs::File::create(&file_path).await?;
     let url = download.url.clone();
     if let Some(parent) = file_path.parent() {
         async_fs::create_dir_all(parent).await?
     }
+    let mut file = async_fs::File::create(&file_path).await.unwrap();
     let mut response = HTTP_CLIENT.get(&url).send().await?.error_for_status()?;
     let speed_counter_input = Arc::new(AtomicU64::new(0));
     let _speed_thread = {

@@ -695,17 +695,20 @@ dependencies = [
  "account",
  "beat_this",
  "config",
+ "download",
  "folder",
  "game_data",
  "install",
  "instance",
  "launch",
  "log",
+ "multiplayer",
  "once_cell",
  "platform",
  "serde",
  "serde_json",
  "shared",
+ "statistics",
  "tauri",
  "tauri-build",
  "tauri-plugin-clipboard-manager",
@@ -2515,6 +2518,7 @@ dependencies = [
  "serde_with",
  "sha1_smol",
  "shared",
+ "statistics",
  "tauri",
  "thiserror 2.0.19",
  "tokio",
@@ -2722,6 +2726,25 @@ dependencies = [
  "serde",
  "thiserror 2.0.19",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "multiplayer"
+version = "0.0.0"
+dependencies = [
+ "async-fs",
+ "download",
+ "folder",
+ "futures",
+ "libloader",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sha2",
+ "shared",
+ "tauri",
+ "thiserror 2.0.19",
 ]
 
 [[package]]
@@ -4368,6 +4391,22 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
+name = "statistics"
+version = "0.0.0"
+dependencies = [
+ "async-fs",
+ "folder",
+ "libloader",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "shared",
+ "tauri",
+ "thiserror 2.0.19",
+ "uuid",
+]
 
 [[package]]
 name = "string_cache"
