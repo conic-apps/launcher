@@ -54,10 +54,10 @@
     </div>
     <div class="right-panel">
       <p class="section-title" style="margin-top: 24px; margin-left: 16px">
-        最近一年内使用此档案启动了 <strong>{{ totalLaunches }}</strong> 次游戏
+        一共使用此账户登录 <strong>{{ totalLaunches }}</strong> 次游戏
       </p>
       <div class="section">
-        <ActivityCalendar :data="calendarData"></ActivityCalendar>
+        <ActivityCalendar :data="dailyLaunchCounts"></ActivityCalendar>
       </div>
 
       <SettingGroup title="皮肤与披风">
@@ -117,7 +117,7 @@ import BaseButton from "@/components/base/BaseButton.vue";
 import { useConfigStore } from "@/store/config";
 import { useAccountStore } from "@/store/account";
 import { useDialogStore } from "@/store/dialog";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import {
   getDefaultSkin,
   saveSkin,
@@ -128,6 +128,11 @@ import {
   type OfflineAccount,
   type YggdrasilAccount,
 } from "@conic/account";
+import {
+  getStatisticsByProfile,
+  type StatisticsEntry,
+  type StatisticsProfile,
+} from "@conic/statistics";
 import AppIcon from "@/components/AppIcon.vue";
 import { useYggdrasilServersStore } from "@/store/yggdrasilServers";
 import { save } from "@tauri-apps/plugin-dialog";
@@ -271,31 +276,67 @@ function switchAccount(account: FlatAccount) {
   currentKey.value = account.key;
 }
 
-const totalLaunches = computed(() => {
-  return barChartData.value.reduce((sum, d) => sum + d.value, 0);
-});
+const DAY_MS = 86400000;
 
-function generateCalendarData(): number[] {
-  const data: number[] = [];
-  for (let i = 0; i < 365; i++) {
-    if (Math.random() > 0.6) {
-      data.push(Math.floor(Math.random() * 8));
-    } else {
-      data.push(0);
-    }
+function buildStatisticsProfile(account: FlatAccount | null): StatisticsProfile | null {
+  if (!account) {
+    return null;
   }
-  return data;
+  switch (account.type) {
+    case "Microsoft":
+      return { Microsoft: account.uuid };
+    case "Offline":
+      return { Offline: account.uuid };
+    case "Yggdrasil":
+      return { Yggdrasil: (account.raw.data as YggdrasilAccount).identifier };
+  }
 }
 
-const calendarData = ref(generateCalendarData());
+function aggregateDailyLaunches(entries: StatisticsEntry[]): number[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const windowStart = new Date(today);
+  windowStart.setFullYear(windowStart.getFullYear() - 1);
+  const windowDays = Math.round((today.getTime() - windowStart.getTime()) / DAY_MS) + 1;
+  const counts = new Array<number>(windowDays).fill(0);
+  for (const entry of entries) {
+    const index = Math.floor((entry.launch_at_unix_secs * 1000 - windowStart.getTime()) / DAY_MS);
+    if (index >= 0 && index < counts.length) {
+      counts[index] += 1;
+    }
+  }
+  return counts;
+}
 
-const barChartData = ref([
-  { label: "Latest Release", value: 245 },
-  { label: "Latest Snapshot", value: 87 },
-  { label: "Forge 1.20", value: 134 },
-  { label: "Fabric 1.21", value: 56 },
-  { label: "Quilt 1.19", value: 23 },
-]);
+const dailyLaunchCounts = ref<number[]>([]);
+
+const totalLaunches = ref(0);
+
+async function loadStatistics() {
+  const profile = buildStatisticsProfile(currentAccount.value);
+  if (!profile) {
+    dailyLaunchCounts.value = [];
+    totalLaunches.value = 0;
+    return;
+  }
+  try {
+    const entries = await getStatisticsByProfile(profile);
+    dailyLaunchCounts.value = aggregateDailyLaunches(entries);
+    totalLaunches.value = entries.length;
+  } catch (error) {
+    console.error(error);
+    dailyLaunchCounts.value = [];
+    totalLaunches.value = 0;
+  }
+}
+
+watch(
+  currentAccount,
+  () => {
+    void loadStatistics();
+  },
+  { immediate: true },
+);
 
 const defaultSkins = import.meta.glob("@/assets/images/skins/**/*.webp", {
   eager: true,
