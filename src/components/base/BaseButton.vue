@@ -41,15 +41,11 @@ button.base-button.disabled {
 
 button.base-button:hover {
   background: rgba(var(--ctp-surface2-rgb), 0.85);
+  transform: scale(1.02);
 }
 
 button.base-button:active {
   background: var(--ctp-surface2);
-}
-button.base-button:hover {
-  transform: scale(1.02);
-}
-button.base-button:active {
   transform: scale(0.97);
 }
 </style>

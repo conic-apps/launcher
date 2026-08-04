@@ -25,6 +25,7 @@ use log::{debug, error, info, warn};
 use options::LaunchOptions;
 use platform::{OsFamily, PLATFORM_INFO};
 use serde::Serialize;
+use statistics::{StatisticsProfile, log_launch};
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 use tauri::{
@@ -412,5 +413,11 @@ async fn spawn_minecraft_process(
                 .spawn();
         }
     }
+    let statistics_profile = match launch_options.selected_account {
+        Account::Microsoft(account) => StatisticsProfile::Microsoft(account.profile.uuid),
+        Account::Offline(account) => StatisticsProfile::Offline(account.uuid),
+        Account::Yggdrasil(account) => StatisticsProfile::Yggdrasil(account.identifier),
+    };
+    log_launch(statistics_profile, instance.id).await.unwrap();
     Ok(pid)
 }

@@ -48,6 +48,7 @@ import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
 import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl } from "@conic/account";
+import { formatBytes } from "@conic/download";
 import { InstallTask, Job } from "@conic/install";
 import { LaunchTask } from "@conic/launch";
 import { computed, onMounted, onUnmounted, ref } from "vue";
@@ -114,22 +115,28 @@ async function installGame() {
         progressBarLoading.value = true;
       }
       if (task.job === Job.InstallGame) {
-        if (task.downloadState?.phase === "VerifyExistingFiles") {
+        if (
+          task.downloadState?.phase === "VerifyExistingFiles" ||
+          (task.downloadState && task.downloadState.totalBytes === 0)
+        ) {
           progressDescription.value = "校验游戏文件";
           progressBarLoading.value = true;
         } else if (task.downloadState?.phase === "DownloadFiles") {
-          progressDescription.value = `下载游戏文件 ${task.downloadState.completedBytes} / ${task.downloadState.totalBytes}`;
+          progressDescription.value = `下载游戏文件 ${formatBytes(task.downloadState.completedBytes)} / ${formatBytes(task.downloadState.totalBytes)}`;
           progressBarLoading.value = false;
           progressBarValue.value = task.downloadState.completedBytes;
           progressBarMax.value = task.downloadState.totalBytes;
         }
       }
       if (task.job === Job.InstallJava) {
-        if (task.downloadState?.phase === "VerifyExistingFiles") {
-          progressDescription.value = "安装 Java";
+        if (
+          task.downloadState?.phase === "VerifyExistingFiles" ||
+          (task.downloadState && task.downloadState.totalBytes === 0)
+        ) {
+          progressDescription.value = "检查 Java 运行环境";
           progressBarLoading.value = true;
         } else if (task.downloadState?.phase === "DownloadFiles") {
-          progressDescription.value = `安装 Java ${task.downloadState.completedBytes}/${task.downloadState.totalBytes}`;
+          progressDescription.value = `下载 Java ${formatBytes(task.downloadState.completedBytes)}/${formatBytes(task.downloadState.totalBytes)}`;
           progressBarLoading.value = false;
           progressBarValue.value = task.downloadState.completedBytes;
           progressBarMax.value = task.downloadState.totalBytes;

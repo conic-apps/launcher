@@ -15,8 +15,13 @@ use sha2::Digest;
 
 pub async fn ensure_library() -> Result<()> {
     let mut sha256_hasher = sha2::Sha256::new();
-    let file_content =
-        async_fs::read(&DATA_LOCATION.runtime.join("native").join(LIBRARY.filename)).await?;
+    let file_content = async_fs::read(
+        &DATA_LOCATION
+            .runtime
+            .join("beat-this")
+            .join(LIBRARY.filename),
+    )
+    .await?;
     sha256_hasher.update(file_content);
     let sha256 = format!("{:02x}", sha256_hasher.finalize());
     let checksum_matched = metadata::LIBRARY.sha256 == sha256;
@@ -28,7 +33,10 @@ pub async fn ensure_library() -> Result<()> {
 }
 
 pub async fn download_library(progress: &DownloadState) -> Result<()> {
-    let library_path = DATA_LOCATION.runtime.join("native").join(LIBRARY.filename);
+    let library_path = DATA_LOCATION
+        .runtime
+        .join("beat-this")
+        .join(LIBRARY.filename);
     for source in LIBRARY.sources {
         let download_task = DownloadTask {
             url: source.to_string(),

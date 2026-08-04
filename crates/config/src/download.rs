@@ -8,38 +8,30 @@ use serde::{Deserialize, Serialize};
 ///
 /// You can customize the download URLs for Minecraft libraries and asset files.
 /// Each field provides a list of mirrors that will be attempted in order.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct MirrorConfig {
     /// Mirror URLs for library files.
-    ///
-    /// Defaults to:
-    /// - `https://libraries.minecraft.net`
-    /// - `https://bmclapi2.bangbang93.com/maven`
     pub libraries: Vec<String>,
 
     /// Mirror URLs for asset files.
-    ///
-    /// Defaults to:
-    /// - `https://resources.download.minecraft.net`
-    /// - `https://bmclapi2.bangbang93.com/assets`
     pub assets: Vec<String>,
 }
 
-impl Default for MirrorConfig {
-    fn default() -> Self {
-        Self {
-            libraries: vec![
-                "https://libraries.minecraft.net".to_string(),
-                "https://bmclapi2.bangbang93.com/maven".to_string(),
-            ],
-            assets: vec![
-                "https://resources.download.minecraft.net".to_string(),
-                "https://bmclapi2.bangbang93.com/assets".to_string(),
-            ],
-        }
-    }
-}
+// impl Default for MirrorConfig {
+//     fn default() -> Self {
+//         Self {
+//             libraries: vec![
+//                 "https://libraries.minecraft.net".to_string(),
+//                 "https://bmclapi2.bangbang93.com/maven".to_string(),
+//             ],
+//             assets: vec![
+//                 "https://resources.download.minecraft.net".to_string(),
+//                 "https://bmclapi2.bangbang93.com/assets".to_string(),
+//             ],
+//         }
+//     }
+// }
 
 /// Configuration for controlling download behavior.
 ///

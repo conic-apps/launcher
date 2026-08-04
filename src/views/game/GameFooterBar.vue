@@ -36,6 +36,9 @@
       @click="navigationStore.navigate('accounts')">
       <span>未登录</span>
     </p>
+    <button class="connect" @click="openConnect">
+      <AppIcon name="globe" :size="22"></AppIcon>
+    </button>
     <button class="new-instance" @click="dialogStore.createInstance.visible = true">
       <AppIcon name="add" :size="22" style="margin-right: 8px"></AppIcon>
       创建新游戏
@@ -58,6 +61,7 @@ import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl } from "@conic/account";
 import { computed } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
+import { isLibraryValid } from "@conic/multiplayer";
 
 const configStore = useConfigStore();
 const dialogStore = useDialogStore();
@@ -96,6 +100,15 @@ const profileName = computed(() => {
     return configStore.current_account ? configStore.current_account.data.name : "";
   }
 });
+
+async function openConnect() {
+  if (await isLibraryValid()) {
+    dialogStore.connectExtension.currentComponent = "downloadDescription";
+  } else {
+    dialogStore.connectExtension.currentComponent = "connectManager";
+  }
+  dialogStore.connectExtension.visible = true;
+}
 </script>
 
 <style lang="less" scoped>
@@ -165,6 +178,10 @@ const profileName = computed(() => {
       }
     }
   }
+  .connect {
+    margin-left: 8px;
+  }
+  .connect,
   .new-instance,
   .install-pack,
   .install-server {
@@ -177,7 +194,7 @@ const profileName = computed(() => {
     align-items: center;
     height: 36px;
     font-size: 14px;
-    padding: 0 16px;
+    padding: 0 12px;
     margin-bottom: 32px;
     &:hover {
       background: var(--ctp-surface2);
