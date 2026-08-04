@@ -33,7 +33,6 @@
 <script setup lang="ts">
 import { formatBytes } from "@conic/download";
 import { computed, onMounted, ref } from "vue";
-import { currentComponent } from "./store";
 import { TerracottaLibraryDownloadTask } from "@conic/terracotta";
 import { useDialogStore } from "@/store/dialog";
 import BaseButton from "@/components/base/BaseButton.vue";
@@ -86,7 +85,7 @@ onMounted(async () => {
     progressBar.value.loading = false;
     progressBar.value.value = progressBar.value.max;
     setTimeout(() => {
-      currentComponent.value = "connectManager";
+      dialogStore.connectExtension.currentComponent = "connectManager";
     }, 500);
   } catch (error) {
     console.log(error);
@@ -99,7 +98,7 @@ async function cancelDownload() {
   } catch (e) {
     console.error(e);
   } finally {
-    currentComponent.value = "downloadDescription";
+    dialogStore.connectExtension.currentComponent = "downloadDescription";
     dialogStore.connectExtension.visible = false;
   }
 }

@@ -17,7 +17,11 @@
       <BaseButton class="back" @click="dialogStore.connectExtension.visible = false">
         取消
       </BaseButton>
-      <BaseButton class="start" @click="currentComponent = 'downloadProgress'">开始下载</BaseButton>
+      <BaseButton
+        class="start"
+        @click="dialogStore.connectExtension.currentComponent = 'downloadProgress'"
+        >开始下载</BaseButton
+      >
     </div>
   </div>
 </template>
@@ -25,7 +29,6 @@
 <script setup lang="ts">
 import { useDialogStore } from "@/store/dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { currentComponent } from "./store";
 import BaseButton from "@/components/base/BaseButton.vue";
 
 const dialogStore = useDialogStore();

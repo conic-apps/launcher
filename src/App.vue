@@ -113,7 +113,6 @@ import { getSystemLanguage } from "@conic/config";
 import LaunchView from "./views/LaunchView.vue";
 import { useDialogStore } from "./store/dialog";
 import GameDataView from "./views/GameDataView.vue";
-import ConnectView from "./views/ConnectView.vue";
 
 const config = useConfigStore();
 const navigation = useNavigationStore();
@@ -150,7 +149,6 @@ const pages = reactive({
   launch: markRaw(LaunchView),
   market: markRaw(MarketView),
   accounts: markRaw(AccountsView),
-  connect: markRaw(ConnectView),
 });
 const transitionName = ref("slide-up");
 

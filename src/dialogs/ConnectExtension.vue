@@ -5,11 +5,12 @@
 <template>
   <BaseDialog
     :visible="dialogStore.connectExtension.visible"
-    :width="components[currentComponent].width"
-    :height="components[currentComponent].height">
+    :width="components[dialogStore.connectExtension.currentComponent].width"
+    :height="components[dialogStore.connectExtension.currentComponent].height">
     <div class="connect" data-tauri-drag-region>
       <Transition name="slide-left">
-        <component :is="components[currentComponent].component"></component>
+        <component
+          :is="components[dialogStore.connectExtension.currentComponent].component"></component>
       </Transition>
     </div>
   </BaseDialog>
@@ -21,7 +22,6 @@ import { useDialogStore } from "@/store/dialog";
 import { markRaw, ref } from "vue";
 import DownloadDescription from "./connect/DownloadDescription.vue";
 import DownloadProgress from "./connect/DownloadProgress.vue";
-import { currentComponent } from "./connect/store";
 import ConnectManager from "./connect/ConnectManager.vue";
 
 const dialogStore = useDialogStore();

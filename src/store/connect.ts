@@ -2,7 +2,7 @@
 // Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { checkLibraryValid } from "@conic/terracotta"
+import { isLibraryValid } from "@conic/terracotta"
 import { defineStore } from "pinia"
 
 export const useDialogStore = defineStore("terracotta", {
@@ -12,7 +12,7 @@ export const useDialogStore = defineStore("terracotta", {
     actions: {
         async checkLibraryValid() {
             try {
-                await checkLibraryValid()
+                await isLibraryValid()
                 this.isLibraryValid = true
             } catch {
                 this.isLibraryValid = false

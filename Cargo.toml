@@ -26,6 +26,7 @@ instance = { path = "./crates/instance", version = "0.0.0"}
 modrinth = { path = "./crates/modrinth", version = "0.0.0" }
 launch = { path = "./crates/launch", version = "0.0.0"}
 platform = { path = "./crates/platform", version = "0.0.0"}
+statistics = { path = "./crates/statistics", version = "0.0.0"}
 terracotta = { path = "./crates/terracotta", version = "0.0.0"}
 version = { path = "./crates/version", version = "0.0.0"}
 

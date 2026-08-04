@@ -6,6 +6,8 @@ use serde::Serialize;
 use serde_with::serde_as;
 use thiserror::Error;
 
+use crate::ffi::TerraResult;
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[serde_as]
@@ -52,4 +54,23 @@ pub enum Error {
         #[serde_as(as = "serde_with::DisplayFromStr")]
         futures::future::Aborted,
     ),
+
+    #[error(transparent)]
+    Nul(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        std::ffi::NulError,
+    ),
+
+    #[error("The Terracotta library has not been loaded yet")]
+    NotLoaded,
+
+    #[error("The Terracotta context has not been created")]
+    NoContext,
+
+    #[error("The Terracotta context has already been created")]
+    ContextAlreadyExists,
+
+    #[error("The Terracotta library returned {0}")]
+    TerraResult(TerraResult),
 }
