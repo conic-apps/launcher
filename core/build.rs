@@ -85,6 +85,14 @@ fn main() {
             InlinedPlugin::new().commands(&["cmd_spawn_launch_task", "cmd_cancel_launch_task"]),
         )
         .plugin(
+            "multiplayer",
+            InlinedPlugin::new().commands(&[
+                "cmd_spawn_download_library_task",
+                "cmd_cancel_download_library_task",
+                "cmd_check_library_valid",
+            ]),
+        )
+        .plugin(
             "modrinth",
             InlinedPlugin::new().commands(&[
                 "cmd_search_projects",

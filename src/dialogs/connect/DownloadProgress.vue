@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { formatBytes } from "@conic/download";
 import { computed, onMounted, ref } from "vue";
-import { TerracottaLibraryDownloadTask } from "@conic/terracotta";
+import { ConicNexusLibraryDownloadTask } from "@conic/multiplayer";
 import { useDialogStore } from "@/store/dialog";
 import BaseButton from "@/components/base/BaseButton.vue";
 import BaseProgress from "@/components/base/BaseProgress.vue";
@@ -62,7 +62,7 @@ const formattedProgressValue = computed(() => {
 
 let cancelDownloadHandle: () => Promise<void>;
 onMounted(async () => {
-  const downloadTask = new TerracottaLibraryDownloadTask({
+  const downloadTask = new ConicNexusLibraryDownloadTask({
     onProgress: (progress) => {
       if (progress.phase === "VerifyExistingFiles") {
         progressBar.value.loading = true;

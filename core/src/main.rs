@@ -31,6 +31,7 @@ fn main() {
         .plugin(download::init())
         .plugin(beat_this::init())
         .plugin(instance::init())
+        .plugin(multiplayer::init())
         .plugin(install::init())
         .plugin(launch::init())
         .plugin(folder::init())

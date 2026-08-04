@@ -61,7 +61,7 @@ import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl } from "@conic/account";
 import { computed } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
-import { isLibraryValid } from "@conic/terracotta";
+import { isLibraryValid } from "@conic/multiplayer";
 
 const configStore = useConfigStore();
 const dialogStore = useDialogStore();

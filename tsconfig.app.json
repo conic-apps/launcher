@@ -23,7 +23,8 @@
             "@conic/folder": ["./crates/folder"],
             "@conic/platform": ["./crates/platform"],
             "@conic/game_data": ["./crates/game_data"],
-            "@conic/statistics": ["./crates/statistics"]
+            "@conic/statistics": ["./crates/statistics"],
+            "@conic/multiplayer": ["./crates/multiplayer"]
         }
     },
     "lib": ["esnext", "dom"]

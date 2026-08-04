@@ -6,6 +6,9 @@ const props = defineProps<{
 }>();
 
 const COLUMN_WIDTH = 14;
+const DAY_LABELS_OFFSET = 32;
+
+const dayLabels = ["", "周一", "", "周三", "", "周五", ""];
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -120,20 +123,25 @@ function getLevel(value: number | null): number {
         <span
           v-for="label in monthLabels"
           :key="label.column"
-          :style="{ left: `${label.column * COLUMN_WIDTH}px` }"
+          :style="{ left: `${DAY_LABELS_OFFSET + label.column * COLUMN_WIDTH}px` }"
           >{{ label.text }}</span
         >
       </div>
-      <div class="grid">
-        <div class="week" v-for="(week, wi) in weeks" :key="wi">
-          <div
-            v-for="(day, di) in week"
-            :key="di"
-            class="cell"
-            :class="`level-${getLevel(day)}`"
-            :title="
-              day !== null ? `${formatDate(getCellDate(wi * 7 + di))} · ${day} 次启动` : ''
-            "></div>
+      <div class="calendar-row">
+        <div class="day-labels">
+          <span v-for="(label, i) in dayLabels" :key="i">{{ label }}</span>
+        </div>
+        <div class="grid">
+          <div class="week" v-for="(week, wi) in weeks" :key="wi">
+            <div
+              v-for="(day, di) in week"
+              :key="di"
+              class="cell"
+              :class="`level-${getLevel(day)}`"
+              :title="
+                day !== null ? `${formatDate(getCellDate(wi * 7 + di))} · ${day} 次启动` : ''
+              "></div>
+          </div>
         </div>
       </div>
     </div>
@@ -177,6 +185,27 @@ function getLevel(value: number | null): number {
 .grid {
   display: flex;
   gap: 3px;
+}
+
+.calendar-row {
+  display: flex;
+}
+
+.day-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 28px;
+  margin-right: 4px;
+  flex-shrink: 0;
+
+  span {
+    height: 11px;
+    line-height: 11px;
+    font-size: 11px;
+    text-align: right;
+    color: rgba(var(--default-text-color), 0.5);
+  }
 }
 
 .week {

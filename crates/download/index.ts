@@ -9,7 +9,7 @@ export enum DownloadTaskType {
     ModrinthMod = "ModrinthMod",
     CurseforgeMod = "CurseforgeMod",
     BeatThis = "BeatThis",
-    Terracotta = "Terracotta",
+    ConicNexus = "ConicNexus",
     Unknown = "Unknown",
 }
 

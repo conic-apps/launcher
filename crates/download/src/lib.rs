@@ -125,7 +125,7 @@ pub enum DownloadTaskType {
     ModrinthMod,
     CurseforgeMod,
     BeatThis,
-    Terracotta,
+    ConicNexus,
     Unknown,
 }
 
