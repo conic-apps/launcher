@@ -106,10 +106,7 @@ fn main() {
         )
         .plugin(
             "statistics",
-            InlinedPlugin::new().commands(&[
-                "cmd_get_statistics",
-                "cmd_get_statistics_by_profile",
-            ]),
+            InlinedPlugin::new().commands(&["cmd_get_statistics", "cmd_get_statistics_by_profile"]),
         )
         .plugin(
             "beat",
@@ -117,24 +114,6 @@ fn main() {
                 "cmd_spawn_download_library_task",
                 "cmd_cancel_download_library_task",
                 "cmd_parse_audio_file",
-            ]),
-        )
-        .plugin(
-            "terracotta",
-            InlinedPlugin::new().commands(&[
-                "cmd_spawn_download_library_task",
-                "cmd_cancel_download_library_task",
-                "cmd_check_library_valid",
-                "cmd_ensure_library",
-                "cmd_create_context",
-                "cmd_destroy_context",
-                "cmd_create_room",
-                "cmd_join_room",
-                "cmd_set_waiting",
-                "cmd_get_state",
-                "cmd_poll_event",
-                "cmd_verify_room_code",
-                "cmd_version",
             ]),
         );
     tauri_build::try_build(attributes).unwrap();

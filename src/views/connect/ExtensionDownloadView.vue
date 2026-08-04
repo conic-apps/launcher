@@ -20,9 +20,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import GameFooterBar from "./game/GameFooterBar.vue";
-</script>
+<script setup lang="ts"></script>
 
 <style lang="less" scoped>
 .connect-extension-download {

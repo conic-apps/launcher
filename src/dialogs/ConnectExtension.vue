@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import BaseDialog from "@/components/base/BaseDialog.vue";
 import { useDialogStore } from "@/store/dialog";
-import { markRaw, ref } from "vue";
+import { markRaw } from "vue";
 import DownloadDescription from "./connect/DownloadDescription.vue";
 import DownloadProgress from "./connect/DownloadProgress.vue";
 import ConnectManager from "./connect/ConnectManager.vue";
@@ -43,8 +43,6 @@ const components = {
     component: markRaw(ConnectManager),
   },
 };
-
-const height = ref(0);
 </script>
 
 <style lang="less" scoped>

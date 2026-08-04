@@ -37,7 +37,6 @@ fn main() {
         .plugin(platform::init())
         .plugin(game_data::init())
         .plugin(statistics::init())
-        .plugin(terracotta::init())
         .invoke_handler(tauri::generate_handler![open_path])
         .setup(|app| {
             print_info();

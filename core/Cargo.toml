@@ -25,7 +25,6 @@ launch.workspace = true
 shared.workspace = true
 game_data.workspace = true
 statistics.workspace = true
-terracotta.workspace = true
 download.workspace = true
 
 once_cell.workspace = true

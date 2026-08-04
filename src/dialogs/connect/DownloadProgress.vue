@@ -62,7 +62,7 @@ const formattedProgressValue = computed(() => {
 
 let cancelDownloadHandle: () => Promise<void>;
 onMounted(async () => {
-  let downloadTask = new TerracottaLibraryDownloadTask({
+  const downloadTask = new TerracottaLibraryDownloadTask({
     onProgress: (progress) => {
       if (progress.phase === "VerifyExistingFiles") {
         progressBar.value.loading = true;
