@@ -346,37 +346,38 @@ async fn spawn_minecraft_process(
     let mut out = std::io::BufReader::new(out);
     let pid = minecraft_process.id();
     let status_cloned = status.clone();
+    let mut buf = String::new();
     thread::spawn(move || {
-        let mut buf = String::new();
-        while out.read_line(&mut buf).is_ok() {
-            if let Ok(Some(_)) = minecraft_process.try_wait() {
+        loop {
+            buf.clear();
+            let size = match out.read_line(&mut buf) {
+                Ok(size) => size,
+                Err(_) => break,
+            };
+            if size == 0 {
                 break;
             }
-            let lines: Vec<_> = buf.split("\n").collect();
-            if let Some(last) = lines.get(lines.len() - 2) {
-                // FIXME: This could
-                // cause panic
-                // FIXME: Unsafe get() method
-                debug!("[{pid}] {last}");
-                if last.contains("Setting user:") {
-                    let mut status = status.lock().expect("Internal error");
-                    *status = LaunchEvent::LogSettingUser;
-                }
-                if last.to_lowercase().contains("lwjgl version") {
-                    info!("Found LWJGL version, the game seems to have started successfully.");
-                    let mut status = status.lock().expect("Internal error");
-                    *status = LaunchEvent::LogLwjglVersion;
-                }
-                if last.contains("OpenAL initialized") {
-                    let mut status = status.lock().expect("Internal error");
-                    *status = LaunchEvent::LogOpenALLoaded;
-                }
-                if last.contains("Created") {
-                    let mut status = status.lock().expect("Internal error");
-                    *status = LaunchEvent::LogTextureLoaded;
-                }
+            let line = buf.trim();
+            debug!("[{pid}] {line}");
+            if line.contains("Setting user:") {
+                let mut status = status.lock().expect("Internal error");
+                *status = LaunchEvent::LogSettingUser;
+            }
+            if line.to_lowercase().contains("lwjgl version") {
+                info!("Found LWJGL version, the game seems to have started successfully.");
+                let mut status = status.lock().expect("Internal error");
+                *status = LaunchEvent::LogLwjglVersion;
+            }
+            if line.contains("OpenAL initialized") {
+                let mut status = status.lock().expect("Internal error");
+                *status = LaunchEvent::LogOpenALLoaded;
+            }
+            if line.contains("Created") {
+                let mut status = status.lock().expect("Internal error");
+                *status = LaunchEvent::LogTextureLoaded;
             }
         }
+
         let output = match minecraft_process.wait_with_output() {
             Ok(output) => output,
             Err(_) => {
