@@ -46,6 +46,12 @@ pub enum Error {
     #[error("The library file is broken")]
     ChecksumMismatch,
 
+    #[error("Conic Nexus returned an error (code {code}): {description}")]
+    ConicNexus {
+        code: i32,
+        description: String,
+    },
+
     #[error(transparent)]
     Aborted(
         #[from]

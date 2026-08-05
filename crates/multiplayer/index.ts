@@ -4,6 +4,7 @@
 
 import { DownloadState } from "@conic/download"
 import { Channel, invoke } from "@tauri-apps/api/core"
+import { listen, type UnlistenFn } from "@tauri-apps/api/event"
 
 export enum ConicNexusErrorKind {
     Io = "Io",
@@ -13,6 +14,7 @@ export enum ConicNexusErrorKind {
     LibLoader = "LibLoader",
     ChecksumMismatch = "ChecksumMismatch",
     Aborted = "Aborted",
+    ConicNexus = "ConicNexus",
 }
 
 export class ConicNexusLibraryDownloadTask {
@@ -43,4 +45,196 @@ export async function isLibraryValid(): Promise<boolean> {
     } catch {
         return false
     }
+}
+
+export type MultiplayerState =
+    | "waiting"
+    | "host-scanning"
+    | "host-starting"
+    | "host-ok"
+    | "guest-connecting"
+    | "guest-starting"
+    | "guest-ok"
+    | "exception"
+    | "unknown"
+
+const STATE_NAMES = [
+    "waiting",
+    "host-scanning",
+    "host-starting",
+    "host-ok",
+    "guest-connecting",
+    "guest-starting",
+    "guest-ok",
+    "exception",
+] as const
+
+export function toStateName(state: number | string): MultiplayerState {
+    if (typeof state === "number") {
+        return STATE_NAMES[state] ?? "unknown"
+    }
+    return state as MultiplayerState
+}
+
+export type PlayerProfile = {
+    machine_id: string
+    name: string
+    vendor: string
+    kind: "HOST" | "GUEST"
+}
+
+export type OverlayInfo = {
+    pid: number
+    alive: boolean
+    rpc_port: number
+}
+
+export type SessionStateDetail =
+    | { port: number; profiles: PlayerProfile[]; overlay: OverlayInfo | null }
+    | { url: string; profiles: PlayerProfile[]; overlay: OverlayInfo | null }
+    | { error: { code: number; message: string } }
+    | Record<string, never>
+
+export type SessionState = {
+    version: number
+    state: MultiplayerState
+    room_code: string
+    detail: SessionStateDetail
+}
+
+export type PeerInfo = {
+    hostname: string
+    ipv4: string
+    is_local: boolean
+    nat: number
+}
+
+export type MultiplayerEventName =
+    | "state-changed"
+    | "player-joined"
+    | "player-left"
+    | "host-ready"
+    | "guest-ready"
+    | "fault"
+
+export const MULTIPLAYER_EVENT_TYPES = {
+    "state-changed": 0,
+    "player-joined": 1,
+    "player-left": 2,
+    "host-ready": 3,
+    "guest-ready": 4,
+    fault: 5,
+} as const
+
+const TYPE_TO_NAME = Object.fromEntries(
+    Object.entries(MULTIPLAYER_EVENT_TYPES).map(([name, type]) => [type, name]),
+) as Record<number, MultiplayerEventName>
+
+export type MultiplayerEventMap = {
+    "state-changed": { state: number | MultiplayerState; version: number }
+    "player-joined": { profile: PlayerProfile }
+    "player-left": { machine_id: string }
+    "host-ready": { room: string; port: number }
+    "guest-ready": { url: string }
+    fault: { code: number; message: string }
+}
+
+let eventChannelUnlisten: UnlistenFn | null = null
+const eventHandlers = new Map<MultiplayerEventName, ((payload: unknown) => void)[]>()
+
+async function ensureEventChannel() {
+    if (eventChannelUnlisten) return
+    eventChannelUnlisten = await listen<{ sequence: number; type: number; payload: unknown }>(
+        "conic-nexus://event",
+        (event) => {
+            const name = TYPE_TO_NAME[event.payload.type]
+            const callbacks = name ? eventHandlers.get(name) : undefined
+            if (!callbacks) return
+            for (const callback of callbacks) {
+                callback(event.payload.payload)
+            }
+        },
+    )
+}
+
+export async function on<K extends MultiplayerEventName>(
+    name: K,
+    callback: (payload: MultiplayerEventMap[K]) => void,
+): Promise<() => void> {
+    await ensureEventChannel()
+    const callbacks = eventHandlers.get(name) ?? []
+    callbacks.push(callback as (payload: unknown) => void)
+    eventHandlers.set(name, callbacks)
+    return () => off(name, callback as (payload: unknown) => void)
+}
+
+export async function off<K extends MultiplayerEventName>(
+    name: K,
+    callback: (payload: MultiplayerEventMap[K]) => void,
+): Promise<void> {
+    const callbacks = eventHandlers.get(name)
+    if (!callbacks) return
+    const index = callbacks.indexOf(callback as (payload: unknown) => void)
+    if (index >= 0) callbacks.splice(index, 1)
+    if (callbacks.length === 0) eventHandlers.delete(name)
+}
+
+export type CreateRoomOptions = {
+    playerName?: string
+    roomCode?: string
+}
+
+export async function createRoom(options: CreateRoomOptions = {}): Promise<void> {
+    await invoke("plugin:multiplayer|cmd_create_room", {
+        playerName: options.playerName,
+        roomCode: options.roomCode,
+    })
+}
+
+export type JoinRoomOptions = {
+    roomCode: string
+    playerName?: string
+}
+
+export async function joinRoom(options: JoinRoomOptions): Promise<void> {
+    await invoke("plugin:multiplayer|cmd_join_room", {
+        roomCode: options.roomCode,
+        playerName: options.playerName,
+    })
+}
+
+export async function leaveRoom(): Promise<void> {
+    await invoke("plugin:multiplayer|cmd_leave_room")
+}
+
+export async function getSessionState(): Promise<SessionState> {
+    return await invoke("plugin:multiplayer|cmd_get_session_state")
+}
+
+export async function queryPeers(): Promise<PeerInfo[]> {
+    return await invoke("plugin:multiplayer|cmd_query_peers")
+}
+
+export async function recentLogs(limit?: number): Promise<string[]> {
+    return await invoke("plugin:multiplayer|cmd_recent_logs", { limit })
+}
+
+export async function isRoomCodeValid(roomCode: string): Promise<boolean> {
+    return await invoke("plugin:multiplayer|cmd_room_code_is_valid", { roomCode })
+}
+
+export async function version(): Promise<string> {
+    return await invoke("plugin:multiplayer|cmd_version")
+}
+
+export type ConfigureOptions = {
+    publicNodes?: string[]
+    dataDir?: string
+}
+
+export async function configure(options: ConfigureOptions): Promise<void> {
+    await invoke("plugin:multiplayer|cmd_configure", {
+        publicNodes: options.publicNodes,
+        dataDir: options.dataDir,
+    })
 }

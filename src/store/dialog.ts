@@ -20,6 +20,13 @@ export const useDialogStore = defineStore("dialog", () => {
             | "downloadDescription"
             | "downloadProgress"
             | "connectManager",
+        connectManagerComponent: "hostReady" as
+            | "waiting"
+            | "hostScan"
+            | "hostReady"
+            | "guestCodeInput"
+            | "guestJoining"
+            | "guestReady",
     })
     const confirmDeleteInstance = ref({
         visible: false,

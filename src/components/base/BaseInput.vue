@@ -107,6 +107,7 @@ watch(model, () => {
   margin: 0;
   padding: 2px 8px;
   text-align: inherit;
+  font-size: 13px;
 }
 
 .input-box input::placeholder {
