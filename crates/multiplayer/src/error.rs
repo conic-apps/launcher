@@ -1,5 +1,5 @@
 // Conic Launcher
-// Copyright 2022-2026 OakChaser and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 use serde::Serialize;
@@ -45,6 +45,9 @@ pub enum Error {
 
     #[error("The library file is broken")]
     ChecksumMismatch,
+
+    #[error("Conic Nexus returned an error (code {code}): {description}")]
+    ConicNexus { code: i32, description: String },
 
     #[error(transparent)]
     Aborted(

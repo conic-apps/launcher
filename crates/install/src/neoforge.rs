@@ -1,12 +1,12 @@
 // Conic Launcher
-// Copyright 2022-2026 OakChaser and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 use std::{io::BufRead, path::PathBuf, process::Stdio};
 
 use folder::DATA_LOCATION;
 use futures::AsyncWriteExt;
-use log::{error, info, trace};
+use log::{debug, error, info};
 use serde_json::Value;
 use shared::HTTP_CLIENT;
 
@@ -75,13 +75,11 @@ pub async fn install(install_dir: &PathBuf, neoforge_version: &str) -> Result<()
             break;
         }
         let line = buf.trim();
-        println!("{:#?}", line);
         if line.contains("Successfully installed client into launcher") {
             success = true;
             info!("Successfully ran the neoforge installer");
         } else {
-            trace!("[{pid}] {line}");
-            println!("[{pid}] {buf}");
+            debug!("[{pid}] {line}");
         }
     }
 

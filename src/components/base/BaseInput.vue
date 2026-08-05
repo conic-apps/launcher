@@ -1,5 +1,5 @@
 <!-- Conic Launcher -->
-<!-- Copyright 2022-2026 OakChaser and contributors. All rights reserved. -->
+<!-- Copyright 2022-2026 ConicMC developers. All rights reserved. -->
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
@@ -107,6 +107,7 @@ watch(model, () => {
   margin: 0;
   padding: 2px 8px;
   text-align: inherit;
+  font-size: 13px;
 }
 
 .input-box input::placeholder {

@@ -2737,6 +2737,7 @@ dependencies = [
  "folder",
  "futures",
  "libloader",
+ "log",
  "reqwest",
  "serde",
  "serde_json",

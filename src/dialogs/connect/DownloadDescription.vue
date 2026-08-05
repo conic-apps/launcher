@@ -1,13 +1,16 @@
+<!-- Conic Launcher -->
+<!-- Copyright 2022-2026 ConicMC developers. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div class="connect-extension-download-description">
-    <p class="title">下载 Conic Connect 扩展</p>
+    <p class="title">下载 Conic Nexus 扩展</p>
     <p class="description">
-      Conic Connect 扩展基于 Easytier 构建，是
-      <a href="" @click.prevent="openUrl('https://github.com/burningtnt/Terracotta')">Terracotta</a>
-      项目的移植版本，可以与其他包括 HMCL 在内的很多启动器联机
+      Conic Nexus 扩展基于 Easytier 构建，且实现了 Scaffolding 协议，可以与其他包括 HMCL
+      在内的很多启动器联机
     </p>
     <p class="description">
-      此扩展只使用了 Easytier 的 P2P
+      Conic Nexus 只使用 P2P
       连接，联机成功后房间内用户之间将直接连接，不使用第三方服务器转发您的流量，联机体验取决于参与联机者的网络情况。
     </p>
     <p class="description description-important">
@@ -28,7 +31,6 @@
 
 <script setup lang="ts">
 import { useDialogStore } from "@/store/dialog";
-import { openUrl } from "@tauri-apps/plugin-opener";
 import BaseButton from "@/components/base/BaseButton.vue";
 
 const dialogStore = useDialogStore();

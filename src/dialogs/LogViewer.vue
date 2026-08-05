@@ -1,5 +1,5 @@
 <!-- Conic Launcher -->
-<!-- Copyright 2022-2026 OakChaser and contributors. All rights reserved. -->
+<!-- Copyright 2022-2026 ConicMC developers. All rights reserved. -->
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <!-- TODO: Support tab, can switch to different instance to view log, then change name to LogBrowser -->
