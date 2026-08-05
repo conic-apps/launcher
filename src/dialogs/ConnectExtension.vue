@@ -69,6 +69,10 @@ const connectManagerDialogSize = {
     width: 520,
     height: 340,
   },
+  exception: {
+    width: 580,
+    height: 274,
+  },
 };
 
 const dialogSize = computed(() => {

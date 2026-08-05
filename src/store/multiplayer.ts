@@ -46,12 +46,17 @@ export const useMultiplayerStore = defineStore("multiplayer", () => {
                 const error = session.detail.error
                 fault.value = { code: error.code, message: error.message }
             }
+        } catch (error) {
+            console.error(error)
         } finally {
             refreshing = false
         }
     }
 
+    let initialized = false
     async function init() {
+        if (initialized) return
+        initialized = true
         on("state-changed", (payload) => {
             state.value = toStateName(payload.state)
             refresh()
