@@ -342,4 +342,18 @@ li.select-option {
 li.selected {
   background: #ffffff17;
 }
+.base-dropdown-select-fade-leave-active,
+.base-dropdown-select-fade-enter-active {
+  transition: all 120ms ease;
+}
+
+.base-dropdown-select-fade-leave-from,
+.base-dropdown-select-fade-enter-to {
+  opacity: 1;
+}
+
+.base-dropdown-select-fade-leave-to,
+.base-dropdown-select-fade-enter-from {
+  opacity: 0;
+}
 </style>
