@@ -9,7 +9,7 @@
       <AppIcon name="chevron-down" :size="14"> </AppIcon>
     </div>
     <div>
-      <Transition>
+      <Transition name="base-dropdown-select-fade">
         <ul
           ref="options"
           class="options"
@@ -92,7 +92,7 @@ function changeSelection(index: number) {
   margin-top: 4px;
   border-radius: var(--dialog-border-radius);
   border: var(--controllers-border);
-  background: var(--dialog-background);
+  background: var(--ctp-base);
   box-shadow: 0px 0px 10px #4500611d;
   position: relative;
   font-size: 14px;
@@ -127,5 +127,19 @@ li.select-option {
 
 li.selected {
   background: #ffffff17;
+}
+.base-dropdown-select-fade-leave-active,
+.base-dropdown-select-fade-enter-active {
+  transition: all 120ms ease;
+}
+
+.base-dropdown-select-fade-leave-from,
+.base-dropdown-select-fade-enter-to {
+  opacity: 1;
+}
+
+.base-dropdown-select-fade-leave-to,
+.base-dropdown-select-fade-enter-from {
+  opacity: 0;
 }
 </style>

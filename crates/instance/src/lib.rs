@@ -260,7 +260,7 @@ pub fn calculate_playtime(instance_id: Uuid) -> Result<u64> {
         })
         .collect::<Vec<_>>()
         .into_par_iter()
-        .map(|path| match try_read_log_dir_entry(path) {
+        .map(|path| match try_read_flate2_log_dir_entry(path) {
             Err(_) => 0,
             Ok(x) => x.unwrap_or_default(),
         })
@@ -268,21 +268,47 @@ pub fn calculate_playtime(instance_id: Uuid) -> Result<u64> {
     Ok(total_play_time)
 }
 
-fn try_read_log_dir_entry(path: PathBuf) -> Result<Option<u64>> {
+fn try_read_flate2_log_dir_entry(path: PathBuf) -> Result<Option<u64>> {
+    if let Some(file_name) = path.file_name()
+        && file_name == "latest.log"
+    {
+        return try_read_nogz_log_dir_entry(path);
+    }
     let file = std::fs::File::open(&path)?;
     let decoder = GzDecoder::new(file);
     let reader = BufReader::new(decoder);
-
     let mut first_time: Option<u64> = None;
     let mut last_time: Option<u64> = None;
 
     for line in reader.lines() {
         let line = line?;
-
         let Some(time) = parse_log_time(&line) else {
             continue;
         };
+        match first_time {
+            None => {
+                first_time = Some(time);
+            }
+            Some(first) if time > first => {
+                last_time = Some(time);
+            }
+            _ => {}
+        }
+    }
+    Ok(first_time.zip(last_time).map(|(start, end)| end - start))
+}
 
+fn try_read_nogz_log_dir_entry(path: PathBuf) -> Result<Option<u64>> {
+    let file = std::fs::File::open(&path)?;
+    let reader = BufReader::new(file);
+    let mut first_time: Option<u64> = None;
+    let mut last_time: Option<u64> = None;
+
+    for line in reader.lines() {
+        let line = line?;
+        let Some(time) = parse_log_time(&line) else {
+            continue;
+        };
         match first_time {
             None => {
                 first_time = Some(time);
