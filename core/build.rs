@@ -1,5 +1,5 @@
 // Conic Launcher
-// Copyright 2022-2026 OakChaser and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 use tauri_build::InlinedPlugin;
@@ -90,6 +90,15 @@ fn main() {
                 "cmd_spawn_download_library_task",
                 "cmd_cancel_download_library_task",
                 "cmd_check_library_valid",
+                "cmd_create_room",
+                "cmd_join_room",
+                "cmd_leave_room",
+                "cmd_get_session_state",
+                "cmd_query_peers",
+                "cmd_recent_logs",
+                "cmd_room_code_is_valid",
+                "cmd_version",
+                "cmd_configure",
             ]),
         )
         .plugin(

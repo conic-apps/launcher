@@ -1,5 +1,5 @@
 // Conic Launcher
-// Copyright 2022-2026 OakChaser and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { defineStore } from "pinia"
@@ -20,6 +20,14 @@ export const useDialogStore = defineStore("dialog", () => {
             | "downloadDescription"
             | "downloadProgress"
             | "connectManager",
+        connectManagerComponent: "waiting" as
+            | "waiting"
+            | "hostScan"
+            | "hostReady"
+            | "guestCodeInput"
+            | "guestJoining"
+            | "guestReady"
+            | "exception",
     })
     const confirmDeleteInstance = ref({
         visible: false,

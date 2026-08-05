@@ -1,3 +1,7 @@
+<!-- Conic Launcher -->
+<!-- Copyright 2022-2026 ConicMC developers. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div class="add-yggdrasil-account-container">
     <div v-if="processing" class="processing">

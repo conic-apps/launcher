@@ -1,5 +1,5 @@
 // Conic Launcher
-// Copyright 2022-2026 OakChaser and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 export default {
@@ -222,7 +222,7 @@ export default {
             viewSourceCode: "View Source Code",
             viewSourceCodeDesc: "View source code in our GitHub repository.",
             sponsorDesc:
-                "Conic Launcher is a free, open-source, cross-platform Minecraft launcher. The program is built by OakChaser and other contributors. Your support will help us.",
+                "Conic Launcher is a free project that aims to bring a better gaming experience and help reduce carbon emissions. The project is developed and maintained by the developers of ConicMC. Your sponsorship or contribution can not only help Conic Launcher grow, but also contribute to the free software movement and environmental protection.",
             thanks: "Thanks",
             thirdPartyLibraries: "Third-Party Libraries",
         },

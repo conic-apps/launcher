@@ -1,3 +1,7 @@
+<!-- Conic Launcher -->
+<!-- Copyright 2022-2026 ConicMC developers. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <script setup lang="ts">
 import { getAvatarFromUrl, getDefaultSkin } from "@conic/account";
 import { ref, watch } from "vue";

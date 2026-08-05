@@ -1,3 +1,7 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use base64::{Engine, engine::general_purpose};
 use futures::stream::{self, StreamExt};
 use serde::{Deserialize, Serialize};

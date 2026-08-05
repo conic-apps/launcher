@@ -1,3 +1,7 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
 import { defineStore } from "pinia"
 
 export type Page = "game" | "launch" | "settings" | "market" | "accounts" | "gameData"

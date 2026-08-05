@@ -1,5 +1,5 @@
 <!-- Conic Launcher -->
-<!-- Copyright 2022-2026 OakChaser and contributors. All rights reserved. -->
+<!-- Copyright 2022-2026 ConicMC developers. All rights reserved. -->
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
@@ -103,9 +103,9 @@ const profileName = computed(() => {
 
 async function openConnect() {
   if (await isLibraryValid()) {
-    dialogStore.connectExtension.currentComponent = "downloadDescription";
-  } else {
     dialogStore.connectExtension.currentComponent = "connectManager";
+  } else {
+    dialogStore.connectExtension.currentComponent = "downloadDescription";
   }
   dialogStore.connectExtension.visible = true;
 }

@@ -1,3 +1,7 @@
+<!-- Conic Launcher -->
+<!-- Copyright 2022-2026 ConicMC developers. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div class="connect-extension-download-progress">
     <div style="display: flex; align-items: center">
@@ -47,8 +51,8 @@ const progressBar = ref({
 });
 
 enum ProgressPhase {
-  Prepare = "准备下载 Conic Connect 扩展",
-  Downloading = "正在下载 Conic Connect 扩展",
+  Prepare = "准备下载 Conic Nexus 扩展",
+  Downloading = "正在下载 Conic Nexus 扩展",
   Finished = "完成！",
 }
 
