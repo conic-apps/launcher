@@ -219,8 +219,43 @@ export async function recentLogs(limit?: number): Promise<string[]> {
     return await invoke("plugin:multiplayer|cmd_recent_logs", { limit })
 }
 
-export async function isRoomCodeValid(roomCode: string): Promise<boolean> {
-    return await invoke("plugin:multiplayer|cmd_room_code_is_valid", { roomCode })
+const ROOM_CODE_CHAR_MAP: Record<string, number> = (() => {
+    const map: Record<string, number> = {}
+    for (let i = 0; i <= 9; i++) {
+        map[String(i)] = i
+    }
+    for (let i = 0; i < 8; i++) {
+        map[String.fromCharCode("A".charCodeAt(0) + i)] = 10 + i
+    }
+    for (let i = 0; i < 5; i++) {
+        map[String.fromCharCode("J".charCodeAt(0) + i)] = 18 + i
+    }
+    for (let i = 0; i < 11; i++) {
+        map[String.fromCharCode("P".charCodeAt(0) + i)] = 23 + i
+    }
+    return map
+})()
+
+export function isRoomCodeValid(input: string): boolean {
+    const match =
+        /^U\/([0-9A-HJ-NP-Z]{4})-([0-9A-HJ-NP-Z]{4})-([0-9A-HJ-NP-Z]{4})-([0-9A-HJ-NP-Z]{4})$/.exec(
+            input,
+        )
+    if (!match) {
+        return false
+    }
+    const chars = match.slice(1).join("").split("")
+    let value = 0n
+    let base = 1n
+    for (const ch of chars) {
+        const mapped = ROOM_CODE_CHAR_MAP[ch]
+        if (mapped === undefined) {
+            return false
+        }
+        value += BigInt(mapped) * base
+        base *= 34n
+    }
+    return value % 7n === 0n
 }
 
 export async function version(): Promise<string> {

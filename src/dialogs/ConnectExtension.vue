@@ -46,32 +46,32 @@ const components = {
 
 const connectManagerDialogSize = {
   waiting: {
-    width: 580,
+    width: 600,
     height: 274,
   },
   hostScan: {
-    width: 580,
+    width: 600,
     height: 280,
   },
   hostReady: {
-    width: 580,
+    width: 600,
     height: 340,
   },
   guestCodeInput: {
-    width: 520,
+    width: 600,
     height: 244,
   },
   guestJoining: {
-    width: 520,
+    width: 600,
     height: 210,
   },
   guestReady: {
-    width: 520,
+    width: 600,
     height: 340,
   },
   exception: {
-    width: 580,
-    height: 274,
+    width: 600,
+    height: 190,
   },
 };
 

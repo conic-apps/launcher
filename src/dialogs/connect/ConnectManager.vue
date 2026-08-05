@@ -1,8 +1,7 @@
 <template>
   <div class="connect-extension-manager">
     <div class="header">
-      <p class="title">Conic Connect 跨局域网联机</p>
-      <BaseButton>检查 NAT 类型</BaseButton>
+      <p class="title">Conic Nexus 跨局域网联机</p>
     </div>
     <div class="waiting" v-if="uiComponent === 'waiting'">
       <p class="description description-info">
@@ -51,11 +50,11 @@
       <p class="description description-info">
         请把下面的邀请码发送给好友，并提醒他们在启动器中输入邀请码加入小组
       </p>
-      <div style="display: flex; height: calc(100% - 80px); gap: 16px">
+      <div style="display: flex; height: calc(100% - 56px); gap: 16px">
         <div class="group-actions">
           <div style="display: flex; flex-direction: column; align-items: center">
             <p style="font-size: 13px; margin-top: 6px">邀请码（点击复制）</p>
-            <Transition name="fade" mode="out-in">
+            <Transition :name="showCopyMessage ? 'zoom-out' : 'zoom-in'" mode="out-in">
               <p style="font-size: 16px; margin-top: 12px" v-if="showCopyMessage">已复制！</p>
               <p style="font-size: 16px; margin-top: 12px" v-else @click="copyCode">
                 {{ multiplayerStore.roomCode }}
@@ -66,12 +65,15 @@
         </div>
         <div class="group-guests-list" style="overflow: auto">
           <template v-for="player in multiplayerStore.players" :key="player.machine_id">
-            <div>
-              <!-- NOTE: 如果不是房主，则不显示 “主机”的tag -->
-              <p class="name">
-                {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
-              </p>
-              <p class="env">Conic Nexus, Easytier v2.6.4</p>
+            <div style="display: flex; justify-content: space-between">
+              <div>
+                <p class="name">
+                  {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
+                </p>
+                <p class="vendor">{{ player.vendor }}</p>
+              </div>
+              <!-- NOTE: 在下面这个元素渲染NAT类型，后面的数字是easytier返回的NAT代码 -->
+              <p style="font-size: 11px; opacity: 0.7">NAT1</p>
             </div>
           </template>
           <p class="message" v-if="multiplayerStore.players.length === 0">等待其他玩家加入...</p>
@@ -81,8 +83,18 @@
     <div class="guest-input-code" v-else-if="uiComponent === 'guestCodeInput'">
       <div style="background: var(--ctp-surface0); border-radius: 8px; padding: 16px">
         <p class="description" style="text-align: center">输入好友发给你的邀请码以连接</p>
-        <BaseInput v-model="codeInput" style="width: 100%; text-align: center"></BaseInput>
-        <BaseButton style="margin-top: 12px" @click="submitJoin">加入</BaseButton>
+        <div style="display: flex; width: 100%; align-items: center; gap: 8px">
+          <BaseInput
+            v-model="codeInput"
+            style="flex: 1"
+            placeholder="邀请码格式：U/BBBB-AAAA-KKKK-AAAA"></BaseInput>
+          <BaseButton
+            style="flex-shrink: 0; width: fit-content"
+            @click="submitJoin"
+            :disabled="!codeInputValid"
+            >加入</BaseButton
+          >
+        </div>
       </div>
     </div>
     <div class="guest-joining" v-else-if="uiComponent === 'guestJoining'">
@@ -115,12 +127,15 @@
             max-height: calc(100% - 32px);
           ">
           <template v-for="player in multiplayerStore.players" :key="player.machine_id">
-            <div>
-              <!-- NOTE: 如果不是房主，则不显示 “主机”的tag -->
-              <p class="name">
-                {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
-              </p>
-              <p class="env">Conic Nexus, Easytier v2.6.4</p>
+            <div style="display: flex; justify-content: space-between">
+              <div>
+                <p class="name">
+                  {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
+                </p>
+                <p class="vendor">{{ player.vendor }}</p>
+              </div>
+              <!-- NOTE: 在下面这个元素渲染NAT类型，后面的数字是easytier返回的NAT代码 -->
+              <p style="font-size: 11px; opacity: 0.7">NAT1</p>
             </div>
           </template>
         </div>
@@ -131,13 +146,35 @@
       class="exception"
       v-else-if="uiComponent === 'exception'"
       style="display: flex; flex-direction: column; gap: 16px; height: 100%">
-      <p class="description description-info" v-if="multiplayerStore.fault">
-        连接出现问题（{{ multiplayerStore.fault.code }}）：{{ multiplayerStore.fault.message }}
+      <p
+        class="description description-error"
+        v-if="multiplayerStore.fault"
+        style="display: flex; align-items: center">
+        <span
+          >连接出现问题（{{ multiplayerStore.fault.code }}）：{{
+            multiplayerStore.fault.message
+          }}</span
+        >
+        <BaseButton style="width: fit-content" @click="leaveRoom">重新开始</BaseButton>
       </p>
-      <p class="description description-info" v-else>连接出现问题，请重新开始</p>
-      <BaseButton style="width: fit-content" @click="leaveRoom">重新开始</BaseButton>
+      <p class="description description-error" v-else>
+        连接出现问题，请重新开始
+        <BaseButton style="width: fit-content" @click="leaveRoom">重新开始</BaseButton>
+      </p>
     </div>
-    <div class="buttons">
+    <div
+      class="buttons"
+      v-if="dialogStore.connectExtension.connectManagerComponent === 'guestCodeInput'">
+      <BaseButton
+        class="back"
+        @click="
+          guestCodeInput = false;
+          codeInput = '';
+        ">
+        返回
+      </BaseButton>
+    </div>
+    <div class="buttons" v-else>
       <BaseButton class="quit" @click="dialogStore.connectExtension.visible = false">
         {{
           uiComponent === "waiting" || uiComponent === "exception"
@@ -159,6 +196,7 @@ import BaseButton from "@/components/base/BaseButton.vue";
 import { computed, ref, watch } from "vue";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import BaseInput from "@/components/base/BaseInput.vue";
+import { isRoomCodeValid } from "@conic/multiplayer";
 
 const dialogStore = useDialogStore();
 const multiplayerStore = useMultiplayerStore();
@@ -169,6 +207,10 @@ multiplayerStore.init();
 const showCopyMessage = ref(false);
 const guestCodeInput = ref(false);
 const codeInput = ref("");
+
+const codeInputValid = computed(() => {
+  return isRoomCodeValid(codeInput.value);
+});
 
 const profileName = computed(() => {
   if (configStore.current_account?.type === "Microsoft") {
@@ -316,6 +358,7 @@ async function leaveRoom() {
   }
   .title {
     font-size: 22px;
+    padding: 4px 0;
   }
   p.description {
     font-size: 14px;
@@ -328,6 +371,13 @@ async function leaveRoom() {
     border: 1px solid var(--ctp-blue);
     border-radius: 8px;
     background: rgba(var(--ctp-blue-rgb), 0.15);
+  }
+  p.description-error {
+    color: var(--ctp-red);
+    padding: 8px 16px;
+    border: 1px solid var(--ctp-red);
+    border-radius: 8px;
+    background: rgba(var(--ctp-red-rgb), 0.15);
   }
   div.buttons {
     margin-top: auto;
@@ -357,7 +407,7 @@ async function leaveRoom() {
     }
   }
   .group-actions {
-    width: 48%;
+    width: 44%;
     height: 100%;
     background: var(--ctp-surface0);
     border-radius: 8px;
@@ -369,11 +419,11 @@ async function leaveRoom() {
     justify-content: space-between;
   }
   .group-guests-list {
-    width: 52%;
+    width: 56%;
     height: 100%;
     background: var(--ctp-surface0);
     border-radius: 8px;
-    padding: 12px;
+    padding: 12px 16px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -384,7 +434,7 @@ async function leaveRoom() {
     p.name {
       font-size: 14px;
     }
-    p.env {
+    p.vendor {
       font-size: 12px;
       padding-top: 4px;
       opacity: 0.8;
