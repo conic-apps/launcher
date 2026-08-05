@@ -1,5 +1,5 @@
 // Conic Launcher
-// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 export default {
@@ -201,7 +201,7 @@ export default {
             viewSourceCode: "소스 코드 보기",
             viewSourceCodeDesc: "GitHub 저장소에서 소스 코드를 봅니다",
             sponsorDesc:
-                "Conic Launcher는 무료, 오픈소스, 크로스 플랫폼 Minecraft 런처입니다. Broken_Deer 및 다른 기여자들이 만들었습니다. 여러분의 지원이 개발에 도움이 됩니다.",
+                "Conic Launcher는 더 나은 게임 경험을 제공하고 탄소 배출을 줄이는 데 기여하는 것을 목표로 하는 자유 프로젝트입니다. 이 프로젝트는 ConicMC 개발자들이 개발하고 유지 관리합니다. 여러분의 후원이나 기여는 Conic Launcher가 더 잘 발전하도록 도울 뿐만 아니라 자유 소프트웨어 운동과 환경 보호에도 기여합니다.",
             thanks: "감사",
             thirdPartyLibraries: "서드파티 라이브러리",
         },

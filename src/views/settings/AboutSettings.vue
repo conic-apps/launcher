@@ -1,10 +1,10 @@
 <!-- Conic Launcher -->
-<!-- Copyright 2022-2026 Broken-Deer and contributors. All rights reserved. -->
+<!-- Copyright 2022-2026 ConicMC developers. All rights reserved. -->
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
   <div>
-    <info-box :click-able="true" @click="openUrl('https://afdian.com/a/BrokenDeer')">
+    <info-box :click-able="true" @click="openUrl('https://github.com/sponsors/conic-apps')">
       <p
         :style="{
           marginBottom: '8px',

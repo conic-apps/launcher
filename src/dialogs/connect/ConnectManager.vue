@@ -1,8 +1,11 @@
+<!-- Conic Launcher -->
+<!-- Copyright 2022-2026 ConicMC developers. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div class="connect-extension-manager">
     <div class="header">
       <p class="title">Conic Nexus 跨局域网联机</p>
-      <!-- NOTE: 在下方的元素中显示用户自己网络的NAT类型 -->
       <p class="nat" v-if="localNatCode !== null">你的网络环境：{{ localNatLabel }}</p>
     </div>
     <div class="waiting" v-if="uiComponent === 'waiting'">

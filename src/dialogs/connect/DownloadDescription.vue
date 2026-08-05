@@ -1,3 +1,7 @@
+<!-- Conic Launcher -->
+<!-- Copyright 2022-2026 ConicMC developers. All rights reserved. -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+
 <template>
   <div class="connect-extension-download-description">
     <p class="title">下载 Conic Nexus 扩展</p>

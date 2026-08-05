@@ -1,5 +1,5 @@
 // Conic Launcher
-// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 export default {
@@ -200,7 +200,7 @@ export default {
             viewSourceCode: "查看原始碼",
             viewSourceCodeDesc: "在 GitHub 中查看啟動器的原始碼",
             sponsorDesc:
-                "Conic Launcher 是一個免費、開源、跨平台的 Minecraft 啟動器。由 Broken_Deer 及其他貢獻者開發和維護，您的贊助或貢獻將幫助 Conic Launcher 獲得更好的發展。",
+                "Conic Launcher 是自由專案，旨在帶來更好的遊戲體驗，並幫助降低碳排放。專案由 ConicMC 的開發者開發和維護，您的贊助或貢獻不僅能幫助 Conic Launcher 獲得更好的發展，更能為自由軟體事業及環境保護貢獻力量。",
             thanks: "鳴謝",
             thirdPartyLibraries: "第三方函式庫",
         },

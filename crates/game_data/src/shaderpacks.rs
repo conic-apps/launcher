@@ -1,3 +1,3 @@
 // Conic Launcher
-// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only

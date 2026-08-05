@@ -1,5 +1,5 @@
 // Conic Launcher
-// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The `forge` module contains functionality related to Forge installation and version management.
@@ -59,7 +59,7 @@ impl ForgeVersionList {
 /// Embedded JAR file used for bootstrapping Forge installation on newer Forge versions.
 const FORGE_INSTALL_BOOTSTRAPPER_BANGBANG93: &[u8] =
     include_bytes!("./forge-install-bootstrapper(bangbang93).jar");
-/// Forge Install Bootstrapper - by Broken-Deer
+/// Forge Install Bootstrapper - by ConicMC
 ///
 /// [GitHub Repository](https://github.com/conic-apps/forge-install-bootstrapper-legacy)
 ///

@@ -1,5 +1,5 @@
 // Conic Launcher
-// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 export default {
@@ -215,7 +215,7 @@ export default {
             viewSourceCode: "查看源代码",
             viewSourceCodeDesc: "在 GitHub 中查看启动器的源代码",
             sponsorDesc:
-                "Conic Launcher 是自由项目，旨在带来更好的游戏体验，并帮助降低碳排放。项目由 Broken_Deer 及其他贡献者开发和维护，您的赞助或贡献不仅能帮助 Conic Launcher 获得更好的发展，更能为自由软件事业及环境保护贡献力量。",
+                "Conic Launcher 是自由项目，旨在带来更好的游戏体验，并帮助降低碳排放。项目由 ConicMC 的开发者开发和维护，您的赞助或贡献不仅能帮助 Conic Launcher 获得更好的发展，更能为自由软件事业及环境保护贡献力量。",
             thanks: "鸣谢",
             thirdPartyLibraries: "第三方库",
         },

@@ -1,7 +1,7 @@
 [package]
 name = "config"
 version = "0.0.0"
-authors = ["Broken-Deer"]
+authors = ["OakChaser"]
 description = "User config"
 
 edition.workspace = true

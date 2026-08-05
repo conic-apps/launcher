@@ -1,5 +1,5 @@
 // Conic Launcher
-// Copyright 2022-2026 Broken-Deer and contributors. All rights reserved.
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
 export default {
@@ -208,7 +208,7 @@ export default {
             viewSourceCode: "Ver código fuente",
             viewSourceCodeDesc: "Ver el código fuente en nuestro repositorio de GitHub",
             sponsorDesc:
-                "Conic Launcher es un launcher de Minecraft gratuito, de código abierto y multiplataforma. Desarrollado por Broken_Deer y otros colaboradores. Tu apoyo nos ayuda.",
+                "Conic Launcher es un proyecto libre que busca ofrecer una mejor experiencia de juego y ayudar a reducir las emisiones de carbono. El proyecto es desarrollado y mantenido por los desarrolladores de ConicMC. Tu patrocinio o contribución no solo ayuda a que Conic Launcher mejore, sino que también contribuye al movimiento del software libre y a la protección del medio ambiente.",
             thanks: "Agradecimientos",
             thirdPartyLibraries: "Bibliotecas de terceros",
         },
