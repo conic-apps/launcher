@@ -12,7 +12,7 @@
         </button>
       </div>
       <div class="other">
-        <div class="sort" tabindex="0" @blur="sortDropdownOpen = false">
+        <div class="sort" ref="sortRef">
           <div class="head" @click="sortDropdownOpen = !sortDropdownOpen">
             <div class="label">排序</div>
             <div class="selected">
@@ -33,7 +33,7 @@
             </ul>
           </Transition>
         </div>
-        <div class="group" tabindex="0" @blur="groupDropdownOpen = false">
+        <div class="group" ref="groupRef">
           <div class="head" @click="groupDropdownOpen = !groupDropdownOpen">
             <div class="label">分组</div>
             <div class="selected">
@@ -118,7 +118,7 @@ import {
   LATEST_SNAPSHOT_INSTANCE_ID,
   zhCN,
 } from "@conic/instance";
-import { nextTick, onMounted, reactive, ref, useTemplateRef } from "vue";
+import { nextTick, onMounted, onUnmounted, reactive, ref, useTemplateRef } from "vue";
 import { window as appWindow } from "@tauri-apps/api";
 import { convertFileSrc } from "@tauri-apps/api/core";
 
@@ -210,6 +210,27 @@ async function init() {
 
 const sortDropdownOpen = ref(false);
 const groupDropdownOpen = ref(false);
+
+const sortRef = useTemplateRef<HTMLElement>("sortRef");
+const groupRef = useTemplateRef<HTMLElement>("groupRef");
+
+function onPointerDownOutside(event: PointerEvent) {
+  const target = event.target as HTMLElement;
+  if (sortRef.value && !sortRef.value.contains(target)) {
+    sortDropdownOpen.value = false;
+  }
+  if (groupRef.value && !groupRef.value.contains(target)) {
+    groupDropdownOpen.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("pointerdown", onPointerDownOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("pointerdown", onPointerDownOutside);
+});
 
 type SortMode = "name" | "version" | "playtime" | "lastplay";
 const sortMode = ref<SortMode>("playtime");
@@ -450,9 +471,11 @@ async function getBackgroundSrc(id: string) {
     margin-top: 2px;
     width: 480px;
     height: 60px;
-    transition:
-      border-left 200ms ease,
-      margin 200ms ease;
+    transition: all 250ms ease;
+
+    &:hover {
+      background: rgba(var(--ctp-surface0-rgb), 0.8);
+    }
     img.instance-background {
       mask-image: linear-gradient(to left, black 0%, transparent 100%);
       width: calc(100% - 200px);
@@ -527,7 +550,6 @@ async function getBackgroundSrc(id: string) {
     transform: scale(1.03);
     margin-top: 4px;
     margin-bottom: 4px;
-    pointer-events: none;
   }
 }
 </style>

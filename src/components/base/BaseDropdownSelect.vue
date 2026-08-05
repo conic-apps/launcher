@@ -3,13 +3,22 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="select" :style="`width: ${width}px;`" tabindex="0" @blur="opened = false">
+  <div class="select" :style="`width: ${width}px;`" ref="selectRef">
     <div class="value-box" @click="opened = !opened">
       {{ displayName[selected] }}
       <AppIcon name="chevron-down" :size="14"> </AppIcon>
     </div>
     <div>
-      <Transition name="base-dropdown-select-fade">
+      <Transition
+        :css="false"
+        @before-enter="onBeforeEnter"
+        @enter="onEnter"
+        @after-enter="onAfterEnter"
+        @enter-cancelled="onEnterCancelled"
+        @before-leave="onBeforeLeave"
+        @leave="onLeave"
+        @after-leave="onAfterLeave"
+        @leave-cancelled="onLeaveCancelled">
         <ul
           ref="options"
           class="options"
@@ -37,7 +46,7 @@
 
 <script setup lang="ts">
 import AppIcon from "../AppIcon.vue";
-import { ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 const props = defineProps<{
   options: string[];
   width?: string;
@@ -46,6 +55,95 @@ const props = defineProps<{
 const model = defineModel();
 const selected = ref(props.options.findIndex((value) => value == model.value));
 const opened = ref(false);
+
+const selectRef = ref<HTMLElement | null>(null);
+
+function onPointerDownOutside(event: PointerEvent) {
+  const target = event.target as HTMLElement;
+  if (selectRef.value && !selectRef.value.contains(target)) {
+    opened.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("pointerdown", onPointerDownOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("pointerdown", onPointerDownOutside);
+});
+
+const DROPDOWN_ANIMATION_DURATION = 600;
+
+function resetTransitionStyles(el: HTMLElement) {
+  el.style.height = "";
+  el.style.opacity = "";
+  el.style.overflow = "";
+}
+
+function onBeforeEnter(el: HTMLElement) {
+  el.style.opacity = "0";
+}
+
+function onEnter(el: HTMLElement, done: () => void) {
+  const targetHeight = el.offsetHeight;
+  el.style.height = "0px";
+  el.style.overflow = "hidden";
+  void el.offsetHeight;
+  console.log(
+    "[BaseDropdownSelect] enter offsetHeight=" + el.offsetHeight + " targetHeight=" + targetHeight,
+  );
+  const animation = el.animate(
+    [
+      { height: "0px", opacity: "0" },
+      { height: `${targetHeight}px`, opacity: "1" },
+    ],
+    { duration: DROPDOWN_ANIMATION_DURATION, easing: "ease" },
+  );
+  animation.onfinish = () => {
+    resetTransitionStyles(el);
+    done();
+  };
+}
+
+function onAfterEnter(el: HTMLElement) {
+  resetTransitionStyles(el);
+}
+
+function onEnterCancelled(el: HTMLElement) {
+  el.getAnimations().forEach((animation) => animation.cancel());
+  resetTransitionStyles(el);
+}
+
+function onBeforeLeave(el: HTMLElement) {
+  el.style.height = `${el.offsetHeight}px`;
+  el.style.overflow = "hidden";
+}
+
+function onLeave(el: HTMLElement, done: () => void) {
+  el.getAnimations().forEach((animation) => animation.cancel());
+  const startHeight = el.offsetHeight;
+  console.log("[BaseDropdownSelect] leave startHeight=" + startHeight);
+  const animation = el.animate(
+    [
+      { height: `${startHeight}px`, opacity: "1" },
+      { height: "0px", opacity: "0" },
+    ],
+    { duration: DROPDOWN_ANIMATION_DURATION, easing: "ease" },
+  );
+  animation.onfinish = () => {
+    el.style.height = "0px";
+    el.style.opacity = "0";
+    done();
+  };
+}
+
+function onAfterLeave() {}
+
+function onLeaveCancelled(el: HTMLElement) {
+  el.getAnimations().forEach((animation) => animation.cancel());
+  resetTransitionStyles(el);
+}
 
 function changeSelection(index: number) {
   selected.value = index;
@@ -127,19 +225,5 @@ li.select-option {
 
 li.selected {
   background: #ffffff17;
-}
-.base-dropdown-select-fade-leave-active,
-.base-dropdown-select-fade-enter-active {
-  transition: all 120ms ease;
-}
-
-.base-dropdown-select-fade-leave-from,
-.base-dropdown-select-fade-enter-to {
-  opacity: 1;
-}
-
-.base-dropdown-select-fade-leave-to,
-.base-dropdown-select-fade-enter-from {
-  opacity: 0;
 }
 </style>

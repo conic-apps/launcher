@@ -22,12 +22,7 @@
       :size="56"
       class="unlogin"
       @click="navigationStore.navigate('accounts')"></AccountAvatar>
-    <p
-      class="profile-name"
-      v-if="configStore.current_account"
-      tabindex="0"
-      @click="navigationStore.navigate('accounts')"
-      @blur="accountMenuOpen = false">
+    <p class="profile-name" v-if="configStore.current_account" ref="accountMenuRef">
       <span>{{ profileName }}</span>
       <button class="account-switch" tabindex="-1" @click.stop="accountMenuOpen = !accountMenuOpen">
         <AppIcon name="chevron-up"></AppIcon>
@@ -77,7 +72,7 @@ import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl, type Account } from "@conic/account";
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
 import { isLibraryValid } from "@conic/multiplayer";
 
@@ -121,6 +116,23 @@ const profileName = computed(() => {
 });
 
 const accountMenuOpen = ref(false);
+
+const accountMenuRef = ref<HTMLElement | null>(null);
+
+function onPointerDownOutside(event: PointerEvent) {
+  const target = event.target as HTMLElement;
+  if (accountMenuRef.value && !accountMenuRef.value.contains(target)) {
+    accountMenuOpen.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("pointerdown", onPointerDownOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("pointerdown", onPointerDownOutside);
+});
 
 type PlayerItem = {
   key: string;
