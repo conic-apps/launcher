@@ -12,43 +12,47 @@
         </button>
       </div>
       <div class="other">
-        <div class="sort">
-          <div class="head">
+        <div class="sort" tabindex="0" @blur="sortDropdownOpen = false">
+          <div class="head" @click="sortDropdownOpen = !sortDropdownOpen">
             <div class="label">排序</div>
             <div class="selected">
               {{ sortOptions.find((x) => x.key === sortMode)?.label }}
               <AppIcon name="chevron-down" :size="14" style="margin-left: 12px"></AppIcon>
             </div>
           </div>
-          <div class="dropdown" v-if="sortDropdownOpen">
-            <div
-              class="sort-option"
-              v-for="option in sortOptions"
-              :key="option.key"
-              :class="{ active: sortMode === option.key }"
-              @click="selectSort(option.key)">
-              {{ option.label }}
-            </div>
-          </div>
+          <Transition name="instances-list-dropdown-fade">
+            <ul class="dropdown" v-if="sortDropdownOpen">
+              <li
+                class="dropdown-option"
+                v-for="option in sortOptions"
+                :key="option.key"
+                :class="{ selected: sortMode === option.key }"
+                @click="selectSort(option.key)">
+                {{ option.label }}
+              </li>
+            </ul>
+          </Transition>
         </div>
-        <div class="group">
-          <div class="head">
+        <div class="group" tabindex="0" @blur="groupDropdownOpen = false">
+          <div class="head" @click="groupDropdownOpen = !groupDropdownOpen">
             <div class="label">分组</div>
             <div class="selected">
-              {{ sortOptions.find((x) => x.key === sortMode)?.label }}
+              {{ groupOptions.find((x) => x.key === groupMode)?.label }}
               <AppIcon name="chevron-down" :size="14"></AppIcon>
             </div>
           </div>
-          <div class="dropdown" v-if="sortDropdownOpen">
-            <div
-              class="sort-option"
-              v-for="option in sortOptions"
-              :key="option.key"
-              :class="{ active: sortMode === option.key }"
-              @click="selectSort(option.key)">
-              {{ option.label }}
-            </div>
-          </div>
+          <Transition name="instances-list-dropdown-fade">
+            <ul class="dropdown" v-if="groupDropdownOpen">
+              <li
+                class="dropdown-option"
+                v-for="option in groupOptions"
+                :key="option.key"
+                :class="{ selected: groupMode === option.key }"
+                @click="selectGroup(option.key)">
+                {{ option.label }}
+              </li>
+            </ul>
+          </Transition>
         </div>
       </div>
     </div>
@@ -205,6 +209,7 @@ async function init() {
 }
 
 const sortDropdownOpen = ref(false);
+const groupDropdownOpen = ref(false);
 
 type SortMode = "name" | "version" | "playtime" | "lastplay";
 const sortMode = ref<SortMode>("playtime");
@@ -218,6 +223,19 @@ const sortOptions: { key: SortMode; label: string }[] = [
 function selectSort(mode: SortMode) {
   sortMode.value = mode;
   sortDropdownOpen.value = false;
+}
+
+type GroupMode = "all" | "none" | "loader";
+const groupMode = ref<GroupMode>("all");
+const groupOptions: { key: GroupMode; label: string }[] = [
+  { key: "all", label: "全部实例" },
+  { key: "none", label: "未分组" },
+  { key: "loader", label: "按模组加载器" },
+];
+
+function selectGroup(mode: GroupMode) {
+  groupMode.value = mode;
+  groupDropdownOpen.value = false;
 }
 
 instanceStore.$subscribe(async () => {
@@ -349,6 +367,65 @@ async function getBackgroundSrc(id: string) {
           }
         }
       }
+    }
+
+    .sort,
+    .group {
+      position: relative;
+    }
+
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--dialog-border-radius);
+      border: var(--controllers-border);
+      background: var(--ctp-base);
+      box-shadow: 0px 0px 10px #4500611d;
+      z-index: 100000;
+      list-style: none;
+
+      .dropdown-option {
+        height: 26px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        margin: 4px 0;
+        border-radius: var(--controllers-border-radius);
+        font-size: 12px;
+        list-style: none;
+        white-space: nowrap;
+        transition: all 30ms ease;
+
+        &:hover {
+          background: #ffffff1f;
+        }
+
+        &:active {
+          background: #ffffff15;
+        }
+
+        &.selected {
+          background: #ffffff17;
+        }
+      }
+    }
+
+    .instances-list-dropdown-fade-leave-active,
+    .instances-list-dropdown-fade-enter-active {
+      transition: all 120ms ease;
+    }
+
+    .instances-list-dropdown-fade-leave-from,
+    .instances-list-dropdown-fade-enter-to {
+      opacity: 1;
+    }
+
+    .instances-list-dropdown-fade-leave-to,
+    .instances-list-dropdown-fade-enter-from {
+      opacity: 0;
     }
   }
   .scroll-container {

@@ -25,9 +25,26 @@
     <p
       class="profile-name"
       v-if="configStore.current_account"
-      @click="navigationStore.navigate('accounts')">
+      tabindex="0"
+      @click="navigationStore.navigate('accounts')"
+      @blur="accountMenuOpen = false">
       <span>{{ profileName }}</span>
-      <button class="account-switch" @click.stop=""><AppIcon name="chevron-up"></AppIcon></button>
+      <button class="account-switch" tabindex="-1" @click.stop="accountMenuOpen = !accountMenuOpen">
+        <AppIcon name="chevron-up"></AppIcon>
+      </button>
+      <Transition name="game-footer-dropdown-fade">
+        <ul class="dropdown" v-if="accountMenuOpen">
+          <li
+            class="dropdown-option"
+            v-for="player in allPlayers"
+            :key="player.key"
+            :class="{ selected: currentAccountKey === player.key }"
+            @click.stop="selectPlayer(player)">
+            <AccountAvatar :skin="player.skinUrl" :uuid="player.uuid" :size="18"></AccountAvatar>
+            <span class="player-name">{{ player.name }}</span>
+          </li>
+        </ul>
+      </Transition>
     </p>
     <p
       class="profile-name"
@@ -55,17 +72,19 @@
 <script setup lang="ts">
 import AccountAvatar from "@/components/AccountAvatar.vue";
 import AppIcon from "@/components/AppIcon.vue";
+import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
-import { yggdrasilGetSkinUrl } from "@conic/account";
-import { computed } from "vue";
+import { yggdrasilGetSkinUrl, type Account } from "@conic/account";
+import { computed, ref } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
 import { isLibraryValid } from "@conic/multiplayer";
 
 const configStore = useConfigStore();
 const dialogStore = useDialogStore();
 const navigationStore = useNavigationStore();
+const accountStore = useAccountStore();
 
 const accountSkin = computed(() => {
   if (configStore.current_account?.type === "Microsoft") {
@@ -100,6 +119,72 @@ const profileName = computed(() => {
     return configStore.current_account ? configStore.current_account.data.name : "";
   }
 });
+
+const accountMenuOpen = ref(false);
+
+type PlayerItem = {
+  key: string;
+  name: string;
+  skinUrl?: string;
+  uuid: string;
+  raw: Account;
+};
+
+const allPlayers = computed<PlayerItem[]>(() => {
+  const result: PlayerItem[] = [];
+
+  for (const account of accountStore.microsoft) {
+    result.push({
+      key: `microsoft-${account.profile.uuid}`,
+      name: account.profile.profile_name,
+      skinUrl: account.profile.skins.length > 0 ? account.profile.skins[0].url : undefined,
+      uuid: account.profile.uuid,
+      raw: { type: "Microsoft", data: account },
+    });
+  }
+
+  for (const account of accountStore.yggdrasil) {
+    result.push({
+      key: `yggdrasil-${account.profile.id}`,
+      name: account.profile.name,
+      skinUrl: yggdrasilGetSkinUrl(account.profile),
+      uuid: account.profile.id,
+      raw: { type: "Yggdrasil", data: account },
+    });
+  }
+
+  for (const account of accountStore.offline) {
+    result.push({
+      key: `offline-${account.uuid}`,
+      name: account.name,
+      skinUrl: account.skin,
+      uuid: account.uuid,
+      raw: { type: "Offline", data: account },
+    });
+  }
+
+  return result;
+});
+
+const currentAccountKey = computed(() => {
+  const currentAccount = configStore.current_account;
+  if (!currentAccount) {
+    return null;
+  }
+  switch (currentAccount.type) {
+    case "Microsoft":
+      return `microsoft-${currentAccount.data.profile.uuid}`;
+    case "Yggdrasil":
+      return `yggdrasil-${currentAccount.data.profile.id}`;
+    case "Offline":
+      return `offline-${currentAccount.data.uuid}`;
+  }
+});
+
+function selectPlayer(player: PlayerItem) {
+  configStore.current_account = player.raw;
+  accountMenuOpen.value = false;
+}
 
 async function openConnect() {
   if (await isLibraryValid()) {
@@ -149,6 +234,7 @@ async function openConnect() {
   }
 
   .profile-name {
+    position: relative;
     margin-left: -16px;
     margin-bottom: 32px;
     background: var(--ctp-surface0);
@@ -176,6 +262,66 @@ async function openConnect() {
       &:active {
         background: var(--ctp-overlay0);
       }
+    }
+
+    .dropdown {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 4px);
+      min-width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--dialog-border-radius);
+      border: var(--controllers-border);
+      background: var(--ctp-base);
+      box-shadow: 0px 0px 10px #4500611d;
+      z-index: 100000;
+      list-style: none;
+
+      .dropdown-option {
+        height: 26px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 0;
+        border-radius: var(--controllers-border-radius);
+        font-size: 12px;
+        list-style: none;
+        white-space: nowrap;
+        transition: all 30ms ease;
+
+        &:hover {
+          background: #ffffff1f;
+        }
+
+        &:active {
+          background: #ffffff15;
+        }
+
+        &.selected {
+          background: #ffffff17;
+        }
+
+        .player-name {
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    .game-footer-dropdown-fade-leave-active,
+    .game-footer-dropdown-fade-enter-active {
+      transition: all 120ms ease;
+    }
+
+    .game-footer-dropdown-fade-leave-from,
+    .game-footer-dropdown-fade-enter-to {
+      opacity: 1;
+    }
+
+    .game-footer-dropdown-fade-leave-to,
+    .game-footer-dropdown-fade-enter-from {
+      opacity: 0;
     }
   }
   .connect {
