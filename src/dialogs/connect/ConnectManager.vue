@@ -440,6 +440,7 @@ async function leaveRoom() {
     align-items: center;
     justify-content: space-between;
   }
+
   .group-guests-list {
     width: 56%;
     height: 100%;
