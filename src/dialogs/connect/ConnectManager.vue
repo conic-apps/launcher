@@ -2,6 +2,8 @@
   <div class="connect-extension-manager">
     <div class="header">
       <p class="title">Conic Nexus 跨局域网联机</p>
+      <!-- NOTE: 在下方的元素中显示用户自己网络的NAT类型 -->
+      <p class="nat" v-if="localNatCode !== null">你的网络环境：{{ localNatLabel }}</p>
     </div>
     <div class="waiting" v-if="uiComponent === 'waiting'">
       <p class="description description-info">
@@ -65,15 +67,11 @@
         </div>
         <div class="group-guests-list" style="overflow: auto">
           <template v-for="player in multiplayerStore.players" :key="player.machine_id">
-            <div style="display: flex; justify-content: space-between">
-              <div>
-                <p class="name">
-                  {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
-                </p>
-                <p class="vendor">{{ player.vendor }}</p>
-              </div>
-              <!-- NOTE: 在下面这个元素渲染NAT类型，后面的数字是easytier返回的NAT代码 -->
-              <p style="font-size: 11px; opacity: 0.7">NAT1</p>
+            <div>
+              <p class="name">
+                {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
+              </p>
+              <p class="vendor">{{ player.vendor }}</p>
             </div>
           </template>
           <p class="message" v-if="multiplayerStore.players.length === 0">等待其他玩家加入...</p>
@@ -127,15 +125,11 @@
             max-height: calc(100% - 32px);
           ">
           <template v-for="player in multiplayerStore.players" :key="player.machine_id">
-            <div style="display: flex; justify-content: space-between">
-              <div>
-                <p class="name">
-                  {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
-                </p>
-                <p class="vendor">{{ player.vendor }}</p>
-              </div>
-              <!-- NOTE: 在下面这个元素渲染NAT类型，后面的数字是easytier返回的NAT代码 -->
-              <p style="font-size: 11px; opacity: 0.7">NAT1</p>
+            <div>
+              <p class="name">
+                {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
+              </p>
+              <p class="vendor">{{ player.vendor }}</p>
             </div>
           </template>
         </div>
@@ -246,6 +240,28 @@ const uiComponent = computed(() => {
   }
 });
 
+const NAT_TYPE_NAMES: Record<number, string> = {
+  0: "Unknown",
+  1: "OpenInternet",
+  2: "NoPAT",
+  3: "FullCone",
+  4: "Restricted",
+  5: "PortRestricted",
+  6: "Symmetric",
+  7: "SymUdpFirewall",
+  8: "SymmetricEasyInc",
+  9: "SymmetricEasyDec",
+};
+
+const localPeer = computed(() => multiplayerStore.peers.find((peer) => peer.is_local));
+
+const localNatCode = computed(() => localPeer.value?.nat ?? null);
+
+const localNatLabel = computed(() => {
+  const code = localNatCode.value;
+  return code === null ? "--" : (NAT_TYPE_NAMES[code] ?? `NAT${code}`);
+});
+
 watch(
   uiComponent,
   (value) => {
@@ -302,9 +318,12 @@ async function leaveRoom() {
   height: 100%;
   .header {
     display: flex;
-    button {
+    p.nat {
       width: fit-content;
       align-items: center;
+      margin-left: auto;
+      font-size: 14px;
+      opacity: 0.7;
     }
     p {
       display: flex;

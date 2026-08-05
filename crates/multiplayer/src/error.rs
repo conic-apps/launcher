@@ -47,10 +47,7 @@ pub enum Error {
     ChecksumMismatch,
 
     #[error("Conic Nexus returned an error (code {code}): {description}")]
-    ConicNexus {
-        code: i32,
-        description: String,
-    },
+    ConicNexus { code: i32, description: String },
 
     #[error(transparent)]
     Aborted(

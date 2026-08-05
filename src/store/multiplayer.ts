@@ -15,12 +15,16 @@ import {
     type PlayerProfile,
 } from "@conic/multiplayer"
 import { defineStore } from "pinia"
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
+
+const NAT_POLL_UNKNOWN_INTERVAL = 10_000
+const NAT_POLL_KNOWN_INTERVAL = 60_000
 
 export const useMultiplayerStore = defineStore("multiplayer", () => {
     const state = ref<MultiplayerState>("waiting")
     const roomCode = ref("")
     const players = ref<PlayerProfile[]>([])
+    const peers = ref<PeerInfo[]>([])
     const url = ref("")
     const fault = ref<{ code: number; message: string } | null>(null)
     const dialogVisible = ref(false)
@@ -46,11 +50,46 @@ export const useMultiplayerStore = defineStore("multiplayer", () => {
                 const error = session.detail.error
                 fault.value = { code: error.code, message: error.message }
             }
+            await refreshPeers()
         } catch (error) {
             console.error(error)
         } finally {
             refreshing = false
         }
+    }
+
+    let peersPollTimer: ReturnType<typeof setInterval> | null = null
+
+    function stopPeersPolling() {
+        if (peersPollTimer !== null) {
+            clearInterval(peersPollTimer)
+            peersPollTimer = null
+        }
+    }
+
+    function isNatKnown(peersToCheck: PeerInfo[]): boolean {
+        const local = peersToCheck.find((peer) => peer.is_local)
+        return local !== undefined && local.nat !== 0
+    }
+
+    function schedulePeersPolling() {
+        stopPeersPolling()
+        if (state.value !== "host-ok" && state.value !== "guest-ok") return
+        const interval = isNatKnown(peers.value)
+            ? NAT_POLL_KNOWN_INTERVAL
+            : NAT_POLL_UNKNOWN_INTERVAL
+        peersPollTimer = setInterval(() => {
+            refreshPeers()
+        }, interval)
+    }
+
+    async function refreshPeers() {
+        try {
+            peers.value = await queryPeers()
+        } catch {
+            peers.value = []
+        }
+        schedulePeersPolling()
     }
 
     let initialized = false
@@ -82,6 +121,10 @@ export const useMultiplayerStore = defineStore("multiplayer", () => {
         await refresh()
     }
 
+    watch(state, () => {
+        schedulePeersPolling()
+    })
+
     async function createRoom(playerName: string) {
         fault.value = null
         await createRoomCommand({ playerName })
@@ -94,9 +137,11 @@ export const useMultiplayerStore = defineStore("multiplayer", () => {
 
     async function leaveRoom() {
         await leaveRoomCommand()
+        stopPeersPolling()
         state.value = "waiting"
         roomCode.value = ""
         players.value = []
+        peers.value = []
         url.value = ""
         fault.value = null
     }
@@ -109,6 +154,7 @@ export const useMultiplayerStore = defineStore("multiplayer", () => {
         state,
         roomCode,
         players,
+        peers,
         url,
         fault,
         dialogVisible,

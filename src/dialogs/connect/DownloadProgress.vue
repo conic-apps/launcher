@@ -47,8 +47,8 @@ const progressBar = ref({
 });
 
 enum ProgressPhase {
-  Prepare = "准备下载 Conic Connect 扩展",
-  Downloading = "正在下载 Conic Connect 扩展",
+  Prepare = "准备下载 Conic Nexus 扩展",
+  Downloading = "正在下载 Conic Nexus 扩展",
   Finished = "完成！",
 }
 

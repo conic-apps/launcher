@@ -81,12 +81,17 @@ type ConicNexusJoinRoomFn = unsafe extern "C" fn(
     player_name: *const c_char,
 ) -> i32;
 type ConicNexusResetToWaitingFn = unsafe extern "C" fn(handle: NexusHandle) -> i32;
-type ConicNexusGetStateFn = unsafe extern "C" fn(handle: NexusHandle, out: *mut ConicNexusState) -> i32;
-type ConicNexusPollEventFn = unsafe extern "C" fn(handle: NexusHandle, out: *mut ConicNexusEvent) -> i32;
+type ConicNexusGetStateFn =
+    unsafe extern "C" fn(handle: NexusHandle, out: *mut ConicNexusState) -> i32;
+type ConicNexusPollEventFn =
+    unsafe extern "C" fn(handle: NexusHandle, out: *mut ConicNexusEvent) -> i32;
 type ConicNexusRoomCodeIsValidFn = unsafe extern "C" fn(room_code: *const c_char) -> bool;
 type ConicNexusVersionFn = unsafe extern "C" fn() -> *const c_char;
-type ConicNexusQueryPeersFn =
-    unsafe extern "C" fn(handle: NexusHandle, out: *mut *mut ConicNexusPeer, count: *mut u32) -> i32;
+type ConicNexusQueryPeersFn = unsafe extern "C" fn(
+    handle: NexusHandle,
+    out: *mut *mut ConicNexusPeer,
+    count: *mut u32,
+) -> i32;
 type ConicNexusFreePeersFn = unsafe extern "C" fn(peers: *mut ConicNexusPeer, count: u32);
 type ConicNexusRecentLogsFn = unsafe extern "C" fn(limit: u32, out: *mut ConicNexusString) -> i32;
 type ConicNexusFreeStringFn = unsafe extern "C" fn(value: *mut ConicNexusString);
@@ -249,7 +254,8 @@ impl NexusSession {
     pub fn get_state(&self) -> Result<SessionState> {
         unsafe {
             let get_state: Symbol<ConicNexusGetStateFn> = self.symbol(b"conic_nexus_get_state")?;
-            let free_state: Symbol<ConicNexusFreeStateFn> = self.symbol(b"conic_nexus_free_state")?;
+            let free_state: Symbol<ConicNexusFreeStateFn> =
+                self.symbol(b"conic_nexus_free_state")?;
             let mut out = std::mem::zeroed::<ConicNexusState>();
             check_code(get_state(self.handle, &mut out))?;
             let state = SessionState {
@@ -267,8 +273,10 @@ impl NexusSession {
     /// Pops the next event, or `None` when the queue is empty.
     pub fn poll_event(&self) -> Result<Option<SessionEvent>> {
         unsafe {
-            let poll_event: Symbol<ConicNexusPollEventFn> = self.symbol(b"conic_nexus_poll_event")?;
-            let free_event: Symbol<ConicNexusFreeEventFn> = self.symbol(b"conic_nexus_free_event")?;
+            let poll_event: Symbol<ConicNexusPollEventFn> =
+                self.symbol(b"conic_nexus_poll_event")?;
+            let free_event: Symbol<ConicNexusFreeEventFn> =
+                self.symbol(b"conic_nexus_free_event")?;
             let mut out = std::mem::zeroed::<ConicNexusEvent>();
             let code = poll_event(self.handle, &mut out);
             if code == CONIC_NEXUS_ERR_NO_EVENT {
@@ -289,7 +297,9 @@ impl NexusSession {
     /// Reports whether `room_code` is well-formed. A pure query; never fails.
     pub fn room_code_is_valid(&self, room_code: &str) -> bool {
         unsafe {
-            let Ok(is_valid) = self.symbol::<ConicNexusRoomCodeIsValidFn>(b"conic_nexus_room_code_is_valid") else {
+            let Ok(is_valid) =
+                self.symbol::<ConicNexusRoomCodeIsValidFn>(b"conic_nexus_room_code_is_valid")
+            else {
                 return false;
             };
             let Ok(room_code) = CString::new(room_code) else {
@@ -316,8 +326,10 @@ impl NexusSession {
     /// Queries the active mesh node for its peers and their NAT types.
     pub fn query_peers(&self) -> Result<Vec<PeerInfo>> {
         unsafe {
-            let query_peers: Symbol<ConicNexusQueryPeersFn> = self.symbol(b"conic_nexus_query_peers")?;
-            let free_peers: Symbol<ConicNexusFreePeersFn> = self.symbol(b"conic_nexus_free_peers")?;
+            let query_peers: Symbol<ConicNexusQueryPeersFn> =
+                self.symbol(b"conic_nexus_query_peers")?;
+            let free_peers: Symbol<ConicNexusFreePeersFn> =
+                self.symbol(b"conic_nexus_free_peers")?;
             let mut out = ptr::null_mut();
             let mut count: u32 = 0;
             check_code(query_peers(self.handle, &mut out, &mut count))?;
@@ -341,8 +353,10 @@ impl NexusSession {
     /// Fills `out` with the `limit` most recent log lines as a JSON array.
     pub fn recent_logs(&self, limit: u32) -> Result<Vec<String>> {
         unsafe {
-            let recent_logs: Symbol<ConicNexusRecentLogsFn> = self.symbol(b"conic_nexus_recent_logs")?;
-            let free_string: Symbol<ConicNexusFreeStringFn> = self.symbol(b"conic_nexus_free_string")?;
+            let recent_logs: Symbol<ConicNexusRecentLogsFn> =
+                self.symbol(b"conic_nexus_recent_logs")?;
+            let free_string: Symbol<ConicNexusFreeStringFn> =
+                self.symbol(b"conic_nexus_free_string")?;
             let mut out = std::mem::zeroed::<ConicNexusString>();
             check_code(recent_logs(limit, &mut out))?;
             let json = read_string(&out);
@@ -354,7 +368,10 @@ impl NexusSession {
     /// Destroys the session. After this call the handle is permanently invalid.
     pub fn destroy(&self) {
         unsafe {
-            let Ok(destroy) = self.library.get::<ConicNexusDestroyFn>(b"conic_nexus_destroy") else {
+            let Ok(destroy) = self
+                .library
+                .get::<ConicNexusDestroyFn>(b"conic_nexus_destroy")
+            else {
                 return;
             };
             destroy(self.handle);

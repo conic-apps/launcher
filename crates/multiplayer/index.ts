@@ -80,7 +80,7 @@ export type PlayerProfile = {
     machine_id: string
     name: string
     vendor: string
-    kind: "HOST" | "GUEST"
+    kind: "HOST" | "LOCAL" | "GUEST"
 }
 
 export type OverlayInfo = {
