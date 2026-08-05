@@ -15,9 +15,9 @@
         <div class="sort" ref="sortRef">
           <div class="head" @click="sortDropdownOpen = !sortDropdownOpen">
             <div class="label">排序</div>
-            <div class="selected">
+            <div class="selected" style="width: 102px">
               {{ sortOptions.find((x) => x.key === sortMode)?.label }}
-              <AppIcon name="chevron-down" :size="14" style="margin-left: 12px"></AppIcon>
+              <AppIcon name="chevron-down" :size="14" style="margin-left: auto"></AppIcon>
             </div>
           </div>
           <Transition name="instances-list-dropdown-fade">
@@ -238,7 +238,7 @@ const sortOptions: { key: SortMode; label: string }[] = [
   { key: "name", label: "名称" },
   { key: "version", label: "版本" },
   { key: "playtime", label: "游玩时间" },
-  { key: "lastplay", label: "最后运行日期" },
+  { key: "lastplay", label: "最后运行" },
 ];
 
 function selectSort(mode: SortMode) {
@@ -251,7 +251,7 @@ const groupMode = ref<GroupMode>("all");
 const groupOptions: { key: GroupMode; label: string }[] = [
   { key: "all", label: "全部实例" },
   { key: "none", label: "未分组" },
-  { key: "loader", label: "按模组加载器" },
+  { key: "loader", label: "模组加载器" },
 ];
 
 function selectGroup(mode: GroupMode) {
