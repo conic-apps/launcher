@@ -106,6 +106,22 @@
       </div>
     </div>
   </div>
+  <Teleport to="body">
+    <div
+      class="instances-scrollbar"
+      :class="{ hidden: !scrollbarVisible }"
+      ref="scrollbar"
+      @pointerdown="onScrollbarPointerDown">
+      <div
+        class="instances-scrollbar-thumb"
+        :class="{ dragging }"
+        ref="thumb"
+        @pointerdown.stop="onThumbPointerDown"
+        @pointermove="onThumbPointerMove"
+        @pointerup="onThumbPointerUp"
+        @pointercancel="onThumbPointerUp"></div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -133,6 +149,8 @@ const containerRef = useTemplateRef("container");
 const contentRef = useTemplateRef("content");
 const items = useTemplateRef<HTMLElement[]>("instances");
 const wrappers = useTemplateRef<HTMLElement[]>("wrappers");
+const scrollbarRef = useTemplateRef("scrollbar");
+const thumbRef = useTemplateRef("thumb");
 
 let lenis: Lenis | undefined;
 let lenisTick: ((time: number) => void) | undefined;
@@ -150,6 +168,13 @@ const maxOffset = 128;
 let cardTriggers: ScrollTrigger[] = [];
 let cardTriggersKey = "";
 
+let contentHeight = 0;
+let thumbHeight = 0;
+let thumbDragOffsetY = 0;
+let scrollbarTop = 0;
+const dragging = ref(false);
+const scrollbarVisible = ref(false);
+
 function ensureLenis() {
   const container = containerRef.value;
   const content = contentRef.value;
@@ -165,6 +190,7 @@ function ensureLenis() {
 
   lenis.on("scroll", (l: Lenis) => {
     renderPositions(l.scroll);
+    updateScrollbar(l.scroll);
   });
 
   gsap.ticker.lagSmoothing(0);
@@ -180,6 +206,7 @@ function measureLayout() {
   if (!container || !elements || !wrapperElements) return;
 
   containerHeight = container.clientHeight;
+  contentHeight = container.scrollHeight;
   const containerRect = container.getBoundingClientRect();
 
   const count = Math.min(elements.length, wrapperElements.length);
@@ -217,6 +244,74 @@ function syncCardTriggers() {
       toggleClass: { targets: el, className: "visible" },
     }),
   );
+}
+
+async function updateScrollbar(scrollY: number) {
+  const scrollbar = scrollbarRef.value;
+  const thumb = thumbRef.value;
+
+  if (!scrollbar || !thumb) return;
+
+  if (contentHeight <= containerHeight) {
+    scrollbarVisible.value = false;
+    return;
+  }
+
+  scrollbarVisible.value = true;
+  await nextTick();
+
+  const trackHeight = scrollbar.clientHeight;
+  const maxScroll = contentHeight - containerHeight;
+  thumbHeight = Math.max(32, trackHeight * (containerHeight / contentHeight));
+  thumb.style.height = `${thumbHeight}px`;
+
+  const maxThumbTop = trackHeight - thumbHeight;
+  const clamped = Math.max(0, Math.min(maxScroll, scrollY));
+  thumb.style.top = `${maxThumbTop <= 0 ? 0 : (clamped / maxScroll) * maxThumbTop}px`;
+}
+
+function onThumbPointerDown(event: PointerEvent) {
+  const thumb = thumbRef.value;
+  if (!thumb) return;
+  dragging.value = true;
+  scrollbarTop = scrollbarRef.value?.getBoundingClientRect().top ?? 0;
+  thumbDragOffsetY = event.clientY - thumb.getBoundingClientRect().top;
+  thumb.setPointerCapture(event.pointerId);
+}
+
+function onThumbPointerMove(event: PointerEvent) {
+  if (!dragging.value) return;
+  const scrollbar = scrollbarRef.value;
+  if (!scrollbar) return;
+
+  const trackHeight = scrollbar.clientHeight;
+  const maxThumbTop = trackHeight - thumbHeight;
+  const top = Math.max(0, Math.min(maxThumbTop, event.clientY - scrollbarTop - thumbDragOffsetY));
+  const maxScroll = contentHeight - containerHeight;
+
+  if (maxThumbTop > 0 && maxScroll > 0) {
+    lenis?.scrollTo((top / maxThumbTop) * maxScroll, { immediate: true });
+  }
+}
+
+function onThumbPointerUp(event: PointerEvent) {
+  dragging.value = false;
+  thumbRef.value?.releasePointerCapture(event.pointerId);
+}
+
+function onScrollbarPointerDown(event: PointerEvent) {
+  const scrollbar = scrollbarRef.value;
+  if (!scrollbar) return;
+
+  const trackHeight = scrollbar.clientHeight;
+  const maxThumbTop = trackHeight - thumbHeight;
+  const top = event.clientY - scrollbar.getBoundingClientRect().top - thumbHeight / 2;
+  const clamped = Math.max(0, Math.min(maxThumbTop, top));
+  const maxScroll = contentHeight - containerHeight;
+
+  if (maxThumbTop > 0 && maxScroll > 0) {
+    lenis?.scrollTo((clamped / maxThumbTop) * maxScroll, { immediate: true });
+  }
 }
 
 function renderPositions(scrollY: number) {
@@ -279,6 +374,11 @@ async function selectInstance(instance: Instance) {
 onMounted(async () => {
   await init();
   scrollToInstance(instanceStore.currentInstance.id, false);
+  requestAnimationFrame(() => {
+    measureLayout();
+    const scrollY = lenis ? lenis.scroll : (containerRef.value?.scrollTop ?? 0);
+    updateScrollbar(scrollY);
+  });
 });
 
 let resizeCleanup: (() => void) | undefined;
@@ -289,11 +389,15 @@ async function init() {
   measureLayout();
   syncCardTriggers();
   lenis?.resize();
-  renderPositions(lenis ? lenis.scroll : (containerRef.value?.scrollTop ?? 0));
+  const scrollY = lenis ? lenis.scroll : (containerRef.value?.scrollTop ?? 0);
+  renderPositions(scrollY);
+  updateScrollbar(scrollY);
   resizeCleanup?.();
   resizeCleanup = await appWindow.getCurrentWindow().onResized(() => {
     measureLayout();
-    renderPositions(lenis ? lenis.scroll : (containerRef.value?.scrollTop ?? 0));
+    const nextScrollY = lenis ? lenis.scroll : (containerRef.value?.scrollTop ?? 0);
+    renderPositions(nextScrollY);
+    updateScrollbar(nextScrollY);
   });
   Object.values(instanceStore.instances).forEach(async (instance) => {
     backgroundImagesSrc.value[instance.id] = await getBackgroundSrc(instance.id);
@@ -659,6 +763,49 @@ async function getBackgroundSrc(id: string) {
       border-left: 16px solid rgba(var(--ctp-lavender-rgb), 0.8);
       margin-left: -20px;
       transform: scale(1.03);
+    }
+  }
+}
+
+.instances-scrollbar {
+  position: fixed;
+  top: calc(44px + 8px + 112px + 6px);
+  bottom: calc(56px + 4px);
+  right: 8px;
+  width: 6px;
+  z-index: 500;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+
+  &.hidden {
+    display: none;
+  }
+
+  .instances-scrollbar-thumb {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 8px;
+    height: 30%;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 1);
+    opacity: 0.35;
+    transition:
+      opacity 160ms ease,
+      width 160ms ease,
+      left 160ms ease,
+      transform 120ms ease;
+
+    &:hover,
+    &.dragging {
+      opacity: 0.55;
+      width: 10px;
+      left: -2px;
+    }
+
+    &.dragging {
+      transform: scale(0.9);
     }
   }
 }

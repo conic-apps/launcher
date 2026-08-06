@@ -22,6 +22,7 @@ instance.workspace = true
 multiplayer.workspace = true
 config.workspace = true
 install.workspace = true
+java-runtime.workspace = true
 launch.workspace = true
 shared.workspace = true
 game_data.workspace = true

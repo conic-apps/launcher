@@ -93,6 +93,7 @@
     "modrinth:allow-cmd-cancel-download-task",
     "folder:allow-cmd-get-data-location",
     "folder:allow-cmd-get-instance-root",
+    "java-runtime:allow-cmd-scan-java",
     "statistics:allow-cmd-get-statistics",
     "statistics:allow-cmd-get-statistics-by-profile",
     "beat:allow-cmd-spawn-download-library-task",

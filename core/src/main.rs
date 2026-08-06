@@ -37,6 +37,7 @@ fn main() {
         .plugin(folder::init())
         .plugin(platform::init())
         .plugin(game_data::init())
+        .plugin(java_runtime::init())
         .plugin(statistics::init())
         .invoke_handler(tauri::generate_handler![open_path])
         .setup(|app| {

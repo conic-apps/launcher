@@ -1,0 +1,21 @@
+[package]
+name = "java-runtime"
+version = "0.0.0"
+authors = ["OakChaser"]
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+folder.workspace = true
+
+log.workspace = true
+serde.workspace = true
+serde_with.workspace = true
+tauri.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
