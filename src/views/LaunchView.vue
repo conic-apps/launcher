@@ -45,8 +45,8 @@
 
 <script setup lang="ts">
 import AccountAvatar from "@/components/AccountAvatar.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
-import BaseProgress from "@/components/base/BaseProgress.vue";
+import BaseButton from "@/components/BaseButton.vue";
+import BaseProgress from "@/components/BaseProgress.vue";
 import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";

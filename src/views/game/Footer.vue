@@ -76,7 +76,7 @@
 
 <script setup lang="ts">
 import AccountAvatar from "@/components/AccountAvatar.vue";
-import AccountListDropdown from "@/components/AccountListDropdown.vue";
+import AccountListDropdown from "./AccountListDropdown.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";

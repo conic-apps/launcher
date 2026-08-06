@@ -6,29 +6,7 @@
   <div class="account-add">
     <p class="title">选择认证服务并添加帐户</p>
     <div class="container" :style="{ width: containerSize.width, height: containerSize.height }">
-      <div class="selection">
-        <button
-          class="microsoft item"
-          :class="{ active: authServiceType === 'microsoft' }"
-          @click="selectAuthService('microsoft')">
-          <AppIcon name="logo-microsoft" :size="15"></AppIcon>
-          <p>微软</p>
-        </button>
-        <button
-          class="yggdrasil item"
-          :class="{ active: authServiceType === 'yggdrasil' }"
-          @click="selectAuthService('yggdrasil')">
-          <AppIcon name="extension-puzzle" :size="15"></AppIcon>
-          <p>外置</p>
-        </button>
-        <button
-          class="offline item"
-          :class="{ active: authServiceType === 'offline' }"
-          @click="selectAuthService('offline')">
-          <AppIcon name="cloud-offline-outline" :size="15"></AppIcon>
-          <p>离线</p>
-        </button>
-      </div>
+      <AccountAddSelect :selectAuthService="selectAuthService" v-model:authServiceType="authServiceType" />
       <Transition :name="transitionName" mode="out-in">
         <component
           :is="currentComponent"
@@ -43,6 +21,7 @@ import { type Component, markRaw, ref, shallowRef } from "vue";
 import AccountAddMicrosoft from "./AccountAddMicrosoft.vue";
 import AccountAddOffline from "./AccountAddOffline.vue";
 import AccountAddYggdrasil from "./AccountAddYggdrasil.vue";
+import AccountAddSelect from './AccountAddSelect.vue'
 
 defineEmits(["switch-component-manage"]);
 

@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import AppIcon from "./AppIcon.vue";
+import AppIcon from "@/components/AppIcon.vue";
 import { onMounted, onUnmounted, ref, watch } from "vue";
 
 const props = withDefaults(

@@ -144,16 +144,16 @@
 </template>
 
 <script setup lang="ts">
-import BaseDialog from "@/components/base/BaseDialog.vue";
+import BaseDialog from "@/components/BaseDialog.vue";
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
-import BaseSwitch from "@/components/base/BaseSwitch.vue";
+import BaseButton from "@/components/BaseButton.vue";
+import BaseSwitch from "@/components/BaseSwitch.vue";
 import MinecraftChoose from "./create/MinecraftChoose.vue";
 import { useDialogStore } from "@/store/dialog";
 import { computed, nextTick, ref, useTemplateRef, watch } from "vue";
 import ModLoaderChoose from "./create/ModLoaderChoose.vue";
-import BaseSelect from "@/components/base/BaseSelect.vue";
+import BaseSelect from "@/components/BaseSelect.vue";
 import {
   FabricLoaderArtifact,
   filterNeoforgeVersionList,

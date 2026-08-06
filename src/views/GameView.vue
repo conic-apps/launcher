@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import InstanceSummary from "./game/InstanceSummary.vue";
 import InstancesList from "./game/InstancesList.vue";
-import GameFooterBar from "./game/GameFooterBar.vue";
+import GameFooterBar from "./game/Footer.vue";
 import { onMounted, useTemplateRef } from "vue";
 import gsap from "gsap";
 
