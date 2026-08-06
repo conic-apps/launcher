@@ -15,8 +15,7 @@
 
 use std::{
     collections::HashMap,
-    env,
-    fs,
+    env, fs,
     io::Read,
     path::{Path, PathBuf},
     process::{Command, Stdio},
@@ -30,8 +29,8 @@ use crate::{
     error::Result,
     models::{JavaRuntime, ScanOptions},
     parser::{
-        JavaInfoRaw, normalize_arch, normalize_vendor, parse_java_output,
-        parse_major_version, parse_release_file,
+        JavaInfoRaw, normalize_arch, normalize_vendor, parse_java_output, parse_major_version,
+        parse_release_file,
     },
 };
 
@@ -113,16 +112,19 @@ fn probe_java(executable: &Path, options: &ScanOptions) -> Option<JavaRuntime> {
     }
 
     let version = raw.version?;
-    let major_version = raw.major_version.or_else(|| parse_major_version(&version))?;
+    let major_version = raw
+        .major_version
+        .or_else(|| parse_major_version(&version))?;
 
     let java_home = raw.java_home.clone().or(resolved_home);
     let is_jdk = java_home.as_ref().is_some_and(|home| {
         home.join("bin").join(javac_executable_name()).is_file()
             || home.join("bin").join("jar").is_file()
     });
-    let is_managed = options.managed_dirs.iter().any(|dir| {
-        java_home.as_ref().is_some_and(|home| home.starts_with(dir))
-    });
+    let is_managed = options
+        .managed_dirs
+        .iter()
+        .any(|dir| java_home.as_ref().is_some_and(|home| home.starts_with(dir)));
 
     Some(JavaRuntime {
         path: executable.to_path_buf(),
@@ -150,15 +152,24 @@ fn run_java_probe(executable: &Path) -> Option<JavaInfoRaw> {
     {
         Ok(child) => child,
         Err(error) => {
-            debug!("Cannot execute Java probe {}: {error}", executable.display());
+            debug!(
+                "Cannot execute Java probe {}: {error}",
+                executable.display()
+            );
             return None;
         }
     };
 
     // Drain both pipes on background threads so the probe can never deadlock on
     // a full pipe buffer.
-    let stdout_reader = child.stdout.take().map(|out| thread::spawn(move || read_all(out)));
-    let stderr_reader = child.stderr.take().map(|err| thread::spawn(move || read_all(err)));
+    let stdout_reader = child
+        .stdout
+        .take()
+        .map(|out| thread::spawn(move || read_all(out)));
+    let stderr_reader = child
+        .stderr
+        .take()
+        .map(|err| thread::spawn(move || read_all(err)));
 
     let start = Instant::now();
     let exited = loop {
@@ -166,7 +177,10 @@ fn run_java_probe(executable: &Path) -> Option<JavaInfoRaw> {
             Ok(Some(status)) => break Some(status),
             Ok(None) => {}
             Err(error) => {
-                debug!("Failed to wait on Java probe {}: {error}", executable.display());
+                debug!(
+                    "Failed to wait on Java probe {}: {error}",
+                    executable.display()
+                );
                 break None;
             }
         }
@@ -180,8 +194,12 @@ fn run_java_probe(executable: &Path) -> Option<JavaInfoRaw> {
     };
     let _ = exited?;
 
-    let stdout = stdout_reader.and_then(|h| h.join().ok()).unwrap_or_default();
-    let stderr = stderr_reader.and_then(|h| h.join().ok()).unwrap_or_default();
+    let stdout = stdout_reader
+        .and_then(|h| h.join().ok())
+        .unwrap_or_default();
+    let stderr = stderr_reader
+        .and_then(|h| h.join().ok())
+        .unwrap_or_default();
     let output = format!(
         "{}\n{}",
         String::from_utf8_lossy(&stdout),
@@ -193,11 +211,7 @@ fn run_java_probe(executable: &Path) -> Option<JavaInfoRaw> {
         || info.java_home.is_some()
         || info.vendor.is_some()
         || info.arch.is_some();
-    if is_java_output {
-        Some(info)
-    } else {
-        None
-    }
+    if is_java_output { Some(info) } else { None }
 }
 
 fn read_all(mut reader: impl Read) -> Vec<u8> {
@@ -432,7 +446,10 @@ fn push_linux_candidates(candidates: &mut Vec<PathBuf>) {
     }
     if let Some(home) = home_dir() {
         // SDKMAN!
-        push_home_subdirs(candidates, &home.join(".sdkman").join("candidates").join("java"));
+        push_home_subdirs(
+            candidates,
+            &home.join(".sdkman").join("candidates").join("java"),
+        );
         // JetBrains Toolbox / IntelliJ SDKs
         push_home_subdirs(candidates, &home.join(".jdks"));
     }
@@ -440,14 +457,14 @@ fn push_linux_candidates(candidates: &mut Vec<PathBuf>) {
 
 #[cfg(target_os = "macos")]
 fn push_macos_candidates(candidates: &mut Vec<PathBuf>) {
-    push_mac_jvm_candidates(
-        candidates,
-        Path::new("/Library/Java/JavaVirtualMachines"),
-    );
+    push_mac_jvm_candidates(candidates, Path::new("/Library/Java/JavaVirtualMachines"));
     if let Some(home) = home_dir() {
         push_mac_jvm_candidates(
             candidates,
-            &home.join("Library").join("Java").join("JavaVirtualMachines"),
+            &home
+                .join("Library")
+                .join("Java")
+                .join("JavaVirtualMachines"),
         );
     }
 
@@ -536,6 +553,9 @@ mod tests {
 
     #[test]
     fn does_not_resolve_non_standard_home() {
-        assert_eq!(resolve_java_home(Path::new("/opt/custom/javabin/java")), None);
+        assert_eq!(
+            resolve_java_home(Path::new("/opt/custom/javabin/java")),
+            None
+        );
     }
 }

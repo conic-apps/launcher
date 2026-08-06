@@ -4,7 +4,15 @@
 
 <template>
   <div class="instances-list">
-    <InstancesListToolBar :sortLabel="sortLabel" :sortOptions="sortOptions" :selectSort="selectSort" :groupLabel="groupLabel" :groupOptions="groupOptions" :selectGroup="selectGroup" v-model:sortMode="sortMode" v-model:groupMode="groupMode" />
+    <InstancesListToolBar
+      :sortLabel="sortLabel"
+      :sortOptions="sortOptions"
+      :selectSort="selectSort"
+      :groupLabel="groupLabel"
+      :groupOptions="groupOptions"
+      :selectGroup="selectGroup"
+      v-model:sortMode="sortMode"
+      v-model:groupMode="groupMode" />
     <div class="scroll-container" ref="container">
       <div class="scroll-content" ref="content">
         <div class="gap-top"></div>
@@ -74,8 +82,6 @@
 </template>
 
 <script setup lang="ts">
-import AppIcon from "@/components/AppIcon.vue";
-import InstanceListDropdown from "./InstanceListDropdown.vue";
 import { useInstanceStore } from "@/store/instance";
 import {
   formatLastPlayed,
@@ -91,7 +97,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { window as appWindow } from "@tauri-apps/api";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import InstancesListToolBar from './InstancesListToolBar.vue'
+import InstancesListToolBar from "./InstancesListToolBar.vue";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -414,7 +420,6 @@ async function getBackgroundSrc(id: string) {
   margin-left: auto;
   transform: translateX(280px);
   overflow: visible;
-
 
   .scroll-container {
     height: 100%;

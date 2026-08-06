@@ -278,7 +278,8 @@ mod tests {
 
     #[test]
     fn release_file_java8() {
-        let content = "JAVA_VERSION=\"1.8.0_392\"\nIMPLEMENTOR=\"Oracle Corporation\"\nOS_ARCH=\"amd64\"\n";
+        let content =
+            "JAVA_VERSION=\"1.8.0_392\"\nIMPLEMENTOR=\"Oracle Corporation\"\nOS_ARCH=\"amd64\"\n";
         let info = parse_release_file(content);
         assert_eq!(info.major_version, Some(8));
         assert_eq!(info.vendor.as_deref(), Some("Oracle Corporation"));
@@ -288,15 +289,33 @@ mod tests {
     fn vendor_normalization() {
         assert_eq!(normalize_vendor("Oracle Corporation"), JavaVendor::Oracle);
         assert_eq!(normalize_vendor("Oracle America, Inc."), JavaVendor::Oracle);
-        assert_eq!(normalize_vendor("Eclipse Adoptium"), JavaVendor::EclipseAdoptium);
-        assert_eq!(normalize_vendor("AdoptOpenJDK"), JavaVendor::EclipseAdoptium);
+        assert_eq!(
+            normalize_vendor("Eclipse Adoptium"),
+            JavaVendor::EclipseAdoptium
+        );
+        assert_eq!(
+            normalize_vendor("AdoptOpenJDK"),
+            JavaVendor::EclipseAdoptium
+        );
         assert_eq!(normalize_vendor("Microsoft"), JavaVendor::Microsoft);
-        assert_eq!(normalize_vendor("Amazon.com Inc."), JavaVendor::AmazonCorretto);
+        assert_eq!(
+            normalize_vendor("Amazon.com Inc."),
+            JavaVendor::AmazonCorretto
+        );
         assert_eq!(normalize_vendor("Azul Systems, Inc."), JavaVendor::AzulZulu);
-        assert_eq!(normalize_vendor("BellSoft Liberica"), JavaVendor::BellsoftLiberica);
-        assert_eq!(normalize_vendor("IBM Semeru Runtime Open Edition"), JavaVendor::Semeru);
+        assert_eq!(
+            normalize_vendor("BellSoft Liberica"),
+            JavaVendor::BellsoftLiberica
+        );
+        assert_eq!(
+            normalize_vendor("IBM Semeru Runtime Open Edition"),
+            JavaVendor::Semeru
+        );
         assert_eq!(normalize_vendor("SAP SE"), JavaVendor::Sap);
-        assert_eq!(normalize_vendor("Alibaba Dragonwell"), JavaVendor::Dragonwell);
+        assert_eq!(
+            normalize_vendor("Alibaba Dragonwell"),
+            JavaVendor::Dragonwell
+        );
         assert_eq!(normalize_vendor("OpenJDK"), JavaVendor::OpenJdk);
         assert_eq!(normalize_vendor("Red Hat, Inc."), JavaVendor::OpenJdk);
         assert_eq!(normalize_vendor("N/A"), JavaVendor::Unknown);

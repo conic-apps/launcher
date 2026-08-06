@@ -6,7 +6,9 @@
   <div class="account-add">
     <p class="title">选择认证服务并添加帐户</p>
     <div class="container" :style="{ width: containerSize.width, height: containerSize.height }">
-      <AccountAddSelect :selectAuthService="selectAuthService" v-model:authServiceType="authServiceType" />
+      <AccountAddSelect
+        :selectAuthService="selectAuthService"
+        v-model:authServiceType="authServiceType" />
       <Transition :name="transitionName" mode="out-in">
         <component
           :is="currentComponent"
@@ -21,7 +23,7 @@ import { type Component, markRaw, ref, shallowRef } from "vue";
 import AccountAddMicrosoft from "./AccountAddMicrosoft.vue";
 import AccountAddOffline from "./AccountAddOffline.vue";
 import AccountAddYggdrasil from "./AccountAddYggdrasil.vue";
-import AccountAddSelect from './AccountAddSelect.vue'
+import AccountAddSelect from "./AccountAddSelect.vue";
 
 defineEmits(["switch-component-manage"]);
 

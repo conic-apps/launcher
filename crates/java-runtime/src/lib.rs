@@ -80,7 +80,9 @@ async fn cmd_scan_java(state: State<'_, ScanState>) -> Result<JavaScanResult> {
         managed_dirs: vec![DATA_LOCATION.runtime.clone()],
     };
     let result = tauri::async_runtime::spawn_blocking(move || -> Result<JavaScanResult> {
-        Ok(JavaScanResult::from_runtimes(scan_java_runtimes_with(&options)?))
+        Ok(JavaScanResult::from_runtimes(scan_java_runtimes_with(
+            &options,
+        )?))
     })
     .await??;
 

@@ -11,15 +11,7 @@
 //   collapsePage({ selector: ".instances-list, .tool-bar" })
 //   collapsePage({ gravity: 1.4, restitution: 0.4, duration: 3500 })
 
-import {
-    Body,
-    Bodies,
-    Composite,
-    Engine,
-    Events,
-    Runner,
-    type Body as MatterBody,
-} from "matter-js"
+import { Body, Bodies, Composite, Engine, Events, Runner, type Body as MatterBody } from "matter-js"
 
 export interface CollapsePageOptions {
     /** 需要掉落的元素选择器，多个用逗号分隔。默认匹配当前页面的主要区块。 */

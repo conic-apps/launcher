@@ -9,11 +9,7 @@
 //! runtimes are grouped by Java major version and shown with a friendly vendor
 //! label, so the UI never has to re-parse raw version strings.
 
-use std::{
-    cmp::Ordering,
-    collections::BTreeMap,
-    path::PathBuf,
-};
+use std::{cmp::Ordering, collections::BTreeMap, path::PathBuf};
 
 use serde::Serialize;
 
@@ -146,12 +142,18 @@ impl JavaScanResult {
         runtimes.sort();
         let mut by_version: BTreeMap<u32, Vec<JavaRuntime>> = BTreeMap::new();
         for runtime in runtimes.iter().cloned() {
-            by_version.entry(runtime.major_version).or_default().push(runtime);
+            by_version
+                .entry(runtime.major_version)
+                .or_default()
+                .push(runtime);
         }
         let groups = by_version
             .into_iter()
             .rev()
-            .map(|(major_version, runtimes)| JavaVersionGroup { major_version, runtimes })
+            .map(|(major_version, runtimes)| JavaVersionGroup {
+                major_version,
+                runtimes,
+            })
             .collect();
         JavaScanResult { runtimes, groups }
     }
@@ -195,10 +197,17 @@ mod tests {
         ];
         let result = JavaScanResult::from_runtimes(runtimes);
         assert_eq!(
-            result.groups.iter().map(|g| g.major_version).collect::<Vec<_>>(),
+            result
+                .groups
+                .iter()
+                .map(|g| g.major_version)
+                .collect::<Vec<_>>(),
             vec![21, 17, 8]
         );
-        assert_eq!(result.groups[1].runtimes[0].path, PathBuf::from("/opt/jdk-17"));
+        assert_eq!(
+            result.groups[1].runtimes[0].path,
+            PathBuf::from("/opt/jdk-17")
+        );
         assert_eq!(result.runtimes[0].path, PathBuf::from("/opt/jdk-21"));
     }
 

@@ -50,11 +50,10 @@ mod tests {
         let json = serde_json::to_string(&Error::Scan("boom".to_owned())).unwrap();
         assert_eq!(json, r#"{"kind":"Scan","message":"boom"}"#);
 
-        let json = serde_json::to_string(&Error::Io(std::io::Error::from(std::io::ErrorKind::NotFound)))
-            .unwrap();
-        assert_eq!(
-            json,
-            r#"{"kind":"Io","message":"entity not found"}"#
-        );
+        let json = serde_json::to_string(&Error::Io(std::io::Error::from(
+            std::io::ErrorKind::NotFound,
+        )))
+        .unwrap();
+        assert_eq!(json, r#"{"kind":"Io","message":"entity not found"}"#);
     }
 }
