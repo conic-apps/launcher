@@ -7,7 +7,7 @@
 
 use folder::DATA_LOCATION;
 use log::{LevelFilter, error, info};
-use tauri::{AppHandle, Manager, Window, WindowEvent, Wry, plugin::TauriPlugin};
+use tauri::{App, AppHandle, Manager, RunEvent, Wry, plugin::TauriPlugin};
 use tauri_plugin_log::{Target, TargetKind};
 
 fn main() {
@@ -40,24 +40,10 @@ fn main() {
         .plugin(java_runtime::init())
         .plugin(statistics::init())
         .invoke_handler(tauri::generate_handler![open_path])
-        .setup(|app| {
-            print_info();
-            #[cfg(any(target_os = "linux", target_os = "windows"))]
-            {
-                use tauri_plugin_deep_link::DeepLinkExt;
-                app.deep_link().register_all()?;
-            }
-            #[cfg(feature = "devtools")]
-            {
-                if let Some(window) = app.get_webview_window("main") {
-                    window.open_devtools();
-                }
-            }
-            Ok(())
-        })
-        .on_window_event(window_event_handler)
-        .run(tauri::generate_context!())
-        .expect("")
+        .setup(tauri_app_setup)
+        .build(tauri::generate_context!())
+        .expect("error while building tauri app")
+        .run(tauri_app_callback);
 }
 
 fn init_log_builder() -> tauri_plugin_log::Builder {
@@ -101,11 +87,25 @@ fn single_instance_builder() -> TauriPlugin<Wry> {
     })
 }
 
-fn window_event_handler(window: &Window, event: &WindowEvent) {
-    if window.label() != "main" {
-        return;
-    };
-    if let tauri::WindowEvent::CloseRequested { .. } = event {
+#[allow(unused_variables)]
+fn tauri_app_setup(app: &mut App) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    print_info();
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    {
+        use tauri_plugin_deep_link::DeepLinkExt;
+        app.deep_link().register_all()?;
+    }
+    #[cfg(feature = "devtools")]
+    {
+        if let Some(window) = app.get_webview_window("main") {
+            window.open_devtools();
+        }
+    }
+    Ok(())
+}
+
+fn tauri_app_callback(_app: &AppHandle, event: RunEvent) {
+    fn cleanup_temp_folder() {
         match std::fs::remove_dir_all(&DATA_LOCATION.temp) {
             Ok(_) => info!("Temporary files cleared"),
             Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
@@ -113,6 +113,13 @@ fn window_event_handler(window: &Window, event: &WindowEvent) {
             }
             _ => (),
         };
+    }
+    match event {
+        RunEvent::ExitRequested { .. } => {
+            cleanup_temp_folder();
+        }
+        RunEvent::Exit => cleanup_temp_folder(),
+        _ => {}
     }
 }
 
