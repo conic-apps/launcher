@@ -47,12 +47,6 @@
         icon="build">
         <BaseSwitch v-model="config.launch.skip_check_files"></BaseSwitch>
       </SettingItem>
-      <SettingItem
-        :title="$t('settings.game.demo')"
-        :description="$t('settings.game.demoDesc')"
-        icon="lock">
-        <BaseSwitch v-model="config.launch.is_demo"></BaseSwitch>
-      </SettingItem>
     </SettingGroup>
     <SettingGroup
       :title="$t('settings.advance.launchArgs')"

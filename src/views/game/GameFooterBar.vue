@@ -3,9 +3,10 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="game-view-footer" data-tauri-drag-region>
+  <div class="game-view-footer" ref="game-view-footer" data-tauri-drag-region>
     <AccountAvatar
       v-if="configStore.current_account"
+      ref="avatar"
       :skin="accountSkin"
       :uuid="accountUuid"
       :size="56"
@@ -17,6 +18,7 @@
       @click="navigationStore.navigate('accounts')"></AccountAvatar>
     <AccountAvatar
       v-else
+      ref="avatar"
       :skin="SteveSkin"
       :uuid="accountUuid"
       :size="56"
@@ -44,21 +46,31 @@
     <p
       class="profile-name"
       v-else
+      ref="accountMenuRef"
       style="border-radius: 8px; padding-right: 16px"
       @click="navigationStore.navigate('accounts')">
       <span>未登录</span>
     </p>
-    <button class="connect" @click="openConnect">
+    <button class="connect" @click="openConnect" ref="connect">
       <AppIcon name="globe" :size="22"></AppIcon>
     </button>
-    <button class="new-instance" @click="dialogStore.createInstance.visible = true">
+    <button
+      class="new-instance"
+      @click="dialogStore.createInstance.visible = true"
+      ref="new-instance">
       <AppIcon name="add" :size="22" style="margin-right: 8px"></AppIcon>
       创建新游戏
     </button>
-    <button class="install-pack" @click="dialogStore.createInstance.visible = true">
+    <button
+      class="install-pack"
+      @click="dialogStore.createInstance.visible = true"
+      ref="install-pack">
       <AppIcon name="package" :size="22" fill="none"></AppIcon>
     </button>
-    <button class="install-server" @click="dialogStore.createInstance.visible = true">
+    <button
+      class="install-server"
+      @click="dialogStore.createInstance.visible = true"
+      ref="install-server">
       <AppIcon name="server" :size="22" fill="none"></AppIcon>
     </button>
   </div>
@@ -72,9 +84,10 @@ import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl, type Account } from "@conic/account";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
 import { isLibraryValid } from "@conic/multiplayer";
+import gsap from "gsap";
 
 const configStore = useConfigStore();
 const dialogStore = useDialogStore();
@@ -117,7 +130,7 @@ const profileName = computed(() => {
 
 const accountMenuOpen = ref(false);
 
-const accountMenuRef = ref<HTMLElement | null>(null);
+const accountMenuRef = useTemplateRef("accountMenuRef");
 
 function onPointerDownOutside(event: PointerEvent) {
   const target = event.target as HTMLElement;
@@ -206,6 +219,64 @@ async function openConnect() {
   }
   dialogStore.connectExtension.visible = true;
 }
+
+const elements = {
+  root: useTemplateRef("game-view-footer"),
+  avatar: useTemplateRef("avatar"),
+  profileName: accountMenuRef,
+  connect: useTemplateRef("connect"),
+  newInstance: useTemplateRef("new-instance"),
+  installPack: useTemplateRef("install-pack"),
+  installServer: useTemplateRef("install-server"),
+};
+
+let resolveReady: () => void;
+
+const ready = new Promise<void>((resolve) => {
+  resolveReady = resolve;
+});
+
+onMounted(() => {
+  elements.avatar.value?.ready.then(() => resolveReady());
+});
+
+const playIntro = () => {
+  return gsap
+    .timeline()
+    .from(elements.root.value, {
+      opacity: 1,
+      y: 56,
+      duration: 0.6,
+      ease: "power3.out",
+    })
+    .from(
+      [elements.avatar.value?.$el, elements.profileName.value, elements.connect.value],
+      {
+        opacity: 0,
+        y: 10,
+        duration: 0.2,
+        stagger: 0.05,
+        ease: "power3.out",
+      },
+      "<0.1",
+    )
+    .from(
+      [elements.installServer.value, elements.installPack.value, elements.newInstance.value],
+      {
+        opacity: 0,
+        y: 10,
+        duration: 0.2,
+        stagger: 0.05,
+        ease: "power3.out",
+      },
+      "<",
+    );
+};
+
+defineExpose({
+  playIntro,
+  ready,
+});
 </script>
 
 <style lang="less" scoped>
@@ -219,7 +290,7 @@ async function openConnect() {
   align-items: center;
   backdrop-filter: blur(4px);
 
-  > img {
+  > .avatar {
     border-radius: 1000px;
     padding: 2px;
     background: var(--ctp-surface0);
@@ -228,19 +299,19 @@ async function openConnect() {
     z-index: 100;
   }
 
-  > img.ms-account {
+  > .avatar.ms-account {
     border: 2px solid var(--ctp-green);
   }
 
-  > img.ygg-account {
+  > .avatar.ygg-account {
     border: 2px solid var(--ctp-yellow);
   }
 
-  > img.offline-account {
+  > .avatar.offline-account {
     border: 2px solid var(--ctp-red);
   }
 
-  > img.unlogin {
+  > .avatar.unlogin {
     filter: grayscale(1);
     border: 2px solid var(--ctp-overlay0);
   }

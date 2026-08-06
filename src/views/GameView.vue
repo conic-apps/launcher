@@ -4,9 +4,9 @@
 
 <template>
   <div class="game-view" data-tauri-drag-region>
-    <InstanceSummary></InstanceSummary>
-    <InstancesList></InstancesList>
-    <GameFooterBar></GameFooterBar>
+    <InstanceSummary ref="instance-summary"></InstanceSummary>
+    <InstancesList ref="instance-list"></InstancesList>
+    <GameFooterBar ref="game-footer-bar"></GameFooterBar>
   </div>
 </template>
 
@@ -14,6 +14,19 @@
 import InstanceSummary from "./game/InstanceSummary.vue";
 import InstancesList from "./game/InstancesList.vue";
 import GameFooterBar from "./game/GameFooterBar.vue";
+import { onMounted, useTemplateRef } from "vue";
+import gsap from "gsap";
+
+const instanceSummary = useTemplateRef("instance-summary");
+const instanceList = useTemplateRef("instance-list");
+const gameFooterBar = useTemplateRef("game-footer-bar");
+
+onMounted(async () => {
+  const intro = gsap.timeline({ paused: true });
+  await Promise.all([gameFooterBar.value!.ready]);
+  intro.add(gameFooterBar.value!.playIntro());
+  intro.play();
+});
 </script>
 
 <style lang="less" scoped>

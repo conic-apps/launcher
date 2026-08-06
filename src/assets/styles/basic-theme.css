@@ -1,49 +1,49 @@
-body {
-    --theme-color: 24, 170, 255;
-    --window-background: rgba(15, 1, 1);
-    --main-background: rgba(44, 48, 57, 0.6);
-    --main-border: 1px solid rgba(56, 59, 65, 1);
-    --min-button-background: #ffffff40;
-    --max-button-background: #ffffff40;
-    --close-button-background: #ffffff40;
-    --window-btn-icon-color: #ffffffb7;
-    --default-text-color: 255, 255, 255;
-    --card-background: rgba(255, 255, 255, 0.03);
-    --card-border-radius: 8px;
-    --card-border: 1px solid rgba(255, 255, 255, 0.1);
-    --card-icon-background: rgba(255, 255, 255, 0.1);
-    --card-icon-border-radius: 6px;
-    --sidebar-item-background: rgba(255, 255, 255, 0);
-    --sidebar-item-background-hover: rgba(255, 255, 255, 0.08);
-    --dialog-border: 1px solid rgb(56, 59, 65);
-    --dialog-border-radius: 10px;
-    --dialog-background: rgb(27, 28, 31);
-    --tag-border-radius: 4px;
-    --list-item-background: rgba(255, 255, 255, 0.04);
-    --list-border-radius: 10px;
-    --setting-group-danger-border: 1px solid rgba(210, 15, 57, 0.6);
-    --setting-item-background: rgba(255, 255, 255, 0.08);
-    --setting-item-background-hover: rgba(255, 255, 255, 0.12);
-    --controllers-border-radius: 6px;
-    --controllers-border: 1px solid rgba(255, 255, 255, 0.08);
-    --controllers-background: rgba(255, 255, 255, 0.05);
-    --controllers-background-hover: rgba(255, 255, 255, 0.05);
-    --controllers-background-focus: rgba(255, 255, 255, 0.05);
-    --toggle-switch-outline: 1px solid #ffffffb7;
-    --toggle-switch-background: rgba(255, 255, 255, 0.05);
-    --toggle-switch-button: #ffffffb7;
-    --toggle-switch-active: rgb(var(--theme-color));
-    --selected-text-background: rgba(45, 170, 219, 0.3);
-    --game-launch-button-background: #189e47;
-    --window-btn-unfocused-color: #4E4E4E;
-    --window-btn-border: none;
-    --link-color: #89b4fa;
-}
-
-body code {
-    padding: 2px 4px;
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-    border-radius: 4px;
-}
+/* body { */
+/*     --theme-color: 24, 170, 255; */
+/*     --window-background: rgba(15, 1, 1); */
+/*     --main-background: rgba(44, 48, 57, 0.6); */
+/*     --main-border: 1px solid rgba(56, 59, 65, 1); */
+/*     --min-button-background: #ffffff40; */
+/*     --max-button-background: #ffffff40; */
+/*     --close-button-background: #ffffff40; */
+/*     --window-btn-icon-color: #ffffffb7; */
+/*     --default-text-color: 255, 255, 255; */
+/*     --card-background: rgba(255, 255, 255, 0.03); */
+/*     --card-border-radius: 8px; */
+/*     --card-border: 1px solid rgba(255, 255, 255, 0.1); */
+/*     --card-icon-background: rgba(255, 255, 255, 0.1); */
+/*     --card-icon-border-radius: 6px; */
+/*     --sidebar-item-background: rgba(255, 255, 255, 0); */
+/*     --sidebar-item-background-hover: rgba(255, 255, 255, 0.08); */
+/*     --dialog-border: 1px solid rgb(56, 59, 65); */
+/*     --dialog-border-radius: 10px; */
+/*     --dialog-background: rgb(27, 28, 31); */
+/*     --tag-border-radius: 4px; */
+/*     --list-item-background: rgba(255, 255, 255, 0.04); */
+/*     --list-border-radius: 10px; */
+/*     --setting-group-danger-border: 1px solid rgba(210, 15, 57, 0.6); */
+/*     --setting-item-background: rgba(255, 255, 255, 0.08); */
+/*     --setting-item-background-hover: rgba(255, 255, 255, 0.12); */
+/*     --controllers-border-radius: 6px; */
+/*     --controllers-border: 1px solid rgba(255, 255, 255, 0.08); */
+/*     --controllers-background: rgba(255, 255, 255, 0.05); */
+/*     --controllers-background-hover: rgba(255, 255, 255, 0.05); */
+/*     --controllers-background-focus: rgba(255, 255, 255, 0.05); */
+/*     --toggle-switch-outline: 1px solid #ffffffb7; */
+/*     --toggle-switch-background: rgba(255, 255, 255, 0.05); */
+/*     --toggle-switch-button: #ffffffb7; */
+/*     --toggle-switch-active: rgb(var(--theme-color)); */
+/*     --selected-text-background: rgba(45, 170, 219, 0.3); */
+/*     --game-launch-button-background: #189e47; */
+/*     --window-btn-unfocused-color: #4E4E4E; */
+/*     --window-btn-border: none; */
+/*     --link-color: #89b4fa; */
+/* } */
+/**/
+/* body code { */
+/*     padding: 2px 4px; */
+/*     background: rgba(255, 255, 255, 0.15); */
+/*     border: 1px solid rgba(255, 255, 255, 0.1); */
+/*     color: #ffffff; */
+/*     border-radius: 4px; */
+/* } */

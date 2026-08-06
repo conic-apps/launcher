@@ -85,9 +85,9 @@
       </div>
     </div>
     <main class="main" style="transition: none">
-      <Transition :name="transitionName" mode="out-in">
-        <component :is="pages[navigation.currentPage]"></component>
-      </Transition>
+      <!-- <Transition :name="transitionName" mode="out-in"> -->
+      <component :is="pages[navigation.currentPage]"></component>
+      <!-- </Transition> -->
     </main>
     <DialogRoot></DialogRoot>
   </div>
