@@ -45,11 +45,11 @@ pub enum StatisticsProfile {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StatisticsEntry {
     pub profile: StatisticsProfile,
-    pub instance_id: Uuid,
+    pub instance_id: String,
     pub launch_at_unix_secs: u64,
 }
 
-pub async fn log_launch(profile: StatisticsProfile, instance_id: Uuid) -> Result<()> {
+pub async fn log_launch(profile: StatisticsProfile, instance_id: String) -> Result<()> {
     let launch_at_unix_secs = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Incorrect system time")

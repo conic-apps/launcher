@@ -85,9 +85,9 @@
       </div>
     </div>
     <main class="main" style="transition: none">
-      <Transition :name="transitionName" mode="out-in">
-        <component :is="pages[navigation.currentPage]"></component>
-      </Transition>
+      <!-- <Transition :name="transitionName" mode="out-in"> -->
+      <component :is="pages[navigation.currentPage]"></component>
+      <!-- </Transition> -->
     </main>
     <DialogRoot></DialogRoot>
   </div>
@@ -150,7 +150,6 @@ const pages = reactive({
   market: markRaw(MarketView),
   accounts: markRaw(AccountsView),
 });
-const transitionName = ref("slide-up");
 
 const i18n = useI18n();
 getSystemLanguage().then((systemLanguage) => {

@@ -5,6 +5,7 @@
 <template>
   <div
     class="input-box"
+    :class="{ disabled: props.disabled }"
     :style="{
       width,
       border: error ? 'none' : '',
@@ -108,6 +109,11 @@ watch(model, () => {
   padding: 2px 8px;
   text-align: inherit;
   font-size: 13px;
+}
+
+.input-box.disabled {
+  pointer-events: none;
+  opacity: 0.6;
 }
 
 .input-box input::placeholder {

@@ -214,7 +214,7 @@ const modLoaderVersion = ref("");
 
 const instanceStore = useInstanceStore();
 
-function confirmCreate() {
+async function confirmCreate() {
   creating.value = true;
   const newInstanceConfig = {
     name: customInstanceName.value ? customInstanceName.value : defaultInstanceName.value,
@@ -227,16 +227,35 @@ function confirmCreate() {
       enable_instance_specific_settings: false,
     },
   };
-  createInstance(newInstanceConfig)
-    .then((instanceId) => {
-      if (backgroundFilePath.value) {
-        addBackgroundImage(backgroundFilePath.value, instanceId);
-      }
-    })
-    .finally(() => {
-      instanceStore.loadInstances();
-      close();
-    });
+  try {
+    await instanceStore.loadInstances();
+    const baseInstanceId = newInstanceConfig.name;
+    let instanceIdAppendNumber = 0;
+    while (
+      instanceStore.instances.find(
+        (instance) =>
+          instance.id ===
+          baseInstanceId +
+            (instanceIdAppendNumber > 0 ? " " : "") +
+            (instanceIdAppendNumber > 0 ? instanceIdAppendNumber : ""),
+      )
+    ) {
+      instanceIdAppendNumber++;
+    }
+    const instanceId =
+      baseInstanceId +
+      (instanceIdAppendNumber > 0 ? " " : "") +
+      (instanceIdAppendNumber > 0 ? instanceIdAppendNumber : "");
+    await createInstance(newInstanceConfig, instanceId);
+    if (backgroundFilePath.value) {
+      await addBackgroundImage(backgroundFilePath.value, instanceId);
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    instanceStore.loadInstances();
+    close();
+  }
 }
 
 function close() {

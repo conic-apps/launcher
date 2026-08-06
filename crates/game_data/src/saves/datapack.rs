@@ -8,7 +8,6 @@ use base64::{Engine, engine::general_purpose};
 use folder::DATA_LOCATION;
 use serde_json::Value;
 use tauri::command;
-use uuid::Uuid;
 use zip::ZipArchive;
 
 use crate::error::*;
@@ -75,12 +74,12 @@ pub fn get_all_datapacks<P: AsRef<Path>>(datapacks_folder_path: P) -> Result<Vec
 
 #[command]
 pub(crate) async fn cmd_get_all_datapacks(
-    instance_id: Uuid,
+    instance_id: &str,
     world_folder_name: String,
 ) -> Result<Vec<DataPack>> {
     get_all_datapacks(
         DATA_LOCATION
-            .get_instance_root(&instance_id)
+            .get_instance_root(instance_id)
             .join("saves")
             .join(world_folder_name)
             .join("datapacks"),

@@ -6,7 +6,6 @@
 
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
-use std::str::FromStr;
 
 use flate2::read::GzDecoder;
 use folder::DATA_LOCATION;
@@ -40,7 +39,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 }
 
 #[command]
-async fn cmd_create_instance(config: InstanceConfig, id: Option<Uuid>) -> Result<Uuid> {
+async fn cmd_create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {
     create_instance(config, id).await
 }
 
@@ -50,29 +49,29 @@ async fn cmd_list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
 }
 
 #[command]
-async fn cmd_get_instance_by_id(id: Uuid) -> Option<Instance> {
-    get_instance_by_id(id).await
+async fn cmd_get_instance_by_id(id: String) -> Option<Instance> {
+    get_instance_by_id(&id).await
 }
 
 #[command]
-async fn cmd_update_instance(config: InstanceConfig, id: Uuid) -> Result<()> {
-    update_instance(config, id).await
+async fn cmd_update_instance(config: InstanceConfig, id: String) -> Result<()> {
+    update_instance(config, &id).await
 }
 
 #[command]
-async fn cmd_delete_instance(id: Uuid) -> Result<()> {
+async fn cmd_delete_instance(id: &str) -> Result<()> {
     delete_instance(id).await
 }
 
 #[command]
-async fn cmd_add_background_file(path: String, id: Uuid) -> Result<()> {
-    let instance_root = DATA_LOCATION.get_instance_root(&id);
+async fn cmd_add_background_file(path: String, id: &str) -> Result<()> {
+    let instance_root = DATA_LOCATION.get_instance_root(id);
     async_fs::copy(path, instance_root.join("background")).await?;
     Ok(())
 }
 
 #[command]
-async fn cmd_get_background_path(id: Uuid) -> String {
+async fn cmd_get_background_path(id: String) -> String {
     let instance_root = DATA_LOCATION.get_instance_root(&id);
     instance_root
         .join("background")
@@ -81,21 +80,22 @@ async fn cmd_get_background_path(id: Uuid) -> String {
 }
 
 #[command]
-async fn cmd_calculate_playtime(id: Uuid) -> Result<u64> {
+async fn cmd_calculate_playtime(id: &str) -> Result<u64> {
     calculate_playtime(id)
 }
 
 /// Creates a new game instance using the provided configuration.
-pub async fn create_instance(config: InstanceConfig, id: Option<Uuid>) -> Result<Uuid> {
-    let id = id.unwrap_or(Uuid::new_v4());
-    let instance_root = DATA_LOCATION.get_instance_root(&id);
+pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {
+    let random_uuid = Uuid::new_v4().to_string();
+    let id = id.unwrap_or(&random_uuid);
+    let instance_root = DATA_LOCATION.get_instance_root(id);
     let config_file_path = instance_root.join("instance.toml");
     if let Some(parent) = config_file_path.parent() {
         async_fs::create_dir_all(parent).await?
     }
     async_fs::write(config_file_path, toml::to_string_pretty(&config)?).await?;
     info!("Created instance: {}", config.name);
-    Ok(id)
+    Ok(id.to_string())
 }
 
 /// Enum representing different sorting strategies for listing instances.
@@ -140,18 +140,15 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
             Err(_) => continue,
             Ok(content) => content,
         };
-        let instance_id = match Uuid::from_str(&folder_name) {
-            Ok(x) => x,
-            Err(_) => continue,
-        };
+        let instance_id = folder_name;
         let instance = Instance {
             config: match toml::from_str::<InstanceConfig>(&config_content) {
                 Ok(config) => config,
                 Err(_) => continue,
             },
             installed: async_fs::metadata(path.join(".install.lock")).await.is_ok(),
+            last_played: get_launch_script_timestamp(&instance_id),
             id: instance_id,
-            last_played: get_launch_script_timestamp(instance_id),
         };
         instances.push(instance);
     }
@@ -164,8 +161,8 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     Ok(instances)
 }
 
-pub async fn get_instance_by_id(id: Uuid) -> Option<Instance> {
-    let instance_root = &DATA_LOCATION.get_instance_root(&id);
+pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
+    let instance_root = &DATA_LOCATION.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
     if let Ok(config_file_content) = async_fs::read_to_string(config_file).await
         && let Ok(config) = toml::from_str::<InstanceConfig>(&config_file_content)
@@ -175,7 +172,7 @@ pub async fn get_instance_by_id(id: Uuid) -> Option<Instance> {
             installed: async_fs::metadata(instance_root.join(".install.lock"))
                 .await
                 .is_ok(),
-            id,
+            id: id.to_string(),
             last_played: get_launch_script_timestamp(id),
         })
     } else {
@@ -185,8 +182,8 @@ pub async fn get_instance_by_id(id: Uuid) -> Option<Instance> {
 
 /// Updates the configuration file of an existing instance
 /// specified by the given UUID.
-pub async fn update_instance(config: InstanceConfig, id: Uuid) -> Result<()> {
-    let instance_root = DATA_LOCATION.get_instance_root(&id);
+pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
+    let instance_root = DATA_LOCATION.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
     async_fs::write(config_file, toml::to_string_pretty(&config)?).await?;
     info!("Updated instance: {}", config.name);
@@ -194,8 +191,8 @@ pub async fn update_instance(config: InstanceConfig, id: Uuid) -> Result<()> {
 }
 
 /// Deletes the instance directory corresponding to the given UUID.
-pub async fn delete_instance(id: Uuid) -> Result<()> {
-    async_fs::remove_dir_all(DATA_LOCATION.get_instance_root(&id)).await?;
+pub async fn delete_instance(id: &str) -> Result<()> {
+    async_fs::remove_dir_all(DATA_LOCATION.get_instance_root(id)).await?;
     info!("Deleted {id}");
     Ok(())
 }
@@ -209,7 +206,7 @@ pub struct Instance {
     /// Whether the instance has been installed.
     pub installed: bool,
     /// Unique identifier of the instance.
-    pub id: Uuid,
+    pub id: String,
     pub last_played: Option<u64>,
 }
 
@@ -246,8 +243,8 @@ impl Instance {
     }
 }
 
-pub fn calculate_playtime(instance_id: Uuid) -> Result<u64> {
-    let instance_root = DATA_LOCATION.get_instance_root(&instance_id);
+pub fn calculate_playtime(instance_id: &str) -> Result<u64> {
+    let instance_root = DATA_LOCATION.get_instance_root(instance_id);
     let logs_root = instance_root.join("logs");
     let total_play_time: u64 = std::fs::read_dir(logs_root)?
         .filter_map(|entry| {
@@ -260,7 +257,7 @@ pub fn calculate_playtime(instance_id: Uuid) -> Result<u64> {
         })
         .collect::<Vec<_>>()
         .into_par_iter()
-        .map(|path| match try_read_log_dir_entry(path) {
+        .map(|path| match try_read_flate2_log_dir_entry(path) {
             Err(_) => 0,
             Ok(x) => x.unwrap_or_default(),
         })
@@ -268,21 +265,47 @@ pub fn calculate_playtime(instance_id: Uuid) -> Result<u64> {
     Ok(total_play_time)
 }
 
-fn try_read_log_dir_entry(path: PathBuf) -> Result<Option<u64>> {
+fn try_read_flate2_log_dir_entry(path: PathBuf) -> Result<Option<u64>> {
+    if let Some(file_name) = path.file_name()
+        && file_name == "latest.log"
+    {
+        return try_read_nogz_log_dir_entry(path);
+    }
     let file = std::fs::File::open(&path)?;
     let decoder = GzDecoder::new(file);
     let reader = BufReader::new(decoder);
-
     let mut first_time: Option<u64> = None;
     let mut last_time: Option<u64> = None;
 
     for line in reader.lines() {
         let line = line?;
-
         let Some(time) = parse_log_time(&line) else {
             continue;
         };
+        match first_time {
+            None => {
+                first_time = Some(time);
+            }
+            Some(first) if time > first => {
+                last_time = Some(time);
+            }
+            _ => {}
+        }
+    }
+    Ok(first_time.zip(last_time).map(|(start, end)| end - start))
+}
 
+fn try_read_nogz_log_dir_entry(path: PathBuf) -> Result<Option<u64>> {
+    let file = std::fs::File::open(&path)?;
+    let reader = BufReader::new(file);
+    let mut first_time: Option<u64> = None;
+    let mut last_time: Option<u64> = None;
+
+    for line in reader.lines() {
+        let line = line?;
+        let Some(time) = parse_log_time(&line) else {
+            continue;
+        };
         match first_time {
             None => {
                 first_time = Some(time);
@@ -319,15 +342,15 @@ fn parse_log_time(line: &str) -> Option<u64> {
     Some(hour * 3600 + minute * 60 + second)
 }
 
-fn get_launch_script_timestamp(instance_id: Uuid) -> Option<u64> {
+fn get_launch_script_timestamp(instance_id: &str) -> Option<u64> {
     #[cfg(not(target_os = "windows"))]
     let script_path = DATA_LOCATION
-        .get_instance_root(&instance_id)
+        .get_instance_root(instance_id)
         .join(".cache")
         .join("conic-launch.sh");
     #[cfg(target_os = "windows")]
     let script_path = DATA_LOCATION
-        .get_instance_root(&instance_id)
+        .get_instance_root(instance_id)
         .join(".cache")
         .join("conic-launch.bat");
     let file = std::fs::File::open(script_path).ok()?;

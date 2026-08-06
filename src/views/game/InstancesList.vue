@@ -12,93 +12,99 @@
         </button>
       </div>
       <div class="other">
-        <div class="sort">
-          <div class="head">
+        <div class="sort" ref="sortRef">
+          <div class="head" @click="sortDropdownOpen = !sortDropdownOpen">
             <div class="label">排序</div>
-            <div class="selected">
+            <div class="selected" style="width: 102px">
               {{ sortOptions.find((x) => x.key === sortMode)?.label }}
-              <AppIcon name="chevron-down" :size="14" style="margin-left: 12px"></AppIcon>
+              <AppIcon name="chevron-down" :size="14" style="margin-left: auto"></AppIcon>
             </div>
           </div>
-          <div class="dropdown" v-if="sortDropdownOpen">
-            <div
-              class="sort-option"
-              v-for="option in sortOptions"
-              :key="option.key"
-              :class="{ active: sortMode === option.key }"
-              @click="selectSort(option.key)">
-              {{ option.label }}
-            </div>
-          </div>
+          <Transition name="instances-list-dropdown-fade">
+            <ul class="dropdown" v-if="sortDropdownOpen">
+              <li
+                class="dropdown-option"
+                v-for="option in sortOptions"
+                :key="option.key"
+                :class="{ selected: sortMode === option.key }"
+                @click="selectSort(option.key)">
+                {{ option.label }}
+              </li>
+            </ul>
+          </Transition>
         </div>
-        <div class="group">
-          <div class="head">
+        <div class="group" ref="groupRef">
+          <div class="head" @click="groupDropdownOpen = !groupDropdownOpen">
             <div class="label">分组</div>
             <div class="selected">
-              {{ sortOptions.find((x) => x.key === sortMode)?.label }}
+              {{ groupOptions.find((x) => x.key === groupMode)?.label }}
               <AppIcon name="chevron-down" :size="14"></AppIcon>
             </div>
           </div>
-          <div class="dropdown" v-if="sortDropdownOpen">
-            <div
-              class="sort-option"
-              v-for="option in sortOptions"
-              :key="option.key"
-              :class="{ active: sortMode === option.key }"
-              @click="selectSort(option.key)">
-              {{ option.label }}
-            </div>
-          </div>
+          <Transition name="instances-list-dropdown-fade">
+            <ul class="dropdown" v-if="groupDropdownOpen">
+              <li
+                class="dropdown-option"
+                v-for="option in groupOptions"
+                :key="option.key"
+                :class="{ selected: groupMode === option.key }"
+                @click="selectGroup(option.key)">
+                {{ option.label }}
+              </li>
+            </ul>
+          </Transition>
         </div>
       </div>
     </div>
-    <div class="scroll-container" ref="container" @scroll="updatePositions">
-      <div class="gap-top"></div>
-      <div
-        class="card-container"
-        :class="{ current: instance.id === instanceStore.currentInstance.id }"
-        v-for="instance in instanceStore.instances"
-        :key="instance.id">
+    <div class="scroll-container" ref="container">
+      <div class="scroll-content" ref="content">
+        <div class="gap-top"></div>
         <div
-          class="instance"
+          class="card-container"
           :class="{ current: instance.id === instanceStore.currentInstance.id }"
-          :style="styleMap.get(instance.id)"
-          @click="selectInstance(instance)"
-          :data-id="instance.id"
-          ref="instances">
-          <p v-if="instance.id === LATEST_RELEASE_INSTANCE_ID">
-            {{ $t("game.latestRelease") }}
-          </p>
-          <p v-else-if="instance.id === LATEST_SNAPSHOT_INSTANCE_ID">
-            {{ $t("game.latestSnapshot") }}
-          </p>
-          <p v-else>{{ instance.config.name }}</p>
-          <div class="details">
-            <span
-              :class="`tag ${instance.config.runtime.mod_loader_type.toLowerCase()}`"
-              v-if="instance.config.runtime.mod_loader_type"
-              >{{ instance.config.runtime.mod_loader_type }}</span
-            >
-            <span class="tag vanilla" v-else>Vanilla</span>
-            <span class="last-play"
-              ><span class="label">上次运行：</span>
-              <span v-if="instance.last_played">{{
-                formatLastPlayed(instance.last_played, zhCN)
-              }}</span>
-              <span v-else>从未运行</span>
-            </span>
+          v-for="instance in instanceStore.instances"
+          :key="instance.id"
+          ref="wrappers">
+          <div
+            class="instance"
+            :class="{ current: instance.id === instanceStore.currentInstance.id }"
+            @click="selectInstance(instance)"
+            :data-id="instance.id"
+            ref="instances">
+            <p v-if="instance.id === LATEST_RELEASE_INSTANCE_ID">
+              {{ $t("game.latestRelease") }}
+            </p>
+            <p v-else-if="instance.id === LATEST_SNAPSHOT_INSTANCE_ID">
+              {{ $t("game.latestSnapshot") }}
+            </p>
+            <p v-else>{{ instance.config.name }}</p>
+            <div class="details">
+              <span
+                :class="`tag ${instance.config.runtime.mod_loader_type.toLowerCase()}`"
+                v-if="instance.config.runtime.mod_loader_type"
+                >{{ instance.config.runtime.mod_loader_type }}</span
+              >
+              <span class="tag vanilla" v-else>Vanilla</span>
+              <span class="last-play"
+                ><span class="label">上次运行：</span>
+                <span v-if="instance.last_played">{{
+                  formatLastPlayed(instance.last_played, zhCN)
+                }}</span>
+                <span v-else>从未运行</span>
+              </span>
+            </div>
+            <img
+              class="instance-background"
+              v-if="backgroundImagesSrc[instance.id]"
+              v-show="backgroundImagesShow[instance.id]"
+              :src="backgroundImagesSrc[instance.id]"
+              alt=""
+              @load="backgroundImagesShow[instance.id] = true"
+              @error="backgroundImagesShow[instance.id] = false" />
           </div>
-          <img
-            class="instance-background"
-            v-if="backgroundImagesSrc[instance.id]"
-            v-show="backgroundImagesShow[instance.id]"
-            :src="backgroundImagesSrc[instance.id]"
-            alt=""
-            @load="backgroundImagesShow[instance.id] = true"
-            @error="backgroundImagesShow[instance.id] = false" />
         </div>
+        <div class="gap-bottom"></div>
       </div>
-      <div class="gap-bottom"></div>
     </div>
   </div>
 </template>
@@ -114,90 +120,152 @@ import {
   LATEST_SNAPSHOT_INSTANCE_ID,
   zhCN,
 } from "@conic/instance";
-import { nextTick, onMounted, reactive, ref, useTemplateRef } from "vue";
+import { nextTick, onMounted, onUnmounted, ref, useTemplateRef } from "vue";
+import Lenis from "lenis";
+import gsap from "gsap";
 import { window as appWindow } from "@tauri-apps/api";
 import { convertFileSrc } from "@tauri-apps/api/core";
 
 const instanceStore = useInstanceStore();
 const containerRef = useTemplateRef("container");
+const contentRef = useTemplateRef("content");
 const items = useTemplateRef<HTMLElement[]>("instances");
+const wrappers = useTemplateRef<HTMLElement[]>("wrappers");
 
-const styleMap = reactive(new Map<string, { transform: string }>());
+let lenis: Lenis | undefined;
+let lenisTick: ((time: number) => void) | undefined;
 
-function updatePositions() {
+interface CardLayout {
+  top: number;
+  height: number;
+}
+
+let cardLayouts: CardLayout[] = [];
+let setters: ((value: number) => void)[] = [];
+let containerHeight = 0;
+const maxOffset = 128;
+
+function ensureLenis() {
+  const container = containerRef.value;
+  const content = contentRef.value;
+
+  if (lenis || !container || !content) return;
+
+  lenis = new Lenis({
+    wrapper: container,
+    content,
+    lerp: 1,
+    smoothWheel: true,
+  });
+
+  lenis.on("scroll", (l: Lenis) => {
+    renderPositions(l.scroll);
+  });
+
+  gsap.ticker.lagSmoothing(0);
+  lenisTick = (time: number) => lenis!.raf(time * 1000);
+  gsap.ticker.add(lenisTick);
+}
+
+function measureLayout() {
   const container = containerRef.value;
   const elements = items.value;
+  const wrapperElements = wrappers.value;
 
-  if (!container || !elements) return;
+  if (!container || !elements || !wrapperElements) return;
 
+  containerHeight = container.clientHeight;
   const containerRect = container.getBoundingClientRect();
 
-  const center = containerRect.height / 2;
-  const maxOffset = 128;
+  const count = Math.min(elements.length, wrapperElements.length);
 
-  const curveRange = containerRect.height;
+  setters = wrapperElements
+    .slice(0, count)
+    .map((element) => gsap.quickSetter(element, "x", "px") as (value: number) => void);
 
-  for (const element of elements) {
+  cardLayouts = elements.slice(0, count).map((element) => {
     const rect = element.getBoundingClientRect();
+    return {
+      top: rect.top - containerRect.top + container.scrollTop,
+      height: rect.height,
+    };
+  });
+}
 
-    const y = rect.top - containerRect.top + rect.height / 2;
+function renderPositions(scrollY: number) {
+  const center = containerHeight / 2;
+  const curveRange = containerHeight;
 
+  for (let i = 0; i < cardLayouts.length; i++) {
+    const layout = cardLayouts[i];
+    const y = layout.top - scrollY + layout.height / 2;
     const t = (y - center) / curveRange;
-
     const clamped = Math.max(-1, Math.min(1, t));
-
     const x = maxOffset * (1 - clamped * clamped);
-
-    styleMap.set(element.dataset.id!, {
-      transform: `translateX(${-x}px)`,
-    });
+    setters[i](-x);
   }
 }
 
 function scrollToInstance(instanceId: string, smooth: boolean) {
-  const container = containerRef.value;
   const elements = items.value;
+  const container = containerRef.value;
 
-  if (!container || !elements) return;
+  if (!elements || !container) return;
 
-  const element = elements.find((el) => el.dataset.id === instanceId);
+  const index = elements.findIndex((el) => el.dataset.id === instanceId);
 
-  if (!element) return;
+  if (index === -1) return;
 
-  const containerRect = container.getBoundingClientRect();
-  const elementRect = element.getBoundingClientRect();
+  const layout = cardLayouts[index];
 
-  const offset =
-    elementRect.top + elementRect.height / 2 - (containerRect.top + containerRect.height / 2);
+  if (!layout) return;
 
-  if (smooth) {
-    container.scrollTo({
-      top: container.scrollTop + offset,
-      behavior: "smooth",
+  const target = layout.top + layout.height / 2 - containerHeight / 2;
+
+  if (lenis) {
+    lenis.scrollTo(target, {
+      immediate: !smooth,
+      ...(smooth ? { duration: 0.4, easing: gsap.parseEase("power3.out") } : {}),
     });
-  } else {
-    container.scrollTo({
-      top: container.scrollTop + offset,
-    });
+    return;
   }
+
+  container.scrollTo({
+    top: target,
+    behavior: smooth ? "smooth" : "auto",
+  });
 }
 
 async function selectInstance(instance: Instance) {
-  scrollToInstance(instance.id, true);
-  await nextTick();
   instanceStore.currentInstance = instance;
+  await nextTick();
+  measureLayout();
+  scrollToInstance(instance.id, true);
 }
 
+// function instanceDblclick(instance: Instance) {
+//   if (instanceStore.currentInstance === instance) {
+//     navigationStore.navigate("launch");
+//   }
+// }
+
 onMounted(async () => {
-  init();
+  await init();
+  scrollToInstance(instanceStore.currentInstance.id, false);
 });
+
+let resizeCleanup: (() => void) | undefined;
 
 async function init() {
   await nextTick();
-  updatePositions();
-  scrollToInstance(instanceStore.currentInstance.id, false);
-  appWindow.getCurrentWindow().onResized(() => {
-    updatePositions();
+  ensureLenis();
+  measureLayout();
+  lenis?.resize();
+  renderPositions(lenis ? lenis.scroll : (containerRef.value?.scrollTop ?? 0));
+  resizeCleanup?.();
+  resizeCleanup = await appWindow.getCurrentWindow().onResized(() => {
+    measureLayout();
+    renderPositions(lenis ? lenis.scroll : (containerRef.value?.scrollTop ?? 0));
   });
   Object.values(instanceStore.instances).forEach(async (instance) => {
     backgroundImagesSrc.value[instance.id] = await getBackgroundSrc(instance.id);
@@ -205,6 +273,31 @@ async function init() {
 }
 
 const sortDropdownOpen = ref(false);
+const groupDropdownOpen = ref(false);
+
+const sortRef = useTemplateRef<HTMLElement>("sortRef");
+const groupRef = useTemplateRef<HTMLElement>("groupRef");
+
+function onPointerDownOutside(event: PointerEvent) {
+  const target = event.target as HTMLElement;
+  if (sortRef.value && !sortRef.value.contains(target)) {
+    sortDropdownOpen.value = false;
+  }
+  if (groupRef.value && !groupRef.value.contains(target)) {
+    groupDropdownOpen.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("pointerdown", onPointerDownOutside);
+});
+
+onUnmounted(() => {
+  if (lenisTick) gsap.ticker.remove(lenisTick);
+  lenis?.destroy();
+  resizeCleanup?.();
+  document.removeEventListener("pointerdown", onPointerDownOutside);
+});
 
 type SortMode = "name" | "version" | "playtime" | "lastplay";
 const sortMode = ref<SortMode>("playtime");
@@ -212,12 +305,25 @@ const sortOptions: { key: SortMode; label: string }[] = [
   { key: "name", label: "名称" },
   { key: "version", label: "版本" },
   { key: "playtime", label: "游玩时间" },
-  { key: "lastplay", label: "最后运行日期" },
+  { key: "lastplay", label: "最后运行" },
 ];
 
 function selectSort(mode: SortMode) {
   sortMode.value = mode;
   sortDropdownOpen.value = false;
+}
+
+type GroupMode = "all" | "none" | "loader";
+const groupMode = ref<GroupMode>("all");
+const groupOptions: { key: GroupMode; label: string }[] = [
+  { key: "all", label: "全部实例" },
+  { key: "none", label: "未分组" },
+  { key: "loader", label: "模组加载器" },
+];
+
+function selectGroup(mode: GroupMode) {
+  groupMode.value = mode;
+  groupDropdownOpen.value = false;
 }
 
 instanceStore.$subscribe(async () => {
@@ -350,17 +456,78 @@ async function getBackgroundSrc(id: string) {
         }
       }
     }
+
+    .sort,
+    .group {
+      position: relative;
+    }
+
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--dialog-border-radius);
+      border: var(--controllers-border);
+      background: var(--ctp-base);
+      box-shadow: 0px 0px 10px #4500611d;
+      z-index: 100000;
+      list-style: none;
+
+      .dropdown-option {
+        height: 26px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        margin: 4px 0;
+        border-radius: var(--controllers-border-radius);
+        font-size: 12px;
+        list-style: none;
+        white-space: nowrap;
+        transition: all 30ms ease;
+
+        &:hover {
+          background: #ffffff1f;
+        }
+
+        &:active {
+          background: #ffffff15;
+        }
+
+        &.selected {
+          background: #ffffff17;
+        }
+      }
+    }
+
+    .instances-list-dropdown-fade-leave-active,
+    .instances-list-dropdown-fade-enter-active {
+      transition: all 120ms ease;
+    }
+
+    .instances-list-dropdown-fade-leave-from,
+    .instances-list-dropdown-fade-enter-to {
+      opacity: 1;
+    }
+
+    .instances-list-dropdown-fade-leave-to,
+    .instances-list-dropdown-fade-enter-from {
+      opacity: 0;
+    }
   }
   .scroll-container {
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-left: 200px;
-    .gap-top {
-      height: 132px;
-    }
-    .gap-bottom {
-      height: 100px;
+    .scroll-content {
+      padding-left: 200px;
+      .gap-top {
+        height: 132px;
+      }
+      .gap-bottom {
+        height: 100px;
+      }
     }
   }
   .instance {
@@ -375,7 +542,16 @@ async function getBackgroundSrc(id: string) {
     height: 60px;
     transition:
       border-left 200ms ease,
-      margin 200ms ease;
+      margin 200ms ease,
+      transform 100ms linear;
+
+    &:active {
+      transform: scale(0.99);
+    }
+
+    &:hover {
+      background: rgba(var(--ctp-surface0-rgb), 0.8);
+    }
     img.instance-background {
       mask-image: linear-gradient(to left, black 0%, transparent 100%);
       width: calc(100% - 200px);
@@ -435,22 +611,18 @@ async function getBackgroundSrc(id: string) {
   .instance.current {
     border-left: 16px solid rgba(var(--ctp-lavender-rgb), 0.8);
     margin-left: -20px;
+    transform: scale(1.03);
   }
 
   .card-container {
-    transition: all 100ms linear;
+    transition: margin 100ms linear;
     margin-top: 0px;
     margin-bottom: 0px;
-
-    &:active {
-      transform: scale(0.99);
-    }
+    will-change: transform;
   }
   .card-container.current {
-    transform: scale(1.03);
     margin-top: 4px;
     margin-bottom: 4px;
-    pointer-events: none;
   }
 }
 </style>
