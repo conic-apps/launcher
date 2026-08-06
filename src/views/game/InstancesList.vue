@@ -125,10 +125,8 @@ import Lenis from "lenis";
 import gsap from "gsap";
 import { window as appWindow } from "@tauri-apps/api";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { useNavigationStore } from "@/store/navigation";
 
 const instanceStore = useInstanceStore();
-const navigationStore = useNavigationStore();
 const containerRef = useTemplateRef("container");
 const contentRef = useTemplateRef("content");
 const items = useTemplateRef<HTMLElement[]>("instances");
@@ -245,11 +243,11 @@ async function selectInstance(instance: Instance) {
   scrollToInstance(instance.id, true);
 }
 
-function instanceDblclick(instance: Instance) {
-  if (instanceStore.currentInstance === instance) {
-    navigationStore.navigate("launch");
-  }
-}
+// function instanceDblclick(instance: Instance) {
+//   if (instanceStore.currentInstance === instance) {
+//     navigationStore.navigate("launch");
+//   }
+// }
 
 onMounted(async () => {
   await init();

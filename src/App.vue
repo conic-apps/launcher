@@ -150,7 +150,6 @@ const pages = reactive({
   market: markRaw(MarketView),
   accounts: markRaw(AccountsView),
 });
-const transitionName = ref("slide-up");
 
 const i18n = useI18n();
 getSystemLanguage().then((systemLanguage) => {

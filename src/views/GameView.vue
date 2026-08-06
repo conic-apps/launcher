@@ -17,8 +17,8 @@ import GameFooterBar from "./game/GameFooterBar.vue";
 import { onMounted, useTemplateRef } from "vue";
 import gsap from "gsap";
 
-const instanceSummary = useTemplateRef("instance-summary");
-const instanceList = useTemplateRef("instance-list");
+// const instanceSummary = useTemplateRef("instance-summary");
+// const instanceList = useTemplateRef("instance-list");
 const gameFooterBar = useTemplateRef("game-footer-bar");
 
 onMounted(async () => {
