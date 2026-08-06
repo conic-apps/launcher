@@ -1,5 +1,8 @@
 name: Conic Launcher Auto Build
 on:
+  workflow_dispatch:
+    branches:
+      - dev
   pull_request:
     paths:
       - ".github/workflows/build.yml"
