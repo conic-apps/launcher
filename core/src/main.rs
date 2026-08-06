@@ -46,6 +46,12 @@ fn main() {
                 use tauri_plugin_deep_link::DeepLinkExt;
                 app.deep_link().register_all()?;
             }
+            #[cfg(feature = "devtools")]
+            {
+                if let Some(window) = app.get_webview_window("main") {
+                    window.open_devtools();
+                }
+            }
             Ok(())
         })
         .on_window_event(window_event_handler)

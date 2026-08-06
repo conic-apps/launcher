@@ -49,7 +49,7 @@ serde_with = "3"
 sha1_smol = "1"
 sha2 = { version = "0.10", default-features = false }
 sys-locale = "0.3"
-tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression", "macos-private-api", "protocol-asset"] }
+tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression", "macos-private-api", "protocol-asset", "devtools"] }
 thiserror = "2"
 toml = "1"
 url = "2"
@@ -59,7 +59,6 @@ libloader = "0.1"
 tokio = { version = "1", features = ["macros", "rt"]}
 flate2 = "1"
 fastnbt = "2"
-fastanvil = "0.32"
 
 [profile.dev]
 incremental = true

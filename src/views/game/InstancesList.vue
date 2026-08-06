@@ -67,7 +67,6 @@
           ref="wrappers">
           <div
             class="instance"
-            :class="{ current: instance.id === instanceStore.currentInstance.id }"
             @click="selectInstance(instance)"
             :data-id="instance.id"
             ref="instances">
@@ -123,8 +122,11 @@ import {
 import { nextTick, onMounted, onUnmounted, ref, useTemplateRef } from "vue";
 import Lenis from "lenis";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { window as appWindow } from "@tauri-apps/api";
 import { convertFileSrc } from "@tauri-apps/api/core";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const instanceStore = useInstanceStore();
 const containerRef = useTemplateRef("container");
@@ -144,6 +146,9 @@ let cardLayouts: CardLayout[] = [];
 let setters: ((value: number) => void)[] = [];
 let containerHeight = 0;
 const maxOffset = 128;
+
+let cardTriggers: ScrollTrigger[] = [];
+let cardTriggersKey = "";
 
 function ensureLenis() {
   const container = containerRef.value;
@@ -190,6 +195,28 @@ function measureLayout() {
       height: rect.height,
     };
   });
+}
+
+function syncCardTriggers() {
+  const container = containerRef.value;
+  const elements = items.value;
+
+  if (!container || !elements) return;
+
+  const key = elements.map((el) => el.dataset.id ?? "").join(",");
+  if (key === cardTriggersKey) return;
+  cardTriggersKey = key;
+
+  cardTriggers.forEach((trigger) => trigger.kill());
+  cardTriggers = elements.map((el) =>
+    ScrollTrigger.create({
+      trigger: el,
+      scroller: container,
+      start: "top bottom",
+      end: "bottom top",
+      toggleClass: { targets: el, className: "visible" },
+    }),
+  );
 }
 
 function renderPositions(scrollY: number) {
@@ -260,6 +287,7 @@ async function init() {
   await nextTick();
   ensureLenis();
   measureLayout();
+  syncCardTriggers();
   lenis?.resize();
   renderPositions(lenis ? lenis.scroll : (containerRef.value?.scrollTop ?? 0));
   resizeCleanup?.();
@@ -293,6 +321,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  cardTriggers.forEach((trigger) => trigger.kill());
+  cardTriggers = [];
+  cardTriggersKey = "";
   if (lenisTick) gsap.ticker.remove(lenisTick);
   lenis?.destroy();
   resizeCleanup?.();
@@ -540,10 +571,12 @@ async function getBackgroundSrc(id: string) {
     margin-top: 2px;
     width: 480px;
     height: 60px;
+    opacity: 0.6;
     transition:
       border-left 200ms ease,
       margin 200ms ease,
-      transform 100ms linear;
+      transform 100ms linear,
+      opacity 300ms ease;
 
     &:active {
       transform: scale(0.99);
@@ -608,10 +641,8 @@ async function getBackgroundSrc(id: string) {
       }
     }
   }
-  .instance.current {
-    border-left: 16px solid rgba(var(--ctp-lavender-rgb), 0.8);
-    margin-left: -20px;
-    transform: scale(1.03);
+  .instance.visible {
+    opacity: 1;
   }
 
   .card-container {
@@ -623,6 +654,12 @@ async function getBackgroundSrc(id: string) {
   .card-container.current {
     margin-top: 4px;
     margin-bottom: 4px;
+
+    .instance {
+      border-left: 16px solid rgba(var(--ctp-lavender-rgb), 0.8);
+      margin-left: -20px;
+      transform: scale(1.03);
+    }
   }
 }
 </style>
