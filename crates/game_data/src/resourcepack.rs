@@ -8,7 +8,6 @@ use base64::{Engine, engine::general_purpose};
 use folder::DATA_LOCATION;
 use serde_json::Value;
 use tauri::command;
-use uuid::Uuid;
 use zip::ZipArchive;
 
 use crate::error::*;
@@ -76,10 +75,10 @@ pub fn get_all_resourcepacks<P: AsRef<Path>>(
 }
 
 #[command]
-pub(crate) async fn cmd_get_all_resourcepacks(instance_id: Uuid) -> Result<Vec<ResourcePack>> {
+pub(crate) async fn cmd_get_all_resourcepacks(instance_id: &str) -> Result<Vec<ResourcePack>> {
     get_all_resourcepacks(
         DATA_LOCATION
-            .get_instance_root(&instance_id)
+            .get_instance_root(instance_id)
             .join("resourcepacks"),
     )
 }

@@ -62,6 +62,21 @@ watch(
     immediate: true,
   },
 );
+
+let resolveReady!: () => void;
+
+const ready = new Promise<void>((resolve) => {
+  resolveReady = resolve;
+});
+
+watch(loading, (loading) => {
+  if (!loading) {
+    console.log("avatar ready");
+    resolveReady();
+  }
+});
+
+defineExpose({ ready });
 </script>
 
 <template>

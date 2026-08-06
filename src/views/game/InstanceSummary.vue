@@ -42,9 +42,15 @@
         }}</span>
         <span v-else>从未运行</span>
       </p>
-      <div class="line"></div>
-      <AppIcon name="time" :size="22" style="margin-right: 2px"></AppIcon>
-      <p>
+      <div
+        class="line"
+        v-if="playtimeCache[currentInstance.id] && playtimeCache[currentInstance.id] > 0"></div>
+      <AppIcon
+        name="time"
+        :size="22"
+        style="margin-right: 2px"
+        v-if="playtimeCache[currentInstance.id] && playtimeCache[currentInstance.id] > 0"></AppIcon>
+      <p v-if="playtimeCache[currentInstance.id] && playtimeCache[currentInstance.id] > 0">
         <span>游戏时间</span>
         <span>{{ formatPlayTime(playtimeCache[currentInstance.id] ?? 0) }}</span>
       </p>

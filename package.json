@@ -12,10 +12,10 @@
     "packageManager": "pnpm@11.18.0",
     "scripts": {
         "dev": "vite",
-        "build": "vue-tsc --noEmit && vite build",
+        "build": "vue-tsc --noEmit -p tsconfig.app.json && vite build",
         "preview": "vite preview",
         "tauri": "tauri",
-        "ts:check": "tsc --noEmit",
+        "ts:check": "vue-tsc --noEmit -p tsconfig.app.json",
         "lint": "eslint \"src/**\" --ignore-pattern \"src/assets\" --max-warnings=0",
         "lint:fix": "eslint \"src/**\" --ignore-pattern \"src/assets\" --fix",
         "format": "prettier --write .",
@@ -32,6 +32,7 @@
         "@tauri-apps/plugin-updater": "^2.10.1",
         "blueimp-md5": "^2.19.0",
         "gsap": "^3.15.0",
+        "lenis": "^1.3.25",
         "pinia": "^3.0.4",
         "vue": "^3.5.38",
         "vue-i18n": "^11.4.6"
@@ -40,7 +41,6 @@
         "@tauri-apps/cli": "^2.11.2",
         "@tsconfig/node22": "^22.0.5",
         "@types/blueimp-md5": "^2.18.2",
-        "@types/gsap": "^1.20.2",
         "@types/jsdom": "^21.1.7",
         "@types/node": "^22.19.21",
         "@typescript-eslint/utils": "^8.61.1",

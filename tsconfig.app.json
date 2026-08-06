@@ -7,7 +7,7 @@
         "preserveValueImports": false,
         "importsNotUsedAsValues": "remove",
         "verbatimModuleSyntax": false,
-        "ignoreDeprecations": "5.0",
+        "ignoreDeprecations": "6.0",
         "composite": true,
         "baseUrl": ".",
         "paths": {

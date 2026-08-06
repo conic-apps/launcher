@@ -18,7 +18,6 @@ use tauri::{
     Runtime, command,
     plugin::{Builder, TauriPlugin},
 };
-use uuid::Uuid;
 
 use platform::{OsFamily, PLATFORM_INFO};
 
@@ -133,8 +132,8 @@ impl DataLocation {
         }
     }
 
-    pub fn get_instance_root(&self, instance_id: &Uuid) -> PathBuf {
-        self.instances.join(instance_id.to_string())
+    pub fn get_instance_root(&self, instance_id: &str) -> PathBuf {
+        self.instances.join(instance_id)
     }
 
     pub fn init(&self) {
@@ -192,9 +191,9 @@ fn cmd_get_data_location() -> DataLocation {
 }
 
 #[command]
-fn cmd_get_instance_root(instance_id: Uuid) -> String {
+fn cmd_get_instance_root(instance_id: &str) -> String {
     DATA_LOCATION
-        .get_instance_root(&instance_id)
+        .get_instance_root(instance_id)
         .to_string_lossy()
         .to_string()
 }
