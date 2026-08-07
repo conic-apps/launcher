@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="content-saves">
+  <div class="content-saves" @click="selectedSave = null">
     <div class="title">
       <AppIcon name="save"></AppIcon>
       <p>存档列表</p>
@@ -14,7 +14,15 @@
     </div>
     <div class="save-list-wrapper">
       <div class="saves-list">
-        <div v-for="(save, folderName) in saves" class="content" :key="folderName">
+        <div
+          v-for="(save, folderName) in saves"
+          class="content"
+          :class="{
+            selected: folderName === selectedSave,
+            'expand-up': expandDirection === 'up' && selectedSave === folderName,
+          }"
+          :key="folderName"
+          @click.stop="selectSave(folderName, $event)">
           <img
             v-if="iconCache[folderName]"
             :src="iconCache[folderName]"
@@ -54,6 +62,9 @@
               <AppIcon name="play" :size="18"></AppIcon>
             </button>
           </div>
+          <div class="extra">
+            <div class="map-previewer-container"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -65,12 +76,14 @@ import BaseSelect from "@/components/BaseSelect.vue";
 import { useGameContentStore } from "@/store/content";
 import { useInstanceStore } from "@/store/instance";
 import { getSaveIcon } from "@conic/content";
-import { formatLastPlayed, formatPlayTime, zhCN } from "@conic/instance";
+import { deleteInstance, formatLastPlayed, formatPlayTime, zhCN } from "@conic/instance";
 import { computed, ref, watch } from "vue";
 
 const gameContentStore = useGameContentStore();
 const instanceStore = useInstanceStore();
 const saves = computed(() => gameContentStore.gameContent.saves);
+
+const selectedSave = ref(null as string | null);
 
 let iconCache = ref({} as Record<string, string>);
 
@@ -110,6 +123,20 @@ function formatGameType(gameType: number) {
     return null;
   }
 }
+
+const expandDirection = ref("down" as "up" | "down");
+
+function selectSave(folderName: string, event: MouseEvent) {
+  selectedSave.value = folderName;
+  const element = event.currentTarget as HTMLElement;
+  const rect = element.getBoundingClientRect();
+  const bottomSpace = window.innerHeight - rect.bottom;
+  if (bottomSpace < 250) {
+    expandDirection.value = "up";
+  } else {
+    expandDirection.value = "down";
+  }
+}
 </script>
 
 <style lang="less" scoped>
@@ -142,11 +169,9 @@ function formatGameType(gameType: number) {
   .content {
     display: flex;
     border-radius: 8px;
-    overflow: hidden;
     image-rendering: pixelated;
     transform: translateX(4px);
     background: rgba(var(--ctp-surface0-rgb), 0.4);
-    position: relative;
     img {
       border: 2px solid var(--ctp-surface0);
       border-radius: 8px 0 0 8px;
@@ -263,6 +288,35 @@ function formatGameType(gameType: number) {
       opacity: 0.7;
       transition: opacity 55ms ease;
     }
+  }
+  .content .extra {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    z-index: -3;
+    padding-top: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding-right: 16px;
+    transition: all 200ms ease;
+    padding-top: 64px;
+    background: var(--ctp-surface0);
+  }
+  .content.selected {
+    z-index: 10;
+    img {
+      z-index: 9;
+    }
+  }
+  .content.selected .extra {
+    outline: 2px solid var(--ctp-blue);
+    height: calc(100% + 250px);
+    z-index: 11;
+    opacity: 1;
+  }
+  .content.selected.expand-up .extra {
+    transform: translateY(-250px);
   }
 }
 </style>
