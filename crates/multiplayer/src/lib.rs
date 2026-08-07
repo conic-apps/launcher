@@ -15,6 +15,7 @@ use std::{
 use download::progress::DownloadState;
 use folder::DATA_LOCATION;
 use futures::stream::{AbortHandle, Abortable};
+use log::info;
 use tauri::{
     AppHandle, Emitter, Manager, Runtime, State, command,
     ipc::Channel,
@@ -41,7 +42,7 @@ const RECONCILE_EVERY: u32 = 5;
 struct PluginState {
     session: Mutex<Option<Arc<NexusSession>>>,
     poll_thread: Mutex<Option<thread::JoinHandle<()>>>,
-    shutdown: Arc<AtomicBool>,
+    shutdown_flag: Arc<AtomicBool>,
     last_state_version: Arc<Mutex<u64>>,
     abort_handle: Arc<Mutex<Option<AbortHandle>>>,
 }
@@ -51,22 +52,32 @@ impl Default for PluginState {
         PluginState {
             session: Mutex::new(None),
             poll_thread: Mutex::new(None),
-            shutdown: Arc::new(AtomicBool::new(false)),
+            shutdown_flag: Arc::new(AtomicBool::new(false)),
             last_state_version: Arc::new(Mutex::new(0)),
             abort_handle: Arc::new(Mutex::new(None)),
         }
     }
 }
 
-impl Drop for PluginState {
-    fn drop(&mut self) {
-        self.shutdown.store(true, Ordering::SeqCst);
+impl PluginState {
+    fn shutdown(&self) {
+        info!("Shutting down multiplayer plugin");
+        self.shutdown_flag.store(true, Ordering::SeqCst);
         if let Some(handle) = self.poll_thread.lock().expect("Internal error").take() {
+            info!("Joining poll thread");
             let _ = handle.join();
         }
         if let Some(session) = self.session.lock().expect("Internal error").take() {
+            info!("Destroy nexus session");
             session.destroy();
         }
+        info!("Plugin stopped");
+    }
+}
+
+impl Drop for PluginState {
+    fn drop(&mut self) {
+        self.shutdown();
     }
 }
 
@@ -89,6 +100,13 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         .setup(|app, _| {
             app.manage(PluginState::default());
             Ok(())
+        })
+        .on_event(|app, event| match event {
+            tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit => {
+                let state = app.state::<PluginState>();
+                state.shutdown();
+            }
+            _ => {}
         })
         .build()
 }
@@ -139,7 +157,7 @@ fn spawn_poll_thread<R: Runtime>(
         return;
     }
     *slot = Some(thread::spawn({
-        let shutdown = state.shutdown.clone();
+        let shutdown = state.shutdown_flag.clone();
         let last_state_version = state.last_state_version.clone();
         move || poll_loop(app, session, shutdown, last_state_version)
     }));

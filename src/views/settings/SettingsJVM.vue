@@ -29,7 +29,7 @@
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import BaseSwitch from "@/components/base/BaseSwitch.vue";
+import BaseSwitch from "@/components/BaseSwitch.vue";
 import { ref } from "vue";
 
 const autoSelectJava = ref(true);

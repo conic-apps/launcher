@@ -21,6 +21,7 @@ config = { path = "./crates/config", version = "0.0.0"}
 download = { path = "./crates/download", version = "0.0.0"}
 folder = { path = "./crates/folder", version = "0.0.0"}
 game_data = { path = "./crates/game_data", version = "0.0.0"}
+java-runtime = { path = "./crates/java-runtime", version = "0.0.0"}
 install = { path = "./crates/install", version = "0.0.0"}
 instance = { path = "./crates/instance", version = "0.0.0"}
 modrinth = { path = "./crates/modrinth", version = "0.0.0" }
@@ -49,7 +50,7 @@ serde_with = "3"
 sha1_smol = "1"
 sha2 = { version = "0.10", default-features = false }
 sys-locale = "0.3"
-tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression", "macos-private-api", "protocol-asset"] }
+tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression", "macos-private-api", "protocol-asset", "devtools"] }
 thiserror = "2"
 toml = "1"
 url = "2"
@@ -59,7 +60,6 @@ libloader = "0.1"
 tokio = { version = "1", features = ["macros", "rt"]}
 flate2 = "1"
 fastnbt = "2"
-fastanvil = "0.32"
 
 [profile.dev]
 incremental = true

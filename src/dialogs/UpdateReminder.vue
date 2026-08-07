@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts" setup>
-import BaseDialog from "@/components/base/BaseDialog.vue";
+import BaseDialog from "@/components/BaseDialog.vue";
 import { useDialogStore } from "@/store/dialog";
 import { ref } from "vue";
 

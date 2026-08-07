@@ -94,9 +94,9 @@
 
 <script setup lang="ts">
 import AccountAvatar from "@/components/AccountAvatar.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
-import BaseCheckbox from "@/components/base/BaseCheckbox.vue";
-import BaseInput from "@/components/base/BaseInput.vue";
+import BaseButton from "@/components/BaseButton.vue";
+import BaseCheckbox from "@/components/BaseCheckbox.vue";
+import BaseInput from "@/components/BaseInput.vue";
 import {
   addYggdrasilAccount,
   AuthResponse,

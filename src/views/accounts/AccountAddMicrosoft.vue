@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
+import BaseButton from "@/components/BaseButton.vue";
 import {
   requestDeviceCode,
   pollDeviceCode,

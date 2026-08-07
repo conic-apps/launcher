@@ -4,7 +4,7 @@
 
 <template>
   <div class="window" data-tauri-drag-region>
-    <AppBackground style="position: fixed"></AppBackground>
+    <WindowBackground style="position: fixed"></WindowBackground>
     <div class="title-bar" data-tauri-drag-region>
       <div
         class="title-bar-actions title-bar-actions-left"
@@ -95,7 +95,7 @@
 
 <script setup lang="ts">
 import WindowButton from "./components/WindowButton.vue";
-import SearchBar from "./components/SearchBar.vue";
+import SearchBar from "./components/BaseSearchBar.vue";
 import GameView from "./views/GameView.vue";
 import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
@@ -107,7 +107,7 @@ import { useConfigStore } from "./store/config";
 import { loadPalette } from "./theme";
 import { window as appWindow } from "@tauri-apps/api";
 import { Event } from "@tauri-apps/api/event";
-import AppBackground from "./components/AppBackground.vue";
+import WindowBackground from "./components/WindowBackground.vue";
 import { useNavigationStore } from "./store/navigation";
 import { getSystemLanguage } from "@conic/config";
 import LaunchView from "./views/LaunchView.vue";

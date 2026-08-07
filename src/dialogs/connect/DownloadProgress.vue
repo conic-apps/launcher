@@ -39,8 +39,8 @@ import { formatBytes } from "@conic/download";
 import { computed, onMounted, ref } from "vue";
 import { ConicNexusLibraryDownloadTask } from "@conic/multiplayer";
 import { useDialogStore } from "@/store/dialog";
-import BaseButton from "@/components/base/BaseButton.vue";
-import BaseProgress from "@/components/base/BaseProgress.vue";
+import BaseButton from "@/components/BaseButton.vue";
+import BaseProgress from "@/components/BaseProgress.vue";
 
 const dialogStore = useDialogStore();
 

@@ -60,9 +60,9 @@
 
 <script setup lang="ts">
 import SettingGroup from "@/components/SettingGroup.vue";
-import InfoBox from "@/components/InfoBox.vue";
+import InfoBox from "./InfoBox.vue";
 import SettingItem from "@/components/SettingItem.vue";
-import BaseSwitch from "@/components/base/BaseSwitch.vue";
+import BaseSwitch from "@/components/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { ref, watch } from "vue";
 import { reloadPalette } from "@/theme";

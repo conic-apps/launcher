@@ -62,14 +62,14 @@
 
       <SettingGroup title="皮肤与披风">
         <div class="skin-section">
-          <SkinModel3D
+          <PlayerSkinModel
             v-if="currentAccount"
             :skin="currentAccount.skinUrl ?? getDefaultSkinUrl(currentAccount.uuid)"
-            class="skin-model"></SkinModel3D>
-          <CapeView
+            class="skin-model"></PlayerSkinModel>
+          <PlayerCape
             v-if="currentAccount?.capeUrl"
             :cape="currentAccount.capeUrl"
-            class="cape-view"></CapeView>
+            class="cape-view"></PlayerCape>
           <div class="skin-actions">
             <BaseButton
               class="skin-btn"
@@ -108,12 +108,12 @@
 
 <script setup lang="ts">
 import AccountAvatar from "@/components/AccountAvatar.vue";
-import SkinModel3D from "@/components/SkinModel3D.vue";
-import CapeView from "@/components/CapeView.vue";
-import ActivityCalendar from "@/components/ActivityCalendar.vue";
+import PlayerSkinModel from "@/components/PlayerSkinModel.vue";
+import PlayerCape from "@/components/PlayerCape.vue";
+import ActivityCalendar from "./ActivityCalendar.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import SettingItem from "@/components/SettingItem.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
+import BaseButton from "@/components/BaseButton.vue";
 import { useConfigStore } from "@/store/config";
 import { useAccountStore } from "@/store/account";
 import { useDialogStore } from "@/store/dialog";

@@ -45,8 +45,8 @@
 
 <script setup lang="ts">
 import AccountAvatar from "@/components/AccountAvatar.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
-import BaseProgress from "@/components/base/BaseProgress.vue";
+import BaseButton from "@/components/BaseButton.vue";
+import BaseProgress from "@/components/BaseProgress.vue";
 import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
@@ -112,7 +112,7 @@ async function launch() {
 let cancelInstallHandle: () => Promise<void>;
 
 async function installGame() {
-  const installTask = new InstallTask(configStore, instanceStore.currentInstance, {
+  const installTask = new InstallTask(configStore.$state, instanceStore.currentInstance, {
     onProgress: (task) => {
       if (task.job === Job.Prepare) {
         progressDescription.value = "准备下载";
@@ -159,7 +159,7 @@ async function installGame() {
 let cancelLaunchHandle: () => Promise<void>;
 
 async function launchGame() {
-  const launchTask = new LaunchTask(configStore, instanceStore.currentInstance, {
+  const launchTask = new LaunchTask(configStore.$state, instanceStore.currentInstance, {
     onProgress: (task) => {
       if (task.job === "Prepare") {
         progressDescription.value = "准备启动";
@@ -200,9 +200,6 @@ async function launchGame() {
         progressDescription.value = "游戏已启动";
         progressBarLoading.value = true;
         backButtonDisabled.value = true;
-        setTimeout(() => {
-          navigationStore.back();
-        }, 1000);
       }
     },
   });

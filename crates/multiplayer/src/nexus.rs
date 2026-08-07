@@ -9,6 +9,7 @@ use std::{
 };
 
 use libloader::libloading::{Library, Symbol};
+use log::info;
 use serde::Serialize;
 
 use crate::{
@@ -214,6 +215,10 @@ impl NexusSession {
 
     /// Starts hosting a room. `room_code` may be `None` to mint a new one.
     pub fn create_room(&self, player_name: Option<&str>, room_code: Option<&str>) -> Result<()> {
+        match player_name {
+            Some(player_name) => info!("Creating room with player name: {player_name}"),
+            None => info!("Creating room without player name"),
+        }
         unsafe {
             let create_room: Symbol<ConicNexusCreateRoomFn> =
                 self.symbol(b"conic_nexus_create_room")?;
@@ -229,6 +234,10 @@ impl NexusSession {
 
     /// Joins an existing room.
     pub fn join_room(&self, room_code: &str, player_name: Option<&str>) -> Result<()> {
+        match player_name {
+            Some(player_name) => info!("Joining room with player name: {player_name}"),
+            None => info!("Joining room without player name"),
+        }
         unsafe {
             let join_room: Symbol<ConicNexusJoinRoomFn> = self.symbol(b"conic_nexus_join_room")?;
             let room_code = to_c_string(Some(room_code))?;
@@ -243,6 +252,7 @@ impl NexusSession {
 
     /// Aborts the active session and returns to the waiting state.
     pub fn reset_to_waiting(&self) -> Result<()> {
+        info!("Reset to waiting");
         unsafe {
             let reset: Symbol<ConicNexusResetToWaitingFn> =
                 self.symbol(b"conic_nexus_reset_to_waiting")?;

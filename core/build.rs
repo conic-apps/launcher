@@ -122,6 +122,10 @@ fn main() {
             InlinedPlugin::new().commands(&["cmd_get_data_location", "cmd_get_instance_root"]),
         )
         .plugin(
+            "java-runtime",
+            InlinedPlugin::new().commands(&["cmd_scan_java"]),
+        )
+        .plugin(
             "statistics",
             InlinedPlugin::new().commands(&["cmd_get_statistics", "cmd_get_statistics_by_profile"]),
         )

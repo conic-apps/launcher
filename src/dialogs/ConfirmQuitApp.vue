@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
-import BaseDialog from "@/components/base/BaseDialog.vue";
+import BaseDialog from "@/components/BaseDialog.vue";
 import { useDialogStore } from "@/store/dialog";
 import { window as appWindow } from "@tauri-apps/api";
 

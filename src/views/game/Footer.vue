@@ -24,31 +24,29 @@
       :size="56"
       class="unlogin"
       @click="navigationStore.navigate('accounts')"></AccountAvatar>
-    <p class="profile-name" v-if="configStore.current_account" ref="accountMenuRef">
-      <span>{{ profileName }}</span>
-      <button class="account-switch" tabindex="-1" @click.stop="accountMenuOpen = !accountMenuOpen">
-        <AppIcon name="chevron-up"></AppIcon>
-      </button>
-      <Transition name="game-footer-dropdown-fade">
-        <ul class="dropdown" v-if="accountMenuOpen">
-          <li
-            class="dropdown-option"
-            v-for="player in allPlayers"
-            :key="player.key"
-            :class="{ selected: currentAccountKey === player.key }"
-            @click.stop="selectPlayer(player)">
-            <AccountAvatar :skin="player.skinUrl" :uuid="player.uuid" :size="18"></AccountAvatar>
-            <span class="player-name">{{ player.name }}</span>
-          </li>
-        </ul>
-      </Transition>
-    </p>
-    <p
-      class="profile-name"
-      v-else
-      ref="accountMenuRef"
-      style="border-radius: 8px; padding-right: 16px"
-      @click="navigationStore.navigate('accounts')">
+    <AccountListDropdown v-if="configStore.current_account" ref="accountMenuRef">
+      <template #trigger="{ toggle }">
+        <span>{{ profileName }}</span>
+        <button class="account-switch" tabindex="-1" @click.stop="toggle()">
+          <AppIcon name="chevron-up"></AppIcon>
+        </button>
+      </template>
+      <template #content="{ toggle }">
+        <li
+          class="dropdown-option"
+          v-for="player in allPlayers"
+          :key="player.key"
+          :class="{ selected: currentAccountKey === player.key }"
+          @click.stop="
+            selectPlayer(player);
+            toggle();
+          ">
+          <AccountAvatar :skin="player.skinUrl" :uuid="player.uuid" :size="18"></AccountAvatar>
+          <span class="player-name">{{ player.name }}</span>
+        </li>
+      </template>
+    </AccountListDropdown>
+    <p class="profile-name-unlogged" v-else @click="navigationStore.navigate('accounts')">
       <span>未登录</span>
     </p>
     <button class="connect" @click="openConnect" ref="connect">
@@ -78,13 +76,14 @@
 
 <script setup lang="ts">
 import AccountAvatar from "@/components/AccountAvatar.vue";
+import AccountListDropdown from "./AccountListDropdown.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl, type Account } from "@conic/account";
-import { computed, onMounted, onUnmounted, ref, useTemplateRef } from "vue";
+import { computed, onMounted, useTemplateRef } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
 import { isLibraryValid } from "@conic/multiplayer";
 import gsap from "gsap";
@@ -128,24 +127,7 @@ const profileName = computed(() => {
   }
 });
 
-const accountMenuOpen = ref(false);
-
-const accountMenuRef = useTemplateRef("accountMenuRef");
-
-function onPointerDownOutside(event: PointerEvent) {
-  const target = event.target as HTMLElement;
-  if (accountMenuRef.value && !accountMenuRef.value.contains(target)) {
-    accountMenuOpen.value = false;
-  }
-}
-
-onMounted(() => {
-  document.addEventListener("pointerdown", onPointerDownOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("pointerdown", onPointerDownOutside);
-});
+const accountMenuRef = useTemplateRef<InstanceType<typeof AccountListDropdown>>("accountMenuRef");
 
 type PlayerItem = {
   key: string;
@@ -208,7 +190,6 @@ const currentAccountKey = computed(() => {
 
 function selectPlayer(player: PlayerItem) {
   configStore.current_account = player.raw;
-  accountMenuOpen.value = false;
 }
 
 async function openConnect() {
@@ -250,7 +231,7 @@ const playIntro = () => {
       ease: "power3.out",
     })
     .from(
-      [elements.avatar.value?.$el, elements.profileName.value, elements.connect.value],
+      [elements.avatar.value?.$el, elements.profileName.value?.$el, elements.connect.value],
       {
         opacity: 0,
         y: 10,
@@ -316,7 +297,7 @@ defineExpose({
     border: 2px solid var(--ctp-overlay0);
   }
 
-  .profile-name {
+  .profile-name-unlogged {
     position: relative;
     margin-left: -16px;
     margin-bottom: 32px;
@@ -326,86 +307,8 @@ defineExpose({
     font-size: 14px;
     display: flex;
     align-items: center;
-    padding: 0 0 0 32px;
+    padding: 0 16px 0 32px;
     box-shadow: 0 0 10px 0px rgba(0, 0, 0, 0.2);
-
-    button.account-switch {
-      appearance: none;
-      background: var(--ctp-surface1);
-      margin-left: 16px;
-      height: 100%;
-      width: 36px;
-      border: none;
-      border-radius: 0 8px 8px 0;
-
-      &:hover {
-        background: var(--ctp-surface2);
-      }
-
-      &:active {
-        background: var(--ctp-overlay0);
-      }
-    }
-
-    .dropdown {
-      position: absolute;
-      right: 0;
-      bottom: calc(100% + 4px);
-      min-width: 100%;
-      padding: 8px 10px;
-      border-radius: var(--dialog-border-radius);
-      border: var(--controllers-border);
-      background: var(--ctp-base);
-      box-shadow: 0px 0px 10px #4500611d;
-      z-index: 100000;
-      list-style: none;
-
-      .dropdown-option {
-        height: 26px;
-        padding: 0 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin: 4px 0;
-        border-radius: var(--controllers-border-radius);
-        font-size: 12px;
-        list-style: none;
-        white-space: nowrap;
-        transition: all 30ms ease;
-
-        &:hover {
-          background: #ffffff1f;
-        }
-
-        &:active {
-          background: #ffffff15;
-        }
-
-        &.selected {
-          background: #ffffff17;
-        }
-
-        .player-name {
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-      }
-    }
-
-    .game-footer-dropdown-fade-leave-active,
-    .game-footer-dropdown-fade-enter-active {
-      transition: all 120ms ease;
-    }
-
-    .game-footer-dropdown-fade-leave-from,
-    .game-footer-dropdown-fade-enter-to {
-      opacity: 1;
-    }
-
-    .game-footer-dropdown-fade-leave-to,
-    .game-footer-dropdown-fade-enter-from {
-      opacity: 0;
-    }
   }
   .connect {
     margin-left: 8px;

@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import BaseSwitch from "@/components/base/BaseSwitch.vue";
+import BaseSwitch from "@/components/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { watch } from "vue";
 import { reloadPalette } from "@/theme";
