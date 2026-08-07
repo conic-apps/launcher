@@ -35,6 +35,7 @@ version = { path = "./crates/version", version = "0.0.0"}
 async-fs = "2"
 async-io = "2"
 base64 = "0.22"
+conic-worldmap = { git = "https://github.com/conic-apps/conic-worldmap", rev = "6c731a2309d107027969f71e72defe333399033e" }
 env_logger = "0.11.5"
 futures = "0.3"
 log = "0.4"

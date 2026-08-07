@@ -19,17 +19,16 @@
           class="content"
           :class="{
             selected: folderName === selectedSave,
-            'expand-up': expandDirection === 'up' && selectedSave === folderName,
+            'expand-up': expandDirection === 'up',
           }"
-          :key="folderName"
-          @click.stop="selectSave(folderName, $event)">
+          :key="folderName">
           <img
             v-if="iconCache[folderName]"
             :src="iconCache[folderName]"
             alt="world icon"
             width="64px"
             height="64px" />
-          <div class="content-info">
+          <div class="content-info" @click.stop="selectSave(folderName, $event)">
             <p class="name">{{ save.Data.LevelName }}</p>
             <p class="folder-name">{{ folderName }}</p>
             <span
@@ -62,8 +61,13 @@
               <AppIcon name="play" :size="18"></AppIcon>
             </button>
           </div>
-          <div class="extra">
-            <div class="map-previewer-container"></div>
+          <div class="extra" @click.stop>
+            <div class="map-previewer-container">
+              <WorldMap
+                v-if="selectedSave === folderName"
+                :instance-id="instanceStore.currentInstance.id"
+                :folder-name="folderName"></WorldMap>
+            </div>
           </div>
         </div>
       </div>
@@ -73,6 +77,7 @@
 
 <script setup lang="ts">
 import BaseSelect from "@/components/BaseSelect.vue";
+import WorldMap from "@/components/WorldMap.vue";
 import { useGameContentStore } from "@/store/content";
 import { useInstanceStore } from "@/store/instance";
 import { getSaveIcon } from "@conic/content";
@@ -131,7 +136,7 @@ function selectSave(folderName: string, event: MouseEvent) {
   const element = event.currentTarget as HTMLElement;
   const rect = element.getBoundingClientRect();
   const bottomSpace = window.innerHeight - rect.bottom;
-  if (bottomSpace < 250) {
+  if (bottomSpace < 160) {
     expandDirection.value = "up";
   } else {
     expandDirection.value = "down";
@@ -295,13 +300,20 @@ function selectSave(folderName: string, event: MouseEvent) {
     height: 100%;
     border-radius: inherit;
     z-index: -3;
-    padding-top: 0;
     opacity: 0;
     overflow: hidden;
-    padding-right: 16px;
     transition: all 200ms ease;
-    padding-top: 64px;
     background: var(--ctp-surface0);
+
+    .map-previewer-container {
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      left: 0;
+      right: 16px;
+      bottom: 0;
+      padding: 8px;
+    }
   }
   .content.selected {
     z-index: 10;
@@ -311,12 +323,13 @@ function selectSave(folderName: string, event: MouseEvent) {
   }
   .content.selected .extra {
     outline: 2px solid var(--ctp-blue);
-    height: calc(100% + 250px);
+    height: calc(100% + 160px);
     z-index: 11;
     opacity: 1;
   }
-  .content.selected.expand-up .extra {
-    transform: translateY(-250px);
+  .content.expand-up .extra {
+    bottom: 0;
+    top: unset;
   }
 }
 </style>

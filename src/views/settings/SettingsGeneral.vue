@@ -70,6 +70,7 @@ import SettingItem from "@/components/SettingItem.vue";
 import BaseSwitch from "@/components/BaseSwitch.vue";
 import BaseDropdownSelect from "@/components/BaseDropdownSelect.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
+import WorldMap from "@/components/WorldMap.vue";
 import { useConfigStore } from "@/store/config";
 
 const config = useConfigStore();

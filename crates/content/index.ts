@@ -74,3 +74,28 @@ export async function getSaveIcon(instanceId: string, folderName: string): Promi
 export async function getAllResourcepacks(instanceId: string): Promise<Resourcepack[]> {
     return await invoke("plugin:content|cmd_get_all_resourcepacks", { instanceId })
 }
+
+export type WorldMapRenderRequest = {
+    instanceId: string
+    folderName: string
+    width: number
+    height: number
+    centerX?: number
+    centerZ?: number
+    dimension?: string
+    water?: boolean
+    shading?: boolean
+    altitudeShading?: boolean
+}
+
+export type WorldMapRenderResult = {
+    width: number
+    height: number
+    pixels: number[]
+}
+
+export async function renderWorldMap(
+    request: WorldMapRenderRequest,
+): Promise<WorldMapRenderResult> {
+    return await invoke("plugin:content|cmd_render_world_map", { request })
+}

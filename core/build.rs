@@ -58,6 +58,7 @@ fn main() {
                 "cmd_get_save_icon",
                 "cmd_get_all_datapacks",
                 "cmd_get_all_resourcepacks",
+                "cmd_render_world_map",
             ]),
         )
         .plugin(
