@@ -4,8 +4,9 @@
 
 use std::collections::{HashMap, hash_map::Entry};
 use std::path::PathBuf;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
+use base64::{Engine, engine::general_purpose};
 use conic_worldmap::{RenderOptions, RenderRequest, WorldMap};
 use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
@@ -17,10 +18,12 @@ const OVERWORLD_DIMENSION: &str = "minecraft:overworld";
 const MAX_CACHED_WORLDS: usize = 8;
 
 /// Managed state: keeps open worlds alive so repeated renders reuse the
-/// internal chunk cache of conic-worldmap.
+/// internal chunk cache of conic-worldmap. Worlds are shared through `Arc` so
+/// the map lock is only held to look up/open a world, letting tiles of the
+/// same world render concurrently.
 #[derive(Default)]
 pub struct MapCache {
-    maps: Mutex<HashMap<WorldMapKey, WorldMap>>,
+    maps: Mutex<HashMap<WorldMapKey, Arc<WorldMap>>>,
 }
 
 /// Identifies an open world inside the cache.
@@ -73,13 +76,14 @@ pub struct WorldMapRequest {
     pub altitude_shading: Option<bool>,
 }
 
-/// Render result: raw RGBA bytes, one Minecraft block per pixel, row-major.
+/// Render result: raw RGBA bytes (base64-encoded), one Minecraft block per
+/// pixel, row-major.
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldMapResult {
     pub width: usize,
     pub height: usize,
-    pub pixels: Vec<u8>,
+    pub pixels: String,
 }
 
 /// Renders a rectangle of a world save into raw RGBA pixels.
@@ -96,9 +100,12 @@ pub fn render_map(cache: &MapCache, request: &WorldMapRequest) -> Result<WorldMa
         maps.remove(&oldest);
     }
     let world = match maps.entry(key) {
-        Entry::Occupied(entry) => entry.into_mut(),
-        Entry::Vacant(entry) => entry.insert(WorldMap::open_dimension(world_dir, &dimension)?),
+        Entry::Occupied(entry) => entry.into_mut().clone(),
+        Entry::Vacant(entry) => entry
+            .insert(Arc::new(WorldMap::open_dimension(world_dir, &dimension)?))
+            .clone(),
     };
+    drop(maps);
 
     let (center_x, center_z) = match (request.center_x, request.center_z) {
         (Some(x), Some(z)) => (x, z),
@@ -117,7 +124,7 @@ pub fn render_map(cache: &MapCache, request: &WorldMapRequest) -> Result<WorldMa
     Ok(WorldMapResult {
         width: result.width,
         height: result.height,
-        pixels: result.pixels,
+        pixels: general_purpose::STANDARD.encode(result.pixels),
     })
 }
 

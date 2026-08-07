@@ -28,6 +28,12 @@
             alt="world icon"
             width="64px"
             height="64px" />
+          <img
+            v-else
+            src="@/assets/images/Unknown_server.webp"
+            alt="world icon"
+            width="64px"
+            height="64px" />
           <div class="content-info" @click.stop="selectSave(folderName, $event)">
             <p class="name">{{ save.Data.LevelName }}</p>
             <p class="folder-name">{{ folderName }}</p>
