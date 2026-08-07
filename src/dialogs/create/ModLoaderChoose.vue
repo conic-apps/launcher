@@ -6,7 +6,7 @@
   <div class="mod-loader-chooser">
     <SettingGroup style="padding: 0"> </SettingGroup>
     <div class="fabric-version version-list" v-if="modLoaderType === 'Fabric'">
-      <list-item
+      <BaseListItem
         v-for="(fabricVersion, index) in fabricVersions"
         :key="index"
         :title="fabricVersion.loader.version"
@@ -17,10 +17,10 @@
           <img style="width: 100%; height: 100%" src="@/assets/images/fabric.webp" alt="" />
         </template>
         <template #subtitle> </template>
-      </list-item>
+      </BaseListItem>
     </div>
     <div class="quilt-version version-list" v-else-if="modLoaderType === 'Quilt'">
-      <list-item
+      <BaseListItem
         v-for="(quiltVersion, index) in quiltVersions"
         :key="index"
         :title="quiltVersion.loader.version"
@@ -31,10 +31,10 @@
           <img style="width: 100%; height: 100%" src="@/assets/images/quilt.svg?url" alt="" />
         </template>
         <template #subtitle> </template>
-      </list-item>
+      </BaseListItem>
     </div>
     <div class="forge-version version-list" v-else-if="modLoaderType === 'Forge'">
-      <list-item
+      <BaseListItem
         v-for="(forgeVersion, index) in forgeVersions"
         :key="index"
         :title="forgeVersion"
@@ -45,10 +45,10 @@
           <img style="width: 100%; height: 100%" src="@/assets/images/forge.svg?url" alt="" />
         </template>
         <template #subtitle> </template>
-      </list-item>
+      </BaseListItem>
     </div>
     <div class="neoforge-version" v-else-if="modLoaderType === 'Neoforge'">
-      <list-item
+      <BaseListItem
         v-for="(neoforgeVersion, index) in neoforgeVersions"
         :key="index"
         :title="neoforgeVersion"
@@ -59,13 +59,13 @@
           <img style="width: 100%; height: 100%" src="@/assets/images/neoforge.png" alt="" />
         </template>
         <template #subtitle> </template>
-      </list-item>
+      </BaseListItem>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import ListItem from "@/components/ListItem.vue";
+import BaseListItem from "@/components/BaseListItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { FabricLoaderArtifact, QuiltVersion } from "@conic/install";
 

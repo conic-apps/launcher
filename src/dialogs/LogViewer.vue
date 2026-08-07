@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import BaseDialog from "@/components/base/BaseDialog.vue";
+import BaseDialog from "@/components/BaseDialog.vue";
 import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
 import { listen } from "@tauri-apps/api/event";

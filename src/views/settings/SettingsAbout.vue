@@ -82,7 +82,7 @@
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import InfoBox from "@/components/InfoBox.vue";
+import InfoBox from "./InfoBox.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useConfigStore } from "@/store/config";
 import { getDataLocation } from "@conic/folder";

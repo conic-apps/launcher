@@ -131,12 +131,12 @@
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import BaseInput from "@/components/base/BaseInput.vue";
-import BaseSwitch from "@/components/base/BaseSwitch.vue";
+import BaseInput from "@/components/BaseInput.vue";
+import BaseSwitch from "@/components/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { computed } from "vue";
 import { getDefaultConfig } from "@conic/config";
-import BaseDropdownSelect from "@/components/base/BaseDropdownSelect.vue";
+import BaseDropdownSelect from "@/components/BaseDropdownSelect.vue";
 
 const config = useConfigStore();
 

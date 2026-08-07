@@ -87,9 +87,9 @@
 </template>
 
 <script setup lang="ts">
-import BaseDialog from "@/components/base/BaseDialog.vue";
-import BaseInput from "@/components/base/BaseInput.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
+import BaseDialog from "@/components/BaseDialog.vue";
+import BaseInput from "@/components/BaseInput.vue";
+import BaseButton from "@/components/BaseButton.vue";
 import { computed, ref, useTemplateRef } from "vue";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { deleteInstance } from "@conic/instance";

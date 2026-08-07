@@ -66,8 +66,8 @@
 
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
-import BaseSwitch from "@/components/base/BaseSwitch.vue";
-import BaseDropdownSelect from "@/components/base/BaseDropdownSelect.vue";
+import BaseSwitch from "@/components/BaseSwitch.vue";
+import BaseDropdownSelect from "@/components/BaseDropdownSelect.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 

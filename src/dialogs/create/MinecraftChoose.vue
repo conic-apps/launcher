@@ -12,7 +12,7 @@
         v-model="showVersionType"></base-select>
     </div>
     <div class="list">
-      <list-item
+      <BaseListItem
         v-for="(version, index) in filteredVersions"
         :key="index"
         :title="`Minecraft ${version.id}`"
@@ -39,17 +39,17 @@
             src="@/assets/images/Ancient_Debris.webp"
             alt="" />
         </template>
-      </list-item>
+      </BaseListItem>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import ListItem from "@/components/ListItem.vue";
+import BaseListItem from "@/components/BaseListItem.vue";
 import { getMinecrafVersionManifest, VersionManifest } from "@conic/install";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import BaseSelect from "@/components/base/BaseSelect.vue";
+import BaseSelect from "@/components/BaseSelect.vue";
 
 const versions = ref<VersionManifest>();
 getMinecrafVersionManifest()

@@ -20,10 +20,10 @@
       </div>
       <div class="body">
         <div class="preview">
-          <SkinModel3D
+          <PlayerSkinModel
             v-if="dialogStore.uploadSkin.textureType === 'skin'"
-            :skin="dialogStore.uploadSkin.skinUrl"></SkinModel3D>
-          <CapeView v-else :cape="dialogStore.uploadSkin.capeUrl"></CapeView>
+            :skin="dialogStore.uploadSkin.skinUrl"></PlayerSkinModel>
+          <PlayerCape v-else :cape="dialogStore.uploadSkin.capeUrl"></PlayerCape>
         </div>
         <div class="right">
           <div class="section">
@@ -70,10 +70,10 @@
 </template>
 
 <script setup lang="ts">
-import BaseDialog from "@/components/base/BaseDialog.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
-import SkinModel3D from "@/components/SkinModel3D.vue";
-import CapeView from "@/components/CapeView.vue";
+import BaseDialog from "@/components/BaseDialog.vue";
+import BaseButton from "@/components/BaseButton.vue";
+import PlayerSkinModel from "@/components/PlayerSkinModel.vue";
+import PlayerCape from "@/components/PlayerCape.vue";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDialogStore } from "@/store/dialog";

@@ -188,11 +188,11 @@ import { useDialogStore } from "@/store/dialog";
 import { useMultiplayerStore } from "@/store/multiplayer";
 import { useConfigStore } from "@/store/config";
 import AppIcon from "@/components/AppIcon.vue";
-import BaseProgress from "@/components/base/BaseProgress.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
+import BaseProgress from "@/components/BaseProgress.vue";
+import BaseButton from "@/components/BaseButton.vue";
 import { computed, ref, watch } from "vue";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
-import BaseInput from "@/components/base/BaseInput.vue";
+import BaseInput from "@/components/BaseInput.vue";
 import { isRoomCodeValid } from "@conic/multiplayer";
 
 const dialogStore = useDialogStore();

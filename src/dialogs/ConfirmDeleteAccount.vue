@@ -23,8 +23,8 @@
 </template>
 
 <script setup lang="ts">
-import BaseDialog from "@/components/base/BaseDialog.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
+import BaseDialog from "@/components/BaseDialog.vue";
+import BaseButton from "@/components/BaseButton.vue";
 import AccountAvatar from "@/components/AccountAvatar.vue";
 import { computed, ref } from "vue";
 import {

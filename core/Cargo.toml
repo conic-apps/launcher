@@ -22,6 +22,7 @@ instance.workspace = true
 multiplayer.workspace = true
 config.workspace = true
 install.workspace = true
+java-runtime.workspace = true
 launch.workspace = true
 shared.workspace = true
 game_data.workspace = true
@@ -43,3 +44,7 @@ tauri-plugin-dialog = "2"
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 tauri-plugin-updater = "2"
+
+[features]
+default = []
+devtools = ["tauri/devtools"]

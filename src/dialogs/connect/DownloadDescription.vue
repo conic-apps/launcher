@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { useDialogStore } from "@/store/dialog";
-import BaseButton from "@/components/base/BaseButton.vue";
+import BaseButton from "@/components/BaseButton.vue";
 
 const dialogStore = useDialogStore();
 defineEmits(["", "confirm-download"]);

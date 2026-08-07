@@ -47,9 +47,9 @@
 </template>
 
 <script setup lang="ts">
-import BaseButton from "@/components/base/BaseButton.vue";
-import BaseInput from "@/components/base/BaseInput.vue";
-import BaseSwitch from "@/components/base/BaseSwitch.vue";
+import BaseButton from "@/components/BaseButton.vue";
+import BaseInput from "@/components/BaseInput.vue";
+import BaseSwitch from "@/components/BaseSwitch.vue";
 import { useAccountStore } from "@/store/account";
 import { addOfflineAccount, getUuidFromUsername } from "@conic/account";
 import { computed, onMounted, ref, watch } from "vue";

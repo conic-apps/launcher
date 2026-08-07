@@ -35,8 +35,8 @@
 
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
-import BaseDialog from "@/components/base/BaseDialog.vue";
+import BaseButton from "@/components/BaseButton.vue";
+import BaseDialog from "@/components/BaseDialog.vue";
 import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
 
