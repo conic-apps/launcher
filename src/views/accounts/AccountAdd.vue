@@ -108,35 +108,5 @@ const transitionName = ref<"slide-left" | "slide-right">("slide-left");
     width: fit-content;
     margin-bottom: 16px;
   }
-
-  .selection {
-    display: flex;
-    flex-direction: 0;
-    margin-bottom: 16px;
-
-    .item {
-      appearance: none;
-      border: none;
-      border-radius: 100px;
-      background: #ffffff0f;
-      width: 88px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 4px;
-      transition: background 100ms ease;
-
-      p {
-        margin-left: 4px;
-        font-size: 13px;
-      }
-    }
-
-    .item.active {
-      border: 1px solid #ffffff3f;
-      background: #ffffff3f;
-    }
-  }
 }
 </style>

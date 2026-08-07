@@ -51,7 +51,7 @@
             </div>
             <img
               class="instance-background"
-              v-if="backgroundImagesSrc[instance.id]"
+              v-if="instance.has_background && backgroundImagesSrc[instance.id]"
               v-show="backgroundImagesShow[instance.id]"
               :src="backgroundImagesSrc[instance.id]"
               alt=""
@@ -66,7 +66,9 @@
   <Teleport to="body">
     <div
       class="instances-scrollbar"
-      :class="{ hidden: !scrollbarVisible }"
+      :class="{
+        hidden: !scrollbarVisible || useShowContent().value || useInstanceSettings().value,
+      }"
       ref="scrollbar"
       @pointerdown="onScrollbarPointerDown">
       <div
@@ -98,6 +100,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { window as appWindow } from "@tauri-apps/api";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import InstancesListToolBar from "./InstancesListToolBar.vue";
+import { useShowContent } from "./useContent";
+import { useInstanceSettings } from "./useGameView";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -452,11 +456,11 @@ async function getBackgroundSrc(id: string) {
       transform 100ms linear,
       opacity 300ms ease;
 
-    &:active {
+    &:not(.card-container.current .instance):active {
       transform: scale(0.99);
     }
 
-    &:hover {
+    &:not(.card-container.current .instance):hover {
       background: rgba(var(--ctp-surface0-rgb), 0.8);
     }
     img.instance-background {
@@ -559,7 +563,7 @@ async function getBackgroundSrc(id: string) {
     width: 8px;
     height: 30%;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 1);
+    background: var(--ctp-text);
     opacity: 0.35;
     transition:
       opacity 160ms ease,

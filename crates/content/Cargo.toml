@@ -1,5 +1,5 @@
 [package]
-name = "game_data"
+name = "content"
 version = "0.0.0"
 authors = ["OakChaser"]
 
@@ -24,3 +24,4 @@ thiserror.workspace = true
 serde_with.workspace = true
 tauri.workspace = true
 uuid.workspace = true
+async-fs.workspace = true

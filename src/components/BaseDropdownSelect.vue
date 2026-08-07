@@ -5,7 +5,10 @@
 <template>
   <div class="select" :style="`width: ${width}px;`" ref="selectRef">
     <div class="value-box" @click="opened = !opened">
-      {{ displayName[selected] }}
+      <span v-if="displayName[selected]">
+        {{ displayName[selected] }}
+      </span>
+      <span v-else> {{ placeholder }}</span>
       <span class="chevron" ref="chevronRef">
         <AppIcon name="chevron-down" :size="14"> </AppIcon>
       </span>
@@ -53,6 +56,7 @@ const props = defineProps<{
   options: string[];
   width?: string;
   displayName: string[];
+  placeholder?: string;
 }>();
 const model = defineModel();
 const selected = ref(props.options.findIndex((value) => value == model.value));

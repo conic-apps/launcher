@@ -89,7 +89,7 @@ onMounted(async () => {
     progressBar.value.loading = false;
     progressBar.value.value = progressBar.value.max;
     setTimeout(() => {
-      dialogStore.connectExtension.currentComponent = "connectManager";
+      dialogStore.multiplayerExtension.currentComponent = "multiplayerManager";
     }, 500);
   } catch (error) {
     console.log(error);
@@ -102,8 +102,8 @@ async function cancelDownload() {
   } catch (e) {
     console.error(e);
   } finally {
-    dialogStore.connectExtension.currentComponent = "downloadDescription";
-    dialogStore.connectExtension.visible = false;
+    dialogStore.multiplayerExtension.currentComponent = "downloadDescription";
+    dialogStore.multiplayerExtension.visible = false;
   }
 }
 </script>

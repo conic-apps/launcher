@@ -17,12 +17,12 @@
       请注意，在多人联机全过程中，你必须严格遵守所在国家与地区的全部法律法规。
     </p>
     <div class="buttons">
-      <BaseButton class="back" @click="dialogStore.connectExtension.visible = false">
+      <BaseButton class="back" @click="dialogStore.multiplayerExtension.visible = false">
         取消
       </BaseButton>
       <BaseButton
         class="start"
-        @click="dialogStore.connectExtension.currentComponent = 'downloadProgress'"
+        @click="dialogStore.multiplayerExtension.currentComponent = 'downloadProgress'"
         >开始下载</BaseButton
       >
     </div>

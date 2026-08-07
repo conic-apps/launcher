@@ -20,7 +20,7 @@ beat_this = { path = "./crates/beat_this", version = "0.0.0"}
 config = { path = "./crates/config", version = "0.0.0"}
 download = { path = "./crates/download", version = "0.0.0"}
 folder = { path = "./crates/folder", version = "0.0.0"}
-game_data = { path = "./crates/game_data", version = "0.0.0"}
+content = { path = "./crates/content", version = "0.0.0"}
 java-runtime = { path = "./crates/java-runtime", version = "0.0.0"}
 install = { path = "./crates/install", version = "0.0.0"}
 instance = { path = "./crates/instance", version = "0.0.0"}

@@ -48,6 +48,7 @@ export type Instance = {
     installed: boolean
     id: string
     last_played: number
+    has_background: boolean
 }
 
 export async function createInstance(instanceConfig: InstanceConfig, id?: string): Promise<string> {

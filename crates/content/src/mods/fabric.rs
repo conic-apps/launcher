@@ -13,7 +13,6 @@ use serde_json::Value;
 use zip::ZipArchive;
 
 use super::{Parse, ResolvedAuthorInfo, ResolvedDepends, ResolvedMod};
-use crate::utils::unzip::filter_entries;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct JarsEntry {
@@ -29,7 +28,7 @@ pub struct FabricModMixinObject {
 /// Corresponds to the <mod_pack>/`fabric.mod.json` file in the module archive
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct QuiltModMetadata {
+pub struct FabricModMetadata {
     /* Required */
     pub schema_version: u8,
     pub id: String,
@@ -63,43 +62,32 @@ pub struct QuiltModMetadata {
     pub custom: Option<HashMap<String, Value>>,
 }
 
-impl QuiltModMetadata {
+impl FabricModMetadata {
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let mod_file = File::open(path)?;
         let mut mod_file_archive = ZipArchive::new(mod_file)?;
         Self::from_zip_archive(&mut mod_file_archive)
     }
     pub fn from_zip_archive(archive: &mut ZipArchive<File>) -> Result<Self> {
-        let entries = filter_entries(
-            archive,
-            &vec!["fabric.mod.json".to_string(), "quilt.mod.json".to_string()],
-        );
-        let file = entries
-            .get("quilt.mod.json")
-            .unwrap_or(entries.get("fabric.mod.json").ok_or(anyhow::Error::new(
-                std::io::Error::from(std::io::ErrorKind::NotFound),
-            ))?)
-            .clone()
-            .content;
-        Ok(serde_json::from_str(&String::from_utf8(file)?)?)
+        let mod_json = archive.by_name("fabric.mod.json")?;
+        Ok(serde_json::from_reader(mod_json)?)
     }
 }
 
-impl Parse for QuiltModMetadata {
+impl Parse for FabricModMetadata {
     fn parse(self) -> ResolvedMod {
         let name = match self.name {
             Some(v) => v,
             None => self.id,
         };
         let mut minecraft_depend = None;
-        let mut loader_depend = None;
+        let mut fabric_loader_depend = None;
         let mut java_depend = None;
         if let Some(depends) = self.depends {
             for depend in depends {
                 match depend.0.as_str() {
                     "minecraft" => minecraft_depend = Some(depend.1),
-                    "quiltloader" => loader_depend = Some(depend.1),
-                    "fabricloader" => loader_depend = Some(depend.1),
+                    "fabricloader" => fabric_loader_depend = Some(depend.1),
                     "java" => java_depend = Some(depend.1),
                     _ => (),
                 };
@@ -157,7 +145,7 @@ impl Parse for QuiltModMetadata {
             version: Some(self.version.clone()),
             depends: ResolvedDepends {
                 minecraft: minecraft_depend,
-                mod_loader: loader_depend,
+                mod_loader: fabric_loader_depend,
                 java: java_depend,
             },
             authors: parsed_authors.unwrap_or_default(),
@@ -168,7 +156,7 @@ impl Parse for QuiltModMetadata {
 }
 
 pub fn parse_mod<P: AsRef<Path>>(path: P) -> Result<ResolvedMod> {
-    let metadata = QuiltModMetadata::from_path(path)?;
+    let metadata = FabricModMetadata::from_path(path)?;
     Ok(metadata.parse())
 }
 
@@ -185,8 +173,7 @@ pub fn parse_folder<S: AsRef<OsStr> + ?Sized>(folder: &S) -> Result<Vec<Resolved
         if path.is_dir() {
             continue;
         }
-        // println!("{:?}", path);
-        let raw_metadata = match QuiltModMetadata::from_path(path) {
+        let raw_metadata = match FabricModMetadata::from_path(path) {
             Ok(v) => v,
             Err(_) => continue,
         };
@@ -194,20 +181,3 @@ pub fn parse_folder<S: AsRef<OsStr> + ?Sized>(folder: &S) -> Result<Vec<Resolved
     }
     Ok(result)
 }
-//
-// #[test]
-// fn test() {
-//     let file = "mock/fabric-mod.jar";
-//     let a = FabricModMetadata::from_path(file).unwrap();
-//     println!("{:#?}", a);
-//     let b = a.parse();
-//     println!("{:#?}", b);
-//     assert_eq!(b.name, "Carpet Mod".to_string());
-// }
-//
-// #[test]
-// fn test2() {
-//     let folder = "mock/fabricMod";
-//     let a = parse_folder(folder).unwrap();
-//     println!("{:#?}", a.len());
-// }

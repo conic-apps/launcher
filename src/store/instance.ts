@@ -11,33 +11,38 @@ import {
 } from "@conic/instance"
 import { defineStore } from "pinia"
 import { useConfigStore } from "./config"
-import { ref } from "vue"
+import { ref, watch } from "vue"
 import { getMinecrafVersionManifest } from "@conic/install"
 
 async function ensureLatestInstancesExistance() {
+    let promises = []
     if (!(await getInstanceById(LATEST_RELEASE_INSTANCE_ID))) {
         const minecraftVersionManifest = await getMinecrafVersionManifest()
-        await createInstance(
-            {
-                launch_config: { enable_instance_specific_settings: false },
-                name: "Latest Release",
-                runtime: { minecraft: minecraftVersionManifest.latest.release },
-            },
-            LATEST_RELEASE_INSTANCE_ID,
+        promises.push(
+            createInstance(
+                {
+                    launch_config: { enable_instance_specific_settings: false },
+                    name: "Latest Release",
+                    runtime: { minecraft: minecraftVersionManifest.latest.release },
+                },
+                LATEST_RELEASE_INSTANCE_ID,
+            ),
         )
     }
-
     if (!(await getInstanceById(LATEST_SNAPSHOT_INSTANCE_ID))) {
         const minecraftVersionManifest = await getMinecrafVersionManifest()
-        await createInstance(
-            {
-                launch_config: { enable_instance_specific_settings: false },
-                name: "Latest Snapshot",
-                runtime: { minecraft: minecraftVersionManifest.latest.snapshot },
-            },
-            LATEST_SNAPSHOT_INSTANCE_ID,
+        promises.push(
+            createInstance(
+                {
+                    launch_config: { enable_instance_specific_settings: false },
+                    name: "Latest Snapshot",
+                    runtime: { minecraft: minecraftVersionManifest.latest.snapshot },
+                },
+                LATEST_SNAPSHOT_INSTANCE_ID,
+            ),
         )
     }
+    await Promise.all(promises)
 }
 
 await ensureLatestInstancesExistance()
@@ -45,25 +50,42 @@ const listedInstances = await listInstances("Name") // TODO: Error handling, sho
 
 export const useInstanceStore = defineStore("instance", () => {
     const instances = ref(listedInstances)
-    const currentInstance = ref(listedInstances[0])
+
+    const currentInstanceId = localStorage.getItem("currentInstanceId")
+    const currentInstance = ref(
+        currentInstanceId
+            ? (listedInstances.find((instance) => instance.id === currentInstanceId) ??
+                  listedInstances[0])
+            : listedInstances[0],
+    )
+    watch(currentInstance, (instance) => localStorage.setItem("currentInstanceId", instance.id))
+
     const launchedInstances = ref(new Map())
-    async function fetchInstances() {
+
+    async function loadInstances() {
         await ensureLatestInstancesExistance()
         instances.value = await listInstances("Name")
         ensureCurrentInstanceAvailable()
     }
+
     function ensureCurrentInstanceAvailable() {
-        const foundCurrentInstance = instances.value.find((value) => {
-            return value.id === currentInstance.value.id
-        })
+        const foundCurrentInstance = instances.value.find(
+            (value) => value.id === currentInstance.value.id,
+        )
         if (foundCurrentInstance) {
             currentInstance.value = foundCurrentInstance
         } else {
             const config = useConfigStore()
             if (!config.accessibility.hide_latest_release) {
-                currentInstance.value = instances.value[0]
+                currentInstance.value =
+                    instances.value.find(
+                        (instance) => instance.id === LATEST_RELEASE_INSTANCE_ID,
+                    ) ?? instances.value[0]
             } else if (!config.accessibility.hide_latest_snapshot) {
-                currentInstance.value = instances.value[0]
+                currentInstance.value =
+                    instances.value.find(
+                        (instances) => instances.id === LATEST_SNAPSHOT_INSTANCE_ID,
+                    ) ?? instances.value[0]
             } else {
                 currentInstance.value = instances.value[0]
             }
@@ -71,9 +93,10 @@ export const useInstanceStore = defineStore("instance", () => {
     }
     return {
         instances,
+        currentInstanceId,
         currentInstance,
         launchedInstances,
-        loadInstances: fetchInstances,
+        loadInstances,
         ensureCurrentInstanceAvailable,
     }
 })

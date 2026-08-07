@@ -683,9 +683,9 @@ dependencies = [
  "account",
  "beat_this",
  "config",
+ "content",
  "download",
  "folder",
- "game_data",
  "install",
  "instance",
  "java-runtime",
@@ -728,6 +728,27 @@ dependencies = [
  "getrandom 0.2.17",
  "once_cell",
  "tiny-keccak",
+]
+
+[[package]]
+name = "content"
+version = "0.0.0"
+dependencies = [
+ "async-fs",
+ "base64 0.22.1",
+ "fastnbt",
+ "flate2",
+ "folder",
+ "instance",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "tauri",
+ "thiserror 2.0.19",
+ "toml 1.1.3+spec-1.1.0",
+ "uuid",
+ "zip",
 ]
 
 [[package]]
@@ -1526,26 +1547,6 @@ dependencies = [
  "memchr",
  "pin-project-lite",
  "slab",
-]
-
-[[package]]
-name = "game_data"
-version = "0.0.0"
-dependencies = [
- "base64 0.22.1",
- "fastnbt",
- "flate2",
- "folder",
- "instance",
- "regex",
- "serde",
- "serde_json",
- "serde_with",
- "tauri",
- "thiserror 2.0.19",
- "toml 1.1.3+spec-1.1.0",
- "uuid",
- "zip",
 ]
 
 [[package]]

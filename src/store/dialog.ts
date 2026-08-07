@@ -10,17 +10,16 @@ import { Instance } from "@conic/instance"
 export const useDialogStore = defineStore("dialog", () => {
     const updateReminder = ref({ visible: false })
     const accountManager = ref({ visible: false })
-    const logViewer = ref({ visible: false })
     const createInstance = ref({ visible: false })
     const confirmQuitApp = ref({ visible: false })
     const noAccountError = ref({ visible: false })
-    const connectExtension = ref({
+    const multiplayerExtension = ref({
         visible: false,
         currentComponent: "downloadDescription" as
             | "downloadDescription"
             | "downloadProgress"
-            | "connectManager",
-        connectManagerComponent: "waiting" as
+            | "multiplayerManager",
+        multiplayerManagerComponent: "waiting" as
             | "waiting"
             | "hostScan"
             | "hostReady"
@@ -43,6 +42,8 @@ export const useDialogStore = defineStore("dialog", () => {
             },
             installed: false,
             id: "00000000-0000-0000-0000-000000000000",
+            has_background: false,
+            last_played: 0,
         } as Instance,
     })
     const confirmDeleteAccount = ref({
@@ -59,13 +60,12 @@ export const useDialogStore = defineStore("dialog", () => {
     return {
         updateReminder,
         accountManager,
-        logViewer,
         createInstance,
         confirmDeleteInstance,
         confirmDeleteAccount,
         confirmQuitApp,
         noAccountError,
-        connectExtension,
+        multiplayerExtension,
         uploadSkin,
     }
 })

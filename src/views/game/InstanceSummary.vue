@@ -75,25 +75,30 @@
         <button class="action-button">
           <AppIcon name="share-social-outline"></AppIcon>
         </button>
-        <button class="action-button">
+        <button class="action-button" @click="useInstanceSettings().value = true">
           <AppIcon name="settings"></AppIcon>
         </button>
       </div>
     </div>
     <div class="row-4">
-      <div @click="test">
+      <div @click="openContent('saves')">
         <AppIcon name="save"></AppIcon>
-        <div><span class="type">存档</span><span class="count">1 个</span></div>
+        <div>
+          <span class="type">存档</span
+          ><span class="count"
+            >{{ Object.keys(contentStore.gameContent.saves ?? {}).length }} 个</span
+          >
+        </div>
       </div>
-      <div>
+      <div @click="openContent('mods')">
         <AppIcon name="extension-puzzle" />
         <div><span class="type">模组</span><span class="count">1 个</span></div>
       </div>
-      <div>
+      <div @click="openContent('resourcepacks')">
         <AppIcon name="folder" />
         <div><span class="type">资源包</span><span class="count">4 个</span></div>
       </div>
-      <div>
+      <div @click="openContent('screenshots')">
         <AppIcon name="images-outline" />
         <div><span class="type">截图</span><span class="count">1 个</span></div>
       </div>
@@ -116,10 +121,14 @@ import {
 import { useNavigationStore } from "@/store/navigation";
 import { getInstanceRoot } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
-import { getAllLevels } from "@conic/game_data";
+import { useInstanceSettings } from "./useGameView";
+import { useGameContentStore } from "@/store/content";
+import { ComponentName } from "./Content.vue";
+import { useContentComponent, useShowContent } from "./useContent";
 
 const instanceStore = useInstanceStore();
 const navigationStore = useNavigationStore();
+const contentStore = useGameContentStore();
 const currentInstance = computed(() => {
   return instanceStore.currentInstance;
 });
@@ -146,13 +155,9 @@ watch(
   { immediate: true },
 );
 
-async function test() {
-  try {
-    const levels = await getAllLevels(currentInstance.value.id);
-    console.log(JSON.stringify(levels));
-  } catch (e) {
-    console.error(e);
-  }
+function openContent(componentName: ComponentName) {
+  useContentComponent().value = componentName;
+  useShowContent().value = true;
 }
 </script>
 

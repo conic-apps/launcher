@@ -221,10 +221,8 @@ fn wait_child(mut child: Child) -> Result<()> {
         if line == "true" {
             success = true;
             info!("Successfully ran the forge installer");
-            println!("Successfully ran the forge installer");
         } else {
             trace!("[{pid}] {line}");
-            println!("[{pid}] {buf}");
         }
     }
     let output = child.wait_with_output()?;

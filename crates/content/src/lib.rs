@@ -13,10 +13,11 @@ pub mod resourcepack;
 pub mod saves;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("game-data")
+    Builder::new("content")
         .invoke_handler(tauri::generate_handler![
             saves::cmd_get_all_levels,
             saves::datapack::cmd_get_all_datapacks,
+            saves::cmd_get_save_icon,
             resourcepack::cmd_get_all_resourcepacks,
         ])
         .build()
