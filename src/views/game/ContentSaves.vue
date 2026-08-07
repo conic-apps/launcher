@@ -66,7 +66,9 @@
               <WorldMap
                 v-if="selectedSave === folderName"
                 :instance-id="instanceStore.currentInstance.id"
-                :folder-name="folderName"></WorldMap>
+                :folder-name="folderName"
+                :center-x="saveSpawnX(save)"
+                :center-z="saveSpawnZ(save)"></WorldMap>
             </div>
           </div>
         </div>
@@ -80,7 +82,7 @@ import BaseSelect from "@/components/BaseSelect.vue";
 import WorldMap from "@/components/WorldMap.vue";
 import { useGameContentStore } from "@/store/content";
 import { useInstanceStore } from "@/store/instance";
-import { getSaveIcon } from "@conic/content";
+import { getSaveIcon, type Level } from "@conic/content";
 import { deleteInstance, formatLastPlayed, formatPlayTime, zhCN } from "@conic/instance";
 import { computed, ref, watch } from "vue";
 
@@ -127,6 +129,23 @@ function formatGameType(gameType: number) {
   } else {
     return null;
   }
+}
+
+function readSpawnPos(pos: unknown): number[] {
+  if (Array.isArray(pos)) return pos;
+  if (pos && typeof pos === "object") {
+    const wrapped = (pos as { __fastnbt_int_array?: unknown }).__fastnbt_int_array;
+    if (Array.isArray(wrapped)) return wrapped;
+  }
+  return [];
+}
+
+function saveSpawnX(save: Level): number | undefined {
+  return readSpawnPos(save.Data.spawn?.pos)[0];
+}
+
+function saveSpawnZ(save: Level): number | undefined {
+  return readSpawnPos(save.Data.spawn?.pos)[2];
 }
 
 const expandDirection = ref("down" as "up" | "down");

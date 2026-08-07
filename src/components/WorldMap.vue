@@ -28,33 +28,62 @@ import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
 import { renderWorldMap, type WorldMapRenderResult } from "@conic/content";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
+const MAX_CONCURRENT = 4;
+const MAX_CACHED_WORLD_TILES = 64;
+const TILE_LOAD_DEBOUNCE = 150;
+
 const props = withDefaults(
   defineProps<{
     instanceId: string;
     folderName: string;
     dimension?: string;
-    width?: number;
-    height?: number;
+    tileSize?: number;
+    centerX?: number;
+    centerZ?: number;
     water?: boolean;
     shading?: boolean;
     altitudeShading?: boolean;
+    minScale?: number;
     maxScale?: number;
   }>(),
   {
-    width: 512,
-    height: 512,
+    tileSize: 512,
     water: true,
     shading: true,
     altitudeShading: true,
+    minScale: 0.25,
     maxScale: 64,
   },
+);
+
+// 模块级瓦片缓存：键为 instance|folder|dimension|tx,tz，跨组件实例复用，
+// 同一块数据在整个应用生命周期内只请求一次
+const worldTileCache = new Map<string, HTMLCanvasElement>();
+
+function getWorldCacheKey(prefix: string, tx: number, tz: number) {
+  return `${prefix}|${tx},${tz}`;
+}
+
+function putWorldCache(prefix: string, tx: number, tz: number, canvas: HTMLCanvasElement) {
+  const key = getWorldCacheKey(prefix, tx, tz);
+  worldTileCache.delete(key);
+  worldTileCache.set(key, canvas);
+  while (worldTileCache.size > MAX_CACHED_WORLD_TILES) {
+    const oldest = worldTileCache.keys().next().value;
+    if (oldest === undefined) break;
+    worldTileCache.delete(oldest);
+  }
+}
+
+const worldKeyPrefix = computed(
+  () => `${props.instanceId}|${props.folderName}|${props.dimension ?? ""}`,
 );
 
 const containerRef = ref<HTMLDivElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 
-const loading = ref(false);
 const error = ref<string | null>(null);
+const tilesLoaded = ref(0);
 
 // 视口尺寸（CSS 像素）
 const viewportW = ref(0);
@@ -65,29 +94,27 @@ const scale = ref(1);
 const offsetX = ref(0);
 const offsetY = ref(0);
 
-const mapSize = ref<{ width: number; height: number } | null>(null);
+// 本地瓦片缓存：key 为 "tx,tz"，value 为离屏 canvas
+const tileCache = new Map<string, HTMLCanvasElement>();
+const inFlight = new Set<string>();
+const pending = new Set<string>();
+const tilesFailed = new Set<string>();
 
-// 离屏画布保存原始像素，显示画布仅做变换绘制
-let mapCanvas: HTMLCanvasElement | null = null;
 let ctx: CanvasRenderingContext2D | null = null;
 let resizeObserver: ResizeObserver | undefined;
-let needsFit = false;
+let tileLoadTimer: number | undefined;
 const dragging = ref(false);
 let lastX = 0;
 let lastY = 0;
 let requestSeq = 0;
+let pendingInit = true;
 
-const fitScale = computed(() => {
-  if (!mapSize.value || viewportW.value <= 0 || viewportH.value <= 0) return 1;
-  return Math.min(viewportW.value / mapSize.value.width, viewportH.value / mapSize.value.height);
-});
+const hasTiles = computed(() => tilesLoaded.value > 0);
+const loading = computed(() => !hasTiles.value && !error.value);
 
-const minScale = computed(() => fitScale.value * 0.5);
-const maxScale = computed(() => props.maxScale);
-
-// 当前可见的世界区块范围（方块坐标），坐标原点为渲染请求中心
+// 当前可见的世界区块范围（方块坐标）
 const visibleWorldRect = computed(() => {
-  if (!mapSize.value) return null;
+  if (viewportW.value <= 0 || viewportH.value <= 0) return null;
   return {
     minX: -offsetX.value / scale.value,
     minZ: -offsetY.value / scale.value,
@@ -105,80 +132,165 @@ function syncCanvasSize() {
 }
 
 function draw() {
-  if (!ctx || !mapCanvas || !mapSize.value) return;
+  if (!ctx || viewportW.value <= 0 || viewportH.value <= 0) return;
   const dpr = window.devicePixelRatio || 1;
+  const s = scale.value;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, viewportW.value, viewportH.value);
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(
-    mapCanvas,
-    offsetX.value,
-    offsetY.value,
-    mapSize.value.width * scale.value,
-    mapSize.value.height * scale.value,
-  );
+  for (const [key, canvas] of tileCache) {
+    const [tx, tz] = key.split(",").map(Number);
+    ctx.drawImage(
+      canvas,
+      tx * props.tileSize * s + offsetX.value,
+      tz * props.tileSize * s + offsetY.value,
+      props.tileSize * s,
+      props.tileSize * s,
+    );
+  }
 }
 
-function buildMapCanvas(result: WorldMapRenderResult) {
+function buildTileCanvas(result: WorldMapRenderResult): HTMLCanvasElement {
   const { width, height, pixels } = result;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const offscreen = canvas.getContext("2d");
-  if (!offscreen) return;
-  const imageData = offscreen.createImageData(width, height);
-  imageData.data.set(pixels);
-  offscreen.putImageData(imageData, 0, 0);
-  mapCanvas = canvas;
-  mapSize.value = { width, height };
+  if (offscreen) {
+    const imageData = offscreen.createImageData(width, height);
+    imageData.data.set(pixels);
+    offscreen.putImageData(imageData, 0, 0);
+  }
+  return canvas;
+}
+
+function takeFromWorldCache(tx: number, tz: number): HTMLCanvasElement | null {
+  const cached = worldTileCache.get(getWorldCacheKey(worldKeyPrefix.value, tx, tz));
+  if (!cached) return null;
+  tileCache.set(`${tx},${tz}`, cached);
+  tilesLoaded.value++;
+  return cached;
 }
 
 function resetView() {
-  if (!mapSize.value || viewportW.value <= 0 || viewportH.value <= 0) return;
-  const s = fitScale.value;
+  if (viewportW.value <= 0 || viewportH.value <= 0) {
+    pendingInit = true;
+    return;
+  }
+  const s = Math.min(
+    Math.max(Math.min(viewportW.value, viewportH.value) / props.tileSize, props.minScale),
+    props.maxScale,
+  );
+  const cx = props.centerX ?? 0;
+  const cz = props.centerZ ?? 0;
   scale.value = s;
-  offsetX.value = (viewportW.value - mapSize.value.width * s) / 2;
-  offsetY.value = (viewportH.value - mapSize.value.height * s) / 2;
-  needsFit = false;
+  offsetX.value = viewportW.value / 2 - cx * s;
+  offsetY.value = viewportH.value / 2 - cz * s;
+  pendingInit = false;
   draw();
+  dispatchTileLoads();
 }
 
 function zoomAt(px: number, py: number, factor: number) {
-  if (!mapSize.value) return;
+  if (viewportW.value <= 0 || viewportH.value <= 0) return;
   const worldX = (px - offsetX.value) / scale.value;
   const worldZ = (py - offsetY.value) / scale.value;
-  const next = Math.min(Math.max(scale.value * factor, minScale.value), maxScale.value);
+  const next = Math.min(Math.max(scale.value * factor, props.minScale), props.maxScale);
   offsetX.value = px - worldX * next;
   offsetY.value = py - worldZ * next;
   scale.value = next;
-  needsFit = false;
   draw();
+  scheduleTileLoad();
 }
 
-async function loadMap() {
-  const seq = ++requestSeq;
-  loading.value = true;
-  error.value = null;
+function scheduleTileLoad() {
+  if (tileLoadTimer !== undefined) window.clearTimeout(tileLoadTimer);
+  tileLoadTimer = window.setTimeout(() => {
+    tileLoadTimer = undefined;
+    dispatchTileLoads();
+  }, TILE_LOAD_DEBOUNCE);
+}
+
+function dispatchTileLoads() {
+  const rect = visibleWorldRect.value;
+  if (!rect) return;
+  const seq = requestSeq;
+  const T = props.tileSize;
+  const tx0 = Math.floor(rect.minX / T);
+  const tx1 = Math.floor(rect.maxX / T);
+  const tz0 = Math.floor(rect.minZ / T);
+  const tz1 = Math.floor(rect.maxZ / T);
+
+  for (let tx = tx0; tx <= tx1; tx++) {
+    for (let tz = tz0; tz <= tz1; tz++) {
+      const key = `${tx},${tz}`;
+      if (tileCache.has(key) || inFlight.has(key) || pending.has(key) || tilesFailed.has(key))
+        continue;
+      if (takeFromWorldCache(tx, tz)) continue;
+      pending.add(key);
+    }
+  }
+  pumpRequests(seq);
+}
+
+function pumpRequests(seq: number) {
+  if (seq !== requestSeq) return;
+  const rect = visibleWorldRect.value;
+  const cx = rect ? (rect.minX + rect.maxX) / 2 : 0;
+  const cz = rect ? (rect.minZ + rect.maxZ) / 2 : 0;
+  const T = props.tileSize;
+  while (inFlight.size < MAX_CONCURRENT && pending.size > 0) {
+    let best: string | null = null;
+    let bestDist = Infinity;
+    for (const key of pending) {
+      const [tx, tz] = key.split(",").map(Number);
+      const dx = (tx + 0.5) * T - cx;
+      const dz = (tz + 0.5) * T - cz;
+      const d = dx * dx + dz * dz;
+      if (d < bestDist) {
+        bestDist = d;
+        best = key;
+      }
+    }
+    if (best === null) break;
+    pending.delete(best);
+    inFlight.add(best);
+    const [tx, tz] = best.split(",").map(Number);
+    void requestTile(best, tx, tz, seq);
+  }
+}
+
+async function requestTile(key: string, tx: number, tz: number, seq: number) {
   try {
     const result = await renderWorldMap({
       instanceId: props.instanceId,
       folderName: props.folderName,
-      width: props.width,
-      height: props.height,
+      width: props.tileSize,
+      height: props.tileSize,
+      centerX: (tx + 0.5) * props.tileSize,
+      centerZ: (tz + 0.5) * props.tileSize,
       dimension: props.dimension,
       water: props.water,
       shading: props.shading,
       altitudeShading: props.altitudeShading,
     });
     if (seq !== requestSeq) return;
-    buildMapCanvas(result);
-    needsFit = true;
-    resetView();
+    const canvas = buildTileCanvas(result);
+    tileCache.set(key, canvas);
+    putWorldCache(worldKeyPrefix.value, tx, tz, canvas);
+    tilesLoaded.value++;
+    error.value = null;
   } catch (err) {
     if (seq !== requestSeq) return;
-    error.value = err instanceof Error ? err.message : String(err);
+    tilesFailed.add(key);
+    if (tilesLoaded.value === 0) {
+      error.value = err instanceof Error ? err.message : String(err);
+    }
   } finally {
-    if (seq === requestSeq) loading.value = false;
+    if (seq !== requestSeq) return;
+    inFlight.delete(key);
+    draw();
+    pumpRequests(requestSeq);
   }
 }
 
@@ -189,10 +301,11 @@ function handleResize() {
   viewportW.value = rect.width;
   viewportH.value = rect.height;
   syncCanvasSize();
-  if (needsFit && mapSize.value) {
+  if (pendingInit) {
     resetView();
   } else {
     draw();
+    scheduleTileLoad();
   }
 }
 
@@ -219,6 +332,7 @@ function onPointerMove(e: PointerEvent) {
   lastX = e.clientX;
   lastY = e.clientY;
   draw();
+  scheduleTileLoad();
 }
 
 function onPointerUp() {
@@ -232,6 +346,7 @@ defineExpose({
   scale,
   offsetX,
   offsetY,
+  loadedTileCount: tilesLoaded,
 });
 
 onMounted(() => {
@@ -247,22 +362,35 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   requestSeq++;
+  if (tileLoadTimer !== undefined) window.clearTimeout(tileLoadTimer);
   resizeObserver?.disconnect();
   canvasRef.value?.removeEventListener("wheel", onWheel);
 });
+
+function resetWorld() {
+  requestSeq++;
+  tileCache.clear();
+  inFlight.clear();
+  pending.clear();
+  tilesFailed.clear();
+  tilesLoaded.value = 0;
+  error.value = null;
+  resetView();
+}
 
 watch(
   () => [
     props.instanceId,
     props.folderName,
     props.dimension,
-    props.width,
-    props.height,
+    props.tileSize,
+    props.centerX,
+    props.centerZ,
     props.water,
     props.shading,
     props.altitudeShading,
   ],
-  loadMap,
+  resetWorld,
   { immediate: true },
 );
 </script>
