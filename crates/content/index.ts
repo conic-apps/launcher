@@ -99,3 +99,7 @@ export async function renderWorldMap(
 ): Promise<WorldMapRenderResult> {
     return await invoke("plugin:content|cmd_render_world_map", { request })
 }
+
+export async function listScreenshots(instanceId: string): Promise<string[]> {
+    return await invoke("plugin:content|cmd_list_screenshots", { instanceId })
+}

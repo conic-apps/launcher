@@ -11,6 +11,7 @@ pub mod error;
 // pub mod mods;
 pub mod resourcepack;
 pub mod saves;
+pub mod screenshots;
 pub mod worldmap;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
@@ -21,6 +22,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             saves::cmd_get_save_icon,
             resourcepack::cmd_get_all_resourcepacks,
             worldmap::cmd_render_world_map,
+            screenshots::cmd_list_screenshots,
         ])
         .setup(|app, _| {
             app.manage(worldmap::MapCache::default());
