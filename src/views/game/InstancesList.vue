@@ -5,6 +5,7 @@
 <template>
   <div class="instances-list">
     <InstancesListToolBar
+      ref="toolbar"
       :sortLabel="sortLabel"
       :sortOptions="sortOptions"
       :selectSort="selectSort"
@@ -77,12 +78,20 @@ import {
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import InstancesListToolBar from "./InstancesListToolBar.vue";
-import InstancesListScrollView from "@/components/InstancesListScrollView.vue";
+import InstancesListScrollView from "./InstancesListScrollView.vue";
 import { useShowContent } from "./useContent";
 import { useInstanceSettings } from "./useGameView";
+import gsap from "gsap";
 
 const instanceStore = useInstanceStore();
 const scrollViewRef = useTemplateRef("scrollView");
+const toolbarRef = useTemplateRef("toolbar");
+
+let resolveReady: () => void;
+
+const ready = new Promise<void>((resolve) => {
+  resolveReady = resolve;
+});
 
 const SCROLLBAR_TOP = "calc(44px + 8px + 112px + 6px)";
 const SCROLLBAR_BOTTOM = "calc(56px + 4px)";
@@ -97,12 +106,22 @@ onMounted(async () => {
   await nextTick();
   scrollViewRef.value?.scrollTo(instanceStore.currentInstance.id, false);
   requestAnimationFrame(() => {
-    scrollViewRef.value?.reflow();
+    scrollViewRef.value?.reflow().then(() => resolveReady());
   });
   Object.values(instanceStore.instances).forEach(async (instance) => {
     backgroundImagesSrc.value[instance.id] = await getBackgroundSrc(instance.id);
   });
 });
+
+const playIntro = () => {
+  const tl = gsap.timeline();
+  const listIntro = scrollViewRef.value?.playIntro();
+  tl.add(toolbarRef.value?.playIntro() ?? gsap.timeline());
+  if (listIntro) tl.add(listIntro, "<0.1");
+  return tl;
+};
+
+defineExpose({ playIntro, ready });
 
 export type SortMode = "name" | "version" | "playtime" | "lastplay";
 const sortMode = ref<SortMode>("playtime");

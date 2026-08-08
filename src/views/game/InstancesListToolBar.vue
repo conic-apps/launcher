@@ -1,5 +1,5 @@
 <template>
-  <div class="tool-bar">
+  <div class="tool-bar" ref="toolbar">
     <div class="search">
       <div class="search-input">
         <input type="text" placeholder="搜索..." v-model="searchQuery" />
@@ -40,6 +40,23 @@
 <script setup lang="ts">
 import InstanceListDropdown from "./InstanceListDropdown.vue";
 import { GroupMode, SortMode } from "./InstancesList.vue";
+import { useTemplateRef } from "vue";
+import gsap from "gsap";
+
+const toolbarRef = useTemplateRef("toolbar");
+
+const toolbarIntroX = 50;
+
+const playIntro = () => {
+  return gsap.timeline().from(toolbarRef.value, {
+    opacity: 0,
+    x: toolbarIntroX,
+    duration: 0.5,
+    ease: "power3.out",
+  });
+};
+
+defineExpose({ playIntro });
 
 defineProps<{
   sortLabel: string;
