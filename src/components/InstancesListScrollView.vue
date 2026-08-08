@@ -243,23 +243,52 @@ function onScrollbarPointerDown(event: PointerEvent) {
   }
 }
 
-function renderPositions(scrollY: number) {
-  const center = containerHeight / 2;
-  const curveRange = containerHeight;
+function parallaxX(centerY: number): number {
+  const t = (centerY - containerHeight / 2) / containerHeight;
+  const clamped = Math.max(-1, Math.min(1, t));
+  return -maxOffset * (1 - clamped * clamped);
+}
 
+function renderPositions(scrollY: number) {
   for (let i = 0; i < cardLayouts.length; i++) {
     const layout = cardLayouts[i];
-    const y = layout.top - scrollY + layout.height / 2;
-    const t = (y - center) / curveRange;
-    const clamped = Math.max(-1, Math.min(1, t));
-    const x = maxOffset * (1 - clamped * clamped);
-    setters[i](-x);
+    const centerY = layout.top - scrollY + layout.height / 2;
+    setters[i](parallaxX(centerY));
   }
 }
 
-// FLIP transitions: when the list changes (reorder, filter), cards fly from their
-// previous position to the new one instead of jumping instantly.
+// FLIP transitions: when the list changes (reorder, filter), cards move from their
+// previous position to the new one instead of jumping instantly. They travel along
+// the same curved track that the wheel-scroll parallax draws: x follows the same
+// parabola as renderPositions, sampled at the eased vertical position.
 let firstRects = new Map<string, number>();
+
+function cubicBezierEase(x1: number, y1: number, x2: number, y2: number) {
+  const ax = 3 * x1 - 3 * x2 + 1;
+  const bx = 3 * x2 - 6 * x1;
+  const cx = 3 * x1;
+  const ay = 3 * y1 - 3 * y2 + 1;
+  const by = 3 * y2 - 6 * y1;
+  const cy = 3 * y1;
+  const sampleX = (t: number) => ((ax * t + bx) * t + cx) * t;
+  const sampleY = (t: number) => ((ay * t + by) * t + cy) * t;
+  return (x: number) => {
+    let lower = 0;
+    let upper = 1;
+    let t = x;
+    for (let i = 0; i < 12; i++) {
+      const sample = sampleX(t);
+      const diff = sample - x;
+      if (Math.abs(diff) < 1e-5) break;
+      if (diff < 0) lower = t;
+      else upper = t;
+      t = (lower + upper) / 2;
+    }
+    return sampleY(t);
+  };
+}
+
+const flipEase = cubicBezierEase(0.22, 1, 0.36, 1);
 
 onBeforeUpdate(() => {
   firstRects = new Map(
@@ -269,6 +298,10 @@ onBeforeUpdate(() => {
 
 onUpdated(() => {
   const cards = queryCards();
+  const scrollY = lenis ? lenis.scroll : (containerRef.value?.scrollTop ?? 0);
+
+  measureLayout();
+  renderPositions(scrollY);
 
   for (const card of cards) {
     const from = firstRects.get(card.id);
@@ -282,13 +315,29 @@ onUpdated(() => {
       );
       continue;
     }
-    const dy = from - card.wrapper.getBoundingClientRect().top;
-    if (Math.abs(dy) > 0.5) {
-      card.instance.animate(
-        [{ transform: `translateY(${dy}px)` }, { transform: "translateY(0)" }],
-        { duration: 400, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
-      );
+
+    const to = card.wrapper.getBoundingClientRect().top;
+    const height = card.wrapper.getBoundingClientRect().height;
+    const fromCenter = from + height / 2;
+    const toCenter = to + height / 2;
+    const dy = from - to;
+    const dx = parallaxX(fromCenter) - parallaxX(toCenter);
+
+    if (Math.abs(dy) < 0.5 && Math.abs(dx) < 0.5) continue;
+
+    const SAMPLES = 24;
+    const keyframes: { offset: number; transform: string }[] = [];
+
+    for (let i = 0; i <= SAMPLES; i++) {
+      const p = i / SAMPLES;
+      const e = flipEase(p);
+      const center = fromCenter + (toCenter - fromCenter) * e;
+      const x = parallaxX(center) - parallaxX(toCenter);
+      const y = dy * (1 - e);
+      keyframes.push({ offset: p, transform: `translate(${x}px, ${y}px)` });
     }
+
+    card.instance.animate(keyframes, { duration: 400, easing: "linear" });
   }
 
   firstRects = new Map();
