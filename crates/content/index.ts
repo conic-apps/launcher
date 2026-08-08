@@ -71,6 +71,14 @@ export async function getSaveIcon(instanceId: string, folderName: string): Promi
     return await invoke("plugin:content|cmd_get_save_icon", { instanceId, folderName })
 }
 
+export async function getSavePath(instanceId: string, folderName: string): Promise<string> {
+    return await invoke("plugin:content|cmd_get_save_path", { instanceId, folderName })
+}
+
+export async function deleteSave(instanceId: string, folderName: string): Promise<void> {
+    return await invoke("plugin:content|cmd_delete_save", { instanceId, folderName })
+}
+
 export async function getAllResourcepacks(instanceId: string): Promise<Resourcepack[]> {
     return await invoke("plugin:content|cmd_get_all_resourcepacks", { instanceId })
 }

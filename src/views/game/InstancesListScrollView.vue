@@ -14,7 +14,7 @@
     <div
       class="instances-scrollbar"
       :class="{ hidden: !scrollbarVisible || disabled }"
-      :style="{ top: scrollbarTop, bottom: scrollbarBottom }"
+      :style="{ top: scrollbarTop, bottom: scrollbarBottom, opacity: 0 }"
       ref="scrollbar"
       @pointerdown="onScrollbarPointerDown">
       <div
@@ -267,6 +267,17 @@ interface IntroTarget {
 function playIntro(): gsap.core.Timeline {
   const container = containerRef.value;
   const tl = gsap.timeline();
+
+  const scrollbar = scrollbarRef.value;
+  if (scrollbar) {
+    const distance = scrollbar.offsetWidth + Number.parseFloat(getComputedStyle(scrollbar).right);
+    tl.fromTo(
+      scrollbar,
+      { x: distance, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.3, ease: "power3.out" },
+      0,
+    );
+  }
 
   if (!container) return tl;
 

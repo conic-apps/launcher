@@ -20,6 +20,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             saves::cmd_get_all_levels,
             saves::datapack::cmd_get_all_datapacks,
             saves::cmd_get_save_icon,
+            saves::cmd_get_save_path,
+            saves::cmd_delete_save,
             resourcepack::cmd_get_all_resourcepacks,
             worldmap::cmd_render_world_map,
             screenshots::cmd_list_screenshots,

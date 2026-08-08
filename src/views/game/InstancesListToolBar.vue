@@ -45,7 +45,7 @@ import gsap from "gsap";
 
 const toolbarRef = useTemplateRef("toolbar");
 
-const toolbarIntroX = 50;
+const toolbarIntroX = 100;
 
 const playIntro = () => {
   return gsap

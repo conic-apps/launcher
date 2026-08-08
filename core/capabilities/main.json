@@ -88,6 +88,8 @@
     "content:allow-cmd-get-all-datapacks",
     "content:allow-cmd-get-all-resourcepacks",
     "content:allow-cmd-get-save-icon",
+    "content:allow-cmd-get-save-path",
+    "content:allow-cmd-delete-save",
     "content:allow-cmd-render-world-map",
     "content:allow-cmd-list-screenshots",
     "modrinth:allow-cmd-search-projects",
