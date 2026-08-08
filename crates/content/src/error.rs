@@ -52,4 +52,6 @@ pub enum Error {
     ),
     #[error("World map render task failed: {0}")]
     WorldMapTask(String),
+    #[error("World map PNG encoding failed: {0}")]
+    WorldMapPng(String),
 }

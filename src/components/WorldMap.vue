@@ -25,13 +25,15 @@
 
 <script setup lang="ts">
 import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
-import { renderWorldMap, type WorldMapRenderResult } from "@conic/content";
+import { renderWorldMap } from "@conic/content";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const MAX_CONCURRENT = 24;
 const TILE_LOAD_DEBOUNCE = 150;
 const INITIAL_VIEW_BLOCKS = 512;
 const FADE_MS = 200;
+// 渲染缓存保留范围：可视区域向外扩展的圈数
+const TILE_RENDER_MARGIN = 3;
 
 const props = withDefaults(
   defineProps<{
@@ -72,11 +74,15 @@ const scale = ref(1);
 const offsetX = ref(0);
 const offsetY = ref(0);
 
-// 本地瓦片缓存：key 为 "tx,tz"，value 为离屏 canvas
-const tileCache = new Map<string, HTMLCanvasElement>();
+// PNG 数据缓存（长期）：key 为 "tx,tz"，value 为后端返回的 PNG 二进制
+const pngCache = new Map<string, Uint8Array<ArrayBuffer>>();
+// ImageBitmap 渲染缓存（短期）：仅保留可视区域外扩 TILE_RENDER_MARGIN 圈
+const renderCache = new Map<string, ImageBitmap>();
 const tileAppear = new Map<string, number>();
 const inFlight = new Set<string>();
 const pending = new Set<string>();
+const decoding = new Set<string>();
+const decodeQueue: string[] = [];
 const tilesFailed = new Set<string>();
 
 let ctx: CanvasRenderingContext2D | null = null;
@@ -113,36 +119,37 @@ function syncCanvasSize() {
 
 function draw() {
   if (!ctx || viewportW.value <= 0 || viewportH.value <= 0) return;
+  const range = visibleTileRange();
+  if (!range) return;
   const dpr = window.devicePixelRatio || 1;
   const s = scale.value;
   const now = performance.now();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, viewportW.value, viewportH.value);
   ctx.imageSmoothingEnabled = false;
+  const T = props.tileSize;
   let fading = false;
-  for (const [key, canvas] of tileCache) {
-    const appear = tileAppear.get(key);
-    let alpha = 1;
-    if (appear !== undefined) {
-      const elapsed = now - appear;
-      if (elapsed >= FADE_MS) {
-        tileAppear.delete(key);
-      } else {
-        alpha = elapsed / FADE_MS;
-        fading = true;
+  for (let tx = range.tx0; tx <= range.tx1; tx++) {
+    for (let tz = range.tz0; tz <= range.tz1; tz++) {
+      const key = `${tx},${tz}`;
+      const bitmap = renderCache.get(key);
+      if (!bitmap) continue;
+      const appear = tileAppear.get(key);
+      let alpha = 1;
+      if (appear !== undefined) {
+        const elapsed = now - appear;
+        if (elapsed >= FADE_MS) {
+          tileAppear.delete(key);
+        } else {
+          alpha = elapsed / FADE_MS;
+          fading = true;
+        }
       }
+      if (alpha <= 0) continue;
+      if (alpha < 1) ctx.globalAlpha = alpha;
+      ctx.drawImage(bitmap, tx * T * s + offsetX.value, tz * T * s + offsetY.value, T * s, T * s);
+      ctx.globalAlpha = 1;
     }
-    if (alpha <= 0) continue;
-    const [tx, tz] = key.split(",").map(Number);
-    if (alpha < 1) ctx.globalAlpha = alpha;
-    ctx.drawImage(
-      canvas,
-      tx * props.tileSize * s + offsetX.value,
-      tz * props.tileSize * s + offsetY.value,
-      props.tileSize * s,
-      props.tileSize * s,
-    );
-    ctx.globalAlpha = 1;
   }
   if (fading && fadeRAF === undefined) {
     fadeRAF = requestAnimationFrame(() => {
@@ -152,27 +159,14 @@ function draw() {
   }
 }
 
-function base64ToBytes(b64: string): Uint8Array {
+function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
   const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
+  const buffer = new ArrayBuffer(binary.length);
+  const bytes = new Uint8Array(buffer);
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
-}
-
-function buildTileCanvas(result: WorldMapRenderResult): HTMLCanvasElement {
-  const { width, height, pixels } = result;
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const offscreen = canvas.getContext("2d");
-  if (offscreen) {
-    const imageData = offscreen.createImageData(width, height);
-    imageData.data.set(base64ToBytes(pixels));
-    offscreen.putImageData(imageData, 0, 0);
-  }
-  return canvas;
 }
 
 function resetView() {
@@ -214,24 +208,43 @@ function scheduleTileLoad() {
   }, TILE_LOAD_DEBOUNCE);
 }
 
-function dispatchTileLoads() {
+function visibleTileRange() {
   const rect = visibleWorldRect.value;
-  if (!rect) return;
-  const seq = requestSeq;
+  if (!rect) return null;
   const T = props.tileSize;
-  const tx0 = Math.floor(rect.minX / T);
-  const tx1 = Math.floor(rect.maxX / T);
-  const tz0 = Math.floor(rect.minZ / T);
-  const tz1 = Math.floor(rect.maxZ / T);
+  return {
+    tx0: Math.floor(rect.minX / T),
+    tx1: Math.floor(rect.maxX / T),
+    tz0: Math.floor(rect.minZ / T),
+    tz1: Math.floor(rect.maxZ / T),
+  };
+}
 
-  for (let tx = tx0; tx <= tx1; tx++) {
-    for (let tz = tz0; tz <= tz1; tz++) {
+function dispatchTileLoads() {
+  const range = visibleTileRange();
+  if (!range) return;
+  const seq = requestSeq;
+  for (let tx = range.tx0; tx <= range.tx1; tx++) {
+    for (let tz = range.tz0; tz <= range.tz1; tz++) {
       const key = `${tx},${tz}`;
-      if (tileCache.has(key) || inFlight.has(key) || pending.has(key) || tilesFailed.has(key))
+      if (
+        renderCache.has(key) ||
+        inFlight.has(key) ||
+        pending.has(key) ||
+        decoding.has(key) ||
+        decodeQueue.includes(key) ||
+        tilesFailed.has(key)
+      )
         continue;
+      if (pngCache.has(key)) {
+        decodeQueue.push(key);
+        continue;
+      }
       pending.add(key);
     }
   }
+  pumpDecodes();
+  pruneRenderCache();
   pumpRequests(seq);
 }
 
@@ -262,6 +275,80 @@ function pumpRequests(seq: number) {
   }
 }
 
+function pruneRenderCache() {
+  const range = visibleTileRange();
+  if (!range) return;
+  for (const [key, bitmap] of renderCache) {
+    const [tx, tz] = key.split(",").map(Number);
+    if (
+      tx < range.tx0 - TILE_RENDER_MARGIN ||
+      tx > range.tx1 + TILE_RENDER_MARGIN ||
+      tz < range.tz0 - TILE_RENDER_MARGIN ||
+      tz > range.tz1 + TILE_RENDER_MARGIN
+    ) {
+      bitmap.close();
+      renderCache.delete(key);
+      tileAppear.delete(key);
+    }
+  }
+}
+
+function queueDecode(key: string) {
+  if (
+    renderCache.has(key) ||
+    decoding.has(key) ||
+    decodeQueue.includes(key) ||
+    tilesFailed.has(key)
+  )
+    return;
+  decodeQueue.push(key);
+  pumpDecodes();
+}
+
+function pumpDecodes() {
+  while (decoding.size < MAX_CONCURRENT && decodeQueue.length > 0) {
+    const key = decodeQueue.shift();
+    if (key === undefined) break;
+    decoding.add(key);
+    void decodeTile(key);
+  }
+}
+
+async function decodeTile(key: string) {
+  const seq = requestSeq;
+  try {
+    const bytes = pngCache.get(key);
+    if (!bytes) return;
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+    if (seq !== requestSeq) {
+      bitmap.close();
+      return;
+    }
+    renderCache.set(key, bitmap);
+    tileAppear.set(key, performance.now());
+    tilesLoaded.value++;
+    error.value = null;
+    pruneRenderCache();
+    draw();
+  } catch (err) {
+    if (seq !== requestSeq) return;
+    tilesFailed.add(key);
+    if (tilesLoaded.value === 0) {
+      error.value = err instanceof Error ? err.message : String(err);
+    }
+  } finally {
+    decoding.delete(key);
+    if (seq === requestSeq) pumpDecodes();
+  }
+}
+
+function closeRenderCache() {
+  for (const bitmap of renderCache.values()) {
+    bitmap.close();
+  }
+  renderCache.clear();
+}
+
 async function requestTile(key: string, tx: number, tz: number, seq: number) {
   try {
     const result = await renderWorldMap({
@@ -277,11 +364,9 @@ async function requestTile(key: string, tx: number, tz: number, seq: number) {
       altitudeShading: props.altitudeShading,
     });
     if (seq !== requestSeq) return;
-    const canvas = buildTileCanvas(result);
-    tileCache.set(key, canvas);
-    tileAppear.set(key, performance.now());
-    tilesLoaded.value++;
+    pngCache.set(key, base64ToBytes(result.png));
     error.value = null;
+    queueDecode(key);
   } catch (err) {
     if (seq !== requestSeq) return;
     tilesFailed.add(key);
@@ -291,7 +376,6 @@ async function requestTile(key: string, tx: number, tz: number, seq: number) {
   } finally {
     if (seq !== requestSeq) return;
     inFlight.delete(key);
-    draw();
     pumpRequests(requestSeq);
   }
 }
@@ -366,6 +450,10 @@ onBeforeUnmount(() => {
   requestSeq++;
   if (tileLoadTimer !== undefined) window.clearTimeout(tileLoadTimer);
   if (fadeRAF !== undefined) cancelAnimationFrame(fadeRAF);
+  closeRenderCache();
+  pngCache.clear();
+  decodeQueue.length = 0;
+  decoding.clear();
   resizeObserver?.disconnect();
   canvasRef.value?.removeEventListener("wheel", onWheel);
 });
@@ -376,8 +464,11 @@ function resetWorld() {
     cancelAnimationFrame(fadeRAF);
     fadeRAF = undefined;
   }
-  tileCache.clear();
+  closeRenderCache();
+  pngCache.clear();
   tileAppear.clear();
+  decodeQueue.length = 0;
+  decoding.clear();
   inFlight.clear();
   pending.clear();
   tilesFailed.clear();

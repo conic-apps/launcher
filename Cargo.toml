@@ -61,6 +61,7 @@ libloader = "0.1"
 tokio = { version = "1", features = ["macros", "rt"]}
 flate2 = "1"
 fastnbt = "2"
+png = "0.18"
 
 [profile.dev]
 incremental = true

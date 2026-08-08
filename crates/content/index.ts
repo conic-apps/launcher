@@ -91,7 +91,7 @@ export type WorldMapRenderRequest = {
 export type WorldMapRenderResult = {
     width: number
     height: number
-    pixels: string
+    png: string
 }
 
 export async function renderWorldMap(

@@ -750,6 +750,7 @@ dependencies = [
  "flate2",
  "folder",
  "instance",
+ "png 0.18.1",
  "regex",
  "serde",
  "serde_json",

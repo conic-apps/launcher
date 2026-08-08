@@ -76,17 +76,17 @@ pub struct WorldMapRequest {
     pub altitude_shading: Option<bool>,
 }
 
-/// Render result: raw RGBA bytes (base64-encoded), one Minecraft block per
-/// pixel, row-major.
+/// Render result: a PNG-encoded bitmap (base64-encoded), one Minecraft block
+/// per pixel, row-major.
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldMapResult {
     pub width: usize,
     pub height: usize,
-    pub pixels: String,
+    pub png: String,
 }
 
-/// Renders a rectangle of a world save into raw RGBA pixels.
+/// Renders a rectangle of a world save into a PNG bitmap.
 pub fn render_map(cache: &MapCache, request: &WorldMapRequest) -> Result<WorldMapResult> {
     let key = WorldMapKey::from(request);
     let world_dir = key.world_dir();
@@ -121,11 +121,29 @@ pub fn render_map(cache: &MapCache, request: &WorldMapRequest) -> Result<WorldMa
         },
     )?;
 
+    let png = encode_png(result.width as u32, result.height as u32, &result.pixels)?;
+
     Ok(WorldMapResult {
         width: result.width,
         height: result.height,
-        pixels: general_purpose::STANDARD.encode(result.pixels),
+        png: general_purpose::STANDARD.encode(png),
     })
+}
+
+fn encode_png(width: u32, height: u32, rgba: &[u8]) -> Result<Vec<u8>> {
+    let mut png = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut png, width, height);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        let mut writer = encoder
+            .write_header()
+            .map_err(|e| Error::WorldMapPng(e.to_string()))?;
+        writer
+            .write_image_data(rgba)
+            .map_err(|e| Error::WorldMapPng(e.to_string()))?;
+    }
+    Ok(png)
 }
 
 #[command]

@@ -21,6 +21,7 @@ toml.workspace = true
 zip.workspace = true
 fastnbt.workspace = true
 flate2.workspace = true
+png.workspace = true
 thiserror.workspace = true
 serde_with.workspace = true
 tauri.workspace = true
