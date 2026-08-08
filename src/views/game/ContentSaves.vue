@@ -51,10 +51,10 @@
             >
           </div>
           <div class="actions">
-            <button class="open-folder">
+            <button class="open-folder" @click.stop="openSaveFolder(folderName)">
               <AppIcon name="folder" :size="14"></AppIcon>
             </button>
-            <button class="delete">
+            <button class="delete" @click.stop="askDeleteSave(folderName)">
               <AppIcon name="trash" :size="14"></AppIcon>
             </button>
           </div>
@@ -84,12 +84,15 @@
 <script setup lang="ts">
 import WorldMap from "@/components/WorldMap.vue";
 import { useGameContentStore } from "@/store/content";
+import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
-import { getSaveIcon, type Level } from "@conic/content";
+import { getSaveIcon, getSavePath, type Level } from "@conic/content";
 import { formatLastPlayed, zhCN } from "@conic/instance";
+import { invoke } from "@tauri-apps/api/core";
 import { computed, ref, watch } from "vue";
 
 const gameContentStore = useGameContentStore();
+const dialogStore = useDialogStore();
 const instanceStore = useInstanceStore();
 const saves = computed(() => gameContentStore.gameContent.saves);
 
@@ -163,6 +166,19 @@ function selectSave(folderName: string, event: MouseEvent) {
   } else {
     expandDirection.value = "down";
   }
+}
+
+async function openSaveFolder(folderName: string) {
+  invoke("open_path", {
+    path: await getSavePath(instanceStore.currentInstance.id, folderName),
+  });
+}
+
+function askDeleteSave(folderName: string) {
+  const save = saves.value?.[folderName];
+  dialogStore.confirmDeleteSave.folderName = folderName;
+  dialogStore.confirmDeleteSave.levelName = save?.Data.LevelName ?? folderName;
+  dialogStore.confirmDeleteSave.visible = true;
 }
 </script>
 

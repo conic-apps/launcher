@@ -57,5 +57,12 @@ export const useGameContentStore = defineStore("gameContent", () => {
         () => instanceStore.instances,
         () => (gameContentCache = {}),
     )
-    return { gameContent }
+    async function refreshSaves() {
+        const instance = instanceStore.currentInstance
+        gameContent.value.saves = await getAllLevels(instance.id)
+        if (gameContentCache[instance.id]) {
+            gameContentCache[instance.id] = [gameContent.value, Date.now()]
+        }
+    }
+    return { gameContent, refreshSaves }
 })

@@ -50,6 +50,11 @@ export const useDialogStore = defineStore("dialog", () => {
         visible: false,
         account: null as Account | null,
     })
+    const confirmDeleteSave = ref({
+        visible: false,
+        folderName: "",
+        levelName: "",
+    })
     const uploadSkin = ref({
         visible: false,
         accountType: "Microsoft" as Account["type"],
@@ -63,6 +68,7 @@ export const useDialogStore = defineStore("dialog", () => {
         createInstance,
         confirmDeleteInstance,
         confirmDeleteAccount,
+        confirmDeleteSave,
         confirmQuitApp,
         noAccountError,
         multiplayerExtension,
