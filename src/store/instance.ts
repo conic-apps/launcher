@@ -8,6 +8,7 @@ import {
     LATEST_RELEASE_INSTANCE_ID,
     LATEST_SNAPSHOT_INSTANCE_ID,
     listInstances,
+    type InstanceSort,
 } from "@conic/instance"
 import { defineStore } from "pinia"
 import { useConfigStore } from "./config"
@@ -45,8 +46,8 @@ async function ensureLatestInstancesExistance() {
     await Promise.all(promises)
 }
 
-await ensureLatestInstancesExistance()
-const listedInstances = await listInstances("Name") // TODO: Error handling, show error dialog
+const sort = ref<InstanceSort>("Playtime")
+const listedInstances = await listInstances(sort.value) // TODO: Error handling, show error dialog
 
 export const useInstanceStore = defineStore("instance", () => {
     const instances = ref(listedInstances)
@@ -62,10 +63,21 @@ export const useInstanceStore = defineStore("instance", () => {
 
     const launchedInstances = ref(new Map())
 
+    let loadToken = 0
+
     async function loadInstances() {
+        const token = ++loadToken
         await ensureLatestInstancesExistance()
-        instances.value = await listInstances("Name")
+        const loadedInstances = await listInstances(sort.value)
+        if (token !== loadToken) return
+        instances.value = loadedInstances
         ensureCurrentInstanceAvailable()
+    }
+
+    function setSort(sortBy: InstanceSort) {
+        if (sort.value === sortBy) return
+        sort.value = sortBy
+        void loadInstances()
     }
 
     function ensureCurrentInstanceAvailable() {
@@ -93,10 +105,12 @@ export const useInstanceStore = defineStore("instance", () => {
     }
     return {
         instances,
+        sort,
         currentInstanceId,
         currentInstance,
         launchedInstances,
         loadInstances,
+        setSort,
         ensureCurrentInstanceAvailable,
     }
 })

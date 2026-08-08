@@ -55,7 +55,9 @@ export async function createInstance(instanceConfig: InstanceConfig, id?: string
     return await invoke("plugin:instance|cmd_create_instance", { config: instanceConfig, id })
 }
 
-export async function listInstances(sortBy: "Name"): Promise<Instance[]> {
+export type InstanceSort = "Name" | "Version" | "Playtime" | "LastPlayed"
+
+export async function listInstances(sortBy: InstanceSort): Promise<Instance[]> {
     return await invoke("plugin:instance|cmd_list_instances", { sortBy })
 }
 
