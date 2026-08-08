@@ -26,6 +26,7 @@ java-runtime.workspace = true
 launch.workspace = true
 shared.workspace = true
 content.workspace = true
+curseforge.workspace = true
 statistics.workspace = true
 download.workspace = true
 

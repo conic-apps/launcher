@@ -120,6 +120,21 @@ fn main() {
             ]),
         )
         .plugin(
+            "curseforge",
+            InlinedPlugin::new().commands(&[
+                "cmd_search_mods",
+                "cmd_get_mod",
+                "cmd_get_mods",
+                "cmd_get_featured_mods",
+                "cmd_get_mod_description",
+                "cmd_get_mod_files",
+                "cmd_get_mod_file",
+                "cmd_get_files",
+                "cmd_get_mod_file_changelog",
+                "cmd_get_mod_file_download_url",
+            ]),
+        )
+        .plugin(
             "platform",
             InlinedPlugin::new().commands(&["cmd_get_platform_info"]),
         )

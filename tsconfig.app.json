@@ -24,6 +24,7 @@
             "@conic/folder": ["./crates/folder"],
             "@conic/platform": ["./crates/platform"],
             "@conic/content": ["./crates/content"],
+            "@conic/curseforge": ["./crates/curseforge"],
             "@conic/statistics": ["./crates/statistics"],
             "@conic/multiplayer": ["./crates/multiplayer"]
         }

@@ -7,11 +7,12 @@ pub mod error;
 use error::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use shared::HTTP_CLIENT;
+use shared::{HTTP_CLIENT, UrlExt};
 use tauri::{
     Runtime, command,
     plugin::{Builder, TauriPlugin},
 };
+use url::Url;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("modrinth")
@@ -45,6 +46,9 @@ async fn cmd_get_all_dependencies(id: &str) -> Result<Value> {
     get_all_dependencies(id).await
 }
 
+// const BASE_URL: &str = "api.modrinth.com";
+const BASE_URL: &str = "mod.mcimirror.top/modrinth";
+
 #[command]
 async fn cmd_list_project_versions(
     id_or_slug: &str,
@@ -63,8 +67,11 @@ pub struct SearchParameters {
 }
 
 pub async fn search_projects(params: &SearchParameters) -> Result<Value> {
+    let url = Url::parse(BASE_URL)?
+        .append_path(["v2", "search"])
+        .expect("Internal error");
     Ok(HTTP_CLIENT
-        .get("https://api.modrinth.com/v2/search")
+        .get(url)
         .query(params)
         .send()
         .await?
@@ -73,33 +80,24 @@ pub async fn search_projects(params: &SearchParameters) -> Result<Value> {
 }
 
 pub async fn get_project(id_or_slug: &str) -> Result<Value> {
-    Ok(HTTP_CLIENT
-        .get(format!("https://api.modrinth.com/v2/project/{id_or_slug}"))
-        .send()
-        .await?
-        .json()
-        .await?)
+    let url = Url::parse(BASE_URL)?
+        .append_path(["v2", "project", id_or_slug])
+        .expect("Internal error");
+    Ok(HTTP_CLIENT.get(url).send().await?.json().await?)
 }
 
 pub async fn get_multiple_projects(ids: &[&str]) -> Result<Value> {
-    Ok(HTTP_CLIENT
-        .get("https://api.modrinth.com/v2/projects")
-        .query(ids)
-        .send()
-        .await?
-        .json()
-        .await?)
+    let url = Url::parse(BASE_URL)?
+        .append_path(["v2", "projects"])
+        .expect("Internal error");
+    Ok(HTTP_CLIENT.get(url).query(ids).send().await?.json().await?)
 }
 
 pub async fn get_all_dependencies(id: &str) -> Result<Value> {
-    Ok(HTTP_CLIENT
-        .get(format!(
-            "https://api.modrinth.com/v2/project/{id}/dependencies"
-        ))
-        .send()
-        .await?
-        .json()
-        .await?)
+    let url = Url::parse(BASE_URL)?
+        .append_path(["v2", "project", id, "dependencies"])
+        .expect("Internal error");
+    Ok(HTTP_CLIENT.get(url).send().await?.json().await?)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -114,10 +112,11 @@ pub async fn list_project_versions(
     id_or_slug: &str,
     params: &ListProjectVersionsParams,
 ) -> Result<Value> {
+    let url = Url::parse(BASE_URL)?
+        .append_path(["v2", "project", id_or_slug, "version"])
+        .expect("Internal error");
     Ok(HTTP_CLIENT
-        .get(format!(
-            "https://api.modrinth.com/v2/project/{id_or_slug}/version"
-        ))
+        .get(url)
         .query(params)
         .send()
         .await?
