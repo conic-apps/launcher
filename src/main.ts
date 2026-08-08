@@ -72,6 +72,7 @@ app.use(
         },
     }),
 )
+
 app.use(createPinia())
 
 app.component("AppIcon", AppIcon)

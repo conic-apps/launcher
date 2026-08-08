@@ -63,7 +63,7 @@ watch(
   },
 );
 
-let resolveReady!: () => void;
+let resolveReady: () => void;
 
 const ready = new Promise<void>((resolve) => {
   resolveReady = resolve;
@@ -71,7 +71,6 @@ const ready = new Promise<void>((resolve) => {
 
 watch(loading, (loading) => {
   if (!loading) {
-    console.log("avatar ready");
     resolveReady();
   }
 });

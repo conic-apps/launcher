@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <BaseDialog :visible="dialogStore.confirmQuitApp.visible" :width="500" :height="144">
+  <BaseDialog :visible="dialogStore.confirmQuitApp.visible" :width="500">
     <div class="confirm-quit-app" ref="main">
       <div style="display: flex; align-items: center">
         <AppIcon name="warning" :size="50"></AppIcon>

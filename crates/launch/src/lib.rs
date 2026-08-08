@@ -301,7 +301,6 @@ async fn spawn_minecraft_process(
             .to_string(),
     );
     launch_command.push_str(&format!("\"{java_path}\""));
-    dbg!(&command_arguments);
     for arg in command_arguments.clone() {
         let arg = if arg.contains(" ") {
             format!("\"{arg}\"")

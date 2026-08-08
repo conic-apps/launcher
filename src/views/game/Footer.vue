@@ -194,11 +194,11 @@ function selectPlayer(player: PlayerItem) {
 
 async function openConnect() {
   if (await isLibraryValid()) {
-    dialogStore.connectExtension.currentComponent = "connectManager";
+    dialogStore.multiplayerExtension.currentComponent = "multiplayerManager";
   } else {
-    dialogStore.connectExtension.currentComponent = "downloadDescription";
+    dialogStore.multiplayerExtension.currentComponent = "downloadDescription";
   }
-  dialogStore.connectExtension.visible = true;
+  dialogStore.multiplayerExtension.visible = true;
 }
 
 const elements = {

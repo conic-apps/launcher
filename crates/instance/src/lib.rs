@@ -149,6 +149,7 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
             installed: async_fs::metadata(path.join(".install.lock")).await.is_ok(),
             last_played: get_launch_script_timestamp(&instance_id),
             id: instance_id,
+            has_background: path.join("background").is_file(),
         };
         instances.push(instance);
     }
@@ -174,6 +175,7 @@ pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
                 .is_ok(),
             id: id.to_string(),
             last_played: get_launch_script_timestamp(id),
+            has_background: instance_root.join("background").is_file(),
         })
     } else {
         None
@@ -208,6 +210,7 @@ pub struct Instance {
     /// Unique identifier of the instance.
     pub id: String,
     pub last_played: Option<u64>,
+    pub has_background: bool,
 }
 
 impl Instance {

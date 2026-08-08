@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <BaseDialog :visible="dialogStore.confirmDeleteAccount.visible" :width="400" :height="138">
+  <BaseDialog :visible="dialogStore.confirmDeleteAccount.visible" :width="400">
     <div class="confirm-quit-app" ref="main">
       <div style="display: flex; align-items: center">
         <AccountAvatar :skin="accountSkin" :uuid="accountUuid" :size="40"></AccountAvatar>

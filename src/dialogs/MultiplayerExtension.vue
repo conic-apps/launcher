@@ -4,13 +4,13 @@
 
 <template>
   <BaseDialog
-    :visible="dialogStore.connectExtension.visible"
+    :visible="dialogStore.multiplayerExtension.visible"
     :width="dialogSize.width"
     :height="dialogSize.height">
     <div class="connect" data-tauri-drag-region>
       <Transition name="slide-left">
         <component
-          :is="components[dialogStore.connectExtension.currentComponent].component"></component>
+          :is="components[dialogStore.multiplayerExtension.currentComponent].component"></component>
       </Transition>
     </div>
   </BaseDialog>
@@ -20,9 +20,9 @@
 import BaseDialog from "@/components/BaseDialog.vue";
 import { useDialogStore } from "@/store/dialog";
 import { computed, markRaw } from "vue";
-import DownloadDescription from "./connect/DownloadDescription.vue";
-import DownloadProgress from "./connect/DownloadProgress.vue";
-import ConnectManager from "./connect/ConnectManager.vue";
+import MultiplayerManager from "./multiplayer/MultiplayerManager.vue";
+import DownloadDescription from "./multiplayer/DownloadDescription.vue";
+import DownloadProgress from "./multiplayer/DownloadProgress.vue";
 
 const dialogStore = useDialogStore();
 
@@ -37,14 +37,14 @@ const components = {
     width: 480,
     component: markRaw(DownloadProgress),
   },
-  connectManager: {
+  multiplayerManager: {
     height: 280,
     width: 580,
-    component: markRaw(ConnectManager),
+    component: markRaw(MultiplayerManager),
   },
 };
 
-const connectManagerDialogSize = {
+const multiplayerManagerDialogSize = {
   waiting: {
     width: 600,
     height: 274,
@@ -76,10 +76,12 @@ const connectManagerDialogSize = {
 };
 
 const dialogSize = computed(() => {
-  if (dialogStore.connectExtension.currentComponent === "connectManager") {
-    return connectManagerDialogSize[dialogStore.connectExtension.connectManagerComponent];
+  if (dialogStore.multiplayerExtension.currentComponent === "multiplayerManager") {
+    return multiplayerManagerDialogSize[
+      dialogStore.multiplayerExtension.multiplayerManagerComponent
+    ];
   }
-  return components[dialogStore.connectExtension.currentComponent];
+  return components[dialogStore.multiplayerExtension.currentComponent];
 });
 </script>
 

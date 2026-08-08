@@ -95,18 +95,6 @@ a:hover {
     text-decoration: underline;
 }
 
-#model-shadow {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: #00000079;
-    z-index: -1;
-    transition: all 0.3s ease;
-    opacity: 0;
-}
-
 .no-animations * {
     animation: none !important;
     transition: none !important;

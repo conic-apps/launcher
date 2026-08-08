@@ -44,4 +44,14 @@ pub enum Error {
         #[serde_as(as = "serde_with::DisplayFromStr")]
         zip::result::ZipError,
     ),
+    #[error(transparent)]
+    WorldMap(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        conic_worldmap::WorldError,
+    ),
+    #[error("World map render task failed: {0}")]
+    WorldMapTask(String),
+    #[error("World map PNG encoding failed: {0}")]
+    WorldMapPng(String),
 }

@@ -25,7 +25,7 @@ install.workspace = true
 java-runtime.workspace = true
 launch.workspace = true
 shared.workspace = true
-game_data.workspace = true
+content.workspace = true
 statistics.workspace = true
 download.workspace = true
 

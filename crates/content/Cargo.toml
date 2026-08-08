@@ -1,5 +1,5 @@
 [package]
-name = "game_data"
+name = "content"
 version = "0.0.0"
 authors = ["OakChaser"]
 
@@ -13,6 +13,7 @@ instance.workspace = true
 folder.workspace = true
 
 base64.workspace = true
+conic-worldmap.workspace = true
 regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -20,7 +21,9 @@ toml.workspace = true
 zip.workspace = true
 fastnbt.workspace = true
 flate2.workspace = true
+png.workspace = true
 thiserror.workspace = true
 serde_with.workspace = true
 tauri.workspace = true
 uuid.workspace = true
+async-fs.workspace = true

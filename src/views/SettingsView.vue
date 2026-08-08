@@ -96,7 +96,7 @@ function switchComponent(component: Component, index: number) {
   width: 100%;
   height: 100%;
   display: flex;
-  background: rgba(var(--ctp-base-rgb), 0.8);
+  background: rgba(var(--ctp-base-rgb), 0.6);
   .column-left,
   .column-right {
     height: 100%;

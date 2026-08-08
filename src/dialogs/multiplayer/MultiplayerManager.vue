@@ -161,7 +161,7 @@
     </div>
     <div
       class="buttons"
-      v-if="dialogStore.connectExtension.connectManagerComponent === 'guestCodeInput'">
+      v-if="dialogStore.multiplayerExtension.multiplayerManagerComponent === 'guestCodeInput'">
       <BaseButton
         class="back"
         @click="
@@ -172,7 +172,7 @@
       </BaseButton>
     </div>
     <div class="buttons" v-else>
-      <BaseButton class="quit" @click="dialogStore.connectExtension.visible = false">
+      <BaseButton class="quit" @click="dialogStore.multiplayerExtension.visible = false">
         {{
           uiComponent === "waiting" || uiComponent === "exception"
             ? "关闭"
@@ -268,7 +268,7 @@ const localNatLabel = computed(() => {
 watch(
   uiComponent,
   (value) => {
-    dialogStore.connectExtension.connectManagerComponent = value;
+    dialogStore.multiplayerExtension.multiplayerManagerComponent = value;
   },
   { immediate: true },
 );

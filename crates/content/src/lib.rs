@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use tauri::{
-    Runtime,
+    Manager, Runtime,
     plugin::{Builder, TauriPlugin},
 };
 
@@ -11,13 +11,20 @@ use tauri::{
 pub mod error;
 pub mod resourcepack;
 pub mod saves;
+pub mod worldmap;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("game-data")
+    Builder::new("content")
         .invoke_handler(tauri::generate_handler![
             saves::cmd_get_all_levels,
             saves::datapack::cmd_get_all_datapacks,
+            saves::cmd_get_save_icon,
             resourcepack::cmd_get_all_resourcepacks,
+            worldmap::cmd_render_world_map,
         ])
+        .setup(|app, _| {
+            app.manage(worldmap::MapCache::default());
+            Ok(())
+        })
         .build()
 }

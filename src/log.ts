@@ -8,6 +8,9 @@ function forwardConsole(
     functionName: "log" | "debug" | "info" | "warn" | "error",
     logger: (message: string) => Promise<void>,
 ) {
+    if (!import.meta.env.PROD) {
+        return
+    }
     const original = console[functionName]
     console[functionName] = (message) => {
         original(message)
