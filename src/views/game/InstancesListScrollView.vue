@@ -82,6 +82,7 @@ let cardLayouts: CardLayout[] = [];
 let setters: ((value: number) => void)[] = [];
 let containerHeight = 0;
 const maxOffset = 128;
+const introStartOffset = 40;
 
 let cardTriggers: ScrollTrigger[] = [];
 let cardTriggersKey = "";
@@ -257,6 +258,78 @@ function renderPositions(scrollY: number) {
   }
 }
 
+interface IntroTarget {
+  wrapper: HTMLElement;
+  startCenter: number;
+  finalCenter: number;
+}
+
+function playIntro(): gsap.core.Timeline {
+  const container = containerRef.value;
+  const tl = gsap.timeline();
+
+  if (!container) return tl;
+
+  const scrollY = lenis ? lenis.scroll : (container.scrollTop ?? 0);
+  measureLayout();
+
+  const cards = queryCards();
+  const targets: IntroTarget[] = [];
+
+  for (let i = 0; i < cards.length; i++) {
+    const layout = cardLayouts[i];
+    if (!layout) continue;
+
+    const finalCenter = layout.top - scrollY + layout.height / 2;
+    const top = finalCenter - layout.height / 2;
+    const bottom = finalCenter + layout.height / 2;
+
+    if (bottom <= 0 || top >= containerHeight) continue;
+
+    targets.push({
+      wrapper: cards[i].wrapper,
+      startCenter: -introStartOffset + layout.height / 2,
+      finalCenter,
+    });
+  }
+
+  if (targets.length === 0) return tl;
+
+  const apply = (target: IntroTarget, p: number) => {
+    const centerY = target.startCenter + (target.finalCenter - target.startCenter) * p;
+    target.wrapper.style.transform = `translate(${parallaxX(centerY)}px, ${centerY - target.finalCenter}px)`;
+  };
+
+  for (const target of targets) {
+    apply(target, 0);
+  }
+
+  for (const target of targets) {
+    const state = { p: 0 };
+    tl.to(
+      state,
+      {
+        p: 1,
+        duration: 0.4,
+        ease: "power3.out",
+        onUpdate: () => apply(target, state.p),
+      },
+      0,
+    );
+    tl.to(target.wrapper, { opacity: 1, duration: 0.4, ease: "power3.out" }, 0);
+  }
+
+  tl.add(() => {
+    renderPositions(scrollY);
+    gsap.set(
+      cards.map((c) => c.wrapper),
+      { opacity: 1 },
+    );
+  });
+
+  return tl;
+}
+
 // FLIP transitions: when the list changes (reorder, filter), cards move from their
 // previous position to the new one instead of jumping instantly. They travel along
 // the same curved track that the wheel-scroll parallax draws: x follows the same
@@ -315,6 +388,7 @@ onUpdated(() => {
     const scaleSuffix = scale !== 1 ? ` scale(${scale})` : "";
     const from = firstRects.get(card.id);
     if (from === undefined) {
+      gsap.set(card.wrapper, { opacity: 1 });
       card.instance.animate(
         [
           { transform: `translateY(24px)${scaleSuffix}`, opacity: "0" },
@@ -416,7 +490,7 @@ onUnmounted(() => {
   resizeCleanup?.();
 });
 
-defineExpose({ reflow, scrollTo });
+defineExpose({ reflow, scrollTo, playIntro });
 </script>
 
 <style lang="less" scoped>

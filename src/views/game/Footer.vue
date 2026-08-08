@@ -10,6 +10,7 @@
       :skin="accountSkin"
       :uuid="accountUuid"
       :size="56"
+      style="opacity: 0"
       :class="{
         'ms-account': configStore.current_account?.type === 'Microsoft',
         'ygg-account': configStore.current_account?.type === 'Yggdrasil',
@@ -23,8 +24,9 @@
       :uuid="accountUuid"
       :size="56"
       class="unlogin"
+      style="opacity: 0"
       @click="navigationStore.navigate('accounts')"></AccountAvatar>
-    <AccountListDropdown v-if="configStore.current_account" ref="accountMenuRef">
+    <AccountListDropdown v-if="configStore.current_account" ref="accountMenuRef" style="opacity: 0">
       <template #trigger="{ toggle }">
         <span>{{ profileName }}</span>
         <button class="account-switch" tabindex="-1" @click.stop="toggle()">
@@ -46,14 +48,19 @@
         </li>
       </template>
     </AccountListDropdown>
-    <p class="profile-name-unlogged" v-else @click="navigationStore.navigate('accounts')">
+    <p
+      class="profile-name-unlogged"
+      v-else
+      style="opacity: 0"
+      @click="navigationStore.navigate('accounts')">
       <span>未登录</span>
     </p>
-    <button class="connect" @click="openConnect" ref="connect">
+    <button class="connect" style="opacity: 0" @click="openConnect" ref="connect">
       <AppIcon name="globe" :size="22"></AppIcon>
     </button>
     <button
       class="new-instance"
+      style="opacity: 0"
       @click="dialogStore.createInstance.visible = true"
       ref="new-instance">
       <AppIcon name="add" :size="22" style="margin-right: 8px"></AppIcon>
@@ -61,12 +68,14 @@
     </button>
     <button
       class="install-pack"
+      style="opacity: 0"
       @click="dialogStore.createInstance.visible = true"
       ref="install-pack">
       <AppIcon name="package" :size="22" fill="none"></AppIcon>
     </button>
     <button
       class="install-server"
+      style="opacity: 0"
       @click="dialogStore.createInstance.visible = true"
       ref="install-server">
       <AppIcon name="server" :size="22" fill="none"></AppIcon>
@@ -230,22 +239,24 @@ const playIntro = () => {
       duration: 0.6,
       ease: "power3.out",
     })
-    .from(
+    .fromTo(
       [elements.avatar.value?.$el, elements.profileName.value?.$el, elements.connect.value],
+      { opacity: 0, y: 10 },
       {
-        opacity: 0,
-        y: 10,
+        opacity: 1,
+        y: 0,
         duration: 0.2,
         stagger: 0.05,
         ease: "power3.out",
       },
       "<0.1",
     )
-    .from(
+    .fromTo(
       [elements.installServer.value, elements.installPack.value, elements.newInstance.value],
+      { opacity: 0, y: 10 },
       {
-        opacity: 0,
-        y: 10,
+        opacity: 1,
+        y: 0,
         duration: 0.2,
         stagger: 0.05,
         ease: "power3.out",

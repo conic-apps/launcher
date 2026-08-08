@@ -4,7 +4,7 @@
 
 <template>
   <div class="current-instance">
-    <div class="row-1" ref="row1">
+    <div class="row-1" ref="row1" style="opacity: 0">
       <p class="title" v-if="currentInstance.id === LATEST_RELEASE_INSTANCE_ID">
         {{ $t("game.latestRelease") }}
       </p>
@@ -13,7 +13,7 @@
       </p>
       <p class="title" v-else>{{ currentInstance.config.name }}</p>
     </div>
-    <div class="row-2" ref="row2">
+    <div class="row-2" ref="row2" style="opacity: 0">
       <p>
         <span> Minecraft 版本 </span>
         <span>{{ currentInstance.config.runtime.minecraft }}</span>
@@ -54,7 +54,7 @@
         <span>{{ formatPlayTime(playtimeCache[currentInstance.id] ?? 0) }}</span>
       </p>
     </div>
-    <div class="row-3" ref="row3">
+    <div class="row-3" ref="row3" style="opacity: 0">
       <button class="launch-button" @click="navigationStore.navigate('launch')">
         <AppIcon name="play" fill="#fff" style="margin-right: 4px"></AppIcon>
         开始游戏
@@ -79,8 +79,8 @@
         </button>
       </div>
     </div>
-    <div class="row-4" ref="row4">
-      <div @click="openContent('saves')" ref="saves">
+    <div class="row-4" ref="row4" style="opacity: 0">
+      <div @click="openContent('saves')" ref="saves" style="opacity: 0">
         <AppIcon name="save"></AppIcon>
         <div>
           <span class="type">存档</span
@@ -89,15 +89,15 @@
           >
         </div>
       </div>
-      <div @click="openContent('mods')" ref="mods">
+      <div @click="openContent('mods')" ref="mods" style="opacity: 0">
         <AppIcon name="extension-puzzle" />
         <div><span class="type">模组</span><span class="count">1 个</span></div>
       </div>
-      <div @click="openContent('resourcepacks')" ref="resourcepacks">
+      <div @click="openContent('resourcepacks')" ref="resourcepacks" style="opacity: 0">
         <AppIcon name="folder" />
         <div><span class="type">资源包</span><span class="count">4 个</span></div>
       </div>
-      <div @click="openContent('screenshots')" ref="screenshots">
+      <div @click="openContent('screenshots')" ref="screenshots" style="opacity: 0">
         <AppIcon name="images-outline" />
         <div><span class="type">截图</span><span class="count">1 个</span></div>
       </div>
@@ -182,14 +182,15 @@ const playIntro = () => {
   );
   return gsap
     .timeline()
-    .from(
+    .fromTo(
       Object.values(rowElements).map((elementRef) => elementRef.value),
+      { opacity: 0, x: -50 },
       {
-        opacity: 0,
+        opacity: 1,
+        x: 0,
         duration: 0.33,
         stagger: 0.03,
         ease: "power3.out",
-        x: -50,
       },
     )
     .fromTo(

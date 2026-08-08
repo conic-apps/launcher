@@ -42,7 +42,7 @@ import Content from "./game/Content.vue";
 import { useShowContent } from "./game/useContent";
 
 const instanceSummary = useTemplateRef("instance-summary");
-// const instanceList = useTemplateRef("instance-list");
+const instanceList = useTemplateRef("instance-list");
 const gameFooterBar = useTemplateRef("game-footer-bar");
 
 const showInstanceSettings = useInstanceSettings();
@@ -50,9 +50,10 @@ const showGameContent = useShowContent();
 
 onMounted(async () => {
   const intro = gsap.timeline({ paused: true });
-  await Promise.all([gameFooterBar.value!.ready]);
+  await Promise.all([gameFooterBar.value!.ready, instanceList.value!.ready]);
   intro.add(gameFooterBar.value!.playIntro());
   intro.add(instanceSummary.value!.playIntro(), "<");
+  intro.add(instanceList.value!.playIntro(), "<0.05");
   intro.play();
 });
 </script>
