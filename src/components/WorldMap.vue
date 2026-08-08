@@ -10,7 +10,8 @@
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
-    @pointercancel="onPointerUp">
+    @pointercancel="onPointerUp"
+    @pointerleave="onPointerLeave">
     <canvas ref="canvasRef" class="world-map-canvas"></canvas>
     <div v-if="loading" class="world-map-status">
       <ItemLoadingIcon status="in-progress"></ItemLoadingIcon>
@@ -23,6 +24,12 @@
     <div v-if="DEBUG_SHOW_TILE_CACHE_COUNT || DEBUG_SHOW_TILE_CACHE_STATS" class="world-map-debug">
       <div v-if="DEBUG_SHOW_TILE_CACHE_COUNT">Render: {{ renderCacheCount }}</div>
       <div v-if="DEBUG_SHOW_TILE_CACHE_STATS">PNG: {{ pngCacheCount }}</div>
+    </div>
+    <div
+      v-if="showCursorCoords && cursorX !== null && cursorZ !== null"
+      class="world-map-coords"
+      :class="cursorCoordsPositionClass">
+      x: {{ cursorX }}, z: {{ cursorZ }}
     </div>
   </div>
 </template>
@@ -43,6 +50,15 @@ const DEBUG_SHOW_TILE_CACHE_COUNT = true;
 // 调试开关：右上角显示 PNG 数据缓存中的 tile 数量
 const DEBUG_SHOW_TILE_CACHE_STATS = true;
 
+// 光标坐标显示位置
+type CursorCoordsPosition =
+  | "bottom-center"
+  | "top-center"
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right";
+
 const props = withDefaults(
   defineProps<{
     instanceId: string;
@@ -56,6 +72,8 @@ const props = withDefaults(
     altitudeShading?: boolean;
     minScale?: number;
     maxScale?: number;
+    showCursorCoords?: boolean;
+    cursorCoordinatesPosition?: CursorCoordsPosition;
   }>(),
   {
     tileSize: 64,
@@ -64,6 +82,8 @@ const props = withDefaults(
     altitudeShading: true,
     minScale: 0.25,
     maxScale: 64,
+    showCursorCoords: false,
+    cursorCoordinatesPosition: "bottom-center",
   },
 );
 
@@ -119,6 +139,42 @@ let lastX = 0;
 let lastY = 0;
 let requestSeq = 0;
 let pendingInit = true;
+
+// 光标所在方块坐标（null 表示鼠标不在地图上）
+const cursorX = ref<number | null>(null);
+const cursorZ = ref<number | null>(null);
+
+const cursorCoordsPositionClass = computed(() => `is-${props.cursorCoordinatesPosition}`);
+
+// 复用现有渲染变换（与 zoomAt / visibleWorldRect 同一套换算），
+// 屏幕坐标 → 世界坐标 → 方块坐标
+function screenToBlock(px: number, py: number): { x: number; z: number } | null {
+  if (viewportW.value <= 0 || viewportH.value <= 0) return null;
+  return {
+    x: Math.floor((px - offsetX.value) / scale.value),
+    z: Math.floor((py - offsetY.value) / scale.value),
+  };
+}
+
+function updateCursorCoords(e: PointerEvent) {
+  if (!props.showCursorCoords) return;
+  const el = containerRef.value;
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  const block = screenToBlock(e.clientX - rect.left, e.clientY - rect.top);
+  if (block === null) {
+    cursorX.value = null;
+    cursorZ.value = null;
+    return;
+  }
+  cursorX.value = block.x;
+  cursorZ.value = block.z;
+}
+
+function onPointerLeave() {
+  cursorX.value = null;
+  cursorZ.value = null;
+}
 
 const hasTiles = computed(() => tilesLoaded.value > 0);
 const loading = computed(() => !hasTiles.value && !error.value);
@@ -461,6 +517,7 @@ function onPointerDown(e: PointerEvent) {
 }
 
 function onPointerMove(e: PointerEvent) {
+  updateCursorCoords(e);
   if (!dragging.value) return;
   offsetX.value += e.clientX - lastX;
   offsetY.value += e.clientY - lastY;
@@ -470,8 +527,12 @@ function onPointerMove(e: PointerEvent) {
   scheduleTileLoad();
 }
 
-function onPointerUp() {
+function onPointerUp(e: PointerEvent) {
   dragging.value = false;
+  if (e.pointerType === "touch") {
+    cursorX.value = null;
+    cursorZ.value = null;
+  }
 }
 
 defineExpose({
@@ -599,6 +660,52 @@ watch(
     border-radius: 6px;
     pointer-events: none;
     user-select: none;
+  }
+
+  .world-map-coords {
+    position: absolute;
+    z-index: 2;
+    padding: 4px 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ctp-text);
+    background: rgba(var(--ctp-mantle-rgb), 0.7);
+    border: 1px solid var(--ctp-surface0);
+    border-radius: 6px;
+    pointer-events: none;
+    user-select: none;
+
+    &.is-bottom-center {
+      left: 50%;
+      bottom: 8px;
+      transform: translateX(-50%);
+    }
+
+    &.is-top-center {
+      left: 50%;
+      top: 8px;
+      transform: translateX(-50%);
+    }
+
+    &.is-top-left {
+      top: 8px;
+      left: 8px;
+    }
+
+    &.is-top-right {
+      top: 8px;
+      right: 8px;
+    }
+
+    &.is-bottom-left {
+      bottom: 8px;
+      left: 8px;
+    }
+
+    &.is-bottom-right {
+      bottom: 8px;
+      right: 8px;
+    }
   }
 }
 </style>

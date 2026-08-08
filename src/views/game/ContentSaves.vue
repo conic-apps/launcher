@@ -74,6 +74,7 @@
                 :instance-id="instanceStore.currentInstance.id"
                 :show-cursor-coords="true"
                 :folder-name="folderName"
+                cursor-coordinates-position="bottom-center"
                 :center-x="saveSpawnX(save)"
                 :center-z="saveSpawnZ(save)"></WorldMap>
             </div>
