@@ -141,8 +141,8 @@ function measureLayout() {
     ({ wrapper }) => gsap.quickSetter(wrapper, "x", "px") as (value: number) => void,
   );
 
-  cardLayouts = cards.map(({ instance }) => {
-    const rect = instance.getBoundingClientRect();
+  cardLayouts = cards.map(({ wrapper }) => {
+    const rect = wrapper.getBoundingClientRect();
     return {
       top: rect.top - containerRect.top + scrollTop,
       height: rect.height,
@@ -161,9 +161,9 @@ function syncCardTriggers() {
   cardTriggersKey = key;
 
   cardTriggers.forEach((trigger) => trigger.kill());
-  cardTriggers = cards.map(({ instance }) =>
+  cardTriggers = cards.map(({ instance, wrapper }) =>
     ScrollTrigger.create({
-      trigger: instance,
+      trigger: wrapper,
       scroller: container,
       start: "top bottom",
       end: "bottom top",
