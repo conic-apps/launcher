@@ -7,8 +7,8 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
 };
 
-// pub mod mods;
 pub mod error;
+// pub mod mods;
 pub mod resourcepack;
 pub mod saves;
 pub mod worldmap;

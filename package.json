@@ -20,7 +20,8 @@
         "lint:fix": "eslint \"src/**\" --ignore-pattern \"src/assets\" --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "clean-app-data": "rm -rf ~/.conic-debug"
+        "clean-app-data": "rm -rf ~/.conic-debug",
+        "check": "pnpm ts:check && pnpm format:check && pnpm lint && cargo clippy && cargo fmt"
     },
     "dependencies": {
         "@tauri-apps/api": "^2.11.1",

@@ -26,8 +26,8 @@ pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
     let mut builder = reqwest::ClientBuilder::new()
         .pool_idle_timeout(Duration::from_secs(60))
         .pool_max_idle_per_host(200)
-        .use_rustls_tls()
-        .user_agent(format!("ConicApps/{}", APP_VERSION));
+        .user_agent(format!("ConicApps/{}", APP_VERSION))
+        .use_rustls_tls();
     if !should_use_system_proxy {
         builder = builder.no_proxy();
     };

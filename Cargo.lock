@@ -684,6 +684,7 @@ dependencies = [
  "beat_this",
  "config",
  "content",
+ "curseforge",
  "download",
  "folder",
  "install",
@@ -928,6 +929,22 @@ name = "ctor-proc-macro"
 version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52560adf09603e58c9a7ee1fe1dcb95a16927b17c127f0ac02d6e768a0e25bc1"
+
+[[package]]
+name = "curseforge"
+version = "0.0.0"
+dependencies = [
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "shared",
+ "tauri",
+ "thiserror 2.0.19",
+ "tokio",
+ "url",
+]
 
 [[package]]
 name = "darling"

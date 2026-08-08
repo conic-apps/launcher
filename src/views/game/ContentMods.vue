@@ -27,14 +27,13 @@
             'expand-up': expandDirection === 'up',
           }"
           :key="folderName">
+          <!-- <img -->
+          <!--   v-if="iconCache[folderName]" -->
+          <!--   :src="iconCache[folderName]" -->
+          <!--   alt="world icon" -->
+          <!--   width="64px" -->
+          <!--   height="64px" /> -->
           <img
-            v-if="iconCache[folderName]"
-            :src="iconCache[folderName]"
-            alt="world icon"
-            width="64px"
-            height="64px" />
-          <img
-            v-else
             src="@/assets/images/Unknown_server.webp"
             alt="world icon"
             width="64px"
@@ -51,38 +50,24 @@
                 adventure: save.Data.GameType === 2,
                 spectator: save.Data.GameType === 3,
               }"
-              >{{ formatGameType(save.Data.GameType) }}</span
+              >111</span
             >
-            <span class="command-enabled" v-if="save.Data.allowCommands">作弊</span>
             <span class="last-played" v-if="save.Data.LastPlayed"
-              ><span class="label">上次游玩: </span
-              >{{ formatLastPlayed(save.Data.LastPlayed, zhCN) }}</span
+              ><span class="label">上次游玩: </span>111</span
             >
           </div>
           <div class="actions">
-            <button class="open-folder">
-              <AppIcon name="folder" :size="14"></AppIcon>
+            <button>
+              <AppIcon name="heart-outline" :size="14"></AppIcon>
             </button>
-            <button class="delete">
-              <AppIcon name="trash" :size="14"></AppIcon>
-            </button>
-          </div>
-          <div class="play-button">
-            <button class="play">
-              <AppIcon name="play" :size="18"></AppIcon>
+            <button>
+              <AppIcon name="save" :size="14"></AppIcon>
             </button>
           </div>
-          <div class="extra" @click.stop>
-            <div class="map-previewer-container">
-              <WorldMap
-                v-if="selectedSave === folderName"
-                :instance-id="instanceStore.currentInstance.id"
-                :show-cursor-coords="true"
-                :folder-name="folderName"
-                cursor-coordinates-position="bottom-center"
-                :center-x="saveSpawnX(save)"
-                :center-z="saveSpawnZ(save)"></WorldMap>
-            </div>
+          <div class="download-button">
+            <button>
+              <AppIcon name="download" :size="18"></AppIcon>
+            </button>
           </div>
         </div>
       </div>
@@ -91,77 +76,16 @@
 </template>
 
 <script setup lang="ts">
-import WorldMap from "@/components/WorldMap.vue";
 import { useGameContentStore } from "@/store/content";
-import { useInstanceStore } from "@/store/instance";
-import { getSaveIcon, type Level } from "@conic/content";
-import { formatLastPlayed, zhCN } from "@conic/instance";
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import Modrinth from "@/assets/images/modrinth.svg";
 import CurseForge from "@/assets/images/curseforge.svg";
 import AppIcon from "@/components/AppIcon.vue";
 
 const gameContentStore = useGameContentStore();
-const instanceStore = useInstanceStore();
 const saves = computed(() => gameContentStore.gameContent.saves);
 
 const selectedSave = ref(null as string | null);
-
-const iconCache = ref({} as Record<string, string>);
-
-watch(
-  () => gameContentStore.gameContent.saves,
-  async (saves) => {
-    console.log(2);
-    if (!saves) {
-      console.log(3);
-      return;
-    }
-    const promises = Object.keys(saves).map(async (key) => {
-      console.log(1);
-      try {
-        iconCache.value[key] = await getSaveIcon(instanceStore.currentInstance.id, key);
-      } catch (error) {
-        console.log(error);
-      }
-      console.log(iconCache);
-    });
-    console.log(111);
-    await Promise.allSettled(promises);
-  },
-  { immediate: true },
-);
-
-function formatGameType(gameType: number) {
-  if (gameType === 0) {
-    return "生存";
-  } else if (gameType === 1) {
-    return "创造";
-  } else if (gameType === 2) {
-    return "冒险";
-  } else if (gameType === 3) {
-    return "旁观";
-  } else {
-    return null;
-  }
-}
-
-function readSpawnPos(pos: unknown): number[] {
-  if (Array.isArray(pos)) return pos;
-  if (pos && typeof pos === "object") {
-    const wrapped = (pos as { __fastnbt_int_array?: unknown }).__fastnbt_int_array;
-    if (Array.isArray(wrapped)) return wrapped;
-  }
-  return [];
-}
-
-function saveSpawnX(save: Level): number | undefined {
-  return readSpawnPos(save.Data.spawn?.pos)[0];
-}
-
-function saveSpawnZ(save: Level): number | undefined {
-  return readSpawnPos(save.Data.spawn?.pos)[2];
-}
 
 const expandDirection = ref("down" as "up" | "down");
 
@@ -303,7 +227,7 @@ function selectSave(folderName: string, event: MouseEvent) {
           transform 200ms ease;
       }
     }
-    .play-button {
+    .download-button {
       position: absolute;
       left: 20px;
       top: 50%;
@@ -337,11 +261,11 @@ function selectSave(folderName: string, event: MouseEvent) {
     img {
       opacity: 0.4;
     }
-    .play-button button {
+    .download-button button {
       opacity: 1;
       transform: scale(1);
     }
-    img:active ~ .play-button button {
+    img:active ~ .download-button button {
       opacity: 0.7;
       transition: opacity 55ms ease;
     }
