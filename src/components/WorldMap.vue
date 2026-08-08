@@ -20,6 +20,10 @@
       <ItemLoadingIcon status="error"></ItemLoadingIcon>
       <span>{{ error }}</span>
     </div>
+    <div v-if="DEBUG_SHOW_TILE_CACHE_COUNT || DEBUG_SHOW_TILE_CACHE_STATS" class="world-map-debug">
+      <div v-if="DEBUG_SHOW_TILE_CACHE_COUNT">Render: {{ renderCacheCount }}</div>
+      <div v-if="DEBUG_SHOW_TILE_CACHE_STATS">PNG: {{ pngCacheCount }}</div>
+    </div>
   </div>
 </template>
 
@@ -29,11 +33,15 @@ import { renderWorldMap } from "@conic/content";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const MAX_CONCURRENT = 24;
-const TILE_LOAD_DEBOUNCE = 150;
+const TILE_LOAD_DEBOUNCE = 50;
 const INITIAL_VIEW_BLOCKS = 512;
-const FADE_MS = 200;
+const FADE_MS = 100;
 // 渲染缓存保留范围：可视区域向外扩展的圈数
-const TILE_RENDER_MARGIN = 3;
+const TILE_RENDER_MARGIN = 6;
+// 调试开关：右上角显示渲染缓存中的 ImageBitmap 数量
+const DEBUG_SHOW_TILE_CACHE_COUNT = true;
+// 调试开关：右上角显示 PNG 数据缓存中的 tile 数量
+const DEBUG_SHOW_TILE_CACHE_STATS = true;
 
 const props = withDefaults(
   defineProps<{
@@ -84,6 +92,23 @@ const pending = new Set<string>();
 const decoding = new Set<string>();
 const decodeQueue: string[] = [];
 const tilesFailed = new Set<string>();
+
+// 缓存为非响应式 Map，通过 tick 触发下方计数重新计算
+const cacheStatsTick = ref(0);
+
+const renderCacheCount = computed(() => {
+  void cacheStatsTick.value;
+  return renderCache.size;
+});
+
+const pngCacheCount = computed(() => {
+  void cacheStatsTick.value;
+  return pngCache.size;
+});
+
+function bumpCacheStats() {
+  cacheStatsTick.value++;
+}
 
 let ctx: CanvasRenderingContext2D | null = null;
 let resizeObserver: ResizeObserver | undefined;
@@ -201,6 +226,8 @@ function zoomAt(px: number, py: number, factor: number) {
 }
 
 function scheduleTileLoad() {
+  // pngCache 命中立即恢复，不等待防抖
+  dispatchCacheHits();
   if (tileLoadTimer !== undefined) window.clearTimeout(tileLoadTimer);
   tileLoadTimer = window.setTimeout(() => {
     tileLoadTimer = undefined;
@@ -220,10 +247,33 @@ function visibleTileRange() {
   };
 }
 
+function dispatchCacheHits() {
+  const range = visibleTileRange();
+  if (!range) return;
+  for (let tx = range.tx0; tx <= range.tx1; tx++) {
+    for (let tz = range.tz0; tz <= range.tz1; tz++) {
+      const key = `${tx},${tz}`;
+      if (
+        renderCache.has(key) ||
+        decoding.has(key) ||
+        decodeQueue.includes(key) ||
+        tilesFailed.has(key)
+      )
+        continue;
+      if (pngCache.has(key)) {
+        decodeQueue.push(key);
+      }
+    }
+  }
+  pumpDecodes();
+}
+
 function dispatchTileLoads() {
   const range = visibleTileRange();
   if (!range) return;
   const seq = requestSeq;
+  dispatchCacheHits();
+  pruneRenderCache();
   for (let tx = range.tx0; tx <= range.tx1; tx++) {
     for (let tz = range.tz0; tz <= range.tz1; tz++) {
       const key = `${tx},${tz}`;
@@ -236,15 +286,9 @@ function dispatchTileLoads() {
         tilesFailed.has(key)
       )
         continue;
-      if (pngCache.has(key)) {
-        decodeQueue.push(key);
-        continue;
-      }
       pending.add(key);
     }
   }
-  pumpDecodes();
-  pruneRenderCache();
   pumpRequests(seq);
 }
 
@@ -291,6 +335,7 @@ function pruneRenderCache() {
       tileAppear.delete(key);
     }
   }
+  bumpCacheStats();
 }
 
 function queueDecode(key: string) {
@@ -325,9 +370,9 @@ async function decodeTile(key: string) {
       return;
     }
     renderCache.set(key, bitmap);
-    tileAppear.set(key, performance.now());
     tilesLoaded.value++;
     error.value = null;
+    bumpCacheStats();
     pruneRenderCache();
     draw();
   } catch (err) {
@@ -347,6 +392,7 @@ function closeRenderCache() {
     bitmap.close();
   }
   renderCache.clear();
+  bumpCacheStats();
 }
 
 async function requestTile(key: string, tx: number, tz: number, seq: number) {
@@ -365,7 +411,10 @@ async function requestTile(key: string, tx: number, tz: number, seq: number) {
     });
     if (seq !== requestSeq) return;
     pngCache.set(key, base64ToBytes(result.png));
+    bumpCacheStats();
     error.value = null;
+    // 新 tile：首次显示走 fade 淡入
+    tileAppear.set(key, performance.now());
     queueDecode(key);
   } catch (err) {
     if (seq !== requestSeq) return;
@@ -466,6 +515,7 @@ function resetWorld() {
   }
   closeRenderCache();
   pngCache.clear();
+  bumpCacheStats();
   tileAppear.clear();
   decodeQueue.length = 0;
   decoding.clear();
@@ -533,6 +583,22 @@ watch(
     &.error {
       color: var(--ctp-red);
     }
+  }
+
+  .world-map-debug {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ctp-text);
+    background: var(--ctp-mantle);
+    border: 1px solid var(--ctp-surface0);
+    border-radius: 6px;
+    pointer-events: none;
+    user-select: none;
   }
 }
 </style>
