@@ -1,13 +1,20 @@
 import { defineStore } from "pinia"
 import { useInstanceStore } from "./instance"
 import { ref, watch } from "vue"
-import { getAllLevels, getAllResourcepacks, Level, Resourcepack } from "@conic/content"
+import {
+    getAllLevels,
+    getAllResourcepacks,
+    Level,
+    listScreenshots,
+    Resourcepack,
+} from "@conic/content"
 
 let gameContentCache = {} as Record<string, [GameContent, number]>
 
 export type GameContent = {
     saves: Record<string, Level> | null
     resourcepacks: Resourcepack[] | null
+    screenshots: string[] | null
 }
 
 export const useGameContentStore = defineStore("gameContent", () => {
@@ -31,7 +38,14 @@ export const useGameContentStore = defineStore("gameContent", () => {
             const loadResourcepacks = async () => {
                 gameContent.value.resourcepacks = await getAllResourcepacks(instance.id)
             }
-            const results = await Promise.allSettled([loadSaves(), loadResourcepacks()])
+            const loadScreenshots = async () => {
+                gameContent.value.screenshots = await listScreenshots(instance.id)
+            }
+            const results = await Promise.allSettled([
+                loadSaves(),
+                loadResourcepacks(),
+                loadScreenshots(),
+            ])
             if (!results.find((result) => result.status === "rejected")) {
                 const timestamp = Date.now()
                 gameContentCache[instance.id] = [gameContent.value, timestamp]

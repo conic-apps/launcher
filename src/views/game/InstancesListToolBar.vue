@@ -1,7 +1,9 @@
 <template>
   <div class="tool-bar">
     <div class="search">
-      <div class="search-input"><input type="text" placeholder="搜索..." /></div>
+      <div class="search-input">
+        <input type="text" placeholder="搜索..." v-model="searchQuery" />
+      </div>
       <button class="search-button">
         <AppIcon name="search"></AppIcon>
       </button>
@@ -49,6 +51,7 @@ defineProps<{
 }>();
 const sortMode = defineModel<SortMode>("sortMode", { required: true });
 const groupMode = defineModel<GroupMode>("groupMode", { required: true });
+const searchQuery = defineModel<string>("searchQuery", { required: true });
 </script>
 
 <style lang="less" scoped>

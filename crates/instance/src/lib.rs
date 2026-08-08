@@ -4,6 +4,7 @@
 
 //! CRUD implementation for game instance
 
+use std::cmp::Ordering;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
@@ -101,9 +102,14 @@ pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result
 /// Enum representing different sorting strategies for listing instances.
 #[derive(Deserialize)]
 pub enum SortBy {
-    /// Sort by instance name.
+    /// Sort by instance name (ascending).
     Name,
-    // TODO: Other sort strategies, such as createdon, last played at, play frequency...
+    /// Sort by Minecraft version (newest first).
+    Version,
+    /// Sort by total play time (most played first).
+    Playtime,
+    /// Sort by last played date (most recent first).
+    LastPlayed,
 }
 
 /// Reads all instances stored in the data directory
@@ -155,11 +161,211 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     }
     match sort_by {
         SortBy::Name => {
-            instances.sort_by_key(|instance| instance.config.name.clone());
+            instances.sort_by(|a, b| a.config.name.cmp(&b.config.name));
+        }
+        SortBy::Version => {
+            instances.sort_by(|a, b| {
+                compare_minecraft_versions(&b.config.runtime.minecraft, &a.config.runtime.minecraft)
+            });
+        }
+        SortBy::Playtime => {
+            let mut playtime_instances = instances
+                .into_iter()
+                .map(|instance| {
+                    (
+                        calculate_playtime(&instance.id).unwrap_or_default(),
+                        instance,
+                    )
+                })
+                .collect::<Vec<_>>();
+            playtime_instances.sort_by_key(|(playtime, _)| std::cmp::Reverse(*playtime));
+            instances = playtime_instances
+                .into_iter()
+                .map(|(_, instance)| instance)
+                .collect();
+        }
+        SortBy::LastPlayed => {
+            instances.sort_by(|a, b| {
+                b.last_played
+                    .unwrap_or_default()
+                    .cmp(&a.last_played.unwrap_or_default())
+            });
         }
     }
     info!("Loaded {} instances", instances.len());
     Ok(instances)
+}
+
+/// Compares two Minecraft version strings, ordering older versions first.
+fn compare_minecraft_versions(a: &str, b: &str) -> Ordering {
+    compare_version_keys(&parse_version_key(a), &parse_version_key(b))
+}
+
+/// Parsed representation of a Minecraft version string used for ordering.
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum VersionKey {
+    /// Dated snapshot, e.g. "24w14a" or "25w14craftmine".
+    Snapshot { year: u16, week: u8, letter: String },
+    /// Regular release, optionally with a "pre" / "rc" suffix, e.g. "1.20.1", "1.21-pre1".
+    Releaseish {
+        major: u8,
+        minor: u8,
+        patch: u8,
+        prerelease: Option<(u8, u8)>,
+    },
+    /// Anything that could not be parsed.
+    Unknown(String),
+}
+
+fn parse_version_key(raw: &str) -> VersionKey {
+    parse_snapshot(raw)
+        .or_else(|| parse_release(raw))
+        .unwrap_or_else(|| VersionKey::Unknown(raw.to_string()))
+}
+
+/// Parses dated snapshots like "24w14a" (year, week, letter).
+fn parse_snapshot(raw: &str) -> Option<VersionKey> {
+    let bytes = raw.as_bytes();
+    if bytes.len() < 5 || !bytes[..2].iter().all(u8::is_ascii_digit) || bytes[2] != b'w' {
+        return None;
+    }
+    let year = raw[..2].parse().ok()?;
+    let rest = &raw[3..];
+    let week_digits_len = rest
+        .as_bytes()
+        .iter()
+        .take_while(|b| b.is_ascii_digit())
+        .count();
+    if week_digits_len == 0 {
+        return None;
+    }
+    let week = rest[..week_digits_len].parse().ok()?;
+    let letter = rest[week_digits_len..].to_string();
+    Some(VersionKey::Snapshot { year, week, letter })
+}
+
+/// Parses releases like "1.20.1", "1.20.1-pre1" or "1.21-rc3".
+fn parse_release(raw: &str) -> Option<VersionKey> {
+    let (version_part, prerelease) = match raw.split_once('-') {
+        Some((version, suffix)) => (version, parse_prerelease(suffix)),
+        None => (raw, None),
+    };
+    let mut segments = version_part.split('.');
+    let major = segments.next()?.parse().ok()?;
+    let minor = segments.next()?.parse().ok()?;
+    let patch = segments.next().and_then(|x| x.parse().ok()).unwrap_or(0);
+    Some(VersionKey::Releaseish {
+        major,
+        minor,
+        patch,
+        prerelease,
+    })
+}
+
+/// Parses a "preN" / "rcN" suffix into `(stage, index)` where pre = 0, rc = 1.
+fn parse_prerelease(suffix: &str) -> Option<(u8, u8)> {
+    let (stage, rest) = suffix
+        .strip_prefix("pre")
+        .map(|rest| (0u8, rest))
+        .or_else(|| suffix.strip_prefix("rc").map(|rest| (1u8, rest)))?;
+    Some((stage, rest.parse().ok()?))
+}
+
+fn compare_version_keys(a: &VersionKey, b: &VersionKey) -> Ordering {
+    match (a, b) {
+        (
+            VersionKey::Snapshot {
+                year: ay,
+                week: aw,
+                letter: al,
+            },
+            VersionKey::Snapshot {
+                year: by,
+                week: bw,
+                letter: bl,
+            },
+        ) => (ay, aw, al).cmp(&(by, bw, bl)),
+        (VersionKey::Releaseish { .. }, VersionKey::Releaseish { .. }) => compare_releaseish(a, b),
+        (VersionKey::Snapshot { .. }, VersionKey::Releaseish { .. }) => {
+            compare_snapshot_to_release(a, b)
+        }
+        (VersionKey::Releaseish { .. }, VersionKey::Snapshot { .. }) => {
+            compare_snapshot_to_release(b, a).reverse()
+        }
+        (VersionKey::Unknown(x), VersionKey::Unknown(y)) => x.cmp(y),
+        // Unknown versions are treated as the oldest, so they sink to the bottom
+        // of a newest-first listing.
+        (VersionKey::Unknown(_), _) => Ordering::Less,
+        (_, VersionKey::Unknown(_)) => Ordering::Greater,
+    }
+}
+
+fn compare_releaseish(a: &VersionKey, b: &VersionKey) -> Ordering {
+    match (a, b) {
+        (
+            VersionKey::Releaseish {
+                major: am,
+                minor: amin,
+                patch: ap,
+                prerelease: apr,
+            },
+            VersionKey::Releaseish {
+                major: bm,
+                minor: bmin,
+                patch: bp,
+                prerelease: bpr,
+            },
+        ) => (am, amin, ap)
+            .cmp(&(bm, bmin, bp))
+            .then_with(|| compare_prerelease(apr, bpr)),
+        _ => unreachable!("compared a non-release key as a release"),
+    }
+}
+
+/// Compares optional prerelease stages. A plain release (None) is newer than any
+/// prerelease; within prereleases "rc" is newer than "pre", then the index.
+fn compare_prerelease(a: &Option<(u8, u8)>, b: &Option<(u8, u8)>) -> Ordering {
+    match (a, b) {
+        (None, None) => Ordering::Equal,
+        (None, Some(_)) => Ordering::Greater,
+        (Some(_), None) => Ordering::Less,
+        (Some(a), Some(b)) => a.cmp(b),
+    }
+}
+
+/// Places a dated snapshot relative to a release by comparing dates.
+fn compare_snapshot_to_release(snapshot: &VersionKey, release: &VersionKey) -> Ordering {
+    let (VersionKey::Snapshot { year, week, .. }, VersionKey::Releaseish { minor, patch, .. }) =
+        (snapshot, release)
+    else {
+        unreachable!("compare_snapshot_to_release requires a snapshot and a release")
+    };
+    let snapshot_date = (2000 + *year, *week);
+    let release_date = (release_year(*minor), release_week(*patch));
+    snapshot_date.cmp(&release_date)
+}
+
+/// Approximate year in which the first release of a given minor version shipped.
+///
+/// Dated snapshots carry their calendar date (e.g. "24w14a") while releases carry
+/// only a version number. To sort snapshots relative to releases we map a release
+/// to an approximate (year, week) and compare by date. The mapping is a best-effort
+/// heuristic; ordering releases among themselves is exact.
+fn release_year(minor: u8) -> u16 {
+    match minor {
+        16 => 2020,
+        17 | 18 => 2021,
+        19 => 2022,
+        20 => 2023,
+        21 => 2024,
+        22 => 2025,
+        minor => 2000 + u16::from(minor) + 3,
+    }
+}
+
+/// Rough week-of-year a release with the given patch number shipped.
+fn release_week(patch: u8) -> u8 {
+    (24 + patch * 8).min(52)
 }
 
 pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
