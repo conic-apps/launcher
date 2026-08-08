@@ -29,7 +29,6 @@ import { renderWorldMap, type WorldMapRenderResult } from "@conic/content";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const MAX_CONCURRENT = 24;
-const MAX_CACHED_WORLD_TILES = 512;
 const TILE_LOAD_DEBOUNCE = 150;
 const INITIAL_VIEW_BLOCKS = 512;
 const FADE_MS = 200;
@@ -56,29 +55,6 @@ const props = withDefaults(
     minScale: 0.25,
     maxScale: 64,
   },
-);
-
-// 模块级瓦片缓存：键为 instance|folder|dimension|tx,tz，跨组件实例复用，
-// 同一块数据在整个应用生命周期内只请求一次
-const worldTileCache = new Map<string, HTMLCanvasElement>();
-
-function getWorldCacheKey(prefix: string, tx: number, tz: number) {
-  return `${prefix}|${tx},${tz}`;
-}
-
-function putWorldCache(prefix: string, tx: number, tz: number, canvas: HTMLCanvasElement) {
-  const key = getWorldCacheKey(prefix, tx, tz);
-  worldTileCache.delete(key);
-  worldTileCache.set(key, canvas);
-  while (worldTileCache.size > MAX_CACHED_WORLD_TILES) {
-    const oldest = worldTileCache.keys().next().value;
-    if (oldest === undefined) break;
-    worldTileCache.delete(oldest);
-  }
-}
-
-const worldKeyPrefix = computed(
-  () => `${props.instanceId}|${props.folderName}|${props.dimension ?? ""}`,
 );
 
 const containerRef = ref<HTMLDivElement | null>(null);
@@ -199,16 +175,6 @@ function buildTileCanvas(result: WorldMapRenderResult): HTMLCanvasElement {
   return canvas;
 }
 
-function takeFromWorldCache(tx: number, tz: number): HTMLCanvasElement | null {
-  const cached = worldTileCache.get(getWorldCacheKey(worldKeyPrefix.value, tx, tz));
-  if (!cached) return null;
-  const key = `${tx},${tz}`;
-  tileCache.set(key, cached);
-  tileAppear.set(key, performance.now());
-  tilesLoaded.value++;
-  return cached;
-}
-
 function resetView() {
   if (viewportW.value <= 0 || viewportH.value <= 0) {
     pendingInit = true;
@@ -263,7 +229,6 @@ function dispatchTileLoads() {
       const key = `${tx},${tz}`;
       if (tileCache.has(key) || inFlight.has(key) || pending.has(key) || tilesFailed.has(key))
         continue;
-      if (takeFromWorldCache(tx, tz)) continue;
       pending.add(key);
     }
   }
@@ -315,7 +280,6 @@ async function requestTile(key: string, tx: number, tz: number, seq: number) {
     const canvas = buildTileCanvas(result);
     tileCache.set(key, canvas);
     tileAppear.set(key, performance.now());
-    putWorldCache(worldKeyPrefix.value, tx, tz, canvas);
     tilesLoaded.value++;
     error.value = null;
   } catch (err) {

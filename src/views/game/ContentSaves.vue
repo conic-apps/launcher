@@ -72,6 +72,7 @@
               <WorldMap
                 v-if="selectedSave === folderName"
                 :instance-id="instanceStore.currentInstance.id"
+                :show-cursor-coords="true"
                 :folder-name="folderName"
                 :center-x="saveSpawnX(save)"
                 :center-z="saveSpawnZ(save)"></WorldMap>

@@ -41,7 +41,7 @@ import { useInstanceSettings } from "./game/useGameView";
 import Content from "./game/Content.vue";
 import { useShowContent } from "./game/useContent";
 
-// const instanceSummary = useTemplateRef("instance-summary");
+const instanceSummary = useTemplateRef("instance-summary");
 // const instanceList = useTemplateRef("instance-list");
 const gameFooterBar = useTemplateRef("game-footer-bar");
 
@@ -52,6 +52,7 @@ onMounted(async () => {
   const intro = gsap.timeline({ paused: true });
   await Promise.all([gameFooterBar.value!.ready]);
   intro.add(gameFooterBar.value!.playIntro());
+  intro.add(instanceSummary.value!.playIntro(), "<");
   intro.play();
 });
 </script>

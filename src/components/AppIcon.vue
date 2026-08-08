@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from "vue";
+import { computed } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -19,10 +19,20 @@ const props = withDefaults(
   },
 );
 
-// eslint-disable-next-line
-const IconComponent = computed(() =>
-  defineAsyncComponent(() => import(`@/assets/icons/${props.name}.svg?component`)),
+const icons = import.meta.glob("@/assets/icons/*.svg", {
+  eager: true,
+  import: "default",
+  query: "?component",
+});
+
+const iconMap = Object.fromEntries(
+  Object.entries(icons).map(([path, component]) => [
+    path.split("/").pop()?.replace(".svg", ""),
+    component,
+  ]),
 );
+
+const IconComponent = computed(() => iconMap[props.name]);
 </script>
 
 <template>

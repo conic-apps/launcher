@@ -145,7 +145,7 @@ function ensureLenis() {
   lenis = new Lenis({
     wrapper: container,
     content,
-    lerp: 1,
+    lerp: 0.16,
     smoothWheel: true,
   });
 

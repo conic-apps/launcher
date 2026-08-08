@@ -4,18 +4,16 @@
 
 <template>
   <div class="current-instance">
-    <div class="row-1">
-      <div class="current-instance-info">
-        <p class="title" v-if="currentInstance.id === LATEST_RELEASE_INSTANCE_ID">
-          {{ $t("game.latestRelease") }}
-        </p>
-        <p class="title" v-else-if="currentInstance.id === LATEST_SNAPSHOT_INSTANCE_ID">
-          {{ $t("game.latestSnapshot") }}
-        </p>
-        <p class="title" v-else>{{ currentInstance.config.name }}</p>
-      </div>
+    <div class="row-1" ref="row1">
+      <p class="title" v-if="currentInstance.id === LATEST_RELEASE_INSTANCE_ID">
+        {{ $t("game.latestRelease") }}
+      </p>
+      <p class="title" v-else-if="currentInstance.id === LATEST_SNAPSHOT_INSTANCE_ID">
+        {{ $t("game.latestSnapshot") }}
+      </p>
+      <p class="title" v-else>{{ currentInstance.config.name }}</p>
     </div>
-    <div class="row-2">
+    <div class="row-2" ref="row2">
       <p>
         <span> Minecraft 版本 </span>
         <span>{{ currentInstance.config.runtime.minecraft }}</span>
@@ -45,6 +43,7 @@
       <div
         class="line"
         v-if="playtimeCache[currentInstance.id] && playtimeCache[currentInstance.id] > 0"></div>
+
       <AppIcon
         name="time"
         :size="22"
@@ -55,7 +54,7 @@
         <span>{{ formatPlayTime(playtimeCache[currentInstance.id] ?? 0) }}</span>
       </p>
     </div>
-    <div class="row-3">
+    <div class="row-3" ref="row3">
       <button class="launch-button" @click="navigationStore.navigate('launch')">
         <AppIcon name="play" fill="#fff" style="margin-right: 4px"></AppIcon>
         开始游戏
@@ -80,8 +79,8 @@
         </button>
       </div>
     </div>
-    <div class="row-4">
-      <div @click="openContent('saves')">
+    <div class="row-4" ref="row4">
+      <div @click="openContent('saves')" ref="saves">
         <AppIcon name="save"></AppIcon>
         <div>
           <span class="type">存档</span
@@ -90,15 +89,15 @@
           >
         </div>
       </div>
-      <div @click="openContent('mods')">
+      <div @click="openContent('mods')" ref="mods">
         <AppIcon name="extension-puzzle" />
         <div><span class="type">模组</span><span class="count">1 个</span></div>
       </div>
-      <div @click="openContent('resourcepacks')">
+      <div @click="openContent('resourcepacks')" ref="resourcepacks">
         <AppIcon name="folder" />
         <div><span class="type">资源包</span><span class="count">4 个</span></div>
       </div>
-      <div @click="openContent('screenshots')">
+      <div @click="openContent('screenshots')" ref="screenshots">
         <AppIcon name="images-outline" />
         <div><span class="type">截图</span><span class="count">1 个</span></div>
       </div>
@@ -109,7 +108,7 @@
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
 import { useInstanceStore } from "@/store/instance";
-import { computed, ref, watch } from "vue";
+import { computed, ref, useTemplateRef, watch } from "vue";
 import {
   calculatePlaytime,
   formatLastPlayed,
@@ -125,6 +124,7 @@ import { useInstanceSettings } from "./useGameView";
 import { useGameContentStore } from "@/store/content";
 import { ComponentName } from "./Content.vue";
 import { useContentComponent, useShowContent } from "./useContent";
+import gsap from "gsap";
 
 const instanceStore = useInstanceStore();
 const navigationStore = useNavigationStore();
@@ -148,9 +148,7 @@ watch(
     try {
       const playtime = await calculatePlaytime(instanceId);
       playtimeCache.value[instanceId] = playtime;
-    } catch (error) {
-      console.error(error);
-    }
+    } catch {}
   },
   { immediate: true },
 );
@@ -159,6 +157,59 @@ function openContent(componentName: ComponentName) {
   useContentComponent().value = componentName;
   useShowContent().value = true;
 }
+
+const rowElements = {
+  row1: useTemplateRef("row1"),
+  row2: useTemplateRef("row2"),
+  row3: useTemplateRef("row3"),
+  row4: useTemplateRef("row4"),
+};
+
+const gameContentElements = {
+  saves: useTemplateRef("saves"),
+  mods: useTemplateRef("mods"),
+  resourcepacks: useTemplateRef("resourcepacks"),
+  screenshots: useTemplateRef("screenshots"),
+};
+
+const playIntro = () => {
+  console.log(
+    Object.entries(gameContentElements).map(([k, v]) => [
+      k,
+      v.value,
+      v.value instanceof HTMLElement,
+    ]),
+  );
+  return gsap
+    .timeline()
+    .from(
+      Object.values(rowElements).map((elementRef) => elementRef.value),
+      {
+        opacity: 0,
+        duration: 0.33,
+        stagger: 0.03,
+        ease: "power3.out",
+        x: -50,
+      },
+    )
+    .fromTo(
+      Object.values(gameContentElements).map((elementRef) => elementRef.value),
+      {
+        opacity: 0,
+        scale: 0.6,
+      },
+      {
+        opacity: 1,
+        scale: 1,
+        duration: 0.33,
+        stagger: 0.03,
+        ease: "power3.out",
+      },
+      "<+0.07",
+    );
+};
+
+defineExpose({ playIntro });
 </script>
 
 <style lang="less" scoped>
@@ -178,14 +229,9 @@ function openContent(componentName: ComponentName) {
       border-radius: calc(var(--card-icon-border-radius) + 4px);
       background: var(--card-icon-background);
     }
-    .current-instance-info {
-      width: 100%;
-      height: 100%;
-      display: flex;
 
-      .title {
-        font-size: 38px;
-      }
+    .title {
+      font-size: 38px;
     }
   }
 

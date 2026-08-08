@@ -91,7 +91,7 @@ watch(
     try {
       playtime.value = await calculatePlaytime(instanceId);
     } catch (error) {
-      console.error(error);
+      playtime.value = null;
     }
   },
   { immediate: true },
