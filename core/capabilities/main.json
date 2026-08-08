@@ -89,6 +89,7 @@
     "content:allow-cmd-get-all-resourcepacks",
     "content:allow-cmd-get-save-icon",
     "content:allow-cmd-render-world-map",
+    "content:allow-cmd-list-screenshots",
     "modrinth:allow-cmd-search-projects",
     "modrinth:allow-cmd-get-project",
     "modrinth:allow-cmd-get-multiple-projects",

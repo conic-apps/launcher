@@ -59,6 +59,7 @@ fn main() {
                 "cmd_get_all_datapacks",
                 "cmd_get_all_resourcepacks",
                 "cmd_render_world_map",
+                "cmd_list_screenshots",
             ]),
         )
         .plugin(
