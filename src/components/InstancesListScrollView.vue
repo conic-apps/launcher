@@ -290,6 +290,13 @@ function cubicBezierEase(x1: number, y1: number, x2: number, y2: number) {
 
 const flipEase = cubicBezierEase(0.22, 1, 0.36, 1);
 
+function cssScale(element: HTMLElement): number {
+  const transform = getComputedStyle(element).transform;
+  if (!transform || transform === "none") return 1;
+  const match = transform.match(/^matrix\((-?[\d.]+),/);
+  return match ? Number(match[1]) : 1;
+}
+
 onBeforeUpdate(() => {
   firstRects = new Map(
     queryCards().map((card) => [card.id, card.wrapper.getBoundingClientRect().top]),
@@ -304,12 +311,14 @@ onUpdated(() => {
   renderPositions(scrollY);
 
   for (const card of cards) {
+    const scale = cssScale(card.instance);
+    const scaleSuffix = scale !== 1 ? ` scale(${scale})` : "";
     const from = firstRects.get(card.id);
     if (from === undefined) {
       card.instance.animate(
         [
-          { transform: "translateY(24px)", opacity: "0" },
-          { transform: "translateY(0)", opacity: "1" },
+          { transform: `translateY(24px)${scaleSuffix}`, opacity: "0" },
+          { transform: `translateY(0)${scaleSuffix}`, opacity: "1" },
         ],
         { duration: 300, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
       );
@@ -334,7 +343,7 @@ onUpdated(() => {
       const center = fromCenter + (toCenter - fromCenter) * e;
       const x = parallaxX(center) - parallaxX(toCenter);
       const y = dy * (1 - e);
-      keyframes.push({ offset: p, transform: `translate(${x}px, ${y}px)` });
+      keyframes.push({ offset: p, transform: `translate(${x}px, ${y}px)${scaleSuffix}` });
     }
 
     card.instance.animate(keyframes, { duration: 400, easing: "linear" });
