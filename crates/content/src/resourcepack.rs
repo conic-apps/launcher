@@ -13,7 +13,7 @@ use zip::ZipArchive;
 use crate::error::*;
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-pub struct ResourcePack {
+pub struct Resourcepack {
     pub metadata: Value,
     pub icon: Option<String>,
     pub name: String,
@@ -52,9 +52,9 @@ fn get_icon<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<String> {
     ))
 }
 
-pub fn parse_resourcepack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<ResourcePack> {
+pub fn parse_resourcepack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<Resourcepack> {
     let path = Path::new(s);
-    Ok(ResourcePack {
+    Ok(Resourcepack {
         metadata: get_metadata(&s)?,
         icon: get_icon(&s).ok(),
         name: path
@@ -67,7 +67,7 @@ pub fn parse_resourcepack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<ResourcePac
 
 pub fn get_all_resourcepacks<P: AsRef<Path>>(
     resourcepacks_folder_path: P,
-) -> Result<Vec<ResourcePack>> {
+) -> Result<Vec<Resourcepack>> {
     Ok(fs::read_dir(resourcepacks_folder_path)?
         .flatten()
         .flat_map(|entry| parse_resourcepack(&entry.path()))
@@ -75,7 +75,7 @@ pub fn get_all_resourcepacks<P: AsRef<Path>>(
 }
 
 #[command]
-pub(crate) async fn cmd_get_all_resourcepacks(instance_id: &str) -> Result<Vec<ResourcePack>> {
+pub(crate) async fn cmd_get_all_resourcepacks(instance_id: &str) -> Result<Vec<Resourcepack>> {
     get_all_resourcepacks(
         DATA_LOCATION
             .get_instance_root(instance_id)

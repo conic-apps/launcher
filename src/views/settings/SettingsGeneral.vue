@@ -7,6 +7,7 @@
     <SettingGroup>
       <SettingItem :title="$t('settings.general.language')" icon="language">
         <BaseDropdownSelect
+          placeholder="跟随系统设置"
           :display-name="[
             'English',
             '简体中文',

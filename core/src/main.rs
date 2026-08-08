@@ -36,7 +36,7 @@ fn main() {
         .plugin(launch::init())
         .plugin(folder::init())
         .plugin(platform::init())
-        .plugin(game_data::init())
+        .plugin(content::init())
         .plugin(java_runtime::init())
         .plugin(statistics::init())
         .invoke_handler(tauri::generate_handler![open_path])

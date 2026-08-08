@@ -20,7 +20,7 @@ beat_this = { path = "./crates/beat_this", version = "0.0.0"}
 config = { path = "./crates/config", version = "0.0.0"}
 download = { path = "./crates/download", version = "0.0.0"}
 folder = { path = "./crates/folder", version = "0.0.0"}
-game_data = { path = "./crates/game_data", version = "0.0.0"}
+content = { path = "./crates/content", version = "0.0.0"}
 java-runtime = { path = "./crates/java-runtime", version = "0.0.0"}
 install = { path = "./crates/install", version = "0.0.0"}
 instance = { path = "./crates/instance", version = "0.0.0"}
@@ -35,6 +35,7 @@ version = { path = "./crates/version", version = "0.0.0"}
 async-fs = "2"
 async-io = "2"
 base64 = "0.22"
+conic-worldmap = { git="https://github.com/conic-apps/conic-worldmap", rev="a86489bb0cf12c1ce7c8a3e2b07bdb01d5c09cf7" }
 env_logger = "0.11.5"
 futures = "0.3"
 log = "0.4"
@@ -60,6 +61,7 @@ libloader = "0.1"
 tokio = { version = "1", features = ["macros", "rt"]}
 flate2 = "1"
 fastnbt = "2"
+png = "0.18"
 
 [profile.dev]
 incremental = true

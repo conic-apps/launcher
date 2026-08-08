@@ -41,7 +41,6 @@ pub async fn download_library(progress: &DownloadState) -> Result<()> {
             checksum: download::Checksum::Sha256(LIBRARY.sha256.to_string()),
             task_type: download::DownloadTaskType::ConicNexus,
         };
-        dbg!(&download_task);
         if download::download(&download_task, progress).await.is_ok() {
             return Ok(());
         };

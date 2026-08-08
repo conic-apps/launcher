@@ -23,7 +23,7 @@
             "@conic/launch": ["./crates/launch"],
             "@conic/folder": ["./crates/folder"],
             "@conic/platform": ["./crates/platform"],
-            "@conic/game_data": ["./crates/game_data"],
+            "@conic/content": ["./crates/content"],
             "@conic/statistics": ["./crates/statistics"],
             "@conic/multiplayer": ["./crates/multiplayer"]
         }

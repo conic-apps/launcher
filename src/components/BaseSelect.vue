@@ -45,7 +45,7 @@ const changeValue = (option: string) => {
 
   border: var(--controllers-border);
   background: var(--controllers-background);
-  border-radius: var(--controllers-border-radius);
+  border-radius: 3px;
   overflow: hidden;
 
   .option {
