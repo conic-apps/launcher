@@ -24,6 +24,7 @@
       <div
         class="card-container"
         :class="{ current: instance.id === instanceStore.currentInstance.id }"
+        style="opacity: 0"
         v-for="instance in filteredInstances"
         :key="instance.id">
         <div class="instance" @click="selectInstance(instance)" :data-id="instance.id">

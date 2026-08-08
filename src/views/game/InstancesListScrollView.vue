@@ -302,7 +302,6 @@ function playIntro(): gsap.core.Timeline {
 
   for (const target of targets) {
     apply(target, 0);
-    gsap.set(target.wrapper, { opacity: 0 });
   }
 
   for (const target of targets) {
@@ -323,8 +322,8 @@ function playIntro(): gsap.core.Timeline {
   tl.add(() => {
     renderPositions(scrollY);
     gsap.set(
-      targets.map((t) => t.wrapper),
-      { clearProps: "opacity" },
+      cards.map((c) => c.wrapper),
+      { opacity: 1 },
     );
   });
 
@@ -389,6 +388,7 @@ onUpdated(() => {
     const scaleSuffix = scale !== 1 ? ` scale(${scale})` : "";
     const from = firstRects.get(card.id);
     if (from === undefined) {
+      gsap.set(card.wrapper, { opacity: 1 });
       card.instance.animate(
         [
           { transform: `translateY(24px)${scaleSuffix}`, opacity: "0" },
