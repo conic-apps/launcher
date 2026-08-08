@@ -32,6 +32,7 @@ const iconMap = Object.fromEntries(
   ]),
 );
 
+// eslint-disable-next-line
 const IconComponent = computed(() => iconMap[props.name]);
 </script>
 

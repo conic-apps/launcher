@@ -713,6 +713,7 @@ dependencies = [
 [[package]]
 name = "conic-worldmap"
 version = "0.1.1"
+source = "git+https://github.com/conic-apps/conic-worldmap?rev=a86489bb0cf12c1ce7c8a3e2b07bdb01d5c09cf7#a86489bb0cf12c1ce7c8a3e2b07bdb01d5c09cf7"
 dependencies = [
  "flate2",
  "lz4_flex",

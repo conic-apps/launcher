@@ -90,7 +90,7 @@ watch(
     const instanceId = newValue.id;
     try {
       playtime.value = await calculatePlaytime(instanceId);
-    } catch (error) {
+    } catch {
       playtime.value = null;
     }
   },

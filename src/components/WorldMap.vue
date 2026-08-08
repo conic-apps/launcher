@@ -45,10 +45,14 @@ const INITIAL_VIEW_BLOCKS = 512;
 const FADE_MS = 100;
 // 渲染缓存保留范围：可视区域向外扩展的圈数
 const TILE_RENDER_MARGIN = 6;
+// 平滑缩放 lerp 系数：每帧向 targetZoom 逼近的比例（0~1，越大响应越快）
+const ZOOM_LERP_FACTOR = 0.25;
+// 平滑缩放停止阈值：与 targetZoom 的差距小于该值视为缩放完成
+const ZOOM_STOP_EPSILON = 0.0005;
 // 调试开关：右上角显示渲染缓存中的 ImageBitmap 数量
-const DEBUG_SHOW_TILE_CACHE_COUNT = true;
+const DEBUG_SHOW_TILE_CACHE_COUNT = false;
 // 调试开关：右上角显示 PNG 数据缓存中的 tile 数量
-const DEBUG_SHOW_TILE_CACHE_STATS = true;
+const DEBUG_SHOW_TILE_CACHE_STATS = false;
 
 // 光标坐标显示位置
 type CursorCoordsPosition =
@@ -80,7 +84,7 @@ const props = withDefaults(
     water: true,
     shading: true,
     altitudeShading: true,
-    minScale: 0.25,
+    minScale: 0.15,
     maxScale: 64,
     showCursorCoords: false,
     cursorCoordinatesPosition: "bottom-center",
@@ -101,6 +105,17 @@ const viewportH = ref(0);
 const scale = ref(1);
 const offsetX = ref(0);
 const offsetY = ref(0);
+
+// 平滑缩放目标值：滚轮只修改 targetZoom，动画帧逐帧 lerp 逼近
+let targetZoom = 1;
+// 缩放锚点：动画期间保持光标下的世界坐标点固定在光标屏幕位置
+let zoomAnchorWorldX = 0;
+let zoomAnchorWorldZ = 0;
+let zoomAnchorPX = 0;
+let zoomAnchorPY = 0;
+let zoomRAF: number | undefined;
+// 物理 Ctrl 键是否真实按下（捏合合成的 ctrlKey 不触发 keydown）
+let physicalCtrl = false;
 
 // PNG 数据缓存（长期）：key 为 "tx,tz"，value 为后端返回的 PNG 二进制
 const pngCache = new Map<string, Uint8Array<ArrayBuffer>>();
@@ -261,7 +276,9 @@ function resetView() {
   );
   const cx = props.centerX ?? 0;
   const cz = props.centerZ ?? 0;
+  stopZoomAnimation();
   scale.value = s;
+  targetZoom = s;
   offsetX.value = viewportW.value / 2 - cx * s;
   offsetY.value = viewportH.value / 2 - cz * s;
   pendingInit = false;
@@ -273,10 +290,59 @@ function zoomAt(px: number, py: number, factor: number) {
   if (viewportW.value <= 0 || viewportH.value <= 0) return;
   const worldX = (px - offsetX.value) / scale.value;
   const worldZ = (py - offsetY.value) / scale.value;
+  const next = Math.min(Math.max(targetZoom * factor, props.minScale), props.maxScale);
+  zoomAnchorWorldX = worldX;
+  zoomAnchorWorldZ = worldZ;
+  zoomAnchorPX = px;
+  zoomAnchorPY = py;
+  targetZoom = next;
+  startZoomAnimation();
+}
+
+function startZoomAnimation() {
+  if (zoomRAF !== undefined) return;
+  updateZoomAnimation();
+}
+
+// 逐帧 lerp：zoom = lerp(zoom, targetZoom, ZOOM_LERP_FACTOR)
+function updateZoomAnimation() {
+  const remaining = targetZoom - scale.value;
+  if (Math.abs(remaining) < ZOOM_STOP_EPSILON) {
+    scale.value = targetZoom;
+    offsetX.value = zoomAnchorPX - zoomAnchorWorldX * targetZoom;
+    offsetY.value = zoomAnchorPY - zoomAnchorWorldZ * targetZoom;
+    zoomRAF = undefined;
+  } else {
+    const next = scale.value + remaining * ZOOM_LERP_FACTOR;
+    scale.value = next;
+    offsetX.value = zoomAnchorPX - zoomAnchorWorldX * next;
+    offsetY.value = zoomAnchorPY - zoomAnchorWorldZ * next;
+    zoomRAF = requestAnimationFrame(updateZoomAnimation);
+  }
+  draw();
+  scheduleTileLoad();
+}
+
+// 终止缩放动画，并将 targetZoom 与当前实际缩放重新对齐
+function stopZoomAnimation() {
+  if (zoomRAF !== undefined) {
+    cancelAnimationFrame(zoomRAF);
+    zoomRAF = undefined;
+  }
+  targetZoom = scale.value;
+}
+
+// 即时缩放（触摸板捏合用）：不做平滑过渡，逐事件直接生效
+function zoomImmediate(px: number, py: number, factor: number) {
+  if (viewportW.value <= 0 || viewportH.value <= 0) return;
+  const worldX = (px - offsetX.value) / scale.value;
+  const worldZ = (py - offsetY.value) / scale.value;
   const next = Math.min(Math.max(scale.value * factor, props.minScale), props.maxScale);
+  stopZoomAnimation();
+  scale.value = next;
+  targetZoom = next;
   offsetX.value = px - worldX * next;
   offsetY.value = py - worldZ * next;
-  scale.value = next;
   draw();
   scheduleTileLoad();
 }
@@ -500,16 +566,46 @@ function handleResize() {
   }
 }
 
+function onKeyDown(e: KeyboardEvent) {
+  if (e.key === "Control") physicalCtrl = true;
+}
+
+function onKeyUp(e: KeyboardEvent) {
+  if (e.key === "Control") physicalCtrl = false;
+}
+
+function onWindowBlur() {
+  // 窗口失焦时可能错过 keyup，重置物理 Ctrl 状态避免误判
+  physicalCtrl = false;
+}
+
 function onWheel(e: WheelEvent) {
   e.preventDefault();
   const canvas = canvasRef.value;
   if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
-  const factor = e.ctrlKey ? Math.exp(-e.deltaY * 0.01) : Math.exp(-e.deltaY * 0.0016);
-  zoomAt(e.clientX - rect.left, e.clientY - rect.top, Math.min(Math.max(factor, 0.2), 5));
+  const pixelsPerLine =
+    e.deltaMode === WheelEvent.DOM_DELTA_LINE
+      ? 16
+      : e.deltaMode === WheelEvent.DOM_DELTA_PAGE
+        ? 120
+        : 1;
+  const delta = e.deltaY * pixelsPerLine;
+  const factor = e.ctrlKey ? Math.exp(-delta * 0.01) : Math.exp(-delta * 0.0016);
+  const px = e.clientX - rect.left;
+  const py = e.clientY - rect.top;
+  const clamped = Math.min(Math.max(factor, 0.2), 5);
+  if (e.ctrlKey && !physicalCtrl) {
+    // 触摸板捏合：即时缩放，跳过平滑动画，手感接近原生捏合
+    zoomImmediate(px, py, clamped);
+  } else {
+    zoomAt(px, py, clamped);
+  }
 }
 
 function onPointerDown(e: PointerEvent) {
+  // 拖动与缩放动画互斥：拖动前终止缩放动画，避免锚点回跳
+  stopZoomAnimation();
   dragging.value = true;
   lastX = e.clientX;
   lastY = e.clientY;
@@ -553,6 +649,9 @@ onMounted(() => {
   }
   resizeObserver = new ResizeObserver(handleResize);
   if (containerRef.value) resizeObserver.observe(containerRef.value);
+  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("keyup", onKeyUp);
+  window.addEventListener("blur", onWindowBlur);
   handleResize();
 });
 
@@ -560,12 +659,16 @@ onBeforeUnmount(() => {
   requestSeq++;
   if (tileLoadTimer !== undefined) window.clearTimeout(tileLoadTimer);
   if (fadeRAF !== undefined) cancelAnimationFrame(fadeRAF);
+  stopZoomAnimation();
   closeRenderCache();
   pngCache.clear();
   decodeQueue.length = 0;
   decoding.clear();
   resizeObserver?.disconnect();
   canvasRef.value?.removeEventListener("wheel", onWheel);
+  window.removeEventListener("keydown", onKeyDown);
+  window.removeEventListener("keyup", onKeyUp);
+  window.removeEventListener("blur", onWindowBlur);
 });
 
 function resetWorld() {

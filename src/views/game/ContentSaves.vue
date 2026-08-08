@@ -7,10 +7,6 @@
     <div class="title">
       <AppIcon name="save"></AppIcon>
       <p>存档列表</p>
-      <p style="margin-left: auto; font-size: 13px; opacity: 0.8">浏览:</p>
-      <BaseSelect
-        :options="['local', 'modrinth', 'curseforge']"
-        :displayName="['本地存档', 'Modrinth 数据包', 'CurseForge 数据包']"></BaseSelect>
     </div>
     <div class="save-list-wrapper">
       <div class="saves-list">
@@ -86,12 +82,11 @@
 </template>
 
 <script setup lang="ts">
-import BaseSelect from "@/components/BaseSelect.vue";
 import WorldMap from "@/components/WorldMap.vue";
 import { useGameContentStore } from "@/store/content";
 import { useInstanceStore } from "@/store/instance";
 import { getSaveIcon, type Level } from "@conic/content";
-import { deleteInstance, formatLastPlayed, formatPlayTime, zhCN } from "@conic/instance";
+import { formatLastPlayed, zhCN } from "@conic/instance";
 import { computed, ref, watch } from "vue";
 
 const gameContentStore = useGameContentStore();
@@ -100,7 +95,7 @@ const saves = computed(() => gameContentStore.gameContent.saves);
 
 const selectedSave = ref(null as string | null);
 
-let iconCache = ref({} as Record<string, string>);
+const iconCache = ref({} as Record<string, string>);
 
 watch(
   () => gameContentStore.gameContent.saves,

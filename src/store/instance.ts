@@ -15,7 +15,7 @@ import { ref, watch } from "vue"
 import { getMinecrafVersionManifest } from "@conic/install"
 
 async function ensureLatestInstancesExistance() {
-    let promises = []
+    const promises = []
     if (!(await getInstanceById(LATEST_RELEASE_INSTANCE_ID))) {
         const minecraftVersionManifest = await getMinecrafVersionManifest()
         promises.push(

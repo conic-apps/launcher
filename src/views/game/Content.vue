@@ -14,16 +14,7 @@ import ContentMods from "./ContentMods.vue";
 import ContentResourcepacks from "./ContentResourcepacks.vue";
 import ContentScreenshots from "./ContentScreenshots.vue";
 import ContentSaves from "./ContentSaves.vue";
-import AppIcon from "@/components/AppIcon.vue";
 import { useContentComponent } from "./useContent";
-import BaseSelect from "@/components/BaseSelect.vue";
-
-const props = withDefaults(
-  defineProps<{
-    currentComponent?: "mods" | "worlds" | "resourcepacks" | "screenshots";
-  }>(),
-  { currentComponent: "worlds" },
-);
 
 const components = {
   saves: markRaw(ContentSaves),
