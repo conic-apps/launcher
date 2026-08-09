@@ -2,194 +2,183 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::collections::HashMap;
-use std::ffi::OsStr;
-use std::fs::File;
-use std::path::Path;
+use std::{
+    collections::HashMap,
+    io::{Read, Seek},
+    path::Path,
+};
 
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use zip::ZipArchive;
 
-use super::{Parse, ResolvedAuthorInfo, ResolvedDepends, ResolvedMod};
-use crate::utils::unzip::filter_entries;
+use super::{
+    ModIcon, ModLoader, ResolvedAuthorInfo, ResolvedDepends, ResolvedMod, open_nested_jar,
+    read_icon,
+};
+use crate::error::{Error, Result};
 
+/// The `quilt_loader` field of `quilt.mod.json`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct JarsEntry {
-    file: String,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct FabricModMixinObject {
-    pub config: String,
-    pub environment: String,
-}
-
-/// Corresponds to the <mod_pack>/`fabric.mod.json` file in the module archive
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct QuiltModMetadata {
-    /* Required */
-    pub schema_version: u8,
+pub struct QuiltLoaderData {
+    pub group: String,
     pub id: String,
     pub version: String,
+    /// Can be plain mod ids or `{ id, version }` objects (quilt-api style).
+    pub provides: Option<Vec<Value>>,
+    pub metadata: Option<QuiltMetadata>,
+    pub entrypoints: Option<Value>,
+    pub jars: Option<Vec<String>>,
+    pub language_adapters: Option<Value>,
+    pub depends: Option<Vec<Value>>,
+    pub breaks: Option<Vec<Value>>,
+    pub load_type: Option<String>,
+    pub minecraft: Option<Value>,
+}
 
-    /* Mod loading */
-    pub provides: Option<Vec<String>>,
-    pub environment: Option<String>,
-    pub entrypoints: Option<HashMap<String, Vec<String>>>,
-    pub jars: Option<Vec<JarsEntry>>,
-    pub language_adapters: Option<HashMap<String, String>>,
-    pub mixins: Option<Value>,
-
-    /* Dependency resolution */
-    pub depends: Option<HashMap<String, Value>>,
-    pub recommends: Option<HashMap<String, String>>,
-    pub suggests: Option<HashMap<String, String>>,
-    pub breaks: Option<HashMap<String, String>>,
-    pub conflicts: Option<HashMap<String, String>>,
-
-    /* Metadata */
+/// The `quilt_loader.metadata` object of `quilt.mod.json`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct QuiltMetadata {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub contact: Option<HashMap<String, Value>>,
-    pub authors: Option<Vec<Value>>,
-    pub contributors: Option<Vec<Value>>,
+    pub contributors: Option<HashMap<String, String>>,
+    pub contact: Option<HashMap<String, String>>,
     pub license: Option<Value>,
-    pub icon: Option<String>,
+    pub icon: Option<ModIcon>,
+    /// Some mods still put the icon at the top level instead of in `metadata`.
+    pub fabric_icon: Option<ModIcon>,
+}
 
-    /* Custom fields */
-    pub custom: Option<HashMap<String, Value>>,
+/// Corresponds to the `quilt.mod.json` file in the mod archive.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct QuiltModMetadata {
+    #[serde(rename = "schema_version")]
+    pub schema_version: u8,
+    #[serde(rename = "quilt_loader")]
+    pub quilt_loader: QuiltLoaderData,
+    pub mixin: Option<Value>,
+}
+
+fn parse_depends(depends: &Option<Vec<Value>>) -> (Option<Value>, Option<Value>, Option<Value>) {
+    let Some(depends) = depends else {
+        return (None, None, None);
+    };
+    let mut minecraft = None;
+    let mut mod_loader = None;
+    let mut java = None;
+    for dep in depends {
+        let (id, versions) = match dep {
+            Value::String(id) => (id.clone(), None),
+            Value::Object(map) => (
+                map.get("id")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default()
+                    .to_string(),
+                map.get("versions").cloned(),
+            ),
+            _ => continue,
+        };
+        let versions = versions.unwrap_or(Value::String("*".to_string()));
+        match id.as_str() {
+            "minecraft" => minecraft = Some(versions),
+            "quilt_loader" | "fabricloader" => mod_loader = Some(versions),
+            "java" => java = Some(versions),
+            _ => (),
+        }
+    }
+    (minecraft, java, mod_loader)
 }
 
 impl QuiltModMetadata {
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let mod_file = File::open(path)?;
-        let mut mod_file_archive = ZipArchive::new(mod_file)?;
-        Self::from_zip_archive(&mut mod_file_archive)
-    }
-    pub fn from_zip_archive(archive: &mut ZipArchive<File>) -> Result<Self> {
-        let entries = filter_entries(
-            archive,
-            &vec!["fabric.mod.json".to_string(), "quilt.mod.json".to_string()],
-        );
-        let file = entries
-            .get("quilt.mod.json")
-            .unwrap_or(entries.get("fabric.mod.json").ok_or(anyhow::Error::new(
-                std::io::Error::from(std::io::ErrorKind::NotFound),
-            ))?)
-            .clone()
-            .content;
-        Ok(serde_json::from_str(&String::from_utf8(file)?)?)
-    }
-}
-
-impl Parse for QuiltModMetadata {
-    fn parse(self) -> ResolvedMod {
-        let name = match self.name {
-            Some(v) => v,
-            None => self.id,
-        };
-        let mut minecraft_depend = None;
-        let mut loader_depend = None;
-        let mut java_depend = None;
-        if let Some(depends) = self.depends {
-            for depend in depends {
-                match depend.0.as_str() {
-                    "minecraft" => minecraft_depend = Some(depend.1),
-                    "quiltloader" => loader_depend = Some(depend.1),
-                    "fabricloader" => loader_depend = Some(depend.1),
-                    "java" => java_depend = Some(depend.1),
-                    _ => (),
-                };
-            }
-        }
-        let license = if let Some(license) = self.license.to_owned() {
-            if license.is_string() {
-                Some(vec![license.as_str().unwrap().to_string()])
-            } else if license.is_array() {
-                Some(
-                    license
-                        .as_array()
-                        .unwrap()
-                        .iter()
-                        .map(|v| v.as_str().unwrap().to_string())
-                        .collect::<Vec<String>>(),
-                )
-            } else {
-                None
-            }
-        } else {
-            None
-        };
-        let mut parsed_authors = None;
-        if let Some(authors) = self.authors.to_owned() {
-            parsed_authors = Some(
-                authors
-                    .iter()
-                    .map(|author_info| {
-                        let author_info = author_info.to_owned();
-                        match author_info {
-                            Value::String(v) => ResolvedAuthorInfo {
-                                name: v,
-                                contact: None,
-                            },
-                            Value::Object(v) => ResolvedAuthorInfo {
-                                name: match v["name"].as_str() {
-                                    Some(v) => v.to_string(),
-                                    None => "".to_string(),
-                                },
-                                contact: serde_json::from_value(v["contact"].clone()).unwrap(),
-                            },
-                            _ => ResolvedAuthorInfo {
-                                name: "".to_string(),
-                                contact: None,
-                            },
-                        }
+    pub fn parse<R: Read + Seek>(self, archive: &mut ZipArchive<R>) -> ResolvedMod {
+        let loader = &self.quilt_loader;
+        let metadata = loader.metadata.as_ref();
+        let name = metadata
+            .and_then(|m| m.name.clone())
+            .unwrap_or_else(|| loader.id.clone());
+        let authors = metadata
+            .and_then(|m| m.contributors.as_ref())
+            .map(|contributors| {
+                contributors
+                    .keys()
+                    .map(|name| ResolvedAuthorInfo {
+                        name: name.clone(),
+                        contact: None,
                     })
-                    .collect::<Vec<ResolvedAuthorInfo>>(),
-            );
-        }
+                    .collect()
+            })
+            .unwrap_or_default();
+        let license = metadata.and_then(|m| parse_license(&m.license));
+        let icon = metadata
+            .and_then(|m| m.icon.as_ref())
+            .or_else(|| metadata.and_then(|m| m.fabric_icon.as_ref()))
+            .and_then(|icon| read_icon(archive, icon.path()));
+        let (minecraft, java, mod_loader) = parse_depends(&loader.depends);
         ResolvedMod {
             name,
-            description: self.description,
-            version: Some(self.version.clone()),
+            description: metadata.and_then(|m| m.description.clone()),
+            version: Some(loader.version.clone()),
             depends: ResolvedDepends {
-                minecraft: minecraft_depend,
-                mod_loader: loader_depend,
-                java: java_depend,
+                minecraft,
+                java,
+                mod_loader,
             },
-            authors: parsed_authors.unwrap_or_default(),
+            authors,
             license,
-            icon: self.icon,
+            icon,
+            loader: ModLoader::Quilt,
+            disabled: false,
+            source: None,
+            source_id: None,
+            version_id: None,
         }
     }
 }
 
-pub fn parse_mod<P: AsRef<Path>>(path: P) -> Result<ResolvedMod> {
-    let metadata = QuiltModMetadata::from_path(path)?;
-    Ok(metadata.parse())
+fn parse_license(license: &Option<Value>) -> Option<Vec<String>> {
+    let license = license.as_ref()?;
+    match license {
+        Value::String(s) => Some(vec![s.clone()]),
+        Value::Array(items) => Some(
+            items
+                .iter()
+                .filter_map(Value::as_str)
+                .map(|s| s.to_string())
+                .collect(),
+        ),
+        Value::Object(map) => map
+            .get("name")
+            .and_then(Value::as_str)
+            .map(|s| vec![s.to_string()]),
+        _ => None,
+    }
 }
 
-pub fn parse_folder<S: AsRef<OsStr> + ?Sized>(folder: &S) -> Result<Vec<ResolvedMod>> {
-    let folder = Path::new(folder).to_path_buf();
-    let entries = folder.read_dir()?;
-    let mut result = Vec::new();
-    for entry in entries {
-        let entry = match entry {
-            Ok(v) => v,
-            Err(_) => continue,
-        };
-        let path = entry.path();
-        if path.is_dir() {
-            continue;
+pub fn parse_mod<P: AsRef<Path>>(path: P) -> Result<Vec<ResolvedMod>> {
+    let mut archive =
+        ZipArchive::new(std::fs::File::open(path)?).map_err(|_| Error::NotAModFile)?;
+    parse_mod_archive(&mut archive)
+}
+
+pub fn parse_mod_archive<R: Read + Seek>(archive: &mut ZipArchive<R>) -> Result<Vec<ResolvedMod>> {
+    let Some(content) = super::read_entry(archive, "quilt.mod.json") else {
+        return Err(Error::NotAModFile);
+    };
+    let Ok(content) = String::from_utf8(content) else {
+        return Err(Error::NotAModFile);
+    };
+    let metadata: QuiltModMetadata = serde_json::from_str(&super::sanitize_json(&content))
+        .map_err(|e| Error::ModParseFailed(format!("quilt.mod.json: {e}")))?;
+
+    let mut result = vec![metadata.clone().parse(archive)];
+    if let Some(jars) = &metadata.quilt_loader.jars {
+        for jar in jars {
+            if let Some(mut nested) = open_nested_jar(archive, jar)
+                && let Ok(mods) = super::parse_mod_archive(&mut nested)
+            {
+                result.extend(mods);
+            }
         }
-        let raw_metadata = match QuiltModMetadata::from_path(path) {
-            Ok(v) => v,
-            Err(_) => continue,
-        };
-        result.push(raw_metadata.parse());
     }
     Ok(result)
 }

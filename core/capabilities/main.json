@@ -92,6 +92,7 @@
     "content:allow-cmd-delete-save",
     "content:allow-cmd-render-world-map",
     "content:allow-cmd-list-screenshots",
+    "content:allow-cmd-parse-mods",
     "modrinth:allow-cmd-search-projects",
     "modrinth:allow-cmd-get-project",
     "modrinth:allow-cmd-get-multiple-projects",
