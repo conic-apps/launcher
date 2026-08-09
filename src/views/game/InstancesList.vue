@@ -76,7 +76,7 @@ import {
   LATEST_SNAPSHOT_INSTANCE_ID,
   zhCN,
 } from "@conic/instance";
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import InstancesListToolBar from "./InstancesListToolBar.vue";
 import InstancesListScrollView from "./InstancesListScrollView.vue";
@@ -104,6 +104,7 @@ async function selectInstance(instance: Instance) {
 }
 
 onMounted(async () => {
+  window.addEventListener("keydown", onKeyDown);
   await nextTick();
   scrollViewRef.value?.scrollTo(instanceStore.currentInstance.id, false);
   requestAnimationFrame(() => {
@@ -112,6 +113,10 @@ onMounted(async () => {
   Object.values(instanceStore.instances).forEach(async (instance) => {
     backgroundImagesSrc.value[instance.id] = await getBackgroundSrc(instance.id);
   });
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", onKeyDown);
 });
 
 const playIntro = () => {
@@ -176,6 +181,36 @@ const filteredInstances = computed(() => {
     ].some((field) => field.toLowerCase().includes(query)),
   );
 });
+
+function navigate(direction: -1 | 1) {
+  const list = filteredInstances.value;
+  if (list.length === 0) return;
+  const index = list.findIndex((instance) => instance.id === instanceStore.currentInstance.id);
+  const nextIndex = Math.max(0, Math.min(list.length - 1, index + direction));
+  selectInstance(list[nextIndex]);
+}
+
+function onKeyDown(event: KeyboardEvent) {
+  const target = event.target as HTMLElement | null;
+  if (
+    target &&
+    (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
+  ) {
+    return;
+  }
+  switch (event.key) {
+    case "j":
+    case "ArrowDown":
+      navigate(1);
+      event.preventDefault();
+      break;
+    case "k":
+    case "ArrowUp":
+      navigate(-1);
+      event.preventDefault();
+      break;
+  }
+}
 
 const overlaid = computed(() => useShowContent().value || useInstanceSettings().value);
 

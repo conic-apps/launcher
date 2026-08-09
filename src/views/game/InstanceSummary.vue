@@ -108,7 +108,7 @@
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
 import { useInstanceStore } from "@/store/instance";
-import { computed, ref, useTemplateRef, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import {
   calculatePlaytime,
   formatLastPlayed,
@@ -136,6 +136,28 @@ const currentInstance = computed(() => {
 async function openInstanceFolder() {
   invoke("open_path", { path: await getInstanceRoot(currentInstance.value.id) });
 }
+
+function onKeyDown(event: KeyboardEvent) {
+  const target = event.target as HTMLElement | null;
+  if (
+    target &&
+    (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
+  ) {
+    return;
+  }
+  if (event.key === "Enter") {
+    navigationStore.navigate("launch");
+    event.preventDefault();
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", onKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", onKeyDown);
+});
 
 const playtimeCache = ref<Record<string, number>>({});
 watch(
