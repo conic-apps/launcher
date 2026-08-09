@@ -194,11 +194,7 @@ pub async fn install_for_instance(
     config: DownloadConfig,
 ) -> Result<()> {
     let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
-    let version_json_path = minecraft_location.get_version_json(
-        instance
-            .get_version_id()
-            .map_err(|_| Error::InvalidInstanceConfig)?,
-    );
+    let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
     let unresolved_version = serde_json::from_str::<version::Version>(
         &async_fs::read_to_string(version_json_path).await?,
     )?;

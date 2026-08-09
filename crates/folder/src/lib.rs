@@ -118,11 +118,8 @@ impl DataLocation {
             music: data_folder_root.join("music"),
             cache: match PLATFORM_INFO.os_family {
                 OsFamily::Macos => data_folder_root.join(".cache"),
-                OsFamily::Windows => data_folder_root.join(".cache"),
-                OsFamily::Linux => {
-                    PathBuf::from(std::env::var("HOME").expect("Could not found home"))
-                        .join(".cache/conic")
-                }
+                _ => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
+                    .join(".cache/conic"),
             },
             resources: data_folder_root.join("resources"),
             logs: data_folder_root.join("logs"),
