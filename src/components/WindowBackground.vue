@@ -5,10 +5,30 @@
 <script setup lang="ts">
 import { useConfigStore } from "@/store/config";
 import { onMounted, onBeforeUnmount, ref } from "vue";
+import gsap from "gsap";
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
+const wrapperRef = ref<HTMLDivElement | null>(null);
 
 let observer: ResizeObserver | undefined;
+let moveX: ((value: number) => void) | undefined;
+let moveY: ((value: number) => void) | undefined;
+
+const MAX_OFFSET = 16;
+const SCALE = 1.08;
+
+function onMouseMove(event: MouseEvent) {
+  const nx = (event.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
+  const ny = (event.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
+
+  moveX?.(nx * MAX_OFFSET);
+  moveY?.(ny * MAX_OFFSET);
+}
+
+function onMouseLeave() {
+  moveX?.(0);
+  moveY?.(0);
+}
 
 function drawHyperbola(ctx: CanvasRenderingContext2D, a: number, b: number, range: number) {
   const step = 1;
@@ -113,6 +133,21 @@ onMounted(() => {
   }
 
   draw();
+
+  if (wrapperRef.value) {
+    gsap.set(wrapperRef.value, {
+      transformOrigin: "center",
+      scale: SCALE,
+      x: 0,
+      y: 0,
+    });
+
+    moveX = gsap.quickTo(wrapperRef.value, "x", { duration: 0.05, ease: "power3.out" });
+    moveY = gsap.quickTo(wrapperRef.value, "y", { duration: 0.05, ease: "power3.out" });
+  }
+
+  window.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseleave", onMouseLeave);
 });
 
 const configStore = useConfigStore();
@@ -123,18 +158,30 @@ configStore.$subscribe(() => {
 
 onBeforeUnmount(() => {
   observer?.disconnect();
+  window.removeEventListener("mousemove", onMouseMove);
+  document.removeEventListener("mouseleave", onMouseLeave);
+
+  if (wrapperRef.value) {
+    gsap.killTweensOf(wrapperRef.value);
+  }
 });
 </script>
 
 <template>
-  <canvas ref="canvasRef" class="background" />
+  <div ref="wrapperRef" class="background-wrapper">
+    <canvas ref="canvasRef" class="background" />
+  </div>
 </template>
 
 <style scoped>
-.background {
+.background-wrapper {
   width: 100%;
   height: 100%;
-  display: block;
-  opacity: 0.3;
+  .background {
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0.3;
+  }
 }
 </style>

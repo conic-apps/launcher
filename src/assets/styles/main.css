@@ -16,26 +16,27 @@ h4 {
     background: var(--selected-text-background);
 }
 
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 5px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.4);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.6);
-}
-
-::-webkit-scrollbar-thumb:active {
-  background: rgba(128, 128, 128, 0.8);
+    width: 0px;
+    height: 0px;
+    display: none;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
+}
+
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+    overflow: hidden;
 }
 
 body {

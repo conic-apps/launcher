@@ -24,8 +24,8 @@
       <div
         class="card-container"
         :class="{ current: instance.id === instanceStore.currentInstance.id }"
-        style="opacity: 0"
         v-for="instance in filteredInstances"
+        style="opacity: 0"
         :key="instance.id">
         <div class="instance" @click="selectInstance(instance)" :data-id="instance.id">
           <p v-if="instance.id === LATEST_RELEASE_INSTANCE_ID">
@@ -118,7 +118,7 @@ const playIntro = () => {
   const tl = gsap.timeline();
   const listIntro = scrollViewRef.value?.playIntro();
   tl.add(toolbarRef.value?.playIntro() ?? gsap.timeline());
-  if (listIntro) tl.add(listIntro, "<0.1");
+  if (listIntro) tl.add(listIntro, "<+0.1145141919810");
   return tl;
 };
 
@@ -194,7 +194,7 @@ async function getBackgroundSrc(id: string) {
   height: 100%;
   width: fit-content;
   margin-left: auto;
-  transform: translateX(280px);
+  transform: translateX(320px);
   overflow: visible;
 
   .gap-top {
@@ -212,7 +212,7 @@ async function getBackgroundSrc(id: string) {
     border-radius: 8px;
     margin-top: 2px;
     width: 480px;
-    height: 60px;
+    height: 56px;
     opacity: 0.6;
     transition:
       border-left 200ms ease,
@@ -238,12 +238,12 @@ async function getBackgroundSrc(id: string) {
       border-radius: 0 8px 8px 0;
     }
     p {
-      font-size: 16px;
+      font-size: 15.2px;
     }
     .details {
-      margin-top: 6px;
+      margin-top: 4px;
       .tag {
-        font-size: 11px;
+        font-size: 10px;
         border-radius: 100px;
         padding: 1px 6px;
         font-weight: 500;
@@ -273,7 +273,7 @@ async function getBackgroundSrc(id: string) {
       }
       .last-play,
       .minecraft-version {
-        font-size: 11px;
+        font-size: 10px;
         margin-left: 8px;
         font-weight: 500;
         .label {
@@ -294,9 +294,6 @@ async function getBackgroundSrc(id: string) {
     will-change: transform;
   }
   .card-container.current {
-    margin-top: 4px;
-    margin-bottom: 4px;
-
     .instance {
       border-left: 16px solid rgba(var(--ctp-lavender-rgb), 0.8);
       margin-left: -20px;

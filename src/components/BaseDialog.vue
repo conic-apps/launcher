@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <Transition name="dialog">
+  <Transition :css="false" @enter="onEnter" @leave="onLeave">
     <div v-if="visible" class="dialog" data-tauri-drag-region>
       <div class="content" :style="contentStyle">
         <slot></slot>
@@ -14,6 +14,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import gsap from "gsap";
 
 const props = withDefaults(
   defineProps<{
@@ -28,6 +29,34 @@ const props = withDefaults(
 const contentStyle = computed(() => {
   return `width: ${props.width}px; height: ${props.height}px;`;
 });
+
+function onEnter(el: Element, done: () => void) {
+  const content = el.querySelector(".content");
+  const tl = gsap.timeline({ onComplete: done });
+  tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.2 }, 0);
+  if (content) {
+    tl.fromTo(
+      content,
+      { opacity: 0, scale: 0.9 },
+      { opacity: 1, scale: 1, duration: 0.3, ease: "back.out" },
+      0.2,
+    );
+  }
+}
+
+function onLeave(el: Element, done: () => void) {
+  const content = el.querySelector(".content");
+  const tl = gsap.timeline({ onComplete: done });
+  tl.fromTo(el, { opacity: 1 }, { opacity: 0, duration: 0.2 }, 0.1);
+  if (content) {
+    tl.fromTo(
+      content,
+      { opacity: 1, scale: 1 },
+      { opacity: 0, scale: 0.9, duration: 0.18, ease: "power1.out" },
+      0,
+    );
+  }
+}
 </script>
 
 <style lang="less" scoped>
@@ -56,47 +85,6 @@ const contentStyle = computed(() => {
     max-height: calc(100vh - 20px);
     overflow-x: visible;
     overflow-y: overlay;
-    transition: all 0.4s ease;
   }
-}
-
-.dialog-enter-from,
-.dialog-leave-to {
-  opacity: 0;
-}
-
-.dialog-enter-to,
-.dialog-leave-from {
-  opacity: 1;
-}
-
-.dialog-enter-active,
-.dialog-leave-active {
-  transition: all 200ms ease;
-}
-
-.dialog-leave-active {
-  transition-delay: 100ms;
-}
-
-.dialog-enter-from .content,
-.dialog-leave-to .content {
-  transform: scale(1.1);
-  opacity: 0;
-}
-
-.dialog-enter-active .content {
-  transition-delay: 200ms;
-  transition: all 300ms cubic-bezier(0, 0.47, 0.25, 1);
-}
-
-.dialog-leave-active .content {
-  transition: all 180ms cubic-bezier(0.47, 0, 1, 0.75);
-}
-
-.dialog-enter-to,
-.dialog-leave-from {
-  transform: scale(1);
-  opacity: 1;
 }
 </style>

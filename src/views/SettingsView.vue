@@ -16,9 +16,13 @@
       </ul>
     </div>
     <div class="column-right">
-      <Transition :name="transitionName" mode="out-in">
-        <component :is="currentComponent"></component>
-      </Transition>
+      <ScrollView scrollbar-top="44px" scrollbar-bottom="0px">
+        <div class="settings-content">
+          <Transition :name="transitionName" mode="out-in">
+            <component :is="currentComponent"></component>
+          </Transition>
+        </div>
+      </ScrollView>
     </div>
   </div>
 </template>
@@ -34,6 +38,7 @@ import AccessibilitySettings from "./settings/SettingsAccessibility.vue";
 import AboutSettings from "./settings/SettingsAbout.vue";
 import AudioSettings from "./settings/SettingsAudio.vue";
 import AppIcon from "@/components/AppIcon.vue";
+import ScrollView from "@/components/ScrollView.vue";
 
 const components = ref<{ name: string; icon: string; component: Component }[]>([
   {
@@ -110,9 +115,11 @@ function switchComponent(component: Component, index: number) {
 
   .column-right {
     width: 100%;
+  }
+
+  .settings-content {
     padding: 24px 24px 24px 0;
     padding-left: 16px;
-    overflow: auto;
   }
 
   .settings-menu {
