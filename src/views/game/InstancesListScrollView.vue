@@ -14,7 +14,7 @@
     <div
       class="instances-scrollbar"
       :class="{ hidden: !scrollbarVisible || disabled }"
-      :style="{ top: scrollbarTop, bottom: scrollbarBottom, opacity: 0 }"
+      :style="{ top: scrollbarTop, bottom: scrollbarBottom }"
       ref="scrollbar"
       @pointerdown="onScrollbarPointerDown">
       <div
@@ -81,8 +81,8 @@ interface CardRef {
 let cardLayouts: CardLayout[] = [];
 let setters: ((value: number) => void)[] = [];
 let containerHeight = 0;
-const maxOffset = 128;
-const introStartOffset = 40;
+const maxOffset = 160;
+const introXOffset = 40;
 
 let cardTriggers: ScrollTrigger[] = [];
 let cardTriggersKey = "";
@@ -260,7 +260,6 @@ function renderPositions(scrollY: number) {
 
 interface IntroTarget {
   wrapper: HTMLElement;
-  startCenter: number;
   finalCenter: number;
 }
 
@@ -299,43 +298,41 @@ function playIntro(): gsap.core.Timeline {
 
     targets.push({
       wrapper: cards[i].wrapper,
-      startCenter: -introStartOffset + layout.height / 2,
       finalCenter,
     });
   }
 
+  // Cards outside the viewport skip the intro animation, but the template starts
+  // every card at opacity: 0, so they must still be revealed or they stay invisible.
+  const animated = new Set(targets.map((target) => target.wrapper));
+  for (const card of cards) {
+    if (!animated.has(card.wrapper)) {
+      gsap.set(card.wrapper, { opacity: 1 });
+    }
+  }
+
   if (targets.length === 0) return tl;
 
-  const apply = (target: IntroTarget, p: number) => {
-    const centerY = target.startCenter + (target.finalCenter - target.startCenter) * p;
-    target.wrapper.style.transform = `translate(${parallaxX(centerY)}px, ${centerY - target.finalCenter}px)`;
-  };
-
-  for (const target of targets) {
-    apply(target, 0);
-  }
-
-  for (const target of targets) {
-    const state = { p: 0 };
-    tl.to(
-      state,
-      {
-        p: 1,
-        duration: 0.4,
-        ease: "power3.out",
-        onUpdate: () => apply(target, state.p),
-      },
-      0,
-    );
-    tl.to(target.wrapper, { opacity: 1, duration: 0.4, ease: "power3.out" }, 0);
-  }
+  const wrappers = targets.map((target) => target.wrapper);
+  tl.fromTo(
+    wrappers,
+    {
+      x: (i: number) => parallaxX(targets[i].finalCenter) + introXOffset,
+      opacity: 0,
+    },
+    {
+      x: (i: number) => parallaxX(targets[i].finalCenter),
+      opacity: 1,
+      duration: 0.3,
+      ease: "power3.out",
+      stagger: 0.03,
+    },
+    0,
+  );
 
   tl.add(() => {
     renderPositions(scrollY);
-    gsap.set(
-      cards.map((c) => c.wrapper),
-      { opacity: 1 },
-    );
+    gsap.set(wrappers, { opacity: 1 });
   });
 
   return tl;
@@ -527,6 +524,7 @@ defineExpose({ reflow, scrollTo, playIntro });
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
+  opacity: 0;
 
   &.hidden {
     display: none;

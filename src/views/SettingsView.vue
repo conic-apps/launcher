@@ -3,29 +3,35 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="settings-view">
+  <div class="settings-view" ref="root" style="opacity: 0">
     <div class="column-left">
       <ul class="settings-menu">
         <li
           @click="switchComponent(item.component, index)"
           :class="{ active: activeComponentIndex == index }"
           v-for="(item, index) in components"
-          :key="index">
+          :key="index"
+          style="opacity: 0">
           <AppIcon :name="item.icon" :size="16"></AppIcon><span>{{ $t(item.name) }}</span>
         </li>
       </ul>
     </div>
     <div class="column-right">
-      <Transition :name="transitionName" mode="out-in">
-        <component :is="currentComponent"></component>
-      </Transition>
+      <ScrollView scrollbar-top="44px" scrollbar-bottom="0px">
+        <div class="settings-content">
+          <Transition :name="transitionName" mode="out-in">
+            <component :is="currentComponent"></component>
+          </Transition>
+        </div>
+      </ScrollView>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { type Component, markRaw, ref, shallowRef } from "vue";
+import { type Component, markRaw, nextTick, onMounted, ref, shallowRef, useTemplateRef } from "vue";
 import GeneralSettings from "./settings/SettingsGeneral.vue";
+import gsap from "gsap";
 import GameSettings from "./settings/SettingsGame.vue";
 import JvmSettings from "./settings/SettingsJVM.vue";
 import AppearanceSettings from "./settings/SettingsAppearance.vue";
@@ -34,6 +40,7 @@ import AccessibilitySettings from "./settings/SettingsAccessibility.vue";
 import AboutSettings from "./settings/SettingsAbout.vue";
 import AudioSettings from "./settings/SettingsAudio.vue";
 import AppIcon from "@/components/AppIcon.vue";
+import ScrollView from "@/components/ScrollView.vue";
 
 const components = ref<{ name: string; icon: string; component: Component }[]>([
   {
@@ -80,6 +87,30 @@ const components = ref<{ name: string; icon: string; component: Component }[]>([
 const currentComponent = shallowRef(components.value[0].component);
 const activeComponentIndex = ref(0);
 const transitionName = ref("slide-up");
+const rootRef = useTemplateRef("root");
+
+onMounted(async () => {
+  await nextTick();
+  const root = rootRef.value;
+  if (!root) return;
+  const sidebarItems = Array.from(root.querySelectorAll<HTMLElement>(".settings-menu > li"));
+  const settingItems = Array.from(root.querySelectorAll<HTMLElement>(".setting-item"));
+  gsap.set(settingItems, { opacity: 0, scale: 0.9 });
+  const intro = gsap.timeline();
+  intro.fromTo(root, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power3.out" });
+  intro.fromTo(
+    sidebarItems,
+    { opacity: 0, x: -20 },
+    { opacity: 1, x: 0, duration: 0.05, stagger: 0.03, ease: "power3.out" },
+    "<",
+  );
+  intro.fromTo(
+    settingItems,
+    { opacity: 0, scale: 0.9 },
+    { opacity: 1, scale: 1, duration: 0.4, stagger: 0.03, ease: "power3.out" },
+    "<0.03",
+  );
+});
 function switchComponent(component: Component, index: number) {
   if (activeComponentIndex.value < index) {
     transitionName.value = "slide-up";
@@ -110,9 +141,11 @@ function switchComponent(component: Component, index: number) {
 
   .column-right {
     width: 100%;
+  }
+
+  .settings-content {
     padding: 24px 24px 24px 0;
     padding-left: 16px;
-    overflow: auto;
   }
 
   .settings-menu {

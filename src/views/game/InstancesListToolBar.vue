@@ -78,7 +78,7 @@ const searchQuery = defineModel<string>("searchQuery", { required: true });
   width: 352px;
   position: absolute;
   top: 8px;
-  right: 280px;
+  right: 320px;
   border-radius: 16px 0 0 16px;
   background: rgba(var(--ctp-surface0-rgb), 0.4);
   backdrop-filter: blur(4px);

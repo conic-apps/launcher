@@ -157,7 +157,7 @@ export default {
             lwjglSettings: "LWJGL-Einstellungen",
         },
         appearance: {
-            sidebar: "Erscheinungsbild",
+            sidebar: "Aussehen & Effekte",
         },
         download: {
             sidebar: "Download",

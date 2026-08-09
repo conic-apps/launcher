@@ -55,6 +55,22 @@
         </div>
       </div>
     </SettingGroup>
+    <SettingGroup title="立体背景">
+      <SettingItem
+        title="立体背景摄像机移动"
+        description="关闭后摄像机停止向前移动，背景渲染完成后不再更新，以完全关闭背景开销"
+        icon="play"
+        icon-fill="none">
+        <BaseSwitch v-model="config.appearance.background_camera_move"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
+        title="背景图片视差"
+        description="关闭后背景不再随鼠标移动"
+        icon="images-outline"
+        icon-fill="none">
+        <BaseSwitch v-model="config.appearance.background_parallax"></BaseSwitch>
+      </SettingItem>
+    </SettingGroup>
   </div>
 </template>
 

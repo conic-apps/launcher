@@ -164,6 +164,12 @@ pub struct AppearanceConfig {
 
     /// Palette name, support mocha frappe latte macchiato.
     pub palette: String,
+
+    /// Whether the 3D background camera keeps moving forward.
+    pub background_camera_move: bool,
+
+    /// Whether the background follows the mouse cursor (parallax).
+    pub background_parallax: bool,
 }
 
 impl Default for AppearanceConfig {
@@ -172,6 +178,8 @@ impl Default for AppearanceConfig {
         Self {
             palette_follow_system: true,
             palette: "Mocha".to_string(),
+            background_camera_move: true,
+            background_parallax: true,
         }
     }
 }
