@@ -7,6 +7,7 @@ pub mod error;
 use error::*;
 use serde_json::Value;
 use shared::{HTTP_CLIENT, UrlExt};
+use std::path::Path;
 use tauri::{
     Runtime, command,
     plugin::{Builder, TauriPlugin},
@@ -273,6 +274,57 @@ pub async fn get_mod_file_download_url(mod_id: i64, file_id: i64) -> Result<Valu
         None,
     )
     .await
+}
+
+/// Fingerprint lookup. Returns the mods whose files carry one of the given
+/// fingerprints, keyed by the requested fingerprint.
+pub async fn get_fingerprint_matches(game_id: i64, fingerprints: &[u32]) -> Result<Value> {
+    let body = serde_json::json!({ "fingerprints": fingerprints });
+    request_with_fallback(
+        &reqwest::Method::POST,
+        &["v1", "fingerprints", &game_id.to_string()],
+        Some(&body),
+    )
+    .await
+}
+
+/// Compute the CurseForge fingerprint of a file: every ASCII whitespace byte
+/// (`0x09`, `0x0A`, `0x0D`, `0x20`) is stripped, then MurmurHash2 with seed 1
+/// is computed over the remaining bytes.
+pub fn compute_fingerprint<P: AsRef<Path>>(path: P) -> Result<u32> {
+    let bytes = std::fs::read(path)?;
+    let normalized: Vec<u8> = bytes
+        .into_iter()
+        .filter(|byte| !matches!(byte, 0x09 | 0x0A | 0x0D | 0x20))
+        .collect();
+    Ok(murmur2(&normalized, 1))
+}
+
+/// MurmurHash2 (32-bit, little-endian reads).
+fn murmur2(data: &[u8], seed: u32) -> u32 {
+    const M: u32 = 0x5bd1e995;
+    const R: u32 = 24;
+    let mut hash = seed ^ data.len() as u32;
+    let mut chunks = data.chunks_exact(4);
+    for chunk in &mut chunks {
+        let mut k = u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+        k = k.wrapping_mul(M);
+        k ^= k >> R;
+        k = k.wrapping_mul(M);
+        hash = hash.wrapping_mul(M);
+        hash ^= k;
+    }
+    let remainder = chunks.remainder();
+    for (index, byte) in remainder.iter().enumerate() {
+        hash ^= (*byte as u32) << (8 * index);
+    }
+    if !remainder.is_empty() {
+        hash = hash.wrapping_mul(M);
+    }
+    hash ^= hash >> 13;
+    hash = hash.wrapping_mul(M);
+    hash ^= hash >> 15;
+    hash
 }
 
 #[tokio::test]

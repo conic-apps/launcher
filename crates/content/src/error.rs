@@ -54,4 +54,8 @@ pub enum Error {
     WorldMapTask(String),
     #[error("World map PNG encoding failed: {0}")]
     WorldMapPng(String),
+    #[error("Not a mod file")]
+    NotAModFile,
+    #[error("Failed to parse mod metadata: {0}")]
+    ModParseFailed(String),
 }

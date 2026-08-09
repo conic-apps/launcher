@@ -8,7 +8,7 @@ use tauri::{
 };
 
 pub mod error;
-// pub mod mods;
+pub mod mods;
 pub mod resourcepack;
 pub mod saves;
 pub mod screenshots;
@@ -25,6 +25,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             resourcepack::cmd_get_all_resourcepacks,
             worldmap::cmd_render_world_map,
             screenshots::cmd_list_screenshots,
+            mods::remote::cmd_parse_mods,
         ])
         .setup(|app, _| {
             app.manage(worldmap::MapCache::default());

@@ -21,6 +21,12 @@ pub enum Error {
         reqwest::Error,
     ),
     #[error(transparent)]
+    Io(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        std::io::Error,
+    ),
+    #[error(transparent)]
     UrlParse(
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]

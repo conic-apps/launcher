@@ -111,3 +111,46 @@ export async function renderWorldMap(
 export async function listScreenshots(instanceId: string): Promise<string[]> {
     return await invoke("plugin:content|cmd_list_screenshots", { instanceId })
 }
+
+export enum ModLoader {
+    Forge = "forge",
+    NeoForge = "neoforge",
+    Fabric = "fabric",
+    Quilt = "quilt",
+    LiteLoader = "liteloader",
+    Unknown = "unknown",
+}
+
+export type ModSource = "modrinth" | "curseforge"
+
+export type ModDepends = {
+    minecraft?: unknown
+    java?: unknown
+    mod_loader?: unknown
+}
+
+export type ModAuthor = {
+    name: string
+    contact?: Record<string, string> | null
+}
+
+export type Mod = {
+    name: string
+    description?: string | null
+    version?: string | null
+    depends: ModDepends
+    authors: ModAuthor[]
+    license?: string[] | null
+    /** Either a `data:image/png;base64,` URL or the icon URL from the source platform. */
+    icon?: string | null
+    loader: ModLoader
+    disabled: boolean
+    /** Where the mod was resolved from online, when the lookup matched. */
+    source?: ModSource | null
+    source_id?: string | null
+    version_id?: string | null
+}
+
+export async function parseMods(instanceId: string): Promise<Mod[]> {
+    return await invoke("plugin:content|cmd_parse_mods", { instanceId })
+}

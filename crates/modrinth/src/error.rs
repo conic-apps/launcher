@@ -40,6 +40,13 @@ pub enum Error {
     ChunkLengthMismatch,
 
     #[error(transparent)]
+    JsonParse(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        serde_json::Error,
+    ),
+
+    #[error(transparent)]
     Aborted(
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]
