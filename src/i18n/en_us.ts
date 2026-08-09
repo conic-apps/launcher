@@ -172,7 +172,7 @@ export default {
             lwjglSettings: "LWJGL Settings",
         },
         appearance: {
-            sidebar: "Appearance",
+            sidebar: "Appearance & Motion",
         },
         download: {
             sidebar: "Download",

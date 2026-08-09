@@ -5,7 +5,7 @@
 <template>
   <div class="window" data-tauri-drag-region>
     <WindowBackground style="position: fixed"></WindowBackground>
-    <div class="title-bar" data-tauri-drag-region>
+    <div class="title-bar" data-tauri-drag-region ref="title-bar" style="opacity: 0">
       <div
         class="title-bar-actions title-bar-actions-left"
         :class="{ 'title-bar-actions-mac': isMacOS() }">
@@ -101,7 +101,7 @@ import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
 import AccountsView from "./views/AccountsView.vue";
 import DialogRoot from "./DialogRoot.vue";
-import { computed, markRaw, onMounted, reactive, ref, watch } from "vue";
+import { computed, markRaw, onMounted, reactive, ref, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfigStore } from "./store/config";
 import { loadPalette } from "./theme";
@@ -112,9 +112,11 @@ import { useNavigationStore } from "./store/navigation";
 import { getSystemLanguage } from "@conic/config";
 import LaunchView from "./views/LaunchView.vue";
 import { useDialogStore } from "./store/dialog";
+import gsap from "gsap";
 
 const config = useConfigStore();
 const navigation = useNavigationStore();
+const titleBarRef = useTemplateRef("title-bar");
 
 loadPalette(
   {
@@ -162,6 +164,13 @@ watch(
 
 onMounted(() => {
   console.log("Frontend loaded");
+  if (titleBarRef.value) {
+    gsap.fromTo(
+      titleBarRef.value,
+      { y: "-100%", opacity: 0 },
+      { y: "0%", opacity: 1, duration: 0.4, ease: "power3.out" },
+    );
+  }
 });
 
 const dialogStore = useDialogStore();

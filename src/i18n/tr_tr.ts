@@ -156,7 +156,7 @@ export default {
             lwjglSettings: "LWJGL Ayarları",
         },
         appearance: {
-            sidebar: "Görünüm",
+            sidebar: "Görünüm ve efektler",
         },
         download: {
             sidebar: "İndirmeler",

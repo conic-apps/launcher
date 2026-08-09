@@ -156,7 +156,7 @@ export default {
             lwjglSettings: "LWJGL 設定",
         },
         appearance: {
-            sidebar: "外観",
+            sidebar: "外観と動き",
         },
         download: {
             sidebar: "ダウンロード",

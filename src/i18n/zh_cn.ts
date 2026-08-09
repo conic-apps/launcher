@@ -166,7 +166,7 @@ export default {
             lwjglSettings: "LWJGL 设置(TODO)",
         },
         appearance: {
-            sidebar: "外观",
+            sidebar: "外观与动效",
         },
         network: {
             sidebar: "下载",
