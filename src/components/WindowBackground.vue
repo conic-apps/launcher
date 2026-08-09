@@ -3,15 +3,16 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from "vue";
+import { onMounted, onBeforeUnmount, ref, watch } from "vue";
 import gsap from "gsap";
+import { useConfigStore } from "@/store/config";
 
 // ============================================================
 // 可调参数
 // ============================================================
 
 // 摄像机前进速度（方块 / 秒）。越大移动越快。
-const CAMERA_SPEED = 6;
+const CAMERA_SPEED = 2;
 
 // 世界渲染视距（方块数）。WebGL + 深度缓冲下可设得比 Canvas 2D 大很多。
 const VIEW_DISTANCE = 120;
@@ -23,8 +24,12 @@ const FOV_DEGREES = 60;
 // 摄像机水平直视时地平线在窗口中央（50%），天空占上半屏，其中心恰好在 25% 处。
 const HYPERBOLA_CENTER_Y_PERCENT = 0.25;
 
+// 天空在地平线（屏幕中线）交界处的淡出范围（占窗口高度的比例，跨地平线上下对称）。
+// 让双曲线稍微延伸过地平线后平滑过渡消失，避免生硬截断。
+const SKY_FADE_HEIGHT_RATIO = 0.14;
+
 // 树木生成密度：单个方块列出现树木的概率（0~1，越大越密）。
-const TREE_DENSITY = 0.0001;
+const TREE_DENSITY = 0.0007;
 
 // 树木形状：每个元素为 [dx, dy, dz]，表示相对树干底部方块
 // （地表方块上方一格）的偏移。改这里即可调整树木形状与大小。
@@ -81,7 +86,7 @@ const BASE_HEIGHT = 4;
 const HILL_AMPLITUDE = 2.2;
 
 // 摄像机高度 = 基准地表高度 + 该值
-const EYE_HEIGHT = 5.6;
+const EYE_HEIGHT = 10.6;
 
 // 鼠标视差（沿用原实现）
 const MAX_OFFSET = 16;
@@ -120,6 +125,12 @@ const MAX_HALF_X = Math.ceil(VIEW_DISTANCE * Math.tan((FOV_DEGREES * Math.PI) / 
 const CAM_X = -0.5;
 const CAM_Y = BASE_HEIGHT + EYE_HEIGHT;
 let camZ = 0;
+
+// 摄像机所在的方块列（点 (-0.5, 9.6) 落在方块 x=-1、y=9 的包围盒内）。
+// 摄像机沿 +z 直线前进会经过该列的所有 z，因此树的任何方块占用 (x=-1, y=9)
+// 都会被摄像机穿过，这类树不生成。
+const CAM_X_CELL = Math.floor(CAM_X);
+const CAM_Y_CELL = Math.floor(CAM_Y);
 
 // ============================================================
 // 地形高度环状缓存：窗口随摄像机滑动，只有新进入的一行需要重新计算。
@@ -293,7 +304,17 @@ let lastBuiltFloor = NaN;
 let raf = 0;
 let lastTime = 0;
 
+// 立体背景设置（外观与动效）
+const config = useConfigStore();
+
+// 摄像机静止（关闭摄像机移动）时，用于在窗口尺寸 / 主题变化时补一帧渲染
+let resizeObserver: ResizeObserver | undefined;
+let themeObserver: MutationObserver | undefined;
+
 function onMouseMove(event: MouseEvent) {
+  // 关闭“背景图片视差”后不再随鼠标移动
+  if (!config.appearance.background_parallax) return;
+
   const nx = (event.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
   const ny = (event.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
 
@@ -302,6 +323,8 @@ function onMouseMove(event: MouseEvent) {
 }
 
 function onMouseLeave() {
+  if (!config.appearance.background_parallax) return;
+
   moveX?.(0);
   moveY?.(0);
 }
@@ -312,6 +335,11 @@ function onContextLost(event: Event) {
 
 function onContextRestored() {
   initGL();
+  buildGeometry();
+  // 静止模式下不依赖主循环，上下文恢复后需要立即补渲染
+  if (!config.appearance.background_camera_move) {
+    draw();
+  }
 }
 
 // ============================================================
@@ -374,7 +402,17 @@ function treeKey(x: number, y: number, z: number): number {
 function treeAt(x: number, z: number): boolean {
   const h = heightAt(x, z);
   if (h < 3 || h > 6) return false;
-  return hash2i(x, z, 0x5eed) < TREE_DENSITY;
+  if (!(hash2i(x, z, 0x5eed) < TREE_DENSITY)) return false;
+  return !treeHitsCamera(x, h);
+}
+
+// 树的任何方块（树干 + 树叶）是否占用了摄像机穿行的方块列
+function treeHitsCamera(x: number, h: number): boolean {
+  const y0 = h + 1;
+  for (const [dx, dy] of TREE_SHAPE) {
+    if (x + dx === CAM_X_CELL && y0 + dy === CAM_Y_CELL) return true;
+  }
+  return false;
 }
 
 // (x, y, z) 是否为实心方块：地表及以下，或属于树木
@@ -842,13 +880,31 @@ function draw() {
 
   computeColors();
 
-  // 天空（Canvas 2D，透明，让下方层显示）
+  // 天空（Canvas 2D，透明，让下方层显示）。
+  // 双曲线会向下延伸越过地平线，而世界画布本身只有 30% 不透明度，
+  // 所以用 destination-out 渐变把地平线以下的天空按透明度逐步擦除：
+  // 上半部分保留，越过地平线一点后平滑淡出，避免生硬截断。
   const sctx = skyC.getContext("2d");
   if (sctx) {
     sctx.setTransform(1, 0, 0, 1, 0, 0);
     sctx.clearRect(0, 0, bw, bh);
     const sky = getSkyCanvas();
-    if (sky) sctx.drawImage(sky, 0, 0);
+    if (sky) {
+      sctx.drawImage(sky, 0, 0);
+      const fadeBand = bh * SKY_FADE_HEIGHT_RATIO;
+      const fadeTop = bh / 1.65 - fadeBand / 2;
+      const fadeBottom = bh / 1.65 + fadeBand / 2;
+      sctx.save();
+      sctx.globalCompositeOperation = "destination-out";
+      // 渐变从 fadeTop 透明到 fadeBottom 全不透明；fillRect 一直铺到底部，
+      // 渐变在此之后保持最后一档（alpha=1），确保淡出带以下完全擦除。
+      const grad = sctx.createLinearGradient(0, fadeTop, 0, fadeBottom);
+      grad.addColorStop(0, "rgba(0,0,0,0)");
+      grad.addColorStop(1, "rgba(0,0,0,1)");
+      sctx.fillStyle = grad;
+      sctx.fillRect(0, fadeTop, bw, bh - fadeTop);
+      sctx.restore();
+    }
   }
 
   // 世界（WebGL2，深度缓冲保证遮挡，无需排序）
@@ -915,6 +971,11 @@ function frame(time: number) {
   const dt = Math.min(0.05, (time - lastTime) / 1000);
   lastTime = time;
 
+  // 关闭“立体背景摄像机移动”后摄像机停止，主循环不再继续调度
+  if (!config.appearance.background_camera_move) {
+    return;
+  }
+
   camZ += CAMERA_SPEED * dt;
 
   // 几何只在摄像机每前进一整格时重建，其余帧仅更新 uniform
@@ -936,7 +997,36 @@ onMounted(() => {
   initGL();
   buildGeometry();
 
-  raf = requestAnimationFrame(frame);
+  const canvas = glCanvasRef.value;
+  if (canvas) {
+    canvas.addEventListener("webglcontextlost", onContextLost);
+    canvas.addEventListener("webglcontextrestored", onContextRestored);
+
+    // 静止模式下窗口尺寸变化时重建并重绘（其余时间不运行主循环，零开销）
+    resizeObserver = new ResizeObserver(() => {
+      if (!config.appearance.background_camera_move) {
+        buildGeometry();
+        draw();
+      }
+    });
+    resizeObserver.observe(canvas);
+  }
+
+  // 静止模式下主题变化（调色板 / 高对比 / 跟随系统）时重绘一次
+  themeObserver = new MutationObserver(() => {
+    if (!config.appearance.background_camera_move) {
+      buildGeometry();
+      draw();
+    }
+  });
+  themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+
+  if (config.appearance.background_camera_move) {
+    raf = requestAnimationFrame(frame);
+  } else {
+    // 摄像机静止：渲染出方块后不再更新
+    draw();
+  }
 
   if (wrapperRef.value) {
     gsap.set(wrapperRef.value, {
@@ -950,16 +1040,40 @@ onMounted(() => {
     moveY = gsap.quickTo(wrapperRef.value, "y", { duration: 0.05, ease: "power3.out" });
   }
 
-  const canvas = glCanvasRef.value;
-  canvas?.addEventListener("webglcontextlost", onContextLost);
-  canvas?.addEventListener("webglcontextrestored", onContextRestored);
-
   window.addEventListener("mousemove", onMouseMove);
   document.addEventListener("mouseleave", onMouseLeave);
 });
 
+// 设置变化时实时切换主循环
+watch(
+  () => config.appearance.background_camera_move,
+  (move) => {
+    if (move) {
+      lastTime = 0;
+      raf = requestAnimationFrame(frame);
+    } else {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      draw();
+    }
+  },
+);
+
+// 关闭视差时把背景归位，避免停留在鼠标最后的位置
+watch(
+  () => config.appearance.background_parallax,
+  (parallax) => {
+    if (!parallax) {
+      moveX?.(0);
+      moveY?.(0);
+    }
+  },
+);
+
 onBeforeUnmount(() => {
   cancelAnimationFrame(raf);
+  resizeObserver?.disconnect();
+  themeObserver?.disconnect();
 
   window.removeEventListener("mousemove", onMouseMove);
   document.removeEventListener("mouseleave", onMouseLeave);

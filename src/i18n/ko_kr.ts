@@ -154,7 +154,7 @@ export default {
             lwjglSettings: "LWJGL 설정",
         },
         appearance: {
-            sidebar: "외관",
+            sidebar: "외관 및 효과",
         },
         download: {
             sidebar: "다운로드",

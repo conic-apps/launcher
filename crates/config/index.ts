@@ -25,6 +25,8 @@ export type Config = {
     appearance: {
         palette_follow_system: boolean
         palette: Palette
+        background_camera_move: boolean
+        background_parallax: boolean
     }
     accessibility: {
         release_reminder: boolean
