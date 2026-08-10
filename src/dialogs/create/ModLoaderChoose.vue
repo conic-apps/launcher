@@ -40,7 +40,7 @@
         :title="forgeVersion"
         logo="1"
         :clickable="true"
-        @click="setModloaderVersion(forgeVersion)">
+        @click="setModloaderVersion(forgeVersion.split('-').slice(1).join('-'))">
         <template #icon>
           <img style="width: 100%; height: 100%" src="@/assets/images/forge.svg?url" alt="" />
         </template>

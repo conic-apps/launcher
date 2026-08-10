@@ -26,7 +26,7 @@ use std::{
     ffi::OsStr,
     fs::File,
     io::{Read, Seek},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use crate::mods::remote::RemoteModPlatform;
@@ -82,6 +82,10 @@ impl ModIcon {
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct ResolvedMod {
+    /// The mod file this entry was resolved from. Filled in by the path-taking
+    /// entry points ([`parse_mod`], [`parse_folder`] and the remote lookup);
+    /// never empty in a result handed back to the frontend.
+    pub path: PathBuf,
     pub name: String,
     pub description: Option<String>,
     pub version: Option<String>,
@@ -95,6 +99,12 @@ pub struct ResolvedMod {
     /// Whether the mod is disabled, i.e. its file name carries the
     /// `.jar.disabled` suffix and the loader will not load it.
     pub disabled: bool,
+    /// Whether the mod was resolved from a jar embedded inside another mod
+    /// (jar-in-jar dependency). The frontend can hide these to show only the
+    /// main jars. Defaults to `false` so cached entries without the field
+    /// still deserialize.
+    #[serde(default)]
+    pub embedded: bool,
     /// Where the mod was resolved from online (`modrinth` / `curseforge`),
     /// when an online lookup matched this file.
     pub source: Option<RemoteModPlatform>,
@@ -120,9 +130,11 @@ pub struct ResolvedAuthorInfo {
 impl ResolvedMod {
     /// Fallback entry for a file that looks like a mod but could not be parsed,
     /// so the user still knows "this is at least a mod file".
-    pub(crate) fn unrecognized(file_name: Option<&OsStr>) -> Self {
+    pub(crate) fn unrecognized(path: &Path) -> Self {
         ResolvedMod {
-            name: file_name
+            path: path.to_path_buf(),
+            name: path
+                .file_name()
                 .map(|s| s.to_string_lossy().into_owned())
                 .unwrap_or_default(),
             description: None,
@@ -137,6 +149,7 @@ impl ResolvedMod {
             icon: None,
             loader: ModLoader::Unknown,
             disabled: false,
+            embedded: false,
             source: None,
             source_id: None,
             version_id: None,
@@ -161,6 +174,9 @@ pub fn parse_mod<P: AsRef<Path>>(path: P) -> Result<Vec<ResolvedMod>> {
         for mod_info in &mut mods {
             mod_info.disabled = true;
         }
+    }
+    for mod_info in &mut mods {
+        mod_info.path = path.to_path_buf();
     }
     Ok(mods)
 }
@@ -201,7 +217,7 @@ pub fn parse_folder<S: AsRef<OsStr> + ?Sized>(folder: &S) -> Result<Vec<Resolved
             Err(Error::NotAModFile) => continue,
             Err(e) => {
                 log::warn!("Failed to parse mod {:?}: {e}", path);
-                let mut unrecognized = ResolvedMod::unrecognized(path.file_name());
+                let mut unrecognized = ResolvedMod::unrecognized(&path);
                 unrecognized.disabled = is_disabled_file(&path);
                 result.push(unrecognized);
             }
@@ -266,11 +282,4 @@ pub(crate) fn open_nested_jar<R: Read + Seek>(
 ) -> Option<ZipArchive<std::io::Cursor<Vec<u8>>>> {
     let bytes = read_entry(archive, path)?;
     ZipArchive::new(std::io::Cursor::new(bytes)).ok()
-}
-
-/// Extract the file name without extension from a mod file path.
-pub(crate) fn file_name_without_extension(path: &Path) -> String {
-    path.file_stem()
-        .map(|s| s.to_string_lossy().into_owned())
-        .unwrap_or_else(|| path.to_string_lossy().into_owned())
 }

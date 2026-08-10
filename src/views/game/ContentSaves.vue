@@ -194,7 +194,8 @@ function askDeleteSave(folderName: string) {
   .title {
     width: 100%;
     background: var(--ctp-mantle);
-    padding: 16px 32px;
+    height: 52px;
+    padding: 0 32px;
     margin-bottom: 16px;
     display: flex;
     align-items: center;

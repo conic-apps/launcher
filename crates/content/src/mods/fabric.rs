@@ -5,7 +5,7 @@
 use std::{
     collections::HashMap,
     io::{Read, Seek},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use serde::{Deserialize, Serialize};
@@ -114,6 +114,7 @@ impl FabricModMetadata {
             .as_ref()
             .and_then(|icon| read_icon(archive, icon.path()));
         ResolvedMod {
+            path: PathBuf::new(),
             name,
             description: self.description,
             version: Some(self.version.clone()),
@@ -127,6 +128,7 @@ impl FabricModMetadata {
             icon,
             loader: ModLoader::Fabric,
             disabled: false,
+            embedded: false,
             source: None,
             source_id: None,
             version_id: None,
@@ -135,9 +137,14 @@ impl FabricModMetadata {
 }
 
 pub fn parse_mod<P: AsRef<Path>>(path: P) -> Result<Vec<ResolvedMod>> {
+    let path = path.as_ref();
     let mut archive =
         ZipArchive::new(std::fs::File::open(path)?).map_err(|_| Error::NotAModFile)?;
-    parse_mod_archive(&mut archive)
+    let mut mods = parse_mod_archive(&mut archive)?;
+    for mod_info in &mut mods {
+        mod_info.path = path.to_path_buf();
+    }
+    Ok(mods)
 }
 
 pub fn parse_mod_archive<R: Read + Seek>(archive: &mut ZipArchive<R>) -> Result<Vec<ResolvedMod>> {
@@ -156,7 +163,10 @@ pub fn parse_mod_archive<R: Read + Seek>(archive: &mut ZipArchive<R>) -> Result<
             if let Some(mut nested) = open_nested_jar(archive, &jar.file)
                 && let Ok(mods) = super::parse_mod_archive(&mut nested)
             {
-                result.extend(mods);
+                result.extend(mods.into_iter().map(|mut mod_info| {
+                    mod_info.embedded = true;
+                    mod_info
+                }));
             }
         }
     }

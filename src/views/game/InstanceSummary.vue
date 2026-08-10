@@ -80,7 +80,7 @@
       </div>
     </div>
     <div class="row-4" ref="row4" style="opacity: 0">
-      <div @click="openContent('saves')" ref="saves" style="opacity: 0">
+      <div @click="useShowContent().value.saves = true" ref="saves" style="opacity: 0">
         <AppIcon name="save"></AppIcon>
         <div>
           <span class="type">存档</span
@@ -89,15 +89,18 @@
           >
         </div>
       </div>
-      <div @click="openContent('mods')" ref="mods" style="opacity: 0">
+      <div @click="useShowContent().value.mods = true" ref="mods" style="opacity: 0">
         <AppIcon name="extension-puzzle" />
         <div><span class="type">模组</span><span class="count">1 个</span></div>
       </div>
-      <div @click="openContent('resourcepacks')" ref="resourcepacks" style="opacity: 0">
+      <div
+        @click="useShowContent().value.resourcepacks = true"
+        ref="resourcepacks"
+        style="opacity: 0">
         <AppIcon name="folder" />
         <div><span class="type">资源包</span><span class="count">4 个</span></div>
       </div>
-      <div @click="openContent('screenshots')" ref="screenshots" style="opacity: 0">
+      <div @click="useShowContent().value.screenshots = true" ref="screenshots" style="opacity: 0">
         <AppIcon name="images-outline" />
         <div><span class="type">截图</span><span class="count">1 个</span></div>
       </div>
@@ -122,8 +125,7 @@ import { getInstanceRoot } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
 import { useInstanceSettings } from "./useGameView";
 import { useGameContentStore } from "@/store/content";
-import { ComponentName } from "./Content.vue";
-import { useContentComponent, useShowContent } from "./useContent";
+import { useShowContent } from "./useContent";
 import gsap from "gsap";
 
 const instanceStore = useInstanceStore();
@@ -174,11 +176,6 @@ watch(
   },
   { immediate: true },
 );
-
-function openContent(componentName: ComponentName) {
-  useContentComponent().value = componentName;
-  useShowContent().value = true;
-}
 
 const rowElements = {
   row1: useTemplateRef("row1"),
