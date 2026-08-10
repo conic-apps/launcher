@@ -18,67 +18,15 @@
       </div>
     </div>
     <div class="save-list-wrapper">
-      <div class="saves-list">
-        <div v-for="mod in mods" class="content" :key="mod.path">
-          <!-- <img -->
-          <!--   v-if="iconCache[folderName]" -->
-          <!--   :src="iconCache[folderName]" -->
-          <!--   alt="world icon" -->
-          <!--   width="64px" -->
-          <!--   height="64px" /> -->
-          <img
-            src="@/assets/images/Unknown_server.webp"
-            alt="world icon"
-            width="64px"
-            height="64px" />
-          <div class="content-info" @click.stop="openModDetailsPage">
-            <p class="name">{{ mod.name }}</p>
-            <p class="folder-name">{{ folderName }}</p>
-            <span
-              class="game-mode"
-              v-if="save.Data.GameType"
-              :class="{
-                survival: save.Data.GameType === 0,
-                creative: save.Data.GameType === 1,
-                adventure: save.Data.GameType === 2,
-                spectator: save.Data.GameType === 3,
-              }"
-              >111</span
-            >
-            <span class="last-played" v-if="save.Data.LastPlayed"
-              ><span class="label">上次游玩: </span>111</span
-            >
-          </div>
-          <div class="actions">
-            <button>
-              <AppIcon name="heart-outline" :size="14"></AppIcon>
-            </button>
-            <button>
-              <AppIcon name="save" :size="14"></AppIcon>
-            </button>
-          </div>
-          <div class="download-button">
-            <button>
-              <AppIcon name="download" :size="18"></AppIcon>
-            </button>
-          </div>
-        </div>
-      </div>
+      <div class="saves-list"></div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useGameContentStore } from "@/store/content";
-import { computed, ref } from "vue";
 import Modrinth from "@/assets/images/modrinth.svg";
 import CurseForge from "@/assets/images/curseforge.svg";
 import AppIcon from "@/components/AppIcon.vue";
-
-const gameContentStore = useGameContentStore();
-const mods = computed(() => gameContentStore.gameContent.mods?.filter((mod) => !mod.embedded));
-
-function openModDetailsPage() {}
 </script>
 
 <style lang="less" scoped>

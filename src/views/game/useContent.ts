@@ -1,7 +1,4 @@
 import { ref } from "vue"
-import { ComponentName } from "./Content.vue"
-
-const componentName = ref<ComponentName>("saves")
 
 const showContent = ref({
     saves: false,

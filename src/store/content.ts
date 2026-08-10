@@ -7,7 +7,6 @@ import {
     Level,
     listScreenshots,
     Mod,
-    parseMods,
     Resourcepack,
 } from "@conic/content"
 
@@ -38,9 +37,9 @@ export const useGameContentStore = defineStore("gameContent", () => {
             const loadSaves = async () => {
                 gameContent.value.saves = await getAllLevels(instance.id)
             }
-            const loadMods = async () => {
-                gameContent.value.mods = await parseMods(instance.id)
-            }
+            // const loadMods = async () => {
+            //     gameContent.value.mods = await parseMods(instance.id)
+            // }
             const loadResourcepacks = async () => {
                 gameContent.value.resourcepacks = await getAllResourcepacks(instance.id)
             }

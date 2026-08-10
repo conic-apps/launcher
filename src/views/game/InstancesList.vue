@@ -212,7 +212,11 @@ function onKeyDown(event: KeyboardEvent) {
   }
 }
 
-const overlaid = computed(() => useShowContent().value || useInstanceSettings().value);
+const overlaid = computed(
+  () =>
+    Object.values(useShowContent().value).find((value) => value === true) ||
+    useInstanceSettings().value,
+);
 
 const backgroundImagesSrc = ref<Record<string, string>>({});
 
