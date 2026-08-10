@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{io::Read, path::Path};
+use std::{io::Read, path::{Path, PathBuf}};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -42,6 +42,7 @@ impl LiteLoaderModMetadata {
             ))
         });
         ResolvedMod {
+            path: PathBuf::new(),
             name: self.name.clone(),
             description: self.description,
             version,
@@ -63,6 +64,7 @@ impl LiteLoaderModMetadata {
             icon: None,
             loader: ModLoader::LiteLoader,
             disabled: false,
+            embedded: false,
             source: None,
             source_id: None,
             version_id: None,
@@ -71,9 +73,14 @@ impl LiteLoaderModMetadata {
 }
 
 pub fn parse_mod<P: AsRef<Path>>(path: P) -> Result<Vec<ResolvedMod>> {
+    let path = path.as_ref();
     let mut archive =
         zip::ZipArchive::new(std::fs::File::open(path)?).map_err(|_| Error::NotAModFile)?;
-    parse_mod_archive(&mut archive)
+    let mut mods = parse_mod_archive(&mut archive)?;
+    for mod_info in &mut mods {
+        mod_info.path = path.to_path_buf();
+    }
+    Ok(mods)
 }
 
 pub fn parse_mod_archive<R: Read + std::io::Seek>(

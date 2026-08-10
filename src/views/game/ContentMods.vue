@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="content-saves" @click="selectedSave = null">
+  <div class="content-saves">
     <div class="title">
       <AppIcon name="extension-puzzle"></AppIcon>
       <p>模组列表</p>
@@ -19,14 +19,7 @@
     </div>
     <div class="save-list-wrapper">
       <div class="saves-list">
-        <div
-          v-for="(save, folderName) in saves"
-          class="content"
-          :class="{
-            selected: folderName === selectedSave,
-            'expand-up': expandDirection === 'up',
-          }"
-          :key="folderName">
+        <div v-for="mod in mods" class="content" :key="mod.path">
           <!-- <img -->
           <!--   v-if="iconCache[folderName]" -->
           <!--   :src="iconCache[folderName]" -->
@@ -38,8 +31,8 @@
             alt="world icon"
             width="64px"
             height="64px" />
-          <div class="content-info" @click.stop="selectSave(folderName, $event)">
-            <p class="name">{{ save.Data.LevelName }}</p>
+          <div class="content-info" @click.stop="openModDetailsPage">
+            <p class="name">{{ mod.name }}</p>
             <p class="folder-name">{{ folderName }}</p>
             <span
               class="game-mode"
@@ -83,23 +76,9 @@ import CurseForge from "@/assets/images/curseforge.svg";
 import AppIcon from "@/components/AppIcon.vue";
 
 const gameContentStore = useGameContentStore();
-const saves = computed(() => gameContentStore.gameContent.saves);
+const mods = computed(() => gameContentStore.gameContent.mods?.filter((mod) => !mod.embedded));
 
-const selectedSave = ref(null as string | null);
-
-const expandDirection = ref("down" as "up" | "down");
-
-function selectSave(folderName: string, event: MouseEvent) {
-  selectedSave.value = folderName;
-  const element = event.currentTarget as HTMLElement;
-  const rect = element.getBoundingClientRect();
-  const bottomSpace = window.innerHeight - rect.bottom;
-  if (bottomSpace < 160) {
-    expandDirection.value = "up";
-  } else {
-    expandDirection.value = "down";
-  }
-}
+function openModDetailsPage() {}
 </script>
 
 <style lang="less" scoped>
@@ -114,7 +93,8 @@ function selectSave(folderName: string, event: MouseEvent) {
   .title {
     width: 100%;
     background: var(--ctp-mantle);
-    padding: 16px 32px;
+    height: 52px;
+    padding: 0 32px;
     margin-bottom: 16px;
     display: flex;
     align-items: center;
@@ -123,19 +103,24 @@ function selectSave(folderName: string, event: MouseEvent) {
     .select-source {
       display: flex;
       align-items: center;
-      border-radius: 8px;
+      border-radius: 4px;
       overflow: hidden;
+      margin-left: auto;
+      border: 1px solid var(--ctp-surface1);
       button {
         appearance: none;
         border: none;
         background: none;
         background: var(--ctp-surface0);
-        width: 80px;
+        width: 40px;
         height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid var(--ctp-surface1);
+        border-right: 1px solid var(--ctp-surface1);
+      }
+      button:last-child {
+        border-right: none;
       }
     }
   }
@@ -269,43 +254,6 @@ function selectSave(folderName: string, event: MouseEvent) {
       opacity: 0.7;
       transition: opacity 55ms ease;
     }
-  }
-  .content .extra {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: inherit;
-    z-index: -3;
-    opacity: 0;
-    overflow: hidden;
-    transition: all 200ms ease;
-    background: var(--ctp-surface0);
-
-    .map-previewer-container {
-      position: absolute;
-      height: 100%;
-      width: 100%;
-      left: 0;
-      right: 16px;
-      bottom: 0;
-      padding: 8px;
-    }
-  }
-  .content.selected {
-    z-index: 10;
-    img {
-      z-index: 9;
-    }
-  }
-  .content.selected .extra {
-    outline: 2px solid var(--ctp-blue);
-    height: calc(100% + 160px);
-    z-index: 11;
-    opacity: 1;
-  }
-  .content.expand-up .extra {
-    bottom: 0;
-    top: unset;
   }
 }
 </style>

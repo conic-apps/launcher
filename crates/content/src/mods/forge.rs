@@ -7,7 +7,7 @@ use std::{
     ffi::OsStr,
     fs::File,
     io::{Read, Seek},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use serde::{Deserialize, Serialize};
@@ -15,8 +15,8 @@ use serde_json::Value;
 use zip::ZipArchive;
 
 use super::{
-    ModLoader, ResolvedAuthorInfo, ResolvedDepends, ResolvedMod, file_name_without_extension,
-    open_nested_jar, read_entry, read_icon, strip_bom,
+    ModLoader, ResolvedAuthorInfo, ResolvedDepends, ResolvedMod, open_nested_jar, read_entry,
+    read_icon, strip_bom,
 };
 use crate::error::{Error, Result};
 
@@ -98,6 +98,7 @@ impl ForgeModMcmodInfo {
             })
             .collect::<Vec<_>>();
         ResolvedMod {
+            path: PathBuf::new(),
             name: self
                 .name
                 .unwrap_or_else(|| self.mod_id.clone().unwrap_or_default()),
@@ -113,6 +114,7 @@ impl ForgeModMcmodInfo {
             },
             loader: ModLoader::Forge,
             disabled: false,
+            embedded: false,
             source: None,
             source_id: None,
             version_id: None,
@@ -211,6 +213,7 @@ impl ForgeModTOMLMod {
             .unwrap_or_default();
         let icon = self.logo_file.clone().or_else(|| root.logo_file.clone());
         ResolvedMod {
+            path: PathBuf::new(),
             name: self
                 .display_name
                 .clone()
@@ -227,6 +230,7 @@ impl ForgeModTOMLMod {
             depends,
             loader,
             disabled: false,
+            embedded: false,
             source: None,
             source_id: None,
             version_id: None,
@@ -313,6 +317,7 @@ pub struct ManifestMetadata {
 impl ManifestMetadata {
     pub fn parse(self) -> ResolvedMod {
         ResolvedMod {
+            path: PathBuf::new(),
             name: self
                 .name
                 .unwrap_or_else(|| self.mod_id.clone().unwrap_or_default()),
@@ -336,6 +341,7 @@ impl ManifestMetadata {
             },
             loader: ModLoader::Forge,
             disabled: false,
+            embedded: false,
             source: None,
             source_id: None,
             version_id: None,
@@ -479,16 +485,24 @@ fn parse_jarjar<R: Read + Seek>(archive: &mut ZipArchive<R>) -> Vec<ResolvedMod>
         if let Some(mut nested) = open_nested_jar(archive, &jar.path)
             && let Ok(mods) = super::parse_mod_archive(&mut nested)
         {
-            result.extend(mods);
+            result.extend(mods.into_iter().map(|mut mod_info| {
+                mod_info.embedded = true;
+                mod_info
+            }));
         }
     }
     result
 }
 
 pub fn parse_mod<P: AsRef<Path>>(path: P) -> Result<Vec<ResolvedMod>> {
+    let path = path.as_ref();
     let file = File::open(path)?;
     let mut archive = ZipArchive::new(file).map_err(|_| Error::NotAModFile)?;
-    parse_mod_archive(&mut archive)
+    let mut mods = parse_mod_archive(&mut archive)?;
+    for mod_info in &mut mods {
+        mod_info.path = path.to_path_buf();
+    }
+    Ok(mods)
 }
 
 pub fn parse_mod_archive<R: Read + Seek>(archive: &mut ZipArchive<R>) -> Result<Vec<ResolvedMod>> {
@@ -596,9 +610,7 @@ pub fn parse_folder<S: AsRef<OsStr> + ?Sized>(folder: &S) -> Result<Vec<Resolved
             Ok(mods) => result.extend(mods),
             Err(e) => {
                 log::warn!("Failed to parse mod {:?}: {e}", path);
-                result.push(ResolvedMod::unrecognized(Some(std::ffi::OsStr::new(
-                    &file_name_without_extension(&path),
-                ))));
+                result.push(ResolvedMod::unrecognized(&path));
             }
         }
     }

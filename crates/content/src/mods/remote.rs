@@ -190,7 +190,7 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
                 Err(crate::error::Error::NotAModFile) => continue,
                 Err(error) => {
                     warn!("Failed to parse mod {:?}: {error}", path);
-                    vec![ResolvedMod::unrecognized(path.file_name())]
+                    vec![ResolvedMod::unrecognized(&path)]
                 }
             },
         };
@@ -208,10 +208,12 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
         }
         // `disabled` is a property of the file name, not the content, so it
         // must be derived from the current file even when the parse result
-        // came from the cache.
+        // came from the cache. The same goes for `path`, which the cached
+        // entries may carry from an earlier run.
         let disabled = is_disabled_file(&path);
         for mod_info in &mut parsed {
             mod_info.disabled = disabled;
+            mod_info.path = path.clone();
         }
         files_by_hash.insert(hash.clone(), path.clone());
         files_with_mods.push((hash, path, parsed));

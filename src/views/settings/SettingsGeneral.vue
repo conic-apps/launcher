@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div>
+  <div ref="generalSettings">
     <SettingGroup>
       <SettingItem :title="$t('settings.general.language')" icon="language">
         <BaseDropdownSelect
@@ -71,8 +71,11 @@ import BaseSwitch from "@/components/BaseSwitch.vue";
 import BaseDropdownSelect from "@/components/BaseDropdownSelect.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
+import { nextTick, onMounted, useTemplateRef } from "vue";
 
 const config = useConfigStore();
+
+const generalSettingsRef = useTemplateRef("generalSettings");
 </script>
 
-<style lang="less"></style>
+<style scoped lang="less"></style>

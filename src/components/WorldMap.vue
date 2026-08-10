@@ -44,7 +44,7 @@ const TILE_LOAD_DEBOUNCE = 50;
 const INITIAL_VIEW_BLOCKS = 512;
 const FADE_MS = 100;
 // 渲染缓存保留范围：可视区域向外扩展的圈数
-const TILE_RENDER_MARGIN = 6;
+const TILE_RENDER_MARGIN = 3;
 // 平滑缩放 lerp 系数：每帧向 targetZoom 逼近的比例（0~1，越大响应越快）
 const ZOOM_LERP_FACTOR = 0.25;
 // 平滑缩放停止阈值：与 targetZoom 的差距小于该值视为缩放完成
