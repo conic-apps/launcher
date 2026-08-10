@@ -8,23 +8,21 @@
       <slot></slot>
     </div>
   </div>
-  <Teleport to="body">
+  <div
+    class="scrollbar"
+    :class="{ hidden: !scrollbarVisible || disabled }"
+    :style="{ top: scrollbarTop, bottom: scrollbarBottom }"
+    ref="scrollbar"
+    @pointerdown="onScrollbarPointerDown">
     <div
-      class="scrollbar"
-      :class="{ hidden: !scrollbarVisible || disabled }"
-      :style="{ top: scrollbarTop, bottom: scrollbarBottom }"
-      ref="scrollbar"
-      @pointerdown="onScrollbarPointerDown">
-      <div
-        class="scrollbar-thumb"
-        :class="{ dragging }"
-        ref="thumb"
-        @pointerdown.stop="onThumbPointerDown"
-        @pointermove="onThumbPointerMove"
-        @pointerup="onThumbPointerUp"
-        @pointercancel="onThumbPointerUp"></div>
-    </div>
-  </Teleport>
+      class="scrollbar-thumb"
+      :class="{ dragging }"
+      ref="thumb"
+      @pointerdown.stop="onThumbPointerDown"
+      @pointermove="onThumbPointerMove"
+      @pointerup="onThumbPointerUp"
+      @pointercancel="onThumbPointerUp"></div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -38,8 +36,8 @@ withDefaults(
     disabled?: boolean;
   }>(),
   {
-    scrollbarTop: "44px",
-    scrollbarBottom: "0px",
+    scrollbarTop: "8px",
+    scrollbarBottom: "8px",
     disabled: false,
   },
 );
@@ -219,7 +217,7 @@ defineExpose({ reflow, scrollTo });
 }
 
 .scrollbar {
-  position: fixed;
+  position: absolute;
   right: 8px;
   width: 6px;
   z-index: 500;

@@ -135,6 +135,8 @@ export type ModAuthor = {
 }
 
 export type Mod = {
+    /** The mod file this entry was resolved from; used as the unique identifier. */
+    path: string
     name: string
     description?: string | null
     version?: string | null
@@ -145,6 +147,8 @@ export type Mod = {
     icon?: string | null
     loader: ModLoader
     disabled: boolean
+    /** Whether the mod came from a jar embedded inside another mod (jar-in-jar). */
+    embedded: boolean
     /** Where the mod was resolved from online, when the lookup matched. */
     source?: ModSource | null
     source_id?: string | null

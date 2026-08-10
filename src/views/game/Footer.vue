@@ -10,7 +10,7 @@
       :skin="accountSkin"
       :uuid="accountUuid"
       :size="56"
-      style="opacity: 0"
+      class="intro-hidden"
       :class="{
         'ms-account': configStore.current_account?.type === 'Microsoft',
         'ygg-account': configStore.current_account?.type === 'Yggdrasil',
@@ -23,10 +23,12 @@
       :skin="SteveSkin"
       :uuid="accountUuid"
       :size="56"
-      class="unlogin"
-      style="opacity: 0"
+      class="unlogin intro-hidden"
       @click="navigationStore.navigate('accounts')"></AccountAvatar>
-    <AccountListDropdown v-if="configStore.current_account" ref="accountMenuRef" style="opacity: 0">
+    <AccountListDropdown
+      v-if="configStore.current_account"
+      ref="accountMenuRef"
+      class="intro-hidden">
       <template #trigger="{ toggle }">
         <span>{{ profileName }}</span>
         <button class="account-switch" tabindex="-1" @click.stop="toggle()">
@@ -64,7 +66,7 @@
       @click="dialogStore.createInstance.visible = true"
       ref="new-instance">
       <AppIcon name="add" :size="22" style="margin-right: 8px"></AppIcon>
-      创建新游戏
+      创建新实例
     </button>
     <button
       class="install-pack"
@@ -281,6 +283,10 @@ defineExpose({
   display: flex;
   align-items: center;
   backdrop-filter: blur(4px);
+
+  .intro-hidden {
+    opacity: 0;
+  }
 
   > .avatar {
     border-radius: 1000px;

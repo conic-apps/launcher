@@ -17,7 +17,7 @@
       </ul>
     </div>
     <div class="column-right">
-      <ScrollView scrollbar-top="44px" scrollbar-bottom="0px">
+      <ScrollView>
         <div class="settings-content">
           <Transition :name="transitionName" mode="out-in">
             <component :is="currentComponent"></component>
@@ -97,20 +97,21 @@ onMounted(async () => {
   const settingItems = Array.from(root.querySelectorAll<HTMLElement>(".setting-item"));
   gsap.set(settingItems, { opacity: 0, scale: 0.9 });
   const intro = gsap.timeline();
-  intro.fromTo(root, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power3.out" });
+  intro.fromTo(root, { opacity: 0 }, { opacity: 1, duration: 0.333, ease: "power3.out" });
   intro.fromTo(
     sidebarItems,
     { opacity: 0, x: -20 },
-    { opacity: 1, x: 0, duration: 0.05, stagger: 0.03, ease: "power3.out" },
+    { opacity: 1, x: 0, duration: 0.33, stagger: 0.03, ease: "power3.out" },
     "<",
   );
   intro.fromTo(
     settingItems,
     { opacity: 0, scale: 0.9 },
-    { opacity: 1, scale: 1, duration: 0.4, stagger: 0.03, ease: "power3.out" },
+    { opacity: 1, scale: 1, duration: 0.33, stagger: 0.03, ease: "power3.out" },
     "<0.03",
   );
 });
+
 function switchComponent(component: Component, index: number) {
   if (activeComponentIndex.value < index) {
     transitionName.value = "slide-up";

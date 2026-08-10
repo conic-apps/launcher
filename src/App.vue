@@ -4,7 +4,7 @@
 
 <template>
   <div class="window" data-tauri-drag-region>
-    <WindowBackground style="position: fixed"></WindowBackground>
+    <WindowBackground style="position: fixed" ref="windowBackground"></WindowBackground>
     <div class="title-bar" data-tauri-drag-region ref="title-bar" style="opacity: 0">
       <div
         class="title-bar-actions title-bar-actions-left"
@@ -48,9 +48,7 @@
           button-type="maximize"
           :lit="windowButtonLit"
           :hover="windowButtonHover"
-          @maximize="
-            appWindow.getCurrentWindow().setFullscreen(!appWindow.getCurrentWindow().isFullscreen())
-          "></WindowButton>
+          @maximize="appWindow.getCurrentWindow().setFullscreen(true)"></WindowButton>
       </div>
       <div
         class="window-buttons-container"
@@ -117,6 +115,7 @@ import gsap from "gsap";
 const config = useConfigStore();
 const navigation = useNavigationStore();
 const titleBarRef = useTemplateRef("title-bar");
+const windowBackgroundRef = useTemplateRef("windowBackground");
 
 loadPalette(
   {
@@ -164,12 +163,25 @@ watch(
 
 onMounted(() => {
   console.log("Frontend loaded");
-  if (titleBarRef.value) {
-    gsap.fromTo(
-      titleBarRef.value,
-      { y: "-100%", opacity: 0 },
-      { y: "0%", opacity: 1, duration: 0.4, ease: "power3.out" },
-    );
+  if (titleBarRef.value && windowBackgroundRef.value) {
+    gsap
+      .timeline()
+      .fromTo(
+        windowBackgroundRef.value.$el,
+        {
+          opacity: 0,
+        },
+        {
+          opacity: 1,
+          duration: 0.8,
+        },
+      )
+      .fromTo(
+        titleBarRef.value,
+        { y: "-100%", opacity: 0 },
+        { y: "0%", opacity: 1, duration: 0.4, ease: "power3.out" },
+        "<",
+      );
   }
 });
 
@@ -193,6 +205,15 @@ if (import.meta.env.PROD) {
 
     if (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA") {
       event.preventDefault();
+    }
+  });
+}
+
+if (import.meta.env.DEV) {
+  document.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "r") {
+      event.preventDefault();
+      location.reload();
     }
   });
 }

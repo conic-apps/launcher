@@ -21,10 +21,23 @@
     <Transition name="game-content">
       <div
         class="game-content-wrapper"
-        v-if="showGameContent"
-        @click="showGameContent = false"
-        :class="{ show: showGameContent }">
-        <Content @click.stop class="game-content-container"></Content>
+        v-if="showGameContent.saves"
+        @click.self="showGameContent.saves = false"
+        :class="{ show: showGameContent.saves }">
+        <div class="game-content-container">
+          <ContentSaves></ContentSaves>
+        </div>
+      </div>
+    </Transition>
+    <Transition name="game-content">
+      <div
+        class="game-content-wrapper"
+        v-if="showGameContent.mods"
+        @click.self="showGameContent.mods = false"
+        :class="{ show: showGameContent.mods }">
+        <div class="game-content-container">
+          <ContentMods></ContentMods>
+        </div>
       </div>
     </Transition>
   </div>
@@ -38,7 +51,8 @@ import { onMounted, useTemplateRef } from "vue";
 import gsap from "gsap";
 import InstanceSetting from "./game/InstanceSetting.vue";
 import { useInstanceSettings } from "./game/useGameView";
-import Content from "./game/Content.vue";
+import ContentSaves from "./game/ContentSaves.vue";
+import ContentMods from "./game/ContentMods.vue";
 import { useShowContent } from "./game/useContent";
 
 const instanceSummary = useTemplateRef("instance-summary");
@@ -138,6 +152,14 @@ onMounted(async () => {
   justify-content: center;
   background: #00000080;
   z-index: 114514;
+
+  .game-content-container {
+    background: var(--ctp-base);
+    width: calc(100% - 150px);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 .game-content-enter-from,

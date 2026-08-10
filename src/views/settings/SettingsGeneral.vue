@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div>
+  <div ref="generalSettings">
     <SettingGroup>
       <SettingItem :title="$t('settings.general.language')" icon="language">
         <BaseDropdownSelect
@@ -75,4 +75,4 @@ import { useConfigStore } from "@/store/config";
 const config = useConfigStore();
 </script>
 
-<style lang="less"></style>
+<style scoped lang="less"></style>

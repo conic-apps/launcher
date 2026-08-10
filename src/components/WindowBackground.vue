@@ -3,9 +3,25 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, watch } from "vue";
+import { onMounted, onBeforeUnmount, watch, useTemplateRef } from "vue";
 import gsap from "gsap";
 import { useConfigStore } from "@/store/config";
+
+function playIntro() {
+  return gsap.timeline().fromTo(
+    wrapperRef.value,
+    {
+      opacity: 0,
+    },
+    {
+      opacity: 1,
+      duration: 0.2,
+      ease: "power3.out",
+    },
+  );
+}
+
+defineExpose({ playIntro });
 
 // ============================================================
 // 可调参数
@@ -61,6 +77,35 @@ const TREE_SHAPE: ReadonlyArray<readonly [number, number, number]> = [
   [-1, 4, 2],
   [0, 4, 2],
   [1, 4, 2],
+  [2, 4, 2],
+  [-2, 4, -2],
+  [2, 4, -2],
+  [-2, 4, 2],
+  [2, 3, 2],
+  [-2, 3, -2],
+  [2, 3, -2],
+  [-2, 3, 2],
+  [-2, 3, -1],
+  [-1, 3, -1],
+  [0, 3, -1],
+  [1, 3, -1],
+  [2, 3, -1],
+  [-2, 3, 0],
+  [-1, 3, 0],
+  [0, 3, 0],
+  [1, 3, 0],
+  [2, 3, 0],
+  [-2, 3, 1],
+  [-1, 3, 1],
+  [0, 3, 1],
+  [1, 3, 1],
+  [2, 3, 1],
+  [-1, 3, -2],
+  [0, 3, -2],
+  [1, 3, -2],
+  [-1, 3, 2],
+  [0, 3, 2],
+  [1, 3, 2],
   // 树叶上层（3x3）
   [-1, 5, -1],
   [0, 5, -1],
@@ -71,6 +116,11 @@ const TREE_SHAPE: ReadonlyArray<readonly [number, number, number]> = [
   [-1, 5, 1],
   [0, 5, 1],
   [1, 5, 1],
+  [0, 6, -1],
+  [-1, 6, 0],
+  [0, 6, 0],
+  [1, 6, 0],
+  [0, 6, 1],
 ];
 
 // 世界方块描边不透明度（0~1，越大越明显）。
@@ -89,7 +139,7 @@ const HILL_AMPLITUDE = 2.2;
 const EYE_HEIGHT = 10.6;
 
 // 鼠标视差（沿用原实现）
-const MAX_OFFSET = 16;
+const MAX_OFFSET = 4;
 const SCALE = 1.08;
 
 // 远景淡出范围（基于与摄像机的 z 距离）：[FADE_START, FADE_END] 内逐步淡出
@@ -265,9 +315,9 @@ const fillIdx = new UintVec(600_000);
 const edgeVerts = new FloatVec(3_000_000);
 
 // 画布 / 几何状态
-const skyCanvasRef = ref<HTMLCanvasElement | null>(null);
-const glCanvasRef = ref<HTMLCanvasElement | null>(null);
-const wrapperRef = ref<HTMLDivElement | null>(null);
+const skyCanvasRef = useTemplateRef("skyCanvasRef");
+const glCanvasRef = useTemplateRef("glCanvasRef");
+const wrapperRef = useTemplateRef("wrapperRef");
 
 let moveX: ((value: number) => void) | undefined;
 let moveY: ((value: number) => void) | undefined;
