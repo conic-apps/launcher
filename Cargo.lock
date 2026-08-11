@@ -692,6 +692,7 @@ dependencies = [
  "java-runtime",
  "launch",
  "log",
+ "modrinth",
  "multiplayer",
  "once_cell",
  "platform",
