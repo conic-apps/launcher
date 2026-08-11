@@ -91,7 +91,10 @@
       </div>
       <div @click="useShowContent().value.mods = true" ref="mods" style="opacity: 0">
         <AppIcon name="extension-puzzle" />
-        <div><span class="type">模组</span><span class="count">1 个</span></div>
+        <div>
+          <span class="type">模组</span
+          ><span class="count">{{ (contentStore.gameContent.mods ?? []).length }} 个</span>
+        </div>
       </div>
       <div
         @click="useShowContent().value.resourcepacks = true"

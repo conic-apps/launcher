@@ -42,8 +42,8 @@
         <BaseSwitch v-model="config.launch.skip_refresh_account"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        :title="$t('settings.game.autoCompleteGameFiles')"
-        :description="$t('settings.game.autoCompleteGameFilesDesc')"
+        title="跳过游戏文件检查"
+        description="启动游戏前启动器将不会尝试补全游戏文件"
         icon="build">
         <BaseSwitch v-model="config.launch.skip_check_files"></BaseSwitch>
       </SettingItem>

@@ -12,7 +12,7 @@ export type SearchedProjects = {
         categories?: string[]
         client_side?: "required" | "optional" | "unsupported" | "unknown"
         server_side?: "required" | "optional" | "unsupported" | "unknown"
-        project_type: "mod" | "modpack" | "resourcepack" | "shader"
+        project_type: string
         downloads: number
         icon_url?: string
         color?: number

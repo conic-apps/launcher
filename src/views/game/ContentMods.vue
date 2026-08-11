@@ -3,23 +3,178 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="content-saves">
-    <div class="title">
-      <AppIcon name="extension-puzzle"></AppIcon>
-      <p>模组列表</p>
-      <div class="select-source">
-        <button><AppIcon name="file-tray-full-outline"></AppIcon></button>
-        <button>
-          <Modrinth fill="var(--ctp-green)" style="width: 24px; padding: 3px"></Modrinth>
-        </button>
-        <button>
-          <CurseForge fill="var(--ctp-peach)" style="width: 24px"></CurseForge>
-        </button>
+  <div class="content-mods">
+    <ScrollView>
+      <div class="title">
+        <AppIcon name="extension-puzzle"></AppIcon>
+        <p>模组列表</p>
+        <!-- FIXME: reverse lavender color, button hover -->
+        <div class="select-source">
+          <button :class="{ active: currentView === 'local' }" @click="currentView = 'local'">
+            <AppIcon name="file-tray-full-outline"></AppIcon>
+          </button>
+          <button :class="{ active: currentView === 'modrinth' }" @click="currentView = 'modrinth'">
+            <Modrinth fill="var(--ctp-green)" style="width: 24px; padding: 3px"></Modrinth>
+          </button>
+          <button
+            :class="{ active: currentView === 'curseforge' }"
+            @click="currentView = 'curseforge'">
+            <CurseForge fill="var(--ctp-peach)" style="width: 24px"></CurseForge>
+          </button>
+        </div>
       </div>
-    </div>
-    <div class="save-list-wrapper">
-      <div class="saves-list"></div>
-    </div>
+      <div class="mods-list-wrapper" v-if="currentView === 'local'">
+        <div class="mods-list">
+          <div
+            v-for="(mod, index) in mods"
+            class="content"
+            :class="{ 'content-disabled': mod.disabled }"
+            :key="index">
+            <img v-if="mod.icon" :src="mod.icon" alt="mod icon" width="72px" height="100%" />
+            <img
+              v-else
+              src="@/assets/images/Unknown_server.webp"
+              alt="world icon"
+              width="72px"
+              height="100%" />
+            <div class="content-info">
+              <p class="name">
+                <span v-if="mod.disabled">[已禁用] </span>
+                <span>{{ mod.name }}</span>
+              </p>
+              <p class="authors">
+                by {{ mod.authors.map((authorInfo) => authorInfo.name).join(",") }}
+              </p>
+              <p class="mod-description">{{ mod.description }}</p>
+              <span
+                class="loader-type"
+                v-if="mod.loader !== ModLoader.Unknown"
+                :class="{
+                  fabric: mod.loader === ModLoader.Fabric,
+                  forge: mod.loader === ModLoader.Forge,
+                  quilt: mod.loader === ModLoader.Quilt,
+                  neoforge: mod.loader === ModLoader.NeoForge,
+                  liteloader: mod.loader === ModLoader.LiteLoader,
+                }"
+                >{{ mod.loader.charAt(0).toUpperCase() + mod.loader.slice(1) }}</span
+              >
+              <span class="version" v-if="mod.version">{{ mod.version }}</span>
+            </div>
+            <div class="actions">
+              <button class="open-folder">
+                <AppIcon name="folder" :size="14"></AppIcon>
+              </button>
+              <button class="delete">
+                <AppIcon name="trash" :size="14"></AppIcon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mods-list-wrapper" v-if="currentView === 'modrinth'">
+        <div v-if="modrinthSearchResult === null">Searching</div>
+        <div class="mods-list" v-else>
+          <div v-for="(mod, index) in modrinthSearchResult.hits" class="content" :key="index">
+            <img
+              v-if="mod.icon_url"
+              :src="mod.icon_url"
+              alt="mod icon"
+              width="72px"
+              height="100%" />
+            <img
+              v-else
+              src="@/assets/images/Unknown_server.webp"
+              alt="world icon"
+              width="72px"
+              height="100%" />
+            <div class="content-info">
+              <p class="name">
+                <span>{{ mod.title }}</span>
+              </p>
+              <p class="authors">by {{ mod.author }}</p>
+              <p class="mod-description">{{ mod.description }}</p>
+              <span
+                class="loader-type fabric"
+                v-if="mod.categories && mod.categories.find((category) => category === 'fabric')"
+                >Fabric</span
+              >
+              <span
+                class="loader-type forge"
+                v-if="mod.categories && mod.categories.find((category) => category === 'forge')"
+                >Forge</span
+              >
+              <span
+                class="loader-type quilt"
+                v-if="mod.categories && mod.categories.find((category) => category === 'quilt')"
+                >Quilt</span
+              >
+              <span
+                class="loader-type neoforge"
+                v-if="mod.categories && mod.categories.find((category) => category === 'neoforge')"
+                >Neoforge</span
+              >
+              <!-- <span class="version" v-if="mod.version">{{ mod.version }}</span> -->
+            </div>
+            <div class="actions">
+              <button class="open-folder">
+                <AppIcon name="folder" :size="14"></AppIcon>
+              </button>
+              <button class="delete">
+                <AppIcon name="trash" :size="14"></AppIcon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mods-list-wrapper" v-if="currentView === 'curseforge'">
+        <div v-if="curseForgeSearchResult === null || !curseForgeSearchResult.data">Searching</div>
+        <div class="mods-list" v-else>
+          <div v-for="(mod, index) in curseForgeSearchResult.data" class="content" :key="index">
+            <img
+              v-if="mod.logo.url"
+              :src="mod.logo.url"
+              alt="mod icon"
+              width="72px"
+              height="100%" />
+            <img
+              v-else
+              src="@/assets/images/Unknown_server.webp"
+              alt="world icon"
+              width="72px"
+              height="100%" />
+            <div class="content-info">
+              <p class="name">
+                <span>{{ mod.name }}</span>
+              </p>
+              <p class="authors">
+                by {{ mod.authors.map((authorInfo) => authorInfo.name).join(",") }}
+              </p>
+              <p class="mod-description">{{ mod.summary }}</p>
+              <!-- <span -->
+              <!--   class="loader-type" -->
+              <!--   v-if="mod.loader !== ModLoader.Unknown" -->
+              <!--   :class="{ -->
+              <!--     fabric: mod.loader === ModLoader.Fabric, -->
+              <!--     forge: mod.loader === ModLoader.Forge, -->
+              <!--     quilt: mod.loader === ModLoader.Quilt, -->
+              <!--     neoforge: mod.loader === ModLoader.NeoForge, -->
+              <!--     liteloader: mod.loader === ModLoader.LiteLoader, -->
+              <!--   }" -->
+              <!--   >{{ mod.loader.charAt(0).toUpperCase() + mod.loader.slice(1) }}</span -->
+              <!-- > -->
+            </div>
+            <div class="actions">
+              <button class="open-folder">
+                <AppIcon name="folder" :size="14"></AppIcon>
+              </button>
+              <button class="delete">
+                <AppIcon name="trash" :size="14"></AppIcon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ScrollView>
   </div>
 </template>
 
@@ -27,15 +182,63 @@
 import Modrinth from "@/assets/images/modrinth.svg";
 import CurseForge from "@/assets/images/curseforge.svg";
 import AppIcon from "@/components/AppIcon.vue";
+import { computed, ref, watch } from "vue";
+import { useGameContentStore } from "@/store/content";
+import { ModLoader } from "@conic/content";
+import {
+  SearchedProjects as ModrinthSearchedProjects,
+  searchProjects as searchModrinthProjects,
+} from "@conic/modrinth";
+import { useInstanceStore } from "@/store/instance";
+import {
+  ApiResponse as CurseForgeApiResponse,
+  Mod as CurseForgeMod,
+  searchMods as searchCurseForgeMods,
+} from "@conic/curseforge";
+import ScrollView from "@/components/ScrollView.vue";
+
+const gameContentStore = useGameContentStore();
+const mods = computed(() => gameContentStore.gameContent.mods);
+
+const currentView = ref("local" as "local" | "modrinth" | "curseforge");
+
+const instanceStore = useInstanceStore();
+const modrinthSearchResult = ref(null as null | ModrinthSearchedProjects);
+const curseForgeSearchResult = ref(null as null | CurseForgeApiResponse<CurseForgeMod[]>);
+watch(currentView, async (value) => {
+  if (
+    !instanceStore.currentInstance.config.runtime.mod_loader_type ||
+    !instanceStore.currentInstance.config.runtime.mod_loader_version
+  ) {
+    return;
+  }
+  if (value === "modrinth" && modrinthSearchResult.value === null) {
+    try {
+      modrinthSearchResult.value = await searchModrinthProjects({
+        facets: `[["project_type:mod"],["categories:${instanceStore.currentInstance.config.runtime.mod_loader_type.toLowerCase()}"]]`,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  if (value === "curseforge" && curseForgeSearchResult.value === null) {
+    try {
+      curseForgeSearchResult.value = await searchCurseForgeMods({});
+    } catch (error) {
+      console.error(error);
+    }
+  }
+});
 </script>
 
 <style lang="less" scoped>
-.content-saves {
+.content-mods {
   width: 100%;
   height: 100%;
   overflow-y: auto;
   flex: 1;
-  .save-list-wrapper {
+  position: relative;
+  .mods-list-wrapper {
     padding: 16px 32px 32px 32px;
   }
   .title {
@@ -70,10 +273,13 @@ import AppIcon from "@/components/AppIcon.vue";
       button:last-child {
         border-right: none;
       }
+      button.active {
+        background: var(--ctp-lavender);
+      }
     }
   }
 }
-.saves-list {
+.mods-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   justify-content: center;
@@ -95,36 +301,61 @@ import AppIcon from "@/components/AppIcon.vue";
       background: var(--ctp-surface0);
       padding: 8px 12px;
       transform: translateX(-8px);
-      width: calc(100% - 64px);
+      width: calc(100% - 72px);
       border-radius: 8px;
       transition: all 200ms ease;
       p.name {
         font-size: 14px;
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
       }
-      p.folder-name {
+      p.authors {
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 11px;
+        opacity: 0.9;
+        margin: 2px 0;
+      }
+      p.mod-description {
         font-size: 10px;
-        margin: 4px 0;
+        margin: 2px 0;
         opacity: 0.6;
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
       }
-      span.game-mode,
-      span.command-enabled {
+      span.loader-type,
+      span.version {
         font-size: 9px;
         padding: 2px 6px;
+        margin-right: 4px;
         border-radius: 100px;
         font-weight: 500;
         color: var(--ctp-text-inverse);
       }
-      span.game-mode.survival {
-        background: var(--ctp-green);
+      span.loader-type.fabric {
+        background: var(--ctp-yellow);
       }
-      span.game-mode.creative {
-        background: var(--ctp-mauve);
+      span.loader-type.forge {
+        background: var(--ctp-blue);
       }
-      span.game-mode.adventure {
+      span.loader-type.neoforge {
         background: var(--ctp-peach);
       }
-      span.game-mode.spectator {
-        background: var(--ctp-blue);
+      span.loader-type.quilt {
+        background: var(--ctp-mauve);
+      }
+      span.loader-type.liteloader {
+        background: var(--ctp-yellow);
+      }
+      span.version {
+        border: 1px solid var(--ctp-sky);
+        color: var(--ctp-text);
       }
       span.command-enabled {
         background: var(--ctp-yellow);
@@ -177,9 +408,19 @@ import AppIcon from "@/components/AppIcon.vue";
       }
     }
   }
+  .content.content-disabled {
+    opacity: 0.7;
+    .name {
+      text-decoration: line-through;
+    }
+  }
   .content:hover {
     .content-info {
-      width: calc(100% - 80px);
+      width: calc(100% - 88px);
+      background: var(--ctp-surface1);
+      transition:
+        background 20ms ease,
+        width 200ms ease;
     }
     .actions button {
       opacity: 0.8;
@@ -190,9 +431,6 @@ import AppIcon from "@/components/AppIcon.vue";
     }
     .actions button:active {
       opacity: 0.9;
-    }
-    img {
-      opacity: 0.4;
     }
     .download-button button {
       opacity: 1;
