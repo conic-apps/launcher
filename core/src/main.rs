@@ -35,6 +35,7 @@ fn main() {
         .plugin(install::init())
         .plugin(launch::init())
         .plugin(folder::init())
+        .plugin(modrinth::init())
         .plugin(platform::init())
         .plugin(content::init())
         .plugin(curseforge::init())

@@ -7,6 +7,7 @@ import {
     Level,
     listScreenshots,
     Mod,
+    parseMods,
     Resourcepack,
 } from "@conic/content"
 
@@ -37,9 +38,11 @@ export const useGameContentStore = defineStore("gameContent", () => {
             const loadSaves = async () => {
                 gameContent.value.saves = await getAllLevels(instance.id)
             }
-            // const loadMods = async () => {
-            //     gameContent.value.mods = await parseMods(instance.id)
-            // }
+            const loadMods = async () => {
+                gameContent.value.mods = (await parseMods(instance.id)).filter(
+                    (mod) => !mod.embedded,
+                )
+            }
             const loadResourcepacks = async () => {
                 gameContent.value.resourcepacks = await getAllResourcepacks(instance.id)
             }
@@ -48,9 +51,11 @@ export const useGameContentStore = defineStore("gameContent", () => {
             }
             const results = await Promise.allSettled([
                 loadSaves(),
+                loadMods(),
                 loadResourcepacks(),
                 loadScreenshots(),
             ])
+            console.log(gameContent.value.mods)
             if (!results.find((result) => result.status === "rejected")) {
                 const timestamp = Date.now()
                 gameContentCache[instance.id] = [gameContent.value, timestamp]
