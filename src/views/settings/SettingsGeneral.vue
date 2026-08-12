@@ -45,13 +45,13 @@
         icon="branch">
         <BaseDropdownSelect
           :display-name="[
-            $t('settings.general.release'),
-            $t('settings.general.snapshot'),
-            $t('settings.general.weekly'),
+            $t('settings.general.stable'),
+            $t('settings.general.beta'),
+            $t('settings.general.nightly'),
           ]"
-          :options="['Release', 'Snapshot', 'Weekly']"
+          :options="['stable', 'beta', 'nightly']"
           v-model="config.update_channel"
-          :default="2"></BaseDropdownSelect>
+          :default="0"></BaseDropdownSelect>
       </SettingItem>
       <SettingItem
         :title="$t('settings.general.autoUpdate')"
@@ -59,8 +59,11 @@
         icon="time">
         <BaseSwitch v-model="config.auto_update"></BaseSwitch>
       </SettingItem>
-      <SettingItem :title="$t('settings.general.checkUpdate')" icon="circle-up" :navigable="true">
-      </SettingItem>
+      <SettingItem
+        :title="$t('settings.general.checkUpdate')"
+        icon="circle-up"
+        :navigable="true"
+        @click="checkUpdate"></SettingItem>
     </SettingGroup>
   </div>
 </template>
@@ -71,8 +74,14 @@ import BaseSwitch from "@/components/BaseSwitch.vue";
 import BaseDropdownSelect from "@/components/BaseDropdownSelect.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
+import { useDialogStore } from "@/store/dialog";
 
 const config = useConfigStore();
+const dialogStore = useDialogStore();
+
+function checkUpdate() {
+  dialogStore.updateApp.visible = true;
+}
 </script>
 
 <style scoped lang="less"></style>

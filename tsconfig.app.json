@@ -26,7 +26,8 @@
             "@conic/content": ["./crates/content"],
             "@conic/curseforge": ["./crates/curseforge"],
             "@conic/statistics": ["./crates/statistics"],
-            "@conic/multiplayer": ["./crates/multiplayer"]
+            "@conic/multiplayer": ["./crates/multiplayer"],
+            "@conic/update": ["./crates/update"]
         }
     },
     "lib": ["esnext", "dom"]

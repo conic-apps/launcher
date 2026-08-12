@@ -9,6 +9,7 @@ import { Instance } from "@conic/instance"
 
 export const useDialogStore = defineStore("dialog", () => {
     const updateReminder = ref({ visible: false })
+    const updateApp = ref({ visible: false })
     const accountManager = ref({ visible: false })
     const createInstance = ref({ visible: false })
     const confirmQuitApp = ref({ visible: false })
@@ -64,6 +65,7 @@ export const useDialogStore = defineStore("dialog", () => {
     })
     return {
         updateReminder,
+        updateApp,
         accountManager,
         createInstance,
         confirmDeleteInstance,

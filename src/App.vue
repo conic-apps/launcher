@@ -77,6 +77,7 @@
         <button class="title-bar-action-btn" @click="navigation.navigate('settings')">
           <AppIcon name="musical-notes" :size="18" />
         </button>
+        <TitleBarUpdateIndicator />
         <button class="title-bar-action-btn" @click="navigation.navigate('settings')">
           <AppIcon name="settings" :size="18" />
         </button>
@@ -94,6 +95,7 @@
 <script setup lang="ts">
 import WindowButton from "./components/WindowButton.vue";
 import SearchBar from "./components/BaseSearchBar.vue";
+import TitleBarUpdateIndicator from "./components/TitleBarUpdateIndicator.vue";
 import GameView from "./views/GameView.vue";
 import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
@@ -107,6 +109,7 @@ import { window as appWindow } from "@tauri-apps/api";
 import { Event } from "@tauri-apps/api/event";
 import WindowBackground from "./components/WindowBackground.vue";
 import { useNavigationStore } from "./store/navigation";
+import { useUpdateStore } from "./store/update";
 import { getSystemLanguage } from "@conic/config";
 import LaunchView from "./views/LaunchView.vue";
 import { useDialogStore } from "./store/dialog";
@@ -183,9 +186,20 @@ onMounted(() => {
         "<",
       );
   }
+  if (config.auto_update) {
+    void checkForUpdateAtStartup();
+  }
 });
 
 const dialogStore = useDialogStore();
+const updateStore = useUpdateStore();
+
+async function checkForUpdateAtStartup() {
+  await updateStore.check(config.update_channel);
+  if (updateStore.updateInfo) {
+    dialogStore.updateApp.visible = true;
+  }
+}
 
 function closeWindow() {
   if (navigation.currentPage === "launch") {

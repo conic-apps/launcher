@@ -41,6 +41,8 @@ fn main() {
         .plugin(curseforge::init())
         .plugin(java_runtime::init())
         .plugin(statistics::init())
+        .plugin(update::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![open_path])
         .setup(tauri_app_setup)
         .build(tauri::generate_context!())

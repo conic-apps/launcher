@@ -1,0 +1,22 @@
+[package]
+name = "update"
+version = "0.0.0"
+authors = ["OakChaser"]
+description = "Launcher self-update utilities"
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+config.workspace = true
+
+log.workspace = true
+serde.workspace = true
+serde_with.workspace = true
+tauri.workspace = true
+tauri-plugin-updater = "2"
+thiserror.workspace = true
+tokio.workspace = true
+url.workspace = true
