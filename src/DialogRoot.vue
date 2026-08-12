@@ -4,6 +4,7 @@
 
 <template>
   <UpdateReminder></UpdateReminder>
+  <UpdateApp></UpdateApp>
   <CreateInstance></CreateInstance>
   <ConfirmDeleteInstance></ConfirmDeleteInstance>
   <ConfirmDeleteAccount></ConfirmDeleteAccount>
@@ -16,6 +17,7 @@
 
 <script setup lang="ts">
 import UpdateReminder from "./dialogs/UpdateReminder.vue";
+import UpdateApp from "./dialogs/UpdateApp.vue";
 import CreateInstance from "./dialogs/CreateInstance.vue";
 import ConfirmDeleteInstance from "./dialogs/ConfirmDeleteInstance.vue";
 import ConfirmDeleteAccount from "./dialogs/ConfirmDeleteAccount.vue";

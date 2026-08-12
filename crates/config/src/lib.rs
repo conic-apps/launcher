@@ -103,15 +103,34 @@ pub fn save_config(config: Config) -> Result<()> {
 }
 
 /// Represents the update channel selection.
+///
+/// The serialized values (`stable`, `beta`, `nightly`) match the update server
+/// channel slugs. Old configuration files that still use `Release`, `Snapshot`
+/// or `Weekly` are migrated transparently via serde aliases.
 #[derive(Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
 pub enum UpdateChannel {
-    /// Weekly builds, potentially unstable.
-    Weekly,
+    /// Nightly builds, potentially unstable.
+    #[serde(alias = "Weekly")]
+    Nightly,
     /// Official release builds.
     #[default]
-    Release,
-    /// Snapshot builds for testing.
-    Snapshot,
+    #[serde(alias = "Release")]
+    Stable,
+    /// Beta builds for testing.
+    #[serde(alias = "Snapshot")]
+    Beta,
+}
+
+impl UpdateChannel {
+    /// The channel slug used by the update server URLs.
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            UpdateChannel::Nightly => "nightly",
+            UpdateChannel::Stable => "stable",
+            UpdateChannel::Beta => "beta",
+        }
+    }
 }
 
 /// Configuration options related to accessibility.

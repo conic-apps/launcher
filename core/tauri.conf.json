@@ -59,7 +59,7 @@
         "updater": {
             "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE3OENDNkQwMkM3RjUyREYKUldUZlVuOHMwTWFNcDBDU3pCaFFnRlEyL3ZWSHR2bm1wQzVYZTR4a1YzVUF4OTJmRFE3bWJqaXUK",
             "endpoints": [
-                "https://api.conicmc.app/latest.json"
+                "https://brkdr.dpdns.org/v1/stable/{{target}}/{{arch}}/{{current_version}}"
             ]
         },
         "deep-link": {
