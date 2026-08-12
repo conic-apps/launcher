@@ -709,6 +709,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
+ "update",
  "version",
 ]
 
@@ -5425,6 +5426,21 @@ name = "untrusted"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
+
+[[package]]
+name = "update"
+version = "0.0.0"
+dependencies = [
+ "config",
+ "log",
+ "serde",
+ "serde_with",
+ "tauri",
+ "tauri-plugin-updater",
+ "thiserror 2.0.19",
+ "tokio",
+ "url",
+]
 
 [[package]]
 name = "url"

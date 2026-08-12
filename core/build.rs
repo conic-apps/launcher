@@ -155,6 +155,14 @@ fn main() {
             InlinedPlugin::new().commands(&["cmd_get_statistics", "cmd_get_statistics_by_profile"]),
         )
         .plugin(
+            "update",
+            InlinedPlugin::new().commands(&[
+                "cmd_check_update",
+                "cmd_download_and_install_update",
+                "cmd_cancel_update",
+            ]),
+        )
+        .plugin(
             "beat",
             InlinedPlugin::new().commands(&[
                 "cmd_spawn_download_library_task",

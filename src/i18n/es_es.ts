@@ -75,6 +75,20 @@ export default {
             description: "",
         },
     },
+    update: {
+        title: "Actualizar el lanzador",
+        checking: "Buscando actualizaciones...",
+        newVersion: "Hay una nueva versión disponible: {version}",
+        upToDate: "Ya tienes la última versión",
+        downloading: "Descargando la actualización...",
+        downloadedOf: "{downloaded} / {total}",
+        installing: "Instalando y reiniciando el lanzador...",
+        later: "Más tarde",
+        install: "Actualizar ahora",
+        cancel: "Cancelar",
+        recheck: "Volver a comprobar",
+        close: "Cerrar",
+    },
     settings: {
         general: {
             sidebar: "General",
@@ -82,9 +96,9 @@ export default {
             languageDesc: "Se aplicará completamente después de recargar la página",
             updateChannel: "Canal de actualización",
             updateChannelDesc: "Cambiar la frecuencia de actualización",
-            weekly: "Compilación semanal",
-            snapshot: "Snapshot",
-            release: "Lanzamiento",
+            stable: "Lanzamiento",
+            beta: "Snapshot",
+            nightly: "Compilación nocturna",
             autoUpdate: "Actualización automática",
             autoUpdateDesc:
                 "Descargar e instalar actualizaciones automáticamente cuando estén disponibles",

@@ -6,9 +6,9 @@ import { Account } from "@conic/account"
 import { invoke } from "@tauri-apps/api/core"
 
 export enum UpdateChannel {
-    Weekly = "Weekly",
-    Snapshot = "Snapshot",
-    Release = "Release",
+    Nightly = "nightly",
+    Stable = "stable",
+    Beta = "beta",
 }
 export enum Palette {
     Mocha = "Mocha",
