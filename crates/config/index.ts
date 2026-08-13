@@ -46,6 +46,11 @@ export type Config = {
         }
         use_system_proxy: boolean
     }
+    music: {
+        enabled: boolean
+        resume_on_startup: boolean
+        show_visualizer: boolean
+    }
     launch: {
         min_memory: number
         max_memory: number

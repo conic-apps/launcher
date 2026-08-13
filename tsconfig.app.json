@@ -20,6 +20,7 @@
             "@conic/java-runtime": ["./crates/java-runtime"],
             "@conic/instance": ["./crates/instance"],
             "@conic/modrinth": ["./crates/modrinth"],
+            "@conic/music": ["./crates/music"],
             "@conic/launch": ["./crates/launch"],
             "@conic/folder": ["./crates/folder"],
             "@conic/platform": ["./crates/platform"],

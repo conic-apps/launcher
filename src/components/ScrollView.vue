@@ -29,6 +29,8 @@
 import { nextTick, onMounted, onUnmounted, ref, useTemplateRef } from "vue";
 import Lenis from "lenis";
 
+const emit = defineEmits<{ scroll: [y: number] }>();
+
 withDefaults(
   defineProps<{
     scrollbarTop?: string;
@@ -74,6 +76,7 @@ function ensureLenis() {
 
   lenis.on("scroll", (l: Lenis) => {
     updateScrollbar(l.scroll);
+    emit("scroll", l.scroll);
   });
 }
 
@@ -190,6 +193,10 @@ function scrollTo(target: number, smooth: boolean) {
   });
 }
 
+function getWrapper() {
+  return wrapperRef.value;
+}
+
 onMounted(async () => {
   await reflow();
 
@@ -206,7 +213,7 @@ onUnmounted(() => {
   lenis?.destroy();
 });
 
-defineExpose({ reflow, scrollTo });
+defineExpose({ reflow, scrollTo, getWrapper });
 </script>
 
 <style lang="less" scoped>

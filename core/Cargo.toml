@@ -30,6 +30,7 @@ curseforge.workspace = true
 statistics.workspace = true
 download.workspace = true
 modrinth.workspace = true
+music.workspace = true
 update.workspace = true
 
 once_cell.workspace = true

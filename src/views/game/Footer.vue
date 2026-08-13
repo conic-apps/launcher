@@ -4,6 +4,12 @@
 
 <template>
   <div class="game-view-footer" ref="game-view-footer" data-tauri-drag-region>
+    <BeatMap
+      v-if="configStore.music.show_visualizer"
+      class="footer-visualizer"
+      fill
+      transparent
+      style="opacity: 0.3"></BeatMap>
     <AccountAvatar
       v-if="configStore.current_account"
       ref="avatar"
@@ -90,6 +96,7 @@
 import AccountAvatar from "@/components/AccountAvatar.vue";
 import AccountListDropdown from "./AccountListDropdown.vue";
 import AppIcon from "@/components/AppIcon.vue";
+import BeatMap from "@/components/BeatMap.vue";
 import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
@@ -289,6 +296,17 @@ defineExpose({
   display: flex;
   align-items: center;
   backdrop-filter: blur(4px);
+
+  > :not(.footer-visualizer) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-visualizer {
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+  }
 
   .intro-hidden {
     opacity: 0;
