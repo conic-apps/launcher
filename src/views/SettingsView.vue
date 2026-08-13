@@ -107,7 +107,14 @@ onMounted(async () => {
   intro.fromTo(
     settingItems,
     { opacity: 0, scale: 0.9 },
-    { opacity: 1, scale: 1, duration: 0.33, stagger: 0.03, ease: "power3.out" },
+    {
+      opacity: 1,
+      scale: 1,
+      duration: 0.33,
+      stagger: 0.03,
+      ease: "power3.out",
+      clearProps: "transform",
+    },
     "<0.03",
   );
 });
