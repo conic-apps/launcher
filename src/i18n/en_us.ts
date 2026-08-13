@@ -193,6 +193,19 @@ export default {
             },
         },
     },
+    music: {
+        play: "Play",
+        pause: "Pause",
+        previous: "Previous",
+        next: "Next",
+        shuffle: "Shuffle",
+        repeat: "Repeat",
+        playlist: "Playlist",
+        openFolder: "Open music folder",
+        progress: "Playback progress",
+        noMusic: "No music",
+        playlistEmpty: "No music found. Place audio files in the music folder.",
+    },
     update: {
         title: "Update Launcher",
         checking: "Checking for updates...",
@@ -306,6 +319,18 @@ export default {
             mirrorServerDesc: "Download game files from mirror server.",
             proxy: "Proxy",
             useSystemProxy: "Use System Proxy (Takes effect after restart application)",
+        },
+        audio: {
+            sidebar: "Music",
+            enableMusic: "Background Music",
+            enableMusicDesc: "Play background music in the launcher.",
+            resumeOnStartup: "Resume on Startup",
+            resumeOnStartupDesc:
+                "Continue playing the last track and its position when the app starts.",
+            showVisualizer: "Audio Visualizer",
+            showVisualizerDesc: "Show the audio visualizer in the game view footer.",
+            openFolder: "Open Music Folder",
+            openFolderDesc: "Place the music you want to play in this folder.",
         },
         accessibility: {
             sidebar: "Easy to Use",

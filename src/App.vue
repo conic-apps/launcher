@@ -74,7 +74,10 @@
       <div
         class="title-bar-actions"
         :class="{ 'is-macos': isMacOS(), disabled: navigation.currentPage === 'settings' }">
-        <button class="title-bar-action-btn" @click="navigation.navigate('settings')">
+        <button
+          v-if="config.music.enabled"
+          class="title-bar-action-btn"
+          @click="music.togglePanel()">
           <AppIcon name="musical-notes" :size="18" />
         </button>
         <TitleBarUpdateIndicator />
@@ -89,6 +92,7 @@
       <!-- </Transition> -->
     </main>
     <DialogRoot></DialogRoot>
+    <MusicPlayer></MusicPlayer>
   </div>
 </template>
 
@@ -101,6 +105,7 @@ import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
 import AccountsView from "./views/AccountsView.vue";
 import DialogRoot from "./DialogRoot.vue";
+import MusicPlayer from "./components/MusicPlayer.vue";
 import { computed, markRaw, onMounted, reactive, ref, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfigStore } from "./store/config";
@@ -113,10 +118,12 @@ import { useUpdateStore } from "./store/update";
 import { getSystemLanguage } from "@conic/config";
 import LaunchView from "./views/LaunchView.vue";
 import { useDialogStore } from "./store/dialog";
+import { useMusicStore } from "./store/music";
 import gsap from "gsap";
 
 const config = useConfigStore();
 const navigation = useNavigationStore();
+const music = useMusicStore();
 const titleBarRef = useTemplateRef("title-bar");
 const windowBackgroundRef = useTemplateRef("windowBackground");
 

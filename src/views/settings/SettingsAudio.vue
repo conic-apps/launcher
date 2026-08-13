@@ -4,11 +4,28 @@
 
 <template>
   <div>
-    <SettingGroup title="背景音乐">
-      <SettingItem title="启用背景音乐" icon="musical-notes"><BaseSwitch></BaseSwitch></SettingItem>
+    <SettingGroup :title="$t('settings.audio.sidebar')">
       <SettingItem
-        title="打开音乐文件夹"
-        description="将你想要播放的背景音乐添加到此文件夹"
+        :title="$t('settings.audio.enableMusic')"
+        :description="$t('settings.audio.enableMusicDesc')"
+        icon="musical-notes">
+        <BaseSwitch v-model="config.music.enabled"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
+        :title="$t('settings.audio.resumeOnStartup')"
+        :description="$t('settings.audio.resumeOnStartupDesc')"
+        icon="play-circle-outline">
+        <BaseSwitch v-model="config.music.resume_on_startup"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
+        :title="$t('settings.audio.showVisualizer')"
+        :description="$t('settings.audio.showVisualizerDesc')"
+        icon="musical-notes">
+        <BaseSwitch v-model="config.music.show_visualizer"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
+        :title="$t('settings.audio.openFolder')"
+        :description="$t('settings.audio.openFolderDesc')"
         icon="music-folder"
         :navigable="true"
         @click="openMusicFolder"></SettingItem>
@@ -20,11 +37,15 @@
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import BaseSwitch from "@/components/BaseSwitch.vue";
-import { getInstanceRoot } from "@conic/folder";
+import { useConfigStore } from "@/store/config";
+import { getDataLocation } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
 
-async function openMusicFolder(instanceId: string) {
-  invoke("open_path", { path: await getInstanceRoot(instanceId) });
+const config = useConfigStore();
+
+async function openMusicFolder() {
+  const dataLocation = await getDataLocation();
+  invoke("open_path", { path: dataLocation.music });
 }
 </script>
 

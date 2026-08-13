@@ -36,6 +36,7 @@ fn main() {
         .plugin(launch::init())
         .plugin(folder::init())
         .plugin(modrinth::init())
+        .plugin(music::init())
         .plugin(platform::init())
         .plugin(content::init())
         .plugin(curseforge::init())

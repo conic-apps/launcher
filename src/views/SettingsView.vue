@@ -7,8 +7,8 @@
     <div class="column-left">
       <ul class="settings-menu">
         <li
-          @click="switchComponent(item.component, index)"
-          :class="{ active: activeComponentIndex == index }"
+          @click="scrollToSection(index)"
+          :class="{ active: activeSection == index }"
           v-for="(item, index) in components"
           :key="index"
           style="opacity: 0">
@@ -17,11 +17,12 @@
       </ul>
     </div>
     <div class="column-right">
-      <ScrollView>
+      <ScrollView ref="scrollViewRef" @scroll="onScroll">
         <div class="settings-content">
-          <Transition :name="transitionName" mode="out-in">
-            <component :is="currentComponent"></component>
-          </Transition>
+          <section v-for="(item, index) in components" :key="index" class="settings-section">
+            <h2 class="settings-section-title">{{ $t(item.name) }}</h2>
+            <component :is="item.component"></component>
+          </section>
         </div>
       </ScrollView>
     </div>
@@ -29,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Component, markRaw, nextTick, onMounted, ref, shallowRef, useTemplateRef } from "vue";
+import { type Component, markRaw, nextTick, onMounted, ref, useTemplateRef } from "vue";
 import GeneralSettings from "./settings/SettingsGeneral.vue";
 import gsap from "gsap";
 import GameSettings from "./settings/SettingsGame.vue";
@@ -64,7 +65,7 @@ const components = ref<{ name: string; icon: string; component: Component }[]>([
     component: markRaw(AppearanceSettings),
   },
   {
-    name: "音乐与音效",
+    name: "settings.audio.sidebar",
     icon: "musical-notes",
     component: markRaw(AudioSettings),
   },
@@ -84,15 +85,16 @@ const components = ref<{ name: string; icon: string; component: Component }[]>([
     component: markRaw(AboutSettings),
   },
 ]);
-const currentComponent = shallowRef(components.value[0].component);
-const activeComponentIndex = ref(0);
-const transitionName = ref("slide-up");
+const activeSection = ref(0);
 const rootRef = useTemplateRef("root");
+const scrollViewRef = useTemplateRef("scrollViewRef");
+const sectionElements: HTMLElement[] = [];
 
 onMounted(async () => {
   await nextTick();
   const root = rootRef.value;
   if (!root) return;
+  sectionElements.push(...Array.from(root.querySelectorAll<HTMLElement>(".settings-section")));
   const sidebarItems = Array.from(root.querySelectorAll<HTMLElement>(".settings-menu > li"));
   const settingItems = Array.from(root.querySelectorAll<HTMLElement>(".setting-item"));
   gsap.set(settingItems, { opacity: 0, scale: 0.9 });
@@ -119,14 +121,33 @@ onMounted(async () => {
   );
 });
 
-function switchComponent(component: Component, index: number) {
-  if (activeComponentIndex.value < index) {
-    transitionName.value = "slide-up";
-  } else {
-    transitionName.value = "slide-down";
+function scrollToSection(index: number) {
+  const scrollView = scrollViewRef.value;
+  const section = sectionElements[index];
+  const wrapper = scrollView?.getWrapper();
+  if (!scrollView || !section || !wrapper) return;
+  const target =
+    wrapper.scrollTop +
+    section.getBoundingClientRect().top -
+    wrapper.getBoundingClientRect().top -
+    16;
+  scrollView.scrollTo(target, true);
+}
+
+function onScroll() {
+  const wrapper = scrollViewRef.value?.getWrapper();
+  if (!wrapper || sectionElements.length === 0) return;
+  const wrapperTop = wrapper.getBoundingClientRect().top;
+  let active = 0;
+  for (let i = 0; i < sectionElements.length; i++) {
+    if (sectionElements[i].getBoundingClientRect().top - wrapperTop <= 100) {
+      active = i;
+    }
   }
-  currentComponent.value = component;
-  activeComponentIndex.value = index;
+  if (wrapper.scrollTop + wrapper.clientHeight >= wrapper.scrollHeight - 1) {
+    active = sectionElements.length - 1;
+  }
+  activeSection.value = active;
 }
 </script>
 
@@ -154,6 +175,21 @@ function switchComponent(component: Component, index: number) {
   .settings-content {
     padding: 24px 24px 24px 0;
     padding-left: 16px;
+  }
+
+  .settings-section {
+    margin-bottom: 24px;
+  }
+
+  .settings-section-title {
+    margin: 0 0 10px 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ctp-text);
+  }
+
+  .settings-section:last-child {
+    margin-bottom: 0;
   }
 
   .settings-menu {
@@ -192,28 +228,5 @@ function switchComponent(component: Component, index: number) {
       height: 22px;
     }
   }
-}
-.custom-slide-bottom-leave-active {
-  transition: all 0.3s cubic-bezier(0.75, 0, 1, 0.2);
-}
-
-.custom-slide-bottom-enter-active {
-  transition: all 0.3s cubic-bezier(0, 0.75, 0.2, 1);
-}
-
-.custom-slide-bottom-leave-from {
-  transform: translate(0, 0);
-}
-
-.custom-slide-bottom-leave-to {
-  transform: translate(0, 70px);
-}
-
-.custom-slide-bottom-enter-from {
-  transform: translate(0, 70px);
-}
-
-.custom-slide-bottom-enter-to {
-  transform: translate(0, 0);
 }
 </style>

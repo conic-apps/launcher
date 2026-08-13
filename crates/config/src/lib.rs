@@ -18,6 +18,7 @@ use tauri::{
 pub mod download;
 pub mod error;
 pub mod launch;
+pub mod music;
 
 use error::*;
 
@@ -232,6 +233,9 @@ pub struct Config {
 
     /// Download-related configuration.
     pub download: download::DownloadConfig,
+
+    /// Music-related configuration.
+    pub music: music::MusicConfig,
 }
 
 impl Default for Config {
@@ -245,6 +249,7 @@ impl Default for Config {
             update_channel: UpdateChannel::default(),
             launch: launch::LaunchConfig::default(),
             download: download::DownloadConfig::default(),
+            music: music::MusicConfig::default(),
         }
     }
 }
