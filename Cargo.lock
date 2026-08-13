@@ -694,6 +694,7 @@ dependencies = [
  "log",
  "modrinth",
  "multiplayer",
+ "music",
  "once_cell",
  "platform",
  "serde",
@@ -2738,6 +2739,20 @@ dependencies = [
  "serde_json",
  "serde_with",
  "sha2",
+ "shared",
+ "tauri",
+ "thiserror 2.0.19",
+]
+
+[[package]]
+name = "music"
+version = "0.0.0"
+dependencies = [
+ "async-fs",
+ "folder",
+ "log",
+ "serde",
+ "serde_with",
  "shared",
  "tauri",
  "thiserror 2.0.19",

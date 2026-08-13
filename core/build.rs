@@ -124,6 +124,10 @@ fn main() {
             ]),
         )
         .plugin(
+            "music",
+            InlinedPlugin::new().commands(&["cmd_list_music_files"]),
+        )
+        .plugin(
             "curseforge",
             InlinedPlugin::new().commands(&[
                 "cmd_search_mods",

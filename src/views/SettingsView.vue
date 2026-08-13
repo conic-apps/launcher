@@ -65,7 +65,7 @@ const components = ref<{ name: string; icon: string; component: Component }[]>([
     component: markRaw(AppearanceSettings),
   },
   {
-    name: "音乐与音效",
+    name: "settings.audio.sidebar",
     icon: "musical-notes",
     component: markRaw(AudioSettings),
   },

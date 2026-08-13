@@ -102,6 +102,7 @@
     "modrinth:allow-cmd-list-project-versions",
     "modrinth:allow-cmd-spawn-download-mod-task",
     "modrinth:allow-cmd-cancel-download-task",
+    "music:allow-cmd-list-music-files",
     "curseforge:allow-cmd-search-mods",
     "curseforge:allow-cmd-get-mod",
     "curseforge:allow-cmd-get-mods",
