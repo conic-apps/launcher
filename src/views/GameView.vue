@@ -7,13 +7,13 @@
     <InstanceSummary ref="instance-summary"></InstanceSummary>
     <InstancesList ref="instance-list"></InstancesList>
     <GameFooterBar ref="game-footer-bar"></GameFooterBar>
-    <Transition name="instance-settings">
+    <Transition name="game-content">
       <div
-        class="instance-settings-wrapper"
+        class="game-content-wrapper"
         v-if="showInstanceSettings"
-        @click="showInstanceSettings = false"
+        @click.self="showInstanceSettings = false"
         :class="{ show: showInstanceSettings }">
-        <div class="instance-settings-container" @click.stop>
+        <div class="game-content-container">
           <InstanceSetting></InstanceSetting>
         </div>
       </div>
@@ -40,6 +40,26 @@
         </div>
       </div>
     </Transition>
+    <Transition name="game-content">
+      <div
+        class="game-content-wrapper"
+        v-if="showGameContent.resourcepacks"
+        @click.self="showGameContent.resourcepacks = false"
+        :class="{ show: showGameContent.resourcepacks }">
+        <div class="game-content-container">
+          <ContentResourcepacks></ContentResourcepacks>
+        </div>
+      </div>
+    </Transition>
+    <Transition name="game-content">
+      <div
+        class="game-content-wrapper"
+        v-if="showGameContent.screenshots"
+        @click.self="showGameContent.screenshots = false"
+        :class="{ show: showGameContent.screenshots }">
+        <ContentScreenshots></ContentScreenshots>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -53,7 +73,9 @@ import InstanceSetting from "./game/InstanceSetting.vue";
 import { useInstanceSettings } from "./game/useGameView";
 import ContentSaves from "./game/ContentSaves.vue";
 import ContentMods from "./game/ContentMods.vue";
+import ContentResourcepacks from "./game/ContentResourcepacks.vue";
 import { useShowContent } from "./game/useContent";
+import ContentScreenshots from "./game/ContentScreenshots.vue";
 
 const instanceSummary = useTemplateRef("instance-summary");
 const instanceList = useTemplateRef("instance-list");
@@ -78,69 +100,6 @@ onMounted(async () => {
   height: 100%;
   position: relative;
 }
-.instance-settings-wrapper {
-  overflow: hidden;
-  width: 100vw;
-  height: 100vh;
-  background: #00000080;
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-
-  .instance-settings-container {
-    width: 640px;
-    height: 100vh;
-    overflow-y: auto;
-    position: absolute;
-    left: 0;
-    transform: translateX(0);
-    background: rgba(var(--ctp-base-rgb), 1);
-    border-radius: 16px 0 0 16px;
-    padding: 24px 16px;
-  }
-}
-
-.instance-settings-enter-from,
-.instance-settings-leave-to {
-  background: #00000000;
-}
-
-.instance-settings-enter-to,
-.instance-settings-leave-from {
-  background: #00000000;
-}
-
-.instance-settings-enter-active,
-.instance-settings-leave-active {
-  transition: all 200ms ease;
-}
-
-.instance-settings-leave-active {
-  transition-delay: 100ms;
-}
-
-.instance-settings-enter-from .instance-settings-container,
-.instance-settings-leave-to .instance-settings-container {
-  transform: translateX(-640px);
-}
-
-.instance-settings-enter-active .instance-settings-container {
-  transition: all 400ms cubic-bezier(0, 0.47, 0.25, 1);
-}
-
-.instance-settings-leave-active .instance-settings-container {
-  transition: all 280ms cubic-bezier(0.47, 0, 1, 0.75);
-}
-
-.instance-settings-enter-to,
-.instance-settings-leave-from {
-  background: #00000080;
-}
-
 .game-content-wrapper {
   top: 0;
   left: 0;

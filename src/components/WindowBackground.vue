@@ -150,6 +150,12 @@ const FADE_END = VIEW_DISTANCE;
 const FILL_ALPHA_NEAR = 1.0;
 const FILL_ALPHA_FAR = 0.15;
 
+// 窗口底部两角的圆角半径（CSS 像素）。窗口本体为透明无边框，WebGL 画布是矩形，
+// CSS border-radius 无法裁剪 GPU 合成层的 WebGL 内容，因此在着色器里按窗口坐标
+// 丢弃圆角区域外的片段。裁剪需还原视差 scale/translate 对画布的位移，
+// 以窗口（viewport）角落而非画布角落为圆心。
+const CORNER_RADIUS = 16;
+
 // 八个角点相对方块坐标的偏移，下标即角点编号
 const CORNER_OFFSETS: ReadonlyArray<readonly [number, number, number]> = [
   [0, 0, 0],
@@ -619,8 +625,28 @@ const FILL_FS = `#version 300 es
 precision highp float;
 in float vAlpha;
 uniform vec4 uBgColor;
+uniform vec2 uViewport;
+uniform vec2 uCanvasPos;
+uniform float uDpr;
+uniform float uCornerRadius;
 out vec4 outColor;
 void main() {
+  // 画布因视差 scale/translate 与窗口并不重合，先还原到窗口（viewport）CSS 坐标，
+  // 再按窗口底部两角的圆角半径裁剪，避免圆角裁到窗口可见区域之外。
+  vec2 vp = vec2(
+    uCanvasPos.x + gl_FragCoord.x / uDpr,
+    uCanvasPos.y - gl_FragCoord.y / uDpr
+  );
+  float r = uCornerRadius;
+  float d = 0.0;
+  if (vp.y > uViewport.y - r) {
+    if (vp.x < r) {
+      d = distance(vp, vec2(r, uViewport.y - r));
+    } else if (vp.x > uViewport.x - r) {
+      d = distance(vp, vec2(uViewport.x - r, uViewport.y - r));
+    }
+  }
+  if (d > r) discard;
   outColor = vec4(uBgColor.rgb * vAlpha, vAlpha);
 }`;
 
@@ -665,8 +691,26 @@ precision highp float;
 in float vMix;
 uniform vec4 uBgColor;
 uniform vec4 uEdgeColor;
+uniform vec2 uViewport;
+uniform vec2 uCanvasPos;
+uniform float uDpr;
+uniform float uCornerRadius;
 out vec4 outColor;
 void main() {
+  vec2 vp = vec2(
+    uCanvasPos.x + gl_FragCoord.x / uDpr,
+    uCanvasPos.y - gl_FragCoord.y / uDpr
+  );
+  float r = uCornerRadius;
+  float d = 0.0;
+  if (vp.y > uViewport.y - r) {
+    if (vp.x < r) {
+      d = distance(vp, vec2(r, uViewport.y - r));
+    } else if (vp.x > uViewport.x - r) {
+      d = distance(vp, vec2(uViewport.x - r, uViewport.y - r));
+    }
+  }
+  if (d > r) discard;
   vec3 c = mix(uBgColor.rgb, uEdgeColor.rgb, vMix);
   outColor = vec4(c, 1.0);
 }`;
@@ -740,9 +784,23 @@ function initGL(): boolean {
 
   const names = ["uCamX", "uCamY", "uCamZ", "uFocal", "uHalfW", "uHalfH", "uNearZ", "uFarZ"];
   Object.assign(fillU, getUniforms(g, fillProg, names));
-  Object.assign(fillU, getUniforms(g, fillProg, ["uBgColor"]));
+  Object.assign(
+    fillU,
+    getUniforms(g, fillProg, ["uBgColor", "uViewport", "uCanvasPos", "uDpr", "uCornerRadius"]),
+  );
   Object.assign(edgeU, getUniforms(g, edgeProg, names));
-  Object.assign(edgeU, getUniforms(g, edgeProg, ["uBgColor", "uEdgeColor", "uEdgeWidth"]));
+  Object.assign(
+    edgeU,
+    getUniforms(g, edgeProg, [
+      "uBgColor",
+      "uEdgeColor",
+      "uEdgeWidth",
+      "uViewport",
+      "uCanvasPos",
+      "uDpr",
+      "uCornerRadius",
+    ]),
+  );
 
   fillVbo = g.createBuffer();
   fillIbo = g.createBuffer();
@@ -973,9 +1031,16 @@ function draw() {
   // 填充面（背景色，预乘 alpha 混合，写入深度）
   // LEQUAL：地平线以下的地面基底四边形位于远平面（深度恰为 1.0），
   // LESS 会让它深度测试失败而无法绘制。
+  const vpW = window.innerWidth;
+  const vpH = window.innerHeight;
+  const canvasBottom = rect.top + rect.height;
   g.useProgram(fillProg);
   setCommonUniforms(fillU, halfW, halfH, focal);
   g.uniform4fv(fillU["uBgColor"], bgColorVec);
+  g.uniform2f(fillU["uViewport"], vpW, vpH);
+  g.uniform2f(fillU["uCanvasPos"], rect.left, canvasBottom);
+  g.uniform1f(fillU["uDpr"], dpr);
+  g.uniform1f(fillU["uCornerRadius"], CORNER_RADIUS);
   g.enable(g.BLEND);
   g.blendFunc(g.ONE, g.ONE_MINUS_SRC_ALPHA);
   g.enable(g.DEPTH_TEST);
@@ -996,6 +1061,10 @@ function draw() {
   g.uniform4fv(edgeU["uBgColor"], bgColorVec);
   g.uniform4fv(edgeU["uEdgeColor"], edgeColorVec);
   g.uniform1f(edgeU["uEdgeWidth"], EDGE_WIDTH_DEVICE_PX);
+  g.uniform2f(edgeU["uViewport"], vpW, vpH);
+  g.uniform2f(edgeU["uCanvasPos"], rect.left, canvasBottom);
+  g.uniform1f(edgeU["uDpr"], dpr);
+  g.uniform1f(edgeU["uCornerRadius"], CORNER_RADIUS);
   g.disable(g.BLEND);
   g.depthFunc(g.LEQUAL);
   g.depthMask(false);
@@ -1161,6 +1230,9 @@ onBeforeUnmount(() => {
   }
   .world {
     opacity: 0.3;
+    left: 1px;
+    right: 1px;
+    bottom: 1px;
   }
 }
 </style>

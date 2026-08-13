@@ -46,6 +46,7 @@ async function ensureLatestInstancesExistance() {
     await Promise.all(promises)
 }
 
+await ensureLatestInstancesExistance()
 const sort = ref<InstanceSort>("Playtime")
 const listedInstances = await listInstances(sort.value) // TODO: Error handling, show error dialog
 

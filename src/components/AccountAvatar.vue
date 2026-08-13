@@ -40,6 +40,7 @@ let currentTask = 0;
 watch(
   () => props.skin,
   async (skin) => {
+    console.log(skin);
     if (!skin) {
       avatar.value = "";
       return;
