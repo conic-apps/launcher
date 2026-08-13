@@ -101,11 +101,17 @@
         ref="resourcepacks"
         style="opacity: 0">
         <AppIcon name="folder" />
-        <div><span class="type">资源包</span><span class="count">4 个</span></div>
+        <div>
+          <span class="type">资源包</span
+          ><span class="count">{{ (contentStore.gameContent.resourcepacks ?? []).length }} 个</span>
+        </div>
       </div>
       <div @click="useShowContent().value.screenshots = true" ref="screenshots" style="opacity: 0">
         <AppIcon name="images-outline" />
-        <div><span class="type">截图</span><span class="count">1 个</span></div>
+        <div>
+          <span class="type">截图</span
+          ><span class="count">{{ (contentStore.gameContent.screenshots ?? []).length }} 个</span>
+        </div>
       </div>
     </div>
   </div>

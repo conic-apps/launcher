@@ -53,6 +53,7 @@
     <p
       class="profile-name-unlogged"
       v-else
+      ref="profileNameUnlogged"
       style="opacity: 0"
       @click="navigationStore.navigate('accounts')">
       <span>未登录</span>
@@ -216,6 +217,7 @@ const elements = {
   root: useTemplateRef("game-view-footer"),
   avatar: useTemplateRef("avatar"),
   profileName: accountMenuRef,
+  profileNameUnlogged: useTemplateRef("profileNameUnlogged"),
   connect: useTemplateRef("connect"),
   newInstance: useTemplateRef("new-instance"),
   installPack: useTemplateRef("install-pack"),
@@ -242,7 +244,11 @@ const playIntro = () => {
       ease: "power3.out",
     })
     .fromTo(
-      [elements.avatar.value?.$el, elements.profileName.value?.$el, elements.connect.value],
+      [
+        elements.avatar.value?.$el,
+        elements.profileName.value?.$el ?? elements.profileNameUnlogged.value,
+        elements.connect.value,
+      ],
       { opacity: 0, y: 10 },
       {
         opacity: 1,
