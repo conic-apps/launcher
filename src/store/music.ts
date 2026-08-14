@@ -7,10 +7,6 @@ import { listMusicFiles, type MusicFile } from "@conic/music"
 import { useConfigStore } from "@/store/config"
 import { defineStore } from "pinia"
 
-export type RepeatMode = "off" | "all" | "one"
-
-const REPEAT_MODES: RepeatMode[] = ["off", "all", "one"]
-
 const SAVED_TRACK_KEY = "conic.music.lastTrack"
 
 type SavedTrackState = {
@@ -97,7 +93,7 @@ export const useMusicStore = defineStore("music", {
         currentIndex: -1 as number,
         isPlaying: false,
         shuffle: false,
-        repeatMode: "off" as RepeatMode,
+        repeat: false,
         currentTime: 0,
         duration: 0,
         loading: false,
@@ -267,8 +263,7 @@ export const useMusicStore = defineStore("music", {
         },
 
         cycleRepeat() {
-            const currentModeIndex = REPEAT_MODES.indexOf(this.repeatMode)
-            this.repeatMode = REPEAT_MODES[(currentModeIndex + 1) % REPEAT_MODES.length]
+            this.repeat = !this.repeat
         },
 
         randomIndex(): number {
@@ -322,16 +317,12 @@ export const useMusicStore = defineStore("music", {
         },
 
         handleTrackEnded() {
-            if (this.repeatMode === "one") {
+            if (this.repeat) {
                 this.seek(0)
                 void this.resume()
                 return
             }
-            if (this.repeatMode === "all" || this.currentIndex < this.tracks.length - 1) {
-                void this.next()
-                return
-            }
-            this.isPlaying = false
+            void this.next()
         },
     },
 })

@@ -4,22 +4,6 @@
 
 <template>
   <div>
-    <InfoBox :click-able="true" @click="openUrl('https://catppuccin.com')">
-      <p
-        :style="{
-          marginBottom: '8px',
-          backgroundImage: `linear-gradient(120deg, var(--ctp-${config.appearance.palette.toLowerCase()}-peach), var(--ctp-${config.appearance.palette.toLowerCase()}-mauve))`,
-          backgroundClip: 'text',
-          color: '#00000000',
-          fontSize: '18px',
-          fontWeight: 'bold',
-        }">
-        Default pastel theme is Catppuccin
-      </p>
-      Catppuccin is a community-driven color scheme meant for coding, designing, and much more.
-      Catppuccin consists of 4 beautiful pastel color palettes, named flavors. You can choose one
-      below. Click here for more information.
-    </InfoBox>
     <SettingGroup title="调色板">
       <SettingItem
         title="跟随系统深色设置"
@@ -55,19 +39,14 @@
         </div>
       </div>
     </SettingGroup>
-    <SettingGroup title="立体背景">
+    <SettingGroup title="背景图像">
       <SettingItem
         title="立体背景摄像机移动"
         description="关闭后摄像机停止向前移动，背景渲染完成后不再更新，以完全关闭背景开销"
-        icon="play"
         icon-fill="none">
         <BaseSwitch v-model="config.appearance.background_camera_move"></BaseSwitch>
       </SettingItem>
-      <SettingItem
-        title="背景图片视差"
-        description="关闭后背景不再随鼠标移动"
-        icon="images-outline"
-        icon-fill="none">
+      <SettingItem title="背景图片视差" description="关闭后背景不再随鼠标移动" icon-fill="none">
         <BaseSwitch v-model="config.appearance.background_parallax"></BaseSwitch>
       </SettingItem>
     </SettingGroup>
@@ -76,13 +55,11 @@
 
 <script setup lang="ts">
 import SettingGroup from "@/components/SettingGroup.vue";
-import InfoBox from "./InfoBox.vue";
 import SettingItem from "@/components/SettingItem.vue";
 import BaseSwitch from "@/components/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { ref, watch } from "vue";
 import { reloadPalette } from "@/theme";
-import { openUrl } from "@tauri-apps/plugin-opener";
 import { Palette } from "@conic/config";
 const config = useConfigStore();
 
@@ -193,9 +170,10 @@ if (config.appearance.palette_follow_system) {
   }
 
   .selected {
-    outline: 4px solid rgb(24, 170, 255);
+    outline: 4px solid var(--ctp-blue);
   }
 }
+
 .color-style-disabled {
   pointer-events: none;
   * {

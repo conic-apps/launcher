@@ -9,7 +9,7 @@
         <input
           class="search-input"
           type="text"
-          :placeholder="t('game.resourcepacks.filter.searchPlaceholder')"
+          :placeholder="'搜索资源包...'"
           v-model="searchQuery"
           @keyup.enter="applySearchFilters()" />
         <button class="search-button" @click="applySearchFilters()">
@@ -59,15 +59,11 @@
     </div>
 
     <p class="result-count" v-if="curseForgeSearchResult">
-      {{
-        t("game.resourcepacks.filter.resultCount", {
-          count: curseForgeSearchResult.pagination?.totalCount ?? 0,
-        })
-      }}
+      {{ `共 ${curseForgeSearchResult.pagination?.totalCount ?? 0} 个资源包` }}
     </p>
 
     <div class="search-status" v-if="curseForgeSearchResult === null || curseForgeLoading">
-      <span>{{ t("game.resourcepacks.filter.searching") }}</span>
+      <span>{{ "正在搜索..." }}</span>
     </div>
     <template v-else>
       <div class="mods-list" v-if="curseForgeSearchResult.data.length > 0">
@@ -102,7 +98,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <span>{{ t("game.resourcepacks.filter.noResults") }}</span>
+        <span>{{ "没有找到相关资源包" }}</span>
       </div>
     </template>
 
@@ -142,7 +138,6 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { useI18n } from "vue-i18n";
 import { useInstanceStore } from "@/store/instance";
 import { getMinecrafVersionManifest } from "@conic/install";
 import {
@@ -151,8 +146,6 @@ import {
   SearchModsParams as CurseForgeSearchParams,
   searchMods as searchCurseForgeMods,
 } from "@conic/curseforge";
-
-const { t } = useI18n();
 
 const instanceStore = useInstanceStore();
 
@@ -180,6 +173,27 @@ const CURSEFORGE_CATEGORIES: CategoryOption[] = [
   { id: 4275, slug: "mobs" },
   { id: 4276, slug: "weather" },
 ];
+const CURSEFORGE_CATEGORY_NAMES: Record<string, string> = {
+  crafted: "手工制作",
+  "photo-realistic": "照片写实",
+  "semi-realistic": "半写实",
+  simple: "简约",
+  traditional: "传统",
+  animated: "动态",
+  modern: "现代",
+  themed: "主题风格",
+  "mod-support": "模组支持",
+  rpg: "RPG",
+  gameplay: "游戏玩法",
+  gui: "界面",
+  sound: "声音",
+  environment: "环境",
+  "world-gen": "世界生成",
+  blocks: "方块",
+  items: "物品",
+  mobs: "生物",
+  weather: "天气",
+};
 type FilterOption = string | CategoryOption;
 type ModsFilter = {
   key: "version" | "category";
@@ -336,7 +350,7 @@ watch(versionPage, () => {
 const curseForgeFilters = computed<ModsFilter[]>(() => [
   {
     key: "version",
-    label: t("game.resourcepacks.filter.version"),
+    label: "版本",
     options: versionOptions.value,
     isSelected: (option) => curseForgeSelectedVersions.value.includes(option as string),
     toggle: (option) => toggleFilterOption(curseForgeSelectedVersions.value, option as string),
@@ -344,14 +358,14 @@ const curseForgeFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "category",
-    label: t("game.resourcepacks.filter.category"),
+    label: "分类",
     options: CURSEFORGE_CATEGORIES,
     isSelected: (option) =>
       curseForgeSelectedCategories.value.includes((option as CategoryOption).id),
     toggle: (option) =>
       toggleFilterOption(curseForgeSelectedCategories.value, (option as CategoryOption).id),
     display: (option) =>
-      t(`game.resourcepacks.filter.curseforgeCategories.${(option as CategoryOption).slug}`),
+      CURSEFORGE_CATEGORY_NAMES[(option as CategoryOption).slug] ?? (option as CategoryOption).slug,
   },
 ]);
 

@@ -21,45 +21,65 @@
       :scrollbar-top="SCROLLBAR_TOP"
       :scrollbar-bottom="SCROLLBAR_BOTTOM">
       <div class="gap-top"></div>
-      <div
-        class="card-container"
-        :class="{ current: instance.id === instanceStore.currentInstance.id }"
-        v-for="instance in filteredInstances"
-        style="opacity: 0"
-        :key="instance.id">
-        <div class="instance" @click="selectInstance(instance)" :data-id="instance.id">
-          <p v-if="instance.id === LATEST_RELEASE_INSTANCE_ID">
-            {{ $t("game.latestRelease") }}
-          </p>
-          <p v-else-if="instance.id === LATEST_SNAPSHOT_INSTANCE_ID">
-            {{ $t("game.latestSnapshot") }}
-          </p>
-          <p v-else>{{ instance.config.name }}</p>
-          <div class="details">
-            <span
-              :class="`tag ${instance.config.runtime.mod_loader_type.toLowerCase()}`"
-              v-if="instance.config.runtime.mod_loader_type"
-              >{{ instance.config.runtime.mod_loader_type }}</span
-            >
-            <span class="tag vanilla" v-else>Vanilla</span>
-            <span class="last-play"
-              ><span class="label">上次运行：</span>
-              <span v-if="instance.last_played">{{
-                formatLastPlayed(instance.last_played, zhCN)
-              }}</span>
-              <span v-else>从未运行</span>
-            </span>
+      <template v-for="group in groups" :key="group.key">
+        <div class="group-card" style="opacity: 0" :data-group="group.key">
+          <div
+            class="group"
+            :class="{ collapsed: isCollapsed(group.key) || collapsingKey === group.key }"
+            :data-id="`group-${group.key}`"
+            @click="toggleGroup(group.key)">
+            <AppIcon name="chevron-down" :size="14"></AppIcon>
+            <p>{{ group.title }}</p>
           </div>
-          <img
-            class="instance-background"
-            v-if="instance.has_background && backgroundImagesSrc[instance.id]"
-            v-show="backgroundImagesShow[instance.id]"
-            :src="backgroundImagesSrc[instance.id]"
-            alt=""
-            @load="backgroundImagesShow[instance.id] = true"
-            @error="backgroundImagesShow[instance.id] = false" />
         </div>
-      </div>
+        <div class="group-content" :data-group-content="group.key">
+          <template v-if="!isCollapsed(group.key)">
+            <div
+              class="card-container"
+              :class="{ current: instance.id === instanceStore.currentInstance.id }"
+              v-for="instance in group.instances"
+              style="opacity: 0"
+              :key="instance.id">
+              <div
+                class="instance"
+                @click="selectInstance(instance)"
+                :data-id="instance.id"
+                :data-key="`${group.key}:${instance.id}`">
+                <p v-if="instance.id === LATEST_RELEASE_INSTANCE_ID">
+                  {{ "最新版本" }}
+                </p>
+                <p v-else-if="instance.id === LATEST_SNAPSHOT_INSTANCE_ID">
+                  {{ "最新快照" }}
+                </p>
+                <p v-else>{{ instance.config.name }}</p>
+                <div class="details">
+                  <span
+                    :class="`tag ${instance.config.runtime.mod_loader_type.toLowerCase()}`"
+                    v-if="instance.config.runtime.mod_loader_type"
+                    >{{ instance.config.runtime.mod_loader_type }}</span
+                  >
+                  <span class="tag vanilla" v-else>Vanilla</span>
+                  <span class="last-play"
+                    ><span class="label">上次运行：</span>
+                    <span v-if="instance.last_played">{{
+                      formatLastPlayed(instance.last_played, zhCN)
+                    }}</span>
+                    <span v-else>从未运行</span>
+                  </span>
+                </div>
+                <img
+                  class="instance-background"
+                  v-if="instance.has_background && backgroundImagesSrc[instance.id]"
+                  v-show="backgroundImagesShow[instance.id]"
+                  :src="backgroundImagesSrc[instance.id]"
+                  alt=""
+                  @load="backgroundImagesShow[instance.id] = true"
+                  @error="backgroundImagesShow[instance.id] = false" />
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
       <div class="gap-bottom"></div>
     </InstancesListScrollView>
   </div>
@@ -130,7 +150,12 @@ const playIntro = () => {
 defineExpose({ playIntro, ready });
 
 export type SortMode = "name" | "version" | "playtime" | "lastplay";
-const sortMode = ref<SortMode>("playtime");
+const SORT_MODES: SortMode[] = ["name", "version", "playtime", "lastplay"];
+const sortMode = ref<SortMode>(
+  SORT_MODES.includes(localStorage.getItem("instancesSortMode") as SortMode)
+    ? (localStorage.getItem("instancesSortMode") as SortMode)
+    : "playtime",
+);
 const sortOptions: { key: SortMode; label: string }[] = [
   { key: "name", label: "名称" },
   { key: "version", label: "版本" },
@@ -146,6 +171,7 @@ const SORT_MODE_TO_SORT: Record<SortMode, InstanceSort> = {
 };
 
 watch(sortMode, (mode) => {
+  localStorage.setItem("instancesSortMode", mode);
   instanceStore.setSort(SORT_MODE_TO_SORT[mode]);
 });
 
@@ -153,16 +179,111 @@ function selectSort(mode: SortMode) {
   sortMode.value = mode;
 }
 
-export type GroupMode = "all" | "none" | "loader";
-const groupMode = ref<GroupMode>("all");
+export type GroupMode = "none" | "loader";
+const GROUP_MODES: GroupMode[] = ["none", "loader"];
+const groupMode = ref<GroupMode>(
+  GROUP_MODES.includes(localStorage.getItem("instancesGroupMode") as GroupMode)
+    ? (localStorage.getItem("instancesGroupMode") as GroupMode)
+    : "none",
+);
 const groupOptions: { key: GroupMode; label: string }[] = [
-  { key: "all", label: "全部实例" },
   { key: "none", label: "未分组" },
   { key: "loader", label: "模组加载器" },
 ];
 
+watch(groupMode, (mode) => {
+  localStorage.setItem("instancesGroupMode", mode);
+});
+
 function selectGroup(mode: GroupMode) {
   groupMode.value = mode;
+}
+
+type GroupKey = "starred" | "all" | "quilt" | "fabric" | "neoforge" | "forge";
+
+interface InstanceGroup {
+  key: GroupKey;
+  title: string;
+  instances: Instance[];
+}
+
+const LOADER_GROUPS: { key: Exclude<GroupKey, "starred" | "all">; title: string }[] = [
+  { key: "quilt", title: "Quilt" },
+  { key: "fabric", title: "Fabric" },
+  { key: "neoforge", title: "Neoforge" },
+  { key: "forge", title: "Forge" },
+];
+
+const expanded = ref<Partial<Record<GroupKey, boolean>>>({});
+const collapsingKey = ref<GroupKey | null>(null);
+
+// Cooldown between group toggles so the expand fade-in (300ms opacity
+// transition) settles before a collapse can start; otherwise a fast re-click
+// collapses cards that are still mid-fade, making the overlap very visible.
+const TOGGLE_SETTLE_MS = 350;
+// While a collapse/expand animates, scrolling would shift the parallax x of
+// the moving cards, so scrolling is locked until the rail FLIP settles.
+const SCROLL_UNLOCK_DELAY_MS = 700;
+let toggleUnlockAt = 0;
+
+function toggleLocked() {
+  return collapsingKey.value !== null || Date.now() < toggleUnlockAt;
+}
+
+function isCollapsed(key: GroupKey) {
+  return expanded.value[key] === false;
+}
+
+function isStarred(instance: Instance) {
+  return (instance.config.group ?? []).includes("starred");
+}
+
+const groups = computed<InstanceGroup[]>(() => {
+  const base = filteredInstances.value;
+  const favorites = base.filter(isStarred);
+  const result: InstanceGroup[] = [];
+
+  if (favorites.length > 0) {
+    result.push({ key: "starred", title: "收藏夹", instances: favorites });
+  }
+
+  if (groupMode.value === "loader") {
+    for (const loader of LOADER_GROUPS) {
+      const members = base.filter(
+        (instance) => instance.config.runtime.mod_loader_type?.toLowerCase() === loader.key,
+      );
+      if (members.length > 0) {
+        result.push({ key: loader.key, title: loader.title, instances: members });
+      }
+    }
+  } else if (base.length > 0) {
+    result.push({ key: "all", title: "全部实例", instances: base });
+  }
+
+  return result;
+});
+
+async function toggleGroup(key: GroupKey) {
+  if (toggleLocked()) return;
+  const startedAt = Date.now();
+  toggleUnlockAt = startedAt + TOGGLE_SETTLE_MS;
+  scrollViewRef.value?.lockScroll();
+  try {
+    if (isCollapsed(key)) {
+      expanded.value[key] = true;
+      scrollViewRef.value?.clearGroupHeight(key);
+    } else {
+      collapsingKey.value = key;
+      try {
+        await scrollViewRef.value?.collapseGroup(key);
+      } finally {
+        collapsingKey.value = null;
+      }
+      expanded.value[key] = false;
+    }
+  } finally {
+    window.setTimeout(() => scrollViewRef.value?.unlockScroll(), SCROLL_UNLOCK_DELAY_MS);
+  }
 }
 
 const sortLabel = computed(() => sortOptions.find((x) => x.key === sortMode.value)?.label ?? "");
@@ -338,6 +459,65 @@ async function getBackgroundSrc(id: string) {
       margin-left: -20px;
       transform: scale(1.03);
     }
+  }
+  .group-card {
+    will-change: transform;
+  }
+  .group {
+    --group-accent-rgb: var(--ctp-lavender-rgb);
+    border: 1px solid rgba(var(--group-accent-rgb), 0.8);
+    border-left: 20px solid rgba(var(--group-accent-rgb), 0.8);
+    background: rgba(var(--ctp-surface0-rgb), 0.4);
+    border-radius: 8px;
+    padding: 8px 16px;
+    margin-top: 2px;
+    transform: translateX(-40px);
+    width: 480px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    position: relative;
+    transition: background 200ms ease;
+
+    &:hover {
+      background: rgba(var(--ctp-surface0-rgb), 0.8);
+    }
+
+    svg {
+      position: absolute;
+      left: -16px;
+      transition: transform 200ms ease;
+    }
+
+    :deep(svg path) {
+      stroke: var(--ctp-text-inverse);
+    }
+
+    &.collapsed svg {
+      transform: rotate(180deg);
+    }
+  }
+  .group-card[data-group="starred"] .group {
+    --group-accent-rgb: var(--ctp-yellow-rgb);
+  }
+  .group-card[data-group="all"] .group {
+    --group-accent-rgb: var(--ctp-lavender-rgb);
+  }
+  .group-card[data-group="quilt"] .group {
+    --group-accent-rgb: var(--ctp-mauve-rgb);
+  }
+  .group-card[data-group="fabric"] .group {
+    --group-accent-rgb: var(--ctp-yellow-rgb);
+  }
+  .group-card[data-group="neoforge"] .group {
+    --group-accent-rgb: var(--ctp-peach-rgb);
+  }
+  .group-card[data-group="forge"] .group {
+    --group-accent-rgb: var(--ctp-blue-rgb);
+  }
+  .card-container.collapsing .instance {
+    opacity: 0;
   }
 }
 </style>

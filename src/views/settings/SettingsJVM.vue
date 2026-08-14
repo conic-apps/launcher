@@ -4,23 +4,12 @@
 
 <template>
   <div>
-    <SettingGroup :title="$t('settings.game.jvmTitle')">
+    <SettingGroup>
       <SettingItem
-        :title="$t('settings.game.autoSelectJava')"
-        :description="$t('settings.game.autoSelectJavaDesc')"
-        icon="refresh">
+        :title="'让 Conic Launcher 自动管理 Java 运行环境'"
+        :description="'自动选择和管理 Java 运行环境，当前版本暂不支持自定义 Java 运行环境'"
+        disabled>
         <BaseSwitch v-model="autoSelectJava"></BaseSwitch>
-      </SettingItem>
-      <SettingItem
-        :title="$t('settings.game.selectDefaultJava')"
-        icon="java"
-        :icon-size="36"
-        :navigable="true">
-        <span style="font-size: 14px; opacity: 0.8; margin-right: 8px">{{
-          $t("settings.game.selectedJava", {
-            selected: "Java 17",
-          })
-        }}</span>
       </SettingItem>
     </SettingGroup>
   </div>

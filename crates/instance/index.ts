@@ -65,11 +65,11 @@ export async function getInstanceById(id: string): Promise<Instance | null> {
     return await invoke("plugin:instance|cmd_get_instance_by_id", { id })
 }
 
-export async function updateInstance(config: InstanceConfig, id: string): Promise<Instance[]> {
+export async function updateInstance(config: InstanceConfig, id: string): Promise<void> {
     return await invoke("plugin:instance|cmd_update_instance", { config, id })
 }
 
-export async function deleteInstance(id: string): Promise<Instance[]> {
+export async function deleteInstance(id: string): Promise<void> {
     return await invoke("plugin:instance|cmd_delete_instance", { id })
 }
 

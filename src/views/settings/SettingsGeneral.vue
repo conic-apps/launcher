@@ -5,7 +5,7 @@
 <template>
   <div ref="generalSettings">
     <SettingGroup>
-      <SettingItem :title="$t('settings.general.language')" icon="language">
+      <SettingItem :title="'语言'" icon="language">
         <BaseDropdownSelect
           placeholder="跟随系统设置"
           :display-name="[
@@ -39,31 +39,15 @@
           v-model="config.language"
           :default="1"></BaseDropdownSelect>
       </SettingItem>
-      <SettingItem
-        :title="$t('settings.general.updateChannel')"
-        :description="$t('settings.general.updateChannelDesc')"
-        icon="branch">
-        <BaseDropdownSelect
-          :display-name="[
-            $t('settings.general.stable'),
-            $t('settings.general.beta'),
-            $t('settings.general.nightly'),
-          ]"
-          :options="['stable', 'beta', 'nightly']"
-          v-model="config.update_channel"
-          :default="0"></BaseDropdownSelect>
+      <SettingItem :title="'更新通道'" :description="'控制启动器获取更新的频率'">
+        <BaseSelect
+          :display-name="['正式版', '测试版']"
+          :options="['stable', 'beta']"
+          v-model="config.update_channel"></BaseSelect>
       </SettingItem>
-      <SettingItem
-        :title="$t('settings.general.autoUpdate')"
-        :description="$t('settings.general.autoUpdateDesc')"
-        icon="time">
+      <SettingItem :title="'自动更新'" :description="'有更新可用时自动下载并安装'">
         <BaseSwitch v-model="config.auto_update"></BaseSwitch>
       </SettingItem>
-      <SettingItem
-        :title="$t('settings.general.checkUpdate')"
-        icon="circle-up"
-        :navigable="true"
-        @click="checkUpdate"></SettingItem>
     </SettingGroup>
   </div>
 </template>
@@ -74,14 +58,9 @@ import BaseSwitch from "@/components/BaseSwitch.vue";
 import BaseDropdownSelect from "@/components/BaseDropdownSelect.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
-import { useDialogStore } from "@/store/dialog";
+import BaseSelect from "@/components/BaseSelect.vue";
 
 const config = useConfigStore();
-const dialogStore = useDialogStore();
-
-function checkUpdate() {
-  dialogStore.updateApp.visible = true;
-}
 </script>
 
 <style scoped lang="less"></style>

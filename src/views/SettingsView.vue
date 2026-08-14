@@ -12,7 +12,7 @@
           v-for="(item, index) in components"
           :key="index"
           style="opacity: 0">
-          <AppIcon :name="item.icon" :size="16"></AppIcon><span>{{ $t(item.name) }}</span>
+          <AppIcon :name="item.icon" :size="16"></AppIcon><span>{{ item.name }}</span>
         </li>
       </ul>
     </div>
@@ -20,7 +20,7 @@
       <ScrollView ref="scrollViewRef" @scroll="onScroll">
         <div class="settings-content">
           <section v-for="(item, index) in components" :key="index" class="settings-section">
-            <h2 class="settings-section-title">{{ $t(item.name) }}</h2>
+            <h2 class="settings-section-title">{{ item.name }}</h2>
             <component :is="item.component"></component>
           </section>
         </div>
@@ -45,42 +45,42 @@ import ScrollView from "@/components/ScrollView.vue";
 
 const components = ref<{ name: string; icon: string; component: Component }[]>([
   {
-    name: "settings.general.sidebar",
+    name: "常规",
     icon: "house",
     component: markRaw(GeneralSettings),
   },
   {
-    name: "settings.game.sidebar",
+    name: "启动选项",
     icon: "gamepad",
     component: markRaw(GameSettings),
   },
   {
-    name: "settings.game.jvmSidebar",
+    name: "Java 虚拟机",
     icon: "java",
     component: markRaw(JvmSettings),
   },
   {
-    name: "settings.appearance.sidebar",
+    name: "外观与动效",
     icon: "palette",
     component: markRaw(AppearanceSettings),
   },
   {
-    name: "settings.audio.sidebar",
+    name: "音频",
     icon: "musical-notes",
     component: markRaw(AudioSettings),
   },
   {
-    name: "settings.network.sidebar",
+    name: "下载",
     icon: "globe",
     component: markRaw(DownloadSettings),
   },
   {
-    name: "settings.accessibility.sidebar",
+    name: "辅助功能",
     icon: "accessibility",
     component: markRaw(AccessibilitySettings),
   },
   {
-    name: "settings.about.sidebar",
+    name: "关于",
     icon: "about",
     component: markRaw(AboutSettings),
   },
@@ -182,9 +182,9 @@ function onScroll() {
   }
 
   .settings-section-title {
-    margin: 0 0 10px 8px;
-    font-size: 15px;
-    font-weight: 600;
+    margin: 0 0 18px 8px;
+    font-size: 18px;
+    font-weight: normal;
     color: var(--ctp-text);
   }
 
