@@ -6,8 +6,8 @@
   <div>
     <SettingGroup title="下载选项">
       <SettingItem
-        :title="$t('settings.network.maxConnections')"
-        :description="$t('settings.network.maxConnectionsDesc')"
+        :title="'最大连接数'"
+        :description="'限制同时与服务器建立的连接数量，只对安装时的下载有效，<strong>过大反而会降低速度！</strong>'"
         icon="link">
         <BaseInput
           width="100px"
@@ -17,8 +17,8 @@
         </BaseInput>
       </SettingItem>
       <SettingItem
-        :title="$t('settings.network.maxDownloadSpeed')"
-        :description="$t('settings.network.maxDownloadSpeedDesc')"
+        :title="'最大下载速度(单位：B/s)'"
+        :description="'限制下载速度，只对安装时的下载有效，必须大于1024才有效，设置为 0 以禁用'"
         icon="speedometer">
         <BaseInput
           width="100px"
@@ -28,16 +28,16 @@
         </BaseInput>
       </SettingItem>
       <SettingItem
-        :title="$t('settings.network.mirrorServer')"
+        :title="'镜像服务器'"
         :navigable="true"
-        :description="$t('settings.network.mirrorServerDesc')"
+        :description="'从其他地方下载游戏文件'"
         icon="server"
         icon-fill="none"
         :last="true">
       </SettingItem>
     </SettingGroup>
-    <SettingGroup :title="$t('settings.network.proxy')">
-      <SettingItem :title="$t('settings.network.useSystemProxy')" icon="globe">
+    <SettingGroup :title="'代理'">
+      <SettingItem :title="'使用系统代理（重启应用后生效）'" icon="globe">
         <BaseSwitch v-model="config.download.use_system_proxy"></BaseSwitch>
       </SettingItem>
     </SettingGroup>

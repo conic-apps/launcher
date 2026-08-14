@@ -6,10 +6,10 @@
   <div class="current-instance">
     <div class="row-1" ref="row1" style="opacity: 0">
       <p class="title" v-if="currentInstance.id === LATEST_RELEASE_INSTANCE_ID">
-        {{ $t("game.latestRelease") }}
+        {{ "最新版本" }}
       </p>
       <p class="title" v-else-if="currentInstance.id === LATEST_SNAPSHOT_INSTANCE_ID">
-        {{ $t("game.latestSnapshot") }}
+        {{ "最新快照" }}
       </p>
       <p class="title" v-else>{{ currentInstance.config.name }}</p>
     </div>
@@ -71,8 +71,8 @@
         <button class="action-button" @click="openInstanceFolder">
           <AppIcon name="folder"></AppIcon>
         </button>
-        <button class="action-button">
-          <AppIcon name="share-social-outline"></AppIcon>
+        <button class="action-button" @click="toggleStarred">
+          <AppIcon :name="isStarred ? 'star' : 'star-outline'"></AppIcon>
         </button>
         <button class="action-button" @click="useInstanceSettings().value = true">
           <AppIcon name="settings"></AppIcon>
@@ -127,6 +127,7 @@ import {
   formatPlayTime,
   LATEST_RELEASE_INSTANCE_ID,
   LATEST_SNAPSHOT_INSTANCE_ID,
+  updateInstance,
   zhCN,
 } from "@conic/instance";
 import { useNavigationStore } from "@/store/navigation";
@@ -146,6 +147,19 @@ const currentInstance = computed(() => {
 
 async function openInstanceFolder() {
   invoke("open_path", { path: await getInstanceRoot(currentInstance.value.id) });
+}
+
+const isStarred = computed(() => (currentInstance.value.config.group ?? []).includes("starred"));
+
+async function toggleStarred() {
+  const config = {
+    ...currentInstance.value.config,
+    group: isStarred.value
+      ? (currentInstance.value.config.group ?? []).filter((group) => group !== "starred")
+      : [...(currentInstance.value.config.group ?? []), "starred"],
+  };
+  await updateInstance(config, currentInstance.value.id);
+  await instanceStore.loadInstances();
 }
 
 function onKeyDown(event: KeyboardEvent) {

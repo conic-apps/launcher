@@ -43,14 +43,12 @@ import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useUpdateStore } from "@/store/update";
 import { computed, watch } from "vue";
-import { useI18n } from "vue-i18n";
 
 type DialogState = "checking" | "update" | "upToDate" | "updating" | "error";
 
 const dialogStore = useDialogStore();
 const updateStore = useUpdateStore();
 const config = useConfigStore();
-const { t } = useI18n();
 
 const state = computed<DialogState>(() => {
   if (updateStore.error) return "error";
@@ -73,16 +71,22 @@ const iconName = computed(() => {
   }
 });
 
-const channelText = computed(() => t(`settings.general.${config.update_channel}`));
+const CHANNEL_LABELS: Record<string, string> = {
+  stable: "正式版",
+  beta: "测试版",
+  nightly: "夜间构建",
+};
+
+const channelText = computed(() => CHANNEL_LABELS[config.update_channel] ?? config.update_channel);
 
 const mainText = computed(() => {
   switch (state.value) {
     case "checking":
-      return t("update.checking");
+      return "正在检查更新...";
     case "update":
-      return t("update.newVersion", { version: updateStore.updateInfo?.version ?? "" });
+      return `发现新版本：${updateStore.updateInfo?.version ?? ""}`;
     case "upToDate":
-      return t("update.upToDate");
+      return "已是最新版本";
     case "updating":
       return progressLabel.value;
     case "error":
@@ -100,22 +104,22 @@ const subText = computed(() => {
 const backText = computed(() => {
   switch (state.value) {
     case "updating":
-      return t("update.cancel");
+      return "取消";
     case "checking":
     case "update":
-      return t("update.later");
+      return "稍后再说";
     default:
-      return t("update.close");
+      return "关闭";
   }
 });
 
 const primaryText = computed(() => {
   switch (state.value) {
     case "update":
-      return t("update.install");
+      return "立即更新";
     case "upToDate":
     case "error":
-      return t("update.recheck");
+      return "重新检查";
     default:
       return "";
   }
@@ -148,18 +152,15 @@ const progressLabel = computed(() => {
   const progress = updateStore.progress;
   switch (progress.phase) {
     case "checking":
-      return t("update.checking");
+      return "正在检查更新...";
     case "downloading": {
       if (progress.downloaded === 0) {
-        return t("update.downloading");
+        return "正在下载更新...";
       }
-      return t("update.downloadedOf", {
-        downloaded: progress.downloaded,
-        total: progress.total ?? "?",
-      });
+      return `${progress.downloaded} / ${progress.total ?? "?"}`;
     }
     case "installing":
-      return t("update.installing");
+      return "正在安装并重启启动器...";
     default:
       return "";
   }

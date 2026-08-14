@@ -50,6 +50,8 @@ export type Config = {
         enabled: boolean
         resume_on_startup: boolean
         show_visualizer: boolean
+        main_volumn: number
+        main_volumn_background: number
     }
     launch: {
         min_memory: number
@@ -74,6 +76,7 @@ export type Config = {
         execute_after_launch: string
         skip_refresh_account: boolean
         skip_check_files: boolean
+        quit_app_after_launch: boolean
     }
 }
 

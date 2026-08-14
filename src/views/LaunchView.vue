@@ -56,6 +56,7 @@ import { formatBytes } from "@conic/download";
 import { InstallTask, Job } from "@conic/install";
 import { LaunchTask } from "@conic/launch";
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import { window as appWindow } from "@tauri-apps/api";
 
 const instanceStore = useInstanceStore();
 const currentInstance = computed(() => {
@@ -205,6 +206,9 @@ async function launchGame() {
   });
   cancelLaunchHandle = launchTask.cancel;
   await launchTask.start();
+  if (configStore.launch.quit_app_after_launch) {
+    appWindow.getCurrentWindow().close();
+  }
   navigationStore.back();
 }
 

@@ -42,10 +42,9 @@ const changeValue = (option: string) => {
 <style lang="less" scoped>
 .base-select {
   display: flex;
-
   border: var(--controllers-border);
   background: var(--controllers-background);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
 
   .option {

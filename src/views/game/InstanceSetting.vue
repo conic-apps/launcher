@@ -18,13 +18,13 @@
           <BaseInput
             v-if="instanceName == 'Latest Release'"
             width="300px"
-            :value="$t('game.latestRelease')"
+            :value="'最新版本'"
             :lazy-update-model="true">
           </BaseInput>
           <BaseInput
             v-else-if="instanceName == 'Latest Snapshot'"
             width="300px"
-            :value="$t('game.latestSnapshot')"
+            :value="'最新快照'"
             :lazy-update-model="true">
           </BaseInput>
           <BaseInput
@@ -42,15 +42,15 @@
         </setting-item>
         <setting-item
           v-if="instanceName === 'Latest Release'"
-          :title="$t('settings.accessibility.hideLatestRelease')"
-          :description="$t('settings.accessibility.hideLatestReleaseDesc')"
+          :title="'隐藏\u0022最新版本\u0022'"
+          :description="'不在游戏列表中显示\u0022最新版本\u0022'"
           icon="eye-off">
           <BaseButton @click="config.accessibility.hide_latest_release = true">Hide it</BaseButton>
         </setting-item>
         <setting-item
           v-if="instanceName === 'Latest Snapshot'"
-          :title="$t('settings.accessibility.hideLatestSnapshot')"
-          :description="$t('settings.accessibility.hideLatestSnapshotDesc')"
+          :title="'隐藏\u0022最新快照\u0022'"
+          :description="'不在游戏列表中显示\u0022最新快照\u0022'"
           icon="eye-off">
           <BaseButton @click="config.accessibility.hide_latest_snapshot = true">Hide it</BaseButton>
         </setting-item>
@@ -64,27 +64,19 @@
             "></BaseSwitch>
         </setting-item>
       </setting-group>
-      <setting-group
-        :title="$t('settings.game.launchOptions')"
-        :disabled="!enableInstanceSpecificSettings">
+      <setting-group :title="'启动选项'" :disabled="!enableInstanceSpecificSettings">
         <setting-item
-          :title="$t('settings.game.enterWorldAfterLaunch')"
-          :description="$t('settings.game.enterWorldAfterLaunchDesc')"
+          :title="'启动后自动进入存档(TODO)'"
+          :description="'游戏版本不低于 1.21 时有效'"
           icon="enter">
-          <BaseInput
-            width="300px"
-            :placeholder="$t('settings.game.enterWorldAfterLaunchPlaceholder')"
-            :lazy-update-model="true">
+          <BaseInput width="300px" :placeholder="'存档文件夹的名称'" :lazy-update-model="true">
           </BaseInput>
         </setting-item>
-        <SettingItem
-          :title="$t('settings.game.windowSize')"
-          :description="$t('settings.game.windowSizeDesc')"
-          icon="resize">
+        <SettingItem :title="'窗口大小'" :description="'游戏窗口的初始大小'" icon="resize">
           <BaseInput
             width="100px"
             style="display: inline-block; margin-right: 16px"
-            :placeholder="$t('settings.game.windowSizeWidth')"
+            :placeholder="'宽'"
             :number-only="true"
             :disabled="config.launch.fullscreen"
             v-model.number="instanceStore.currentInstance.config.launch_config.width"
@@ -93,80 +85,64 @@
           <BaseInput
             width="100px"
             style="display: inline-block"
-            :placeholder="$t('settings.game.windowSizeHeight')"
+            :placeholder="'高'"
             :number-only="true"
             :disabled="config.launch.fullscreen"
             v-model.number="instanceStore.currentInstance.config.launch_config.height"
             :lazy-update-value="true">
           </BaseInput>
-          <span style="font-size: 12px; margin-left: 8px"
-            >{{ $t("settings.game.fullscreen") }}:
-          </span>
+          <span style="font-size: 12px; margin-left: 8px">{{ "全屏" }}: </span>
           <BaseSwitch
             v-model="instanceStore.currentInstance.config.launch_config.fullscreen"></BaseSwitch>
         </SettingItem>
-        <setting-item :title="$t('settings.game.hideLauncherAfterLaunch')" icon="eye-off">
+        <setting-item :title="'启动游戏后隐藏启动器(TODO)'" icon="eye-off">
           <BaseSwitch></BaseSwitch>
         </setting-item>
       </setting-group>
-      <setting-group
-        :title="$t('settings.advance.launchArgs')"
-        :disabled="!enableInstanceSpecificSettings">
-        <setting-item :title="$t('settings.advance.gc')">
+      <setting-group :title="'高级启动选项'" :disabled="!enableInstanceSpecificSettings">
+        <setting-item :title="'Java 垃圾回收器'">
           <BaseDropdownSelect
             :display-name="['G1GC', 'ZGC', 'ParallelGC', 'ParallelOldGC', 'SerialGC']"
             :options="['G1', 'Z', 'Parallel', 'ParallelOld', 'Serial']"
             v-model="instanceStore.currentInstance.config.launch_config.gc"
             :default="0"></BaseDropdownSelect>
         </setting-item>
-        <setting-item
-          :title="$t('settings.advance.extraJVMArgs')"
-          :description="$t('settings.advance.extraJVMArgsDesc')">
+        <setting-item :title="'添加 JVM 参数'" :description="'将会放在默认 JVM 参数后面'">
           <BaseInput
             width="300px"
             v-model="instanceStore.currentInstance.config.launch_config.extra_jvm_args"
             :lazy-update-model="true">
           </BaseInput>
         </setting-item>
-        <setting-item
-          :title="$t('settings.advance.extraMinecraftArgs')"
-          :description="$t('settings.advance.extraMinecraftArgsDesc')">
+        <setting-item :title="'添加游戏参数'" :description="'添加游戏需要的其他参数'">
           <BaseInput
             width="300px"
             v-model="instanceStore.currentInstance.config.launch_config.extra_mc_args"
             :lazy-update-model="true">
           </BaseInput>
         </setting-item>
-        <setting-item
-          :title="$t('settings.advance.extraClassPaths')"
-          :description="$t('settings.advance.extraClassPathsDesc')">
+        <setting-item :title="'添加类路径'" :description="'Windows 下用分号隔开，其他系统用冒号'">
           <BaseInput
             width="300px"
             v-model="instanceStore.currentInstance.config.launch_config.extra_class_paths"
             :lazy-update-model="true">
           </BaseInput>
         </setting-item>
-        <setting-item
-          :title="$t('settings.advance.executeBeforeLaunch')"
-          :description="$t('settings.advance.executeBeforeLaunchDesc')">
+        <setting-item :title="'启动前执行'" :description="'将会添加至启动命令的前一行'">
           <BaseInput
             width="300px"
             v-model="instanceStore.currentInstance.config.launch_config.execute_before_launch"
             :lazy-update-model="true">
           </BaseInput>
         </setting-item>
-        <setting-item
-          :title="$t('settings.advance.wrapCommand')"
-          :description="$t('settings.advance.wrapCommandDesc')">
+        <setting-item :title="'包装命令'" :description="'将会添加至启动命令的开头'">
           <BaseInput
             width="300px"
             v-model="instanceStore.currentInstance.config.launch_config.wrap_command"
             :lazy-update-model="true">
           </BaseInput>
         </setting-item>
-        <setting-item
-          :title="$t('settings.advance.executeAfterLaunch')"
-          :description="$t('settings.advance.executeAfterLaunchDesc')">
+        <setting-item :title="'启动后执行'" :description="'将会添加至启动脚本的最后一行'">
           <BaseInput
             width="300px"
             v-model="instanceStore.currentInstance.config.launch_config.execute_after_launch"
@@ -174,8 +150,8 @@
           </BaseInput>
         </setting-item>
         <setting-item
-          :title="$t('settings.advance.ignoreInvalidMinecraftCertificates')"
-          :description="$t('settings.advance.ignoreInvalidMinecraftCertificatesDesc')">
+          :title="'忽略无效的 Minecraft 凭证'"
+          :description="'将 <code>-Dfml.ignoreInvalidMinecraftCertificates=true</code> 添加到 JVM 参数中'">
           <BaseSwitch
             v-model="
               instanceStore.currentInstance.config.launch_config
@@ -184,17 +160,13 @@
           </BaseSwitch>
         </setting-item>
         <setting-item
-          :title="$t('settings.advance.ignorePatchDiscrepancies')"
-          :description="$t('settings.advance.ignorePatchDiscrepanciesDesc')">
+          :title="'忽略补丁差异'"
+          :description="'将 <code>-Dfml.ignorePatchDiscrepancies=true</code> 添加到 JVM 参数中'">
           <BaseSwitch
             v-model="instanceStore.currentInstance.config.launch_config.ignore_patch_discrepancies">
           </BaseSwitch>
         </setting-item>
-        <setting-item
-          :title="$t('settings.advance.lwjglSettings')"
-          description=""
-          :navigable="true">
-        </setting-item>
+        <setting-item :title="'LWJGL 设置(TODO)'" description="" :navigable="true"> </setting-item>
       </setting-group>
       <setting-group title="Danger Zone" :danger="true">
         <setting-item
