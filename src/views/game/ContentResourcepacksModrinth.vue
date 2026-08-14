@@ -9,7 +9,7 @@
         <input
           class="search-input"
           type="text"
-          :placeholder="t('game.resourcepacks.filter.searchPlaceholder')"
+          :placeholder="'搜索资源包...'"
           v-model="searchQuery"
           @keyup.enter="applySearchFilters()" />
         <button class="search-button" @click="applySearchFilters()">
@@ -59,11 +59,11 @@
     </div>
 
     <p class="result-count" v-if="modrinthSearchResult">
-      {{ t("game.resourcepacks.filter.resultCount", { count: modrinthSearchResult.total_hits }) }}
+      {{ `共 ${modrinthSearchResult.total_hits} 个资源包` }}
     </p>
 
     <div class="search-status" v-if="modrinthSearchResult === null || modrinthLoading">
-      <span>{{ t("game.resourcepacks.filter.searching") }}</span>
+      <span>{{ "正在搜索..." }}</span>
     </div>
     <template v-else>
       <div class="mods-list" v-if="modrinthSearchResult.hits.length > 0">
@@ -93,7 +93,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <span>{{ t("game.resourcepacks.filter.noResults") }}</span>
+        <span>{{ "没有找到相关资源包" }}</span>
       </div>
     </template>
 
@@ -127,7 +127,6 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { useI18n } from "vue-i18n";
 import { useInstanceStore } from "@/store/instance";
 import { getMinecrafVersionManifest } from "@conic/install";
 import {
@@ -135,8 +134,6 @@ import {
   SearchParameters as ModrinthSearchParameters,
   searchProjects as searchModrinthProjects,
 } from "@conic/modrinth";
-
-const { t } = useI18n();
 
 const instanceStore = useInstanceStore();
 
@@ -164,6 +161,28 @@ const CATEGORIES = [
   "utility",
   "other",
 ];
+const CATEGORY_NAMES: Record<string, string> = {
+  faithful: "忠实原版",
+  "16x": "16x",
+  "32x": "32x",
+  "64x": "64x",
+  "128x": "128x",
+  "256x": "256x",
+  "photo-realistic": "照片写实",
+  "semi-realistic": "半写实",
+  simple: "简约",
+  modern: "现代",
+  "theme-based": "主题风格",
+  classic: "经典",
+  dark: "暗色",
+  medieval: "中世纪",
+  anime: "动漫",
+  cartoon: "卡通",
+  "pixel-art": "像素画",
+  "vanilla-plus": "原版加强",
+  utility: "实用",
+  other: "其他",
+};
 type FilterOption = string;
 type ModsFilter = {
   key: "version" | "category";
@@ -317,7 +336,7 @@ watch(versionPage, () => {
 const modrinthFilters = computed<ModsFilter[]>(() => [
   {
     key: "version",
-    label: t("game.resourcepacks.filter.version"),
+    label: "版本",
     options: versionOptions.value,
     isSelected: (option) => selectedVersions.value.includes(option as string),
     toggle: (option) => toggleFilterOption(selectedVersions.value, option as string),
@@ -325,11 +344,11 @@ const modrinthFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "category",
-    label: t("game.resourcepacks.filter.category"),
+    label: "分类",
     options: CATEGORIES,
     isSelected: (option) => selectedCategories.value.includes(option as string),
     toggle: (option) => toggleFilterOption(selectedCategories.value, option as string),
-    display: (option) => t(`game.resourcepacks.filter.categories.${option as string}`),
+    display: (option) => CATEGORY_NAMES[option as string] ?? option,
   },
 ]);
 

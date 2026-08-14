@@ -222,7 +222,7 @@ jobs:
         uses: release-drafter/release-drafter@v6
         with:
           version: ${{ needs.get-version.outputs.app_version }}
-          prerelease: ${{ steps.current_version.outputs.text }}
+          prerelease: ${{ steps.detect.outputs.is_prerelease }}
           publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

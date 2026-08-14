@@ -7,7 +7,7 @@
     <div class="music-overlay" v-if="music.panelOpen" @pointerdown.self="music.closePanel()">
       <div class="music-card" @pointerdown.stop>
         <div class="track-info">
-          <span class="track-name">{{ music.currentTrack?.name ?? $t("music.noMusic") }}</span>
+          <span class="track-name">{{ music.currentTrack?.name ?? "暂无音乐" }}</span>
         </div>
         <div class="progress-area">
           <span class="time">{{ formatTime(music.currentTime) }}</span>
@@ -15,7 +15,7 @@
             class="progress-bar"
             ref="progressBarRef"
             @pointerdown="onProgressPointerDown"
-            :title="$t('music.progress')">
+            :title="'播放进度'">
             <div class="progress-fill" :style="{ width: `${music.progress * 100}%` }"></div>
           </div>
           <span class="time">{{ formatTime(music.duration) }}</span>
@@ -26,42 +26,41 @@
               class="player-btn"
               :class="{ active: music.shuffle }"
               @click="music.toggleShuffle()"
-              :title="$t('music.shuffle')">
+              :title="'随机播放'">
               <AppIcon name="shuffle" :size="18" />
             </button>
             <button
               class="player-btn"
-              :class="[{ active: music.repeatMode !== 'off' }, `repeat-${music.repeatMode}`]"
+              :class="{ active: music.repeat }"
               @click="music.cycleRepeat()"
-              :title="$t('music.repeat')">
+              :title="'循环播放'">
               <AppIcon name="repeat" :size="18" />
-              <span v-if="music.repeatMode === 'one'" class="repeat-one">1</span>
             </button>
           </div>
           <div class="controls-group controls-center">
-            <button class="player-btn" @click="music.prev()" :title="$t('music.previous')">
+            <button class="player-btn" @click="music.prev()" :title="'上一曲'">
               <AppIcon name="play-skip-back" :size="18" />
             </button>
             <button
               class="player-btn play-btn"
               @click="music.togglePlay()"
-              :title="music.isPlaying ? $t('music.pause') : $t('music.play')">
+              :title="music.isPlaying ? '暂停' : '播放'">
               <AppIcon v-if="music.isPlaying" name="pause-circle-outline" :size="24" />
               <AppIcon v-else name="play-circle-outline" :size="24" />
             </button>
-            <button class="player-btn" @click="music.next()" :title="$t('music.next')">
+            <button class="player-btn" @click="music.next()" :title="'下一曲'">
               <AppIcon name="play-skip-forward" :size="18" />
             </button>
           </div>
           <div class="controls-group controls-right">
-            <button class="player-btn" @click="openMusicFolder" :title="$t('music.openFolder')">
+            <button class="player-btn" @click="openMusicFolder" :title="'打开音乐文件夹'">
               <AppIcon name="folder" :size="18" />
             </button>
             <button
               class="player-btn"
               :class="{ active: showPlaylist }"
               @click="showPlaylist = !showPlaylist"
-              :title="$t('music.playlist')">
+              :title="'播放列表'">
               <AppIcon name="list" :size="18" />
             </button>
           </div>
@@ -81,7 +80,7 @@
                   <span class="playlist-item-name">{{ track.name }}</span>
                 </button>
                 <p v-if="music.tracks.length === 0" class="playlist-empty">
-                  {{ $t("music.playlistEmpty") }}
+                  {{ "暂无音乐，请将音频文件放入音乐文件夹。" }}
                 </p>
               </div>
             </ScrollView>
@@ -179,7 +178,6 @@ function onProgressPointerDown(event: PointerEvent) {
 .music-card {
   display: flex;
   flex-direction: column;
-  gap: 14px;
   width: 340px;
   padding: 16px;
   border-radius: 14px;
@@ -197,6 +195,7 @@ function onProgressPointerDown(event: PointerEvent) {
     .track-name {
       font-size: 16px;
       font-weight: 600;
+      margin-bottom: 18px;
       color: var(--ctp-text);
       text-align: center;
       white-space: nowrap;
@@ -209,6 +208,7 @@ function onProgressPointerDown(event: PointerEvent) {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-bottom: 8px;
 
     .time {
       font-size: 11px;
@@ -285,6 +285,10 @@ function onProgressPointerDown(event: PointerEvent) {
 
       &.active {
         color: var(--ctp-mauve);
+
+        :deep(svg path) {
+          stroke: var(--ctp-mauve);
+        }
       }
 
       &.play-btn {
@@ -296,15 +300,6 @@ function onProgressPointerDown(event: PointerEvent) {
           background: rgba(var(--ctp-surface2-rgb), 0.7);
           color: var(--ctp-mauve);
         }
-      }
-
-      .repeat-one {
-        position: absolute;
-        top: 3px;
-        right: 5px;
-        font-size: 8px;
-        font-weight: 700;
-        color: inherit;
       }
     }
   }

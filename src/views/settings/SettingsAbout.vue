@@ -4,93 +4,116 @@
 
 <template>
   <div>
-    <info-box :click-able="true" @click="openUrl('https://github.com/sponsors/conic-apps')">
-      <p
-        :style="{
-          marginBottom: '8px',
-          backgroundImage: `linear-gradient(-90deg, var(--ctp-${config.appearance.palette.toLowerCase()}-mauve), var(--ctp-${config.appearance.palette.toLowerCase()}-pink))`,
-          backgroundClip: 'text',
-          color: '#00000000',
-          fontSize: '18px',
-          fontWeight: 'bold',
-        }">
-        {{ $t("settings.about.sponsorTitle") }}
-      </p>
-      {{ $t("settings.about.sponsorDesc") }}
-    </info-box>
+    <!-- TODO:  -->
+    <!-- <info-box :click-able="true" @click="openUrl('https://github.com/sponsors/conic-apps')"> -->
+    <!-- <p -->
+    <!--   :style="{ -->
+    <!--     marginBottom: '8px', -->
+    <!--     backgroundImage: `linear-gradient(-90deg, var(--ctp-${config.appearance.palette.toLowerCase()}-mauve), var(--ctp-${config.appearance.palette.toLowerCase()}-pink))`, -->
+    <!--     backgroundClip: 'text', -->
+    <!--     color: '#00000000', -->
+    <!--     fontSize: '18px', -->
+    <!--     fontWeight: 'bold', -->
+    <!--   }"> -->
+    <!--   {{ "赞助 Conic Launcher" }} -->
+    <!-- </p> -->
+    <!-- {{ -->
+    <!--   "Conic Launcher 是自由项目，旨在带来更好的游戏体验，并帮助降低碳排放。项目由 ConicMC 的开发者开发和维护，您的赞助或贡献不仅能帮助 Conic Launcher 获得更好的发展，更能为自由软件事业及环境保护贡献力量。" -->
+    <!-- }} -->
+    <!-- </info-box> -->
     <SettingGroup>
       <SettingItem
-        :title="$t('settings.about.report')"
-        :description="$t('settings.about.reportDesc')"
+        :title="'提交反馈'"
+        :description="'打开一个 GitHub Issue，如果报告 Bug 记得上传启动器日志'"
         icon="flag"
         :navigable="true"
         @click="openUrl('https://github.com/conic-apps/launcher')">
       </SettingItem>
       <SettingItem
-        :title="$t('settings.about.viewSourceCode')"
-        :description="$t('settings.about.viewSourceCodeDesc')"
+        :title="'查看源代码'"
+        :description="'在 GitHub 中查看启动器的源代码'"
         icon="github"
         :navigable="true"
         @click="openUrl('https://github.com/conic-apps/launcher/issues/new/choose')">
       </SettingItem>
       <SettingItem
-        :title="$t('settings.advance.viewLauncherLogs')"
-        :description="$t('settings.advance.viewLauncherLogsDesc')"
+        :title="'查看启动器日志'"
+        :description="'打开启动器日志文件夹，报告问题时请上传日志'"
         icon="document-text"
         :navigable="true"
         @click="openLogFolder">
       </SettingItem>
     </SettingGroup>
-    <SettingGroup :title="$t('settings.about.thirdPartyLibraries')">
-      <SettingItem
-        title="Tauri"
-        description="Copyright 2022 Tauri Programme within The Commons Conservancy<br> Licensed under the Apache-2.0 License or MIT Licenses"></SettingItem>
-      <SettingItem
-        title="Vue"
-        description="Copyright (c) 2018-present, Yuxi (Evan) You and Vue contributors<br> Licensed under the MIT License"></SettingItem>
-      <SettingItem
-        title="vite"
-        description="Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors<br> Licensed under the MIT License"></SettingItem>
-      <SettingItem
-        title="Less"
-        description="Copyright (c) 2009-2017 Alexis Sellier & The Core Less Team<br> Licensed under the Apache License."></SettingItem>
-      <SettingItem
-        title="Tokio"
-        description="Copyright (c) 2019 The Tokio Project Developers<br> Licensed under the MIT License."></SettingItem>
-      <SettingItem
-        title="Serde"
-        description="Licensed under Apache-2.0 or MIT license."></SettingItem>
-      <SettingItem
-        title="Anyhow"
-        description="Licensed under Apache-2.0 or MIT license."></SettingItem>
-      <SettingItem
-        title="OneCell"
-        description="Licensed under Apache-2.0 or MIT license."></SettingItem>
-      <SettingItem
-        title="Rejex"
-        description="Licensed under Apache-2.0 or MIT license."></SettingItem>
-      <SettingItem
-        title="Rayon"
-        description="Rayon is distributed under the terms of both the MIT license and the Apache License (Version 2.0)."></SettingItem>
-      <SettingItem
-        title="env_logger"
-        description="Licensed under Apache-2.0 or MIT license."></SettingItem>
-    </SettingGroup>
+    <div class="version-info">
+      <p class="application-name">Conic Launcher</p>
+      <p class="application-version">{{ appVersion ?? "0.0.0" }}</p>
+      <p class="copyright">Copyright 2022-2026 ConicMC developers. All rights reserved.</p>
+      <!-- <p class="text"> -->
+      <!--   Conic Launcher is not an official Minecraft product, and is not approved by or associated -->
+      <!--   with Mojang Studios. "Minecraft" is a trademark of Mojang AB and any usage of the Minecraft -->
+      <!--   brand on this site is used in accordance with Mojang Studios' Brand and Asset Guidelines. -->
+      <!-- </p> -->
+      <p class="text">
+        Conic Launcher 不是官方的 Minecraft 产品，也未获得 Mojang Studios
+        的批准或关联。“Minecraft”是 Mojang AB 的商标，本网站对 Minecraft 品牌的任何使用均符合 Mojang
+        Studios 的<a
+          href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines"
+          @click.prevent="openUrl('https://www.minecraft.net/en-us/terms#terms-brand_guidelines')"
+          >品牌与资产指南</a
+        >
+        。
+      </p>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
-import InfoBox from "./InfoBox.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { useConfigStore } from "@/store/config";
 import { getDataLocation } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
+import { getVersion } from "@tauri-apps/api/app";
+import { onMounted, ref } from "vue";
 
-const config = useConfigStore();
 async function openLogFolder() {
   const dataLocation = await getDataLocation();
   invoke("open_path", { path: dataLocation.logs });
 }
+
+const appVersion = ref(null as null | string);
+onMounted(async () => {
+  appVersion.value = await getVersion();
+});
 </script>
+
+<style lang="less" scoped>
+.version-info {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  flex-direction: column;
+  margin-top: 32px;
+  .application-name {
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .application-version {
+    font-size: 9px;
+    font-weight: normal;
+    margin-top: 2px;
+  }
+  .copyright {
+    font-size: 9px;
+    font-weight: normal;
+    margin-top: 6px;
+  }
+  .text {
+    font-size: 9px;
+    font-weight: normal;
+    margin-top: 6px;
+    text-align: center;
+    width: calc(100% - 96px);
+  }
+}
+</style>

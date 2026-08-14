@@ -4,50 +4,38 @@
 
 <template>
   <div>
-    <SettingGroup :title="$t('settings.accessibility.extraFeatures')">
+    <SettingGroup :title="'辅助功能'">
       <SettingItem
-        :title="$t('settings.accessibility.releaseReminder')"
-        :description="$t('settings.accessibility.releaseReminderDesc')"
+        :title="'正式版更新提醒'"
+        :description="'当 Minecraft 正式版发布时弹出提醒弹窗'"
         icon="bell"
         icon-fill="none">
         <BaseSwitch v-model="config.accessibility.release_reminder"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        :title="$t('settings.accessibility.snapshotReminder')"
-        :description="$t('settings.accessibility.snapshotReminderDesc')"
+        :title="'快照版更新提醒'"
+        :description="'当 Minecraft 快照发布时弹出提醒弹窗'"
         icon="bell"
         icon-fill="none">
         <BaseSwitch v-model="config.accessibility.snapshot_reminder"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        :title="$t('settings.accessibility.hideLatestRelease')"
-        :description="$t('settings.accessibility.hideLatestReleaseDesc')"
-        icon="eye-off">
-        <BaseSwitch v-model="config.accessibility.hide_latest_release"></BaseSwitch>
-      </SettingItem>
-      <SettingItem
-        :title="$t('settings.accessibility.hideLatestSnapshot')"
-        :description="$t('settings.accessibility.hideLatestSnapshotDesc')"
-        icon="eye-off">
-        <BaseSwitch v-model="config.accessibility.hide_latest_snapshot"></BaseSwitch>
-      </SettingItem>
-      <SettingItem
-        :title="$t('settings.accessibility.changeGameLanguage')"
-        :description="$t('settings.accessibility.changeGameLanguageDesc')"
+        :title="'自动更改游戏语言'"
+        :description="'在首次启动游戏时将游戏语言设置为你的启动器语言'"
         icon="language">
         <BaseSwitch v-model="config.accessibility.change_game_language"></BaseSwitch>
       </SettingItem>
     </SettingGroup>
-    <SettingGroup :title="$t('settings.accessibility.accessibility')">
+    <SettingGroup :title="'无障碍'">
+      <!-- <SettingItem -->
+      <!--   :title="'禁用所有动画'" -->
+      <!--   :description="'眨眼和闪烁的动画对于有认知问题的人来说是有问题的，比如注意力缺陷多动障碍 (ADHD)。此外，某些动画效果可以触发前庭神经紊乱、癫痫、偏头痛和暗点敏感性。'" -->
+      <!--   icon="pause"> -->
+      <!--   <BaseSwitch v-model="config.accessibility.disable_animations"></BaseSwitch> -->
+      <!-- </SettingItem> -->
       <SettingItem
-        :title="$t('settings.accessibility.disableAllAnimations')"
-        :description="$t('settings.accessibility.disableAllAnimationsDesc')"
-        icon="pause">
-        <BaseSwitch v-model="config.accessibility.disable_animations"></BaseSwitch>
-      </SettingItem>
-      <SettingItem
-        :title="$t('settings.accessibility.highContrastMode')"
-        :description="$t('settings.accessibility.highContrastModeDesc')"
+        :title="'高对比度模式'"
+        :description="'启用当前主题的高对比度模式（如果可用）'"
         icon="contrast">
         <BaseSwitch v-model="config.accessibility.high_contrast_mode"></BaseSwitch>
       </SettingItem>

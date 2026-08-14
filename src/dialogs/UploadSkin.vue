@@ -13,7 +13,7 @@
           padding-bottom: 16px;
           border-bottom: var(--card-border);
         ">
-        {{ t("accounts.uploadSkin.title") }}
+        {{ "上传皮肤" }}
       </p>
       <div class="dialog-button" @click="close">
         <i></i>
@@ -27,42 +27,40 @@
         </div>
         <div class="right">
           <div class="section">
-            <p class="section-title">{{ t("accounts.uploadSkin.modelType") }}</p>
+            <p class="section-title">{{ "模型类型" }}</p>
             <div class="type-select">
               <div
                 class="type-option"
                 :class="{ activated: modelType === 'slim' }"
                 @click="modelType = 'slim'">
-                {{ t("accounts.uploadSkin.slim") }}
+                {{ "Slim" }}
               </div>
               <div
                 class="type-option"
                 :class="{ activated: modelType === 'classic' }"
                 @click="modelType = 'classic'">
-                {{ t("accounts.uploadSkin.classic") }}
+                {{ "Classic" }}
               </div>
             </div>
           </div>
           <div class="section" v-if="dialogStore.uploadSkin.accountType === 'Yggdrasil'">
-            <p class="section-title">{{ t("accounts.uploadSkin.textureType") }}</p>
+            <p class="section-title">{{ "上传类型" }}</p>
             <div class="type-select">
               <div
                 class="type-option"
                 :class="{ activated: dialogStore.uploadSkin.textureType === 'skin' }"
                 @click="dialogStore.uploadSkin.textureType = 'skin'">
-                {{ t("accounts.uploadSkin.skin") }}
+                {{ "皮肤" }}
               </div>
               <div
                 class="type-option"
                 :class="{ activated: dialogStore.uploadSkin.textureType === 'cape' }"
                 @click="dialogStore.uploadSkin.textureType = 'cape'">
-                {{ t("accounts.uploadSkin.cape") }}
+                {{ "披风" }}
               </div>
             </div>
           </div>
-          <BaseButton style="width: 100%" @click="upload">{{
-            t("accounts.uploadSkin.confirm")
-          }}</BaseButton>
+          <BaseButton style="width: 100%" @click="upload">{{ "上传皮肤" }}</BaseButton>
         </div>
       </div>
     </div>
@@ -75,10 +73,8 @@ import BaseButton from "@/components/BaseButton.vue";
 import PlayerSkinModel from "@/components/PlayerSkinModel.vue";
 import PlayerCape from "@/components/PlayerCape.vue";
 import { ref } from "vue";
-import { useI18n } from "vue-i18n";
 import { useDialogStore } from "@/store/dialog";
 
-const { t } = useI18n();
 const dialogStore = useDialogStore();
 
 const modelType = ref<"slim" | "classic">("classic");

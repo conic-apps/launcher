@@ -61,7 +61,8 @@ Use **pnpm** only. README says `yarn` — it's stale. Engine is `pnpm@11.7.0`; `
 - `vue/multi-word-component-names` ESLint rule is **off**
 - Naming: `camelCase` for variables/consts, `UPPER_CASE` for constants, `PascalCase` for types/interfaces
 - Components use `<AppIcon>` globally registered — no import needed
-- i18n: vue-i18n with `en_us` and `zh_cn` locales
+- UI text is hardcoded in Chinese directly in templates/components — do **not** add or update i18n locale files when changing UI text
+- **Never** add `cursor: pointer` on your own — this is a desktop app; interactive elements don't use the web link-hand cursor
 
 ## Testing
 

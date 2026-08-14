@@ -84,6 +84,8 @@ pub struct LaunchConfig {
 
     /// If true, skips integrity checks of the game files.
     pub skip_check_files: bool,
+
+    pub quit_app_after_launch: bool,
 }
 
 impl Default for LaunchConfig {
@@ -108,6 +110,7 @@ impl Default for LaunchConfig {
             execute_before_launch: String::new(),
             skip_refresh_account: false,
             skip_check_files: false,
+            quit_app_after_launch: false,
         }
     }
 }

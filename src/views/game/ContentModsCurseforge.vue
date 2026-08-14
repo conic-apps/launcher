@@ -9,7 +9,7 @@
         <input
           class="search-input"
           type="text"
-          :placeholder="t('game.mods.filter.searchPlaceholder')"
+          :placeholder="'搜索模组...'"
           v-model="searchQuery"
           @keyup.enter="applySearchFilters()" />
         <button class="search-button" @click="applySearchFilters()">
@@ -59,15 +59,11 @@
     </div>
 
     <p class="result-count" v-if="curseForgeSearchResult">
-      {{
-        t("game.mods.filter.resultCount", {
-          count: curseForgeSearchResult.pagination?.totalCount ?? 0,
-        })
-      }}
+      {{ `共 ${curseForgeSearchResult.pagination?.totalCount ?? 0} 个模组` }}
     </p>
 
     <div class="search-status" v-if="curseForgeSearchResult === null || curseForgeLoading">
-      <span>{{ t("game.mods.filter.searching") }}</span>
+      <span>{{ "正在搜索..." }}</span>
     </div>
     <template v-else>
       <div class="mods-list" v-if="curseForgeSearchResult.data.length > 0">
@@ -102,7 +98,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <span>{{ t("game.mods.filter.noResults") }}</span>
+        <span>{{ "没有找到相关模组" }}</span>
       </div>
     </template>
 
@@ -142,7 +138,6 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { useI18n } from "vue-i18n";
 import { useInstanceStore } from "@/store/instance";
 import { getMinecrafVersionManifest } from "@conic/install";
 import {
@@ -153,13 +148,17 @@ import {
   searchMods as searchCurseForgeMods,
 } from "@conic/curseforge";
 
-const { t } = useI18n();
-
 const instanceStore = useInstanceStore();
 
 const PAGE_SIZE = 20;
 const VERSIONS_PER_PAGE = 6;
 const LOADERS = ["fabric", "forge", "neoforge", "quilt"];
+const LOADER_NAMES: Record<string, string> = {
+  fabric: "Fabric",
+  forge: "Forge",
+  neoforge: "NeoForge",
+  quilt: "Quilt",
+};
 const CURSEFORGE_LOADER_ENUMS: Record<string, CurseForgeModLoaderType> = {
   forge: CurseForgeModLoaderType.Forge,
   fabric: CurseForgeModLoaderType.Fabric,
@@ -185,6 +184,24 @@ const CURSEFORGE_CATEGORIES: CategoryOption[] = [
   { id: 424, slug: "cosmetic" },
   { id: 425, slug: "mc-miscellaneous" },
 ];
+const CURSEFORGE_CATEGORY_NAMES: Record<string, string> = {
+  "adventure-rpg": "冒险与RPG",
+  "armor-weapons-tools": "护甲、工具与武器",
+  "world-gen": "世界生成",
+  technology: "科技",
+  magic: "魔法",
+  storage: "存储",
+  "library-api": "库与API",
+  "map-information": "地图与信息",
+  "utility-qol": "实用与QoL",
+  "server-utility": "服务器实用",
+  "mc-food": "食物",
+  performance: "性能",
+  "bug-fixes": "漏洞修复",
+  redstone: "红石",
+  cosmetic: "外观装饰",
+  "mc-miscellaneous": "杂项",
+};
 type FilterOption = string | CategoryOption;
 type ModsFilter = {
   key: "loader" | "version" | "category";
@@ -350,15 +367,15 @@ watch(versionPage, () => {
 const curseForgeFilters = computed<ModsFilter[]>(() => [
   {
     key: "loader",
-    label: t("game.mods.filter.loader"),
+    label: "加载器",
     options: LOADERS,
     isSelected: (option) => curseForgeSelectedLoaders.value.includes(option as string),
     toggle: (option) => toggleFilterOption(curseForgeSelectedLoaders.value, option as string),
-    display: (option) => t(`game.mods.filter.loaders.${option as string}`),
+    display: (option) => LOADER_NAMES[option as string] ?? option,
   },
   {
     key: "version",
-    label: t("game.mods.filter.version"),
+    label: "版本",
     options: versionOptions.value,
     isSelected: (option) => curseForgeSelectedVersions.value.includes(option as string),
     toggle: (option) => toggleFilterOption(curseForgeSelectedVersions.value, option as string),
@@ -366,14 +383,14 @@ const curseForgeFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "category",
-    label: t("game.mods.filter.category"),
+    label: "分类",
     options: CURSEFORGE_CATEGORIES,
     isSelected: (option) =>
       curseForgeSelectedCategories.value.includes((option as CategoryOption).id),
     toggle: (option) =>
       toggleFilterOption(curseForgeSelectedCategories.value, (option as CategoryOption).id),
     display: (option) =>
-      t(`game.mods.filter.curseforgeCategories.${(option as CategoryOption).slug}`),
+      CURSEFORGE_CATEGORY_NAMES[(option as CategoryOption).slug] ?? (option as CategoryOption).slug,
   },
 ]);
 

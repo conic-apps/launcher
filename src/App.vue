@@ -27,7 +27,7 @@
         </button>
       </div>
       <div class="title-bar-container">
-        <search-bar style="width: 100%" :placeholder="$t('globalSearch.placeholder')"></search-bar>
+        <search-bar style="width: 100%" :placeholder="'按 / 搜索，或按 ; 输入命令'"></search-bar>
       </div>
       <div
         class="window-buttons-container window-buttons-container-macos"

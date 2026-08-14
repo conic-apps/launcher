@@ -9,7 +9,7 @@
         <input
           class="search-input"
           type="text"
-          :placeholder="t('game.mods.filter.searchPlaceholder')"
+          :placeholder="'搜索模组...'"
           v-model="searchQuery"
           @keyup.enter="applySearchFilters()" />
         <button class="search-button" @click="applySearchFilters()">
@@ -59,11 +59,11 @@
     </div>
 
     <p class="result-count" v-if="modrinthSearchResult">
-      {{ t("game.mods.filter.resultCount", { count: modrinthSearchResult.total_hits }) }}
+      {{ `共 ${modrinthSearchResult.total_hits} 个模组` }}
     </p>
 
     <div class="search-status" v-if="modrinthSearchResult === null || modrinthLoading">
-      <span>{{ t("game.mods.filter.searching") }}</span>
+      <span>{{ "正在搜索..." }}</span>
     </div>
     <template v-else>
       <div class="mods-list" v-if="modrinthSearchResult.hits.length > 0">
@@ -113,7 +113,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <span>{{ t("game.mods.filter.noResults") }}</span>
+        <span>{{ "没有找到相关模组" }}</span>
       </div>
     </template>
 
@@ -147,7 +147,6 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { useI18n } from "vue-i18n";
 import { useInstanceStore } from "@/store/instance";
 import { getMinecrafVersionManifest } from "@conic/install";
 import {
@@ -156,13 +155,17 @@ import {
   searchProjects as searchModrinthProjects,
 } from "@conic/modrinth";
 
-const { t } = useI18n();
-
 const instanceStore = useInstanceStore();
 
 const PAGE_SIZE = 20;
 const VERSIONS_PER_PAGE = 6;
 const LOADERS = ["fabric", "forge", "neoforge", "quilt"];
+const LOADER_NAMES: Record<string, string> = {
+  fabric: "Fabric",
+  forge: "Forge",
+  neoforge: "NeoForge",
+  quilt: "Quilt",
+};
 const CATEGORIES = [
   "adventure",
   "cursed",
@@ -184,6 +187,27 @@ const CATEGORIES = [
   "utility",
   "worldgen",
 ];
+const CATEGORY_NAMES: Record<string, string> = {
+  adventure: "冒险",
+  cursed: "诡异",
+  decoration: "装饰",
+  economy: "经济",
+  equipment: "装备",
+  food: "食物",
+  "game-mechanics": "游戏机制",
+  library: "库",
+  magic: "魔法",
+  management: "管理",
+  minigame: "小游戏",
+  mobs: "生物",
+  optimization: "优化",
+  social: "社交",
+  storage: "存储",
+  technology: "科技",
+  transportation: "交通",
+  utility: "实用",
+  worldgen: "世界生成",
+};
 type FilterOption = string;
 type ModsFilter = {
   key: "loader" | "version" | "category";
@@ -341,15 +365,15 @@ watch(versionPage, () => {
 const modrinthFilters = computed<ModsFilter[]>(() => [
   {
     key: "loader",
-    label: t("game.mods.filter.loader"),
+    label: "加载器",
     options: LOADERS,
     isSelected: (option) => selectedLoaders.value.includes(option as string),
     toggle: (option) => toggleFilterOption(selectedLoaders.value, option as string),
-    display: (option) => t(`game.mods.filter.loaders.${option as string}`),
+    display: (option) => LOADER_NAMES[option as string] ?? option,
   },
   {
     key: "version",
-    label: t("game.mods.filter.version"),
+    label: "版本",
     options: versionOptions.value,
     isSelected: (option) => selectedVersions.value.includes(option as string),
     toggle: (option) => toggleFilterOption(selectedVersions.value, option as string),
@@ -357,11 +381,11 @@ const modrinthFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "category",
-    label: t("game.mods.filter.category"),
+    label: "分类",
     options: CATEGORIES,
     isSelected: (option) => selectedCategories.value.includes(option as string),
     toggle: (option) => toggleFilterOption(selectedCategories.value, option as string),
-    display: (option) => t(`game.mods.filter.categories.${option as string}`),
+    display: (option) => CATEGORY_NAMES[option as string] ?? option,
   },
 ]);
 

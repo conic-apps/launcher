@@ -6,7 +6,7 @@
   <button
     v-if="updateStore.updating"
     class="update-indicator"
-    :title="t('update.downloading')"
+    :title="'正在下载更新...'"
     @click="dialogStore.updateApp.visible = true">
     <svg viewBox="0 0 512 512" :class="{ indeterminate }">
       <path class="ring-track" :d="RING_PATH" pathLength="100" stroke-dasharray="100"></path>
@@ -25,14 +25,12 @@
 import { useDialogStore } from "@/store/dialog";
 import { useUpdateStore } from "@/store/update";
 import { computed } from "vue";
-import { useI18n } from "vue-i18n";
 
 const RING_PATH = "M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z";
 const ARROW_PATH = "M176 249.38L256 170l80 79.38M256 181.03V342";
 
 const updateStore = useUpdateStore();
 const dialogStore = useDialogStore();
-const { t } = useI18n();
 
 const indeterminate = computed(() => {
   const progress = updateStore.progress;

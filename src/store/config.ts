@@ -14,7 +14,7 @@ export const useConfigStore = defineStore("global_config", () => {
     watch(
         config,
         () => {
-            saveQueue = saveQueue.catch(() => {}).then(() => saveConfigToFile(config.value))
+            saveQueue = saveQueue.catch(() => {}).then(() => saveConfigToFile(config.value)) // TODO: Debounce
         },
         {
             deep: true,

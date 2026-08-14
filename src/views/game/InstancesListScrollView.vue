@@ -74,6 +74,7 @@ interface CardLayout {
 
 interface CardRef {
   id: string;
+  dataId: string;
   wrapper: HTMLElement;
   instance: HTMLElement;
 }
@@ -83,6 +84,7 @@ let setters: ((value: number) => void)[] = [];
 let containerHeight = 0;
 const maxOffset = 160;
 const introXOffset = 40;
+const GROUP_TITLE_X = -40;
 
 let cardTriggers: ScrollTrigger[] = [];
 let cardTriggersKey = "";
@@ -98,7 +100,8 @@ function queryCards(): CardRef[] {
   const content = contentRef.value;
   if (!content) return [];
   return Array.from(content.querySelectorAll<HTMLElement>("[data-id]")).map((instance) => ({
-    id: instance.dataset.id ?? "",
+    id: instance.dataset.key ?? instance.dataset.id ?? "",
+    dataId: instance.dataset.id ?? "",
     instance,
     wrapper: instance.parentElement ?? instance,
   }));
@@ -161,16 +164,40 @@ function syncCardTriggers() {
   if (key === cardTriggersKey) return;
   cardTriggersKey = key;
 
-  cardTriggers.forEach((trigger) => trigger.kill());
-  cardTriggers = cards.map(({ instance, wrapper }) =>
-    ScrollTrigger.create({
-      trigger: wrapper,
-      scroller: container,
-      start: "top bottom",
-      end: "bottom top",
-      toggleClass: { targets: instance, className: "visible" },
-    }),
+  // Snapshot which elements are currently revealed before killing the triggers:
+  // ScrollTrigger.kill() strips the toggleClass, which would flash elements back
+  // to their rest opacity when a group collapse/expand recreates the triggers.
+  const wasVisible = new Set<HTMLElement>(
+    cardTriggers
+      .map((trigger) => {
+        const toggle = trigger.vars.toggleClass;
+        return typeof toggle === "string" ? undefined : toggle?.targets;
+      })
+      .flat()
+      .filter(
+        (target): target is HTMLElement =>
+          target instanceof HTMLElement && target.classList.contains("visible"),
+      ),
   );
+
+  cardTriggers.forEach((trigger) => trigger.kill());
+  cardTriggers = cards
+    .filter((card) => !card.dataId.startsWith("group-"))
+    .map(({ instance, wrapper }) =>
+      ScrollTrigger.create({
+        trigger: wrapper,
+        scroller: container,
+        start: "top bottom",
+        end: "bottom top",
+        toggleClass: { targets: instance, className: "visible" },
+      }),
+    );
+
+  for (const card of cards) {
+    if (wasVisible.has(card.instance) && !card.instance.classList.contains("visible")) {
+      card.instance.classList.add("visible");
+    }
+  }
 }
 
 async function updateScrollbar(scrollY: number) {
@@ -198,6 +225,7 @@ async function updateScrollbar(scrollY: number) {
 }
 
 function onThumbPointerDown(event: PointerEvent) {
+  if (scrollLocked) return;
   const thumb = thumbRef.value;
   if (!thumb) return;
   dragging.value = true;
@@ -207,6 +235,7 @@ function onThumbPointerDown(event: PointerEvent) {
 }
 
 function onThumbPointerMove(event: PointerEvent) {
+  if (scrollLocked) return;
   if (!dragging.value) return;
   const scrollbar = scrollbarRef.value;
   if (!scrollbar) return;
@@ -230,6 +259,7 @@ function onThumbPointerUp(event: PointerEvent) {
 }
 
 function onScrollbarPointerDown(event: PointerEvent) {
+  if (scrollLocked) return;
   const scrollbar = scrollbarRef.value;
   if (!scrollbar) return;
 
@@ -378,6 +408,40 @@ function cssScale(element: HTMLElement): number {
   return match ? Number(match[1]) : 1;
 }
 
+// Samples keyframes along the curved rail: x follows the same parabola as
+// renderPositions, eased between the start and end center positions. xBase is an
+// extra horizontal offset baked into the keyframes (used for group headers, which
+// carry a CSS transform that a WAAPI animation would otherwise override).
+function railKeyframes(
+  fromCenter: number,
+  toCenter: number,
+  fromTop: number,
+  toTop: number,
+  scaleSuffix: string,
+  fade = false,
+  xBase = 0,
+) {
+  const SAMPLES = 24;
+  const dy = fromTop - toTop;
+  const keyframes: { offset: number; transform: string; opacity?: string }[] = [];
+
+  for (let i = 0; i <= SAMPLES; i++) {
+    const p = i / SAMPLES;
+    const e = flipEase(p);
+    const center = fromCenter + (toCenter - fromCenter) * e;
+    const x = parallaxX(center) - parallaxX(toCenter) + xBase;
+    const y = dy * (1 - e);
+    const frame: { offset: number; transform: string; opacity?: string } = {
+      offset: p,
+      transform: `translate(${x}px, ${y}px)${scaleSuffix}`,
+    };
+    if (fade) frame.opacity = `${e}`;
+    keyframes.push(frame);
+  }
+
+  return keyframes;
+}
+
 onBeforeUpdate(() => {
   firstRects = new Map(
     queryCards().map((card) => [card.id, card.wrapper.getBoundingClientRect().top]),
@@ -394,41 +458,37 @@ onUpdated(() => {
   for (const card of cards) {
     const scale = cssScale(card.instance);
     const scaleSuffix = scale !== 1 ? ` scale(${scale})` : "";
+    const to = card.wrapper.getBoundingClientRect().top;
+    const height = card.wrapper.getBoundingClientRect().height;
+    const toCenter = to + height / 2;
     const from = firstRects.get(card.id);
+    const xBase = card.wrapper.hasAttribute("data-group") ? GROUP_TITLE_X : 0;
+
     if (from === undefined) {
       gsap.set(card.wrapper, { opacity: 1 });
       card.instance.animate(
-        [
-          { transform: `translateY(24px)${scaleSuffix}`, opacity: "0" },
-          { transform: `translateY(0)${scaleSuffix}`, opacity: "1" },
-        ],
-        { duration: 300, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+        railKeyframes(toCenter + 24, toCenter, to + 24, to, scaleSuffix, true, xBase),
+        {
+          duration: 300,
+          easing: "linear",
+        },
       );
       continue;
     }
 
-    const to = card.wrapper.getBoundingClientRect().top;
-    const height = card.wrapper.getBoundingClientRect().height;
     const fromCenter = from + height / 2;
-    const toCenter = to + height / 2;
     const dy = from - to;
     const dx = parallaxX(fromCenter) - parallaxX(toCenter);
 
     if (Math.abs(dy) < 0.5 && Math.abs(dx) < 0.5) continue;
 
-    const SAMPLES = 24;
-    const keyframes: { offset: number; transform: string }[] = [];
-
-    for (let i = 0; i <= SAMPLES; i++) {
-      const p = i / SAMPLES;
-      const e = flipEase(p);
-      const center = fromCenter + (toCenter - fromCenter) * e;
-      const x = parallaxX(center) - parallaxX(toCenter);
-      const y = dy * (1 - e);
-      keyframes.push({ offset: p, transform: `translate(${x}px, ${y}px)${scaleSuffix}` });
-    }
-
-    card.instance.animate(keyframes, { duration: 400, easing: "linear" });
+    card.instance.animate(
+      railKeyframes(fromCenter, toCenter, from, to, scaleSuffix, false, xBase),
+      {
+        duration: 400,
+        easing: "linear",
+      },
+    );
   }
 
   firstRects = new Map();
@@ -447,12 +507,14 @@ async function reflow() {
 }
 
 function scrollTo(instanceId: string, smooth: boolean) {
+  if (scrollLocked) return;
+
   const container = containerRef.value;
   const cards = queryCards();
 
   if (!container || cards.length === 0) return;
 
-  const index = cards.findIndex((card) => card.id === instanceId);
+  const index = cards.findIndex((card) => card.dataId === instanceId);
   if (index === -1) return;
 
   measureLayout();
@@ -472,6 +534,83 @@ function scrollTo(instanceId: string, smooth: boolean) {
   container.scrollTo({
     top: target,
     behavior: smooth ? "smooth" : "auto",
+  });
+}
+
+const COLLAPSE_DURATION = 300;
+
+let scrollLocked = false;
+
+function lockScroll() {
+  scrollLocked = true;
+  lenis?.stop();
+}
+
+function unlockScroll() {
+  scrollLocked = false;
+  lenis?.start();
+}
+
+function clearGroupHeight(groupKey: string) {
+  const content = contentRef.value;
+  const groupContent = content?.querySelector<HTMLElement>(`[data-group-content="${groupKey}"]`);
+  if (groupContent) groupContent.style.height = "";
+}
+
+// Collapses a group: animates the group content height down to zero while the
+// cards below it glide along the curved rail to fill the vacated space.
+function collapseGroup(groupKey: string): Promise<void> {
+  const container = containerRef.value;
+  const content = contentRef.value;
+  if (!container || !content) return Promise.resolve();
+
+  const groupContent = content.querySelector<HTMLElement>(`[data-group-content="${groupKey}"]`);
+  if (!groupContent) return Promise.resolve();
+
+  const height = groupContent.offsetHeight;
+  if (height <= 0) return Promise.resolve();
+
+  const containerRect = container.getBoundingClientRect();
+  const contentBottom = groupContent.getBoundingClientRect().bottom;
+
+  const affected: CardRef[] = [];
+  const affectedSetters: ((value: number) => void)[] = [];
+  for (const card of queryCards()) {
+    const rect = card.wrapper.getBoundingClientRect();
+    if (rect.top >= contentBottom - 1) {
+      affected.push(card);
+      affectedSetters.push(gsap.quickSetter(card.wrapper, "x", "px") as (value: number) => void);
+    }
+  }
+
+  const groupCards = Array.from(groupContent.querySelectorAll<HTMLElement>(".card-container"));
+  groupCards.forEach((el) => el.classList.add("collapsing"));
+
+  const easeOutCubic = (p: number) => 1 - Math.pow(1 - p, 3);
+
+  return new Promise<void>((resolve) => {
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / COLLAPSE_DURATION);
+      const e = easeOutCubic(p);
+      groupContent.style.height = `${Math.max(0, height * (1 - e))}px`;
+
+      for (let i = 0; i < affected.length; i++) {
+        const rect = affected[i].wrapper.getBoundingClientRect();
+        const center = rect.top - containerRect.top + rect.height / 2;
+        affectedSetters[i](parallaxX(center));
+      }
+
+      if (p < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        groupContent.style.height = "0px";
+        groupCards.forEach((el) => el.classList.remove("collapsing"));
+        reflow();
+        resolve();
+      }
+    };
+    requestAnimationFrame(tick);
   });
 }
 
@@ -498,7 +637,15 @@ onUnmounted(() => {
   resizeCleanup?.();
 });
 
-defineExpose({ reflow, scrollTo, playIntro });
+defineExpose({
+  reflow,
+  scrollTo,
+  playIntro,
+  collapseGroup,
+  clearGroupHeight,
+  lockScroll,
+  unlockScroll,
+});
 </script>
 
 <style lang="less" scoped>
