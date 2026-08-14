@@ -1,6 +1,6 @@
 {
     "productName": "conic-launcher",
-    "version": "0.0.1-alpha.3",
+    "version": "0.0.1-alpha.4",
     "identifier": "app.conicmc.launcher",
     "build": {
         "beforeDevCommand": "pnpm dev",
@@ -32,7 +32,9 @@
             "assetProtocol": {
                 "enable": true,
                 "scope": {
-                    "allow": ["**/*"]
+                    "allow": [
+                        "**/*"
+                    ]
                 }
             }
         },
@@ -64,7 +66,9 @@
         },
         "deep-link": {
             "desktop": {
-                "schemes": ["conic-launcher"]
+                "schemes": [
+                    "conic-launcher"
+                ]
             }
         }
     }
