@@ -58,15 +58,9 @@ import BaseSwitch from "@/components/BaseSwitch.vue";
 import BaseDropdownSelect from "@/components/BaseDropdownSelect.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
-import { useDialogStore } from "@/store/dialog";
 import BaseSelect from "@/components/BaseSelect.vue";
 
 const config = useConfigStore();
-const dialogStore = useDialogStore();
-
-function checkUpdate() {
-  dialogStore.updateApp.visible = true;
-}
 </script>
 
 <style scoped lang="less"></style>

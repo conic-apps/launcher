@@ -22,15 +22,11 @@
 </template>
 
 <script setup lang="ts">
-const props = withDefaults(
-  defineProps<{
-    config?: string;
-    max: number;
-    min: number;
-    step: number;
-  }>(),
-  {},
-);
+defineProps<{
+  max: number;
+  min: number;
+  step: number;
+}>();
 const value = defineModel<number>();
 </script>
 
