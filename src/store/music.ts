@@ -6,6 +6,9 @@ import { convertFileSrc } from "@tauri-apps/api/core"
 import { listMusicFiles, type MusicFile } from "@conic/music"
 import { useConfigStore } from "@/store/config"
 import { defineStore } from "pinia"
+import { watch } from "vue"
+import { window as appWindow } from "@tauri-apps/api"
+import { Event } from "@tauri-apps/api/event"
 
 const SAVED_TRACK_KEY = "conic.music.lastTrack"
 
@@ -44,9 +47,12 @@ function loadTrackState(): SavedTrackState | null {
 let audioElement: HTMLAudioElement | null = null
 let audioContext: AudioContext | null = null
 let analyserNode: AnalyserNode | null = null
+let gainNode: GainNode | null = null
 
 let lastPersistedAt = 0
 const PERSIST_INTERVAL_MS = 5000
+
+let volumeInitialized = false
 
 function getAudioElement(): HTMLAudioElement {
     if (!audioElement) {
@@ -63,16 +69,24 @@ function getAudioContext(): AudioContext {
     return audioContext
 }
 
-/** Routes the audio element through an analyser so visualizers can read live data. */
+/**
+ * Routes the audio element through an analyser and a volume gain node so
+ * visualizers can read live data and the volume can be controlled. The gain
+ * node is required because once the element is pulled into the Web Audio
+ * graph, its `volume` property is ignored by the webview.
+ */
 function ensureAnalyser(): AnalyserNode {
     if (!analyserNode) {
         const context = getAudioContext()
         analyserNode = context.createAnalyser()
         analyserNode.fftSize = 1024
         analyserNode.smoothingTimeConstant = 0.8
+        gainNode = context.createGain()
+        gainNode.gain.value = getAudioElement().volume
         const source = context.createMediaElementSource(getAudioElement())
         source.connect(analyserNode)
-        analyserNode.connect(context.destination)
+        analyserNode.connect(gainNode)
+        gainNode.connect(context.destination)
     }
     return analyserNode
 }
@@ -87,6 +101,81 @@ export function getAudioSampleRate(): number {
     return getAudioContext().sampleRate
 }
 
+const MEDIA_SESSION_SUPPORTED = typeof navigator !== "undefined" && "mediaSession" in navigator
+
+let mediaSessionSetup = false
+
+/**
+ * Registers OS media control handlers via the Media Session API so the system
+ * can control playback (play/pause/previous/next/seek) and show the track name.
+ * No-op when the platform webview lacks the API.
+ */
+function setupMediaSession() {
+    if (!MEDIA_SESSION_SUPPORTED || mediaSessionSetup) {
+        return
+    }
+    mediaSessionSetup = true
+    const session = navigator.mediaSession
+    const actions: [MediaSessionAction, MediaSessionActionHandler][] = [
+        [
+            "play",
+            () => {
+                void useMusicStore().resume()
+            },
+        ],
+        [
+            "pause",
+            () => {
+                useMusicStore().pause()
+            },
+        ],
+        [
+            "previoustrack",
+            () => {
+                void useMusicStore().prev()
+            },
+        ],
+        [
+            "nexttrack",
+            () => {
+                void useMusicStore().next()
+            },
+        ],
+        [
+            "seekto",
+            (details) => {
+                const store = useMusicStore()
+                if (typeof details.seekTime === "number") {
+                    store.seek(details.seekTime)
+                }
+            },
+        ],
+    ]
+    for (const [action, handler] of actions) {
+        try {
+            session.setActionHandler(action, handler)
+        } catch {
+            // unsupported action on this platform; ignore
+        }
+    }
+}
+
+/** Reports the current track name to the OS media controls. */
+function updateMediaSessionMetadata() {
+    if (!MEDIA_SESSION_SUPPORTED) {
+        return
+    }
+    const track = useMusicStore().currentTrack
+    navigator.mediaSession.metadata = track ? new MediaMetadata({ title: track.name }) : null
+}
+
+/** Syncs the OS media controls playback state. */
+function setMediaSessionPlaybackState(state: MediaSessionPlaybackState) {
+    if (MEDIA_SESSION_SUPPORTED) {
+        navigator.mediaSession.playbackState = state
+    }
+}
+
 export const useMusicStore = defineStore("music", {
     state: () => ({
         tracks: [] as MusicFile[],
@@ -99,6 +188,7 @@ export const useMusicStore = defineStore("music", {
         loading: false,
         error: null as string | null,
         panelOpen: false,
+        backgrounded: false,
     }),
     getters: {
         currentTrack(state): MusicFile | null {
@@ -149,6 +239,63 @@ export const useMusicStore = defineStore("music", {
             }
         },
 
+        /**
+         * Applies the configured volume to the audio output, using the
+         * background volume when the window is not focused. When `smooth` is
+         * set, the change is ramped over 1s instead of jumping instantly.
+         */
+        applyVolume(smooth = false) {
+            const config = useConfigStore()
+            const percent = this.backgrounded
+                ? config.music.main_volumn_background
+                : config.music.main_volumn
+            const volume = Math.min(Math.max(percent / 100, 0), 1)
+            const audio = getAudioElement()
+            audio.volume = volume
+            if (gainNode) {
+                const gain = gainNode.gain
+                const now = getAudioContext().currentTime
+                if (smooth) {
+                    gain.cancelScheduledValues(now)
+                    gain.setValueAtTime(gain.value, now)
+                    gain.linearRampToValueAtTime(volume, now + 1.0)
+                } else {
+                    gain.setValueAtTime(volume, now)
+                }
+            }
+        },
+
+        /**
+         * Registers window focus tracking so the volume switches between the
+         * main and background settings, and watches those settings for changes.
+         */
+        init() {
+            if (volumeInitialized) {
+                return
+            }
+            volumeInitialized = true
+            setupMediaSession()
+            appWindow
+                .getCurrentWindow()
+                .isFocused()
+                .then((focused) => {
+                    this.backgrounded = !focused
+                    this.applyVolume()
+                })
+            appWindow.getCurrentWindow().onFocusChanged((event: Event<boolean>) => {
+                this.backgrounded = !event.payload
+                this.applyVolume(true)
+            })
+            watch(
+                () =>
+                    [
+                        useConfigStore().music.main_volumn,
+                        useConfigStore().music.main_volumn_background,
+                    ] as const,
+                () => this.applyVolume(),
+            )
+        },
+
         async startPlayback() {
             const track = this.currentTrack
             if (track === null) {
@@ -158,8 +305,9 @@ export const useMusicStore = defineStore("music", {
             ensureAnalyser()
             await getAudioContext().resume()
             audio.src = convertFileSrc(track.path)
-            audio.volume = 1
+            this.applyVolume()
             this.attachAudioEvents(audio)
+            updateMediaSessionMetadata()
             try {
                 await audio.play()
                 this.isPlaying = true
@@ -209,6 +357,7 @@ export const useMusicStore = defineStore("music", {
             const audio = getAudioElement()
             ensureAnalyser()
             await getAudioContext().resume()
+            this.applyVolume()
             try {
                 await audio.play()
                 this.isPlaying = true
@@ -307,9 +456,11 @@ export const useMusicStore = defineStore("music", {
             audio.onpause = () => {
                 this.isPlaying = false
                 this.persistState()
+                setMediaSessionPlaybackState("paused")
             }
             audio.onplay = () => {
                 this.isPlaying = true
+                setMediaSessionPlaybackState("playing")
             }
             audio.onerror = () => {
                 console.error("Audio playback error", audio.error)

@@ -55,10 +55,12 @@ pub struct InstanceLaunchConfig {
     /// Override built-in Java environment
     pub java_path: Option<String>,
 
-    /// Minimum allocated memory in MB (adds `-Xms` to JVM args)
-    pub min_memory: Option<usize>,
+    /// Whether to automatically allocate memory based on available physical memory
+    pub auto_memory: Option<bool>,
 
-    /// Maximum allocated memory in MB (adds `-Xmx` to JVM args)
+    /// Maximum allocated memory in MB (adds `-Xmx` to JVM args).
+    ///
+    /// Only used when [`InstanceLaunchConfig::auto_memory`] is disabled.
     pub max_memory: Option<usize>,
 
     /// Minecraft server configuration for the instance

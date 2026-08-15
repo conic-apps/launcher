@@ -7,7 +7,10 @@ use config::{
     Config,
     launch::{GC, Server},
 };
+use folder::DATA_LOCATION;
 use instance::Instance;
+use java_runtime::JavaArch;
+use log::info;
 
 use crate::error::*;
 
@@ -20,11 +23,12 @@ pub struct LaunchOptions {
 
     pub user_properties: String,
 
-    /// Min memory, this will add a jvm flag -XMS to the command result
-    pub min_memory: usize,
-
     /// Max memory, this will add a jvm flag -Xmx to the command result
     pub max_memory: usize,
+
+    /// Young generation size in MB, this will add a jvm flag -Xmn to the
+    /// command result. Only set when auto memory allocation is used.
+    pub xmn_memory: usize,
 
     /// Enter a server after launch. TODO: support 1.21.1
     pub server: Option<Server>,
@@ -78,15 +82,47 @@ impl LaunchOptions {
     ///
     /// Launch configuration is resolved from both global and per-instance settings,
     /// with per-instance settings taking priority when defined.
-    pub fn new(config: &Config, instance: &Instance) -> Result<Self> {
+    ///
+    /// `java_arch` is the architecture of the Java runtime that will be used to
+    /// launch the game; a 32-bit runtime caps the auto-allocated heap at 1 GiB.
+    pub fn new(config: &Config, instance: &Instance, java_arch: JavaArch) -> Result<Self> {
         let global_launch_config = config.launch.clone();
         let launch_config = &instance.config.launch_config;
         let selected_account = match config.current_account.clone() {
             None => return Err(Error::InvalidProfile),
             Some(account) => account,
         };
+        let auto_memory = launch_config
+            .auto_memory
+            .unwrap_or(global_launch_config.auto_memory);
+        let is_32_bit = is_32_bit_java(java_arch);
+        let (max_memory, xmn_memory) = if auto_memory {
+            let available = platform::get_available_memory_bytes();
+            let mod_count = count_instance_mods(instance);
+            let (max_memory, xmn_memory) = auto_allocate_memory(
+                available,
+                instance_has_mod_loader(instance),
+                mod_count,
+                is_32_bit,
+            );
+            info!(
+                "Auto memory allocation: -Xmx{max_memory}M -Xmn{xmn_memory}M \
+                 (available {} MiB, mod count {mod_count}, {} Java)",
+                available / 1024 / 1024,
+                if is_32_bit { "32-bit" } else { "64-bit" }
+            );
+            (max_memory, xmn_memory)
+        } else {
+            let max_memory = launch_config
+                .max_memory
+                .unwrap_or(global_launch_config.max_memory);
+            info!("Manual memory allocation: -Xmx{max_memory}M");
+            (max_memory, 0)
+        };
         Ok(Self {
             selected_account,
+            max_memory,
+            xmn_memory,
             wrap_command: launch_config
                 .wrap_command
                 .clone()
@@ -103,12 +139,6 @@ impl LaunchOptions {
                 .launcher_name
                 .clone()
                 .unwrap_or(global_launch_config.launcher_name),
-            min_memory: launch_config
-                .min_memory
-                .unwrap_or(global_launch_config.min_memory),
-            max_memory: launch_config
-                .max_memory
-                .unwrap_or(global_launch_config.max_memory),
             server: launch_config.server.clone(),
             width: launch_config.width.unwrap_or(global_launch_config.width),
             height: launch_config.height.unwrap_or(global_launch_config.height),
@@ -140,4 +170,84 @@ impl LaunchOptions {
             user_properties: "{}".to_string(),
         })
     }
+}
+
+/// Returns whether the instance has a mod loader installed.
+fn instance_has_mod_loader(instance: &Instance) -> bool {
+    instance.config.runtime.mod_loader_type.is_some()
+}
+
+/// Returns whether the Java runtime architecture is 32-bit.
+fn is_32_bit_java(arch: JavaArch) -> bool {
+    matches!(arch, JavaArch::X86 | JavaArch::Arm)
+}
+
+/// Counts the number of mod files in the instance's `mods` directory.
+///
+/// This is a rough estimate based on the file count only, no archive parsing.
+fn count_instance_mods(instance: &Instance) -> usize {
+    let mods_folder = DATA_LOCATION.get_instance_root(&instance.id).join("mods");
+    match std::fs::read_dir(&mods_folder) {
+        Ok(entries) => entries
+            .flatten()
+            .filter(|entry| entry.file_type().map(|t| t.is_file()).unwrap_or(false))
+            .count(),
+        Err(_) => 0,
+    }
+}
+
+/// Calculates the maximum heap (`-Xmx`) and young generation (`-Xmn`) memory
+/// in MB, following the same algorithm PCL uses for its auto allocation.
+///
+/// # Arguments
+///
+/// * `available_bytes` - The currently available physical memory in bytes.
+/// * `has_mod_loader` - Whether the instance supports mods.
+/// * `mod_count` - Number of mod files in the instance's `mods` directory.
+/// * `is_32_bit` - Whether the Java runtime is 32-bit; the heap is then capped
+///   at 1 GiB because a 32-bit JVM cannot address much more.
+fn auto_allocate_memory(
+    available_bytes: u64,
+    has_mod_loader: bool,
+    mod_count: usize,
+    is_32_bit: bool,
+) -> (usize, usize) {
+    // Available memory in GiB, rounded to 1 decimal place, same as PCL.
+    let mut available = (available_bytes as f64 / 1073741824.0 * 10.0).round() / 10.0;
+
+    let (ram_minimum, target1, target2, target3) = if has_mod_loader {
+        let mod_count = mod_count as f64;
+        (
+            0.5 + mod_count / 150.0,
+            1.5 + mod_count / 90.0,
+            2.7 + mod_count / 50.0,
+            4.5 + mod_count / 25.0,
+        )
+    } else {
+        (0.5, 1.5, 2.5, 4.0)
+    };
+
+    let stages = [
+        (target1, 1.0),
+        (target2 - target1, 0.7),
+        (target3 - target2, 0.4),
+        (target3, 0.15),
+    ];
+
+    let mut ram_give = 0.0;
+    for (delta, ratio) in stages {
+        ram_give += (available * ratio).min(delta);
+        available -= delta / ratio;
+        if available < 0.1 {
+            break;
+        }
+    }
+    let mut ram_give = (ram_give.max(ram_minimum) * 10.0).round() / 10.0;
+    if is_32_bit {
+        ram_give = ram_give.min(1.0);
+    }
+
+    let max_memory = (ram_give * 1024.0).floor() as usize;
+    let xmn_memory = (ram_give * 1024.0 * 0.15).floor() as usize;
+    (max_memory, xmn_memory)
 }

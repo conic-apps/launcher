@@ -104,6 +104,7 @@ const music = useMusicStore();
 const showPlaylist = ref(false);
 const progressBarRef = useTemplateRef("progressBarRef");
 
+music.init();
 music.restoreSession();
 
 watch(

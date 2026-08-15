@@ -4,6 +4,27 @@
 
 <template>
   <div>
+    <SettingGroup :title="'内存'">
+      <SettingItem
+        :title="'自动分配内存'"
+        :description="'根据系统当前可用内存自动计算游戏内存大小，Mod 越多分配越多'">
+        <BaseSwitch v-model="config.launch.auto_memory"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
+        :title="'手动分配内存'"
+        :description="'手动指定 Java 堆的最大大小，关闭自动分配后生效'"
+        :disabled="config.launch.auto_memory">
+        <BaseInput
+          width="100px"
+          style="display: inline-block; margin-right: 8px"
+          :number-only="true"
+          :disabled="config.launch.auto_memory"
+          v-model.number="config.launch.max_memory"
+          :lazy-update-model="true">
+        </BaseInput>
+        <span style="font-size: 12px">MB</span>
+      </SettingItem>
+    </SettingGroup>
     <SettingGroup :title="'基础设置'">
       <SettingItem :title="'窗口大小'" :description="'游戏窗口的初始大小'">
         <BaseInput

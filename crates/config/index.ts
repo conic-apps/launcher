@@ -56,7 +56,7 @@ export type Config = {
         main_volumn_background: number
     }
     launch: {
-        min_memory: number
+        auto_memory: boolean
         max_memory: number
         server?: {
             ip: string

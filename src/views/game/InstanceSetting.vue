@@ -98,6 +98,28 @@
         <setting-item :title="'启动游戏后隐藏启动器(TODO)'" icon="eye-off">
           <BaseSwitch></BaseSwitch>
         </setting-item>
+        <setting-item
+          :title="'自动分配内存'"
+          :description="'根据系统当前可用内存自动计算游戏内存大小，Mod 越多分配越多'"
+          icon="resize">
+          <BaseSwitch
+            v-model="instanceStore.currentInstance.config.launch_config.auto_memory"></BaseSwitch>
+        </setting-item>
+        <setting-item
+          :title="'手动分配内存'"
+          :description="'手动指定 Java 堆的最大大小，关闭自动分配后生效'"
+          icon="resize"
+          :disabled="instanceStore.currentInstance.config.launch_config.auto_memory">
+          <BaseInput
+            width="100px"
+            style="display: inline-block; margin-right: 8px"
+            :number-only="true"
+            :disabled="instanceStore.currentInstance.config.launch_config.auto_memory"
+            v-model.number="instanceStore.currentInstance.config.launch_config.max_memory"
+            :lazy-update-model="true">
+          </BaseInput>
+          <span style="font-size: 12px">MB</span>
+        </setting-item>
       </setting-group>
       <setting-group :title="'高级启动选项'" :disabled="!enableInstanceSpecificSettings">
         <setting-item :title="'Java 垃圾回收器'">
@@ -228,7 +250,7 @@ watchEffect(() => {
   ) {
     instanceStore.currentInstance.config.launch_config = {
       enable_instance_specific_settings: true,
-      min_memory: config.launch.min_memory,
+      auto_memory: config.launch.auto_memory,
       max_memory: config.launch.max_memory,
       server:
         config.launch.server && config.launch.server.ip

@@ -20,7 +20,7 @@ export type InstanceConfig = {
     group?: string[]
     launch_config: {
         enable_instance_specific_settings: boolean
-        min_memory?: number
+        auto_memory?: boolean
         max_memory?: number
         server?: {
             ip: string
