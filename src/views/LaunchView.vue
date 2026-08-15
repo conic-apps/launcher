@@ -106,7 +106,24 @@ async function launch() {
     }
     await launchGame();
   } catch (error) {
+    if (isNoSuitableJavaError(error)) {
+      dialogStore.noSuitableJavaError.visible = true;
+      return;
+    }
     console.error(error);
+  }
+}
+
+function isNoSuitableJavaError(error: unknown): boolean {
+  if (typeof error === "object" && error !== null && "kind" in error) {
+    return (error as { kind?: unknown }).kind === "NoSuitableJavaRuntime";
+  }
+  const raw = typeof error === "string" ? error : error instanceof Error ? error.message : "";
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed?.kind === "NoSuitableJavaRuntime";
+  } catch {
+    return false;
   }
 }
 

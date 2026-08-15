@@ -4,6 +4,7 @@
 
 use std::{
     io::BufRead,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     str::FromStr,
     sync::{
@@ -211,11 +212,13 @@ pub async fn launch(
     )
     .await?;
 
+    let java_path = resolve_java_executable(&config, &instance, &resolved_version).await?;
+
     let result = spawn_minecraft_process(
         command_arguments,
         launch_options,
         instance,
-        resolved_version,
+        java_path,
         status,
     )
     .await;
@@ -238,6 +241,60 @@ fn print_instance_info(instance: &Instance) {
     };
 }
 
+/// Resolves the Java executable used to launch the game.
+///
+/// The resolution order is:
+/// 1. An instance-specific `java_path`, when configured by the user;
+/// 2. When `config.prefer_mojang_java` is enabled, the Mojang-provided runtime
+///    installed under the launcher runtime directory;
+/// 3. A system-installed Java runtime matching the required major version,
+///    excluding launcher-managed and user-disabled runtimes.
+///
+/// Returns [`Error::NoSuitableJavaRuntime`] when no usable runtime is found.
+async fn resolve_java_executable(
+    config: &Config,
+    instance: &Instance,
+    resolved_version: &ResolvedVersion,
+) -> Result<PathBuf> {
+    if let Some(java_path) = &instance.config.launch_config.java_path {
+        info!("Using instance-specific Java: {java_path}");
+        return Ok(PathBuf::from(java_path));
+    }
+
+    if config.prefer_mojang_java
+        && let Ok(mojang_path) =
+            install::java::get_executable_path(&resolved_version.java_version.component)
+    {
+        if mojang_path.is_file() {
+            info!("Using Mojang-provided Java: {}", mojang_path.display());
+            return Ok(mojang_path);
+        }
+        info!(
+            "Mojang-provided Java not found at {}, falling back to system Java",
+            mojang_path.display()
+        );
+    }
+
+    let required_major_version = resolved_version.java_version.major_version;
+    let runtimes = tokio::task::spawn_blocking(java_runtime::scan_java_runtimes)
+        .await
+        .map_err(|_| Error::Other)??;
+    let system_java = runtimes.into_iter().find(|runtime| {
+        runtime.major_version == required_major_version as u32
+            && runtime.is_valid
+            && !runtime.is_managed
+            && !config
+                .disabled_java_runtime
+                .iter()
+                .any(|disabled| runtime.path == Path::new(disabled))
+    });
+    if let Some(runtime) = system_java {
+        info!("Using system Java: {}", runtime.path.display());
+        return Ok(runtime.path);
+    }
+    Err(Error::NoSuitableJavaRuntime)
+}
+
 /// Spawns the Minecraft process by generating and executing a launch script,
 /// customized per operating system and instance configuration.
 ///
@@ -258,7 +315,7 @@ async fn spawn_minecraft_process(
     command_arguments: Vec<String>,
     launch_options: LaunchOptions,
     instance: Instance,
-    resolved_version: ResolvedVersion,
+    java_path: PathBuf,
     status: Arc<Mutex<LaunchEvent>>,
 ) -> Result<u32> {
     // TODO: 要求 Java 使用高性能显卡
@@ -295,12 +352,7 @@ async fn spawn_minecraft_process(
         OsFamily::Windows => String::new(),
         _ => "exec ".to_string(),
     };
-    let java_path = instance.config.launch_config.java_path.unwrap_or(
-        install::java::get_executable_path(&resolved_version.java_version.component)?
-            .to_string_lossy()
-            .to_string(),
-    );
-    launch_command.push_str(&format!("\"{java_path}\""));
+    launch_command.push_str(&format!("\"{}\"", java_path.to_string_lossy()));
     for arg in command_arguments.clone() {
         let arg = if arg.contains(" ") {
             format!("\"{arg}\"")

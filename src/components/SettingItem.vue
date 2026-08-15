@@ -11,7 +11,12 @@
         <AppIcon :name="icon" :size="iconSize" :fill="iconFill"></AppIcon>
       </div>
       <div class="text">
-        <p class="title">{{ title }}</p>
+        <p class="title">
+          {{ title }}
+          <button v-if="props.resetable" class="reset-button" @click.stop="$emit('reset')">
+            <AppIcon name="refresh" :size="16"></AppIcon>
+          </button>
+        </p>
         <p v-if="description" class="description" v-html="description"></p>
       </div>
     </div>
@@ -39,11 +44,14 @@ const props = withDefaults(
     iconFill?: string;
     navigable?: boolean;
     disabled?: boolean;
+    resetable?: boolean;
   }>(),
   {
     iconSize: 26,
   },
 );
+
+defineEmits(["reset"]);
 </script>
 
 <style lang="less" scoped>
@@ -81,8 +89,32 @@ const props = withDefaults(
   }
 
   .text p.title {
+    display: flex;
+    align-items: center;
     font-weight: normal;
     font-size: 13px;
+    line-height: 20px;
+  }
+
+  button.reset-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    margin-left: 3px;
+    appearance: none;
+    border: none;
+    background: none;
+  }
+
+  button.reset-button:hover {
+    background: #ffffff1c;
+  }
+
+  button.reset-button:active {
+    opacity: 0.8;
   }
 
   .text p.description {

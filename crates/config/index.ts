@@ -20,6 +20,8 @@ export enum Palette {
 export type Config = {
     language?: string
     update_channel: UpdateChannel
+    disabled_java_runtime: string[]
+    prefer_mojang_java: boolean
     auto_update: boolean
     current_account: Account | null
     appearance: {

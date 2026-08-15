@@ -2510,6 +2510,7 @@ dependencies = [
  "futures",
  "install",
  "instance",
+ "java-runtime",
  "log",
  "num_cpus",
  "platform",
