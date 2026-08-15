@@ -5,6 +5,7 @@
 // TODO: Support Optifine auto install
 
 use std::{
+    str::FromStr,
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
@@ -23,11 +24,12 @@ use tauri::{
 };
 use vanilla::generate_download_info;
 
-use config::Config;
+use config::{Config, get_system_language};
 use download::download_concurrent;
 use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::{Instance, InstanceRuntime, ModLoaderType};
+use version::Version;
 
 use crate::{
     forge::ForgeVersionList, neoforge::get_neoforge_version_list, vanilla::VersionManifest,
@@ -38,6 +40,7 @@ mod error;
 pub mod fabric;
 pub mod forge;
 pub mod java;
+pub mod language;
 pub mod neoforge;
 pub mod quilt;
 pub mod vanilla;
@@ -292,6 +295,8 @@ pub async fn install(
         install_mod_loader(runtime).await?;
     };
 
+    configure_first_launch_language(config, &instance).await;
+
     debug!("Saving lock file");
     async_fs::write(
         DATA_LOCATION
@@ -365,4 +370,42 @@ pub async fn install_mod_loader(runtime: &InstanceRuntime) -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Sets the in-game language to match the launcher UI language before the first
+/// launch, by writing `options.txt` in the instance game directory.
+///
+/// Only applies when the "change game language on first launch" setting is
+/// enabled. A failure to write the file is logged and does not abort the
+/// installation.
+async fn configure_first_launch_language(config: Config, instance: &Instance) {
+    if !config.accessibility.change_game_language {
+        return;
+    }
+    let options_txt_path = DATA_LOCATION
+        .get_instance_root(&instance.id)
+        .join("options.txt");
+    let launcher_language = config
+        .language
+        .as_deref()
+        .unwrap_or_else(|| get_system_language());
+    let release_time = get_version_release_time(instance).await;
+    if let Err(error) = language::configure_game_language(
+        &options_txt_path,
+        launcher_language,
+        release_time.as_deref(),
+    )
+    .await
+    {
+        warn!("Failed to configure the game language: {error}");
+    }
+}
+
+/// Reads the `releaseTime` of the Minecraft version from the version.json that has
+/// already been downloaded during the installation.
+async fn get_version_release_time(instance: &Instance) -> Option<String> {
+    let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
+    let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
+    let raw_version_json = async_fs::read_to_string(version_json_path).await.ok()?;
+    Version::from_str(&raw_version_json).ok()?.release_time
 }
