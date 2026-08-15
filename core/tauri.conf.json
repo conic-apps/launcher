@@ -28,7 +28,7 @@
             }
         ],
         "security": {
-            "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline';",
+            "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data: https://cdn.modrinth.com https://media.forgecdn.net http://textures.minecraft.net https://textures.minecraft.net https://mod.mcimirror.top; style-src 'self' 'unsafe-inline';",
             "assetProtocol": {
                 "enable": true,
                 "scope": {
