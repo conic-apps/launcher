@@ -22,9 +22,10 @@ use config::Config;
 use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::Instance;
+use java_runtime::JavaArch;
 use log::{debug, error, info, warn};
 use options::LaunchOptions;
-use platform::{OsFamily, PLATFORM_INFO};
+use platform::{OsArch, OsFamily, PLATFORM_INFO};
 use serde::Serialize;
 use statistics::{StatisticsProfile, log_launch};
 #[cfg(target_os = "windows")]
@@ -187,15 +188,6 @@ pub async fn launch(
     }
 
     info!("Generating startup parameters");
-    let launch_options = LaunchOptions::new(&config, &instance)?;
-    {
-        let mut status = status.lock().expect("Internal error");
-        *status = LaunchEvent::GenerateScriptlet;
-    }
-    if let Account::Yggdrasil(_) = launch_options.selected_account {
-        let progress = DownloadState::default();
-        install::authlib_injector::ensure_latest(&progress).await?;
-    }
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
     let raw_version_json = async_fs::read_to_string(version_json_path).await?;
     let resolved_version = resolve_version(
@@ -204,6 +196,16 @@ pub async fn launch(
         &[],
     )
     .await?;
+    let resolved_java = resolve_java_executable(&config, &instance, &resolved_version).await?;
+    {
+        let mut status = status.lock().expect("Internal error");
+        *status = LaunchEvent::GenerateScriptlet;
+    }
+    let launch_options = LaunchOptions::new(&config, &instance, resolved_java.arch)?;
+    if let Account::Yggdrasil(_) = launch_options.selected_account {
+        let progress = DownloadState::default();
+        install::authlib_injector::ensure_latest(&progress).await?;
+    }
     let command_arguments = generate_command_arguments(
         &minecraft_location,
         &instance,
@@ -212,13 +214,11 @@ pub async fn launch(
     )
     .await?;
 
-    let java_path = resolve_java_executable(&config, &instance, &resolved_version).await?;
-
     let result = spawn_minecraft_process(
         command_arguments,
         launch_options,
         instance,
-        java_path,
+        resolved_java.path,
         status,
     )
     .await;
@@ -241,6 +241,12 @@ fn print_instance_info(instance: &Instance) {
     };
 }
 
+/// A resolved Java runtime: the executable path together with its architecture.
+struct ResolvedJava {
+    path: PathBuf,
+    arch: JavaArch,
+}
+
 /// Resolves the Java executable used to launch the game.
 ///
 /// The resolution order is:
@@ -250,15 +256,23 @@ fn print_instance_info(instance: &Instance) {
 /// 3. A system-installed Java runtime matching the required major version,
 ///    excluding launcher-managed and user-disabled runtimes.
 ///
+/// The returned [`ResolvedJava::arch`] carries the bitness of the runtime:
+/// Mojang-provided Java always matches the OS architecture, while scanned
+/// system runtimes report their own parsed architecture. The instance-specific
+/// path is reported as [`JavaArch::Unknown`] since it is not parsed again.
+///
 /// Returns [`Error::NoSuitableJavaRuntime`] when no usable runtime is found.
 async fn resolve_java_executable(
     config: &Config,
     instance: &Instance,
     resolved_version: &ResolvedVersion,
-) -> Result<PathBuf> {
+) -> Result<ResolvedJava> {
     if let Some(java_path) = &instance.config.launch_config.java_path {
         info!("Using instance-specific Java: {java_path}");
-        return Ok(PathBuf::from(java_path));
+        return Ok(ResolvedJava {
+            path: PathBuf::from(java_path),
+            arch: JavaArch::Unknown,
+        });
     }
 
     if config.prefer_mojang_java
@@ -267,7 +281,10 @@ async fn resolve_java_executable(
     {
         if mojang_path.is_file() {
             info!("Using Mojang-provided Java: {}", mojang_path.display());
-            return Ok(mojang_path);
+            return Ok(ResolvedJava {
+                path: mojang_path,
+                arch: mojang_java_arch(),
+            });
         }
         info!(
             "Mojang-provided Java not found at {}, falling back to system Java",
@@ -290,9 +307,24 @@ async fn resolve_java_executable(
     });
     if let Some(runtime) = system_java {
         info!("Using system Java: {}", runtime.path.display());
-        return Ok(runtime.path);
+        return Ok(ResolvedJava {
+            path: runtime.path,
+            arch: runtime.arch,
+        });
     }
     Err(Error::NoSuitableJavaRuntime)
+}
+
+/// Maps the current OS architecture to the architecture of the Mojang-provided
+/// Java runtime, which is always built for the host platform.
+fn mojang_java_arch() -> JavaArch {
+    match PLATFORM_INFO.arch {
+        OsArch::X64 => JavaArch::X64,
+        OsArch::X86 => JavaArch::X86,
+        OsArch::Aarch64 => JavaArch::Aarch64,
+        OsArch::Arm => JavaArch::Arm,
+        _ => JavaArch::Unknown,
+    }
 }
 
 /// Spawns the Minecraft process by generating and executing a launch script,
