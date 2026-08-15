@@ -679,6 +679,7 @@ onMounted(async () => {
       border-color: var(--ctp-lavender);
       background: var(--ctp-lavender);
       color: var(--ctp-text-inverse);
+      pointer-events: none;
     }
   }
 

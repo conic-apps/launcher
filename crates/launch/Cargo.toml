@@ -15,6 +15,7 @@ account.workspace = true
 folder.workspace = true
 instance.workspace = true
 install.workspace = true
+java-runtime.workspace = true
 platform.workspace = true
 version.workspace = true
 download.workspace = true

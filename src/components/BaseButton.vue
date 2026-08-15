@@ -32,6 +32,7 @@ button.base-button {
   align-items: center;
   justify-content: center;
   transition: all 150ms ease;
+  font-size: 11px;
 }
 
 button.base-button.disabled {

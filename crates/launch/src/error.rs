@@ -57,6 +57,9 @@ pub enum Error {
     #[error("Unabled to take Minecraft stdout")]
     TakeMinecraftStdoutFailed,
 
+    #[error("No suitable Java runtime found")]
+    NoSuitableJavaRuntime,
+
     #[error(transparent)]
     AccountError(#[from] account::Error),
 
@@ -119,6 +122,15 @@ impl From<download::Error> for Error {
             download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
             download::Error::UrlParse(_) => Self::Other,
             download::Error::Aborted(error) => Self::Aborted(error),
+        }
+    }
+}
+
+impl From<java_runtime::Error> for Error {
+    fn from(value: java_runtime::Error) -> Self {
+        match value {
+            java_runtime::Error::Io(error) => Self::Io(error),
+            _ => Self::Other,
         }
     }
 }

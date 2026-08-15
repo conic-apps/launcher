@@ -30,8 +30,14 @@
           :step="1"
           v-model="config.music.main_volumn"></BaseSliderBar>
       </SettingItem>
-      <SettingItem :title="'主音量（窗口位于后台时）'">
-        <BaseSwitch v-model="config.music.main_volumn_background"></BaseSwitch>
+      <SettingItem
+        :title="'主音量（窗口位于后台时）'"
+        :description="`${config.music.main_volumn_background}%`">
+        <BaseSliderBar
+          :max="100"
+          :min="0"
+          :step="1"
+          v-model="config.music.main_volumn_background"></BaseSliderBar>
       </SettingItem>
     </SettingGroup>
   </div>

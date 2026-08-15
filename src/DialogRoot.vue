@@ -12,6 +12,7 @@
   <UploadSkin></UploadSkin>
   <ConfirmQuitApp></ConfirmQuitApp>
   <NoAccountError></NoAccountError>
+  <NoSuitableJavaError></NoSuitableJavaError>
   <MultiplayerExtension></MultiplayerExtension>
 </template>
 
@@ -25,5 +26,6 @@ import ConfirmDeleteSave from "./dialogs/ConfirmDeleteSave.vue";
 import UploadSkin from "./dialogs/UploadSkin.vue";
 import ConfirmQuitApp from "./dialogs/ConfirmQuitApp.vue";
 import NoAccountError from "./dialogs/NoAccountError.vue";
+import NoSuitableJavaError from "./dialogs/NoSuitableJavaError.vue";
 import MultiplayerExtension from "./dialogs/MultiplayerExtension.vue";
 </script>

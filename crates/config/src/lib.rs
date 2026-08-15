@@ -228,6 +228,12 @@ pub struct Config {
     /// The selected update channel.
     pub update_channel: UpdateChannel,
 
+    /// Java runtime executable paths the launcher must not use.
+    pub disabled_java_runtime: Vec<String>,
+
+    /// Prefer the Mojang-provided Java runtime bundled with the game.
+    pub prefer_mojang_java: bool,
+
     /// Launch-related configuration.
     pub launch: launch::LaunchConfig,
 
@@ -247,6 +253,8 @@ impl Default for Config {
             auto_update: true,
             language: None,
             update_channel: UpdateChannel::default(),
+            disabled_java_runtime: Vec::new(),
+            prefer_mojang_java: true,
             launch: launch::LaunchConfig::default(),
             download: download::DownloadConfig::default(),
             music: music::MusicConfig::default(),

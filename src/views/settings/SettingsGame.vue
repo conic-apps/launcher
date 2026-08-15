@@ -36,7 +36,7 @@
         <BaseSwitch v-model="config.launch.skip_check_files"></BaseSwitch>
       </SettingItem>
     </SettingGroup>
-    <SettingGroup
+    <SettingCollapse
       :title="'高级启动选项'"
       :resetable="advancedLaunchOptionsChanged"
       @reset="resetAdvanceOptions">
@@ -94,13 +94,14 @@
         :description="'将 <code>-Dfml.ignorePatchDiscrepancies=true</code> 添加到 JVM 参数中'">
         <BaseSwitch v-model="config.launch.ignore_patch_discrepancies"></BaseSwitch>
       </SettingItem>
-    </SettingGroup>
+    </SettingCollapse>
   </div>
 </template>
 
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
+import SettingCollapse from "@/components/SettingCollapse.vue";
 import BaseInput from "@/components/BaseInput.vue";
 import BaseSwitch from "@/components/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
