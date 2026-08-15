@@ -28,10 +28,13 @@ pub enum GC {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct LaunchConfig {
-    /// Minimum memory to allocate (MB), passed as `-Xms`.
-    pub min_memory: usize,
+    /// Whether to automatically allocate memory for the game based on the
+    /// available physical memory, following the PCL algorithm.
+    pub auto_memory: bool,
 
     /// Maximum memory to allocate (MB), passed as `-Xmx`.
+    ///
+    /// Only used when [`LaunchConfig::auto_memory`] is disabled.
     pub max_memory: usize,
 
     /// Optional server to connect to when the game launches.
@@ -91,7 +94,7 @@ pub struct LaunchConfig {
 impl Default for LaunchConfig {
     fn default() -> Self {
         Self {
-            min_memory: 0,
+            auto_memory: true,
             max_memory: 2048,
             server: None,
             width: 854,

@@ -65,6 +65,7 @@ tokio = { version = "1", features = ["macros", "rt"]}
 flate2 = "1"
 fastnbt = "2"
 png = "0.18"
+sysinfo = "0.33"
 
 [profile.dev]
 incremental = true

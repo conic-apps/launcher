@@ -12,6 +12,10 @@ use tauri::{
     plugin::{Builder, TauriPlugin},
 };
 
+mod memory;
+
+pub use memory::get_available_memory_bytes;
+
 pub static PLATFORM_INFO: Lazy<PlatformInfo> = Lazy::new(PlatformInfo::new);
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {

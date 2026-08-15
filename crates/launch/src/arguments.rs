@@ -71,8 +71,8 @@ pub async fn generate_command_arguments(
             }
         ));
     }
-    if launch_options.min_memory > 0 {
-        command_arguments.push(format!("-Xms{}M", launch_options.min_memory));
+    if launch_options.xmn_memory > 0 {
+        command_arguments.push(format!("-Xmn{}M", launch_options.xmn_memory));
     }
     if launch_options.max_memory > 0 {
         command_arguments.push(format!("-Xmx{}M", launch_options.max_memory));
