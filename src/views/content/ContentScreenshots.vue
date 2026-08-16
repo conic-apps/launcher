@@ -179,13 +179,13 @@ function playOutro(onComplete: () => void) {
 
   const timeline = gsap.timeline({ onComplete });
   if (strip) {
-    timeline.to(strip, { y: "100%", duration: 0.6, ease: "power3.in" }, 0);
+    timeline.to(strip, { y: "100%", duration: 0.3, ease: "power3.in" }, 0);
   }
   if (thumbnailImages.length > 0) {
-    timeline.to(thumbnailImages, { scale: 0.6, opacity: 0, duration: 0.4, ease: "power3.in" }, 0);
+    timeline.to(thumbnailImages, { scale: 0.7, opacity: 0, duration: 0.33, ease: "power3.in" }, 0);
   }
   if (mainTargets.length > 0) {
-    timeline.to(mainTargets, { scale: 0.6, opacity: 0, duration: 0.5, ease: "power3.in" }, 0);
+    timeline.to(mainTargets, { scale: 0.7, opacity: 0, duration: 0.33, ease: "power3.in" }, 0);
   }
 }
 
@@ -277,6 +277,10 @@ onUnmounted(() => window.removeEventListener("keydown", onKeydown));
 
       &:hover:not(:disabled) {
         background: var(--ctp-surface1);
+      }
+
+      &:active:not(:disabled) {
+        background: var(--ctp-surface2);
       }
 
       &:disabled {

@@ -52,6 +52,7 @@ export type Config = {
         enabled: boolean
         resume_on_startup: boolean
         show_visualizer: boolean
+        pause_on_launch: boolean
         main_volumn: number
         main_volumn_background: number
     }

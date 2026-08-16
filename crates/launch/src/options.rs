@@ -212,7 +212,6 @@ fn auto_allocate_memory(
     mod_count: usize,
     is_32_bit: bool,
 ) -> (usize, usize) {
-    // Available memory in GiB, rounded to 1 decimal place, same as PCL.
     let mut available = (available_bytes as f64 / 1073741824.0 * 10.0).round() / 10.0;
 
     let (ram_minimum, target1, target2, target3) = if has_mod_loader {

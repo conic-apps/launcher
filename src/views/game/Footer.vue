@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="game-view-footer" ref="game-view-footer" data-tauri-drag-region>
+  <div class="game-view-footer" ref="game-view-footer">
     <BeatMap
       v-if="configStore.music.show_visualizer"
       class="footer-visualizer"
@@ -81,13 +81,6 @@
       @click="dialogStore.createInstance.visible = true"
       ref="install-pack">
       <AppIcon name="package" :size="22" fill="none"></AppIcon>
-    </button>
-    <button
-      class="install-server"
-      style="opacity: 0"
-      @click="dialogStore.createInstance.visible = true"
-      ref="install-server">
-      <AppIcon name="server" :size="22" fill="none"></AppIcon>
     </button>
   </div>
 </template>
@@ -228,7 +221,6 @@ const elements = {
   connect: useTemplateRef("connect"),
   newInstance: useTemplateRef("new-instance"),
   installPack: useTemplateRef("install-pack"),
-  installServer: useTemplateRef("install-server"),
 };
 
 let resolveReady: () => void;
@@ -267,7 +259,7 @@ const playIntro = () => {
       "<0.1",
     )
     .fromTo(
-      [elements.installServer.value, elements.installPack.value, elements.newInstance.value],
+      [elements.installPack.value, elements.newInstance.value],
       { opacity: 0, y: 10 },
       {
         opacity: 1,
@@ -379,12 +371,11 @@ defineExpose({
   .new-instance {
     margin-left: auto;
   }
-  .install-pack,
-  .install-server {
+  .install-pack {
     margin-left: 8px;
   }
-  .install-server {
-    margin-right: 36px;
+  .install-pack {
+    margin-right: 52px;
   }
 }
 </style>

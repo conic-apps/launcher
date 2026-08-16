@@ -13,7 +13,7 @@
       border: 'var(--window-btn-border)',
     }"
     @click="$emit(buttonType)">
-    <AppIcon v-if="showIcon" name="minus" :size="10" />
+    <AppIcon v-if="showIcon" name="minus" :size="10" stroke="#000" fill="#000" />
   </div>
   <div
     class="win-btn win-btn-maximize"
@@ -25,7 +25,7 @@
       border: 'var(--window-btn-border)',
     }"
     @click="$emit(buttonType)">
-    <AppIcon v-if="showIcon" name="expand-2" :size="10" />
+    <AppIcon v-if="showIcon" name="expand-2" :size="10" stroke="#000" fill="#000" />
   </div>
   <div
     class="win-btn win-btn-close"
@@ -37,7 +37,7 @@
       border: 'var(--window-btn-border)',
     }"
     @click="$emit(buttonType)">
-    <AppIcon v-if="showIcon" name="xmark" :size="10" />
+    <AppIcon v-if="showIcon" name="xmark" :size="10" stroke="#000" fill="#000" />
   </div>
 </template>
 
@@ -45,6 +45,7 @@
 import { computed, ref } from "vue";
 import { window as appWindow } from "@tauri-apps/api";
 import { Event } from "@tauri-apps/api/event";
+import AppIcon from "./AppIcon.vue";
 
 const props = defineProps<{
   buttonType: "minimize" | "maximize" | "close";

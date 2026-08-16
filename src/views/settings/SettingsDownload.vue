@@ -37,7 +37,10 @@
       </SettingItem>
     </SettingGroup>
     <SettingGroup :title="'代理'">
-      <SettingItem :title="'使用系统代理（重启应用后生效）'" icon="globe">
+      <SettingItem
+        :title="'使用系统代理（重启应用后生效）'"
+        icon="globe"
+        description="目前仅支持通过环境变量设置代理">
         <BaseSwitch v-model="config.download.use_system_proxy"></BaseSwitch>
       </SettingItem>
     </SettingGroup>

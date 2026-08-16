@@ -15,7 +15,6 @@ export type InstanceRuntime = {
 export type InstanceConfig = {
     name: string
     icon?: Base64URLString
-    background?: string
     runtime: InstanceRuntime
     group?: string[]
     launch_config: {
@@ -40,6 +39,8 @@ export type InstanceConfig = {
         wrap_command?: string
         execute_before_launch?: string
         execute_after_launch?: string
+        skip_check_files?: boolean
+        quit_app_after_launch?: boolean
     }
 }
 
@@ -79,6 +80,10 @@ export async function addBackgroundImage(path: string, id: string): Promise<void
 
 export async function getBackgroundPath(id: string): Promise<string> {
     return await invoke("plugin:instance|cmd_get_background_path", { id })
+}
+
+export async function removeBackground(id: string): Promise<void> {
+    return await invoke("plugin:instance|cmd_remove_background", { id })
 }
 
 export async function calculatePlaytime(id: string): Promise<number> {

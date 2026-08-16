@@ -3,11 +3,11 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div>
+  <div class="setting-jvm">
     <SettingGroup>
       <SettingItem
-        :title="'优先使用 Mojang 官方提供的 Java 运行环境'"
-        :description="'安装游戏时一并安装 Java 运行环境，启动时优先从启动器目录中查找。关闭后将仅尝试使用系统中已安装的 Java 启动游戏'">
+        :title="'优先使用 Mojang 提供的 Java 运行环境'"
+        :description="'此选项有助于避免个别平台（例如 macOS ）的奇怪问题，如果你的 Java 环境出现问题或者懒得自己安装 Java ，直接打开此选项即可。关闭后将仅尝试使用系统中已安装的 Java 启动游戏'">
         <BaseSwitch v-model="config.prefer_mojang_java"></BaseSwitch>
       </SettingItem>
     </SettingGroup>
@@ -23,11 +23,15 @@
           v-if="runtimes.length === 0"
           :title="'未检测到已安装的 Java 运行环境'"
           :description="'安装游戏时 Conic Launcher 会自动从 Mojang 服务器下载所需的 Java 运行环境'"></SettingItem>
-        <SettingItem
-          v-for="runtime in runtimes"
-          :key="runtime.path"
-          :title="formatJavaTitle(runtime)"
-          :description="formatJavaDescription(runtime)">
+        <SettingItem v-for="runtime in runtimes" :key="runtime.path" :description="runtime.path">
+          <template #title>
+            <p style="font-size: 13px; display: flex; gap: 4px; align-items: center">
+              <span style="margin-right: 4px">Java {{ runtime.major_version }}</span>
+              <span class="vendor tag"> {{ VENDOR_DISPLAY[runtime.vendor] }} </span>
+              <span class="version tag"> {{ runtime.version }} </span>
+              <span class="version tag"> {{ runtime.arch }} </span>
+            </p>
+          </template>
           <BaseSwitch
             :model-value="isJavaEnabled(runtime)"
             @update:model-value="setJavaEnabled(runtime, $event)"></BaseSwitch>
@@ -67,18 +71,6 @@ const VENDOR_DISPLAY: Record<JavaVendor, string> = {
   unknown: "Unknown",
 };
 
-function formatJavaTitle(runtime: JavaRuntime): string {
-  return `Java ${runtime.major_version} · ${VENDOR_DISPLAY[runtime.vendor]} · ${runtime.version}`;
-}
-
-function formatJavaDescription(runtime: JavaRuntime): string {
-  const parts: string[] = [];
-  if (runtime.is_jdk) parts.push("JDK");
-  if (runtime.arch !== "unknown") parts.push(runtime.arch);
-  parts.push(runtime.is_valid ? runtime.path : `${runtime.path}（无效）`);
-  return parts.join(" · ");
-}
-
 function isJavaEnabled(runtime: JavaRuntime): boolean {
   return !config.disabled_java_runtime.includes(runtime.path);
 }
@@ -107,4 +99,13 @@ onMounted(async () => {
 });
 </script>
 
-<style lang="less"></style>
+<style lang="less">
+.setting-jvm {
+  .tag {
+    border: 1px solid var(--ctp-blue);
+    padding: 2px 6px;
+    border-radius: 100px;
+    font-size: 11px;
+  }
+}
+</style>

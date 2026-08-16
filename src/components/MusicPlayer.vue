@@ -80,7 +80,7 @@
                   <span class="playlist-item-name">{{ track.name }}</span>
                 </button>
                 <p v-if="music.tracks.length === 0" class="playlist-empty">
-                  {{ "暂无音乐，请将音频文件放入音乐文件夹。" }}
+                  {{ "啥也没" }}
                 </p>
               </div>
             </ScrollView>

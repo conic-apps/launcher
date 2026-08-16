@@ -17,6 +17,9 @@ pub struct MusicConfig {
     /// Whether to show the audio visualizer in the game view footer.
     pub show_visualizer: bool,
 
+    /// Whether to pause background music after the game launches.
+    pub pause_on_launch: bool,
+
     pub main_volumn: u8,
     pub main_volumn_background: u8,
 }
@@ -27,6 +30,7 @@ impl Default for MusicConfig {
             enabled: true,
             resume_on_startup: true,
             show_visualizer: true,
+            pause_on_launch: true,
             main_volumn: 100,
             main_volumn_background: 25,
         }

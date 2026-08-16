@@ -20,6 +20,9 @@ const CACHE_BASE_URL: &str = "https://mod.mcimirror.top/curseforge";
 // Official CurseForge API. Requires an API key. Only queried when the cache
 // returns an empty or invalid result.
 const OFFICIAL_BASE_URL: &str = "https://api.curseforge.com";
+// MCIM translate API for mod summaries.
+// See https://github.com/mcmod-info-mirror/translate-mod-summary
+const TRANSLATE_BASE_URL: &str = "https://mod.mcimirror.top/translate";
 
 // CurseForge API key baked in at build time by `build.rs` from the
 // `CURSEFORGE_API_KEY` environment variable. Empty when the variable was unset.
@@ -41,6 +44,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_get_files,
             cmd_get_mod_file_changelog,
             cmd_get_mod_file_download_url,
+            cmd_get_mod_translations,
         ])
         .build()
 }
@@ -93,6 +97,11 @@ async fn cmd_get_mod_file_changelog(mod_id: i64, file_id: i64) -> Result<Value> 
 #[command]
 async fn cmd_get_mod_file_download_url(mod_id: i64, file_id: i64) -> Result<Value> {
     get_mod_file_download_url(mod_id, file_id).await
+}
+
+#[command]
+async fn cmd_get_mod_translations(mod_ids: Vec<i64>) -> Result<Value> {
+    get_mod_translations(&mod_ids).await
 }
 
 fn build_url(base_url: &str, segments: &[&str]) -> Result<Url> {
@@ -271,6 +280,20 @@ pub async fn get_mod_file_download_url(mod_id: i64, file_id: i64) -> Result<Valu
             &file_id.to_string(),
             "download-url",
         ],
+        None,
+    )
+    .await
+}
+
+/// Fetch the translated summaries of the given CurseForge mods. Mods without a
+/// translation are simply absent from the response.
+pub async fn get_mod_translations(mod_ids: &[i64]) -> Result<Value> {
+    let body = serde_json::json!({ "modids": mod_ids });
+    send_request(
+        TRANSLATE_BASE_URL,
+        &reqwest::Method::POST,
+        &["curseforge"],
+        Some(&body),
         None,
     )
     .await

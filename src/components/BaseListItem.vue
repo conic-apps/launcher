@@ -14,12 +14,9 @@
         <slot name="icon" style="margin-right: 10px"></slot>
       </div>
       <div>
-        <h4>
+        <p class="title">
           {{ title }}
-          <div class="sub-title">
-            <slot name="subtitle"></slot>
-          </div>
-        </h4>
+        </p>
         <p class="text">
           {{ description ?? "" }}
           <slot></slot>
@@ -93,9 +90,9 @@ defineProps<{
     justify-content: flex-end;
   }
 
-  h4 {
+  p.title {
     font-weight: normal;
-    font-size: 15px;
+    font-size: 14px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -115,12 +112,12 @@ defineProps<{
   p.text {
     display: flex;
     align-items: center;
-    font-size: 13px;
+    font-size: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     width: fit-content;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(var(--ctp-text-rgb), 0.6);
     margin-top: 0;
   }
 }
@@ -131,18 +128,18 @@ defineProps<{
 
 .icon {
   flex-shrink: 0;
-  max-width: 32px;
-  height: 32px;
+  max-width: 28px;
+  height: 28px;
   background-size: cover;
   background-position: center;
-  margin-left: 2px;
+  margin-left: 4px;
   // box-shadow: 0 0 2px #00000088;
   overflow: hidden;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 8px;
+  margin-right: 4px;
 }
 
 .list-item-button {

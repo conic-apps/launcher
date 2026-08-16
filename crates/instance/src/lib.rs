@@ -34,6 +34,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_delete_instance,
             cmd_add_background_file,
             cmd_get_background_path,
+            cmd_remove_background,
             cmd_calculate_playtime,
         ])
         .build()
@@ -78,6 +79,12 @@ async fn cmd_get_background_path(id: String) -> String {
         .join("background")
         .to_string_lossy()
         .to_string()
+}
+
+#[command]
+async fn cmd_remove_background(id: &str) -> Result<()> {
+    let instance_root = DATA_LOCATION.get_instance_root(id);
+    Ok(async_fs::remove_file(instance_root.join("background")).await?)
 }
 
 #[command]

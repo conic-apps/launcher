@@ -48,6 +48,7 @@ let audioElement: HTMLAudioElement | null = null
 let audioContext: AudioContext | null = null
 let analyserNode: AnalyserNode | null = null
 let gainNode: GainNode | null = null
+let targetFftSize = 2048
 
 let lastPersistedAt = 0
 const PERSIST_INTERVAL_MS = 5000
@@ -79,7 +80,7 @@ function ensureAnalyser(): AnalyserNode {
     if (!analyserNode) {
         const context = getAudioContext()
         analyserNode = context.createAnalyser()
-        analyserNode.fftSize = 1024
+        analyserNode.fftSize = targetFftSize
         analyserNode.smoothingTimeConstant = 0.8
         gainNode = context.createGain()
         gainNode.gain.value = getAudioElement().volume
@@ -94,6 +95,18 @@ function ensureAnalyser(): AnalyserNode {
 /** Returns the analyser node feeding the currently playing audio, or null if not set up. */
 export function getAnalyser(): AnalyserNode | null {
     return analyserNode
+}
+
+/**
+ * Adjusts the FFT size so frequency resolution can scale with the visualizer's
+ * bar count. Takes effect on the next analysis; also applies when the analyser
+ * is created later.
+ */
+export function setAnalyserFftSize(size: number) {
+    targetFftSize = size
+    if (analyserNode) {
+        analyserNode.fftSize = size
+    }
 }
 
 /** Returns the sample rate of the audio context driving playback. */
@@ -296,7 +309,11 @@ export const useMusicStore = defineStore("music", {
             )
         },
 
-        async startPlayback() {
+        /**
+         * Loads the current track's source into the audio element and wires up
+         * events, without starting playback.
+         */
+        async preparePlayback() {
             const track = this.currentTrack
             if (track === null) {
                 return
@@ -308,8 +325,12 @@ export const useMusicStore = defineStore("music", {
             this.applyVolume()
             this.attachAudioEvents(audio)
             updateMediaSessionMetadata()
+        },
+
+        async startPlayback() {
+            await this.preparePlayback()
             try {
-                await audio.play()
+                await getAudioElement().play()
                 this.isPlaying = true
             } catch (error) {
                 console.error("Failed to play music", error)
@@ -329,27 +350,33 @@ export const useMusicStore = defineStore("music", {
         },
 
         /**
-         * Loads tracks and resumes the last playing track and its position from
-         * localStorage, gated by the background music and resume settings.
+         * Loads tracks and restores the last playing track and its position from
+         * localStorage, gated by the background music setting. When the saved
+         * track can be restored it resumes or pauses at the saved position
+         * depending on the resume-on-startup setting; when it cannot, the first
+         * track is loaded in a paused state at its start instead.
          */
         async restoreSession() {
             await this.loadTracks()
             const config = useConfigStore()
-            if (!config.music.enabled || !config.music.resume_on_startup) {
+            if (!config.music.enabled || this.tracks.length === 0) {
                 return
             }
             const saved = loadTrackState()
-            if (saved === null) {
-                return
-            }
-            const index = this.tracks.findIndex((track) => track.path === saved.path)
-            if (index < 0) {
-                return
-            }
-            this.currentIndex = index
-            await this.startPlayback()
-            if (saved.currentTime > 0) {
+            const restoredIndex =
+                saved !== null ? this.tracks.findIndex((track) => track.path === saved.path) : -1
+            this.currentIndex = restoredIndex >= 0 ? restoredIndex : 0
+            await this.preparePlayback()
+            if (restoredIndex >= 0 && saved !== null && saved.currentTime > 0) {
                 this.seek(saved.currentTime)
+            }
+            if (config.music.resume_on_startup && restoredIndex >= 0) {
+                try {
+                    await getAudioElement().play()
+                    this.isPlaying = true
+                } catch (error) {
+                    console.error("Failed to play music", error)
+                }
             }
         },
 

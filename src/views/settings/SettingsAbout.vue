@@ -21,20 +21,20 @@
     <!--   "Conic Launcher 是自由项目，旨在带来更好的游戏体验，并帮助降低碳排放。项目由 ConicMC 的开发者开发和维护，您的赞助或贡献不仅能帮助 Conic Launcher 获得更好的发展，更能为自由软件事业及环境保护贡献力量。" -->
     <!-- }} -->
     <!-- </info-box> -->
-    <SettingGroup>
+    <SettingGroup title="反馈">
       <SettingItem
         :title="'提交反馈'"
         :description="'打开一个 GitHub Issue，如果报告 Bug 记得上传启动器日志'"
         icon="flag"
         :navigable="true"
-        @click="openUrl('https://github.com/conic-apps/launcher')">
+        @click="openUrl('https://github.com/conic-apps/launcher/issues/new/choose')">
       </SettingItem>
       <SettingItem
         :title="'查看源代码'"
         :description="'在 GitHub 中查看启动器的源代码'"
         icon="github"
         :navigable="true"
-        @click="openUrl('https://github.com/conic-apps/launcher/issues/new/choose')">
+        @click="openUrl('https://github.com/conic-apps/launcher')">
       </SettingItem>
       <SettingItem
         :title="'查看启动器日志'"
@@ -44,18 +44,50 @@
         @click="openLogFolder">
       </SettingItem>
     </SettingGroup>
+    <SettingGroup title="鸣谢">
+      <SettingItem
+        :title="'osu!'"
+        :description="'Conic Launcher 使用的用户界面交互风格受 osu! 的启发'"
+        :navigable="true"
+        @click="openUrl('https://osu.ppy.sh')">
+        <template #icon>
+          <img src="@/assets/images/osu! logo.png" alt="osu!" style="width: calc(100% - 12px)" />
+        </template>
+      </SettingItem>
+      <SettingItem
+        :title="'Catppuccin'"
+        :description="'Conic Launcher 的四种内置配色方案来自 Catppuccin'"
+        :navigable="true"
+        @click="openUrl('https://catppuccin.com')">
+        <template #icon>
+          <img
+            src="@/assets/images/catppuccin-1544x1544_circle.png"
+            alt="osu!"
+            style="width: calc(100% - 12px)" />
+        </template>
+      </SettingItem>
+      <SettingItem
+        :title="'BMCLAPI'"
+        :description="'Conic Launcher 镜像列表的默认配置包含 bangbang93 提供的 BMCLAPI 作为部分 Minecraft 资源的下载加速源'"
+        :navigable="true"
+        @click="openUrl('https://bmclapidoc.bangbang93.com')">
+        <template #icon>
+          <img
+            src="@/assets/images/bangbang93-avatar.jpeg"
+            alt="osu!"
+            style="width: calc(100% - 12px); border-radius: 10000px" />
+        </template>
+      </SettingItem>
+    </SettingGroup>
     <div class="version-info">
       <p class="application-name">Conic Launcher</p>
-      <p class="application-version">{{ appVersion ?? "0.0.0" }}</p>
+      <p class="application-version">
+        {{ appVersion ?? "0.0.0" }}
+      </p>
       <p class="copyright">Copyright 2022-2026 ConicMC developers. All rights reserved.</p>
-      <!-- <p class="text"> -->
-      <!--   Conic Launcher is not an official Minecraft product, and is not approved by or associated -->
-      <!--   with Mojang Studios. "Minecraft" is a trademark of Mojang AB and any usage of the Minecraft -->
-      <!--   brand on this site is used in accordance with Mojang Studios' Brand and Asset Guidelines. -->
-      <!-- </p> -->
       <p class="text">
         Conic Launcher 不是官方的 Minecraft 产品，也未获得 Mojang Studios
-        的批准或关联。“Minecraft”是 Mojang AB 的商标，本网站对 Minecraft 品牌的任何使用均符合 Mojang
+        的批准或关联。“Minecraft”是 Mojang AB 的商标，本项目对 Minecraft 品牌的任何使用均符合 Mojang
         Studios 的<a
           href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines"
           @click.prevent="openUrl('https://www.minecraft.net/en-us/terms#terms-brand_guidelines')"
@@ -113,6 +145,7 @@ onMounted(async () => {
     font-weight: normal;
     margin-top: 6px;
     text-align: center;
+    line-height: 1.5;
     width: calc(100% - 96px);
   }
 }

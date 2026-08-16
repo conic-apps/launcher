@@ -107,6 +107,11 @@ pub struct InstanceLaunchConfig {
 
     /// Script or command to execute after launch
     pub execute_after_launch: Option<String>,
+
+    /// If true, skips integrity checks of the game files.
+    pub skip_check_files: Option<bool>,
+
+    pub quit_app_after_launch: Option<bool>,
 }
 
 /// Main configuration structure for a Minecraft instance.

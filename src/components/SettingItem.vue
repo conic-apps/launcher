@@ -7,17 +7,20 @@
     class="setting-item"
     :class="{ 'setting-item-navigable': props.navigable, 'setting-item-disabled': props.disabled }">
     <div style="display: flex">
-      <div class="icon" v-if="icon">
-        <AppIcon :name="icon" :size="iconSize" :fill="iconFill"></AppIcon>
+      <div class="icon" v-if="icon || slots.icon">
+        <AppIcon v-if="icon" :name="icon" :size="iconSize" :fill="iconFill"></AppIcon>
+        <slot name="icon" v-else-if="slots.icon"> </slot>
       </div>
       <div class="text">
-        <p class="title">
+        <slot v-if="slots.title" name="title"> </slot>
+        <p class="title" v-else-if="props.title">
           {{ title }}
           <button v-if="props.resetable" class="reset-button" @click.stop="$emit('reset')">
             <AppIcon name="refresh" :size="16"></AppIcon>
           </button>
         </p>
         <p v-if="description" class="description" v-html="description"></p>
+        <slot v-else-if="slots.description" name="description"> </slot>
       </div>
     </div>
     <div style="display: flex; align-items: center">
@@ -33,11 +36,12 @@
 </template>
 
 <script setup lang="ts">
+import { useSlots } from "vue";
 import AppIcon from "./AppIcon.vue";
 
 const props = withDefaults(
   defineProps<{
-    title: string;
+    title?: string;
     description?: string;
     icon?: string;
     iconSize?: number | string;
@@ -52,6 +56,8 @@ const props = withDefaults(
 );
 
 defineEmits(["reset"]);
+
+const slots = useSlots();
 </script>
 
 <style lang="less" scoped>
@@ -72,6 +78,7 @@ defineEmits(["reset"]);
   .icon,
   .text {
     display: flex;
+    gap: 2px;
     flex-direction: column;
     justify-content: center;
   }
@@ -93,7 +100,6 @@ defineEmits(["reset"]);
     align-items: center;
     font-weight: normal;
     font-size: 13px;
-    line-height: 20px;
   }
 
   button.reset-button {
@@ -122,7 +128,7 @@ defineEmits(["reset"]);
     color: rgba(var(--default-text-color), 0.849);
     line-height: 1.1;
     opacity: 0.6;
-    margin-top: 4px;
+    margin-top: 2px;
   }
 }
 

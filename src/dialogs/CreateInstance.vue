@@ -61,14 +61,13 @@
                   @click.stop="
                     () => {
                       backgroundFilePath = null;
-                      launcherBackgroundOverride = false;
                     }
                   "
                   >移除图像</BaseButton
                 >
               </SettingItem>
               <SettingItem title="在启动器背景使用实例背景" :disabled="backgroundFilePath === null">
-                <BaseSwitch v-model="launcherBackgroundOverride"></BaseSwitch>
+                <BaseSwitch></BaseSwitch>
               </SettingItem>
             </SettingGroup>
             <SettingGroup title="版本设置">
@@ -78,9 +77,6 @@
                 :description="minecraftVersion ? `已选择 ${minecraftVersion}` : ''"
                 :navigable="true"
                 @click="currentComponent = 'minecraft-choose'">
-                <span style="font-size: 14px; opacity: 0.8; margin-right: 8px">{{
-                  minecraftVersion
-                }}</span>
                 <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
               </SettingItem>
               <SettingItem title="模组加载器" :disabled="modLoaderSettingDisabled">
@@ -400,7 +396,6 @@ async function getBackground() {
   }
 }
 
-const launcherBackgroundOverride = ref(false);
 const backgroundFileSrc = computed(() => {
   return convertFileSrc(backgroundFilePath.value ?? "");
 });

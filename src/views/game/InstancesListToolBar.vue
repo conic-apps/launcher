@@ -103,6 +103,7 @@ const searchQuery = defineModel<string>("searchQuery", { required: true });
       background: none;
       font-size: 14px;
       height: 100%;
+      width: 100%;
       padding-left: 16px;
     }
   }

@@ -23,6 +23,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_get_multiple_projects,
             cmd_get_all_dependencies,
             cmd_list_project_versions,
+            cmd_get_project_translations,
         ])
         .build()
 }
@@ -50,6 +51,9 @@ async fn cmd_get_all_dependencies(id: &str) -> Result<Value> {
 // const BASE_URL: &str = "https://api.modrinth.com";
 const BASE_URL: &str = "https://mod.mcimirror.top/modrinth";
 const OFFICIAL_BASE_URL: &str = "https://api.modrinth.com";
+// MCIM translate API for project descriptions.
+// See https://github.com/mcmod-info-mirror/translate-mod-summary
+const TRANSLATE_BASE_URL: &str = "https://mod.mcimirror.top/translate";
 
 #[command]
 async fn cmd_list_project_versions(
@@ -57,6 +61,27 @@ async fn cmd_list_project_versions(
     params: ListProjectVersionsParams,
 ) -> Result<Value> {
     list_project_versions(id_or_slug, &params).await
+}
+
+#[command]
+async fn cmd_get_project_translations(project_ids: Vec<String>) -> Result<Value> {
+    get_project_translations(&project_ids).await
+}
+
+/// Fetch the translated descriptions of the given Modrinth projects. Projects
+/// without a translation are simply absent from the response.
+pub async fn get_project_translations(project_ids: &[String]) -> Result<Value> {
+    let url = Url::parse(TRANSLATE_BASE_URL)?
+        .append_path(["modrinth"])
+        .expect("Internal error");
+    let body = serde_json::json!({ "project_ids": project_ids });
+    Ok(HTTP_CLIENT
+        .post(url)
+        .json(&body)
+        .send()
+        .await?
+        .json()
+        .await?)
 }
 
 #[derive(Serialize, Deserialize)]
