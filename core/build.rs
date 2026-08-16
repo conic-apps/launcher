@@ -63,6 +63,7 @@ fn main() {
                 "cmd_render_world_map",
                 "cmd_list_screenshots",
                 "cmd_parse_mods",
+                "cmd_check_mod_installed",
             ]),
         )
         .plugin(
