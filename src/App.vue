@@ -118,6 +118,7 @@ import { getSystemLanguage } from "@conic/config";
 import LaunchView from "./views/LaunchView.vue";
 import { useDialogStore } from "./store/dialog";
 import { useMusicStore } from "./store/music";
+import { checkMinecraftUpdateReminder } from "./store/minecraftUpdate";
 import gsap from "gsap";
 
 const config = useConfigStore();
@@ -194,6 +195,7 @@ onMounted(() => {
   if (config.auto_update) {
     void checkForUpdateAtStartup();
   }
+  void checkMinecraftUpdateReminder();
 });
 
 const dialogStore = useDialogStore();

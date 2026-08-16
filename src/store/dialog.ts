@@ -8,7 +8,7 @@ import type { Account } from "@conic/account"
 import { Instance } from "@conic/instance"
 
 export const useDialogStore = defineStore("dialog", () => {
-    const updateReminder = ref({ visible: false })
+    const updateReminder = ref({ visible: false, version: "" })
     const updateApp = ref({ visible: false })
     const accountManager = ref({ visible: false })
     const createInstance = ref({ visible: false })
