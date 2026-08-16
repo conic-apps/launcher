@@ -11,8 +11,13 @@ import {
     Resourcepack,
 } from "@conic/content"
 
-let gameContentCache = {} as Record<string, [GameContent, number]>
+type GameContentCacheValue = {
+    [K in keyof GameContent]: { data: GameContent[K] | null; time: number }
+}
 
+const gameContentCache = {} as Record<string, GameContentCacheValue>
+
+/// For current instance only
 export type GameContent = {
     saves: Record<string, Level> | null
     mods: Mod[] | null
@@ -20,59 +25,126 @@ export type GameContent = {
     screenshots: string[] | null
 }
 
+const CACHE_TTL = 60 * 1000
+const REFRESH_COOL_DOWN = 10 * 1000
+
+function getValidContentFromCacheEntries(instanceId: string): GameContent {
+    const cache = gameContentCache[instanceId]
+    if (!cache) return { saves: null, mods: null, resourcepacks: null, screenshots: null }
+
+    return Object.fromEntries(
+        Object.entries(cache).map(([key, item]) => {
+            const isValid = Date.now() - item.time < CACHE_TTL
+            return [key, isValid ? item.data : null]
+        }),
+    ) as GameContent
+}
+
 export const useGameContentStore = defineStore("gameContent", () => {
-    const gameContent = ref({ saves: null } as GameContent)
+    const gameContent = ref<GameContent>({
+        saves: null,
+        mods: null,
+        resourcepacks: null,
+        screenshots: null,
+    })
     const instanceStore = useInstanceStore()
+
+    function createContentLoader<K extends keyof GameContent>(
+        key: K,
+        instanceId: string,
+        fetcher: () => Promise<GameContent[K]>,
+        hasValidCache: boolean,
+    ) {
+        return async () => {
+            if (gameContent.value[key] !== null) {
+                if (!hasValidCache) {
+                } else {
+                    const lastRefreshTime = gameContentCache[instanceId]?.[key]?.time || 0
+                    const isCoolingDown = Date.now() - lastRefreshTime < REFRESH_COOL_DOWN
+
+                    if (isCoolingDown) return
+                }
+            }
+
+            const data = await fetcher()
+
+            gameContentCache[instanceId] ??= {} as GameContentCacheValue
+            gameContentCache[instanceId][key] ??= { data: null, time: 0 }
+
+            if (instanceId === instanceStore.currentInstance.id) {
+                gameContent.value[key] = data
+            }
+
+            gameContentCache[instanceId][key].data = data
+            gameContentCache[instanceId][key].time = Date.now()
+        }
+    }
+
     watch(
         () => instanceStore.currentInstance,
         async (instance) => {
             ;(Object.keys(gameContent.value) as Array<keyof GameContent>).forEach((key) => {
                 gameContent.value[key] = null
             })
-            if (
-                gameContentCache[instance.id] &&
-                gameContentCache[instance.id][1] - Date.now() < 60 * 1000
-            ) {
-                gameContent.value = gameContentCache[instance.id][0]
-            }
-            const loadSaves = async () => {
-                gameContent.value.saves = await getAllLevels(instance.id)
-            }
-            const loadMods = async () => {
-                gameContent.value.mods = (await parseMods(instance.id)).filter(
-                    (mod) => !mod.embedded,
-                )
-            }
-            const loadResourcepacks = async () => {
-                gameContent.value.resourcepacks = await getAllResourcepacks(instance.id)
-            }
-            const loadScreenshots = async () => {
-                gameContent.value.screenshots = await listScreenshots(instance.id)
-            }
-            const results = await Promise.allSettled([
-                loadSaves(),
-                loadMods(),
-                loadResourcepacks(),
-                loadScreenshots(),
+
+            const cachedData = getValidContentFromCacheEntries(instance.id)
+
+            Object.assign(gameContent.value, cachedData)
+
+            await Promise.allSettled([
+                createContentLoader(
+                    "saves",
+                    instance.id,
+                    () => getAllLevels(instance.id),
+                    cachedData.saves !== null,
+                )(),
+                createContentLoader(
+                    "mods",
+                    instance.id,
+                    async () => {
+                        const rawMods = await parseMods(instance.id)
+                        return rawMods.filter((mod) => !mod.embedded)
+                    },
+                    cachedData.mods !== null,
+                )(),
+                createContentLoader(
+                    "resourcepacks",
+                    instance.id,
+                    () => getAllResourcepacks(instance.id),
+                    cachedData.resourcepacks !== null,
+                )(),
+                createContentLoader(
+                    "screenshots",
+                    instance.id,
+                    () => listScreenshots(instance.id),
+                    cachedData.screenshots !== null,
+                )(),
             ])
-            console.log(gameContent.value.mods)
-            if (!results.find((result) => result.status === "rejected")) {
-                const timestamp = Date.now()
-                gameContentCache[instance.id] = [gameContent.value, timestamp]
-            }
         },
         { immediate: true },
     )
+
     watch(
         () => instanceStore.instances,
-        () => (gameContentCache = {}),
+        () => {
+            for (const key in gameContentCache) {
+                delete gameContentCache[key]
+            }
+        },
     )
+
     async function refreshSaves() {
         const instance = instanceStore.currentInstance
-        gameContent.value.saves = await getAllLevels(instance.id)
-        if (gameContentCache[instance.id]) {
-            gameContentCache[instance.id] = [gameContent.value, Date.now()]
+        const saves = await getAllLevels(instance.id)
+
+        gameContent.value.saves = saves
+
+        gameContentCache[instance.id] ??= {} as GameContentCacheValue
+        gameContentCache[instance.id].saves = {
+            data: saves,
+            time: Date.now(),
         }
     }
+
     return { gameContent, refreshSaves }
 })

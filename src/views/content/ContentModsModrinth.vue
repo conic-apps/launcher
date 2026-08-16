@@ -9,7 +9,7 @@
         <input
           class="search-input"
           type="text"
-          :placeholder="'搜索资源包...'"
+          :placeholder="'搜索模组...'"
           v-model="searchQuery"
           @keyup.enter="applySearchFilters()" />
         <button class="search-button" @click="applySearchFilters()">
@@ -59,7 +59,7 @@
     </div>
 
     <p class="result-count" v-if="modrinthSearchResult">
-      {{ `共 ${modrinthSearchResult.total_hits} 个资源包` }}
+      {{ `共 ${modrinthSearchResult.total_hits} 个模组` }}
     </p>
 
     <div class="search-status" v-if="modrinthSearchResult === null || modrinthLoading">
@@ -68,11 +68,11 @@
     <template v-else>
       <div class="mods-list" v-if="modrinthSearchResult.hits.length > 0">
         <div v-for="(mod, index) in modrinthSearchResult.hits" class="content" :key="index">
-          <img v-if="mod.icon_url" :src="mod.icon_url" alt="pack icon" width="72px" height="100%" />
+          <img v-if="mod.icon_url" :src="mod.icon_url" alt="mod icon" width="72px" height="100%" />
           <img
             v-else
             src="@/assets/images/Unknown_server.webp"
-            alt="pack icon"
+            alt="world icon"
             width="72px"
             height="100%" />
           <div class="content-info">
@@ -80,7 +80,29 @@
               <span>{{ mod.title }}</span>
             </p>
             <p class="authors">by {{ mod.author }}</p>
-            <p class="mod-description">{{ mod.description }}</p>
+            <p class="mod-description">
+              {{ modrinthTranslations.get(mod.project_id) ?? mod.description }}
+            </p>
+            <span
+              class="loader-type fabric"
+              v-if="mod.categories && mod.categories.find((category) => category === 'fabric')"
+              >Fabric</span
+            >
+            <span
+              class="loader-type forge"
+              v-if="mod.categories && mod.categories.find((category) => category === 'forge')"
+              >Forge</span
+            >
+            <span
+              class="loader-type quilt"
+              v-if="mod.categories && mod.categories.find((category) => category === 'quilt')"
+              >Quilt</span
+            >
+            <span
+              class="loader-type neoforge"
+              v-if="mod.categories && mod.categories.find((category) => category === 'neoforge')"
+              >Neoforge</span
+            >
           </div>
           <div class="actions">
             <button class="open-folder">
@@ -93,7 +115,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <span>{{ "没有找到相关资源包" }}</span>
+        <span>{{ "没有找到相关模组" }}</span>
       </div>
     </template>
 
@@ -134,58 +156,66 @@ import {
   SearchParameters as ModrinthSearchParameters,
   searchProjects as searchModrinthProjects,
 } from "@conic/modrinth";
+import { useDescriptionTranslation } from "./useDescriptionTranslation";
 
 const instanceStore = useInstanceStore();
+const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
+  useDescriptionTranslation();
 
 const PAGE_SIZE = 20;
 const VERSIONS_PER_PAGE = 6;
+const LOADERS = ["fabric", "forge", "neoforge", "quilt"];
+const LOADER_NAMES: Record<string, string> = {
+  fabric: "Fabric",
+  forge: "Forge",
+  neoforge: "NeoForge",
+  quilt: "Quilt",
+};
 const CATEGORIES = [
-  "faithful",
-  "16x",
-  "32x",
-  "64x",
-  "128x",
-  "256x",
-  "photo-realistic",
-  "semi-realistic",
-  "simple",
-  "modern",
-  "theme-based",
-  "classic",
-  "dark",
-  "medieval",
-  "anime",
-  "cartoon",
-  "pixel-art",
-  "vanilla-plus",
+  "adventure",
+  "cursed",
+  "decoration",
+  "economy",
+  "equipment",
+  "food",
+  "game-mechanics",
+  "library",
+  "magic",
+  "management",
+  "minigame",
+  "mobs",
+  "optimization",
+  "social",
+  "storage",
+  "technology",
+  "transportation",
   "utility",
-  "other",
+  "worldgen",
 ];
 const CATEGORY_NAMES: Record<string, string> = {
-  faithful: "忠实原版",
-  "16x": "16x",
-  "32x": "32x",
-  "64x": "64x",
-  "128x": "128x",
-  "256x": "256x",
-  "photo-realistic": "照片写实",
-  "semi-realistic": "半写实",
-  simple: "简约",
-  modern: "现代",
-  "theme-based": "主题风格",
-  classic: "经典",
-  dark: "暗色",
-  medieval: "中世纪",
-  anime: "动漫",
-  cartoon: "卡通",
-  "pixel-art": "像素画",
-  "vanilla-plus": "原版加强",
+  adventure: "冒险",
+  cursed: "诡异",
+  decoration: "装饰",
+  economy: "经济",
+  equipment: "装备",
+  food: "食物",
+  "game-mechanics": "游戏机制",
+  library: "库",
+  magic: "魔法",
+  management: "管理",
+  minigame: "小游戏",
+  mobs: "生物",
+  optimization: "优化",
+  social: "社交",
+  storage: "存储",
+  technology: "科技",
+  transportation: "交通",
   utility: "实用",
-  other: "其他",
+  worldgen: "世界生成",
 };
 type FilterOption = string;
 type ModsFilter = {
-  key: "version" | "category";
+  key: "loader" | "version" | "category";
   label: string;
   options: FilterOption[];
   isSelected: (option: FilterOption) => boolean;
@@ -194,6 +224,7 @@ type ModsFilter = {
 };
 
 const searchQuery = ref("");
+const selectedLoaders = ref<string[]>([]);
 const selectedVersions = ref<string[]>([]);
 const selectedCategories = ref<string[]>([]);
 const versionOptions = ref<string[]>([]);
@@ -220,7 +251,10 @@ function toggleFilterOption<T>(list: T[], value: T) {
 }
 
 function buildModrinthFacets(): string {
-  const facets: string[][] = [["project_type:resourcepack"]];
+  const facets: string[][] = [["project_type:mod"]];
+  if (selectedLoaders.value.length > 0) {
+    facets.push(selectedLoaders.value.map((loader) => `categories:${loader}`));
+  }
   if (selectedVersions.value.length > 0) {
     facets.push(selectedVersions.value.map((version) => `versions:${version}`));
   }
@@ -243,7 +277,10 @@ async function runModrinthSearch() {
   const cacheKey = JSON.stringify(params);
   const cached = modrinthCache.get(cacheKey);
   if (cached) {
-    if (token === modrinthSearchToken) modrinthSearchResult.value = cached;
+    if (token === modrinthSearchToken) {
+      modrinthSearchResult.value = cached;
+      void translateModrinthDescriptions(cached.hits.map((hit) => hit.project_id));
+    }
     return;
   }
   modrinthLoading.value = true;
@@ -252,6 +289,7 @@ async function runModrinthSearch() {
     if (token !== modrinthSearchToken) return;
     modrinthCache.set(cacheKey, result);
     modrinthSearchResult.value = result;
+    void translateModrinthDescriptions(result.hits.map((hit) => hit.project_id));
   } catch (error) {
     console.error(error);
   } finally {
@@ -335,6 +373,14 @@ watch(versionPage, () => {
 
 const modrinthFilters = computed<ModsFilter[]>(() => [
   {
+    key: "loader",
+    label: "加载器",
+    options: LOADERS,
+    isSelected: (option) => selectedLoaders.value.includes(option as string),
+    toggle: (option) => toggleFilterOption(selectedLoaders.value, option as string),
+    display: (option) => LOADER_NAMES[option as string] ?? option,
+  },
+  {
     key: "version",
     label: "版本",
     options: versionOptions.value,
@@ -400,6 +446,7 @@ async function ensureModrinthInitialized() {
   if (modrinthInitializedFor === key) return;
   modrinthInitializedFor = key;
   const runtime = instanceStore.currentInstance.config.runtime;
+  selectedLoaders.value = runtime.mod_loader_type ? [runtime.mod_loader_type.toLowerCase()] : [];
   selectedVersions.value = runtime.minecraft ? [runtime.minecraft] : [];
   searchQuery.value = "";
   syncVersionPageToSelection();
@@ -704,14 +751,33 @@ onMounted(async () => {
         white-space: nowrap;
         text-overflow: ellipsis;
       }
+      span.loader-type,
       span.version {
         font-size: 9px;
         padding: 2px 6px;
         margin-right: 4px;
         border-radius: 100px;
         font-weight: 500;
-        color: var(--ctp-text);
+        color: var(--ctp-text-inverse);
+      }
+      span.loader-type.fabric {
+        background: var(--ctp-yellow);
+      }
+      span.loader-type.forge {
+        background: var(--ctp-blue);
+      }
+      span.loader-type.neoforge {
+        background: var(--ctp-peach);
+      }
+      span.loader-type.quilt {
+        background: var(--ctp-mauve);
+      }
+      span.loader-type.liteloader {
+        background: var(--ctp-yellow);
+      }
+      span.version {
         border: 1px solid var(--ctp-sky);
+        color: var(--ctp-text);
       }
       span.command-enabled {
         background: var(--ctp-yellow);

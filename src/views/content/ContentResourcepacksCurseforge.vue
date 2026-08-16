@@ -9,7 +9,7 @@
         <input
           class="search-input"
           type="text"
-          :placeholder="'搜索模组...'"
+          :placeholder="'搜索资源包...'"
           v-model="searchQuery"
           @keyup.enter="applySearchFilters()" />
         <button class="search-button" @click="applySearchFilters()">
@@ -17,7 +17,7 @@
         </button>
       </div>
       <div class="filter-bar">
-        <div class="filter-row" v-for="filter in modrinthFilters" :key="filter.key">
+        <div class="filter-row" v-for="filter in curseForgeFilters" :key="filter.key">
           <span class="filter-label">{{ filter.label }}</span>
           <div class="filter-chips" :class="{ paged: filter.key === 'version' }">
             <template v-if="filter.key === 'version'">
@@ -58,49 +58,34 @@
       </div>
     </div>
 
-    <p class="result-count" v-if="modrinthSearchResult">
-      {{ `共 ${modrinthSearchResult.total_hits} 个模组` }}
+    <p class="result-count" v-if="curseForgeSearchResult">
+      {{ `共 ${curseForgeSearchResult.pagination?.totalCount ?? 0} 个资源包` }}
     </p>
 
-    <div class="search-status" v-if="modrinthSearchResult === null || modrinthLoading">
+    <div class="search-status" v-if="curseForgeSearchResult === null || curseForgeLoading">
       <span>{{ "正在搜索..." }}</span>
     </div>
     <template v-else>
-      <div class="mods-list" v-if="modrinthSearchResult.hits.length > 0">
-        <div v-for="(mod, index) in modrinthSearchResult.hits" class="content" :key="index">
-          <img v-if="mod.icon_url" :src="mod.icon_url" alt="mod icon" width="72px" height="100%" />
+      <div class="mods-list" v-if="curseForgeSearchResult.data.length > 0">
+        <div v-for="(mod, index) in curseForgeSearchResult.data" class="content" :key="index">
+          <img v-if="mod.logo.url" :src="mod.logo.url" alt="pack icon" width="72px" height="100%" />
           <img
             v-else
             src="@/assets/images/Unknown_server.webp"
-            alt="world icon"
+            alt="pack icon"
             width="72px"
             height="100%" />
           <div class="content-info">
             <p class="name">
-              <span>{{ mod.title }}</span>
+              <span>{{ mod.name }}</span>
             </p>
-            <p class="authors">by {{ mod.author }}</p>
-            <p class="mod-description">{{ mod.description }}</p>
-            <span
-              class="loader-type fabric"
-              v-if="mod.categories && mod.categories.find((category) => category === 'fabric')"
-              >Fabric</span
-            >
-            <span
-              class="loader-type forge"
-              v-if="mod.categories && mod.categories.find((category) => category === 'forge')"
-              >Forge</span
-            >
-            <span
-              class="loader-type quilt"
-              v-if="mod.categories && mod.categories.find((category) => category === 'quilt')"
-              >Quilt</span
-            >
-            <span
-              class="loader-type neoforge"
-              v-if="mod.categories && mod.categories.find((category) => category === 'neoforge')"
-              >Neoforge</span
-            >
+            <p class="authors">
+              by {{ mod.authors.map((authorInfo) => authorInfo.name).join(",") }}
+            </p>
+            <p class="mod-description">{{ curseforgeTranslations.get(mod.id) ?? mod.summary }}</p>
+            <span class="version" v-if="mod.latestFilesIndexes && mod.latestFilesIndexes[0]">{{
+              mod.latestFilesIndexes[0].gameVersion
+            }}</span>
           </div>
           <div class="actions">
             <button class="open-folder">
@@ -113,20 +98,23 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <span>{{ "没有找到相关模组" }}</span>
+        <span>{{ "没有找到相关资源包" }}</span>
       </div>
     </template>
 
-    <div class="pagination" v-if="totalPages > 1">
-      <button class="page-nav" :disabled="currentPage === 1" @click="goToPage(1)">«</button>
-      <button class="page-nav" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
+    <div class="pagination" v-if="curseForgeTotalPages > 1">
+      <button class="page-nav" :disabled="curseForgePage === 1" @click="goToPage(1)">«</button>
+      <button
+        class="page-nav"
+        :disabled="curseForgePage === 1"
+        @click="goToPage(curseForgePage - 1)">
         ‹
       </button>
       <template v-for="(page, index) in paginationPages" :key="index">
         <button
           v-if="page !== '…'"
           class="page-number"
-          :class="{ active: page === currentPage }"
+          :class="{ active: page === curseForgePage }"
           @click="goToPage(page)">
           {{ page }}
         </button>
@@ -134,11 +122,14 @@
       </template>
       <button
         class="page-nav"
-        :disabled="currentPage === totalPages"
-        @click="goToPage(currentPage + 1)">
+        :disabled="curseForgePage === curseForgeTotalPages"
+        @click="goToPage(curseForgePage + 1)">
         ›
       </button>
-      <button class="page-nav" :disabled="currentPage === totalPages" @click="goToPage(totalPages)">
+      <button
+        class="page-nav"
+        :disabled="curseForgePage === curseForgeTotalPages"
+        @click="goToPage(curseForgeTotalPages)">
         »
       </button>
     </div>
@@ -150,67 +141,65 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useInstanceStore } from "@/store/instance";
 import { getMinecrafVersionManifest } from "@conic/install";
 import {
-  SearchedProjects as ModrinthSearchedProjects,
-  SearchParameters as ModrinthSearchParameters,
-  searchProjects as searchModrinthProjects,
-} from "@conic/modrinth";
+  ApiResponse as CurseForgeApiResponse,
+  Mod as CurseForgeMod,
+  SearchModsParams as CurseForgeSearchParams,
+  searchMods as searchCurseForgeMods,
+} from "@conic/curseforge";
+import { useDescriptionTranslation } from "./useDescriptionTranslation";
 
 const instanceStore = useInstanceStore();
+const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
+  useDescriptionTranslation();
 
 const PAGE_SIZE = 20;
 const VERSIONS_PER_PAGE = 6;
-const LOADERS = ["fabric", "forge", "neoforge", "quilt"];
-const LOADER_NAMES: Record<string, string> = {
-  fabric: "Fabric",
-  forge: "Forge",
-  neoforge: "NeoForge",
-  quilt: "Quilt",
-};
-const CATEGORIES = [
-  "adventure",
-  "cursed",
-  "decoration",
-  "economy",
-  "equipment",
-  "food",
-  "game-mechanics",
-  "library",
-  "magic",
-  "management",
-  "minigame",
-  "mobs",
-  "optimization",
-  "social",
-  "storage",
-  "technology",
-  "transportation",
-  "utility",
-  "worldgen",
+type CategoryOption = { id: number; slug: string };
+const CURSEFORGE_CATEGORIES: CategoryOption[] = [
+  { id: 4252, slug: "crafted" },
+  { id: 4255, slug: "photo-realistic" },
+  { id: 4259, slug: "semi-realistic" },
+  { id: 4256, slug: "simple" },
+  { id: 4258, slug: "traditional" },
+  { id: 4253, slug: "animated" },
+  { id: 4254, slug: "modern" },
+  { id: 4257, slug: "themed" },
+  { id: 4261, slug: "mod-support" },
+  { id: 4264, slug: "rpg" },
+  { id: 4266, slug: "gameplay" },
+  { id: 4268, slug: "gui" },
+  { id: 4269, slug: "sound" },
+  { id: 4270, slug: "environment" },
+  { id: 4271, slug: "world-gen" },
+  { id: 4273, slug: "blocks" },
+  { id: 4274, slug: "items" },
+  { id: 4275, slug: "mobs" },
+  { id: 4276, slug: "weather" },
 ];
-const CATEGORY_NAMES: Record<string, string> = {
-  adventure: "冒险",
-  cursed: "诡异",
-  decoration: "装饰",
-  economy: "经济",
-  equipment: "装备",
-  food: "食物",
-  "game-mechanics": "游戏机制",
-  library: "库",
-  magic: "魔法",
-  management: "管理",
-  minigame: "小游戏",
+const CURSEFORGE_CATEGORY_NAMES: Record<string, string> = {
+  crafted: "手工制作",
+  "photo-realistic": "照片写实",
+  "semi-realistic": "半写实",
+  simple: "简约",
+  traditional: "传统",
+  animated: "动态",
+  modern: "现代",
+  themed: "主题风格",
+  "mod-support": "模组支持",
+  rpg: "RPG",
+  gameplay: "游戏玩法",
+  gui: "界面",
+  sound: "声音",
+  environment: "环境",
+  "world-gen": "世界生成",
+  blocks: "方块",
+  items: "物品",
   mobs: "生物",
-  optimization: "优化",
-  social: "社交",
-  storage: "存储",
-  technology: "科技",
-  transportation: "交通",
-  utility: "实用",
-  worldgen: "世界生成",
+  weather: "天气",
 };
-type FilterOption = string;
+type FilterOption = string | CategoryOption;
 type ModsFilter = {
-  key: "loader" | "version" | "category";
+  key: "version" | "category";
   label: string;
   options: FilterOption[];
   isSelected: (option: FilterOption) => boolean;
@@ -219,9 +208,8 @@ type ModsFilter = {
 };
 
 const searchQuery = ref("");
-const selectedLoaders = ref<string[]>([]);
-const selectedVersions = ref<string[]>([]);
-const selectedCategories = ref<string[]>([]);
+const curseForgeSelectedVersions = ref<string[]>([]);
+const curseForgeSelectedCategories = ref<number[]>([]);
 const versionOptions = ref<string[]>([]);
 const versionPage = ref(0);
 const versionOffset = ref(0);
@@ -231,10 +219,10 @@ function setVersionTrackRef(el: unknown) {
   versionTrackElement = el instanceof HTMLElement ? el : null;
 }
 
-const currentPage = ref(1);
-const modrinthLoading = ref(false);
-const modrinthSearchResult = ref(null as null | ModrinthSearchedProjects);
-const modrinthCache = new Map<string, ModrinthSearchedProjects>();
+const curseForgePage = ref(1);
+const curseForgeLoading = ref(false);
+const curseForgeSearchResult = ref(null as null | CurseForgeApiResponse<CurseForgeMod[]>);
+const curseForgeCache = new Map<string, CurseForgeApiResponse<CurseForgeMod[]>>();
 
 function toggleFilterOption<T>(list: T[], value: T) {
   const index = list.indexOf(value);
@@ -245,68 +233,72 @@ function toggleFilterOption<T>(list: T[], value: T) {
   }
 }
 
-function buildModrinthFacets(): string {
-  const facets: string[][] = [["project_type:mod"]];
-  if (selectedLoaders.value.length > 0) {
-    facets.push(selectedLoaders.value.map((loader) => `categories:${loader}`));
-  }
-  if (selectedVersions.value.length > 0) {
-    facets.push(selectedVersions.value.map((version) => `versions:${version}`));
-  }
-  if (selectedCategories.value.length > 0) {
-    facets.push(selectedCategories.value.map((category) => `categories:${category}`));
-  }
-  return JSON.stringify(facets);
+function buildCurseForgeParams(): CurseForgeSearchParams {
+  const params: CurseForgeSearchParams = {
+    classId: 12,
+    searchFilter: searchQuery.value.trim() || undefined,
+    gameVersions:
+      curseForgeSelectedVersions.value.length > 0
+        ? JSON.stringify(curseForgeSelectedVersions.value.slice(0, 4))
+        : undefined,
+    categoryIds:
+      curseForgeSelectedCategories.value.length > 0
+        ? JSON.stringify(curseForgeSelectedCategories.value)
+        : undefined,
+    index: (curseForgePage.value - 1) * PAGE_SIZE,
+    pageSize: PAGE_SIZE,
+  };
+  return params;
 }
 
-let modrinthSearchToken = 0;
+let curseForgeSearchToken = 0;
 
-async function runModrinthSearch() {
-  const token = ++modrinthSearchToken;
-  const params: ModrinthSearchParameters = {
-    query: searchQuery.value.trim() || undefined,
-    facets: buildModrinthFacets(),
-    offset: (currentPage.value - 1) * PAGE_SIZE,
-    limit: PAGE_SIZE,
-  };
+async function runCurseForgeSearch() {
+  const token = ++curseForgeSearchToken;
+  const params = buildCurseForgeParams();
   const cacheKey = JSON.stringify(params);
-  const cached = modrinthCache.get(cacheKey);
+  const cached = curseForgeCache.get(cacheKey);
   if (cached) {
-    if (token === modrinthSearchToken) modrinthSearchResult.value = cached;
+    if (token === curseForgeSearchToken) {
+      curseForgeSearchResult.value = cached;
+      void translateCurseforgeSummaries(cached.data.map((mod) => mod.id));
+    }
     return;
   }
-  modrinthLoading.value = true;
+  curseForgeLoading.value = true;
   try {
-    const result = await searchModrinthProjects(params);
-    if (token !== modrinthSearchToken) return;
-    modrinthCache.set(cacheKey, result);
-    modrinthSearchResult.value = result;
+    const result = await searchCurseForgeMods(params);
+    if (token !== curseForgeSearchToken) return;
+    curseForgeCache.set(cacheKey, result);
+    curseForgeSearchResult.value = result;
+    void translateCurseforgeSummaries(result.data.map((mod) => mod.id));
   } catch (error) {
     console.error(error);
   } finally {
-    if (token === modrinthSearchToken) modrinthLoading.value = false;
+    if (token === curseForgeSearchToken) curseForgeLoading.value = false;
   }
 }
 
 function applySearchFilters() {
-  currentPage.value = 1;
-  void runModrinthSearch();
+  curseForgePage.value = 1;
+  void runCurseForgeSearch();
 }
 
 function goToPage(page: number) {
-  if (page < 1 || page > totalPages.value) return;
-  currentPage.value = page;
-  void runModrinthSearch();
+  if (page < 1 || page > curseForgeTotalPages.value) return;
+  curseForgePage.value = page;
+  void runCurseForgeSearch();
 }
 
-const totalPages = computed(() => {
-  if (!modrinthSearchResult.value) return 0;
-  return Math.max(1, Math.ceil(modrinthSearchResult.value.total_hits / PAGE_SIZE));
+const curseForgeTotalPages = computed(() => {
+  const totalCount = curseForgeSearchResult.value?.pagination?.totalCount;
+  if (!totalCount) return 0;
+  return Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 });
 
 const paginationPages = computed(() => {
-  const total = totalPages.value;
-  const current = currentPage.value;
+  const total = curseForgeTotalPages.value;
+  const current = curseForgePage.value;
   const pages: (number | "…")[] = [];
   if (total <= 7) {
     for (let page = 1; page <= total; page++) pages.push(page);
@@ -362,37 +354,32 @@ watch(versionPage, () => {
   void updateVersionOffset();
 });
 
-const modrinthFilters = computed<ModsFilter[]>(() => [
-  {
-    key: "loader",
-    label: "加载器",
-    options: LOADERS,
-    isSelected: (option) => selectedLoaders.value.includes(option as string),
-    toggle: (option) => toggleFilterOption(selectedLoaders.value, option as string),
-    display: (option) => LOADER_NAMES[option as string] ?? option,
-  },
+const curseForgeFilters = computed<ModsFilter[]>(() => [
   {
     key: "version",
     label: "版本",
     options: versionOptions.value,
-    isSelected: (option) => selectedVersions.value.includes(option as string),
-    toggle: (option) => toggleFilterOption(selectedVersions.value, option as string),
+    isSelected: (option) => curseForgeSelectedVersions.value.includes(option as string),
+    toggle: (option) => toggleFilterOption(curseForgeSelectedVersions.value, option as string),
     display: (option) => option as string,
   },
   {
     key: "category",
     label: "分类",
-    options: CATEGORIES,
-    isSelected: (option) => selectedCategories.value.includes(option as string),
-    toggle: (option) => toggleFilterOption(selectedCategories.value, option as string),
-    display: (option) => CATEGORY_NAMES[option as string] ?? option,
+    options: CURSEFORGE_CATEGORIES,
+    isSelected: (option) =>
+      curseForgeSelectedCategories.value.includes((option as CategoryOption).id),
+    toggle: (option) =>
+      toggleFilterOption(curseForgeSelectedCategories.value, (option as CategoryOption).id),
+    display: (option) =>
+      CURSEFORGE_CATEGORY_NAMES[(option as CategoryOption).slug] ?? (option as CategoryOption).slug,
   },
 ]);
 
 function onFilterChipClick(filter: ModsFilter, option: FilterOption) {
   filter.toggle(option);
-  currentPage.value = 1;
-  void runModrinthSearch();
+  curseForgePage.value = 1;
+  void runCurseForgeSearch();
 }
 
 async function loadVersionOptions() {
@@ -413,7 +400,7 @@ async function loadVersionOptions() {
 }
 
 function syncVersionPageToSelection() {
-  const current = selectedVersions.value[0];
+  const current = curseForgeSelectedVersions.value[0];
   if (!current) {
     versionPage.value = 0;
     return;
@@ -427,29 +414,28 @@ function searchInitKey(): string {
   return `${runtime.mod_loader_type ?? ""}|${runtime.minecraft}`;
 }
 
-let modrinthInitializedFor: string | null = null;
+let curseForgeInitializedFor: string | null = null;
 
-async function ensureModrinthInitialized() {
+async function ensureCurseForgeInitialized() {
   if (versionOptions.value.length === 0) {
     await loadVersionOptions();
   }
   const key = searchInitKey();
-  if (modrinthInitializedFor === key) return;
-  modrinthInitializedFor = key;
+  if (curseForgeInitializedFor === key) return;
+  curseForgeInitializedFor = key;
   const runtime = instanceStore.currentInstance.config.runtime;
-  selectedLoaders.value = runtime.mod_loader_type ? [runtime.mod_loader_type.toLowerCase()] : [];
-  selectedVersions.value = runtime.minecraft ? [runtime.minecraft] : [];
+  curseForgeSelectedVersions.value = runtime.minecraft ? [runtime.minecraft] : [];
   searchQuery.value = "";
   syncVersionPageToSelection();
-  selectedCategories.value = [];
-  currentPage.value = 1;
-  modrinthSearchResult.value = null;
+  curseForgeSelectedCategories.value = [];
+  curseForgePage.value = 1;
+  curseForgeSearchResult.value = null;
 }
 
 onMounted(async () => {
-  await ensureModrinthInitialized();
+  await ensureCurseForgeInitialized();
   void updateVersionOffset();
-  await runModrinthSearch();
+  await runCurseForgeSearch();
 });
 </script>
 
@@ -742,33 +728,14 @@ onMounted(async () => {
         white-space: nowrap;
         text-overflow: ellipsis;
       }
-      span.loader-type,
       span.version {
         font-size: 9px;
         padding: 2px 6px;
         margin-right: 4px;
         border-radius: 100px;
         font-weight: 500;
-        color: var(--ctp-text-inverse);
-      }
-      span.loader-type.fabric {
-        background: var(--ctp-yellow);
-      }
-      span.loader-type.forge {
-        background: var(--ctp-blue);
-      }
-      span.loader-type.neoforge {
-        background: var(--ctp-peach);
-      }
-      span.loader-type.quilt {
-        background: var(--ctp-mauve);
-      }
-      span.loader-type.liteloader {
-        background: var(--ctp-yellow);
-      }
-      span.version {
-        border: 1px solid var(--ctp-sky);
         color: var(--ctp-text);
+        border: 1px solid var(--ctp-sky);
       }
       span.command-enabled {
         background: var(--ctp-yellow);

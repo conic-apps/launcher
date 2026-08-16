@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="launch-view" data-tauri-drag-region>
+  <div class="launch-view">
     <div class="container">
       <AccountAvatar :skin="accountSkin" :uuid="accountUuid" :size="48"></AccountAvatar>
       <p class="instance-name">{{ currentInstance.config.name }}</p>
@@ -50,6 +50,7 @@ import BaseProgress from "@/components/BaseProgress.vue";
 import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
+import { useMusicStore } from "@/store/music";
 import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl } from "@conic/account";
 import { formatBytes } from "@conic/download";
@@ -65,6 +66,7 @@ const currentInstance = computed(() => {
 const navigationStore = useNavigationStore();
 const configStore = useConfigStore();
 const dialogStore = useDialogStore();
+const musicStore = useMusicStore();
 
 const progressDescription = ref("正在准备");
 const progressBarLoading = ref(true);
@@ -223,7 +225,13 @@ async function launchGame() {
   });
   cancelLaunchHandle = launchTask.cancel;
   await launchTask.start();
-  if (configStore.launch.quit_app_after_launch) {
+  if (configStore.music.pause_on_launch) {
+    musicStore.pause();
+  }
+  if (
+    currentInstance.value.config.launch_config.quit_app_after_launch ??
+    configStore.launch.quit_app_after_launch
+  ) {
     appWindow.getCurrentWindow().close();
   }
   navigationStore.back();

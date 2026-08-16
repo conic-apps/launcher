@@ -312,3 +312,14 @@ export async function getModFileDownloadUrl(
 ): Promise<ApiResponse<string>> {
     return await invoke("plugin:curseforge|cmd_get_mod_file_download_url", { modId, fileId })
 }
+
+export type ModTranslation = {
+    modid: number
+    translated: string
+    original: string
+    translated_at: string
+}
+
+export async function getModTranslations(modIds: number[]): Promise<ModTranslation[]> {
+    return await invoke("plugin:curseforge|cmd_get_mod_translations", { modIds })
+}

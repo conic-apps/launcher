@@ -82,7 +82,7 @@
             <p class="authors">
               by {{ mod.authors.map((authorInfo) => authorInfo.name).join(",") }}
             </p>
-            <p class="mod-description">{{ mod.summary }}</p>
+            <p class="mod-description">{{ curseforgeTranslations.get(mod.id) ?? mod.summary }}</p>
             <span class="version" v-if="mod.latestFilesIndexes && mod.latestFilesIndexes[0]">{{
               mod.latestFilesIndexes[0].gameVersion
             }}</span>
@@ -147,8 +147,11 @@ import {
   SearchModsParams as CurseForgeSearchParams,
   searchMods as searchCurseForgeMods,
 } from "@conic/curseforge";
+import { useDescriptionTranslation } from "./useDescriptionTranslation";
 
 const instanceStore = useInstanceStore();
+const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
+  useDescriptionTranslation();
 
 const PAGE_SIZE = 20;
 const VERSIONS_PER_PAGE = 6;
@@ -273,7 +276,10 @@ async function runCurseForgeSearch() {
   const cacheKey = JSON.stringify(params);
   const cached = curseForgeCache.get(cacheKey);
   if (cached) {
-    if (token === curseForgeSearchToken) curseForgeSearchResult.value = cached;
+    if (token === curseForgeSearchToken) {
+      curseForgeSearchResult.value = cached;
+      void translateCurseforgeSummaries(cached.data.map((mod) => mod.id));
+    }
     return;
   }
   curseForgeLoading.value = true;
@@ -282,6 +288,7 @@ async function runCurseForgeSearch() {
     if (token !== curseForgeSearchToken) return;
     curseForgeCache.set(cacheKey, result);
     curseForgeSearchResult.value = result;
+    void translateCurseforgeSummaries(result.data.map((mod) => mod.id));
   } catch (error) {
     console.error(error);
   } finally {
