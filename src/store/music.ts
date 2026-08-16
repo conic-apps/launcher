@@ -350,16 +350,15 @@ export const useMusicStore = defineStore("music", {
         },
 
         /**
-         * Loads tracks and restores the last playing track and its position from
-         * localStorage, gated by the background music setting. When the saved
-         * track can be restored it resumes or pauses at the saved position
-         * depending on the resume-on-startup setting; when it cannot, the first
-         * track is loaded in a paused state at its start instead.
+         * Loads tracks and always restores the last playing track and its
+         * position from localStorage, regardless of settings. Playback only
+         * starts when both the background music and resume-on-startup settings
+         * are enabled; otherwise the track stays paused. When the saved track
+         * cannot be found, the first track is selected in a paused state.
          */
         async restoreSession() {
             await this.loadTracks()
-            const config = useConfigStore()
-            if (!config.music.enabled || this.tracks.length === 0) {
+            if (this.tracks.length === 0) {
                 return
             }
             const saved = loadTrackState()
@@ -370,7 +369,8 @@ export const useMusicStore = defineStore("music", {
             if (restoredIndex >= 0 && saved !== null && saved.currentTime > 0) {
                 this.seek(saved.currentTime)
             }
-            if (config.music.resume_on_startup && restoredIndex >= 0) {
+            const config = useConfigStore()
+            if (config.music.enabled && config.music.resume_on_startup && restoredIndex >= 0) {
                 try {
                     await getAudioElement().play()
                     this.isPlaying = true
@@ -382,6 +382,9 @@ export const useMusicStore = defineStore("music", {
 
         async resume() {
             const audio = getAudioElement()
+            if (!audio.src) {
+                await this.preparePlayback()
+            }
             ensureAnalyser()
             await getAudioContext().resume()
             this.applyVolume()
