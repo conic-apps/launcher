@@ -135,7 +135,7 @@ import { getInstanceRoot } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
 import { useInstanceSettings } from "./useGameView";
 import { useGameContentStore } from "@/store/content";
-import { useShowContent } from "./useContent";
+import { useShowContent } from "../content/useContent";
 import gsap from "gsap";
 
 const instanceStore = useInstanceStore();
@@ -215,13 +215,6 @@ const gameContentElements = {
 };
 
 const playIntro = () => {
-  console.log(
-    Object.entries(gameContentElements).map(([k, v]) => [
-      k,
-      v.value,
-      v.value instanceof HTMLElement,
-    ]),
-  );
   return gsap
     .timeline()
     .fromTo(

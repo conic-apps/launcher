@@ -28,7 +28,7 @@
             :class="{ collapsed: isCollapsed(group.key) || collapsingKey === group.key }"
             :data-id="`group-${group.key}`"
             @click="toggleGroup(group.key)">
-            <AppIcon name="chevron-down" :size="14"></AppIcon>
+            <AppIcon name="chevron-forward" :size="14"></AppIcon>
             <p>{{ group.title }}</p>
           </div>
         </div>
@@ -100,7 +100,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch 
 import { convertFileSrc } from "@tauri-apps/api/core";
 import InstancesListToolBar from "./InstancesListToolBar.vue";
 import InstancesListScrollView from "./InstancesListScrollView.vue";
-import { useShowContent } from "./useContent";
+import { useShowContent } from "../content/useContent";
 import { useInstanceSettings } from "./useGameView";
 import gsap from "gsap";
 
@@ -214,7 +214,37 @@ const LOADER_GROUPS: { key: Exclude<GroupKey, "starred" | "all">; title: string 
   { key: "forge", title: "Forge" },
 ];
 
-const expanded = ref<Partial<Record<GroupKey, boolean>>>({});
+const SAVED_GROUPS_EXPANDED_KEY = "instancesGroupExpanded";
+
+function loadExpanded(): Partial<Record<GroupKey, boolean>> {
+    try {
+        const raw = localStorage.getItem(SAVED_GROUPS_EXPANDED_KEY);
+        if (!raw) {
+            return {};
+        }
+        const parsed = JSON.parse(raw) as Record<string, unknown>;
+        const result: Partial<Record<GroupKey, boolean>> = {};
+        for (const [key, value] of Object.entries(parsed)) {
+            if (typeof value === "boolean") {
+                result[key as GroupKey] = value;
+            }
+        }
+        return result;
+    } catch {
+        return {};
+    }
+}
+
+const expanded = ref<Partial<Record<GroupKey, boolean>>>(loadExpanded());
+
+watch(
+    expanded,
+    (value) => {
+        localStorage.setItem(SAVED_GROUPS_EXPANDED_KEY, JSON.stringify(value));
+    },
+    { deep: true },
+);
+
 const collapsingKey = ref<GroupKey | null>(null);
 
 // Cooldown between group toggles so the expand fade-in (300ms opacity
@@ -494,8 +524,8 @@ async function getBackgroundSrc(id: string) {
       stroke: var(--ctp-text-inverse);
     }
 
-    &.collapsed svg {
-      transform: rotate(180deg);
+    &:not(.collapsed) svg {
+      transform: rotate(90deg);
     }
   }
   .group-card[data-group="starred"] .group {

@@ -6,41 +6,47 @@
   <div class="minecraft-choose">
     <div class="filter">
       <p>版本分类</p>
+      <!-- TODO: Special version support -->
       <base-select
-        :options="['releases', 'snapshot', 'old', 'special']"
-        :display-name="['正式版', '快照版', '远古版', '愚人节版']"
+        :options="['releases', 'snapshot', 'old']"
+        :display-name="['正式版', '快照版', '远古版']"
         v-model="showVersionType"></base-select>
     </div>
     <div class="list">
-      <BaseListItem
-        v-for="(version, index) in filteredVersions"
-        :key="index"
-        :title="`Minecraft ${version.id}`"
-        logo="1"
-        :clickable="true"
-        @click="selectVersion(version.id)"
-        :buttons="['about']"
-        @click-about="clickAbout(version.id)"
-        :description="parseTime(version.releaseTime)">
-        <template #icon>
-          <img
-            v-if="version.type == `release`"
-            style="width: 100%; height: 100%; margin-right: 8px; opacity: 0.8"
-            src="@/assets/images/minecraft.webp"
-            alt="" />
-          <img
-            v-else-if="version.type == `snapshot`"
-            style="width: 100%; height: 100%; margin-right: 8px"
-            src="@/assets/images/Command_Block.webp"
-            alt="" />
-          <img
-            v-else
-            style="width: 100%; height: 100%; margin-right: 8px"
-            src="@/assets/images/Ancient_Debris.webp"
-            alt="" />
-        </template>
-      </BaseListItem>
+      <ScrollView>
+        <BaseListItem
+          v-for="(version, index) in filteredVersions"
+          :key="index"
+          :title="`Minecraft ${version.id}`"
+          logo="1"
+          :clickable="true"
+          @click="selectVersion(version.id)"
+          :buttons="['about']"
+          @click-about="clickAbout(version.id)"
+          :description="parseTime(version.releaseTime)">
+          <template #icon>
+            <img
+              v-if="version.type == `release`"
+              style="width: 100%; height: 100%; margin-right: 8px; opacity: 0.8"
+              src="@/assets/images/minecraft.webp"
+              alt="" />
+            <img
+              v-else-if="version.type == `snapshot`"
+              style="width: 100%; height: 100%; margin-right: 8px"
+              src="@/assets/images/Command_Block.webp"
+              alt="" />
+            <img
+              v-else
+              style="width: 100%; height: 100%; margin-right: 8px"
+              src="@/assets/images/Ancient_Debris.webp"
+              alt="" />
+          </template>
+        </BaseListItem>
+      </ScrollView>
     </div>
+    <BaseButton @click="dialogStore.createInstance.visible = false" style="margin-top: 8px"
+      >取消</BaseButton
+    >
   </div>
 </template>
 
@@ -50,6 +56,11 @@ import BaseListItem from "@/components/BaseListItem.vue";
 import { getMinecrafVersionManifest, VersionManifest } from "@conic/install";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import BaseSelect from "@/components/BaseSelect.vue";
+import { useDialogStore } from "@/store/dialog";
+import BaseButton from "@/components/BaseButton.vue";
+
+import ScrollView from "@/components/ScrollView.vue";
+const dialogStore = useDialogStore();
 
 const versions = ref<VersionManifest>();
 getMinecrafVersionManifest()
@@ -82,7 +93,7 @@ const filteredVersions = computed(() => {
 });
 function parseTime(time: string) {
   const date = new Date(time);
-  return `发布于 ${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
 const model = defineModel();
@@ -100,13 +111,11 @@ function clickAbout(version: string) {
 
 <style lang="less" scoped>
 .minecraft-choose {
-  height: calc(100% - 64px);
+  height: calc(100% - 42px);
   width: 100%;
-  margin: 12px 14px;
-  width: calc(100% - 28px);
   display: flex;
   flex-direction: column;
-  padding-right: 8px;
+  padding: 8px;
   .filter {
     display: flex;
     align-items: center;
@@ -118,15 +127,11 @@ function clickAbout(version: string) {
     margin-bottom: 8px;
   }
   .list {
-    overflow: auto;
+    overflow: hidden;
     height: 100%;
     border: 1px solid rgba(0, 0, 0, 0.16);
-    :first-child {
-      border-radius: 8px 8px 0 0;
-    }
-    :last-child {
-      border-radius: 0 0 8px 8px;
-    }
+    border-radius: 8px;
+    position: relative;
   }
 }
 </style>

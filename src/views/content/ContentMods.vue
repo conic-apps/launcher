@@ -8,9 +8,11 @@
       <div class="title">
         <AppIcon name="extension-puzzle"></AppIcon>
         <p>模组列表</p>
-        <!-- FIXME: reverse lavender color, button hover -->
         <div class="select-source">
-          <button :class="{ active: currentView === 'local' }" @click="currentView = 'local'">
+          <button
+            class="local"
+            :class="{ active: currentView === 'local' }"
+            @click="currentView = 'local'">
             <AppIcon name="file-tray-full-outline"></AppIcon>
           </button>
           <button :class="{ active: currentView === 'modrinth' }" @click="currentView = 'modrinth'">
@@ -78,6 +80,9 @@ const currentView = ref("local" as "local" | "modrinth" | "curseforge");
         align-items: center;
         justify-content: center;
         border-right: 1px solid var(--ctp-surface1);
+      }
+      button.local.active :deep(path) {
+        stroke: var(--ctp-text-inverse);
       }
       button:last-child {
         border-right: none;

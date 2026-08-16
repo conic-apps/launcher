@@ -88,6 +88,7 @@ fn main() {
                 "cmd_add_background_file",
                 "cmd_get_background_path",
                 "cmd_calculate_playtime",
+                "cmd_remove_background",
             ]),
         )
         .plugin(
@@ -119,6 +120,7 @@ fn main() {
                 "cmd_get_multiple_projects",
                 "cmd_get_all_dependencies",
                 "cmd_list_project_versions",
+                "cmd_get_project_translations",
                 "cmd_spawn_download_mod_task",
                 "cmd_cancel_download_task",
             ]),
@@ -140,6 +142,7 @@ fn main() {
                 "cmd_get_files",
                 "cmd_get_mod_file_changelog",
                 "cmd_get_mod_file_download_url",
+                "cmd_get_mod_translations",
             ]),
         )
         .plugin(

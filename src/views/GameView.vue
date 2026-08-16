@@ -3,13 +3,13 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="game-view" data-tauri-drag-region>
+  <div class="game-view">
     <InstanceSummary ref="instance-summary"></InstanceSummary>
     <InstancesList ref="instance-list"></InstancesList>
     <GameFooterBar ref="game-footer-bar"></GameFooterBar>
     <Transition name="game-content">
       <div
-        class="game-content-wrapper"
+        class="game-content-wrapper instance-settings-wrapper"
         v-if="showInstanceSettings"
         @click.self="showInstanceSettings = false"
         :class="{ show: showInstanceSettings }">
@@ -71,11 +71,11 @@ import { onMounted, useTemplateRef } from "vue";
 import gsap from "gsap";
 import InstanceSetting from "./game/InstanceSetting.vue";
 import { useInstanceSettings } from "./game/useGameView";
-import ContentSaves from "./game/ContentSaves.vue";
-import ContentMods from "./game/ContentMods.vue";
-import ContentResourcepacks from "./game/ContentResourcepacks.vue";
-import { useShowContent } from "./game/useContent";
-import ContentScreenshots from "./game/ContentScreenshots.vue";
+import { useShowContent } from "./content/useContent";
+import ContentSaves from "./content/ContentSaves.vue";
+import ContentMods from "./content/ContentMods.vue";
+import ContentResourcepacks from "./content/ContentResourcepacks.vue";
+import ContentScreenshots from "./content/ContentScreenshots.vue";
 
 const instanceSummary = useTemplateRef("instance-summary");
 const instanceList = useTemplateRef("instance-list");
@@ -119,6 +119,10 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
   }
+}
+
+.game-content-wrapper.instance-settings-wrapper .game-content-container {
+  width: calc(100% - 200px);
 }
 
 .game-content-enter-from,

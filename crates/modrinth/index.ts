@@ -184,6 +184,17 @@ export async function listProjectVersions(
     return await invoke("plugin:modrinth|cmd_list_project_versions", { idOrSlug, params })
 }
 
+export type ProjectTranslation = {
+    project_id: string
+    translated: string
+    original: string
+    translated_at: string
+}
+
+export async function getProjectTranslations(projectIds: string[]): Promise<ProjectTranslation[]> {
+    return await invoke("plugin:modrinth|cmd_get_project_translations", { projectIds })
+}
+
 export type DownloadProgress = {
     completed: number
     total: number

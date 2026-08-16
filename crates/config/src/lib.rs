@@ -292,30 +292,19 @@ pub fn get_system_language() -> &'static str {
                 _ => "zh_cn",
             },
         },
-
         "en" => "en_us",
-
         "ja" => "ja_jp",
-
         "ko" => "ko_kr",
-
         "de" => "de_de",
-
         "fr" => "fr_fr",
-
         "es" => "es_es",
-
         "pt" => match region.as_deref() {
             Some("br") => "pt_br",
             _ => "pt_br",
         },
-
         "ru" => "ru_ru",
-
         "tr" => "tr_tr",
-
         "pl" => "pl_pl",
-
         _ => "en_us",
     }
 }

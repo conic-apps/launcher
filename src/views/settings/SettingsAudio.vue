@@ -16,6 +16,9 @@
       <SettingItem :title="'音频可视化'" :description="'在游戏页面底部显示音频可视化效果。'">
         <BaseSwitch v-model="config.music.show_visualizer"></BaseSwitch>
       </SettingItem>
+      <SettingItem :title="'启动游戏后暂停播放'" :description="'游戏启动完成后自动暂停背景音乐。'">
+        <BaseSwitch v-model="config.music.pause_on_launch"></BaseSwitch>
+      </SettingItem>
       <SettingItem
         :title="'打开音乐文件夹'"
         :description="'将你想播放的音乐放入此文件夹。'"

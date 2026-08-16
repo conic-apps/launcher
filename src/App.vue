@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="window" data-tauri-drag-region>
+  <div class="window">
     <WindowBackground style="position: fixed" ref="windowBackground"></WindowBackground>
     <div class="title-bar" data-tauri-drag-region ref="title-bar" style="opacity: 0">
       <div
@@ -101,7 +101,6 @@ import WindowButton from "./components/WindowButton.vue";
 import SearchBar from "./components/BaseSearchBar.vue";
 import TitleBarUpdateIndicator from "./components/TitleBarUpdateIndicator.vue";
 import GameView from "./views/GameView.vue";
-import MarketView from "./views/MarketView.vue";
 import SettingsView from "./views/SettingsView.vue";
 import AccountsView from "./views/AccountsView.vue";
 import DialogRoot from "./DialogRoot.vue";
@@ -156,7 +155,6 @@ const pages = reactive({
   settings: markRaw(SettingsView),
   game: markRaw(GameView),
   launch: markRaw(LaunchView),
-  market: markRaw(MarketView),
   accounts: markRaw(AccountsView),
 });
 

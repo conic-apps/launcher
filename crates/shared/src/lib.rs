@@ -4,7 +4,7 @@
 
 use std::time::Duration;
 
-use log::warn;
+use log::{info, warn};
 use once_cell::sync::{Lazy, OnceCell};
 use thiserror::Error;
 use url::Url;
@@ -23,6 +23,11 @@ pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
             true
         }
     };
+    if should_use_system_proxy {
+        info!("Using system proxy")
+    } else {
+        info!("Shouldn't use system proxy")
+    }
     let mut builder = reqwest::ClientBuilder::new()
         .pool_idle_timeout(Duration::from_secs(60))
         .pool_max_idle_per_host(200)

@@ -176,7 +176,12 @@ pub async fn launch(
     print_instance_info(&instance);
     let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
 
-    if config.launch.skip_check_files {
+    if instance
+        .config
+        .launch_config
+        .skip_check_files
+        .unwrap_or(config.launch.skip_check_files)
+    {
         info!("File checking disabled by user")
     } else {
         let progress = DownloadState::default();
