@@ -107,7 +107,6 @@ import { getDataLocation } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
 import { getVersion } from "@tauri-apps/api/app";
 import { onMounted, ref } from "vue";
-import InfoBox from "./InfoBox.vue";
 
 async function openLogFolder() {
   const dataLocation = await getDataLocation();

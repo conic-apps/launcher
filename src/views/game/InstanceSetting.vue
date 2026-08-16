@@ -272,7 +272,6 @@ import { useConfigStore } from "@/store/config";
 import BaseInput from "@/components/BaseInput.vue";
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch, watchEffect } from "vue";
 import BaseSwitch from "@/components/BaseSwitch.vue";
-import BaseDropdownSelect from "@/components/BaseDropdownSelect.vue";
 import { useInstanceStore } from "@/store/instance";
 import BaseButton from "@/components/BaseButton.vue";
 import {
@@ -293,10 +292,6 @@ import { getDefaultConfig } from "@conic/config";
 
 const instanceStore = useInstanceStore();
 const dialogStore = useDialogStore();
-
-const instanceName = computed(() => {
-  return instanceStore.currentInstance.config.name;
-});
 
 const config = useConfigStore();
 

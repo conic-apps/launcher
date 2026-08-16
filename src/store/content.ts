@@ -11,15 +11,11 @@ import {
     Resourcepack,
 } from "@conic/content"
 
-const gameContentCache = {} as Record<
-    string,
-    {
-        saves: { data: Record<string, Level> | null; time: number }
-        mods: { data: Mod[] | null; time: number }
-        resourcepacks: { data: Resourcepack[] | null; time: number }
-        screenshots: { data: string[] | null; time: number }
-    }
->
+type GameContentCacheValue = {
+    [K in keyof GameContent]: { data: GameContent[K] | null; time: number }
+}
+
+const gameContentCache = {} as Record<string, GameContentCacheValue>
 
 /// For current instance only
 export type GameContent = {
@@ -72,14 +68,14 @@ export const useGameContentStore = defineStore("gameContent", () => {
 
             const data = await fetcher()
 
-            gameContentCache[instanceId] ??= {} as any
+            gameContentCache[instanceId] ??= {} as GameContentCacheValue
             gameContentCache[instanceId][key] ??= { data: null, time: 0 }
 
             if (instanceId === instanceStore.currentInstance.id) {
                 gameContent.value[key] = data
             }
 
-            gameContentCache[instanceId][key].data = data as any
+            gameContentCache[instanceId][key].data = data
             gameContentCache[instanceId][key].time = Date.now()
         }
     }
@@ -95,7 +91,7 @@ export const useGameContentStore = defineStore("gameContent", () => {
 
             Object.assign(gameContent.value, cachedData)
 
-            const results = await Promise.allSettled([
+            await Promise.allSettled([
                 createContentLoader(
                     "saves",
                     instance.id,
@@ -143,7 +139,7 @@ export const useGameContentStore = defineStore("gameContent", () => {
 
         gameContent.value.saves = saves
 
-        gameContentCache[instance.id] ??= {} as any
+        gameContentCache[instance.id] ??= {} as GameContentCacheValue
         gameContentCache[instance.id].saves = {
             data: saves,
             time: Date.now(),

@@ -217,32 +217,32 @@ const LOADER_GROUPS: { key: Exclude<GroupKey, "starred" | "all">; title: string 
 const SAVED_GROUPS_EXPANDED_KEY = "instancesGroupExpanded";
 
 function loadExpanded(): Partial<Record<GroupKey, boolean>> {
-    try {
-        const raw = localStorage.getItem(SAVED_GROUPS_EXPANDED_KEY);
-        if (!raw) {
-            return {};
-        }
-        const parsed = JSON.parse(raw) as Record<string, unknown>;
-        const result: Partial<Record<GroupKey, boolean>> = {};
-        for (const [key, value] of Object.entries(parsed)) {
-            if (typeof value === "boolean") {
-                result[key as GroupKey] = value;
-            }
-        }
-        return result;
-    } catch {
-        return {};
+  try {
+    const raw = localStorage.getItem(SAVED_GROUPS_EXPANDED_KEY);
+    if (!raw) {
+      return {};
     }
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const result: Partial<Record<GroupKey, boolean>> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === "boolean") {
+        result[key as GroupKey] = value;
+      }
+    }
+    return result;
+  } catch {
+    return {};
+  }
 }
 
 const expanded = ref<Partial<Record<GroupKey, boolean>>>(loadExpanded());
 
 watch(
-    expanded,
-    (value) => {
-        localStorage.setItem(SAVED_GROUPS_EXPANDED_KEY, JSON.stringify(value));
-    },
-    { deep: true },
+  expanded,
+  (value) => {
+    localStorage.setItem(SAVED_GROUPS_EXPANDED_KEY, JSON.stringify(value));
+  },
+  { deep: true },
 );
 
 const collapsingKey = ref<GroupKey | null>(null);
