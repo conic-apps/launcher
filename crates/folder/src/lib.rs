@@ -117,9 +117,11 @@ impl DataLocation {
             runtime: data_folder_root.join("runtime"),
             music: data_folder_root.join("music"),
             cache: match PLATFORM_INFO.os_family {
-                OsFamily::Macos => data_folder_root.join(".cache"),
-                _ => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
-                    .join(".cache/conic"),
+                OsFamily::Windows => data_folder_root.join("cache"),
+                _ => std::env::var("HOME")
+                    .ok()
+                    .map(|home| PathBuf::from(home).join(".cache/conic-launcher"))
+                    .unwrap_or(data_folder_root.join("cache")),
             },
             resources: data_folder_root.join("resources"),
             logs: data_folder_root.join("logs"),
