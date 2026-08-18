@@ -27,10 +27,10 @@ pub struct MusicConfig {
 impl Default for MusicConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
+            enabled: false,
             resume_on_startup: true,
             show_visualizer: true,
-            pause_on_launch: true,
+            pause_on_launch: false,
             main_volumn: 100,
             main_volumn_background: 25,
         }

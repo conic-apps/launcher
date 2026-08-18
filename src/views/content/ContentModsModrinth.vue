@@ -67,7 +67,11 @@
     </div>
     <template v-else>
       <div class="mods-list" v-if="modrinthSearchResult.hits.length > 0">
-        <div v-for="(mod, index) in modrinthSearchResult.hits" class="content" :key="index">
+        <div
+          v-for="(mod, index) in modrinthSearchResult.hits"
+          class="content"
+          :key="index"
+          @click="openDetails(mod.project_id)">
           <img v-if="mod.icon_url" :src="mod.icon_url" alt="mod icon" width="72px" height="100%" />
           <img
             v-else
@@ -157,6 +161,7 @@ import {
   searchProjects as searchModrinthProjects,
 } from "@conic/modrinth";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
+import { useShowContentDetails } from "./useContent";
 
 const instanceStore = useInstanceStore();
 const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
@@ -460,6 +465,10 @@ onMounted(async () => {
   void updateVersionOffset();
   await runModrinthSearch();
 });
+
+function openDetails(project_id: string) {
+  useShowContentDetails().value.modrinth.mod = project_id;
+}
 </script>
 
 <style lang="less" scoped>

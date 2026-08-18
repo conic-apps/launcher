@@ -33,8 +33,6 @@ export type Config = {
     accessibility: {
         release_reminder: boolean
         snapshot_reminder: boolean
-        hide_latest_release: boolean
-        hide_latest_snapshot: boolean
         change_game_language: boolean
         disable_animations: boolean
         high_contrast_mode: boolean

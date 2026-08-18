@@ -541,7 +541,7 @@ async fn query_modrinth_batch(
         };
         // Team members are not served by the mirror, so fetch them from the
         // official API on a best-effort basis.
-        let members = modrinth::get_project_members(team).await;
+        let members = modrinth::get_team_members(team).await;
         let authors = match members {
             Ok(members) => members
                 .as_array()

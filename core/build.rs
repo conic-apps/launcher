@@ -122,6 +122,7 @@ fn main() {
                 "cmd_get_all_dependencies",
                 "cmd_list_project_versions",
                 "cmd_get_project_translations",
+                "cmd_get_team_members",
                 "cmd_spawn_download_mod_task",
                 "cmd_cancel_download_task",
             ]),
