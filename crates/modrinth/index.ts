@@ -109,7 +109,7 @@ export type Project = {
         description?: string
         created: string
         ordering: number
-    }
+    }[]
 }
 
 export async function getProject(idOrSlug: string): Promise<Project> {

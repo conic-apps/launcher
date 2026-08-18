@@ -135,12 +135,15 @@ import { getInstanceRoot } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
 import { useInstanceSettings } from "./useGameView";
 import { useGameContentStore } from "@/store/content";
-import { useShowContent } from "../content/useContent";
+import { useShowContent, useShowContentDetails } from "../content/useContent";
 import gsap from "gsap";
 
 const instanceStore = useInstanceStore();
 const navigationStore = useNavigationStore();
 const contentStore = useGameContentStore();
+const showInstanceSettings = useInstanceSettings();
+const showContent = useShowContent();
+const showContentDetails = useShowContentDetails();
 const currentInstance = computed(() => {
   return instanceStore.currentInstance;
 });
@@ -167,6 +170,17 @@ function onKeyDown(event: KeyboardEvent) {
   if (
     target &&
     (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
+  ) {
+    return;
+  }
+  if (showInstanceSettings.value) return;
+  if (Object.values(showContent.value).some((v) => v)) return;
+  const details = showContentDetails.value;
+  if (
+    details.modrinth.mod ||
+    details.modrinth.resourcepack ||
+    details.curseforge.mod ||
+    details.curseforge.resourcepack
   ) {
     return;
   }

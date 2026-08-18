@@ -43,11 +43,21 @@
                 {{ projectInfo.followers }}
               </span>
             </p>
-            <p class="description" v-if="projectInfo.description">{{ projectInfo.description }}</p>
+            <p class="description" v-if="translatedDescription">{{ translatedDescription }}</p>
           </div>
         </div>
-        <div class="section readme">
-          <!-- NOTE: 在此处渲染markdown -->
+        <div class="section readme markdown-body" v-html="readmeHtml" @click="onReadmeClick"></div>
+        <div class="section gallery" v-if="projectInfo.gallery && projectInfo.gallery.length > 0">
+          <ScrollViewHorizontal>
+            <div class="gallery-list">
+              <div
+                v-for="(item, index) in projectInfo.gallery"
+                :key="index"
+                class="gallery-item">
+                <img :src="item.url" :alt="item.title ?? `gallery ${index + 1}`" />
+              </div>
+            </div>
+          </ScrollViewHorizontal>
         </div>
       </div>
     </ScrollView>
@@ -58,11 +68,26 @@
 import AppIcon from "@/components/AppIcon.vue";
 import { computed, onMounted, ref, watch } from "vue";
 import ScrollView from "@/components/ScrollView.vue";
+import ScrollViewHorizontal from "@/components/ScrollViewHorizontal.vue";
 import { getProject, getTeamMembers, Project, TeamMembers } from "@conic/modrinth";
 import { useShowContentDetails } from "./useContent";
+import { useDescriptionTranslation } from "./useDescriptionTranslation";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { marked } from "marked";
+
+const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
+  useDescriptionTranslation();
 
 const projectInfo = ref(null as null | Project);
+const readmeHtml = computed(() => {
+    if (!projectInfo.value?.body) return "";
+    return marked.parse(projectInfo.value.body) as string;
+});
+
+const translatedDescription = computed(() => {
+    if (!projectInfo.value) return "";
+    return modrinthTranslations.get(projectInfo.value.id) ?? projectInfo.value.description ?? "";
+});
 
 const projectId = computed(() => useShowContentDetails().value.modrinth.mod);
 const teamMembers = ref(null as TeamMembers | null);
@@ -88,6 +113,9 @@ async function refreshProjectInfo() {
   }
   projectInfo.value = await getProject(projectId.value);
   console.log(projectInfo.value);
+  if (projectInfo.value) {
+    void translateModrinthDescriptions([projectInfo.value.id]);
+  }
 }
 
 function formatGithubRepo(url: string): string | null {
@@ -116,6 +144,15 @@ function formatGithubRepo(url: string): string | null {
 }
 
 const formattedGithubRepo = computed(() => formatGithubRepo(projectInfo.value?.source_url ?? ""));
+
+function onReadmeClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (target.tagName === "A") {
+        event.preventDefault();
+        const href = (target as HTMLAnchorElement).href;
+        if (href) openUrl(href);
+    }
+}
 </script>
 
 <style lang="less" scoped>
@@ -234,6 +271,190 @@ const formattedGithubRepo = computed(() => formatGithubRepo(projectInfo.value?.s
 
       .description {
         font-size: 14px;
+      }
+    }
+
+    .markdown-body {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--ctp-surface0);
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ctp-text);
+      word-wrap: break-word;
+
+      :deep(h1),
+      :deep(h2),
+      :deep(h3),
+      :deep(h4),
+      :deep(h5),
+      :deep(h6) {
+        margin-top: 24px;
+        margin-bottom: 16px;
+        font-weight: 600;
+        line-height: 1.25;
+        color: var(--ctp-text);
+      }
+
+      :deep(h1) {
+        font-size: 2em;
+        padding-bottom: 0.3em;
+        border-bottom: 1px solid var(--ctp-surface1);
+      }
+
+      :deep(h2) {
+        font-size: 1.5em;
+        padding-bottom: 0.3em;
+        border-bottom: 1px solid var(--ctp-surface1);
+      }
+
+      :deep(h3) {
+        font-size: 1.25em;
+      }
+
+      :deep(h4) {
+        font-size: 1em;
+      }
+
+      :deep(p) {
+        margin-top: 0;
+        margin-bottom: 16px;
+      }
+
+      :deep(a) {
+        color: var(--ctp-blue);
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+
+      :deep(code) {
+        padding: 0.2em 0.4em;
+        margin: 0;
+        font-size: 85%;
+        background: var(--ctp-surface1);
+        border-radius: 6px;
+        font-family: monospace;
+      }
+
+      :deep(pre) {
+        margin-top: 0;
+        margin-bottom: 16px;
+        padding: 16px;
+        overflow: auto;
+        font-size: 85%;
+        line-height: 1.45;
+        background: var(--ctp-mantle);
+        border-radius: 8px;
+
+        code {
+          padding: 0;
+          margin: 0;
+          background: transparent;
+          border-radius: 0;
+        }
+      }
+
+      :deep(blockquote) {
+        margin: 0 0 16px 0;
+        padding: 0 1em;
+        color: var(--ctp-overlay2);
+        border-left: 0.25em solid var(--ctp-surface1);
+      }
+
+      :deep(ul),
+      :deep(ol) {
+        margin-top: 0;
+        margin-bottom: 16px;
+        padding-left: 2em;
+      }
+
+      :deep(li) {
+        margin-top: 0.25em;
+      }
+
+      :deep(li + li) {
+        margin-top: 0.25em;
+      }
+
+      :deep(table) {
+        display: block;
+        width: max-content;
+        max-width: 100%;
+        overflow: auto;
+        margin-top: 0;
+        margin-bottom: 16px;
+        border-spacing: 0;
+        border-collapse: collapse;
+      }
+
+      :deep(tr) {
+        background: var(--ctp-surface0);
+        border-top: 1px solid var(--ctp-surface1);
+      }
+
+      :deep(th),
+      :deep(td) {
+        padding: 6px 13px;
+        border: 1px solid var(--ctp-surface1);
+      }
+
+      :deep(th) {
+        font-weight: 600;
+        background: var(--ctp-mantle);
+      }
+
+      :deep(hr) {
+        height: 0.25em;
+        padding: 0;
+        margin: 24px 0;
+        background-color: var(--ctp-surface1);
+        border: 0;
+      }
+
+      :deep(img) {
+        max-width: 100%;
+        border-radius: 8px;
+      }
+
+      :deep(input[type="checkbox"]) {
+        margin-right: 0.5em;
+      }
+    }
+
+    .gallery {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--ctp-surface0);
+      border-radius: 8px;
+      height: 252px;
+      position: relative;
+
+      .gallery-list {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 100%;
+        padding: 0 8px;
+
+        .gallery-item {
+          flex-shrink: 0;
+          height: calc(100% - 16px);
+          border-radius: 8px;
+          overflow: hidden;
+
+          img {
+            height: 100%;
+            width: auto;
+            display: block;
+            border-radius: 8px;
+            user-select: none;
+            -webkit-user-drag: none;
+          }
+        }
       }
     }
   }
