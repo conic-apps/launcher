@@ -144,12 +144,6 @@ pub struct AccessibilityConfig {
     /// Whether to show reminders for new snapshots.
     pub snapshot_reminder: bool,
 
-    /// Whether to hide the latest release instance.
-    pub hide_latest_release: bool,
-
-    /// Whether to hide the latest snapshot instance.
-    pub hide_latest_snapshot: bool,
-
     /// Whether to changing the game language to local language on first time.
     pub change_game_language: bool,
 
@@ -164,10 +158,8 @@ impl Default for AccessibilityConfig {
     /// Returns the default values for accessibility configuration.
     fn default() -> Self {
         Self {
-            release_reminder: true,
-            snapshot_reminder: true,
-            hide_latest_release: false,
-            hide_latest_snapshot: false,
+            release_reminder: false,
+            snapshot_reminder: false,
             change_game_language: true,
             disable_animations: false,
             high_contrast_mode: false,

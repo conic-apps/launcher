@@ -26,6 +26,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             worldmap::cmd_render_world_map,
             screenshots::cmd_list_screenshots,
             mods::remote::cmd_parse_mods,
+            mods::remote::cmd_check_mod_installed,
         ])
         .setup(|app, _| {
             app.manage(worldmap::MapCache::default());

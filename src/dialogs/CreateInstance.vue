@@ -79,7 +79,7 @@
                 @click="currentComponent = 'minecraft-choose'">
                 <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
               </SettingItem>
-              <SettingItem title="模组加载器" :disabled="modLoaderSettingDisabled">
+              <SettingItem title="模组加载器" :loading="modLoaderSettingLoading">
                 <BaseSelect
                   :options="['None', 'Fabric', 'Quilt', 'Neoforge', 'Forge']"
                   :display-name="['无', 'Fabric', 'Quilt', 'Neoforge', 'Forge']"
@@ -98,9 +98,7 @@
                 "
                 :navigable="true"
                 @click="currentComponent = 'mod-loader-choose'"
-                :disabled="
-                  !minecraftVersion || modLoaderType === 'None' || modLoaderSettingDisabled
-                ">
+                :disabled="!minecraftVersion || modLoaderType === 'None'">
                 <span style="font-size: 14px; opacity: 0.8; margin-right: 8px">{{
                   minecraftVersion
                 }}</span>
@@ -283,7 +281,7 @@ const modLoaderLoading = ref({
   neoforge: true,
 });
 
-const modLoaderSettingDisabled = computed(() => {
+const modLoaderSettingLoading = computed(() => {
   return !!Object.values(modLoaderLoading.value).filter((value) => value).length;
 });
 

@@ -30,3 +30,5 @@ serde_with.workspace = true
 tauri.workspace = true
 uuid.workspace = true
 async-fs.workspace = true
+futures.workspace = true
+tokio.workspace = true
