@@ -63,9 +63,9 @@ const modInfo = ref(null as null | CurseforgeMod);
 const modDescription = ref("");
 const unsafeHtmlRe = /<\s*(script|style)\b/i;
 const safeDescription = computed(() =>
-    unsafeHtmlRe.test(modDescription.value)
-        ? "Unable to display this unsafe content"
-        : modDescription.value,
+  unsafeHtmlRe.test(modDescription.value)
+    ? "Unable to display this unsafe content"
+    : modDescription.value,
 );
 
 const modId = computed(() => useShowContentDetails().value.curseforge.mod);

@@ -3,9 +3,12 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, watch, useTemplateRef } from "vue";
+import { onMounted, onBeforeUnmount, watch, useTemplateRef, ref, nextTick } from "vue";
 import gsap from "gsap";
 import { useConfigStore } from "@/store/config";
+import { useInstanceStore } from "@/store/instance";
+import { getBackgroundPath } from "@conic/instance";
+import { convertFileSrc } from "@tauri-apps/api/core";
 
 function playIntro() {
   return gsap.timeline().fromTo(
@@ -362,6 +365,190 @@ let lastTime = 0;
 
 // 立体背景设置（外观与动效）
 const config = useConfigStore();
+const instanceStore = useInstanceStore();
+
+// 自定义背景图像
+interface BgImage {
+  url: string;
+  key: number;
+}
+const bgImages = ref<BgImage[]>([]);
+const fadeoutBg = ref<BgImage | null>(null);
+let bgKeySeq = 0;
+
+async function resolveBackgroundUrl(): Promise<string | null> {
+  const current = instanceStore.currentInstance;
+  // Priority: instance background > global custom background
+  if (current?.config.use_as_launcher_background && current.has_background) {
+    try {
+      const path = await getBackgroundPath(current.id);
+      return convertFileSrc(path) + "?t=" + Date.now();
+    } catch {
+      return null;
+    }
+  }
+  if (config.appearance.background_image) {
+    const dataLocation = window.__DATA_LOCATION__;
+    if (dataLocation) {
+      return (
+        convertFileSrc(`${dataLocation.root}/${config.appearance.background_image}`) +
+        "?t=" +
+        Date.now()
+      );
+    }
+  }
+  return null;
+}
+
+function currentBgUrlBase(): string {
+  return bgImages.value.length > 0
+    ? bgImages.value[bgImages.value.length - 1].url.split("?")[0]
+    : "";
+}
+
+let isTransitioning = false;
+let pendingUpdate = false;
+
+async function processBackgroundUpdate() {
+  // If already animating, mark pending and let the current animation
+  // chain into the next one after it completes.
+  if (isTransitioning) {
+    pendingUpdate = true;
+    return;
+  }
+
+  isTransitioning = true;
+  pendingUpdate = false;
+
+  try {
+    const newUrl = await resolveBackgroundUrl();
+
+    const newUrlBase = newUrl ? newUrl.split("?")[0] : "";
+    if (newUrlBase === currentBgUrlBase()) return;
+
+    const hadCustomBg = bgImages.value.length > 0;
+
+    if (newUrl) {
+      // --- Transition TO a custom background image ---
+      const newKey = ++bgKeySeq;
+
+      if (!hadCustomBg) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+
+      bgImages.value = [];
+      bgImages.value.push({ url: newUrl, key: newKey });
+
+      await nextTick();
+
+      const newEl = document.querySelector(`[data-bg-key="${newKey}"]`) as HTMLImageElement | null;
+      if (!newEl) return;
+
+      await new Promise<void>((resolve) => {
+        const doFadeIn = () => {
+          gsap.to(newEl, {
+            opacity: 0.3,
+            duration: 0.4,
+            ease: "power2.inOut",
+            onComplete: () => resolve(),
+          });
+        };
+        if (newEl.complete) {
+          doFadeIn();
+        } else {
+          newEl.addEventListener("load", doFadeIn, { once: true });
+        }
+      });
+    } else {
+      // --- Transition TO 3D world ---
+      if (hadCustomBg) {
+        const lastImg = bgImages.value[bgImages.value.length - 1];
+        fadeoutBg.value = { ...lastImg };
+        bgImages.value = [];
+      }
+
+      await nextTick();
+
+      // Reinitialize and render 3D world
+      cancelAnimationFrame(raf);
+      raf = 0;
+      initGL();
+      buildGeometry();
+      if (config.appearance.background_camera_move) {
+        lastTime = 0;
+        raf = requestAnimationFrame(frame);
+      } else {
+        draw();
+      }
+
+      // Fade out overlaying image to reveal 3D world underneath
+      if (fadeoutBg.value) {
+        const fadingKey = fadeoutBg.value.key;
+        const el = document.querySelector(`[data-bg-key="${fadingKey}"]`) as HTMLElement | null;
+        if (el) {
+          await new Promise<void>((resolve) => {
+            gsap.to(el, {
+              opacity: 0,
+              duration: 0.4,
+              ease: "power2.inOut",
+              onComplete: () => {
+                fadeoutBg.value = null;
+                resolve();
+              },
+            });
+          });
+        } else {
+          fadeoutBg.value = null;
+        }
+      }
+    }
+  } finally {
+    isTransitioning = false;
+    // If another update was requested while we were animating, chain into it
+    if (pendingUpdate) {
+      pendingUpdate = false;
+      processBackgroundUpdate();
+    }
+  }
+}
+
+function requestBackgroundUpdate() {
+  pendingUpdate = true;
+  processBackgroundUpdate();
+}
+
+// Watch instance changes
+watch(
+  () => instanceStore.currentInstance?.id,
+  () => {
+    requestBackgroundUpdate();
+  },
+);
+
+// Watch instance config changes (use_as_launcher_background toggle)
+watch(
+  () => instanceStore.currentInstance?.config.use_as_launcher_background,
+  () => {
+    requestBackgroundUpdate();
+  },
+);
+
+// Watch global background_image changes
+watch(
+  () => config.appearance.background_image,
+  () => {
+    requestBackgroundUpdate();
+  },
+);
+
+// Watch instance background removal
+watch(
+  () => instanceStore.currentInstance?.has_background,
+  () => {
+    requestBackgroundUpdate();
+  },
+);
 
 // 摄像机静止（关闭摄像机移动）时，用于在窗口尺寸 / 主题变化时补一帧渲染
 let resizeObserver: ResizeObserver | undefined;
@@ -1161,12 +1348,16 @@ onMounted(() => {
 
   window.addEventListener("mousemove", onMouseMove);
   document.addEventListener("mouseleave", onMouseLeave);
+
+  // Resolve initial background image
+  processBackgroundUpdate();
 });
 
 // 设置变化时实时切换主循环
 watch(
   () => config.appearance.background_camera_move,
   (move) => {
+    if (bgImages.value.length > 0) return;
     if (move) {
       lastTime = 0;
       raf = requestAnimationFrame(frame);
@@ -1204,13 +1395,44 @@ onBeforeUnmount(() => {
   if (wrapperRef.value) {
     gsap.killTweensOf(wrapperRef.value);
   }
+  // Kill any in-progress bg image tweens
+  for (const img of bgImages.value) {
+    const el = document.querySelector(`[data-bg-key="${img.key}"]`);
+    if (el) gsap.killTweensOf(el);
+  }
+  if (fadeoutBg.value) {
+    const el = document.querySelector(`[data-bg-key="${fadeoutBg.value.key}"]`);
+    if (el) gsap.killTweensOf(el);
+  }
+  bgImages.value = [];
+  fadeoutBg.value = null;
 });
 </script>
 
 <template>
   <div ref="wrapperRef" class="background-wrapper">
-    <canvas ref="skyCanvasRef" class="background sky" />
-    <canvas ref="glCanvasRef" class="background world" />
+    <canvas
+      ref="skyCanvasRef"
+      class="background sky"
+      :style="{ display: bgImages.length > 0 ? 'none' : '' }" />
+    <canvas
+      ref="glCanvasRef"
+      class="background world"
+      :style="{ display: bgImages.length > 0 ? 'none' : '' }" />
+    <img
+      v-for="img in bgImages"
+      :key="img.key"
+      :data-bg-key="img.key"
+      :src="img.url"
+      class="background custom-bg"
+      style="opacity: 0"
+      alt="" />
+    <img
+      v-if="fadeoutBg"
+      :data-bg-key="fadeoutBg.key"
+      :src="fadeoutBg.url"
+      class="background custom-bg"
+      alt="" />
   </div>
 </template>
 
@@ -1224,6 +1446,10 @@ onBeforeUnmount(() => {
     width: 100%;
     height: 100%;
     display: block;
+  }
+  .custom-bg {
+    object-fit: cover;
+    opacity: 0.3;
   }
   .sky {
     opacity: 0.3;

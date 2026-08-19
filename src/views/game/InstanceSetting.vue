@@ -68,7 +68,10 @@
             >
           </SettingItem>
           <SettingItem title="在启动器背景使用实例背景" :disabled="!currentInstance.has_background">
-            <BaseSwitch></BaseSwitch>
+            <BaseSwitch
+              v-model="
+                instanceStore.currentInstance.config.use_as_launcher_background
+              "></BaseSwitch>
           </SettingItem>
         </SettingGroup>
         <SettingGroup>
@@ -319,7 +322,8 @@ const imgLoaded = ref(false);
 
 onMounted(async () => {
   if (currentInstance.value.has_background) {
-    backgroundFileSrc.value = convertFileSrc(await getBackgroundPath(currentInstance.value.id));
+    backgroundFileSrc.value =
+      convertFileSrc(await getBackgroundPath(currentInstance.value.id)) + "?t=" + Date.now();
   }
 });
 
@@ -327,7 +331,8 @@ watch(
   () => currentInstance.value.has_background,
   async (newValue) => {
     if (newValue) {
-      backgroundFileSrc.value = convertFileSrc(await getBackgroundPath(currentInstance.value.id));
+      backgroundFileSrc.value =
+        convertFileSrc(await getBackgroundPath(currentInstance.value.id)) + "?t=" + Date.now();
     }
   },
 );

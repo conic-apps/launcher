@@ -161,7 +161,6 @@ pub struct Log {
 /// * `Err(())` - If there was an error during launch (e.g., account not found).
 ///
 /// # Side Effects
-/// * Refreshes the selected account if configured to do so.
 /// * Optionally checks files before launch.
 /// * Spawns the Minecraft process and generates launch script.
 pub async fn launch(

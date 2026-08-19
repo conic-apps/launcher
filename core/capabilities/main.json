@@ -27,6 +27,8 @@
     "config:allow-cmd-load-config-file",
     "config:allow-cmd-save-config",
     "config:allow-cmd-get-default-config",
+    "config:allow-cmd-set-background-image",
+    "config:allow-cmd-remove-background-image",
     "download:allow-cmd-spawn-download-task",
     "download:allow-cmd-cancel-download-task",
     "account:allow-cmd-list-accounts",
