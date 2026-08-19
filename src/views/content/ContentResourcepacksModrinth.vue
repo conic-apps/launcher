@@ -67,8 +67,17 @@
     </div>
     <template v-else>
       <div class="mods-list" v-if="modrinthSearchResult.hits.length > 0">
-        <div v-for="(mod, index) in modrinthSearchResult.hits" class="content" :key="index">
-          <img v-if="mod.icon_url" :src="mod.icon_url" alt="pack icon" width="72px" height="100%" />
+        <div
+          v-for="(pack, index) in modrinthSearchResult.hits"
+          class="content"
+          :key="index"
+          @click="useShowContentDetails().value.modrinth.resourcepack = pack.project_id">
+          <img
+            v-if="pack.icon_url"
+            :src="pack.icon_url"
+            alt="pack icon"
+            width="72px"
+            height="100%" />
           <img
             v-else
             src="@/assets/images/Unknown_server.webp"
@@ -77,11 +86,11 @@
             height="100%" />
           <div class="content-info">
             <p class="name">
-              <span>{{ mod.title }}</span>
+              <span>{{ pack.title }}</span>
             </p>
-            <p class="authors">by {{ mod.author }}</p>
+            <p class="authors">by {{ pack.author }}</p>
             <p class="mod-description">
-              {{ modrinthTranslations.get(mod.project_id) ?? mod.description }}
+              {{ modrinthTranslations.get(pack.project_id) ?? pack.description }}
             </p>
           </div>
           <div class="actions">
@@ -137,6 +146,7 @@ import {
   searchProjects as searchModrinthProjects,
 } from "@conic/modrinth";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
+import { useShowContentDetails } from "./useContent";
 
 const instanceStore = useInstanceStore();
 const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =

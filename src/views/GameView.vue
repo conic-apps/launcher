@@ -60,6 +60,50 @@
         <ContentScreenshots></ContentScreenshots>
       </div>
     </Transition>
+    <Transition name="game-content">
+      <div
+        class="game-content-wrapper"
+        v-if="showGameContentDetails.curseforge.mod"
+        @click.self="showGameContentDetails.curseforge.mod = null"
+        :class="{ show: showGameContentDetails.curseforge.mod }">
+        <div class="game-content-container">
+          <ContentCurseforgeModDetails></ContentCurseforgeModDetails>
+        </div>
+      </div>
+    </Transition>
+    <Transition name="game-content">
+      <div
+        class="game-content-wrapper"
+        v-if="showGameContentDetails.curseforge.resourcepack"
+        @click.self="showGameContentDetails.curseforge.resourcepack = null"
+        :class="{ show: showGameContentDetails.curseforge.resourcepack }">
+        <div class="game-content-container">
+          <ContentCurseforgeResourcepackDetails></ContentCurseforgeResourcepackDetails>
+        </div>
+      </div>
+    </Transition>
+    <Transition name="game-content">
+      <div
+        class="game-content-wrapper"
+        v-if="showGameContentDetails.modrinth.mod"
+        @click.self="showGameContentDetails.modrinth.mod = null"
+        :class="{ show: showGameContentDetails.modrinth.mod }">
+        <div class="game-content-container">
+          <ContentModrinthModDetails></ContentModrinthModDetails>
+        </div>
+      </div>
+    </Transition>
+    <Transition name="game-content">
+      <div
+        class="game-content-wrapper"
+        v-if="showGameContentDetails.modrinth.resourcepack"
+        @click.self="showGameContentDetails.modrinth.resourcepack = null"
+        :class="{ show: showGameContentDetails.modrinth.resourcepack }">
+        <div class="game-content-container">
+          <ContentModrinthResourcepackDetails></ContentModrinthResourcepackDetails>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -71,11 +115,15 @@ import { onMounted, useTemplateRef } from "vue";
 import gsap from "gsap";
 import InstanceSetting from "./game/InstanceSetting.vue";
 import { useInstanceSettings } from "./game/useGameView";
-import { useShowContent } from "./content/useContent";
+import { useShowContent, useShowContentDetails } from "./content/useContent";
 import ContentSaves from "./content/ContentSaves.vue";
 import ContentMods from "./content/ContentMods.vue";
 import ContentResourcepacks from "./content/ContentResourcepacks.vue";
 import ContentScreenshots from "./content/ContentScreenshots.vue";
+import ContentCurseforgeModDetails from "./content/ContentCurseforgeModDetails.vue";
+import ContentCurseforgeResourcepackDetails from "./content/ContentCurseforgeResourcepackDetails.vue";
+import ContentModrinthModDetails from "./content/ContentModrinthModDetails.vue";
+import ContentModrinthResourcepackDetails from "./content/ContentModrinthResourcepackDetails.vue";
 
 const instanceSummary = useTemplateRef("instance-summary");
 const instanceList = useTemplateRef("instance-list");
@@ -83,6 +131,7 @@ const gameFooterBar = useTemplateRef("game-footer-bar");
 
 const showInstanceSettings = useInstanceSettings();
 const showGameContent = useShowContent();
+const showGameContentDetails = useShowContentDetails();
 
 onMounted(async () => {
   const intro = gsap.timeline({ paused: true });

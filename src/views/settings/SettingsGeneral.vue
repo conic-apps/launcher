@@ -39,14 +39,17 @@
           v-model="config.language"
           :default="1"></BaseDropdownSelect>
       </SettingItem>
-      <SettingItem :title="'更新通道'" :description="'控制启动器获取更新的频率'">
+      <SettingItem :title="'自动更新'" :description="'有更新可用时自动下载并安装'">
+        <BaseSwitch v-model="config.auto_update"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
+        :title="'更新通道'"
+        :description="'控制启动器获取更新的频率'"
+        :disabled="!config.auto_update">
         <BaseSelect
           :display-name="['正式版', '测试版']"
           :options="['stable', 'beta']"
           v-model="config.update_channel"></BaseSelect>
-      </SettingItem>
-      <SettingItem :title="'自动更新'" :description="'有更新可用时自动下载并安装'">
-        <BaseSwitch v-model="config.auto_update"></BaseSwitch>
       </SettingItem>
     </SettingGroup>
   </div>

@@ -109,7 +109,7 @@ export type Project = {
         description?: string
         created: string
         ordering: number
-    }
+    }[]
 }
 
 export async function getProject(idOrSlug: string): Promise<Project> {
@@ -193,6 +193,42 @@ export type ProjectTranslation = {
 
 export async function getProjectTranslations(projectIds: string[]): Promise<ProjectTranslation[]> {
     return await invoke("plugin:modrinth|cmd_get_project_translations", { projectIds })
+}
+
+export type TeamMembers = {
+    team_id: string
+    user: {
+        username: string
+        // The user's display name
+        name?: string
+        email?: string
+        bio?: string
+        payout_data?: {
+            balance: number
+            payout_wallet: string
+            payout_wallet_type: string
+            payout_address: string
+        }
+        id: string
+        avatar_url: string
+        created: string
+        role: string
+        badges?: number
+        auth_providers?: string[]
+        email_verified?: boolean
+        has_password?: boolean
+        has_totp?: boolean
+        github_id?: number
+    }
+    role: string
+    permissions?: number
+    accepted: boolean
+    payouts_split?: number
+    ordering?: number
+}[]
+
+export async function getTeamMembers(teamId: string): Promise<TeamMembers> {
+    return await invoke("plugin:modrinth|cmd_get_team_members", { teamId })
 }
 
 export type DownloadProgress = {

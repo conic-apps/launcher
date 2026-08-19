@@ -18,6 +18,9 @@
           <button v-if="props.resetable" class="reset-button" @click.stop="$emit('reset')">
             <AppIcon name="refresh" :size="16"></AppIcon>
           </button>
+          <span style="transform: scale(0.8); height: 100%" v-if="props.loading">
+            <ItemLoadingIcon status="in-progress"></ItemLoadingIcon>
+          </span>
         </p>
         <p v-if="description" class="description" v-html="description"></p>
         <slot v-else-if="slots.description" name="description"> </slot>
@@ -38,6 +41,7 @@
 <script setup lang="ts">
 import { useSlots } from "vue";
 import AppIcon from "./AppIcon.vue";
+import ItemLoadingIcon from "./ItemLoadingIcon.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -49,6 +53,7 @@ const props = withDefaults(
     navigable?: boolean;
     disabled?: boolean;
     resetable?: boolean;
+    loading?: boolean;
   }>(),
   {
     iconSize: 26,

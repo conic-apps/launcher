@@ -11,7 +11,6 @@ import {
     type InstanceSort,
 } from "@conic/instance"
 import { defineStore } from "pinia"
-import { useConfigStore } from "./config"
 import { ref, watch } from "vue"
 import { getMinecrafVersionManifest } from "@conic/install"
 
@@ -88,20 +87,7 @@ export const useInstanceStore = defineStore("instance", () => {
         if (foundCurrentInstance) {
             currentInstance.value = foundCurrentInstance
         } else {
-            const config = useConfigStore()
-            if (!config.accessibility.hide_latest_release) {
-                currentInstance.value =
-                    instances.value.find(
-                        (instance) => instance.id === LATEST_RELEASE_INSTANCE_ID,
-                    ) ?? instances.value[0]
-            } else if (!config.accessibility.hide_latest_snapshot) {
-                currentInstance.value =
-                    instances.value.find(
-                        (instances) => instances.id === LATEST_SNAPSHOT_INSTANCE_ID,
-                    ) ?? instances.value[0]
-            } else {
-                currentInstance.value = instances.value[0]
-            }
+            currentInstance.value = instances.value[0]
         }
     }
     return {

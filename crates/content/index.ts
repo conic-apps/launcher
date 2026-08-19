@@ -158,3 +158,20 @@ export type Mod = {
 export async function parseMods(instanceId: string): Promise<Mod[]> {
     return await invoke("plugin:content|cmd_parse_mods", { instanceId })
 }
+
+export type ModInstalledInfo = {
+    installed: boolean
+    mods: Mod[]
+}
+
+export async function checkModInstalled(
+    instanceId: string,
+    platform: ModSource,
+    projectId: string,
+): Promise<ModInstalledInfo> {
+    return await invoke("plugin:content|cmd_check_mod_installed", {
+        instanceId,
+        platform,
+        projectId,
+    })
+}

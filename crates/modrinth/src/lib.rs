@@ -24,6 +24,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_get_all_dependencies,
             cmd_list_project_versions,
             cmd_get_project_translations,
+            cmd_get_team_members
         ])
         .build()
 }
@@ -46,6 +47,11 @@ async fn cmd_get_multiple_projects(ids: Vec<&str>) -> Result<Value> {
 #[command]
 async fn cmd_get_all_dependencies(id: &str) -> Result<Value> {
     get_all_dependencies(id).await
+}
+
+#[command]
+async fn cmd_get_team_members(team_id: &str) -> Result<Value> {
+    get_team_members(team_id).await
 }
 
 // const BASE_URL: &str = "https://api.modrinth.com";
@@ -192,7 +198,7 @@ pub async fn get_projects(ids: &[&str]) -> Result<Value> {
 
 /// Fetch the members of a project team. The mirror does not serve this
 /// endpoint, so the official API is queried directly.
-pub async fn get_project_members(team_id: &str) -> Result<Value> {
+pub async fn get_team_members(team_id: &str) -> Result<Value> {
     let url = Url::parse(OFFICIAL_BASE_URL)?
         .append_path(["v2", "team", team_id, "members"])
         .expect("Internal error");
