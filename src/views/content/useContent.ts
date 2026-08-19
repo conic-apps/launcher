@@ -13,8 +13,8 @@ const showContentDetails = ref({
         resourcepack: null as string | null,
     },
     curseforge: {
-        mod: null as string | null,
-        resourcepack: null as string | null,
+        mod: null as number | null,
+        resourcepack: null as number | null,
     },
 })
 

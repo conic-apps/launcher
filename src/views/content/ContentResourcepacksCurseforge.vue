@@ -67,7 +67,11 @@
     </div>
     <template v-else>
       <div class="mods-list" v-if="curseForgeSearchResult.data.length > 0">
-        <div v-for="(mod, index) in curseForgeSearchResult.data" class="content" :key="index">
+        <div
+          v-for="(mod, index) in curseForgeSearchResult.data"
+          class="content"
+          :key="index"
+          @click="useShowContentDetails().value.curseforge.resourcepack = mod.id">
           <img v-if="mod.logo.url" :src="mod.logo.url" alt="pack icon" width="72px" height="100%" />
           <img
             v-else
@@ -147,6 +151,7 @@ import {
   searchMods as searchCurseForgeMods,
 } from "@conic/curseforge";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
+import { useShowContentDetails } from "./useContent";
 
 const instanceStore = useInstanceStore();
 const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =

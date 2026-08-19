@@ -466,8 +466,8 @@ onMounted(async () => {
   await runModrinthSearch();
 });
 
-function openDetails(project_id: string) {
-  useShowContentDetails().value.modrinth.mod = project_id;
+function openDetails(projectId: string) {
+  useShowContentDetails().value.modrinth.mod = projectId;
 }
 </script>
 

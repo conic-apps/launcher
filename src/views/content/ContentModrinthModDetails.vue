@@ -50,10 +50,7 @@
         <div class="section gallery" v-if="projectInfo.gallery && projectInfo.gallery.length > 0">
           <ScrollViewHorizontal>
             <div class="gallery-list">
-              <div
-                v-for="(item, index) in projectInfo.gallery"
-                :key="index"
-                class="gallery-item">
+              <div v-for="(item, index) in projectInfo.gallery" :key="index" class="gallery-item">
                 <img :src="item.url" :alt="item.title ?? `gallery ${index + 1}`" />
               </div>
             </div>
@@ -80,13 +77,13 @@ const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
 
 const projectInfo = ref(null as null | Project);
 const readmeHtml = computed(() => {
-    if (!projectInfo.value?.body) return "";
-    return marked.parse(projectInfo.value.body) as string;
+  if (!projectInfo.value?.body) return "";
+  return marked.parse(projectInfo.value.body) as string;
 });
 
 const translatedDescription = computed(() => {
-    if (!projectInfo.value) return "";
-    return modrinthTranslations.get(projectInfo.value.id) ?? projectInfo.value.description ?? "";
+  if (!projectInfo.value) return "";
+  return modrinthTranslations.get(projectInfo.value.id) ?? projectInfo.value.description ?? "";
 });
 
 const projectId = computed(() => useShowContentDetails().value.modrinth.mod);
@@ -138,7 +135,7 @@ function formatGithubRepo(url: string): string | null {
     }
 
     return `${owner}/${repo}`;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -146,12 +143,12 @@ function formatGithubRepo(url: string): string | null {
 const formattedGithubRepo = computed(() => formatGithubRepo(projectInfo.value?.source_url ?? ""));
 
 function onReadmeClick(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    if (target.tagName === "A") {
-        event.preventDefault();
-        const href = (target as HTMLAnchorElement).href;
-        if (href) openUrl(href);
-    }
+  const target = event.target as HTMLElement;
+  if (target.tagName === "A") {
+    event.preventDefault();
+    const href = (target as HTMLAnchorElement).href;
+    if (href) openUrl(href);
+  }
 }
 </script>
 
