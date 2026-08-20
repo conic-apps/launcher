@@ -13,6 +13,8 @@ fn main() {
                 "cmd_get_default_config",
                 "cmd_save_config",
                 "cmd_get_system_language",
+                "cmd_set_background_image",
+                "cmd_remove_background_image",
             ]),
         )
         .plugin(
