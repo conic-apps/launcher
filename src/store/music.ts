@@ -321,7 +321,7 @@ export const useMusicStore = defineStore("music", {
             const audio = getAudioElement()
             ensureAnalyser()
             await getAudioContext().resume()
-            audio.src = convertFileSrc(track.path)
+            audio.src = convertFileSrc(track.path) + "?t=" + Date.now()
             this.applyVolume()
             this.attachAudioEvents(audio)
             updateMediaSessionMetadata()

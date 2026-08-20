@@ -41,6 +41,20 @@
     </SettingGroup>
     <SettingGroup title="背景图像">
       <SettingItem
+        title="自定义背景图像"
+        description="选择一张图片作为启动器背景，优先级低于实例背景"
+        icon="image"
+        :navigable="!config.appearance.background_image"
+        @click="pickBackgroundImage">
+        <AppIcon
+          name="chevron-forward"
+          style="margin-right: 4px"
+          v-if="!config.appearance.background_image"></AppIcon>
+        <BaseButton color="var(--ctp-red)" v-else @click.stop="removeBackgroundImageSetting"
+          >移除图像</BaseButton
+        >
+      </SettingItem>
+      <SettingItem
         title="立体背景摄像机移动"
         description="关闭后摄像机停止向前移动，背景渲染完成后不再更新，以完全关闭背景开销"
         icon-fill="none">
@@ -57,10 +71,13 @@
 import SettingGroup from "@/components/SettingGroup.vue";
 import SettingItem from "@/components/SettingItem.vue";
 import BaseSwitch from "@/components/BaseSwitch.vue";
+import BaseButton from "@/components/BaseButton.vue";
+import AppIcon from "@/components/AppIcon.vue";
 import { useConfigStore } from "@/store/config";
 import { ref, watch } from "vue";
 import { reloadPalette } from "@/theme";
-import { Palette } from "@conic/config";
+import { Palette, setBackgroundImage, removeBackgroundImage } from "@conic/config";
+import { open } from "@tauri-apps/plugin-dialog";
 const config = useConfigStore();
 
 const currentTheme = ref<Palette>(config.appearance.palette);
@@ -123,6 +140,28 @@ if (config.appearance.palette_follow_system) {
   } else {
     currentTheme.value = Palette.Latte;
   }
+}
+
+async function pickBackgroundImage() {
+  const filePath = await open({
+    multiple: false,
+    directory: false,
+    filters: [
+      {
+        name: "Images",
+        extensions: ["png", "jpg", "jpeg", "webp", "gif", "bmp", "avif", "svg", "ico"],
+      },
+    ],
+  });
+  if (filePath) {
+    const filename = await setBackgroundImage(filePath);
+    config.appearance.background_image = filename;
+  }
+}
+
+async function removeBackgroundImageSetting() {
+  await removeBackgroundImage();
+  config.appearance.background_image = undefined;
 }
 </script>
 

@@ -334,11 +334,18 @@ const filteredInstances = computed(() => {
 });
 
 function navigate(direction: -1 | 1) {
-  const list = filteredInstances.value;
-  if (list.length === 0) return;
-  const index = list.findIndex((instance) => instance.id === instanceStore.currentInstance.id);
-  const nextIndex = Math.max(0, Math.min(list.length - 1, index + direction));
-  selectInstance(list[nextIndex]);
+  const visibleInstances: Instance[] = [];
+  for (const group of groups.value) {
+    if (!isCollapsed(group.key)) {
+      visibleInstances.push(...group.instances);
+    }
+  }
+  if (visibleInstances.length === 0) return;
+  const index = visibleInstances.findIndex(
+    (instance) => instance.id === instanceStore.currentInstance.id,
+  );
+  const nextIndex = Math.max(0, Math.min(visibleInstances.length - 1, index + direction));
+  selectInstance(visibleInstances[nextIndex]);
 }
 
 function onKeyDown(event: KeyboardEvent) {
@@ -375,7 +382,7 @@ const backgroundImagesShow = ref<Record<string, boolean>>({});
 
 async function getBackgroundSrc(id: string) {
   const backgroundPath = await getBackgroundPath(id);
-  return convertFileSrc(backgroundPath);
+  return convertFileSrc(backgroundPath) + "?t=" + Date.now();
 }
 </script>
 

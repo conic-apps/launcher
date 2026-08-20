@@ -29,6 +29,7 @@ export type Config = {
         palette: Palette
         background_camera_move: boolean
         background_parallax: boolean
+        background_image?: string
     }
     accessibility: {
         release_reminder: boolean
@@ -95,4 +96,12 @@ export async function saveConfigToFile(config: Config): Promise<void> {
 
 export async function getSystemLanguage(): Promise<string> {
     return await invoke("plugin:config|cmd_get_system_language")
+}
+
+export async function setBackgroundImage(path: string): Promise<string> {
+    return await invoke("plugin:config|cmd_set_background_image", { path })
+}
+
+export async function removeBackgroundImage(): Promise<void> {
+    return await invoke("plugin:config|cmd_remove_background_image")
 }

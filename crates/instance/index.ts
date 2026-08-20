@@ -42,6 +42,7 @@ export type InstanceConfig = {
         skip_check_files?: boolean
         quit_app_after_launch?: boolean
     }
+    use_as_launcher_background?: boolean
 }
 
 export type Instance = {

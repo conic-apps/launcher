@@ -28,7 +28,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_load_config_file,
             cmd_get_default_config,
             cmd_save_config,
-            cmd_get_system_language
+            cmd_get_system_language,
+            cmd_set_background_image,
+            cmd_remove_background_image,
         ])
         .build()
 }
@@ -53,6 +55,23 @@ fn cmd_save_config(config: Config) -> Result<()> {
 #[command]
 fn cmd_get_system_language() -> String {
     get_system_language().to_string()
+}
+
+#[command]
+async fn cmd_set_background_image(path: String) -> Result<String> {
+    let dest = DATA_LOCATION.root.join("background_image");
+    async_fs::copy(&path, &dest).await?;
+    let filename = "background_image".to_string();
+    Ok(filename)
+}
+
+#[command]
+async fn cmd_remove_background_image() -> Result<()> {
+    let dest = DATA_LOCATION.root.join("background_image");
+    if dest.exists() {
+        async_fs::remove_file(&dest).await?;
+    }
+    Ok(())
 }
 
 /// Reads the configuration file from disk.
@@ -182,6 +201,9 @@ pub struct AppearanceConfig {
 
     /// Whether the background follows the mouse cursor (parallax).
     pub background_parallax: bool,
+
+    /// Custom launcher background image filename (stored in data directory).
+    pub background_image: Option<String>,
 }
 
 impl Default for AppearanceConfig {
@@ -192,6 +214,7 @@ impl Default for AppearanceConfig {
             palette: "Mocha".to_string(),
             background_camera_move: true,
             background_parallax: true,
+            background_image: None,
         }
     }
 }

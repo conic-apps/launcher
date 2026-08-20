@@ -119,6 +119,7 @@ import LaunchView from "./views/LaunchView.vue";
 import { useDialogStore } from "./store/dialog";
 import { useMusicStore } from "./store/music";
 import { checkMinecraftUpdateReminder } from "./store/minecraftUpdate";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import gsap from "gsap";
 
 const config = useConfigStore();
@@ -229,6 +230,17 @@ if (import.meta.env.PROD) {
     }
   });
 }
+
+document.addEventListener("click", (event) => {
+  if (event.defaultPrevented) return;
+  const anchor = (event.target as HTMLElement).closest("a");
+  if (!anchor) return;
+  const href = anchor.getAttribute("href");
+  if (href && /^https?:\/\//.test(href)) {
+    event.preventDefault();
+    openUrl(href);
+  }
+});
 
 if (import.meta.env.DEV) {
   document.addEventListener("keydown", (event) => {

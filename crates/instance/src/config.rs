@@ -132,6 +132,10 @@ pub struct InstanceConfig {
     /// Instance-specific launch configuration
     #[serde(default)]
     pub launch_config: InstanceLaunchConfig,
+
+    /// Whether to use this instance's background image as the launcher background
+    #[serde(default)]
+    pub use_as_launcher_background: bool,
 }
 
 impl InstanceConfig {
@@ -156,6 +160,7 @@ impl InstanceConfig {
             },
             group: None,
             launch_config: InstanceLaunchConfig::default(),
+            use_as_launcher_background: false,
         }
     }
 }

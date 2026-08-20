@@ -108,7 +108,7 @@ watch(
 );
 async function getBackgroundSrc(id: string) {
   const backgroundPath = await getBackgroundPath(id);
-  return convertFileSrc(backgroundPath);
+  return convertFileSrc(backgroundPath) + "?t=" + Date.now();
 }
 </script>
 
