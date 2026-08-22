@@ -95,7 +95,7 @@ import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl, type Account } from "@conic/account";
-import { computed, onMounted, useTemplateRef, watch } from "vue";
+import { computed, onMounted, useTemplateRef } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
 import { isLibraryValid } from "@conic/multiplayer";
 import gsap from "gsap";
