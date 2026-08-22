@@ -76,7 +76,6 @@ const ready = new Promise<void>((resolve) => {
 watch([offlineAvatarLoading, avatarLoading], ([offlineAvatarLoading, avatarLoading]) => {
   if (!offlineAvatarLoading && !avatarLoading) {
     resolveReady();
-    console.log("resolved!!!!!");
   }
 });
 

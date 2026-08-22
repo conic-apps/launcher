@@ -42,6 +42,9 @@ const deleting = ref(false);
 async function confirmDelete() {
   deleting.value = true;
   try {
+    if (!instanceStore.currentInstance) {
+      throw "CurrentInstance is null";
+    }
     await deleteSave(instanceStore.currentInstance.id, dialogStore.confirmDeleteSave.folderName);
     await gameContentStore.refreshSaves();
     dialogStore.confirmDeleteSave.visible = false;
