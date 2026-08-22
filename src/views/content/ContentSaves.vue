@@ -66,7 +66,7 @@
           <div class="extra" @click.stop>
             <div class="map-previewer-container">
               <WorldMap
-                v-if="selectedSave === folderName"
+                v-if="selectedSave === folderName && instanceStore.currentInstance"
                 :instance-id="instanceStore.currentInstance.id"
                 :show-cursor-coords="true"
                 :folder-name="folderName"
@@ -111,6 +111,9 @@ watch(
     const promises = Object.keys(saves).map(async (key) => {
       console.log(1);
       try {
+        if (!instanceStore.currentInstance) {
+          throw "currentInstance is null";
+        }
         iconCache.value[key] = await getSaveIcon(instanceStore.currentInstance.id, key);
       } catch (error) {
         console.log(error);
@@ -169,6 +172,9 @@ function selectSave(folderName: string, event: MouseEvent) {
 }
 
 async function openSaveFolder(folderName: string) {
+  if (!instanceStore.currentInstance) {
+    throw "currentInstance is null";
+  }
   invoke("open_path", {
     path: await getSavePath(instanceStore.currentInstance.id, folderName),
   });

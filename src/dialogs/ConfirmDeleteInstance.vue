@@ -227,7 +227,6 @@ async function getBackgroundSrc(id: string) {
       margin-right: 8px;
       background: var(--ctp-blue);
       color: var(--ctp-text-inverse);
-      padding: 8px 0;
     }
     button.quit {
       background: var(--ctp-red);
