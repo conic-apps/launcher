@@ -46,7 +46,7 @@ const dasharray = computed(() => {
 .base-loading-circle {
   transform-origin: 24px 24px;
   will-change: transform;
-  animation: base-loading-spin 0.9s linear infinite;
+  animation: base-loading-spin 1.9s linear infinite;
 }
 
 @keyframes base-loading-spin {
