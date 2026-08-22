@@ -71,7 +71,7 @@ export const useGameContentStore = defineStore("gameContent", () => {
             gameContentCache[instanceId] ??= {} as GameContentCacheValue
             gameContentCache[instanceId][key] ??= { data: null, time: 0 }
 
-            if (instanceId === instanceStore.currentInstance.id) {
+            if (instanceId === instanceStore.currentInstance?.id) {
                 gameContent.value[key] = data
             }
 
@@ -83,6 +83,9 @@ export const useGameContentStore = defineStore("gameContent", () => {
     watch(
         () => instanceStore.currentInstance,
         async (instance) => {
+            if (!instance) {
+                return
+            }
             ;(Object.keys(gameContent.value) as Array<keyof GameContent>).forEach((key) => {
                 gameContent.value[key] = null
             })
@@ -134,13 +137,16 @@ export const useGameContentStore = defineStore("gameContent", () => {
     )
 
     async function refreshSaves() {
-        const instance = instanceStore.currentInstance
-        const saves = await getAllLevels(instance.id)
+        const currentInstance = instanceStore.currentInstance
+        if (!currentInstance) {
+            throw "currentInstance is null"
+        }
+        const saves = await getAllLevels(currentInstance.id)
 
         gameContent.value.saves = saves
 
-        gameContentCache[instance.id] ??= {} as GameContentCacheValue
-        gameContentCache[instance.id].saves = {
+        gameContentCache[currentInstance.id] ??= {} as GameContentCacheValue
+        gameContentCache[currentInstance.id].saves = {
             data: saves,
             time: Date.now(),
         }

@@ -419,7 +419,7 @@ async function loadVersionOptions() {
       .filter((version) => version.type === "release")
       .sort((a, b) => new Date(b.releaseTime).getTime() - new Date(a.releaseTime).getTime())
       .map((version) => version.id);
-    const minecraft = instanceStore.currentInstance.config.runtime.minecraft;
+    const minecraft = instanceStore.currentInstance?.config.runtime.minecraft;
     if (minecraft && !options.includes(minecraft)) {
       options.push(minecraft);
     }
@@ -440,8 +440,8 @@ function syncVersionPageToSelection() {
 }
 
 function searchInitKey(): string {
-  const runtime = instanceStore.currentInstance.config.runtime;
-  return `${runtime.mod_loader_type ?? ""}|${runtime.minecraft}`;
+  const runtime = instanceStore.currentInstance?.config.runtime;
+  return `${runtime?.mod_loader_type ?? ""}|${runtime?.minecraft ?? ""}`;
 }
 
 let curseForgeInitializedFor: string | null = null;
@@ -453,11 +453,11 @@ async function ensureCurseForgeInitialized() {
   const key = searchInitKey();
   if (curseForgeInitializedFor === key) return;
   curseForgeInitializedFor = key;
-  const runtime = instanceStore.currentInstance.config.runtime;
-  curseForgeSelectedLoaders.value = runtime.mod_loader_type
+  const runtime = instanceStore.currentInstance?.config.runtime;
+  curseForgeSelectedLoaders.value = runtime?.mod_loader_type
     ? [runtime.mod_loader_type.toLowerCase()]
     : [];
-  curseForgeSelectedVersions.value = runtime.minecraft ? [runtime.minecraft] : [];
+  curseForgeSelectedVersions.value = runtime?.minecraft ? [runtime.minecraft] : [];
   searchQuery.value = "";
   syncVersionPageToSelection();
   curseForgeSelectedCategories.value = [];

@@ -36,7 +36,7 @@
           <template v-if="!isCollapsed(group.key)">
             <div
               class="card-container"
-              :class="{ current: instance.id === instanceStore.currentInstance.id }"
+              :class="{ current: instance.id === instanceStore.currentInstance?.id }"
               v-for="instance in group.instances"
               style="opacity: 0"
               :key="instance.id">
@@ -45,13 +45,7 @@
                 @click="selectInstance(instance)"
                 :data-id="instance.id"
                 :data-key="`${group.key}:${instance.id}`">
-                <p v-if="instance.id === LATEST_RELEASE_INSTANCE_ID">
-                  {{ "最新版本" }}
-                </p>
-                <p v-else-if="instance.id === LATEST_SNAPSHOT_INSTANCE_ID">
-                  {{ "最新快照" }}
-                </p>
-                <p v-else>{{ instance.config.name }}</p>
+                <p>{{ instance.config.name }}</p>
                 <div class="details">
                   <span
                     :class="`tag ${instance.config.runtime.mod_loader_type.toLowerCase()}`"
@@ -82,20 +76,19 @@
       </template>
       <div class="gap-bottom"></div>
     </InstancesListScrollView>
+    <Transition name="instance-list-placeholder-transition">
+      <div class="instance-list-placeholder" v-if="noMatchedInstances">
+        <AppIcon name="about" :size="64"></AppIcon>
+        <p class="title">没有匹配的实例</p>
+        <p class="desc">考虑创建一个新实例</p>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useInstanceStore } from "@/store/instance";
-import {
-  formatLastPlayed,
-  getBackgroundPath,
-  Instance,
-  InstanceSort,
-  LATEST_RELEASE_INSTANCE_ID,
-  LATEST_SNAPSHOT_INSTANCE_ID,
-  zhCN,
-} from "@conic/instance";
+import { formatLastPlayed, getBackgroundPath, Instance, InstanceSort, zhCN } from "@conic/instance";
 import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import InstancesListToolBar from "./InstancesListToolBar.vue";
@@ -103,6 +96,7 @@ import InstancesListScrollView from "./InstancesListScrollView.vue";
 import { useShowContent } from "../content/useContent";
 import { useInstanceSettings } from "./useGameView";
 import gsap from "gsap";
+import AppIcon from "@/components/AppIcon.vue";
 
 const instanceStore = useInstanceStore();
 const scrollViewRef = useTemplateRef("scrollView");
@@ -126,7 +120,9 @@ async function selectInstance(instance: Instance) {
 onMounted(async () => {
   window.addEventListener("keydown", onKeyDown);
   await nextTick();
-  scrollViewRef.value?.scrollTo(instanceStore.currentInstance.id, false);
+  if (instanceStore.currentInstance?.id) {
+    scrollViewRef.value?.scrollTo(instanceStore.currentInstance.id, false);
+  }
   requestAnimationFrame(() => {
     scrollViewRef.value?.reflow().then(() => resolveReady());
   });
@@ -138,6 +134,12 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener("keydown", onKeyDown);
 });
+
+const noMatchedInstances = computed(
+  () =>
+    instanceStore.instances.length === 0 ||
+    (searchQuery.value.trim() !== "" && filteredInstances.value.length === 0),
+);
 
 const playIntro = () => {
   const tl = gsap.timeline();
@@ -199,7 +201,7 @@ function selectGroup(mode: GroupMode) {
   groupMode.value = mode;
 }
 
-type GroupKey = "starred" | "all" | "quilt" | "fabric" | "neoforge" | "forge";
+type GroupKey = "starred" | "all" | "quilt" | "fabric" | "neoforge" | "forge" | "vanilla";
 
 interface InstanceGroup {
   key: GroupKey;
@@ -212,6 +214,7 @@ const LOADER_GROUPS: { key: Exclude<GroupKey, "starred" | "all">; title: string 
   { key: "fabric", title: "Fabric" },
   { key: "neoforge", title: "Neoforge" },
   { key: "forge", title: "Forge" },
+  { key: "vanilla", title: "Vanilla" },
 ];
 
 const SAVED_GROUPS_EXPANDED_KEY = "instancesGroupExpanded";
@@ -280,7 +283,8 @@ const groups = computed<InstanceGroup[]>(() => {
   if (groupMode.value === "loader") {
     for (const loader of LOADER_GROUPS) {
       const members = base.filter(
-        (instance) => instance.config.runtime.mod_loader_type?.toLowerCase() === loader.key,
+        (instance) =>
+          (instance.config.runtime.mod_loader_type?.toLowerCase() ?? "vanilla") === loader.key,
       );
       if (members.length > 0) {
         result.push({ key: loader.key, title: loader.title, instances: members });
@@ -342,7 +346,7 @@ function navigate(direction: -1 | 1) {
   }
   if (visibleInstances.length === 0) return;
   const index = visibleInstances.findIndex(
-    (instance) => instance.id === instanceStore.currentInstance.id,
+    (instance) => instance.id === instanceStore.currentInstance?.id,
   );
   const nextIndex = Math.max(0, Math.min(visibleInstances.length - 1, index + direction));
   selectInstance(visibleInstances[nextIndex]);
@@ -553,8 +557,45 @@ async function getBackgroundSrc(id: string) {
   .group-card[data-group="forge"] .group {
     --group-accent-rgb: var(--ctp-blue-rgb);
   }
+  .group-card[data-group="vanilla"] .group {
+    --group-accent-rgb: var(--ctp-green-rgb);
+  }
   .card-container.collapsing .instance {
     opacity: 0;
+  }
+  .instance-list-placeholder {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 320px;
+    width: 380px;
+    height: fit-content;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    .title {
+      font-size: 16px;
+      margin-top: 12px;
+    }
+    .desc {
+      font-size: 14px;
+      margin-top: 8px;
+    }
+  }
+  .instance-list-placeholder-transition-enter-active {
+    transition:
+      transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .instance-list-placeholder-transition-leave-active {
+    transition:
+      transform 0.25s cubic-bezier(0.215, 0.61, 0.355, 1),
+      opacity 0.25s cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  .instance-list-placeholder-transition-enter-from,
+  .instance-list-placeholder-transition-leave-to {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.9);
   }
 }
 </style>

@@ -5,29 +5,23 @@
 <template>
   <div class="current-instance">
     <div class="row-1" ref="row1" style="opacity: 0">
-      <p class="title" v-if="currentInstance.id === LATEST_RELEASE_INSTANCE_ID">
-        {{ "最新版本" }}
-      </p>
-      <p class="title" v-else-if="currentInstance.id === LATEST_SNAPSHOT_INSTANCE_ID">
-        {{ "最新快照" }}
-      </p>
-      <p class="title" v-else>{{ currentInstance.config.name }}</p>
+      <p class="title">{{ currentInstance?.config.name ?? "no instance selected!" }}</p>
     </div>
     <div class="row-2" ref="row2" style="opacity: 0">
       <p>
         <span> Minecraft 版本 </span>
-        <span>{{ currentInstance.config.runtime.minecraft }}</span>
+        <span>{{ currentInstance?.config.runtime.minecraft ?? "--" }}</span>
       </p>
       <div
         class="line"
         v-if="
-          currentInstance.config.runtime.mod_loader_type &&
-          currentInstance.config.runtime.mod_loader_version
+          currentInstance?.config.runtime.mod_loader_type &&
+          currentInstance?.config.runtime.mod_loader_version
         "></div>
       <p
         v-if="
-          currentInstance.config.runtime.mod_loader_type &&
-          currentInstance.config.runtime.mod_loader_version
+          currentInstance?.config.runtime.mod_loader_type &&
+          currentInstance?.config.runtime.mod_loader_version
         ">
         <span> {{ currentInstance.config.runtime.mod_loader_type }} 版本 </span>
         <span>{{ currentInstance.config.runtime.mod_loader_version }}</span>
@@ -35,27 +29,44 @@
       <div class="line"></div>
       <p>
         <span>最后运行日期</span>
-        <span v-if="currentInstance.last_played">{{
+        <span v-if="!currentInstance">--</span>
+        <span v-else-if="currentInstance.last_played">{{
           formatLastPlayed(currentInstance.last_played, zhCN)
         }}</span>
         <span v-else>从未运行</span>
       </p>
       <div
         class="line"
-        v-if="playtimeCache[currentInstance.id] && playtimeCache[currentInstance.id] > 0"></div>
+        v-if="
+          currentInstance &&
+          playtimeCache[currentInstance.id] &&
+          playtimeCache[currentInstance.id] > 0
+        "></div>
 
       <AppIcon
         name="time"
         :size="22"
         style="margin-right: 2px"
-        v-if="playtimeCache[currentInstance.id] && playtimeCache[currentInstance.id] > 0"></AppIcon>
-      <p v-if="playtimeCache[currentInstance.id] && playtimeCache[currentInstance.id] > 0">
+        v-if="
+          currentInstance &&
+          playtimeCache[currentInstance.id] &&
+          playtimeCache[currentInstance.id] > 0
+        "></AppIcon>
+      <p
+        v-if="
+          currentInstance &&
+          playtimeCache[currentInstance.id] &&
+          playtimeCache[currentInstance.id] > 0
+        ">
         <span>游戏时间</span>
         <span>{{ formatPlayTime(playtimeCache[currentInstance.id] ?? 0) }}</span>
       </p>
     </div>
     <div class="row-3" ref="row3" style="opacity: 0">
-      <button class="launch-button" @click="navigationStore.navigate('launch')">
+      <button
+        class="launch-button"
+        @click="navigationStore.navigate('launch')"
+        :class="{ disabled: !currentInstance }">
         <AppIcon name="play" fill="#fff" style="margin-right: 4px"></AppIcon>
         开始游戏
       </button>
@@ -67,7 +78,7 @@
           style="color: #fff"
           :size="16"></AppIcon>
       </button>
-      <div class="actions">
+      <div class="actions" :class="{ disabled: !currentInstance }">
         <button class="action-button" @click="openInstanceFolder">
           <AppIcon name="folder"></AppIcon>
         </button>
@@ -79,7 +90,7 @@
         </button>
       </div>
     </div>
-    <div class="row-4" ref="row4" style="opacity: 0">
+    <div class="row-4" ref="row4" style="opacity: 0" :class="{ disabled: !currentInstance }">
       <div @click="useShowContent().value.saves = true" ref="saves" style="opacity: 0">
         <AppIcon name="save"></AppIcon>
         <div>
@@ -125,8 +136,6 @@ import {
   calculatePlaytime,
   formatLastPlayed,
   formatPlayTime,
-  LATEST_RELEASE_INSTANCE_ID,
-  LATEST_SNAPSHOT_INSTANCE_ID,
   updateInstance,
   zhCN,
 } from "@conic/instance";
@@ -149,12 +158,16 @@ const currentInstance = computed(() => {
 });
 
 async function openInstanceFolder() {
+  if (!currentInstance.value) {
+    return;
+  }
   invoke("open_path", { path: await getInstanceRoot(currentInstance.value.id) });
 }
 
-const isStarred = computed(() => (currentInstance.value.config.group ?? []).includes("starred"));
+const isStarred = computed(() => (currentInstance.value?.config.group ?? []).includes("starred"));
 
 async function toggleStarred() {
+  if (!currentInstance.value) return;
   const config = {
     ...currentInstance.value.config,
     group: isStarred.value
@@ -202,6 +215,7 @@ const playtimeCache = ref<Record<string, number>>({});
 watch(
   currentInstance,
   async (newValue) => {
+    if (!newValue) return;
     const instanceId = newValue.id;
     if (!!playtimeCache.value[instanceId]) {
       return;
@@ -343,8 +357,9 @@ defineExpose({ playIntro });
       transition: transform 100ms ease;
     }
 
-    div.actions.launching {
-      transform: translateX(152px);
+    div.actions.disabled {
+      opacity: 0.6;
+      pointer-events: none;
     }
 
     .action-button {
@@ -402,6 +417,12 @@ defineExpose({ playIntro });
       margin-left: 2px;
     }
 
+    .launch-button.disabled,
+    .launch-button.disabled ~ .launch-sub-button {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
     .launch-button:active {
       opacity: 0.9;
     }
@@ -453,6 +474,10 @@ defineExpose({ playIntro });
         font-size: 15px;
       }
     }
+  }
+  .row-4.disabled * {
+    opacity: 0.6;
+    pointer-events: none;
   }
 }
 </style>

@@ -10,7 +10,7 @@
         <p>实例设置</p>
       </div>
       <div style="padding: 0 16px">
-        <div class="instance">
+        <div class="instance" v-if="currentInstance">
           <p class="instance-name" @click="editInstanceName">
             <span v-if="!editingInstanceName">
               {{ currentInstance.config.name }}
@@ -44,7 +44,7 @@
             @load="imgLoaded = true"
             @error="imgLoaded = false" />
         </div>
-        <SettingGroup>
+        <SettingGroup v-if="currentInstance">
           <SettingItem
             title="设置背景图像"
             description=""
@@ -60,6 +60,9 @@
               v-else
               @click.stop="
                 (async () => {
+                  if (!currentInstance) {
+                    throw 'currentInstance is null';
+                  }
                   await removeBackground(currentInstance.id);
                   await instanceStore.loadInstances();
                 })()
@@ -69,12 +72,13 @@
           </SettingItem>
           <SettingItem title="在启动器背景使用实例背景" :disabled="!currentInstance.has_background">
             <BaseSwitch
+              v-if="instanceStore.currentInstance"
               v-model="
                 instanceStore.currentInstance.config.use_as_launcher_background
               "></BaseSwitch>
           </SettingItem>
         </SettingGroup>
-        <SettingGroup>
+        <SettingGroup v-if="currentInstance">
           <SettingItem
             title="Minecraft"
             icon="minecraft"
@@ -106,7 +110,7 @@
           <!-- </SettingItem> -->
         </SettingGroup>
 
-        <setting-group>
+        <setting-group v-if="currentInstance && instanceStore.currentInstance">
           <setting-item title="启用实例独立设置" icon="settings">
             <BaseSwitch
               v-model="
@@ -114,7 +118,10 @@
               "></BaseSwitch>
           </setting-item>
         </setting-group>
-        <setting-group :title="'启动选项'" :disabled="!enableInstanceSpecificSettings">
+        <setting-group
+          :title="'启动选项'"
+          :disabled="!enableInstanceSpecificSettings"
+          v-if="currentInstance && instanceStore.currentInstance">
           <SettingItem :title="'窗口大小'" :description="'游戏窗口的初始大小'">
             <BaseInput
               width="100px"
@@ -153,7 +160,10 @@
               "></BaseSwitch>
           </SettingItem>
         </setting-group>
-        <SettingGroup :title="'内存'" :disabled="!enableInstanceSpecificSettings">
+        <SettingGroup
+          :title="'内存'"
+          :disabled="!enableInstanceSpecificSettings"
+          v-if="currentInstance && instanceStore.currentInstance">
           <SettingItem :title="'自动分配内存'">
             <BaseSwitch
               v-model="instanceStore.currentInstance.config.launch_config.auto_memory"></BaseSwitch>
@@ -178,7 +188,8 @@
           :title="'高级启动选项'"
           :resetable="advancedLaunchOptionsChanged"
           @reset="resetAdvanceOptions"
-          :disabled="!enableInstanceSpecificSettings">
+          :disabled="!enableInstanceSpecificSettings"
+          v-if="currentInstance && instanceStore.currentInstance">
           <SettingItem :title="'Java 垃圾回收器'">
             <BaseSelect
               :display-name="['G1', 'Z', 'Parallel', 'Serial']"
@@ -299,11 +310,13 @@ const dialogStore = useDialogStore();
 const config = useConfigStore();
 
 const enableInstanceSpecificSettings = computed(() => {
-  return instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings;
+  return (
+    instanceStore.currentInstance?.config.launch_config.enable_instance_specific_settings ?? false
+  );
 });
 
 let oldEnabledSpecificSettings =
-  instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings;
+  instanceStore.currentInstance?.config.launch_config.enable_instance_specific_settings ?? false;
 
 const currentInstance = computed(() => instanceStore.currentInstance);
 
@@ -321,6 +334,9 @@ const backgroundFileSrc = ref(null as string | null);
 const imgLoaded = ref(false);
 
 onMounted(async () => {
+  if (!currentInstance.value) {
+    throw "currentInstance is null";
+  }
   if (currentInstance.value.has_background) {
     backgroundFileSrc.value =
       convertFileSrc(await getBackgroundPath(currentInstance.value.id)) + "?t=" + Date.now();
@@ -328,9 +344,9 @@ onMounted(async () => {
 });
 
 watch(
-  () => currentInstance.value.has_background,
+  () => (currentInstance.value ? currentInstance.value.has_background : null),
   async (newValue) => {
-    if (newValue) {
+    if (newValue && currentInstance.value) {
       backgroundFileSrc.value =
         convertFileSrc(await getBackgroundPath(currentInstance.value.id)) + "?t=" + Date.now();
     }
@@ -348,7 +364,7 @@ async function getBackground() {
       },
     ],
   });
-  if (filePath) {
+  if (filePath && currentInstance.value) {
     console.log(filePath);
     await addBackgroundImage(filePath, currentInstance.value.id);
     await instanceStore.loadInstances();
@@ -356,6 +372,9 @@ async function getBackground() {
 }
 
 watchEffect(() => {
+  if (!instanceStore.currentInstance) {
+    return;
+  }
   const currentInstanceConfig = instanceStore.currentInstance.config;
   document.body.classList.add("saving-instance-settings");
   if (
@@ -413,6 +432,9 @@ watchEffect(() => {
 });
 
 const advancedLaunchOptionsChanged = computed(() => {
+  if (!instanceStore.currentInstance) {
+    return;
+  }
   const launchOptions = instanceStore.currentInstance.config.launch_config;
   const isDefault =
     launchOptions.gc === "G1" &&
@@ -428,6 +450,9 @@ const advancedLaunchOptionsChanged = computed(() => {
 });
 
 async function resetAdvanceOptions() {
+  if (!instanceStore.currentInstance) {
+    return;
+  }
   const defaultConfig = await getDefaultConfig();
   instanceStore.currentInstance.config.launch_config.gc = defaultConfig.launch.gc;
   instanceStore.currentInstance.config.launch_config.extra_jvm_args =
@@ -449,6 +474,9 @@ async function resetAdvanceOptions() {
 }
 
 function openDeleteInstanceDialog() {
+  if (!instanceStore.currentInstance) {
+    return;
+  }
   useInstanceSettings().value = false;
   dialogStore.confirmDeleteInstance.instanceToDelete = instanceStore.currentInstance;
   dialogStore.confirmDeleteInstance.visible = true;

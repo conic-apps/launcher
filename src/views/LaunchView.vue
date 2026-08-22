@@ -4,8 +4,17 @@
 
 <template>
   <div class="launch-view">
-    <div class="container">
-      <AccountAvatar :skin="accountSkin" :uuid="accountUuid" :size="48"></AccountAvatar>
+    <div class="container" v-if="currentInstance">
+      <AccountAvatar
+        class="avatar"
+        :skin="accountSkin"
+        :uuid="accountUuid"
+        :class="{
+          'ms-account': configStore.current_account?.type === 'Microsoft',
+          'ygg-account': configStore.current_account?.type === 'Yggdrasil',
+          'offline-account': configStore.current_account?.type === 'Offline',
+        }"
+        :size="48"></AccountAvatar>
       <p class="instance-name">{{ currentInstance.config.name }}</p>
       <div class="instance-info">
         <p>Minecraft {{ currentInstance.config.runtime.minecraft }}</p>
@@ -103,6 +112,7 @@ async function launch() {
     return;
   }
   try {
+    if (!instanceStore.currentInstance) throw "currentInstance is null";
     if (!instanceStore.currentInstance.installed) {
       await installGame();
     }
@@ -132,8 +142,10 @@ function isNoSuitableJavaError(error: unknown): boolean {
 let cancelInstallHandle: () => Promise<void>;
 
 async function installGame() {
+  if (!instanceStore.currentInstance) throw "currentInstance is null";
   const installTask = new InstallTask(configStore.$state, instanceStore.currentInstance, {
     onProgress: (task) => {
+      if (!instanceStore.currentInstance) throw "currentInstance is null";
       if (task.job === Job.Prepare) {
         progressDescription.value = "准备下载";
         progressBarLoading.value = true;
@@ -179,6 +191,7 @@ async function installGame() {
 let cancelLaunchHandle: () => Promise<void>;
 
 async function launchGame() {
+  if (!instanceStore.currentInstance) throw "currentInstance is null";
   const launchTask = new LaunchTask(configStore.$state, instanceStore.currentInstance, {
     onProgress: (task) => {
       if (task.job === "Prepare") {
@@ -229,7 +242,7 @@ async function launchGame() {
     musicStore.pause();
   }
   if (
-    currentInstance.value.config.launch_config.quit_app_after_launch ??
+    currentInstance.value?.config.launch_config.quit_app_after_launch ??
     configStore.launch.quit_app_after_launch
   ) {
     appWindow.getCurrentWindow().close();
@@ -264,12 +277,20 @@ function back() {
   justify-content: center;
 
   .container {
-    > img {
+    > .avatar :deep(.avatar-image) {
       background: var(--ctp-surface0);
       border-radius: 1000px;
       padding: 2px;
       margin-bottom: 16px;
+    }
+    > .avatar.ms-account :deep(.avatar-image) {
       border: 2px solid var(--ctp-green);
+    }
+    > .avatar.ygg-account :deep(.avatar-image) {
+      border: 2px solid var(--ctp-yellow);
+    }
+    > .avatar.offline-account :deep(.avatar-image) {
+      border: 2px solid var(--ctp-red);
     }
     display: flex;
     flex-direction: column;
@@ -287,7 +308,7 @@ function back() {
       }
     }
     .progress-container {
-      width: 280px;
+      width: 340px;
       background: rgba(var(--ctp-overlay2-rgb), 0.16);
       backdrop-filter: blur(2px);
       display: flex;

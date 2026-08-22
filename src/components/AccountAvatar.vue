@@ -17,15 +17,18 @@ const defaultSkins = import.meta.glob("@/assets/images/skins/**/*.webp", {
   import: "default",
 });
 const fallbackAvatar = ref("");
+const offlineAvatarLoading = ref(false);
 
 watch(
   () => props.uuid,
   async (uuid) => {
+    offlineAvatarLoading.value = true;
     const defaultSkin = getDefaultSkin(uuid);
     const skinUrl = defaultSkins[
       `/src/assets/images/skins/${defaultSkin.modelType}/${defaultSkin.textureName}.webp`
     ] as string;
     fallbackAvatar.value = await getAvatarFromUrl(skinUrl, props.size);
+    offlineAvatarLoading.value = false;
   },
   {
     immediate: true,
@@ -33,9 +36,10 @@ watch(
 );
 
 const avatar = ref<string>("");
-const loading = ref(false);
 
 let currentTask = 0;
+
+const avatarLoading = ref(false);
 
 watch(
   () => props.skin,
@@ -45,7 +49,7 @@ watch(
       return;
     }
     const task = ++currentTask;
-    loading.value = true;
+    avatarLoading.value = true;
     try {
       const result = await getAvatarFromUrl(skin, props.size);
 
@@ -54,7 +58,7 @@ watch(
       }
     } finally {
       if (task === currentTask) {
-        loading.value = false;
+        avatarLoading.value = false;
       }
     }
   },
@@ -69,8 +73,8 @@ const ready = new Promise<void>((resolve) => {
   resolveReady = resolve;
 });
 
-watch(loading, (loading) => {
-  if (!loading) {
+watch([offlineAvatarLoading, avatarLoading], ([offlineAvatarLoading, avatarLoading]) => {
+  if (!offlineAvatarLoading && !avatarLoading) {
     resolveReady();
   }
 });
@@ -79,21 +83,23 @@ defineExpose({ ready });
 </script>
 
 <template>
-  <img
-    v-if="avatar"
-    :src="avatar"
-    class="avatar"
-    :style="{ width: `${size}px`, height: `${size}px` }" />
-  <img
-    v-else-if="fallbackAvatar"
-    :src="fallbackAvatar"
-    class="avatar"
-    :style="{ width: `${size}px`, height: `${size}px` }" />
-  <div v-else class="avatar placeholder" />
+  <div class="avatar-image">
+    <img
+      v-if="avatar"
+      :src="avatar"
+      class="avatar-image"
+      :style="{ width: `${size}px`, height: `${size}px` }" />
+    <img
+      v-else-if="fallbackAvatar"
+      :src="fallbackAvatar"
+      class="avatar-image"
+      :style="{ width: `${size}px`, height: `${size}px` }" />
+    <div v-else class="avatar-image placeholder" />
+  </div>
 </template>
 
 <style scoped>
-.avatar {
+.avatar-image {
   image-rendering: pixelated;
 }
 
