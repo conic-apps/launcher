@@ -13,6 +13,11 @@
         v-model="showVersionType"></base-select>
     </div>
     <div class="list">
+      <Transition>
+        <div class="loading" v-if="loading">
+          <BaseLoading></BaseLoading>
+        </div>
+      </Transition>
       <ScrollView>
         <BaseListItem
           v-for="(version, index) in filteredVersions"
@@ -51,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import BaseListItem from "@/components/BaseListItem.vue";
 import { getMinecrafVersionManifest, VersionManifest } from "@conic/install";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -60,20 +65,28 @@ import { useDialogStore } from "@/store/dialog";
 import BaseButton from "@/components/BaseButton.vue";
 
 import ScrollView from "@/components/ScrollView.vue";
+import BaseLoading from "@/components/BaseLoading.vue";
 const dialogStore = useDialogStore();
 
 const versions = ref<VersionManifest>();
-getMinecrafVersionManifest()
-  .then((res) => {
-    if (res) {
-      versions.value = res;
-    } else {
-      throw "get_version_list failed!";
-    }
-  })
-  .catch((err) => {
-    console.error(err);
-  });
+const loading = ref(false);
+onMounted(() => {
+  loading.value = true;
+  getMinecrafVersionManifest()
+    .then((res) => {
+      if (res) {
+        versions.value = res;
+      } else {
+        throw "get_version_list failed!";
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+});
 
 const showVersionType = ref<"releases" | "snapshot" | "old" | "special">("releases");
 
@@ -132,6 +145,18 @@ function clickAbout(version: string) {
     border: 1px solid rgba(0, 0, 0, 0.16);
     border-radius: 8px;
     position: relative;
+    .loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0000004b;
+      z-index: 1;
+    }
   }
 }
 </style>
