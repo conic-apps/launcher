@@ -328,8 +328,8 @@ fn murmur2(data: &[u8], seed: u32) -> u32 {
     const M: u32 = 0x5bd1e995;
     const R: u32 = 24;
     let mut hash = seed ^ data.len() as u32;
-    let mut chunks = data.chunks_exact(4);
-    for chunk in &mut chunks {
+    let (chunks, remainder) = data.as_chunks::<4>();
+    for chunk in chunks {
         let mut k = u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
         k = k.wrapping_mul(M);
         k ^= k >> R;
@@ -337,7 +337,6 @@ fn murmur2(data: &[u8], seed: u32) -> u32 {
         hash = hash.wrapping_mul(M);
         hash ^= k;
     }
-    let remainder = chunks.remainder();
     for (index, byte) in remainder.iter().enumerate() {
         hash ^= (*byte as u32) << (8 * index);
     }
