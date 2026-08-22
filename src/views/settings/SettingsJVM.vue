@@ -23,7 +23,10 @@
           v-if="runtimes.length === 0"
           :title="'未检测到已安装的 Java 运行环境'"
           :description="'安装游戏时 Conic Launcher 会自动从 Mojang 服务器下载所需的 Java 运行环境'"></SettingItem>
-        <SettingItem v-for="runtime in runtimes" :key="runtime.path" :description="runtime.path">
+        <SettingItem
+          v-for="runtime in runtimes"
+          :key="runtime.path"
+          :description="formatJavaPath(runtime.path)">
           <template #title>
             <p style="font-size: 13px; display: flex; gap: 4px; align-items: center">
               <span style="margin-right: 4px">Java {{ runtime.major_version }}</span>
@@ -70,6 +73,16 @@ const VENDOR_DISPLAY: Record<JavaVendor, string> = {
   dragonwell: "Alibaba Dragonwell",
   unknown: "Unknown",
 };
+
+function formatJavaPath(path: string): string {
+  if (path.startsWith("\\\\?\\UNC\\")) {
+    return "\\\\" + path.slice(8);
+  }
+  if (path.startsWith("\\\\?\\")) {
+    return path.slice(4);
+  }
+  return path;
+}
 
 function isJavaEnabled(runtime: JavaRuntime): boolean {
   return !config.disabled_java_runtime.includes(runtime.path);

@@ -15,13 +15,17 @@
             @click="currentView = 'local'">
             <AppIcon name="file-tray-full-outline"></AppIcon>
           </button>
-          <button :class="{ active: currentView === 'modrinth' }" @click="currentView = 'modrinth'">
-            <Modrinth fill="var(--ctp-green)" style="width: 24px; padding: 3px"></Modrinth>
+          <button
+            class="modrinth"
+            :class="{ active: currentView === 'modrinth' }"
+            @click="currentView = 'modrinth'">
+            <Modrinth style="width: 24px; padding: 3px"></Modrinth>
           </button>
           <button
+            class="curseforge"
             :class="{ active: currentView === 'curseforge' }"
             @click="currentView = 'curseforge'">
-            <CurseForge fill="var(--ctp-peach)" style="width: 24px"></CurseForge>
+            <CurseForge style="width: 24px"></CurseForge>
           </button>
         </div>
       </div>
@@ -57,7 +61,6 @@ const currentView = ref("local" as "local" | "modrinth" | "curseforge");
     background: var(--ctp-mantle);
     height: 52px;
     padding: 0 32px;
-    margin-bottom: 16px;
     display: flex;
     align-items: center;
     flex-shrink: 0;
@@ -67,28 +70,45 @@ const currentView = ref("local" as "local" | "modrinth" | "curseforge");
       align-items: center;
       border-radius: 4px;
       overflow: hidden;
+      gap: 4px;
       margin-left: auto;
-      border: 1px solid var(--ctp-surface1);
       button {
         appearance: none;
         border: none;
         background: none;
-        background: var(--ctp-surface0);
         width: 40px;
         height: 32px;
         display: flex;
         align-items: center;
+        border-radius: 4px;
         justify-content: center;
-        border-right: 1px solid var(--ctp-surface1);
+      }
+      button:hover {
+        background: var(--ctp-surface0);
+      }
+      button:active {
+        background: var(--ctp-surface1);
+      }
+      button.local :deep(path) {
+        stroke: rgba(var(--ctp-text-rgb), 0.7);
       }
       button.local.active :deep(path) {
-        stroke: var(--ctp-text-inverse);
+        stroke: var(--ctp-blue);
       }
-      button:last-child {
-        border-right: none;
+      button.modrinth {
+        fill: rgba(var(--ctp-text-rgb), 0.7);
+      }
+      button.active.modrinth {
+        fill: var(--ctp-green);
+      }
+      button.curseforge {
+        fill: rgba(var(--ctp-text-rgb), 0.7);
+      }
+      button.active.curseforge {
+        fill: var(--ctp-peach);
       }
       button.active {
-        background: var(--ctp-lavender);
+        background: var(--ctp-surface2);
       }
     }
   }

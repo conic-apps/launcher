@@ -10,8 +10,10 @@
       <!--   <p class="description"></p> -->
       <!-- </div> -->
       <div v-if="processing" class="processing">
-        <div class="loading">正在加载，但是没有动画</div>
-        <p class="description">这是描述</p>
+        <div class="loading">
+          <BaseLoading :size="40" :strokeWidth="5" :gap="12"></BaseLoading>
+        </div>
+        <p class="description">正在获取设备代码</p>
       </div>
       <div v-else-if="useDeviceCodeFlow" class="device-code">
         <p class="description">
@@ -39,8 +41,7 @@
             @click="refreshDeviceCode"
             >{{ isRefreshingDeviceCode ? "正在请求新代码" : "刷新设备代码"
             }}{{ refreshCountdown ? `（${refreshCountdown}）` : "" }}
-            <!-- 这里要有个小加载动画，请求代码时显示 --></BaseButton
-          >
+          </BaseButton>
         </div>
       </div>
       <div v-else class="auth-code">
@@ -99,6 +100,7 @@ import { type UnlistenFn } from "@tauri-apps/api/event";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
+import BaseLoading from "@/components/BaseLoading.vue";
 
 const accountStore = useAccountStore();
 const configStore = useConfigStore();
@@ -452,6 +454,21 @@ const transitionName = computed(() => {
   .processing {
     width: 100%;
     height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+    }
+    p.description {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
   }
 }
 
