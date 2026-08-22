@@ -27,17 +27,17 @@
           <template #icon>
             <img
               v-if="version.type == `release`"
-              style="width: 100%; height: 100%; margin-right: 8px; opacity: 0.8"
+              style="width: 100%; height: 100%; opacity: 0.8"
               src="@/assets/images/minecraft.webp"
               alt="" />
             <img
               v-else-if="version.type == `snapshot`"
-              style="width: 100%; height: 100%; margin-right: 8px"
+              style="width: 100%; height: 100%"
               src="@/assets/images/Command_Block.webp"
               alt="" />
             <img
               v-else
-              style="width: 100%; height: 100%; margin-right: 8px"
+              style="width: 100%; height: 100%"
               src="@/assets/images/Ancient_Debris.webp"
               alt="" />
           </template>

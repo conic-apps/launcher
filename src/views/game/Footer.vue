@@ -16,7 +16,7 @@
       :skin="accountSkin"
       :uuid="accountUuid"
       :size="56"
-      class="intro-hidden"
+      class="intro-hidden avatar"
       :class="{
         'ms-account': configStore.current_account?.type === 'Microsoft',
         'ygg-account': configStore.current_account?.type === 'Yggdrasil',
@@ -29,7 +29,7 @@
       :skin="SteveSkin"
       :uuid="accountUuid"
       :size="56"
-      class="unlogin intro-hidden"
+      class="unlogin intro-hidden avatar"
       @click="navigationStore.navigate('accounts')"></AccountAvatar>
     <AccountListDropdown
       v-if="configStore.current_account"
@@ -95,7 +95,7 @@ import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl, type Account } from "@conic/account";
-import { computed, onMounted, useTemplateRef } from "vue";
+import { computed, onMounted, useTemplateRef, watch } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
 import { isLibraryValid } from "@conic/multiplayer";
 import gsap from "gsap";
@@ -303,8 +303,11 @@ defineExpose({
   .intro-hidden {
     opacity: 0;
   }
-
   > .avatar {
+    z-index: 2;
+  }
+
+  > .avatar :deep(.avatar-image) {
     border-radius: 1000px;
     padding: 2px;
     background: var(--ctp-surface0);
@@ -313,19 +316,19 @@ defineExpose({
     z-index: 100;
   }
 
-  > .avatar.ms-account {
+  > .avatar.ms-account :deep(.avatar-image) {
     border: 2px solid var(--ctp-green);
   }
 
-  > .avatar.ygg-account {
+  > .avatar.ygg-account :deep(.avatar-image) {
     border: 2px solid var(--ctp-yellow);
   }
 
-  > .avatar.offline-account {
+  > .avatar.offline-account :deep(.avatar-image) {
     border: 2px solid var(--ctp-red);
   }
 
-  > .avatar.unlogin {
+  > .avatar.unlogin :deep(.avatar-image) {
     filter: grayscale(1);
     border: 2px solid var(--ctp-overlay0);
   }

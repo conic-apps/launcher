@@ -23,6 +23,15 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+/// Windows: suppresses the console window a GUI-subsystem process would
+/// otherwise allocate for every spawned console executable (`java.exe`,
+/// `reg.exe`).
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
 use log::{debug, warn};
 
 use crate::{
@@ -143,13 +152,15 @@ fn probe_java(executable: &Path, options: &ScanOptions) -> Option<JavaRuntime> {
 /// its output. Returns `None` when the executable cannot run or its output does
 /// not look like a Java runtime.
 fn run_java_probe(executable: &Path) -> Option<JavaInfoRaw> {
-    let mut child = match Command::new(executable)
+    let mut command = Command::new(executable);
+    command
         .args(["-XshowSettings:properties", "-version"])
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-    {
+        .stderr(Stdio::piped());
+    #[cfg(target_os = "windows")]
+    command.creation_flags(CREATE_NO_WINDOW);
+    let mut child = match command.spawn() {
         Ok(child) => child,
         Err(error) => {
             debug!(
@@ -413,6 +424,7 @@ fn query_windows_registry(candidates: &mut Vec<PathBuf>) {
         .args(["query", "HKLM\\SOFTWARE\\JavaSoft", "/s"])
         .stdin(Stdio::null())
         .stderr(Stdio::null())
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
     {
         Ok(output) => output,
