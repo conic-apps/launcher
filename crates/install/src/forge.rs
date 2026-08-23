@@ -8,6 +8,7 @@
 //! and exposes the `version_list` submodule for managing Forge versions.
 
 use std::{
+    cmp::Reverse,
     collections::HashMap,
     ffi::OsString,
     io::BufRead,
@@ -19,7 +20,7 @@ use config::download::DownloadConfig;
 use download::{download_concurrent, progress::DownloadState};
 use folder::{DATA_LOCATION, MinecraftLocation};
 use futures::AsyncWriteExt;
-use log::{error, info, trace};
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
 
@@ -44,13 +45,58 @@ impl ForgeVersionList {
     ///
     /// A `ForgeVersionList` containing all available Forge versions for the specified Minecraft version.
     pub async fn new() -> Result<Self> {
-        Ok(HTTP_CLIENT
+        let mut list: Self = HTTP_CLIENT
             .get("https://files.minecraftforge.net/net/minecraftforge/forge/maven-metadata.json")
             .send()
             .await?
             .json::<Self>()
-            .await?)
+            .await?;
+        for versions in list.0.values_mut() {
+            versions.sort_by_cached_key(|version| Reverse(tokenize_version(version)));
+        }
+        Ok(list)
     }
+}
+
+/// A token of a Forge version string used for natural ordering.
+///
+/// Runs of digits compare numerically, everything else lexicographically,
+/// so e.g. `36.0.10` correctly sorts after `36.0.9`.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+enum VersionToken {
+    Num(u64),
+    Text(String),
+}
+
+/// Splits a Forge version string into [`VersionToken`]s.
+///
+/// `.` and `-` act as separators; digit runs become [`VersionToken::Num`],
+/// all other runs become [`VersionToken::Text`] (branch suffixes such as
+/// `-1.7.10` or `-prerelease`).
+fn tokenize_version(version: &str) -> Vec<VersionToken> {
+    fn push(tokens: &mut Vec<VersionToken>, run: &mut String) {
+        if run.is_empty() {
+            return;
+        }
+        if run.chars().all(|c| c.is_ascii_digit()) {
+            let num: u64 = run.parse().unwrap_or(u64::MAX);
+            tokens.push(VersionToken::Num(num));
+        } else {
+            tokens.push(VersionToken::Text(run.clone()));
+        }
+        run.clear();
+    }
+
+    let mut tokens = Vec::new();
+    let mut run = String::new();
+    for c in version.chars() {
+        match c {
+            '.' | '-' => push(&mut tokens, &mut run),
+            _ => run.push(c),
+        }
+    }
+    push(&mut tokens, &mut run);
+    tokens
 }
 
 /// Forge Install Bootstrapper - by bangbang93
@@ -74,9 +120,10 @@ const FORGE_INSTALL_BOOTSTRAPPER_CONIC: &[u8] =
 ///
 /// # Arguments
 ///
-/// * `install_dir` - The directory where Forge should be installed.
+/// * `minecraft_location` - The directory where Forge should be installed.
 /// * `forge_version` - The Forge version string to install (e.g., "1.20.1-47.1.0").
 /// * `mcversion` - The Minecraft version string associated with this Forge version.
+/// * `java_path` - The Java executable used to run the installer.
 ///
 /// # Errors
 ///
@@ -89,15 +136,27 @@ pub async fn install(
     minecraft_location: &MinecraftLocation,
     forge_version: &str,
     mcversion: &str,
+    java_path: &Path,
 ) -> Result<()> {
     info!("Start downloading the forge installer");
     let installer_path = download_installer(mcversion, forge_version).await?;
     let _ = prefetch_installer_dependencies(minecraft_location, &installer_path).await;
     let bangbang93_bootstrapper_installation_result =
-        try_bangbang93_bootstrapper(&minecraft_location.root, &installer_path).await;
+        try_bangbang93_bootstrapper(&minecraft_location.root, &installer_path, java_path).await;
+    // The legacy bootstrapper renames the installed version to this id, so it
+    // must stay in sync with `Instance::get_version_id` (crates/instance).
+    let version_id = format!("{mcversion}-forge-{forge_version}");
     let conicmc_bootstrapper_installation_result =
         if let Err(Error::ForgeInstallerFailed) = bangbang93_bootstrapper_installation_result {
-            Some(try_conicmc_bootstrapper(&minecraft_location.root, &installer_path).await)
+            Some(
+                try_conicmc_bootstrapper(
+                    &minecraft_location.root,
+                    &installer_path,
+                    java_path,
+                    &version_id,
+                )
+                .await,
+            )
         } else {
             None
         };
@@ -144,6 +203,7 @@ pub async fn download_installer(mcversion: &str, forge_version: &str) -> Result<
         .error_for_status()?;
     let src = response.bytes().await?;
     file.write_all(&src).await?;
+    info!("Downloaded forge installer");
     Ok(installer_path)
 }
 
@@ -168,11 +228,15 @@ async fn prefetch_installer_dependencies(
     Ok(())
 }
 
-async fn try_bangbang93_bootstrapper(install_dir: &Path, installer_path: &Path) -> Result<()> {
+async fn try_bangbang93_bootstrapper(
+    install_dir: &Path,
+    installer_path: &Path,
+    java_path: &Path,
+) -> Result<()> {
     info!("Trying Bangbang93 forge install bootstrapper");
     let bangbang93_bootstrapper_path =
         save_bootstrapper(FORGE_INSTALL_BOOTSTRAPPER_BANGBANG93).await?;
-    let child = std::process::Command::new("/usr/bin/java")
+    let child = std::process::Command::new(java_path)
         .arg("-cp")
         .arg(generate_classpath(
             &bangbang93_bootstrapper_path,
@@ -187,10 +251,20 @@ async fn try_bangbang93_bootstrapper(install_dir: &Path, installer_path: &Path) 
     result
 }
 
-async fn try_conicmc_bootstrapper(install_dir: &Path, installer_path: &Path) -> Result<()> {
+/// Installs legacy Forge using the ConicMC bootstrapper.
+///
+/// The bootstrapper rewrites the installer's embedded `install_profile.json`
+/// so the installed version directory is named `version_id` instead of the
+/// era-specific name chosen by the official installer.
+async fn try_conicmc_bootstrapper(
+    install_dir: &Path,
+    installer_path: &Path,
+    java_path: &Path,
+    version_id: &str,
+) -> Result<()> {
     info!("Trying ConicMC forge install bootstrapper");
     let conicmc_bootstrapper_path = save_bootstrapper(FORGE_INSTALL_BOOTSTRAPPER_CONIC).await?;
-    let child = std::process::Command::new("/usr/bin/java")
+    let child = std::process::Command::new(java_path)
         .arg("-cp")
         .arg(generate_classpath(
             &conicmc_bootstrapper_path,
@@ -198,6 +272,7 @@ async fn try_conicmc_bootstrapper(install_dir: &Path, installer_path: &Path) -> 
         )?)
         .arg("app.conicmc.Bootstrap")
         .arg(install_dir)
+        .arg(version_id)
         .stdout(Stdio::piped())
         .spawn()?;
     let result = wait_child(child);
@@ -222,7 +297,7 @@ fn wait_child(mut child: Child) -> Result<()> {
             success = true;
             info!("Successfully ran the forge installer");
         } else {
-            trace!("[{pid}] {line}");
+            debug!("[{pid}] {line}");
         }
     }
     let output = child.wait_with_output()?;

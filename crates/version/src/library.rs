@@ -14,6 +14,9 @@ use crate::error::*;
 pub fn resolve_libraries(libraries: Vec<Value>) -> Result<Vec<ResolvedLibrary>> {
     let mut result = Vec::new();
     for library in libraries {
+        if library["clientreq"].as_bool() == Some(false) {
+            continue;
+        }
         let rules = library["rules"].as_array();
         if let Some(rules) = rules
             && !check_allowed(rules.clone(), &[])
@@ -37,14 +40,18 @@ fn resolve_native_libraries(library: &Value) -> Option<ResolvedLibrary> {
         OsFamily::Linux => "linux",
         OsFamily::Macos => "osx",
     };
-    if let Some(classifiers) = library["downloads"]["classifiers"].as_object()
-        && let Some(natives) = library["natives"].as_object()
-        && let Some(classifier_key) = natives.get(os_family_normalized).and_then(|v| v.as_str())
-        && let Some(classifier) = classifiers.get(classifier_key).and_then(|v| v.as_object())
+    let classifier_key = library["natives"]
+        .as_object()?
+        .get(os_family_normalized)?
+        .as_str()?
+        .replace("${arch}", "64");
+    if let Some(classifier) = library["downloads"]["classifiers"]
+        .get(&classifier_key)
+        .and_then(|v| v.as_object())
         && let Some(url) = classifier.get("url").and_then(|v| v.as_str())
         && let Some(path) = classifier.get("path").and_then(|v| v.as_str())
     {
-        Some(ResolvedLibrary::Native(LibraryDownloadInfo {
+        return Some(ResolvedLibrary::Native(LibraryDownloadInfo {
             sha1: classifier
                 .get("sha1")
                 .and_then(|sha1| sha1.as_str())
@@ -52,10 +59,29 @@ fn resolve_native_libraries(library: &Value) -> Option<ResolvedLibrary> {
             size: classifier.get("size").and_then(|v| v.as_u64()),
             url: url.to_string(),
             path: path.to_string(),
-        }))
-    } else {
-        None
+        }));
     }
+    // Legacy loader jsons carry no `downloads` metadata; the native artifact
+    // follows the plain maven layout with the selected classifier appended.
+    let coordinate = library["name"].as_str()?;
+    let coordinate: Vec<&str> = coordinate.split(":").collect();
+    if coordinate.len() != 3 {
+        return None;
+    }
+    #[allow(clippy::get_first)]
+    let package = coordinate.first()?.replace(".", "/");
+    let name = *coordinate.get(1)?;
+    let version = *coordinate.get(2)?;
+    let base_url = library["url"]
+        .as_str()
+        .unwrap_or("https://libraries.minecraft.net/");
+    let file_name = format!("{name}-{version}-{classifier_key}");
+    Some(ResolvedLibrary::Native(LibraryDownloadInfo {
+        sha1: None,
+        size: None,
+        url: format!("{base_url}{package}/{name}/{version}/{file_name}.jar"),
+        path: format!("{package}/{name}/{version}/{file_name}.jar"),
+    }))
 }
 fn resolve_common_libraries(library: &Value) -> Result<Option<ResolvedLibrary>> {
     if library["downloads"]["artifact"].is_object() {
@@ -89,14 +115,23 @@ fn resolve_modloader_libraries(library: &Value) -> Result<ResolvedLibrary> {
     let version = name.get(2).ok_or(Error::InvalidVersionJson)?;
     let name = name.get(1).ok_or(Error::InvalidVersionJson)?;
 
-    let url = library["url"]
+    let base_url = library["url"]
         .as_str()
         .unwrap_or("https://libraries.minecraft.net/");
+    // Forge publishes its own artifact on its maven repository with the
+    // "-universal" classifier, but installs it locally under the plain file
+    // name. Keep the local path plain so it matches both the installed file
+    // and the classpath, and only classify the download URL. Skip libraries
+    // whose coordinate already carries a classifier to avoid doubling it.
+    let mut artifact = format!("{name}-{version}");
+    if package == "net/minecraftforge" && *name == "forge" && !artifact.ends_with("-universal") {
+        artifact.push_str("-universal");
+    }
     let path = format!("{package}/{name}/{version}/{name}-{version}.jar");
     Ok(ResolvedLibrary::Common(LibraryDownloadInfo {
         sha1: None,
         size: None,
-        url: format!("{url}{path}"),
+        url: format!("{base_url}{package}/{name}/{version}/{artifact}.jar"),
         path,
     }))
 }

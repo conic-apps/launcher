@@ -195,6 +195,29 @@ impl ResolvedVersion {
         }
         self
     }
+
+    /// Merges the tokens of a legacy style `minecraftArguments` string into
+    /// the game arguments.
+    ///
+    /// Version jsons before `minimumLauncherVersion 21` carry their game
+    /// arguments as a single whitespace separated string instead of the
+    /// modern `arguments.game` array. Without this, loader specific options
+    /// like Forge's `--tweakClass` would be silently dropped. Options that
+    /// appear in both sets are collapsed to their last occurrence because
+    /// launchwrapper and the game read them through joptsimple single value
+    /// specs, which reject repeated options.
+    fn join_minecraft_arguments(&mut self, minecraft_arguments: &Option<String>) -> &mut Self {
+        if let Some(minecraft_arguments) = minecraft_arguments {
+            let mut combined = std::mem::take(&mut self.game_arguments);
+            combined.extend(
+                minecraft_arguments
+                    .split_whitespace()
+                    .map(std::string::ToString::to_string),
+            );
+            self.game_arguments = collapse_duplicate_options(combined);
+        }
+        self
+    }
     fn join_java_version(&mut self, java_version: Option<JavaVersion>) -> &mut Self {
         if let Some(java_version) = java_version {
             self.java_version = java_version
@@ -266,14 +289,73 @@ pub async fn resolve_version(
             .join_downloads(version.downloads)
             .join_jvm_arguments(&version.arguments, enabled_features)
             .join_game_arguments(version.arguments, enabled_features)
+            .join_minecraft_arguments(&version.minecraft_arguments)
             .join_libraries(version.libraries)?;
     }
+    // Self contained legacy loader jsons (no `inheritsFrom`) carry every
+    // library inline and reference assets only by index name. Hydrate the
+    // asset index metadata from the sibling vanilla json so asset completion
+    // keeps working; missing it is not fatal because completion skips absent
+    // indexes.
+    if resolved_version.inheritances.is_empty()
+        && resolved_version.asset_index.is_none()
+        && let Some(assets) = resolved_version.assets.clone()
+    {
+        let path = versions_folder.join(&assets).join(format!("{assets}.json"));
+        if let Ok(vanilla_json) = read_to_string(path)
+            && let Ok(vanilla_json) = serde_json::from_str::<Version>(&vanilla_json)
+            && let Some(asset_index) = vanilla_json.asset_index
+        {
+            resolved_version.asset_index = Some(asset_index);
+        }
+    }
+    let standalone = resolved_version.inheritances.is_empty();
     if resolved_version.main_class.is_none()
-        || resolved_version.asset_index.is_none()
-        || resolved_version.downloads.is_empty()
         || resolved_version.libraries.is_empty()
+        || (!standalone
+            && (resolved_version.asset_index.is_none() || resolved_version.downloads.is_empty()))
     {
         return Err(Error::InvalidVersionJson);
     }
     Ok(resolved_version)
+}
+
+/// Collapses repeated command line options into their last occurrence while
+/// keeping the position of their first appearance. Options that the game
+/// legitimately accepts multiple times, such as `--tweakClass`, accumulate
+/// all of their values instead.
+fn collapse_duplicate_options(arguments: Vec<String>) -> Vec<String> {
+    const REPEATABLE_OPTIONS: [&str; 1] = ["--tweakClass"];
+    let mut option_order: Vec<String> = Vec::new();
+    let mut option_values: HashMap<String, Vec<String>> = HashMap::new();
+    let mut leading_values: Vec<String> = Vec::new();
+    let mut current_option: Option<String> = None;
+    for argument in arguments {
+        if argument.starts_with("--") {
+            if !option_order.contains(&argument) {
+                option_order.push(argument.clone());
+            } else if !REPEATABLE_OPTIONS.contains(&argument.as_str())
+                && let Some(existing) = option_values.get_mut(&argument)
+            {
+                existing.clear();
+            }
+            option_values.entry(argument.clone()).or_default();
+            current_option = Some(argument);
+        } else if let Some(option) = &current_option {
+            option_values
+                .entry(option.clone())
+                .or_default()
+                .push(argument);
+        } else {
+            leading_values.push(argument);
+        }
+    }
+    let mut collapsed = leading_values;
+    for option in option_order {
+        collapsed.push(option.clone());
+        if let Some(values) = option_values.get(&option) {
+            collapsed.extend(values.iter().cloned());
+        }
+    }
+    collapsed
 }
