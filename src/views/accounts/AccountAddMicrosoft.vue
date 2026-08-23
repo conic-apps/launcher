@@ -312,6 +312,8 @@ onUnmounted(() => {
   unListenDeepLink();
   cancelLogin();
 });
+
+const errorOccured = ref(false);
 </script>
 
 <style lang="less" scoped>
