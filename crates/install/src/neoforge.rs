@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{io::BufRead, path::PathBuf, process::Stdio};
+use std::{io::BufRead, path::Path, path::PathBuf, process::Stdio};
 
 use folder::DATA_LOCATION;
 use futures::AsyncWriteExt;
@@ -35,23 +35,27 @@ pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
 
 /// Installs the specified version of Neoforge.
 ///
-/// Downloads the installer, runs it using the bundled Java Runtime,
+/// Downloads the installer, runs it using the given Java Runtime,
 /// and then cleans up the temporary installer file.
 ///
 /// # Arguments
 /// * `install_dir` - The target directory where the client will be installed.
 /// * `neoforge_version` - The version of Neoforge to install.
+/// * `java_path` - The Java executable used to run the installer.
 ///
 /// # Returns
 /// * `Ok(())` on successful installation.
 /// * `Err(Error)` if installation fails.
-pub async fn install(install_dir: &PathBuf, neoforge_version: &str) -> Result<()> {
+pub async fn install(
+    install_dir: &PathBuf,
+    neoforge_version: &str,
+    java_path: &Path,
+) -> Result<()> {
     info!("Start downloading the neoforge installer");
     let installer_path = download_installer(neoforge_version).await?;
-    let java = "/usr/bin/java"; // TODO: Use config file
-    info!("Running installer");
+    info!("Running installer with {}", java_path.display());
 
-    let mut command = std::process::Command::new(java)
+    let mut command = std::process::Command::new(java_path)
         .arg("-jar")
         .arg(&installer_path)
         .arg("--installClient")

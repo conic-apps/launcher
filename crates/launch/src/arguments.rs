@@ -17,6 +17,7 @@ use zip::ZipArchive;
 use config::launch::GC;
 use folder::DATA_LOCATION;
 use folder::MinecraftLocation;
+use install::vanilla::LOF4J2_CONFIGURATION;
 use instance::Instance;
 use platform::PLATFORM_INFO;
 use platform::{DELIMITER, OsFamily};
@@ -154,12 +155,23 @@ pub async fn generate_command_arguments(
     );
     let mut jvm_arguments = Vec::with_capacity(version.jvm_arguments.len() + 1);
     let log_config_path = minecraft_location.get_log_config(&version.id);
-    if let Some(client) = version.logging.get("client")
-        && async_fs::metadata(&log_config_path).await.is_ok()
-    {
-        let argument = &client.argument;
-        jvm_arguments.push(argument.replace("${path}", log_config_path.to_string_lossy().as_ref()));
+    if async_fs::metadata(&log_config_path).await.is_err() {
+        if let Some(parent) = log_config_path.parent() {
+            async_fs::create_dir_all(parent).await?;
+        }
+        async_fs::write(&log_config_path, LOF4J2_CONFIGURATION).await?;
     }
+    let log_argument = match version.logging.get("client") {
+        Some(client) => {
+            let argument = &client.argument;
+            argument.replace("${path}", log_config_path.to_string_lossy().as_ref())
+        }
+        None => format!(
+            "-Dlog4j.configurationFile={}",
+            log_config_path.to_string_lossy()
+        ),
+    };
+    jvm_arguments.push(log_argument);
     jvm_arguments.extend(version.jvm_arguments.clone());
     command_arguments.push(launch_options.extra_jvm_args.clone());
     command_arguments.extend(
@@ -202,8 +214,9 @@ pub async fn generate_command_arguments(
         version
             .asset_index
             .clone()
-            .ok_or(Error::InvalidVersionJson("assetIndex".to_string()))?
-            .id,
+            .map(|asset_index| asset_index.id)
+            .or(version.assets.clone())
+            .ok_or(Error::InvalidVersionJson("assetIndex".to_string()))?,
     );
     game_options.insert(
         "assets_index_name",

@@ -11,10 +11,7 @@ use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
 #[cfg(not(windows))]
 use std::os::unix::fs::PermissionsExt;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, path::Path};
 use version::resolve_version;
 
 use download::{DownloadTask, DownloadTaskType};
@@ -270,54 +267,13 @@ pub async fn install_for_instance(
     };
     install(
         java_runtime_info,
-        &get_installation_directory(&resolved_version.java_version.component)?,
+        &java_runtime::mojang::get_installation_directory(
+            &resolved_version.java_version.component,
+        )?,
         progress,
         config,
     )
     .await
-}
-
-pub fn get_installation_directory(java_component: &str) -> Result<PathBuf> {
-    let root = &DATA_LOCATION.runtime;
-    let platform_folder_name = match PLATFORM_INFO.os_family {
-        OsFamily::Windows => match PLATFORM_INFO.arch {
-            OsArch::X64 => "windows_x64",
-            OsArch::X86 => "windows_x86",
-            OsArch::Aarch64 => "windows_arm64",
-            _ => return Err(Error::NoSupportedJavaRuntime),
-        },
-        OsFamily::Linux => match PLATFORM_INFO.arch {
-            OsArch::X64 => "linux_amd64",
-            OsArch::X86 => "linux_i386",
-            _ => return Err(Error::NoSupportedJavaRuntime),
-        },
-        OsFamily::Macos => match PLATFORM_INFO.arch {
-            OsArch::X64 => "macos_x64",
-            OsArch::Aarch64 => "macos_arm64",
-            _ => return Err(Error::NoSupportedJavaRuntime),
-        },
-    };
-    Ok(root.join(platform_folder_name).join(java_component))
-}
-
-pub fn get_executable_path(java_component: &str) -> Result<PathBuf> {
-    let installation_directory = get_installation_directory(java_component)?;
-    match PLATFORM_INFO.os_family {
-        OsFamily::Linux => Ok(installation_directory.join("bin").join("java")),
-        OsFamily::Macos => Ok(installation_directory
-            .join("jre.bundle")
-            .join("Contents")
-            .join("Home")
-            .join("bin")
-            .join("java")),
-        OsFamily::Windows => {
-            if java_component == "minecraft-java-exe" {
-                Ok(installation_directory.join("MinecraftJava.exe"))
-            } else {
-                Ok(installation_directory.join("bin").join("javaw.exe"))
-            }
-        }
-    }
 }
 
 /// Generates a list of files to be downloaded based on the manifest.

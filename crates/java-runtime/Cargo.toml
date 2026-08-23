@@ -10,6 +10,7 @@ repository.workspace = true
 
 [dependencies]
 folder.workspace = true
+platform.workspace = true
 
 log.workspace = true
 serde.workspace = true

@@ -39,6 +39,12 @@ pub enum Error {
         #[serde_as(as = "serde_with::DisplayFromStr")]
         tauri::Error,
     ),
+
+    #[error("No suitable Java runtime found")]
+    NoSuitableJavaRuntime,
+
+    #[error("No supported Java runtime")]
+    NoSupportedJavaRuntime,
 }
 
 #[cfg(test)]

@@ -24,7 +24,9 @@
 
 pub mod error;
 pub mod models;
+pub mod mojang;
 pub mod parser;
+pub mod resolve;
 pub mod scanner;
 
 use std::{
@@ -42,6 +44,7 @@ pub use error::{Error, Result};
 pub use models::{
     JavaArch, JavaRuntime, JavaScanResult, JavaVendor, JavaVersionGroup, ScanOptions,
 };
+pub use resolve::{ResolveJavaOptions, ResolvedJava, resolve_java_executable};
 pub use scanner::{scan_java_runtimes, scan_java_runtimes_with};
 
 /// How long a scan result is reused before the next `cmd_scan_java` rescans.
