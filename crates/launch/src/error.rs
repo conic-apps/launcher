@@ -130,6 +130,7 @@ impl From<java_runtime::Error> for Error {
     fn from(value: java_runtime::Error) -> Self {
         match value {
             java_runtime::Error::Io(error) => Self::Io(error),
+            java_runtime::Error::NoSuitableJavaRuntime => Self::NoSuitableJavaRuntime,
             _ => Self::Other,
         }
     }

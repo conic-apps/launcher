@@ -16,6 +16,7 @@ instance.workspace = true
 download.workspace = true
 platform.workspace = true
 version.workspace = true
+java-runtime.workspace = true
 
 async-fs.workspace = true
 log.workspace = true

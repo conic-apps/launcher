@@ -240,7 +240,7 @@ pub async fn generate_assets_downloads(
     Ok(assets)
 }
 
-const LOF4J2_CONFIGURATION: &[u8] = include_bytes!("./log4j2.xml");
+pub const LOF4J2_CONFIGURATION: &[u8] = include_bytes!("./log4j2.xml");
 
 /// Override the `log4j2.xml` configuration file for the given version.
 ///

@@ -5,6 +5,7 @@
 // TODO: Support Optifine auto install
 
 use std::{
+    path::Path,
     str::FromStr,
     sync::{
         Arc, Mutex,
@@ -29,7 +30,7 @@ use download::download_concurrent;
 use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::{Instance, InstanceRuntime, ModLoaderType};
-use version::Version;
+use version::{Version, resolve_version};
 
 use crate::{
     forge::ForgeVersionList, neoforge::get_neoforge_version_list, vanilla::VersionManifest,
@@ -292,7 +293,8 @@ pub async fn install(
             *status = InstallEvent::InstallModLoader;
         }
         // TODO: mod loader installation progress
-        install_mod_loader(runtime).await?;
+        let installer_java = resolve_installer_java(&config, &instance).await?;
+        install_mod_loader(runtime, installer_java.path.as_path()).await?;
     };
 
     configure_first_launch_language(config, &instance).await;
@@ -321,16 +323,41 @@ fn print_runtime_info(runtime: &InstanceRuntime) {
     };
 }
 
+/// Resolves the Java executable used to run mod loader installers, applying the
+/// same selection logic as game launching (see `java_runtime::resolve_java_executable`).
+async fn resolve_installer_java(
+    config: &Config,
+    instance: &Instance,
+) -> Result<java_runtime::ResolvedJava> {
+    let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
+    let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
+    let raw_version_json = async_fs::read_to_string(version_json_path).await?;
+    let unresolved_version = serde_json::from_str::<Version>(&raw_version_json)?;
+    let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[]).await?;
+    Ok(
+        java_runtime::resolve_java_executable(&java_runtime::ResolveJavaOptions {
+            instance_java_path: instance.config.launch_config.java_path.clone(),
+            prefer_mojang_java: config.prefer_mojang_java,
+            disabled_java_runtimes: config.disabled_java_runtime.clone(),
+            required_major_version: resolved_version.java_version.major_version as u32,
+            mojang_component: resolved_version.java_version.component.clone(),
+        })
+        .await?,
+    )
+}
+
 /// Installs the specified mod loader for the provided runtime configuration.
 ///
 /// # Arguments
 /// * `runtime` - Instance runtime configuration containing loader type/version.
+/// * `java_path` - The Java executable used to run Java-based installers
+///   (Forge and NeoForge).
 ///
 /// # Errors
 /// Returns an error if:
 /// - The loader type/version is missing or malformed.
 /// - The underlying installation function fails.
-pub async fn install_mod_loader(runtime: &InstanceRuntime) -> Result<()> {
+pub async fn install_mod_loader(runtime: &InstanceRuntime, java_path: &Path) -> Result<()> {
     let mod_loader_type = runtime
         .mod_loader_type
         .as_ref()
@@ -361,11 +388,12 @@ pub async fn install_mod_loader(runtime: &InstanceRuntime) -> Result<()> {
                 &MinecraftLocation::new(&DATA_LOCATION.root),
                 mod_loader_version,
                 &runtime.minecraft,
+                java_path,
             )
             .await?
         }
         ModLoaderType::Neoforge => {
-            neoforge::install(&DATA_LOCATION.root, mod_loader_version).await?
+            neoforge::install(&DATA_LOCATION.root, mod_loader_version, java_path).await?
         }
     }
 

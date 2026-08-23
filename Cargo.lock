@@ -2267,6 +2267,7 @@ dependencies = [
  "folder",
  "futures",
  "instance",
+ "java-runtime",
  "log",
  "platform",
  "reqwest",
@@ -2342,6 +2343,7 @@ version = "0.0.0"
 dependencies = [
  "folder",
  "log",
+ "platform",
  "serde",
  "serde_json",
  "serde_with",
