@@ -309,6 +309,20 @@ main.main {
   left: 8px;
 }
 
+.loading-demo {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+
+  svg {
+    filter: drop-shadow(0 2px 8px rgba(var(--ctp-mauve-rgb), 0.45));
+  }
+}
+
 .title-bar-avatar {
   position: relative;
   margin-left: 8px;

@@ -5,7 +5,10 @@
 <template>
   <div class="add-yggdrasil-account-container">
     <div v-if="processing" class="processing">
-      <p class="description">正在验证帐户...</p>
+      <div class="loading">
+        <BaseLoading :size="40" :strokeWidth="5" :gap="12"></BaseLoading>
+      </div>
+      <p class="description">正在验证帐户</p>
     </div>
     <div v-else-if="errorMessage" class="error-state">
       <p class="description error">{{ errorMessage }}</p>
@@ -15,33 +18,36 @@
     </div>
     <template v-else-if="shouldChooseProfile">
       <p class="description">该帐户拥有多个角色，请选择要添加的角色</p>
-      <ul class="profile-list">
-        <li
-          v-for="profile in availableProfiles"
-          :key="profile.id"
-          class="profile-item"
-          :class="{
-            selected: selectedProfileIds.has(profile.id),
-            disabled: profileDisabled(profile),
-          }"
-          @click="toggleProfile(profile.id)">
-          <BaseCheckbox
-            :model-value="selectedProfileIds.has(profile.id)"
-            @click.stop
-            @update:model-value="toggleProfile(profile.id)" />
-          <AccountAvatar
-            :skin="yggdrasilGetSkinUrl(profile)"
-            :size="32"
-            :uuid="profile.id"
-            class="profile-avatar" />
-          <p style="display: flex; flex-direction: column">
-            <span class="profile-name">{{ profile.name }}</span>
-            <span class="profile-description" v-if="profileDisabled(profile)">
-              此角色已经添加过了
-            </span>
-          </p>
-        </li>
-      </ul>
+      <div class="profile-list-wrapper">
+        <ScrollView>
+          <ul class="profile-list">
+            <li
+              v-for="profile in availableProfiles"
+              :key="profile.id"
+              class="profile-item"
+              :class="{
+                selected: selectedProfileIds.has(profile.id),
+                disabled: profileDisabled(profile),
+              }"
+              @click="toggleProfile(profile.id)">
+              <BaseCheckbox
+                :model-value="selectedProfileIds.has(profile.id)"
+                @click.stop
+                @update:model-value="toggleProfile(profile.id)" />
+              <AccountAvatar
+                :skin="yggdrasilGetSkinUrl(profile)"
+                :size="28"
+                :uuid="profile.id"
+                class="profile-avatar" />
+              <p style="display: flex; flex-direction: column">
+                <span class="profile-name">{{
+                  profile.name + (profileDisabled(profile) ? " (已添加)" : "")
+                }}</span>
+              </p>
+            </li>
+          </ul>
+        </ScrollView>
+      </div>
       <div class="buttons">
         <BaseButton @click="shouldChooseProfile = false"> 返回 </BaseButton>
         <BaseButton
@@ -107,6 +113,8 @@ import {
 } from "@conic/account";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useAccountStore } from "@/store/account";
+import BaseLoading from "@/components/BaseLoading.vue";
+import ScrollView from "@/components/ScrollView.vue";
 
 const emit = defineEmits(["switch-component-manage"]);
 
@@ -266,7 +274,7 @@ function sameApiRoot(a: string, b: string): boolean {
 <style lang="less" scoped>
 .add-yggdrasil-account-container {
   width: 100%;
-  height: calc(100% - 32px);
+  height: calc(100% - 42px);
   display: flex;
   flex-direction: column;
 
@@ -324,6 +332,9 @@ function sameApiRoot(a: string, b: string): boolean {
     align-items: center;
     justify-content: center;
     height: 120px;
+    flex-direction: column;
+    gap: 8px;
+    height: 180px;
   }
 
   .error-state {
@@ -340,12 +351,16 @@ function sameApiRoot(a: string, b: string): boolean {
     width: 100px;
   }
 
+  .profile-list-wrapper {
+    height: calc(100% - 64px);
+    position: relative;
+  }
+
   .profile-list {
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    height: calc(100% - 16px);
     overflow-y: auto;
     padding: 2px 4px;
   }
@@ -372,19 +387,10 @@ function sameApiRoot(a: string, b: string): boolean {
       background: var(--ctp-overlay0);
     }
 
-    .profile-avatar {
-      border-radius: 6px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-
     .profile-name {
       font-size: 14px;
       font-weight: 500;
       margin-bottom: 2px;
-    }
-    .profile-description {
-      font-size: 12px;
     }
     &.disabled {
       pointer-events: none;
