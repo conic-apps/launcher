@@ -5,11 +5,12 @@
 <template>
   <div class="add-microsoft-account-container">
     <Transition :name="transitionName" mode="out-in">
-      <div v-if="errorOccured" class="error">message</div>
+      <div v-if="errorOccured" class="error">登录失败：{{ errorText }}</div>
       <div v-else-if="processing" class="processing">
         <div class="loading">
           <BaseLoading :size="40" :strokeWidth="5" :gap="12"></BaseLoading>
         </div>
+        <p class="description">{{ progressDescription }}</p>
       </div>
       <div v-else-if="useDeviceCodeFlow" class="device-code">
         <p class="description">
@@ -30,13 +31,7 @@
           </div>
         </div>
         <div class="buttons">
-          <BaseButton @click="dialogStore.accountAdd.visible = false">{{ "取消" }}</BaseButton>
-          <!-- <BaseButton -->
-          <!--   :disabled="expiresIn > totalExpiresIn - 60 || expiresIn < 60 || isRefreshingDeviceCode" -->
-          <!--   @click="refreshDeviceCode" -->
-          <!--   >{{ isRefreshingDeviceCode ? "正在请求新代码" : "刷新设备代码" -->
-          <!--   }}{{ refreshCountdown ? `（${refreshCountdown}）` : "" }} -->
-          <!-- </BaseButton> -->
+          <BaseButton @click="closeDialog">{{ "取消" }}</BaseButton>
         </div>
       </div>
       <div v-else class="auth-code">
@@ -64,7 +59,7 @@
           </div>
         </div>
         <div class="buttons">
-          <BaseButton @click="dialogStore.accountAdd.visible = false">{{ "取消" }}</BaseButton>
+          <BaseButton @click="closeDialog">{{ "取消" }}</BaseButton>
           <BaseButton
             style="background: var(--ctp-blue); color: var(--ctp-text-inverse)"
             @click="openUrl(AUTH_CODE_LOGIN_URL)"
@@ -79,13 +74,9 @@
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
 import BaseButton from "@/components/BaseButton.vue";
-import {
-  requestDeviceCode,
-  pollDeviceCode,
-  microsoftAccessTokenAuthFlow,
-  addMicrosoftAccount,
-  redeemAccessToken,
-} from "@conic/account";
+import BaseLoading from "@/components/BaseLoading.vue";
+import { MicrosoftLoginTask } from "@conic/account";
+import type { LoginProgress } from "@conic/account";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -94,7 +85,6 @@ import { type UnlistenFn } from "@tauri-apps/api/event";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
-import BaseLoading from "@/components/BaseLoading.vue";
 import { useDialogStore } from "@/store/dialog";
 
 const accountStore = useAccountStore();
@@ -115,7 +105,6 @@ const copied = ref(false);
 const copiedLink = ref(false);
 const copiedCode = ref(false);
 const expiresIn = ref(0);
-const totalExpiresIn = ref(0);
 let countdownTimer: number;
 
 const emit = defineEmits(["switch-component-manage"]);
@@ -128,10 +117,151 @@ const formatCountdown = computed(() => {
   return m > 0 ? `${m} 分 ${String(s).padStart(2, "0")} 秒` : `${s} 秒`;
 });
 
-const refreshCountdown = computed(() => {
-  const remaining = expiresIn.value - (totalExpiresIn.value - 60);
-  if (remaining <= 0) return "";
-  return `${remaining}`;
+const transitionName = computed(() => {
+  if (processing.value || errorOccured.value) {
+    return "slide-left";
+  }
+  return useDeviceCodeFlow.value ? "slide-left" : "slide-right";
+});
+
+const processing = ref(false);
+const progressDescription = ref("正在准备登录");
+const errorOccured = ref(false);
+const errorText = ref("");
+
+interface RunningLogin {
+  task: MicrosoftLoginTask;
+  deviceFlow: boolean;
+}
+let runningLogin: RunningLogin | null = null;
+
+function describeProgress(progress: LoginProgress): string | undefined {
+  switch (progress.job) {
+    case "Prepare":
+      return "正在准备登录";
+    case "RequestDeviceCode":
+      return "正在请求设备代码";
+    case "RedeemAccessToken":
+      return "正在获取访问令牌";
+    case "XboxAuthenticate":
+      return "正在登录 Xbox";
+    case "XstsAuthenticate":
+      return "正在验证 XSTS";
+    case "MinecraftAuthenticate":
+      return "正在获取 Minecraft 访问令牌";
+    case "GetProfile":
+      return "正在获取游戏档案";
+    case "SaveAccount":
+      return "正在保存帐户信息";
+    default:
+      return undefined;
+  }
+}
+
+function startCountdown() {
+  clearInterval(countdownTimer);
+  countdownTimer = window.setInterval(() => {
+    if (expiresIn.value > 0) {
+      expiresIn.value--;
+    } else {
+      clearInterval(countdownTimer);
+    }
+  }, 1000);
+}
+
+function stopCountdown() {
+  clearInterval(countdownTimer);
+}
+
+function handleProgress(progress: LoginProgress) {
+  if (progress.job === "WaitingForAuthorization") {
+    const detail = progress.progress;
+    if (detail.user_code !== userCode.value || detail.verification_uri !== verificationUri.value) {
+      verificationUri.value = detail.verification_uri;
+      userCode.value = detail.user_code;
+      expiresIn.value = detail.expires_in;
+      startCountdown();
+      writeText(detail.user_code);
+    }
+    useDeviceCodeFlow.value = true;
+    processing.value = false;
+    return;
+  }
+  const description = describeProgress(progress);
+  if (description) {
+    processing.value = true;
+    progressDescription.value = description;
+  }
+}
+
+function handleError(error: unknown, deviceFlow: boolean) {
+  const kind = (error as { kind?: string } | null)?.kind;
+  if (kind === "Aborted") {
+    // 用户主动取消了登录，静默返回之前的界面。
+  } else if (kind === "DeviceCodeExpired" && deviceFlow && useDeviceCodeFlow.value) {
+    // 设备代码过期后自动重新申请新的设备代码。
+    startLogin(true);
+    return;
+  } else {
+    errorText.value =
+      typeof (error as { message?: unknown })?.message === "string"
+        ? (error as { message: string }).message
+        : String(error);
+    errorOccured.value = true;
+  }
+  stopCountdown();
+  processing.value = false;
+}
+
+async function startLogin(deviceFlow: boolean, code?: string) {
+  if (runningLogin) return;
+  errorOccured.value = false;
+  processing.value = true;
+  progressDescription.value = "正在准备登录";
+  const task = new MicrosoftLoginTask(code, { onProgress: handleProgress });
+  runningLogin = { task, deviceFlow };
+  try {
+    const account = await task.start();
+    if (!configStore.current_account) {
+      configStore.current_account = { type: "Microsoft", data: account };
+    }
+    emit("switch-component-manage");
+    await accountStore.reloadFromFile();
+    processing.value = false;
+  } catch (error) {
+    console.error(error);
+    if (runningLogin?.task === task) runningLogin = null;
+    handleError(error, deviceFlow);
+  } finally {
+    if (runningLogin?.task === task) runningLogin = null;
+  }
+}
+
+async function cancelLogin() {
+  const current = runningLogin;
+  runningLogin = null;
+  if (current) {
+    try {
+      await current.task.cancel();
+    } catch {}
+  }
+  stopCountdown();
+  processing.value = false;
+}
+
+function closeDialog() {
+  cancelLogin();
+  dialogStore.accountAdd.visible = false;
+}
+
+watch(useDeviceCodeFlow, (value) => {
+  if (value) {
+    if (!verificationUri.value && !userCode.value && !runningLogin) {
+      startLogin(true);
+    }
+  } else if (runningLogin?.deviceFlow) {
+    cancelLogin();
+  }
 });
 
 async function copyLinkText() {
@@ -157,166 +287,23 @@ async function copyLink() {
     copied.value = false;
   }, 1500);
 }
-let pollTimer: number;
-
-watch(useDeviceCodeFlow, async (value) => {
-  if (!value || (verificationUri.value && userCode.value)) {
-    return;
-  }
-  processing.value = true;
-  const deviceCodeResponse = await requestDeviceCode();
-  verificationUri.value = deviceCodeResponse.verification_uri;
-  userCode.value = deviceCodeResponse.user_code;
-  expiresIn.value = deviceCodeResponse.expires_in;
-  totalExpiresIn.value = deviceCodeResponse.expires_in;
-  writeText(deviceCodeResponse.user_code);
-  processing.value = false;
-  clearInterval(countdownTimer);
-  countdownTimer = window.setInterval(() => {
-    if (expiresIn.value > 0) {
-      expiresIn.value--;
-    } else {
-      clearInterval(countdownTimer);
-    }
-  }, 1000);
-  pollTimer = setInterval(async () => {
-    const pollResult = await pollDeviceCode(deviceCodeResponse.device_code);
-    switch (pollResult.status) {
-      case "authorization_pending":
-      case "slow_down":
-        break;
-      case "success":
-        clearInterval(pollTimer);
-        clearInterval(countdownTimer);
-        verificationUri.value = "";
-        userCode.value = "";
-        processing.value = true;
-        const account = await microsoftAccessTokenAuthFlow(
-          pollResult.access_token!,
-          pollResult.refresh_token!,
-        );
-        await addMicrosoftAccount(account);
-        if (!configStore.current_account) {
-          configStore.current_account = { type: "Microsoft", data: account };
-        }
-        emit("switch-component-manage");
-        await accountStore.reloadFromFile();
-        processing.value = false;
-        break;
-      case "authorization_declined":
-      case "bad_verification_code":
-        clearInterval(pollTimer);
-        clearInterval(countdownTimer);
-        verificationUri.value = "";
-        userCode.value = "";
-        break;
-      case "expired_token":
-        refreshDeviceCode();
-        break;
-    }
-  }, deviceCodeResponse.interval * 1000);
-});
-
-const isRefreshingDeviceCode = ref(false);
-
-async function refreshDeviceCode() {
-  isRefreshingDeviceCode.value = true;
-  clearInterval(pollTimer);
-  clearInterval(countdownTimer);
-  const deviceCodeResponse = await requestDeviceCode();
-  verificationUri.value = deviceCodeResponse.verification_uri;
-  userCode.value = deviceCodeResponse.user_code;
-  expiresIn.value = deviceCodeResponse.expires_in;
-  totalExpiresIn.value = deviceCodeResponse.expires_in;
-  writeText(deviceCodeResponse.user_code);
-  countdownTimer = window.setInterval(() => {
-    if (expiresIn.value > 0) {
-      expiresIn.value--;
-    } else {
-      clearInterval(countdownTimer);
-    }
-  }, 1000);
-  pollTimer = setInterval(async () => {
-    const pollResult = await pollDeviceCode(deviceCodeResponse.device_code);
-    switch (pollResult.status) {
-      case "authorization_pending":
-      case "slow_down":
-        break;
-      case "success":
-        clearInterval(pollTimer);
-        clearInterval(countdownTimer);
-        verificationUri.value = "";
-        userCode.value = "";
-        processing.value = true;
-        const account = await microsoftAccessTokenAuthFlow(
-          pollResult.access_token!,
-          pollResult.refresh_token!,
-        );
-        await addMicrosoftAccount(account);
-        if (!configStore.current_account) {
-          configStore.current_account = { type: "Microsoft", data: account };
-        }
-        emit("switch-component-manage");
-        await accountStore.reloadFromFile();
-        processing.value = false;
-        break;
-      case "authorization_declined":
-      case "bad_verification_code":
-        clearInterval(pollTimer);
-        clearInterval(countdownTimer);
-        verificationUri.value = "";
-        userCode.value = "";
-        break;
-      case "expired_token":
-        refreshDeviceCode();
-        break;
-    }
-  }, deviceCodeResponse.interval * 1000);
-  isRefreshingDeviceCode.value = false;
-}
 
 let unListenDeepLink: UnlistenFn = () => {};
 onMounted(async () => {
   unListenDeepLink = await onOpenUrl(([url]) => {
-    if (!url) return;
+    if (!url || runningLogin) return;
     const u = new URL(url);
     const code = u.searchParams.get("code");
     if (code) {
-      processing.value = true;
-      authCodeFlow(code)
-        .then(() => {
-          emit("switch-component-manage");
-          processing.value = false;
-          accountStore.reloadFromFile();
-        })
-        .catch((e) => {
-          console.error(e);
-        });
+      startLogin(false, code);
     }
   });
 });
 
-async function authCodeFlow(code: string) {
-  const { access_token: accessToken, refresh_token: refreshToken } = await redeemAccessToken(code);
-  const account = await microsoftAccessTokenAuthFlow(accessToken, refreshToken);
-  await addMicrosoftAccount(account);
-}
-
 onUnmounted(() => {
   unListenDeepLink();
-  clearInterval(pollTimer);
-  clearInterval(countdownTimer);
+  cancelLogin();
 });
-
-const processing = ref(false);
-const transitionName = computed(() => {
-  if (processing.value || errorOccured.value) {
-    return "slide-left";
-  }
-  return useDeviceCodeFlow.value ? "slide-left" : "slide-right";
-});
-
-const errorOccured = ref(false);
 </script>
 
 <style lang="less" scoped>

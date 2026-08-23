@@ -2,7 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{ffi::OsStr, fs, io::Read, path::Path};
+use std::{
+    ffi::OsStr,
+    fs,
+    io::Read,
+    path::{Path, PathBuf},
+};
 
 use base64::{Engine, engine::general_purpose};
 use folder::DATA_LOCATION;
@@ -17,21 +22,37 @@ pub struct Resourcepack {
     pub metadata: Value,
     pub icon: Option<String>,
     pub name: String,
+    pub path: PathBuf,
 }
 
 fn get_metadata<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<Value> {
     let path = Path::new(s).to_path_buf();
-    let metadata = if path.is_dir() {
-        fs::read_to_string(path.join("pack.mcmeta"))?
+    let data = if path.is_dir() {
+        let mut file = fs::File::open(path.join("pack.mcmeta"))?;
+        let mut buf = vec![];
+        file.read_to_end(&mut buf)?;
+        buf
     } else {
         let file = fs::File::open(path)?;
         let mut zip_archive = ZipArchive::new(file)?;
-        let mut zip_file = zip_archive.by_name("pack.metadata")?;
-        let mut buf = String::new();
-        zip_file.read_to_string(&mut buf)?;
+        let mut zip_file = zip_archive.by_name("pack.mcmeta")?;
+        let mut buf = Vec::new();
+        zip_file.read_to_end(&mut buf)?;
+        while let Some(&last) = buf.last() {
+            if last == 0 || last.is_ascii_whitespace() {
+                buf.pop();
+            } else {
+                break;
+            }
+        }
         buf
     };
-    Ok(serde_json::from_str(&metadata)?)
+    let slice = if data.starts_with(&[0xEF, 0xBB, 0xBF]) {
+        &data[3..]
+    } else {
+        &data[..]
+    };
+    Ok(serde_json::from_slice(slice)?)
 }
 
 fn get_icon<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<String> {
@@ -53,7 +74,7 @@ fn get_icon<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<String> {
 }
 
 pub fn parse_resourcepack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<Resourcepack> {
-    let path = Path::new(s);
+    let path = PathBuf::from(s);
     Ok(Resourcepack {
         metadata: get_metadata(&s)?,
         icon: get_icon(&s).ok(),
@@ -62,6 +83,7 @@ pub fn parse_resourcepack<S: AsRef<OsStr> + ?Sized>(s: &S) -> Result<Resourcepac
             .ok_or(Error::BadPack)?
             .display()
             .to_string(),
+        path,
     })
 }
 

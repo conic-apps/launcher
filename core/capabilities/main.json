@@ -42,6 +42,8 @@
     "account:allow-cmd-microsoft-refresh-account",
     "account:allow-cmd-microsoft-request-device-code",
     "account:allow-cmd-microsoft-poll-device-code",
+    "account:allow-cmd-spawn-microsoft-login-task",
+    "account:allow-cmd-cancel-microsoft-login-task",
     "account:allow-cmd-offline-add-account",
     "account:allow-cmd-offline-delete-account",
     "account:allow-cmd-offline-update-account",

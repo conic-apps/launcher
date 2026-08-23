@@ -15,6 +15,9 @@ pub type Result<T> = result::Result<T, Error>;
 #[derive(Debug, Error, Serialize)]
 #[serde(tag = "kind", content = "message")]
 pub enum Error {
+    #[error("Another login task is already running")]
+    LoginInProgress,
+
     #[error(transparent)]
     Io(
         #[from]
@@ -76,5 +79,21 @@ pub enum Error {
         #[from]
         #[serde_as(as = "serde_with::DisplayFromStr")]
         base64::DecodeError,
+    ),
+
+    #[error("The device code has expired, please try again")]
+    DeviceCodeExpired,
+
+    #[error("The authorization was declined")]
+    AuthorizationDeclined,
+
+    #[error("Invalid device code, please try again")]
+    BadVerificationCode,
+
+    #[error(transparent)]
+    Aborted(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        tokio::task::JoinError,
     ),
 }

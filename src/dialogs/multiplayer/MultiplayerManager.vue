@@ -38,7 +38,10 @@
         </p>
         <div style="display: flex" class="host-scan-progress">
           <div style="width: 100%">
-            <p>扫描局域网世界...</p>
+            <p class="scan-status">
+              <span>扫描局域网世界...</span>
+              <span v-if="scanning">{{ scanRemaining }}s</span>
+            </p>
             <BaseProgress :value="0" :max="1" :loading="true"></BaseProgress>
           </div>
           <BaseButton
@@ -192,7 +195,7 @@ import { useConfigStore } from "@/store/config";
 import AppIcon from "@/components/AppIcon.vue";
 import BaseProgress from "@/components/BaseProgress.vue";
 import BaseButton from "@/components/BaseButton.vue";
-import { computed, ref, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import BaseInput from "@/components/BaseInput.vue";
 import { isRoomCodeValid } from "@conic/multiplayer";
@@ -277,6 +280,38 @@ watch(
   },
   { immediate: true },
 );
+
+const SCAN_TOTAL_SECONDS = 60;
+const scanRemaining = ref(SCAN_TOTAL_SECONDS);
+const scanning = computed(() => multiplayerStore.state === "host-scanning");
+let scanTimer: ReturnType<typeof setInterval> | null = null;
+
+function stopScanCountdown() {
+  if (scanTimer !== null) {
+    clearInterval(scanTimer);
+    scanTimer = null;
+  }
+}
+
+watch(
+  scanning,
+  (active) => {
+    stopScanCountdown();
+    if (active) {
+      scanRemaining.value = SCAN_TOTAL_SECONDS;
+      scanTimer = setInterval(() => {
+        scanRemaining.value -= 1;
+        if (scanRemaining.value <= 0) {
+          scanRemaining.value = 0;
+          stopScanCountdown();
+        }
+      }, 1000);
+    }
+  },
+  { immediate: true },
+);
+
+onUnmounted(stopScanCountdown);
 
 async function copyCode() {
   await writeText(multiplayerStore.roomCode);
@@ -406,6 +441,7 @@ async function leaveRoom() {
     border: 1px solid var(--ctp-red);
     border-radius: 8px;
     background: rgba(var(--ctp-red-rgb), 0.15);
+    margin-bottom: 0;
   }
   div.buttons {
     margin-top: 16px;
@@ -435,6 +471,10 @@ async function leaveRoom() {
     p {
       font-size: 14px;
       margin-bottom: 10px;
+    }
+    p.scan-status {
+      display: flex;
+      justify-content: space-between;
     }
   }
   .group-actions {

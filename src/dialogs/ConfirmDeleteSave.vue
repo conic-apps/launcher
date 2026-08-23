@@ -11,7 +11,7 @@
           <p style="font-size: 17px">
             是否确认删除存档「{{ dialogStore.confirmDeleteSave.levelName }}」？
           </p>
-          <p style="font-size: 12px; margin-top: 8px">存档文件夹将永久删除，最后的反悔机会</p>
+          <p style="font-size: 12px; margin-top: 8px">存档文件夹将永久删除，这是最后的反悔机会</p>
         </div>
       </div>
       <div class="buttons">
