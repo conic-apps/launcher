@@ -117,7 +117,11 @@
           ><span class="count">{{ (contentStore.gameContent.resourcepacks ?? []).length }} 个</span>
         </div>
       </div>
-      <div @click="useShowContent().value.screenshots = true" ref="screenshots" style="opacity: 0">
+      <div
+        @click="useShowContent().value.screenshots = true"
+        ref="screenshots"
+        style="opacity: 0"
+        :class="{ disabled: !(contentStore.gameContent.screenshots ?? []).length }">
         <AppIcon name="images-outline" />
         <div>
           <span class="type">截图</span
@@ -438,6 +442,7 @@ defineExpose({ playIntro });
     width: fit-content;
     padding: 4px 4px;
     border-radius: 12px;
+    gap: 4px;
 
     > div {
       display: flex;
@@ -448,12 +453,18 @@ defineExpose({ playIntro });
 
       &:hover {
         background: var(--ctp-surface0);
+        transition: none;
       }
 
       &:active {
         background: var(--ctp-surface1);
         transform: scale(0.95);
       }
+    }
+    > div.disabled,
+    > div.disabled * {
+      pointer-events: none;
+      opacity: 0.6;
     }
     > div > div {
       font-size: 12px;

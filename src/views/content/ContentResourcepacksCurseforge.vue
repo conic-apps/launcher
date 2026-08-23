@@ -22,7 +22,7 @@
           <div class="filter-chips" :class="{ paged: filter.key === 'version' }">
             <template v-if="filter.key === 'version'">
               <button class="chip-pager" :disabled="versionPage <= 0" @click="versionPagePrev()">
-                ‹
+                <AppIcon name="chevron-back" :size="12"></AppIcon>
               </button>
               <div class="filter-chips-track" :ref="setVersionTrackRef">
                 <div class="filter-chips-track-inner" :style="versionTrackStyle">
@@ -40,7 +40,7 @@
                 class="chip-pager"
                 :disabled="versionPage >= versionPageCount - 1"
                 @click="versionPageNext()">
-                ›
+                <AppIcon name="chevron-forward" :size="12"></AppIcon>
               </button>
             </template>
             <template v-else>
@@ -58,12 +58,10 @@
       </div>
     </div>
 
-    <p class="result-count" v-if="curseForgeSearchResult">
-      {{ `共 ${curseForgeSearchResult.pagination?.totalCount ?? 0} 个资源包` }}
-    </p>
-
     <div class="search-status" v-if="curseForgeSearchResult === null || curseForgeLoading">
-      <span>{{ "正在搜索..." }}</span>
+      <div class="loading">
+        <BaseLoading :size="32" :gap="8" :strokeWidth="4"></BaseLoading>
+      </div>
     </div>
     <template v-else>
       <div class="mods-list" v-if="curseForgeSearchResult.data.length > 0">
@@ -91,12 +89,12 @@
               mod.latestFilesIndexes[0].gameVersion
             }}</span>
           </div>
-          <div class="actions">
-            <button class="open-folder">
-              <AppIcon name="folder" :size="14"></AppIcon>
+          <div class="actions" @click.stop>
+            <button class="heart">
+              <AppIcon name="heart-outline" :size="14"></AppIcon>
             </button>
-            <button class="delete">
-              <AppIcon name="trash" :size="14"></AppIcon>
+            <button class="link">
+              <AppIcon name="link" :size="14" @click.stop="openUrl(mod.links.websiteUrl)"></AppIcon>
             </button>
           </div>
         </div>
@@ -107,12 +105,11 @@
     </template>
 
     <div class="pagination" v-if="curseForgeTotalPages > 1">
-      <button class="page-nav" :disabled="curseForgePage === 1" @click="goToPage(1)">«</button>
       <button
         class="page-nav"
         :disabled="curseForgePage === 1"
         @click="goToPage(curseForgePage - 1)">
-        ‹
+        <AppIcon name="chevron-back" :size="12"></AppIcon>
       </button>
       <template v-for="(page, index) in paginationPages" :key="index">
         <button
@@ -128,13 +125,7 @@
         class="page-nav"
         :disabled="curseForgePage === curseForgeTotalPages"
         @click="goToPage(curseForgePage + 1)">
-        ›
-      </button>
-      <button
-        class="page-nav"
-        :disabled="curseForgePage === curseForgeTotalPages"
-        @click="goToPage(curseForgeTotalPages)">
-        »
+        <AppIcon name="chevron-forward" :size="12"></AppIcon>
       </button>
     </div>
   </div>
@@ -152,6 +143,9 @@ import {
 } from "@conic/curseforge";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
 import { useShowContentDetails } from "./useContent";
+import BaseLoading from "@/components/BaseLoading.vue";
+import AppIcon from "@/components/AppIcon.vue";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 const instanceStore = useInstanceStore();
 const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
@@ -305,16 +299,26 @@ const paginationPages = computed(() => {
   const total = curseForgeTotalPages.value;
   const current = curseForgePage.value;
   const pages: (number | "…")[] = [];
-  if (total <= 7) {
+  if (total <= 15) {
     for (let page = 1; page <= total; page++) pages.push(page);
     return pages;
   }
-  pages.push(1);
-  if (current > 3) pages.push("…");
-  for (let page = Math.max(2, current - 1); page <= Math.min(total - 1, current + 1); page++) {
-    pages.push(page);
+  if (current <= 7) {
+    for (let page = 1; page <= 13; page++) pages.push(page);
+    pages.push("…");
+    pages.push(total);
+    return pages;
   }
-  if (current < total - 2) pages.push("…");
+  if (current >= total - 6) {
+    pages.push(1);
+    pages.push("…");
+    for (let page = total - 12; page <= total; page++) pages.push(page);
+    return pages;
+  }
+  pages.push(1);
+  pages.push("…");
+  for (let page = current - 5; page <= current + 5; page++) pages.push(page);
+  pages.push("…");
   pages.push(total);
   return pages;
 });
@@ -445,18 +449,13 @@ onMounted(async () => {
 </script>
 
 <style lang="less" scoped>
-.mods-list-wrapper {
-  padding: 16px 32px 32px 32px;
-}
 .search-panel {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 16px;
-  padding: 12px;
-  border: 1px solid var(--ctp-surface1);
-  border-radius: 10px;
-  background: rgba(var(--ctp-mantle-rgb), 0.92);
+  padding: 24px;
+  background: rgba(var(--ctp-crust-rgb), 0.92);
   backdrop-filter: blur(4px);
 
   .search-bar {
@@ -468,6 +467,7 @@ onMounted(async () => {
       height: 36px;
       padding: 0 12px;
       border: 1px solid var(--ctp-surface1);
+      border: none;
       border-radius: 8px;
       background: var(--ctp-surface0);
       color: var(--ctp-text);
@@ -522,7 +522,7 @@ onMounted(async () => {
 
   .filter-row {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 10px;
 
     .filter-label {
@@ -592,11 +592,13 @@ onMounted(async () => {
   }
 
   .filter-chip {
-    height: 26px;
-    padding: 0 12px;
+    height: 20px;
+    padding: 0 8px;
     border: 1px solid var(--ctp-surface1);
+    border: none;
     border-radius: 999px;
     background: var(--ctp-surface0);
+    background: none;
     color: var(--ctp-text);
     font-size: 12px;
     transition:
@@ -606,16 +608,24 @@ onMounted(async () => {
 
     &:hover {
       background: var(--ctp-surface1);
+      transition: none;
     }
 
     &:active {
       background: var(--ctp-surface2);
+      transition:
+        background 120ms ease,
+        border-color 120ms ease,
+        color 120ms ease;
     }
 
     &.selected {
-      border-color: var(--ctp-lavender);
       background: var(--ctp-lavender);
       color: var(--ctp-text-inverse);
+      transition:
+        background 120ms ease,
+        border-color 120ms ease,
+        color 120ms ease;
     }
   }
 }
@@ -631,13 +641,19 @@ onMounted(async () => {
   padding: 40px 0;
   font-size: 13px;
   color: var(--ctp-subtext0);
+
+  .loading {
+    background: var(--ctp-mantle);
+    padding: 16px;
+    border-radius: 8px;
+  }
 }
 .pagination {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 20px 0 8px;
+  padding: 20px 0 32px;
 
   button {
     min-width: 30px;
@@ -654,11 +670,13 @@ onMounted(async () => {
       background 120ms ease,
       border-color 120ms ease;
 
-    &:hover:not(:disabled) {
+    &:hover:not(:disabled),
+    &:hover:not(.active) {
       background: var(--ctp-surface1);
     }
 
-    &:active:not(:disabled) {
+    &:active:not(:disabled),
+    &:hover:not(.active) {
       background: var(--ctp-surface2);
     }
 
@@ -678,12 +696,13 @@ onMounted(async () => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 20px;
+    min-width: 30px;
     font-size: 12px;
     color: var(--ctp-subtext0);
   }
 }
 .mods-list {
+  padding: 16px 32px 32px 32px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   justify-content: center;
