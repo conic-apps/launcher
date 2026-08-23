@@ -5,7 +5,7 @@
 <template>
   <Transition :css="false" @enter="onEnter" @leave="onLeave">
     <div v-if="visible" class="dialog" data-tauri-drag-region>
-      <div class="content" :style="contentStyle">
+      <div class="content" :style="contentStyle" ref="contentRef">
         <slot></slot>
       </div>
     </div>
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import gsap from "gsap";
 
 const props = withDefaults(
@@ -21,17 +21,98 @@ const props = withDefaults(
     visible?: boolean;
     width?: number;
     height?: number;
+    animateHeight?: boolean;
   }>(),
   {
     visible: false,
+    animateHeight: false,
   },
 );
-const contentStyle = computed(() => {
-  return `width: ${props.width}px; height: ${props.height}px;`;
-});
+
+const HEIGHT_ANIMATION_DURATION = 0.3;
+
+const contentRef = ref<HTMLElement | null>(null);
+
+const contentStyle = computed(() => ({
+  width: props.width != null ? `${props.width}px` : undefined,
+  height: props.height != null ? `${props.height}px` : undefined,
+}));
+
+let resizeObserver: ResizeObserver | null = null;
+let mutationObserver: MutationObserver | null = null;
+let skipNextResize = false;
+
+function autoHeightEnabled() {
+  return props.animateHeight && props.height == null;
+}
+
+// Tracks slot children so the dialog height can tween whenever the rendered
+// content changes size. An explicit pixel height is kept on .content between
+// tweens so removing old content (e.g. out-in swaps) never collapses it.
+function stopHeightTracking() {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+  mutationObserver?.disconnect();
+  mutationObserver = null;
+}
+
+function onContentResize() {
+  const content = contentRef.value;
+  if (!content || !content.isConnected || content.childElementCount === 0) return;
+  if (skipNextResize) {
+    skipNextResize = false;
+    return;
+  }
+  gsap.to(content, {
+    height: "auto",
+    duration: HEIGHT_ANIMATION_DURATION,
+    ease: "power2.out",
+    overwrite: "auto",
+    onComplete: () => {
+      if (contentRef.value === content && content.isConnected) {
+        content.style.height = `${content.offsetHeight}px`;
+      }
+    },
+  });
+}
+
+function observeChildren(target: HTMLElement, skipFirst: boolean) {
+  resizeObserver?.disconnect();
+  skipNextResize = skipFirst;
+  resizeObserver = new ResizeObserver(onContentResize);
+  for (const child of Array.from(target.children)) {
+    resizeObserver.observe(child);
+  }
+}
+
+function startHeightTracking(target: HTMLElement) {
+  stopHeightTracking();
+  target.style.height = `${target.offsetHeight}px`;
+  observeChildren(target, true);
+  mutationObserver = new MutationObserver(() => observeChildren(target, false));
+  mutationObserver.observe(target, { childList: true });
+}
+
+watch(
+  () => props.height,
+  (value, previous) => {
+    if (!props.animateHeight || value == null || previous == null) return;
+    const content = contentRef.value;
+    if (!content || !content.isConnected) return;
+    gsap.to(content, {
+      height: value,
+      duration: HEIGHT_ANIMATION_DURATION,
+      ease: "power2.out",
+      overwrite: "auto",
+    });
+  },
+);
 
 function onEnter(el: Element, done: () => void) {
   const content = el.querySelector(".content");
+  if (content instanceof HTMLElement && autoHeightEnabled()) {
+    startHeightTracking(content);
+  }
   const tl = gsap.timeline({ onComplete: done });
   tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.2 }, 0);
   if (content) {
@@ -45,6 +126,7 @@ function onEnter(el: Element, done: () => void) {
 }
 
 function onLeave(el: Element, done: () => void) {
+  stopHeightTracking();
   const content = el.querySelector(".content");
   const tl = gsap.timeline({ onComplete: done });
   tl.fromTo(el, { opacity: 1 }, { opacity: 0, duration: 0.2 }, 0.1);
@@ -57,6 +139,17 @@ function onLeave(el: Element, done: () => void) {
     );
   }
 }
+
+onMounted(async () => {
+  if (props.visible && autoHeightEnabled()) {
+    await nextTick();
+    if (contentRef.value) startHeightTracking(contentRef.value);
+  }
+});
+
+onUnmounted(() => {
+  stopHeightTracking();
+});
 </script>
 
 <style lang="less" scoped>

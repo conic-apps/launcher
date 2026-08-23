@@ -14,6 +14,7 @@
   <NoAccountError></NoAccountError>
   <NoSuitableJavaError></NoSuitableJavaError>
   <MultiplayerExtension></MultiplayerExtension>
+  <AccountAdd></AccountAdd>
 </template>
 
 <script setup lang="ts">
@@ -28,4 +29,5 @@ import ConfirmQuitApp from "./dialogs/ConfirmQuitApp.vue";
 import NoAccountError from "./dialogs/NoAccountError.vue";
 import NoSuitableJavaError from "./dialogs/NoSuitableJavaError.vue";
 import MultiplayerExtension from "./dialogs/MultiplayerExtension.vue";
+import AccountAdd from "./dialogs/AccountAdd.vue";
 </script>

@@ -5,15 +5,11 @@
 <template>
   <div class="add-microsoft-account-container">
     <Transition :name="transitionName" mode="out-in">
-      <!-- <div v-if="errorOccured" class="processing"> -->
-      <!--   <div class="loading"></div> -->
-      <!--   <p class="description"></p> -->
-      <!-- </div> -->
-      <div v-if="processing" class="processing">
+      <div v-if="errorOccured" class="error">message</div>
+      <div v-else-if="processing" class="processing">
         <div class="loading">
           <BaseLoading :size="40" :strokeWidth="5" :gap="12"></BaseLoading>
         </div>
-        <p class="description">正在获取设备代码</p>
       </div>
       <div v-else-if="useDeviceCodeFlow" class="device-code">
         <p class="description">
@@ -22,26 +18,25 @@
             verificationUri
           }}</a
           >, 输入下方设备代码并登录帐户。此代码将于 {{ formatCountdown }} 后失效。
+          <a @click.prevent="useDeviceCodeFlow = false">点击此处</a>以返回并使用系统浏览器登录。
         </p>
         <div class="link">
           <div class="link-box code-box" :class="{ 'code-copied': copiedCode }" @click="copyCode">
             <p class="link-text">{{ userCode }}</p>
             <div class="checkmark-wrapper">
               <div class="tooltip">已复制！</div>
-              <AppIcon name="checkmark-outline" :size="16" class="checkmark-icon" />
+              <AppIcon name="checkmark-outline" :size="20" class="checkmark-icon" />
             </div>
           </div>
         </div>
         <div class="buttons">
-          <BaseButton style="margin-right: 120px" @click="useDeviceCodeFlow = false">{{
-            "使用系统浏览器登录"
-          }}</BaseButton>
-          <BaseButton
-            :disabled="expiresIn > totalExpiresIn - 60 || expiresIn < 60 || isRefreshingDeviceCode"
-            @click="refreshDeviceCode"
-            >{{ isRefreshingDeviceCode ? "正在请求新代码" : "刷新设备代码"
-            }}{{ refreshCountdown ? `（${refreshCountdown}）` : "" }}
-          </BaseButton>
+          <BaseButton @click="dialogStore.accountAdd.visible = false">{{ "取消" }}</BaseButton>
+          <!-- <BaseButton -->
+          <!--   :disabled="expiresIn > totalExpiresIn - 60 || expiresIn < 60 || isRefreshingDeviceCode" -->
+          <!--   @click="refreshDeviceCode" -->
+          <!--   >{{ isRefreshingDeviceCode ? "正在请求新代码" : "刷新设备代码" -->
+          <!--   }}{{ refreshCountdown ? `（${refreshCountdown}）` : "" }} -->
+          <!-- </BaseButton> -->
         </div>
       </div>
       <div v-else class="auth-code">
@@ -53,7 +48,8 @@
               <div v-if="copiedLink" class="link-tooltip">已复制！</div>
             </Transition>
           </span>
-          并在浏览器粘贴以登录。若要在其他设备上完成登录步骤，请通过设备代码登录。
+          并在浏览器粘贴以登录。若要在其他设备上完成登录步骤，请
+          <a @click.prevent="useDeviceCodeFlow = true">通过设备代码</a> 登录。
         </p>
         <div class="link">
           <p class="description">登录链接：</p>
@@ -68,9 +64,7 @@
           </div>
         </div>
         <div class="buttons">
-          <BaseButton style="margin-right: 120px" @click="useDeviceCodeFlow = true">{{
-            "使用设备代码登录"
-          }}</BaseButton>
+          <BaseButton @click="dialogStore.accountAdd.visible = false">{{ "取消" }}</BaseButton>
           <BaseButton
             style="background: var(--ctp-blue); color: var(--ctp-text-inverse)"
             @click="openUrl(AUTH_CODE_LOGIN_URL)"
@@ -101,9 +95,11 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
 import BaseLoading from "@/components/BaseLoading.vue";
+import { useDialogStore } from "@/store/dialog";
 
 const accountStore = useAccountStore();
 const configStore = useConfigStore();
+const dialogStore = useDialogStore();
 const AUTH_CODE_LOGIN_URL =
   "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize" +
   "?client_id=94a1414e-e9ad-4bda-94f0-3368d979b0cc" +
@@ -314,11 +310,13 @@ onUnmounted(() => {
 
 const processing = ref(false);
 const transitionName = computed(() => {
-  if (processing.value) {
+  if (processing.value || errorOccured.value) {
     return "slide-left";
   }
   return useDeviceCodeFlow.value ? "slide-left" : "slide-right";
 });
+
+const errorOccured = ref(false);
 </script>
 
 <style lang="less" scoped>
@@ -352,6 +350,7 @@ const transitionName = computed(() => {
   div.buttons {
     display: flex;
     margin-top: 16px;
+    gap: 8px;
   }
 
   .device-code div.link {
@@ -383,13 +382,24 @@ const transitionName = computed(() => {
 
       &.code-box {
         flex: none;
-        width: 12ch;
+        width: 20ch;
+        height: 48px;
         justify-content: center;
+        background: none;
+
+        &:hover {
+          background: var(--ctp-surface0);
+        }
+        &:active {
+          background: var(--ctp-surface1);
+        }
 
         p.link-text {
           flex: none;
           text-align: center;
           transition: transform 0.3s ease;
+          font-size: 20px;
+          letter-spacing: 4px;
         }
 
         .checkmark-wrapper {
