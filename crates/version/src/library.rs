@@ -118,20 +118,12 @@ fn resolve_modloader_libraries(library: &Value) -> Result<ResolvedLibrary> {
     let base_url = library["url"]
         .as_str()
         .unwrap_or("https://libraries.minecraft.net/");
-    // Forge publishes its own artifact on its maven repository with the
-    // "-universal" classifier, but installs it locally under the plain file
-    // name. Keep the local path plain so it matches both the installed file
-    // and the classpath, and only classify the download URL. Skip libraries
-    // whose coordinate already carries a classifier to avoid doubling it.
-    let mut artifact = format!("{name}-{version}");
-    if package == "net/minecraftforge" && *name == "forge" && !artifact.ends_with("-universal") {
-        artifact.push_str("-universal");
-    }
-    let path = format!("{package}/{name}/{version}/{name}-{version}.jar");
+    let artifact = format!("{name}-{version}");
+    let path = format!("{package}/{name}/{version}/{artifact}.jar");
     Ok(ResolvedLibrary::Common(LibraryDownloadInfo {
         sha1: None,
         size: None,
-        url: format!("{base_url}{package}/{name}/{version}/{artifact}.jar"),
+        url: format!("{base_url}{path}"),
         path,
     }))
 }

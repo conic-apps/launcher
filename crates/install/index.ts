@@ -168,20 +168,38 @@ export enum Job {
     InstallModLoader = "InstallModLoader",
 }
 
+export type ModLoaderProgress =
+    | {
+          phase: "prepare"
+      }
+    | {
+          phase: "downloadInstaller"
+          detail?: DownloadState
+      }
+    | {
+          phase: "prefetchDependencies"
+          detail?: DownloadState
+      }
+    | {
+          phase: "runInstaller"
+          detail?: { message: string }
+      }
+
 export type InstallProgress =
     | {
           job: Job.Prepare
       }
     | {
           job: Job.InstallGame
-          downloadState?: DownloadState
+          progress?: DownloadState
       }
     | {
           job: Job.InstallJava
-          downloadState?: DownloadState
+          progress?: DownloadState
       }
     | {
           job: Job.InstallModLoader
+          progress?: ModLoaderProgress
       }
 
 export class InstallTask {

@@ -366,7 +366,10 @@ pub fn filter_existing_and_verified_files(
         completed.fetch_add(1, Ordering::SeqCst);
         match check_result {
             Some(x) => !x,
-            None => true,
+            // Without an expected checksum the content cannot be verified,
+            // so an existing file counts as complete instead of being
+            // redownloaded on every run.
+            None => false,
         }
     };
     let downloads: Vec<_> = downloads.into_par_iter().filter(filter_op).collect();

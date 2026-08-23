@@ -12,9 +12,6 @@ type LaunchProgress =
           job: "Prepare"
       }
     | {
-          job: "RefreshAccount"
-      }
-    | {
           job: "CompleteFiles"
           downloadState?: DownloadState
       }

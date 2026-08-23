@@ -152,35 +152,61 @@ async function installGame() {
       }
       if (task.job === Job.InstallGame) {
         if (
-          task.downloadState?.phase === "VerifyExistingFiles" ||
-          (task.downloadState && task.downloadState.totalBytes === 0)
+          task.progress?.phase === "VerifyExistingFiles" ||
+          (task.progress && task.progress.totalBytes === 0)
         ) {
           progressDescription.value = "校验游戏文件";
           progressBarLoading.value = true;
-        } else if (task.downloadState?.phase === "DownloadFiles") {
-          progressDescription.value = `下载游戏文件 ${formatBytes(task.downloadState.completedBytes)} / ${formatBytes(task.downloadState.totalBytes)}`;
+        } else if (task.progress?.phase === "DownloadFiles") {
+          progressDescription.value = `下载游戏文件 ${formatBytes(task.progress.completedBytes)} / ${formatBytes(task.progress.totalBytes)}`;
           progressBarLoading.value = false;
-          progressBarValue.value = task.downloadState.completedBytes;
-          progressBarMax.value = task.downloadState.totalBytes;
+          progressBarValue.value = task.progress.completedBytes;
+          progressBarMax.value = task.progress.totalBytes;
         }
       }
       if (task.job === Job.InstallJava) {
         if (
-          task.downloadState?.phase === "VerifyExistingFiles" ||
-          (task.downloadState && task.downloadState.totalBytes === 0)
+          task.progress?.phase === "VerifyExistingFiles" ||
+          (task.progress && task.progress.totalBytes === 0)
         ) {
           progressDescription.value = "检查 Java 运行环境";
           progressBarLoading.value = true;
-        } else if (task.downloadState?.phase === "DownloadFiles") {
-          progressDescription.value = `下载 Java ${formatBytes(task.downloadState.completedBytes)}/${formatBytes(task.downloadState.totalBytes)}`;
+        } else if (task.progress?.phase === "DownloadFiles") {
+          progressDescription.value = `下载 Java ${formatBytes(task.progress.completedBytes)}/${formatBytes(task.progress.totalBytes)}`;
           progressBarLoading.value = false;
-          progressBarValue.value = task.downloadState.completedBytes;
-          progressBarMax.value = task.downloadState.totalBytes;
+          progressBarValue.value = task.progress.completedBytes;
+          progressBarMax.value = task.progress.totalBytes;
         }
       }
       if (task.job === Job.InstallModLoader) {
-        progressDescription.value = `安装 ${instanceStore.currentInstance.config.runtime.mod_loader_type}`;
-        progressBarLoading.value = true;
+        const modLoaderName = instanceStore.currentInstance.config.runtime.mod_loader_type;
+        const modLoaderProgress = task.progress;
+        if (!modLoaderProgress || modLoaderProgress.phase === "prepare") {
+          progressDescription.value = `安装 ${modLoaderName}`;
+          progressBarLoading.value = true;
+        } else if (
+          modLoaderProgress.phase === "downloadInstaller" ||
+          modLoaderProgress.phase === "prefetchDependencies"
+        ) {
+          const detail = modLoaderProgress.detail;
+          const stageText =
+            modLoaderProgress.phase === "downloadInstaller"
+              ? `下载 ${modLoaderName} 安装器`
+              : "下载依赖库";
+          if (!detail || detail.phase === "VerifyExistingFiles" || detail.totalBytes === 0) {
+            progressDescription.value = stageText;
+            progressBarLoading.value = true;
+          } else {
+            progressDescription.value = `${stageText} ${formatBytes(detail.completedBytes)} / ${formatBytes(detail.totalBytes)}`;
+            progressBarLoading.value = false;
+            progressBarValue.value = detail.completedBytes;
+            progressBarMax.value = detail.totalBytes;
+          }
+        } else if (modLoaderProgress.phase === "runInstaller") {
+          const message = modLoaderProgress.detail?.message ?? "";
+          progressDescription.value = `运行 ${modLoaderName} installer：${message}`;
+          progressBarLoading.value = true;
+        }
       }
     },
   });
@@ -196,9 +222,6 @@ async function launchGame() {
     onProgress: (task) => {
       if (task.job === "Prepare") {
         progressDescription.value = "准备启动";
-        progressBarLoading.value = true;
-      } else if (task.job === "RefreshAccount") {
-        progressDescription.value = "更新登录凭据";
         progressBarLoading.value = true;
       } else if (task.job === "CompleteFiles") {
         if (task.downloadState?.phase === "VerifyExistingFiles") {
@@ -320,6 +343,10 @@ function back() {
 
       p {
         font-size: 14px;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .progress {

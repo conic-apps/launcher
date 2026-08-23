@@ -4,13 +4,14 @@
 
 use std::{io::BufRead, path::Path, path::PathBuf, process::Stdio};
 
+use config::download::DownloadConfig;
+use download::{DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState};
 use folder::DATA_LOCATION;
-use futures::AsyncWriteExt;
 use log::{debug, error, info};
 use serde_json::Value;
 use shared::HTTP_CLIENT;
 
-use crate::error::*;
+use crate::{ModLoaderProgress, ModLoaderReporter, error::*};
 
 pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
     let legacy_versions = HTTP_CLIENT
@@ -42,6 +43,7 @@ pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
 /// * `install_dir` - The target directory where the client will be installed.
 /// * `neoforge_version` - The version of Neoforge to install.
 /// * `java_path` - The Java executable used to run the installer.
+/// * `reporter` - Progress reporter forwarded to the frontend.
 ///
 /// # Returns
 /// * `Ok(())` on successful installation.
@@ -50,9 +52,10 @@ pub async fn install(
     install_dir: &PathBuf,
     neoforge_version: &str,
     java_path: &Path,
+    reporter: &ModLoaderReporter,
 ) -> Result<()> {
     info!("Start downloading the neoforge installer");
-    let installer_path = download_installer(neoforge_version).await?;
+    let installer_path = download_installer(neoforge_version, reporter).await?;
     info!("Running installer with {}", java_path.display());
 
     let mut command = std::process::Command::new(java_path)
@@ -84,6 +87,7 @@ pub async fn install(
             info!("Successfully ran the neoforge installer");
         } else {
             debug!("[{pid}] {line}");
+            reporter.report_installer_line(line);
         }
     }
 
@@ -99,12 +103,18 @@ pub async fn install(
 /// Downloads the Neoforge installer JAR for the given version.
 ///
 /// # Arguments
+///
 /// * `neoforge_version` - The version to download.
+/// * `reporter` - Progress reporter forwarded to the frontend.
 ///
 /// # Returns
+///
 /// * `Ok(PathBuf)` containing the path to the downloaded installer.
 /// * `Err(Error)` if downloading fails.
-pub async fn download_installer(neoforge_version: &str) -> Result<PathBuf> {
+pub async fn download_installer(
+    neoforge_version: &str,
+    reporter: &ModLoaderReporter,
+) -> Result<PathBuf> {
     let installer_url = format!(
         "https://maven.neoforged.net/releases/net/neoforged/neoforge/{neoforge_version}/neoforge-{neoforge_version}-installer.jar"
     );
@@ -117,13 +127,20 @@ pub async fn download_installer(neoforge_version: &str) -> Result<PathBuf> {
         async_fs::create_dir_all(parent).await?;
     }
 
-    let mut file = async_fs::File::create(&installer_path).await?;
-    let response = HTTP_CLIENT
-        .get(installer_url)
-        .send()
-        .await?
-        .error_for_status()?;
-    let src = response.bytes().await?;
-    file.write_all(&src).await?;
+    let checksum = crate::fetch_maven_sha1(&installer_url).await;
+    let progress = DownloadState::default();
+    reporter.report(ModLoaderProgress::DownloadInstaller(progress.clone()));
+    download_concurrent(
+        vec![DownloadTask {
+            url: installer_url,
+            file: installer_path.clone(),
+            checksum,
+            size_bytes: None,
+            task_type: DownloadTaskType::Unknown,
+        }],
+        &progress,
+        DownloadConfig::default(),
+    )
+    .await?;
     Ok(installer_path)
 }
