@@ -22,7 +22,7 @@
         <SettingItem
           v-if="runtimes.length === 0"
           :title="'未检测到已安装的 Java 运行环境'"
-          :description="'安装游戏时 Conic Launcher 会自动从 Mojang 服务器下载所需的 Java 运行环境'"></SettingItem>
+          :description="'开启「优先使用 Mojang 提供的 Java 运行环境」后，Conic Launcher 会自动从 Mojang 服务器下载所需的 Java 运行环境'"></SettingItem>
         <SettingItem
           v-for="runtime in runtimes"
           :key="runtime.path"

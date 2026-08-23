@@ -17,9 +17,8 @@ use std::{
 };
 
 use config::download::DownloadConfig;
-use download::{download_concurrent, progress::DownloadState};
+use download::{DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState};
 use folder::{DATA_LOCATION, MinecraftLocation};
-use futures::AsyncWriteExt;
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
@@ -28,7 +27,9 @@ use platform::DELIMITER;
 use version::{Version, resolve_libraries};
 use zip::ZipArchive;
 
-use crate::{error::*, vanilla::generate_libraries_downloads};
+use crate::{
+    ModLoaderProgress, ModLoaderReporter, error::*, vanilla::generate_libraries_downloads,
+};
 
 /// A list of Forge versions for a given Minecraft version.
 #[derive(Clone, Deserialize, Serialize)]
@@ -124,6 +125,7 @@ const FORGE_INSTALL_BOOTSTRAPPER_CONIC: &[u8] =
 /// * `forge_version` - The Forge version string to install (e.g., "1.20.1-47.1.0").
 /// * `mcversion` - The Minecraft version string associated with this Forge version.
 /// * `java_path` - The Java executable used to run the installer.
+/// * `reporter` - Progress reporter forwarded to the frontend.
 ///
 /// # Errors
 ///
@@ -137,12 +139,18 @@ pub async fn install(
     forge_version: &str,
     mcversion: &str,
     java_path: &Path,
+    reporter: &ModLoaderReporter,
 ) -> Result<()> {
     info!("Start downloading the forge installer");
-    let installer_path = download_installer(mcversion, forge_version).await?;
-    let _ = prefetch_installer_dependencies(minecraft_location, &installer_path).await;
-    let bangbang93_bootstrapper_installation_result =
-        try_bangbang93_bootstrapper(&minecraft_location.root, &installer_path, java_path).await;
+    let installer_path = download_installer(mcversion, forge_version, reporter).await?;
+    let _ = prefetch_installer_dependencies(minecraft_location, &installer_path, reporter).await;
+    let bangbang93_bootstrapper_installation_result = try_bangbang93_bootstrapper(
+        &minecraft_location.root,
+        &installer_path,
+        java_path,
+        reporter,
+    )
+    .await;
     // The legacy bootstrapper renames the installed version to this id, so it
     // must stay in sync with `Instance::get_version_id` (crates/instance).
     let version_id = format!("{mcversion}-forge-{forge_version}");
@@ -154,6 +162,7 @@ pub async fn install(
                     &installer_path,
                     java_path,
                     &version_id,
+                    reporter,
                 )
                 .await,
             )
@@ -175,6 +184,7 @@ pub async fn install(
 ///
 /// * `mcversion` - The Minecraft version string.
 /// * `forge_version` - The Forge version string.
+/// * `reporter` - Progress reporter forwarded to the frontend.
 ///
 /// # Returns
 ///
@@ -183,7 +193,11 @@ pub async fn install(
 /// # Errors
 ///
 /// Returns an error if the download fails or the file cannot be written.
-pub async fn download_installer(mcversion: &str, forge_version: &str) -> Result<PathBuf> {
+pub async fn download_installer(
+    mcversion: &str,
+    forge_version: &str,
+    reporter: &ModLoaderReporter,
+) -> Result<PathBuf> {
     let installer_url = format!(
         "https://maven.minecraftforge.net/net/minecraftforge/forge/{mcversion}-{forge_version}/forge-{mcversion}-{forge_version}-installer.jar"
     );
@@ -194,15 +208,21 @@ pub async fn download_installer(mcversion: &str, forge_version: &str) -> Result<
     if let Some(parent) = installer_path.parent() {
         async_fs::create_dir_all(parent).await?;
     }
-    let mut file = async_fs::File::create(&installer_path).await?;
-    // TODO: This can also return progress to frontend
-    let response = HTTP_CLIENT
-        .get(installer_url)
-        .send()
-        .await?
-        .error_for_status()?;
-    let src = response.bytes().await?;
-    file.write_all(&src).await?;
+    let checksum = crate::fetch_maven_sha1(&installer_url).await;
+    let progress = DownloadState::default();
+    reporter.report(ModLoaderProgress::DownloadInstaller(progress.clone()));
+    download_concurrent(
+        vec![DownloadTask {
+            url: installer_url,
+            file: installer_path.clone(),
+            checksum,
+            size_bytes: None,
+            task_type: DownloadTaskType::Unknown,
+        }],
+        &progress,
+        DownloadConfig::default(),
+    )
+    .await?;
     info!("Downloaded forge installer");
     Ok(installer_path)
 }
@@ -210,6 +230,7 @@ pub async fn download_installer(mcversion: &str, forge_version: &str) -> Result<
 async fn prefetch_installer_dependencies(
     minecraft_location: &MinecraftLocation,
     installer_path: &Path,
+    reporter: &ModLoaderReporter,
 ) -> Result<()> {
     let file = std::fs::File::open(installer_path)?;
     let mut archive = ZipArchive::new(file)?;
@@ -218,12 +239,9 @@ async fn prefetch_installer_dependencies(
     if let Some(libraries) = version.libraries {
         let libraries = resolve_libraries(libraries)?;
         let download_entries = generate_libraries_downloads(minecraft_location, &libraries);
-        download_concurrent(
-            download_entries,
-            &DownloadState::default(), // TODO: return progress to frontend
-            DownloadConfig::default(),
-        )
-        .await?;
+        let progress = DownloadState::default();
+        reporter.report(ModLoaderProgress::PrefetchDependencies(progress.clone()));
+        download_concurrent(download_entries, &progress, DownloadConfig::default()).await?;
     }
     Ok(())
 }
@@ -232,6 +250,7 @@ async fn try_bangbang93_bootstrapper(
     install_dir: &Path,
     installer_path: &Path,
     java_path: &Path,
+    reporter: &ModLoaderReporter,
 ) -> Result<()> {
     info!("Trying Bangbang93 forge install bootstrapper");
     let bangbang93_bootstrapper_path =
@@ -246,7 +265,7 @@ async fn try_bangbang93_bootstrapper(
         .arg(install_dir)
         .stdout(Stdio::piped())
         .spawn()?;
-    let result = wait_child(child);
+    let result = wait_child(child, reporter);
     async_fs::remove_file(bangbang93_bootstrapper_path).await?;
     result
 }
@@ -261,6 +280,7 @@ async fn try_conicmc_bootstrapper(
     installer_path: &Path,
     java_path: &Path,
     version_id: &str,
+    reporter: &ModLoaderReporter,
 ) -> Result<()> {
     info!("Trying ConicMC forge install bootstrapper");
     let conicmc_bootstrapper_path = save_bootstrapper(FORGE_INSTALL_BOOTSTRAPPER_CONIC).await?;
@@ -275,12 +295,12 @@ async fn try_conicmc_bootstrapper(
         .arg(version_id)
         .stdout(Stdio::piped())
         .spawn()?;
-    let result = wait_child(child);
+    let result = wait_child(child, reporter);
     async_fs::remove_file(conicmc_bootstrapper_path).await?;
     result
 }
 
-fn wait_child(mut child: Child) -> Result<()> {
+fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()> {
     let out = child.stdout.take().ok_or(Error::ForgeInstallerFailed)?;
     let mut out = std::io::BufReader::new(out);
     let mut buf = String::new();
@@ -298,6 +318,7 @@ fn wait_child(mut child: Child) -> Result<()> {
             info!("Successfully ran the forge installer");
         } else {
             debug!("[{pid}] {line}");
+            reporter.report_installer_line(line);
         }
     }
     let output = child.wait_with_output()?;

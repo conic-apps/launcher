@@ -67,7 +67,6 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 #[serde(tag = "job", content = "progress")]
 pub enum LaunchEvent {
     Prepare,
-    RefreshAccount,
     InstallAuthlibInjector(DownloadState),
     CompleteFiles(DownloadState),
     GenerateScriptlet,
@@ -188,7 +187,14 @@ pub async fn launch(
             let mut status = status.lock().expect("Internal error");
             *status = LaunchEvent::CompleteFiles(progress.clone());
         }
-        complete_files(&instance, &minecraft_location, progress, &config.download).await?;
+        complete_files(
+            &instance,
+            &minecraft_location,
+            progress,
+            config.prefer_mojang_java,
+            &config.download,
+        )
+        .await?;
     }
 
     info!("Generating startup parameters");
@@ -380,7 +386,9 @@ async fn spawn_minecraft_process(
                 let mut status = status.lock().expect("Internal error");
                 *status = LaunchEvent::LogOpenALLoaded;
             }
-            if line.contains("Created") {
+            if (line.contains("Created") && line.contains("textures") && line.contains("-atlas"))
+                || line.contains("Found animation info")
+            {
                 let mut status = status.lock().expect("Internal error");
                 *status = LaunchEvent::LogTextureLoaded;
             }
@@ -403,9 +411,15 @@ async fn spawn_minecraft_process(
         }
     });
     let start = Instant::now();
-    while start.elapsed().as_secs() < 30
-        && *status_cloned.lock().expect("Internal error") != LaunchEvent::LogTextureLoaded
-    {
+    while start.elapsed().as_secs() < 20 {
+        if matches!(
+            &*status_cloned.lock().expect("Internal error"),
+            LaunchEvent::LogTextureLoaded
+                | LaunchEvent::LogLwjglVersion
+                | LaunchEvent::LogOpenALLoaded
+        ) {
+            break;
+        }
         async_io::Timer::after(Duration::from_secs(1)).await;
     }
     match PLATFORM_INFO.os_family {

@@ -26,10 +26,11 @@ use tauri::{
 use vanilla::generate_download_info;
 
 use config::{Config, get_system_language};
-use download::download_concurrent;
 use download::progress::DownloadState;
+use download::{Checksum, download_concurrent};
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::{Instance, InstanceRuntime, ModLoaderType};
+use shared::HTTP_CLIENT;
 use version::{Version, resolve_version};
 
 use crate::{
@@ -163,12 +164,75 @@ async fn cmd_get_neoforge_version_list(state: State<'_, PluginState>) -> Result<
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(tag = "job", content = "downloadState")]
+#[serde(tag = "job", content = "progress")]
 pub enum InstallEvent {
     Prepare,
     InstallGame(DownloadState),
     InstallJava(DownloadState),
-    InstallModLoader,
+    InstallModLoader(ModLoaderProgress),
+}
+
+/// Fine-grained progress of a mod loader installation.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(tag = "phase", content = "detail", rename_all = "camelCase")]
+pub enum ModLoaderProgress {
+    /// Preparing the installation (resolving versions and Java).
+    Prepare,
+    /// Downloading the loader installer JAR.
+    DownloadInstaller(DownloadState),
+    /// Prefetching libraries bundled inside the installer JAR (Forge).
+    PrefetchDependencies(DownloadState),
+    /// Running the installer subprocess, carrying its latest log line.
+    RunInstaller { message: String },
+}
+
+/// Clonable handle through which loader installers report [`ModLoaderProgress`].
+#[derive(Clone)]
+pub struct ModLoaderReporter {
+    status: Arc<Mutex<InstallEvent>>,
+}
+
+impl ModLoaderReporter {
+    pub(crate) fn new(status: &Arc<Mutex<InstallEvent>>) -> Self {
+        Self {
+            status: Arc::clone(status),
+        }
+    }
+
+    pub fn report(&self, progress: ModLoaderProgress) {
+        let mut current = self.status.lock().expect("Internal error");
+        *current = InstallEvent::InstallModLoader(progress);
+    }
+
+    /// Reports one output line of the installer subprocess as
+    /// [`ModLoaderProgress::RunInstaller`]. Empty lines are skipped and overly
+    /// long lines are clamped to keep the IPC payload small.
+    pub fn report_installer_line(&self, line: &str) {
+        let line = line.trim();
+        if line.is_empty() {
+            return;
+        }
+        self.report(ModLoaderProgress::RunInstaller {
+            message: line.chars().take(200).collect(),
+        });
+    }
+}
+
+/// Fetches the standard Maven `.sha1` checksum for the artifact behind `url`,
+/// falling back to no checksum when it is unavailable.
+pub(crate) async fn fetch_maven_sha1(url: &str) -> Checksum {
+    let response = match HTTP_CLIENT.get(format!("{url}.sha1")).send().await {
+        Ok(response) => response,
+        Err(_) => return Checksum::None,
+    };
+    let response = match response.error_for_status() {
+        Ok(response) => response,
+        Err(_) => return Checksum::None,
+    };
+    match response.text().await {
+        Ok(text) => Checksum::Sha1(text.trim().to_string()),
+        Err(_) => Checksum::None,
+    }
 }
 
 #[command]
@@ -282,7 +346,7 @@ pub async fn install(
         *status = InstallEvent::InstallJava(progress.clone())
     }
 
-    if instance.config.launch_config.java_path.is_none() {
+    if instance.config.launch_config.java_path.is_none() && config.prefer_mojang_java {
         java::install_for_instance(&instance, &progress, config.download.clone()).await?;
     }
 
@@ -290,11 +354,11 @@ pub async fn install(
         info!("Install mod loader");
         {
             let mut status = status.lock().expect("Internal error");
-            *status = InstallEvent::InstallModLoader;
+            *status = InstallEvent::InstallModLoader(ModLoaderProgress::Prepare);
         }
-        // TODO: mod loader installation progress
+        let reporter = ModLoaderReporter::new(&status);
         let installer_java = resolve_installer_java(&config, &instance).await?;
-        install_mod_loader(runtime, installer_java.path.as_path()).await?;
+        install_mod_loader(runtime, installer_java.path.as_path(), &reporter).await?;
     };
 
     configure_first_launch_language(config, &instance).await;
@@ -352,12 +416,17 @@ async fn resolve_installer_java(
 /// * `runtime` - Instance runtime configuration containing loader type/version.
 /// * `java_path` - The Java executable used to run Java-based installers
 ///   (Forge and NeoForge).
+/// * `reporter` - Progress reporter forwarded to the loader installation.
 ///
 /// # Errors
 /// Returns an error if:
 /// - The loader type/version is missing or malformed.
 /// - The underlying installation function fails.
-pub async fn install_mod_loader(runtime: &InstanceRuntime, java_path: &Path) -> Result<()> {
+pub async fn install_mod_loader(
+    runtime: &InstanceRuntime,
+    java_path: &Path,
+    reporter: &ModLoaderReporter,
+) -> Result<()> {
     let mod_loader_type = runtime
         .mod_loader_type
         .as_ref()
@@ -389,11 +458,12 @@ pub async fn install_mod_loader(runtime: &InstanceRuntime, java_path: &Path) -> 
                 mod_loader_version,
                 &runtime.minecraft,
                 java_path,
+                reporter,
             )
             .await?
         }
         ModLoaderType::Neoforge => {
-            neoforge::install(&DATA_LOCATION.root, mod_loader_version, java_path).await?
+            neoforge::install(&DATA_LOCATION.root, mod_loader_version, java_path, reporter).await?
         }
     }
 
