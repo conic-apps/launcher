@@ -22,13 +22,16 @@ const offlineAvatarLoading = ref(false);
 watch(
   () => props.uuid,
   async (uuid) => {
+    if (props.skin) return;
     offlineAvatarLoading.value = true;
-    const defaultSkin = getDefaultSkin(uuid);
-    const skinUrl = defaultSkins[
-      `/src/assets/images/skins/${defaultSkin.modelType}/${defaultSkin.textureName}.webp`
-    ] as string;
-    fallbackAvatar.value = await getAvatarFromUrl(skinUrl, props.size);
-    offlineAvatarLoading.value = false;
+    try {
+      const defaultSkin = getDefaultSkin(uuid);
+      const skinUrl = defaultSkins[
+        `/src/assets/images/skins/${defaultSkin.modelType}/${defaultSkin.textureName}.webp`
+      ] as string;
+      fallbackAvatar.value = await getAvatarFromUrl(skinUrl, props.size);
+      offlineAvatarLoading.value = false;
+    } catch {}
   },
   {
     immediate: true,
