@@ -2,7 +2,13 @@
   <div class="tool-bar" ref="toolbar" style="opacity: 0">
     <div class="search">
       <div class="search-input">
-        <input type="text" placeholder="搜索..." v-model="searchQuery" />
+        <input
+          type="text"
+          placeholder="搜索..."
+          v-model="searchQuery"
+          autocapitalize="off"
+          autocomplete="off"
+          autocorrect="off" />
       </div>
       <button class="search-button">
         <AppIcon name="search"></AppIcon>

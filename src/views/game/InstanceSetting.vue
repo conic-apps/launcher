@@ -20,6 +20,9 @@
               type="text"
               ref="instance-name-input"
               v-model="currentInstance.config.name"
+              autocapitalize="off"
+              autocomplete="off"
+              autocorrect="off"
               v-else
               @blur="editingInstanceName = false" />
           </p>

@@ -46,9 +46,11 @@ import {
 import { useDialogStore } from "@/store/dialog";
 import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
+import { useNavigationStore } from "@/store/navigation";
 
 const dialogStore = useDialogStore();
 const accountStore = useAccountStore();
+const navigationStore = useNavigationStore();
 const config = useConfigStore();
 
 const account = computed<Account | null>(() => {
@@ -102,10 +104,14 @@ async function confirmDelete() {
       config.current_account = { type: "Microsoft", data: accountStore.microsoft[0] };
     } else if (accountStore.offline.length > 0) {
       config.current_account = { type: "Offline", data: accountStore.offline[0] };
-    } else {
+    } else if (Object.values(accountStore.yggdrasil).length > 0) {
       const yggdrasilAccounts = Object.values(accountStore.yggdrasil);
-      config.current_account =
-        yggdrasilAccounts.length > 0 ? { type: "Yggdrasil", data: yggdrasilAccounts[0] } : null;
+      config.current_account = { type: "Yggdrasil", data: yggdrasilAccounts[0] };
+    } else {
+      config.current_account = null;
+      if (navigationStore.currentPage === "accounts") {
+        navigationStore.back();
+      }
     }
   } finally {
     deleting.value = false;

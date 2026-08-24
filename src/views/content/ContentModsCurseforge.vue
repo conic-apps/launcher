@@ -11,6 +11,9 @@
           type="text"
           :placeholder="'搜索模组...'"
           v-model="searchQuery"
+          autocapitalize="off"
+          autocomplete="off"
+          autocorrect="off"
           @keyup.enter="applySearchFilters()" />
         <button class="search-button" @click="applySearchFilters()">
           <AppIcon name="search" :size="16"></AppIcon>
@@ -28,7 +31,10 @@
                 <div class="filter-chips-track-inner" :style="versionTrackStyle">
                   <button
                     class="filter-chip"
-                    :class="{ selected: filter.isSelected(option) }"
+                    :class="{
+                      selected: filter.isSelected(option),
+                      'minecraft-version': filter.key === 'version',
+                    }"
                     v-for="(option, index) in filter.options"
                     :key="`${filter.key}-${index}`"
                     @click="onFilterChipClick(filter, option)">
@@ -46,7 +52,13 @@
             <template v-else>
               <button
                 class="filter-chip"
-                :class="{ selected: filter.isSelected(option) }"
+                :class="{
+                  selected: filter.isSelected(option),
+                  fabric: option === 'fabric',
+                  forge: option === 'forge',
+                  quilt: option === 'quilt',
+                  neoforge: option === 'neoforge',
+                }"
                 v-for="(option, index) in filter.options"
                 :key="`${filter.key}-${index}`"
                 @click="onFilterChipClick(filter, option)">
@@ -100,7 +112,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <span>{{ "没有找到相关模组" }}</span>
+        <ContentNotFound description="尝试调整关键词或筛选条件后再次搜索" show />
       </div>
     </template>
 
@@ -147,6 +159,7 @@ import { useShowContentDetails } from "./useContent";
 import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import ContentNotFound from "./ContentNotFound.vue";
 
 const instanceStore = useInstanceStore();
 const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
@@ -654,6 +667,21 @@ onMounted(async () => {
         background 120ms ease,
         border-color 120ms ease,
         color 120ms ease;
+    }
+    &.selected.fabric {
+      background: var(--ctp-yellow);
+    }
+    &.selected.forge {
+      background: var(--ctp-blue);
+    }
+    &.selected.neoforge {
+      background: var(--ctp-peach);
+    }
+    &.selected.quilt {
+      background: var(--ctp-mauve);
+    }
+    &.selected.minecraft-version {
+      background: var(--ctp-green);
     }
   }
 }

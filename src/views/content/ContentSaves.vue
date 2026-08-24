@@ -4,6 +4,22 @@
 
 <template>
   <div class="content-saves" @click="selectedSave = null">
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      ">
+      <ContentNotFound
+        :show="Object.keys(saves ?? {}).length === 0"
+        description="考虑启动游戏并创建一些存档" />
+    </div>
     <ScrollView>
       <div class="title">
         <AppIcon name="save"></AppIcon>
@@ -94,6 +110,7 @@ import { getSaveIcon, getSavePath, type Level } from "@conic/content";
 import { formatLastPlayed, zhCN } from "@conic/instance";
 import { invoke } from "@tauri-apps/api/core";
 import { computed, ref, watch } from "vue";
+import ContentNotFound from "./ContentNotFound.vue";
 
 const gameContentStore = useGameContentStore();
 const dialogStore = useDialogStore();
