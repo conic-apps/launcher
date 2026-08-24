@@ -1,5 +1,5 @@
 <template>
-  <div class="account-add-selection">
+  <div class="account-add-selection" :class="{ disabled }">
     <button
       class="microsoft item"
       :class="{ active: authServiceType === 'microsoft' }"
@@ -27,6 +27,7 @@
 <script setup lang="ts">
 defineProps<{
   selectAuthService: (service: "microsoft" | "yggdrasil" | "offline") => void;
+  disabled?: boolean;
 }>();
 const authServiceType = defineModel<"microsoft" | "offline" | "yggdrasil">("authServiceType", {
   required: true,
@@ -39,6 +40,11 @@ const authServiceType = defineModel<"microsoft" | "offline" | "yggdrasil">("auth
   align-items: center;
   gap: 4px;
   margin-left: auto;
+
+  &.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
 
   .item {
     appearance: none;

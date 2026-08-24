@@ -8,11 +8,13 @@
       <p class="title">选择认证服务并添加帐户</p>
       <AccountAddSelect
         :selectAuthService="selectAuthService"
-        v-model:authServiceType="authServiceType" />
+        v-model:authServiceType="authServiceType"
+        :disabled="switchComponentDisabled" />
     </div>
     <Transition :name="transitionName" mode="out-in">
       <component
         :is="currentComponent"
+        v-model:switchComponentDisabled="switchComponentDisabled"
         @switch-component-manage="$emit('switch-component-manage')"></component>
     </Transition>
   </div>
@@ -70,6 +72,8 @@ function selectAuthService(service: "microsoft" | "yggdrasil" | "offline") {
 }
 
 const transitionName = ref<"slide-left" | "slide-right">("slide-left");
+
+const switchComponentDisabled = ref(false);
 </script>
 
 <style lang="less" scoped>

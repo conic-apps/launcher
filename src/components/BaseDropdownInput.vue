@@ -19,6 +19,9 @@
         v-model="inputBoxValue"
         :style="error ? 'outline: rgb(127,0,0)' : ''"
         :disabled="disabled"
+        autocapitalize="off"
+        autocomplete="off"
+        autocorrect="off"
         @focus="onFocusIn"
         @keydown="onKeydown" />
       <div class="arrow" :class="{ opened }" @click.stop="toggleDropdown">

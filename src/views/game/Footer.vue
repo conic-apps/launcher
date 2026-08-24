@@ -16,8 +16,9 @@
       :skin="accountSkin"
       :uuid="accountUuid"
       :size="56"
-      class="intro-hidden avatar"
+      class="avatar"
       :class="{
+        'intro-hidden': !introPlayed,
         'ms-account': configStore.current_account?.type === 'Microsoft',
         'ygg-account': configStore.current_account?.type === 'Yggdrasil',
         'offline-account': configStore.current_account?.type === 'Offline',
@@ -29,12 +30,13 @@
       :skin="SteveSkin"
       :uuid="accountUuid"
       :size="56"
-      class="unlogin intro-hidden avatar"
+      class="unlogin avatar"
+      :class="{ 'intro-hidden': !introPlayed }"
       @click="dialogStore.accountAdd.visible = true"></AccountAvatar>
     <AccountListDropdown
       v-if="configStore.current_account"
       ref="accountMenuRef"
-      class="intro-hidden">
+      :class="{ 'intro-hidden': !introPlayed }">
       <template #trigger="{ toggle }">
         <span>{{ profileName }}</span>
         <button class="account-switch" tabindex="-1" @click.stop="toggle()">
@@ -95,7 +97,7 @@ import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
 import { yggdrasilGetSkinUrl, type Account } from "@conic/account";
-import { computed, onMounted, useTemplateRef } from "vue";
+import { computed, onMounted, ref, useTemplateRef } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
 import { isLibraryValid } from "@conic/multiplayer";
 import gsap from "gsap";
@@ -233,9 +235,15 @@ onMounted(() => {
   elements.avatar.value?.ready.then(() => resolveReady());
 });
 
+const introPlayed = ref(false);
+
 const playIntro = () => {
   return gsap
-    .timeline()
+    .timeline({
+      onComplete: () => {
+        introPlayed.value = true;
+      },
+    })
     .from(elements.root.value, {
       opacity: 1,
       y: 56,

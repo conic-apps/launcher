@@ -43,7 +43,7 @@
               默认
             </p>
           </li>
-          <li class="account-item" @click="$emit('switch-component-add')">
+          <li class="account-item" @click="dialogStore.accountAdd.visible = true">
             <AppIcon name="user-add"></AppIcon>
             <div class="item-info">
               <span class="item-name">新增一个档案</span>

@@ -5,6 +5,22 @@
 <template>
   <div class="mods-list-wrapper">
     <div class="mods-list">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          pointer-events: none;
+          height: 100%;
+        ">
+        <ContentNotFound
+          :show="resourcepacks.length === 0"
+          description="考虑从互联网下载一些资源包"></ContentNotFound>
+      </div>
       <div v-for="(pack, index) in resourcepacks" class="content" :key="index">
         <img v-if="pack.icon" :src="pack.icon" alt="pack icon" width="72px" height="100%" />
         <img
@@ -38,6 +54,7 @@ import { computed } from "vue";
 import { useGameContentStore } from "@/store/content";
 import type { Resourcepack } from "@conic/content";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import ContentNotFound from "./ContentNotFound.vue";
 
 const gameContentStore = useGameContentStore();
 const resourcepacks = computed(() => gameContentStore.gameContent.resourcepacks ?? []);
