@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1200" height="640" viewBox="0 0 1200 640"
+     role="img" aria-labelledby="hero-title hero-desc">
+  <title id="hero-title">Conic Launcher — 现代、跨平台的 Minecraft 启动器</title>
+  <desc id="hero-desc">Conic Launcher 的主界面以四种 Catppuccin 主题（Mocha、Macchiato、Frappé、Latte）扇形展开，左侧是项目名称与核心特性。</desc>
+
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#89b4fa"/>
+      <stop offset="1" stop-color="#cba6f7"/>
+    </linearGradient>
+    <radialGradient id="fan-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#89b4fa" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#89b4fa" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="canvas-clip">
+      <rect x="0" y="0" width="1200" height="640" rx="26"/>
+    </clipPath>
+    <clipPath id="shot-clip">
+      <rect x="-310" y="-196.5" width="620" height="393" rx="14"/>
+    </clipPath>
+    <filter id="card-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="22" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <g clip-path="url(#canvas-clip)">
+    <!-- background -->
+    <rect width="1200" height="640" fill="#11111b"/>
+    <ellipse cx="880" cy="330" rx="430" ry="330" fill="url(#fan-glow)"/>
+
+    <!-- conic swoosh: elliptical orbit echoing the logo -->
+    <g transform="translate(870 320) rotate(-24)">
+      <ellipse rx="500" ry="300" fill="none" stroke="url(#accent)" stroke-opacity="0.16" stroke-width="2.5"/>
+    </g>
+    <g transform="translate(870 320) rotate(-24)">
+      <ellipse rx="500" ry="300" fill="none" stroke="url(#accent)" stroke-opacity="0.35" stroke-width="2.5"
+               stroke-dasharray="70 1030" stroke-dashoffset="-160" stroke-linecap="round"/>
+    </g>
+
+    <!-- title block -->
+    <g id="title-block" transform="translate(64 0)">
+      <text x="2" y="152" font-family="'SF Mono', Menlo, monospace" font-size="15" letter-spacing="4"
+            fill="#b4befe">MINECRAFT LAUNCHER</text>
+      <text x="0" y="242" font-family="'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Segoe UI', sans-serif"
+            font-weight="800" font-size="92" fill="url(#accent)">Conic</text>
+      <text x="0" y="330" font-family="'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Segoe UI', sans-serif"
+            font-weight="800" font-size="92" fill="#cdd6f4">Launcher</text>
+      <text x="2" y="376" font-family="'PingFang SC', 'Segoe UI', sans-serif" font-size="21"
+            fill="#a6adc8">现代、跨平台的 Minecraft 启动器</text>
+
+      <!-- loader-pill motif from the in-app instance list -->
+      <g id="feature-pills" transform="translate(2 402)" font-family="'PingFang SC', 'Segoe UI', sans-serif" font-size="16">
+        <g>
+          <rect x="0" y="0" width="92" height="30" rx="15" fill="#cba6f7" fill-opacity="0.16"/>
+          <text x="46" y="20" text-anchor="middle" fill="#cba6f7">Modrinth</text>
+        </g>
+        <g transform="translate(102 0)">
+          <rect x="0" y="0" width="106" height="30" rx="15" fill="#fab387" fill-opacity="0.16"/>
+          <text x="53" y="20" text-anchor="middle" fill="#fab387">CurseForge</text>
+        </g>
+        <g transform="translate(218 0)">
+          <rect x="0" y="0" width="100" height="30" rx="15" fill="#89b4fa" fill-opacity="0.16"/>
+          <text x="50" y="20" text-anchor="middle" fill="#89b4fa">Nexus 联机</text>
+        </g>
+        <g transform="translate(328 0)">
+          <rect x="0" y="0" width="118" height="30" rx="15" fill="#a6e3a1" fill-opacity="0.16"/>
+          <text x="59" y="20" text-anchor="middle" fill="#a6e3a1">开源 GPL-3.0</text>
+        </g>
+      </g>
+
+      <text x="2" y="530" font-family="'SF Mono', Menlo, monospace" font-size="16" fill="#6c7086">Windows · macOS · Linux　—　x64 / arm64</text>
+    </g>
+
+    <!-- screenshot fan: four real theme screenshots, back to front -->
+    <g id="screenshot-fan">
+      <g transform="translate(840 255) rotate(-10)">
+        <g filter="url(#card-shadow)">
+          <image xlink:href="../themes/mocha.png" x="-310" y="-196.5" width="620" height="393" clip-path="url(#shot-clip)"/>
+        </g>
+        <rect x="-310" y="-196.5" width="620" height="393" rx="14" fill="none" stroke="#585b70" stroke-opacity="0.7" stroke-width="1.5"/>
+      </g>
+      <g transform="translate(892 300) rotate(-3.5)">
+        <g filter="url(#card-shadow)">
+          <image xlink:href="../themes/macchiato.png" x="-310" y="-196.5" width="620" height="393" clip-path="url(#shot-clip)"/>
+        </g>
+        <rect x="-310" y="-196.5" width="620" height="393" rx="14" fill="none" stroke="#585b70" stroke-opacity="0.7" stroke-width="1.5"/>
+      </g>
+      <g transform="translate(944 345) rotate(3.5)">
+        <g filter="url(#card-shadow)">
+          <image xlink:href="../themes/frappe.png" x="-310" y="-196.5" width="620" height="393" clip-path="url(#shot-clip)"/>
+        </g>
+        <rect x="-310" y="-196.5" width="620" height="393" rx="14" fill="none" stroke="#585b70" stroke-opacity="0.7" stroke-width="1.5"/>
+      </g>
+      <g transform="translate(996 390) rotate(10)">
+        <g filter="url(#card-shadow)">
+          <image xlink:href="../themes/latte.png" x="-310" y="-196.5" width="620" height="393" clip-path="url(#shot-clip)"/>
+        </g>
+        <rect x="-310" y="-196.5" width="620" height="393" rx="14" fill="none" stroke="#585b70" stroke-opacity="0.7" stroke-width="1.5"/>
+      </g>
+    </g>
+  </g>
+</svg>
