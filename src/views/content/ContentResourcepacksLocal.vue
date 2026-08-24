@@ -21,7 +21,7 @@
           <span class="version" v-if="formatRange(pack)">{{ formatRange(pack) }}</span>
         </div>
         <div class="actions">
-          <button class="open-folder">
+          <button class="open-folder" @click="revealItemInDir(pack.path)">
             <AppIcon name="folder" :size="14"></AppIcon>
           </button>
           <button class="delete">
@@ -37,6 +37,7 @@
 import { computed } from "vue";
 import { useGameContentStore } from "@/store/content";
 import type { Resourcepack } from "@conic/content";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 
 const gameContentStore = useGameContentStore();
 const resourcepacks = computed(() => gameContentStore.gameContent.resourcepacks ?? []);

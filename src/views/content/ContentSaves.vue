@@ -4,84 +4,88 @@
 
 <template>
   <div class="content-saves" @click="selectedSave = null">
-    <div class="title">
-      <AppIcon name="save"></AppIcon>
-      <p>存档列表</p>
-    </div>
-    <div class="save-list-wrapper">
-      <div class="saves-list">
-        <div
-          v-for="(save, folderName) in saves"
-          class="content"
-          :class="{
-            selected: folderName === selectedSave,
-            'expand-up': expandDirection === 'up',
-          }"
-          :key="folderName">
-          <img
-            v-if="iconCache[folderName]"
-            :src="iconCache[folderName]"
-            alt="world icon"
-            width="64px"
-            height="64px" />
-          <img
-            v-else
-            src="@/assets/images/Unknown_server.webp"
-            alt="world icon"
-            width="64px"
-            height="64px" />
-          <div class="content-info" @click.stop="selectSave(folderName, $event)">
-            <p class="name">{{ save.Data.LevelName }}</p>
-            <p class="folder-name">{{ folderName }}</p>
-            <span
-              class="game-mode"
-              v-if="save.Data.GameType"
-              :class="{
-                survival: save.Data.GameType === 0,
-                creative: save.Data.GameType === 1,
-                adventure: save.Data.GameType === 2,
-                spectator: save.Data.GameType === 3,
-              }"
-              >{{ formatGameType(save.Data.GameType) }}</span
-            >
-            <span class="command-enabled" v-if="save.Data.allowCommands">作弊</span>
-            <span class="last-played" v-if="save.Data.LastPlayed"
-              ><span class="label">上次游玩: </span
-              >{{ formatLastPlayed(save.Data.LastPlayed, zhCN) }}</span
-            >
-          </div>
-          <div class="actions">
-            <button class="open-folder" @click.stop="openSaveFolder(folderName)">
-              <AppIcon name="folder" :size="14"></AppIcon>
-            </button>
-            <button class="delete" @click.stop="askDeleteSave(folderName)">
-              <AppIcon name="trash" :size="14"></AppIcon>
-            </button>
-          </div>
-          <div class="play-button">
-            <button class="play">
-              <AppIcon name="play" :size="18"></AppIcon>
-            </button>
-          </div>
-          <div class="extra" @click.stop>
-            <div class="map-previewer-container">
-              <WorldMap
-                v-if="selectedSave === folderName && instanceStore.currentInstance"
-                :instance-id="instanceStore.currentInstance.id"
-                :show-cursor-coords="true"
-                :folder-name="folderName"
-                cursor-coordinates-position="bottom-center"
-                :center-x="saveSpawnX(save)"
-                :center-z="saveSpawnZ(save)"></WorldMap>
+    <ScrollView>
+      <div class="title">
+        <AppIcon name="save"></AppIcon>
+        <p>存档列表</p>
+      </div>
+      <div class="save-list-wrapper">
+        <div class="saves-list">
+          <div
+            v-for="(save, folderName) in saves"
+            class="content"
+            :class="{
+              selected: folderName === selectedSave,
+              'expand-up': expandDirection === 'up',
+            }"
+            :key="folderName">
+            <img
+              v-if="iconCache[folderName]"
+              :src="iconCache[folderName]"
+              alt="world icon"
+              width="64px"
+              height="64px" />
+            <img
+              v-else
+              src="@/assets/images/Unknown_server.webp"
+              alt="world icon"
+              width="64px"
+              height="64px" />
+            <div class="content-info" @click.stop="selectSave(folderName, $event)">
+              <p class="name">{{ save.Data.LevelName }}</p>
+              <p class="folder-name">{{ folderName }}</p>
+              <span
+                class="game-mode"
+                v-if="save.Data.GameType"
+                :class="{
+                  survival: save.Data.GameType === 0,
+                  creative: save.Data.GameType === 1,
+                  adventure: save.Data.GameType === 2,
+                  spectator: save.Data.GameType === 3,
+                }"
+                >{{ formatGameType(save.Data.GameType) }}</span
+              >
+              <span class="command-enabled" v-if="save.Data.allowCommands">作弊</span>
+              <span class="last-played" v-if="save.Data.LastPlayed"
+                ><span class="label">上次游玩: </span
+                >{{ formatLastPlayed(save.Data.LastPlayed, zhCN) }}</span
+              >
+            </div>
+            <div class="actions">
+              <button class="open-folder" @click.stop="openSaveFolder(folderName)">
+                <AppIcon name="folder" :size="14"></AppIcon>
+              </button>
+              <button class="delete" @click.stop="askDeleteSave(folderName)">
+                <AppIcon name="trash" :size="14"></AppIcon>
+              </button>
+            </div>
+            <div class="play-button">
+              <button class="play">
+                <AppIcon name="play" :size="18"></AppIcon>
+              </button>
+            </div>
+            <!-- FIXME: Disable page scroll when scale -->
+            <div class="extra" @click.stop>
+              <div class="map-previewer-container">
+                <WorldMap
+                  v-if="selectedSave === folderName && instanceStore.currentInstance"
+                  :instance-id="instanceStore.currentInstance.id"
+                  :show-cursor-coords="true"
+                  :folder-name="folderName"
+                  cursor-coordinates-position="bottom-center"
+                  :center-x="saveSpawnX(save)"
+                  :center-z="saveSpawnZ(save)"></WorldMap>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ScrollView>
   </div>
 </template>
 
 <script setup lang="ts">
+import ScrollView from "@/components/ScrollView.vue";
 import WorldMap from "@/components/WorldMap.vue";
 import { useGameContentStore } from "@/store/content";
 import { useDialogStore } from "@/store/dialog";
@@ -194,6 +198,7 @@ function askDeleteSave(folderName: string) {
   height: 100%;
   overflow-y: auto;
   flex: 1;
+  position: relative;
   .save-list-wrapper {
     padding: 16px 32px 32px 32px;
   }

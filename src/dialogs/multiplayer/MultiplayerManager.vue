@@ -8,157 +8,162 @@
       <p class="title">Conic Nexus 跨局域网联机</p>
       <p class="nat" v-if="localNatCode !== null">你的网络环境：{{ localNatLabel }}</p>
     </div>
-    <div class="waiting" v-if="uiComponent === 'waiting'">
-      <p class="description description-info">
-        联机体验取决于你和其他参与者的网络环境。如果联机失败，请尝试改善 NAT 类型，或连接到有 IPV6
-        的网络以提升联机成功率
-      </p>
-      <div class="waiting-actions">
-        <button class="create-room" @click="createRoom">
-          <AppIcon name="add-circle" :size="26"></AppIcon>
-          <p>
-            <span class="label">创建小组</span>
-            <span class="description">创建小组并生成邀请码</span>
-          </p>
-        </button>
-        <button class="enter" @click="openJoinCodeInput">
-          <AppIcon name="enter" :size="30"></AppIcon>
-          <p>
-            <span class="label">加入小组</span>
-            <span class="description">通过邀请码加入小组后进入世界</span>
-          </p>
-        </button>
-      </div>
-    </div>
-    <div class="host-scan" v-else-if="uiComponent === 'hostScan'">
-      <p class="description description-info">
-        请启动游戏，打开单人存档，按下 ESC 键，选择「对局域网开放」<br />
-        当扫描到 Minecraft 世界后，房间码将会显示
-      </p>
-      <div style="display: flex" class="host-scan-progress">
-        <div style="width: 100%">
-          <p>扫描局域网世界...</p>
-          <BaseProgress :value="0" :max="1" :loading="true"></BaseProgress>
+    <Transition mode="out-in" :name="transitionName">
+      <div class="waiting" v-if="uiComponent === 'waiting'">
+        <p class="description description-info">
+          联机体验取决于你和其他参与者的网络环境。如果联机失败，请尝试改善 NAT 类型，或连接到有 IPV6
+          的网络以提升联机成功率
+        </p>
+        <div class="waiting-actions">
+          <button class="create-room" @click="createRoom">
+            <AppIcon name="add-circle" :size="26"></AppIcon>
+            <p>
+              <span class="label">创建小组</span>
+              <span class="description">创建小组并生成邀请码</span>
+            </p>
+          </button>
+          <button class="enter" @click="openJoinCodeInput">
+            <AppIcon name="enter" :size="30"></AppIcon>
+            <p>
+              <span class="label">加入小组</span>
+              <span class="description">通过邀请码加入小组后进入世界</span>
+            </p>
+          </button>
         </div>
-        <BaseButton
-          class="back"
-          style="width: fit-content; flex-shrink: 0; margin-left: 16px"
-          @click="leaveRoom">
-          取消
-        </BaseButton>
       </div>
-    </div>
-    <div
-      class="host-ready"
-      v-else-if="uiComponent === 'hostReady'"
-      style="display: flex; flex-direction: column; height: 100%; padding-bottom: 16px">
-      <p class="description description-info">
-        请把下面的邀请码发送给好友，并提醒他们在启动器中输入邀请码加入小组
-      </p>
-      <div style="display: flex; height: calc(100% - 56px); gap: 16px">
-        <div class="group-actions">
-          <div style="display: flex; flex-direction: column; align-items: center">
-            <p style="font-size: 13px; margin-top: 6px">邀请码（点击复制）</p>
-            <Transition :name="showCopyMessage ? 'zoom-out' : 'zoom-in'" mode="out-in">
-              <p style="font-size: 16px; margin-top: 12px" v-if="showCopyMessage">已复制！</p>
-              <p style="font-size: 16px; margin-top: 12px" v-else @click="copyCode">
-                {{ multiplayerStore.roomCode }}
-              </p>
-            </Transition>
+      <div class="host-scan" v-else-if="uiComponent === 'hostScan'">
+        <p class="description description-info">
+          请启动游戏，打开单人存档，按下 ESC 键，选择「对局域网开放」<br />
+          当扫描到 Minecraft 世界后，房间码将会显示
+        </p>
+        <div style="display: flex" class="host-scan-progress">
+          <div style="width: 100%">
+            <p class="scan-status">
+              <span>扫描局域网世界...</span>
+              <span v-if="scanning">{{ scanRemaining }}s</span>
+            </p>
+            <BaseProgress :value="0" :max="1" :loading="true"></BaseProgress>
           </div>
-          <BaseButton @click="leaveRoom">关闭连接</BaseButton>
-        </div>
-        <div class="group-guests-list" style="overflow: auto">
-          <template v-for="player in multiplayerStore.players" :key="player.machine_id">
-            <div>
-              <p class="name">
-                {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
-              </p>
-              <p class="vendor">{{ player.vendor }}</p>
-            </div>
-          </template>
-          <p class="message" v-if="multiplayerStore.players.length === 0">等待其他玩家加入...</p>
-        </div>
-      </div>
-    </div>
-    <div class="guest-input-code" v-else-if="uiComponent === 'guestCodeInput'">
-      <div style="background: var(--ctp-surface0); border-radius: 8px; padding: 16px">
-        <p class="description" style="text-align: center">输入好友发给你的邀请码以连接</p>
-        <div style="display: flex; width: 100%; align-items: center; gap: 8px">
-          <BaseInput
-            v-model="codeInput"
-            style="flex: 1"
-            placeholder="邀请码格式：U/BBBB-AAAA-KKKK-AAAA"></BaseInput>
           <BaseButton
-            style="flex-shrink: 0; width: fit-content"
-            @click="submitJoin"
-            :disabled="!codeInputValid"
-            >加入</BaseButton
-          >
+            class="back"
+            style="width: fit-content; flex-shrink: 0; margin-left: 16px"
+            @click="leaveRoom">
+            取消
+          </BaseButton>
         </div>
       </div>
-    </div>
-    <div class="guest-joining" v-else-if="uiComponent === 'guestJoining'">
-      <div style="display: flex" class="host-scan-progress">
-        <div style="width: 100%">
-          <p>尝试加入小组...</p>
-          <BaseProgress :value="0" :max="1" :loading="true"></BaseProgress>
-        </div>
-        <BaseButton
-          class="back"
-          style="width: fit-content; flex-shrink: 0; margin-left: 16px"
-          @click="leaveRoom">
-          取消
-        </BaseButton>
-      </div>
-    </div>
-    <div
-      class="guest-ready"
-      v-else-if="uiComponent === 'guestReady'"
-      style="height: calc(100% - 72px); padding-bottom: 16px">
       <div
-        class="group-guests-list"
-        style="width: 100%; height: 100%; justify-content: space-between">
-        <div
-          style="
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            overflow: auto;
-            max-height: calc(100% - 32px);
-          ">
-          <template v-for="player in multiplayerStore.players" :key="player.machine_id">
-            <div>
-              <p class="name">
-                {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
-              </p>
-              <p class="vendor">{{ player.vendor }}</p>
+        class="host-ready"
+        v-else-if="uiComponent === 'hostReady'"
+        style="display: flex; flex-direction: column; height: 100%; padding-bottom: 16px">
+        <p class="description description-info">
+          请把下面的邀请码发送给好友，并提醒他们在启动器中输入邀请码加入小组
+        </p>
+        <div style="display: flex; height: calc(100% - 56px); gap: 16px">
+          <div class="group-actions">
+            <div style="display: flex; flex-direction: column; align-items: center">
+              <p style="font-size: 13px; margin-top: 6px">邀请码（点击复制）</p>
+              <Transition :name="showCopyMessage ? 'zoom-out' : 'zoom-in'" mode="out-in">
+                <p style="font-size: 16px; margin-top: 12px" v-if="showCopyMessage">已复制！</p>
+                <p style="font-size: 16px; margin-top: 12px" v-else @click="copyCode">
+                  {{ multiplayerStore.roomCode }}
+                </p>
+              </Transition>
             </div>
-          </template>
+            <BaseButton @click="leaveRoom">关闭连接</BaseButton>
+          </div>
+          <div class="group-guests-list" style="overflow: auto">
+            <template v-for="player in multiplayerStore.players" :key="player.machine_id">
+              <div>
+                <p class="name">
+                  {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
+                </p>
+                <p class="vendor">{{ player.vendor }}</p>
+              </div>
+            </template>
+            <p class="message" v-if="multiplayerStore.players.length === 0">等待其他玩家加入...</p>
+          </div>
         </div>
-        <BaseButton @click="leaveRoom">退出小组</BaseButton>
       </div>
-    </div>
-    <div
-      class="exception"
-      v-else-if="uiComponent === 'exception'"
-      style="display: flex; flex-direction: column; gap: 16px; height: 100%">
-      <p
-        class="description description-error"
-        v-if="multiplayerStore.fault"
-        style="display: flex; align-items: center">
-        <span
-          >连接出现问题（{{ multiplayerStore.fault.code }}）：{{
-            multiplayerStore.fault.message
-          }}</span
-        >
-        <BaseButton style="width: fit-content" @click="leaveRoom">重新开始</BaseButton>
-      </p>
-      <p class="description description-error" v-else>
-        连接出现问题，请重新开始
-        <BaseButton style="width: fit-content" @click="leaveRoom">重新开始</BaseButton>
-      </p>
-    </div>
+      <div class="guest-input-code" v-else-if="uiComponent === 'guestCodeInput'">
+        <div style="background: var(--ctp-surface0); border-radius: 8px; padding: 16px">
+          <p class="description" style="text-align: center">输入好友发给你的邀请码以连接</p>
+          <div style="display: flex; width: 100%; align-items: center; gap: 8px">
+            <BaseInput
+              v-model="codeInput"
+              style="flex: 1"
+              placeholder="邀请码格式：U/BBBB-AAAA-KKKK-AAAA"></BaseInput>
+            <BaseButton
+              style="flex-shrink: 0; width: fit-content"
+              @click="submitJoin"
+              :disabled="!codeInputValid"
+              >加入</BaseButton
+            >
+          </div>
+        </div>
+      </div>
+      <div class="guest-joining" v-else-if="uiComponent === 'guestJoining'">
+        <div style="display: flex" class="host-scan-progress">
+          <div style="width: 100%">
+            <p>尝试加入小组...</p>
+            <BaseProgress :value="0" :max="1" :loading="true"></BaseProgress>
+          </div>
+          <BaseButton
+            class="back"
+            style="width: fit-content; flex-shrink: 0; margin-left: 16px"
+            @click="leaveRoom">
+            取消
+          </BaseButton>
+        </div>
+      </div>
+      <div
+        class="guest-ready"
+        v-else-if="uiComponent === 'guestReady'"
+        style="height: calc(100% - 72px); padding-bottom: 16px">
+        <div
+          class="group-guests-list"
+          style="width: 100%; height: 100%; justify-content: space-between">
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+              overflow: auto;
+              max-height: calc(100% - 32px);
+            ">
+            <template v-for="player in multiplayerStore.players" :key="player.machine_id">
+              <div>
+                <p class="name">
+                  {{ player.name }} <span class="tag" v-if="player.kind === 'HOST'">主机</span>
+                </p>
+                <p class="vendor">{{ player.vendor }}</p>
+              </div>
+            </template>
+          </div>
+          <BaseButton @click="leaveRoom">退出小组</BaseButton>
+        </div>
+      </div>
+      <div
+        class="exception"
+        v-else-if="uiComponent === 'exception'"
+        style="display: flex; flex-direction: column; gap: 16px; height: 100%">
+        <p
+          class="description description-error"
+          v-if="multiplayerStore.fault"
+          style="display: flex; align-items: center">
+          <span
+            >连接出现问题（{{ multiplayerStore.fault.code }}）：{{
+              multiplayerStore.fault.message
+            }}</span
+          >
+          <BaseButton style="width: fit-content" @click="leaveRoom">重新开始</BaseButton>
+        </p>
+        <p class="description description-error" v-else>
+          连接出现问题，请重新开始
+          <BaseButton style="width: fit-content" @click="leaveRoom">重新开始</BaseButton>
+        </p>
+      </div>
+    </Transition>
     <div
       class="buttons"
       v-if="dialogStore.multiplayerExtension.multiplayerManagerComponent === 'guestCodeInput'">
@@ -190,7 +195,7 @@ import { useConfigStore } from "@/store/config";
 import AppIcon from "@/components/AppIcon.vue";
 import BaseProgress from "@/components/BaseProgress.vue";
 import BaseButton from "@/components/BaseButton.vue";
-import { computed, ref, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import BaseInput from "@/components/BaseInput.vue";
 import { isRoomCodeValid } from "@conic/multiplayer";
@@ -198,6 +203,8 @@ import { isRoomCodeValid } from "@conic/multiplayer";
 const dialogStore = useDialogStore();
 const multiplayerStore = useMultiplayerStore();
 const configStore = useConfigStore();
+
+const transitionName = ref("slide-left");
 
 multiplayerStore.init();
 
@@ -268,10 +275,43 @@ const localNatLabel = computed(() => {
 watch(
   uiComponent,
   (value) => {
+    transitionName.value = value === "waiting" ? "slide-right" : "slide-left";
     dialogStore.multiplayerExtension.multiplayerManagerComponent = value;
   },
   { immediate: true },
 );
+
+const SCAN_TOTAL_SECONDS = 60;
+const scanRemaining = ref(SCAN_TOTAL_SECONDS);
+const scanning = computed(() => multiplayerStore.state === "host-scanning");
+let scanTimer: ReturnType<typeof setInterval> | null = null;
+
+function stopScanCountdown() {
+  if (scanTimer !== null) {
+    clearInterval(scanTimer);
+    scanTimer = null;
+  }
+}
+
+watch(
+  scanning,
+  (active) => {
+    stopScanCountdown();
+    if (active) {
+      scanRemaining.value = SCAN_TOTAL_SECONDS;
+      scanTimer = setInterval(() => {
+        scanRemaining.value -= 1;
+        if (scanRemaining.value <= 0) {
+          scanRemaining.value = 0;
+          stopScanCountdown();
+        }
+      }, 1000);
+    }
+  },
+  { immediate: true },
+);
+
+onUnmounted(stopScanCountdown);
 
 async function copyCode() {
   await writeText(multiplayerStore.roomCode);
@@ -319,6 +359,7 @@ async function leaveRoom() {
   display: flex;
   flex-direction: column;
   height: 100%;
+  padding-bottom: 48px;
   .header {
     display: flex;
     p.nat {
@@ -400,11 +441,15 @@ async function leaveRoom() {
     border: 1px solid var(--ctp-red);
     border-radius: 8px;
     background: rgba(var(--ctp-red-rgb), 0.15);
+    margin-bottom: 0;
   }
   div.buttons {
-    margin-top: auto;
+    margin-top: 16px;
     display: flex;
     gap: 12px;
+    position: absolute;
+    bottom: 24px;
+    width: calc(100% - 48px);
     .start {
       background: var(--ctp-blue);
       color: var(--ctp-text-inverse);
@@ -426,6 +471,10 @@ async function leaveRoom() {
     p {
       font-size: 14px;
       margin-bottom: 10px;
+    }
+    p.scan-status {
+      display: flex;
+      justify-content: space-between;
     }
   }
   .group-actions {

@@ -80,6 +80,9 @@
       </SettingItem>
     </SettingGroup>
     <div class="version-info">
+      <div class="logo">
+        <LogoFlat />
+      </div>
       <p class="application-name">Conic Launcher</p>
       <p class="application-version">
         {{ appVersion ?? "0.0.0" }}
@@ -102,6 +105,7 @@
 <script setup lang="ts">
 import SettingItem from "@/components/SettingItem.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
+import LogoFlat from "@/assets/logo-flat.svg";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { getDataLocation } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
@@ -126,6 +130,11 @@ onMounted(async () => {
   align-items: center;
   flex-direction: column;
   margin-top: 32px;
+  .logo svg {
+    width: 24px;
+    margin-bottom: 8px;
+    fill: var(--ctp-text);
+  }
   .application-name {
     font-size: 12px;
     font-weight: 600;

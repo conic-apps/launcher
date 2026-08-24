@@ -5,8 +5,17 @@
 <template>
   <BaseDialog :visible="dialogStore.confirmDeleteAccount.visible" :width="400">
     <div class="confirm-quit-app" ref="main">
-      <div style="display: flex; align-items: center">
-        <AccountAvatar :skin="accountSkin" :uuid="accountUuid" :size="40"></AccountAvatar>
+      <div style="display: flex; align-items: center; flex-direction: column">
+        <AccountAvatar
+          :class="{
+            'ms-account': account?.type === 'Microsoft',
+            'ygg-account': account?.type === 'Yggdrasil',
+            'offline-account': account?.type === 'Offline',
+          }"
+          class="avatar"
+          :skin="accountSkin"
+          :uuid="accountUuid"
+          :size="48"></AccountAvatar>
         <div class="message">
           <p style="font-size: 16px">是否确认删除此帐户？</p>
           <p style="font-size: 12px; margin-top: 8px">最后的反悔机会</p>
@@ -108,16 +117,33 @@ async function confirmDelete() {
 <style lang="less" scoped>
 .confirm-quit-app {
   padding: 8px;
+  .avatar :deep(.avatar-image) {
+    border-radius: 1000px;
+    margin-bottom: 16px;
+  }
+  .avatar.ms-account :deep(.avatar-image) {
+    border: 2px solid var(--ctp-green);
+  }
+
+  .avatar.ygg-account :deep(.avatar-image) {
+    border: 2px solid var(--ctp-yellow);
+  }
+
+  .avatar.offline-account :deep(.avatar-image) {
+    border: 2px solid var(--ctp-red);
+  }
   .message {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    margin-left: 16px;
+    text-align: center;
   }
   .buttons {
     display: flex;
     width: 100%;
     margin-top: 16px;
+    gap: 8px;
+
     button {
       appearance: none;
       border: none;
@@ -126,10 +152,8 @@ async function confirmDelete() {
       transition: transform 200ms ease;
     }
     button.back {
-      margin-right: 8px;
       background: var(--ctp-blue);
       color: var(--ctp-text-inverse);
-      padding: 8px 0;
     }
     button.quit {
       background: var(--ctp-red);

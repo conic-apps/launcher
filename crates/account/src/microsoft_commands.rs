@@ -2,17 +2,68 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use std::sync::{Arc, Mutex};
+
+use log::warn;
 use serde::Serialize;
-use tauri::command;
+use tauri::{State, command, ipc::Channel};
 use uuid::Uuid;
 
 use crate::{
-    Result,
+    Error, Result,
     microsoft::{
-        MicrosoftAccount,
+        LoginEvent, LoginReporter, MicrosoftAccount,
         device_code::{DeviceCodePollResult, DeviceCodeResponse},
+        login_with_auth_code, login_with_device_code,
     },
 };
+
+/// State of the at-most-one running Microsoft login task.
+#[derive(Clone, Default)]
+pub(crate) struct PluginState {
+    task: Arc<Mutex<Option<tokio::task::AbortHandle>>>,
+}
+
+#[command]
+pub(crate) async fn cmd_spawn_microsoft_login_task(
+    state: State<'_, PluginState>,
+    code: Option<String>,
+    channel: Channel<LoginEvent>,
+) -> Result<MicrosoftAccount> {
+    {
+        let current_task = state.task.lock().expect("Internal error");
+        if current_task.is_some() {
+            return Err(Error::LoginInProgress);
+        }
+    }
+    let reporter = LoginReporter::new(channel);
+    let handle = tokio::spawn(async move {
+        reporter.report(LoginEvent::Prepare);
+        match code {
+            Some(code) => login_with_auth_code(&code, &reporter).await,
+            None => login_with_device_code(&reporter).await,
+        }
+    });
+    *state.task.lock().expect("Internal error") = Some(handle.abort_handle());
+    let result = match handle.await {
+        Ok(result) => result,
+        Err(error) => {
+            warn!("Microsoft login cancelled");
+            Err(Error::Aborted(error))
+        }
+    };
+    *state.task.lock().expect("Internal error") = None;
+    result
+}
+
+#[command]
+pub(crate) fn cmd_cancel_microsoft_login_task(state: State<'_, PluginState>) {
+    let mut current_task = state.task.lock().expect("Internal error");
+    if let Some(handle) = current_task.take() {
+        handle.abort();
+        warn!("Cancelling Microsoft login!");
+    }
+}
 
 #[command]
 pub(crate) async fn cmd_microsoft_get_account(uuid: Uuid) -> Result<MicrosoftAccount> {

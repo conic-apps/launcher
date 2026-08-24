@@ -39,7 +39,7 @@
           <span class="version" v-if="mod.version">{{ mod.version }}</span>
         </div>
         <div class="actions">
-          <button class="open-folder">
+          <button class="open-folder" @click="revealItemInDir(mod.path)">
             <AppIcon name="folder" :size="14"></AppIcon>
           </button>
           <button class="delete">
@@ -55,6 +55,7 @@
 import { computed } from "vue";
 import { useGameContentStore } from "@/store/content";
 import { ModLoader } from "@conic/content";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 
 const gameContentStore = useGameContentStore();
 const mods = computed(() => gameContentStore.gameContent.mods);
