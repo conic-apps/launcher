@@ -6,9 +6,9 @@
   <BaseDialog
     :visible="dialogStore.multiplayerExtension.visible"
     :width="dialogSize.width"
-    :height="dialogSize.height">
+    animate-height>
     <div class="connect" data-tauri-drag-region>
-      <Transition name="slide-left">
+      <Transition name="slide-left" mode="out-in">
         <component
           :is="components[dialogStore.multiplayerExtension.currentComponent].component"></component>
       </Transition>
@@ -28,58 +28,24 @@ const dialogStore = useDialogStore();
 
 const components = {
   downloadDescription: {
-    height: 295,
     width: 580,
     component: markRaw(DownloadDescription),
   },
   downloadProgress: {
-    height: 148,
     width: 480,
     component: markRaw(DownloadProgress),
   },
   multiplayerManager: {
-    height: 280,
     width: 580,
     component: markRaw(MultiplayerManager),
   },
 };
 
-const multiplayerManagerDialogSize = {
-  waiting: {
-    width: 600,
-    height: 274,
-  },
-  hostScan: {
-    width: 600,
-    height: 280,
-  },
-  hostReady: {
-    width: 600,
-    height: 340,
-  },
-  guestCodeInput: {
-    width: 600,
-    height: 244,
-  },
-  guestJoining: {
-    width: 600,
-    height: 210,
-  },
-  guestReady: {
-    width: 600,
-    height: 340,
-  },
-  exception: {
-    width: 600,
-    height: 190,
-  },
-};
+const multiplayerManagerWidth = 600;
 
 const dialogSize = computed(() => {
   if (dialogStore.multiplayerExtension.currentComponent === "multiplayerManager") {
-    return multiplayerManagerDialogSize[
-      dialogStore.multiplayerExtension.multiplayerManagerComponent
-    ];
+    return { width: multiplayerManagerWidth };
   }
   return components[dialogStore.multiplayerExtension.currentComponent];
 });
@@ -88,7 +54,6 @@ const dialogSize = computed(() => {
 <style lang="less" scoped>
 .connect {
   width: 100%;
-  height: 100%;
   overflow: hidden;
   padding: 8px;
 }

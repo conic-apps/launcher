@@ -274,7 +274,6 @@ function sameApiRoot(a: string, b: string): boolean {
 <style lang="less" scoped>
 .add-yggdrasil-account-container {
   width: 100%;
-  height: calc(100% - 42px);
   display: flex;
   flex-direction: column;
 
@@ -352,7 +351,7 @@ function sameApiRoot(a: string, b: string): boolean {
   }
 
   .profile-list-wrapper {
-    height: calc(100% - 64px);
+    max-height: 134px;
     position: relative;
   }
 

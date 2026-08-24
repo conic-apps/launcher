@@ -24,7 +24,7 @@
             ><span>{{ instanceToDelete.config.runtime.minecraft }}</span></span
           >
           <span class="playtime"
-            ><span class="label">游戏时长：</span
+            ><span class="label">游戏时间：</span
             ><span>{{ formatPlayTime(playtime ?? 0) }}</span></span
           >
         </div>

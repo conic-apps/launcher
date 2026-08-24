@@ -61,7 +61,7 @@ url = "2"
 uuid = { version = "1", features = ["v4"] }
 zip = { version = "4", default-features = false, features = ["deflate"]}
 libloader = "0.1"
-tokio = { version = "1", features = ["macros", "rt"]}
+tokio = { version = "1", features = ["macros", "rt", "time"]}
 flate2 = "1"
 fastnbt = "2"
 png = "0.18"

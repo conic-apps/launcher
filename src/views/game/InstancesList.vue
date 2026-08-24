@@ -30,6 +30,7 @@
             @click="toggleGroup(group.key)">
             <AppIcon name="chevron-forward" :size="14"></AppIcon>
             <p>{{ group.title }}</p>
+            <span class="group-count">{{ group.instances.length }}</span>
           </div>
         </div>
         <div class="group-content" :data-group-content="group.key">
@@ -537,6 +538,16 @@ async function getBackgroundSrc(id: string) {
 
     &:not(.collapsed) svg {
       transform: rotate(90deg);
+    }
+
+    .group-count {
+      margin-left: 8px;
+      font-size: 10px;
+      font-weight: 500;
+      background: rgb(var(--group-accent-rgb));
+      color: var(--ctp-text-inverse);
+      border-radius: 100px;
+      padding: 1px 6px;
     }
   }
   .group-card[data-group="starred"] .group {

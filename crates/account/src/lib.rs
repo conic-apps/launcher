@@ -5,7 +5,7 @@
 use base64::{Engine, engine::general_purpose};
 use serde::{Deserialize, Serialize};
 use tauri::{
-    Runtime, command,
+    Manager, Runtime, command,
     plugin::{Builder, TauriPlugin},
 };
 
@@ -76,6 +76,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             microsoft_commands::cmd_microsoft_refresh_account,
             microsoft_commands::cmd_microsoft_request_device_code,
             microsoft_commands::cmd_microsoft_poll_device_code,
+            microsoft_commands::cmd_spawn_microsoft_login_task,
+            microsoft_commands::cmd_cancel_microsoft_login_task,
             offline_commands::cmd_offline_add_account,
             offline_commands::cmd_offline_delete_account,
             offline_commands::cmd_offline_update_account,
@@ -93,6 +95,10 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             yggdrasil_commands::cmd_yggdrasil_list_accounts,
             yggdrasil_commands::cmd_yggdrasil_update_account,
         ])
+        .setup(|app, _| {
+            app.manage(microsoft_commands::PluginState::default());
+            Ok(())
+        })
         .build()
 }
 

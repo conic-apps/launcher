@@ -61,6 +61,7 @@ export type Resourcepack = {
     }
     icon?: string
     name: string
+    path: string
 }
 
 export async function getAllLevels(instanceId: string): Promise<Record<string, Level>> {

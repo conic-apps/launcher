@@ -34,7 +34,7 @@ export function loadPalette(
         if (isDarkMode) {
             className += Palette.Mocha
         } else {
-            className += Palette.Macchiato
+            className += Palette.Latte
         }
     } else {
         className += appearanceConfig.palette

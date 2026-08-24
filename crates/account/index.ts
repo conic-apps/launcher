@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { invoke } from "@tauri-apps/api/core"
+import { Channel, invoke } from "@tauri-apps/api/core"
 import md5 from "blueimp-md5"
 
 export type AccountError =
@@ -18,6 +18,11 @@ export type AccountError =
     | { kind: "InvalidALIResponse"; message: string }
     | { kind: "YggdrasilTextureParseError"; message: string }
     | { kind: "Base64DecodeError"; message: string }
+    | { kind: "LoginInProgress"; message: string }
+    | { kind: "DeviceCodeExpired"; message: string }
+    | { kind: "AuthorizationDeclined"; message: string }
+    | { kind: "BadVerificationCode"; message: string }
+    | { kind: "Aborted"; message: string }
 
 export type Accounts = {
     microsoft: MicrosoftAccount[]
@@ -180,6 +185,59 @@ export async function requestDeviceCode(): Promise<DeviceCodeResponse> {
 
 export async function pollDeviceCode(deviceCode: string): Promise<DeviceCodePollResult> {
     return await invoke("plugin:account|cmd_microsoft_poll_device_code", { deviceCode })
+}
+
+export type LoginProgress =
+    | { job: "Prepare" }
+    | { job: "RequestDeviceCode" }
+    | {
+          job: "WaitingForAuthorization"
+          progress: {
+              user_code: string
+              verification_uri: string
+              expires_in: number
+              interval: number
+          }
+      }
+    | { job: "RedeemAccessToken" }
+    | { job: "XboxAuthenticate" }
+    | { job: "XstsAuthenticate" }
+    | { job: "MinecraftAuthenticate" }
+    | { job: "GetProfile" }
+    | { job: "SaveAccount" }
+
+/**
+ * Usage:
+ * ```ts
+ * const task = new MicrosoftLoginTask(code) // omit `code` for the device-code flow
+ * task.callbacks = {
+ *   onProgress: ...
+ * }
+ * const account = await task.start()
+ * ```
+ */
+export class MicrosoftLoginTask {
+    private _code?: string
+    private _callbacks?: {
+        onProgress?: (progress: LoginProgress) => void
+    }
+    constructor(code: string | undefined, callbacks?: typeof this._callbacks) {
+        this._code = code
+        this._callbacks = callbacks
+    }
+    async start(): Promise<MicrosoftAccount> {
+        const channel = new Channel<LoginProgress>()
+        channel.onmessage = (message) => {
+            this._callbacks?.onProgress?.(message)
+        }
+        return await invoke("plugin:account|cmd_spawn_microsoft_login_task", {
+            code: this._code ?? null,
+            channel,
+        })
+    }
+    async cancel() {
+        await invoke("plugin:account|cmd_cancel_microsoft_login_task")
+    }
 }
 
 export async function refreshMicrosoftAccount(

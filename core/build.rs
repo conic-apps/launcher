@@ -31,6 +31,8 @@ fn main() {
                 "cmd_microsoft_refresh_account",
                 "cmd_microsoft_request_device_code",
                 "cmd_microsoft_poll_device_code",
+                "cmd_spawn_microsoft_login_task",
+                "cmd_cancel_microsoft_login_task",
                 "cmd_offline_add_account",
                 "cmd_offline_delete_account",
                 "cmd_offline_update_account",

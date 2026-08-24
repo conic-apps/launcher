@@ -209,6 +209,9 @@ function onReadmeClick(event: MouseEvent) {
       line-height: 1.6;
       color: var(--ctp-text);
       word-wrap: break-word;
+      :deep(*) {
+        -webkit-user-select: unset;
+      }
 
       :deep(h1),
       :deep(h2),

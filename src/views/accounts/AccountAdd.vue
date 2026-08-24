@@ -4,17 +4,17 @@
 
 <template>
   <div class="account-add">
-    <p class="title">选择认证服务并添加帐户</p>
-    <div class="container" :style="{ width: containerSize.width, height: containerSize.height }">
+    <div class="header">
+      <p class="title">选择认证服务并添加帐户</p>
       <AccountAddSelect
         :selectAuthService="selectAuthService"
         v-model:authServiceType="authServiceType" />
-      <Transition :name="transitionName" mode="out-in">
-        <component
-          :is="currentComponent"
-          @switch-component-manage="$emit('switch-component-manage')"></component>
-      </Transition>
     </div>
+    <Transition :name="transitionName" mode="out-in">
+      <component
+        :is="currentComponent"
+        @switch-component-manage="$emit('switch-component-manage')"></component>
+    </Transition>
   </div>
 </template>
 
@@ -30,19 +30,15 @@ defineEmits(["switch-component-manage"]);
 const components = {
   addMicrosoftAccount: {
     component: markRaw(AccountAddMicrosoft),
-    containerSize: { width: "500px", height: "210px" },
   },
   addYggdrasilAccount: {
     component: markRaw(AccountAddYggdrasil),
-    containerSize: { width: "500px", height: "280px" },
   },
   addOfflineAccount: {
     component: markRaw(AccountAddOffline),
-    containerSize: { width: "500px", height: "264px" },
   },
 };
 const currentComponent = shallowRef<Component>(components.addMicrosoftAccount.component);
-const containerSize = ref(components.addMicrosoftAccount.containerSize);
 const authServiceType = ref<"microsoft" | "yggdrasil" | "offline">("microsoft");
 function selectAuthService(service: "microsoft" | "yggdrasil" | "offline") {
   if (service === authServiceType.value) {
@@ -63,15 +59,12 @@ function selectAuthService(service: "microsoft" | "yggdrasil" | "offline") {
   switch (service) {
     case "microsoft":
       currentComponent.value = components.addMicrosoftAccount.component;
-      containerSize.value = components.addMicrosoftAccount.containerSize;
       break;
     case "yggdrasil":
       currentComponent.value = components.addYggdrasilAccount.component;
-      containerSize.value = components.addYggdrasilAccount.containerSize;
       break;
     case "offline":
       currentComponent.value = components.addOfflineAccount.component;
-      containerSize.value = components.addOfflineAccount.containerSize;
       break;
   }
 }
@@ -81,32 +74,19 @@ const transitionName = ref<"slide-left" | "slide-right">("slide-left");
 
 <style lang="less" scoped>
 .account-add {
-  margin: auto;
+  width: 540px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  padding: 8px;
 
-  div.container {
+  .header {
     display: flex;
-    width: 300px;
-    height: 180px;
-    flex-direction: column;
     align-items: center;
-    justify-content: initial;
-    border: var(--card-border);
-    border-radius: var(--card-border-radius);
-    background: var(--card-background);
-    padding: 20px 20px;
-    transition: all 200ms ease;
-    overflow: hidden;
-  }
-
-  p.title {
-    font-size: 22px;
-    text-align: center;
-    width: fit-content;
     margin-bottom: 16px;
+
+    p.title {
+      font-size: 22px;
+    }
   }
 }
 </style>

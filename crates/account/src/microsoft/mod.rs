@@ -13,12 +13,15 @@ use folder::DATA_LOCATION;
 
 mod account_profile_step;
 pub mod device_code;
+mod login_task;
 mod microsoft_auth_step;
 mod minecraft_auth_step;
 mod minecraft_profile_step;
 mod xbox_auth_step;
 mod xsts_auth_step;
 
+pub use login_task::{LoginEvent, LoginReporter};
+pub(crate) use login_task::{login_with_auth_code, login_with_device_code};
 pub use microsoft_auth_step::redeem_access_token;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -126,18 +129,38 @@ pub async fn access_token_auth_flow(
     access_token: &str,
     refresh_token: &str,
 ) -> Result<MicrosoftAccount> {
+    access_token_auth_flow_with_reporter(access_token, refresh_token, None).await
+}
+
+/// Same as [`access_token_auth_flow`], but reports each stage of the chain to
+/// the frontend when a [`LoginReporter`] is provided.
+pub(crate) async fn access_token_auth_flow_with_reporter(
+    access_token: &str,
+    refresh_token: &str,
+    reporter: Option<&LoginReporter>,
+) -> Result<MicrosoftAccount> {
+    fn report(reporter: Option<&LoginReporter>, event: LoginEvent) {
+        if let Some(reporter) = reporter {
+            reporter.report(event);
+        }
+    }
+
     info!("Starting access token auth flow");
+    report(reporter, LoginEvent::XboxAuthenticate);
     let xbox_auth_response = xbox_auth_step::xbox_authenticate(access_token).await?;
     info!("Successfully login Xbox");
 
+    report(reporter, LoginEvent::XstsAuthenticate);
     let xsts_token = xsts_auth_step::xsts_authenticate(&xbox_auth_response.xbl_token).await?;
     info!("Successfully verify XSTS");
 
+    report(reporter, LoginEvent::MinecraftAuthenticate);
     let (minecraft_access_token, expires_in_secs) =
         minecraft_auth_step::minecraft_authenticate(&xbox_auth_response.xbl_uhs, &xsts_token)
             .await?;
     info!("Successfully get Minecraft access token");
 
+    report(reporter, LoginEvent::GetProfile);
     let minecraft_profile_response =
         minecraft_profile_step::get_game_profile(&minecraft_access_token).await?;
     info!("Successfully get game profile");

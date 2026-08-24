@@ -30,7 +30,7 @@
       :uuid="accountUuid"
       :size="56"
       class="unlogin intro-hidden avatar"
-      @click="navigationStore.navigate('accounts')"></AccountAvatar>
+      @click="dialogStore.accountAdd.visible = true"></AccountAvatar>
     <AccountListDropdown
       v-if="configStore.current_account"
       ref="accountMenuRef"
@@ -61,7 +61,7 @@
       v-else
       ref="profileNameUnlogged"
       style="opacity: 0"
-      @click="navigationStore.navigate('accounts')">
+      @click="dialogStore.accountAdd.visible = true">
       <span>未登录</span>
     </p>
     <button class="connect" style="opacity: 0" @click="openConnect" ref="connect">

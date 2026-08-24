@@ -36,31 +36,40 @@ const authServiceType = defineModel<"microsoft" | "offline" | "yggdrasil">("auth
 <style lang="less" scoped>
 .account-add-selection {
   display: flex;
-  flex-direction: 0;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
 
   .item {
     appearance: none;
     border: none;
-    border-radius: 100px;
-    background: #ffffff0f;
-    width: 88px;
-    height: 28px;
+    background: none;
+    height: 32px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 4px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: rgba(var(--ctp-text-rgb), 0.7);
     transition: background 100ms ease;
 
     p {
       margin-left: 4px;
-      font-size: 13px;
+    }
+
+    &:hover {
+      background: var(--ctp-surface0);
+    }
+
+    &:active {
+      background: var(--ctp-surface1);
     }
   }
 
   .item.active {
-    border: 1px solid #ffffff3f;
-    background: #ffffff3f;
+    background: var(--ctp-surface2);
+    color: rgba(var(--ctp-text-rgb), 1);
   }
 }
 </style>
