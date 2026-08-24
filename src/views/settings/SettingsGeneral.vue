@@ -51,6 +51,12 @@
           :options="['stable', 'beta']"
           v-model="config.update_channel"></BaseSelect>
       </SettingItem>
+      <SettingItem
+        :title="'打开设置向导'"
+        :description="'设置向导可带你完成基本的启动器设置'"
+        :navigable="true"
+        @click="">
+      </SettingItem>
     </SettingGroup>
   </div>
 </template>

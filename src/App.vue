@@ -121,6 +121,7 @@ import { useMusicStore } from "./store/music";
 import { checkMinecraftUpdateReminder } from "./store/minecraftUpdate";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import gsap from "gsap";
+import SetupWizard from "./views/SetupWizard.vue";
 
 const config = useConfigStore();
 const navigation = useNavigationStore();
@@ -158,6 +159,7 @@ const pages = reactive({
   game: markRaw(GameView),
   launch: markRaw(LaunchView),
   accounts: markRaw(AccountsView),
+  setup: markRaw(SetupWizard),
 });
 
 const i18n = useI18n();

@@ -100,7 +100,15 @@
           >
         </div>
       </div>
-      <div @click="useShowContent().value.mods = true" ref="mods" style="opacity: 0">
+      <div
+        @click="useShowContent().value.mods = true"
+        ref="mods"
+        style="opacity: 0"
+        :class="{
+          disabled:
+            !currentInstance?.config.runtime.mod_loader_type ||
+            !currentInstance.config.runtime.mod_loader_version,
+        }">
         <AppIcon name="extension-puzzle" />
         <div>
           <span class="type">模组</span

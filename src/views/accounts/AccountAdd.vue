@@ -40,9 +40,14 @@ const components = {
     component: markRaw(AccountAddOffline),
   },
 };
+
 const currentComponent = shallowRef<Component>(components.addMicrosoftAccount.component);
 const authServiceType = ref<"microsoft" | "yggdrasil" | "offline">("microsoft");
+const transitionName = ref<"slide-left" | "slide-right">("slide-left");
+const switchComponentDisabled = ref(false);
+
 function selectAuthService(service: "microsoft" | "yggdrasil" | "offline") {
+  if (switchComponentDisabled.value) return;
   if (service === authServiceType.value) {
     return;
   }
@@ -70,10 +75,6 @@ function selectAuthService(service: "microsoft" | "yggdrasil" | "offline") {
       break;
   }
 }
-
-const transitionName = ref<"slide-left" | "slide-right">("slide-left");
-
-const switchComponentDisabled = ref(false);
 </script>
 
 <style lang="less" scoped>

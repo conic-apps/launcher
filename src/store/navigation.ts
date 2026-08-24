@@ -4,7 +4,7 @@
 
 import { defineStore } from "pinia"
 
-export type Page = "game" | "launch" | "settings" | "accounts"
+export type Page = "setup" | "game" | "launch" | "settings" | "accounts"
 
 export const useNavigationStore = defineStore("navigation", {
     state: () => ({
