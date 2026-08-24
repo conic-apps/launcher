@@ -12,17 +12,19 @@
         <button
           class="title-bar-action-btn"
           :class="{
-            disabled: navigation.history.length === 0 || navigation.currentPage === 'launch',
+            disabled:
+              navigationStore.history.length === 0 || navigationStore.currentPage === 'launch',
           }"
-          @click="navigation.back()">
+          @click="navigationStore.back()">
           <AppIcon name="arrow-back-outline" :size="18" />
         </button>
         <button
           class="title-bar-action-btn"
           :class="{
-            disabled: navigation.currentPage === 'game' || navigation.currentPage === 'launch',
+            disabled:
+              navigationStore.currentPage === 'game' || navigationStore.currentPage === 'launch',
           }"
-          @click="navigation.navigate('game')">
+          @click="navigationStore.navigate('game')">
           <AppIcon name="house" :size="18" />
         </button>
       </div>
@@ -73,7 +75,7 @@
       </div>
       <div
         class="title-bar-actions"
-        :class="{ 'is-macos': isMacOS(), disabled: navigation.currentPage === 'settings' }">
+        :class="{ 'is-macos': isMacOS(), disabled: navigationStore.currentPage === 'settings' }">
         <button
           v-if="config.music.enabled"
           class="title-bar-action-btn"
@@ -81,14 +83,14 @@
           <AppIcon name="musical-notes" :size="18" />
         </button>
         <TitleBarUpdateIndicator />
-        <button class="title-bar-action-btn" @click="navigation.navigate('settings')">
+        <button class="title-bar-action-btn" @click="navigationStore.navigate('settings')">
           <AppIcon name="settings" :size="18" />
         </button>
       </div>
     </div>
     <main class="main" style="transition: none">
       <!-- <Transition :name="transitionName" mode="out-in"> -->
-      <component :is="pages[navigation.currentPage]"></component>
+      <component :is="pages[navigationStore.currentPage]"></component>
       <!-- </Transition> -->
     </main>
     <DialogRoot></DialogRoot>
@@ -124,7 +126,7 @@ import gsap from "gsap";
 import SetupWizard from "./views/SetupWizard.vue";
 
 const config = useConfigStore();
-const navigation = useNavigationStore();
+const navigationStore = useNavigationStore();
 const music = useMusicStore();
 const titleBarRef = useTemplateRef("title-bar");
 const windowBackgroundRef = useTemplateRef("windowBackground");
@@ -212,7 +214,7 @@ async function checkForUpdateAtStartup() {
 }
 
 function closeWindow() {
-  if (navigation.currentPage === "launch") {
+  if (navigationStore.currentPage === "launch") {
     dialogStore.confirmQuitApp.visible = true;
     return;
   }

@@ -36,7 +36,9 @@
       </div>
     </div>
     <div class="buttons">
-      <BaseButton @click="dialogStore.accountAdd.visible = false">{{ "取消" }}</BaseButton>
+      <BaseButton @click="dialogStore.accountAdd.visible = false" class="cancel-login">{{
+        "取消"
+      }}</BaseButton>
       <BaseButton
         :disabled="username.trim() === '' || uuidInvalid"
         style="background: var(--ctp-latte-lavender); color: #000"

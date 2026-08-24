@@ -31,7 +31,7 @@
           </div>
         </div>
         <div class="buttons">
-          <BaseButton @click="closeDialog">{{ "取消" }}</BaseButton>
+          <BaseButton @click="closeDialog" class="cancel-login">{{ "取消" }}</BaseButton>
         </div>
       </div>
       <div v-else class="auth-code">
@@ -59,7 +59,7 @@
           </div>
         </div>
         <div class="buttons">
-          <BaseButton @click="closeDialog">{{ "取消" }}</BaseButton>
+          <BaseButton @click="closeDialog" class="cancel-login">{{ "取消" }}</BaseButton>
           <BaseButton
             style="background: var(--ctp-blue); color: var(--ctp-text-inverse)"
             @click="openUrl(AUTH_CODE_LOGIN_URL)"
