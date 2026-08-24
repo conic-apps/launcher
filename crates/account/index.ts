@@ -397,11 +397,14 @@ const DEFAULT_SKINS: DefaultSkin[] = [
 
 function uuidToLongs(uuid: string): [bigint, bigint] {
     const hex = uuid.replace(/-/g, "")
+    try {
+        const mostSigBits = BigInt("0x" + hex.slice(0, 16))
+        const leastSigBits = BigInt("0x" + hex.slice(16, 32))
 
-    const mostSigBits = BigInt("0x" + hex.slice(0, 16))
-    const leastSigBits = BigInt("0x" + hex.slice(16, 32))
-
-    return [mostSigBits, leastSigBits]
+        return [mostSigBits, leastSigBits]
+    } catch {
+        throw "Failed to parse uuid"
+    }
 }
 
 function uuidHashCode(uuid: string): number {
