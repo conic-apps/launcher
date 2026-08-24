@@ -10,9 +10,7 @@ use tauri::ipc::Channel;
 
 use crate::{
     error::*,
-    microsoft::{
-        self, MicrosoftAccount, access_token_auth_flow_with_reporter, device_code,
-    },
+    microsoft::{self, MicrosoftAccount, access_token_auth_flow_with_reporter, device_code},
 };
 
 /// Progress events reported while a Microsoft login task is running.

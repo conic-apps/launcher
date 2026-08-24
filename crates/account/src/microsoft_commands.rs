@@ -12,7 +12,7 @@ use uuid::Uuid;
 use crate::{
     Error, Result,
     microsoft::{
-        MicrosoftAccount, LoginEvent, LoginReporter,
+        LoginEvent, LoginReporter, MicrosoftAccount,
         device_code::{DeviceCodePollResult, DeviceCodeResponse},
         login_with_auth_code, login_with_device_code,
     },

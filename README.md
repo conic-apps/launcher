@@ -100,11 +100,11 @@ Conic Launcher 是一个现代的桌面版 Minecraft 启动器：核心逻辑由
 
 前往 [GitHub Releases](https://github.com/conic-apps/launcher/releases) 下载对应平台的安装包：
 
-| 平台 | 架构 | 格式 |
-| --- | --- | --- |
-| Windows | x64 · arm64 | MSI · NSIS 安装器 · 便携版 exe |
-| macOS | Apple Silicon · Intel | DMG |
-| Linux | x64 · arm64 | deb · rpm · AppImage |
+| 平台    | 架构                  | 格式                           |
+| ------- | --------------------- | ------------------------------ |
+| Windows | x64 · arm64           | MSI · NSIS 安装器 · 便携版 exe |
+| macOS   | Apple Silicon · Intel | DMG                            |
+| Linux   | x64 · arm64           | deb · rpm · AppImage           |
 
 应用内置自动更新，安装后无需手动升级。
 
