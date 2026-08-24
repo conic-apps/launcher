@@ -6,15 +6,15 @@
     <a href="./LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
   </p>
-  <p><strong>免费开源的 Minecraft 启动器，用 Rust 与 Tauri 打造。</strong><br>
-  多实例管理 · 模组与资源包市场 · 跨局域网联机 · 四种 Catppuccin 主题</p>
+  <p><strong>一款小快灵的 Minecraft 启动器</strong><br>
+  多实例管理 · 模组与资源包市场 · 跨局域网联机 · 多主题支持</p>
 </div>
 
 ---
 
 ## 这是什么
 
-Conic Launcher 是一个现代的桌面版 Minecraft 启动器：核心逻辑由 Rust 实现，界面基于 Tauri 2 + Vue 3，安装包小、启动快、资源占用低。
+Conic Launcher 是一个现代的桌面版 Minecraft 启动器：核心逻辑由 Rust 实现，界面基于 Tauri 2 + Vue 3，安装包小、启动快、资源占用低，甚至有助于减少碳排放。
 
 从创建实例、安装加载器，到搜索模组、邀请好友联机，再到启动游戏与统计游戏时长——整个流程都可以在一个应用里完成。
 
@@ -26,41 +26,31 @@ Conic Launcher 是一个现代的桌面版 Minecraft 启动器：核心逻辑由
 
 按模组加载器分组浏览实例，支持排序、搜索与收藏；每个实例都有独立的设置与专属背景，游戏时长与上次运行时间一目了然。
 
-<!-- 📸 演示素材占位：录制后放入 docs/videos/，再取消注释
-![实例管理](./docs/videos/instances.gif)
--->
+https://github.com/user-attachments/assets/ad4678ee-8462-4e55-89f6-99aea41107cb
 
-### 一键安装全主流加载器
+### 支持所有主流加载器
 
 选择 Minecraft 版本与加载器版本，剩下的交给启动器：Vanilla、Forge、NeoForge、Fabric、Quilt 全部支持，安装过程实时展示进度。
 
-<!-- 📸 演示素材占位：录制后放入 docs/videos/，再取消注释
-![创建实例](./docs/videos/create-instance.gif)
--->
+https://github.com/user-attachments/assets/73d28bc7-e743-4d16-b126-7b997eae797e
 
 ### 模组与资源包市场
 
 内置 Modrinth 与 CurseForge 搜索：浏览项目详情与依赖、阅读中文摘要翻译，一键把模组或资源包装进实例，也可以直接管理已安装的本地模组。
 
-<!-- 📸 演示素材占位：录制后放入 docs/videos/，再取消注释
-![模组市场](./docs/videos/content-market.gif)
--->
+https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
 ### Conic Nexus 跨局域网联机
 
 不需要额外工具：创建小组、把邀请码发给好友，即可一起进入同一个世界。启动器会检测网络环境（NAT 类型）并给出改善建议。
 
-<!-- 📸 演示素材占位：录制后放入 docs/videos/，再取消注释
-![跨局域网联机](./docs/videos/nexus-multiplayer.gif)
--->
+https://github.com/user-attachments/assets/b6c88174-655a-458e-b086-2f7e17b18733<img width="840" height="533" alt="Conic Nexus" src="https://github.com/user-attachments/assets/e689a0ed-ee06-4495-b963-22eb7371671b" />
 
 ### 多种登录方式
 
 支持微软正版登录（设备码流程）、离线登录，以及任意 Authlib-Injector / Yggdrasil 外置认证服务器。账户支持 3D 皮肤预览、披风展示与皮肤上传。
 
-<!-- 📸 演示素材占位：录制后放入 docs/videos/，再取消注释
-![账户与皮肤](./docs/videos/accounts.gif)
--->
+<img width="840" height="533" alt="截屏2026-08-24 16 30 02" src="https://github.com/user-attachments/assets/1bbcba1a-1c9b-4cd0-9984-b4acbb8e3a5d" />
 
 ### 省心的启动体验
 
@@ -68,25 +58,21 @@ Conic Launcher 是一个现代的桌面版 Minecraft 启动器：核心逻辑由
 
 高级玩家也没有被遗忘——JVM 垃圾回收器、JVM 参数、游戏参数、类路径、包装命令、启动前后执行命令均可自定义。
 
-<!-- 📸 演示素材占位：录制后放入 docs/videos/，再取消注释
-![启动流程](./docs/videos/launch.gif)
--->
+https://github.com/user-attachments/assets/1a6943f9-4e35-4391-9984-799cf42ee49d
 
 ### 存档与游戏资料
 
 在启动器内直接浏览存档的世界地图、管理数据包与资源包、查看游戏截图。
 
-<!-- 📸 演示素材占位：截图后放入 docs/screenshots/，再取消注释
-![世界地图](./docs/screenshots/worldmap.png)
--->
+https://github.com/user-attachments/assets/195afb69-8c9f-4d83-aa40-50e7b4d61788
 
 ### 界面与个性化
 
 四种 Catppuccin 主题（Mocha · Macchiato · Frappé · Latte），另有高对比度变体，可跟随系统深浅色自动切换；支持自定义启动器背景。内置音乐播放器，播放本地音乐并附带频谱可视化。
 
-<!-- 📸 演示素材占位：录制后放入 docs/videos/，再取消注释
-![音乐播放器](./docs/videos/music-player.gif)
--->
+https://github.com/user-attachments/assets/5a262ff9-2ba8-45d4-b326-38f5d3911a80
+
+https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ### 更多
 
@@ -94,7 +80,6 @@ Conic Launcher 是一个现代的桌面版 Minecraft 启动器：核心逻辑由
 - 多线程下载，可调连接数与限速，支持镜像服务器与系统代理
 - 全局搜索（`/`）与命令输入（`;`）
 - 游戏时长统计与活动日历
-- `conic-launcher://` 深链接支持
 
 ## 下载
 
@@ -153,4 +138,5 @@ pnpm check
 
 ## 免责声明
 
-Minecraft 是 Mojang Synergies AB 的商标。本项目与 Mojang Studios 及 Microsoft 无关，也不受其认可或赞助。
+Conic Launcher 不是官方的 Minecraft 产品，也未获得 Mojang Studios 的批准或关联。“Minecraft”是 Mojang AB 的商标，本项目对 Minecraft 品牌的任何使用均符合 Mojang Studios 的<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">品牌与资产指南</a>。
+
