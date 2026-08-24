@@ -82,6 +82,10 @@ import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { type UnlistenFn } from "@tauri-apps/api/event";
 
+const switchComponentDisabled = defineModel<boolean>("switchComponentDisabled", {
+  required: true,
+});
+
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
@@ -128,6 +132,10 @@ const processing = ref(false);
 const progressDescription = ref("正在准备登录");
 const errorOccured = ref(false);
 const errorText = ref("");
+
+watch(processing, (value) => {
+  switchComponentDisabled.value = value;
+});
 
 interface RunningLogin {
   task: MicrosoftLoginTask;

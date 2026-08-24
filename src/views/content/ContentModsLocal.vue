@@ -6,6 +6,22 @@
   <div class="mods-list-wrapper">
     <div class="mods-list">
       <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          pointer-events: none;
+          height: 100%;
+        ">
+        <ContentNotFound
+          :show="Object.keys(mods ?? {}).length === 0"
+          description="考虑从互联网下载一些模组" />
+      </div>
+      <div
         v-for="(mod, index) in mods"
         class="content"
         :class="{ 'content-disabled': mod.disabled }"
@@ -56,6 +72,7 @@ import { computed } from "vue";
 import { useGameContentStore } from "@/store/content";
 import { ModLoader } from "@conic/content";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import ContentNotFound from "./ContentNotFound.vue";
 
 const gameContentStore = useGameContentStore();
 const mods = computed(() => gameContentStore.gameContent.mods);

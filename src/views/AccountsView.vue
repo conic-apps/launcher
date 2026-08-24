@@ -4,41 +4,12 @@
 
 <template>
   <div class="accounts-view">
-    <AccountManager @switch-component-add="openAdd"></AccountManager>
+    <AccountManager></AccountManager>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from "vue";
-import { useDialogStore } from "@/store/dialog";
-import { useAccountStore } from "@/store/account";
 import AccountManager from "./accounts/AccountManager.vue";
-
-const accounts = useAccountStore();
-const dialogStore = useDialogStore();
-
-function openAdd() {
-  dialogStore.accountAdd.visible = true;
-}
-
-const hasAccounts = computed(
-  () =>
-    Object.keys(accounts.yggdrasil).length > 0 ||
-    accounts.microsoft.length > 0 ||
-    accounts.offline.length > 0,
-);
-
-onMounted(() => {
-  if (!hasAccounts.value) {
-    openAdd();
-  }
-});
-
-watch(hasAccounts, (value, oldValue) => {
-  if (!value && oldValue) {
-    openAdd();
-  }
-});
 </script>
 
 <style lang="less" scoped>

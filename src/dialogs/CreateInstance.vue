@@ -21,6 +21,9 @@
                   type="text"
                   ref="instance-name-input"
                   v-model="customInstanceName"
+                  autocapitalize="off"
+                  autocomplete="off"
+                  autocorrect="off"
                   :placeholder="defaultInstanceName"
                   v-else
                   @blur="instanceNameEdit = false" />

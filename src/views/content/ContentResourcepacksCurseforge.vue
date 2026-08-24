@@ -11,6 +11,9 @@
           type="text"
           :placeholder="'搜索资源包...'"
           v-model="searchQuery"
+          autocapitalize="off"
+          autocomplete="off"
+          autocorrect="off"
           @keyup.enter="applySearchFilters()" />
         <button class="search-button" @click="applySearchFilters()">
           <AppIcon name="search" :size="16"></AppIcon>
@@ -100,7 +103,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <span>{{ "没有找到相关资源包" }}</span>
+        <ContentNotFound description="尝试调整关键词或筛选条件后再次搜索" show />
       </div>
     </template>
 
@@ -146,6 +149,7 @@ import { useShowContentDetails } from "./useContent";
 import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import ContentNotFound from "./ContentNotFound.vue";
 
 const instanceStore = useInstanceStore();
 const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
