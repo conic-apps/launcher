@@ -159,21 +159,11 @@
       </Transition>
     </div>
     <div class="footer">
-      <button
-        class="back"
-        @click="
-          transitionName = 'slide-right';
-          currentPhaseIndex--;
-        ">
+      <button class="back" :class="{ disabled: currentPhaseIndex === 0 }" @click="backPhase">
         <AppIcon name="chevron-back" :size="20"></AppIcon>
         返回
       </button>
-      <button
-        class="next"
-        @click="
-          transitionName = 'slide-left';
-          currentPhaseIndex++;
-        ">
+      <button class="next" @click="nextPhase">
         {{ nextPhaseTexts[currentPhaseIndex] }}
       </button>
     </div>
@@ -220,6 +210,22 @@ const nextPhaseTexts = [
   "下一个（导入实例）",
   "完成",
 ];
+
+function backPhase() {
+  if (currentPhaseIndex.value > 0) {
+    transitionName.value = "slide-right";
+    currentPhaseIndex.value--;
+  }
+}
+
+function nextPhase() {
+  if (currentPhaseIndex.value < phases.length - 1) {
+    transitionName.value = "slide-left";
+    currentPhaseIndex.value++;
+  } else {
+    navigationStore.navigate("game");
+  }
+}
 
 const supportedLanguages = {
   en_us: "English",
@@ -512,6 +518,10 @@ const createLatestSnapshotButtonText = computed(() => {
       &:active {
         transition: background 100ms ease;
       }
+    }
+    button.disabled {
+      opacity: 0.7;
+      pointer-events: none;
     }
     .back {
       width: 200px;
