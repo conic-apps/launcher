@@ -1,53 +1,53 @@
 .pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 20px 0 32px;
-
-  button {
-    min-width: 30px;
-    height: 30px;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--ctp-surface1);
-    border-radius: 6px;
-    background: var(--ctp-surface0);
-    color: var(--ctp-text);
-    font-size: 12px;
-    transition:
-      background 120ms ease,
-      border-color 120ms ease;
+    gap: 6px;
+    padding: 20px 0 32px;
 
-    &:hover:not(:disabled),
-    &:hover:not(.active) {
-      background: var(--ctp-surface1);
+    button {
+        min-width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--ctp-surface1);
+        border-radius: 6px;
+        background: var(--ctp-surface0);
+        color: var(--ctp-text);
+        font-size: 12px;
+        transition:
+            background 120ms ease,
+            border-color 120ms ease;
+
+        &:hover:not(:disabled),
+        &:hover:not(.active) {
+            background: var(--ctp-surface1);
+        }
+
+        &:active:not(:disabled),
+        &:hover:not(.active) {
+            background: var(--ctp-surface2);
+        }
+
+        &:disabled {
+            opacity: 0.4;
+        }
+
+        &.active {
+            border-color: var(--ctp-lavender);
+            background: var(--ctp-lavender);
+            color: var(--ctp-text-inverse);
+            pointer-events: none;
+        }
     }
 
-    &:active:not(:disabled),
-    &:hover:not(.active) {
-      background: var(--ctp-surface2);
+    .page-ellipsis {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 30px;
+        font-size: 12px;
+        color: var(--ctp-subtext0);
     }
-
-    &:disabled {
-      opacity: 0.4;
-    }
-
-    &.active {
-      border-color: var(--ctp-lavender);
-      background: var(--ctp-lavender);
-      color: var(--ctp-text-inverse);
-      pointer-events: none;
-    }
-  }
-
-  .page-ellipsis {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 30px;
-    font-size: 12px;
-    color: var(--ctp-subtext0);
-  }
 }

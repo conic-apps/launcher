@@ -108,10 +108,7 @@
     </template>
 
     <div class="pagination" v-if="curseForgeTotalPages > 1">
-      <button
-        class="page-nav"
-        :disabled="currentPage === 1"
-        @click="goToPage(currentPage - 1)">
+      <button class="page-nav" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
         <AppIcon name="chevron-back" :size="12"></AppIcon>
       </button>
       <template v-for="(page, index) in paginationPages" :key="index">
@@ -231,10 +228,7 @@ const {
   searchInitKey,
   loadVersionOptions,
   instanceStore,
-} = useSearchPagination(
-  () => curseForgeTotalPages.value,
-  curseForgeSelectedVersions,
-);
+} = useSearchPagination(() => curseForgeTotalPages.value, curseForgeSelectedVersions);
 
 function buildCurseForgeParams(): CurseForgeSearchParams {
   const params: CurseForgeSearchParams = {

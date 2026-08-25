@@ -235,10 +235,7 @@ const {
   searchInitKey,
   loadVersionOptions,
   instanceStore,
-} = useSearchPagination(
-  () => totalPages.value,
-  selectedVersions,
-);
+} = useSearchPagination(() => totalPages.value, selectedVersions);
 
 function buildModrinthFacets(): string {
   const facets: string[][] = [["project_type:resourcepack"]];
