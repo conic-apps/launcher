@@ -12,6 +12,7 @@
   <UploadSkin></UploadSkin>
   <ConfirmQuitApp></ConfirmQuitApp>
   <NoAccountError></NoAccountError>
+  <NoMicrosoftAccountError></NoMicrosoftAccountError>
   <NoSuitableJavaError></NoSuitableJavaError>
   <MultiplayerExtension></MultiplayerExtension>
   <AccountAdd></AccountAdd>
@@ -30,4 +31,5 @@ import NoAccountError from "./dialogs/NoAccountError.vue";
 import NoSuitableJavaError from "./dialogs/NoSuitableJavaError.vue";
 import MultiplayerExtension from "./dialogs/MultiplayerExtension.vue";
 import AccountAdd from "./dialogs/AccountAdd.vue";
+import NoMicrosoftAccountError from "./dialogs/NoMicrosoftAccountError.vue";
 </script>

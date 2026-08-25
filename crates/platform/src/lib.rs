@@ -2,8 +2,6 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// TODO: remove this, use cfg and os_info directly
-
 use once_cell::sync::Lazy;
 use os_info::{Type, Version};
 use serde::{Deserialize, Serialize};
