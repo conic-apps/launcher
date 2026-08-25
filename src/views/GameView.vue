@@ -63,6 +63,17 @@
     <Transition name="game-content">
       <div
         class="game-content-wrapper"
+        v-if="showGameContent.packs"
+        @click.self="showGameContent.packs = false"
+        :class="{ show: showGameContent.packs }">
+        <div class="game-content-container">
+          <ContentPacks></ContentPacks>
+        </div>
+      </div>
+    </Transition>
+    <Transition name="game-content">
+      <div
+        class="game-content-wrapper"
         v-if="showGameContentDetails.curseforge.mod"
         @click.self="showGameContentDetails.curseforge.mod = null"
         :class="{ show: showGameContentDetails.curseforge.mod }">
@@ -104,6 +115,28 @@
         </div>
       </div>
     </Transition>
+    <Transition name="game-content">
+      <div
+        class="game-content-wrapper"
+        v-if="showGameContentDetails.modrinth.pack"
+        @click.self="showGameContentDetails.modrinth.pack = null"
+        :class="{ show: showGameContentDetails.modrinth.pack }">
+        <div class="game-content-container">
+          <ContentModrinthPackDetails></ContentModrinthPackDetails>
+        </div>
+      </div>
+    </Transition>
+    <Transition name="game-content">
+      <div
+        class="game-content-wrapper"
+        v-if="showGameContentDetails.curseforge.pack"
+        @click.self="showGameContentDetails.curseforge.pack = null"
+        :class="{ show: showGameContentDetails.curseforge.pack }">
+        <div class="game-content-container">
+          <ContentCurseforgePackDetails></ContentCurseforgePackDetails>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -124,6 +157,9 @@ import ContentCurseforgeModDetails from "./content/ContentCurseforgeModDetails.v
 import ContentCurseforgeResourcepackDetails from "./content/ContentCurseforgeResourcepackDetails.vue";
 import ContentModrinthModDetails from "./content/ContentModrinthModDetails.vue";
 import ContentModrinthResourcepackDetails from "./content/ContentModrinthResourcepackDetails.vue";
+import ContentPacks from "./content/ContentPacks.vue";
+import ContentModrinthPackDetails from "./content/ContentModrinthPackDetails.vue";
+import ContentCurseforgePackDetails from "./content/ContentCurseforgePackDetails.vue";
 
 const instanceSummary = useTemplateRef("instance-summary");
 const instanceList = useTemplateRef("instance-list");
