@@ -51,6 +51,12 @@
           :options="['stable', 'beta']"
           v-model="config.update_channel"></BaseSelect>
       </SettingItem>
+      <SettingItem
+        :title="'打开设置向导'"
+        :description="'设置向导可带你完成基本的启动器设置'"
+        :navigable="true"
+        @click="navigationStore.navigate('setup')">
+      </SettingItem>
     </SettingGroup>
   </div>
 </template>
@@ -62,8 +68,10 @@ import BaseDropdownSelect from "@/components/BaseDropdownSelect.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 import BaseSelect from "@/components/BaseSelect.vue";
+import { useNavigationStore } from "@/store/navigation";
 
 const config = useConfigStore();
+const navigationStore = useNavigationStore();
 </script>
 
 <style scoped lang="less"></style>

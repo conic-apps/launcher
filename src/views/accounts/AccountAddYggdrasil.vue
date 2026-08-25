@@ -8,7 +8,7 @@
       <div class="loading">
         <BaseLoading :size="40" :strokeWidth="5" :gap="12"></BaseLoading>
       </div>
-      <p class="description">正在验证帐户</p>
+      <p class="description">请稍后</p>
     </div>
     <div v-else-if="errorMessage" class="error-state">
       <p class="description error">{{ errorMessage }}</p>
@@ -71,22 +71,25 @@
               {{ serverName ? "认证服务：" + serverName : "" }}
             </p>
           </div>
-          <BaseInput v-model="apiRoot" width="260px" placeholder="" />
+          <BaseInput v-model="apiRoot" width="300px" />
         </div>
         <div class="form-row">
           <div class="form-label">
             <label>用户名</label>
           </div>
-          <BaseInput v-model="username" width="260px" />
+          <BaseInput v-model="username" width="300px" />
         </div>
         <div class="form-row">
           <div class="form-label">
             <label>密码</label>
           </div>
-          <BaseInput v-model="password" width="260px" />
+          <BaseInput v-model="password" width="300px" />
         </div>
       </div>
       <div class="buttons">
+        <BaseButton @click="dialogStore.accountAdd.visible = false" class="cancel-login">{{
+          "取消"
+        }}</BaseButton>
         <BaseButton
           :disabled="!canSubmit"
           style="background: var(--ctp-latte-lavender); color: #000"
@@ -115,10 +118,12 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useAccountStore } from "@/store/account";
 import BaseLoading from "@/components/BaseLoading.vue";
 import ScrollView from "@/components/ScrollView.vue";
-
-const emit = defineEmits(["switch-component-manage"]);
+import { useDialogStore } from "@/store/dialog";
+import { useConfigStore } from "@/store/config";
 
 const accountStore = useAccountStore();
+const dialogStore = useDialogStore();
+const configStore = useConfigStore();
 
 const apiRoot = ref("");
 const username = ref("");
@@ -221,7 +226,8 @@ async function login() {
       added_at: Date.now(),
     });
     await accountStore.reloadFromFile();
-    emit("switch-component-manage");
+    if (!configStore.current_account) accountStore.selectNextAccount();
+    dialogStore.accountAdd.visible = false;
   } catch (e: unknown) {
     console.error(e);
     errorMessage.value = e instanceof Error ? e.message : "登录失败，请检查服务器地址和凭据";
@@ -249,7 +255,8 @@ async function addSelectedProfiles() {
       });
     }
     await accountStore.reloadFromFile();
-    emit("switch-component-manage");
+    if (!configStore.current_account) accountStore.selectNextAccount();
+    dialogStore.accountAdd.visible = false;
   } catch (e: unknown) {
     console.error(e);
     errorMessage.value = e instanceof Error ? e.message : "添加档案失败";
@@ -323,6 +330,7 @@ function sameApiRoot(a: string, b: string): boolean {
     display: flex;
     justify-content: flex-end;
     margin-top: 12px;
+    gap: 8px;
   }
 
   .processing {
@@ -351,8 +359,15 @@ function sameApiRoot(a: string, b: string): boolean {
   }
 
   .profile-list-wrapper {
-    max-height: 134px;
+    max-height: 234px;
+    height: fit-content;
+    display: flex;
     position: relative;
+  }
+
+  .profile-list-wrapper :deep(.wrapper.lenis) {
+    flex: 1;
+    height: unset;
   }
 
   .profile-list {
