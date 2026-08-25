@@ -3,19 +3,19 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <BaseDialog :visible="dialogStore.noAccountError.visible" :width="500" :height="146">
+  <BaseDialog :visible="dialogStore.noMicrosoftAccountError.visible" :width="500" :height="146">
     <div class="confirm-quit-app" ref="main">
       <div style="display: flex; align-items: center">
         <AppIcon name="warning" :size="50"></AppIcon>
         <div class="message">
-          <p style="font-size: 16px">要启动游戏，你必须至少已添加一个帐户</p>
+          <p style="font-size: 16px">要启动游戏，你必须至少已添加一个微软账户</p>
         </div>
       </div>
       <div class="buttons">
         <BaseButton
           class="back"
           @click="
-            dialogStore.noAccountError.visible = false;
+            dialogStore.noMicrosoftAccountError.visible = false;
             navigationStore.back();
           "
           >取消启动</BaseButton
