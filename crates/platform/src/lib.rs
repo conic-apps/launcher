@@ -106,12 +106,16 @@ pub fn strip_unc_prefix(path: std::path::PathBuf) -> std::path::PathBuf {
 fn parse_arch(arch_str: Option<&str>) -> OsArch {
     match arch_str {
         Some("x86_64") => OsArch::X64,
+        Some("amd64") => OsArch::X64,
         Some("i386") => OsArch::X86,
         Some("mips") => OsArch::Mips,
         Some("powerpc") => OsArch::PowerPC,
         Some("powerpc64") => OsArch::PowerPC64,
         Some("arm") => OsArch::Arm,
+        Some("armv7l") => OsArch::Arm,
+        Some("armv7") => OsArch::Arm,
         Some("aarch64") => OsArch::Aarch64,
+        Some("arm64") => OsArch::Aarch64,
         _ => OsArch::Unknown,
     }
 }
@@ -138,6 +142,7 @@ impl PlatformInfo {
             panic!("Sorry, but this program does not support your system!")
         };
         let os_info = os_info::get();
+        dbg!(os_info.architecture());
         Self {
             arch: parse_arch(os_info.architecture()),
             os_family,

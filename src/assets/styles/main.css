@@ -68,12 +68,6 @@ body {
     line-height: 1;
 }
 
-.fa-brands,
-.fa-brands::before,
-.fa-brands::after {
-    font-family: "fa-brands" !important;
-}
-
 .hidden *,
 .hidden {
     display: none !important;
