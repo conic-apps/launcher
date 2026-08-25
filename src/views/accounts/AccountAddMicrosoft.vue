@@ -111,8 +111,6 @@ const copiedCode = ref(false);
 const expiresIn = ref(0);
 let countdownTimer: number;
 
-const emit = defineEmits(["switch-component-manage"]);
-
 const formatCountdown = computed(() => {
   const total = expiresIn.value;
   if (total <= 0) return "0 秒";
@@ -229,12 +227,10 @@ async function startLogin(deviceFlow: boolean, code?: string) {
   const task = new MicrosoftLoginTask(code, { onProgress: handleProgress });
   runningLogin = { task, deviceFlow };
   try {
-    const account = await task.start();
-    if (!configStore.current_account) {
-      configStore.current_account = { type: "Microsoft", data: account };
-    }
-    emit("switch-component-manage");
+    await task.start();
     await accountStore.reloadFromFile();
+    if (!configStore.current_account) accountStore.selectNextAccount();
+    dialogStore.accountAdd.visible = false;
     processing.value = false;
   } catch (error) {
     console.error(error);

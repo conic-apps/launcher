@@ -59,8 +59,6 @@ import { useDialogStore } from "@/store/dialog";
 import { addOfflineAccount, getUuidFromUsername } from "@conic/account";
 import { computed, onMounted, ref, watch } from "vue";
 
-const emit = defineEmits(["switch-component-manage"]);
-
 const accountStore = useAccountStore();
 const dialogStore = useDialogStore();
 const configStore = useConfigStore();

@@ -121,8 +121,6 @@ import ScrollView from "@/components/ScrollView.vue";
 import { useDialogStore } from "@/store/dialog";
 import { useConfigStore } from "@/store/config";
 
-const emit = defineEmits(["switch-component-manage"]);
-
 const accountStore = useAccountStore();
 const dialogStore = useDialogStore();
 const configStore = useConfigStore();

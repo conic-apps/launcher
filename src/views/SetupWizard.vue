@@ -25,6 +25,7 @@
               <button
                 class="language-item"
                 v-for="(displayName, option) in supportedLanguages"
+                :key="option"
                 :class="{ selected: configStore.language === option }"
                 @click="configStore.language = option">
                 {{ displayName }}
@@ -104,7 +105,7 @@
                 </p>
                 <p
                   class="profile-type offline"
-                  v-else="configStore.current_account.type === 'Offline'">
+                  v-else-if="configStore.current_account.type === 'Offline'">
                   无认证服务（离线帐户）
                 </p>
               </div>
