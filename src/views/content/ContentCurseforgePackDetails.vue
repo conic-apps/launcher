@@ -9,7 +9,10 @@
         <AppIcon name="package"></AppIcon>
         <p>整合包信息</p>
       </div>
-      <div class="details" v-if="modInfo">
+      <div class="search-status" v-if="loading && !modInfo">
+        <BaseLoading :size="32" :gap="8" :strokeWidth="4"></BaseLoading>
+      </div>
+      <div class="details" v-else-if="modInfo">
         <div class="header">
           <div class="icon">
             <img :src="modInfo.logo?.url" alt="pack icon" />
@@ -49,6 +52,7 @@
 
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
+import BaseLoading from "@/components/BaseLoading.vue";
 import { computed, onMounted, ref, watch } from "vue";
 import ScrollView from "@/components/ScrollView.vue";
 import { getMod, getModDescription, Mod as CurseforgeMod } from "@conic/curseforge";
@@ -60,6 +64,7 @@ const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } 
   useDescriptionTranslation();
 
 const modInfo = ref(null as null | CurseforgeMod);
+const loading = ref(true);
 const modDescription = ref("");
 const unsafeHtmlRe = /<\s*(script|style)\b/i;
 const safeDescription = computed(() =>
@@ -87,8 +92,10 @@ async function refreshModInfo() {
   if (!modId.value) {
     modInfo.value = null;
     modDescription.value = "";
+    loading.value = false;
     return;
   }
+  loading.value = true;
   const response = await getMod(modId.value);
   modInfo.value = response.data;
   if (modInfo.value) {
@@ -96,6 +103,7 @@ async function refreshModInfo() {
     const descResponse = await getModDescription(modInfo.value.id, { markup: true });
     modDescription.value = descResponse.data ?? "";
   }
+  loading.value = false;
 }
 
 function onReadmeClick(event: MouseEvent) {
@@ -111,83 +119,18 @@ function onReadmeClick(event: MouseEvent) {
 <style lang="less" scoped>
 @import "./styles/title-bar.less";
 @import "./styles/markdown-body.less";
+@import "./styles/details.less";
 
 .content-curseforge-pack-details {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  flex: 1;
-  position: relative;
+  &:extend(.content-details all);
 
-  .details {
-    padding: 8px 24px;
-
-    .header {
-      display: flex;
-
-      .icon {
-        margin-right: 16px;
-
-        img {
-          width: 88px;
-          height: 88px;
-          overflow: hidden;
-          border-radius: 12px;
-        }
-      }
-
-      .info {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-      }
-
-      .project-name {
-        font-size: 24px;
-        font-weight: 600;
-        margin-bottom: 8px;
-      }
-
-      .metadata {
-        display: flex;
-        align-items: center;
-        font-size: 14px;
-        margin-bottom: 8px;
-        gap: 12px;
-
-        span {
-          display: flex;
-          align-items: center;
-
-          svg {
-            margin-right: 4px;
-          }
-        }
-
-        :deep(svg) {
-          stroke: var(--ctp-mauve);
-          fill: var(--ctp-mauve);
-        }
-
-        :deep(path) {
-          stroke: var(--ctp-mauve);
-          fill: var(--ctp-mauve);
-        }
-
-        > * + *::before {
-          content: "";
-          display: inline-block;
-          width: 1px;
-          height: 16px;
-          background-color: var(--ctp-overlay2);
-          margin-right: 12px;
-        }
-      }
-
-      .description {
-        font-size: 14px;
-      }
-    }
+  .search-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    font-size: 13px;
+    color: var(--ctp-subtext0);
   }
 }
 </style>

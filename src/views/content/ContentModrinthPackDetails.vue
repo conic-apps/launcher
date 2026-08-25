@@ -9,7 +9,10 @@
         <AppIcon name="package"></AppIcon>
         <p>整合包信息</p>
       </div>
-      <div class="details" v-if="projectInfo">
+      <div class="search-status" v-if="loading && !projectInfo">
+        <BaseLoading :size="32" :gap="8" :strokeWidth="4"></BaseLoading>
+      </div>
+      <div class="details" v-else-if="projectInfo">
         <div class="header">
           <div class="icon">
             <img :src="projectInfo.icon_url" alt="pack icon" />
@@ -62,6 +65,7 @@
 
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
+import BaseLoading from "@/components/BaseLoading.vue";
 import { computed, onMounted, ref, watch } from "vue";
 import ScrollView from "@/components/ScrollView.vue";
 import ScrollViewHorizontal from "@/components/ScrollViewHorizontal.vue";
@@ -75,6 +79,7 @@ const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
   useDescriptionTranslation();
 
 const projectInfo = ref(null as null | Project);
+const loading = ref(true);
 const readmeHtml = computed(() => {
   if (!projectInfo.value?.body) return "";
   return marked.parse(projectInfo.value.body) as string;
@@ -105,12 +110,15 @@ watch(projectInfo, async (projectInfo) => {
 async function refreshProjectInfo() {
   if (!projectId.value) {
     projectInfo.value = null;
+    loading.value = false;
     return;
   }
+  loading.value = true;
   projectInfo.value = await getProject(projectId.value);
   if (projectInfo.value) {
     void translateModrinthDescriptions([projectInfo.value.id]);
   }
+  loading.value = false;
 }
 
 function formatGithubRepo(url: string): string | null {
@@ -153,113 +161,48 @@ function onReadmeClick(event: MouseEvent) {
 <style lang="less" scoped>
 @import "./styles/title-bar.less";
 @import "./styles/markdown-body.less";
+@import "./styles/details.less";
 
 .content-modrinth-pack-details {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  flex: 1;
-  position: relative;
+  &:extend(.content-details all);
 
-  .details {
-    padding: 8px 24px;
+  .search-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    font-size: 13px;
+    color: var(--ctp-subtext0);
+  }
 
-    .header {
+  .details .gallery {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--ctp-surface0);
+    border-radius: 8px;
+    height: 252px;
+    position: relative;
+
+    .gallery-list {
       display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 100%;
+      padding: 0 8px;
 
-      .icon {
-        margin-right: 16px;
+      .gallery-item {
+        flex-shrink: 0;
+        height: calc(100% - 16px);
+        border-radius: 8px;
+        overflow: hidden;
 
         img {
-          width: 88px;
-          height: 88px;
-          overflow: hidden;
-          border-radius: 12px;
-        }
-      }
-
-      .info {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-      }
-
-      .project-name {
-        font-size: 24px;
-        font-weight: 600;
-        margin-bottom: 8px;
-      }
-
-      .metadata {
-        display: flex;
-        align-items: center;
-        font-size: 14px;
-        margin-bottom: 8px;
-        gap: 12px;
-
-        span {
-          display: flex;
-          align-items: center;
-
-          svg {
-            margin-right: 4px;
-          }
-        }
-
-        :deep(svg) {
-          stroke: var(--ctp-mauve);
-          fill: var(--ctp-mauve);
-        }
-
-        :deep(path) {
-          stroke: var(--ctp-mauve);
-          fill: var(--ctp-mauve);
-        }
-
-        > * + *::before {
-          content: "";
-          display: inline-block;
-          width: 1px;
-          height: 16px;
-          background-color: var(--ctp-overlay2);
-          margin-right: 12px;
-        }
-      }
-
-      .description {
-        font-size: 14px;
-      }
-    }
-
-    .gallery {
-      margin-top: 16px;
-      padding: 16px;
-      background: var(--ctp-surface0);
-      border-radius: 8px;
-      height: 252px;
-      position: relative;
-
-      .gallery-list {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        height: 100%;
-        padding: 0 8px;
-
-        .gallery-item {
-          flex-shrink: 0;
-          height: calc(100% - 16px);
+          height: 100%;
+          width: auto;
+          display: block;
           border-radius: 8px;
-          overflow: hidden;
-
-          img {
-            height: 100%;
-            width: auto;
-            display: block;
-            border-radius: 8px;
-            user-select: none;
-            -webkit-user-drag: none;
-          }
+          user-select: none;
+          -webkit-user-drag: none;
         }
       }
     }

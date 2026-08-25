@@ -129,9 +129,7 @@ async fn ensure_session<R: Runtime>(
     let session = NexusSession::load(&path).await?;
     session.configure(&SessionConfig {
         public_nodes: vec![
-            "https://terracotta.glavo.site/acebc7d8-1208-47fd-b212-d03ac49e36e0".to_string(),
-            "https://api.qomicex.top/api/nodes/7b6cbc18-3edf-43bb-9c78-69e461b7f8ba".to_string(),
-            "https://api.qomicex.top/api/nodes/6e349dee-072e-4a47-9e93-a60165146649".to_string(),
+            // NOTE: add other nodes here
         ],
         data_dir: Some(DATA_LOCATION.runtime.join("conic-nexus")),
         motd: None,
