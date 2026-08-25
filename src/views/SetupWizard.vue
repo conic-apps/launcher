@@ -152,7 +152,7 @@
                 error: createLatestSnapshotErrorOccured,
               }"
               @click="createLatestSnapshotInstance">
-              以最新快照版创建实例
+              {{ createLatestSnapshotButtonText }}
             </button>
           </div>
         </div>
