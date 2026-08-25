@@ -61,11 +61,8 @@ pub enum OsFamily {
 /// Typically used for environment-specific behavior or diagnostics.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct PlatformInfo {
-    /// The target CPU architecture (e.g., "x64", "arm").
+    /// The real hardware CPU architecture, detected at runtime via `os_info`.
     pub arch: OsArch,
-
-    /// The architecture string as reported by `uname`, if available.
-    pub arch_from_uname: Option<String>,
 
     /// The operating system type, as reported by the `os_info` crate.
     pub os_type: Type,
@@ -88,10 +85,42 @@ pub const DELIMITER: &str = ";";
 #[cfg(not(windows))]
 pub const DELIMITER: &str = ":";
 
+/// Strips the Windows `\\?\` UNC prefix added by [`std::fs::canonicalize`].
+///
+/// Some programs (e.g. Java) do not understand extended-length paths,
+/// so this helper reverts the prefix while keeping the resolved absolute path.
+#[cfg(windows)]
+pub fn strip_unc_prefix(path: std::path::PathBuf) -> std::path::PathBuf {
+    let s = path.to_string_lossy();
+    match s.strip_prefix(r"\\?\") {
+        Some(stripped) => std::path::PathBuf::from(stripped),
+        None => path,
+    }
+}
+
+#[cfg(not(windows))]
+pub fn strip_unc_prefix(path: std::path::PathBuf) -> std::path::PathBuf {
+    path
+}
+
+fn parse_arch(arch_str: Option<&str>) -> OsArch {
+    match arch_str {
+        Some("x86_64") => OsArch::X64,
+        Some("i386") => OsArch::X86,
+        Some("mips") => OsArch::Mips,
+        Some("powerpc") => OsArch::PowerPC,
+        Some("powerpc64") => OsArch::PowerPC64,
+        Some("arm") => OsArch::Arm,
+        Some("aarch64") => OsArch::Aarch64,
+        _ => OsArch::Unknown,
+    }
+}
+
 impl PlatformInfo {
-    /// Constructs a new [`PlatformInfo`] instance using compile-time and runtime system data.
+    /// Constructs a new [`PlatformInfo`] instance using runtime system data.
     ///
-    /// - Detects architecture using `cfg!(target_arch)`
+    /// - Detects hardware architecture at runtime via `os_info` (uses `GetNativeSystemInfo` on Windows,
+    ///   `uname` on Unix), which correctly reports the real CPU even under emulation
     /// - Detects OS family using `cfg!(target_os)`
     /// - Uses `os_info` crate to get detailed version, type, and edition info
     ///
@@ -110,26 +139,9 @@ impl PlatformInfo {
         };
         let os_info = os_info::get();
         Self {
-            arch_from_uname: os_info.architecture().map(|x| x.to_owned()),
+            arch: parse_arch(os_info.architecture()),
             os_family,
             os_version: os_info.version().to_owned(),
-            arch: if cfg!(target_arch = "x86_64") {
-                OsArch::X64
-            } else if cfg!(target_arch = "x86") {
-                OsArch::X86
-            } else if cfg!(target_arch = "mips") {
-                OsArch::Mips
-            } else if cfg!(target_arch = "powerpc") {
-                OsArch::PowerPC
-            } else if cfg!(target_arch = "powerpc64") {
-                OsArch::PowerPC64
-            } else if cfg!(target_arch = "arm") {
-                OsArch::Arm
-            } else if cfg!(target_arch = "aarch64") {
-                OsArch::Aarch64
-            } else {
-                OsArch::Unknown
-            },
             os_type: os_info.os_type(),
             edition: os_info.edition().map(|x| x.to_owned()),
         }

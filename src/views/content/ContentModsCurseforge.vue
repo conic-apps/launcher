@@ -119,15 +119,15 @@
     <div class="pagination" v-if="curseForgeTotalPages > 1">
       <button
         class="page-nav"
-        :disabled="curseForgePage === 1"
-        @click="goToPage(curseForgePage - 1)">
+        :disabled="currentPage === 1"
+        @click="goToPage(currentPage - 1)">
         <AppIcon name="chevron-back" :size="12"></AppIcon>
       </button>
       <template v-for="(page, index) in paginationPages" :key="index">
         <button
           v-if="page !== '…'"
           class="page-number"
-          :class="{ active: page === curseForgePage }"
+          :class="{ active: page === currentPage }"
           @click="goToPage(page)">
           {{ page }}
         </button>
@@ -135,8 +135,8 @@
       </template>
       <button
         class="page-nav"
-        :disabled="curseForgePage === curseForgeTotalPages"
-        @click="goToPage(curseForgePage + 1)">
+        :disabled="currentPage === curseForgeTotalPages"
+        @click="goToPage(currentPage + 1)">
         <AppIcon name="chevron-forward" :size="12"></AppIcon>
       </button>
     </div>
@@ -144,9 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { useInstanceStore } from "@/store/instance";
-import { getMinecrafVersionManifest } from "@conic/install";
+import { computed, onMounted, ref } from "vue";
 import {
   ApiResponse as CurseForgeApiResponse,
   Mod as CurseForgeMod,
@@ -156,17 +154,15 @@ import {
 } from "@conic/curseforge";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
 import { useShowContentDetails } from "./useContent";
+import { useSearchPagination } from "./useSearchPagination";
 import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
 
-const instanceStore = useInstanceStore();
 const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
   useDescriptionTranslation();
 
-const PAGE_SIZE = 20;
-const VERSIONS_PER_PAGE = 6;
 const LOADERS = ["fabric", "forge", "neoforge", "quilt"];
 const LOADER_NAMES: Record<string, string> = {
   fabric: "Fabric",
@@ -227,32 +223,36 @@ type ModsFilter = {
   display: (option: FilterOption) => string;
 };
 
-const searchQuery = ref("");
 const curseForgeSelectedLoaders = ref<string[]>([]);
 const curseForgeSelectedVersions = ref<string[]>([]);
 const curseForgeSelectedCategories = ref<number[]>([]);
-const versionOptions = ref<string[]>([]);
-const versionPage = ref(0);
-const versionOffset = ref(0);
-const versionPageAnimated = ref(false);
-let versionTrackElement: HTMLElement | null = null;
-function setVersionTrackRef(el: unknown) {
-  versionTrackElement = el instanceof HTMLElement ? el : null;
-}
 
-const curseForgePage = ref(1);
 const curseForgeLoading = ref(false);
 const curseForgeSearchResult = ref(null as null | CurseForgeApiResponse<CurseForgeMod[]>);
 const curseForgeCache = new Map<string, CurseForgeApiResponse<CurseForgeMod[]>>();
 
-function toggleFilterOption<T>(list: T[], value: T) {
-  const index = list.indexOf(value);
-  if (index >= 0) {
-    list.splice(index, 1);
-  } else {
-    list.push(value);
-  }
-}
+const {
+  PAGE_SIZE,
+  searchQuery,
+  currentPage,
+  versionOptions,
+  versionPage,
+  setVersionTrackRef,
+  toggleFilterOption,
+  paginationPages,
+  versionPageCount,
+  versionTrackStyle,
+  updateVersionOffset,
+  versionPagePrev,
+  versionPageNext,
+  syncVersionPageToSelection,
+  searchInitKey,
+  loadVersionOptions,
+  instanceStore,
+} = useSearchPagination(
+  () => curseForgeTotalPages.value,
+  curseForgeSelectedVersions,
+);
 
 function buildCurseForgeParams(): CurseForgeSearchParams {
   const params: CurseForgeSearchParams = {
@@ -274,7 +274,7 @@ function buildCurseForgeParams(): CurseForgeSearchParams {
       curseForgeSelectedCategories.value.length > 0
         ? JSON.stringify(curseForgeSelectedCategories.value)
         : undefined,
-    index: (curseForgePage.value - 1) * PAGE_SIZE,
+    index: (currentPage.value - 1) * PAGE_SIZE,
     pageSize: PAGE_SIZE,
   };
   return params;
@@ -309,13 +309,13 @@ async function runCurseForgeSearch() {
 }
 
 function applySearchFilters() {
-  curseForgePage.value = 1;
+  currentPage.value = 1;
   void runCurseForgeSearch();
 }
 
 function goToPage(page: number) {
   if (page < 1 || page > curseForgeTotalPages.value) return;
-  curseForgePage.value = page;
+  currentPage.value = page;
   void runCurseForgeSearch();
 }
 
@@ -323,74 +323,6 @@ const curseForgeTotalPages = computed(() => {
   const totalCount = curseForgeSearchResult.value?.pagination?.totalCount;
   if (!totalCount) return 0;
   return Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-});
-
-const paginationPages = computed(() => {
-  const total = curseForgeTotalPages.value;
-  const current = curseForgePage.value;
-  const pages: (number | "…")[] = [];
-  if (total <= 15) {
-    for (let page = 1; page <= total; page++) pages.push(page);
-    return pages;
-  }
-  if (current <= 7) {
-    for (let page = 1; page <= 13; page++) pages.push(page);
-    pages.push("…");
-    pages.push(total);
-    return pages;
-  }
-  if (current >= total - 6) {
-    pages.push(1);
-    pages.push("…");
-    for (let page = total - 12; page <= total; page++) pages.push(page);
-    return pages;
-  }
-  pages.push(1);
-  pages.push("…");
-  for (let page = current - 5; page <= current + 5; page++) pages.push(page);
-  pages.push("…");
-  pages.push(total);
-  return pages;
-});
-
-const versionPageCount = computed(() =>
-  Math.max(0, Math.ceil(versionOptions.value.length / VERSIONS_PER_PAGE)),
-);
-
-const versionTrackStyle = computed(() => ({
-  transform: `translateX(${versionOffset.value}px)`,
-  transition: versionPageAnimated.value ? "transform 240ms ease" : "none",
-}));
-
-async function updateVersionOffset() {
-  await nextTick();
-  const track = versionTrackElement;
-  if (!track) return;
-  const chips = track.querySelectorAll(".filter-chip");
-  if (chips.length === 0) {
-    versionOffset.value = 0;
-    return;
-  }
-  const index = Math.min(versionPage.value * VERSIONS_PER_PAGE, chips.length - 1);
-  const chip = chips[index] as HTMLElement;
-  versionOffset.value = -chip.offsetLeft;
-  if (!versionPageAnimated.value) {
-    requestAnimationFrame(() => {
-      versionPageAnimated.value = true;
-    });
-  }
-}
-
-function versionPagePrev() {
-  versionPage.value = Math.max(0, versionPage.value - 1);
-}
-
-function versionPageNext() {
-  versionPage.value = Math.min(versionPageCount.value - 1, versionPage.value + 1);
-}
-
-watch(versionPage, () => {
-  void updateVersionOffset();
 });
 
 const curseForgeFilters = computed<ModsFilter[]>(() => [
@@ -425,40 +357,8 @@ const curseForgeFilters = computed<ModsFilter[]>(() => [
 
 function onFilterChipClick(filter: ModsFilter, option: FilterOption) {
   filter.toggle(option);
-  curseForgePage.value = 1;
+  currentPage.value = 1;
   void runCurseForgeSearch();
-}
-
-async function loadVersionOptions() {
-  try {
-    const manifest = await getMinecrafVersionManifest();
-    const options = manifest.versions
-      .filter((version) => version.type === "release")
-      .sort((a, b) => new Date(b.releaseTime).getTime() - new Date(a.releaseTime).getTime())
-      .map((version) => version.id);
-    const minecraft = instanceStore.currentInstance?.config.runtime.minecraft;
-    if (minecraft && !options.includes(minecraft)) {
-      options.push(minecraft);
-    }
-    versionOptions.value = options;
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-function syncVersionPageToSelection() {
-  const current = curseForgeSelectedVersions.value[0];
-  if (!current) {
-    versionPage.value = 0;
-    return;
-  }
-  const index = versionOptions.value.indexOf(current);
-  versionPage.value = index >= 0 ? Math.floor(index / VERSIONS_PER_PAGE) : 0;
-}
-
-function searchInitKey(): string {
-  const runtime = instanceStore.currentInstance?.config.runtime;
-  return `${runtime?.mod_loader_type ?? ""}|${runtime?.minecraft ?? ""}`;
 }
 
 let curseForgeInitializedFor: string | null = null;
@@ -478,7 +378,7 @@ async function ensureCurseForgeInitialized() {
   searchQuery.value = "";
   syncVersionPageToSelection();
   curseForgeSelectedCategories.value = [];
-  curseForgePage.value = 1;
+  currentPage.value = 1;
   curseForgeSearchResult.value = null;
 }
 
@@ -490,206 +390,10 @@ onMounted(async () => {
 </script>
 
 <style lang="less" scoped>
-.search-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 16px;
-  padding: 24px;
-  background: rgba(var(--ctp-crust-rgb), 0.92);
-  backdrop-filter: blur(4px);
+@import "./styles/search-panel.less";
+@import "./styles/pagination.less";
+@import "./styles/content-card.less";
 
-  .search-bar {
-    display: flex;
-    gap: 8px;
-
-    .search-input {
-      flex: 1;
-      height: 36px;
-      padding: 0 12px;
-      border: 1px solid var(--ctp-surface1);
-      border: none;
-      border-radius: 8px;
-      background: var(--ctp-surface0);
-      color: var(--ctp-text);
-      font-size: 13px;
-      transition:
-        background 120ms ease,
-        border-color 150ms ease;
-
-      &::placeholder {
-        color: var(--ctp-subtext0);
-      }
-
-      &:hover {
-        background: var(--ctp-surface1);
-      }
-
-      &:focus {
-        outline: none;
-        border-color: var(--ctp-lavender);
-      }
-    }
-
-    .search-button {
-      flex-shrink: 0;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-      border-radius: 8px;
-      background: var(--ctp-surface0);
-      color: var(--ctp-text);
-      transition: background 120ms ease;
-
-      &:hover {
-        background: var(--ctp-surface1);
-      }
-
-      &:active {
-        background: var(--ctp-lavender);
-        color: var(--ctp-text-inverse);
-      }
-    }
-  }
-
-  .filter-bar {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .filter-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    .filter-label {
-      flex-shrink: 0;
-      min-width: 52px;
-      line-height: 26px;
-      font-size: 12px;
-      color: var(--ctp-subtext0);
-    }
-
-    .filter-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-
-      &.paged {
-        flex: 1;
-        min-width: 0;
-        flex-wrap: nowrap;
-        align-items: center;
-      }
-    }
-
-    .filter-chips-track {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-    }
-
-    .filter-chips-track-inner {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 6px;
-      width: max-content;
-      will-change: transform;
-
-      .filter-chip {
-        flex-shrink: 0;
-      }
-    }
-  }
-
-  .chip-pager {
-    flex-shrink: 0;
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--ctp-surface1);
-    border-radius: 999px;
-    background: var(--ctp-surface0);
-    color: var(--ctp-text);
-    font-size: 14px;
-    transition:
-      background 120ms ease,
-      color 120ms ease;
-
-    &:hover:not(:disabled) {
-      background: var(--ctp-surface1);
-    }
-
-    &:disabled {
-      opacity: 0.4;
-    }
-  }
-
-  .filter-chip {
-    height: 20px;
-    padding: 0 8px;
-    border: 1px solid var(--ctp-surface1);
-    border: none;
-    border-radius: 999px;
-    background: var(--ctp-surface0);
-    background: none;
-    color: var(--ctp-text);
-    font-size: 12px;
-    transition:
-      background 120ms ease,
-      border-color 120ms ease,
-      color 120ms ease;
-
-    &:hover {
-      background: var(--ctp-surface1);
-      transition: none;
-    }
-
-    &:active {
-      background: var(--ctp-surface2);
-      transition:
-        background 120ms ease,
-        border-color 120ms ease,
-        color 120ms ease;
-    }
-
-    &.selected {
-      background: var(--ctp-lavender);
-      color: var(--ctp-text-inverse);
-      transition:
-        background 120ms ease,
-        border-color 120ms ease,
-        color 120ms ease;
-    }
-    &.selected.fabric {
-      background: var(--ctp-yellow);
-    }
-    &.selected.forge {
-      background: var(--ctp-blue);
-    }
-    &.selected.neoforge {
-      background: var(--ctp-peach);
-    }
-    &.selected.quilt {
-      background: var(--ctp-mauve);
-    }
-    &.selected.minecraft-version {
-      background: var(--ctp-green);
-    }
-  }
-}
-.result-count {
-  margin-bottom: 12px;
-  font-size: 12px;
-  color: var(--ctp-subtext0);
-}
 .search-status {
   display: flex;
   align-items: center;
@@ -697,227 +401,15 @@ onMounted(async () => {
   padding: 40px 0;
   font-size: 13px;
   color: var(--ctp-subtext0);
+
   .loading {
     background: var(--ctp-mantle);
     padding: 16px;
     border-radius: 8px;
   }
 }
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 20px 0 32px;
 
-  button {
-    min-width: 30px;
-    height: 30px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--ctp-surface1);
-    border-radius: 6px;
-    background: var(--ctp-surface0);
-    color: var(--ctp-text);
-    font-size: 12px;
-    transition:
-      background 120ms ease,
-      border-color 120ms ease;
-
-    &:hover:not(:disabled),
-    &:hover:not(.active) {
-      background: var(--ctp-surface1);
-    }
-
-    &:active:not(:disabled),
-    &:hover:not(.active) {
-      background: var(--ctp-surface2);
-    }
-
-    &:disabled {
-      opacity: 0.4;
-    }
-
-    &.active {
-      border-color: var(--ctp-lavender);
-      background: var(--ctp-lavender);
-      color: var(--ctp-text-inverse);
-      pointer-events: none;
-    }
-  }
-
-  .page-ellipsis {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 30px;
-    font-size: 12px;
-    color: var(--ctp-subtext0);
-  }
-}
 .mods-list {
-  padding: 16px 32px 32px 32px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  justify-content: center;
-  width: 100%;
-  row-gap: 12px;
-  column-gap: 12px;
-  .content {
-    display: flex;
-    border-radius: 8px;
-    image-rendering: pixelated;
-    transform: translateX(4px);
-    background: rgba(var(--ctp-surface0-rgb), 0.4);
-    img {
-      border: 2px solid var(--ctp-surface0);
-      border-radius: 8px 0 0 8px;
-      transition: opacity 200ms ease;
-    }
-    .content-info {
-      background: var(--ctp-surface0);
-      padding: 8px 12px;
-      transform: translateX(-8px);
-      width: calc(100% - 72px);
-      border-radius: 8px;
-      transition: all 200ms ease;
-      p.name {
-        font-size: 14px;
-        width: 100%;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-      p.authors {
-        width: 100%;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        font-size: 11px;
-        opacity: 0.9;
-        margin: 2px 0;
-      }
-      p.mod-description {
-        font-size: 10px;
-        margin: 2px 0;
-        opacity: 0.6;
-        width: 100%;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-      span.loader-type,
-      span.version {
-        font-size: 9px;
-        padding: 2px 6px;
-        margin-right: 4px;
-        border-radius: 100px;
-        font-weight: 500;
-        color: var(--ctp-text-inverse);
-      }
-      span.loader-type.fabric {
-        background: var(--ctp-yellow);
-      }
-      span.loader-type.forge {
-        background: var(--ctp-blue);
-      }
-      span.loader-type.neoforge {
-        background: var(--ctp-peach);
-      }
-      span.loader-type.quilt {
-        background: var(--ctp-mauve);
-      }
-      span.loader-type.liteloader {
-        background: var(--ctp-yellow);
-      }
-      span.version {
-        border: 1px solid var(--ctp-sky);
-        color: var(--ctp-text);
-      }
-      span.command-enabled {
-        background: var(--ctp-yellow);
-        margin-left: 4px;
-      }
-      span.last-played {
-        font-size: 10px;
-        margin-left: 4px;
-        span.label {
-          opacity: 0.8;
-        }
-      }
-    }
-    .actions {
-      position: absolute;
-      right: 4px;
-      top: 0;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 12px 0;
-      align-items: center;
-      justify-content: space-between;
-      z-index: -1;
-      button {
-        appearance: none;
-        border: none;
-        background: none;
-        opacity: 0;
-        transform: scale(0.5);
-        transition:
-          opacity 200ms ease,
-          transform 200ms ease;
-      }
-    }
-    .download-button {
-      position: absolute;
-      left: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      button {
-        appearance: none;
-        background: none;
-        border: none;
-        opacity: 0;
-        transform: scale(0.5);
-        transition:
-          opacity 200ms ease,
-          transform 200ms ease;
-      }
-    }
-  }
-  .content.content-disabled {
-    opacity: 0.7;
-    .name {
-      text-decoration: line-through;
-    }
-  }
-  .content:hover {
-    .content-info {
-      width: calc(100% - 88px);
-      background: var(--ctp-surface1);
-      transition:
-        background 20ms ease,
-        width 200ms ease;
-    }
-    .actions button {
-      opacity: 0.8;
-      transform: scale(1);
-    }
-    .actions button:hover {
-      opacity: 1;
-    }
-    .actions button:active {
-      opacity: 0.9;
-    }
-    .download-button button {
-      opacity: 1;
-      transform: scale(1);
-    }
-    img:active ~ .download-button button {
-      opacity: 0.7;
-      transition: opacity 55ms ease;
-    }
-  }
+  &:extend(.content-card-grid all);
 }
 </style>
