@@ -10,153 +10,163 @@
       </div>
     </div>
     <div class="body">
-      <Transition :name="transitionName" mode="out-in">
-        <div class="language-setting" v-if="currentPhase === 'language'">
-          <p class="title">欢迎</p>
-          <p class="message">欢迎来到首次启动设置指南页！</p>
-          <p class="message">
-            Conic Launcher 是可高度自定义的启动器，但那些复杂的设置可能会让你不知所措。
-          </p>
-          <p class="message">
-            这个指南将快速带你完成一些重要的设置项，以便待会儿你能够快速上手并启动你的游戏。
-          </p>
-          <div class="language-setting-container">
-            <button
-              class="language-item"
-              v-for="(displayName, option) in supportedLanguages"
-              :class="{ selected: configStore.language === option }"
-              @click="configStore.language = option">
-              {{ displayName }}
-            </button>
-          </div>
-        </div>
-        <div class="choose-palette" v-else-if="currentPhase === 'palette'">
-          <p class="title">选择配色方案</p>
-          <p class="message">Conic Launcher 支持多种配色方案，你可以按自己的喜好选择一个。</p>
-          <div class="palette-setting-container">
-            <SettingGroup style="width: 100%; margin-top: 16px">
-              <SettingItem
-                title="跟随系统深色设置"
-                description="如果系统设置中设置为浅色，则使用 Latte ，否则使用 Mocha"
-                icon="moon"
-                icon-fill="none">
-                <BaseSwitch v-model="configStore.appearance.palette_follow_system"></BaseSwitch>
-              </SettingItem>
-              <div
-                class="color-style"
-                :class="{
-                  'color-style-disabled': configStore.appearance.palette_follow_system,
-                }">
-                <div
-                  :class="{ latte: true, selected: currentTheme == Palette.Latte }"
-                  @click="choosePalette(Palette.Latte)">
-                  <p>Latte</p>
-                </div>
-                <div
-                  :class="{ frappe: true, selected: currentTheme == Palette.Frappe }"
-                  @click="choosePalette(Palette.Frappe)">
-                  <p>Frappé</p>
-                </div>
-                <div
-                  :class="{ macchiato: true, selected: currentTheme == Palette.Macchiato }"
-                  @click="choosePalette(Palette.Macchiato)">
-                  <p>Macchiato</p>
-                </div>
-                <div
-                  :class="{ mocha: true, selected: currentTheme == Palette.Mocha }"
-                  @click="choosePalette(Palette.Mocha)">
-                  <p>Mocha</p>
-                </div>
-              </div>
-            </SettingGroup>
-          </div>
-        </div>
-        <div class="add-account" v-else-if="currentPhase === 'add-account'">
-          <div class="account-add-container" v-if="!configStore.current_account">
-            <AccountAdd style="width: 100%; height: 100%"></AccountAdd>
-          </div>
-          <div class="account-view-container" v-else>
-            <p class="title">帐户已添加！</p>
+      <ScrollView>
+        <Transition :name="transitionName" mode="out-in">
+          <div class="language-setting" v-if="currentPhase === 'language'">
+            <p class="title">欢迎</p>
+            <p class="message">欢迎来到首次启动设置指南页！</p>
             <p class="message">
-              以下档案已设为默认档案。当你没有给实例设置要使用的档案时，启动器会使用此档案登录游戏
+              Conic Launcher 是可高度自定义的启动器，但那些复杂的设置可能会让你不知所措。
             </p>
-            <div class="profile-card">
-              <AccountAvatar
-                v-if="configStore.current_account"
-                ref="avatar"
-                :skin="accountSkin"
-                :uuid="accountUuid"
-                :size="56"
-                class="avatar"></AccountAvatar>
-              <p class="profile-name">
-                {{ accountProfileName }}
-              </p>
-              <p
-                class="profile-type microsoft"
-                v-if="configStore.current_account.type === 'Microsoft'">
-                微软（正版帐户）
-              </p>
-              <p
-                class="profile-type yggdrasil"
-                v-else-if="configStore.current_account.type === 'Yggdrasil'">
-                Yggdrasil（外置登录）
-              </p>
-              <p
-                class="profile-type offline"
-                v-else="configStore.current_account.type === 'Offline'">
-                无认证服务（离线帐户）
-              </p>
+            <p class="message">
+              这个指南将快速带你完成一些重要的设置项，以便待会儿你能够快速上手并启动你的游戏。
+            </p>
+            <div class="language-setting-container">
+              <button
+                class="language-item"
+                v-for="(displayName, option) in supportedLanguages"
+                :class="{ selected: configStore.language === option }"
+                @click="configStore.language = option">
+                {{ displayName }}
+              </button>
             </div>
           </div>
-        </div>
-        <div class="java-settings" v-else-if="currentPhase === 'java-settings'">
-          <p class="title">Java 虚拟机设置</p>
-          <p class="message" v-if="isSupportedJVMAutoInstallPlatform">
-            Conic Launcher 能够极大地简化 Java 环境的配置。启用「自动安装 Java
-            运行环境」即可免于手动安装它们！
-          </p>
-          <p class="message warn" v-else>
-            注意：当前平台可能无法自动安装 Java 运行环境，建议手动安装并禁用「自动安装 Java
-            运行环境」
-          </p>
-          <SettingsJVM style="margin-top: 16px"></SettingsJVM>
-        </div>
-        <div class="game-settings" v-else-if="currentPhase === 'launch-options'">
-          <p class="title">游戏启动选项</p>
-          <p class="message">
-            这里列出了一些基本的启动选项。稍后你还可以在设置和实例独立设置中更改更多选项。
-          </p>
-          <SettingsGame style="margin-top: 16px"></SettingsGame>
-        </div>
-        <div class="import-instances" v-else-if="currentPhase === 'import-instances'">
-          <p class="title">导入实例</p>
-          <p class="message">你可以从其他启动器导入先前游玩的实例以便快速开始游戏</p>
-          <div style="width: 100%; display: flex; justify-content: center; margin: 12px 0">
-            <button class="import-from-other-launcher">导入实例</button>
+          <div class="choose-palette" v-else-if="currentPhase === 'palette'">
+            <p class="title">选择配色方案</p>
+            <p class="message">Conic Launcher 支持多种配色方案，你可以按自己的喜好选择一个。</p>
+            <div class="palette-setting-container">
+              <SettingGroup style="width: 100%; margin-top: 16px">
+                <SettingItem
+                  title="跟随系统深色设置"
+                  description="如果系统设置中设置为浅色，则使用 Latte ，否则使用 Mocha"
+                  icon="moon"
+                  icon-fill="none">
+                  <BaseSwitch v-model="configStore.appearance.palette_follow_system"></BaseSwitch>
+                </SettingItem>
+                <div
+                  class="color-style"
+                  :class="{
+                    'color-style-disabled': configStore.appearance.palette_follow_system,
+                  }">
+                  <div
+                    :class="{ latte: true, selected: currentTheme == Palette.Latte }"
+                    @click="choosePalette(Palette.Latte)">
+                    <p>Latte</p>
+                  </div>
+                  <div
+                    :class="{ frappe: true, selected: currentTheme == Palette.Frappe }"
+                    @click="choosePalette(Palette.Frappe)">
+                    <p>Frappé</p>
+                  </div>
+                  <div
+                    :class="{ macchiato: true, selected: currentTheme == Palette.Macchiato }"
+                    @click="choosePalette(Palette.Macchiato)">
+                    <p>Macchiato</p>
+                  </div>
+                  <div
+                    :class="{ mocha: true, selected: currentTheme == Palette.Mocha }"
+                    @click="choosePalette(Palette.Mocha)">
+                    <p>Mocha</p>
+                  </div>
+                </div>
+              </SettingGroup>
+            </div>
           </div>
-          <p class="message">
-            如果你第一次接触 Minecraft，你也可以选择以最新 Minecraft 版本立刻创建空白实例
-          </p>
-          <div
-            style="width: 100%; display: flex; justify-content: center; gap: 16px; margin: 12px 0">
-            <button
-              class="create-latest-instance"
-              :class="{ creating: creatingLatestRelease, error: createLatestReleaseErrorOccured }"
-              @click="createLatestReleaseInstance">
-              {{ createLatestReleaseButtonText }}
-            </button>
-            <button
-              class="create-latest-instance"
-              :class="{
-                creating: creatingLatestSnapshot,
-                error: createLatestSnapshotErrorOccured,
-              }"
-              @click="createLatestSnapshotInstance">
-              {{ createLatestSnapshotButtonText }}
-            </button>
+          <div class="add-account" v-else-if="currentPhase === 'add-account'">
+            <div class="account-add-container" v-if="!configStore.current_account">
+              <AccountAdd style="width: 100%; height: 100%"></AccountAdd>
+            </div>
+            <div class="account-view-container" v-else>
+              <p class="title">帐户已添加！</p>
+              <p class="message">
+                以下档案已设为默认档案。当你没有给实例设置要使用的档案时，启动器会使用此档案登录游戏
+              </p>
+              <div class="profile-card">
+                <AccountAvatar
+                  v-if="configStore.current_account"
+                  ref="avatar"
+                  :skin="accountSkin"
+                  :uuid="accountUuid"
+                  :size="56"
+                  class="avatar"></AccountAvatar>
+                <p class="profile-name">
+                  {{ accountProfileName }}
+                </p>
+                <p
+                  class="profile-type microsoft"
+                  v-if="configStore.current_account.type === 'Microsoft'">
+                  微软（正版帐户）
+                </p>
+                <p
+                  class="profile-type yggdrasil"
+                  v-else-if="configStore.current_account.type === 'Yggdrasil'">
+                  Yggdrasil（外置登录）
+                </p>
+                <p
+                  class="profile-type offline"
+                  v-else="configStore.current_account.type === 'Offline'">
+                  无认证服务（离线帐户）
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      </Transition>
+          <div class="java-settings" v-else-if="currentPhase === 'java-settings'">
+            <ScrollView>
+              <p class="title">Java 虚拟机设置</p>
+              <p class="message" v-if="isSupportedJVMAutoInstallPlatform">
+                Conic Launcher 能够极大地简化 Java 环境的配置。启用「自动安装 Java
+                运行环境」即可免于手动安装它们！
+              </p>
+              <p class="message warn" v-else>
+                注意：当前平台可能无法自动安装 Java 运行环境，建议手动安装并禁用「自动安装 Java
+                运行环境」
+              </p>
+              <SettingsJVM style="margin-top: 16px"></SettingsJVM>
+            </ScrollView>
+          </div>
+          <div class="game-settings" v-else-if="currentPhase === 'launch-options'">
+            <p class="title">游戏启动选项</p>
+            <p class="message">
+              这里列出了一些基本的启动选项。稍后你还可以在设置和实例独立设置中更改更多选项。
+            </p>
+            <SettingsGame style="margin-top: 16px"></SettingsGame>
+          </div>
+          <div class="import-instances" v-else-if="currentPhase === 'import-instances'">
+            <p class="title">导入实例</p>
+            <p class="message">你可以从其他启动器导入先前游玩的实例以便快速开始游戏</p>
+            <div style="width: 100%; display: flex; justify-content: center; margin: 12px 0">
+              <button class="import-from-other-launcher">导入实例</button>
+            </div>
+            <p class="message">
+              如果你第一次接触 Minecraft，你也可以选择以最新 Minecraft 版本立刻创建空白实例
+            </p>
+            <div
+              style="
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                gap: 16px;
+                margin: 12px 0;
+              ">
+              <button
+                class="create-latest-instance"
+                :class="{ creating: creatingLatestRelease, error: createLatestReleaseErrorOccured }"
+                @click="createLatestReleaseInstance">
+                {{ createLatestReleaseButtonText }}
+              </button>
+              <button
+                class="create-latest-instance"
+                :class="{
+                  creating: creatingLatestSnapshot,
+                  error: createLatestSnapshotErrorOccured,
+                }"
+                @click="createLatestSnapshotInstance">
+                {{ createLatestSnapshotButtonText }}
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </ScrollView>
     </div>
     <div class="footer">
       <button class="back" :class="{ disabled: currentPhaseIndex === 0 }" @click="backPhase">
@@ -187,6 +197,7 @@ import SettingsJVM from "./settings/SettingsJVM.vue";
 import SettingsGame from "./settings/SettingsGame.vue";
 import { createInstance } from "@conic/instance";
 import { getMinecrafVersionManifest } from "@conic/install";
+import ScrollView from "@/components/ScrollView.vue";
 
 const navigationStore = useNavigationStore();
 const configStore = useConfigStore();
@@ -468,6 +479,7 @@ const createLatestSnapshotButtonText = computed(() => {
     border-radius: 12px;
     margin-top: 32px;
     overflow: hidden;
+    position: relative;
 
     .title {
       color: var(--ctp-lavender);
