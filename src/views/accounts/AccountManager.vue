@@ -276,6 +276,15 @@ function switchAccount(account: FlatAccount) {
   currentKey.value = account.key;
 }
 
+watch(
+  () => config.current_account,
+  (ca) => {
+    if (!currentAccount.value && ca) {
+      currentKey.value = `${ca.type.toLowerCase()}-${getUuidFromAccount(ca)}`;
+    }
+  },
+);
+
 const DAY_MS = 86400000;
 
 function buildStatisticsProfile(account: FlatAccount | null): StatisticsProfile | null {

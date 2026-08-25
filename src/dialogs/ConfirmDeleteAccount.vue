@@ -100,18 +100,9 @@ async function confirmDelete() {
         break;
     }
     await accountStore.reloadFromFile();
-    if (accountStore.microsoft.length > 0) {
-      config.current_account = { type: "Microsoft", data: accountStore.microsoft[0] };
-    } else if (accountStore.offline.length > 0) {
-      config.current_account = { type: "Offline", data: accountStore.offline[0] };
-    } else if (Object.values(accountStore.yggdrasil).length > 0) {
-      const yggdrasilAccounts = Object.values(accountStore.yggdrasil);
-      config.current_account = { type: "Yggdrasil", data: yggdrasilAccounts[0] };
-    } else {
-      config.current_account = null;
-      if (navigationStore.currentPage === "accounts") {
-        navigationStore.back();
-      }
+    accountStore.selectNextAccount();
+    if (navigationStore.currentPage === "accounts" && !config.current_account) {
+      navigationStore.back();
     }
   } finally {
     deleting.value = false;

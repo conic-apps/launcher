@@ -6,38 +6,6 @@ import { Instance, listInstances, type InstanceSort } from "@conic/instance"
 import { defineStore } from "pinia"
 import { ref, watch } from "vue"
 
-// NOTE: Move this to welcome screen
-// async function ensureLatestInstancesExistance() {
-//     const promises = []
-//     if (!(await getInstanceById(LATEST_RELEASE_INSTANCE_ID))) {
-//         const minecraftVersionManifest = await getMinecrafVersionManifest()
-//         promises.push(
-//             createInstance(
-//                 {
-//                     launch_config: { enable_instance_specific_settings: false },
-//                     name: "Latest Release",
-//                     runtime: { minecraft: minecraftVersionManifest.latest.release },
-//                 },
-//                 LATEST_RELEASE_INSTANCE_ID,
-//             ),
-//         )
-//     }
-//     if (!(await getInstanceById(LATEST_SNAPSHOT_INSTANCE_ID))) {
-//         const minecraftVersionManifest = await getMinecrafVersionManifest()
-//         promises.push(
-//             createInstance(
-//                 {
-//                     launch_config: { enable_instance_specific_settings: false },
-//                     name: "Latest Snapshot",
-//                     runtime: { minecraft: minecraftVersionManifest.latest.snapshot },
-//                 },
-//                 LATEST_SNAPSHOT_INSTANCE_ID,
-//             ),
-//         )
-//     }
-//     await Promise.all(promises)
-// }
-
 const sort = ref<InstanceSort>("Playtime")
 const listedInstances = await listInstances(sort.value)
 

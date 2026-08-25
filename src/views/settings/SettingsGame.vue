@@ -30,11 +30,6 @@
       <SettingItem :title="'启动游戏后退出启动器'">
         <BaseSwitch v-model="config.launch.quit_app_after_launch"></BaseSwitch>
       </SettingItem>
-      <SettingItem
-        title="跳过游戏文件检查"
-        description="启动游戏前启动器将不会尝试检查或补全游戏文件">
-        <BaseSwitch v-model="config.launch.skip_check_files"></BaseSwitch>
-      </SettingItem>
     </SettingGroup>
     <SettingGroup :title="'内存'">
       <SettingItem :title="'自动分配内存'">
@@ -112,6 +107,11 @@
         :title="'忽略补丁差异'"
         :description="'将 <code>-Dfml.ignorePatchDiscrepancies=true</code> 添加到 JVM 参数中'">
         <BaseSwitch v-model="config.launch.ignore_patch_discrepancies"></BaseSwitch>
+      </SettingItem>
+      <SettingItem
+        title="跳过游戏文件检查"
+        description="启动游戏前启动器将不会尝试检查或补全游戏文件">
+        <BaseSwitch v-model="config.launch.skip_check_files"></BaseSwitch>
       </SettingItem>
     </SettingCollapse>
   </div>

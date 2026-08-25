@@ -6,8 +6,8 @@
   <div class="setting-jvm">
     <SettingGroup>
       <SettingItem
-        :title="'优先使用 Mojang 提供的 Java 运行环境'"
-        :description="'此选项有助于避免个别平台（例如 macOS ）的奇怪问题，如果你的 Java 环境出现问题或者懒得自己安装 Java ，直接打开此选项即可。关闭后将仅尝试使用系统中已安装的 Java 启动游戏'">
+        :title="'自动安装 Java 运行环境'"
+        :description="'开启后，启动器将在启动前会根据版本信息自动下载合适的 Java 运行环境。关闭后将仅尝试使用系统中已安装的 Java 启动游戏'">
         <BaseSwitch v-model="config.prefer_mojang_java"></BaseSwitch>
       </SettingItem>
     </SettingGroup>

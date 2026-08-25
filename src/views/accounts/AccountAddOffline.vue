@@ -36,6 +36,9 @@
       </div>
     </div>
     <div class="buttons">
+      <BaseButton @click="dialogStore.accountAdd.visible = false" class="cancel-login">{{
+        "取消"
+      }}</BaseButton>
       <BaseButton
         :disabled="username.trim() === '' || uuidInvalid"
         style="background: var(--ctp-latte-lavender); color: #000"
@@ -51,10 +54,14 @@ import BaseButton from "@/components/BaseButton.vue";
 import BaseInput from "@/components/BaseInput.vue";
 import BaseSwitch from "@/components/BaseSwitch.vue";
 import { useAccountStore } from "@/store/account";
+import { useConfigStore } from "@/store/config";
+import { useDialogStore } from "@/store/dialog";
 import { addOfflineAccount, getUuidFromUsername } from "@conic/account";
 import { computed, onMounted, ref, watch } from "vue";
 
-const emit = defineEmits(["switch-component-manage"]);
+const accountStore = useAccountStore();
+const dialogStore = useDialogStore();
+const configStore = useConfigStore();
 
 const username = ref("");
 const uuid = ref("");
@@ -62,7 +69,6 @@ const advancedMode = ref(false);
 const generatedUuid = computed(() => {
   return getUuidFromUsername(username.value);
 });
-const accountStore = useAccountStore();
 
 const uuidPattern =
   /^[0-9a-f]{32}$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -94,7 +100,8 @@ async function submitAccount() {
   }
   await addOfflineAccount(username.value.trim(), uuid.value.trim());
   await accountStore.reloadFromFile();
-  emit("switch-component-manage");
+  if (!configStore.current_account) accountStore.selectNextAccount();
+  dialogStore.accountAdd.visible = false;
 }
 </script>
 
@@ -144,6 +151,7 @@ async function submitAccount() {
     display: flex;
     justify-content: flex-end;
     margin-top: 12px;
+    gap: 8px;
   }
 }
 </style>
