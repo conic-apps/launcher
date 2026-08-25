@@ -44,7 +44,7 @@ https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
 不需要额外工具：创建小组、把邀请码发给好友，即可一起进入同一个世界。启动器会检测网络环境（NAT 类型）并给出改善建议。
 
-https://github.com/user-attachments/assets/b6c88174-655a-458e-b086-2f7e17b18733<img width="840" height="533" alt="Conic Nexus" src="https://github.com/user-attachments/assets/e689a0ed-ee06-4495-b963-22eb7371671b" />
+<img width="840" height="533" alt="Conic Nexus" src="https://github.com/user-attachments/assets/e689a0ed-ee06-4495-b963-22eb7371671b" />
 
 ### 多种登录方式
 
@@ -139,4 +139,3 @@ pnpm check
 ## 免责声明
 
 Conic Launcher 不是官方的 Minecraft 产品，也未获得 Mojang Studios 的批准或关联。“Minecraft”是 Mojang AB 的商标，本项目对 Minecraft 品牌的任何使用均符合 Mojang Studios 的<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">品牌与资产指南</a>。
-
