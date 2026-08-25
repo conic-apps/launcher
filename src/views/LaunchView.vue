@@ -35,8 +35,9 @@
           :max="progressBarMax"></BaseProgress>
       </div>
       <div class="other-info">
-        <span class="label">登录认证服务</span> <span>{{ configStore.current_account?.type }}</span>
-        <span class="label">档案名称</span>
+        <span class="label">{{ t("game.launch.authService") }}</span>
+        <span>{{ configStore.current_account?.type }}</span>
+        <span class="label">{{ t("game.launch.profileName") }}</span>
         <span v-if="configStore.current_account?.type === 'Microsoft'">{{
           configStore.current_account?.data.profile.profile_name
         }}</span>
@@ -46,7 +47,9 @@
         <span v-else>{{ configStore.current_account?.data.name }}</span>
       </div>
       <div class="back-button">
-        <BaseButton :class="{ disabled: backButtonDisabled }" @click="back()">取消启动</BaseButton>
+        <BaseButton :class="{ disabled: backButtonDisabled }" @click="back()">{{
+          t("game.launch.cancelLaunch")
+        }}</BaseButton>
       </div>
     </div>
   </div>
@@ -61,14 +64,22 @@ import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
 import { useMusicStore } from "@/store/music";
 import { useNavigationStore } from "@/store/navigation";
-import { yggdrasilGetSkinUrl } from "@conic/account";
+import {
+  refreshMicrosoftAccount,
+  updateYggdrasilAccount,
+  yggdrasilGetSkinUrl,
+  yggdrasilRefreshAccount,
+  yggdrasilValidateAccount,
+} from "@conic/account";
 import { formatBytes } from "@conic/download";
 import { InstallTask, Job } from "@conic/install";
 import { LaunchTask } from "@conic/launch";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { window as appWindow } from "@tauri-apps/api";
 import { useAccountStore } from "@/store/account";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const instanceStore = useInstanceStore();
 const currentInstance = computed(() => {
   return instanceStore.currentInstance;
@@ -79,7 +90,7 @@ const configStore = useConfigStore();
 const dialogStore = useDialogStore();
 const musicStore = useMusicStore();
 
-const progressDescription = ref("正在准备");
+const progressDescription = ref(t("game.launch.progress.preparing"));
 const progressBarLoading = ref(true);
 const progressBarValue = ref(0);
 const progressBarMax = ref(0);
@@ -119,6 +130,15 @@ async function launch() {
   }
   try {
     if (!instanceStore.currentInstance) throw "currentInstance is null";
+    if (!configStore.launch.skip_refresh_account) {
+      try {
+        await refreshAccountCredentials();
+      } catch (error) {
+        console.error(error);
+        dialogStore.accountRefreshFailed.visible = true;
+        return;
+      }
+    }
     if (!instanceStore.currentInstance.installed) {
       await installGame();
     }
@@ -145,6 +165,24 @@ function isNoSuitableJavaError(error: unknown): boolean {
   }
 }
 
+async function refreshAccountCredentials() {
+  const account = configStore.current_account;
+  if (!account || account.type === "Offline") return;
+  progressDescription.value = t("game.launch.progress.refreshAccount");
+  progressBarLoading.value = true;
+  if (account.type === "Microsoft") {
+    const refreshed = await refreshMicrosoftAccount(account.data.profile.uuid, false);
+    configStore.current_account = { type: "Microsoft", data: refreshed };
+  } else if (account.type === "Yggdrasil") {
+    if (!(await yggdrasilValidateAccount(account.data))) {
+      const refreshed = await yggdrasilRefreshAccount(account.data);
+      await updateYggdrasilAccount(refreshed.identifier, refreshed);
+      configStore.current_account = { type: "Yggdrasil", data: refreshed };
+    }
+  }
+  await accountStore.reloadFromFile();
+}
+
 let cancelInstallHandle: () => Promise<void>;
 
 async function installGame() {
@@ -153,7 +191,7 @@ async function installGame() {
     onProgress: (task) => {
       if (!instanceStore.currentInstance) throw "currentInstance is null";
       if (task.job === Job.Prepare) {
-        progressDescription.value = "准备下载";
+        progressDescription.value = t("game.launch.progress.prepareDownload");
         progressBarLoading.value = true;
       }
       if (task.job === Job.InstallGame) {
@@ -161,10 +199,13 @@ async function installGame() {
           task.progress?.phase === "VerifyExistingFiles" ||
           (task.progress && task.progress.totalBytes === 0)
         ) {
-          progressDescription.value = "校验游戏文件";
+          progressDescription.value = t("game.launch.progress.verifyFiles");
           progressBarLoading.value = true;
         } else if (task.progress?.phase === "DownloadFiles") {
-          progressDescription.value = `下载游戏文件 ${formatBytes(task.progress.completedBytes)} / ${formatBytes(task.progress.totalBytes)}`;
+          progressDescription.value = t("game.launch.progress.downloadFiles", {
+            current: formatBytes(task.progress.completedBytes),
+            total: formatBytes(task.progress.totalBytes),
+          });
           progressBarLoading.value = false;
           progressBarValue.value = task.progress.completedBytes;
           progressBarMax.value = task.progress.totalBytes;
@@ -175,10 +216,13 @@ async function installGame() {
           task.progress?.phase === "VerifyExistingFiles" ||
           (task.progress && task.progress.totalBytes === 0)
         ) {
-          progressDescription.value = "检查 Java 运行环境";
+          progressDescription.value = t("game.launch.progress.checkJava");
           progressBarLoading.value = true;
         } else if (task.progress?.phase === "DownloadFiles") {
-          progressDescription.value = `下载 Java ${formatBytes(task.progress.completedBytes)}/${formatBytes(task.progress.totalBytes)}`;
+          progressDescription.value = t("game.launch.progress.downloadJava", {
+            current: formatBytes(task.progress.completedBytes),
+            total: formatBytes(task.progress.totalBytes),
+          });
           progressBarLoading.value = false;
           progressBarValue.value = task.progress.completedBytes;
           progressBarMax.value = task.progress.totalBytes;
@@ -188,7 +232,9 @@ async function installGame() {
         const modLoaderName = instanceStore.currentInstance.config.runtime.mod_loader_type;
         const modLoaderProgress = task.progress;
         if (!modLoaderProgress || modLoaderProgress.phase === "prepare") {
-          progressDescription.value = `安装 ${modLoaderName}`;
+          progressDescription.value = t("game.launch.progress.installModLoader", {
+            name: modLoaderName,
+          });
           progressBarLoading.value = true;
         } else if (
           modLoaderProgress.phase === "downloadInstaller" ||
@@ -197,8 +243,8 @@ async function installGame() {
           const detail = modLoaderProgress.detail;
           const stageText =
             modLoaderProgress.phase === "downloadInstaller"
-              ? `下载 ${modLoaderName} 安装器`
-              : "下载依赖库";
+              ? t("game.launch.progress.downloadInstaller", { name: modLoaderName })
+              : t("game.launch.progress.downloadDeps");
           if (!detail || detail.phase === "VerifyExistingFiles" || detail.totalBytes === 0) {
             progressDescription.value = stageText;
             progressBarLoading.value = true;
@@ -210,7 +256,10 @@ async function installGame() {
           }
         } else if (modLoaderProgress.phase === "runInstaller") {
           const message = modLoaderProgress.detail?.message ?? "";
-          progressDescription.value = `运行 ${modLoaderName} installer：${message}`;
+          progressDescription.value = t("game.launch.progress.runInstaller", {
+            name: modLoaderName,
+            message,
+          });
           progressBarLoading.value = true;
         }
       }
@@ -227,39 +276,42 @@ async function launchGame() {
   const launchTask = new LaunchTask(configStore.$state, instanceStore.currentInstance, {
     onProgress: (task) => {
       if (task.job === "Prepare") {
-        progressDescription.value = "准备启动";
+        progressDescription.value = t("game.launch.progress.preparingLaunch");
         progressBarLoading.value = true;
       } else if (task.job === "CompleteFiles") {
         if (task.downloadState?.phase === "VerifyExistingFiles") {
-          progressDescription.value = "校验游戏文件";
+          progressDescription.value = t("game.launch.progress.verifyFiles");
           progressBarLoading.value = true;
         } else if (task.downloadState?.phase === "DownloadFiles") {
-          progressDescription.value = `下载游戏文件 ${task.downloadState.completedBytes} / ${task.downloadState.totalBytes}`;
+          progressDescription.value = t("game.launch.progress.downloadFiles", {
+            current: task.downloadState.completedBytes,
+            total: task.downloadState.totalBytes,
+          });
           progressBarLoading.value = false;
           progressBarValue.value = task.downloadState.completedBytes;
           progressBarMax.value = task.downloadState.totalBytes;
         }
       } else if (task.job === "GenerateScriptlet") {
-        progressDescription.value = "生成启动脚本";
+        progressDescription.value = t("game.launch.progress.generateScript");
         progressBarLoading.value = true;
       } else if (task.job === "WaitForLaunch") {
-        progressDescription.value = "等待游戏进程启动";
+        progressDescription.value = t("game.launch.progress.waitForLaunch");
         progressBarLoading.value = true;
         backButtonDisabled.value = true;
       } else if (task.job === "LogSettingUser") {
-        progressDescription.value = "等待游戏进程启动";
+        progressDescription.value = t("game.launch.progress.waitForLaunch");
         progressBarLoading.value = true;
         backButtonDisabled.value = true;
       } else if (task.job === "LogLwjglVersion") {
-        progressDescription.value = "等待游戏进程启动";
+        progressDescription.value = t("game.launch.progress.waitForLaunch");
         progressBarLoading.value = true;
         backButtonDisabled.value = true;
       } else if (task.job === "LogOpenALLoaded") {
-        progressDescription.value = "等待游戏进程启动";
+        progressDescription.value = t("game.launch.progress.waitForLaunch");
         progressBarLoading.value = true;
         backButtonDisabled.value = true;
       } else if (task.job === "LogTextureLoaded") {
-        progressDescription.value = "游戏已启动";
+        progressDescription.value = t("game.launch.progress.gameStarted");
         progressBarLoading.value = true;
         backButtonDisabled.value = true;
       }

@@ -4,19 +4,23 @@
 
 <template>
   <div class="content-screenshots">
-    <button class="close" @click="close" title="关闭" ref="closeButton">
+    <button class="close" @click="close" :title="t('content.screenshots.close')" ref="closeButton">
       <AppIcon name="xmark" :size="20"></AppIcon>
     </button>
     <div class="main">
       <template v-if="screenshotSrcs.length === 0">
-        <p class="empty">{{ screenshots === null ? "加载中..." : "暂无截图" }}</p>
+        <p class="empty">
+          {{
+            screenshots === null ? t("content.screenshots.loading") : t("content.screenshots.empty")
+          }}
+        </p>
       </template>
       <template v-else>
         <button
           class="nav prev"
           @click="previous"
           :disabled="currentIndex === 0"
-          title="上一张"
+          :title="t('content.screenshots.prev')"
           ref="prevButton">
           <AppIcon name="chevron-forward" :size="22"></AppIcon>
         </button>
@@ -27,7 +31,7 @@
           class="nav next"
           @click="next"
           :disabled="currentIndex >= screenshotSrcs.length - 1"
-          title="下一张"
+          :title="t('content.screenshots.next')"
           ref="nextButton">
           <AppIcon name="chevron-forward" :size="22"></AppIcon>
         </button>
@@ -57,7 +61,10 @@ import ScrollViewHorizontal from "@/components/ScrollViewHorizontal.vue";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import gsap from "gsap";
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useShowContent } from "./useContent";
+
+const { t } = useI18n();
 
 const gameContentStore = useGameContentStore();
 

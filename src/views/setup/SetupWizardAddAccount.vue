@@ -8,9 +8,9 @@
       <AccountAdd style="width: 100%; height: 100%"></AccountAdd>
     </div>
     <div class="account-view-container" v-else>
-      <p class="wizard-title">帐户已添加！</p>
+      <p class="wizard-title">{{ t("setup.addAccount.added") }}</p>
       <p class="wizard-message">
-        以下档案已设为默认档案。当你没有给实例设置要使用的档案时，启动器会使用此档案登录游戏
+        {{ t("setup.addAccount.profileDesc") }}
       </p>
       <div class="profile-card">
         <AccountAvatar
@@ -24,15 +24,15 @@
           {{ accountProfileName }}
         </p>
         <p class="profile-type microsoft" v-if="configStore.current_account.type === 'Microsoft'">
-          微软（正版帐户）
+          {{ t("setup.addAccount.microsoft") }}
         </p>
         <p
           class="profile-type yggdrasil"
           v-else-if="configStore.current_account.type === 'Yggdrasil'">
-          Yggdrasil（外置登录）
+          {{ t("setup.addAccount.yggdrasil") }}
         </p>
         <p class="profile-type offline" v-else-if="configStore.current_account.type === 'Offline'">
-          无认证服务（离线帐户）
+          {{ t("setup.addAccount.offline") }}
         </p>
       </div>
     </div>
@@ -42,6 +42,9 @@
 <script setup lang="ts">
 import AccountAvatar from "@/components/AccountAvatar.vue";
 import { useConfigStore } from "@/store/config";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 import { yggdrasilGetSkinUrl } from "@conic/account";
 import { computed } from "vue";
 import AccountAdd from "../accounts/AccountAdd.vue";

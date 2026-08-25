@@ -14,6 +14,7 @@
   <NoAccountError></NoAccountError>
   <NoMicrosoftAccountError></NoMicrosoftAccountError>
   <NoSuitableJavaError></NoSuitableJavaError>
+  <AccountRefreshFailed></AccountRefreshFailed>
   <MultiplayerExtension></MultiplayerExtension>
   <AccountAdd></AccountAdd>
 </template>
@@ -32,4 +33,5 @@ import NoSuitableJavaError from "./dialogs/NoSuitableJavaError.vue";
 import MultiplayerExtension from "./dialogs/MultiplayerExtension.vue";
 import AccountAdd from "./dialogs/AccountAdd.vue";
 import NoMicrosoftAccountError from "./dialogs/NoMicrosoftAccountError.vue";
+import AccountRefreshFailed from "./dialogs/AccountRefreshFailed.vue";
 </script>

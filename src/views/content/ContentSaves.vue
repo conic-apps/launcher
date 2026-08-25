@@ -18,12 +18,12 @@
       ">
       <ContentNotFound
         :show="Object.keys(saves ?? {}).length === 0"
-        description="考虑启动游戏并创建一些存档" />
+        :description="t('content.saves.empty')" />
     </div>
     <ScrollView>
       <div class="title">
         <AppIcon name="save"></AppIcon>
-        <p>存档列表</p>
+        <p>{{ t("content.saves.title") }}</p>
       </div>
       <div class="save-list-wrapper">
         <div class="saves-list">
@@ -61,10 +61,12 @@
                 }"
                 >{{ formatGameType(save.Data.GameType) }}</span
               >
-              <span class="command-enabled" v-if="save.Data.allowCommands">作弊</span>
+              <span class="command-enabled" v-if="save.Data.allowCommands">{{
+                t("content.saves.cheats")
+              }}</span>
               <span class="last-played" v-if="save.Data.LastPlayed"
-                ><span class="label">上次游玩: </span
-                >{{ formatLastPlayed(save.Data.LastPlayed, zhCN) }}</span
+                ><span class="label">{{ t("content.saves.lastPlayed") }}</span
+                >{{ formatLastPlayed(save.Data.LastPlayed, timeFormatter) }}</span
               >
             </div>
             <div class="actions">
@@ -107,10 +109,26 @@ import { useGameContentStore } from "@/store/content";
 import { useDialogStore } from "@/store/dialog";
 import { useInstanceStore } from "@/store/instance";
 import { getSaveIcon, getSavePath, type Level } from "@conic/content";
-import { formatLastPlayed, zhCN } from "@conic/instance";
+import { formatLastPlayed } from "@conic/instance";
 import { invoke } from "@tauri-apps/api/core";
 import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import ContentNotFound from "./ContentNotFound.vue";
+
+const { t } = useI18n();
+
+const timeFormatter = {
+  get justNow() {
+    return t("game.time.justNow");
+  },
+  hoursAgo: (hours: number) => t("game.time.hoursAgo", hours),
+  get yesterday() {
+    return t("game.time.yesterday");
+  },
+  monthDay: (month: number, day: number) => t("game.time.monthDay", { month, day }),
+  yearMonthDay: (year: number, month: number, day: number) =>
+    t("game.time.yearMonthDay", { year, month, day }),
+};
 
 const gameContentStore = useGameContentStore();
 const dialogStore = useDialogStore();
@@ -149,13 +167,13 @@ watch(
 
 function formatGameType(gameType: number) {
   if (gameType === 0) {
-    return "生存";
+    return t("content.saves.gameType.survival");
   } else if (gameType === 1) {
-    return "创造";
+    return t("content.saves.gameType.creative");
   } else if (gameType === 2) {
-    return "冒险";
+    return t("content.saves.gameType.adventure");
   } else if (gameType === 3) {
-    return "旁观";
+    return t("content.saves.gameType.spectator");
   } else {
     return null;
   }

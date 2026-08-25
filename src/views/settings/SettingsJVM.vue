@@ -6,23 +6,26 @@
   <div class="setting-jvm">
     <SettingGroup>
       <SettingItem
-        :title="'自动安装 Java 运行环境'"
-        :description="'开启后，启动器将在启动前会根据版本信息自动下载合适的 Java 运行环境。关闭后将仅尝试使用系统中已安装的 Java 启动游戏'">
+        :title="t('settings.jvm.autoInstall')"
+        :description="t('settings.jvm.autoInstallDesc')">
         <BaseSwitch v-model="config.prefer_mojang_java"></BaseSwitch>
       </SettingItem>
     </SettingGroup>
     <SettingCollapse
-      :title="'管理已安装的 Java 运行环境'"
-      :description="'关闭某个 Java 后，启动器将不会使用它来启动游戏'">
-      <SettingItem v-if="loading" :title="'正在扫描已安装的 Java 运行环境'">
+      :title="t('settings.jvm.manageInstalled')"
+      :description="t('settings.jvm.manageInstalledDesc')">
+      <SettingItem v-if="loading" :title="t('settings.jvm.scanning')">
         <ItemLoadingIcon status="in-progress"></ItemLoadingIcon>
       </SettingItem>
-      <SettingItem v-else-if="scanError" :title="'扫描失败'" :description="scanError"></SettingItem>
+      <SettingItem
+        v-else-if="scanError"
+        :title="t('settings.jvm.scanFailed')"
+        :description="scanError"></SettingItem>
       <template v-else>
         <SettingItem
           v-if="runtimes.length === 0"
-          :title="'未检测到已安装的 Java 运行环境'"
-          :description="'开启「优先使用 Mojang 提供的 Java 运行环境」后，Conic Launcher 会自动从 Mojang 服务器下载所需的 Java 运行环境'"></SettingItem>
+          :title="t('settings.jvm.notDetected')"
+          :description="t('settings.jvm.notDetectedDesc')"></SettingItem>
         <SettingItem
           v-for="runtime in runtimes"
           :key="runtime.path"
@@ -53,7 +56,9 @@ import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
 import { useConfigStore } from "@/store/config";
 import { scanJava, type JavaRuntime, type JavaVendor } from "@conic/java-runtime";
 import { onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const config = useConfigStore();
 
 const runtimes = ref<JavaRuntime[]>([]);

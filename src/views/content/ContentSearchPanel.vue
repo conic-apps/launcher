@@ -24,7 +24,10 @@
         <span class="filter-label">{{ filter.label }}</span>
         <div class="filter-chips" :class="{ paged: filter.key === 'version' }">
           <template v-if="filter.key === 'version'">
-            <button class="chip-pager" :disabled="versionPage <= 0" @click="$emit('version-page-prev')">
+            <button
+              class="chip-pager"
+              :disabled="versionPage <= 0"
+              @click="$emit('version-page-prev')">
               <AppIcon name="chevron-back" :size="12"></AppIcon>
             </button>
             <div class="filter-chips-track" :ref="setVersionTrackRef">

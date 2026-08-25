@@ -19,7 +19,7 @@
         ">
         <ContentNotFound
           :show="resourcepacks.length === 0"
-          description="考虑从互联网下载一些资源包"></ContentNotFound>
+          :description="t('content.resourcepacks.localEmpty')"></ContentNotFound>
       </div>
       <div v-for="(pack, index) in resourcepacks" class="content" :key="index">
         <img v-if="pack.icon" :src="pack.icon" alt="pack icon" width="72px" height="100%" />
@@ -51,10 +51,13 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useGameContentStore } from "@/store/content";
 import type { Resourcepack } from "@conic/content";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+
+const { t } = useI18n();
 
 const gameContentStore = useGameContentStore();
 const resourcepacks = computed(() => gameContentStore.gameContent.resourcepacks ?? []);

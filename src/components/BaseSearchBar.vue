@@ -9,7 +9,7 @@
       type="text"
       v-model="value"
       @input="$emit('search', value)"
-      :placeholder="props.placeholder"
+      :placeholder="placeholderText"
       autocapitalize="off"
       autocomplete="off"
       autocorrect="off"
@@ -19,7 +19,9 @@
 
 <script setup lang="ts">
 import AppIcon from "./AppIcon.vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 const value = ref("");
 const props = withDefaults(
   defineProps<{
@@ -30,11 +32,11 @@ const props = withDefaults(
   {
     width: "",
     height: "",
-    placeholder: "搜索",
+    placeholder: "",
   },
 );
 const style = `width: ${props.width}; height: ${props.height};`;
-// todo: 添加search in 属性，搜索用的算法全部在这个组件中进行
+const placeholderText = computed(() => props.placeholder || t("app.search"));
 </script>
 
 <style lang="less" scoped>

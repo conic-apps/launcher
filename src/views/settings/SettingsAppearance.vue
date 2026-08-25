@@ -4,10 +4,10 @@
 
 <template>
   <div>
-    <SettingGroup title="调色板">
+    <SettingGroup :title="t('settings.appearance.palette')">
       <SettingItem
-        title="跟随系统深色设置"
-        description="如果系统设置中设置为浅色，则使用 Latte ，否则使用 Mocha"
+        :title="t('settings.appearance.followSystem')"
+        :description="t('settings.appearance.followSystemDesc')"
         icon="moon"
         icon-fill="none">
         <BaseSwitch v-model="config.appearance.palette_follow_system"></BaseSwitch>
@@ -39,10 +39,10 @@
         </div>
       </div>
     </SettingGroup>
-    <SettingGroup title="背景图像">
+    <SettingGroup :title="t('settings.appearance.backgroundImage')">
       <SettingItem
-        title="自定义背景图像"
-        description="选择一张图片作为启动器背景，优先级低于实例背景"
+        :title="t('settings.appearance.customBackground')"
+        :description="t('settings.appearance.customBackgroundDesc')"
         icon="image"
         :navigable="!config.appearance.background_image"
         @click="pickBackgroundImage">
@@ -50,17 +50,20 @@
           name="chevron-forward"
           style="margin-right: 4px"
           v-if="!config.appearance.background_image"></AppIcon>
-        <BaseButton color="var(--ctp-red)" v-else @click.stop="removeBackgroundImageSetting"
-          >移除图像</BaseButton
-        >
+        <BaseButton color="var(--ctp-red)" v-else @click.stop="removeBackgroundImageSetting">{{
+          t("settings.appearance.removeImage")
+        }}</BaseButton>
       </SettingItem>
       <SettingItem
-        title="立体背景摄像机移动"
-        description="关闭后摄像机停止向前移动，背景渲染完成后不再更新，以完全关闭背景开销"
+        :title="t('settings.appearance.parallaxCamera')"
+        :description="t('settings.appearance.parallaxCameraDesc')"
         icon-fill="none">
         <BaseSwitch v-model="config.appearance.background_camera_move"></BaseSwitch>
       </SettingItem>
-      <SettingItem title="背景图片视差" description="关闭后背景不再随鼠标移动" icon-fill="none">
+      <SettingItem
+        :title="t('settings.appearance.parallaxMouse')"
+        :description="t('settings.appearance.parallaxMouseDesc')"
+        icon-fill="none">
         <BaseSwitch v-model="config.appearance.background_parallax"></BaseSwitch>
       </SettingItem>
     </SettingGroup>
@@ -78,6 +81,9 @@ import { ref, watch } from "vue";
 import { reloadPalette } from "@/theme";
 import { Palette, setBackgroundImage, removeBackgroundImage } from "@conic/config";
 import { open } from "@tauri-apps/plugin-dialog";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 const config = useConfigStore();
 
 const currentTheme = ref<Palette>(config.appearance.palette);

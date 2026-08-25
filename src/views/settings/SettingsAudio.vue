@@ -4,29 +4,37 @@
 
 <template>
   <div>
-    <SettingGroup :title="'背景音乐'">
-      <SettingItem :title="'启用背景音乐'" :description="'在启动器中播放背景音乐。'">
+    <SettingGroup :title="t('settings.audio.bgm')">
+      <SettingItem
+        :title="t('settings.audio.enableBgm')"
+        :description="t('settings.audio.enableBgmDesc')">
         <BaseSwitch v-model="config.music.enabled"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        :title="'启动时继续播放'"
-        :description="'应用启动时继续播放上次的曲目及其进度。'">
+        :title="t('settings.audio.resumeOnStart')"
+        :description="t('settings.audio.resumeOnStartDesc')">
         <BaseSwitch v-model="config.music.resume_on_startup"></BaseSwitch>
       </SettingItem>
-      <SettingItem :title="'音频可视化'" :description="'在游戏页面底部显示音频可视化效果。'">
+      <SettingItem
+        :title="t('settings.audio.visualizer')"
+        :description="t('settings.audio.visualizerDesc')">
         <BaseSwitch v-model="config.music.show_visualizer"></BaseSwitch>
       </SettingItem>
-      <SettingItem :title="'启动游戏后暂停播放'" :description="'游戏启动完成后自动暂停背景音乐。'">
+      <SettingItem
+        :title="t('settings.audio.pauseOnLaunch')"
+        :description="t('settings.audio.pauseOnLaunchDesc')">
         <BaseSwitch v-model="config.music.pause_on_launch"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        :title="'打开音乐文件夹'"
-        :description="'将你想播放的音乐放入此文件夹。'"
+        :title="t('settings.audio.openFolder')"
+        :description="t('settings.audio.openFolderDesc')"
         :navigable="true"
         @click="openMusicFolder"></SettingItem>
     </SettingGroup>
-    <SettingGroup title="音量">
-      <SettingItem :title="'主音量'" :description="`${config.music.main_volumn}%`">
+    <SettingGroup :title="t('settings.audio.volume')">
+      <SettingItem
+        :title="t('settings.audio.masterVolume')"
+        :description="`${config.music.main_volumn}%`">
         <BaseSliderBar
           :max="100"
           :min="0"
@@ -34,7 +42,7 @@
           v-model="config.music.main_volumn"></BaseSliderBar>
       </SettingItem>
       <SettingItem
-        :title="'主音量（窗口位于后台时）'"
+        :title="t('settings.audio.backgroundVolume')"
         :description="`${config.music.main_volumn_background}%`">
         <BaseSliderBar
           :max="100"
@@ -54,7 +62,9 @@ import { useConfigStore } from "@/store/config";
 import { getDataLocation } from "@conic/folder";
 import { invoke } from "@tauri-apps/api/core";
 import BaseSliderBar from "@/components/BaseSliderBar.vue";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const config = useConfigStore();
 
 async function openMusicFolder() {

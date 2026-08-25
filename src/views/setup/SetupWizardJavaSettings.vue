@@ -5,13 +5,12 @@
 <template>
   <div class="java-settings">
     <ScrollView>
-      <p class="wizard-title">Java 虚拟机设置</p>
+      <p class="wizard-title">{{ t("setup.javaSettings.title") }}</p>
       <p class="wizard-message" v-if="isSupportedJVMAutoInstallPlatform">
-        Conic Launcher 能够极大地简化 Java 环境的配置。启用「自动安装 Java
-        运行环境」即可免于手动安装它们！
+        {{ t("setup.javaSettings.desc") }}
       </p>
       <p class="wizard-message warn" v-else>
-        注意：当前平台可能无法自动安装 Java 运行环境，建议手动安装并禁用「自动安装 Java 运行环境」
+        {{ t("setup.javaSettings.note") }}
       </p>
       <SettingsJVM style="margin-top: 16px"></SettingsJVM>
     </ScrollView>
@@ -21,6 +20,9 @@
 <script setup lang="ts">
 import ScrollView from "@/components/ScrollView.vue";
 import { useConfigStore } from "@/store/config";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 import { onMounted } from "vue";
 import SettingsJVM from "../settings/SettingsJVM.vue";
 

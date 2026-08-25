@@ -25,7 +25,7 @@
           >
           <span class="playtime"
             ><span class="label">游戏时间：</span
-            ><span>{{ formatPlayTime(playtime ?? 0) }}</span></span
+            ><span>{{ formatPlayTime(playtime ?? 0, playTimeFormatter) }}</span></span
           >
         </div>
         <img
@@ -61,6 +61,15 @@ import {
 import { useDialogStore } from "@/store/dialog";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { useInstanceStore } from "@/store/instance";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
+
+const playTimeFormatter = {
+  seconds: (count: number) => t("game.time.seconds", { count }),
+  minutes: (count: number) => t("game.time.minutes", { count }),
+  hours: (count: number) => t("game.time.hours", { count }),
+};
 
 const dialogStore = useDialogStore();
 const instanceStore = useInstanceStore();

@@ -7,7 +7,7 @@
     <ContentSearchPanel
       v-model="searchQuery"
       :filters="curseForgeFilters"
-      :placeholder="'搜索整合包...'"
+      :placeholder="t('content.common.searchPacks')"
       :version-page="versionPage"
       :version-page-count="versionPageCount"
       :version-track-style="versionTrackStyle"
@@ -59,7 +59,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <ContentNotFound description="尝试调整关键词或筛选条件后再次搜索" show />
+        <ContentNotFound :description="t('content.common.notFoundDesc')" show />
       </div>
     </template>
 
@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   ApiResponse as CurseForgeApiResponse,
   Mod as CurseForgeMod,
@@ -90,6 +91,8 @@ import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+
+const { t } = useI18n();
 
 const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
   useDescriptionTranslation();
@@ -128,26 +131,6 @@ const CURSEFORGE_CATEGORIES: CategoryOption[] = [
   { id: 7418, slug: "horror" },
   { id: 9243, slug: "expert" },
 ];
-const CURSEFORGE_CATEGORY_NAMES: Record<string, string> = {
-  tech: "科技",
-  magic: "魔法",
-  "sci-fi": "科幻",
-  "adventure-and-rpg": "冒险RPG",
-  exploration: "探索",
-  "mini-game": "小游戏",
-  quests: "任务",
-  hardcore: "高难度",
-  "map-based": "有特定地图",
-  "small-light": "轻量整合包",
-  "extra-large": "大型整合包",
-  combat: "战斗PvP",
-  multiplayer: "多人",
-  ftb: "FTB整合包",
-  skyblock: "空岛",
-  "vanilla-plus": "原版增强",
-  horror: "恐怖",
-  expert: "专家",
-};
 type ModsFilter = ContentFilterItem & {
   key: "loader" | "version" | "category";
 };
@@ -175,9 +158,7 @@ const {
   versionPagePrev,
   versionPageNext,
   syncVersionPageToSelection,
-  searchInitKey,
   loadVersionOptions,
-  instanceStore,
 } = useSearchPagination(() => curseForgeTotalPages.value, curseForgeSelectedVersions);
 
 function buildCurseForgeParams(): CurseForgeSearchParams {
@@ -254,7 +235,7 @@ const curseForgeTotalPages = computed(() => {
 const curseForgeFilters = computed<ModsFilter[]>(() => [
   {
     key: "loader",
-    label: "加载器",
+    label: t("content.common.loader"),
     options: LOADERS,
     isSelected: (option) => curseForgeSelectedLoaders.value.includes(option as string),
     display: (option) => LOADER_NAMES[option as string] ?? option,
@@ -267,7 +248,7 @@ const curseForgeFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "version",
-    label: "版本",
+    label: t("content.common.version"),
     options: versionOptions.value,
     isSelected: (option) => curseForgeSelectedVersions.value.includes(option as string),
     display: (option) => option as string,
@@ -275,12 +256,13 @@ const curseForgeFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "category",
-    label: "分类",
+    label: t("content.common.category"),
     options: CURSEFORGE_CATEGORIES,
     isSelected: (option) =>
       curseForgeSelectedCategories.value.includes((option as CategoryOption).id),
     display: (option) =>
-      CURSEFORGE_CATEGORY_NAMES[(option as CategoryOption).slug] ?? (option as CategoryOption).slug,
+      t(`content.packs.curseforge.${(option as CategoryOption).slug}`) ??
+      (option as CategoryOption).slug,
   },
 ]);
 
@@ -296,20 +278,10 @@ function onFilterChipClick(filter: ContentFilterItem, option: unknown) {
   void runCurseForgeSearch();
 }
 
-let curseForgeInitializedFor: string | null = null;
-
 async function ensureCurseForgeInitialized() {
   if (versionOptions.value.length === 0) {
     await loadVersionOptions();
   }
-  const key = searchInitKey();
-  if (curseForgeInitializedFor === key) return;
-  curseForgeInitializedFor = key;
-  const runtime = instanceStore.currentInstance?.config.runtime;
-  curseForgeSelectedLoaders.value = runtime?.mod_loader_type
-    ? [runtime.mod_loader_type.toLowerCase()]
-    : [];
-  curseForgeSelectedVersions.value = runtime?.minecraft ? [runtime.minecraft] : [];
   searchQuery.value = "";
   syncVersionPageToSelection();
   curseForgeSelectedCategories.value = [];

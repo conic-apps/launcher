@@ -7,7 +7,7 @@
     <ScrollView>
       <div class="title">
         <AppIcon name="extension-puzzle"></AppIcon>
-        <p>模组列表</p>
+        <p>{{ t("content.mods.title") }}</p>
         <div class="select-source">
           <button
             class="local"
@@ -41,10 +41,13 @@ import Modrinth from "@/assets/images/modrinth.svg";
 import CurseForge from "@/assets/images/curseforge.svg";
 import AppIcon from "@/components/AppIcon.vue";
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import ScrollView from "@/components/ScrollView.vue";
 import ContentModsLocal from "./ContentModsLocal.vue";
 import ContentModsModrinth from "./ContentModsModrinth.vue";
 import ContentModsCurseforge from "./ContentModsCurseforge.vue";
+
+const { t } = useI18n();
 
 const currentView = ref("local" as "local" | "modrinth" | "curseforge");
 </script>

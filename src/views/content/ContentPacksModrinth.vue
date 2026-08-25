@@ -7,7 +7,7 @@
     <ContentSearchPanel
       v-model="searchQuery"
       :filters="modrinthFilters"
-      :placeholder="'搜索整合包...'"
+      :placeholder="t('content.common.searchPacks')"
       :version-page="versionPage"
       :version-page-count="versionPageCount"
       :version-track-style="versionTrackStyle"
@@ -42,9 +42,7 @@
             width="72px"
             height="100%" />
           <div class="content-info">
-            <p class="name">
-              <span>{{ pack.title }}</span>
-            </p>
+            <p class="name">{{ pack.title }}</p>
             <p class="authors">by {{ pack.author }}</p>
             <p class="mod-description">
               {{ modrinthTranslations.get(pack.project_id) ?? pack.description }}
@@ -86,7 +84,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <ContentNotFound description="尝试调整关键词或筛选条件后再次搜索" show />
+        <ContentNotFound :description="t('content.common.notFoundDesc')" show />
       </div>
     </template>
 
@@ -100,6 +98,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   SearchedProjects as ModrinthSearchedProjects,
   SearchParameters as ModrinthSearchParameters,
@@ -115,6 +114,8 @@ import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+
+const { t } = useI18n();
 
 const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
   useDescriptionTranslation();
@@ -138,18 +139,6 @@ const CATEGORIES = [
   "quests",
   "technology",
 ];
-const CATEGORY_NAMES: Record<string, string> = {
-  adventure: "冒险",
-  challenging: "挑战",
-  combat: "战斗",
-  "kitchen-sink": "综合",
-  lightweight: "轻量",
-  magic: "魔法",
-  multiplayer: "多人",
-  optimization: "优化",
-  quests: "任务",
-  technology: "科技",
-};
 type ModsFilter = ContentFilterItem & {
   key: "loader" | "version" | "category";
 };
@@ -177,9 +166,7 @@ const {
   versionPagePrev,
   versionPageNext,
   syncVersionPageToSelection,
-  searchInitKey,
   loadVersionOptions,
-  instanceStore,
 } = useSearchPagination(() => totalPages.value, selectedVersions);
 
 function buildModrinthFacets(): string {
@@ -248,7 +235,7 @@ const totalPages = computed(() => {
 const modrinthFilters = computed<ModsFilter[]>(() => [
   {
     key: "loader",
-    label: "加载器",
+    label: t("content.common.loader"),
     options: LOADERS,
     isSelected: (option) => selectedLoaders.value.includes(option as string),
     display: (option) => LOADER_NAMES[option as string] ?? option,
@@ -261,7 +248,7 @@ const modrinthFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "version",
-    label: "版本",
+    label: t("content.common.version"),
     options: versionOptions.value,
     isSelected: (option) => selectedVersions.value.includes(option as string),
     display: (option) => option as string,
@@ -269,10 +256,10 @@ const modrinthFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "category",
-    label: "分类",
+    label: t("content.common.category"),
     options: CATEGORIES,
     isSelected: (option) => selectedCategories.value.includes(option as string),
-    display: (option) => CATEGORY_NAMES[option as string] ?? option,
+    display: (option) => t(`content.packs.modrinth.${option as string}`) ?? option,
   },
 ]);
 
@@ -288,18 +275,10 @@ function onFilterChipClick(filter: ContentFilterItem, option: unknown) {
   void runModrinthSearch();
 }
 
-let modrinthInitializedFor: string | null = null;
-
 async function ensureModrinthInitialized() {
   if (versionOptions.value.length === 0) {
     await loadVersionOptions();
   }
-  const key = searchInitKey();
-  if (modrinthInitializedFor === key) return;
-  modrinthInitializedFor = key;
-  const runtime = instanceStore.currentInstance?.config.runtime;
-  selectedLoaders.value = runtime?.mod_loader_type ? [runtime.mod_loader_type.toLowerCase()] : [];
-  selectedVersions.value = runtime?.minecraft ? [runtime.minecraft] : [];
   searchQuery.value = "";
   syncVersionPageToSelection();
   selectedCategories.value = [];

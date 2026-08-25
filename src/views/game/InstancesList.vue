@@ -55,11 +55,11 @@
                   >
                   <span class="tag vanilla" v-else>Vanilla</span>
                   <span class="last-play"
-                    ><span class="label">上次运行：</span>
+                    ><span class="label">{{ t("game.instances.lastPlayed") }}</span>
                     <span v-if="instance.last_played">{{
-                      formatLastPlayed(instance.last_played, zhCN)
+                      formatLastPlayed(instance.last_played, timeFormatter)
                     }}</span>
-                    <span v-else>从未运行</span>
+                    <span v-else>{{ t("game.instances.neverPlayed") }}</span>
                   </span>
                 </div>
                 <img
@@ -80,8 +80,8 @@
     <Transition name="instance-list-placeholder-transition">
       <div class="instance-list-placeholder" v-if="noMatchedInstances">
         <AppIcon name="about" :size="64"></AppIcon>
-        <p class="title">没有匹配的实例</p>
-        <p class="desc">考虑创建一个新实例</p>
+        <p class="title">{{ t("game.instances.noMatch") }}</p>
+        <p class="desc">{{ t("game.instances.createNew") }}</p>
       </div>
     </Transition>
   </div>
@@ -89,7 +89,7 @@
 
 <script setup lang="ts">
 import { useInstanceStore } from "@/store/instance";
-import { formatLastPlayed, getBackgroundPath, Instance, InstanceSort, zhCN } from "@conic/instance";
+import { formatLastPlayed, getBackgroundPath, Instance, InstanceSort } from "@conic/instance";
 import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import InstancesListToolBar from "./InstancesListToolBar.vue";
@@ -98,6 +98,22 @@ import { useShowContent } from "../content/useContent";
 import { useInstanceSettings } from "./useGameView";
 import gsap from "gsap";
 import AppIcon from "@/components/AppIcon.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
+
+const timeFormatter = {
+  get justNow() {
+    return t("game.time.justNow");
+  },
+  hoursAgo: (hours: number) => t("game.time.hoursAgo", hours),
+  get yesterday() {
+    return t("game.time.yesterday");
+  },
+  monthDay: (month: number, day: number) => t("game.time.monthDay", { month, day }),
+  yearMonthDay: (year: number, month: number, day: number) =>
+    t("game.time.yearMonthDay", { year, month, day }),
+};
 
 const instanceStore = useInstanceStore();
 const scrollViewRef = useTemplateRef("scrollView");
@@ -159,12 +175,12 @@ const sortMode = ref<SortMode>(
     ? (localStorage.getItem("instancesSortMode") as SortMode)
     : "playtime",
 );
-const sortOptions: { key: SortMode; label: string }[] = [
-  { key: "name", label: "名称" },
-  { key: "version", label: "版本" },
-  { key: "playtime", label: "游玩时间" },
-  { key: "lastplay", label: "最后运行" },
-];
+const sortOptions = computed<{ key: SortMode; label: string }[]>(() => [
+  { key: "name", label: t("game.instances.sort.name") },
+  { key: "version", label: t("game.instances.sort.version") },
+  { key: "playtime", label: t("game.instances.sort.playtime") },
+  { key: "lastplay", label: t("game.instances.sort.lastplay") },
+]);
 
 const SORT_MODE_TO_SORT: Record<SortMode, InstanceSort> = {
   name: "Name",
@@ -189,10 +205,10 @@ const groupMode = ref<GroupMode>(
     ? (localStorage.getItem("instancesGroupMode") as GroupMode)
     : "none",
 );
-const groupOptions: { key: GroupMode; label: string }[] = [
-  { key: "none", label: "未分组" },
-  { key: "loader", label: "模组加载器" },
-];
+const groupOptions = computed<{ key: GroupMode; label: string }[]>(() => [
+  { key: "none", label: t("game.instances.group.none") },
+  { key: "loader", label: t("game.instances.group.loader") },
+]);
 
 watch(groupMode, (mode) => {
   localStorage.setItem("instancesGroupMode", mode);
@@ -278,7 +294,11 @@ const groups = computed<InstanceGroup[]>(() => {
   const result: InstanceGroup[] = [];
 
   if (favorites.length > 0) {
-    result.push({ key: "starred", title: "收藏夹", instances: favorites });
+    result.push({
+      key: "starred",
+      title: t("game.instances.groupTitle.favorites"),
+      instances: favorites,
+    });
   }
 
   if (groupMode.value === "loader") {
@@ -292,7 +312,7 @@ const groups = computed<InstanceGroup[]>(() => {
       }
     }
   } else if (base.length > 0) {
-    result.push({ key: "all", title: "全部实例", instances: base });
+    result.push({ key: "all", title: t("game.instances.groupTitle.all"), instances: base });
   }
 
   return result;
@@ -321,8 +341,12 @@ async function toggleGroup(key: GroupKey) {
   }
 }
 
-const sortLabel = computed(() => sortOptions.find((x) => x.key === sortMode.value)?.label ?? "");
-const groupLabel = computed(() => groupOptions.find((x) => x.key === groupMode.value)?.label ?? "");
+const sortLabel = computed(
+  () => sortOptions.value.find((x) => x.key === sortMode.value)?.label ?? "",
+);
+const groupLabel = computed(
+  () => groupOptions.value.find((x) => x.key === groupMode.value)?.label ?? "",
+);
 
 const searchQuery = ref("");
 
@@ -448,7 +472,7 @@ async function getBackgroundSrc(id: string) {
         font-size: 10px;
         border-radius: 100px;
         padding: 1px 6px;
-        font-weight: 500;
+        font-weight: 700;
         display: inline-flex;
         align-items: center;
         width: fit-content;

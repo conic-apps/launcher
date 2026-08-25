@@ -28,8 +28,9 @@
           <AppIcon name="house" :size="18" />
         </button>
       </div>
-      <div class="title-bar-container">
-        <search-bar style="width: 100%" :placeholder="'按 / 搜索，或按 ; 输入命令'"></search-bar>
+      <div class="title-bar-container" @click="commandPaletteVisible = true">
+        <search-bar style="width: 100%" :placeholder="t('app.searchPlaceholder')"></search-bar>
+        <span class="search-hotkey">{{ hotkeyLabel }}</span>
       </div>
       <div
         class="window-buttons-container window-buttons-container-macos"
@@ -94,6 +95,9 @@
       <!-- </Transition> -->
     </main>
     <DialogRoot></DialogRoot>
+    <CommandPalette
+      :visible="commandPaletteVisible"
+      @close="commandPaletteVisible = false"></CommandPalette>
     <MusicPlayer></MusicPlayer>
   </div>
 </template>
@@ -101,6 +105,7 @@
 <script setup lang="ts">
 import WindowButton from "./components/WindowButton.vue";
 import SearchBar from "./components/BaseSearchBar.vue";
+import CommandPalette from "./components/CommandPalette.vue";
 import TitleBarUpdateIndicator from "./components/TitleBarUpdateIndicator.vue";
 import GameView from "./views/GameView.vue";
 import SettingsView from "./views/SettingsView.vue";
@@ -165,6 +170,7 @@ const pages = reactive({
 });
 
 const i18n = useI18n();
+const { t } = i18n;
 getSystemLanguage().then((systemLanguage) => {
   i18n.locale.value = config.language ?? systemLanguage;
 });
@@ -205,6 +211,8 @@ onMounted(() => {
 
 const dialogStore = useDialogStore();
 const updateStore = useUpdateStore();
+const commandPaletteVisible = ref(false);
+const hotkeyLabel = computed(() => (isMacOS() ? "⌘/" : "Ctrl+/"));
 
 async function checkForUpdateAtStartup() {
   await updateStore.check(config.update_channel);
@@ -224,6 +232,13 @@ function closeWindow() {
 function isMacOS() {
   return window.__PLATFORM__.os_family === "Macos";
 }
+
+document.addEventListener("keydown", (event) => {
+  const modifierPressed = isMacOS() ? event.metaKey : event.ctrlKey;
+  if (!modifierPressed || event.key !== "/") return;
+  event.preventDefault();
+  commandPaletteVisible.value = !commandPaletteVisible.value;
+});
 
 if (import.meta.env.PROD) {
   document.addEventListener("contextmenu", (event) => {
@@ -279,6 +294,23 @@ if (import.meta.env.DEV) {
     margin: auto;
     flex-shrink: 0;
     align-items: center;
+    position: relative;
+
+    .search-hotkey {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 11;
+      font-size: 11px;
+      line-height: 1;
+      padding: 3px 6px;
+      border-radius: 4px;
+      background: rgba(var(--ctp-surface2-rgb), 0.7);
+      color: rgba(var(--default-text-color), 0.6);
+      pointer-events: none;
+      user-select: none;
+    }
   }
 
   .account {

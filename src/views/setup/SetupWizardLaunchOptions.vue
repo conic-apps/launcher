@@ -4,9 +4,9 @@
 
 <template>
   <div class="game-settings">
-    <p class="wizard-title">游戏启动选项</p>
+    <p class="wizard-title">{{ t("setup.launchOptions.title") }}</p>
     <p class="wizard-message">
-      这里列出了一些基本的启动选项。稍后你还可以在设置和实例独立设置中更改更多选项。
+      {{ t("setup.launchOptions.desc") }}
     </p>
     <SettingsGame style="margin-top: 16px"></SettingsGame>
   </div>
@@ -14,6 +14,9 @@
 
 <script setup lang="ts">
 import SettingsGame from "../settings/SettingsGame.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 </script>
 
 <style lang="less" scoped>

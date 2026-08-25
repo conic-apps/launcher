@@ -7,7 +7,7 @@
     <ScrollView>
       <div class="title">
         <AppIcon name="package"></AppIcon>
-        <p>整合包列表</p>
+        <p>{{ t("content.packs.title") }}</p>
         <div class="select-source">
           <button
             class="modrinth"
@@ -34,9 +34,12 @@ import Modrinth from "@/assets/images/modrinth.svg";
 import CurseForge from "@/assets/images/curseforge.svg";
 import AppIcon from "@/components/AppIcon.vue";
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import ScrollView from "@/components/ScrollView.vue";
 import ContentPacksModrinth from "./ContentPacksModrinth.vue";
 import ContentPacksCurseforge from "./ContentPacksCurseforge.vue";
+
+const { t } = useI18n();
 
 const currentView = ref("modrinth" as "modrinth" | "curseforge");
 </script>

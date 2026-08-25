@@ -10,7 +10,7 @@
           @click="scrollToSection(index)"
           :class="{ active: activeSection == index }"
           v-for="(item, index) in components"
-          :key="index"
+          :key="item.icon"
           style="opacity: 0">
           <AppIcon :name="item.icon" :size="16"></AppIcon><span>{{ item.name }}</span>
         </li>
@@ -30,7 +30,10 @@
 </template>
 
 <script setup lang="ts">
-import { type Component, markRaw, nextTick, onMounted, ref, useTemplateRef } from "vue";
+import { type Component, computed, markRaw, nextTick, onMounted, ref, useTemplateRef } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 import GeneralSettings from "./settings/SettingsGeneral.vue";
 import gsap from "gsap";
 import GameSettings from "./settings/SettingsGame.vue";
@@ -43,44 +46,44 @@ import AudioSettings from "./settings/SettingsAudio.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import ScrollView from "@/components/ScrollView.vue";
 
-const components = ref<{ name: string; icon: string; component: Component }[]>([
+const components = computed<{ name: string; icon: string; component: Component }[]>(() => [
   {
-    name: "常规",
+    name: t("settings.tabs.general"),
     icon: "house",
     component: markRaw(GeneralSettings),
   },
   {
-    name: "启动选项",
+    name: t("settings.tabs.launchOptions"),
     icon: "gamepad",
     component: markRaw(GameSettings),
   },
   {
-    name: "Java 虚拟机",
+    name: t("settings.tabs.jvm"),
     icon: "java",
     component: markRaw(JvmSettings),
   },
   {
-    name: "外观与动效",
+    name: t("settings.tabs.appearance"),
     icon: "palette",
     component: markRaw(AppearanceSettings),
   },
   {
-    name: "音频",
+    name: t("settings.tabs.audio"),
     icon: "musical-notes",
     component: markRaw(AudioSettings),
   },
   {
-    name: "下载",
+    name: t("settings.tabs.download"),
     icon: "globe",
     component: markRaw(DownloadSettings),
   },
   {
-    name: "辅助功能",
+    name: t("settings.tabs.accessibility"),
     icon: "accessibility",
     component: markRaw(AccessibilitySettings),
   },
   {
-    name: "关于",
+    name: t("settings.tabs.about"),
     icon: "about",
     component: markRaw(AboutSettings),
   },

@@ -7,7 +7,7 @@
     <ScrollView>
       <div class="title">
         <AppIcon name="extension-puzzle"></AppIcon>
-        <p>模组信息</p>
+        <p>{{ t("content.common.modInfo") }}</p>
       </div>
       <div class="search-status" v-if="loading && !projectInfo">
         <BaseLoading :size="32" :gap="8" :strokeWidth="4"></BaseLoading>
@@ -68,6 +68,7 @@
 import AppIcon from "@/components/AppIcon.vue";
 import BaseLoading from "@/components/BaseLoading.vue";
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import ScrollView from "@/components/ScrollView.vue";
 import ScrollViewHorizontal from "@/components/ScrollViewHorizontal.vue";
 import { getProject, getTeamMembers, Project, TeamMembers } from "@conic/modrinth";
@@ -75,6 +76,8 @@ import { useShowContentDetails } from "./useContent";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { marked } from "marked";
+
+const { t } = useI18n();
 
 const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
   useDescriptionTranslation();

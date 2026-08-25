@@ -4,7 +4,10 @@
 
 <template>
   <div class="pagination" v-if="totalPages > 1">
-    <button class="page-nav" :disabled="currentPage === 1" @click="$emit('page-change', currentPage - 1)">
+    <button
+      class="page-nav"
+      :disabled="currentPage === 1"
+      @click="$emit('page-change', currentPage - 1)">
       <AppIcon name="chevron-back" :size="12"></AppIcon>
     </button>
     <template v-for="(page, index) in pages" :key="index">

@@ -4,7 +4,7 @@
       <div class="search-input">
         <input
           type="text"
-          placeholder="搜索..."
+          :placeholder="t('game.instances.searchPlaceholder')"
           v-model="searchQuery"
           autocapitalize="off"
           autocomplete="off"
@@ -16,7 +16,10 @@
     </div>
     <div class="other">
       <div class="sort">
-        <InstanceListDropdown label="排序" :selected="sortLabel" :selected-width="102">
+        <InstanceListDropdown
+          :label="t('game.instances.sortLabel')"
+          :selected="sortLabel"
+          :selected-width="102">
           <li
             class="dropdown-option"
             v-for="option in sortOptions"
@@ -28,7 +31,7 @@
         </InstanceListDropdown>
       </div>
       <div class="group">
-        <InstanceListDropdown label="分组" :selected="groupLabel">
+        <InstanceListDropdown :label="t('game.instances.groupLabel')" :selected="groupLabel">
           <li
             class="dropdown-option"
             v-for="option in groupOptions"
@@ -48,6 +51,9 @@ import InstanceListDropdown from "./InstanceListDropdown.vue";
 import { GroupMode, SortMode } from "./InstancesList.vue";
 import { useTemplateRef } from "vue";
 import gsap from "gsap";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const toolbarRef = useTemplateRef("toolbar");
 

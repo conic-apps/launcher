@@ -7,7 +7,7 @@
     <ScrollView>
       <div class="title">
         <AppIcon name="package"></AppIcon>
-        <p>整合包信息</p>
+        <p>{{ t("content.common.packInfo") }}</p>
       </div>
       <div class="search-status" v-if="loading && !modInfo">
         <BaseLoading :size="32" :gap="8" :strokeWidth="4"></BaseLoading>
@@ -54,11 +54,14 @@
 import AppIcon from "@/components/AppIcon.vue";
 import BaseLoading from "@/components/BaseLoading.vue";
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import ScrollView from "@/components/ScrollView.vue";
 import { getMod, getModDescription, Mod as CurseforgeMod } from "@conic/curseforge";
 import { useShowContentDetails } from "./useContent";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
 import { openUrl } from "@tauri-apps/plugin-opener";
+
+const { t } = useI18n();
 
 const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
   useDescriptionTranslation();

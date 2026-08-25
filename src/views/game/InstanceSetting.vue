@@ -7,7 +7,7 @@
     <ScrollView>
       <div class="title">
         <AppIcon name="settings"></AppIcon>
-        <p>实例设置</p>
+        <p>{{ t("game.instance.title") }}</p>
       </div>
       <div style="padding: 0 16px">
         <div class="instance" v-if="currentInstance">
@@ -49,7 +49,7 @@
         </div>
         <SettingGroup v-if="currentInstance">
           <SettingItem
-            title="设置背景图像"
+            :title="t('game.instance.setBackground')"
             description=""
             icon="image"
             :navigable="!currentInstance.has_background"
@@ -70,10 +70,12 @@
                   await instanceStore.loadInstances();
                 })()
               "
-              >移除图像</BaseButton
+              >{{ t("game.instance.removeImage") }}</BaseButton
             >
           </SettingItem>
-          <SettingItem title="在启动器背景使用实例背景" :disabled="!currentInstance.has_background">
+          <SettingItem
+            :title="t('game.instance.useAsLauncherBg')"
+            :disabled="!currentInstance.has_background">
             <BaseSwitch
               v-if="instanceStore.currentInstance"
               v-model="
@@ -85,7 +87,9 @@
           <SettingItem
             title="Minecraft"
             icon="minecraft"
-            :description="`已选择 ${currentInstance.config.runtime.minecraft}`"
+            :description="
+              t('game.instance.selected', { version: currentInstance.config.runtime.minecraft })
+            "
             :navigable="true">
             <AppIcon name="chevron-forward" style="margin-right: 4px"></AppIcon>
           </SettingItem>
@@ -114,7 +118,7 @@
         </SettingGroup>
 
         <setting-group v-if="currentInstance && instanceStore.currentInstance">
-          <setting-item title="启用实例独立设置" icon="settings">
+          <setting-item :title="t('game.instance.enableInstanceSettings')" icon="settings">
             <BaseSwitch
               v-model="
                 instanceStore.currentInstance.config.launch_config.enable_instance_specific_settings
@@ -122,41 +126,45 @@
           </setting-item>
         </setting-group>
         <setting-group
-          :title="'启动选项'"
+          :title="t('game.instance.launchOptions')"
           :disabled="!enableInstanceSpecificSettings"
           v-if="currentInstance && instanceStore.currentInstance">
-          <SettingItem :title="'窗口大小'" :description="'游戏窗口的初始大小'">
+          <SettingItem
+            :title="t('game.instance.windowSize')"
+            :description="t('game.instance.windowSizeDesc')">
             <BaseInput
               width="100px"
               style="display: inline-block; margin-right: 16px"
-              :placeholder="'宽'"
+              :placeholder="t('game.instance.width')"
               :number-only="true"
               :disabled="config.launch.fullscreen"
               v-model.number="instanceStore.currentInstance.config.launch_config.width"
-              :lazy-update-value="true">
+              :lazy-update-model="true">
             </BaseInput>
             <BaseInput
               width="100px"
               style="display: inline-block"
-              :placeholder="'高'"
+              :placeholder="t('game.instance.height')"
               :number-only="true"
               :disabled="config.launch.fullscreen"
               v-model.number="instanceStore.currentInstance.config.launch_config.height"
-              :lazy-update-value="true">
+              :lazy-update-model="true">
             </BaseInput>
-            <span style="font-size: 12px; margin-left: 8px">{{ "全屏" }}: </span>
+            <span style="font-size: 12px; margin-left: 8px"
+              >{{ t("game.instance.fullscreen") }}:
+            </span>
             <BaseSwitch
               v-model="instanceStore.currentInstance.config.launch_config.fullscreen"></BaseSwitch>
           </SettingItem>
-          <SettingItem :title="'启动游戏后退出启动器'">
+          <SettingItem :title="t('game.instance.quitAfterLaunch')">
             <BaseSwitch
               v-model="
                 instanceStore.currentInstance.config.launch_config.quit_app_after_launch
               "></BaseSwitch>
           </SettingItem>
           <SettingItem
-            title="跳过游戏文件检查"
-            description="启动游戏前启动器将不会尝试检查或补全游戏文件">
+            :title="t('game.instance.skipFileCheck')"
+            :description="t('game.instance.skipFileCheckDesc')">
             <BaseSwitch
               v-model="
                 instanceStore.currentInstance.config.launch_config.skip_check_files
@@ -164,16 +172,16 @@
           </SettingItem>
         </setting-group>
         <SettingGroup
-          :title="'内存'"
+          :title="t('game.instance.memory')"
           :disabled="!enableInstanceSpecificSettings"
           v-if="currentInstance && instanceStore.currentInstance">
-          <SettingItem :title="'自动分配内存'">
+          <SettingItem :title="t('game.instance.autoMemory')">
             <BaseSwitch
               v-model="instanceStore.currentInstance.config.launch_config.auto_memory"></BaseSwitch>
           </SettingItem>
           <SettingItem
-            :title="'手动分配内存'"
-            :description="'手动指定 Java 堆的最大大小，关闭自动分配后生效'"
+            :title="t('game.instance.manualMemory')"
+            :description="t('game.instance.manualMemoryDesc')"
             :disabled="instanceStore.currentInstance.config.launch_config.auto_memory">
             <BaseInput
               width="100px"
@@ -188,53 +196,65 @@
         </SettingGroup>
 
         <SettingCollapse
-          :title="'高级启动选项'"
+          :title="t('game.instance.advancedOptions')"
           :resetable="advancedLaunchOptionsChanged"
           @reset="resetAdvanceOptions"
           :disabled="!enableInstanceSpecificSettings"
           v-if="currentInstance && instanceStore.currentInstance">
-          <SettingItem :title="'Java 垃圾回收器'">
+          <SettingItem :title="t('game.instance.gc')">
             <BaseSelect
               :display-name="['G1', 'Z', 'Parallel', 'Serial']"
               :options="['G1', 'Z', 'Parallel', 'Serial']"
               v-model="instanceStore.currentInstance.config.launch_config.gc"></BaseSelect>
           </SettingItem>
-          <setting-item :title="'添加 JVM 参数'" :description="'将会放在默认 JVM 参数后面'">
+          <setting-item
+            :title="t('game.instance.jvmArgs')"
+            :description="t('game.instance.jvmArgsDesc')">
             <BaseInput
               width="300px"
               v-model="instanceStore.currentInstance.config.launch_config.extra_jvm_args"
               :lazy-update-model="true">
             </BaseInput>
           </setting-item>
-          <setting-item :title="'添加游戏参数'" :description="'添加游戏需要的其他参数'">
+          <setting-item
+            :title="t('game.instance.gameArgs')"
+            :description="t('game.instance.gameArgsDesc')">
             <BaseInput
               width="300px"
               v-model="instanceStore.currentInstance.config.launch_config.extra_mc_args"
               :lazy-update-model="true">
             </BaseInput>
           </setting-item>
-          <setting-item :title="'添加类路径'" :description="'Windows 下用分号隔开，其他系统用冒号'">
+          <setting-item
+            :title="t('game.instance.classPath')"
+            :description="t('game.instance.classPathDesc')">
             <BaseInput
               width="300px"
               v-model="instanceStore.currentInstance.config.launch_config.extra_class_paths"
               :lazy-update-model="true">
             </BaseInput>
           </setting-item>
-          <setting-item :title="'启动前执行'" :description="'将会添加至启动命令的前一行'">
+          <setting-item
+            :title="t('game.instance.beforeLaunch')"
+            :description="t('game.instance.beforeLaunchDesc')">
             <BaseInput
               width="300px"
               v-model="instanceStore.currentInstance.config.launch_config.execute_before_launch"
               :lazy-update-model="true">
             </BaseInput>
           </setting-item>
-          <setting-item :title="'包装命令'" :description="'将会添加至启动命令的开头'">
+          <setting-item
+            :title="t('game.instance.wrapCommand')"
+            :description="t('game.instance.wrapCommandDesc')">
             <BaseInput
               width="300px"
               v-model="instanceStore.currentInstance.config.launch_config.wrap_command"
               :lazy-update-model="true">
             </BaseInput>
           </setting-item>
-          <setting-item :title="'启动后执行'" :description="'将会添加至启动脚本的最后一行'">
+          <setting-item
+            :title="t('game.instance.afterLaunch')"
+            :description="t('game.instance.afterLaunchDesc')">
             <BaseInput
               width="300px"
               v-model="instanceStore.currentInstance.config.launch_config.execute_after_launch"
@@ -242,8 +262,8 @@
             </BaseInput>
           </setting-item>
           <setting-item
-            :title="'忽略无效的 Minecraft 凭证'"
-            :description="'将 <code>-Dfml.ignoreInvalidMinecraftCertificates=true</code> 添加到 JVM 参数中'">
+            :title="t('game.instance.ignoreInvalidCerts')"
+            :description="t('game.instance.ignoreInvalidCertsDesc')">
             <BaseSwitch
               v-model="
                 instanceStore.currentInstance.config.launch_config
@@ -252,8 +272,8 @@
             </BaseSwitch>
           </setting-item>
           <setting-item
-            :title="'忽略补丁差异'"
-            :description="'将 <code>-Dfml.ignorePatchDiscrepancies=true</code> 添加到 JVM 参数中'">
+            :title="t('game.instance.ignorePatchDiff')"
+            :description="t('game.instance.ignorePatchDiffDesc')">
             <BaseSwitch
               v-model="
                 instanceStore.currentInstance.config.launch_config.ignore_patch_discrepancies
@@ -264,15 +284,15 @@
 
         <setting-group :danger="true">
           <setting-item
-            title="删除实例"
-            description="一旦删除此实例，该实例下的存档、材质包等一切游戏数据都将丢失"
+            :title="t('game.instance.deleteInstance')"
+            :description="t('game.instance.deleteInstanceDesc')"
             icon="trash"
             :navigable="true"
             @click="openDeleteInstanceDialog">
           </setting-item>
           <setting-item
-            title="重置实例"
-            description="一旦重置实例，该实例下的存档、材质包等一切游戏数据都将丢失，仅实例配置会被保留"
+            :title="t('game.instance.resetInstance')"
+            :description="t('game.instance.resetInstanceDesc')"
             icon="refresh"
             :navigable="true">
           </setting-item>
@@ -306,6 +326,9 @@ import { open } from "@tauri-apps/plugin-dialog";
 import BaseSelect from "@/components/BaseSelect.vue";
 import SettingCollapse from "@/components/SettingCollapse.vue";
 import { getDefaultConfig } from "@conic/config";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const instanceStore = useInstanceStore();
 const dialogStore = useDialogStore();

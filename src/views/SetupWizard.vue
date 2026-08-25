@@ -6,8 +6,8 @@
   <div class="setup-wizard">
     <div class="header-wrapper">
       <div class="header">
-        <p class="title">首次启动设置</p>
-        <p class="description">调整 Conic Launcher 以更贴合你的习惯</p>
+        <p class="title">{{ t("setup.welcome") }}</p>
+        <p class="description">{{ t("setup.welcomeDesc") }}</p>
         <button class="close" @click="navigationStore.navigate('game')">
           <AppIcon name="xmark" :size="16"></AppIcon>
         </button>
@@ -26,9 +26,9 @@
       </ScrollView>
     </div>
     <div class="footer">
-      <button class="back" :class="{ disabled: currentPhaseIndex === 0 }" @click="backPhase">
+      <button class="prev" :class="{ disabled: currentPhaseIndex === 0 }" @click="prevPhase">
         <AppIcon name="chevron-back" :size="20"></AppIcon>
-        返回
+        {{ t("setup.back") }}
       </button>
       <button class="next" @click="nextPhase">
         {{ nextPhaseTexts[currentPhaseIndex] }}
@@ -42,6 +42,9 @@ import AppIcon from "@/components/AppIcon.vue";
 import ScrollView from "@/components/ScrollView.vue";
 import { useNavigationStore } from "@/store/navigation";
 import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 import SetupWizardAddAccount from "./setup/SetupWizardAddAccount.vue";
 import SetupWizardImportInstances from "./setup/SetupWizardImportInstances.vue";
 import SetupWizardJavaSettings from "./setup/SetupWizardJavaSettings.vue";
@@ -62,16 +65,16 @@ const phases = [
   "import-instances",
 ] as const;
 const currentPhase = computed(() => phases[currentPhaseIndex.value]);
-const nextPhaseTexts = [
-  "让我们开始吧！",
-  "下一个（添加帐户）",
-  "下一个（Java 虚拟机设置）",
-  "下一个（游戏启动选项）",
-  "下一个（导入实例）",
-  "完成",
-];
+const nextPhaseTexts = computed(() => [
+  t("setup.steps.start"),
+  t("setup.steps.addAccount"),
+  t("setup.steps.javaSettings"),
+  t("setup.steps.launchOptions"),
+  t("setup.steps.importInstances"),
+  t("setup.steps.finish"),
+]);
 
-function backPhase() {
+function prevPhase() {
   if (currentPhaseIndex.value > 0) {
     transitionName.value = "slide-right";
     currentPhaseIndex.value--;
@@ -199,7 +202,7 @@ function nextPhase() {
       opacity: 0.7;
       pointer-events: none;
     }
-    .back {
+    .prev {
       width: 200px;
       background-image: linear-gradient(var(--ctp-blue), var(--ctp-blue));
       background: var(--ctp-blue);

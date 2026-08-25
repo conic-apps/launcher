@@ -25,7 +25,7 @@ use instance::Instance;
 use java_runtime::ResolveJavaOptions;
 use log::{debug, error, info, warn};
 use options::LaunchOptions;
-use platform::{OsFamily, PLATFORM_INFO};
+use platform::{OsFamily, PLATFORM_INFO, strip_unc_prefix};
 use serde::Serialize;
 use statistics::{StatisticsProfile, log_launch};
 #[cfg(target_os = "windows")]
@@ -315,7 +315,10 @@ async fn spawn_minecraft_process(
         OsFamily::Windows => String::new(),
         _ => "exec ".to_string(),
     };
-    launch_command.push_str(&format!("\"{}\"", java_path.to_string_lossy()));
+    launch_command.push_str(&format!(
+        "\"{}\"",
+        strip_unc_prefix(java_path).to_string_lossy()
+    ));
     for arg in command_arguments.clone() {
         let arg = if arg.contains(" ") {
             format!("\"{arg}\"")

@@ -61,8 +61,86 @@ Use **pnpm** only. README says `yarn` — it's stale. Engine is `pnpm@11.7.0`; `
 - `vue/multi-word-component-names` ESLint rule is **off**
 - Naming: `camelCase` for variables/consts, `UPPER_CASE` for constants, `PascalCase` for types/interfaces
 - Components use `<AppIcon>` globally registered — no import needed
-- UI text is hardcoded in Chinese directly in templates/components — do **not** add or update i18n locale files when changing UI text
 - **Never** add `cursor: pointer` on your own — this is a desktop app; interactive elements don't use the web link-hand cursor
+
+## Internationalization (i18n)
+
+The app uses `vue-i18n` for internationalization. Locale files are in `src/locales/`.
+
+### Locale file structure
+
+12 locales, all kept in sync (406+ keys each). `zh_cn` is the primary/source language; `en_us` is the fallback.
+
+| File       | Language           | Notes                                     |
+| ---------- | ------------------ | ----------------------------------------- |
+| `zh_cn.ts` | 简体中文           | Source language                           |
+| `en_us.ts` | English            | Fallback locale                           |
+| `zh_tw.ts` | 繁體中文           |                                           |
+| `ja_jp.ts` | 日本語             |                                           |
+| `ko_kr.ts` | 한국어             |                                           |
+| `de_de.ts` | Deutsch            |                                           |
+| `fr_fr.ts` | Français           |                                           |
+| `es_es.ts` | Español            |                                           |
+| `pt_br.ts` | Português (Brasil) |                                           |
+| `ru_ru.ts` | Русский            | Slavic plural rules registered in main.ts |
+| `tr_tr.ts` | Türkçe             |                                           |
+| `pl_pl.ts` | Polski             | Slavic plural rules registered in main.ts |
+
+The supported locale list must match the UI language pickers in `src/views/settings/SettingsGeneral.vue` and `src/views/setup/SetupWizardLanguage.vue`.
+
+Top-level keys: `app`, `game`, `content`, `setup`, `settings`.
+
+- `app.*` — App-wide strings (titlebar search, command palette, music player, update indicator)
+- `game.*` — Game view, instance list, instance settings, launch view, footer, time formatting (`game.time.*`)
+- `content.*` — Content panels (mods, resource packs, modpacks, saves, screenshots)
+- `setup.*` — Setup wizard (all steps)
+- `settings.*` — Settings view (all tabs)
+
+### Pluralization
+
+vue-i18n pipe syntax is used where grammar requires it:
+
+- Two-form languages: `"1 hour ago | {count} hours ago"` — call with `t("game.time.hoursAgo", hours)` (number as second arg; `{count}` is bound automatically)
+- Russian/Polish need FOUR forms `zero | one | few | many` (e.g. `"час назад"`) and rely on the `slavicPluralRules` function registered under `pluralRules` in `src/main.ts` for both `ru_ru` and `pl_pl`
+- Languages without numeral agreement (zh, ja, ko, tr) use a single form
+- Playtime units (`game.time.seconds/minutes/hours`) deliberately avoid plurals because values can be decimal (e.g. "4.1 min")
+
+### Relative-time formatting
+
+`formatLastPlayed(timestamp, timeFormatter)` and `formatPlayTime(seconds, playTimeFormatter)` in `crates/instance/index.ts` require formatter objects built from `t()`. Build them per-component like in `InstanceSummary.vue` / `InstancesList.vue` / `ContentSaves.vue` / `ConfirmDeleteInstance.vue` (plain object whose methods call `t()` so re-renders pick up locale changes).
+
+### Current i18n coverage
+
+**Fully internationalized:**
+
+- `src/views/game/*` (InstancesList, InstanceSummary, InstanceSetting, Footer, InstancesListToolBar)
+- `src/views/LaunchView.vue`
+- `src/views/content/*` (all content panel files)
+- `src/views/SetupWizard.vue` and `src/views/setup/*`
+- `src/views/SettingsView.vue` and `src/views/settings/*`
+- `src/components/MusicPlayer.vue`
+- `src/components/TitleBarUpdateIndicator.vue`
+- `src/components/BaseSearchBar.vue`
+- `src/App.vue` (titlebar search placeholder)
+
+**Not yet internationalized (accounts — pending new UI):**
+
+- `src/views/accounts/*`
+- `src/dialogs/*`
+
+### How to add/update i18n strings
+
+1. Add the key to both `src/locales/zh_cn.ts` and `src/locales/en_us.ts`
+2. Use `t('key.path')` in templates (requires `const { t } = useI18n()` in `<script setup>`)
+3. For parameterized messages, use `t('key', { param: value })` — e.g. `t('game.launch.progress.downloadFiles', { current, total })`
+4. **Do NOT** use Chinese strings directly in templates/components for internationalized sections
+5. After UI text changes, both locale files must be kept in sync
+
+### Adding a new locale
+
+1. Create `src/locales/<locale>.ts` following the same structure as `zh_cn.ts`
+2. Import it in `src/main.ts` and add to the `messages` object
+3. Update the locale list in `src/views/settings/SettingsGeneral.vue` and `src/views/setup/SetupWizardLanguage.vue`
 
 ## Testing
 
