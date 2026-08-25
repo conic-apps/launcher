@@ -80,7 +80,7 @@
     <button
       class="install-pack"
       style="opacity: 0"
-      @click="dialogStore.createInstance.visible = true"
+      @click="showContent.packs = true"
       ref="install-pack">
       <AppIcon name="package" :size="22" fill="none"></AppIcon>
     </button>
@@ -96,6 +96,7 @@ import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
+import { useShowContent } from "../content/useContent";
 import { yggdrasilGetSkinUrl, type Account } from "@conic/account";
 import { computed, onMounted, ref, useTemplateRef } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
@@ -106,6 +107,7 @@ const configStore = useConfigStore();
 const dialogStore = useDialogStore();
 const navigationStore = useNavigationStore();
 const accountStore = useAccountStore();
+const showContent = useShowContent();
 
 const accountSkin = computed(() => {
   if (configStore.current_account?.type === "Microsoft") {
