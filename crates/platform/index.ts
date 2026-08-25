@@ -6,7 +6,6 @@ import { invoke } from "@tauri-apps/api/core"
 
 export type PlatformInfo = {
     arch: string
-    arch_from_uname?: string
     os_type: string
     os_family: "Windows" | "Linux" | "Macos"
     os_version: NonNullable<object>

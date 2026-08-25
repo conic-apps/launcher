@@ -67,12 +67,14 @@ import { InstallTask, Job } from "@conic/install";
 import { LaunchTask } from "@conic/launch";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { window as appWindow } from "@tauri-apps/api";
+import { useAccountStore } from "@/store/account";
 
 const instanceStore = useInstanceStore();
 const currentInstance = computed(() => {
   return instanceStore.currentInstance;
 });
 const navigationStore = useNavigationStore();
+const accountStore = useAccountStore();
 const configStore = useConfigStore();
 const dialogStore = useDialogStore();
 const musicStore = useMusicStore();
@@ -107,6 +109,10 @@ const accountUuid = computed(() => {
 });
 
 async function launch() {
+  if (configStore.language !== "zh_cn" && accountStore.microsoft.length === 0) {
+    dialogStore.noMicrosoftAccountError.visible = true;
+    return;
+  }
   if (!configStore.current_account) {
     dialogStore.noAccountError.visible = true;
     return;

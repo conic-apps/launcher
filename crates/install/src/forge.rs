@@ -23,7 +23,7 @@ use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use shared::HTTP_CLIENT;
 
-use platform::DELIMITER;
+use platform::{DELIMITER, strip_unc_prefix};
 use version::{Version, resolve_libraries};
 use zip::ZipArchive;
 
@@ -336,9 +336,11 @@ async fn save_bootstrapper(data: &[u8]) -> Result<PathBuf> {
 }
 
 fn generate_classpath(bootstrapper_path: &Path, installer_path: &Path) -> Result<OsString> {
-    let mut result = bootstrapper_path.canonicalize()?.into_os_string();
+    let bootstrapper = strip_unc_prefix(bootstrapper_path.canonicalize()?);
+    let installer = strip_unc_prefix(installer_path.canonicalize()?);
+    let mut result = bootstrapper.into_os_string();
     result.push(DELIMITER);
-    result.push(installer_path.canonicalize()?.into_os_string());
+    result.push(installer.into_os_string());
     Ok(result)
 }
 

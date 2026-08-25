@@ -15,6 +15,7 @@ export const useDialogStore = defineStore("dialog", () => {
     const createInstance = ref({ visible: false })
     const confirmQuitApp = ref({ visible: false })
     const noAccountError = ref({ visible: false })
+    const noMicrosoftAccountError = ref({ visible: false })
     const noSuitableJavaError = ref({ visible: false })
     const multiplayerExtension = ref({
         visible: false,
@@ -76,6 +77,7 @@ export const useDialogStore = defineStore("dialog", () => {
         confirmDeleteSave,
         confirmQuitApp,
         noAccountError,
+        noMicrosoftAccountError,
         noSuitableJavaError,
         multiplayerExtension,
         uploadSkin,

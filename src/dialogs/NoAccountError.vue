@@ -20,14 +20,6 @@
           "
           >取消启动</BaseButton
         >
-        <BaseButton
-          class="quit"
-          @click="
-            dialogStore.noAccountError.visible = false;
-            navigationStore.navigate('accounts');
-          "
-          >添加帐户</BaseButton
-        >
       </div>
     </div>
   </BaseDialog>
@@ -65,12 +57,7 @@ const navigationStore = useNavigationStore();
       transition: transform 200ms ease;
     }
     button.back {
-      margin-right: 8px;
       padding: 8px 0;
-    }
-    button.quit {
-      background: var(--ctp-blue);
-      color: var(--ctp-text-inverse);
     }
   }
 }

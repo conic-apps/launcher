@@ -50,21 +50,18 @@ const currentView = ref("local" as "local" | "modrinth" | "curseforge");
 </script>
 
 <style lang="less" scoped>
+@import "./styles/title-bar.less";
+
 .content-mods {
   width: 100%;
   height: 100%;
   overflow-y: auto;
   flex: 1;
   position: relative;
+
   .title {
-    width: 100%;
-    background: var(--ctp-mantle);
-    height: 52px;
-    padding: 0 32px;
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 8px;
+    margin-bottom: 0;
+
     .select-source {
       display: flex;
       align-items: center;
@@ -72,6 +69,7 @@ const currentView = ref("local" as "local" | "modrinth" | "curseforge");
       overflow: hidden;
       gap: 4px;
       margin-left: auto;
+
       button {
         appearance: none;
         border: none;
@@ -83,30 +81,39 @@ const currentView = ref("local" as "local" | "modrinth" | "curseforge");
         border-radius: 4px;
         justify-content: center;
       }
+
       button:hover {
         background: var(--ctp-surface0);
       }
+
       button:active {
         background: var(--ctp-surface1);
       }
+
       button.local :deep(path) {
         stroke: rgba(var(--ctp-text-rgb), 0.7);
       }
+
       button.local.active :deep(path) {
         stroke: var(--ctp-blue);
       }
+
       button.modrinth {
         fill: rgba(var(--ctp-text-rgb), 0.7);
       }
+
       button.active.modrinth {
         fill: var(--ctp-green);
       }
+
       button.curseforge {
         fill: rgba(var(--ctp-text-rgb), 0.7);
       }
+
       button.active.curseforge {
         fill: var(--ctp-peach);
       }
+
       button.active {
         background: var(--ctp-surface2);
       }
