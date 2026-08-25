@@ -4,24 +4,24 @@
 
 <template>
   <div>
-    <SettingGroup :title="'辅助功能'">
+    <SettingGroup :title="t('settings.accessibility.title')">
       <SettingItem
-        :title="'正式版更新提醒'"
-        :description="'当 Minecraft 正式版发布时弹出提醒弹窗'"
+        :title="t('settings.accessibility.releaseReminder')"
+        :description="t('settings.accessibility.releaseReminderDesc')"
         icon="bell"
         icon-fill="none">
         <BaseSwitch v-model="config.accessibility.release_reminder"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        :title="'快照版更新提醒'"
-        :description="'当 Minecraft 快照发布时弹出提醒弹窗'"
+        :title="t('settings.accessibility.snapshotReminder')"
+        :description="t('settings.accessibility.snapshotReminderDesc')"
         icon="bell"
         icon-fill="none">
         <BaseSwitch v-model="config.accessibility.snapshot_reminder"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        :title="'自动更改游戏语言'"
-        :description="'在首次启动游戏时将游戏语言设置为你的启动器语言'"
+        :title="t('settings.accessibility.autoGameLang')"
+        :description="t('settings.accessibility.autoGameLangDesc')"
         icon="language">
         <BaseSwitch v-model="config.accessibility.change_game_language"></BaseSwitch>
       </SettingItem>
@@ -34,8 +34,8 @@
       <!--   <BaseSwitch v-model="config.accessibility.disable_animations"></BaseSwitch> -->
       <!-- </SettingItem> -->
       <SettingItem
-        :title="'高对比度模式'"
-        :description="'启用当前主题的高对比度模式（如果可用）'"
+        :title="t('settings.accessibility.highContrast')"
+        :description="t('settings.accessibility.highContrastDesc')"
         icon="contrast">
         <BaseSwitch v-model="config.accessibility.high_contrast_mode"></BaseSwitch>
       </SettingItem>
@@ -50,6 +50,9 @@ import BaseSwitch from "@/components/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
 import { watch } from "vue";
 import { reloadPalette } from "@/theme";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 const config = useConfigStore();
 
 watch(

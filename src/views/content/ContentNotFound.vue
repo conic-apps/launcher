@@ -2,13 +2,17 @@
   <Transition name="content-placeholder-transition">
     <div class="content-placeholder" v-if="props.show">
       <AppIcon name="about" :size="64"></AppIcon>
-      <p class="message">此视图筛选条件无匹配结果</p>
+      <p class="message">{{ t("content.common.noResult") }}</p>
       <p class="desc" v-if="props.description">{{ props.description }}</p>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
+
 const props = defineProps<{
   show: boolean;
   description?: string;

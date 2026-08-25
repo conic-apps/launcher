@@ -7,7 +7,7 @@
     <ContentSearchPanel
       v-model="searchQuery"
       :filters="curseForgeFilters"
-      :placeholder="'搜索模组...'"
+      :placeholder="t('content.common.searchMods')"
       :version-page="versionPage"
       :version-page-count="versionPageCount"
       :version-track-style="versionTrackStyle"
@@ -59,7 +59,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <ContentNotFound description="尝试调整关键词或筛选条件后再次搜索" show />
+        <ContentNotFound :description="t('content.common.notFoundDesc')" show />
       </div>
     </template>
 
@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   ApiResponse as CurseForgeApiResponse,
   Mod as CurseForgeMod,
@@ -90,6 +91,8 @@ import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+
+const { t } = useI18n();
 
 const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
   useDescriptionTranslation();
@@ -126,24 +129,6 @@ const CURSEFORGE_CATEGORIES: CategoryOption[] = [
   { id: 424, slug: "cosmetic" },
   { id: 425, slug: "mc-miscellaneous" },
 ];
-const CURSEFORGE_CATEGORY_NAMES: Record<string, string> = {
-  "adventure-rpg": "冒险与RPG",
-  "armor-weapons-tools": "护甲、工具与武器",
-  "world-gen": "世界生成",
-  technology: "科技",
-  magic: "魔法",
-  storage: "存储",
-  "library-api": "库与API",
-  "map-information": "地图与信息",
-  "utility-qol": "实用与QoL",
-  "server-utility": "服务器实用",
-  "mc-food": "食物",
-  performance: "性能",
-  "bug-fixes": "漏洞修复",
-  redstone: "红石",
-  cosmetic: "外观装饰",
-  "mc-miscellaneous": "杂项",
-};
 type ModsFilter = ContentFilterItem & {
   key: "loader" | "version" | "category";
 };
@@ -250,7 +235,7 @@ const curseForgeTotalPages = computed(() => {
 const curseForgeFilters = computed<ModsFilter[]>(() => [
   {
     key: "loader",
-    label: "加载器",
+    label: t("content.common.loader"),
     options: LOADERS,
     isSelected: (option) => curseForgeSelectedLoaders.value.includes(option as string),
     display: (option) => LOADER_NAMES[option as string] ?? option,
@@ -263,7 +248,7 @@ const curseForgeFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "version",
-    label: "版本",
+    label: t("content.common.version"),
     options: versionOptions.value,
     isSelected: (option) => curseForgeSelectedVersions.value.includes(option as string),
     display: (option) => option as string,
@@ -271,12 +256,13 @@ const curseForgeFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "category",
-    label: "分类",
+    label: t("content.common.category"),
     options: CURSEFORGE_CATEGORIES,
     isSelected: (option) =>
       curseForgeSelectedCategories.value.includes((option as CategoryOption).id),
     display: (option) =>
-      CURSEFORGE_CATEGORY_NAMES[(option as CategoryOption).slug] ?? (option as CategoryOption).slug,
+      t(`content.mods.curseforge.${(option as CategoryOption).slug}`) ??
+      (option as CategoryOption).slug,
   },
 ]);
 

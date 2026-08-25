@@ -4,10 +4,10 @@
 
 <template>
   <div>
-    <SettingGroup title="下载选项">
+    <SettingGroup :title="t('settings.download.title')">
       <SettingItem
-        :title="'最大连接数'"
-        :description="'限制同时与服务器建立的连接数量，只对安装时的下载有效，<strong>过大反而会降低速度！</strong>'"
+        :title="t('settings.download.maxConnections')"
+        :description="t('settings.download.maxConnectionsDesc')"
         icon="link">
         <BaseInput
           width="100px"
@@ -17,8 +17,8 @@
         </BaseInput>
       </SettingItem>
       <SettingItem
-        :title="'最大下载速度(单位：B/s)'"
-        :description="'限制下载速度，只对安装时的下载有效，必须大于1024才有效，设置为 0 以禁用'"
+        :title="t('settings.download.maxSpeed')"
+        :description="t('settings.download.maxSpeedDesc')"
         icon="speedometer">
         <BaseInput
           width="100px"
@@ -28,19 +28,19 @@
         </BaseInput>
       </SettingItem>
       <SettingItem
-        :title="'镜像服务器'"
+        :title="t('settings.download.mirror')"
         :navigable="true"
-        :description="'从其他地方下载游戏文件'"
+        :description="t('settings.download.mirrorDesc')"
         icon="server"
         icon-fill="none"
         :last="true">
       </SettingItem>
     </SettingGroup>
-    <SettingGroup :title="'代理'">
+    <SettingGroup :title="t('settings.download.proxy')">
       <SettingItem
         :title="'使用系统代理（重启应用后生效）'"
         icon="globe"
-        description="目前仅支持通过环境变量设置代理">
+        :description="t('settings.download.proxyNote')">
         <BaseSwitch v-model="config.download.use_system_proxy"></BaseSwitch>
       </SettingItem>
     </SettingGroup>
@@ -53,6 +53,9 @@ import SettingGroup from "@/components/SettingGroup.vue";
 import BaseInput from "@/components/BaseInput.vue";
 import BaseSwitch from "@/components/BaseSwitch.vue";
 import { useConfigStore } from "@/store/config";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 const config = useConfigStore();
 </script>
 

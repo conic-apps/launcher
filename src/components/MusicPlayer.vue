@@ -7,7 +7,9 @@
     <div class="music-overlay" v-if="music.panelOpen" @pointerdown.self="music.closePanel()">
       <div class="music-card" @pointerdown.stop>
         <div class="track-info">
-          <span class="track-name">{{ music.currentTrack?.name ?? "暂无音乐" }}</span>
+          <span class="track-name">{{
+            music.currentTrack?.name ?? t("app.musicplayer.noMusic")
+          }}</span>
         </div>
         <div class="progress-area">
           <span class="time">{{ formatTime(music.currentTime) }}</span>
@@ -15,7 +17,7 @@
             class="progress-bar"
             ref="progressBarRef"
             @pointerdown="onProgressPointerDown"
-            :title="'播放进度'">
+            :title="t('app.musicplayer.progress')">
             <div class="progress-fill" :style="{ width: `${music.progress * 100}%` }"></div>
           </div>
           <span class="time">{{ formatTime(music.duration) }}</span>
@@ -26,41 +28,44 @@
               class="player-btn"
               :class="{ active: music.shuffle }"
               @click="music.toggleShuffle()"
-              :title="'随机播放'">
+              :title="t('app.musicplayer.shuffle')">
               <AppIcon name="shuffle" :size="18" />
             </button>
             <button
               class="player-btn"
               :class="{ active: music.repeat }"
               @click="music.cycleRepeat()"
-              :title="'循环播放'">
+              :title="t('app.musicplayer.repeat')">
               <AppIcon name="repeat" :size="18" />
             </button>
           </div>
           <div class="controls-group controls-center">
-            <button class="player-btn" @click="music.prev()" :title="'上一曲'">
+            <button class="player-btn" @click="music.prev()" :title="t('app.musicplayer.prev')">
               <AppIcon name="play-skip-back" :size="18" />
             </button>
             <button
               class="player-btn play-btn"
               @click="music.togglePlay()"
-              :title="music.isPlaying ? '暂停' : '播放'">
+              :title="music.isPlaying ? t('app.musicplayer.pause') : t('app.musicplayer.play')">
               <AppIcon v-if="music.isPlaying" name="pause-circle-outline" :size="24" />
               <AppIcon v-else name="play-circle-outline" :size="24" />
             </button>
-            <button class="player-btn" @click="music.next()" :title="'下一曲'">
+            <button class="player-btn" @click="music.next()" :title="t('app.musicplayer.next')">
               <AppIcon name="play-skip-forward" :size="18" />
             </button>
           </div>
           <div class="controls-group controls-right">
-            <button class="player-btn" @click="openMusicFolder" :title="'打开音乐文件夹'">
+            <button
+              class="player-btn"
+              @click="openMusicFolder"
+              :title="t('app.musicplayer.openFolder')">
               <AppIcon name="folder" :size="18" />
             </button>
             <button
               class="player-btn"
               :class="{ active: showPlaylist }"
               @click="showPlaylist = !showPlaylist"
-              :title="'播放列表'">
+              :title="t('app.musicplayer.playlist')">
               <AppIcon name="list" :size="18" />
             </button>
           </div>
@@ -80,7 +85,7 @@
                   <span class="playlist-item-name">{{ track.name }}</span>
                 </button>
                 <p v-if="music.tracks.length === 0" class="playlist-empty">
-                  {{ "啥也没" }}
+                  {{ t("app.musicplayer.empty") }}
                 </p>
               </div>
             </ScrollView>
@@ -98,6 +103,9 @@ import { getDataLocation } from "@conic/folder";
 import ScrollView from "@/components/ScrollView.vue";
 import { useConfigStore } from "@/store/config";
 import { useMusicStore } from "@/store/music";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const config = useConfigStore();
 const music = useMusicStore();

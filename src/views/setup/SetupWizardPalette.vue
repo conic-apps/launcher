@@ -4,13 +4,13 @@
 
 <template>
   <div class="choose-palette">
-    <p class="wizard-title">选择配色方案</p>
-    <p class="wizard-message">Conic Launcher 支持多种配色方案，你可以按自己的喜好选择一个。</p>
+    <p class="wizard-title">{{ t("setup.palette.title") }}</p>
+    <p class="wizard-message">{{ t("setup.palette.desc") }}</p>
     <div class="palette-setting-container">
       <SettingGroup style="width: 100%; margin-top: 16px">
         <SettingItem
-          title="跟随系统深色设置"
-          description="如果系统设置中设置为浅色，则使用 Latte ，否则使用 Mocha"
+          :title="t('setup.palette.followSystem')"
+          :description="t('setup.palette.followSystemDesc')"
           icon="moon"
           icon-fill="none">
           <BaseSwitch v-model="configStore.appearance.palette_follow_system"></BaseSwitch>
@@ -51,6 +51,9 @@ import BaseSwitch from "@/components/BaseSwitch.vue";
 import SettingGroup from "@/components/SettingGroup.vue";
 import SettingItem from "@/components/SettingItem.vue";
 import { useConfigStore } from "@/store/config";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 import { reloadPalette } from "@/theme";
 import { Palette } from "@conic/config";
 import { ref, watch } from "vue";

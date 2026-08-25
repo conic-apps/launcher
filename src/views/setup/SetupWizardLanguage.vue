@@ -4,13 +4,13 @@
 
 <template>
   <div class="language-setting">
-    <p class="wizard-title">欢迎</p>
-    <p class="wizard-message">欢迎来到首次启动设置指南页！</p>
+    <p class="wizard-title">{{ t("setup.language.title") }}</p>
+    <p class="wizard-message">{{ t("setup.language.desc") }}</p>
     <p class="wizard-message">
-      Conic Launcher 是可高度自定义的启动器，但那些复杂的设置可能会让你不知所措。
+      {{ t("setup.language.desc2") }}
     </p>
     <p class="wizard-message">
-      这个指南将快速带你完成一些重要的设置项，以便待会儿你能够快速上手并启动你的游戏。
+      {{ t("setup.language.desc3") }}
     </p>
     <div class="language-setting-container">
       <button
@@ -27,6 +27,9 @@
 
 <script setup lang="ts">
 import { useConfigStore } from "@/store/config";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const configStore = useConfigStore();
 

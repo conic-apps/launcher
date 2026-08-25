@@ -7,7 +7,7 @@
     <ContentSearchPanel
       v-model="searchQuery"
       :filters="modrinthFilters"
-      :placeholder="'搜索资源包...'"
+      :placeholder="t('content.common.searchResourcePacks')"
       :version-page="versionPage"
       :version-page-count="versionPageCount"
       :version-track-style="versionTrackStyle"
@@ -66,7 +66,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <ContentNotFound description="尝试调整关键词或筛选条件后再次搜索" show />
+        <ContentNotFound :description="t('content.common.notFoundDesc')" show />
       </div>
     </template>
 
@@ -80,6 +80,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   SearchedProjects as ModrinthSearchedProjects,
   SearchParameters as ModrinthSearchParameters,
@@ -95,6 +96,8 @@ import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+
+const { t } = useI18n();
 
 const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
   useDescriptionTranslation();
@@ -121,28 +124,6 @@ const CATEGORIES = [
   "utility",
   "other",
 ];
-const CATEGORY_NAMES: Record<string, string> = {
-  faithful: "忠实原版",
-  "16x": "16x",
-  "32x": "32x",
-  "64x": "64x",
-  "128x": "128x",
-  "256x": "256x",
-  "photo-realistic": "照片写实",
-  "semi-realistic": "半写实",
-  simple: "简约",
-  modern: "现代",
-  "theme-based": "主题风格",
-  classic: "经典",
-  dark: "暗色",
-  medieval: "中世纪",
-  anime: "动漫",
-  cartoon: "卡通",
-  "pixel-art": "像素画",
-  "vanilla-plus": "原版加强",
-  utility: "实用",
-  other: "其他",
-};
 type ModsFilter = ContentFilterItem & {
   key: "version" | "category";
 };
@@ -237,17 +218,17 @@ const totalPages = computed(() => {
 const modrinthFilters = computed<ModsFilter[]>(() => [
   {
     key: "version",
-    label: "版本",
+    label: t("content.common.version"),
     options: versionOptions.value,
     isSelected: (option) => selectedVersions.value.includes(option as string),
     display: (option) => option as string,
   },
   {
     key: "category",
-    label: "分类",
+    label: t("content.common.category"),
     options: CATEGORIES,
     isSelected: (option) => selectedCategories.value.includes(option as string),
-    display: (option) => CATEGORY_NAMES[option as string] ?? option,
+    display: (option) => t(`content.resourcepacks.modrinth.${option as string}`) ?? option,
   },
 ]);
 

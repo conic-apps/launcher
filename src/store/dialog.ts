@@ -17,6 +17,7 @@ export const useDialogStore = defineStore("dialog", () => {
     const noAccountError = ref({ visible: false })
     const noMicrosoftAccountError = ref({ visible: false })
     const noSuitableJavaError = ref({ visible: false })
+    const accountRefreshFailed = ref({ visible: false })
     const multiplayerExtension = ref({
         visible: false,
         currentComponent: "downloadDescription" as
@@ -79,6 +80,7 @@ export const useDialogStore = defineStore("dialog", () => {
         noAccountError,
         noMicrosoftAccountError,
         noSuitableJavaError,
+        accountRefreshFailed,
         multiplayerExtension,
         uploadSkin,
     }
