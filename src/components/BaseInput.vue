@@ -54,9 +54,12 @@ const model = defineModel();
 const inputBoxValue = ref(model.value);
 const emits = defineEmits(["updated"]);
 
+const emptyNumberInput = () => props.numberOnly && inputBoxValue.value === "";
+
 if (!props.lazyUpdateModel) {
-  watch(inputBoxValue, (newValue) => {
-    model.value = newValue;
+  watch(inputBoxValue, () => {
+    if (emptyNumberInput()) return;
+    model.value = inputBoxValue.value;
   });
 }
 
@@ -76,6 +79,10 @@ if (props.value) {
   );
 }
 function updateModel() {
+  if (emptyNumberInput()) {
+    inputBoxValue.value = model.value;
+    return;
+  }
   if (props.lazyUpdateModel) {
     model.value = inputBoxValue.value;
   }

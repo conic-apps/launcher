@@ -19,7 +19,7 @@
         ">
         <ContentNotFound
           :show="Object.keys(mods ?? {}).length === 0"
-          description="考虑从互联网下载一些模组" />
+          :description="t('content.mods.localEmpty')" />
       </div>
       <div
         v-for="(mod, index) in mods"
@@ -35,7 +35,7 @@
           height="100%" />
         <div class="content-info">
           <p class="name">
-            <span v-if="mod.disabled">[已禁用] </span>
+            <span v-if="mod.disabled">{{ t("content.mods.disabledPrefix") }}</span>
             <span>{{ mod.name }}</span>
           </p>
           <p class="authors">by {{ mod.authors.map((authorInfo) => authorInfo.name).join(",") }}</p>
@@ -69,10 +69,13 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useGameContentStore } from "@/store/content";
 import { ModLoader } from "@conic/content";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+
+const { t } = useI18n();
 
 const gameContentStore = useGameContentStore();
 const mods = computed(() => gameContentStore.gameContent.mods);

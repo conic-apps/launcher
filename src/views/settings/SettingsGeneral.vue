@@ -5,9 +5,9 @@
 <template>
   <div ref="generalSettings">
     <SettingGroup>
-      <SettingItem :title="'语言'" icon="language">
+      <SettingItem :title="t('settings.general.language')" icon="language">
         <BaseDropdownSelect
-          placeholder="跟随系统设置"
+          :placeholder="t('settings.general.followSystem')"
           :display-name="[
             'English',
             '简体中文',
@@ -39,21 +39,23 @@
           v-model="config.language"
           :default="1"></BaseDropdownSelect>
       </SettingItem>
-      <SettingItem :title="'自动更新'" :description="'有更新可用时自动下载并安装'">
+      <SettingItem
+        :title="t('settings.general.autoUpdate')"
+        :description="t('settings.general.autoUpdateDesc')">
         <BaseSwitch v-model="config.auto_update"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        :title="'更新通道'"
-        :description="'控制启动器获取更新的频率'"
+        :title="t('settings.general.updateChannel')"
+        :description="t('settings.general.updateChannelDesc')"
         :disabled="!config.auto_update">
         <BaseSelect
-          :display-name="['正式版', '测试版']"
+          :display-name="[t('settings.general.stable'), t('settings.general.beta')]"
           :options="['stable', 'beta']"
           v-model="config.update_channel"></BaseSelect>
       </SettingItem>
       <SettingItem
-        :title="'打开设置向导'"
-        :description="'设置向导可带你完成基本的启动器设置'"
+        :title="t('settings.general.openSetupWizard')"
+        :description="t('settings.general.openSetupWizardDesc')"
         :navigable="true"
         @click="navigationStore.navigate('setup')">
       </SettingItem>
@@ -69,7 +71,9 @@ import SettingGroup from "@/components/SettingGroup.vue";
 import { useConfigStore } from "@/store/config";
 import BaseSelect from "@/components/BaseSelect.vue";
 import { useNavigationStore } from "@/store/navigation";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const config = useConfigStore();
 const navigationStore = useNavigationStore();
 </script>

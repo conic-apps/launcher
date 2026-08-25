@@ -64,7 +64,7 @@
       ref="profileNameUnlogged"
       style="opacity: 0"
       @click="dialogStore.accountAdd.visible = true">
-      <span>未登录</span>
+      <span>{{ t("game.footer.notLoggedIn") }}</span>
     </p>
     <button class="connect" style="opacity: 0" @click="openConnect" ref="connect">
       <AppIcon name="globe" :size="22"></AppIcon>
@@ -75,7 +75,7 @@
       @click="dialogStore.createInstance.visible = true"
       ref="new-instance">
       <AppIcon name="add" :size="22" style="margin-right: 8px"></AppIcon>
-      创建新实例
+      {{ t("game.footer.newInstance") }}
     </button>
     <button
       class="install-pack"
@@ -102,6 +102,9 @@ import { computed, onMounted, ref, useTemplateRef } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";
 import { isLibraryValid } from "@conic/multiplayer";
 import gsap from "gsap";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const configStore = useConfigStore();
 const dialogStore = useDialogStore();

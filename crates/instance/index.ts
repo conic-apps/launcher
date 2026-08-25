@@ -88,24 +88,30 @@ export async function calculatePlaytime(id: string): Promise<number> {
     return await invoke("plugin:instance|cmd_calculate_playtime", { id })
 }
 
-export function formatPlayTime(seconds: number): string {
-    if (seconds < 60) {
-        return `${Math.floor(seconds)} 秒`
-    }
-    const format = (value: number) => Number(value.toFixed(1)).toString()
-    const minutes = seconds / 60
-    if (minutes < 60) {
-        return `${format(minutes)} 分钟`
-    }
-    return `${format(minutes / 60)} 小时`
-}
-
 export type TimeFormatter = {
     justNow: string
     hoursAgo: (hours: number) => string
     yesterday: string
     monthDay: (month: number, day: number) => string
     yearMonthDay: (year: number, month: number, day: number) => string
+}
+
+export type PlayTimeFormatter = {
+    seconds: (count: number) => string
+    minutes: (count: number) => string
+    hours: (count: number) => string
+}
+
+export function formatPlayTime(seconds: number, formatter: PlayTimeFormatter): string {
+    if (seconds < 60) {
+        return formatter.seconds(Math.floor(seconds))
+    }
+    const format = (value: number) => Number(value.toFixed(1)).toString()
+    const minutes = seconds / 60
+    if (minutes < 60) {
+        return formatter.minutes(Number(format(minutes)))
+    }
+    return formatter.hours(Number(format(minutes / 60)))
 }
 
 export function formatLastPlayed(timestamp: number, formatter: TimeFormatter): string {
@@ -146,20 +152,3 @@ export function formatLastPlayed(timestamp: number, formatter: TimeFormatter): s
 
     return formatter.yearMonthDay(date.getFullYear(), date.getMonth() + 1, date.getDate())
 }
-
-export const zhCN: TimeFormatter = {
-    justNow: "刚刚",
-    hoursAgo: (hours) => `${hours}小时前`,
-    yesterday: "昨天",
-    monthDay: (month, day) => `${month}月${day}日`,
-    yearMonthDay: (year, month, day) => `${year}年${month}月${day}日`,
-}
-// NOTE: i18n support:
-// const formatter = {
-//   justNow: t("time.justNow"),
-//   hoursAgo: (h) => t("time.hoursAgo", { count: h }),
-//   yesterday: t("time.yesterday"),
-//   monthDay: (m, d) => t("date.monthDay", { month: m, day: d }),
-//   yearMonthDay: (y, m, d) =>
-//     t("date.yearMonthDay", { year: y, month: m, day: d }),
-// };

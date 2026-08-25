@@ -9,7 +9,7 @@
     </div>
     <div class="row-2" ref="row2" style="opacity: 0">
       <p>
-        <span> Minecraft 版本 </span>
+        <span> {{ t("game.summary.minecraftVersion") }} </span>
         <span>{{ currentInstance?.config.runtime.minecraft ?? "--" }}</span>
       </p>
       <div
@@ -23,17 +23,19 @@
           currentInstance?.config.runtime.mod_loader_type &&
           currentInstance?.config.runtime.mod_loader_version
         ">
-        <span> {{ currentInstance.config.runtime.mod_loader_type }} 版本 </span>
+        <span>
+          {{ currentInstance.config.runtime.mod_loader_type }} {{ t("game.summary.version") }}
+        </span>
         <span>{{ currentInstance.config.runtime.mod_loader_version }}</span>
       </p>
       <div class="line"></div>
       <p>
-        <span>最后运行日期</span>
+        <span>{{ t("game.summary.lastPlayedDate") }}</span>
         <span v-if="!currentInstance">--</span>
         <span v-else-if="currentInstance.last_played">{{
-          formatLastPlayed(currentInstance.last_played, zhCN)
+          formatLastPlayed(currentInstance.last_played, timeFormatter)
         }}</span>
-        <span v-else>从未运行</span>
+        <span v-else>{{ t("game.summary.neverPlayed") }}</span>
       </p>
       <div
         class="line"
@@ -58,8 +60,8 @@
           playtimeCache[currentInstance.id] &&
           playtimeCache[currentInstance.id] > 0
         ">
-        <span>游戏时间</span>
-        <span>{{ formatPlayTime(playtimeCache[currentInstance.id] ?? 0) }}</span>
+        <span>{{ t("game.summary.playTime") }}</span>
+        <span>{{ formatPlayTime(playtimeCache[currentInstance.id] ?? 0, playTimeFormatter) }}</span>
       </p>
     </div>
     <div class="row-3" ref="row3" style="opacity: 0">
@@ -68,7 +70,7 @@
         @click="navigationStore.navigate('launch')"
         :class="{ disabled: !currentInstance }">
         <AppIcon name="play" fill="#fff" style="margin-right: 4px"></AppIcon>
-        开始游戏
+        {{ t("game.summary.startGame") }}
       </button>
       <button class="launch-sub-button">
         <AppIcon
@@ -94,9 +96,10 @@
       <div @click="useShowContent().value.saves = true" ref="saves" style="opacity: 0">
         <AppIcon name="save"></AppIcon>
         <div>
-          <span class="type">存档</span
+          <span class="type">{{ t("game.summary.saves") }}</span
           ><span class="count"
-            >{{ Object.keys(contentStore.gameContent.saves ?? {}).length }} 个</span
+            >{{ Object.keys(contentStore.gameContent.saves ?? {}).length }}
+            {{ t("game.summary.countUnit") }}</span
           >
         </div>
       </div>
@@ -111,8 +114,11 @@
         }">
         <AppIcon name="extension-puzzle" />
         <div>
-          <span class="type">模组</span
-          ><span class="count">{{ (contentStore.gameContent.mods ?? []).length }} 个</span>
+          <span class="type">{{ t("game.summary.mods") }}</span
+          ><span class="count"
+            >{{ (contentStore.gameContent.mods ?? []).length }}
+            {{ t("game.summary.countUnit") }}</span
+          >
         </div>
       </div>
       <div
@@ -121,8 +127,11 @@
         style="opacity: 0">
         <AppIcon name="folder" />
         <div>
-          <span class="type">资源包</span
-          ><span class="count">{{ (contentStore.gameContent.resourcepacks ?? []).length }} 个</span>
+          <span class="type">{{ t("game.summary.resourcePacks") }}</span
+          ><span class="count"
+            >{{ (contentStore.gameContent.resourcepacks ?? []).length }}
+            {{ t("game.summary.countUnit") }}</span
+          >
         </div>
       </div>
       <div
@@ -132,8 +141,11 @@
         :class="{ disabled: !(contentStore.gameContent.screenshots ?? []).length }">
         <AppIcon name="images-outline" />
         <div>
-          <span class="type">截图</span
-          ><span class="count">{{ (contentStore.gameContent.screenshots ?? []).length }} 个</span>
+          <span class="type">{{ t("game.summary.screenshots") }}</span
+          ><span class="count"
+            >{{ (contentStore.gameContent.screenshots ?? []).length }}
+            {{ t("game.summary.countUnit") }}</span
+          >
         </div>
       </div>
     </div>
@@ -149,7 +161,6 @@ import {
   formatLastPlayed,
   formatPlayTime,
   updateInstance,
-  zhCN,
 } from "@conic/instance";
 import { useNavigationStore } from "@/store/navigation";
 import { getInstanceRoot } from "@conic/folder";
@@ -158,6 +169,28 @@ import { useInstanceSettings } from "./useGameView";
 import { useGameContentStore } from "@/store/content";
 import { useShowContent, useShowContentDetails } from "../content/useContent";
 import gsap from "gsap";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
+
+const timeFormatter = {
+  get justNow() {
+    return t("game.time.justNow");
+  },
+  hoursAgo: (hours: number) => t("game.time.hoursAgo", hours),
+  get yesterday() {
+    return t("game.time.yesterday");
+  },
+  monthDay: (month: number, day: number) => t("game.time.monthDay", { month, day }),
+  yearMonthDay: (year: number, month: number, day: number) =>
+    t("game.time.yearMonthDay", { year, month, day }),
+};
+
+const playTimeFormatter = {
+  seconds: (count: number) => t("game.time.seconds", { count }),
+  minutes: (count: number) => t("game.time.minutes", { count }),
+  hours: (count: number) => t("game.time.hours", { count }),
+};
 
 const instanceStore = useInstanceStore();
 const navigationStore = useNavigationStore();

@@ -7,7 +7,7 @@
     <ContentSearchPanel
       v-model="searchQuery"
       :filters="modrinthFilters"
-      :placeholder="'搜索模组...'"
+      :placeholder="t('content.common.searchMods')"
       :version-page="versionPage"
       :version-page-count="versionPageCount"
       :version-track-style="versionTrackStyle"
@@ -81,7 +81,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <ContentNotFound description="尝试调整关键词或筛选条件后再次搜索" show />
+        <ContentNotFound :description="t('content.common.notFoundDesc')" show />
       </div>
     </template>
 
@@ -95,6 +95,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   SearchedProjects as ModrinthSearchedProjects,
   SearchParameters as ModrinthSearchParameters,
@@ -110,6 +111,8 @@ import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+
+const { t } = useI18n();
 
 const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
   useDescriptionTranslation();
@@ -142,27 +145,6 @@ const CATEGORIES = [
   "utility",
   "worldgen",
 ];
-const CATEGORY_NAMES: Record<string, string> = {
-  adventure: "冒险",
-  cursed: "诡异",
-  decoration: "装饰",
-  economy: "经济",
-  equipment: "装备",
-  food: "食物",
-  "game-mechanics": "游戏机制",
-  library: "库",
-  magic: "魔法",
-  management: "管理",
-  minigame: "小游戏",
-  mobs: "生物",
-  optimization: "优化",
-  social: "社交",
-  storage: "存储",
-  technology: "科技",
-  transportation: "交通",
-  utility: "实用",
-  worldgen: "世界生成",
-};
 type ModsFilter = ContentFilterItem & {
   key: "loader" | "version" | "category";
 };
@@ -261,7 +243,7 @@ const totalPages = computed(() => {
 const modrinthFilters = computed<ModsFilter[]>(() => [
   {
     key: "loader",
-    label: "加载器",
+    label: t("content.common.loader"),
     options: LOADERS,
     isSelected: (option) => selectedLoaders.value.includes(option as string),
     display: (option) => LOADER_NAMES[option as string] ?? option,
@@ -274,7 +256,7 @@ const modrinthFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "version",
-    label: "版本",
+    label: t("content.common.version"),
     options: versionOptions.value,
     isSelected: (option) => selectedVersions.value.includes(option as string),
     display: (option) => option as string,
@@ -282,10 +264,10 @@ const modrinthFilters = computed<ModsFilter[]>(() => [
   },
   {
     key: "category",
-    label: "分类",
+    label: t("content.common.category"),
     options: CATEGORIES,
     isSelected: (option) => selectedCategories.value.includes(option as string),
-    display: (option) => CATEGORY_NAMES[option as string] ?? option,
+    display: (option) => t(`content.mods.modrinth.${option as string}`) ?? option,
   },
 ]);
 

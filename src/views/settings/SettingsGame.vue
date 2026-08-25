@@ -4,40 +4,42 @@
 
 <template>
   <div>
-    <SettingGroup :title="'基础设置'">
-      <SettingItem :title="'窗口大小'" :description="'游戏窗口的初始大小'">
+    <SettingGroup :title="t('settings.game.basicSettings')">
+      <SettingItem
+        :title="t('settings.game.windowSize')"
+        :description="t('settings.game.windowSizeDesc')">
         <BaseInput
           width="100px"
           style="display: inline-block; margin-right: 16px"
-          :placeholder="'宽'"
+          :placeholder="t('settings.game.width')"
           :number-only="true"
           :disabled="config.launch.fullscreen"
           v-model.number="config.launch.width"
-          :lazy-update-value="true">
+          :lazy-update-model="true">
         </BaseInput>
         <BaseInput
           width="100px"
           style="display: inline-block"
-          :placeholder="'高'"
+          :placeholder="t('settings.game.height')"
           :number-only="true"
           :disabled="config.launch.fullscreen"
           v-model.number="config.launch.height"
-          :lazy-update-value="true">
+          :lazy-update-model="true">
         </BaseInput>
-        <span style="font-size: 12px; margin-left: 8px">{{ "全屏" }}: </span>
+        <span style="font-size: 12px; margin-left: 8px">{{ t("settings.game.fullscreen") }}: </span>
         <BaseSwitch v-model="config.launch.fullscreen"></BaseSwitch>
       </SettingItem>
-      <SettingItem :title="'启动游戏后退出启动器'">
+      <SettingItem :title="t('settings.game.quitAfterLaunch')">
         <BaseSwitch v-model="config.launch.quit_app_after_launch"></BaseSwitch>
       </SettingItem>
     </SettingGroup>
-    <SettingGroup :title="'内存'">
-      <SettingItem :title="'自动分配内存'">
+    <SettingGroup :title="t('settings.game.memory')">
+      <SettingItem :title="t('settings.game.autoMemory')">
         <BaseSwitch v-model="config.launch.auto_memory"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        :title="'手动分配内存'"
-        :description="'手动指定 Java 堆的最大大小，关闭自动分配后生效'"
+        :title="t('settings.game.manualMemory')"
+        :description="t('settings.game.manualMemoryDesc')"
         :disabled="config.launch.auto_memory">
         <BaseInput
           width="100px"
@@ -51,47 +53,59 @@
       </SettingItem>
     </SettingGroup>
     <SettingCollapse
-      :title="'高级启动选项'"
+      :title="t('settings.game.advancedOptions')"
       :resetable="advancedLaunchOptionsChanged"
       @reset="resetAdvanceOptions">
-      <SettingItem :title="'Java 垃圾回收器'">
+      <SettingItem :title="t('settings.game.gc')">
         <BaseSelect
           :display-name="['G1', 'Z', 'Parallel', 'Serial']"
           :options="['G1', 'Z', 'Parallel', 'Serial']"
           v-model="config.launch.gc"></BaseSelect>
       </SettingItem>
-      <SettingItem :title="'添加 JVM 参数'" :description="'将会放在默认 JVM 参数后面'">
+      <SettingItem
+        :title="t('settings.game.jvmArgs')"
+        :description="t('settings.game.jvmArgsDesc')">
         <BaseInput
           width="260px"
           v-model="config.launch.extra_jvm_args"
           :lazy-update-model="true"></BaseInput>
       </SettingItem>
-      <SettingItem :title="'添加游戏参数'" :description="'添加游戏需要的其他参数'">
+      <SettingItem
+        :title="t('settings.game.gameArgs')"
+        :description="t('settings.game.gameArgsDesc')">
         <BaseInput
           width="260px"
           v-model="config.launch.extra_mc_args"
           :lazy-update-model="true"></BaseInput>
       </SettingItem>
-      <SettingItem :title="'添加类路径'" :description="'Windows 下用分号隔开，其他系统用冒号'">
+      <SettingItem
+        :title="t('settings.game.classPath')"
+        :description="t('settings.game.classPathDesc')">
         <BaseInput
           width="260px"
           v-model="config.launch.extra_class_paths"
           :lazy-update-model="true"></BaseInput>
       </SettingItem>
-      <SettingItem :title="'启动前执行'" :description="'将会添加至启动命令的前一行'">
+      <SettingItem
+        :title="t('settings.game.beforeLaunch')"
+        :description="t('settings.game.beforeLaunchDesc')">
         <BaseInput
           width="260px"
           v-model="config.launch.execute_before_launch"
           :lazy-update-model="true">
         </BaseInput>
       </SettingItem>
-      <SettingItem :title="'包装命令'" :description="'将会添加至启动命令的开头'">
+      <SettingItem
+        :title="t('settings.game.wrapCommand')"
+        :description="t('settings.game.wrapCommandDesc')">
         <BaseInput
           width="260px"
           v-model="config.launch.wrap_command"
           :lazy-update-model="true"></BaseInput>
       </SettingItem>
-      <SettingItem :title="'启动后执行'" :description="'将会添加至启动脚本的最后一行'">
+      <SettingItem
+        :title="t('settings.game.afterLaunch')"
+        :description="t('settings.game.afterLaunchDesc')">
         <BaseInput
           width="260px"
           v-model="config.launch.execute_after_launch"
@@ -99,18 +113,18 @@
         </BaseInput>
       </SettingItem>
       <SettingItem
-        :title="'忽略无效的 Minecraft 凭证'"
-        :description="'将 <code>-Dfml.ignoreInvalidMinecraftCertificates=true</code> 添加到 JVM 参数中'">
+        :title="t('settings.game.ignoreInvalidCerts')"
+        :description="t('settings.game.ignoreInvalidCertsDesc')">
         <BaseSwitch v-model="config.launch.ignore_invalid_minecraft_certificates"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        :title="'忽略补丁差异'"
-        :description="'将 <code>-Dfml.ignorePatchDiscrepancies=true</code> 添加到 JVM 参数中'">
+        :title="t('settings.game.ignorePatchDiff')"
+        :description="t('settings.game.ignorePatchDiffDesc')">
         <BaseSwitch v-model="config.launch.ignore_patch_discrepancies"></BaseSwitch>
       </SettingItem>
       <SettingItem
-        title="跳过游戏文件检查"
-        description="启动游戏前启动器将不会尝试检查或补全游戏文件">
+        :title="t('settings.game.skipFileCheck')"
+        :description="t('settings.game.skipFileCheckDesc')">
         <BaseSwitch v-model="config.launch.skip_check_files"></BaseSwitch>
       </SettingItem>
     </SettingCollapse>
@@ -127,7 +141,9 @@ import { useConfigStore } from "@/store/config";
 import { computed } from "vue";
 import { getDefaultConfig } from "@conic/config";
 import BaseSelect from "@/components/BaseSelect.vue";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const config = useConfigStore();
 
 const advancedLaunchOptionsChanged = computed(() => {

@@ -7,7 +7,7 @@
     <ContentSearchPanel
       v-model="searchQuery"
       :filters="curseForgeFilters"
-      :placeholder="'搜索资源包...'"
+      :placeholder="t('content.common.searchResourcePacks')"
       :version-page="versionPage"
       :version-page-count="versionPageCount"
       :version-track-style="versionTrackStyle"
@@ -59,7 +59,7 @@
         </div>
       </div>
       <div class="search-status" v-else>
-        <ContentNotFound description="尝试调整关键词或筛选条件后再次搜索" show />
+        <ContentNotFound :description="t('content.common.notFoundDesc')" show />
       </div>
     </template>
 
@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   ApiResponse as CurseForgeApiResponse,
   Mod as CurseForgeMod,
@@ -89,6 +90,8 @@ import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+
+const { t } = useI18n();
 
 const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
   useDescriptionTranslation();
@@ -115,27 +118,6 @@ const CURSEFORGE_CATEGORIES: CategoryOption[] = [
   { id: 4275, slug: "mobs" },
   { id: 4276, slug: "weather" },
 ];
-const CURSEFORGE_CATEGORY_NAMES: Record<string, string> = {
-  crafted: "手工制作",
-  "photo-realistic": "照片写实",
-  "semi-realistic": "半写实",
-  simple: "简约",
-  traditional: "传统",
-  animated: "动态",
-  modern: "现代",
-  themed: "主题风格",
-  "mod-support": "模组支持",
-  rpg: "RPG",
-  gameplay: "游戏玩法",
-  gui: "界面",
-  sound: "声音",
-  environment: "环境",
-  "world-gen": "世界生成",
-  blocks: "方块",
-  items: "物品",
-  mobs: "生物",
-  weather: "天气",
-};
 type ModsFilter = ContentFilterItem & {
   key: "version" | "category";
 };
@@ -233,19 +215,20 @@ const curseForgeTotalPages = computed(() => {
 const curseForgeFilters = computed<ModsFilter[]>(() => [
   {
     key: "version",
-    label: "版本",
+    label: t("content.common.version"),
     options: versionOptions.value,
     isSelected: (option) => curseForgeSelectedVersions.value.includes(option as string),
     display: (option) => option as string,
   },
   {
     key: "category",
-    label: "分类",
+    label: t("content.common.category"),
     options: CURSEFORGE_CATEGORIES,
     isSelected: (option) =>
       curseForgeSelectedCategories.value.includes((option as CategoryOption).id),
     display: (option) =>
-      CURSEFORGE_CATEGORY_NAMES[(option as CategoryOption).slug] ?? (option as CategoryOption).slug,
+      t(`content.resourcepacks.curseforge.${(option as CategoryOption).slug}`) ??
+      (option as CategoryOption).slug,
   },
 ]);
 
