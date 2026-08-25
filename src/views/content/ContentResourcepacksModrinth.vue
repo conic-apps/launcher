@@ -4,62 +4,18 @@
 
 <template>
   <div class="mods-list-wrapper">
-    <div class="search-panel">
-      <div class="search-bar">
-        <input
-          class="search-input"
-          type="text"
-          :placeholder="'搜索资源包...'"
-          v-model="searchQuery"
-          autocapitalize="off"
-          autocomplete="off"
-          autocorrect="off"
-          @keyup.enter="applySearchFilters()" />
-        <button class="search-button" @click="applySearchFilters()">
-          <AppIcon name="search" :size="16"></AppIcon>
-        </button>
-      </div>
-      <div class="filter-bar">
-        <div class="filter-row" v-for="filter in modrinthFilters" :key="filter.key">
-          <span class="filter-label">{{ filter.label }}</span>
-          <div class="filter-chips" :class="{ paged: filter.key === 'version' }">
-            <template v-if="filter.key === 'version'">
-              <button class="chip-pager" :disabled="versionPage <= 0" @click="versionPagePrev()">
-                <AppIcon name="chevron-back" :size="12"></AppIcon>
-              </button>
-              <div class="filter-chips-track" :ref="setVersionTrackRef">
-                <div class="filter-chips-track-inner" :style="versionTrackStyle">
-                  <button
-                    class="filter-chip"
-                    :class="{ selected: filter.isSelected(option) }"
-                    v-for="(option, index) in filter.options"
-                    :key="`${filter.key}-${index}`"
-                    @click="onFilterChipClick(filter, option)">
-                    {{ filter.display(option) }}
-                  </button>
-                </div>
-              </div>
-              <button
-                class="chip-pager"
-                :disabled="versionPage >= versionPageCount - 1"
-                @click="versionPageNext()">
-                <AppIcon name="chevron-forward" :size="12"></AppIcon>
-              </button>
-            </template>
-            <template v-else>
-              <button
-                class="filter-chip"
-                :class="{ selected: filter.isSelected(option) }"
-                v-for="(option, index) in filter.options"
-                :key="`${filter.key}-${index}`"
-                @click="onFilterChipClick(filter, option)">
-                {{ filter.display(option) }}
-              </button>
-            </template>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ContentSearchPanel
+      v-model="searchQuery"
+      :filters="modrinthFilters"
+      :placeholder="'搜索资源包...'"
+      :version-page="versionPage"
+      :version-page-count="versionPageCount"
+      :version-track-style="versionTrackStyle"
+      :set-version-track-ref="setVersionTrackRef"
+      @search="applySearchFilters()"
+      @filter-change="onFilterChipClick"
+      @version-page-prev="versionPagePrev()"
+      @version-page-next="versionPageNext()" />
 
     <div class="search-status" v-if="modrinthSearchResult === null || modrinthLoading">
       <div class="loading">
@@ -114,27 +70,11 @@
       </div>
     </template>
 
-    <div class="pagination" v-if="totalPages > 1">
-      <button class="page-nav" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
-        <AppIcon name="chevron-back" :size="12"></AppIcon>
-      </button>
-      <template v-for="(page, index) in paginationPages" :key="index">
-        <button
-          v-if="page !== '…'"
-          class="page-number"
-          :class="{ active: page === currentPage }"
-          @click="goToPage(page)">
-          {{ page }}
-        </button>
-        <span v-else class="page-ellipsis">…</span>
-      </template>
-      <button
-        class="page-nav"
-        :disabled="currentPage === totalPages"
-        @click="goToPage(currentPage + 1)">
-        <AppIcon name="chevron-forward" :size="12"></AppIcon>
-      </button>
-    </div>
+    <ContentPagination
+      :total-pages="totalPages"
+      :current-page="currentPage"
+      :pages="paginationPages"
+      @page-change="goToPage" />
   </div>
 </template>
 
@@ -148,6 +88,9 @@ import {
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
 import { useShowContentDetails } from "./useContent";
 import { useSearchPagination } from "./useSearchPagination";
+import type { ContentFilterItem } from "./ContentSearchPanel.vue";
+import ContentSearchPanel from "./ContentSearchPanel.vue";
+import ContentPagination from "./ContentPagination.vue";
 import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -200,14 +143,8 @@ const CATEGORY_NAMES: Record<string, string> = {
   utility: "实用",
   other: "其他",
 };
-type FilterOption = string;
-type ModsFilter = {
+type ModsFilter = ContentFilterItem & {
   key: "version" | "category";
-  label: string;
-  options: FilterOption[];
-  isSelected: (option: FilterOption) => boolean;
-  toggle: (option: FilterOption) => void;
-  display: (option: FilterOption) => string;
 };
 
 const selectedVersions = ref<string[]>([]);
@@ -303,7 +240,6 @@ const modrinthFilters = computed<ModsFilter[]>(() => [
     label: "版本",
     options: versionOptions.value,
     isSelected: (option) => selectedVersions.value.includes(option as string),
-    toggle: (option) => toggleFilterOption(selectedVersions.value, option as string),
     display: (option) => option as string,
   },
   {
@@ -311,13 +247,16 @@ const modrinthFilters = computed<ModsFilter[]>(() => [
     label: "分类",
     options: CATEGORIES,
     isSelected: (option) => selectedCategories.value.includes(option as string),
-    toggle: (option) => toggleFilterOption(selectedCategories.value, option as string),
     display: (option) => CATEGORY_NAMES[option as string] ?? option,
   },
 ]);
 
-function onFilterChipClick(filter: ModsFilter, option: FilterOption) {
-  filter.toggle(option);
+function onFilterChipClick(filter: ContentFilterItem, option: unknown) {
+  if (filter.key === "version") {
+    toggleFilterOption(selectedVersions.value, option as string);
+  } else if (filter.key === "category") {
+    toggleFilterOption(selectedCategories.value, option as string);
+  }
   currentPage.value = 1;
   void runModrinthSearch();
 }
@@ -348,8 +287,6 @@ onMounted(async () => {
 </script>
 
 <style lang="less" scoped>
-@import "./styles/search-panel.less";
-@import "./styles/pagination.less";
 @import "./styles/content-card.less";
 
 .search-status {
