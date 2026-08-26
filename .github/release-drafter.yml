@@ -22,5 +22,6 @@ exclude-labels:
   - "refactor"
   - "test"
   - "style"
+  - "release"
 template: |
   $CHANGES
