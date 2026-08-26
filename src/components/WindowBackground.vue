@@ -448,7 +448,7 @@ async function processBackgroundUpdate() {
       await new Promise<void>((resolve) => {
         const doFadeIn = () => {
           gsap.to(newEl, {
-            opacity: 0.3,
+            opacity: 1,
             duration: 0.4,
             ease: "power2.inOut",
             onComplete: () => resolve(),
@@ -1440,6 +1440,8 @@ onBeforeUnmount(() => {
 .background-wrapper {
   width: 100%;
   height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
   .background {
     position: absolute;
     inset: 0;
@@ -1449,7 +1451,6 @@ onBeforeUnmount(() => {
   }
   .custom-bg {
     object-fit: cover;
-    opacity: 0.3;
   }
   .sky {
     opacity: 0.3;

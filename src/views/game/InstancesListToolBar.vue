@@ -16,10 +16,7 @@
     </div>
     <div class="other">
       <div class="sort">
-        <InstanceListDropdown
-          :label="t('game.instances.sortLabel')"
-          :selected="sortLabel"
-          :selected-width="102">
+        <InstanceListDropdown :label="t('game.instances.sortLabel')" :selected="sortLabel">
           <li
             class="dropdown-option"
             v-for="option in sortOptions"
@@ -87,7 +84,7 @@ const searchQuery = defineModel<string>("searchQuery", { required: true });
 <style lang="less" scoped>
 .tool-bar {
   height: 112px;
-  width: 352px;
+  width: 400px;
   position: absolute;
   top: 8px;
   right: 320px;
@@ -98,7 +95,7 @@ const searchQuery = defineModel<string>("searchQuery", { required: true });
 
   .search {
     display: flex;
-    width: 320px;
+    width: 372px;
     height: 40px;
     margin-top: 16px;
     margin-left: 16px;
@@ -151,21 +148,14 @@ const searchQuery = defineModel<string>("searchQuery", { required: true });
 
   .other {
     display: flex;
-    width: 320px;
+    width: 372px;
     margin-left: 16px;
     margin-top: 12px;
+    gap: 8px;
 
     > div {
       display: flex;
-    }
-
-    .sort {
-      margin-right: 8px;
-      flex-shrink: 0;
-    }
-
-    .group {
-      width: 100%;
+      flex: 1;
     }
   }
 }

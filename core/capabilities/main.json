@@ -90,6 +90,7 @@
     "instance:allow-cmd-add-background-file",
     "instance:allow-cmd-get-background-path",
     "instance:allow-cmd-remove-background",
+    "instance:allow-cmd-remove-install-lock",
     "instance:allow-cmd-calculate-playtime",
     "content:allow-cmd-get-all-levels",
     "content:allow-cmd-get-all-datapacks",

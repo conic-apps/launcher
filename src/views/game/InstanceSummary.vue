@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="current-instance">
+  <div class="current-instance" :class="{ introPlayed }">
     <div class="row-1" ref="row1" style="opacity: 0">
       <p class="title">{{ currentInstance?.config.name ?? "no instance selected!" }}</p>
     </div>
@@ -65,21 +65,45 @@
       </p>
     </div>
     <div class="row-3" ref="row3" style="opacity: 0">
-      <button
-        class="launch-button"
-        @click="navigationStore.navigate('launch')"
-        :class="{ disabled: !currentInstance }">
-        <AppIcon name="play" fill="#fff" style="margin-right: 4px"></AppIcon>
-        {{ t("game.summary.startGame") }}
-      </button>
-      <button class="launch-sub-button">
-        <AppIcon
-          name="chevron-down"
-          stroke="#ffffff"
-          fill="#ffffff"
-          style="color: #fff"
-          :size="16"></AppIcon>
-      </button>
+      <div class="launch-buttons" ref="launchButtons">
+        <button
+          class="launch-button"
+          @click="navigationStore.navigate('launch')"
+          :class="{ disabled: !currentInstance }">
+          <AppIcon name="play" fill="#fff" style="margin-right: 4px"></AppIcon>
+          {{ t("game.summary.startGame") }}
+        </button>
+        <button class="launch-sub-button" @click.stop="toggleLaunchMenu">
+          <span class="chevron" ref="launchMenuChevron">
+            <AppIcon
+              name="chevron-down"
+              stroke="#ffffff"
+              fill="#ffffff"
+              style="color: #fff"
+              :size="16"></AppIcon>
+          </span>
+        </button>
+        <Transition
+          :css="false"
+          @before-enter="onBeforeEnter"
+          @enter="onEnter"
+          @after-enter="onAfterEnter"
+          @enter-cancelled="onEnterCancelled"
+          @before-leave="onBeforeLeave"
+          @leave="onLeave"
+          @after-leave="onAfterLeave"
+          @leave-cancelled="onLeaveCancelled">
+          <ul
+            class="launch-menu-dropdown"
+            v-if="launchMenuOpened"
+            @click="launchMenuOpened = false">
+            <li class="dropdown-option" @click="repairAndLaunch">
+              <AppIcon name="build" :size="14"></AppIcon>
+              <span>{{ t("game.summary.repairAndLaunch") }}</span>
+            </li>
+          </ul>
+        </Transition>
+      </div>
       <div class="actions" :class="{ disabled: !currentInstance }">
         <button class="action-button" @click="openInstanceFolder">
           <AppIcon name="folder"></AppIcon>
@@ -92,12 +116,34 @@
         </button>
       </div>
     </div>
-    <div class="row-4" ref="row4" style="opacity: 0" :class="{ disabled: !currentInstance }">
+    <div class="current-instance-contents" ref="contents" :class="{ disabled: !currentInstance }">
       <div @click="useShowContent().value.saves = true" ref="saves" style="opacity: 0">
-        <AppIcon name="save"></AppIcon>
         <div>
-          <span class="type">{{ t("game.summary.saves") }}</span
-          ><span class="count"
+          <AppIcon name="save"></AppIcon>
+          <span class="type">{{ t("game.summary.saves") }}</span>
+        </div>
+        <div>
+          <div
+            class="content-img"
+            v-for="(folderName, index) in Object.keys(contentStore.gameContent.saves ?? {}).slice(
+              0,
+              5,
+            )"
+            :key="index">
+            <img
+              v-if="iconCache[folderName]"
+              :src="iconCache[folderName]"
+              alt="world icon"
+              width="64px"
+              height="64px" />
+            <img
+              v-else
+              src="@/assets/images/Unknown_server.webp"
+              alt="world icon"
+              width="64px"
+              height="64px" />
+          </div>
+          <span class="count"
             >{{ Object.keys(contentStore.gameContent.saves ?? {}).length }}
             {{ t("game.summary.countUnit") }}</span
           >
@@ -112,10 +158,24 @@
             !currentInstance?.config.runtime.mod_loader_type ||
             !currentInstance.config.runtime.mod_loader_version,
         }">
-        <AppIcon name="extension-puzzle" />
         <div>
-          <span class="type">{{ t("game.summary.mods") }}</span
-          ><span class="count"
+          <AppIcon name="extension-puzzle" />
+          <span class="type">{{ t("game.summary.mods") }}</span>
+        </div>
+        <div>
+          <div
+            class="content-img"
+            v-for="(mod, index) in (contentStore.gameContent.mods ?? []).slice(0, 5)"
+            :key="index">
+            <img v-if="mod.icon" :src="mod.icon" alt="mod icon" width="64px" height="64px" />
+            <img
+              v-else
+              src="@/assets/images/Unknown_server.webp"
+              alt="world icon"
+              width="64px"
+              height="64px" />
+          </div>
+          <span class="count"
             >{{ (contentStore.gameContent.mods ?? []).length }}
             {{ t("game.summary.countUnit") }}</span
           >
@@ -125,10 +185,29 @@
         @click="useShowContent().value.resourcepacks = true"
         ref="resourcepacks"
         style="opacity: 0">
-        <AppIcon name="folder" />
         <div>
-          <span class="type">{{ t("game.summary.resourcePacks") }}</span
-          ><span class="count"
+          <AppIcon name="folder" />
+          <span class="type">{{ t("game.summary.resourcePacks") }}</span>
+        </div>
+        <div>
+          <div
+            class="content-img"
+            v-for="(pack, index) in (contentStore.gameContent.resourcepacks ?? []).slice(0, 5)"
+            :key="index">
+            <img
+              v-if="pack.icon"
+              :src="pack.icon"
+              alt="resourcepack icon"
+              width="64px"
+              height="64px" />
+            <img
+              v-else
+              src="@/assets/images/Unknown_server.webp"
+              alt="world icon"
+              width="64px"
+              height="64px" />
+          </div>
+          <span class="count"
             >{{ (contentStore.gameContent.resourcepacks ?? []).length }}
             {{ t("game.summary.countUnit") }}</span
           >
@@ -139,10 +218,20 @@
         ref="screenshots"
         style="opacity: 0"
         :class="{ disabled: !(contentStore.gameContent.screenshots ?? []).length }">
-        <AppIcon name="images-outline" />
         <div>
-          <span class="type">{{ t("game.summary.screenshots") }}</span
-          ><span class="count"
+          <AppIcon name="images-outline" />
+          <span class="type">{{ t("game.summary.screenshots") }}</span>
+        </div>
+        <div>
+          <div
+            class="content-img"
+            v-for="(src, index) in (contentStore.gameContent.screenshots ?? [])
+              .slice(0, 5)
+              .map((path) => convertFileSrc(path))"
+            :key="index">
+            <img :src="src" alt="screenshot icon" width="64px" height="64px" />
+          </div>
+          <span class="count"
             >{{ (contentStore.gameContent.screenshots ?? []).length }}
             {{ t("game.summary.countUnit") }}</span
           >
@@ -160,16 +249,23 @@ import {
   calculatePlaytime,
   formatLastPlayed,
   formatPlayTime,
+  removeInstallLock,
   updateInstance,
 } from "@conic/instance";
 import { useNavigationStore } from "@/store/navigation";
 import { getInstanceRoot } from "@conic/folder";
-import { invoke } from "@tauri-apps/api/core";
-import { useInstanceSettings } from "./useGameView";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { useInstanceSettings } from "@/overlays/useInstanceSettings";
+import {
+  flipDropdownChevron,
+  useDismissOnOutsidePointerDown,
+  useDropdownTransition,
+} from "./useDropdownTransition";
 import { useGameContentStore } from "@/store/content";
-import { useShowContent, useShowContentDetails } from "../content/useContent";
+import { useShowContent, useShowContentDetails } from "@/overlays/content/useContent";
 import gsap from "gsap";
 import { useI18n } from "vue-i18n";
+import { getSaveIcon } from "@conic/content";
 
 const { t } = useI18n();
 
@@ -195,6 +291,7 @@ const playTimeFormatter = {
 const instanceStore = useInstanceStore();
 const navigationStore = useNavigationStore();
 const contentStore = useGameContentStore();
+
 const showInstanceSettings = useInstanceSettings();
 const showContent = useShowContent();
 const showContentDetails = useShowContentDetails();
@@ -221,6 +318,45 @@ async function toggleStarred() {
   };
   await updateInstance(config, currentInstance.value.id);
   await instanceStore.loadInstances();
+}
+
+const launchMenuOpened = ref(false);
+const launchButtons = ref<HTMLElement | null>(null);
+const launchMenuChevron = ref<HTMLElement | null>(null);
+
+useDismissOnOutsidePointerDown(launchButtons, launchMenuOpened);
+
+function toggleLaunchMenu() {
+  launchMenuOpened.value = !launchMenuOpened.value;
+}
+
+const {
+  onBeforeEnter,
+  onEnter,
+  onAfterEnter,
+  onEnterCancelled,
+  onBeforeLeave,
+  onLeave,
+  onAfterLeave,
+  onLeaveCancelled,
+} = useDropdownTransition(launchMenuOpened, {
+  onChange: (value) => {
+    flipDropdownChevron(launchMenuChevron.value, value ? 180 : 0);
+  },
+});
+
+// Removes the install lock of the current instance and launches the game, so
+// the launch pipeline re-runs the installation flow first.
+async function repairAndLaunch() {
+  if (!currentInstance.value) return;
+  try {
+    await removeInstallLock(currentInstance.value.id);
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+  currentInstance.value.installed = false;
+  navigationStore.navigate("launch");
 }
 
 function onKeyDown(event: KeyboardEvent) {
@@ -273,11 +409,33 @@ watch(
   { immediate: true },
 );
 
+const iconCache = ref({} as Record<string, string>);
+
+watch(
+  () => contentStore.gameContent.saves,
+  async (saves) => {
+    if (!saves) {
+      return;
+    }
+    const promises = Object.keys(saves).map(async (key) => {
+      try {
+        if (!instanceStore.currentInstance) {
+          throw "currentInstance is null";
+        }
+        iconCache.value[key] = await getSaveIcon(instanceStore.currentInstance.id, key);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+    await Promise.allSettled(promises);
+  },
+  { immediate: true },
+);
+
 const rowElements = {
   row1: useTemplateRef("row1"),
   row2: useTemplateRef("row2"),
   row3: useTemplateRef("row3"),
-  row4: useTemplateRef("row4"),
 };
 
 const gameContentElements = {
@@ -287,9 +445,15 @@ const gameContentElements = {
   screenshots: useTemplateRef("screenshots"),
 };
 
+const introPlayed = ref(false);
+
 const playIntro = () => {
   return gsap
-    .timeline()
+    .timeline({
+      onComplete: () => {
+        introPlayed.value = true;
+      },
+    })
     .fromTo(
       Object.values(rowElements).map((elementRef) => elementRef.value),
       { opacity: 0, x: -50 },
@@ -305,16 +469,16 @@ const playIntro = () => {
       Object.values(gameContentElements).map((elementRef) => elementRef.value),
       {
         opacity: 0,
-        scale: 0.6,
+        x: -50,
       },
       {
         opacity: 1,
-        scale: 1,
+        x: 0,
         duration: 0.33,
         stagger: 0.03,
         ease: "power3.out",
       },
-      "<+0.07",
+      "<+0.03",
     );
 };
 
@@ -324,9 +488,13 @@ defineExpose({ playIntro });
 <style lang="less" scoped>
 .current-instance {
   position: absolute;
-  top: 40%;
+  top: 45%;
   transform: translateY(-50%);
   margin-left: 48px;
+
+  &:not(.introPlayed) {
+    pointer-events: none;
+  }
 
   .row-1 {
     display: flex;
@@ -381,6 +549,7 @@ defineExpose({ playIntro });
     align-items: center;
     margin-top: 16px;
     position: relative;
+    z-index: 1;
 
     .open-instance-setting-button {
       appearance: none;
@@ -437,6 +606,17 @@ defineExpose({ playIntro });
       }
     }
 
+    .launch-buttons {
+      position: relative;
+      display: flex;
+      align-items: center;
+
+      .chevron {
+        display: inline-flex;
+        align-items: center;
+      }
+    }
+
     .launch-button {
       appearance: none;
       border: none;
@@ -462,6 +642,42 @@ defineExpose({ playIntro });
       margin-left: 2px;
     }
 
+    .launch-menu-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--dialog-border-radius);
+      border: var(--controllers-border);
+      background: var(--ctp-base);
+      box-shadow: 0px 0px 10px #4500611d;
+      z-index: 100000;
+      list-style: none;
+
+      .dropdown-option {
+        height: 26px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 0;
+        border-radius: var(--controllers-border-radius);
+        font-size: 12px;
+        list-style: none;
+        white-space: nowrap;
+        transition: all 30ms ease;
+
+        &:hover {
+          background: #ffffff1f;
+        }
+
+        &:active {
+          background: #ffffff15;
+        }
+      }
+    }
+
     .launch-button.disabled,
     .launch-button.disabled ~ .launch-sub-button {
       opacity: 0.6;
@@ -473,13 +689,11 @@ defineExpose({ playIntro });
     }
   }
 
-  .row-4 {
+  .current-instance-contents {
     display: flex;
+    flex-direction: column;
     align-items: center;
     margin-top: 16px;
-    background: #4f4f4f72;
-    background: var(--ctp-base);
-    backdrop-filter: blur(10px);
     width: fit-content;
     padding: 4px 4px;
     border-radius: 12px;
@@ -488,9 +702,13 @@ defineExpose({ playIntro });
     > div {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       padding: 8px 16px;
       border-radius: 8px;
+      background: rgba(var(--ctp-surface0-rgb), 0.7);
       transition: all 100ms ease;
+      font-size: 14px;
+      width: 400px;
 
       &:hover {
         background: var(--ctp-surface0);
@@ -502,32 +720,28 @@ defineExpose({ playIntro });
         transform: scale(0.95);
       }
     }
+    > div > div {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    > div > div > div.content-img {
+      display: flex;
+      gap: 1px;
+      img {
+        width: 20px;
+        height: 20px;
+        border-radius: 10000px;
+        border: 1px solid rgba(var(--ctp-lavender-rgb), 0.8);
+      }
+    }
     > div.disabled,
     > div.disabled * {
       pointer-events: none;
       opacity: 0.6;
     }
-    > div > div {
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: initial;
-      width: fit-content;
-      padding: 2px 4px;
-      margin-left: 8px;
-
-      :first-child {
-        opacity: 0.8;
-        font-size: 12px;
-      }
-
-      :last-child {
-        margin-top: 2px;
-        font-size: 15px;
-      }
-    }
   }
-  .row-4.disabled * {
+  .current-instance-contents.disabled * {
     opacity: 0.6;
     pointer-events: none;
   }

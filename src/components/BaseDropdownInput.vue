@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import AppIcon from "../AppIcon.vue";
+import AppIcon from "./AppIcon.vue";
 import { ref, watch } from "vue";
 
 const props = withDefaults(

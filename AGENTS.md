@@ -29,6 +29,8 @@ Use **pnpm** only. README says `yarn` — it's stale. Engine is `pnpm@11.7.0`; `
 - **`core/`** — Tauri v2 app crate. Entrypoint: `core/src/main.rs`. Registers all plugins (config, account, install, instance, launch, folder, platform) and their invoke handlers in `core/build.rs`.
 - **`crates/*/`** — Rust library crates. Each has a corresponding `crates/<name>/index.ts` that wraps `@tauri-apps/api/core` `invoke()` calls. The TypeScript frontend imports these as `@conic/<name>` (Vite alias resolves `@conic` → `./crates`).
 - **`src/`** — Vue 3 + Pinia + vue-i18n frontend. Entrypoint: `src/main.ts`. Uses `@tauri-apps/api` for window and invoke.
+- **`src/views/`** — Screens (osu!-style): full-page views switched by `navigationStore` (`GameView`, `LaunchView`, `SettingsView`, `AccountsView`, `SetupWizard`). Screen-local subcomponents live in their subdirectories (`views/game/*`, `views/settings/*`, `views/setup/*`).
+- **`src/overlays/`** — Global overlays (osu!-style): persistent layers mounted above all screens. `DialogRoot.vue` mounts everything under `overlays/dialogs/*`; content panels live in `overlays/content/*`; `InstanceSetting.vue`, `CommandPalette.vue`, `MusicPlayer.vue` sit at the overlays root. Visibility state for instance settings: `overlays/useInstanceSettings.ts`; for content panels: `overlays/content/useContent.ts`.
 - **`core/capabilities/main.json`** — Tauri v2 capability/permission file. Adding a new Tauri command requires adding a permission entry here and in `core/build.rs`.
 
 ## Crate map
@@ -88,11 +90,12 @@ The app uses `vue-i18n` for internationalization. Locale files are in `src/local
 
 The supported locale list must match the UI language pickers in `src/views/settings/SettingsGeneral.vue` and `src/views/setup/SetupWizardLanguage.vue`.
 
-Top-level keys: `app`, `game`, `content`, `setup`, `settings`.
+Top-level keys: `app`, `game`, `overlays`, `setup`, `settings`. Locale namespaces mirror the component structure.
 
-- `app.*` — App-wide strings (titlebar search, command palette, music player, update indicator)
-- `game.*` — Game view, instance list, instance settings, launch view, footer, time formatting (`game.time.*`)
-- `content.*` — Content panels (mods, resource packs, modpacks, saves, screenshots)
+- `app.*` — App-wide strings (titlebar search, update indicator)
+- `game.*` — Game view, instance list, launch view, footer, time formatting (`game.time.*`)
+- `overlays.dialogs.*` — Dialog overlays (e.g. `overlays.dialogs.createInstance.*`, `overlays.dialogs.minecraftChoose.*`)
+- `overlays.content.*` — Content panels (mods, resource packs, modpacks, saves, screenshots)
 - `setup.*` — Setup wizard (all steps)
 - `settings.*` — Settings view (all tabs)
 
@@ -113,12 +116,14 @@ vue-i18n pipe syntax is used where grammar requires it:
 
 **Fully internationalized:**
 
-- `src/views/game/*` (InstancesList, InstanceSummary, InstanceSetting, Footer, InstancesListToolBar)
+- `src/views/game/*` (InstancesList, InstanceSummary, Footer, InstancesListToolBar)
 - `src/views/LaunchView.vue`
-- `src/views/content/*` (all content panel files)
+- `src/overlays/content/*` (all content panel files)
+- `src/overlays/dialogs/CreateInstance.vue` and its subcomponents (`create/MinecraftChoose.vue`)
 - `src/views/SetupWizard.vue` and `src/views/setup/*`
 - `src/views/SettingsView.vue` and `src/views/settings/*`
-- `src/components/MusicPlayer.vue`
+- `src/overlays/MusicPlayer.vue`
+- `src/overlays/CommandPalette.vue`
 - `src/components/TitleBarUpdateIndicator.vue`
 - `src/components/BaseSearchBar.vue`
 - `src/App.vue` (titlebar search placeholder)
@@ -126,7 +131,8 @@ vue-i18n pipe syntax is used where grammar requires it:
 **Not yet internationalized (accounts — pending new UI):**
 
 - `src/views/accounts/*`
-- `src/dialogs/*`
+- Remaining dialogs in `src/overlays/dialogs/*` other than the create-instance flow
+- `src/overlays/InstanceSetting.vue` (uses `game.instance.*` keys; namespace may move under `overlays.*` later)
 
 ### How to add/update i18n strings
 

@@ -8,22 +8,29 @@
     <div class="title-bar" data-tauri-drag-region ref="title-bar" style="opacity: 0">
       <div
         class="title-bar-actions title-bar-actions-left"
-        :class="{ 'title-bar-actions-mac': isMacOS() }">
+        :class="{
+          'title-bar-actions-mac': isMacOS(),
+          disabled: navigationStore.currentPage === 'launch',
+        }">
+        <!-- <button -->
+        <!--   class="title-bar-action-btn" -->
+        <!--   :class="{ -->
+        <!--     disabled: -->
+        <!--       navigationStore.history.length === 0 || navigationStore.currentPage === 'launch', -->
+        <!--   }" -->
+        <!--   @click="navigationStore.back()"> -->
+        <!--   <AppIcon name="arrow-back-outline" :size="18" /> -->
+        <!-- </button> -->
+        <!-- TODO: navigation shortcut keys: opt+Home / opt+h to home, cmd+, to settings -->
         <button
           class="title-bar-action-btn"
-          :class="{
-            disabled:
-              navigationStore.history.length === 0 || navigationStore.currentPage === 'launch',
-          }"
-          @click="navigationStore.back()">
-          <AppIcon name="arrow-back-outline" :size="18" />
+          :class="{ selected: navigationStore.currentPage === 'settings' }"
+          @click="navigationStore.navigate('settings')">
+          <AppIcon name="settings" :size="18" />
         </button>
         <button
           class="title-bar-action-btn"
-          :class="{
-            disabled:
-              navigationStore.currentPage === 'game' || navigationStore.currentPage === 'launch',
-          }"
+          :class="{ selected: navigationStore.currentPage === 'game' }"
           @click="navigationStore.navigate('game')">
           <AppIcon name="house" :size="18" />
         </button>
@@ -74,9 +81,7 @@
           :hover="windowButtonHover"
           :lit="windowButtonLit"></WindowButton>
       </div>
-      <div
-        class="title-bar-actions"
-        :class="{ 'is-macos': isMacOS(), disabled: navigationStore.currentPage === 'settings' }">
+      <div class="title-bar-actions" :class="{ 'is-macos': isMacOS() }">
         <button
           v-if="config.music.enabled"
           class="title-bar-action-btn"
@@ -84,9 +89,6 @@
           <AppIcon name="musical-notes" :size="18" />
         </button>
         <TitleBarUpdateIndicator />
-        <button class="title-bar-action-btn" @click="navigationStore.navigate('settings')">
-          <AppIcon name="settings" :size="18" />
-        </button>
       </div>
     </div>
     <main class="main" style="transition: none">
@@ -105,13 +107,13 @@
 <script setup lang="ts">
 import WindowButton from "./components/WindowButton.vue";
 import SearchBar from "./components/BaseSearchBar.vue";
-import CommandPalette from "./components/CommandPalette.vue";
+import CommandPalette from "./overlays/CommandPalette.vue";
 import TitleBarUpdateIndicator from "./components/TitleBarUpdateIndicator.vue";
 import GameView from "./views/GameView.vue";
 import SettingsView from "./views/SettingsView.vue";
 import AccountsView from "./views/AccountsView.vue";
-import DialogRoot from "./DialogRoot.vue";
-import MusicPlayer from "./components/MusicPlayer.vue";
+import DialogRoot from "./overlays/DialogRoot.vue";
+import MusicPlayer from "./overlays/MusicPlayer.vue";
 import { computed, markRaw, onMounted, reactive, ref, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfigStore } from "./store/config";
@@ -408,6 +410,12 @@ main.main {
   display: flex;
   align-items: center;
   gap: 4px;
+  transition: opacity 300ms ease;
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }
 
 .title-bar-actions.is-macos {
@@ -434,6 +442,7 @@ main.main {
   background: transparent;
   color: var(--window-btn-icon-color);
   transform: scale(1);
+  position: relative;
   transition:
     background 120ms ease,
     transform 120ms eaes;
@@ -443,6 +452,30 @@ main.main {
   }
   &:active {
     background: rgba(var(--ctp-overlay0-rgb), 0.7);
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    opacity: 0;
+    height: 2px;
+    border-radius: 100px;
+    bottom: -2px;
+    background: var(--ctp-text);
+    transition:
+      width 200ms ease,
+      opacity 200ms ease;
+  }
+  &.selected {
+    color: var(--ctp-mauve);
+    :deep(*) {
+      color: var(--ctp-mauve);
+    }
+    &::after {
+      width: 14px;
+      opacity: 1;
+    }
   }
 }
 .title-bar-action-btn.disabled {

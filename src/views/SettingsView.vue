@@ -220,15 +220,19 @@ function onScroll() {
       content: "";
       width: 3px;
       height: 0px;
+      opacity: 0;
       margin-left: -16px;
       margin-right: 13px;
       border-radius: 9999px;
       background: var(--ctp-mauve);
-      transition: height 100ms ease;
+      transition:
+        height 100ms ease,
+        opacity 100ms ease;
     }
     li.active::before {
       content: "";
       height: 22px;
+      opacity: 1;
     }
   }
 }
