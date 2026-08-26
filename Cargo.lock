@@ -680,7 +680,7 @@ dependencies = [
 
 [[package]]
 name = "conic-launcher"
-version = "0.0.1-alpha.4"
+version = "0.1.0-alpha.1"
 dependencies = [
  "account",
  "beat_this",
