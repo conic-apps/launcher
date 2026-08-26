@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Label PR based on title
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
             const prTitle = context.payload.pull_request.title.toLowerCase();
@@ -23,7 +23,8 @@ jobs:
               'perf': 'performance',
               'test': 'test',
               'chore': 'chore',
-              'ci': 'ci'
+              'ci': 'ci',
+              'release': 'release'
             };
 
             let labelToAdd = null;

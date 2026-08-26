@@ -14,7 +14,7 @@ jobs:
   get-version:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
       - name: Get app version
@@ -61,7 +61,7 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
@@ -70,7 +70,7 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
 
       - name: setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache-dependency-path: "pnpm-lock.yaml"
@@ -100,28 +100,28 @@ jobs:
           pnpm run tauri build --verbose
 
       - name: Upload deb bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: Debian bundle(${{ matrix.deb }})
           path: ${{ github.workspace }}/target/release/bundle/deb/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.deb }}.deb
 
       - name: Upload rpm bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: RPM bundle(${{ matrix.rpm }})
           path: ${{ github.workspace }}/target/release/bundle/rpm/conic-launcher-${{ needs.get-version.outputs.app_version }}-1.${{ matrix.rpm }}.rpm
 
       - name: Upload appimage bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: AppImage bundle(${{ matrix.appimage }})
           path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.appimage }}.AppImage
 
       - name: Upload appimage updater signature
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: Updater signature(${{ matrix.appimage }}-appimage)
@@ -132,65 +132,65 @@ jobs:
         run: ren "${{ github.workspace }}/target/release/conic-launcher.exe" "${{ github.workspace }}/target/release/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.exe"
 
       - name: Upload Windows installation-free exe
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
         with:
           name: Windows Installation-free(${{ matrix.arch }}-exe)
           path: ${{ github.workspace }}/target/release/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.exe
 
       - name: Upload Microsoft Installer bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
         with:
           name: Microsoft Installer bundle(${{ matrix.arch }})
           path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}_en-US.msi
 
       - name: Upload Microsoft Installer signature
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
         with:
           name: Updater signature(${{ matrix.arch }}-msi)
           path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}_en-US.msi.sig
 
       - name: Upload NSIS bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
         with:
           name: NSIS bundle(${{ matrix.arch }})
           path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}-setup.exe
 
       - name: Upload NSIS updater signature
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
         with:
           name: Updater signature(${{ matrix.arch }}-nsis)
           path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}-setup.exe.sig
 
       - name: Upload dmg bundle
-        uses: actions/upload-artifact@v4
-        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
+        uses: actions/upload-artifact@v7
+        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-15-intel'
         with:
           name: MacOS ${{ matrix.arch }} bundle(dmg)
           path: ${{ github.workspace }}/target/release/bundle/dmg/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg
 
       - name: Rename macos updater bundle
-        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
+        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-15-intel'
         run: mv "${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz" "${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz"
 
       - name: Upload macos updater bundle
-        uses: actions/upload-artifact@v4
-        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
+        uses: actions/upload-artifact@v7
+        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-15-intel'
         with:
           name: MacOS ${{ matrix.arch }} updater bundle
           path: ${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz
 
       - name: Rename macos updater signature
-        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
+        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-15-intel'
         run: mv "${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz.sig" "${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz.sig"
 
       - name: Upload macos updater signature
-        uses: actions/upload-artifact@v4
-        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-13'
+        uses: actions/upload-artifact@v7
+        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-15-intel'
         with:
           name: MacOS ${{ matrix.arch }} updater signature
           path: ${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz.sig
@@ -200,11 +200,11 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-22.04
-    if: needs.get-version.outputs.app_version != needs.get-version.outputs.previous_app_version
+    if: github.event_name == 'push' && needs.get-version.outputs.app_version != needs.get-version.outputs.previous_app_version
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ./release_files
 
@@ -219,7 +219,7 @@ jobs:
 
       - name: Create release
         id: drafter
-        uses: release-drafter/release-drafter@v6
+        uses: release-drafter/release-drafter@v7
         with:
           version: ${{ needs.get-version.outputs.app_version }}
           prerelease: ${{ steps.detect.outputs.is_prerelease }}
@@ -228,7 +228,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ./release_files
 
@@ -239,5 +239,5 @@ jobs:
         run: |
           find ./release_files -type f -print0 | while IFS= read -r -d '' file; do
             echo "Uploading $file to release $TAG_NAME"
-            gh release upload "$TAG_NAME" "$file" --repo conic-apps/launcher
+            gh release upload "$TAG_NAME" "$file" --clobber --repo conic-apps/launcher
           done

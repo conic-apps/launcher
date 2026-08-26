@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Rust and rustfmt
         uses: dtolnay/rust-toolchain@stable
@@ -49,7 +49,7 @@ jobs:
           - platform: "windows-latest"
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: install dependencies
         if: matrix.platform == 'ubuntu-latest'
@@ -78,7 +78,7 @@ jobs:
           - platform: "windows-latest"
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: install dependencies
         if: matrix.platform == 'ubuntu-latest'
