@@ -60,7 +60,7 @@ async function createLatestReleaseInstance() {
     });
     createdLatestRelease.value = minecraftVersionManifest.latest.release;
   } catch (error) {
-    console.log("Failed to create latest release instance", error);
+    console.error("Failed to create latest release instance", error);
     createLatestReleaseErrorOccured.value = true;
   } finally {
     creatingLatestRelease.value = false;
@@ -78,7 +78,7 @@ async function createLatestSnapshotInstance() {
     });
     createdLatestSnapshot.value = minecraftVersionManifest.latest.snapshot;
   } catch (error) {
-    console.log("Failed to create latest snapshot instance", error);
+    console.error("Failed to create latest snapshot instance", error);
     createLatestSnapshotErrorOccured.value = true;
   } finally {
     creatingLatestSnapshot.value = false;
