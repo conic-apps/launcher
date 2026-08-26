@@ -54,7 +54,10 @@ serde_with = "3"
 sha1_smol = "1"
 sha2 = { version = "0.10", default-features = false }
 sys-locale = "0.3"
-tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression", "macos-private-api", "protocol-asset", "devtools"] }
+# Do NOT enable tauri's "devtools" feature here: it would force-enable devtools
+# in release builds. Debug builds always have them; opt back in via core's own
+# `devtools` feature when debugging production issues.
+tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression", "macos-private-api", "protocol-asset"] }
 thiserror = "2"
 toml = "1"
 url = "2"

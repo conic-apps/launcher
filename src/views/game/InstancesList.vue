@@ -94,8 +94,8 @@ import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch 
 import { convertFileSrc } from "@tauri-apps/api/core";
 import InstancesListToolBar from "./InstancesListToolBar.vue";
 import InstancesListScrollView from "./InstancesListScrollView.vue";
-import { useShowContent } from "../content/useContent";
-import { useInstanceSettings } from "./useGameView";
+import { useShowContent } from "@/overlays/content/useContent";
+import { useInstanceSettings } from "@/overlays/useInstanceSettings";
 import gsap from "gsap";
 import AppIcon from "@/components/AppIcon.vue";
 import { useI18n } from "vue-i18n";

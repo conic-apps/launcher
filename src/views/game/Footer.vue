@@ -96,7 +96,7 @@ import { useAccountStore } from "@/store/account";
 import { useConfigStore } from "@/store/config";
 import { useDialogStore } from "@/store/dialog";
 import { useNavigationStore } from "@/store/navigation";
-import { useShowContent } from "../content/useContent";
+import { useShowContent } from "@/overlays/content/useContent";
 import { yggdrasilGetSkinUrl, type Account } from "@conic/account";
 import { computed, onMounted, ref, useTemplateRef } from "vue";
 import SteveSkin from "@/assets/images/skins/wide/steve.webp?url";

@@ -94,6 +94,7 @@ fn main() {
                 "cmd_get_background_path",
                 "cmd_calculate_playtime",
                 "cmd_remove_background",
+                "cmd_remove_install_lock",
             ]),
         )
         .plugin(

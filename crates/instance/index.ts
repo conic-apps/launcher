@@ -72,6 +72,10 @@ export async function deleteInstance(id: string): Promise<void> {
     return await invoke("plugin:instance|cmd_delete_instance", { id })
 }
 
+export async function removeInstallLock(id: string): Promise<void> {
+    return await invoke("plugin:instance|cmd_remove_install_lock", { id })
+}
+
 export async function addBackgroundImage(path: string, id: string): Promise<void> {
     return await invoke("plugin:instance|cmd_add_background_file", { path, id })
 }

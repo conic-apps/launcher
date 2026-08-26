@@ -35,6 +35,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             cmd_add_background_file,
             cmd_get_background_path,
             cmd_remove_background,
+            cmd_remove_install_lock,
             cmd_calculate_playtime,
         ])
         .build()
@@ -85,6 +86,11 @@ async fn cmd_get_background_path(id: String) -> String {
 async fn cmd_remove_background(id: &str) -> Result<()> {
     let instance_root = DATA_LOCATION.get_instance_root(id);
     Ok(async_fs::remove_file(instance_root.join("background")).await?)
+}
+
+#[command]
+async fn cmd_remove_install_lock(id: &str) -> Result<()> {
+    remove_install_lock(id).await
 }
 
 #[command]
@@ -409,6 +415,20 @@ pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
 pub async fn delete_instance(id: &str) -> Result<()> {
     async_fs::remove_dir_all(DATA_LOCATION.get_instance_root(id)).await?;
     info!("Deleted {id}");
+    Ok(())
+}
+
+/// Removes the `.install.lock` marker file of an instance.
+///
+/// The lock file marks an instance as installed; deleting it makes the next
+/// launch re-run the full installation flow (repair).
+pub async fn remove_install_lock(id: &str) -> Result<()> {
+    let lock_file = DATA_LOCATION.get_instance_root(id).join(".install.lock");
+    if let Err(err) = async_fs::remove_file(lock_file).await
+        && err.kind() != std::io::ErrorKind::NotFound
+    {
+        return Err(err.into());
+    }
     Ok(())
 }
 
