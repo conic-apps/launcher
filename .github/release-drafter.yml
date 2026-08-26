@@ -1,27 +1,32 @@
 name-template: "Conic Launcher v$RESOLVED_VERSION"
 tag-template: "v$RESOLVED_VERSION"
 categories:
+  - type: "pre-exclude"
+    when:
+      labels:
+        - "ci"
+        - "chore"
+        - "documentation"
+        - "refactor"
+        - "test"
+        - "style"
+        - "release"
   - title: "✨ Features"
-    labels:
-      - "feature"
-      - "enhancement"
+    when:
+      labels:
+        - "feature"
+        - "enhancement"
   - title: "🐛 Bug Fixes"
-    labels:
-      - "fix"
-      - "bugfix"
-      - "bug"
+    when:
+      labels:
+        - "fix"
+        - "bugfix"
+        - "bug"
   - title: "🚀 Performance"
-    labels:
-      - "performance"
+    when:
+      labels:
+        - "performance"
 change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
 change-title-escapes: '\<*_&'
-exclude-labels:
-  - "ci"
-  - "chore"
-  - "documentation"
-  - "refactor"
-  - "test"
-  - "style"
-  - "release"
 template: |
   $CHANGES
