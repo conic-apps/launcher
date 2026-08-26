@@ -200,7 +200,7 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-22.04
-    if: needs.get-version.outputs.app_version != needs.get-version.outputs.previous_app_version
+    if: github.event_name == 'push' && needs.get-version.outputs.app_version != needs.get-version.outputs.previous_app_version
     steps:
       - uses: actions/checkout@v7
       - name: Download artifacts
@@ -239,5 +239,5 @@ jobs:
         run: |
           find ./release_files -type f -print0 | while IFS= read -r -d '' file; do
             echo "Uploading $file to release $TAG_NAME"
-            gh release upload "$TAG_NAME" "$file" --repo conic-apps/launcher
+            gh release upload "$TAG_NAME" "$file" --clobber --repo conic-apps/launcher
           done
