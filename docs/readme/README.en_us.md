@@ -1,15 +1,15 @@
 <div align="center">
-  <img src="./docs/screenshots/hero.png" width="100%" alt="Conic Launcher — a modern, cross-platform Minecraft launcher showcasing four Catppuccin themes">
+  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher —— a modern, cross-platform Minecraft launcher showcasing four Catppuccin themes">
   <p>
     <a href="https://github.com/conic-apps/launcher/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/conic-apps/launcher/build.yml?label=build&logo=github" alt="Build status"></a>
     <a href="https://github.com/conic-apps/launcher/releases"><img src="https://img.shields.io/github/v/release/conic-apps/launcher?include_prereleases&label=release" alt="Release"></a>
-    <a href="./LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
+    <a href="../../LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
   </p>
   <p><strong>A small, fast, and nimble Minecraft launcher</strong><br>
   Multi-instance management · Mod & resource pack marketplace · Cross-LAN multiplayer · Multi-theme support</p>
   <p>
-    🌐 <strong>English</strong> · <a href="./docs/readme/README.zh_cn.md">简体中文</a> · <a href="./docs/readme/README.zh_tw.md">繁體中文</a> · <a href="./docs/readme/README.ja_jp.md">日本語</a> · <a href="./docs/readme/README.ko_kr.md">한국어</a> · <a href="./docs/readme/README.de_de.md">Deutsch</a> · <a href="./docs/readme/README.fr_fr.md">Français</a> · <a href="./docs/readme/README.es_es.md">Español</a> · <a href="./docs/readme/README.pt_br.md">Português (Brasil)</a> · <a href="./docs/readme/README.ru_ru.md">Русский</a> · <a href="./docs/readme/README.tr_tr.md">Türkçe</a> · <a href="./docs/readme/README.pl_pl.md">Polski</a>
+    🌐 <a href="../../README.md"><strong>English</strong></a> · <a href="./README.zh_cn.md">简体中文</a> · <a href="./README.zh_tw.md">繁體中文</a> · <a href="./README.ja_jp.md">日本語</a> · <a href="./README.ko_kr.md">한국어</a> · <a href="./README.de_de.md">Deutsch</a> · <a href="./README.fr_fr.md">Français</a> · <a href="./README.es_es.md">Español</a> · <a href="./README.pt_br.md">Português (Brasil)</a> · <a href="./README.ru_ru.md">Русский</a> · <a href="./README.tr_tr.md">Türkçe</a> · <a href="./README.pl_pl.md">Polski</a>
   </p>
 </div>
 
@@ -119,18 +119,18 @@ pnpm check
 ## Architecture
 
 <div align="center">
-  <img src="./docs/screenshots/architecture.png" width="100%" alt="Architecture diagram: Vue 3 frontend communicates with Rust core via Tauri IPC, with domain-split crates below">
+  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Architecture diagram: Vue 3 frontend communicates with Rust core via Tauri IPC, with domain-split crates below">
 </div>
 
 The frontend (Vue 3 + Pinia) communicates with Rust capabilities via Tauri IPC. The `core` handles Tauri app assembly, while specific capabilities are split into domain-focused `crates/*` workspace modules that evolve independently and compose as needed.
 
 ## License
 
-This project is distributed under [GPL-3.0](./LICENSE) with additional terms under GPLv3 Section 7:
+This project is distributed under [GPL-3.0](../../LICENSE) with additional terms under GPLv3 Section 7:
 
-1. When distributing modified versions, you must reasonably change the software name or version number to distinguish it from the original (per [GPL-3.0 §7(c)](./LICENSE)); you need to replace all project-name references in the source code.
-2. You must not remove copyright notices displayed in the software (per [GPL-3.0 §7(b)](./LICENSE)).
-3. If anyone enters contractual terms with recipients and assumes liability, the licensor and authors are not held jointly liable (per [GPL-3.0 §7(b)](./LICENSE)).
+1. When distributing modified versions, you must reasonably change the software name or version number to distinguish it from the original (per [GPL-3.0 §7(c)](../../LICENSE)); you need to replace all project-name references in the source code.
+2. You must not remove copyright notices displayed in the software (per [GPL-3.0 §7(b)](../../LICENSE)).
+3. If anyone enters contractual terms with recipients and assumes liability, the licensor and authors are not held jointly liable (per [GPL-3.0 §7(b)](../../LICENSE)).
 
 ## Acknowledgements
 
