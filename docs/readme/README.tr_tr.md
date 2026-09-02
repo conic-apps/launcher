@@ -88,11 +88,11 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 Platformunuz için yükleyiciyi [GitHub Releases](https://github.com/conic-apps/launcher/releases)'den indirin:
 
-| Platform   | Mimari                 | Formatlar                      |
-| ---------- | ---------------------- | ------------------------------ |
-| Windows    | x64 · arm64            | MSI · NSIS yükleyici · taşınabilir exe |
-| macOS      | Apple Silicon · Intel  | DMG                            |
-| Linux      | x64 · arm64            | deb · rpm · AppImage           |
+| Platform | Mimari                | Formatlar                              |
+| -------- | --------------------- | -------------------------------------- |
+| Windows  | x64 · arm64           | MSI · NSIS yükleyici · taşınabilir exe |
+| macOS    | Apple Silicon · Intel | DMG                                    |
+| Linux    | x64 · arm64           | deb · rpm · AppImage                   |
 
 Uygulama dahili otomatik güncelleme içerir — kurulumdan sonra manuel yükseltme gerekmez.
 

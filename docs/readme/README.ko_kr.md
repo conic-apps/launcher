@@ -88,11 +88,11 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 [GitHub Releases](https://github.com/conic-apps/launcher/releases)에서 플랫폼에 맞는 설치 프로그램을 다운로드하세요:
 
-| 플랫폼   | 아키텍처              | 형식                           |
-| --------- | --------------------- | ------------------------------ |
-| Windows   | x64 · arm64           | MSI · NSIS 설치 프로그램 · 포터블 exe |
-| macOS     | Apple Silicon · Intel | DMG                            |
-| Linux     | x64 · arm64           | deb · rpm · AppImage           |
+| 플랫폼  | 아키텍처              | 형식                                  |
+| ------- | --------------------- | ------------------------------------- |
+| Windows | x64 · arm64           | MSI · NSIS 설치 프로그램 · 포터블 exe |
+| macOS   | Apple Silicon · Intel | DMG                                   |
+| Linux   | x64 · arm64           | deb · rpm · AppImage                  |
 
 앱에 자동 업데이트가 내장되어 있어, 설치 후 수동 업그레이드가 필요 없습니다.
 

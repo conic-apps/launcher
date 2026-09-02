@@ -88,11 +88,11 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 Pobierz instalator dla swojej platformy z [GitHub Releases](https://github.com/conic-apps/launcher/releases):
 
-| Platforma | Architektura            | Formaty                        |
-| --------- | ---------------------- | ------------------------------ |
-| Windows   | x64 · arm64            | MSI · instalator NSIS · przenośny exe |
-| macOS     | Apple Silicon · Intel  | DMG                            |
-| Linux     | x64 · arm64            | deb · rpm · AppImage           |
+| Platforma | Architektura          | Formaty                               |
+| --------- | --------------------- | ------------------------------------- |
+| Windows   | x64 · arm64           | MSI · instalator NSIS · przenośny exe |
+| macOS     | Apple Silicon · Intel | DMG                                   |
+| Linux     | x64 · arm64           | deb · rpm · AppImage                  |
 
 Aplikacja zawiera wbudowane automatyczne aktualizacje — po instalacji nie jest wymagana ręczna aktualizacja.
 

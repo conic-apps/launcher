@@ -88,11 +88,11 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 [GitHub Releases](https://github.com/conic-apps/launcher/releases) からお使いのプラットフォームに対応するインストーラーをダウンロード：
 
-| プラットフォーム | アーキテクチャ        | フォーマット                     |
-| --------------- | --------------------- | -------------------------------- |
-| Windows         | x64 · arm64           | MSI · NSIS インストーラー · ポータブル exe |
-| macOS           | Apple Silicon · Intel | DMG                              |
-| Linux           | x64 · arm64           | deb · rpm · AppImage             |
+| プラットフォーム | アーキテクチャ        | フォーマット                               |
+| ---------------- | --------------------- | ------------------------------------------ |
+| Windows          | x64 · arm64           | MSI · NSIS インストーラー · ポータブル exe |
+| macOS            | Apple Silicon · Intel | DMG                                        |
+| Linux            | x64 · arm64           | deb · rpm · AppImage                       |
 
 アプリには自動更新機能が組み込まれており、インストール後の手動アップグレードは不要です。
 
