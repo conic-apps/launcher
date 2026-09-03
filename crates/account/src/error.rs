@@ -90,6 +90,9 @@ pub enum Error {
     #[error("Invalid device code, please try again")]
     BadVerificationCode,
 
+    #[error("HTTP request failed with status {status}: {body}")]
+    HttpResponse { status: u16, body: String },
+
     #[error(transparent)]
     Aborted(
         #[from]
