@@ -60,7 +60,10 @@ pub(crate) async fn login_with_auth_code(
     reporter: &LoginReporter,
 ) -> Result<MicrosoftAccount> {
     reporter.report(LoginEvent::RedeemAccessToken);
-    let (access_token, refresh_token) = microsoft::redeem_access_token(code).await?;
+    let (access_token, refresh_token) = {
+        let tokens = microsoft::redeem_access_token(code).await?;
+        (tokens.access_token, tokens.refresh_token)
+    };
     finish_login(access_token, refresh_token, reporter).await
 }
 

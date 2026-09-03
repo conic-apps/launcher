@@ -98,10 +98,10 @@ pub struct GetAccessTokenResult {
 pub(crate) async fn cmd_microsoft_redeem_access_token(
     code: String,
 ) -> Result<GetAccessTokenResult> {
-    let (access_token, refresh_token) = crate::microsoft::redeem_access_token(&code).await?;
+    let tokens = crate::microsoft::redeem_access_token(&code).await?;
     Ok(GetAccessTokenResult {
-        access_token,
-        refresh_token,
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
     })
 }
 
