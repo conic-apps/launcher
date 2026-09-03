@@ -110,8 +110,17 @@ pub async fn refresh_account(uuid: Uuid, force_refresh: bool) -> Result<Microsof
         }
     }
     info!("Start refreshing the account: {uuid}");
-    let (access_token, refresh_token) =
-        microsoft_auth_step::get_access_token_from_refresh_token(&account.refresh_token).await?;
+    let (access_token, refresh_token) = {
+        let tokens =
+            microsoft_auth_step::get_access_token_from_refresh_token(&account.refresh_token)
+                .await?;
+        (tokens.access_token, tokens.refresh_token)
+    };
+    // Save the new refresh_token immediately so a failure in the Xbox/XSTS/MC
+    // chain does not lose the rotated token.
+    let mut saved_account = account;
+    saved_account.refresh_token = refresh_token.clone();
+    update_account(uuid, &saved_account).await?;
     let refreshed_account = access_token_auth_flow(&access_token, &refresh_token).await?;
     update_account(uuid, &refreshed_account).await?;
     Ok(refreshed_account)

@@ -19,7 +19,7 @@ pub struct DeviceCodeResponse {
 }
 
 pub async fn request_device_code() -> Result<DeviceCodeResponse> {
-    Ok(HTTP_CLIENT
+    let response = HTTP_CLIENT
         .post("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode")
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(
@@ -27,9 +27,16 @@ pub async fn request_device_code() -> Result<DeviceCodeResponse> {
                 .to_string(),
         )
         .send()
-        .await?
-        .json()
-        .await?)
+        .await?;
+    let status = response.status();
+    let body = response.text().await?;
+    if !status.is_success() {
+        return Err(Error::HttpResponse {
+            status: status.as_u16(),
+            body,
+        });
+    }
+    serde_json::from_str(&body).map_err(Into::into)
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -41,7 +48,7 @@ pub struct DeviceCodePollResult {
 }
 
 pub async fn poll_device_code(device_code: &str) -> Result<DeviceCodePollResult> {
-    let response: Value = HTTP_CLIENT
+    let raw_response = HTTP_CLIENT
         .post("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(
@@ -51,9 +58,16 @@ pub async fn poll_device_code(device_code: &str) -> Result<DeviceCodePollResult>
                 + device_code,
         )
         .send()
-        .await?
-        .json()
         .await?;
+    let status = raw_response.status();
+    let body = raw_response.text().await?;
+    if !status.is_success() {
+        return Err(Error::HttpResponse {
+            status: status.as_u16(),
+            body,
+        });
+    }
+    let response: Value = serde_json::from_str(&body)?;
     if let Some(error) = response["error"].as_str() {
         return Ok(DeviceCodePollResult {
             status: error.to_string(),
