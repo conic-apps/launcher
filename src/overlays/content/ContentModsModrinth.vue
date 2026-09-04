@@ -66,8 +66,13 @@
             >
           </div>
           <div class="actions" @click.stop>
-            <button class="heart">
-              <AppIcon name="heart-outline" :size="14"></AppIcon>
+            <button
+              class="heart"
+              :class="{ 'heart-favorited': isFavorited('modrinth', 'mod', mod.project_id) }"
+              @click.stop="toggleFavorite('modrinth', 'mod', mod.project_id)">
+              <AppIcon
+                :name="isFavorited('modrinth', 'mod', mod.project_id) ? 'heart' : 'heart-outline'"
+                :size="14"></AppIcon>
             </button>
             <button class="link">
               <AppIcon
@@ -111,8 +116,10 @@ import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+import { useFavorites } from "./useFavorites";
 
 const { t } = useI18n();
+const { loadFavorites, isFavorited, toggleFavorite } = useFavorites();
 
 const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
   useDescriptionTranslation();
@@ -144,6 +151,7 @@ const CATEGORIES = [
   "transportation",
   "utility",
   "worldgen",
+  "favorites",
 ];
 type ModsFilter = ContentFilterItem & {
   key: "loader" | "version" | "category";
@@ -152,6 +160,7 @@ type ModsFilter = ContentFilterItem & {
 const selectedLoaders = ref<string[]>([]);
 const selectedVersions = ref<string[]>([]);
 const selectedCategories = ref<string[]>([]);
+const showFavoritesOnly = ref(false);
 
 const modrinthLoading = ref(false);
 const modrinthSearchResult = ref(null as null | ModrinthSearchedProjects);
@@ -193,6 +202,14 @@ function buildModrinthFacets(): string {
 
 let modrinthSearchToken = 0;
 
+function filterByFavorites(result: ModrinthSearchedProjects): ModrinthSearchedProjects {
+  if (!showFavoritesOnly.value) return result;
+  return {
+    ...result,
+    hits: result.hits.filter((hit) => isFavorited("modrinth", "mod", hit.project_id)),
+  };
+}
+
 async function runModrinthSearch() {
   const token = ++modrinthSearchToken;
   const params: ModrinthSearchParameters = {
@@ -205,7 +222,7 @@ async function runModrinthSearch() {
   const cached = modrinthCache.get(cacheKey);
   if (cached) {
     if (token === modrinthSearchToken) {
-      modrinthSearchResult.value = cached;
+      modrinthSearchResult.value = filterByFavorites(cached);
       void translateModrinthDescriptions(cached.hits.map((hit) => hit.project_id));
     }
     return;
@@ -215,7 +232,7 @@ async function runModrinthSearch() {
     const result = await searchModrinthProjects(params);
     if (token !== modrinthSearchToken) return;
     modrinthCache.set(cacheKey, result);
-    modrinthSearchResult.value = result;
+    modrinthSearchResult.value = filterByFavorites(result);
     void translateModrinthDescriptions(result.hits.map((hit) => hit.project_id));
   } catch (error) {
     console.error(error);
@@ -266,8 +283,15 @@ const modrinthFilters = computed<ModsFilter[]>(() => [
     key: "category",
     label: t("overlays.content.common.category"),
     options: CATEGORIES,
-    isSelected: (option) => selectedCategories.value.includes(option as string),
-    display: (option) => t(`overlays.content.mods.modrinth.${option as string}`) ?? option,
+    isSelected: (option) =>
+      option === "favorites"
+        ? showFavoritesOnly.value
+        : selectedCategories.value.includes(option as string),
+    display: (option) =>
+      option === "favorites"
+        ? t("overlays.content.common.favorites")
+        : (t(`overlays.content.mods.modrinth.${option as string}`) ?? option),
+    chipClass: (option) => ({ favorites: option === "favorites" }),
   },
 ]);
 
@@ -277,7 +301,12 @@ function onFilterChipClick(filter: ContentFilterItem, option: unknown) {
   } else if (filter.key === "version") {
     toggleFilterOption(selectedVersions.value, option as string);
   } else if (filter.key === "category") {
-    toggleFilterOption(selectedCategories.value, option as string);
+    if (option === "favorites") {
+      showFavoritesOnly.value = !showFavoritesOnly.value;
+    } else {
+      showFavoritesOnly.value = false;
+      toggleFilterOption(selectedCategories.value, option as string);
+    }
   }
   currentPage.value = 1;
   void runModrinthSearch();
@@ -298,11 +327,13 @@ async function ensureModrinthInitialized() {
   searchQuery.value = "";
   syncVersionPageToSelection();
   selectedCategories.value = [];
+  showFavoritesOnly.value = false;
   currentPage.value = 1;
   modrinthSearchResult.value = null;
 }
 
 onMounted(async () => {
+  await loadFavorites();
   await ensureModrinthInitialized();
   void updateVersionOffset();
   await runModrinthSearch();
@@ -333,5 +364,10 @@ function openDetails(projectId: string) {
 
 .mods-list {
   &:extend(.content-card-grid all);
+}
+
+.heart-favorited {
+  color: var(--ctp-red) !important;
+  opacity: 1 !important;
 }
 </style>

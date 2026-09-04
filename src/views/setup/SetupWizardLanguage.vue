@@ -4,18 +4,19 @@
 
 <template>
   <div class="language-setting">
-    <p class="wizard-title">{{ t("setup.language.title") }}</p>
-    <p class="wizard-message">{{ t("setup.language.desc") }}</p>
-    <p class="wizard-message">
+    <p class="wizard-title" ref="title">{{ t("setup.language.title") }}</p>
+    <p class="wizard-message" ref="desc1">{{ t("setup.language.desc") }}</p>
+    <p class="wizard-message" ref="desc2">
       {{ t("setup.language.desc2") }}
     </p>
-    <p class="wizard-message">
+    <p class="wizard-message" ref="desc3">
       {{ t("setup.language.desc3") }}
     </p>
     <div class="language-setting-container">
       <button
         class="language-item"
         v-for="(displayName, option) in supportedLanguages"
+        ref="language-setting-buttons"
         :key="option"
         :class="{ selected: configStore.language === option }"
         @click="configStore.language = option">
@@ -27,6 +28,8 @@
 
 <script setup lang="ts">
 import { useConfigStore } from "@/store/config";
+import gsap from "gsap";
+import { useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -47,6 +50,67 @@ const supportedLanguages = {
   tr_tr: "Türkçe",
   pl_pl: "Polski",
 };
+
+const elements = {
+  title: useTemplateRef("title"),
+  description1: useTemplateRef("desc1"),
+  description2: useTemplateRef("desc2"),
+  description3: useTemplateRef("desc3"),
+  languageSettingButtons: useTemplateRef("language-setting-buttons"),
+};
+
+const playIntro = () => {
+  return gsap
+    .timeline()
+    .from(
+      elements.title.value,
+      {
+        opacity: 0,
+        scale: 0.8,
+        duration: 0.33,
+      },
+      "<0.03",
+    )
+    .from(
+      elements.description1.value,
+      {
+        opacity: 0,
+        scale: 0.8,
+        duration: 0.33,
+      },
+      "<0.03",
+    )
+    .from(
+      elements.description2.value,
+      {
+        opacity: 0,
+        scale: 0.8,
+        duration: 0.33,
+      },
+      "<0.03",
+    )
+    .from(
+      elements.description3.value,
+      {
+        opacity: 0,
+        scale: 0.8,
+        duration: 0.33,
+      },
+      "<0.03",
+    )
+    .from(
+      elements.languageSettingButtons.value,
+      {
+        opacity: 0,
+        scale: 0.8,
+        duration: 0.33,
+        stagger: 0.03,
+      },
+      "<0.03",
+    );
+};
+
+defineExpose({ playIntro });
 </script>
 
 <style lang="less" scoped>

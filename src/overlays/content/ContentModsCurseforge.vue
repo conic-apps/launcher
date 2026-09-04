@@ -49,8 +49,13 @@
             }}</span>
           </div>
           <div class="actions" @click.stop>
-            <button class="heart">
-              <AppIcon name="heart-outline" :size="14"></AppIcon>
+            <button
+              class="heart"
+              :class="{ 'heart-favorited': isFavorited('curseforge', 'mod', String(mod.id)) }"
+              @click.stop="toggleFavorite('curseforge', 'mod', String(mod.id))">
+              <AppIcon
+                :name="isFavorited('curseforge', 'mod', String(mod.id)) ? 'heart' : 'heart-outline'"
+                :size="14"></AppIcon>
             </button>
             <button class="link">
               <AppIcon name="link" :size="14" @click.stop="openUrl(mod.links.websiteUrl)"></AppIcon>
@@ -91,8 +96,10 @@ import BaseLoading from "@/components/BaseLoading.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+import { useFavorites } from "./useFavorites";
 
 const { t } = useI18n();
+const { loadFavorites, isFavorited, toggleFavorite } = useFavorites();
 
 const { curseforgeCache: curseforgeTranslations, translateCurseforgeSummaries } =
   useDescriptionTranslation();
@@ -128,6 +135,7 @@ const CURSEFORGE_CATEGORIES: CategoryOption[] = [
   { id: 4558, slug: "redstone" },
   { id: 424, slug: "cosmetic" },
   { id: 425, slug: "mc-miscellaneous" },
+  { id: -1, slug: "favorites" },
 ];
 type ModsFilter = ContentFilterItem & {
   key: "loader" | "version" | "category";
@@ -136,6 +144,7 @@ type ModsFilter = ContentFilterItem & {
 const curseForgeSelectedLoaders = ref<string[]>([]);
 const curseForgeSelectedVersions = ref<string[]>([]);
 const curseForgeSelectedCategories = ref<number[]>([]);
+const showFavoritesOnly = ref(false);
 
 const curseForgeLoading = ref(false);
 const curseForgeSearchResult = ref(null as null | CurseForgeApiResponse<CurseForgeMod[]>);
@@ -189,6 +198,16 @@ function buildCurseForgeParams(): CurseForgeSearchParams {
 
 let curseForgeSearchToken = 0;
 
+function filterByFavorites(
+  result: CurseForgeApiResponse<CurseForgeMod[]>,
+): CurseForgeApiResponse<CurseForgeMod[]> {
+  if (!showFavoritesOnly.value) return result;
+  return {
+    ...result,
+    data: result.data.filter((mod) => isFavorited("curseforge", "mod", String(mod.id))),
+  };
+}
+
 async function runCurseForgeSearch() {
   const token = ++curseForgeSearchToken;
   const params = buildCurseForgeParams();
@@ -196,7 +215,7 @@ async function runCurseForgeSearch() {
   const cached = curseForgeCache.get(cacheKey);
   if (cached) {
     if (token === curseForgeSearchToken) {
-      curseForgeSearchResult.value = cached;
+      curseForgeSearchResult.value = filterByFavorites(cached);
       void translateCurseforgeSummaries(cached.data.map((mod) => mod.id));
     }
     return;
@@ -206,7 +225,7 @@ async function runCurseForgeSearch() {
     const result = await searchCurseForgeMods(params);
     if (token !== curseForgeSearchToken) return;
     curseForgeCache.set(cacheKey, result);
-    curseForgeSearchResult.value = result;
+    curseForgeSearchResult.value = filterByFavorites(result);
     void translateCurseforgeSummaries(result.data.map((mod) => mod.id));
   } catch (error) {
     console.error(error);
@@ -259,10 +278,15 @@ const curseForgeFilters = computed<ModsFilter[]>(() => [
     label: t("overlays.content.common.category"),
     options: CURSEFORGE_CATEGORIES,
     isSelected: (option) =>
-      curseForgeSelectedCategories.value.includes((option as CategoryOption).id),
+      (option as CategoryOption).id === -1
+        ? showFavoritesOnly.value
+        : curseForgeSelectedCategories.value.includes((option as CategoryOption).id),
     display: (option) =>
-      t(`overlays.content.mods.curseforge.${(option as CategoryOption).slug}`) ??
-      (option as CategoryOption).slug,
+      (option as CategoryOption).id === -1
+        ? t("overlays.content.common.favorites")
+        : (t(`overlays.content.mods.curseforge.${(option as CategoryOption).slug}`) ??
+          (option as CategoryOption).slug),
+    chipClass: (option) => ({ favorites: (option as CategoryOption).id === -1 }),
   },
 ]);
 
@@ -272,7 +296,12 @@ function onFilterChipClick(filter: ContentFilterItem, option: unknown) {
   } else if (filter.key === "version") {
     toggleFilterOption(curseForgeSelectedVersions.value, option as string);
   } else if (filter.key === "category") {
-    toggleFilterOption(curseForgeSelectedCategories.value, (option as CategoryOption).id);
+    if ((option as CategoryOption).id === -1) {
+      showFavoritesOnly.value = !showFavoritesOnly.value;
+    } else {
+      showFavoritesOnly.value = false;
+      toggleFilterOption(curseForgeSelectedCategories.value, (option as CategoryOption).id);
+    }
   }
   currentPage.value = 1;
   void runCurseForgeSearch();
@@ -295,11 +324,13 @@ async function ensureCurseForgeInitialized() {
   searchQuery.value = "";
   syncVersionPageToSelection();
   curseForgeSelectedCategories.value = [];
+  showFavoritesOnly.value = false;
   currentPage.value = 1;
   curseForgeSearchResult.value = null;
 }
 
 onMounted(async () => {
+  await loadFavorites();
   await ensureCurseForgeInitialized();
   void updateVersionOffset();
   await runCurseForgeSearch();
@@ -326,5 +357,10 @@ onMounted(async () => {
 
 .mods-list {
   &:extend(.content-card-grid all);
+}
+
+.heart-favorited {
+  color: var(--ctp-red) !important;
+  opacity: 1 !important;
 }
 </style>

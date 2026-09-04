@@ -203,6 +203,7 @@ export default {
                 loader: "로더",
                 version: "버전",
                 category: "카테고리",
+                favorites: "즐겨찾기",
                 modInfo: "모드 정보",
                 resourcePackInfo: "리소스 팩 정보",
                 packInfo: "모드팩 정보",

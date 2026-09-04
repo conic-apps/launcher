@@ -27,12 +27,22 @@
           {{ currentInstance.config.runtime.mod_loader_version }}
         </p>
       </div>
-      <div class="progress-container">
-        <p>{{ progressDescription }}</p>
-        <BaseProgress
-          :loading="progressBarLoading"
-          :value="progressBarValue"
-          :max="progressBarMax"></BaseProgress>
+      <div class="progress-container" :class="{ error }" ref="progressContainerRef">
+        <Transition name="fade" mode="out-in">
+          <template v-if="error">
+            <p class="error-message">{{ errorMessage }}</p>
+          </template>
+          <template v-else>
+            <p>{{ progressDescription }}</p>
+          </template>
+        </Transition>
+        <Transition name="fade" mode="out-in">
+          <BaseProgress
+            v-if="!error"
+            :loading="progressBarLoading"
+            :value="progressBarValue"
+            :max="progressBarMax"></BaseProgress>
+        </Transition>
       </div>
       <div class="other-info">
         <span class="label">{{ t("game.launch.authService") }}</span>
@@ -74,10 +84,11 @@ import {
 import { formatBytes } from "@conic/download";
 import { InstallTask, Job } from "@conic/install";
 import { LaunchTask } from "@conic/launch";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch, nextTick } from "vue";
 import { window as appWindow } from "@tauri-apps/api";
 import { useAccountStore } from "@/store/account";
 import { useI18n } from "vue-i18n";
+import gsap from "gsap";
 
 const { t } = useI18n();
 const instanceStore = useInstanceStore();
@@ -94,6 +105,8 @@ const progressDescription = ref(t("game.launch.progress.preparing"));
 const progressBarLoading = ref(true);
 const progressBarValue = ref(0);
 const progressBarMax = ref(0);
+const error = ref(false);
+const errorMessage = ref("");
 
 const accountSkin = computed(() => {
   if (configStore.current_account?.type === "Microsoft") {
@@ -148,7 +161,7 @@ async function launch() {
       dialogStore.noSuitableJavaError.visible = true;
       return;
     }
-    console.error(error);
+    handleError(error);
   }
 }
 
@@ -317,7 +330,7 @@ async function launchGame() {
       }
     },
   });
-  cancelLaunchHandle = launchTask.cancel;
+  cancelLaunchHandle = launchTask.start;
   await launchTask.start();
   if (configStore.music.pause_on_launch) {
     musicStore.pause();
@@ -333,7 +346,42 @@ async function launchGame() {
 
 const backButtonDisabled = ref(false);
 
-onMounted(() => launch());
+function handleError(err: unknown) {
+  error.value = true;
+  const errorMsg = typeof err === "string" ? err : err instanceof Error ? err.message : String(err);
+  errorMessage.value = t("game.launch.progress.errorMessage", { error: errorMsg });
+}
+
+const progressContainerRef = ref<HTMLElement | null>(null);
+
+function updateProgressContainerHeight() {
+  const container = progressContainerRef.value;
+  if (!container) return;
+  gsap.to(container, {
+    height: "auto",
+    duration: 0.3,
+    ease: "power2.out",
+    overwrite: "auto",
+    onComplete: () => {
+      if (progressContainerRef.value === container && container.isConnected) {
+        container.style.height = `${container.offsetHeight}px`;
+      }
+    },
+  });
+}
+
+watch([error, progressDescription], () => {
+  nextTick(() => {
+    updateProgressContainerHeight();
+  });
+});
+
+onMounted(async () => {
+  launch();
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  updateProgressContainerHeight();
+});
+
 onUnmounted(async () => {
   try {
     await cancelInstallHandle();
@@ -398,6 +446,13 @@ function back() {
       border-radius: 8px;
       padding: 16px 32px;
       margin-bottom: 40px;
+      transition: all 0.3s ease;
+      overflow: hidden;
+      height: auto;
+
+      &.error {
+        border: 2px solid var(--ctp-red);
+      }
 
       p {
         font-size: 14px;
@@ -405,6 +460,12 @@ function back() {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        transition: color 0.3s ease;
+
+        &.error-message {
+          color: var(--ctp-red);
+          text-align: center;
+        }
       }
 
       .progress {

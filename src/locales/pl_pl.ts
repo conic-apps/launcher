@@ -205,6 +205,7 @@ export default {
                 loader: "Loader",
                 version: "Wersja",
                 category: "Kategoria",
+                favorites: "Ulubione",
                 modInfo: "Informacje o modzie",
                 resourcePackInfo: "Informacje o paczce zasobów",
                 packInfo: "Informacje o modpacku",

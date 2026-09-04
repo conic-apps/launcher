@@ -299,6 +299,9 @@ function getChipClasses(filter: ContentFilterItem, option: unknown): Record<stri
     &.selected.minecraft-version {
       background: var(--ctp-green);
     }
+    &.selected.favorites {
+      background: var(--ctp-yellow);
+    }
   }
 }
 </style>
