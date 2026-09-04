@@ -176,3 +176,51 @@ export async function checkModInstalled(
         projectId,
     })
 }
+
+// ----- Favorites -----
+
+export type Favorite = {
+    platform: string
+    content_type: string
+    project_id: string
+}
+
+export async function listFavorites(): Promise<Favorite[]> {
+    return await invoke("plugin:content|cmd_list_favorites")
+}
+
+export async function addFavorite(
+    platform: string,
+    contentType: string,
+    projectId: string,
+): Promise<void> {
+    return await invoke("plugin:content|cmd_add_favorite", {
+        platform,
+        contentType,
+        projectId,
+    })
+}
+
+export async function removeFavorite(
+    platform: string,
+    contentType: string,
+    projectId: string,
+): Promise<void> {
+    return await invoke("plugin:content|cmd_remove_favorite", {
+        platform,
+        contentType,
+        projectId,
+    })
+}
+
+export async function isFavorited(
+    platform: string,
+    contentType: string,
+    projectId: string,
+): Promise<boolean> {
+    return await invoke("plugin:content|cmd_is_favorited", {
+        platform,
+        contentType,
+        projectId,
+    })
+}

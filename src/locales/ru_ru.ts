@@ -206,6 +206,7 @@ export default {
                 loader: "Загрузчик",
                 version: "Версия",
                 category: "Категория",
+                favorites: "Избранное",
                 modInfo: "О моде",
                 resourcePackInfo: "О ресурспаке",
                 packInfo: "О модпаке",

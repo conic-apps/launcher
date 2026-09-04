@@ -289,6 +289,7 @@ if (import.meta.env.DEV) {
   align-items: center;
   justify-content: space-between;
   background: rgba(var(--ctp-surface0-rgb), 0.8);
+  z-index: 114514;
 
   .title-bar-container {
     display: flex;

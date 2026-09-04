@@ -68,6 +68,10 @@ fn main() {
                 "cmd_list_screenshots",
                 "cmd_parse_mods",
                 "cmd_check_mod_installed",
+                "cmd_list_favorites",
+                "cmd_add_favorite",
+                "cmd_remove_favorite",
+                "cmd_is_favorited",
             ]),
         )
         .plugin(

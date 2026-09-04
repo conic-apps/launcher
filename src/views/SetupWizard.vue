@@ -4,7 +4,7 @@
 
 <template>
   <div class="setup-wizard">
-    <div class="header-wrapper">
+    <div class="header-wrapper" ref="header">
       <div class="header">
         <p class="title">{{ t("setup.welcome") }}</p>
         <p class="description">{{ t("setup.welcomeDesc") }}</p>
@@ -13,10 +13,10 @@
         </button>
       </div>
     </div>
-    <div class="body">
+    <div class="body" ref="body">
       <ScrollView>
         <Transition :name="transitionName" mode="out-in">
-          <SetupWizardLanguage v-if="currentPhase === 'language'" />
+          <SetupWizardLanguage v-if="currentPhase === 'language'" ref="setup-wizard-language" />
           <SetupWizardPalette v-else-if="currentPhase === 'palette'" />
           <SetupWizardAddAccount v-else-if="currentPhase === 'add-account'" />
           <SetupWizardJavaSettings v-else-if="currentPhase === 'java-settings'" />
@@ -25,7 +25,7 @@
         </Transition>
       </ScrollView>
     </div>
-    <div class="footer">
+    <div class="footer" ref="footer">
       <button class="prev" :class="{ disabled: currentPhaseIndex === 0 }" @click="prevPhase">
         <AppIcon name="chevron-back" :size="20"></AppIcon>
         {{ t("setup.back") }}
@@ -41,7 +41,7 @@
 import AppIcon from "@/components/AppIcon.vue";
 import ScrollView from "@/components/ScrollView.vue";
 import { useNavigationStore } from "@/store/navigation";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -51,6 +51,7 @@ import SetupWizardJavaSettings from "./setup/SetupWizardJavaSettings.vue";
 import SetupWizardLanguage from "./setup/SetupWizardLanguage.vue";
 import SetupWizardLaunchOptions from "./setup/SetupWizardLaunchOptions.vue";
 import SetupWizardPalette from "./setup/SetupWizardPalette.vue";
+import gsap from "gsap";
 
 const navigationStore = useNavigationStore();
 
@@ -89,6 +90,48 @@ function nextPhase() {
     navigationStore.navigate("game");
   }
 }
+
+const elements = {
+  header: useTemplateRef("header"),
+  body: useTemplateRef("body"),
+  footer: useTemplateRef("footer"),
+  setupWizardLanguage: useTemplateRef("setup-wizard-language"),
+};
+
+const playIntro = () => {
+  return gsap
+    .timeline()
+    .from(
+      elements.header.value,
+      {
+        y: -118,
+        duration: 0.33,
+        ease: "power3.out",
+      },
+      "<",
+    )
+    .from(
+      elements.body.value,
+      {
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.33,
+        ease: "power3.out",
+      },
+      "<0.06",
+    )
+    .from(
+      elements.footer.value,
+      {
+        y: 100,
+        duration: 0.33,
+        ease: "power3.out",
+      },
+      "<0.03",
+    );
+};
+
+onMounted(playIntro);
 </script>
 
 <style lang="less" scoped>

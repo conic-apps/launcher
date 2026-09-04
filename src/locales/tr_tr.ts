@@ -205,6 +205,7 @@ export default {
                 loader: "Yükleyici",
                 version: "Sürüm",
                 category: "Kategori",
+                favorites: "Favoriler",
                 modInfo: "Mod bilgisi",
                 resourcePackInfo: "Kaynak paketi bilgisi",
                 packInfo: "Mod paketi bilgisi",
