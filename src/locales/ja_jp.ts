@@ -203,6 +203,7 @@ export default {
                 loader: "ローダー",
                 version: "バージョン",
                 category: "カテゴリ",
+                favorites: "お気に入り",
                 modInfo: "Mod情報",
                 resourcePackInfo: "リソースパック情報",
                 packInfo: "Modpack情報",

@@ -200,6 +200,7 @@ export default {
                 loader: "載入器",
                 version: "版本",
                 category: "分類",
+                favorites: "收藏",
                 modInfo: "模組資訊",
                 resourcePackInfo: "資源包資訊",
                 packInfo: "整合包資訊",

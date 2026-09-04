@@ -142,7 +142,6 @@ impl PlatformInfo {
             panic!("Sorry, but this program does not support your system!")
         };
         let os_info = os_info::get();
-        dbg!(os_info.architecture());
         Self {
             arch: parse_arch(os_info.architecture()),
             os_family,
