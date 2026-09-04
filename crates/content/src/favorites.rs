@@ -43,11 +43,7 @@ pub fn cmd_list_favorites() -> Result<Vec<Favorite>> {
 }
 
 #[command]
-pub fn cmd_add_favorite(
-    platform: String,
-    content_type: String,
-    project_id: String,
-) -> Result<()> {
+pub fn cmd_add_favorite(platform: String, content_type: String, project_id: String) -> Result<()> {
     let mut favorites = read_favorites()?;
     let new_favorite = Favorite {
         platform,
