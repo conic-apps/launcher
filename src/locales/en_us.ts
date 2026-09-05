@@ -211,6 +211,9 @@ export default {
                 resourcePackInfo: "Resource pack info",
                 packInfo: "Modpack info",
                 noResult: "No results match the current filter",
+                download: "Download",
+                remove: "Remove",
+                installed: "Installed: {version}",
             },
             mods: {
                 title: "Mods",

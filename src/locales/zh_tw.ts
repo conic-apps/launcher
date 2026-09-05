@@ -205,6 +205,9 @@ export default {
                 resourcePackInfo: "資源包資訊",
                 packInfo: "整合包資訊",
                 noResult: "目前篩選條件沒有符合的結果",
+                download: "下載",
+                remove: "刪除",
+                installed: "已安裝：{version}",
             },
             mods: {
                 title: "模組列表",

@@ -208,6 +208,9 @@ export default {
                 resourcePackInfo: "리소스 팩 정보",
                 packInfo: "모드팩 정보",
                 noResult: "현재 필터와 일치하는 결과가 없습니다",
+                download: "다운로드",
+                remove: "삭제",
+                installed: "설치됨: {version}",
             },
             mods: {
                 title: "모드",
