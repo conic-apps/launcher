@@ -38,7 +38,7 @@
     </SettingGroup>
     <SettingGroup :title="t('settings.download.proxy')">
       <SettingItem
-        :title="'使用系统代理（重启应用后生效）'"
+        :title="t('settings.download.proxyDesc')"
         icon="globe"
         :description="t('settings.download.proxyNote')">
         <BaseSwitch v-model="config.download.use_system_proxy"></BaseSwitch>
