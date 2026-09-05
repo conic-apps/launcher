@@ -502,6 +502,8 @@ export default {
             customBackgroundDesc:
                 "Wähle ein Bild als Launcher-Hintergrund. Instanzhintergründe haben Vorrang",
             removeImage: "Bild entfernen",
+            backgroundDarkness: "Abdunkeln des Hintergrundbilds",
+            backgroundDarknessDesc: "Verringert die Helligkeit des eigenen Hintergrundbilds",
             parallaxCamera: "3D-Kamerabewegung des Hintergrunds",
             parallaxCameraDesc:
                 "Wenn deaktiviert, stoppt die Kamerabewegung nach vorn und der Hintergrund aktualisiert sich nach dem Rendern nicht mehr – der Aufwand für den Hintergrund entfällt vollständig",

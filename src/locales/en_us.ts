@@ -501,6 +501,8 @@ export default {
             customBackgroundDesc:
                 "Select an image as the launcher background. Instance backgrounds take priority",
             removeImage: "Remove image",
+            backgroundDarkness: "Background image darkness",
+            backgroundDarknessDesc: "Lowers the brightness of the custom background image",
             parallaxCamera: "3D background camera movement",
             parallaxCameraDesc:
                 "When disabled, the camera stops moving forward and the background stops updating after rendering, completely eliminating background overhead",

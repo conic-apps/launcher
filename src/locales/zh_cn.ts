@@ -492,6 +492,8 @@ export default {
             customBackground: "自定义背景图像",
             customBackgroundDesc: "选择一张图片作为启动器背景，优先级低于实例背景",
             removeImage: "移除图像",
+            backgroundDarkness: "背景图像变暗",
+            backgroundDarknessDesc: "降低自定义背景图像的亮度",
             parallaxCamera: "立体背景摄像机移动",
             parallaxCameraDesc:
                 "关闭后摄像机停止向前移动，背景渲染完成后不再更新，以完全关闭背景开销",
