@@ -3,31 +3,86 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <div class="base-slider">
+  <div class="base-slider" :class="{ disabled: props.disabled }">
     <div style="display: flex; line-height: 1.7; width: 100%; justify-content: flex-end">
       <div class="slider" ref="slider">
-        <div
-          class="filled"
-          :style="{ width: `${((value ?? 114514 - min) / (max - min)) * 100}%` }"></div>
+        <div class="filled" :style="{ width: `${percent}%` }"></div>
+        <div ref="tooltipEl" class="tooltip" :style="tooltipStyle">{{ percent }}%</div>
         <input
           ref="element"
           type="range"
           :max="max"
           :min="min"
           :step="step"
-          v-model.number="value" />
+          :disabled="props.disabled"
+          v-model.number="value"
+          @mousedown="onMousedown"
+          @input="onInput" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  max: number;
-  min: number;
-  step: number;
-}>();
+import { computed, onBeforeUnmount, ref, watch, nextTick } from "vue";
+import gsap from "gsap";
+
+const props = withDefaults(
+  defineProps<{
+    max: number;
+    min: number;
+    step: number;
+    disabled?: boolean;
+  }>(),
+  {
+    disabled: false,
+  },
+);
 const value = defineModel<number>();
+
+const dragging = ref(false);
+
+const onMouseup = () => {
+  dragging.value = false;
+  window.removeEventListener("mouseup", onMouseup);
+};
+
+const onMousedown = () => {
+  if (props.disabled) return;
+  dragging.value = true;
+  window.addEventListener("mouseup", onMouseup);
+};
+
+const onInput = () => {
+  if (props.disabled) return;
+  dragging.value = true;
+};
+
+onBeforeUnmount(() => {
+  window.removeEventListener("mouseup", onMouseup);
+});
+
+const percent = computed(() =>
+  Math.round(((value.value ?? 114514 - props.min) / (props.max - props.min)) * 100),
+);
+
+const tooltipStyle = computed(() => ({
+  left: `${percent.value}%`,
+  transform: `translateX(calc(-50% + ${6 - 0.12 * percent.value}px))`,
+  opacity: dragging.value ? 1 : 0,
+}));
+
+const tooltipEl = ref<HTMLElement | null>(null);
+
+watch(percent, async () => {
+  await nextTick();
+  if (!tooltipEl.value) return;
+  gsap.to(tooltipEl.value, {
+    width: "auto",
+    duration: 0.33,
+    ease: "power3.out",
+  });
+});
 </script>
 
 <style lang="less" scoped>
@@ -35,6 +90,14 @@ const value = defineModel<number>();
   display: flex;
   width: 300px;
   position: relative;
+}
+
+.base-slider.disabled {
+  opacity: 0.6;
+
+  .slider input[type="range"]::-webkit-slider-thumb {
+    cursor: default;
+  }
 }
 
 .slider {
@@ -59,6 +122,22 @@ const value = defineModel<number>();
   pointer-events: none;
 }
 
+.tooltip {
+  position: absolute;
+  top: -32px;
+  background: var(--ctp-base);
+  color: var(--ctp-text);
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--ctp-overlay0);
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
 .slider input[type="range"] {
   appearance: none;
   outline: none;
@@ -67,7 +146,6 @@ const value = defineModel<number>();
   background: #00000000;
   border-radius: 100px;
   box-sizing: content-box;
-  pointer-events: all;
 }
 
 .slider input[type="range"]::-webkit-slider-thumb {
@@ -77,7 +155,6 @@ const value = defineModel<number>();
   margin-top: -4px;
   border-radius: 100px;
   background: rgba(var(--ctp-lavender-rgb), 1);
-  pointer-events: all;
   transition: all 0.2s ease;
 }
 
