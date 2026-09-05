@@ -564,7 +564,7 @@ export default {
             creditsBMCLAPI:
                 "Conic Launcher'ın varsayılan ayna yapılandırması, bazı Minecraft kaynakları için indirme hızlandırma kaynağı olarak bangbang93 tarafından sağlanan BMCLAPI'yi içerir",
             disclaimer:
-                "Conic Launcher resmi bir Minecraft ürünü değildir ve Mojang Studios tarafından onaylanmamıştır ya da Mojang Studios ile bağı yoktur. \"Minecraft\", Mojang AB'nin ticari markasıdır. Bu projede Minecraft markasının her türlü kullanımı Mojang Studios Marka ve Varlık Yönergeleri'ne uygundur.",
+                "Conic Launcher resmi bir Minecraft ürünü değildir ve Mojang Studios tarafından onaylanmamıştır ya da Mojang Studios ile bağı yoktur. \"Minecraft\", Mojang AB'nin ticari markasıdır. Bu projede Minecraft markasının her türlü kullanımı Mojang Studios <a href='https://www.minecraft.net/en-us/usage-guidelines'>Marka ve Varlık Yönergeleri</a>'ne uygundur.",
         },
     },
 }

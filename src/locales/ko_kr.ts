@@ -555,7 +555,7 @@ export default {
             creditsBMCLAPI:
                 "Conic Launcher의 기본 미러 구성에는 bangbang93이 제공하는 BMCLAPI가 일부 Minecraft 리소스의 다운로드 가속 소스로 포함되어 있습니다",
             disclaimer:
-                'Conic Launcher는 공식 Minecraft 제품이 아니며, Mojang Studios의 승인을 받았거나 제휴 관계에 있지 않습니다. "Minecraft"는 Mojang AB의 상표입니다. 이 프로젝트에서 Minecraft 브랜드의 모든 사용은 Mojang Studios 브랜드 및 에셋 가이드라인을 준수합니다.',
+                'Conic Launcher는 공식 Minecraft 제품이 아니며, Mojang Studios의 승인을 받았거나 제휴 관계에 있지 않습니다. "Minecraft"는 Mojang AB의 상표입니다. 이 프로젝트에서 Minecraft 브랜드의 모든 사용은 Mojang Studios <a href="https://www.minecraft.net/en-us/usage-guidelines">브랜드 및 에셋 가이드라인</a>을 준수합니다.',
         },
     },
 }

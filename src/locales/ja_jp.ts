@@ -562,7 +562,7 @@ export default {
             creditsBMCLAPI:
                 "Conic Launcher のデフォルトのミラー設定には、一部のMinecraftリソースのダウンロードを高速化するソースとして bangbang93 氏提供の BMCLAPI が含まれています",
             disclaimer:
-                "Conic Launcher は非公式のMinecraft製品であり、Mojang Studios の承認を受けたものでも提携関係にあるものでもありません。「Minecraft」は Mojang AB の商標です。本プロジェクトにおけるMinecraftブランドのあらゆる使用は、Mojang Studios のブランドおよびアセットガイドラインに準拠しています。",
+                "Conic Launcher は非公式のMinecraft製品であり、Mojang Studios の承認を受けたものでも提携関係にあるものでもありません。「Minecraft」は Mojang AB の商標です。本プロジェクトにおけるMinecraftブランドのあらゆる使用は、Mojang Studios の<a href='https://www.minecraft.net/en-us/usage-guidelines'>ブランドおよびアセットガイドライン</a>に準拠しています。",
         },
     },
 }

@@ -546,7 +546,7 @@ export default {
             creditsBMCLAPI:
                 "Conic Launcher 鏡像站列表的預設設定包含 bangbang93 提供的 BMCLAPI 作為部分 Minecraft 資源的下載加速來源",
             disclaimer:
-                "Conic Launcher 不是官方的 Minecraft 產品，也未獲得 Mojang Studios 的批准或關聯。「Minecraft」是 Mojang AB 的商標，本專案對 Minecraft 品牌的任何使用均符合 Mojang Studios 的品牌與資產指南。",
+                "Conic Launcher 不是官方的 Minecraft 產品，也未獲得 Mojang Studios 的批准或關聯。「Minecraft」是 Mojang AB 的商標，本專案對 Minecraft 品牌的任何使用均符合 Mojang Studios 的<a href='https://www.minecraft.net/en-us/usage-guidelines'>品牌與資產指南</a>。",
         },
     },
 }

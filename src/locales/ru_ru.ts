@@ -565,7 +565,7 @@ export default {
             creditsBMCLAPI:
                 "Зеркала по умолчанию в Conic Launcher включают BMCLAPI от bangbang93 как источник ускорения загрузки некоторых ресурсов Minecraft",
             disclaimer:
-                "Conic Launcher не является официальным продуктом Minecraft, не одобрен им и не связан с Mojang Studios. «Minecraft» является товарным знаком Mojang AB. Любое использование бренда Minecraft в этом проекте соответствует правилам использования бренда и материалов Mojang Studios.",
+                "Conic Launcher не является официальным продуктом Minecraft, не одобрен им и не связан с Mojang Studios. «Minecraft» является товарным знаком Mojang AB. Любое использование бренда Minecraft в этом проекте соответствует <a href='https://www.minecraft.net/en-us/usage-guidelines'>правилам использования бренда и материалов</a> Mojang Studios.",
         },
     },
 }

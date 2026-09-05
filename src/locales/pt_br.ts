@@ -567,7 +567,7 @@ export default {
             creditsBMCLAPI:
                 "A configuração de espelhos padrão do Conic Launcher inclui o BMCLAPI, fornecido por bangbang93, como fonte de aceleração de download para alguns recursos do Minecraft",
             disclaimer:
-                'O Conic Launcher não é um produto oficial do Minecraft e não é aprovado nem associado à Mojang Studios. "Minecraft" é uma marca registrada da Mojang AB. Qualquer uso da marca Minecraft neste projeto está em conformidade com as Diretrizes de Marca e Ativos da Mojang Studios.',
+                'O Conic Launcher não é um produto oficial do Minecraft e não é aprovado nem associado à Mojang Studios. "Minecraft" é uma marca registrada da Mojang AB. Qualquer uso da marca Minecraft neste projeto está em conformidade com as <a href="https://www.minecraft.net/en-us/usage-guidelines">Diretrizes de Marca e Ativos</a> da Mojang Studios.',
         },
     },
 }
