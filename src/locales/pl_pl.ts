@@ -566,7 +566,7 @@ export default {
             creditsBMCLAPI:
                 "Domyślna konfiguracja serwerów lustrzanych Conic Launcher obejmuje BMCLAPI dostarczane przez bangbang93 jako źródło przyspieszające pobieranie niektórych zasobów Minecraft",
             disclaimer:
-                "Conic Launcher nie jest oficjalnym produktem Minecraft i nie jest zatwierdzony ani powiązany z Mojang Studios. „Minecraft” jest znakiem towarowym Mojang AB. Każde użycie marki Minecraft w tym projekcie jest zgodne z wytycznymi dotyczącymi marki i zasobów Mojang Studios.",
+                "Conic Launcher nie jest oficjalnym produktem Minecraft i nie jest zatwierdzony ani powiązany z Mojang Studios. „Minecraft” jest znakiem towarowym Mojang AB. Każde użycie marki Minecraft w tym projekcie jest zgodne z <a href='https://www.minecraft.net/en-us/usage-guidelines'>wytycznymi dotyczącymi marki i zasobów</a> Mojang Studios.",
         },
     },
 }

@@ -88,9 +88,7 @@
         {{ appVersion ?? "0.0.0" }}
       </p>
       <p class="copyright">Copyright 2022-2026 ConicMC developers. All rights reserved.</p>
-      <p class="text">
-        {{ t("settings.about.disclaimer") }}
-      </p>
+      <p class="text" v-html="t('settings.about.disclaimer')" @click="onDisclaimerClick"></p>
     </div>
   </div>
 </template>
@@ -107,6 +105,15 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
+
+function onDisclaimerClick(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (target.tagName === "A") {
+    event.preventDefault();
+    const href = (target as HTMLAnchorElement).href;
+    if (href) openUrl(href);
+  }
+}
 
 async function openLogFolder() {
   const dataLocation = await getDataLocation();
@@ -152,6 +159,13 @@ onMounted(async () => {
     text-align: center;
     line-height: 1.5;
     width: calc(100% - 96px);
+    a {
+      color: var(--ctp-blue);
+      text-decoration: none;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 }
 </style>

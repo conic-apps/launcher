@@ -572,7 +572,7 @@ export default {
             creditsBMCLAPI:
                 "La configuración de servidores espejo predeterminada de Conic Launcher incluye BMCLAPI, proporcionado por bangbang93, como fuente de aceleración de descargas para algunos recursos de Minecraft",
             disclaimer:
-                "Conic Launcher no es un producto oficial de Minecraft y no está aprobado ni asociado a Mojang Studios. «Minecraft» es una marca comercial de Mojang AB. Cualquier uso de la marca Minecraft en este proyecto cumple con las directrices de marca y recursos de Mojang Studios.",
+                "Conic Launcher no es un producto oficial de Minecraft y no está aprobado ni asociado a Mojang Studios. «Minecraft» es una marca comercial de Mojang AB. Cualquier uso de la marca Minecraft en este proyecto cumple con las <a href='https://www.minecraft.net/en-us/usage-guidelines'>directrices de marca y recursos</a> de Mojang Studios.",
         },
     },
 }
