@@ -1038,7 +1038,10 @@ pub(crate) fn cmd_remove_mod_files(instance_id: String, files: Vec<String>) -> R
         let path = PathBuf::from(file);
         let canonical = path.canonicalize().unwrap_or(path);
         if !canonical.starts_with(&instance_root_canonical) {
-            warn!("Refusing to remove file outside instance root: {:?}", canonical);
+            warn!(
+                "Refusing to remove file outside instance root: {:?}",
+                canonical
+            );
             continue;
         }
         if let Err(error) = std::fs::remove_file(&canonical) {
