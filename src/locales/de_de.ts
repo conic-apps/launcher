@@ -210,6 +210,9 @@ export default {
                 resourcePackInfo: "Ressourcenpaket-Informationen",
                 packInfo: "Modpack-Informationen",
                 noResult: "Keine Ergebnisse entsprechen dem aktuellen Filter",
+                download: "Herunterladen",
+                remove: "Entfernen",
+                installed: "Installiert: {version}",
             },
             mods: {
                 title: "Mods",

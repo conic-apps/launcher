@@ -9,7 +9,7 @@ import { Instance } from "@conic/instance"
 
 export const useDialogStore = defineStore("dialog", () => {
     const updateReminder = ref({
-        visible: true,
+        visible: false,
         version: null as null | string,
         versionType: null as null | "release" | "snapshot",
     })

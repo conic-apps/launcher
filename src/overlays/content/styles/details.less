@@ -8,6 +8,74 @@
     .details {
         padding: 8px 24px;
 
+        .actions-section {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            button.heart,
+            button.download,
+            button.remove,
+            button.download-loading {
+                appearance: none;
+                border: none;
+                background: var(--ctp-latte-teal);
+                border-radius: 6px;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                color: #fff;
+                :deep(svg *) {
+                    color: #fff;
+                }
+            }
+            button.download,
+            button.download-loading,
+            button.remove {
+                width: 120px;
+                height: 36px;
+            }
+            button.heart {
+                width: 36px;
+                height: 36px;
+            }
+            button.remove {
+                background: var(--ctp-surface0);
+                border: 1px solid var(--ctp-red);
+                transition: color 200ms ease;
+                :deep(svg *) {
+                    transition: color 200ms ease;
+                }
+                &:hover {
+                    color: var(--ctp-red);
+                    :deep(svg *) {
+                        color: var(--ctp-red);
+                    }
+                }
+            }
+            button.download-loading {
+                opacity: 0.6;
+            }
+            button:disabled {
+                opacity: 0.6;
+            }
+            button.heart-favorited {
+                color: var(--ctp-red) !important;
+                :deep(svg *) {
+                    color: var(--ctp-red) !important;
+                }
+            }
+            .installed-version {
+                font-size: 13px;
+                font-style: italic;
+                opacity: 0.6;
+                color: var(--ctp-subtext1);
+            }
+        }
+
         .header {
             display: flex;
 

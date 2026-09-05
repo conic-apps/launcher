@@ -28,6 +28,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             screenshots::cmd_list_screenshots,
             mods::remote::cmd_parse_mods,
             mods::remote::cmd_check_mod_installed,
+            mods::remote::cmd_remove_mod_files,
             favorites::cmd_list_favorites,
             favorites::cmd_add_favorite,
             favorites::cmd_remove_favorite,

@@ -102,6 +102,7 @@
     "content:allow-cmd-list-screenshots",
     "content:allow-cmd-parse-mods",
     "content:allow-cmd-check-mod-installed",
+    "content:allow-cmd-remove-mod-files",
     "content:allow-cmd-list-favorites",
     "content:allow-cmd-add-favorite",
     "content:allow-cmd-remove-favorite",

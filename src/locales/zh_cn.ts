@@ -208,6 +208,9 @@ export default {
                 resourcePackInfo: "资源包信息",
                 packInfo: "整合包信息",
                 noResult: "此视图筛选条件无匹配结果",
+                download: "下载",
+                remove: "删除",
+                installed: "已安装：{version}",
             },
             mods: {
                 title: "模组列表",

@@ -46,6 +46,7 @@ use serde_json::Value;
 use sha2::{Digest, Sha512};
 use tauri::command;
 
+use crate::error::Result;
 use crate::mods::{ModLoader, ResolvedAuthorInfo, ResolvedMod, is_disabled_file, parse_mod};
 
 /// The platform an online mod lookup was resolved from.
@@ -1021,4 +1022,28 @@ pub(crate) async fn cmd_check_mod_installed(
     project_id: String,
 ) -> ModInstalledInfo {
     check_mod_installed(&instance_id, platform, &project_id).await
+}
+
+/// Tauri command: delete the given files from an instance.
+///
+/// Only files under the instance root are accepted; paths outside it are
+/// silently skipped so the launcher never deletes arbitrary user data. The
+/// frontend only shows the remove action for mods, but the check is done
+/// against the whole instance root so partial-download cleanup stays possible.
+#[command]
+pub(crate) fn cmd_remove_mod_files(instance_id: String, files: Vec<String>) -> Result<()> {
+    let instance_root = folder::DATA_LOCATION.get_instance_root(&instance_id);
+    let instance_root_canonical = instance_root.canonicalize().unwrap_or(instance_root);
+    for file in files {
+        let path = PathBuf::from(file);
+        let canonical = path.canonicalize().unwrap_or(path);
+        if !canonical.starts_with(&instance_root_canonical) {
+            warn!("Refusing to remove file outside instance root: {:?}", canonical);
+            continue;
+        }
+        if let Err(error) = std::fs::remove_file(&canonical) {
+            warn!("Failed to remove file {:?}: {error}", canonical);
+        }
+    }
+    Ok(())
 }
