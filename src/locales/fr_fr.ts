@@ -503,6 +503,8 @@ export default {
             customBackgroundDesc:
                 "Sélectionnez une image comme fond du lanceur. Les fonds définis par instance ont la priorité",
             removeImage: "Supprimer l'image",
+            backgroundDarkness: "Assombrissement de l'image de fond",
+            backgroundDarknessDesc: "Réduit la luminosité de l'image de fond personnalisée",
             parallaxCamera: "Mouvement 3D de la caméra du fond",
             parallaxCameraDesc:
                 "Lorsqu'il est désactivé, la caméra cesse d'avancer et le fond cesse d'être mis à jour après le rendu, éliminant totalement la charge liée au fond",

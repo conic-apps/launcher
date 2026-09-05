@@ -374,6 +374,7 @@ interface BgImage {
 }
 const bgImages = ref<BgImage[]>([]);
 const fadeoutBg = ref<BgImage | null>(null);
+const isGlobalCustomBg = ref(false);
 let bgKeySeq = 0;
 
 async function resolveBackgroundUrl(): Promise<string | null> {
@@ -382,14 +383,17 @@ async function resolveBackgroundUrl(): Promise<string | null> {
   if (current?.config.use_as_launcher_background && current.has_background) {
     try {
       const path = await getBackgroundPath(current.id);
+      isGlobalCustomBg.value = false;
       return convertFileSrc(path) + "?t=" + Date.now();
     } catch {
+      isGlobalCustomBg.value = false;
       return null;
     }
   }
   if (config.appearance.background_image) {
     const dataLocation = window.__DATA_LOCATION__;
     if (dataLocation) {
+      isGlobalCustomBg.value = true;
       return (
         convertFileSrc(`${dataLocation.root}/${config.appearance.background_image}`) +
         "?t=" +
@@ -397,6 +401,7 @@ async function resolveBackgroundUrl(): Promise<string | null> {
       );
     }
   }
+  isGlobalCustomBg.value = false;
   return null;
 }
 
@@ -1433,6 +1438,10 @@ onBeforeUnmount(() => {
       :src="fadeoutBg.url"
       class="background custom-bg"
       alt="" />
+    <div
+      v-if="isGlobalCustomBg"
+      class="background dim-overlay"
+      :style="{ opacity: config.appearance.background_darkness / 100 }"></div>
   </div>
 </template>
 
@@ -1451,6 +1460,10 @@ onBeforeUnmount(() => {
   }
   .custom-bg {
     object-fit: cover;
+  }
+  .dim-overlay {
+    background: #000;
+    pointer-events: none;
   }
   .sky {
     opacity: 0.3;

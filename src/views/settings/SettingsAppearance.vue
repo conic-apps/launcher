@@ -55,6 +55,17 @@
         }}</BaseButton>
       </SettingItem>
       <SettingItem
+        :title="t('settings.appearance.backgroundDarkness')"
+        :description="`${config.appearance.background_darkness}%`"
+        :disabled="!config.appearance.background_image">
+        <BaseSliderBar
+          :max="100"
+          :min="0"
+          :step="1"
+          :disabled="!config.appearance.background_image"
+          v-model="config.appearance.background_darkness"></BaseSliderBar>
+      </SettingItem>
+      <SettingItem
         :title="t('settings.appearance.parallaxCamera')"
         :description="t('settings.appearance.parallaxCameraDesc')"
         icon-fill="none">
@@ -75,6 +86,7 @@ import SettingGroup from "@/components/SettingGroup.vue";
 import SettingItem from "@/components/SettingItem.vue";
 import BaseSwitch from "@/components/BaseSwitch.vue";
 import BaseButton from "@/components/BaseButton.vue";
+import BaseSliderBar from "@/components/BaseSliderBar.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { useConfigStore } from "@/store/config";
 import { ref, watch } from "vue";

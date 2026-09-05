@@ -204,6 +204,9 @@ pub struct AppearanceConfig {
 
     /// Custom launcher background image filename (stored in data directory).
     pub background_image: Option<String>,
+
+    /// How much the custom background image is darkened, in percent (0-100).
+    pub background_darkness: u8,
 }
 
 impl Default for AppearanceConfig {
@@ -215,6 +218,7 @@ impl Default for AppearanceConfig {
             background_camera_move: true,
             background_parallax: true,
             background_image: None,
+            background_darkness: 0,
         }
     }
 }

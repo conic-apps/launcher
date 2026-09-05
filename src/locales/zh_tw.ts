@@ -489,6 +489,8 @@ export default {
             customBackground: "自訂背景圖片",
             customBackgroundDesc: "選擇一張圖片作為啟動器背景，優先順序低於實例背景",
             removeImage: "移除圖片",
+            backgroundDarkness: "背景圖片變暗",
+            backgroundDarknessDesc: "降低自訂背景圖片的亮度",
             parallaxCamera: "3D 背景運鏡",
             parallaxCameraDesc:
                 "關閉後鏡頭停止向前移動，背景渲染完成後不再更新，以完全關閉背景開銷",
