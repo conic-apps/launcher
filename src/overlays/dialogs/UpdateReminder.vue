@@ -3,65 +3,77 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 
 <template>
-  <BaseDialog :visible="dialogStore.updateReminder.visible" :width="420" :height="200">
-    <div class="main">
+  <BaseDialog :visible="dialogStore.updateReminder.visible" :width="400">
+    <div class="update-reminder" ref="main">
       <div class="title">
-        <h4>发现新的 Minecraft 版本</h4>
-        <p>Minecraft {{ dialogStore.updateReminder.version }} 已发布！</p>
+        <div class="version-icon">
+          <img
+            v-if="dialogStore.updateReminder.versionType === 'release'"
+            style="width: 100%; height: 100%; opacity: 0.8"
+            src="@/assets/images/minecraft.webp"
+            alt="" />
+          <img
+            v-else
+            style="width: 100%; height: 100%"
+            src="@/assets/images/Command_Block.webp"
+            alt="" />
+        </div>
+        <div class="message">
+          <p style="font-size: 16px">Minecraft 1.18.2 已发布</p>
+          <p style="font-size: 16px"></p>
+        </div>
       </div>
-      <button class="know" @click="close">知道了</button>
+      <div class="buttons">
+        <BaseButton class="ok" @click="dialogStore.updateReminder.visible = false">好</BaseButton>
+      </div>
     </div>
   </BaseDialog>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import BaseDialog from "@/components/BaseDialog.vue";
+import BaseButton from "@/components/BaseButton.vue";
 import { useDialogStore } from "@/store/dialog";
 
 const dialogStore = useDialogStore();
-
-function close() {
-  dialogStore.updateReminder.visible = false;
-}
 </script>
 
 <style lang="less" scoped>
-.main {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  .title {
+.update-reminder {
+  padding: 8px;
+  div.title {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    h4 {
-      margin: 0;
-    }
-
-    p {
-      margin: 12px 0 0;
-      font-size: 14px;
+    div.version-icon {
+      width: 64px;
     }
   }
-
-  .know {
-    appearance: none;
-    border: none;
+  .message {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+  .buttons {
+    display: flex;
     width: 100%;
-    padding: 8px 0;
-    border-radius: 4px;
-    background: var(--ctp-blue);
-    color: var(--ctp-text-inverse);
-    transition: transform 200ms ease;
+    margin-top: 16px;
+    gap: 8px;
 
-    &:hover {
+    button {
+      appearance: none;
+      border: none;
+      width: 100%;
+      border-radius: 4px;
+      transition: transform 200ms ease;
+    }
+    button.ok {
+      background: var(--ctp-blue);
+      color: var(--ctp-text-inverse);
+    }
+    button:hover {
       transform: scale(1.02);
     }
-
-    &:active {
+    button:active {
       transform: scale(0.97);
     }
   }

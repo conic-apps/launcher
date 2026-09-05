@@ -25,6 +25,10 @@ export type GameContent = {
     screenshots: string[] | null
 }
 
+function createInitialLoadingState(): Record<keyof GameContent, boolean> {
+    return { saves: false, mods: false, resourcepacks: false, screenshots: false }
+}
+
 const CACHE_TTL = 60 * 1000
 const REFRESH_COOL_DOWN = 10 * 1000
 
@@ -47,6 +51,7 @@ export const useGameContentStore = defineStore("gameContent", () => {
         resourcepacks: null,
         screenshots: null,
     })
+    const loading = ref(createInitialLoadingState())
     const instanceStore = useInstanceStore()
 
     function createContentLoader<K extends keyof GameContent>(
@@ -66,17 +71,29 @@ export const useGameContentStore = defineStore("gameContent", () => {
                 }
             }
 
-            const data = await fetcher()
-
-            gameContentCache[instanceId] ??= {} as GameContentCacheValue
-            gameContentCache[instanceId][key] ??= { data: null, time: 0 }
-
-            if (instanceId === instanceStore.currentInstance?.id) {
-                gameContent.value[key] = data
+            const showLoading = gameContent.value[key] === null
+            if (showLoading) {
+                loading.value[key] = true
             }
 
-            gameContentCache[instanceId][key].data = data
-            gameContentCache[instanceId][key].time = Date.now()
+            try {
+                const data = await fetcher()
+
+                gameContentCache[instanceId] ??= {} as GameContentCacheValue
+                gameContentCache[instanceId][key] ??= { data: null, time: 0 }
+
+                if (instanceId === instanceStore.currentInstance?.id) {
+                    gameContent.value[key] = data
+                    loading.value[key] = false
+                }
+
+                gameContentCache[instanceId][key].data = data
+                gameContentCache[instanceId][key].time = Date.now()
+            } finally {
+                if (showLoading && instanceId === instanceStore.currentInstance?.id) {
+                    loading.value[key] = false
+                }
+            }
         }
     }
 
@@ -84,10 +101,14 @@ export const useGameContentStore = defineStore("gameContent", () => {
         () => instanceStore.currentInstance,
         async (instance) => {
             if (!instance) {
+                ;(Object.keys(loading.value) as Array<keyof GameContent>).forEach((key) => {
+                    loading.value[key] = false
+                })
                 return
             }
             ;(Object.keys(gameContent.value) as Array<keyof GameContent>).forEach((key) => {
                 gameContent.value[key] = null
+                loading.value[key] = false
             })
 
             const cachedData = getValidContentFromCacheEntries(instance.id)
@@ -152,5 +173,5 @@ export const useGameContentStore = defineStore("gameContent", () => {
         }
     }
 
-    return { gameContent, refreshSaves }
+    return { gameContent, loading, refreshSaves }
 })

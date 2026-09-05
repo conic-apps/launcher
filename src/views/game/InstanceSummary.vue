@@ -143,7 +143,10 @@
               width="64px"
               height="64px" />
           </div>
-          <span class="count"
+          <span class="count" v-if="contentStore.loading.saves">
+            <BaseLoading :size="16" :strokeWidth="6" :gap="6"></BaseLoading>
+          </span>
+          <span class="count" v-else
             >{{ Object.keys(contentStore.gameContent.saves ?? {}).length }}
             {{ t("game.summary.countUnit") }}</span
           >
@@ -175,7 +178,10 @@
               width="64px"
               height="64px" />
           </div>
-          <span class="count"
+          <span class="count" v-if="contentStore.loading.mods">
+            <BaseLoading :size="16" :strokeWidth="6" :gap="6"></BaseLoading>
+          </span>
+          <span class="count" v-else
             >{{ (contentStore.gameContent.mods ?? []).length }}
             {{ t("game.summary.countUnit") }}</span
           >
@@ -207,7 +213,10 @@
               width="64px"
               height="64px" />
           </div>
-          <span class="count"
+          <span class="count" v-if="contentStore.loading.resourcepacks">
+            <BaseLoading :size="16" :strokeWidth="6" :gap="6"></BaseLoading>
+          </span>
+          <span class="count" v-else
             >{{ (contentStore.gameContent.resourcepacks ?? []).length }}
             {{ t("game.summary.countUnit") }}</span
           >
@@ -231,7 +240,10 @@
             :key="index">
             <img :src="src" alt="screenshot icon" width="64px" height="64px" />
           </div>
-          <span class="count"
+          <span class="count" v-if="contentStore.loading.screenshots">
+            <BaseLoading :size="16" :strokeWidth="6" :gap="6"></BaseLoading>
+          </span>
+          <span class="count" v-else
             >{{ (contentStore.gameContent.screenshots ?? []).length }}
             {{ t("game.summary.countUnit") }}</span
           >
@@ -243,6 +255,7 @@
 
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
+import BaseLoading from "@/components/BaseLoading.vue";
 import { useInstanceStore } from "@/store/instance";
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import {
