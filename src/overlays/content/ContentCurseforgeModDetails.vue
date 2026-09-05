@@ -40,6 +40,31 @@
             <p class="description" v-if="translatedDescription">{{ translatedDescription }}</p>
           </div>
         </div>
+        <div class="actions-section">
+          <button
+            class="heart"
+            :class="{ 'heart-favorited': isFavorited('curseforge', 'mod', String(modId)) }"
+            @click="toggleFavorite('curseforge', 'mod', String(modId))">
+            <AppIcon
+              :name="
+                isFavorited('curseforge', 'mod', String(modId)) ? 'heart' : 'heart-outline'
+              "></AppIcon>
+          </button>
+          <button class="download-loading" v-if="checkingInstalled">
+            <BaseLoading :size="18" :strokeWidth="6"></BaseLoading>
+          </button>
+          <button v-else-if="installed" class="remove" :disabled="operating" @click="removeMod">
+            {{ t("overlays.content.common.remove") }}
+            <AppIcon name="trash"></AppIcon>
+          </button>
+          <button v-else class="download" :disabled="operating" @click="install">
+            {{ t("overlays.content.common.download") }}
+            <AppIcon name="download"></AppIcon>
+          </button>
+          <p class="installed-version" v-if="installedVersion">
+            {{ t("overlays.content.common.installed", { version: installedVersion }) }}
+          </p>
+        </div>
         <div
           class="section readme markdown-body"
           v-if="modDescription"
@@ -60,6 +85,7 @@ import { getMod, getModDescription, Mod as CurseforgeMod } from "@conic/cursefor
 import { useShowContentDetails } from "./useContent";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { useContentActions } from "./useContentActions";
 
 const { t } = useI18n();
 
@@ -77,6 +103,17 @@ const safeDescription = computed(() =>
 );
 
 const modId = computed(() => useShowContentDetails().value.curseforge.mod);
+
+const {
+  isFavorited,
+  toggleFavorite,
+  installed,
+  installedVersion,
+  checkingInstalled,
+  operating,
+  install,
+  removeMod,
+} = useContentActions("curseforge", "mod", modId);
 
 const translatedDescription = computed(() => {
   if (!modInfo.value) return "";

@@ -48,6 +48,25 @@
             <p class="description" v-if="translatedDescription">{{ translatedDescription }}</p>
           </div>
         </div>
+        <div class="actions-section">
+          <button
+            class="heart"
+            :class="{
+              'heart-favorited': isFavorited('modrinth', 'resourcepack', String(projectId)),
+            }"
+            @click="toggleFavorite('modrinth', 'resourcepack', String(projectId))">
+            <AppIcon
+              :name="
+                isFavorited('modrinth', 'resourcepack', String(projectId))
+                  ? 'heart'
+                  : 'heart-outline'
+              "></AppIcon>
+          </button>
+          <button class="download" :disabled="operating" @click="install">
+            {{ t("overlays.content.common.download") }}
+            <AppIcon name="download"></AppIcon>
+          </button>
+        </div>
         <div class="section readme markdown-body" v-html="readmeHtml" @click="onReadmeClick"></div>
         <div class="section gallery" v-if="projectInfo.gallery && projectInfo.gallery.length > 0">
           <ScrollViewHorizontal>
@@ -75,6 +94,7 @@ import { useShowContentDetails } from "./useContent";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { marked } from "marked";
+import { useContentActions } from "./useContentActions";
 
 const { t } = useI18n();
 
@@ -95,6 +115,12 @@ const translatedDescription = computed(() => {
 
 const projectId = computed(() => useShowContentDetails().value.modrinth.resourcepack);
 const teamMembers = ref(null as TeamMembers | null);
+
+const { isFavorited, toggleFavorite, operating, install } = useContentActions(
+  "modrinth",
+  "resourcepack",
+  projectId,
+);
 
 onMounted(async () => {
   await refreshProjectInfo();

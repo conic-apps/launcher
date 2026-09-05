@@ -40,6 +40,23 @@
             <p class="description" v-if="translatedDescription">{{ translatedDescription }}</p>
           </div>
         </div>
+        <div class="actions-section">
+          <button
+            class="heart"
+            :class="{
+              'heart-favorited': isFavorited('curseforge', 'resourcepack', String(modId)),
+            }"
+            @click="toggleFavorite('curseforge', 'resourcepack', String(modId))">
+            <AppIcon
+              :name="
+                isFavorited('curseforge', 'resourcepack', String(modId)) ? 'heart' : 'heart-outline'
+              "></AppIcon>
+          </button>
+          <button class="download" :disabled="operating" @click="install">
+            {{ t("overlays.content.common.download") }}
+            <AppIcon name="download"></AppIcon>
+          </button>
+        </div>
         <div
           class="section readme markdown-body"
           v-if="modDescription"
@@ -60,6 +77,7 @@ import { getMod, getModDescription, Mod as CurseforgeMod } from "@conic/cursefor
 import { useShowContentDetails } from "./useContent";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { useContentActions } from "./useContentActions";
 
 const { t } = useI18n();
 
@@ -80,6 +98,12 @@ const modId = computed(() => {
   const id = useShowContentDetails().value.curseforge.resourcepack;
   return id ? Number(id) : null;
 });
+
+const { isFavorited, toggleFavorite, operating, install } = useContentActions(
+  "curseforge",
+  "resourcepack",
+  modId,
+);
 
 const translatedDescription = computed(() => {
   if (!modInfo.value) return "";

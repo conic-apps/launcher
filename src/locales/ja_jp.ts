@@ -208,6 +208,9 @@ export default {
                 resourcePackInfo: "リソースパック情報",
                 packInfo: "Modpack情報",
                 noResult: "現在のフィルターに一致する結果はありません",
+                download: "ダウンロード",
+                remove: "削除",
+                installed: "インストール済み：{version}",
             },
             mods: {
                 title: "Mod",

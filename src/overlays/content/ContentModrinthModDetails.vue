@@ -50,21 +50,29 @@
           </div>
         </div>
         <div class="actions-section">
-          <button class="heart">
-            <AppIcon name="heart-outline"> </AppIcon>
+          <button
+            class="heart"
+            :class="{ 'heart-favorited': isFavorited('modrinth', 'mod', String(projectId)) }"
+            @click="toggleFavorite('modrinth', 'mod', String(projectId))">
+            <AppIcon
+              :name="
+                isFavorited('modrinth', 'mod', String(projectId)) ? 'heart' : 'heart-outline'
+              "></AppIcon>
           </button>
-          <button class="download-loading" v-if="installedModInfo?.installed ?? null === null">
+          <button class="download-loading" v-if="checkingInstalled">
             <BaseLoading :size="18" :strokeWidth="6"></BaseLoading>
           </button>
-          <button class="download" v-else-if="installedModInfo?.installed === false">
-            Download
-            <AppIcon name="download"></AppIcon>
-          </button>
-          <button class="remove" v-else-if="installedModInfo?.installed === true">
-            Remove
+          <button v-else-if="installed" class="remove" :disabled="operating" @click="removeMod">
+            {{ t("overlays.content.common.remove") }}
             <AppIcon name="trash"></AppIcon>
           </button>
-          <p class="installed-version"></p>
+          <button v-else class="download" :disabled="operating" @click="install">
+            {{ t("overlays.content.common.download") }}
+            <AppIcon name="download"></AppIcon>
+          </button>
+          <p class="installed-version" v-if="installedVersion">
+            {{ t("overlays.content.common.installed", { version: installedVersion }) }}
+          </p>
         </div>
         <div class="section readme markdown-body" v-html="readmeHtml" @click="onReadmeClick"></div>
         <div class="section gallery" v-if="projectInfo.gallery && projectInfo.gallery.length > 0">
@@ -93,12 +101,9 @@ import { useShowContentDetails } from "./useContent";
 import { useDescriptionTranslation } from "./useDescriptionTranslation";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { marked } from "marked";
-import { checkModInstalled, ModInstalledInfo } from "@conic/content";
-import { useInstanceStore } from "@/store/instance";
+import { useContentActions } from "./useContentActions";
 
 const { t } = useI18n();
-
-const instanceStore = useInstanceStore();
 
 const { modrinthCache: modrinthTranslations, translateModrinthDescriptions } =
   useDescriptionTranslation();
@@ -117,6 +122,17 @@ const translatedDescription = computed(() => {
 
 const projectId = computed(() => useShowContentDetails().value.modrinth.mod);
 const teamMembers = ref(null as TeamMembers | null);
+
+const {
+  isFavorited,
+  toggleFavorite,
+  installed,
+  installedVersion,
+  checkingInstalled,
+  operating,
+  install,
+  removeMod,
+} = useContentActions("modrinth", "mod", projectId);
 
 onMounted(async () => {
   await refreshProjectInfo();
@@ -181,26 +197,6 @@ function onReadmeClick(event: MouseEvent) {
     if (href) openUrl(href);
   }
 }
-
-const installedModInfo = ref(null as null | ModInstalledInfo);
-
-onMounted(async () => {
-  if (!instanceStore.currentInstance || !projectId.value) return;
-  installedModInfo.value = null;
-  try {
-    installedModInfo.value = await checkModInstalled(
-      instanceStore.currentInstance.id,
-      "modrinth",
-      projectId.value,
-    );
-  } catch (error) {
-    console.error(error);
-    installedModInfo.value = {
-      installed: false,
-      mods: [],
-    };
-  }
-});
 </script>
 
 <style lang="less" scoped>
@@ -250,56 +246,6 @@ onMounted(async () => {
           -webkit-user-drag: none;
         }
       }
-    }
-  }
-  .actions-section {
-    margin-top: 16px;
-    display: flex;
-    gap: 8px;
-    button.heart,
-    button.download,
-    button.remove,
-    button.download-loading {
-      appearance: none;
-      border: none;
-      background: var(--ctp-latte-teal);
-      border-radius: 6px;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      color: #fff;
-      :deep(svg *) {
-        color: #fff;
-      }
-    }
-    button.download,
-    button.download-loading,
-    button.remove {
-      width: 120px;
-      height: 36px;
-    }
-    button.heart {
-      width: 36px;
-      height: 36px;
-    }
-    button.remove {
-      background: var(--ctp-surface0);
-      border: 1px solid var(--ctp-red);
-      transition: color 200ms ease;
-      :deep(svg *) {
-        transition: color 200ms ease;
-      }
-      &:hover {
-        color: var(--ctp-red);
-        :deep(svg *) {
-          color: var(--ctp-red);
-        }
-      }
-    }
-    button.download-loading {
-      opacity: 0.6;
     }
   }
 }

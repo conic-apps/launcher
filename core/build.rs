@@ -68,6 +68,7 @@ fn main() {
                 "cmd_list_screenshots",
                 "cmd_parse_mods",
                 "cmd_check_mod_installed",
+                "cmd_remove_mod_files",
                 "cmd_list_favorites",
                 "cmd_add_favorite",
                 "cmd_remove_favorite",

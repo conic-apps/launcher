@@ -177,6 +177,10 @@ export async function checkModInstalled(
     })
 }
 
+export async function removeModFiles(instanceId: string, files: string[]): Promise<void> {
+    return await invoke("plugin:content|cmd_remove_mod_files", { instanceId, files })
+}
+
 // ----- Favorites -----
 
 export type Favorite = {

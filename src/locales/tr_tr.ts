@@ -210,6 +210,9 @@ export default {
                 resourcePackInfo: "Kaynak paketi bilgisi",
                 packInfo: "Mod paketi bilgisi",
                 noResult: "Geçerli filtreyle eşleşen sonuç yok",
+                download: "İndir",
+                remove: "Kaldır",
+                installed: "Kurulu: {version}",
             },
             mods: {
                 title: "Modlar",

@@ -211,6 +211,9 @@ export default {
                 resourcePackInfo: "О ресурспаке",
                 packInfo: "О модпаке",
                 noResult: "Нет результатов, соответствующих текущему фильтру",
+                download: "Скачать",
+                remove: "Удалить",
+                installed: "Установлено: {version}",
             },
             mods: {
                 title: "Моды",
