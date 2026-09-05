@@ -17,7 +17,7 @@
         pointer-events: none;
       ">
       <ContentNotFound
-        :show="Object.keys(saves ?? {}).length === 0"
+        :show="!gameContentStore.loading.saves && Object.keys(saves ?? {}).length === 0"
         :description="t('overlays.content.saves.empty')" />
     </div>
     <ScrollView>
@@ -25,7 +25,12 @@
         <AppIcon name="save"></AppIcon>
         <p>{{ t("overlays.content.saves.title") }}</p>
       </div>
-      <div class="save-list-wrapper">
+      <div class="search-status" v-if="gameContentStore.loading.saves">
+        <div class="loading">
+          <BaseLoading :size="32" :gap="8" :strokeWidth="4"></BaseLoading>
+        </div>
+      </div>
+      <div class="save-list-wrapper" v-else>
         <div class="saves-list">
           <div
             v-for="(save, folderName) in saves"
@@ -114,6 +119,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import ContentNotFound from "./ContentNotFound.vue";
+import BaseLoading from "@/components/BaseLoading.vue";
 
 const { t } = useI18n();
 
@@ -242,6 +248,21 @@ function askDeleteSave(folderName: string) {
     align-items: center;
     flex-shrink: 0;
     gap: 8px;
+  }
+
+  .search-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    font-size: 13px;
+    color: var(--ctp-subtext0);
+
+    .loading {
+      background: var(--ctp-mantle);
+      padding: 16px;
+      border-radius: 8px;
+    }
   }
 }
 .saves-list {

@@ -4,7 +4,12 @@
 
 <template>
   <div class="mods-list-wrapper">
-    <div class="mods-list">
+    <div class="search-status" v-if="gameContentStore.loading.resourcepacks">
+      <div class="loading">
+        <BaseLoading :size="32" :gap="8" :strokeWidth="4"></BaseLoading>
+      </div>
+    </div>
+    <div class="mods-list" v-else>
       <div
         style="
           display: flex;
@@ -56,6 +61,7 @@ import { useGameContentStore } from "@/store/content";
 import type { Resourcepack } from "@conic/content";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import ContentNotFound from "./ContentNotFound.vue";
+import BaseLoading from "@/components/BaseLoading.vue";
 
 const { t } = useI18n();
 
@@ -77,5 +83,20 @@ function formatRange(pack: Resourcepack): string {
 
 .mods-list {
   &:extend(.content-card-grid all);
+}
+
+.search-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  font-size: 13px;
+  color: var(--ctp-subtext0);
+
+  .loading {
+    background: var(--ctp-mantle);
+    padding: 16px;
+    border-radius: 8px;
+  }
 }
 </style>
