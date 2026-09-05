@@ -563,7 +563,7 @@ export default {
             creditsBMCLAPI:
                 "The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources",
             disclaimer:
-                'Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. "Minecraft" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines.',
+                'Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. "Minecraft" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios <a href="https://www.minecraft.net/en-us/usage-guidelines">Brand and Asset Guidelines</a>.',
         },
     },
 }
