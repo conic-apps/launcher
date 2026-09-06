@@ -30,6 +30,7 @@ export type Config = {
         background_camera_move: boolean
         background_parallax: boolean
         background_image?: string
+        background_darkness: number
     }
     accessibility: {
         release_reminder: boolean

@@ -498,6 +498,8 @@ export default {
             customBackgroundDesc:
                 "Başlatıcı arka planı olarak bir resim seçin. Örnek arka planları önceliklidir",
             removeImage: "Resmi kaldır",
+            backgroundDarkness: "Arka plan resmini karartma",
+            backgroundDarknessDesc: "Özel arka plan resminin parlaklığını azaltır",
             parallaxCamera: "3D arka plan kamera hareketi",
             parallaxCameraDesc:
                 "Devre dışı bırakıldığında, kamera ileri doğru hareket etmeyi bırakır ve arka plan işlemeden sonra güncellenmeyi durdurur; böylece arka plan yükü tamamen ortadan kalkar",

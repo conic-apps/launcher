@@ -498,6 +498,8 @@ export default {
             customBackgroundDesc:
                 "ランチャーの背景として画像を選択します。インスタンスの背景が優先されます",
             removeImage: "画像を削除",
+            backgroundDarkness: "背景画像の暗さ",
+            backgroundDarknessDesc: "カスタム背景画像の明るさを下げます",
             parallaxCamera: "3D背景のカメラ移動",
             parallaxCameraDesc:
                 "無効にすると、描画完了後にカメラの前進と背景の更新が停止し、背景の処理負荷を完全になくします",

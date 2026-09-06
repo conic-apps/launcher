@@ -504,6 +504,8 @@ export default {
             customBackgroundDesc:
                 "Selecciona una imagen como fondo del launcher. El fondo de la instancia tiene prioridad",
             removeImage: "Eliminar imagen",
+            backgroundDarkness: "Oscurecer imagen de fondo",
+            backgroundDarknessDesc: "Reduce el brillo de la imagen de fondo personalizada",
             parallaxCamera: "Movimiento de cámara 3D del fondo",
             parallaxCameraDesc:
                 "Si se desactiva, la cámara deja de avanzar y el fondo deja de actualizarse después del renderizado, eliminando por completo la sobrecarga del fondo",

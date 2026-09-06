@@ -502,6 +502,8 @@ export default {
             customBackgroundDesc:
                 "Selecione uma imagem como fundo do launcher. Os fundos das instâncias têm prioridade",
             removeImage: "Remover imagem",
+            backgroundDarkness: "Escurecer imagem de fundo",
+            backgroundDarknessDesc: "Reduz o brilho da imagem de fundo personalizada",
             parallaxCamera: "Movimentação de câmera do fundo em 3D",
             parallaxCameraDesc:
                 "Quando desativado, a câmera para de avançar e o fundo para de ser atualizado após a renderização, eliminando completamente o custo do fundo",
