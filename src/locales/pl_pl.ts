@@ -501,6 +501,8 @@ export default {
             customBackgroundDesc:
                 "Wybierz obraz jako tło launchera. Tła instancji mają pierwszeństwo",
             removeImage: "Usuń obraz",
+            backgroundDarkness: "Przyciemnienie obrazu tła",
+            backgroundDarknessDesc: "Zmniejsza jasność niestandardowego obrazu tła",
             parallaxCamera: "Ruch kamery tła 3D",
             parallaxCameraDesc:
                 "Po wyłączeniu kamera przestaje przesuwać się do przodu, a tło po wyrenderowaniu przestaje się aktualizować, co całkowicie eliminuje narzut wydajnościowy tła",

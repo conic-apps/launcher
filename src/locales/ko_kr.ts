@@ -495,6 +495,8 @@ export default {
             customBackgroundDesc:
                 "런처 배경으로 사용할 이미지를 선택합니다. 인스턴스 배경이 우선 적용됩니다",
             removeImage: "이미지 제거",
+            backgroundDarkness: "배경 이미지 어둡게",
+            backgroundDarknessDesc: "사용자 지정 배경 이미지의 밝기를 낮춥니다",
             parallaxCamera: "3D 배경 카메라 이동",
             parallaxCameraDesc:
                 "비활성화하면 렌더링 후 카메라가 앞으로 이동을 멈추고 배경 업데이트도 중단되어, 배경 오버헤드를 완전히 없앱니다",
