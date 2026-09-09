@@ -1,0 +1,52 @@
+name: Mirror CDN sync
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Wait for release assets to be uploaded
+        id: assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          repo="${{ github.repository }}"
+          for i in 1 2 3 4 5 6 7 8; do
+            count="$(gh api "repos/${repo}/releases/tags/${TAG_NAME}" --jq '.assets | length' 2>/dev/null || echo 0)"
+            echo "check $i: ${TAG_NAME} has $count assets"
+            if [ "$count" -gt 0 ]; then
+              echo "assets=$count" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "release assets not visible after retries; mirror will catch up on the hourly cron" >&2
+          echo "assets=0" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger mirror sync
+        if: steps.assets.outputs.assets != '0'
+        env:
+          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          body="$(curl -s -X POST -H "X-Sync-Token: ${SYNC_TOKEN}" https://dl.conicmc.app/__sync)"
+          echo "sync response: $body"
+          for i in 1 2 3 4 5 6; do
+            sleep 20
+            marker="$(curl -s https://dl.conicmc.app/v1/mirror/status)"
+            tag="$(printf '%s' "$marker" | jq -r '.tag // empty')"
+            warnings="$(printf '%s' "$marker" | jq -r '.warnings | length')"
+            echo "check $i: tag=$tag warnings=$warnings"
+            if [ "$tag" = "${TAG_NAME}" ] && [ "$warnings" = "0" ]; then
+              echo "mirror synced for ${TAG_NAME}"
+              exit 0
+            fi
+          done
+          echo "mirror sync did not converge within the wait window; the hourly cron will finish it" >&2
+          exit 1
