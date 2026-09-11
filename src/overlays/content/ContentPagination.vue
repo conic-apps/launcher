@@ -64,15 +64,11 @@ defineEmits<{
     font-size: 12px;
     transition:
       background 120ms ease,
-      border-color 120ms ease;
+      border-color 120ms ease,
+      color 120ms ease;
 
-    &:hover:not(:disabled),
-    &:hover:not(.active) {
-      background: var(--ctp-surface1);
-    }
-
-    &:active:not(:disabled),
-    &:hover:not(.active) {
+    &:not(:disabled):active,
+    &:not(.active):hover {
       background: var(--ctp-surface2);
     }
 
