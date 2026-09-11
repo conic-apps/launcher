@@ -60,7 +60,7 @@ pub async fn generate_command_arguments(
         .join("minecraft.icns")
         .to_string_lossy()
         .to_string();
-    async_fs::write(&game_icon, DEFAULT_GAME_ICON).await?;
+    tokio::fs::write(&game_icon, DEFAULT_GAME_ICON).await?;
     if PLATFORM_INFO.os_family == OsFamily::Macos {
         command_arguments.push("-Xdock:name=Minecraft".to_string());
         command_arguments.push(format!(
@@ -155,11 +155,11 @@ pub async fn generate_command_arguments(
     );
     let mut jvm_arguments = Vec::with_capacity(version.jvm_arguments.len() + 1);
     let log_config_path = minecraft_location.get_log_config(&version.id);
-    if async_fs::metadata(&log_config_path).await.is_err() {
+    if tokio::fs::metadata(&log_config_path).await.is_err() {
         if let Some(parent) = log_config_path.parent() {
-            async_fs::create_dir_all(parent).await?;
+            tokio::fs::create_dir_all(parent).await?;
         }
-        async_fs::write(&log_config_path, LOF4J2_CONFIGURATION).await?;
+        tokio::fs::write(&log_config_path, LOF4J2_CONFIGURATION).await?;
     }
     let log_argument = match version.logging.get("client") {
         Some(client) => {

@@ -93,7 +93,7 @@ async fn complete_assets_files(
     config: DownloadConfig,
 ) -> Result<()> {
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
-    let raw_version_json = async_fs::read_to_string(version_json_path).await?;
+    let raw_version_json = tokio::fs::read_to_string(version_json_path).await?;
     let resolved_version = resolve_version(
         &Version::from_str(&raw_version_json)?,
         minecraft_location,
@@ -115,7 +115,7 @@ async fn complete_libraries_files(
     config: DownloadConfig,
 ) -> Result<()> {
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
-    let raw_version_json = async_fs::read_to_string(version_json_path).await?;
+    let raw_version_json = tokio::fs::read_to_string(version_json_path).await?;
     let resolved_version = resolve_version(
         &Version::from_str(&raw_version_json)?,
         minecraft_location,

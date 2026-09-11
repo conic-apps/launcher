@@ -364,7 +364,7 @@ pub async fn install(
     configure_first_launch_language(config, &instance).await;
 
     debug!("Saving lock file");
-    async_fs::write(
+    tokio::fs::write(
         DATA_LOCATION
             .get_instance_root(&instance.id)
             .join(".install.lock"),
@@ -395,7 +395,7 @@ async fn resolve_installer_java(
 ) -> Result<java_runtime::ResolvedJava> {
     let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
-    let raw_version_json = async_fs::read_to_string(version_json_path).await?;
+    let raw_version_json = tokio::fs::read_to_string(version_json_path).await?;
     let unresolved_version = serde_json::from_str::<Version>(&raw_version_json)?;
     let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[]).await?;
     Ok(
@@ -504,6 +504,6 @@ async fn configure_first_launch_language(config: Config, instance: &Instance) {
 async fn get_version_release_time(instance: &Instance) -> Option<String> {
     let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
-    let raw_version_json = async_fs::read_to_string(version_json_path).await.ok()?;
+    let raw_version_json = tokio::fs::read_to_string(version_json_path).await.ok()?;
     Version::from_str(&raw_version_json).ok()?.release_time
 }

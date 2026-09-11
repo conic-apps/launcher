@@ -199,7 +199,7 @@ pub async fn launch(
 
     info!("Generating startup parameters");
     let version_json_path = minecraft_location.get_version_json(instance.get_version_id()?);
-    let raw_version_json = async_fs::read_to_string(version_json_path).await?;
+    let raw_version_json = tokio::fs::read_to_string(version_json_path).await?;
     let resolved_version = resolve_version(
         &Version::from_str(&raw_version_json)?,
         &minecraft_location,
@@ -423,7 +423,7 @@ async fn spawn_minecraft_process(
         ) {
             break;
         }
-        async_io::Timer::after(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
     }
     match PLATFORM_INFO.os_family {
         OsFamily::Windows => {

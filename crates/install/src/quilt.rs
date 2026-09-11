@@ -128,9 +128,9 @@ pub async fn install(
     let version_name = quilt_version_json.id.clone();
     let json_path = minecraft.get_version_json(&version_name);
     if let Some(parent) = json_path.parent() {
-        async_fs::create_dir_all(parent).await?;
+        tokio::fs::create_dir_all(parent).await?;
     }
-    async_fs::write(
+    tokio::fs::write(
         json_path,
         serde_json::to_string_pretty(&quilt_version_json)?,
     )
