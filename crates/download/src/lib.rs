@@ -14,12 +14,13 @@ use std::{
     time::Duration,
 };
 
-use async_fs::OpenOptions;
-use futures::{AsyncSeekExt, AsyncWriteExt, StreamExt, TryStreamExt};
+use futures::{StreamExt, TryStreamExt};
 use log::warn;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use reqwest::{IntoUrl, header::ACCEPT_RANGES};
 use serde::{Deserialize, Serialize};
+use tokio::fs::OpenOptions;
+use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 
 use config::download::DownloadConfig;
 use progress::{DownloadPhase, DownloadState};
@@ -229,9 +230,9 @@ pub async fn download(download: &DownloadTask, progress: &DownloadState) -> Resu
     let file_path = download.file.clone();
     let url = download.url.clone();
     if let Some(parent) = file_path.parent() {
-        async_fs::create_dir_all(parent).await?
+        tokio::fs::create_dir_all(parent).await?
     }
-    let mut file = async_fs::File::create(&file_path).await.unwrap();
+    let mut file = tokio::fs::File::create(&file_path).await.unwrap();
     let mut response = HTTP_CLIENT.get(&url).send().await?.error_for_status()?;
     let speed_counter_input = Arc::new(AtomicU64::new(0));
     let _speed_thread = {
@@ -463,16 +464,16 @@ async fn inner_download_executer(
     let file_path = task.file.clone();
     let url = task.url.clone();
     if let Some(parent) = file_path.parent() {
-        async_fs::create_dir_all(parent).await?;
+        tokio::fs::create_dir_all(parent).await?;
     }
     let mut response = HTTP_CLIENT.get(&url).send().await?.error_for_status()?;
-    let mut file = async_fs::File::create(&file_path).await?;
+    let mut file = tokio::fs::File::create(&file_path).await?;
     let mut hasher = Hasher::from(&task.checksum);
     while let Some(chunk) = response.chunk().await? {
         while progress.speed.load(Ordering::SeqCst) > config.max_download_speed
             && config.max_download_speed > 1024
         {
-            async_io::Timer::after(Duration::from_millis(100)).await;
+            tokio::time::sleep(Duration::from_millis(100)).await;
         }
         file.write_all(&chunk).await?;
         hasher.update(&chunk);
@@ -509,7 +510,7 @@ async fn inner_chunk_download_executer(
     let chunks = calculate_chunks_length(length);
     let file_path = task.file.clone();
     if let Some(parent) = file_path.parent() {
-        async_fs::create_dir_all(parent).await?;
+        tokio::fs::create_dir_all(parent).await?;
     }
     {
         let file = OpenOptions::new()
@@ -587,7 +588,7 @@ async fn download_slice(
 ) -> Result<()> {
     let url = task.url.clone();
     if let Some(parent) = task.file.parent() {
-        async_fs::create_dir_all(parent).await?;
+        tokio::fs::create_dir_all(parent).await?;
     }
     let mut target_file = OpenOptions::new().write(true).open(task.file).await?;
     target_file.seek(SeekFrom::Start(range.0)).await?;
@@ -602,7 +603,7 @@ async fn download_slice(
         while progress.speed.load(Ordering::SeqCst) > config.max_download_speed
             && config.max_download_speed > 1024
         {
-            async_io::Timer::after(Duration::from_millis(100)).await;
+            tokio::time::sleep(Duration::from_millis(100)).await;
         }
         target_file.write_all(&chunk).await?;
         speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);

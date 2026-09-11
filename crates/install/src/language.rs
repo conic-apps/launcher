@@ -117,7 +117,7 @@ pub async fn configure_game_language(
     if needs_force_unicode_font(&language_code) {
         content.push_str("forceUnicodeFont:true\n");
     }
-    async_fs::write(options_txt_path, content.as_bytes()).await?;
+    tokio::fs::write(options_txt_path, content.as_bytes()).await?;
     info!("Set the game language to {language_code}");
     Ok(())
 }

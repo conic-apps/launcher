@@ -169,7 +169,7 @@ pub async fn install(
         } else {
             None
         };
-    async_fs::remove_file(installer_path).await?;
+    tokio::fs::remove_file(installer_path).await?;
     merge_results(
         bangbang93_bootstrapper_installation_result,
         conicmc_bootstrapper_installation_result,
@@ -206,7 +206,7 @@ pub async fn download_installer(
         .temp
         .join(format!("forge-installer-{forge_version}.jar"));
     if let Some(parent) = installer_path.parent() {
-        async_fs::create_dir_all(parent).await?;
+        tokio::fs::create_dir_all(parent).await?;
     }
     let checksum = crate::fetch_maven_sha1(&installer_url).await;
     let progress = DownloadState::default();
@@ -266,7 +266,7 @@ async fn try_bangbang93_bootstrapper(
         .stdout(Stdio::piped())
         .spawn()?;
     let result = wait_child(child, reporter);
-    async_fs::remove_file(bangbang93_bootstrapper_path).await?;
+    tokio::fs::remove_file(bangbang93_bootstrapper_path).await?;
     result
 }
 
@@ -296,7 +296,7 @@ async fn try_conicmc_bootstrapper(
         .stdout(Stdio::piped())
         .spawn()?;
     let result = wait_child(child, reporter);
-    async_fs::remove_file(conicmc_bootstrapper_path).await?;
+    tokio::fs::remove_file(conicmc_bootstrapper_path).await?;
     result
 }
 
@@ -331,7 +331,7 @@ fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()> {
 
 async fn save_bootstrapper(data: &[u8]) -> Result<PathBuf> {
     let bootstrapper_path = DATA_LOCATION.temp.join("forge-install-bootstrapper.jar");
-    async_fs::write(&bootstrapper_path, data).await?;
+    tokio::fs::write(&bootstrapper_path, data).await?;
     Ok(bootstrapper_path)
 }
 

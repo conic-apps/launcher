@@ -6,7 +6,6 @@ version = 4
 name = "account"
 version = "0.0.0"
 dependencies = [
- "async-fs",
  "base64 0.22.1",
  "folder",
  "futures",
@@ -151,17 +150,6 @@ dependencies = [
  "futures-lite",
  "pin-project-lite",
  "slab",
-]
-
-[[package]]
-name = "async-fs"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8034a681df4aed8b8edbd7fbe472401ecf009251c8b40556b304567052e294c5"
-dependencies = [
- "async-lock",
- "blocking",
- "futures-lite",
 ]
 
 [[package]]
@@ -331,7 +319,6 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 name = "beat_this"
 version = "0.0.0"
 dependencies = [
- "async-fs",
  "download",
  "folder",
  "futures",
@@ -344,6 +331,7 @@ dependencies = [
  "shared",
  "tauri",
  "thiserror 2.0.19",
+ "tokio",
 ]
 
 [[package]]
@@ -663,7 +651,6 @@ name = "config"
 version = "0.0.0"
 dependencies = [
  "account",
- "async-fs",
  "folder",
  "log",
  "serde",
@@ -674,6 +661,7 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "thiserror 2.0.19",
+ "tokio",
  "toml 1.1.3+spec-1.1.0",
  "uuid",
 ]
@@ -750,7 +738,6 @@ dependencies = [
 name = "content"
 version = "0.0.0"
 dependencies = [
- "async-fs",
  "base64 0.22.1",
  "conic-worldmap",
  "curseforge",
@@ -1142,8 +1129,6 @@ checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 name = "download"
 version = "0.0.0"
 dependencies = [
- "async-fs",
- "async-io",
  "config",
  "futures",
  "log",
@@ -2262,7 +2247,6 @@ dependencies = [
 name = "install"
 version = "0.0.0"
 dependencies = [
- "async-fs",
  "config",
  "download",
  "folder",
@@ -2290,7 +2274,6 @@ dependencies = [
 name = "instance"
 version = "0.0.0"
 dependencies = [
- "async-fs",
  "config",
  "flate2",
  "folder",
@@ -2508,8 +2491,6 @@ name = "launch"
 version = "0.0.0"
 dependencies = [
  "account",
- "async-fs",
- "async-io",
  "config",
  "download",
  "folder",
@@ -2682,8 +2663,6 @@ dependencies = [
 name = "modrinth"
 version = "0.0.0"
 dependencies = [
- "async-fs",
- "async-io",
  "download",
  "folder",
  "futures",
@@ -2735,7 +2714,6 @@ dependencies = [
 name = "multiplayer"
 version = "0.0.0"
 dependencies = [
- "async-fs",
  "download",
  "folder",
  "futures",
@@ -2749,13 +2727,13 @@ dependencies = [
  "shared",
  "tauri",
  "thiserror 2.0.19",
+ "tokio",
 ]
 
 [[package]]
 name = "music"
 version = "0.0.0"
 dependencies = [
- "async-fs",
  "folder",
  "log",
  "serde",
@@ -4377,7 +4355,6 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 name = "statistics"
 version = "0.0.0"
 dependencies = [
- "async-fs",
  "folder",
  "libloader",
  "serde",
@@ -4386,6 +4363,7 @@ dependencies = [
  "shared",
  "tauri",
  "thiserror 2.0.19",
+ "tokio",
  "uuid",
 ]
 

@@ -67,7 +67,7 @@ pub async fn log_launch(profile: StatisticsProfile, instance_id: String) -> Resu
 
 pub async fn get_statistics() -> Result<Vec<StatisticsEntry>> {
     let statistics_path = DATA_LOCATION.root.join("statistics.json");
-    let file_content = async_fs::read_to_string(statistics_path).await?;
+    let file_content = tokio::fs::read_to_string(statistics_path).await?;
     Ok(serde_json::from_str(&file_content)?)
 }
 
@@ -81,6 +81,6 @@ pub async fn get_statistics_by_profile(profile: StatisticsProfile) -> Result<Vec
 
 async fn save_logs_file(logs: Vec<StatisticsEntry>) -> Result<()> {
     let path = DATA_LOCATION.root.join("statistics.json");
-    async_fs::write(path, serde_json::to_string_pretty(&logs)?).await?;
+    tokio::fs::write(path, serde_json::to_string_pretty(&logs)?).await?;
     Ok(())
 }

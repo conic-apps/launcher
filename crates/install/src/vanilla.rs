@@ -125,9 +125,10 @@ async fn save_version_json(
         .versions
         .join(format!("{resolved_version_id}/{resolved_version_id}.json"));
     if let Some(parent) = version_json_path.parent() {
-        async_fs::create_dir_all(parent).await?;
+        tokio::fs::create_dir_all(parent).await?;
     }
-    async_fs::write(&version_json_path, raw_version_json.as_bytes()).await?;
+
+    tokio::fs::write(&version_json_path, raw_version_json.as_bytes()).await?;
     Ok(())
 }
 
@@ -256,7 +257,7 @@ pub async fn override_log4j2_configuration_file(
     minecraft_location: &MinecraftLocation,
     version: &ResolvedVersion,
 ) -> Result<()> {
-    async_fs::write(
+    tokio::fs::write(
         minecraft_location.get_log_config(version.id.clone()),
         LOF4J2_CONFIGURATION,
     )

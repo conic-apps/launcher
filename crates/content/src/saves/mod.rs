@@ -31,7 +31,7 @@ pub(crate) async fn cmd_get_all_levels(instance_id: &str) -> Result<HashMap<Stri
 #[command]
 pub(crate) async fn cmd_get_save_icon(instance_id: &str, folder_name: &str) -> Result<String> {
     let icon_path = save_folder(instance_id, folder_name).join("icon.png");
-    let icon = async_fs::read(icon_path).await?;
+    let icon = tokio::fs::read(icon_path).await?;
     Ok(format!(
         "data:image/png;base64,{}",
         general_purpose::STANDARD.encode(icon)
@@ -47,6 +47,6 @@ pub(crate) async fn cmd_get_save_path(instance_id: &str, folder_name: &str) -> R
 
 #[command]
 pub(crate) async fn cmd_delete_save(instance_id: &str, folder_name: &str) -> Result<()> {
-    async_fs::remove_dir_all(save_folder(instance_id, folder_name)).await?;
+    tokio::fs::remove_dir_all(save_folder(instance_id, folder_name)).await?;
     Ok(())
 }

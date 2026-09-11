@@ -140,13 +140,13 @@ pub async fn install(
         if let JavaFileInfo::Link { target } = file_info {
             let path = install_directory.join(path);
             if let Some(parent) = path.parent() {
-                async_fs::create_dir_all(parent).await?;
+                tokio::fs::create_dir_all(parent).await?;
             }
-            let _ = async_fs::remove_file(&path).await;
+            let _ = tokio::fs::remove_file(&path).await;
             #[cfg(unix)]
-            async_fs::unix::symlink(target, path).await?;
+            tokio::fs::symlink(target, path).await?;
             #[cfg(windows)]
-            async_fs::windows::symlink_file(target, path).await?;
+            tokio::fs::windows::symlink_file(target, path).await?;
             continue;
         }
         if let JavaFileInfo::File {
@@ -154,9 +154,9 @@ pub async fn install(
         } = &file_info
         {
             let path = install_directory.join(path);
-            let mut perm = async_fs::metadata(&path).await?.permissions();
+            let mut perm = tokio::fs::metadata(&path).await?.permissions();
             perm.set_mode(0o755);
-            async_fs::set_permissions(path, perm).await?;
+            tokio::fs::set_permissions(path, perm).await?;
             continue;
         }
     }
@@ -193,7 +193,7 @@ pub async fn install_for_instance(
     let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
     let unresolved_version = serde_json::from_str::<version::Version>(
-        &async_fs::read_to_string(version_json_path).await?,
+        &tokio::fs::read_to_string(version_json_path).await?,
     )?;
     let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[]).await?;
     let java_version_list = MojangJavaVersionList::new().await?;

@@ -128,6 +128,6 @@ async fn cmd_save_skin(base64_skin_url: String, path: String) -> Result<()> {
     let bytes = general_purpose::STANDARD_NO_PAD
         .decode(&data)
         .or_else(|_| general_purpose::STANDARD.decode(data))?;
-    async_fs::write(path, bytes).await?;
+    tokio::fs::write(path, bytes).await?;
     Ok(())
 }

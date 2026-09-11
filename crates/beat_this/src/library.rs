@@ -15,7 +15,7 @@ use sha2::Digest;
 
 pub async fn ensure_library() -> Result<()> {
     let mut sha256_hasher = sha2::Sha256::new();
-    let file_content = async_fs::read(
+    let file_content = tokio::fs::read(
         &DATA_LOCATION
             .runtime
             .join("beat-this")
@@ -62,7 +62,7 @@ pub async unsafe fn load_library_from_file<P: AsRef<OsStr> + AsRef<Path>>(
     path: P,
 ) -> Result<Library> {
     let mut sha256_hasher = sha2::Sha256::new();
-    let file_content = async_fs::read(&path).await?;
+    let file_content = tokio::fs::read(&path).await?;
     sha256_hasher.update(file_content);
     let sha256 = format!("{:02x}", sha256_hasher.finalize());
     let checksum_matched = metadata::LIBRARY.sha256 == sha256;

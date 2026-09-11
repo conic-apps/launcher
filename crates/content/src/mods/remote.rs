@@ -148,7 +148,7 @@ fn cache_dir() -> std::path::PathBuf {
 
 async fn load_remote_cache(name: &str) -> RemoteCache {
     let path = cache_dir().join(name);
-    match async_fs::read(&path).await {
+    match tokio::fs::read(&path).await {
         Ok(bytes) => serde_json::from_slice(&bytes).unwrap_or_default(),
         Err(_) => RemoteCache::default(),
     }
@@ -159,14 +159,14 @@ async fn save_remote_cache(name: &str, cache: &RemoteCache) {
         warn!("Failed to serialize mod cache {name}");
         return;
     };
-    if let Err(error) = async_fs::write(cache_dir().join(name), bytes).await {
+    if let Err(error) = tokio::fs::write(cache_dir().join(name), bytes).await {
         warn!("Failed to save mod cache {name}: {error}");
     }
 }
 
 async fn load_local_cache() -> LocalCache {
     let path = cache_dir().join(LOCAL_CACHE);
-    match async_fs::read(&path).await {
+    match tokio::fs::read(&path).await {
         Ok(bytes) => serde_json::from_slice(&bytes).unwrap_or_default(),
         Err(_) => LocalCache::default(),
     }
@@ -177,7 +177,7 @@ async fn save_local_cache(cache: &LocalCache) {
         warn!("Failed to serialize local mod cache");
         return;
     };
-    if let Err(error) = async_fs::write(cache_dir().join(LOCAL_CACHE), bytes).await {
+    if let Err(error) = tokio::fs::write(cache_dir().join(LOCAL_CACHE), bytes).await {
         warn!("Failed to save local mod cache: {error}");
     }
 }
@@ -199,7 +199,7 @@ async fn merge_and_save_remote_cache(name: &str, entries: &RemoteCache) {
 
 async fn load_identity_cache() -> IdentityCache {
     let path = cache_dir().join(IDENTITY_CACHE);
-    match async_fs::read(&path).await {
+    match tokio::fs::read(&path).await {
         Ok(bytes) => serde_json::from_slice(&bytes).unwrap_or_default(),
         Err(_) => IdentityCache::default(),
     }
@@ -210,7 +210,7 @@ async fn save_identity_cache(cache: &IdentityCache) {
         warn!("Failed to serialize identity cache");
         return;
     };
-    if let Err(error) = async_fs::write(cache_dir().join(IDENTITY_CACHE), bytes).await {
+    if let Err(error) = tokio::fs::write(cache_dir().join(IDENTITY_CACHE), bytes).await {
         warn!("Failed to save identity cache: {error}");
     }
 }
@@ -257,7 +257,7 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
         })
         .unwrap_or_default();
 
-    if let Err(error) = async_fs::create_dir_all(cache_dir()).await {
+    if let Err(error) = tokio::fs::create_dir_all(cache_dir()).await {
         warn!("Failed to create mod cache directory: {error}");
         return Vec::new();
     }

@@ -18,7 +18,6 @@ platform.workspace = true
 version.workspace = true
 java-runtime.workspace = true
 
-async-fs.workspace = true
 log.workspace = true
 uuid.workspace = true
 serde.workspace = true
