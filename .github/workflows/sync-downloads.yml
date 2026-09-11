@@ -32,10 +32,10 @@ jobs:
       - name: Trigger mirror sync
         if: steps.assets.outputs.assets != '0'
         env:
-          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          R2_SYNC_TOKEN: ${{ secrets.R2_SYNC_TOKEN }}
           TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-          body="$(curl -s -X POST -H "X-Sync-Token: ${SYNC_TOKEN}" https://dl.conicmc.app/__sync)"
+          body="$(curl -s -X POST -H "X-Sync-Token: ${R2_SYNC_TOKEN}" https://dl.conicmc.app/__sync)"
           echo "sync response: $body"
           for i in 1 2 3 4 5 6; do
             sleep 20

@@ -14,8 +14,7 @@
     @pointerleave="onPointerLeave">
     <canvas ref="canvasRef" class="world-map-canvas"></canvas>
     <div v-if="loading" class="world-map-status">
-      <ItemLoadingIcon status="in-progress"></ItemLoadingIcon>
-      <span>加载地图中…</span>
+      <BaseLoading :size="22" :strokeWidth="5" :gap="6"></BaseLoading>
     </div>
     <div v-else-if="error" class="world-map-status error">
       <ItemLoadingIcon status="error"></ItemLoadingIcon>
@@ -38,6 +37,7 @@
 import ItemLoadingIcon from "@/components/ItemLoadingIcon.vue";
 import { renderWorldMap } from "@conic/content";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import BaseLoading from "./BaseLoading.vue";
 
 const MAX_CONCURRENT = 24;
 const TILE_LOAD_DEBOUNCE = 50;
