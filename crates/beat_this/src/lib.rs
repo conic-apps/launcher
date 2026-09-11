@@ -96,14 +96,14 @@ async fn cmd_parse_audio_file(path: String) -> Result<BeatAnalysis> {
 
 pub async fn parse_audio_file(path: String) -> Result<BeatAnalysis> {
     let mut sha256_hasher = sha2::Sha256::new();
-    let file_content = async_fs::read(&path).await?;
+    let file_content = tokio::fs::read(&path).await?;
     sha256_hasher.update(&file_content);
     let sha256 = format!("{:x}", sha256_hasher.finalize());
 
     let cache_dir = DATA_LOCATION.cache.join("beat_this");
     let cache_path = cache_dir.join(format!("{sha256}.json"));
 
-    if let Ok(cached) = async_fs::read_to_string(&cache_path).await
+    if let Ok(cached) = tokio::fs::read_to_string(&cache_path).await
         && let Ok(analysis) = serde_json::from_str::<BeatAnalysis>(&cached)
     {
         return Ok(analysis);
@@ -123,8 +123,8 @@ pub async fn parse_audio_file(path: String) -> Result<BeatAnalysis> {
     if let Ok(ref a) = analysis
         && let Ok(json) = serde_json::to_string(a)
     {
-        let _ = async_fs::create_dir_all(&cache_dir).await;
-        let _ = async_fs::write(&cache_path, json).await;
+        let _ = tokio::fs::create_dir_all(&cache_dir).await;
+        let _ = tokio::fs::write(&cache_path, json).await;
     }
 
     analysis

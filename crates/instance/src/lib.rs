@@ -10,7 +10,6 @@ use std::path::PathBuf;
 
 use flate2::read::GzDecoder;
 use folder::DATA_LOCATION;
-use futures::TryStreamExt;
 use log::info;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -69,7 +68,7 @@ async fn cmd_delete_instance(id: &str) -> Result<()> {
 #[command]
 async fn cmd_add_background_file(path: String, id: &str) -> Result<()> {
     let instance_root = DATA_LOCATION.get_instance_root(id);
-    async_fs::copy(path, instance_root.join("background")).await?;
+    tokio::fs::copy(path, instance_root.join("background")).await?;
     Ok(())
 }
 
@@ -85,7 +84,7 @@ async fn cmd_get_background_path(id: String) -> String {
 #[command]
 async fn cmd_remove_background(id: &str) -> Result<()> {
     let instance_root = DATA_LOCATION.get_instance_root(id);
-    Ok(async_fs::remove_file(instance_root.join("background")).await?)
+    Ok(tokio::fs::remove_file(instance_root.join("background")).await?)
 }
 
 #[command]
@@ -105,9 +104,9 @@ pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result
     let instance_root = DATA_LOCATION.get_instance_root(id);
     let config_file_path = instance_root.join("instance.toml");
     if let Some(parent) = config_file_path.parent() {
-        async_fs::create_dir_all(parent).await?
+        tokio::fs::create_dir_all(parent).await?
     }
-    async_fs::write(config_file_path, toml::to_string_pretty(&config)?).await?;
+    tokio::fs::write(config_file_path, toml::to_string_pretty(&config)?).await?;
     info!("Created instance: {}", config.name);
     Ok(id.to_string())
 }
@@ -128,11 +127,11 @@ pub enum SortBy {
 /// Reads all instances stored in the data directory
 pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     let instances_folder = &DATA_LOCATION.instances;
-    async_fs::create_dir_all(instances_folder).await?;
-    let mut folder_entries = async_fs::read_dir(instances_folder).await?;
+    tokio::fs::create_dir_all(instances_folder).await?;
+    let mut folder_entries = tokio::fs::read_dir(instances_folder).await?;
     let mut instances = Vec::new();
 
-    while let Some(entry) = folder_entries.try_next().await? {
+    while let Some(entry) = folder_entries.next_entry().await? {
         let file_type = match entry.file_type().await {
             Err(_) => continue,
             Ok(file_type) => file_type,
@@ -155,7 +154,7 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
         if metadata.len() > 2_000_000 || !instance_config.is_file() {
             continue;
         }
-        let config_content = match async_fs::read_to_string(instance_config).await {
+        let config_content = match tokio::fs::read_to_string(instance_config).await {
             Err(_) => continue,
             Ok(content) => content,
         };
@@ -165,7 +164,9 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
                 Ok(config) => config,
                 Err(_) => continue,
             },
-            installed: async_fs::metadata(path.join(".install.lock")).await.is_ok(),
+            installed: tokio::fs::metadata(path.join(".install.lock"))
+                .await
+                .is_ok(),
             last_played: get_launch_script_timestamp(&instance_id),
             id: instance_id,
             has_background: path.join("background").is_file(),
@@ -384,12 +385,12 @@ fn release_week(patch: u8) -> u8 {
 pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
     let instance_root = &DATA_LOCATION.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
-    if let Ok(config_file_content) = async_fs::read_to_string(config_file).await
+    if let Ok(config_file_content) = tokio::fs::read_to_string(config_file).await
         && let Ok(config) = toml::from_str::<InstanceConfig>(&config_file_content)
     {
         Some(Instance {
             config,
-            installed: async_fs::metadata(instance_root.join(".install.lock"))
+            installed: tokio::fs::metadata(instance_root.join(".install.lock"))
                 .await
                 .is_ok(),
             id: id.to_string(),
@@ -406,14 +407,14 @@ pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
 pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
     let instance_root = DATA_LOCATION.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
-    async_fs::write(config_file, toml::to_string_pretty(&config)?).await?;
+    tokio::fs::write(config_file, toml::to_string_pretty(&config)?).await?;
     info!("Updated instance: {}", config.name);
     Ok(())
 }
 
 /// Deletes the instance directory corresponding to the given UUID.
 pub async fn delete_instance(id: &str) -> Result<()> {
-    async_fs::remove_dir_all(DATA_LOCATION.get_instance_root(id)).await?;
+    tokio::fs::remove_dir_all(DATA_LOCATION.get_instance_root(id)).await?;
     info!("Deleted {id}");
     Ok(())
 }
@@ -424,7 +425,7 @@ pub async fn delete_instance(id: &str) -> Result<()> {
 /// launch re-run the full installation flow (repair).
 pub async fn remove_install_lock(id: &str) -> Result<()> {
     let lock_file = DATA_LOCATION.get_instance_root(id).join(".install.lock");
-    if let Err(err) = async_fs::remove_file(lock_file).await
+    if let Err(err) = tokio::fs::remove_file(lock_file).await
         && err.kind() != std::io::ErrorKind::NotFound
     {
         return Err(err.into());

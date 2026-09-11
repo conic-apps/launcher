@@ -92,7 +92,7 @@ pub async fn install(
     }
 
     let output = command.wait_with_output()?;
-    async_fs::remove_file(installer_path).await?;
+    tokio::fs::remove_file(installer_path).await?;
     if !success || !output.status.success() {
         error!("Failed to ran neoforge installer");
         return Err(Error::NeoforgeInstallerFailed);
@@ -124,7 +124,7 @@ pub async fn download_installer(
         .temp
         .join(format!("{}.jar", uuid::Uuid::new_v4()));
     if let Some(parent) = installer_path.parent() {
-        async_fs::create_dir_all(parent).await?;
+        tokio::fs::create_dir_all(parent).await?;
     }
 
     let checksum = crate::fetch_maven_sha1(&installer_url).await;

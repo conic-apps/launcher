@@ -45,9 +45,9 @@ pub async fn delete_account(account: YggdrasilAccount) -> Result<()> {
 
 async fn save_accounts(accounts: Vec<YggdrasilAccount>) -> Result<()> {
     let yggdrasil_accounts_list_file = DATA_LOCATION.accounts.join("yggdrasil-accounts.json");
-    async_fs::create_dir_all(&DATA_LOCATION.accounts).await?;
+    tokio::fs::create_dir_all(&DATA_LOCATION.accounts).await?;
     let serialized_yggdrasil_accounts_list = serde_json::to_string_pretty(&accounts)?;
-    async_fs::write(
+    tokio::fs::write(
         yggdrasil_accounts_list_file,
         serialized_yggdrasil_accounts_list,
     )
@@ -57,13 +57,14 @@ async fn save_accounts(accounts: Vec<YggdrasilAccount>) -> Result<()> {
 
 pub async fn list_accounts() -> Result<Vec<YggdrasilAccount>> {
     let yggdrasil_accounts_list_file = DATA_LOCATION.accounts.join("yggdrasil-accounts.json");
-    async_fs::create_dir_all(&DATA_LOCATION.accounts).await?;
+    tokio::fs::create_dir_all(&DATA_LOCATION.accounts).await?;
     if !yggdrasil_accounts_list_file.exists() {
         return Ok(vec![]);
     }
-    let serialized_yggdrasil_accounts_list = async_fs::read_to_string(yggdrasil_accounts_list_file)
-        .await
-        .unwrap_or_default();
+    let serialized_yggdrasil_accounts_list =
+        tokio::fs::read_to_string(yggdrasil_accounts_list_file)
+            .await
+            .unwrap_or_default();
     Ok(serde_json::from_str(&serialized_yggdrasil_accounts_list).unwrap_or_default())
 }
 

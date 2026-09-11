@@ -60,9 +60,9 @@ pub async fn update_account(account: OfflineAccount) -> Result<()> {
 
 async fn save_accounts(accounts: &Vec<OfflineAccount>) -> Result<()> {
     let accounts_list_file = DATA_LOCATION.accounts.join("offline.json");
-    async_fs::create_dir_all(&DATA_LOCATION.accounts).await?;
+    tokio::fs::create_dir_all(&DATA_LOCATION.accounts).await?;
     let content = serde_json::to_string(accounts)?;
-    async_fs::write(accounts_list_file, content).await?;
+    tokio::fs::write(accounts_list_file, content).await?;
     Ok(())
 }
 
@@ -71,7 +71,7 @@ pub async fn list_accounts() -> Result<Vec<OfflineAccount>> {
     if !accounts_list_file.exists() {
         return Ok(vec![]);
     }
-    let serialized_account_list = async_fs::read_to_string(accounts_list_file).await?;
+    let serialized_account_list = tokio::fs::read_to_string(accounts_list_file).await?;
     Ok(serde_json::from_str(&serialized_account_list)?)
 }
 

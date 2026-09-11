@@ -60,7 +60,7 @@ fn cmd_get_system_language() -> String {
 #[command]
 async fn cmd_set_background_image(path: String) -> Result<String> {
     let dest = DATA_LOCATION.root.join("background_image");
-    async_fs::copy(&path, &dest).await?;
+    tokio::fs::copy(&path, &dest).await?;
     let filename = "background_image".to_string();
     Ok(filename)
 }
@@ -69,7 +69,7 @@ async fn cmd_set_background_image(path: String) -> Result<String> {
 async fn cmd_remove_background_image() -> Result<()> {
     let dest = DATA_LOCATION.root.join("background_image");
     if dest.exists() {
-        async_fs::remove_file(&dest).await?;
+        tokio::fs::remove_file(&dest).await?;
     }
     Ok(())
 }
