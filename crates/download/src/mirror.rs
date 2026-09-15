@@ -11,6 +11,7 @@ use std::{
 };
 
 use config::download::MirrorConfig;
+use log::debug;
 use serde::{Deserialize, Serialize};
 
 pub(crate) struct Mirror(pub(crate) String, pub(crate) Arc<AtomicU64>);
@@ -45,6 +46,11 @@ impl MirrorUsage {
             .iter()
             .filter(|x| !disabled.iter().any(|y| x.0 == y))
             .min_by(|x, y| x.1.load(Ordering::SeqCst).cmp(&y.1.load(Ordering::SeqCst)))?;
+        debug!(
+            "Selected libraries mirror {k} ({} active connection(s), {} disabled)",
+            v.load(Ordering::SeqCst),
+            disabled.len()
+        );
         Some(Mirror(k.clone(), v.clone()))
     }
     /// Get a fewest connections assets mirror
@@ -54,6 +60,11 @@ impl MirrorUsage {
             .iter()
             .filter(|x| !disabled.iter().any(|y| x.0 == y))
             .min_by(|x, y| x.1.load(Ordering::SeqCst).cmp(&y.1.load(Ordering::SeqCst)))?;
+        debug!(
+            "Selected assets mirror {k} ({} active connection(s), {} disabled)",
+            v.load(Ordering::SeqCst),
+            disabled.len()
+        );
         Some(Mirror(k.clone(), v.clone()))
     }
 }
