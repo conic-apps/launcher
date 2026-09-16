@@ -93,6 +93,8 @@ export default {
             resourcePacks: "資源包",
             screenshots: "截圖",
             countUnit: "個",
+            gameMode: "遊戲模式",
+            lastPlayedTime: "上次遊玩時間",
         },
         instance: {
             title: "實例設定",

@@ -94,6 +94,8 @@ export default {
             resourcePacks: "Ресурспаки",
             screenshots: "Скриншоты",
             countUnit: "",
+            gameMode: "Режим игры",
+            lastPlayedTime: "Время последнего запуска",
         },
         instance: {
             title: "Настройки сборки",

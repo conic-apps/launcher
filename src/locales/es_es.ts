@@ -93,6 +93,8 @@ export default {
             resourcePacks: "Paquetes de recursos",
             screenshots: "Capturas de pantalla",
             countUnit: "",
+            gameMode: "Modo de juego",
+            lastPlayedTime: "Última vez jugado",
         },
         instance: {
             title: "Ajustes de la instancia",

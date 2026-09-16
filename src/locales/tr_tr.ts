@@ -93,6 +93,8 @@ export default {
             resourcePacks: "Kaynak paketleri",
             screenshots: "Ekran görüntüleri",
             countUnit: "",
+            gameMode: "Oyun modu",
+            lastPlayedTime: "Son oynama zamanı",
         },
         instance: {
             title: "Örnek ayarları",

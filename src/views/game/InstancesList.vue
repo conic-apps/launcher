@@ -419,8 +419,10 @@ async function getBackgroundSrc(id: string) {
 .instances-list {
   height: 100%;
   width: fit-content;
-  margin-left: auto;
-  transform: translateX(320px);
+  position: absolute;
+  top: 0;
+  right: -320px;
+  // left: clamp(50vw, calc(50vw + 64px), 100px);
   overflow: visible;
 
   .gap-top {

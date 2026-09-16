@@ -86,12 +86,23 @@ const searchQuery = defineModel<string>("searchQuery", { required: true });
   height: 112px;
   width: 400px;
   position: absolute;
-  top: 8px;
   right: 320px;
   border-radius: 16px 0 0 16px;
-  background: rgba(var(--ctp-surface0-rgb), 0.4);
-  backdrop-filter: blur(4px);
   z-index: 114;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -100px;
+    bottom: 0;
+    left: 0px;
+    z-index: -1;
+    background: rgba(var(--ctp-surface0-rgb), 0.4);
+    backdrop-filter: blur(4px);
+    transform: skew(-10deg);
+    border-bottom-left-radius: 16px;
+  }
 
   .search {
     display: flex;

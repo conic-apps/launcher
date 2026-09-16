@@ -4,251 +4,168 @@
 
 <template>
   <div class="current-instance" :class="{ introPlayed }">
-    <div class="row-1" ref="row1" style="opacity: 0">
-      <p class="title">{{ currentInstance?.config.name ?? "no instance selected!" }}</p>
-    </div>
-    <div class="row-2" ref="row2" style="opacity: 0">
-      <p>
-        <span> {{ t("game.summary.minecraftVersion") }} </span>
-        <span>{{ currentInstance?.config.runtime.minecraft ?? "--" }}</span>
-      </p>
-      <div
-        class="line"
-        v-if="
-          currentInstance?.config.runtime.mod_loader_type &&
-          currentInstance?.config.runtime.mod_loader_version
-        "></div>
-      <p
-        v-if="
-          currentInstance?.config.runtime.mod_loader_type &&
-          currentInstance?.config.runtime.mod_loader_version
-        ">
-        <span>
-          {{ currentInstance.config.runtime.mod_loader_type }} {{ t("game.summary.version") }}
-        </span>
-        <span>{{ currentInstance.config.runtime.mod_loader_version }}</span>
-      </p>
-      <div class="line"></div>
-      <p>
-        <span>{{ t("game.summary.lastPlayedDate") }}</span>
-        <span v-if="!currentInstance">--</span>
-        <span v-else-if="currentInstance.last_played">{{
-          formatLastPlayed(currentInstance.last_played, timeFormatter)
-        }}</span>
-        <span v-else>{{ t("game.summary.neverPlayed") }}</span>
-      </p>
-      <div
-        class="line"
-        v-if="
-          currentInstance &&
-          playtimeCache[currentInstance.id] &&
-          playtimeCache[currentInstance.id] > 0
-        "></div>
-
-      <AppIcon
-        name="time"
-        :size="22"
-        style="margin-right: 2px"
-        v-if="
-          currentInstance &&
-          playtimeCache[currentInstance.id] &&
-          playtimeCache[currentInstance.id] > 0
-        "></AppIcon>
-      <p
-        v-if="
-          currentInstance &&
-          playtimeCache[currentInstance.id] &&
-          playtimeCache[currentInstance.id] > 0
-        ">
-        <span>{{ t("game.summary.playTime") }}</span>
-        <span>{{ formatPlayTime(playtimeCache[currentInstance.id] ?? 0, playTimeFormatter) }}</span>
-      </p>
-    </div>
-    <div class="row-3" ref="row3" style="opacity: 0">
-      <div class="launch-buttons" ref="launchButtons">
+    <div class="summary-card" ref="summaryCard" style="opacity: 0">
+      <div class="row-1">
+        <p class="title">{{ currentInstance?.config.name ?? "no instance selected!" }}</p>
+      </div>
+      <div class="row-2">
+        <p>
+          <span>Minecraft</span>
+          <span>{{ currentInstance?.config.runtime.minecraft ?? "--" }}</span>
+        </p>
+        <div
+          class="line"
+          v-if="
+            currentInstance?.config.runtime.mod_loader_type &&
+            currentInstance?.config.runtime.mod_loader_version
+          "></div>
+        <p
+          v-if="
+            currentInstance?.config.runtime.mod_loader_type &&
+            currentInstance?.config.runtime.mod_loader_version
+          ">
+          <span>
+            {{ currentInstance.config.runtime.mod_loader_type }}
+          </span>
+          <span>{{ currentInstance.config.runtime.mod_loader_version }}</span>
+        </p>
+        <div class="line"></div>
+        <p>
+          <span>{{ t("game.summary.lastPlayedDate") }}</span>
+          <span v-if="!currentInstance">--</span>
+          <span v-else-if="currentInstance.last_played">{{
+            formatLastPlayed(currentInstance.last_played, timeFormatter)
+          }}</span>
+          <span v-else>{{ t("game.summary.neverPlayed") }}</span>
+        </p>
+        <div
+          class="line"
+          v-if="
+            currentInstance &&
+            playtimeCache[currentInstance.id] &&
+            playtimeCache[currentInstance.id] > 0
+          "></div>
+        <AppIcon
+          name="time"
+          :size="22"
+          style="margin-right: 2px"
+          v-if="
+            currentInstance &&
+            playtimeCache[currentInstance.id] &&
+            playtimeCache[currentInstance.id] > 0
+          "></AppIcon>
+        <p
+          v-if="
+            currentInstance &&
+            playtimeCache[currentInstance.id] &&
+            playtimeCache[currentInstance.id] > 0
+          ">
+          <span>{{ t("game.summary.playTime") }}</span>
+          <span>{{
+            formatPlayTime(playtimeCache[currentInstance.id] ?? 0, playTimeFormatter)
+          }}</span>
+        </p>
+      </div>
+      <div class="row-3">
         <button
           class="launch-button"
           @click="navigationStore.navigate('launch')"
           :class="{ disabled: !currentInstance }">
-          <AppIcon name="play" fill="#fff" style="margin-right: 4px"></AppIcon>
-          {{ t("game.summary.startGame") }}
+          <AppIcon name="rocket" fill="var(--ctp-text-inverse)" :size="18"></AppIcon>
+          <span style="color: var(--ctp-text-inverse)">启动</span>
         </button>
-        <button class="launch-sub-button" @click.stop="toggleLaunchMenu">
-          <span class="chevron" ref="launchMenuChevron">
-            <AppIcon
-              name="chevron-down"
-              stroke="#ffffff"
-              fill="#ffffff"
-              style="color: #fff"
-              :size="16"></AppIcon>
-          </span>
-        </button>
-        <Transition
-          :css="false"
-          @before-enter="onBeforeEnter"
-          @enter="onEnter"
-          @after-enter="onAfterEnter"
-          @enter-cancelled="onEnterCancelled"
-          @before-leave="onBeforeLeave"
-          @leave="onLeave"
-          @after-leave="onAfterLeave"
-          @leave-cancelled="onLeaveCancelled">
-          <ul
-            class="launch-menu-dropdown"
-            v-if="launchMenuOpened"
-            @click="launchMenuOpened = false">
-            <li class="dropdown-option" @click="repairAndLaunch">
-              <AppIcon name="build" :size="14"></AppIcon>
-              <span>{{ t("game.summary.repairAndLaunch") }}</span>
-            </li>
-          </ul>
-        </Transition>
-      </div>
-      <div class="actions" :class="{ disabled: !currentInstance }">
-        <button class="action-button" @click="openInstanceFolder">
-          <AppIcon name="folder"></AppIcon>
-        </button>
-        <button class="action-button" @click="toggleStarred">
-          <AppIcon :name="isStarred ? 'star' : 'star-outline'"></AppIcon>
-        </button>
-        <button class="action-button" @click="useInstanceSettings().value = true">
-          <AppIcon name="settings"></AppIcon>
-        </button>
+        <div class="actions" :class="{ disabled: !currentInstance }">
+          <button class="action-button" @click="openInstanceFolder">
+            <AppIcon name="folder"></AppIcon>
+          </button>
+          <button class="action-button" @click="toggleStarred">
+            <AppIcon :name="isStarred ? 'star' : 'star-outline'"></AppIcon>
+          </button>
+          <button class="action-button" @click="useInstanceSettings().value = true">
+            <AppIcon name="settings"></AppIcon>
+          </button>
+        </div>
       </div>
     </div>
-    <div class="current-instance-contents" ref="contents" :class="{ disabled: !currentInstance }">
-      <div @click="useShowContent().value.saves = true" ref="saves" style="opacity: 0">
-        <div>
-          <AppIcon name="save"></AppIcon>
-          <span class="type">{{ t("game.summary.saves") }}</span>
+
+    <div class="tabs" ref="tabsEl" style="opacity: 0">
+      <button
+        class="tab"
+        v-for="tab in tabs"
+        :key="tab.key"
+        :ref="(el: unknown) => setTabRef(tab.key, el)"
+        :class="{ active: activeTab === tab.key }"
+        @click="onTabClick(tab.key)">
+        {{ tab.label }}
+      </button>
+      <div class="tab-indicator" ref="tabIndicator"></div>
+    </div>
+
+    <div class="content-area" ref="contentAreaEl" style="opacity: 0">
+      <template v-if="activeContentLoading">
+        <div class="state-wrapper">
+          <BaseLoading :size="32" :gap="8" :strokeWidth="4"></BaseLoading>
         </div>
-        <div>
-          <div
-            class="content-img"
-            v-for="(folderName, index) in Object.keys(contentStore.gameContent.saves ?? {}).slice(
-              0,
-              5,
-            )"
-            :key="index">
-            <img
-              v-if="iconCache[folderName]"
-              :src="iconCache[folderName]"
-              alt="world icon"
-              width="64px"
-              height="64px" />
-            <img
-              v-else
-              src="@/assets/images/Unknown_server.webp"
-              alt="world icon"
-              width="64px"
-              height="64px" />
-          </div>
-          <span class="count" v-if="contentStore.loading.saves">
-            <BaseLoading :size="16" :strokeWidth="6" :gap="6"></BaseLoading>
-          </span>
-          <span class="count" v-else
-            >{{ Object.keys(contentStore.gameContent.saves ?? {}).length }}
-            {{ t("game.summary.countUnit") }}</span
-          >
+      </template>
+      <template v-else-if="activeContentEmpty">
+        <div class="state-wrapper">
+          <BaseNotFound :show="true" :description="activeEmptyDesc"></BaseNotFound>
         </div>
-      </div>
-      <div
-        @click="useShowContent().value.mods = true"
-        ref="mods"
-        style="opacity: 0"
-        :class="{
-          disabled:
-            !currentInstance?.config.runtime.mod_loader_type ||
-            !currentInstance.config.runtime.mod_loader_version,
-        }">
-        <div>
-          <AppIcon name="extension-puzzle" />
-          <span class="type">{{ t("game.summary.mods") }}</span>
+      </template>
+      <template v-else>
+        <div class="content-list">
+          <template v-if="activeTab === 'saves'">
+            <div class="list-item" v-for="[folder, save] in savesList" :key="folder">
+              <img class="item-thumb" :src="iconCache[folder] ?? unknownImg" alt="" />
+              <div class="item-main">
+                <div class="item-title-line">
+                  <span class="item-title">{{ save.Data.LevelName }}</span>
+                  <span class="cheats" v-if="save.Data.allowCommands">{{
+                    t("overlays.content.saves.cheats")
+                  }}</span>
+                </div>
+                <span class="item-sub">{{ folder }}</span>
+              </div>
+              <div class="item-meta">
+                <div class="meta-item">
+                  <span class="meta-label">{{ t("game.summary.lastPlayedTime") }}</span>
+                  <span class="meta-value">{{
+                    save.Data.LastPlayed
+                      ? formatLastPlayed(save.Data.LastPlayed, timeFormatter)
+                      : "--"
+                  }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">{{ t("game.summary.gameMode") }}</span>
+                  <span class="meta-value">{{ formatGameType(save.Data.GameType) }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+          <template v-else-if="activeTab === 'mods'">
+            <div class="list-item" v-for="(mod, idx) in modsList" :key="idx">
+              <img class="item-thumb" :src="mod.icon ?? unknownImg" alt="" />
+              <div class="item-main">
+                <span class="item-title">{{ mod.name }}</span>
+                <span class="item-sub" v-if="mod.authors.length"
+                  >by {{ mod.authors.map((a) => a.name).join(", ") }}</span
+                >
+              </div>
+              <div class="item-meta" v-if="mod.version">
+                <span class="meta-value">{{ mod.version }}</span>
+              </div>
+            </div>
+          </template>
+          <template v-else-if="activeTab === 'resourcepacks'">
+            <div class="list-item" v-for="(pack, idx) in rpList" :key="idx">
+              <img class="item-thumb" :src="pack.icon ?? unknownImg" alt="" />
+              <div class="item-main">
+                <span class="item-title">{{ pack.name }}</span>
+              </div>
+            </div>
+          </template>
         </div>
-        <div>
-          <div
-            class="content-img"
-            v-for="(mod, index) in (contentStore.gameContent.mods ?? []).slice(0, 5)"
-            :key="index">
-            <img v-if="mod.icon" :src="mod.icon" alt="mod icon" width="64px" height="64px" />
-            <img
-              v-else
-              src="@/assets/images/Unknown_server.webp"
-              alt="world icon"
-              width="64px"
-              height="64px" />
-          </div>
-          <span class="count" v-if="contentStore.loading.mods">
-            <BaseLoading :size="16" :strokeWidth="6" :gap="6"></BaseLoading>
-          </span>
-          <span class="count" v-else
-            >{{ (contentStore.gameContent.mods ?? []).length }}
-            {{ t("game.summary.countUnit") }}</span
-          >
-        </div>
-      </div>
-      <div
-        @click="useShowContent().value.resourcepacks = true"
-        ref="resourcepacks"
-        style="opacity: 0">
-        <div>
-          <AppIcon name="folder" />
-          <span class="type">{{ t("game.summary.resourcePacks") }}</span>
-        </div>
-        <div>
-          <div
-            class="content-img"
-            v-for="(pack, index) in (contentStore.gameContent.resourcepacks ?? []).slice(0, 5)"
-            :key="index">
-            <img
-              v-if="pack.icon"
-              :src="pack.icon"
-              alt="resourcepack icon"
-              width="64px"
-              height="64px" />
-            <img
-              v-else
-              src="@/assets/images/Unknown_server.webp"
-              alt="world icon"
-              width="64px"
-              height="64px" />
-          </div>
-          <span class="count" v-if="contentStore.loading.resourcepacks">
-            <BaseLoading :size="16" :strokeWidth="6" :gap="6"></BaseLoading>
-          </span>
-          <span class="count" v-else
-            >{{ (contentStore.gameContent.resourcepacks ?? []).length }}
-            {{ t("game.summary.countUnit") }}</span
-          >
-        </div>
-      </div>
-      <div
-        @click="useShowContent().value.screenshots = true"
-        ref="screenshots"
-        style="opacity: 0"
-        :class="{ disabled: !(contentStore.gameContent.screenshots ?? []).length }">
-        <div>
-          <AppIcon name="images-outline" />
-          <span class="type">{{ t("game.summary.screenshots") }}</span>
-        </div>
-        <div>
-          <div
-            class="content-img"
-            v-for="(src, index) in (contentStore.gameContent.screenshots ?? [])
-              .slice(0, 5)
-              .map((path) => convertFileSrc(path))"
-            :key="index">
-            <img :src="src" alt="screenshot icon" width="64px" height="64px" />
-          </div>
-          <span class="count" v-if="contentStore.loading.screenshots">
-            <BaseLoading :size="16" :strokeWidth="6" :gap="6"></BaseLoading>
-          </span>
-          <span class="count" v-else
-            >{{ (contentStore.gameContent.screenshots ?? []).length }}
-            {{ t("game.summary.countUnit") }}</span
-          >
-        </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -256,8 +173,9 @@
 <script setup lang="ts">
 import AppIcon from "@/components/AppIcon.vue";
 import BaseLoading from "@/components/BaseLoading.vue";
+import BaseNotFound from "@/components/BaseNotFound.vue";
 import { useInstanceStore } from "@/store/instance";
-import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import {
   calculatePlaytime,
   formatLastPlayed,
@@ -267,7 +185,7 @@ import {
 } from "@conic/instance";
 import { useNavigationStore } from "@/store/navigation";
 import { getInstanceRoot } from "@conic/folder";
-import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { useInstanceSettings } from "@/overlays/useInstanceSettings";
 import {
   flipDropdownChevron,
@@ -279,6 +197,7 @@ import { useShowContent, useShowContentDetails } from "@/overlays/content/useCon
 import gsap from "gsap";
 import { useI18n } from "vue-i18n";
 import { getSaveIcon } from "@conic/content";
+import unknownImg from "@/assets/images/Unknown_server.webp";
 
 const { t } = useI18n();
 
@@ -358,8 +277,6 @@ const {
   },
 });
 
-// Removes the install lock of the current instance and launches the game, so
-// the launch pipeline re-runs the installation flow first.
 async function repairAndLaunch() {
   if (!currentInstance.value) return;
   try {
@@ -399,6 +316,7 @@ function onKeyDown(event: KeyboardEvent) {
 
 onMounted(() => {
   window.addEventListener("keydown", onKeyDown);
+  nextTick(updateIndicator);
 });
 
 onUnmounted(() => {
@@ -445,19 +363,106 @@ watch(
   { immediate: true },
 );
 
-const rowElements = {
-  row1: useTemplateRef("row1"),
-  row2: useTemplateRef("row2"),
-  row3: useTemplateRef("row3"),
-};
+function formatGameType(gameType: number | undefined) {
+  if (gameType === 0) return t("overlays.content.saves.gameType.survival");
+  if (gameType === 1) return t("overlays.content.saves.gameType.creative");
+  if (gameType === 2) return t("overlays.content.saves.gameType.adventure");
+  if (gameType === 3) return t("overlays.content.saves.gameType.spectator");
+  return "--";
+}
 
-const gameContentElements = {
-  saves: useTemplateRef("saves"),
-  mods: useTemplateRef("mods"),
-  resourcepacks: useTemplateRef("resourcepacks"),
-  screenshots: useTemplateRef("screenshots"),
-};
+type TabKey = "saves" | "mods" | "resourcepacks";
 
+const activeTab = ref<TabKey>("saves");
+
+const tabs = computed(() => [
+  { key: "saves" as const, label: t("game.summary.saves") },
+  { key: "mods" as const, label: t("game.summary.mods") },
+  { key: "resourcepacks" as const, label: t("game.summary.resourcePacks") },
+  { key: "screenshots" as const, label: t("game.summary.screenshots") },
+]);
+
+const tabElMap: Record<string, HTMLElement> = {};
+function setTabRef(key: string, el: unknown) {
+  if (el && el instanceof HTMLElement) {
+    tabElMap[key] = el;
+  }
+}
+
+const tabIndicator = useTemplateRef("tabIndicator");
+
+function updateIndicator() {
+  const el = tabElMap[activeTab.value];
+  const indicator = tabIndicator.value;
+  if (!el || !indicator) return;
+  indicator.style.left = `${el.offsetLeft}px`;
+  indicator.style.width = `${el.offsetWidth}px`;
+}
+
+watch(activeTab, async () => {
+  await nextTick();
+  updateIndicator();
+});
+
+watch(tabs, async () => {
+  await nextTick();
+  updateIndicator();
+});
+
+function onTabClick(key: string) {
+  if (key === "screenshots") {
+    showContent.value.screenshots = true;
+    return;
+  }
+  activeTab.value = key as TabKey;
+}
+
+const savesList = computed(() => Object.entries(contentStore.gameContent.saves ?? {}));
+const modsList = computed(() => contentStore.gameContent.mods ?? []);
+const rpList = computed(() => contentStore.gameContent.resourcepacks ?? []);
+
+const activeContentLoading = computed(() => {
+  switch (activeTab.value) {
+    case "saves":
+      return contentStore.loading.saves;
+    case "mods":
+      return contentStore.loading.mods;
+    case "resourcepacks":
+      return contentStore.loading.resourcepacks;
+    default:
+      return false;
+  }
+});
+
+const activeContentEmpty = computed(() => {
+  switch (activeTab.value) {
+    case "saves":
+      return Object.keys(contentStore.gameContent.saves ?? {}).length === 0;
+    case "mods":
+      return (contentStore.gameContent.mods ?? []).length === 0;
+    case "resourcepacks":
+      return (contentStore.gameContent.resourcepacks ?? []).length === 0;
+    default:
+      return false;
+  }
+});
+
+const activeEmptyDesc = computed(() => {
+  switch (activeTab.value) {
+    case "saves":
+      return t("overlays.content.saves.empty");
+    case "mods":
+      return t("overlays.content.mods.localEmpty");
+    case "resourcepacks":
+      return t("overlays.content.resourcepacks.localEmpty");
+    default:
+      return undefined;
+  }
+});
+
+const summaryCard = useTemplateRef("summaryCard");
+const tabsEl = useTemplateRef("tabsEl");
+const contentAreaEl = useTemplateRef("contentAreaEl");
 const introPlayed = ref(false);
 
 const playIntro = () => {
@@ -468,29 +473,20 @@ const playIntro = () => {
       },
     })
     .fromTo(
-      Object.values(rowElements).map((elementRef) => elementRef.value),
+      summaryCard.value,
       { opacity: 0, x: -50 },
-      {
-        opacity: 1,
-        x: 0,
-        duration: 0.33,
-        stagger: 0.03,
-        ease: "power3.out",
-      },
+      { opacity: 1, x: 0, duration: 0.33, ease: "power3.out" },
     )
     .fromTo(
-      Object.values(gameContentElements).map((elementRef) => elementRef.value),
-      {
-        opacity: 0,
-        x: -50,
-      },
-      {
-        opacity: 1,
-        x: 0,
-        duration: 0.33,
-        stagger: 0.03,
-        ease: "power3.out",
-      },
+      tabsEl.value,
+      { opacity: 0, x: -50 },
+      { opacity: 1, x: 0, duration: 0.33, ease: "power3.out" },
+      "<+0.03",
+    )
+    .fromTo(
+      contentAreaEl.value,
+      { opacity: 0, x: -50 },
+      { opacity: 1, x: 0, duration: 0.33, ease: "power3.out" },
       "<+0.03",
     );
 };
@@ -501,262 +497,292 @@ defineExpose({ playIntro });
 <style lang="less" scoped>
 .current-instance {
   position: absolute;
-  top: 45%;
-  transform: translateY(-50%);
-  margin-left: 48px;
+  display: flex;
+  flex-direction: column;
+  min-width: 420px;
+  width: calc(50vw);
+  max-width: 600px;
 
   &:not(.introPlayed) {
     pointer-events: none;
   }
 
-  .row-1 {
-    display: flex;
-    align-items: center;
+  .summary-card {
+    flex-shrink: 0;
+    padding: 16px 20px;
 
-    .current-instance-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: calc(var(--card-icon-border-radius) + 4px);
-      background: var(--card-icon-background);
-    }
-
-    .title {
-      font-size: 38px;
-    }
-  }
-
-  .row-2 {
-    display: flex;
-    align-items: center;
-    margin-top: 16px;
-
-    > p {
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: initial;
-      width: fit-content;
-      padding: 2px 4px;
-
-      :first-child {
-        opacity: 0.8;
-        font-size: 12px;
-      }
-
-      :last-child {
-        margin-top: 2px;
-        font-size: 15px;
-      }
-    }
-
-    div.line {
-      width: 1px;
-      height: 26px;
-      background: var(--ctp-surface2);
-      margin: 0px 8px;
-    }
-  }
-
-  .row-3 {
-    display: flex;
-    align-items: center;
-    margin-top: 16px;
-    position: relative;
-    z-index: 1;
-
-    .open-instance-setting-button {
-      appearance: none;
-      background: none;
-      border: none;
-      width: 32px;
-      height: 32px;
-      margin-right: 16px;
-    }
-
-    .open-instance-setting-button:active {
-      opacity: 0.9;
-      transform: scale(0.95);
-    }
-
-    div.actions {
-      display: flex;
-      margin-left: 16px;
-      transition: transform 100ms ease;
-    }
-
-    div.actions.disabled {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-
-    .action-button {
-      appearance: none;
-      border: none;
-      color: var(--ctp-text);
-      width: 32px;
-      height: 32px;
-      border-radius: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 8px;
-      background: none;
-      transition:
-        background 100ms ease,
-        transform 100ms ease;
-
-      &:hover {
-        background: var(--ctp-surface1);
-      }
-
-      &:active {
-        transform: scale(0.9);
-        background: var(--ctp-surface0);
-      }
-
-      &:last-child {
-        margin-right: 0;
-      }
-    }
-
-    .launch-buttons {
-      position: relative;
-      display: flex;
-      align-items: center;
-
-      .chevron {
-        display: inline-flex;
-        align-items: center;
-      }
-    }
-
-    .launch-button {
-      appearance: none;
-      border: none;
-      color: #fff;
-      width: 128px;
-      height: 42px;
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px 0 0 8px;
-      background: rgb(114, 135, 253);
-    }
-
-    .launch-sub-button {
-      appearance: none;
-      border: none;
-      background: #ffffff4f;
-      height: 42px;
-      width: 24px;
-      border-radius: 0 8px 8px 0;
-      background: rgb(114, 135, 253);
-      margin-left: 2px;
-    }
-
-    .launch-menu-dropdown {
+    &::before {
+      content: "";
       position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      min-width: 100%;
-      padding: 8px 10px;
-      border-radius: var(--dialog-border-radius);
-      border: var(--controllers-border);
-      background: var(--ctp-base);
-      box-shadow: 0px 0px 10px #4500611d;
-      z-index: 100000;
-      list-style: none;
+      top: 0;
+      right: 24px;
+      bottom: 0;
+      left: -100px;
+      z-index: -1;
+      background: rgba(var(--ctp-surface0-rgb), 0.4);
+      backdrop-filter: blur(4px);
+      transform: skew(-10deg);
+      border-bottom-right-radius: 16px;
+    }
 
-      .dropdown-option {
+    .row-1 {
+      .title {
+        font-size: 32px;
+      }
+    }
+
+    .row-2 {
+      display: flex;
+      align-items: center;
+      margin-top: 12px;
+
+      > p {
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: initial;
+        width: fit-content;
+        padding: 2px 4px;
+
+        :first-child {
+          opacity: 0.8;
+          font-size: 12px;
+        }
+
+        :last-child {
+          margin-top: 2px;
+          font-size: 15px;
+        }
+      }
+
+      div.line {
+        width: 1px;
         height: 26px;
-        padding: 0 8px;
+        background: var(--ctp-surface2);
+        margin: 0px 8px;
+      }
+    }
+
+    .row-3 {
+      display: flex;
+      align-items: center;
+      margin-top: 16px;
+      position: relative;
+      z-index: 1;
+
+      .launch-button {
+        appearance: none;
+        border: none;
+        color: #fff;
+        width: fit-content;
+        padding: 0 16px;
+        height: 36px;
         display: flex;
         align-items: center;
+        justify-content: center;
+        border-radius: 100px;
+        background: var(--ctp-blue);
         gap: 8px;
-        margin: 4px 0;
-        border-radius: var(--controllers-border-radius);
-        font-size: 12px;
-        list-style: none;
-        white-space: nowrap;
-        transition: all 30ms ease;
+        span {
+          font-size: 13px;
+        }
+      }
+
+      .launch-button.disabled,
+      .launch-button.disabled ~ .launch-sub-button {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .launch-button:active {
+        opacity: 0.9;
+      }
+
+      div.actions {
+        display: flex;
+        margin-left: 16px;
+        transition: transform 100ms ease;
+      }
+
+      div.actions.disabled {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .action-button {
+        appearance: none;
+        border: none;
+        color: var(--ctp-text);
+        width: 32px;
+        height: 32px;
+        border-radius: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+        background: none;
+        transition:
+          background 100ms ease,
+          transform 100ms ease;
 
         &:hover {
-          background: #ffffff1f;
+          background: var(--ctp-surface1);
         }
 
         &:active {
-          background: #ffffff15;
+          transform: scale(0.9);
+          background: var(--ctp-surface0);
+        }
+
+        &:last-child {
+          margin-right: 0;
         }
       }
     }
-
-    .launch-button.disabled,
-    .launch-button.disabled ~ .launch-sub-button {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-
-    .launch-button:active {
-      opacity: 0.9;
-    }
   }
 
-  .current-instance-contents {
+  .tabs {
+    position: relative;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    gap: 8px;
     margin-top: 16px;
     width: fit-content;
-    padding: 4px 4px;
-    border-radius: 12px;
-    gap: 4px;
+    padding-bottom: 8px;
+    margin-left: 16px;
+    margin-bottom: 16px;
 
-    > div {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 16px;
-      border-radius: 8px;
-      background: rgba(var(--ctp-surface0-rgb), 0.7);
-      transition: all 100ms ease;
+    .tab {
+      appearance: none;
+      background: none;
+      border: none;
+      padding: 4px 0;
       font-size: 14px;
-      width: 400px;
+      color: rgba(var(--default-text-color), 0.9);
+      opacity: 0.4;
+      transition: opacity 150ms ease;
 
-      &:hover {
-        background: var(--ctp-surface0);
-        transition: none;
+      &.active {
+        opacity: 1;
       }
+    }
 
-      &:active {
-        background: var(--ctp-surface1);
-        transform: scale(0.95);
-      }
-    }
-    > div > div {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    > div > div > div.content-img {
-      display: flex;
-      gap: 1px;
-      img {
-        width: 20px;
-        height: 20px;
-        border-radius: 10000px;
-        border: 1px solid rgba(var(--ctp-lavender-rgb), 0.8);
-      }
-    }
-    > div.disabled,
-    > div.disabled * {
-      pointer-events: none;
-      opacity: 0.6;
+    .tab-indicator {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--ctp-blue);
+      transition:
+        left 300ms cubic-bezier(0.4, 0, 0.2, 1),
+        width 300ms cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
-  .current-instance-contents.disabled * {
-    opacity: 0.6;
-    pointer-events: none;
+
+  .content-area {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+
+    .state-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .content-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 4px 0;
+    }
+
+    .list-item {
+      display: flex;
+      height: 64px;
+      background: rgba(var(--ctp-surface0-rgb), 0.4);
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+
+      .item-thumb {
+        height: 100%;
+        width: auto;
+        flex-shrink: 0;
+        background: var(--ctp-surface0);
+      }
+
+      .item-main {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 12px;
+        gap: 2px;
+
+        .item-title-line {
+          display: flex;
+          align-items: baseline;
+          gap: 6px;
+
+          .item-title {
+            font-size: 15px;
+            font-weight: 700;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+          }
+
+          .cheats {
+            font-size: 9px;
+            padding: 1px 6px;
+            border-radius: 100px;
+            background: var(--ctp-yellow);
+            color: var(--ctp-text-inverse);
+            flex-shrink: 0;
+          }
+        }
+
+        .item-sub {
+          font-size: 11px;
+          opacity: 0.6;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+      }
+
+      .item-meta {
+        flex-shrink: 0;
+        width: 180px;
+        padding: 8px 16px 8px 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+        align-items: flex-end;
+        text-align: right;
+
+        .meta-item {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+        }
+
+        .meta-label {
+          font-size: 9px;
+          opacity: 0.6;
+        }
+
+        .meta-value {
+          font-size: 12px;
+        }
+      }
+    }
   }
 }
 </style>

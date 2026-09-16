@@ -93,6 +93,8 @@ export default {
             resourcePacks: "리소스 팩",
             screenshots: "스크린샷",
             countUnit: "",
+            gameMode: "게임 모드",
+            lastPlayedTime: "최근 플레이 시간",
         },
         instance: {
             title: "인스턴스 설정",

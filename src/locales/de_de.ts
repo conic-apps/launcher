@@ -93,6 +93,8 @@ export default {
             resourcePacks: "Ressourcenpakete",
             screenshots: "Screenshots",
             countUnit: "",
+            gameMode: "Spielmodus",
+            lastPlayedTime: "Zuletzt gespielt",
         },
         instance: {
             title: "Instanzeinstellungen",

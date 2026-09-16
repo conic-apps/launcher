@@ -94,6 +94,8 @@ export default {
             resourcePacks: "Paczki zasobów",
             screenshots: "Zrzuty ekranu",
             countUnit: "",
+            gameMode: "Tryb gry",
+            lastPlayedTime: "Czas ostatniej gry",
         },
         instance: {
             title: "Ustawienia instancji",
