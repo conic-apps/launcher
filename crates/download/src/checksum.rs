@@ -2,6 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use log::trace;
 use serde::Deserialize;
 use sha2::Digest;
 
@@ -41,7 +42,7 @@ impl Hasher {
         }
     }
     pub(crate) fn verify(self, checksum: &Checksum) -> bool {
-        match (self, checksum) {
+        let result = match (self, checksum) {
             (Self::Sha1(sha1_hasher), Checksum::Sha1(sha1_checksum)) => {
                 &sha1_hasher.digest().to_string() == sha1_checksum
             }
@@ -53,6 +54,8 @@ impl Hasher {
             }
             (Self::None, Checksum::None) => true,
             _ => false,
-        }
+        };
+        trace!("Checksum verification result: {result}, expected={checksum:?}");
+        result
     }
 }
