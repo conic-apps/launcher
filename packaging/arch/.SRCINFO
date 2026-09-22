@@ -1,0 +1,35 @@
+pkgbase = conic-launcher
+	pkgdesc = A modern Minecraft launcher built with Tauri and Vue
+	pkgver = 0.1.0alpha.2
+	pkgrel = 1
+	url = https://github.com/conic-apps/launcher
+	arch = x86_64
+	arch = aarch64
+	license = GPL-3.0-only
+	license = LicenseRef-Conic-Additional-Terms
+	makedepends = cargo
+	makedepends = desktop-file-utils
+	makedepends = git
+	makedepends = nodejs-lts-krypton
+	makedepends = pkgconf
+	makedepends = pnpm>=11.7.0
+	depends = ca-certificates
+	depends = cairo
+	depends = gcc-libs
+	depends = gdk-pixbuf2
+	depends = glib2
+	depends = glibc
+	depends = gtk3
+	depends = libsoup3
+	depends = libx11
+	depends = webkit2gtk-4.1
+	depends = xdg-utils
+	optdepends = java-runtime: use a system Java runtime instead of downloading one in the launcher
+	options = !lto
+	options = !debug
+	source = conic-launcher-0.1.0-alpha.2.tar.gz::https://github.com/conic-apps/launcher/archive/refs/tags/v0.1.0-alpha.2.tar.gz
+	source = conic-launcher.desktop
+	sha256sums = 20f8b7a52e9ff5162eb0d175dab0b7c08b729b8ac137d8cd07261de59bc10f26
+	sha256sums = b9e6b9a66d77b610f695994d06b06c5af576ff958ec1dec0e2d35394a843da28
+
+pkgname = conic-launcher

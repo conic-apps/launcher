@@ -108,6 +108,16 @@ pnpm tauri dev      # Development & debugging
 pnpm tauri build    # Production build
 ```
 
+### Arch Linux
+
+A source-based `PKGBUILD` is available in [`packaging/arch`](./packaging/arch/README.md).
+With `base-devel` installed, build and install the release package using:
+
+```bash
+cd packaging/arch
+makepkg -si
+```
+
 ## Contributing
 
 Issues and Pull Requests (targeting the `dev` branch) are welcome. Before submitting, please run:
