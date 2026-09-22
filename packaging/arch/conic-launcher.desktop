@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Conic Launcher
+Comment=A modern Minecraft launcher
+Comment[es]=Un lanzador moderno de Minecraft
+Exec=conic-launcher %U
+Icon=conic-launcher
+Terminal=false
+Categories=Game;
+MimeType=x-scheme-handler/conic-launcher;
+StartupWMClass=conic-launcher
+Keywords=Minecraft;Launcher;
