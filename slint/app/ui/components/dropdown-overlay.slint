@@ -44,7 +44,7 @@ export component DropdownOverlay inherits Rectangle {
         clip: true;
         border-radius: 10px;
         border-width: 1px;
-        border-color: Theme.lavender.transparentize(0.82);
+        border-color: Theme.controllers-border;
         background: Theme.base;
         drop-shadow-color: #4500611d;
         drop-shadow-blur: 10px;
@@ -79,7 +79,7 @@ export component DropdownOverlay inherits Rectangle {
                     text: Dropdown.display-name[index];
                     font-size: 12px;
                     font-weight: Theme.font-weight-normal;
-                    color: Theme.text.transparentize(0.1);
+                    color: Theme.default-text-color.transparentize(0.1);
                     x: 8px;
                     y: (parent.height - self.height) / 2;
                 }

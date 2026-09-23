@@ -5,6 +5,7 @@
 import { Theme } from "../theme.slint";
 import { AppIcon } from "../components/app-icon.slint";
 import { ScrollView } from "../components/scroll-view.slint";
+import { FocusManager } from "../globals/focus.slint";
 import { SettingsGeneral } from "settings/settings-general.slint";
 import { SettingsGame } from "settings/settings-game.slint";
 import { SettingsJvm } from "settings/settings-jvm.slint";
@@ -50,19 +51,22 @@ component NavItem inherits Rectangle {
         AppIcon {
             name: root.icon;
             size: 16px;
-            icon-color: Theme.text.transparentize(0.1);
+            icon-color: Theme.default-text-color.transparentize(0.1);
         }
 
         Text {
             text: root.label;
             font-size: 13px;
             font-weight: Theme.font-weight-normal;
-            color: Theme.text.transparentize(0.1);
+            color: Theme.default-text-color.transparentize(0.1);
         }
     }
 
     touch := TouchArea {
-        clicked => { root.selected(); }
+        clicked => {
+            FocusManager.clear();
+            root.selected();
+        }
     }
 }
 
@@ -83,7 +87,8 @@ component SettingsSection inherits VerticalLayout {
             x: 8px;
             font-size: 18px;
             font-weight: Theme.font-weight-normal;
-            color: Theme.text.transparentize(0.1);
+            // The Vue section title uses `var(--ctp-text)` at full opacity.
+            color: Theme.text;
         }
     }
 
@@ -99,6 +104,15 @@ export component SettingsView inherits Rectangle {
     width: 100%;
     height: 100%;
     background: Theme.base.transparentize(0.4);
+
+    // Background click layer: clicking empty space (page padding, section
+    // titles, gaps between rows) blurs the focused text field. Controls and rows
+    // declare their own touch areas on top and handle the click themselves.
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { FocusManager.clear(); }
+    }
 
     HorizontalLayout {
         spacing: 0px;

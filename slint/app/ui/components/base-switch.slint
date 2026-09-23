@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../theme.slint";
+import { FocusManager } from "../globals/focus.slint";
 
 // Toggle switch (src/components/BaseSwitch.vue).
 //
@@ -26,7 +27,7 @@ export component BaseSwitch inherits Rectangle {
         height: 18px;
         border-radius: 9px;
         border-width: 1px;
-        border-color: root.checked ? Theme.blue : Theme.overlay-2;
+        border-color: root.checked ? Theme.toggle-switch-active : Theme.toggle-switch-outline;
         background: transparent;
     }
 
@@ -35,16 +36,16 @@ export component BaseSwitch inherits Rectangle {
         width: 32px;
         height: root.height;
         border-radius: root.height / 2;
-        background: root.checked ? Theme.blue
+        background: root.checked ? Theme.toggle-switch-active
             : touch.has-hover ? #ffffff14
-            : Theme.surface-1;
+            : Theme.toggle-switch-background;
         animate background { duration: 300ms; easing: cubic-bezier(0, 0.6, 0.32, 0.99); }
 
         thumb := Rectangle {
             width: touch.pressed ? 8.925px : touch.has-hover ? 11.55px : 10.5px;
             height: touch.pressed ? 8.925px : touch.has-hover ? 11.55px : 10.5px;
             border-radius: 200px;
-            background: root.checked ? #ffffff : Theme.overlay-2;
+            background: root.checked ? #ffffff : Theme.toggle-switch-button;
             x: root.checked ? 19px : 3px;
             y: (track.height - self.height) / 2;
             animate x, background, width, height {
@@ -59,6 +60,7 @@ export component BaseSwitch inherits Rectangle {
         width: 32px;
         height: root.height;
         clicked => {
+            FocusManager.clear();
             root.checked = !root.checked;
             root.toggled();
         }

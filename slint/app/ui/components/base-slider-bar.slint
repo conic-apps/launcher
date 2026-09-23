@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../theme.slint";
+import { FocusManager } from "../globals/focus.slint";
 
 // Range slider (src/components/BaseSliderBar.vue).
 //
@@ -69,7 +70,7 @@ export component BaseSliderBar inherits Rectangle {
             text: round(root.percent * 100) + "%";
             font-size: 12px;
             font-weight: Theme.font-weight-normal;
-            color: Theme.text.transparentize(0.1);
+            color: Theme.default-text-color.transparentize(0.1);
             x: (parent.width - self.width) / 2;
             y: (parent.height - self.height) / 2;
         }
@@ -85,6 +86,7 @@ export component BaseSliderBar inherits Rectangle {
                 && (event.kind == PointerEventKind.down
                     || (event.kind == PointerEventKind.move && root.dragging)) {
                 root.dragging = true;
+                FocusManager.clear();
                 root.value = root.min + round(clamp(self.mouse-x / root.width, 0, 1) * (root.max - root.min));
             } else if event.kind == PointerEventKind.up {
                 if root.dragging {

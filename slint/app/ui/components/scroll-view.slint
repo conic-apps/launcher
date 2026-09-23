@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../theme.slint";
+import { FocusManager } from "../globals/focus.slint";
 
 // Vertical scroll container with a slim custom scrollbar
 // (src/components/ScrollView.vue).
@@ -28,6 +29,13 @@ export component ScrollView inherits Rectangle {
         width: 100%;
         height: 100%;
         interactive: true;
+        // The original scrolls with the wheel only (Lenis); mouse drag-panning
+        // is not part of the design. Disabling it also removes the backend's
+        // 100ms press-forward delay (`FORWARD_DELAY`), which otherwise makes
+        // controls inside the scroll area (switches, text inputs) react late
+        // and lets clicks fall through to the page background. Touch panning
+        // is unaffected.
+        mouse-drag-pan-enabled: false;
         // Pin the content width to the viewport so only vertical scrolling is
         // possible and children's preferred widths cannot feed back into the
         // Flickable's content size (binding loop).
@@ -75,6 +83,9 @@ export component ScrollView inherits Rectangle {
             pointer-event(event) => {
                 if event.button == PointerEventButton.left
                     && (event.kind == PointerEventKind.down || event.kind == PointerEventKind.move) {
+                    if event.kind == PointerEventKind.down {
+                        FocusManager.clear();
+                    }
                     if root.track-height > root.thumb-height && root.max-scroll > 0px {
                         root.content-y = -clamp(
                             (self.mouse-y - root.thumb-height / 2) / (root.track-height - root.thumb-height),

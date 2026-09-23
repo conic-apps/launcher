@@ -130,8 +130,18 @@ msgstr "Domyślna konfiguracja serwerów lustrzanych Conic Launcher obejmuje BMC
 
 #: ui
 msgctxt "SettingsAbout"
-msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
-msgstr "Conic Launcher nie jest oficjalnym produktem Minecraft i nie jest zatwierdzony ani powiązany z Mojang Studios. „Minecraft” jest znakiem towarowym Mojang AB. Każde użycie marki Minecraft w tym projekcie jest zgodne z wytycznymi dotyczącymi marki i zasobów Mojang Studios."
+msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios "
+msgstr "Conic Launcher nie jest oficjalnym produktem Minecraft i nie jest zatwierdzony ani powiązany z Mojang Studios. „Minecraft” jest znakiem towarowym Mojang AB. Każde użycie marki Minecraft w tym projekcie jest zgodne z "
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Brand and Asset Guidelines"
+msgstr "wytycznymi dotyczącymi marki i zasobów"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "."
+msgstr " Mojang Studios."
 
 #: ui
 msgctxt "SettingsAccessibility"

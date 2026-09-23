@@ -8,45 +8,261 @@
 import "fonts/Comfortaa.ttf";
 import "fonts/Nunito.ttf";
 
-// Catppuccin (Mocha) palette for the Slint app.
-// TODO(migration): source this from the config store once settings are
-// migrated; for now it mirrors the default dark theme declared in
-// src/assets/styles/catppuccin-theme.css.
+// `Palette.color-scheme` reflects the OS light/dark preference and lets
+// "follow system" resolve without Rust help. It ships with `std-widgets`; only
+// the palette global is pulled in, the app draws its own controls.
+import { Palette } from "std-widgets.slint";
 
+import { AppConfig } from "globals/settings.slint";
+
+// The 26 Catppuccin colors, copied from src/assets/styles/catppuccin-theme.css.
+// The four flavors below share this shape; high contrast reuses the same raw
+// colors and only changes the semantic tokens derived from them (see `Theme`).
+export struct CatppuccinPalette {
+    rosewater: color,
+    flamingo: color,
+    pink: color,
+    mauve: color,
+    red: color,
+    maroon: color,
+    peach: color,
+    yellow: color,
+    green: color,
+    teal: color,
+    sky: color,
+    sapphire: color,
+    blue: color,
+    lavender: color,
+    text: color,
+    subtext1: color,
+    subtext0: color,
+    overlay2: color,
+    overlay1: color,
+    overlay0: color,
+    surface2: color,
+    surface1: color,
+    surface0: color,
+    base: color,
+    mantle: color,
+    crust: color,
+}
+
+// The four Catppuccin flavors, mirroring the `--ctp-<flavor>-*` blocks in
+// src/assets/styles/catppuccin-theme.css. `text` for Latte is the launcher's
+// pure-black override, not upstream Catppuccin's `#4c4f69`.
+global Catppuccin {
+    in property <CatppuccinPalette> latte: {
+        rosewater: #dc8a78,
+        flamingo: #dd7878,
+        pink: #ea76cb,
+        mauve: #8839ef,
+        red: #d20f39,
+        maroon: #e64553,
+        peach: #fe640b,
+        yellow: #df8e1d,
+        green: #40a02b,
+        teal: #179299,
+        sky: #04a5e5,
+        sapphire: #209fb5,
+        blue: #1e66f5,
+        lavender: #7287fd,
+        text: #000000,
+        subtext1: #5c5f77,
+        subtext0: #6c6f85,
+        overlay2: #7c7f93,
+        overlay1: #8c8fa1,
+        overlay0: #9ca0b0,
+        surface2: #acb0be,
+        surface1: #bcc0cc,
+        surface0: #ccd0da,
+        base: #eff1f5,
+        mantle: #e6e9ef,
+        crust: #dce0e8,
+    };
+    in property <CatppuccinPalette> frappe: {
+        rosewater: #f2d5cf,
+        flamingo: #eebebe,
+        pink: #f4b8e4,
+        mauve: #ca9ee6,
+        red: #e78284,
+        maroon: #ea999c,
+        peach: #ef9f76,
+        yellow: #e5c890,
+        green: #a6d189,
+        teal: #81c8be,
+        sky: #99d1db,
+        sapphire: #85c1dc,
+        blue: #8caaee,
+        lavender: #babbf1,
+        text: #c6d0f5,
+        subtext1: #b5bfe2,
+        subtext0: #a5adce,
+        overlay2: #949cbb,
+        overlay1: #838ba7,
+        overlay0: #737994,
+        surface2: #626880,
+        surface1: #51576d,
+        surface0: #414559,
+        base: #303446,
+        mantle: #292c3c,
+        crust: #232634,
+    };
+    in property <CatppuccinPalette> macchiato: {
+        rosewater: #f4dbd6,
+        flamingo: #f0c6c6,
+        pink: #f5bde6,
+        mauve: #c6a0f6,
+        red: #ed8796,
+        maroon: #ee99a0,
+        peach: #f5a97f,
+        yellow: #eed49f,
+        green: #a6da95,
+        teal: #8bd5ca,
+        sky: #91d7e3,
+        sapphire: #7dc4e4,
+        blue: #8aadf4,
+        lavender: #b7bdf8,
+        text: #cad3f5,
+        subtext1: #b8c0e0,
+        subtext0: #a5adcb,
+        overlay2: #939ab7,
+        overlay1: #8087a2,
+        overlay0: #6e738d,
+        surface2: #5b6078,
+        surface1: #494d64,
+        surface0: #363a4f,
+        base: #24273a,
+        mantle: #1e2030,
+        crust: #181926,
+    };
+    in property <CatppuccinPalette> mocha: {
+        rosewater: #f5e0dc,
+        flamingo: #f2cdcd,
+        pink: #f5c2e7,
+        mauve: #cba6f7,
+        red: #f38ba8,
+        maroon: #eba0ac,
+        peach: #fab387,
+        yellow: #f9e2af,
+        green: #a6e3a1,
+        teal: #94e2d5,
+        sky: #89dceb,
+        sapphire: #74c7ec,
+        blue: #89b4fa,
+        lavender: #b4befe,
+        text: #cdd6f4,
+        subtext1: #bac2de,
+        subtext0: #a6adc8,
+        overlay2: #9399b2,
+        overlay1: #7f849c,
+        overlay0: #6c7086,
+        surface2: #585b70,
+        surface1: #45475a,
+        surface0: #313244,
+        base: #1e1e2e,
+        mantle: #181825,
+        crust: #11111b,
+    };
+}
+
+// The active design tokens. The palette is derived from `AppConfig.palette`,
+// `AppConfig.palette-follow-system` and `AppConfig.high-contrast`, so changing
+// those settings in the UI restyles the whole app. The eight schemes are the
+// four flavors above, each with and without high contrast.
+//
+// The raw Catppuccin colors and the semantic tokens mirror
+// src/assets/styles/catppuccin-theme.css (and `-hc.css`): the dark flavors use
+// the raw surfaces, while Latte remaps the controller/group/card tokens, and
+// high contrast swaps the hairlines for opaque overlays and whitens the text.
+//
+// Slint globals cannot animate (the compiler rejects `animate` inside a
+// `global`), so the colors below are declared here but produced and animated by
+// `ThemeProvider`, instantiated once at the app root. Components keep reading
+// `Theme.*` as before.
+//
+// Smooth switching: the Vue frontend briefly applied `.changing-theme`
+// (`transition: all 0.3s ease !important`) to every element while swapping the
+// palette class. The Slint equivalent is to mark the tokens as animated: when
+// the palette/high-contrast changes, each token interpolates over 300ms `ease`.
+// The animation only fires on a token value change (i.e. a theme switch), so
+// hover/press states are unaffected, and the startup load is applied instantly
+// (see `ThemeProvider.transitions-enabled`).
 export global Theme {
-    // Palette
-    in property <color> base: #1e1e2e;
-    in property <color> mantle: #181825;
-    in property <color> crust: #11111b;
-    in property <color> surface-0: #313244;
-    in property <color> surface-1: #45475a;
-    in property <color> surface-2: #585b70;
-    in property <color> overlay-0: #6c7086;
-    in property <color> overlay-1: #7f849c;
-    in property <color> overlay-2: #9399b2;
-    in property <color> text: #cdd6f4;
-    in property <color> subtext-0: #a6adc8;
-    in property <color> subtext-1: #bac2de;
-    in property <color> mauve: #cba6f7;
-    in property <color> blue: #89b4fa;
-    in property <color> lavender: #b4befe;
-    in property <color> red: #f38ba8;
-    in property <color> green: #a6e3a1;
-    // --ctp-text-inverse resolves to the Latte text colour on dark palettes.
-    in property <color> text-inverse: #000000;
+    // The palette actually in effect. When following the system, dark mode uses
+    // Mocha and light mode Latte (mirrors `reloadPalette` in src/theme.ts).
+    // Slint only reports the real scheme once the window is mapped, so while it
+    // is `Unknown` (the first, pre-mapped frame) fall back to the configured
+    // palette instead of guessing light — avoids a light flash on dark systems.
+    in property <string> active-palette:
+        AppConfig.palette-follow-system
+            ? (Palette.color-scheme == ColorScheme.dark ? "Mocha"
+                : Palette.color-scheme == ColorScheme.light ? "Latte"
+                : AppConfig.palette)
+            : AppConfig.palette;
+    // High contrast swaps the semantic tokens for their `*-hc` counterparts
+    // (high contrast mode in src/views/settings/SettingsAccessibility.vue).
+    in property <bool> high-contrast: AppConfig.high-contrast;
 
-    // Title bar (App.vue .title-bar-container)
-    in property <color> titlebar-background: #313244;
+    // ----- raw Catppuccin colors (filled by ThemeProvider) -----
+    in-out property <color> base;
+    in-out property <color> mantle;
+    in-out property <color> crust;
+    in-out property <color> surface-0;
+    in-out property <color> surface-1;
+    in-out property <color> surface-2;
+    in-out property <color> overlay-0;
+    in-out property <color> overlay-1;
+    in-out property <color> overlay-2;
+    in-out property <color> text;
+    in-out property <color> subtext-0;
+    in-out property <color> subtext-1;
+    in-out property <color> mauve;
+    in-out property <color> blue;
+    in-out property <color> lavender;
+    in-out property <color> red;
+    in-out property <color> green;
 
-    // Window buttons (WindowButton.vue)
+    // ----- text -----
+    // `--default-text-color`: the app-wide inherited text color
+    // (`* { color: rgba(var(--default-text-color), 0.9) }`). High contrast turns
+    // it pure white on the two flavors whose raw text is not already white-ish.
+    in-out property <color> default-text-color;
+    // `--ctp-text-inverse`: contrasting label on an accent fill.
+    in-out property <color> text-inverse;
+
+    // ----- title bar / controllers -----
+    in-out property <color> titlebar-background;
+    in-out property <color> controllers-background;
+    in-out property <color> controllers-background-hover;
+    in-out property <color> controllers-background-focus;
+    in-out property <color> controllers-border;
+    in-out property <color> controllers-outline-focus;
+    // `--controllers-border-radius` (6px dark, 4px Latte).
+    in-out property <length> controllers-border-radius;
+
+    // ----- setting rows / groups -----
+    in-out property <color> setting-item-background;
+    in-out property <color> setting-item-background-hover;
+    in-out property <color> setting-item-background-active;
+    in-out property <color> setting-group-border;
+    in-out property <color> setting-group-danger-border;
+
+    // ----- toggle switch -----
+    in-out property <color> toggle-switch-background;
+    in-out property <color> toggle-switch-outline;
+    in-out property <color> toggle-switch-button;
+    in-out property <color> toggle-switch-active;
+
+    // ----- cards -----
+    in-out property <color> card-background;
+    in-out property <color> card-border;
+
+    // Window buttons (WindowButton.vue) — platform traffic-light colors, not
+    // part of the Catppuccin palette.
     in property <color> win-btn-close: #ff5f57;
     in property <color> win-btn-minimize: #febc2e;
     in property <color> win-btn-maximize: #61c554;
     in property <color> win-btn-unfocused: #4e4e4e;
-
-    // Search bar (BaseSearchBar.vue)
-    in property <color> controllers-background: #45475a;
-    in property <color> controllers-border: #b4befe;
 
     // Typography (src/assets/styles/main.css). The original stack was
     // 'Nunito', 'Comfortaa', system-ui, … where Nunito was restricted to
@@ -58,4 +274,200 @@ export global Theme {
     in property <length> font-size-base: 16px;
     in property <int> font-weight-normal: 400;
     in property <int> font-weight-bold: 700;
+}
+
+// Produces the theme colors from the selected palette and interpolates them
+// when the selection changes. Instantiated once by the root `App`; keeps the
+// animation (impossible in a global) out of the token consumers.
+export component ThemeProvider inherits Rectangle {
+    width: 0;
+    height: 0;
+
+    // The persisted palette is applied by Rust right after the component is
+    // built, before the event loop runs. Disable the transition until then so
+    // the app opens directly in the saved scheme instead of animating away from
+    // the default; later (user-driven) palette changes do animate.
+    private property <bool> transitions-enabled: false;
+    startup-timer := Timer {
+        interval: 100ms;
+        running: true;
+        triggered => {
+            root.transitions-enabled = true;
+            startup-timer.running = false;
+        }
+    }
+
+    // Latte is the only light flavor; the other three are dark.
+    private property <bool> dark: Theme.active-palette != "Latte";
+    private property <bool> hc: Theme.high-contrast;
+
+    private property <CatppuccinPalette> ctp:
+        Theme.active-palette == "Latte" ? Catppuccin.latte
+        : Theme.active-palette == "Frappe" ? Catppuccin.frappe
+        : Theme.active-palette == "Macchiato" ? Catppuccin.macchiato
+        : Catppuccin.mocha;
+
+    // ----- raw Catppuccin colors -----
+    in-out property <color> base: ctp.base;
+    in-out property <color> mantle: ctp.mantle;
+    in-out property <color> crust: ctp.crust;
+    in-out property <color> surface-0: ctp.surface0;
+    in-out property <color> surface-1: ctp.surface1;
+    in-out property <color> surface-2: ctp.surface2;
+    in-out property <color> overlay-0: ctp.overlay0;
+    in-out property <color> overlay-1: ctp.overlay1;
+    in-out property <color> overlay-2: ctp.overlay2;
+    in-out property <color> text: ctp.text;
+    in-out property <color> subtext-0: ctp.subtext0;
+    in-out property <color> subtext-1: ctp.subtext1;
+    in-out property <color> mauve: ctp.mauve;
+    in-out property <color> blue: ctp.blue;
+    in-out property <color> lavender: ctp.lavender;
+    in-out property <color> red: ctp.red;
+    in-out property <color> green: ctp.green;
+
+    // ----- semantic tokens -----
+    in-out property <color> default-text-color:
+        root.hc && (Theme.active-palette == "Mocha" || Theme.active-palette == "Macchiato")
+            ? #ffffff : ctp.text;
+    in-out property <color> text-inverse:
+        Theme.active-palette == "Latte" ? Catppuccin.mocha.text : Catppuccin.latte.text;
+
+    in-out property <color> titlebar-background: ctp.surface0;
+
+    in-out property <color> controllers-background: root.dark ? ctp.surface1 : ctp.crust;
+    in-out property <color> controllers-background-hover: root.dark ? ctp.surface2 : ctp.surface0;
+    in-out property <color> controllers-background-focus: root.dark ? ctp.surface2 : ctp.surface0;
+    // High contrast replaces the translucent lavender hairline with an opaque
+    // overlay; the normal alpha mirrors the per-flavor `--controllers-border`.
+    in-out property <color> controllers-border:
+        root.hc ? ctp.overlay2
+        : ctp.lavender.with-alpha(
+            root.dark ? (Theme.active-palette == "Mocha" ? 0.18 : 0.48) : 0.58);
+    // Latte keeps the lavender focus outline even in high contrast.
+    in-out property <color> controllers-outline-focus:
+        root.hc && root.dark ? ctp.overlay2 : ctp.lavender;
+    in-out property <length> controllers-border-radius: root.dark ? 6px : 4px;
+
+    in-out property <color> setting-item-background: root.dark ? ctp.surface0 : ctp.mantle;
+    in-out property <color> setting-item-background-hover: root.dark ? ctp.surface1 : ctp.crust;
+    in-out property <color> setting-item-background-active: root.dark ? ctp.surface2 : ctp.surface0;
+    // No group hairline on the dark flavors without high contrast; Latte draws
+    // one in `crust`, every high-contrast scheme in `overlay2`.
+    in-out property <color> setting-group-border:
+        root.hc ? ctp.overlay2 : (root.dark ? transparent : ctp.crust);
+    in-out property <color> setting-group-danger-border: ctp.red;
+
+    in-out property <color> toggle-switch-background: root.dark ? ctp.surface1 : ctp.crust;
+    in-out property <color> toggle-switch-outline: ctp.overlay2;
+    in-out property <color> toggle-switch-button: ctp.overlay2;
+    in-out property <color> toggle-switch-active: root.dark ? ctp.blue : ctp.lavender;
+
+    in-out property <color> card-background: root.dark ? ctp.surface0 : ctp.mantle;
+    in-out property <color> card-border:
+        root.hc ? ctp.overlay2 : (root.dark ? ctp.surface1 : ctp.crust);
+
+    // The Slint equivalent of `.changing-theme`.
+    animate base, mantle, crust,
+        surface-0, surface-1, surface-2,
+        overlay-0, overlay-1, overlay-2,
+        text, subtext-0, subtext-1,
+        mauve, blue, lavender, red, green,
+        default-text-color, text-inverse,
+        titlebar-background,
+        controllers-background, controllers-background-hover, controllers-background-focus,
+        controllers-border, controllers-outline-focus,
+        setting-item-background, setting-item-background-hover, setting-item-background-active,
+        setting-group-border, setting-group-danger-border,
+        toggle-switch-background, toggle-switch-outline, toggle-switch-button,
+        toggle-switch-active,
+        card-background, card-border
+    {
+        duration: root.transitions-enabled ? 300ms : 0ms;
+        easing: ease;
+    }
+
+    // Seed the global before the first frame (a `changed` handler only runs on
+    // subsequent changes).
+    init => {
+        Theme.base = root.base;
+        Theme.mantle = root.mantle;
+        Theme.crust = root.crust;
+        Theme.surface-0 = root.surface-0;
+        Theme.surface-1 = root.surface-1;
+        Theme.surface-2 = root.surface-2;
+        Theme.overlay-0 = root.overlay-0;
+        Theme.overlay-1 = root.overlay-1;
+        Theme.overlay-2 = root.overlay-2;
+        Theme.text = root.text;
+        Theme.subtext-0 = root.subtext-0;
+        Theme.subtext-1 = root.subtext-1;
+        Theme.mauve = root.mauve;
+        Theme.blue = root.blue;
+        Theme.lavender = root.lavender;
+        Theme.red = root.red;
+        Theme.green = root.green;
+        Theme.default-text-color = root.default-text-color;
+        Theme.text-inverse = root.text-inverse;
+        Theme.titlebar-background = root.titlebar-background;
+        Theme.controllers-background = root.controllers-background;
+        Theme.controllers-background-hover = root.controllers-background-hover;
+        Theme.controllers-background-focus = root.controllers-background-focus;
+        Theme.controllers-border = root.controllers-border;
+        Theme.controllers-outline-focus = root.controllers-outline-focus;
+        Theme.controllers-border-radius = root.controllers-border-radius;
+        Theme.setting-item-background = root.setting-item-background;
+        Theme.setting-item-background-hover = root.setting-item-background-hover;
+        Theme.setting-item-background-active = root.setting-item-background-active;
+        Theme.setting-group-border = root.setting-group-border;
+        Theme.setting-group-danger-border = root.setting-group-danger-border;
+        Theme.toggle-switch-background = root.toggle-switch-background;
+        Theme.toggle-switch-outline = root.toggle-switch-outline;
+        Theme.toggle-switch-button = root.toggle-switch-button;
+        Theme.toggle-switch-active = root.toggle-switch-active;
+        Theme.card-background = root.card-background;
+        Theme.card-border = root.card-border;
+    }
+
+    // Push the (interpolated) values into the global. Slint can't bind a global
+    // property from a component, so each animated token forwards its current
+    // value on every change — including the per-frame steps of the animation
+    // above, which is what makes the switch animate for every consumer.
+    changed base => { Theme.base = root.base; }
+    changed mantle => { Theme.mantle = root.mantle; }
+    changed crust => { Theme.crust = root.crust; }
+    changed surface-0 => { Theme.surface-0 = root.surface-0; }
+    changed surface-1 => { Theme.surface-1 = root.surface-1; }
+    changed surface-2 => { Theme.surface-2 = root.surface-2; }
+    changed overlay-0 => { Theme.overlay-0 = root.overlay-0; }
+    changed overlay-1 => { Theme.overlay-1 = root.overlay-1; }
+    changed overlay-2 => { Theme.overlay-2 = root.overlay-2; }
+    changed text => { Theme.text = root.text; }
+    changed subtext-0 => { Theme.subtext-0 = root.subtext-0; }
+    changed subtext-1 => { Theme.subtext-1 = root.subtext-1; }
+    changed mauve => { Theme.mauve = root.mauve; }
+    changed blue => { Theme.blue = root.blue; }
+    changed lavender => { Theme.lavender = root.lavender; }
+    changed red => { Theme.red = root.red; }
+    changed green => { Theme.green = root.green; }
+    changed default-text-color => { Theme.default-text-color = root.default-text-color; }
+    changed text-inverse => { Theme.text-inverse = root.text-inverse; }
+    changed titlebar-background => { Theme.titlebar-background = root.titlebar-background; }
+    changed controllers-background => { Theme.controllers-background = root.controllers-background; }
+    changed controllers-background-hover => { Theme.controllers-background-hover = root.controllers-background-hover; }
+    changed controllers-background-focus => { Theme.controllers-background-focus = root.controllers-background-focus; }
+    changed controllers-border => { Theme.controllers-border = root.controllers-border; }
+    changed controllers-outline-focus => { Theme.controllers-outline-focus = root.controllers-outline-focus; }
+    changed controllers-border-radius => { Theme.controllers-border-radius = root.controllers-border-radius; }
+    changed setting-item-background => { Theme.setting-item-background = root.setting-item-background; }
+    changed setting-item-background-hover => { Theme.setting-item-background-hover = root.setting-item-background-hover; }
+    changed setting-item-background-active => { Theme.setting-item-background-active = root.setting-item-background-active; }
+    changed setting-group-border => { Theme.setting-group-border = root.setting-group-border; }
+    changed setting-group-danger-border => { Theme.setting-group-danger-border = root.setting-group-danger-border; }
+    changed toggle-switch-background => { Theme.toggle-switch-background = root.toggle-switch-background; }
+    changed toggle-switch-outline => { Theme.toggle-switch-outline = root.toggle-switch-outline; }
+    changed toggle-switch-button => { Theme.toggle-switch-button = root.toggle-switch-button; }
+    changed toggle-switch-active => { Theme.toggle-switch-active = root.toggle-switch-active; }
+    changed card-background => { Theme.card-background = root.card-background; }
+    changed card-border => { Theme.card-border = root.card-border; }
 }
