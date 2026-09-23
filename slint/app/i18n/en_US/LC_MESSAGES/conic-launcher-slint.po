@@ -1,0 +1,42 @@
+# Conic Launcher — English (fallback) translations for the Slint app.
+# Catalogs are bundled at compile time by `build.rs`
+# (`CompilerConfiguration::with_bundled_translations("i18n")`) and selected at
+# runtime with `slint::select_bundled_translation(<language>)`.
+#
+# The catalog file name must match the crate name (the gettext domain is
+# `CARGO_PKG_NAME`): `conic-launcher-slint.po`.
+#
+# The default translation context is the Slint component name where `@tr()`
+# appears (see `--no-default-translation-context` in `slint-tr-extractor`).
+msgid ""
+msgstr ""
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ui/app.slint
+msgctxt "App"
+msgid "Conic Launcher"
+msgstr "Conic Launcher"
+
+#: ui/app.slint
+msgctxt "App"
+msgid "Search or type a command…"
+msgstr "Search or type a command…"
+
+#: ui/components/title-bar.slint
+msgctxt "TitleBar"
+msgid "Settings"
+msgstr "Settings"
+
+#: ui/components/title-bar.slint
+msgctxt "TitleBar"
+msgid "Home"
+msgstr "Home"
+
+#: ui/components/title-bar.slint
+msgctxt "TitleBar"
+msgid "Music"
+msgstr "Music"
