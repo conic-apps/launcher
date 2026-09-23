@@ -337,6 +337,34 @@ fn pick_image_file() -> Option<PathBuf> {
     None
 }
 
+/// Sets the macOS Dock / task-switcher icon.
+///
+/// The Slint `Window.icon` binding can't reach it: the winit backend forwards
+/// that to `winit::Window::set_window_icon`, which is a no-op on macOS. Instead
+/// the embedded PNG is loaded into an `NSImage` and handed to the shared
+/// `NSApplication`. Windows and Linux use the `icon:` binding in `app.slint`.
+#[cfg(target_os = "macos")]
+fn set_macos_app_icon() {
+    use objc2::runtime::AnyObject;
+    use objc2::{class, msg_send};
+
+    const ICON: &[u8] = include_bytes!("../ui/assets/app-icon.png");
+
+    unsafe {
+        let data: *mut AnyObject = msg_send![
+            class!(NSData),
+            dataWithBytes: ICON.as_ptr() as *const core::ffi::c_void,
+            length: ICON.len()
+        ];
+        let image: *mut AnyObject = msg_send![class!(NSImage), alloc];
+        let image: *mut AnyObject = msg_send![image, initWithData: data];
+        let app: *mut AnyObject = msg_send![class!(NSApplication), sharedApplication];
+        let _: () = msg_send![app, setApplicationIconImage: image];
+        // `setApplicationIconImage:` retains the image; balance our alloc/init.
+        let _: () = msg_send![image, release];
+    }
+}
+
 fn main() {
     env_logger::Builder::from_default_env()
         .filter_level(LevelFilter::Info)
@@ -564,6 +592,12 @@ fn main() {
     #[cfg(target_os = "macos")]
     install_traffic_light_observers();
 
+    // macOS draws the Dock icon from NSApplication, not from the window, and the
+    // icon can only be set once `applicationDidFinishLaunching` has run (inside
+    // `ui.run()`) — setting it earlier is overwritten by AppKit during launch.
+    #[cfg(target_os = "macos")]
+    install_app_icon_observer();
+
     let window = WindowService::new(ui.clone_strong());
     log::debug!(target: "shell", "init window state — maximized: {}", window.is_maximized());
 
@@ -582,6 +616,30 @@ fn main() {
     });
 
     ui.run().expect("failed to run the shell event loop");
+}
+
+/// Defers `set_macos_app_icon` until the app has finished launching.
+///
+/// `setApplicationIconImage:` only sticks after `applicationDidFinishLaunching:`
+/// (which AppKit runs inside `ui.run()`); setting it before that is discarded
+/// when AppKit initializes the app icon during launch.
+#[cfg(target_os = "macos")]
+fn install_app_icon_observer() {
+    use core::ptr::NonNull;
+    use objc2_foundation::{NSNotification, NSNotificationCenter, ns_string};
+
+    let block = block2::RcBlock::new(move |_notification: NonNull<NSNotification>| {
+        set_macos_app_icon();
+    });
+
+    unsafe {
+        NSNotificationCenter::defaultCenter().addObserverForName_object_queue_usingBlock(
+            Some(ns_string!("NSApplicationDidFinishLaunchingNotification")),
+            None,
+            None,
+            &block,
+        );
+    }
 }
 
 /// Installs the observers that keep the traffic lights in place, mirroring

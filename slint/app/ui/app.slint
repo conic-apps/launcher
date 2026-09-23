@@ -20,6 +20,9 @@ export { AppConfig, JavaRuntime } from "globals/settings.slint";
 // their native caption bar.
 export component App inherits Window {
     title: @tr("Conic Launcher");
+    // Window/taskbar icon for Windows and Linux WMs (see the shared asset). macOS
+    // is handled separately in main.rs: winit's window icon path is a no-op there.
+    icon: @image-url("assets/app-icon.png");
     // Base typography from the original stylesheet (see theme.slint).
     default-font-family: Theme.font-family;
     default-font-size: Theme.font-size-base;
