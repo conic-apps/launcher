@@ -1,0 +1,36 @@
+[package]
+# Named `conic-launcher-slint` (not `conic-shell`) to avoid clashing with the
+# Tauri app's binary. Temporary until the Slint app replaces it.
+name = "conic-launcher-slint"
+description = "Conic Launcher app (Slint)"
+version = "0.1.0-alpha.2"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[build-dependencies]
+slint-build.workspace = true
+
+[dependencies]
+slint.workspace = true
+slint-platform.workspace = true
+slint-window.workspace = true
+log.workspace = true
+env_logger.workspace = true
+sys-locale.workspace = true
+
+# Used to inject macOS window attributes (transparent title bar + full-size
+# content view) through the winit backend's window-attributes hook.
+i-slint-backend-winit = "1.18"
+winit = "0.30"
+
+# Used to position the native macOS traffic lights to match the custom title bar.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.5"
+objc2-foundation = { version = "0.2", features = [
+    "NSNotification",
+    "NSOperation",
+    "NSString",
+    "block2",
+] }
+block2 = "0.5"

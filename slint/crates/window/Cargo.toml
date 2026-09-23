@@ -1,0 +1,10 @@
+[package]
+name = "slint-window"
+description = "Window control service for the Slint app"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+slint.workspace = true

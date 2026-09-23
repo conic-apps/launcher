@@ -1,0 +1,67 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "theme.slint";
+import { TitleBar } from "components/title-bar.slint";
+import { PlaceholderPanel } from "views/placeholder.slint";
+
+// Application root window (App.vue). Native window chrome on every platform:
+// macOS gets the Chrome-style treatment (transparent hidden titlebar +
+// full-size content view via a winit window-attributes hook in main.rs) so the
+// custom title bar draws under the native traffic lights; Windows/Linux use
+// their native caption bar.
+export component App inherits Window {
+    title: @tr("Conic Launcher");
+    // Base typography from the original stylesheet (see theme.slint).
+    default-font-family: Theme.font-family;
+    default-font-size: Theme.font-size-base;
+    default-font-weight: Theme.font-weight-normal;
+    // macOS keeps a transparent window so the custom title bar blends into the
+    // native (transparent) title bar; other platforms need an opaque client
+    // area beneath their native caption bar.
+    background: self.macos ? transparent : Theme.crust;
+    width: 840px;
+    height: 532px;
+
+    in-out property <bool> macos: false;
+    in-out property <string> current-page: "game";
+    in-out property <string> search-placeholder: @tr("Search or type a command…");
+    in-out property <string> search-hotkey: "";
+
+    callback open-home();
+    callback open-settings();
+    callback open-search();
+    callback toggle-music();
+    callback maximize-or-fullscreen();
+
+    // Corners, edge and borders are owned by the window system (the native
+    // title bar / window frame), so the content layer is a plain full-size
+    // gradient with no custom framing.
+    container := Rectangle {
+        width: root.width;
+        height: root.height;
+        background: @linear-gradient(180deg, Theme.mantle 0%, Theme.crust 100%);
+        clip: true;
+
+        VerticalLayout {
+            width: root.width;
+            height: root.height;
+
+            TitleBar {
+                macos: root.macos;
+                search-placeholder: root.search-placeholder;
+                search-hotkey: root.search-hotkey;
+                current-page: root.current-page;
+
+                open-home => { root.open-home(); }
+                open-settings => { root.open-settings(); }
+                open-search => { root.open-search(); }
+                toggle-music => { root.toggle-music(); }
+                maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
+            }
+
+            PlaceholderPanel { }
+        }
+    }
+}
