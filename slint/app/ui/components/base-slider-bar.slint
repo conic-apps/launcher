@@ -1,0 +1,99 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// Range slider (src/components/BaseSliderBar.vue).
+//
+// 300px wide; 3.5px rounded track, lavender fill and a 12px thumb. The value
+// tooltip appears above the thumb while dragging (the Vue original fades it
+// with GSAP on drag start and grows its width on every change; here it is
+// naturally sized).
+export component BaseSliderBar inherits Rectangle {
+    in property <int> max: 100;
+    in property <int> min: 0;
+    in property <int> step: 1;
+    in property <bool> slider-enabled: true;
+    in-out property <int> value: 0;
+    callback edited;
+
+    width: 300px;
+    height: 20px;
+    opacity: root.slider-enabled ? 1.0 : 0.6;
+
+    private property <float> percent: root.max > root.min
+        ? clamp((root.value - root.min) * 1.0 / (root.max - root.min), 0, 1)
+        : 0;
+    private property <bool> dragging: false;
+
+    track := Rectangle {
+        x: 0;
+        y: (root.height - self.height) / 2;
+        width: root.width;
+        height: 3.5px;
+        border-radius: 10px;
+        background: #00000045;
+    }
+
+    fill := Rectangle {
+        x: 0;
+        y: (root.height - self.height) / 2;
+        width: root.percent * root.width;
+        height: 3.5px;
+        border-radius: 10px;
+        background: Theme.lavender;
+    }
+
+    thumb := Rectangle {
+        width: thumb-touch.pressed ? 10.8px : thumb-touch.has-hover ? 13.2px : 12px;
+        height: self.width;
+        border-radius: 100px;
+        background: Theme.lavender;
+        x: root.percent * root.width - self.width / 2;
+        y: (root.height - self.height) / 2;
+        animate width, height { duration: 200ms; easing: ease; }
+    }
+
+    if root.dragging && root.slider-enabled : tooltip := Rectangle {
+        height: 22px;
+        width: tooltip-label.preferred-width + 14px;
+        border-radius: 6px;
+        border-width: 1px;
+        border-color: Theme.overlay-0;
+        background: Theme.base;
+        x: root.percent * root.width - self.width / 2 + 6px - 0.12 * (root.percent * 100) * 1px;
+        y: -32px;
+
+        tooltip-label := Text {
+            text: round(root.percent * 100) + "%";
+            font-size: 12px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.text.transparentize(0.1);
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+        }
+    }
+
+    thumb-touch := TouchArea {
+        width: root.width;
+        height: root.height;
+        mouse-cursor: pointer;
+        enabled: root.slider-enabled;
+        pointer-event(event) => {
+            if event.button == PointerEventButton.left
+                && (event.kind == PointerEventKind.down
+                    || (event.kind == PointerEventKind.move && root.dragging)) {
+                root.dragging = true;
+                root.value = root.min + round(clamp(self.mouse-x / root.width, 0, 1) * (root.max - root.min));
+            } else if event.kind == PointerEventKind.up {
+                if root.dragging {
+                    root.dragging = false;
+                    root.edited();
+                }
+            } else if event.kind == PointerEventKind.cancel {
+                root.dragging = false;
+            }
+        }
+    }
+}

@@ -1,0 +1,81 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { SettingItem } from "setting-item.slint";
+import { AppIcon } from "app-icon.slint";
+
+// Collapsible settings group (src/components/SettingCollapse.vue).
+//
+// The Vue component animates height/opacity and flips the chevron with the Web
+// Animations API. This round of the migration does not port the entry/exit
+// animations (per the task), so the content simply appears and the chevron
+// flips instantly.
+//
+// `border-radius` corners are applied per side: when closed the header is fully
+// rounded; when open only its top corners are, and the content keeps the
+// bottom corners (matching the Vue class toggling).
+export component SettingCollapse inherits VerticalLayout {
+    in property <string> title;
+    in property <string> description: "";
+    in property <bool> resetable: false;
+    callback reset;
+
+    private property <bool> opened: false;
+
+    width: 100%;
+    spacing: 0px;
+
+    head := Rectangle {
+        width: 100%;
+        height: head-item.preferred-height;
+        clip: true;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        border-bottom-left-radius: root.opened ? 0px : 8px;
+        border-bottom-right-radius: root.opened ? 0px : 8px;
+
+        head-item := SettingItem {
+            width: parent.width;
+            title: root.title;
+            description: root.description;
+            resetable: root.resetable;
+            clickable: true;
+            reset => { root.reset(); }
+            clicked => { root.opened = !root.opened; }
+
+            AppIcon {
+                name: "chevron-down";
+                size: 17px;
+                icon-color: Theme.text.transparentize(0.1);
+                transform-rotation: root.opened ? 180deg : 0deg;
+                transform-origin: { x: self.width / 2, y: self.height / 2 };
+            }
+        }
+    }
+
+    // `@children` cannot live in a conditional, so the content is always
+    // instantiated. A clipped wrapper collapses to zero height when closed;
+    // its height reads the natural height of a separate inner element so the
+    // binding does not reference itself (which Slint rejects as a loop).
+    content-wrapper := Rectangle {
+        width: 100%;
+        height: root.opened ? content.preferred-height : 0px;
+        visible: root.opened;
+        clip: true;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+        background: transparent;
+
+        content := Rectangle {
+            width: 100%;
+            background: transparent;
+
+            VerticalLayout {
+                spacing: 1px;
+                @children
+            }
+        }
+    }
+}

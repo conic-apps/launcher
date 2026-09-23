@@ -1,0 +1,33 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// Global page navigation (src/store/navigation.ts).
+//
+// The Vue app keeps the current page in a global Pinia store so the title bar,
+// the main view stack and any overlay can drive navigation. Slint globals are
+// the equivalent mechanism: every component can read `Navigation.current-page`
+// and call `Navigation.navigate(page)` without prop drilling.
+//
+// `Page` values mirror the Vue type: "setup" | "game" | "launch" | "settings" |
+// "accounts". The Vue store keeps a full history stack and implements `back()`;
+// the back button is currently commented out in App.vue, so only the one-level
+// `previous-page` is tracked here.
+export global Navigation {
+    in-out property <string> current-page: "game";
+    in-out property <string> previous-page: "";
+
+    public function navigate(page: string) {
+        if (self.current-page != page && self.current-page != "launch") {
+            self.previous-page = self.current-page;
+        }
+        self.current-page = page;
+    }
+
+    public function back() {
+        if (self.previous-page != "") {
+            self.current-page = self.previous-page;
+            self.previous-page = "";
+        }
+    }
+}

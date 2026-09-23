@@ -1,0 +1,25 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+
+// Rounded info card (src/views/settings/InfoBox.vue). Currently unused (the
+// sponsorship box is commented out in the Vue About page) but kept so the
+// settings tree mirrors the original.
+export component InfoBox inherits Rectangle {
+    in property <bool> click-able: false;
+
+    width: 100%;
+    background: Theme.surface-0;
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: Theme.surface-1;
+
+    VerticalLayout {
+        padding: 20px;
+        spacing: 0px;
+        alignment: start;
+        @children
+    }
+}

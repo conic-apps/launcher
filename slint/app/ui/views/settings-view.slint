@@ -1,0 +1,184 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "../components/app-icon.slint";
+import { ScrollView } from "../components/scroll-view.slint";
+import { SettingsGeneral } from "settings/settings-general.slint";
+import { SettingsGame } from "settings/settings-game.slint";
+import { SettingsJvm } from "settings/settings-jvm.slint";
+import { SettingsAppearance } from "settings/settings-appearance.slint";
+import { SettingsAudio } from "settings/settings-audio.slint";
+import { SettingsDownload } from "settings/settings-download.slint";
+import { SettingsAccessibility } from "settings/settings-accessibility.slint";
+import { SettingsAbout } from "settings/settings-about.slint";
+
+// Sidebar entry (SettingsView.vue `.settings-menu > li`). The active marker is
+// a 3x22px mauve pill sitting 6px to the left of the item (the CSS `::before`
+// uses margin-left:-16 + margin-right:13 around the 10px padding).
+component NavItem inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <bool> active: false;
+    callback selected;
+
+    width: 100%;
+    height: 30px;
+    border-radius: 8px;
+    background: touch.pressed ? Theme.surface-1.transparentize(0.2)
+        : root.active ? Theme.surface-1.transparentize(0.2)
+        : touch.has-hover ? Theme.surface-0.transparentize(0.2)
+        : transparent;
+
+    Rectangle {
+        x: -6px;
+        y: (parent.height - self.height) / 2;
+        width: 3px;
+        height: root.active ? 22px : 0px;
+        border-radius: 9999px;
+        background: Theme.mauve;
+        opacity: root.active ? 1.0 : 0.0;
+        animate height, opacity { duration: 100ms; easing: ease; }
+    }
+
+    HorizontalLayout {
+        padding-left: 10px;
+        spacing: 8px;
+        cross-axis-alignment: center;
+
+        AppIcon {
+            name: root.icon;
+            size: 16px;
+            icon-color: Theme.text.transparentize(0.1);
+        }
+
+        Text {
+            text: root.label;
+            font-size: 13px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.text.transparentize(0.1);
+        }
+    }
+
+    touch := TouchArea {
+        clicked => { root.selected(); }
+    }
+}
+
+// A titled settings section (`.settings-section`).
+component SettingsSection inherits VerticalLayout {
+    in property <string> title;
+
+    width: 100%;
+    spacing: 18px;
+    alignment: start;
+
+    Rectangle {
+        height: 18px;
+        background: transparent;
+
+        Text {
+            text: root.title;
+            x: 8px;
+            font-size: 18px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.text.transparentize(0.1);
+        }
+    }
+
+    @children
+}
+
+// src/views/SettingsView.vue
+//
+// The Vue view fades in with GSAP and tracks the active section from the
+// scroll offset; this migration only ports the layout, the sidebar/spy logic
+// and the scroll-to-section behaviour.
+export component SettingsView inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: Theme.base.transparentize(0.4);
+
+    HorizontalLayout {
+        spacing: 0px;
+
+        // ----- left: settings menu -----
+        Rectangle {
+            width: 224px;
+            height: 100%;
+            background: transparent;
+
+            VerticalLayout {
+                padding-top: 28px;
+                padding-left: 32px;
+                padding-bottom: 16px;
+                spacing: 4px;
+                alignment: start;
+
+                NavItem { icon: "house"; label: @tr("General"); active: root.active-index == 0; selected => { root.scroll-to(0); } }
+                NavItem { icon: "gamepad"; label: @tr("Launch"); active: root.active-index == 1; selected => { root.scroll-to(1); } }
+                NavItem { icon: "java"; label: @tr("Java"); active: root.active-index == 2; selected => { root.scroll-to(2); } }
+                NavItem { icon: "palette"; label: @tr("Appearance"); active: root.active-index == 3; selected => { root.scroll-to(3); } }
+                NavItem { icon: "musical-notes"; label: @tr("Audio"); active: root.active-index == 4; selected => { root.scroll-to(4); } }
+                NavItem { icon: "globe"; label: @tr("Download"); active: root.active-index == 5; selected => { root.scroll-to(5); } }
+                NavItem { icon: "accessibility"; label: @tr("Accessibility"); active: root.active-index == 6; selected => { root.scroll-to(6); } }
+                NavItem { icon: "about"; label: @tr("About"); active: root.active-index == 7; selected => { root.scroll-to(7); } }
+            }
+        }
+
+        // ----- right: scrollable content -----
+        Rectangle {
+            horizontal-stretch: 1;
+            height: 100%;
+            background: transparent;
+
+            scroll := ScrollView {
+                content-layout := VerticalLayout {
+                    padding-top: 24px;
+                    padding-right: 24px;
+                    padding-bottom: 24px;
+                    padding-left: 16px;
+                    spacing: 24px;
+                    alignment: start;
+
+                    s0 := SettingsSection { title: @tr("General"); SettingsGeneral { } }
+                    s1 := SettingsSection { title: @tr("Launch"); SettingsGame { } }
+                    s2 := SettingsSection { title: @tr("Java"); SettingsJvm { } }
+                    s3 := SettingsSection { title: @tr("Appearance"); SettingsAppearance { } }
+                    s4 := SettingsSection { title: @tr("Audio"); SettingsAudio { } }
+                    s5 := SettingsSection { title: @tr("Download"); SettingsDownload { } }
+                    s6 := SettingsSection { title: @tr("Accessibility"); SettingsAccessibility { } }
+                    s7 := SettingsSection { title: @tr("About"); SettingsAbout { } }
+                }
+            }
+        }
+    }
+
+    // Scroll-spy: the last section whose top has crossed 100px below the
+    // viewport top is active; at the very bottom the last section wins.
+    private property <length> vp: scroll.content-y;
+    private property <length> max-scroll: max(0px, scroll.content-height - scroll.height);
+    private property <bool> at-bottom: root.max-scroll > 0px && -root.vp >= root.max-scroll - 1px;
+    private property <int> active-index:
+        root.at-bottom ? 7
+        : s7.y + root.vp <= 100px ? 7
+        : s6.y + root.vp <= 100px ? 6
+        : s5.y + root.vp <= 100px ? 5
+        : s4.y + root.vp <= 100px ? 4
+        : s3.y + root.vp <= 100px ? 3
+        : s2.y + root.vp <= 100px ? 2
+        : s1.y + root.vp <= 100px ? 1
+        : 0;
+
+    public function scroll-to(index: int) {
+        if index == 0 { scroll.content-y = 16px - s0.y; }
+        if index == 1 { scroll.content-y = 16px - s1.y; }
+        if index == 2 { scroll.content-y = 16px - s2.y; }
+        if index == 3 { scroll.content-y = 16px - s3.y; }
+        if index == 4 { scroll.content-y = 16px - s4.y; }
+        if index == 5 { scroll.content-y = 16px - s5.y; }
+        if index == 6 { scroll.content-y = 16px - s6.y; }
+        if index == 7 { scroll.content-y = 16px - s7.y; }
+    }
+}

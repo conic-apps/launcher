@@ -1,0 +1,62 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// Text / number input (src/components/BaseInput.vue).
+//
+// 30px tall, 6px radius, surface-1 background; focus turns the outline
+// lavender and the background surface-2. The Vue original only commits the
+// model on blur (lazy-update-model); this version commits on `edited` and lets
+// the Rust side debounce disk writes, which behaves the same for the user.
+export component BaseInput inherits Rectangle {
+    in property <string> placeholder: "";
+    in property <length> input-width: 400px;
+    in property <bool> number-only: false;
+    in property <bool> input-enabled: true;
+    in-out property <string> value: "";
+    callback edited;
+
+    width: input-width;
+    height: 30px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: text-input.has-focus ? Theme.lavender : Theme.lavender.transparentize(0.82);
+    background: text-input.has-focus ? Theme.surface-2
+        : input-touch.has-hover ? Theme.surface-2
+        : Theme.surface-1;
+    opacity: root.input-enabled ? 1.0 : 0.6;
+    animate background { duration: 100ms; }
+
+    // Hover tracker (declared before the field so the field stays clickable).
+    input-touch := TouchArea {
+        width: parent.width;
+        height: parent.height;
+    }
+
+    text-input := TextInput {
+        x: 8px;
+        y: 2px;
+        width: parent.width - 16px;
+        height: parent.height - 4px;
+        text <=> root.value;
+        font-size: 13px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.text.transparentize(0.1);
+        input-type: root.number-only ? number : text;
+        single-line: true;
+        vertical-alignment: center;
+        enabled: root.input-enabled;
+        edited => { root.edited(); }
+    }
+
+    if root.value == "" && root.placeholder != "" : Text {
+        text: root.placeholder;
+        font-size: 13px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.text.transparentize(0.2);
+        x: 8px;
+        y: (parent.height - self.height) / 2;
+    }
+}

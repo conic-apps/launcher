@@ -1,0 +1,605 @@
+# Conic Launcher — translations for the Slint app.
+# Generated from the @tr() strings under slint/app/ui and seeded from src/locales/*.ts.
+msgid ""
+msgstr ""
+"Language: ja_JP\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ui
+msgctxt "App"
+msgid "Conic Launcher"
+msgstr "Conic Launcher"
+
+#: ui
+msgctxt "App"
+msgid "Search or type a command…"
+msgstr "検索またはコマンドを入力…"
+
+#: ui
+msgctxt "TitleBar"
+msgid "Settings"
+msgstr "設定"
+
+#: ui
+msgctxt "TitleBar"
+msgid "Home"
+msgstr "ホーム"
+
+#: ui
+msgctxt "TitleBar"
+msgid "Music"
+msgstr "音楽"
+
+#: ui
+msgctxt "SettingsView"
+msgid "General"
+msgstr "一般"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Launch"
+msgstr "起動"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Java"
+msgstr "Java"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Appearance"
+msgstr "外観"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Audio"
+msgstr "サウンド"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Download"
+msgstr "ダウンロード"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Accessibility"
+msgstr "アクセシビリティ"
+
+#: ui
+msgctxt "SettingsView"
+msgid "About"
+msgstr "情報"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Feedback"
+msgstr "フィードバック"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Submit feedback"
+msgstr "フィードバックを送信"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Open a GitHub Issue. Remember to upload launcher logs when reporting bugs"
+msgstr "GitHub Issueを開きます。バグを報告する際は、ランチャーのログもアップロードしてください"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View source code"
+msgstr "ソースコードを見る"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View the launcher source code on GitHub"
+msgstr "GitHub上でランチャーのソースコードを閲覧します"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View launcher logs"
+msgstr "ランチャーのログを表示"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Open the launcher log folder. Please upload logs when reporting issues"
+msgstr "ランチャーのログフォルダを開きます。問題を報告する際はログを添付してください"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Credits"
+msgstr "クレジット"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The UI interaction style of Conic Launcher is inspired by osu!"
+msgstr "Conic Launcher のUIインタラクションスタイルは osu! にインスパイアされています"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The four built-in color schemes of Conic Launcher come from Catppuccin"
+msgstr "Conic Launcher の4つの内蔵カラースキームは Catppuccin 由来です"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources"
+msgstr "Conic Launcher のデフォルトのミラー設定には、一部のMinecraftリソースのダウンロードを高速化するソースとして bangbang93 氏提供の BMCLAPI が含まれています"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
+msgstr "Conic Launcher は非公式のMinecraft製品であり、Mojang Studios の承認を受けたものでも提携関係にあるものでもありません。「Minecraft」は Mojang AB の商標です。本プロジェクトにおけるMinecraftブランドのあらゆる使用は、Mojang Studios のブランドおよびアセットガイドラインに準拠しています。"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Accessibility"
+msgstr "アクセシビリティ"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Release update reminder"
+msgstr "リリースアップデートの通知"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a reminder dialog when a Minecraft release is published"
+msgstr "Minecraftのリリース版が公開されたときに通知ダイアログを表示します"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Snapshot update reminder"
+msgstr "スナップショット更新の通知"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a reminder dialog when a Minecraft snapshot is published"
+msgstr "Minecraftのスナップショットが公開されたときに通知ダイアログを表示します"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Auto-change game language"
+msgstr "ゲーム言語を自動変更"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Set the game language to your launcher language on first launch"
+msgstr "初回起動時に、ゲームの言語をランチャーの言語に合わせます"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "High contrast mode"
+msgstr "ハイコントラストモード"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Enable high contrast mode for the current theme (if available)"
+msgstr "現在のテーマでハイコントラストモードを有効にします（利用可能な場合）"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Palette"
+msgstr "パレット"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Follow system dark mode"
+msgstr "システムのダークモードに従う"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
+msgstr "システムがライトモードの場合は Latte、それ以外の場合は Mocha を使用します"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background image"
+msgstr "背景画像"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Custom background image"
+msgstr "カスタム背景画像"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Select an image as the launcher background. Instance backgrounds take priority"
+msgstr "ランチャーの背景として画像を選択します。インスタンスの背景が優先されます"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Remove image"
+msgstr "画像を削除"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background image darkness"
+msgstr "背景画像の暗さ"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "3D background camera movement"
+msgstr "3D背景のカメラ移動"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "When disabled, the camera stops moving forward and the background stops updating after rendering, completely eliminating background overhead"
+msgstr "無効にすると、描画完了後にカメラの前進と背景の更新が停止し、背景の処理負荷を完全になくします"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background parallax"
+msgstr "背景のパララックス"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "When disabled, the background no longer moves with the mouse"
+msgstr "無効にすると、背景がマウスに合わせて動かなくなります"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Background music"
+msgstr "BGM"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Enable background music"
+msgstr "BGMを有効にする"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Play background music in the launcher."
+msgstr "ランチャー内でBGMを再生します。"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Resume on start"
+msgstr "起動時に再生を再開"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Resume the last track and its progress when the application starts."
+msgstr "アプリの起動時に、前回の曲とその再生位置から再開します。"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Audio visualizer"
+msgstr "オーディオビジュアライザー"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Show audio visualization at the bottom of the game page."
+msgstr "ゲームページの下部にオーディオの可視化を表示します。"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Pause on game launch"
+msgstr "ゲーム起動時に一時停止"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Automatically pause background music when the game finishes launching."
+msgstr "ゲームの起動が完了したら、BGMを自動的に一時停止します。"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Open music folder"
+msgstr "音楽フォルダを開く"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Place the music you want to play in this folder."
+msgstr "再生したい音楽をこのフォルダに配置してください。"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Volume"
+msgstr "音量"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Master volume"
+msgstr "マスター音量"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Master volume (when window is in background)"
+msgstr "マスター音量（ウィンドウがバックグラウンドにあるとき）"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Download options"
+msgstr "ダウンロード設定"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Max connections"
+msgstr "最大接続数"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Limit the number of simultaneous connections to servers. Only applies to downloads during installation. Setting too high may reduce speed!"
+msgstr "サーバーへの同時接続数を制限します。インストール時のダウンロードにのみ適用されます。大きすぎる値はかえって速度低下の原因になります！"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Max download speed (B/s)"
+msgstr "最大ダウンロード速度（B/s）"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Limit download speed. Only applies to downloads during installation. Must be greater than 1024 to take effect. Set to 0 to disable"
+msgstr "ダウンロード速度を制限します。インストール時のダウンロードにのみ適用されます。1024より大きい値でのみ有効になります。0で無効化"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Mirror servers"
+msgstr "ミラーサーバー"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Download game files from alternative sources"
+msgstr "別のソースからゲームファイルをダウンロードします"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Proxy"
+msgstr "プロキシ"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Use system proxy (requires app restart)"
+msgstr "システムプロキシを使用します（アプリの再起動が必要です）"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Currently only proxy via environment variables is supported"
+msgstr "現在サポートされているのは、環境変数によるプロキシのみです"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Basic settings"
+msgstr "基本設定"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Window size"
+msgstr "ウィンドウサイズ"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Initial game window size"
+msgstr "ゲーム起動時のウィンドウサイズ"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "W"
+msgstr "幅"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "H"
+msgstr "高さ"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Fullscreen"
+msgstr "フルスクリーン"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Quit launcher after launching game"
+msgstr "ゲーム起動後にランチャーを終了"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Memory"
+msgstr "メモリ"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Auto-allocate memory"
+msgstr "メモリを自動割り当て"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Manual memory allocation"
+msgstr "メモリを手動割り当て"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
+msgstr "Javaヒープの最大サイズを手動で設定します。自動割り当てが無効な場合に有効になります"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Advanced launch options"
+msgstr "高度な起動オプション"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Java garbage collector"
+msgstr "Javaガベージコレクター"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra JVM arguments"
+msgstr "追加のJVM引数"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Appended after default JVM arguments"
+msgstr "デフォルトのJVM引数の後に追加されます"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra game arguments"
+msgstr "追加のゲーム引数"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Additional arguments for the game"
+msgstr "ゲームに渡す追加の引数です"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra class paths"
+msgstr "追加のクラスパス"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Separated by semicolons on Windows, colons on other systems"
+msgstr "Windowsではセミコロン、その他のOSではコロンで区切ります"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Execute before launch"
+msgstr "起動前に実行"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added before the launch command"
+msgstr "起動コマンドの前に追加されます"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Wrap command"
+msgstr "ラップコマンド"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added at the beginning of the launch command"
+msgstr "起動コマンドの先頭に追加されます"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Execute after launch"
+msgstr "起動後に実行"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added at the end of the launch script"
+msgstr "起動スクリプトの末尾に追加されます"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Ignore invalid Minecraft certificates"
+msgstr "無効なMinecraft証明書を無視"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
+msgstr "JVM引数に -Dfml.ignoreInvalidMinecraftCertificates=true を追加します"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Ignore patch discrepancies"
+msgstr "パッチの不整合を無視"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
+msgstr "JVM引数に -Dfml.ignorePatchDiscrepancies=true を追加します"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Skip game file check"
+msgstr "ゲームファイルの検証をスキップ"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "The launcher will not attempt to verify or repair game files before launching"
+msgstr "起動前にゲームファイルの検証や修復を行いません"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Language"
+msgstr "言語"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Follow system"
+msgstr "システムに従う"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Auto update"
+msgstr "自動アップデート"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Automatically download and install updates when available"
+msgstr "利用可能になり次第、アップデートを自動的にダウンロードしてインストールします"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Update channel"
+msgstr "アップデートチャンネル"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Controls how frequently the launcher receives updates"
+msgstr "ランチャーがアップデートを受け取る頻度を制御します"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Stable"
+msgstr "安定版"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Beta"
+msgstr "ベータ版"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Open setup wizard"
+msgstr "セットアップウィザードを開く"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "The setup wizard guides you through basic launcher settings"
+msgstr "セットアップウィザードでランチャーの基本設定を案内します"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "Scan failed"
+msgstr "スキャンに失敗しました"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "No installed Java runtimes detected"
+msgstr "インストール済みのJavaランタイムが検出されませんでした"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "After enabling \"Prefer Mojang-provided Java runtime\", Conic Launcher will automatically download the required Java from Mojang servers"
+msgstr "「Mojang提供のJavaランタイムを優先」を有効にすると、Conic Launcher が必要なJavaをMojangのサーバーから自動的にダウンロードします"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Auto-install Java runtime"
+msgstr "Javaランタイムを自動インストール"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "When enabled, the launcher will automatically download the appropriate Java runtime before launching. When disabled, only system-installed Java will be used"
+msgstr "有効にすると、起動前に適切なJavaランタイムを自動的にダウンロードします。無効にした場合は、システムにインストールされたJavaのみを使用します"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Manage installed Java runtimes"
+msgstr "インストール済みのJavaランタイムを管理"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Disabling a Java installation prevents the launcher from using it to launch the game"
+msgstr "Java環境を無効化すると、ランチャーはそのJavaを使ってゲームを起動しなくなります"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Scanning for installed Java runtimes"
+msgstr "インストール済みのJavaランタイムをスキャン中"
+

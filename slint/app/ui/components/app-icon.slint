@@ -1,0 +1,48 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { Icons } from "../icons.slint";
+
+// Icon renderer (src/components/AppIcon.vue).
+//
+// Icons are SVG path data at their original view box. The original `AppIcon`
+// defaults `stroke`/`fill` to `currentColor`; here the caller passes an
+// explicit `color` (default: body text at 90% opacity, matching
+// `main.css` `* { color: rgba(var(--default-text-color), 0.9) }`).
+//
+// Stroke width is expressed in the icon's view box units and converted to
+// element pixels the same way the title bar does it: an 18px glyph on a 512
+// view box with stroke-width 32 becomes 18 * 32 / 512 = 1.125px.
+export component AppIcon inherits Rectangle {
+    in property <string> name;
+    in property <length> size: 20px;
+    in property <color> icon-color: Theme.text.transparentize(0.1);
+
+    width: size;
+    height: size;
+
+    Path {
+        commands: Icons.stroke-commands(root.name);
+        viewbox-width: Icons.viewbox(root.name);
+        viewbox-height: Icons.viewbox(root.name);
+        width: root.width;
+        height: root.height;
+        fill: transparent;
+        stroke: root.icon-color;
+        stroke-width: root.size * Icons.stroke-width(root.name) / Icons.viewbox(root.name);
+        stroke-line-cap: LineCap.round;
+        stroke-line-join: LineJoin.round;
+    }
+
+    Path {
+        commands: Icons.fill-commands(root.name);
+        viewbox-width: Icons.viewbox(root.name);
+        viewbox-height: Icons.viewbox(root.name);
+        width: root.width;
+        height: root.height;
+        fill: root.icon-color;
+        stroke: transparent;
+    }
+}

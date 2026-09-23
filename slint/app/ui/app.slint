@@ -4,7 +4,14 @@
 
 import { Theme } from "theme.slint";
 import { TitleBar } from "components/title-bar.slint";
-import { PlaceholderPanel } from "views/placeholder.slint";
+import { Navigation } from "globals/navigation.slint";
+import { DropdownOverlay } from "components/dropdown-overlay.slint";
+import { SettingsView } from "views/settings-view.slint";
+import { GameViewPlaceholder } from "views/game-placeholder.slint";
+
+// Re-export so the Rust side can access the settings global and build the Java
+// runtime model (`slint_backend::AppConfig` / `slint_backend::JavaRuntime`).
+export { AppConfig, JavaRuntime } from "globals/settings.slint";
 
 // Application root window (App.vue). Native window chrome on every platform:
 // macOS gets the Chrome-style treatment (transparent hidden titlebar +
@@ -25,12 +32,9 @@ export component App inherits Window {
     height: 532px;
 
     in-out property <bool> macos: false;
-    in-out property <string> current-page: "game";
     in-out property <string> search-placeholder: @tr("Search or type a command…");
     in-out property <string> search-hotkey: "";
 
-    callback open-home();
-    callback open-settings();
     callback open-search();
     callback toggle-music();
     callback maximize-or-fullscreen();
@@ -52,16 +56,31 @@ export component App inherits Window {
                 macos: root.macos;
                 search-placeholder: root.search-placeholder;
                 search-hotkey: root.search-hotkey;
-                current-page: root.current-page;
+                current-page: Navigation.current-page;
 
-                open-home => { root.open-home(); }
-                open-settings => { root.open-settings(); }
+                // Navigation is global now: the title bar drives it directly.
+                open-home => { Navigation.navigate("game"); }
+                open-settings => { Navigation.navigate("settings"); }
                 open-search => { root.open-search(); }
                 toggle-music => { root.toggle-music(); }
                 maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
             }
 
-            PlaceholderPanel { }
+            // Page stack (App.vue `<component :is="pages[...]">`). Only the
+            // settings page is migrated for real; the rest keeps the
+            // placeholder until later phases.
+            page-stack := Rectangle {
+                width: 100%;
+                vertical-stretch: 1;
+                clip: true;
+
+                if Navigation.current-page == "settings" : SettingsView { }
+                if Navigation.current-page != "settings" : GameViewPlaceholder { }
+            }
         }
+
+        // Floating dropdown list + outside-click layer, mounted above the page
+        // stack (see `DropdownOverlay`).
+        DropdownOverlay { }
     }
 }

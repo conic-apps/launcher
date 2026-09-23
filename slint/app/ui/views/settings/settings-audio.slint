@@ -1,0 +1,99 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { SettingGroup } from "../../components/setting-group.slint";
+import { SettingItem } from "../../components/setting-item.slint";
+import { BaseSwitch } from "../../components/base-switch.slint";
+import { BaseSliderBar } from "../../components/base-slider-bar.slint";
+import { AppConfig } from "../../globals/settings.slint";
+
+// src/views/settings/SettingsAudio.vue
+export component SettingsAudio inherits VerticalLayout {
+    width: 100%;
+    padding-left: 8px;
+    padding-right: 8px;
+    spacing: 16px;
+    alignment: start;
+
+    SettingGroup {
+        title: @tr("Background music");
+
+        SettingItem {
+            title: @tr("Enable background music");
+            description: @tr("Play background music in the launcher.");
+
+            BaseSwitch {
+                checked <=> AppConfig.music-enabled;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Resume on start");
+            description: @tr("Resume the last track and its progress when the application starts.");
+
+            BaseSwitch {
+                checked <=> AppConfig.resume-on-startup;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Audio visualizer");
+            description: @tr("Show audio visualization at the bottom of the game page.");
+
+            BaseSwitch {
+                checked <=> AppConfig.show-visualizer;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Pause on game launch");
+            description: @tr("Automatically pause background music when the game finishes launching.");
+
+            BaseSwitch {
+                checked <=> AppConfig.pause-on-launch;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Open music folder");
+            description: @tr("Place the music you want to play in this folder.");
+            navigable: true;
+            clicked => { AppConfig.open-path("music"); }
+        }
+    }
+
+    SettingGroup {
+        title: @tr("Volume");
+
+        SettingItem {
+            title: @tr("Master volume");
+            description: AppConfig.main-volume + "%";
+
+            BaseSliderBar {
+                max: 100;
+                min: 0;
+                step: 1;
+                value <=> AppConfig.main-volume;
+                edited => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Master volume (when window is in background)");
+            description: AppConfig.background-volume + "%";
+
+            BaseSliderBar {
+                max: 100;
+                min: 0;
+                step: 1;
+                value <=> AppConfig.background-volume;
+                edited => { AppConfig.changed(); }
+            }
+        }
+    }
+}

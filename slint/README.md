@@ -23,17 +23,39 @@ slint/
     ui/
       app.slint                     # root `App` Window (mirrors src/App.vue)
       theme.slint                   # palette + typography tokens, embeds fonts
+      icons.slint                   # icon path data (mirrors src/assets/icons/*.svg)
       fonts/Comfortaa.ttf           # converted from src/assets/fonts/*.woff2
       fonts/Nunito.ttf
+      assets/                       # palette previews + about logos (png/svg)
+      globals/
+        navigation.slint            # global page navigation (src/store/navigation.ts)
+        settings.slint              # global config state (the "config store")
       components/                   # shared/reusable pieces
         title-bar.slint
         title-bar/navigation-button.slint
         title-bar/title-bar-action-button.slint
         search-bar.slint
-      views/placeholder.slint       # stand-in for the view stack (GameView, …)
+        app-icon.slint
+        setting-group.slint
+        setting-item.slint
+        setting-collapse.slint
+        scroll-view.slint
+        base-switch.slint
+        base-select.slint
+        base-dropdown-select.slint
+        dropdown-overlay.slint
+        base-slider-bar.slint
+        base-input.slint
+        base-button.slint
+        item-loading-icon.slint
+      views/
+        settings-view.slint         # src/views/SettingsView.vue
+        settings/                   # the eight settings sections + InfoBox
+        game-placeholder.slint      # stand-in for GameView
   crates/
     platform/                       # Tauri-free mirror of crates/platform
     window/                         # window-control service (min/max/fullscreen)
+    config/                         # Tauri-free mirror of crates/config
 ```
 
 ## Naming
@@ -94,14 +116,24 @@ Uses Slint's built-in translation support:
 - `build.rs` bundles them via
   `CompilerConfiguration::with_bundled_translations("i18n")`.
 - `src/main.rs` picks a language at startup with
-  `slint::select_bundled_translation(&lang)` (from the system locale).
-  `CONIC_LOCALE=zh_CN` overrides it (useful for testing).
+  `slint::select_bundled_translation(&lang)`: the language saved in the config,
+  or the system locale when unset ("follow system"). An unknown code falls back
+  to `en_US`.
+- Changing the language in Settings → General calls
+  `select_bundled_translation` again from the settings `changed` handler; Slint
+  re-evaluates every `@tr` binding, so **no restart is needed**.
+- `CONIC_LOCALE=fr_FR` forces a locale and disables runtime switching (useful
+  for testing).
 - The **default translation context is the Slint component name**, so entries
   use e.g. `msgctxt "App"` / `msgctxt "TitleBar"`.
 
-Currently bundled: `en_US` (fallback) and `zh_CN`. To add a language, copy a
-catalog directory and register the mapping in `select_locale()`. Catalogs can be
-(re)generated with `slint-tr-extractor` (not currently installed).
+All 12 launcher languages ship a catalog (`en_US` is the fallback):
+`zh_CN`, `zh_TW`, `ja_JP`, `ko_KR`, `de_DE`, `fr_FR`, `es_ES`, `pt_BR`, `ru_RU`,
+`tr_TR`, `pl_PL`. Catalogs were seeded from the Vue `src/locales/*.ts` settings
+strings; the `msgid`s are the `@tr()` source strings and the `msgctxt` is the
+component name. To add or refresh a language, add/update its directory under
+`app/i18n/` (and the `bundled_locale()` mapping in `src/main.rs`). Catalogs can
+be (re)generated with `slint-tr-extractor` (not currently installed).
 
 ## State ownership
 
@@ -119,13 +151,29 @@ Per the migration plan:
 - Application window (`App`) with the custom title bar and native window chrome.
 - Title bar: home/settings navigation, centered search bar + hotkey chip, music
   action (`components/title-bar*`, `components/search-bar.slint`).
-- Theme palette + typography, embedded fonts, i18n framework.
-- `slint-platform` (OS detection) and `slint-window` (window controls).
+- Global page navigation (`globals/navigation.slint`) and the `App` page stack.
+- The settings screen: `SettingsView` (sidebar + scroll-spy + scroll-to-section)
+  and all eight sections (`General`, `Launch`, `Java`, `Appearance`, `Audio`,
+  `Download`, `Accessibility`, `About`) with the shared controls.
+- Dropdown expand/collapse animation (200ms, `ease`, interruptible) and the
+  flipping chevron (200ms, `ease-in-out`, with the 0.7 opacity dip), matching
+  `BaseDropdownSelect.vue`. The list is drawn by `DropdownOverlay` at the app
+  root because Slint's `z` only orders siblings and the scroll area clips.
+- Icon rendering for the migrated screens (`icons.slint` + `AppIcon`).
+- Config load/save (`slint-config`) wired to the `AppConfig` global: every
+  setting is persisted to the same `~/.conic[-debug]/config.toml` as the Tauri
+  app. Editing text fields saves on a 400 ms debounce.
+- Language switching across all 12 bundled locales, applied at runtime without a
+  restart (see Internationalization).
+- `slint-platform` (OS detection), `slint-window` (window controls) and
+  `slint-config`.
 
-Not yet migrated: the real views (`GameView`, `SettingsView`, `LaunchView`,
-`AccountsView`, setup wizard), the overlay layer (dialogs, content panels,
-command palette, music player, instance settings), the icon set, and the
-Rust controllers/state. `views/placeholder.slint` stands in for the view stack.
+Not yet migrated: the other real views (`GameView`, `LaunchView`,
+`AccountsView`, the setup wizard), the overlay layer (dialogs, content panels,
+command palette, music player, instance settings), the background renderer, and
+the full Java runtime scanner (settings use a lightweight subset). The settings
+entry animations are also intentionally not ported this round;
+`views/game-placeholder.slint` stands in for `GameView`.
 
 ## Conventions
 

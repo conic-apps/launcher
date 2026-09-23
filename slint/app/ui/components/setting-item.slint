@@ -1,0 +1,188 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "app-icon.slint";
+
+// A single settings row (src/components/SettingItem.vue).
+//
+// Layout mirrors the CSS: 10/16/10/14 padding, a 40px icon column with an 8px
+// right margin, a text column (13px title, 12px 60%-opacity description) and a
+// right-aligned control area. Navigable rows show a chevron and get the hover /
+// active background; rows with a control use the caller's children.
+export component SettingItem inherits Rectangle {
+    in property <string> title: "";
+    // Optional blue tag chips appended to the title (Java runtime versions).
+    in property <[string]> tags: [];
+    in property <string> description: "";
+    in property <string> icon: "";
+    in property <image> custom-icon;
+    in property <bool> custom-icon-rounded: false;
+    in property <bool> navigable: false;
+    // Clickable but without the trailing chevron (collapse headers).
+    in property <bool> clickable: false;
+    in property <bool> resetable: false;
+    // Hover/pressed state driven by the parent for rows that are not navigable
+    // but still clickable (the collapse header).
+    in property <bool> hovered: false;
+    in property <bool> pressed: false;
+    in property <bool> item-disabled: false;
+
+    callback clicked;
+    callback reset;
+
+    width: 100%;
+    background: root.pressed || ((root.navigable || root.clickable) && touch.pressed) ? Theme.surface-2
+        : root.hovered || ((root.navigable || root.clickable) && touch.has-hover) ? Theme.surface-1
+        : Theme.surface-0;
+    animate background { duration: 50ms; }
+    opacity: root.item-disabled ? 0.6 : 1.0;
+
+    // Declared before the content so controls (selects, switches, reset
+    // buttons) stay on top and keep receiving pointer events; empty areas fall
+    // through to this touch area.
+    touch := TouchArea {
+        width: root.width;
+        height: root.height;
+        enabled: root.navigable || root.clickable;
+        clicked => { root.clicked(); }
+    }
+
+    HorizontalLayout {
+        padding-top: 10px;
+        padding-bottom: 10px;
+        padding-left: 14px;
+        padding-right: 16px;
+        spacing: 0px;
+        cross-axis-alignment: center;
+
+        // ----- left: icon + text -----
+        HorizontalLayout {
+            horizontal-stretch: 1;
+            spacing: 8px;
+            cross-axis-alignment: center;
+
+            if root.icon != "" || root.custom-icon.width > 0 : icon-box := Rectangle {
+                width: 40px;
+                height: 28px;
+                horizontal-stretch: 0;
+
+                if root.custom-icon.width > 0 : Rectangle {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: root.custom-icon-rounded ? 10000px : 0px;
+                    clip: true;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+
+                    Image {
+                        width: 100%;
+                        height: 100%;
+                        source: root.custom-icon;
+                    }
+                }
+                if root.custom-icon.width <= 0 : AppIcon {
+                    name: root.icon;
+                    size: 26px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+            }
+
+            text-column := VerticalLayout {
+                spacing: 2px;
+                alignment: center;
+                cross-axis-alignment: start;
+
+                if root.title != "" : HorizontalLayout {
+                    spacing: 4px;
+                    cross-axis-alignment: center;
+                    alignment: start;
+
+                    Text {
+                        text: root.title;
+                        font-size: 13px;
+                        font-weight: Theme.font-weight-normal;
+                        color: Theme.text.transparentize(0.1);
+                    }
+
+                    for tag[index] in root.tags : Rectangle {
+                        height: 17px;
+                        width: tag-label.preferred-width + 14px;
+                        border-radius: 100px;
+                        border-width: 1px;
+                        border-color: Theme.blue;
+                        background: transparent;
+
+                        tag-label := Text {
+                            text: tag;
+                            font-size: 11px;
+                            font-weight: Theme.font-weight-normal;
+                            color: Theme.text.transparentize(0.1);
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+                    }
+
+                    if root.resetable : reset-button := Rectangle {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 3px;
+                        background: reset-touch.has-hover ? #ffffff1c : transparent;
+                        opacity: reset-touch.pressed ? 0.8 : 1.0;
+
+                        AppIcon {
+                            name: "refresh";
+                            size: 16px;
+                            icon-color: Theme.text.transparentize(0.1);
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+
+                        reset-touch := TouchArea {
+                            clicked => { root.reset(); }
+                        }
+                    }
+                }
+
+                if root.description != "" : Text {
+                    text: root.description;
+                    font-size: 12px;
+                    font-weight: Theme.font-weight-normal;
+                    // CSS: rgba(text, 0.849) at 60% element opacity.
+                    color: Theme.text.with-alpha(0.509);
+                    wrap: word-wrap;
+                    line-height-factor: 1.1;
+                }
+            }
+        }
+
+        // ----- right: control / chevron -----
+        HorizontalLayout {
+            horizontal-stretch: 0;
+            spacing: 0px;
+            cross-axis-alignment: center;
+
+            if root.navigable : AppIcon {
+                name: "chevron-forward";
+                size: 17px;
+                icon-color: Theme.text.transparentize(0.1);
+            }
+
+            // `.setting-item .icon` chevron has `margin-right: 4px`.
+            if root.navigable : Rectangle {
+                width: 4px;
+                background: transparent;
+            }
+
+            @children
+        }
+    }
+
+    // Disabled rows swallow pointer events (CSS `pointer-events: none`).
+    if root.item-disabled : TouchArea {
+        width: root.width;
+        height: root.height;
+    }
+}

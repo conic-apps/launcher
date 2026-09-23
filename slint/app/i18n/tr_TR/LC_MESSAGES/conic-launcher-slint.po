@@ -1,0 +1,605 @@
+# Conic Launcher — translations for the Slint app.
+# Generated from the @tr() strings under slint/app/ui and seeded from src/locales/*.ts.
+msgid ""
+msgstr ""
+"Language: tr_TR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ui
+msgctxt "App"
+msgid "Conic Launcher"
+msgstr "Conic Launcher"
+
+#: ui
+msgctxt "App"
+msgid "Search or type a command…"
+msgstr "Ara veya komut yaz…"
+
+#: ui
+msgctxt "TitleBar"
+msgid "Settings"
+msgstr "Ayarlar"
+
+#: ui
+msgctxt "TitleBar"
+msgid "Home"
+msgstr "Ana Sayfa"
+
+#: ui
+msgctxt "TitleBar"
+msgid "Music"
+msgstr "Müzik"
+
+#: ui
+msgctxt "SettingsView"
+msgid "General"
+msgstr "Genel"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Launch"
+msgstr "Başlatma"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Java"
+msgstr "Java"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Appearance"
+msgstr "Görünüm"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Audio"
+msgstr "Ses"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Download"
+msgstr "İndirme"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Accessibility"
+msgstr "Erişilebilirlik"
+
+#: ui
+msgctxt "SettingsView"
+msgid "About"
+msgstr "Hakkında"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Feedback"
+msgstr "Geri bildirim"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Submit feedback"
+msgstr "Geri bildirim gönder"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Open a GitHub Issue. Remember to upload launcher logs when reporting bugs"
+msgstr "Bir GitHub Issue açar. Hata bildirirken başlatıcı günlüklerini yüklemeyi unutmayın"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View source code"
+msgstr "Kaynak kodu görüntüle"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View the launcher source code on GitHub"
+msgstr "Başlatıcının kaynak kodunu GitHub üzerinde görüntüler"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View launcher logs"
+msgstr "Başlatıcı günlüklerini görüntüle"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Open the launcher log folder. Please upload logs when reporting issues"
+msgstr "Başlatıcı günlük klasörünü açar. Sorun bildirirken lütfen günlükleri yükleyin"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Credits"
+msgstr "Hazırlayanlar"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The UI interaction style of Conic Launcher is inspired by osu!"
+msgstr "Conic Launcher'ın arayüz etkileşim tarzında osu!'dan ilham alınmıştır"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The four built-in color schemes of Conic Launcher come from Catppuccin"
+msgstr "Conic Launcher'ın dört yerleşik renk şeması Catppuccin'den gelmektedir"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources"
+msgstr "Conic Launcher'ın varsayılan ayna yapılandırması, bazı Minecraft kaynakları için indirme hızlandırma kaynağı olarak bangbang93 tarafından sağlanan BMCLAPI'yi içerir"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
+msgstr "Conic Launcher resmi bir Minecraft ürünü değildir ve Mojang Studios tarafından onaylanmamıştır ya da Mojang Studios ile bağı yoktur. \"Minecraft\", Mojang AB'nin ticari markasıdır. Bu projede Minecraft markasının her türlü kullanımı Mojang Studios Marka ve Varlık Yönergeleri'ne uygundur."
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Accessibility"
+msgstr "Erişilebilirlik"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Release update reminder"
+msgstr "Sürüm güncelleme hatırlatıcısı"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a reminder dialog when a Minecraft release is published"
+msgstr "Bir Minecraft sürümü yayınlandığında hatırlatma penceresi gösterir"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Snapshot update reminder"
+msgstr "Anlık görüntü güncelleme hatırlatıcısı"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a reminder dialog when a Minecraft snapshot is published"
+msgstr "Bir Minecraft anlık görüntüsü yayınlandığında hatırlatma penceresi gösterir"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Auto-change game language"
+msgstr "Oyun dilini otomatik değiştir"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Set the game language to your launcher language on first launch"
+msgstr "İlk açılışta oyun dilini başlatıcı dilinize ayarlar"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "High contrast mode"
+msgstr "Yüksek karşıtlık modu"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Enable high contrast mode for the current theme (if available)"
+msgstr "Geçerli tema için yüksek karşıtlık modunu etkinleştirir (varsa)"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Palette"
+msgstr "Renk şeması"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Follow system dark mode"
+msgstr "Sistem karanlık modunu takip et"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
+msgstr "Sistem açık moddayken Latte kullanır, aksi halde Mocha kullanır"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background image"
+msgstr "Arka plan resmi"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Custom background image"
+msgstr "Özel arka plan resmi"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Select an image as the launcher background. Instance backgrounds take priority"
+msgstr "Başlatıcı arka planı olarak bir resim seçin. Örnek arka planları önceliklidir"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Remove image"
+msgstr "Resmi kaldır"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background image darkness"
+msgstr "Arka plan resmini karartma"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "3D background camera movement"
+msgstr "3D arka plan kamera hareketi"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "When disabled, the camera stops moving forward and the background stops updating after rendering, completely eliminating background overhead"
+msgstr "Devre dışı bırakıldığında, kamera ileri doğru hareket etmeyi bırakır ve arka plan işlemeden sonra güncellenmeyi durdurur; böylece arka plan yükü tamamen ortadan kalkar"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background parallax"
+msgstr "Arka plan paralaksı"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "When disabled, the background no longer moves with the mouse"
+msgstr "Devre dışı bırakıldığında, arka plan artık fareyle birlikte hareket etmez"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Background music"
+msgstr "Arka plan müziği"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Enable background music"
+msgstr "Arka plan müziğini etkinleştir"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Play background music in the launcher."
+msgstr "Başlatıcıda arka plan müziği çalar."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Resume on start"
+msgstr "Başlangıçta devam et"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Resume the last track and its progress when the application starts."
+msgstr "Uygulama başladığında son parçayı ve ilerleme durumunu kaldığı yerden sürdürür."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Audio visualizer"
+msgstr "Ses görselleştirici"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Show audio visualization at the bottom of the game page."
+msgstr "Oyun sayfasının altında ses görselleştirmesini gösterir."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Pause on game launch"
+msgstr "Oyun başlarken duraklat"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Automatically pause background music when the game finishes launching."
+msgstr "Oyun başlatma tamamlandığında arka plan müziğini otomatik olarak duraklatır."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Open music folder"
+msgstr "Müzik klasörünü aç"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Place the music you want to play in this folder."
+msgstr "Çalmasını istediğiniz müzikleri bu klasöre yerleştirin."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Volume"
+msgstr "Ses düzeyi"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Master volume"
+msgstr "Ana ses düzeyi"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Master volume (when window is in background)"
+msgstr "Ana ses düzeyi (pencere arkadayken)"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Download options"
+msgstr "İndirme seçenekleri"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Max connections"
+msgstr "En fazla bağlantı sayısı"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Limit the number of simultaneous connections to servers. Only applies to downloads during installation. Setting too high may reduce speed!"
+msgstr "Sunuculara yapılacak eşzamanlı bağlantı sayısını sınırlar. Yalnızca kurulum sırasındaki indirmeler için geçerlidir. Çok yüksek ayarlamak hızı düşürebilir!"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Max download speed (B/s)"
+msgstr "En fazla indirme hızı (B/s)"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Limit download speed. Only applies to downloads during installation. Must be greater than 1024 to take effect. Set to 0 to disable"
+msgstr "İndirme hızını sınırlar. Yalnızca kurulum sırasındaki indirmeler için geçerlidir. Geçerli olması için 1024'ten büyük olmalıdır. Devre dışı bırakmak için 0 olarak ayarlayın"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Mirror servers"
+msgstr "Ayna sunucular"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Download game files from alternative sources"
+msgstr "Oyun dosyalarını alternatif kaynaklardan indirir"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Proxy"
+msgstr "Proxy"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Use system proxy (requires app restart)"
+msgstr "Sistem proxy'sini kullan (uygulamanın yeniden başlatılması gerekir)"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Currently only proxy via environment variables is supported"
+msgstr "Şu anda yalnızca ortam değişkenleri üzerinden proxy desteklenmektedir"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Basic settings"
+msgstr "Temel ayarlar"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Window size"
+msgstr "Pencere boyutu"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Initial game window size"
+msgstr "Oyunun başlangıç pencere boyutu"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "W"
+msgstr "G"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "H"
+msgstr "Y"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Fullscreen"
+msgstr "Tam ekran"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Quit launcher after launching game"
+msgstr "Oyun başlatıldıktan sonra başlatıcıdan çık"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Memory"
+msgstr "Bellek"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Auto-allocate memory"
+msgstr "Belleği otomatik ayır"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Manual memory allocation"
+msgstr "Elle bellek ayırma"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
+msgstr "Maksimum Java heap boyutunu elle ayarlayın. Otomatik ayırma devre dışı bırakıldığında geçerli olur"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Advanced launch options"
+msgstr "Gelişmiş başlatma seçenekleri"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Java garbage collector"
+msgstr "Java çöp toplayıcı"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra JVM arguments"
+msgstr "Ek JVM argümanları"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Appended after default JVM arguments"
+msgstr "Varsayılan JVM argümanlarının sonuna eklenir"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra game arguments"
+msgstr "Ek oyun argümanları"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Additional arguments for the game"
+msgstr "Oyun için ek argümanlar"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra class paths"
+msgstr "Ek sınıf yolları"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Separated by semicolons on Windows, colons on other systems"
+msgstr "Windows'ta noktalı virgül, diğer sistemlerde iki nokta ile ayrılır"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Execute before launch"
+msgstr "Başlatmadan önce çalıştır"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added before the launch command"
+msgstr "Başlatma komutundan önce eklenir"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Wrap command"
+msgstr "Komutu sarmala"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added at the beginning of the launch command"
+msgstr "Başlatma komutunun başına eklenir"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Execute after launch"
+msgstr "Başlattıktan sonra çalıştır"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added at the end of the launch script"
+msgstr "Başlatma betiğinin sonuna eklenir"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Ignore invalid Minecraft certificates"
+msgstr "Geçersiz Minecraft sertifikalarını yoksay"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
+msgstr "JVM argümanlarına -Dfml.ignoreInvalidMinecraftCertificates=true ekler"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Ignore patch discrepancies"
+msgstr "Yama tutarsızlıklarını yoksay"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
+msgstr "JVM argümanlarına -Dfml.ignorePatchDiscrepancies=true ekler"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Skip game file check"
+msgstr "Oyun dosyası kontrolünü atla"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "The launcher will not attempt to verify or repair game files before launching"
+msgstr "Başlatıcı, oyunu başlatmadan önce oyun dosyalarını doğrulamaya veya onarmaya çalışmaz"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Language"
+msgstr "Dil"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Follow system"
+msgstr "Sistemi takip et"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Auto update"
+msgstr "Otomatik güncelleme"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Automatically download and install updates when available"
+msgstr "Güncellemeler mevcut olduğunda otomatik olarak indirilir ve kurulur"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Update channel"
+msgstr "Güncelleme kanalı"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Controls how frequently the launcher receives updates"
+msgstr "Başlatıcının güncellemeleri ne sıklıkla alacağını belirler"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Stable"
+msgstr "Kararlı"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Beta"
+msgstr "Beta"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Open setup wizard"
+msgstr "Kurulum sihirbazını aç"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "The setup wizard guides you through basic launcher settings"
+msgstr "Kurulum sihirbazı temel başlatıcı ayarlarında size yol gösterir"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "Scan failed"
+msgstr "Tarama başarısız oldu"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "No installed Java runtimes detected"
+msgstr "Kurulu Java çalışma ortamı bulunamadı"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "After enabling \"Prefer Mojang-provided Java runtime\", Conic Launcher will automatically download the required Java from Mojang servers"
+msgstr "\"Mojang tarafından sağlanan Java çalışma ortamını tercih et\" seçeneği etkinleştirildikten sonra Conic Launcher, gerekli Java'yı Mojang sunucularından otomatik olarak indirecektir"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Auto-install Java runtime"
+msgstr "Java çalışma ortamını otomatik kur"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "When enabled, the launcher will automatically download the appropriate Java runtime before launching. When disabled, only system-installed Java will be used"
+msgstr "Etkinleştirildiğinde, başlatıcı oyundan önce uygun Java çalışma ortamını otomatik olarak indirir. Devre dışı bırakıldığında yalnızca sisteme kurulmuş Java kullanılır"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Manage installed Java runtimes"
+msgstr "Kurulu Java çalışma ortamlarını yönet"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Disabling a Java installation prevents the launcher from using it to launch the game"
+msgstr "Bir Java kurulumunun devre dışı bırakılması, başlatıcının oyunu başlatmak için onu kullanmasını engeller"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Scanning for installed Java runtimes"
+msgstr "Kurulu Java çalışma ortamları taranıyor"
+

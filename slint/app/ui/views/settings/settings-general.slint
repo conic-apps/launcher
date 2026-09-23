@@ -1,0 +1,84 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { SettingGroup } from "../../components/setting-group.slint";
+import { SettingItem } from "../../components/setting-item.slint";
+import { BaseSwitch } from "../../components/base-switch.slint";
+import { BaseSelect } from "../../components/base-select.slint";
+import { BaseDropdownSelect } from "../../components/base-dropdown-select.slint";
+import { AppConfig } from "../../globals/settings.slint";
+import { Navigation } from "../../globals/navigation.slint";
+
+// src/views/settings/SettingsGeneral.vue
+export component SettingsGeneral inherits VerticalLayout {
+    width: 100%;
+    padding-left: 8px;
+    padding-right: 8px;
+    spacing: 16px;
+    alignment: start;
+
+    // Maps a language code to its display name (BaseDropdownSelect cannot index
+    // its parallel arrays).
+    pure function language-label(value: string) -> string {
+        if value == "en_us" { return "English"; }
+        if value == "zh_cn" { return "简体中文"; }
+        if value == "zh_tw" { return "繁體中文"; }
+        if value == "ja_jp" { return "日本語"; }
+        if value == "ko_kr" { return "한국어"; }
+        if value == "de_de" { return "Deutsch"; }
+        if value == "fr_fr" { return "Français"; }
+        if value == "es_es" { return "Español"; }
+        if value == "pt_br" { return "Português (Brasil)"; }
+        if value == "ru_ru" { return "Русский"; }
+        if value == "tr_tr" { return "Türkçe"; }
+        if value == "pl_pl" { return "Polski"; }
+        return "";
+    }
+
+    SettingGroup {
+        SettingItem {
+            title: @tr("Language");
+            icon: "language";
+
+            BaseDropdownSelect {
+                options: ["en_us", "zh_cn", "zh_tw", "ja_jp", "ko_kr", "de_de", "fr_fr", "es_es", "pt_br", "ru_ru", "tr_tr", "pl_pl"];
+                display-name: ["English", "简体中文", "繁體中文", "日本語", "한국어", "Deutsch", "Français", "Español", "Português (Brasil)", "Русский", "Türkçe", "Polski"];
+                selected-label: language-label(AppConfig.language);
+                placeholder: @tr("Follow system");
+                value <=> AppConfig.language;
+                selected(value) => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Auto update");
+            description: @tr("Automatically download and install updates when available");
+
+            BaseSwitch {
+                checked <=> AppConfig.auto-update;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Update channel");
+            description: @tr("Controls how frequently the launcher receives updates");
+            item-disabled: !AppConfig.auto-update;
+
+            BaseSelect {
+                options: ["stable", "beta"];
+                display-name: [@tr("Stable"), @tr("Beta")];
+                value <=> AppConfig.update-channel;
+                selected(value) => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Open setup wizard");
+            description: @tr("The setup wizard guides you through basic launcher settings");
+            navigable: true;
+            clicked => { Navigation.navigate("setup"); }
+        }
+    }
+}

@@ -1,0 +1,100 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "app-icon.slint";
+import { Dropdown } from "../globals/dropdown.slint";
+
+// Dropdown select (src/components/BaseDropdownSelect.vue), used for the
+// language picker.
+//
+// The list itself is rendered by `DropdownOverlay` at the application root, so
+// it can float above the settings scroll area. This component:
+//   * fills the `Dropdown` global with its data and anchor on open;
+//   * flips its chevron over `CHEVRON_FLIP_DURATION` = 200ms `ease-in-out`
+//     (`rotateX(0 -> 90 -> 180)`, including the 0.7 opacity dip). Slint has no
+//     3D rotateX, so a vertical scale through zero (100% -> -100%) reproduces
+//     the flip, with opacity following the angle;
+//   * applies the choice reported back through `Dropdown.chosen` /
+//     `choose-serial`.
+//
+// Slint has no `Array.indexOf` (the built-in is experimental), so the current
+// label is passed in via `selected-label`. An empty value (`""`, i.e. "follow
+// system") shows the placeholder.
+export component BaseDropdownSelect inherits Rectangle {
+    in property <[string]> options;
+    in property <[string]> display-name;
+    in property <string> selected-label: "";
+    in property <string> placeholder: "";
+    in property <length> select-width: 240px;
+    in-out property <string> value;
+    callback selected(string);
+
+    width: select-width;
+    height: 28px;
+
+    // 0 = pointing down, 1 = flipped up.
+    private property <float> chevron-flip: Dropdown.open ? 1.0 : 0.0;
+    animate chevron-flip { duration: 200ms; easing: ease-in-out; }
+
+    // Choice reported by the overlay.
+    private property <int> serial: Dropdown.choose-serial;
+    changed serial => {
+        root.value = Dropdown.chosen;
+        root.selected(Dropdown.chosen);
+    }
+
+    value-box := Rectangle {
+        width: root.width;
+        height: root.height;
+        border-radius: 6px;
+        border-width: 1px;
+        border-color: Theme.lavender.transparentize(0.82);
+        background: value-touch.has-hover ? Theme.surface-2 : Theme.surface-1;
+        opacity: value-touch.pressed ? 0.8 : 1.0;
+        animate background { duration: 70ms; }
+
+        HorizontalLayout {
+            padding-left: 8px;
+            padding-right: 8px;
+            alignment: space-between;
+            cross-axis-alignment: center;
+
+            Text {
+                text: root.selected-label != "" ? root.selected-label : root.placeholder;
+                font-size: 12px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.text.transparentize(0.1);
+                overflow: elide;
+            }
+
+            AppIcon {
+                name: "chevron-down";
+                size: 14px;
+                icon-color: Theme.text.transparentize(0.1);
+                transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
+                // `rotateX` keyframes dip to 0.7 at 90deg (scale 0 here).
+                opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
+            }
+        }
+
+        value-touch := TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => {
+                if (Dropdown.open) {
+                    Dropdown.open = false;
+                } else {
+                    Dropdown.options = root.options;
+                    Dropdown.display-name = root.display-name;
+                    Dropdown.current = root.value;
+                    Dropdown.anchor-x = root.absolute-position.x;
+                    Dropdown.anchor-y = root.absolute-position.y + root.height + 4px;
+                    Dropdown.anchor-width = root.width;
+                    Dropdown.open = true;
+                }
+            }
+        }
+    }
+}

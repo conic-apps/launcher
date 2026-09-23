@@ -39,6 +39,7 @@ slint = { version = "1.18", default-features = true }
 slint-build = "1.18"
 slint-platform = { path = "./slint/crates/platform", version = "0.0.0" }
 slint-window = { path = "./slint/crates/window", version = "0.0.0" }
+slint-config = { path = "./slint/crates/config", version = "0.0.0" }
 
 # ----- non-local crates -----
 base64 = "0.22"
