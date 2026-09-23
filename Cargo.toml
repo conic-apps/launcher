@@ -1,7 +1,9 @@
 [workspace]
 members = [
     "core/",
-    "crates/*"
+    "crates/*",
+    "slint/app",
+    "slint/crates/*"
 ]
 resolver = "3"
 
@@ -33,6 +35,10 @@ platform = { path = "./crates/platform", version = "0.0.0"}
 statistics = { path = "./crates/statistics", version = "0.0.0"}
 update = { path = "./crates/update", version = "0.0.0"}
 version = { path = "./crates/version", version = "0.0.0"}
+slint = { version = "1.18", default-features = true }
+slint-build = "1.18"
+slint-platform = { path = "./slint/crates/platform", version = "0.0.0" }
+slint-window = { path = "./slint/crates/window", version = "0.0.0" }
 
 # ----- non-local crates -----
 base64 = "0.22"

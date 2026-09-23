@@ -1,0 +1,57 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// Custom fonts are embedded at compile time (Slint supports `.ttf`/`.ttc`/
+// `.otf` imports; the original `.woff2` files were converted to `.ttf`).
+// `Comfortaa` is the base family, `Nunito` is the digits-only subset.
+import "fonts/Comfortaa.ttf";
+import "fonts/Nunito.ttf";
+
+// Catppuccin (Mocha) palette for the Slint app.
+// TODO(migration): source this from the config store once settings are
+// migrated; for now it mirrors the default dark theme declared in
+// src/assets/styles/catppuccin-theme.css.
+
+export global Theme {
+    // Palette
+    in property <color> base: #1e1e2e;
+    in property <color> mantle: #181825;
+    in property <color> crust: #11111b;
+    in property <color> surface-0: #313244;
+    in property <color> surface-1: #45475a;
+    in property <color> surface-2: #585b70;
+    in property <color> overlay-0: #6c7086;
+    in property <color> overlay-1: #7f849c;
+    in property <color> overlay-2: #9399b2;
+    in property <color> text: #cdd6f4;
+    in property <color> subtext-0: #a6adc8;
+    in property <color> subtext-1: #bac2de;
+    in property <color> mauve: #cba6f7;
+    in property <color> blue: #89b4fa;
+    in property <color> lavender: #b4befe;
+
+    // Title bar (App.vue .title-bar-container)
+    in property <color> titlebar-background: #313244;
+
+    // Window buttons (WindowButton.vue)
+    in property <color> win-btn-close: #ff5f57;
+    in property <color> win-btn-minimize: #febc2e;
+    in property <color> win-btn-maximize: #61c554;
+    in property <color> win-btn-unfocused: #4e4e4e;
+
+    // Search bar (BaseSearchBar.vue)
+    in property <color> controllers-background: #45475a;
+    in property <color> controllers-border: #b4befe;
+
+    // Typography (src/assets/styles/main.css). The original stack was
+    // 'Nunito', 'Comfortaa', system-ui, … where Nunito was restricted to
+    // digits (unicode-range U+0030-0039). Slint has no unicode-range fallback,
+    // so `font-family` is the base and `digits-font-family` is applied to
+    // numeric text explicitly.
+    in property <string> font-family: "Comfortaa";
+    in property <string> digits-font-family: "Nunito";
+    in property <length> font-size-base: 16px;
+    in property <int> font-weight-normal: 400;
+    in property <int> font-weight-bold: 700;
+}

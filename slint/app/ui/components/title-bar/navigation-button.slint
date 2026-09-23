@@ -1,0 +1,58 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+
+// Title bar navigation icon button (App.vue .title-bar-action-btn). Icons are
+// Ionicons-style stroked paths (512 viewbox): fill is transparent and the
+// outline color follows the selection state. The selected underline mirrors
+// the ::after pseudo element: 14x2px, hugging the bottom edge (bottom: -2px).
+export component NavigationButton inherits Rectangle {
+    in property <string> icon-commands;
+    in property <length> icon-stroke-width: 0px;
+    in property <bool> selected: false;
+    callback clicked;
+
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: touch.has-hover ? Theme.surface-2.transparentize(0.3)
+        : touch.pressed ? Theme.overlay-0.transparentize(0.3)
+        : transparent;
+    animate background { duration: 120ms; easing: Easing.ease; }
+
+    accessible-role: button;
+    accessible-checked: root.selected;
+    accessible-action-default => { root.clicked(); }
+
+    Path {
+        commands: root.icon-commands;
+        viewbox-width: 512;
+        viewbox-height: 512;
+        width: 18px;
+        height: 18px;
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+        fill: transparent;
+        stroke: root.selected ? Theme.mauve : Theme.text;
+        stroke-width: root.icon-stroke-width;
+        stroke-line-cap: LineCap.round;
+        stroke-line-join: LineJoin.round;
+    }
+
+    Rectangle {
+        width: root.selected ? 14px : 0px;
+        height: 2px;
+        border-radius: 1px;
+        background: Theme.text;
+        opacity: root.selected ? 1.0 : 0.0;
+        x: (root.width - self.width) / 2;
+        y: root.height;
+        animate width, opacity { duration: 200ms; easing: Easing.ease; }
+    }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}

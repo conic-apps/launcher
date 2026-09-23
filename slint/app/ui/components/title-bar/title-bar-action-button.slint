@@ -1,0 +1,43 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+
+// Right-side title bar icon button (music toggle). Same styling rules as the
+// navigation buttons; icons are Ionicons-style stroked paths (512 viewbox).
+export component TitleBarActionButton inherits Rectangle {
+    in property <string> icon-commands;
+    in property <length> icon-stroke-width: 0px;
+    callback clicked;
+
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: touch.has-hover ? Theme.surface-2.transparentize(0.3)
+        : touch.pressed ? Theme.overlay-0.transparentize(0.3)
+        : transparent;
+    animate background { duration: 120ms; easing: Easing.ease; }
+
+    accessible-role: button;
+    accessible-action-default => { root.clicked(); }
+
+    Path {
+        commands: root.icon-commands;
+        viewbox-width: 512;
+        viewbox-height: 512;
+        width: 18px;
+        height: 18px;
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+        fill: transparent;
+        stroke: Theme.text;
+        stroke-width: root.icon-stroke-width;
+        stroke-line-cap: LineCap.round;
+        stroke-line-join: LineJoin.round;
+    }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
