@@ -8,10 +8,10 @@ import { AppIcon } from "app-icon.slint";
 
 // Collapsible settings group (src/components/SettingCollapse.vue).
 //
-// The Vue component animates height/opacity and flips the chevron with the Web
-// Animations API. This round of the migration does not port the entry/exit
-// animations (per the task), so the content simply appears and the chevron
-// flips instantly.
+// The Vue component animates height/opacity over 200ms with
+// `cubic-bezier(0.215, 0.61, 0.355, 1)` and flips the chevron over 200ms
+// `ease-in-out`. Slint's `animate` is interruptible, so re-toggling mid-flight
+// behaves like the original Web Animations API implementation.
 //
 // `border-radius` corners are applied per side: when closed the header is fully
 // rounded; when open only its top corners are, and the content keeps the
@@ -35,6 +35,7 @@ export component SettingCollapse inherits VerticalLayout {
         border-top-right-radius: 8px;
         border-bottom-left-radius: root.opened ? 0px : 8px;
         border-bottom-right-radius: root.opened ? 0px : 8px;
+        animate border-bottom-left-radius, border-bottom-right-radius { duration: 200ms; easing: ease; }
 
         head-item := SettingItem {
             width: parent.width;
@@ -48,9 +49,10 @@ export component SettingCollapse inherits VerticalLayout {
             AppIcon {
                 name: "chevron-down";
                 size: 17px;
-                icon-color: Theme.text.transparentize(0.1);
+                icon-color: Theme.default-text-color.transparentize(0.1);
                 transform-rotation: root.opened ? 180deg : 0deg;
                 transform-origin: { x: self.width / 2, y: self.height / 2 };
+                animate transform-rotation { duration: 200ms; easing: ease-in-out; }
             }
         }
     }
@@ -58,15 +60,21 @@ export component SettingCollapse inherits VerticalLayout {
     // `@children` cannot live in a conditional, so the content is always
     // instantiated. A clipped wrapper collapses to zero height when closed;
     // its height reads the natural height of a separate inner element so the
-    // binding does not reference itself (which Slint rejects as a loop).
+    // binding does not reference itself (which Slint rejects as a loop). It
+    // stays visible while the height animates back to zero so the collapse is
+    // animated instead of snapping shut.
     content-wrapper := Rectangle {
         width: 100%;
         height: root.opened ? content.preferred-height : 0px;
-        visible: root.opened;
+        visible: root.opened || self.height > 0.5px;
+        opacity: root.opened ? 1.0 : 0.0;
         clip: true;
         border-bottom-left-radius: 8px;
         border-bottom-right-radius: 8px;
         background: transparent;
+
+        animate height { duration: 200ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
+        animate opacity { duration: 200ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
 
         content := Rectangle {
             width: 100%;

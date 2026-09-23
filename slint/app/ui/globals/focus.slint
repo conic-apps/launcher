@@ -1,0 +1,19 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// Global focus coordination.
+//
+// Slint only moves focus when a focusable element (TextInput) is clicked; a
+// click anywhere else leaves the previously focused field focused. Every
+// `BaseInput` mirrors `clear-sequence` and drops focus when it changes, so any
+// interactive control (or the settings page background) can blur the active
+// text field by calling `FocusManager.clear()`.
+export global FocusManager {
+    // Bumped whenever a click happened outside a text field.
+    in-out property <int> clear-sequence: 0;
+
+    public function clear() {
+        clear-sequence += 1;
+    }
+}

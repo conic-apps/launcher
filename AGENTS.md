@@ -3,164 +3,105 @@
 ## Quick start
 
 ```bash
-pnpm install          # install frontend deps
-pnpm dev              # Vite dev server (Tauri's beforeDevCommand)
+pnpm install
+pnpm dev              # Vite dev server (Tauri beforeDevCommand)
 pnpm tauri dev        # full Tauri app in dev mode
-pnpm build            # vue-tsc --noEmit && vite build (runs as Tauri beforeBuildCommand)
-pnpm tauri build      # production build
+pnpm build            # vue-tsc --noEmit -p tsconfig.app.json && vite build
+pnpm tauri build      # production bundle
 ```
 
-## Verification commands (run in this order)
+`pnpm clean-app-data` deletes `~/.conic-debug` (debug builds use that data dir; release builds use the app identifier).
 
-```bash
-pnpm lint             # eslint "src/**" --ignore-pattern "src/assets" --max-warnings=0
-pnpm format:check     # prettier --check .
-pnpm ts:check         # tsc --noEmit
-```
+## Verification
 
-`pnpm format` rewrites files with Prettier.
+`pnpm check` (what contributors are asked to run) = `ts:check -> format:check -> lint -> cargo clippy -> cargo fmt`.
+
+Frontend-only, matching CI order (`check-frontend.yml`): `pnpm ts:check`, `pnpm lint`, `pnpm format:check`, `pnpm build`.
+
+- `pnpm ts:check` is `vue-tsc -p tsconfig.app.json` — it typechecks `crates/**/*.ts` too, not just `src/`.
+- `pnpm lint` runs ESLint over **`src/**`only** (not`crates/\*/index.ts`).
+- `pnpm format` rewrites with Prettier.
+- `check-rust.yml`: `cargo fmt --all -- --check`, `cargo check`, then `cargo clippy --all-targets --release -- -D warnings` (clippy warnings fail CI). Its "test" job actually runs `cargo check --all --all-targets`, not `cargo test`.
+- `deny.yml` runs cargo-deny (bans/licenses/sources) when `Cargo.toml`/`Cargo.lock`/`deny.toml` change.
 
 ## Package manager
 
-Use **pnpm** only. README says `yarn` — it's stale. Engine is `pnpm@11.7.0`; `.npmrc` has `pnpm@10.14.0` (also stale — ignore). If you get engine errors, update `.npmrc` to match `package.json`.
+pnpm only (README's `yarn` is stale). `package.json`: `packageManager: pnpm@11.18.0`, engines `node ^24.16.0`, `pnpm ^11.7.0`. `.npmrc` still pins `pnpm@10.14.0` — ignore it unless corepack throws, then align it.
 
 ## Architecture
 
-- **`core/`** — Tauri v2 app crate. Entrypoint: `core/src/main.rs`. Registers all plugins (config, account, install, instance, launch, folder, platform) and their invoke handlers in `core/build.rs`.
-- **`crates/*/`** — Rust library crates. Each has a corresponding `crates/<name>/index.ts` that wraps `@tauri-apps/api/core` `invoke()` calls. The TypeScript frontend imports these as `@conic/<name>` (Vite alias resolves `@conic` → `./crates`).
-- **`src/`** — Vue 3 + Pinia + vue-i18n frontend. Entrypoint: `src/main.ts`. Uses `@tauri-apps/api` for window and invoke.
-- **`src/views/`** — Screens (osu!-style): full-page views switched by `navigationStore` (`GameView`, `LaunchView`, `SettingsView`, `AccountsView`, `SetupWizard`). Screen-local subcomponents live in their subdirectories (`views/game/*`, `views/settings/*`, `views/setup/*`).
-- **`src/overlays/`** — Global overlays (osu!-style): persistent layers mounted above all screens. `DialogRoot.vue` mounts everything under `overlays/dialogs/*`; content panels live in `overlays/content/*`; `InstanceSetting.vue`, `CommandPalette.vue`, `MusicPlayer.vue` sit at the overlays root. Visibility state for instance settings: `overlays/useInstanceSettings.ts`; for content panels: `overlays/content/useContent.ts`.
-- **`core/capabilities/main.json`** — Tauri v2 capability/permission file. Adding a new Tauri command requires adding a permission entry here and in `core/build.rs`.
+- **`core/`** — Tauri v2 app crate. Entrypoint `core/src/main.rs`, which registers every plugin from `crates/*`. **Adding a Tauri command needs two edits**: list it in `core/build.rs` (`InlinedPlugin::new().commands(...)`) and add `"<plugin>:allow-<cmd>"` to `core/capabilities/main.json` — otherwise the invoke is denied at runtime.
+- **`crates/*/`** — Rust domain crates, one per capability, each with an `index.ts` wrapping `invoke()`. Frontend imports them as `@conic/<name>`. Vite aliases `@conic` → `./crates`, but **TypeScript requires an explicit path entry per crate in `tsconfig.app.json`** — add one when adding a crate.
+- **`src/`** — Vue 3 + Pinia + vue-i18n. Entry `src/main.ts` (awaits platform/data-location, then mounts `#window`). Screens switch via `src/store/navigation.ts`: `Page = "setup" | "game" | "launch" | "settings" | "accounts"`.
+- **`src/views/`** — full-page screens (`GameView`, `LaunchView`, `SettingsView`, `AccountsView`, `SetupView` + `views/setup/SetupWizard*.vue`).
+- **`src/overlays/`** — persistent layers above screens. `DialogRoot.vue` mounts `overlays/dialogs/*`; content panels live in `overlays/content/*`; `InstanceSetting.vue`, `CommandPalette.vue`, `MusicPlayer.vue` at the root. State: `useInstanceSettings.ts`, `content/useContent.ts`.
+- **`slint/`** — **in-progress parallel migration of the UI to Slint 1.18**; read `slint/README.md` before touching it. Copy-and-adapt: the Tauri/Vue code is deliberately not modified, so both frontends coexist. Build with `cargo run -p conic-launcher-slint`. Its `.po`/`@tr()` i18n is separate from the Vue `src/locales` system — don't mix or auto-sync them.
 
 ## Crate map
 
-| Crate       | Purpose                                                              |
-| ----------- | -------------------------------------------------------------------- |
-| `account`   | Microsoft/offline/Authlib/Yggdrasil account management               |
-| `config`    | App config load/save                                                 |
-| `download`  | Generic file downloader                                              |
-| `folder`    | Data directory layout                                                |
-| `game_data` | Minecraft resource pack / world parsing                              |
-| `install`   | Minecraft + mod loader installation (Forge, Fabric, Quilt, NeoForge) |
-| `instance`  | Instance CRUD                                                        |
-| `launch`    | Game launch with progress reporting                                  |
-| `modrinth`  | Modrinth API client                                                  |
-| `platform`  | OS detection                                                         |
-| `shared`    | Common types/utilities                                               |
-| `version`   | Minecraft version metadata                                           |
+| Crate          | Purpose                                               |
+| -------------- | ----------------------------------------------------- |
+| `account`      | Microsoft / offline / Authlib / Yggdrasil accounts    |
+| `beat_this`    | Audio parsing / beat detection (`beat` plugin)        |
+| `config`       | App config load/save, background image                |
+| `content`      | Saves, datapacks, resourcepacks, screenshots, mods    |
+| `curseforge`   | CurseForge API client                                 |
+| `download`     | Generic downloader tasks                              |
+| `folder`       | Data directory layout (`DATA_LOCATION`)               |
+| `install`      | Minecraft + loader installation                       |
+| `instance`     | Instance CRUD, playtime                               |
+| `java-runtime` | Java scanning/parsing                                 |
+| `launch`       | Game launch with progress reporting                   |
+| `modrinth`     | Modrinth API client                                   |
+| `multiplayer`  | Conic Nexus cross-LAN multiplayer                     |
+| `music`        | Local music file listing                              |
+| `platform`     | OS detection                                          |
+| `shared`       | Common types/utilities (Rust-only, no `index.ts`)     |
+| `statistics`   | Playtime statistics                                   |
+| `update`       | Launcher self-update                                  |
+| `version`      | Minecraft version metadata (Rust-only, no `index.ts`) |
 
 ## Rust conventions
 
-- Edition 2024, MSRV 1.88
-- `#![deny(clippy::unwrap_used)]` in the main crate
-- Release profile: `panic = "abort"`, `lto = true`, `codegen-units = 1`, `strip = true`
+- Workspace edition 2024, `rust-version = "1.88"`, resolver 3.
+- `#![deny(clippy::unwrap_used)]` applies to `core/src/main.rs` only.
+- All external deps live in root `Cargo.toml` `[workspace.dependencies]`; local crates are declared there and are not published.
+- Do **not** enable Tauri's `devtools` feature in workspace deps (it force-enables devtools in release). Opt in via core's own `devtools` feature when needed.
+- Release profile: `panic = "abort"`, `lto`, `codegen-units = 1`, `opt-level = "z"`, `strip`.
+- File header convention: `// Conic Launcher` / copyright / `// SPDX-License-Identifier: GPL-3.0-only`.
 
 ## Frontend conventions
 
-- **No semicolons** in `.ts` files; **semicolons required** in `.vue` `<script>` blocks
-- Indent: 4 spaces (TS/JS), 2 spaces (Vue templates, HTML, YAML)
-- `vue/multi-word-component-names` ESLint rule is **off**
-- Naming: `camelCase` for variables/consts, `UPPER_CASE` for constants, `PascalCase` for types/interfaces
-- Components use `<AppIcon>` globally registered — no import needed
-- **Never** add `cursor: pointer` on your own — this is a desktop app; interactive elements don't use the web link-hand cursor
+- Prettier is the source of truth: no semicolons in `.ts`, **semicolons in `.vue` scripts**; tabWidth 4 (2 for `.vue`/`.html`/`.yml`); `printWidth 100`.
+- `vue/multi-word-component-names` is **off**; `@typescript-eslint/naming-convention` warns on `src/**` (const camelCase/UPPER_CASE, types/interface PascalCase).
+- `<AppIcon>` is globally registered — no import needed.
+- **Never** add `cursor: pointer`; this is a desktop app.
+- `window.__PLATFORM__` and `window.__DATA_LOCATION__` are populated before the app mounts.
 
-## Internationalization (i18n)
+## i18n
 
-The app uses `vue-i18n` for internationalization. Locale files are in `src/locales/`.
+12 locales in `src/locales/`; `zh_cn` is the default/source, `en_us` the fallback. Add every key to both `zh_cn.ts` and `en_us.ts` and keep all 12 in sync. The locale list must match the pickers in `src/views/settings/SettingsGeneral.vue` and `src/views/setup/SetupWizardLanguage.vue`. Never hardcode Chinese in components.
 
-### Locale file structure
-
-12 locales, all kept in sync (406+ keys each). `zh_cn` is the primary/source language; `en_us` is the fallback.
-
-| File       | Language           | Notes                                     |
-| ---------- | ------------------ | ----------------------------------------- |
-| `zh_cn.ts` | 简体中文           | Source language                           |
-| `en_us.ts` | English            | Fallback locale                           |
-| `zh_tw.ts` | 繁體中文           |                                           |
-| `ja_jp.ts` | 日本語             |                                           |
-| `ko_kr.ts` | 한국어             |                                           |
-| `de_de.ts` | Deutsch            |                                           |
-| `fr_fr.ts` | Français           |                                           |
-| `es_es.ts` | Español            |                                           |
-| `pt_br.ts` | Português (Brasil) |                                           |
-| `ru_ru.ts` | Русский            | Slavic plural rules registered in main.ts |
-| `tr_tr.ts` | Türkçe             |                                           |
-| `pl_pl.ts` | Polski             | Slavic plural rules registered in main.ts |
-
-The supported locale list must match the UI language pickers in `src/views/settings/SettingsGeneral.vue` and `src/views/setup/SetupWizardLanguage.vue`.
-
-Top-level keys: `app`, `game`, `overlays`, `setup`, `settings`. Locale namespaces mirror the component structure.
-
-- `app.*` — App-wide strings (titlebar search, update indicator)
-- `game.*` — Game view, instance list, launch view, footer, time formatting (`game.time.*`)
-- `overlays.dialogs.*` — Dialog overlays (e.g. `overlays.dialogs.createInstance.*`, `overlays.dialogs.minecraftChoose.*`)
-- `overlays.content.*` — Content panels (mods, resource packs, modpacks, saves, screenshots)
-- `setup.*` — Setup wizard (all steps)
-- `settings.*` — Settings view (all tabs)
-
-### Pluralization
-
-vue-i18n pipe syntax is used where grammar requires it:
-
-- Two-form languages: `"1 hour ago | {count} hours ago"` — call with `t("game.time.hoursAgo", hours)` (number as second arg; `{count}` is bound automatically)
-- Russian/Polish need FOUR forms `zero | one | few | many` (e.g. `"час назад"`) and rely on the `slavicPluralRules` function registered under `pluralRules` in `src/main.ts` for both `ru_ru` and `pl_pl`
-- Languages without numeral agreement (zh, ja, ko, tr) use a single form
-- Playtime units (`game.time.seconds/minutes/hours`) deliberately avoid plurals because values can be decimal (e.g. "4.1 min")
-
-### Relative-time formatting
-
-`formatLastPlayed(timestamp, timeFormatter)` and `formatPlayTime(seconds, playTimeFormatter)` in `crates/instance/index.ts` require formatter objects built from `t()`. Build them per-component like in `InstanceSummary.vue` / `InstancesList.vue` / `ContentSaves.vue` / `ConfirmDeleteInstance.vue` (plain object whose methods call `t()` so re-renders pick up locale changes).
-
-### Current i18n coverage
-
-**Fully internationalized:**
-
-- `src/views/game/*` (InstancesList, InstanceSummary, Footer, InstancesListToolBar)
-- `src/views/LaunchView.vue`
-- `src/overlays/content/*` (all content panel files)
-- `src/overlays/dialogs/CreateInstance.vue` and its subcomponents (`create/MinecraftChoose.vue`)
-- `src/views/SetupWizard.vue` and `src/views/setup/*`
-- `src/views/SettingsView.vue` and `src/views/settings/*`
-- `src/overlays/MusicPlayer.vue`
-- `src/overlays/CommandPalette.vue`
-- `src/components/TitleBarUpdateIndicator.vue`
-- `src/components/BaseSearchBar.vue`
-- `src/App.vue` (titlebar search placeholder)
-
-**Not yet internationalized (accounts — pending new UI):**
-
-- `src/views/accounts/*`
-- Remaining dialogs in `src/overlays/dialogs/*` other than the create-instance flow
-- `src/overlays/InstanceSetting.vue` (uses `game.instance.*` keys; namespace may move under `overlays.*` later)
-
-### How to add/update i18n strings
-
-1. Add the key to both `src/locales/zh_cn.ts` and `src/locales/en_us.ts`
-2. Use `t('key.path')` in templates (requires `const { t } = useI18n()` in `<script setup>`)
-3. For parameterized messages, use `t('key', { param: value })` — e.g. `t('game.launch.progress.downloadFiles', { current, total })`
-4. **Do NOT** use Chinese strings directly in templates/components for internationalized sections
-5. After UI text changes, both locale files must be kept in sync
-
-### Adding a new locale
-
-1. Create `src/locales/<locale>.ts` following the same structure as `zh_cn.ts`
-2. Import it in `src/main.ts` and add to the `messages` object
-3. Update the locale list in `src/views/settings/SettingsGeneral.vue` and `src/views/setup/SetupWizardLanguage.vue`
+- Pluralization uses vue-i18n pipe syntax: two-form languages call `t("game.time.hoursAgo", count)` (the number binds `{count}`). `ru_ru`/`pl_pl` need four forms `zero | one | few | many` and rely on `slavicPluralRules` registered in `src/main.ts`. zh/ja/ko/tr use a single form. Playtime units (`game.time.seconds/minutes/hours`) intentionally avoid plurals because values are decimal.
+- `formatLastPlayed` / `formatPlayTime` in `crates/instance/index.ts` take a formatter object built from `t()`; build it per component so locale changes re-render (see `InstanceSummary.vue`, `InstancesList.vue`, `ContentSaves.vue`, `ConfirmDeleteInstance.vue`).
+- Not yet internationalized: `src/views/accounts/*`, `src/overlays/account/*`, most `src/overlays/dialogs/*` (except the create-instance flow), and `src/overlays/InstanceSetting.vue` (still uses `game.instance.*`).
 
 ## Testing
 
-**No tests exist** — neither Rust tests (`mod tests {}`) nor frontend tests (no `__tests__/` or `*.spec.*` files). Vitest is configured in `vitest.config.ts` (jsdom environment) but has no tests to run.
+No frontend tests: Vitest is configured (jsdom) but there are no `*.spec.*`/`__tests__`. Rust unit tests exist only in a few crates (`install`, `java-runtime`); run with `cargo test`.
 
-## Linux-specific
+## Versioning & releases
 
-`WEBKIT_DISABLE_DMABUF_RENDERER=1` is set at startup to work around WebKit rendering issues on Linux.
+The app version comes from `core/tauri.conf.json` (Windows WiX additionally has `bundle.windows.wix.version`). `build.yml` builds on push to `master` and publishes a release only when that version differs from the previous commit. README asks contributors to target the `dev` branch; releases are cut from `master`.
 
-## Generated files
+## Generated / ignored
 
-`core/gen/schemas/` is generated by Tauri build and gitignored.
-`core/.gitignore` also ignores `META-INF/` (Forge installer artifact).
+`core/gen/schemas/` (Tauri build output) and `core/META-INF/` (Forge installer artifact) are gitignored. `vite.config.ts` ignores `target/**` in watch; `.prettierignore` skips `core/`, `**/assets`, and `packaging/arch/{src,pkg}`.
+
+## Linux
+
+`WEBKIT_DISABLE_DMABUF_RENDERER=1` is set in `core/src/main.rs` on Linux. Arch packaging lives in `packaging/arch` (`makepkg -si`).
 
 ## License
 
-GPL-3.0-only with additional terms (see LICENSE — distribution must rename the software, keep copyright, no joint liability).
+GPL-3.0-only with GPLv3 §7 additional terms: modified distributions must rename the software, keep copyright notices, and not hold the authors jointly liable.

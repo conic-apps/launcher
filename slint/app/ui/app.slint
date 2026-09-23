@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { Theme } from "theme.slint";
+import { Theme, ThemeProvider } from "theme.slint";
 import { TitleBar } from "components/title-bar.slint";
 import { Navigation } from "globals/navigation.slint";
 import { DropdownOverlay } from "components/dropdown-overlay.slint";
@@ -38,6 +38,10 @@ export component App inherits Window {
     callback open-search();
     callback toggle-music();
     callback maximize-or-fullscreen();
+
+    // Drives the palette selection and animates the Theme tokens (see
+    // theme.slint). Must exist exactly once.
+    ThemeProvider { }
 
     // Corners, edge and borders are owned by the window system (the native
     // title bar / window frame), so the content layer is a plain full-size
