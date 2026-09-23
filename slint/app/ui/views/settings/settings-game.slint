@@ -1,0 +1,263 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { SettingGroup } from "../../components/setting-group.slint";
+import { SettingItem } from "../../components/setting-item.slint";
+import { SettingCollapse } from "../../components/setting-collapse.slint";
+import { BaseInput } from "../../components/base-input.slint";
+import { BaseSwitch } from "../../components/base-switch.slint";
+import { BaseSelect } from "../../components/base-select.slint";
+import { AppConfig } from "../../globals/settings.slint";
+
+// src/views/settings/SettingsGame.vue
+export component SettingsGame inherits VerticalLayout {
+    width: 100%;
+    padding-left: 8px;
+    padding-right: 8px;
+    spacing: 16px;
+    alignment: start;
+
+    private property <bool> advanced-changed:
+        AppConfig.gc != "G1"
+        || AppConfig.extra-jvm-args != ""
+        || AppConfig.extra-mc-args != ""
+        || AppConfig.extra-class-paths != ""
+        || AppConfig.before-launch != ""
+        || AppConfig.wrap-command != ""
+        || AppConfig.after-launch != ""
+        || AppConfig.ignore-invalid-certs
+        || AppConfig.ignore-patch-discrepancies;
+
+    SettingGroup {
+        title: @tr("Basic settings");
+
+        SettingItem {
+            title: @tr("Window size");
+            description: @tr("Initial game window size");
+
+            HorizontalLayout {
+                spacing: 0px;
+                cross-axis-alignment: center;
+
+                BaseInput {
+                    input-width: 100px;
+                    placeholder: @tr("W");
+                    number-only: true;
+                    input-enabled: !AppConfig.launch-fullscreen;
+                    value <=> AppConfig.launch-width;
+                    edited => { AppConfig.changed(); }
+                }
+
+                spacer-16 := Rectangle {
+                    width: 16px;
+                    background: transparent;
+                }
+
+                BaseInput {
+                    input-width: 100px;
+                    placeholder: @tr("H");
+                    number-only: true;
+                    input-enabled: !AppConfig.launch-fullscreen;
+                    value <=> AppConfig.launch-height;
+                    edited => { AppConfig.changed(); }
+                }
+
+                spacer-8 := Rectangle {
+                    width: 8px;
+                    background: transparent;
+                }
+
+                Text {
+                    text: @tr("Fullscreen") + ": ";
+                    font-size: 12px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.text.transparentize(0.1);
+                }
+
+                BaseSwitch {
+                    checked <=> AppConfig.launch-fullscreen;
+                    toggled => { AppConfig.changed(); }
+                }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Quit launcher after launching game");
+
+            BaseSwitch {
+                checked <=> AppConfig.quit-after-launch;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+    }
+
+    SettingGroup {
+        title: @tr("Memory");
+
+        SettingItem {
+            title: @tr("Auto-allocate memory");
+
+            BaseSwitch {
+                checked <=> AppConfig.auto-memory;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Manual memory allocation");
+            description: @tr("Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled");
+            item-disabled: AppConfig.auto-memory;
+
+            HorizontalLayout {
+                spacing: 0px;
+                cross-axis-alignment: center;
+
+                BaseInput {
+                    input-width: 100px;
+                    number-only: true;
+                    input-enabled: !AppConfig.auto-memory;
+                    value <=> AppConfig.max-memory;
+                    edited => { AppConfig.changed(); }
+                }
+
+                spacer-mb := Rectangle {
+                    width: 8px;
+                    background: transparent;
+                }
+
+                Text {
+                    text: "MB";
+                    font-size: 12px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.text.transparentize(0.1);
+                }
+            }
+        }
+    }
+
+    SettingCollapse {
+        title: @tr("Advanced launch options");
+        resetable: root.advanced-changed;
+        reset => {
+            AppConfig.gc = "G1";
+            AppConfig.extra-jvm-args = "";
+            AppConfig.extra-mc-args = "";
+            AppConfig.extra-class-paths = "";
+            AppConfig.before-launch = "";
+            AppConfig.wrap-command = "";
+            AppConfig.after-launch = "";
+            AppConfig.ignore-invalid-certs = false;
+            AppConfig.ignore-patch-discrepancies = false;
+            AppConfig.changed();
+        }
+
+        SettingItem {
+            title: @tr("Java garbage collector");
+
+            BaseSelect {
+                options: ["G1", "Z", "Parallel", "Serial"];
+                display-name: ["G1", "Z", "Parallel", "Serial"];
+                value <=> AppConfig.gc;
+                selected(value) => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Extra JVM arguments");
+            description: @tr("Appended after default JVM arguments");
+
+            BaseInput {
+                input-width: 260px;
+                value <=> AppConfig.extra-jvm-args;
+                edited => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Extra game arguments");
+            description: @tr("Additional arguments for the game");
+
+            BaseInput {
+                input-width: 260px;
+                value <=> AppConfig.extra-mc-args;
+                edited => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Extra class paths");
+            description: @tr("Separated by semicolons on Windows, colons on other systems");
+
+            BaseInput {
+                input-width: 260px;
+                value <=> AppConfig.extra-class-paths;
+                edited => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Execute before launch");
+            description: @tr("Added before the launch command");
+
+            BaseInput {
+                input-width: 260px;
+                value <=> AppConfig.before-launch;
+                edited => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Wrap command");
+            description: @tr("Added at the beginning of the launch command");
+
+            BaseInput {
+                input-width: 260px;
+                value <=> AppConfig.wrap-command;
+                edited => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Execute after launch");
+            description: @tr("Added at the end of the launch script");
+
+            BaseInput {
+                input-width: 260px;
+                value <=> AppConfig.after-launch;
+                edited => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Ignore invalid Minecraft certificates");
+            description: @tr("Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments");
+
+            BaseSwitch {
+                checked <=> AppConfig.ignore-invalid-certs;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Ignore patch discrepancies");
+            description: @tr("Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments");
+
+            BaseSwitch {
+                checked <=> AppConfig.ignore-patch-discrepancies;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Skip game file check");
+            description: @tr("The launcher will not attempt to verify or repair game files before launching");
+
+            BaseSwitch {
+                checked <=> AppConfig.skip-file-check;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+    }
+}

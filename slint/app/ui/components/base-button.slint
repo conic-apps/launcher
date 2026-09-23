@@ -1,0 +1,43 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// Small button (src/components/BaseButton.vue). Used for "Remove image".
+// The Vue component is `width: 100%`; because it is placed in an auto-sized
+// flex row, it effectively shrinks to its content, so the Slint version sizes
+// to the label plus the 16px horizontal padding.
+export component BaseButton inherits Rectangle {
+    in property <string> text: "";
+    in property <color> text-color: Theme.text.transparentize(0.1);
+    in property <bool> button-enabled: true;
+    callback clicked;
+
+    width: button-label.preferred-width + 32px;
+    height: 30px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: Theme.lavender.transparentize(0.82);
+    background: button-touch.pressed ? Theme.surface-2
+        : button-touch.has-hover ? Theme.surface-2.transparentize(0.15)
+        : Theme.surface-1;
+    opacity: root.button-enabled ? 1.0 : 0.5;
+    animate background { duration: 150ms; }
+
+    button-label := Text {
+        text: root.text;
+        font-size: 11px;
+        font-weight: Theme.font-weight-normal;
+        color: root.text-color;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+    }
+
+    button-touch := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        enabled: root.button-enabled;
+        clicked => { root.clicked(); }
+    }
+}

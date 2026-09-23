@@ -1,13 +1,5 @@
-# Conic Launcher — English (fallback) translations for the Slint app.
-# Catalogs are bundled at compile time by `build.rs`
-# (`CompilerConfiguration::with_bundled_translations("i18n")`) and selected at
-# runtime with `slint::select_bundled_translation(<language>)`.
-#
-# The catalog file name must match the crate name (the gettext domain is
-# `CARGO_PKG_NAME`): `conic-launcher-slint.po`.
-#
-# The default translation context is the Slint component name where `@tr()`
-# appears (see `--no-default-translation-context` in `slint-tr-extractor`).
+# Conic Launcher — translations for the Slint app.
+# Generated from the @tr() strings under slint/app/ui and seeded from src/locales/*.ts.
 msgid ""
 msgstr ""
 "Language: en_US\n"
@@ -16,27 +8,598 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ui/app.slint
+#: ui
 msgctxt "App"
 msgid "Conic Launcher"
 msgstr "Conic Launcher"
 
-#: ui/app.slint
+#: ui
 msgctxt "App"
 msgid "Search or type a command…"
 msgstr "Search or type a command…"
 
-#: ui/components/title-bar.slint
+#: ui
 msgctxt "TitleBar"
 msgid "Settings"
 msgstr "Settings"
 
-#: ui/components/title-bar.slint
+#: ui
 msgctxt "TitleBar"
 msgid "Home"
 msgstr "Home"
 
-#: ui/components/title-bar.slint
+#: ui
 msgctxt "TitleBar"
 msgid "Music"
 msgstr "Music"
+
+#: ui
+msgctxt "SettingsView"
+msgid "General"
+msgstr "General"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Launch"
+msgstr "Launch"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Java"
+msgstr "Java"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Appearance"
+msgstr "Appearance"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Audio"
+msgstr "Audio"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Download"
+msgstr "Download"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Accessibility"
+msgstr "Accessibility"
+
+#: ui
+msgctxt "SettingsView"
+msgid "About"
+msgstr "About"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Feedback"
+msgstr "Feedback"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Submit feedback"
+msgstr "Submit feedback"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Open a GitHub Issue. Remember to upload launcher logs when reporting bugs"
+msgstr "Open a GitHub Issue. Remember to upload launcher logs when reporting bugs"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View source code"
+msgstr "View source code"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View the launcher source code on GitHub"
+msgstr "View the launcher source code on GitHub"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View launcher logs"
+msgstr "View launcher logs"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Open the launcher log folder. Please upload logs when reporting issues"
+msgstr "Open the launcher log folder. Please upload logs when reporting issues"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Credits"
+msgstr "Credits"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The UI interaction style of Conic Launcher is inspired by osu!"
+msgstr "The UI interaction style of Conic Launcher is inspired by osu!"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The four built-in color schemes of Conic Launcher come from Catppuccin"
+msgstr "The four built-in color schemes of Conic Launcher come from Catppuccin"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources"
+msgstr "The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
+msgstr "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Accessibility"
+msgstr "Accessibility"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Release update reminder"
+msgstr "Release update reminder"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a reminder dialog when a Minecraft release is published"
+msgstr "Show a reminder dialog when a Minecraft release is published"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Snapshot update reminder"
+msgstr "Snapshot update reminder"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a reminder dialog when a Minecraft snapshot is published"
+msgstr "Show a reminder dialog when a Minecraft snapshot is published"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Auto-change game language"
+msgstr "Auto-change game language"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Set the game language to your launcher language on first launch"
+msgstr "Set the game language to your launcher language on first launch"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "High contrast mode"
+msgstr "High contrast mode"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Enable high contrast mode for the current theme (if available)"
+msgstr "Enable high contrast mode for the current theme (if available)"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Palette"
+msgstr "Palette"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Follow system dark mode"
+msgstr "Follow system dark mode"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
+msgstr "Uses Latte when the system is set to light mode, otherwise uses Mocha"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background image"
+msgstr "Background image"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Custom background image"
+msgstr "Custom background image"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Select an image as the launcher background. Instance backgrounds take priority"
+msgstr "Select an image as the launcher background. Instance backgrounds take priority"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Remove image"
+msgstr "Remove image"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background image darkness"
+msgstr "Background image darkness"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "3D background camera movement"
+msgstr "3D background camera movement"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "When disabled, the camera stops moving forward and the background stops updating after rendering, completely eliminating background overhead"
+msgstr "When disabled, the camera stops moving forward and the background stops updating after rendering, completely eliminating background overhead"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background parallax"
+msgstr "Background parallax"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "When disabled, the background no longer moves with the mouse"
+msgstr "When disabled, the background no longer moves with the mouse"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Background music"
+msgstr "Background music"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Enable background music"
+msgstr "Enable background music"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Play background music in the launcher."
+msgstr "Play background music in the launcher."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Resume on start"
+msgstr "Resume on start"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Resume the last track and its progress when the application starts."
+msgstr "Resume the last track and its progress when the application starts."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Audio visualizer"
+msgstr "Audio visualizer"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Show audio visualization at the bottom of the game page."
+msgstr "Show audio visualization at the bottom of the game page."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Pause on game launch"
+msgstr "Pause on game launch"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Automatically pause background music when the game finishes launching."
+msgstr "Automatically pause background music when the game finishes launching."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Open music folder"
+msgstr "Open music folder"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Place the music you want to play in this folder."
+msgstr "Place the music you want to play in this folder."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Volume"
+msgstr "Volume"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Master volume"
+msgstr "Master volume"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Master volume (when window is in background)"
+msgstr "Master volume (when window is in background)"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Download options"
+msgstr "Download options"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Max connections"
+msgstr "Max connections"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Limit the number of simultaneous connections to servers. Only applies to downloads during installation. Setting too high may reduce speed!"
+msgstr "Limit the number of simultaneous connections to servers. Only applies to downloads during installation. Setting too high may reduce speed!"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Max download speed (B/s)"
+msgstr "Max download speed (B/s)"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Limit download speed. Only applies to downloads during installation. Must be greater than 1024 to take effect. Set to 0 to disable"
+msgstr "Limit download speed. Only applies to downloads during installation. Must be greater than 1024 to take effect. Set to 0 to disable"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Mirror servers"
+msgstr "Mirror servers"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Download game files from alternative sources"
+msgstr "Download game files from alternative sources"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Proxy"
+msgstr "Proxy"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Use system proxy (requires app restart)"
+msgstr "Use system proxy (requires app restart)"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Currently only proxy via environment variables is supported"
+msgstr "Currently only proxy via environment variables is supported"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Basic settings"
+msgstr "Basic settings"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Window size"
+msgstr "Window size"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Initial game window size"
+msgstr "Initial game window size"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "W"
+msgstr "W"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "H"
+msgstr "H"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Fullscreen"
+msgstr "Fullscreen"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Quit launcher after launching game"
+msgstr "Quit launcher after launching game"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Memory"
+msgstr "Memory"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Auto-allocate memory"
+msgstr "Auto-allocate memory"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Manual memory allocation"
+msgstr "Manual memory allocation"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
+msgstr "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Advanced launch options"
+msgstr "Advanced launch options"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Java garbage collector"
+msgstr "Java garbage collector"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra JVM arguments"
+msgstr "Extra JVM arguments"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Appended after default JVM arguments"
+msgstr "Appended after default JVM arguments"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra game arguments"
+msgstr "Extra game arguments"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Additional arguments for the game"
+msgstr "Additional arguments for the game"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra class paths"
+msgstr "Extra class paths"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Separated by semicolons on Windows, colons on other systems"
+msgstr "Separated by semicolons on Windows, colons on other systems"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Execute before launch"
+msgstr "Execute before launch"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added before the launch command"
+msgstr "Added before the launch command"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Wrap command"
+msgstr "Wrap command"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added at the beginning of the launch command"
+msgstr "Added at the beginning of the launch command"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Execute after launch"
+msgstr "Execute after launch"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added at the end of the launch script"
+msgstr "Added at the end of the launch script"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Ignore invalid Minecraft certificates"
+msgstr "Ignore invalid Minecraft certificates"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
+msgstr "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Ignore patch discrepancies"
+msgstr "Ignore patch discrepancies"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
+msgstr "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Skip game file check"
+msgstr "Skip game file check"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "The launcher will not attempt to verify or repair game files before launching"
+msgstr "The launcher will not attempt to verify or repair game files before launching"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Language"
+msgstr "Language"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Follow system"
+msgstr "Follow system"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Auto update"
+msgstr "Auto update"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Automatically download and install updates when available"
+msgstr "Automatically download and install updates when available"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Update channel"
+msgstr "Update channel"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Controls how frequently the launcher receives updates"
+msgstr "Controls how frequently the launcher receives updates"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Stable"
+msgstr "Stable"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Beta"
+msgstr "Beta"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Open setup wizard"
+msgstr "Open setup wizard"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "The setup wizard guides you through basic launcher settings"
+msgstr "The setup wizard guides you through basic launcher settings"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "Scan failed"
+msgstr "Scan failed"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "No installed Java runtimes detected"
+msgstr "No installed Java runtimes detected"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "After enabling \"Prefer Mojang-provided Java runtime\", Conic Launcher will automatically download the required Java from Mojang servers"
+msgstr "After enabling \"Prefer Mojang-provided Java runtime\", Conic Launcher will automatically download the required Java from Mojang servers"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Auto-install Java runtime"
+msgstr "Auto-install Java runtime"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "When enabled, the launcher will automatically download the appropriate Java runtime before launching. When disabled, only system-installed Java will be used"
+msgstr "When enabled, the launcher will automatically download the appropriate Java runtime before launching. When disabled, only system-installed Java will be used"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Manage installed Java runtimes"
+msgstr "Manage installed Java runtimes"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Disabling a Java installation prevents the launcher from using it to launch the game"
+msgstr "Disabling a Java installation prevents the launcher from using it to launch the game"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Scanning for installed Java runtimes"
+msgstr "Scanning for installed Java runtimes"
+

@@ -1,0 +1,73 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "app-icon.slint";
+
+// A titled group of settings (src/components/SettingGroup.vue).
+//
+// `width: calc(100% - 16px); margin: 0 auto` becomes a full-width layout whose
+// items are inset by the settings page (`padding: 0 8px`). The items wrapper
+// is a rounded, clipped container: the Vue original rounds the first and last
+// child to 8px, which clipping achieves in one place.
+export component SettingGroup inherits VerticalLayout {
+    in property <string> title: "";
+    in property <bool> resetable: false;
+    in property <bool> danger: false;
+    callback reset;
+
+    width: 100%;
+    spacing: 10px;
+
+    if root.title != "" : Rectangle {
+        height: 16px;
+        background: transparent;
+
+        HorizontalLayout {
+            padding-left: 8px;
+            spacing: 4px;
+            cross-axis-alignment: center;
+            alignment: start;
+
+            Text {
+                text: root.title;
+                font-size: 13.5px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.text.transparentize(0.1);
+            }
+
+            if root.resetable : Rectangle {
+                width: 20px;
+                height: 20px;
+                border-radius: 3px;
+                background: group-reset-touch.has-hover ? #ffffff1c : transparent;
+                opacity: group-reset-touch.pressed ? 0.8 : 1.0;
+
+                AppIcon {
+                    name: "refresh";
+                    size: 16px;
+                    icon-color: Theme.text.transparentize(0.1);
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                group-reset-touch := TouchArea {
+                    clicked => { root.reset(); }
+                }
+            }
+        }
+    }
+
+    items := Rectangle {
+        width: 100%;
+        border-radius: 8px;
+        clip: true;
+        background: transparent;
+
+        VerticalLayout {
+            spacing: 1px;
+            @children
+        }
+    }
+}

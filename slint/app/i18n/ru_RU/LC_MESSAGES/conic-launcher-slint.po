@@ -1,0 +1,605 @@
+# Conic Launcher — translations for the Slint app.
+# Generated from the @tr() strings under slint/app/ui and seeded from src/locales/*.ts.
+msgid ""
+msgstr ""
+"Language: ru_RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: ui
+msgctxt "App"
+msgid "Conic Launcher"
+msgstr "Conic Launcher"
+
+#: ui
+msgctxt "App"
+msgid "Search or type a command…"
+msgstr "Поиск или введите команду…"
+
+#: ui
+msgctxt "TitleBar"
+msgid "Settings"
+msgstr "Настройки"
+
+#: ui
+msgctxt "TitleBar"
+msgid "Home"
+msgstr "Главная"
+
+#: ui
+msgctxt "TitleBar"
+msgid "Music"
+msgstr "Музыка"
+
+#: ui
+msgctxt "SettingsView"
+msgid "General"
+msgstr "Общие"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Launch"
+msgstr "Запуск"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Java"
+msgstr "Java"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Appearance"
+msgstr "Внешний вид"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Audio"
+msgstr "Звук"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Download"
+msgstr "Загрузка"
+
+#: ui
+msgctxt "SettingsView"
+msgid "Accessibility"
+msgstr "Специальные возможности"
+
+#: ui
+msgctxt "SettingsView"
+msgid "About"
+msgstr "О программе"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Feedback"
+msgstr "Обратная связь"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Submit feedback"
+msgstr "Отправить отзыв"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Open a GitHub Issue. Remember to upload launcher logs when reporting bugs"
+msgstr "Открыть GitHub Issue. При сообщении об ошибке не забудьте приложить логи лаунчера"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View source code"
+msgstr "Исходный код"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View the launcher source code on GitHub"
+msgstr "Посмотреть исходный код лаунчера на GitHub"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "View launcher logs"
+msgstr "Логи лаунчера"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Open the launcher log folder. Please upload logs when reporting issues"
+msgstr "Открыть папку с логами лаунчера. Пожалуйста, прикладывайте логи при сообщении о проблемах"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Credits"
+msgstr "Благодарности"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The UI interaction style of Conic Launcher is inspired by osu!"
+msgstr "Стиль взаимодействия интерфейса Conic Launcher вдохновлен osu!"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The four built-in color schemes of Conic Launcher come from Catppuccin"
+msgstr "Четыре встроенные цветовые схемы Conic Launcher взяты из Catppuccin"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources"
+msgstr "Зеркала по умолчанию в Conic Launcher включают BMCLAPI от bangbang93 как источник ускорения загрузки некоторых ресурсов Minecraft"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
+msgstr "Conic Launcher не является официальным продуктом Minecraft, не одобрен им и не связан с Mojang Studios. «Minecraft» является товарным знаком Mojang AB. Любое использование бренда Minecraft в этом проекте соответствует правилам использования бренда и материалов Mojang Studios."
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Accessibility"
+msgstr "Специальные возможности"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Release update reminder"
+msgstr "Напоминания о релизных обновлениях"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a reminder dialog when a Minecraft release is published"
+msgstr "Показывать окно напоминания при выходе релиза Minecraft"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Snapshot update reminder"
+msgstr "Напоминания о снапшотах"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Show a reminder dialog when a Minecraft snapshot is published"
+msgstr "Показывать окно напоминания при выходе снапшота Minecraft"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Auto-change game language"
+msgstr "Автосмена языка игры"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Set the game language to your launcher language on first launch"
+msgstr "Устанавливать язык игры равным языку лаунчера при первом запуске"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "High contrast mode"
+msgstr "Режим высокой контрастности"
+
+#: ui
+msgctxt "SettingsAccessibility"
+msgid "Enable high contrast mode for the current theme (if available)"
+msgstr "Включать режим высокой контрастности для текущей темы (если доступно)"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Palette"
+msgstr "Цветовая схема"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Follow system dark mode"
+msgstr "Следовать темной теме системы"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
+msgstr "Используется Latte при светлой теме системы, в противном случае — Mocha"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background image"
+msgstr "Фоновое изображение"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Custom background image"
+msgstr "Свое фоновое изображение"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Select an image as the launcher background. Instance backgrounds take priority"
+msgstr "Выберите изображение в качестве фона лаунчера. Фон сборки имеет приоритет"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Remove image"
+msgstr "Удалить изображение"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background image darkness"
+msgstr "Затемнение фонового изображения"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "3D background camera movement"
+msgstr "Движение камеры 3D-фона"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "When disabled, the camera stops moving forward and the background stops updating after rendering, completely eliminating background overhead"
+msgstr "Если отключено, камера перестает двигаться вперед, а фон перестает обновляться после рендеринга, полностью убирая нагрузку от фона"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "Background parallax"
+msgstr "Параллакс фона"
+
+#: ui
+msgctxt "SettingsAppearance"
+msgid "When disabled, the background no longer moves with the mouse"
+msgstr "Если отключено, фон больше не следует за мышью"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Background music"
+msgstr "Фоновая музыка"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Enable background music"
+msgstr "Включить фоновую музыку"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Play background music in the launcher."
+msgstr "Воспроизводить фоновую музыку в лаунчере."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Resume on start"
+msgstr "Возобновлять при запуске"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Resume the last track and its progress when the application starts."
+msgstr "Восстанавливать последний трек и позицию воспроизведения при запуске приложения."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Audio visualizer"
+msgstr "Аудиовизуализация"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Show audio visualization at the bottom of the game page."
+msgstr "Показывать визуализацию звука внизу игровой страницы."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Pause on game launch"
+msgstr "Пауза при запуске игры"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Automatically pause background music when the game finishes launching."
+msgstr "Автоматически ставить фоновую музыку на паузу после запуска игры."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Open music folder"
+msgstr "Открыть папку с музыкой"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Place the music you want to play in this folder."
+msgstr "Поместите музыку, которую хотите слушать, в эту папку."
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Volume"
+msgstr "Громкость"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Master volume"
+msgstr "Общая громкость"
+
+#: ui
+msgctxt "SettingsAudio"
+msgid "Master volume (when window is in background)"
+msgstr "Общая громкость (когда окно в фоне)"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Download options"
+msgstr "Параметры загрузки"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Max connections"
+msgstr "Максимум соединений"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Limit the number of simultaneous connections to servers. Only applies to downloads during installation. Setting too high may reduce speed!"
+msgstr "Ограничивает число одновременных подключений к серверам. Применяется только к загрузкам при установке. Слишком высокое значение может снизить скорость!"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Max download speed (B/s)"
+msgstr "Максимальная скорость загрузки (Б/с)"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Limit download speed. Only applies to downloads during installation. Must be greater than 1024 to take effect. Set to 0 to disable"
+msgstr "Ограничивает скорость загрузки. Применяется только к загрузкам при установке. Значение должно быть больше 1024, чтобы ограничение действовало. Установите 0, чтобы отключить"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Mirror servers"
+msgstr "Зеркала"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Download game files from alternative sources"
+msgstr "Загружать файлы игры из альтернативных источников"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Proxy"
+msgstr "Прокси"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Use system proxy (requires app restart)"
+msgstr "Использовать системный прокси (требуется перезапуск приложения)"
+
+#: ui
+msgctxt "SettingsDownload"
+msgid "Currently only proxy via environment variables is supported"
+msgstr "Сейчас поддерживается только прокси через переменные окружения"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Basic settings"
+msgstr "Основные настройки"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Window size"
+msgstr "Размер окна"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Initial game window size"
+msgstr "Начальный размер игрового окна"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "W"
+msgstr "Ш"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "H"
+msgstr "В"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Fullscreen"
+msgstr "Полноэкранный режим"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Quit launcher after launching game"
+msgstr "Закрывать лаунчер после запуска игры"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Memory"
+msgstr "Память"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Auto-allocate memory"
+msgstr "Автоматическое выделение памяти"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Manual memory allocation"
+msgstr "Выделение памяти вручную"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
+msgstr "Задайте максимальный размер кучи Java вручную. Применяется, когда автоматическое выделение отключено"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Advanced launch options"
+msgstr "Дополнительные параметры запуска"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Java garbage collector"
+msgstr "Сборщик мусора Java"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra JVM arguments"
+msgstr "Дополнительные аргументы JVM"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Appended after default JVM arguments"
+msgstr "Добавляются после стандартных аргументов JVM"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra game arguments"
+msgstr "Дополнительные аргументы игры"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Additional arguments for the game"
+msgstr "Дополнительные аргументы для игры"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Extra class paths"
+msgstr "Дополнительные пути классов"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Separated by semicolons on Windows, colons on other systems"
+msgstr "Разделяются точкой с запятой в Windows и двоеточием в других системах"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Execute before launch"
+msgstr "Выполнять перед запуском"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added before the launch command"
+msgstr "Добавляется перед командой запуска"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Wrap command"
+msgstr "Команда-обертка"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added at the beginning of the launch command"
+msgstr "Добавляется в начало команды запуска"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Execute after launch"
+msgstr "Выполнять после запуска"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Added at the end of the launch script"
+msgstr "Добавляется в конец сценария запуска"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Ignore invalid Minecraft certificates"
+msgstr "Игнорировать недействительные сертификаты Minecraft"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
+msgstr "Добавляет -Dfml.ignoreInvalidMinecraftCertificates=true в аргументы JVM"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Ignore patch discrepancies"
+msgstr "Игнорировать расхождения патчей"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
+msgstr "Добавляет -Dfml.ignorePatchDiscrepancies=true в аргументы JVM"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "Skip game file check"
+msgstr "Пропускать проверку файлов игры"
+
+#: ui
+msgctxt "SettingsGame"
+msgid "The launcher will not attempt to verify or repair game files before launching"
+msgstr "Лаунчер не будет проверять и восстанавливать файлы игры перед запуском"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Language"
+msgstr "Язык"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Follow system"
+msgstr "Как в системе"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Auto update"
+msgstr "Автообновление"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Automatically download and install updates when available"
+msgstr "Автоматически загружать и устанавливать обновления, когда они доступны"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Update channel"
+msgstr "Канал обновлений"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Controls how frequently the launcher receives updates"
+msgstr "Определяет частоту получения обновлений лаунчером"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Stable"
+msgstr "Стабильный"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Beta"
+msgstr "Бета"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Open setup wizard"
+msgstr "Открыть мастер настройки"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "The setup wizard guides you through basic launcher settings"
+msgstr "Мастер настройки проведет вас через базовые настройки лаунчера"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "Scan failed"
+msgstr "Не удалось выполнить поиск"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "No installed Java runtimes detected"
+msgstr "Установленные среды Java не обнаружены"
+
+#: ui
+msgctxt "JavaRuntimeList"
+msgid "After enabling \"Prefer Mojang-provided Java runtime\", Conic Launcher will automatically download the required Java from Mojang servers"
+msgstr "После включения «Предпочитать среду Java от Mojang» Conic Launcher автоматически загрузит необходимую Java с серверов Mojang"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Auto-install Java runtime"
+msgstr "Автоустановка среды Java"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "When enabled, the launcher will automatically download the appropriate Java runtime before launching. When disabled, only system-installed Java will be used"
+msgstr "Если включено, лаунчер автоматически загрузит подходящую среду Java перед запуском. Если отключено, используется только Java, установленная в системе"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Manage installed Java runtimes"
+msgstr "Управление установленными средами Java"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Disabling a Java installation prevents the launcher from using it to launch the game"
+msgstr "Отключенная среда Java не будет использоваться лаунчером для запуска игры"
+
+#: ui
+msgctxt "SettingsJvm"
+msgid "Scanning for installed Java runtimes"
+msgstr "Поиск установленных сред Java"
+

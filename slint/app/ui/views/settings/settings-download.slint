@@ -1,0 +1,70 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { SettingGroup } from "../../components/setting-group.slint";
+import { SettingItem } from "../../components/setting-item.slint";
+import { BaseInput } from "../../components/base-input.slint";
+import { BaseSwitch } from "../../components/base-switch.slint";
+import { AppConfig } from "../../globals/settings.slint";
+
+// src/views/settings/SettingsDownload.vue
+export component SettingsDownload inherits VerticalLayout {
+    width: 100%;
+    padding-left: 8px;
+    padding-right: 8px;
+    spacing: 16px;
+    alignment: start;
+
+    SettingGroup {
+        title: @tr("Download options");
+
+        SettingItem {
+            title: @tr("Max connections");
+            description: @tr("Limit the number of simultaneous connections to servers. Only applies to downloads during installation. Setting too high may reduce speed!");
+            icon: "link";
+
+            BaseInput {
+                input-width: 100px;
+                number-only: true;
+                value <=> AppConfig.max-connections;
+                edited => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Max download speed (B/s)");
+            description: @tr("Limit download speed. Only applies to downloads during installation. Must be greater than 1024 to take effect. Set to 0 to disable");
+            icon: "speedometer";
+
+            BaseInput {
+                input-width: 100px;
+                number-only: true;
+                value <=> AppConfig.max-download-speed;
+                edited => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Mirror servers");
+            description: @tr("Download game files from alternative sources");
+            icon: "server";
+            navigable: true;
+        }
+    }
+
+    SettingGroup {
+        title: @tr("Proxy");
+
+        SettingItem {
+            title: @tr("Use system proxy (requires app restart)");
+            description: @tr("Currently only proxy via environment variables is supported");
+            icon: "globe";
+
+            BaseSwitch {
+                checked <=> AppConfig.use-system-proxy;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+    }
+}

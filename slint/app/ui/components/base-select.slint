@@ -1,0 +1,61 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// Segmented select (src/components/BaseSelect.vue).
+//
+// A row of options with 1px separators, the active option filled with the
+// lavender accent. The Vue component has no explicit width: it shrinks to its
+// content and grows to fit it, which Slint handles by deriving the component's
+// preferred size from the inner layout.
+export component BaseSelect inherits Rectangle {
+    in property <[string]> options;
+    in property <[string]> display-name;
+    in-out property <string> value;
+    callback selected(string);
+
+    // CSS: option height 22px + 1px border on each side of the (auto-height)
+    // wrapper => 24px total (box-sizing: border-box).
+    height: 24px;
+    background: Theme.surface-1;
+    border-width: 1px;
+    border-color: Theme.lavender.transparentize(0.82);
+    border-radius: 4px;
+    clip: true;
+
+    HorizontalLayout {
+        for option[index] in root.options : Rectangle {
+            width: option-label.preferred-width + 16px;
+            height: 22px;
+            background: root.value == option ? Theme.lavender : transparent;
+
+            option-label := Text {
+                text: root.display-name[index];
+                font-size: 12px;
+                font-weight: Theme.font-weight-normal;
+                color: root.value == option ? Theme.text-inverse : Theme.text.transparentize(0.1);
+                x: 8px;
+                y: (parent.height - self.height) / 2;
+            }
+
+            // separator (all but the last option)
+            if index < root.options.length - 1 : Rectangle {
+                x: parent.width - 1px;
+                width: 1px;
+                height: parent.height;
+                background: Theme.lavender.transparentize(0.82);
+            }
+
+            TouchArea {
+                width: parent.width;
+                height: parent.height;
+                clicked => {
+                    root.value = option;
+                    root.selected(option);
+                }
+            }
+        }
+    }
+}

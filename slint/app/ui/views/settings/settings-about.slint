@@ -1,0 +1,153 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { SettingGroup } from "../../components/setting-group.slint";
+import { SettingItem } from "../../components/setting-item.slint";
+import { AppConfig } from "../../globals/settings.slint";
+
+// src/views/settings/SettingsAbout.vue
+export component SettingsAbout inherits VerticalLayout {
+    width: 100%;
+    padding-left: 8px;
+    padding-right: 8px;
+    spacing: 16px;
+    alignment: start;
+
+    SettingGroup {
+        title: @tr("Feedback");
+
+        SettingItem {
+            title: @tr("Submit feedback");
+            description: @tr("Open a GitHub Issue. Remember to upload launcher logs when reporting bugs");
+            icon: "flag";
+            navigable: true;
+            clicked => { AppConfig.open-url("https://github.com/conic-apps/launcher/issues/new/choose"); }
+        }
+
+        SettingItem {
+            title: @tr("View source code");
+            description: @tr("View the launcher source code on GitHub");
+            icon: "github";
+            navigable: true;
+            clicked => { AppConfig.open-url("https://github.com/conic-apps/launcher"); }
+        }
+
+        SettingItem {
+            title: @tr("View launcher logs");
+            description: @tr("Open the launcher log folder. Please upload logs when reporting issues");
+            icon: "document-text";
+            navigable: true;
+            clicked => { AppConfig.open-path("logs"); }
+        }
+    }
+
+    SettingGroup {
+        title: @tr("Credits");
+
+        SettingItem {
+            title: "osu!";
+            description: @tr("The UI interaction style of Conic Launcher is inspired by osu!");
+            custom-icon: @image-url("../../assets/osu-logo.png");
+            navigable: true;
+            clicked => { AppConfig.open-url("https://osu.ppy.sh"); }
+        }
+
+        SettingItem {
+            title: "Catppuccin";
+            description: @tr("The four built-in color schemes of Conic Launcher come from Catppuccin");
+            custom-icon: @image-url("../../assets/catppuccin-circle.png");
+            navigable: true;
+            clicked => { AppConfig.open-url("https://catppuccin.com"); }
+        }
+
+        SettingItem {
+            title: "BMCLAPI";
+            description: @tr("The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources");
+            custom-icon: @image-url("../../assets/bangbang93-avatar.png");
+            custom-icon-rounded: true;
+            navigable: true;
+            clicked => { AppConfig.open-url("https://bmclapidoc.bangbang93.com"); }
+        }
+    }
+
+    version-info := VerticalLayout {
+        width: 100%;
+        padding-top: 16px;
+        spacing: 0px;
+        alignment: center;
+
+        Image {
+            width: 24px;
+            height: 24px;
+            source: @image-url("../../assets/logo-flat.svg");
+            colorize: Theme.text;
+        }
+
+        spacer-logo := Rectangle {
+            height: 8px;
+            background: transparent;
+        }
+
+        Text {
+            text: "Conic Launcher";
+            font-size: 12px;
+            font-weight: 600;
+            color: Theme.text.transparentize(0.1);
+            horizontal-alignment: center;
+        }
+
+        spacer-version := Rectangle {
+            height: 2px;
+            background: transparent;
+        }
+
+        Text {
+            text: AppConfig.app-version;
+            font-size: 9px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.text.transparentize(0.1);
+            horizontal-alignment: center;
+        }
+
+        spacer-copyright := Rectangle {
+            height: 6px;
+            background: transparent;
+        }
+
+        Text {
+            text: "Copyright 2022-2026 ConicMC developers. All rights reserved.";
+            font-size: 9px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.text.transparentize(0.1);
+            horizontal-alignment: center;
+        }
+
+        spacer-disclaimer := Rectangle {
+            height: 6px;
+            background: transparent;
+        }
+
+        disclaimer := Rectangle {
+            width: parent.width - 96px;
+            height: disclaimer-text.height;
+            background: transparent;
+
+            disclaimer-text := Text {
+                text: @tr("Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines.");
+                font-size: 9px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.text.transparentize(0.1);
+                wrap: word-wrap;
+                line-height-factor: 1.5;
+                width: 100%;
+                horizontal-alignment: center;
+            }
+
+            TouchArea {
+                clicked => { AppConfig.open-url("https://www.minecraft.net/en-us/usage-guidelines"); }
+            }
+        }
+    }
+}

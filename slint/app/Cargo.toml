@@ -15,9 +15,9 @@ slint-build.workspace = true
 slint.workspace = true
 slint-platform.workspace = true
 slint-window.workspace = true
+slint-config.workspace = true
 log.workspace = true
 env_logger.workspace = true
-sys-locale.workspace = true
 
 # Used to inject macOS window attributes (transparent title bar + full-size
 # content view) through the winit backend's window-attributes hook.
