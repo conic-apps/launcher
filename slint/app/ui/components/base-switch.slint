@@ -1,0 +1,66 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// Toggle switch (src/components/BaseSwitch.vue).
+//
+// Mirrors the CSS: a 32x16 track with a 1px outline drawn *outside* the box
+// (CSS `outline` does not affect layout, so it is a larger rectangle behind the
+// track), and a 10.5px thumb that travels from x:3 to x:19 (padding 3 + the
+// 16px `margin-left` applied when checked). The root is 44px wide to include
+// the Vue `.input-box { margin: 0 6px }`.
+export component BaseSwitch inherits Rectangle {
+    in-out property <bool> checked: false;
+    callback toggled;
+
+    width: 44px;
+    height: 16px;
+
+    // outline: 1px outside the 32x16 track.
+    Rectangle {
+        x: 5px;
+        y: -1px;
+        width: 34px;
+        height: 18px;
+        border-radius: 9px;
+        border-width: 1px;
+        border-color: root.checked ? Theme.blue : Theme.overlay-2;
+        background: transparent;
+    }
+
+    track := Rectangle {
+        x: 6px;
+        width: 32px;
+        height: root.height;
+        border-radius: root.height / 2;
+        background: root.checked ? Theme.blue
+            : touch.has-hover ? #ffffff14
+            : Theme.surface-1;
+        animate background { duration: 300ms; easing: cubic-bezier(0, 0.6, 0.32, 0.99); }
+
+        thumb := Rectangle {
+            width: touch.pressed ? 8.925px : touch.has-hover ? 11.55px : 10.5px;
+            height: touch.pressed ? 8.925px : touch.has-hover ? 11.55px : 10.5px;
+            border-radius: 200px;
+            background: root.checked ? #ffffff : Theme.overlay-2;
+            x: root.checked ? 19px : 3px;
+            y: (track.height - self.height) / 2;
+            animate x, background, width, height {
+                duration: 300ms;
+                easing: cubic-bezier(0, 0.6, 0.32, 0.99);
+            }
+        }
+    }
+
+    touch := TouchArea {
+        x: 6px;
+        width: 32px;
+        height: root.height;
+        clicked => {
+            root.checked = !root.checked;
+            root.toggled();
+        }
+    }
+}

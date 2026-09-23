@@ -1,0 +1,69 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { SettingGroup } from "../../components/setting-group.slint";
+import { SettingItem } from "../../components/setting-item.slint";
+import { BaseSwitch } from "../../components/base-switch.slint";
+import { AppConfig } from "../../globals/settings.slint";
+
+// src/views/settings/SettingsAccessibility.vue
+export component SettingsAccessibility inherits VerticalLayout {
+    width: 100%;
+    padding-left: 8px;
+    padding-right: 8px;
+    spacing: 16px;
+    alignment: start;
+
+    SettingGroup {
+        title: @tr("Accessibility");
+
+        SettingItem {
+            title: @tr("Release update reminder");
+            description: @tr("Show a reminder dialog when a Minecraft release is published");
+            icon: "bell";
+
+            BaseSwitch {
+                checked <=> AppConfig.release-reminder;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Snapshot update reminder");
+            description: @tr("Show a reminder dialog when a Minecraft snapshot is published");
+            icon: "bell";
+
+            BaseSwitch {
+                checked <=> AppConfig.snapshot-reminder;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+
+        SettingItem {
+            title: @tr("Auto-change game language");
+            description: @tr("Set the game language to your launcher language on first launch");
+            icon: "language";
+
+            BaseSwitch {
+                checked <=> AppConfig.auto-game-lang;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+    }
+
+    SettingGroup {
+        title: "无障碍";
+
+        SettingItem {
+            title: @tr("High contrast mode");
+            description: @tr("Enable high contrast mode for the current theme (if available)");
+            icon: "contrast";
+
+            BaseSwitch {
+                checked <=> AppConfig.high-contrast;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+    }
+}

@@ -1199,9 +1199,9 @@ dependencies = [
  "objc2-foundation 0.2.2",
  "slint",
  "slint-build",
+ "slint-config",
  "slint-platform",
  "slint-window",
- "sys-locale",
  "winit",
 ]
 
@@ -6638,6 +6638,18 @@ dependencies = [
  "i-slint-compiler",
  "spin_on",
  "toml_edit 0.25.13+spec-1.1.0",
+]
+
+[[package]]
+name = "slint-config"
+version = "0.0.0"
+dependencies = [
+ "log",
+ "serde",
+ "slint-platform",
+ "sys-locale",
+ "thiserror 2.0.19",
+ "toml 1.1.3+spec-1.1.0",
 ]
 
 [[package]]

@@ -1,0 +1,75 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// 16px status glyph (src/components/ItemLoadingIcon.vue): success check, error
+// cross, pending dot and an in-progress spinner. The spinner uses
+// `animation-tick()` for continuous rotation (same approach as the bundled
+// Slint spinner).
+export component ItemLoadingIcon inherits Rectangle {
+    in property <string> status: "pending";
+
+    width: 16px;
+    height: 16px;
+
+    if root.status == "success" : Path {
+        commands: "M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16Zm3.78-9.72a.751.751 0 0 0-.018-1.042.751.751 0 0 0-1.042-.018L6.75 9.19 5.28 7.72a.751.751 0 0 0-1.042.018.751.751 0 0 0-.018 1.042l2 2a.75.75 0 0 0 1.06 0Z";
+        viewbox-width: 16;
+        viewbox-height: 16;
+        width: 100%;
+        height: 100%;
+        fill: Theme.green;
+        stroke: transparent;
+    }
+
+    if root.status == "error" : Path {
+        commands: "M2.343 13.657A8 8 0 1 1 13.658 2.343 8 8 0 0 1 2.343 13.657ZM6.03 4.97a.751.751 0 0 0-1.042.018.751.751 0 0 0-.018 1.042L6.94 8 4.97 9.97a.749.749 0 0 0 .326 1.275.749.749 0 0 0 .734-.215L8 9.06l1.97 1.97a.749.749 0 0 0 1.275-.326.749.749 0 0 0-.215-.734L9.06 8l1.97-1.97a.749.749 0 0 0-.326-1.275.749.749 0 0 0-.734.215L8 6.94Z";
+        viewbox-width: 16;
+        viewbox-height: 16;
+        width: 100%;
+        height: 100%;
+        fill: Theme.red;
+        stroke: transparent;
+    }
+
+    if root.status == "pending" : Path {
+        commands: "M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Z";
+        viewbox-width: 16;
+        viewbox-height: 16;
+        width: 100%;
+        height: 100%;
+        fill: #ffffff66;
+        stroke: transparent;
+    }
+
+    if root.status == "in-progress" : spinner := Rectangle {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        transform-rotation: mod(animation-tick(), 1s) / 1s * 360deg;
+        transform-origin: { x: self.width / 2, y: self.height / 2 };
+
+        Path {
+            commands: "M8 15A7 7 0 108 1a7 7 0 000 14v0z";
+            viewbox-width: 16;
+            viewbox-height: 16;
+            width: 100%;
+            height: 100%;
+            fill: transparent;
+            stroke: #ffffffe6;
+            stroke-width: 2.4px;
+        }
+        Path {
+            commands: "M15 8a7 7 0 01-7 7";
+            viewbox-width: 16;
+            viewbox-height: 16;
+            width: 100%;
+            height: 100%;
+            fill: transparent;
+            stroke: #ffffffe6;
+            stroke-width: 2.4px;
+        }
+    }
+}

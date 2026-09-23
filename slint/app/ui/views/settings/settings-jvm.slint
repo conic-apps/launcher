@@ -1,0 +1,79 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { SettingGroup } from "../../components/setting-group.slint";
+import { SettingItem } from "../../components/setting-item.slint";
+import { SettingCollapse } from "../../components/setting-collapse.slint";
+import { BaseSwitch } from "../../components/base-switch.slint";
+import { ItemLoadingIcon } from "../../components/item-loading-icon.slint";
+import { AppConfig, JavaRuntime } from "../../globals/settings.slint";
+
+// Runtime rows (JavaRuntime[]). Mirrors the `v-if`/`v-else-if`/`v-for` chain
+// in SettingsJVM.vue: error, then empty, then the list.
+component JavaRuntimeList inherits VerticalLayout {
+    in property <[JavaRuntime]> runtimes: [];
+    in property <string> scan-error: "";
+
+    width: 100%;
+    spacing: 1px;
+    alignment: start;
+
+    if root.scan-error != "" : SettingItem {
+        title: @tr("Scan failed");
+        description: root.scan-error;
+    }
+
+    if root.scan-error == "" && root.runtimes.length == 0 : SettingItem {
+        title: @tr("No installed Java runtimes detected");
+        description: @tr("After enabling \"Prefer Mojang-provided Java runtime\", Conic Launcher will automatically download the required Java from Mojang servers");
+    }
+
+    for runtime in root.runtimes : SettingItem {
+        title: "Java " + runtime.major;
+        tags: [runtime.vendor, runtime.version, runtime.arch];
+        description: runtime.path;
+
+        BaseSwitch {
+            checked: runtime.enabled;
+            toggled => { AppConfig.set-java-enabled(runtime.path, !runtime.enabled); }
+        }
+    }
+}
+
+// src/views/settings/SettingsJVM.vue
+export component SettingsJvm inherits VerticalLayout {
+    width: 100%;
+    padding-left: 8px;
+    padding-right: 8px;
+    spacing: 16px;
+    alignment: start;
+
+    init => { AppConfig.rescan-java(); }
+
+    SettingGroup {
+        SettingItem {
+            title: @tr("Auto-install Java runtime");
+            description: @tr("When enabled, the launcher will automatically download the appropriate Java runtime before launching. When disabled, only system-installed Java will be used");
+
+            BaseSwitch {
+                checked <=> AppConfig.prefer-mojang-java;
+                toggled => { AppConfig.changed(); }
+            }
+        }
+    }
+
+    SettingCollapse {
+        title: @tr("Manage installed Java runtimes");
+        description: @tr("Disabling a Java installation prevents the launcher from using it to launch the game");
+
+        if AppConfig.java-scanning : SettingItem {
+            title: @tr("Scanning for installed Java runtimes");
+            ItemLoadingIcon { status: "in-progress"; }
+        }
+        if !AppConfig.java-scanning : JavaRuntimeList {
+            runtimes: AppConfig.java-runtimes;
+            scan-error: AppConfig.java-scan-error;
+        }
+    }
+}

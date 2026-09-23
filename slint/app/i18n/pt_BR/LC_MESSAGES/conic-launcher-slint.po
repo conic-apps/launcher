@@ -2,11 +2,11 @@
 # Generated from the @tr() strings under slint/app/ui and seeded from src/locales/*.ts.
 msgid ""
 msgstr ""
-"Language: zh_CN\n"
+"Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: ui
 msgctxt "App"
@@ -16,590 +16,590 @@ msgstr "Conic Launcher"
 #: ui
 msgctxt "App"
 msgid "Search or type a command…"
-msgstr "搜索或输入命令…"
+msgstr "Pesquisar ou digitar um comando…"
 
 #: ui
 msgctxt "TitleBar"
 msgid "Settings"
-msgstr "设置"
+msgstr "Configurações"
 
 #: ui
 msgctxt "TitleBar"
 msgid "Home"
-msgstr "主页"
+msgstr "Início"
 
 #: ui
 msgctxt "TitleBar"
 msgid "Music"
-msgstr "音乐"
+msgstr "Música"
 
 #: ui
 msgctxt "SettingsView"
 msgid "General"
-msgstr "常规"
+msgstr "Geral"
 
 #: ui
 msgctxt "SettingsView"
 msgid "Launch"
-msgstr "启动选项"
+msgstr "Inicialização"
 
 #: ui
 msgctxt "SettingsView"
 msgid "Java"
-msgstr "Java 虚拟机"
+msgstr "Java"
 
 #: ui
 msgctxt "SettingsView"
 msgid "Appearance"
-msgstr "外观与动效"
+msgstr "Aparência"
 
 #: ui
 msgctxt "SettingsView"
 msgid "Audio"
-msgstr "音频"
+msgstr "Áudio"
 
 #: ui
 msgctxt "SettingsView"
 msgid "Download"
-msgstr "下载"
+msgstr "Download"
 
 #: ui
 msgctxt "SettingsView"
 msgid "Accessibility"
-msgstr "辅助功能"
+msgstr "Acessibilidade"
 
 #: ui
 msgctxt "SettingsView"
 msgid "About"
-msgstr "关于"
+msgstr "Sobre"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "Feedback"
-msgstr "反馈"
+msgstr "Feedback"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "Submit feedback"
-msgstr "提交反馈"
+msgstr "Enviar feedback"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "Open a GitHub Issue. Remember to upload launcher logs when reporting bugs"
-msgstr "打开一个 GitHub Issue，如果报告 Bug 记得上传启动器日志"
+msgstr "Abre uma issue no GitHub. Lembre-se de enviar os logs do launcher ao relatar bugs"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "View source code"
-msgstr "查看源代码"
+msgstr "Ver código-fonte"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "View the launcher source code on GitHub"
-msgstr "在 GitHub 中查看启动器的源代码"
+msgstr "Veja o código-fonte do launcher no GitHub"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "View launcher logs"
-msgstr "查看启动器日志"
+msgstr "Ver logs do launcher"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "Open the launcher log folder. Please upload logs when reporting issues"
-msgstr "打开启动器日志文件夹，报告问题时请上传日志"
+msgstr "Abre a pasta de logs do launcher. Envie os logs ao relatar problemas"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "Credits"
-msgstr "鸣谢"
+msgstr "Créditos"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "The UI interaction style of Conic Launcher is inspired by osu!"
-msgstr "Conic Launcher 使用的用户界面交互风格受 osu! 的启发"
+msgstr "O estilo de interação da interface do Conic Launcher é inspirado em osu!"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "The four built-in color schemes of Conic Launcher come from Catppuccin"
-msgstr "Conic Launcher 的四种内置配色方案来自 Catppuccin"
+msgstr "Os quatro esquemas de cores integrados do Conic Launcher vêm do Catppuccin"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources"
-msgstr "Conic Launcher 镜像列表的默认配置包含 bangbang93 提供的 BMCLAPI 作为部分 Minecraft 资源的下载加速源"
+msgstr "A configuração de espelhos padrão do Conic Launcher inclui o BMCLAPI, fornecido por bangbang93, como fonte de aceleração de download para alguns recursos do Minecraft"
 
 #: ui
 msgctxt "SettingsAbout"
 msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
-msgstr "Conic Launcher 不是官方的 Minecraft 产品，也未获得 Mojang Studios 的批准或关联。\"Minecraft\"是 Mojang AB 的商标，本项目对 Minecraft 品牌的任何使用均符合 Mojang Studios 的品牌与资产指南。"
+msgstr "O Conic Launcher não é um produto oficial do Minecraft e não é aprovado nem associado à Mojang Studios. \"Minecraft\" é uma marca registrada da Mojang AB. Qualquer uso da marca Minecraft neste projeto está em conformidade com as Diretrizes de Marca e Ativos da Mojang Studios."
 
 #: ui
 msgctxt "SettingsAccessibility"
 msgid "Accessibility"
-msgstr "辅助功能"
+msgstr "Acessibilidade"
 
 #: ui
 msgctxt "SettingsAccessibility"
 msgid "Release update reminder"
-msgstr "正式版更新提醒"
+msgstr "Aviso de novas releases"
 
 #: ui
 msgctxt "SettingsAccessibility"
 msgid "Show a reminder dialog when a Minecraft release is published"
-msgstr "当 Minecraft 正式版发布时弹出提醒弹窗"
+msgstr "Mostra um diálogo de aviso quando uma release do Minecraft é publicada"
 
 #: ui
 msgctxt "SettingsAccessibility"
 msgid "Snapshot update reminder"
-msgstr "快照版更新提醒"
+msgstr "Aviso de novos snapshots"
 
 #: ui
 msgctxt "SettingsAccessibility"
 msgid "Show a reminder dialog when a Minecraft snapshot is published"
-msgstr "当 Minecraft 快照发布时弹出提醒弹窗"
+msgstr "Mostra um diálogo de aviso quando um snapshot do Minecraft é publicado"
 
 #: ui
 msgctxt "SettingsAccessibility"
 msgid "Auto-change game language"
-msgstr "自动更改游戏语言"
+msgstr "Alterar idioma do jogo automaticamente"
 
 #: ui
 msgctxt "SettingsAccessibility"
 msgid "Set the game language to your launcher language on first launch"
-msgstr "在首次启动游戏时将游戏语言设置为你的启动器语言"
+msgstr "Define o idioma do jogo conforme o idioma do launcher na primeira inicialização"
 
 #: ui
 msgctxt "SettingsAccessibility"
 msgid "High contrast mode"
-msgstr "高对比度模式"
+msgstr "Modo de alto contraste"
 
 #: ui
 msgctxt "SettingsAccessibility"
 msgid "Enable high contrast mode for the current theme (if available)"
-msgstr "启用当前主题的高对比度模式（如果可用）"
+msgstr "Ativa o modo de alto contraste para o tema atual (se disponível)"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "Palette"
-msgstr "调色板"
+msgstr "Paleta de cores"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "Follow system dark mode"
-msgstr "跟随系统深色设置"
+msgstr "Seguir modo escuro do sistema"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
-msgstr "如果系统设置中设置为浅色，则使用 Latte ，否则使用 Mocha"
+msgstr "Usa Latte quando o sistema estiver em modo claro; caso contrário, usa Mocha"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "Background image"
-msgstr "背景图像"
+msgstr "Imagem de fundo"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "Custom background image"
-msgstr "自定义背景图像"
+msgstr "Imagem de fundo personalizada"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "Select an image as the launcher background. Instance backgrounds take priority"
-msgstr "选择一张图片作为启动器背景，优先级低于实例背景"
+msgstr "Selecione uma imagem como fundo do launcher. Os fundos das instâncias têm prioridade"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "Remove image"
-msgstr "移除图像"
+msgstr "Remover imagem"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "Background image darkness"
-msgstr "背景图像变暗"
+msgstr "Escurecer imagem de fundo"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "3D background camera movement"
-msgstr "立体背景摄像机移动"
+msgstr "Movimentação de câmera do fundo em 3D"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "When disabled, the camera stops moving forward and the background stops updating after rendering, completely eliminating background overhead"
-msgstr "关闭后摄像机停止向前移动，背景渲染完成后不再更新，以完全关闭背景开销"
+msgstr "Quando desativado, a câmera para de avançar e o fundo para de ser atualizado após a renderização, eliminando completamente o custo do fundo"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "Background parallax"
-msgstr "背景图片视差"
+msgstr "Paralaxe do fundo"
 
 #: ui
 msgctxt "SettingsAppearance"
 msgid "When disabled, the background no longer moves with the mouse"
-msgstr "关闭后背景不再随鼠标移动"
+msgstr "Quando desativado, o fundo não se move mais junto com o mouse"
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Background music"
-msgstr "背景音乐"
+msgstr "Música de fundo"
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Enable background music"
-msgstr "启用背景音乐"
+msgstr "Ativar música de fundo"
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Play background music in the launcher."
-msgstr "在启动器中播放背景音乐。"
+msgstr "Reproduz música de fundo no launcher."
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Resume on start"
-msgstr "启动时继续播放"
+msgstr "Retomar ao iniciar"
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Resume the last track and its progress when the application starts."
-msgstr "应用启动时继续播放上次的曲目及其进度。"
+msgstr "Retoma a última faixa e seu progresso quando o aplicativo é iniciado."
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Audio visualizer"
-msgstr "音频可视化"
+msgstr "Visualizador de áudio"
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Show audio visualization at the bottom of the game page."
-msgstr "在游戏页面底部显示音频可视化效果。"
+msgstr "Exibe a visualização de áudio na parte inferior da página do jogo."
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Pause on game launch"
-msgstr "启动游戏后暂停播放"
+msgstr "Pausar ao iniciar o jogo"
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Automatically pause background music when the game finishes launching."
-msgstr "游戏启动完成后自动暂停背景音乐。"
+msgstr "Pausa automaticamente a música de fundo quando o jogo termina de iniciar."
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Open music folder"
-msgstr "打开音乐文件夹"
+msgstr "Abrir pasta de músicas"
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Place the music you want to play in this folder."
-msgstr "将你想播放的音乐放入此文件夹。"
+msgstr "Coloque as músicas que deseja ouvir nesta pasta."
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Volume"
-msgstr "音量"
+msgstr "Volume"
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Master volume"
-msgstr "主音量"
+msgstr "Volume principal"
 
 #: ui
 msgctxt "SettingsAudio"
 msgid "Master volume (when window is in background)"
-msgstr "主音量（窗口位于后台时）"
+msgstr "Volume principal (quando a janela está em segundo plano)"
 
 #: ui
 msgctxt "SettingsDownload"
 msgid "Download options"
-msgstr "下载选项"
+msgstr "Opções de download"
 
 #: ui
 msgctxt "SettingsDownload"
 msgid "Max connections"
-msgstr "最大连接数"
+msgstr "Conexões máximas"
 
 #: ui
 msgctxt "SettingsDownload"
 msgid "Limit the number of simultaneous connections to servers. Only applies to downloads during installation. Setting too high may reduce speed!"
-msgstr "限制同时与服务器建立的连接数量，只对安装时的下载有效，过大反而会降低速度！"
+msgstr "Limita o número de conexões simultâneas aos servidores. Aplica-se apenas aos downloads durante a instalação. Um valor muito alto pode reduzir a velocidade!"
 
 #: ui
 msgctxt "SettingsDownload"
 msgid "Max download speed (B/s)"
-msgstr "最大下载速度(单位：B/s)"
+msgstr "Velocidade máxima de download (B/s)"
 
 #: ui
 msgctxt "SettingsDownload"
 msgid "Limit download speed. Only applies to downloads during installation. Must be greater than 1024 to take effect. Set to 0 to disable"
-msgstr "限制下载速度，只对安装时的下载有效，必须大于1024才有效，设置为 0 以禁用"
+msgstr "Limita a velocidade de download. Aplica-se apenas aos downloads durante a instalação. Deve ser maior que 1024 para ter efeito. Defina 0 para desativar"
 
 #: ui
 msgctxt "SettingsDownload"
 msgid "Mirror servers"
-msgstr "镜像服务器"
+msgstr "Servidores espelho"
 
 #: ui
 msgctxt "SettingsDownload"
 msgid "Download game files from alternative sources"
-msgstr "从其他地方下载游戏文件"
+msgstr "Baixa arquivos do jogo de fontes alternativas"
 
 #: ui
 msgctxt "SettingsDownload"
 msgid "Proxy"
-msgstr "代理"
+msgstr "Proxy"
 
 #: ui
 msgctxt "SettingsDownload"
 msgid "Use system proxy (requires app restart)"
-msgstr "使用系统代理（重启应用后生效）"
+msgstr "Usar proxy do sistema (requer reiniciar o aplicativo)"
 
 #: ui
 msgctxt "SettingsDownload"
 msgid "Currently only proxy via environment variables is supported"
-msgstr "目前仅支持通过环境变量设置代理"
+msgstr "Atualmente, há suporte apenas para proxy via variáveis de ambiente"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Basic settings"
-msgstr "基础设置"
+msgstr "Configurações básicas"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Window size"
-msgstr "窗口大小"
+msgstr "Tamanho da janela"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Initial game window size"
-msgstr "游戏窗口的初始大小"
+msgstr "Tamanho inicial da janela do jogo"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "W"
-msgstr "宽"
+msgstr "L"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "H"
-msgstr "高"
+msgstr "A"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Fullscreen"
-msgstr "全屏"
+msgstr "Tela cheia"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Quit launcher after launching game"
-msgstr "启动游戏后退出启动器"
+msgstr "Fechar o launcher após iniciar o jogo"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Memory"
-msgstr "内存"
+msgstr "Memória"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Auto-allocate memory"
-msgstr "自动分配内存"
+msgstr "Alocar memória automaticamente"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Manual memory allocation"
-msgstr "手动分配内存"
+msgstr "Alocação manual de memória"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
-msgstr "手动指定 Java 堆的最大大小，关闭自动分配后生效"
+msgstr "Define manualmente o tamanho máximo do heap do Java. Tem efeito quando a alocação automática está desativada"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Advanced launch options"
-msgstr "高级启动选项"
+msgstr "Opções de inicialização avançadas"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Java garbage collector"
-msgstr "Java 垃圾回收器"
+msgstr "Garbage collector do Java"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Extra JVM arguments"
-msgstr "添加 JVM 参数"
+msgstr "Argumentos extras da JVM"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Appended after default JVM arguments"
-msgstr "将会放在默认 JVM 参数后面"
+msgstr "Adicionados após os argumentos padrão da JVM"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Extra game arguments"
-msgstr "添加游戏参数"
+msgstr "Argumentos extras do jogo"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Additional arguments for the game"
-msgstr "添加游戏需要的其他参数"
+msgstr "Argumentos adicionais para o jogo"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Extra class paths"
-msgstr "添加类路径"
+msgstr "Caminhos de classe extras"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Separated by semicolons on Windows, colons on other systems"
-msgstr "Windows 下用分号隔开，其他系统用冒号"
+msgstr "Separados por ponto e vírgula no Windows e por dois-pontos nos demais sistemas"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Execute before launch"
-msgstr "启动前执行"
+msgstr "Executar antes da inicialização"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Added before the launch command"
-msgstr "将会添加至启动命令的前一行"
+msgstr "Adicionado antes do comando de inicialização"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Wrap command"
-msgstr "包装命令"
+msgstr "Comando wrapper"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Added at the beginning of the launch command"
-msgstr "将会添加至启动命令的开头"
+msgstr "Adicionado ao início do comando de inicialização"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Execute after launch"
-msgstr "启动后执行"
+msgstr "Executar após a inicialização"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Added at the end of the launch script"
-msgstr "将会添加至启动脚本的最后一行"
+msgstr "Adicionado ao final do script de inicialização"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Ignore invalid Minecraft certificates"
-msgstr "忽略无效的 Minecraft 凭证"
+msgstr "Ignorar certificados inválidos do Minecraft"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
-msgstr "将 -Dfml.ignoreInvalidMinecraftCertificates=true 添加到 JVM 参数中"
+msgstr "Adiciona -Dfml.ignoreInvalidMinecraftCertificates=true aos argumentos da JVM"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Ignore patch discrepancies"
-msgstr "忽略补丁差异"
+msgstr "Ignorar divergências de patches"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
-msgstr "将 -Dfml.ignorePatchDiscrepancies=true 添加到 JVM 参数中"
+msgstr "Adiciona -Dfml.ignorePatchDiscrepancies=true aos argumentos da JVM"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "Skip game file check"
-msgstr "跳过游戏文件检查"
+msgstr "Ignorar verificação dos arquivos do jogo"
 
 #: ui
 msgctxt "SettingsGame"
 msgid "The launcher will not attempt to verify or repair game files before launching"
-msgstr "启动游戏前启动器将不会尝试检查或补全游戏文件"
+msgstr "O launcher não tentará verificar nem reparar os arquivos do jogo antes da inicialização"
 
 #: ui
 msgctxt "SettingsGeneral"
 msgid "Language"
-msgstr "语言"
+msgstr "Idioma"
 
 #: ui
 msgctxt "SettingsGeneral"
 msgid "Follow system"
-msgstr "跟随系统设置"
+msgstr "Seguir o sistema"
 
 #: ui
 msgctxt "SettingsGeneral"
 msgid "Auto update"
-msgstr "自动更新"
+msgstr "Atualização automática"
 
 #: ui
 msgctxt "SettingsGeneral"
 msgid "Automatically download and install updates when available"
-msgstr "有更新可用时自动下载并安装"
+msgstr "Baixa e instala atualizações automaticamente quando disponíveis"
 
 #: ui
 msgctxt "SettingsGeneral"
 msgid "Update channel"
-msgstr "更新通道"
+msgstr "Canal de atualização"
 
 #: ui
 msgctxt "SettingsGeneral"
 msgid "Controls how frequently the launcher receives updates"
-msgstr "控制启动器获取更新的频率"
+msgstr "Controla com que frequência o launcher recebe atualizações"
 
 #: ui
 msgctxt "SettingsGeneral"
 msgid "Stable"
-msgstr "正式版"
+msgstr "Estável"
 
 #: ui
 msgctxt "SettingsGeneral"
 msgid "Beta"
-msgstr "测试版"
+msgstr "Beta"
 
 #: ui
 msgctxt "SettingsGeneral"
 msgid "Open setup wizard"
-msgstr "打开设置向导"
+msgstr "Abrir assistente de configuração"
 
 #: ui
 msgctxt "SettingsGeneral"
 msgid "The setup wizard guides you through basic launcher settings"
-msgstr "设置向导可带你完成基本的启动器设置"
+msgstr "O assistente de configuração orienta você pelas configurações básicas do launcher"
 
 #: ui
 msgctxt "JavaRuntimeList"
 msgid "Scan failed"
-msgstr "扫描失败"
+msgstr "Falha na verificação"
 
 #: ui
 msgctxt "JavaRuntimeList"
 msgid "No installed Java runtimes detected"
-msgstr "未检测到已安装的 Java 运行环境"
+msgstr "Nenhum runtime do Java instalado detectado"
 
 #: ui
 msgctxt "JavaRuntimeList"
 msgid "After enabling \"Prefer Mojang-provided Java runtime\", Conic Launcher will automatically download the required Java from Mojang servers"
-msgstr "开启「优先使用 Mojang 提供的 Java 运行环境」后，Conic Launcher 会自动从 Mojang 服务器下载所需的 Java 运行环境"
+msgstr "Após ativar \"Runtime do Java fornecido pela Mojang\", o Conic Launcher baixará automaticamente o Java necessário dos servidores da Mojang"
 
 #: ui
 msgctxt "SettingsJvm"
 msgid "Auto-install Java runtime"
-msgstr "自动安装 Java 运行环境"
+msgstr "Instalar runtime do Java automaticamente"
 
 #: ui
 msgctxt "SettingsJvm"
 msgid "When enabled, the launcher will automatically download the appropriate Java runtime before launching. When disabled, only system-installed Java will be used"
-msgstr "开启后，启动器将在启动前会根据版本信息自动下载合适的 Java 运行环境。关闭后将仅尝试使用系统中已安装的 Java 启动游戏"
+msgstr "Quando ativado, o launcher baixará automaticamente o runtime adequado do Java antes de iniciar o jogo. Quando desativado, apenas o Java instalado no sistema será usado"
 
 #: ui
 msgctxt "SettingsJvm"
 msgid "Manage installed Java runtimes"
-msgstr "管理已安装的 Java 运行环境"
+msgstr "Gerenciar runtimes do Java instalados"
 
 #: ui
 msgctxt "SettingsJvm"
 msgid "Disabling a Java installation prevents the launcher from using it to launch the game"
-msgstr "关闭某个 Java 后，启动器将不会使用它来启动游戏"
+msgstr "Desativar uma instalação do Java impede que o launcher a use para iniciar o jogo"
 
 #: ui
 msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
-msgstr "正在扫描已安装的 Java 运行环境"
+msgstr "Procurando runtimes do Java instalados"
 

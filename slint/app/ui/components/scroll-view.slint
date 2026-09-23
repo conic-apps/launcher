@@ -1,0 +1,89 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// Vertical scroll container with a slim custom scrollbar
+// (src/components/ScrollView.vue).
+//
+// The Vue version uses Lenis for smooth wheel scrolling and draws its own
+// thumb (6px track pinned 8px from the right, 8px thumb at 35% opacity). Slint's
+// `Flickable` provides momentum scrolling; the thumb is bound to `content-y`.
+//
+// `content-y` is the Flickable offset (negative when scrolled down). Section
+// scrolling is done by assigning to it.
+export component ScrollView inherits Rectangle {
+    in-out property <length> content-y <=> flick.content-y;
+    out property <length> content-height: flick.content-height;
+
+    width: 100%;
+    height: 100%;
+    clip: true;
+    background: transparent;
+
+    flick := Flickable {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        interactive: true;
+        // Pin the content width to the viewport so only vertical scrolling is
+        // possible and children's preferred widths cannot feed back into the
+        // Flickable's content size (binding loop).
+        content-width: root.width;
+
+        content := VerticalLayout {
+            alignment: start;
+            @children
+        }
+    }
+
+    private property <length> track-height: max(0px, root.height - 16px);
+    private property <length> max-scroll: max(0px, root.content-height - root.height);
+    private property <length> thumb-height: root.max-scroll > 0px
+        ? max(32px, root.track-height * root.height / max(root.content-height, root.height))
+        : root.track-height;
+    private property <bool> scrollbar-visible: root.max-scroll > 0.5px;
+
+    scrollbar := Rectangle {
+        visible: root.scrollbar-visible;
+        x: root.width - 8px - 6px;
+        y: 8px;
+        width: 6px;
+        height: root.track-height;
+        background: transparent;
+        z: 500;
+
+        thumb := Rectangle {
+            width: track-touch.has-hover ? 10px : 8px;
+            x: track-touch.has-hover ? -2px : 0px;
+            height: root.thumb-height;
+            y: root.track-height > root.thumb-height
+                ? clamp(-root.content-y / root.max-scroll, 0, 1) * (root.track-height - root.thumb-height)
+                : 0px;
+            border-radius: 999px;
+            background: Theme.text;
+            opacity: track-touch.pressed ? 0.55 : track-touch.has-hover ? 0.55 : 0.35;
+            animate opacity { duration: 160ms; }
+            animate width { duration: 160ms; }
+        }
+
+        track-touch := TouchArea {
+            width: parent.width;
+            height: parent.height;
+            pointer-event(event) => {
+                if event.button == PointerEventButton.left
+                    && (event.kind == PointerEventKind.down || event.kind == PointerEventKind.move) {
+                    if root.track-height > root.thumb-height && root.max-scroll > 0px {
+                        root.content-y = -clamp(
+                            (self.mouse-y - root.thumb-height / 2) / (root.track-height - root.thumb-height),
+                            0,
+                            1,
+                        ) * root.max-scroll;
+                    }
+                }
+            }
+        }
+    }
+}

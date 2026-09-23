@@ -1,0 +1,93 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// Global settings state.
+//
+// Mirrors the Vue config store (src/store/config.ts + crates/config). Rust owns
+// the authoritative `Config` and seeds these properties before the window is
+// shown; the settings pages mutate them and call `changed()`, after which Rust
+// reads the properties back and persists them (debounced).
+//
+// Numeric text fields are strings on purpose: `TextInput` edits text, and Rust
+// parses them back into `usize` / `u64`. Sliders are `int`.
+export struct JavaRuntime {
+    major: int,
+    vendor: string,
+    version: string,
+    arch: string,
+    path: string,
+    enabled: bool,
+}
+
+export global AppConfig {
+    // ----- general -----
+    in-out property <string> language: "";
+    in-out property <bool> auto-update: true;
+    in-out property <string> update-channel: "stable";
+
+    // ----- launch -----
+    in-out property <string> launch-width: "854";
+    in-out property <string> launch-height: "480";
+    in-out property <bool> launch-fullscreen: false;
+    in-out property <bool> quit-after-launch: false;
+    in-out property <bool> auto-memory: true;
+    in-out property <string> max-memory: "2048";
+    in-out property <string> gc: "G1";
+    in-out property <string> extra-jvm-args: "";
+    in-out property <string> extra-mc-args: "";
+    in-out property <string> extra-class-paths: "";
+    in-out property <string> before-launch: "";
+    in-out property <string> wrap-command: "";
+    in-out property <string> after-launch: "";
+    in-out property <bool> ignore-invalid-certs: false;
+    in-out property <bool> ignore-patch-discrepancies: false;
+    in-out property <bool> skip-file-check: false;
+
+    // ----- jvm -----
+    in-out property <bool> prefer-mojang-java: true;
+    in-out property <[JavaRuntime]> java-runtimes: [];
+    in-out property <bool> java-scanning: false;
+    in-out property <string> java-scan-error: "";
+
+    // ----- appearance -----
+    in-out property <bool> palette-follow-system: true;
+    in-out property <string> palette: "Mocha";
+    in-out property <string> background-image: "";
+    in-out property <int> background-darkness: 0;
+    in-out property <bool> background-camera-move: true;
+    in-out property <bool> background-parallax: true;
+
+    // ----- audio -----
+    in-out property <bool> music-enabled: false;
+    in-out property <bool> resume-on-startup: true;
+    in-out property <bool> show-visualizer: true;
+    in-out property <bool> pause-on-launch: false;
+    in-out property <int> main-volume: 100;
+    in-out property <int> background-volume: 25;
+
+    // ----- download -----
+    in-out property <string> max-connections: "100";
+    in-out property <string> max-download-speed: "0";
+    in-out property <bool> use-system-proxy: true;
+
+    // ----- accessibility -----
+    in-out property <bool> release-reminder: false;
+    in-out property <bool> snapshot-reminder: false;
+    in-out property <bool> auto-game-lang: true;
+    in-out property <bool> high-contrast: false;
+
+    // ----- about -----
+    in-out property <string> app-version: "0.0.0";
+
+    // A setting was edited: Rust reads the properties back and saves.
+    callback changed();
+    // OS integrations (implemented in main.rs).
+    callback open-url(string);
+    callback open-path(string);
+    callback pick-background-image();
+    callback remove-background-image();
+    callback rescan-java();
+    // A Java runtime's enabled toggle changed (path, enabled).
+    callback set-java-enabled(string, bool);
+}

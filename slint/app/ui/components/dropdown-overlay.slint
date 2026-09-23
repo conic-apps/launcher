@@ -1,0 +1,99 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { Dropdown } from "../globals/dropdown.slint";
+
+// Floating dropdown list, mounted once at the application root (above the page
+// stack) so it can overflow the settings scroll area.
+//
+// Animation mirrors `BaseDropdownSelect.vue`: the panel expands / collapses
+// over 200ms with `ease`, animating height and opacity together. Slint
+// `animate` is interruptible, matching the Web Animations API behaviour.
+export component DropdownOverlay inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // 8px padding top/bottom + 1px border top/bottom + n*26px rows + (n-1)*4px
+    // spacing (mirrors `.options` / `li.select-option` in the Vue styles).
+    private property <length> natural-height: 18px + Dropdown.options.length * 26px
+        + max(0, Dropdown.options.length - 1) * 4px;
+    private property <length> panel-height: Dropdown.open ? root.natural-height : 0px;
+    private property <float> panel-opacity: Dropdown.open ? 1.0 : 0.0;
+
+    animate panel-height { duration: 200ms; easing: ease; }
+    animate panel-opacity { duration: 200ms; easing: ease; }
+
+    // Outside-click layer (behind the panel): closes the dropdown. Enabled only
+    // while open or still collapsing so it never blocks the app when idle.
+    TouchArea {
+        width: parent.width;
+        height: parent.height;
+        enabled: Dropdown.open || root.panel-height > 0.5px;
+        clicked => { Dropdown.open = false; }
+    }
+
+    panel := Rectangle {
+        x: Dropdown.anchor-x;
+        y: Dropdown.anchor-y;
+        width: Dropdown.anchor-width;
+        height: root.panel-height;
+        opacity: root.panel-opacity;
+        clip: true;
+        border-radius: 10px;
+        border-width: 1px;
+        border-color: Theme.lavender.transparentize(0.82);
+        background: Theme.base;
+        drop-shadow-color: #4500611d;
+        drop-shadow-blur: 10px;
+
+        // Swallow clicks on the panel padding so they don't reach the
+        // outside-click layer (the Vue list padding likewise does not close).
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+        }
+
+        VerticalLayout {
+            x: 1px;
+            y: 1px;
+            width: parent.width - 2px;
+            height: root.natural-height - 2px;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            padding-left: 10px;
+            padding-right: 10px;
+            spacing: 4px;
+
+            for option[index] in Dropdown.options : Rectangle {
+                height: 26px;
+                border-radius: 6px;
+                background: Dropdown.current == option ? #ffffff17
+                    : option-touch.has-hover ? #ffffff1f
+                    : transparent;
+                animate background { duration: 30ms; }
+
+                Text {
+                    text: Dropdown.display-name[index];
+                    font-size: 12px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.text.transparentize(0.1);
+                    x: 8px;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                option-touch := TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    clicked => {
+                        Dropdown.chosen = option;
+                        Dropdown.choose-serial = Dropdown.choose-serial + 1;
+                        Dropdown.open = false;
+                    }
+                }
+            }
+        }
+    }
+}
