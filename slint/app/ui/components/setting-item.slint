@@ -4,6 +4,7 @@
 
 import { Theme } from "../theme.slint";
 import { AppIcon } from "app-icon.slint";
+import { FocusManager } from "../globals/focus.slint";
 
 // A single settings row (src/components/SettingItem.vue).
 //
@@ -33,20 +34,25 @@ export component SettingItem inherits Rectangle {
     callback reset;
 
     width: 100%;
-    background: root.pressed || ((root.navigable || root.clickable) && touch.pressed) ? Theme.surface-2
-        : root.hovered || ((root.navigable || root.clickable) && touch.has-hover) ? Theme.surface-1
-        : Theme.surface-0;
+    background: root.pressed || ((root.navigable || root.clickable) && touch.pressed) ? Theme.setting-item-background-active
+        : root.hovered || ((root.navigable || root.clickable) && touch.has-hover) ? Theme.setting-item-background-hover
+        : Theme.setting-item-background;
     animate background { duration: 50ms; }
     opacity: root.item-disabled ? 0.6 : 1.0;
 
     // Declared before the content so controls (selects, switches, reset
     // buttons) stay on top and keep receiving pointer events; empty areas fall
-    // through to this touch area.
+    // through to this touch area. It is always enabled (even for plain rows) so
+    // that clicking a row blurs any focused text field.
     touch := TouchArea {
         width: root.width;
         height: root.height;
-        enabled: root.navigable || root.clickable;
-        clicked => { root.clicked(); }
+        clicked => {
+            FocusManager.clear();
+            if (root.navigable || root.clickable) {
+                root.clicked();
+            }
+        }
     }
 
     HorizontalLayout {
@@ -104,7 +110,7 @@ export component SettingItem inherits Rectangle {
                         text: root.title;
                         font-size: 13px;
                         font-weight: Theme.font-weight-normal;
-                        color: Theme.text.transparentize(0.1);
+                        color: Theme.default-text-color.transparentize(0.1);
                     }
 
                     for tag[index] in root.tags : Rectangle {
@@ -119,7 +125,7 @@ export component SettingItem inherits Rectangle {
                             text: tag;
                             font-size: 11px;
                             font-weight: Theme.font-weight-normal;
-                            color: Theme.text.transparentize(0.1);
+                            color: Theme.default-text-color.transparentize(0.1);
                             x: (parent.width - self.width) / 2;
                             y: (parent.height - self.height) / 2;
                         }
@@ -135,7 +141,7 @@ export component SettingItem inherits Rectangle {
                         AppIcon {
                             name: "refresh";
                             size: 16px;
-                            icon-color: Theme.text.transparentize(0.1);
+                            icon-color: Theme.default-text-color.transparentize(0.1);
                             x: (parent.width - self.width) / 2;
                             y: (parent.height - self.height) / 2;
                         }
@@ -150,8 +156,8 @@ export component SettingItem inherits Rectangle {
                     text: root.description;
                     font-size: 12px;
                     font-weight: Theme.font-weight-normal;
-                    // CSS: rgba(text, 0.849) at 60% element opacity.
-                    color: Theme.text.with-alpha(0.509);
+                    // CSS: rgba(default-text, 0.849) at 60% element opacity.
+                    color: Theme.default-text-color.with-alpha(0.509);
                     wrap: word-wrap;
                     line-height-factor: 1.1;
                 }
@@ -167,7 +173,7 @@ export component SettingItem inherits Rectangle {
             if root.navigable : AppIcon {
                 name: "chevron-forward";
                 size: 17px;
-                icon-color: Theme.text.transparentize(0.1);
+                icon-color: Theme.default-text-color.transparentize(0.1);
             }
 
             // `.setting-item .icon` chevron has `margin-right: 4px`.

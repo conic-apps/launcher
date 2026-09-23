@@ -5,6 +5,7 @@
 import { Theme } from "../theme.slint";
 import { AppIcon } from "app-icon.slint";
 import { Dropdown } from "../globals/dropdown.slint";
+import { FocusManager } from "../globals/focus.slint";
 
 // Dropdown select (src/components/BaseDropdownSelect.vue), used for the
 // language picker.
@@ -48,10 +49,10 @@ export component BaseDropdownSelect inherits Rectangle {
     value-box := Rectangle {
         width: root.width;
         height: root.height;
-        border-radius: 6px;
+        border-radius: Theme.controllers-border-radius;
         border-width: 1px;
-        border-color: Theme.lavender.transparentize(0.82);
-        background: value-touch.has-hover ? Theme.surface-2 : Theme.surface-1;
+        border-color: Theme.controllers-border;
+        background: value-touch.has-hover ? Theme.controllers-background-hover : Theme.controllers-background;
         opacity: value-touch.pressed ? 0.8 : 1.0;
         animate background { duration: 70ms; }
 
@@ -65,14 +66,14 @@ export component BaseDropdownSelect inherits Rectangle {
                 text: root.selected-label != "" ? root.selected-label : root.placeholder;
                 font-size: 12px;
                 font-weight: Theme.font-weight-normal;
-                color: Theme.text.transparentize(0.1);
+                color: Theme.default-text-color.transparentize(0.1);
                 overflow: elide;
             }
 
             AppIcon {
                 name: "chevron-down";
                 size: 14px;
-                icon-color: Theme.text.transparentize(0.1);
+                icon-color: Theme.default-text-color.transparentize(0.1);
                 transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
                 // `rotateX` keyframes dip to 0.7 at 90deg (scale 0 here).
                 opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
@@ -83,6 +84,7 @@ export component BaseDropdownSelect inherits Rectangle {
             width: parent.width;
             height: parent.height;
             clicked => {
+                FocusManager.clear();
                 if (Dropdown.open) {
                     Dropdown.open = false;
                 } else {

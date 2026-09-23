@@ -130,8 +130,18 @@ msgstr "Conic Launcher의 기본 미러 구성에는 bangbang93이 제공하는 
 
 #: ui
 msgctxt "SettingsAbout"
-msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
-msgstr "Conic Launcher는 공식 Minecraft 제품이 아니며, Mojang Studios의 승인을 받았거나 제휴 관계에 있지 않습니다. \"Minecraft\"는 Mojang AB의 상표입니다. 이 프로젝트에서 Minecraft 브랜드의 모든 사용은 Mojang Studios 브랜드 및 에셋 가이드라인을 준수합니다."
+msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios "
+msgstr "Conic Launcher는 공식 Minecraft 제품이 아니며, Mojang Studios의 승인을 받았거나 제휴 관계에 있지 않습니다. \"Minecraft\"는 Mojang AB의 상표입니다. 이 프로젝트에서 Minecraft 브랜드의 모든 사용은 Mojang Studios "
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Brand and Asset Guidelines"
+msgstr "브랜드 및 에셋 가이드라인"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "."
+msgstr "을 준수합니다."
 
 #: ui
 msgctxt "SettingsAccessibility"

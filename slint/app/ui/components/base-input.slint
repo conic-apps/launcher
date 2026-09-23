@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../theme.slint";
+import { AppIcon } from "app-icon.slint";
+import { FocusManager } from "../globals/focus.slint";
 
 // Text / number input (src/components/BaseInput.vue).
 //
@@ -10,6 +12,10 @@ import { Theme } from "../theme.slint";
 // lavender and the background surface-2. The Vue original only commits the
 // model on blur (lazy-update-model); this version commits on `edited` and lets
 // the Rust side debounce disk writes, which behaves the same for the user.
+//
+// `number-only` fields draw the two step buttons (up/down chevrons stacked in
+// one column) that the native `<input type="number">` spinner provides in the
+// Vue original.
 export component BaseInput inherits Rectangle {
     in property <string> placeholder: "";
     in property <length> input-width: 400px;
@@ -20,14 +26,31 @@ export component BaseInput inherits Rectangle {
 
     width: input-width;
     height: 30px;
-    border-radius: 6px;
+    border-radius: Theme.controllers-border-radius;
     border-width: 1px;
-    border-color: text-input.has-focus ? Theme.lavender : Theme.lavender.transparentize(0.82);
-    background: text-input.has-focus ? Theme.surface-2
-        : input-touch.has-hover ? Theme.surface-2
-        : Theme.surface-1;
+    border-color: text-input.has-focus ? Theme.controllers-outline-focus : Theme.controllers-border;
+    background: text-input.has-focus ? Theme.controllers-background-focus
+        : input-touch.has-hover ? Theme.controllers-background-hover
+        : Theme.controllers-background;
     opacity: root.input-enabled ? 1.0 : 0.6;
     animate background { duration: 100ms; }
+
+    private property <length> spinner-width: root.number-only ? 17px : 0px;
+
+    // Mirrors the global counter so a local `changed` handler can drop focus
+    // (Slint's `changed` does not accept a qualified global property).
+    private property <int> clear-sequence: FocusManager.clear-sequence;
+    changed clear-sequence => { text-input.clear-focus(); }
+
+    // Steps a number-only field by `delta`, ignoring empty / non-numeric text.
+    // `round` returns an int, which Slint renders into the string property
+    // without a decimal part.
+    function step(delta: int) {
+        if (root.value.is-float()) {
+            root.value = round(root.value.to-float() + delta);
+            root.edited();
+        }
+    }
 
     // Hover tracker (declared before the field so the field stays clickable).
     input-touch := TouchArea {
@@ -38,12 +61,17 @@ export component BaseInput inherits Rectangle {
     text-input := TextInput {
         x: 8px;
         y: 2px;
-        width: parent.width - 16px;
+        width: parent.width - 16px - root.spinner-width;
         height: parent.height - 4px;
         text <=> root.value;
         font-size: 13px;
         font-weight: Theme.font-weight-normal;
-        color: Theme.text.transparentize(0.1);
+        color: Theme.default-text-color.transparentize(0.1);
+        // The macOS backend draws the caret in the selection background colour
+        // (forced to full alpha), so a translucent text tint yields a text-
+        // coloured caret while keeping the selection highlight subtle.
+        selection-background-color: Theme.default-text-color.with-alpha(0.3);
+        selection-foreground-color: Theme.default-text-color;
         input-type: root.number-only ? number : text;
         single-line: true;
         vertical-alignment: center;
@@ -55,8 +83,69 @@ export component BaseInput inherits Rectangle {
         text: root.placeholder;
         font-size: 13px;
         font-weight: Theme.font-weight-normal;
-        color: Theme.text.transparentize(0.2);
+        color: Theme.default-text-color.transparentize(0.2);
         x: 8px;
         y: (parent.height - self.height) / 2;
+    }
+
+    // Native spinner replacement: two stacked buttons in a single column at the
+    // right edge. Reuses the `chevron-down` glyph, flipped for the up step.
+    if root.number-only : Rectangle {
+        x: parent.width - root.spinner-width;
+        y: 1px;
+        width: root.spinner-width;
+        height: parent.height - 2px;
+        background: transparent;
+
+        up-button := Rectangle {
+            y: 0;
+            width: parent.width;
+            height: parent.height / 2;
+            border-top-right-radius: 5px;
+            background: up-touch.pressed ? Theme.controllers-background-focus
+                : up-touch.has-hover ? Theme.controllers-background-hover
+                : transparent;
+
+            AppIcon {
+                name: "chevron-down";
+                size: 9px;
+                icon-color: Theme.default-text-color.transparentize(0.25);
+                transform-rotation: 180deg;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+
+            up-touch := TouchArea {
+                width: parent.width;
+                height: parent.height;
+                enabled: root.input-enabled;
+                clicked => { root.step(1); }
+            }
+        }
+
+        down-button := Rectangle {
+            y: parent.height / 2;
+            width: parent.width;
+            height: parent.height / 2;
+            border-bottom-right-radius: 5px;
+            background: down-touch.pressed ? Theme.controllers-background-focus
+                : down-touch.has-hover ? Theme.controllers-background-hover
+                : transparent;
+
+            AppIcon {
+                name: "chevron-down";
+                size: 9px;
+                icon-color: Theme.default-text-color.transparentize(0.25);
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+
+            down-touch := TouchArea {
+                width: parent.width;
+                height: parent.height;
+                enabled: root.input-enabled;
+                clicked => { root.step(-1); }
+            }
+        }
     }
 }

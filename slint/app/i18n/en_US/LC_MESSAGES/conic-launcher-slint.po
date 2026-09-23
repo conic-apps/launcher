@@ -130,8 +130,18 @@ msgstr "The default mirror configuration of Conic Launcher includes BMCLAPI prov
 
 #: ui
 msgctxt "SettingsAbout"
-msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
-msgstr "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
+msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios "
+msgstr "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios "
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Brand and Asset Guidelines"
+msgstr "Brand and Asset Guidelines"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "."
+msgstr "."
 
 #: ui
 msgctxt "SettingsAccessibility"

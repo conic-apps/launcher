@@ -18,7 +18,7 @@ import { Icons } from "../icons.slint";
 export component AppIcon inherits Rectangle {
     in property <string> name;
     in property <length> size: 20px;
-    in property <color> icon-color: Theme.text.transparentize(0.1);
+    in property <color> icon-color: Theme.default-text-color.transparentize(0.1);
 
     width: size;
     height: size;

@@ -130,8 +130,18 @@ msgstr "Conic Launcher'ın varsayılan ayna yapılandırması, bazı Minecraft k
 
 #: ui
 msgctxt "SettingsAbout"
-msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
-msgstr "Conic Launcher resmi bir Minecraft ürünü değildir ve Mojang Studios tarafından onaylanmamıştır ya da Mojang Studios ile bağı yoktur. \"Minecraft\", Mojang AB'nin ticari markasıdır. Bu projede Minecraft markasının her türlü kullanımı Mojang Studios Marka ve Varlık Yönergeleri'ne uygundur."
+msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios "
+msgstr "Conic Launcher resmi bir Minecraft ürünü değildir ve Mojang Studios tarafından onaylanmamıştır ya da Mojang Studios ile bağı yoktur. \"Minecraft\", Mojang AB'nin ticari markasıdır. Bu projede Minecraft markasının her türlü kullanımı Mojang Studios "
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Brand and Asset Guidelines"
+msgstr "Marka ve Varlık Yönergeleri"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "."
+msgstr "'ne uygundur."
 
 #: ui
 msgctxt "SettingsAccessibility"

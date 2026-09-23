@@ -130,8 +130,18 @@ msgstr "A configuração de espelhos padrão do Conic Launcher inclui o BMCLAPI,
 
 #: ui
 msgctxt "SettingsAbout"
-msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
-msgstr "O Conic Launcher não é um produto oficial do Minecraft e não é aprovado nem associado à Mojang Studios. \"Minecraft\" é uma marca registrada da Mojang AB. Qualquer uso da marca Minecraft neste projeto está em conformidade com as Diretrizes de Marca e Ativos da Mojang Studios."
+msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios "
+msgstr "O Conic Launcher não é um produto oficial do Minecraft e não é aprovado nem associado à Mojang Studios. \"Minecraft\" é uma marca registrada da Mojang AB. Qualquer uso da marca Minecraft neste projeto está em conformidade com as "
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Brand and Asset Guidelines"
+msgstr "Diretrizes de Marca e Ativos"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "."
+msgstr " da Mojang Studios."
 
 #: ui
 msgctxt "SettingsAccessibility"

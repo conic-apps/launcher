@@ -135,6 +135,14 @@ component name. To add or refresh a language, add/update its directory under
 `app/i18n/` (and the `bundled_locale()` mapping in `src/main.rs`). Catalogs can
 be (re)generated with `slint-tr-extractor` (not currently installed).
 
+The About disclaimer is the one rich-text string: `StyledText` renders it with
+an interpolated markdown link (`@markdown("\{@tr(…)}[\{@tr(…)}](url)…")`), so
+only "Brand and Asset Guidelines" is a link. Its sentence is therefore split
+into three catalog entries — the text before the link, the link label, and the
+text after it (the Vue original embedded the `<a>` in a single `v-html` string).
+Slint always underlines `Style::Link` spans and 1.18 has no link-hover state, so
+the underline is always visible (it can't be limited to hover).
+
 ## State ownership
 
 Per the migration plan:
@@ -159,12 +167,31 @@ Per the migration plan:
   flipping chevron (200ms, `ease-in-out`, with the 0.7 opacity dip), matching
   `BaseDropdownSelect.vue`. The list is drawn by `DropdownOverlay` at the app
   root because Slint's `z` only orders siblings and the scroll area clips.
+- `SettingCollapse` expand/collapse animation (200ms height + opacity,
+  `cubic-bezier(0.215, 0.61, 0.355, 1)`) and its chevron flip, matching
+  `SettingCollapse.vue`.
+- `BaseInput` numeric fields draw the two step buttons (up/down chevrons stacked
+  in one column) that the native `<input type="number">` spinner provides in the
+  Vue original; the caret is tinted with the text colour via the selection
+  background. Clicking outside a text field blurs it (`globals/focus.slint`).
 - Icon rendering for the migrated screens (`icons.slint` + `AppIcon`).
 - Config load/save (`slint-config`) wired to the `AppConfig` global: every
   setting is persisted to the same `~/.conic[-debug]/config.toml` as the Tauri
   app. Editing text fields saves on a 400 ms debounce.
 - Language switching across all 12 bundled locales, applied at runtime without a
   restart (see Internationalization).
+- Theme switching: the four Catppuccin flavors (Latte/Frappé/Macchiato/Mocha),
+  each with and without high contrast — eight schemes, mirroring
+  `src/assets/styles/catppuccin-theme{,-hc}.css`. `Theme.active-palette` resolves
+  `appearance.palette`, `palette_follow_system` (via `Palette.color-scheme`) and
+  `accessibility.high_contrast_mode`. The semantic tokens (`--controllers-*`,
+  `--setting-item-*`, `--setting-group-*`, `--toggle-switch-*`, `--card-*`,
+  `--default-text-color`, …) are derived per scheme, so Latte's remapped
+  surfaces and high contrast's opaque hairlines / whitened text match the
+  original. Slint globals cannot animate, so `ThemeProvider` (instantiated once
+  in `App`) owns the color tokens, eases them over 300ms `ease` on a palette
+  change, and forwards each value into the `Theme` global — the equivalent of
+  the Vue frontend's `.changing-theme` class.
 - `slint-platform` (OS detection), `slint-window` (window controls) and
   `slint-config`.
 
@@ -172,7 +199,8 @@ Not yet migrated: the other real views (`GameView`, `LaunchView`,
 `AccountsView`, the setup wizard), the overlay layer (dialogs, content panels,
 command palette, music player, instance settings), the background renderer, and
 the full Java runtime scanner (settings use a lightweight subset). The settings
-entry animations are also intentionally not ported this round;
+page's GSAP entry animation (the fade/slide-in of the menu and rows) is also
+intentionally not ported this round;
 `views/game-placeholder.slint` stands in for `GameView`.
 
 ## Conventions

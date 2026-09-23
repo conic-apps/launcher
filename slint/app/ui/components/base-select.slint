@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../theme.slint";
+import { FocusManager } from "../globals/focus.slint";
 
 // Segmented select (src/components/BaseSelect.vue).
 //
@@ -19,9 +20,9 @@ export component BaseSelect inherits Rectangle {
     // CSS: option height 22px + 1px border on each side of the (auto-height)
     // wrapper => 24px total (box-sizing: border-box).
     height: 24px;
-    background: Theme.surface-1;
+    background: Theme.controllers-background;
     border-width: 1px;
-    border-color: Theme.lavender.transparentize(0.82);
+    border-color: Theme.controllers-border;
     border-radius: 4px;
     clip: true;
 
@@ -35,7 +36,7 @@ export component BaseSelect inherits Rectangle {
                 text: root.display-name[index];
                 font-size: 12px;
                 font-weight: Theme.font-weight-normal;
-                color: root.value == option ? Theme.text-inverse : Theme.text.transparentize(0.1);
+                color: root.value == option ? Theme.text-inverse : Theme.default-text-color.transparentize(0.1);
                 x: 8px;
                 y: (parent.height - self.height) / 2;
             }
@@ -45,13 +46,14 @@ export component BaseSelect inherits Rectangle {
                 x: parent.width - 1px;
                 width: 1px;
                 height: parent.height;
-                background: Theme.lavender.transparentize(0.82);
+                background: Theme.controllers-border;
             }
 
             TouchArea {
                 width: parent.width;
                 height: parent.height;
                 clicked => {
+                    FocusManager.clear();
                     root.value = option;
                     root.selected(option);
                 }

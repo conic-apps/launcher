@@ -130,8 +130,18 @@ msgstr "La configuración de servidores espejo predeterminada de Conic Launcher 
 
 #: ui
 msgctxt "SettingsAbout"
-msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines."
-msgstr "Conic Launcher no es un producto oficial de Minecraft y no está aprobado ni asociado a Mojang Studios. «Minecraft» es una marca comercial de Mojang AB. Cualquier uso de la marca Minecraft en este proyecto cumple con las directrices de marca y recursos de Mojang Studios."
+msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios "
+msgstr "Conic Launcher no es un producto oficial de Minecraft y no está aprobado ni asociado a Mojang Studios. «Minecraft» es una marca comercial de Mojang AB. Cualquier uso de la marca Minecraft en este proyecto cumple con las "
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "Brand and Asset Guidelines"
+msgstr "directrices de marca y recursos"
+
+#: ui
+msgctxt "SettingsAbout"
+msgid "."
+msgstr " de Mojang Studios."
 
 #: ui
 msgctxt "SettingsAccessibility"

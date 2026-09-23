@@ -100,7 +100,7 @@ export component TitleBar inherits Rectangle {
                 hotkey-text := Text {
                     text: root.search-hotkey;
                     font-size: 11px;
-                    color: Theme.text.transparentize(0.4);
+                    color: Theme.default-text-color.transparentize(0.4);
                     x: (hotkey-chip.width - self.width) / 2;
                     y: (hotkey-chip.height - self.height) / 2;
                 }

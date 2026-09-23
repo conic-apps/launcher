@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../theme.slint";
+import { FocusManager } from "../globals/focus.slint";
 
 // Small button (src/components/BaseButton.vue). Used for "Remove image".
 // The Vue component is `width: 100%`; because it is placed in an auto-sized
@@ -10,18 +11,20 @@ import { Theme } from "../theme.slint";
 // to the label plus the 16px horizontal padding.
 export component BaseButton inherits Rectangle {
     in property <string> text: "";
-    in property <color> text-color: Theme.text.transparentize(0.1);
+    in property <color> text-color: Theme.default-text-color.transparentize(0.1);
     in property <bool> button-enabled: true;
     callback clicked;
 
     width: button-label.preferred-width + 32px;
     height: 30px;
-    border-radius: 6px;
+    border-radius: Theme.controllers-border-radius;
     border-width: 1px;
-    border-color: Theme.lavender.transparentize(0.82);
+    border-color: Theme.controllers-border;
+    // Vue BaseButton: normal `--controllers-background`, hover `surface2` at
+    // 85%, active raw `surface2`.
     background: button-touch.pressed ? Theme.surface-2
         : button-touch.has-hover ? Theme.surface-2.transparentize(0.15)
-        : Theme.surface-1;
+        : Theme.controllers-background;
     opacity: root.button-enabled ? 1.0 : 0.5;
     animate background { duration: 150ms; }
 
@@ -38,6 +41,9 @@ export component BaseButton inherits Rectangle {
         width: parent.width;
         height: parent.height;
         enabled: root.button-enabled;
-        clicked => { root.clicked(); }
+        clicked => {
+            FocusManager.clear();
+            root.clicked();
+        }
     }
 }

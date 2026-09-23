@@ -76,7 +76,10 @@ export component SettingsAbout inherits VerticalLayout {
         width: 100%;
         padding-top: 16px;
         spacing: 0px;
-        alignment: center;
+        // Center the logo and text horizontally. In a `VerticalLayout`,
+        // `cross-axis-alignment` controls the horizontal axis (`alignment`
+        // would only affect the vertical packing).
+        cross-axis-alignment: center;
 
         Image {
             width: 24px;
@@ -94,7 +97,7 @@ export component SettingsAbout inherits VerticalLayout {
             text: "Conic Launcher";
             font-size: 12px;
             font-weight: 600;
-            color: Theme.text.transparentize(0.1);
+            color: Theme.default-text-color.transparentize(0.1);
             horizontal-alignment: center;
         }
 
@@ -107,7 +110,7 @@ export component SettingsAbout inherits VerticalLayout {
             text: AppConfig.app-version;
             font-size: 9px;
             font-weight: Theme.font-weight-normal;
-            color: Theme.text.transparentize(0.1);
+            color: Theme.default-text-color.transparentize(0.1);
             horizontal-alignment: center;
         }
 
@@ -120,7 +123,7 @@ export component SettingsAbout inherits VerticalLayout {
             text: "Copyright 2022-2026 ConicMC developers. All rights reserved.";
             font-size: 9px;
             font-weight: Theme.font-weight-normal;
-            color: Theme.text.transparentize(0.1);
+            color: Theme.default-text-color.transparentize(0.1);
             horizontal-alignment: center;
         }
 
@@ -134,19 +137,20 @@ export component SettingsAbout inherits VerticalLayout {
             height: disclaimer-text.height;
             background: transparent;
 
-            disclaimer-text := Text {
-                text: @tr("Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios Brand and Asset Guidelines.");
-                font-size: 9px;
-                font-weight: Theme.font-weight-normal;
-                color: Theme.text.transparentize(0.1);
-                wrap: word-wrap;
-                line-height-factor: 1.5;
+            // Only "Brand and Asset Guidelines" is a link (mirrors the Vue `<a>`
+            // + the click handler that only opens the URL for anchor targets).
+            // The sentence is split into before/link/after translations so the
+            // link can hug the translated label. Slint always underlines
+            // `Style::Link` spans (1.18 has no link-hover state), so the
+            // underline is always visible.
+            disclaimer-text := StyledText {
                 width: 100%;
+                text: @markdown("\{@tr("Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios ")}[\{@tr("Brand and Asset Guidelines")}](https://www.minecraft.net/en-us/usage-guidelines)\{@tr(".")}");
+                default-color: Theme.default-text-color.transparentize(0.1);
+                default-font-size: 9px;
                 horizontal-alignment: center;
-            }
-
-            TouchArea {
-                clicked => { AppConfig.open-url("https://www.minecraft.net/en-us/usage-guidelines"); }
+                link-color: Theme.blue;
+                link-clicked(link) => { AppConfig.open-url(link); }
             }
         }
     }

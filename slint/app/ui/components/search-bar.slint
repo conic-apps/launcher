@@ -12,9 +12,9 @@ export component SearchBar inherits Rectangle {
     callback activated;
 
     height: 26px;
-    border-radius: 6px;
+    border-radius: Theme.controllers-border-radius;
     border-width: 1px;
-    border-color: Theme.controllers-border.transparentize(0.82);
+    border-color: Theme.controllers-border;
     background: Theme.controllers-background;
     clip: true;
 
@@ -30,13 +30,13 @@ export component SearchBar inherits Rectangle {
         height: 20px;
         x: 10px;
         y: (root.height - self.height) / 2;
-        fill: Theme.text.transparentize(0.1);
+        fill: Theme.default-text-color.transparentize(0.1);
     }
 
     Text {
         text: root.placeholder;
         font-size: 13px;
-        color: Theme.text.transparentize(0.2);
+        color: Theme.default-text-color.transparentize(0.2);
         x: 36px;
         y: (root.height - self.height) / 2;
     }
