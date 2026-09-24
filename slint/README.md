@@ -30,8 +30,11 @@ slint/
       globals/
         navigation.slint            # global page navigation (src/store/navigation.ts)
         settings.slint              # global config state (the "config store")
+        game.slint                  # game view state (src/store/instance.ts + …)
       components/                   # shared/reusable pieces
         title-bar.slint
+        account-avatar.slint
+        base-loading.slint
         title-bar/navigation-button.slint
         title-bar/title-bar-action-button.slint
         search-bar.slint
@@ -51,11 +54,17 @@ slint/
       views/
         settings-view.slint         # src/views/SettingsView.vue
         settings/                   # the eight settings sections + InfoBox
-        game-placeholder.slint      # stand-in for GameView
+        game-view.slint             # src/views/GameView.vue
+        game/                       # summary, list, toolbar, footer, dropdowns
+        game-placeholder.slint      # stand-in for the not-yet-migrated views
   crates/
     platform/                       # Tauri-free mirror of crates/platform
     window/                         # window-control service (min/max/fullscreen)
     config/                         # Tauri-free mirror of crates/config
+    folder/                         # Tauri-free mirror of crates/folder
+    account/                        # Tauri-free mirror of crates/account
+    instance/                       # Tauri-free mirror of crates/instance
+    content/                        # Tauri-free mirror of crates/content (counts)
 ```
 
 ## Naming
@@ -86,7 +95,7 @@ are embedded/bundled at compile time.
 The original stylesheet (`src/assets/styles/main.css`) used:
 
 ```css
-font-family: 'Nunito', 'Comfortaa', system-ui, …;   /* body */
+font-family: "Nunito", "Comfortaa", system-ui, …; /* body */
 ```
 
 where `Nunito` was a **digits-only subset** (`unicode-range: U+0030-0039`) so
@@ -115,7 +124,7 @@ Uses Slint's built-in translation support:
   match the crate name (the gettext domain is `CARGO_PKG_NAME`).
 - `build.rs` bundles them via
   `CompilerConfiguration::with_bundled_translations("i18n")`.
-- `src/main.rs` picks a language at startup with
+- `config_bridge::select_locale` picks a language at startup with
   `slint::select_bundled_translation(&lang)`: the language saved in the config,
   or the system locale when unset ("follow system"). An unknown code falls back
   to `en_US`.
@@ -125,15 +134,18 @@ Uses Slint's built-in translation support:
 - `CONIC_LOCALE=fr_FR` forces a locale and disables runtime switching (useful
   for testing).
 - The **default translation context is the Slint component name**, so entries
-  use e.g. `msgctxt "App"` / `msgctxt "TitleBar"`.
+  use e.g. `msgctxt "App"` / `msgctxt "TitleBar"`. Globals can set an explicit
+  context with `@tr("GameTime" => "…")`, which `GameTime` uses for the relative
+  time strings.
 
 All 12 launcher languages ship a catalog (`en_US` is the fallback):
 `zh_CN`, `zh_TW`, `ja_JP`, `ko_KR`, `de_DE`, `fr_FR`, `es_ES`, `pt_BR`, `ru_RU`,
 `tr_TR`, `pl_PL`. Catalogs were seeded from the Vue `src/locales/*.ts` settings
-strings; the `msgid`s are the `@tr()` source strings and the `msgctxt` is the
-component name. To add or refresh a language, add/update its directory under
-`app/i18n/` (and the `bundled_locale()` mapping in `src/main.rs`). Catalogs can
-be (re)generated with `slint-tr-extractor` (not currently installed).
+and game strings; the `msgid`s are the `@tr()` source strings and the `msgctxt`
+is the component name. To add or refresh a language, add/update its directory
+under `app/i18n/` (and the `bundled_locale()` mapping in
+`src/config_bridge.rs`). Catalogs can be (re)generated with
+`slint-tr-extractor` (not currently installed).
 
 The About disclaimer is the one rich-text string: `StyledText` renders it with
 an interpolated markdown link (`@markdown("\{@tr(…)}[\{@tr(…)}](url)…")`), so
@@ -178,6 +190,12 @@ Per the migration plan:
 - Config load/save (`slint-config`) wired to the `AppConfig` global: every
   setting is persisted to the same `~/.conic[-debug]/config.toml` as the Tauri
   app. Editing text fields saves on a 400 ms debounce.
+- Data directory layout (`slint-folder`), a Tauri-free mirror of
+  `crates/folder`: the shared `~/.conic[-debug]` root, `config.toml`, music and
+  log folders, Minecraft folder helpers, and the launcher-profiles seed written
+  at startup. The data-root helpers that previously lived in `slint-config` were
+  removed in favour of `slint_folder::DATA_LOCATION`, matching the Tauri app's
+  `folder` plugin.
 - Language switching across all 12 bundled locales, applied at runtime without a
   restart (see Internationalization).
 - Theme switching: the four Catppuccin flavors (Latte/Frappé/Macchiato/Mocha),
@@ -192,16 +210,43 @@ Per the migration plan:
   in `App`) owns the color tokens, eases them over 300ms `ease` on a palette
   change, and forwards each value into the `Theme` global — the equivalent of
   the Vue frontend's `.changing-theme` class.
-- `slint-platform` (OS detection), `slint-window` (window controls) and
-  `slint-config`.
+- The game screen (`GameView`): `InstanceSummary` (current-instance title,
+  metadata, launch/actions row and the local-content previews), `InstancesList`
+  (grouped/filtered instance cards with the horizontal-offset rail) and
+  `GameFooterBar` (account avatar/switcher, connect, new instance, install pack).
+  The `GameState` global carries the domain data; `slint-instance`,
+  `slint-account` and `slint-content` (a lightweight count-only mirror) provide
+  it. Sorting/grouping/filtering and the flattened `[GameRow]` model are built
+  in `app/src/game.rs`. The `InstanceListDropdown` and `AccountListDropdown`
+  panels are self-contained.
+- The instance list's **Lenis + GSAP "curved rail"** (`views/game/instances-list.slint`):
+  cards glide along a parabola — pulled 160px to the left as they cross the
+  middle of the viewport and released back at the edges — and the list scrolls
+  with Lenis' smoothed offset (`lerp: 0.16`, scaled by the frame time, taken from
+  a `GameState.now-ms()` callback because Slint has no wall clock). A `Timer`
+  drives `scroll-y` instead of a `Flickable`, which would layer its own
+  fixed-duration wheel animation on top and fight the programmatic scrolling the
+  view needs (centring on open, gliding to a selection, freezing during a group
+  collapse). Wheel events are captured by the `TouchArea` wrapping the content:
+  the cards' own `TouchArea`s reject scroll events, so the wheel bubbles to it.
+  The same curve carries every list change — the rows' `y` is animated and their
+  `x` is a pure function of it, so a reorder travels along the rail exactly like
+  the gsap `railKeyframes` sampling `parallaxX`. Rows are reconciled in place by
+  `uid` in `game.rs`, so their items survive a relayout; a collapsed group keeps
+  its cards parked on their header's slot at `opacity: 0` so they fade and glide
+  instead of being destroyed. The custom scrollbar, the toolbar and the
+  `GameIntro` timeline (the Vue `onMounted`/`playIntro` GSAP entrance, staggered
+  through the `delay` of each `animate`) are ported with it.
+- `slint-platform` (OS detection), `slint-window` (window controls),
+  `slint-config`, `slint-folder`, `slint-account`, `slint-instance` and
+  `slint-content`.
 
-Not yet migrated: the other real views (`GameView`, `LaunchView`,
-`AccountsView`, the setup wizard), the overlay layer (dialogs, content panels,
-command palette, music player, instance settings), the background renderer, and
-the full Java runtime scanner (settings use a lightweight subset). The settings
-page's GSAP entry animation (the fade/slide-in of the menu and rows) is also
-intentionally not ported this round;
-`views/game-placeholder.slint` stands in for `GameView`.
+Not yet migrated: `LaunchView`, `AccountsView`, the setup wizard, the overlay
+layer (dialogs, content panels, command palette, music player, instance
+settings), the background renderer, and the full Java runtime scanner (settings
+use a lightweight subset). The game view's click-to-open content overlays and
+the account skin/audio-visualizer rendering are stubbed; `views/game-placeholder.slint`
+stands in for the not-yet-migrated views.
 
 ## Conventions
 
@@ -214,6 +259,35 @@ intentionally not ported this round;
   the custom title bar.
 
 ## Known issues / notes
+
+- **Instance list deviations** from the Vue original, all deliberate:
+    - Cards no longer change opacity as they enter and leave the viewport. The
+      original dims them to 0.6 outside the scroll view's visible area and brings
+      them back to 1 inside it (the `ScrollTrigger` `visible` class); that effect is
+      dropped in the migration, so cards always draw at full opacity.
+    - Expanding a group glides its cards back out along the rail, while the
+      original re-creates them and slides them in from +24px (it has no notion of a
+      "parked" row). Collapsing matches the original.
+    - Touch drag-panning is not implemented. The Vue list scrolled with a native
+      `overflow-y: auto` container underneath Lenis, so a touchscreen still panned
+      it; the Slint version is wheel-only, like a `Flickable` with
+      `mouse-drag-pan-enabled: false` (which is what the rest of the app uses).
+    - The wheel step is doubled (`wheel-step`) to match the browser's ~120px per
+      notch; a trackpad's pixel deltas arrive in the same units and are therefore
+      also doubled — that constant is the knob if it feels fast on a trackpad.
+    - The toolbar and the footer have no backdrop blur: the original relies on
+      `backdrop-filter: blur(4px)`, and Slint 1.18 has no backdrop blur (its only
+      blur is `drop-shadow-blur`). They stay translucent, so the rows scrolling
+      under the toolbar show through it unblurred.
+- **Slint notes** learned the hard way while porting the list, kept here because
+  both cost real debugging time:
+    - `z` on a _component's root_ is ignored when the parent instantiates it
+      outside a `for` loop: the compiler's z-order pass only falls back to the
+      component root's `z` for repeated children, so the value has to be set on the
+      instance (`InstancesList` sets the toolbar's `z: 114` there).
+    - `TouchArea.pointer-event` reports a _move_ with `PointerEventButton.other`,
+      never `left`, so a drag has to be tracked with its own flag rather than by
+      filtering on the button.
 
 - **macOS traffic lights**: on startup the native buttons can briefly appear at
   the stock position before settling. Several approaches were tried (moving the
