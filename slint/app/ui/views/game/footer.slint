@@ -1,0 +1,229 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { AccountAvatar } from "../../components/account-avatar.slint";
+import { GameState, GameIntro } from "../../globals/game.slint";
+import { AccountListDropdown } from "account-list-dropdown.slint";
+
+// A pill-shaped footer action (account switcher / connect / new instance /
+// install pack). The label is hidden for the icon-only buttons.
+component FooterButton inherits Rectangle {
+    in property <string> icon;
+    in property <bool> show-label: false;
+    in property <string> label-text: "";
+    callback clicked;
+
+    width: show-label ? 36px + label.preferred-width + 12px : 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: button-touch.pressed ? Theme.surface-1
+        : button-touch.has-hover ? Theme.surface-1.transparentize(0.2)
+        : Theme.surface-0;
+    drop-shadow-color: #00000033;
+    drop-shadow-blur: 10px;
+
+    HorizontalLayout {
+        alignment: center;
+        spacing: 4px;
+        cross-axis-alignment: center;
+
+        AppIcon {
+            name: root.icon;
+            size: 20px;
+            icon-color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        label := Text {
+            text: root.label-text;
+            font-size: 14px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.1);
+            visible: root.show-label;
+        }
+    }
+
+    button-touch := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => { root.clicked(); }
+    }
+}
+
+// Bottom bar: account avatar + switcher, connect / new instance / install pack
+// (src/views/game/Footer.vue). The music visualizer is not ported.
+export component GameFooterBar inherits Rectangle {
+    width: 100%;
+    height: 56px;
+    background: transparent;
+
+    // Vue `playIntro`: the bar slides up from 56px below the window over 0.6s
+    // `power3.out`, then its contents fade in from +10px, staggered — the avatar
+    // at 0.1s, the account name at 0.15s, connect at 0.2s. The right-hand actions
+    // form a second group that the timeline starts alongside the first
+    // (`"<"` is the *start* of the previous animation, not its end), so they take
+    // the same 0.1s / 0.15s beats.
+    private property <duration> item-duration: 200ms;
+    private property <length> intro-dy: GameIntro.played ? 0px : 56px;
+    animate intro-dy { duration: 600ms; easing: ease-out-quart; }
+
+    body := Rectangle {
+        x: 0;
+        y: root.intro-dy;
+        width: root.width;
+        height: root.height;
+        background: Theme.surface-0.transparentize(0.4);
+
+        // ----- account avatar -----
+        avatar-wrap := Rectangle {
+            x: 28px;
+            y: -18px + self.intro-dy;
+            width: 56px;
+            height: 56px;
+            background: transparent;
+            opacity: self.intro-alpha;
+
+            private property <length> intro-dy: GameIntro.played ? 0px : 10px;
+            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+            animate intro-dy { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
+            animate intro-alpha { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
+
+            AccountAvatar {
+                width: 100%;
+                height: 100%;
+                kind: GameState.current-account-kind;
+                unlogged: !GameState.has-account;
+            }
+
+            avatar-touch := TouchArea {
+                width: parent.width;
+                height: parent.height;
+                clicked => {
+                    if GameState.has-account {
+                        GameState.open-accounts();
+                    } else {
+                        GameState.open-add-account();
+                    }
+                }
+            }
+        }
+
+        // ----- account name / switcher + connect -----
+        if GameState.has-account : account-layer := Rectangle {
+            width: parent.width;
+            height: parent.height;
+            background: transparent;
+
+            pill := AccountListDropdown {
+                x: 68px;
+                y: -6px + self.intro-dy;
+                name: GameState.current-account-name;
+                kind: GameState.current-account-kind;
+                players: GameState.accounts;
+                current-key: GameState.current-account-key;
+                opacity: self.intro-alpha;
+                select(key) => { GameState.select-account(key); }
+
+                private property <length> intro-dy: GameIntro.played ? 0px : 10px;
+                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+                animate intro-dy { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
+                animate intro-alpha { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
+            }
+
+            connect-button := FooterButton {
+                x: pill.x + pill.width + 8px;
+                y: -6px + self.intro-dy;
+                icon: "globe";
+                opacity: self.intro-alpha;
+                clicked => { GameState.open-connect(); }
+
+                private property <length> intro-dy: GameIntro.played ? 0px : 10px;
+                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+                animate intro-dy { duration: root.item-duration; delay: 200ms; easing: ease-out-quart; }
+                animate intro-alpha { duration: root.item-duration; delay: 200ms; easing: ease-out-quart; }
+            }
+        }
+
+        if !GameState.has-account : unlogged-layer := Rectangle {
+            width: parent.width;
+            height: parent.height;
+            background: transparent;
+
+            unlogged-pill := Rectangle {
+                x: 68px;
+                y: -6px + self.intro-dy;
+                width: 32px + unlogged-text.preferred-width + 16px;
+                height: 36px;
+                border-radius: 8px;
+                background: Theme.surface-0;
+                drop-shadow-color: #00000033;
+                drop-shadow-blur: 10px;
+                opacity: self.intro-alpha;
+
+                private property <length> intro-dy: GameIntro.played ? 0px : 10px;
+                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+                animate intro-dy { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
+                animate intro-alpha { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
+
+                unlogged-text := Text {
+                    text: @tr("Not logged in");
+                    font-size: 14px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    x: 32px;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                unlogged-touch := TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    clicked => { GameState.open-add-account(); }
+                }
+            }
+
+            connect-button-unlogged := FooterButton {
+                x: unlogged-pill.x + unlogged-pill.width + 8px;
+                y: -6px + self.intro-dy;
+                icon: "globe";
+                opacity: self.intro-alpha;
+                clicked => { GameState.open-connect(); }
+
+                private property <length> intro-dy: GameIntro.played ? 0px : 10px;
+                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+                animate intro-dy { duration: root.item-duration; delay: 200ms; easing: ease-out-quart; }
+                animate intro-alpha { duration: root.item-duration; delay: 200ms; easing: ease-out-quart; }
+            }
+        }
+
+        // ----- right actions -----
+        install-pack-button := FooterButton {
+            x: parent.width - 52px - self.width;
+            y: -6px + self.intro-dy;
+            icon: "package";
+            opacity: self.intro-alpha;
+            clicked => { GameState.open-packs(); }
+
+            private property <length> intro-dy: GameIntro.played ? 0px : 10px;
+            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+            animate intro-dy { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
+            animate intro-alpha { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
+        }
+
+        new-instance-button := FooterButton {
+            x: install-pack-button.x - 8px - self.width;
+            y: -6px + self.intro-dy;
+            icon: "add";
+            show-label: true;
+            label-text: @tr("New instance");
+            opacity: self.intro-alpha;
+            clicked => { GameState.new-instance(); }
+
+            private property <length> intro-dy: GameIntro.played ? 0px : 10px;
+            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+            animate intro-dy { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
+            animate intro-alpha { duration: root.item-duration; delay: 150ms; easing: ease-out-quart; }
+        }
+    }
+}

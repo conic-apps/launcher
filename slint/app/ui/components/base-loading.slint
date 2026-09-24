@@ -1,0 +1,35 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// Spinning arc (src/components/BaseLoading.vue): a 48-unit circle with a round
+// cap and a gap, rotated continuously. The Vue version uses
+// `stroke-dasharray`; Slint has no dash arrays, so the arc is drawn as an
+// explicit ~88% sweep (matching the default gap + stroke settings used in the
+// game view).
+export component BaseLoading inherits Rectangle {
+    in property <length> size: 32px;
+    // Stroke width in the SVG's 48-unit view box (matches the Vue prop).
+    in property <int> stroke-width: 4;
+    in property <color> icon-color: Theme.default-text-color.transparentize(0.1);
+
+    width: size;
+    height: size;
+    background: transparent;
+
+    Path {
+        commands: "M24 4A20 20 0 1 1 10.31 9.42";
+        viewbox-width: 48;
+        viewbox-height: 48;
+        width: root.width;
+        height: root.height;
+        fill: transparent;
+        stroke: root.icon-color;
+        stroke-width: root.size * root.stroke-width / 48;
+        stroke-line-cap: LineCap.round;
+        transform-rotation: mod(animation-tick(), 1.9s) / 1.9s * 360deg;
+        transform-origin: { x: root.size / 2, y: root.size / 2 };
+    }
+}

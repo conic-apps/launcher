@@ -1,0 +1,56 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { GameIntro } from "../globals/game.slint";
+import { InstanceSummary } from "game/instance-summary.slint";
+import { InstancesList } from "game/instances-list.slint";
+import { GameFooterBar } from "game/footer.slint";
+
+// The game screen (src/views/GameView.vue): current-instance summary on the
+// left, the grouped instance list on the right and the footer bar beneath.
+// The click-to-open content overlays (saves, mods, …) are not migrated yet.
+export component GameView inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // The screen is recreated on every navigation to it (the page stack uses a
+    // conditional), so the intro replays exactly like the Vue `onMounted`.
+    init => {
+        GameIntro.played = false;
+    }
+
+    // Vue's `onMounted` starts a paused timeline with the footer's and the
+    // summary's intros, then chains the list's after awaiting both `ready`
+    // promises (the list resolving after a `nextTick` + a frame, i.e. once it has
+    // been measured). Here the same single beat is used: once the first frame has
+    // been rendered, centre the current instance without animating
+    // (Vue `scrollTo(id, false)` on mount, so the list opens on the selected
+    // instance rather than gliding to it) and then play every intro at once by
+    // flipping the shared flag — each element's `animate` carries its own delay,
+    // which is how the gsap timeline positions are reproduced.
+    intro-timer := Timer {
+        interval: 50ms;
+        running: true;
+        triggered => {
+            instance-list.scroll-to-current(false);
+            GameIntro.played = true;
+            intro-timer.running = false;
+        }
+    }
+
+    instance-summary := InstanceSummary {
+        x: 48px;
+        y: parent.height * 45 / 100 - self.height / 2;
+    }
+
+    instance-list := InstancesList {
+        y: 0;
+        x: parent.width - self.width + 320px;
+    }
+
+    GameFooterBar {
+        y: parent.height - self.height;
+    }
+}
