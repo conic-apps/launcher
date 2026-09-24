@@ -315,8 +315,8 @@ msgstr "主音量"
 
 #: ui
 msgctxt "SettingsAudio"
-msgid "Master volume (when window is in background)"
-msgstr "主音量（窗口位于后台时）"
+msgid "Master volume (window inactive)"
+msgstr "主音量（窗口未激活时）"
 
 #: ui
 msgctxt "SettingsDownload"
@@ -613,3 +613,145 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "正在扫描已安装的 Java 运行环境"
 
+
+# Game view strings, seeded from src/locales/zh_cn.ts.
+
+msgctxt "GameTime"
+msgid "Just now"
+msgstr "刚刚"
+
+msgctxt "GameTime"
+msgid "1 hour ago"
+msgstr "1 小时前"
+
+msgctxt "GameTime"
+msgid "{} hours ago"
+msgstr "{} 小时前"
+
+msgctxt "GameTime"
+msgid "Yesterday"
+msgstr "昨天"
+
+msgctxt "GameTime"
+msgid "{0}/{1}"
+msgstr "{0}月{1}日"
+
+msgctxt "GameTime"
+msgid "{0}/{1}/{2}"
+msgstr "{2}年{0}月{1}日"
+
+msgctxt "GameTime"
+msgid "Never played"
+msgstr "从未运行"
+
+msgctxt "GameTime"
+msgid "{} sec"
+msgstr "{} 秒"
+
+msgctxt "GameTime"
+msgid "{} min"
+msgstr "{} 分钟"
+
+msgctxt "GameTime"
+msgid "{} hr"
+msgstr "{} 小时"
+
+msgctxt "InstancesList"
+msgid "Favorites"
+msgstr "收藏夹"
+
+msgctxt "InstancesList"
+msgid "All instances"
+msgstr "全部实例"
+
+msgctxt "InstancesList"
+msgid "Last played: "
+msgstr "上次运行："
+
+msgctxt "InstancesListToolBar"
+msgid "Name"
+msgstr "名称"
+
+msgctxt "InstancesListToolBar"
+msgid "Version"
+msgstr "版本"
+
+msgctxt "InstancesListToolBar"
+msgid "Play time"
+msgstr "游玩时间"
+
+msgctxt "InstancesListToolBar"
+msgid "Last played"
+msgstr "最后运行"
+
+msgctxt "InstancesListToolBar"
+msgid "Ungrouped"
+msgstr "未分组"
+
+msgctxt "InstancesListToolBar"
+msgid "Mod loader"
+msgstr "模组加载器"
+
+msgctxt "InstancesListToolBar"
+msgid "Search..."
+msgstr "搜索..."
+
+msgctxt "InstancesListToolBar"
+msgid "Sort"
+msgstr "排序"
+
+msgctxt "InstancesListToolBar"
+msgid "Group"
+msgstr "分组"
+
+msgctxt "InstanceSummary"
+msgid "no instance selected!"
+msgstr "no instance selected!"
+
+msgctxt "InstanceSummary"
+msgid "Minecraft version"
+msgstr "Minecraft 版本"
+
+msgctxt "InstanceSummary"
+msgid "version"
+msgstr "版本"
+
+msgctxt "InstanceSummary"
+msgid "Last played date"
+msgstr "最后运行日期"
+
+msgctxt "InstanceSummary"
+msgid "Play time"
+msgstr "游戏时间"
+
+msgctxt "InstanceSummary"
+msgid "Launch"
+msgstr "开始游戏"
+
+msgctxt "InstanceSummary"
+msgid "Repair game and launch"
+msgstr "修复游戏并启动"
+
+msgctxt "InstanceSummary"
+msgid "Saves"
+msgstr "存档"
+
+msgctxt "InstanceSummary"
+msgid "Mods"
+msgstr "模组"
+
+msgctxt "InstanceSummary"
+msgid "Resource packs"
+msgstr "资源包"
+
+msgctxt "InstanceSummary"
+msgid "Screenshots"
+msgstr "截图"
+
+msgctxt "GameFooterBar"
+msgid "Not logged in"
+msgstr "未登录"
+
+msgctxt "GameFooterBar"
+msgid "New instance"
+msgstr "创建新实例"

@@ -315,8 +315,8 @@ msgstr "Ana ses düzeyi"
 
 #: ui
 msgctxt "SettingsAudio"
-msgid "Master volume (when window is in background)"
-msgstr "Ana ses düzeyi (pencere arkadayken)"
+msgid "Master volume (window inactive)"
+msgstr "Ana ses düzeyi (pencere etkin değil)"
 
 #: ui
 msgctxt "SettingsDownload"
@@ -613,3 +613,145 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "Kurulu Java çalışma ortamları taranıyor"
 
+
+# Game view strings, seeded from src/locales/tr_tr.ts.
+
+msgctxt "GameTime"
+msgid "Just now"
+msgstr "Az önce"
+
+msgctxt "GameTime"
+msgid "1 hour ago"
+msgstr "1 saat önce"
+
+msgctxt "GameTime"
+msgid "{} hours ago"
+msgstr "{} saat önce"
+
+msgctxt "GameTime"
+msgid "Yesterday"
+msgstr "Dün"
+
+msgctxt "GameTime"
+msgid "{0}/{1}"
+msgstr "{1}.{0}"
+
+msgctxt "GameTime"
+msgid "{0}/{1}/{2}"
+msgstr "{1}.{0}.{2}"
+
+msgctxt "GameTime"
+msgid "Never played"
+msgstr "Hiç oynanmadı"
+
+msgctxt "GameTime"
+msgid "{} sec"
+msgstr "{} sn"
+
+msgctxt "GameTime"
+msgid "{} min"
+msgstr "{} dk"
+
+msgctxt "GameTime"
+msgid "{} hr"
+msgstr "{} sa"
+
+msgctxt "InstancesList"
+msgid "Favorites"
+msgstr "Favoriler"
+
+msgctxt "InstancesList"
+msgid "All instances"
+msgstr "Tüm örnekler"
+
+msgctxt "InstancesList"
+msgid "Last played: "
+msgstr "Son oynanma: "
+
+msgctxt "InstancesListToolBar"
+msgid "Name"
+msgstr "Ad"
+
+msgctxt "InstancesListToolBar"
+msgid "Version"
+msgstr "Sürüm"
+
+msgctxt "InstancesListToolBar"
+msgid "Play time"
+msgstr "Oynama süresi"
+
+msgctxt "InstancesListToolBar"
+msgid "Last played"
+msgstr "Son oynanma"
+
+msgctxt "InstancesListToolBar"
+msgid "Ungrouped"
+msgstr "Gruplanmamış"
+
+msgctxt "InstancesListToolBar"
+msgid "Mod loader"
+msgstr "Mod yükleyici"
+
+msgctxt "InstancesListToolBar"
+msgid "Search..."
+msgstr "Ara..."
+
+msgctxt "InstancesListToolBar"
+msgid "Sort"
+msgstr "Sırala"
+
+msgctxt "InstancesListToolBar"
+msgid "Group"
+msgstr "Grupla"
+
+msgctxt "InstanceSummary"
+msgid "no instance selected!"
+msgstr "no instance selected!"
+
+msgctxt "InstanceSummary"
+msgid "Minecraft version"
+msgstr "Minecraft sürümü"
+
+msgctxt "InstanceSummary"
+msgid "version"
+msgstr "sürüm"
+
+msgctxt "InstanceSummary"
+msgid "Last played date"
+msgstr "Son oynanma tarihi"
+
+msgctxt "InstanceSummary"
+msgid "Play time"
+msgstr "Oynama süresi"
+
+msgctxt "InstanceSummary"
+msgid "Launch"
+msgstr "Oyunu başlat"
+
+msgctxt "InstanceSummary"
+msgid "Repair game and launch"
+msgstr "Oyunu onar ve başlat"
+
+msgctxt "InstanceSummary"
+msgid "Saves"
+msgstr "Kayıtlar"
+
+msgctxt "InstanceSummary"
+msgid "Mods"
+msgstr "Modlar"
+
+msgctxt "InstanceSummary"
+msgid "Resource packs"
+msgstr "Kaynak paketleri"
+
+msgctxt "InstanceSummary"
+msgid "Screenshots"
+msgstr "Ekran görüntüleri"
+
+msgctxt "GameFooterBar"
+msgid "Not logged in"
+msgstr "Oturum açılmadı"
+
+msgctxt "GameFooterBar"
+msgid "New instance"
+msgstr "Yeni örnek"

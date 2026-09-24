@@ -315,8 +315,8 @@ msgstr "마스터 음량"
 
 #: ui
 msgctxt "SettingsAudio"
-msgid "Master volume (when window is in background)"
-msgstr "마스터 음량 (창이 백그라운드일 때)"
+msgid "Master volume (window inactive)"
+msgstr "마스터 음량 (창이 비활성일 때)"
 
 #: ui
 msgctxt "SettingsDownload"
@@ -613,3 +613,145 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "설치된 Java 런타임 확인 중"
 
+
+# Game view strings, seeded from src/locales/ko_kr.ts.
+
+msgctxt "GameTime"
+msgid "Just now"
+msgstr "방금 전"
+
+msgctxt "GameTime"
+msgid "1 hour ago"
+msgstr "1시간 전"
+
+msgctxt "GameTime"
+msgid "{} hours ago"
+msgstr "{}시간 전"
+
+msgctxt "GameTime"
+msgid "Yesterday"
+msgstr "어제"
+
+msgctxt "GameTime"
+msgid "{0}/{1}"
+msgstr "{0}월 {1}일"
+
+msgctxt "GameTime"
+msgid "{0}/{1}/{2}"
+msgstr "{2}년 {0}월 {1}일"
+
+msgctxt "GameTime"
+msgid "Never played"
+msgstr "플레이 기록 없음"
+
+msgctxt "GameTime"
+msgid "{} sec"
+msgstr "{}초"
+
+msgctxt "GameTime"
+msgid "{} min"
+msgstr "{}분"
+
+msgctxt "GameTime"
+msgid "{} hr"
+msgstr "{}시간"
+
+msgctxt "InstancesList"
+msgid "Favorites"
+msgstr "즐겨찾기"
+
+msgctxt "InstancesList"
+msgid "All instances"
+msgstr "모든 인스턴스"
+
+msgctxt "InstancesList"
+msgid "Last played: "
+msgstr "마지막 플레이: "
+
+msgctxt "InstancesListToolBar"
+msgid "Name"
+msgstr "이름"
+
+msgctxt "InstancesListToolBar"
+msgid "Version"
+msgstr "버전"
+
+msgctxt "InstancesListToolBar"
+msgid "Play time"
+msgstr "플레이 시간"
+
+msgctxt "InstancesListToolBar"
+msgid "Last played"
+msgstr "마지막 플레이"
+
+msgctxt "InstancesListToolBar"
+msgid "Ungrouped"
+msgstr "그룹 없음"
+
+msgctxt "InstancesListToolBar"
+msgid "Mod loader"
+msgstr "모드 로더"
+
+msgctxt "InstancesListToolBar"
+msgid "Search..."
+msgstr "검색..."
+
+msgctxt "InstancesListToolBar"
+msgid "Sort"
+msgstr "정렬"
+
+msgctxt "InstancesListToolBar"
+msgid "Group"
+msgstr "그룹화"
+
+msgctxt "InstanceSummary"
+msgid "no instance selected!"
+msgstr "no instance selected!"
+
+msgctxt "InstanceSummary"
+msgid "Minecraft version"
+msgstr "Minecraft 버전"
+
+msgctxt "InstanceSummary"
+msgid "version"
+msgstr "버전"
+
+msgctxt "InstanceSummary"
+msgid "Last played date"
+msgstr "마지막 플레이 날짜"
+
+msgctxt "InstanceSummary"
+msgid "Play time"
+msgstr "플레이 시간"
+
+msgctxt "InstanceSummary"
+msgid "Launch"
+msgstr "게임 시작"
+
+msgctxt "InstanceSummary"
+msgid "Repair game and launch"
+msgstr "게임 복구 후 실행"
+
+msgctxt "InstanceSummary"
+msgid "Saves"
+msgstr "월드"
+
+msgctxt "InstanceSummary"
+msgid "Mods"
+msgstr "모드"
+
+msgctxt "InstanceSummary"
+msgid "Resource packs"
+msgstr "리소스 팩"
+
+msgctxt "InstanceSummary"
+msgid "Screenshots"
+msgstr "스크린샷"
+
+msgctxt "GameFooterBar"
+msgid "Not logged in"
+msgstr "로그인되지 않음"
+
+msgctxt "GameFooterBar"
+msgid "New instance"
+msgstr "새 인스턴스"

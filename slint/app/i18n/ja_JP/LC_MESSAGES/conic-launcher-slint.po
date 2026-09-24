@@ -315,8 +315,8 @@ msgstr "マスター音量"
 
 #: ui
 msgctxt "SettingsAudio"
-msgid "Master volume (when window is in background)"
-msgstr "マスター音量（ウィンドウがバックグラウンドにあるとき）"
+msgid "Master volume (window inactive)"
+msgstr "マスター音量（ウィンドウが非アクティブのとき）"
 
 #: ui
 msgctxt "SettingsDownload"
@@ -613,3 +613,145 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "インストール済みのJavaランタイムをスキャン中"
 
+
+# Game view strings, seeded from src/locales/ja_jp.ts.
+
+msgctxt "GameTime"
+msgid "Just now"
+msgstr "たった今"
+
+msgctxt "GameTime"
+msgid "1 hour ago"
+msgstr "1時間前"
+
+msgctxt "GameTime"
+msgid "{} hours ago"
+msgstr "{}時間前"
+
+msgctxt "GameTime"
+msgid "Yesterday"
+msgstr "昨日"
+
+msgctxt "GameTime"
+msgid "{0}/{1}"
+msgstr "{0}月{1}日"
+
+msgctxt "GameTime"
+msgid "{0}/{1}/{2}"
+msgstr "{2}年{0}月{1}日"
+
+msgctxt "GameTime"
+msgid "Never played"
+msgstr "未プレイ"
+
+msgctxt "GameTime"
+msgid "{} sec"
+msgstr "{} 秒"
+
+msgctxt "GameTime"
+msgid "{} min"
+msgstr "{} 分"
+
+msgctxt "GameTime"
+msgid "{} hr"
+msgstr "{} 時間"
+
+msgctxt "InstancesList"
+msgid "Favorites"
+msgstr "お気に入り"
+
+msgctxt "InstancesList"
+msgid "All instances"
+msgstr "すべてのインスタンス"
+
+msgctxt "InstancesList"
+msgid "Last played: "
+msgstr "最終プレイ: "
+
+msgctxt "InstancesListToolBar"
+msgid "Name"
+msgstr "名前"
+
+msgctxt "InstancesListToolBar"
+msgid "Version"
+msgstr "バージョン"
+
+msgctxt "InstancesListToolBar"
+msgid "Play time"
+msgstr "プレイ時間"
+
+msgctxt "InstancesListToolBar"
+msgid "Last played"
+msgstr "最終プレイ"
+
+msgctxt "InstancesListToolBar"
+msgid "Ungrouped"
+msgstr "グループなし"
+
+msgctxt "InstancesListToolBar"
+msgid "Mod loader"
+msgstr "Modローダー"
+
+msgctxt "InstancesListToolBar"
+msgid "Search..."
+msgstr "検索..."
+
+msgctxt "InstancesListToolBar"
+msgid "Sort"
+msgstr "並べ替え"
+
+msgctxt "InstancesListToolBar"
+msgid "Group"
+msgstr "グループ"
+
+msgctxt "InstanceSummary"
+msgid "no instance selected!"
+msgstr "no instance selected!"
+
+msgctxt "InstanceSummary"
+msgid "Minecraft version"
+msgstr "Minecraftバージョン"
+
+msgctxt "InstanceSummary"
+msgid "version"
+msgstr "バージョン"
+
+msgctxt "InstanceSummary"
+msgid "Last played date"
+msgstr "最終プレイ日時"
+
+msgctxt "InstanceSummary"
+msgid "Play time"
+msgstr "プレイ時間"
+
+msgctxt "InstanceSummary"
+msgid "Launch"
+msgstr "ゲームを起動"
+
+msgctxt "InstanceSummary"
+msgid "Repair game and launch"
+msgstr "ゲームを修復して起動"
+
+msgctxt "InstanceSummary"
+msgid "Saves"
+msgstr "ワールド"
+
+msgctxt "InstanceSummary"
+msgid "Mods"
+msgstr "Mod"
+
+msgctxt "InstanceSummary"
+msgid "Resource packs"
+msgstr "リソースパック"
+
+msgctxt "InstanceSummary"
+msgid "Screenshots"
+msgstr "スクリーンショット"
+
+msgctxt "GameFooterBar"
+msgid "Not logged in"
+msgstr "未ログイン"
+
+msgctxt "GameFooterBar"
+msgid "New instance"
+msgstr "新規インスタンス"
