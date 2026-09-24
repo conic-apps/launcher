@@ -1,0 +1,705 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { FocusManager } from "../../globals/focus.slint";
+import { GameState, GameIntro, GameTime } from "../../globals/game.slint";
+import { InstancesListToolBar } from "instances-list-tool-bar.slint";
+
+// Grouped instance list (src/views/game/InstancesList.vue +
+// InstancesListScrollView.vue).
+//
+// The list is anchored so its right edge sits 320px past the viewport, with the
+// cards peeking from the right (the Vue `margin-left: auto` + `translateX(320px)`
+// / `right: -320px`).
+//
+// Scrolling
+// =========
+// The Vue original drives both the rail and its custom scrollbar from Lenis'
+// smoothed offset (`lerp: 0.16`: every frame the offset closes 16% of the
+// remaining distance to the target). That is reproduced here with a `Timer` that
+// eases `scroll-y` towards `target-y`, instead of a `Flickable`: a Flickable
+// would add its own fixed-duration wheel animation on top of the lerp, and its
+// input handling would fight the programmatic scrolling this view needs
+// (`scrollTo` on selection, the snap that centres the current instance when the
+// view opens, and the lock that freezes scrolling while a group collapses).
+//
+// Wheel events are captured by the `TouchArea` that *wraps* the content. The
+// cards' own `TouchArea`s never handle scroll events and Slint's `EventResult`
+// defaults to `reject`, so the wheel bubbles up to it.
+//
+// The rail
+// ========
+// Cards glide along a parabola: `rail-x` pulls a row `rail-offset` to the left
+// while it crosses the vertical centre of the viewport and releases it back to
+// its resting x at the edges. It is a pure function of the row's *current* y, so
+// while a row animates to a new slot (collapse/expand, sort, grouping) its x
+// follows the same curve that the wheel draws — the gsap rail of the original.
+export component InstancesList inherits Rectangle {
+    width: 680px;
+    height: 100%;
+    background: transparent;
+
+    // ----- geometry (the Vue `InstancesList.vue` stylesheet) -----
+    // `.scroll-content { padding-left: 200px }`; the group box carries a CSS
+    // `transform: translateX(-40px)`, so its resting x is 160px.
+    private property <length> card-left: 200px;
+    private property <length> group-left: 160px;
+    // `parallaxX`: `-maxOffset * (1 - t²)` with `maxOffset = 160`.
+    private property <length> rail-offset: 160px;
+    // GROUP_HEIGHT / 2 — the gsap rail is sampled at the row *wrapper*'s centre.
+    private property <length> group-half-height: 21px;
+    // The scrollbar: `right: 8px; width: 6px` against the *window* (the Vue
+    // version `Teleport`s it to `<body>`), spanning from below the toolbar
+    // (`top: calc(44px + 8px + 112px + 6px)`, i.e. 126px below the title bar,
+    // which is where this view starts) to above the footer
+    // (`bottom: calc(56px + 4px)`).
+    private property <length> scrollbar-right: 8px;
+    private property <length> scrollbar-width: 6px;
+    private property <length> scrollbar-top: 8px + 112px + 6px;
+    private property <length> scrollbar-bottom: 56px + 4px;
+
+    // ----- scroll state -----
+    /// Smoothed scroll offset: 0 at the top, growing as the list scrolls down.
+    /// Drives the rail and the scrollbar thumb.
+    in-out property <length> scroll-y: 0px;
+    /// Where `scroll-y` is heading (wheel input, `scrollTo`, centring).
+    in-out property <length> target-y: 0px;
+    /// Wheel distance multiplier. A notch is `LineDelta * 60` in winit but ~120px
+    /// in the browser (the Lenis baseline this view is matched against), hence 2.
+    /// A trackpad scrolls with pixel deltas, which are already in browser units —
+    /// Slint folds both into `delta-y`, so this is calibrated for the wheel.
+    private property <float> wheel-step: 2;
+    private property <length> max-scroll: max(0px, GameState.list-content-height - root.height);
+    // While a toggle is settling the offset is left alone, even if the list just
+    // became shorter than it: the collapse plays out first and the glide to the
+    // new end follows (see `changed max-scroll` below).
+    private property <length> clamped-target: root.settling
+        ? root.target-y
+        : clamp(root.target-y, 0px, root.max-scroll);
+
+    // While a group collapses or expands the rows travel along the rail: scrolling
+    // in the middle of that would drag their x along while they move, and a second
+    // toggle would collapse cards that are still in flight, so both are held off
+    // for as long as the original does (Vue `lockScroll` 700ms, `toggleLocked`
+    // 350ms).
+    //
+    // The release is driven by the timers' `running` *bindings*. Calling
+    // `restart()` would not work here: it only restarts a timer that has been
+    // started before, so a `running: false` timer would never fire and the list
+    // would stay locked until the view was rebuilt.
+    private property <bool> settling: false;
+    private property <bool> toggle-locked: false;
+
+    scroll-unlock-timer := Timer {
+        interval: 700ms;
+        running: root.settling;
+        triggered => { root.settling = false; }
+    }
+
+    toggle-unlock-timer := Timer {
+        interval: 350ms;
+        running: root.toggle-locked;
+        triggered => {
+            root.toggle-locked = false;
+            // The collapse has played by now: if it made the list shorter than the
+            // current offset, glide up to the end it has now.
+            root.target-y = clamp(root.target-y, 0px, root.max-scroll);
+        }
+    }
+
+    // Collapsing the last group shortens the list under the current offset. The
+    // original collapses first and only then eases to the new end (the browser
+    // clamps the scroll container, Lenis eases to its recomputed limit), and
+    // expanding must not scroll back to where the collapse left off — so the
+    // *target* is clamped here, once, instead of the derived offset being clamped
+    // continuously while the collapse runs.
+    changed max-scroll => {
+        if !root.settling {
+            root.target-y = clamp(root.target-y, 0px, root.max-scroll);
+        }
+    }
+
+    // Lenis' `lerp: 0.16` — 16% of the remaining distance per 60Hz frame. Lenis
+    // scales the step by the frame time so the glide looks the same on a 120Hz
+    // display as on a 60Hz one (`1 - (1 - lerp)^(dt * 60)`), which is reproduced
+    // here: Slint fires the timer at whatever rate it can (its own frame rate),
+    // so the step has to be derived from the elapsed time rather than fixed.
+    // The timer only runs while there is distance left to cover: unlike a
+    // `Flickable` there is no momentum to integrate.
+    private property <float> lerp: 0.16;
+    private property <float> last-tick-ms: 0;
+
+    /// Whether the offset still has to catch up with the target. Held in its own
+    /// property because a `changed` handler can only observe a property of this
+    /// element (or a global), and the moment the glide *starts* has to be caught:
+    /// the timer stops once the offset settles, so without this the first tick
+    /// after an idle period would read that whole gap as its frame time and start
+    /// the glide with a jump sized for a second-long frame.
+    private property <bool> scrolling: abs(root.clamped-target - root.scroll-y) > 0.5px;
+
+    changed scrolling => {
+        if root.scrolling {
+            root.last-tick-ms = GameState.now-ms();
+        }
+    }
+
+    scroll-timer := Timer {
+        interval: 8ms;
+        running: root.scrolling;
+        triggered => {
+            // The step is scaled by the *real* elapsed time, so the glide lasts the
+            // same as it does in the browser even when Slint is running at a low
+            // frame rate (a debug build sits at 25-50ms per frame, and a fixed step
+            // would stretch the glide by as much). The upper bound only guards a
+            // stall of the whole event loop, which would otherwise be spent in one
+            // visible jump.
+            //
+            // The target is already inside the list, so the offset is not clamped
+            // again here: clamping it would snap the list on the frame a collapsed
+            // group made it shorter, instead of easing up to the new end.
+            root.scroll-y = root.scroll-y + (root.clamped-target - root.scroll-y) * (1 - pow(
+                1 - root.lerp,
+                clamp((GameState.now-ms() - root.last-tick-ms) / 1000, 0.004, 0.05) * 60,
+            ));
+            root.last-tick-ms = GameState.now-ms();
+        }
+    }
+
+    /// The rail: `parallaxX(centerY)` of the Vue original.
+    /// `viewport-center-y` is the row's centre as it appears on screen, i.e. its
+    /// content position minus the scroll offset — callers subtract `scroll-y`, so
+    /// the sign of the scroll can only be got wrong in one place.
+    pure function rail-x(viewport-center-y: length) -> length {
+        if root.height <= 0px {
+            return 0px;
+        }
+        return -root.rail-offset * (1 - squared(clamp(
+            (viewport-center-y - root.height / 2) / root.height,
+            -1,
+            1,
+        )));
+    }
+
+    pure function squared(value: float) -> float {
+        return value * value;
+    }
+
+    /// Centres the current instance. `smooth` glides there along the rail (Vue
+    /// `scrollTo(id, true)`, used after every card selection) while `!smooth`
+    /// moves the offset with the target — the Vue `scrollTo(id, false)` that the
+    /// view uses to open on the selected instance.
+    public function scroll-to-current(smooth: bool) {
+        if GameState.current-row-y >= 0px {
+            root.target-y = clamp(
+                GameState.current-row-y + GameState.current-row-height / 2 - root.height / 2,
+                0px,
+                root.max-scroll,
+            );
+            if !smooth {
+                root.scroll-y = root.target-y;
+            }
+        }
+    }
+
+    // ----- entrance animation (gsap timeline positions, in seconds) -----
+    // `GameView` plays the list 0.05s after the footer and the summary, and the
+    // list's own intro starts the cards 0.1145s in (see `InstancesList.vue`).
+    private property <duration> intro-list-delay: 50ms;
+    private property <duration> intro-card-delay: 165ms;
+    private property <duration> intro-stagger: 30ms;
+
+    // The toolbar keeps its own size and is positioned relative to the list's
+    // right edge (Vue `right: 320px`, `z-index: 114`). The z has to be set *here*,
+    // on the instance: the rows scroll under the toolbar, and a component root's
+    // own `z` is only honoured for `for`-loop children (see the compiler's
+    // z-order pass), which is why the toolbar used to be painted underneath them.
+    InstancesListToolBar {
+        x: root.width - 320px - self.width;
+        y: 8px;
+        z: 114;
+    }
+
+    viewport := Rectangle {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        clip: true;
+        background: transparent;
+
+        scroll-touch := TouchArea {
+            width: parent.width;
+            height: parent.height;
+
+            scroll-event(event) => {
+                if !root.settling && root.max-scroll > 0px {
+                    root.target-y = clamp(
+                        root.target-y - event.delta-y * root.wheel-step,
+                        0px,
+                        root.max-scroll,
+                    );
+                    return accept;
+                }
+                reject
+            }
+
+            content := Rectangle {
+                x: 0;
+                y: -root.scroll-y;
+                width: parent.width;
+                height: GameState.list-content-height;
+                background: transparent;
+
+                // Row heights are laid out in Rust (`row-y`/`height`), so the view
+                // positions the rows absolutely: that is what lets a row animate to
+                // its new slot without the model being rebuilt.
+                for row[i] in GameState.rows : row-box := Rectangle {
+                    y: row.row-y;
+                    width: root.width;
+                    height: row.height;
+                    background: transparent;
+
+                    // ----- entrance (intro + newly added rows) -----
+                    // Vue's intro slides cards in from +40px along the rail,
+                    // staggered by 0.03s; a row that appears later (search, sort,
+                    // grouping, starring) slides in from +24px instead. Both are
+                    // offsets on top of the rail, so the card enters *along* the
+                    // curve rather than merely fading.
+                    private property <duration> intro-delay: root.intro-card-delay
+                        + min(i, 12) * root.intro-stagger;
+                    private property <length> intro-dx: GameIntro.played ? 0px : 40px;
+                    private property <length> appear-dx: row.appear ? 0px : 24px;
+                    private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+                    private property <float> appear-alpha: row.appear ? 1.0 : 0.0;
+                    /// The collapse fade: a card of a collapsed group goes to 0
+                    /// where it stands, while the rows below close the gap.
+                    private property <float> row-alpha: row.opacity;
+
+                    x: self.intro-dx + self.appear-dx;
+                    // `opacity` itself must stay unanimated: it is the product of
+                    // these three, and an `animate` here would chase the moving
+                    // product with a second easing, so the row's fade would lag
+                    // behind its slide instead of running with it.
+                    opacity: self.intro-alpha * self.appear-alpha * self.row-alpha;
+                    // A fading row (a collapsed group's cards) must not take clicks
+                    // from what it is covering.
+                    visible: self.opacity > 0.01;
+
+                    animate intro-dx {
+                        duration: 300ms;
+                        delay: self.intro-delay;
+                        easing: ease-out-quart;
+                    }
+                    animate appear-dx { duration: 300ms; easing: ease-out-quint; }
+                    animate intro-alpha {
+                        duration: 300ms;
+                        delay: self.intro-delay;
+                        easing: ease-out-quart;
+                    }
+                    animate appear-alpha { duration: 300ms; easing: ease-out-quint; }
+                    animate row-alpha {
+                        duration: 300ms;
+                        easing: cubic-bezier(0.33, 1, 0.68, 1);
+                    }
+                    // The FLIP: when the slot changes the row glides there, and
+                    // because its x is a pure function of its y the row travels
+                    // along the rail at the same eased progress. A reorder travels
+                    // on the gsap FLIP curve (400ms), a group collapse on the
+                    // original's `easeOutCubic` (300ms).
+                    animate y {
+                        duration: row.flip ? 400ms : 300ms;
+                        easing: row.flip
+                            ? ease-out-quint
+                            : cubic-bezier(0.33, 1, 0.68, 1);
+                    }
+
+                    // ----- group header -----
+                    if row.kind == "group" : group := Rectangle {
+                        x: root.group-left + root.rail-x(
+                            row-box.y + root.group-half-height - root.scroll-y);
+                        y: 2px;
+                        width: 480px;
+                        height: 40px;
+                        border-width: 1px;
+                        border-color: root.accent(row.key).with-alpha(0.8);
+                        border-radius: 8px;
+                        background: group-touch.has-hover
+                            ? Theme.surface-0.with-alpha(0.8)
+                            : Theme.surface-0.with-alpha(0.4);
+                        animate background { duration: 200ms; }
+
+                        // Thick left border (CSS `border-left: 20px`).
+                        Rectangle {
+                            x: 0;
+                            y: 0;
+                            width: 20px;
+                            height: parent.height;
+                            background: root.accent(row.key).with-alpha(0.8);
+                            border-top-left-radius: 8px;
+                            border-bottom-left-radius: 8px;
+                        }
+
+                        // CSS `left: -16px` is relative to the padding box, i.e. 4px
+                        // inside the 20px accent bar.
+                        AppIcon {
+                            name: "chevron-forward";
+                            size: 14px;
+                            icon-color: Theme.text-inverse;
+                            x: 3px;
+                            y: (parent.height - self.height) / 2;
+                            transform-origin: { x: self.width / 2, y: self.height / 2 };
+                            transform-rotation: row.collapsed ? 0deg : 90deg;
+                            animate transform-rotation { duration: 200ms; easing: ease; }
+                        }
+
+                        // `padding: 8px 16px` starts *after* the 20px accent bar, so
+                        // the title sits 36px in.
+                        HorizontalLayout {
+                            x: 20px + 16px;
+                            y: (parent.height - self.height) / 2;
+                            height: 14px;
+                            spacing: 8px;
+                            alignment: start;
+                            cross-axis-alignment: center;
+
+                            Text {
+                                text: row.title-kind == "favorites" ? @tr("Favorites")
+                                    : row.title-kind == "all" ? @tr("All instances")
+                                    : row.title-literal;
+                                font-size: 14px;
+                                font-weight: Theme.font-weight-normal;
+                                color: Theme.default-text-color.transparentize(0.1);
+                            }
+
+                            count-badge := Rectangle {
+                                width: count-text.preferred-width + 12px;
+                                height: 13px;
+                                border-radius: 100px;
+                                background: root.accent(row.key);
+
+                                count-text := Text {
+                                    text: "\{row.count}";
+                                    font-size: 10px;
+                                    font-weight: 500;
+                                    color: Theme.text-inverse;
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                }
+                            }
+                        }
+
+                        group-touch := TouchArea {
+                            width: parent.width;
+                            height: parent.height;
+                            clicked => {
+                                // `toggleLocked`: a second click while the rail
+                                // transition is still running would collapse cards
+                                // that are mid-flight.
+                                if !root.toggle-locked {
+                                    root.settling = true;
+                                    root.toggle-locked = true;
+                                    GameState.toggle-group(row.key);
+                                }
+                            }
+                        }
+                    }
+
+                    // ----- instance card -----
+                    if row.kind == "instance" : card := Rectangle {
+                        // The current card is pulled 20px further left
+                        // (`.card-container.current .instance { margin-left: -20px }`,
+                        // transitioned over 200ms).
+                        private property <length> current-shift: row.current ? -20px : 0px;
+                        animate current-shift { duration: 200ms; easing: ease; }
+
+                        x: root.card-left + root.rail-x(
+                            row-box.y + row.height / 2 - root.scroll-y) + self.current-shift;
+                        y: 2px;
+                        width: 480px;
+                        height: 56px;
+                        border-radius: 8px;
+                        background: card-touch.pressed && !row.current ? Theme.surface-0
+                            : card-touch.has-hover && !row.current ? Theme.surface-0.with-alpha(0.8)
+                            : Theme.surface-0.with-alpha(0.4);
+                        border-width: 1px;
+                        border-color: Theme.surface-1.with-alpha(0.8);
+                        transform-origin: { x: self.width / 2, y: self.height / 2 };
+                        transform-scale-x: card-touch.pressed && !row.current ? 0.99 : row.current ? 1.03 : 1.0;
+                        transform-scale-y: card-touch.pressed && !row.current ? 0.99 : row.current ? 1.03 : 1.0;
+                        animate transform-scale-x { duration: 100ms; }
+                        animate transform-scale-y { duration: 100ms; }
+
+                        // Thick left border (16px), colored by state.
+                        Rectangle {
+                            x: 0;
+                            y: 0;
+                            width: 16px;
+                            height: parent.height;
+                            background: row.current
+                                ? Theme.lavender.with-alpha(0.8)
+                                : Theme.surface-1.with-alpha(0.8);
+                            border-top-left-radius: 8px;
+                            border-bottom-left-radius: 8px;
+                        }
+
+                        // `padding: 8px 16px` starts *after* the 16px accent bar, so
+                        // the card's text sits 32px in (Vue's box model).
+                        Text {
+                            text: row.name;
+                            font-size: 15.2px;
+                            font-weight: Theme.font-weight-normal;
+                            color: Theme.default-text-color.transparentize(0.1);
+                            x: 16px + 16px;
+                            y: 8px;
+                        }
+
+                        details := HorizontalLayout {
+                            x: 16px + 16px;
+                            y: 27px;
+                            width: parent.width - 48px;
+                            height: 14px;
+                            spacing: 8px;
+                            alignment: start;
+                            cross-axis-alignment: center;
+
+                            tag := Rectangle {
+                                width: tag-text.preferred-width + 12px;
+                                height: 13px;
+                                border-radius: 100px;
+                                background: root.accent(row.loader-key);
+                                vertical-stretch: 0;
+
+                                tag-text := Text {
+                                    text: row.loader;
+                                    font-size: 10px;
+                                    font-weight: 700;
+                                    color: Theme.text-inverse;
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 4px;
+                                cross-axis-alignment: center;
+
+                                Text {
+                                    text: @tr("Last played: ");
+                                    font-size: 10px;
+                                    font-weight: 300;
+                                    color: Theme.default-text-color.with-alpha(0.509);
+                                }
+                                Text {
+                                    text: GameTime.last-played(
+                                        row.last-played-kind,
+                                        row.last-played-hours,
+                                        row.last-played-month,
+                                        row.last-played-day,
+                                        row.last-played-year,
+                                    );
+                                    font-size: 10px;
+                                    font-weight: 500;
+                                    color: Theme.default-text-color.with-alpha(0.9);
+                                }
+                            }
+                        }
+
+                        card-touch := TouchArea {
+                            width: parent.width;
+                            height: parent.height;
+                            clicked => {
+                                GameState.select-instance(row.key);
+                                // The selection is centred, even when the card was
+                                // already the current one (Vue always calls
+                                // `scrollTo(id, true)` here).
+                                root.scroll-to-current(true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ----- empty / no match placeholder -----
+    // Vue's `instance-list-placeholder-transition`: 350ms
+    // `cubic-bezier(0.34, 1.56, 0.64, 1)` in (Slint's `ease-out-back`), 250ms
+    // `cubic-bezier(0.215, 0.61, 0.355, 1)` out.
+    if GameState.show-placeholder : placeholder := Rectangle {
+        x: root.width - 320px - self.width;
+        y: root.height / 2 - self.height / 2;
+        width: 380px;
+        height: placeholder-layout.preferred-height;
+        private property <float> enter: GameState.show-placeholder ? 1.0 : 0.0;
+        opacity: self.enter;
+        visible: self.enter > 0.01;
+        transform-origin: { x: self.width / 2, y: self.height / 2 };
+        transform-scale-x: 0.9 + self.enter * 0.1;
+        transform-scale-y: 0.9 + self.enter * 0.1;
+        animate enter { duration: 350ms; easing: ease-out-back; }
+
+        placeholder-layout := VerticalLayout {
+            alignment: center;
+            spacing: 0px;
+            width: parent.width;
+
+            Rectangle {
+                width: parent.width;
+                height: 64px;
+                background: transparent;
+
+                AppIcon {
+                    name: "about";
+                    size: 64px;
+                    x: (parent.width - self.width) / 2;
+                }
+            }
+
+            Rectangle { width: parent.width; height: 12px; background: transparent; }
+
+            Text {
+                text: @tr("No matching instances");
+                font-size: 16px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+                horizontal-alignment: center;
+                width: parent.width;
+            }
+
+            Rectangle { width: parent.width; height: 8px; background: transparent; }
+
+            Text {
+                text: @tr("Consider creating a new instance");
+                font-size: 14px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+                horizontal-alignment: center;
+                width: parent.width;
+            }
+        }
+    }
+
+    // ----- scrollbar -----
+    // Vue `InstancesListScrollView.vue`: a 6px track pinned 8px from the right
+    // edge of the *window* (hence the -320px below: this view overhangs the
+    // window by that much), with an 8px thumb that widens to 10px on hover and
+    // can be dragged or used to jump.
+    scrollbar := Rectangle {
+        visible: root.max-scroll > 0.5px;
+        // Intro: the bar slides in from just past the window edge
+        // (Vue tweens it from `offsetWidth + right` to 0) while fading in.
+        private property <length> intro-dx: GameIntro.played
+            ? 0px
+            : root.scrollbar-width + root.scrollbar-right;
+        private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+
+        x: root.width - 320px - root.scrollbar-right - root.scrollbar-width + self.intro-dx;
+        y: root.scrollbar-top;
+        width: root.scrollbar-width;
+        height: max(0px, root.height - root.scrollbar-top - root.scrollbar-bottom);
+        background: transparent;
+        opacity: self.intro-alpha;
+        z: 500;
+
+        animate intro-dx { duration: 300ms; delay: root.intro-list-delay; easing: ease-out-quart; }
+        animate intro-alpha { duration: 300ms; delay: root.intro-list-delay; easing: ease-out-quart; }
+
+        private property <length> thumb-track: self.height - thumb.height;
+        private property <length> track-height: self.height;
+
+        thumb := Rectangle {
+            width: track-touch.has-hover || track-touch.pressed ? 10px : 8px;
+            x: track-touch.has-hover || track-touch.pressed ? -2px : 0px;
+            // Vue: `Math.max(32, trackHeight * containerHeight / contentHeight)`.
+            height: root.max-scroll > 0px
+                ? max(32px, parent.track-height * root.height
+                    / max(GameState.list-content-height, root.height))
+                : parent.track-height;
+            y: parent.thumb-track > 0px
+                ? clamp(root.scroll-y / root.max-scroll, 0, 1) * parent.thumb-track
+                : 0px;
+            border-radius: 999px;
+            background: Theme.text;
+            opacity: track-touch.pressed ? 0.55 : track-touch.has-hover ? 0.55 : 0.35;
+            transform-origin: { x: self.width / 2, y: self.height / 2 };
+            transform-scale-x: track-touch.pressed ? 0.9 : 1.0;
+            transform-scale-y: track-touch.pressed ? 0.9 : 1.0;
+            animate opacity { duration: 160ms; }
+            animate width { duration: 160ms; }
+            animate x { duration: 160ms; }
+            animate transform-scale-x, transform-scale-y { duration: 120ms; }
+        }
+
+        // Grabbing the thumb drags it; pressing the track elsewhere jumps so the
+        // thumb centres under the cursor and then keeps dragging it, which is the
+        // `onScrollbarPointerDown` / `onThumbPointerDown` pair of the original
+        // (both move the offset without animating, `immediate: true`).
+        //
+        // The drag state has to be tracked here rather than keyed off the event's
+        // button: Slint reports a *move* with `PointerEventButton.other`, so
+        // `button == left` only ever matches the press. The touch area is as wide
+        // as the *hovered* thumb (10px, hanging 2px off each side of the 6px
+        // track) so grabbing the overhang does not shrink the thumb out from under
+        // the cursor.
+        track-touch := TouchArea {
+            x: -2px;
+            width: parent.width + 4px;
+            height: parent.height;
+
+            pointer-event(event) => {
+                if event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel {
+                    root.dragging = false;
+                } else if event.kind == PointerEventKind.down {
+                    if event.button != PointerEventButton.left
+                        || root.settling
+                        || root.max-scroll <= 0px
+                        || self.height <= thumb.height {
+                        return;
+                    }
+                    FocusManager.clear();
+                    // Pressing the thumb keeps the grab point; pressing the track
+                    // brings the thumb's centre to the cursor.
+                    root.drag-anchor = self.mouse-y >= thumb.y && self.mouse-y <= thumb.y + thumb.height
+                        ? self.mouse-y - thumb.y
+                        : thumb.height / 2;
+                    root.dragging = true;
+                    root.drag-scrollbar(self.mouse-y);
+                } else if event.kind == PointerEventKind.move && root.dragging {
+                    root.drag-scrollbar(self.mouse-y);
+                }
+            }
+        }
+    }
+
+    // ----- scrollbar drag -----
+    private property <bool> dragging: false;
+    /// Where inside the thumb the pointer grabbed it, so dragging does not make
+    /// the thumb jump under the cursor.
+    private property <length> drag-anchor: 0px;
+
+    /// Maps a pointer position inside the scrollbar track to a scroll offset.
+    function drag-scrollbar(mouse-y: length) {
+        if root.max-scroll <= 0px || scrollbar.height <= thumb.height {
+            return;
+        }
+        root.target-y = clamp(
+            (mouse-y - root.drag-anchor) / (scrollbar.height - thumb.height),
+            0,
+            1,
+        ) * root.max-scroll;
+        root.scroll-y = root.target-y;
+    }
+
+    pure function accent(key: string) -> color {
+        if key == "starred" { return Theme.yellow; }
+        if key == "quilt" { return Theme.mauve; }
+        if key == "fabric" { return Theme.yellow; }
+        if key == "neoforge" { return Theme.peach; }
+        if key == "forge" { return Theme.blue; }
+        if key == "vanilla" { return Theme.green; }
+        return Theme.lavender;
+    }
+}

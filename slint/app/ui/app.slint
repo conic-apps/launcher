@@ -7,11 +7,15 @@ import { TitleBar } from "components/title-bar.slint";
 import { Navigation } from "globals/navigation.slint";
 import { DropdownOverlay } from "components/dropdown-overlay.slint";
 import { SettingsView } from "views/settings-view.slint";
+import { GameView } from "views/game-view.slint";
 import { GameViewPlaceholder } from "views/game-placeholder.slint";
 
-// Re-export so the Rust side can access the settings global and build the Java
-// runtime model (`slint_backend::AppConfig` / `slint_backend::JavaRuntime`).
+// Re-export so the Rust side can access the globals and build the Java runtime
+// model (`slint_backend::AppConfig` / `slint_backend::JavaRuntime` /
+// `slint_backend::GameState`).
 export { AppConfig, JavaRuntime } from "globals/settings.slint";
+export { Navigation } from "globals/navigation.slint";
+export { GameState, GameRow, AccountItem } from "globals/game.slint";
 
 // Application root window (App.vue). Native window chrome on every platform:
 // macOS gets the Chrome-style treatment (transparent hidden titlebar +
@@ -82,7 +86,8 @@ export component App inherits Window {
                 clip: true;
 
                 if Navigation.current-page == "settings" : SettingsView { }
-                if Navigation.current-page != "settings" : GameViewPlaceholder { }
+                if Navigation.current-page == "game" : GameView { }
+                if Navigation.current-page != "settings" && Navigation.current-page != "game" : GameViewPlaceholder { }
             }
         }
 

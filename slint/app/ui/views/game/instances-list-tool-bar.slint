@@ -1,0 +1,152 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { GameState, GameIntro } from "../../globals/game.slint";
+import { InstanceListDropdown, DropdownOption } from "instance-list-dropdown.slint";
+
+// Search + sort/group toolbar above the instance list
+// (src/views/game/InstancesListToolBar.vue). Anchored to the top-right.
+export component InstancesListToolBar inherits Rectangle {
+    width: 400px;
+    height: 112px;
+    background: Theme.surface-0.transparentize(0.6);
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+    // NOTE: the `z-index: 114` of the Vue original is *not* set here. A component
+    // root's `z` only reaches the parent's stacking order when the parent places
+    // it from a `for` loop — for a plain instance the compiler's z-order pass
+    // reads the instance's own binding and drops the rest. `InstancesList` sets it
+    // where the toolbar has to sit above the scrolling rows.
+
+    private property <[DropdownOption]> sort-options: [
+        { key: "name", label: @tr("Name") },
+        { key: "version", label: @tr("Version") },
+        { key: "playtime", label: @tr("Play time") },
+        { key: "lastplay", label: @tr("Last played") },
+    ];
+    private property <[DropdownOption]> group-options: [
+        { key: "none", label: @tr("Ungrouped") },
+        { key: "loader", label: @tr("Mod loader") },
+    ];
+
+    private property <string> sort-label:
+        GameState.sort-mode == "name" ? @tr("Name")
+        : GameState.sort-mode == "version" ? @tr("Version")
+        : GameState.sort-mode == "lastplay" ? @tr("Last played")
+        : @tr("Play time");
+    private property <string> group-label:
+        GameState.group-mode == "loader" ? @tr("Mod loader") : @tr("Ungrouped");
+
+    // Intro: the toolbar slides in from 100px to the right over 0.5s
+    // `power3.out` (`power3` is GSAP's quart, Slint's `ease-out-quart`). It is the
+    // first beat of the list's intro, which the game view starts 0.05s after the
+    // footer and the summary, so the shared delay is 50ms.
+    private property <length> intro-dx: GameIntro.played ? 0px : 100px;
+    private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+
+    animate intro-dx { duration: 500ms; delay: 50ms; easing: ease-out-quart; }
+    animate intro-alpha { duration: 500ms; delay: 50ms; easing: ease-out-quart; }
+
+    // Everything is wrapped so the intro can offset the whole toolbar; the
+    // background stays on the root so the panel's own corners are not affected by
+    // the children sliding in.
+    body := Rectangle {
+        x: root.intro-dx;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        background: transparent;
+        opacity: root.intro-alpha;
+        visible: root.intro-alpha > 0.01;
+
+        // ----- search -----
+        search-row := Rectangle {
+            x: 16px;
+            y: 16px;
+            width: 372px;
+            height: 40px;
+
+            input-box := Rectangle {
+                x: 0;
+                y: 0;
+                width: 332px;
+                height: parent.height;
+                background: Theme.surface-0;
+                border-top-left-radius: 8px;
+                border-bottom-left-radius: 8px;
+
+                Text {
+                    x: 16px;
+                    y: (parent.height - self.height) / 2;
+                    text: @tr("Search...");
+                    font-size: 14px;
+                    color: Theme.default-text-color.transparentize(0.4);
+                    visible: GameState.search-query == "";
+                }
+
+                TextInput {
+                    x: 16px;
+                    width: parent.width - 16px;
+                    height: parent.height;
+                    text: GameState.search-query;
+                    font-size: 14px;
+                    single-line: true;
+                    vertical-alignment: center;
+                    edited => { GameState.search-changed(self.text); }
+                }
+            }
+
+            search-button := Rectangle {
+                x: 332px;
+                y: 0;
+                width: 40px;
+                height: parent.height;
+                background: search-touch.pressed ? Theme.surface-2
+                    : search-touch.has-hover ? Theme.surface-2.transparentize(0.2)
+                    : Theme.surface-1;
+                border-top-right-radius: 8px;
+                border-bottom-right-radius: 8px;
+
+                AppIcon {
+                    name: "search";
+                    size: 20px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                search-touch := TouchArea { width: parent.width; height: parent.height; }
+            }
+        }
+
+        // ----- sort / group -----
+        other-row := Rectangle {
+            x: 16px;
+            y: 68px;
+            width: 372px;
+            height: 25px;
+
+            InstanceListDropdown {
+                x: 0;
+                width: 182px;
+                label: @tr("Sort");
+                selected: root.sort-label;
+                options: root.sort-options;
+                selected-key: GameState.sort-mode;
+                select(key) => { GameState.set-sort(key); }
+            }
+
+            InstanceListDropdown {
+                x: 190px;
+                width: 182px;
+                label: @tr("Group");
+                selected: root.group-label;
+                options: root.group-options;
+                selected-key: GameState.group-mode;
+                select(key) => { GameState.set-group-mode(key); }
+            }
+        }
+    }
+}

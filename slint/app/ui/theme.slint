@@ -216,11 +216,22 @@ export global Theme {
     in-out property <color> text;
     in-out property <color> subtext-0;
     in-out property <color> subtext-1;
+    // Every Catppuccin colour is exposed, whether the current screens use it or
+    // not, so components can rely on the full palette.
+    in-out property <color> rosewater;
+    in-out property <color> flamingo;
+    in-out property <color> pink;
     in-out property <color> mauve;
+    in-out property <color> maroon;
+    in-out property <color> red;
+    in-out property <color> peach;
+    in-out property <color> yellow;
+    in-out property <color> green;
+    in-out property <color> teal;
+    in-out property <color> sky;
+    in-out property <color> sapphire;
     in-out property <color> blue;
     in-out property <color> lavender;
-    in-out property <color> red;
-    in-out property <color> green;
 
     // ----- text -----
     // `--default-text-color`: the app-wide inherited text color
@@ -320,11 +331,20 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> text: ctp.text;
     in-out property <color> subtext-0: ctp.subtext0;
     in-out property <color> subtext-1: ctp.subtext1;
+    in-out property <color> rosewater: ctp.rosewater;
+    in-out property <color> flamingo: ctp.flamingo;
+    in-out property <color> pink: ctp.pink;
     in-out property <color> mauve: ctp.mauve;
+    in-out property <color> maroon: ctp.maroon;
+    in-out property <color> red: ctp.red;
+    in-out property <color> peach: ctp.peach;
+    in-out property <color> yellow: ctp.yellow;
+    in-out property <color> green: ctp.green;
+    in-out property <color> teal: ctp.teal;
+    in-out property <color> sky: ctp.sky;
+    in-out property <color> sapphire: ctp.sapphire;
     in-out property <color> blue: ctp.blue;
     in-out property <color> lavender: ctp.lavender;
-    in-out property <color> red: ctp.red;
-    in-out property <color> green: ctp.green;
 
     // ----- semantic tokens -----
     in-out property <color> default-text-color:
@@ -372,7 +392,8 @@ export component ThemeProvider inherits Rectangle {
         surface-0, surface-1, surface-2,
         overlay-0, overlay-1, overlay-2,
         text, subtext-0, subtext-1,
-        mauve, blue, lavender, red, green,
+        rosewater, flamingo, pink, mauve, maroon, red, peach, yellow, green,
+        teal, sky, sapphire, blue, lavender,
         default-text-color, text-inverse,
         titlebar-background,
         controllers-background, controllers-background-hover, controllers-background-focus,
@@ -402,11 +423,20 @@ export component ThemeProvider inherits Rectangle {
         Theme.text = root.text;
         Theme.subtext-0 = root.subtext-0;
         Theme.subtext-1 = root.subtext-1;
+        Theme.rosewater = root.rosewater;
+        Theme.flamingo = root.flamingo;
+        Theme.pink = root.pink;
         Theme.mauve = root.mauve;
+        Theme.maroon = root.maroon;
+        Theme.red = root.red;
+        Theme.peach = root.peach;
+        Theme.yellow = root.yellow;
+        Theme.green = root.green;
+        Theme.teal = root.teal;
+        Theme.sky = root.sky;
+        Theme.sapphire = root.sapphire;
         Theme.blue = root.blue;
         Theme.lavender = root.lavender;
-        Theme.red = root.red;
-        Theme.green = root.green;
         Theme.default-text-color = root.default-text-color;
         Theme.text-inverse = root.text-inverse;
         Theme.titlebar-background = root.titlebar-background;
@@ -445,11 +475,20 @@ export component ThemeProvider inherits Rectangle {
     changed text => { Theme.text = root.text; }
     changed subtext-0 => { Theme.subtext-0 = root.subtext-0; }
     changed subtext-1 => { Theme.subtext-1 = root.subtext-1; }
+    changed rosewater => { Theme.rosewater = root.rosewater; }
+    changed flamingo => { Theme.flamingo = root.flamingo; }
+    changed pink => { Theme.pink = root.pink; }
     changed mauve => { Theme.mauve = root.mauve; }
+    changed maroon => { Theme.maroon = root.maroon; }
+    changed red => { Theme.red = root.red; }
+    changed peach => { Theme.peach = root.peach; }
+    changed yellow => { Theme.yellow = root.yellow; }
+    changed green => { Theme.green = root.green; }
+    changed teal => { Theme.teal = root.teal; }
+    changed sky => { Theme.sky = root.sky; }
+    changed sapphire => { Theme.sapphire = root.sapphire; }
     changed blue => { Theme.blue = root.blue; }
     changed lavender => { Theme.lavender = root.lavender; }
-    changed red => { Theme.red = root.red; }
-    changed green => { Theme.green = root.green; }
     changed default-text-color => { Theme.default-text-color = root.default-text-color; }
     changed text-inverse => { Theme.text-inverse = root.text-inverse; }
     changed titlebar-background => { Theme.titlebar-background = root.titlebar-background; }
