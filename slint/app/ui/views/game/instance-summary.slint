@@ -1,0 +1,553 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { BaseLoading } from "../../components/base-loading.slint";
+import { GameState, GameIntro, GameTime } from "../../globals/game.slint";
+
+// A labelless metadata column (label on top, value below) used by the detail
+// row of the current-instance summary.
+component MetaColumn inherits Rectangle {
+    in property <string> label;
+    in property <string> value;
+
+    width: layout.preferred-width;
+    height: layout.preferred-height;
+    background: transparent;
+
+    layout := VerticalLayout {
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        spacing: 2px;
+        alignment: start;
+
+        Text {
+            text: root.label;
+            font-size: 12px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.with-alpha(0.8);
+        }
+        Text {
+            text: root.value;
+            font-size: 15px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+    }
+}
+
+// The 1px divider between metadata columns (`margin: 0 8px`).
+component MetaSeparator inherits Rectangle {
+    width: 17px;
+    height: 26px;
+    background: transparent;
+
+    Rectangle {
+        x: 8px;
+        width: 1px;
+        height: 26px;
+        background: Theme.surface-2;
+    }
+}
+
+// One preview row of the current-instance contents list.
+component ContentRow inherits Rectangle {
+    in property <string> icon;
+    in property <string> type-label;
+    in property <int> count: 0;
+    in property <bool> loading: false;
+    in property <bool> disabled: false;
+    in property <string> unit: "";
+    callback clicked;
+
+    width: 400px;
+    height: 36px;
+    border-radius: 8px;
+    background: row-touch.pressed ? Theme.surface-1
+        : row-touch.has-hover ? Theme.surface-0
+        : Theme.surface-0.with-alpha(0.7);
+    opacity: root.disabled ? 0.6 : 1.0;
+    animate background { duration: 100ms; }
+
+    HorizontalLayout {
+        x: 16px;
+        width: parent.width - 32px;
+        height: parent.height;
+        spacing: 0px;
+        cross-axis-alignment: center;
+
+        // left: icon + type
+        HorizontalLayout {
+            horizontal-stretch: 1;
+            spacing: 8px;
+            cross-axis-alignment: center;
+            alignment: start;
+
+            AppIcon {
+                name: root.icon;
+                size: 20px;
+            }
+            Text {
+                text: root.type-label;
+                font-size: 14px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+        }
+
+        // right: preview dots + count / spinner
+        HorizontalLayout {
+            horizontal-stretch: 0;
+            spacing: 8px;
+            cross-axis-alignment: center;
+
+            HorizontalLayout {
+                spacing: 1px;
+                cross-axis-alignment: center;
+                for i in min(root.count, 5) : Rectangle {
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 10000px;
+                    border-width: 1px;
+                    border-color: Theme.lavender.with-alpha(0.8);
+                    background: Theme.surface-1;
+                }
+            }
+
+            if root.loading : BaseLoading {
+                size: 16px;
+                stroke-width: 6;
+            }
+            if !root.loading : Text {
+                text: "\{root.count} \{root.unit}";
+                font-size: 14px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+        }
+    }
+
+    row-touch := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        enabled: !root.disabled;
+        clicked => { root.clicked(); }
+    }
+}
+
+// The current-instance panel: title, metadata row, launch/actions row and the
+// local-content previews (src/views/game/InstanceSummary.vue).
+//
+// The rows are stacked with explicit `y` positions instead of a `VerticalLayout`
+// because the intro slides each row in horizontally (the Vue `playIntro`
+// animates `x` from -50px → 0) and a layout owns the x of its children.
+export component InstanceSummary inherits Rectangle {
+    // The panel is as wide as the widest row; the contents block (408px) is the
+    // usual floor. Referencing the rows' intrinsic preferred widths avoids a
+    // binding loop with the panel's own width.
+    width: max(408px, max(title-text.preferred-width, row2.preferred-width));
+    height: contents.y + contents.height;
+    background: transparent;
+
+    // Vue `playIntro`: the three detail rows slide in from -50px over 0.33s
+    // `power3.out` (GSAP's `power3` is quart, Slint's `ease-out-quart`), staggered
+    // by 0.03s; the four content previews repeat the same steps starting 0.03s
+    // after the first batch started.
+    private property <duration> intro-stagger: 30ms;
+
+    // ----- row-1: instance name -----
+    row1 := Rectangle {
+        y: 0;
+        width: title-text.preferred-width;
+        height: title-text.preferred-height;
+        background: transparent;
+        x: self.intro-dx;
+        opacity: self.intro-alpha;
+
+        private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+        private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+        // First beat: no delay.
+        animate intro-dx { duration: 330ms; easing: ease-out-quart; }
+        animate intro-alpha { duration: 330ms; easing: ease-out-quart; }
+
+        title-text := Text {
+            text: GameState.has-current ? GameState.current-name : @tr("no instance selected!");
+            font-size: 38px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+    }
+
+    // ----- row-2: metadata -----
+    row2 := HorizontalLayout {
+        y: row1.height + 16px;
+        // A layout defaults to filling its parent; the panel's height is derived
+        // from the rows, so this one has to size itself to its content.
+        width: row2.preferred-width;
+        height: row2.preferred-height;
+        spacing: 0px;
+        cross-axis-alignment: center;
+        x: self.intro-dx;
+        opacity: self.intro-alpha;
+
+        private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+        private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+        animate intro-dx { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
+        animate intro-alpha { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
+
+        MetaColumn {
+            label: @tr("Minecraft version");
+            value: GameState.has-current ? GameState.current-minecraft : "--";
+        }
+
+        if GameState.current-has-loader : MetaSeparator { }
+        if GameState.current-has-loader : MetaColumn {
+            label: "\{GameState.current-loader} \{@tr("version")}";
+            value: GameState.current-loader-version;
+        }
+
+        MetaSeparator { }
+        MetaColumn {
+            label: @tr("Last played date");
+            value: GameState.has-current
+                ? GameTime.last-played(
+                    GameState.current-last-played-kind,
+                    GameState.current-last-played-hours,
+                    GameState.current-last-played-month,
+                    GameState.current-last-played-day,
+                    GameState.current-last-played-year,
+                )
+                : "--";
+        }
+
+        if GameState.current-has-playtime : MetaSeparator { }
+        if GameState.current-has-playtime : AppIcon {
+            name: "time";
+            size: 22px;
+            vertical-stretch: 0;
+        }
+        if GameState.current-has-playtime : MetaColumn {
+            label: @tr("Play time");
+            value: GameTime.play-time(GameState.current-playtime-kind, GameState.current-playtime-value);
+        }
+    }
+
+    // ----- row-3: launch + actions -----
+    row3 := Rectangle {
+        y: row2.y + row2.height + 16px;
+        width: actions.x + actions.width;
+        height: max(launch-buttons.height, actions.height);
+        background: transparent;
+        x: self.intro-dx;
+        opacity: self.intro-alpha;
+
+        private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+        private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+        animate intro-dx { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
+        animate intro-alpha { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
+
+        launch-buttons := Rectangle {
+            x: 0;
+            y: (parent.height - self.height) / 2;
+            width: 154px;
+            height: 42px;
+            background: transparent;
+
+            launch-button := Rectangle {
+                x: 0;
+                y: 0;
+                width: 128px;
+                height: parent.height;
+                background: #7287fd;
+                border-top-left-radius: 8px;
+                border-bottom-left-radius: 8px;
+                opacity: launch-touch.pressed ? 0.9 : root-launch-disabled ? 0.6 : 1.0;
+
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 4px;
+                    cross-axis-alignment: center;
+
+                    AppIcon { name: "play"; size: 20px; icon-color: #ffffff; }
+                    Text {
+                        text: @tr("Launch");
+                        font-size: 15px;
+                        font-weight: Theme.font-weight-normal;
+                        color: #ffffff;
+                    }
+                }
+
+                launch-touch := TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    enabled: GameState.has-current;
+                    clicked => { GameState.launch(); }
+                }
+            }
+
+            launch-sub-button := Rectangle {
+                x: 130px;
+                y: 0;
+                width: 24px;
+                height: parent.height;
+                background: #7287fd;
+                border-top-right-radius: 8px;
+                border-bottom-right-radius: 8px;
+                opacity: sub-touch.pressed ? 0.9 : root-launch-disabled ? 0.6 : 1.0;
+
+                AppIcon {
+                    name: "chevron-down";
+                    size: 16px;
+                    icon-color: #ffffff;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                sub-touch := TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    enabled: GameState.has-current;
+                    clicked => { root.launch-menu-opened = !root.launch-menu-opened; }
+                }
+            }
+
+            if root.launch-menu-opened : launch-menu := Rectangle {
+                x: 0;
+                y: parent.height + 4px;
+                width: 154px;
+                height: 26px + 16px;
+                border-radius: 10px;
+                border-width: 1px;
+                border-color: Theme.controllers-border;
+                background: Theme.base;
+                drop-shadow-color: #4500611d;
+                drop-shadow-blur: 10px;
+                z: 100000;
+
+                VerticalLayout {
+                    x: 10px;
+                    y: 8px;
+                    width: parent.width - 20px;
+                    height: 26px;
+
+                    Rectangle {
+                        height: 26px;
+                        border-radius: 6px;
+                        background: repair-touch.has-hover ? #ffffff1f : transparent;
+                        animate background { duration: 30ms; }
+
+                        HorizontalLayout {
+                            x: 8px;
+                            width: parent.width - 16px;
+                            height: parent.height;
+                            spacing: 8px;
+                            cross-axis-alignment: center;
+                            alignment: start;
+
+                            AppIcon { name: "build"; size: 14px; }
+                            Text {
+                                text: @tr("Repair game and launch");
+                                font-size: 12px;
+                                font-weight: Theme.font-weight-normal;
+                                color: Theme.default-text-color.transparentize(0.1);
+                            }
+                        }
+
+                        repair-touch := TouchArea {
+                            width: parent.width;
+                            height: parent.height;
+                            clicked => {
+                                root.launch-menu-opened = false;
+                                GameState.repair-and-launch();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        actions := Rectangle {
+            x: launch-buttons.width + 16px;
+            y: 0;
+            width: 112px;
+            height: 32px;
+            background: transparent;
+            opacity: GameState.has-current ? 1.0 : 0.6;
+
+            HorizontalLayout {
+                spacing: 8px;
+                cross-axis-alignment: center;
+
+                Rectangle {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 100px;
+                    background: folder-touch.pressed ? Theme.surface-0
+                        : folder-touch.has-hover ? Theme.surface-1
+                        : transparent;
+
+                    AppIcon {
+                        name: "folder";
+                        size: 20px;
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                    }
+
+                    folder-touch := TouchArea {
+                        width: parent.width;
+                        height: parent.height;
+                        enabled: GameState.has-current;
+                        clicked => { GameState.open-instance-folder(); }
+                    }
+                }
+
+                Rectangle {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 100px;
+                    background: star-touch.pressed ? Theme.surface-0
+                        : star-touch.has-hover ? Theme.surface-1
+                        : transparent;
+
+                    AppIcon {
+                        name: GameState.current-starred ? "star" : "star-outline";
+                        size: 20px;
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                    }
+
+                    star-touch := TouchArea {
+                        width: parent.width;
+                        height: parent.height;
+                        enabled: GameState.has-current;
+                        clicked => { GameState.toggle-starred(); }
+                    }
+                }
+
+                Rectangle {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 100px;
+                    background: settings-touch.pressed ? Theme.surface-0
+                        : settings-touch.has-hover ? Theme.surface-1
+                        : transparent;
+
+                    AppIcon {
+                        name: "settings";
+                        size: 20px;
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                    }
+
+                    settings-touch := TouchArea {
+                        width: parent.width;
+                        height: parent.height;
+                        enabled: GameState.has-current;
+                        clicked => { GameState.open-instance-settings(); }
+                    }
+                }
+            }
+        }
+    }
+
+    // ----- current instance contents -----
+    // The four previews carry the second batch of the intro: same slide, starting
+    // 0.03s after the detail rows did.
+    contents := Rectangle {
+        y: row3.y + row3.height + 16px;
+        width: 408px;
+        height: 4 * 36px + 3 * 4px + 8px;
+        border-radius: 12px;
+        background: transparent;
+        opacity: GameState.has-current ? 1.0 : 0.6;
+
+        saves-row := ContentRow {
+            x: 4px + self.intro-dx;
+            y: 4px;
+            width: parent.width - 8px;
+            height: 36px;
+            icon: "save";
+            type-label: @tr("Saves");
+            count: GameState.content-saves;
+            loading: GameState.content-loading;
+            disabled: !GameState.has-current;
+            unit: GameState.count-unit;
+            clicked => { GameState.open-content("saves"); }
+
+            // `disabled` is the component's own dimming; the intro multiplies on
+            // top of it.
+            private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+            opacity: (self.disabled ? 0.6 : 1.0) * self.intro-alpha;
+            animate intro-dx { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
+            animate intro-alpha { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
+        }
+
+        mods-row := ContentRow {
+            x: 4px + self.intro-dx;
+            y: 4px + 36px + 4px;
+            width: parent.width - 8px;
+            height: 36px;
+            icon: "extension-puzzle";
+            type-label: @tr("Mods");
+            count: GameState.content-mods;
+            loading: GameState.content-loading;
+            disabled: !GameState.has-current || !GameState.current-has-loader;
+            unit: GameState.count-unit;
+            clicked => { GameState.open-content("mods"); }
+
+            private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+            opacity: (self.disabled ? 0.6 : 1.0) * self.intro-alpha;
+            animate intro-dx { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
+            animate intro-alpha { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
+        }
+
+        resourcepacks-row := ContentRow {
+            x: 4px + self.intro-dx;
+            y: 4px + 2 * (36px + 4px);
+            width: parent.width - 8px;
+            height: 36px;
+            icon: "folder";
+            type-label: @tr("Resource packs");
+            count: GameState.content-resourcepacks;
+            loading: GameState.content-loading;
+            disabled: !GameState.has-current;
+            unit: GameState.count-unit;
+            clicked => { GameState.open-content("resourcepacks"); }
+
+            private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+            opacity: (self.disabled ? 0.6 : 1.0) * self.intro-alpha;
+            animate intro-dx { duration: 330ms; delay: 3 * root.intro-stagger; easing: ease-out-quart; }
+            animate intro-alpha { duration: 330ms; delay: 3 * root.intro-stagger; easing: ease-out-quart; }
+        }
+
+        screenshots-row := ContentRow {
+            x: 4px + self.intro-dx;
+            y: 4px + 3 * (36px + 4px);
+            width: parent.width - 8px;
+            height: 36px;
+            icon: "images-outline";
+            type-label: @tr("Screenshots");
+            count: GameState.content-screenshots;
+            loading: GameState.content-loading;
+            disabled: !GameState.has-current || GameState.content-screenshots == 0;
+            unit: GameState.count-unit;
+            clicked => { GameState.open-content("screenshots"); }
+
+            private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+            opacity: (self.disabled ? 0.6 : 1.0) * self.intro-alpha;
+            animate intro-dx { duration: 330ms; delay: 4 * root.intro-stagger; easing: ease-out-quart; }
+            animate intro-alpha { duration: 330ms; delay: 4 * root.intro-stagger; easing: ease-out-quart; }
+        }
+    }
+
+    private property <bool> root-launch-disabled: !GameState.has-current;
+    in-out property <bool> launch-menu-opened: false;
+}

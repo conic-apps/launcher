@@ -1,0 +1,137 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+
+export struct DropdownOption {
+    key: string,
+    label: string,
+}
+
+// Label + selected-value dropdown used by the instances toolbar
+// (src/views/game/InstanceListDropdown.vue). The panel opens below the head and
+// reuses the same padding/row styling as the shared dropdown overlay.
+export component InstanceListDropdown inherits Rectangle {
+    in property <string> label: "";
+    in property <string> selected: "";
+    in property <[DropdownOption]> options: [];
+    in property <string> selected-key: "";
+    in-out property <bool> opened: false;
+    callback select(string);
+
+    width: 100%;
+    height: 25px;
+    background: transparent;
+
+    private property <length> panel-height:
+        root.options.length * 26px + max(0, root.options.length - 1) * 8px + 16px;
+
+    head := Rectangle {
+        width: root.width;
+        height: root.height;
+        background: Theme.surface-0;
+        border-radius: 4px;
+
+        label-box := Rectangle {
+            x: 0;
+            y: 0;
+            width: label-text.preferred-width + 24px;
+            height: parent.height;
+            background: Theme.surface-1;
+            border-radius: 4px;
+
+            label-text := Text {
+                text: root.label;
+                font-size: 13px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+        }
+
+        selected-box := Rectangle {
+            x: label-box.width;
+            y: 0;
+            width: parent.width - label-box.width;
+            height: parent.height;
+            background: transparent;
+
+            Text {
+                text: root.selected;
+                font-size: 13px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+                x: 12px;
+                y: (parent.height - self.height) / 2;
+                width: parent.width - min(parent.width, 38px);
+                overflow: elide;
+                wrap: no-wrap;
+            }
+
+            AppIcon {
+                name: "chevron-down";
+                size: 14px;
+                x: selected-box.width - 12px - self.width;
+                y: (parent.height - self.height) / 2;
+            }
+        }
+
+        head-touch := TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => { root.opened = !root.opened; }
+        }
+    }
+
+    if root.opened : Rectangle {
+        x: 0;
+        y: root.height + 4px;
+        width: root.width;
+        height: root.panel-height;
+        border-radius: 10px;
+        border-width: 1px;
+        border-color: Theme.controllers-border;
+        background: Theme.base;
+        drop-shadow-color: #4500611d;
+        drop-shadow-blur: 10px;
+        z: 100000;
+
+        VerticalLayout {
+            x: 10px;
+            y: 8px;
+            width: parent.width - 20px;
+            height: parent.height - 16px;
+            spacing: 8px;
+
+            for option in root.options : Rectangle {
+                height: 26px;
+                border-radius: 6px;
+                background: option.key == root.selected-key ? #ffffff17
+                    : option-touch.has-hover ? #ffffff1f
+                    : transparent;
+                animate background { duration: 30ms; }
+
+                Text {
+                    text: option.label;
+                    font-size: 12px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    x: 8px;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                option-touch := TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    clicked => {
+                        root.opened = false;
+                        root.select(option.key);
+                    }
+                }
+            }
+        }
+    }
+}
