@@ -16,6 +16,11 @@ slint.workspace = true
 slint-platform.workspace = true
 slint-window.workspace = true
 slint-config.workspace = true
+slint-folder.workspace = true
+slint-account.workspace = true
+slint-instance.workspace = true
+slint-content.workspace = true
+chrono.workspace = true
 log.workspace = true
 env_logger.workspace = true
 
