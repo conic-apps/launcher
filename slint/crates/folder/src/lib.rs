@@ -1,0 +1,177 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+//! Tauri-free mirror of `crates/folder`: the game folders / data location
+//! layout. The original crate is a Tauri plugin; this one keeps the same data
+//! model (and the shared `~/.conic[-debug]` directory resolution) without the
+//! Tauri dependency so the Slint app can use it directly.
+//!
+//! [`DATA_LOCATION`] is a lazy singleton holding every path of the launcher's
+//! data directory — the same one the Tauri app writes, so both frontends share
+//! `config.toml`, instances, logs and music.
+
+use std::{
+    ffi::OsStr,
+    fmt::Display,
+    path::{Path, PathBuf},
+};
+
+use log::error;
+use once_cell::sync::Lazy;
+
+use slint_platform::{OsFamily, PLATFORM_INFO};
+
+pub static DATA_LOCATION: Lazy<DataLocation> = Lazy::new(DataLocation::default);
+
+const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("./launcher_profiles.json");
+
+#[derive(Clone)]
+/// The Minecraft folder structure. All method will return the path related to a minecraft root like .minecraft.
+pub struct MinecraftLocation {
+    pub root: PathBuf,
+    pub libraries: PathBuf,
+    pub assets: PathBuf,
+    pub versions: PathBuf,
+}
+
+impl MinecraftLocation {
+    pub fn new<S: AsRef<OsStr> + ?Sized>(root: &S) -> MinecraftLocation {
+        let root = Path::new(root);
+        MinecraftLocation {
+            root: root.to_path_buf(),
+            assets: root.join("assets"),
+            libraries: root.join("libraries"),
+            versions: root.join("versions"),
+        }
+    }
+
+    pub fn get_natives_root<P: AsRef<Path>>(&self, version_id: P) -> PathBuf {
+        self.get_version_root(version_id).join("conic-natives")
+    }
+
+    pub fn get_version_root<P: AsRef<Path>>(&self, version_id: P) -> PathBuf {
+        self.versions.join(version_id)
+    }
+
+    pub fn get_version_json<P: AsRef<Path> + Display>(&self, version_id: P) -> PathBuf {
+        self.get_version_root(&version_id)
+            .join(format!("{version_id}.json"))
+    }
+
+    pub fn get_version_jar<P: AsRef<Path> + Display>(
+        &self,
+        version: P,
+        version_jar_type: Option<&str>,
+    ) -> PathBuf {
+        if let Some(version_jar_type) = version_jar_type
+            && version_jar_type != "client"
+        {
+            self.get_version_root(&version)
+                .join(format!("{version}-{}.jar", version_jar_type))
+        } else {
+            self.get_version_root(&version)
+                .join(format!("{version}.jar"))
+        }
+    }
+
+    pub fn get_library_by_path<P: AsRef<Path>>(&self, library_path: P) -> PathBuf {
+        self.libraries.join(library_path)
+    }
+
+    pub fn get_assets_index(&self, version_assets: &str) -> PathBuf {
+        self.assets
+            .join("indexes")
+            .join(format!("{version_assets}.json"))
+    }
+
+    pub fn get_log_config<P: AsRef<Path>>(&self, version_id: P) -> PathBuf {
+        self.get_version_root(version_id).join("log4j2.xml")
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DataLocation {
+    pub root: PathBuf,
+    pub accounts: PathBuf,
+    pub authlib_injector: PathBuf,
+    pub instances: PathBuf,
+    pub cache: PathBuf,
+    pub logs: PathBuf,
+    pub resources: PathBuf,
+    pub music: PathBuf,
+    pub runtime: PathBuf,
+    pub temp: PathBuf,
+    pub config: PathBuf,
+}
+
+impl DataLocation {
+    pub fn new<S: AsRef<OsStr> + ?Sized>(data_folder: &S) -> Self {
+        let data_folder_root = Path::new(data_folder).to_path_buf();
+        let temp_path =
+            std::env::temp_dir().join(format!("conic-launcher-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&temp_path).expect("Could not create temp dir");
+        Self {
+            accounts: data_folder_root.join("accounts"),
+            authlib_injector: data_folder_root.join("authlib-injector.jar"),
+            instances: data_folder_root.join("instances"),
+            runtime: data_folder_root.join("runtime"),
+            music: data_folder_root.join("music"),
+            cache: match PLATFORM_INFO.os_family {
+                OsFamily::Windows => data_folder_root.join("cache"),
+                _ => std::env::var("HOME")
+                    .ok()
+                    .map(|home| PathBuf::from(home).join(".cache/conic-launcher"))
+                    .unwrap_or(data_folder_root.join("cache")),
+            },
+            resources: data_folder_root.join("resources"),
+            logs: data_folder_root.join("logs"),
+            temp: temp_path,
+            config: data_folder_root.join("config.toml"),
+            root: data_folder_root,
+        }
+    }
+
+    pub fn get_instance_root(&self, instance_id: &str) -> PathBuf {
+        self.instances.join(instance_id)
+    }
+
+    pub fn init(&self) {
+        std::fs::create_dir_all(&self.music).expect("Unable to create application data directory");
+        let launcher_profiles_path = self.root.join("launcher_profiles.json");
+        let override_json_profile_result =
+            std::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE);
+        if override_json_profile_result.is_err() {
+            error!("Unable to override launcher_profile.json, forge may not install properly")
+        }
+    }
+}
+
+impl Default for DataLocation {
+    fn default() -> Self {
+        #[cfg(not(debug_assertions))]
+        #[allow(unused_variables)]
+        let application_folder_name = "conic";
+        #[cfg(debug_assertions)]
+        #[allow(unused_variables)]
+        let application_folder_name = "conic-debug";
+        #[cfg(test)]
+        let application_folder_name = "conic-test";
+        let application_data_path = match PLATFORM_INFO.os_family {
+            OsFamily::Windows => {
+                PathBuf::from(std::env::var("APPDATA").expect("Could not found APP_DATA directory"))
+                    .join(application_folder_name)
+            }
+            OsFamily::Macos => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
+                .join(application_folder_name),
+            OsFamily::Linux => PathBuf::from(std::env::var("HOME").expect("Could not found home"))
+                .join(format!(".{application_folder_name}")),
+        };
+        #[cfg(test)]
+        {
+            std::fs::remove_dir_all(&application_data_path).expect("Could not clear data folder");
+            std::fs::create_dir_all(&application_data_path).expect("Could not create data folder");
+        }
+        Self::new(&application_data_path)
+    }
+}
