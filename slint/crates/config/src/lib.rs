@@ -5,21 +5,20 @@
 //! App configuration (Tauri-free mirror of `crates/config`).
 //!
 //! The Slint app shares the same `~/.conic[-debug]` data directory as the
-//! Tauri app, so the same `config.toml` is read and written by both. Unknown
+//! Tauri app, so the same `config.toml` is read and written by both. The data
+//! directory layout itself comes from [`slint_folder::DATA_LOCATION`]; unknown
 //! keys (e.g. `current_account`, which the Slint app does not model yet) are
 //! preserved across a load/save round-trip via [`Config::extra`].
 //!
 //! Everything is synchronous: the Slint host loads the config before building
 //! the UI and writes it back from a debounced timer.
 
-use std::{
-    collections::BTreeMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::BTreeMap, path::Path};
 
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
-use slint_platform::{OsFamily, PLATFORM_INFO};
+use slint_account::Account;
+use slint_folder::DATA_LOCATION;
 
 pub mod download;
 pub mod error;
@@ -28,63 +27,16 @@ pub mod music;
 
 pub use error::{Error, Result};
 
-/// Root of the launcher data directory (`~/.conic` in release, `~/.conic-debug`
-/// in debug builds; `%APPDATA%` on Windows). Mirrors
-/// `crates/folder::DataLocation::default`.
-pub fn data_root() -> PathBuf {
-    #[cfg(not(debug_assertions))]
-    let default_name = "conic";
-    #[cfg(debug_assertions)]
-    let default_name = "conic-debug";
-
-    let name = std::env::var("CONIC_DATA_NAME").unwrap_or_else(|_| default_name.to_string());
-
-    match &PLATFORM_INFO.os_family {
-        OsFamily::Windows => {
-            PathBuf::from(std::env::var("APPDATA").expect("Could not found APP_DATA directory"))
-                .join(name)
-        }
-        OsFamily::Linux => {
-            let home = std::env::var("HOME").expect("Could not found home");
-            PathBuf::from(home).join(format!(".{name}"))
-        }
-        OsFamily::Macos => {
-            let home = std::env::var("HOME").expect("Could not found home");
-            PathBuf::from(home).join(name)
-        }
-    }
-}
-
-/// Path of `config.toml` inside [`data_root`].
-pub fn config_path() -> PathBuf {
-    data_root().join("config.toml")
-}
-
-/// The launcher's music folder.
-pub fn music_dir() -> PathBuf {
-    data_root().join("music")
-}
-
-/// The launcher's log folder.
-pub fn logs_dir() -> PathBuf {
-    data_root().join("logs")
-}
-
-/// Path of the copied custom background image.
-pub fn background_image_path() -> PathBuf {
-    data_root().join("background_image")
-}
-
 /// Reads the configuration file from disk.
 ///
 /// If the file does not exist, a default configuration is generated and saved.
 pub fn load_config_file() -> Result<Config> {
-    let config_file_path = config_path();
+    let config_file_path = &DATA_LOCATION.config;
     if !config_file_path.exists() {
         info!("No config file, using default config");
         return reset_config();
     }
-    let data = match std::fs::read_to_string(&config_file_path) {
+    let data = match std::fs::read_to_string(config_file_path) {
         Ok(x) => x,
         Err(_) => {
             error!("Could not read config file, reset it");
@@ -93,7 +45,7 @@ pub fn load_config_file() -> Result<Config> {
     };
     if let Ok(config) = toml::from_str::<Config>(&data) {
         let write_back_data = toml::to_string_pretty(&config)?;
-        std::fs::write(&config_file_path, write_back_data)?;
+        std::fs::write(config_file_path, write_back_data)?;
         info!("Loaded config from file");
         Ok(config)
     } else {
@@ -111,12 +63,12 @@ pub fn reset_config() -> Result<Config> {
 
 /// Saves the configuration to the configuration file.
 pub fn save_config(config: &Config) -> Result<()> {
-    let config_file_path = config_path();
+    let config_file_path = &DATA_LOCATION.config;
     if let Some(parent) = config_file_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
     let data = toml::to_string_pretty(config)?;
-    std::fs::write(&config_file_path, data)?;
+    std::fs::write(config_file_path, data)?;
     debug!("Saved config to file");
     Ok(())
 }
@@ -124,7 +76,7 @@ pub fn save_config(config: &Config) -> Result<()> {
 /// Copies `path` to the data directory as the custom background image,
 /// returning the stored file name.
 pub fn set_background_image(path: &Path) -> Result<String> {
-    let dest = background_image_path();
+    let dest = DATA_LOCATION.root.join("background_image");
     if let Some(parent) = dest.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -134,7 +86,7 @@ pub fn set_background_image(path: &Path) -> Result<String> {
 
 /// Removes the stored custom background image, if any.
 pub fn remove_background_image() -> Result<()> {
-    let dest = background_image_path();
+    let dest = DATA_LOCATION.root.join("background_image");
     if dest.exists() {
         std::fs::remove_file(&dest)?;
     }
@@ -225,6 +177,9 @@ impl Default for AppearanceConfig {
 #[serde(default)]
 pub struct Config {
     pub auto_update: bool,
+    /// The currently selected account, serialized exactly like the Tauri app's
+    /// `config.current_account` so the selection is shared between frontends.
+    pub current_account: Option<Account>,
     pub appearance: AppearanceConfig,
     pub accessibility: AccessibilityConfig,
     pub language: Option<String>,
@@ -245,6 +200,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             auto_update: true,
+            current_account: None,
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
             language: None,

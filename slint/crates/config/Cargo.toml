@@ -7,7 +7,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-slint-platform.workspace = true
+slint-folder.workspace = true
+slint-account.workspace = true
 serde.workspace = true
 toml.workspace = true
 log.workspace = true
