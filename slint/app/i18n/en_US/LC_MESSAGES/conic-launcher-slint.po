@@ -315,8 +315,8 @@ msgstr "Master volume"
 
 #: ui
 msgctxt "SettingsAudio"
-msgid "Master volume (when window is in background)"
-msgstr "Master volume (when window is in background)"
+msgid "Master volume (window inactive)"
+msgstr "Master volume (window inactive)"
 
 #: ui
 msgctxt "SettingsDownload"
@@ -613,3 +613,145 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "Scanning for installed Java runtimes"
 
+
+# Game view strings, seeded from src/locales/en_us.ts.
+
+msgctxt "GameTime"
+msgid "Just now"
+msgstr "Just now"
+
+msgctxt "GameTime"
+msgid "1 hour ago"
+msgstr "1 hour ago"
+
+msgctxt "GameTime"
+msgid "{} hours ago"
+msgstr "{} hours ago"
+
+msgctxt "GameTime"
+msgid "Yesterday"
+msgstr "Yesterday"
+
+msgctxt "GameTime"
+msgid "{0}/{1}"
+msgstr "{0}/{1}"
+
+msgctxt "GameTime"
+msgid "{0}/{1}/{2}"
+msgstr "{0}/{1}/{2}"
+
+msgctxt "GameTime"
+msgid "Never played"
+msgstr "Never played"
+
+msgctxt "GameTime"
+msgid "{} sec"
+msgstr "{} sec"
+
+msgctxt "GameTime"
+msgid "{} min"
+msgstr "{} min"
+
+msgctxt "GameTime"
+msgid "{} hr"
+msgstr "{} hr"
+
+msgctxt "InstancesList"
+msgid "Favorites"
+msgstr "Favorites"
+
+msgctxt "InstancesList"
+msgid "All instances"
+msgstr "All instances"
+
+msgctxt "InstancesList"
+msgid "Last played: "
+msgstr "Last played: "
+
+msgctxt "InstancesListToolBar"
+msgid "Name"
+msgstr "Name"
+
+msgctxt "InstancesListToolBar"
+msgid "Version"
+msgstr "Version"
+
+msgctxt "InstancesListToolBar"
+msgid "Play time"
+msgstr "Play time"
+
+msgctxt "InstancesListToolBar"
+msgid "Last played"
+msgstr "Last played"
+
+msgctxt "InstancesListToolBar"
+msgid "Ungrouped"
+msgstr "Ungrouped"
+
+msgctxt "InstancesListToolBar"
+msgid "Mod loader"
+msgstr "Mod loader"
+
+msgctxt "InstancesListToolBar"
+msgid "Search..."
+msgstr "Search..."
+
+msgctxt "InstancesListToolBar"
+msgid "Sort"
+msgstr "Sort"
+
+msgctxt "InstancesListToolBar"
+msgid "Group"
+msgstr "Group"
+
+msgctxt "InstanceSummary"
+msgid "no instance selected!"
+msgstr "no instance selected!"
+
+msgctxt "InstanceSummary"
+msgid "Minecraft version"
+msgstr "Minecraft version"
+
+msgctxt "InstanceSummary"
+msgid "version"
+msgstr "version"
+
+msgctxt "InstanceSummary"
+msgid "Last played date"
+msgstr "Last played date"
+
+msgctxt "InstanceSummary"
+msgid "Play time"
+msgstr "Play time"
+
+msgctxt "InstanceSummary"
+msgid "Launch"
+msgstr "Launch"
+
+msgctxt "InstanceSummary"
+msgid "Repair game and launch"
+msgstr "Repair game and launch"
+
+msgctxt "InstanceSummary"
+msgid "Saves"
+msgstr "Saves"
+
+msgctxt "InstanceSummary"
+msgid "Mods"
+msgstr "Mods"
+
+msgctxt "InstanceSummary"
+msgid "Resource packs"
+msgstr "Resource packs"
+
+msgctxt "InstanceSummary"
+msgid "Screenshots"
+msgstr "Screenshots"
+
+msgctxt "GameFooterBar"
+msgid "Not logged in"
+msgstr "Not logged in"
+
+msgctxt "GameFooterBar"
+msgid "New instance"
+msgstr "New instance"

@@ -315,8 +315,8 @@ msgstr "Общая громкость"
 
 #: ui
 msgctxt "SettingsAudio"
-msgid "Master volume (when window is in background)"
-msgstr "Общая громкость (когда окно в фоне)"
+msgid "Master volume (window inactive)"
+msgstr "Общая громкость (окно неактивно)"
 
 #: ui
 msgctxt "SettingsDownload"
@@ -613,3 +613,145 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "Поиск установленных сред Java"
 
+
+# Game view strings, seeded from src/locales/ru_ru.ts.
+
+msgctxt "GameTime"
+msgid "Just now"
+msgstr "Только что"
+
+msgctxt "GameTime"
+msgid "1 hour ago"
+msgstr "1 час назад"
+
+msgctxt "GameTime"
+msgid "{} hours ago"
+msgstr "{} часов назад"
+
+msgctxt "GameTime"
+msgid "Yesterday"
+msgstr "Вчера"
+
+msgctxt "GameTime"
+msgid "{0}/{1}"
+msgstr "{1}.{0}"
+
+msgctxt "GameTime"
+msgid "{0}/{1}/{2}"
+msgstr "{1}.{0}.{2}"
+
+msgctxt "GameTime"
+msgid "Never played"
+msgstr "Никогда не запускалась"
+
+msgctxt "GameTime"
+msgid "{} sec"
+msgstr "{} с"
+
+msgctxt "GameTime"
+msgid "{} min"
+msgstr "{} мин"
+
+msgctxt "GameTime"
+msgid "{} hr"
+msgstr "{} ч"
+
+msgctxt "InstancesList"
+msgid "Favorites"
+msgstr "Избранное"
+
+msgctxt "InstancesList"
+msgid "All instances"
+msgstr "Все сборки"
+
+msgctxt "InstancesList"
+msgid "Last played: "
+msgstr "Последний запуск: "
+
+msgctxt "InstancesListToolBar"
+msgid "Name"
+msgstr "Название"
+
+msgctxt "InstancesListToolBar"
+msgid "Version"
+msgstr "Версия"
+
+msgctxt "InstancesListToolBar"
+msgid "Play time"
+msgstr "Время игры"
+
+msgctxt "InstancesListToolBar"
+msgid "Last played"
+msgstr "Последний запуск"
+
+msgctxt "InstancesListToolBar"
+msgid "Ungrouped"
+msgstr "Без группы"
+
+msgctxt "InstancesListToolBar"
+msgid "Mod loader"
+msgstr "Загрузчик модов"
+
+msgctxt "InstancesListToolBar"
+msgid "Search..."
+msgstr "Поиск..."
+
+msgctxt "InstancesListToolBar"
+msgid "Sort"
+msgstr "Сортировка"
+
+msgctxt "InstancesListToolBar"
+msgid "Group"
+msgstr "Группа"
+
+msgctxt "InstanceSummary"
+msgid "no instance selected!"
+msgstr "no instance selected!"
+
+msgctxt "InstanceSummary"
+msgid "Minecraft version"
+msgstr "Версия Minecraft"
+
+msgctxt "InstanceSummary"
+msgid "version"
+msgstr "версия"
+
+msgctxt "InstanceSummary"
+msgid "Last played date"
+msgstr "Дата последнего запуска"
+
+msgctxt "InstanceSummary"
+msgid "Play time"
+msgstr "Время игры"
+
+msgctxt "InstanceSummary"
+msgid "Launch"
+msgstr "Запустить игру"
+
+msgctxt "InstanceSummary"
+msgid "Repair game and launch"
+msgstr "Восстановить игру и запустить"
+
+msgctxt "InstanceSummary"
+msgid "Saves"
+msgstr "Сохранения"
+
+msgctxt "InstanceSummary"
+msgid "Mods"
+msgstr "Моды"
+
+msgctxt "InstanceSummary"
+msgid "Resource packs"
+msgstr "Ресурспаки"
+
+msgctxt "InstanceSummary"
+msgid "Screenshots"
+msgstr "Скриншоты"
+
+msgctxt "GameFooterBar"
+msgid "Not logged in"
+msgstr "Не выполнен вход"
+
+msgctxt "GameFooterBar"
+msgid "New instance"
+msgstr "Новая сборка"

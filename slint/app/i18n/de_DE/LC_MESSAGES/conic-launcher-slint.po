@@ -315,8 +315,8 @@ msgstr "Gesamtlautstärke"
 
 #: ui
 msgctxt "SettingsAudio"
-msgid "Master volume (when window is in background)"
-msgstr "Gesamtlautstärke (wenn das Fenster im Hintergrund ist)"
+msgid "Master volume (window inactive)"
+msgstr "Gesamtlautstärke (Fenster inaktiv)"
 
 #: ui
 msgctxt "SettingsDownload"
@@ -613,3 +613,145 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "Installierte Java-Laufzeitumgebungen werden gesucht"
 
+
+# Game view strings, seeded from src/locales/de_de.ts.
+
+msgctxt "GameTime"
+msgid "Just now"
+msgstr "Gerade eben"
+
+msgctxt "GameTime"
+msgid "1 hour ago"
+msgstr "vor 1 Stunde"
+
+msgctxt "GameTime"
+msgid "{} hours ago"
+msgstr "vor {} Stunden"
+
+msgctxt "GameTime"
+msgid "Yesterday"
+msgstr "Gestern"
+
+msgctxt "GameTime"
+msgid "{0}/{1}"
+msgstr "{1}.{0}."
+
+msgctxt "GameTime"
+msgid "{0}/{1}/{2}"
+msgstr "{1}.{0}.{2}"
+
+msgctxt "GameTime"
+msgid "Never played"
+msgstr "Nie gespielt"
+
+msgctxt "GameTime"
+msgid "{} sec"
+msgstr "{} Sek."
+
+msgctxt "GameTime"
+msgid "{} min"
+msgstr "{} Min."
+
+msgctxt "GameTime"
+msgid "{} hr"
+msgstr "{} Std."
+
+msgctxt "InstancesList"
+msgid "Favorites"
+msgstr "Favoriten"
+
+msgctxt "InstancesList"
+msgid "All instances"
+msgstr "Alle Instanzen"
+
+msgctxt "InstancesList"
+msgid "Last played: "
+msgstr "Zuletzt gespielt: "
+
+msgctxt "InstancesListToolBar"
+msgid "Name"
+msgstr "Name"
+
+msgctxt "InstancesListToolBar"
+msgid "Version"
+msgstr "Version"
+
+msgctxt "InstancesListToolBar"
+msgid "Play time"
+msgstr "Spielzeit"
+
+msgctxt "InstancesListToolBar"
+msgid "Last played"
+msgstr "Zuletzt gespielt"
+
+msgctxt "InstancesListToolBar"
+msgid "Ungrouped"
+msgstr "Ohne Gruppe"
+
+msgctxt "InstancesListToolBar"
+msgid "Mod loader"
+msgstr "Mod-Loader"
+
+msgctxt "InstancesListToolBar"
+msgid "Search..."
+msgstr "Suchen..."
+
+msgctxt "InstancesListToolBar"
+msgid "Sort"
+msgstr "Sortieren"
+
+msgctxt "InstancesListToolBar"
+msgid "Group"
+msgstr "Gruppieren"
+
+msgctxt "InstanceSummary"
+msgid "no instance selected!"
+msgstr "no instance selected!"
+
+msgctxt "InstanceSummary"
+msgid "Minecraft version"
+msgstr "Minecraft-Version"
+
+msgctxt "InstanceSummary"
+msgid "version"
+msgstr "Version"
+
+msgctxt "InstanceSummary"
+msgid "Last played date"
+msgstr "Zuletzt gespielt"
+
+msgctxt "InstanceSummary"
+msgid "Play time"
+msgstr "Spielzeit"
+
+msgctxt "InstanceSummary"
+msgid "Launch"
+msgstr "Spiel starten"
+
+msgctxt "InstanceSummary"
+msgid "Repair game and launch"
+msgstr "Spiel reparieren und starten"
+
+msgctxt "InstanceSummary"
+msgid "Saves"
+msgstr "Welten"
+
+msgctxt "InstanceSummary"
+msgid "Mods"
+msgstr "Mods"
+
+msgctxt "InstanceSummary"
+msgid "Resource packs"
+msgstr "Ressourcenpakete"
+
+msgctxt "InstanceSummary"
+msgid "Screenshots"
+msgstr "Screenshots"
+
+msgctxt "GameFooterBar"
+msgid "Not logged in"
+msgstr "Nicht angemeldet"
+
+msgctxt "GameFooterBar"
+msgid "New instance"
+msgstr "Neue Instanz"
