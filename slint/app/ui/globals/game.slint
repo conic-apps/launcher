@@ -1,0 +1,216 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// Game view state (mirrors the Vue game stores + composables).
+//
+// Domain state (the instance list, the current instance, accounts) lives in
+// Rust and is pushed into this global; pure-UI state (search query, sort/group
+// mode, selected account) is written here by the view and read back by Rust
+// through the callbacks. This keeps the crate layer free of any Slint types.
+
+/// A single flattened row of the instance list: either a group header or an
+/// instance card. Rust expands the favorites/loader grouping so the view can
+/// render the list with a single `for`.
+export struct GameRow {
+    /// "group" or "instance".
+    kind: string,
+    /// Group key or instance id (what `toggle-group` / `select-instance` take).
+    key: string,
+    /// Identity of the *rendered* row, `<group-key>:<instance-id>` for cards and
+    /// the group key for headers. A starred instance is listed twice (in its
+    /// group and in "all"), so the instance id alone is not unique — this is the
+    /// Vue `data-key` (see `InstancesList.vue`).
+    uid: string,
+    /// Row position and height inside the list content (Rust lays the list out
+    /// so the view can position rows absolutely and compute the parallax rail).
+    /// `row-y` (not `y`) to avoid clashing with the element `y` property.
+    row-y: length,
+    height: length,
+    /// Instance name (instance rows only).
+    name: string,
+    /// Group title kind: "favorites", "all" or "literal" (group rows only).
+    title-kind: string,
+    /// Group title when `title-kind == "literal"` (group rows only).
+    title-literal: string,
+    /// Number of instances in the group (group rows only).
+    count: int,
+    /// Display name of the mod loader, or "Vanilla" (instance rows only).
+    loader: string,
+    /// Lower-case loader key used for the tag/group accent colour.
+    loader-key: string,
+    /// Relative-time kind for `GameTime.last-played`.
+    last-played-kind: string,
+    last-played-hours: int,
+    last-played-month: int,
+    last-played-day: int,
+    last-played-year: int,
+    /// Whether the instance is a favorite (starred) instance.
+    starred: bool,
+    /// Whether the instance is the currently selected one.
+    current: bool,
+    /// Whether the group is collapsed (group rows only).
+    collapsed: bool,
+    /// Row opacity target. Cards of a collapsed group stay in the model — parked
+    /// on their group's slot with opacity 0 — so the view's `for` items are never
+    /// destroyed and can glide along the rail (and fade) when the group toggles.
+    opacity: float,
+    /// False until a row that was just added (search, sort, grouping, starring)
+    /// has been revealed; the view slides such rows in along the rail from +24px.
+    /// Rust flips it one frame after the row appears in the model, which is what
+    /// triggers the animation.
+    appear: bool,
+    /// Whether this row's next position change animates like the Vue FLIP — the
+    /// 400ms `cubic-bezier(0.22,1,0.36,1)` a reordered list travels with — rather
+    /// than the 300ms `cubic-bezier(0.33,1,0.68,1)` of a group collapse.
+    flip: bool,
+}
+
+/// One account entry of the footer account dropdown.
+export struct AccountItem {
+    /// Stable account key (`microsoft-<uuid>` etc.).
+    key: string,
+    name: string,
+    /// "Microsoft" / "Offline" / "Yggdrasil".
+    kind: string,
+}
+
+/// Relative time / play time formatting helpers.
+///
+/// Slint evaluates `@tr` bindings again when the locale changes, so keeping the
+/// formatting here (rather than in Rust) preserves runtime language switching.
+export global GameTime {
+    public pure function last-played(
+        kind: string,
+        hours: int,
+        month: int,
+        day: int,
+        year: int,
+    ) -> string {
+        if kind == "just-now" {
+            return @tr("GameTime" => "Just now");
+        }
+        if kind == "hours-ago" {
+            return hours == 1
+                ? @tr("GameTime" => "1 hour ago")
+                : @tr("GameTime" => "{} hours ago", hours);
+        }
+        if kind == "yesterday" {
+            return @tr("GameTime" => "Yesterday");
+        }
+        if kind == "month-day" {
+            return @tr("GameTime" => "{}/{}", month, day);
+        }
+        if kind == "year-month-day" {
+            return @tr("GameTime" => "{}/{}/{}", month, day, year);
+        }
+        return @tr("GameTime" => "Never played");
+    }
+
+    public pure function play-time(kind: string, value: string) -> string {
+        if kind == "seconds" {
+            return @tr("GameTime" => "{} sec", value);
+        }
+        if kind == "minutes" {
+            return @tr("GameTime" => "{} min", value);
+        }
+        if kind == "hours" {
+            return @tr("GameTime" => "{} hr", value);
+        }
+        return "";
+    }
+}
+
+/// Entrance animation state of the game view (`GameView.vue`'s gsap timeline).
+///
+/// `GameView` resets `played` to false on every instantiation and flips it true
+/// once the list has been measured, exactly like the Vue `onMounted` waiting for
+/// the footer/list `ready` promises before playing the timeline. Every animated
+/// intro property in the game view reads it; the ordering of the gsap timeline
+/// (the list starting 50ms in, the cards 115ms after that, the footer's inner
+/// rows staggered) is expressed as the `delay` of each `animate`.
+export global GameIntro {
+    in-out property <bool> played: false;
+}
+
+export global GameState {
+    // ----- instance list -----
+    in-out property <[GameRow]> rows: [];
+    /// Total scrollable height of the instance list content (gap top + rows +
+    /// gap bottom).
+    in-out property <length> list-content-height: 0px;
+    /// Position/size of the current instance's row, used to center it on open.
+    in-out property <length> current-row-y: -1px;
+    in-out property <length> current-row-height: 0px;
+    in-out property <bool> has-instances: false;
+    in-out property <bool> show-placeholder: false;
+    in-out property <string> search-query: "";
+    // "playtime" | "name" | "version" | "lastplay"
+    in-out property <string> sort-mode: "playtime";
+    // "none" | "loader"
+    in-out property <string> group-mode: "none";
+
+    // ----- current instance summary -----
+    in-out property <bool> has-current: false;
+    in-out property <string> current-name: "";
+    in-out property <string> current-minecraft: "";
+    in-out property <bool> current-has-loader: false;
+    in-out property <string> current-loader: "";
+    in-out property <string> current-loader-version: "";
+    in-out property <string> current-last-played-kind: "never";
+    in-out property <int> current-last-played-hours: 0;
+    in-out property <int> current-last-played-month: 0;
+    in-out property <int> current-last-played-day: 0;
+    in-out property <int> current-last-played-year: 0;
+    in-out property <bool> current-has-playtime: false;
+    in-out property <string> current-playtime-kind: "";
+    in-out property <string> current-playtime-value: "";
+    in-out property <bool> current-starred: false;
+
+    // ----- current instance content counts -----
+    in-out property <int> content-saves: 0;
+    in-out property <int> content-mods: 0;
+    in-out property <int> content-resourcepacks: 0;
+    in-out property <int> content-screenshots: 0;
+    in-out property <bool> content-loading: false;
+    // Suffix shown after a content count. Only Chinese uses one ("个"/"個");
+    // Rust derives it from the language so it is not a gettext key.
+    in-out property <string> count-unit: "";
+
+    // ----- accounts (footer) -----
+    in-out property <[AccountItem]> accounts: [];
+    in-out property <bool> has-account: false;
+    in-out property <string> current-account-key: "";
+    in-out property <string> current-account-name: "";
+    in-out property <string> current-account-kind: "";
+
+    // Called once at startup and whenever something changed on disk.
+    callback refresh();
+    // An instance card was clicked.
+    callback select-instance(string);
+    // A group header was clicked.
+    callback toggle-group(string);
+    callback set-sort(string);
+    callback set-group-mode(string);
+    callback search-changed(string);
+    // Footer / summary actions.
+    callback launch();
+    callback repair-and-launch();
+    callback open-instance-folder();
+    callback toggle-starred();
+    callback open-instance-settings();
+    callback open-content(string);
+    callback select-account(string);
+    callback open-accounts();
+    callback open-add-account();
+    callback open-connect();
+    callback new-instance();
+    callback open-packs();
+    // TEMP-PROBE
+    callback debug-log(string);
+    /// Monotonic milliseconds since startup, used to make the list's smoothing
+    /// frame-time compensated (`Lenis` scales its `lerp` by the frame time, so a
+    /// 120Hz display does not glide twice as fast as a 60Hz one). Slint has no
+    /// wall clock — `DateNow` only reports a date — so it comes from Rust.
+    callback now-ms() -> float;
+}

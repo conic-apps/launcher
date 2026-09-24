@@ -1,0 +1,56 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// Player head avatar (src/components/AccountAvatar.vue).
+//
+// The Vue component fetches the skin texture and crops the 8x8 face to a
+// `<canvas>`. That image pipeline is not ported yet, so this component renders
+// the placeholder disc with the per-account-type ring; wiring a real skin later
+// only needs to fill `skin`.
+export component AccountAvatar inherits Rectangle {
+    in property <length> size: 56px;
+    in property <image> skin;
+    in property <string> kind: "";
+    in property <bool> unlogged: false;
+
+    width: size;
+    height: size;
+
+    private property <color> ring-color: root.unlogged ? Theme.overlay-0
+        : root.kind == "Microsoft" ? Theme.green
+        : root.kind == "Yggdrasil" ? Theme.yellow
+        : root.kind == "Offline" ? Theme.red
+        : Theme.overlay-0;
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        border-radius: 10000px;
+        background: root.unlogged ? Theme.overlay-0.with-alpha(0.4) : Theme.surface-0;
+        border-width: 2px;
+        border-color: root.ring-color;
+        clip: true;
+
+        if root.skin.width > 0 : Image {
+            x: 4px;
+            y: 4px;
+            width: root.width - 8px;
+            height: root.height - 8px;
+            source: root.skin;
+            image-fit: cover;
+            image-rendering: pixelated;
+        }
+
+        if root.skin.width <= 0 : Rectangle {
+            x: 4px;
+            y: 4px;
+            width: root.width - 8px;
+            height: root.height - 8px;
+            border-radius: 10000px;
+            background: Theme.surface-1;
+        }
+    }
+}
