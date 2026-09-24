@@ -40,9 +40,14 @@ slint-build = "1.18"
 slint-platform = { path = "./slint/crates/platform", version = "0.0.0" }
 slint-window = { path = "./slint/crates/window", version = "0.0.0" }
 slint-config = { path = "./slint/crates/config", version = "0.0.0" }
+slint-folder = { path = "./slint/crates/folder", version = "0.0.0" }
+slint-account = { path = "./slint/crates/account", version = "0.0.0" }
+slint-instance = { path = "./slint/crates/instance", version = "0.0.0" }
+slint-content = { path = "./slint/crates/content", version = "0.0.0" }
 
 # ----- non-local crates -----
 base64 = "0.22"
+chrono = "0.4"
 conic-worldmap = { git="https://github.com/conic-apps/conic-worldmap", rev="a86489bb0cf12c1ce7c8a3e2b07bdb01d5c09cf7" }
 env_logger = "0.11.5"
 futures = "0.3"
@@ -66,7 +71,7 @@ tauri = { version = "2", default-features = false, features = ["wry", "x11", "co
 thiserror = "2"
 toml = "1"
 url = "2"
-uuid = { version = "1", features = ["v4"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 zip = { version = "4", default-features = false, features = ["deflate"]}
 libloader = "0.1"
 tokio = { version = "1", features = ["macros", "rt", "time", "fs"]}

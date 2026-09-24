@@ -1,0 +1,14 @@
+[package]
+name = "slint-folder"
+description = "Tauri-free mirror of crates/folder for the Slint app"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+slint-platform.workspace = true
+
+log.workspace = true
+once_cell.workspace = true
+uuid.workspace = true
