@@ -18,6 +18,7 @@ import { GameViewPlaceholder } from "views/game-placeholder.slint";
 export { AppConfig, JavaRuntime } from "globals/settings.slint";
 export { Navigation } from "globals/navigation.slint";
 export { GameState, GameRow, AccountItem } from "globals/game.slint";
+export { ScrollInput, ScrollSource } from "globals/scroll.slint";
 export { Dialogs, CreateInstanceState, MinecraftVersionItem } from "globals/dialogs.slint";
 export { WindowDrag } from "globals/window-drag.slint";
 
@@ -39,10 +40,20 @@ export component App inherits Window {
     // native (transparent) title bar; other platforms need an opaque client
     // area beneath their native caption bar.
     background: self.macos ? transparent : Theme.crust;
-    width: 840px;
-    height: 532px;
+    // 840x532 is the floor, not a fixed size: fixed `width`/`height` on the
+    // root Window pin min == max (making the window non-resizable), so the
+    // original window size is expressed as the minimum + preferred size.
+    min-width: 840px;
+    min-height: 532px;
+    preferred-width: 840px;
+    preferred-height: 532px;
 
     in-out property <bool> macos: false;
+    /// Whether the window is in native fullscreen — a *state* pushed from the
+    /// platform (`traffic_lights.rs`), not a request: to change it, use the
+    /// `WindowService`. macOS hides the traffic lights in fullscreen, and the
+    /// title bar stops leaving room for them there. False elsewhere.
+    in-out property <bool> window-fullscreen: false;
     in-out property <string> search-placeholder: @tr("Search or type a command…");
     in-out property <string> search-hotkey: "";
 
@@ -69,6 +80,7 @@ export component App inherits Window {
 
             TitleBar {
                 macos: root.macos;
+                fullscreen: root.window-fullscreen;
                 search-placeholder: root.search-placeholder;
                 search-hotkey: root.search-hotkey;
                 current-page: Navigation.current-page;
