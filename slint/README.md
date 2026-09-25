@@ -19,18 +19,29 @@ slint/
     Cargo.toml                      # package: conic-launcher-slint
     i18n/<lang>/LC_MESSAGES/
       conic-launcher-slint.po       # gettext catalogs (see Internationalization)
-    src/main.rs                     # Rust host: platform setup, window chrome, locale
+    src/
+      main.rs                       # Rust host: platform setup, window chrome, locale
+      traffic_lights.rs             # macOS: native traffic lights vs. the custom title bar
+      runtime.rs                    # the tokio runtime the background work runs on
+      config_bridge.rs              # config ↔ UI bridges (file pickers, opening URLs)
+      settings.rs                   # the settings screen's script
+      game.rs                       # the game view's script
+      java.rs                       # Java runtime discovery (a subset of the plugin)
+      create_instance.rs            # the create-instance dialog's script
     ui/
       app.slint                     # root `App` Window (mirrors src/App.vue)
       theme.slint                   # palette + typography tokens, embeds fonts
       icons.slint                   # icon path data (mirrors src/assets/icons/*.svg)
       fonts/Comfortaa.ttf           # converted from src/assets/fonts/*.woff2
       fonts/Nunito.ttf
-      assets/                       # palette previews + about logos (png/svg)
+      assets/                       # palette previews, about logos, version icons
       globals/
         navigation.slint            # global page navigation (src/store/navigation.ts)
         settings.slint              # global config state (the "config store")
         game.slint                  # game view state (src/store/instance.ts + …)
+        dialogs.slint               # dialog store + the create-instance form state
+        focus.slint                 # blur-the-focused-field helper
+        window-drag.slint           # the Vue's `data-tauri-drag-region` regions
       components/                   # shared/reusable pieces
         title-bar.slint
         account-avatar.slint
@@ -43,6 +54,9 @@ slint/
         setting-item.slint
         setting-collapse.slint
         scroll-view.slint
+        base-dialog.slint           # modal shell with its scrim/panel animation
+        base-list-item.slint        # a row of a list panel
+        zoom-transition.slint       # the zoom-in / zoom-out screen transition
         base-switch.slint
         base-select.slint
         base-dropdown-select.slint
@@ -57,6 +71,13 @@ slint/
         game-view.slint             # src/views/GameView.vue
         game/                       # summary, list, toolbar, footer, dropdowns
         game-placeholder.slint      # stand-in for the not-yet-migrated views
+      overlays/
+        dialog-root.slint           # src/overlays/DialogRoot.vue
+        dialogs/
+          create-instance.slint     # src/overlays/dialogs/CreateInstance.vue
+          create/
+            minecraft-choose.slint  #   …/create/MinecraftChoose.vue
+            mod-loader-choose.slint #   …/create/ModLoaderChoose.vue
   crates/
     platform/                       # Tauri-free mirror of crates/platform
     window/                         # window-control service (min/max/fullscreen)
@@ -65,6 +86,7 @@ slint/
     account/                        # Tauri-free mirror of crates/account
     instance/                       # Tauri-free mirror of crates/instance
     content/                        # Tauri-free mirror of crates/content (counts)
+    install/                        # Tauri-free mirror of crates/install (version lists)
 ```
 
 ## Naming
@@ -146,6 +168,20 @@ is the component name. To add or refresh a language, add/update its directory
 under `app/i18n/` (and the `bundled_locale()` mapping in
 `src/config_bridge.rs`). Catalogs can be (re)generated with
 `slint-tr-extractor` (not currently installed).
+
+The `msgid` of a `@tr()` with more than one argument is the source string as it
+is written — `@tr("{}/{}/{}", month, day, year)` is looked up as `"{}/{}/{}"`,
+**not** as the extractor's positional `"{0}/{1}/{2}"`. A string the runtime
+cannot find falls back to the source, so a catalog entry under the wrong form
+looks like a missing translation: the `GameTime` date formats were catalogued
+that way and only ever rendered as `9/15/2026`; they now use the source form
+(their `msgstr`s stay positional, `"{2}年{0}月{1}日"`, which the formatter
+supports) and are translated.
+
+A `@tr()` in a component that is not the one the key belongs to (an inline
+`component SettingsStep { … }` inside `create-instance.slint`) resolves under
+_that_ component's name, so those call sites set the context explicitly:
+`@tr("CreateInstance" => "Version settings")`.
 
 The About disclaimer is the one rich-text string: `StyledText` renders it with
 an interpolated markdown link (`@markdown("\{@tr(…)}[\{@tr(…)}](url)…")`), so
@@ -237,12 +273,43 @@ Per the migration plan:
   instead of being destroyed. The custom scrollbar, the toolbar and the
   `GameIntro` timeline (the Vue `onMounted`/`playIntro` GSAP entrance, staggered
   through the `delay` of each `animate`) are ported with it.
+- The overlay layer's first dialog: `overlays/dialog-root.slint` (mirroring
+  `DialogRoot.vue`) mounts `overlays/dialogs/create-instance.slint`, the
+  "create instance" dialog, with its two screens under `dialogs/create/`. The
+  dialog runs the Vue's two animations: `BaseDialog`'s scrim/panel entrance and
+  exit (gsap timeline → the `delay` of each animated property) and the
+  `mode="out-in"` swap between the three screens (`zoom-in` / `zoom-out`, 80ms
+  out then 250ms in). `components/base-list-item.slint` (the version rows),
+  `components/zoom-transition.slint` (the swap's two halves) and the new
+  `slint-install` crate came with it. The dialog is opened by the footer's "New
+  instance" button (`GameState.new-instance`), and the whole form is driven by
+  `app/src/create_instance.rs` — the version lists are fetched on the tokio
+  runtime and reported back through `upgrade_in_event_loop`.
 - `slint-platform` (OS detection), `slint-window` (window controls),
-  `slint-config`, `slint-folder`, `slint-account`, `slint-instance` and
-  `slint-content`.
+  `slint-config`, `slint-folder`, `slint-account`, `slint-instance`,
+  `slint-content` and `slint-install`.
+- `slint-install` mirrors the **version-list half** of `crates/install`:
+  `VersionManifest`, the Fabric/Quilt/Forge/Neoforge lists and the caching the
+  Tauri plugin keeps in its `PluginState` (30 minutes, like
+  `CACHE_EXPIRATION_SECONDS`). Like the original's commands it is `async` and
+  uses the shared async HTTP client, so it is awaited on a runtime; the install
+  task itself (game files, loaders, Java) arrives with the launch view.
+  `filterNeoforgeVersionList` lives in `crates/install/index.ts`, i.e. in the Vue
+  frontend, so it is mirrored in `app/src/create_instance.rs` instead.
+- Window drag regions (`globals/window-drag.slint` + `WindowService::drag_window`):
+  a press inside one starts the platform's own window drag — on macOS
+  `performWindowDragWithEvent:`, the way Chromium, Electron and Tauri do it, so
+  the drag keeps working outside the window and with the system's window
+  snapping. This is what the Vue expresses with `data-tauri-drag-region`; the
+  dialog's scrim uses it, so the dialog can be moved by its shadow area.
+- `app/src/runtime.rs`: the tokio runtime the background work runs on, standing
+  in for the one Tauri builds at startup. `spawn` carries the async work (the
+  HTTP calls of `slint-install`) and `spawn_blocking` the disk work (the Java
+  scan, creating an instance), both reporting back through
+  `upgrade_in_event_loop` — Slint itself is not thread-safe.
 
-Not yet migrated: `LaunchView`, `AccountsView`, the setup wizard, the overlay
-layer (dialogs, content panels, command palette, music player, instance
+Not yet migrated: `LaunchView`, `AccountsView`, the setup wizard, the remaining
+overlays (dialogs, content panels, command palette, music player, instance
 settings), the background renderer, and the full Java runtime scanner (settings
 use a lightweight subset). The game view's click-to-open content overlays and
 the account skin/audio-visualizer rendering are stubbed; `views/game-placeholder.slint`
@@ -256,7 +323,7 @@ stands in for the not-yet-migrated views.
   `views/` (screens), and — later — `overlays/` and `globals/`.
 - The macOS window is Chrome-style (transparent, title-hidden, full-size content
   view), configured in `src/main.rs`; the native traffic lights are aligned to
-  the custom title bar.
+  the custom title bar by `src/traffic_lights.rs` (see below).
 
 ## Known issues / notes
 
@@ -288,10 +355,93 @@ stands in for the not-yet-migrated views.
     - `TouchArea.pointer-event` reports a _move_ with `PointerEventButton.other`,
       never `left`, so a drag has to be tracked with its own flag rather than by
       filtering on the button.
+- **An `animate` only advances while its property is being read**, which decides
+  how the dialog's animations had to be built. An element that is not painted —
+  `visible: false`, or clipped or scrolled out of sight — is never read, so the
+  first value its animated properties are ever asked for is the one they were
+  meant to animate *to*: the fade was skipped and the element jumped to its end
+  state. Everything that animates therefore has to be on screen, at the start
+  values, one frame before the target changes:
+    - `BaseDialog` shows itself for one frame at the start values (`phase:
+      "starting"`, 16ms) before moving to "shown", which is what makes the scrim
+      fade and the panel scale in instead of appearing — and the scrim's alpha has
+      to be part of the dialog's background colour, not an element `opacity`,
+      because the fade runs on a `visible: false`-when-closed root.
+    - The create-instance swap plays the **leave on the mounted screen** (the step
+      is only changed when it is over) instead of on a copy mounted ahead of time:
+      a copy kept out of sight jumps straight to the leave values when it is shown.
+      The arriving screen is then mounted at the enter rest and moved to "shown"
+      one frame later (`enter-timer`), for the same reason.
+    - `scrim-alpha`, `content-alpha`/`content-scale` and the swap's `phase`s are
+      plain state, never derived from each other, so no animation depends on a
+      value that is itself mid-animation.
+- **Create-instance dialog** deviations, all deliberate:
+    - The dialog's scroll area (`overflow-y: auto` in the Vue) draws no
+      scrollbar: the webview hides scrollbars globally, so the original never
+      showed one either. The version list keeps the app's `ScrollView` (and its
+      slim thumb), exactly like the Vue nests that component there.
+    - The version chooser's category filter and Cancel button keep the heights
+      their padding and content ask for (40px and 30px). The Vue's flex column
+      overflows — `height: calc(100% - 42px)` on the screen plus `height: 100%`
+      on the list — so flexbox shrinks them to roughly 32px and 24px.
+    - The **mod loader list is built like the version chooser's** — a 1px
+      bordered, rounded box around the app's `ScrollView` — where the Vue lets it
+      grow to its full height (13 700px for Fabric on 1.20.1, 16 600px for Quilt)
+      and scrolls the whole dialog content, and the screen fills the dialog's
+      inner area like the version chooser does. Slint's renderer cannot paint an
+      element taller than 8192px *inside an opacity/transform group* — the layer
+      it allocates for the screen is that tall — and the dialog then stops being
+      painted altogether. Two additions the Vue does not have on that screen: the
+      border (its list is a plain rounded box, and it is the version chooser's
+      list that carries the border the two now share) and the scrollbar (the Vue
+      scrolled the dialog's content area and hides scrollbars globally). Above the
+      list the screen uses the settings screen's 4px gap, where the Vue has an
+      empty `<SettingGroup>` hairline plus its item list's 16px margin — that read
+      as a second border just above the list's own.
+    - Both lists build **only the rows the viewport can show** (`window-top`) and
+      position them absolutely, so a hidden row keeps its place. Past roughly 150
+      rows drawn in a frame the renderer gives up the same way — Fabric has 253
+      versions on 1.20.1, Quilt 307, and the snapshot category of the version
+      chooser around 600 — so the rows outside the window (plus two rows of
+      slack) are `visible: false`, and the list's height is computed from the row
+      height instead of measured.
+    - `BaseDialog` has no "let the content size the panel" mode yet (the Vue's
+      `fit-content`): it needs a layout to measure the slot, and every migrated
+      dialog passes an explicit size.
+    - The dialog's scrim starts a window drag, like the Vue's
+      `data-tauri-drag-region`, but the panel does not — a Tauri drag region
+      covers the element that carries the attribute, not its children, so
+      pressing the panel (or anything on it) leaves the window alone. The Vue's
+      two other regions are not wired yet: `App.vue`'s title bar still relies on
+      the window system's own title bar area, and the multiplayer dialog is not
+      migrated.
+    - The instance background's preview overlays the card's own colour with a
+      left-to-right gradient instead of a CSS `mask-image` (Slint has no masks),
+      and the image is loaded by Rust — Slint can only load a runtime path
+      through Rust. The Rust-side loader reads the formats the file picker
+      offers (the app enables Slint's `image-default-formats`); AVIF is the one
+      it cannot decode yet, though picking one still stores it on the instance.
+- **`@children` and `parent`**: the elements written between a component's
+  braces are laid out in the slot that hosts `@children`, but their `parent` is
+  the element they are written _in_ — for a dialog that is the whole window. A
+  child that has to fill the slot (`BaseDialog`'s content) therefore sizes
+  itself against properties the host exposes (`content-width` /
+  `content-height`), not against `parent`. A `Text` that is not inside a layout
+  is also centred on its own width; the create-instance name row pins it with an
+  explicit `x`.
 
-- **macOS traffic lights**: on startup the native buttons can briefly appear at
-  the stock position before settling. Several approaches were tried (moving the
-  container, hiding/revealing, Electron-style positioning); see git history.
+- **macOS traffic lights** (resolved): the buttons used to flash back to the
+  stock position during the window-open animation and when swiping between
+  Spaces. Writing their frames always loses that race — AppKit re-derives the
+  titlebar from its own metrics on every layout pass, and during those
+  animations the window is composited by the window server with no update
+  notifications to re-apply from. `src/traffic_lights.rs` now answers the
+  metrics AppKit asks for instead (the model Chromium moved to in 2018), so
+  there is no stored position left to reset. It is private API, so a self-check
+  verifies the result on the first visible frame and hands over to the older
+  frame-writing path if it ever stops taking; run with
+  `CONIC_FORCE_TRAFFIC_LIGHT_FALLBACK=1` to exercise that path, and
+  `RUST_LOG=shell=debug` to see which one is active.
 - **Icons**: the original uses Font Awesome Pro (`fa-pro`), which can't be
   shipped. The search glyph is currently a hand-embedded path; a proper icon
   strategy (e.g. the SVGs in `src/assets/icons/`) is still to be decided.
