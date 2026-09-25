@@ -120,6 +120,12 @@ fn main() {
         log::info!(target: "shell", "toggle music (placeholder)");
     });
 
+    // The title bar stops leaving room for the traffic lights while they are
+    // hidden by fullscreen. Registered after `App::new()` because it reports
+    // into the UI; the observer itself is armed from then on.
+    #[cfg(target_os = "macos")]
+    traffic_lights::watch_fullscreen(&ui);
+
     // macOS draws the Dock icon from NSApplication, not from the window, and the
     // icon can only be set once `applicationDidFinishLaunching` has run (inside
     // `ui.run()`) — setting it earlier is overwritten by AppKit during launch.

@@ -498,7 +498,13 @@ stands in for the not-yet-migrated views.
   verifies the result on the first visible frame and hands over to the older
   frame-writing path if it ever stops taking; run with
   `CONIC_FORCE_TRAFFIC_LIGHT_FALLBACK=1` to exercise that path, and
-  `RUST_LOG=shell=debug` to see which one is active.
+  `RUST_LOG=shell=debug` to see which one is active. Fullscreen is also the one
+  case where nothing has to be cleared: AppKit hides the buttons, and the title
+  bar's leading controls move into the corner they leave behind (the Vue keeps
+  the 90px gap). AppKit's fullscreen notifications drive that, so the layout
+  flips when the buttons do — while the title bar is *revealed* by the pointer
+  at the top of a fullscreen window the two do overlap, which is what Chromium's
+  window-controls overlay does as well.
 - **Icons**: the original uses Font Awesome Pro (`fa-pro`), which can't be
   shipped. The search glyph is currently a hand-embedded path; a proper icon
   strategy (e.g. the SVGs in `src/assets/icons/`) is still to be decided.
