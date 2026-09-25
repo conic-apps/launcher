@@ -633,11 +633,11 @@ msgid "Yesterday"
 msgstr "어제"
 
 msgctxt "GameTime"
-msgid "{0}/{1}"
+msgid "{}/{}"
 msgstr "{0}월 {1}일"
 
 msgctxt "GameTime"
-msgid "{0}/{1}/{2}"
+msgid "{}/{}/{}"
 msgstr "{2}년 {0}월 {1}일"
 
 msgctxt "GameTime"
@@ -755,3 +755,95 @@ msgstr "로그인되지 않음"
 msgctxt "GameFooterBar"
 msgid "New instance"
 msgstr "새 인스턴스"
+
+msgctxt "CreateInstance"
+msgid "Select Minecraft version"
+msgstr "Minecraft 버전 선택"
+
+msgctxt "CreateInstance"
+msgid "Select mod loader"
+msgstr "모드 로더 선택"
+
+msgctxt "CreateInstance"
+msgid "Create new instance"
+msgstr "새 인스턴스 생성"
+
+msgctxt "CreateInstance"
+msgid "Unnamed instance"
+msgstr "이름 없는 인스턴스"
+
+msgctxt "CreateInstance"
+msgid "Set background image"
+msgstr "배경 이미지 설정"
+
+msgctxt "CreateInstance"
+msgid "Images"
+msgstr "이미지"
+
+msgctxt "CreateInstance"
+msgid "Remove image"
+msgstr "이미지 제거"
+
+msgctxt "CreateInstance"
+msgid "Use instance background as launcher background"
+msgstr "인스턴스 배경을 런처 배경으로 사용"
+
+msgctxt "CreateInstance"
+msgid "Version settings"
+msgstr "버전 설정"
+
+msgctxt "CreateInstance"
+msgid "Selected {}"
+msgstr "{} 선택됨"
+
+msgctxt "CreateInstance"
+msgid "Mod loader"
+msgstr "모드 로더"
+
+msgctxt "CreateInstance"
+msgid "None"
+msgstr "없음"
+
+msgctxt "CreateInstance"
+msgid "Loader version"
+msgstr "로더 버전"
+
+msgctxt "CreateInstance"
+msgid "Click to select a mod loader version"
+msgstr "클릭하여 모드 로더 버전 선택"
+
+msgctxt "CreateInstance"
+msgid "Select a Minecraft version first"
+msgstr "먼저 Minecraft 버전을 선택하세요"
+
+msgctxt "CreateInstance"
+msgid "Cancel"
+msgstr "취소"
+
+msgctxt "CreateInstance"
+msgid "Creating..."
+msgstr "생성 중..."
+
+msgctxt "CreateInstance"
+msgid "Create instance"
+msgstr "인스턴스 생성"
+
+msgctxt "MinecraftChoose"
+msgid "Version category"
+msgstr "버전 분류"
+
+msgctxt "MinecraftChoose"
+msgid "Releases"
+msgstr "정식 릴리스"
+
+msgctxt "MinecraftChoose"
+msgid "Snapshots"
+msgstr "스냅샷"
+
+msgctxt "MinecraftChoose"
+msgid "Old versions"
+msgstr "이전 버전"
+
+msgctxt "MinecraftChoose"
+msgid "Cancel"
+msgstr "취소"

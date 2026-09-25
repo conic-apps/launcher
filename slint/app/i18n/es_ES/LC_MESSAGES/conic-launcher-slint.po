@@ -633,11 +633,11 @@ msgid "Yesterday"
 msgstr "Ayer"
 
 msgctxt "GameTime"
-msgid "{0}/{1}"
+msgid "{}/{}"
 msgstr "{1}/{0}"
 
 msgctxt "GameTime"
-msgid "{0}/{1}/{2}"
+msgid "{}/{}/{}"
 msgstr "{1}/{0}/{2}"
 
 msgctxt "GameTime"
@@ -755,3 +755,95 @@ msgstr "Sesión no iniciada"
 msgctxt "GameFooterBar"
 msgid "New instance"
 msgstr "Nueva instancia"
+
+msgctxt "CreateInstance"
+msgid "Select Minecraft version"
+msgstr "Seleccionar versión de Minecraft"
+
+msgctxt "CreateInstance"
+msgid "Select mod loader"
+msgstr "Seleccionar mod loader"
+
+msgctxt "CreateInstance"
+msgid "Create new instance"
+msgstr "Crear nueva instancia"
+
+msgctxt "CreateInstance"
+msgid "Unnamed instance"
+msgstr "Instancia sin nombre"
+
+msgctxt "CreateInstance"
+msgid "Set background image"
+msgstr "Establecer imagen de fondo"
+
+msgctxt "CreateInstance"
+msgid "Images"
+msgstr "Imágenes"
+
+msgctxt "CreateInstance"
+msgid "Remove image"
+msgstr "Eliminar imagen"
+
+msgctxt "CreateInstance"
+msgid "Use instance background as launcher background"
+msgstr "Usar el fondo de la instancia como fondo del launcher"
+
+msgctxt "CreateInstance"
+msgid "Version settings"
+msgstr "Ajustes de versión"
+
+msgctxt "CreateInstance"
+msgid "Selected {}"
+msgstr "Seleccionada {}"
+
+msgctxt "CreateInstance"
+msgid "Mod loader"
+msgstr "Mod loader"
+
+msgctxt "CreateInstance"
+msgid "None"
+msgstr "Ninguno"
+
+msgctxt "CreateInstance"
+msgid "Loader version"
+msgstr "Versión del loader"
+
+msgctxt "CreateInstance"
+msgid "Click to select a mod loader version"
+msgstr "Haz clic para seleccionar una versión del mod loader"
+
+msgctxt "CreateInstance"
+msgid "Select a Minecraft version first"
+msgstr "Primero selecciona una versión de Minecraft"
+
+msgctxt "CreateInstance"
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgctxt "CreateInstance"
+msgid "Creating..."
+msgstr "Creando..."
+
+msgctxt "CreateInstance"
+msgid "Create instance"
+msgstr "Crear instancia"
+
+msgctxt "MinecraftChoose"
+msgid "Version category"
+msgstr "Categoría de versión"
+
+msgctxt "MinecraftChoose"
+msgid "Releases"
+msgstr "Lanzamientos"
+
+msgctxt "MinecraftChoose"
+msgid "Snapshots"
+msgstr "Snapshots"
+
+msgctxt "MinecraftChoose"
+msgid "Old versions"
+msgstr "Versiones antiguas"
+
+msgctxt "MinecraftChoose"
+msgid "Cancel"
+msgstr "Cancelar"

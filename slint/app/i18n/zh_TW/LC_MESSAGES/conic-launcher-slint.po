@@ -633,11 +633,11 @@ msgid "Yesterday"
 msgstr "昨天"
 
 msgctxt "GameTime"
-msgid "{0}/{1}"
+msgid "{}/{}"
 msgstr "{0}月{1}日"
 
 msgctxt "GameTime"
-msgid "{0}/{1}/{2}"
+msgid "{}/{}/{}"
 msgstr "{2}年{0}月{1}日"
 
 msgctxt "GameTime"
@@ -755,3 +755,95 @@ msgstr "尚未登入"
 msgctxt "GameFooterBar"
 msgid "New instance"
 msgstr "建立新實例"
+
+msgctxt "CreateInstance"
+msgid "Select Minecraft version"
+msgstr "選擇 Minecraft 版本"
+
+msgctxt "CreateInstance"
+msgid "Select mod loader"
+msgstr "選擇模組載入器"
+
+msgctxt "CreateInstance"
+msgid "Create new instance"
+msgstr "建立新實例"
+
+msgctxt "CreateInstance"
+msgid "Unnamed instance"
+msgstr "未命名實例"
+
+msgctxt "CreateInstance"
+msgid "Set background image"
+msgstr "設定背景圖片"
+
+msgctxt "CreateInstance"
+msgid "Images"
+msgstr "圖片"
+
+msgctxt "CreateInstance"
+msgid "Remove image"
+msgstr "移除圖片"
+
+msgctxt "CreateInstance"
+msgid "Use instance background as launcher background"
+msgstr "將實例背景用作啟動器背景"
+
+msgctxt "CreateInstance"
+msgid "Version settings"
+msgstr "版本設定"
+
+msgctxt "CreateInstance"
+msgid "Selected {}"
+msgstr "已選擇 {}"
+
+msgctxt "CreateInstance"
+msgid "Mod loader"
+msgstr "模組載入器"
+
+msgctxt "CreateInstance"
+msgid "None"
+msgstr "無"
+
+msgctxt "CreateInstance"
+msgid "Loader version"
+msgstr "載入器版本"
+
+msgctxt "CreateInstance"
+msgid "Click to select a mod loader version"
+msgstr "點擊以選擇模組載入器版本"
+
+msgctxt "CreateInstance"
+msgid "Select a Minecraft version first"
+msgstr "請先選擇 Minecraft 版本"
+
+msgctxt "CreateInstance"
+msgid "Cancel"
+msgstr "取消"
+
+msgctxt "CreateInstance"
+msgid "Creating..."
+msgstr "正在建立..."
+
+msgctxt "CreateInstance"
+msgid "Create instance"
+msgstr "建立實例"
+
+msgctxt "MinecraftChoose"
+msgid "Version category"
+msgstr "版本分類"
+
+msgctxt "MinecraftChoose"
+msgid "Releases"
+msgstr "正式版"
+
+msgctxt "MinecraftChoose"
+msgid "Snapshots"
+msgstr "快照版"
+
+msgctxt "MinecraftChoose"
+msgid "Old versions"
+msgstr "遠古版"
+
+msgctxt "MinecraftChoose"
+msgid "Cancel"
+msgstr "取消"

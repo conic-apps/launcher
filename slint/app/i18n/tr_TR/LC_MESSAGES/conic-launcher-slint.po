@@ -633,11 +633,11 @@ msgid "Yesterday"
 msgstr "Dün"
 
 msgctxt "GameTime"
-msgid "{0}/{1}"
+msgid "{}/{}"
 msgstr "{1}.{0}"
 
 msgctxt "GameTime"
-msgid "{0}/{1}/{2}"
+msgid "{}/{}/{}"
 msgstr "{1}.{0}.{2}"
 
 msgctxt "GameTime"
@@ -755,3 +755,95 @@ msgstr "Oturum açılmadı"
 msgctxt "GameFooterBar"
 msgid "New instance"
 msgstr "Yeni örnek"
+
+msgctxt "CreateInstance"
+msgid "Select Minecraft version"
+msgstr "Minecraft sürümü seç"
+
+msgctxt "CreateInstance"
+msgid "Select mod loader"
+msgstr "Mod yükleyici seç"
+
+msgctxt "CreateInstance"
+msgid "Create new instance"
+msgstr "Yeni örnek oluştur"
+
+msgctxt "CreateInstance"
+msgid "Unnamed instance"
+msgstr "Adlandırılmamış örnek"
+
+msgctxt "CreateInstance"
+msgid "Set background image"
+msgstr "Arka plan resmi ayarla"
+
+msgctxt "CreateInstance"
+msgid "Images"
+msgstr "Görüntüler"
+
+msgctxt "CreateInstance"
+msgid "Remove image"
+msgstr "Resmi kaldır"
+
+msgctxt "CreateInstance"
+msgid "Use instance background as launcher background"
+msgstr "Örnek arka planını başlatıcı arka planı olarak kullan"
+
+msgctxt "CreateInstance"
+msgid "Version settings"
+msgstr "Sürüm ayarları"
+
+msgctxt "CreateInstance"
+msgid "Selected {}"
+msgstr "{} seçildi"
+
+msgctxt "CreateInstance"
+msgid "Mod loader"
+msgstr "Mod yükleyici"
+
+msgctxt "CreateInstance"
+msgid "None"
+msgstr "Yok"
+
+msgctxt "CreateInstance"
+msgid "Loader version"
+msgstr "Yükleyici sürümü"
+
+msgctxt "CreateInstance"
+msgid "Click to select a mod loader version"
+msgstr "Mod yükleyici sürümü seçmek için tıklayın"
+
+msgctxt "CreateInstance"
+msgid "Select a Minecraft version first"
+msgstr "Önce bir Minecraft sürümü seçin"
+
+msgctxt "CreateInstance"
+msgid "Cancel"
+msgstr "İptal"
+
+msgctxt "CreateInstance"
+msgid "Creating..."
+msgstr "Oluşturuluyor..."
+
+msgctxt "CreateInstance"
+msgid "Create instance"
+msgstr "Örnek oluştur"
+
+msgctxt "MinecraftChoose"
+msgid "Version category"
+msgstr "Sürüm kategorisi"
+
+msgctxt "MinecraftChoose"
+msgid "Releases"
+msgstr "Resmi sürümler"
+
+msgctxt "MinecraftChoose"
+msgid "Snapshots"
+msgstr "Anlık görüntüler"
+
+msgctxt "MinecraftChoose"
+msgid "Old versions"
+msgstr "Eski sürümler"
+
+msgctxt "MinecraftChoose"
+msgid "Cancel"
+msgstr "İptal"
