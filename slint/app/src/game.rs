@@ -16,7 +16,7 @@ use std::{
 use chrono::{Datelike, Local, TimeZone};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, Timer, TimerMode, VecModel};
 
-use crate::slint_backend::{AccountItem, App, GameRow, GameState, Navigation};
+use crate::slint_backend::{AccountItem, App, Dialogs, GameRow, GameState, Navigation};
 use slint_account::Account;
 use slint_instance::{Instance, ModLoaderType, SortBy};
 
@@ -804,8 +804,16 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
         .on_open_content(|kind| log::info!(target: "game", "open content '{kind}' (not migrated)"));
     state.on_open_add_account(|| log::info!(target: "game", "add account (not migrated)"));
     state.on_open_connect(|| log::info!(target: "game", "multiplayer connect (not migrated)"));
-    state.on_new_instance(|| log::info!(target: "game", "create instance (not migrated)"));
     state.on_open_packs(|| log::info!(target: "game", "install packs (not migrated)"));
+    {
+        // The footer's "New instance" opens the create-instance dialog.
+        let weak = ui.as_weak();
+        state.on_new_instance(move || {
+            if let Some(ui) = weak.upgrade() {
+                ui.global::<Dialogs>().set_create_instance_visible(true);
+            }
+        });
+    }
     state.on_debug_log(|message| log::info!(target: "probe", "{message}"));
     // The list's smoothing scales its per-tick step by the elapsed time, the same
     // way Lenis does, so the glide does not depend on the display's refresh rate.

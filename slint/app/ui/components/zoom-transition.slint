@@ -1,0 +1,46 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The Vue `zoom-in` / `zoom-out` route transition
+// (src/assets/styles/transitions.css), used by the screens that swap inside the
+// create-instance dialog (`<Transition mode="out-in" :name="zoom-in|zoom-out">`)
+// and by the multiplayer manager.
+//
+// Each direction has its two halves:
+//
+//   zoom-in   leave  scale 1 → 0.9,  80ms  `cubic-bezier(0.65, 0, 1, 0.42)`
+//             enter  scale 1.03 → 1, 250ms `cubic-bezier(0, 0.65, 0.26, 1)`
+//   zoom-out  leave  scale 1 → 1.03, 80ms
+//             enter  scale 0.9 → 1,  250ms
+//
+// Both halves fade to / from opacity 0 over the same time. `phase` picks which
+// half an element is in, so a screen plays it by passing the phase down.
+//
+// The element is a VerticalLayout so a screen built on it is sized by its
+// content: the dialog's scroll area can then follow the mounted screen without
+// anyone measuring it.
+export component ZoomTransition inherits VerticalLayout {
+    /// "enter" (waiting at the start of the enter half), "shown" (at rest) or
+    /// "leave" (playing the leave half).
+    in property <string> phase: "shown";
+    /// "in" for `zoom-in`, "out" for `zoom-out`.
+    in property <string> direction: "in";
+
+    width: 100%;
+
+    private property <float> zoom: root.phase == "enter"
+        ? (root.direction == "in" ? 1.03 : 0.9)
+        : root.phase == "leave" ? (root.direction == "in" ? 0.9 : 1.03) : 1.0;
+    opacity: root.phase == "shown" ? 1.0 : 0.0;
+    transform-scale: root.zoom * 100%;
+
+    // The durations and easings differ per phase, so they are read when the
+    // animation starts — i.e. with the phase the element is entering.
+    animate zoom, opacity {
+        duration: root.phase == "leave" ? 80ms : 250ms;
+        easing: root.phase == "leave"
+            ? cubic-bezier(0.65, 0, 1, 0.42)
+            : cubic-bezier(0, 0.65, 0.26, 1);
+    }
+}

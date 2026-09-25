@@ -14,11 +14,23 @@ import { FocusManager } from "../globals/focus.slint";
 export component BaseSelect inherits Rectangle {
     in property <[string]> options;
     in property <[string]> display-name;
+    /// Which options can be picked, parallel to `options`; shorter than
+    /// `options` means "the remaining ones are enabled".
+    ///
+    /// The Vue takes the *names* that cannot be picked (`disabled: string[]`).
+    /// Slint arrays have no `contains` (only the experimental `index-of`), so
+    /// the caller derives a flag per option instead.
+    in property <[bool]> option-enabled: [];
     in-out property <string> value;
     callback selected(string);
 
     // CSS: option height 22px + 1px border on each side of the (auto-height)
     // wrapper => 24px total (box-sizing: border-box).
+    //
+    // The width is the options' own width plus those borders: without it the
+    // select has no preferred size, and a layout would stretch it (and its last
+    // option with it) to whatever space is left.
+    width: options-row.preferred-width + 2px;
     height: 24px;
     background: Theme.controllers-background;
     border-width: 1px;
@@ -26,11 +38,13 @@ export component BaseSelect inherits Rectangle {
     border-radius: 4px;
     clip: true;
 
-    HorizontalLayout {
+    options-row := HorizontalLayout {
         for option[index] in root.options : Rectangle {
             width: option-label.preferred-width + 16px;
             height: 22px;
             background: root.value == option ? Theme.lavender : transparent;
+            // CSS `.disabled { opacity: 0.4; }`
+            opacity: index < root.option-enabled.length && !root.option-enabled[index] ? 0.4 : 1.0;
 
             option-label := Text {
                 text: root.display-name[index];
@@ -52,6 +66,8 @@ export component BaseSelect inherits Rectangle {
             TouchArea {
                 width: parent.width;
                 height: parent.height;
+                // CSS `pointer-events: none` on a disabled option.
+                enabled: index >= root.option-enabled.length || root.option-enabled[index];
                 clicked => {
                     FocusManager.clear();
                     root.value = option;

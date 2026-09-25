@@ -1,0 +1,135 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The overlay layer's state: the dialogs of `src/store/dialog.ts` plus, for
+// each migrated dialog, the form state its Vue component kept in `ref`s.
+//
+// A Vue component's own `ref`s have to become a global here: Slint components
+// can only be reached from Rust through a global, and the script that fills the
+// version lists and creates the instance (`app/src/create_instance.rs`) has to
+// read and write that state.
+
+/// A row of the Minecraft version chooser.
+export struct MinecraftVersionItem {
+    /// The version id, e.g. "1.20.1".
+    id: string,
+    /// `version.type` as the manifest spells it: "release", "snapshot",
+    /// "old_beta" or "old_alpha".
+    kind: string,
+    /// The release date, split so `GameTime` can format it.
+    year: int,
+    month: int,
+    day: int,
+}
+
+// The Vue dialog store: one visibility flag per dialog, written by whoever
+// opens it (the footer's "New instance", the launch view's errors …) and by
+// Rust (an action that finishes and dismisses the dialog). Only the
+// create-instance dialog is migrated so far; the other flags of
+// `src/store/dialog.ts` arrive with their dialogs.
+export global Dialogs {
+    in-out property <bool> create-instance-visible: false;
+}
+
+// The "create instance" dialog
+// (src/overlays/dialogs/CreateInstance.vue and the two screens under
+// `create/`).
+export global CreateInstanceState {
+    // ----- the swap between the three screens -----
+    /// "settings" | "minecraft-choose" | "mod-loader-choose" (Vue
+    /// `currentComponent`); empty while the dialog is closed, so the step
+    /// machine in `CreateInstance` unmounts everything.
+    in-out property <string> step: "";
+
+    // ----- the form -----
+    in-out property <string> minecraft-version: "";
+    /// "None" | "Fabric" | "Quilt" | "Neoforge" | "Forge"
+    in-out property <string> mod-loader-type: "None";
+    in-out property <string> mod-loader-version: "";
+    /// What the user typed; an empty value falls back to `default-name`
+    /// (Vue `customInstanceName`).
+    in-out property <string> custom-name: "";
+    in-out property <bool> name-editing: false;
+    in-out property <bool> creating: false;
+    /// The picked background file, empty when none. Rust loads it into
+    /// `background-image`, because Slint can only load an image from a runtime
+    /// path through Rust.
+    in-out property <string> background-path: "";
+    in-out property <image> background-image;
+
+    // ----- the Minecraft version chooser -----
+    in-out property <bool> minecraft-loading: false;
+    /// The versions of the selected category, filtered by the script from the
+    /// manifest (the Vue's `filteredVersions` computed — it holds ~900 versions,
+    /// so they are not all instantiated as rows).
+    in-out property <[MinecraftVersionItem]> minecraft-versions: [];
+    /// "releases" | "snapshot" | "old" (Vue `showVersionType`).
+    in-out property <string> version-category: "releases";
+
+    // ----- the mod loader lists (Vue `modLoaderLoading` / `modLoaderAvailable`) -----
+    in-out property <bool> fabric-loading: true;
+    in-out property <bool> quilt-loading: true;
+    in-out property <bool> forge-loading: true;
+    in-out property <bool> neoforge-loading: true;
+    in-out property <bool> fabric-available: false;
+    in-out property <bool> quilt-available: false;
+    in-out property <bool> forge-available: false;
+    in-out property <bool> neoforge-available: false;
+    /// Fabric loader versions for the chosen Minecraft version.
+    in-out property <[string]> fabric-versions: [];
+    in-out property <[string]> quilt-versions: [];
+    /// Forge versions of the chosen Minecraft version, without the Minecraft
+    /// part of the version string (Vue shows `forgeVersion.split('-').slice(1)`).
+    in-out property <[string]> forge-versions: [];
+    /// Neoforge versions of the chosen Minecraft version.
+    in-out property <[string]> neoforge-versions: [];
+
+    /// The name offered when the user did not type one (Vue
+    /// `defaultInstanceName`). Rust reads it when it creates the instance.
+    out property <string> default-name: (minecraft-version != ""
+            ? minecraft-version
+            : @tr("CreateInstance" => "Unnamed instance"))
+        + (mod-loader-type.to-lowercase() == "none"
+            ? ""
+            : "-" + mod-loader-type.to-lowercase() + mod-loader-version);
+
+    /// Any list still loading (Vue `modLoaderSettingLoading`).
+    out property <bool> mod-loader-loading: fabric-loading || quilt-loading || forge-loading
+        || neoforge-loading;
+
+    /// Which options of the mod loader select can be picked (Vue
+    /// `modLoaderTypeDisabled`, which lists the *names* of the loaders that
+    /// answered with an empty list).
+    ///
+    /// Slint arrays have no `contains` — only the experimental `index-of` — so
+    /// the select takes a list of flags parallel to its options instead. The
+    /// order matches the select in `create-instance.slint`.
+    public pure function loader-option-enabled() -> [bool] {
+        return [
+            true,
+            self.fabric-available,
+            self.quilt-available,
+            self.neoforge-available,
+            self.forge-available,
+        ];
+    }
+
+    // ----- the script (app/src/create_instance.rs) -----
+    /// Fetches the Mojang version manifest (the chooser's `onMounted`).
+    callback load-minecraft-versions();
+    /// The version category changed: re-filter the list (Vue
+    /// `filteredVersions`).
+    callback set-version-category(string);
+    /// A version was picked: stores it and refreshes the mod loader lists
+    /// (Vue's `watch(minecraftVersion)`).
+    callback select-minecraft-version(string);
+    /// The "Create instance" button: Rust creates the instance, refreshes the
+    /// game view and closes the dialog.
+    callback create();
+    /// The "Set background image" row. The native picker's filter label is
+    /// translated, so the UI passes it along.
+    callback pick-background(string);
+    /// The `about` button of a version row: opens the Minecraft wiki for it.
+    callback open-version-wiki(string);
+}

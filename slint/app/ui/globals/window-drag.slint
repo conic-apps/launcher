@@ -1,0 +1,21 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// Window drag regions.
+//
+// The Vue marks the elements the window can be dragged by with Tauri's
+// `data-tauri-drag-region` (the dialog's scrim, the app's title bar, the
+// multiplayer dialog), and Tauri starts an OS window drag on a press there —
+// only on the marked element itself, never on its children.
+//
+// Slint has no drag region and no window-drag method of its own, so a marked
+// element calls this global instead: `WindowDrag.start()` from the press
+// handler. `src/main.rs` wires it to `WindowService::drag_window()`, which
+// hands the drag to the platform, exactly like Tauri does.
+export global WindowDrag {
+    /// Raised on a press inside a drag region. Must be answered by starting the
+    /// platform's own window drag while the press is still being handled: on
+    /// macOS the drag is started from the mouse event that is being dispatched.
+    callback start();
+}

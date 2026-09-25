@@ -1,0 +1,20 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { CreateInstance } from "dialogs/create-instance.slint";
+
+// The overlay layer (src/overlays/DialogRoot.vue): one instance per dialog,
+// mounted once above the whole app. Each dialog stays hidden until its flag in
+// `Dialogs` is set, and draws its own scrim, so a dialog that is closed lets
+// everything through.
+//
+// The Vue's DialogRoot lists every dialog in the app; they are added here as
+// they are migrated.
+export component DialogRoot inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    CreateInstance { }
+}

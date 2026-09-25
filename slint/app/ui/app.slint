@@ -6,6 +6,8 @@ import { Theme, ThemeProvider } from "theme.slint";
 import { TitleBar } from "components/title-bar.slint";
 import { Navigation } from "globals/navigation.slint";
 import { DropdownOverlay } from "components/dropdown-overlay.slint";
+import { DialogRoot } from "overlays/dialog-root.slint";
+import { WindowDrag } from "globals/window-drag.slint";
 import { SettingsView } from "views/settings-view.slint";
 import { GameView } from "views/game-view.slint";
 import { GameViewPlaceholder } from "views/game-placeholder.slint";
@@ -16,6 +18,8 @@ import { GameViewPlaceholder } from "views/game-placeholder.slint";
 export { AppConfig, JavaRuntime } from "globals/settings.slint";
 export { Navigation } from "globals/navigation.slint";
 export { GameState, GameRow, AccountItem } from "globals/game.slint";
+export { Dialogs, CreateInstanceState, MinecraftVersionItem } from "globals/dialogs.slint";
+export { WindowDrag } from "globals/window-drag.slint";
 
 // Application root window (App.vue). Native window chrome on every platform:
 // macOS gets the Chrome-style treatment (transparent hidden titlebar +
@@ -94,5 +98,9 @@ export component App inherits Window {
         // Floating dropdown list + outside-click layer, mounted above the page
         // stack (see `DropdownOverlay`).
         DropdownOverlay { }
+
+        // The dialog layer (DialogRoot.vue): mounted last so a dialog covers
+        // both the page and the floating dropdown.
+        DialogRoot { }
     }
 }

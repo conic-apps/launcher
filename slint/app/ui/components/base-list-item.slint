@@ -1,0 +1,160 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "app-icon.slint";
+import { FocusManager } from "../globals/focus.slint";
+
+// A row of a list panel (src/components/BaseListItem.vue): a 28px rounded icon,
+// a title with an optional description, and optional buttons on the right.
+//
+// The Vue exposes an `#icon` slot and emits one `click-<name>` event per entry
+// of `buttons`; its only two users are the create-instance screens, which pass
+// an image and the `about` button, so this version takes an image and reports
+// the pressed button by name.
+//
+// One deliberate difference: the Vue hangs the click on the inner content box,
+// which leaves the row's 10px padding strips dead. Here the whole row is
+// clickable.
+export component BaseListItem inherits Rectangle {
+    in property <string> title: "";
+    in property <string> description: "";
+    in property <image> icon;
+    /// The release icon of a Minecraft version is drawn at 80% opacity; the
+    /// other rows use the default.
+    in property <float> icon-opacity: 1.0;
+    /// Names of the buttons drawn at the right edge. Only "about" is used.
+    in property <[string]> buttons: [];
+    in property <bool> clickable: false;
+    callback clicked;
+    callback button-clicked(string);
+
+    width: 100%;
+    // CSS `height: 53px` plus the 1px `margin-bottom` that separates two rows.
+    height: 54px;
+    background: transparent;
+
+    row := Rectangle {
+        width: parent.width;
+        height: 53px;
+        background: touch.pressed ? Theme.surface-2
+            : touch.has-hover ? Theme.surface-1
+            : Theme.surface-0;
+        // CSS `transition: all 0.1s cubic-bezier(0, 0.43, 0.25, 1)`.
+        animate background { duration: 100ms; easing: cubic-bezier(0, 0.43, 0.25, 1); }
+
+        HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            spacing: 0px;
+            cross-axis-alignment: center;
+
+            // ----- the leading icon (`max-width: 28px; margin: 0 4px`) -----
+            icon-box := Rectangle {
+                width: 28px + 8px;
+                height: 28px;
+                background: transparent;
+
+                icon-clip := Rectangle {
+                    x: 4px;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 8px;
+                    clip: true;
+                    opacity: root.icon-opacity;
+
+                    Image {
+                        width: 100%;
+                        height: 100%;
+                        source: root.icon;
+                    }
+                }
+            }
+
+            // ----- title + description -----
+            text-column := Rectangle {
+                horizontal-stretch: 1;
+                height: 100%;
+                background: transparent;
+                clip: true;
+
+                VerticalLayout {
+                    y: (parent.height - self.height) / 2;
+                    width: parent.width;
+                    spacing: 3px;
+                    // The layout fills the column, so the alignment is what
+                    // places the text: the Vue centres the title/description
+                    // block in the row (`align-items: center` on the row's
+                    // content box). `start` pinned the title to the top of the
+                    // column instead — invisible while a description filled the
+                    // block out, but a row without one (the mod loader list)
+                    // drew its title too high, with the description's room
+                    // still taken.
+                    alignment: center;
+                    cross-axis-alignment: start;
+
+                    Text {
+                        text: root.title;
+                        width: parent.width;
+                        font-size: 14px;
+                        font-weight: Theme.font-weight-normal;
+                        color: Theme.default-text-color.transparentize(0.1);
+                        vertical-alignment: center;
+                        overflow: elide;
+                    }
+
+                    if root.description != "" : Text {
+                        text: root.description;
+                        width: parent.width;
+                        font-size: 12px;
+                        font-weight: Theme.font-weight-normal;
+                        // CSS `rgba(var(--ctp-text-rgb), 0.6)`.
+                        color: Theme.text.with-alpha(0.6);
+                        vertical-alignment: center;
+                        overflow: elide;
+                    }
+                }
+            }
+
+            // ----- buttons (`margin: 0 6px` around a 16px icon) -----
+            for button in root.buttons : Rectangle {
+                width: 16px + 12px;
+                height: 100%;
+                background: transparent;
+
+                button-icon := AppIcon {
+                    name: button;
+                    size: 16px;
+                    icon-color: Theme.default-text-color.transparentize(0.1);
+                    opacity: button-touch.has-hover ? 1.0 : 0.8;
+                    transform-scale: button-touch.pressed ? 86% : 100%;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                button-touch := TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    clicked => {
+                        FocusManager.clear();
+                        root.button-clicked(button);
+                    }
+                }
+            }
+        }
+
+        touch := TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => {
+                FocusManager.clear();
+                if (root.clickable) {
+                    root.clicked();
+                }
+            }
+        }
+    }
+}

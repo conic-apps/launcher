@@ -1,0 +1,606 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { BaseDialog } from "../../components/base-dialog.slint";
+import { BaseButton } from "../../components/base-button.slint";
+import { BaseSelect } from "../../components/base-select.slint";
+import { BaseSwitch } from "../../components/base-switch.slint";
+import { SettingGroup } from "../../components/setting-group.slint";
+import { SettingItem } from "../../components/setting-item.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { ZoomTransition } from "../../components/zoom-transition.slint";
+import { FocusManager } from "../../globals/focus.slint";
+import { Dialogs, CreateInstanceState } from "../../globals/dialogs.slint";
+import { MinecraftChoose } from "create/minecraft-choose.slint";
+import { ModLoaderChoose } from "create/mod-loader-choose.slint";
+
+// The dialog's "settings" step — the `.settings` block that lives inline in
+// CreateInstance.vue.
+//
+// It is a component of its own (rather than markup in `CreateInstance`) because
+// of the swap: each screen mounts fresh when the step changes, which is what
+// lets its zoom animation start from the right place. See `CreateInstance`.
+component SettingsStep inherits ZoomTransition {
+    spacing: 0px;
+    // The blocks are `width: calc(100% - 16px); margin: 0 8px` in the Vue.
+    padding-left: 8px;
+    padding-right: 8px;
+
+    pure function tag-color(loader: string) -> color {
+        if loader == "quilt" { return Theme.mauve; }
+        if loader == "fabric" { return Theme.yellow; }
+        if loader == "forge" { return Theme.blue; }
+        if loader == "neoforge" { return Theme.peach; }
+        return Theme.green;
+    }
+
+    // `.instance { margin: 4px 8px 12px 8px }`.
+    Rectangle {
+        width: 100%;
+        height: 4px;
+        background: transparent;
+    }
+
+    // ----- the instance preview card -----
+    card := Rectangle {
+        width: 100%;
+        height: 60px;
+        border-radius: 8px;
+        clip: true;
+        background: Theme.surface-0.with-alpha(0.4);
+
+        // `border: 1px solid rgba(var(--ctp-surface1-rgb), 0.8)`.
+        Rectangle {
+            width: 100%;
+            height: 100%;
+            border-width: 1px;
+            border-color: Theme.surface-1.with-alpha(0.8);
+            background: transparent;
+        }
+
+        // `border-left: 16px solid rgba(var(--ctp-lavender-rgb), 0.8)` — drawn
+        // over the hairline, which Slint cannot leave out of one edge only.
+        Rectangle {
+            x: 0;
+            y: 0;
+            width: 16px;
+            height: parent.height;
+            background: Theme.lavender.with-alpha(0.8);
+        }
+
+        // The picked background, under a left-to-right fade: the Vue masks it
+        // with `linear-gradient(to left, black 0%, transparent 100%)`
+        // (`width: calc(100% - 100px); height: 100%; top: 0; right: 0` from the
+        // padding box of the card). Slint has no masks, so the card's own colour
+        // is laid over it and fades out to the right instead.
+        //
+        // The Vue shows the image once it has loaded (`imgLoaded`); a Slint
+        // image that failed to load reports a zero width, which is the same
+        // test. Rust loads the file, because Slint can only read a runtime path
+        // through Rust.
+        if CreateInstanceState.background-path != ""
+            && CreateInstanceState.background-image.width > 0 : Rectangle {
+            x: 116px;
+            y: 1px;
+            width: parent.width - 116px - 1px;
+            height: parent.height - 2px;
+            background: transparent;
+
+            Image {
+                width: 100%;
+                height: 100%;
+                source: CreateInstanceState.background-image;
+                image-fit: cover;
+            }
+
+            Rectangle {
+                width: 100%;
+                height: 100%;
+                background: @linear-gradient(
+                    90deg,
+                    Theme.dialog-background.mix(Theme.surface-0, 0.4) 0%,
+                    transparent 100%);
+            }
+        }
+
+        // ----- the name (`p.instance-name`, 16px tall) -----
+        if !CreateInstanceState.name-editing : name-row := Rectangle {
+            x: 32px;
+            y: 9px;
+            width: parent.width - 32px - 17px;
+            height: 16px;
+            background: transparent;
+
+            name-text := Text {
+                text: CreateInstanceState.custom-name != ""
+                    ? CreateInstanceState.custom-name
+                    : CreateInstanceState.default-name;
+                // `span { max-width: calc(100% - 30px) }`: the name takes its
+                // own width, elided once it would reach the edit icon.
+                // A bare `Text` outside a layout is centred by Slint; the Vue
+                // keeps the name at the left, with the edit icon next to it.
+                x: 0;
+                width: min(self.preferred-width, parent.width - 30px);
+                height: 16px;
+                font-size: 16px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+                horizontal-alignment: left;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+
+            edit-icon := AppIcon {
+                name: "create-outline";
+                size: 16px;
+                x: name-text.width + 4px;
+                y: (parent.height - self.height) / 2;
+                icon-color: Theme.default-text-color.transparentize(0.1);
+                transform-scale: edit-touch.pressed ? 97% : edit-touch.has-hover ? 102% : 100%;
+                animate transform-scale { duration: 100ms; }
+            }
+
+            // Clicking the row starts the edit, like clicking the Vue's `<p>`.
+            edit-touch := TouchArea {
+                width: parent.width;
+                height: parent.height;
+                clicked => {
+                    FocusManager.clear();
+                    CreateInstanceState.name-editing = true;
+                }
+            }
+        }
+
+        // The edit field: the Vue swaps the `<p>` for an unstyled `<input>`.
+        if CreateInstanceState.name-editing : name-input := TextInput {
+            x: 32px;
+            y: 9px;
+            width: parent.width - 32px - 17px;
+            height: 16px;
+            text <=> CreateInstanceState.custom-name;
+            font-size: 16px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.1);
+            // The macOS backend paints the caret with the selection colour, so
+            // a translucent tint gives a text-coloured caret.
+            selection-background-color: Theme.default-text-color.with-alpha(0.3);
+            selection-foreground-color: Theme.default-text-color;
+            single-line: true;
+            vertical-alignment: center;
+            // The Vue focuses the field as soon as it appears (`nextTick` +
+            // `focus()`), and leaves edit mode on `@blur`.
+            init => { self.focus(); }
+            changed has-focus => {
+                if !self.has-focus && CreateInstanceState.name-editing {
+                    CreateInstanceState.name-editing = false;
+                }
+            }
+            // Clicking any control elsewhere in the dialog drops the focus (see
+            // `FocusManager`), which ends the edit as well.
+            private property <int> clear-sequence: FocusManager.clear-sequence;
+            changed clear-sequence => { self.clear-focus(); }
+        }
+
+        // `<input :placeholder>` — the default name while the field is empty
+        // (Slint's `TextInput` has no placeholder of its own, so it is drawn
+        // over it like `BaseInput` does).
+        if CreateInstanceState.name-editing && CreateInstanceState.custom-name == "" : Text {
+            x: 32px;
+            y: 9px;
+            width: parent.width - 32px - 17px;
+            height: 16px;
+            text: CreateInstanceState.default-name;
+            font-size: 16px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.2);
+            vertical-alignment: center;
+            overflow: elide;
+        }
+
+        // ----- the loader tag and the Minecraft version (`.details`) -----
+        details := HorizontalLayout {
+            x: 32px;
+            // `margin-top: 6px` below the 16px name row.
+            y: 9px + 16px + 6px;
+            width: parent.width - 32px - 17px;
+            height: 13px;
+            spacing: 8px;
+            alignment: start;
+            cross-axis-alignment: center;
+
+            tag := Rectangle {
+                width: tag-text.preferred-width + 12px;
+                height: 13px;
+                border-radius: 100px;
+                background: root.tag-color(CreateInstanceState.mod-loader-type.to-lowercase());
+
+                tag-text := Text {
+                    text: CreateInstanceState.mod-loader-type == "None"
+                        ? "Vanilla"
+                        : CreateInstanceState.mod-loader-type;
+                    font-size: 11px;
+                    // The Vue's `font-weight: 500`.
+                    font-weight: 500;
+                    color: Theme.text-inverse;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+            }
+
+            // `<span class="minecraft-version"><span class="label">Minecraft:
+            // </span><span>{{ version }}</span></span>`.
+            if CreateInstanceState.minecraft-version != "" : HorizontalLayout {
+                spacing: 0px;
+                alignment: start;
+                cross-axis-alignment: center;
+
+                Text {
+                    text: "Minecraft: ";
+                    font-size: 11px;
+                    // `.label { opacity: 0.8; font-weight: 300 }`.
+                    font-weight: 300;
+                    color: Theme.default-text-color.transparentize(0.1).with-alpha(0.72);
+                }
+
+                Text {
+                    text: CreateInstanceState.minecraft-version;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+            }
+        }
+    }
+
+    // `.instance { margin-bottom: 12px }`.
+    Rectangle {
+        width: 100%;
+        height: 12px;
+        background: transparent;
+    }
+
+    // ----- background -----
+    SettingGroup {
+        SettingItem {
+            title: @tr("CreateInstance" => "Set background image");
+            icon: "image";
+            navigable: CreateInstanceState.background-path == "";
+            clicked => { CreateInstanceState.pick-background(@tr("CreateInstance" => "Images")); }
+
+            // The Vue swaps its chevron for a red "Remove image" button once a
+            // file is picked.
+            if CreateInstanceState.background-path != "" : BaseButton {
+                text: @tr("CreateInstance" => "Remove image");
+                text-color: Theme.red;
+                clicked => { CreateInstanceState.background-path = ""; }
+            }
+        }
+
+        SettingItem {
+            title: @tr("CreateInstance" => "Use instance background as launcher background");
+            item-disabled: CreateInstanceState.background-path == "";
+            // The Vue binds nothing to this switch either — the choice is not
+            // persisted yet.
+            BaseSwitch { }
+        }
+    }
+
+    // `.setting-items { margin-bottom: 16px }` between two groups.
+    Rectangle {
+        width: 100%;
+        height: 16px;
+        background: transparent;
+    }
+
+    // ----- version settings -----
+    SettingGroup {
+        title: @tr("CreateInstance" => "Version settings");
+
+        SettingItem {
+            title: "Minecraft";
+            icon: "minecraft";
+            description: CreateInstanceState.minecraft-version != ""
+                ? @tr("CreateInstance" => "Selected {}", CreateInstanceState.minecraft-version)
+                : "";
+            navigable: true;
+            clicked => { CreateInstanceState.step = "minecraft-choose"; }
+        }
+
+        SettingItem {
+            title: @tr("CreateInstance" => "Mod loader");
+            loading: CreateInstanceState.mod-loader-loading;
+
+            BaseSelect {
+                options: ["None", "Fabric", "Quilt", "Neoforge", "Forge"];
+                display-name: [@tr("CreateInstance" => "None"), "Fabric", "Quilt", "Neoforge", "Forge"];
+                option-enabled: CreateInstanceState.loader-option-enabled();
+                value <=> CreateInstanceState.mod-loader-type;
+                // Vue: `watch(modLoaderType, () => (modLoaderVersion.value = ""))`.
+                selected(value) => { CreateInstanceState.mod-loader-version = ""; }
+            }
+        }
+
+        SettingItem {
+            title: @tr("CreateInstance" => "Loader version");
+            icon: "extension-puzzle";
+            description: CreateInstanceState.minecraft-version != ""
+                ? (CreateInstanceState.mod-loader-version != ""
+                    ? @tr(
+                        "CreateInstance" => "Selected {}",
+                        CreateInstanceState.mod-loader-type + " " + CreateInstanceState.mod-loader-version)
+                    : @tr("CreateInstance" => "Click to select a mod loader version"))
+                : @tr("CreateInstance" => "Select a Minecraft version first");
+            navigable: true;
+            item-disabled: CreateInstanceState.minecraft-version == ""
+                || CreateInstanceState.mod-loader-type == "None";
+            clicked => { CreateInstanceState.step = "mod-loader-choose"; }
+        }
+    }
+
+    // `.setting-items { margin-bottom: 16px }` before the buttons.
+    Rectangle {
+        width: 100%;
+        height: 16px;
+        background: transparent;
+    }
+
+    // ----- actions -----
+    actions := Rectangle {
+        width: 100%;
+        height: 30px;
+        background: transparent;
+
+        // `.settings` insets its children by 8px (see the step's padding), so
+        // this row adds none: its buttons line up with the setting rows above.
+        HorizontalLayout {
+            spacing: 12px;
+
+            BaseButton {
+                button-width: (parent.width - 12px) / 2;
+                text: @tr("CreateInstance" => "Cancel");
+                clicked => { Dialogs.create-instance-visible = false; }
+            }
+
+            BaseButton {
+                button-width: (parent.width - 12px) / 2;
+                text: CreateInstanceState.creating
+                    ? @tr("CreateInstance" => "Creating...")
+                    : @tr("CreateInstance" => "Create instance");
+                // The Vue disables it while creating and until both a Minecraft
+                // version and (for a modded instance) a loader version are set.
+                button-enabled: !CreateInstanceState.creating
+                    && CreateInstanceState.minecraft-version != ""
+                    && (CreateInstanceState.mod-loader-type == "None"
+                        || CreateInstanceState.mod-loader-version != "");
+                clicked => { CreateInstanceState.create(); }
+            }
+        }
+    }
+}
+
+// The create-instance dialog
+// (src/overlays/dialogs/CreateInstance.vue): a 480×480 panel that swaps between
+// three screens.
+//
+// The Vue animates the swap with `<Transition mode="out-in" :name="zoom-in |
+// zoom-out">`: the outgoing screen plays its 80ms zoom-out first, then the
+// incoming one plays its 250ms zoom-in. Slint has no transition component, so
+// the state machine below drives it with the `phase` the screens read: the
+// mounted screen plays its leave first (`shown` stays put for the 80ms beat),
+// then the `shown` slot changes — which destroys the old element and creates the
+// new one, so the arriving screen starts from the enter rest state instead of
+// animating away from the previous screen's — and its `phase` moves to "shown"
+// one frame later.
+//
+// `switchComponent()` picks the direction: into the version chooser and back
+// from the loader chooser are `zoom-in`, into the loader chooser and back from
+// the version chooser are `zoom-out`.
+export component CreateInstance inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // `.content > p`: 8px top + a 16px line + 16px bottom.
+    private property <length> title-height: 40px;
+    private property <bool> open: Dialogs.create-instance-visible;
+    // The step the user asked for — the Vue's `currentComponent`. The title
+    // follows it at once, like the Vue's `dialogTitle` computed.
+    private property <string> step: CreateInstanceState.step;
+    // The screen actually mounted. It follows `step` only once the mounted
+    // screen has played its leave: the Vue's `<Transition mode="out-in">` keeps
+    // the outgoing component and mounts the incoming one after it.
+    //
+    // Driving the leave from the mounted screen (instead of from a copy of it
+    // mounted ahead of time) is what makes it play: Slint only advances an
+    // `animate` while the property is read, so a copy that is kept out of
+    // sight — `visible: false`, or clipped away — jumps straight to the leave
+    // values the moment it is shown, without animating.
+    private property <string> shown: "";
+    // Whether the mounted screen is playing its leave.
+    private property <bool> leaving: false;
+    // "enter" while the arriving screen sits at the start of its enter, then
+    // "shown".
+    private property <string> arrive-phase: "shown";
+    // "in" = zoom-in, "out" = zoom-out.
+    private property <string> direction: "in";
+    private property <bool> leave-armed: false;
+    private property <bool> enter-armed: false;
+
+    changed open => {
+        if open {
+            // The Vue's `watch(visible)`: every open starts at the chooser.
+            CreateInstanceState.step = "minecraft-choose";
+        } else {
+            // `close()`: clean the form. Clearing the step unmounts the screens
+            // so the next open builds them again.
+            CreateInstanceState.step = "";
+            CreateInstanceState.custom-name = "";
+            CreateInstanceState.name-editing = false;
+            CreateInstanceState.minecraft-version = "";
+            CreateInstanceState.mod-loader-type = "None";
+            CreateInstanceState.mod-loader-version = "";
+            CreateInstanceState.background-path = "";
+            CreateInstanceState.creating = false;
+        }
+    }
+
+    changed step => {
+        if root.step == "" {
+            root.shown = "";
+            root.leaving = false;
+            root.leave-armed = false;
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+            root.direction = "in";
+        } else {
+            // `switchComponent()` picks the direction from the screen it is
+            // leaving: into the version chooser and back from the loader chooser
+            // are `zoom-in`, into the loader chooser and back from the version
+            // chooser are `zoom-out`.
+            root.direction = (root.step == "minecraft-choose"
+                || (root.step == "settings" && root.shown == "mod-loader-choose"))
+                ? "in"
+                : "out";
+
+            // Entering the chooser fetches the manifest again, like the Vue
+            // component's `onMounted` (the crate caches it for 30 minutes).
+            if root.step == "minecraft-choose" {
+                CreateInstanceState.load-minecraft-versions();
+            }
+
+            if root.shown == "" {
+                // The first screen of this open just appears: the Vue's
+                // `<Transition>` has no `appear`, so mounting is not animated.
+                root.shown = root.step;
+            } else if root.step == root.shown {
+                // Switching back to the screen that is leaving calls it off.
+                root.leaving = false;
+                root.leave-armed = false;
+            } else {
+                root.leaving = true;
+                root.leave-armed = true;
+                leave-timer.restart();
+            }
+        }
+    }
+
+    // The `mode="out-in"` beat: the mounted screen plays its 80ms leave, and the
+    // arriving one is mounted when that is over.
+    leave-timer := Timer {
+        interval: 80ms;
+        running: root.leave-armed;
+        triggered => {
+            root.leave-armed = false;
+            root.leaving = false;
+            if root.step != root.shown {
+                root.shown = root.step;
+                root.arrive-phase = "enter";
+                root.enter-armed = true;
+            }
+        }
+    }
+
+    // The arriving screen is mounted at the enter rest and moves to "shown" one
+    // frame later: an element created and finished in the same frame has nothing
+    // to animate from, and the enter became a jump. Long enough for a frame,
+    // short enough not to be seen.
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.enter-armed;
+        triggered => {
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+        }
+    }
+
+    // A `BaseDialog` instance rather than a base to inherit from: inside an
+    // inherited component a `parent` reference resolves against the *root* of
+    // the base (the whole window) instead of the element that hosts the
+    // `@children` slot, which would size everything below to the window.
+    dialog := BaseDialog {
+        dialog-visible: Dialogs.create-instance-visible;
+        dialog-width: 480px;
+        dialog-height: 480px;
+
+        // `.create-instance { padding: 4px }`: the dialog's inner area. Its size
+        // comes from `BaseDialog` — a `parent` reference here is the dialog's
+        // root (the window), not the slot the content is laid out in.
+        scroll := Rectangle {
+            x: 4px;
+            y: 4px;
+            width: dialog.content-width - 8px;
+            height: dialog.content-height - 8px;
+            background: transparent;
+            // The Flickable cannot clip itself (only a Rectangle can), and without
+            // it the screen would draw over the panel's rounded edges.
+            clip: true;
+
+            // `.create-instance > .content`: the dialog's scroll area
+            // (`overflow-y: auto`, which the webview draws no scrollbar for —
+            // the Vue hides them globally).
+            flick := Flickable {
+                width: 100%;
+                height: 100%;
+                interactive: true;
+                mouse-drag-pan-enabled: false;
+                // Pin the content to the dialog's inner width, like `ScrollView` does —
+                // without it the column would be laid out at its preferred width.
+                content-width: scroll.width;
+
+                VerticalLayout {
+                    alignment: start;
+                    spacing: 0px;
+
+                    // The title (`dialogTitle`).
+                    title := Rectangle {
+                        width: 100%;
+                        height: root.title-height;
+                        background: transparent;
+
+                        Text {
+                            x: 8px;
+                            y: 8px;
+                            width: parent.width - 8px;
+                            height: 16px;
+                            text: root.step == "minecraft-choose"
+                                ? @tr("Select Minecraft version")
+                                : root.step == "mod-loader-choose" ? @tr("Select mod loader") : @tr("Create new instance");
+                            font-size: 16px;
+                            font-weight: Theme.font-weight-normal;
+                            color: Theme.default-text-color.transparentize(0.1);
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // ----- the screen -----
+                    // One slot per screen, keyed on the screen that is *mounted*
+                    // (`shown`) rather than on the one asked for: that is what
+                    // keeps the element alive (and its animation running) while it
+                    // plays its leave, and what makes the arriving screen a fresh
+                    // element that starts at its enter rest.
+                    if root.shown == "settings" : SettingsStep {
+                        phase: root.leaving ? "leave" : root.arrive-phase;
+                        direction: root.direction;
+                    }
+                    if root.shown == "minecraft-choose" : MinecraftChoose {
+                        phase: root.leaving ? "leave" : root.arrive-phase;
+                        direction: root.direction;
+                        // `.minecraft-choose { height: calc(100% - 42px) }`: the screen
+                        // fills what the title leaves of the dialog's inner area.
+                        screen-height: flick.height - root.title-height;
+                    }
+                    if root.shown == "mod-loader-choose" : ModLoaderChoose {
+                        phase: root.leaving ? "leave" : root.arrive-phase;
+                        direction: root.direction;
+                        // Like the Minecraft chooser, the screen fills what the
+                        // title leaves of the dialog's inner area and scrolls
+                        // its list itself.
+                        screen-height: flick.height - root.title-height;
+                    }
+                }
+            }
+        }
+    }
+}

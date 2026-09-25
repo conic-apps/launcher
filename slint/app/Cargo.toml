@@ -12,7 +12,10 @@ repository.workspace = true
 slint-build.workspace = true
 
 [dependencies]
-slint.workspace = true
+# `image-default-formats` adds the raster formats the OS file pickers offer
+# (webp, gif, bmp, ico, …) to the decoders Slint builds in, so a picked
+# background image previews in its original format like it does in the browser.
+slint = { workspace = true, features = ["image-default-formats"] }
 slint-platform.workspace = true
 slint-window.workspace = true
 slint-config.workspace = true
