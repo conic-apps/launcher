@@ -47,6 +47,10 @@ pub fn apply_locale(locale: &str) {
     } else {
         log::debug!(target: "app", "selected locale '{locale}'");
     }
+    // The catalog only carries text; which font draws the Han characters in it
+    // is a separate, also locale-dependent choice (see `cjk_font`). Kept here so
+    // a language change picks up both.
+    crate::cjk_font::apply_cjk_fallbacks(locale);
 }
 
 /// Selects the bundled translation that best matches the preferred language

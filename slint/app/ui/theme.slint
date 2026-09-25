@@ -288,6 +288,12 @@ export global Theme {
     // so the digits are baked into the embedded "Comfortaa Nunito" variable
     // font (slint/tools/merge-digit-font.py) and `font-family` is the only
     // family.
+    //
+    // That font is Latin + digits, and Slint only appends the
+    // `[SansSerif, SystemUi]` generics behind it — which resolve to
+    // Arial/Segoe UI on Windows, also glyph-free for Han. The rest of the
+    // original stack ('Yu Gothic UI', 'Microsoft YaHei UI') therefore has to be
+    // registered separately; see `src/cjk_font.rs`.
     in property <string> font-family: "Comfortaa Nunito";
     in property <length> font-size-base: 16px;
     in property <int> font-weight-normal: 400;

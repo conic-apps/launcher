@@ -12,6 +12,7 @@ pub(crate) mod slint_backend {
     slint::include_modules!();
 }
 
+mod cjk_font;
 mod config_bridge;
 mod create_instance;
 mod game;

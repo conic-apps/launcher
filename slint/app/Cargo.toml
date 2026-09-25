@@ -15,7 +15,10 @@ slint-build.workspace = true
 # `image-default-formats` adds the raster formats the OS file pickers offer
 # (webp, gif, bmp, ico, …) to the decoders Slint builds in, so a picked
 # background image previews in its original format like it does in the browser.
-slint = { workspace = true, features = ["image-default-formats"] }
+# `unstable-fontique-011` exposes `slint::fontique_011::shared_collection()`,
+# which `src/cjk_font.rs` uses to name a real CJK family for the Han script
+# (see that module for why the OS fallback is not enough on Windows).
+slint = { workspace = true, features = ["image-default-formats", "unstable-fontique-011"] }
 slint-platform.workspace = true
 slint-window.workspace = true
 slint-config.workspace = true
