@@ -275,12 +275,26 @@ pub fn open_external(target: &str) -> std::io::Result<()> {
 
 /// Native "choose an image file" dialog (no extra dependency).
 pub fn pick_image_file() -> Option<PathBuf> {
+    pick_image_file_named("Select an image")
+}
+
+/// The same picker with the filter label the caller wants to show. The Vue
+/// passes a translated name here (`overlays.dialogs.createInstance.imagesFilter`
+/// in the create-instance dialog), and the file types match the filter it uses.
+pub fn pick_image_file_named(name: &str) -> Option<PathBuf> {
+    /// The file types the Vue's filter offers. macOS takes only the prompt, so
+    /// the pattern list is unused there.
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    const EXTENSIONS: &str = "*.png *.jpg *.jpeg *.webp *.gif *.bmp *.avif *.svg *.ico";
     #[cfg(target_os = "macos")]
     {
+        // The label becomes the dialog's prompt: AppleScript strings need their
+        // quotes and backslashes escaped.
+        let prompt = name.replace('\\', "\\\\").replace('"', "\\\"");
         let output = std::process::Command::new("osascript")
             .args([
                 "-e",
-                "POSIX path of (choose file with prompt \"Select an image\")",
+                &format!("POSIX path of (choose file with prompt \"{prompt}\")"),
             ])
             .output()
             .ok()?;
@@ -295,7 +309,7 @@ pub fn pick_image_file() -> Option<PathBuf> {
         let output = std::process::Command::new("zenity")
             .args([
                 "--file-selection",
-                "--file-filter=Images | *.png *.jpg *.jpeg *.webp *.gif *.bmp *.avif *.svg *.ico",
+                &format!("--file-filter={name} | {EXTENSIONS}"),
             ])
             .output()
             .ok()?;
@@ -307,12 +321,16 @@ pub fn pick_image_file() -> Option<PathBuf> {
     }
     #[cfg(target_os = "windows")]
     {
-        let script = "Add-Type -AssemblyName System.Windows.Forms; \
+        // The filter string separates the label from the patterns with a `|`.
+        let filter = format!("{}|{}", name, EXTENSIONS.replace(' ', ";"));
+        let script = format!(
+            "Add-Type -AssemblyName System.Windows.Forms; \
             $f = New-Object System.Windows.Forms.OpenFileDialog; \
-            $f.Filter = 'Images|*.png;*.jpg;*.jpeg;*.webp;*.gif;*.bmp;*.avif;*.svg;*.ico'; \
-            if ($f.ShowDialog() -eq 'OK') { $f.FileName }";
+            $f.Filter = '{filter}'; \
+            if ($f.ShowDialog() -eq 'OK') {{ $f.FileName }}"
+        );
         let output = std::process::Command::new("powershell")
-            .args(["-NoProfile", "-Command", script])
+            .args(["-NoProfile", "-Command", &script])
             .output()
             .ok()?;
         if !output.status.success() {
