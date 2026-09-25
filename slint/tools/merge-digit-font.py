@@ -356,8 +356,19 @@ def main():
     parser.add_argument("--verify", action="store_true", help="render-compare against sources")
     args = parser.parse_args()
 
+    from verify_merge import check_sfnt_container
+
     merged = build_merged()
+    # The sources are WOFF2 and `TTFont` keeps their `flavor`, which `save()`
+    # reuses: without clearing it the merge lands as WOFF2 inside a `.ttf` name,
+    # which Slint cannot parse.
+    merged.flavor = None
     merged.save(MERGE_OUT)
+
+    if not check_sfnt_container(MERGE_OUT):
+        print(f"error: {MERGE_OUT} is not a font Slint can load", file=sys.stderr)
+        sys.exit(1)
+
     print(f"wrote {MERGE_OUT}")
 
     if args.verify:
