@@ -88,6 +88,7 @@ fn main() {
     // Platform (mirrors crates/platform; tauri-free variant).
     let platform = slint_platform::PLATFORM_INFO.clone();
     ui.set_macos(platform.os_family == slint_platform::OsFamily::Macos);
+    ui.set_linux(platform.os_family == slint_platform::OsFamily::Linux);
     log::info!(
         "detected platform: {:?} ({})",
         platform.os_type,
@@ -133,6 +134,11 @@ fn main() {
     install_app_icon_observer();
 
     let window = WindowService::new(ui.clone_strong());
+
+    let minimize_window = window.clone();
+    ui.on_minimize_window(move || {
+        minimize_window.minimize();
+    });
 
     // Drag regions (`globals/window-drag.slint`): a press on one — the dialog's
     // scrim, as in the Vue's `data-tauri-drag-region` — moves the window.

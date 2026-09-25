@@ -9,11 +9,9 @@ use slint::ComponentHandle;
 /// Thin wrapper around a Slint component's window exposing the window-control
 /// operations the title bar needs.
 ///
-/// Window-state toggles (minimize / maximize / fullscreen) are wired directly
-/// in `.slint` markup via the builtin `Window` properties; this crate exists
-/// so Rust code can drive the same operations programmatically (e.g.
-/// shortcuts, state restore) without touching the UI tree. It keeps a strong
-/// component handle, so it also keeps the event loop alive while live.
+/// The title bar and Rust callbacks use this service to drive window-state
+/// operations without reaching into the UI tree. It keeps a strong component
+/// handle, so it also keeps the event loop alive while live.
 pub struct WindowService<H: ComponentHandle> {
     component: Arc<H>,
 }
@@ -41,7 +39,14 @@ impl<H: ComponentHandle> WindowService<H> {
 
     /// Minimizes the window.
     pub fn minimize(&self) {
-        self.window().set_minimized(true);
+        use i_slint_backend_winit::WinitWindowAccessor;
+        if self
+            .window()
+            .with_winit_window(|window| window.set_minimized(true))
+            .is_none()
+        {
+            self.window().set_minimized(true);
+        }
     }
 
     /// Toggles the maximized state (Windows/Linux).
