@@ -26,7 +26,6 @@ slint/
       config_bridge.rs              # config ↔ UI bridges (file pickers, opening URLs)
       settings.rs                   # the settings screen's script
       game.rs                       # the game view's script
-      java.rs                       # Java runtime discovery (a subset of the plugin)
       create_instance.rs            # the create-instance dialog's script
     ui/
       app.slint                     # root `App` Window (mirrors src/App.vue)
@@ -87,6 +86,7 @@ slint/
     instance/                       # Tauri-free mirror of crates/instance
     content/                        # Tauri-free mirror of crates/content (counts)
     install/                        # Tauri-free mirror of crates/install (version lists)
+    java-runtime/                   # Tauri-free mirror of crates/java-runtime (the scan)
 ```
 
 ## Naming
@@ -304,7 +304,7 @@ Per the migration plan:
   runtime and reported back through `upgrade_in_event_loop`.
 - `slint-platform` (OS detection), `slint-window` (window controls),
   `slint-config`, `slint-folder`, `slint-account`, `slint-instance`,
-  `slint-content` and `slint-install`.
+  `slint-content`, `slint-install` and `slint-java-runtime`.
 - `slint-install` mirrors the **version-list half** of `crates/install`:
   `VersionManifest`, the Fabric/Quilt/Forge/Neoforge lists and the caching the
   Tauri plugin keeps in its `PluginState` (30 minutes, like
@@ -313,6 +313,19 @@ Per the migration plan:
   task itself (game files, loaders, Java) arrives with the launch view.
   `filterNeoforgeVersionList` lives in `crates/install/index.ts`, i.e. in the Vue
   frontend, so it is mirrored in `app/src/create_instance.rs` instead.
+- `slint-java-runtime` mirrors the **scanning half** of `crates/java-runtime`:
+  `models.rs`, `parser.rs` and `scanner.rs` are the original's files, so the two
+  crates can be diffed against each other. The differences are the ones
+  `slint-install` makes in its own error module — the `serde` derives go away,
+  because the original's exist for the Tauri IPC boundary the Slint app does not
+  have (the UI calls `JavaVendor::display_name()` instead) — plus a
+  `SCAN_CACHE_TTL` cache behind `scan_java_runtimes_cached`, standing in for the
+  Tauri plugin's `ScanState`. The scan walks `JAVA_HOME`, `PATH`, the platform's
+  JVM directories (Homebrew and Minecraft's bundled runtimes included) and the
+  Windows registry; the settings list hides whatever it flags `is_managed`, as
+  the Vue does. `resolve.rs` (which runtime to launch with) and `mojang.rs` (the
+  launcher-managed runtimes) arrive with the launch view, like the install task
+  of `slint-install`.
 - Window drag regions (`globals/window-drag.slint` + `WindowService::drag_window`):
   a press inside one starts the platform's own window drag — on macOS
   `performWindowDragWithEvent:`, the way Chromium, Electron and Tauri do it, so
@@ -337,10 +350,9 @@ Per the migration plan:
 
 Not yet migrated: `LaunchView`, `AccountsView`, the setup wizard, the remaining
 overlays (dialogs, content panels, command palette, music player, instance
-settings), the background renderer, and the full Java runtime scanner (settings
-use a lightweight subset). The game view's click-to-open content overlays and
-the account skin/audio-visualizer rendering are stubbed; `views/game-placeholder.slint`
-stands in for the not-yet-migrated views.
+settings) and the background renderer. The game view's click-to-open content
+overlays and the account skin/audio-visualizer rendering are stubbed;
+`views/game-placeholder.slint` stands in for the not-yet-migrated views.
 
 ## Conventions
 

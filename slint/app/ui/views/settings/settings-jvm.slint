@@ -32,7 +32,7 @@ component JavaRuntimeList inherits VerticalLayout {
     for runtime in root.runtimes : SettingItem {
         title: "Java " + runtime.major;
         tags: [runtime.vendor, runtime.version, runtime.arch];
-        description: runtime.path;
+        description: runtime.display-path;
 
         BaseSwitch {
             checked: runtime.enabled;
