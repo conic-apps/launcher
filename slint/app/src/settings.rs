@@ -8,29 +8,50 @@
 use std::{cell::RefCell, path::PathBuf, rc::Rc, time::Duration};
 
 use slint::{ComponentHandle, ModelRc, SharedString, Timer, TimerMode, VecModel};
+use slint_java_runtime::{JavaRuntime as ScannedJava, ScanOptions, scan_java_runtimes_cached};
 
+use crate::config_bridge;
 use crate::slint_backend::{App, AppConfig, GameState, JavaRuntime};
-use crate::{config_bridge, java};
 
 thread_local! {
-    /// Last Java scan result. Only accessed on the UI thread so it can stay an
-    /// `Rc`-free, `Send`-free `RefCell` while the scan itself runs on a worker.
-    static JAVA_CACHE: RefCell<Vec<java::DetectedJava>> = const { RefCell::new(Vec::new()) };
+    /// The last Java scan: the non-managed runtimes, as the list holds them
+    /// (the Vue's `runtimes.value`, after its `!is_managed` filter). Only
+    /// accessed on the UI thread so it can stay an `Rc`-free, `Send`-free
+    /// `RefCell` while the scan itself runs on a worker; it is what lets the
+    /// enable/disable toggles redraw the list without rescanning the disk.
+    static JAVA_CACHE: RefCell<Vec<ScannedJava>> = const { RefCell::new(Vec::new()) };
+}
+
+/// Mirrors `formatJavaPath` in SettingsJVM.vue: Windows reports the
+/// extended-length form of a path, which is not what a user should be shown.
+///
+/// This is display only — the switch's callback and `disabled_java_runtime`
+/// keep the raw path, exactly like the Vue, which formats `runtime.path` for
+/// the description but stores it unformatted.
+fn format_java_path(path: &str) -> String {
+    if let Some(rest) = path.strip_prefix(r"\\?\UNC\") {
+        format!(r"\\{rest}")
+    } else if let Some(rest) = path.strip_prefix(r"\\?\") {
+        rest.to_string()
+    } else {
+        path.to_string()
+    }
 }
 
 /// Builds the Java runtime model, marking the paths present in `disabled`.
-fn java_model(runtimes: &[java::DetectedJava], disabled: &[String]) -> ModelRc<JavaRuntime> {
+fn java_model(runtimes: &[ScannedJava], disabled: &[String]) -> ModelRc<JavaRuntime> {
     let rows: Vec<JavaRuntime> = runtimes
         .iter()
         .map(|runtime| {
-            let path = runtime.path_string();
+            let path = runtime.path.to_string_lossy().to_string();
             JavaRuntime {
-                major: runtime.major,
-                vendor: SharedString::from(runtime.vendor.clone()),
-                version: SharedString::from(runtime.version.clone()),
-                arch: SharedString::from(runtime.arch.clone()),
+                major: runtime.major_version as i32,
+                vendor: runtime.vendor.display_name().into(),
+                version: runtime.version.clone().into(),
+                arch: runtime.arch.display_name().into(),
                 enabled: !disabled.iter().any(|disabled| disabled == &path),
-                path: SharedString::from(path),
+                display_path: format_java_path(&path).into(),
+                path: path.into(),
             }
         })
         .collect();
@@ -159,17 +180,34 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
                 settings.set_java_scan_error(SharedString::default());
             }
             let weak = weak.clone();
-            let managed = slint_folder::DATA_LOCATION.runtime.clone();
             // The scan walks the disk and starts a JVM per candidate, so it runs
             // on the runtime's blocking pool — the original's
-            // `tauri::async_runtime::spawn_blocking`.
+            // `tauri::async_runtime::spawn_blocking`. `scan_java_runtimes_cached`
+            // reuses a result younger than 30s, so revisiting the page does not
+            // re-probe every candidate.
             crate::runtime::spawn_blocking(move || {
-                let runtimes = java::scan(&managed);
+                let options = ScanOptions {
+                    extra_home_dirs: Vec::new(),
+                    managed_dirs: vec![slint_folder::DATA_LOCATION.runtime.clone()],
+                };
+                // The Vue lists the system runtimes only:
+                // `result.runtimes.filter((runtime) => !runtime.is_managed)`.
+                let scanned = scan_java_runtimes_cached(&options).map(|result| {
+                    result
+                        .runtimes
+                        .into_iter()
+                        .filter(|runtime| !runtime.is_managed)
+                        .collect::<Vec<_>>()
+                });
                 let _ = weak.upgrade_in_event_loop(move |ui| {
                     let settings = ui.global::<AppConfig>();
+                    let (runtimes, error) = match scanned {
+                        Ok(runtimes) => (runtimes, SharedString::default()),
+                        Err(error) => (Vec::new(), SharedString::from(error.to_string())),
+                    };
                     settings.set_java_runtimes(java_model(&runtimes, &disabled));
                     settings.set_java_scanning(false);
-                    settings.set_java_scan_error(SharedString::default());
+                    settings.set_java_scan_error(error);
                     JAVA_CACHE.with(|cache| *cache.borrow_mut() = runtimes);
                 });
             });

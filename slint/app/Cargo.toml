@@ -27,6 +27,7 @@ slint-account.workspace = true
 slint-instance.workspace = true
 slint-content.workspace = true
 slint-install.workspace = true
+slint-java-runtime.workspace = true
 chrono.workspace = true
 once_cell.workspace = true
 # The runtime the background work runs on, standing in for Tauri's (see
