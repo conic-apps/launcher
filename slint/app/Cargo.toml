@@ -20,7 +20,13 @@ slint-folder.workspace = true
 slint-account.workspace = true
 slint-instance.workspace = true
 slint-content.workspace = true
+slint-install.workspace = true
 chrono.workspace = true
+once_cell.workspace = true
+# The runtime the background work runs on, standing in for Tauri's (see
+# `src/runtime.rs`). Multi-threaded like Tauri's, and `net` for the HTTP client
+# of `slint-install`, which reqwest turns on with its own dependency.
+tokio = { workspace = true, features = ["rt-multi-thread", "net"] }
 log.workspace = true
 env_logger.workspace = true
 
