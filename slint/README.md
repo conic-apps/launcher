@@ -32,8 +32,7 @@ slint/
       app.slint                     # root `App` Window (mirrors src/App.vue)
       theme.slint                   # palette + typography tokens, embeds fonts
       icons.slint                   # icon path data (mirrors src/assets/icons/*.svg)
-      fonts/Comfortaa.ttf           # converted from src/assets/fonts/*.woff2
-      fonts/Nunito.ttf
+      fonts/ComfortaaNunito.ttf      # Comfortaa with Nunito digits merged (see Fonts)
       assets/                       # palette previews, about logos, version icons
       globals/
         navigation.slint            # global page navigation (src/store/navigation.ts)
@@ -121,20 +120,33 @@ font-family: "Nunito", "Comfortaa", system-ui, …; /* body */
 ```
 
 where `Nunito` was a **digits-only subset** (`unicode-range: U+0030-0039`) so
-numbers render in Nunito and everything else falls back to Comfortaa. Both were
-variable `.woff2` fonts. Slint embeds fonts at compile time but only accepts
-`.ttf`/`.ttc`/`.otf`, so they were converted with `fonttools`:
+numbers render in Nunito and everything else falls back to Comfortaa, both
+variable `.woff2` fonts. Slint has no `unicode-range` fallback, so the digit
+glyphs (with their variable-font deltas) are **merged into a new "Comfortaa
+Nunito" variable font** instead:
 
-- `Comfortaa.ttf` — variable (wght 300–700), family `Comfortaa`.
-- `Nunito.ttf` — instanced at weight 400, family `Nunito`.
+- `slint/tools/merge-digit-font.py` regenerates `ui/fonts/ComfortaaNunito.ttf`
+  from `slint/tools/fonts/Comfortaa-Latin.woff2` + `Nunito-Digits.woff2` (the
+  original sources, kept next to the scripts): the Nunito digits instanced at
+  weight 400 become the base glyphs, gvar tuples cover weights 400–700 (matching
+  the Nunito subset outline on every master knot), Comfortaa's HVAR digit rows
+  and the GPOS kerning pairs touching digits are zeroed, and everything else in
+  the font is untouched — letters are byte-identical to the original Comfortaa
+  and digit advances always equal the Nunito 600. The font's `name` records are
+  re-tagged as **"Comfortaa Nunito"** (the sources' version/license/copyright
+  names are inherited).
+- `slint/tools/verify_merge.py` (run as `python3 merge-digit-font.py --verify`)
+  checks the digit outlines point-exact against the instanced Nunito glyphs,
+  letters against the original Comfortaa, and that no digit kerning remains.
 
-They are imported in `ui/theme.slint` (`import "fonts/*.ttf";`), and the root
-window sets `default-font-family: Theme.font-family`. Slint has no
-`unicode-range` fallback, so numeric text must opt in explicitly with
-`font-family: Theme.digits-font-family`.
+The font is embedded at compile time and imported in `ui/theme.slint`
+(`import "fonts/ComfortaaNunito.ttf";`); the root window sets
+`default-font-family: Theme.font-family` and `font-family` is the only family —
+digits and letters render from the same variable font, so numeric text needs no
+extra `font-family` overrides.
 
-Typography tokens live in the `Theme` global (`font-family`,
-`digits-font-family`, `font-size-base`, `font-weight-normal/bold`).
+Typography tokens live in the `Theme` global (`font-family`, `font-size-base`,
+`font-weight-normal/bold`).
 
 ## Internationalization
 
