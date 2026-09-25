@@ -1,0 +1,126 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { ZoomTransition } from "../../../components/zoom-transition.slint";
+import { BaseListItem } from "../../../components/base-list-item.slint";
+import { ScrollView } from "../../../components/scroll-view.slint";
+import { CreateInstanceState } from "../../../globals/dialogs.slint";
+
+// The mod loader version chooser
+// (src/overlays/dialogs/create/ModLoaderChoose.vue): the versions of the loader
+// the settings screen picked.
+//
+// The Vue writes one `v-if` branch per loader although all four render the same
+// list, so this version picks the list (and the icon) from the loader type.
+// Forge rows show the version without its Minecraft prefix, which Rust strips
+// when it builds the list.
+//
+// The list is built exactly like the Minecraft chooser's, bar its height: a
+// 1px bordered, rounded box around the app's `ScrollView` (and its slim thumb),
+// with only the visible rows drawn. Two things about that differ from the Vue,
+// both deliberate:
+//
+//   * the list scrolls in an area of its own instead of growing to its full
+//     height and letting the dialog's scroll area carry it, as the Vue's
+//     `.content` does. Slint's renderer cannot paint an element taller than
+//     8192px *inside an opacity/transform group*, and a screen is exactly such a
+//     group — the zoom transition — while a list is 13 700px tall for Fabric on
+//     1.20.1 (Quilt: 16 600px). The layer allocation fails and the dialog stops being
+//     painted altogether. A bounded scroller keeps the group small.
+//   * that area draws a 1px border and a scrollbar, neither of which the Vue has
+//     on this screen (its list is a plain rounded box, and the app hides
+//     scrollbars globally). The border makes it match the version chooser, whose
+//     list carries one, and the thumb shows that the list can be scrolled.
+//   * the screen opens with the settings screen's 4px gap rather than the Vue's
+//     empty SettingGroup hairline plus the 16px margin of its item list.
+//
+// Only the visible rows are built as well — past roughly 150 rows drawn in a
+// frame the renderer gives up too (see `window-top`).
+export component ModLoaderChoose inherits ZoomTransition {
+    /// The dialog's inner area minus its title: what this screen has to fill.
+    in property <length> screen-height: 0px;
+
+    height: root.screen-height;
+    padding-left: 8px;
+    padding-right: 8px;
+
+    private property <string> loader-type: CreateInstanceState.mod-loader-type;
+    private property <[string]> versions: root.loader-type == "Fabric"
+        ? CreateInstanceState.fabric-versions
+        : root.loader-type == "Quilt" ? CreateInstanceState.quilt-versions
+        : root.loader-type == "Forge" ? CreateInstanceState.forge-versions
+        : root.loader-type == "Neoforge" ? CreateInstanceState.neoforge-versions
+        : [];
+
+    pure function loader-icon(loader-type: string) -> image {
+        if loader-type == "Fabric" {
+            return @image-url("../../../assets/fabric.webp");
+        }
+        if loader-type == "Quilt" {
+            return @image-url("../../../assets/quilt.svg");
+        }
+        if loader-type == "Forge" {
+            return @image-url("../../../assets/forge.svg");
+        }
+        return @image-url("../../../assets/neoforge.png");
+    }
+
+    // A row is 54px tall (see `BaseListItem`), which is what lets the list's
+    // height and the visible range be computed without measuring anything.
+    private property <length> row-height: 54px;
+    // The part of the list the scroll area can show, with two rows of slack on
+    // each side so a scroll never reveals a slot before its row is built.
+    private property <length> window-top: max(
+        0px,
+        -versions-scroll.content-y - 2 * root.row-height);
+    private property <length> window-bottom: -versions-scroll.content-y + versions-scroll.height
+        + 2 * root.row-height;
+
+    // `.instance { margin: 4px 8px 12px 8px }`: the gap the settings screen opens
+    // with, which is what this screen uses too. The Vue opens this one with an
+    // empty `<SettingGroup style="padding: 0">` — its 1px hairline box plus the
+    // 16px bottom margin of its item list, so 18px — and that read as a second
+    // border just above the list's own.
+    Rectangle {
+        width: 100%;
+        height: 4px;
+        background: transparent;
+    }
+
+    // ----- the versions -----
+    list := Rectangle {
+        width: 100%;
+        vertical-stretch: 1;
+        // CSS `border: 1px solid rgba(0, 0, 0, 0.16)`.
+        border-width: 1px;
+        border-color: #00000029;
+        border-radius: 8px;
+        clip: true;
+        background: transparent;
+
+        versions-scroll := ScrollView {
+            // The rows live in a box of their own — a row's `visible` cannot be
+            // used to drop it from the scroll content, or the list would
+            // collapse. See `window-top`.
+            list-content := Rectangle {
+                width: 100%;
+                height: root.row-height * root.versions.length;
+
+                for version[index] in root.versions : BaseListItem {
+                    visible: root.row-height * index < root.window-bottom
+                        && root.row-height * (index + 1) > root.window-top;
+                    y: root.row-height * index;
+                    title: version;
+                    icon: root.loader-icon(root.loader-type);
+                    clickable: true;
+
+                    clicked => {
+                        CreateInstanceState.mod-loader-version = version;
+                        CreateInstanceState.step = "settings";
+                    }
+                }
+            }
+        }
+    }
+}

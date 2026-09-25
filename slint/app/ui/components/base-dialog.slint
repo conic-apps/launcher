@@ -1,0 +1,193 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { FocusManager } from "../globals/focus.slint";
+import { WindowDrag } from "../globals/window-drag.slint";
+
+// Modal dialog shell (src/components/BaseDialog.vue).
+//
+// A full-window scrim with a centred panel. The Vue animates the pair with a
+// gsap timeline; Slint's `animate` has no timeline, so each track becomes the
+// `delay` of the properties it drives:
+//
+//   enter  scrim   opacity 0 → 1     200ms `power1.out`, from 0ms
+//          content opacity 0 → 1     300ms `back.out`,    from 200ms
+//          content scale   0.9 → 1
+//   leave  content opacity 1 → 0     180ms `power1.out`, from 0ms
+//          content scale   1 → 0.9
+//          scrim   opacity 1 → 0     200ms `power1.out`,  from 100ms
+//
+// `back.out` overshoots its target (its control points sit above 1); Slint
+// interpolates a `cubic-bezier` the same way, so the usual easeOutBack
+// approximation stands in for it.
+//
+// The panel keeps its place in the tree while it animates out and is drawn no
+// more afterwards — the closest Slint gets to the Vue's `v-if` after the leave
+// transition. Its touch area is disabled as soon as the dialog is asked to
+// close, so the window underneath is clickable while it fades.
+export component BaseDialog inherits Rectangle {
+    /// Whether the dialog is open (the Vue's `visible` prop, renamed because
+    /// `visible` is an element property of its own).
+    in property <bool> dialog-visible: false;
+    /// Panel size (the Vue's `width` / `height` props). Left at 0 the panel
+    /// fills the window, which is also where the Vue's `max-width` /
+    /// `max-height` clamp it; a dialog that lets its content size it (the Vue's
+    /// `fit-content` default) needs a layout to measure the slot and arrives
+    /// with one of those dialogs.
+    in property <length> dialog-width: 0px;
+    in property <length> dialog-height: 0px;
+    /// Size of the area the content is laid out in (the panel minus the 16px
+    /// padding).
+    ///
+    /// Elements written between a `BaseDialog`'s braces are laid out in that
+    /// area, but their `parent` is the element they are written *in* — the
+    /// dialog's root, i.e. the whole window. Anything that has to fill or fit
+    /// the slot sizes itself against these instead.
+    out property <length> content-width: panel.width - 32px;
+    out property <length> content-height: panel.height - 32px;
+
+    width: 100%;
+    height: 100%;
+    // The scrim (`background: #00000042`), faded in and out with the dialog —
+    // the Vue fades the whole `.dialog` while its content scales. The alpha has
+    // to be part of the colour: an element `opacity` here would put the scrim's
+    // own children in a layer.
+    background: #000000.with-alpha(0.259 * root.scrim-alpha);
+    border-radius: 16px;
+
+    // "closed" | "starting" | "shown" | "leaving".
+    //
+    // The dialog has to stay *visible* while it plays its leave, and its
+    // visibility must not be derived from a value that is animating: an
+    // animated property is only advanced while something reads it, and an
+    // element that turns invisible on the first frame of the leave stops being
+    // read — so the fade ended up being skipped and the dialog disappeared in a
+    // single frame. The phase is a plain state instead: `leaving` keeps the
+    // dialog on screen (and the animation running) until the timer hides it.
+    //
+    // `starting` is the same problem at the other end. A hidden dialog is not
+    // read either, so the first value its tracks are ever asked for is the one
+    // they are meant to *end* at: the fade and the scale were skipped on open
+    // and the panel simply appeared. The dialog is therefore shown for one frame
+    // at the start values, and only then moved to "shown" (`start-timer`).
+    private property <string> phase: "closed";
+    visible: root.phase != "closed";
+
+    changed dialog-visible => {
+        if root.dialog-visible {
+            if root.phase == "closed" {
+                root.phase = "starting";
+                start-timer.restart();
+            } else {
+                // Reopened while it was leaving: play the enter from wherever
+                // the leave had got to.
+                root.phase = "shown";
+            }
+        } else if root.phase != "closed" && root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    // One frame at the start values is enough for the renderer to see them.
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    // The leave: 100ms of delay + 200ms of scrim (the longest of the two
+    // tracks). `running` turns itself off when the phase reaches "closed".
+    leave-timer := Timer {
+        interval: 300ms;
+        running: root.phase == "leaving";
+        triggered => { root.phase = "closed"; }
+    }
+
+    init => {
+        // `changed` does not fire for the value a component is created with.
+        if root.dialog-visible {
+            root.phase = "shown";
+        }
+    }
+
+    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    animate scrim-alpha {
+        duration: 200ms;
+        delay: root.phase == "shown" ? 0ms : 100ms;
+        easing: ease-out-quad;
+    }
+
+    private property <float> content-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    private property <float> content-scale: root.phase == "shown" ? 1.0 : 0.9;
+    animate content-alpha {
+        duration: root.phase == "shown" ? 300ms : 180ms;
+        delay: root.phase == "shown" ? 200ms : 0ms;
+        easing: root.phase == "shown" ? cubic-bezier(0.34, 1.56, 0.64, 1) : ease-out-quad;
+    }
+    animate content-scale {
+        duration: root.phase == "shown" ? 300ms : 180ms;
+        delay: root.phase == "shown" ? 200ms : 0ms;
+        easing: root.phase == "shown" ? cubic-bezier(0.34, 1.56, 0.64, 1) : ease-out-quad;
+    }
+
+    // Swallows clicks meant for the window below. Declared before the panel so
+    // the panel — and the controls inside it — stay on top: Slint hit-tests the
+    // last-declared element first. Disabled the moment the dialog is asked to
+    // close, so the window is usable again while the panel fades out.
+    //
+    // The Vue marks this element with Tauri's `data-tauri-drag-region`, so a
+    // press on the scrim also moves the window — by its shadow area, like any
+    // other window background. The drops-focus part has to run on the press
+    // rather than on the click: the platform takes the drag over from there and
+    // the release never reaches Slint.
+    scrim-touch := TouchArea {
+        width: 100%;
+        height: 100%;
+        enabled: root.visible;
+        pointer-event(event) => {
+            if event.button == PointerEventButton.left && event.kind == PointerEventKind.down {
+                // A press outside the panel drops any focused text field, the
+                // way the browser blurs an input its user clicks away from.
+                FocusManager.clear();
+                WindowDrag.start();
+            }
+        }
+    }
+
+    // The press-swallower for the panel: Tauri's drag regions only cover the
+    // element that carries the attribute, so pressing the panel — or anything on
+    // it — does not start a window drag while pressing the scrim does.
+    panel := Rectangle {
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+        // A dialog that sizes itself, clamped to the window — the Vue's
+        // `max-width` / `max-height` of `calc(100vw - 20px)`.
+        width: min(root.dialog-width > 0px ? root.dialog-width : root.width - 20px, root.width - 20px);
+        height: min(root.dialog-height > 0px ? root.dialog-height : root.height - 20px, root.height - 20px);
+        background: Theme.dialog-background;
+        border-width: 1px;
+        border-color: Theme.dialog-border;
+        border-radius: Theme.dialog-border-radius;
+        drop-shadow-color: #00000071;
+        drop-shadow-blur: 50px;
+        opacity: root.content-alpha;
+        transform-scale: root.content-scale * 100%;
+
+        panel-touch := TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        // `padding: 16px` of `.dialog > .content`.
+        content := Rectangle {
+            x: 16px;
+            y: 16px;
+            width: parent.width - 32px;
+            height: parent.height - 32px;
+            background: transparent;
+            @children
+        }
+    }
+}

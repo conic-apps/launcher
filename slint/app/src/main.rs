@@ -118,6 +118,16 @@ fn main() {
     install_app_icon_observer();
 
     let window = WindowService::new(ui.clone_strong());
+
+    // Drag regions (`globals/window-drag.slint`): a press on one — the dialog's
+    // scrim, as in the Vue's `data-tauri-drag-region` — moves the window.
+    ui.global::<slint_backend::WindowDrag>().on_start({
+        let window = window.clone();
+        move || {
+            log::debug!(target: "shell", "window drag requested");
+            window.drag_window();
+        }
+    });
     log::debug!(target: "shell", "init window state — maximized: {}", window.is_maximized());
 
     // Double-clicking the title bar zooms (macOS: native fullscreen space,

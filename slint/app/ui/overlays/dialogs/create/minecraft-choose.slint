@@ -1,0 +1,165 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../../theme.slint";
+import { ZoomTransition } from "../../../components/zoom-transition.slint";
+import { BaseListItem } from "../../../components/base-list-item.slint";
+import { BaseSelect } from "../../../components/base-select.slint";
+import { BaseButton } from "../../../components/base-button.slint";
+import { ScrollView } from "../../../components/scroll-view.slint";
+import { BaseLoading } from "../../../components/base-loading.slint";
+import { Dialogs, CreateInstanceState } from "../../../globals/dialogs.slint";
+import { GameTime } from "../../../globals/game.slint";
+
+// The Minecraft version chooser
+// (src/overlays/dialogs/create/MinecraftChoose.vue): a category filter, the
+// version list and a Cancel button.
+//
+// The list is the dialog's own `ScrollView`, so it keeps that component's slim
+// scrollbar — the Vue nests the very same component here.
+//
+// One deliberate difference: the Vue's flex column overflows (`height: calc(100%
+// - 42px)` on the screen and `height: 100%` on the list leave the filter and the
+// button no room, and flexbox shrinks them to ~32px and ~24px). Here the filter
+// and the button keep the heights their padding and content ask for, and the
+// list takes what is left — see `slint/README.md`.
+export component MinecraftChoose inherits ZoomTransition {
+    /// The dialog's inner area minus its title: what this screen has to fill.
+    in property <length> screen-height: 0px;
+
+    height: root.screen-height;
+    padding: 8px;
+    // The filter's `margin-bottom: 8px` and the button's `margin-top: 8px`.
+    spacing: 8px;
+
+    /// The row icon: the release texture, the command block for a snapshot and
+    /// the ancient debris for everything older.
+    pure function version-icon(kind: string) -> image {
+        if kind == "release" {
+            return @image-url("../../../assets/minecraft.webp");
+        }
+        if kind == "snapshot" {
+            return @image-url("../../../assets/command-block.webp");
+        }
+        return @image-url("../../../assets/ancient-debris.webp");
+    }
+
+    // ----- version category -----
+    filter := Rectangle {
+        width: 100%;
+        // 8px vertical padding around the 24px segmented select.
+        height: 40px;
+        border-radius: 8px;
+        background: Theme.surface-0;
+
+        // The label takes the free space, the select keeps its own width — the
+        // same shape the settings rows use, and what the Vue's
+        // `justify-content: space-between` amounts to. Giving the select a fixed
+        // width would leave the strip the options do not fill empty, which is
+        // what showed to the right of the last one.
+        HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            spacing: 0px;
+            cross-axis-alignment: center;
+
+            Text {
+                text: @tr("Version category");
+                font-size: 13px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+                horizontal-stretch: 1;
+                vertical-alignment: center;
+            }
+
+            BaseSelect {
+                options: ["releases", "snapshot", "old"];
+                display-name: [@tr("Releases"), @tr("Snapshots"), @tr("Old versions")];
+                value <=> CreateInstanceState.version-category;
+                // Rust re-filters the list behind it (the Vue's
+                // `filteredVersions`).
+                selected(value) => { CreateInstanceState.set-version-category(value); }
+            }
+        }
+    }
+
+    // A row is 54px tall (see `BaseListItem`), which is what lets the list's
+    // height and the visible range be computed without measuring anything.
+    private property <length> row-height: 54px;
+    // The part of the list the scroll area can show, with two rows of slack on
+    // each side so a scroll never reveals a slot before its row is built.
+    //
+    // Slint would otherwise build every row: the "snapshot" category alone runs
+    // to some 600 versions, and past roughly 150 rows drawn in a frame the
+    // renderer gives up mid-frame, taking the whole dialog down with it. Only
+    // these rows are drawn.
+    private property <length> window-top: max(
+        0px,
+        -versions-scroll.content-y - 2 * root.row-height);
+    private property <length> window-bottom: -versions-scroll.content-y + versions-scroll.height
+        + 2 * root.row-height;
+
+    // ----- the versions -----
+    list := Rectangle {
+        width: 100%;
+        vertical-stretch: 1;
+        // CSS `border: 1px solid rgba(0, 0, 0, 0.16)`.
+        border-width: 1px;
+        border-color: #00000029;
+        border-radius: 8px;
+        clip: true;
+        background: transparent;
+
+        versions-scroll := ScrollView {
+            // The rows live in a box of their own — a row's `visible` cannot be
+            // used to drop it from the scroll content, or the list would
+            // collapse. See `window-top`.
+            list-content := Rectangle {
+                width: 100%;
+                height: root.row-height * CreateInstanceState.minecraft-versions.length;
+
+                for version[index] in CreateInstanceState.minecraft-versions : BaseListItem {
+                    visible: root.row-height * index < root.window-bottom
+                        && root.row-height * (index + 1) > root.window-top;
+                    y: root.row-height * index;
+                    title: "Minecraft " + version.id;
+                    description: GameTime.year-month-day(version.month, version.day, version.year);
+                    icon: root.version-icon(version.kind);
+                    // Only the release icon is drawn at 80% opacity.
+                    icon-opacity: version.kind == "release" ? 0.8 : 1.0;
+                    clickable: true;
+                    buttons: ["about"];
+
+                    clicked => {
+                        CreateInstanceState.select-minecraft-version(version.id);
+                        CreateInstanceState.step = "settings";
+                    }
+                    // The Vue's `click-about`: every version has a Minecraft wiki
+                    // page, under a different URL per language.
+                    button-clicked(name) => { CreateInstanceState.open-version-wiki(version.id); }
+                }
+            }
+        }
+
+        // Loading veil. The Vue wraps it in a `<Transition>` whose default `v-`
+        // classes are not defined anywhere, so it simply appears.
+        if CreateInstanceState.minecraft-loading : Rectangle {
+            width: 100%;
+            height: 100%;
+            background: #0000004b;
+
+            BaseLoading {
+                size: 32px;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+        }
+    }
+
+    BaseButton {
+        width: 100%;
+        text: @tr("Cancel");
+        clicked => { Dialogs.create-instance-visible = false; }
+    }
+}

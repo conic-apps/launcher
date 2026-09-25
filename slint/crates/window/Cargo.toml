@@ -8,3 +8,9 @@ repository.workspace = true
 
 [dependencies]
 slint.workspace = true
+# `WindowService::drag_window` goes through the winit window (Slint has no
+# window-drag API of its own); these are the same versions the app builds
+# against.
+i-slint-backend-winit = "1.18"
+winit = "0.30"
+log.workspace = true
