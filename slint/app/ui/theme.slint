@@ -3,10 +3,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 // Custom fonts are embedded at compile time (Slint supports `.ttf`/`.ttc`/
-// `.otf` imports; the original `.woff2` files were converted to `.ttf`).
-// `Comfortaa` is the base family, `Nunito` is the digits-only subset.
-import "fonts/Comfortaa.ttf";
-import "fonts/Nunito.ttf";
+// `.otf` imports; the original `.woff2` files were converted/merged).
+// `ComfortaaNunito.ttf` is the "Comfortaa Nunito" variable font: Comfortaa's
+// glyphs with the Nunito digit glyphs merged in (see
+// slint/tools/merge-digit-font.py), so digits render exactly like the original
+// CSS unicode-range setup without a second font family.
+import "fonts/ComfortaaNunito.ttf";
 
 // `Palette.color-scheme` reflects the OS light/dark preference and lets
 // "follow system" resolve without Rust help. It ships with `std-widgets`; only
@@ -283,10 +285,10 @@ export global Theme {
     // Typography (src/assets/styles/main.css). The original stack was
     // 'Nunito', 'Comfortaa', system-ui, … where Nunito was restricted to
     // digits (unicode-range U+0030-0039). Slint has no unicode-range fallback,
-    // so `font-family` is the base and `digits-font-family` is applied to
-    // numeric text explicitly.
-    in property <string> font-family: "Comfortaa";
-    in property <string> digits-font-family: "Nunito";
+    // so the digits are baked into the embedded "Comfortaa Nunito" variable
+    // font (slint/tools/merge-digit-font.py) and `font-family` is the only
+    // family.
+    in property <string> font-family: "Comfortaa Nunito";
     in property <length> font-size-base: 16px;
     in property <int> font-weight-normal: 400;
     in property <int> font-weight-bold: 700;

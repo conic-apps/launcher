@@ -22,3 +22,7 @@ dist-ssr
 *.key
 
 /target/
+
+# Python tooling (slint/tools)
+__pycache__/
+*.pyc
