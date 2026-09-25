@@ -192,7 +192,37 @@ def verify_outlines(merged_path):
     return ok
 
 
+# A font Slint cannot parse is worse than a missing one: its loader accepts any
+# blob (an unparsable `register_font_from_memory` reports no error), so a WOFF2
+# payload under a `.ttf` name silently drops the family and every text run falls
+# back to the system font while the app keeps running. Nothing below this point
+# can catch that -- `TTFont` decompresses WOFF2 on load and FreeType renders it,
+# so both the numeric and the bitmap checks pass -- hence the container check.
+SFNT_MAGICS = (b"\x00\x01\x00\x00", b"true", b"typ1", b"OTTO")
+WOFF_MAGICS = (b"wOFF", b"wOF2")
+
+
+def check_sfnt_container(path):
+    """Assert the file is a plain sfnt (TTF/OTF), not a WOFF/WOFF2 wrapper."""
+    head = open(path, "rb").read(4)
+    name = os.path.basename(path)
+    if head in WOFF_MAGICS:
+        print(f"  FAIL {name} is {head.decode()} data, not an sfnt font;")
+        print("       Slint has no WOFF2 decoder and falls back to the system font")
+        return False
+    if head not in SFNT_MAGICS:
+        print(f"  FAIL {name} is not an sfnt font (first bytes: {head!r})")
+        return False
+    print(f"  OK   {name} is a plain sfnt")
+    return True
+
+
 def verify(merged_path):
+    print("verify embedded font container:")
+    if not check_sfnt_container(merged_path):
+        # Every check below assumes a parseable sfnt; bail out rather than crash.
+        return False
+
     merged_bytes = open(merged_path, "rb").read()
     nunito_bytes = woff2_to_ttf_bytes(NUNITO)
     comfortaa_bytes = woff2_to_ttf_bytes(COMFORTAA_SRC)
