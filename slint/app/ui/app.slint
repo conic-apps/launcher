@@ -22,11 +22,9 @@ export { ScrollInput, ScrollSource } from "globals/scroll.slint";
 export { Dialogs, CreateInstanceState, MinecraftVersionItem } from "globals/dialogs.slint";
 export { WindowDrag } from "globals/window-drag.slint";
 
-// Application root window (App.vue). Native window chrome on every platform:
-// macOS gets the Chrome-style treatment (transparent hidden titlebar +
-// full-size content view via a winit window-attributes hook in main.rs) so the
-// custom title bar draws under the native traffic lights; Windows/Linux use
-// their native caption bar.
+// Application root window (App.vue). macOS keeps the native traffic lights,
+// Linux uses a frameless window with a custom title bar, and Windows keeps its
+// native caption bar.
 export component App inherits Window {
     title: @tr("Conic Launcher");
     // Window/taskbar icon for Windows and Linux WMs (see the shared asset). macOS
@@ -36,10 +34,9 @@ export component App inherits Window {
     default-font-family: Theme.font-family;
     default-font-size: Theme.font-size-base;
     default-font-weight: Theme.font-weight-normal;
-    // macOS keeps a transparent window so the custom title bar blends into the
-    // native (transparent) title bar; other platforms need an opaque client
-    // area beneath their native caption bar.
-    background: self.macos ? transparent : Theme.crust;
+    // macOS blends its native title bar into the client area; Linux leaves the
+    // corners transparent for the rounded, frameless window.
+    background: self.macos || self.linux ? transparent : Theme.crust;
     // 840x532 is the floor, not a fixed size: fixed `width`/`height` on the
     // root Window pin min == max (making the window non-resizable), so the
     // original window size is expressed as the minimum + preferred size.
@@ -47,8 +44,11 @@ export component App inherits Window {
     min-height: 532px;
     preferred-width: 840px;
     preferred-height: 532px;
+    no-frame: self.linux;
+    resize-border-width: self.linux ? 6px : 0px;
 
     in-out property <bool> macos: false;
+    in-out property <bool> linux: false;
     /// Whether the window is in native fullscreen — a *state* pushed from the
     /// platform (`traffic_lights.rs`), not a request: to change it, use the
     /// `WindowService`. macOS hides the traffic lights in fullscreen, and the
@@ -60,18 +60,20 @@ export component App inherits Window {
     callback open-search();
     callback toggle-music();
     callback maximize-or-fullscreen();
+    callback minimize-window();
+    callback close-window();
 
     // Drives the palette selection and animates the Theme tokens (see
     // theme.slint). Must exist exactly once.
     ThemeProvider { }
 
-    // Corners, edge and borders are owned by the window system (the native
-    // title bar / window frame), so the content layer is a plain full-size
-    // gradient with no custom framing.
+    // The content layer stays full-size; the title bar owns the top row and
+    // the platform owns the remaining window edge.
     container := Rectangle {
         width: root.width;
         height: root.height;
         background: @linear-gradient(180deg, Theme.mantle 0%, Theme.crust 100%);
+        border-radius: 16px;
         clip: true;
 
         VerticalLayout {
@@ -80,6 +82,7 @@ export component App inherits Window {
 
             TitleBar {
                 macos: root.macos;
+                linux: root.linux;
                 fullscreen: root.window-fullscreen;
                 search-placeholder: root.search-placeholder;
                 search-hotkey: root.search-hotkey;
@@ -91,6 +94,8 @@ export component App inherits Window {
                 open-search => { root.open-search(); }
                 toggle-music => { root.toggle-music(); }
                 maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
+                minimize-window => { root.minimize-window(); }
+                close-window => { root.close(); }
             }
 
             // Page stack (App.vue `<component :is="pages[...]">`). Only the

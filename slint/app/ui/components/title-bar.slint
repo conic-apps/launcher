@@ -7,23 +7,60 @@ import { NavigationButton } from "title-bar/navigation-button.slint";
 import { TitleBarActionButton } from "title-bar/title-bar-action-button.slint";
 import { SearchBar } from "search-bar.slint";
 
-// Title bar (App.vue). Window controls are native chrome on every platform
-// (AppKit traffic lights on macOS, the OS caption bar elsewhere), so only
-// navigation/search/actions are drawn here.
+component LinuxWindowControlButton inherits Rectangle {
+    in property <string> icon-commands;
+    callback clicked;
+
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: touch.pressed ? Theme.overlay-0
+        : touch.has-hover ? Theme.surface-2
+        : Theme.surface-1;
+
+    accessible-role: button;
+    accessible-action-default => { root.clicked(); }
+
+    Path {
+        commands: root.icon-commands;
+        viewbox-width: 512;
+        viewbox-height: 512;
+        width: 14px;
+        height: 14px;
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+        fill: transparent;
+        stroke: Theme.default-text-color;
+        stroke-width: 1px;
+        stroke-line-cap: LineCap.round;
+        stroke-line-join: LineJoin.round;
+    }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+// Title bar (App.vue). macOS uses native traffic lights, Linux uses the custom
+// window controls below, and Windows keeps its native caption bar.
 export component TitleBar inherits Rectangle {
     in property <bool> macos: false;
+    in property <bool> linux: false;
     /// Whether the window is in native fullscreen, where macOS hides the
     /// traffic lights (see the leading controls below).
     in property <bool> fullscreen: false;
     in property <string> search-placeholder;
     in property <string> search-hotkey;
     in property <string> current-page: "game";
+    private property <length> linux-action-inset: 86px;
 
     callback open-home();
     callback open-settings();
     callback open-search();
     callback toggle-music();
     callback maximize-or-fullscreen();
+    callback minimize-window();
+    callback close-window();
 
     // Ionicons (stroked, 512 viewbox) icon paths, stroke-width 32.
     // 18px glyph on a 512 view box scales the stroke to 32 * 18 / 512 = 1.125px.
@@ -31,6 +68,9 @@ export component TitleBar inherits Rectangle {
     private property <string> house-icon: "M80 212v236a16 16 0 0016 16h96V328a24 24 0 0124-24h80a24 24 0 0124 24v136h96a16 16 0 0016-16V212 M480 256L266.89 52c-5-5.28-16.69-5.34-21.78 0L32 256M400 179V64h-48v69";
     private property <string> gear-icon: "M262.29 192.31a64 64 0 1057.4 57.4 64.13 64.13 0 00-57.4-57.4zM416.39 256a154.34 154.34 0 01-1.53 20.79l45.21 35.46a10.81 10.81 0 012.45 13.75l-42.77 74a10.81 10.81 0 01-13.14 4.59l-44.9-18.08a16.11 16.11 0 00-15.17 1.75A164.48 164.48 0 01325 400.8a15.94 15.94 0 00-8.82 12.14l-6.73 47.89a11.08 11.08 0 01-10.68 9.17h-85.54a11.11 11.11 0 01-10.69-8.87l-6.72-47.82a16.07 16.07 0 00-9-12.22 155.3 155.3 0 01-21.46-12.57 16 16 0 00-15.11-1.71l-44.89 18.07a10.81 10.81 0 01-13.14-4.58l-42.77-74a10.8 10.8 0 012.45-13.75l38.21-30a16.05 16.05 0 006-14.08c-.36-4.17-.58-8.33-.58-12.5s.21-8.27.58-12.35a16 16 0 00-6.07-13.94l-38.19-30A10.81 10.81 0 0149.48 186l42.77-74a10.81 10.81 0 0113.14-4.59l44.9 18.08a16.11 16.11 0 0015.17-1.75A164.48 164.48 0 01187 111.2a15.94 15.94 0 008.82-12.14l6.73-47.89A11.08 11.08 0 01213.23 42h85.54a11.11 11.11 0 0110.69 8.87l6.72 47.82a16.07 16.07 0 009 12.22 155.3 155.3 0 0121.46 12.57 16 16 0 0015.11 1.71l44.89-18.07a10.81 10.81 0 0113.14 4.58l42.77 74a10.8 10.8 0 01-2.45 13.75l-38.21 30a16.05 16.05 0 00-6.05 14.08c.33 4.14.55 8.3.55 12.47z";
     private property <string> music-icon: "M192 218v-6c0-14.84 10-27 24.24-30.59l174.59-46.68A20 20 0 0 1 416 154v22 M416 295.94v80c0 13.91-8.93 25.59-22 30l-22 8c-25.9 8.72-52-10.42-52-38h0a33.37 33.37 0 0 1 23-32l51-18.15c13.07-4.4 22-15.94 22-29.85V58a10 10 0 0 0-12.6-9.61L204 102a16.48 16.48 0 0 0-12 16v226c0 13.91-8.93 25.6-22 30l-52 18c-13.88 4.68-22 17.22-22 32h0c0 27.58 26.52 46.55 52 38l22-8c13.07-4.4 22-16.08 22-30v-80";
+    private property <string> minimize-icon: "M128 256H384";
+    private property <string> maximize-icon: "M144 144H368V368H144Z";
+    private property <string> close-icon: "M160 160L352 352M352 160L160 352";
 
     height: 44px;
     background: Theme.titlebar-background.transparentize(0.2);
@@ -76,6 +116,36 @@ export component TitleBar inherits Rectangle {
             }
         }
 
+        if root.linux : Rectangle {
+            width: 78px;
+            height: 28px;
+            x: root.width - self.width;
+            y: (root.height - self.height) / 2;
+
+            HorizontalLayout {
+                x: 0px;
+                y: 5px;
+                width: 66px;
+                height: 18px;
+                spacing: 6px;
+                alignment: start;
+                cross-axis-alignment: center;
+
+                LinuxWindowControlButton {
+                    icon-commands: root.minimize-icon;
+                    clicked => { root.minimize-window(); }
+                }
+                LinuxWindowControlButton {
+                    icon-commands: root.maximize-icon;
+                    clicked => { root.maximize-or-fullscreen(); }
+                }
+                LinuxWindowControlButton {
+                    icon-commands: root.close-icon;
+                    clicked => { root.close-window(); }
+                }
+            }
+        }
+
         // Centered search bar. Mirrors App.vue: .title-bar-container is
         // calc(100vw - 500px) centered; the search bar is given width:100%
         // via inline style and fills the container; .search-hotkey floats
@@ -113,14 +183,12 @@ export component TitleBar inherits Rectangle {
             }
         }
 
-        // Right-side actions (music). .title-bar-actions sits at right:10 —
-        // window controls are native chrome (traffic lights top-left on
-        // macOS, the OS caption bar above the content elsewhere), so nothing
-        // stacks to the right of the actions.
+        // Right-side actions (music). Linux reserves room for the custom window
+        // controls; macOS traffic lights remain on the left.
         Rectangle {
             width: 28px;
             height: 28px;
-            x: root.width - self.width - 10px;
+            x: root.width - self.width - (root.linux ? root.linux-action-inset : 10px);
             y: (root.height - self.height) / 2;
 
             TitleBarActionButton {
