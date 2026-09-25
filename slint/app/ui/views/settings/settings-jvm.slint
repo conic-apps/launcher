@@ -14,22 +14,29 @@ import { AppConfig, JavaRuntime } from "../../globals/settings.slint";
 component JavaRuntimeList inherits VerticalLayout {
     in property <[JavaRuntime]> runtimes: [];
     in property <string> scan-error: "";
+    // Whether this list ends a `SettingCollapse` (the Vue's
+    // `.setting-collapse-content > div:last-child`). Which row that is depends
+    // on the branch showing, so it is worked out here and handed to that one row.
+    in property <bool> group-last: false;
 
     width: 100%;
     spacing: 1px;
     alignment: start;
 
     if root.scan-error != "" : SettingItem {
+        group-last: root.group-last;
         title: @tr("Scan failed");
         description: root.scan-error;
     }
 
     if root.scan-error == "" && root.runtimes.length == 0 : SettingItem {
+        group-last: root.group-last;
         title: @tr("No installed Java runtimes detected");
         description: @tr("After enabling \"Prefer Mojang-provided Java runtime\", Conic Launcher will automatically download the required Java from Mojang servers");
     }
 
-    for runtime in root.runtimes : SettingItem {
+    for runtime[index] in root.runtimes : SettingItem {
+        group-last: root.group-last && index == root.runtimes.length - 1;
         title: "Java " + runtime.major;
         tags: [runtime.vendor, runtime.version, runtime.arch];
         description: runtime.display-path;
@@ -53,6 +60,8 @@ export component SettingsJvm inherits VerticalLayout {
 
     SettingGroup {
         SettingItem {
+            group-first: true;
+            group-last: true;
             title: @tr("Auto-install Java runtime");
             description: @tr("When enabled, the launcher will automatically download the appropriate Java runtime before launching. When disabled, only system-installed Java will be used");
 
@@ -68,10 +77,12 @@ export component SettingsJvm inherits VerticalLayout {
         description: @tr("Disabling a Java installation prevents the launcher from using it to launch the game");
 
         if AppConfig.java-scanning : SettingItem {
+            group-last: true;
             title: @tr("Scanning for installed Java runtimes");
             ItemLoadingIcon { status: "in-progress"; }
         }
         if !AppConfig.java-scanning : JavaRuntimeList {
+            group-last: true;
             runtimes: AppConfig.java-runtimes;
             scan-error: AppConfig.java-scan-error;
         }
