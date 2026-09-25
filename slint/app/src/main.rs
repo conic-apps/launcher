@@ -13,6 +13,7 @@ pub(crate) mod slint_backend {
 }
 
 mod config_bridge;
+mod create_instance;
 mod game;
 mod java;
 mod settings;
@@ -91,9 +92,10 @@ fn main() {
     let shared = Rc::new(RefCell::new(config));
     let save_timer = Rc::new(Timer::default());
 
-    // Settings + game view "scripts".
+    // Settings + game view + overlay "scripts".
     settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     game::setup(&ui, Rc::clone(&shared));
+    create_instance::setup(&ui, Rc::clone(&shared));
 
     // TODO(migration): wire these to the real command palette / music player.
     ui.on_open_search(move || {
