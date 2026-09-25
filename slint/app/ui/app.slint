@@ -18,6 +18,7 @@ import { GameViewPlaceholder } from "views/game-placeholder.slint";
 export { AppConfig, JavaRuntime } from "globals/settings.slint";
 export { Navigation } from "globals/navigation.slint";
 export { GameState, GameRow, AccountItem } from "globals/game.slint";
+export { ScrollInput, ScrollSource } from "globals/scroll.slint";
 export { Dialogs, CreateInstanceState, MinecraftVersionItem } from "globals/dialogs.slint";
 export { WindowDrag } from "globals/window-drag.slint";
 
@@ -39,8 +40,13 @@ export component App inherits Window {
     // native (transparent) title bar; other platforms need an opaque client
     // area beneath their native caption bar.
     background: self.macos ? transparent : Theme.crust;
-    width: 840px;
-    height: 532px;
+    // 840x532 is the floor, not a fixed size: fixed `width`/`height` on the
+    // root Window pin min == max (making the window non-resizable), so the
+    // original window size is expressed as the minimum + preferred size.
+    min-width: 840px;
+    min-height: 532px;
+    preferred-width: 840px;
+    preferred-height: 532px;
 
     in-out property <bool> macos: false;
     in-out property <string> search-placeholder: @tr("Search or type a command…");

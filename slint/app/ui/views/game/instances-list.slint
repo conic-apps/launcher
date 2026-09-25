@@ -6,6 +6,7 @@ import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/app-icon.slint";
 import { FocusManager } from "../../globals/focus.slint";
 import { GameState, GameIntro, GameTime } from "../../globals/game.slint";
+import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 import { InstancesListToolBar } from "instances-list-tool-bar.slint";
 
 // Grouped instance list (src/views/game/InstancesList.vue +
@@ -28,7 +29,11 @@ import { InstancesListToolBar } from "instances-list-tool-bar.slint";
 //
 // Wheel events are captured by the `TouchArea` that *wraps* the content. The
 // cards' own `TouchArea`s never handle scroll events and Slint's `EventResult`
-// defaults to `reject`, so the wheel bubbles up to it.
+// defaults to `reject`, so the wheel bubbles up to it. A trackpad does not go
+// through the lerp at all — its deltas, the fingers' and the momentum's alike,
+// are applied as they arrive (see `globals/scroll.slint`), because macOS
+// derives that momentum from the velocity the gesture ended at: easing it would
+// stall the list on release and ramp back up.
 //
 // The rail
 // ========
@@ -69,8 +74,8 @@ export component InstancesList inherits Rectangle {
     in-out property <length> target-y: 0px;
     /// Wheel distance multiplier. A notch is `LineDelta * 60` in winit but ~120px
     /// in the browser (the Lenis baseline this view is matched against), hence 2.
-    /// A trackpad scrolls with pixel deltas, which are already in browser units —
-    /// Slint folds both into `delta-y`, so this is calibrated for the wheel.
+    /// A trackpad scrolls with pixel deltas, which are already in browser units:
+    /// the wheel path scales by this, the trackpad path applies them as they are.
     private property <float> wheel-step: 2;
     private property <length> max-scroll: max(0px, GameState.list-content-height - root.height);
     // While a toggle is settling the offset is left alone, even if the list just
@@ -142,7 +147,7 @@ export component InstancesList inherits Rectangle {
 
     changed scrolling => {
         if root.scrolling {
-            root.last-tick-ms = GameState.now-ms();
+            root.last-tick-ms = ScrollInput.now-ms();
         }
     }
 
@@ -162,9 +167,9 @@ export component InstancesList inherits Rectangle {
             // group made it shorter, instead of easing up to the new end.
             root.scroll-y = root.scroll-y + (root.clamped-target - root.scroll-y) * (1 - pow(
                 1 - root.lerp,
-                clamp((GameState.now-ms() - root.last-tick-ms) / 1000, 0.004, 0.05) * 60,
+                clamp((ScrollInput.now-ms() - root.last-tick-ms) / 1000, 0.004, 0.05) * 60,
             ));
-            root.last-tick-ms = GameState.now-ms();
+            root.last-tick-ms = ScrollInput.now-ms();
         }
     }
 
@@ -236,11 +241,28 @@ export component InstancesList inherits Rectangle {
 
             scroll-event(event) => {
                 if !root.settling && root.max-scroll > 0px {
-                    root.target-y = clamp(
-                        root.target-y - event.delta-y * root.wheel-step,
-                        0px,
-                        root.max-scroll,
-                    );
+                    if ScrollInput.source() == ScrollSource.wheel {
+                        // A wheel notch is a *distance*, not a motion: it goes
+                        // into the target and the offset eases after it.
+                        root.target-y = clamp(
+                            root.target-y - event.delta-y * root.wheel-step,
+                            0px,
+                            root.max-scroll,
+                        );
+                    } else {
+                        // A trackpad, fingers down or coasting: the deltas *are*
+                        // the motion, so the list goes exactly where they put it
+                        // (writing the target too drops a glide in flight). Its
+                        // momentum is macOS' own, derived from the velocity the
+                        // gesture ended at — easing it would stall the list on
+                        // release and ramp back up, see `scroll-view.slint`.
+                        root.scroll-y = clamp(
+                            root.scroll-y - event.delta-y,
+                            0px,
+                            root.max-scroll,
+                        );
+                        root.target-y = root.scroll-y;
+                    }
                     return accept;
                 }
                 reject

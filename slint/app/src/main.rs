@@ -17,6 +17,7 @@ mod create_instance;
 mod game;
 mod java;
 mod runtime;
+mod scroll_input;
 mod settings;
 
 #[cfg(target_os = "macos")]
@@ -108,6 +109,8 @@ fn main() {
     settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     game::setup(&ui, Rc::clone(&shared));
     create_instance::setup(&ui, Rc::clone(&shared));
+    // The clock and the wheel/trackpad classification the scroll containers use.
+    scroll_input::setup(&ui);
 
     // TODO(migration): wire these to the real command palette / music player.
     ui.on_open_search(move || {

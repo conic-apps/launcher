@@ -41,6 +41,7 @@ slint/
         dialogs.slint               # dialog store + the create-instance form state
         focus.slint                 # blur-the-focused-field helper
         window-drag.slint           # the Vue's `data-tauri-drag-region` regions
+        scroll.slint                # wheel/trackpad classification + monotonic clock
       components/                   # shared/reusable pieces
         title-bar.slint
         account-avatar.slint
@@ -271,12 +272,16 @@ Per the migration plan:
   cards glide along a parabola — pulled 160px to the left as they cross the
   middle of the viewport and released back at the edges — and the list scrolls
   with Lenis' smoothed offset (`lerp: 0.16`, scaled by the frame time, taken from
-  a `GameState.now-ms()` callback because Slint has no wall clock). A `Timer`
+  the `ScrollInput.now-ms()` callback because Slint has no wall clock). A `Timer`
   drives `scroll-y` instead of a `Flickable`, which would layer its own
   fixed-duration wheel animation on top and fight the programmatic scrolling the
   view needs (centring on open, gliding to a selection, freezing during a group
   collapse). Wheel events are captured by the `TouchArea` wrapping the content:
   the cards' own `TouchArea`s reject scroll events, so the wheel bubbles to it.
+  `components/scroll-view.slint`, the generic scroller the settings page and the
+  create-instance screens use, runs the same machinery (the same `lerp: 0.16`)
+  with its own slim scrollbar, and exposes `scroll-to(y, smooth)` for the
+  programmatic scrolls the Vue does with Lenis' `scrollTo`.
   The same curve carries every list change — the rows' `y` is animated and their
   `x` is a pure function of it, so a reorder travels along the rail exactly like
   the gsap `railKeyframes` sampling `parallaxX`. Rows are reconciled in place by
@@ -319,6 +324,16 @@ Per the migration plan:
   HTTP calls of `slint-install`) and `spawn_blocking` the disk work (the Java
   scan, creating an instance), both reporting back through
   `upgrade_in_event_loop` — Slint itself is not thread-safe.
+- `app/src/scroll_input.rs` backs `globals/scroll.slint`. Slint's
+  `PointerScrollEvent` carries the deltas and the modifiers and nothing else, so
+  the two facts the Lenis-style scrollers are built on are read from the
+  platform instead: a monotonic clock (the smoothing scales its step by the real
+  frame time, and `DateNow` reports a date rather than an instant) and where a
+  scroll event came from. On macOS an `NSEvent` local monitor — a supported
+  hook, nothing swizzled — records `momentumPhase` and
+  `hasPreciseScrollingDeltas` as the event goes by, before Slint dispatches it,
+  and the `.slint` side pulls that while it handles the very same event. Every
+  other platform answers `wheel`, i.e. what the containers did before.
 
 Not yet migrated: `LaunchView`, `AccountsView`, the setup wizard, the remaining
 overlays (dialogs, content panels, command palette, music player, instance
@@ -352,12 +367,42 @@ stands in for the not-yet-migrated views.
       it; the Slint version is wheel-only, like a `Flickable` with
       `mouse-drag-pan-enabled: false` (which is what the rest of the app uses).
     - The wheel step is doubled (`wheel-step`) to match the browser's ~120px per
-      notch; a trackpad's pixel deltas arrive in the same units and are therefore
-      also doubled — that constant is the knob if it feels fast on a trackpad.
+      notch; a trackpad's pixel deltas arrive in the same units and are applied
+      as they are — that constant is the wheel's knob only, and is the one to
+      change if a mouse wheel feels fast.
     - The toolbar and the footer have no backdrop blur: the original relies on
       `backdrop-filter: blur(4px)`, and Slint 1.18 has no backdrop blur (its only
       blur is `drop-shadow-blur`). They stay translucent, so the rows scrolling
       under the toolbar show through it unblurred.
+- **Scrolling**, in both containers (`components/scroll-view.slint` and the
+  instance list), follows the platform:
+    - A mouse wheel's deltas are accumulated into the target and the offset eases
+      after them — Lenis' wheel path, which is the design. A notch is a
+      *distance*; there is no motion to continue.
+    - A trackpad's deltas are applied as they arrive — the fingers' and the
+      momentum macOS sends after they lift, alike. Content that eases towards a
+      gesture trails the fingers, and an easing has nothing to start from once
+      the gesture is over: macOS derives its momentum from the velocity the
+      fingers left at, so at that moment the offset is exactly caught up, and
+      easing would drop the content to a standstill on release and ramp it back
+      up. Matching the handoff velocity *and* stretching the tail would travel
+      further than the gesture asked for (a first-order filter can keep the
+      velocity it inherits or keep the distance, not both), so the tail is the
+      system's own glide, as in every native macOS scroll view and Chromium.
+      On macOS the kinds are told apart by AppKit (see `scroll_input.rs`); on
+      other platforms every event takes the wheel path, i.e. what the app had
+      before.
+    - Both containers use `lerp: 0.16`. The Vue disagrees with itself
+      (`ScrollView.vue` 0.12, `InstancesListScrollView.vue` 0.16); one app should
+      glide at one rate, so the instance list's value won.
+    - Touch drag-panning is not implemented anywhere (the Vue's native
+      `overflow-y: auto` wrapper still panned on a touchscreen; the Slint
+      containers are wheel-only). No mouse drag-panning either, which the
+      original does not have: `mouse-drag-pan-enabled: false` was what kept a
+      press inside a scroll area from being delayed to tell a drag from a click.
+    - `ScrollView.content-y` is read-only now (its callers only ever read it for
+      scroll-spy maths); scrolling to a position goes through
+      `scroll-to(y, smooth)`, mirroring the Vue's `scrollTo(target, smooth)`.
 - **Slint notes** learned the hard way while porting the list, kept here because
   both cost real debugging time:
     - `z` on a _component's root_ is ignored when the parent instantiates it
