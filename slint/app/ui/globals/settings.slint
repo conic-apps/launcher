@@ -16,7 +16,12 @@ export struct JavaRuntime {
     vendor: string,
     version: string,
     arch: string,
+    // The path as the switch identifies the runtime by, and the form the
+    // disabled list stores (`SettingsJVM.vue`'s `runtime.path`).
     path: string,
+    // The same path as it is shown: Windows reports the extended-length form,
+    // which `formatJavaPath` strips (see `format_java_path` in `settings.rs`).
+    display-path: string,
     enabled: bool,
 }
 

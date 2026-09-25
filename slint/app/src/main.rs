@@ -16,7 +16,6 @@ mod cjk_font;
 mod config_bridge;
 mod create_instance;
 mod game;
-mod java;
 mod runtime;
 mod scroll_input;
 mod settings;

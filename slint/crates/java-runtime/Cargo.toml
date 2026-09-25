@@ -1,0 +1,12 @@
+[package]
+name = "slint-java-runtime"
+description = "Tauri-free mirror of crates/java-runtime for the Slint app"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+log.workspace = true
+once_cell.workspace = true
+thiserror.workspace = true
