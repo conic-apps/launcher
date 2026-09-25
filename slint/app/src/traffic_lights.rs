@@ -40,6 +40,14 @@
 //! The pitch between buttons stays AppKit's own; the `16/38/60` the old code
 //! hardcoded were simply its values at the time.
 //!
+//! # When the buttons are not there
+//!
+//! Native fullscreen hides them (AppKit hides the whole titlebar container), so
+//! the title bar stops having to leave room for them: [`watch_fullscreen`]
+//! reports the state into the UI, which is what moves the leading controls back
+//! into the corner they occupy on every other platform. The Vue original keeps
+//! the gap in fullscreen; this is a deliberate deviation.
+//!
 //! # Keeping the fallback honest
 //!
 //! All four selectors are private API, so [`install`] arms a one-shot
@@ -159,6 +167,44 @@ pub fn install() {
          inset {WIDGET_INSET_X}px, buttons centred at {EXPECTED_CENTER_Y}px)"
     );
     arm_self_check();
+}
+
+/// Keeps the UI's `window-fullscreen` flag in step with the window, so the title
+/// bar knows whether the traffic lights are there to leave room for.
+///
+/// The state comes from the notifications rather than a poll: AppKit hides the
+/// buttons at the end of the fullscreen transition, and the layout has to flip
+/// with them — a poll would leave the controls hanging where the buttons were
+/// until its next tick. The app always starts windowed, so there is no initial
+/// value to read.
+///
+/// The notification's window is asked for its style mask rather than trusting
+/// the notification's name, because that mask is what AppKit's own hiding
+/// follows — and the app has exactly one window that can go fullscreen.
+pub fn watch_fullscreen(ui: &crate::slint_backend::App) {
+    use slint::ComponentHandle;
+
+    let weak = ui.as_weak();
+    let block = RcBlock::new(move |notification: NonNull<NSNotification>| {
+        let notification = unsafe { notification.as_ref() };
+        let Some(window) = (unsafe { notification.object() }) else {
+            return;
+        };
+        let window = &*window as *const AnyObject as Id;
+        let fullscreen = unsafe { is_fullscreen_window(window) };
+        if let Some(ui) = weak.upgrade() {
+            ui.set_window_fullscreen(fullscreen);
+        }
+    });
+
+    observe(
+        &[
+            ns_string!("NSWindowDidEnterFullScreenNotification"),
+            ns_string!("NSWindowDidExitFullScreenNotification"),
+        ],
+        &block,
+    );
+    log::debug!(target: "shell", "traffic lights: watching the fullscreen state");
 }
 
 /// Registers `ConicThemeFrame` (an `NSThemeFrame` subclass) and makes `NSWindow`

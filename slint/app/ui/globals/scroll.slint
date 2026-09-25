@@ -1,0 +1,49 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// What the Lenis-style scroll containers need from the platform.
+//
+// `components/scroll-view.slint` and `views/game/instances-list.slint` both ease
+// their offset towards the wheel target (`lerp`, the way Lenis does), and both
+// have to know one thing Slint's `PointerScrollEvent` does not carry: where the
+// event came from, because the two kinds of event mean different things.
+//
+// A wheel notch is a *distance* — the wheel does not move anything, it reports
+// how far the page should go — so it accumulates into a target the offset then
+// eases after. A trackpad's deltas *are* a motion, and one the gesture is still
+// making: the fingers, and then the momentum macOS derives from the velocity
+// they were moving at when they left. Easing those would make the content trail
+// the hand, and easing the momentum would stall the content at the moment of
+// release (the offset has no distance left to cover, so there is nothing for an
+// easing to start from) — see `components/scroll-view.slint`.
+//
+// Slint hands over the delta and the modifiers only, so both answers come from
+// the platform (`app/src/scroll_input.rs`, which watches the AppKit scroll
+// events).
+
+export enum ScrollSource {
+    /// A classic wheel — or a platform the classifier cannot tell apart, which
+    /// takes the same path: a distance the offset eases after.
+    wheel,
+    /// A trackpad with the fingers on it: the deltas are the motion itself.
+    trackpad,
+    /// The momentum a trackpad keeps generating after the fingers left: also the
+    /// motion itself, because macOS derived it from the velocity the gesture
+    /// ended at. Kept apart from `trackpad` because a run says which phase an
+    /// event belonged to, and because a softer tail would be tuned here.
+    momentum,
+}
+
+export global ScrollInput {
+    /// What generated the scroll event being handled right now. Pulled from
+    /// inside a `scroll-event` handler, once per event: it describes the event
+    /// that is being dispatched, not the one before it.
+    callback source() -> ScrollSource;
+
+    /// Monotonic milliseconds since startup. The smoothing scales its per-tick
+    /// step by the real elapsed time the way Lenis does, so the glide lasts the
+    /// same on a 120Hz display as on a 60Hz one; Slint has no clock to read
+    /// (its `DateNow` reports a date, not an instant), so it comes from Rust.
+    callback now-ms() -> float;
+}

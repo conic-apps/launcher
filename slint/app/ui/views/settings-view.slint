@@ -148,7 +148,10 @@ export component SettingsView inherits Rectangle {
             background: transparent;
 
             scroll := ScrollView {
-                content-layout := VerticalLayout {
+                // Named to stay clear of `ScrollView`'s own layout, which these
+                // children are inlined into (`content-column` here, `content-layout`
+                // there).
+                content-column := VerticalLayout {
                     padding-top: 24px;
                     padding-right: 24px;
                     padding-bottom: 24px;
@@ -185,14 +188,17 @@ export component SettingsView inherits Rectangle {
         : s1.y + root.vp <= 100px ? 1
         : 0;
 
+    // The Vue's `scrollToSection` measures the section against the wrapper and
+    // then `scrollView.scrollTo(target, true)` — a *smooth* scroll, which the
+    // Slint `ScrollView` glides through its Lenis lerp.
     public function scroll-to(index: int) {
-        if index == 0 { scroll.content-y = 16px - s0.y; }
-        if index == 1 { scroll.content-y = 16px - s1.y; }
-        if index == 2 { scroll.content-y = 16px - s2.y; }
-        if index == 3 { scroll.content-y = 16px - s3.y; }
-        if index == 4 { scroll.content-y = 16px - s4.y; }
-        if index == 5 { scroll.content-y = 16px - s5.y; }
-        if index == 6 { scroll.content-y = 16px - s6.y; }
-        if index == 7 { scroll.content-y = 16px - s7.y; }
+        if index == 0 { scroll.scroll-to(16px - s0.y, true); }
+        if index == 1 { scroll.scroll-to(16px - s1.y, true); }
+        if index == 2 { scroll.scroll-to(16px - s2.y, true); }
+        if index == 3 { scroll.scroll-to(16px - s3.y, true); }
+        if index == 4 { scroll.scroll-to(16px - s4.y, true); }
+        if index == 5 { scroll.scroll-to(16px - s5.y, true); }
+        if index == 6 { scroll.scroll-to(16px - s6.y, true); }
+        if index == 7 { scroll.scroll-to(16px - s7.y, true); }
     }
 }

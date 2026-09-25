@@ -214,9 +214,4 @@ export global GameState {
     callback open-packs();
     // TEMP-PROBE
     callback debug-log(string);
-    /// Monotonic milliseconds since startup, used to make the list's smoothing
-    /// frame-time compensated (`Lenis` scales its `lerp` by the frame time, so a
-    /// 120Hz display does not glide twice as fast as a 60Hz one). Slint has no
-    /// wall clock — `DateNow` only reports a date — so it comes from Rust.
-    callback now-ms() -> float;
 }

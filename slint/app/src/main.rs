@@ -17,6 +17,7 @@ mod create_instance;
 mod game;
 mod java;
 mod runtime;
+mod scroll_input;
 mod settings;
 
 #[cfg(target_os = "macos")]
@@ -108,6 +109,8 @@ fn main() {
     settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     game::setup(&ui, Rc::clone(&shared));
     create_instance::setup(&ui, Rc::clone(&shared));
+    // The clock and the wheel/trackpad classification the scroll containers use.
+    scroll_input::setup(&ui);
 
     // TODO(migration): wire these to the real command palette / music player.
     ui.on_open_search(move || {
@@ -116,6 +119,12 @@ fn main() {
     ui.on_toggle_music(move || {
         log::info!(target: "shell", "toggle music (placeholder)");
     });
+
+    // The title bar stops leaving room for the traffic lights while they are
+    // hidden by fullscreen. Registered after `App::new()` because it reports
+    // into the UI; the observer itself is armed from then on.
+    #[cfg(target_os = "macos")]
+    traffic_lights::watch_fullscreen(&ui);
 
     // macOS draws the Dock icon from NSApplication, not from the window, and the
     // icon can only be set once `applicationDidFinishLaunching` has run (inside

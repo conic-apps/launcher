@@ -4,97 +4,313 @@
 
 import { Theme } from "../theme.slint";
 import { FocusManager } from "../globals/focus.slint";
+import { ScrollInput, ScrollSource } from "../globals/scroll.slint";
 
 // Vertical scroll container with a slim custom scrollbar
 // (src/components/ScrollView.vue).
 //
-// The Vue version uses Lenis for smooth wheel scrolling and draws its own
-// thumb (6px track pinned 8px from the right, 8px thumb at 35% opacity). Slint's
-// `Flickable` provides momentum scrolling; the thumb is bound to `content-y`.
+// Scrolling
+// =========
+// The Vue original drives the wrapper's offset from Lenis (`lerp: 0.12`): every
+// frame the offset closes 12% of the remaining distance to the wheel target,
+// scaled by the frame time. That is reproduced here with a `Timer` easing
+// `scroll-y` towards `target-y` — the same machinery as
+// `views/game/instances-list.slint`, and the reason this is not a `Flickable`:
+// one would layer its own fixed-duration wheel animation (and its own momentum)
+// on top of the lerp, and it would clamp a programmatic scroll on the frame the
+// content changes height instead of easing to the new end.
 //
-// `content-y` is the Flickable offset (negative when scrolled down). Section
-// scrolling is done by assigning to it.
+// Wheel events are captured by the `TouchArea` that *wraps* the content: the
+// controls inside it never handle scroll events and Slint's `EventResult`
+// defaults to reject, so the wheel bubbles up to that area.
+//
+// Touchpads take a different path (see `globals/scroll.slint`): their deltas —
+// the fingers' *and* the momentum macOS keeps sending after the fingers lift —
+// are applied as they arrive, never eased towards.
+//
+// # Why the momentum is not eased
+//
+// Easing it is what a trackpad gesture cannot afford. macOS derives its
+// momentum from the velocity the gesture ended at, so it continues the motion
+// the fingers were driving; by then the offset has no distance left to cover,
+// and an easing that starts with nothing to cover starts at zero velocity —
+// the content drops to a standstill on release and ramps back up over the
+// lerp's time constant. Keeping the momentum's own velocity and extending the
+// tail instead would mean travelling further than the gesture asked for
+// (a first-order filter cannot do both: matching the velocity it inherits
+// either discards distance or adds ~tau·v of it). So the glide is left to the
+// system, which is what every native macOS scroll view and Chromium do.
+//
+// There is no drag-panning (`mouse-drag-pan-enabled: false` before): the
+// original scrolls with the wheel only, and a pannable scroll area makes the
+// controls inside it react late to presses.
+//
+// `content-y` is the offset in the sign its callers use — the `Flickable`
+// convention, kept so `views/settings-view.slint` and the create-instance
+// screens read the same values as before: 0 at the top, negative when scrolled
+// down. Everything below works with its positive twin, `scroll-y`.
 export component ScrollView inherits Rectangle {
-    in-out property <length> content-y <=> flick.content-y;
-    out property <length> content-height: flick.content-height;
-
     width: 100%;
     height: 100%;
     clip: true;
     background: transparent;
 
-    flick := Flickable {
-        x: 0;
-        y: 0;
-        width: 100%;
-        height: 100%;
-        interactive: true;
-        // The original scrolls with the wheel only (Lenis); mouse drag-panning
-        // is not part of the design. Disabling it also removes the backend's
-        // 100ms press-forward delay (`FORWARD_DELAY`), which otherwise makes
-        // controls inside the scroll area (switches, text inputs) react late
-        // and lets clicks fall through to the page background. Touch panning
-        // is unaffected.
-        mouse-drag-pan-enabled: false;
-        // Pin the content width to the viewport so only vertical scrolling is
-        // possible and children's preferred widths cannot feed back into the
-        // Flickable's content size (binding loop).
-        content-width: root.width;
+    /// Height of the scrollable content: the natural height of what was put in,
+    /// or the viewport when that is shorter. A `Flickable` derived this from its
+    /// child layout; without one it is read off the layout directly, the same
+    /// `height: layout.preferred-height` idiom `views/game/instance-summary.slint`
+    /// uses.
+    out property <length> content-height: max(root.height, content-layout.preferred-height);
+    /// Smoothed scroll offset, negative when scrolled down.
+    out property <length> content-y: -root.scroll-y;
 
-        content := VerticalLayout {
-            alignment: start;
-            @children
+    // ----- geometry (the Vue stylesheet) -----
+    // `.scrollbar { right: 8px; width: 6px }` with the default `top`/`bottom` of
+    // 8px: the track runs from 8px below the top edge to 8px above the bottom
+    // one, and the thumb hangs 2px off each side of it while hovered or dragged.
+    private property <length> scrollbar-inset: 8px;
+    private property <length> scrollbar-width: 6px;
+    private property <length> track-height: max(0px, root.height - 2 * root.scrollbar-inset);
+
+    // ----- scroll state -----
+    /// Smoothed offset: 0 at the top, growing as the content scrolls down.
+    /// Drives the content's position and the scrollbar thumb.
+    private property <length> scroll-y: 0px;
+    /// Where `scroll-y` is heading (wheel input, `scroll-to`, dragging). Always
+    /// clamped to the list, so the easing never has to clamp it again — unlike
+    /// the instance list, which holds a collapsing list's offset while its rows
+    /// are still travelling.
+    private property <length> target-y: 0px;
+    private property <length> max-scroll: max(0px, root.content-height - root.height);
+    /// Wheel distance multiplier. A notch is `LineDelta * 60` in winit but ~120px
+    /// in the browser (the Lenis baseline this is matched against), hence 2.
+    private property <float> wheel-step: 2;
+
+    // Lenis' `lerp` — the share of the remaining distance covered per 60Hz frame.
+    // Lenis scales the step by the frame time so the glide looks the same on a
+    // 120Hz display as on a 60Hz one (`1 - (1 - lerp)^(dt * 60)`), which is
+    // reproduced here: Slint fires the timer at whatever rate it can (its own
+    // frame rate), so the step has to be derived from the elapsed time rather
+    // than fixed. The timer only runs while there is distance left to cover.
+    //
+    // 0.16 is `InstancesListScrollView.vue`'s value — the Vue's two containers
+    // disagree (`ScrollView.vue` uses 0.12), and they sit in one app here, so
+    // both glide at the same rate.
+    private property <float> lerp: 0.16;
+    private property <float> last-tick-ms: 0;
+
+    /// Whether the offset still has to catch up with the target. Held in its own
+    /// property because a `changed` handler can only observe a property of this
+    /// element (or a global), and the moment the glide *starts* has to be caught:
+    /// the timer stops once the offset settles, so without this the first tick
+    /// after an idle period would read that whole gap as its frame time and start
+    /// the glide with a jump sized for a second-long frame.
+    private property <bool> scrolling: abs(root.target-y - root.scroll-y) > 0.5px;
+
+    changed scrolling => {
+        if root.scrolling {
+            root.last-tick-ms = ScrollInput.now-ms();
         }
     }
 
-    private property <length> track-height: max(0px, root.height - 16px);
-    private property <length> max-scroll: max(0px, root.content-height - root.height);
-    private property <length> thumb-height: root.max-scroll > 0px
-        ? max(32px, root.track-height * root.height / max(root.content-height, root.height))
-        : root.track-height;
-    private property <bool> scrollbar-visible: root.max-scroll > 0.5px;
+    scroll-timer := Timer {
+        interval: 8ms;
+        running: root.scrolling;
+        triggered => {
+            // The step is scaled by the *real* elapsed time, so the glide lasts the
+            // same as it does in the browser even when Slint is running at a low
+            // frame rate (a debug build sits at 25-50ms per frame, and a fixed step
+            // would stretch the glide by as much). The upper bound only guards a
+            // stall of the whole event loop, which would otherwise be spent in one
+            // visible jump.
+            root.scroll-y = root.scroll-y + (root.target-y - root.scroll-y) * (1 - pow(
+                1 - root.lerp,
+                clamp((ScrollInput.now-ms() - root.last-tick-ms) / 1000, 0.004, 0.05) * 60,
+            ));
+            root.last-tick-ms = ScrollInput.now-ms();
+        }
+    }
 
+    // Resizing the window (or the content itself changing height) can leave the
+    // offset past the end of the list. The browser clamps its scroll container
+    // there and Lenis eases to the recomputed limit, so the *target* is pulled
+    // back to it once, and the offset glides after it.
+    changed max-scroll => {
+        root.target-y = clamp(root.target-y, 0px, root.max-scroll);
+    }
+
+    // ----- programmatic scrolling (`ScrollView.scrollTo(y, smooth)` of the Vue) -----
+    /// Scrolls so that `y` — the same sign as `content-y` — ends up at the top of
+    /// the viewport. `smooth` glides there along the lerp; `!smooth` moves the
+    /// offset with the target, which is the original's `immediate: true`.
+    public function scroll-to(y: length, smooth: bool) {
+        if smooth {
+            root.target-y = clamp(-y, 0px, root.max-scroll);
+        } else {
+            root.jump-to(-y);
+        }
+    }
+
+    /// Moves the offset without easing (`immediate: true`): both the offset and
+    /// the target, so a glide in flight is dropped rather than resumed.
+    function jump-to(offset: length) {
+        root.scroll-y = clamp(offset, 0px, root.max-scroll);
+        root.target-y = root.scroll-y;
+    }
+
+    viewport := Rectangle {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        clip: true;
+        background: transparent;
+
+        scroll-touch := TouchArea {
+            width: parent.width;
+            height: parent.height;
+
+            // A `TouchArea` grabs every press inside it, so the page behind it
+            // stops seeing clicks that land on the scroll area. That is what the
+            // settings page's background layer relies on (it blurs the focused
+            // field when empty space is clicked), so the same is done here —
+            // after the controls inside the content, which handle their own
+            // clicks first. It is also what the browser does for the original:
+            // a press on a plain element blurs the focused input.
+            clicked => { FocusManager.clear(); }
+
+            scroll-event(event) => {
+                if root.max-scroll <= 0px {
+                    return reject;
+                }
+                if ScrollInput.source() == ScrollSource.wheel {
+                    // A wheel notch is a *distance*, not a motion: it goes into
+                    // the target and the offset eases after it (Lenis' wheel
+                    // path, the one the Vue's `smoothWheel` is).
+                    root.target-y = clamp(
+                        root.target-y - event.delta-y * root.wheel-step,
+                        0px,
+                        root.max-scroll,
+                    );
+                } else {
+                    // A trackpad, fingers down or coasting: the deltas *are* the
+                    // motion, so the content goes exactly where they put it —
+                    // which also drops a wheel glide that was still in flight.
+                    root.jump-to(root.scroll-y - event.delta-y);
+                }
+                return accept;
+            }
+
+            content := Rectangle {
+                x: 0;
+                y: -root.scroll-y;
+                width: parent.width;
+                height: root.content-height;
+                background: transparent;
+
+                content-layout := VerticalLayout {
+                    width: parent.width;
+                    alignment: start;
+                    @children
+                }
+            }
+        }
+    }
+
+    // ----- scrollbar -----
+    // The Vue's `teleport` target is the component itself here, so the track is
+    // pinned to this view's right edge (the instance list, which overhangs the
+    // window, subtracts the overhang instead). A 6px track with an 8px thumb that
+    // widens to 10px on hover and shrinks slightly while dragged.
     scrollbar := Rectangle {
-        visible: root.scrollbar-visible;
-        x: root.width - 8px - 6px;
-        y: 8px;
-        width: 6px;
+        visible: root.max-scroll > 0.5px;
+        x: root.width - root.scrollbar-inset - root.scrollbar-width;
+        y: root.scrollbar-inset;
+        width: root.scrollbar-width;
         height: root.track-height;
         background: transparent;
         z: 500;
 
+        private property <length> thumb-track: self.height - thumb.height;
+
         thumb := Rectangle {
-            width: track-touch.has-hover ? 10px : 8px;
-            x: track-touch.has-hover ? -2px : 0px;
+            width: track-touch.has-hover || track-touch.pressed ? 10px : 8px;
+            x: track-touch.has-hover || track-touch.pressed ? -2px : 0px;
             height: root.thumb-height;
-            y: root.track-height > root.thumb-height
-                ? clamp(-root.content-y / root.max-scroll, 0, 1) * (root.track-height - root.thumb-height)
+            // Follows the *smoothed* offset, so the thumb glides with the content.
+            y: parent.thumb-track > 0px
+                ? clamp(root.scroll-y / root.max-scroll, 0, 1) * parent.thumb-track
                 : 0px;
             border-radius: 999px;
             background: Theme.text;
             opacity: track-touch.pressed ? 0.55 : track-touch.has-hover ? 0.55 : 0.35;
+            transform-origin: { x: self.width / 2, y: self.height / 2 };
+            transform-scale-x: track-touch.pressed ? 0.9 : 1.0;
+            transform-scale-y: track-touch.pressed ? 0.9 : 1.0;
             animate opacity { duration: 160ms; }
             animate width { duration: 160ms; }
+            animate x { duration: 160ms; }
+            animate transform-scale-x, transform-scale-y { duration: 120ms; }
         }
 
+        // Grabbing the thumb drags it; pressing the track elsewhere jumps so the
+        // thumb centres under the cursor and then keeps dragging it, which is the
+        // `onScrollbarPointerDown` / `onThumbPointerDown` pair of the original
+        // (both move the offset without animating, `immediate: true`).
+        //
+        // The drag state has to be tracked here rather than keyed off the event's
+        // button: Slint reports a *move* with `PointerEventButton.other`, so
+        // `button == left` only ever matches the press. The touch area is as wide
+        // as the *hovered* thumb (10px, hanging 2px off each side of the 6px
+        // track) so grabbing the overhang does not shrink the thumb out from under
+        // the cursor.
         track-touch := TouchArea {
-            width: parent.width;
+            x: -2px;
+            width: parent.width + 4px;
             height: parent.height;
+
             pointer-event(event) => {
-                if event.button == PointerEventButton.left
-                    && (event.kind == PointerEventKind.down || event.kind == PointerEventKind.move) {
-                    if event.kind == PointerEventKind.down {
-                        FocusManager.clear();
+                if event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel {
+                    root.dragging = false;
+                } else if event.kind == PointerEventKind.down {
+                    if event.button != PointerEventButton.left
+                        || root.max-scroll <= 0px
+                        || self.height <= thumb.height {
+                        return;
                     }
-                    if root.track-height > root.thumb-height && root.max-scroll > 0px {
-                        root.content-y = -clamp(
-                            (self.mouse-y - root.thumb-height / 2) / (root.track-height - root.thumb-height),
-                            0,
-                            1,
-                        ) * root.max-scroll;
-                    }
+                    FocusManager.clear();
+                    // Pressing the thumb keeps the grab point; pressing the track
+                    // brings the thumb's centre to the cursor.
+                    root.drag-anchor = self.mouse-y >= thumb.y && self.mouse-y <= thumb.y + thumb.height
+                        ? self.mouse-y - thumb.y
+                        : thumb.height / 2;
+                    root.dragging = true;
+                    root.drag-scrollbar(self.mouse-y);
+                } else if event.kind == PointerEventKind.move && root.dragging {
+                    root.drag-scrollbar(self.mouse-y);
                 }
             }
         }
+    }
+
+    private property <length> thumb-height: root.max-scroll > 0px
+        ? max(32px, root.track-height * root.height / max(root.content-height, root.height))
+        : root.track-height;
+
+    // ----- scrollbar drag -----
+    private property <bool> dragging: false;
+    /// Where inside the thumb the pointer grabbed it, so dragging does not make
+    /// the thumb jump under the cursor.
+    private property <length> drag-anchor: 0px;
+
+    /// Maps a pointer position inside the scrollbar track to a scroll offset.
+    function drag-scrollbar(mouse-y: length) {
+        if root.max-scroll <= 0px || scrollbar.height <= thumb.height {
+            return;
+        }
+        root.jump-to(
+            clamp((mouse-y - root.drag-anchor) / (scrollbar.height - thumb.height), 0, 1)
+                * root.max-scroll,
+        );
     }
 }

@@ -815,18 +815,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
         });
     }
     state.on_debug_log(|message| log::info!(target: "probe", "{message}"));
-    // The list's smoothing scales its per-tick step by the elapsed time, the same
-    // way Lenis does, so the glide does not depend on the display's refresh rate.
-    // The clock is monotonic: a wall clock can be stepped (NTP), which would make
-    // the step jump or stall.
-    state.on_now_ms(|| {
-        static ORIGIN: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
-        ORIGIN
-            .get_or_init(std::time::Instant::now)
-            .elapsed()
-            .as_secs_f32()
-            * 1000.0
-    });
     {
         let weak = ui.as_weak();
         state.on_open_accounts(move || {

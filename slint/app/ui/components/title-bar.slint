@@ -12,6 +12,9 @@ import { SearchBar } from "search-bar.slint";
 // navigation/search/actions are drawn here.
 export component TitleBar inherits Rectangle {
     in property <bool> macos: false;
+    /// Whether the window is in native fullscreen, where macOS hides the
+    /// traffic lights (see the leading controls below).
+    in property <bool> fullscreen: false;
     in property <string> search-placeholder;
     in property <string> search-hotkey;
     in property <string> current-page: "game";
@@ -43,9 +46,12 @@ export component TitleBar inherits Rectangle {
         }
 
         // Left navigation actions (settings, home). .title-bar-actions-left is
-        // at left:16, or left:90 on macOS to clear the native traffic lights.
+        // at left:16, or left:90 on macOS to clear the native traffic lights —
+        // except in fullscreen, where AppKit hides them: the controls take the
+        // corner they leave behind instead of lining up behind nothing. (The
+        // Vue keeps the 90px gap there.)
         Rectangle {
-            x: root.macos ? 90px : 16px;
+            x: root.macos && !root.fullscreen ? 90px : 16px;
             y: (root.height - self.height) / 2;
             width: 60px;
             height: 28px;
