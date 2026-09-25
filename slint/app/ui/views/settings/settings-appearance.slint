@@ -80,10 +80,14 @@ export component SettingsAppearance inherits VerticalLayout {
             }
         }
 
+        // The palette row is a plain `Rectangle` rather than a `SettingItem`, so
+        // it does not pick up the rounding the rows get; without it the square
+        // corners here cover the rounded ones of the card painted behind them.
         color-style := Rectangle {
             width: 100%;
             height: 120px;
             background: Theme.setting-item-background;
+            border-radius: 8px;
 
             PaletteSwatch {
                 x: (color-style.width - 456px) / 2 + 12px;
