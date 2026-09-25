@@ -68,4 +68,29 @@ impl<H: ComponentHandle> WindowService<H> {
     pub fn is_fullscreen(&self) -> bool {
         self.window().is_fullscreen()
     }
+
+    /// Starts an OS window drag, for a `data-tauri-drag-region`-style region.
+    ///
+    /// This is `performWindowDragWithEvent:` on macOS — what Chromium, Electron
+    /// and tao (Tauri's own windowing layer) do for their drag regions: the drag
+    /// is handed to the platform, which tracks it in its own event loop, so it
+    /// keeps working outside the window, over other applications, and with the
+    /// system's window snapping, and the window is composited by the OS rather
+    /// than repainted here.
+    ///
+    /// It has to be called while a mouse event is being dispatched: the drag is
+    /// started from that event (`NSApp.currentEvent`). Slint runs a `TouchArea`'s
+    /// pointer handlers inside the event that produced them, so calling this
+    /// from one of those is what makes it work.
+    ///
+    /// The platform keeps the mouse until the drag is over, so the release (and
+    /// therefore Slint's `clicked`) never arrives for the press that started it.
+    pub fn drag_window(&self) {
+        use i_slint_backend_winit::WinitWindowAccessor;
+        let _ = self.window().with_winit_window(|window| {
+            if let Err(error) = window.drag_window() {
+                log::debug!("the platform did not start a window drag: {error}");
+            }
+        });
+    }
 }

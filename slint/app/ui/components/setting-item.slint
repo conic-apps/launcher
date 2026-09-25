@@ -4,6 +4,7 @@
 
 import { Theme } from "../theme.slint";
 import { AppIcon } from "app-icon.slint";
+import { BaseLoading } from "base-loading.slint";
 import { FocusManager } from "../globals/focus.slint";
 
 // A single settings row (src/components/SettingItem.vue).
@@ -24,6 +25,8 @@ export component SettingItem inherits Rectangle {
     // Clickable but without the trailing chevron (collapse headers).
     in property <bool> clickable: false;
     in property <bool> resetable: false;
+    /// Shows a small spinner after the title while the row's value is loading.
+    in property <bool> loading: false;
     // Hover/pressed state driven by the parent for rows that are not navigable
     // but still clickable (the collapse header).
     in property <bool> hovered: false;
@@ -148,6 +151,27 @@ export component SettingItem inherits Rectangle {
 
                         reset-touch := TouchArea {
                             clicked => { root.reset(); }
+                        }
+                    }
+
+                    // The Vue wraps the spinner in `<Transition name="fade">`
+                    // (100ms opacity). Keeping the box in the tree and animating
+                    // its opacity is what gives the fade: a freshly created
+                    // element would simply appear.
+                    loading-box := Rectangle {
+                        width: 15px;
+                        height: 15px;
+                        background: transparent;
+                        opacity: root.loading ? 1.0 : 0.0;
+                        visible: root.loading || self.opacity > 0.001;
+                        // The Vue's `<span style="transform: scale(0.8)">`.
+                        transform-scale: 80%;
+                        animate opacity { duration: 100ms; easing: ease; }
+
+                        BaseLoading {
+                            size: 15px;
+                            stroke-width: 8;
+                            icon-color: Theme.default-text-color.transparentize(0.1);
                         }
                     }
                 }

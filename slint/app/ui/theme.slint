@@ -268,6 +268,11 @@ export global Theme {
     in-out property <color> card-background;
     in-out property <color> card-border;
 
+    // ----- dialogs (BaseDialog.vue) -----
+    in-out property <color> dialog-background;
+    in-out property <color> dialog-border;
+    in-out property <length> dialog-border-radius;
+
     // Window buttons (WindowButton.vue) — platform traffic-light colors, not
     // part of the Catppuccin palette.
     in property <color> win-btn-close: #ff5f57;
@@ -387,6 +392,14 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> card-border:
         root.hc ? ctp.overlay2 : (root.dark ? ctp.surface1 : ctp.crust);
 
+    // `--dialog-*`. The dark flavors draw a fixed dark hairline; high contrast
+    // swaps it for the flavor's overlay2, and Latte keeps its own crust border
+    // and background.
+    in-out property <color> dialog-background: root.dark ? ctp.base : ctp.crust;
+    in-out property <color> dialog-border:
+        root.dark ? (root.hc ? ctp.overlay2 : #383b41) : ctp.crust;
+    in-out property <length> dialog-border-radius: 10px;
+
     // The Slint equivalent of `.changing-theme`.
     animate base, mantle, crust,
         surface-0, surface-1, surface-2,
@@ -402,7 +415,8 @@ export component ThemeProvider inherits Rectangle {
         setting-group-border, setting-group-danger-border,
         toggle-switch-background, toggle-switch-outline, toggle-switch-button,
         toggle-switch-active,
-        card-background, card-border
+        card-background, card-border,
+        dialog-background, dialog-border
     {
         duration: root.transitions-enabled ? 300ms : 0ms;
         easing: ease;
@@ -457,6 +471,9 @@ export component ThemeProvider inherits Rectangle {
         Theme.toggle-switch-active = root.toggle-switch-active;
         Theme.card-background = root.card-background;
         Theme.card-border = root.card-border;
+        Theme.dialog-background = root.dialog-background;
+        Theme.dialog-border = root.dialog-border;
+        Theme.dialog-border-radius = root.dialog-border-radius;
     }
 
     // Push the (interpolated) values into the global. Slint can't bind a global
@@ -509,4 +526,7 @@ export component ThemeProvider inherits Rectangle {
     changed toggle-switch-active => { Theme.toggle-switch-active = root.toggle-switch-active; }
     changed card-background => { Theme.card-background = root.card-background; }
     changed card-border => { Theme.card-border = root.card-border; }
+    changed dialog-background => { Theme.dialog-background = root.dialog-background; }
+    changed dialog-border => { Theme.dialog-border = root.dialog-border; }
+    changed dialog-border-radius => { Theme.dialog-border-radius = root.dialog-border-radius; }
 }

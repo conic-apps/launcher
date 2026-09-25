@@ -80,6 +80,12 @@ export struct AccountItem {
 /// Slint evaluates `@tr` bindings again when the locale changes, so keeping the
 /// formatting here (rather than in Rust) preserves runtime language switching.
 export global GameTime {
+    /// A year-month-day date (the Vue `game.time.yearMonthDay`), used for the
+    /// relative times below and for the release dates in the version chooser.
+    public pure function year-month-day(month: int, day: int, year: int) -> string {
+        return @tr("GameTime" => "{}/{}/{}", month, day, year);
+    }
+
     public pure function last-played(
         kind: string,
         hours: int,
@@ -102,7 +108,7 @@ export global GameTime {
             return @tr("GameTime" => "{}/{}", month, day);
         }
         if kind == "year-month-day" {
-            return @tr("GameTime" => "{}/{}/{}", month, day, year);
+            return self.year-month-day(month, day, year);
         }
         return @tr("GameTime" => "Never played");
     }
