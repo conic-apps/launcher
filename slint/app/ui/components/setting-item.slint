@@ -37,6 +37,11 @@ export component SettingItem inherits Rectangle {
     callback reset;
 
     width: 100%;
+    // Rounded to match the group it sits in, which paints the card behind it in
+    // the same colour: what a row's corners leave against its neighbours and
+    // against the two ends of the card does not show. (The group rounds the
+    // outer corners through this, as it cannot tell which row is first.)
+    border-radius: 8px;
     background: root.pressed || ((root.navigable || root.clickable) && touch.pressed) ? Theme.setting-item-background-active
         : root.hovered || ((root.navigable || root.clickable) && touch.has-hover) ? Theme.setting-item-background-hover
         : Theme.setting-item-background;
