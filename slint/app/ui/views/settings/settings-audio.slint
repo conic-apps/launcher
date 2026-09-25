@@ -77,7 +77,7 @@ export component SettingsAudio inherits VerticalLayout {
             BaseSliderBar {
                 max: 100;
                 min: 0;
-                step: 1;
+                step: 5;
                 value <=> AppConfig.main-volume;
                 edited => { AppConfig.changed(); }
             }
@@ -90,7 +90,7 @@ export component SettingsAudio inherits VerticalLayout {
             BaseSliderBar {
                 max: 100;
                 min: 0;
-                step: 1;
+                step: 5;
                 value <=> AppConfig.background-volume;
                 edited => { AppConfig.changed(); }
             }
