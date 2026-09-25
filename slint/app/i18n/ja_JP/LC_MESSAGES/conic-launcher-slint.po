@@ -633,11 +633,11 @@ msgid "Yesterday"
 msgstr "昨日"
 
 msgctxt "GameTime"
-msgid "{0}/{1}"
+msgid "{}/{}"
 msgstr "{0}月{1}日"
 
 msgctxt "GameTime"
-msgid "{0}/{1}/{2}"
+msgid "{}/{}/{}"
 msgstr "{2}年{0}月{1}日"
 
 msgctxt "GameTime"
@@ -755,3 +755,95 @@ msgstr "未ログイン"
 msgctxt "GameFooterBar"
 msgid "New instance"
 msgstr "新規インスタンス"
+
+msgctxt "CreateInstance"
+msgid "Select Minecraft version"
+msgstr "Minecraft のバージョンを選択"
+
+msgctxt "CreateInstance"
+msgid "Select mod loader"
+msgstr "モッドローダーを選択"
+
+msgctxt "CreateInstance"
+msgid "Create new instance"
+msgstr "新規インスタンスを作成"
+
+msgctxt "CreateInstance"
+msgid "Unnamed instance"
+msgstr "名前のないインスタンス"
+
+msgctxt "CreateInstance"
+msgid "Set background image"
+msgstr "背景画像を設定"
+
+msgctxt "CreateInstance"
+msgid "Images"
+msgstr "画像"
+
+msgctxt "CreateInstance"
+msgid "Remove image"
+msgstr "画像を削除"
+
+msgctxt "CreateInstance"
+msgid "Use instance background as launcher background"
+msgstr "インスタンスの背景をランチャーの背景として使用"
+
+msgctxt "CreateInstance"
+msgid "Version settings"
+msgstr "バージョン設定"
+
+msgctxt "CreateInstance"
+msgid "Selected {}"
+msgstr "{} を選択中"
+
+msgctxt "CreateInstance"
+msgid "Mod loader"
+msgstr "モッドローダー"
+
+msgctxt "CreateInstance"
+msgid "None"
+msgstr "なし"
+
+msgctxt "CreateInstance"
+msgid "Loader version"
+msgstr "ローダーのバージョン"
+
+msgctxt "CreateInstance"
+msgid "Click to select a mod loader version"
+msgstr "クリックしてローダーのバージョンを選択"
+
+msgctxt "CreateInstance"
+msgid "Select a Minecraft version first"
+msgstr "先に Minecraft のバージョンを選択してください"
+
+msgctxt "CreateInstance"
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgctxt "CreateInstance"
+msgid "Creating..."
+msgstr "作成中..."
+
+msgctxt "CreateInstance"
+msgid "Create instance"
+msgstr "インスタンスを作成"
+
+msgctxt "MinecraftChoose"
+msgid "Version category"
+msgstr "バージョンの種類"
+
+msgctxt "MinecraftChoose"
+msgid "Releases"
+msgstr "リリース"
+
+msgctxt "MinecraftChoose"
+msgid "Snapshots"
+msgstr "スナップショット"
+
+msgctxt "MinecraftChoose"
+msgid "Old versions"
+msgstr "古いバージョン"
+
+msgctxt "MinecraftChoose"
+msgid "Cancel"
+msgstr "キャンセル"
