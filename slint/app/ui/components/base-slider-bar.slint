@@ -4,6 +4,7 @@
 
 import { Theme } from "../theme.slint";
 import { FocusManager } from "../globals/focus.slint";
+import { ScrollInput } from "../globals/scroll.slint";
 
 // Range slider (src/components/BaseSliderBar.vue).
 //
@@ -11,6 +12,40 @@ import { FocusManager } from "../globals/focus.slint";
 // tooltip appears above the thumb while dragging (the Vue original fades it
 // with GSAP on drag start and grows its width on every change; here it is
 // naturally sized).
+//
+// # Dragging
+//
+// A press jumps the value to the pointer and every move while the button is
+// held follows it, which is what the `<input type="range">` the original wraps
+// does. The moves are read from `TouchArea.moved` rather than from the `move`
+// arm of `pointer-event`: Slint reports a move with `PointerEventButton.other`,
+// never with the button that is held, so a `button == left` test — which the
+// press needs, to keep the right and middle buttons out — is false for every
+// move, and the thumb would follow the initial press alone. The scrollbar of
+// `components/scroll-view.slint` carries its drag for the same reason.
+//
+// What is *drawn* is the step the value snapped to, reached by a short slide
+// instead of a jump (see the glide below).
+//
+// `moved` fires while the touch area holds the pointer grab, and that is not
+// enough to say *whose* drag it is: a touch area keeps the grab until the
+// release comes back to it, and while it holds one Slint hands it presses —
+// and their moves — that landed on other controls. Hence `dragging`, set by a
+// press, and only by one that landed on the control: a press elsewhere clears
+// whatever a lost release left behind instead of driving this slider with it.
+// Slint's own `pressed` cannot stand in for it — it is true for any press that
+// reaches the area, wherever it landed, and a release that goes missing leaves
+// it stuck.
+//
+// # Disabling
+//
+// `slider-enabled` reaches no further than `TouchArea.enabled`. Slint hands a
+// disabled touch area no pointer events at all (no press, no move, no
+// `pressed`), withholds the pointer cursor it was given, and cancels a press
+// that is in flight when the area becomes disabled. The original's extra
+// guards — `onMousedown` / `onInput` returning early, `cursor: default` on the
+// disabled thumb — work around a webview range input that keeps reacting after
+// `disabled`, and have no counterpart here.
 export component BaseSliderBar inherits Rectangle {
     in property <int> max: 100;
     in property <int> min: 0;
@@ -26,7 +61,84 @@ export component BaseSliderBar inherits Rectangle {
     private property <float> percent: root.max > root.min
         ? clamp((root.value - root.min) * 1.0 / (root.max - root.min), 0, 1)
         : 0;
+
+    /// Whether a drag started on this slider is in progress (see the touch
+    /// area below).
     private property <bool> dragging: false;
+
+    // ----- the glide -----
+    //
+    // `value` snaps to `step` — 15px a tick where the settings pages run it,
+    // `step: 5` over 0..100 of this 300px track — and the drawn position is a
+    // step, never a share of one between two: the thumb rests exactly where the
+    // value is. Getting from one step to the next is
+    // what the glide covers, along the frame-time scaled lerp the scroll
+    // container glides with (`components/scroll-view.slint`), so a step reads
+    // as a short slide rather than as a jump — and a press at the far end of
+    // the track slides over instead of teleporting.
+    //
+    // That container's 0.16 is far too low here: its target is a wheel notch,
+    // which stops, while these come from a pointer that is already moving. A
+    // step that arrives while the previous slide is still going has to be
+    // caught up with, and a lower share of the remaining distance leaves the
+    // thumb further behind the cursor for as long as the drag lasts.
+    private property <float> lerp: 0.45;
+
+    private property <bool> gliding: false;
+    private property <float> glide-percent: 0;
+    private property <float> last-tick-ms: 0;
+
+    /// Where the thumb, the fill and the tooltip are drawn: the step the value
+    /// is on, on its way there.
+    private property <float> shown-percent: root.gliding ? root.glide-percent : root.percent;
+
+    /// Sets the timer going from wherever the drawn position is now, so that
+    /// the step the value just moved to is slid to. Called on every move as
+    /// well as on the press: the glide ends as soon as it has caught up, and a
+    /// slow drag gives it all the time it needs to settle between two moves —
+    /// without this, every step after the first one would be drawn as a jump.
+    function start-glide() {
+        if !root.gliding {
+            root.glide-percent = root.shown-percent;
+            root.last-tick-ms = ScrollInput.now-ms();
+            root.gliding = true;
+        }
+    }
+
+    glide-timer := Timer {
+        interval: 8ms;
+        running: root.gliding;
+        triggered => {
+            // Scaled by the real elapsed time, so the glide covers the same
+            // ground on a 120Hz display as on a 60Hz one — and so a debug build
+            // sitting at 25ms a frame does not stretch it out. The upper bound
+            // only guards a stall of the whole event loop, which would otherwise
+            // be spent in one visible jump.
+            root.glide-percent = root.glide-percent
+                + (root.percent - root.glide-percent) * (1 - pow(
+                    1 - root.lerp,
+                    clamp((ScrollInput.now-ms() - root.last-tick-ms) / 1000, 0.004, 0.05) * 60,
+                ));
+            root.last-tick-ms = ScrollInput.now-ms();
+            if abs(root.percent - root.glide-percent) <= 0.0005 {
+                root.glide-percent = root.percent;
+                root.gliding = false;
+            }
+        }
+    }
+
+    /// The value a pointer at `x`, in this component's coordinates, picks out:
+    /// how far along the track it is over the range, snapped to `step` (the
+    /// value the original handed to the range input's own `step`). A `step` of
+    /// zero or less is not one to snap to, so such a slider holds its minimum
+    /// — the builtin `min`/`max` are not callable from here, as the properties
+    /// of those names shadow them.
+    function value-at(x: length) -> int {
+        if root.max <= root.min || root.step <= 0 {
+            return root.min;
+        }
+        return root.min + round(clamp(x / root.width, 0, 1) * (root.max - root.min) / root.step) * root.step;
+    }
 
     track := Rectangle {
         x: 0;
@@ -40,33 +152,34 @@ export component BaseSliderBar inherits Rectangle {
     fill := Rectangle {
         x: 0;
         y: (root.height - self.height) / 2;
-        width: root.percent * root.width;
+        width: root.shown-percent * root.width;
         height: 3.5px;
         border-radius: 10px;
         background: Theme.lavender;
     }
 
     thumb := Rectangle {
-        width: thumb-touch.pressed ? 10.8px : thumb-touch.has-hover ? 13.2px : 12px;
+        width: root.dragging ? 10.8px : thumb-touch.has-hover ? 13.2px : 12px;
         height: self.width;
         border-radius: 100px;
         background: Theme.lavender;
-        x: root.percent * root.width - self.width / 2;
+        x: root.shown-percent * root.width - self.width / 2;
         y: (root.height - self.height) / 2;
         animate width, height { duration: 200ms; easing: ease; }
     }
 
-    if root.dragging && root.slider-enabled : tooltip := Rectangle {
+    if root.dragging : tooltip := Rectangle {
         height: 22px;
         width: tooltip-label.preferred-width + 14px;
         border-radius: 6px;
         border-width: 1px;
         border-color: Theme.overlay-0;
         background: Theme.base;
-        x: root.percent * root.width - self.width / 2 + 6px - 0.12 * (root.percent * 100) * 1px;
+        x: root.shown-percent * root.width - self.width / 2 + 6px - 0.12 * (root.shown-percent * 100) * 1px;
         y: -32px;
 
         tooltip-label := Text {
+            // The value, not the drawn position: the number is what is set.
             text: round(root.percent * 100) + "%";
             font-size: 12px;
             font-weight: Theme.font-weight-normal;
@@ -81,20 +194,47 @@ export component BaseSliderBar inherits Rectangle {
         height: root.height;
         mouse-cursor: pointer;
         enabled: root.slider-enabled;
+
         pointer-event(event) => {
-            if event.button == PointerEventButton.left
-                && (event.kind == PointerEventKind.down
-                    || (event.kind == PointerEventKind.move && root.dragging)) {
-                root.dragging = true;
-                FocusManager.clear();
-                root.value = root.min + round(clamp(self.mouse-x / root.width, 0, 1) * (root.max - root.min));
-            } else if event.kind == PointerEventKind.up {
+            // Only the press and the release are taken here — the drag itself
+            // is the `moved` handler below, the one callback a move arrives in.
+            if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                // A press that landed on the track — the 20px band it is as
+                // wide as, not just the 3.5px rail — is the only one that
+                // starts a drag here.
+                let on-track = self.mouse-x >= 0px && self.mouse-x <= self.width
+                    && self.mouse-y >= 0px && self.mouse-y <= self.height;
+                root.dragging = on-track;
+                if on-track {
+                    FocusManager.clear();
+                    // Called before the value is written, while the drawn
+                    // position is still the step the thumb is on: the glide has
+                    // to start there and not where the press lands.
+                    root.start-glide();
+                    root.value = root.value-at(self.mouse-x);
+                }
+            } else if event.kind == PointerEventKind.cancel
+                || (event.kind == PointerEventKind.up && event.button == PointerEventButton.left) {
+                // The Vue's `mouseup`. A cancel — the pointer left the window
+                // with the button still down, or the slider was disabled
+                // mid-drag — ends the drag the same way, so the value the
+                // moves arrived at still reaches the config through `edited`.
                 if root.dragging {
+                    // Nothing to ease here: the target is the step the value is
+                    // already on, and a slide still in flight carries on to it.
                     root.dragging = false;
                     root.edited();
                 }
-            } else if event.kind == PointerEventKind.cancel {
-                root.dragging = false;
+            }
+        }
+
+        moved => {
+            if root.dragging {
+                // `start-glide` before the value is written — which is what
+                // moves the target — so a step this move lands on is slid to
+                // from the one before it.
+                root.start-glide();
+                root.value = root.value-at(self.mouse-x);
             }
         }
     }
