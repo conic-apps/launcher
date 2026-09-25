@@ -160,7 +160,10 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
             }
             let weak = weak.clone();
             let managed = slint_folder::DATA_LOCATION.runtime.clone();
-            std::thread::spawn(move || {
+            // The scan walks the disk and starts a JVM per candidate, so it runs
+            // on the runtime's blocking pool — the original's
+            // `tauri::async_runtime::spawn_blocking`.
+            crate::runtime::spawn_blocking(move || {
                 let runtimes = java::scan(&managed);
                 let _ = weak.upgrade_in_event_loop(move |ui| {
                     let settings = ui.global::<AppConfig>();

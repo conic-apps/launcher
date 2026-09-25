@@ -15,6 +15,7 @@ pub(crate) mod slint_backend {
 mod config_bridge;
 mod game;
 mod java;
+mod runtime;
 mod settings;
 
 use std::{cell::RefCell, rc::Rc};
@@ -66,6 +67,11 @@ fn main() {
         log::error!("failed to load config: {error}");
         slint_config::Config::default()
     });
+    // Tell the HTTP client whether to go through the system proxy, like
+    // `crates/config` does for `shared::HTTP_CLIENT`. Has to happen before the
+    // first request, which is why it is done here rather than when a version
+    // list is first fetched.
+    slint_install::set_system_proxy(config.download.use_system_proxy);
 
     // Pick the bundled translation. Must run after a component exists (that's
     // what installs the translation bundle).
