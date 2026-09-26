@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme, ThemeProvider } from "theme.slint";
-import { TitleBar } from "components/title-bar.slint";
+import { TitleBar, WindowControl } from "components/title-bar.slint";
 import { Navigation } from "globals/navigation.slint";
 import { DropdownOverlay } from "components/dropdown-overlay.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
@@ -21,10 +21,12 @@ export { GameState, GameRow, AccountItem } from "globals/game.slint";
 export { ScrollInput, ScrollSource } from "globals/scroll.slint";
 export { Dialogs, CreateInstanceState, MinecraftVersionItem, AccountAddState, YggdrasilProfileItem } from "globals/dialogs.slint";
 export { WindowDrag } from "globals/window-drag.slint";
+export { WindowControl } from "components/title-bar.slint";
 
 // Application root window (App.vue). macOS keeps the native traffic lights,
-// Linux uses a frameless window with a custom title bar, and Windows keeps its
-// native caption bar.
+// Linux draws the window controls itself, and Windows draws the platform's own
+// over the title bar (`src/windows_caption.rs`) — neither of the last two leaves
+// a system title bar behind.
 export component App inherits Window {
     title: @tr("Conic Launcher");
     // Window/taskbar icon for Windows and Linux WMs (see the shared asset). macOS
@@ -35,7 +37,8 @@ export component App inherits Window {
     default-font-size: Theme.font-size-base;
     default-font-weight: Theme.font-weight-normal;
     // macOS blends its native title bar into the client area; Linux leaves the
-    // corners transparent for the rounded, frameless window.
+    // corners transparent for the rounded, frameless window. Windows stays
+    // opaque: its frame is DWM's, which rounds the window itself.
     background: self.macos || self.linux ? transparent : Theme.crust;
     // 840x532 is the floor, not a fixed size: fixed `width`/`height` on the
     // root Window pin min == max (making the window non-resizable), so the
@@ -44,11 +47,33 @@ export component App inherits Window {
     min-height: 532px;
     preferred-width: 840px;
     preferred-height: 532px;
-    no-frame: self.linux;
-    resize-border-width: self.linux ? 6px : 0px;
+    // Linux has no window controls of its own, and Windows drops the caption so
+    // that the platform's have the app's title bar to sit on (see
+    // `src/windows_caption.rs`), so both draw over the whole window.
+    no-frame: self.linux || self.windows;
+    resize-border-width: (self.linux || self.windows) ? 6px : 0px;
 
     in-out property <bool> macos: false;
     in-out property <bool> linux: false;
+    in-out property <bool> windows: false;
+    /// The custom title bar's height. Declared here rather than in
+    /// `title-bar.slint` because the platform sizes the window controls to it and
+    /// hit tests them against it (see `src/windows_caption.rs`), so the two sides
+    /// have to read the same number.
+    in property <length> title-bar-height: 44px;
+    /// How much of the title bar's right-hand end the platform's own window
+    /// controls take, in logical units. Zero everywhere but Windows, where the
+    /// platform measures it and pushes it in.
+    in-out property <length> window-controls-inset: 0px;
+    /// The platform's window controls, as the platform draws them. Empty until
+    /// the window exists, which is also when the platform can be asked.
+    in-out property <[WindowControl]> window-controls: [];
+    /// Which control the pointer is on, and which is pressed, in the platform's
+    /// own numbering (`WindowControl.index`). -1 is neither: the controls are
+    /// non-client area, so the pointer is only ever reported through the system's
+    /// own messages.
+    in-out property <int> window-control-hovered: -1;
+    in-out property <int> window-control-pressed: -1;
     /// Whether the window is in native fullscreen — a *state* pushed from the
     /// platform (`traffic_lights.rs`), not a request: to change it, use the
     /// `WindowService`. macOS hides the traffic lights in fullscreen, and the
@@ -62,10 +87,16 @@ export component App inherits Window {
     callback maximize-or-fullscreen();
     callback minimize-window();
     callback close-window();
+    /// Tells the platform which theme the app resolved to, so the window controls
+    /// it draws take their ink from this title bar. Answered on Windows
+    /// (`windows_caption.rs`) and ignored everywhere else.
+    callback set-caption-dark(dark: bool);
 
     // Drives the palette selection and animates the Theme tokens (see
     // theme.slint). Must exist exactly once.
-    ThemeProvider { }
+    ThemeProvider {
+        caption-dark-changed(dark) => { root.set-caption-dark(dark); }
+    }
 
     // The content layer stays full-size; the title bar owns the top row and
     // the platform owns the remaining window edge.
@@ -83,7 +114,13 @@ export component App inherits Window {
             TitleBar {
                 macos: root.macos;
                 linux: root.linux;
+                windows: root.windows;
                 fullscreen: root.window-fullscreen;
+                height: root.title-bar-height;
+                window-controls-inset: root.window-controls-inset;
+                window-controls: root.window-controls;
+                window-control-hovered: root.window-control-hovered;
+                window-control-pressed: root.window-control-pressed;
                 search-placeholder: root.search-placeholder;
                 search-hotkey: root.search-hotkey;
                 current-page: Navigation.current-page;

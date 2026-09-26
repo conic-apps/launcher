@@ -317,6 +317,9 @@ export component ThemeProvider inherits Rectangle {
         running: true;
         triggered => {
             root.transitions-enabled = true;
+            // The platform is told the resolved palette once here as well, so it
+            // does not have to wait for the first palette *change* to hear it.
+            root.caption-dark-changed(root.dark);
             startup-timer.running = false;
         }
     }
@@ -324,6 +327,16 @@ export component ThemeProvider inherits Rectangle {
     // Latte is the only light flavor; the other three are dark.
     private property <bool> dark: Theme.active-palette != "Latte";
     private property <bool> hc: Theme.high-contrast;
+
+    // The platform draws its own window controls (macOS traffic lights, Windows
+    // caption buttons), and the Windows ones take their ink from the palette
+    // rather than from the system, so that they stay legible on this title bar
+    // whatever the system theme is doing. Hand it the palette this app actually
+    // resolved to — "follow system" can only be known here. The tokens below
+    // animate on a palette change; this does not, which is what the platform
+    // wants (it cannot interpolate its own glyphs). See `src/windows_caption.rs`.
+    callback caption-dark-changed(dark: bool);
+    changed dark => { root.caption-dark-changed(root.dark); }
 
     private property <CatppuccinPalette> ctp:
         Theme.active-palette == "Latte" ? Catppuccin.latte

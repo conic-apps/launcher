@@ -61,3 +61,19 @@ objc2-foundation = { version = "0.2", features = [
     "block2",
 ] }
 block2 = "0.5"
+
+# Used to keep the platform's own window controls over the custom title bar on
+# Windows (see `src/windows_caption.rs`): the window frame and its messages, the
+# GDI text drawing the controls' glyphs come from, and the window subclassing the
+# frame needs. `Win32_UI_Shell` is where the SDK declares comctl32's
+# `SetWindowSubclass` / `DefSubclassProc`.
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_Graphics_Gdi",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
