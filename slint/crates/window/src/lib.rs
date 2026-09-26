@@ -39,14 +39,7 @@ impl<H: ComponentHandle> WindowService<H> {
 
     /// Minimizes the window.
     pub fn minimize(&self) {
-        use i_slint_backend_winit::WinitWindowAccessor;
-        if self
-            .window()
-            .with_winit_window(|window| window.set_minimized(true))
-            .is_none()
-        {
-            self.window().set_minimized(true);
-        }
+        self.minimize_to(true);
     }
 
     /// Toggles the maximized state (Windows/Linux).
@@ -72,6 +65,63 @@ impl<H: ComponentHandle> WindowService<H> {
     /// Reports whether the window is currently in fullscreen mode.
     pub fn is_fullscreen(&self) -> bool {
         self.window().is_fullscreen()
+    }
+
+    /// Brings the window back in front of the user and gives it the input focus.
+    ///
+    /// This is what a second launch of the app does to the one that is already
+    /// running (`slint-single-instance`): the user asked for the launcher
+    /// again, and the answer is the window they already have, not a second one.
+    ///
+    /// A minimized window is restored first, because the platform's own
+    /// activation does nothing for one — it is not on screen to bring forward.
+    /// That is the case when the user reaches the launcher from the dock or the
+    /// taskbar, and minimized is where it usually is by then.
+    ///
+    /// The underlying calls take the focus from whatever the user is working
+    /// in, which is the intent here and why nothing in the app calls this
+    /// speculatively.
+    ///
+    /// It has to run on the event loop's thread: the winit window only exists
+    /// while the loop is pumping, and the platform's activation has to run where
+    /// its own window lives. Call it from an `upgrade_in_event_loop` callback.
+    pub fn bring_to_front(&self) {
+        if self.window().is_minimized() {
+            self.minimize_to(false);
+        }
+        if !self.window().is_visible() {
+            // A launch of the app that arrives after the window was hidden — a
+            // window that is not on screen cannot be brought to it.
+            if let Err(error) = self.window().show() {
+                log::debug!("the window could not be shown: {error}");
+            }
+        }
+        self.focus();
+    }
+
+    /// Restores or minimizes the window.
+    fn minimize_to(&self, minimized: bool) {
+        use i_slint_backend_winit::WinitWindowAccessor;
+        if self
+            .window()
+            .with_winit_window(|window| window.set_minimized(minimized))
+            .is_none()
+        {
+            self.window().set_minimized(minimized);
+        }
+    }
+
+    /// Asks the platform to make the window the focused one.
+    fn focus(&self) {
+        use i_slint_backend_winit::WinitWindowAccessor;
+        let focused = self
+            .window()
+            .with_winit_window(|window| window.focus_window());
+        if focused.is_none() {
+            // No winit window (another backend): Slint has no activation of its
+            // own, so there is nothing left to try.
+            log::debug!("the window could not be focused: no winit window to focus");
+        }
     }
 
     /// Starts an OS window drag, for a `data-tauri-drag-region`-style region.
