@@ -13,9 +13,10 @@ import { InstanceListDropdown } from "instance-list-dropdown.slint";
 export component InstancesListToolBar inherits Rectangle {
     width: 400px;
     height: 112px;
-    background: Theme.surface-0.transparentize(0.6);
-    border-top-left-radius: 16px;
-    border-bottom-left-radius: 16px;
+    // The root is only the 400×112 box `InstancesList` positions against; the
+    // panel the Vue `.tool-bar` element corresponds to — background included —
+    // is `body` below, because the intro animates that whole element.
+    background: transparent;
     // NOTE: the `z-index: 114` of the Vue original is *not* set here. A component
     // root's `z` only reaches the parent's stacking order when the parent places
     // it from a `for` loop — for a plain instance the compiler's z-order pass
@@ -51,17 +52,36 @@ export component InstancesListToolBar inherits Rectangle {
     animate intro-dx { duration: 500ms; delay: 50ms; easing: ease-out-quart; }
     animate intro-alpha { duration: 500ms; delay: 50ms; easing: ease-out-quart; }
 
-    // Everything is wrapped so the intro can offset the whole toolbar; the
-    // background stays on the root so the panel's own corners are not affected by
-    // the children sliding in.
+    // The whole panel is one element in the Vue original: the intro animates
+    // `.tool-bar` itself (`gsap.fromTo(toolbar, { opacity: 0, x: 100 }, ...)`),
+    // so the translucent background slides in together with the controls rather
+    // than staying put under them.
     body := Rectangle {
         x: root.intro-dx;
         y: 0;
         width: root.width;
         height: root.height;
-        background: transparent;
+        background: Theme.surface-0.transparentize(0.6);
+        border-top-left-radius: 16px;
+        border-bottom-left-radius: 16px;
         opacity: root.intro-alpha;
         visible: root.intro-alpha > 0.01;
+
+        // The panel is drawn on top of the scrolling rows, but a bare
+        // `Rectangle` does not take pointer events: Slint dispatches to the
+        // topmost item first and falls through to the items below whenever one
+        // ignores the event, so a press on the panel's empty area would reach the
+        // card underneath and select it (Vue: the toolbar's `z-index: 114` puts
+        // it above the rows, so it covers the press). The shield swallows it; it
+        // is declared first so the controls below still get their own events.
+        shield := TouchArea {
+            width: parent.width;
+            height: parent.height;
+            // A bare `TouchArea`'s `scroll-event` defaults to `reject`, which
+            // would let the wheel through to the list. Vue's Lenis listens on the
+            // scroll container, which the panel covers, so accept it to match.
+            scroll-event(event) => { accept }
+        }
 
         // ----- search -----
         search-row := Rectangle {

@@ -69,6 +69,22 @@ export component GameFooterBar inherits Rectangle {
     private property <length> intro-dy: GameIntro.played ? 0px : 56px;
     animate intro-dy { duration: 600ms; easing: ease-out-quart; }
 
+    // The bar is drawn on top of the instance list, but a bare `Rectangle` does
+    // not take pointer events: Slint dispatches to the topmost item first and
+    // falls through to the items below whenever one ignores the event, so a
+    // press on the bar's empty area would reach the card underneath and select
+    // it (Vue: the footer is a positioned sibling painted above the list, so it
+    // covers the press). The shield swallows it; it is declared first so the
+    // controls in `body` below still get their own events.
+    shield := TouchArea {
+        width: root.width;
+        height: root.height;
+        // A bare `TouchArea`'s `scroll-event` defaults to `reject`, which would
+        // let the wheel through to the list. Vue's Lenis listens on the scroll
+        // container, which the bar covers, so accept it here to match.
+        scroll-event(event) => { accept }
+    }
+
     body := Rectangle {
         x: 0;
         y: root.intro-dy;
