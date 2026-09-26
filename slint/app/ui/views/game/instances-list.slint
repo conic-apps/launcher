@@ -4,6 +4,7 @@
 
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/app-icon.slint";
+import { Dropdown } from "../../globals/dropdown.slint";
 import { FocusManager } from "../../globals/focus.slint";
 import { GameState, GameIntro, GameTime } from "../../globals/game.slint";
 import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
@@ -144,6 +145,13 @@ export component InstancesList inherits Rectangle {
     /// after an idle period would read that whole gap as its frame time and start
     /// the glide with a jump sized for a second-long frame.
     private property <bool> scrolling: abs(root.clamped-target - root.scroll-y) > 0.5px;
+    private property <bool> dropdown-open: Dropdown.open;
+
+    changed dropdown-open => {
+        if root.dropdown-open {
+            root.target-y = root.scroll-y;
+        }
+    }
 
     changed scrolling => {
         if root.scrolling {
@@ -240,6 +248,9 @@ export component InstancesList inherits Rectangle {
             height: parent.height;
 
             scroll-event(event) => {
+                if Dropdown.open {
+                    return accept;
+                }
                 if !root.settling && root.max-scroll > 0px {
                     if ScrollInput.source() == ScrollSource.wheel {
                         // A wheel notch is a *distance*, not a motion: it goes
