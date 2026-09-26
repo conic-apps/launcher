@@ -22,6 +22,7 @@ slint/
     src/
       main.rs                       # Rust host: platform setup, window chrome, locale
       traffic_lights.rs             # macOS: native traffic lights vs. the custom title bar
+      windows_caption.rs            # Windows: the platform's own caption buttons
       runtime.rs                    # the tokio runtime the background work runs on
       config_bridge.rs              # config ↔ UI bridges (file pickers, opening URLs)
       settings.rs                   # the settings screen's script
@@ -226,6 +227,19 @@ Per the migration plan:
 ## Migrated so far
 
 - Application window (`App`) with the custom title bar and native window chrome.
+- **Windows caption buttons** (`app/src/windows_caption.rs`): the window has no
+  system title bar, and the minimize/maximize/close controls are the platform's
+  own — real non-client area, not buttons the app drew. `WM_NCHITTEST` answers
+  `HTMINBUTTON` / `HTMAXBUTTON` / `HTCLOSE` for the three slots, which is what
+  brings DWM's Windows 11 snap-layouts flyout, the system menu and the
+  accessibility entries with them; a press sends the `WM_SYSCOMMAND` a caption
+  button sends (`SC_MINIMIZE` / `SC_MAXIMIZE` / `SC_RESTORE` / `SC_CLOSE`) on the
+  *release*, so dragging off a control cancels it. The same subclass owns the rest
+  of the frameless window: the caption is gone (`WM_NCCALCSIZE`), the invisible
+  resize border is the hit test, and a maximized window is exactly the monitor's
+  work area. The glyphs come from the font Windows draws its caption buttons with
+  and the fills are DWM's — see Known issues for why uxtheme could not supply
+  them. macOS has the mirror-image arrangement in `traffic_lights.rs`.
 - Title bar: home/settings navigation, centered search bar + hotkey chip, music
   action (`components/title-bar*`, `components/search-bar.slint`).
 - Global page navigation (`globals/navigation.slint`) and the `App` page stack.
@@ -428,6 +442,9 @@ still falls back to the placeholder disc for a skin Rust could not decode.
 - The macOS window is Chrome-style (transparent, title-hidden, full-size content
   view), configured in `src/main.rs`; the native traffic lights are aligned to
   the custom title bar by `src/traffic_lights.rs` (see below).
+- The Windows window is created undecorated
+  (`Backend::builder().with_window_attributes_hook(|a| a.with_decorations(false))`)
+  and its frame is taken over by `src/windows_caption.rs` (see below).
 
 ## Known issues / notes
 
@@ -649,8 +666,81 @@ still falls back to the placeholder disc for a skin Rust could not decode.
   flips when the buttons do — while the title bar is *revealed* by the pointer
   at the top of a fullscreen window the two do overlap, which is what Chromium's
   window-controls overlay does as well.
+- **Windows caption buttons** — the artwork is composed, the behaviour is not.
+  Everything a caption button *does* is the system's (see Migrated so far), but
+  the pixels come from this app, and only because Windows gives no way to have
+  DWM draw them: a window whose caption has been removed from the non-client
+  area gets no caption buttons painted over it, on any Windows since 8, with or
+  without `DwmExtendFrameIntoClientArea` (that call succeeds; it is the Windows 7
+  Aero Glass hook and has been a no-op for opaque windows since). Microsoft's own
+  answers agree — `Window.ExtendsContentIntoTitleBar` and
+  `AppWindowTitleBar.ExtendsContentIntoTitleBar` remove the frame the same way
+  and then draw the buttons themselves.
+  `DrawThemeBackground`, the obvious source, cannot supply them either:
+    - the `Explorer` class (what the shell and Windows Terminal draw their
+      captions from) does not open at all on Windows 11 — there are no
+      `.msstyles` files left to load it from, so `OpenThemeData` returns a null
+      handle, and there is no `DarkMode_Explorer` to ask for instead;
+    - the `Window` class does open, and does draw `WP_CLOSEBUTTON` and friends,
+      but it draws the *classic* caption: an opaque button face filled in even in
+      its normal state, with the close button red throughout, and in light colours
+      regardless of the system theme (a process only gets the dark variants by
+      opting in per window, and that opt-in is only reachable through the class
+      that is missing). On this app's dark title bar that is a row of pale blocks.
+  So `windows_caption.rs` renders the glyphs with GDI from **the font Windows
+  draws its caption buttons with** — `Segoe Fluent Icons` on Windows 11,
+  `Segoe MDL2 Assets` on Windows 10, tried in that order and the first one that
+  actually draws the glyph wins — and fills them with DWM's own colours: the
+  caption ink at 10% on hover and 20% pressed, and `#c42b1c` / `#b02518` for the
+  close button. The three shapes, the metrics and the behaviour are the
+  platform's; the two colours DWM would have supplied are the constants above,
+  which is the same trade Windows Terminal and Chromium make. (The wash
+  percentages are the app's own numbers, chosen to read clearly against a dark
+  title bar; six and twelve were tried first and a press was not legible at that
+  strength.)
+  One deliberate deviation: the ink follows the **app's** palette, not the
+  system's, because the title bar the glyphs sit on is the app's. A white glyph
+  is right on Catppuccin Mocha and invisible on Latte, and the system theme
+  cannot know which one is in use. `ThemeProvider` reports the resolved palette
+  through `App.set-caption-dark` and the artwork is re-rendered when it changes;
+  the tokens themselves animate over 300ms, this does not, which is what the
+  platform wants (it cannot interpolate its own glyphs). The close button's glyph
+  is the one exception: once it is on its red plate it is white in both themes,
+  because that is the only ink that reads on that red.
+- **The window controls' fill is a colour, not part of the bitmap** — the one
+  non-obvious decision in `windows_caption.rs`, and the reason hovering and
+  pressing animate at all. Only the glyph is rendered; the wash behind it is
+  published as a pair of colours, so `SystemWindowControl` can interpolate it.
+  Three things follow from that, and they are worth knowing before changing it:
+    - **Hovering and pressing are the fill changing**, so a fill that can be
+      interpolated *is* the transition. Baking it into the bitmap would allow only
+      a cross-fade between two finished rasters, and three of those cannot be
+      stacked: they composite additively, so a press would read as hover *plus*
+      pressed. The state is one animated float (0 / 1 / 2) and the glyph never
+      moves.
+    - **Two animated numbers, not one**: `hover-level` at 120ms and `press-level`
+      at 60ms, summed. The press rides on top of the hover instead of replacing
+      it, which is what lets go drop straight back to a hover while only *leaving*
+      takes the full hover duration — the asymmetry the platform's own buttons
+      have.
+    - **`press-fill` is an increment, not a fill.** The two layers are stacked, so
+      compositing washes of `a` and `b` lands on `a + b - a·b`; the increment that
+      reaches the intended pressed strength is `(pressed - hover) / (1 - hover)`,
+      worked out in Rust where the numbers live. `hover 10% / pressed 20%` becomes
+      layers of 26 and 28, not 26 and 51.
+    - Slint's `Color.mix` is *not* usable for this. Its factor weights the
+      **receiver** (`a.mix(&b, 0)` is `b`), and it is alpha-aware per the Sass
+      spec rather than a plain lerp. Both were found the hard way, from a fill
+      that came out inverted. Two `Rectangle`s with animated `opacity` need
+      nothing but `opacity` and are exactly predictable.
+    - Only the close button's glyph changes ink (its fill is opaque, so the
+      caption ink would not read on the red), which is what `plate` in
+      `WindowControl` means. Minimize and maximize keep one image at full opacity
+      and let the wash move — and are gated on `plate` rather than cross-faded
+      unconditionally, because cross-fading an image with itself composites it
+      twice, landing short of opaque mid-transition and making the glyph thin out
+      as it moves.
 - **Icons**: the original uses Font Awesome Pro (`fa-pro`), which can't be
   shipped. The search glyph is currently a hand-embedded path; a proper icon
-  strategy (e.g. the SVGs in `src/assets/icons/`) is still to be decided.
-- The placeholder view contains dev-only English strings; real localized text
+  strategy (e.g. the SVGs in `src/assets/icons/`) is still to be decided.- The placeholder view contains dev-only English strings; real localized text
   arrives with the actual views.

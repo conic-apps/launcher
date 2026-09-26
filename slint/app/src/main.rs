@@ -25,6 +25,9 @@ mod settings;
 #[cfg(target_os = "macos")]
 mod traffic_lights;
 
+#[cfg(target_os = "windows")]
+mod windows_caption;
+
 use std::{cell::RefCell, rc::Rc};
 
 use log::LevelFilter;
@@ -77,6 +80,24 @@ fn main() {
         set_platform(Box::new(backend)).expect("failed to install the winit backend");
     }
 
+    // Windows is frameless in the same sense as macOS: the client area covers
+    // the whole window, so the custom title bar reaches the top edge and the
+    // platform's own window controls sit on top of it (see `windows_caption`).
+    // The window is *created* that way rather than left to `app.slint`'s
+    // `no-frame`, because Slint only applies that once the window exists — and
+    // winit would size the first, still-decorated window for a caption that is
+    // about to disappear, leaving the app a frame's width and height too big.
+    #[cfg(target_os = "windows")]
+    {
+        use slint::platform::set_platform;
+
+        let backend = i_slint_backend_winit::Backend::builder()
+            .with_window_attributes_hook(|attributes| attributes.with_decorations(false))
+            .build()
+            .expect("failed to build the winit backend");
+        set_platform(Box::new(backend)).expect("failed to install the winit backend");
+    }
+
     // The custom title bar is 44px tall, so the native traffic lights have to
     // sit lower than AppKit's own title bar would put them. This has to happen
     // before the first window exists — see the `traffic_lights` module.
@@ -107,11 +128,17 @@ fn main() {
     let platform = slint_platform::PLATFORM_INFO.clone();
     ui.set_macos(platform.os_family == slint_platform::OsFamily::Macos);
     ui.set_linux(platform.os_family == slint_platform::OsFamily::Linux);
+    ui.set_windows(platform.os_family == slint_platform::OsFamily::Windows);
     log::info!(
         "detected platform: {:?} ({})",
         platform.os_type,
         platform.os_family
     );
+
+    // Windows draws the platform's own window controls over the title bar, so
+    // the title bar has to leave room for them (see `windows_caption`).
+    #[cfg(target_os = "windows")]
+    ui.set_window_controls_inset(windows_caption::controls_inset());
 
     // The search placeholder is translated in app.slint via `@tr`; the hotkey
     // is platform-specific (not translated).
@@ -153,6 +180,21 @@ fn main() {
     install_app_icon_observer();
 
     let window = WindowService::new(ui.clone_strong());
+
+    // Windows: hand the window frame to the platform so it draws its own window
+    // controls over the custom title bar. The window procedure that does it is
+    // installed as soon as there is a window to install it on, and the controls
+    // take their ink from whatever theme the app resolved to.
+    #[cfg(target_os = "windows")]
+    {
+        windows_caption::install(&ui);
+
+        let frame = window.clone();
+        ui.on_set_caption_dark(move |dark| windows_caption::set_dark(frame.window(), dark));
+    }
+    // Nothing else has a caption of its own to colour.
+    #[cfg(not(target_os = "windows"))]
+    ui.on_set_caption_dark(|_| {});
 
     let minimize_window = window.clone();
     ui.on_minimize_window(move || {
