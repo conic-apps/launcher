@@ -270,7 +270,7 @@ unsafe extern "system" fn window_proc(
 /// Both are given up when this is dropped, which is what tells the next launch
 /// the role is free.
 #[derive(Default)]
-pub(crate) struct Guard {
+pub struct Guard {
     /// The handle to the named mutex, released and closed on drop.
     mutex: Option<HANDLE>,
 
@@ -282,6 +282,14 @@ pub(crate) struct Guard {
     /// usually a different one; the process ending destroys the window anyway.
     owner: u32,
 }
+
+// The handles are `*mut c_void`, which is not `Send` because nothing about the
+// type says so — they are opaque kernel and user32 handles, not pointers into
+// this process' memory. Every operation on them is thread-safe except
+// destroying the window, and `Drop` only does that on the thread that created
+// it. Moving the claim to a watcher thread is what requires this; the app's
+// `watch_launches` does exactly that.
+unsafe impl Send for Guard {}
 
 impl Drop for Guard {
     fn drop(&mut self) {

@@ -152,3 +152,20 @@ pub(crate) fn report(launches: &Sender<Launch>, launch: Launch) {
         log::debug!(target: "shell", "a launch was not handed over: {error}");
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::SingleInstance;
+
+    /// The claim has to survive a move onto a thread, because that is where the
+    /// app waits for later launches (it cannot be told about them before its
+    /// event loop exists). Nothing inside the crate requires that, so nothing
+    /// inside the crate would notice it breaking either: on Windows the claim
+    /// holds a `HANDLE` and an `HWND`, which are `*mut c_void` and therefore
+    /// `!Send` until the backend says otherwise.
+    #[test]
+    fn the_claim_can_move_to_another_thread() {
+        fn assert_send<T: Send>() {}
+        assert_send::<SingleInstance>();
+    }
+}
