@@ -2,6 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+import { AccountAddDialog } from "dialogs/account-add.slint";
 import { CreateInstance } from "dialogs/create-instance.slint";
 
 // The overlay layer (src/overlays/DialogRoot.vue): one instance per dialog,
@@ -17,4 +18,5 @@ export component DialogRoot inherits Rectangle {
     background: transparent;
 
     CreateInstance { }
+    AccountAddDialog { }
 }

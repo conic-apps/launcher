@@ -16,7 +16,10 @@ component FooterButton inherits Rectangle {
     in property <string> label-text: "";
     callback clicked;
 
-    width: show-label ? 36px + label.preferred-width + 12px : 36px;
+    // `padding: 0 12px` around a 22px icon on each side; the labelled
+    // "New instance" adds the icon's own `margin-right: 8px` and the label.
+    width: root.show-label ? 54px + label.preferred-width : 46px;
+    private property <length> label-width: root.show-label ? label.preferred-width : 0px;
     height: 36px;
     border-radius: 8px;
     background: button-touch.pressed ? Theme.surface-1
@@ -27,16 +30,23 @@ component FooterButton inherits Rectangle {
 
     HorizontalLayout {
         alignment: center;
-        spacing: 4px;
+        // The label is hidden on the icon-only buttons but its cell stays in the
+        // layout — and Slint gives even an *empty* `Text` a few pixels of
+        // preferred width — so both its width and its gap have to be zeroed or
+        // the icon is pushed left of centre and the button reads as
+        // right-padded only. The width is a property of its own because the
+        // button's own width needs the label's, which `visible` cannot give.
+        spacing: root.show-label ? 8px : 0px;
         cross-axis-alignment: center;
 
         AppIcon {
             name: root.icon;
-            size: 20px;
+            size: 22px;
             icon-color: Theme.default-text-color.transparentize(0.1);
         }
 
         label := Text {
+            width: root.label-width;
             text: root.label-text;
             font-size: 14px;
             font-weight: Theme.font-weight-normal;
@@ -91,40 +101,6 @@ export component GameFooterBar inherits Rectangle {
         width: root.width;
         height: root.height;
         background: Theme.surface-0.transparentize(0.4);
-
-        // ----- account avatar -----
-        avatar-wrap := Rectangle {
-            x: 28px;
-            y: -18px + self.intro-dy;
-            width: 56px;
-            height: 56px;
-            background: transparent;
-            opacity: self.intro-alpha;
-
-            private property <length> intro-dy: GameIntro.played ? 0px : 10px;
-            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-            animate intro-dy { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
-            animate intro-alpha { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
-
-            AccountAvatar {
-                width: 100%;
-                height: 100%;
-                kind: GameState.current-account-kind;
-                unlogged: !GameState.has-account;
-            }
-
-            avatar-touch := TouchArea {
-                width: parent.width;
-                height: parent.height;
-                clicked => {
-                    if GameState.has-account {
-                        GameState.open-accounts();
-                    } else {
-                        GameState.open-add-account();
-                    }
-                }
-            }
-        }
 
         // ----- account name / switcher + connect -----
         if GameState.has-account : account-layer := Rectangle {
@@ -210,6 +186,49 @@ export component GameFooterBar inherits Rectangle {
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
                 animate intro-dy { duration: root.item-duration; delay: 200ms; easing: ease-out-quart; }
                 animate intro-alpha { duration: root.item-duration; delay: 200ms; easing: ease-out-quart; }
+            }
+        }
+
+        // ----- account avatar -----
+        // Declared after the account layers, although the Vue's template puts it
+        // first: there the avatar is `z-index: 2` and every sibling `z-index: 1`
+        // (`.game-view-footer > :not(.footer-visualizer)`), so its 56px circle —
+        // inset 28px from the left, overhanging the bar by 18px — is painted
+        // *over* the left 16px of the name pill it overlaps. Slint paints
+        // siblings in declaration order unless `z` is set, and the compiler
+        // ignores `z` on a component instance's root, so here the order is the
+        // z-order.
+        avatar-wrap := Rectangle {
+            x: 28px;
+            y: -18px + self.intro-dy;
+            width: 56px;
+            height: 56px;
+            background: transparent;
+            opacity: self.intro-alpha;
+
+            private property <length> intro-dy: GameIntro.played ? 0px : 10px;
+            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+            animate intro-dy { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
+            animate intro-alpha { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
+
+            AccountAvatar {
+                width: 100%;
+                height: 100%;
+                skin: GameState.current-account-avatar;
+                kind: GameState.current-account-kind;
+                unlogged: !GameState.has-account;
+            }
+
+            avatar-touch := TouchArea {
+                width: parent.width;
+                height: parent.height;
+                clicked => {
+                    if GameState.has-account {
+                        GameState.open-accounts();
+                    } else {
+                        GameState.open-add-account();
+                    }
+                }
             }
         }
 

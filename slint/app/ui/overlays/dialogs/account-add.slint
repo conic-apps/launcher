@@ -1,0 +1,43 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { BaseDialog } from "../../components/base-dialog.slint";
+import { Dialogs } from "../../globals/dialogs.slint";
+import { AccountAdd } from "../../views/accounts/account-add.slint";
+
+// The add-account dialog (src/overlays/dialogs/AccountAdd.vue), which is the
+// `views/accounts/AccountAdd.vue` body inside a plain modal.
+//
+// The Vue's `BaseDialog` is used `animate-height`: the panel is `fit-content`
+// and tweens to the mounted screen's height over 300ms `power2.out` — an
+// `ease-out-quad` here. Slint has no fit-content panel mode, so the height is
+// taken from the measuring layout the content is written in: `body` is a
+// VerticalLayout, so its `preferred-height` is the content's height, and it is
+// evaluated before the panel's height is applied to it (the content's *width*
+// comes from the panel, the height does not, so the two do not depend on each
+// other).
+//
+// 572px is the Vue's 540px body plus the dialog's 16px padding on each side,
+// which leaves `BaseDialog.content-width` at exactly 540.
+export component AccountAddDialog inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    private property <length> panel-height: body.preferred-height + 32px;
+    animate panel-height {
+        duration: 300ms;
+        easing: ease-out-quad;
+    }
+
+    dialog := BaseDialog {
+        dialog-visible: Dialogs.account-add-visible;
+        dialog-width: 572px;
+        dialog-height: root.panel-height;
+
+        body := AccountAdd {
+            content-width: dialog.content-width;
+        }
+    }
+}

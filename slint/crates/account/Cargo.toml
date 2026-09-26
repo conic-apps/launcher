@@ -8,7 +8,16 @@ repository.workspace = true
 
 [dependencies]
 slint-folder.workspace = true
+
+base64.workspace = true
+futures.workspace = true
 log.workspace = true
+md-5.workspace = true
+once_cell.workspace = true
+reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+url.workspace = true
 uuid.workspace = true

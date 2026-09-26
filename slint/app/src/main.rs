@@ -12,6 +12,8 @@ pub(crate) mod slint_backend {
     slint::include_modules!();
 }
 
+mod account_add;
+mod account_avatar;
 mod cjk_font;
 mod config_bridge;
 mod create_instance;
@@ -93,6 +95,9 @@ fn main() {
     // first request, which is why it is done here rather than when a version
     // list is first fetched.
     slint_install::set_system_proxy(config.download.use_system_proxy);
+    // The account crate keeps its own client (see its `shared` module), so it
+    // needs the same answer.
+    slint_account::set_system_proxy(config.download.use_system_proxy);
 
     // Pick the bundled translation. Must run after a component exists (that's
     // what installs the translation bundle).
@@ -123,6 +128,7 @@ fn main() {
     settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     game::setup(&ui, Rc::clone(&shared));
     create_instance::setup(&ui, Rc::clone(&shared));
+    account_add::setup(&ui);
     // The clock and the wheel/trackpad classification the scroll containers use.
     scroll_input::setup(&ui);
 

@@ -1,0 +1,71 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// Tick box (src/components/BaseCheckbox.vue): an 18x18 box, 4px radius,
+// translucent hairline, filled with the pinned latte lavender when checked,
+// with a white tick inside.
+//
+// The Vue hides a real `<input type="checkbox">` inside the label and styles a
+// sibling `span` from it; here the box is drawn directly and `toggled` reports
+// the click. Its callers in the add-account dialog drive the selection from the
+// whole row, exactly as the Vue's rows do (they toggle from the row *and* from
+// the checkbox, each stopping the other), so the box itself is usually drawn
+// with only its `checked` state fed.
+export component BaseCheckbox inherits Rectangle {
+    in property <bool> checked: false;
+    in property <bool> checkbox-enabled: true;
+    callback toggled;
+
+    width: 18px;
+    height: 18px;
+
+    box := Rectangle {
+        width: parent.width;
+        height: parent.height;
+        border-radius: 4px;
+        // `border: 1.5px solid var(--ctp-overlay0)`, turning subtext0 on hover.
+        border-width: 1.5px;
+        border-color: root.checked ? Theme.latte-lavender
+            : hover.has-hover ? Theme.subtext-0
+            : Theme.overlay-0;
+        background: root.checked ? Theme.latte-lavender : transparent;
+        opacity: root.checkbox-enabled ? 1.0 : 0.5;
+        animate background, border-color { duration: 150ms; easing: ease; }
+
+        // `.checkmark::after`: a 5x9 box carrying only its right and bottom
+        // borders — the tick — turned 45 degrees. The Vue centres it in the
+        // flex row with a 1px bottom margin, which is the 1px lift here.
+        if root.checked : glyph := Rectangle {
+            width: 5px;
+            height: 9px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2 - 1px;
+            background: transparent;
+            transform-rotation: 45deg;
+
+            Rectangle {
+                x: parent.width - 2px;
+                width: 2px;
+                height: parent.height;
+                background: #fff;
+            }
+
+            Rectangle {
+                y: parent.height - 2px;
+                width: parent.width;
+                height: 2px;
+                background: #fff;
+            }
+        }
+    }
+
+    hover := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        enabled: root.checkbox-enabled;
+        clicked => { root.toggled(); }
+    }
+}

@@ -291,6 +291,13 @@ export global Theme {
     in property <length> font-size-base: 16px;
     in property <int> font-weight-normal: 400;
     in property <int> font-weight-bold: 700;
+
+    // `--ctp-latte-lavender`, which the stylesheet declares once in `:root`
+    // rather than per flavor: the add-account dialog's "create" buttons and its
+    // checkboxes use it, so they stay the same lavender in every palette (the
+    // original never themed them). Not a `ThemeProvider` token — there is
+    // nothing to animate.
+    in property <color> latte-lavender: #7287fd;
 }
 
 // Produces the theme colors from the selected palette and interpolates them
