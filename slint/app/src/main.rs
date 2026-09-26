@@ -26,7 +26,7 @@ mod traffic_lights;
 use std::{cell::RefCell, rc::Rc};
 
 use log::LevelFilter;
-use slint::{ComponentHandle, Timer};
+use slint::{ComponentHandle, Timer, Weak};
 
 use slint_backend::{App, AppConfig};
 use slint_window::WindowService;
@@ -39,6 +39,19 @@ fn main() {
     // Create the data directory layout (shares `~/.conic[-debug]` with the
     // Tauri app) before anything reads from it.
     slint_folder::DATA_LOCATION.init();
+
+    // Claim the single-instance role before anything else: a second launch of
+    // the app is not a second window, it is this window coming forward. The
+    // claim has to happen before the window exists, and the launches that come
+    // with it arrive long after this function has moved on — the running
+    // instance cannot be told about them yet, so they queue up until the
+    // watcher below picks them up.
+    let Ok(single_instance) = slint_single_instance::try_acquire() else {
+        // The instance that is already running has just been told about this
+        // launch, so this process has nothing left to do but go away.
+        log::info!(target: "shell", "another instance is already running");
+        return;
+    };
 
     // macOS gets the Chrome-style window: a native titled window with a
     // transparent, title-less titlebar and a full-size content view, so the
@@ -151,6 +164,14 @@ fn main() {
     });
     log::debug!(target: "shell", "init window state — maximized: {}", window.is_maximized());
 
+    // The app is the only instance of it now, so it can be told about the next
+    // launch. The claim moves onto the watcher's thread, which is where the
+    // launches arrive, and stays there for as long as the process lives.
+    //
+    // A weak handle is what crosses over: a Slint component is `Send` but not
+    // `Sync`, so a strong one cannot be moved onto the watcher's thread at all.
+    watch_launches(single_instance, ui.as_weak());
+
     // Double-clicking the title bar zooms (macOS: native fullscreen space,
     // elsewhere: maximized), matching the system convention.
     let macos = ui.get_macos();
@@ -166,6 +187,43 @@ fn main() {
     });
 
     ui.run().expect("failed to run the shell event loop");
+}
+
+/// Brings the window forward for every later launch of the app.
+///
+/// This is the Slint half of what `tauri-plugin-single-instance` does for the
+/// Tauri app: its callback focuses the first webview window, and this does the
+/// same through [`WindowService::bring_to_front`].
+///
+/// The launches arrive on a platform thread — a D-Bus worker, a `WM_COPYDATA`
+/// window message, a socket reader — so the window is only ever touched from
+/// the event loop, which is what the weak handle is upgraded in. `SingleInstance`
+/// moves in here as well: it holds the single-instance claim, which has to
+/// outlive the setup in `main`.
+fn watch_launches(single_instance: slint_single_instance::SingleInstance, app: Weak<App>) {
+    std::thread::Builder::new()
+        .name("conic-single-instance".into())
+        .spawn(move || {
+            while let Some(launch) = single_instance.next_launch() {
+                log::info!(
+                    target: "shell",
+                    "another launch was handed over: {:?} (in {})",
+                    launch.args,
+                    launch.cwd
+                );
+                // TODO(migration): the arguments are the deep-link payload the
+                // accounts view consumes (the Microsoft login's `?code=…`,
+                // reached through the desktop entry's `conic-launcher://`
+                // handler) — route them there once it is migrated.
+                let app = app.clone();
+                if let Err(error) = app.upgrade_in_event_loop(move |app| {
+                    WindowService::new(app).bring_to_front();
+                }) {
+                    log::debug!(target: "shell", "the window was not brought forward: {error}");
+                }
+            }
+        })
+        .expect("failed to start the single-instance watcher");
 }
 
 /// Sets the macOS Dock / task-switcher icon.
