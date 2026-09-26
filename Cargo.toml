@@ -46,6 +46,7 @@ slint-instance = { path = "./slint/crates/instance", version = "0.0.0" }
 slint-content = { path = "./slint/crates/content", version = "0.0.0" }
 slint-install = { path = "./slint/crates/install", version = "0.0.0" }
 slint-java-runtime = { path = "./slint/crates/java-runtime", version = "0.0.0" }
+slint-single-instance = { path = "./slint/crates/single-instance", version = "0.0.0" }
 
 # ----- non-local crates -----
 base64 = "0.22"

@@ -9,17 +9,18 @@ import { FocusManager } from "../globals/focus.slint";
 // A titled group of settings (src/components/SettingGroup.vue).
 //
 // `width: calc(100% - 16px); margin: 0 auto` becomes a full-width layout whose
-// items are inset by the settings page (`padding: 0 8px`). The Vue rounds the
-// first and last child to 8px and leaves the wrapper's own corners to the
-// border; here every row is rounded instead — a row does not know whether it is
-// the first or the last — and this wrapper paints the card behind them, in the
-// colour a row paints, so the notches their corners leave at the two ends of
-// the card and at the 1px seams between rows are filled in.
+// items are inset by the settings page (`padding: 0 8px`).
 //
-// Clipping the wrapper to its own radius rounds the rows just as well, and is
-// what this did before, but it also cuts off the value tooltip a control in the
-// first row draws above itself: `.setting-items` has no `overflow` and lets
-// that tooltip through.
+// The corners are the rows', not the wrapper's: the Vue rounds `:first-child`
+// and `:last-child` and puts no `overflow` on `.setting-items`, so the two ways
+// of doing it here are both wrong. Clipping the wrapper rounds the rows, but
+// cuts off the value tooltip a control in the first row draws above itself.
+// Rounding every row and painting the card behind them leaves a notch at each
+// row's corners and at every 1px seam, which only the card's colour hides — and
+// a hovered row is a lighter colour, so its four corners show the base one
+// through. `SettingItem`'s `group-first` / `group-last` do what the Vue's
+// selectors do: the two rows that end the group round the two corners they are
+// on, and nothing else rounds anything.
 export component SettingGroup inherits VerticalLayout {
     in property <string> title: "";
     in property <bool> resetable: false;
@@ -73,8 +74,7 @@ export component SettingGroup inherits VerticalLayout {
 
     items := Rectangle {
         width: 100%;
-        border-radius: 8px;
-        background: Theme.setting-item-background;
+        background: transparent;
 
         VerticalLayout {
             spacing: 1px;

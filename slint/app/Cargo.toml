@@ -28,6 +28,7 @@ slint-instance.workspace = true
 slint-content.workspace = true
 slint-install.workspace = true
 slint-java-runtime.workspace = true
+slint-single-instance.workspace = true
 # For the `data:` URLs the account crates store skins as (`account_avatar`).
 base64.workspace = true
 # Decoding a skin texture into the pixel buffer `AccountAvatar` draws.
