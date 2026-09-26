@@ -1,0 +1,111 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+
+// One service button of the selector: a 32px pill with a 15px icon and its
+// label, spelled out rather than laid out by the parent so the row can be as
+// wide as the three of them.
+component ServiceButton inherits Rectangle {
+    in property <string> label: "";
+    in property <string> icon: "";
+    in property <bool> active: false;
+    callback clicked;
+
+    width: content.preferred-width;
+    height: 32px;
+    border-radius: 4px;
+    // `background: none`, then surface0 on hover, surface1 while pressed and
+    // surface2 for the selected one. The selected fill comes first: the Vue
+    // declares `.item.active` after its `:hover` / `:active` rules and both
+    // selectors weigh the same, so the later one wins there — a selected button
+    // does not react to the pointer at all.
+    background: root.active ? Theme.surface-2
+        : button-touch.pressed ? Theme.surface-1
+        : button-touch.has-hover ? Theme.surface-0
+        : transparent;
+    animate background { duration: 100ms; easing: ease; }
+
+    content := HorizontalLayout {
+        width: parent.width;
+        height: parent.height;
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 4px;
+        alignment: center;
+        cross-axis-alignment: center;
+
+        AppIcon {
+            name: root.icon;
+            size: 15px;
+            // `color: rgba(var(--ctp-text-rgb), 0.7)`, fully opaque when active.
+            icon-color: Theme.text.with-alpha(root.active ? 1.0 : 0.7);
+        }
+
+        Text {
+            text: root.label;
+            font-size: 13px;
+            color: Theme.text.with-alpha(root.active ? 1.0 : 0.7);
+        }
+    }
+
+    button-touch := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => { root.clicked(); }
+    }
+}
+
+// The auth-service selector of the add-account dialog
+// (src/views/accounts/AccountAddSelect.vue): "Microsoft | External | Offline",
+// at the right-hand end of the dialog's header.
+export component AccountAddSelect inherits Rectangle {
+    /// Which service is selected — "microsoft" | "yggdrasil" | "offline".
+    in-out property <string> value: "microsoft";
+    /// Frozen while a screen is mid-flow (Vue `disabled`: 0.6 opacity and no
+    /// pointer events).
+    in property <bool> select-enabled: true;
+    callback selected(string);
+
+    width: row.preferred-width;
+    height: 32px;
+    opacity: root.select-enabled ? 1.0 : 0.6;
+
+    row := HorizontalLayout {
+        width: parent.width;
+        height: parent.height;
+        spacing: 4px;
+        alignment: center;
+        cross-axis-alignment: center;
+
+        ServiceButton {
+            label: @tr("Microsoft");
+            icon: "logo-microsoft";
+            active: root.value == "microsoft";
+            clicked => { root.selected("microsoft"); }
+        }
+
+        ServiceButton {
+            label: @tr("External");
+            icon: "extension-puzzle";
+            active: root.value == "yggdrasil";
+            clicked => { root.selected("yggdrasil"); }
+        }
+
+        ServiceButton {
+            label: @tr("Offline");
+            icon: "cloud-offline-outline";
+            active: root.value == "offline";
+            clicked => { root.selected("offline"); }
+        }
+    }
+
+    // `&.disabled { pointer-events: none }`.
+    blocker := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        enabled: !root.select-enabled;
+    }
+}

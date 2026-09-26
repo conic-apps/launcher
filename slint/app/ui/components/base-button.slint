@@ -19,6 +19,11 @@ export component BaseButton inherits Rectangle {
     in property <bool> button-enabled: true;
     /// 0 keeps the content width.
     in property <length> button-width: 0px;
+    /// Fills the button instead of the default surface. The Vue's callers set
+    /// an inline `background`, which beats the class and so covers the hover and
+    /// pressed states too — the accented buttons of the add-account dialog are
+    /// exactly that. `transparent` (the default) keeps the default look.
+    in property <color> button-background: transparent;
     callback clicked;
 
     width: root.button-width > 0px ? root.button-width : button-label.preferred-width + 32px;
@@ -28,11 +33,19 @@ export component BaseButton inherits Rectangle {
     border-color: Theme.controllers-border;
     // Vue BaseButton: normal `--controllers-background`, hover `surface2` at
     // 85%, active raw `surface2`.
-    background: button-touch.pressed ? Theme.surface-2
+    background: root.button-background != transparent ? root.button-background
+        : button-touch.pressed ? Theme.surface-2
         : button-touch.has-hover ? Theme.surface-2.transparentize(0.15)
         : Theme.controllers-background;
+    // `&:hover { transform: scale(1.02) }` and `&:active { transform: scale(0.97) }`.
+    // A `button-background` pins the fill above and so leaves the press with no
+    // feedback of its own — this is what the accented buttons have left, and
+    // what the Vue has them do (an inline `background` beats the class, a
+    // transform is not part of it).
+    transform-scale: button-touch.pressed ? 97% : button-touch.has-hover ? 102% : 100%;
     opacity: root.button-enabled ? 1.0 : 0.5;
-    animate background { duration: 150ms; }
+    // `transition: all 150ms ease` covers both tracks.
+    animate background, transform-scale { duration: 150ms; easing: ease; }
 
     button-label := Text {
         text: root.text;

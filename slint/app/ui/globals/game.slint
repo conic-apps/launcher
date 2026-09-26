@@ -73,6 +73,9 @@ export struct AccountItem {
     name: string,
     /// "Microsoft" / "Offline" / "Yggdrasil".
     kind: string,
+    /// The head the row's 18px avatar shows, built by Rust (only it can crop a
+    /// skin).
+    avatar: image,
 }
 
 /// Relative time / play time formatting helpers.
@@ -189,9 +192,16 @@ export global GameState {
     in-out property <string> current-account-key: "";
     in-out property <string> current-account-name: "";
     in-out property <string> current-account-kind: "";
+    /// The 56px head on the footer's avatar. The wide Steve while no account is
+    /// selected, which is what the Vue's logged-out branch passes.
+    in-out property <image> current-account-avatar;
 
     // Called once at startup and whenever something changed on disk.
     callback refresh();
+    // An account was added or removed: pick one when none is selected (the
+    // Vue store's `selectNextAccount`). Rust owns the config, so this runs
+    // there rather than in the dialog's script.
+    callback select-first-account();
     // An instance card was clicked.
     callback select-instance(string);
     // A group header was clicked.

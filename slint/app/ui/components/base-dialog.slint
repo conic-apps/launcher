@@ -181,12 +181,21 @@ export component BaseDialog inherits Rectangle {
         }
 
         // `padding: 16px` of `.dialog > .content`.
+        //
+        // This is also where the Vue's clip sits: `overflow-y: overlay` on
+        // `.content` makes `overflow-x` compute to `auto`, so the box clips at
+        // its padding edge — the 540px of a dialog body, not the 524px inside
+        // it. That margin matters: a control that grows (the buttons scale to
+        // 102% on hover) overflows into the body's own padding, and clipping at
+        // the inner edge would slice the growth off. A rectangular clip, which
+        // is what keeps it free of a render layer.
         content := Rectangle {
             x: 16px;
             y: 16px;
             width: parent.width - 32px;
             height: parent.height - 32px;
             background: transparent;
+            clip: true;
             @children
         }
     }

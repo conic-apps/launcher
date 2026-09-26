@@ -1,0 +1,472 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { BaseButton } from "../../components/base-button.slint";
+import { BaseLoading } from "../../components/base-loading.slint";
+import { SlideTransition } from "../../components/slide-transition.slint";
+import { AccountAddState } from "../../globals/dialogs.slint";
+
+// The "copied!" bubble (`.link-box .tooltip`): 12px text in a card-coloured
+// box with a hairline, floating 8px above whatever it is anchored to.
+//
+// It is a component of its own because it is only ever placed by its bottom
+// edge, so the anchor does the positioning and both call sites share it.
+component CopiedTooltip inherits Rectangle {
+    width: label.width + 20px;
+    height: label.height + 8px;
+    background: Theme.card-background;
+    border-width: 1px;
+    border-color: Theme.overlay-2.with-alpha(0.5);
+    border-radius: 4px;
+
+    label := Text {
+        x: 10px;
+        y: 4px;
+        text: @tr("AccountAddMicrosoft" => "Copied!");
+        font-size: 12px;
+        color: Theme.default-text-color.transparentize(0.1);
+    }
+}
+
+// "Sign in with Microsoft" — the first screen of the add-account dialog
+// (src/views/accounts/AccountAddMicrosoft.vue).
+//
+// The screen shows one of four states, swapped with the same `mode="out-in"`
+// beat the dialog's shell uses for its screens (see `account-add.slint`): the
+// mounted state plays its 80ms slide-out first, then the arriving one plays its
+// 250ms slide-in. Which state is mounted is `AccountAddState.ms-view`, which
+// `app/src/account_add.rs` drives — the screen only decides how each looks.
+export component AccountAddMicrosoft inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    // `start`: the screen's own height changes as its states swap, and a
+    // stretching column would spread that over the rows instead (see
+    // `AccountAdd`).
+    alignment: start;
+
+    // ----- the swap between the four states -----
+    // A `changed` handler cannot take a qualified global property, so the view
+    // is mirrored into a local first (`base-input.slint` does the same with the
+    // focus counter).
+    private property <string> view: AccountAddState.ms-view;
+    /// The state actually mounted — one 80ms beat behind `view`.
+    private property <string> shown: "";
+    private property <bool> leaving: false;
+    private property <bool> leave-armed: false;
+    private property <bool> enter-armed: false;
+    private property <string> arrive-phase: "shown";
+
+    // The Vue's `transitionName`: everything after the first screen slides in
+    // from the right, and the first screen slides back in from the left.
+    private property <string> direction: (root.view == "processing" || root.view == "error"
+            || root.view == "device-code") ? "left" : "right";
+
+    init => {
+        // The Vue's `<Transition>` has no `appear`, so the state the screen
+        // opens in is simply mounted.
+        root.shown = root.view;
+    }
+
+    changed view => {
+        if root.shown == "" {
+            root.shown = root.view;
+        } else if root.view == root.shown {
+            root.leaving = false;
+            root.leave-armed = false;
+        } else {
+            root.leaving = true;
+            root.leave-armed = true;
+            leave-timer.restart();
+        }
+    }
+
+    // The `mode="out-in"` beat: the mounted state plays its leave, and the
+    // arriving one is mounted when that is over.
+    leave-timer := Timer {
+        interval: 80ms;
+        running: root.leave-armed;
+        triggered => {
+            root.leave-armed = false;
+            root.leaving = false;
+            if root.view != root.shown {
+                root.shown = root.view;
+                root.arrive-phase = "enter";
+                root.enter-armed = true;
+            }
+        }
+    }
+
+    // The arriving state is mounted at its enter rest and moves to "shown" one
+    // frame later: an element created and finished in the same frame has
+    // nothing to animate from, and the enter became a jump.
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.enter-armed;
+        triggered => {
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+        }
+    }
+
+    // The device code's countdown (Vue `startCountdown`). The Vue starts and
+    // stops an interval by hand; here it simply runs while the code is on
+    // screen and has seconds left.
+    countdown := Timer {
+        interval: 1000ms;
+        running: root.shown == "device-code" && AccountAddState.ms-expires-in > 0;
+        triggered => { AccountAddState.ms-expires-in -= 1; }
+    }
+
+    // The three "copied!" hints, each cleared 1.5s after it was set.
+    copied-link-timer := Timer {
+        interval: 1500ms;
+        running: AccountAddState.ms-copied-link;
+        triggered => { AccountAddState.ms-copied-link = false; }
+    }
+    copied-timer := Timer {
+        interval: 1500ms;
+        running: AccountAddState.ms-copied;
+        triggered => { AccountAddState.ms-copied = false; }
+    }
+    copied-code-timer := Timer {
+        interval: 1500ms;
+        running: AccountAddState.ms-copied-code;
+        triggered => { AccountAddState.ms-copied-code = false; }
+    }
+
+    /// The step a running login is on (Vue `describeProgress`).
+    ///
+    /// It lives here rather than in the script so that a language change
+    /// re-renders it: Slint re-evaluates `@tr` bindings when the locale changes.
+    pure function progress-text(job: string) -> string {
+        if job == "prepare" { return @tr("Preparing to log in"); }
+        if job == "request-device-code" { return @tr("Requesting a device code"); }
+        if job == "redeem-access-token" { return @tr("Getting the access token"); }
+        if job == "xbox-authenticate" { return @tr("Signing in to Xbox"); }
+        if job == "xsts-authenticate" { return @tr("Verifying XSTS"); }
+        if job == "minecraft-authenticate" { return @tr("Getting the Minecraft access token"); }
+        if job == "get-profile" { return @tr("Getting the game profile"); }
+        if job == "save-account" { return @tr("Saving the account"); }
+        return "";
+    }
+
+    /// How long the device code is still valid (Vue `formatCountdown`).
+    ///
+    /// `floor`, because Slint's `/` is a floating-point division even on two
+    /// integers: 898 seconds would otherwise read as "14.966666 min".
+    pure function countdown-text(seconds: int) -> string {
+        if seconds < 60 { return @tr("{} sec", seconds); }
+        return @tr("{} min {} sec", floor(seconds / 60), mod(seconds, 60));
+    }
+
+    // ----- the failure (Vue `div.error`: no styling of its own, so it inherits
+    // the dialog's 16px) -----
+    if root.shown == "error" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+
+        Text {
+            text: @tr("Login failed: {}", AccountAddState.ms-error);
+            wrap: word-wrap;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+    }
+
+    // ----- a login that has not reached the device code yet -----
+    if root.shown == "processing" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+        // `.processing { height: 120px }`: a box of a fixed height, with its
+        // content centred inside it.
+        min-height: 120px;
+        vertical-stretch: 0;
+
+        VerticalLayout {
+            width: 100%;
+            height: 120px;
+            // `justify-content: center; align-items: center;
+            // flex-direction: column; gap: 8px`.
+            alignment: center;
+            spacing: 8px;
+
+            // The arc, in a row that carries `.loading { padding: 8px }`.
+            HorizontalLayout {
+                alignment: center;
+                spacing: 8px;
+
+                BaseLoading {
+                    size: 40px;
+                    stroke-width: 5;
+                }
+            }
+
+            // `p.description { font-size: 14px; margin-bottom: 8px }`, on top of
+            // the column's own 8px gap.
+            Text {
+                text: root.progress-text(AccountAddState.ms-progress);
+                font-size: 14px;
+                horizontal-alignment: center;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+            Rectangle {
+                height: 8px;
+                background: transparent;
+            }
+        }
+    }
+
+    // ----- the device code -----
+    if root.shown == "device-code" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+
+        // `p.description { font-size: 14px; line-height: 1.3 }`, carrying the
+        // verification URI and the way back to the browser flow as its two
+        // links. `StyledText` is the only element that can hold a link inside a
+        // wrapping paragraph — Slint 1.18 has no click target for a span.
+        StyledText {
+            width: 100%;
+            text: @markdown("\{@tr("Open a web page on any device — ")}[\{AccountAddState.ms-verification-uri}](conic:open-verification)\{@tr(", enter the device code below and sign in. It expires in {}.", root.countdown-text(AccountAddState.ms-expires-in))} [\{@tr("Click here")}](conic:use-auth-code)\{@tr(" to sign in with your browser instead.")}");
+            default-font-size: 14px;
+            default-color: Theme.default-text-color.transparentize(0.1);
+            link-color: Theme.blue;
+            link-clicked(link) => {
+                if link == "conic:use-auth-code" {
+                    AccountAddState.use-auth-code-flow();
+                } else {
+                    AccountAddState.open-url(AccountAddState.ms-verification-uri);
+                }
+            }
+        }
+
+        // `div.link { width: 100%; margin-top: 8px }`, centred.
+        Rectangle {
+            height: 8px;
+            background: transparent;
+        }
+
+        Rectangle {
+            width: 100%;
+            height: 48px;
+            background: transparent;
+
+            // `ch` is the advance of "0" in the element's font, which Slint has
+            // no unit for, so the glyph is measured and multiplied.
+            zero-glyph := Text {
+                text: "0";
+                font-size: 20px;
+                visible: false;
+            }
+
+            // `.link-box.code-box { width: 20ch; height: 48px; background: none }`.
+            // The box keeps `.link-box`'s rounded hairline — the Vue clears only
+            // its background — and adds no padding, so the code is centred in
+            // the 20ch.
+            code-box := Rectangle {
+                x: (parent.width - self.width) / 2;
+                width: zero-glyph.preferred-width * 20;
+                height: parent.height;
+                border-radius: Theme.controllers-border-radius;
+                border-width: 1px;
+                border-color: Theme.controllers-border;
+                background: code-touch.pressed ? Theme.surface-1
+                    : code-touch.has-hover ? Theme.surface-0
+                    : transparent;
+                animate background { duration: 100ms; easing: ease; }
+
+                code-text := Text {
+                    y: 0;
+                    // `.code-copied p.link-text { transform: translateX(-8px) }`:
+                    // the code steps aside as the checkmark arrives. Slint has
+                    // no translation transform, so the text moves with its `x`.
+                    x: (parent.width - self.width) / 2 + (AccountAddState.ms-copied-code ? -8px : 0px);
+                    height: parent.height;
+                    text: AccountAddState.ms-user-code;
+                    font-size: 20px;
+                    letter-spacing: 4px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    animate x { duration: 300ms; easing: ease; }
+                }
+
+                // `.checkmark-wrapper { right: 8px }`, faded and scaled in with
+                // the tooltip it carries.
+                Rectangle {
+                    x: parent.width - self.width - 8px;
+                    y: (parent.height - self.height) / 2;
+                    width: checkmark.width;
+                    height: checkmark.height;
+                    background: transparent;
+                    opacity: AccountAddState.ms-copied-code ? 1.0 : 0.0;
+                    transform-scale: AccountAddState.ms-copied-code ? 100% : 0%;
+                    animate opacity, transform-scale { duration: 300ms; easing: ease; }
+
+                    checkmark := AppIcon {
+                        name: "checkmark-outline";
+                        size: 20px;
+                        icon-color: Theme.green;
+                    }
+
+                    CopiedTooltip {
+                        x: (parent.width - self.width) / 2;
+                        y: -self.height - 8px;
+                    }
+                }
+
+                code-touch := TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    clicked => {
+                        AccountAddState.copy-text(AccountAddState.ms-user-code);
+                        AccountAddState.ms-copied-code = true;
+                    }
+                }
+            }
+        }
+
+        // `div.buttons { margin-top: 16px; gap: 8px }`, which this row does not
+        // push to the right (unlike the other screens').
+        Rectangle {
+            height: 16px;
+            background: transparent;
+        }
+
+        HorizontalLayout {
+            spacing: 8px;
+
+            BaseButton {
+                // The Vue's `width: 100%` on a lone button in a flex row: it
+                // fills the row.
+                button-width: parent.width;
+                text: @tr("Cancel");
+                clicked => { AccountAddState.cancel-microsoft-login(); }
+            }
+        }
+    }
+
+    // ----- the browser flow -----
+    if root.shown == "auth-code" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+
+        StyledText {
+            width: 100%;
+            text: @markdown("\{@tr("Clicking \"Log in\" opens your browser to sign in. You can also ")}[\{@tr("copy the link")}](conic:copy-link)\{@tr(" and paste it into the browser. To finish signing in on another device, ")}[\{@tr("use a device code")}](conic:device-code)\{@tr(" instead.")}");
+            default-font-size: 14px;
+            default-color: Theme.default-text-color.transparentize(0.1);
+            link-color: Theme.blue;
+            link-clicked(link) => {
+                if link == "conic:device-code" {
+                    AccountAddState.use-device-code-flow();
+                } else {
+                    AccountAddState.copy-text(AccountAddState.auth-code-login-url);
+                    AccountAddState.ms-copied-link = true;
+                }
+            }
+        }
+
+        // `div.link { margin-top: 8px }`: the label, then the link box over the
+        // rest of the row.
+        Rectangle {
+            height: 8px;
+            background: transparent;
+        }
+
+        HorizontalLayout {
+            spacing: 0px;
+            cross-axis-alignment: center;
+
+            Text {
+                text: @tr("Login link:");
+                font-size: 14px;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+
+            link-box := Rectangle {
+                horizontal-stretch: 1;
+                height: 30px;
+                border-radius: Theme.controllers-border-radius;
+                background: link-touch.pressed ? Theme.controllers-background-focus
+                    : link-touch.has-hover ? Theme.controllers-background-hover
+                    : Theme.controllers-background;
+                border-width: 1px;
+                border-color: Theme.controllers-border;
+                animate background { duration: 100ms; easing: ease; }
+
+                Text {
+                    x: 8px;
+                    y: 0;
+                    height: parent.height;
+                    // `p.link-text { flex: 1; text-overflow: ellipsis }` with the
+                    // checkmark's `margin-left: 6px` beside it.
+                    width: parent.width - 16px - 6px - check-wrapper.width;
+                    text: AccountAddState.auth-code-login-url;
+                    vertical-alignment: center;
+                    overflow: elide;
+                    font-size: 12.5px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+
+                check-wrapper := Rectangle {
+                    x: parent.width - self.width - 8px;
+                    y: (parent.height - self.height) / 2;
+                    width: check-mark.width;
+                    height: check-mark.height;
+                    background: transparent;
+                    opacity: AccountAddState.ms-copied ? 1.0 : 0.0;
+                    transform-scale: AccountAddState.ms-copied ? 100% : 0%;
+                    animate opacity, transform-scale { duration: 300ms; easing: ease; }
+
+                    check-mark := AppIcon {
+                        name: "checkmark-outline";
+                        size: 16px;
+                        icon-color: Theme.green;
+                    }
+
+                    CopiedTooltip {
+                        x: (parent.width - self.width) / 2;
+                        y: -self.height - 8px;
+                    }
+                }
+
+                link-touch := TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    clicked => {
+                        AccountAddState.copy-text(AccountAddState.auth-code-login-url);
+                        AccountAddState.ms-copied = true;
+                    }
+                }
+            }
+        }
+
+        // `div.buttons { margin-top: 16px; gap: 8px }`, left-aligned like the
+        // device code's.
+        Rectangle {
+            height: 16px;
+            background: transparent;
+        }
+
+        HorizontalLayout {
+            spacing: 8px;
+
+            BaseButton {
+                button-width: (parent.width - 8px) / 2;
+                text: @tr("Cancel");
+                clicked => { AccountAddState.cancel-microsoft-login(); }
+            }
+
+            BaseButton {
+                button-width: (parent.width - 8px) / 2;
+                text: @tr("Log in");
+                button-background: Theme.blue;
+                text-color: Theme.text-inverse;
+                clicked => { AccountAddState.open-url(AccountAddState.auth-code-login-url); }
+            }
+        }
+    }
+}

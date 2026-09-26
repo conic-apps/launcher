@@ -8,6 +8,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+
 #: ui
 msgctxt "App"
 msgid "Conic Launcher"
@@ -613,237 +614,540 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "설치된 Java 런타임 확인 중"
 
-
 # Game view strings, seeded from src/locales/ko_kr.ts.
 
+
+#: ui
 msgctxt "GameTime"
 msgid "Just now"
 msgstr "방금 전"
 
+#: ui
 msgctxt "GameTime"
 msgid "1 hour ago"
 msgstr "1시간 전"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} hours ago"
 msgstr "{}시간 전"
 
+#: ui
 msgctxt "GameTime"
 msgid "Yesterday"
 msgstr "어제"
 
+#: ui
 msgctxt "GameTime"
 msgid "{}/{}"
 msgstr "{0}월 {1}일"
 
+#: ui
 msgctxt "GameTime"
 msgid "{}/{}/{}"
 msgstr "{2}년 {0}월 {1}일"
 
+#: ui
 msgctxt "GameTime"
 msgid "Never played"
 msgstr "플레이 기록 없음"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} sec"
 msgstr "{}초"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} min"
 msgstr "{}분"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} hr"
 msgstr "{}시간"
 
+#: ui
 msgctxt "InstancesList"
 msgid "Favorites"
 msgstr "즐겨찾기"
 
+#: ui
 msgctxt "InstancesList"
 msgid "All instances"
 msgstr "모든 인스턴스"
 
+#: ui
 msgctxt "InstancesList"
 msgid "Last played: "
 msgstr "마지막 플레이: "
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Name"
 msgstr "이름"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Version"
 msgstr "버전"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Play time"
 msgstr "플레이 시간"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Last played"
 msgstr "마지막 플레이"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Ungrouped"
 msgstr "그룹 없음"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Mod loader"
 msgstr "모드 로더"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Search..."
 msgstr "검색..."
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Sort"
 msgstr "정렬"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Group"
 msgstr "그룹화"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "no instance selected!"
 msgstr "no instance selected!"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Minecraft version"
 msgstr "Minecraft 버전"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "version"
 msgstr "버전"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Last played date"
 msgstr "마지막 플레이 날짜"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Play time"
 msgstr "플레이 시간"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Launch"
 msgstr "게임 시작"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Repair game and launch"
 msgstr "게임 복구 후 실행"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Saves"
 msgstr "월드"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Mods"
 msgstr "모드"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Resource packs"
 msgstr "리소스 팩"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Screenshots"
 msgstr "스크린샷"
 
+#: ui
 msgctxt "GameFooterBar"
 msgid "Not logged in"
 msgstr "로그인되지 않음"
 
+#: ui
 msgctxt "GameFooterBar"
 msgid "New instance"
 msgstr "새 인스턴스"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select Minecraft version"
 msgstr "Minecraft 버전 선택"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select mod loader"
 msgstr "모드 로더 선택"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Create new instance"
 msgstr "새 인스턴스 생성"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Unnamed instance"
 msgstr "이름 없는 인스턴스"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Set background image"
 msgstr "배경 이미지 설정"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Images"
 msgstr "이미지"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Remove image"
 msgstr "이미지 제거"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Use instance background as launcher background"
 msgstr "인스턴스 배경을 런처 배경으로 사용"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Version settings"
 msgstr "버전 설정"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Selected {}"
 msgstr "{} 선택됨"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Mod loader"
 msgstr "모드 로더"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "None"
 msgstr "없음"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Loader version"
 msgstr "로더 버전"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Click to select a mod loader version"
 msgstr "클릭하여 모드 로더 버전 선택"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select a Minecraft version first"
 msgstr "먼저 Minecraft 버전을 선택하세요"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Cancel"
 msgstr "취소"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Creating..."
 msgstr "생성 중..."
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Create instance"
 msgstr "인스턴스 생성"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Version category"
 msgstr "버전 분류"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Releases"
 msgstr "정식 릴리스"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Snapshots"
 msgstr "스냅샷"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Old versions"
 msgstr "이전 버전"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Cancel"
 msgstr "취소"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Choose an auth service and add an account"
+msgstr "인증 서비스를 선택하고 계정 추가"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "Microsoft"
+msgstr "Microsoft"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "External"
+msgstr "외부"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "Offline"
+msgstr "오프라인"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Log in without any auth service. Skins are usually invisible in multiplayer, and servers with online-mode enabled will not let you join."
+msgstr "인증 서비스 없이 로그인합니다. 일반적으로 멀티플레이에서 스킨이 보이지 않으며, 정품 인증이 켜진 서버에는 접속할 수 없습니다."
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Username"
+msgstr "사용자 이름"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Enable advanced settings"
+msgstr "고급 설정 사용"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "UUID"
+msgstr "UUID"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "The UUID you entered is not valid"
+msgstr "입력한 UUID가 올바르지 않습니다"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "The unique identifier of a Minecraft player"
+msgstr "Minecraft 플레이어의 고유 식별자"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Cancel"
+msgstr "취소"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Create offline profile"
+msgstr "오프라인 프로필 만들기"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Preparing to log in"
+msgstr "로그인 준비 중"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Requesting a device code"
+msgstr "디바이스 코드 요청 중"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the access token"
+msgstr "액세스 토큰 가져오는 중"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Signing in to Xbox"
+msgstr "Xbox에 로그인 중"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Verifying XSTS"
+msgstr "XSTS 확인 중"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the Minecraft access token"
+msgstr "Minecraft 액세스 토큰 가져오는 중"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the game profile"
+msgstr "게임 프로필 가져오는 중"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Saving the account"
+msgstr "계정 저장 중"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "{} sec"
+msgstr "{}초"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "{} min {} sec"
+msgstr "{}분 {}초"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Login failed: {}"
+msgstr "로그인 실패: {}"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Open a web page on any device — "
+msgstr "아무 기기에서 다음 페이지를 열고"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ", enter the device code below and sign in. It expires in {}."
+msgstr ", 아래 디바이스 코드를 입력해 로그인하세요. 이 코드는 {} 후에 만료됩니다."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click here"
+msgstr "여기를 클릭"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " to sign in with your browser instead."
+msgstr "하면 대신 브라우저로 로그인할 수 있습니다."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Copied!"
+msgstr "복사됨!"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Login link:"
+msgstr "로그인 링크:"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Clicking \"Log in\" opens your browser to sign in. You can also "
+msgstr "\"로그인\"을 클릭하면 브라우저가 열립니다."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "copy the link"
+msgstr "링크를 복사"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " and paste it into the browser. To finish signing in on another device, "
+msgstr "해 브라우저에 붙여넣어 로그인할 수도 있습니다. 다른 기기에서 마치려면 "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "use a device code"
+msgstr "디바이스 코드 사용"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " instead."
+msgstr "하세요."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Log in"
+msgstr "로그인"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Sign in to a Minecraft account through a third-party Yggdrasil auth server — for skin sites, self-hosted auth servers and other unofficial account systems."
+msgstr "서드파티 Yggdrasil 인증 서버로 Minecraft 계정에 로그인합니다. 스킨 사이트나 자체 인증 서버 같은 비공식 계정 시스템에 사용하세요."
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Auth server address (API root)"
+msgstr "인증 서버 주소 (API root)"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Auth service: {}"
+msgstr "인증 서비스: {}"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Password"
+msgstr "비밀번호"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Verify and add profile"
+msgstr "확인 후 프로필 추가"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Please wait"
+msgstr "잠시만 기다려 주세요"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Back"
+msgstr "뒤로"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "This account has more than one profile — choose the ones to add"
+msgstr "이 계정에는 프로필이 여러 개 있습니다. 추가할 프로필을 선택하세요"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid " (added)"
+msgstr " (추가됨)"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Add profiles"
+msgstr "프로필 추가"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "This account has no game profile"
+msgstr "이 계정에는 게임 프로필이 없습니다"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Cancel"
+msgstr "취소"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Cancel"
+msgstr "취소"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Username"
+msgstr "사용자 이름"

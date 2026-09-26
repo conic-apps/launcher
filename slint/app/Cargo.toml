@@ -29,6 +29,14 @@ slint-content.workspace = true
 slint-install.workspace = true
 slint-java-runtime.workspace = true
 slint-single-instance.workspace = true
+# For the `data:` URLs the account crates store skins as (`account_avatar`).
+base64.workspace = true
+# Decoding a skin texture into the pixel buffer `AccountAvatar` draws.
+image.workspace = true
+# Comparing two Yggdrasil API roots (`account_add`'s `same_api_root`).
+url.workspace = true
+# A Yggdrasil account's own identifier, minted per added profile.
+uuid.workspace = true
 chrono.workspace = true
 once_cell.workspace = true
 # The runtime the background work runs on, standing in for Tauri's (see

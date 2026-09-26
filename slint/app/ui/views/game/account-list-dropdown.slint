@@ -19,7 +19,9 @@ export component AccountListDropdown inherits Rectangle {
     out property <bool> opened: root.is-open;
 
     height: 36px;
-    width: 32px + name-text.preferred-width + 36px;
+    // `padding: 0 0 0 32px` on the pill, the switch button's `margin-left: 16px`
+    // between the name and the chevron, and the 36px button itself.
+    width: 32px + name-text.preferred-width + 16px + 36px;
     background: Theme.surface-0;
     border-radius: 8px;
     drop-shadow-color: #00000033;

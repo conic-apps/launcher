@@ -17,6 +17,7 @@ use chrono::{Datelike, Local, TimeZone};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, Timer, TimerMode, VecModel};
 
 use crate::slint_backend::{AccountItem, App, Dialogs, GameRow, GameState, Navigation};
+use slint::Image;
 use slint_account::Account;
 use slint_instance::{Instance, ModLoaderType, SortBy};
 
@@ -40,6 +41,10 @@ struct GameController {
     accounts: Vec<Account>,
     playtime: HashMap<String, u64>,
     content: HashMap<String, slint_content::ContentCounts>,
+    /// The account heads the footer and its switcher draw, by `<key>@<size>`.
+    /// Memoised because a skin is a base64 PNG (or a bundled webp) that has to
+    /// be decoded and cropped, and `apply` runs on every list change.
+    avatars: HashMap<String, Image>,
     /// The instance list. It is kept across applies and reconciled in place (see
     /// `sync_rows`), so the view's row items survive a relayout and can animate
     /// along the rail to their new slot instead of being recreated in place.
@@ -84,6 +89,7 @@ impl GameController {
             accounts: Vec::new(),
             playtime: HashMap::new(),
             content: HashMap::new(),
+            avatars: HashMap::new(),
             rows_model,
             reveal_timer,
             synced: false,
@@ -110,6 +116,8 @@ impl GameController {
     fn reload_accounts(&mut self) {
         let accounts = slint_account::list_accounts();
         self.accounts.clear();
+        // The set of accounts is what the cache is keyed on.
+        self.avatars.clear();
         self.accounts
             .extend(accounts.microsoft.into_iter().map(Account::Microsoft));
         self.accounts
@@ -403,16 +411,22 @@ impl GameController {
             .unwrap_or_default();
         let current = self.current().cloned();
 
+        // Taken out for the map below, which needs the cache mutably while it
+        // borrows the account list immutably, and put back afterwards.
+        let mut avatars = std::mem::take(&mut self.avatars);
         let accounts: Vec<AccountItem> = self
             .accounts
             .iter()
             .map(|account| AccountItem {
                 key: account.key().into(),
-                name: account.profile_name().into(),
+                name: account.get_profile_name().into(),
                 kind: account.kind().into(),
+                avatar: account_avatar(Some(account), 18, &mut avatars),
             })
             .collect();
         let current_account = self.config.borrow().current_account.clone();
+        let current_avatar = account_avatar(current_account.as_ref(), 56, &mut avatars);
+        self.avatars = avatars;
 
         self.sync_rows(rows);
 
@@ -499,10 +513,11 @@ impl GameController {
         state.set_count_unit(unit.into());
 
         state.set_has_account(current_account.is_some());
+        state.set_current_account_avatar(current_avatar);
         match current_account {
             Some(account) => {
                 state.set_current_account_key(account.key().into());
-                state.set_current_account_name(account.profile_name().into());
+                state.set_current_account_name(account.get_profile_name().into());
                 state.set_current_account_kind(account.kind().into());
             }
             None => {
@@ -812,7 +827,16 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
     );
     state
         .on_open_content(|kind| log::info!(target: "game", "open content '{kind}' (not migrated)"));
-    state.on_open_add_account(|| log::info!(target: "game", "add account (not migrated)"));
+    {
+        // The footer's "+" avatar and its "not logged in" label open the
+        // add-account dialog.
+        let weak = ui.as_weak();
+        state.on_open_add_account(move || {
+            if let Some(ui) = weak.upgrade() {
+                ui.global::<Dialogs>().set_account_add_visible(true);
+            }
+        });
+    }
     state.on_open_connect(|| log::info!(target: "game", "multiplayer connect (not migrated)"));
     state.on_open_packs(|| log::info!(target: "game", "install packs (not migrated)"));
     {
@@ -821,6 +845,21 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
         state.on_new_instance(move || {
             if let Some(ui) = weak.upgrade() {
                 ui.global::<Dialogs>().set_create_instance_visible(true);
+            }
+        });
+    }
+    {
+        // The add-account dialog runs this after every successful add, and the
+        // delete dialog will run it after every delete — the Vue's
+        // `selectNextAccount`, which its store calls in exactly those two
+        // places and never at startup.
+        let controller = Rc::clone(&controller);
+        let weak = ui.as_weak();
+        state.on_select_first_account(move || {
+            let config = Rc::clone(&controller.borrow().config);
+            select_first_account_if_none(&config);
+            if let Some(ui) = weak.upgrade() {
+                controller.borrow_mut().apply(&ui);
             }
         });
     }
@@ -833,4 +872,48 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             }
         });
     }
+}
+
+/// The head an account's avatar shows, memoised by `<key>@<size>`.
+///
+/// `None` is the logged-out footer, which the Vue gives the bundled wide Steve.
+fn account_avatar(
+    account: Option<&Account>,
+    size: u32,
+    cache: &mut HashMap<String, Image>,
+) -> Image {
+    let key = match account {
+        Some(account) => format!("{}@{size}", account.key()),
+        None => format!("steve@{size}"),
+    };
+    if let Some(image) = cache.get(&key) {
+        return image.clone();
+    }
+    // A skin that cannot be decoded (a URL the crate failed to download) leaves
+    // the placeholder disc up, as the Vue's empty `<img src>` would.
+    let image = crate::account_avatar::account_head(account, size).unwrap_or_default();
+    cache.insert(key, image.clone());
+    image
+}
+
+/// Picks an account when none is selected, the way the Vue's
+/// `store/account.ts`'s `selectNextAccount` does after an account is added.
+///
+/// The precedence is Microsoft, then offline, then Yggdrasil — note that it is
+/// *not* the order `reload_accounts` pushes them into the footer's list in. The
+/// original runs this only after an add or a delete, never at startup.
+pub fn select_first_account_if_none(config: &Rc<RefCell<slint_config::Config>>) {
+    if config.borrow().current_account.is_some() {
+        return;
+    }
+    let accounts = slint_account::list_accounts();
+    let selected = accounts
+        .microsoft
+        .first()
+        .cloned()
+        .map(Account::Microsoft)
+        .or_else(|| accounts.offline.first().cloned().map(Account::Offline))
+        .or_else(|| accounts.yggdrasil.first().cloned().map(Account::Yggdrasil));
+    config.borrow_mut().current_account = selected;
+    let _ = slint_config::save_config(&config.borrow());
 }

@@ -277,6 +277,85 @@ pub fn open_external(target: &str) -> std::io::Result<()> {
     command.spawn().map(|_| ())
 }
 
+/// Writes `text` to the system clipboard.
+///
+/// Slint 1.18 has no application-level clipboard API — `Platform::set_clipboard_text`
+/// is only reachable from inside a backend, which the app is not — so the
+/// add-account dialog's two "copy" buttons go to the platform directly, the way
+/// `open_external` and `pick_image_file_named` above already do. The strings
+/// copied there (the device code and the login URL) are ASCII, which is why the
+/// Windows path can go through `clip`'s OEM code page.
+pub fn copy_to_clipboard(text: &str) -> std::io::Result<()> {
+    #[cfg(target_os = "macos")]
+    {
+        use objc2::runtime::AnyObject;
+        use objc2::{class, msg_send};
+        use objc2_foundation::{NSInteger, NSString};
+
+        type Id = *mut AnyObject;
+
+        let text = NSString::from_str(text);
+        // `NSPasteboardTypeString`. It is declared in AppKit, which the app does
+        // not link; its value is the UTI and is stable.
+        let pasteboard_type = NSString::from_str("public.utf8-plain-text");
+        let text: Id = (&*text) as *const NSString as Id;
+        let pasteboard_type: Id = (&*pasteboard_type) as *const NSString as Id;
+        unsafe {
+            let pasteboard: Id = msg_send![class!(NSPasteboard), generalPasteboard];
+            // Every `msg_send!` has to declare the return type Objective-C
+            // reports: objc2 checks it at runtime and panics on a mismatch —
+            // and a panic in a Slint callback aborts the process, since the
+            // callback is `extern "C"`. `clearContents` answers `NSInteger`,
+            // `setString:forType:` a `BOOL`.
+            let _: NSInteger = msg_send![pasteboard, clearContents];
+            let _: bool = msg_send![
+                pasteboard,
+                setString: text,
+                forType: pasteboard_type
+            ];
+        }
+        return Ok(());
+    }
+    #[cfg(target_os = "windows")]
+    {
+        // `clip` reads the clipboard text from its standard input.
+        return write_to_process("cmd", &["/C", "clip"], text);
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        // Whichever of the two the session has; neither is part of the desktop.
+        for (program, args) in [
+            ("wl-copy", [].as_slice()),
+            ("xclip", ["-selection", "clipboard"].as_slice()),
+        ] {
+            if write_to_process(program, args, text).is_ok() {
+                return Ok(());
+            }
+        }
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "neither wl-copy nor xclip is installed",
+        ));
+    }
+    #[allow(unreachable_code)]
+    Ok(())
+}
+
+/// Runs `program` and feeds it `text` on standard input.
+#[cfg(not(target_os = "macos"))]
+fn write_to_process(program: &str, args: &[&str], text: &str) -> std::io::Result<()> {
+    use std::io::Write;
+
+    let mut child = std::process::Command::new(program)
+        .args(args)
+        .stdin(std::process::Stdio::piped())
+        .spawn()?;
+    if let Some(stdin) = child.stdin.as_mut() {
+        stdin.write_all(text.as_bytes())?;
+    }
+    child.wait().map(|_| ())
+}
+
 /// Native "choose an image file" dialog (no extra dependency).
 pub fn pick_image_file() -> Option<PathBuf> {
     pick_image_file_named("Select an image")

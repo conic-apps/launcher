@@ -1,0 +1,146 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { SlideTransition } from "../../components/slide-transition.slint";
+import { AccountAddState } from "../../globals/dialogs.slint";
+import { AccountAddMicrosoft } from "account-add-microsoft.slint";
+import { AccountAddOffline } from "account-add-offline.slint";
+import { AccountAddSelect } from "account-add-select.slint";
+import { AccountAddYggdrasil } from "account-add-yggdrasil.slint";
+
+// The body of the add-account dialog (src/views/accounts/AccountAdd.vue): a
+// 540px column with the title and the service selector in its header, and the
+// three service screens swapping below it.
+//
+// The swap is the Vue's `<Transition mode="out-in" :name="transitionName">`
+// with its own rule for which way the screens travel: away from Microsoft (and
+// from Yggdrasil to Offline) slides left, away from Offline (and from Yggdrasil
+// to Microsoft) slides right. That is the *outgoing* screen that decides, which
+// is why the direction is worked out when the swap starts rather than read from
+// the arriving service. The out-in beat itself is the same state machine the
+// create-instance dialog and the Microsoft screen use.
+export component AccountAdd inherits VerticalLayout {
+    /// The dialog's inner width; the panel itself is 16px wider on each side
+    /// (see `overlays/dialogs/account-add.slint`).
+    in property <length> content-width: 540px;
+
+    width: root.content-width;
+    padding: 8px;
+    spacing: 0px;
+    // `start`, not the default `stretch`: the panel's height is tweened, so
+    // while that runs there is a surplus (or a deficit) to hand out, and a
+    // stretching column would split it between the header and the screen — the
+    // header visibly breathes for the 300ms. The Vue's flex column does the
+    // same thing: `height: auto` rows, and the panel clips.
+    alignment: start;
+
+    private property <string> service: AccountAddState.auth-service;
+    /// The screen actually mounted — one 80ms beat behind `service`.
+    private property <string> shown: "";
+    private property <string> direction: "left";
+    private property <bool> leaving: false;
+    private property <bool> leave-armed: false;
+    private property <bool> enter-armed: false;
+    private property <string> arrive-phase: "shown";
+
+    init => {
+        // `<Transition>` has no `appear`: the first screen is simply mounted.
+        root.shown = root.service;
+    }
+
+    changed service => {
+        if root.shown == "" {
+            root.shown = root.service;
+        } else if root.service == root.shown {
+            root.leaving = false;
+            root.leave-armed = false;
+        } else {
+            // The Vue's `selectAuthService`, which reads the *old* service.
+            root.direction = root.shown == "microsoft" ? "left"
+                : root.shown == "offline" ? "right"
+                : root.service == "microsoft" ? "right"
+                : "left";
+            root.leaving = true;
+            root.leave-armed = true;
+            leave-timer.restart();
+        }
+    }
+
+    leave-timer := Timer {
+        interval: 80ms;
+        running: root.leave-armed;
+        triggered => {
+            root.leave-armed = false;
+            root.leaving = false;
+            if root.service != root.shown {
+                root.shown = root.service;
+                root.arrive-phase = "enter";
+                root.enter-armed = true;
+            }
+        }
+    }
+
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.enter-armed;
+        triggered => {
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+        }
+    }
+
+    // `.header { align-items: center; margin-bottom: 16px }`, with the selector
+    // pushed to the right-hand end (`.account-add-selection { margin-left: auto }`).
+    //
+    // The title stretches and wraps rather than keeping its natural width: the
+    // Vue's flex row shrinks it the same way, and in English "Choose an auth
+    // service and add an account" is wider than the 540px column on its own —
+    // unwrapped it would push the selector out through the panel's edge. The
+    // Chinese original is short enough to fit on one line, so this only shows up
+    // in the longer translations.
+    HorizontalLayout {
+        // The default `stretch` distribution, not `start`: it is what gives the
+        // stretching title the leftover width and so pins the selector to the
+        // right-hand end, the way the Vue's `margin-left: auto` does. With
+        // `start` every cell keeps its preferred width and the remainder falls
+        // after the last one, which leaves the selector next to the title.
+        cross-axis-alignment: center;
+        padding-bottom: 16px;
+        spacing: 0px;
+
+        Text {
+            text: @tr("Choose an auth service and add an account");
+            font-size: 22px;
+            horizontal-stretch: 1;
+            wrap: word-wrap;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        AccountAddSelect {
+            value: AccountAddState.auth-service;
+            select-enabled: !AccountAddState.switch-disabled;
+            selected(service) => { AccountAddState.select-auth-service(service); }
+        }
+    }
+
+    // ----- the screen -----
+    if root.shown == "microsoft" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+        AccountAddMicrosoft { }
+    }
+
+    if root.shown == "yggdrasil" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+        AccountAddYggdrasil { }
+    }
+
+    if root.shown == "offline" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+        AccountAddOffline { }
+    }
+}
