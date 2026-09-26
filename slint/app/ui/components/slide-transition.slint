@@ -1,0 +1,70 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The Vue `slide-left` / `slide-right` transition
+// (src/assets/styles/transitions.css), used by the add-account dialog: the
+// swap between its three screens, and the Microsoft screen's own swap between
+// its four states.
+//
+// Each direction has its two halves:
+//
+//   slide-left   leave  translate to -80px, 80ms  `cubic-bezier(0.65, 0, 1, 0.42)`
+//                enter  from +80px,       250ms `cubic-bezier(0, 0.65, 0.26, 1)`
+//   slide-right  leave  translate to +80px, 80ms
+//                enter  from -80px,       250ms
+//
+// Both halves fade to / from opacity 0 over the same time. `phase` picks which
+// half an element is in, so a screen plays it by passing the phase down — the
+// same contract as `ZoomTransition`, whose state machine drives this one too.
+//
+// Unlike `ZoomTransition` this cannot be a layout itself: Slint 1.18 has no
+// translation transform (only rotation and scale), so the movement has to be an
+// animated `x`, and a layout child's `x` belongs to its layout. The root is
+// therefore a plain rectangle whose height the content dictates through
+// `min-height`, with the content in a layout of its own that the `x` moves.
+// The screen is clipped by the dialog it sits in (`BaseDialog`'s content slot,
+// where the Vue's own clip lands) and not here — see the comment on the root.
+export component SlideTransition inherits Rectangle {
+    /// "enter" (waiting at the start of the enter half), "shown" (at rest) or
+    /// "leave" (playing the leave half).
+    in property <string> phase: "shown";
+    /// "left" or "right", as the CSS class spells it.
+    in property <string> direction: "left";
+
+    width: 100%;
+    // A Rectangle has no preferred size of its own, so the content's height is
+    // declared as the minimum for the parent layout to size us by.
+    min-height: content.preferred-height;
+    background: transparent;
+    // Deliberately unclipped: the sliding screen overruns its own box, and the
+    // Vue clips it in `BaseDialog` — at the dialog's content box, which is
+    // 8px wider on each side than a screen here. Clipping at the screen
+    // instead would cut both the slide (24px short of the original) and any
+    // control that grows past the screen's edge, which the buttons do on hover
+    // (`scale(1.02)`).
+    opacity: root.phase == "shown" ? 1.0 : 0.0;
+
+    private property <length> offset: root.phase == "enter"
+        ? (root.direction == "left" ? 80px : -80px)
+        : root.phase == "leave" ? (root.direction == "left" ? -80px : 80px)
+        : 0px;
+
+    // The durations and easings differ per phase, so they are read when the
+    // animation starts — i.e. with the phase the element is entering.
+    animate offset, opacity {
+        duration: root.phase == "leave" ? 80ms : 250ms;
+        easing: root.phase == "leave"
+            ? cubic-bezier(0.65, 0, 1, 0.42)
+            : cubic-bezier(0, 0.65, 0.26, 1);
+    }
+
+    content := VerticalLayout {
+        x: root.offset;
+        width: root.width;
+        // See `AccountAdd`: a stretching column would spread the panel's
+        // mid-tween surplus over the screen's own rows.
+        alignment: start;
+        @children
+    }
+}

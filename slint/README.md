@@ -27,12 +27,15 @@ slint/
       settings.rs                   # the settings screen's script
       game.rs                       # the game view's script
       create_instance.rs            # the create-instance dialog's script
+      account_add.rs                # the add-account dialog's script
+      account_avatar.rs             # player-head avatars (the Vue's canvas crop)
     ui/
       app.slint                     # root `App` Window (mirrors src/App.vue)
       theme.slint                   # palette + typography tokens, embeds fonts
       icons.slint                   # icon path data (mirrors src/assets/icons/*.svg)
       fonts/ComfortaaNunito.ttf      # Comfortaa with Nunito digits merged (see Fonts)
       assets/                       # palette previews, about logos, version icons
+      assets/skins/                 # the 18 bundled default skins (slim + wide)
       globals/
         navigation.slint            # global page navigation (src/store/navigation.ts)
         settings.slint              # global config state (the "config store")
@@ -63,6 +66,8 @@ slint/
         base-slider-bar.slint
         base-input.slint
         base-button.slint
+        base-checkbox.slint
+        slide-transition.slint      # the slide-left / slide-right screen swap
         item-loading-icon.slint
       views/
         settings-view.slint         # src/views/SettingsView.vue
@@ -70,9 +75,11 @@ slint/
         game-view.slint             # src/views/GameView.vue
         game/                       # summary, list, toolbar, footer, dropdowns
         game-placeholder.slint      # stand-in for the not-yet-migrated views
+        accounts/                   # the add-account dialog's three screens
       overlays/
         dialog-root.slint           # src/overlays/DialogRoot.vue
         dialogs/
+          account-add.slint         # src/overlays/dialogs/AccountAdd.vue
           create-instance.slint     # src/overlays/dialogs/CreateInstance.vue
           create/
             minecraft-choose.slint  #   …/create/MinecraftChoose.vue
@@ -82,7 +89,7 @@ slint/
     window/                         # window-control service (min/max/fullscreen)
     config/                         # Tauri-free mirror of crates/config
     folder/                         # Tauri-free mirror of crates/folder
-    account/                        # Tauri-free mirror of crates/account
+    account/                        # Tauri-free mirror of crates/account (whole crate)
     instance/                       # Tauri-free mirror of crates/instance
     content/                        # Tauri-free mirror of crates/content (counts)
     install/                        # Tauri-free mirror of crates/install (version lists)
@@ -302,6 +309,22 @@ Per the migration plan:
   instance" button (`GameState.new-instance`), and the whole form is driven by
   `app/src/create_instance.rs` — the version lists are fetched on the tokio
   runtime and reported back through `upgrade_in_event_loop`.
+- The **account layer**: `slint-account` mirrors the whole of `crates/account` —
+  the Microsoft OAuth → Xbox Live → XSTS → Minecraft services chain (with the
+  device-code flow), offline profiles and the Yggdrasil (authlib-injector)
+  client — so a module can be diffed against its original file by file. The
+  command layer of the original becomes plain API: the two pass-through command
+  modules have no counterpart (their functions are the module functions), and
+  `microsoft_commands.rs`'s at-most-one-login-task state machine is
+  `microsoft_task::LoginTaskState`; `LoginReporter` reports through a closure
+  instead of a `tauri::ipc::Channel`, and `shared::HTTP_CLIENT` / `UrlExt` are
+  inlined in the crate's `shared` module the way `slint-install` inlines the
+  client. The add-account dialog (`overlays/dialogs/account-add.slint` and the
+  three screens under `views/accounts/`) is driven by `app/src/account_add.rs`,
+  with `account_avatar.rs` reproducing the Vue's `<canvas>` head crop, and its
+  18 bundled default skins, in a pixel buffer; the game footer's avatar and its
+  account switcher draw from the same pipeline (memoised in `game.rs`, since a
+  skin has to be decoded and cropped and `apply` runs on every list change).
 - `slint-platform` (OS detection), `slint-window` (window controls),
   `slint-config`, `slint-folder`, `slint-account`, `slint-instance`,
   `slint-content`, `slint-install` and `slint-java-runtime`.
@@ -351,8 +374,11 @@ Per the migration plan:
 Not yet migrated: `LaunchView`, `AccountsView`, the setup wizard, the remaining
 overlays (dialogs, content panels, command palette, music player, instance
 settings) and the background renderer. The game view's click-to-open content
-overlays and the account skin/audio-visualizer rendering are stubbed;
-`views/game-placeholder.slint` stands in for the not-yet-migrated views.
+overlays and the audio-visualizer rendering are stubbed;
+`views/game-placeholder.slint` stands in for the not-yet-migrated views. The
+account avatars (the footer's 56px head, its switcher's 18px rows and the
+add-account dialog's profile rows) all draw the real skin now; `AccountAvatar`
+still falls back to the placeholder disc for a skin Rust could not decode.
 
 ## Conventions
 
@@ -449,6 +475,10 @@ overlays and the account skin/audio-visualizer rendering are stubbed;
     - `TouchArea.pointer-event` reports a _move_ with `PointerEventButton.other`,
       never `left`, so a drag has to be tracked with its own flag rather than by
       filtering on the button.
+    - **`/` is a floating-point division even between two integers.** The
+      device code's countdown printed "14.966666 min 58 sec" until it was
+      wrapped in `floor()`; the Vue's `Math.floor(total / 60)` is the same
+      intent. `mod()` and `round()` behave as expected (`round` yields an int).
 - **An `animate` only advances while its property is being read**, which decides
   how the dialog's animations had to be built. An element that is not painted —
   `visible: false`, or clipped or scrolled out of sight — is never read, so the
@@ -515,6 +545,40 @@ overlays and the account skin/audio-visualizer rendering are stubbed;
       through Rust. The Rust-side loader reads the formats the file picker
       offers (the app enables Slint's `image-default-formats`); AVIF is the one
       it cannot decode yet, though picking one still stores it on the instance.
+- **Add-account dialog deviations**, all deliberate:
+    - The sentence that offers "copy the link" as a link *within* the paragraph
+      has no hover tooltip: the Vue floats a "已复制！" bubble over the link
+      span, and Slint 1.18 has neither a per-span click target nor a way to ask
+      where a span landed. The link itself works (`StyledText`'s
+      `link-clicked`), so only the bubble is missing — the dialog's other two
+      "已复制！" bubbles (the link box and the device code) are exact.
+    - The Microsoft **auth-code flow cannot be finished**. The browser hands the
+      code back over the `conic-launcher://` scheme, which the Tauri app
+      registers with `tauri-plugin-deep-link` + `tauri-plugin-single-instance`
+      and the Slint app has no equivalent of. The screen is 1:1 and "Log in"
+      opens the browser; the **device-code flow is the one that completes**,
+      until the platform layer grows a deep-link handler.
+    - Coming back to the device code after leaving it starts a fresh one. The
+      Vue keeps the stale code on screen and never polls it again, which leaves
+      the dialog stuck.
+    - The device code's box is sized to the code rather than to the CSS `20ch`
+      (Slint has no `ch` unit), and the sliding screens are clipped by
+      `SlideTransition` rather than by the panel, so their travel stops 24px
+      short of the original's (see below).
+- **A word-wrapping `Text` has to be a direct child of the column that owns its
+  width.** Slint measures such a text for the width it is going to be given only
+  while that chain is short enough to resolve: one layout level deeper, the
+  add-account dialog's Yggdrasil paragraph reported a single line for its three,
+  the screen's `preferred-height` came out 40px short — and since the panel's
+  height *is* that measurement (`body.preferred-height + 32px`), the panel
+  followed it down and clipped the screen's buttons away. Both other screens
+  already had their paragraphs as direct children, which is why only that one
+  was affected. Worth remembering for any dialog whose panel measures itself.
+- **`SlideTransition` is a `Rectangle`, where `ZoomTransition` is a layout.**
+  Slint 1.18 has no translation transform (only rotation and scale), so the 80px
+  slide has to be an animated `x` — and a layout child's `x` belongs to its
+  layout. The screen therefore sits in a layout of its own inside a
+  `min-height`-sized rectangle that the `x` moves and that clips.
 - **`@children` and `parent`**: the elements written between a component's
   braces are laid out in the slot that hosts `@children`, but their `parent` is
   the element they are written _in_ — for a dialog that is the whole window. A

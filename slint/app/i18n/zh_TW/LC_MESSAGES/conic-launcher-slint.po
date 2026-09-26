@@ -8,6 +8,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+
 #: ui
 msgctxt "App"
 msgid "Conic Launcher"
@@ -613,237 +614,540 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "正在掃描已安裝的 Java 執行環境"
 
-
 # Game view strings, seeded from src/locales/zh_tw.ts.
 
+
+#: ui
 msgctxt "GameTime"
 msgid "Just now"
 msgstr "剛剛"
 
+#: ui
 msgctxt "GameTime"
 msgid "1 hour ago"
 msgstr "1 小時前"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} hours ago"
 msgstr "{} 小時前"
 
+#: ui
 msgctxt "GameTime"
 msgid "Yesterday"
 msgstr "昨天"
 
+#: ui
 msgctxt "GameTime"
 msgid "{}/{}"
 msgstr "{0}月{1}日"
 
+#: ui
 msgctxt "GameTime"
 msgid "{}/{}/{}"
 msgstr "{2}年{0}月{1}日"
 
+#: ui
 msgctxt "GameTime"
 msgid "Never played"
 msgstr "從未遊玩"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} sec"
 msgstr "{} 秒"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} min"
 msgstr "{} 分鐘"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} hr"
 msgstr "{} 小時"
 
+#: ui
 msgctxt "InstancesList"
 msgid "Favorites"
 msgstr "我的最愛"
 
+#: ui
 msgctxt "InstancesList"
 msgid "All instances"
 msgstr "全部實例"
 
+#: ui
 msgctxt "InstancesList"
 msgid "Last played: "
 msgstr "上次遊玩："
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Name"
 msgstr "名稱"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Version"
 msgstr "版本"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Play time"
 msgstr "遊玩時間"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Last played"
 msgstr "上次遊玩"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Ungrouped"
 msgstr "未分組"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Mod loader"
 msgstr "模組載入器"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Search..."
 msgstr "搜尋..."
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Sort"
 msgstr "排序"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Group"
 msgstr "分組"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "no instance selected!"
 msgstr "no instance selected!"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Minecraft version"
 msgstr "Minecraft 版本"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "version"
 msgstr "版本"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Last played date"
 msgstr "上次遊玩日期"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Play time"
 msgstr "遊玩時間"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Launch"
 msgstr "開始遊戲"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Repair game and launch"
 msgstr "修復遊戲並啟動"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Saves"
 msgstr "存檔"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Mods"
 msgstr "模組"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Resource packs"
 msgstr "資源包"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Screenshots"
 msgstr "截圖"
 
+#: ui
 msgctxt "GameFooterBar"
 msgid "Not logged in"
 msgstr "尚未登入"
 
+#: ui
 msgctxt "GameFooterBar"
 msgid "New instance"
 msgstr "建立新實例"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select Minecraft version"
 msgstr "選擇 Minecraft 版本"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select mod loader"
 msgstr "選擇模組載入器"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Create new instance"
 msgstr "建立新實例"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Unnamed instance"
 msgstr "未命名實例"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Set background image"
 msgstr "設定背景圖片"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Images"
 msgstr "圖片"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Remove image"
 msgstr "移除圖片"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Use instance background as launcher background"
 msgstr "將實例背景用作啟動器背景"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Version settings"
 msgstr "版本設定"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Selected {}"
 msgstr "已選擇 {}"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Mod loader"
 msgstr "模組載入器"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "None"
 msgstr "無"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Loader version"
 msgstr "載入器版本"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Click to select a mod loader version"
 msgstr "點擊以選擇模組載入器版本"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select a Minecraft version first"
 msgstr "請先選擇 Minecraft 版本"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Cancel"
 msgstr "取消"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Creating..."
 msgstr "正在建立..."
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Create instance"
 msgstr "建立實例"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Version category"
 msgstr "版本分類"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Releases"
 msgstr "正式版"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Snapshots"
 msgstr "快照版"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Old versions"
 msgstr "遠古版"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Cancel"
 msgstr "取消"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Choose an auth service and add an account"
+msgstr "選擇認證服務並新增帳號"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "Microsoft"
+msgstr "Microsoft"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "External"
+msgstr "外置"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "Offline"
+msgstr "離線"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Log in without any auth service. Skins are usually invisible in multiplayer, and servers with online-mode enabled will not let you join."
+msgstr "不使用任何認證服務登入帳號。一般情況下，多人遊戲中外觀將不可見，且無法加入啟用正版驗證的伺服器。"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Username"
+msgstr "使用者名稱"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Enable advanced settings"
+msgstr "啟用進階設定"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "UUID"
+msgstr "UUID"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "The UUID you entered is not valid"
+msgstr "輸入的 UUID 無效"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "The unique identifier of a Minecraft player"
+msgstr "Minecraft 玩家的唯一識別碼"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Cancel"
+msgstr "取消"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Create offline profile"
+msgstr "建立離線設定檔"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Preparing to log in"
+msgstr "正在準備登入"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Requesting a device code"
+msgstr "正在請求裝置代碼"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the access token"
+msgstr "正在取得存取權杖"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Signing in to Xbox"
+msgstr "正在登入 Xbox"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Verifying XSTS"
+msgstr "正在驗證 XSTS"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the Minecraft access token"
+msgstr "正在取得 Minecraft 存取權杖"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the game profile"
+msgstr "正在取得遊戲設定檔"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Saving the account"
+msgstr "正在儲存帳號資訊"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "{} sec"
+msgstr "{} 秒"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "{} min {} sec"
+msgstr "{} 分 {} 秒"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Login failed: {}"
+msgstr "登入失敗：{}"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Open a web page on any device — "
+msgstr "使用任意裝置開啟網頁 "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ", enter the device code below and sign in. It expires in {}."
+msgstr "，輸入下方裝置代碼並登入帳號。此代碼將於 {} 後失效。"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click here"
+msgstr "點擊此處"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " to sign in with your browser instead."
+msgstr "以改用瀏覽器登入。"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Copied!"
+msgstr "已複製！"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Login link:"
+msgstr "登入連結："
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Clicking \"Log in\" opens your browser to sign in. You can also "
+msgstr "點擊「登入」將開啟瀏覽器以登入，你也可以 "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "copy the link"
+msgstr "複製連結"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " and paste it into the browser. To finish signing in on another device, "
+msgstr "並在瀏覽器貼上以登入。若要在其他裝置上完成登入步驟，請 "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "use a device code"
+msgstr "使用裝置代碼"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " instead."
+msgstr " 登入。"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Log in"
+msgstr "登入"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Sign in to a Minecraft account through a third-party Yggdrasil auth server — for skin sites, self-hosted auth servers and other unofficial account systems."
+msgstr "使用第三方 Yggdrasil 認證伺服器登入 Minecraft 帳號，適用於外觀站、自架認證伺服器等非官方帳號系統。"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Auth server address (API root)"
+msgstr "認證伺服器位址 (API root)"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Auth service: {}"
+msgstr "認證服務：{}"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Password"
+msgstr "密碼"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Verify and add profile"
+msgstr "驗證並新增設定檔"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Please wait"
+msgstr "請稍後"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Back"
+msgstr "返回"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "This account has more than one profile — choose the ones to add"
+msgstr "該帳號擁有多個角色，請選擇要新增的角色"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid " (added)"
+msgstr "（已新增）"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Add profiles"
+msgstr "新增設定檔"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "This account has no game profile"
+msgstr "該帳號沒有任何遊戲角色"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Cancel"
+msgstr "取消"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Cancel"
+msgstr "取消"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Username"
+msgstr "使用者名稱"

@@ -8,6 +8,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+
 #: ui
 msgctxt "App"
 msgid "Conic Launcher"
@@ -613,237 +614,540 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "Kurulu Java çalışma ortamları taranıyor"
 
-
 # Game view strings, seeded from src/locales/tr_tr.ts.
 
+
+#: ui
 msgctxt "GameTime"
 msgid "Just now"
 msgstr "Az önce"
 
+#: ui
 msgctxt "GameTime"
 msgid "1 hour ago"
 msgstr "1 saat önce"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} hours ago"
 msgstr "{} saat önce"
 
+#: ui
 msgctxt "GameTime"
 msgid "Yesterday"
 msgstr "Dün"
 
+#: ui
 msgctxt "GameTime"
 msgid "{}/{}"
 msgstr "{1}.{0}"
 
+#: ui
 msgctxt "GameTime"
 msgid "{}/{}/{}"
 msgstr "{1}.{0}.{2}"
 
+#: ui
 msgctxt "GameTime"
 msgid "Never played"
 msgstr "Hiç oynanmadı"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} sec"
 msgstr "{} sn"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} min"
 msgstr "{} dk"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} hr"
 msgstr "{} sa"
 
+#: ui
 msgctxt "InstancesList"
 msgid "Favorites"
 msgstr "Favoriler"
 
+#: ui
 msgctxt "InstancesList"
 msgid "All instances"
 msgstr "Tüm örnekler"
 
+#: ui
 msgctxt "InstancesList"
 msgid "Last played: "
 msgstr "Son oynanma: "
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Name"
 msgstr "Ad"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Version"
 msgstr "Sürüm"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Play time"
 msgstr "Oynama süresi"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Last played"
 msgstr "Son oynanma"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Ungrouped"
 msgstr "Gruplanmamış"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Mod loader"
 msgstr "Mod yükleyici"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Search..."
 msgstr "Ara..."
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Sort"
 msgstr "Sırala"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Group"
 msgstr "Grupla"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "no instance selected!"
 msgstr "no instance selected!"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Minecraft version"
 msgstr "Minecraft sürümü"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "version"
 msgstr "sürüm"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Last played date"
 msgstr "Son oynanma tarihi"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Play time"
 msgstr "Oynama süresi"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Launch"
 msgstr "Oyunu başlat"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Repair game and launch"
 msgstr "Oyunu onar ve başlat"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Saves"
 msgstr "Kayıtlar"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Mods"
 msgstr "Modlar"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Resource packs"
 msgstr "Kaynak paketleri"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Screenshots"
 msgstr "Ekran görüntüleri"
 
+#: ui
 msgctxt "GameFooterBar"
 msgid "Not logged in"
 msgstr "Oturum açılmadı"
 
+#: ui
 msgctxt "GameFooterBar"
 msgid "New instance"
 msgstr "Yeni örnek"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select Minecraft version"
 msgstr "Minecraft sürümü seç"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select mod loader"
 msgstr "Mod yükleyici seç"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Create new instance"
 msgstr "Yeni örnek oluştur"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Unnamed instance"
 msgstr "Adlandırılmamış örnek"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Set background image"
 msgstr "Arka plan resmi ayarla"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Images"
 msgstr "Görüntüler"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Remove image"
 msgstr "Resmi kaldır"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Use instance background as launcher background"
 msgstr "Örnek arka planını başlatıcı arka planı olarak kullan"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Version settings"
 msgstr "Sürüm ayarları"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Selected {}"
 msgstr "{} seçildi"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Mod loader"
 msgstr "Mod yükleyici"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "None"
 msgstr "Yok"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Loader version"
 msgstr "Yükleyici sürümü"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Click to select a mod loader version"
 msgstr "Mod yükleyici sürümü seçmek için tıklayın"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select a Minecraft version first"
 msgstr "Önce bir Minecraft sürümü seçin"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Cancel"
 msgstr "İptal"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Creating..."
 msgstr "Oluşturuluyor..."
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Create instance"
 msgstr "Örnek oluştur"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Version category"
 msgstr "Sürüm kategorisi"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Releases"
 msgstr "Resmi sürümler"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Snapshots"
 msgstr "Anlık görüntüler"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Old versions"
 msgstr "Eski sürümler"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Cancel"
 msgstr "İptal"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Choose an auth service and add an account"
+msgstr "Bir kimlik doğrulama servisi seçin ve hesap ekleyin"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "Microsoft"
+msgstr "Microsoft"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "External"
+msgstr "Harici"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "Offline"
+msgstr "Çevrimdışı"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Log in without any auth service. Skins are usually invisible in multiplayer, and servers with online-mode enabled will not let you join."
+msgstr "Kimlik doğrulama servisi olmadan giriş yapın. Çok oyunculu oyunlarda skinler genellikle görünmez ve çevrimiçi mod etkin sunucular sizi kabul etmez."
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Username"
+msgstr "Kullanıcı adı"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Enable advanced settings"
+msgstr "Gelişmiş ayarları etkinleştir"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "UUID"
+msgstr "UUID"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "The UUID you entered is not valid"
+msgstr "Girdiğiniz UUID geçersiz"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "The unique identifier of a Minecraft player"
+msgstr "Bir Minecraft oyuncusunun benzersiz kimliği"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Cancel"
+msgstr "İptal"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Create offline profile"
+msgstr "Çevrimdışı profil oluştur"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Preparing to log in"
+msgstr "Giriş hazırlanıyor"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Requesting a device code"
+msgstr "Cihaz kodu isteniyor"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the access token"
+msgstr "Erişim belirteci alınıyor"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Signing in to Xbox"
+msgstr "Xbox'a giriş yapılıyor"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Verifying XSTS"
+msgstr "XSTS doğrulanıyor"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the Minecraft access token"
+msgstr "Minecraft erişim belirteci alınıyor"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the game profile"
+msgstr "Oyun profili alınıyor"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Saving the account"
+msgstr "Hesap kaydediliyor"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "{} sec"
+msgstr "{} sn"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "{} min {} sec"
+msgstr "{} dk {} sn"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Login failed: {}"
+msgstr "Giriş başarısız: {}"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Open a web page on any device — "
+msgstr "Herhangi bir cihazda şu sayfayı açın — "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ", enter the device code below and sign in. It expires in {}."
+msgstr ", aşağıdaki cihaz kodunu girin ve oturum açın. {} içinde geçersiz olur."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click here"
+msgstr "Buraya tıklayın"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " to sign in with your browser instead."
+msgstr ", bunun yerine tarayıcınızla oturum açmak için."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Copied!"
+msgstr "Kopyalandı!"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Login link:"
+msgstr "Giriş bağlantısı:"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Clicking \"Log in\" opens your browser to sign in. You can also "
+msgstr "\"Oturum aç\"a tıklamak tarayıcınızı açar. Ayrıca bağlantıyı "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "copy the link"
+msgstr "kopyalayıp"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " and paste it into the browser. To finish signing in on another device, "
+msgstr " tarayıcıya yapıştırarak da oturum açabilirsiniz. Başka bir cihazda tamamlamak için "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "use a device code"
+msgstr "cihaz kodu kullanın"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " instead."
+msgstr "."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Log in"
+msgstr "Oturum aç"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Sign in to a Minecraft account through a third-party Yggdrasil auth server — for skin sites, self-hosted auth servers and other unofficial account systems."
+msgstr "Üçüncü taraf bir Yggdrasil kimlik doğrulama sunucusu üzerinden Minecraft hesabına giriş yapın — skin siteleri, kendi sunucularınız ve diğer resmî olmayan hesap sistemleri için."
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Auth server address (API root)"
+msgstr "Kimlik doğrulama sunucusu adresi (API root)"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Auth service: {}"
+msgstr "Kimlik doğrulama servisi: {}"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Password"
+msgstr "Parola"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Verify and add profile"
+msgstr "Doğrula ve profil ekle"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Please wait"
+msgstr "Lütfen bekleyin"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Back"
+msgstr "Geri"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "This account has more than one profile — choose the ones to add"
+msgstr "Bu hesapta birden fazla profil var — eklenecekleri seçin"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid " (added)"
+msgstr " (eklendi)"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Add profiles"
+msgstr "Profil ekle"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "This account has no game profile"
+msgstr "Bu hesapta hiç oyun profili yok"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Cancel"
+msgstr "İptal"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Cancel"
+msgstr "İptal"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Username"
+msgstr "Kullanıcı adı"

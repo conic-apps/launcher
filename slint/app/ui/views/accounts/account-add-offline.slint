@@ -1,0 +1,157 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { BaseButton } from "../../components/base-button.slint";
+import { BaseInput } from "../../components/base-input.slint";
+import { BaseSwitch } from "../../components/base-switch.slint";
+import { AccountAddState } from "../../globals/dialogs.slint";
+
+// "Create an offline profile" — the third screen of the add-account dialog
+// (src/views/accounts/AccountAddOffline.vue).
+//
+// The UUID is derived from the username unless "advanced settings" is on, in
+// which case the field is typed into and validated; both live in Rust
+// (`sync-offline-uuid`), because Slint has no regular expressions to test the
+// UUID's two accepted spellings with.
+export component AccountAddOffline inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    // `start`: the description wraps to a different number of lines per
+    // language, and a stretching column would spread that over the rows (see
+    // `AccountAdd`).
+    alignment: start;
+
+    init => {
+        // The Vue's `onMounted`, and also what makes a reopened dialog start
+        // blank: the screen is destroyed and rebuilt whenever the dialog
+        // switches services.
+        AccountAddState.reset-offline-form();
+    }
+
+    // `p.description { font-size: 14px; line-height: 1.3; margin-bottom: 8px }`.
+    Text {
+        text: @tr("Log in without any auth service. Skins are usually invisible in multiplayer, and servers with online-mode enabled will not let you join.");
+        font-size: 14px;
+        line-height-factor: 1.3;
+        wrap: word-wrap;
+        color: Theme.default-text-color.transparentize(0.1);
+    }
+
+    Rectangle {
+        height: 8px;
+        background: transparent;
+    }
+
+    // `div.form { gap: 8px }`.
+    form := VerticalLayout {
+        spacing: 8px;
+
+        // ----- username -----
+        HorizontalLayout {
+            alignment: space-between;
+            cross-axis-alignment: center;
+
+            Text {
+                text: @tr("Username");
+                font-size: 13px;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+
+            BaseInput {
+                input-width: 260px;
+                placeholder: @tr("Username");
+                value <=> AccountAddState.offline-username;
+                edited => { AccountAddState.sync-offline-uuid(); }
+            }
+        }
+
+        // ----- advanced settings -----
+        HorizontalLayout {
+            alignment: space-between;
+            cross-axis-alignment: center;
+
+            Text {
+                text: @tr("Enable advanced settings");
+                font-size: 13px;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+
+            // The switch does not write the state itself: the script handles the
+            // toggle, because switching it on hands the UUID field over empty
+            // (the Vue's `watch(advancedMode)`).
+            BaseSwitch {
+                checked: AccountAddState.offline-advanced;
+                toggled => { AccountAddState.toggle-offline-advanced(); }
+            }
+        }
+
+        // ----- UUID -----
+        // `&.disabled { opacity: 0.4 }`: the whole row fades while the field is
+        // left to its derived value.
+        HorizontalLayout {
+            alignment: space-between;
+            cross-axis-alignment: center;
+            opacity: AccountAddState.offline-advanced ? 1.0 : 0.4;
+            animate opacity { duration: 200ms; easing: ease; }
+
+            VerticalLayout {
+                spacing: 2px;
+                alignment: center;
+
+                Text {
+                    text: @tr("UUID");
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+
+                // `p.field-description { font-size: 12px; margin-top: 2px }`,
+                // turning red while the typed UUID does not parse.
+                Text {
+                    text: AccountAddState.offline-uuid-invalid
+                        ? @tr("The UUID you entered is not valid")
+                        : @tr("The unique identifier of a Minecraft player");
+                    font-size: 12px;
+                    color: AccountAddState.offline-uuid-invalid ? Theme.red
+                        : Theme.default-text-color.transparentize(0.5);
+                }
+            }
+
+            BaseInput {
+                input-width: 260px;
+                placeholder: "UUID";
+                input-enabled: AccountAddState.offline-advanced;
+                value <=> AccountAddState.offline-uuid;
+                edited => { AccountAddState.sync-offline-uuid(); }
+            }
+        }
+    }
+
+    Rectangle {
+        height: 12px;
+        background: transparent;
+    }
+
+    // `div.buttons { justify-content: flex-end; margin-top: 12px; gap: 8px }`.
+        // `button.base-button { width: 100% }` in a flex row: each button takes
+        // an equal share of the row minus the gap between them.
+    HorizontalLayout {
+        spacing: 8px;
+
+        BaseButton {
+            button-width: (parent.width - 8px) / 2;
+            text: @tr("Cancel");
+            clicked => { AccountAddState.close(); }
+        }
+
+        BaseButton {
+            button-width: (parent.width - 8px) / 2;
+            text: @tr("Create offline profile");
+            button-background: Theme.latte-lavender;
+            text-color: #000;
+            button-enabled: AccountAddState.offline-can-submit;
+            clicked => { AccountAddState.add-offline-account(); }
+        }
+    }
+}

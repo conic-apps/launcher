@@ -23,13 +23,31 @@ export struct MinecraftVersionItem {
     day: int,
 }
 
+/// A row of the Yggdrasil profile chooser (Vue `availableProfiles`).
+export struct YggdrasilProfileItem {
+    /// The profile UUID, what `toggleProfile` keys the selection on.
+    id: string,
+    /// The profile name.
+    name: string,
+    /// Whether the launcher already holds this profile on this server, which
+    /// the row shows as an " (added)" suffix and does not let you pick
+    /// (Vue `profileDisabled`).
+    added: bool,
+    /// Whether the row is selected.
+    selected: bool,
+    /// The head `AccountAvatar` draws. Rust builds it from the profile's
+    /// `textures` property, because Slint cannot crop an image itself.
+    avatar: image,
+}
+
 // The Vue dialog store: one visibility flag per dialog, written by whoever
 // opens it (the footer's "New instance", the launch view's errors …) and by
 // Rust (an action that finishes and dismisses the dialog). Only the
-// create-instance dialog is migrated so far; the other flags of
-// `src/store/dialog.ts` arrive with their dialogs.
+// create-instance and add-account dialogs are migrated so far; the other flags
+// of `src/store/dialog.ts` arrive with their dialogs.
 export global Dialogs {
     in-out property <bool> create-instance-visible: false;
+    in-out property <bool> account-add-visible: false;
 }
 
 // The "create instance" dialog
@@ -132,4 +150,121 @@ export global CreateInstanceState {
     callback pick-background(string);
     /// The `about` button of a version row: opens the Minecraft wiki for it.
     callback open-version-wiki(string);
+}
+
+// The "add account" dialog (src/overlays/dialogs/AccountAdd.vue and the four
+// screens it swaps between, under `src/views/accounts/`).
+export global AccountAddState {
+    // ----- the shell (views/accounts/AccountAdd.vue) -----
+    /// Which auth service's screen is mounted: "microsoft" | "yggdrasil" |
+    /// "offline" (Vue `authServiceType`).
+    in-out property <string> auth-service: "microsoft";
+    /// Whether the service selector is frozen — the Microsoft screen sets it
+    /// while a login runs, so its progress cannot be lost by switching away
+    /// (Vue `switchComponentDisabled`, and the 0.6 opacity that goes with it).
+    out property <bool> switch-disabled: self.ms-view == "processing";
+
+    // ----- the offline screen (AccountAddOffline.vue) -----
+    in-out property <string> offline-username: "";
+    in-out property <string> offline-uuid: "";
+    in-out property <bool> offline-advanced: false;
+    /// Whether the typed UUID is malformed; only ever true in advanced mode
+    /// (Vue `uuidInvalid`). Rust computes it — Slint has no regular expressions.
+    in-out property <bool> offline-uuid-invalid: false;
+    /// Whether "Create offline profile" can be pressed. Rust computes it too:
+    /// the Vue's test trims the username, and Slint has no `trim`.
+    in-out property <bool> offline-can-submit: false;
+
+    // ----- the Microsoft screen (AccountAddMicrosoft.vue) -----
+    /// "auth-code" | "processing" | "device-code" | "error".
+    in-out property <string> ms-view: "auth-code";
+    /// Which login step is running, named after its `LoginEvent` ("prepare",
+    /// "request-device-code", …). The screen turns it into text, so the
+    /// translation stays in the UI (Vue `progressDescription`).
+    in-out property <string> ms-progress: "";
+    /// The failure the screen reports (Vue `errorText`).
+    in-out property <string> ms-error: "";
+    in-out property <string> ms-user-code: "";
+    in-out property <string> ms-verification-uri: "";
+    /// Seconds left on the device code, counted down by the screen (Vue
+    /// `expiresIn`).
+    in-out property <int> ms-expires-in: 0;
+    /// The three "copied!" hints, each on its own timer: the link inside the
+    /// description, the link box, and the device code box.
+    in-out property <bool> ms-copied-link: false;
+    in-out property <bool> ms-copied: false;
+    in-out property <bool> ms-copied-code: false;
+    /// The URL the browser flow opens (Vue `AUTH_CODE_LOGIN_URL`).
+    out property <string> auth-code-login-url: "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=94a1414e-e9ad-4bda-94f0-3368d979b0cc&response_type=code&redirect_uri=conic-launcher%3A%2F%2Foauth2%2Fmicrosoft%2Fcallback&response_mode=query&prompt=select_account&scope=XboxLive.signin%20offline_access";
+
+    // ----- the Yggdrasil screen (AccountAddYggdrasil.vue) -----
+    /// "form" | "processing" | "error" | "profiles".
+    in-out property <string> yggdrasil-view: "form";
+    in-out property <string> yggdrasil-api-root: "";
+    in-out property <string> yggdrasil-username: "";
+    in-out property <string> yggdrasil-password: "";
+    /// The failure the screen reports (Vue `errorMessage`).
+    in-out property <string> yggdrasil-error: "";
+    /// The `meta.serverName` the API root answered with, shown under the field
+    /// (Vue `serverName`).
+    in-out property <string> yggdrasil-server-name: "";
+    /// The profiles the chooser offers (Vue `availableProfiles`).
+    in-out property <[YggdrasilProfileItem]> yggdrasil-profiles: [];
+    /// Whether any row is selected (Vue `selectedProfileIds.size === 0`).
+    in-out property <bool> yggdrasil-has-selection: false;
+    /// Whether "Verify and add profile" can be pressed — the three fields are
+    /// non-blank, after trimming, which is what Rust checks.
+    in-out property <bool> yggdrasil-can-submit: false;
+    /// What the screen reports when a server answered with no profiles at all
+    /// (the Vue's hard-coded `该帐户没有任何游戏角色`). It is read by the script
+    /// so the sentence stays translatable.
+    out property <string> no-profile-message: @tr("AccountAddYggdrasil" => "This account has no game profile");
+
+    // ----- shared -----
+    /// A service button of the selector (Vue `selectAuthService`).
+    callback select-auth-service(string);
+    /// A "Cancel" button.
+    callback close();
+    /// Copies `text` to the system clipboard.
+    callback copy-text(string);
+    /// Opens a URL with the platform's default handler.
+    callback open-url(string);
+
+    // ----- the offline screen -----
+    /// Resets the form to what the Vue's `onMounted` leaves it in.
+    callback reset-offline-form();
+    /// The advanced switch was flipped: mirror the new mode into the button's
+    /// state and reset the UUID field the way the Vue's `watch(advancedMode)`
+    /// does.
+    callback toggle-offline-advanced();
+    /// The username or the UUID field changed: recompute the derived UUID and
+    /// its validity (the Vue's two watchers).
+    callback sync-offline-uuid();
+    /// "Create offline profile".
+    callback add-offline-account();
+
+    // ----- the Microsoft screen -----
+    /// The "log in with a device code" link. Starts a login when none is
+    /// running.
+    callback use-device-code-flow();
+    /// The "back to the browser" link: cancels a running device-code login and
+    /// shows the browser screen again.
+    callback use-auth-code-flow();
+    /// A "Cancel" button of the Microsoft screen.
+    callback cancel-microsoft-login();
+
+    // ----- the Yggdrasil screen -----
+    /// Resets the form to what the Vue's `onMounted` leaves it in.
+    callback reset-yggdrasil-form();
+    /// 500 ms after the API root stopped changing: look its name up (the Vue's
+    /// debounced `watch(apiRoot)`).
+    callback lookup-server-name();
+    /// One of the three fields changed: recompute `yggdrasil-can-submit`.
+    callback sync-yggdrasil-submit();
+    /// "Verify and add profile".
+    callback yggdrasil-login();
+    /// "Add profiles", for the rows selected in the chooser.
+    callback yggdrasil-add-profiles();
+    /// A row of the chooser was clicked, by index (Vue `toggleProfile`).
+    callback toggle-yggdrasil-profile(int);
 }

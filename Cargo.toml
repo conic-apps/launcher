@@ -53,7 +53,16 @@ chrono = "0.4"
 conic-worldmap = { git="https://github.com/conic-apps/conic-worldmap", rev="a86489bb0cf12c1ce7c8a3e2b07bdb01d5c09cf7" }
 env_logger = "0.11.5"
 futures = "0.3"
+# PNG for the skin textures `slint-account` resolves and webp for the bundled
+# default skins (`slint/app/ui/assets/skins`). Slint already pulls `image` in
+# for `image-default-formats`; these are the two codecs the Slint app needs by
+# name, so they are requested explicitly rather than inherited.
+image = { version = "0.25", default-features = false, features = ["png", "webp"] }
 log = "0.4"
+# The offline profile's UUID is the MD5 of `OfflinePlayer:<name>` (see
+# `slint-account`'s `get_uuid_from_username`), so the Rust side needs the same
+# digest the Vue frontend computed with `blueimp-md5`.
+md-5 = "0.10"
 num_cpus = "1"
 once_cell = "1"
 os_info = "3"

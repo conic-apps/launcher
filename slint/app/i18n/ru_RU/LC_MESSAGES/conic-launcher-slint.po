@@ -8,6 +8,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
+
 #: ui
 msgctxt "App"
 msgid "Conic Launcher"
@@ -613,237 +614,540 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "Поиск установленных сред Java"
 
-
 # Game view strings, seeded from src/locales/ru_ru.ts.
 
+
+#: ui
 msgctxt "GameTime"
 msgid "Just now"
 msgstr "Только что"
 
+#: ui
 msgctxt "GameTime"
 msgid "1 hour ago"
 msgstr "1 час назад"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} hours ago"
 msgstr "{} часов назад"
 
+#: ui
 msgctxt "GameTime"
 msgid "Yesterday"
 msgstr "Вчера"
 
+#: ui
 msgctxt "GameTime"
 msgid "{}/{}"
 msgstr "{1}.{0}"
 
+#: ui
 msgctxt "GameTime"
 msgid "{}/{}/{}"
 msgstr "{1}.{0}.{2}"
 
+#: ui
 msgctxt "GameTime"
 msgid "Never played"
 msgstr "Никогда не запускалась"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} sec"
 msgstr "{} с"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} min"
 msgstr "{} мин"
 
+#: ui
 msgctxt "GameTime"
 msgid "{} hr"
 msgstr "{} ч"
 
+#: ui
 msgctxt "InstancesList"
 msgid "Favorites"
 msgstr "Избранное"
 
+#: ui
 msgctxt "InstancesList"
 msgid "All instances"
 msgstr "Все сборки"
 
+#: ui
 msgctxt "InstancesList"
 msgid "Last played: "
 msgstr "Последний запуск: "
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Name"
 msgstr "Название"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Version"
 msgstr "Версия"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Play time"
 msgstr "Время игры"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Last played"
 msgstr "Последний запуск"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Ungrouped"
 msgstr "Без группы"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Mod loader"
 msgstr "Загрузчик модов"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Search..."
 msgstr "Поиск..."
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Sort"
 msgstr "Сортировка"
 
+#: ui
 msgctxt "InstancesListToolBar"
 msgid "Group"
 msgstr "Группа"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "no instance selected!"
 msgstr "no instance selected!"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Minecraft version"
 msgstr "Версия Minecraft"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "version"
 msgstr "версия"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Last played date"
 msgstr "Дата последнего запуска"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Play time"
 msgstr "Время игры"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Launch"
 msgstr "Запустить игру"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Repair game and launch"
 msgstr "Восстановить игру и запустить"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Saves"
 msgstr "Сохранения"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Mods"
 msgstr "Моды"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Resource packs"
 msgstr "Ресурспаки"
 
+#: ui
 msgctxt "InstanceSummary"
 msgid "Screenshots"
 msgstr "Скриншоты"
 
+#: ui
 msgctxt "GameFooterBar"
 msgid "Not logged in"
 msgstr "Не выполнен вход"
 
+#: ui
 msgctxt "GameFooterBar"
 msgid "New instance"
 msgstr "Новая сборка"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select Minecraft version"
 msgstr "Выберите версию Minecraft"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select mod loader"
 msgstr "Выберите мод-лоадер"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Create new instance"
 msgstr "Создать экземпляр"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Unnamed instance"
 msgstr "Экземпляр без названия"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Set background image"
 msgstr "Установить фоновое изображение"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Images"
 msgstr "Изображения"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Remove image"
 msgstr "Удалить изображение"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Use instance background as launcher background"
 msgstr "Использовать фон сборки как фон лаунчера"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Version settings"
 msgstr "Настройки версии"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Selected {}"
 msgstr "Выбрано: {}"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Mod loader"
 msgstr "Мод-лоадер"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "None"
 msgstr "Нет"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Loader version"
 msgstr "Версия лоадера"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Click to select a mod loader version"
 msgstr "Нажмите, чтобы выбрать версию мод-лоадера"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Select a Minecraft version first"
 msgstr "Сначала выберите версию Minecraft"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Cancel"
 msgstr "Отмена"
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Creating..."
 msgstr "Создание..."
 
+#: ui
 msgctxt "CreateInstance"
 msgid "Create instance"
 msgstr "Создать экземпляр"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Version category"
 msgstr "Категория версий"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Releases"
 msgstr "Релизы"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Snapshots"
 msgstr "Снапшоты"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Old versions"
 msgstr "Старые версии"
 
+#: ui
 msgctxt "MinecraftChoose"
 msgid "Cancel"
 msgstr "Отмена"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Choose an auth service and add an account"
+msgstr "Выберите сервис авторизации и добавьте аккаунт"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "Microsoft"
+msgstr "Microsoft"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "External"
+msgstr "Сторонний"
+
+#: ui
+msgctxt "AccountAddSelect"
+msgid "Offline"
+msgstr "Офлайн"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Log in without any auth service. Skins are usually invisible in multiplayer, and servers with online-mode enabled will not let you join."
+msgstr "Вход без сервиса авторизации. В сетевой игре скины обычно не видны, а серверы с включённой проверкой лицензии не пустят вас."
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Username"
+msgstr "Имя пользователя"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Enable advanced settings"
+msgstr "Включить дополнительные настройки"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "UUID"
+msgstr "UUID"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "The UUID you entered is not valid"
+msgstr "Введённый UUID недействителен"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "The unique identifier of a Minecraft player"
+msgstr "Уникальный идентификатор игрока Minecraft"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Cancel"
+msgstr "Отмена"
+
+#: ui
+msgctxt "AccountAddOffline"
+msgid "Create offline profile"
+msgstr "Создать офлайн-профиль"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Preparing to log in"
+msgstr "Подготовка к входу"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Requesting a device code"
+msgstr "Запрос кода устройства"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the access token"
+msgstr "Получение токена доступа"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Signing in to Xbox"
+msgstr "Вход в Xbox"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Verifying XSTS"
+msgstr "Проверка XSTS"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the Minecraft access token"
+msgstr "Получение токена доступа Minecraft"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Getting the game profile"
+msgstr "Получение игрового профиля"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Saving the account"
+msgstr "Сохранение аккаунта"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "{} sec"
+msgstr "{} с"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "{} min {} sec"
+msgstr "{} мин {} с"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Login failed: {}"
+msgstr "Не удалось войти: {}"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Open a web page on any device — "
+msgstr "Откройте страницу на любом устройстве — "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ", enter the device code below and sign in. It expires in {}."
+msgstr ", введите код устройства ниже и войдите. Он истечёт через {}."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click here"
+msgstr "Нажмите здесь"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " to sign in with your browser instead."
+msgstr ", чтобы вместо этого войти через браузер."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Copied!"
+msgstr "Скопировано!"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Login link:"
+msgstr "Ссылка для входа:"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Clicking \"Log in\" opens your browser to sign in. You can also "
+msgstr "Нажатие «Войти» откроет браузер. Вы также можете "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "copy the link"
+msgstr "скопировать ссылку"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " and paste it into the browser. To finish signing in on another device, "
+msgstr " и вставить её в браузер. Чтобы завершить вход на другом устройстве, "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "use a device code"
+msgstr "используйте код устройства"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid " instead."
+msgstr "."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Log in"
+msgstr "Войти"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Sign in to a Minecraft account through a third-party Yggdrasil auth server — for skin sites, self-hosted auth servers and other unofficial account systems."
+msgstr "Вход в аккаунт Minecraft через сторонний сервер авторизации Yggdrasil — для сайтов скинов, собственных серверов авторизации и других неофициальных систем."
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Auth server address (API root)"
+msgstr "Адрес сервера авторизации (API root)"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Auth service: {}"
+msgstr "Сервис авторизации: {}"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Password"
+msgstr "Пароль"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Verify and add profile"
+msgstr "Проверить и добавить профиль"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Please wait"
+msgstr "Подождите"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Back"
+msgstr "Назад"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "This account has more than one profile — choose the ones to add"
+msgstr "У этого аккаунта несколько профилей — выберите, какие добавить"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid " (added)"
+msgstr " (добавлен)"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Add profiles"
+msgstr "Добавить профили"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "This account has no game profile"
+msgstr "У этого аккаунта нет игрового профиля"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Cancel"
+msgstr "Отмена"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Cancel"
+msgstr "Отмена"
+
+#: ui
+msgctxt "AccountAddYggdrasil"
+msgid "Username"
+msgstr "Имя пользователя"

@@ -1293,10 +1293,12 @@ dependencies = [
 name = "conic-launcher-slint"
 version = "0.1.0-alpha.2"
 dependencies = [
+ "base64 0.22.1",
  "block2 0.5.1",
  "chrono",
  "env_logger",
  "i-slint-backend-winit",
+ "image",
  "log",
  "objc2 0.5.2",
  "objc2-foundation 0.2.2",
@@ -1313,6 +1315,8 @@ dependencies = [
  "slint-platform",
  "slint-window",
  "tokio",
+ "url",
+ "uuid",
  "winit",
 ]
 
@@ -1826,7 +1830,7 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab8ecd87370524b461f8557c119c405552c396ed91fc0a8eec68679eab26f94a"
 dependencies = [
- "libloading 0.7.4",
+ "libloading 0.8.9",
 ]
 
 [[package]]
@@ -4460,6 +4464,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "md-5"
+version = "0.10.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d89e7ee0cfbedfc4da3340218492196241d89eefb6dab27de5df917a6d2e78cf"
+dependencies = [
+ "cfg-if",
+ "digest",
+]
+
+[[package]]
 name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7073,10 +7087,18 @@ dependencies = [
 name = "slint-account"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
+ "futures",
  "log",
+ "md-5",
+ "once_cell",
+ "reqwest",
  "serde",
  "serde_json",
  "slint-folder",
+ "thiserror 2.0.19",
+ "tokio",
+ "url",
  "uuid",
 ]
 

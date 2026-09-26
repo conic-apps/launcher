@@ -1,0 +1,370 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { BaseButton } from "../../components/base-button.slint";
+import { BaseCheckbox } from "../../components/base-checkbox.slint";
+import { BaseInput } from "../../components/base-input.slint";
+import { BaseLoading } from "../../components/base-loading.slint";
+import { ScrollView } from "../../components/scroll-view.slint";
+import { AccountAddState, YggdrasilProfileItem } from "../../globals/dialogs.slint";
+
+// "Sign in with Yggdrasil" — the second screen of the add-account dialog
+// (src/views/accounts/AccountAddYggdrasil.vue).
+//
+// Four states, which the Vue swaps with plain `v-if`s — no `<Transition>`, so
+// this screen changes state without an animation (unlike the Microsoft one).
+export component AccountAddYggdrasil inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    // `start`: the four states have four different heights, so the panel
+    // tweens between them, and a stretching column would spread the surplus
+    // over the rows (see `AccountAdd`).
+    alignment: start;
+
+    init => {
+        // The Vue's `onMounted` clears the form. The screen is destroyed and
+        // rebuilt whenever the dialog switches services, so this is also what
+        // makes a reopened dialog start blank.
+        AccountAddState.reset-yggdrasil-form();
+    }
+
+    // `p.description { font-size: 14px; line-height: 1.3; margin-bottom: 8px }`.
+    //
+    // A sibling of the form's layout rather than its first row, although the
+    // Vue has it inside: Slint measures a word-wrapping `Text` for the width it
+    // will be given only while the chain from the layout that owns that width
+    // is short enough to resolve it, and one layout level deeper this one
+    // reported a single line for its three. `AccountAddYggdrasil`'s preferred
+    // height came out 40px short, the panel followed it down, and the buttons
+    // were clipped away — the same reason the other two screens keep their
+    // paragraphs as direct children of the column.
+    if AccountAddState.yggdrasil-view == "form" : Text {
+        text: @tr("Sign in to a Minecraft account through a third-party Yggdrasil auth server — for skin sites, self-hosted auth servers and other unofficial account systems.");
+        font-size: 14px;
+        line-height-factor: 1.3;
+        wrap: word-wrap;
+        color: Theme.default-text-color.transparentize(0.1);
+    }
+
+    // ----- the form -----
+    if AccountAddState.yggdrasil-view == "form" : VerticalLayout {
+        spacing: 0px;
+        alignment: start;
+
+        Rectangle {
+            height: 8px;
+            background: transparent;
+        }
+
+        // `div.form { gap: 8px }`.
+        VerticalLayout {
+            spacing: 8px;
+
+            // ----- the API root, with the server's own name under the label
+            // once it has answered -----
+            HorizontalLayout {
+                alignment: space-between;
+                cross-axis-alignment: center;
+
+                VerticalLayout {
+                    spacing: 2px;
+                    alignment: center;
+
+                    Text {
+                        text: @tr("Auth server address (API root)");
+                        font-size: 13px;
+                        color: Theme.default-text-color.transparentize(0.1);
+                    }
+
+                    // `p.field-description` clips to one 200px line.
+                    if AccountAddState.yggdrasil-server-name != "" : Text {
+                        text: @tr("Auth service: {}", AccountAddState.yggdrasil-server-name);
+                        font-size: 12px;
+                        width: 200px;
+                        color: Theme.default-text-color.transparentize(0.5);
+                        horizontal-alignment: left;
+                        overflow: elide;
+                    }
+                }
+
+                BaseInput {
+                    input-width: 300px;
+                    value <=> AccountAddState.yggdrasil-api-root;
+                    edited => {
+                        AccountAddState.sync-yggdrasil-submit();
+                        server-lookup.restart();
+                    }
+                }
+            }
+
+            // ----- the credentials -----
+            HorizontalLayout {
+                alignment: space-between;
+                cross-axis-alignment: center;
+
+                Text {
+                    text: @tr("Username");
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+
+                BaseInput {
+                    input-width: 300px;
+                    value <=> AccountAddState.yggdrasil-username;
+                    edited => { AccountAddState.sync-yggdrasil-submit(); }
+                }
+            }
+
+            HorizontalLayout {
+                alignment: space-between;
+                cross-axis-alignment: center;
+
+                Text {
+                    text: @tr("Password");
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+
+                BaseInput {
+                    input-width: 300px;
+                    value <=> AccountAddState.yggdrasil-password;
+                    edited => { AccountAddState.sync-yggdrasil-submit(); }
+                }
+            }
+        }
+
+        // `div.buttons { justify-content: flex-end; margin-top: 12px; gap: 8px }`.
+        Rectangle {
+            height: 12px;
+            background: transparent;
+        }
+
+        HorizontalLayout {
+            spacing: 8px;
+
+            BaseButton {
+                button-width: (parent.width - 8px) / 2;
+                text: @tr("Cancel");
+                clicked => { AccountAddState.close(); }
+            }
+
+            BaseButton {
+                button-width: (parent.width - 8px) / 2;
+                text: @tr("Verify and add profile");
+                button-background: Theme.latte-lavender;
+                text-color: #000;
+                button-enabled: AccountAddState.yggdrasil-can-submit;
+                clicked => { AccountAddState.yggdrasil-login(); }
+            }
+        }
+    }
+
+    // ----- waiting -----
+    if AccountAddState.yggdrasil-view == "processing" : Rectangle {
+        width: 100%;
+        height: 180px;
+        background: transparent;
+
+        // `.processing { justify-content: center; align-items: center;
+        // flex-direction: column; gap: 8px }`.
+        VerticalLayout {
+            width: parent.width;
+            height: parent.height;
+            alignment: center;
+            spacing: 8px;
+
+            HorizontalLayout {
+                alignment: center;
+                spacing: 8px;
+
+                BaseLoading {
+                    size: 40px;
+                    stroke-width: 5;
+                }
+            }
+
+            Text {
+                text: @tr("Please wait");
+                font-size: 14px;
+                horizontal-alignment: center;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+        }
+    }
+
+    // ----- the failure -----
+    if AccountAddState.yggdrasil-view == "error" : Rectangle {
+        width: 100%;
+        height: 120px;
+        background: transparent;
+
+        // `.error-state { align-items: center; justify-content: center;
+        // gap: 16px }`.
+        VerticalLayout {
+            width: parent.width;
+            height: parent.height;
+            alignment: center;
+            cross-axis-alignment: center;
+            spacing: 16px;
+
+            Text {
+                text: AccountAddState.yggdrasil-error;
+                font-size: 14px;
+                horizontal-alignment: center;
+                wrap: word-wrap;
+                color: Theme.red;
+            }
+
+            // `.error-state .buttons { width: 100px }`.
+            BaseButton {
+                button-width: 100px;
+                text: @tr("Back");
+                clicked => { AccountAddState.yggdrasil-view = "form"; }
+            }
+        }
+    }
+
+    // ----- choosing between the account's profiles -----
+    if AccountAddState.yggdrasil-view == "profiles" : VerticalLayout {
+        spacing: 0px;
+        alignment: start;
+
+        Text {
+            text: @tr("This account has more than one profile — choose the ones to add");
+            font-size: 14px;
+            line-height-factor: 1.3;
+            wrap: word-wrap;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        Rectangle {
+            height: 8px;
+            background: transparent;
+        }
+
+        // `.profile-list-wrapper { max-height: 234px; height: fit-content }`: the
+        // list is as tall as its rows, up to 234px. A row is 44px — the 28px
+        // avatar plus the 8px vertical padding on each side — and the list puts
+        // 8px between them and 2px above and below (see the `padding` below).
+        list-wrapper := Rectangle {
+            width: 100%;
+            height: min(234px, 4px
+                + AccountAddState.yggdrasil-profiles.length * 44px
+                + max(0, AccountAddState.yggdrasil-profiles.length - 1) * 8px);
+            background: transparent;
+
+            ScrollView {
+                width: 100%;
+                height: 100%;
+
+                VerticalLayout {
+                    spacing: 8px;
+                    padding-top: 2px;
+                    padding-bottom: 2px;
+                    padding-left: 4px;
+                    padding-right: 4px;
+
+                    for profile[index] in AccountAddState.yggdrasil-profiles : Rectangle {
+                        width: 100%;
+                        height: 44px;
+                        border-radius: 8px;
+                        // `.profile-item { background: surface1 }`, surface2 when
+                        // selected or hovered, overlay0 while pressed, and a
+                        // lavender hairline around a selected one.
+                        background: profile-touch.pressed ? Theme.overlay-0
+                            : profile.selected || profile-touch.has-hover ? Theme.surface-2
+                            : Theme.surface-1;
+                        border-width: profile.selected ? 1px : 0px;
+                        border-color: Theme.latte-lavender;
+                        opacity: profile.added ? 0.4 : 1.0;
+                        animate background { duration: 150ms; easing: ease; }
+
+                        BaseCheckbox {
+                            x: 10px;
+                            y: (parent.height - self.height) / 2;
+                            checked: profile.selected;
+                            checkbox-enabled: false;
+                        }
+
+                        // The Vue's `AccountAvatar` here is a bare 28px image —
+                        // no disc and no ring, which its callers add with CSS
+                        // and `AccountAddYggdrasil.vue` does not.
+                        Rectangle {
+                            x: 38px;
+                            y: (parent.height - self.height) / 2;
+                            width: 28px;
+                            height: 28px;
+                            background: transparent;
+
+                            if profile.avatar.width > 0 : Image {
+                                width: 28px;
+                                height: 28px;
+                                source: profile.avatar;
+                                image-rendering: pixelated;
+                            }
+                        }
+
+                        Text {
+                            x: 76px;
+                            y: 0;
+                            width: parent.width - 86px;
+                            height: parent.height;
+                            text: profile.name + (profile.added ? @tr(" (added)") : "");
+                            font-size: 14px;
+                            font-weight: 500;
+                            vertical-alignment: center;
+                            overflow: elide;
+                            color: Theme.default-text-color.transparentize(0.1);
+                        }
+
+                        // `.profile-item.disabled { pointer-events: none }`.
+                        profile-touch := TouchArea {
+                            width: parent.width;
+                            height: parent.height;
+                            enabled: !profile.added;
+                            clicked => { AccountAddState.toggle-yggdrasil-profile(index); }
+                        }
+                    }
+                }
+            }
+        }
+
+        // `div.buttons { justify-content: flex-end; margin-top: 12px; gap: 8px }`.
+        Rectangle {
+            height: 12px;
+            background: transparent;
+        }
+
+        // The Vue gives the second button a `margin-left: 8px` on top of the
+        // row's 8px gap, so this pair shares the width with 16px between them.
+        HorizontalLayout {
+            spacing: 16px;
+
+            BaseButton {
+                button-width: (parent.width - 16px) / 2;
+                text: @tr("Back");
+                clicked => { AccountAddState.yggdrasil-view = "form"; }
+            }
+
+            BaseButton {
+                button-width: (parent.width - 16px) / 2;
+                text: @tr("Add profiles");
+                button-background: Theme.latte-lavender;
+                text-color: #000;
+                button-enabled: AccountAddState.yggdrasil-has-selection;
+                clicked => { AccountAddState.yggdrasil-add-profiles(); }
+            }
+        }
+    }
+
+    // The Vue's `watch(apiRoot)`, debounced 500 ms: the server's name is looked
+    // up after typing stops. It is cleared when the field runs empty, so the
+    // lookup runs on that too.
+    server-lookup := Timer {
+        interval: 500ms;
+        running: false;
+        triggered => { AccountAddState.lookup-server-name(); }
+    }
+}
