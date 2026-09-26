@@ -32,19 +32,38 @@ export component SettingItem inherits Rectangle {
     in property <bool> hovered: false;
     in property <bool> pressed: false;
     in property <bool> item-disabled: false;
+    // Whether this row sits on the top / bottom edge of the group it belongs to.
+    //
+    // The Vue rounds the group's first and last child and nothing else
+    // (`.setting-items > div:first-child` / `:last-child`) — there is no
+    // `overflow` on `.setting-items`, so the corners are the rows' own. Slint
+    // has no `:first-child` selector and cannot reach into a `@children` slot,
+    // so the row that ends the group says so itself.
+    //
+    // This cannot be a clip instead, and not only because of what it costs the
+    // Vue: a `clip: true` + `border-radius` box is clipped *rectangularly* by
+    // Slint's software renderer (`i-slint-renderer-software`'s `combine_clip`
+    // ignores the radius), and the winit backend silently falls back to that
+    // renderer when femtovg's OpenGL context cannot be created — a VM, an RDP
+    // session, a disabled or outdated GPU driver — with no log. A rounded fill
+    // is what every renderer draws.
+    in property <bool> group-first: false;
+    in property <bool> group-last: false;
 
     callback clicked;
     callback reset;
 
+    // The 8px of `SettingGroup.vue`.
+    private property <length> group-radius: 8px;
+
     width: 100%;
-    // Rounded to match the group it sits in, which paints the card behind it in
-    // the same colour: what a row's corners leave against its neighbours and
-    // against the two ends of the card does not show. (The group rounds the
-    // outer corners through this, as it cannot tell which row is first.)
-    border-radius: 8px;
     background: root.pressed || ((root.navigable || root.clickable) && touch.pressed) ? Theme.setting-item-background-active
         : root.hovered || ((root.navigable || root.clickable) && touch.has-hover) ? Theme.setting-item-background-hover
         : Theme.setting-item-background;
+    border-top-left-radius: root.group-first ? root.group-radius : 0px;
+    border-top-right-radius: root.group-first ? root.group-radius : 0px;
+    border-bottom-left-radius: root.group-last ? root.group-radius : 0px;
+    border-bottom-right-radius: root.group-last ? root.group-radius : 0px;
     animate background { duration: 50ms; }
     opacity: root.item-disabled ? 0.6 : 1.0;
 

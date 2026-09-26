@@ -70,6 +70,7 @@ export component SettingsAppearance inherits VerticalLayout {
         title: @tr("Palette");
 
         SettingItem {
+            group-first: true;
             title: @tr("Follow system dark mode");
             description: @tr("Uses Latte when the system is set to light mode, otherwise uses Mocha");
             icon: "moon";
@@ -81,13 +82,14 @@ export component SettingsAppearance inherits VerticalLayout {
         }
 
         // The palette row is a plain `Rectangle` rather than a `SettingItem`, so
-        // it does not pick up the rounding the rows get; without it the square
-        // corners here cover the rounded ones of the card painted behind them.
+        // it does not pick up the `group-last` rounding the Vue gives
+        // `:last-child`; it is the last child here, so it rounds its own.
         color-style := Rectangle {
             width: 100%;
             height: 120px;
             background: Theme.setting-item-background;
-            border-radius: 8px;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
 
             PaletteSwatch {
                 x: (color-style.width - 456px) / 2 + 12px;
@@ -132,6 +134,7 @@ export component SettingsAppearance inherits VerticalLayout {
         title: @tr("Background image");
 
         SettingItem {
+            group-first: true;
             title: @tr("Custom background image");
             description: @tr("Select an image as the launcher background. Instance backgrounds take priority");
             icon: "image";
@@ -171,6 +174,7 @@ export component SettingsAppearance inherits VerticalLayout {
         }
 
         SettingItem {
+            group-last: true;
             title: @tr("Background parallax");
             description: @tr("When disabled, the background no longer moves with the mouse");
 

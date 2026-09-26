@@ -20,6 +20,7 @@ export component SettingsAudio inherits VerticalLayout {
         title: @tr("Background music");
 
         SettingItem {
+            group-first: true;
             title: @tr("Enable background music");
             description: @tr("Play background music in the launcher.");
 
@@ -60,6 +61,7 @@ export component SettingsAudio inherits VerticalLayout {
         }
 
         SettingItem {
+            group-last: true;
             title: @tr("Open music folder");
             description: @tr("Place the music you want to play in this folder.");
             navigable: true;
@@ -71,6 +73,7 @@ export component SettingsAudio inherits VerticalLayout {
         title: @tr("Volume");
 
         SettingItem {
+            group-first: true;
             title: @tr("Master volume");
             description: AppConfig.main-volume + "%";
 
@@ -84,6 +87,7 @@ export component SettingsAudio inherits VerticalLayout {
         }
 
         SettingItem {
+            group-last: true;
             title: @tr("Master volume (window inactive)");
             description: AppConfig.background-volume + "%";
 

@@ -265,6 +265,7 @@ component SettingsStep inherits ZoomTransition {
     // ----- background -----
     SettingGroup {
         SettingItem {
+            group-first: true;
             title: @tr("CreateInstance" => "Set background image");
             icon: "image";
             navigable: CreateInstanceState.background-path == "";
@@ -280,6 +281,7 @@ component SettingsStep inherits ZoomTransition {
         }
 
         SettingItem {
+            group-last: true;
             title: @tr("CreateInstance" => "Use instance background as launcher background");
             item-disabled: CreateInstanceState.background-path == "";
             // The Vue binds nothing to this switch either — the choice is not
@@ -300,6 +302,7 @@ component SettingsStep inherits ZoomTransition {
         title: @tr("CreateInstance" => "Version settings");
 
         SettingItem {
+            group-first: true;
             title: "Minecraft";
             icon: "minecraft";
             description: CreateInstanceState.minecraft-version != ""
@@ -324,6 +327,7 @@ component SettingsStep inherits ZoomTransition {
         }
 
         SettingItem {
+            group-last: true;
             title: @tr("CreateInstance" => "Loader version");
             icon: "extension-puzzle";
             description: CreateInstanceState.minecraft-version != ""

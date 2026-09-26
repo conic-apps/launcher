@@ -19,6 +19,7 @@ export component SettingsAbout inherits VerticalLayout {
         title: @tr("Feedback");
 
         SettingItem {
+            group-first: true;
             title: @tr("Submit feedback");
             description: @tr("Open a GitHub Issue. Remember to upload launcher logs when reporting bugs");
             icon: "flag";
@@ -35,6 +36,7 @@ export component SettingsAbout inherits VerticalLayout {
         }
 
         SettingItem {
+            group-last: true;
             title: @tr("View launcher logs");
             description: @tr("Open the launcher log folder. Please upload logs when reporting issues");
             icon: "document-text";
@@ -47,6 +49,7 @@ export component SettingsAbout inherits VerticalLayout {
         title: @tr("Credits");
 
         SettingItem {
+            group-first: true;
             title: "osu!";
             description: @tr("The UI interaction style of Conic Launcher is inspired by osu!");
             custom-icon: @image-url("../../assets/osu-logo.png");
@@ -63,6 +66,7 @@ export component SettingsAbout inherits VerticalLayout {
         }
 
         SettingItem {
+            group-last: true;
             title: "BMCLAPI";
             description: @tr("The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources");
             custom-icon: @image-url("../../assets/bangbang93-avatar.png");

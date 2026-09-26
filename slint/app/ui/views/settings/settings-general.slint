@@ -37,6 +37,7 @@ export component SettingsGeneral inherits VerticalLayout {
 
     SettingGroup {
         SettingItem {
+            group-first: true;
             title: @tr("Language");
             icon: "language";
 
@@ -86,6 +87,7 @@ export component SettingsGeneral inherits VerticalLayout {
         }
 
         SettingItem {
+            group-last: true;
             title: @tr("Open setup wizard");
             description: @tr("The setup wizard guides you through basic launcher settings");
             navigable: true;

@@ -17,13 +17,11 @@ import { AppIcon } from "app-icon.slint";
 // rounded; when open only its top corners are, and the content keeps the
 // bottom corners (matching the Vue class toggling).
 //
-// Both halves do it the way `SettingGroup` does after #310 — the wrapper paints
-// the card in the colour a row paints, and the rows are rounded by `SettingItem`
-// — rather than clipping the wrapper to its own radius. That is not only because
-// a rounded `clip` is what the *software* renderer drops (see `README.md`), but
-// because a row cannot tell whether it is the first or the last one here either:
-// the content is a `@children` slot. Clipping would also have kept the card's
-// corners from a control in the first row drawing outside them.
+// As in `SettingGroup`, the corners are the rows' and nothing is clipped to a
+// radius — the Vue puts `overflow: hidden` on these two but gives the content's
+// last child its bottom radii as well, and a rounded `clip` is what Slint's
+// software renderer drops (see `README.md`). So the header is the first row, and
+// the last one while it is closed, and the content's last row says so itself.
 export component SettingCollapse inherits VerticalLayout {
     in property <string> title;
     in property <string> description: "";
@@ -38,15 +36,18 @@ export component SettingCollapse inherits VerticalLayout {
     head := Rectangle {
         width: 100%;
         height: head-item.preferred-height;
-        background: Theme.setting-item-background;
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
-        border-bottom-left-radius: root.opened ? 0px : 8px;
-        border-bottom-right-radius: root.opened ? 0px : 8px;
-        animate border-bottom-left-radius, border-bottom-right-radius { duration: 200ms; easing: ease; }
+        background: transparent;
 
         head-item := SettingItem {
             width: parent.width;
+            group-first: true;
+            group-last: !root.opened;
+            // The Vue's `border-radius: 8px` -> `8px 8px 0 0` on `.opened`, over
+            // 200ms; a row's bottom corners are where that is carried here.
+            animate border-bottom-left-radius, border-bottom-right-radius {
+                duration: 200ms;
+                easing: ease;
+            }
             title: root.title;
             description: root.description;
             resetable: root.resetable;
@@ -72,18 +73,16 @@ export component SettingCollapse inherits VerticalLayout {
     // stays visible while the height animates back to zero so the collapse is
     // animated instead of snapping shut.
     //
-    // The clip is for that height animation only — it is a plain rectangle, and
-    // the bottom corners come from the card this paints (the rows above it are
-    // rounded by `SettingItem`).
+    // The clip is that animation's, and is a plain rectangle: the bottom corners
+    // are the last row's (`group-last`), which a caller whose content is a
+    // dynamic `@children` slot has to pass on — see `settings-jvm.slint`.
     content-wrapper := Rectangle {
         width: 100%;
         height: root.opened ? content.preferred-height : 0px;
         visible: root.opened || self.height > 0.5px;
         opacity: root.opened ? 1.0 : 0.0;
         clip: true;
-        border-bottom-left-radius: 8px;
-        border-bottom-right-radius: 8px;
-        background: Theme.setting-item-background;
+        background: transparent;
 
         animate height { duration: 200ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
         animate opacity { duration: 200ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
