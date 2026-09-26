@@ -4,18 +4,19 @@
 
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/app-icon.slint";
-import { AccountAvatar } from "../../components/account-avatar.slint";
 import { AccountItem } from "../../globals/game.slint";
+import { Dropdown } from "../../globals/dropdown.slint";
+import { FocusManager } from "../../globals/focus.slint";
 
-// Profile name + account switcher pill (src/views/game/AccountListDropdown.vue).
-// The list opens upward and is right-aligned to the trigger.
 export component AccountListDropdown inherits Rectangle {
     in property <string> name: "";
     in property <string> kind: "";
     in property <[AccountItem]> players: [];
     in property <string> current-key: "";
-    in-out property <bool> opened: false;
+    in property <string> dropdown-id: "account-switcher";
     callback select(string);
+
+    out property <bool> opened: root.is-open;
 
     height: 36px;
     width: 32px + name-text.preferred-width + 36px;
@@ -24,8 +25,18 @@ export component AccountListDropdown inherits Rectangle {
     drop-shadow-color: #00000033;
     drop-shadow-blur: 10px;
 
-    private property <length> panel-height:
-        root.players.length * 26px + max(0, root.players.length - 1) * 8px + 16px;
+    private property <bool> is-open: Dropdown.open && Dropdown.owner == root.dropdown-id;
+    private property <float> chevron-flip: root.is-open ? 1.0 : 0.0;
+    animate chevron-flip { duration: 200ms; easing: ease-in-out; }
+
+    private property <length> panel-height: root.players.length * 26px
+        + max(0, root.players.length - 1) * 4px + 18px;
+    private property <int> serial: Dropdown.choose-serial;
+    changed serial => {
+        if Dropdown.choose-owner == root.dropdown-id {
+            root.select(Dropdown.chosen);
+        }
+    }
 
     name-text := Text {
         text: root.name;
@@ -50,71 +61,31 @@ export component AccountListDropdown inherits Rectangle {
         AppIcon {
             name: "chevron-up";
             size: 16px;
+            icon-color: Theme.default-text-color.transparentize(0.1);
             x: (parent.width - self.width) / 2;
             y: (parent.height - self.height) / 2;
+            transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
+            opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
         }
 
         switch-touch := TouchArea {
             width: parent.width;
             height: parent.height;
-            clicked => { root.opened = !root.opened; }
-        }
-    }
-
-    if root.opened : Rectangle {
-        x: parent.width - self.width;
-        y: -(root.panel-height + 4px);
-        width: root.width;
-        height: root.panel-height;
-        border-radius: 10px;
-        border-width: 1px;
-        border-color: Theme.controllers-border;
-        background: Theme.base;
-        drop-shadow-color: #4500611d;
-        drop-shadow-blur: 10px;
-        z: 100000;
-
-        VerticalLayout {
-            x: 10px;
-            y: 8px;
-            width: parent.width - 20px;
-            height: parent.height - 16px;
-            spacing: 8px;
-
-            for player in root.players : Rectangle {
-                height: 26px;
-                border-radius: 6px;
-                background: player.key == root.current-key ? #ffffff17
-                    : player-touch.has-hover ? #ffffff1f
-                    : transparent;
-                animate background { duration: 30ms; }
-
-                AccountAvatar {
-                    size: 18px;
-                    kind: player.kind;
-                    x: 8px;
-                    y: (parent.height - self.height) / 2;
-                }
-
-                Text {
-                    text: player.name;
-                    font-size: 12px;
-                    font-weight: Theme.font-weight-normal;
-                    color: Theme.default-text-color.transparentize(0.1);
-                    x: 34px;
-                    y: (parent.height - self.height) / 2;
-                    width: parent.width - 42px;
-                    overflow: elide;
-                    wrap: no-wrap;
-                }
-
-                player-touch := TouchArea {
-                    width: parent.width;
-                    height: parent.height;
-                    clicked => {
-                        root.opened = false;
-                        root.select(player.key);
-                    }
+            clicked => {
+                FocusManager.clear();
+                if (root.is-open) {
+                    Dropdown.open = false;
+                } else {
+                    Dropdown.options = [];
+                    Dropdown.accounts = root.players;
+                    Dropdown.account-mode = true;
+                    Dropdown.current = root.current-key;
+                    Dropdown.owner = root.dropdown-id;
+                    Dropdown.anchor-x = root.absolute-position.x;
+                    Dropdown.anchor-y = root.absolute-position.y - root.panel-height - 4px;
+                    Dropdown.anchor-width = root.width;
+                    Dropdown.expand-upwards = true;
+                    Dropdown.open = true;
                 }
             }
         }

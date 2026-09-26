@@ -417,6 +417,16 @@ impl GameController {
         self.sync_rows(rows);
 
         let state = ui.global::<GameState>();
+        state.set_sort_mode(
+            match self.sort {
+                SortBy::Name => "name",
+                SortBy::Version => "version",
+                SortBy::LastPlayed => "lastplay",
+                SortBy::Playtime => "playtime",
+            }
+            .into(),
+        );
+        state.set_group_mode(self.group_mode.into());
         state.set_list_content_height(content_height);
         match current_row {
             Some((y, height)) => {

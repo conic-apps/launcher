@@ -5,7 +5,8 @@
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/app-icon.slint";
 import { GameState, GameIntro } from "../../globals/game.slint";
-import { InstanceListDropdown, DropdownOption } from "instance-list-dropdown.slint";
+import { DropdownOption } from "../../globals/dropdown.slint";
+import { InstanceListDropdown } from "instance-list-dropdown.slint";
 
 // Search + sort/group toolbar above the instance list
 // (src/views/game/InstancesListToolBar.vue). Anchored to the top-right.
@@ -22,14 +23,14 @@ export component InstancesListToolBar inherits Rectangle {
     // where the toolbar has to sit above the scrolling rows.
 
     private property <[DropdownOption]> sort-options: [
-        { key: "name", label: @tr("Name") },
-        { key: "version", label: @tr("Version") },
-        { key: "playtime", label: @tr("Play time") },
-        { key: "lastplay", label: @tr("Last played") },
+        { key: "name", label: @tr("Name"), icon: "" },
+        { key: "version", label: @tr("Version"), icon: "" },
+        { key: "playtime", label: @tr("Play time"), icon: "" },
+        { key: "lastplay", label: @tr("Last played"), icon: "" },
     ];
     private property <[DropdownOption]> group-options: [
-        { key: "none", label: @tr("Ungrouped") },
-        { key: "loader", label: @tr("Mod loader") },
+        { key: "none", label: @tr("Ungrouped"), icon: "" },
+        { key: "loader", label: @tr("Mod loader"), icon: "" },
     ];
 
     private property <string> sort-label:
@@ -135,6 +136,7 @@ export component InstancesListToolBar inherits Rectangle {
                 selected: root.sort-label;
                 options: root.sort-options;
                 selected-key: GameState.sort-mode;
+                dropdown-id: "instance-sort";
                 select(key) => { GameState.set-sort(key); }
             }
 
@@ -145,6 +147,7 @@ export component InstancesListToolBar inherits Rectangle {
                 selected: root.group-label;
                 options: root.group-options;
                 selected-key: GameState.group-mode;
+                dropdown-id: "instance-group";
                 select(key) => { GameState.set-group-mode(key); }
             }
         }

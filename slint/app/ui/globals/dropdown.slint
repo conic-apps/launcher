@@ -2,30 +2,28 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// State for the floating dropdown list (see `DropdownOverlay` and
-// `BaseDropdownSelect`).
-//
-// The list is rendered once at the application root instead of inside the
-// select, because Slint's `z` only orders siblings and the settings scroll area
-// clips — the Vue original relies on `z-index` + a document-level outside-click
-// listener for the same effect. The select hands its data to this global when
-// it opens; the overlay reports the choice back through `chosen` +
-// `choose-serial` (Slint globals cannot hold per-instance callbacks).
+import { AccountItem } from "game.slint";
+
+export struct DropdownOption {
+    key: string,
+    label: string,
+    icon: string,
+}
+
 export global Dropdown {
     in-out property <bool> open: false;
-
-    // Data for the currently open list.
-    in-out property <[string]> options: [];
-    in-out property <[string]> display-name: [];
+    in-out property <[DropdownOption]> options: [];
+    in-out property <[AccountItem]> accounts: [];
+    in-out property <bool> account-mode: false;
     in-out property <string> current: "";
+    in-out property <string> owner: "";
 
-    // Panel position (window coordinates) and width.
     in-out property <length> anchor-x: 0px;
     in-out property <length> anchor-y: 0px;
     in-out property <length> anchor-width: 240px;
+    in-out property <bool> expand-upwards: false;
 
-    // Selection hand-off: the overlay sets `chosen` then increments the serial;
-    // the originating select watches the serial and applies the value.
     in-out property <string> chosen: "";
+    in-out property <string> choose-owner: "";
     in-out property <int> choose-serial: 0;
 }

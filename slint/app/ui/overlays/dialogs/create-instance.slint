@@ -12,6 +12,7 @@ import { SettingItem } from "../../components/setting-item.slint";
 import { AppIcon } from "../../components/app-icon.slint";
 import { ZoomTransition } from "../../components/zoom-transition.slint";
 import { FocusManager } from "../../globals/focus.slint";
+import { Dropdown } from "../../globals/dropdown.slint";
 import { Dialogs, CreateInstanceState } from "../../globals/dialogs.slint";
 import { MinecraftChoose } from "create/minecraft-choose.slint";
 import { ModLoaderChoose } from "create/mod-loader-choose.slint";
@@ -543,7 +544,7 @@ export component CreateInstance inherits Rectangle {
             flick := Flickable {
                 width: 100%;
                 height: 100%;
-                interactive: true;
+                interactive: !Dropdown.open;
                 mouse-drag-pan-enabled: false;
                 // Pin the content to the dialog's inner width, like `ScrollView` does —
                 // without it the column would be laid out at its preferred width.
@@ -600,6 +601,16 @@ export component CreateInstance inherits Rectangle {
                         screen-height: flick.height - root.title-height;
                     }
                 }
+            }
+
+            dropdown-scroll-blocker := TouchArea {
+                x: 0;
+                y: 0;
+                width: parent.width;
+                height: parent.height;
+                enabled: Dropdown.open;
+                scroll-event(event) => { return accept; }
+                clicked => { Dropdown.open = false; }
             }
         }
     }
