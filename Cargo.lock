@@ -1311,6 +1311,7 @@ dependencies = [
  "slint-instance",
  "slint-java-runtime",
  "slint-platform",
+ "slint-single-instance",
  "slint-window",
  "tokio",
  "winit",
@@ -7179,6 +7180,16 @@ dependencies = [
  "once_cell",
  "os_info",
  "serde",
+]
+
+[[package]]
+name = "slint-single-instance"
+version = "0.0.0"
+dependencies = [
+ "libc",
+ "log",
+ "windows-sys 0.60.2",
+ "zbus",
 ]
 
 [[package]]

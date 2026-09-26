@@ -87,6 +87,7 @@ slint/
     content/                        # Tauri-free mirror of crates/content (counts)
     install/                        # Tauri-free mirror of crates/install (version lists)
     java-runtime/                   # Tauri-free mirror of crates/java-runtime (the scan)
+    single-instance/                # single-instance guard (no Tauri plugin here)
 ```
 
 ## Naming
@@ -304,7 +305,8 @@ Per the migration plan:
   runtime and reported back through `upgrade_in_event_loop`.
 - `slint-platform` (OS detection), `slint-window` (window controls),
   `slint-config`, `slint-folder`, `slint-account`, `slint-instance`,
-  `slint-content`, `slint-install` and `slint-java-runtime`.
+  `slint-content`, `slint-install`, `slint-java-runtime` and
+  `slint-single-instance`.
 - `slint-install` mirrors the **version-list half** of `crates/install`:
   `VersionManifest`, the Fabric/Quilt/Forge/Neoforge lists and the caching the
   Tauri plugin keeps in its `PluginState` (30 minutes, like
@@ -332,6 +334,43 @@ Per the migration plan:
   the drag keeps working outside the window and with the system's window
   snapping. This is what the Vue expresses with `data-tauri-drag-region`; the
   dialog's scrim uses it, so the dialog can be moved by its shadow area.
+- `slint-single-instance`, the single-instance guard, replacing the Tauri app's
+  `tauri-plugin-single-instance` (a dependency and three lines in
+  `core/src/main.rs`). `main()` claims the role before the window exists, so a
+  later launch quits without ever showing one, exactly as the plugin's does; the
+  launch it was made with is handed to the instance that is already running,
+  which brings the window forward through `WindowService::bring_to_front` — the
+  equivalent of the plugin's callback, whose `set_focus()` goes to the first
+  webview window. What that callback throws away (`|app, _, _|`) arrives here in
+  full: the crate reports the later launch's `argv` and its working directory.
+  The app owns its event loop and there is no plugin to host the backends, so
+  there is one per platform, each the pair the plugin uses on that platform:
+
+  | Platform | Lock                    | The later launch is reported by |
+  | -------- | ----------------------- | ------------------------------- |
+  | Linux    | a D-Bus well-known name | an `ExecuteCallback` method     |
+  | macOS    | a `UDS` socket file     | a connection to that socket     |
+  | Windows  | a named mutex           | a `WM_COPYDATA` message         |
+
+  Only a process of the same user can reach any of them: the D-Bus name and the
+  Windows object names derive from `APP_ID` (D-Bus hands a well-known name to
+  one connection, and it is the session bus, which is per user), and the macOS
+  socket is qualified with the uid rather than being a fixed name in the shared
+  `/tmp`. None of it is load-bearing on failure either — a backend that cannot
+  take its lock (no session bus, no socket to bind) logs a warning and lets the
+  launch continue, so a headless session still starts the app. The deviations
+  from the plugin are three: the `APP_ID` (`app.conicmc.launcher.slint` rather
+  than the Tauri app's `app.conicmc.launcher`, so both frontends can run side by
+  side while both exist — drop the suffix when the Slint app replaces it), the
+  `WM_COPYDATA` payload being NUL-framed rather than `|`-joined (a path may
+  contain a `|`), and a later launch waiting up to two seconds for the primary
+  to publish its window instead of quietly running a second copy when it catches
+  it mid-startup.
+  The arguments are logged and nothing acts on them yet: they are the deep-link
+  payload (`conic-launcher://…?code=…`, which the desktop entry hands over), and
+  the accounts view that consumes it is not migrated. The Tauri app's half of
+  that still runs as it always did — its own plugin, its own lock, its own
+  `onOpenUrl` listener.
 - `app/src/runtime.rs`: the tokio runtime the background work runs on, standing
   in for the one Tauri builds at startup. `spawn` carries the async work (the
   HTTP calls of `slint-install`) and `spawn_blocking` the disk work (the Java

@@ -21,8 +21,8 @@ fn main() {
 /// running and nothing logged. Failing the build is the only loud signal.
 fn check_embedded_font() {
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("ui/fonts/ComfortaaNunito.ttf");
-    let data =
-        fs::read(&path).unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
+    let data = fs::read(&path)
+        .unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
     // TrueType outlines, the Apple `true`/`typ1` variants, and `OTTO` (CFF).
     let head = data.get(..4).unwrap_or_default();
     if !matches!(head, b"\x00\x01\x00\x00" | b"true" | b"typ1" | b"OTTO") {
