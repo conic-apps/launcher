@@ -4,7 +4,7 @@
 
 import { Theme } from "../theme.slint";
 import { AppIcon } from "app-icon.slint";
-import { Dropdown } from "../globals/dropdown.slint";
+import { Dropdown, DropdownOption } from "../globals/dropdown.slint";
 import { FocusManager } from "../globals/focus.slint";
 
 // Dropdown select (src/components/BaseDropdownSelect.vue), used for the
@@ -24,26 +24,27 @@ import { FocusManager } from "../globals/focus.slint";
 // label is passed in via `selected-label`. An empty value (`""`, i.e. "follow
 // system") shows the placeholder.
 export component BaseDropdownSelect inherits Rectangle {
-    in property <[string]> options;
-    in property <[string]> display-name;
+    in property <[DropdownOption]> options;
     in property <string> selected-label: "";
     in property <string> placeholder: "";
     in property <length> select-width: 240px;
+    in property <string> dropdown-id: "settings";
     in-out property <string> value;
     callback selected(string);
 
     width: select-width;
     height: 28px;
 
-    // 0 = pointing down, 1 = flipped up.
-    private property <float> chevron-flip: Dropdown.open ? 1.0 : 0.0;
+    private property <bool> is-open: Dropdown.open && Dropdown.owner == root.dropdown-id;
+    private property <float> chevron-flip: root.is-open ? 1.0 : 0.0;
     animate chevron-flip { duration: 200ms; easing: ease-in-out; }
 
-    // Choice reported by the overlay.
     private property <int> serial: Dropdown.choose-serial;
     changed serial => {
-        root.value = Dropdown.chosen;
-        root.selected(Dropdown.chosen);
+        if Dropdown.choose-owner == root.dropdown-id {
+            root.value = Dropdown.chosen;
+            root.selected(Dropdown.chosen);
+        }
     }
 
     value-box := Rectangle {
@@ -85,15 +86,18 @@ export component BaseDropdownSelect inherits Rectangle {
             height: parent.height;
             clicked => {
                 FocusManager.clear();
-                if (Dropdown.open) {
+                if (root.is-open) {
                     Dropdown.open = false;
                 } else {
                     Dropdown.options = root.options;
-                    Dropdown.display-name = root.display-name;
+                    Dropdown.accounts = [];
+                    Dropdown.account-mode = false;
                     Dropdown.current = root.value;
+                    Dropdown.owner = root.dropdown-id;
                     Dropdown.anchor-x = root.absolute-position.x;
                     Dropdown.anchor-y = root.absolute-position.y + root.height + 4px;
                     Dropdown.anchor-width = root.width;
+                    Dropdown.expand-upwards = false;
                     Dropdown.open = true;
                 }
             }

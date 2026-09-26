@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../theme.slint";
+import { Dropdown } from "../globals/dropdown.slint";
 import { FocusManager } from "../globals/focus.slint";
 import { ScrollInput, ScrollSource } from "../globals/scroll.slint";
 
@@ -106,6 +107,13 @@ export component ScrollView inherits Rectangle {
     /// after an idle period would read that whole gap as its frame time and start
     /// the glide with a jump sized for a second-long frame.
     private property <bool> scrolling: abs(root.target-y - root.scroll-y) > 0.5px;
+    private property <bool> dropdown-open: Dropdown.open;
+
+    changed dropdown-open => {
+        if root.dropdown-open {
+            root.target-y = root.scroll-y;
+        }
+    }
 
     changed scrolling => {
         if root.scrolling {
@@ -180,6 +188,9 @@ export component ScrollView inherits Rectangle {
             clicked => { FocusManager.clear(); }
 
             scroll-event(event) => {
+                if Dropdown.open {
+                    return accept;
+                }
                 if root.max-scroll <= 0px {
                     return reject;
                 }
