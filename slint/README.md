@@ -387,7 +387,7 @@ overlays and the account skin/audio-visualizer rendering are stubbed;
       blur is `drop-shadow-blur`). They stay translucent, so the rows scrolling
       under the toolbar show through it unblurred.
 - **A rounded `clip` is a Windows-only no-op** — the reason the settings page's
-  cards came out as plain rectangles there and nowhere else. Slint's desktop
+  cards came out with square corners there and nowhere else. Slint's desktop
   default is femtovg over OpenGL, but the winit backend **silently falls back to
   the software renderer** when the GL context cannot be created: no log, no
   error. That is far more likely on Windows than elsewhere — a VM, an RDP
@@ -397,15 +397,19 @@ overlays and the account skin/audio-visualizer rendering are stubbed;
   *borders* (per corner), but its `combine_clip` is a plain rectangle
   intersection carrying a `// TODO: handle radius`: a `clip: true` +
   `border-radius` box is clipped **rectangularly** there.
-  So the cards paint their own corners instead: the wrapper fills the card in the
-  colour a row paints and the rows are rounded, which fills the notches a row's
-  corners leave at the two ends of the card and at the 1px seams. Both
-  `SettingGroup` and `SettingCollapse` do this. Rounding only the first and the
-  last row — what the Vue's `:first-child` / `:last-child` do — is the
-  alternative, but Slint cannot reach into a `@children` slot to say which is
-  which, so every call site would have to be told about it. A *rectangular*
-  clip is fine, and is what the collapse keeps: it is there to hide the content
-  while its height animates to zero.
+  The cards therefore have to draw their own corners, the way the Vue does —
+  `.setting-items > div:first-child` / `:last-child`, with no `overflow` on
+  `.setting-items`. Slint has no `:first-child` selector and cannot reach into a
+  `@children` slot, so `SettingItem`'s `group-first` / `group-last` stand in for
+  the two selectors, and a caller whose content is a dynamic slot has to pass
+  them on (`JavaRuntimeList`). The two ways of *not* doing that are both wrong:
+  clipping the wrapper cuts off the value tooltip a control in the first row
+  draws above itself, and rounding every row with the wrapper painting the card
+  behind them leaves a notch at each row's corners and at every 1px seam that
+  only the card's colour hides — a hovered row is a lighter colour, so its four
+  corners show the base one through. A *rectangular* clip is fine, and is what
+  `SettingCollapse`'s content keeps: it is there to cut the rows off while the
+  height animates to zero.
   **Rule of thumb: never rely on a rounded `clip` in this app.** Still unfixed,
   in that what the corner is cut from is an image rather than a fill:
   `AccountAvatar` (a skin inside a `border-radius: 10000px; clip: true` circle)

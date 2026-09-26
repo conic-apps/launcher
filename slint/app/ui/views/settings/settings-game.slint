@@ -34,6 +34,7 @@ export component SettingsGame inherits VerticalLayout {
         title: @tr("Basic settings");
 
         SettingItem {
+            group-first: true;
             title: @tr("Window size");
             description: @tr("Initial game window size");
 
@@ -84,6 +85,7 @@ export component SettingsGame inherits VerticalLayout {
         }
 
         SettingItem {
+            group-last: true;
             title: @tr("Quit launcher after launching game");
 
             BaseSwitch {
@@ -97,6 +99,7 @@ export component SettingsGame inherits VerticalLayout {
         title: @tr("Memory");
 
         SettingItem {
+            group-first: true;
             title: @tr("Auto-allocate memory");
 
             BaseSwitch {
@@ -106,6 +109,7 @@ export component SettingsGame inherits VerticalLayout {
         }
 
         SettingItem {
+            group-last: true;
             title: @tr("Manual memory allocation");
             description: @tr("Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled");
             item-disabled: AppConfig.auto-memory;
@@ -251,6 +255,7 @@ export component SettingsGame inherits VerticalLayout {
         }
 
         SettingItem {
+            group-last: true;
             title: @tr("Skip game file check");
             description: @tr("The launcher will not attempt to verify or repair game files before launching");
 
