@@ -78,7 +78,20 @@ export component SettingsAppearance inherits VerticalLayout {
 
             BaseSwitch {
                 checked <=> AppConfig.palette-follow-system;
-                toggled => { AppConfig.changed(); }
+                // Arms the palette transition, which is what makes a change a
+                // *user* change (see `Theme.transitions-enabled`); without it
+                // the app would snap, which is right at startup and wrong here.
+                //
+                // `BaseSwitch` writes `checked` through the two-way binding
+                // before it calls `toggled`, so this is not the first mutation
+                // of the change — and does not need to be. Slint evaluates the
+                // tokens lazily, from the change handlers, which run on the
+                // event loop and never in the middle of a click handler: by the
+                // time anything reads `transitions-enabled`, it is set.
+                toggled => {
+                    Theme.transitions-enabled = true;
+                    AppConfig.changed();
+                }
             }
         }
 
@@ -99,7 +112,11 @@ export component SettingsAppearance inherits VerticalLayout {
                 label: "Latte";
                 selected: Theme.active-palette == "Latte";
                 swatch-disabled: AppConfig.palette-follow-system;
-                chosen => { AppConfig.palette = "Latte"; AppConfig.changed(); }
+                chosen => {
+                    Theme.transitions-enabled = true;
+                    AppConfig.palette = "Latte";
+                    AppConfig.changed();
+                }
             }
             PaletteSwatch {
                 x: (color-style.width - 456px) / 2 + 126px;
@@ -108,7 +125,11 @@ export component SettingsAppearance inherits VerticalLayout {
                 label: "Frappé";
                 selected: Theme.active-palette == "Frappe";
                 swatch-disabled: AppConfig.palette-follow-system;
-                chosen => { AppConfig.palette = "Frappe"; AppConfig.changed(); }
+                chosen => {
+                    Theme.transitions-enabled = true;
+                    AppConfig.palette = "Frappe";
+                    AppConfig.changed();
+                }
             }
             PaletteSwatch {
                 x: (color-style.width - 456px) / 2 + 240px;
@@ -117,7 +138,11 @@ export component SettingsAppearance inherits VerticalLayout {
                 label: "Macchiato";
                 selected: Theme.active-palette == "Macchiato";
                 swatch-disabled: AppConfig.palette-follow-system;
-                chosen => { AppConfig.palette = "Macchiato"; AppConfig.changed(); }
+                chosen => {
+                    Theme.transitions-enabled = true;
+                    AppConfig.palette = "Macchiato";
+                    AppConfig.changed();
+                }
             }
             PaletteSwatch {
                 x: (color-style.width - 456px) / 2 + 354px;
@@ -126,7 +151,11 @@ export component SettingsAppearance inherits VerticalLayout {
                 label: "Mocha";
                 selected: Theme.active-palette == "Mocha";
                 swatch-disabled: AppConfig.palette-follow-system;
-                chosen => { AppConfig.palette = "Mocha"; AppConfig.changed(); }
+                chosen => {
+                    Theme.transitions-enabled = true;
+                    AppConfig.palette = "Mocha";
+                    AppConfig.changed();
+                }
             }
         }
     }

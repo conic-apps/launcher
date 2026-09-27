@@ -193,8 +193,14 @@ export global Theme {
     // The palette actually in effect. When following the system, dark mode uses
     // Mocha and light mode Latte (mirrors `reloadPalette` in src/theme.ts).
     // Slint only reports the real scheme once the window is mapped, so while it
-    // is `Unknown` (the first, pre-mapped frame) fall back to the configured
-    // palette instead of guessing light — avoids a light flash on dark systems.
+    // is `Unknown` (everything before the window exists) fall back to the
+    // configured palette instead of guessing light.
+    //
+    // That intermediate value is never painted: the window — and with it the
+    // platform's answer — is created before the first frame, and the first frame
+    // is drawn after `run_change_handlers` has run. It only has to *exist*, and
+    // the tokens have to reach the final palette without animating on the way
+    // there, which is what `transitions-enabled` below is for.
     in property <string> active-palette:
         AppConfig.palette-follow-system
             ? (Palette.color-scheme == ColorScheme.dark ? "Mocha"
@@ -298,6 +304,38 @@ export global Theme {
     // original never themed them). Not a `ThemeProvider` token — there is
     // nothing to animate.
     in property <color> latte-lavender: #7287fd;
+
+    // Whether a palette change eases over `transitions-duration` or snaps.
+    // Written by whoever causes the change, never by a clock.
+    //
+    // Startup must not animate, and the reason is structural rather than a
+    // matter of timing. The palette moves *twice* before the window is up: once
+    // to the configured `AppConfig.palette` (Rust seeds the global before
+    // `run()`), and once more to what the platform reports, which only happens
+    // when the window is created — AppKit, Win32 and the XDG portal all need a
+    // window to answer, so `Palette.color-scheme` is `Unknown` until then and
+    // `active-palette` falls back to the configured name. Those two values can
+    // be different (`palette = "Latte"` with `palette_follow_system` on a dark
+    // system is the ordinary case), and the first frame is painted after the
+    // second, so the app has to *arrive* at the final palette rather than fade
+    // towards it. A time-based guard cannot arrange that:
+    // `update_timers_and_animations()` fires the due timers and then runs the
+    // change handlers in the same call, so a timer armed at construction is
+    // already up by the time the first frame's change handlers run.
+    //
+    // This mirrors the Vue original, which never guessed either:
+    // `loadPalette()` (called once, from `App.vue`) swaps the theme class with
+    // no transition, and `reloadPalette()` — the one every settings screen and
+    // the setup wizard call — brackets the swap in `.changing-theme` for 300ms.
+    // So: the settings screens arm this before a change the user made, and
+    // nothing else ever does. Once armed it stays armed, which additionally
+    // eases a *system* theme change while the app is running — something the
+    // Vue never did, since it has no `prefers-color-scheme` listener and
+    // `Palette.color-scheme` is the only thing that notices here.
+    in-out property <bool> transitions-enabled: false;
+    // `.changing-theme`'s `transition: all 0.3s ease`, in one place so the two
+    // ends of the pair cannot drift apart.
+    in property <duration> transitions-duration: 300ms;
 }
 
 // Produces the theme colors from the selected palette and interpolates them
@@ -307,18 +345,23 @@ export component ThemeProvider inherits Rectangle {
     width: 0;
     height: 0;
 
-    // The persisted palette is applied by Rust right after the component is
-    // built, before the event loop runs. Disable the transition until then so
-    // the app opens directly in the saved scheme instead of animating away from
-    // the default; later (user-driven) palette changes do animate.
-    private property <bool> transitions-enabled: false;
+    // The platform is told the resolved palette once the app is up, which is
+    // the first moment the platform can have reported its scheme (see
+    // `Theme.transitions-enabled`). `changed dark` alone would not do: when the
+    // configured palette already *is* the resolved one — the common case on a
+    // dark system — `dark` never changes, and `windows_caption.rs` would keep
+    // the default ink for a Latte window.
+    //
+    // This is deliberately the only thing this timer does. It used to arm the
+    // palette transition as well, which is what made the app fade through
+    // `AppConfig.palette` on its way to the real scheme: timers and change
+    // handlers run in the same `update_timers_and_animations()` call, so the
+    // guard was guaranteed to be open one tick before it was needed. The
+    // transition is now armed by the change itself (see the global).
     startup-timer := Timer {
         interval: 100ms;
         running: true;
         triggered => {
-            root.transitions-enabled = true;
-            // The platform is told the resolved palette once here as well, so it
-            // does not have to wait for the first palette *change* to hear it.
             root.caption-dark-changed(root.dark);
             startup-timer.running = false;
         }
@@ -421,7 +464,8 @@ export component ThemeProvider inherits Rectangle {
         root.dark ? (root.hc ? ctp.overlay2 : #383b41) : ctp.crust;
     in-out property <length> dialog-border-radius: 10px;
 
-    // The Slint equivalent of `.changing-theme`.
+    // The Slint equivalent of `.changing-theme`, for the changes that are
+    // allowed to fade (see `Theme.transitions-enabled`).
     animate base, mantle, crust,
         surface-0, surface-1, surface-2,
         overlay-0, overlay-1, overlay-2,
@@ -439,7 +483,7 @@ export component ThemeProvider inherits Rectangle {
         card-background, card-border,
         dialog-background, dialog-border
     {
-        duration: root.transitions-enabled ? 300ms : 0ms;
+        duration: Theme.transitions-enabled ? Theme.transitions-duration : 0ms;
         easing: ease;
     }
 
