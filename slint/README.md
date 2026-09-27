@@ -27,6 +27,7 @@ slint/
       config_bridge.rs              # config ↔ UI bridges (file pickers, opening URLs)
       settings.rs                   # the settings screen's script
       game.rs                       # the game view's script
+      launch.rs                     # the launch view's script
       create_instance.rs            # the create-instance dialog's script
       account_add.rs                # the add-account dialog's script
       account_avatar.rs             # player-head avatars (the Vue's canvas crop)
@@ -41,6 +42,7 @@ slint/
         navigation.slint            # global page navigation (src/store/navigation.ts)
         settings.slint              # global config state (the "config store")
         game.slint                  # game view state (src/store/instance.ts + …)
+        launch.slint                # launch view state (src/views/LaunchView.vue)
         dialogs.slint               # dialog store + the create-instance form state
         focus.slint                 # blur-the-focused-field helper
         window-drag.slint           # the Vue's `data-tauri-drag-region` regions
@@ -49,6 +51,7 @@ slint/
         title-bar.slint
         account-avatar.slint
         base-loading.slint
+        base-progress.slint         # the launch view's linear progress bar
         title-bar/navigation-button.slint
         title-bar/title-bar-action-button.slint
         search-bar.slint
@@ -75,6 +78,7 @@ slint/
         settings/                   # the eight settings sections + InfoBox
         game-view.slint             # src/views/GameView.vue
         game/                       # summary, list, toolbar, footer, dropdowns
+        launch-view.slint           # src/views/LaunchView.vue
         game-placeholder.slint      # stand-in for the not-yet-migrated views
         accounts/                   # the add-account dialog's three screens
       overlays/
@@ -82,6 +86,7 @@ slint/
         dialogs/
           account-add.slint         # src/overlays/dialogs/AccountAdd.vue
           create-instance.slint     # src/overlays/dialogs/CreateInstance.vue
+          launch-errors.slint       # the four launch error dialogs
           create/
             minecraft-choose.slint  #   …/create/MinecraftChoose.vue
             mod-loader-choose.slint #   …/create/ModLoaderChoose.vue
@@ -93,8 +98,13 @@ slint/
     account/                        # Tauri-free mirror of crates/account (whole crate)
     instance/                       # Tauri-free mirror of crates/instance
     content/                        # Tauri-free mirror of crates/content (counts)
-    install/                        # Tauri-free mirror of crates/install (version lists)
-    java-runtime/                   # Tauri-free mirror of crates/java-runtime (the scan)
+    shared/                         # Tauri-free mirror of crates/shared (HTTP client, …)
+    version/                        # Tauri-free mirror of crates/version
+    download/                       # Tauri-free mirror of crates/download
+    install/                        # Tauri-free mirror of crates/install (whole crate)
+    launch/                         # Tauri-free mirror of crates/launch (whole crate)
+    statistics/                     # Tauri-free mirror of crates/statistics
+    java-runtime/                   # Tauri-free mirror of crates/java-runtime (whole crate)
     single-instance/                # single-instance guard (no Tauri plugin here)
 ```
 
@@ -347,9 +357,14 @@ Per the migration plan:
 - `slint-install` mirrors the **version-list half** of `crates/install`:
   `VersionManifest`, the Fabric/Quilt/Forge/Neoforge lists and the caching the
   Tauri plugin keeps in its `PluginState` (30 minutes, like
-  `CACHE_EXPIRATION_SECONDS`). Like the original's commands it is `async` and
-  uses the shared async HTTP client, so it is awaited on a runtime; the install
-  task itself (game files, loaders, Java) arrives with the launch view.
+  `CACHE_EXPIRATION_SECONDS`) — and, since the launch view, the **whole install
+  pipeline** too: `install()` (the body of the original `cmd_spawn_install_task`,
+  taking the same `Arc<Mutex<InstallEvent>>` the command thread polled rather
+  than a Tauri `Channel`), the vanilla/libraries/assets download lists, the
+  Mojang Java runtime download, the Fabric/Quilt/Forge/Neoforge installers (the
+  two Forge bootstrapper JARs are copied over byte for byte) and the
+  first-launch `options.txt`. Like the original's commands it is `async` and
+  uses the shared async HTTP client, so it is awaited on a runtime.
   `filterNeoforgeVersionList` lives in `crates/install/index.ts`, i.e. in the Vue
   frontend, so it is mirrored in `app/src/create_instance.rs` instead.
 - `slint-java-runtime` mirrors the **scanning half** of `crates/java-runtime`:
@@ -362,9 +377,56 @@ Per the migration plan:
   Tauri plugin's `ScanState`. The scan walks `JAVA_HOME`, `PATH`, the platform's
   JVM directories (Homebrew and Minecraft's bundled runtimes included) and the
   Windows registry; the settings list hides whatever it flags `is_managed`, as
-  the Vue does. `resolve.rs` (which runtime to launch with) and `mojang.rs` (the
-  launcher-managed runtimes) arrive with the launch view, like the install task
-  of `slint-install`.
+  the Vue does. Its rows are the one place on the settings page that pins its
+  description to a single elided line with a hover tooltip for the whole of it,
+  where the Vue wraps the path over as many lines as it takes — a wrapping row
+  height cannot be *measured* here (see the note in **Known issues**), and the
+  path is the longest description on the page. `resolve.rs` (which runtime to
+  launch with) and `mojang.rs` (the launcher-managed runtimes) are mirrored too,
+  now that the launch view resolves a runtime; `resolve_java_executable` runs the
+  blocking scan on the app's tokio runtime where the original used
+  `tauri::async_runtime::spawn_blocking`.
+- The **launch view** (`views/launch-view.slint` + `globals/launch.slint` +
+  `app/src/launch.rs`), with the rest of the crate layer it needs:
+
+    - `slint-launch` mirrors the whole of `crates/launch`: `complete.rs`
+      (assets/libraries/Java completion with its lock files), `options.rs` (the
+      memory allocator and the per-instance/global launch options), `arguments.rs`
+      (the JVM/game argument list, the classpath and native-library extraction)
+      and `lib.rs`'s `launch()` — file completion, version resolution, Java
+      selection, authlib-injector setup, the per-platform launch script and its
+      stdout watcher. The two Tauri commands become `LaunchEvent` + a plain
+      `launch(config, instance, Arc<Mutex<LaunchEvent>>)`, which the app spawns
+      and aborts to cancel.
+    - `slint-download` mirrors `crates/download`: the downloader, the mirror
+      picker, the checksum hashing and `DownloadState`. Only the
+      `cmd_spawn_download_task` / `cmd_cancel_download_task` command layer is
+      dropped (the app owns the task handle), and the **chunked** path is kept
+      disabled — see the launch-view deviations below.
+    - `slint-version` is a copy of `crates/version` (the `version.json` model,
+      inheritance merge and argument resolution), and `slint-shared` is a copy of
+      `crates/shared` (the launcher version, `HTTP_CLIENT` and its proxy
+      preference, `UrlExt`), so `slint-download`, `slint-install` and
+      `slint-launch` share one client exactly like the original workspace — where
+      before `slint-install` had inlined its own. `slint-platform` grew the
+      `DELIMITER` / `strip_unc_prefix` / `get_available_memory_bytes` helpers the
+      argument builder and the memory allocator use.
+    - `slint-statistics` mirrors `crates/statistics`' `log_launch`, so a launch
+      still appends to `statistics.json`.
+    - The view itself is the Vue's `.container`: the 48px account avatar, the
+      32px name, the "Minecraft x / loader y" row, the 340px translucent progress
+      panel (which grows/shrinks 300ms between its 58px and error 50px heights),
+      the two-row label/value grid and the 240px red "Cancel launch" button.
+      `BaseProgress` (`components/base-progress.slint`) is the Vue's 1px track
+      with its 3px bar, both the determinate width and the indeterminate sweep.
+      `app/src/launch.rs` plays the Vue's `launch()` — the "no Microsoft
+      account" / "no account" checks, the Microsoft/Yggdrasil credential refresh,
+      the install when the instance is not installed, the launch, and the
+      `quit_app_after_launch` close — with the same progress texts (the
+      description is a kind plus its parts, so `@tr` stays in the UI) and the
+      same four error dialogs (`overlays/dialogs/launch-errors.slint`). Leaving
+      the page aborts the task and reloads the instance list, the Vue's
+      `onUnmounted`.
 - Window drag regions (`globals/window-drag.slint` + `WindowService::drag_window`):
   a press inside one starts the platform's own window drag — on macOS
   `performWindowDragWithEvent:`, the way Chromium, Electron and Tauri do it, so
@@ -424,10 +486,10 @@ Per the migration plan:
   and the `.slint` side pulls that while it handles the very same event. Every
   other platform answers `wheel`, i.e. what the containers did before.
 
-Not yet migrated: `LaunchView`, `AccountsView`, the setup wizard, the remaining
-overlays (dialogs, content panels, command palette, music player, instance
-settings) and the background renderer. The game view's click-to-open content
-overlays and the audio-visualizer rendering are stubbed;
+Not yet migrated: `AccountsView`, the setup wizard, the remaining overlays
+(dialogs, content panels, command palette, music player, instance settings). The
+game view's click-to-open content overlays and the audio-visualizer rendering are
+stubbed;
 `views/game-placeholder.slint` stands in for the not-yet-migrated views. The
 account avatars (the footer's 56px head, its switcher's 18px rows and the
 add-account dialog's profile rows) all draw the real skin now; `AccountAvatar`
@@ -625,6 +687,49 @@ still falls back to the placeholder disc for a skin Rust could not decode.
       (Slint has no `ch` unit), and the sliding screens are clipped by
       `SlideTransition` rather than by the panel, so their travel stops 24px
       short of the original's (see below).
+- **Launch view deviations**, all deliberate:
+    - The progress line's `mode="out-in"` fade (100ms out, then 100ms in) is not
+      reproduced — Slint has no transition groups, so the text swaps in place.
+      The panel's own height still eases over 300ms between its 58px and its 50px
+      error size, which is the `transition: all .3s ease` plus the gsap
+      `height: auto` capture of the original.
+    - The panel's `backdrop-filter: blur(2px)` is dropped (Slint 1.18 has no
+      backdrop blur, like the toolbar and the footer); it stays translucent.
+    - The indeterminate bar's CSS keyframes (`progress-loading`, 2.5s,
+      `cubic-bezier(0.66, 0.01, 0.5, 0.97)`, with the jump back at 50%) become a
+      1.25s sawtooth computed from `animation-tick()`, with a smoothstep standing
+      in for the cubic-bezier — it is a 3px bar, and Slint has no keyframe
+      timelines. The travel is `[-0.6W, +1.1W]`, not `[-0.85W, +0.85W]`: the
+      Vue's bar is a flex item in a `justify-content: center` row, so it is
+      centred first and `left: ±85%` is an offset from that centre — treating the
+      offsets as absolute leaves a 15% tail visible on the right when the sweep
+      restarts.
+    - The Vue's outer `.avatar-image` carries 2px of padding, so it measures
+      52px; the wrapper here is 52px with the 48px `AccountAvatar` inset by 2px,
+      which keeps the whole column at the original's 344px. What still differs is
+      the no-account placeholder: the Vue paints a flat `surface0` disc, while
+      `AccountAvatar` draws its 2px ring and the footer's "unlogged" tint. The
+      launch flow requires an account, so that is only visible for the frame
+      before the no-account dialog opens.
+    - The **chunked download path is disabled** in `slint-download` (every task
+      takes the sequential path, and the `Accept-Ranges` probe with it). The
+      original design's chunked download is known to misbehave, and the removed
+      code is left commented out next to where it ran so the two crates can
+      still be diffed.
+    - The four error dialogs' sentences are **translated** in the Slint app; the
+      Vue hard-codes Chinese (they are in its "not yet internationalized" set),
+      so the Chinese stays as the catalog source text and an untranslated locale
+      still reads like the original. `NoSuitableJavaError` omits its height in
+      the Vue and lets the panel size itself; `BaseDialog` has no fit-content
+      mode, so it is given the measured 144px.
+    - `launch()` is a single task, so the Vue's two cancel handles
+      (`cancelInstallHandle` / `cancelLaunchHandle`) are one abort. The music
+      player's `pause_on_launch` is logged only, since the player is not
+      migrated.
+    - The "must have a Microsoft account" check reproduces the Vue's
+      `config.language !== "zh_cn"` verbatim, so a config that follows the system
+      locale (`language: null`) counts as non-Chinese and requires a Microsoft
+      account — a quirk of the original, kept rather than silently fixed.
 - **A word-wrapping `Text` has to be a direct child of the column that owns its
   width.** Slint measures such a text for the width it is going to be given only
   while that chain is short enough to resolve: one layout level deeper, the

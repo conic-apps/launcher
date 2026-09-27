@@ -48,6 +48,12 @@ export struct YggdrasilProfileItem {
 export global Dialogs {
     in-out property <bool> create-instance-visible: false;
     in-out property <bool> account-add-visible: false;
+    // The launch view's error dialogs (src/store/dialog.ts). Rust raises them
+    // when a launch is refused before it starts.
+    in-out property <bool> no-account-error-visible: false;
+    in-out property <bool> no-microsoft-account-error-visible: false;
+    in-out property <bool> account-refresh-failed-visible: false;
+    in-out property <bool> no-suitable-java-error-visible: false;
 }
 
 // The "create instance" dialog

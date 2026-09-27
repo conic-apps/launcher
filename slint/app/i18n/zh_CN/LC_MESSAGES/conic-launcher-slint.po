@@ -1151,3 +1151,128 @@ msgstr "取消"
 msgctxt "AccountAddYggdrasil"
 msgid "Username"
 msgstr "用户名"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Auth service"
+msgstr "登录认证服务"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Profile name"
+msgstr "档案名称"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Cancel launch"
+msgstr "取消启动"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing"
+msgstr "正在准备"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing download"
+msgstr "准备下载"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Refreshing account"
+msgstr "刷新账户"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Verifying game files"
+msgstr "校验游戏文件"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading game files {} / {}"
+msgstr "下载游戏文件 {0} / {1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Checking Java runtime"
+msgstr "检查 Java 运行环境"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading Java {}/{}"
+msgstr "下载 Java {0}/{1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Installing {}"
+msgstr "安装 {0}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading {} installer"
+msgstr "下载 {0} 安装器"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading dependencies"
+msgstr "下载依赖库"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Running {} installer: {}"
+msgstr "运行 {0} installer：{1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing to launch"
+msgstr "准备启动"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Generating launch script"
+msgstr "生成启动脚本"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for game process to start"
+msgstr "等待游戏进程启动"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Game started"
+msgstr "游戏已启动"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Error: {}"
+msgstr "错误：{}"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "To launch the game, you must have added at least one account"
+msgstr "要启动游戏，你必须至少已添加一个帐户"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "To launch the game, you must have added at least one Microsoft account"
+msgstr "要启动游戏，你必须至少已添加一个微软账户"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Failed to refresh the account. Check your network connection and try again, or log in to the account again"
+msgstr "刷新账户失败，请检查网络连接后重试，或重新登录该账户"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Could not find a suitable Java runtime"
+msgstr "无法找到最合适的 Java 运行环境"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "You can set one manually in the instance settings"
+msgstr "你可以在实例设置中手动指定一个"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Cancel launch"
+msgstr "取消启动"

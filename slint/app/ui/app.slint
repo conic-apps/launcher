@@ -10,6 +10,7 @@ import { DialogRoot } from "overlays/dialog-root.slint";
 import { WindowDrag } from "globals/window-drag.slint";
 import { SettingsView } from "views/settings-view.slint";
 import { GameView } from "views/game-view.slint";
+import { LaunchView } from "views/launch-view.slint";
 import { GameViewPlaceholder } from "views/game-placeholder.slint";
 
 // Re-export so the Rust side can access the globals and build the Java runtime
@@ -18,6 +19,7 @@ import { GameViewPlaceholder } from "views/game-placeholder.slint";
 export { AppConfig, JavaRuntime } from "globals/settings.slint";
 export { Navigation } from "globals/navigation.slint";
 export { GameState, GameRow, AccountItem } from "globals/game.slint";
+export { LaunchState } from "globals/launch.slint";
 export { ScrollInput, ScrollSource } from "globals/scroll.slint";
 export { Dialogs, CreateInstanceState, MinecraftVersionItem, AccountAddState, YggdrasilProfileItem } from "globals/dialogs.slint";
 export { WindowDrag } from "globals/window-drag.slint";
@@ -145,7 +147,8 @@ export component App inherits Window {
 
                 if Navigation.current-page == "settings" : SettingsView { }
                 if Navigation.current-page == "game" : GameView { }
-                if Navigation.current-page != "settings" && Navigation.current-page != "game" : GameViewPlaceholder { }
+                if Navigation.current-page == "launch" : LaunchView { }
+                if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" : GameViewPlaceholder { }
             }
         }
 

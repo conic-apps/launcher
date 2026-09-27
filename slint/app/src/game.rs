@@ -461,6 +461,7 @@ impl GameController {
                 let (loader, _) = Self::loader(&instance);
                 let relative = relative_time(instance.last_played);
                 state.set_has_current(true);
+                state.set_current_id(instance.id.clone().into());
                 state.set_current_name(instance.config.name.clone().into());
                 state.set_current_minecraft(instance.config.runtime.minecraft.clone().into());
                 state.set_current_has_loader(instance.config.runtime.mod_loader_type.is_some());
@@ -487,6 +488,7 @@ impl GameController {
             }
             None => {
                 state.set_has_current(false);
+                state.set_current_id(SharedString::default());
                 state.set_current_has_loader(false);
                 state.set_current_has_playtime(false);
                 state.set_current_starred(false);

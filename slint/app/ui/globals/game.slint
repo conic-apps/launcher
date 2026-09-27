@@ -162,6 +162,9 @@ export global GameState {
     // ----- current instance summary -----
     in-out property <bool> has-current: false;
     in-out property <string> current-name: "";
+    /// The current instance's id, which the launch view resolves back into an
+    /// `Instance` (the Vue's `instanceStore.currentInstance`).
+    in-out property <string> current-id: "";
     in-out property <string> current-minecraft: "";
     in-out property <bool> current-has-loader: false;
     in-out property <string> current-loader: "";

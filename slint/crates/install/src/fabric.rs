@@ -2,15 +2,18 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The Fabric loader version list (`crates/install/src/fabric.rs`).
-//!
-//! Only the version list is mirrored; writing the loader profile JSON belongs
-//! to the install task, which is not migrated yet.
+//! The Fabric loader version list and profile installer
+//! (`crates/install/src/fabric.rs`).
 
+use log::info;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{HTTP_CLIENT, error::*};
+use slint_folder::MinecraftLocation;
+use slint_shared::HTTP_CLIENT;
+use slint_version::Version;
+
+use crate::error::*;
 
 /// Represents a specific version of a Fabric artifact.
 #[derive(Deserialize, Serialize, Clone)]
@@ -28,6 +31,17 @@ pub struct FabricArtifactVersion {
     pub version: String,
     /// Whether this artifact version is considered stable.
     pub stable: bool,
+}
+
+/// Collection of Fabric artifact versions grouped by type.
+///
+/// Includes mappings and loader artifacts.
+#[derive(Deserialize, Serialize)]
+pub struct FabricArtifacts {
+    /// List of mapping artifact versions.
+    pub mappings: Vec<FabricArtifactVersion>,
+    /// List of loader artifact versions.
+    pub loader: Vec<FabricArtifactVersion>,
 }
 
 /// Represents Fabric loader artifacts including loader, intermediary, and launcher metadata.
@@ -64,6 +78,11 @@ impl LoaderArtifactList {
     }
 }
 
+/// Wrapper for a list of Yarn artifact versions.
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct YarnArtifactList(Vec<FabricArtifactVersion>);
+
 /// Metadata information for the Fabric launcher.
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -94,4 +113,48 @@ pub struct LauncherMetaLibrariesItems {
     pub name: Option<String>,
     /// Optional URL to the library resource.
     pub url: Option<String>,
+}
+
+/// Downloads and saves the Fabric version metadata JSON file.
+///
+/// This function fetches the version metadata from the Fabric Meta API based on the specified
+/// Minecraft version and Fabric loader version. It saves the resulting `version.json`
+/// to the appropriate location inside the `.minecraft/versions` folder.
+///
+/// # Arguments
+///
+/// * `mcversion` - The target Minecraft version (e.g., `"1.20.1"`).
+/// * `fabric_version` - The loader version to be used (e.g., `"0.14.21"`).
+/// * `minecraft` - The local Minecraft installation location.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the file is successfully written, or an `Error` if any step fails.
+///
+/// # Remarks
+///
+/// After calling this function, you should revalidate the libraries used by the version
+/// before launching the game, to ensure integrity and compatibility.
+pub async fn install(
+    mcversion: &str,
+    fabric_version: &str,
+    minecraft: MinecraftLocation,
+) -> Result<()> {
+    info!("Saving version metadata file");
+    let url = format!(
+        "https://meta.fabricmc.net/v2/versions/loader/{mcversion}/{fabric_version}/profile/json"
+    );
+    let response = HTTP_CLIENT.get(url).send().await?;
+    let fabric_version_json: Version = response.json().await?;
+    let version_name = fabric_version_json.id.clone();
+    let json_path = minecraft.get_version_json(&version_name);
+    if let Some(parent) = json_path.parent() {
+        tokio::fs::create_dir_all(parent).await?;
+    }
+    tokio::fs::write(
+        json_path,
+        serde_json::to_string_pretty(&fabric_version_json)?,
+    )
+    .await?;
+    Ok(())
 }

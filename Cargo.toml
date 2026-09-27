@@ -37,6 +37,7 @@ update = { path = "./crates/update", version = "0.0.0"}
 version = { path = "./crates/version", version = "0.0.0"}
 slint = { version = "1.18", default-features = true }
 slint-build = "1.18"
+slint-shared = { path = "./slint/crates/shared", version = "0.0.0" }
 slint-platform = { path = "./slint/crates/platform", version = "0.0.0" }
 slint-window = { path = "./slint/crates/window", version = "0.0.0" }
 slint-config = { path = "./slint/crates/config", version = "0.0.0" }
@@ -44,8 +45,12 @@ slint-folder = { path = "./slint/crates/folder", version = "0.0.0" }
 slint-account = { path = "./slint/crates/account", version = "0.0.0" }
 slint-instance = { path = "./slint/crates/instance", version = "0.0.0" }
 slint-content = { path = "./slint/crates/content", version = "0.0.0" }
+slint-version = { path = "./slint/crates/version", version = "0.0.0" }
+slint-download = { path = "./slint/crates/download", version = "0.0.0" }
 slint-install = { path = "./slint/crates/install", version = "0.0.0" }
+slint-launch = { path = "./slint/crates/launch", version = "0.0.0" }
 slint-java-runtime = { path = "./slint/crates/java-runtime", version = "0.0.0" }
+slint-statistics = { path = "./slint/crates/statistics", version = "0.0.0" }
 slint-single-instance = { path = "./slint/crates/single-instance", version = "0.0.0" }
 
 # ----- non-local crates -----
