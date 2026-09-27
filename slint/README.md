@@ -327,7 +327,9 @@ Per the migration plan:
   original. Slint globals cannot animate, so `ThemeProvider` (instantiated once
   in `App`) owns the color tokens, eases them over 300ms `ease` on a palette
   change, and forwards each value into the `Theme` global — the equivalent of
-  the Vue frontend's `.changing-theme` class.
+  the Vue frontend's `.changing-theme` class. Whether a change eases is declared
+  by whoever makes it (`Theme.transitions-enabled`), never inferred: see the note
+  on the startup palette under Known issues.
 - The game screen (`GameView`): `InstanceSummary` (current-instance title,
   metadata, launch/actions row and the local-content previews), `InstancesList`
   (grouped/filtered instance cards with the horizontal-offset rail) and
@@ -628,6 +630,27 @@ still falls back to the placeholder disc for a skin Rust could not decode.
 
 ## Known issues / notes
 
+- **The startup palette moves twice, and the second move is the platform's.**
+  `Palette.color-scheme` is `Unknown` until the window exists — AppKit, Win32 and
+  the XDG portal all need a window to answer — so `Theme.active-palette` resolves
+  to `appearance.palette` until then, and the two can differ: `palette = "Latte"`
+  with `palette_follow_system` on a dark system is the ordinary case, so the app
+  was passing through Latte on its way to Mocha. **Whether that correction eases
+  must not be decided by a clock**, and it used to be: a 100ms `Timer` in
+  `ThemeProvider` stood in for "startup is over", and it was open one tick too
+  early every time, because `SlintContext::update_timers_and_animations()` fires
+  the due timers and *then* runs the change handlers in the same call, while the
+  window — and with it the real scheme — is only created afterwards, in
+  `about_to_wait`. Every startup therefore ran two 300ms cross-fades and the
+  intermediate palette was on screen. The fix is the shape the Vue already had:
+  `loadPalette()` (`App.vue`, once) swaps the theme class with no transition, and
+  `reloadPalette()` (every settings screen) brackets the swap in
+  `.changing-theme`, so the *caller* declares whether the change eases. Slint does
+  the same through `Theme.transitions-enabled`, which the palette row and the
+  high-contrast switch set and nothing else does. It is not a matter of painting
+  the window differently: the window is created *before* the first frame, so once
+  the moves are instant the intermediate palette is never painted at all. Worth
+  remembering for any startup value the platform supplies late.
 - **Window background** notes:
     - The world is drawn by `background/gl.rs` on the GPU, at the window's full
       device resolution with no scaling. `install` registers the notifier only
