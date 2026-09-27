@@ -7,12 +7,17 @@ use std::{
     time::{Duration, Instant},
 };
 
-use log::info;
+use log::{info, warn};
 
 use crate::{
     error::*,
     microsoft::{self, MicrosoftAccount, access_token_auth_flow_with_reporter, device_code},
 };
+
+/// How many polls in a row may fail outright before the device code flow gives
+/// up. A pending or backed-off poll is an answer and not counted here — only a
+/// request that never reached an OAuth answer.
+const MAX_FAILED_POLLS: u32 = 3;
 
 /// Progress events reported while a Microsoft login task is running.
 ///
@@ -95,16 +100,36 @@ pub(crate) async fn login_with_device_code(reporter: &LoginReporter) -> Result<M
     });
 
     let deadline = Instant::now() + Duration::from_secs(response.expires_in);
-    let mut interval = Duration::from_secs(response.interval);
+    let mut interval = Duration::from_secs(response.interval.max(1));
+    let mut failed_polls = 0;
     let tokens = loop {
         tokio::time::sleep(interval).await;
         if Instant::now() >= deadline {
             return Err(Error::DeviceCodeExpired);
         }
-        let poll_result = device_code::poll_device_code(&response.device_code).await?;
+        let poll_result = match device_code::poll_device_code(&response.device_code).await {
+            Ok(poll_result) => {
+                failed_polls = 0;
+                poll_result
+            }
+            // The user is given minutes to finish in the browser, and the flow
+            // asks for a new code (a new code, a new wait) when this one
+            // expires: a single unreachable request should not throw away a
+            // code they are in the middle of authorizing. A few in a row
+            // means the network is really gone, so the error is reported.
+            Err(error) => {
+                failed_polls += 1;
+                if failed_polls < MAX_FAILED_POLLS {
+                    warn!("device code poll failed ({failed_polls}/{MAX_FAILED_POLLS}): {error}");
+                    continue;
+                }
+                return Err(error);
+            }
+        };
         match poll_result.status.as_str() {
             "success" => break poll_result,
             "authorization_pending" => {}
+            // RFC 8628: back off by 5s, for this and every later poll.
             "slow_down" => interval += Duration::from_secs(5),
             "authorization_declined" => return Err(Error::AuthorizationDeclined),
             "bad_verification_code" => return Err(Error::BadVerificationCode),
