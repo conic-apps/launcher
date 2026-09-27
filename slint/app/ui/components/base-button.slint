@@ -24,18 +24,29 @@ export component BaseButton inherits Rectangle {
     /// pressed states too — the accented buttons of the add-account dialog are
     /// exactly that. `transparent` (the default) keeps the default look.
     in property <color> button-background: transparent;
+    /// The outline (`border: 1px solid var(--controllers-border)` by default).
+    /// The multiplayer dialog's red-outlined "Stop download" overrides it, which
+    /// the Vue does from a scoped rule on the button's own class.
+    in property <color> button-border-color: transparent;
+    /// The fill and the label colour while the pointer is over the button.
+    /// `transparent` keeps the defaults (surface2 at 85% on the inherited
+    /// label). The Vue's scoped `.stop:hover` rule is what this stands in for.
+    in property <color> hover-background: transparent;
+    in property <color> hover-text-color: transparent;
     callback clicked;
 
     width: root.button-width > 0px ? root.button-width : button-label.preferred-width + 32px;
     height: 30px;
     border-radius: Theme.controllers-border-radius;
     border-width: 1px;
-    border-color: Theme.controllers-border;
+    border-color: root.button-border-color != transparent ? root.button-border-color : Theme.controllers-border;
     // Vue BaseButton: normal `--controllers-background`, hover `surface2` at
     // 85%, active raw `surface2`.
     background: root.button-background != transparent ? root.button-background
         : button-touch.pressed ? Theme.surface-2
-        : button-touch.has-hover ? Theme.surface-2.transparentize(0.15)
+        : button-touch.has-hover ? (root.hover-background != transparent
+            ? root.hover-background
+            : Theme.surface-2.transparentize(0.15))
         : Theme.controllers-background;
     // `&:hover { transform: scale(1.02) }` and `&:active { transform: scale(0.97) }`.
     // A `button-background` pins the fill above and so leaves the press with no
@@ -51,7 +62,9 @@ export component BaseButton inherits Rectangle {
         text: root.text;
         font-size: 11px;
         font-weight: Theme.font-weight-normal;
-        color: root.text-color;
+        color: root.hover-text-color != transparent && button-touch.has-hover
+            ? root.hover-text-color
+            : root.text-color;
         x: (parent.width - self.width) / 2;
         y: (parent.height - self.height) / 2;
     }

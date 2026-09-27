@@ -1246,3 +1246,188 @@ msgstr "Jogo iniciado"
 msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Close"
+msgstr "Fechar"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Hide window (connection stays open)"
+msgstr "Ocultar janela (a conexão continua)"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Done!"
+msgstr "Concluído!"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Downloading the Conic Nexus extension"
+msgstr "Baixando a extensão do Conic Nexus"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Preparing to download the Conic Nexus extension"
+msgstr "Preparando o download da extensão do Conic Nexus"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Download the Conic Nexus extension"
+msgstr "Baixar a extensão do Conic Nexus"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "The Conic Nexus extension is built on EasyTier and implements the Scaffolding protocol, so it can play together with many other launchers, HMCL included."
+msgstr "A extensão do Conic Nexus é baseada no Easytier e implementa o protocolo Scaffolding, então pode jogar junto com vários outros launchers, incluindo o HMCL"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Conic Nexus only uses P2P connections. Once the room is up, its members connect to each other directly; no third-party server relays your traffic. How well it works depends on the network conditions of everyone taking part."
+msgstr "O Conic Nexus usa apenas conexões P2P. Depois de conectar, os usuários da sala se conectam diretamente entre si; nenhum servidor de terceiros retransmite seu tráfego. A qualidade depende das condições de rede de todos os participantes."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Please note that you must strictly obey all laws and regulations of your country and region throughout the whole multiplayer session."
+msgstr "Observe que você deve cumprir rigorosamente todas as leis e regulamentos do seu país e região durante toda a sessão multijogador."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Start download"
+msgstr "Iniciar download"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Stop download"
+msgstr "Parar download"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Host"
+msgstr "Anfitrião"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "How well multiplayer works depends on your network environment and the other participants'. If it fails, try improving your NAT type, or connect to a network with IPv6 to make it more likely to succeed."
+msgstr "A qualidade do multijogador depende do seu ambiente de rede e do dos outros participantes. Se falhar, tente melhorar seu tipo de NAT ou conecte-se a uma rede com IPV6 para aumentar a chance de sucesso"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Create a group"
+msgstr "Criar um grupo"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Create a group and get an invite code"
+msgstr "Crie um grupo e receba um código de convite"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Join a group"
+msgstr "Entrar em um grupo"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Join with an invite code and enter the world"
+msgstr "Entre com um código de convite e acesse o mundo"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Start the game, open a single-player save and press ESC, then choose \"Open to LAN\"."
+msgstr "Inicie o jogo, abra um save de um jogador e pressione ESC, depois escolha «Abrir para LAN»"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "The room code appears once a Minecraft world has been found."
+msgstr "O código da sala aparecerá quando um mundo do Minecraft for detectado."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Scanning for LAN worlds..."
+msgstr "Procurando mundos na LAN..."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Send the invite code below to your friends and remind them to enter it in the launcher to join the group."
+msgstr "Envie o código de convite abaixo aos seus amigos e lembre-os de digitá-lo no launcher para entrar no grupo."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Invite code (click to copy)"
+msgstr "Código de convite (clique para copiar)"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Copied!"
+msgstr "Copiado!"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Close connection"
+msgstr "Fechar conexão"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Waiting for other players to join..."
+msgstr "Aguardando outros jogadores entrarem..."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Enter the invite code your friend sent you to connect"
+msgstr "Digite o código de convite que seu amigo enviou para se conectar"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Join"
+msgstr "Entrar"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Invite code format: U/BBBB-AAAA-KKKK-AAAA"
+msgstr "Formato do código de convite: U/BBBB-AAAA-KKKK-AAAA"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Trying to join the group..."
+msgstr "Tentando entrar no grupo..."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Leave group"
+msgstr "Sair do grupo"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Connection problem ({}): {}"
+msgstr "Problema de conexão ({0}): {1}"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Something went wrong with the connection. Please start over."
+msgstr "Algo deu errado com a conexão. Comece de novo."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Start over"
+msgstr "Começar de novo"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Back"
+msgstr "Voltar"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Conic Nexus cross-LAN multiplayer"
+msgstr "Multijogador em LAN do Conic Nexus"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Your network environment: {}"
+msgstr "Seu ambiente de rede: {0}"

@@ -33,6 +33,7 @@ slint-launch.workspace = true
 slint-java-runtime.workspace = true
 slint-statistics.workspace = true
 slint-single-instance.workspace = true
+slint-multiplayer.workspace = true
 glow.workspace = true
 bytemuck.workspace = true
 euclid.workspace = true
@@ -55,6 +56,8 @@ once_cell.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "net", "time"] }
 log.workspace = true
 env_logger.workspace = true
+# Reading the Conic Nexus event payloads the service hands over.
+serde_json.workspace = true
 
 # Used to inject macOS window attributes (transparent title bar + full-size
 # content view) through the winit backend's window-attributes hook.

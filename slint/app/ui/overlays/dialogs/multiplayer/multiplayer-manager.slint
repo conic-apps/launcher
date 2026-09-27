@@ -1,0 +1,891 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../../theme.slint";
+import { AppIcon } from "../../../components/app-icon.slint";
+import { BaseButton } from "../../../components/base-button.slint";
+import { BaseInput } from "../../../components/base-input.slint";
+import { BaseProgress } from "../../../components/base-progress.slint";
+import { SlideTransition } from "../../../components/slide-transition.slint";
+import { ZoomTransition } from "../../../components/zoom-transition.slint";
+import { MultiplayerState, MultiplayerPlayer } from "../../../globals/multiplayer.slint";
+
+// One member row of a `.group-guests-list` (the `v-for` template of
+// `MultiplayerManager.vue`).
+component PlayerRow inherits VerticalLayout {
+    in property <MultiplayerPlayer> player;
+
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    HorizontalLayout {
+        alignment: start;
+        cross-axis-alignment: center;
+        // `span.tag { margin-left: 4px }`.
+        spacing: 4px;
+
+        Text {
+            text: root.player.name;
+            font-size: 14px;
+            line-height-factor: 1;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        // `<span class="tag" v-if="player.kind === 'HOST'">`.
+        if root.player.kind == "HOST" : tag := Rectangle {
+            width: tag-text.preferred-width + 8px;
+            height: 15px;
+            border-radius: 4px;
+            background: Theme.blue.with-alpha(0.2);
+
+            tag-text := Text {
+                text: @tr("Multiplayer" => "Host");
+                font-size: 11px;
+                line-height-factor: 1;
+                color: Theme.blue;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+        }
+    }
+
+    // `p.vendor { font-size: 12px; padding-top: 4px; opacity: 0.8 }`.
+    Rectangle {
+        width: 100%;
+        height: 16px;
+        background: transparent;
+
+        Text {
+            x: 0;
+            y: 4px;
+            text: root.player.vendor;
+            font-size: 12px;
+            line-height-factor: 1;
+            opacity: 0.8;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+    }
+}
+
+// One of the two group cards of the waiting screen (`.waiting-actions button`).
+// Both icons render 30px: the Vue passes 26 and 30, but the scoped
+// `button svg { width: 30px }` rule wins over the attribute.
+component WaitAction inherits Rectangle {
+    in property <string> icon: "add-circle";
+    in property <string> label: "";
+    in property <string> description: "";
+    callback clicked;
+
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: Theme.controllers-border;
+    background: action-touch.pressed ? Theme.surface-2
+        : action-touch.has-hover ? Theme.surface-2.with-alpha(0.85)
+        : Theme.surface-0;
+    // `&:hover { transform: scale(1.01) }` / `&:active { scale(0.98) }`.
+    transform-scale: action-touch.pressed ? 98% : action-touch.has-hover ? 101% : 100%;
+    animate background, transform-scale { duration: 150ms; easing: ease; }
+
+    HorizontalLayout {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        padding-left: 16px;
+        padding-right: 16px;
+        // `p { margin-left: 8px }`.
+        spacing: 8px;
+        cross-axis-alignment: center;
+        alignment: start;
+
+        AppIcon {
+            name: root.icon;
+            size: 30px;
+        }
+
+        VerticalLayout {
+            alignment: center;
+            spacing: 4px;
+
+            Text {
+                width: 100%;
+                text: root.label;
+                font-size: 15px;
+                line-height-factor: 1;
+                wrap: word-wrap;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+
+            Text {
+                width: 100%;
+                text: root.description;
+                font-size: 12px;
+                line-height-factor: 1;
+                wrap: word-wrap;
+                opacity: 0.8;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+        }
+    }
+
+    action-touch := TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.clicked(); }
+    }
+}
+
+// `.description.description-info`: the blue bordered note.
+//
+// The paragraph is placed by hand rather than in a nested layout: a wrapping
+// `Text` one layout level away from the column that owns its width reports a
+// single line (see the add-account dialog's Yggdrasil note), so the box takes
+// its height from the text's own measurement at the width it is given.
+component InfoNote inherits Rectangle {
+    in property <string> note: "";
+    in property <color> tone: Theme.blue;
+
+    width: 100%;
+    height: note-text.preferred-height + 18px;
+    background: root.tone.with-alpha(0.15);
+    border-width: 1px;
+    border-color: root.tone;
+    border-radius: 8px;
+
+    note-text := Text {
+        x: 16px;
+        y: 8px;
+        width: parent.width - 34px;
+        text: root.note;
+        font-size: 14px;
+        line-height-factor: 1.5;
+        wrap: word-wrap;
+        vertical-alignment: top;
+        color: root.tone;
+    }
+}
+
+// `.host-scan-progress`: the surface card with the status line, the
+// indeterminate bar and the Cancel button beside them.
+component ScanProgress inherits Rectangle {
+    in property <string> status: "";
+    in property <bool> show-countdown: false;
+    in property <int> remaining: 0;
+    callback cancel;
+
+    width: 100%;
+    background: Theme.surface-0;
+    border-radius: 8px;
+
+    HorizontalLayout {
+        padding: 16px;
+        // The Vue's `margin-left: 16px` on the button.
+        spacing: 16px;
+        cross-axis-alignment: start;
+
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: start;
+            spacing: 0px;
+
+            HorizontalLayout {
+                alignment: space-between;
+
+                Text {
+                    text: root.status;
+                    font-size: 14px;
+                    line-height-factor: 1;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+
+                if root.show-countdown : Text {
+                    text: root.remaining + "s";
+                    font-size: 14px;
+                    line-height-factor: 1;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+            }
+
+            // `p { margin-bottom: 10px }`.
+            Rectangle { height: 10px; background: transparent; }
+
+            BaseProgress { loading: true; value: 0; max: 1; }
+        }
+
+        BaseButton {
+            text: @tr("Multiplayer" => "Cancel");
+            clicked => { root.cancel(); }
+        }
+    }
+}
+
+// ----- the seven screens -----
+
+// `.waiting`.
+component WaitingScreen inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    InfoNote {
+        note: @tr("Multiplayer" => "How well multiplayer works depends on your network environment and the other participants'. If it fails, try improving your NAT type, or connect to a network with IPv6 to make it more likely to succeed.");
+    }
+
+    Rectangle { height: 16px; background: transparent; }
+
+    actions := Rectangle {
+        width: 100%;
+        background: transparent;
+
+        HorizontalLayout {
+            spacing: 12px;
+
+            WaitAction {
+                width: (parent.width - 12px) / 2;
+                icon: "add-circle";
+                label: @tr("Multiplayer" => "Create a group");
+                description: @tr("Multiplayer" => "Create a group and get an invite code");
+                clicked => { MultiplayerState.create-room(); }
+            }
+
+            WaitAction {
+                width: (parent.width - 12px) / 2;
+                icon: "enter";
+                label: @tr("Multiplayer" => "Join a group");
+                description: @tr("Multiplayer" => "Join with an invite code and enter the world");
+                clicked => {
+                    MultiplayerState.code-input-open = true;
+                    MultiplayerState.code-input = "";
+                    // `codeInputValid` follows the field: recompute it after a
+                    // programmatic clear, since `edited` does not fire for one.
+                    MultiplayerState.code-input-changed();
+                }
+            }
+        }
+    }
+}
+
+// `.host-scan`.
+component HostScanScreen inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    // `p.description.description-info` with its `<br/>`.
+    note := Rectangle {
+        width: 100%;
+        height: line1.preferred-height + line2.preferred-height + 18px;
+        background: Theme.blue.with-alpha(0.15);
+        border-width: 1px;
+        border-color: Theme.blue;
+        border-radius: 8px;
+
+        line1 := Text {
+            x: 16px;
+            y: 8px;
+            width: parent.width - 34px;
+            text: @tr("Multiplayer" => "Start the game, open a single-player save and press ESC, then choose \"Open to LAN\".");
+            font-size: 14px;
+            line-height-factor: 1.5;
+            wrap: word-wrap;
+            vertical-alignment: top;
+            color: Theme.blue;
+        }
+
+        line2 := Text {
+            x: 16px;
+            y: 8px + line1.preferred-height;
+            width: parent.width - 34px;
+            text: @tr("Multiplayer" => "The room code appears once a Minecraft world has been found.");
+            font-size: 14px;
+            line-height-factor: 1.5;
+            wrap: word-wrap;
+            vertical-alignment: top;
+            color: Theme.blue;
+        }
+    }
+
+    Rectangle { height: 16px; background: transparent; }
+
+    ScanProgress {
+        status: @tr("Multiplayer" => "Scanning for LAN worlds...");
+        show-countdown: MultiplayerState.state == "host-scanning";
+        remaining: MultiplayerState.scan-remaining;
+        cancel => { MultiplayerState.leave-room(); }
+    }
+}
+
+// `.host-ready`.
+component HostReadyScreen inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    // "已复制！" swaps in for the invite code with
+    // `<Transition :name="showCopyMessage ? 'zoom-out' : 'zoom-in'"
+    // mode="out-in">`. Both halves are driven by `MultiplayerState.code-copied`
+    // (the manager's 1.5s timer puts it back).
+    private property <bool> copied: MultiplayerState.code-copied;
+    private property <bool> copy-shown: false;
+    private property <bool> copy-leaving: false;
+    private property <string> copy-phase: "shown";
+    private property <bool> copy-leave-armed: false;
+    private property <bool> copy-enter-armed: false;
+
+    init => { root.copy-shown = root.copied; }
+
+    changed copied => {
+        if root.copied != root.copy-shown {
+            root.copy-leaving = true;
+            root.copy-leave-armed = true;
+            copy-leave-timer.restart();
+        }
+    }
+
+    copy-leave-timer := Timer {
+        interval: 80ms;
+        running: root.copy-leave-armed;
+        triggered => {
+            root.copy-leave-armed = false;
+            root.copy-leaving = false;
+            root.copy-shown = root.copied;
+            root.copy-phase = "enter";
+            root.copy-enter-armed = true;
+        }
+    }
+
+    copy-enter-timer := Timer {
+        interval: 16ms;
+        running: root.copy-enter-armed;
+        triggered => {
+            root.copy-enter-armed = false;
+            root.copy-phase = "shown";
+        }
+    }
+
+    InfoNote {
+        note: @tr("Multiplayer" => "Send the invite code below to your friends and remind them to enter it in the launcher to join the group.");
+    }
+
+    Rectangle { height: 16px; background: transparent; }
+
+    HorizontalLayout {
+        // `gap: 16px`.
+        spacing: 16px;
+
+        // `.group-actions`: 44% of the row, shrunk like the Vue's flex items
+        // (the two percentages plus the gap overflow by one gap).
+        actions := Rectangle {
+            width: (parent.width - 16px) * 0.44;
+            background: Theme.surface-0;
+            border-radius: 8px;
+
+            VerticalLayout {
+                padding: 12px;
+                spacing: 0px;
+                alignment: space-between;
+                cross-axis-alignment: center;
+
+                VerticalLayout {
+                    alignment: start;
+                    cross-axis-alignment: center;
+                    spacing: 0px;
+
+                    // `p { margin-top: 6px }`.
+                    Rectangle { height: 6px; background: transparent; }
+
+                    Text {
+                        text: @tr("Multiplayer" => "Invite code (click to copy)");
+                        font-size: 13px;
+                        line-height-factor: 1;
+                        color: Theme.default-text-color.transparentize(0.1);
+                    }
+
+                    // `p { margin-top: 12px }`.
+                    Rectangle { height: 12px; background: transparent; }
+
+                    copy := ZoomTransition {
+                        phase: root.copy-leaving ? "leave" : root.copy-phase;
+                        direction: MultiplayerState.code-copied ? "out" : "in";
+
+                        // The Vue swaps the code for the copied bubble with
+                        // `<Transition :name="showCopyMessage ? 'zoom-out' :
+                        // 'zoom-in'" mode="out-in">`.
+                        if root.copy-shown : Rectangle {
+                            width: 100%;
+                            height: 16px;
+                            background: transparent;
+
+                            Text {
+                                text: @tr("Multiplayer" => "Copied!");
+                                font-size: 16px;
+                                line-height-factor: 1;
+                                color: Theme.default-text-color.transparentize(0.1);
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+                        }
+
+                        if !root.copy-shown : Rectangle {
+                            width: 100%;
+                            height: 16px;
+                            background: transparent;
+
+                            Text {
+                                text: MultiplayerState.room-code;
+                                font-size: 16px;
+                                line-height-factor: 1;
+                                color: Theme.default-text-color.transparentize(0.1);
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            // `<p @click="copyCode">`.
+                            code-touch := TouchArea {
+                                width: parent.width;
+                                height: parent.height;
+                                clicked => { MultiplayerState.copy-room-code(); }
+                            }
+                        }
+                    }
+                }
+
+                // `<BaseButton @click="leaveRoom">`.
+                Rectangle {
+                    width: 100%;
+                    height: 30px;
+                    background: transparent;
+
+                    BaseButton {
+                        button-width: parent.width;
+                        text: @tr("Multiplayer" => "Close connection");
+                        clicked => { MultiplayerState.leave-room(); }
+                    }
+                }
+            }
+        }
+
+        // `.group-guests-list`: 56% of the row.
+        guests := Rectangle {
+            width: (parent.width - 16px) * 0.56;
+            background: Theme.surface-0;
+            border-radius: 8px;
+
+            VerticalLayout {
+                padding-top: 12px;
+                padding-bottom: 12px;
+        padding-left: 16px;
+        padding-right: 16px;
+                spacing: 8px;
+                alignment: start;
+
+                for player in MultiplayerState.players : PlayerRow {
+                    player: player;
+                }
+
+                // `p.message`; the italic is dropped: Slint has no oblique
+                // style for the embedded variable font.
+                if MultiplayerState.players.length == 0 : Text {
+                    width: 100%;
+                    text: @tr("Multiplayer" => "Waiting for other players to join...");
+                    font-size: 12px;
+                    line-height-factor: 1;
+                    horizontal-alignment: center;
+                    opacity: 0.6;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+            }
+        }
+    }
+}
+
+// `.guest-input-code`.
+component GuestCodeInputScreen inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    card := Rectangle {
+        width: 100%;
+        background: Theme.surface-0;
+        border-radius: 8px;
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 0px;
+            alignment: start;
+
+            Text {
+                width: 100%;
+                text: @tr("Multiplayer" => "Enter the invite code your friend sent you to connect");
+                font-size: 14px;
+                line-height-factor: 1.5;
+                horizontal-alignment: center;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+
+            Rectangle { height: 16px; background: transparent; }
+
+            row := Rectangle {
+                width: 100%;
+                height: 30px;
+                background: transparent;
+
+                // `flex-shrink: 0; width: fit-content`: the button keeps its
+                // natural width at the right-hand end, the field takes the rest.
+                join-button := BaseButton {
+                    x: parent.width - self.width;
+                    text: @tr("Multiplayer" => "Join");
+                    button-enabled: MultiplayerState.code-input-valid;
+                    clicked => { MultiplayerState.join-room(); }
+                }
+
+                BaseInput {
+                    // A bare element in a plain `Rectangle` is centred by
+                    // Slint; the Vue's `flex: 1` pins it to the row's start.
+                    x: 0;
+                    y: 0;
+                    input-width: join-button.x - 8px;
+                    placeholder: @tr("Multiplayer" => "Invite code format: U/BBBB-AAAA-KKKK-AAAA");
+                    value <=> MultiplayerState.code-input;
+                    edited => { MultiplayerState.code-input-changed(); }
+                }
+            }
+        }
+    }
+}
+
+// `.guest-joining`.
+component GuestJoiningScreen inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    ScanProgress {
+        status: @tr("Multiplayer" => "Trying to join the group...");
+        cancel => { MultiplayerState.leave-room(); }
+    }
+}
+
+// `.guest-ready`.
+component GuestReadyScreen inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    card := Rectangle {
+        width: 100%;
+        background: Theme.surface-0;
+        border-radius: 8px;
+
+        VerticalLayout {
+            padding-top: 12px;
+            padding-bottom: 12px;
+        padding-left: 16px;
+        padding-right: 16px;
+            spacing: 8px;
+            alignment: space-between;
+
+            // `div { gap: 12px }` around the member rows.
+            players := VerticalLayout {
+                alignment: start;
+                spacing: 12px;
+
+                for player in MultiplayerState.players : PlayerRow {
+                    player: player;
+                }
+            }
+
+            Rectangle {
+                width: 100%;
+                height: 30px;
+                background: transparent;
+
+                BaseButton {
+                    button-width: parent.width;
+                    text: @tr("Multiplayer" => "Leave group");
+                    clicked => { MultiplayerState.leave-room(); }
+                }
+            }
+        }
+    }
+}
+
+// `.exception`.
+component ExceptionScreen inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    // `p.description.description-error` with the fault's code and message.
+    if MultiplayerState.has-fault : Rectangle {
+        width: 100%;
+        background: Theme.red.with-alpha(0.15);
+        border-width: 1px;
+        border-color: Theme.red;
+        border-radius: 8px;
+
+        HorizontalLayout {
+            padding-top: 8px;
+            padding-bottom: 8px;
+        padding-left: 16px;
+        padding-right: 16px;
+            spacing: 8px;
+            cross-axis-alignment: center;
+
+            Text {
+                horizontal-stretch: 1;
+                text: @tr("Multiplayer" => "Connection problem ({}): {}", MultiplayerState.fault-code, MultiplayerState.fault-message);
+                font-size: 14px;
+                line-height-factor: 1.5;
+                wrap: word-wrap;
+                color: Theme.red;
+            }
+
+            BaseButton {
+                text: @tr("Multiplayer" => "Start over");
+                clicked => { MultiplayerState.leave-room(); }
+            }
+        }
+    }
+
+    // The Vue's `v-else`, without the fault's code and message.
+    if !MultiplayerState.has-fault : Rectangle {
+        width: 100%;
+        background: Theme.red.with-alpha(0.15);
+        border-width: 1px;
+        border-color: Theme.red;
+        border-radius: 8px;
+
+        HorizontalLayout {
+            padding-top: 8px;
+            padding-bottom: 8px;
+        padding-left: 16px;
+        padding-right: 16px;
+            spacing: 8px;
+            cross-axis-alignment: center;
+
+            Text {
+                horizontal-stretch: 1;
+                text: @tr("Multiplayer" => "Something went wrong with the connection. Please start over.");
+                font-size: 14px;
+                line-height-factor: 1.5;
+                wrap: word-wrap;
+                color: Theme.red;
+            }
+
+            BaseButton {
+                text: @tr("Multiplayer" => "Start over");
+                clicked => { MultiplayerState.leave-room(); }
+            }
+        }
+    }
+}
+
+// The manager body (`MultiplayerManager.vue`): the title row with the NAT
+// label, the screen swap and the bottom button bar.
+//
+// The Vue's `.buttons` is `position: absolute; bottom: 24px`, but its
+// containing block is the full-window `.dialog` scrim -- no ancestor between it
+// and the panel is positioned -- so the bar actually lands at the bottom of the
+// *window*, detached from the panel it is meant to sit in, while the panel
+// still reserves the manager's 48px `padding-bottom`. The bar is laid out in
+// flow here instead: the same 24px it would sit from the panel's bottom edge,
+// with the `margin-top: 16px` the rule already declares above it.
+export component MultiplayerManager inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    // ----- the screen swap -----
+    // `<Transition mode="out-in" :name="transitionName">` (see `CreateInstance`
+    // for the state machine): the mounted screen plays its 80ms leave, the slot
+    // switches, and the arriving screen moves from its enter rest to `shown` a
+    // frame later.
+    private property <string> screen: MultiplayerState.screen;
+    private property <string> shown: "";
+    private property <bool> leaving: false;
+    private property <string> arrive-phase: "shown";
+    private property <bool> leave-armed: false;
+    private property <bool> enter-armed: false;
+
+    // `scanning` in the Vue's `watch(scanning, ...)`. The comparison is
+    // mirrored so a `changed` handler can see it — a qualified global property
+    // cannot be watched directly.
+    private property <bool> scanning: MultiplayerState.state == "host-scanning";
+
+    init => {
+        root.shown = root.screen;
+        // `multiplayerStore.init()` in the Vue's `<script setup>`.
+        MultiplayerState.start();
+    }
+
+    // `watch(scanning, (active) => { ... }, { immediate: true })`: a scan
+    // starts over from 60 every time one begins.
+    changed scanning => {
+        if root.scanning {
+            MultiplayerState.scan-remaining = 60;
+        }
+    }
+
+
+    changed screen => {
+        if root.shown == "" {
+            root.shown = root.screen;
+        } else if root.screen == root.shown {
+            root.leaving = false;
+            root.leave-armed = false;
+        } else {
+            root.leaving = true;
+            root.leave-armed = true;
+            leave-timer.restart();
+        }
+    }
+
+    leave-timer := Timer {
+        interval: 80ms;
+        running: root.leave-armed;
+        triggered => {
+            root.leave-armed = false;
+            root.leaving = false;
+            if root.screen != root.shown {
+                root.shown = root.screen;
+                root.arrive-phase = "enter";
+                root.enter-armed = true;
+            }
+        }
+    }
+
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.enter-armed;
+        triggered => {
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+        }
+    }
+
+    // `setInterval(..., 1500)` behind `showCopyMessage`.
+    copy-timer := Timer {
+        interval: 1500ms;
+        running: MultiplayerState.code-copied;
+        triggered => { MultiplayerState.code-copied = false; }
+    }
+
+    // The LAN-scan countdown (`watch(scanning)` + the Vue's `setInterval`, which
+    // `stopScanCountdown` clears at zero and `onUnmounted`).
+    //
+    // The timer is driven purely by its `running` binding, like the add-account
+    // dialog's device-code countdown: `restart()` only restarts a timer that has
+    // been started before, and `stop()` — which `timer.stop()` lowers to — writes
+    // `running` and so throws the binding away, after which no later arm could
+    // start it again.
+    scan-timer := Timer {
+        interval: 1s;
+        running: root.scanning && MultiplayerState.scan-remaining > 0;
+        triggered => { MultiplayerState.scan-remaining -= 1; }
+    }
+
+    // ----- the header -----
+    HorizontalLayout {
+        // `.title { padding: 4px 0 }` plus `.header { margin-bottom: 16px }`.
+        padding-top: 4px;
+        padding-bottom: 20px;
+        spacing: 8px;
+        cross-axis-alignment: center;
+
+        Text {
+            horizontal-stretch: 1;
+            text: @tr("Multiplayer" => "Conic Nexus cross-LAN multiplayer");
+            font-size: 22px;
+            line-height-factor: 1;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        // `p.nat { margin-left: auto; font-size: 14px; opacity: 0.7 }`, only
+        // while the store knows the local peer.
+        if MultiplayerState.show-nat : Text {
+            text: @tr("Multiplayer" => "Your network environment: {}", MultiplayerState.local-nat-label);
+            font-size: 14px;
+            line-height-factor: 1;
+            horizontal-alignment: right;
+            opacity: 0.7;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+    }
+
+    // ----- the screen -----
+    if root.shown == "waiting" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: MultiplayerState.screen-direction;
+        WaitingScreen { }
+    }
+    if root.shown == "hostScan" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: MultiplayerState.screen-direction;
+        HostScanScreen { }
+    }
+    if root.shown == "hostReady" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: MultiplayerState.screen-direction;
+        HostReadyScreen { }
+    }
+    if root.shown == "guestCodeInput" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: MultiplayerState.screen-direction;
+        GuestCodeInputScreen { }
+    }
+    if root.shown == "guestJoining" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: MultiplayerState.screen-direction;
+        GuestJoiningScreen { }
+    }
+    if root.shown == "guestReady" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: MultiplayerState.screen-direction;
+        GuestReadyScreen { }
+    }
+    if root.shown == "exception" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: MultiplayerState.screen-direction;
+        ExceptionScreen { }
+    }
+
+    // `.buttons { margin-top: 16px }`.
+    Rectangle { height: 16px; background: transparent; }
+
+    buttons := Rectangle {
+        width: 100%;
+        height: 30px;
+        background: transparent;
+
+        HorizontalLayout {
+            spacing: 12px;
+
+            // The `v-if="...multiplayerManagerComponent === 'guestCodeInput'"`
+            // branch: a "Back" button that closes the join-code screen.
+            if root.screen == "guestCodeInput" : BaseButton {
+                button-width: parent.width;
+                text: @tr("Multiplayer" => "Back");
+                clicked => {
+                    MultiplayerState.code-input-open = false;
+                    MultiplayerState.code-input = "";
+                    MultiplayerState.code-input-changed();
+                }
+            }
+
+            if root.screen != "guestCodeInput" : BaseButton {
+                button-width: parent.width;
+                text: MultiplayerState.bottom-label;
+                clicked => {
+                    if root.screen == "waiting" || root.screen == "exception" {
+                        MultiplayerState.close();
+                    } else {
+                        // The "hide window (connection stays open)" label.
+                        MultiplayerState.visible = false;
+                    }
+                }
+            }
+        }
+    }
+}

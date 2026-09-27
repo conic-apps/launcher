@@ -1306,6 +1306,7 @@ dependencies = [
  "objc2 0.5.2",
  "objc2-foundation 0.2.2",
  "once_cell",
+ "serde_json",
  "slint",
  "slint-account",
  "slint-build",
@@ -1317,6 +1318,7 @@ dependencies = [
  "slint-instance",
  "slint-java-runtime",
  "slint-launch",
+ "slint-multiplayer",
  "slint-platform",
  "slint-single-instance",
  "slint-statistics",
@@ -7265,6 +7267,25 @@ dependencies = [
  "proc-macro2",
  "quote",
  "spin_on",
+]
+
+[[package]]
+name = "slint-multiplayer"
+version = "0.0.0"
+dependencies = [
+ "futures",
+ "libloader",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sha2",
+ "slint-download",
+ "slint-folder",
+ "slint-shared",
+ "thiserror 2.0.19",
+ "tokio",
 ]
 
 [[package]]

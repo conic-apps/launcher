@@ -1246,3 +1246,188 @@ msgstr "게임이 시작되었습니다"
 msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Close"
+msgstr "닫기"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Hide window (connection stays open)"
+msgstr "창 숨기기 (연결은 유지됩니다)"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Done!"
+msgstr "완료!"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Downloading the Conic Nexus extension"
+msgstr "Conic Nexus 확장을 다운로드하는 중"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Preparing to download the Conic Nexus extension"
+msgstr "Conic Nexus 확장 다운로드 준비 중"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Download the Conic Nexus extension"
+msgstr "Conic Nexus 확장 다운로드"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "The Conic Nexus extension is built on EasyTier and implements the Scaffolding protocol, so it can play together with many other launchers, HMCL included."
+msgstr "Conic Nexus 확장은 Easytier를 기반으로 만들어졌고 Scaffolding 프로토콜을 구현하여 HMCL을 비롯한 여러 런처와 함께 멀티플레이할 수 있습니다"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Conic Nexus only uses P2P connections. Once the room is up, its members connect to each other directly; no third-party server relays your traffic. How well it works depends on the network conditions of everyone taking part."
+msgstr "Conic Nexus는 P2P 연결만 사용합니다. 연결이 성공하면 방 안의 사용자끼리 직접 연결되며, 제3자 서버가 트래픽을 중계하지 않습니다. 연결 품질은 참여자의 네트워크 상황에 따라 달라집니다."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Please note that you must strictly obey all laws and regulations of your country and region throughout the whole multiplayer session."
+msgstr "주의: 멀티플레이 전 과정에서 귀하는 거주 국가와 지역의 모든 법률과 규정을 엄격히 준수해야 합니다."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Cancel"
+msgstr "취소"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Start download"
+msgstr "다운로드 시작"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Stop download"
+msgstr "다운로드 중지"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Host"
+msgstr "호스트"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "How well multiplayer works depends on your network environment and the other participants'. If it fails, try improving your NAT type, or connect to a network with IPv6 to make it more likely to succeed."
+msgstr "멀티플레이 품질은 나와 다른 참여자의 네트워크 환경에 따라 달라집니다. 실패하면 NAT 유형을 개선하거나 IPV6 네트워크에 연결해 성공률을 높여 보세요"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Create a group"
+msgstr "그룹 만들기"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Create a group and get an invite code"
+msgstr "그룹을 만들고 초대 코드 생성"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Join a group"
+msgstr "그룹 참가"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Join with an invite code and enter the world"
+msgstr "초대 코드로 그룹에 참가해 월드로 이동"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Start the game, open a single-player save and press ESC, then choose \"Open to LAN\"."
+msgstr "게임을 실행하고 싱글 플레이 저장을 연 뒤 ESC 키를 누르고 「LAN에 개방」을 선택하세요"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "The room code appears once a Minecraft world has been found."
+msgstr "Minecraft 월드가 검색되면 방 코드가 표시됩니다"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Scanning for LAN worlds..."
+msgstr "LAN 월드 검색 중..."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Send the invite code below to your friends and remind them to enter it in the launcher to join the group."
+msgstr "아래 초대 코드를 친구에게 보내고 런처에서 초대 코드를 입력해 그룹에 참가하라고 알려 주세요"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Invite code (click to copy)"
+msgstr "초대 코드 (클릭하여 복사)"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Copied!"
+msgstr "복사했습니다!"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Close connection"
+msgstr "연결 닫기"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Waiting for other players to join..."
+msgstr "다른 플레이어의 참가를 기다리는 중..."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Enter the invite code your friend sent you to connect"
+msgstr "연결하려면 친구가 보낸 초대 코드를 입력하세요"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Join"
+msgstr "참가"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Invite code format: U/BBBB-AAAA-KKKK-AAAA"
+msgstr "초대 코드 형식: U/BBBB-AAAA-KKKK-AAAA"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Trying to join the group..."
+msgstr "그룹에 참가하는 중..."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Leave group"
+msgstr "그룹 나가기"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Connection problem ({}): {}"
+msgstr "연결에 문제가 발생했습니다({0}): {1}"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Something went wrong with the connection. Please start over."
+msgstr "연결에 문제가 발생했습니다. 다시 시작하세요"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Start over"
+msgstr "다시 시작"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Back"
+msgstr "뒤로"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Conic Nexus cross-LAN multiplayer"
+msgstr "Conic Nexus 크로스 LAN 멀티플레이"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Your network environment: {}"
+msgstr "네트워크 환경: {0}"
