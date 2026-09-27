@@ -1434,7 +1434,7 @@ msgid "Your network environment: {}"
 msgstr "Ağ ortamınız: {0}"
 
 msgctxt "ContentModsPanel"
-msgid "Mods list"
+msgid "Mods"
 msgstr "Modlar"
 
 msgctxt "ContentModsPanel"
@@ -1442,7 +1442,7 @@ msgid "Consider downloading some mods from the internet"
 msgstr "İnternetten birkaç mod indirmeyi düşünebilirsiniz"
 
 msgctxt "ContentResourcepacksPanel"
-msgid "Resource packs list"
+msgid "Resource Packs"
 msgstr "Kaynak Paketleri"
 
 msgctxt "ContentResourcepacksPanel"
@@ -1450,11 +1450,11 @@ msgid "Consider downloading some resource packs from the internet"
 msgstr "İnternetten birkaç kaynak paketi indirmeyi düşünebilirsiniz"
 
 msgctxt "ContentPacksPanel"
-msgid "Modpacks list"
+msgid "Modpacks"
 msgstr "Mod Paketleri"
 
 msgctxt "ContentSavesPanel"
-msgid "Saves list"
+msgid "Saves"
 msgstr "Kayıtlar"
 
 msgctxt "ContentSavesPanel"
@@ -1462,19 +1462,19 @@ msgid "Consider launching the game and creating some saves"
 msgstr "Oyunu başlatıp birkaç kayıt oluşturmayı düşünebilirsiniz"
 
 msgctxt "ContentScreenshotsPanel"
-msgid "Loading…"
+msgid "Loading..."
 msgstr "Yükleniyor..."
 
 msgctxt "ContentScreenshotsPanel"
-msgid "No screenshots yet"
+msgid "No screenshots"
 msgstr "Ekran görüntüsü yok"
 
 msgctxt "ContentNotFound"
-msgid "No matching results for this view's filters"
+msgid "No results match the current filter"
 msgstr "Geçerli filtreyle eşleşen sonuç yok"
 
 msgctxt "RemoteListView"
-msgid "Try changing the keywords or filters and searching again"
+msgid "Try adjusting keywords or filters and search again"
 msgstr "Anahtar kelimeleri veya filtreleri ayarlayıp yeniden aramayı deneyin"
 
 msgctxt "DetailBody"
@@ -1518,326 +1518,427 @@ msgid "Modpack info"
 msgstr "Mod paketi bilgisi"
 
 msgctxt "ContentText"
-msgid "Search mods…"
+msgid "Search mods..."
 msgstr "Mod ara..."
 
 msgctxt "ContentText"
-msgid "Search resource packs…"
+msgid "Search resource packs..."
 msgstr "Kaynak paketi ara..."
 
 msgctxt "ContentText"
-msgid "Search modpacks…"
+msgid "Search modpacks..."
 msgstr "Mod paketi ara..."
 
 msgctxt "ContentText"
 msgid "Last played: "
 msgstr "Son oynanma: "
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Adventure & RPG"
 msgstr "Macera ve RPG"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Armor, Tools & Weapons"
 msgstr "Zırh, Aletler ve Silahlar"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "World Generation"
 msgstr "Dünya Oluşturma"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Technology"
 msgstr "Teknoloji"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Magic"
 msgstr "Büyü"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Storage"
 msgstr "Depolama"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Library & API"
 msgstr "Kütüphane ve API"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Maps & Info"
 msgstr "Haritalar ve Bilgi"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Utility & QoL"
 msgstr "Yardımcı Araçlar ve Kolaylıklar"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Server Utility"
 msgstr "Sunucu Yardımcıları"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Food"
 msgstr "Yiyecek"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Performance"
 msgstr "Performans"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Bug Fixes"
 msgstr "Hata Düzeltmeleri"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Redstone"
 msgstr "Redstone"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Cosmetic"
 msgstr "Kozmetik"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Miscellaneous"
 msgstr "Çeşitli"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Adventure"
 msgstr "Macera"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Cursed"
 msgstr "Tuhaf"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Decoration"
 msgstr "Dekorasyon"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Economy"
 msgstr "Ekonomi"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Equipment"
 msgstr "Ekipman"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
+msgid "Food"
+msgstr "Yiyecek"
+
+msgctxt "CategoryModsModrinth"
 msgid "Game Mechanics"
 msgstr "Oyun Mekanikleri"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Library"
 msgstr "Kütüphane"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
+msgid "Magic"
+msgstr "Büyü"
+
+msgctxt "CategoryModsModrinth"
 msgid "Management"
 msgstr "Yönetim"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Minigame"
 msgstr "Mini oyun"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Mobs"
 msgstr "Moblar"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Optimization"
 msgstr "Optimizasyon"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Social"
 msgstr "Sosyal"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
+msgid "Storage"
+msgstr "Depolama"
+
+msgctxt "CategoryModsModrinth"
+msgid "Technology"
+msgstr "Teknoloji"
+
+msgctxt "CategoryModsModrinth"
 msgid "Transportation"
 msgstr "Ulaşım"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Utility"
 msgstr "Yardımcı Araçlar"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
+msgid "World Generation"
+msgstr "Dünya Oluşturma"
+
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Crafted"
 msgstr "El Yapımı"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Photorealistic"
 msgstr "Fotogerçekçi"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Semi-Realistic"
 msgstr "Yarı Gerçekçi"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Simple"
 msgstr "Basit"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Traditional"
 msgstr "Geleneksel"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Animated"
 msgstr "Hareketli"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Modern"
 msgstr "Modern"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Themed"
 msgstr "Temalı"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Mod Support"
 msgstr "Mod Desteği"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "RPG"
 msgstr "RPG"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Gameplay"
 msgstr "Oynanış"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "GUI"
 msgstr "Arayüz"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Sound"
 msgstr "Ses"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Environment"
 msgstr "Çevre"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "World Generation"
+msgstr "Dünya Oluşturma"
+
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Blocks"
 msgstr "Bloklar"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Items"
 msgstr "Eşyalar"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Mobs"
+msgstr "Moblar"
+
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Weather"
 msgstr "Hava Durumu"
 
-msgctxt "ContentText"
-msgid "16x"
-msgstr "16x"
-
-msgctxt "ContentText"
-msgid "32x"
-msgstr "32x"
-
-msgctxt "ContentText"
-msgid "64x"
-msgstr "64x"
-
-msgctxt "ContentText"
-msgid "128x"
-msgstr "128x"
-
-msgctxt "ContentText"
-msgid "256x"
-msgstr "256x"
-
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Faithful"
 msgstr "Faithful"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
+msgid "16x"
+msgstr "16x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "32x"
+msgstr "32x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "64x"
+msgstr "64x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "128x"
+msgstr "128x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "256x"
+msgstr "256x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Photorealistic"
+msgstr "Fotogerçekçi"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Semi-Realistic"
+msgstr "Yarı Gerçekçi"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Simple"
+msgstr "Basit"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Modern"
+msgstr "Modern"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Themed"
+msgstr "Temalı"
+
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Classic"
 msgstr "Klasik"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Dark"
 msgstr "Karanlık"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Medieval"
 msgstr "Orta Çağ"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Anime"
 msgstr "Anime"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Cartoon"
 msgstr "Çizgi Film"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Pixel Art"
 msgstr "Piksel Sanatı"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Vanilla Plus"
 msgstr "Vanilla Artı"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Utility"
+msgstr "Yardımcı Araçlar"
+
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Other"
 msgstr "Diğer"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
+msgid "Technology"
+msgstr "Teknoloji"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Magic"
+msgstr "Büyü"
+
+msgctxt "CategoryPacksCurseforge"
 msgid "Sci-Fi"
 msgstr "Bilim Kurgu"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
+msgid "Adventure & RPG"
+msgstr "Macera ve RPG"
+
+msgctxt "CategoryPacksCurseforge"
 msgid "Exploration"
 msgstr "Keşif"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
+msgid "Minigame"
+msgstr "Mini oyun"
+
+msgctxt "CategoryPacksCurseforge"
 msgid "Quests"
 msgstr "Görevler"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Hardcore"
 msgstr "Hardcore"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Map-Based"
 msgstr "Harita Tabanlı"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Lightweight"
 msgstr "Hafif"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Extra Large"
 msgstr "Çok Büyük"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Combat PvP"
 msgstr "Savaş PvP"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Multiplayer"
 msgstr "Çok Oyunculu"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "FTB Modpacks"
 msgstr "FTB Mod Paketleri"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Skyblock"
 msgstr "Skyblock"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
+msgid "Vanilla Plus"
+msgstr "Vanilla Artı"
+
+msgctxt "CategoryPacksCurseforge"
 msgid "Horror"
 msgstr "Korku"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Expert"
 msgstr "Uzman"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksModrinth"
+msgid "Adventure"
+msgstr "Macera"
+
+msgctxt "CategoryPacksModrinth"
 msgid "Challenging"
 msgstr "Zorlu"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksModrinth"
 msgid "Combat"
 msgstr "Savaş"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "Kitchen Sink"
+
+
+msgctxt "CategoryPacksModrinth"
+msgid "Lightweight"
+msgstr "Hafif"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Magic"
+msgstr "Büyü"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Multiplayer"
+msgstr "Çok Oyunculu"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Optimization"
+msgstr "Optimizasyon"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Quests"
+msgstr "Görevler"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Technology"
+msgstr "Teknoloji"
 

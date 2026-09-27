@@ -987,8 +987,9 @@ typography, its palette and its scroll behaviour under the app's own control.
       project.
     - The screenshot viewer's **arrow-key and Escape handling is not wired**.
       Nothing in `slint/app/ui/` uses `FocusScope` or `key-pressed` yet — the
-      title bar's ⌘/ hotkey is still a logging placeholder — so the viewer's
-      close button and its thumbnails are its only controls for now.
+      title bar's ⌘/ hotkey is still a logging placeholder — so the viewer is
+      driven by its two arrow buttons, its thumbnails and its close button.
+      Its GSAP intro and outro (`playIntro` / `playOutro`) *are* there.
 - **Instance list deviations** from the Vue original, all deliberate:
     - Cards no longer change opacity as they enter and leave the viewport. The
       original dims them to 0.6 outside the scroll view's visible area and brings
@@ -1130,6 +1131,17 @@ typography, its palette and its scroll behaviour under the app's own control.
       device code's countdown printed "14.966666 min 58 sec" until it was
       wrapped in `floor()`; the Vue's `Math.floor(total / 60)` is the same
       intent. `mod()` and `round()` behave as expected (`round` yields an int).
+- **A wrapping `FlexboxLayout` measures itself at its own "roughly square"
+  width.** `flexbox_layout_info_main_axis` (`i-slint-core/layout.rs`) computes a
+  wrapping layout's preferred width as √(total area) rather than its longest
+  line, deliberately, so that a wrapped row comes out roughly square — which is
+  fine when the layout is *given* the width it draws at, and wrong when a parent
+  asks it for a height: the search panel's category row reserved two lines where
+  it drew one, and every row below it sat a line too low. (The chips' own widths
+  are exact — a chip reports what it measured — so the wrap is computed in Rust
+  instead; `content.rs`'s `filter_row_height`.) The same trap catches CSS's
+  `flex: 0 1 auto` chip run, which is why the Vue's rows do not have this
+  problem: the browser wraps at the width the row was given.
 - **A repeated element's height is measured at its own *preferred* width**, which
   is the width its content wants unwrapped, while the layout that places it uses
   the width the container gives it. A `word-wrap` `Text` therefore never wraps in

@@ -56,6 +56,16 @@ component FilterChipView inherits Rectangle {
         : root.chip.accent == "favorites" ? Theme.yellow
         : Theme.lavender;
 
+    // `.filter-chip { transition: background 120ms ease, border-color 120ms ease,
+    // color 120ms ease; &:hover { transition: none } }` — the *leave* eases and
+    // the enter does not, which is what `duration` bound to the hover state
+    // says. A pressed or selected chip eases either way: those rules come after
+    // `:hover` in the stylesheet, so they win while both apply.
+    animate background {
+        duration: touch.has-hover && !touch.pressed && !root.chip.selected ? 0ms : 120ms;
+        easing: ease-out;
+    }
+
     label := Text {
         width: self.preferred-width;
         // A chip whose label comes from a table is resolved here rather than in
@@ -177,7 +187,7 @@ component FilterRowView inherits Rectangle {
     in property <bool> is-version-row: false;
 
     width: 100%;
-    height: self.preferred-height;
+    height: root.row-data.height;
     background: transparent;
 
     HorizontalLayout {
@@ -217,6 +227,9 @@ component FilterRowView inherits Rectangle {
 
             for chip in root.row-data.chips : FilterChipView {
                 chip: chip;
+                // The row's height is computed in Rust from these (Slint cannot
+                // measure a wrapping `FlexboxLayout` at the width it is given).
+                measured(width) => { ContentSearch.chip-measured(chip.value, width); }
             }
         }
     }
@@ -275,6 +288,12 @@ export component ContentSearchPanel inherits Rectangle {
                 field-touch := TouchArea {
                     // The field has no border in the Vue (`border: none` wins
                     // over the 1px surface1 above it), only the hover fill.
+                    //
+                    // The area sits *over* the input (it is declared after it, so
+                    // it takes the press), which is what gives the field its
+                    // hover fill — so it has to hand the focus over explicitly,
+                    // or clicking the field would never put a cursor in it.
+                    clicked => { input.focus(); }
                 }
             }
 

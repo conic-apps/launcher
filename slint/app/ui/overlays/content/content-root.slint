@@ -30,40 +30,44 @@ export component ContentRoot inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    list-overlay := ContentOverlay {
-        overlay-visible: ContentState.open-panel != ""
-            && ContentState.open-panel != "screenshots";
+    // One overlay **per panel**, in the Vue's DOM order: a wrapper each, with
+    // its own `v-if` and its own enter/leave. That is what makes a switch
+    // between two panels play both animations — a single overlay swapping its
+    // contents would show the new panel the instant the state changed.
+    saves-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel == "saves";
         closed => { ContentState.close(); }
 
         ContentSavesPanel {
-            panel-width: list-overlay.panel-width;
-            panel-height: list-overlay.panel-height;
-            visible: ContentState.open-panel == "saves";
-        }
-
-        ContentModsPanel {
-            panel-width: list-overlay.panel-width;
-            panel-height: list-overlay.panel-height;
-            visible: ContentState.open-panel == "mods";
-        }
-
-        ContentResourcepacksPanel {
-            panel-width: list-overlay.panel-width;
-            panel-height: list-overlay.panel-height;
-            visible: ContentState.open-panel == "resourcepacks";
-        }
-
-        ContentPacksPanel {
-            panel-width: list-overlay.panel-width;
-            panel-height: list-overlay.panel-height;
-            visible: ContentState.open-panel == "packs";
+            panel-width: saves-overlay.panel-width;
+            panel-height: saves-overlay.panel-height;
         }
     }
 
+    mods-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel == "mods";
+        closed => { ContentState.close(); }
+
+        ContentModsPanel {
+            panel-width: mods-overlay.panel-width;
+            panel-height: mods-overlay.panel-height;
+        }
+    }
+
+    resourcepacks-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel == "resourcepacks";
+        closed => { ContentState.close(); }
+
+        ContentResourcepacksPanel {
+            panel-width: resourcepacks-overlay.panel-width;
+            panel-height: resourcepacks-overlay.panel-height;
+        }
+    }
+
+    // The Vue mounts the screenshots viewer *without* the sliding container, so
+    // it spans the window and only the scrim fades.
     screenshots-overlay := ContentOverlay {
         overlay-visible: ContentState.open-panel == "screenshots";
-        // The Vue mounts the screenshots viewer without the sliding container,
-        // so it spans the window and only the scrim fades.
         slide: false;
         panel-inset: 0px;
         panel-background: transparent;
@@ -72,6 +76,17 @@ export component ContentRoot inherits Rectangle {
         ContentScreenshotsPanel {
             panel-width: screenshots-overlay.panel-width;
             panel-height: screenshots-overlay.panel-height;
+        }
+    }
+
+    // Declared last, as in the Vue: a detail panel covers the list it came from.
+    packs-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel == "packs";
+        closed => { ContentState.close(); }
+
+        ContentPacksPanel {
+            panel-width: packs-overlay.panel-width;
+            panel-height: packs-overlay.panel-height;
         }
     }
 

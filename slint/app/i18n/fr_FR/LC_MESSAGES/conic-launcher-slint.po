@@ -1434,7 +1434,7 @@ msgid "Your network environment: {}"
 msgstr "Votre environnement réseau : {0}"
 
 msgctxt "ContentModsPanel"
-msgid "Mods list"
+msgid "Mods"
 msgstr "Mods"
 
 msgctxt "ContentModsPanel"
@@ -1442,7 +1442,7 @@ msgid "Consider downloading some mods from the internet"
 msgstr "Pensez à télécharger des mods depuis Internet"
 
 msgctxt "ContentResourcepacksPanel"
-msgid "Resource packs list"
+msgid "Resource Packs"
 msgstr "Packs de ressources"
 
 msgctxt "ContentResourcepacksPanel"
@@ -1450,11 +1450,11 @@ msgid "Consider downloading some resource packs from the internet"
 msgstr "Pensez à télécharger des packs de ressources depuis Internet"
 
 msgctxt "ContentPacksPanel"
-msgid "Modpacks list"
+msgid "Modpacks"
 msgstr "Modpacks"
 
 msgctxt "ContentSavesPanel"
-msgid "Saves list"
+msgid "Saves"
 msgstr "Sauvegardes"
 
 msgctxt "ContentSavesPanel"
@@ -1462,19 +1462,19 @@ msgid "Consider launching the game and creating some saves"
 msgstr "Lancez le jeu et créez quelques sauvegardes"
 
 msgctxt "ContentScreenshotsPanel"
-msgid "Loading…"
+msgid "Loading..."
 msgstr "Chargement..."
 
 msgctxt "ContentScreenshotsPanel"
-msgid "No screenshots yet"
+msgid "No screenshots"
 msgstr "Aucune capture d'écran"
 
 msgctxt "ContentNotFound"
-msgid "No matching results for this view's filters"
+msgid "No results match the current filter"
 msgstr "Aucun résultat ne correspond au filtre actuel"
 
 msgctxt "RemoteListView"
-msgid "Try changing the keywords or filters and searching again"
+msgid "Try adjusting keywords or filters and search again"
 msgstr "Essayez d'ajuster les mots-clés ou les filtres, puis relancez la recherche"
 
 msgctxt "DetailBody"
@@ -1518,326 +1518,427 @@ msgid "Modpack info"
 msgstr "Informations sur le modpack"
 
 msgctxt "ContentText"
-msgid "Search mods…"
+msgid "Search mods..."
 msgstr "Rechercher des mods..."
 
 msgctxt "ContentText"
-msgid "Search resource packs…"
+msgid "Search resource packs..."
 msgstr "Rechercher des packs de ressources..."
 
 msgctxt "ContentText"
-msgid "Search modpacks…"
+msgid "Search modpacks..."
 msgstr "Rechercher des modpacks..."
 
 msgctxt "ContentText"
 msgid "Last played: "
 msgstr "Dernière partie : "
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Adventure & RPG"
 msgstr "Aventure & RPG"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Armor, Tools & Weapons"
 msgstr "Armures, outils & armes"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "World Generation"
 msgstr "Génération du monde"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Technology"
 msgstr "Technologie"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Magic"
 msgstr "Magie"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Storage"
 msgstr "Stockage"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Library & API"
 msgstr "Bibliothèque & API"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Maps & Info"
 msgstr "Cartes & informations"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Utility & QoL"
 msgstr "Utilitaires & confort de jeu"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Server Utility"
 msgstr "Utilitaires serveur"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Food"
 msgstr "Nourriture"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Performance"
 msgstr "Performances"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Bug Fixes"
 msgstr "Corrections de bugs"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Redstone"
 msgstr "Redstone"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Cosmetic"
 msgstr "Cosmétique"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsCurseforge"
 msgid "Miscellaneous"
 msgstr "Divers"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Adventure"
 msgstr "Aventure"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Cursed"
 msgstr "Maudit"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Decoration"
 msgstr "Décoration"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Economy"
 msgstr "Économie"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Equipment"
 msgstr "Équipement"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
+msgid "Food"
+msgstr "Nourriture"
+
+msgctxt "CategoryModsModrinth"
 msgid "Game Mechanics"
 msgstr "Mécaniques de jeu"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Library"
 msgstr "Bibliothèque"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
+msgid "Magic"
+msgstr "Magie"
+
+msgctxt "CategoryModsModrinth"
 msgid "Management"
 msgstr "Gestion"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Minigame"
 msgstr "Mini-jeu"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Mobs"
 msgstr "Mobs"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Optimization"
 msgstr "Optimisation"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Social"
 msgstr "Social"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
+msgid "Storage"
+msgstr "Stockage"
+
+msgctxt "CategoryModsModrinth"
+msgid "Technology"
+msgstr "Technologie"
+
+msgctxt "CategoryModsModrinth"
 msgid "Transportation"
 msgstr "Transport"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
 msgid "Utility"
 msgstr "Utilitaire"
 
-msgctxt "ContentText"
+msgctxt "CategoryModsModrinth"
+msgid "World Generation"
+msgstr "Génération du monde"
+
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Crafted"
 msgstr "Artisanal"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Photorealistic"
 msgstr "Photoréaliste"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Semi-Realistic"
 msgstr "Semi-réaliste"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Simple"
 msgstr "Simple"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Traditional"
 msgstr "Traditionnel"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Animated"
 msgstr "Animé"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Modern"
 msgstr "Moderne"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Themed"
 msgstr "Thématique"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Mod Support"
 msgstr "Compatibilité avec les mods"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "RPG"
 msgstr "RPG"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Gameplay"
 msgstr "Gameplay"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "GUI"
 msgstr "Interface (GUI)"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Sound"
 msgstr "Audio"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Environment"
 msgstr "Environnement"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "World Generation"
+msgstr "Génération du monde"
+
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Blocks"
 msgstr "Blocs"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Items"
 msgstr "Objets"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Mobs"
+msgstr "Mobs"
+
+msgctxt "CategoryResourcepacksCurseforge"
 msgid "Weather"
 msgstr "Météo"
 
-msgctxt "ContentText"
-msgid "16x"
-msgstr "16x"
-
-msgctxt "ContentText"
-msgid "32x"
-msgstr "32x"
-
-msgctxt "ContentText"
-msgid "64x"
-msgstr "64x"
-
-msgctxt "ContentText"
-msgid "128x"
-msgstr "128x"
-
-msgctxt "ContentText"
-msgid "256x"
-msgstr "256x"
-
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Faithful"
 msgstr "Faithful"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
+msgid "16x"
+msgstr "16x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "32x"
+msgstr "32x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "64x"
+msgstr "64x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "128x"
+msgstr "128x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "256x"
+msgstr "256x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Photorealistic"
+msgstr "Photoréaliste"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Semi-Realistic"
+msgstr "Semi-réaliste"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Simple"
+msgstr "Simple"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Modern"
+msgstr "Moderne"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Themed"
+msgstr "Thématique"
+
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Classic"
 msgstr "Classique"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Dark"
 msgstr "Sombre"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Medieval"
 msgstr "Médiéval"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Anime"
 msgstr "Anime"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Cartoon"
 msgstr "Cartoon"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Pixel Art"
 msgstr "Pixel Art"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Vanilla Plus"
 msgstr "Vanilla Plus"
 
-msgctxt "ContentText"
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Utility"
+msgstr "Utilitaire"
+
+msgctxt "CategoryResourcepacksModrinth"
 msgid "Other"
 msgstr "Autre"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
+msgid "Technology"
+msgstr "Technologie"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Magic"
+msgstr "Magie"
+
+msgctxt "CategoryPacksCurseforge"
 msgid "Sci-Fi"
 msgstr "Science-fiction"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
+msgid "Adventure & RPG"
+msgstr "Aventure & RPG"
+
+msgctxt "CategoryPacksCurseforge"
 msgid "Exploration"
 msgstr "Exploration"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
+msgid "Minigame"
+msgstr "Mini-jeu"
+
+msgctxt "CategoryPacksCurseforge"
 msgid "Quests"
 msgstr "Quêtes"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Hardcore"
 msgstr "Hardcore"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Map-Based"
 msgstr "Basés sur des cartes"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Lightweight"
 msgstr "Léger"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Extra Large"
 msgstr "Très volumineux"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Combat PvP"
 msgstr "Combat PvP"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Multiplayer"
 msgstr "Multijoueur"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "FTB Modpacks"
 msgstr "Modpacks FTB"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Skyblock"
 msgstr "Skyblock"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
+msgid "Vanilla Plus"
+msgstr "Vanilla Plus"
+
+msgctxt "CategoryPacksCurseforge"
 msgid "Horror"
 msgstr "Horreur"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksCurseforge"
 msgid "Expert"
 msgstr "Expert"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksModrinth"
+msgid "Adventure"
+msgstr "Aventure"
+
+msgctxt "CategoryPacksModrinth"
 msgid "Challenging"
 msgstr "Difficile"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksModrinth"
 msgid "Combat"
 msgstr "Combat"
 
-msgctxt "ContentText"
+msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "Kitchen Sink"
+
+
+msgctxt "CategoryPacksModrinth"
+msgid "Lightweight"
+msgstr "Léger"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Magic"
+msgstr "Magie"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Multiplayer"
+msgstr "Multijoueur"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Optimization"
+msgstr "Optimisation"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Quests"
+msgstr "Quêtes"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Technology"
+msgstr "Technologie"
 

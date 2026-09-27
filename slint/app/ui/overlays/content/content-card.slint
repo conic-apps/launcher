@@ -78,12 +78,24 @@ component ActionButton inherits Rectangle {
 component TagChip inherits Rectangle {
     in property <CardTag> tag;
 
-    width: label.width + (root.plain ? 0px : 12px);
-    height: root.plain ? 16px : 13px;
+    // `span.loader-type, span.version, span.game-mode, span.command-enabled
+    // { padding: 2px 6px }` — every pill but the plain labels, which the Vue
+    // draws as bare text: `span.last-played { font-size: 10px; margin-left: 4px }`
+    // and the saves' `.name`/`.folder-name` lines.
+    private property <bool> padded:
+        tag.kind != "last-played" && tag.kind != "plain";
+    // The run's spacing is each tag's own margin, not one uniform gap: the pills
+    // carry `margin-right: 4px` and the two label tags carry `margin-left: 4px`,
+    // so a pill followed by one of them is 8px away, not 4.
+    private property <length> margin-before:
+        tag.kind == "command-enabled" || tag.kind == "last-played" ? 4px : 0px;
+    private property <length> margin-after:
+        tag.kind == "last-played" || tag.kind == "plain" ? 0px : 4px;
+
+    width: label.width + (root.padded ? 12px : 0px) + root.margin-before + root.margin-after;
+    height: root.padded ? 13px : 16px;
     // `span.version { border: 1px solid var(--ctp-sky); color: var(--ctp-text) }`
     // is the only outlined tag; the rest are fills.
-    private property <bool> plain:
-        tag.kind == "last-played" || tag.kind == "plain" || tag.kind == "version";
     background: tag.kind == "loader-fabric" || tag.kind == "loader-liteloader"
             || tag.kind == "command-enabled" ? Theme.yellow
         : tag.kind == "loader-forge" ? Theme.blue
@@ -117,11 +129,10 @@ component TagChip inherits Rectangle {
         // The Vue draws a `last-played` tag's label at 80% and its value at
         // full strength; Slint has no per-span styling, so the whole tag takes
         // the label's dimmer colour.
-        color: root.plain ? Theme.default-text-color.transparentize(0.3)
-            : Theme.text-inverse;
-        font-size: root.plain ? 10px : 9px;
+        color: root.padded ? Theme.text-inverse : Theme.default-text-color.transparentize(0.3);
+        font-size: root.padded ? 9px : 10px;
         font-weight: 500;
-        x: root.plain ? 0px : 6px;
+        x: root.margin-before + (root.padded ? 6px : 0px);
         vertical-alignment: center;
     }
 }
@@ -278,6 +289,16 @@ export component ContentCard inherits Rectangle {
             height: parent.height - 4px;
             source: root.card.icon;
             image-fit: ImageFit.fill;
+            // `.content:hover img { opacity: 0.4 }` — the *saves* cards dim
+            // their world icon while the info block opens up; the mods cards'
+            // `.content:hover` has no such rule. The saves are the only cards
+            // whose second line is a folder name (and the only ones with a play
+            // button), which is what this keys off.
+            opacity: root.hovered && root.subtitle-style == "folder" ? 0.4 : 1.0;
+            animate opacity {
+                duration: 200ms;
+                easing: ease-out;
+            }
         }
     }
 
@@ -361,7 +382,8 @@ export component ContentCard inherits Rectangle {
             // them, so a run of pills reads 4px tighter than the original's 8.
             tags := HorizontalLayout {
                 height: 16px;
-                spacing: 4px;
+                // The tags carry their own margins (see `TagChip`).
+                spacing: 0px;
                 // The Vue's `span`s sit in a plain line box: no `justify-content`,
                 // so the run starts at the block's left edge.
                 cross-axis-alignment: center;

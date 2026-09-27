@@ -86,11 +86,6 @@ const CARD_HEIGHT_NO_SUBTITLE: i32 = 60;
 /// so that line is absent — which is what `CARD_HEIGHT` subtracts.
 const CARD_HEIGHT_SAVES: i32 = 64;
 
-/// The height of one gallery image: `.gallery` is 252px with 16px of padding,
-/// and `.gallery-item` is `calc(100% - 16px)` of that 220px row.
-/// `details.slint` spells the same number as its item's `height`.
-const GALLERY_ITEM_HEIGHT: f32 = 204.0;
-
 /// Which remote list is showing. The Vue has a component per kind per platform;
 /// here the kind and the platform are state, because only one is ever open.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -338,6 +333,15 @@ struct ContentController {
     form: SearchForm,
     /// The Minecraft release list, newest first. Empty until it arrives.
     version_options: Vec<String>,
+    /// Every filter chip's measured width, by its value. The wrapping rows are
+    /// laid out from these (`filter_row_height`), because Slint measures a
+    /// wrapping `FlexboxLayout` at its own "roughly square" preferred width
+    /// rather than at the width the row is given.
+    filter_widths: HashMap<String, f32>,
+    /// The filter rows, as the model the search panel draws. Held here so a
+    /// chip's width report can rewrite one row's height in place — replacing
+    /// the model would re-create every chip and start the measurement again.
+    filter_rows: Rc<VecModel<FilterRow>>,
     /// Translated project descriptions, keyed `<platform>:<id>`
     /// (`useDescriptionTranslation`). Only filled for a Chinese locale, and only
     /// for the ids that have been on screen.
@@ -384,6 +388,8 @@ impl ContentController {
             source: "local".into(),
             form: SearchForm::default(),
             version_options: Vec::new(),
+            filter_widths: HashMap::new(),
+            filter_rows: Rc::new(VecModel::default()),
             translations: HashMap::new(),
             version_page: 0,
             version_widths: Vec::new(),
@@ -442,15 +448,19 @@ impl ContentController {
     /// value is what the API wants — a Modrinth slug, a CurseForge numeric id —
     /// and the label key is what `ContentText.category` resolves.
     fn categories(&self) -> Vec<(String, String)> {
-        match self.platform {
-            Platform::Modrinth => MODRINTH_CATEGORIES
-                .iter()
-                .map(|slug| (slug.to_string(), slug.to_string()))
-                .collect(),
-            Platform::CurseForge => CURSEFORGE_CATEGORIES
-                .iter()
-                .map(|(id, slug)| (id.to_string(), (*slug).to_string()))
-                .collect(),
+        match (self.kind, self.platform) {
+            (RemoteKind::Mods, Platform::Modrinth) => modrinth_rows(&MODRINTH_MOD_CATEGORIES),
+            (RemoteKind::Mods, Platform::CurseForge) => curseforge_rows(&CURSEFORGE_MOD_CATEGORIES),
+            (RemoteKind::ResourcePacks, Platform::Modrinth) => {
+                modrinth_rows(&MODRINTH_RESOURCEPACK_CATEGORIES)
+            }
+            (RemoteKind::ResourcePacks, Platform::CurseForge) => {
+                curseforge_rows(&CURSEFORGE_RESOURCEPACK_CATEGORIES)
+            }
+            (RemoteKind::Packs, Platform::Modrinth) => modrinth_rows(&MODRINTH_PACK_CATEGORIES),
+            (RemoteKind::Packs, Platform::CurseForge) => {
+                curseforge_rows(&CURSEFORGE_PACK_CATEGORIES)
+            }
         }
     }
 }
@@ -461,6 +471,22 @@ thread_local! {
     /// every time.
     static ICONS: RefCell<HashMap<String, Image>> = RefCell::new(HashMap::new());
     static SCREENSHOTS: RefCell<HashMap<String, Image>> = RefCell::new(HashMap::new());
+}
+
+/// One Modrinth category: its slug is both the filter value and the label key.
+fn modrinth_rows(slugs: &[&str]) -> Vec<(String, String)> {
+    slugs
+        .iter()
+        .map(|slug| (slug.to_string(), slug.to_string()))
+        .collect()
+}
+
+/// One CurseForge category: the numeric id is the filter value, the slug the
+/// label key.
+fn curseforge_rows(rows: &[(&str, &str)]) -> Vec<(String, String)> {
+    rows.iter()
+        .map(|(id, slug)| (id.to_string(), slug.to_string()))
+        .collect()
 }
 
 /// Registers every content-overlay callback on `ContentState` / `ContentSearch`
@@ -506,6 +532,10 @@ pub fn setup(ui: &App) {
                 .set_open_panel(SharedString::from(kind.as_str()));
             ui.global::<ContentState>()
                 .set_source(SharedString::from("local"));
+            // The Vue's `ensureXInitialized` sets the search result to null, and
+            // the pagination bar is drawn from `totalPages` — so opening a panel
+            // starts it hidden and it only comes back with the first response.
+            ui.global::<ContentSearch>().set_total_pages(0);
             match kind.as_str() {
                 "saves" => load_saves(&ui),
                 "screenshots" => load_screenshots(&ui),
@@ -568,6 +598,8 @@ pub fn setup(ui: &App) {
             }
             ui.global::<ContentState>()
                 .set_source(SharedString::from(source.as_str()));
+            // A source switch re-mounts the Vue's list, so the same reset.
+            ui.global::<ContentSearch>().set_total_pages(0);
             match source.as_str() {
                 "modrinth" | "curseforge" => {
                     ensure_version_options(&ui);
@@ -747,30 +779,43 @@ pub fn setup(ui: &App) {
         ui.global::<ContentSearch>()
             .on_chip_measured(move |value, width| {
                 let Some(ui) = weak.upgrade() else { return };
-                let moved = {
+                let (moved, recorded) = {
                     let state = controller();
                     let mut state = state.borrow_mut();
-                    let Some(index) = state
+                    // A version chip moves the carousel's track; every other
+                    // chip is one of the wrapping rows, which are laid out from
+                    // these widths.
+                    let moved = match state
                         .version_options
                         .iter()
                         .position(|option| option == value.as_str())
-                    else {
-                        return;
+                    {
+                        Some(index) => {
+                            if state.version_widths.len() <= index {
+                                state.version_widths.resize(index + 1, 0.0);
+                            }
+                            let previous = state.version_widths[index];
+                            state.version_widths[index] = width;
+                            // Only a chip inside the current page's prefix
+                            // moves the track; a later one just has its width
+                            // recorded.
+                            previous != width
+                                && index < (state.version_page + 1) * VERSIONS_PER_PAGE
+                        }
+                        None => false,
                     };
-                    if state.version_widths.len() <= index {
-                        state.version_widths.resize(index + 1, 0.0);
-                    }
-                    let previous = state.version_widths[index];
-                    state.version_widths[index] = width;
-                    // Only a chip inside the current page's prefix moves the
-                    // track; a later one just has its width recorded.
-                    previous != width && index < (state.version_page + 1) * VERSIONS_PER_PAGE
+                    let recorded =
+                        state.filter_widths.insert(value.to_string(), width) != Some(width);
+                    (moved, recorded)
                 };
                 if moved {
                     let state = controller();
                     let state = state.borrow();
                     ui.global::<ContentSearch>()
                         .set_version_offset(version_offset(&state));
+                }
+                if recorded {
+                    relayout_filters(&ui);
                 }
             });
     }
@@ -1023,6 +1068,64 @@ fn version_offset(state: &ContentController) -> f32 {
         .sum()
 }
 
+/// `.filter-chip { height: 20px }` and `.filter-chips { gap: 6px }`.
+const FILTER_CHIP_HEIGHT: f32 = 20.0;
+const FILTER_CHIP_GAP: f32 = 6.0;
+/// `.filter-row`'s carousel: the 26px pager row.
+const FILTER_CAROUSEL_HEIGHT: f32 = 26.0;
+
+/// `.filter-chips { flex-wrap: wrap; gap: 6px }` in a row whose label takes
+/// 52px and 10px of gap out of the panel's content box — so the chips wrap
+/// inside `panel - 48 (padding) - 62 (label and gap)`.
+///
+/// Returns the row's height: 20px per line with the 6px gap between them.
+fn filter_row_height(state: &ContentController, chips: &ModelRc<FilterChip>) -> f32 {
+    let available = (state.grid_width - 48 - 62).max(0) as f32;
+    let mut lines = 1.0f32;
+    let mut x = 0.0f32;
+    for index in 0..chips.row_count() {
+        let Some(chip) = chips.row_data(index) else {
+            continue;
+        };
+        let width = state
+            .filter_widths
+            .get(chip.value.as_str())
+            .copied()
+            .unwrap_or(0.0);
+        if x > 0.0 && x + FILTER_CHIP_GAP + width > available {
+            lines += 1.0;
+            x = width;
+        } else {
+            x += if x > 0.0 { FILTER_CHIP_GAP } else { 0.0 } + width;
+        }
+    }
+    lines * FILTER_CHIP_HEIGHT + (lines - 1.0) * FILTER_CHIP_GAP
+}
+
+/// Recounts every row's height from the widths reported so far and rewrites the
+/// rows that changed, in place.
+fn relayout_filters(ui: &App) {
+    let state = controller();
+    let state = state.borrow();
+    let search = ui.global::<ContentSearch>();
+    for index in 0..state.filter_rows.row_count() {
+        let Some(mut row) = state.filter_rows.row_data(index) else {
+            continue;
+        };
+        let height = if row.paginated {
+            FILTER_CAROUSEL_HEIGHT
+        } else {
+            filter_row_height(&state, &row.chips)
+        };
+        if (row.height - height).abs() < 0.5 {
+            continue;
+        }
+        row.height = height;
+        state.filter_rows.set_row_data(index, row);
+    }
+    let _ = search;
+}
+
 /// Pushes the carousel's page, its page count and where the track sits.
 fn push_version(ui: &App) {
     let state = controller();
@@ -1080,6 +1183,8 @@ fn push_search(ui: &App) {
             label: SharedString::from("loader"),
             chips: ModelRc::from(Rc::new(VecModel::from(chips))),
             paginated: false,
+            // Filled in below, once every row is built.
+            height: FILTER_CHIP_HEIGHT,
         });
     }
     let version_row = rows.len();
@@ -1090,6 +1195,7 @@ fn push_search(ui: &App) {
         // carries.
         chips: ModelRc::default(),
         paginated: true,
+        height: FILTER_CAROUSEL_HEIGHT,
     });
 
     let mut categories: Vec<FilterChip> = state
@@ -1116,11 +1222,39 @@ fn push_search(ui: &App) {
         label: SharedString::from("category"),
         chips: ModelRc::from(Rc::new(VecModel::from(categories))),
         paginated: false,
+        height: FILTER_CHIP_HEIGHT,
     });
 
     search.set_version_row(version_row as i32);
-    search.set_filters(ModelRc::from(Rc::new(VecModel::from(rows))));
+    let heights: Vec<f32> = rows
+        .iter()
+        .map(|row| {
+            if row.paginated {
+                FILTER_CAROUSEL_HEIGHT
+            } else {
+                filter_row_height(&state, &row.chips)
+            }
+        })
+        .collect();
+    let rows: Vec<FilterRow> = rows
+        .into_iter()
+        .zip(heights)
+        .map(|(row, height)| FilterRow { height, ..row })
+        .collect();
     drop(state);
+    let filter_model = {
+        let state = controller();
+        let state = state.borrow();
+        if state.filter_rows.row_count() != rows.len() {
+            state.filter_rows.set_vec(rows);
+        } else {
+            for (index, row) in rows.into_iter().enumerate() {
+                state.filter_rows.set_row_data(index, row);
+            }
+        }
+        Rc::clone(&state.filter_rows)
+    };
+    search.set_filters(ModelRc::from(filter_model));
     push_version(ui);
 }
 
@@ -1573,6 +1707,98 @@ fn resourcepack_card(pack: &slint_content::resourcepack::Resourcepack) -> Pendin
     }
 }
 
+/// How many icons a preview row shows (`InstanceSummary.vue`'s `.slice(0, 5)`).
+const PREVIEW_ICONS: usize = 5;
+
+/// The four preview rows' icons: the first five saves, mods, resource packs and
+/// screenshots of the instance, each decoded here — the game view's rows are a
+/// view of the same content the panels show, and every one of these is a local
+/// file or a data URL, so nothing is fetched.
+///
+/// Called whenever the current instance changes (`game.rs` re-reads its counts
+/// then).
+pub fn refresh_preview_icons(ui: &App, instance_id: &str) {
+    let instance = instance_id.to_string();
+    let weak = ui.as_weak();
+    crate::runtime::spawn(async move {
+        let (saves, mods, packs, shots) = crate::runtime::spawn_blocking({
+            let instance = instance.clone();
+            move || {
+                let mut saves: Vec<PendingImage> = Vec::new();
+                if let Ok(levels) = slint_content::saves::get_all_levels(&instance) {
+                    let mut folders: Vec<String> = levels.keys().cloned().collect();
+                    folders.sort();
+                    for folder in folders.into_iter().take(PREVIEW_ICONS) {
+                        // Blocking: it reads the level's `icon.png` and encodes it.
+                        let Ok(icon) = crate::runtime::block_on(
+                            slint_content::saves::get_save_icon(&instance, &folder),
+                        ) else {
+                            continue;
+                        };
+                        if let Some(image) = fetch_icon(&icon) {
+                            saves.push(image);
+                        }
+                    }
+                }
+                // `parse_mods` is the instance-aware one (`parse_folder` wants
+                // the folder itself); it is async, so it is driven to
+                // completion here — this whole closure is already off the UI
+                // thread.
+                let mods: Vec<PendingImage> =
+                    crate::runtime::block_on(slint_content::mods::remote::parse_mods(&instance))
+                        .iter()
+                        .filter(|mod_info| !mod_info.embedded)
+                        .filter_map(|mod_info| mod_info.icon.as_deref())
+                        .take(PREVIEW_ICONS)
+                        .filter_map(fetch_icon)
+                        .collect();
+                let packs: Vec<PendingImage> =
+                    slint_content::resourcepack::get_instance_resourcepacks(&instance)
+                        .unwrap_or_default()
+                        .iter()
+                        .filter_map(|pack| pack.icon.as_deref())
+                        .take(PREVIEW_ICONS)
+                        .filter_map(fetch_icon)
+                        .collect();
+                let shots: Vec<PendingImage> =
+                    slint_content::screenshots::list_screenshots(&instance)
+                        .unwrap_or_default()
+                        .iter()
+                        .take(PREVIEW_ICONS)
+                        .filter_map(|path| {
+                            let bytes = std::fs::read(path).ok()?;
+                            let (width, height, rgba) = decode_to_rgba(&bytes)?;
+                            Some(PendingImage {
+                                key: path.clone(),
+                                width,
+                                height,
+                                rgba,
+                            })
+                        })
+                        .collect();
+                (saves, mods, packs, shots)
+            }
+        })
+        .await
+        .unwrap_or_default();
+        let _ = weak.upgrade_in_event_loop(move |ui| {
+            let state = ui.global::<GameState>();
+            let images = |pending: Vec<PendingImage>| {
+                ModelRc::from(Rc::new(VecModel::from(
+                    pending
+                        .into_iter()
+                        .filter_map(|image| resolve_image(image, &ICONS))
+                        .collect::<Vec<Image>>(),
+                )))
+            };
+            state.set_preview_saves(images(saves));
+            state.set_preview_mods(images(mods));
+            state.set_preview_resourcepacks(images(packs));
+            state.set_preview_screenshots(images(shots));
+        });
+    });
+}
+
 fn load_screenshots(ui: &App) {
     ui.global::<ContentState>().set_screenshots_loading(true);
     let weak = ui.as_weak();
@@ -1593,16 +1819,16 @@ fn load_screenshots(ui: &App) {
             })
             .collect();
         let _ = weak.upgrade_in_event_loop(move |ui| {
-            let images: Vec<Image> = images
+            let shots: Vec<GalleryShot> = images
                 .into_iter()
-                .filter_map(|image| resolve_image(image, &SCREENSHOTS))
+                .filter_map(|image| resolve_gallery_shot_with(image, &SCREENSHOTS))
                 .collect();
             let ui_state = ui.global::<ContentState>();
-            ui_state.set_screenshots(ModelRc::from(Rc::new(VecModel::from(images))));
+            ui_state.set_screenshots(ModelRc::from(Rc::new(VecModel::from(shots))));
             ui_state.set_screenshots_loading(false);
             ui_state.set_screenshot_index(0);
             if let Some(first) = ui_state.get_screenshots().row_data(0) {
-                ui_state.set_current_screenshot(first);
+                ui_state.set_current_screenshot(first.image);
             }
         });
     });
@@ -1617,7 +1843,7 @@ fn set_screenshot(ui: &App, index: i32) {
     let index = index.clamp(0, count - 1);
     state.set_screenshot_index(index);
     if let Some(shot) = state.get_screenshots().row_data(index as usize) {
-        state.set_current_screenshot(shot);
+        state.set_current_screenshot(shot.image);
     }
 }
 
@@ -2881,13 +3107,19 @@ fn resolve_icon(image: PendingImage) -> Option<Image> {
 /// image's own aspect ratio, and Slint cannot read an image's natural size — the
 /// decoded bitmap's dimensions are only known here.
 fn resolve_gallery_shot(image: PendingImage) -> Option<GalleryShot> {
+    resolve_gallery_shot_with(image, &ICONS)
+}
+
+fn resolve_gallery_shot_with(
+    image: PendingImage,
+    cache: &'static std::thread::LocalKey<RefCell<HashMap<String, Image>>>,
+) -> Option<GalleryShot> {
     let ratio = if image.height == 0 {
         1.0
     } else {
         image.width as f32 / image.height as f32
     };
-    let width = GALLERY_ITEM_HEIGHT * ratio;
-    resolve_icon(image).map(|image| GalleryShot { image, width })
+    resolve_image(image, cache).map(|image| GalleryShot { image, ratio })
 }
 
 fn resolve_image(
@@ -2937,7 +3169,31 @@ fn decode_to_rgba(bytes: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
 // ---------------------------------------------------------------------------
 
 /// Modrinth's mod categories (`ContentModsModrinth.vue`'s `CATEGORIES`).
-const MODRINTH_CATEGORIES: [&str; 19] = [
+/// The category tables each list offers, in the order the Vue declares them
+/// (`Content{Mods,Resourcepacks,Packs}{Modrinth,Curseforge}.vue`'s `CATEGORIES`
+/// / `CURSEFORGE_CATEGORIES`). A CurseForge entry is `(id, slug)`: the id is
+/// what the API filters by and the slug is what names the label. The favourites
+/// chip is not here — every list appends it last.
+const CURSEFORGE_MOD_CATEGORIES: [(&str, &str); 16] = [
+    ("422", "adventure-rpg"),
+    ("434", "armor-weapons-tools"),
+    ("406", "world-gen"),
+    ("412", "technology"),
+    ("419", "magic"),
+    ("420", "storage"),
+    ("421", "library-api"),
+    ("423", "map-information"),
+    ("5191", "utility-qol"),
+    ("435", "server-utility"),
+    ("436", "mc-food"),
+    ("6814", "performance"),
+    ("6821", "bug-fixes"),
+    ("4558", "redstone"),
+    ("424", "cosmetic"),
+    ("425", "mc-miscellaneous"),
+];
+
+const MODRINTH_MOD_CATEGORIES: [&str; 19] = [
     "adventure",
     "cursed",
     "decoration",
@@ -2959,22 +3215,81 @@ const MODRINTH_CATEGORIES: [&str; 19] = [
     "worldgen",
 ];
 
-/// CurseForge's mod categories, as `(id, slug)`.
-const CURSEFORGE_CATEGORIES: [(&str, &str); 16] = [
-    ("422", "adventure-rpg"),
-    ("434", "armor-weapons-tools"),
-    ("406", "world-gen"),
-    ("412", "technology"),
-    ("419", "magic"),
-    ("420", "storage"),
-    ("421", "library-api"),
-    ("423", "map-information"),
-    ("5191", "utility-qol"),
-    ("435", "server-utility"),
-    ("436", "mc-food"),
-    ("6814", "performance"),
-    ("6821", "bug-fixes"),
-    ("4558", "redstone"),
-    ("424", "cosmetic"),
-    ("425", "mc-miscellaneous"),
+const CURSEFORGE_RESOURCEPACK_CATEGORIES: [(&str, &str); 19] = [
+    ("4252", "crafted"),
+    ("4255", "photo-realistic"),
+    ("4259", "semi-realistic"),
+    ("4256", "simple"),
+    ("4258", "traditional"),
+    ("4253", "animated"),
+    ("4254", "modern"),
+    ("4257", "themed"),
+    ("4261", "mod-support"),
+    ("4264", "rpg"),
+    ("4266", "gameplay"),
+    ("4268", "gui"),
+    ("4269", "sound"),
+    ("4270", "environment"),
+    ("4271", "world-gen"),
+    ("4273", "blocks"),
+    ("4274", "items"),
+    ("4275", "mobs"),
+    ("4276", "weather"),
+];
+
+const MODRINTH_RESOURCEPACK_CATEGORIES: [&str; 20] = [
+    "faithful",
+    "16x",
+    "32x",
+    "64x",
+    "128x",
+    "256x",
+    "photo-realistic",
+    "semi-realistic",
+    "simple",
+    "modern",
+    "theme-based",
+    "classic",
+    "dark",
+    "medieval",
+    "anime",
+    "cartoon",
+    "pixel-art",
+    "vanilla-plus",
+    "utility",
+    "other",
+];
+
+const CURSEFORGE_PACK_CATEGORIES: [(&str, &str); 18] = [
+    ("4472", "tech"),
+    ("4473", "magic"),
+    ("4474", "sci-fi"),
+    ("4475", "adventure-and-rpg"),
+    ("4476", "exploration"),
+    ("4477", "mini-game"),
+    ("4478", "quests"),
+    ("4479", "hardcore"),
+    ("4480", "map-based"),
+    ("4481", "small-light"),
+    ("4482", "extra-large"),
+    ("4483", "combat"),
+    ("4484", "multiplayer"),
+    ("4487", "ftb"),
+    ("4736", "skyblock"),
+    ("5128", "vanilla-plus"),
+    ("7418", "horror"),
+    ("9243", "expert"),
+];
+
+const MODRINTH_PACK_CATEGORIES: [&str; 10] = [
+    "adventure",
+    "challenging",
+    "combat",
+    "kitchen-sink",
+    "lightweight",
+    "magic",
+    "multiplayer",
+    "optimization",
+    "quests",
+    "technology",
 ];

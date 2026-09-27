@@ -60,11 +60,25 @@ export component ContentSavesPanel inherits Rectangle {
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
     // The Vue clears the selection when the panel itself is clicked
-    // (`@click="selectedSave = null"`), and wraps the list in the scroller.
-    ScrollView {
+    // (`@click="selectedSave = null"`) and wraps the list in the scroller. The
+    // click has to come from *inside* the scroller: a `TouchArea` over the whole
+    // panel would sit on top of the cards and swallow every hover and click in
+    // them, which is exactly what it did.
+    // The Vue re-mounts a list every time it opens, which puts it back at the
+    // top; these panels stay alive, so the scroll is reset by hand.
+    private property <bool> panel-open: ContentState.open-panel == "saves";
+    changed panel-open => {
+        if root.panel-open {
+            list-scroll.scroll-to(0px, false);
+        }
+    }
+
+    list-scroll := ScrollView {
+        background-clicked => { ContentState.select-save(""); }
+
         ContentTitleBar {
             icon: "save";
-            title: @tr("Saves list");
+            title: @tr("Saves");
             // `.title { margin-bottom: 16px }` on this panel alone.
             title-gap: 16px;
         }
@@ -80,7 +94,10 @@ export component ContentSavesPanel inherits Rectangle {
             select(id) => { ContentState.select-save(id); }
             open-path(id) => { ContentState.open-path(id); }
             delete(id) => { ContentState.delete-save(id); }
-            play(id) => { ContentState.select-save(id); }
+            // The play button carries no handler in the Vue — the click bubbles
+            // to the panel and clears the expanded save, which is what this
+            // comes to.
+            play(id) => { ContentState.select-save(""); }
         }
     }
 
@@ -90,19 +107,23 @@ export component ContentSavesPanel inherits Rectangle {
         show: !ContentState.saves-loading && ContentState.saves.length == 0;
         description: @tr("Consider launching the game and creating some saves");
     }
-
-    background-touch := TouchArea {
-        // A click on the panel background clears the expanded save. Declared
-        // after the scroller so it only sees what the scroller did not take —
-        // which, with the cards' own touch areas above it, is the empty space.
-        clicked => { ContentState.select-save(""); }
-    }
 }
 
 // ----- screenshots -----
-// A full-window viewer rather than a scrolled list: one image on a stage,
-// arrows either side, and a horizontal strip of thumbnails along the bottom.
-// `content-root.slint` mounts it without the sliding container, as the Vue does.
+//
+// The full-window viewer (`ContentScreenshots.vue`). Unlike the five panels it
+// is mounted without a container — `GameView.vue` puts it straight in the
+// wrapper — so it spans the window and only the scrim fades.
+//
+// Its motion is GSAP in the original (`playIntro` / `playOutro`), not CSS: the
+// strip rises from the bottom over 600ms, the thumbnails and the stage/arrows/
+// close button scale up from 0.6 — those with `back.out`, the thumbnails
+// staggered 30ms apart — and closing plays the reverse (300/330ms, `power3.in`)
+// *before* the panel is dismissed. `power3.out` is `ease-out-cubic`, `back.out`
+// is `ease-out-back` and `power3.in` is `ease-in-cubic`.
+//
+// The close button, the stage and Escape run that outro; a click on the scrim
+// does not (the Vue's `@click.self` on the wrapper clears the flag directly).
 export component ContentScreenshotsPanel inherits Rectangle {
     /// The overlay container's size. Passed in rather than taken from `parent`,
     /// which is the game view — the container is inset from it.
@@ -113,117 +134,291 @@ export component ContentScreenshotsPanel inherits Rectangle {
     height: panel-height;
     background: transparent;
 
+    // "closed" | "starting" | "shown" | "leaving" — the panel's own machine,
+    // driven by whether the viewer is the open panel.
+    private property <bool> open: ContentState.open-panel == "screenshots";
+    private property <string> phase: "closed";
+    private property <bool> leaving: root.phase == "leaving";
+    /// The outro is running: the close timer is armed and the elements are on
+    /// their way out, but the panel is still open.
+    private property <bool> closing: false;
+
+    changed open => {
+        if root.open {
+            if root.phase == "closed" {
+                root.phase = "starting";
+                start-timer.restart();
+            } else {
+                root.phase = "shown";
+            }
+        } else if root.phase != "closed" && root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    init => {
+        if root.open {
+            root.phase = "shown";
+        }
+    }
+
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    leave-timer := Timer {
+        interval: 330ms;
+        running: root.phase == "leaving";
+        triggered => { root.phase = "closed"; }
+    }
+
+    // `.close()`: the outro plays, and the panel is dismissed when it ends
+    // (`playOutro(() => { showContent.screenshots = false })`).
+    close-timer := Timer {
+        interval: 330ms;
+        running: root.closing;
+        triggered => {
+            root.closing = false;
+            ContentState.close();
+        }
+    }
+
+    private property <bool> shown-state: root.phase == "shown" && !root.closing;
+
+    // ----- what moves -----
+    // The strip slides in from one full height below; the thumbnails and the
+    // stage fade and scale up from 0.6.
+    private property <length> strip-y: root.phase == "shown" && !root.closing ? 0px : root.height;
+    private property <float> thumb-scale: root.shown-state ? 1.0 : (root.closing || root.leaving ? 0.7 : 0.6);
+    private property <float> thumb-alpha: root.shown-state ? 1.0 : 0.0;
+    private property <float> main-scale: root.shown-state ? 1.0 : (root.closing || root.leaving ? 0.7 : 0.6);
+    private property <float> main-alpha: root.shown-state ? 1.0 : 0.0;
+
+    animate strip-y {
+        duration: root.leaving || root.closing ? 300ms : 600ms;
+        easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+    animate thumb-scale {
+        duration: root.leaving || root.closing ? 330ms : 400ms;
+        easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : ease-out-back;
+    }
+    animate thumb-alpha {
+        duration: root.leaving || root.closing ? 330ms : 400ms;
+        easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : ease-out-back;
+    }
+    animate main-scale {
+        duration: root.leaving || root.closing ? 330ms : 500ms;
+        easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : ease-out-back;
+    }
+    animate main-alpha {
+        duration: root.leaving || root.closing ? 330ms : 500ms;
+        easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : ease-out-back;
+    }
+
     // The panel *is* the column: `.content-screenshots` is
     // `display: flex; flex-direction: column` with `.main { flex: 1 }` above
     // `.thumbnails { flex-shrink: 0 }`. A wrapper sized to its own content
     // would leave the strip wherever the content happened to end rather than
     // at the bottom.
-    screenshots-column := VerticalLayout {
+    // `.content-screenshots { display: flex; flex-direction: column }` with
+    // `.main { flex: 1 }` above `.thumbnails { flex-shrink: 0 }` — the stage
+    // keeps the space the strip leaves. Two boxes rather than a layout,
+    // because the strip slides and a layout owns its children's `y`.
+    private property <length> strip-height: clamp(92px, root.height * 12 / 100, 116px);
+
+    stage := Rectangle {
         x: 0;
         y: 0;
         width: parent.width;
-        height: parent.height;
+        height: parent.height - root.strip-height;
+        background: transparent;
 
-        // `.main { flex: 1; padding: 32px 96px }` — the stage keeps the
-        // space the strip leaves.
-            stage := Rectangle {
-                vertical-stretch: 1;
-                background: transparent;
-
-                if ContentState.screenshots.length == 0 : Text {
-                    text: ContentState.screenshots-loading
-                        ? @tr("Loading…")
-                        : @tr("No screenshots yet");
-                    font-size: 14px;
-                    color: Theme.overlay-2;
-                    x: (parent.width - self.width) / 2;
-                    y: (parent.height - self.height) / 2;
-                }
-
-                if ContentState.screenshots.length > 0 : Rectangle {
-                    width: 100%;
-                    height: 100%;
-                    background: transparent;
-
-                    // `.stage { padding: 32px 96px }` with
-                    // `img { max-width: 100%; max-height: 100%; object-fit:
-                    // contain }` — an `Image` given the padded box and
-                    // `contain` lands the same way.
-                    // `.stage`'s own `@click.self="close"` is what the touch
-                    // area under the image is for; the image swallows its own
-                    // clicks, as a click on the `<img>` did in the Vue.
-                    stage-touch := TouchArea {
-                        clicked => { ContentState.close(); }
-                    }
-
-                    Image {
-                        x: 96px;
-                        y: 32px;
-                        width: max(0px, parent.width - 192px);
-                        height: max(0px, parent.height - 64px);
-                        source: ContentState.current-screenshot;
-                        image-fit: contain;
-                    }
-
-                    image-swallow := TouchArea {
-                        x: 96px;
-                        y: 32px;
-                        width: max(0px, parent.width - 192px);
-                        height: max(0px, parent.height - 64px);
-                    }
-                }
+            if ContentState.screenshots.length == 0 : Text {
+                text: ContentState.screenshots-loading
+                    ? @tr("Loading...")
+                    : @tr("No screenshots");
+                font-size: 14px;
+                color: Theme.overlay-2;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
             }
 
             if ContentState.screenshots.length > 0 : Rectangle {
-                // `.thumbnails { height: clamp(92px, 12vh, 116px) }`
-                height: 104px;
                 width: 100%;
-                background: Theme.surface-0.with-alpha(0.8);
+                height: 100%;
+                background: transparent;
+                opacity: root.main-alpha;
 
-                // `border-top: 1px solid var(--ctp-surface1)` — a hairline of
-                // its own, because Slint's `border-width` is all four sides.
-                Rectangle {
-                    x: 0;
-                    y: 0;
-                    width: parent.width;
-                    height: 1px;
-                    background: Theme.surface-1;
+                // `.nav { top: 50%; 44px; border-radius: 50%; border: 1px solid
+                // surface1; background: rgba(surface0, .85); &.prev { left:
+                // 24px } &.next { right: 24px } }` with a 22px chevron, the
+                // left one rotated.
+                prev-button := Rectangle {
+                    x: 24px;
+                    y: (parent.height - self.height) / 2;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 22px;
+                    border-width: 1px;
+                    border-color: Theme.surface-1;
+                    background: prev-touch.pressed ? Theme.surface-2
+                        : prev-touch.has-hover ? Theme.surface-1
+                        : Theme.surface-0.with-alpha(0.85);
+                    opacity: ContentState.screenshot-index <= 0 ? 0.35 : 1.0;
+                    transform-scale: root.main-scale;
+
+                    AppIcon {
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                        name: "chevron-forward";
+                        size: 22px;
+                        icon-color: Theme.default-text-color.transparentize(0.1);
+                        transform-rotation: 180deg;
+                        transform-origin: { x: self.width / 2, y: self.height / 2 };
+                    }
+
+                    prev-touch := TouchArea {
+                        enabled: ContentState.screenshot-index > 0;
+                        clicked => { ContentState.screenshot-prev(); }
+                    }
                 }
 
-                thumbnail-strip := HorizontalLayout {
-                    x: 0;
-                    y: 10px;
-                    width: 100%;
-                    height: parent.height - 20px;
-                    spacing: 10px;
+                next-button := Rectangle {
+                    x: parent.width - 24px - self.width;
+                    y: (parent.height - self.height) / 2;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 22px;
+                    border-width: 1px;
+                    border-color: Theme.surface-1;
+                    background: next-touch.pressed ? Theme.surface-2
+                        : next-touch.has-hover ? Theme.surface-1
+                        : Theme.surface-0.with-alpha(0.85);
+                    opacity: ContentState.screenshot-index >= ContentState.screenshots.length - 1
+                        ? 0.35
+                        : 1.0;
+                    transform-scale: root.main-scale;
 
-                    for shot[index] in ContentState.screenshots : Rectangle {
-                        width: 120px;
-                        height: parent.height;
-                        border-radius: 6px;
-                        border-width: 2px;
-                        border-color: index == ContentState.screenshot-index
-                            ? Theme.blue
-                            : transparent;
-                        opacity: index == ContentState.screenshot-index
-                            ? 1.0
-                            : (touch.has-hover ? 1.0 : 0.6);
-                        clip: true;
+                    AppIcon {
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                        name: "chevron-forward";
+                        size: 22px;
+                        icon-color: Theme.default-text-color.transparentize(0.1);
+                    }
 
-                        Image {
-                            width: parent.width;
-                            height: parent.height;
-                            source: shot;
-                            image-fit: cover;
-                        }
+                    next-touch := TouchArea {
+                        enabled: ContentState.screenshot-index < ContentState.screenshots.length - 1;
+                        clicked => { ContentState.screenshot-next(); }
+                    }
+                }
 
-                        touch := TouchArea {
-                            clicked => { ContentState.set-screenshot(index); }
-                        }
+                // `.stage { padding: 32px 96px }` with
+                // `img { max-width: 100%; max-height: 100%; object-fit:
+                // contain; border-radius: 8px; box-shadow: 0 8px 32px
+                // rgba(0,0,0,.4) }` — an `Image` given the padded box and
+                // `contain` lands the same way.
+                // `.stage`'s own `@click.self="close"` is what the touch
+                // area under the image is for; the image swallows its own
+                // clicks, as a click on the `<img>` did in the Vue.
+                stage-touch := TouchArea {
+                    clicked => { root.closing = true; }
+                }
+
+
+                image-swallow := TouchArea {
+                    x: 96px;
+                    y: 32px;
+                    width: max(0px, parent.width - 192px);
+                    height: max(0px, parent.height - 64px);
+                }
+
+                // A box of its own so the shadow follows the image's alpha:
+                // `drop-shadow-*` is a Rectangle's property, and the Vue's
+                // `box-shadow: 0 8px 32px rgba(0,0,0,.4)` hugs the picture.
+                shadow := Rectangle {
+                    x: 96px;
+                    y: 32px;
+                    width: max(0px, parent.width - 192px);
+                    height: max(0px, parent.height - 64px);
+                    background: transparent;
+                    transform-scale: root.main-scale;
+                    drop-shadow-color: #00000066;
+                    drop-shadow-blur: 32px;
+                    drop-shadow-offset-y: 8px;
+
+                    Image {
+                        width: 100%;
+                        height: 100%;
+                        source: ContentState.current-screenshot;
+                        image-fit: contain;
                     }
                 }
             }
+    }
+
+    if ContentState.screenshots.length > 0 : Rectangle {
+        y: parent.height - self.height + root.strip-y;
+        height: root.strip-height;
+        width: 100%;
+        background: Theme.surface-0.with-alpha(0.8);
+        clip: true;
+
+        // `border-top: 1px solid var(--ctp-surface1)` — a hairline of its
+        // own, because Slint's `border-width` is all four sides.
+        Rectangle {
+            x: 0;
+            y: 0;
+            width: parent.width;
+            height: 1px;
+            background: Theme.surface-1;
         }
+
+        // `.thumbnails-list { gap: 10px; height: 100%; .thumbnail {
+        // height: calc(100% - 20px); &:first-child { margin-left: 96px }
+        // &:last-child { margin-right: 96px } } }`
+        thumbnail-strip := HorizontalLayout {
+            x: 0;
+            y: 10px;
+            width: 100%;
+            height: parent.height - 20px;
+            spacing: 10px;
+
+                for shot[index] in ContentState.screenshots : Rectangle {
+                    // `img { height: 100%; width: auto }` — the width follows
+                    // the image's own ratio at the row's height.
+                    width: shot.ratio * (parent.height);
+                    height: parent.height;
+                    border-radius: 6px;
+                    border-width: 2px;
+                    border-color: index == ContentState.screenshot-index
+                        ? Theme.blue
+                        : transparent;
+                    opacity: index == ContentState.screenshot-index
+                        ? 1.0
+                        : (touch.has-hover ? 1.0 : 0.6);
+                    transform-scale: root.thumb-scale;
+                    clip: true;
+                    animate opacity {
+                        duration: 150ms;
+                        easing: ease-out;
+                    }
+
+                    Image {
+                        width: parent.width;
+                        height: parent.height;
+                        source: shot.image;
+                        image-fit: cover;
+                    }
+
+                    touch := TouchArea {
+                        clicked => { ContentState.set-screenshot(index); }
+                    }
+                }
+            }
+    }
 
     // `.close { top: 16px; right: 16px; 36px round }`
     close-button := Rectangle {
@@ -233,6 +428,12 @@ export component ContentScreenshotsPanel inherits Rectangle {
         height: 36px;
         border-radius: 18px;
         background: close-touch.has-hover ? Theme.surface-1 : Theme.surface-0.with-alpha(0.8);
+        opacity: root.main-alpha;
+        transform-scale: root.main-scale;
+        animate background {
+            duration: 150ms;
+            easing: ease-out;
+        }
 
         AppIcon {
             x: (parent.width - self.width) / 2;
@@ -243,10 +444,11 @@ export component ContentScreenshotsPanel inherits Rectangle {
         }
 
         close-touch := TouchArea {
-            clicked => { ContentState.close(); }
+            clicked => { root.closing = true; }
         }
     }
 }
+
 export component ContentModsPanel inherits Rectangle {
     /// The overlay container's size. Passed in rather than taken from `parent`,
     /// which is the game view — the container is inset from it.
@@ -268,10 +470,19 @@ export component ContentModsPanel inherits Rectangle {
     changed width => { ContentState.grid-resized(root.width, root.height); }
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
-    ScrollView {
+    // The Vue re-mounts a list every time it opens, which puts it back at the
+    // top; these panels stay alive, so the scroll is reset by hand.
+    private property <bool> panel-open: ContentState.open-panel == "mods";
+    changed panel-open => {
+        if root.panel-open {
+            list-scroll.scroll-to(0px, false);
+        }
+    }
+
+    list-scroll := ScrollView {
         ContentTitleBar {
             icon: "extension-puzzle";
-            title: @tr("Mods list");
+            title: @tr("Mods");
             sources: ["local", "modrinth", "curseforge"];
             active-source: ContentState.source;
             source-selected(source) => { ContentState.set-source(source); }
@@ -312,14 +523,19 @@ export component ContentModsPanel inherits Rectangle {
 
         if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : ContentNotFound {
             show: true;
-            description: @tr("Try changing the keywords or filters and searching again");
+            description: @tr("Try adjusting keywords or filters and search again");
         }
 
         ContentPagination {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            visible: ContentState.source != "local" && ContentState.remote-cards.length > 0;
+            // `ContentPagination.vue`'s own `v-if="totalPages > 1"`: the bar is
+            // drawn from the result's page count alone. A page change, a filter
+            // or a query keeps it — those never clear the result — while
+            // opening a panel, or switching the source, does (Rust resets it),
+            // which is exactly when the Vue's bar disappears.
+            visible: ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
     }
@@ -339,10 +555,19 @@ export component ContentResourcepacksPanel inherits Rectangle {
     changed width => { ContentState.grid-resized(root.width, root.height); }
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
-    ScrollView {
+    // The Vue re-mounts a list every time it opens, which puts it back at the
+    // top; these panels stay alive, so the scroll is reset by hand.
+    private property <bool> panel-open: ContentState.open-panel == "resourcepacks";
+    changed panel-open => {
+        if root.panel-open {
+            list-scroll.scroll-to(0px, false);
+        }
+    }
+
+    list-scroll := ScrollView {
         ContentTitleBar {
             icon: "palette";
-            title: @tr("Resource packs list");
+            title: @tr("Resource Packs");
             sources: ["local", "modrinth", "curseforge"];
             active-source: ContentState.source;
             source-selected(source) => { ContentState.set-source(source); }
@@ -382,14 +607,19 @@ export component ContentResourcepacksPanel inherits Rectangle {
 
         if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : ContentNotFound {
             show: true;
-            description: @tr("Try changing the keywords or filters and searching again");
+            description: @tr("Try adjusting keywords or filters and search again");
         }
 
         ContentPagination {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            visible: ContentState.source != "local" && ContentState.remote-cards.length > 0;
+            // `ContentPagination.vue`'s own `v-if="totalPages > 1"`: the bar is
+            // drawn from the result's page count alone. A page change, a filter
+            // or a query keeps it — those never clear the result — while
+            // opening a panel, or switching the source, does (Rust resets it),
+            // which is exactly when the Vue's bar disappears.
+            visible: ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
     }
@@ -416,10 +646,19 @@ export component ContentPacksPanel inherits Rectangle {
     changed width => { ContentState.grid-resized(root.width, root.height); }
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
-    ScrollView {
+    // The Vue re-mounts a list every time it opens, which puts it back at the
+    // top; these panels stay alive, so the scroll is reset by hand.
+    private property <bool> panel-open: ContentState.open-panel == "packs";
+    changed panel-open => {
+        if root.panel-open {
+            list-scroll.scroll-to(0px, false);
+        }
+    }
+
+    list-scroll := ScrollView {
         ContentTitleBar {
             icon: "package";
-            title: @tr("Modpacks list");
+            title: @tr("Modpacks");
             sources: ["modrinth", "curseforge"];
             active-source: ContentState.source;
             source-selected(source) => { ContentState.set-source(source); }
@@ -441,7 +680,7 @@ export component ContentPacksPanel inherits Rectangle {
 
         if !ContentState.remote-loading && ContentState.remote-cards.length == 0 : ContentNotFound {
             show: true;
-            description: @tr("Try changing the keywords or filters and searching again");
+            description: @tr("Try adjusting keywords or filters and search again");
         }
 
         ContentPagination {

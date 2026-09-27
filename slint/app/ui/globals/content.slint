@@ -124,6 +124,16 @@ export struct FilterRow {
     label: string,
     chips: [FilterChip],
     paginated: bool,
+    /// The row's height, computed in Rust from the widths the chips report.
+    ///
+    /// A wrapping `FlexboxLayout` cannot supply it: the layout measures itself
+    /// at its own *preferred* width, and for `flex-wrap: wrap` that is a
+    /// deliberately "roughly square" one (`i-slint-core/layout.rs`), not the
+    /// width the row actually gets. A row of Chinese category labels therefore
+    /// reserved two lines where it drew one, and the rows below it sat too far
+    /// down. Rust wraps the chips itself instead — same 6px gap, same 20px
+    /// chips — and the height follows a language change with the labels.
+    height: length,
 }
 
 /// One page button of the pagination bar. `text` is "…" for an ellipsis, which
@@ -134,14 +144,16 @@ export struct PageButton {
     page: int,
 }
 
-/// One image of a detail panel's gallery strip. The strip's items are one
-/// fixed height and their width follows the image's own aspect ratio
+/// One image of a strip whose items are a fixed height and whose width follows
+/// the image's own aspect ratio — a detail panel's gallery
 /// (`.gallery-item { height: calc(100% - 16px) }` + `img { height: 100%;
-/// width: auto }`), which Rust works out from the decoded bitmap — Slint
-/// cannot read an image's natural size, so it cannot derive the width itself.
+/// width: auto }`) and the screenshots viewer's thumbnail row. The ratio comes
+/// from Rust, which has just decoded the bitmap: Slint cannot read an image's
+/// natural size, and the two strips scale it to different heights.
 export struct GalleryShot {
     image: image,
-    width: length,
+    /// width / height of the decoded bitmap.
+    ratio: float,
 }
 
 /// The overlay layer's state. Which panel is open, what it is showing, and the
@@ -237,7 +249,7 @@ export global ContentState {
     in-out property <bool> detail-can-remove: true;
 
     // ----- screenshots -----
-    in-out property <[image]> screenshots: [];
+    in-out property <[GalleryShot]> screenshots: [];
     in-out property <bool> screenshots-loading: false;
     in-out property <int> screenshot-index: 0;
     /// The image the stage shows, which is `screenshots[screenshot-index]` —
@@ -339,310 +351,310 @@ export global ContentText {
     /// with a different name).
     public pure function category(kind: string, platform: string, key: string) -> string {
         if kind == "mods" && platform == "curseforge" && key == "adventure-rpg" {
-            return @tr("ContentText" => "Adventure & RPG");
+            return @tr("CategoryModsCurseforge" => "Adventure & RPG");
         }
         if kind == "mods" && platform == "curseforge" && key == "armor-weapons-tools" {
-            return @tr("ContentText" => "Armor, Tools & Weapons");
+            return @tr("CategoryModsCurseforge" => "Armor, Tools & Weapons");
         }
         if kind == "mods" && platform == "curseforge" && key == "world-gen" {
-            return @tr("ContentText" => "World Generation");
+            return @tr("CategoryModsCurseforge" => "World Generation");
         }
         if kind == "mods" && platform == "curseforge" && key == "technology" {
-            return @tr("ContentText" => "Technology");
+            return @tr("CategoryModsCurseforge" => "Technology");
         }
         if kind == "mods" && platform == "curseforge" && key == "magic" {
-            return @tr("ContentText" => "Magic");
+            return @tr("CategoryModsCurseforge" => "Magic");
         }
         if kind == "mods" && platform == "curseforge" && key == "storage" {
-            return @tr("ContentText" => "Storage");
+            return @tr("CategoryModsCurseforge" => "Storage");
         }
         if kind == "mods" && platform == "curseforge" && key == "library-api" {
-            return @tr("ContentText" => "Library & API");
+            return @tr("CategoryModsCurseforge" => "Library & API");
         }
         if kind == "mods" && platform == "curseforge" && key == "map-information" {
-            return @tr("ContentText" => "Maps & Info");
+            return @tr("CategoryModsCurseforge" => "Maps & Info");
         }
         if kind == "mods" && platform == "curseforge" && key == "utility-qol" {
-            return @tr("ContentText" => "Utility & QoL");
+            return @tr("CategoryModsCurseforge" => "Utility & QoL");
         }
         if kind == "mods" && platform == "curseforge" && key == "server-utility" {
-            return @tr("ContentText" => "Server Utility");
+            return @tr("CategoryModsCurseforge" => "Server Utility");
         }
         if kind == "mods" && platform == "curseforge" && key == "mc-food" {
-            return @tr("ContentText" => "Food");
+            return @tr("CategoryModsCurseforge" => "Food");
         }
         if kind == "mods" && platform == "curseforge" && key == "performance" {
-            return @tr("ContentText" => "Performance");
+            return @tr("CategoryModsCurseforge" => "Performance");
         }
         if kind == "mods" && platform == "curseforge" && key == "bug-fixes" {
-            return @tr("ContentText" => "Bug Fixes");
+            return @tr("CategoryModsCurseforge" => "Bug Fixes");
         }
         if kind == "mods" && platform == "curseforge" && key == "redstone" {
-            return @tr("ContentText" => "Redstone");
+            return @tr("CategoryModsCurseforge" => "Redstone");
         }
         if kind == "mods" && platform == "curseforge" && key == "cosmetic" {
-            return @tr("ContentText" => "Cosmetic");
+            return @tr("CategoryModsCurseforge" => "Cosmetic");
         }
         if kind == "mods" && platform == "curseforge" && key == "mc-miscellaneous" {
-            return @tr("ContentText" => "Miscellaneous");
+            return @tr("CategoryModsCurseforge" => "Miscellaneous");
         }
         if kind == "mods" && platform == "modrinth" && key == "adventure" {
-            return @tr("ContentText" => "Adventure");
+            return @tr("CategoryModsModrinth" => "Adventure");
         }
         if kind == "mods" && platform == "modrinth" && key == "cursed" {
-            return @tr("ContentText" => "Cursed");
+            return @tr("CategoryModsModrinth" => "Cursed");
         }
         if kind == "mods" && platform == "modrinth" && key == "decoration" {
-            return @tr("ContentText" => "Decoration");
+            return @tr("CategoryModsModrinth" => "Decoration");
         }
         if kind == "mods" && platform == "modrinth" && key == "economy" {
-            return @tr("ContentText" => "Economy");
+            return @tr("CategoryModsModrinth" => "Economy");
         }
         if kind == "mods" && platform == "modrinth" && key == "equipment" {
-            return @tr("ContentText" => "Equipment");
+            return @tr("CategoryModsModrinth" => "Equipment");
         }
         if kind == "mods" && platform == "modrinth" && key == "food" {
-            return @tr("ContentText" => "Food");
+            return @tr("CategoryModsModrinth" => "Food");
         }
         if kind == "mods" && platform == "modrinth" && key == "game-mechanics" {
-            return @tr("ContentText" => "Game Mechanics");
+            return @tr("CategoryModsModrinth" => "Game Mechanics");
         }
         if kind == "mods" && platform == "modrinth" && key == "library" {
-            return @tr("ContentText" => "Library");
+            return @tr("CategoryModsModrinth" => "Library");
         }
         if kind == "mods" && platform == "modrinth" && key == "magic" {
-            return @tr("ContentText" => "Magic");
+            return @tr("CategoryModsModrinth" => "Magic");
         }
         if kind == "mods" && platform == "modrinth" && key == "management" {
-            return @tr("ContentText" => "Management");
+            return @tr("CategoryModsModrinth" => "Management");
         }
         if kind == "mods" && platform == "modrinth" && key == "minigame" {
-            return @tr("ContentText" => "Minigame");
+            return @tr("CategoryModsModrinth" => "Minigame");
         }
         if kind == "mods" && platform == "modrinth" && key == "mobs" {
-            return @tr("ContentText" => "Mobs");
+            return @tr("CategoryModsModrinth" => "Mobs");
         }
         if kind == "mods" && platform == "modrinth" && key == "optimization" {
-            return @tr("ContentText" => "Optimization");
+            return @tr("CategoryModsModrinth" => "Optimization");
         }
         if kind == "mods" && platform == "modrinth" && key == "social" {
-            return @tr("ContentText" => "Social");
+            return @tr("CategoryModsModrinth" => "Social");
         }
         if kind == "mods" && platform == "modrinth" && key == "storage" {
-            return @tr("ContentText" => "Storage");
+            return @tr("CategoryModsModrinth" => "Storage");
         }
         if kind == "mods" && platform == "modrinth" && key == "technology" {
-            return @tr("ContentText" => "Technology");
+            return @tr("CategoryModsModrinth" => "Technology");
         }
         if kind == "mods" && platform == "modrinth" && key == "transportation" {
-            return @tr("ContentText" => "Transportation");
+            return @tr("CategoryModsModrinth" => "Transportation");
         }
         if kind == "mods" && platform == "modrinth" && key == "utility" {
-            return @tr("ContentText" => "Utility");
+            return @tr("CategoryModsModrinth" => "Utility");
         }
         if kind == "mods" && platform == "modrinth" && key == "worldgen" {
-            return @tr("ContentText" => "World Generation");
+            return @tr("CategoryModsModrinth" => "World Generation");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "crafted" {
-            return @tr("ContentText" => "Crafted");
+            return @tr("CategoryResourcepacksCurseforge" => "Crafted");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "photo-realistic" {
-            return @tr("ContentText" => "Photorealistic");
+            return @tr("CategoryResourcepacksCurseforge" => "Photorealistic");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "semi-realistic" {
-            return @tr("ContentText" => "Semi-Realistic");
+            return @tr("CategoryResourcepacksCurseforge" => "Semi-Realistic");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "simple" {
-            return @tr("ContentText" => "Simple");
+            return @tr("CategoryResourcepacksCurseforge" => "Simple");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "traditional" {
-            return @tr("ContentText" => "Traditional");
+            return @tr("CategoryResourcepacksCurseforge" => "Traditional");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "animated" {
-            return @tr("ContentText" => "Animated");
+            return @tr("CategoryResourcepacksCurseforge" => "Animated");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "modern" {
-            return @tr("ContentText" => "Modern");
+            return @tr("CategoryResourcepacksCurseforge" => "Modern");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "themed" {
-            return @tr("ContentText" => "Themed");
+            return @tr("CategoryResourcepacksCurseforge" => "Themed");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "mod-support" {
-            return @tr("ContentText" => "Mod Support");
+            return @tr("CategoryResourcepacksCurseforge" => "Mod Support");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "rpg" {
-            return @tr("ContentText" => "RPG");
+            return @tr("CategoryResourcepacksCurseforge" => "RPG");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "gameplay" {
-            return @tr("ContentText" => "Gameplay");
+            return @tr("CategoryResourcepacksCurseforge" => "Gameplay");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "gui" {
-            return @tr("ContentText" => "GUI");
+            return @tr("CategoryResourcepacksCurseforge" => "GUI");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "sound" {
-            return @tr("ContentText" => "Sound");
+            return @tr("CategoryResourcepacksCurseforge" => "Sound");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "environment" {
-            return @tr("ContentText" => "Environment");
+            return @tr("CategoryResourcepacksCurseforge" => "Environment");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "world-gen" {
-            return @tr("ContentText" => "World Generation");
+            return @tr("CategoryResourcepacksCurseforge" => "World Generation");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "blocks" {
-            return @tr("ContentText" => "Blocks");
+            return @tr("CategoryResourcepacksCurseforge" => "Blocks");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "items" {
-            return @tr("ContentText" => "Items");
+            return @tr("CategoryResourcepacksCurseforge" => "Items");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "mobs" {
-            return @tr("ContentText" => "Mobs");
+            return @tr("CategoryResourcepacksCurseforge" => "Mobs");
         }
         if kind == "resourcepacks" && platform == "curseforge" && key == "weather" {
-            return @tr("ContentText" => "Weather");
-        }
-        if kind == "resourcepacks" && platform == "modrinth" && key == "16x" {
-            return @tr("ContentText" => "16x");
-        }
-        if kind == "resourcepacks" && platform == "modrinth" && key == "32x" {
-            return @tr("ContentText" => "32x");
-        }
-        if kind == "resourcepacks" && platform == "modrinth" && key == "64x" {
-            return @tr("ContentText" => "64x");
-        }
-        if kind == "resourcepacks" && platform == "modrinth" && key == "128x" {
-            return @tr("ContentText" => "128x");
-        }
-        if kind == "resourcepacks" && platform == "modrinth" && key == "256x" {
-            return @tr("ContentText" => "256x");
+            return @tr("CategoryResourcepacksCurseforge" => "Weather");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "faithful" {
-            return @tr("ContentText" => "Faithful");
+            return @tr("CategoryResourcepacksModrinth" => "Faithful");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "16x" {
+            return @tr("CategoryResourcepacksModrinth" => "16x");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "32x" {
+            return @tr("CategoryResourcepacksModrinth" => "32x");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "64x" {
+            return @tr("CategoryResourcepacksModrinth" => "64x");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "128x" {
+            return @tr("CategoryResourcepacksModrinth" => "128x");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "256x" {
+            return @tr("CategoryResourcepacksModrinth" => "256x");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "photo-realistic" {
-            return @tr("ContentText" => "Photorealistic");
+            return @tr("CategoryResourcepacksModrinth" => "Photorealistic");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "semi-realistic" {
-            return @tr("ContentText" => "Semi-Realistic");
+            return @tr("CategoryResourcepacksModrinth" => "Semi-Realistic");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "simple" {
-            return @tr("ContentText" => "Simple");
+            return @tr("CategoryResourcepacksModrinth" => "Simple");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "modern" {
-            return @tr("ContentText" => "Modern");
+            return @tr("CategoryResourcepacksModrinth" => "Modern");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "theme-based" {
-            return @tr("ContentText" => "Themed");
+            return @tr("CategoryResourcepacksModrinth" => "Themed");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "classic" {
-            return @tr("ContentText" => "Classic");
+            return @tr("CategoryResourcepacksModrinth" => "Classic");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "dark" {
-            return @tr("ContentText" => "Dark");
+            return @tr("CategoryResourcepacksModrinth" => "Dark");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "medieval" {
-            return @tr("ContentText" => "Medieval");
+            return @tr("CategoryResourcepacksModrinth" => "Medieval");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "anime" {
-            return @tr("ContentText" => "Anime");
+            return @tr("CategoryResourcepacksModrinth" => "Anime");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "cartoon" {
-            return @tr("ContentText" => "Cartoon");
+            return @tr("CategoryResourcepacksModrinth" => "Cartoon");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "pixel-art" {
-            return @tr("ContentText" => "Pixel Art");
+            return @tr("CategoryResourcepacksModrinth" => "Pixel Art");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "vanilla-plus" {
-            return @tr("ContentText" => "Vanilla Plus");
+            return @tr("CategoryResourcepacksModrinth" => "Vanilla Plus");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "utility" {
-            return @tr("ContentText" => "Utility");
+            return @tr("CategoryResourcepacksModrinth" => "Utility");
         }
         if kind == "resourcepacks" && platform == "modrinth" && key == "other" {
-            return @tr("ContentText" => "Other");
+            return @tr("CategoryResourcepacksModrinth" => "Other");
         }
         if kind == "packs" && platform == "curseforge" && key == "tech" {
-            return @tr("ContentText" => "Technology");
+            return @tr("CategoryPacksCurseforge" => "Technology");
         }
         if kind == "packs" && platform == "curseforge" && key == "magic" {
-            return @tr("ContentText" => "Magic");
+            return @tr("CategoryPacksCurseforge" => "Magic");
         }
         if kind == "packs" && platform == "curseforge" && key == "sci-fi" {
-            return @tr("ContentText" => "Sci-Fi");
+            return @tr("CategoryPacksCurseforge" => "Sci-Fi");
         }
         if kind == "packs" && platform == "curseforge" && key == "adventure-and-rpg" {
-            return @tr("ContentText" => "Adventure & RPG");
+            return @tr("CategoryPacksCurseforge" => "Adventure & RPG");
         }
         if kind == "packs" && platform == "curseforge" && key == "exploration" {
-            return @tr("ContentText" => "Exploration");
+            return @tr("CategoryPacksCurseforge" => "Exploration");
         }
         if kind == "packs" && platform == "curseforge" && key == "mini-game" {
-            return @tr("ContentText" => "Minigame");
+            return @tr("CategoryPacksCurseforge" => "Minigame");
         }
         if kind == "packs" && platform == "curseforge" && key == "quests" {
-            return @tr("ContentText" => "Quests");
+            return @tr("CategoryPacksCurseforge" => "Quests");
         }
         if kind == "packs" && platform == "curseforge" && key == "hardcore" {
-            return @tr("ContentText" => "Hardcore");
+            return @tr("CategoryPacksCurseforge" => "Hardcore");
         }
         if kind == "packs" && platform == "curseforge" && key == "map-based" {
-            return @tr("ContentText" => "Map-Based");
+            return @tr("CategoryPacksCurseforge" => "Map-Based");
         }
         if kind == "packs" && platform == "curseforge" && key == "small-light" {
-            return @tr("ContentText" => "Lightweight");
+            return @tr("CategoryPacksCurseforge" => "Lightweight");
         }
         if kind == "packs" && platform == "curseforge" && key == "extra-large" {
-            return @tr("ContentText" => "Extra Large");
+            return @tr("CategoryPacksCurseforge" => "Extra Large");
         }
         if kind == "packs" && platform == "curseforge" && key == "combat" {
-            return @tr("ContentText" => "Combat PvP");
+            return @tr("CategoryPacksCurseforge" => "Combat PvP");
         }
         if kind == "packs" && platform == "curseforge" && key == "multiplayer" {
-            return @tr("ContentText" => "Multiplayer");
+            return @tr("CategoryPacksCurseforge" => "Multiplayer");
         }
         if kind == "packs" && platform == "curseforge" && key == "ftb" {
-            return @tr("ContentText" => "FTB Modpacks");
+            return @tr("CategoryPacksCurseforge" => "FTB Modpacks");
         }
         if kind == "packs" && platform == "curseforge" && key == "skyblock" {
-            return @tr("ContentText" => "Skyblock");
+            return @tr("CategoryPacksCurseforge" => "Skyblock");
         }
         if kind == "packs" && platform == "curseforge" && key == "vanilla-plus" {
-            return @tr("ContentText" => "Vanilla Plus");
+            return @tr("CategoryPacksCurseforge" => "Vanilla Plus");
         }
         if kind == "packs" && platform == "curseforge" && key == "horror" {
-            return @tr("ContentText" => "Horror");
+            return @tr("CategoryPacksCurseforge" => "Horror");
         }
         if kind == "packs" && platform == "curseforge" && key == "expert" {
-            return @tr("ContentText" => "Expert");
+            return @tr("CategoryPacksCurseforge" => "Expert");
         }
         if kind == "packs" && platform == "modrinth" && key == "adventure" {
-            return @tr("ContentText" => "Adventure");
+            return @tr("CategoryPacksModrinth" => "Adventure");
         }
         if kind == "packs" && platform == "modrinth" && key == "challenging" {
-            return @tr("ContentText" => "Challenging");
+            return @tr("CategoryPacksModrinth" => "Challenging");
         }
         if kind == "packs" && platform == "modrinth" && key == "combat" {
-            return @tr("ContentText" => "Combat");
+            return @tr("CategoryPacksModrinth" => "Combat");
         }
         if kind == "packs" && platform == "modrinth" && key == "kitchen-sink" {
-            return @tr("ContentText" => "Kitchen Sink");
+            return @tr("CategoryPacksModrinth" => "Kitchen Sink");
         }
         if kind == "packs" && platform == "modrinth" && key == "lightweight" {
-            return @tr("ContentText" => "Lightweight");
+            return @tr("CategoryPacksModrinth" => "Lightweight");
         }
         if kind == "packs" && platform == "modrinth" && key == "magic" {
-            return @tr("ContentText" => "Magic");
+            return @tr("CategoryPacksModrinth" => "Magic");
         }
         if kind == "packs" && platform == "modrinth" && key == "multiplayer" {
-            return @tr("ContentText" => "Multiplayer");
+            return @tr("CategoryPacksModrinth" => "Multiplayer");
         }
         if kind == "packs" && platform == "modrinth" && key == "optimization" {
-            return @tr("ContentText" => "Optimization");
+            return @tr("CategoryPacksModrinth" => "Optimization");
         }
         if kind == "packs" && platform == "modrinth" && key == "quests" {
-            return @tr("ContentText" => "Quests");
+            return @tr("CategoryPacksModrinth" => "Quests");
         }
         if kind == "packs" && platform == "modrinth" && key == "technology" {
-            return @tr("ContentText" => "Technology");
+            return @tr("CategoryPacksModrinth" => "Technology");
         }
         return key;
     }
@@ -674,9 +686,9 @@ export global ContentText {
 
     /// The search field's placeholder.
     public pure function search-placeholder(kind: string) -> string {
-        if kind == "mods" { return @tr("ContentText" => "Search mods…"); }
-        if kind == "resourcepacks" { return @tr("ContentText" => "Search resource packs…"); }
-        return @tr("ContentText" => "Search modpacks…");
+        if kind == "mods" { return @tr("ContentText" => "Search mods..."); }
+        if kind == "resourcepacks" { return @tr("ContentText" => "Search resource packs..."); }
+        return @tr("ContentText" => "Search modpacks...");
     }
 
     /// A filter row's label. The rows are identified by key so the label stays

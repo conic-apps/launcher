@@ -467,6 +467,7 @@ impl GameController {
         state.set_show_placeholder(show_placeholder);
         state.set_accounts(ModelRc::new(VecModel::from(accounts)));
 
+        let current_id = current.as_ref().map(|instance| instance.id.clone());
         match current {
             Some(instance) => {
                 let (loader, _) = Self::loader(&instance);
@@ -503,6 +504,18 @@ impl GameController {
                 state.set_current_has_loader(false);
                 state.set_current_has_playtime(false);
                 state.set_current_starred(false);
+            }
+        }
+
+        // The preview rows draw the first few icons of each kind as well as
+        // their counts; `content.rs` owns the decoding and the caches.
+        match current_id.as_deref() {
+            Some(id) => crate::content::refresh_preview_icons(ui, id),
+            None => {
+                state.set_preview_saves(slint::ModelRc::default());
+                state.set_preview_mods(slint::ModelRc::default());
+                state.set_preview_resourcepacks(slint::ModelRc::default());
+                state.set_preview_screenshots(slint::ModelRc::default());
             }
         }
 

@@ -102,8 +102,11 @@ component DetailButton inherits Rectangle {
         cross-axis-alignment: center;
 
         if root.kind == "heart" : AppIcon {
+            // The Vue passes no `:size`, so these are `AppIcon`'s default 20px —
+            // the glyph inside the view box is smaller than that, which is what
+            // makes 16px look too small.
             name: root.favorited ? "heart" : "heart-outline";
-            size: 16px;
+            size: 20px;
             icon-color: root.ink;
         }
 
@@ -116,13 +119,13 @@ component DetailButton inherits Rectangle {
 
         if root.kind == "download" : AppIcon {
             name: "download";
-            size: 16px;
+            size: 20px;
             icon-color: root.ink;
         }
 
         if root.kind == "remove" : AppIcon {
             name: "trash";
-            size: 16px;
+            size: 20px;
             icon-color: root.ink;
         }
     }
@@ -382,7 +385,7 @@ component DetailBody inherits Rectangle {
                             // `.gallery-item { height: calc(100% - 16px) }` — 204px
                             // in the 220px row, centred.
                             for shot in ContentState.detail-gallery : Rectangle {
-                                width: shot.width;
+                                width: shot.ratio * 204px;
                                 height: 204px;
                                 border-radius: 8px;
                                 clip: true;

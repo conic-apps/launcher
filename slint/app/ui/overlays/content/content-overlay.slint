@@ -138,6 +138,12 @@ export component ContentOverlay inherits Rectangle {
 
     scrim-touch := TouchArea {
         clicked => { root.closed(); }
+        // Every panel's wrapper in the Vue covers the game view, and its own
+        // scroller swallows the wheel (`Lenis` calls `preventDefault()` on every
+        // wheel it sees), so a wheel over an open panel can never reach the
+        // instance list behind it. Slint has no such rule — an unhandled wheel
+        // falls through to whatever is underneath — so the scrim takes it.
+        scroll-event(event) => { accept }
     }
 
     container := Rectangle {
