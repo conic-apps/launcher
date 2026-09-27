@@ -9,6 +9,7 @@ import { DropdownOverlay } from "components/dropdown-overlay.slint";
 import { DescriptionTooltipOverlay } from "components/description-tooltip.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
 import { WindowDrag } from "globals/window-drag.slint";
+import { WindowBackground } from "components/window-background.slint";
 import { SettingsView } from "views/settings-view.slint";
 import { GameView } from "views/game-view.slint";
 import { LaunchView } from "views/launch-view.slint";
@@ -25,6 +26,7 @@ export { ScrollInput, ScrollSource } from "globals/scroll.slint";
 export { Dialogs, CreateInstanceState, MinecraftVersionItem, AccountAddState, YggdrasilProfileItem } from "globals/dialogs.slint";
 export { WindowDrag } from "globals/window-drag.slint";
 export { WindowControl } from "components/title-bar.slint";
+export { Background } from "globals/background.slint";
 
 // Application root window (App.vue). macOS keeps the native traffic lights,
 // Linux draws the window controls itself, and Windows draws the platform's own
@@ -106,9 +108,16 @@ export component App inherits Window {
     container := Rectangle {
         width: root.width;
         height: root.height;
-        background: @linear-gradient(180deg, Theme.mantle 0%, Theme.crust 100%);
+        // The Vue's `#window` background: the palette's `crust`, flat. The
+        // hyperbola sky over it is only 30% opaque, so the base shows through
+        // and is part of the picture.
+        background: Theme.crust;
         border-radius: 16px;
         clip: true;
+
+        // Behind every page and every overlay, as the Vue's `WindowBackground`
+        // is the first child of `.window`.
+        WindowBackground { }
 
         VerticalLayout {
             width: root.width;

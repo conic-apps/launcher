@@ -39,6 +39,7 @@ slint/
       assets/                       # palette previews, about logos, version icons
       assets/skins/                 # the 18 bundled default skins (slim + wide)
       globals/
+        background.slint            # window background state (the Vue's WindowBackground)
         navigation.slint            # global page navigation (src/store/navigation.ts)
         settings.slint              # global config state (the "config store")
         game.slint                  # game view state (src/store/instance.ts + …)
@@ -51,6 +52,7 @@ slint/
         window-drag.slint           # the Vue's `data-tauri-drag-region` regions
       components/                   # shared/reusable pieces
         title-bar.slint
+        window-background.slint     # the window's background layers (src/components/WindowBackground.vue)
         account-avatar.slint
         base-loading.slint
         base-progress.slint         # the launch view's linear progress bar
@@ -456,6 +458,73 @@ Per the migration plan:
       same four error dialogs (`overlays/dialogs/launch-errors.slint`). Leaving
       the page aborts the task and reloads the instance list, the Vue's
       `onUnmounted`.
+- The **window background** (`components/window-background.slint`,
+  `globals/background.slint` and `app/src/background/`): the hyperbola sky, the
+  3D block world and the user's custom backgrounds, replacing
+  `src/components/WindowBackground.vue` — over the window colour, sky at 30%
+  then world at 30%, exactly the two `opacity: .3` canvases of the original:
+
+    - `background/scene.rs` is the terrain, trees and face culling, ported
+      function for function (`hash2i`/`valueNoise`/`terrainHeight`/`heightAt`/
+      `treeAt`/`isSolid`/`emitBlock`), with the original's constants and its
+      ring-buffered height cache. It rebuilds only when the camera crosses a
+      block boundary, and emits both the faces the software fallback draws and
+      the vertex buffers the GPU uploads, in the original's own layouts.
+    - `background/gl.rs` is the world **on the GPU**, which is how it is drawn
+      by default. Slint's declarative API has no custom-shader hook, but
+      `Window::set_rendering_notifier` hands over the current OpenGL context
+      (and `get_proc_address`, so the same code loads the entry points on every
+      platform), and `Image::from_borrowed_gl_texture` lets Slint composite a
+      texture we drew into. Both shader pairs are the original's, line for
+      line, minus what Slint now does for us: the corner-radius discard is gone
+      (Slint rounds the window's corners when it composites the image, where
+      the original had to rebuild window coordinates from the canvas's own
+      position) and the layer's 0.3 opacity is folded in, since this image is
+      one layer of Slint's composite rather than an element of its own. The
+      fills blend `ONE, ONE_MINUS_SRC_ALPHA` into a depth buffer and the 2px
+      outlines are screen-space quads expanded in the vertex shader, drawn over
+      them with blending off — the frame is written into an offscreen
+      framebuffer and never comes back to the CPU.
+    - `background/raster.rs` + `background/world.rs` + `background/sky.rs` are
+      the **fallback** for a renderer without OpenGL (the software renderer on
+      a machine with no GL driver): the same two passes expressed as a
+      z-buffered software rasteriser, and the hyperbolae (six curves, four
+      branches, composited once from a max-coverage buffer so the polyline's
+      joins are not double-blended, plus the `destination-out` band that lets
+      them dissolve past the horizon) in the sky's own cached image.
+    - `background/controller.rs` owns what is on screen: the current instance's
+      background beats the global one, which beats the world; a change
+      cross-fades over the one already there instead of waiting for it to
+      leave, and rapid changes are coalesced so clicking through instances does
+      not start a fade per click. The software rasteriser runs on its own
+      thread (one frame in flight, dropped requests pace the loop) so a slow
+      frame cannot stall the UI, and the camera only advances while the world
+      is what the window shows. The rasteriser starts the app off and keeps
+      drawing until the GPU has actually put a frame on screen, then stands
+      down — a renderer that turns out to have no OpenGL never takes over, and
+      keeps the frames the rasteriser drew.
+    - The parallax is eased **in Rust**, not by the component's `animate`
+      (`PARALLAX_EASE_SECS`, 35ms: about 100ms to settle, which is what an eased
+      100ms transition looks like). Every change goes through it — following the
+      pointer, the pointer entering the window, and leaving it — because the
+      position always *approaches* its target instead of being set to it, a
+      pointer flicking across the edge moves the background slightly and brings
+      it back rather than flashing it to a corner. The Vue used a 50ms `quickTo`
+      and snapped on entry and exit; this is a deliberate departure. It cannot
+      be an `animate` duration on the component: **Slint reads an `animate`'s
+      `duration` once, so a conditional in it never re-evaluates** — measuring it
+      showed a `flag ? 5000ms : 50ms` behaving exactly like a plain 50ms. (The
+      `snap` flags that the background's writes use rely on the same idea and so
+      never take effect; what they guard is either a no-op or the fade that was
+      wanted anyway.)
+    - The parallax is the Vue's: a wrapper scaled 1.08 that follows the pointer
+      by up to 4px, the images rendered that much larger so the scaling lands
+      them 1:1 on device pixels. The pointer comes from
+      `WinitWindowAccessor::on_winit_window_event` — a `TouchArea` cannot be
+      used, because one that covers the window swallows every click in the app
+      and one underneath the content never sees a move (any `TouchArea` the
+      pointer is over accepts the event and ends the walk).
+
 - Window drag regions (`globals/window-drag.slint` + `WindowService::drag_window`):
   a press inside one starts the platform's own window drag — on macOS
   `performWindowDragWithEvent:`, the way Chromium, Electron and Tauri do it, so
@@ -538,6 +607,134 @@ still falls back to the placeholder disc for a skin Rust could not decode.
   and its frame is taken over by `src/windows_caption.rs` (see below).
 
 ## Known issues / notes
+
+- **Window background** notes:
+    - The world is drawn by `background/gl.rs` on the GPU, at the window's full
+      device resolution with no scaling. `install` registers the notifier only
+      if the renderer offers one, and the renderer reports in only once it has
+      drawn a frame, so the software path is the fallback for a renderer
+      without OpenGL — the software renderer on a machine with no GL driver —
+      and never has to be chosen explicitly.
+    - **Platforms.** Slint's winit backend defaults to femtovg over OpenGL on
+      Linux, Windows and macOS alike (`renderer-femtovg` is a default feature),
+      and the context it hands the notifier comes with `get_proc_address`, so
+      there is no per-platform GL loading code here — no `dlsym`, WGL or GLX.
+      The shaders are compiled as `#version 330 core` on a desktop context and
+      `#version 300 es` on an ES one (ANGLE on Windows, or a GLES context on
+      Wayland), which is decided at runtime from `GL_VERSION`. A context too
+      old for either, a driver that cannot make a window at all (Slint then
+      falls back to its software renderer, whose `set_rendering_notifier`
+      returns `Unsupported`), or any other renderer — wgpu, vello, a
+      non-OpenGL Skia — all end up in the same place: `install` or
+      `Renderer::new` reports the failure and the CPU rasteriser keeps the
+      world. **Verified on macOS** (GL 4.1 core / GLSL 4.10, Apple M4 Pro);
+      Linux and Windows take the same code path through the same Slint
+      abstraction but have not been run here.
+    - The software fallback caps its target at `WORLD_PIXEL_BUDGET` (1.4 MP):
+      the default window stays under it and is drawn at full device resolution,
+      a maximised window on a Retina display is scaled down. Raise the constant
+      on a fast machine — `cargo test --release -p conic-launcher-slint timings
+      -- --nocapture` prints what a frame costs. The outline width follows the
+      scale, so the lines keep their on-screen weight. The fallback's outline
+      pass draws a few hairlines the GPU's does not: its per-row spans put a
+      line between the quad's two long edges even when they are less than a
+      pixel apart, where GL's pixel-centre rule covers nothing. They are only
+      visible as faint dashes inside large faces at full zoom (and they are not
+      a depth difference — forcing `GL_ALWAYS` on the GPU's outline pass does
+      not bring them back). The GPU path is the one that matches the
+      original's shaders exactly.
+    - `CONIC_GL_DUMP=/tmp/world.png` (debug builds) writes the world's
+      offscreen frame to a PNG on the first frame, and `CONIC_GL_CAM_Z=12.34`
+      pins the camera so that frame is reproducible and can be compared with
+      `cargo test -p conic-launcher-slint dump_background`'s reference.
+    - The window colour under everything is now the palette's flat `crust`, as
+      the Vue's `#window` is. The app previously drew a `mantle → crust`
+      gradient there; since the sky is only 30% opaque, the base shows through
+      and is part of the picture, so the gradient changed it. The container
+      keeps the gradient's place in `app.slint` and it is easy to put back.
+    - A cross-fade puts the incoming background *over* the one on screen, which
+      stays opaque until the incoming one has arrived and is then dropped. The
+      Vue instead hid the world's canvases the moment a custom background
+      appeared, so the background it replaced vanished before the new one was
+      in — a flash of the window colour. Fading both layers at once would do
+      the same thing, which is why only the incoming one animates. An incoming
+      image *with transparency* is the exception: there the outgoing layer is
+      faded out over the same 400ms instead of snapping, since it would
+      otherwise be visible through the new one.
+    - Custom backgrounds take priority in the Vue's order: the current
+      instance's (when it asks to be the launcher's) over the global one over
+      the world. Changes are debounced — a burst of instance switches resolves
+      to a single transition — and one arriving while a transition is on screen
+      waits for it, unless the incoming layer has barely arrived, in which case
+      its image is simply replaced.
+    - The "background darkness" setting dims the *global* custom background
+      only, as in the Vue (`v-if="isGlobalCustomBg"`); an instance background
+      and the world are never dimmed.
+    - Background images are decoded on a worker thread and cached by
+      modification time, so switching back and forth does not re-decode. The
+      Vue busts its cache with `?t=` on every switch, which re-decodes on the
+      UI thread each time. Images are also scaled down once, to
+      `IMAGE_MAX_EDGE` (2560), and the decode is what tells us whether an image
+      has any transparency — the answer decides whether the world stays behind
+      it.
+    - The camera advances **per drawn frame** (the GPU steps it inside the
+      render callback, the rasteriser between frames) — the Vue's
+      `requestAnimationFrame`, where a frame that never happens also never moves
+      the camera. It used to run off a wall clock, which meant a window nothing
+      was repainting went on moving invisibly and then jumped when it was drawn
+      again.
+    - The background's clock is **not a Slint `Timer`**. Slint ticks timers out
+      of `update_timers_and_animations`, which only runs while the window is
+      being rendered — so a Slint timer stops exactly when rendering does, and a
+      camera clock built on one cannot be what restarts it. It is a task on the
+      app's own runtime instead, handing each tick to the event loop. (This is
+      why `tokio`'s `time` feature is on.)
+    - While the camera moves, `window-background.slint` keeps something bound to
+      `animation-tick()`, so Slint has an animation in flight and paints every
+      frame. `Window::request_redraw` was not enough on its own: on a machine
+      whose compositor only repaints for animations, the world stood still until
+      the user scrolled the instance list.
+    - With **no OpenGL** the world is not drawn at all: `software_only` drops it
+      for good once the renderer has had its grace period, the window falls back
+      to the hyperbola sky (rendered at the wrapper's full size, so it fills),
+      and the settings page greys out the camera option — nothing would move a
+      world that is not being drawn. A CPU-rasterised world is many times too
+      slow to be worth showing.
+    - The camera pauses while a custom background is what the window shows, and
+      so does the renderer — the Vue's `cancelAnimationFrame` and its hidden
+      canvases. Between block crossings only the projection runs, as there.
+    - The sky is still the CPU's, at the GPU's size, because it is a handful of
+      curves drawn once per size and palette: it is cached per size and palette
+      and re-rendered when either changes (about 30 ms), so a window resize
+      drag re-renders it per frame.
+    - The Vue's window-open fade (0.8s on the whole background, from `App.vue`)
+      is not ported, matching the title bar's entrance animation.
+    - The world is drawn **premultiplied** (as the original is) and then
+      un-premultiplied by a resolve pass before Slint samples it. Slint hands a
+      borrowed texture to femtovg *without* `ImageFlags::PREMULTIPLIED`, so
+      femtovg multiplies by alpha as it samples: a premultiplied texture would be
+      multiplied twice and everything would come out `alpha` times too dark — a
+      hard colour step at the horizon in a dark palette, an obvious one in a
+      light palette. Writing straight alpha from the shaders does *not* fix it,
+      because fixed-function blending over the framebuffer's transparent black
+      cannot hold straight alpha for the first thing drawn; the resolve can, and
+      it costs one full-screen pass. The fallback's buffers go through
+      `Image::from_rgba8_premultiplied` instead, which is what Slint expects
+      there.
+    - `Image::from_rgba8_premultiplied` is what feeds the fallback's layers,
+      where the rest of the app uses `Image::from_rgba8`: the buffers are
+      composited by hand with `source-over`, and premultiplied pixels are also
+      what an image scaled by the parallax wants (the alternative bleeds its
+      edges). The GPU's texture is premultiplied for the same reason — its
+      shaders write `vec4(rgb * a, a)`, and Slint reads a borrowed texture as
+      premultiplied — and it is borrowed as `BottomLeft`, since GL's first row
+      is the bottom of the viewport.
+    - The `gl.rs` callback runs inside Slint's own render pass, so it saves and
+      restores every piece of GL state it touches. femtovg re-establishes most
+      of what it needs at the top of each flush (its vertex array, attributes 0
+      and 1, blending on, depth test off); the framebuffer, the program, the
+      vertex array and the buffer bindings are what it does not, and those are
+      the ones that would otherwise leak into the UI's own drawing.
 
 - **Instance list deviations** from the Vue original, all deliberate:
     - Cards no longer change opacity as they enter and leave the viewport. The

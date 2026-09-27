@@ -52,6 +52,12 @@ slint-launch = { path = "./slint/crates/launch", version = "0.0.0" }
 slint-java-runtime = { path = "./slint/crates/java-runtime", version = "0.0.0" }
 slint-statistics = { path = "./slint/crates/statistics", version = "0.0.0" }
 slint-single-instance = { path = "./slint/crates/single-instance", version = "0.0.0" }
+# Drawing the window background's shaders on the GPU: the notifier hands over
+# `get_proc_address`, and this is the loader (see slint/app/src/background/gl.rs).
+glow = "0.18"
+bytemuck = "1"
+# `IntSize` for the borrowed-texture builder — the type Slint asks for.
+euclid = "0.22"
 
 # ----- non-local crates -----
 base64 = "0.22"
