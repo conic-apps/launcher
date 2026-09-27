@@ -371,14 +371,38 @@ export component ContentCard inherits Rectangle {
             // Its line box is its *own* font size: `line-height: 1` on
             // everything (src/assets/styles/main.css) and a block's strut comes
             // from its own font, not the parent's.
-            Text {
-                text: root.card.title-prefix + root.card.title;
-                font-size: 14px;
-                font-weight: 700;
-                color: Theme.default-text-color.transparentize(0.1);
-                overflow: elide;
-                vertical-alignment: center;
+            // The line box is its own 14px row: the strikethrough below is
+            // drawn over it, and a layout child may not set its own `y`, so the
+            // two live inside this wrapper.
+            Rectangle {
                 height: 14px;
+                background: transparent;
+
+                name := Text {
+                    width: parent.width;
+                    height: parent.height;
+                    text: (root.card.mod-disabled ? ContentText.disabled-prefix : "")
+                        + root.card.title;
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+
+                // `.content-disabled .name { text-decoration: line-through }`.
+                // The `p.name` carries the prefix's span too, so the rule crosses
+                // both. Slint's `Text` has no decoration property, hence the rule
+                // drawn by hand: a hairline through the middle of the line box,
+                // as wide as the text it drew — `preferred-width` while that
+                // fits, the elided block when it does not — in the text's ink.
+                if root.card.mod-disabled : Rectangle {
+                    x: 0;
+                    y: (parent.height - self.height) / 2;
+                    width: min(name.preferred-width, name.width);
+                    height: 1px;
+                    background: name.color;
+                }
             }
 
             // `p.authors { font-size: 11px; opacity: .9; margin: 2px 0 }`, or

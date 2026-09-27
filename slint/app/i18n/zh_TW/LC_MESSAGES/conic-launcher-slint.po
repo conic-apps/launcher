@@ -1494,6 +1494,10 @@ msgid "Favorites"
 msgstr "收藏"
 
 msgctxt "ContentText"
+msgid "[Disabled] "
+msgstr "[已停用] "
+
+msgctxt "ContentText"
 msgid "Loader"
 msgstr "載入器"
 

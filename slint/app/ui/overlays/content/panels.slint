@@ -526,16 +526,31 @@ export component ContentModsPanel inherits Rectangle {
             description: @tr("Try adjusting keywords or filters and search again");
         }
 
+        // `ContentModsModrinth.vue`'s own `ContentPagination` — one element per
+        // remote list, each drawn only while *its* list is the open one, and
+        // backed by that list's own page state in Rust (`list_key`).
+        // `ContentModsLocal.vue` has no pagination at all, so a local list has
+        // no element here either and can never draw another list's pages.
+        //
+        // `ContentPagination.vue`'s own `v-if="totalPages > 1"`: the bar is
+        // drawn from the result's page count alone. A page change, a filter or a
+        // query keeps it — those never clear the result — while opening a panel,
+        // or switching the source, does (Rust resets it), which is exactly when
+        // the Vue's bar disappears.
         ContentPagination {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            // `ContentPagination.vue`'s own `v-if="totalPages > 1"`: the bar is
-            // drawn from the result's page count alone. A page change, a filter
-            // or a query keeps it — those never clear the result — while
-            // opening a panel, or switching the source, does (Rust resets it),
-            // which is exactly when the Vue's bar disappears.
-            visible: ContentSearch.total-pages > 1;
+            visible: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+
+        // `ContentModsCurseforge.vue`'s own.
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            visible: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
     }
@@ -610,16 +625,23 @@ export component ContentResourcepacksPanel inherits Rectangle {
             description: @tr("Try adjusting keywords or filters and search again");
         }
 
+        // `ContentResourcepacksModrinth.vue`'s own `ContentPagination`, and
+        // `…Curseforge.vue`'s — one element each, drawn only for its own list,
+        // over its own page state (`list_key`). The local list has none, as in
+        // the Vue.
         ContentPagination {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            // `ContentPagination.vue`'s own `v-if="totalPages > 1"`: the bar is
-            // drawn from the result's page count alone. A page change, a filter
-            // or a query keeps it — those never clear the result — while
-            // opening a panel, or switching the source, does (Rust resets it),
-            // which is exactly when the Vue's bar disappears.
-            visible: ContentSearch.total-pages > 1;
+            visible: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            visible: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
     }
@@ -683,11 +705,21 @@ export component ContentPacksPanel inherits Rectangle {
             description: @tr("Try adjusting keywords or filters and search again");
         }
 
+        // `ContentPacksModrinth.vue`'s own `ContentPagination` and
+        // `ContentPacksCurseforge.vue`'s — this panel has no local list.
         ContentPagination {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            visible: ContentState.remote-cards.length > 0;
+            visible: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            visible: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
     }

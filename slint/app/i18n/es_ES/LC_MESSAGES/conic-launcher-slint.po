@@ -1494,6 +1494,10 @@ msgid "Favorites"
 msgstr "Favoritos"
 
 msgctxt "ContentText"
+msgid "[Disabled] "
+msgstr "[Desactivado] "
+
+msgctxt "ContentText"
 msgid "Loader"
 msgstr "Cargador"
 

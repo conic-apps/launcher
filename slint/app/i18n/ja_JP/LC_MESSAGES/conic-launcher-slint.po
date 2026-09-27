@@ -1494,6 +1494,10 @@ msgid "Favorites"
 msgstr "お気に入り"
 
 msgctxt "ContentText"
+msgid "[Disabled] "
+msgstr "[無効] "
+
+msgctxt "ContentText"
 msgid "Loader"
 msgstr "ローダー"
 

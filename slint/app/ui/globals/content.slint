@@ -63,8 +63,6 @@ export struct ContentCard {
     /// The URL a card's link button opens (remote lists only).
     link: string,
     title: string,
-    /// Drawn before the title, dimmed — the local mods' "[disabled] " prefix.
-    title-prefix: string,
     subtitle: string,
     /// Whether the "by …" line is drawn at all; a card without authors keeps
     /// the row out of the layout rather than drawing an empty line.
@@ -82,7 +80,8 @@ export struct ContentCard {
     /// sitting in the action column. A save card draws both.
     shows-play: bool,
     favorited: bool,
-    /// A disabled local mod: struck-through name, dimmed card.
+    /// A disabled local mod: struck-through name behind the
+    /// `[disabled] ` prefix, and the whole card dimmed.
     mod-disabled: bool,
     /// The saves' expanded state: the card lifts above its neighbours and its
     /// `.extra` panel slides out.
@@ -333,6 +332,12 @@ export global ContentSearch {
 /// not a component's own strings: Slint's default context is the component name,
 /// and the callers are the chips and cards rather than one component.
 export global ContentText {
+    /// The local mods' disabled marker. The Vue resolves it in the template
+    /// (`{{ t("overlays.content.mods.disabledPrefix") }}`) rather than in Rust,
+    /// so it follows a language change; the prefix carries its own trailing
+    /// space.
+    out property <string> disabled-prefix: @tr("ContentText" => "[Disabled] ");
+
     /// The loader names. The Vue keeps these in a plain `LOADER_NAMES` map and
     /// never translates them.
     public pure function loader(key: string) -> string {

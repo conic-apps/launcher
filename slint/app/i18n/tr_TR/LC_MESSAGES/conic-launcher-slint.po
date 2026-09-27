@@ -1494,6 +1494,10 @@ msgid "Favorites"
 msgstr "Favoriler"
 
 msgctxt "ContentText"
+msgid "[Disabled] "
+msgstr "[Devre dışı] "
+
+msgctxt "ContentText"
 msgid "Loader"
 msgstr "Yükleyici"
 

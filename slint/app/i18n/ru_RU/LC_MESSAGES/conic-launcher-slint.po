@@ -1494,6 +1494,10 @@ msgid "Favorites"
 msgstr "Избранное"
 
 msgctxt "ContentText"
+msgid "[Disabled] "
+msgstr "[Отключен] "
+
+msgctxt "ContentText"
 msgid "Loader"
 msgstr "Загрузчик"
 

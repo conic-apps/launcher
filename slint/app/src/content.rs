@@ -175,12 +175,11 @@ impl Platform {
 /// built cards therefore travel as plain data and become `ContentCard`s inside
 /// the closure, on the UI thread. (`Image` is `Send`, so the decoded icons
 /// cross with them.)
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct PendingCard {
     id: String,
     link: String,
     title: String,
-    title_prefix: String,
     subtitle: String,
     has_subtitle: bool,
     description: String,
@@ -201,7 +200,6 @@ impl PendingCard {
             id: SharedString::from(self.id),
             link: SharedString::from(self.link),
             title: SharedString::from(self.title),
-            title_prefix: SharedString::from(self.title_prefix),
             subtitle: SharedString::from(self.subtitle),
             has_subtitle: self.has_subtitle,
             description: SharedString::from(self.description),
@@ -222,6 +220,7 @@ impl PendingCard {
 /// one that would stall the window — happens on the background thread, and what
 /// crosses is its result: a plain buffer. Building the `Image` from it on the
 /// UI thread is a copy.
+#[derive(Clone)]
 struct PendingImage {
     /// The URL or path it came from, which is also its cache key.
     key: String,
@@ -231,6 +230,7 @@ struct PendingImage {
 }
 
 /// One tag, before it becomes a Slint struct.
+#[derive(Clone)]
 struct PendingTag {
     text: String,
     label: String,
@@ -283,6 +283,32 @@ struct SearchForm {
     categories: Vec<String>,
     favorites_only: bool,
     page: usize,
+}
+
+/// One remote list's search bookkeeping.
+///
+/// The Vue keeps these as *module-level* variables in each list component —
+/// `ContentModsModrinth.vue` declares `modrinthCache` and
+/// `modrinthSearchToken`, `ContentModsCurseforge.vue` its own pair — so there
+/// is one of each per list, and a list that is destroyed and re-created by a
+/// source switch keeps the cache it built.
+#[derive(Default)]
+struct ListSearch {
+    /// `JSON.stringify(params)` → what that exact request returned: the cards
+    /// and the total hit count the page count comes from. A page that has been
+    /// seen is drawn straight away, without the spinner a fresh request shows.
+    cache: HashMap<String, (Vec<BuiltCard>, usize)>,
+    /// The newest request's number. `let token = ++searchToken` and the check
+    /// after the `await` mean an answer that belongs to an older request is
+    /// dropped rather than drawn over a newer one — which is what rapid paging
+    /// needs, since the answers do not come back in order.
+    token: u64,
+    /// The instance runtime this list last seeded its filters from —
+    /// `curseForgeInitializedFor`'s `searchInitKey()`, `"<loader>|<minecraft>"`.
+    /// A list seeds once per instance and not again, so switching away and back
+    /// gives a list with no filters on it (its selections are per-mount in the
+    /// Vue) while the cache above survives.
+    initialized_for: Option<String>,
 }
 
 /// The detail panel that is open, and what its buttons act on.
@@ -340,6 +366,9 @@ struct ContentController {
     /// `totalPages`, and a source switch destroys and re-creates one of them —
     /// so one list's page numbers are never shown against another's results.
     pages: HashMap<String, (usize, usize)>,
+    /// `<kind>:<source>` → that list's own search cache and request token, the
+    /// way each Vue list component has its own.
+    lists: HashMap<String, ListSearch>,
     /// Every filter chip's measured width, by its value. The wrapping rows are
     /// laid out from these (`filter_row_height`), because Slint measures a
     /// wrapping `FlexboxLayout` at its own "roughly square" preferred width
@@ -396,6 +425,7 @@ impl ContentController {
             form: SearchForm::default(),
             version_options: Vec::new(),
             pages: HashMap::new(),
+            lists: HashMap::new(),
             filter_widths: HashMap::new(),
             filter_rows: Rc::new(VecModel::default()),
             translations: HashMap::new(),
@@ -567,8 +597,9 @@ pub fn setup(ui: &App) {
                 state.platform = Platform::Modrinth;
                 state.source = "modrinth".into();
                 state.form = SearchForm::default();
+                let list = list_key(state.kind, state.platform.key());
+                initialize_list(&mut state, &list);
                 state.targets.clear();
-                seed_filters(&mut state);
             }
             let ui_state = ui.global::<ContentState>();
             ui_state.set_open_panel(SharedString::from("packs"));
@@ -598,9 +629,12 @@ pub fn setup(ui: &App) {
                         Platform::CurseForge
                     };
                     // The Vue re-mounts the sub-view on every switch, which
-                    // resets its query, its page and its selections.
+                    // resets its query, its page and its selections — the
+                    // filters it seeds come back only if this list has not
+                    // already been opened on this instance.
                     state.form = SearchForm::default();
-                    seed_filters(&mut state);
+                    let list = list_key(state.kind, state.platform.key());
+                    initialize_list(&mut state, &list);
                     state.targets.clear();
                 }
             }
@@ -775,7 +809,19 @@ pub fn setup(ui: &App) {
         let weak = ui.as_weak();
         ui.global::<ContentSearch>().on_go_to_page(move |page| {
             let Some(ui) = weak.upgrade() else { return };
-            run_search(&ui, page.max(1) as usize);
+            // `function goToPage(page) { if (page < 1 || page > totalPages)
+            // return ; … }` — with no result yet the count is 0, so every page
+            // is out of range and nothing is requested.
+            let (_, total_pages) = {
+                let state = controller();
+                let state = state.borrow();
+                list_pages(&state)
+            };
+            let page = page.max(1) as usize;
+            if page > total_pages {
+                return;
+            }
+            run_search(&ui, page);
         });
     }
     // The version chips report the width they measured, which is what the
@@ -952,6 +998,13 @@ pub fn setup(ui: &App) {
                     state.grid_width = width as i32;
                     state.panel_height = height as i32;
                 }
+                // The search panel's rows wrap at the panel's width, so a
+                // resize changes how many lines each of them takes — and with
+                // it the panel's height. In the Vue the DOM re-measures itself;
+                // here the row heights were computed for the old width and the
+                // rows then sat too close together (or too far apart) until
+                // something else re-measured them.
+                relayout_filters(&ui);
                 relayout(&ui);
             });
     }
@@ -986,6 +1039,35 @@ fn favorite_key(platform: &str, kind: &str, id: &str) -> String {
 
 /// The loader and Minecraft version the remote lists start from
 /// (`ensureModrinthInitialized` reads them off the instance's runtime).
+/// `ensure…Initialized`: the loader and version the list opens on, seeded from
+/// the instance's runtime. `curseForgeInitializedFor` makes it happen once per
+/// instance per list — the Vue's `if (…InitializedFor === key) return` — so a
+/// list that is switched away from and back is *not* re-seeded: its selections
+/// lived in the component, which the `v-if` destroyed.
+fn initialize_list(state: &mut ContentController, list: &str) {
+    let key = match slint_instance::get_instance_by_id(&state.instance_id) {
+        Some(instance) => {
+            let runtime = &instance.config.runtime;
+            format!(
+                "{}|{}",
+                runtime
+                    .mod_loader_type
+                    .as_ref()
+                    .map(|loader| loader.to_string())
+                    .unwrap_or_default(),
+                runtime.minecraft
+            )
+        }
+        None => String::new(),
+    };
+    let entry = state.lists.entry(list.to_string()).or_default();
+    if entry.initialized_for.as_deref() == Some(key.as_str()) {
+        return;
+    }
+    entry.initialized_for = Some(key);
+    seed_filters(state);
+}
+
 fn seed_filters(state: &mut ContentController) {
     let Some(instance) = slint_instance::get_instance_by_id(&state.instance_id) else {
         return;
@@ -1078,18 +1160,33 @@ fn version_offset(state: &ContentController) -> f32 {
 }
 
 /// The key one list's page state is filed under: the Vue keeps a component per
-/// kind per platform (`ContentModsModrinth.vue`, `ContentPacksCurseforge.vue`,
-/// …), each with its own `currentPage` and `totalPages`.
-fn list_key(kind: RemoteKind, platform: Platform) -> String {
-    format!("{}:{}", kind.key(), platform.key())
+/// kind per source (`ContentModsLocal.vue`, `ContentModsModrinth.vue`,
+/// `ContentPacksCurseforge.vue`, …), each with its own `currentPage` and
+/// `totalPages`.
+///
+/// The key is the *source* (`"local" | "modrinth" | "curseforge"`), not the
+/// platform: the local lists have no platform of their own, and keying them on
+/// whichever one the last remote list happened to set made the local view read
+/// that list's page count — the local mods list drew modrinth's 158 pages.
+fn list_key(kind: RemoteKind, source: &str) -> String {
+    format!("{}:{}", kind.key(), source)
 }
 
 /// That list's `(current page, total pages)` — `(1, 0)` for one that has not
 /// searched yet, which is what hides its pagination bar.
 fn list_pages(state: &ContentController) -> (usize, usize) {
-    state
-        .pages
-        .get(&list_key(state.kind, state.platform))
+    pages_of(&state.pages, state.kind, &state.source)
+}
+
+/// The lookup itself, apart from the controller so the per-list rule can be
+/// tested without one.
+fn pages_of(
+    pages: &HashMap<String, (usize, usize)>,
+    kind: RemoteKind,
+    source: &str,
+) -> (usize, usize) {
+    pages
+        .get(&list_key(kind, source))
         .copied()
         .unwrap_or((1, 0))
 }
@@ -1123,17 +1220,25 @@ const FILTER_CAROUSEL_HEIGHT: f32 = 26.0;
 /// Returns the row's height: 20px per line with the 6px gap between them.
 fn filter_row_height(state: &ContentController, chips: &ModelRc<FilterChip>) -> f32 {
     let available = (state.grid_width - 48 - 62).max(0) as f32;
-    let mut lines = 1.0f32;
-    let mut x = 0.0f32;
-    for index in 0..chips.row_count() {
-        let Some(chip) = chips.row_data(index) else {
-            continue;
-        };
-        let width = state
+    let width = |chip: &FilterChip| {
+        state
             .filter_widths
             .get(chip.value.as_str())
             .copied()
-            .unwrap_or(0.0);
+            .unwrap_or(0.0)
+    };
+    let widths = (0..chips.row_count())
+        .filter_map(|index| chips.row_data(index))
+        .map(|chip| width(&chip));
+    filter_row_height_of(available, widths)
+}
+
+/// The wrapping itself, apart from the controller so that it can be tested: the
+/// chips run left to right and a chip that does not fit opens a new line.
+fn filter_row_height_of(available: f32, widths: impl Iterator<Item = f32>) -> f32 {
+    let mut lines = 1.0f32;
+    let mut x = 0.0f32;
+    for width in widths {
         if x > 0.0 && x + FILTER_CHIP_GAP + width > available {
             lines += 1.0;
             x = width;
@@ -1632,11 +1737,6 @@ fn local_mod_card(mod_info: &ResolvedMod) -> PendingCard {
     PendingCard {
         id: mod_info.path.to_string_lossy().to_string(),
         title: mod_info.name.clone(),
-        title_prefix: if mod_info.disabled {
-            "[Disabled] ".into()
-        } else {
-            String::new()
-        },
         subtitle: format!(
             "by {}",
             mod_info
@@ -1943,31 +2043,50 @@ fn refresh_favorite_flags(ui: &App) {
 // ---------------------------------------------------------------------------
 
 /// A card and the targets its callbacks need, which only the search knows.
+#[derive(Clone)]
 struct BuiltCard {
     card: PendingCard,
     target: CardTarget,
 }
 
 fn run_search(ui: &App, page: usize) {
-    {
+    // `let token = ++searchToken; const params = buildParams(); const cacheKey =
+    // JSON.stringify(params);` — the request is identified, and every earlier
+    // request for this list is invalidated, before anything else happens.
+    let (list, request) = {
         let state = controller();
         let mut state = state.borrow_mut();
         state.form.page = page;
-        state.targets.clear();
-        let key = list_key(state.kind, state.platform);
-        state.pages.entry(key).or_insert((page, 0)).0 = page;
-    }
-    // The request is composed from a snapshot: the spawn runs on another
-    // thread and may not reach the state.
-    let (platform, kind, form, favorites) = {
+        let list = list_key(state.kind, state.platform.key());
+        let request = request_key_of(&state, page);
+        state.lists.entry(list.clone()).or_default().token += 1;
+        (list, request)
+    };
+
+    // `const cached = cache.get(cacheKey); if (cached) { …; return }` — read
+    // *before* the loading flag is raised, so a page that has been seen is
+    // drawn without the spinner a fresh request shows.
+    let cached = {
         let state = controller();
         let state = state.borrow();
-        (
-            state.platform,
-            state.kind,
-            state.form.clone(),
-            state.favorites.clone(),
-        )
+        state
+            .lists
+            .get(&list)
+            .and_then(|entry| entry.cache.get(&request))
+            .cloned()
+    };
+    if let Some((cards, total)) = cached {
+        show_results(ui, &list, page, cards, total);
+        return;
+    }
+
+    // The request is composed from a snapshot: the spawn runs on another
+    // thread and may not reach the state.
+    let (platform, kind, form, token) = {
+        let state = controller();
+        let state = state.borrow();
+        let token = state.lists.get(&list).map(|entry| entry.token).unwrap_or(0);
+        (state.platform, state.kind, state.form.clone(), token)
     };
     ui.global::<ContentState>().set_remote_loading(true);
     push_pages(ui);
@@ -1979,68 +2098,142 @@ fn run_search(ui: &App, page: usize) {
             Platform::CurseForge => search_curseforge(kind, &form).await,
         };
         let _ = weak.upgrade_in_event_loop(move |ui| {
-            ui.global::<ContentState>().set_remote_loading(false);
+            // `if (token !== …SearchToken) return` — an answer for a request the
+            // user has paged (or switched) away from is dropped, and dropped
+            // *before* it is cached, exactly as the Vue drops it.
+            let newest = {
+                let state = controller();
+                let state = state.borrow();
+                state
+                    .lists
+                    .get(&list)
+                    .map(|entry| entry.token == token)
+                    .unwrap_or(false)
+            };
+            if !newest {
+                return;
+            }
+            // `catch (error) { console.error(error) }` — a failed request draws
+            // nothing and caches nothing: the page it was replacing stays on
+            // screen, and the next attempt asks the server again rather than
+            // reading back an empty page out of the cache.
             let (cards, total) = match result {
                 Ok(result) => result,
                 Err(error) => {
                     log::error!("content search failed: {error}");
-                    (Vec::new(), 0)
+                    ui.global::<ContentState>().set_remote_loading(false);
+                    return;
                 }
             };
-            let cards: Vec<BuiltCard> = cards
-                .into_iter()
-                .filter(|built| {
-                    if !form.favorites_only {
-                        return true;
-                    }
-                    match &built.target {
-                        CardTarget::Remote { platform, id } => {
-                            favorites.contains(&favorite_key(platform.key(), kind.key(), id))
-                        }
-                        _ => true,
-                    }
-                })
-                .collect();
+            // `cache.set(cacheKey, result)` — the *unfiltered* page: the
+            // favourites chip filters what is drawn, not what was requested.
             {
                 let state = controller();
                 let mut state = state.borrow_mut();
-                for built in &cards {
-                    let CardTarget::Remote { platform, id } = &built.target else {
-                        continue;
-                    };
-                    let _ = platform;
-                    state.targets.insert(id.clone(), built.target.clone());
-                }
-            }
-            let total_pages = total.div_ceil(PAGE_SIZE).max(1);
-            {
-                let state = controller();
-                let mut state = state.borrow_mut();
-                // Filed under the list the request went out for, not whichever
-                // one is open now: a slow answer must not land on another list.
+                let request = request_key_of(&state, page);
                 state
-                    .pages
-                    .insert(list_key(kind, platform), (page, total_pages));
+                    .lists
+                    .entry(list.clone())
+                    .or_default()
+                    .cache
+                    .insert(request, (cards.clone(), total));
             }
-            let ids: Vec<String> = cards
-                .iter()
-                .filter_map(|built| match &built.target {
-                    CardTarget::Remote { id, .. } => Some(id.clone()),
-                    _ => None,
-                })
-                .collect();
-            set_cards(
-                &ui,
-                Grid::Remote,
-                cards.into_iter().map(|built| built.card).collect(),
-            );
-            push_pages(&ui);
-            // A page whose translations are already cached gets them in the same
-            // frame; the rest arrive later and are substituted then.
-            apply_translations(&ui);
-            ensure_translations(&ui, platform, ids);
+            show_results(&ui, &list, page, cards, total);
         });
     });
+}
+
+/// What one request is identified by — the Vue's `JSON.stringify(params)`, and
+/// it has to cover everything the request carries and nothing it does not. The
+/// favourites chip is not in it: it filters what comes back, it does not change
+/// what is asked for.
+///
+/// The fields are in the order the list's `build…Params` writes them.
+fn request_key_of(state: &ContentController, page: usize) -> String {
+    request_key(state.kind, state.platform, page, &state.form)
+}
+
+fn request_key(kind: RemoteKind, platform: Platform, page: usize, form: &SearchForm) -> String {
+    format!(
+        "{}|{}|{}|{}|{}|{}|{}",
+        kind.key(),
+        platform.key(),
+        page,
+        form.query.trim(),
+        form.loaders.join(","),
+        form.versions.join(","),
+        form.categories.join(","),
+    )
+}
+
+/// Draws a page of results — from the cache or straight off the wire.
+///
+/// `list` is the list the request was made *for*: a slow answer for a list the
+/// user has since switched away from is cached but not drawn, which is what the
+/// Vue gets from each list component owning its own `searchResult` ref.
+fn show_results(ui: &App, list: &str, page: usize, cards: Vec<BuiltCard>, total: usize) {
+    let (open, favorites_only) = {
+        let state = controller();
+        let state = state.borrow();
+        (
+            list_key(state.kind, state.platform.key()) == list,
+            state.form.favorites_only,
+        )
+    };
+    if !open {
+        return;
+    }
+    // `filterByFavorites(result)` — the favourites chip narrows what is drawn,
+    // against the favourites as they are now; the page itself, and the hit count
+    // its page numbers come from, are untouched.
+    let cards: Vec<BuiltCard> = if favorites_only {
+        let state = controller();
+        let state = state.borrow();
+        cards
+            .into_iter()
+            .filter(|built| match &built.target {
+                CardTarget::Remote { platform, id } => state.is_favorited(*platform, id),
+                _ => true,
+            })
+            .collect()
+    } else {
+        cards
+    };
+    let total_pages = total.div_ceil(PAGE_SIZE).max(1);
+    {
+        let state = controller();
+        let mut state = state.borrow_mut();
+        state.targets.clear();
+        for built in &cards {
+            if let CardTarget::Remote { id, .. } = &built.target {
+                state.targets.insert(id.clone(), built.target.clone());
+            }
+        }
+        state.pages.insert(list.to_string(), (page, total_pages));
+    }
+    ui.global::<ContentState>().set_remote_loading(false);
+    let ids: Vec<String> = cards
+        .iter()
+        .filter_map(|built| match &built.target {
+            CardTarget::Remote { id, .. } => Some(id.clone()),
+            _ => None,
+        })
+        .collect();
+    set_cards(
+        ui,
+        Grid::Remote,
+        cards.into_iter().map(|built| built.card).collect(),
+    );
+    push_pages(ui);
+    // A page whose translations are already cached gets them in the same frame;
+    // the rest arrive later and are substituted then.
+    apply_translations(ui);
+    let platform = {
+        let state = controller();
+        let state = state.borrow();
+        state.platform
+    };
+    ensure_translations(ui, platform, ids);
 }
 
 /// `<platform>:<id>` — the Vue's two caches (`modrinthCache`, `curseforgeCache`)
@@ -3341,3 +3534,94 @@ const MODRINTH_PACK_CATEGORIES: [&str; 10] = [
     "quests",
     "technology",
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A row re-wraps when the panel's width changes, so its height has to be
+    /// computed again with it — the filter rows used to keep the height they
+    /// were given for the old width, and the search panel then sat too close to
+    /// (or too far from) the grid.
+    #[test]
+    fn a_narrower_row_takes_more_lines() {
+        let chips = [60.0, 60.0, 60.0, 60.0, 60.0];
+        // 5 x 60 + 4 x 6 = 324 for one line, so 330 fits and 320 does not.
+        assert_eq!(filter_row_height_of(330.0, chips.into_iter()), 20.0);
+        assert_eq!(
+            filter_row_height_of(320.0, chips.into_iter()),
+            FILTER_CHIP_HEIGHT * 2.0 + FILTER_CHIP_GAP
+        );
+        // Two lines of two chips and a third for the last one.
+        assert_eq!(
+            filter_row_height_of(130.0, chips.into_iter()),
+            FILTER_CHIP_HEIGHT * 3.0 + FILTER_CHIP_GAP * 2.0
+        );
+    }
+
+    /// What one request is identified by: a page that has been seen is only
+    /// re-used when everything the request carries is the same. The favourites
+    /// chip is deliberately not part of it — it narrows what is drawn, not what
+    /// is asked for.
+    #[test]
+    fn a_request_is_identified_by_what_it_asks_for() {
+        let form = SearchForm {
+            query: "sodium".into(),
+            loaders: vec!["quilt".into()],
+            versions: vec!["1.20.1".into()],
+            categories: vec!["optimization".into()],
+            favorites_only: false,
+            page: 1,
+        };
+        let key = request_key(RemoteKind::Mods, Platform::Modrinth, 1, &form);
+
+        let mut other_page = form.clone();
+        other_page.page = 2;
+        assert_ne!(
+            key,
+            request_key(RemoteKind::Mods, Platform::Modrinth, 2, &form)
+        );
+        assert_ne!(
+            key,
+            request_key(RemoteKind::Packs, Platform::Modrinth, 1, &form)
+        );
+        assert_ne!(
+            key,
+            request_key(RemoteKind::Mods, Platform::CurseForge, 1, &form)
+        );
+
+        let mut favorited = form.clone();
+        favorited.favorites_only = true;
+        assert_eq!(
+            key,
+            request_key(RemoteKind::Mods, Platform::Modrinth, 1, &favorited)
+        );
+
+        let mut queried = form.clone();
+        queried.query = "lithium".into();
+        assert_ne!(
+            key,
+            request_key(RemoteKind::Mods, Platform::Modrinth, 1, &queried)
+        );
+    }
+
+    /// The rule that was broken: the page state is filed per *list*, so a local
+    /// list has none of its own and must never read a remote one's — the local
+    /// mods grid used to draw curseforge's 158 pages. A page the user moved to
+    /// on one list belongs to that list alone as well.
+    #[test]
+    fn a_list_only_ever_reads_its_own_pages() {
+        let mut pages = HashMap::new();
+        pages.insert(list_key(RemoteKind::Mods, "modrinth"), (1, 247));
+        pages.insert(list_key(RemoteKind::Mods, "curseforge"), (3, 158));
+
+        assert_eq!(pages_of(&pages, RemoteKind::Mods, "local"), (1, 0));
+        assert_eq!(pages_of(&pages, RemoteKind::Mods, "modrinth"), (1, 247));
+        assert_eq!(pages_of(&pages, RemoteKind::Mods, "curseforge"), (3, 158));
+        // Another kind's list of the same source is a different list too.
+        assert_eq!(
+            pages_of(&pages, RemoteKind::ResourcePacks, "curseforge"),
+            (1, 0)
+        );
+    }
+}

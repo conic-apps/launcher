@@ -1494,6 +1494,10 @@ msgid "Favorites"
 msgstr "즐겨찾기"
 
 msgctxt "ContentText"
+msgid "[Disabled] "
+msgstr "[비활성화됨] "
+
+msgctxt "ContentText"
 msgid "Loader"
 msgstr "로더"
 
