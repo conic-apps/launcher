@@ -6,6 +6,7 @@ import { SettingGroup } from "../../components/setting-group.slint";
 import { SettingItem } from "../../components/setting-item.slint";
 import { BaseSwitch } from "../../components/base-switch.slint";
 import { AppConfig } from "../../globals/settings.slint";
+import { Theme } from "../../theme.slint";
 
 // src/views/settings/SettingsAccessibility.vue
 export component SettingsAccessibility inherits VerticalLayout {
@@ -66,7 +67,17 @@ export component SettingsAccessibility inherits VerticalLayout {
 
             BaseSwitch {
                 checked <=> AppConfig.high-contrast;
-                toggled => { AppConfig.changed(); }
+                // Swaps the semantic tokens like a palette change does, so it
+                // animates the same way (see `Theme.transitions-enabled`).
+                //
+                // As in the palette row, `BaseSwitch` writes `checked` through
+                // the two-way binding first; the tokens are only evaluated from
+                // the event loop's change handlers, so arming here in `toggled`
+                // is early enough.
+                toggled => {
+                    Theme.transitions-enabled = true;
+                    AppConfig.changed();
+                }
             }
         }
     }
