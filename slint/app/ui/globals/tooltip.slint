@@ -1,0 +1,41 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// State of the description tooltip: the full text of a `SettingItem` description
+// that the row pinned to a fixed number of lines, shown on hover.
+//
+// The panel itself is drawn by `DescriptionTooltipOverlay` at the application
+// root, the same reason `DropdownOverlay` draws the dropdown lists there: the
+// panel is several lines tall and starts on the description line, so it covers
+// the rows below it, and both the settings collapse (`SettingCollapse`'s
+// `clip: true` height) and the settings scroll area clip everything inside
+// them. The row fills in the anchor — the description's own position in the
+// window — so the panel is placed relative to the description line and not to
+// the pointer.
+export global DescriptionTooltip {
+    /// The full text, written by the row on hover.
+    in-out property <string> text: "";
+    /// The description line's top-left corner in window coordinates, and the
+    /// width it is given there — the panel is as wide as the line it explains, so
+    /// the text breaks where that line's did.
+    in-out property <length> anchor-x: 0px;
+    in-out property <length> anchor-y: 0px;
+    in-out property <length> anchor-width: 0px;
+    /// Whether the pointer is on the description line, and whether it is on the
+    /// panel. The panel is drawn *over* the description, so a pointer that moves
+    /// onto it takes the hover away from there: it is the two together that keep
+    /// the tooltip up, not the first one alone.
+    in-out property <bool> over-description: false;
+    in-out property <bool> over-panel: false;
+    /// Which pinned box the anchor currently belongs to, and the counter the boxes
+    /// take their numbers from. The row that opened the panel keeps refreshing the
+    /// anchor even after a scroll has taken it out from under the pointer and left
+    /// the pointer on the panel — otherwise the panel would sit still while the
+    /// content slid out from under it, which is the one thing it must never do.
+    /// A number rather than a flag because the flag would be global: every pinned
+    /// row would see it and every one of them would push its own anchor, and the
+    /// last push of the tick would win.
+    in-out property <int> anchor-seq: 0;
+    in-out property <int> next-anchor-seq: 0;
+}
