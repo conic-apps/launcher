@@ -162,7 +162,9 @@ component TagChip inherits Rectangle {
                 ? Theme.default-text-color.transparentize(root.pill ? 0.1 : 0.3)
                 : Theme.text-inverse;
             font-size: root.pill ? 9px : 10px;
-            font-weight: 500;
+            // `font-weight: 500` is on the four pill classes; `span.last-played`
+            // has none, so its text keeps the body weight.
+            font-weight: root.pill ? 500 : Theme.font-weight-normal;
             x: root.pill ? 6px : 0px;
             vertical-alignment: center;
         }
