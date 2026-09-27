@@ -14,6 +14,7 @@ pub(crate) mod slint_backend {
 
 mod account_add;
 mod account_avatar;
+mod background;
 mod cjk_font;
 mod config_bridge;
 mod create_instance;
@@ -151,6 +152,10 @@ fn main() {
 
     let shared = Rc::new(RefCell::new(config));
     let save_timer = Rc::new(Timer::default());
+
+    // The window background comes first: the game view reports the current
+    // instance to it as it is set up, and that report has to land somewhere.
+    background::controller::setup(&ui, Rc::clone(&shared));
 
     // Settings + game view + overlay "scripts".
     settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));

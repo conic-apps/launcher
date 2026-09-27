@@ -9,6 +9,7 @@ import { BaseSwitch } from "../../components/base-switch.slint";
 import { BaseButton } from "../../components/base-button.slint";
 import { BaseSliderBar } from "../../components/base-slider-bar.slint";
 import { AppConfig } from "../../globals/settings.slint";
+import { Background } from "../../globals/background.slint";
 
 // A palette preview tile (.color-style > div, 90x60, rounded, label at
 // `width - 20`). The 4px blue outline is drawn outside the box by a larger
@@ -166,6 +167,9 @@ export component SettingsAppearance inherits VerticalLayout {
         SettingItem {
             title: @tr("3D background camera movement");
             description: @tr("When disabled, the camera stops moving forward and the background stops updating after rendering, completely eliminating background overhead");
+            // Nothing moves a world that is not being drawn: this machine has no
+            // OpenGL, so the background is the hyperbola sky alone.
+            item-disabled: Background.software-only;
 
             BaseSwitch {
                 checked <=> AppConfig.background-camera-move;

@@ -33,6 +33,9 @@ slint-launch.workspace = true
 slint-java-runtime.workspace = true
 slint-statistics.workspace = true
 slint-single-instance.workspace = true
+glow.workspace = true
+bytemuck.workspace = true
+euclid.workspace = true
 # For the `data:` URLs the account crates store skins as (`account_avatar`).
 base64.workspace = true
 # Decoding a skin texture into the pixel buffer `AccountAvatar` draws.
@@ -46,7 +49,10 @@ once_cell.workspace = true
 # The runtime the background work runs on, standing in for Tauri's (see
 # `src/runtime.rs`). Multi-threaded like Tauri's, and `net` for the HTTP client
 # of `slint-install`, which reqwest turns on with its own dependency.
-tokio = { workspace = true, features = ["rt-multi-thread", "net"] }
+# `time` is what the background's own clock sleeps on: it must not be a Slint
+# timer, which only ticks while the window is being painted (see
+# `src/background/controller.rs`).
+tokio = { workspace = true, features = ["rt-multi-thread", "net", "time"] }
 log.workspace = true
 env_logger.workspace = true
 

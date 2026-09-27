@@ -83,6 +83,12 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
                 ui.global::<GameState>()
                     .set_count_unit(config_bridge::count_unit(config.language.as_deref()).into());
             }
+            // A background setting may have moved — including the ones that
+            // decide *which* background shows. Cheap when nothing did: the
+            // controller compares what the config resolves to.
+            if let Some(ui) = weak.upgrade() {
+                crate::background::controller::config_changed(&ui);
+            }
             // Slint re-evaluates every `@tr` binding after this call, so the UI
             // switches language without a restart.
             if let Some(language) = language_changed {
@@ -135,6 +141,11 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
                     if let Some(ui) = weak.upgrade() {
                         ui.global::<AppConfig>()
                             .set_background_image(filename.into());
+                        // This path writes the config itself rather than going
+                        // through `AppConfig.changed`, so nothing else would
+                        // tell the background to resolve its source again — it
+                        // used to wait for the next unrelated settings change.
+                        crate::background::controller::config_changed(&ui);
                     }
                     let shared = Rc::clone(&shared);
                     save_timer.start(
@@ -163,6 +174,10 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
                     .set_background_image(SharedString::default());
             }
             shared.borrow_mut().appearance.background_image = None;
+            // As above: this does not go through `AppConfig.changed`.
+            if let Some(ui) = weak.upgrade() {
+                crate::background::controller::config_changed(&ui);
+            }
             let config = shared.borrow();
             let _ = slint_config::save_config(&config);
         });
