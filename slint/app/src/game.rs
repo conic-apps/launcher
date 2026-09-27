@@ -16,7 +16,9 @@ use std::{
 use chrono::{Datelike, Local, TimeZone};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, Timer, TimerMode, VecModel};
 
-use crate::slint_backend::{AccountItem, App, Dialogs, GameRow, GameState, Navigation};
+use crate::slint_backend::{
+    AccountItem, App, Dialogs, GameRow, GameState, MultiplayerState, Navigation,
+};
 use slint::Image;
 use slint_account::Account;
 use slint_instance::{Instance, ModLoaderType, SortBy};
@@ -859,7 +861,17 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             }
         });
     }
-    state.on_open_connect(|| log::info!(target: "game", "multiplayer connect (not migrated)"));
+    {
+        // The footer's globe opens the multiplayer dialog: it checks the Conic
+        // Nexus library and shows either the download screen or the manager
+        // (the Vue footer's `openConnect`).
+        let weak = ui.as_weak();
+        state.on_open_connect(move || {
+            if let Some(ui) = weak.upgrade() {
+                ui.global::<MultiplayerState>().invoke_open();
+            }
+        });
+    }
     state.on_open_packs(|| log::info!(target: "game", "install packs (not migrated)"));
     {
         // The footer's "New instance" opens the create-instance dialog.

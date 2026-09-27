@@ -1276,3 +1276,188 @@ msgstr "你可以在实例设置中手动指定一个"
 msgctxt "LaunchDialogs"
 msgid "Cancel launch"
 msgstr "取消启动"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Close"
+msgstr "关闭"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Hide window (connection stays open)"
+msgstr "隐藏窗口（不会断开连接）"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Done!"
+msgstr "完成！"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Downloading the Conic Nexus extension"
+msgstr "正在下载 Conic Nexus 扩展"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Preparing to download the Conic Nexus extension"
+msgstr "准备下载 Conic Nexus 扩展"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Download the Conic Nexus extension"
+msgstr "下载 Conic Nexus 扩展"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "The Conic Nexus extension is built on EasyTier and implements the Scaffolding protocol, so it can play together with many other launchers, HMCL included."
+msgstr "Conic Nexus 扩展基于 Easytier 构建，且实现了 Scaffolding 协议，可以与其他包括 HMCL 在内的很多启动器联机"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Conic Nexus only uses P2P connections. Once the room is up, its members connect to each other directly; no third-party server relays your traffic. How well it works depends on the network conditions of everyone taking part."
+msgstr "Conic Nexus 只使用 P2P 连接，联机成功后房间内用户之间将直接连接，不使用第三方服务器转发您的流量，联机体验取决于参与联机者的网络情况。"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Please note that you must strictly obey all laws and regulations of your country and region throughout the whole multiplayer session."
+msgstr "请注意，在多人联机全过程中，你必须严格遵守所在国家与地区的全部法律法规。"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Cancel"
+msgstr "取消"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Start download"
+msgstr "开始下载"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Stop download"
+msgstr "停止下载"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Host"
+msgstr "主机"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "How well multiplayer works depends on your network environment and the other participants'. If it fails, try improving your NAT type, or connect to a network with IPv6 to make it more likely to succeed."
+msgstr "联机体验取决于你和其他参与者的网络环境。如果联机失败，请尝试改善 NAT 类型，或连接到有 IPV6 的网络以提升联机成功率"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Create a group"
+msgstr "创建小组"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Create a group and get an invite code"
+msgstr "创建小组并生成邀请码"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Join a group"
+msgstr "加入小组"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Join with an invite code and enter the world"
+msgstr "通过邀请码加入小组后进入世界"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Start the game, open a single-player save and press ESC, then choose \"Open to LAN\"."
+msgstr "请启动游戏，打开单人存档，按下 ESC 键，选择「对局域网开放」"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "The room code appears once a Minecraft world has been found."
+msgstr "当扫描到 Minecraft 世界后，房间码将会显示"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Scanning for LAN worlds..."
+msgstr "扫描局域网世界..."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Send the invite code below to your friends and remind them to enter it in the launcher to join the group."
+msgstr "请把下面的邀请码发送给好友，并提醒他们在启动器中输入邀请码加入小组"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Invite code (click to copy)"
+msgstr "邀请码（点击复制）"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Copied!"
+msgstr "已复制！"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Close connection"
+msgstr "关闭连接"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Waiting for other players to join..."
+msgstr "等待其他玩家加入..."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Enter the invite code your friend sent you to connect"
+msgstr "输入好友发给你的邀请码以连接"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Join"
+msgstr "加入"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Invite code format: U/BBBB-AAAA-KKKK-AAAA"
+msgstr "邀请码格式：U/BBBB-AAAA-KKKK-AAAA"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Trying to join the group..."
+msgstr "尝试加入小组..."
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Leave group"
+msgstr "退出小组"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Connection problem ({}): {}"
+msgstr "连接出现问题（{0}）：{1}"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Something went wrong with the connection. Please start over."
+msgstr "连接出现问题，请重新开始"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Start over"
+msgstr "重新开始"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Back"
+msgstr "返回"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Conic Nexus cross-LAN multiplayer"
+msgstr "Conic Nexus 跨局域网联机"
+
+#: ui
+msgctxt "Multiplayer"
+msgid "Your network environment: {}"
+msgstr "你的网络环境：{0}"

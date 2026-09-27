@@ -1,0 +1,103 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../../theme.slint";
+import { BaseButton } from "../../../components/base-button.slint";
+import { MultiplayerState } from "../../../globals/multiplayer.slint";
+
+// The "download the Conic Nexus extension" screen
+// (src/overlays/dialogs/multiplayer/DownloadDescription.vue): the title, the
+// three paragraphs and the Cancel / Start download pair.
+//
+// The Vue's `.title { margin-bottom: 16px }` and `.description { margin-bottom:
+// 8px }` margins collapse with `.buttons { margin-top: 16px }`, so the gap
+// before the buttons is 16px — the spacers below spell that out.
+export component MultiplayerDownloadDescription inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    Text {
+        text: @tr("Multiplayer" => "Download the Conic Nexus extension");
+        font-size: 22px;
+        line-height-factor: 1;
+        horizontal-alignment: center;
+        color: Theme.default-text-color.transparentize(0.1);
+    }
+
+    Rectangle { height: 16px; background: transparent; }
+
+    Text {
+        text: @tr("Multiplayer" => "The Conic Nexus extension is built on EasyTier and implements the Scaffolding protocol, so it can play together with many other launchers, HMCL included.");
+        font-size: 14px;
+        line-height-factor: 1.5;
+        wrap: word-wrap;
+        color: Theme.default-text-color.transparentize(0.1);
+    }
+
+    Rectangle { height: 8px; background: transparent; }
+
+    Text {
+        text: @tr("Multiplayer" => "Conic Nexus only uses P2P connections. Once the room is up, its members connect to each other directly; no third-party server relays your traffic. How well it works depends on the network conditions of everyone taking part.");
+        font-size: 14px;
+        line-height-factor: 1.5;
+        wrap: word-wrap;
+        color: Theme.default-text-color.transparentize(0.1);
+    }
+
+    Rectangle { height: 8px; background: transparent; }
+
+    // `p.description.description-important`.
+    //
+    // The paragraph is measured by its wrap width rather than by a nested
+    // layout: a `Text` one layout level away from the column that owns its width
+    // reports a single line (see the account dialog's Yggdrasil note), so the
+    // box takes its height from the text and the text is placed by hand.
+    important := Rectangle {
+        width: 100%;
+        height: important-text.preferred-height + 18px;
+        background: Theme.red.with-alpha(0.15);
+        border-width: 1px;
+        border-color: Theme.red;
+        border-radius: 8px;
+
+        important-text := Text {
+            x: 16px;
+            y: 8px;
+            width: parent.width - 34px;
+            text: @tr("Multiplayer" => "Please note that you must strictly obey all laws and regulations of your country and region throughout the whole multiplayer session.");
+            font-size: 14px;
+            line-height-factor: 1.5;
+            wrap: word-wrap;
+            vertical-alignment: top;
+            color: Theme.red;
+        }
+    }
+
+    Rectangle { height: 16px; background: transparent; }
+
+    actions := Rectangle {
+        width: 100%;
+        height: 30px;
+        background: transparent;
+
+        HorizontalLayout {
+            spacing: 12px;
+
+            BaseButton {
+                button-width: (parent.width - 12px) / 2;
+                text: @tr("Multiplayer" => "Cancel");
+                clicked => { MultiplayerState.close(); }
+            }
+
+            BaseButton {
+                button-width: (parent.width - 12px) / 2;
+                text: @tr("Multiplayer" => "Start download");
+                text-color: Theme.text-inverse;
+                button-background: Theme.blue;
+                clicked => { MultiplayerState.component = "downloadProgress"; }
+            }
+        }
+    }
+}

@@ -20,6 +20,7 @@ mod config_bridge;
 mod create_instance;
 mod game;
 mod launch;
+mod multiplayer;
 mod runtime;
 mod scroll_input;
 mod settings;
@@ -163,6 +164,7 @@ fn main() {
     launch::setup(&ui, Rc::clone(&shared));
     create_instance::setup(&ui, Rc::clone(&shared));
     account_add::setup(&ui);
+    multiplayer::setup(&ui);
     // The clock and the wheel/trackpad classification the scroll containers use.
     scroll_input::setup(&ui);
 
@@ -242,6 +244,10 @@ fn main() {
     });
 
     ui.run().expect("failed to run the shell event loop");
+
+    // The original stops the multiplayer plugin on `RunEvent::Exit`: the poll
+    // thread is joined and the Conic Nexus session destroyed.
+    multiplayer::shutdown();
 }
 
 /// Brings the window forward for every later launch of the app.
