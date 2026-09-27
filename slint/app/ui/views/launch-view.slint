@@ -1,0 +1,243 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { LaunchState } from "../globals/launch.slint";
+import { AccountAvatar } from "../components/account-avatar.slint";
+import { BaseProgress } from "../components/base-progress.slint";
+
+// The launch screen (src/views/LaunchView.vue): the current instance's avatar,
+// name and version, a progress panel and the account summary, with a red
+// "Cancel launch" button beneath.
+//
+// The container is the Vue's `.container`: a centred column with `margin-top:
+// -32px`. A negative margin in a centred flex box pulls the content up by half
+// the margin (the margin box is what gets centred), so the column's `y` is
+// `(height - self.height) / 2 - 16px`.
+export component LaunchView inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // The Vue runs `launch()` in `onMounted`; the page stack recreates this
+    // component on every navigation to "launch", so `init` is that hook.
+    init => {
+        LaunchState.start();
+    }
+
+    container := VerticalLayout {
+        // The Vue's `v-if="currentInstance"`: with no instance the screen is
+        // empty (and the error the flow raises has nowhere to show, as in the
+        // original).
+        visible: LaunchState.has-instance;
+        // A layout that is not itself inside a layout defaults to 100% of its
+        // parent — so without these bindings `self.height` is the whole page and
+        // the centring below collapses to `y: -16px`, i.e. the column is pinned
+        // to the top. Sizing the layout to its own content is what makes the
+        // Vue's `align-items: center` on `.launch-view` work.
+        width: self.preferred-width;
+        height: self.preferred-height;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2 - 16px;
+        cross-axis-alignment: center;
+        spacing: 0px;
+
+        // `> .avatar { margin-bottom: 16px }`. The Vue's `.avatar-image` wrapper
+        // is the 48px head plus its `padding: 2px`, so it measures 52px; the
+        // 2px inset here is what keeps the rest of the column at the same height
+        // as the original (see the README's launch-view notes).
+        avatar := Rectangle {
+            width: 52px;
+            height: 52px;
+            background: transparent;
+
+            AccountAvatar {
+                x: 2px;
+                y: 2px;
+                size: 48px;
+                skin: LaunchState.account-avatar;
+                kind: LaunchState.account-kind;
+                unlogged: !LaunchState.has-account;
+            }
+        }
+        Rectangle { height: 16px; }
+
+        // `.instance-name { font-size: 32px }`.
+        Text {
+            height: 32px;
+            text: LaunchState.instance-name;
+            font-size: 32px;
+            color: Theme.default-text-color.transparentize(0.1);
+            vertical-alignment: center;
+        }
+        Rectangle { height: 16px; }
+
+        // `.instance-info { display: flex; margin: 16px 0 }`, the loader being
+        // `p:last-child { margin-left: 16px }`.
+        HorizontalLayout {
+            alignment: center;
+            spacing: 16px;
+            Text {
+                height: 16px;
+                text: "Minecraft " + LaunchState.minecraft-version;
+                font-size: 16px;
+                color: Theme.default-text-color.transparentize(0.1);
+                vertical-alignment: center;
+            }
+            if LaunchState.has-loader : Text {
+                height: 16px;
+                text: LaunchState.loader-type + " " + LaunchState.loader-version;
+                font-size: 16px;
+                color: Theme.default-text-color.transparentize(0.1);
+                vertical-alignment: center;
+            }
+        }
+        Rectangle { height: 16px; }
+
+        // `.progress-container`: 340px wide, 16/32 padding, 8px radius, the two
+        // heights the Vue's gsap animates between (58px, or 50px with the 2px
+        // error border).
+        progress-container := Rectangle {
+            width: 340px;
+            height: LaunchState.error ? 50px : 58px;
+            border-radius: 8px;
+            background: Theme.overlay-2.with-alpha(0.16);
+            border-width: LaunchState.error ? 2px : 0px;
+            border-color: Theme.red;
+            clip: true;
+            animate height { duration: 300ms; easing: ease; }
+
+            VerticalLayout {
+                width: 100%;
+                height: 100%;
+                padding-top: 16px;
+                padding-bottom: 16px;
+                padding-left: 32px;
+                padding-right: 32px;
+                spacing: 0px;
+                alignment: center;
+
+                // The Vue's `mode="out-in"` fade between the description and the
+                // error message is not reproduced (Slint has no transition
+                // groups); the text swaps in place.
+                Text {
+                    height: 14px;
+                    width: 100%;
+                    // The Vue's `<p>` is a shrink-to-fit flex item centred by the
+                    // column's `align-items: center`, so both the progress line
+                    // and the error message read centred (the error's extra
+                    // `text-align: center` is redundant).
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    color: LaunchState.error ? Theme.red : Theme.default-text-color.transparentize(0.1);
+                    font-size: 14px;
+                    wrap: no-wrap;
+                    overflow: elide;
+                    // `description()` renders the "Error: {…}" wrapper in the
+                    // error state, so the translation stays in the UI.
+                    text: LaunchState.description();
+                }
+                if !LaunchState.error : Rectangle { height: 10px; }
+                if !LaunchState.error : BaseProgress {
+                    width: 100%;
+                    loading: LaunchState.progress-loading;
+                    value: LaunchState.progress-value;
+                    max: LaunchState.progress-max;
+                }
+            }
+        }
+        Rectangle { height: 40px; }
+
+        // `.other-info { grid-template-columns: max-content auto; column-gap:
+        // 12px; row-gap: 6px; font-size: 13px }`.
+        GridLayout {
+            spacing-horizontal: 12px;
+            spacing-vertical: 6px;
+            // Two rows of `label | value`. Without explicit rows every child
+            // auto-places into row 0, which put all four cells on one line.
+            // `grid-template-columns: max-content auto` is what the columns do
+            // by themselves, and the labels' `text-align: right` is what lines
+            // them up against the 12px gap before the values.
+            Text {
+                row: 0;
+                col: 0;
+                height: 13px;
+                horizontal-alignment: right;
+                vertical-alignment: center;
+                opacity: 0.8;
+                font-size: 13px;
+                color: Theme.default-text-color.transparentize(0.1);
+                text: @tr("LaunchView" => "Auth service");
+            }
+            Text {
+                row: 0;
+                col: 1;
+                height: 13px;
+                vertical-alignment: center;
+                font-size: 13px;
+                color: Theme.default-text-color.transparentize(0.1);
+                text: LaunchState.account-kind;
+            }
+            Text {
+                row: 1;
+                col: 0;
+                height: 13px;
+                horizontal-alignment: right;
+                vertical-alignment: center;
+                opacity: 0.8;
+                font-size: 13px;
+                color: Theme.default-text-color.transparentize(0.1);
+                text: @tr("LaunchView" => "Profile name");
+            }
+            Text {
+                row: 1;
+                col: 1;
+                height: 13px;
+                vertical-alignment: center;
+                font-size: 13px;
+                color: Theme.default-text-color.transparentize(0.1);
+                text: LaunchState.profile-name;
+            }
+        }
+        Rectangle { height: 36px; }
+
+        // `.back-button { width: 240px; margin-top: 36px }` with its red
+        // override of the base button (`border: 1px solid red; color: red;
+        // background: surface0`, hover filled red).
+        back-button := Rectangle {
+            width: 240px;
+            height: 30px;
+            border-radius: Theme.controllers-border-radius;
+            border-width: 1px;
+            border-color: Theme.red;
+            background: back-touch.has-hover && !LaunchState.back-disabled
+                ? Theme.red
+                : Theme.surface-0;
+            transform-scale: back-touch.pressed ? 98% : 100%;
+            opacity: LaunchState.back-disabled ? 0.5 : 1.0;
+            animate background, transform-scale { duration: 200ms; easing: ease; }
+
+            Text {
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                text: @tr("LaunchView" => "Cancel launch");
+                font-size: 11px;
+                color: back-touch.has-hover && !LaunchState.back-disabled
+                    ? Theme.text-inverse
+                    : Theme.red;
+                animate color { duration: 200ms; easing: ease; }
+            }
+
+            back-touch := TouchArea {
+                width: 100%;
+                height: 100%;
+                // `pointer-events: none` while disabled.
+                enabled: !LaunchState.back-disabled;
+                clicked => {
+                    LaunchState.cancel();
+                }
+            }
+        }
+    }
+}

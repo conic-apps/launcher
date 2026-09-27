@@ -1151,3 +1151,98 @@ msgstr "キャンセル"
 msgctxt "AccountAddYggdrasil"
 msgid "Username"
 msgstr "ユーザー名"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Auth service"
+msgstr "認証サービス"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Profile name"
+msgstr "プロファイル名"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Cancel launch"
+msgstr "起動をキャンセル"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing"
+msgstr "準備中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing download"
+msgstr "ダウンロードを準備中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Refreshing account"
+msgstr "アカウントを更新中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Verifying game files"
+msgstr "ゲームファイルを検証中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading game files {} / {}"
+msgstr "ゲームファイルをダウンロード中 {0} / {1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Checking Java runtime"
+msgstr "Javaランタイムを確認中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading Java {}/{}"
+msgstr "Javaをダウンロード中 {0}/{1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Installing {}"
+msgstr "{0} をインストール中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading {} installer"
+msgstr "{0} のインストーラーをダウンロード中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading dependencies"
+msgstr "依存関係をダウンロード中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Running {} installer: {}"
+msgstr "{0} のインストーラーを実行中: {1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing to launch"
+msgstr "起動を準備中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Generating launch script"
+msgstr "起動スクリプトを生成中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for game process to start"
+msgstr "ゲームプロセスの起動を待機中"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Game started"
+msgstr "ゲームを起動しました"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Error: {}"
+msgstr "Error: {}"

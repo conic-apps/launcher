@@ -4,6 +4,7 @@
 
 import { AccountAddDialog } from "dialogs/account-add.slint";
 import { CreateInstance } from "dialogs/create-instance.slint";
+import { LaunchErrorDialogs } from "dialogs/launch-errors.slint";
 
 // The overlay layer (src/overlays/DialogRoot.vue): one instance per dialog,
 // mounted once above the whole app. Each dialog stays hidden until its flag in
@@ -19,4 +20,5 @@ export component DialogRoot inherits Rectangle {
 
     CreateInstance { }
     AccountAddDialog { }
+    LaunchErrorDialogs { }
 }

@@ -18,6 +18,7 @@ mod cjk_font;
 mod config_bridge;
 mod create_instance;
 mod game;
+mod launch;
 mod runtime;
 mod scroll_input;
 mod settings;
@@ -154,6 +155,7 @@ fn main() {
     // Settings + game view + overlay "scripts".
     settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     game::setup(&ui, Rc::clone(&shared));
+    launch::setup(&ui, Rc::clone(&shared));
     create_instance::setup(&ui, Rc::clone(&shared));
     account_add::setup(&ui);
     // The clock and the wheel/trackpad classification the scroll containers use.

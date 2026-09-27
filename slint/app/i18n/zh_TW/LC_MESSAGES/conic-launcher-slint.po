@@ -1151,3 +1151,98 @@ msgstr "取消"
 msgctxt "AccountAddYggdrasil"
 msgid "Username"
 msgstr "使用者名稱"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Auth service"
+msgstr "登入認證服務"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Profile name"
+msgstr "設定檔名稱"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Cancel launch"
+msgstr "取消啟動"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing"
+msgstr "正在準備"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing download"
+msgstr "準備下載"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Refreshing account"
+msgstr "重新整理帳戶"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Verifying game files"
+msgstr "驗證遊戲檔案"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading game files {} / {}"
+msgstr "下載遊戲檔案 {0} / {1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Checking Java runtime"
+msgstr "檢查 Java 執行環境"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading Java {}/{}"
+msgstr "下載 Java {0}/{1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Installing {}"
+msgstr "安裝 {0}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading {} installer"
+msgstr "下載 {0} 安裝程式"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading dependencies"
+msgstr "下載相依元件"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Running {} installer: {}"
+msgstr "正在執行 {0} 安裝程式：{1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing to launch"
+msgstr "準備啟動"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Generating launch script"
+msgstr "產生啟動腳本"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for game process to start"
+msgstr "等待遊戲程序啟動"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Game started"
+msgstr "遊戲已啟動"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Error: {}"
+msgstr "Error: {}"

@@ -1151,3 +1151,98 @@ msgstr "Abbrechen"
 msgctxt "AccountAddYggdrasil"
 msgid "Username"
 msgstr "Benutzername"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Auth service"
+msgstr "Auth-Dienst"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Profile name"
+msgstr "Profilname"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Cancel launch"
+msgstr "Start abbrechen"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing"
+msgstr "Wird vorbereitet"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing download"
+msgstr "Download wird vorbereitet"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Refreshing account"
+msgstr "Konto wird aktualisiert"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Verifying game files"
+msgstr "Spieldateien werden überprüft"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading game files {} / {}"
+msgstr "Spieldateien werden heruntergeladen {0} / {1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Checking Java runtime"
+msgstr "Java-Laufzeitumgebung wird überprüft"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading Java {}/{}"
+msgstr "Java {0}/{1} wird heruntergeladen"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Installing {}"
+msgstr "{0} wird installiert"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading {} installer"
+msgstr "{0}-Installer wird heruntergeladen"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading dependencies"
+msgstr "Abhängigkeiten werden heruntergeladen"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Running {} installer: {}"
+msgstr "{0}-Installer wird ausgeführt: {1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing to launch"
+msgstr "Start wird vorbereitet"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Generating launch script"
+msgstr "Startskript wird erstellt"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for game process to start"
+msgstr "Auf Start des Spielprozesses wird gewartet"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Game started"
+msgstr "Spiel gestartet"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Error: {}"
+msgstr "Error: {}"

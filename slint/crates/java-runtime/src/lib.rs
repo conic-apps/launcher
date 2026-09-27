@@ -13,10 +13,10 @@
 //!   * [`scan_java_runtimes_cached`] stands in for the command itself
 //!     (`cmd_scan_java`) and owns the cache the Tauri plugin keeps in its
 //!     `PluginState`, down to the same 30 s TTL;
-//!   * it carries the scanning half of the crate only. `resolve.rs` (which
-//!     runtime to launch the game with) and `mojang.rs` (the launcher-managed
-//!     runtimes it downloads) arrive with the launch view — see
-//!     `slint/README.md`.
+//!   * `resolve.rs` (which runtime to launch the game with) and `mojang.rs`
+//!     (the launcher-managed runtimes it downloads) are mirrored too, now that
+//!     the launch view uses them; the only change is that the scan runs through
+//!     the app's own tokio runtime instead of `tauri::async_runtime`.
 //!
 //! Structures, search paths and sorting match `crates/java-runtime/src/*.rs` so
 //! the two crates can be diffed against each other. The one deliberate
@@ -26,7 +26,9 @@
 
 pub mod error;
 pub mod models;
+pub mod mojang;
 pub mod parser;
+pub mod resolve;
 pub mod scanner;
 
 use std::{
@@ -40,6 +42,7 @@ pub use error::{Error, Result};
 pub use models::{
     JavaArch, JavaRuntime, JavaScanResult, JavaVendor, JavaVersionGroup, ScanOptions,
 };
+pub use resolve::{ResolveJavaOptions, ResolvedJava, resolve_java_executable};
 pub use scanner::{scan_java_runtimes, scan_java_runtimes_with};
 
 /// How long a scan result is reused before the next scan, mirroring

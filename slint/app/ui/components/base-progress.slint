@@ -1,0 +1,66 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+
+// Linear progress bar (src/components/BaseProgress.vue): a 1px track with a 3px
+// bar over it, clipped to the 2px box.
+//
+//   * `loading` shows the indeterminate bar sweeping left↔right;
+//   * otherwise the bar's width is `value / max` and eases over 300ms, exactly
+//     like the Vue's `transition: width 300ms ease`.
+//
+// The Vue's sweep is a CSS keyframe animation (`progress-loading`, 2.5s,
+// `cubic-bezier(0.66, 0.01, 0.5, 0.97)`) that jumps back to the left at the
+// halfway point. Slint has no keyframe timelines, so the same sawtooth is
+// computed from `animation-tick()`: a 1.25s phase per sweep with an instant
+// reset, eased with a smoothstep standing in for the cubic-bezier (a 3px bar,
+// so the difference is not visible).
+//
+// The travel has to account for the Vue's flex centring: `.progress` is
+// `display:flex; justify-content:center`, so the 50%-wide bar is centred first
+// and `left: -85%…85%` is an offset from *that* position. The bar therefore
+// moves over `0.25W + [-0.85W, +0.85W]` = `[-0.6W, +1.1W]`, which clears the
+// track at both ends — `[-0.85W, +0.85W]` would leave a 15% tail visible on the
+// right when the animation restarts.
+export component BaseProgress inherits Rectangle {
+    in property <bool> loading: false;
+    in property <float> value: 0;
+    in property <float> max: 0;
+
+    height: 2px;
+    background: transparent;
+    clip: true;
+
+    private property <float> phase: mod(animation-tick(), 1.25s) / 1.25s;
+    private property <float> sweep: self.phase * self.phase * (3.0 - 2.0 * self.phase);
+    // `root`, not `parent`: the two bars below sit inside `if` blocks, so
+    // `parent` would be the implicit conditional item rather than this component.
+    private property <length> sweep-x: root.width * (-0.60 + self.sweep * 1.70);
+
+    // `.progress-track`: 1px, full width, vertically centred.
+    Rectangle {
+        width: 100%;
+        height: 1px;
+        y: (root.height - self.height) / 2;
+        background: Theme.surface-2;
+    }
+
+    if root.loading : Rectangle {
+        width: root.width * 0.5;
+        height: 3px;
+        y: (root.height - self.height) / 2;
+        x: root.sweep-x;
+        background: #f0f0f0;
+    }
+
+    if !root.loading : Rectangle {
+        width: root.max > 0.0 ? min(root.value / root.max, 1.0) * root.width : 0px;
+        height: 3px;
+        x: 0px;
+        y: (root.height - self.height) / 2;
+        background: #f0f0f0;
+        animate width { duration: 300ms; easing: ease; }
+    }
+}

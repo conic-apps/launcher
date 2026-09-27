@@ -1151,3 +1151,98 @@ msgstr "İptal"
 msgctxt "AccountAddYggdrasil"
 msgid "Username"
 msgstr "Kullanıcı adı"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Auth service"
+msgstr "Kimlik doğrulama servisi"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Profile name"
+msgstr "Profil adı"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Cancel launch"
+msgstr "Başlatmayı iptal et"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing"
+msgstr "Hazırlanıyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing download"
+msgstr "İndirme hazırlanıyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Refreshing account"
+msgstr "Hesap yenileniyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Verifying game files"
+msgstr "Oyun dosyaları doğrulanıyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading game files {} / {}"
+msgstr "Oyun dosyaları indiriliyor {0} / {1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Checking Java runtime"
+msgstr "Java çalışma ortamı kontrol ediliyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading Java {}/{}"
+msgstr "Java indiriliyor {0}/{1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Installing {}"
+msgstr "{0} kuruluyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading {} installer"
+msgstr "{0} kurulum programı indiriliyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading dependencies"
+msgstr "Bağımlılıklar indiriliyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Running {} installer: {}"
+msgstr "{0} kurulum programı çalıştırılıyor: {1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing to launch"
+msgstr "Başlatmaya hazırlanılıyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Generating launch script"
+msgstr "Başlatma betiği oluşturuluyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for game process to start"
+msgstr "Oyun sürecinin başlaması bekleniyor"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Game started"
+msgstr "Oyun başladı"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Error: {}"
+msgstr "Error: {}"

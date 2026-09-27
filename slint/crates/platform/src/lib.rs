@@ -6,10 +6,40 @@ use once_cell::sync::Lazy;
 use os_info::{Type, Version};
 use serde::{Deserialize, Serialize};
 
+mod memory;
+
+pub use memory::get_available_memory_bytes;
+
 /// Tauri-free mirror of `crates/platform`. The original crate is a Tauri
 /// plugin; this one keeps the same data model without the Tauri dependency
 /// so the Slint app can interrogate the OS directly.
 pub static PLATFORM_INFO: Lazy<PlatformInfo> = Lazy::new(PlatformInfo::new);
+
+/// The path delimiter character used in environment variables like `PATH`.
+///
+/// On Windows, this is `";"`, and on other systems it is `":"`.
+#[cfg(windows)]
+pub const DELIMITER: &str = ";";
+#[cfg(not(windows))]
+pub const DELIMITER: &str = ":";
+
+/// Strips the Windows `\\?\` UNC prefix added by [`std::fs::canonicalize`].
+///
+/// Some programs (e.g. Java) do not understand extended-length paths,
+/// so this helper reverts the prefix while keeping the resolved absolute path.
+#[cfg(windows)]
+pub fn strip_unc_prefix(path: std::path::PathBuf) -> std::path::PathBuf {
+    let s = path.to_string_lossy();
+    match s.strip_prefix(r"\\?\") {
+        Some(stripped) => std::path::PathBuf::from(stripped),
+        None => path,
+    }
+}
+
+#[cfg(not(windows))]
+pub fn strip_unc_prefix(path: std::path::PathBuf) -> std::path::PathBuf {
+    path
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub enum OsArch {
