@@ -410,6 +410,15 @@ impl GameController {
             .map(|id| self.playtime(&id))
             .unwrap_or_default();
         let current = self.current().cloned();
+        // The window background follows the current instance (`apply`'s match
+        // below consumes `current`, so this is taken first).
+        let background_instance = current.as_ref().map(|instance| {
+            (
+                instance.id.clone(),
+                instance.config.use_as_launcher_background,
+                instance.has_background,
+            )
+        });
 
         // Taken out for the map below, which needs the cache mutably while it
         // borrows the account list immutably, and put back afterwards.
@@ -516,6 +525,17 @@ impl GameController {
 
         state.set_has_account(current_account.is_some());
         state.set_current_account_avatar(current_avatar);
+
+        // Its own image when it asks to be the launcher's, the global one, or
+        // the 3D world.
+        crate::background::controller::set_instance(
+            ui,
+            background_instance
+                .as_ref()
+                .map(|(id, use_as_launcher, has_background)| {
+                    (id.as_str(), *use_as_launcher, *has_background)
+                }),
+        );
         match current_account {
             Some(account) => {
                 state.set_current_account_key(account.key().into());
