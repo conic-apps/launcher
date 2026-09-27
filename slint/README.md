@@ -621,6 +621,17 @@ still falls back to the placeholder disc for a skin Rust could not decode.
     - Coming back to the device code after leaving it starts a fresh one. The
       Vue keeps the stale code on screen and never polls it again, which leaves
       the dialog stuck.
+    - **The device code poll is fixed, and the Tauri original is not.** The token
+      endpoint answers every non-success state — `authorization_pending` and
+      `slow_down` above all — with `400 Bad Request` and the OAuth `error` in
+      the body, so judging the status before reading the body ended the login
+      with "HTTP request failed with status 400" on the very first poll, before
+      the user had opened the browser. The body is now read first and the
+      `error` becomes the poll's status. A poll that never got an answer at all
+      (no network, a 5xx, a proxy's HTML page) is retried up to
+      `MAX_FAILED_POLLS` times in a row rather than thrown away, since the user
+      is given minutes to finish in the browser and expiry only buys them a new
+      code and a new wait.
     - The device code's box is sized to the code rather than to the CSS `20ch`
       (Slint has no `ch` unit), and the sliding screens are clipped by
       `SlideTransition` rather than by the panel, so their travel stops 24px
