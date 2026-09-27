@@ -78,37 +78,44 @@ component ActionButton inherits Rectangle {
 component TagChip inherits Rectangle {
     in property <CardTag> tag;
 
-    // `span.loader-type, span.version, span.game-mode, span.command-enabled
-    // { padding: 2px 6px }` — every pill but the plain labels, which the Vue
-    // draws as bare text: `span.last-played { font-size: 10px; margin-left: 4px }`
-    // and the saves' `.name`/`.folder-name` lines.
-    private property <bool> padded:
-        tag.kind != "last-played" && tag.kind != "plain";
-    // The run's spacing is each tag's own margin, not one uniform gap: the pills
-    // carry `margin-right: 4px` and the two label tags carry `margin-left: 4px`,
-    // so a pill followed by one of them is 8px away, not 4.
+    // The Vue's tag family, transcribed from `styles/content-card.less` and
+    // `ContentSaves.vue`'s own block, class by class:
+    //
+    //   span.loader-type, span.version { font-size: 9px; padding: 2px 6px;
+    //                                    margin-right: 4px;
+    //                                    border-radius: 100px;
+    //                                    font-weight: 500;
+    //                                    color: var(--ctp-text-inverse) }
+    //   span.loader-type.fabric { background: yellow } (forge blue, neoforge
+    //                            peach, quilt mauve, liteloader yellow)
+    //   span.version { border: 1px solid var(--ctp-sky); color: var(--ctp-text) }
+    //   span.game-mode, span.command-enabled { font-size: 9px; padding: 2px 6px;
+    //                                    border-radius: 100px; font-weight: 500;
+    //                                    color: var(--ctp-text-inverse) }
+    //   span.game-mode.survival { background: green } (creative mauve, adventure
+    //                            peach, spectator blue)
+    //   span.command-enabled { background: yellow; margin-left: 4px }
+    //   span.last-played { font-size: 10px; margin-left: 4px }
+    //
+    // The margins are *outside* the pill, which is why the background lives on
+    // an inner box: a tag's own box is `margin + padding + label`.
+    private property <bool> pill: tag.kind != "last-played" && tag.kind != "plain";
     private property <length> margin-before:
         tag.kind == "command-enabled" || tag.kind == "last-played" ? 4px : 0px;
     private property <length> margin-after:
-        tag.kind == "last-played" || tag.kind == "plain" ? 0px : 4px;
+        tag.kind == "version"
+            || tag.kind == "loader-fabric"
+            || tag.kind == "loader-forge"
+            || tag.kind == "loader-neoforge"
+            || tag.kind == "loader-quilt"
+            || tag.kind == "loader-liteloader" ? 4px
+        : 0px;
 
-    width: label.width + (root.padded ? 12px : 0px) + root.margin-before + root.margin-after;
-    height: root.padded ? 13px : 16px;
-    // `span.version { border: 1px solid var(--ctp-sky); color: var(--ctp-text) }`
-    // is the only outlined tag; the rest are fills.
-    background: tag.kind == "loader-fabric" || tag.kind == "loader-liteloader"
-            || tag.kind == "command-enabled" ? Theme.yellow
-        : tag.kind == "loader-forge" ? Theme.blue
-        : tag.kind == "loader-neoforge" ? Theme.peach
-        : tag.kind == "loader-quilt" ? Theme.mauve
-        : tag.kind == "game-mode-survival" ? Theme.green
-        : tag.kind == "game-mode-creative" ? Theme.mauve
-        : tag.kind == "game-mode-adventure" ? Theme.peach
-        : tag.kind == "game-mode-spectator" ? Theme.blue
-        : transparent;
-    border-width: tag.kind == "version" ? 1px : 0px;
-    border-color: Theme.sky;
-    border-radius: 100px;
+    // One line box for the run — the info block's 16px strut — with a 13px
+    // pill centred in it (9px of text plus its 4px of padding).
+    height: 16px;
+    width: root.margin-before + pill-box.width + root.margin-after;
+    background: transparent;
 
     // A last-played tag's halves are both translated, so neither can be
     // composed in Rust; the relative time comes from the same `GameTime` helper
@@ -124,16 +131,43 @@ component TagChip inherits Rectangle {
             )
         : root.tag.label + root.tag.text;
 
-    label := Text {
-        text: root.resolved;
-        // The Vue draws a `last-played` tag's label at 80% and its value at
-        // full strength; Slint has no per-span styling, so the whole tag takes
-        // the label's dimmer colour.
-        color: root.padded ? Theme.text-inverse : Theme.default-text-color.transparentize(0.3);
-        font-size: root.padded ? 9px : 10px;
-        font-weight: 500;
-        x: root.margin-before + (root.padded ? 6px : 0px);
-        vertical-alignment: center;
+    pill-box := Rectangle {
+        x: root.margin-before;
+        y: root.pill ? 1.5px : 0px;
+        height: root.pill ? 13px : 16px;
+        border-radius: 100px;
+        background: tag.kind == "loader-fabric" || tag.kind == "loader-liteloader"
+                || tag.kind == "command-enabled" ? Theme.yellow
+            : tag.kind == "loader-forge" ? Theme.blue
+            : tag.kind == "loader-neoforge" ? Theme.peach
+            : tag.kind == "loader-quilt" ? Theme.mauve
+            : tag.kind == "game-mode-survival" ? Theme.green
+            : tag.kind == "game-mode-creative" ? Theme.mauve
+            : tag.kind == "game-mode-adventure" ? Theme.peach
+            : tag.kind == "game-mode-spectator" ? Theme.blue
+            : transparent;
+        // `span.version { border: 1px solid var(--ctp-sky) }` — the only
+        // outlined tag.
+        border-width: tag.kind == "version" ? 1px : 0px;
+        border-color: Theme.sky;
+
+        label := Text {
+            text: root.resolved;
+            // `span.version { color: var(--ctp-text) }` — a version reads as
+            // body text, not as the inverse of its own fill, because it has no
+            // fill. The Vue draws a last-played tag's label at 80% and its
+            // value at full strength; Slint has no per-span styling, so the
+            // whole tag takes the label's dimmer colour.
+            color: !root.pill || tag.kind == "version"
+                ? Theme.default-text-color.transparentize(root.pill ? 0.1 : 0.3)
+                : Theme.text-inverse;
+            font-size: root.pill ? 9px : 10px;
+            font-weight: 500;
+            x: root.pill ? 6px : 0px;
+            vertical-alignment: center;
+        }
+
+        width: label.width + (root.pill ? 12px : 0px);
     }
 }
 export component ContentCard inherits Rectangle {
@@ -426,15 +460,28 @@ export component ContentCard inherits Rectangle {
     // outline and rises above the neighbouring cards. It is declared last so it
     // paints over the info block. Its content is the world map, which is not
     // migrated yet, so only the panel and its outline are drawn.
+    // `.content .extra { height: 100%; opacity: 0; transition: all 200ms ease }`
+    // → `.content.selected .extra { height: calc(100% + 160px); opacity: 1 }`:
+    // the box *grows* by 160px over 200ms rather than appearing. Expanding
+    // upwards (`.expand-up`) pins it to the card's bottom edge, so the growth
+    // is what moves its top edge up.
+    //
     // `visible` rather than `if`, so the card's hover can take the expanded
     // area into account: `.extra` is a child of `.content` in the Vue, and
     // `:hover` on a parent stays true while a descendant is hovered.
     expansion := Rectangle {
-        visible: root.card.selected;
+        private property <float> expanded: root.card.selected ? 1.0 : 0.0;
+
+        visible: self.expanded > 0.0;
         x: 0;
-        y: root.card.expand-up ? -160px : 0px;
+        y: root.card.expand-up ? -160px * self.expanded : 0px;
         width: root.width;
-        height: root.height + 160px;
+        height: root.height + 160px * self.expanded;
+        opacity: self.expanded;
+        animate height, opacity, y {
+            duration: 200ms;
+            easing: ease;
+        }
         background: Theme.surface-0;
         border-radius: 8px;
         // `outline: 2px solid var(--ctp-blue)` — an outline is drawn outside
@@ -445,6 +492,20 @@ export component ContentCard inherits Rectangle {
         // `.extra` carries `@click.stop`: a click on the expanded area opens
         // nothing, it only keeps the card hovered.
         expansion-touch := TouchArea { }
+
+        // `.map-previewer-container { position: absolute; inset: 0; padding:
+        // 8px }` around the world map. The map itself is not migrated
+        // (`WorldMap.vue` over the `conic-worldmap` crate — see the README), so
+        // this is the box it would draw into: the map's own `.world-map {
+        // border-radius: 8px; background: var(--ctp-base) }`.
+        Rectangle {
+            x: 8px;
+            y: 8px;
+            width: parent.width - 16px;
+            height: parent.height - 16px;
+            border-radius: 8px;
+            background: Theme.base;
+        }
 
         // Declared after the area it reads — an id is only in scope from its
         // own declaration onwards.

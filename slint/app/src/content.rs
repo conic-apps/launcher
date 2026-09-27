@@ -333,6 +333,13 @@ struct ContentController {
     form: SearchForm,
     /// The Minecraft release list, newest first. Empty until it arrives.
     version_options: Vec<String>,
+    /// `<kind>:<source>` → that list's `(current page, total pages)`.
+    ///
+    /// The Vue gives every list its own pair of refs — `ContentModsModrinth.vue`
+    /// and `ContentModsCurseforge.vue` each declare `currentPage` and
+    /// `totalPages`, and a source switch destroys and re-creates one of them —
+    /// so one list's page numbers are never shown against another's results.
+    pages: HashMap<String, (usize, usize)>,
     /// Every filter chip's measured width, by its value. The wrapping rows are
     /// laid out from these (`filter_row_height`), because Slint measures a
     /// wrapping `FlexboxLayout` at its own "roughly square" preferred width
@@ -388,6 +395,7 @@ impl ContentController {
             source: "local".into(),
             form: SearchForm::default(),
             version_options: Vec::new(),
+            pages: HashMap::new(),
             filter_widths: HashMap::new(),
             filter_rows: Rc::new(VecModel::default()),
             translations: HashMap::new(),
@@ -532,10 +540,10 @@ pub fn setup(ui: &App) {
                 .set_open_panel(SharedString::from(kind.as_str()));
             ui.global::<ContentState>()
                 .set_source(SharedString::from("local"));
-            // The Vue's `ensureXInitialized` sets the search result to null, and
-            // the pagination bar is drawn from `totalPages` — so opening a panel
-            // starts it hidden and it only comes back with the first response.
-            ui.global::<ContentSearch>().set_total_pages(0);
+            // The pagination bar is drawn from the list's own `totalPages`, so
+            // opening a panel shows whatever that list had — nothing, the first
+            // time.
+            push_pages(&ui);
             match kind.as_str() {
                 "saves" => load_saves(&ui),
                 "screenshots" => load_screenshots(&ui),
@@ -598,8 +606,9 @@ pub fn setup(ui: &App) {
             }
             ui.global::<ContentState>()
                 .set_source(SharedString::from(source.as_str()));
-            // A source switch re-mounts the Vue's list, so the same reset.
-            ui.global::<ContentSearch>().set_total_pages(0);
+            // A source switch shows the other list's own page state, which for
+            // a list that has not searched yet is a hidden bar.
+            push_pages(&ui);
             match source.as_str() {
                 "modrinth" | "curseforge" => {
                     ensure_version_options(&ui);
@@ -1066,6 +1075,39 @@ fn version_offset(state: &ContentController) -> f32 {
     (0..first.min(state.version_widths.len()))
         .map(|index| state.version_widths[index] + VERSION_GAP)
         .sum()
+}
+
+/// The key one list's page state is filed under: the Vue keeps a component per
+/// kind per platform (`ContentModsModrinth.vue`, `ContentPacksCurseforge.vue`,
+/// …), each with its own `currentPage` and `totalPages`.
+fn list_key(kind: RemoteKind, platform: Platform) -> String {
+    format!("{}:{}", kind.key(), platform.key())
+}
+
+/// That list's `(current page, total pages)` — `(1, 0)` for one that has not
+/// searched yet, which is what hides its pagination bar.
+fn list_pages(state: &ContentController) -> (usize, usize) {
+    state
+        .pages
+        .get(&list_key(state.kind, state.platform))
+        .copied()
+        .unwrap_or((1, 0))
+}
+
+/// Pushes the open list's page, its page count and its page buttons.
+fn push_pages(ui: &App) {
+    let (page, total_pages) = {
+        let state = controller();
+        let state = state.borrow();
+        list_pages(&state)
+    };
+    let search = ui.global::<ContentSearch>();
+    search.set_current_page(page as i32);
+    search.set_total_pages(total_pages as i32);
+    search.set_pages(ModelRc::from(Rc::new(VecModel::from(pagination_pages(
+        total_pages,
+        page,
+    )))));
 }
 
 /// `.filter-chip { height: 20px }` and `.filter-chips { gap: 6px }`.
@@ -1912,6 +1954,8 @@ fn run_search(ui: &App, page: usize) {
         let mut state = state.borrow_mut();
         state.form.page = page;
         state.targets.clear();
+        let key = list_key(state.kind, state.platform);
+        state.pages.entry(key).or_insert((page, 0)).0 = page;
     }
     // The request is composed from a snapshot: the spawn runs on another
     // thread and may not reach the state.
@@ -1926,7 +1970,7 @@ fn run_search(ui: &App, page: usize) {
         )
     };
     ui.global::<ContentState>().set_remote_loading(true);
-    ui.global::<ContentSearch>().set_current_page(page as i32);
+    push_pages(ui);
 
     let weak = ui.as_weak();
     crate::runtime::spawn(async move {
@@ -1969,12 +2013,15 @@ fn run_search(ui: &App, page: usize) {
                 }
             }
             let total_pages = total.div_ceil(PAGE_SIZE).max(1);
-            let search = ui.global::<ContentSearch>();
-            search.set_total_pages(total_pages as i32);
-            search.set_pages(ModelRc::from(Rc::new(VecModel::from(pagination_pages(
-                total_pages,
-                page,
-            )))));
+            {
+                let state = controller();
+                let mut state = state.borrow_mut();
+                // Filed under the list the request went out for, not whichever
+                // one is open now: a slow answer must not land on another list.
+                state
+                    .pages
+                    .insert(list_key(kind, platform), (page, total_pages));
+            }
             let ids: Vec<String> = cards
                 .iter()
                 .filter_map(|built| match &built.target {
@@ -1987,6 +2034,7 @@ fn run_search(ui: &App, page: usize) {
                 Grid::Remote,
                 cards.into_iter().map(|built| built.card).collect(),
             );
+            push_pages(&ui);
             // A page whose translations are already cached gets them in the same
             // frame; the rest arrive later and are substituted then.
             apply_translations(&ui);

@@ -73,15 +73,36 @@ export component ContentOverlay inherits Rectangle {
     private property <string> phase: "closed";
     visible: root.phase != "closed";
 
+    // What every animated binding reads, one frame behind `phase`: Slint drops
+    // the first of two changes made to an animated property before a frame is
+    // drawn, so toggling the overlay twice inside one frame (a fast close and
+    // reopen) would leave the slide with nothing to travel between and the
+    // panel would jump to its new place. Applying the machine's state through a
+    // timer means a frame only ever sees the latest one.
+    private property <string> settled: "closed";
+    // `running` has to be a property this element owns: a `Timer` whose
+    // `running` is a constant binding cannot be started by `restart()` (a bound
+    // property cannot be written), and the overlay stayed parked below the
+    // window with no way to settle.
+    private property <bool> settling: false;
+    changed phase => { root.settling = true; }
+    settle-timer := Timer {
+        interval: 16ms;
+        running: root.settling;
+        triggered => {
+            root.settled = root.phase;
+            root.settling = false;
+        }
+    }
+
     changed overlay-visible => {
         if root.overlay-visible {
-            if root.phase == "closed" {
+            if root.phase != "shown" {
+                // Closed, or still leaving: play the entrance from wherever the
+                // panel is — a leave that was interrupted carries on from the
+                // offset it had reached.
                 root.phase = "starting";
                 start-timer.restart();
-            } else {
-                // Reopened while leaving: play the entrance from where the
-                // leave had got to.
-                root.phase = "shown";
             }
         } else if root.phase != "closed" && root.phase != "leaving" {
             root.phase = "leaving";
@@ -107,6 +128,7 @@ export component ContentOverlay inherits Rectangle {
         // `changed` does not fire for the value a component is created with.
         if root.overlay-visible {
             root.phase = "shown";
+            root.settled = "shown";
         }
     }
 
@@ -118,8 +140,8 @@ export component ContentOverlay inherits Rectangle {
     // 400ms/280ms pair takes effect per direction (`BaseDialog`'s enter/leave
     // asymmetry works the same way).
     private property <length> panel-y:
-        root.phase == "shown" || root.phase == "starting" ? 0px : root.height;
-    private property <bool> leaving: root.phase == "leaving";
+        root.settled == "shown" || root.settled == "starting" ? 0px : root.height;
+    private property <bool> leaving: root.settled == "leaving";
 
     animate panel-y {
         duration: root.leaving ? 280ms : 400ms;
@@ -129,7 +151,7 @@ export component ContentOverlay inherits Rectangle {
     // ----- the scrim -----
     // 200ms `ease` both ways; on the way out the Vue delays it by 100ms
     // (`.game-content-leave-active { transition-delay: 100ms }`).
-    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    private property <float> scrim-alpha: root.settled == "shown" ? 1.0 : 0.0;
     animate scrim-alpha {
         duration: 200ms;
         delay: root.leaving ? 100ms : 0ms;

@@ -192,13 +192,15 @@ component FilterRowView inherits Rectangle {
 
     HorizontalLayout {
         spacing: 10px;
-        // The Vue's `.filter-row { align-items: start }` — the *cross* axis, so
-        // `cross-axis-alignment`, not `alignment`. A main-axis alignment other
-        // than the default `stretch` hands every child its preferred width and
-        // ignores `horizontal-stretch`: with `alignment: start` here the chip run
-        // wrapped into a roughly square block and the version carousel collapsed
-        // to nothing (see the Slint notes in `slint/README.md`).
-        cross-axis-alignment: start;
+        // The cross axis is left at its default (`stretch`) even though the Vue
+        // says `align-items: start`, and that is deliberate: a non-stretch
+        // alignment hands each child its **preferred** size, and a wrapping
+        // `FlexboxLayout`'s preferred height is measured at its own "roughly
+        // square" width — about twice the lines it actually draws — so the chip
+        // run would be given a box twice as tall as its content and would spread
+        // its lines across it. Stretched, it takes the row's own height, which
+        // Rust computed from the chips' measured widths. The label and the
+        // carousel are unaffected: both set an explicit height.
 
         Text {
             // `.filter-label { min-width: 52px; line-height: 20px; font-size: 12px }`
@@ -233,6 +235,7 @@ component FilterRowView inherits Rectangle {
             }
         }
     }
+
 }
 export component ContentSearchPanel inherits Rectangle {
     width: 100%;
