@@ -242,13 +242,23 @@ export component ContentCard inherits Rectangle {
                 } else {
                     root.delete();
                 }
-            } else {
+            } else if hover-area.mouse-x <= root.inner-right {
                 root.select();
             }
         }
     }
 
     private property <bool> hovered: hover-area.has-hover || expansion.pointed;
+    /// `.content-info:hover { width: calc(100% - 88px) }` — the 16px the inner
+    /// card gives up while the pointer is on the card.
+    private property <length> info-inset: root.hovered ? 16px : 0px;
+    /// Where the inner card ends. `.content` is the flex row the image and
+    /// `.content-info` fill, so those two are what the card *is*; the strip of
+    /// the grid cell past them is its transparent overhang, and a click there
+    /// opens nothing.
+    private property <length> inner-right:
+        root.icon-size - 8px + max(0px, root.width - root.icon-size - root.info-inset);
+
     /// `.actions { right: 4px }` around the 14px column.
     private property <length> actions-left: root.width - 18px;
     private property <bool> column-shown: root.card.action-kind != "";
@@ -346,16 +356,18 @@ export component ContentCard inherits Rectangle {
         // block, 16px narrower. Only the *inset* is animated: `width` also
         // follows the card's own width, so animating it left the block a frame
         // behind the card around it while the window was being resized.
-        private property <length> hover-inset: root.hovered ? 16px : 0px;
+        // The animation has to be on a property this element owns: an `animate`
+        // cannot reach into another element's property.
+        private property <length> inset: root.info-inset;
 
         x: root.icon-size - 8px;
         y: 0;
         height: root.height;
-        width: max(0px, root.width - root.icon-size - self.hover-inset);
+        width: max(0px, root.width - root.icon-size - self.inset);
         background: root.hovered ? Theme.surface-1 : Theme.surface-0;
         border-radius: 8px;
 
-        animate hover-inset, background {
+        animate inset, background {
             duration: 200ms;
             easing: ease-out-quad;
         }

@@ -575,10 +575,19 @@ pub fn setup(ui: &App) {
             // time.
             push_pages(&ui);
             match kind.as_str() {
-                "saves" => load_saves(&ui),
+                "saves" => {
+                    show_grid(&ui, Grid::Saves);
+                    load_saves(&ui);
+                }
                 "screenshots" => load_screenshots(&ui),
-                "resourcepacks" => load_local_resourcepacks(&ui),
-                "mods" => load_local_mods(&ui),
+                "resourcepacks" => {
+                    show_grid(&ui, Grid::LocalResourcePacks);
+                    load_local_resourcepacks(&ui);
+                }
+                "mods" => {
+                    show_grid(&ui, Grid::LocalMods);
+                    load_local_mods(&ui);
+                }
                 _ => {}
             }
         });
@@ -607,6 +616,7 @@ pub fn setup(ui: &App) {
             ui_state.set_remote_kind(SharedString::from(RemoteKind::Packs.key()));
             ensure_version_options(&ui);
             push_search(&ui);
+            show_grid(&ui, Grid::Remote);
             run_search(&ui, 1);
         });
     }
@@ -640,6 +650,22 @@ pub fn setup(ui: &App) {
             }
             ui.global::<ContentState>()
                 .set_source(SharedString::from(source.as_str()));
+            // The list being shown is the grid a resize re-lays out from here
+            // on, and it is re-laid out now — the local list in particular was
+            // loaded while another source was open, at whatever width the panel
+            // had then.
+            show_grid(
+                &ui,
+                if source == "local" {
+                    if controller().borrow().kind == RemoteKind::Mods {
+                        Grid::LocalMods
+                    } else {
+                        Grid::LocalResourcePacks
+                    }
+                } else {
+                    Grid::Remote
+                },
+            );
             // A source switch shows the other list's own page state, which for
             // a list that has not searched yet is a hidden bar.
             push_pages(&ui);
@@ -1535,13 +1561,34 @@ fn set_cards(ui: &App, grid: Grid, pending: Vec<PendingCard>) {
     } else {
         layout(&mut cards, width, grid_card_height(grid))
     };
-    ui_state.set_grid_height(height as f32);
+    set_grid_height(&ui_state, grid, height);
     if model.row_count() != cards.len() {
         model.set_vec(cards);
     } else {
         for (index, card) in cards.into_iter().enumerate() {
             model.set_row_data(index, card);
         }
+    }
+}
+
+/// Makes `grid` the one on screen: it becomes the grid a resize re-lays out,
+/// and it is re-laid out now, because a grid that was loaded while another list
+/// was open still carries the positions it was given at the old panel width.
+fn show_grid(ui: &App, grid: Grid) {
+    controller().borrow_mut().open_grid = Some(grid);
+    relayout(ui);
+}
+
+/// Writes one grid's height to that grid's own property: the four grids are
+/// laid out independently, and the one on screen must not be given another
+/// list's height — see the note on the properties in `globals/content.slint`.
+fn set_grid_height(state: &ContentState<'_>, grid: Grid, height: i32) {
+    let height = height as f32;
+    match grid {
+        Grid::Saves => state.set_saves_grid_height(height),
+        Grid::LocalMods => state.set_local_mods_grid_height(height),
+        Grid::LocalResourcePacks => state.set_local_resourcepacks_grid_height(height),
+        Grid::Remote => state.set_remote_grid_height(height),
     }
 }
 
@@ -1565,8 +1612,7 @@ fn relayout(ui: &App) {
     } else {
         layout(&mut cards, width, grid_card_height(grid))
     };
-    ui.global::<ContentState>()
-        .set_grid_height(grid_height as f32);
+    set_grid_height(&ui.global::<ContentState>(), grid, grid_height);
     if !cards.is_empty() {
         for (index, card) in cards.into_iter().enumerate() {
             model.set_row_data(index, card);
@@ -2059,6 +2105,10 @@ fn run_search(ui: &App, page: usize) {
         state.form.page = page;
         let list = list_key(state.kind, state.platform.key());
         let request = request_key_of(&state, page);
+        // `currentPage.value = page` — the page the user picked is the page the
+        // bar shows *now*, before the answer arrives; only the total comes from
+        // the result.
+        state.pages.entry(list.clone()).or_insert((page, 0)).0 = page;
         state.lists.entry(list.clone()).or_default().token += 1;
         (list, request)
     };

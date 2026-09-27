@@ -89,7 +89,7 @@ export component ContentSavesPanel inherits Rectangle {
             cards: ContentState.saves;
             icon-size: 64px;
             subtitle-style: "folder";
-            grid-height: ContentState.grid-height;
+            grid-height: ContentState.saves-grid-height;
 
             select(id) => { ContentState.select-save(id); }
             open-path(id) => { ContentState.open-path(id); }
@@ -493,7 +493,7 @@ export component ContentModsPanel inherits Rectangle {
         if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length > 0) : ContentCardGrid {
             cards: ContentState.local-mods;
             icon-size: 72px;
-            grid-height: ContentState.grid-height;
+            grid-height: ContentState.local-mods-grid-height;
 
             select(id) => { ContentState.select-card(id); }
             open-path(id) => { ContentState.open-path(id); }
@@ -514,7 +514,7 @@ export component ContentModsPanel inherits Rectangle {
         if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0) : ContentCardGrid {
             cards: ContentState.remote-cards;
             icon-size: 72px;
-            grid-height: ContentState.grid-height;
+            grid-height: ContentState.remote-grid-height;
 
             select(id) => { ContentState.select-card(id); }
             open-link(url) => { ContentState.open-url(url); }
@@ -541,7 +541,7 @@ export component ContentModsPanel inherits Rectangle {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            visible: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
+            shown: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
 
@@ -550,7 +550,7 @@ export component ContentModsPanel inherits Rectangle {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            visible: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
+            shown: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
     }
@@ -593,7 +593,7 @@ export component ContentResourcepacksPanel inherits Rectangle {
         if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length > 0) : ContentCardGrid {
             cards: ContentState.local-resourcepacks;
             icon-size: 72px;
-            grid-height: ContentState.grid-height;
+            grid-height: ContentState.local-resourcepacks-grid-height;
 
             select(id) => { ContentState.select-card(id); }
             open-path(id) => { ContentState.open-path(id); }
@@ -613,7 +613,7 @@ export component ContentResourcepacksPanel inherits Rectangle {
         if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0) : ContentCardGrid {
             cards: ContentState.remote-cards;
             icon-size: 72px;
-            grid-height: ContentState.grid-height;
+            grid-height: ContentState.remote-grid-height;
 
             select(id) => { ContentState.select-card(id); }
             open-link(url) => { ContentState.open-url(url); }
@@ -633,7 +633,7 @@ export component ContentResourcepacksPanel inherits Rectangle {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            visible: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
+            shown: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
 
@@ -641,7 +641,7 @@ export component ContentResourcepacksPanel inherits Rectangle {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            visible: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
+            shown: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
     }
@@ -693,7 +693,7 @@ export component ContentPacksPanel inherits Rectangle {
         if !ContentState.remote-loading && ContentState.remote-cards.length > 0 : ContentCardGrid {
             cards: ContentState.remote-cards;
             icon-size: 72px;
-            grid-height: ContentState.grid-height;
+            grid-height: ContentState.remote-grid-height;
 
             select(id) => { ContentState.select-card(id); }
             open-link(url) => { ContentState.open-url(url); }
@@ -711,7 +711,7 @@ export component ContentPacksPanel inherits Rectangle {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            visible: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
+            shown: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
 
@@ -719,7 +719,7 @@ export component ContentPacksPanel inherits Rectangle {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
             total-pages: ContentSearch.total-pages;
-            visible: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
+            shown: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
     }

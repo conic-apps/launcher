@@ -92,10 +92,18 @@ component DetailButton inherits Rectangle {
             : root.kind == "heart" && root.favorited ? Theme.red : white;
 
     HorizontalLayout {
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
+        // `button { display: flex; align-items: center; justify-content: center;
+        // gap: 4px }` — the row fills the button and the glyph and the label are
+        // centred in it as one run. Sizing the row to its content instead
+        // (`x: (parent.width - self.width) / 2`) left the two at the button's
+        // ends for the 120px labelled buttons, and the lone heart off-centre.
+        x: 0;
+        y: 0;
+        width: parent.width;
         height: parent.height;
         spacing: 4px;
+        // `justify-content: center` — the main (horizontal) axis.
+        alignment: center;
         // `align-items: center` — the cross axis. `alignment` is the main
         // (horizontal) axis, and on its own it leaves the 16px glyph at the top
         // of the 36px button instead of centred on the label.

@@ -80,11 +80,26 @@ export component ContentPagination inherits Rectangle {
     in property <[PageButton]> pages: [];
     in property <int> current-page: 1;
     in property <int> total-pages: 0;
+    /// Whether this list's bar is the one on screen.
+    ///
+    /// Each remote list owns a bar (`ContentModsModrinth.vue` and
+    /// `ContentModsCurseforge.vue` each mount their own), so a panel holds one
+    /// per list and only one of them is ever shown. `visible` alone is not
+    /// enough to take the others out of the layout: a hidden `ContentPagination`
+    /// still took its 82px in the scroller, which is the blank that was left
+    /// under the page buttons (and under a *local* list's last row, where both
+    /// bars are hidden). The height is therefore stated rather than inherited
+    /// from `self.preferred-height`, which cannot be read while overriding it.
+    in property <bool> shown: true;
 
     callback page-change(int);
 
+    /// `.pagination { padding: 20px 0 32px }` around the 30px buttons.
+    private property <length> bar-height: 82px;
+
     width: 100%;
-    height: self.preferred-height;
+    visible: root.shown;
+    height: root.shown ? root.bar-height : 0px;
     background: transparent;
 
     HorizontalLayout {

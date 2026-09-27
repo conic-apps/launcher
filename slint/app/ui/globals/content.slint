@@ -171,7 +171,19 @@ export global ContentState {
     /// positioned child contributes nothing to its parent's measurement, so a
     /// measured height would be zero and the panel's `ScrollView` would stop
     /// scrolling.
-    in-out property <length> grid-height: 0px;
+    /// One height **per grid**, because they are not the same grid: a panel
+    /// shows one list at a time, but the other lists keep loading behind it —
+    /// opening Mods loads the local folder while the Modrinth search is still
+    /// in the air — and a single shared height would be overwritten by
+    /// whichever finished last. The remote grid then reserved the *local*
+    /// folder's 3 081px for its 906px of cards, which is the blank that sat
+    /// between the last row and the page bar.
+    ///
+    /// The four names are the four models (`Grid` in `app/src/content.rs`).
+    in-out property <length> saves-grid-height: 0px;
+    in-out property <length> local-mods-grid-height: 0px;
+    in-out property <length> local-resourcepacks-grid-height: 0px;
+    in-out property <length> remote-grid-height: 0px;
 
     /// The panel's height, written back by whichever panel is on screen. The
     /// "nothing here" placeholder covers the panel rather than its (empty) grid,
