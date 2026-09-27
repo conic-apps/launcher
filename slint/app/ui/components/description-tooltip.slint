@@ -1,0 +1,202 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { DescriptionTooltip } from "../globals/tooltip.slint";
+import { Navigation } from "../globals/navigation.slint";
+
+// The full text behind a pinned `SettingItem` description, on hover.
+//
+// Mounted at the application root (`app.slint`) for the reason
+// `DropdownOverlay` is: the panel is several lines tall and starts on the
+// description line, so it covers the rows below it, and both the settings
+// collapse (`SettingCollapse`'s `clip: true` height, there to animate it shut)
+// and the settings scroll area clip everything inside them. What is anchored is
+// the description's own position in the window (`ItemAbsolutePosition`, as
+// `BaseDropdownSelect` does for the dropdown lists) — the panel sits on the
+// description line, not under the pointer.
+//
+// The reveal is a height animation, from one line at opacity 0 to the full
+// wrapped height at opacity 1, and back again. The `phase` state machine is
+// `BaseDialog`'s, for the same reason: an `animate` only advances while its
+// property is being read, so a panel that is not painted for one frame is first
+// asked for the value it was meant to *reach* and jumps there instead of
+// animating — hence one frame at the start values before the target moves.
+export component DescriptionTooltipOverlay inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // The line a pinned description is drawn at (`SettingItem`'s
+    // `description-line-height`, which the panel has to agree with or the text
+    // sits off the line it explains), the panel's own metrics, and the two
+    // heights the animation runs between: collapsed is one line, so the panel
+    // does not vanish but shrinks onto the line it belongs to. The pitch is the
+    // description's own (`line-height-factor: 1.1` at 12px, which the label below
+    // keeps); 18px is the box it is given, a shade over the line box it draws.
+    private property <length> description-line-height: 18px;
+    private property <length> padding-v: 8px;
+    private property <length> padding-h: 10px;
+    private property <length> frame-width: 2px;
+    /// What the border and the vertical padding take off the content box.
+    private property <length> inset: root.frame-width + root.padding-v;
+    private property <length> collapsed-height: root.description-line-height + 2 * root.inset;
+    /// The full text wrapped at the anchor width. `label`'s width is a plain
+    /// binding (the anchor's, less the panel's own padding) rather than a layout
+    /// cell, so the text is measured at the width it is drawn at and the two
+    /// cannot disagree.
+    private property <length> natural-height: max(root.collapsed-height,
+        label.preferred-height + 2 * root.inset);
+
+    // Grows down from the description line, and up from the line's bottom edge
+    // when the window does not have room below — `DropdownOverlay`'s
+    // `expand-upwards`, for the same reason. It is read while the panel is still
+    // transparent, so the flip itself is never seen.
+    private property <bool> expand-upwards:
+        DescriptionTooltip.anchor-y + root.natural-height > root.height - 8px;
+
+    /// The pointer is on the description line or on the panel (see
+    /// `DescriptionTooltip`).
+    ///
+    /// There is no "the content is moving" term in this, and deliberately so: the
+    /// one signal `ScrollView` has for that (`scrolling`) is "the offset is still
+    /// easing towards its wheel target", which a trackpad never is — it moves the
+    /// offset and the target together, so a gesture, its momentum and a sidebar
+    /// `scroll-to` all read as *not* scrolling. Gating on it suspended the panel
+    /// for a wheel and not for a trackpad. Instead the panel **follows its row**:
+    /// the anchor is re-pushed from the row that owns it (`anchor-seq`) on a tick
+    /// for as long as the panel is up — which is not the same as the pointer being
+    /// on the row, since a scroll takes the row out from under a pointer that never
+    /// moved and leaves it on this panel. So the panel glides along with the
+    /// content on every input path, and a row that scrolls out of the viewport
+    /// drops out of the hit test, which ends the hover and closes the panel — so
+    /// it never travels out of the page on its own.
+    private property <bool> wanted: DescriptionTooltip.over-description
+        || DescriptionTooltip.over-panel;
+
+    // "closed" | "starting" | "shown" | "leaving".
+    private property <string> phase: "closed";
+    visible: root.phase != "closed";
+
+    private property <length> panel-height: root.phase == "shown"
+        ? root.natural-height : root.collapsed-height;
+    private property <float> panel-opacity: root.phase == "shown" ? 1.0 : 0.0;
+    animate panel-height {
+        duration: 200ms;
+        easing: cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+    animate panel-opacity {
+        duration: 200ms;
+        easing: cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+
+    changed wanted => {
+        if root.wanted {
+            if root.phase == "closed" {
+                root.phase = "starting";
+                start-timer.restart();
+            } else {
+                // Back while it was leaving: play the enter from wherever the
+                // leave had got to.
+                root.phase = "shown";
+            }
+        } else if root.phase != "closed" && root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    // A page swap takes away the row the anchor was measured from, and nothing
+    // moves the pointer to say so — without this the panel would sit over the page
+    // that replaced it until the next mouse move. The global is mirrored into a
+    // local property because `changed` follows this element's own, not a
+    // global's.
+    private property <string> page: Navigation.current-page;
+    changed page => { root.dismiss(); }
+
+    // One frame at the start values is enough for the renderer to see them.
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    leave-timer := Timer {
+        interval: 240ms;
+        running: root.phase == "leaving";
+        triggered => { root.hide(); }
+    }
+
+    /// Puts the panel away but leaves the description's hover state alone: a
+    /// scroll suspends the panel while the pointer is still on the description,
+    /// and it reopens by itself once the surface settles — the row has kept the
+    /// anchor up to date in the meantime. The panel's own hover cannot survive
+    /// it, since there is no panel to hover, so that flag goes.
+    function hide() {
+        root.phase = "closed";
+        DescriptionTooltip.over-panel = false;
+    }
+
+    /// Puts it away for good, for a reason nothing will undo: the row the anchor
+    /// was measured from is gone, so no hover will ever clear its flag again, and
+    /// a stale `over-description` would keep `wanted` true and stop the panel
+    /// from ever opening again.
+    function dismiss() {
+        root.hide();
+        DescriptionTooltip.over-description = false;
+        DescriptionTooltip.text = "";
+    }
+
+    // Always instantiated rather than created on demand, for two reasons: the
+    // height the animation runs to is the label's measured height, and an id
+    // inside a conditional cannot be read from out here — the same reason
+    // `BaseDialog` keeps its panel in the tree. It is shown by the root's
+    // `visible`, which is also what keeps the touch area from taking presses
+    // while there is nothing to see.
+    panel := Rectangle {
+        x: DescriptionTooltip.anchor-x;
+        y: root.expand-upwards
+            ? DescriptionTooltip.anchor-y + root.description-line-height - root.panel-height
+            : DescriptionTooltip.anchor-y;
+        width: DescriptionTooltip.anchor-width;
+        height: root.panel-height;
+        opacity: root.panel-opacity;
+        visible: root.phase != "closed";
+        clip: true;
+        border-radius: 8px;
+        // The Catppuccin blue the request asked for; the fill is a surface token,
+        // so the panel follows the palette (and its 300ms transition) like
+        // everything else.
+        border-width: root.frame-width;
+        border-color: Theme.blue;
+        background: Theme.surface-0;
+        drop-shadow-color: #00000071;
+        drop-shadow-blur: 16px;
+
+        label := Text {
+            x: root.frame-width + root.padding-h;
+            y: root.frame-width + root.padding-v;
+            width: parent.width - 2 * (root.frame-width + root.padding-h);
+            text: DescriptionTooltip.text;
+            font-size: 12px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.1);
+            wrap: word-wrap;
+            line-height-factor: 1.1;
+        }
+
+        // Takes the clicks meant for the rows underneath, which the panel covers
+        // — without it a press there would land on another row's switch. It also
+        // reports its own hover, because the panel is above the description: a
+        // pointer that moves onto it takes the hover away from there, and the
+        // tooltip has to survive that.
+        panel-touch := TouchArea {
+            x: 0px;
+            y: 0px;
+            width: parent.width;
+            height: parent.height;
+
+            changed has-hover => { DescriptionTooltip.over-panel = self.has-hover; }
+        }
+    }
+}

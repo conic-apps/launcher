@@ -43,8 +43,10 @@ slint/
         game.slint                  # game view state (src/store/instance.ts + …)
         dialogs.slint               # dialog store + the create-instance form state
         focus.slint                 # blur-the-focused-field helper
-        window-drag.slint           # the Vue's `data-tauri-drag-region` regions
         scroll.slint                # wheel/trackpad classification + monotonic clock
+        dropdown.slint              # the dropdown overlay's anchor + selection
+        tooltip.slint               # the description tooltip's anchor + hover state
+        window-drag.slint           # the Vue's `data-tauri-drag-region` regions
       components/                   # shared/reusable pieces
         title-bar.slint
         account-avatar.slint
@@ -58,6 +60,7 @@ slint/
         setting-collapse.slint
         scroll-view.slint
         base-dialog.slint           # modal shell with its scrim/panel animation
+        description-tooltip.slint   # a pinned description's full text, on hover
         base-list-item.slint        # a row of a list panel
         zoom-transition.slint       # the zoom-in / zoom-out screen transition
         base-switch.slint
@@ -253,6 +256,32 @@ Per the migration plan:
 - `SettingCollapse` expand/collapse animation (200ms height + opacity,
   `cubic-bezier(0.215, 0.61, 0.355, 1)`) and its chevron flip, matching
   `SettingCollapse.vue`.
+- The description tooltip (`components/description-tooltip.slint` +
+  `globals/tooltip.slint`): a `SettingItem` whose description is pinned to a
+  fixed number of elided lines shows the whole string on hover, in a panel drawn
+  at the app root and anchored to the description line — the same arrangement as
+  `DropdownOverlay`, for the same reason (it is taller than its row, and both the
+  collapse and the scroll area clip). The reveal is a height animation from one
+  line at opacity 0, on `BaseDialog`'s phase machine. The anchor is re-pushed
+  from the row that owns it (`DescriptionTooltip.anchor-seq`) on an 8ms tick (the
+  same tick `ScrollView` and `BaseSliderBar` ease on) for as long as the panel is
+  up, so **the panel rides along with the content** on every input path (wheel,
+  trackpad, its momentum) rather than being left behind; a row that scrolls out of
+  the viewport drops out of the hit test, which ends the hover and closes the
+  panel. The tick is not laziness: `absolute-position` is a native call, and the
+  Rust backend emits it without a property read, so it registers no dependency and
+  never invalidates — a `changed absolute-position` handler is silent while the
+  list scrolls, and the row's own `y`/`width` do not move when it does (the offset
+  is applied by an ancestor `y` far above the row), so there is no property down
+  there to watch instead. Ownership is a sequence number rather than a flag
+  because "the panel is up" is global: with a flag every pinned row would push its
+  own anchor on every tick and the last push would win. Nor can the tick be gated
+  on the row's own hover: a trackpad gesture never moves the pointer, so a scroll
+  takes the row out from under it and leaves the pointer on the panel, and the
+  panel still has to travel from there. Nothing gates on "the content is moving"
+  either: `ScrollView`'s only such signal is "the offset is still easing towards
+  the wheel target", which a trackpad never is (it moves the offset and the target
+  together), so that gate covered a wheel and not a trackpad.
 - `BaseInput` numeric fields draw the two step buttons (up/down chevrons stacked
   in one column) that the native `<input type="number">` spinner provides in the
   Vue original; the caret is tinted with the text colour via the selection
@@ -539,6 +568,45 @@ still falls back to the placeholder disc for a skin Rust could not decode.
       device code's countdown printed "14.966666 min 58 sec" until it was
       wrapped in `floor()`; the Vue's `Math.floor(total / 60)` is the same
       intent. `mod()` and `round()` behave as expected (`round` yields an int).
+- **A repeated element's height is measured at its own *preferred* width**, which
+  is the width its content wants unwrapped, while the layout that places it uses
+  the width the container gives it. A `word-wrap` `Text` therefore never wraps in
+  the measurement and does wrap in the layout, and the two heights differ by a
+  line per wrapped line. This is a compiler decision, not a stale value: the
+  width change re-triggers the measurement (`Item::layout_info(…, -1, …)` falls
+  back to the item's current `width`, read through `Property::get()`, so the read
+  is tracked) and the measurement comes out the same way every time. The
+  generated code says it plainly — a repeated cell's *sum* goes through
+  `layout_item_info(orientation, None)`, i.e. `layout_info(Vertical)` →
+  `fn_layoutinfo_v_with_constraint(<the element's own preferred width>)`, while
+  the *solve* that actually positions it goes through
+  `layout_item_info_at_cross_width(container_width)`. So a container whose height
+  is **measured** rather than computed comes out shorter than what it holds:
+  `SettingCollapse`'s `content-wrapper` clips the overflow away, and
+  `ScrollView`'s `content-height` is short too, so the bottom of the list is both
+  cut off *and* out of reach. That is what the "manage installed Java runtimes"
+  list did — it is the only `for`-built list of rows with a description long
+  enough to wrap, and a *static* row is unaffected (its own `layoutinfo-v`
+  measures the text at the width it is given, which is why the "advanced launch
+  options" collapse right next to it looked fine).
+  **The fix is a `height` binding**: Slint turns any `height` into a layout
+  cell's min *and* max, so the measured height stops following the text and the
+  measurement and the layout agree. `SettingItem`'s `description-lines` does
+  that — `0` keeps the plain wrapping `Text` for every static row, and a pinned
+  row puts the text in a fixed-height box with `max-lines` + `overflow: elide`.
+  Worth remembering for any future `for`-built row whose height depends on its
+  width, and for any list that has to be measured rather than computed.
+- **A repeated element gets no layout info of its own**, which is the other half
+  of the same story: `gen_layout_info_prop` synthesizes a `layoutinfo-*` for a
+  plain element out of its children's, but it *skips* elements with `repeated` set
+  — so a wrapper `Rectangle` written inside an `if` (which is what a conditional
+  in a layout lowers to) reports the bare `{min: 0, max: ∞, preferred: 0}`
+  struct, and a `cross-axis-alignment: start` parent then hands it a zero width
+  and nothing inside it is drawn. The pinned description box hit exactly that:
+  its `height` is what pins the row, and it still needs an explicit `width:
+  100%` (which becomes the cell's min *and* max, as `height` does for the other
+  axis) to be given the column's width. Worth remembering for any wrapper around
+  a conditional child.
 - **An `animate` only advances while its property is being read**, which decides
   how the dialog's animations had to be built. An element that is not painted —
   `visible: false`, or clipped or scrolled out of sight — is never read, so the

@@ -6,6 +6,7 @@ import { Theme, ThemeProvider } from "theme.slint";
 import { TitleBar, WindowControl } from "components/title-bar.slint";
 import { Navigation } from "globals/navigation.slint";
 import { DropdownOverlay } from "components/dropdown-overlay.slint";
+import { DescriptionTooltipOverlay } from "components/description-tooltip.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
 import { WindowDrag } from "globals/window-drag.slint";
 import { SettingsView } from "views/settings-view.slint";
@@ -152,6 +153,12 @@ export component App inherits Window {
         // Floating dropdown list + outside-click layer, mounted above the page
         // stack (see `DropdownOverlay`).
         DropdownOverlay { }
+
+        // The description tooltip, on the same footing: it is taller than the row
+        // it belongs to and both the settings collapse and the settings scroll
+        // area clip, so it is drawn here and anchored to the description line
+        // (see `components/description-tooltip.slint`).
+        DescriptionTooltipOverlay { }
 
         // The dialog layer (DialogRoot.vue): mounted last so a dialog covers
         // both the page and the floating dropdown.

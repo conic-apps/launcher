@@ -40,6 +40,13 @@ component JavaRuntimeList inherits VerticalLayout {
         title: "Java " + runtime.major;
         tags: [runtime.vendor, runtime.version, runtime.arch];
         description: runtime.display-path;
+        // A path is a single line with the rest elided, hover for the whole of it
+        // — and it has to be pinned, since this is the one row on the settings
+        // page whose height is *measured* rather than laid out: the rows come
+        // from a `for`, which Slint measures at the row's own preferred width
+        // where a wrapping description never wraps. See `SettingItem`'s
+        // `description-lines`.
+        description-lines: 1;
 
         BaseSwitch {
             checked: runtime.enabled;
