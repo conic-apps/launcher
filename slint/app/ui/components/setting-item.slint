@@ -5,6 +5,7 @@
 import { Theme } from "../theme.slint";
 import { AppIcon } from "app-icon.slint";
 import { BaseLoading } from "base-loading.slint";
+import { DescriptionTooltip } from "../globals/tooltip.slint";
 import { FocusManager } from "../globals/focus.slint";
 
 // A single settings row (src/components/SettingItem.vue).
@@ -49,12 +50,84 @@ export component SettingItem inherits Rectangle {
     // is what every renderer draws.
     in property <bool> group-first: false;
     in property <bool> group-last: false;
+    // Pin the description to a fixed number of lines, eliding the rest (0 = as
+    // many lines as it takes, the Vue's `<p class="description">`).
+    //
+    // This is not a cosmetic choice, it is what makes such a row measurable at
+    // all. Slint measures a *repeated* element's height (`for runtime in ...`)
+    // at its own **preferred width** — the width its content wants unwrapped —
+    // while the layout that places it uses the width the container gives it. A
+    // wrapping `Text` therefore never wraps in the measurement and does wrap in
+    // the layout, so the row measures a line short per wrapped line. Nothing
+    // recovers from that: the width change re-triggers the measurement, which
+    // comes out the same way, and a container whose height is *measured* rather
+    // than computed — `SettingCollapse`'s `clip: true` content box, and with it
+    // `ScrollView`'s `content-height` — ends up shorter than what it holds, so
+    // the bottom of the list is cut off and cannot be scrolled to either.
+    //
+    // A `height` binding is what pins it: Slint turns any `height` into a
+    // layout cell's min *and* max, so the height this row is measured at stops
+    // following the text and the measurement and the layout agree. `max-lines`
+    // and `elide` then keep the text inside that box, and a hover hands the full
+    // string to `DescriptionTooltipOverlay` (drawn at the application root, since
+    // the box is clipped by the very containers that were mis-measuring).
+    //
+    // Rows that are *not* repeated need none of this: their height is measured
+    // through their own `layoutinfo-v`, where the text is measured at the width
+    // it is given (`Item::layout_info(…, -1, …)` falls back to the current
+    // `width`), which is why only a `for`-built list ever showed the bug.
+    in property <int> description-lines: 0;
 
     callback clicked;
     callback reset;
 
     // The 8px of `SettingGroup.vue`.
     private property <length> group-radius: 8px;
+    // The pitch a pinned description is given per line. The text itself keeps the
+    // `1.1` line-height factor the unpinned branch uses, so 18px is the box each
+    // line is allotted — a shade over the line box it draws, which keeps the
+    // descenders off the row's bottom padding.
+    // `DescriptionTooltipOverlay` carries the same constant: the panel has to
+    // collapse onto the line it explains.
+    private property <length> description-line-height: 18px;
+
+    /// Hands the pinned description's place and size **in the window** to the
+    /// tooltip, which draws its panel from them (`DescriptionTooltipOverlay`):
+    /// `x`/`y` are the box's `absolute-position` — a position in the window, not
+    /// a position in the list — and `width` is what the text column gave the box.
+    ///
+    /// Called on hover, and again from the pinned box's `follow-timer` for as
+    /// long as the panel is this row's, so the panel tracks the row instead of
+    /// being left behind by it. The row leaving the scroll viewport is what ends
+    /// it, not a "the content is moving" flag: `ScrollView`'s only such signal is
+    /// "the offset is still easing towards its wheel target", which a trackpad
+    /// never is (it moves offset and target together), so gating on it covered a
+    /// wheel and not a trackpad.
+    function push-description-anchor(x: length, y: length, w: length) {
+        DescriptionTooltip.anchor-x = x;
+        DescriptionTooltip.anchor-y = y;
+        DescriptionTooltip.anchor-width = w;
+    }
+
+    /// This row's number in `DescriptionTooltip`'s ownership of the anchor, taken
+    /// when it opens the panel. `0` means it never has.
+    private property <int> description-anchor-seq: 0;
+
+    /// Whether the panel on screen is this row's — see
+    /// `DescriptionTooltip.anchor-seq` for why that is a number.
+    private property <bool> owns-description-anchor: root.description-anchor-seq != 0
+        && root.description-anchor-seq == DescriptionTooltip.anchor-seq;
+
+    /// Claims the anchor for this row and hands it the description to explain.
+    /// Only the opening hover calls this: the follow-up pushes come from the
+    /// pinned box's tick, which must keep the claim it already has rather than
+    /// take a new number every 8ms.
+    function claim-description-anchor(t: string) {
+        root.description-anchor-seq = DescriptionTooltip.next-anchor-seq + 1;
+        DescriptionTooltip.next-anchor-seq = root.description-anchor-seq;
+        DescriptionTooltip.anchor-seq = root.description-anchor-seq;
+        DescriptionTooltip.text = t;
+    }
 
     width: 100%;
     background: root.pressed || ((root.navigable || root.clickable) && touch.pressed) ? Theme.setting-item-background-active
@@ -200,7 +273,11 @@ export component SettingItem inherits Rectangle {
                     }
                 }
 
-                if root.description != "" : Text {
+                // The description as the Vue's `<p class="description">` has it:
+                // as many lines as it takes. Correct wherever the row's height is
+                // not measured across a width it is not given — see
+                // `description-lines`.
+                if root.description != "" && root.description-lines <= 0 : Text {
                     text: root.description;
                     font-size: 12px;
                     font-weight: Theme.font-weight-normal;
@@ -208,6 +285,110 @@ export component SettingItem inherits Rectangle {
                     color: Theme.default-text-color.with-alpha(0.509);
                     wrap: word-wrap;
                     line-height-factor: 1.1;
+                }
+
+                // A description pinned to `description-lines` lines. The box is
+                // what pins the row (see `description-lines`); the text is
+                // elided inside it, and the hover opens the full string.
+                if root.description != "" && root.description-lines > 0 : pinned-box := Rectangle {
+                    // `width: 100%` is load-bearing, not cosmetic. The `if` makes
+                    // this box a *repeated* element, and a repeated element gets no
+                    // synthesized layout info of its own — `gen_layout_info_prop`
+                    // skips it — so its `preferred-width` is 0, and the
+                    // `cross-axis-alignment: start` column would then hand it, and
+                    // the text inside it, a zero width: nothing is drawn. The
+                    // percent becomes the cell's min *and* max, which is the
+                    // column's width, and is the same width the unpinned branch
+                    // gets. (`height` is what pins the measurement; see
+                    // `description-lines`.)
+                    width: 100%;
+                    height: root.description-lines * root.description-line-height;
+                    background: transparent;
+
+                    // Only text that does not fit on the line(s) it was given is
+                    // worth a tooltip: `preferred-width` is the unwrapped width,
+                    // `width` what the column had left for it.
+                    property <bool> clipped: pinned-text.preferred-width > pinned-text.width + 0.5px;
+
+                    pinned-text := Text {
+                        x: 0px;
+                        y: 0px;
+                        width: parent.width;
+                        text: root.description;
+                        font-size: 12px;
+                        font-weight: Theme.font-weight-normal;
+                        color: Theme.default-text-color.with-alpha(0.509);
+                        wrap: word-wrap;
+                        line-height-factor: 1.1;
+                        max-lines: root.description-lines;
+                        overflow: elide;
+                    }
+
+                    pinned-touch := TouchArea {
+                        x: 0px;
+                        y: 0px;
+                        width: parent.width;
+                        height: parent.height;
+                        // A `TouchArea` grabs the press whether or not it handles
+                        // it, so the row's own `touch` never sees a click that
+                        // lands on the description. This is that area's half of
+                        // it, verbatim: without it a pinned row would not blur a
+                        // focused field.
+                        clicked => {
+                            FocusManager.clear();
+                            if (root.navigable || root.clickable) {
+                                root.clicked();
+                            }
+                        }
+                        // A hover change is the only other signal this area has to
+                        // give: `pointer-event` reports `Cancel` on losing the
+                        // hover only while it holds the grab, so the widget idiom
+                        // (`menu-base.slint`) is a `changed` on the property.
+                        // Declared after the text so it is on top of it.
+                        changed has-hover => {
+                            if self.has-hover && parent.clipped {
+                                root.claim-description-anchor(root.description);
+                                root.push-description-anchor(
+                                    parent.absolute-position.x,
+                                    parent.absolute-position.y,
+                                    parent.width,
+                                );
+                            }
+                            DescriptionTooltip.over-description = self.has-hover && parent.clipped;
+                        }
+                    }
+
+                    // Keeps the panel's anchor on this box for as long as the panel
+                    // is this row's, which outlasts the pointer being on the row: a
+                    // scroll takes the row out from under a pointer that has not
+                    // moved (a trackpad gesture never moves it) and leaves it on
+                    // the panel, and the panel still has to travel with the content
+                    // from there.
+                    //
+                    // A tick rather than `changed`, because `absolute-position` is
+                    // a native call: the Rust backend emits it without a single
+                    // property read, so no dependency is registered for it and
+                    // nothing ever invalidates it — a `changed absolute-position`
+                    // handler stays silent while the list scrolls. (Reading it is
+                    // always current; it just never fires.) There is no property
+                    // down here to watch instead: the scroll offset is applied by
+                    // an ancestor's `y` far above the row, and a row's own `y` and
+                    // `width` do not move when the list scrolls. 8ms is the tick
+                    // `ScrollView` and `BaseSliderBar` already ease on; it only
+                    // runs while a panel is up, and the three writes are no-ops
+                    // whenever the anchor has not actually moved.
+                    follow-timer := Timer {
+                        interval: 8ms;
+                        running: root.owns-description-anchor
+                            && (DescriptionTooltip.over-description || DescriptionTooltip.over-panel);
+                        triggered => {
+                            root.push-description-anchor(
+                                pinned-box.absolute-position.x,
+                                pinned-box.absolute-position.y,
+                                pinned-box.width,
+                            );
+                        }
+                    }
                 }
             }
         }
