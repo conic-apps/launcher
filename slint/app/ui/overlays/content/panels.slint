@@ -1,0 +1,455 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { ContentCard, ContentState, ContentSearch } from "../../globals/content.slint";
+import { ScrollView } from "../../components/scroll-view.slint";
+import { ContentTitleBar } from "content-title-bar.slint";
+import { ContentCardGrid } from "content-card-grid.slint";
+import { ContentSearchPanel } from "content-search-panel.slint";
+import { ContentPagination } from "content-pagination.slint";
+import { ContentLoading, ContentNotFound } from "content-not-found.slint";
+
+// The five content panels the game view opens (src/overlays/content/
+// Content{Saves,Mods,Resourcepacks,Packs,Screenshots}.vue).
+//
+// Each is the same skeleton: a `ScrollView` holding a 52px header bar and then
+// whatever that panel shows. The Vue wraps the whole panel in one `ScrollView`
+// and lets the search header scroll away with the grid, which is what these do
+// too — there is no second scroller anywhere inside a panel.
+//
+// `content-root.slint` mounts each of these inside a `ContentOverlay`, so they
+// are the container's content rather than the overlay itself.
+
+
+
+
+
+
+// The local lists and the remote ones are written out at each panel rather than
+// behind a wrapper component.
+//
+// A wrapper whose height is `self.preferred-height` and whose child sits inside
+// an `if` collapses: the conditional lowers to a wrapper that reports no layout
+// info of its own (see the README's note on repeated elements and `if`), so the
+// component measures zero tall and the grid inside it is laid out against the
+// ScrollView's content instead — it ended up painted over the panel's own
+// header bar. Every state block below therefore has a definite height.
+
+export component ContentSavesPanel inherits Rectangle {
+    /// The overlay container's size. Passed in rather than taken from `parent`,
+    /// which is the game view — the container is inset from it.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    // The size the grid has to lay out in, reported from here rather than from
+    // the grid itself: a layout assigns a child's geometry without going
+    // through `changed`, so a `changed width` on the grid never fires and the
+    // cards were laid out at width 0.
+    // `changed` does not fire for the value a component is created with, and a
+    // panel is created at its final size — so the first report is `init` and
+    // the handlers only pick up a later window resize.
+    init => { ContentState.grid-resized(root.width, root.height); }
+    changed width => { ContentState.grid-resized(root.width, root.height); }
+    changed height => { ContentState.grid-resized(root.width, root.height); }
+
+    // The Vue clears the selection when the panel itself is clicked
+    // (`@click="selectedSave = null"`), and wraps the list in the scroller.
+    ScrollView {
+        ContentTitleBar {
+            icon: "save";
+            title: @tr("Saves list");
+            // `.title { margin-bottom: 16px }` on this panel alone.
+            title-gap: 16px;
+        }
+
+        if ContentState.saves-loading : ContentLoading { }
+
+        if !ContentState.saves-loading && ContentState.saves.length > 0 : ContentCardGrid {
+            cards: ContentState.saves;
+            icon-size: 64px;
+            subtitle-style: "folder";
+            grid-height: ContentState.grid-height;
+
+            select(id) => { ContentState.select-save(id); }
+            open-path(id) => { ContentState.open-path(id); }
+            delete(id) => { ContentState.delete-save(id); }
+            play(id) => { ContentState.select-save(id); }
+        }
+    }
+
+    // The empty state sits over the *whole* panel in the Vue, outside the
+    // scroller and with `pointer-events: none`, so the cards stay clickable.
+    ContentNotFound {
+        show: !ContentState.saves-loading && ContentState.saves.length == 0;
+        description: @tr("Consider launching the game and creating some saves");
+    }
+
+    background-touch := TouchArea {
+        // A click on the panel background clears the expanded save. Declared
+        // after the scroller so it only sees what the scroller did not take —
+        // which, with the cards' own touch areas above it, is the empty space.
+        clicked => { ContentState.select-save(""); }
+    }
+}
+
+// ----- screenshots -----
+// A full-window viewer rather than a scrolled list: one image on a stage,
+// arrows either side, and a horizontal strip of thumbnails along the bottom.
+// `content-root.slint` mounts it without the sliding container, as the Vue does.
+export component ContentScreenshotsPanel inherits Rectangle {
+    /// The overlay container's size. Passed in rather than taken from `parent`,
+    /// which is the game view — the container is inset from it.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    // The panel *is* the column: `.content-screenshots` is
+    // `display: flex; flex-direction: column` with `.main { flex: 1 }` above
+    // `.thumbnails { flex-shrink: 0 }`. A wrapper sized to its own content
+    // would leave the strip wherever the content happened to end rather than
+    // at the bottom.
+    screenshots-column := VerticalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: parent.height;
+
+        // `.main { flex: 1; padding: 32px 96px }` — the stage keeps the
+        // space the strip leaves.
+            stage := Rectangle {
+                vertical-stretch: 1;
+                background: transparent;
+
+                if ContentState.screenshots.length == 0 : Text {
+                    text: ContentState.screenshots-loading
+                        ? @tr("Loading…")
+                        : @tr("No screenshots yet");
+                    font-size: 14px;
+                    color: Theme.overlay-2;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                if ContentState.screenshots.length > 0 : Rectangle {
+                    width: 100%;
+                    height: 100%;
+                    background: transparent;
+
+                    // `.stage { padding: 32px 96px }` with
+                    // `img { max-width: 100%; max-height: 100%; object-fit:
+                    // contain }` — an `Image` given the padded box and
+                    // `contain` lands the same way.
+                    // `.stage`'s own `@click.self="close"` is what the touch
+                    // area under the image is for; the image swallows its own
+                    // clicks, as a click on the `<img>` did in the Vue.
+                    stage-touch := TouchArea {
+                        clicked => { ContentState.close(); }
+                    }
+
+                    Image {
+                        x: 96px;
+                        y: 32px;
+                        width: max(0px, parent.width - 192px);
+                        height: max(0px, parent.height - 64px);
+                        source: ContentState.current-screenshot;
+                        image-fit: contain;
+                    }
+
+                    image-swallow := TouchArea {
+                        x: 96px;
+                        y: 32px;
+                        width: max(0px, parent.width - 192px);
+                        height: max(0px, parent.height - 64px);
+                    }
+                }
+            }
+
+            if ContentState.screenshots.length > 0 : Rectangle {
+                // `.thumbnails { height: clamp(92px, 12vh, 116px) }`
+                height: 104px;
+                width: 100%;
+                background: Theme.surface-0.with-alpha(0.8);
+
+                // `border-top: 1px solid var(--ctp-surface1)` — a hairline of
+                // its own, because Slint's `border-width` is all four sides.
+                Rectangle {
+                    x: 0;
+                    y: 0;
+                    width: parent.width;
+                    height: 1px;
+                    background: Theme.surface-1;
+                }
+
+                thumbnail-strip := HorizontalLayout {
+                    x: 0;
+                    y: 10px;
+                    width: 100%;
+                    height: parent.height - 20px;
+                    spacing: 10px;
+
+                    for shot[index] in ContentState.screenshots : Rectangle {
+                        width: 120px;
+                        height: parent.height;
+                        border-radius: 6px;
+                        border-width: 2px;
+                        border-color: index == ContentState.screenshot-index
+                            ? Theme.blue
+                            : transparent;
+                        opacity: index == ContentState.screenshot-index
+                            ? 1.0
+                            : (touch.has-hover ? 1.0 : 0.6);
+                        clip: true;
+
+                        Image {
+                            width: parent.width;
+                            height: parent.height;
+                            source: shot;
+                            image-fit: cover;
+                        }
+
+                        touch := TouchArea {
+                            clicked => { ContentState.set-screenshot(index); }
+                        }
+                    }
+                }
+            }
+        }
+
+    // `.close { top: 16px; right: 16px; 36px round }`
+    close-button := Rectangle {
+        x: parent.width - 16px - self.width;
+        y: 16px;
+        width: 36px;
+        height: 36px;
+        border-radius: 18px;
+        background: close-touch.has-hover ? Theme.surface-1 : Theme.surface-0.with-alpha(0.8);
+
+        AppIcon {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            name: "xmark";
+            size: 20px;
+            icon-color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        close-touch := TouchArea {
+            clicked => { ContentState.close(); }
+        }
+    }
+}
+export component ContentModsPanel inherits Rectangle {
+    /// The overlay container's size. Passed in rather than taken from `parent`,
+    /// which is the game view — the container is inset from it.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    // The size the grid has to lay out in, reported from here rather than from
+    // the grid itself: a layout assigns a child's geometry without going
+    // through `changed`, so a `changed width` on the grid never fires and the
+    // cards were laid out at width 0.
+    // `changed` does not fire for the value a component is created with, and a
+    // panel is created at its final size — so the first report is `init` and
+    // the handlers only pick up a later window resize.
+    init => { ContentState.grid-resized(root.width, root.height); }
+    changed width => { ContentState.grid-resized(root.width, root.height); }
+    changed height => { ContentState.grid-resized(root.width, root.height); }
+
+    ScrollView {
+        ContentTitleBar {
+            icon: "extension-puzzle";
+            title: @tr("Mods list");
+            sources: ["local", "modrinth", "curseforge"];
+            active-source: ContentState.source;
+            source-selected(source) => { ContentState.set-source(source); }
+        }
+
+        if ContentState.source == "local" && ContentState.local-mods-loading : ContentLoading { }
+
+        if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length > 0) : ContentCardGrid {
+            cards: ContentState.local-mods;
+            icon-size: 72px;
+            grid-height: ContentState.grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-path(id) => { ContentState.open-path(id); }
+            delete(id) => { ContentState.delete-save(id); }
+        }
+
+        if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length == 0) : ContentNotFound {
+            show: true;
+            block-height: ContentState.panel-height - 52px;
+            description: @tr("Consider downloading some mods from the internet");
+        }
+
+        // ----- the remote list -----
+        if ContentState.source != "local" : ContentSearchPanel { }
+
+        if ContentState.source != "local" && ContentState.remote-loading : ContentLoading { }
+
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0) : ContentCardGrid {
+            cards: ContentState.remote-cards;
+            icon-size: 72px;
+            grid-height: ContentState.grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-link(url) => { ContentState.open-url(url); }
+            toggle-favorite(id) => { ContentState.toggle-favorite(id); }
+        }
+
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : ContentNotFound {
+            show: true;
+            description: @tr("Try changing the keywords or filters and searching again");
+        }
+
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            visible: ContentState.source != "local" && ContentState.remote-cards.length > 0;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+    }
+}
+
+export component ContentResourcepacksPanel inherits Rectangle {
+    /// The overlay container's size. Passed in rather than taken from `parent`,
+    /// which is the game view — the container is inset from it.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    init => { ContentState.grid-resized(root.width, root.height); }
+    changed width => { ContentState.grid-resized(root.width, root.height); }
+    changed height => { ContentState.grid-resized(root.width, root.height); }
+
+    ScrollView {
+        ContentTitleBar {
+            icon: "palette";
+            title: @tr("Resource packs list");
+            sources: ["local", "modrinth", "curseforge"];
+            active-source: ContentState.source;
+            source-selected(source) => { ContentState.set-source(source); }
+        }
+
+        if ContentState.source == "local" && ContentState.local-resourcepacks-loading : ContentLoading { }
+
+        if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length > 0) : ContentCardGrid {
+            cards: ContentState.local-resourcepacks;
+            icon-size: 72px;
+            grid-height: ContentState.grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-path(id) => { ContentState.open-path(id); }
+            delete(id) => { ContentState.delete-save(id); }
+        }
+
+        if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length == 0) : ContentNotFound {
+            show: true;
+            block-height: ContentState.panel-height - 52px;
+            description: @tr("Consider downloading some resource packs from the internet");
+        }
+
+        if ContentState.source != "local" : ContentSearchPanel { }
+
+        if ContentState.source != "local" && ContentState.remote-loading : ContentLoading { }
+
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0) : ContentCardGrid {
+            cards: ContentState.remote-cards;
+            icon-size: 72px;
+            grid-height: ContentState.grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-link(url) => { ContentState.open-url(url); }
+            toggle-favorite(id) => { ContentState.toggle-favorite(id); }
+        }
+
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : ContentNotFound {
+            show: true;
+            description: @tr("Try changing the keywords or filters and searching again");
+        }
+
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            visible: ContentState.source != "local" && ContentState.remote-cards.length > 0;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+    }
+}
+
+export component ContentPacksPanel inherits Rectangle {
+    /// The overlay container's size. Passed in rather than taken from `parent`,
+    /// which is the game view — the container is inset from it.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    // The size the grid has to lay out in, reported from here rather than from
+    // the grid itself: a layout assigns a child's geometry without going
+    // through `changed`, so a `changed width` on the grid never fires and the
+    // cards were laid out at width 0.
+    // `changed` does not fire for the value a component is created with, and a
+    // panel is created at its final size — so the first report is `init` and
+    // the handlers only pick up a later window resize.
+    init => { ContentState.grid-resized(root.width, root.height); }
+    changed width => { ContentState.grid-resized(root.width, root.height); }
+    changed height => { ContentState.grid-resized(root.width, root.height); }
+
+    ScrollView {
+        ContentTitleBar {
+            icon: "package";
+            title: @tr("Modpacks list");
+            sources: ["modrinth", "curseforge"];
+            active-source: ContentState.source;
+            source-selected(source) => { ContentState.set-source(source); }
+        }
+
+        ContentSearchPanel { }
+
+        if ContentState.remote-loading : ContentLoading { }
+
+        if !ContentState.remote-loading && ContentState.remote-cards.length > 0 : ContentCardGrid {
+            cards: ContentState.remote-cards;
+            icon-size: 72px;
+            grid-height: ContentState.grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-link(url) => { ContentState.open-url(url); }
+            toggle-favorite(id) => { ContentState.toggle-favorite(id); }
+        }
+
+        if !ContentState.remote-loading && ContentState.remote-cards.length == 0 : ContentNotFound {
+            show: true;
+            description: @tr("Try changing the keywords or filters and searching again");
+        }
+
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            visible: ContentState.remote-cards.length > 0;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+    }
+}

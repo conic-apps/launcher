@@ -1,0 +1,316 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { ContentSearch, ContentState, ContentText, FilterChip, FilterRow } from "../../globals/content.slint";
+component ChipPager inherits Rectangle {
+    in property <bool> flipped: false;
+    in property <bool> disabled: false;
+    callback clicked;
+
+    width: 26px;
+    height: 26px;
+    border-width: 1px;
+    border-color: Theme.surface-1;
+    border-radius: 999px;
+    background: touch.has-hover && !root.disabled ? Theme.surface-1 : Theme.surface-0;
+    opacity: root.disabled ? 0.4 : 1.0;
+
+    AppIcon {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        name: "chevron-forward";
+        size: 12px;
+        icon-color: Theme.default-text-color.transparentize(0.1);
+        transform-rotation: root.flipped ? 180deg : 0deg;
+        transform-origin: { x: self.width / 2, y: self.height / 2 };
+    }
+
+    touch := TouchArea {
+        enabled: !root.disabled;
+        clicked => { root.clicked(); }
+    }
+}
+component FilterChipView inherits Rectangle {
+    in property <FilterChip> chip;
+    /// The chip's own width, which the version carousel needs: the Vue places
+    /// its track by reading `chips[page * 6].offsetLeft`, and a repeated
+    /// element's geometry cannot be read from outside in Slint, so each chip
+    /// reports what it measured. Unhandled by the wrapping rows.
+    callback measured(length);
+
+    height: 20px;
+    // From the label, explicitly: a component's own `preferred-width` came out
+    // as zero here, which stacked every chip of a row on top of the others.
+    width: label.preferred-width + 16px;
+    border-radius: 999px;
+    background: !root.chip.selected ? (touch.pressed ? Theme.surface-2
+            : touch.has-hover ? Theme.surface-1 : transparent)
+        : root.chip.accent == "fabric" ? Theme.yellow
+        : root.chip.accent == "forge" ? Theme.blue
+        : root.chip.accent == "neoforge" ? Theme.peach
+        : root.chip.accent == "quilt" ? Theme.mauve
+        : root.chip.accent == "minecraft-version" ? Theme.green
+        : root.chip.accent == "favorites" ? Theme.yellow
+        : Theme.lavender;
+
+    label := Text {
+        width: self.preferred-width;
+        // A chip whose label comes from a table is resolved here rather than in
+        // Rust, so it follows a language change.
+        text: root.chip.translated
+            ? ContentText.chip-label(ContentState.remote-kind, ContentState.source, root.chip.label-key)
+            : root.chip.text;
+        font-size: 12px;
+        x: 8px;
+        y: (parent.height - self.height) / 2;
+        color: root.chip.selected ? Theme.text-inverse : Theme.default-text-color.transparentize(0.1);
+    }
+
+    touch := TouchArea {
+        clicked => { ContentSearch.chip-clicked(root.chip.value); }
+    }
+
+    // `changed` does not fire for the value an element is created with, hence
+    // both.
+    init => { root.measured(root.width); }
+    changed width => { root.measured(root.width); }
+}
+component VersionCarousel inherits Rectangle {
+    in property <[FilterChip]> chips: [];
+
+    height: 26px;
+    background: transparent;
+
+    private property <int> page: ContentSearch.version-page;
+
+    HorizontalLayout {
+        spacing: 6px;
+        // The Vue's `.filter-chips.paged { align-items: center }` — the *cross*
+        // axis. It must not be `alignment`, which is the main axis: a main-axis
+        // alignment other than the default `stretch` makes the layout hand every
+        // child its preferred width and drop its `horizontal-stretch`, which
+        // collapses the viewport below to zero (see the Slint notes in
+        // `slint/README.md`).
+        cross-axis-alignment: center;
+
+        ChipPager {
+            flipped: true;
+            disabled: root.page <= 0;
+            clicked => { ContentSearch.version-page-prev(); }
+        }
+
+        // `.filter-chips-track { flex: 1; min-width: 0; overflow: hidden }`
+        viewport := Rectangle {
+            horizontal-stretch: 1;
+            height: parent.height;
+            clip: true;
+            background: transparent;
+
+            // `.filter-chips-track-inner { width: max-content; transform:
+            // translateX(offset) }`, with `transition: transform 240ms ease`.
+            // The whole track is drawn and the viewport clips it, exactly as the
+            // Vue does — which is why more than one page's worth of chips shows
+            // at once. Rust computes the offset from the widths the chips report
+            // (`ContentSearch.chip-measured`), because `chips[page * 6]
+            // .offsetLeft` is not readable here.
+            //
+            // A layout child's own `x` belongs to its layout, so this is a plain
+            // `Rectangle` holding the track: it is the thing that moves.
+            track := HorizontalLayout {
+                x: -ContentSearch.version-offset;
+                y: 0;
+                width: self.preferred-width;
+                height: parent.height;
+                spacing: 6px;
+                cross-axis-alignment: center;
+
+                for chip in root.chips : FilterChipView {
+                    chip: chip;
+                    measured(width) => { ContentSearch.chip-measured(chip.value, width); }
+                }
+
+                // `.filter-chips-track-inner { transition: transform 240ms ease }`
+                // — declared in the element that owns the property; an `animate`
+                // cannot reach into a sibling.
+                animate x {
+                    duration: 240ms;
+                    easing: ease-out-quad;
+                }
+            }
+        }
+
+
+        ChipPager {
+            disabled: root.page >= max(0, ContentSearch.version-page-count - 1);
+            clicked => { ContentSearch.version-page-next(); }
+        }
+    }
+}
+
+// The remote lists' search + filter header (`ContentSearchPanel.vue`).
+//
+// A translucent crust panel with a 36px search field and a button beside it,
+// then one row per filter: a 52px label and a run of pill chips. The loader and
+// category rows wrap; the version row is the paginated one and does not.
+//
+// The wrapping rows are a `FlexboxLayout` with `flex-wrap: wrap` — Slint's
+// equivalent of the Vue's `flex-wrap: wrap`. (The plain `HorizontalLayout` used
+// everywhere else in this app never wraps.)
+//
+// The version row is where the Vue measures the DOM: it reads
+// `chips[page * 6].offsetLeft` and translates the track by its negative, with a
+// 240ms ease. Slint cannot read a repeated element's geometry from outside, and
+// an id inside a `for` is deliberately unreachable — but each chip can *report*
+// the width it measured, and the offset is the sum of the ones before the page.
+// That is what makes the same track-and-clip arrangement possible here.
+// `.filter-chip` — a 20px pill. Its `accent` picks the selected fill.
+// `.chip-pager` — a 26px round arrow button.
+// The version row's carousel: a pager, the whole track in a clipped viewport,
+// and a pager.
+// One `.filter-row`: the label, then either the chip carousel or a wrapping
+// run of chips.
+component FilterRowView inherits Rectangle {
+    in property <FilterRow> row-data;
+    in property <bool> is-version-row: false;
+
+    width: 100%;
+    height: self.preferred-height;
+    background: transparent;
+
+    HorizontalLayout {
+        spacing: 10px;
+        // The Vue's `.filter-row { align-items: start }` — the *cross* axis, so
+        // `cross-axis-alignment`, not `alignment`. A main-axis alignment other
+        // than the default `stretch` hands every child its preferred width and
+        // ignores `horizontal-stretch`: with `alignment: start` here the chip run
+        // wrapped into a roughly square block and the version carousel collapsed
+        // to nothing (see the Slint notes in `slint/README.md`).
+        cross-axis-alignment: start;
+
+        Text {
+            // `.filter-label { min-width: 52px; line-height: 20px; font-size: 12px }`
+            text: ContentText.row-label(root.row-data.label);
+            font-size: 12px;
+            color: Theme.subtext-0;
+            min-width: 52px;
+            horizontal-alignment: left;
+            // `line-height: 20px` centres the 12px text in the 20px line box.
+            vertical-alignment: center;
+            height: 20px;
+        }
+
+        if root.is-version-row : VersionCarousel {
+            horizontal-stretch: 1;
+            // The row's own chips are empty: the carousel draws the whole track,
+            // which is not a page's worth and therefore not what a `FilterRow`
+            // carries.
+            chips: ContentSearch.version-chips;
+        }
+
+        if !root.is-version-row : FlexboxLayout {
+            horizontal-stretch: 1;
+            flex-wrap: wrap;
+            spacing: 6px;
+
+            for chip in root.row-data.chips : FilterChipView {
+                chip: chip;
+            }
+        }
+    }
+}
+export component ContentSearchPanel inherits Rectangle {
+    width: 100%;
+    height: self.preferred-height;
+    // `.search-panel { background: rgba(var(--ctp-crust-rgb), .92) }` — the
+    // Vue also asks for `backdrop-filter: blur(4px)`, which Slint has no
+    // equivalent for, so the panel stays translucent without the blur (the
+    // same trade the game view's toolbar and footer make).
+    background: Theme.crust.with-alpha(0.92);
+
+    VerticalLayout {
+        padding: 24px;
+        spacing: 16px;
+
+        // ----- the search bar -----
+        HorizontalLayout {
+            height: 36px;
+            spacing: 8px;
+
+            search-field := Rectangle {
+                horizontal-stretch: 1;
+                height: 36px;
+                border-radius: 8px;
+                // `&:hover { background: var(--ctp-surface1) }`
+                background: field-touch.has-hover ? Theme.surface-1 : Theme.surface-0;
+
+                input := TextInput {
+                    x: 12px;
+                    y: 0;
+                    width: parent.width - 24px;
+                    height: parent.height;
+                    text <=> ContentSearch.query;
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    selection-background-color: Theme.default-text-color.with-alpha(0.3);
+                    selection-foreground-color: Theme.default-text-color;
+                    single-line: true;
+                    vertical-alignment: center;
+                    // The Vue commits on Enter (`@keyup.enter`); the input
+                    // itself is bound to the model as it is typed.
+                    accepted => { ContentSearch.search(); }
+                }
+
+                if ContentSearch.query == "" : Text {
+                    text: ContentText.search-placeholder(ContentState.remote-kind);
+                    font-size: 13px;
+                    // `&::placeholder { color: var(--ctp-subtext0) }`
+                    color: Theme.subtext-0;
+                    x: 12px;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                field-touch := TouchArea {
+                    // The field has no border in the Vue (`border: none` wins
+                    // over the 1px surface1 above it), only the hover fill.
+                }
+            }
+
+            search-button := Rectangle {
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                background: button-touch.pressed ? Theme.lavender
+                    : button-touch.has-hover ? Theme.surface-1
+                    : Theme.surface-0;
+
+                AppIcon {
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                    name: "search";
+                    size: 16px;
+                    // `&:active { color: var(--ctp-text-inverse) }`
+                    icon-color: button-touch.pressed
+                        ? Theme.text-inverse
+                        : Theme.default-text-color.transparentize(0.1);
+                }
+
+                button-touch := TouchArea {
+                    clicked => { ContentSearch.search(); }
+                }
+            }
+        }
+
+        // ----- the filter rows -----
+        VerticalLayout {
+            spacing: 8px;
+
+            for filter-row[index] in ContentSearch.filters : FilterRowView {
+                row-data: filter-row;
+                is-version-row: index == ContentSearch.version-row;
+            }
+        }
+    }
+}

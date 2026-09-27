@@ -1247,6 +1247,7 @@ msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
 
+
 #: ui
 msgctxt "Multiplayer"
 msgid "Close"
@@ -1431,3 +1432,412 @@ msgstr "Conic Nexus 크로스 LAN 멀티플레이"
 msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "네트워크 환경: {0}"
+
+msgctxt "ContentModsPanel"
+msgid "Mods list"
+msgstr "모드"
+
+msgctxt "ContentModsPanel"
+msgid "Consider downloading some mods from the internet"
+msgstr "인터넷에서 모드를 다운로드해 보세요"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Resource packs list"
+msgstr "리소스 팩"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Consider downloading some resource packs from the internet"
+msgstr "인터넷에서 리소스 팩을 다운로드해 보세요"
+
+msgctxt "ContentPacksPanel"
+msgid "Modpacks list"
+msgstr "모드팩"
+
+msgctxt "ContentSavesPanel"
+msgid "Saves list"
+msgstr "월드"
+
+msgctxt "ContentSavesPanel"
+msgid "Consider launching the game and creating some saves"
+msgstr "게임을 실행하여 월드를 만들어 보세요"
+
+msgctxt "ContentScreenshotsPanel"
+msgid "Loading…"
+msgstr "불러오는 중..."
+
+msgctxt "ContentScreenshotsPanel"
+msgid "No screenshots yet"
+msgstr "스크린샷이 없습니다"
+
+msgctxt "ContentNotFound"
+msgid "No matching results for this view's filters"
+msgstr "현재 필터와 일치하는 결과가 없습니다"
+
+msgctxt "RemoteListView"
+msgid "Try changing the keywords or filters and searching again"
+msgstr "키워드나 필터를 조정한 후 다시 검색해 보세요"
+
+msgctxt "DetailBody"
+msgid "Download"
+msgstr "다운로드"
+
+msgctxt "DetailBody"
+msgid "Remove"
+msgstr "삭제"
+
+msgctxt "DetailBody"
+msgid "Installed: {}"
+msgstr "설치됨: {}"
+
+msgctxt "ContentText"
+msgid "Favorites"
+msgstr "즐겨찾기"
+
+msgctxt "ContentText"
+msgid "Loader"
+msgstr "로더"
+
+msgctxt "ContentText"
+msgid "Version"
+msgstr "버전"
+
+msgctxt "ContentText"
+msgid "Category"
+msgstr "카테고리"
+
+msgctxt "ContentText"
+msgid "Mod info"
+msgstr "모드 정보"
+
+msgctxt "ContentText"
+msgid "Resource pack info"
+msgstr "리소스 팩 정보"
+
+msgctxt "ContentText"
+msgid "Modpack info"
+msgstr "모드팩 정보"
+
+msgctxt "ContentText"
+msgid "Search mods…"
+msgstr "모드 검색..."
+
+msgctxt "ContentText"
+msgid "Search resource packs…"
+msgstr "리소스 팩 검색..."
+
+msgctxt "ContentText"
+msgid "Search modpacks…"
+msgstr "모드팩 검색..."
+
+msgctxt "ContentText"
+msgid "Last played: "
+msgstr "마지막 플레이: "
+
+msgctxt "ContentText"
+msgid "Adventure & RPG"
+msgstr "모험 & RPG"
+
+msgctxt "ContentText"
+msgid "Armor, Tools & Weapons"
+msgstr "방어구, 도구 & 무기"
+
+msgctxt "ContentText"
+msgid "World Generation"
+msgstr "월드 생성"
+
+msgctxt "ContentText"
+msgid "Technology"
+msgstr "기술"
+
+msgctxt "ContentText"
+msgid "Magic"
+msgstr "마법"
+
+msgctxt "ContentText"
+msgid "Storage"
+msgstr "저장"
+
+msgctxt "ContentText"
+msgid "Library & API"
+msgstr "라이브러리 & API"
+
+msgctxt "ContentText"
+msgid "Maps & Info"
+msgstr "지도 & 정보"
+
+msgctxt "ContentText"
+msgid "Utility & QoL"
+msgstr "유틸리티 & 편의 기능"
+
+msgctxt "ContentText"
+msgid "Server Utility"
+msgstr "서버 유틸리티"
+
+msgctxt "ContentText"
+msgid "Food"
+msgstr "음식"
+
+msgctxt "ContentText"
+msgid "Performance"
+msgstr "성능 최적화"
+
+msgctxt "ContentText"
+msgid "Bug Fixes"
+msgstr "버그 수정"
+
+msgctxt "ContentText"
+msgid "Redstone"
+msgstr "레드스톤"
+
+msgctxt "ContentText"
+msgid "Cosmetic"
+msgstr "코스메틱"
+
+msgctxt "ContentText"
+msgid "Miscellaneous"
+msgstr "기타"
+
+msgctxt "ContentText"
+msgid "Adventure"
+msgstr "모험"
+
+msgctxt "ContentText"
+msgid "Cursed"
+msgstr "저주받은"
+
+msgctxt "ContentText"
+msgid "Decoration"
+msgstr "장식"
+
+msgctxt "ContentText"
+msgid "Economy"
+msgstr "경제"
+
+msgctxt "ContentText"
+msgid "Equipment"
+msgstr "장비"
+
+msgctxt "ContentText"
+msgid "Game Mechanics"
+msgstr "게임 메커니즘"
+
+msgctxt "ContentText"
+msgid "Library"
+msgstr "라이브러리"
+
+msgctxt "ContentText"
+msgid "Management"
+msgstr "관리"
+
+msgctxt "ContentText"
+msgid "Minigame"
+msgstr "미니게임"
+
+msgctxt "ContentText"
+msgid "Mobs"
+msgstr "몹"
+
+msgctxt "ContentText"
+msgid "Optimization"
+msgstr "최적화"
+
+msgctxt "ContentText"
+msgid "Social"
+msgstr "소셜"
+
+msgctxt "ContentText"
+msgid "Transportation"
+msgstr "이동수단"
+
+msgctxt "ContentText"
+msgid "Utility"
+msgstr "유틸리티"
+
+msgctxt "ContentText"
+msgid "Crafted"
+msgstr "수공예풍"
+
+msgctxt "ContentText"
+msgid "Photorealistic"
+msgstr "사실적인"
+
+msgctxt "ContentText"
+msgid "Semi-Realistic"
+msgstr "준사실적인"
+
+msgctxt "ContentText"
+msgid "Simple"
+msgstr "심플한"
+
+msgctxt "ContentText"
+msgid "Traditional"
+msgstr "전통적인"
+
+msgctxt "ContentText"
+msgid "Animated"
+msgstr "애니메이션"
+
+msgctxt "ContentText"
+msgid "Modern"
+msgstr "모던한"
+
+msgctxt "ContentText"
+msgid "Themed"
+msgstr "테마 기반"
+
+msgctxt "ContentText"
+msgid "Mod Support"
+msgstr "모드 지원"
+
+msgctxt "ContentText"
+msgid "RPG"
+msgstr "RPG"
+
+msgctxt "ContentText"
+msgid "Gameplay"
+msgstr "게임플레이"
+
+msgctxt "ContentText"
+msgid "GUI"
+msgstr "GUI"
+
+msgctxt "ContentText"
+msgid "Sound"
+msgstr "사운드"
+
+msgctxt "ContentText"
+msgid "Environment"
+msgstr "환경"
+
+msgctxt "ContentText"
+msgid "Blocks"
+msgstr "블록"
+
+msgctxt "ContentText"
+msgid "Items"
+msgstr "아이템"
+
+msgctxt "ContentText"
+msgid "Weather"
+msgstr "날씨"
+
+msgctxt "ContentText"
+msgid "16x"
+msgstr "16x"
+
+msgctxt "ContentText"
+msgid "32x"
+msgstr "32x"
+
+msgctxt "ContentText"
+msgid "64x"
+msgstr "64x"
+
+msgctxt "ContentText"
+msgid "128x"
+msgstr "128x"
+
+msgctxt "ContentText"
+msgid "256x"
+msgstr "256x"
+
+msgctxt "ContentText"
+msgid "Faithful"
+msgstr "Faithful"
+
+msgctxt "ContentText"
+msgid "Classic"
+msgstr "클래식"
+
+msgctxt "ContentText"
+msgid "Dark"
+msgstr "다크"
+
+msgctxt "ContentText"
+msgid "Medieval"
+msgstr "중세"
+
+msgctxt "ContentText"
+msgid "Anime"
+msgstr "애니메"
+
+msgctxt "ContentText"
+msgid "Cartoon"
+msgstr "카툰"
+
+msgctxt "ContentText"
+msgid "Pixel Art"
+msgstr "픽셀 아트"
+
+msgctxt "ContentText"
+msgid "Vanilla Plus"
+msgstr "Vanilla Plus"
+
+msgctxt "ContentText"
+msgid "Other"
+msgstr "기타"
+
+msgctxt "ContentText"
+msgid "Sci-Fi"
+msgstr "SF"
+
+msgctxt "ContentText"
+msgid "Exploration"
+msgstr "탐험"
+
+msgctxt "ContentText"
+msgid "Quests"
+msgstr "퀘스트"
+
+msgctxt "ContentText"
+msgid "Hardcore"
+msgstr "하드코어"
+
+msgctxt "ContentText"
+msgid "Map-Based"
+msgstr "맵 기반"
+
+msgctxt "ContentText"
+msgid "Lightweight"
+msgstr "경량"
+
+msgctxt "ContentText"
+msgid "Extra Large"
+msgstr "초대형"
+
+msgctxt "ContentText"
+msgid "Combat PvP"
+msgstr "전투/PvP"
+
+msgctxt "ContentText"
+msgid "Multiplayer"
+msgstr "멀티플레이어"
+
+msgctxt "ContentText"
+msgid "FTB Modpacks"
+msgstr "FTB 모드팩"
+
+msgctxt "ContentText"
+msgid "Skyblock"
+msgstr "스카이블럭"
+
+msgctxt "ContentText"
+msgid "Horror"
+msgstr "호러"
+
+msgctxt "ContentText"
+msgid "Expert"
+msgstr "전문가용"
+
+msgctxt "ContentText"
+msgid "Challenging"
+msgstr "도전적"
+
+msgctxt "ContentText"
+msgid "Combat"
+msgstr "전투"
+
+msgctxt "ContentText"
+msgid "Kitchen Sink"
+msgstr "키친 싱크"
+

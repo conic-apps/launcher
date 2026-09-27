@@ -1,0 +1,171 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { BaseLoading } from "../../components/base-loading.slint";
+
+// The "nothing here" placeholder (`ContentNotFound.vue`), drawn over an empty
+// grid, and the spinner block the list views show instead of their grid while
+// the first response is on its way (`.search-status`).
+//
+// The Vue wraps the placeholder in a `<Transition>`: 350ms in on
+// `cubic-bezier(.34, 1.56, .64, 1)` — a slight overshoot — and 250ms out on
+// `cubic-bezier(.215, .61, .355, 1)`, both scaling from 0.9, so it springs open
+// rather than appearing. A newly created element never plays an `animate`
+// (its first evaluation takes the not-animating branch), which is why this
+// shows itself for one frame at the rest values first, exactly like
+// `BaseDialog` and `DescriptionTooltip` do.
+export component ContentNotFound inherits Rectangle {
+    /// The Vue's `show` prop.
+    in property <bool> show: false;
+    /// The second line, which the Vue only draws when it is given one.
+    in property <string> description: "";
+    /// The block it occupies. A definite height rather than `100%` or a
+    /// measured one: it is a child of a column, and a component whose height is
+    /// measured collapses to nothing there (see the note in `panels.slint`).
+    in property <length> block-height: 150px;
+
+    width: 100%;
+    height: block-height;
+    background: transparent;
+
+    // "closed" | "starting" | "shown" | "leaving"
+    private property <string> phase: "closed";
+    visible: root.phase != "closed";
+    // The Vue's overlay is `pointer-events: none` — it sits over the grid
+    // without swallowing its clicks.
+    private property <float> reveal: root.phase == "shown" ? 1.0 : 0.0;
+    private property <float> spring: root.phase == "shown" ? 1.0 : 0.9;
+
+    changed show => {
+        if root.show {
+            if root.phase == "closed" {
+                root.phase = "starting";
+                start-timer.restart();
+            } else {
+                root.phase = "shown";
+            }
+        } else if root.phase != "closed" && root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    // The longer of the leave's two tracks.
+    leave-timer := Timer {
+        interval: 260ms;
+        running: root.phase == "leaving";
+        triggered => { root.phase = "closed"; }
+    }
+
+    init => {
+        if root.show {
+            root.phase = "shown";
+        }
+    }
+
+    animate reveal {
+        duration: root.phase == "shown" ? 350ms : 250ms;
+        easing: root.phase == "shown"
+            ? cubic-bezier(0.34, 1.56, 0.64, 1)
+            : cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+
+    animate spring {
+        duration: root.phase == "shown" ? 350ms : 250ms;
+        easing: root.phase == "shown"
+            ? cubic-bezier(0.34, 1.56, 0.64, 1)
+            : cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+
+    body := Rectangle {
+        // `.content-placeholder { right: 320px; width: 380px; height: fit-content }`
+        // — centred in the grid area the instance list leaves free, which is
+        // what the `right: 320px` offset comes to on an 840px-wide window.
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        width: 380px;
+        height: self.preferred-height;
+        background: transparent;
+        opacity: root.reveal;
+        transform-scale: root.spring;
+
+        VerticalLayout {
+            spacing: 0px;
+
+            // A wrapper rather than an alignment on the icon: cell alignment
+            // is a property of native elements, not of a component.
+            Rectangle {
+                height: 64px;
+                background: transparent;
+
+                AppIcon {
+                    x: (parent.width - self.width) / 2;
+                    y: 0;
+                    name: "about";
+                    size: 64px;
+                }
+            }
+
+            Text {
+                // `.message { font-size: 16px; margin-top: 12px }`
+                text: @tr("No matching results for this view's filters");
+                font-size: 16px;
+                color: Theme.default-text-color.transparentize(0.1);
+                horizontal-alignment: center;
+                height: 16px;
+            }
+
+            if root.description != "" : Text {
+                // `.desc { font-size: 12px; margin-top: 12px }`
+                text: root.description;
+                font-size: 12px;
+                color: Theme.default-text-color.transparentize(0.1);
+                horizontal-alignment: center;
+                wrap: word-wrap;
+                height: 24px;
+            }
+        }
+    }
+}
+
+// The spinner block the list views draw while the first response is in flight
+// (`.search-status` + `.loading`): a 32px spinner in a padded mantle box.
+export component ContentLoading inherits Rectangle {
+    /// `.search-status { padding: 40px 0 }` around the 64px spinner box.
+    width: 100%;
+    height: 144px;
+    background: transparent;
+
+    VerticalLayout {
+        width: 100%;
+        padding-top: 40px;
+        padding-bottom: 40px;
+        // `.search-status { justify-content: center }` is the *main* axis of a
+        // flex row — the horizontal one here — so the mark is centred across the
+        // panel. `alignment` would centre it down the column instead and leave
+        // it against the left edge, which is where it was drawn.
+        cross-axis-alignment: center;
+
+        Rectangle {
+            width: 64px;
+            height: 64px;
+            background: Theme.mantle;
+            border-radius: 8px;
+
+            BaseLoading {
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                size: 32px;
+                stroke-width: 4;
+            }
+        }
+    }
+}

@@ -1,0 +1,79 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { ContentState } from "../../globals/content.slint";
+import { ContentOverlay } from "content-overlay.slint";
+import {
+    ContentModsPanel,
+    ContentResourcepacksPanel,
+    ContentPacksPanel,
+    ContentSavesPanel,
+    ContentScreenshotsPanel,
+} from "panels.slint";
+import { DetailPanels } from "details.slint";
+
+// The content overlay layer. `GameView` mounts it — the Vue mounts every
+// `.game-content-wrapper` inside `GameView.vue` too, so the panels sit below
+// the title bar and inside the screen that opens them.
+//
+// The four list panels share one overlay: only one of them is ever open, and
+// they are switched by `visible` rather than by `if` so a panel that is closed
+// and reopened keeps its scroll position. A closed panel is invisible, and
+// Slint's layout skips an invisible child, so the open one fills the container.
+//
+// The detail overlay is drawn *after* it, so a detail panel covers the list it
+// was opened from — the same ordering the Vue gets from its DOM order, and what
+// leaves the list underneath untouched when the detail closes.
+export component ContentRoot inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    list-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel != ""
+            && ContentState.open-panel != "screenshots";
+        closed => { ContentState.close(); }
+
+        ContentSavesPanel {
+            panel-width: list-overlay.panel-width;
+            panel-height: list-overlay.panel-height;
+            visible: ContentState.open-panel == "saves";
+        }
+
+        ContentModsPanel {
+            panel-width: list-overlay.panel-width;
+            panel-height: list-overlay.panel-height;
+            visible: ContentState.open-panel == "mods";
+        }
+
+        ContentResourcepacksPanel {
+            panel-width: list-overlay.panel-width;
+            panel-height: list-overlay.panel-height;
+            visible: ContentState.open-panel == "resourcepacks";
+        }
+
+        ContentPacksPanel {
+            panel-width: list-overlay.panel-width;
+            panel-height: list-overlay.panel-height;
+            visible: ContentState.open-panel == "packs";
+        }
+    }
+
+    screenshots-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel == "screenshots";
+        // The Vue mounts the screenshots viewer without the sliding container,
+        // so it spans the window and only the scrim fades.
+        slide: false;
+        panel-inset: 0px;
+        panel-background: transparent;
+        closed => { ContentState.close(); }
+
+        ContentScreenshotsPanel {
+            panel-width: screenshots-overlay.panel-width;
+            panel-height: screenshots-overlay.panel-height;
+        }
+    }
+
+    DetailPanels { }
+}

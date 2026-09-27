@@ -1,0 +1,137 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { PageButton } from "../../globals/content.slint";
+component PageNumber inherits Rectangle {
+    in property <string> label: "";
+    in property <bool> active: false;
+    callback clicked;
+
+    width: max(30px, self.preferred-width);
+    height: 30px;
+    border-width: 1px;
+    // `.active { border-color: var(--ctp-lavender); background: var(--ctp-lavender) }`
+    border-color: root.active ? Theme.lavender : Theme.surface-1;
+    border-radius: 6px;
+    background: root.active ? Theme.lavender
+        : touch.pressed || touch.has-hover ? Theme.surface-2
+        : Theme.surface-0;
+
+    Text {
+        text: root.label;
+        font-size: 12px;
+        color: root.active ? Theme.text-inverse : Theme.default-text-color.transparentize(0.1);
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        width: parent.width;
+        height: parent.height;
+    }
+
+    touch := TouchArea {
+        // `.active { pointer-events: none }`
+        enabled: !root.active;
+        clicked => { root.clicked(); }
+    }
+}
+
+// The remote lists' page bar (`ContentPagination.vue`), drawn only when there
+// is more than one page.
+//
+// 30px-tall buttons in a centred row with a 6px gap and `20px 0 32px` padding;
+// the current page takes the lavender fill and stops taking clicks, an
+// ellipsis is a plain label in the same slot, and the two arrows are disabled
+// at the ends.
+// `button.page-number`, and the lavender `.active` state.
+// `button.page-nav` — a chevron in a 30px square, the left one mirrored.
+component ArrowButton inherits Rectangle {
+    in property <bool> flipped: false;
+    in property <bool> disabled: false;
+    callback clicked;
+
+    width: 30px;
+    height: 30px;
+    border-width: 1px;
+    border-color: Theme.surface-1;
+    border-radius: 6px;
+    background: touch.pressed && !root.disabled ? Theme.surface-2
+        : touch.has-hover && !root.disabled ? Theme.surface-2
+        : Theme.surface-0;
+    opacity: root.disabled ? 0.4 : 1.0;
+
+    AppIcon {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        name: "chevron-forward";
+        size: 12px;
+        icon-color: Theme.default-text-color.transparentize(0.1);
+        transform-rotation: root.flipped ? 180deg : 0deg;
+        transform-origin: { x: self.width / 2, y: self.height / 2 };
+    }
+
+    touch := TouchArea {
+        enabled: !root.disabled;
+        clicked => { root.clicked(); }
+    }
+}
+export component ContentPagination inherits Rectangle {
+    in property <[PageButton]> pages: [];
+    in property <int> current-page: 1;
+    in property <int> total-pages: 0;
+
+    callback page-change(int);
+
+    width: 100%;
+    height: self.preferred-height;
+    background: transparent;
+
+    HorizontalLayout {
+        padding-top: 20px;
+        padding-bottom: 32px;
+        spacing: 6px;
+        alignment: center;
+
+        ArrowButton {
+            flipped: true;
+            disabled: root.current-page <= 1;
+            clicked => { root.page-change(root.current-page - 1); }
+        }
+
+        for page in root.pages : Rectangle {
+            // `.pagination button, .page-ellipsis { min-width: 30px }` — and 30px
+            // is what every slot comes to in practice, since a page button has no
+            // horizontal padding and its number is a few characters wide. It has
+            // to be given rather than measured: both of this wrapper's children
+            // are conditionals, and Slint measures such an element as zero (see
+            // the Slint notes in `slint/README.md`), which stacked every number
+            // on top of the first.
+            width: 30px;
+            height: 30px;
+            background: transparent;
+
+            if page.page < 0 : Text {
+                // `.page-ellipsis` — a label in a page button's slot.
+                text: page.text;
+                font-size: 12px;
+                color: Theme.subtext-0;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                width: 30px;
+                height: 30px;
+            }
+
+            if page.page >= 0 : PageNumber {
+                label: page.text;
+                active: page.page == root.current-page;
+                clicked => { root.page-change(page.page); }
+            }
+        }
+
+        ArrowButton {
+            disabled: root.current-page >= root.total-pages;
+            clicked => { root.page-change(root.current-page + 1); }
+        }
+    }
+}

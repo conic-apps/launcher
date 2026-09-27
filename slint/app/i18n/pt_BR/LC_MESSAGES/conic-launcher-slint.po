@@ -1247,6 +1247,7 @@ msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
 
+
 #: ui
 msgctxt "Multiplayer"
 msgid "Close"
@@ -1431,3 +1432,412 @@ msgstr "Multijogador em LAN do Conic Nexus"
 msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "Seu ambiente de rede: {0}"
+
+msgctxt "ContentModsPanel"
+msgid "Mods list"
+msgstr "Mods"
+
+msgctxt "ContentModsPanel"
+msgid "Consider downloading some mods from the internet"
+msgstr "Considere baixar alguns mods da internet"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Resource packs list"
+msgstr "Pacotes de recursos"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Consider downloading some resource packs from the internet"
+msgstr "Considere baixar alguns pacotes de recursos da internet"
+
+msgctxt "ContentPacksPanel"
+msgid "Modpacks list"
+msgstr "Modpacks"
+
+msgctxt "ContentSavesPanel"
+msgid "Saves list"
+msgstr "Mundos"
+
+msgctxt "ContentSavesPanel"
+msgid "Consider launching the game and creating some saves"
+msgstr "Considere abrir o jogo e criar alguns mundos"
+
+msgctxt "ContentScreenshotsPanel"
+msgid "Loading…"
+msgstr "Carregando..."
+
+msgctxt "ContentScreenshotsPanel"
+msgid "No screenshots yet"
+msgstr "Nenhuma captura de tela"
+
+msgctxt "ContentNotFound"
+msgid "No matching results for this view's filters"
+msgstr "Nenhum resultado corresponde ao filtro atual"
+
+msgctxt "RemoteListView"
+msgid "Try changing the keywords or filters and searching again"
+msgstr "Tente ajustar as palavras-chave ou os filtros e pesquise novamente"
+
+msgctxt "DetailBody"
+msgid "Download"
+msgstr "Baixar"
+
+msgctxt "DetailBody"
+msgid "Remove"
+msgstr "Remover"
+
+msgctxt "DetailBody"
+msgid "Installed: {}"
+msgstr "Instalado: {}"
+
+msgctxt "ContentText"
+msgid "Favorites"
+msgstr "Favoritos"
+
+msgctxt "ContentText"
+msgid "Loader"
+msgstr "Loader"
+
+msgctxt "ContentText"
+msgid "Version"
+msgstr "Versão"
+
+msgctxt "ContentText"
+msgid "Category"
+msgstr "Categoria"
+
+msgctxt "ContentText"
+msgid "Mod info"
+msgstr "Informações do mod"
+
+msgctxt "ContentText"
+msgid "Resource pack info"
+msgstr "Informações do pacote de recursos"
+
+msgctxt "ContentText"
+msgid "Modpack info"
+msgstr "Informações do modpack"
+
+msgctxt "ContentText"
+msgid "Search mods…"
+msgstr "Pesquisar mods..."
+
+msgctxt "ContentText"
+msgid "Search resource packs…"
+msgstr "Pesquisar pacotes de recursos..."
+
+msgctxt "ContentText"
+msgid "Search modpacks…"
+msgstr "Pesquisar modpacks..."
+
+msgctxt "ContentText"
+msgid "Last played: "
+msgstr "Última partida: "
+
+msgctxt "ContentText"
+msgid "Adventure & RPG"
+msgstr "Aventura e RPG"
+
+msgctxt "ContentText"
+msgid "Armor, Tools & Weapons"
+msgstr "Armaduras, ferramentas e armas"
+
+msgctxt "ContentText"
+msgid "World Generation"
+msgstr "Geração de mundo"
+
+msgctxt "ContentText"
+msgid "Technology"
+msgstr "Tecnologia"
+
+msgctxt "ContentText"
+msgid "Magic"
+msgstr "Magia"
+
+msgctxt "ContentText"
+msgid "Storage"
+msgstr "Armazenamento"
+
+msgctxt "ContentText"
+msgid "Library & API"
+msgstr "Biblioteca e API"
+
+msgctxt "ContentText"
+msgid "Maps & Info"
+msgstr "Mapas e informações"
+
+msgctxt "ContentText"
+msgid "Utility & QoL"
+msgstr "Utilidade e QoL"
+
+msgctxt "ContentText"
+msgid "Server Utility"
+msgstr "Utilidades para servidor"
+
+msgctxt "ContentText"
+msgid "Food"
+msgstr "Comida"
+
+msgctxt "ContentText"
+msgid "Performance"
+msgstr "Desempenho"
+
+msgctxt "ContentText"
+msgid "Bug Fixes"
+msgstr "Correção de bugs"
+
+msgctxt "ContentText"
+msgid "Redstone"
+msgstr "Redstone"
+
+msgctxt "ContentText"
+msgid "Cosmetic"
+msgstr "Cosmético"
+
+msgctxt "ContentText"
+msgid "Miscellaneous"
+msgstr "Diversos"
+
+msgctxt "ContentText"
+msgid "Adventure"
+msgstr "Aventura"
+
+msgctxt "ContentText"
+msgid "Cursed"
+msgstr "Amaldiçoado"
+
+msgctxt "ContentText"
+msgid "Decoration"
+msgstr "Decoração"
+
+msgctxt "ContentText"
+msgid "Economy"
+msgstr "Economia"
+
+msgctxt "ContentText"
+msgid "Equipment"
+msgstr "Equipamento"
+
+msgctxt "ContentText"
+msgid "Game Mechanics"
+msgstr "Mecânicas de jogo"
+
+msgctxt "ContentText"
+msgid "Library"
+msgstr "Biblioteca"
+
+msgctxt "ContentText"
+msgid "Management"
+msgstr "Gerenciamento"
+
+msgctxt "ContentText"
+msgid "Minigame"
+msgstr "Minigame"
+
+msgctxt "ContentText"
+msgid "Mobs"
+msgstr "Mobs"
+
+msgctxt "ContentText"
+msgid "Optimization"
+msgstr "Otimização"
+
+msgctxt "ContentText"
+msgid "Social"
+msgstr "Social"
+
+msgctxt "ContentText"
+msgid "Transportation"
+msgstr "Transporte"
+
+msgctxt "ContentText"
+msgid "Utility"
+msgstr "Utilidade"
+
+msgctxt "ContentText"
+msgid "Crafted"
+msgstr "Craftado"
+
+msgctxt "ContentText"
+msgid "Photorealistic"
+msgstr "Fotorrealista"
+
+msgctxt "ContentText"
+msgid "Semi-Realistic"
+msgstr "Semirrealista"
+
+msgctxt "ContentText"
+msgid "Simple"
+msgstr "Simples"
+
+msgctxt "ContentText"
+msgid "Traditional"
+msgstr "Tradicional"
+
+msgctxt "ContentText"
+msgid "Animated"
+msgstr "Animado"
+
+msgctxt "ContentText"
+msgid "Modern"
+msgstr "Moderno"
+
+msgctxt "ContentText"
+msgid "Themed"
+msgstr "Temático"
+
+msgctxt "ContentText"
+msgid "Mod Support"
+msgstr "Suporte a mods"
+
+msgctxt "ContentText"
+msgid "RPG"
+msgstr "RPG"
+
+msgctxt "ContentText"
+msgid "Gameplay"
+msgstr "Jogabilidade"
+
+msgctxt "ContentText"
+msgid "GUI"
+msgstr "GUI"
+
+msgctxt "ContentText"
+msgid "Sound"
+msgstr "Som"
+
+msgctxt "ContentText"
+msgid "Environment"
+msgstr "Ambiente"
+
+msgctxt "ContentText"
+msgid "Blocks"
+msgstr "Blocos"
+
+msgctxt "ContentText"
+msgid "Items"
+msgstr "Itens"
+
+msgctxt "ContentText"
+msgid "Weather"
+msgstr "Clima"
+
+msgctxt "ContentText"
+msgid "16x"
+msgstr "16x"
+
+msgctxt "ContentText"
+msgid "32x"
+msgstr "32x"
+
+msgctxt "ContentText"
+msgid "64x"
+msgstr "64x"
+
+msgctxt "ContentText"
+msgid "128x"
+msgstr "128x"
+
+msgctxt "ContentText"
+msgid "256x"
+msgstr "256x"
+
+msgctxt "ContentText"
+msgid "Faithful"
+msgstr "Faithful"
+
+msgctxt "ContentText"
+msgid "Classic"
+msgstr "Clássico"
+
+msgctxt "ContentText"
+msgid "Dark"
+msgstr "Escuro"
+
+msgctxt "ContentText"
+msgid "Medieval"
+msgstr "Medieval"
+
+msgctxt "ContentText"
+msgid "Anime"
+msgstr "Anime"
+
+msgctxt "ContentText"
+msgid "Cartoon"
+msgstr "Cartoon"
+
+msgctxt "ContentText"
+msgid "Pixel Art"
+msgstr "Pixel Art"
+
+msgctxt "ContentText"
+msgid "Vanilla Plus"
+msgstr "Vanilla Plus"
+
+msgctxt "ContentText"
+msgid "Other"
+msgstr "Outro"
+
+msgctxt "ContentText"
+msgid "Sci-Fi"
+msgstr "Ficção científica"
+
+msgctxt "ContentText"
+msgid "Exploration"
+msgstr "Exploração"
+
+msgctxt "ContentText"
+msgid "Quests"
+msgstr "Quests"
+
+msgctxt "ContentText"
+msgid "Hardcore"
+msgstr "Hardcore"
+
+msgctxt "ContentText"
+msgid "Map-Based"
+msgstr "Baseados em mapa"
+
+msgctxt "ContentText"
+msgid "Lightweight"
+msgstr "Leve"
+
+msgctxt "ContentText"
+msgid "Extra Large"
+msgstr "Extra grande"
+
+msgctxt "ContentText"
+msgid "Combat PvP"
+msgstr "Combate PvP"
+
+msgctxt "ContentText"
+msgid "Multiplayer"
+msgstr "Multijogador"
+
+msgctxt "ContentText"
+msgid "FTB Modpacks"
+msgstr "Modpacks FTB"
+
+msgctxt "ContentText"
+msgid "Skyblock"
+msgstr "Skyblock"
+
+msgctxt "ContentText"
+msgid "Horror"
+msgstr "Terror"
+
+msgctxt "ContentText"
+msgid "Expert"
+msgstr "Expert"
+
+msgctxt "ContentText"
+msgid "Challenging"
+msgstr "Desafiador"
+
+msgctxt "ContentText"
+msgid "Combat"
+msgstr "Combate"
+
+msgctxt "ContentText"
+msgid "Kitchen Sink"
+msgstr "Kitchen Sink"
+

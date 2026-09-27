@@ -1247,6 +1247,7 @@ msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
 
+
 #: ui
 msgctxt "Multiplayer"
 msgid "Close"
@@ -1431,3 +1432,412 @@ msgstr "Conic Nexus クロス LAN マルチプレイ"
 msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "あなたのネットワーク環境：{0}"
+
+msgctxt "ContentModsPanel"
+msgid "Mods list"
+msgstr "Mod"
+
+msgctxt "ContentModsPanel"
+msgid "Consider downloading some mods from the internet"
+msgstr "インターネットからModをダウンロードしてみましょう"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Resource packs list"
+msgstr "リソースパック"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Consider downloading some resource packs from the internet"
+msgstr "インターネットからリソースパックをダウンロードしてみましょう"
+
+msgctxt "ContentPacksPanel"
+msgid "Modpacks list"
+msgstr "Modpack"
+
+msgctxt "ContentSavesPanel"
+msgid "Saves list"
+msgstr "ワールド"
+
+msgctxt "ContentSavesPanel"
+msgid "Consider launching the game and creating some saves"
+msgstr "ゲームを起動してワールドを作成してみましょう"
+
+msgctxt "ContentScreenshotsPanel"
+msgid "Loading…"
+msgstr "読み込み中..."
+
+msgctxt "ContentScreenshotsPanel"
+msgid "No screenshots yet"
+msgstr "スクリーンショットがありません"
+
+msgctxt "ContentNotFound"
+msgid "No matching results for this view's filters"
+msgstr "現在のフィルターに一致する結果はありません"
+
+msgctxt "RemoteListView"
+msgid "Try changing the keywords or filters and searching again"
+msgstr "キーワードやフィルターを調整して、もう一度検索してください"
+
+msgctxt "DetailBody"
+msgid "Download"
+msgstr "ダウンロード"
+
+msgctxt "DetailBody"
+msgid "Remove"
+msgstr "削除"
+
+msgctxt "DetailBody"
+msgid "Installed: {}"
+msgstr "インストール済み：{}"
+
+msgctxt "ContentText"
+msgid "Favorites"
+msgstr "お気に入り"
+
+msgctxt "ContentText"
+msgid "Loader"
+msgstr "ローダー"
+
+msgctxt "ContentText"
+msgid "Version"
+msgstr "バージョン"
+
+msgctxt "ContentText"
+msgid "Category"
+msgstr "カテゴリ"
+
+msgctxt "ContentText"
+msgid "Mod info"
+msgstr "Mod情報"
+
+msgctxt "ContentText"
+msgid "Resource pack info"
+msgstr "リソースパック情報"
+
+msgctxt "ContentText"
+msgid "Modpack info"
+msgstr "Modpack情報"
+
+msgctxt "ContentText"
+msgid "Search mods…"
+msgstr "Modを検索..."
+
+msgctxt "ContentText"
+msgid "Search resource packs…"
+msgstr "リソースパックを検索..."
+
+msgctxt "ContentText"
+msgid "Search modpacks…"
+msgstr "Modpackを検索..."
+
+msgctxt "ContentText"
+msgid "Last played: "
+msgstr "最終プレイ: "
+
+msgctxt "ContentText"
+msgid "Adventure & RPG"
+msgstr "アドベンチャー & RPG"
+
+msgctxt "ContentText"
+msgid "Armor, Tools & Weapons"
+msgstr "防具・ツール・武器"
+
+msgctxt "ContentText"
+msgid "World Generation"
+msgstr "ワールド生成"
+
+msgctxt "ContentText"
+msgid "Technology"
+msgstr "テクノロジー"
+
+msgctxt "ContentText"
+msgid "Magic"
+msgstr "魔法"
+
+msgctxt "ContentText"
+msgid "Storage"
+msgstr "ストレージ"
+
+msgctxt "ContentText"
+msgid "Library & API"
+msgstr "ライブラリ & API"
+
+msgctxt "ContentText"
+msgid "Maps & Info"
+msgstr "地図・情報"
+
+msgctxt "ContentText"
+msgid "Utility & QoL"
+msgstr "ユーティリティ & QoL"
+
+msgctxt "ContentText"
+msgid "Server Utility"
+msgstr "サーバーユーティリティ"
+
+msgctxt "ContentText"
+msgid "Food"
+msgstr "食料"
+
+msgctxt "ContentText"
+msgid "Performance"
+msgstr "パフォーマンス"
+
+msgctxt "ContentText"
+msgid "Bug Fixes"
+msgstr "バグ修正"
+
+msgctxt "ContentText"
+msgid "Redstone"
+msgstr "レッドストーン"
+
+msgctxt "ContentText"
+msgid "Cosmetic"
+msgstr "装飾"
+
+msgctxt "ContentText"
+msgid "Miscellaneous"
+msgstr "その他"
+
+msgctxt "ContentText"
+msgid "Adventure"
+msgstr "アドベンチャー"
+
+msgctxt "ContentText"
+msgid "Cursed"
+msgstr "呪い"
+
+msgctxt "ContentText"
+msgid "Decoration"
+msgstr "装飾"
+
+msgctxt "ContentText"
+msgid "Economy"
+msgstr "経済"
+
+msgctxt "ContentText"
+msgid "Equipment"
+msgstr "装備"
+
+msgctxt "ContentText"
+msgid "Game Mechanics"
+msgstr "ゲームメカニクス"
+
+msgctxt "ContentText"
+msgid "Library"
+msgstr "ライブラリ"
+
+msgctxt "ContentText"
+msgid "Management"
+msgstr "管理"
+
+msgctxt "ContentText"
+msgid "Minigame"
+msgstr "ミニゲーム"
+
+msgctxt "ContentText"
+msgid "Mobs"
+msgstr "Mob"
+
+msgctxt "ContentText"
+msgid "Optimization"
+msgstr "最適化"
+
+msgctxt "ContentText"
+msgid "Social"
+msgstr "ソーシャル"
+
+msgctxt "ContentText"
+msgid "Transportation"
+msgstr "輸送"
+
+msgctxt "ContentText"
+msgid "Utility"
+msgstr "ユーティリティ"
+
+msgctxt "ContentText"
+msgid "Crafted"
+msgstr "クラフト風"
+
+msgctxt "ContentText"
+msgid "Photorealistic"
+msgstr "フォトリアル"
+
+msgctxt "ContentText"
+msgid "Semi-Realistic"
+msgstr "セミリアル"
+
+msgctxt "ContentText"
+msgid "Simple"
+msgstr "シンプル"
+
+msgctxt "ContentText"
+msgid "Traditional"
+msgstr "トラディショナル"
+
+msgctxt "ContentText"
+msgid "Animated"
+msgstr "アニメーション"
+
+msgctxt "ContentText"
+msgid "Modern"
+msgstr "モダン"
+
+msgctxt "ContentText"
+msgid "Themed"
+msgstr "テーマ"
+
+msgctxt "ContentText"
+msgid "Mod Support"
+msgstr "Mod対応"
+
+msgctxt "ContentText"
+msgid "RPG"
+msgstr "RPG"
+
+msgctxt "ContentText"
+msgid "Gameplay"
+msgstr "ゲームプレイ"
+
+msgctxt "ContentText"
+msgid "GUI"
+msgstr "GUI"
+
+msgctxt "ContentText"
+msgid "Sound"
+msgstr "サウンド"
+
+msgctxt "ContentText"
+msgid "Environment"
+msgstr "環境"
+
+msgctxt "ContentText"
+msgid "Blocks"
+msgstr "ブロック"
+
+msgctxt "ContentText"
+msgid "Items"
+msgstr "アイテム"
+
+msgctxt "ContentText"
+msgid "Weather"
+msgstr "天候"
+
+msgctxt "ContentText"
+msgid "16x"
+msgstr "16x"
+
+msgctxt "ContentText"
+msgid "32x"
+msgstr "32x"
+
+msgctxt "ContentText"
+msgid "64x"
+msgstr "64x"
+
+msgctxt "ContentText"
+msgid "128x"
+msgstr "128x"
+
+msgctxt "ContentText"
+msgid "256x"
+msgstr "256x"
+
+msgctxt "ContentText"
+msgid "Faithful"
+msgstr "Faithful"
+
+msgctxt "ContentText"
+msgid "Classic"
+msgstr "クラシック"
+
+msgctxt "ContentText"
+msgid "Dark"
+msgstr "ダーク"
+
+msgctxt "ContentText"
+msgid "Medieval"
+msgstr "中世"
+
+msgctxt "ContentText"
+msgid "Anime"
+msgstr "アニメ"
+
+msgctxt "ContentText"
+msgid "Cartoon"
+msgstr "カートゥーン"
+
+msgctxt "ContentText"
+msgid "Pixel Art"
+msgstr "ドット絵"
+
+msgctxt "ContentText"
+msgid "Vanilla Plus"
+msgstr "Vanilla+"
+
+msgctxt "ContentText"
+msgid "Other"
+msgstr "その他"
+
+msgctxt "ContentText"
+msgid "Sci-Fi"
+msgstr "SF"
+
+msgctxt "ContentText"
+msgid "Exploration"
+msgstr "探索"
+
+msgctxt "ContentText"
+msgid "Quests"
+msgstr "クエスト"
+
+msgctxt "ContentText"
+msgid "Hardcore"
+msgstr "ハードコア"
+
+msgctxt "ContentText"
+msgid "Map-Based"
+msgstr "マップベース"
+
+msgctxt "ContentText"
+msgid "Lightweight"
+msgstr "軽量"
+
+msgctxt "ContentText"
+msgid "Extra Large"
+msgstr "超大規模"
+
+msgctxt "ContentText"
+msgid "Combat PvP"
+msgstr "戦闘 & PvP"
+
+msgctxt "ContentText"
+msgid "Multiplayer"
+msgstr "マルチプレイヤー"
+
+msgctxt "ContentText"
+msgid "FTB Modpacks"
+msgstr "FTB Modpack"
+
+msgctxt "ContentText"
+msgid "Skyblock"
+msgstr "スカイブロック"
+
+msgctxt "ContentText"
+msgid "Horror"
+msgstr "ホラー"
+
+msgctxt "ContentText"
+msgid "Expert"
+msgstr "エキスパート"
+
+msgctxt "ContentText"
+msgid "Challenging"
+msgstr "高難度"
+
+msgctxt "ContentText"
+msgid "Combat"
+msgstr "戦闘"
+
+msgctxt "ContentText"
+msgid "Kitchen Sink"
+msgstr "キッチンシンク"
+

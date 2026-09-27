@@ -1,0 +1,689 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// Content overlay state, mirroring the Vue's `useContent.ts`, `store/content.ts`
+// and the composables under `src/overlays/content/`.
+//
+// The Vue keeps eleven independent flags in two reactive objects — five panels
+// (`showContent.*`, src/overlays/content/Content*.vue) and six detail ids
+// (`showContentDetails.*`, the *Details.vue panels). Nothing ever opens two
+// panels at once, and the six detail ids are one family of one panel, so the
+// same thing is an enumerable "which overlay is open" plus the id it shows —
+// which a view can switch on directly where the Vue needs eleven `v-if`s.
+//
+// As everywhere else in this port the domain state lives in Rust and is pushed
+// in here; the view writes back only what is pure UI (the search box, the
+// selected save).
+
+/// One tag on a card — the Vue's `<span class="loader-type">` family
+/// (`styles/content-card.less`). Its `kind` picks the surface colour.
+export struct CardTag {
+    text: string,
+    /// A dimmed label drawn before the text, with no gap between them. Only the
+    /// saves' "last played:" tag has one.
+    label: string,
+    /// "loader-fabric" | "loader-forge" | "loader-quilt" | "loader-neoforge"
+    /// | "loader-liteloader" | "version" | "game-mode-survival"
+    /// | "game-mode-creative" | "game-mode-adventure" | "game-mode-spectator"
+    /// | "command-enabled" | "last-played" | "plain"
+    kind: string,
+    /// When `kind` is "last-played", the parts `GameTime.last-played` formats.
+    /// The tag then draws a translated label and a translated relative time
+    /// instead of `text`, which Rust could not translate — a string Rust
+    /// composed is fixed when it is pushed and would not follow a language
+    /// change.
+    time-kind: string,
+    time-hours: int,
+    time-month: int,
+    time-day: int,
+    time-year: int,
+}
+
+/// One card of a content grid (`styles/content-card.less` `.content`).
+///
+/// Its geometry is part of the row rather than derived in the view: the grid's
+/// column count comes from the panel's width, so Rust lays the cards out and
+/// hands each one its `x`/`y`/`width`/`height`. That keeps a resize onto the
+/// *same* elements — the model is rewritten in place with `set_row_data`, so a
+/// card keeps its hover, its decoded icon and any animation in flight, where a
+/// model reset would re-create every one of them.
+export struct ContentCard {
+    x: length,
+    y: length,
+    width: length,
+    height: length,
+    /// False for a card scrolled out of the viewport. The renderer struggles
+    /// past roughly 150 painted elements in a frame and a mods folder easily
+    /// has more, so Rust keeps a window of rows visible.
+    in-view: bool,
+    /// What `select` reports back: a Modrinth/CurseForge project id, a local
+    /// file path, or a save folder name.
+    id: string,
+    /// The URL a card's link button opens (remote lists only).
+    link: string,
+    title: string,
+    /// Drawn before the title, dimmed — the local mods' "[disabled] " prefix.
+    title-prefix: string,
+    subtitle: string,
+    /// Whether the "by …" line is drawn at all; a card without authors keeps
+    /// the row out of the layout rather than drawing an empty line.
+    has-subtitle: bool,
+    description: string,
+    tags: [CardTag],
+    /// The decoded icon. Rust falls back to the bundled unknown-world texture,
+    /// which is what the Vue's `v-else` branch shows.
+    icon: image,
+    /// Which trailing action column the card draws: "" | "favorite" (heart +
+    /// link) | "file" (folder + trash). The two buttons fade and scale in on
+    /// hover.
+    action-kind: string,
+    /// The saves' separate play button, which floats over the icon rather than
+    /// sitting in the action column. A save card draws both.
+    shows-play: bool,
+    favorited: bool,
+    /// A disabled local mod: struck-through name, dimmed card.
+    mod-disabled: bool,
+    /// The saves' expanded state: the card lifts above its neighbours and its
+    /// `.extra` panel slides out.
+    selected: bool,
+    /// Whether a selected save expands upwards (the Vue flips it when the card
+    /// sits within 160px of the bottom of the window, `ContentSaves.vue`).
+    expand-up: bool,
+}
+
+/// One filter chip of the search panel's filter rows.
+export struct FilterChip {
+    /// What `chip-clicked` reports back — the option itself, or the CurseForge
+    /// category's numeric id as a string.
+    value: string,
+    /// The chip's label. Ignored when `translated` is set, because a label that
+    /// may need translating has to be resolved in Slint: a string Rust composed
+    /// is fixed at the moment it was pushed and would not follow a language
+    /// change (`@tr` bindings do).
+    text: string,
+    /// Resolve the label through `ContentText.chip-label` from `label-key`
+    /// instead of drawing `text`, so it re-translates with the locale. The key
+    /// is not always the value: a CurseForge category chip carries the numeric
+    /// id the API wants while its label comes from the category's slug.
+    translated: bool,
+    label-key: string,
+    selected: bool,
+    /// The selected fill: "" (lavender) | "fabric" | "forge" | "neoforge"
+    /// | "quilt" | "minecraft-version" | "favorites".
+    accent: string,
+}
+
+/// One filter row (`ContentSearchPanel.vue`'s `.filter-row`). The version row
+/// is the paginated one, and is the only one that draws its chips in a carousel
+/// rather than wrapping.
+export struct FilterRow {
+    /// The row's key — "loader" | "version" | "category" — which
+    /// `ContentText.row-label` turns into the label the row draws. A key rather
+    /// than the text so it follows a language change.
+    label: string,
+    chips: [FilterChip],
+    paginated: bool,
+}
+
+/// One page button of the pagination bar. `text` is "…" for an ellipsis, which
+/// is drawn as a label instead of a button.
+export struct PageButton {
+    text: string,
+    /// -1 for the ellipsis.
+    page: int,
+}
+
+/// One image of a detail panel's gallery strip. The strip's items are one
+/// fixed height and their width follows the image's own aspect ratio
+/// (`.gallery-item { height: calc(100% - 16px) }` + `img { height: 100%;
+/// width: auto }`), which Rust works out from the decoded bitmap — Slint
+/// cannot read an image's natural size, so it cannot derive the width itself.
+export struct GalleryShot {
+    image: image,
+    width: length,
+}
+
+/// The overlay layer's state. Which panel is open, what it is showing, and the
+/// grids behind it.
+export global ContentState {
+    /// "" | "saves" | "mods" | "resourcepacks" | "screenshots" | "packs"
+    in-out property <string> open-panel: "";
+    /// "" | "modrinth-mod" | "modrinth-resourcepack" | "modrinth-pack"
+    /// | "curseforge-mod" | "curseforge-resourcepack" | "curseforge-pack"
+    in-out property <string> open-detail: "";
+    /// The id the open detail panel is showing (a project id either way — the
+    /// CurseForge numeric id as a string, which is how the Vue passes it).
+    in-out property <string> detail-id: "";
+    /// The height Rust gave the visible grid. `ContentCardGrid` takes this as
+    /// its own height: the cards are positioned absolutely and an absolutely
+    /// positioned child contributes nothing to its parent's measurement, so a
+    /// measured height would be zero and the panel's `ScrollView` would stop
+    /// scrolling.
+    in-out property <length> grid-height: 0px;
+
+    /// The panel's height, written back by whichever panel is on screen. The
+    /// "nothing here" placeholder covers the panel rather than its (empty) grid,
+    /// so it needs a height of its own to sit in.
+    in-out property <length> panel-height: 0px;
+
+    /// A grid reports the width it has to lay out in. Rust turns it into a
+    /// column count and rewrites every card's geometry, in place, so a resize
+    /// moves the cards rather than re-creating them. `height` is the panel's,
+    /// for the placeholder.
+    callback grid-resized(length, length);
+
+    // ----- local grids -----
+    in-out property <[ContentCard]> saves: [];
+    in-out property <bool> saves-loading: false;
+    in-out property <[ContentCard]> local-mods: [];
+    in-out property <bool> local-mods-loading: false;
+    in-out property <[ContentCard]> local-resourcepacks: [];
+    in-out property <bool> local-resourcepacks-loading: false;
+
+    // ----- the active remote list -----
+    // Only one sub-view is on screen at a time (`v-if` in the Vue), and the Vue
+    // re-mounts the sub-view — resetting its query, page and selections — every
+    // time it is switched to. Rust clears these on the same switch.
+    /// Which of the open panel's sub-views is showing: "local" | "modrinth"
+    /// | "curseforge". The Vue keeps one `ref` per panel for this; it is one
+    /// value here because only one panel is ever open.
+    in-out property <string> source: "local";
+    /// "mods" | "resourcepacks" | "packs" — which panel the remote list belongs
+    /// to. It decides the card's tag set and where a download lands.
+    in-out property <string> remote-kind: "mods";
+    in-out property <[ContentCard]> remote-cards: [];
+    /// The Vue shows the spinner while the result is null *or* a request is in
+    /// flight (`modrinthSearchResult === null || modrinthLoading`), so this
+    /// covers both.
+    in-out property <bool> remote-loading: true;
+
+    // ----- the open detail panel -----
+    in-out property <bool> detail-loading: false;
+    in-out property <string> detail-title: "";
+    in-out property <image> detail-icon;
+    /// The repository link, already reduced to "owner/repo" when it is a GitHub
+    /// URL (`ContentModrinth*Details.vue`'s `formatGithubRepo`). `detail-source`
+    /// is the URL the link opens.
+    in-out property <string> detail-source: "";
+    /// "owner/repo" when the source is a GitHub URL, which is what the Vue's
+    /// `formatGithubRepo` reduces it to, and the URL itself otherwise.
+    in-out property <string> detail-source-label: "";
+    /// Whether the source is GitHub, which decides the entry's glyph.
+    in-out property <bool> detail-source-is-github: false;
+    in-out property <string> detail-downloads: "";
+    in-out property <string> detail-followers: "";
+    in-out property <bool> detail-has-followers: false;
+    in-out property <string> detail-description: "";
+    /// The README body, before rendering (see `markdown-plain.slint`).
+    in-out property <string> detail-body: "";
+    /// Whether the body's box is drawn even when the body is empty. The three
+    /// Modrinth panels render it unconditionally — an empty one still takes a
+    /// 32px box plus its 16px margin — while the CurseForge ones put it behind
+    /// `v-if="modDescription"`. Rust sets this from the platform it loaded.
+    in-out property <bool> detail-body-always: false;
+    in-out property <[GalleryShot]> detail-gallery: [];
+    in-out property <bool> detail-favorited: false;
+    /// The heart + download/remove row is the mod detail panels'; the pack and
+    /// resource-pack ones have no remove, and only the mods are "installed".
+    in-out property <bool> detail-has-install: true;
+    in-out property <bool> detail-installed: false;
+    in-out property <string> detail-installed-version: "";
+    in-out property <bool> detail-checking-installed: false;
+    in-out property <bool> detail-operating: false;
+    /// Whether this detail panel has an installed state at all. The Vue's mod
+    /// panels check it and offer a remove button; the pack and resource-pack
+    /// ones only ever draw a download button.
+    in-out property <bool> detail-can-remove: true;
+
+    // ----- screenshots -----
+    in-out property <[image]> screenshots: [];
+    in-out property <bool> screenshots-loading: false;
+    in-out property <int> screenshot-index: 0;
+    /// The image the stage shows, which is `screenshots[screenshot-index]` —
+    /// kept as its own property because a model index inside a binding would
+    /// re-read the whole model.
+    in-out property <image> current-screenshot;
+
+    /// Closes whichever panel is open (the scrim click, and Escape).
+    callback close();
+    /// A detail panel was closed, leaving the list underneath open.
+    callback close-detail();
+    /// The mods/resource-packs/packs panels' source switcher.
+    callback set-source(string);
+    /// A card was clicked. `id` is the card's id.
+    callback select-card(string);
+    /// The saves' folder button, the local mods' folder button.
+    callback open-path(string);
+    /// The saves' delete button.
+    callback delete-save(string);
+    /// The remote grids' link button / the detail panel's source link.
+    callback open-url(string);
+    callback toggle-favorite(string);
+    callback download();
+    callback remove();
+    /// A save was selected (or deselected, with an empty id).
+    callback select-save(string);
+    /// The screenshots viewer.
+    callback set-screenshot(int);
+    callback screenshot-next();
+    callback screenshot-prev();
+}
+
+/// The search panel's own state, for whichever remote list is on screen.
+///
+/// Kept apart from `ContentState` because it is a self-contained form: the
+/// query, the three filter rows, the version carousel's page, and the result
+/// pages. Rust fills `filters` and `pages` and reads back what the user picked.
+export global ContentSearch {
+    in-out property <string> query: "";
+    in-out property <[FilterRow]> filters: [];
+    /// Which row index is the paginated (version) one; -1 when there is none.
+    in-out property <int> version-row: -1;
+    in-out property <int> version-page: 0;
+    in-out property <int> version-page-count: 0;
+    /// Every version the filter offers. The carousel draws the whole track and
+    /// clips it, the way the Vue's `.filter-chips-track-inner` does: a page is
+    /// what the track is *translated* by (`chips[page * 6].offsetLeft`), not how
+    /// many chips are drawn, so more than a page's worth shows at once.
+    in-out property <[FilterChip]> version-chips: [];
+    /// How far the track is scrolled left, in pixels. Rust sums the chips'
+    /// measured widths up to the page's first one — the Vue reads their
+    /// `offsetLeft`, which Slint cannot (`A repeated element's geometry is
+    /// unreachable from outside`).
+    in-out property <length> version-offset: 0px;
+    in-out property <[PageButton]> pages: [];
+    in-out property <int> current-page: 1;
+    in-out property <int> total-pages: 0;
+
+    callback search();
+    callback chip-clicked(string);
+    /// A version chip reports the width it measured, for the carousel's offset.
+    /// Keyed by the chip's value rather than its position: the other rows' chips
+    /// report too (their handler is the same one), and their indices would land
+    /// on the version slots.
+    callback chip-measured(string, length);
+    callback version-page-prev();
+    callback version-page-next();
+    callback go-to-page(int);
+}
+
+
+/// The content overlays' translated strings.
+///
+/// Rust composes most of a chip's label — a loader name, a version, a category —
+/// but a string Rust pushes into a model is fixed at the moment it is pushed and
+/// would not follow a language change, where an `@tr` binding re-evaluates. So
+/// the labels live here and the view resolves them from the chip's key, the way
+/// `GameTime` does for the game view's relative times.
+///
+/// The context is set explicitly (`@tr("ContentText" => …)`) because these are
+/// not a component's own strings: Slint's default context is the component name,
+/// and the callers are the chips and cards rather than one component.
+export global ContentText {
+    /// The loader names. The Vue keeps these in a plain `LOADER_NAMES` map and
+    /// never translates them.
+    public pure function loader(key: string) -> string {
+        if key == "fabric" { return "Fabric"; }
+        if key == "forge" { return "Forge"; }
+        if key == "neoforge" { return "NeoForge"; }
+        if key == "quilt" { return "Quilt"; }
+        if key == "liteloader" { return "LiteLoader"; }
+        return key;
+    }
+
+    /// A category chip's label. `platform` and `kind` are part of the lookup
+    /// because the three lists have their own category tables and CurseForge's
+    /// are keyed by numeric id — the same slug can mean something different in
+    /// two of them (`combat` is a Modrinth pack category and a CurseForge one
+    /// with a different name).
+    public pure function category(kind: string, platform: string, key: string) -> string {
+        if kind == "mods" && platform == "curseforge" && key == "adventure-rpg" {
+            return @tr("ContentText" => "Adventure & RPG");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "armor-weapons-tools" {
+            return @tr("ContentText" => "Armor, Tools & Weapons");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "world-gen" {
+            return @tr("ContentText" => "World Generation");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "technology" {
+            return @tr("ContentText" => "Technology");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "magic" {
+            return @tr("ContentText" => "Magic");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "storage" {
+            return @tr("ContentText" => "Storage");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "library-api" {
+            return @tr("ContentText" => "Library & API");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "map-information" {
+            return @tr("ContentText" => "Maps & Info");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "utility-qol" {
+            return @tr("ContentText" => "Utility & QoL");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "server-utility" {
+            return @tr("ContentText" => "Server Utility");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "mc-food" {
+            return @tr("ContentText" => "Food");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "performance" {
+            return @tr("ContentText" => "Performance");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "bug-fixes" {
+            return @tr("ContentText" => "Bug Fixes");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "redstone" {
+            return @tr("ContentText" => "Redstone");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "cosmetic" {
+            return @tr("ContentText" => "Cosmetic");
+        }
+        if kind == "mods" && platform == "curseforge" && key == "mc-miscellaneous" {
+            return @tr("ContentText" => "Miscellaneous");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "adventure" {
+            return @tr("ContentText" => "Adventure");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "cursed" {
+            return @tr("ContentText" => "Cursed");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "decoration" {
+            return @tr("ContentText" => "Decoration");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "economy" {
+            return @tr("ContentText" => "Economy");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "equipment" {
+            return @tr("ContentText" => "Equipment");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "food" {
+            return @tr("ContentText" => "Food");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "game-mechanics" {
+            return @tr("ContentText" => "Game Mechanics");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "library" {
+            return @tr("ContentText" => "Library");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "magic" {
+            return @tr("ContentText" => "Magic");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "management" {
+            return @tr("ContentText" => "Management");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "minigame" {
+            return @tr("ContentText" => "Minigame");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "mobs" {
+            return @tr("ContentText" => "Mobs");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "optimization" {
+            return @tr("ContentText" => "Optimization");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "social" {
+            return @tr("ContentText" => "Social");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "storage" {
+            return @tr("ContentText" => "Storage");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "technology" {
+            return @tr("ContentText" => "Technology");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "transportation" {
+            return @tr("ContentText" => "Transportation");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "utility" {
+            return @tr("ContentText" => "Utility");
+        }
+        if kind == "mods" && platform == "modrinth" && key == "worldgen" {
+            return @tr("ContentText" => "World Generation");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "crafted" {
+            return @tr("ContentText" => "Crafted");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "photo-realistic" {
+            return @tr("ContentText" => "Photorealistic");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "semi-realistic" {
+            return @tr("ContentText" => "Semi-Realistic");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "simple" {
+            return @tr("ContentText" => "Simple");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "traditional" {
+            return @tr("ContentText" => "Traditional");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "animated" {
+            return @tr("ContentText" => "Animated");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "modern" {
+            return @tr("ContentText" => "Modern");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "themed" {
+            return @tr("ContentText" => "Themed");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "mod-support" {
+            return @tr("ContentText" => "Mod Support");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "rpg" {
+            return @tr("ContentText" => "RPG");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "gameplay" {
+            return @tr("ContentText" => "Gameplay");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "gui" {
+            return @tr("ContentText" => "GUI");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "sound" {
+            return @tr("ContentText" => "Sound");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "environment" {
+            return @tr("ContentText" => "Environment");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "world-gen" {
+            return @tr("ContentText" => "World Generation");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "blocks" {
+            return @tr("ContentText" => "Blocks");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "items" {
+            return @tr("ContentText" => "Items");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "mobs" {
+            return @tr("ContentText" => "Mobs");
+        }
+        if kind == "resourcepacks" && platform == "curseforge" && key == "weather" {
+            return @tr("ContentText" => "Weather");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "16x" {
+            return @tr("ContentText" => "16x");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "32x" {
+            return @tr("ContentText" => "32x");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "64x" {
+            return @tr("ContentText" => "64x");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "128x" {
+            return @tr("ContentText" => "128x");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "256x" {
+            return @tr("ContentText" => "256x");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "faithful" {
+            return @tr("ContentText" => "Faithful");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "photo-realistic" {
+            return @tr("ContentText" => "Photorealistic");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "semi-realistic" {
+            return @tr("ContentText" => "Semi-Realistic");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "simple" {
+            return @tr("ContentText" => "Simple");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "modern" {
+            return @tr("ContentText" => "Modern");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "theme-based" {
+            return @tr("ContentText" => "Themed");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "classic" {
+            return @tr("ContentText" => "Classic");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "dark" {
+            return @tr("ContentText" => "Dark");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "medieval" {
+            return @tr("ContentText" => "Medieval");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "anime" {
+            return @tr("ContentText" => "Anime");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "cartoon" {
+            return @tr("ContentText" => "Cartoon");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "pixel-art" {
+            return @tr("ContentText" => "Pixel Art");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "vanilla-plus" {
+            return @tr("ContentText" => "Vanilla Plus");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "utility" {
+            return @tr("ContentText" => "Utility");
+        }
+        if kind == "resourcepacks" && platform == "modrinth" && key == "other" {
+            return @tr("ContentText" => "Other");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "tech" {
+            return @tr("ContentText" => "Technology");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "magic" {
+            return @tr("ContentText" => "Magic");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "sci-fi" {
+            return @tr("ContentText" => "Sci-Fi");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "adventure-and-rpg" {
+            return @tr("ContentText" => "Adventure & RPG");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "exploration" {
+            return @tr("ContentText" => "Exploration");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "mini-game" {
+            return @tr("ContentText" => "Minigame");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "quests" {
+            return @tr("ContentText" => "Quests");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "hardcore" {
+            return @tr("ContentText" => "Hardcore");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "map-based" {
+            return @tr("ContentText" => "Map-Based");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "small-light" {
+            return @tr("ContentText" => "Lightweight");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "extra-large" {
+            return @tr("ContentText" => "Extra Large");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "combat" {
+            return @tr("ContentText" => "Combat PvP");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "multiplayer" {
+            return @tr("ContentText" => "Multiplayer");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "ftb" {
+            return @tr("ContentText" => "FTB Modpacks");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "skyblock" {
+            return @tr("ContentText" => "Skyblock");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "vanilla-plus" {
+            return @tr("ContentText" => "Vanilla Plus");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "horror" {
+            return @tr("ContentText" => "Horror");
+        }
+        if kind == "packs" && platform == "curseforge" && key == "expert" {
+            return @tr("ContentText" => "Expert");
+        }
+        if kind == "packs" && platform == "modrinth" && key == "adventure" {
+            return @tr("ContentText" => "Adventure");
+        }
+        if kind == "packs" && platform == "modrinth" && key == "challenging" {
+            return @tr("ContentText" => "Challenging");
+        }
+        if kind == "packs" && platform == "modrinth" && key == "combat" {
+            return @tr("ContentText" => "Combat");
+        }
+        if kind == "packs" && platform == "modrinth" && key == "kitchen-sink" {
+            return @tr("ContentText" => "Kitchen Sink");
+        }
+        if kind == "packs" && platform == "modrinth" && key == "lightweight" {
+            return @tr("ContentText" => "Lightweight");
+        }
+        if kind == "packs" && platform == "modrinth" && key == "magic" {
+            return @tr("ContentText" => "Magic");
+        }
+        if kind == "packs" && platform == "modrinth" && key == "multiplayer" {
+            return @tr("ContentText" => "Multiplayer");
+        }
+        if kind == "packs" && platform == "modrinth" && key == "optimization" {
+            return @tr("ContentText" => "Optimization");
+        }
+        if kind == "packs" && platform == "modrinth" && key == "quests" {
+            return @tr("ContentText" => "Quests");
+        }
+        if kind == "packs" && platform == "modrinth" && key == "technology" {
+            return @tr("ContentText" => "Technology");
+        }
+        return key;
+    }
+
+    /// A chip's label, whichever kind of chip it is. A Minecraft version is not
+    /// in any table and reads as itself.
+    public pure function chip-label(kind: string, platform: string, key: string) -> string {
+        if key == "favorites" { return @tr("ContentText" => "Favorites"); }
+        if key == "fabric" || key == "forge" || key == "neoforge" || key == "quilt"
+            || key == "liteloader" {
+            return self.loader(key);
+        }
+        return self.category(kind, platform, key);
+    }
+
+    /// The saves' "Last played: " prefix. The time itself is
+    /// `GameTime.last-played`'s, which the card tag calls.
+    public pure function last-played-label() -> string {
+        return @tr("ContentText" => "Last played: ");
+    }
+
+    /// A detail panel's header title. `kind` is the `ContentState.remote-kind`
+    /// of the open list.
+    public pure function detail-title(kind: string) -> string {
+        if kind == "mods" { return @tr("ContentText" => "Mod info"); }
+        if kind == "resourcepacks" { return @tr("ContentText" => "Resource pack info"); }
+        return @tr("ContentText" => "Modpack info");
+    }
+
+    /// The search field's placeholder.
+    public pure function search-placeholder(kind: string) -> string {
+        if kind == "mods" { return @tr("ContentText" => "Search mods…"); }
+        if kind == "resourcepacks" { return @tr("ContentText" => "Search resource packs…"); }
+        return @tr("ContentText" => "Search modpacks…");
+    }
+
+    /// A filter row's label. The rows are identified by key so the label stays
+    /// translatable.
+    public pure function row-label(key: string) -> string {
+        if key == "loader" { return @tr("ContentText" => "Loader"); }
+        if key == "version" { return @tr("ContentText" => "Version"); }
+        return @tr("ContentText" => "Category");
+    }
+}

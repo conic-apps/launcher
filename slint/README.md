@@ -44,6 +44,7 @@ slint/
         settings.slint              # global config state (the "config store")
         game.slint                  # game view state (src/store/instance.ts + …)
         launch.slint                # launch view state (src/views/LaunchView.vue)
+        content.slint               # content overlay state (useContent.ts + store/content.ts)
         dialogs.slint               # dialog store + the create-instance form state
         focus.slint                 # blur-the-focused-field helper
         scroll.slint                # wheel/trackpad classification + monotonic clock
@@ -100,6 +101,18 @@ slint/
           create/
             minecraft-choose.slint  #   …/create/MinecraftChoose.vue
             mod-loader-choose.slint #   …/create/ModLoaderChoose.vue
+        content/                    # src/overlays/content/ — see below
+          content-root.slint        #   the layer GameView mounts
+          content-overlay.slint     #   the scrim + sliding container every panel uses
+          content-title-bar.slint   #   styles/title-bar.less
+          content-card.slint        #   styles/content-card.less `.content`
+          content-card-grid.slint   #   styles/content-card.less `.content-card-grid`
+          content-search-panel.slint#   ContentSearchPanel.vue
+          content-pagination.slint  #   ContentPagination.vue
+          content-not-found.slint   #   ContentNotFound.vue + the loading block
+          markdown-plain.slint      #   styles/markdown-body.less, as plain text
+          panels.slint              #   the five panels and the nine lists
+          details.slint             #   the six detail panels
   crates/
     platform/                       # Tauri-free mirror of crates/platform
     window/                         # window-control service (min/max/fullscreen)
@@ -107,7 +120,9 @@ slint/
     folder/                         # Tauri-free mirror of crates/folder
     account/                        # Tauri-free mirror of crates/account (whole crate)
     instance/                       # Tauri-free mirror of crates/instance
-    content/                        # Tauri-free mirror of crates/content (counts)
+    content/                        # Tauri-free mirror of crates/content
+    modrinth/                       # Tauri-free mirror of crates/modrinth
+    curseforge/                     # Tauri-free mirror of crates/curseforge
     shared/                         # Tauri-free mirror of crates/shared (HTTP client, …)
     version/                        # Tauri-free mirror of crates/version
     download/                       # Tauri-free mirror of crates/download
@@ -389,6 +404,34 @@ Per the migration plan:
   18 bundled default skins, in a pixel buffer; the game footer's avatar and its
   account switcher draw from the same pipeline (memoised in `game.rs`, since a
   skin has to be decoded and cropped and `apply` runs on every list change).
+- `slint-modrinth` and `slint-curseforge` mirror `crates/modrinth` and
+  `crates/curseforge`. Neither original holds any plugin state and none of their
+  eighteen commands takes a `State`, an `AppHandle` or a `Channel` — they are
+  thin wrappers over the functions beside them — so the mirrors drop the whole
+  command layer and keep everything else exactly: the same three base URLs each
+  (the MCIM mirror for everything it serves, the official API for the one
+  endpoint it does not), the same `slint-shared` client and URL builder, the
+  same error enums and their `{"kind", "message"}` shape, `curseforge`'s
+  `request_with_fallback` with its `response_is_valid` test and its
+  `CURSEFORGE_API_KEY` gate (the `build.rs` that bakes the key in comes with
+  it), and `compute_fingerprint` with its MurmurHash2. Two deviations:
+  `get_multiple_projects` is not mirrored (it is broken upstream — it hands a
+  `&[&str]` to `RequestBuilder::query`, which reqwest serializes through
+  `serde_urlencoded`'s pair serializer and rejects, so it always fails;
+  `get_projects` does the same job and works), and `Modrinth`'s two request
+  structs have public fields here because the app builds them rather than Tauri
+  deserializing them.
+- `slint-content` grew from a file counter into the whole of `crates/content`:
+  `mods/` (the four loader archive parsers with their nested-jar recursion, and
+  `remote.rs`'s four-file cache with its 24h TTL and read-merge-write lock),
+  `saves/`, `resourcepack.rs`, `screenshots.rs` and `favorites.rs`, all kept
+  file for file against the original so the two can be diffed. `worldmap.rs` is
+  the one module not mirrored (see the world map note below), so its three error
+  variants are gone with it. The entry points take `&str` where the original
+  took `String`, which was only ever what Tauri's IPC deserialization produced,
+  and the four commands that had no function of their own to call
+  (`cmd_get_save_icon`, `cmd_get_save_path`, `cmd_delete_save`,
+  `cmd_remove_mod_files`) became plain functions with the `cmd_` prefix dropped.
 - `slint-platform` (OS detection), `slint-window` (window controls),
   `slint-config`, `slint-folder`, `slint-account`, `slint-instance`,
   `slint-content`, `slint-install`, `slint-java-runtime` and
@@ -606,14 +649,121 @@ Per the migration plan:
   FFI session (`nexus.rs`), the event poll thread with its `get_state`
   reconciliation and the room-code check.
 
+
+- The **content overlays** the game view opens (`slint/app/ui/overlays/content/`,
+  replacing `src/overlays/content/*.vue` — twenty components and their four
+  stylesheets). The crate layer they need came with them (see below).
+    - `content-overlay.slint` is the shell every panel shares: the Vue's
+      `.game-content-wrapper` scrim and its `calc(100% - 150px)` sliding
+      container. The transitions are the Vue's — a 400ms
+      `cubic-bezier(0, .47, .25, 1)` entrance, a 280ms
+      `cubic-bezier(.47, 0, 1, .75)` exit with the scrim's 200ms fade delayed
+      100ms behind it. It runs on `BaseDialog`'s phase machine (one frame at the
+      start values, because a hidden element is never painted and an animated
+      property nothing reads snaps to its target). Only `y` moves: an `opacity`
+      or `transform` on the panel would put the whole subtree in a render layer,
+      and the renderer gives up on a layer taller than 8192px.
+    - One panel per Vue component, except that the six detail panels are *one*
+      component (`details.slint`). `Content{Modrinth,Curseforge}{Mod,
+      Resourcepack,Pack}Details.vue` are six near-identical files differing only
+      in which API fills them and in two conditionals (whether the remove button
+      exists, whether there is a gallery); Rust already knows which is open, so
+      the difference is carried by `ContentState` and about 1 200 lines of
+      duplication go away.
+    - The filter rows are a `FlexboxLayout` with `flex-wrap: wrap`, which is
+      what Slint has instead of `flex-wrap`. The plain `HorizontalLayout` the
+      rest of the app uses never wraps.
+    - The **version-chip carousel** is built the other way round. The Vue reads
+      `chips[page * 6].offsetLeft` and translates the whole track. An id inside a
+      `for` is deliberately unreachable in Slint, so there is no way to *read*
+      that offset — but each chip can report the width it measured, and the
+      track's offset is the sum of the ones before the page. That is what
+      `ContentSearch.chip-measured` carries, and the offset it comes to is what
+      the `track` in `content-search-panel.slint` translates by. The carousel
+      therefore draws the whole track and clips it, exactly like the original,
+      and more than a page's worth of chips shows at once.
+    - The **card grid** cannot use a Slint layout: there is no wrapping grid
+      (`GridLayout` never wraps, and a repeated child is a single cell), so the
+      column count has to come from outside in any case. Rust computes it from
+      the panel's width and writes every card's `x`/`y`/`width`/`height` into
+      the row, which also keeps a resize onto the *same* elements — the model is
+      rewritten with `set_row_data`, so a card keeps its hover and its decoded
+      icon. Cards outside the viewport are `visible: false`, as the renderer
+      struggles past roughly 150 painted elements in a frame.
+
+**The content overlay layer is complete and verified against the Vue.** The five
+panels, the six detail panels, the search panel with its paginated version
+carousel, the pagination bar and the empty states all render as the original
+does, at the original's measurements. `GameState.open-content` opens the
+panels, the scrim and the slide run, the cards carry their icons, translations
+and tags, and the instal/remove actions go through `slint-download`.
+
+- `app/src/content.rs` is the controller: `useContentActions.ts`,
+  `useFavorites.ts`, `useSearchPagination.ts`, `useDescriptionTranslation.ts`
+  and the nine panels' loading. It lives in a `thread_local`, because an
+  `upgrade_in_event_loop` closure has to be `Send` and a Slint model is not; and
+  cards travel to that closure as plain data (`PendingCard`) for the same
+  reason. Images are fetched *and decoded* on the background thread and cross as
+  raw pixels, since `Image` is not `Send` either.
+- The twelve `.po` catalogs carry the overlay's 102 strings, with the category
+  tables seeded from `src/locales/*.ts` in every language. The labels that a
+  language change has to follow are resolved in Slint (`ContentText`), not
+  composed in Rust.
+- `config_bridge::reveal_in_dir` is the Vue's `revealItemInDir`.
+
 Not yet migrated: `AccountsView`, the setup wizard, the remaining overlays
-(dialogs, content panels, command palette, music player, instance settings). The
-game view's click-to-open content overlays and the audio-visualizer rendering are
-stubbed;
+(dialogs, command palette, music player, instance settings). The
+audio-visualizer rendering is stubbed;
 `views/game-placeholder.slint` stands in for the not-yet-migrated views. The
 account avatars (the footer's 56px head, its switcher's 18px rows and the
 add-account dialog's profile rows) all draw the real skin now; `AccountAvatar`
 still falls back to the placeholder disc for a skin Rust could not decode.
+
+
+## Rendering the README bodies
+
+A project detail panel shows the project's README (`Modrinth`'s `body`,
+`CurseForge`'s description markup). The Vue renders it with `marked` into
+`v-html`, so headings, lists, code blocks, links, images and tables all come out
+styled. **Slint has nothing that can render an arbitrary Markdown document**, so
+the body is drawn as plain text for now — `markdown-plain.slint`, in the Vue's
+`.markdown-body` box (surface0, an 8px radius, 16px of padding, a 14px body),
+with Rust having flattened the document to text (tags dropped, entities
+unescaped, paragraph breaks kept). What that costs: no headings, no lists, no
+code blocks, no links, no images, and — because Slint 1.18 has no `line-height`
+at all — none of the `line-height: 1.6` the original sets on this one box.
+
+The options, in the order they are worth considering:
+
+1. **Parse in Rust into a block model and draw it with Slint components.** A
+   small parser (`pulldown-cmark` is already in the workspace lockfile through
+   Tauri) turns the body into a `[MarkdownBlock]` — heading level, paragraph,
+   list item with depth, code block, quote, rule, image — and a handful of Slint
+   components draw each kind. This is the shape the rest of the app already
+   uses: plain data in a model, `for` in the view (`GameRow` is the same idea).
+   It needs no browser engine, keeps every string translatable and selectable,
+   and the model is where the panel's own images can be spliced in. The cost is
+   the parser plus a component per block kind, and a block model has to grow to
+   cover tables and inline emphasis when they matter.
+2. **Render to a list of styled spans.** The same parser, but emitting runs of
+   text with weight/colour/underline rather than blocks — enough for emphasis,
+   inline code and links, at the cost of doing the line-breaking by hand.
+3. **`StyledText`'s `@markdown`.** Slint has a Markdown-ish rich-text element,
+   and the About tab already uses it. It is **not usable here**: `@markdown`
+   takes a compile-time literal which the parser reads out of the source map, so
+   it cannot be handed a runtime string. It would only work for bodies known at
+   build time.
+4. **An offscreen webview rendered to an image.** `wry`/`tao` are in the
+   workspace, so the HTML could be laid out offscreen, rasterised and handed to
+   Slint as a bitmap. The rendering would be exact — and it would pull a browser
+   engine into the binary the migration exists to remove, break scrolling and
+   text selection, and make the body unstyleable by the palette.
+5. **Pre-render server-side.** The MCIM mirror this app already talks to could
+   serve a rendered image or a pre-flattened document. No client work, but the
+   mirror has to grow the capability and the body stops working offline.
+
+Option 1 is the intended direction: it is the only one that keeps the panel's
+typography, its palette and its scroll behaviour under the app's own control.
 
 ## Conventions
 
@@ -779,6 +929,66 @@ still falls back to the placeholder disc for a skin Rust could not decode.
       vertex array and the buffer bindings are what it does not, and those are
       the ones that would otherwise leak into the UI's own drawing.
 
+- **Content overlay deviations**, all deliberate:
+    - The **world map** is not migrated. The saves panel's card expansion shows
+      a live map of the world (`.extra` in `ContentSaves.vue`), drawn by the
+      814-line `WorldMap.vue` over the external `conic-worldmap` crate, which
+      rasterises region files into tiles in Rust. It is a feature of its own —
+      its own renderer, its own pan/zoom, its own tile cache — so the card, its
+      hover, its selection and the expansion's 160px rise and blue outline are
+      all migrated and the panel inside `.extra` is left empty. `worldmap.rs`'s
+      error variants are gone from the mirrored `slint-content` with it.
+    - A card's **name is not struck through** when a local mod is disabled. The
+      Vue has `text-decoration: line-through` on it; Slint has no text
+      decoration at all. The dimmed card and the `[disabled]` prefix carry the
+      state, which is what the Vue shows too.
+    - **`image-rendering: pixelated`** has no equivalent: the card icons are
+      scaled smoothly where the webview kept them sharp.
+    - The tags of one card are **4px apart**, where the Vue puts 4px before some
+      of them and 8px between two pills (a pill's `margin-right` plus the next
+      one's `margin-left`, which do not collapse in a line box). A run of pills
+      therefore reads slightly tighter.
+    - The last-played tag's **label and value are one colour**. The Vue draws
+      "last played:" at 80% and the time at full strength; Slint has no per-span
+      styling.
+    - A card's **rounded icon corners** are rounded by a `clip`, which the
+      software renderer ignores — square corners on Windows, exactly like
+      `AccountAvatar`. (The filled corners the settings page had to work around
+      are not involved here.)
+    - The grid's **row height is a constant**. The Vue's rows stretch to their
+      tallest card and every card in a list has the same shape, so one number
+      per list is what the layout comes to; it is derived from the stylesheet
+      rather than measured (see `app/src/content.rs`). If a list's card ever
+      gains or loses a line, that constant is what has to change — a *measured*
+      height is not available, because the cards are positioned absolutely and
+      an absolutely-positioned child contributes nothing to its parent's
+      measurement.
+      The derivation is easy to get wrong in a way that only shows up in the
+      icon: a card is `padding` + its four lines, and **each line box is its own
+      paragraph's font size** (14 / 11+4 / 10+4 / 16), not the info block's 16px
+      strut — a block's strut comes from its own font. Reading it as a 16px
+      strut per line gives 88px instead of 75, and since `img { height: 100% }`
+      makes the icon as tall as the card, a 13px-too-tall card shows a visibly
+      squeezed icon.
+    - An **inner scroll area does not chain to the outer one** (the details
+      panel's body inside the panel's scroller, and the horizontal strips inside
+      them): `ScrollView` accepts the wheel whenever it has anything to scroll,
+      including at either end, so the outer container never sees it. The Vue let
+      the browser chain. Related: there is still no horizontal scroll container
+      in the Slint tree, so the screenshots strip and the gallery are laid out
+      in a plain row that does not scroll.
+    - A gallery image's **box follows its own aspect ratio**
+      (`.gallery-item img { height: 100%; width: auto }`). Slint cannot read an
+      image's natural size, so Rust computes the width from the bitmap it just
+      decoded and the model carries it (`GalleryShot`).
+    - The description translation (`useDescriptionTranslation.ts`) is in: with a
+      Chinese locale the cards and the detail panel show the mirror's
+      `translated` text where it has one, fetched per page and cached per
+      project.
+    - The screenshot viewer's **arrow-key and Escape handling is not wired**.
+      Nothing in `slint/app/ui/` uses `FocusScope` or `key-pressed` yet — the
+      title bar's ⌘/ hotkey is still a logging placeholder — so the viewer's
+      close button and its thumbnails are its only controls for now.
 - **Instance list deviations** from the Vue original, all deliberate:
     - Cards no longer change opacity as they enter and leave the viewport. The
       original dims them to 0.6 outside the scroll view's visible area and brings
@@ -857,6 +1067,56 @@ still falls back to the placeholder disc for a skin Rust could not decode.
     - `ScrollView.content-y` is read-only now (its callers only ever read it for
       scroll-spy maths); scrolling to a position goes through
       `scroll-to(y, smooth)`, mirroring the Vue's `scrollTo(target, smooth)`.
+- **Slint notes** learned the hard way while porting the content overlays, kept
+  here because each cost real debugging time:
+    - **`padding` and `border-radius` take exactly one value.** The CSS
+      shorthands do not carry over: `padding: 8px 24px` and
+      `border-radius: 8px 0 0 8px` are both parse errors, and landing a bare `0`
+      in either (`40px 0`) does not help. Use the four longhand properties.
+    - **A component has to be declared before it is used**, and that includes
+      the local `component` blocks inside one file — a helper written below the
+      component that instantiates it is "Unknown element". Ordering the helpers
+      bottom-up is the fix; the file order is the declaration order.
+    - **A child element is referenced by its bare id, not through `root`.**
+      `root.width` reads the root's own property, but `root.some-child.has-hover`
+      does not resolve at all — `some-child.has-hover` does.
+    - **`horizontal-alignment` / `vertical-alignment` belong to native elements,
+      not to components.** A component child of a layout cannot be aligned with
+      them; wrap it in a `Rectangle` and centre it inside.
+    - **`@tr` placeholders are positional** (`@tr("Installed: {}", version)`);
+      a named one (`{version}`) is rejected by the parser.
+      `vertical-alignment` is likewise not a property of a layout — use
+      `alignment` inside one.
+    - **`alignment` is the main axis, and anything but the default `stretch`
+      switches every `*-stretch` off.** `LayoutAlignment::Start` (and `Center`,
+      `End`, …) makes the layout hand each child its *preferred* size instead of
+      running the stretch distribution — `i-slint-core/src/layout.rs` says so in
+      as many words (`it.size = it.pref`). CSS's `align-items: start` is
+      `cross-axis-alignment`, and writing it as `alignment` cost two visible
+      bugs: the version carousel's `horizontal-stretch: 1` viewport collapsed to
+      zero width (so the chips were clipped away), and the wrapping chip rows
+      wrapped at their own "roughly square" preferred width instead of the
+      panel's edge — a wrapping `FlexboxLayout` measures itself as √(total area),
+      deliberately, not as its longest line.
+    - **A child with an `x` or `y` contributes nothing to its parent's preferred
+      size.** `gen_layout_info_prop` (`passes/default_geometry.rs`) skips those
+      children, so a component or element whose children are *all* absolutely
+      positioned reports a preferred size of **zero** — a bare
+      `self.preferred-width` measures 0, silently. Three of this port's bugs
+      were exactly that: the metadata entries of a detail panel stacked on top
+      of each other, the README body's box collapsed to nothing, and the
+      pagination's repeated wrapper stacked its page numbers. Read the size off
+      an inner layout (`entry.preferred-width`) or give it one, and watch for
+      *conditional* children too — a lone `if` child measures as zero as well.
+    - **`TouchArea.has-hover` is true for the topmost area under the pointer
+      only.** CSS `:hover` stays true on a parent while a descendant is hovered,
+      so the Vue can reveal a card's action column with `.content:hover` and let
+      the pointer reach the buttons. Slint cannot: the moment the pointer moved
+      onto a button, the card stopped being hovered, the column faded out from
+      under the pointer and the two chased each other — the flicker is
+      unmistakable once you look for it. A card therefore holds exactly **one**
+      `TouchArea` and routes its clicks by position; the buttons are drawings
+      that are told whether they are pointed at.
 - **Slint notes** learned the hard way while porting the list, kept here because
   both cost real debugging time:
     - `z` on a _component's root_ is ignored when the parent instantiates it

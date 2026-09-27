@@ -1247,6 +1247,7 @@ msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
 
+
 #: ui
 msgctxt "Multiplayer"
 msgid "Close"
@@ -1431,3 +1432,412 @@ msgstr "Conic Nexus 跨區域網路連線"
 msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "你的網路環境：{0}"
+
+msgctxt "ContentModsPanel"
+msgid "Mods list"
+msgstr "模組列表"
+
+msgctxt "ContentModsPanel"
+msgid "Consider downloading some mods from the internet"
+msgstr "考慮從網路下載一些模組"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Resource packs list"
+msgstr "資源包列表"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Consider downloading some resource packs from the internet"
+msgstr "考慮從網路下載一些資源包"
+
+msgctxt "ContentPacksPanel"
+msgid "Modpacks list"
+msgstr "整合包列表"
+
+msgctxt "ContentSavesPanel"
+msgid "Saves list"
+msgstr "存檔列表"
+
+msgctxt "ContentSavesPanel"
+msgid "Consider launching the game and creating some saves"
+msgstr "考慮啟動遊戲並建立一些存檔"
+
+msgctxt "ContentScreenshotsPanel"
+msgid "Loading…"
+msgstr "載入中..."
+
+msgctxt "ContentScreenshotsPanel"
+msgid "No screenshots yet"
+msgstr "尚無截圖"
+
+msgctxt "ContentNotFound"
+msgid "No matching results for this view's filters"
+msgstr "目前篩選條件沒有符合的結果"
+
+msgctxt "RemoteListView"
+msgid "Try changing the keywords or filters and searching again"
+msgstr "嘗試調整關鍵字或篩選條件後再次搜尋"
+
+msgctxt "DetailBody"
+msgid "Download"
+msgstr "下載"
+
+msgctxt "DetailBody"
+msgid "Remove"
+msgstr "刪除"
+
+msgctxt "DetailBody"
+msgid "Installed: {}"
+msgstr "已安裝：{}"
+
+msgctxt "ContentText"
+msgid "Favorites"
+msgstr "收藏"
+
+msgctxt "ContentText"
+msgid "Loader"
+msgstr "載入器"
+
+msgctxt "ContentText"
+msgid "Version"
+msgstr "版本"
+
+msgctxt "ContentText"
+msgid "Category"
+msgstr "分類"
+
+msgctxt "ContentText"
+msgid "Mod info"
+msgstr "模組資訊"
+
+msgctxt "ContentText"
+msgid "Resource pack info"
+msgstr "資源包資訊"
+
+msgctxt "ContentText"
+msgid "Modpack info"
+msgstr "整合包資訊"
+
+msgctxt "ContentText"
+msgid "Search mods…"
+msgstr "搜尋模組..."
+
+msgctxt "ContentText"
+msgid "Search resource packs…"
+msgstr "搜尋資源包..."
+
+msgctxt "ContentText"
+msgid "Search modpacks…"
+msgstr "搜尋整合包..."
+
+msgctxt "ContentText"
+msgid "Last played: "
+msgstr "上次遊玩："
+
+msgctxt "ContentText"
+msgid "Adventure & RPG"
+msgstr "冒險與RPG"
+
+msgctxt "ContentText"
+msgid "Armor, Tools & Weapons"
+msgstr "護甲、工具與武器"
+
+msgctxt "ContentText"
+msgid "World Generation"
+msgstr "世界生成"
+
+msgctxt "ContentText"
+msgid "Technology"
+msgstr "科技"
+
+msgctxt "ContentText"
+msgid "Magic"
+msgstr "魔法"
+
+msgctxt "ContentText"
+msgid "Storage"
+msgstr "儲存"
+
+msgctxt "ContentText"
+msgid "Library & API"
+msgstr "函式庫與API"
+
+msgctxt "ContentText"
+msgid "Maps & Info"
+msgstr "地圖與資訊"
+
+msgctxt "ContentText"
+msgid "Utility & QoL"
+msgstr "實用與QoL"
+
+msgctxt "ContentText"
+msgid "Server Utility"
+msgstr "伺服器實用"
+
+msgctxt "ContentText"
+msgid "Food"
+msgstr "食物"
+
+msgctxt "ContentText"
+msgid "Performance"
+msgstr "效能"
+
+msgctxt "ContentText"
+msgid "Bug Fixes"
+msgstr "錯誤修復"
+
+msgctxt "ContentText"
+msgid "Redstone"
+msgstr "紅石"
+
+msgctxt "ContentText"
+msgid "Cosmetic"
+msgstr "外觀裝飾"
+
+msgctxt "ContentText"
+msgid "Miscellaneous"
+msgstr "雜項"
+
+msgctxt "ContentText"
+msgid "Adventure"
+msgstr "冒險"
+
+msgctxt "ContentText"
+msgid "Cursed"
+msgstr "詭異"
+
+msgctxt "ContentText"
+msgid "Decoration"
+msgstr "裝飾"
+
+msgctxt "ContentText"
+msgid "Economy"
+msgstr "經濟"
+
+msgctxt "ContentText"
+msgid "Equipment"
+msgstr "裝備"
+
+msgctxt "ContentText"
+msgid "Game Mechanics"
+msgstr "遊戲機制"
+
+msgctxt "ContentText"
+msgid "Library"
+msgstr "函式庫"
+
+msgctxt "ContentText"
+msgid "Management"
+msgstr "管理"
+
+msgctxt "ContentText"
+msgid "Minigame"
+msgstr "小遊戲"
+
+msgctxt "ContentText"
+msgid "Mobs"
+msgstr "生物"
+
+msgctxt "ContentText"
+msgid "Optimization"
+msgstr "最佳化"
+
+msgctxt "ContentText"
+msgid "Social"
+msgstr "社交"
+
+msgctxt "ContentText"
+msgid "Transportation"
+msgstr "運輸"
+
+msgctxt "ContentText"
+msgid "Utility"
+msgstr "實用"
+
+msgctxt "ContentText"
+msgid "Crafted"
+msgstr "手工製作"
+
+msgctxt "ContentText"
+msgid "Photorealistic"
+msgstr "照片寫實"
+
+msgctxt "ContentText"
+msgid "Semi-Realistic"
+msgstr "半寫實"
+
+msgctxt "ContentText"
+msgid "Simple"
+msgstr "簡約"
+
+msgctxt "ContentText"
+msgid "Traditional"
+msgstr "傳統"
+
+msgctxt "ContentText"
+msgid "Animated"
+msgstr "動態"
+
+msgctxt "ContentText"
+msgid "Modern"
+msgstr "現代"
+
+msgctxt "ContentText"
+msgid "Themed"
+msgstr "主題風格"
+
+msgctxt "ContentText"
+msgid "Mod Support"
+msgstr "模組支援"
+
+msgctxt "ContentText"
+msgid "RPG"
+msgstr "RPG"
+
+msgctxt "ContentText"
+msgid "Gameplay"
+msgstr "遊戲玩法"
+
+msgctxt "ContentText"
+msgid "GUI"
+msgstr "介面"
+
+msgctxt "ContentText"
+msgid "Sound"
+msgstr "聲音"
+
+msgctxt "ContentText"
+msgid "Environment"
+msgstr "環境"
+
+msgctxt "ContentText"
+msgid "Blocks"
+msgstr "方塊"
+
+msgctxt "ContentText"
+msgid "Items"
+msgstr "物品"
+
+msgctxt "ContentText"
+msgid "Weather"
+msgstr "天氣"
+
+msgctxt "ContentText"
+msgid "16x"
+msgstr "16x"
+
+msgctxt "ContentText"
+msgid "32x"
+msgstr "32x"
+
+msgctxt "ContentText"
+msgid "64x"
+msgstr "64x"
+
+msgctxt "ContentText"
+msgid "128x"
+msgstr "128x"
+
+msgctxt "ContentText"
+msgid "256x"
+msgstr "256x"
+
+msgctxt "ContentText"
+msgid "Faithful"
+msgstr "忠實原版"
+
+msgctxt "ContentText"
+msgid "Classic"
+msgstr "經典"
+
+msgctxt "ContentText"
+msgid "Dark"
+msgstr "暗色"
+
+msgctxt "ContentText"
+msgid "Medieval"
+msgstr "中世紀"
+
+msgctxt "ContentText"
+msgid "Anime"
+msgstr "動漫"
+
+msgctxt "ContentText"
+msgid "Cartoon"
+msgstr "卡通"
+
+msgctxt "ContentText"
+msgid "Pixel Art"
+msgstr "像素風格"
+
+msgctxt "ContentText"
+msgid "Vanilla Plus"
+msgstr "原版加強"
+
+msgctxt "ContentText"
+msgid "Other"
+msgstr "其他"
+
+msgctxt "ContentText"
+msgid "Sci-Fi"
+msgstr "科幻"
+
+msgctxt "ContentText"
+msgid "Exploration"
+msgstr "探索"
+
+msgctxt "ContentText"
+msgid "Quests"
+msgstr "任務"
+
+msgctxt "ContentText"
+msgid "Hardcore"
+msgstr "高難度"
+
+msgctxt "ContentText"
+msgid "Map-Based"
+msgstr "特定地圖"
+
+msgctxt "ContentText"
+msgid "Lightweight"
+msgstr "輕量整合包"
+
+msgctxt "ContentText"
+msgid "Extra Large"
+msgstr "大型整合包"
+
+msgctxt "ContentText"
+msgid "Combat PvP"
+msgstr "戰鬥PvP"
+
+msgctxt "ContentText"
+msgid "Multiplayer"
+msgstr "多人"
+
+msgctxt "ContentText"
+msgid "FTB Modpacks"
+msgstr "FTB整合包"
+
+msgctxt "ContentText"
+msgid "Skyblock"
+msgstr "空島"
+
+msgctxt "ContentText"
+msgid "Horror"
+msgstr "恐怖"
+
+msgctxt "ContentText"
+msgid "Expert"
+msgstr "專家"
+
+msgctxt "ContentText"
+msgid "Challenging"
+msgstr "挑戰"
+
+msgctxt "ContentText"
+msgid "Combat"
+msgstr "戰鬥"
+
+msgctxt "ContentText"
+msgid "Kitchen Sink"
+msgstr "綜合"
+

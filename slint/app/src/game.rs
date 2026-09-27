@@ -24,12 +24,12 @@ use slint_account::Account;
 use slint_instance::{Instance, ModLoaderType, SortBy};
 
 /// A ready-to-display relative time (`GameTime.last-played`).
-struct RelativeTime {
-    kind: &'static str,
-    hours: i32,
-    month: i32,
-    day: i32,
-    year: i32,
+pub(crate) struct RelativeTime {
+    pub(crate) kind: &'static str,
+    pub(crate) hours: i32,
+    pub(crate) month: i32,
+    pub(crate) day: i32,
+    pub(crate) year: i32,
 }
 
 struct GameController {
@@ -591,8 +591,9 @@ fn format_decimal(value: f64) -> String {
 }
 
 /// Resolves the relative-time parts of a last-played timestamp (mirrors
-/// `formatLastPlayed` in crates/instance/index.ts).
-fn relative_time(timestamp: Option<u64>) -> RelativeTime {
+/// `formatLastPlayed` in crates/instance/index.ts). Shared with the content
+/// overlays' saves cards (`content.rs`).
+pub(crate) fn relative_time(timestamp: Option<u64>) -> RelativeTime {
     let Some(timestamp) = timestamp else {
         return RelativeTime {
             kind: "never",
@@ -849,8 +850,9 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
     state.on_open_instance_settings(
         || log::info!(target: "game", "instance settings (not migrated)"),
     );
-    state
-        .on_open_content(|kind| log::info!(target: "game", "open content '{kind}' (not migrated)"));
+    // `open-content` and `open-packs` belong to the content overlays' script
+    // (`content.rs`), which registers them after this one — a Slint `on_*`
+    // setter replaces the handler, so nothing is wired for them here.
     {
         // The footer's "+" avatar and its "not logged in" label open the
         // add-account dialog.
@@ -872,7 +874,6 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             }
         });
     }
-    state.on_open_packs(|| log::info!(target: "game", "install packs (not migrated)"));
     {
         // The footer's "New instance" opens the create-instance dialog.
         let weak = ui.as_weak();

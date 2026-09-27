@@ -1247,6 +1247,7 @@ msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
 
+
 #: ui
 msgctxt "Multiplayer"
 msgid "Close"
@@ -1431,3 +1432,412 @@ msgstr "Conic Nexus LAN üzerinden çok oyunculu"
 msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "Ağ ortamınız: {0}"
+
+msgctxt "ContentModsPanel"
+msgid "Mods list"
+msgstr "Modlar"
+
+msgctxt "ContentModsPanel"
+msgid "Consider downloading some mods from the internet"
+msgstr "İnternetten birkaç mod indirmeyi düşünebilirsiniz"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Resource packs list"
+msgstr "Kaynak Paketleri"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Consider downloading some resource packs from the internet"
+msgstr "İnternetten birkaç kaynak paketi indirmeyi düşünebilirsiniz"
+
+msgctxt "ContentPacksPanel"
+msgid "Modpacks list"
+msgstr "Mod Paketleri"
+
+msgctxt "ContentSavesPanel"
+msgid "Saves list"
+msgstr "Kayıtlar"
+
+msgctxt "ContentSavesPanel"
+msgid "Consider launching the game and creating some saves"
+msgstr "Oyunu başlatıp birkaç kayıt oluşturmayı düşünebilirsiniz"
+
+msgctxt "ContentScreenshotsPanel"
+msgid "Loading…"
+msgstr "Yükleniyor..."
+
+msgctxt "ContentScreenshotsPanel"
+msgid "No screenshots yet"
+msgstr "Ekran görüntüsü yok"
+
+msgctxt "ContentNotFound"
+msgid "No matching results for this view's filters"
+msgstr "Geçerli filtreyle eşleşen sonuç yok"
+
+msgctxt "RemoteListView"
+msgid "Try changing the keywords or filters and searching again"
+msgstr "Anahtar kelimeleri veya filtreleri ayarlayıp yeniden aramayı deneyin"
+
+msgctxt "DetailBody"
+msgid "Download"
+msgstr "İndir"
+
+msgctxt "DetailBody"
+msgid "Remove"
+msgstr "Kaldır"
+
+msgctxt "DetailBody"
+msgid "Installed: {}"
+msgstr "Kurulu: {}"
+
+msgctxt "ContentText"
+msgid "Favorites"
+msgstr "Favoriler"
+
+msgctxt "ContentText"
+msgid "Loader"
+msgstr "Yükleyici"
+
+msgctxt "ContentText"
+msgid "Version"
+msgstr "Sürüm"
+
+msgctxt "ContentText"
+msgid "Category"
+msgstr "Kategori"
+
+msgctxt "ContentText"
+msgid "Mod info"
+msgstr "Mod bilgisi"
+
+msgctxt "ContentText"
+msgid "Resource pack info"
+msgstr "Kaynak paketi bilgisi"
+
+msgctxt "ContentText"
+msgid "Modpack info"
+msgstr "Mod paketi bilgisi"
+
+msgctxt "ContentText"
+msgid "Search mods…"
+msgstr "Mod ara..."
+
+msgctxt "ContentText"
+msgid "Search resource packs…"
+msgstr "Kaynak paketi ara..."
+
+msgctxt "ContentText"
+msgid "Search modpacks…"
+msgstr "Mod paketi ara..."
+
+msgctxt "ContentText"
+msgid "Last played: "
+msgstr "Son oynanma: "
+
+msgctxt "ContentText"
+msgid "Adventure & RPG"
+msgstr "Macera ve RPG"
+
+msgctxt "ContentText"
+msgid "Armor, Tools & Weapons"
+msgstr "Zırh, Aletler ve Silahlar"
+
+msgctxt "ContentText"
+msgid "World Generation"
+msgstr "Dünya Oluşturma"
+
+msgctxt "ContentText"
+msgid "Technology"
+msgstr "Teknoloji"
+
+msgctxt "ContentText"
+msgid "Magic"
+msgstr "Büyü"
+
+msgctxt "ContentText"
+msgid "Storage"
+msgstr "Depolama"
+
+msgctxt "ContentText"
+msgid "Library & API"
+msgstr "Kütüphane ve API"
+
+msgctxt "ContentText"
+msgid "Maps & Info"
+msgstr "Haritalar ve Bilgi"
+
+msgctxt "ContentText"
+msgid "Utility & QoL"
+msgstr "Yardımcı Araçlar ve Kolaylıklar"
+
+msgctxt "ContentText"
+msgid "Server Utility"
+msgstr "Sunucu Yardımcıları"
+
+msgctxt "ContentText"
+msgid "Food"
+msgstr "Yiyecek"
+
+msgctxt "ContentText"
+msgid "Performance"
+msgstr "Performans"
+
+msgctxt "ContentText"
+msgid "Bug Fixes"
+msgstr "Hata Düzeltmeleri"
+
+msgctxt "ContentText"
+msgid "Redstone"
+msgstr "Redstone"
+
+msgctxt "ContentText"
+msgid "Cosmetic"
+msgstr "Kozmetik"
+
+msgctxt "ContentText"
+msgid "Miscellaneous"
+msgstr "Çeşitli"
+
+msgctxt "ContentText"
+msgid "Adventure"
+msgstr "Macera"
+
+msgctxt "ContentText"
+msgid "Cursed"
+msgstr "Tuhaf"
+
+msgctxt "ContentText"
+msgid "Decoration"
+msgstr "Dekorasyon"
+
+msgctxt "ContentText"
+msgid "Economy"
+msgstr "Ekonomi"
+
+msgctxt "ContentText"
+msgid "Equipment"
+msgstr "Ekipman"
+
+msgctxt "ContentText"
+msgid "Game Mechanics"
+msgstr "Oyun Mekanikleri"
+
+msgctxt "ContentText"
+msgid "Library"
+msgstr "Kütüphane"
+
+msgctxt "ContentText"
+msgid "Management"
+msgstr "Yönetim"
+
+msgctxt "ContentText"
+msgid "Minigame"
+msgstr "Mini oyun"
+
+msgctxt "ContentText"
+msgid "Mobs"
+msgstr "Moblar"
+
+msgctxt "ContentText"
+msgid "Optimization"
+msgstr "Optimizasyon"
+
+msgctxt "ContentText"
+msgid "Social"
+msgstr "Sosyal"
+
+msgctxt "ContentText"
+msgid "Transportation"
+msgstr "Ulaşım"
+
+msgctxt "ContentText"
+msgid "Utility"
+msgstr "Yardımcı Araçlar"
+
+msgctxt "ContentText"
+msgid "Crafted"
+msgstr "El Yapımı"
+
+msgctxt "ContentText"
+msgid "Photorealistic"
+msgstr "Fotogerçekçi"
+
+msgctxt "ContentText"
+msgid "Semi-Realistic"
+msgstr "Yarı Gerçekçi"
+
+msgctxt "ContentText"
+msgid "Simple"
+msgstr "Basit"
+
+msgctxt "ContentText"
+msgid "Traditional"
+msgstr "Geleneksel"
+
+msgctxt "ContentText"
+msgid "Animated"
+msgstr "Hareketli"
+
+msgctxt "ContentText"
+msgid "Modern"
+msgstr "Modern"
+
+msgctxt "ContentText"
+msgid "Themed"
+msgstr "Temalı"
+
+msgctxt "ContentText"
+msgid "Mod Support"
+msgstr "Mod Desteği"
+
+msgctxt "ContentText"
+msgid "RPG"
+msgstr "RPG"
+
+msgctxt "ContentText"
+msgid "Gameplay"
+msgstr "Oynanış"
+
+msgctxt "ContentText"
+msgid "GUI"
+msgstr "Arayüz"
+
+msgctxt "ContentText"
+msgid "Sound"
+msgstr "Ses"
+
+msgctxt "ContentText"
+msgid "Environment"
+msgstr "Çevre"
+
+msgctxt "ContentText"
+msgid "Blocks"
+msgstr "Bloklar"
+
+msgctxt "ContentText"
+msgid "Items"
+msgstr "Eşyalar"
+
+msgctxt "ContentText"
+msgid "Weather"
+msgstr "Hava Durumu"
+
+msgctxt "ContentText"
+msgid "16x"
+msgstr "16x"
+
+msgctxt "ContentText"
+msgid "32x"
+msgstr "32x"
+
+msgctxt "ContentText"
+msgid "64x"
+msgstr "64x"
+
+msgctxt "ContentText"
+msgid "128x"
+msgstr "128x"
+
+msgctxt "ContentText"
+msgid "256x"
+msgstr "256x"
+
+msgctxt "ContentText"
+msgid "Faithful"
+msgstr "Faithful"
+
+msgctxt "ContentText"
+msgid "Classic"
+msgstr "Klasik"
+
+msgctxt "ContentText"
+msgid "Dark"
+msgstr "Karanlık"
+
+msgctxt "ContentText"
+msgid "Medieval"
+msgstr "Orta Çağ"
+
+msgctxt "ContentText"
+msgid "Anime"
+msgstr "Anime"
+
+msgctxt "ContentText"
+msgid "Cartoon"
+msgstr "Çizgi Film"
+
+msgctxt "ContentText"
+msgid "Pixel Art"
+msgstr "Piksel Sanatı"
+
+msgctxt "ContentText"
+msgid "Vanilla Plus"
+msgstr "Vanilla Artı"
+
+msgctxt "ContentText"
+msgid "Other"
+msgstr "Diğer"
+
+msgctxt "ContentText"
+msgid "Sci-Fi"
+msgstr "Bilim Kurgu"
+
+msgctxt "ContentText"
+msgid "Exploration"
+msgstr "Keşif"
+
+msgctxt "ContentText"
+msgid "Quests"
+msgstr "Görevler"
+
+msgctxt "ContentText"
+msgid "Hardcore"
+msgstr "Hardcore"
+
+msgctxt "ContentText"
+msgid "Map-Based"
+msgstr "Harita Tabanlı"
+
+msgctxt "ContentText"
+msgid "Lightweight"
+msgstr "Hafif"
+
+msgctxt "ContentText"
+msgid "Extra Large"
+msgstr "Çok Büyük"
+
+msgctxt "ContentText"
+msgid "Combat PvP"
+msgstr "Savaş PvP"
+
+msgctxt "ContentText"
+msgid "Multiplayer"
+msgstr "Çok Oyunculu"
+
+msgctxt "ContentText"
+msgid "FTB Modpacks"
+msgstr "FTB Mod Paketleri"
+
+msgctxt "ContentText"
+msgid "Skyblock"
+msgstr "Skyblock"
+
+msgctxt "ContentText"
+msgid "Horror"
+msgstr "Korku"
+
+msgctxt "ContentText"
+msgid "Expert"
+msgstr "Uzman"
+
+msgctxt "ContentText"
+msgid "Challenging"
+msgstr "Zorlu"
+
+msgctxt "ContentText"
+msgid "Combat"
+msgstr "Savaş"
+
+msgctxt "ContentText"
+msgid "Kitchen Sink"
+msgstr "Kitchen Sink"
+
