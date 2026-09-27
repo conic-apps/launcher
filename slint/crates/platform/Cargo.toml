@@ -10,3 +10,4 @@ repository.workspace = true
 once_cell.workspace = true
 os_info.workspace = true
 serde.workspace = true
+sysinfo.workspace = true

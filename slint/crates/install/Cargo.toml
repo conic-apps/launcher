@@ -7,9 +7,24 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+slint-config.workspace = true
+slint-folder.workspace = true
+slint-instance.workspace = true
+slint-download.workspace = true
+slint-platform.workspace = true
+slint-version.workspace = true
+slint-java-runtime.workspace = true
+slint-shared.workspace = true
+
 log.workspace = true
 once_cell.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_with.workspace = true
+sha2.workspace = true
 thiserror.workspace = true
+tokio.workspace = true
+url.workspace = true
+uuid.workspace = true
+zip.workspace = true

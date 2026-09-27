@@ -7,6 +7,10 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+slint-folder.workspace = true
+slint-platform.workspace = true
+
 log.workspace = true
 once_cell.workspace = true
 thiserror.workspace = true
+tokio.workspace = true

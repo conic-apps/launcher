@@ -2,14 +2,16 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The Quilt loader version list (`crates/install/src/quilt.rs`).
-//!
-//! Only the version list is mirrored; writing the loader profile JSON belongs
-//! to the install task, which is not migrated yet.
+//! The Quilt loader version list and profile installer
+//! (`crates/install/src/quilt.rs`).
 
 use serde::{Deserialize, Serialize};
 
-use crate::{HTTP_CLIENT, error::*};
+use slint_folder::MinecraftLocation;
+use slint_shared::HTTP_CLIENT;
+use slint_version::Version;
+
+use crate::error::*;
 
 /// Represents a Quilt loader artifact version, including its Maven coordinates and version.
 #[derive(Clone, Deserialize, Serialize)]
@@ -109,4 +111,40 @@ impl QuiltVersionList {
     pub fn as_slice(&self) -> &[QuiltVersion] {
         &self.0
     }
+}
+
+/// Downloads and installs the Quilt version metadata into the Minecraft directory.
+///
+/// This will save the version profile JSON in the appropriate location inside the Minecraft folder.
+///
+/// # Arguments
+///
+/// * `mcversion` - Target Minecraft version.
+/// * `quilt_version` - Specific Quilt loader version to install.
+/// * `minecraft` - Path to the user's Minecraft installation.
+///
+/// # Returns
+///
+/// * A `Result<()>` indicating success or failure.
+pub async fn install(
+    mcversion: &str,
+    quilt_version: &str,
+    minecraft: MinecraftLocation,
+) -> Result<()> {
+    let url = format!(
+        "https://meta.quiltmc.org/v3/versions/loader/{mcversion}/{quilt_version}/profile/json"
+    );
+    let response = HTTP_CLIENT.get(url).send().await?;
+    let quilt_version_json: Version = response.json().await?;
+    let version_name = quilt_version_json.id.clone();
+    let json_path = minecraft.get_version_json(&version_name);
+    if let Some(parent) = json_path.parent() {
+        tokio::fs::create_dir_all(parent).await?;
+    }
+    tokio::fs::write(
+        json_path,
+        serde_json::to_string_pretty(&quilt_version_json)?,
+    )
+    .await?;
+    Ok(())
 }

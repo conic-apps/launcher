@@ -26,8 +26,12 @@ slint-folder.workspace = true
 slint-account.workspace = true
 slint-instance.workspace = true
 slint-content.workspace = true
+slint-version.workspace = true
+slint-download.workspace = true
 slint-install.workspace = true
+slint-launch.workspace = true
 slint-java-runtime.workspace = true
+slint-statistics.workspace = true
 slint-single-instance.workspace = true
 # For the `data:` URLs the account crates store skins as (`account_avatar`).
 base64.workspace = true

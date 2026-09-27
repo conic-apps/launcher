@@ -17,6 +17,16 @@ export global Navigation {
     in-out property <string> current-page: "game";
     in-out property <string> previous-page: "";
 
+    /// Fired whenever `current-page` changes, so a screen can run its
+    /// "unmounted" work without polling. The launch view is the first user: the
+    /// Vue's `onUnmounted` cancels a running install/launch, and the title bar
+    /// can navigate away from it without going through the back button.
+    callback page-changed(string);
+
+    changed current-page => {
+        self.page-changed(self.current-page);
+    }
+
     public function navigate(page: string) {
         if (self.current-page != page && self.current-page != "launch") {
             self.previous-page = self.current-page;

@@ -1151,3 +1151,128 @@ msgstr "Cancel"
 msgctxt "AccountAddYggdrasil"
 msgid "Username"
 msgstr "Username"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Auth service"
+msgstr "Auth service"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Profile name"
+msgstr "Profile name"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Cancel launch"
+msgstr "Cancel launch"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing"
+msgstr "Preparing"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing download"
+msgstr "Preparing download"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Refreshing account"
+msgstr "Refreshing account"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Verifying game files"
+msgstr "Verifying game files"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading game files {} / {}"
+msgstr "Downloading game files {0} / {1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Checking Java runtime"
+msgstr "Checking Java runtime"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading Java {}/{}"
+msgstr "Downloading Java {0}/{1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Installing {}"
+msgstr "Installing {0}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading {} installer"
+msgstr "Downloading {0} installer"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Downloading dependencies"
+msgstr "Downloading dependencies"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Running {} installer: {}"
+msgstr "Running {0} installer: {1}"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Preparing to launch"
+msgstr "Preparing to launch"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Generating launch script"
+msgstr "Generating launch script"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Waiting for game process to start"
+msgstr "Waiting for game process to start"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Game started"
+msgstr "Game started"
+
+#: ui
+msgctxt "LaunchView"
+msgid "Error: {}"
+msgstr "Error: {}"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "To launch the game, you must have added at least one account"
+msgstr "To launch the game, you must have added at least one account"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "To launch the game, you must have added at least one Microsoft account"
+msgstr "To launch the game, you must have added at least one Microsoft account"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Failed to refresh the account. Check your network connection and try again, or log in to the account again"
+msgstr "Failed to refresh the account. Check your network connection and try again, or log in to the account again"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Could not find a suitable Java runtime"
+msgstr "Could not find a suitable Java runtime"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "You can set one manually in the instance settings"
+msgstr "You can set one manually in the instance settings"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Cancel launch"
+msgstr "Cancel launch"

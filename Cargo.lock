@@ -1308,12 +1308,16 @@ dependencies = [
  "slint-build",
  "slint-config",
  "slint-content",
+ "slint-download",
  "slint-folder",
  "slint-install",
  "slint-instance",
  "slint-java-runtime",
+ "slint-launch",
  "slint-platform",
  "slint-single-instance",
+ "slint-statistics",
+ "slint-version",
  "slint-window",
  "tokio",
  "url",
@@ -7139,6 +7143,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "slint-download"
+version = "0.0.0"
+dependencies = [
+ "futures",
+ "log",
+ "rayon",
+ "reqwest",
+ "serde",
+ "serde_with",
+ "sha1_smol",
+ "sha2",
+ "slint-config",
+ "slint-shared",
+ "thiserror 2.0.19",
+ "tokio",
+ "url",
+]
+
+[[package]]
 name = "slint-folder"
 version = "0.0.0"
 dependencies = [
@@ -7157,7 +7180,21 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "serde_with",
+ "sha2",
+ "slint-config",
+ "slint-download",
+ "slint-folder",
+ "slint-instance",
+ "slint-java-runtime",
+ "slint-platform",
+ "slint-shared",
+ "slint-version",
  "thiserror 2.0.19",
+ "tokio",
+ "url",
+ "uuid",
+ "zip",
 ]
 
 [[package]]
@@ -7181,7 +7218,38 @@ version = "0.0.0"
 dependencies = [
  "log",
  "once_cell",
+ "slint-folder",
+ "slint-platform",
  "thiserror 2.0.19",
+ "tokio",
+]
+
+[[package]]
+name = "slint-launch"
+version = "0.0.0"
+dependencies = [
+ "log",
+ "num_cpus",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "slint-account",
+ "slint-config",
+ "slint-download",
+ "slint-folder",
+ "slint-install",
+ "slint-instance",
+ "slint-java-runtime",
+ "slint-platform",
+ "slint-shared",
+ "slint-statistics",
+ "slint-version",
+ "thiserror 2.0.19",
+ "tokio",
+ "uuid",
+ "zip",
 ]
 
 [[package]]
@@ -7203,6 +7271,18 @@ dependencies = [
  "once_cell",
  "os_info",
  "serde",
+ "sysinfo",
+]
+
+[[package]]
+name = "slint-shared"
+version = "0.0.0"
+dependencies = [
+ "log",
+ "once_cell",
+ "reqwest",
+ "thiserror 2.0.19",
+ "url",
 ]
 
 [[package]]
@@ -7213,6 +7293,33 @@ dependencies = [
  "log",
  "windows-sys 0.60.2",
  "zbus",
+]
+
+[[package]]
+name = "slint-statistics"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_with",
+ "slint-folder",
+ "thiserror 2.0.19",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "slint-version"
+version = "0.0.0"
+dependencies = [
+ "once_cell",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "slint-folder",
+ "slint-platform",
+ "thiserror 2.0.19",
 ]
 
 [[package]]

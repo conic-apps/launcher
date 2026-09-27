@@ -1,0 +1,186 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { BaseDialog } from "../../components/base-dialog.slint";
+import { BaseButton } from "../../components/base-button.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { Dialogs } from "../../globals/dialogs.slint";
+import { Navigation } from "../../globals/navigation.slint";
+
+// The four dialogs the launch view raises before/while starting
+// (src/overlays/dialogs/{NoAccountError,NoMicrosoftAccountError,
+// AccountRefreshFailed,NoSuitableJavaError}.vue).
+//
+// They share one shape: a 50px warning icon, the message beside it and a
+// full-width "Cancel launch" button below, which hides the dialog and goes back
+// — the Vue's inline `@click` written out in each component.
+//
+// The Vue originals are not internationalized (their sentences are hard-coded
+// Chinese); the Slint catalogues translate them, with the Chinese kept as the
+// source text so a locale without an entry still reads like the original.
+export component LaunchErrorDialogs inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // `NoAccountError.vue`.
+    no-account := BaseDialog {
+        dialog-visible: Dialogs.no-account-error-visible;
+        dialog-width: 500px;
+        dialog-height: 146px;
+
+        VerticalLayout {
+            x: 8px;
+            y: 8px;
+            width: no-account.content-width - 16px;
+            spacing: 0px;
+
+            HorizontalLayout {
+                height: 50px;
+                spacing: 16px;
+                cross-axis-alignment: center;
+                AppIcon { name: "warning"; size: 50px; }
+                Text {
+                    vertical-alignment: center;
+                    font-size: 16px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    wrap: word-wrap;
+                    text: @tr("LaunchDialogs" => "To launch the game, you must have added at least one account");
+                }
+            }
+            Rectangle { height: 16px; }
+            BaseButton {
+                button-width: no-account.content-width - 16px;
+                text: @tr("LaunchDialogs" => "Cancel launch");
+                clicked => {
+                    Dialogs.no-account-error-visible = false;
+                    Navigation.back();
+                }
+            }
+        }
+    }
+
+    // `NoMicrosoftAccountError.vue`.
+    no-microsoft-account := BaseDialog {
+        dialog-visible: Dialogs.no-microsoft-account-error-visible;
+        dialog-width: 500px;
+        dialog-height: 146px;
+
+        VerticalLayout {
+            x: 8px;
+            y: 8px;
+            width: no-microsoft-account.content-width - 16px;
+            spacing: 0px;
+
+            HorizontalLayout {
+                height: 50px;
+                spacing: 16px;
+                cross-axis-alignment: center;
+                AppIcon { name: "warning"; size: 50px; }
+                Text {
+                    vertical-alignment: center;
+                    font-size: 16px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    wrap: word-wrap;
+                    text: @tr("LaunchDialogs" => "To launch the game, you must have added at least one Microsoft account");
+                }
+            }
+            Rectangle { height: 16px; }
+            BaseButton {
+                button-width: no-microsoft-account.content-width - 16px;
+                text: @tr("LaunchDialogs" => "Cancel launch");
+                clicked => {
+                    Dialogs.no-microsoft-account-error-visible = false;
+                    Navigation.back();
+                }
+            }
+        }
+    }
+
+    // `AccountRefreshFailed.vue`.
+    refresh-failed := BaseDialog {
+        dialog-visible: Dialogs.account-refresh-failed-visible;
+        dialog-width: 500px;
+        dialog-height: 146px;
+
+        VerticalLayout {
+            x: 8px;
+            y: 8px;
+            width: refresh-failed.content-width - 16px;
+            spacing: 0px;
+
+            HorizontalLayout {
+                height: 50px;
+                spacing: 16px;
+                cross-axis-alignment: center;
+                AppIcon { name: "warning"; size: 50px; }
+                Text {
+                    vertical-alignment: center;
+                    font-size: 16px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    wrap: word-wrap;
+                    text: @tr("LaunchDialogs" => "Failed to refresh the account. Check your network connection and try again, or log in to the account again");
+                }
+            }
+            Rectangle { height: 16px; }
+            BaseButton {
+                button-width: refresh-failed.content-width - 16px;
+                text: @tr("LaunchDialogs" => "Cancel launch");
+                clicked => {
+                    Dialogs.account-refresh-failed-visible = false;
+                    Navigation.back();
+                }
+            }
+        }
+    }
+
+    // `NoSuitableJavaError.vue` — a two-line message and a filled blue button.
+    no-java := BaseDialog {
+        dialog-visible: Dialogs.no-suitable-java-error-visible;
+        dialog-width: 500px;
+        dialog-height: 144px;
+
+        VerticalLayout {
+            x: 8px;
+            y: 8px;
+            width: no-java.content-width - 16px;
+            spacing: 0px;
+
+            HorizontalLayout {
+                height: 50px;
+                spacing: 16px;
+                cross-axis-alignment: center;
+                AppIcon { name: "warning"; size: 50px; }
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 8px;
+                    Text {
+                        font-size: 17px;
+                        color: Theme.default-text-color.transparentize(0.1);
+                        wrap: word-wrap;
+                        text: @tr("LaunchDialogs" => "Could not find a suitable Java runtime");
+                    }
+                    Text {
+                        font-size: 12px;
+                        color: Theme.default-text-color.transparentize(0.1);
+                        wrap: word-wrap;
+                        text: @tr("LaunchDialogs" => "You can set one manually in the instance settings");
+                    }
+                }
+            }
+            Rectangle { height: 16px; }
+            BaseButton {
+                button-width: no-java.content-width - 16px;
+                text: @tr("LaunchDialogs" => "Cancel launch");
+                text-color: Theme.text-inverse;
+                button-background: Theme.blue;
+                clicked => {
+                    Dialogs.no-suitable-java-error-visible = false;
+                    Navigation.back();
+                }
+            }
+        }
+    }
+}
