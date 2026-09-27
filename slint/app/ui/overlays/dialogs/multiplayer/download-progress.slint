@@ -1,0 +1,98 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../../theme.slint";
+import { AppIcon } from "../../../components/app-icon.slint";
+import { BaseButton } from "../../../components/base-button.slint";
+import { BaseProgress } from "../../../components/base-progress.slint";
+import { MultiplayerState } from "../../../globals/multiplayer.slint";
+
+// The Conic Nexus library download screen
+// (src/overlays/dialogs/multiplayer/DownloadProgress.vue): the download glyph,
+// the phase / byte counter pair and the progress bar beside it, then the
+// red-outlined "Stop download" button.
+export component MultiplayerDownloadProgress inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    // `onMounted(async () => { ... downloadTask.start() })` — the screen mounts
+    // when the description's "Start download" swaps it in.
+    init => { MultiplayerState.start-download(); }
+
+    // `display: flex; align-items: center` — the icon is the taller of the two,
+    // so the row is 50px and the message column is centred against it.
+    HorizontalLayout {
+        height: 50px;
+        spacing: 16px;
+        cross-axis-alignment: center;
+
+        AppIcon {
+            name: "download";
+            size: 50px;
+        }
+
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 0px;
+
+            // `p { display: flex; justify-content: space-between; align-items: end }`.
+            HorizontalLayout {
+                alignment: space-between;
+                cross-axis-alignment: end;
+
+                Text {
+                    horizontal-stretch: 1;
+                    text: MultiplayerState.download-phase-text;
+                    font-size: 16px;
+                    line-height-factor: 1;
+                    // The Vue's flex row shrinks the two spans; the headline
+                    // wraps rather than pushing the counter out of the panel.
+                    wrap: word-wrap;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+
+                // `v-if="progressBar.value && progressBar.max"`.
+                if MultiplayerState.show-download-bytes : Text {
+                    text: MultiplayerState.download-value-text + " / " + MultiplayerState.download-max-text;
+                    font-size: 14px;
+                    line-height-factor: 1;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+            }
+
+            Rectangle { height: 16px; background: transparent; }
+
+            BaseProgress {
+                loading: MultiplayerState.download-loading;
+                value: MultiplayerState.download-value;
+                max: MultiplayerState.download-max;
+            }
+        }
+    }
+
+    Rectangle { height: 16px; background: transparent; }
+
+    actions := Rectangle {
+        width: 100%;
+        height: 30px;
+        background: transparent;
+
+        HorizontalLayout {
+            spacing: 12px;
+
+            // `.stop`: a red outline that fills red on hover.
+            BaseButton {
+                button-width: parent.width;
+                text: @tr("Multiplayer" => "Stop download");
+                text-color: Theme.red;
+                button-border-color: Theme.red.with-alpha(0.6);
+                hover-background: Theme.red;
+                hover-text-color: Theme.text-inverse;
+                clicked => { MultiplayerState.cancel-download(); }
+            }
+        }
+    }
+}

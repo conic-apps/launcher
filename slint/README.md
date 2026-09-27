@@ -92,6 +92,11 @@ slint/
           account-add.slint         # src/overlays/dialogs/AccountAdd.vue
           create-instance.slint     # src/overlays/dialogs/CreateInstance.vue
           launch-errors.slint       # the four launch error dialogs
+          multiplayer-extension.slint  # …/dialogs/MultiplayerExtension.vue
+          multiplayer/
+            download-description.slint # …/multiplayer/DownloadDescription.vue
+            download-progress.slint    # …/multiplayer/DownloadProgress.vue
+            multiplayer-manager.slint  # …/multiplayer/MultiplayerManager.vue
           create/
             minecraft-choose.slint  #   …/create/MinecraftChoose.vue
             mod-loader-choose.slint #   …/create/ModLoaderChoose.vue
@@ -111,6 +116,7 @@ slint/
     statistics/                     # Tauri-free mirror of crates/statistics
     java-runtime/                   # Tauri-free mirror of crates/java-runtime (whole crate)
     single-instance/                # single-instance guard (no Tauri plugin here)
+    multiplayer/                    # Tauri-free mirror of crates/multiplayer (whole crate)
 ```
 
 ## Naming
@@ -583,6 +589,20 @@ Per the migration plan:
   `hasPreciseScrollingDeltas` as the event goes by, before Slint dispatches it,
   and the `.slint` side pulls that while it handles the very same event. Every
   other platform answers `wheel`, i.e. what the containers did before.
+- **The multiplayer dialog** (`overlays/dialogs/multiplayer-extension.slint`,
+  the three screens under `overlays/dialogs/multiplayer/`, `globals/multiplayer.slint`
+  and `app/src/multiplayer.rs`). The footer's globe runs the Vue footer's
+  `openConnect` (check the Conic Nexus library, then show either the download
+  description or the manager), the description's "Start download" swaps to the
+  download screen, and the completed download switches to the manager half a
+  second later. The manager carries all seven of its screens (`waiting`,
+  `hostScan`, `hostReady`, `guestCodeInput`, `guestJoining`, `guestReady`,
+  `exception`), the `slide-left`/`slide-right` out-in swap, the invite code's
+  copy-bubble `zoom-in`/`zoom-out`, the 60-second LAN-scan countdown and the
+  NAT-type line. The whole `crates/multiplayer` surface is mirrored by
+  `slint-multiplayer` (see below): the library download and its checksum, the
+  FFI session (`nexus.rs`), the event poll thread with its `get_state`
+  reconciliation and the room-code check.
 
 Not yet migrated: `AccountsView`, the setup wizard, the remaining overlays
 (dialogs, content panels, command palette, music player, instance settings). The
@@ -924,8 +944,9 @@ still falls back to the placeholder disc for a skin Rust could not decode.
       covers the element that carries the attribute, not its children, so
       pressing the panel (or anything on it) leaves the window alone. The Vue's
       two other regions are not wired yet: `App.vue`'s title bar still relies on
-      the window system's own title bar area, and the multiplayer dialog is not
-      migrated.
+      the window system's own title bar area, and the multiplayer dialog's own
+      `data-tauri-drag-region` on its 8px body padding is not reproduced (the
+      scrim drag below it is).
     - The instance background's preview overlays the card's own colour with a
       left-to-right gradient instead of a CSS `mask-image` (Slint has no masks),
       and the image is loaded by Rust — Slint can only load a runtime path
@@ -963,6 +984,50 @@ still falls back to the placeholder disc for a skin Rust could not decode.
       (Slint has no `ch` unit), and the sliding screens are clipped by
       `SlideTransition` rather than by the panel, so their travel stops 24px
       short of the original's (see below).
+- **Multiplayer dialog deviations**, all deliberate:
+    - The manager's bottom button bar is laid out **in flow**. The Vue's
+      `.buttons` is `position: absolute; bottom: 24px; width: calc(100% - 48px)`,
+      but no ancestor between it and the panel is positioned, so its containing
+      block is the full-window `.dialog` scrim: the bar actually renders at the
+      bottom of the *window*, detached from the panel, while the panel still
+      reserves the manager's 48px `padding-bottom`. Reproducing that would move
+      the button off the dialog, so the bar keeps the rule's own `margin-top:
+      16px` above it and sits 24px above the panel's bottom edge instead.
+    - `p.message`'s `font-style: italic` is dropped: Slint has no oblique style
+      for the embedded variable font, so "Waiting for other players to join..."
+      is upright.
+    - The two "ready" screens drop their own `padding-bottom: 16px`. In the Vue
+      that padding and the bar's `margin-top: 16px` stack (the bar's margin has
+      no effect at all while it is absolutely positioned, so the padding is what
+      the eye sees); with the bar back in flow both would apply, and the gap
+      above it came out twice as large on those two screens as on the five
+      without the padding. The bar's own 16px is kept, so every screen has the
+      same gap.
+    - The download screen's headline wraps. The Vue's `p { display: flex;
+      justify-content: space-between }` shrinks both spans, so the long phase
+      string wraps next to the byte counter rather than pushing it out of the
+      panel; the Slint row stretches and wraps the headline the same way.
+    - `BaseButton` grew three optional overrides (`button-border-color`,
+      `hover-background`, `hover-text-color`) for the download screen's
+      `.stop` rule — a red outline that fills red on hover. The Vue gets there
+      with a scoped `.stop:hover` selector, which a component's own properties
+      cannot express. (`border-color` is `Rectangle`'s own property, hence the
+      `button-` prefix.)
+    - The room-code format check lives in `slint-multiplayer`
+      (`room_code.rs`) instead of the Vue's `index.ts`: it is the same regex and
+      base-34 modulo-7 checksum, and the UI needs it without a session (the
+      library's own `conic_nexus_room_code_is_valid` is still reachable through
+      `NexusService::room_code_is_valid`).
+    - The manager stays mounted while the dialog is hidden, where the Vue
+      unmounts it (the panel would otherwise animate its height from nothing on
+      every reopen, which the Vue's height tracking does not do). The only
+      visible difference is that a LAN-scan countdown keeps ticking while the
+      window is hidden — the Vue's `onUnmounted(stopScanCountdown)` would freeze
+      it.
+    - The copy bubble's text is drawn as a centred `Text` inside a 16px box
+      rather than a `<p>` sized by `align-items: center`, so the two swapped
+      strings stay in exactly the same place through the `zoom-in`/`zoom-out`
+      out-in swap.
 - **Launch view deviations**, all deliberate:
     - The progress line's `mode="out-in"` fade (100ms out, then 100ms in) is not
       reproduced — Slint has no transition groups, so the text swaps in place.
