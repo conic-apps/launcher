@@ -337,12 +337,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
 
         // `div.buttons { margin-top: 16px; gap: 8px }`, which this row does not
         // push to the right (unlike the other screens').
-        Rectangle {
-            height: 16px;
-            background: transparent;
-        }
-
         HorizontalLayout {
+            padding-top: 16px;
             spacing: 8px;
 
             BaseButton {
@@ -382,12 +378,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
 
         // `div.link { margin-top: 8px }`: the label, then the link box over the
         // rest of the row.
-        Rectangle {
-            height: 8px;
-            background: transparent;
-        }
-
         HorizontalLayout {
+            padding-top: 8px;
             cross-axis-alignment: center;
 
             Text {
@@ -454,12 +446,9 @@ export component AccountAddMicrosoft inherits VerticalLayout {
 
         // `div.buttons { margin-top: 16px; gap: 8px }`, left-aligned like the
         // device code's.
-        Rectangle {
-            height: 16px;
-            background: transparent;
-        }
-
+        // `div.buttons { margin-top: 16px; display: flex; gap: 8px }`.
         HorizontalLayout {
+            padding-top: 16px;
             spacing: 8px;
 
             BaseButton {
