@@ -139,7 +139,10 @@ export component GameFooterBar inherits Rectangle {
             background: transparent;
 
             pill := AccountListDropdown {
-                x: 68px;
+                // 28 + 64 − 16: the avatar's right edge, less the
+                // `margin-left: -16px` AccountListDropdown.vue carries so the pill
+                // tucks under the circle.
+                x: 76px;
                 y: -6px + self.intro-dy;
                 name: GameState.current-account-name;
                 kind: GameState.current-account-kind;
@@ -174,7 +177,9 @@ export component GameFooterBar inherits Rectangle {
             background: transparent;
 
             unlogged-pill := Rectangle {
-                x: 68px;
+                // 28 + 64 − 16, as the logged-in pill above: the avatar's right
+                // edge less the `.profile-name-unlogged { margin-left: -16px }`.
+                x: 76px;
                 y: -6px + self.intro-dy;
                 width: 32px + unlogged-text.preferred-width + 16px;
                 height: 36px;
@@ -222,17 +227,23 @@ export component GameFooterBar inherits Rectangle {
         // ----- account avatar -----
         // Declared after the account layers, although the Vue's template puts it
         // first: there the avatar is `z-index: 2` and every sibling `z-index: 1`
-        // (`.game-view-footer > :not(.footer-visualizer)`), so its 56px circle —
-        // inset 28px from the left, overhanging the bar by 18px — is painted
-        // *over* the left 16px of the name pill it overlaps. Slint paints
-        // siblings in declaration order unless `z` is set, and the compiler
-        // ignores `z` on a component instance's root, so here the order is the
-        // z-order.
+        // (`.game-view-footer > :not(.footer-visualizer)`), so its circle —
+        // inset 28px from the left, overhanging the bar — is painted *over* the
+        // left 16px of the name pill it overlaps. Slint paints siblings in
+        // declaration order unless `z` is set, and the compiler ignores `z` on a
+        // component instance's root, so here the order is the z-order.
+        //
+        // The box is 64px, not 56: `> .avatar :deep(.avatar-image)` is
+        // `padding: 2px` inside a `border: 2px solid`, so the *flex item* the
+        // Vue's footer lays out is the 56px image plus 4px of padding and 4px of
+        // border. `AccountAvatar` already insets its own 4px for that, so it is
+        // this box that has to be 64 — and the pill, which the Vue offsets by
+        // `-16px` from where the avatar *ends*, moves out with it.
         avatar-wrap := Rectangle {
             x: 28px;
-            y: -18px + self.intro-dy;
-            width: 56px;
-            height: 56px;
+            y: -22px + self.intro-dy;
+            width: 64px;
+            height: 64px;
             background: transparent;
             opacity: self.intro-alpha;
 

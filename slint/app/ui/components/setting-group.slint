@@ -36,7 +36,9 @@ export component SettingGroup inherits VerticalLayout {
 
         HorizontalLayout {
             padding-left: 8px;
-            spacing: 4px;
+            // `> p.title` is a flex row with no `gap`, so the 3px the reset button
+            // carries on its left *is* the space between the two.
+            spacing: 3px;
             cross-axis-alignment: center;
             alignment: start;
 

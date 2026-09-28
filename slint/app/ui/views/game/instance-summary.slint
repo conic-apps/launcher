@@ -256,10 +256,19 @@ export component InstanceSummary inherits Rectangle {
         }
 
         if GameState.current-has-playtime : MetaSeparator { }
-        if GameState.current-has-playtime : AppIcon {
-            name: "time";
-            size: 22px;
-            vertical-stretch: 0;
+        // `<AppIcon name="time" :size="22" style="margin-right: 2px">`, and the
+        // `MetaColumn` beside it carries the `p { padding: 2px 4px }` the Vue
+        // puts every metadata cell in — so the gap is 2 + 4 = 6px, and the row's
+        // `spacing: 0px` supplied none of it.
+        if GameState.current-has-playtime : time-icon := HorizontalLayout {
+            spacing: 0px;
+            cross-axis-alignment: center;
+            padding-right: 2px;
+
+            AppIcon {
+                name: "time";
+                size: 22px;
+            }
         }
         if GameState.current-has-playtime : MetaColumn {
             label: @tr("Play time");

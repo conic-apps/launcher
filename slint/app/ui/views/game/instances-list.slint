@@ -381,7 +381,7 @@ export component InstancesList inherits Rectangle {
                             name: "chevron-forward";
                             size: 14px;
                             icon-color: Theme.text-inverse;
-                            x: 3px;
+                            x: 4px;
                             y: (parent.height - self.height) / 2;
                             transform-origin: { x: self.width / 2, y: self.height / 2 };
                             transform-rotation: row.collapsed ? 0deg : 90deg;
@@ -516,7 +516,12 @@ export component InstancesList inherits Rectangle {
                             }
 
                             HorizontalLayout {
-                                spacing: 4px;
+                                // No `spacing`: `.last-play` is an inline span
+                                // with no gap and no margin, so the only separator
+                                // between the label and the value is the one
+                                // collapsed whitespace character — which is what
+                                // the label's own trailing string already is.
+                                spacing: 0px;
                                 cross-axis-alignment: center;
 
                                 Text {

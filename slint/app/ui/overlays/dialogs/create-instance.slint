@@ -410,6 +410,14 @@ export component CreateInstance inherits Rectangle {
 
     // `.content > p`: 8px top + a 16px line + 16px bottom.
     private property <length> title-height: 40px;
+    // The version chooser is `height: calc(100% - 42px)`, and the mod loader one
+    // is `height: 100%` — the two stylesheets disagree about the same dialog, by
+    // 2px and by a whole title band respectively. Each screen therefore gets its
+    // own number here rather than one shared with the title, so that neither is
+    // quietly the other's. The mod loader one is the normalized reading: a
+    // `height: 100%` flex child in a column with a title above it overflows by
+    // the title, which the Vue's scroller absorbs.
+    private property <length> version-screen-height: 42px;
     private property <bool> open: Dialogs.create-instance-visible;
     // The step the user asked for — the Vue's `currentComponent`. The title
     // follows it at once, like the Vue's `dialogTitle` computed.
@@ -593,16 +601,16 @@ export component CreateInstance inherits Rectangle {
                     if root.shown == "minecraft-choose" : MinecraftChoose {
                         phase: root.leaving ? "leave" : root.arrive-phase;
                         direction: root.direction;
-                        // `.minecraft-choose { height: calc(100% - 42px) }`: the screen
-                        // fills what the title leaves of the dialog's inner area.
-                        screen-height: flick.height - root.title-height;
+                        // `.minecraft-choose { height: calc(100% - 42px) }`.
+                        screen-height: flick.height - root.version-screen-height;
                     }
                     if root.shown == "mod-loader-choose" : ModLoaderChoose {
                         phase: root.leaving ? "leave" : root.arrive-phase;
                         direction: root.direction;
-                        // Like the Minecraft chooser, the screen fills what the
-                        // title leaves of the dialog's inner area and scrolls
-                        // its list itself.
+                        // `.mod-loader-chooser { height: 100% }`, read as filling
+                        // what the title leaves of the dialog's inner area (see
+                        // `version-screen-height`). The screen scrolls its own
+                        // list either way.
                         screen-height: flick.height - root.title-height;
                     }
                 }
