@@ -9,7 +9,7 @@ import { ContentState, ContentText } from "../../globals/content.slint";
 import { ScrollView } from "../../components/scroll-view.slint";
 import { ContentOverlay } from "content-overlay.slint";
 import { ContentTitleBar } from "content-title-bar.slint";
-import { MarkdownPlain } from "markdown-plain.slint";
+import { MarkdownBody } from "markdown-body.slint";
 component MetadataEntry inherits Rectangle {
     in property <string> icon: "";
     in property <string> text: "";
@@ -163,7 +163,9 @@ component DetailBody inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    ScrollView {
+    // Named for the one thing its children need from it: the scroll offset, so
+    // the body's renderer can skip the items that are scrolled out of sight.
+    scroller := ScrollView {
         VerticalLayout {
             ContentTitleBar {
                 icon: "extension-puzzle";
@@ -367,8 +369,12 @@ component DetailBody inherits Rectangle {
                     // The CurseForge panels put the box behind `v-if`, the
                     // Modrinth ones do not — an empty body still draws the
                     // surface0 box there (`ContentState.detail-body-always`).
-                    if ContentState.detail-body != "" || ContentState.detail-body-always : MarkdownPlain {
-                        text: ContentState.detail-body;
+                    if ContentState.detail-body != "" || ContentState.detail-body-always : MarkdownBody {
+                        // The scroller's offset and height, for the body to cull
+                        // against. The view is a grandchild of the scroller and
+                        // cannot reach it, so both are passed down.
+                        scroll-y: scroller.content-y;
+                        viewport-height: scroller.height;
                     }
 
                     // ----- the gallery (Modrinth projects) -----

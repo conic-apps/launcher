@@ -1,0 +1,79 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The data a `MarkdownView` draws. The field names and their meanings are the
+// Rust `MdItem`'s, which the caller copies into; `ColorRole` in
+// `markdown-view.slint` is the other half of the engine's `ColorRole` enum.
+//
+// A struct's Rust type belongs to the compilation that produced it, which is why
+// this file is shipped as data and compiled by the caller rather than by the
+// crate: two compilations of the same file would give two unrelated types and no
+// way to move an item from one to the other.
+
+/// The colours a view resolves a `color` name against.
+///
+/// Every colour a display-list item can ask for, and nothing else: the item says
+/// *what* it is (`"link"`, `"code-background"`, …) and the caller says what that
+/// is worth. That is what lets a palette switch be a repaint — the display list
+/// never changes and never has to be rebuilt, which would re-measure, re-break
+/// and re-position every line of the document.
+export struct MarkdownPalette {
+    /// Body text.
+    text: color,
+    /// Heading text. Defaults to `text` where a stylesheet does not give
+    /// headings their own colour, which is GitHub's case.
+    heading: color,
+    /// The text of a link, and the rule a hovered one gets.
+    link: color,
+    /// Inline `code` glyphs.
+    code-text: color,
+    /// The capsule behind inline `code`.
+    code-background: color,
+    /// A fenced code block's glyphs.
+    code-block-text: color,
+    /// A fenced code block's background.
+    code-block-background: color,
+    /// A block quote's text.
+    quote-text: color,
+    /// A block quote's left rule.
+    quote-bar: color,
+    /// A table cell's border.
+    table-border: color,
+    /// A table header cell's text.
+    table-head-text: color,
+    /// A table header cell's background.
+    table-head-background: color,
+    /// `---`, and the rule under `h1` and `h2`.
+    rule: color,
+    /// A rule drawn over struck-through text.
+    strike: color,
+    /// A list marker, an ordered marker, a task box and its tick.
+    marker: color,
+    /// An image that could not be fetched, drawn as its alt text.
+    placeholder: color,
+    /// A `<details>` summary row at rest.
+    details-head: color,
+    /// The same row under the pointer, which is what a settings row does.
+    details-head-hover: color,
+    /// The row while it is held down.
+    details-head-active: color,
+    /// The row's disclosure chevron.
+    details-marker: color,
+}
+
+/// The disclosure marker, as an icon set draws one.
+///
+/// SVG path data at its own view box, which is what the launcher's `Icons` holds
+/// and what `AppIcon` draws — the crate has no icon set of its own, so a caller
+/// that wants *its* chevron rather than the built-in one says so here. A `viewbox`
+/// of zero means the built-in path, which is what keeps the crate usable with
+/// nothing but a palette.
+export struct MdIconPath {
+    /// The path data, in `viewbox` units.
+    commands: string,
+    /// The view box the path is authored at — 512 for the launcher's icons.
+    viewbox: int,
+    /// The stroke width, in the same units.
+    stroke-width: int,
+}
