@@ -1247,6 +1247,7 @@ msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
 
+
 #: ui
 msgctxt "Multiplayer"
 msgid "Close"
@@ -1431,3 +1432,517 @@ msgstr "Conic Nexus LAN üzerinden çok oyunculu"
 msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "Ağ ortamınız: {0}"
+
+msgctxt "ContentModsPanel"
+msgid "Mods"
+msgstr "Modlar"
+
+msgctxt "ContentModsPanel"
+msgid "Consider downloading some mods from the internet"
+msgstr "İnternetten birkaç mod indirmeyi düşünebilirsiniz"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Resource Packs"
+msgstr "Kaynak Paketleri"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Consider downloading some resource packs from the internet"
+msgstr "İnternetten birkaç kaynak paketi indirmeyi düşünebilirsiniz"
+
+msgctxt "ContentPacksPanel"
+msgid "Modpacks"
+msgstr "Mod Paketleri"
+
+msgctxt "ContentSavesPanel"
+msgid "Saves"
+msgstr "Kayıtlar"
+
+msgctxt "ContentSavesPanel"
+msgid "Consider launching the game and creating some saves"
+msgstr "Oyunu başlatıp birkaç kayıt oluşturmayı düşünebilirsiniz"
+
+msgctxt "ContentScreenshotsPanel"
+msgid "Loading..."
+msgstr "Yükleniyor..."
+
+msgctxt "ContentScreenshotsPanel"
+msgid "No screenshots"
+msgstr "Ekran görüntüsü yok"
+
+msgctxt "ContentNotFound"
+msgid "No results match the current filter"
+msgstr "Geçerli filtreyle eşleşen sonuç yok"
+
+msgctxt "RemoteListView"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "Anahtar kelimeleri veya filtreleri ayarlayıp yeniden aramayı deneyin"
+
+msgctxt "DetailBody"
+msgid "Download"
+msgstr "İndir"
+
+msgctxt "DetailBody"
+msgid "Remove"
+msgstr "Kaldır"
+
+msgctxt "DetailBody"
+msgid "Installed: {}"
+msgstr "Kurulu: {}"
+
+msgctxt "ContentText"
+msgid "Favorites"
+msgstr "Favoriler"
+
+msgctxt "ContentText"
+msgid "[Disabled] "
+msgstr "[Devre dışı] "
+
+msgctxt "ContentText"
+msgid "Loader"
+msgstr "Yükleyici"
+
+msgctxt "ContentText"
+msgid "Version"
+msgstr "Sürüm"
+
+msgctxt "ContentText"
+msgid "Category"
+msgstr "Kategori"
+
+msgctxt "ContentText"
+msgid "Mod info"
+msgstr "Mod bilgisi"
+
+msgctxt "ContentText"
+msgid "Resource pack info"
+msgstr "Kaynak paketi bilgisi"
+
+msgctxt "ContentText"
+msgid "Modpack info"
+msgstr "Mod paketi bilgisi"
+
+msgctxt "ContentText"
+msgid "Search mods..."
+msgstr "Mod ara..."
+
+msgctxt "ContentText"
+msgid "Search resource packs..."
+msgstr "Kaynak paketi ara..."
+
+msgctxt "ContentText"
+msgid "Search modpacks..."
+msgstr "Mod paketi ara..."
+
+msgctxt "ContentText"
+msgid "Last played: "
+msgstr "Son oynanma: "
+
+msgctxt "CategoryModsCurseforge"
+msgid "Adventure & RPG"
+msgstr "Macera ve RPG"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Armor, Tools & Weapons"
+msgstr "Zırh, Aletler ve Silahlar"
+
+msgctxt "CategoryModsCurseforge"
+msgid "World Generation"
+msgstr "Dünya Oluşturma"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Technology"
+msgstr "Teknoloji"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Magic"
+msgstr "Büyü"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Storage"
+msgstr "Depolama"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Library & API"
+msgstr "Kütüphane ve API"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Maps & Info"
+msgstr "Haritalar ve Bilgi"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Utility & QoL"
+msgstr "Yardımcı Araçlar ve Kolaylıklar"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Server Utility"
+msgstr "Sunucu Yardımcıları"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Food"
+msgstr "Yiyecek"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Performance"
+msgstr "Performans"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Bug Fixes"
+msgstr "Hata Düzeltmeleri"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Redstone"
+msgstr "Redstone"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Cosmetic"
+msgstr "Kozmetik"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Miscellaneous"
+msgstr "Çeşitli"
+
+msgctxt "CategoryModsModrinth"
+msgid "Adventure"
+msgstr "Macera"
+
+msgctxt "CategoryModsModrinth"
+msgid "Cursed"
+msgstr "Tuhaf"
+
+msgctxt "CategoryModsModrinth"
+msgid "Decoration"
+msgstr "Dekorasyon"
+
+msgctxt "CategoryModsModrinth"
+msgid "Economy"
+msgstr "Ekonomi"
+
+msgctxt "CategoryModsModrinth"
+msgid "Equipment"
+msgstr "Ekipman"
+
+msgctxt "CategoryModsModrinth"
+msgid "Food"
+msgstr "Yiyecek"
+
+msgctxt "CategoryModsModrinth"
+msgid "Game Mechanics"
+msgstr "Oyun Mekanikleri"
+
+msgctxt "CategoryModsModrinth"
+msgid "Library"
+msgstr "Kütüphane"
+
+msgctxt "CategoryModsModrinth"
+msgid "Magic"
+msgstr "Büyü"
+
+msgctxt "CategoryModsModrinth"
+msgid "Management"
+msgstr "Yönetim"
+
+msgctxt "CategoryModsModrinth"
+msgid "Minigame"
+msgstr "Mini oyun"
+
+msgctxt "CategoryModsModrinth"
+msgid "Mobs"
+msgstr "Moblar"
+
+msgctxt "CategoryModsModrinth"
+msgid "Optimization"
+msgstr "Optimizasyon"
+
+msgctxt "CategoryModsModrinth"
+msgid "Social"
+msgstr "Sosyal"
+
+msgctxt "CategoryModsModrinth"
+msgid "Storage"
+msgstr "Depolama"
+
+msgctxt "CategoryModsModrinth"
+msgid "Technology"
+msgstr "Teknoloji"
+
+msgctxt "CategoryModsModrinth"
+msgid "Transportation"
+msgstr "Ulaşım"
+
+msgctxt "CategoryModsModrinth"
+msgid "Utility"
+msgstr "Yardımcı Araçlar"
+
+msgctxt "CategoryModsModrinth"
+msgid "World Generation"
+msgstr "Dünya Oluşturma"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Crafted"
+msgstr "El Yapımı"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Photorealistic"
+msgstr "Fotogerçekçi"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Semi-Realistic"
+msgstr "Yarı Gerçekçi"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Simple"
+msgstr "Basit"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Traditional"
+msgstr "Geleneksel"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Animated"
+msgstr "Hareketli"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Modern"
+msgstr "Modern"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Themed"
+msgstr "Temalı"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Mod Support"
+msgstr "Mod Desteği"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "RPG"
+msgstr "RPG"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Gameplay"
+msgstr "Oynanış"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "GUI"
+msgstr "Arayüz"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Sound"
+msgstr "Ses"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Environment"
+msgstr "Çevre"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "World Generation"
+msgstr "Dünya Oluşturma"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Blocks"
+msgstr "Bloklar"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Items"
+msgstr "Eşyalar"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Mobs"
+msgstr "Moblar"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Weather"
+msgstr "Hava Durumu"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Faithful"
+msgstr "Faithful"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "16x"
+msgstr "16x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "32x"
+msgstr "32x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "64x"
+msgstr "64x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "128x"
+msgstr "128x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "256x"
+msgstr "256x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Photorealistic"
+msgstr "Fotogerçekçi"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Semi-Realistic"
+msgstr "Yarı Gerçekçi"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Simple"
+msgstr "Basit"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Modern"
+msgstr "Modern"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Themed"
+msgstr "Temalı"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Classic"
+msgstr "Klasik"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Dark"
+msgstr "Karanlık"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Medieval"
+msgstr "Orta Çağ"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Anime"
+msgstr "Anime"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Cartoon"
+msgstr "Çizgi Film"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Pixel Art"
+msgstr "Piksel Sanatı"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Vanilla Plus"
+msgstr "Vanilla Artı"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Utility"
+msgstr "Yardımcı Araçlar"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Other"
+msgstr "Diğer"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Technology"
+msgstr "Teknoloji"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Magic"
+msgstr "Büyü"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Sci-Fi"
+msgstr "Bilim Kurgu"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Adventure & RPG"
+msgstr "Macera ve RPG"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Exploration"
+msgstr "Keşif"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Minigame"
+msgstr "Mini oyun"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Quests"
+msgstr "Görevler"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Hardcore"
+msgstr "Hardcore"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Map-Based"
+msgstr "Harita Tabanlı"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Lightweight"
+msgstr "Hafif"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Extra Large"
+msgstr "Çok Büyük"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Combat PvP"
+msgstr "Savaş PvP"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Multiplayer"
+msgstr "Çok Oyunculu"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "FTB Modpacks"
+msgstr "FTB Mod Paketleri"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Skyblock"
+msgstr "Skyblock"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Vanilla Plus"
+msgstr "Vanilla Artı"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Horror"
+msgstr "Korku"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Expert"
+msgstr "Uzman"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Adventure"
+msgstr "Macera"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Challenging"
+msgstr "Zorlu"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Combat"
+msgstr "Savaş"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Kitchen Sink"
+msgstr "Kitchen Sink"
+
+
+msgctxt "CategoryPacksModrinth"
+msgid "Lightweight"
+msgstr "Hafif"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Magic"
+msgstr "Büyü"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Multiplayer"
+msgstr "Çok Oyunculu"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Optimization"
+msgstr "Optimizasyon"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Quests"
+msgstr "Görevler"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Technology"
+msgstr "Teknoloji"
+

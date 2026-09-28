@@ -49,3 +49,15 @@ where
 {
     RUNTIME.spawn_blocking(task)
 }
+
+/// Runs `future` to completion on the calling thread.
+///
+/// For the handful of helpers that block inside an async task — the content
+/// cards' icons, which are fetched over the network while a list is being
+/// built, and the synchronous reads the `content` crate offers. `block_in_place`
+/// hands this worker's other tasks to the pool first, so the call parks one
+/// thread rather than the whole runtime. It needs the multi-threaded runtime,
+/// which is what this module builds.
+pub fn block_on<F: Future>(future: F) -> F::Output {
+    tokio::task::block_in_place(|| tokio::runtime::Handle::current().block_on(future))
+}

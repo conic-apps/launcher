@@ -17,6 +17,7 @@ mod account_avatar;
 mod background;
 mod cjk_font;
 mod config_bridge;
+mod content;
 mod create_instance;
 mod game;
 mod launch;
@@ -161,6 +162,7 @@ fn main() {
     // Settings + game view + overlay "scripts".
     settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     game::setup(&ui, Rc::clone(&shared));
+    content::setup(&ui);
     launch::setup(&ui, Rc::clone(&shared));
     create_instance::setup(&ui, Rc::clone(&shared));
     account_add::setup(&ui);

@@ -61,6 +61,8 @@ component ContentRow inherits Rectangle {
     in property <string> icon;
     in property <string> type-label;
     in property <int> count: 0;
+    /// The row's preview icons, at most five.
+    in property <[image]> icons: [];
     in property <bool> loading: false;
     in property <bool> disabled: false;
     in property <string> unit: "";
@@ -107,16 +109,29 @@ component ContentRow inherits Rectangle {
             spacing: 8px;
             cross-axis-alignment: center;
 
+            // `InstanceSummary.vue`'s `.content-img`: the first five items of
+            // the row, each a 20px circle with a 1px lavender outline, 1px
+            // apart. The icons are decoded by `content.rs`.
             HorizontalLayout {
                 spacing: 1px;
                 cross-axis-alignment: center;
-                for i in min(root.count, 5) : Rectangle {
+                for icon in root.icons : Rectangle {
                     width: 20px;
                     height: 20px;
                     border-radius: 10000px;
                     border-width: 1px;
                     border-color: Theme.lavender.with-alpha(0.8);
                     background: Theme.surface-1;
+                    clip: true;
+
+                    Image {
+                        x: 1px;
+                        y: 1px;
+                        width: 18px;
+                        height: 18px;
+                        source: icon;
+                        image-fit: cover;
+                    }
                 }
             }
 
@@ -454,6 +469,7 @@ export component InstanceSummary inherits Rectangle {
             icon: "save";
             type-label: @tr("Saves");
             count: GameState.content-saves;
+            icons: GameState.preview-saves;
             loading: GameState.content-loading;
             disabled: !GameState.has-current;
             unit: GameState.count-unit;
@@ -476,6 +492,7 @@ export component InstanceSummary inherits Rectangle {
             icon: "extension-puzzle";
             type-label: @tr("Mods");
             count: GameState.content-mods;
+            icons: GameState.preview-mods;
             loading: GameState.content-loading;
             disabled: !GameState.has-current || !GameState.current-has-loader;
             unit: GameState.count-unit;
@@ -496,6 +513,7 @@ export component InstanceSummary inherits Rectangle {
             icon: "folder";
             type-label: @tr("Resource packs");
             count: GameState.content-resourcepacks;
+            icons: GameState.preview-resourcepacks;
             loading: GameState.content-loading;
             disabled: !GameState.has-current;
             unit: GameState.count-unit;
@@ -516,6 +534,7 @@ export component InstanceSummary inherits Rectangle {
             icon: "images-outline";
             type-label: @tr("Screenshots");
             count: GameState.content-screenshots;
+            icons: GameState.preview-screenshots;
             loading: GameState.content-loading;
             disabled: !GameState.has-current || GameState.content-screenshots == 0;
             unit: GameState.count-unit;

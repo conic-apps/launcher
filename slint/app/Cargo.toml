@@ -26,6 +26,9 @@ slint-folder.workspace = true
 slint-account.workspace = true
 slint-instance.workspace = true
 slint-content.workspace = true
+slint-shared.workspace = true
+slint-modrinth.workspace = true
+slint-curseforge.workspace = true
 slint-version.workspace = true
 slint-download.workspace = true
 slint-install.workspace = true
@@ -39,9 +42,13 @@ bytemuck.workspace = true
 euclid.workspace = true
 # For the `data:` URLs the account crates store skins as (`account_avatar`).
 base64.workspace = true
-# Decoding a skin texture into the pixel buffer `AccountAvatar` draws.
-image.workspace = true
-# Comparing two Yggdrasil API roots (`account_add`'s `same_api_root`).
+# Decoding a skin texture into the pixel buffer `AccountAvatar` draws, and the
+# content overlays' project icons. `image-default-formats` on Slint covers what
+# Slint itself loads; these are the codecs the icon hosts serve by name, which
+# the app decodes itself (`content.rs`).
+image = { version = "0.25", default-features = false, features = ["png", "webp", "jpeg", "gif"] }
+# Comparing two Yggdrasil API roots (`account_add`'s `same_api_root`), and the
+# repository URL a detail panel reduces to `owner/repo`.
 url.workspace = true
 # A Yggdrasil account's own identifier, minted per added profile.
 uuid.workspace = true
@@ -56,7 +63,8 @@ once_cell.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "net", "time"] }
 log.workspace = true
 env_logger.workspace = true
-# Reading the Conic Nexus event payloads the service hands over.
+# Reading the Conic Nexus event payloads the service hands over, and the
+# content overlays' own JSON (the search requests' query bodies).
 serde_json.workspace = true
 
 # Used to inject macOS window attributes (transparent title bar + full-size

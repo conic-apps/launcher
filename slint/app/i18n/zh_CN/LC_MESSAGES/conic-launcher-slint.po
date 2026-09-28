@@ -1277,6 +1277,7 @@ msgctxt "LaunchDialogs"
 msgid "Cancel launch"
 msgstr "取消启动"
 
+
 #: ui
 msgctxt "Multiplayer"
 msgid "Close"
@@ -1461,3 +1462,517 @@ msgstr "Conic Nexus 跨局域网联机"
 msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "你的网络环境：{0}"
+
+msgctxt "ContentModsPanel"
+msgid "Mods"
+msgstr "模组列表"
+
+msgctxt "ContentModsPanel"
+msgid "Consider downloading some mods from the internet"
+msgstr "考虑从互联网下载一些模组"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Resource Packs"
+msgstr "资源包列表"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Consider downloading some resource packs from the internet"
+msgstr "考虑从互联网下载一些资源包"
+
+msgctxt "ContentPacksPanel"
+msgid "Modpacks"
+msgstr "整合包列表"
+
+msgctxt "ContentSavesPanel"
+msgid "Saves"
+msgstr "存档列表"
+
+msgctxt "ContentSavesPanel"
+msgid "Consider launching the game and creating some saves"
+msgstr "考虑启动游戏并创建一些存档"
+
+msgctxt "ContentScreenshotsPanel"
+msgid "Loading..."
+msgstr "加载中..."
+
+msgctxt "ContentScreenshotsPanel"
+msgid "No screenshots"
+msgstr "暂无截图"
+
+msgctxt "ContentNotFound"
+msgid "No results match the current filter"
+msgstr "此视图筛选条件无匹配结果"
+
+msgctxt "RemoteListView"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "尝试调整关键词或筛选条件后再次搜索"
+
+msgctxt "DetailBody"
+msgid "Download"
+msgstr "下载"
+
+msgctxt "DetailBody"
+msgid "Remove"
+msgstr "删除"
+
+msgctxt "DetailBody"
+msgid "Installed: {}"
+msgstr "已安装：{}"
+
+msgctxt "ContentText"
+msgid "Favorites"
+msgstr "收藏"
+
+msgctxt "ContentText"
+msgid "[Disabled] "
+msgstr "[已禁用] "
+
+msgctxt "ContentText"
+msgid "Loader"
+msgstr "加载器"
+
+msgctxt "ContentText"
+msgid "Version"
+msgstr "版本"
+
+msgctxt "ContentText"
+msgid "Category"
+msgstr "分类"
+
+msgctxt "ContentText"
+msgid "Mod info"
+msgstr "模组信息"
+
+msgctxt "ContentText"
+msgid "Resource pack info"
+msgstr "资源包信息"
+
+msgctxt "ContentText"
+msgid "Modpack info"
+msgstr "整合包信息"
+
+msgctxt "ContentText"
+msgid "Search mods..."
+msgstr "搜索模组..."
+
+msgctxt "ContentText"
+msgid "Search resource packs..."
+msgstr "搜索资源包..."
+
+msgctxt "ContentText"
+msgid "Search modpacks..."
+msgstr "搜索整合包..."
+
+msgctxt "ContentText"
+msgid "Last played: "
+msgstr "上次游玩: "
+
+msgctxt "CategoryModsCurseforge"
+msgid "Adventure & RPG"
+msgstr "冒险与RPG"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Armor, Tools & Weapons"
+msgstr "护甲、工具与武器"
+
+msgctxt "CategoryModsCurseforge"
+msgid "World Generation"
+msgstr "世界生成"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Technology"
+msgstr "科技"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Magic"
+msgstr "魔法"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Storage"
+msgstr "存储"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Library & API"
+msgstr "库与API"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Maps & Info"
+msgstr "地图与信息"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Utility & QoL"
+msgstr "实用与QoL"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Server Utility"
+msgstr "服务器实用"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Food"
+msgstr "食物"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Performance"
+msgstr "性能"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Bug Fixes"
+msgstr "漏洞修复"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Redstone"
+msgstr "红石"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Cosmetic"
+msgstr "外观装饰"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Miscellaneous"
+msgstr "杂项"
+
+msgctxt "CategoryModsModrinth"
+msgid "Adventure"
+msgstr "冒险"
+
+msgctxt "CategoryModsModrinth"
+msgid "Cursed"
+msgstr "诡异"
+
+msgctxt "CategoryModsModrinth"
+msgid "Decoration"
+msgstr "装饰"
+
+msgctxt "CategoryModsModrinth"
+msgid "Economy"
+msgstr "经济"
+
+msgctxt "CategoryModsModrinth"
+msgid "Equipment"
+msgstr "装备"
+
+msgctxt "CategoryModsModrinth"
+msgid "Food"
+msgstr "食物"
+
+msgctxt "CategoryModsModrinth"
+msgid "Game Mechanics"
+msgstr "游戏机制"
+
+msgctxt "CategoryModsModrinth"
+msgid "Library"
+msgstr "库"
+
+msgctxt "CategoryModsModrinth"
+msgid "Magic"
+msgstr "魔法"
+
+msgctxt "CategoryModsModrinth"
+msgid "Management"
+msgstr "管理"
+
+msgctxt "CategoryModsModrinth"
+msgid "Minigame"
+msgstr "小游戏"
+
+msgctxt "CategoryModsModrinth"
+msgid "Mobs"
+msgstr "生物"
+
+msgctxt "CategoryModsModrinth"
+msgid "Optimization"
+msgstr "优化"
+
+msgctxt "CategoryModsModrinth"
+msgid "Social"
+msgstr "社交"
+
+msgctxt "CategoryModsModrinth"
+msgid "Storage"
+msgstr "存储"
+
+msgctxt "CategoryModsModrinth"
+msgid "Technology"
+msgstr "科技"
+
+msgctxt "CategoryModsModrinth"
+msgid "Transportation"
+msgstr "交通"
+
+msgctxt "CategoryModsModrinth"
+msgid "Utility"
+msgstr "实用"
+
+msgctxt "CategoryModsModrinth"
+msgid "World Generation"
+msgstr "世界生成"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Crafted"
+msgstr "手工制作"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Photorealistic"
+msgstr "照片写实"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Semi-Realistic"
+msgstr "半写实"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Simple"
+msgstr "简约"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Traditional"
+msgstr "传统"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Animated"
+msgstr "动态"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Modern"
+msgstr "现代"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Themed"
+msgstr "主题风格"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Mod Support"
+msgstr "模组支持"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "RPG"
+msgstr "RPG"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Gameplay"
+msgstr "游戏玩法"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "GUI"
+msgstr "界面"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Sound"
+msgstr "声音"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Environment"
+msgstr "环境"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "World Generation"
+msgstr "世界生成"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Blocks"
+msgstr "方块"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Items"
+msgstr "物品"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Mobs"
+msgstr "生物"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Weather"
+msgstr "天气"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Faithful"
+msgstr "忠实原版"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "16x"
+msgstr "16x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "32x"
+msgstr "32x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "64x"
+msgstr "64x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "128x"
+msgstr "128x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "256x"
+msgstr "256x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Photorealistic"
+msgstr "照片写实"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Semi-Realistic"
+msgstr "半写实"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Simple"
+msgstr "简约"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Modern"
+msgstr "现代"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Themed"
+msgstr "主题风格"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Classic"
+msgstr "经典"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Dark"
+msgstr "暗色"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Medieval"
+msgstr "中世纪"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Anime"
+msgstr "动漫"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Cartoon"
+msgstr "卡通"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Pixel Art"
+msgstr "像素画"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Vanilla Plus"
+msgstr "原版加强"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Utility"
+msgstr "实用"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Other"
+msgstr "其他"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Technology"
+msgstr "科技"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Magic"
+msgstr "魔法"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Sci-Fi"
+msgstr "科幻"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Adventure & RPG"
+msgstr "冒险RPG"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Exploration"
+msgstr "探索"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Minigame"
+msgstr "小游戏"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Quests"
+msgstr "任务"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Hardcore"
+msgstr "高难度"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Map-Based"
+msgstr "有特定地图"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Lightweight"
+msgstr "轻量整合包"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Extra Large"
+msgstr "大型整合包"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Combat PvP"
+msgstr "战斗PvP"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Multiplayer"
+msgstr "多人"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "FTB Modpacks"
+msgstr "FTB整合包"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Skyblock"
+msgstr "空岛"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Vanilla Plus"
+msgstr "原版增强"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Horror"
+msgstr "恐怖"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Expert"
+msgstr "专家"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Adventure"
+msgstr "冒险"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Challenging"
+msgstr "挑战"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Combat"
+msgstr "战斗"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Kitchen Sink"
+msgstr "综合"
+
+
+msgctxt "CategoryPacksModrinth"
+msgid "Lightweight"
+msgstr "轻量"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Magic"
+msgstr "魔法"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Multiplayer"
+msgstr "多人"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Optimization"
+msgstr "优化"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Quests"
+msgstr "任务"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Technology"
+msgstr "科技"
+

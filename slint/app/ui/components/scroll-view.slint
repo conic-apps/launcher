@@ -100,6 +100,12 @@ export component ScrollView inherits Rectangle {
     private property <float> lerp: 0.16;
     private property <float> last-tick-ms: 0;
 
+    /// A click on the scroll area that no control inside it took. The Vue's
+    /// panels rely on the click *bubbling* to their own `@click` (a save's
+    /// expansion is cleared this way); Slint's `TouchArea` stops it, so the
+    /// intent is forwarded explicitly.
+    callback background-clicked();
+
     /// Whether the offset still has to catch up with the target. Held in its own
     /// property because a `changed` handler can only observe a property of this
     /// element (or a global), and the moment the glide *starts* has to be caught:
@@ -185,14 +191,23 @@ export component ScrollView inherits Rectangle {
             // after the controls inside the content, which handle their own
             // clicks first. It is also what the browser does for the original:
             // a press on a plain element blurs the focused input.
-            clicked => { FocusManager.clear(); }
+            clicked => {
+                FocusManager.clear();
+                root.background-clicked();
+            }
 
             scroll-event(event) => {
                 if Dropdown.open {
                     return accept;
                 }
+                // A wheel over the scroll area is *always* consumed, whether or
+                // not there is anything to scroll — Lenis calls
+                // `preventDefault()` unconditionally, so in the Vue a wheel over
+                // a panel never reaches the instance list behind it and never
+                // chains to an outer scroller. Rejecting here (as this used to)
+                // let the wheel fall through to whatever is underneath.
                 if root.max-scroll <= 0px {
-                    return reject;
+                    return accept;
                 }
                 if ScrollInput.source() == ScrollSource.wheel {
                     // A wheel notch is a *distance*, not a motion: it goes into
