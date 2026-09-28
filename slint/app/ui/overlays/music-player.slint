@@ -30,17 +30,17 @@ component PlayerButton inherits Rectangle {
     height: root.size;
     border-radius: 10px;
     background: touch.pressed
-        ? Theme.overlay-0.transparentize(0.3)
-        : touch.has-hover
-            ? Theme.surface-2.transparentize(0.3)
-            : Colors.transparent;
+    ? Theme.overlay-0.transparentize(0.3)
+    : touch.has-hover
+    ? Theme.surface-2.transparentize(0.3)
+    : Colors.transparent;
     animate background { duration: 120ms; easing: Easing.ease; }
 
     /// `&.active { color: var(--ctp-mauve) }`, and `.play-btn` mauve whatever
     /// the state — its `:hover` keeps the colour and only changes the fill.
     private property <color> ink: root.primary || root.on
-        ? Theme.mauve
-        : touch.has-hover ? Theme.text : Theme.subtext-0;
+    ? Theme.mauve
+    : touch.has-hover ? Theme.text : Theme.subtext-0;
     animate ink { duration: 120ms; easing: Easing.ease; }
 
     accessible-role: button;
@@ -70,25 +70,33 @@ component PlaylistItem inherits Rectangle {
     height: 26px;
     border-radius: 8px;
     background: touch.has-hover
-        ? Theme.surface-1.transparentize(0.3)
-        : Colors.transparent;
+    ? Theme.surface-1.transparentize(0.3)
+    : Colors.transparent;
     animate background { duration: 120ms; easing: Easing.ease; }
 
     accessible-role: button;
     accessible-label: root.name;
     accessible-action-default => { root.clicked(); }
 
-    Text {
-        x: 8px;
-        width: parent.width - 16px;
-        height: 12px;
-        text: root.name;
-        font-size: 12px;
-        font-weight: Theme.font-weight-normal;
-        color: root.playing
+    // `.playlist-item { padding: 7px 8px; display: flex; align-items: center }`.
+    // The 12px height stays: it is what reproduces `line-height: 1` against the
+    // embedded font's taller natural line box, and the 26px row height is derived
+    // from it.
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        cross-axis-alignment: center;
+
+        Text {
+            height: 12px;
+            text: root.name;
+            font-size: 12px;
+            font-weight: Theme.font-weight-normal;
+            color: root.playing
             ? Theme.blue
             : touch.has-hover ? Theme.text : Theme.subtext-0;
-        overflow: elide;
+            overflow: elide;
+        }
     }
 
     touch := TouchArea {
@@ -134,7 +142,7 @@ export component MusicPlayerOverlay inherits Rectangle {
             if root.phase == "closed" {
                 root.phase = "starting";
                 start-timer.restart();
-            } else {
+                } else {
                 // Reopened while it was leaving: play the enter from wherever the
                 // leave had got to.
                 root.phase = "shown";
@@ -148,7 +156,7 @@ export component MusicPlayerOverlay inherits Rectangle {
                 root.playlist-phase = "starting";
                 playlist-start.restart();
             }
-        } else if root.phase != "closed" && root.phase != "leaving" {
+            } else if root.phase != "closed" && root.phase != "leaving" {
             // The playlist does *not* leave here: in the Vue it is inside the
             // overlay's own subtree, so it fades out with it. It is dropped when
             // the overlay's leave is over (see `leave-timer`).
@@ -198,12 +206,12 @@ export component MusicPlayerOverlay inherits Rectangle {
             if root.playlist-phase == "closed" {
                 root.playlist-phase = "starting";
                 playlist-start.restart();
-            } else {
+                } else {
                 // Reopened while it was leaving: play the enter from wherever the
                 // leave had got to.
                 root.playlist-phase = "shown";
             }
-        } else if root.playlist-phase != "closed" && root.playlist-phase != "leaving" {
+            } else if root.playlist-phase != "closed" && root.playlist-phase != "leaving" {
             root.playlist-phase = "leaving";
         }
     }
@@ -242,10 +250,10 @@ export component MusicPlayerOverlay inherits Rectangle {
     private property <length> playlist-row-height: 26px;
     private property <length> playlist-empty-height: 36px;
     private property <length> playlist-items-height: 4px
-        + (MusicState.tracks.length > 0
-            ? playlist-row-height * MusicState.tracks.length
-            : playlist-empty-height)
-        + 8px;
+    + (MusicState.tracks.length > 0
+    ? playlist-row-height * MusicState.tracks.length
+    : playlist-empty-height)
+    + 8px;
 
     // The column is `.music-overlay { padding: 16px; gap: 12px }` and its height
     // is the window's less the 44px title bar — 488px at the 532px floor
@@ -257,8 +265,8 @@ export component MusicPlayerOverlay inherits Rectangle {
     private property <length> overlay-padding: 16px;
     private property <length> card-gap: 12px;
     private property <length> playlist-max-height: min(
-        320px,
-        root.height - 2 * root.overlay-padding - root.card-height - root.card-gap,
+    320px,
+    root.height - 2 * root.overlay-padding - root.card-height - root.card-gap,
     );
 
     // The scrim swallows the presses meant for the window below, and a press that
@@ -277,214 +285,236 @@ export component MusicPlayerOverlay inherits Rectangle {
 
     // `.music-overlay` is a flex column with `align-items: flex-end` and
     // `padding: 16px`, so both cards are flush to the right inset by 16px and
-    // separated by the column's 12px gap. They are placed by hand rather than by
-    // a layout: both slide in from a `y` of their own, and a layout child does not
-    // get to set one.
-    Rectangle {
-        x: 0;
-        y: 0;
-        width: parent.width;
-        height: parent.height;
-        background: Colors.transparent;
+    // separated by the column's 12px gap.
+    //
+    // Each card is *wrapped* rather than placed here. A layout child cannot set
+    // its own `y`, which is what this used to work around — but the element that
+    // slides in does not have to be the layout's child. It is a plain child of a
+    // cell the layout sizes, so the layout keeps the `y` and the gap and the
+    // right-hand inset, and the card keeps the animation.
+    VerticalLayout {
+        padding: 16px;
+        spacing: 12px;
+        cross-axis-alignment: end;
 
-        card := Rectangle {
-            x: parent.width - 16px - 340px;
+        card-cell := Rectangle {
             width: 340px;
             height: root.card-height;
-            y: 16px + root.card-dy;
-            opacity: root.card-alpha;
-            border-radius: 14px;
-            background: Theme.base;
-            border-width: 1px;
-            border-color: Theme.overlay-0.transparentize(0.5);
-            drop-shadow-color: #0000004d;
-            drop-shadow-blur: 24px;
+            background: Colors.transparent;
 
-            card-touch := TouchArea {
+            card := Rectangle {
                 width: 100%;
                 height: 100%;
-            }
+                y: root.card-dy;
+                opacity: root.card-alpha;
+                border-radius: 14px;
+                background: Theme.base;
+                border-width: 1px;
+                border-color: Theme.overlay-0.transparentize(0.5);
+                drop-shadow-color: #0000004d;
+                drop-shadow-blur: 24px;
 
-            // ----- track title -----
-            // `.track-info` is a flex row that centres its one child, and the
-            // child carries an 18px `margin-bottom` — so the text sits 9px above
-            // the middle of a box 18px taller than the line itself. That is the
-            // same as pinning the text to the top of a 34px box.
-            Text {
-                x: 16px;
-                y: 16px;
-                width: parent.width - 32px;
-                height: 16px;
-                text: MusicState.current-name != ""
-                    ? MusicState.current-name
-                    : @tr("No music");
-                font-size: 16px;
-                // `.track-name { font-weight: 600 }`. The `bold` token is 700, so
-                // the literal is the Vue's weight, as it is elsewhere in the app
-                // where the CSS says 600.
-                font-weight: 600;
-                color: Theme.text;
-                horizontal-alignment: center;
-                overflow: elide;
-            }
-
-            // ----- progress -----
-            // `.progress-area` is a flex row of the two clock labels and the bar,
-            // with `gap: 8px` and the labels `flex-shrink: 0`; everything centres
-            // in an 11px row. The bar takes what is left, which is what its
-            // `flex: 1` asks for.
-            current-time-text := Text {
-                x: 16px;
-                y: 16px + 34px + (11px - self.height) / 2;
-                width: self.preferred-width;
-                height: 11px;
-                text: MusicState.current-time-text;
-                font-size: 11px;
-                font-weight: Theme.font-weight-normal;
-                color: Theme.subtext-0;
-            }
-
-            duration-text := Text {
-                x: parent.width - 16px - self.width;
-                y: current-time-text.y;
-                width: self.preferred-width;
-                height: 11px;
-                text: MusicState.duration-text;
-                font-size: 11px;
-                font-weight: Theme.font-weight-normal;
-                color: Theme.subtext-0;
-            }
-
-            // `.progress-bar`, the drag target of `onProgressPointerDown`.
-            progress-bar := Rectangle {
-                x: 16px + current-time-text.width + 8px;
-                y: 16px + 34px + (11px - 4px) / 2;
-                width: parent.width - 32px - current-time-text.width - duration-text.width - 16px;
-                height: 4px;
-                border-radius: 4px;
-                background: Theme.surface-2.transparentize(0.2);
-
-                Rectangle {
-                    x: 0;
-                    y: 0;
-                    width: parent.width * MusicState.progress;
-                    height: parent.height;
-                    border-radius: 4px;
-                    background: Theme.mauve;
+                card-touch := TouchArea {
+                    width: 100%;
+                    height: 100%;
                 }
 
-                // The Vue registers `pointermove`/`pointerup` on `window` for the
-                // duration of a drag, so the bar keeps following the pointer once
-                // it has left the bar itself. Slint cannot listen outside the
-                // element, so the drag is tracked here instead — a press inside
-                // the bar still seeks, which is what a click does.
-                touch := TouchArea {
-                    width: parent.width;
-                    height: parent.height;
-                    // `seekRatio(clamp((clientX - left) / width, 0, 1))`. The
-                    // division is written in pixels because Slint cannot divide
-                    // one length by another.
-                    private property <float> ratio: clamp(
-                        (self.mouse-x - parent.x) / 1px / (parent.width / 1px),
-                        0,
-                        1,
-                    );
-                    // The bar is seekable only once there is a duration to seek
-                    // within, which is the Vue's `music.duration <= 0` guard.
-                    function seek() {
-                        if MusicState.duration > 0 {
-                            MusicState.seek-ratio(self.ratio);
+                // `.music-card { padding: 16px }` around the three rows. A layout
+                // gives the card its height too, which is how the `125px` and the
+                // running `y: 16px + 34px + …` offsets that placed them stop being
+                // arithmetic — but the card itself cannot be the layout, because it
+                // carries a background, a border and a shadow.
+                card-body := VerticalLayout {
+                    padding: 16px;
+                    spacing: 0px;
+
+                    // ----- track title -----
+                    // `.track-info` is a flex row that centres its one child, and the
+                    // child carries an 18px `margin-bottom` — so the text sits 9px above
+                    // the middle of a box 18px taller than the line itself. That is the
+                    // same as pinning the text to the top of a 34px block, which is what
+                    // `alignment: start` on a 34px row says. (`stretch` would grow the
+                    // 16px text to 34px and `center` would drop it 9px.)
+                    track-info := VerticalLayout {
+                        height: 34px;
+                        alignment: start;
+
+                        Text {
+                            height: 16px;
+                            text: MusicState.current-name != ""
+                            ? MusicState.current-name
+                            : @tr("No music");
+                            font-size: 16px;
+                            // `.track-name { font-weight: 600 }`. The `bold` token is 700,
+                            // so the literal is the Vue's weight, as it is elsewhere in
+                            // the app where the CSS says 600.
+                            font-weight: 600;
+                            color: Theme.text;
+                            horizontal-alignment: center;
+                            overflow: elide;
                         }
                     }
-                    pointer-event(event) => {
-                        if event.kind == PointerEventKind.down
-                            && event.button == PointerEventButton.left
-                        {
-                            root.dragging = true;
-                            self.seek();
-                        } else if event.kind == PointerEventKind.up
-                            || event.kind == PointerEventKind.cancel
-                        {
-                            root.dragging = false;
-                        } else if event.kind == PointerEventKind.move && root.dragging {
-                            self.seek();
+
+                    // ----- progress -----
+                    // `.progress-area` is a flex row of the two clock labels and the bar,
+                    // with `gap: 8px` and the labels `flex-shrink: 0`; everything centres
+                    // in an 11px row, and the bar takes what is left, which is what its
+                    // `flex: 1` asks for. The row is 19px — the 11px line box plus the
+                    // `margin-bottom: 8px` under it — with the bar at the top of it.
+                    //
+                    // The labels need no width of their own: a `Text` that neither wraps
+                    // nor elides reports `min-width == preferred-width`, which *is*
+                    // `flex-shrink: 0`.
+                    progress-area := HorizontalLayout {
+                        height: 19px;
+                        spacing: 8px;
+                        cross-axis-alignment: start;
+
+                        current-time-text := Text {
+                            height: 11px;
+                            text: MusicState.current-time-text;
+                            font-size: 11px;
+                            font-weight: Theme.font-weight-normal;
+                            color: Theme.subtext-0;
+                        }
+
+                        // `.progress-bar`, the drag target of `onProgressPointerDown`.
+                        progress-bar := Rectangle {
+                            horizontal-stretch: 1;
+                            height: 4px;
+                            border-radius: 4px;
+                            background: Theme.surface-2.transparentize(0.2);
+
+                            Rectangle {
+                                width: parent.width * MusicState.progress;
+                                height: parent.height;
+                                border-radius: 4px;
+                                background: Theme.mauve;
+                            }
+
+                            // The Vue registers `pointermove`/`pointerup` on `window` for the
+                            // duration of a drag, so the bar keeps following the pointer once
+                            // it has left the bar itself. Slint cannot listen outside the
+                            // element, so the drag is tracked here instead — a press inside
+                            // the bar still seeks, which is what a click does.
+                            touch := TouchArea {
+                                width: parent.width;
+                                height: parent.height;
+                                // `seekRatio(clamp((clientX - left) / width, 0, 1))`. The
+                                // division is written in pixels because Slint cannot divide
+                                // one length by another.
+                                private property <float> ratio: clamp(
+                                (self.mouse-x - parent.x) / 1px / (parent.width / 1px),
+                                0,
+                                1,
+                                );
+                                // The bar is seekable only once there is a duration to seek
+                                // within, which is the Vue's `music.duration <= 0` guard.
+                                function seek() {
+                                    if MusicState.duration > 0 {
+                                        MusicState.seek-ratio(self.ratio);
+                                    }
+                                }
+                                pointer-event(event) => {
+                                    if event.kind == PointerEventKind.down
+                                    && event.button == PointerEventButton.left
+                                    {
+                                        root.dragging = true;
+                                        self.seek();
+                                    } else if event.kind == PointerEventKind.up
+                                    || event.kind == PointerEventKind.cancel
+                                    {
+                                        root.dragging = false;
+                                        } else if event.kind == PointerEventKind.move && root.dragging {
+                                        self.seek();
+                                    }
+                                }
+                            }
+
+                            duration-text := Text {
+                                height: 11px;
+                                text: MusicState.duration-text;
+                                font-size: 11px;
+                                font-weight: Theme.font-weight-normal;
+                                color: Theme.subtext-0;
+                            }
                         }
                     }
-                }
-            }
 
-            // ----- transport -----
-            // `.controls` is a flex row of three `flex: 1` groups — left, centre,
-            // right — each `gap: 2px`, and the play button is 40px. The centre
-            // group's buttons are 34+2+40+2+34 = 112px in a third of the 308px
-            // content width, so it overflows its cell symmetrically and the play
-            // button lands in the middle of the card either way: the three are
-            // centred as a group here, which is the same placement.
-            controls := Rectangle {
-                x: 16px;
-                y: parent.height - 16px - 40px;
-                width: parent.width - 32px;
-                height: 40px;
-                background: Colors.transparent;
+                    // ----- transport -----
+                    // `.controls` is a flex row of three `flex: 1` groups — left, centre,
+                    // right — each `gap: 2px`, and the play button is 40px. The centre
+                    // group's buttons are 34+2+40+2+34 = 112px in a third of the 308px
+                    // content width, so it overflows its cell symmetrically and the play
+                    // button lands in the middle of the card either way.
+                    //
+                    // Which is what the two bare spacers are: the left group takes the
+                    // free space, then the centre group's three buttons, then the rest.
+                    // The row is one `spacing: 2px` because every group has that gap.
+                    //
+                    // A `FlexboxLayout` is the wrong tool — `justify-content` belongs to
+                    // the container, not to a group, so three `flex: 1` cells with their
+                    // own alignment would still need the cells. And the spacers must be
+                    // bare `Rectangle`s: an element with a bound `width` gets
+                    // `min == max == width` and cannot take a share, and a nested layout
+                    // of fixed-size buttons has `max == preferred` and would not grow
+                    // either.
+                    controls := HorizontalLayout {
+                        height: 40px;
+                        spacing: 2px;
+                        cross-axis-alignment: center;
 
-                shuffle-button := PlayerButton {
-                    x: 0;
-                    icon: "shuffle";
-                    on: MusicState.shuffle;
-                    label: @tr("Shuffle");
-                    clicked => { MusicState.toggle-shuffle(); }
-                }
+                        shuffle-button := PlayerButton {
+                            icon: "shuffle";
+                            on: MusicState.shuffle;
+                            label: @tr("Shuffle");
+                            clicked => { MusicState.toggle-shuffle(); }
+                        }
 
-                repeat-button := PlayerButton {
-                    x: shuffle-button.x + shuffle-button.width + 2px;
-                    y: shuffle-button.y;
-                    icon: "repeat";
-                    on: MusicState.repeat;
-                    label: @tr("Repeat");
-                    clicked => { MusicState.cycle-repeat(); }
-                }
+                        repeat-button := PlayerButton {
+                            icon: "repeat";
+                            on: MusicState.repeat;
+                            label: @tr("Repeat");
+                            clicked => { MusicState.cycle-repeat(); }
+                        }
 
-                previous-button := PlayerButton {
-                    x: (parent.width - 112px) / 2;
-                    y: shuffle-button.y;
-                    icon: "play-skip-back";
-                    label: @tr("Previous");
-                    clicked => { MusicState.previous(); }
-                }
+                        Rectangle { horizontal-stretch: 1; }
 
-                play-button := PlayerButton {
-                    x: previous-button.x + previous-button.width + 2px;
-                    y: 0;
-                    size: 40px;
-                    primary: true;
-                    icon: MusicState.is-playing ? "pause-circle-outline" : "play-circle-outline";
-                    label: MusicState.is-playing ? @tr("Pause") : @tr("Play");
-                    clicked => { MusicState.toggle-play(); }
-                }
+                        previous-button := PlayerButton {
+                            icon: "play-skip-back";
+                            label: @tr("Previous");
+                            clicked => { MusicState.previous(); }
+                        }
 
-                next-button := PlayerButton {
-                    x: play-button.x + play-button.width + 2px;
-                    y: shuffle-button.y;
-                    icon: "play-skip-forward";
-                    label: @tr("Next");
-                    clicked => { MusicState.next(); }
-                }
+                        play-button := PlayerButton {
+                            size: 40px;
+                            primary: true;
+                            icon: MusicState.is-playing ? "pause-circle-outline" : "play-circle-outline";
+                            label: MusicState.is-playing ? @tr("Pause") : @tr("Play");
+                            clicked => { MusicState.toggle-play(); }
+                        }
 
-                folder-button := PlayerButton {
-                    x: parent.width - 70px;
-                    y: shuffle-button.y;
-                    icon: "folder";
-                    label: @tr("Open music folder");
-                    clicked => { MusicState.open-music-folder(); }
-                }
+                        next-button := PlayerButton {
+                            icon: "play-skip-forward";
+                            label: @tr("Next");
+                            clicked => { MusicState.next(); }
+                        }
 
-                list-button := PlayerButton {
-                    x: folder-button.x + folder-button.width + 2px;
-                    y: shuffle-button.y;
-                    icon: "list";
-                    on: MusicState.playlist-open;
-                    label: @tr("Playlist");
-                    clicked => { MusicState.toggle-playlist(); }
+                        Rectangle { horizontal-stretch: 1; }
+
+                        folder-button := PlayerButton {
+                            icon: "folder";
+                            label: @tr("Open music folder");
+                            clicked => { MusicState.open-music-folder(); }
+                        }
+
+                        list-button := PlayerButton {
+                            icon: "list";
+                            on: MusicState.playlist-open;
+                            label: @tr("Playlist");
+                            clicked => { MusicState.toggle-playlist(); }
+                        }
+                    }
                 }
             }
         }
@@ -502,54 +532,57 @@ export component MusicPlayerOverlay inherits Rectangle {
         //
         // It stays mounted for as long as its *phase* is not "closed" rather than
         // while `playlist-open` is true, so the leave has something to animate.
-        if root.playlist-phase != "closed" : playlist-card := Rectangle {
-            x: parent.width - 16px - 340px;
+        if root.playlist-phase != "closed" : playlist-cell := Rectangle {
             width: 340px;
             height: min(root.playlist-max-height, 16px + root.playlist-items-height);
-            // 16px of padding, the card, then the column's 12px gap.
-            y: 16px + root.card-height + 12px + root.playlist-dy;
-            opacity: root.playlist-alpha;
-            border-radius: 14px;
-            background: Theme.base;
-            border-width: 1px;
-            border-color: Theme.overlay-0.transparentize(0.5);
-            drop-shadow-color: #0000004d;
-            drop-shadow-blur: 24px;
+            background: Colors.transparent;
 
-            playlist-touch := TouchArea {
+            playlist-card := Rectangle {
                 width: 100%;
                 height: 100%;
-            }
+                y: root.playlist-dy;
+                opacity: root.playlist-alpha;
+                border-radius: 14px;
+                background: Theme.base;
+                border-width: 1px;
+                border-color: Theme.overlay-0.transparentize(0.5);
+                drop-shadow-color: #0000004d;
+                drop-shadow-blur: 24px;
 
-            ScrollView {
-                x: 8px;
-                y: 8px;
-                width: parent.width - 16px;
-                height: parent.height - 16px;
+                playlist-touch := TouchArea {
+                    width: 100%;
+                    height: 100%;
+                }
 
-                // `.playlist-items { padding: 4px 0 8px }`.
-                playlist-items := VerticalLayout {
-                    width: parent.width;
-                    alignment: start;
-                    padding-top: 4px;
-                    padding-bottom: 8px;
-                    spacing: 0px;
+                // `.playlist-card { padding: 8px }`.
+                VerticalLayout {
+                    padding: 8px;
 
-                    for track[index] in MusicState.tracks : PlaylistItem {
-                        name: track.name;
-                        playing: index == MusicState.current-index;
-                        clicked => { MusicState.play-index(index); }
-                    }
+                    ScrollView {
 
-                    if MusicState.tracks.length == 0 : Text {
-                        width: parent.width;
-                        height: root.playlist-empty-height;
-                        text: @tr("Nothing here");
-                        font-size: 12px;
-                        font-weight: Theme.font-weight-normal;
-                        color: Theme.overlay-0;
-                        horizontal-alignment: center;
-                        vertical-alignment: center;
+                        // `.playlist-items { padding: 4px 0 8px }`.
+                        playlist-items := VerticalLayout {
+                            alignment: start;
+                            padding-top: 4px;
+                            padding-bottom: 8px;
+                            spacing: 0px;
+
+                            for track[index] in MusicState.tracks : PlaylistItem {
+                                name: track.name;
+                                playing: index == MusicState.current-index;
+                                clicked => { MusicState.play-index(index); }
+                            }
+
+                            if MusicState.tracks.length == 0 : Text {
+                                height: root.playlist-empty-height;
+                                text: @tr("Nothing here");
+                                font-size: 12px;
+                                font-weight: Theme.font-weight-normal;
+                                color: Theme.overlay-0;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
                     }
                 }
             }
