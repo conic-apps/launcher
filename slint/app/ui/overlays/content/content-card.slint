@@ -410,7 +410,6 @@ export component ContentCard inherits Rectangle {
                 // fits, the elided block when it does not — in the text's ink.
                 if root.card.mod-disabled : Rectangle {
                     x: 0;
-                    y: (parent.height - self.height) / 2;
                     width: min(name.preferred-width, name.width);
                     height: 1px;
                     background: name.color;
@@ -471,7 +470,6 @@ export component ContentCard inherits Rectangle {
     // `left: 20px; top: 50%; translateY(-50%)`, revealed with the hover.
     if root.card.shows-play : Rectangle {
         x: 20px;
-        y: (root.height - self.height) / 2;
         width: 18px;
         height: 18px;
         background: transparent;

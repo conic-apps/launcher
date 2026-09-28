@@ -34,7 +34,6 @@ component MetadataEntry inherits Rectangle {
 
     if root.divider : Rectangle {
         x: 0;
-        y: (parent.height - self.height) / 2;
         width: 1px;
         height: 16px;
         background: Theme.overlay-2;
@@ -185,7 +184,6 @@ component DetailBody inherits Rectangle {
                 background: transparent;
 
                 BaseLoading {
-                    x: (parent.width - self.width) / 2;
                     y: 40px;
                     size: 32px;
                     stroke-width: 4;

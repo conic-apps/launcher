@@ -51,8 +51,6 @@ export component InstanceListDropdown inherits Rectangle {
                 font-size: 13px;
                 font-weight: Theme.font-weight-normal;
                 color: Theme.default-text-color.transparentize(0.1);
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
             }
         }
 
@@ -69,7 +67,6 @@ export component InstanceListDropdown inherits Rectangle {
                 font-weight: Theme.font-weight-normal;
                 color: Theme.default-text-color.transparentize(0.1);
                 x: 12px;
-                y: (parent.height - self.height) / 2;
                 width: parent.width - min(parent.width, 38px);
                 overflow: elide;
                 wrap: no-wrap;
@@ -80,7 +77,6 @@ export component InstanceListDropdown inherits Rectangle {
                 size: 14px;
                 icon-color: Theme.default-text-color.transparentize(0.1);
                 x: selected-box.width - 12px - self.width;
-                y: (parent.height - self.height) / 2;
                 transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
                 opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
             }

@@ -174,7 +174,6 @@ export component ContentOverlay inherits Rectangle {
         // plain `Rectangle` rather than a layout child: a layout owns its
         // children's `y`, and this one is animated (`SlideTransition` is a
         // `Rectangle` for the same reason).
-        x: (root.width - self.width) / 2;
         y: root.slide ? root.panel-y : 0px;
         width: root.panel-width;
         height: root.panel-height;

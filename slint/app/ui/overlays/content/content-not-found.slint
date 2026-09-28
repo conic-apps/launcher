@@ -97,8 +97,6 @@ export component ContentNotFound inherits Rectangle {
         // it `position: absolute` — so it has no effect; the wrapper the panel
         // puts it in is the `display: flex; align-items: center; justify-content:
         // center` one, and that is what centres this 380px box.
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
         width: 380px;
         height: self.preferred-height;
         background: transparent;
@@ -117,7 +115,6 @@ export component ContentNotFound inherits Rectangle {
                 background: transparent;
 
                 AppIcon {
-                    x: (parent.width - self.width) / 2;
                     y: 0;
                     name: "about";
                     size: 64px;
@@ -171,8 +168,6 @@ export component ContentLoading inherits Rectangle {
             border-radius: 8px;
 
             BaseLoading {
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
                 size: 32px;
                 stroke-width: 4;
             }

@@ -137,7 +137,6 @@ component SettingsStep inherits ZoomTransition {
                 name: "create-outline";
                 size: 16px;
                 x: name-text.width + 4px;
-                y: (parent.height - self.height) / 2;
                 icon-color: Theme.default-text-color.transparentize(0.1);
                 transform-scale: edit-touch.pressed ? 97% : edit-touch.has-hover ? 102% : 100%;
                 animate transform-scale { duration: 100ms; }
@@ -225,8 +224,6 @@ component SettingsStep inherits ZoomTransition {
                     // The Vue's `font-weight: 500`.
                     font-weight: 500;
                     color: Theme.text-inverse;
-                    x: (parent.width - self.width) / 2;
-                    y: (parent.height - self.height) / 2;
                 }
             }
 

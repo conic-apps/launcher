@@ -95,7 +95,6 @@ export component BaseInput inherits Rectangle {
         font-weight: Theme.font-weight-normal;
         color: Theme.default-text-color.transparentize(0.2);
         x: 8px;
-        y: (parent.height - self.height) / 2;
     }
 
     // Native spinner replacement: two stacked buttons in a single column at the
@@ -121,8 +120,6 @@ export component BaseInput inherits Rectangle {
                 size: 9px;
                 icon-color: Theme.default-text-color.transparentize(0.25);
                 transform-rotation: 180deg;
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
             }
 
             up-touch := TouchArea {
@@ -146,8 +143,6 @@ export component BaseInput inherits Rectangle {
                 name: "chevron-down";
                 size: 9px;
                 icon-color: Theme.default-text-color.transparentize(0.25);
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
             }
 
             down-touch := TouchArea {

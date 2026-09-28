@@ -160,8 +160,6 @@ export component BaseDialog inherits Rectangle {
     // element that carries the attribute, so pressing the panel — or anything on
     // it — does not start a window drag while pressing the scrim does.
     panel := Rectangle {
-        x: (root.width - self.width) / 2;
-        y: (root.height - self.height) / 2;
         // A dialog that sizes itself, clamped to the window — the Vue's
         // `max-width` / `max-height` of `calc(100vw - 20px)`.
         width: min(root.dialog-width > 0px ? root.dialog-width : root.width - 20px, root.width - 20px);

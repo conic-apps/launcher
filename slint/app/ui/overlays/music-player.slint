@@ -48,8 +48,6 @@ component PlayerButton inherits Rectangle {
     accessible-action-default => { root.clicked(); }
 
     AppIcon {
-        x: (root.width - self.width) / 2;
-        y: (root.height - self.height) / 2;
         icon-color: root.ink;
         name: root.icon;
         size: root.primary ? 24px : 18px;
@@ -82,7 +80,6 @@ component PlaylistItem inherits Rectangle {
 
     Text {
         x: 8px;
-        y: (root.height - self.height) / 2;
         width: parent.width - 16px;
         height: 12px;
         text: root.name;
@@ -432,7 +429,6 @@ export component MusicPlayerOverlay inherits Rectangle {
 
                 shuffle-button := PlayerButton {
                     x: 0;
-                    y: (parent.height - self.height) / 2;
                     icon: "shuffle";
                     on: MusicState.shuffle;
                     label: @tr("Shuffle");

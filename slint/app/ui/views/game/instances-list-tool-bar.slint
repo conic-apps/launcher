@@ -101,7 +101,6 @@ export component InstancesListToolBar inherits Rectangle {
 
                 Text {
                     x: 16px;
-                    y: (parent.height - self.height) / 2;
                     text: @tr("Search...");
                     font-size: 14px;
                     color: Theme.default-text-color.transparentize(0.4);
@@ -134,8 +133,6 @@ export component InstancesListToolBar inherits Rectangle {
                 AppIcon {
                     name: "search";
                     size: 20px;
-                    x: (parent.width - self.width) / 2;
-                    y: (parent.height - self.height) / 2;
                 }
 
                 search-touch := TouchArea { width: parent.width; height: parent.height; }

@@ -81,9 +81,15 @@ export component BaseListItem inherits Rectangle {
                 background: transparent;
                 clip: true;
 
+                // `vertical-stretch: 0` is what says "do not fill me". The `y`
+                // this replaces said the same thing by repeating the default, but
+                // a layout that *fills* a box whose width the outer layout is
+                // still measuring is a binding loop the compiler is right to
+                // refuse, and the factor says it without a coordinate. (A layout
+                // cannot `clip` in 1.18, which is why the box stays at all.)
                 VerticalLayout {
-                    y: (parent.height - self.height) / 2;
-                    width: parent.width;
+                    vertical-stretch: 0;
+                    horizontal-stretch: 0;
                     spacing: 3px;
                     // The layout fills the column, so the alignment is what
                     // places the text: the Vue centres the title/description
@@ -98,7 +104,7 @@ export component BaseListItem inherits Rectangle {
 
                     Text {
                         text: root.title;
-                        width: parent.width;
+                        width: 100%;
                         font-size: 14px;
                         font-weight: Theme.font-weight-normal;
                         color: Theme.default-text-color.transparentize(0.1);
@@ -108,7 +114,7 @@ export component BaseListItem inherits Rectangle {
 
                     if root.description != "" : Text {
                         text: root.description;
-                        width: parent.width;
+                        width: 100%;
                         font-size: 12px;
                         font-weight: Theme.font-weight-normal;
                         // CSS `rgba(var(--ctp-text-rgb), 0.6)`.

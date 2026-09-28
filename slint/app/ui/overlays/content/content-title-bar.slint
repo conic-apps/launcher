@@ -37,8 +37,6 @@ component SourceButton inherits Rectangle {
         : Theme.peach;
 
     AppIcon {
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
         name: root.source == "local" ? "file-tray-full-outline"
             : root.source == "modrinth" ? "modrinth"
             : "curseforge";
@@ -79,14 +77,12 @@ export component ContentTitleBar inherits Rectangle {
 
         AppIcon {
             x: 32px;
-            y: (parent.height - self.height) / 2;
             name: root.icon;
             size: root.icon-size;
         }
 
         Text {
             x: 32px + root.icon-size + 8px;
-            y: (parent.height - self.height) / 2;
             text: root.title;
             font-size: 16px;
             color: Theme.default-text-color.transparentize(0.1);
@@ -103,7 +99,6 @@ export component ContentTitleBar inherits Rectangle {
             width: root.sources.length * 40px + max(0, root.sources.length - 1) * 4px;
             height: 32px;
             x: parent.width - 32px - self.width;
-            y: (parent.height - self.height) / 2;
             spacing: 4px;
 
             for source in root.sources : SourceButton {

@@ -292,7 +292,6 @@ export component InstanceSummary inherits Rectangle {
 
         launch-buttons := Rectangle {
             x: 0;
-            y: (parent.height - self.height) / 2;
             width: 154px;
             height: 42px;
             background: transparent;
@@ -343,8 +342,6 @@ export component InstanceSummary inherits Rectangle {
                     name: "chevron-down";
                     size: 16px;
                     icon-color: #ffffff;
-                    x: (parent.width - self.width) / 2;
-                    y: (parent.height - self.height) / 2;
                     transform-scale-y: (1.0 - 2.0 * root.launch-chevron-flip) * 100%;
                     opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.launch-chevron-flip));
                 }
@@ -398,8 +395,6 @@ export component InstanceSummary inherits Rectangle {
                     AppIcon {
                         name: "folder";
                         size: 20px;
-                        x: (parent.width - self.width) / 2;
-                        y: (parent.height - self.height) / 2;
                     }
 
                     folder-touch := TouchArea {
@@ -421,8 +416,6 @@ export component InstanceSummary inherits Rectangle {
                     AppIcon {
                         name: GameState.current-starred ? "star" : "star-outline";
                         size: 20px;
-                        x: (parent.width - self.width) / 2;
-                        y: (parent.height - self.height) / 2;
                     }
 
                     star-touch := TouchArea {
@@ -444,8 +437,6 @@ export component InstanceSummary inherits Rectangle {
                     AppIcon {
                         name: "settings";
                         size: 20px;
-                        x: (parent.width - self.width) / 2;
-                        y: (parent.height - self.height) / 2;
                     }
 
                     settings-touch := TouchArea {

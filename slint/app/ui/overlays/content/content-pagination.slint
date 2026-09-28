@@ -62,8 +62,6 @@ component ArrowButton inherits Rectangle {
     opacity: root.disabled ? 0.4 : 1.0;
 
     AppIcon {
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
         name: "chevron-forward";
         size: 12px;
         icon-color: Theme.default-text-color.transparentize(0.1);

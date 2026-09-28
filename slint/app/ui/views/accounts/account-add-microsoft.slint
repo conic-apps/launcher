@@ -276,7 +276,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             // its background — and adds no padding, so the code is centred in
             // the 20ch.
             code-box := Rectangle {
-                x: (parent.width - self.width) / 2;
                 width: zero-glyph.preferred-width * 20;
                 height: parent.height;
                 border-radius: Theme.controllers-border-radius;
@@ -307,7 +306,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                 // the tooltip it carries.
                 Rectangle {
                     x: parent.width - self.width - 8px;
-                    y: (parent.height - self.height) / 2;
                     width: checkmark.width;
                     height: checkmark.height;
                     background: transparent;
@@ -322,7 +320,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                     }
 
                     CopiedTooltip {
-                        x: (parent.width - self.width) / 2;
                         y: -self.height - 8px;
                     }
                 }
@@ -427,7 +424,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
 
                 check-wrapper := Rectangle {
                     x: parent.width - self.width - 8px;
-                    y: (parent.height - self.height) / 2;
                     width: check-mark.width;
                     height: check-mark.height;
                     background: transparent;
@@ -442,7 +438,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                     }
 
                     CopiedTooltip {
-                        x: (parent.width - self.width) / 2;
                         y: -self.height - 8px;
                     }
                 }

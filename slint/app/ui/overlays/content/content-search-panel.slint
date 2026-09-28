@@ -19,8 +19,6 @@ component ChipPager inherits Rectangle {
     opacity: root.disabled ? 0.4 : 1.0;
 
     AppIcon {
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
         name: "chevron-forward";
         size: 12px;
         icon-color: Theme.default-text-color.transparentize(0.1);
@@ -75,7 +73,6 @@ component FilterChipView inherits Rectangle {
             : root.chip.text;
         font-size: 12px;
         x: 8px;
-        y: (parent.height - self.height) / 2;
         color: root.chip.selected ? Theme.text-inverse : Theme.default-text-color.transparentize(0.1);
     }
 
@@ -294,7 +291,6 @@ export component ContentSearchPanel inherits Rectangle {
                         // `&::placeholder { color: var(--ctp-subtext0) }`
                         color: Theme.subtext-0;
                         x: 12px;
-                        y: (parent.height - self.height) / 2;
                     }
 
                     field-touch := TouchArea {
@@ -318,8 +314,6 @@ export component ContentSearchPanel inherits Rectangle {
                         : Theme.surface-0;
 
                     AppIcon {
-                        x: (parent.width - self.width) / 2;
-                        y: (parent.height - self.height) / 2;
                         name: "search";
                         size: 16px;
                         // `&:active { color: var(--ctp-text-inverse) }`

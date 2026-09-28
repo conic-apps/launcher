@@ -227,7 +227,6 @@ export component TitleBar inherits Rectangle {
         // Vue keeps the 90px gap there.)
         Rectangle {
             x: root.macos && !root.fullscreen ? 90px : 16px;
-            y: (root.height - self.height) / 2;
             width: 60px;
             height: 28px;
 
@@ -288,14 +287,12 @@ export component TitleBar inherits Rectangle {
         search-container := Rectangle {
             width: max(0px, root.width - 500px);
             height: root.height;
-            x: (root.width - self.width) / 2;
             y: 0px;
 
             SearchBar {
                 width: 100%;
                 height: 26px;
                 x: 0px;
-                y: (root.height - self.height) / 2;
                 placeholder: root.search-placeholder;
                 activated => { root.open-search(); }
             }
@@ -306,7 +303,6 @@ export component TitleBar inherits Rectangle {
                 border-radius: 4px;
                 background: Theme.surface-2.transparentize(0.3);
                 x: search-container.width - self.width - 10px;
-                y: (root.height - self.height) / 2;
 
                 hotkey-text := Text {
                     text: root.search-hotkey;
@@ -325,7 +321,6 @@ export component TitleBar inherits Rectangle {
             width: 28px;
             height: 28px;
             x: root.width - self.width - root.controls-inset;
-            y: (root.height - self.height) / 2;
 
             TitleBarActionButton {
                 icon-commands: root.music-icon;

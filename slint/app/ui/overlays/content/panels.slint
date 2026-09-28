@@ -246,8 +246,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
                     : @tr("No screenshots");
                 font-size: 14px;
                 color: Theme.overlay-2;
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
             }
 
             if ContentState.screenshots.length > 0 : Rectangle {
@@ -262,7 +260,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
                 // left one rotated.
                 prev-button := Rectangle {
                     x: 24px;
-                    y: (parent.height - self.height) / 2;
                     width: 44px;
                     height: 44px;
                     border-radius: 22px;
@@ -275,8 +272,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
                     transform-scale: root.main-scale;
 
                     AppIcon {
-                        x: (parent.width - self.width) / 2;
-                        y: (parent.height - self.height) / 2;
                         name: "chevron-forward";
                         size: 22px;
                         icon-color: Theme.default-text-color.transparentize(0.1);
@@ -292,7 +287,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
 
                 next-button := Rectangle {
                     x: parent.width - 24px - self.width;
-                    y: (parent.height - self.height) / 2;
                     width: 44px;
                     height: 44px;
                     border-radius: 22px;
@@ -307,8 +301,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
                     transform-scale: root.main-scale;
 
                     AppIcon {
-                        x: (parent.width - self.width) / 2;
-                        y: (parent.height - self.height) / 2;
                         name: "chevron-forward";
                         size: 22px;
                         icon-color: Theme.default-text-color.transparentize(0.1);
@@ -444,8 +436,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
         }
 
         AppIcon {
-            x: (parent.width - self.width) / 2;
-            y: (parent.height - self.height) / 2;
             name: "xmark";
             size: 20px;
             icon-color: Theme.default-text-color.transparentize(0.1);

@@ -32,7 +32,6 @@ export component SearchBar inherits Rectangle {
         width: 20px;
         height: 20px;
         x: 10px;
-        y: (root.height - self.height) / 2;
         fill: Theme.default-text-color.transparentize(0.1);
     }
 
@@ -41,7 +40,6 @@ export component SearchBar inherits Rectangle {
         font-size: 13px;
         color: Theme.default-text-color.transparentize(0.2);
         x: 36px;
-        y: (root.height - self.height) / 2;
     }
 
     touch := TouchArea {

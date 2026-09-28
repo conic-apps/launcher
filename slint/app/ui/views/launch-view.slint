@@ -38,7 +38,6 @@ export component LaunchView inherits Rectangle {
         // Vue's `align-items: center` on `.launch-view` work.
         width: self.preferred-width;
         height: self.preferred-height;
-        x: (parent.width - self.width) / 2;
         y: (parent.height - self.height) / 2 - 16px;
         cross-axis-alignment: center;
         spacing: 0px;
@@ -219,8 +218,6 @@ export component LaunchView inherits Rectangle {
             animate background, transform-scale { duration: 200ms; easing: ease; }
 
             Text {
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
                 text: @tr("LaunchView" => "Cancel launch");
                 font-size: 11px;
                 color: back-touch.has-hover && !LaunchState.back-disabled

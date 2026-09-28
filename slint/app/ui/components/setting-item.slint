@@ -187,8 +187,6 @@ export component SettingItem inherits Rectangle {
                     height: 28px;
                     border-radius: root.custom-icon-rounded ? 10000px : 0px;
                     clip: true;
-                    x: (parent.width - self.width) / 2;
-                    y: (parent.height - self.height) / 2;
 
                     Image {
                         width: 100%;
@@ -199,8 +197,6 @@ export component SettingItem inherits Rectangle {
                 if root.custom-icon.width <= 0 : AppIcon {
                     name: root.icon;
                     size: 26px;
-                    x: (parent.width - self.width) / 2;
-                    y: (parent.height - self.height) / 2;
                 }
             }
 
@@ -253,8 +249,6 @@ export component SettingItem inherits Rectangle {
                             font-size: 11px;
                             font-weight: Theme.font-weight-normal;
                             color: Theme.default-text-color.transparentize(0.1);
-                            x: (parent.width - self.width) / 2;
-                            y: (parent.height - self.height) / 2;
                         }
                     }
 
@@ -269,8 +263,6 @@ export component SettingItem inherits Rectangle {
                             name: "refresh";
                             size: 16px;
                             icon-color: Theme.default-text-color.transparentize(0.1);
-                            x: (parent.width - self.width) / 2;
-                            y: (parent.height - self.height) / 2;
                         }
 
                         reset-touch := TouchArea {

@@ -382,7 +382,6 @@ export component InstancesList inherits Rectangle {
                             size: 14px;
                             icon-color: Theme.text-inverse;
                             x: 4px;
-                            y: (parent.height - self.height) / 2;
                             transform-origin: { x: self.width / 2, y: self.height / 2 };
                             transform-rotation: row.collapsed ? 0deg : 90deg;
                             animate transform-rotation { duration: 200ms; easing: ease; }
@@ -392,7 +391,6 @@ export component InstancesList inherits Rectangle {
                         // the title sits 36px in.
                         HorizontalLayout {
                             x: 20px + 16px;
-                            y: (parent.height - self.height) / 2;
                             height: 14px;
                             spacing: 8px;
                             alignment: start;
@@ -418,8 +416,6 @@ export component InstancesList inherits Rectangle {
                                     font-size: 10px;
                                     font-weight: 500;
                                     color: Theme.text-inverse;
-                                    x: (parent.width - self.width) / 2;
-                                    y: (parent.height - self.height) / 2;
                                 }
                             }
                         }
@@ -510,8 +506,6 @@ export component InstancesList inherits Rectangle {
                                     font-size: 10px;
                                     font-weight: 700;
                                     color: Theme.text-inverse;
-                                    x: (parent.width - self.width) / 2;
-                                    y: (parent.height - self.height) / 2;
                                 }
                             }
 
@@ -592,7 +586,6 @@ export component InstancesList inherits Rectangle {
                 AppIcon {
                     name: "about";
                     size: 64px;
-                    x: (parent.width - self.width) / 2;
                 }
             }
 

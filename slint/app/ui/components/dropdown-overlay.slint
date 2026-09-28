@@ -90,7 +90,6 @@ export component DropdownOverlay inherits Rectangle {
                     size: 18px;
                     skin: player.avatar;
                     x: 8px;
-                    y: (parent.height - self.height) / 2;
                 }
 
                 Text {
@@ -99,7 +98,6 @@ export component DropdownOverlay inherits Rectangle {
                     font-weight: Theme.font-weight-normal;
                     color: Theme.default-text-color.transparentize(0.1);
                     x: 34px;
-                    y: (parent.height - self.height) / 2;
                     width: parent.width - 42px;
                     overflow: elide;
                     wrap: no-wrap;
@@ -143,7 +141,6 @@ export component DropdownOverlay inherits Rectangle {
                     name: option.icon;
                     size: 14px;
                     x: 8px;
-                    y: (parent.height - self.height) / 2;
                 }
 
                 Text {
@@ -152,7 +149,6 @@ export component DropdownOverlay inherits Rectangle {
                     font-weight: Theme.font-weight-normal;
                     color: Theme.default-text-color.transparentize(0.1);
                     x: option.icon != "" ? 30px : 8px;
-                    y: (parent.height - self.height) / 2;
                     width: parent.width - (option.icon != "" ? 38px : 16px);
                     overflow: elide;
                     wrap: no-wrap;
