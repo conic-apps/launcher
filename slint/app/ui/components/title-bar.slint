@@ -157,6 +157,10 @@ export component TitleBar inherits Rectangle {
     in property <string> search-placeholder;
     in property <string> search-hotkey;
     in property <string> current-page: "game";
+    /// Whether background music is on at all, which is the Vue's
+    /// `v-if="config.music.enabled"` on the music button. Turning it off pauses
+    /// the player and closes its panel (`src/music.rs`).
+    in property <bool> music-enabled: true;
 
     callback open-home();
     callback open-settings();
@@ -317,7 +321,7 @@ export component TitleBar inherits Rectangle {
         // Right-side actions (music). The window controls take the far right on
         // the platforms that have them there; macOS traffic lights remain on the
         // left.
-        Rectangle {
+        if root.music-enabled : Rectangle {
             width: 28px;
             height: 28px;
             x: root.width - self.width - root.controls-inset;

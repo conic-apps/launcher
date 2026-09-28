@@ -296,10 +296,9 @@ async fn run_flow(weak: Weak<App>, run: Run, mut config: Config, instance: Optio
     match launch_game(&weak, &run, config.clone(), instance.clone()).await {
         Ok(()) => {
             log::info!(target: "launch", "launch task finished");
-            // `if (configStore.music.pause_on_launch) musicStore.pause()` — the
-            // music player is not migrated yet.
+            // `if (configStore.music.pause_on_launch) musicStore.pause()`.
             if config.music.pause_on_launch {
-                log::info!(target: "launch", "music pause on launch (music player not migrated)");
+                crate::music::pause();
             }
             let quit = instance
                 .config

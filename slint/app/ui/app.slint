@@ -4,10 +4,12 @@
 
 import { Theme, ThemeProvider } from "theme.slint";
 import { TitleBar, WindowControl } from "components/title-bar.slint";
+import { AppConfig } from "globals/settings.slint";
 import { Navigation } from "globals/navigation.slint";
 import { DropdownOverlay } from "components/dropdown-overlay.slint";
 import { DescriptionTooltipOverlay } from "components/description-tooltip.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
+import { MusicPlayerOverlay } from "overlays/music-player.slint";
 import { WindowDrag } from "globals/window-drag.slint";
 import { WindowBackground } from "components/window-background.slint";
 import { SettingsView } from "views/settings-view.slint";
@@ -29,6 +31,7 @@ export { MultiplayerState, MultiplayerPlayer, MultiplayerPeer } from "globals/mu
 export { WindowControl } from "components/title-bar.slint";
 export { Background } from "globals/background.slint";
 export { ContentState, ContentSearch, ContentCard, CardTag, FilterChip, FilterRow, PageButton } from "globals/content.slint";
+export { MusicState, MusicTrack } from "globals/music.slint";
 
 // Application root window (App.vue). macOS keeps the native traffic lights,
 // Linux draws the window controls itself, and Windows draws the platform's own
@@ -138,6 +141,7 @@ export component App inherits Window {
                 search-placeholder: root.search-placeholder;
                 search-hotkey: root.search-hotkey;
                 current-page: Navigation.current-page;
+                music-enabled: AppConfig.music-enabled;
 
                 // Navigation is global now: the title bar drives it directly.
                 open-home => { Navigation.navigate("game"); }
@@ -173,6 +177,17 @@ export component App inherits Window {
         // area clip, so it is drawn here and anchored to the description line
         // (see `components/description-tooltip.slint`).
         DescriptionTooltipOverlay { }
+
+        // The background-music panel (`<MusicPlayer>` in App.vue), mounted on the
+        // same layer and covering everything below the title bar. It comes after
+        // the dropdowns and the tooltip but before the dialogs, which is the Vue's
+        // order: its `.music-overlay` is `z-index: 100` against the command
+        // palette's 114515 and the dialogs' 11451419. Its `top: 44px` is applied
+        // here, where the title bar's height is known.
+        MusicPlayerOverlay {
+            y: root.title-bar-height;
+            height: root.height - root.title-bar-height;
+        }
 
         // The dialog layer (DialogRoot.vue): mounted last so a dialog covers
         // both the page and the floating dropdown.
