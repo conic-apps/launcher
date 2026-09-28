@@ -291,10 +291,12 @@ export component ContentCard inherits Rectangle {
         background: transparent;
 
         actions := VerticalLayout {
-            x: 0;
-            y: 12px;
-            width: parent.width;
-            height: parent.height - 24px;
+            // `.actions { padding: 12px 0; justify-content: space-between }` —
+            // the padding and the `space-between` are both the layout's, so the
+            // spacer element that stood in for the latter is gone.
+            padding-top: 12px;
+            padding-bottom: 12px;
+            alignment: space-between;
 
             ActionButton {
                 kind: root.card.action-kind == "favorite" ? "heart" : "folder";
@@ -303,9 +305,6 @@ export component ContentCard inherits Rectangle {
                 pointed: root.over-first;
                 pressed: root.over-first && hover-area.pressed;
             }
-
-            // `justify-content: space-between`
-            Rectangle { vertical-stretch: 1; }
 
             ActionButton {
                 kind: root.card.action-kind == "favorite" ? "link" : "trash";
@@ -372,11 +371,12 @@ export component ContentCard inherits Rectangle {
             easing: ease-out-quad;
         }
 
+        // `.content-info { padding: 8px 12px }`, which is a padding.
         info-layout := VerticalLayout {
-            x: 12px;
-            y: 8px;
-            width: parent.width - 24px;
-            height: parent.height - 16px;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            padding-left: 12px;
+            padding-right: 12px;
             spacing: 0px;
 
             // `p.name { font-size: 14px; font-weight: 700 }`, nowrap + ellipsis.

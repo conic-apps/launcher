@@ -243,7 +243,7 @@ component WaitingScreen inherits VerticalLayout {
             spacing: 12px;
 
             WaitAction {
-                width: (parent.width - 12px) / 2;
+                horizontal-stretch: 1;
                 icon: "add-circle";
                 label: @tr("Multiplayer" => "Create a group");
                 description: @tr("Multiplayer" => "Create a group and get an invite code");
@@ -251,7 +251,7 @@ component WaitingScreen inherits VerticalLayout {
             }
 
             WaitAction {
-                width: (parent.width - 12px) / 2;
+                horizontal-stretch: 1;
                 icon: "enter";
                 label: @tr("Multiplayer" => "Join a group");
                 description: @tr("Multiplayer" => "Join with an invite code and enter the world");
@@ -369,16 +369,17 @@ component HostReadyScreen inherits VerticalLayout {
         note: @tr("Multiplayer" => "Send the invite code below to your friends and remind them to enter it in the launcher to join the group.");
     }
 
-    Rectangle { height: 16px; background: transparent; }
-
     HorizontalLayout {
         // `gap: 16px`.
         spacing: 16px;
+        padding-top: 16px;
 
-        // `.group-actions`: 44% of the row, shrunk like the Vue's flex items
-        // (the two percentages plus the gap overflow by one gap).
+        // `.group-actions` is 44% and `.group-guests-list` 56%, which in the Vue
+        // overflow by one gap and `flex-shrink` reclaims it in proportion — so
+        // each cell is 44/56 of `W - 16`. A stretch factor says that directly
+        // and keeps saying it when the gap changes.
         actions := Rectangle {
-            width: (parent.width - 16px) * 0.44;
+            horizontal-stretch: 44;
             background: Theme.surface-0;
             border-radius: 8px;
 
@@ -397,9 +398,12 @@ component HostReadyScreen inherits VerticalLayout {
                     // in the same place either way, and gives the wrap somewhere
                     // to happen.
                     cross-axis-alignment: stretch;
-
-                    // `p { margin-top: 6px }`.
-                    Rectangle { height: 6px; background: transparent; }
+                    // `p { margin-top: 6px }` then `p { margin-top: 12px }`, as
+                    // paddings — the column carries two different gaps and
+                    // `space-between` on the card is what put a third between the
+                    // ends.
+                    padding-top: 6px;
+                    spacing: 12px;
 
                     Text {
                         text: @tr("Multiplayer" => "Invite code (click to copy)");
@@ -409,9 +413,6 @@ component HostReadyScreen inherits VerticalLayout {
                         horizontal-alignment: center;
                         color: Theme.default-text-color.transparentize(0.1);
                     }
-
-                    // `p { margin-top: 12px }`.
-                    Rectangle { height: 12px; background: transparent; }
 
                     copy := ZoomTransition {
                         phase: root.copy-leaving ? "leave" : root.copy-phase;
@@ -470,7 +471,7 @@ component HostReadyScreen inherits VerticalLayout {
 
         // `.group-guests-list`: 56% of the row.
         guests := Rectangle {
-            width: (parent.width - 16px) * 0.56;
+            horizontal-stretch: 56;
             background: Theme.surface-0;
             border-radius: 8px;
 
@@ -537,7 +538,7 @@ component GuestCodeInputScreen inherits VerticalLayout {
             // `display: flex; width: 100%; align-items: center; gap: 8px` with
             // `flex: 1` on the field and `flex-shrink: 0; width: fit-content` on
             // the button, so the field takes what is left and the button lands at
-            // the end. Both were hand-placed off each other's geometry.
+            // the end. `alignment: end` is what puts it there.
             row := HorizontalLayout {
                 spacing: 8px;
                 cross-axis-alignment: center;
