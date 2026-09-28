@@ -1946,3 +1946,35 @@ msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "テクノロジー"
 
+
+#: ui
+msgctxt "MusicPlayerOverlay"
+msgid "No music"
+msgstr "音楽がありません"
+
+msgid "Shuffle"
+msgstr "シャッフル"
+
+msgid "Repeat"
+msgstr "リピート"
+
+msgid "Previous"
+msgstr "前へ"
+
+msgid "Play"
+msgstr "再生"
+
+msgid "Pause"
+msgstr "一時停止"
+
+msgid "Next"
+msgstr "次へ"
+
+msgid "Open music folder"
+msgstr "音楽フォルダを開く"
+
+msgid "Playlist"
+msgstr "プレイリスト"
+
+msgid "Nothing here"
+msgstr "何もありません"

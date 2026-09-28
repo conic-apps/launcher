@@ -37,6 +37,15 @@ impl<H: ComponentHandle> WindowService<H> {
         self.component.window()
     }
 
+    /// A weak handle to the component, for a callback that has to reach the UI
+    /// from somewhere the service cannot be moved (a focus listener, a watcher).
+    pub fn component_weak(&self) -> slint::Weak<H>
+    where
+        H: slint::ComponentHandle,
+    {
+        self.component.as_weak()
+    }
+
     /// Minimizes the window.
     pub fn minimize(&self) {
         self.minimize_to(true);
@@ -55,6 +64,32 @@ impl<H: ComponentHandle> WindowService<H> {
     /// Toggles fullscreen mode.
     pub fn toggle_fullscreen(&self) {
         self.window().set_fullscreen(!self.window().is_fullscreen());
+    }
+
+    /// Reports every focus change to `callback`.
+    ///
+    /// winit's `WindowEvent::Focused` is the platform's own answer, and it is
+    /// delivered to a filter installed here rather than polled: a poll would have
+    /// to run often enough not to miss a short trip to another window, and the
+    /// volume ramp the music player follows a focus change with is not something
+    /// to discover half a second late.
+    ///
+    /// There is deliberately no matching "read it once" accessor. The Vue store
+    /// asks the window for its focus state at startup as well, but a Slint window
+    /// does not exist until the event loop runs, so the read would always answer
+    /// "focused" and the first event is what actually settles it.
+    ///
+    /// The callback runs on the event loop's thread, and the event is propagated
+    /// afterwards so Slint still sees it.
+    pub fn on_focus_changed(&self, callback: impl FnMut(bool) + 'static) {
+        use i_slint_backend_winit::{EventResult, WinitWindowAccessor};
+        let mut callback = callback;
+        self.window().on_winit_window_event(move |_, event| {
+            if let winit::event::WindowEvent::Focused(focused) = event {
+                callback(*focused);
+            }
+            EventResult::Propagate
+        });
     }
 
     /// Reports whether the window is currently maximized.

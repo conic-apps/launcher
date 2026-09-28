@@ -1,0 +1,17 @@
+[package]
+name = "slint-music"
+description = "Tauri-free mirror of crates/music for the Slint app"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+slint-folder.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+log.workspace = true
+symphonia.workspace = true
+cpal.workspace = true
+rustfft.workspace = true

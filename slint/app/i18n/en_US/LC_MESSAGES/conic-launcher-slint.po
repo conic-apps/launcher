@@ -1976,3 +1976,35 @@ msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "Technology"
 
+
+#: ui
+msgctxt "MusicPlayerOverlay"
+msgid "No music"
+msgstr "No music"
+
+msgid "Shuffle"
+msgstr "Shuffle"
+
+msgid "Repeat"
+msgstr "Repeat"
+
+msgid "Previous"
+msgstr "Previous"
+
+msgid "Play"
+msgstr "Play"
+
+msgid "Pause"
+msgstr "Pause"
+
+msgid "Next"
+msgstr "Next"
+
+msgid "Open music folder"
+msgstr "Open music folder"
+
+msgid "Playlist"
+msgstr "Playlist"
+
+msgid "Nothing here"
+msgstr "Nothing here"

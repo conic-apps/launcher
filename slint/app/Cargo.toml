@@ -42,6 +42,8 @@ slint-multiplayer.workspace = true
 # into the `ContentState` model the panel draws (see
 # `ui/overlays/content/markdown-body.slint`).
 slint-markdown.workspace = true
+slint-music.workspace = true
+
 glow.workspace = true
 bytemuck.workspace = true
 euclid.workspace = true

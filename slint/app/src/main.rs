@@ -22,6 +22,7 @@ mod create_instance;
 mod game;
 mod launch;
 mod multiplayer;
+mod music;
 mod runtime;
 mod scroll_input;
 mod settings;
@@ -169,13 +170,13 @@ fn main() {
     multiplayer::setup(&ui);
     // The clock and the wheel/trackpad classification the scroll containers use.
     scroll_input::setup(&ui);
+    // The background-music player: `MusicPlayer.vue` mounted itself on the Vue
+    // app's root, so this runs for the whole session rather than per page.
+    music::setup(&ui);
 
-    // TODO(migration): wire these to the real command palette / music player.
+    // TODO(migration): wire this to the real command palette.
     ui.on_open_search(move || {
         log::info!(target: "shell", "search activated (placeholder)");
-    });
-    ui.on_toggle_music(move || {
-        log::info!(target: "shell", "toggle music (placeholder)");
     });
 
     // The title bar stops leaving room for the traffic lights while they are
@@ -211,6 +212,10 @@ fn main() {
     ui.on_minimize_window(move || {
         minimize_window.minimize();
     });
+
+    // The music player's background volume follows the window's focus (the
+    // store's `onFocusChanged`). Registered here, where the window service exists.
+    music::watch_focus(&window);
 
     // Drag regions (`globals/window-drag.slint`): a press on one — the dialog's
     // scrim, as in the Vue's `data-tauri-drag-region` — moves the window.

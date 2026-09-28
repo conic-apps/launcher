@@ -56,6 +56,30 @@ slint-statistics = { path = "./slint/crates/statistics", version = "0.0.0" }
 slint-single-instance = { path = "./slint/crates/single-instance", version = "0.0.0" }
 slint-multiplayer = { path = "./slint/crates/multiplayer", version = "0.0.0" }
 slint-markdown = { path = "./slint/crates/markdown", version = "0.0.0" }
+slint-music = { path = "./slint/crates/music", version = "0.0.0" }
+# The background music player (slint/crates/music). The Tauri build had the
+# webview decode and play the tracks through the Web Audio API; a native app has
+# to do it itself, so the decoders and the output device come from here.
+# `default-features = false` keeps symphonia to the formats the player's
+# extension list advertises instead of pulling every codec in.
+symphonia = { version = "0.5", default-features = false, features = [
+    # `pcm` is a codec of its own, not part of `wav`: without it symphonia reads a
+    # WAV header and then has no decoder for the samples it found.
+    "pcm",
+    "wav",
+    "adpcm",
+    "mp3",
+    "flac",
+    "ogg",
+    "vorbis",
+    "isomp4",
+    "aac",
+    "alac",
+] }
+cpal = "0.15"
+# The `AnalyserNode` of the Vue's Web Audio graph (slint/crates/music/analyser.rs).
+rustfft = "6.4"
+
 # Drawing the window background's shaders on the GPU: the notifier hands over
 # `get_proc_address`, and this is the loader (see slint/app/src/background/gl.rs).
 glow = "0.18"

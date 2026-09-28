@@ -1,0 +1,545 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "../components/app-icon.slint";
+import { ScrollView } from "../components/scroll-view.slint";
+import { MusicState } from "../globals/music.slint";
+
+// A player button (`.player-btn`): 34px square, 10px radius, transparent at
+// rest, `surface2` on hover, `overlay0` pressed, and `mauve` when it is *on*
+// (shuffle / repeat, the playlist toggle) or is the play button — the Vue's
+// `&.play-btn { color: var(--ctp-mauve) }`, which is why the transport's play and
+// pause are purple and not text-coloured.
+//
+// `transition: all 120ms ease` moves the ink as well as the fill, so the colour
+// is animated through a property of its own: the icon is a child, and its
+// `icon-color` is a plain binding.
+component PlayerButton inherits Rectangle {
+    in property <string> icon;
+    in property <length> size: 34px;
+    in property <bool> on: false;
+    in property <bool> primary: false;
+    /// The `title` attribute. Slint has no tooltip on an icon button, so this is
+    /// the accessible label the Vue's `title` was the only carrier of.
+    in property <string> label: "";
+    callback clicked;
+
+    width: root.size;
+    height: root.size;
+    border-radius: 10px;
+    background: touch.pressed
+        ? Theme.overlay-0.transparentize(0.3)
+        : touch.has-hover
+            ? Theme.surface-2.transparentize(0.3)
+            : Colors.transparent;
+    animate background { duration: 120ms; easing: Easing.ease; }
+
+    /// `&.active { color: var(--ctp-mauve) }`, and `.play-btn` mauve whatever
+    /// the state — its `:hover` keeps the colour and only changes the fill.
+    private property <color> ink: root.primary || root.on
+        ? Theme.mauve
+        : touch.has-hover ? Theme.text : Theme.subtext-0;
+    animate ink { duration: 120ms; easing: Easing.ease; }
+
+    accessible-role: button;
+    accessible-label: root.label;
+    accessible-action-default => { root.clicked(); }
+
+    AppIcon {
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+        icon-color: root.ink;
+        name: root.icon;
+        size: root.primary ? 24px : 18px;
+    }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+// A playlist row (`.playlist-item`), which is also what the playing one looks
+// like (`&.playing { color: var(--ctp-blue) }`).
+component PlaylistItem inherits Rectangle {
+    in property <string> name;
+    in property <bool> playing: false;
+    callback clicked;
+
+    width: 100%;
+    // `padding: 7px 8px` around a 12px line box (`line-height: 1`).
+    height: 26px;
+    border-radius: 8px;
+    background: touch.has-hover
+        ? Theme.surface-1.transparentize(0.3)
+        : Colors.transparent;
+    animate background { duration: 120ms; easing: Easing.ease; }
+
+    accessible-role: button;
+    accessible-label: root.name;
+    accessible-action-default => { root.clicked(); }
+
+    Text {
+        x: 8px;
+        y: (root.height - self.height) / 2;
+        width: parent.width - 16px;
+        height: 12px;
+        text: root.name;
+        font-size: 12px;
+        font-weight: Theme.font-weight-normal;
+        color: root.playing
+            ? Theme.blue
+            : touch.has-hover ? Theme.text : Theme.subtext-0;
+        overflow: elide;
+    }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+// The background-music panel (src/overlays/MusicPlayer.vue).
+//
+// A scrim over everything below the title bar, the 340px player card in its
+// top-right corner, and — when it is open — the playlist popup underneath it.
+// Both cards are the Vue's own: `base`, a 1px `overlay0` border at half opacity,
+// a 14px radius and the `0 4px 24px rgba(0,0,0,.3)` shadow (the `box-shadow`'s
+// x/y offsets do not exist in Slint, which only has a blur).
+//
+// The card's own height, which the stylesheet leaves to its content:
+//
+//   padding 16
+//   .track-info    16px line box + the 18px `margin-bottom` = 34
+//   .progress-area 11px (the `.time` line box; the 4px bar centres in it)
+//                   + the 8px `margin-bottom`
+//   .controls      40px (the play button)
+//   ─────────────────────────────
+//                  125px
+export component MusicPlayerOverlay inherits Rectangle {
+    // `MusicState.panel-open` is the Vue's `v-if` on `.music-overlay`.
+    in property <bool> open: MusicState.panel-open;
+
+    width: 100%;
+    height: 100%;
+    background: #000000.with-alpha(0.45 * root.scrim-alpha);
+
+    // The Vue's `v-if` plus a `<Transition name="music-overlay">`: the scrim fades
+    // over 150ms and the card slides in from -8px over the same 150ms. As in
+    // `BaseDialog`, the phase is plain state and the panel is shown for one frame
+    // at the start values, because an animated property is only advanced while
+    // something reads it.
+    private property <string> phase: "closed";
+    visible: root.phase != "closed";
+
+    changed open => {
+        if root.open {
+            if root.phase == "closed" {
+                root.phase = "starting";
+                start-timer.restart();
+            } else {
+                // Reopened while it was leaving: play the enter from wherever the
+                // leave had got to.
+                root.phase = "shown";
+            }
+            // The overlay is the Vue's `v-if`, so the whole subtree — the playlist
+            // included — is built and destroyed with it. Re-entering therefore
+            // re-enters the playlist too, and a `showPlaylist` that was still true
+            // is not forgotten (it is a `ref` in `MusicPlayer.vue`, which stays
+            // mounted; only the inner `v-if` comes and goes).
+            if root.playlist-open {
+                root.playlist-phase = "starting";
+                playlist-start.restart();
+            }
+        } else if root.phase != "closed" && root.phase != "leaving" {
+            // The playlist does *not* leave here: in the Vue it is inside the
+            // overlay's own subtree, so it fades out with it. It is dropped when
+            // the overlay's leave is over (see `leave-timer`).
+            root.phase = "leaving";
+        }
+    }
+
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    leave-timer := Timer {
+        interval: 150ms;
+        running: root.phase == "leaving";
+        triggered => {
+            root.phase = "closed";
+            root.playlist-phase = "closed";
+        }
+    }
+
+    init => {
+        if root.open {
+            root.phase = "shown";
+        }
+    }
+
+    // ----- the playlist's own transition -----
+    // `<Transition name="playlist-fade">`: 120ms of `all`, from opacity 0 and
+    // -4px, and it is a *separate* transition from the overlay's. So it needs its
+    // own phase machine: driving it off the overlay's phase would leave the
+    // playlist with nothing to animate when the user toggles it while the overlay
+    // stays open — the case the button is for. The same two rules as `BaseDialog`
+    // apply: "starting" is a frame at the start values, because an animated
+    // property is only advanced while something reads it, and "leaving" keeps the
+    // card on screen until the timer drops it.
+    private property <bool> playlist-open: MusicState.playlist-open;
+    private property <string> playlist-phase: "closed";
+    private property <float> playlist-alpha: root.playlist-phase == "shown" ? 1.0 : 0.0;
+    private property <length> playlist-dy: root.playlist-phase == "shown" ? 0px : -4px;
+    animate playlist-alpha { duration: 120ms; easing: Easing.ease; }
+    animate playlist-dy { duration: 120ms; easing: Easing.ease; }
+
+    changed playlist-open => {
+        if root.playlist-open {
+            if root.playlist-phase == "closed" {
+                root.playlist-phase = "starting";
+                playlist-start.restart();
+            } else {
+                // Reopened while it was leaving: play the enter from wherever the
+                // leave had got to.
+                root.playlist-phase = "shown";
+            }
+        } else if root.playlist-phase != "closed" && root.playlist-phase != "leaving" {
+            root.playlist-phase = "leaving";
+        }
+    }
+
+    playlist-start := Timer {
+        interval: 16ms;
+        running: root.playlist-phase == "starting";
+        triggered => { root.playlist-phase = "shown"; }
+    }
+
+    playlist-leave := Timer {
+        interval: 120ms;
+        running: root.playlist-phase == "leaving";
+        triggered => { root.playlist-phase = "closed"; }
+    }
+
+    private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    animate scrim-alpha { duration: 150ms; easing: Easing.ease; }
+    private property <float> card-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    private property <length> card-dy: root.phase == "shown" ? 0px : -8px;
+    animate card-alpha { duration: 150ms; easing: Easing.ease; }
+    animate card-dy { duration: 150ms; easing: Easing.ease; }
+
+    // Whether the progress bar is being dragged, so a move only seeks while it
+    // is.
+    private property <bool> dragging: false;
+
+    // ----- playlist geometry -----
+    // `padding: 7px 8px` around a 12px line box (`line-height: 1`) is a row;
+    // `.playlist-empty { padding: 12px }` around the same line box is the message
+    // that stands in for the rows. The card is sized from these rather than
+    // measured, because the list is built by a `for` and a repeated element's
+    // height is measured at its own preferred width — so a measurement would not
+    // be the height the layout uses (the same trap the content grid's
+    // `filter_row_height` works around).
+    private property <length> playlist-row-height: 26px;
+    private property <length> playlist-empty-height: 36px;
+    private property <length> playlist-items-height: 4px
+        + (MusicState.tracks.length > 0
+            ? playlist-row-height * MusicState.tracks.length
+            : playlist-empty-height)
+        + 8px;
+
+    // The scrim swallows the presses meant for the window below, and a press that
+    // is not on a card closes the panel — the Vue's `@pointerdown.self`. The two
+    // cards stop it (`@pointerdown.stop`), which is why each carries its own
+    // touch area and both are declared after this one.
+    scrim-touch := TouchArea {
+        width: 100%;
+        height: 100%;
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                MusicState.close-panel();
+            }
+        }
+    }
+
+    // `.music-overlay` is a flex column with `align-items: flex-end` and
+    // `padding: 16px`, so both cards are flush to the right inset by 16px and
+    // separated by the column's 12px gap. They are placed by hand rather than by
+    // a layout: both slide in from a `y` of their own, and a layout child does not
+    // get to set one.
+    Rectangle {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: parent.height;
+        background: Colors.transparent;
+
+        card := Rectangle {
+            x: parent.width - 16px - 340px;
+            width: 340px;
+            height: 125px;
+            y: 16px + root.card-dy;
+            opacity: root.card-alpha;
+            border-radius: 14px;
+            background: Theme.base;
+            border-width: 1px;
+            border-color: Theme.overlay-0.transparentize(0.5);
+            drop-shadow-color: #0000004d;
+            drop-shadow-blur: 24px;
+
+            card-touch := TouchArea {
+                width: 100%;
+                height: 100%;
+            }
+
+            // ----- track title -----
+            // `.track-info` is a flex row that centres its one child, and the
+            // child carries an 18px `margin-bottom` — so the text sits 9px above
+            // the middle of a box 18px taller than the line itself. That is the
+            // same as pinning the text to the top of a 34px box.
+            Text {
+                x: 16px;
+                y: 16px;
+                width: parent.width - 32px;
+                height: 16px;
+                text: MusicState.current-name != ""
+                    ? MusicState.current-name
+                    : @tr("No music");
+                font-size: 16px;
+                font-weight: Theme.font-weight-bold;
+                color: Theme.text;
+                horizontal-alignment: center;
+                overflow: elide;
+            }
+
+            // ----- progress -----
+            // `.progress-area` is a flex row of the two clock labels and the bar,
+            // with `gap: 8px` and the labels `flex-shrink: 0`; everything centres
+            // in an 11px row. The bar takes what is left, which is what its
+            // `flex: 1` asks for.
+            current-time-text := Text {
+                x: 16px;
+                y: 16px + 34px + (11px - self.height) / 2;
+                width: self.preferred-width;
+                height: 11px;
+                text: MusicState.current-time-text;
+                font-size: 11px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.subtext-0;
+            }
+
+            duration-text := Text {
+                x: parent.width - 16px - self.width;
+                y: current-time-text.y;
+                width: self.preferred-width;
+                height: 11px;
+                text: MusicState.duration-text;
+                font-size: 11px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.subtext-0;
+            }
+
+            // `.progress-bar`, the drag target of `onProgressPointerDown`.
+            progress-bar := Rectangle {
+                x: 16px + current-time-text.width + 8px;
+                y: 16px + 34px + (11px - 4px) / 2;
+                width: parent.width - 32px - current-time-text.width - duration-text.width - 16px;
+                height: 4px;
+                border-radius: 4px;
+                background: Theme.surface-2.transparentize(0.2);
+
+                Rectangle {
+                    x: 0;
+                    y: 0;
+                    width: parent.width * MusicState.progress;
+                    height: parent.height;
+                    border-radius: 4px;
+                    background: Theme.mauve;
+                }
+
+                // The Vue registers `pointermove`/`pointerup` on `window` for the
+                // duration of a drag, so the bar keeps following the pointer once
+                // it has left the bar itself. Slint cannot listen outside the
+                // element, so the drag is tracked here instead — a press inside
+                // the bar still seeks, which is what a click does.
+                touch := TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    // `seekRatio(clamp((clientX - left) / width, 0, 1))`. The
+                    // division is written in pixels because Slint cannot divide
+                    // one length by another.
+                    private property <float> ratio: clamp(
+                        (self.mouse-x - parent.x) / 1px / (parent.width / 1px),
+                        0,
+                        1,
+                    );
+                    // The bar is seekable only once there is a duration to seek
+                    // within, which is the Vue's `music.duration <= 0` guard.
+                    function seek() {
+                        if MusicState.duration > 0 {
+                            MusicState.seek-ratio(self.ratio);
+                        }
+                    }
+                    pointer-event(event) => {
+                        if event.kind == PointerEventKind.down
+                            && event.button == PointerEventButton.left
+                        {
+                            root.dragging = true;
+                            self.seek();
+                        } else if event.kind == PointerEventKind.up
+                            || event.kind == PointerEventKind.cancel
+                        {
+                            root.dragging = false;
+                        } else if event.kind == PointerEventKind.move && root.dragging {
+                            self.seek();
+                        }
+                    }
+                }
+            }
+
+            // ----- transport -----
+            // `.controls` is a flex row of three `flex: 1` groups — left, centre,
+            // right — each `gap: 2px`, and the play button is 40px. The centre
+            // group's buttons are 34+2+40+2+34 = 112px in a third of the 308px
+            // content width, so it overflows its cell symmetrically and the play
+            // button lands in the middle of the card either way: the three are
+            // centred as a group here, which is the same placement.
+            controls := Rectangle {
+                x: 16px;
+                y: parent.height - 16px - 40px;
+                width: parent.width - 32px;
+                height: 40px;
+                background: Colors.transparent;
+
+                shuffle-button := PlayerButton {
+                    x: 0;
+                    y: (parent.height - self.height) / 2;
+                    icon: "shuffle";
+                    on: MusicState.shuffle;
+                    label: @tr("Shuffle");
+                    clicked => { MusicState.toggle-shuffle(); }
+                }
+
+                repeat-button := PlayerButton {
+                    x: shuffle-button.x + shuffle-button.width + 2px;
+                    y: shuffle-button.y;
+                    icon: "repeat";
+                    on: MusicState.repeat;
+                    label: @tr("Repeat");
+                    clicked => { MusicState.cycle-repeat(); }
+                }
+
+                previous-button := PlayerButton {
+                    x: (parent.width - 112px) / 2;
+                    y: shuffle-button.y;
+                    icon: "play-skip-back";
+                    label: @tr("Previous");
+                    clicked => { MusicState.previous(); }
+                }
+
+                play-button := PlayerButton {
+                    x: previous-button.x + previous-button.width + 2px;
+                    y: 0;
+                    size: 40px;
+                    primary: true;
+                    icon: MusicState.is-playing ? "pause-circle-outline" : "play-circle-outline";
+                    label: MusicState.is-playing ? @tr("Pause") : @tr("Play");
+                    clicked => { MusicState.toggle-play(); }
+                }
+
+                next-button := PlayerButton {
+                    x: play-button.x + play-button.width + 2px;
+                    y: shuffle-button.y;
+                    icon: "play-skip-forward";
+                    label: @tr("Next");
+                    clicked => { MusicState.next(); }
+                }
+
+                folder-button := PlayerButton {
+                    x: parent.width - 70px;
+                    y: shuffle-button.y;
+                    icon: "folder";
+                    label: @tr("Open music folder");
+                    clicked => { MusicState.open-music-folder(); }
+                }
+
+                list-button := PlayerButton {
+                    x: folder-button.x + folder-button.width + 2px;
+                    y: shuffle-button.y;
+                    icon: "list";
+                    on: MusicState.playlist-open;
+                    label: @tr("Playlist");
+                    clicked => { MusicState.toggle-playlist(); }
+                }
+            }
+        }
+
+        // ----- playlist -----
+        // `.playlist-card` is 340px wide, at most 320px tall, and holds the app's
+        // own `ScrollView` in its 8px padding. The card's own fade and slide are
+        // `playlist-alpha` / `playlist-dy` above.
+        //
+        // The height is computed from the row height rather than measured: the
+        // list is built by a `for`, and a repeated element's height is measured
+        // at its own preferred width, so a measurement would not be the height
+        // the layout uses (the same trap the content grid's `filter_row_height`
+        // works around).
+        //
+        // It stays mounted for as long as its *phase* is not "closed" rather than
+        // while `playlist-open` is true, so the leave has something to animate.
+        if root.playlist-phase != "closed" : playlist-card := Rectangle {
+            x: parent.width - 16px - 340px;
+            width: 340px;
+            height: min(320px, 16px + root.playlist-items-height);
+            // 16px of padding, the 125px card, then the column's 12px gap.
+            y: 16px + 125px + 12px + root.playlist-dy;
+            opacity: root.playlist-alpha;
+            border-radius: 14px;
+            background: Theme.base;
+            border-width: 1px;
+            border-color: Theme.overlay-0.transparentize(0.5);
+            drop-shadow-color: #0000004d;
+            drop-shadow-blur: 24px;
+
+            playlist-touch := TouchArea {
+                width: 100%;
+                height: 100%;
+            }
+
+            ScrollView {
+                x: 8px;
+                y: 8px;
+                width: parent.width - 16px;
+                height: parent.height - 16px;
+
+                // `.playlist-items { padding: 4px 0 8px }`.
+                playlist-items := VerticalLayout {
+                    width: parent.width;
+                    alignment: start;
+                    padding-top: 4px;
+                    padding-bottom: 8px;
+                    spacing: 0px;
+
+                    for track[index] in MusicState.tracks : PlaylistItem {
+                        name: track.name;
+                        playing: index == MusicState.current-index;
+                        clicked => { MusicState.play-index(index); }
+                    }
+
+                    if MusicState.tracks.length == 0 : Text {
+                        width: parent.width;
+                        height: root.playlist-empty-height;
+                        text: @tr("Nothing here");
+                        font-size: 12px;
+                        font-weight: Theme.font-weight-normal;
+                        color: Theme.overlay-0;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -84,10 +84,13 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
                     .set_count_unit(config_bridge::count_unit(config.language.as_deref()).into());
             }
             // A background setting may have moved — including the ones that
-            // decide *which* background shows. Cheap when nothing did: the
-            // controller compares what the config resolves to.
+            // decide *which* background shows, and the volumes and the switch
+            // the music player reads. Cheap when nothing did: the background
+            // controller compares what the config resolves to, and the music
+            // script only re-applies a volume that actually changed.
             if let Some(ui) = weak.upgrade() {
                 crate::background::controller::config_changed(&ui);
+                crate::music::config_changed(&ui);
             }
             // Slint re-evaluates every `@tr` binding after this call, so the UI
             // switches language without a restart.
