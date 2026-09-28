@@ -1946,3 +1946,35 @@ msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "기술"
 
+
+#: ui
+msgctxt "MusicPlayerOverlay"
+msgid "No music"
+msgstr "음악 없음"
+
+msgid "Shuffle"
+msgstr "셔플"
+
+msgid "Repeat"
+msgstr "반복"
+
+msgid "Previous"
+msgstr "이전 곡"
+
+msgid "Play"
+msgstr "재생"
+
+msgid "Pause"
+msgstr "일시정지"
+
+msgid "Next"
+msgstr "다음 곡"
+
+msgid "Open music folder"
+msgstr "음악 폴더 열기"
+
+msgid "Playlist"
+msgstr "재생 목록"
+
+msgid "Nothing here"
+msgstr "아무것도 없습니다"

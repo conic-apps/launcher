@@ -37,6 +37,7 @@ slint-java-runtime.workspace = true
 slint-statistics.workspace = true
 slint-single-instance.workspace = true
 slint-multiplayer.workspace = true
+slint-music.workspace = true
 glow.workspace = true
 bytemuck.workspace = true
 euclid.workspace = true

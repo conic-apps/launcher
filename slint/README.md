@@ -31,6 +31,7 @@ slint/
       create_instance.rs            # the create-instance dialog's script
       account_add.rs                # the add-account dialog's script
       account_avatar.rs             # player-head avatars (the Vue's canvas crop)
+      music.rs                      # the music player's script (see Music player)
     ui/
       app.slint                     # root `App` Window (mirrors src/App.vue)
       theme.slint                   # palette + typography tokens, embeds fonts
@@ -51,6 +52,7 @@ slint/
         dropdown.slint              # the dropdown overlay's anchor + selection
         tooltip.slint               # the description tooltip's anchor + hover state
         window-drag.slint           # the Vue's `data-tauri-drag-region` regions
+        music.slint                 # background-music state (src/store/music.ts)
       components/                   # shared/reusable pieces
         title-bar.slint
         window-background.slint     # the window's background layers (src/components/WindowBackground.vue)
@@ -79,6 +81,7 @@ slint/
         base-checkbox.slint
         slide-transition.slint      # the slide-left / slide-right screen swap
         item-loading-icon.slint
+        beat-map.slint              # the footer audio visualizer (src/components/BeatMap.vue)
       views/
         settings-view.slint         # src/views/SettingsView.vue
         settings/                   # the eight settings sections + InfoBox
@@ -89,6 +92,7 @@ slint/
         accounts/                   # the add-account dialog's three screens
       overlays/
         dialog-root.slint           # src/overlays/DialogRoot.vue
+        music-player.slint          # src/overlays/MusicPlayer.vue
         dialogs/
           account-add.slint         # src/overlays/dialogs/AccountAdd.vue
           create-instance.slint     # src/overlays/dialogs/CreateInstance.vue
@@ -132,6 +136,14 @@ slint/
     java-runtime/                   # Tauri-free mirror of crates/java-runtime (whole crate)
     single-instance/                # single-instance guard (no Tauri plugin here)
     multiplayer/                    # Tauri-free mirror of crates/multiplayer (whole crate)
+    music/                          # Tauri-free mirror of crates/music + the Web Audio
+                                    # graph the webview's store owned (see Music player)
+      lib.rs                        #   the original crate verbatim: the folder listing
+      decode.rs                     #   a file becomes PCM (the element's `src`)
+      analyser.rs                   #   the AnalyserNode
+      player.rs                     #   the graph + the transport
+      session.rs                    #   the saved track and position
+      error.rs                      #   crates/music/src/error.rs
 ```
 
 ## Naming
@@ -277,7 +289,15 @@ Per the migration plan:
   and the fills are DWM's — see Known issues for why uxtheme could not supply
   them. macOS has the mirror-image arrangement in `traffic_lights.rs`.
 - Title bar: home/settings navigation, centered search bar + hotkey chip, music
-  action (`components/title-bar*`, `components/search-bar.slint`).
+  action (`components/title-bar*`, `components/search-bar.slint`) — the last one
+  gated on `config.music.enabled`, as the Vue's `v-if` is.
+- **The background-music player**, in full: the title bar's action, the panel
+  (`overlays/music-player.slint` — card, playlist popup, progress bar, the seven
+  transport buttons), and the footer visualizer
+  (`components/beat-map.slint`). `slint-music` is the Tauri-free mirror of
+  `crates/music` and carries the Web Audio graph the webview used to own; see
+  [Music player](#music-player) for the split and Known issues for the
+  deviations.
 - Global page navigation (`globals/navigation.slint`) and the `App` page stack.
 - The settings screen: `SettingsView` (sidebar + scroll-spy + scroll-to-section)
   and all eight sections (`General`, `Launch`, `Java`, `Appearance`, `Audio`,
@@ -711,10 +731,9 @@ and tags, and the instal/remove actions go through `slint-download`.
   composed in Rust.
 - `config_bridge::reveal_in_dir` is the Vue's `revealItemInDir`.
 
-Not yet migrated: `AccountsView`, the setup wizard, the remaining overlays
-(dialogs, command palette, music player, instance settings). The
-audio-visualizer rendering is stubbed;
-`views/game-placeholder.slint` stands in for the not-yet-migrated views. The
+Not yet migrated: `AccountsView`, the setup wizard, the command palette and the
+instance-settings overlay; `views/game-placeholder.slint` stands in for the
+not-yet-migrated views. The
 account avatars (the footer's 56px head, its switcher's 18px rows and the
 add-account dialog's profile rows) all draw the real skin now; `AccountAvatar`
 still falls back to the placeholder disc for a skin Rust could not decode.
@@ -764,6 +783,59 @@ The options, in the order they are worth considering:
 
 Option 1 is the intended direction: it is the only one that keeps the panel's
 typography, its palette and its scroll behaviour under the app's own control.
+
+## Music player
+
+The background-music player is the one place where the _architecture_ of the Vue
+original is a webview detail, so it is worth spelling out where the pieces went.
+
+`crates/music` is a Tauri plugin whose only command lists the music folder. The
+rest of the player — decoding, the output device, the analyser, the transport, the
+playlist, the saved position — lived in `src/store/music.ts`, driving an
+`<audio>` element through the Web Audio API. A native app has no webview, so
+`slint/crates/music` is the mirror of `crates/music` _plus_ everything the
+webview's store owned, split the way the store's responsibilities were:
+
+| `slint/crates/music` | the Vue's                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `lib.rs`             | `crates/music` verbatim: `list_music_files`, `MusicFile`                             |
+| `decode.rs`          | the `<audio>` element's `src` — a file becomes PCM                                   |
+| `analyser.rs`        | the `AnalyserNode`, down to the Blackman window and the 0.8 smoothing                |
+| `player.rs`          | the graph (`source → analyser → gain → destination`) and the `useMusicStore` actions |
+| `session.rs`         | the `localStorage` entry the position was kept in                                    |
+| `error.rs`           | `crates/music/src/error.rs`, minus the Tauri IPC derives                             |
+
+The graph is `decoded track → resampler → (analyser tap) → gain → output device`,
+in that order because the order is visible: the analyser sits **before** the gain,
+so the footer visualizer is unaffected by the volume, exactly as in the Vue. The
+resampler is the one new stage — the element was handed the device's own pipeline
+and never had to convert rates, while a 44.1 kHz track on a 48 kHz device would
+otherwise play 9% fast.
+
+**The threads.** The device pulls samples on cpal's callback thread, which only
+touches the graph under one lock: the cursor, the gain ramp and the seek all have
+to be instantaneous. Decoding happens on a worker thread and swaps the track in
+over a channel; the callback reports the end of a track back to it, which is the
+`audio.onended` the store handled in `handleTrackEnded`. Reads (`state()`,
+`spectrum()`) are a lock and a clone, so the UI can poll as often as it likes.
+
+**What stays in the app** (`app/src/music.rs`) is the app's and not the player's:
+the configuration (the two volumes, the enable switch) and the window focus the
+background volume follows — the store's `init` and its two `watch`es; the panel's
+`panelOpen`/`showPlaylist`, which the store only held so the title bar could reach
+it; and `BeatMap.vue`'s mapping of the analyser's bins onto bars, which is a
+component's own maths and cannot be a Slint binding (see Known issues). The player
+itself is not `Send` (cpal's stream is not), so it lives in a `thread_local` and is
+only ever touched from the event loop's thread — the same reason `content.rs`
+keeps its caches there.
+
+**The clock.** The state is pushed into `MusicState` on a 16ms tick that runs on
+the app's own runtime, not on a Slint `Timer`: a Slint timer stops the moment the
+window goes quiet, which is exactly when the progress bar has to keep moving. The
+tick only runs while something is moving — a track playing, a selection decoding,
+or the panel open — and `PlayerState::pending` is what covers the second case, or
+the very first play at startup would start silently. This is the same clock
+`background/controller.rs` runs the camera on.
 
 ## Conventions
 
@@ -1360,8 +1432,7 @@ typography, its palette and its scroll behaviour under the app's own control.
       mode, so it is given the measured 144px.
     - `launch()` is a single task, so the Vue's two cancel handles
       (`cancelInstallHandle` / `cancelLaunchHandle`) are one abort. The music
-      player's `pause_on_launch` is logged only, since the player is not
-      migrated.
+      player's `pause_on_launch` is wired for real.
     - The "must have a Microsoft account" check reproduces the Vue's
       `config.language !== "zh_cn"` verbatim, so a config that follows the system
       locale (`language: null`) counts as non-Chinese and requires a Microsoft
@@ -1481,6 +1552,123 @@ typography, its palette and its scroll behaviour under the app's own control.
       unconditionally, because cross-fading an image with itself composites it
       twice, landing short of opaque mid-transition and making the glyph thin out
       as it moves.
+- **Music player deviations**, all deliberate:
+    - **A track is decoded in full, on the worker, before it plays.** The element
+      streamed, which is the right shape for a long file the user seeks around in,
+      and the wrong one here: the analyser needs the signal the way the element fed
+      it, the position has to be readable and seekable at any moment (it is
+      persisted every five seconds and restored at startup), and the _duration_ is
+      what the panel's right-hand clock shows — which for a VBR MP3 is only exact
+      once the whole file has been read. The cost is a pause between tracks, and
+      the pause is short: symphonia decodes these at 340–1750x realtime on this
+      machine (a 2-minute MP3 in 0.35s in release, ~1.5s in a debug build), and the
+      work happens on a worker, so the panel keeps running. The other cost is
+      memory: the samples are held as `i16`, so a two-minute stereo track costs
+      ~42 MiB and a long WAV its own file size. The webview buffered the whole
+      file too, so this is the same shape at a size that can be named.
+    - **The saved position is a file, not `localStorage`.** `{ path, currentTime }`
+      goes to `music_session.json` next to `config.toml` in the shared data
+      directory, which is the only app-level store a native app has. It is the one
+      piece of the player the two frontends do not share: the Tauri app cannot read
+      it, and this one cannot read the webview's storage.
+    - **The OS media controls are not wired.** The store registered `play`,
+      `pause`, `previoustrack`, `nexttrack` and `seekto` through the Media Session
+      API, so the system's media keys and the macOS Now Playing widget drove the
+      player. There is no equivalent in Slint; it needs MPRIS on Linux, SMTC on
+      Windows and `MPNowPlayingInfoCenter` on macOS, and none of those is
+      reachable from a Slint application. The player's own API is complete for it.
+    - **The `title` tooltips are accessible labels.** Slint has no tooltip on an
+      icon button, so the eight `@tr`'d titles of the transport row and the
+      playlist's `title` became `accessible-label`s. They are read out; they are
+      not drawn.
+    - **The progress bar's drag stops at the bar.** The Vue registered
+      `pointermove`/`pointerup` on `window` for the duration of the drag, so the
+      bar kept following the pointer once it had left the bar itself. Slint cannot
+      listen outside an element, so the drag is tracked inside it: a press still
+      seeks, which is what a click does, but the pointer has to stay on the bar.
+    - **`opus`, `wma` and `aiff` are listed but not decodable.** The extension list
+      is the original's, all ten, and it still decides what the playlist shows.
+      Symphonia has no decoder for those three, so a track in one of them selects,
+      shows its name, reports an error and plays nothing — which is what the
+      webview did with a file its engine could not play. `mp3`, `wav`, `ogg`,
+      `flac`, `m4a`/`aac` and `alac` all decode. The extension list is not narrowed
+      to hide this: whether a file decodes is a property of the file, not of its
+      extension.
+    - **A decode failure is a log line.** The store reported it through
+      `console.error`, which had no counterpart; the crate logs it and the track
+      stays selected, so the panel and the playlist still show it.
+    - **The visualizer is drawn in logical pixels, not device pixels.** The Vue
+      sized its canvas to the container times `devicePixelRatio` and let the CSS
+      scale it back down, so its two absolute constants — the 1px floor on a bar's
+      height and the 2px idle baseline — were _device_ pixels (0.5 and 1 CSS px on
+      a Retina display). Slint has no device-pixel grid, so they are 1px and 2px
+      in logical units, and the idle baseline is twice as thick on a Retina screen
+      as the original drew it. Everything proportional is unaffected: the bar count
+      comes from the CSS width, and the gap is a quarter of the bar's width, which
+      lands on the same CSS value either way.
+    - **The spectrum-to-bars maths is in Rust** (`music::BeatMap`), not in
+      `beat-map.slint`. It cannot be a Slint binding: every bar is normalised
+      against the loudest _bar of the frame_, which needs a pass over all of them
+      before any of them can be drawn, and the decaying peak is state only a
+      callback may write. What the component draws is what the Vue drew — the same
+      bins, the same logarithmic spread, the same dB floor, the same 0.97 decay —
+      from the levels it is handed. This is the same trade the content grid's
+      `filter_row_height` makes.
+    - **A gradient is relative to the element it fills, so each bar draws its own
+      share of the canvas gradient.** The Vue built one
+      `createLinearGradient(0, height, 0, 0)` for the whole canvas and every bar
+      sampled the part of it the bar covered — which is what `level`, a fraction of
+      the canvas height, is for: a bar's head is `lavender` mixed with `blue` by
+      its own height, so the colour at a given height is the same in both.
+    - The playlist popup's fade and slide are its own phase machine, not the
+      panel's. `<Transition name="playlist-fade">` is a *second* transition, so a
+      toggle while the panel stays open has to animate on its own — and a `v-if`
+      would take the card away before anything could, which is why it stays
+      mounted for as long as its phase is not "closed" (the same two rules as
+      `BaseDialog`).
+    - **The live and idle bars are two loops, not one.** A gradient cannot share a
+      `background` ternary with a plain colour — the two do not unify into a brush,
+      and every bar comes out invisible. The idle loop iterates `bar-count` (an
+      integer _is_ a model in Slint, which is what it repeats over) because
+      `levels` is empty while there is no spectrum to read.
+    - **The playlist card's height is computed, not measured.** The list is built by
+      a `for`, and a repeated element's height is measured at its own preferred
+      width, so a measurement would not be the height the layout uses — the trap
+      `filter_row_height` and the `SettingCollapse` clip work around. The row
+      height is a constant in the component instead.
+    - The footer's `backdrop-filter: blur(4px)` is dropped, like the toolbar's and
+      the launch panel's (Slint 1.18 has no backdrop blur), so the bars show
+      through the bar's own `surface0` at 40% unblurred.
+    - **`showPlaylist` outlives the panel.** The Vue's is a `ref` inside
+      `MusicPlayer.vue`, which stays mounted for the whole session; only the inner
+      `v-if` on `panelOpen` comes and goes. So `closePanel()`, the title bar's
+      button and the enable-switch watcher all leave it alone, and reopening the
+      panel brings the playlist back as it was — with its own enter, because the
+      overlay's `v-if` rebuilds the whole subtree. Rust used to clear it on all
+      three, which silently lost the setting.
+- **A percentage on a component's own root is not the parent's size**, which is
+  why the visualizer is sized by its caller. `.beat-map.fill` is `position:
+  absolute; inset: 0` — it fills the *footer* — and the obvious
+  `width: 100%; height: 100%` in `BeatMap` came out as **840×100**: the width
+  re-resolved during layout (something read it, so the dependency was
+  registered), the height never was, and it kept the 100px it fell back to when
+  the wrapper a conditional puts around a child — `if AppConfig.show-visualizer :
+  BeatMap` — had no size of its own. The bars then measured themselves against
+  100px and were drawn 22px above the footer. The size is given at the one place
+  that knows the footer's box (`views/game/footer.slint`, as `parent.width` /
+  `parent.height`), which is the honest translation of `inset: 0`. Worth
+  remembering for any component mounted under an `if` that has to fill something.
+- **`icons.slint` is transcribed by hand, and it drifts.**
+  `slint/tools/check-icons.py` re-derives both command passes from the SVGs and
+  reports (or `--fix`es) every icon that does not match, including the `<circle>`
+  elements a `d`-only reading misses. The music player's `list` was missing all
+  three of its discs for that reason; ten other icons still differ and are
+  untouched here, so run it before blaming a component for an odd glyph.
+- **The `pcm` feature of symphonia is a codec of its own, not part of `wav`.**
+  Without it symphonia reads a WAV header and then has no decoder for the samples
+  it found, which fails every WAV in the folder with "unsupported codec" — the one
+  thing a music folder is most likely to be full of.
+
 - **Icons**: the original uses Font Awesome Pro (`fa-pro`), which can't be
   shipped. The search glyph is currently a hand-embedded path; a proper icon
   strategy (e.g. the SVGs in `src/assets/icons/`) is still to be decided.- The placeholder view contains dev-only English strings; real localized text

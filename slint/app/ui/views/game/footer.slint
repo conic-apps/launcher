@@ -5,6 +5,9 @@
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/app-icon.slint";
 import { AccountAvatar } from "../../components/account-avatar.slint";
+import { BeatMap } from "../../components/beat-map.slint";
+import { MusicState } from "../../globals/music.slint";
+import { AppConfig } from "../../globals/settings.slint";
 import { GameState, GameIntro } from "../../globals/game.slint";
 import { AccountListDropdown } from "account-list-dropdown.slint";
 
@@ -63,7 +66,7 @@ component FooterButton inherits Rectangle {
 }
 
 // Bottom bar: account avatar + switcher, connect / new instance / install pack
-// (src/views/game/Footer.vue). The music visualizer is not ported.
+// (src/views/game/Footer.vue), over the background music visualizer.
 export component GameFooterBar inherits Rectangle {
     width: 100%;
     height: 56px;
@@ -101,6 +104,33 @@ export component GameFooterBar inherits Rectangle {
         width: root.width;
         height: root.height;
         background: Theme.surface-0.transparentize(0.4);
+
+        // ----- the music visualizer -----
+        // `.footer-visualizer` in the Vue, declared first because every sibling
+        // is `z-index: 1` and it is `z-index: 0` (`.game-view-footer >
+        // :not(.footer-visualizer)`), so it is the layer under all of them.
+        //
+        // The Vue's opacity is 0.3, not the 0.5 its class asks for: the element
+        // carries `style="opacity: 0.3"`, and an inline style outranks a class
+        // rule.
+        //
+        // It takes no pointer events in either build — a `Rectangle` here, and
+        // `pointer-events: none` there.
+        if AppConfig.show-visualizer : BeatMap {
+            fill: true;
+            transparent: true;
+            opacity: 0.3;
+            // `.beat-map.fill` is `position: absolute; inset: 0` — it fills the
+            // footer, so its box is the footer's. It is given here, at the one
+            // place that knows that box, because a percentage on a component's
+            // own root does *not* resolve against the element the instance was
+            // written in: it is evaluated before the wrapper an `if` puts around
+            // a conditional child has a size, and stays at the 100px it could not
+            // resolve (see Known issues).
+            width: parent.width;
+            height: parent.height;
+            resized(bar-count) => { MusicState.resized(bar-count); }
+        }
 
         // ----- account name / switcher + connect -----
         if GameState.has-account : account-layer := Rectangle {
