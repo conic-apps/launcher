@@ -37,6 +37,11 @@ slint-java-runtime.workspace = true
 slint-statistics.workspace = true
 slint-single-instance.workspace = true
 slint-multiplayer.workspace = true
+# The Markdown/HTML body of a content detail panel. `src/content.rs` drives it:
+# the body is parsed and laid out in Rust and the resulting display list is pushed
+# into the `ContentState` model the panel draws (see
+# `ui/overlays/content/markdown-body.slint`).
+slint-markdown.workspace = true
 glow.workspace = true
 bytemuck.workspace = true
 euclid.workspace = true
