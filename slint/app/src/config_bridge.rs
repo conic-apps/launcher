@@ -277,6 +277,57 @@ pub fn open_external(target: &str) -> std::io::Result<()> {
     command.spawn().map(|_| ())
 }
 
+/// Opens the file manager with `path` selected.
+///
+/// The `revealItemInDir` the Vue gets from `tauri-plugin-opener`: on macOS
+/// `open -R`, on Windows `explorer /select,`, and on Linux the same
+/// `org.freedesktop.FileManager1` D-Bus call the plugin makes (with the parent
+/// directory as the fallback, since a desktop without that service cannot
+/// select a file). `open_external` is *not* a substitute — it launches the
+/// file, it does not show it in its folder.
+pub fn reveal_in_dir(path: &str) -> std::io::Result<()> {
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .args(["-R", path])
+            .spawn()
+            .map(|_| ())
+    }
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(format!("/select,{path}"))
+            .spawn()
+            .map(|_| ())
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        // `FileManager1.ShowItems` takes a list of URIs.
+        let uri = format!("file://{}", path.replace(' ', "%20"));
+        let shown = std::process::Command::new("dbus-send")
+            .args([
+                "--session",
+                "--dest=org.freedesktop.FileManager1",
+                "--type=method_call",
+                "/org/freedesktop/FileManager1",
+                "org.freedesktop.FileManager1.ShowItems",
+            ])
+            .arg(format!("array:string:{uri}"))
+            .arg("string:")
+            .spawn()
+            .map(|_| ());
+        if shown.is_ok() {
+            return shown;
+        }
+        // No FileManager1 on this desktop: at least open the folder.
+        let parent = std::path::Path::new(path)
+            .parent()
+            .map(|parent| parent.to_string_lossy().to_string())
+            .unwrap_or_else(|| path.to_string());
+        open_external(&parent)
+    }
+}
+
 /// Writes `text` to the system clipboard.
 ///
 /// Slint 1.18 has no application-level clipboard API — `Platform::set_clipboard_text`

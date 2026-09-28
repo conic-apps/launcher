@@ -1,0 +1,102 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+use std::collections::HashMap;
+use std::path::PathBuf;
+
+use base64::{Engine, engine::general_purpose};
+use fastnbt::Value;
+use slint_folder::DATA_LOCATION;
+
+use crate::error::*;
+
+pub mod datapack;
+pub mod level;
+mod nbt;
+
+/// The fields a save's card shows, read out of its `level.dat` root.
+///
+/// Not part of the original: it hands the whole NBT `Value` to the frontend and
+/// lets it walk the tree (`Level` in `crates/content/index.ts`, with the
+/// `__fastnbt_int_array` shape and all). Pulling the handful of fields out here
+/// keeps the NBT shape inside this crate and gives the app a plain, `Send`
+/// summary to carry across threads.
+#[derive(Debug, Clone, Default)]
+pub struct LevelSummary {
+    /// The world's display name, absent when `level.dat` does not carry one.
+    pub name: Option<String>,
+    /// `Data.GameType`: 0 survival, 1 creative, 2 adventure, 3 spectator.
+    pub game_type: Option<i32>,
+    pub allow_commands: bool,
+    /// `Data.LastPlayed`, in milliseconds since the epoch.
+    pub last_played: Option<u64>,
+}
+
+/// Reads a [`LevelSummary`] out of a `level.dat` root (`level::get_all_levels`).
+pub fn summarize_level(root: &Value) -> LevelSummary {
+    let Some(data) = compound_field(root, "Data") else {
+        return LevelSummary::default();
+    };
+    LevelSummary {
+        name: match compound_field(data, "LevelName") {
+            Some(Value::String(name)) => Some(name.clone()),
+            _ => None,
+        },
+        game_type: integer_field(data, "GameType").map(|value| value as i32),
+        allow_commands: integer_field(data, "allowCommands").is_some_and(|value| value != 0),
+        // The launch script stores milliseconds, which is what the Vue hands
+        // straight to `new Date(timestamp)`.
+        last_played: integer_field(data, "LastPlayed").map(|value| value as u64),
+    }
+}
+
+fn compound_field<'a>(value: &'a Value, name: &str) -> Option<&'a Value> {
+    match value {
+        Value::Compound(fields) => fields.get(name),
+        _ => None,
+    }
+}
+
+/// The integer tags, as `i64`. NBT writes these fields as whichever width fits,
+/// so all four are accepted.
+fn integer_field(value: &Value, name: &str) -> Option<i64> {
+    match compound_field(value, name)? {
+        Value::Byte(value) => Some(i64::from(*value)),
+        Value::Short(value) => Some(i64::from(*value)),
+        Value::Int(value) => Some(i64::from(*value)),
+        Value::Long(value) => Some(*value),
+        _ => None,
+    }
+}
+
+fn save_folder(instance_id: &str, folder_name: &str) -> PathBuf {
+    DATA_LOCATION
+        .get_instance_root(instance_id)
+        .join("saves")
+        .join(folder_name)
+}
+
+pub fn get_all_levels(instance_id: &str) -> Result<HashMap<String, Value>> {
+    level::get_all_levels(DATA_LOCATION.get_instance_root(instance_id).join("saves"))
+}
+
+pub async fn get_save_icon(instance_id: &str, folder_name: &str) -> Result<String> {
+    let icon_path = save_folder(instance_id, folder_name).join("icon.png");
+    let icon = tokio::fs::read(icon_path).await?;
+    Ok(format!(
+        "data:image/png;base64,{}",
+        general_purpose::STANDARD.encode(icon)
+    ))
+}
+
+pub fn get_save_path(instance_id: &str, folder_name: &str) -> Result<String> {
+    Ok(save_folder(instance_id, folder_name)
+        .to_string_lossy()
+        .to_string())
+}
+
+pub async fn delete_save(instance_id: &str, folder_name: &str) -> Result<()> {
+    tokio::fs::remove_dir_all(save_folder(instance_id, folder_name)).await?;
+    Ok(())
+}

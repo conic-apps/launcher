@@ -2,17 +2,44 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Lightweight, Tauri-free mirror of `crates/content` for the Slint app.
+//! Tauri-free mirror of `crates/content`: the instance's local content.
 //!
-//! The Game view only needs the *counts* of the current instance's local
-//! content to lay out its preview rows; the heavy preview machinery (NBT level
-//! parsing, save icons, mod metadata, world-map rendering) is not ported here
-//! yet. Everything is scanned directly from the instance directory, matching
-//! the layout the Tauri `content` crate reads.
+//! The original is a Tauri plugin whose fifteen commands are thin wrappers —
+//! none of them takes `State`, `AppHandle` or a `Channel` — so the mirror drops
+//! the command layer and keeps the modules themselves, which can then be
+//! diffed against the original file for file:
+//!
+//!   * `mods/` reads the mods folder and resolves each jar's metadata, offline
+//!     from the archive itself and online through Modrinth and CurseForge;
+//!   * `saves/` reads `level.dat` out of each world and serves a world's icon
+//!     and path;
+//!   * `resourcepack.rs` and `screenshots.rs` list the other two content kinds;
+//!   * `favorites.rs` is the shared favorites file.
+//!
+//! Two deviations, both deliberate:
+//!
+//!   * `worldmap.rs` is **not** mirrored. The saves overlay's card expansion
+//!     draws a live world map through the external `conic-worldmap` crate; that
+//!     is a feature of its own and is left for a later pass (see the Slint
+//!     README's Known issues), so the error variants that existed only for it
+//!     (`WorldMap`, `WorldMapTask`, `WorldMapPng`) are gone too.
+//!   * The entry points take `&str` where the original took `String`. The
+//!     owned strings were what Tauri's IPC deserialization produced; nothing
+//!     here needs them.
+//!
+//! [`content_counts`] is not part of the original — it is what the game view's
+//! preview rows read for their "n items" labels.
 
 use std::path::{Path, PathBuf};
 
 use slint_folder::DATA_LOCATION;
+
+pub mod error;
+pub mod favorites;
+pub mod mods;
+pub mod resourcepack;
+pub mod saves;
+pub mod screenshots;
 
 /// How many items of each kind the current instance contains.
 #[derive(Clone, Copy, Default)]

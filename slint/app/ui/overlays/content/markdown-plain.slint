@@ -1,0 +1,52 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+
+// The README body of a project detail panel, drawn as plain text.
+//
+// The Vue renders the body with `marked` into `v-html` (and CurseForge's
+// summary as HTML straight from the API), so headings, lists, code blocks,
+// links and images all come out styled. Slint has nothing that can render an
+// arbitrary Markdown document: `@markdown` is a compile-time literal the parser
+// reads out of the source, so it cannot take a runtime string, and there is no
+// HTML engine to hand the document to.
+//
+// Until the body gets a real renderer (the options are set out in the Slint
+// README's "Rendering the README bodies"), Rust flattens the document to text —
+// tags dropped, entities unescaped, paragraph breaks kept as blank lines — and
+// this draws it in the Vue's `.markdown-body` box: `surface0`, an 8px radius,
+// 16px of padding and a 14px body.
+//
+// One thing the box cannot match: the Vue sets `line-height: 1.6` here, over
+// the global `line-height: 1` everything else uses, and Slint 1.18 has no
+// line-height property at all. The body therefore reads a little tighter than
+// the original.
+export component MarkdownPlain inherits Rectangle {
+    in property <string> text: "";
+
+    width: 100%;
+    // `.markdown-body { padding: 16px }` box-sizing border-box. The box's height
+    // has to come from a layout: a component measures zero when every one of its
+    // children is absolutely positioned (`gen_layout_info_prop` skips a child
+    // that sets `x` or `y`), so a bare `self.preferred-height` here collapsed the
+    // box to nothing and the body was never drawn.
+    height: self.preferred-height;
+    background: Theme.surface-0;
+    border-radius: 8px;
+
+    body := VerticalLayout {
+        padding: 16px;
+
+        body-text := Text {
+            text: root.text;
+            font-size: 14px;
+            color: Theme.default-text-color.transparentize(0.1);
+            wrap: word-wrap;
+            // Root resources are only reachable through `Theme`, and a body with
+            // no links has nothing to click either way, so the paragraphs simply
+            // flow.
+        }
+    }
+}

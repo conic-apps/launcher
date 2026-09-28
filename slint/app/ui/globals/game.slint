@@ -184,6 +184,13 @@ export global GameState {
     in-out property <int> content-mods: 0;
     in-out property <int> content-resourcepacks: 0;
     in-out property <int> content-screenshots: 0;
+    /// The icons the game view's preview rows draw — up to five of each kind,
+    /// in a 20px circle (`InstanceSummary.vue`'s `.content-img` run). Decoded
+    /// by `content.rs`, which owns the content caches.
+    in-out property <[image]> preview-saves: [];
+    in-out property <[image]> preview-mods: [];
+    in-out property <[image]> preview-resourcepacks: [];
+    in-out property <[image]> preview-screenshots: [];
     in-out property <bool> content-loading: false;
     // Suffix shown after a content count. Only Chinese uses one ("个"/"個");
     // Rust derives it from the language so it is not a gettext key.

@@ -1,0 +1,205 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+
+// The content overlays' shared shell (`GameView.vue`'s `.game-content-wrapper`
+// + `.game-content-container`).
+//
+// Every panel the game view opens — the five content panels and the six detail
+// panels behind them — is the same two elements: a full-window scrim, and a
+// container `calc(100% - 150px)` wide and full height that slides up from
+// `translateY(100%)`. The screenshots viewer is the one exception: the Vue
+// mounts it *without* the container, so it spans the window and only the scrim
+// fades (`slide: false`).
+//
+// The transitions are the Vue's:
+//
+//   enter  scrim     #00000000 → #00000080   200ms `ease`
+//          container translateY(100%) → 0   400ms `cubic-bezier(0, .47, .25, 1)`
+//   leave  scrim     #00000080 → #00000000   200ms `ease`, 100ms in
+//          container 0 → translateY(100%)   280ms `cubic-bezier(.47, 0, 1, .75)`
+//
+// Two things it deliberately does *not* do:
+//
+//   * No `opacity` or `transform` on the panel — only `y` moves. Either of the
+//     other two would put the whole subtree in a render layer, and the renderer
+//     gives up on a layer taller than 8192px (see the mod-loader list's note in
+//     the README). The scrim's fade lives in its background colour instead.
+//   * No window drag on the scrim. The Vue's `.game-content-wrapper` carries no
+//     `data-tauri-drag-region` (unlike the dialogs' scrim), so a press on it
+//     only closes the panel.
+//
+// Showing it for one frame at the start value before moving to "shown" is what
+// makes the entrance play at all: a hidden element is never painted, so an
+// animated property that is not being read snaps straight to its target, and
+// the slide would be skipped. `BaseDialog` makes the same detour, for the same
+// reason, and its differing enter/leave durations are the same shape as the
+// two below.
+export component ContentOverlay inherits Rectangle {
+    /// Whether the overlay is open (the Vue's `v-if`).
+    in property <bool> overlay-visible: false;
+    /// How much of the window width the container leaves free — the Vue's
+    /// `calc(100% - 150px)`, or 200px for the instance-settings panel.
+    in property <length> panel-inset: 150px;
+    /// False for the screenshots viewer, which the Vue mounts without the
+    /// sliding container.
+    in property <bool> slide: true;
+    /// The container's fill (`var(--ctp-base)`).
+    in property <color> panel-background: Theme.base;
+
+    /// Size of the container. Elements written between the braces are laid out
+    /// in it, but their `parent` is the element they are written *in* — the
+    /// game view, not this component — so anything that sizes itself against
+    /// the container has to read these (the same arrangement as `BaseDialog`).
+    out property <length> panel-width: max(0px, root.width - root.panel-inset);
+    out property <length> panel-height: root.height;
+
+    /// A click landed on the scrim, or Escape was pressed.
+    callback closed;
+
+    width: 100%;
+    height: 100%;
+    // The container starts one full height below the overlay and travels up;
+    // clipping here keeps the part that has not arrived yet out of the way.
+    clip: true;
+    // The scrim's alpha is part of the colour rather than an element `opacity`:
+    // the overlay is `visible: false` when it is closed, and an `opacity` on it
+    // would put the whole panel in a layer.
+    background: #000000.with-alpha(0.502 * root.scrim-alpha);
+
+    // "closed" | "starting" | "shown" | "leaving" — `BaseDialog`'s machine.
+    private property <string> phase: "closed";
+    visible: root.phase != "closed";
+
+    // What every animated binding reads, one frame behind `phase`: Slint drops
+    // the first of two changes made to an animated property before a frame is
+    // drawn, so toggling the overlay twice inside one frame (a fast close and
+    // reopen) would leave the slide with nothing to travel between and the
+    // panel would jump to its new place. Applying the machine's state through a
+    // timer means a frame only ever sees the latest one.
+    private property <string> settled: "closed";
+    // `running` has to be a property this element owns: a `Timer` whose
+    // `running` is a constant binding cannot be started by `restart()` (a bound
+    // property cannot be written), and the overlay stayed parked below the
+    // window with no way to settle.
+    private property <bool> settling: false;
+    changed phase => { root.settling = true; }
+    settle-timer := Timer {
+        interval: 16ms;
+        running: root.settling;
+        triggered => {
+            root.settled = root.phase;
+            root.settling = false;
+        }
+    }
+
+    changed overlay-visible => {
+        if root.overlay-visible {
+            if root.phase != "shown" {
+                // Closed, or still leaving: play the entrance from wherever the
+                // panel is — a leave that was interrupted carries on from the
+                // offset it had reached.
+                root.phase = "starting";
+                start-timer.restart();
+            }
+        } else if root.phase != "closed" && root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    // One frame at the start values, so the renderer sees them before the
+    // container is asked to move.
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    // The longest of the leave's two tracks (280ms slide, 100 + 200ms scrim).
+    leave-timer := Timer {
+        interval: 300ms;
+        running: root.phase == "leaving";
+        triggered => { root.phase = "closed"; }
+    }
+
+    init => {
+        // `changed` does not fire for the value a component is created with.
+        if root.overlay-visible {
+            root.phase = "shown";
+            root.settled = "shown";
+        }
+    }
+
+    // ----- the slide -----
+    // One property, whose target is the container's offset from the top: the
+    // window height while it is parked below, 0 once it has arrived. Each
+    // transition moves the value, which is what lets the duration be read again
+    // — `ShouldStart` is only reached when there is a change to animate, so the
+    // 400ms/280ms pair takes effect per direction (`BaseDialog`'s enter/leave
+    // asymmetry works the same way).
+    private property <length> panel-y:
+        root.settled == "shown" || root.settled == "starting" ? 0px : root.height;
+    private property <bool> leaving: root.settled == "leaving";
+
+    animate panel-y {
+        duration: root.leaving ? 280ms : 400ms;
+        easing: root.leaving ? cubic-bezier(0.47, 0, 1, 0.75) : cubic-bezier(0, 0.47, 0.25, 1);
+    }
+
+    // ----- the scrim -----
+    // 200ms `ease` both ways; on the way out the Vue delays it by 100ms
+    // (`.game-content-leave-active { transition-delay: 100ms }`).
+    private property <float> scrim-alpha: root.settled == "shown" ? 1.0 : 0.0;
+    animate scrim-alpha {
+        duration: 200ms;
+        delay: root.leaving ? 100ms : 0ms;
+        easing: ease-out-quad;
+    }
+
+    scrim-touch := TouchArea {
+        clicked => { root.closed(); }
+        // Every panel's wrapper in the Vue covers the game view, and its own
+        // scroller swallows the wheel (`Lenis` calls `preventDefault()` on every
+        // wheel it sees), so a wheel over an open panel can never reach the
+        // instance list behind it. Slint has no such rule — an unhandled wheel
+        // falls through to whatever is underneath — so the scrim takes it.
+        scroll-event(event) => { accept }
+    }
+
+    container := Rectangle {
+        // Centred horizontally the way the Vue's flexbox centres it, and moved
+        // by `panel-y` — which for the screenshots viewer stays 0. This is a
+        // plain `Rectangle` rather than a layout child: a layout owns its
+        // children's `y`, and this one is animated (`SlideTransition` is a
+        // `Rectangle` for the same reason).
+        x: (root.width - self.width) / 2;
+        y: root.slide ? root.panel-y : 0px;
+        width: root.panel-width;
+        height: root.panel-height;
+        background: root.panel-background;
+
+        // The Vue closes the panel from a click on the wrapper itself
+        // (`@click.self`), so a click anywhere on the container has to stop
+        // there rather than reach the scrim. Declared before the content, so
+        // the controls inside it stay on top of this and keep their own clicks.
+        swallow := TouchArea { }
+
+        // The slot, as a plain `Rectangle` rather than a layout: the elements
+        // written between a component's braces get their `parent` from the
+        // element they are written *in* (the game view, not this container), so
+        // a layout here would size them against the wrong box. `BaseDialog`
+        // hosts its slot the same way, and its panels size themselves from the
+        // `content-width`/`content-height` it exposes — which is what
+        // `panel-width`/`panel-height` are for here.
+        content := Rectangle {
+            x: 0;
+            y: 0;
+            width: parent.width;
+            height: parent.height;
+            background: transparent;
+            @children
+        }
+    }
+}

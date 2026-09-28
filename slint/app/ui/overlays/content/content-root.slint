@@ -1,0 +1,94 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { ContentState } from "../../globals/content.slint";
+import { ContentOverlay } from "content-overlay.slint";
+import {
+    ContentModsPanel,
+    ContentResourcepacksPanel,
+    ContentPacksPanel,
+    ContentSavesPanel,
+    ContentScreenshotsPanel,
+} from "panels.slint";
+import { DetailPanels } from "details.slint";
+
+// The content overlay layer. `GameView` mounts it — the Vue mounts every
+// `.game-content-wrapper` inside `GameView.vue` too, so the panels sit below
+// the title bar and inside the screen that opens them.
+//
+// The four list panels share one overlay: only one of them is ever open, and
+// they are switched by `visible` rather than by `if` so a panel that is closed
+// and reopened keeps its scroll position. A closed panel is invisible, and
+// Slint's layout skips an invisible child, so the open one fills the container.
+//
+// The detail overlay is drawn *after* it, so a detail panel covers the list it
+// was opened from — the same ordering the Vue gets from its DOM order, and what
+// leaves the list underneath untouched when the detail closes.
+export component ContentRoot inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // One overlay **per panel**, in the Vue's DOM order: a wrapper each, with
+    // its own `v-if` and its own enter/leave. That is what makes a switch
+    // between two panels play both animations — a single overlay swapping its
+    // contents would show the new panel the instant the state changed.
+    saves-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel == "saves";
+        closed => { ContentState.close(); }
+
+        ContentSavesPanel {
+            panel-width: saves-overlay.panel-width;
+            panel-height: saves-overlay.panel-height;
+        }
+    }
+
+    mods-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel == "mods";
+        closed => { ContentState.close(); }
+
+        ContentModsPanel {
+            panel-width: mods-overlay.panel-width;
+            panel-height: mods-overlay.panel-height;
+        }
+    }
+
+    resourcepacks-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel == "resourcepacks";
+        closed => { ContentState.close(); }
+
+        ContentResourcepacksPanel {
+            panel-width: resourcepacks-overlay.panel-width;
+            panel-height: resourcepacks-overlay.panel-height;
+        }
+    }
+
+    // The Vue mounts the screenshots viewer *without* the sliding container, so
+    // it spans the window and only the scrim fades.
+    screenshots-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel == "screenshots";
+        slide: false;
+        panel-inset: 0px;
+        panel-background: transparent;
+        closed => { ContentState.close(); }
+
+        ContentScreenshotsPanel {
+            panel-width: screenshots-overlay.panel-width;
+            panel-height: screenshots-overlay.panel-height;
+        }
+    }
+
+    // Declared last, as in the Vue: a detail panel covers the list it came from.
+    packs-overlay := ContentOverlay {
+        overlay-visible: ContentState.open-panel == "packs";
+        closed => { ContentState.close(); }
+
+        ContentPacksPanel {
+            panel-width: packs-overlay.panel-width;
+            panel-height: packs-overlay.panel-height;
+        }
+    }
+
+    DetailPanels { }
+}

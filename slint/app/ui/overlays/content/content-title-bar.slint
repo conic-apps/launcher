@@ -1,0 +1,116 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+
+// The panels' header row (`styles/title-bar.less` `.title`): a 52px mantle bar
+// with the panel's icon, its title, and — on the panels that can show content
+// from more than one place — the source switcher pushed to the right.
+//
+// The switcher is the Vue's `.select-source`: 40x32 buttons in a 4px-gapped row,
+// each tinted by the source it selects (blue for local, Modrinth's green,
+// CurseForge's peach) and backed by `surface2` while active.
+// One `.select-source button`. The local button draws a stroked glyph, the two
+// platform marks are filled, which is `AppIcon`'s stroke/fill split.
+component SourceButton inherits Rectangle {
+    in property <string> source: "";
+    in property <bool> active: false;
+    callback clicked;
+
+    width: 40px;
+    height: 32px;
+    border-radius: 4px;
+    background: touch.pressed ? Theme.surface-1
+        : touch.has-hover ? Theme.surface-0
+        : (root.active ? Theme.surface-2 : transparent);
+
+    // `button.local.active { stroke: var(--ctp-blue) }`,
+    // `button.active.modrinth { fill: var(--ctp-green) }`,
+    // `button.active.curseforge { fill: var(--ctp-peach) }`, and otherwise the
+    // body text at 70%.
+    private property <color> tint:
+        !root.active ? Theme.default-text-color.transparentize(0.3)
+        : root.source == "local" ? Theme.blue
+        : root.source == "modrinth" ? Theme.green
+        : Theme.peach;
+
+    AppIcon {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        name: root.source == "local" ? "file-tray-full-outline"
+            : root.source == "modrinth" ? "modrinth"
+            : "curseforge";
+        // The Modrinth mark is a 593-unit view box and reads a size larger than
+        // the 512-unit ionicons at the same number, so it is drawn 3px smaller —
+        // the Vue's inline `padding: 3px` on that one button's svg.
+        size: root.source == "modrinth" ? 18px : 24px;
+        icon-color: root.tint;
+    }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+export component ContentTitleBar inherits Rectangle {
+    in property <string> icon: "";
+    in property <length> icon-size: 20px;
+    in property <string> title: "";
+    /// Gap below the bar. The Vue only sets one on the saves panel
+    /// (`ContentSaves.vue`'s `margin-bottom: 16px`); the others leave it at 0.
+    in property <length> title-gap: 0px;
+    /// "" when the panel has a single source. Otherwise the switcher is drawn
+    /// with `sources` — "local", "modrinth", "curseforge".
+    in property <[string]> sources: [];
+    in property <string> active-source: "";
+
+    callback source-selected(string);
+
+    width: 100%;
+    height: 52px + title-gap;
+    background: transparent;
+
+    bar := Rectangle {
+        width: parent.width;
+        height: 52px;
+        background: Theme.mantle;
+        clip: true;
+
+        AppIcon {
+            x: 32px;
+            y: (parent.height - self.height) / 2;
+            name: root.icon;
+            size: root.icon-size;
+        }
+
+        Text {
+            x: 32px + root.icon-size + 8px;
+            y: (parent.height - self.height) / 2;
+            text: root.title;
+            font-size: 16px;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        switcher := HorizontalLayout {
+            // `margin-left: auto` — the row is pushed against the bar's right
+            // padding edge. Its size has to be spelled out: a layout with no
+            // `width` of its own takes its parent's, so `parent.width -
+            // self.width` would come out at -32px and the buttons would be laid
+            // out over the title. The height is the buttons' own 32px for the
+            // same kind of reason — `y` is only their centre once the row is as
+            // tall as they are.
+            width: root.sources.length * 40px + max(0, root.sources.length - 1) * 4px;
+            height: 32px;
+            x: parent.width - 32px - self.width;
+            y: (parent.height - self.height) / 2;
+            spacing: 4px;
+
+            for source in root.sources : SourceButton {
+                source: source;
+                active: source == root.active-source;
+                clicked => { root.source-selected(source); }
+            }
+        }
+    }
+}

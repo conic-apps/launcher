@@ -45,6 +45,8 @@ slint-folder = { path = "./slint/crates/folder", version = "0.0.0" }
 slint-account = { path = "./slint/crates/account", version = "0.0.0" }
 slint-instance = { path = "./slint/crates/instance", version = "0.0.0" }
 slint-content = { path = "./slint/crates/content", version = "0.0.0" }
+slint-modrinth = { path = "./slint/crates/modrinth", version = "0.0.0" }
+slint-curseforge = { path = "./slint/crates/curseforge", version = "0.0.0" }
 slint-version = { path = "./slint/crates/version", version = "0.0.0" }
 slint-download = { path = "./slint/crates/download", version = "0.0.0" }
 slint-install = { path = "./slint/crates/install", version = "0.0.0" }

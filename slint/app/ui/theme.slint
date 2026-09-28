@@ -336,6 +336,10 @@ export global Theme {
     // `.changing-theme`'s `transition: all 0.3s ease`, in one place so the two
     // ends of the pair cannot drift apart.
     in property <duration> transitions-duration: 300ms;
+
+    // `--ctp-latte-teal`, declared on the same terms: the detail panels' action
+    // buttons use it, so they stay the same teal in every palette.
+    in property <color> latte-teal: #179299;
 }
 
 // Produces the theme colors from the selected palette and interpolates them

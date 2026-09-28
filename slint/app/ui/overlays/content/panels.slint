@@ -1,0 +1,726 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { ContentCard, ContentState, ContentSearch } from "../../globals/content.slint";
+import { ScrollView } from "../../components/scroll-view.slint";
+import { ContentTitleBar } from "content-title-bar.slint";
+import { ContentCardGrid } from "content-card-grid.slint";
+import { ContentSearchPanel } from "content-search-panel.slint";
+import { ContentPagination } from "content-pagination.slint";
+import { ContentLoading, ContentNotFound } from "content-not-found.slint";
+
+// The five content panels the game view opens (src/overlays/content/
+// Content{Saves,Mods,Resourcepacks,Packs,Screenshots}.vue).
+//
+// Each is the same skeleton: a `ScrollView` holding a 52px header bar and then
+// whatever that panel shows. The Vue wraps the whole panel in one `ScrollView`
+// and lets the search header scroll away with the grid, which is what these do
+// too — there is no second scroller anywhere inside a panel.
+//
+// `content-root.slint` mounts each of these inside a `ContentOverlay`, so they
+// are the container's content rather than the overlay itself.
+
+
+
+
+
+
+// The local lists and the remote ones are written out at each panel rather than
+// behind a wrapper component.
+//
+// A wrapper whose height is `self.preferred-height` and whose child sits inside
+// an `if` collapses: the conditional lowers to a wrapper that reports no layout
+// info of its own (see the README's note on repeated elements and `if`), so the
+// component measures zero tall and the grid inside it is laid out against the
+// ScrollView's content instead — it ended up painted over the panel's own
+// header bar. Every state block below therefore has a definite height.
+
+export component ContentSavesPanel inherits Rectangle {
+    /// The overlay container's size. Passed in rather than taken from `parent`,
+    /// which is the game view — the container is inset from it.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    // The size the grid has to lay out in, reported from here rather than from
+    // the grid itself: a layout assigns a child's geometry without going
+    // through `changed`, so a `changed width` on the grid never fires and the
+    // cards were laid out at width 0.
+    // `changed` does not fire for the value a component is created with, and a
+    // panel is created at its final size — so the first report is `init` and
+    // the handlers only pick up a later window resize.
+    init => { ContentState.grid-resized(root.width, root.height); }
+    changed width => { ContentState.grid-resized(root.width, root.height); }
+    changed height => { ContentState.grid-resized(root.width, root.height); }
+
+    // The Vue clears the selection when the panel itself is clicked
+    // (`@click="selectedSave = null"`) and wraps the list in the scroller. The
+    // click has to come from *inside* the scroller: a `TouchArea` over the whole
+    // panel would sit on top of the cards and swallow every hover and click in
+    // them, which is exactly what it did.
+    // The Vue re-mounts a list every time it opens, which puts it back at the
+    // top; these panels stay alive, so the scroll is reset by hand.
+    private property <bool> panel-open: ContentState.open-panel == "saves";
+    changed panel-open => {
+        if root.panel-open {
+            list-scroll.scroll-to(0px, false);
+        }
+    }
+
+    list-scroll := ScrollView {
+        background-clicked => { ContentState.select-save(""); }
+
+        ContentTitleBar {
+            icon: "save";
+            title: @tr("Saves");
+            // `.title { margin-bottom: 16px }` on this panel alone.
+            title-gap: 16px;
+        }
+
+        if ContentState.saves-loading : ContentLoading { }
+
+        if !ContentState.saves-loading && ContentState.saves.length > 0 : ContentCardGrid {
+            cards: ContentState.saves;
+            icon-size: 64px;
+            subtitle-style: "folder";
+            grid-height: ContentState.saves-grid-height;
+
+            select(id) => { ContentState.select-save(id); }
+            open-path(id) => { ContentState.open-path(id); }
+            delete(id) => { ContentState.delete-save(id); }
+            // The play button carries no handler in the Vue — the click bubbles
+            // to the panel and clears the expanded save, which is what this
+            // comes to.
+            play(id) => { ContentState.select-save(""); }
+        }
+    }
+
+    // The empty state sits over the *whole* panel in the Vue, outside the
+    // scroller and with `pointer-events: none`, so the cards stay clickable.
+    ContentNotFound {
+        show: !ContentState.saves-loading && ContentState.saves.length == 0;
+        description: @tr("Consider launching the game and creating some saves");
+    }
+}
+
+// ----- screenshots -----
+//
+// The full-window viewer (`ContentScreenshots.vue`). Unlike the five panels it
+// is mounted without a container — `GameView.vue` puts it straight in the
+// wrapper — so it spans the window and only the scrim fades.
+//
+// Its motion is GSAP in the original (`playIntro` / `playOutro`), not CSS: the
+// strip rises from the bottom over 600ms, the thumbnails and the stage/arrows/
+// close button scale up from 0.6 — those with `back.out`, the thumbnails
+// staggered 30ms apart — and closing plays the reverse (300/330ms, `power3.in`)
+// *before* the panel is dismissed. `power3.out` is `ease-out-cubic`, `back.out`
+// is `ease-out-back` and `power3.in` is `ease-in-cubic`.
+//
+// The close button, the stage and Escape run that outro; a click on the scrim
+// does not (the Vue's `@click.self` on the wrapper clears the flag directly).
+export component ContentScreenshotsPanel inherits Rectangle {
+    /// The overlay container's size. Passed in rather than taken from `parent`,
+    /// which is the game view — the container is inset from it.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    // "closed" | "starting" | "shown" | "leaving" — the panel's own machine,
+    // driven by whether the viewer is the open panel.
+    private property <bool> open: ContentState.open-panel == "screenshots";
+    private property <string> phase: "closed";
+    private property <bool> leaving: root.phase == "leaving";
+    /// The outro is running: the close timer is armed and the elements are on
+    /// their way out, but the panel is still open.
+    private property <bool> closing: false;
+
+    changed open => {
+        if root.open {
+            if root.phase == "closed" {
+                root.phase = "starting";
+                start-timer.restart();
+            } else {
+                root.phase = "shown";
+            }
+        } else if root.phase != "closed" && root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    init => {
+        if root.open {
+            root.phase = "shown";
+        }
+    }
+
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    leave-timer := Timer {
+        interval: 330ms;
+        running: root.phase == "leaving";
+        triggered => { root.phase = "closed"; }
+    }
+
+    // `.close()`: the outro plays, and the panel is dismissed when it ends
+    // (`playOutro(() => { showContent.screenshots = false })`).
+    close-timer := Timer {
+        interval: 330ms;
+        running: root.closing;
+        triggered => {
+            root.closing = false;
+            ContentState.close();
+        }
+    }
+
+    private property <bool> shown-state: root.phase == "shown" && !root.closing;
+
+    // ----- what moves -----
+    // The strip slides in from one full height below; the thumbnails and the
+    // stage fade and scale up from 0.6.
+    private property <length> strip-y: root.phase == "shown" && !root.closing ? 0px : root.height;
+    private property <float> thumb-scale: root.shown-state ? 1.0 : (root.closing || root.leaving ? 0.7 : 0.6);
+    private property <float> thumb-alpha: root.shown-state ? 1.0 : 0.0;
+    private property <float> main-scale: root.shown-state ? 1.0 : (root.closing || root.leaving ? 0.7 : 0.6);
+    private property <float> main-alpha: root.shown-state ? 1.0 : 0.0;
+
+    animate strip-y {
+        duration: root.leaving || root.closing ? 300ms : 600ms;
+        easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+    animate thumb-scale {
+        duration: root.leaving || root.closing ? 330ms : 400ms;
+        easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : ease-out-back;
+    }
+    animate thumb-alpha {
+        duration: root.leaving || root.closing ? 330ms : 400ms;
+        easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : ease-out-back;
+    }
+    animate main-scale {
+        duration: root.leaving || root.closing ? 330ms : 500ms;
+        easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : ease-out-back;
+    }
+    animate main-alpha {
+        duration: root.leaving || root.closing ? 330ms : 500ms;
+        easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : ease-out-back;
+    }
+
+    // The panel *is* the column: `.content-screenshots` is
+    // `display: flex; flex-direction: column` with `.main { flex: 1 }` above
+    // `.thumbnails { flex-shrink: 0 }`. A wrapper sized to its own content
+    // would leave the strip wherever the content happened to end rather than
+    // at the bottom.
+    // `.content-screenshots { display: flex; flex-direction: column }` with
+    // `.main { flex: 1 }` above `.thumbnails { flex-shrink: 0 }` — the stage
+    // keeps the space the strip leaves. Two boxes rather than a layout,
+    // because the strip slides and a layout owns its children's `y`.
+    private property <length> strip-height: clamp(92px, root.height * 12 / 100, 116px);
+
+    stage := Rectangle {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: parent.height - root.strip-height;
+        background: transparent;
+
+            if ContentState.screenshots.length == 0 : Text {
+                text: ContentState.screenshots-loading
+                    ? @tr("Loading...")
+                    : @tr("No screenshots");
+                font-size: 14px;
+                color: Theme.overlay-2;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+
+            if ContentState.screenshots.length > 0 : Rectangle {
+                width: 100%;
+                height: 100%;
+                background: transparent;
+                opacity: root.main-alpha;
+
+                // `.nav { top: 50%; 44px; border-radius: 50%; border: 1px solid
+                // surface1; background: rgba(surface0, .85); &.prev { left:
+                // 24px } &.next { right: 24px } }` with a 22px chevron, the
+                // left one rotated.
+                prev-button := Rectangle {
+                    x: 24px;
+                    y: (parent.height - self.height) / 2;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 22px;
+                    border-width: 1px;
+                    border-color: Theme.surface-1;
+                    background: prev-touch.pressed ? Theme.surface-2
+                        : prev-touch.has-hover ? Theme.surface-1
+                        : Theme.surface-0.with-alpha(0.85);
+                    opacity: ContentState.screenshot-index <= 0 ? 0.35 : 1.0;
+                    transform-scale: root.main-scale;
+
+                    AppIcon {
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                        name: "chevron-forward";
+                        size: 22px;
+                        icon-color: Theme.default-text-color.transparentize(0.1);
+                        transform-rotation: 180deg;
+                        transform-origin: { x: self.width / 2, y: self.height / 2 };
+                    }
+
+                    prev-touch := TouchArea {
+                        enabled: ContentState.screenshot-index > 0;
+                        clicked => { ContentState.screenshot-prev(); }
+                    }
+                }
+
+                next-button := Rectangle {
+                    x: parent.width - 24px - self.width;
+                    y: (parent.height - self.height) / 2;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 22px;
+                    border-width: 1px;
+                    border-color: Theme.surface-1;
+                    background: next-touch.pressed ? Theme.surface-2
+                        : next-touch.has-hover ? Theme.surface-1
+                        : Theme.surface-0.with-alpha(0.85);
+                    opacity: ContentState.screenshot-index >= ContentState.screenshots.length - 1
+                        ? 0.35
+                        : 1.0;
+                    transform-scale: root.main-scale;
+
+                    AppIcon {
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                        name: "chevron-forward";
+                        size: 22px;
+                        icon-color: Theme.default-text-color.transparentize(0.1);
+                    }
+
+                    next-touch := TouchArea {
+                        enabled: ContentState.screenshot-index < ContentState.screenshots.length - 1;
+                        clicked => { ContentState.screenshot-next(); }
+                    }
+                }
+
+                // `.stage { padding: 32px 96px }` with
+                // `img { max-width: 100%; max-height: 100%; object-fit:
+                // contain; border-radius: 8px; box-shadow: 0 8px 32px
+                // rgba(0,0,0,.4) }` — an `Image` given the padded box and
+                // `contain` lands the same way.
+                // `.stage`'s own `@click.self="close"` is what the touch
+                // area under the image is for; the image swallows its own
+                // clicks, as a click on the `<img>` did in the Vue.
+                stage-touch := TouchArea {
+                    clicked => { root.closing = true; }
+                }
+
+
+                image-swallow := TouchArea {
+                    x: 96px;
+                    y: 32px;
+                    width: max(0px, parent.width - 192px);
+                    height: max(0px, parent.height - 64px);
+                }
+
+                // A box of its own so the shadow follows the image's alpha:
+                // `drop-shadow-*` is a Rectangle's property, and the Vue's
+                // `box-shadow: 0 8px 32px rgba(0,0,0,.4)` hugs the picture.
+                shadow := Rectangle {
+                    x: 96px;
+                    y: 32px;
+                    width: max(0px, parent.width - 192px);
+                    height: max(0px, parent.height - 64px);
+                    background: transparent;
+                    transform-scale: root.main-scale;
+                    drop-shadow-color: #00000066;
+                    drop-shadow-blur: 32px;
+                    drop-shadow-offset-y: 8px;
+
+                    Image {
+                        width: 100%;
+                        height: 100%;
+                        source: ContentState.current-screenshot;
+                        image-fit: contain;
+                    }
+                }
+            }
+    }
+
+    if ContentState.screenshots.length > 0 : Rectangle {
+        y: parent.height - self.height + root.strip-y;
+        height: root.strip-height;
+        width: 100%;
+        background: Theme.surface-0.with-alpha(0.8);
+        clip: true;
+
+        // `border-top: 1px solid var(--ctp-surface1)` — a hairline of its
+        // own, because Slint's `border-width` is all four sides.
+        Rectangle {
+            x: 0;
+            y: 0;
+            width: parent.width;
+            height: 1px;
+            background: Theme.surface-1;
+        }
+
+        // `.thumbnails-list { gap: 10px; height: 100%; .thumbnail {
+        // height: calc(100% - 20px); &:first-child { margin-left: 96px }
+        // &:last-child { margin-right: 96px } } }`
+        thumbnail-strip := HorizontalLayout {
+            x: 0;
+            y: 10px;
+            width: 100%;
+            height: parent.height - 20px;
+            spacing: 10px;
+
+                for shot[index] in ContentState.screenshots : Rectangle {
+                    // `img { height: 100%; width: auto }` — the width follows
+                    // the image's own ratio at the row's height.
+                    width: shot.ratio * (parent.height);
+                    height: parent.height;
+                    border-radius: 6px;
+                    border-width: 2px;
+                    border-color: index == ContentState.screenshot-index
+                        ? Theme.blue
+                        : transparent;
+                    opacity: index == ContentState.screenshot-index
+                        ? 1.0
+                        : (touch.has-hover ? 1.0 : 0.6);
+                    transform-scale: root.thumb-scale;
+                    clip: true;
+                    animate opacity {
+                        duration: 150ms;
+                        easing: ease-out;
+                    }
+
+                    Image {
+                        width: parent.width;
+                        height: parent.height;
+                        source: shot.image;
+                        image-fit: cover;
+                    }
+
+                    touch := TouchArea {
+                        clicked => { ContentState.set-screenshot(index); }
+                    }
+                }
+            }
+    }
+
+    // `.close { top: 16px; right: 16px; 36px round }`
+    close-button := Rectangle {
+        x: parent.width - 16px - self.width;
+        y: 16px;
+        width: 36px;
+        height: 36px;
+        border-radius: 18px;
+        background: close-touch.has-hover ? Theme.surface-1 : Theme.surface-0.with-alpha(0.8);
+        opacity: root.main-alpha;
+        transform-scale: root.main-scale;
+        animate background {
+            duration: 150ms;
+            easing: ease-out;
+        }
+
+        AppIcon {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            name: "xmark";
+            size: 20px;
+            icon-color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        close-touch := TouchArea {
+            clicked => { root.closing = true; }
+        }
+    }
+}
+
+export component ContentModsPanel inherits Rectangle {
+    /// The overlay container's size. Passed in rather than taken from `parent`,
+    /// which is the game view — the container is inset from it.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    // The size the grid has to lay out in, reported from here rather than from
+    // the grid itself: a layout assigns a child's geometry without going
+    // through `changed`, so a `changed width` on the grid never fires and the
+    // cards were laid out at width 0.
+    // `changed` does not fire for the value a component is created with, and a
+    // panel is created at its final size — so the first report is `init` and
+    // the handlers only pick up a later window resize.
+    init => { ContentState.grid-resized(root.width, root.height); }
+    changed width => { ContentState.grid-resized(root.width, root.height); }
+    changed height => { ContentState.grid-resized(root.width, root.height); }
+
+    // The Vue re-mounts a list every time it opens, which puts it back at the
+    // top; these panels stay alive, so the scroll is reset by hand.
+    private property <bool> panel-open: ContentState.open-panel == "mods";
+    changed panel-open => {
+        if root.panel-open {
+            list-scroll.scroll-to(0px, false);
+        }
+    }
+
+    list-scroll := ScrollView {
+        ContentTitleBar {
+            icon: "extension-puzzle";
+            title: @tr("Mods");
+            sources: ["local", "modrinth", "curseforge"];
+            active-source: ContentState.source;
+            source-selected(source) => { ContentState.set-source(source); }
+        }
+
+        if ContentState.source == "local" && ContentState.local-mods-loading : ContentLoading { }
+
+        if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length > 0) : ContentCardGrid {
+            cards: ContentState.local-mods;
+            icon-size: 72px;
+            grid-height: ContentState.local-mods-grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-path(id) => { ContentState.open-path(id); }
+            delete(id) => { ContentState.delete-save(id); }
+        }
+
+        if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length == 0) : ContentNotFound {
+            show: true;
+            block-height: ContentState.panel-height - 52px;
+            description: @tr("Consider downloading some mods from the internet");
+        }
+
+        // ----- the remote list -----
+        if ContentState.source != "local" : ContentSearchPanel { }
+
+        if ContentState.source != "local" && ContentState.remote-loading : ContentLoading { }
+
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0) : ContentCardGrid {
+            cards: ContentState.remote-cards;
+            icon-size: 72px;
+            grid-height: ContentState.remote-grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-link(url) => { ContentState.open-url(url); }
+            toggle-favorite(id) => { ContentState.toggle-favorite(id); }
+        }
+
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : ContentNotFound {
+            show: true;
+            description: @tr("Try adjusting keywords or filters and search again");
+        }
+
+        // `ContentModsModrinth.vue`'s own `ContentPagination` — one element per
+        // remote list, each drawn only while *its* list is the open one, and
+        // backed by that list's own page state in Rust (`list_key`).
+        // `ContentModsLocal.vue` has no pagination at all, so a local list has
+        // no element here either and can never draw another list's pages.
+        //
+        // `ContentPagination.vue`'s own `v-if="totalPages > 1"`: the bar is
+        // drawn from the result's page count alone. A page change, a filter or a
+        // query keeps it — those never clear the result — while opening a panel,
+        // or switching the source, does (Rust resets it), which is exactly when
+        // the Vue's bar disappears.
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            shown: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+
+        // `ContentModsCurseforge.vue`'s own.
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            shown: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+    }
+}
+
+export component ContentResourcepacksPanel inherits Rectangle {
+    /// The overlay container's size. Passed in rather than taken from `parent`,
+    /// which is the game view — the container is inset from it.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    init => { ContentState.grid-resized(root.width, root.height); }
+    changed width => { ContentState.grid-resized(root.width, root.height); }
+    changed height => { ContentState.grid-resized(root.width, root.height); }
+
+    // The Vue re-mounts a list every time it opens, which puts it back at the
+    // top; these panels stay alive, so the scroll is reset by hand.
+    private property <bool> panel-open: ContentState.open-panel == "resourcepacks";
+    changed panel-open => {
+        if root.panel-open {
+            list-scroll.scroll-to(0px, false);
+        }
+    }
+
+    list-scroll := ScrollView {
+        ContentTitleBar {
+            icon: "palette";
+            title: @tr("Resource Packs");
+            sources: ["local", "modrinth", "curseforge"];
+            active-source: ContentState.source;
+            source-selected(source) => { ContentState.set-source(source); }
+        }
+
+        if ContentState.source == "local" && ContentState.local-resourcepacks-loading : ContentLoading { }
+
+        if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length > 0) : ContentCardGrid {
+            cards: ContentState.local-resourcepacks;
+            icon-size: 72px;
+            grid-height: ContentState.local-resourcepacks-grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-path(id) => { ContentState.open-path(id); }
+            delete(id) => { ContentState.delete-save(id); }
+        }
+
+        if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length == 0) : ContentNotFound {
+            show: true;
+            block-height: ContentState.panel-height - 52px;
+            description: @tr("Consider downloading some resource packs from the internet");
+        }
+
+        if ContentState.source != "local" : ContentSearchPanel { }
+
+        if ContentState.source != "local" && ContentState.remote-loading : ContentLoading { }
+
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length > 0) : ContentCardGrid {
+            cards: ContentState.remote-cards;
+            icon-size: 72px;
+            grid-height: ContentState.remote-grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-link(url) => { ContentState.open-url(url); }
+            toggle-favorite(id) => { ContentState.toggle-favorite(id); }
+        }
+
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : ContentNotFound {
+            show: true;
+            description: @tr("Try adjusting keywords or filters and search again");
+        }
+
+        // `ContentResourcepacksModrinth.vue`'s own `ContentPagination`, and
+        // `…Curseforge.vue`'s — one element each, drawn only for its own list,
+        // over its own page state (`list_key`). The local list has none, as in
+        // the Vue.
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            shown: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            shown: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+    }
+}
+
+export component ContentPacksPanel inherits Rectangle {
+    /// The overlay container's size. Passed in rather than taken from `parent`,
+    /// which is the game view — the container is inset from it.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    // The size the grid has to lay out in, reported from here rather than from
+    // the grid itself: a layout assigns a child's geometry without going
+    // through `changed`, so a `changed width` on the grid never fires and the
+    // cards were laid out at width 0.
+    // `changed` does not fire for the value a component is created with, and a
+    // panel is created at its final size — so the first report is `init` and
+    // the handlers only pick up a later window resize.
+    init => { ContentState.grid-resized(root.width, root.height); }
+    changed width => { ContentState.grid-resized(root.width, root.height); }
+    changed height => { ContentState.grid-resized(root.width, root.height); }
+
+    // The Vue re-mounts a list every time it opens, which puts it back at the
+    // top; these panels stay alive, so the scroll is reset by hand.
+    private property <bool> panel-open: ContentState.open-panel == "packs";
+    changed panel-open => {
+        if root.panel-open {
+            list-scroll.scroll-to(0px, false);
+        }
+    }
+
+    list-scroll := ScrollView {
+        ContentTitleBar {
+            icon: "package";
+            title: @tr("Modpacks");
+            sources: ["modrinth", "curseforge"];
+            active-source: ContentState.source;
+            source-selected(source) => { ContentState.set-source(source); }
+        }
+
+        ContentSearchPanel { }
+
+        if ContentState.remote-loading : ContentLoading { }
+
+        if !ContentState.remote-loading && ContentState.remote-cards.length > 0 : ContentCardGrid {
+            cards: ContentState.remote-cards;
+            icon-size: 72px;
+            grid-height: ContentState.remote-grid-height;
+
+            select(id) => { ContentState.select-card(id); }
+            open-link(url) => { ContentState.open-url(url); }
+            toggle-favorite(id) => { ContentState.toggle-favorite(id); }
+        }
+
+        if !ContentState.remote-loading && ContentState.remote-cards.length == 0 : ContentNotFound {
+            show: true;
+            description: @tr("Try adjusting keywords or filters and search again");
+        }
+
+        // `ContentPacksModrinth.vue`'s own `ContentPagination` and
+        // `ContentPacksCurseforge.vue`'s — this panel has no local list.
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            shown: ContentState.source == "modrinth" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+
+        ContentPagination {
+            pages: ContentSearch.pages;
+            current-page: ContentSearch.current-page;
+            total-pages: ContentSearch.total-pages;
+            shown: ContentState.source == "curseforge" && ContentSearch.total-pages > 1;
+            page-change(page) => { ContentSearch.go-to-page(page); }
+        }
+    }
+}

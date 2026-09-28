@@ -1312,14 +1312,17 @@ dependencies = [
  "slint-build",
  "slint-config",
  "slint-content",
+ "slint-curseforge",
  "slint-download",
  "slint-folder",
  "slint-install",
  "slint-instance",
  "slint-java-runtime",
  "slint-launch",
+ "slint-modrinth",
  "slint-multiplayer",
  "slint-platform",
+ "slint-shared",
  "slint-single-instance",
  "slint-statistics",
  "slint-version",
@@ -7143,8 +7146,36 @@ dependencies = [
 name = "slint-content"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
+ "fastnbt",
+ "flate2",
+ "futures",
  "log",
+ "once_cell",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sha2",
+ "slint-curseforge",
  "slint-folder",
+ "slint-modrinth",
+ "thiserror 2.0.19",
+ "tokio",
+ "toml 1.1.3+spec-1.1.0",
+ "zip",
+]
+
+[[package]]
+name = "slint-curseforge"
+version = "0.0.0"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "slint-shared",
+ "thiserror 2.0.19",
+ "url",
 ]
 
 [[package]]
@@ -7267,6 +7298,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "spin_on",
+]
+
+[[package]]
+name = "slint-modrinth"
+version = "0.0.0"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "slint-download",
+ "slint-shared",
+ "thiserror 2.0.19",
+ "tokio",
+ "url",
 ]
 
 [[package]]

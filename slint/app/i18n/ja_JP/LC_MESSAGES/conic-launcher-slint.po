@@ -1247,6 +1247,7 @@ msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
 
+
 #: ui
 msgctxt "Multiplayer"
 msgid "Close"
@@ -1431,3 +1432,517 @@ msgstr "Conic Nexus クロス LAN マルチプレイ"
 msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "あなたのネットワーク環境：{0}"
+
+msgctxt "ContentModsPanel"
+msgid "Mods"
+msgstr "Mod"
+
+msgctxt "ContentModsPanel"
+msgid "Consider downloading some mods from the internet"
+msgstr "インターネットからModをダウンロードしてみましょう"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Resource Packs"
+msgstr "リソースパック"
+
+msgctxt "ContentResourcepacksPanel"
+msgid "Consider downloading some resource packs from the internet"
+msgstr "インターネットからリソースパックをダウンロードしてみましょう"
+
+msgctxt "ContentPacksPanel"
+msgid "Modpacks"
+msgstr "Modpack"
+
+msgctxt "ContentSavesPanel"
+msgid "Saves"
+msgstr "ワールド"
+
+msgctxt "ContentSavesPanel"
+msgid "Consider launching the game and creating some saves"
+msgstr "ゲームを起動してワールドを作成してみましょう"
+
+msgctxt "ContentScreenshotsPanel"
+msgid "Loading..."
+msgstr "読み込み中..."
+
+msgctxt "ContentScreenshotsPanel"
+msgid "No screenshots"
+msgstr "スクリーンショットがありません"
+
+msgctxt "ContentNotFound"
+msgid "No results match the current filter"
+msgstr "現在のフィルターに一致する結果はありません"
+
+msgctxt "RemoteListView"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "キーワードやフィルターを調整して、もう一度検索してください"
+
+msgctxt "DetailBody"
+msgid "Download"
+msgstr "ダウンロード"
+
+msgctxt "DetailBody"
+msgid "Remove"
+msgstr "削除"
+
+msgctxt "DetailBody"
+msgid "Installed: {}"
+msgstr "インストール済み：{}"
+
+msgctxt "ContentText"
+msgid "Favorites"
+msgstr "お気に入り"
+
+msgctxt "ContentText"
+msgid "[Disabled] "
+msgstr "[無効] "
+
+msgctxt "ContentText"
+msgid "Loader"
+msgstr "ローダー"
+
+msgctxt "ContentText"
+msgid "Version"
+msgstr "バージョン"
+
+msgctxt "ContentText"
+msgid "Category"
+msgstr "カテゴリ"
+
+msgctxt "ContentText"
+msgid "Mod info"
+msgstr "Mod情報"
+
+msgctxt "ContentText"
+msgid "Resource pack info"
+msgstr "リソースパック情報"
+
+msgctxt "ContentText"
+msgid "Modpack info"
+msgstr "Modpack情報"
+
+msgctxt "ContentText"
+msgid "Search mods..."
+msgstr "Modを検索..."
+
+msgctxt "ContentText"
+msgid "Search resource packs..."
+msgstr "リソースパックを検索..."
+
+msgctxt "ContentText"
+msgid "Search modpacks..."
+msgstr "Modpackを検索..."
+
+msgctxt "ContentText"
+msgid "Last played: "
+msgstr "最終プレイ: "
+
+msgctxt "CategoryModsCurseforge"
+msgid "Adventure & RPG"
+msgstr "アドベンチャー & RPG"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Armor, Tools & Weapons"
+msgstr "防具・ツール・武器"
+
+msgctxt "CategoryModsCurseforge"
+msgid "World Generation"
+msgstr "ワールド生成"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Technology"
+msgstr "テクノロジー"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Magic"
+msgstr "魔法"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Storage"
+msgstr "ストレージ"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Library & API"
+msgstr "ライブラリ & API"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Maps & Info"
+msgstr "地図・情報"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Utility & QoL"
+msgstr "ユーティリティ & QoL"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Server Utility"
+msgstr "サーバーユーティリティ"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Food"
+msgstr "食料"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Performance"
+msgstr "パフォーマンス"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Bug Fixes"
+msgstr "バグ修正"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Redstone"
+msgstr "レッドストーン"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Cosmetic"
+msgstr "装飾"
+
+msgctxt "CategoryModsCurseforge"
+msgid "Miscellaneous"
+msgstr "その他"
+
+msgctxt "CategoryModsModrinth"
+msgid "Adventure"
+msgstr "アドベンチャー"
+
+msgctxt "CategoryModsModrinth"
+msgid "Cursed"
+msgstr "呪い"
+
+msgctxt "CategoryModsModrinth"
+msgid "Decoration"
+msgstr "装飾"
+
+msgctxt "CategoryModsModrinth"
+msgid "Economy"
+msgstr "経済"
+
+msgctxt "CategoryModsModrinth"
+msgid "Equipment"
+msgstr "装備"
+
+msgctxt "CategoryModsModrinth"
+msgid "Food"
+msgstr "食料"
+
+msgctxt "CategoryModsModrinth"
+msgid "Game Mechanics"
+msgstr "ゲームメカニクス"
+
+msgctxt "CategoryModsModrinth"
+msgid "Library"
+msgstr "ライブラリ"
+
+msgctxt "CategoryModsModrinth"
+msgid "Magic"
+msgstr "魔法"
+
+msgctxt "CategoryModsModrinth"
+msgid "Management"
+msgstr "管理"
+
+msgctxt "CategoryModsModrinth"
+msgid "Minigame"
+msgstr "ミニゲーム"
+
+msgctxt "CategoryModsModrinth"
+msgid "Mobs"
+msgstr "Mob"
+
+msgctxt "CategoryModsModrinth"
+msgid "Optimization"
+msgstr "最適化"
+
+msgctxt "CategoryModsModrinth"
+msgid "Social"
+msgstr "ソーシャル"
+
+msgctxt "CategoryModsModrinth"
+msgid "Storage"
+msgstr "ストレージ"
+
+msgctxt "CategoryModsModrinth"
+msgid "Technology"
+msgstr "テクノロジー"
+
+msgctxt "CategoryModsModrinth"
+msgid "Transportation"
+msgstr "輸送"
+
+msgctxt "CategoryModsModrinth"
+msgid "Utility"
+msgstr "ユーティリティ"
+
+msgctxt "CategoryModsModrinth"
+msgid "World Generation"
+msgstr "ワールド生成"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Crafted"
+msgstr "クラフト風"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Photorealistic"
+msgstr "フォトリアル"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Semi-Realistic"
+msgstr "セミリアル"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Simple"
+msgstr "シンプル"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Traditional"
+msgstr "トラディショナル"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Animated"
+msgstr "アニメーション"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Modern"
+msgstr "モダン"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Themed"
+msgstr "テーマ"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Mod Support"
+msgstr "Mod対応"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "RPG"
+msgstr "RPG"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Gameplay"
+msgstr "ゲームプレイ"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "GUI"
+msgstr "GUI"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Sound"
+msgstr "サウンド"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Environment"
+msgstr "環境"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "World Generation"
+msgstr "ワールド生成"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Blocks"
+msgstr "ブロック"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Items"
+msgstr "アイテム"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Mobs"
+msgstr "Mob"
+
+msgctxt "CategoryResourcepacksCurseforge"
+msgid "Weather"
+msgstr "天候"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Faithful"
+msgstr "Faithful"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "16x"
+msgstr "16x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "32x"
+msgstr "32x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "64x"
+msgstr "64x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "128x"
+msgstr "128x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "256x"
+msgstr "256x"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Photorealistic"
+msgstr "フォトリアル"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Semi-Realistic"
+msgstr "セミリアル"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Simple"
+msgstr "シンプル"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Modern"
+msgstr "モダン"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Themed"
+msgstr "テーマ"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Classic"
+msgstr "クラシック"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Dark"
+msgstr "ダーク"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Medieval"
+msgstr "中世"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Anime"
+msgstr "アニメ"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Cartoon"
+msgstr "カートゥーン"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Pixel Art"
+msgstr "ドット絵"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Vanilla Plus"
+msgstr "Vanilla+"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Utility"
+msgstr "ユーティリティ"
+
+msgctxt "CategoryResourcepacksModrinth"
+msgid "Other"
+msgstr "その他"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Technology"
+msgstr "テクノロジー"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Magic"
+msgstr "魔法"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Sci-Fi"
+msgstr "SF"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Adventure & RPG"
+msgstr "アドベンチャー & RPG"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Exploration"
+msgstr "探索"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Minigame"
+msgstr "ミニゲーム"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Quests"
+msgstr "クエスト"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Hardcore"
+msgstr "ハードコア"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Map-Based"
+msgstr "マップベース"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Lightweight"
+msgstr "軽量"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Extra Large"
+msgstr "超大規模"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Combat PvP"
+msgstr "戦闘 & PvP"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Multiplayer"
+msgstr "マルチプレイヤー"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "FTB Modpacks"
+msgstr "FTB Modpack"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Skyblock"
+msgstr "スカイブロック"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Vanilla Plus"
+msgstr "Vanilla+"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Horror"
+msgstr "ホラー"
+
+msgctxt "CategoryPacksCurseforge"
+msgid "Expert"
+msgstr "エキスパート"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Adventure"
+msgstr "アドベンチャー"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Challenging"
+msgstr "高難度"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Combat"
+msgstr "戦闘"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Kitchen Sink"
+msgstr "キッチンシンク"
+
+
+msgctxt "CategoryPacksModrinth"
+msgid "Lightweight"
+msgstr "軽量"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Magic"
+msgstr "魔法"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Multiplayer"
+msgstr "マルチプレイヤー"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Optimization"
+msgstr "最適化"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Quests"
+msgstr "クエスト"
+
+msgctxt "CategoryPacksModrinth"
+msgid "Technology"
+msgstr "テクノロジー"
+

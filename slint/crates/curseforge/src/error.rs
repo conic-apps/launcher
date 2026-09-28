@@ -1,0 +1,40 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+//! `crates/curseforge/src/error.rs`, minus the Tauri IPC boundary.
+//!
+//! The `Serialize` derive and the `serde_with::DisplayFromStr` shims are kept
+//! so the shape the frontend sees (`{"kind": …, "message": …}`) does not change.
+
+use std::result;
+
+use serde::Serialize;
+use serde_with::serde_as;
+use thiserror::Error;
+
+pub type Result<T> = result::Result<T, Error>;
+
+#[serde_as]
+#[derive(Debug, Error, Serialize)]
+#[serde(tag = "kind", content = "message")]
+pub enum Error {
+    #[error(transparent)]
+    Network(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        reqwest::Error,
+    ),
+    #[error(transparent)]
+    Io(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        std::io::Error,
+    ),
+    #[error(transparent)]
+    UrlParse(
+        #[from]
+        #[serde_as(as = "serde_with::DisplayFromStr")]
+        url::ParseError,
+    ),
+}
