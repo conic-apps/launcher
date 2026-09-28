@@ -12,6 +12,9 @@ allow = [
     "ISC",
     "Apache-2.0 WITH LLVM-exception",
     "BSD-3-Clause",
+    # comrak, the Markdown parser behind the content panels' body
+    # (slint/crates/markdown).
+    "BSD-2-Clause",
     "BSL-1.0"
 ]
 unused-allowed-license = "deny"

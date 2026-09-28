@@ -1,0 +1,136 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The README body of a project detail panel.
+//
+// The Vue renders the body with `marked` into `v-html` (and a CurseForge
+// summary as HTML straight from the API), so headings, lists, code blocks, links
+// and images all come out styled by `.markdown-body`. This is that box: the same
+// `surface0` fill, the same 8px radius, the same 16px of padding, and the same
+// 14px body with a 1.6 line height.
+//
+// What draws the body is `slint-markdown`, which is not Slint's own text. Slint
+// 1.18 has no `line-height` at all, no strikethrough, no way to turn a link's
+// underline off, and `@markdown` is a compile-time literal the parser reads out
+// of the source, so it cannot take a string that arrives at runtime. So the
+// engine parses the body and measures it with the same text engine Slint renders
+// with, lays every run out itself, and hands this component a flat list of
+// positioned boxes to paint. `content.rs` owns that engine; see the crate's
+// `README.md`.
+//
+// One thing the box has to do itself: the padding. The engine lays out the
+// *content* of the box, because that is what a width means, so the 16px is
+// applied here and added back into the height.
+
+import { Theme } from "../../theme.slint";
+import { Icons } from "../../icons.slint";
+import { ContentState } from "../../globals/content.slint";
+import { MarkdownView } from "../../../../crates/markdown/ui/markdown-view.slint";
+
+export component MarkdownBody inherits Rectangle {
+    /// The scroll offset of whatever scrolls this box, in the same sign the
+    /// shared `ScrollView` reports: negative scrolled down, so it is added to an
+    /// item's own y to find out whether it is on screen. The panel passes it in
+    /// because this component is a grandchild of the scroller and cannot reach
+    /// it.
+    in property <length> scroll-y: 0px;
+    /// How tall the scroller is, which is what the view compares the offset
+    /// against. Not this box's own height: the box is as tall as the document, so
+    /// using it here would make the visible window as tall as the document and
+    /// skip nothing.
+    in property <length> viewport-height: 0px;
+
+    width: 100%;
+    // The box's height is the document's height plus the padding on both sides.
+    // It has to be stated rather than measured: a component whose children are
+    // all absolutely positioned measures zero (`gen_layout_info_prop` skips a
+    // child that sets `x` or `y`), and the view below positions every item by
+    // hand. So the height comes from Rust, which is the only thing that knows it.
+    // The view's *shown* height rather than the engine's: a document with a
+    // `<details>` in it is laid out open, and the view shrinks this as the
+    // sections close. Sizing the box from the engine's height would leave a band
+    // of empty space under the document as tall as everything that is closed —
+    // and it would scroll, which is the part a reader notices.
+    height: view.shown-height + 32px;
+    background: Theme.surface-0;
+    border-radius: 8px;
+    // A long document is a lot of text, and the panel scrolls rather than
+    // selecting any of it, so nothing here takes the pointer except the links.
+    // The box is a sibling of the links, not their parent, for the same reason.
+    TouchArea {
+        clicked => { ContentState.detail-body-hovered = ""; }
+    }
+
+    view := MarkdownView {
+        x: 16px;
+        y: 16px;
+        width: parent.width - 32px;
+        height: parent.height - 32px;
+        chunks: ContentState.detail-body-chunks;
+        content-height: ContentState.detail-body-height;
+        section-open: ContentState.detail-body-section-open;
+        // The launcher's own chevron, handed over as path data because the crate
+        // has no icon set. `chevron-forward` rather than `chevron-down`: the two
+        // are the same glyph, and a quarter turn from the right-pointing one lands
+        // on the down-pointing one an open section shows.
+        marker-icon: {
+            commands: Icons.stroke-commands("chevron-forward"),
+            viewbox: Icons.viewbox("chevron-forward"),
+            stroke-width: Icons.stroke-width("chevron-forward"),
+        };
+        family: Theme.font-family;
+        // The same family the engine shaped the code with. Handing this a
+        // generic name instead puts the view in a different face from the
+        // engine, which is both the wrong typeface and the wrong advances.
+        mono-family: ContentState.detail-body-mono-family;
+        // The view skips the items that are scrolled out of sight, which is what
+        // keeps a long README from instantiating a `Text` per line for a panel
+        // showing a screenful of them.
+        viewport-y: root.scroll-y;
+        viewport-height: root.viewport-height;
+        cull: true;
+        hovered-link: ContentState.detail-body-hovered;
+        // The Vue intercepts a click on the `v-html` body and opens the href
+        // itself, so a link in a description does not navigate the app away. It
+        // is the same `open-url` the header's repository link uses.
+        link-clicked(url) => { ContentState.open-url(url); }
+        // The engine has to hear about a width change or the document never
+        // re-wraps; this is the whole of the resize story.
+        resized(width) => { ContentState.body-resized(width); }
+        section-toggled(id) => { ContentState.body-section-toggled(id); }
+        // A stylesheet swap repaints without the display list changing, which is
+        // why the palette is bound here rather than baked into the items.
+        palette: {
+            text: Theme.text,
+            heading: Theme.text,
+            link: Theme.blue,
+            code-text: Theme.text,
+            code-background: Theme.surface-1,
+            code-block-text: Theme.text,
+            code-block-background: Theme.mantle,
+            quote-text: Theme.overlay-2,
+            quote-bar: Theme.surface-1,
+            table-border: Theme.surface-1,
+            table-head-text: Theme.text,
+            table-head-background: Theme.mantle,
+            rule: Theme.surface-1,
+            // `markdown-body.less` has no rule for `del`, so a browser falls
+            // back to `text-decoration-color: currentcolor` and draws the rule in
+            // the text's own colour. `Theme.red` would be GitHub's choice, not
+            // this stylesheet's.
+            strike: Theme.text,
+            marker: Theme.subtext-1,
+            placeholder: Theme.overlay-2,
+            // A `<details>` is a control, and it is drawn like the one control
+            // the app already has: `SettingItem`'s three row states, its 17px
+            // chevron and its title colour. GitHub's own `<summary>` is a bare
+            // triangle at body size, which in a body already carrying the
+            // launcher's typography reads as an unstyled leftover.
+            details-head: Theme.setting-item-background,
+            details-head-hover: Theme.setting-item-background-hover,
+            details-head-active: Theme.setting-item-background-active,
+            details-marker: Theme.default-text-color.transparentize(0.1),
+        };
+    }
+}

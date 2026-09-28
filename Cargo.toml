@@ -55,6 +55,7 @@ slint-java-runtime = { path = "./slint/crates/java-runtime", version = "0.0.0" }
 slint-statistics = { path = "./slint/crates/statistics", version = "0.0.0" }
 slint-single-instance = { path = "./slint/crates/single-instance", version = "0.0.0" }
 slint-multiplayer = { path = "./slint/crates/multiplayer", version = "0.0.0" }
+slint-markdown = { path = "./slint/crates/markdown", version = "0.0.0" }
 # Drawing the window background's shaders on the GPU: the notifier hands over
 # `get_proc_address`, and this is the loader (see slint/app/src/background/gl.rs).
 glow = "0.18"
@@ -105,6 +106,17 @@ flate2 = "1"
 fastnbt = "2"
 png = "0.18"
 sysinfo = "0.38"
+# The Markdown/HTML body of a content detail panel (slint/crates/markdown).
+# `parley` and `fontique` are the text engine Slint itself renders with, and
+# they are already in the tree as Slint's own dependencies: reusing the same
+# versions is not an optimisation but a requirement, because the engine is handed
+# Slint's own font collection and two `fontique` versions would be two unrelated
+# `Collection` types. `comrak` parses the body; `default-features = false` drops
+# its `cli` (clap, xdg) and `syntect`, the latter of which would pull an oniguruma
+# C library into a GUI app.
+comrak = { version = "0.18", default-features = false }
+parley = "0.11"
+fontique = "0.11"
 
 [profile.dev]
 incremental = true
