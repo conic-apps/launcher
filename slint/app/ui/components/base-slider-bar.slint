@@ -8,10 +8,11 @@ import { ScrollInput } from "../globals/scroll.slint";
 
 // Range slider (src/components/BaseSliderBar.vue).
 //
-// 300px wide; 3.5px rounded track, lavender fill and a 12px thumb. The value
-// tooltip appears above the thumb while dragging (the Vue original fades it
-// with GSAP on drag start and grows its width on every change; here it is
-// naturally sized).
+// 300px wide; 3.5px rounded track, lavender fill and a 12px thumb, which grows
+// and shrinks as a uniform scale on hover and while dragging (the Vue's
+// `transform: scale()`; see the thumb below). The value tooltip appears above
+// the thumb while dragging (the Vue original fades it with GSAP on drag start
+// and grows its width on every change; here it is naturally sized).
 //
 // # Dragging
 //
@@ -158,14 +159,27 @@ export component BaseSliderBar inherits Rectangle {
         background: Theme.lavender;
     }
 
+    // The thumb is the CSS `::-webkit-slider-thumb`, which grows to
+    // `scale(1.1)` on `:hover` and shrinks to `scale(0.9)` on `:active` over a
+    // `transition: all 0.2s ease` — a *uniform* scale about the thumb's centre,
+    // which is what a `transform-scale` off its own middle is (the same port
+    // `components/scroll-view.slint` makes of its scrollbar's press scale).
+    // The size itself cannot be animated instead: with `height: self.width` the
+    // height's target is a value that is already moving, so its own 200ms
+    // animation re-targets every frame from the width's current value and the
+    // dot grows wide first and tall only after it — 0.9/1.1 of the 12px it is
+    // kept at are the 10.8px/13.2px the old sizes stood for.
     thumb := Rectangle {
-        width: root.dragging ? 10.8px : thumb-touch.has-hover ? 13.2px : 12px;
-        height: self.width;
+        width: 12px;
+        height: 12px;
         border-radius: 100px;
         background: Theme.lavender;
         x: root.shown-percent * root.width - self.width / 2;
         y: (root.height - self.height) / 2;
-        animate width, height { duration: 200ms; easing: ease; }
+        transform-origin: { x: self.width / 2, y: self.height / 2 };
+        transform-scale-x: root.dragging ? 0.9 : thumb-touch.has-hover ? 1.1 : 1.0;
+        transform-scale-y: root.dragging ? 0.9 : thumb-touch.has-hover ? 1.1 : 1.0;
+        animate transform-scale-x, transform-scale-y { duration: 200ms; easing: ease; }
     }
 
     if root.dragging : tooltip := Rectangle {

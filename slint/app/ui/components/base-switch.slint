@@ -11,7 +11,8 @@ import { FocusManager } from "../globals/focus.slint";
 // (CSS `outline` does not affect layout, so it is a larger rectangle behind the
 // track), and a 10.5px thumb that travels from x:3 to x:19 (padding 3 + the
 // 16px `margin-left` applied when checked). The root is 44px wide to include
-// the Vue `.input-box { margin: 0 6px }`.
+// the Vue `.input-box { margin: 0 6px }`. The thumb's hover and press are the
+// Vue's `transform: scale()` on the inner `div`, kept as a scale (see below).
 export component BaseSwitch inherits Rectangle {
     in-out property <bool> checked: false;
     callback toggled;
@@ -41,14 +42,23 @@ export component BaseSwitch inherits Rectangle {
             : Theme.toggle-switch-background;
         animate background { duration: 300ms; easing: cubic-bezier(0, 0.6, 0.32, 0.99); }
 
+        // The thumb is the Vue's `div`: 10.5px, `transform: scale(1.1)` while the
+        // label is hovered and `scale(0.85)` while it is active, on a 0.3s
+        // `cubic-bezier(0, 0.6, 0.32, 0.99)`. Those are scales, so they are
+        // ported as one — the sizes they stand for (11.55px / 8.925px) are what
+        // a `width`/`height` pair has to spell out, and spelling out both is what
+        // lets the two drift apart should the sizes ever stop matching.
         thumb := Rectangle {
-            width: touch.pressed ? 8.925px : touch.has-hover ? 11.55px : 10.5px;
-            height: touch.pressed ? 8.925px : touch.has-hover ? 11.55px : 10.5px;
+            width: 10.5px;
+            height: 10.5px;
             border-radius: 200px;
             background: root.checked ? #ffffff : Theme.toggle-switch-button;
             x: root.checked ? 19px : 3px;
             y: (track.height - self.height) / 2;
-            animate x, background, width, height {
+            transform-origin: { x: self.width / 2, y: self.height / 2 };
+            transform-scale-x: touch.pressed ? 0.85 : touch.has-hover ? 1.1 : 1.0;
+            transform-scale-y: touch.pressed ? 0.85 : touch.has-hover ? 1.1 : 1.0;
+            animate x, background, transform-scale-x, transform-scale-y {
                 duration: 300ms;
                 easing: cubic-bezier(0, 0.6, 0.32, 0.99);
             }
