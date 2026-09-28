@@ -4,7 +4,9 @@ A Markdown and HTML renderer for Slint, as a layout engine. `comrak` parses,
 `parley` measures, and the caller paints.
 
 The split is not a preference. Slint 1.18's `Text` has no strikethrough, no
-underline control, no text background and no `line-height`; `StyledText`
+underline control and no text background, and its `line-height-factor` multiplies
+the font's *natural* line height rather than the font size, so it is not the
+`line-height` a stylesheet asks for; `StyledText`
 underlines every link whether or not the pointer is over it; and `@markdown` is a
 compile-time literal the parser reads out of the source, so it cannot take a
 document that arrives at runtime. None of what a `.markdown-body` stylesheet asks
@@ -20,13 +22,12 @@ that imported the same file would hold two unrelated types with no way to move a
 item between them.
 
 ```slint
-import { MarkdownView, MdItem, MarkdownImage } from "path/to/slint-markdown/ui/markdown-view.slint";
-import { MdSection } from "path/to/slint-markdown/ui/markdown-types.slint";
+import { MarkdownView, MdChunk } from "path/to/slint-markdown/ui/markdown-view.slint";
 
 MarkdownView {
-    items: <[MdItem]>;
-    images: <[MarkdownImage]>;
-    content-height: 100px;
+    chunks: <[MdChunk]>;            // the runs, in document order
+    section-open: <[bool]>;         // index-aligned with `chunks`
+    content-height: 100px;          // the engine's open height
     resized(width) => { re-lay-the-document-out-for-this-width(width); }
 }
 ```
@@ -46,8 +47,9 @@ cannot be an `MdItem`, because a `slint::Image` cannot be left empty in a struct
 literal, so image items go into the separate `MarkdownImage` list instead. Both
 lists share one coordinate space.
 
-A `<details>` is a third list: `DisplayList::sections`, which is `MdSection`s in
-document order. See [Collapsible sections](#collapsible-sections).
+A `<details>` is not a third list: `DisplayList::chunks` is every run in document
+order, and a run carries its `section` — an `Option<MdSection>`, `None` for a run
+of ordinary blocks. See [Collapsible sections](#collapsible-sections).
 
 ## Collapsible sections
 
@@ -163,8 +165,9 @@ importing it, keep both lines.
   its longest word, so a heading does not break mid-word, and a cell that cannot
   fit its padding gives the padding up rather than its text. A scroll view that
   only ever scrolls one way was the trade.
-- **Code blocks wrap** for the same reason; `MdStyle::code_block_wrap` clips
-  instead.
+- **Code blocks clip** by default, for the same reason; `MdStyle::code_block_wrap`
+  wraps them instead. Neither scrolls sideways, which is what the Vue's
+  `pre { overflow: auto }` does.
 - **An inline-code capsule keeps a half-space from the text beside it**
   (`MdStyle::code_margin_x`). Padding is *inside* the capsule and this is not, which
   is the whole of it: `code_padding_x` alone leaves the capsule drawn straight over

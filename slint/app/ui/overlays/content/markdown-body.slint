@@ -11,8 +11,11 @@
 // 14px body with a 1.6 line height.
 //
 // What draws the body is `slint-markdown`, which is not Slint's own text. Slint
-// 1.18 has no `line-height` at all, no strikethrough, no way to turn a link's
-// underline off, and `@markdown` is a compile-time literal the parser reads out
+// 1.18 has no CSS `line-height` — `Text` grew `line-height-factor`, but that
+// multiplies the font's *natural* line height rather than the font size, so it
+// is not a drop-in for the `1.6` this box is set at — and it has no
+// strikethrough, no way to turn a link's underline off, and `@markdown` is a
+// compile-time literal the parser reads out
 // of the source, so it cannot take a string that arrives at runtime. So the
 // engine parses the body and measures it with the same text engine Slint renders
 // with, lays every run out itself, and hands this component a flat list of
@@ -35,40 +38,51 @@ export component MarkdownBody inherits Rectangle {
     /// because this component is a grandchild of the scroller and cannot reach
     /// it.
     in property <length> scroll-y: 0px;
+    /// Where this box sits inside that scrolled content. The view measures its
+    /// culling window from its *own* top, so the scroller's offset on its own
+    /// would cull away everything above this box — a blank band at the top of
+    /// the body whenever the panel is shorter than the header and the action
+    /// row it sits under.
+    in property <length> top-in-scroll: 0px;
     /// How tall the scroller is, which is what the view compares the offset
     /// against. Not this box's own height: the box is as tall as the document, so
     /// using it here would make the visible window as tall as the document and
     /// skip nothing.
     in property <length> viewport-height: 0px;
+    /// `.markdown-body { padding: 16px }`. Stated once: the height, the view's
+    /// box and the culling offset all need it, and three copies of the number
+    /// are three chances to change one of them.
+    private property <length> inset: 16px;
 
     width: 100%;
     // The box's height is the document's height plus the padding on both sides.
     // It has to be stated rather than measured: a component whose children are
     // all absolutely positioned measures zero (`gen_layout_info_prop` skips a
     // child that sets `x` or `y`), and the view below positions every item by
-    // hand. So the height comes from Rust, which is the only thing that knows it.
-    // The view's *shown* height rather than the engine's: a document with a
-    // `<details>` in it is laid out open, and the view shrinks this as the
-    // sections close. Sizing the box from the engine's height would leave a band
-    // of empty space under the document as tall as everything that is closed —
-    // and it would scroll, which is the part a reader notices.
-    height: view.shown-height + 32px;
+    // hand. So the height comes from the view. The view's *shown* height rather
+    // than the engine's: a document with a `<details>` in it is laid out open,
+    // and the view shrinks this as the sections close. Sizing the box from the
+    // engine's height would leave a band of empty space under the document as
+    // tall as everything that is closed — and it would scroll, which is the part
+    // a reader notices.
+    height: view.shown-height + 2 * root.inset;
     background: Theme.surface-0;
     border-radius: 8px;
-    // A long document is a lot of text, and the panel scrolls rather than
-    // selecting any of it, so nothing here takes the pointer except the links.
-    // The box is a sibling of the links, not their parent, for the same reason.
-    TouchArea {
-        clicked => { ContentState.detail-body-hovered = ""; }
-    }
+
+    // A link that moved out from under a stationary pointer keeps its rule until
+    // the pointer moves again: a wheel scroll emits no pointer-move, so nothing
+    // re-hit-tests it. Clearing on the scroll is therefore what the browser's own
+    // `a:hover` does, and a press is no help — a press that lands outside every
+    // link box is by definition a press where no link was hovered, so a click
+    // handler is inert in the only case it could matter.
+    changed scroll-y => { ContentState.detail-body-hovered = ""; }
 
     view := MarkdownView {
-        x: 16px;
-        y: 16px;
-        width: parent.width - 32px;
-        height: parent.height - 32px;
+        x: root.inset;
+        y: root.inset;
+        width: parent.width - 2 * root.inset;
+        height: parent.height - 2 * root.inset;
         chunks: ContentState.detail-body-chunks;
-        content-height: ContentState.detail-body-height;
         section-open: ContentState.detail-body-section-open;
         // The launcher's own chevron, handed over as path data because the crate
         // has no icon set. `chevron-forward` rather than `chevron-down`: the two
@@ -87,10 +101,12 @@ export component MarkdownBody inherits Rectangle {
         // The view skips the items that are scrolled out of sight, which is what
         // keeps a long README from instantiating a `Text` per line for a panel
         // showing a screenful of them.
-        viewport-y: root.scroll-y;
+        viewport-y: root.scroll-y - root.top-in-scroll;
         viewport-height: root.viewport-height;
         cull: true;
-        hovered-link: ContentState.detail-body-hovered;
+        // Two-way, because the view writes it: a one-way binding is dropped the
+        // first time the view assigns, and the global would go write-only.
+        hovered-link <=> ContentState.detail-body-hovered;
         // The Vue intercepts a click on the `v-html` body and opens the href
         // itself, so a link in a description does not navigate the app away. It
         // is the same `open-url` the header's repository link uses.
@@ -120,8 +136,11 @@ export component MarkdownBody inherits Rectangle {
             // the text's own colour. `Theme.red` would be GitHub's choice, not
             // this stylesheet's.
             strike: Theme.text,
-            marker: Theme.subtext-1,
-            placeholder: Theme.overlay-2,
+            // `markdown-body.less` has no `li::marker` rule and no
+            // broken-image rule, so a browser draws the bullet and the alt text
+            // in the text's own colour rather than dimming either.
+            marker: Theme.text,
+            placeholder: Theme.text,
             // A `<details>` is a control, and it is drawn like the one control
             // the app already has: `SettingItem`'s three row states, its 17px
             // chevron and its title colour. GitHub's own `<summary>` is a bare

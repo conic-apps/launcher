@@ -73,26 +73,23 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
         }
     }
 
-    Rectangle { height: 16px; background: transparent; }
+    // `div.buttons { margin-top: 16px; display: flex; gap: 12px }` with a lone
+    // `BaseButton` in it — so the 16px is padding below and the row is the
+    // button itself, the `gap` being dead for a single child either way.
+    actions := HorizontalLayout {
+        padding-top: 16px;
+        spacing: 12px;
+        alignment: start;
 
-    actions := Rectangle {
-        width: 100%;
-        height: 30px;
-        background: transparent;
-
-        HorizontalLayout {
-            spacing: 12px;
-
-            // `.stop`: a red outline that fills red on hover.
-            BaseButton {
-                button-width: parent.width;
-                text: @tr("Multiplayer" => "Stop download");
-                text-color: Theme.red;
-                button-border-color: Theme.red.with-alpha(0.6);
-                hover-background: Theme.red;
-                hover-text-color: Theme.text-inverse;
-                clicked => { MultiplayerState.cancel-download(); }
-            }
+        // `.stop`: a red outline that fills red on hover.
+        BaseButton {
+            horizontal-stretch: 1;
+            text: @tr("Multiplayer" => "Stop download");
+            text-color: Theme.red;
+            button-border-color: Theme.red.with-alpha(0.6);
+            hover-background: Theme.red;
+            hover-text-color: Theme.text-inverse;
+            clicked => { MultiplayerState.cancel-download(); }
         }
     }
 }

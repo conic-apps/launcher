@@ -208,12 +208,13 @@ component MdRect inherits Rectangle {
 // undistorted even where the view was given a box of a different shape.
 component MdImage inherits Rectangle {
     in property <MarkdownImage> picture;
+    in property <string> hovered-id: "";
+    callback link-clicked(string);
 
     x: picture.x;
     y: picture.y;
     width: picture.width;
     height: picture.height;
-    background: transparent;
     border-radius: picture.radius;
     clip: true;
 
@@ -222,6 +223,16 @@ component MdImage inherits Rectangle {
         height: parent.height;
         source: picture.bitmap;
         image-fit: contain;
+    }
+
+    // `![alt](img)` inside a link is a link: `markdown-body.less` styles every
+    // `a` under the body, image or not, and the Vue's `onReadmeClick` opens any
+    // anchor it finds. `text-decoration` does not reach a replaced element, so
+    // there is no rule to draw over the picture — but the press is the same
+    // press, and the hand says so.
+    if root.picture.link-url != "" : TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.link-clicked(root.picture.link-url); }
     }
 }
 
@@ -386,14 +397,29 @@ export component MarkdownView inherits Rectangle {
     /// that, and the two differ by whatever the closed sections are hiding.
     in property <length> content-height: 0px;
     /// The colours `color` resolves against. See `MarkdownPalette`.
+    // Every slot is named. A struct's unset fields take their *type* default,
+    // which for a color is opaque black, and `MarkdownColors.resolve` only falls
+    // back to `text` for a name it does not know — not for one that was left out.
+    // Nine of the twenty roles would otherwise come out black.
     in property <MarkdownPalette> palette: {
         text: #000000,
+        heading: #000000,
+        link: #0000ee,
+        code-text: #000000,
         code-background: #cccccc,
+        code-block-text: #000000,
         code-block-background: #eeeeee,
+        quote-text: #555555,
         quote-bar: #888888,
         table-border: #aaaaaa,
+        table-head-text: #000000,
         table-head-background: #dddddd,
         rule: #888888,
+        strike: #000000,
+        // `markdown-body.less` has no `::marker` and no broken-image rule, so a
+        // browser draws both in the text's own colour.
+        marker: #000000,
+        placeholder: #000000,
         details-head: #ffffff,
         details-head-hover: #f0f0f0,
         details-head-active: #e0e0e0,
@@ -454,7 +480,13 @@ export component MarkdownView inherits Rectangle {
     /// the engine's height is the open one, and a container that used it would
     /// keep a scroll range for content that is on its way out, and the document
     /// would end in a band of empty space as tall as everything closed.
-    out property <length> shown-height: column.preferred-height;
+    ///
+    /// `content-height` is the one exception, and it is a degenerate one: with
+    /// nothing in `chunks` the column measures nothing at all, and a caller that
+    /// has laid a document out but not yet pushed it still has the engine's
+    /// number. That is the only case where it beats the column.
+    out property <length> shown-height:
+        root.chunks.length == 0 ? root.content-height : column.preferred-height;
 
     /// The view's width, in logical pixels.
     ///
@@ -575,6 +607,8 @@ export component MarkdownView inherits Rectangle {
             for picture in chunk.images : MdImage {
                 visible: !root.cull || in-window(picture.y);
                 picture: picture;
+                hovered-id: root.hovered-link;
+                link-clicked(url) => { root.link-clicked(url); }
             }
 
             // The links are last within their run so their boxes are over the text:
@@ -583,7 +617,15 @@ export component MarkdownView inherits Rectangle {
             // that carries one. A run's links are under the *next* run's items, and
             // the runs do not overlap, so a link is never under its own text.
             for item in chunk.items : MdLink {
-                visible: item.kind == "rect" && item.link-url != "";
+                // Culled like the other two loops. Every table cell and chip in
+                // the document is a `rect`, so without this an off-screen one is
+                // still painted and still hit-testable, and an off-screen link
+                // can set `hovered-link`. A hidden element takes no pointer
+                // events, so that half of it is fixed. The element itself is
+                // still created — Slint has no `for … : if`, so a link box is
+                // allocated per cell — but it is neither drawn nor hit-tested.
+                visible: (item.kind == "rect" && item.link-url != "")
+                    && (!root.cull || in-window(item.y));
                 box-item: item;
                 link-color: root.palette.link;
                 hovered-id: root.hovered-link;

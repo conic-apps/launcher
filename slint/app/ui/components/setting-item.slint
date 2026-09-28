@@ -28,6 +28,14 @@ export component SettingItem inherits Rectangle {
     in property <bool> resetable: false;
     /// Shows a small spinner after the title while the row's value is loading.
     in property <bool> loading: false;
+    /// A second string drawn after the title, in the Vue's own styling for it:
+    /// `CreateInstance.vue` puts `<span style="font-size: 14px; opacity: 0.8;
+    /// margin-right: 8px">{{ minecraftVersion }}</span>` in the title slot, so a
+    /// row can name the value the rest of it is about. A `title` property cannot
+    /// carry it, and the Vue's `title` *slot* has no counterpart here: Slint's
+    /// only slot is the anonymous `@children`, which this component already
+    /// spends on its trailing chevron.
+    in property <string> title-suffix: "";
     // Hover/pressed state driven by the parent for rows that are not navigable
     // but still clickable (the collapse header).
     in property <bool> hovered: false;
@@ -211,6 +219,25 @@ export component SettingItem inherits Rectangle {
                         font-size: 13px;
                         font-weight: Theme.font-weight-normal;
                         color: Theme.default-text-color.transparentize(0.1);
+                    }
+
+                    if root.title-suffix != "" : title-suffix-box := HorizontalLayout {
+                        // The Vue's span: 14px rather than the title's 13, 80%
+                        // opaque, and 8px of margin on its right — which is what
+                        // separates it from the reset button and the chevron. A
+                        // `Text` carries no padding, so the margin is a padding on
+                        // a box around it.
+                        spacing: 0px;
+                        cross-axis-alignment: center;
+                        padding-right: 8px;
+
+                        Text {
+                            text: root.title-suffix;
+                            font-size: 14px;
+                            font-weight: Theme.font-weight-normal;
+                            color: Theme.default-text-color.transparentize(0.1);
+                            opacity: 0.8;
+                        }
                     }
 
                     for tag[index] in root.tags : Rectangle {

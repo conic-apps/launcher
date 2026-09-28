@@ -118,6 +118,12 @@ export component App inherits Window {
         // and is part of the picture.
         background: Theme.crust;
         border-radius: 16px;
+        // `#window { border: 1px solid rgba(255, 255, 255, 0.16) }`. A Slint
+        // border is drawn inside the box and does not inset the children, where
+        // the Vue's `box-sizing: border-box` leaves 1px of padding on every side;
+        // the hairline is the visible part, and the inset is not reproduced.
+        border-width: 1px;
+        border-color: #ffffff.with-alpha(0.16);
         clip: true;
 
         // Behind every page and every overlay, as the Vue's `WindowBackground`

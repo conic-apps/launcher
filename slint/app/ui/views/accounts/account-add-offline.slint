@@ -140,13 +140,13 @@ export component AccountAddOffline inherits VerticalLayout {
         spacing: 8px;
 
         BaseButton {
-            button-width: (parent.width - 8px) / 2;
+            horizontal-stretch: 1;
             text: @tr("Cancel");
             clicked => { AccountAddState.close(); }
         }
 
         BaseButton {
-            button-width: (parent.width - 8px) / 2;
+            horizontal-stretch: 1;
             text: @tr("Create offline profile");
             button-background: Theme.latte-lavender;
             text-color: #000;

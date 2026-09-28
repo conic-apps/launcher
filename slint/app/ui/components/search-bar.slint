@@ -15,7 +15,10 @@ export component SearchBar inherits Rectangle {
     border-radius: Theme.controllers-border-radius;
     border-width: 1px;
     border-color: Theme.controllers-border;
-    background: Theme.controllers-background;
+    // Not `--controllers-background`: the title bar's own rules override it with
+    // the flavor's surface0 on every dark flavor, and leave it as the controller
+    // background on Latte. See `Theme.titlebar-search-background`.
+    background: Theme.titlebar-search-background;
     clip: true;
 
     accessible-role: button;

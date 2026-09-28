@@ -250,6 +250,20 @@ export component MusicPlayerOverlay inherits Rectangle {
             : playlist-empty-height)
         + 8px;
 
+    // The column is `.music-overlay { padding: 16px; gap: 12px }` and its height
+    // is the window's less the 44px title bar — 488px at the 532px floor
+    // `core/tauri.conf.json` sets. The Vue's column is `overflow-y: auto`, so a
+    // 125px card plus a 320px playlist plus 16 + 12 + 16 does not quite fit and
+    // scrolls by a pixel. Clamping the playlist to what is left keeps the two
+    // cards inside the panel at any window size instead.
+    private property <length> card-height: 125px;
+    private property <length> overlay-padding: 16px;
+    private property <length> card-gap: 12px;
+    private property <length> playlist-max-height: min(
+        320px,
+        root.height - 2 * root.overlay-padding - root.card-height - root.card-gap,
+    );
+
     // The scrim swallows the presses meant for the window below, and a press that
     // is not on a card closes the panel — the Vue's `@pointerdown.self`. The two
     // cards stop it (`@pointerdown.stop`), which is why each carries its own
@@ -279,7 +293,7 @@ export component MusicPlayerOverlay inherits Rectangle {
         card := Rectangle {
             x: parent.width - 16px - 340px;
             width: 340px;
-            height: 125px;
+            height: root.card-height;
             y: 16px + root.card-dy;
             opacity: root.card-alpha;
             border-radius: 14px;
@@ -308,7 +322,10 @@ export component MusicPlayerOverlay inherits Rectangle {
                     ? MusicState.current-name
                     : @tr("No music");
                 font-size: 16px;
-                font-weight: Theme.font-weight-bold;
+                // `.track-name { font-weight: 600 }`. The `bold` token is 700, so
+                // the literal is the Vue's weight, as it is elsewhere in the app
+                // where the CSS says 600.
+                font-weight: 600;
                 color: Theme.text;
                 horizontal-alignment: center;
                 overflow: elide;
@@ -492,9 +509,9 @@ export component MusicPlayerOverlay inherits Rectangle {
         if root.playlist-phase != "closed" : playlist-card := Rectangle {
             x: parent.width - 16px - 340px;
             width: 340px;
-            height: min(320px, 16px + root.playlist-items-height);
-            // 16px of padding, the 125px card, then the column's 12px gap.
-            y: 16px + 125px + 12px + root.playlist-dy;
+            height: min(root.playlist-max-height, 16px + root.playlist-items-height);
+            // 16px of padding, the card, then the column's 12px gap.
+            y: 16px + root.card-height + 12px + root.playlist-dy;
             opacity: root.playlist-alpha;
             border-radius: 14px;
             background: Theme.base;

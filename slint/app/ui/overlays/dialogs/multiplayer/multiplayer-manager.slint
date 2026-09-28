@@ -52,17 +52,21 @@ component PlayerRow inherits VerticalLayout {
     }
 
     // `p.vendor { font-size: 12px; padding-top: 4px; opacity: 0.8 }`.
+    // `p.vendor { font-size: 12px; padding-top: 4px }` — the padding is above the
+    // line, and the box is as tall as the text needs it, so a vendor string that
+    // wraps grows the row instead of running past the card.
     Rectangle {
         width: 100%;
-        height: 16px;
+        height: vendor-text.preferred-height + 4px;
         background: transparent;
 
-        Text {
-            x: 0;
+        vendor-text := Text {
+            width: 100%;
             y: 4px;
             text: root.player.vendor;
             font-size: 12px;
             line-height-factor: 1;
+            wrap: word-wrap;
             opacity: 0.8;
             color: Theme.default-text-color.transparentize(0.1);
         }
@@ -96,7 +100,12 @@ component WaitAction inherits Rectangle {
         // `p { margin-left: 8px }`.
         spacing: 8px;
         cross-axis-alignment: center;
-        alignment: start;
+        // No `alignment`: the Vue's `button { width: 100% }` inside a flex row
+        // with no `justify-content` leaves the text column the rest of the row,
+        // which is the width `wrap: word-wrap` then wraps at. A main-axis
+        // `alignment` other than the default `stretch` sizes a child to its
+        // *preferred* width instead — the unwrapped line — so the wrapping would
+        // never happen and a long locale would run past the card.
 
         AppIcon {
             name: root.icon;
@@ -108,7 +117,6 @@ component WaitAction inherits Rectangle {
             spacing: 4px;
 
             Text {
-                width: 100%;
                 text: root.label;
                 font-size: 15px;
                 line-height-factor: 1;
@@ -117,7 +125,6 @@ component WaitAction inherits Rectangle {
             }
 
             Text {
-                width: 100%;
                 text: root.description;
                 font-size: 12px;
                 line-height-factor: 1;
@@ -388,7 +395,14 @@ component HostReadyScreen inherits VerticalLayout {
 
                 VerticalLayout {
                     alignment: start;
-                    cross-axis-alignment: center;
+                    // `.group-actions` is `align-items: center`, so the Vue's
+                    // `<p>` shrink-to-fits, is capped at the card's width, and
+                    // sits centred. `cross-axis-alignment: center` would hand over
+                    // the *unwrapped* width and so never wrap; stretching the box
+                    // and centring the glyphs inside it puts the text's left edge
+                    // in the same place either way, and gives the wrap somewhere
+                    // to happen.
+                    cross-axis-alignment: stretch;
                     spacing: 0px;
 
                     // `p { margin-top: 6px }`.
@@ -398,6 +412,8 @@ component HostReadyScreen inherits VerticalLayout {
                         text: @tr("Multiplayer" => "Invite code (click to copy)");
                         font-size: 13px;
                         line-height-factor: 1;
+                        wrap: word-wrap;
+                        horizontal-alignment: center;
                         color: Theme.default-text-color.transparentize(0.1);
                     }
 
@@ -450,17 +466,15 @@ component HostReadyScreen inherits VerticalLayout {
                     }
                 }
 
-                // `<BaseButton @click="leaveRoom">`.
-                Rectangle {
-                    width: 100%;
-                    height: 30px;
-                    background: transparent;
-
-                    BaseButton {
-                        button-width: parent.width;
-                        text: @tr("Multiplayer" => "Close connection");
-                        clicked => { MultiplayerState.leave-room(); }
-                    }
+                // `<BaseButton @click="leaveRoom">` — a bare child of the card's
+                // column, so `alignment: space-between` puts it at the bottom and
+                // the default cross-axis stretch makes it the card's width. The
+                // `Rectangle` wrapper it used to be wrapped in existed only to
+                // hand it a `parent.width` to read.
+                BaseButton {
+                    horizontal-stretch: 1;
+                    text: @tr("Multiplayer" => "Close connection");
+                    clicked => { MultiplayerState.leave-room(); }
                 }
             }
         }
@@ -484,15 +498,23 @@ component HostReadyScreen inherits VerticalLayout {
                 }
 
                 // `p.message`; the italic is dropped: Slint has no oblique
-                // style for the embedded variable font.
-                if MultiplayerState.players.length == 0 : Text {
-                    width: 100%;
-                    text: @tr("Multiplayer" => "Waiting for other players to join...");
-                    font-size: 12px;
-                    line-height-factor: 1;
-                    horizontal-alignment: center;
-                    opacity: 0.6;
-                    color: Theme.default-text-color.transparentize(0.1);
+                // style for the embedded variable font. Its `margin-top: 8px` is
+                // the list's own `gap: 8px` once there are rows to separate from,
+                // so it is a padding here — where the message is the list's only
+                // child and the gap has nothing to sit between, and where a
+                // `Text` cannot carry the padding itself.
+                if MultiplayerState.players.length == 0 : VerticalLayout {
+                    padding-top: 8px;
+
+                    Text {
+                        text: @tr("Multiplayer" => "Waiting for other players to join...");
+                        font-size: 12px;
+                        line-height-factor: 1;
+                        horizontal-alignment: center;
+                        wrap: word-wrap;
+                        opacity: 0.6;
+                        color: Theme.default-text-color.transparentize(0.1);
+                    }
                 }
             }
         }
@@ -526,26 +548,23 @@ component GuestCodeInputScreen inherits VerticalLayout {
 
             Rectangle { height: 16px; background: transparent; }
 
-            row := Rectangle {
-                width: 100%;
-                height: 30px;
-                background: transparent;
+            // `display: flex; width: 100%; align-items: center; gap: 8px` with
+            // `flex: 1` on the field and `flex-shrink: 0; width: fit-content` on
+            // the button, so the field takes what is left and the button lands at
+            // the end. Both were hand-placed off each other's geometry.
+            row := HorizontalLayout {
+                spacing: 8px;
+                cross-axis-alignment: center;
+                alignment: end;
 
-                // `flex-shrink: 0; width: fit-content`: the button keeps its
-                // natural width at the right-hand end, the field takes the rest.
                 join-button := BaseButton {
-                    x: parent.width - self.width;
                     text: @tr("Multiplayer" => "Join");
                     button-enabled: MultiplayerState.code-input-valid;
                     clicked => { MultiplayerState.join-room(); }
                 }
 
                 BaseInput {
-                    // A bare element in a plain `Rectangle` is centred by
-                    // Slint; the Vue's `flex: 1` pins it to the row's start.
-                    x: 0;
-                    y: 0;
-                    input-width: join-button.x - 8px;
+                    horizontal-stretch: 1;
                     placeholder: @tr("Multiplayer" => "Invite code format: U/BBBB-AAAA-KKKK-AAAA");
                     value <=> MultiplayerState.code-input;
                     edited => { MultiplayerState.code-input-changed(); }
@@ -596,16 +615,10 @@ component GuestReadyScreen inherits VerticalLayout {
                 }
             }
 
-            Rectangle {
-                width: 100%;
-                height: 30px;
-                background: transparent;
-
-                BaseButton {
-                    button-width: parent.width;
-                    text: @tr("Multiplayer" => "Leave group");
-                    clicked => { MultiplayerState.leave-room(); }
-                }
+            BaseButton {
+                horizontal-stretch: 1;
+                text: @tr("Multiplayer" => "Leave group");
+                clicked => { MultiplayerState.leave-room(); }
             }
         }
     }
@@ -865,7 +878,7 @@ export component MultiplayerManager inherits VerticalLayout {
             // The `v-if="...multiplayerManagerComponent === 'guestCodeInput'"`
             // branch: a "Back" button that closes the join-code screen.
             if root.screen == "guestCodeInput" : BaseButton {
-                button-width: parent.width;
+                horizontal-stretch: 1;
                 text: @tr("Multiplayer" => "Back");
                 clicked => {
                     MultiplayerState.code-input-open = false;
@@ -875,7 +888,7 @@ export component MultiplayerManager inherits VerticalLayout {
             }
 
             if root.screen != "guestCodeInput" : BaseButton {
-                button-width: parent.width;
+                horizontal-stretch: 1;
                 text: MultiplayerState.bottom-label;
                 clicked => {
                     if root.screen == "waiting" || root.screen == "exception" {

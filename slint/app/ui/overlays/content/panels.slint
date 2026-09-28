@@ -103,8 +103,13 @@ export component ContentSavesPanel inherits Rectangle {
 
     // The empty state sits over the *whole* panel in the Vue, outside the
     // scroller and with `pointer-events: none`, so the cards stay clickable.
-    ContentNotFound {
+    // Its wrapper is `position: absolute; top: 0; left: 0; width: 100%; height:
+    // 100%` against a `position: relative` `.content-saves`, so the block it
+    // centres the placeholder in is the panel's own height — not the 150px this
+    // used to settle for, which put the placeholder 200px too high.
+    saves-not-found := ContentNotFound {
         show: !ContentState.saves-loading && ContentState.saves.length == 0;
+        block-height: ContentState.panel-height;
         description: @tr("Consider launching the game and creating some saves");
     }
 }
@@ -376,21 +381,24 @@ export component ContentScreenshotsPanel inherits Rectangle {
             background: Theme.surface-1;
         }
 
-        // `.thumbnails-list { gap: 10px; height: 100%; .thumbnail {
-        // height: calc(100% - 20px); &:first-child { margin-left: 96px }
-        // &:last-child { margin-right: 96px } } }`
+        // `.thumbnails-list { gap: 10px; height: 100%; width: max-content }
+        // .thumbnail { height: calc(100% - 20px); &:first-child { margin-left:
+        // 96px } &:last-child { margin-right: 96px } }` — the strip is a single
+        // clipped row, so the symmetric end margins are the row's own padding,
+        // which is what keeps the first and last thumbnails off the window edge
+        // and clear of the `‹` / `›` buttons.
         thumbnail-strip := HorizontalLayout {
-            x: 0;
             y: 10px;
-            width: 100%;
             height: parent.height - 20px;
+            padding-left: 96px;
+            padding-right: 96px;
             spacing: 10px;
 
-                for shot[index] in ContentState.screenshots : Rectangle {
-                    // `img { height: 100%; width: auto }` — the width follows
-                    // the image's own ratio at the row's height.
-                    width: shot.ratio * (parent.height);
-                    height: parent.height;
+            for shot[index] in ContentState.screenshots : Rectangle {
+                // `img { height: 100%; width: auto }` — the width follows
+                // the image's own ratio at the row's height.
+                width: shot.ratio * parent.height;
+                height: parent.height;
                     border-radius: 6px;
                     border-width: 2px;
                     border-color: index == ContentState.screenshot-index
@@ -502,7 +510,10 @@ export component ContentModsPanel inherits Rectangle {
 
         if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length == 0) : ContentNotFound {
             show: true;
-            block-height: ContentState.panel-height - 52px;
+            // The Vue's wrapper is the same `position: absolute; … height: 100%`
+            // one, over a `position: relative` panel, so this is the whole panel
+            // too — the old `panel-height - 52px` left it 26px low.
+            block-height: ContentState.panel-height;
             description: @tr("Consider downloading some mods from the internet");
         }
 
@@ -521,8 +532,12 @@ export component ContentModsPanel inherits Rectangle {
             toggle-favorite(id) => { ContentState.toggle-favorite(id); }
         }
 
-        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : ContentNotFound {
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : remote-not-found := ContentNotFound {
             show: true;
+            // `.search-status { padding: 40px 0 }` around this one, so the block
+            // is the placeholder plus 80px — the 150px this used to settle for
+            // put the icon 23px too high (and 29px with a two-line description).
+            block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
         }
 
@@ -602,7 +617,8 @@ export component ContentResourcepacksPanel inherits Rectangle {
 
         if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length == 0) : ContentNotFound {
             show: true;
-            block-height: ContentState.panel-height - 52px;
+            // As with the local mods above: the whole panel.
+            block-height: ContentState.panel-height;
             description: @tr("Consider downloading some resource packs from the internet");
         }
 
@@ -620,8 +636,12 @@ export component ContentResourcepacksPanel inherits Rectangle {
             toggle-favorite(id) => { ContentState.toggle-favorite(id); }
         }
 
-        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : ContentNotFound {
+        if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : remote-not-found := ContentNotFound {
             show: true;
+            // `.search-status { padding: 40px 0 }` around this one, so the block
+            // is the placeholder plus 80px — the 150px this used to settle for
+            // put the icon 23px too high (and 29px with a two-line description).
+            block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
         }
 
@@ -700,8 +720,11 @@ export component ContentPacksPanel inherits Rectangle {
             toggle-favorite(id) => { ContentState.toggle-favorite(id); }
         }
 
-        if !ContentState.remote-loading && ContentState.remote-cards.length == 0 : ContentNotFound {
+        if !ContentState.remote-loading && ContentState.remote-cards.length == 0 : remote-not-found := ContentNotFound {
             show: true;
+            // As with the mods and resource-pack panels: `.search-status`'s
+            // `padding: 40px 0` is the block.
+            block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
         }
 

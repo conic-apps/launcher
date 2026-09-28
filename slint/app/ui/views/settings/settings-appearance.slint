@@ -12,8 +12,16 @@ import { AppConfig } from "../../globals/settings.slint";
 import { Background } from "../../globals/background.slint";
 
 // A palette preview tile (.color-style > div, 90x60, rounded, label at
-// `width - 20`). The 4px blue outline is drawn outside the box by a larger
-// rectangle behind the tile.
+// `width - 20`).
+//
+// Neither the 4px blue outline nor the label is inside the tile: the outline is
+// the Vue's `outline: 4px solid var(--ctp-blue)`, drawn 4px outside the 90x60
+// box, and the label is its `p { margin-top: calc(100% - 20px) }`, 70px down a
+// 60px box. The Vue's tile has no `overflow: hidden`, so both show. This one
+// cannot carry a `clip` for the same reason — Slint's `clip` cuts the children
+// to the element's box, which would take the outline and the label with it. The
+// radius is therefore on the image box, which is the one element that has to be
+// rounded and cropped.
 component PaletteSwatch inherits Rectangle {
     in property <image> preview;
     in property <string> label;
@@ -23,8 +31,6 @@ component PaletteSwatch inherits Rectangle {
 
     width: 90px;
     height: 60px;
-    border-radius: 6px;
-    clip: true;
     opacity: root.swatch-disabled ? 0.6 : 1.0;
 
     if root.selected : Rectangle {
@@ -36,11 +42,18 @@ component PaletteSwatch inherits Rectangle {
         background: Theme.blue;
     }
 
-    Image {
-        width: 100%;
-        height: 100%;
-        source: root.preview;
-        image-fit: contain;
+    image-box := Rectangle {
+        width: 90px;
+        height: 60px;
+        border-radius: 6px;
+        clip: true;
+
+        Image {
+            width: 100%;
+            height: 100%;
+            source: root.preview;
+            image-fit: contain;
+        }
     }
 
     Text {
@@ -105,56 +118,62 @@ export component SettingsAppearance inherits VerticalLayout {
             border-bottom-left-radius: 8px;
             border-bottom-right-radius: 8px;
 
-            PaletteSwatch {
-                x: (color-style.width - 456px) / 2 + 12px;
-                y: 18px;
-                preview: @image-url("../../assets/palette-latte.png");
-                label: "Latte";
-                selected: Theme.active-palette == "Latte";
-                swatch-disabled: AppConfig.palette-follow-system;
-                chosen => {
-                    Theme.transitions-enabled = true;
-                    AppConfig.palette = "Latte";
-                    AppConfig.changed();
+            // `.color-style { display: flex; align-items: center;
+            // justify-content: center }` with the tiles' `margin: -24px 12px 0`
+            // — a 24px side that is really a gap, and a -24px top that is what
+            // `align-items: center` then measures against. Spacing and padding
+            // say so directly, so the 456px of hand-computed offsets (4 × 90 +
+            // 8 × 12) and the 114px pitch are gone: a fifth tile, or a wider one,
+            // needs nothing changed here.
+            HorizontalLayout {
+                alignment: center;
+                cross-axis-alignment: start;
+                padding-top: 18px;
+                spacing: 24px;
+
+                PaletteSwatch {
+                    preview: @image-url("../../assets/palette-latte.png");
+                    label: "Latte";
+                    selected: Theme.active-palette == "Latte";
+                    swatch-disabled: AppConfig.palette-follow-system;
+                    chosen => {
+                        Theme.transitions-enabled = true;
+                        AppConfig.palette = "Latte";
+                        AppConfig.changed();
+                    }
                 }
-            }
-            PaletteSwatch {
-                x: (color-style.width - 456px) / 2 + 126px;
-                y: 18px;
-                preview: @image-url("../../assets/palette-frappe.png");
-                label: "Frappé";
-                selected: Theme.active-palette == "Frappe";
-                swatch-disabled: AppConfig.palette-follow-system;
-                chosen => {
-                    Theme.transitions-enabled = true;
-                    AppConfig.palette = "Frappe";
-                    AppConfig.changed();
+                PaletteSwatch {
+                    preview: @image-url("../../assets/palette-frappe.png");
+                    label: "Frappé";
+                    selected: Theme.active-palette == "Frappe";
+                    swatch-disabled: AppConfig.palette-follow-system;
+                    chosen => {
+                        Theme.transitions-enabled = true;
+                        AppConfig.palette = "Frappe";
+                        AppConfig.changed();
+                    }
                 }
-            }
-            PaletteSwatch {
-                x: (color-style.width - 456px) / 2 + 240px;
-                y: 18px;
-                preview: @image-url("../../assets/palette-macchiato.png");
-                label: "Macchiato";
-                selected: Theme.active-palette == "Macchiato";
-                swatch-disabled: AppConfig.palette-follow-system;
-                chosen => {
-                    Theme.transitions-enabled = true;
-                    AppConfig.palette = "Macchiato";
-                    AppConfig.changed();
+                PaletteSwatch {
+                    preview: @image-url("../../assets/palette-macchiato.png");
+                    label: "Macchiato";
+                    selected: Theme.active-palette == "Macchiato";
+                    swatch-disabled: AppConfig.palette-follow-system;
+                    chosen => {
+                        Theme.transitions-enabled = true;
+                        AppConfig.palette = "Macchiato";
+                        AppConfig.changed();
+                    }
                 }
-            }
-            PaletteSwatch {
-                x: (color-style.width - 456px) / 2 + 354px;
-                y: 18px;
-                preview: @image-url("../../assets/palette-mocha.png");
-                label: "Mocha";
-                selected: Theme.active-palette == "Mocha";
-                swatch-disabled: AppConfig.palette-follow-system;
-                chosen => {
-                    Theme.transitions-enabled = true;
-                    AppConfig.palette = "Mocha";
-                    AppConfig.changed();
+                PaletteSwatch {
+                    preview: @image-url("../../assets/palette-mocha.png");
+                    label: "Mocha";
+                    selected: Theme.active-palette == "Mocha";
+                    swatch-disabled: AppConfig.palette-follow-system;
+                    chosen => {
+                        Theme.transitions-enabled = true;
+                        AppConfig.palette = "Mocha";
+                        AppConfig.changed();
+                    }
                 }
             }
         }

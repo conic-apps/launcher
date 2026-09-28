@@ -166,9 +166,12 @@ component DetailBody inherits Rectangle {
     // Named for the one thing its children need from it: the scroll offset, so
     // the body's renderer can skip the items that are scrolled out of sight.
     scroller := ScrollView {
-        VerticalLayout {
+        details-column := VerticalLayout {
             ContentTitleBar {
-                icon: "extension-puzzle";
+                // `ContentModrinth/CurseforgePackDetails.vue` open with
+                // `<AppIcon name="package">`; the mod and resource-pack panels
+                // with `extension-puzzle`.
+                icon: ContentState.remote-kind == "packs" ? "package" : "extension-puzzle";
                 title: ContentText.detail-title(ContentState.remote-kind);
             }
 
@@ -197,7 +200,7 @@ component DetailBody inherits Rectangle {
                 // `.details { padding: 8px 24px }`. The Vue gives the action
                 // row, the body and the gallery a 16px `margin-top` each, which
                 // is the layout's spacing.
-                VerticalLayout {
+                details-inner := VerticalLayout {
                     padding-left: 24px;
                     padding-right: 24px;
                     padding-top: 8px;
@@ -319,12 +322,13 @@ component DetailBody inherits Rectangle {
                             width: 120px;
                             height: 36px;
                             border-radius: 6px;
-                            background: Theme.latte-lavender;
+                            // `button.download-loading`, which `details.less:17-34`
+                            // gives the same `--ctp-latte-teal` as the heart, the
+                            // download and the remove button.
+                            background: Theme.latte-teal;
                             opacity: 0.6;
 
                             BaseLoading {
-                                x: (parent.width - self.width) / 2;
-                                y: (parent.height - self.height) / 2;
                                 size: 18px;
                                 stroke-width: 6;
                                 icon-color: white;
@@ -369,12 +373,22 @@ component DetailBody inherits Rectangle {
                     // The CurseForge panels put the box behind `v-if`, the
                     // Modrinth ones do not — an empty body still draws the
                     // surface0 box there (`ContentState.detail-body-always`).
-                    if ContentState.detail-body != "" || ContentState.detail-body-always : MarkdownBody {
+                    if ContentState.detail-body != "" || ContentState.detail-body-always : markdown-body := MarkdownBody {
                         // The scroller's offset and height, for the body to cull
                         // against. The view is a grandchild of the scroller and
                         // cannot reach it, so both are passed down.
                         scroll-y: scroller.content-y;
                         viewport-height: scroller.height;
+                        // …and where this box sits inside the scrolled content.
+                        // The view measures its culling window from its *own* top,
+                        // so handing it the scroller's offset alone culls away the
+                        // header and the action row above it — a blank band at the
+                        // top of the body whenever the panel is shorter than they
+                        // are. A layout assigns `y` to each of its children, so
+                        // the three steps up are each readable.
+                        top-in-scroll: details-column.y
+                            + details-inner.y
+                            + markdown-body.y;
                     }
 
                     // ----- the gallery (Modrinth projects) -----

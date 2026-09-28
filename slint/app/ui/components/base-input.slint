@@ -24,7 +24,17 @@ export component BaseInput inherits Rectangle {
     in-out property <string> value: "";
     callback edited;
 
-    width: input-width;
+    // A `min-width`/`preferred-width` pair rather than a `width`: an element with
+    // an explicit `width` gets `min == max == width` as its size constraints, so
+    // a layout can neither grow nor shrink it — which is what the multiplayer
+    // dialog's "invite code" row needs (`flex: 1` next to a fit-content button).
+    // Without an explicit `width` the default is `max(preferred-width,
+    // min-width)`, which still sizes an unsized field exactly as before.
+    min-width: root.input-width;
+    preferred-width: self.min-width;
+    // Pinned to 0 so an unsized field keeps its declared width rather than taking
+    // whatever the layout's free-space split gives it; see `base-button.slint`.
+    horizontal-stretch: 0;
     height: 30px;
     border-radius: Theme.controllers-border-radius;
     border-width: 1px;
