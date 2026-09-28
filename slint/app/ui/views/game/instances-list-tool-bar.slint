@@ -24,23 +24,23 @@ export component InstancesListToolBar inherits Rectangle {
     // where the toolbar has to sit above the scrolling rows.
 
     private property <[DropdownOption]> sort-options: [
-        { key: "name", label: @tr("Name"), icon: "" },
-        { key: "version", label: @tr("Version"), icon: "" },
-        { key: "playtime", label: @tr("Play time"), icon: "" },
-        { key: "lastplay", label: @tr("Last played"), icon: "" },
+    { key: "name", label: @tr("Name"), icon: "" },
+    { key: "version", label: @tr("Version"), icon: "" },
+    { key: "playtime", label: @tr("Play time"), icon: "" },
+    { key: "lastplay", label: @tr("Last played"), icon: "" },
     ];
     private property <[DropdownOption]> group-options: [
-        { key: "none", label: @tr("Ungrouped"), icon: "" },
-        { key: "loader", label: @tr("Mod loader"), icon: "" },
+    { key: "none", label: @tr("Ungrouped"), icon: "" },
+    { key: "loader", label: @tr("Mod loader"), icon: "" },
     ];
 
     private property <string> sort-label:
-        GameState.sort-mode == "name" ? @tr("Name")
-        : GameState.sort-mode == "version" ? @tr("Version")
-        : GameState.sort-mode == "lastplay" ? @tr("Last played")
-        : @tr("Play time");
+    GameState.sort-mode == "name" ? @tr("Name")
+    : GameState.sort-mode == "version" ? @tr("Version")
+    : GameState.sort-mode == "lastplay" ? @tr("Last played")
+    : @tr("Play time");
     private property <string> group-label:
-        GameState.group-mode == "loader" ? @tr("Mod loader") : @tr("Ungrouped");
+    GameState.group-mode == "loader" ? @tr("Mod loader") : @tr("Ungrouped");
 
     // Intro: the toolbar slides in from 100px to the right over 0.5s
     // `power3.out` (`power3` is GSAP's quart, Slint's `ease-out-quart`). It is the
@@ -83,89 +83,103 @@ export component InstancesListToolBar inherits Rectangle {
             scroll-event(event) => { accept }
         }
 
-        // ----- search -----
-        search-row := Rectangle {
-            x: 16px;
-            y: 16px;
-            width: 372px;
-            height: 40px;
+        // `.search { margin-top: 16px; margin-left: 16px }` and `.other {
+        // margin-left: 16px; margin-top: 12px }` are a padding and a `gap`. The
+        // 68px the second row sat at was `16 + 40 + 12` written out, the 332px
+        // was the row less a 40px button, and the two 182px dropdowns were half
+        // of what was left.
+        VerticalLayout {
+            padding: 16px;
+            spacing: 12px;
+            alignment: start;
 
-            input-box := Rectangle {
-                x: 0;
-                y: 0;
-                width: 332px;
-                height: parent.height;
-                background: Theme.surface-0;
-                border-top-left-radius: 8px;
-                border-bottom-left-radius: 8px;
+            // ----- search -----
+            // `.search { display: flex }` of a `width: 100%` field and a
+            // `flex-shrink: 0` 40px button.
+            search-row := HorizontalLayout {
+                height: 40px;
+                spacing: 0px;
 
-                Text {
-                    x: 16px;
-                    text: @tr("Search...");
-                    font-size: 14px;
-                    color: Theme.default-text-color.transparentize(0.4);
-                    visible: GameState.search-query == "";
+                input-box := Rectangle {
+                    horizontal-stretch: 1;
+                    background: Theme.surface-0;
+                    border-top-left-radius: 8px;
+                    border-bottom-left-radius: 8px;
+
+                    // `input { padding-left: 16px; height: 100% }`.
+                    HorizontalLayout {
+                        padding-left: 16px;
+                        cross-axis-alignment: center;
+
+                        Text {
+                            text: @tr("Search...");
+                            font-size: 14px;
+                            color: Theme.default-text-color.transparentize(0.4);
+                            visible: GameState.search-query == "";
+                        }
+
+                        TextInput {
+                            horizontal-stretch: 1;
+                            text: GameState.search-query;
+                            font-size: 14px;
+                            single-line: true;
+                            vertical-alignment: center;
+                            edited => { GameState.search-changed(self.text); }
+                        }
+                    }
                 }
 
-                TextInput {
-                    x: 16px;
-                    width: parent.width - 16px;
-                    height: parent.height;
-                    text: GameState.search-query;
-                    font-size: 14px;
-                    single-line: true;
-                    vertical-alignment: center;
-                    edited => { GameState.search-changed(self.text); }
-                }
-            }
-
-            search-button := Rectangle {
-                x: 332px;
-                y: 0;
-                width: 40px;
-                height: parent.height;
-                background: search-touch.pressed ? Theme.surface-2
+                search-button := Rectangle {
+                    width: 40px;
+                    background: search-touch.pressed ? Theme.surface-2
                     : search-touch.has-hover ? Theme.surface-2.transparentize(0.2)
                     : Theme.surface-1;
-                border-top-right-radius: 8px;
-                border-bottom-right-radius: 8px;
+                    border-top-right-radius: 8px;
+                    border-bottom-right-radius: 8px;
 
-                AppIcon {
-                    name: "search";
-                    size: 20px;
+                    // `.search-button { display: flex; align-items: center;
+                    // justify-content: center }`.
+                    HorizontalLayout {
+                        alignment: center;
+                        cross-axis-alignment: center;
+                        spacing: 0px;
+
+                        AppIcon {
+                            name: "search";
+                            size: 20px;
+                        }
+                    }
+
+                    search-touch := TouchArea { }
+                }
+            }
+
+            // ----- sort / group -----
+            // `.other { display: flex; gap: 8px }` with `> div { flex: 1 }` on
+            // both, so each takes half of what is left.
+            other-row := HorizontalLayout {
+                height: 25px;
+                spacing: 8px;
+
+                InstanceListDropdown {
+                    horizontal-stretch: 1;
+                    label: @tr("Sort");
+                    selected: root.sort-label;
+                    options: root.sort-options;
+                    selected-key: GameState.sort-mode;
+                    dropdown-id: "instance-sort";
+                    select(key) => { GameState.set-sort(key); }
                 }
 
-                search-touch := TouchArea { width: parent.width; height: parent.height; }
-            }
-        }
-
-        // ----- sort / group -----
-        other-row := Rectangle {
-            x: 16px;
-            y: 68px;
-            width: 372px;
-            height: 25px;
-
-            InstanceListDropdown {
-                x: 0;
-                width: 182px;
-                label: @tr("Sort");
-                selected: root.sort-label;
-                options: root.sort-options;
-                selected-key: GameState.sort-mode;
-                dropdown-id: "instance-sort";
-                select(key) => { GameState.set-sort(key); }
-            }
-
-            InstanceListDropdown {
-                x: 190px;
-                width: 182px;
-                label: @tr("Group");
-                selected: root.group-label;
-                options: root.group-options;
-                selected-key: GameState.group-mode;
-                dropdown-id: "instance-group";
-                select(key) => { GameState.set-group-mode(key); }
+                InstanceListDropdown {
+                    horizontal-stretch: 1;
+                    label: @tr("Group");
+                    selected: root.group-label;
+                    options: root.group-options;
+                    selected-key: GameState.group-mode;
+                    dropdown-id: "instance-group";
+                    select(key) => { GameState.set-group-mode(key); }
+                }
             }
         }
     }

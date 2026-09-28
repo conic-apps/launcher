@@ -19,7 +19,11 @@ export component InstanceListDropdown inherits Rectangle {
 
     width: 100%;
     height: 25px;
-    background: transparent;
+    // `.head`'s own fill, on the component root — which is a `Rectangle` and
+    // fills its caller, so the row inside does not have to be wrapped in a box
+    // that then has to be told the component's width.
+    background: Theme.surface-0;
+    border-radius: 4px;
 
     private property <bool> is-open: Dropdown.open && Dropdown.owner == root.dropdown-id;
     private property <float> chevron-flip: root.is-open ? 1.0 : 0.0;
@@ -32,64 +36,78 @@ export component InstanceListDropdown inherits Rectangle {
         }
     }
 
-    head := Rectangle {
-        width: root.width;
-        height: root.height;
-        background: Theme.surface-0;
-        border-radius: 4px;
+    // `.head { display: flex; align-items: center }` with `.label { flex-shrink: 0;
+    // padding: 6px 12px }` and `.selected { flex: 1; padding: 0 12px }` — so the
+    // label is its own text and the selection takes the rest, with the chevron
+    // 12px from the end. The three widths the hand-placement needed (the label
+    // plus 24, `parent.width - label-box.width`, and `- min(parent.width, 38px)`
+    // for the elide) are the layout's own arithmetic.
+    head := HorizontalLayout {
+        cross-axis-alignment: center;
 
+        // `.label { padding: 6px 12px; flex-shrink: 0 }`.
         label-box := Rectangle {
-            x: 0;
-            y: 0;
-            width: label-text.preferred-width + 24px;
-            height: parent.height;
+            vertical-stretch: 0;
             background: Theme.surface-1;
             border-radius: 4px;
 
-            label-text := Text {
-                text: root.label;
-                font-size: 13px;
-                font-weight: Theme.font-weight-normal;
-                color: Theme.default-text-color.transparentize(0.1);
+            HorizontalLayout {
+                padding-top: 6px;
+                padding-bottom: 6px;
+                padding-left: 12px;
+                padding-right: 12px;
+                cross-axis-alignment: center;
+
+                label-text := Text {
+                    text: root.label;
+                    font-size: 13px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
             }
         }
 
         selected-box := Rectangle {
-            x: label-box.width;
-            y: 0;
-            width: parent.width - label-box.width;
-            height: parent.height;
+            horizontal-stretch: 1;
             background: transparent;
 
-            Text {
-                text: root.selected;
-                font-size: 13px;
-                font-weight: Theme.font-weight-normal;
-                color: Theme.default-text-color.transparentize(0.1);
-                x: 12px;
-                width: parent.width - min(parent.width, 38px);
-                overflow: elide;
-                wrap: no-wrap;
-            }
+            // `.selected { display: flex; align-items: center; overflow: hidden }
+            // .text { overflow: hidden; text-overflow: ellipsis; white-space:
+            // nowrap } .chevron { margin-left: auto }`.
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                cross-axis-alignment: center;
 
-            AppIcon {
-                name: "chevron-down";
-                size: 14px;
-                icon-color: Theme.default-text-color.transparentize(0.1);
-                x: selected-box.width - 12px - self.width;
-                transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
-                opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
+                Text {
+                    text: root.selected;
+                    font-size: 13px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    horizontal-stretch: 1;
+                    overflow: elide;
+                    wrap: no-wrap;
+                }
+
+                AppIcon {
+                    name: "chevron-down";
+                    size: 14px;
+                    icon-color: Theme.default-text-color.transparentize(0.1);
+                    transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
+                    opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
+                }
             }
         }
 
+        // Unbound: a `TouchArea` fills its parent, and asking the row for the
+        // width it is still measuring is a binding loop once the *caller* sizes
+        // this component.
         head-touch := TouchArea {
-            width: parent.width;
-            height: parent.height;
             clicked => {
                 FocusManager.clear();
                 if (root.is-open) {
                     Dropdown.open = false;
-                } else {
+                    } else {
                     Dropdown.options = root.options;
                     Dropdown.accounts = [];
                     Dropdown.account-mode = false;
