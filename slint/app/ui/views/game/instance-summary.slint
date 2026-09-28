@@ -82,7 +82,6 @@ component ContentRow inherits Rectangle {
     HorizontalLayout {
         padding-left: 16px;
         padding-right: 16px;
-        spacing: 0px;
         cross-axis-alignment: center;
 
         // left: icon + type
@@ -150,8 +149,6 @@ component ContentRow inherits Rectangle {
     }
 
     row-touch := TouchArea {
-        width: parent.width;
-        height: parent.height;
         enabled: !root.disabled;
         clicked => { root.clicked(); }
     }
@@ -243,7 +240,6 @@ export component InstanceSummary inherits Rectangle {
                 // this layout: a child that fills would ask the parent for its
                 // height, which asks it again.
                 row2 := HorizontalLayout {
-                    spacing: 0px;
                     cross-axis-alignment: center;
                     vertical-stretch: 0;
                     horizontal-stretch: 0;
@@ -279,7 +275,6 @@ export component InstanceSummary inherits Rectangle {
                     // puts every metadata cell in — so the gap is 2 + 4 = 6px, and the row's
                     // `spacing: 0px` supplied none of it.
                     if GameState.current-has-playtime : time-icon := HorizontalLayout {
-                        spacing: 0px;
                         cross-axis-alignment: center;
                         padding-right: 2px;
 

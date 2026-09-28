@@ -525,7 +525,6 @@ export component MarkdownView inherits Rectangle {
         x: 0;
         y: 0;
         width: root.width;
-        spacing: 0px;
 
         for chunk[index] in root.chunks: chunk-box := Rectangle {
             in property <bool> is-section: chunk.section-index >= 0;

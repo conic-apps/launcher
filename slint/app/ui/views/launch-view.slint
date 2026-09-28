@@ -40,7 +40,6 @@ export component LaunchView inherits Rectangle {
         height: self.preferred-height;
         y: (parent.height - self.height) / 2 - 16px;
         cross-axis-alignment: center;
-        spacing: 0px;
 
         // `> .avatar { margin-bottom: 16px }`. The Vue's `.avatar-image` wrapper
         // is the 48px head plus its `padding: 2px`, so it measures 52px; the
@@ -114,7 +113,6 @@ export component LaunchView inherits Rectangle {
                 padding-bottom: 16px;
                 padding-left: 32px;
                 padding-right: 32px;
-                spacing: 0px;
                 alignment: center;
 
                 // The Vue's `mode="out-in"` fade between the description and the

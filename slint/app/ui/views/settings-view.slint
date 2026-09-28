@@ -108,13 +108,10 @@ export component SettingsView inherits Rectangle {
     // titles, gaps between rows) blurs the focused text field. Controls and rows
     // declare their own touch areas on top and handle the click themselves.
     TouchArea {
-        width: 100%;
-        height: 100%;
         clicked => { FocusManager.clear(); }
     }
 
     HorizontalLayout {
-        spacing: 0px;
 
         // ----- left: settings menu -----
         Rectangle {

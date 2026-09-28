@@ -84,8 +84,6 @@ export component BaseButton inherits Rectangle {
     }
 
     button-touch := TouchArea {
-        width: parent.width;
-        height: parent.height;
         enabled: root.button-enabled;
         clicked => {
             FocusManager.clear();

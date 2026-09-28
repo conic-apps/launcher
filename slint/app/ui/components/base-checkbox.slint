@@ -62,8 +62,6 @@ export component BaseCheckbox inherits Rectangle {
     }
 
     hover := TouchArea {
-        width: parent.width;
-        height: parent.height;
         enabled: root.checkbox-enabled;
         clicked => { root.toggled(); }
     }

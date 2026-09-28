@@ -59,8 +59,6 @@ component FooterButton inherits Rectangle {
     }
 
     button-touch := TouchArea {
-        width: parent.width;
-        height: parent.height;
         clicked => { root.clicked(); }
     }
 }

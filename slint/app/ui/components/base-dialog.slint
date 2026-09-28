@@ -143,8 +143,6 @@ export component BaseDialog inherits Rectangle {
     // rather than on the click: the platform takes the drag over from there and
     // the release never reaches Slint.
     scrim-touch := TouchArea {
-        width: 100%;
-        height: 100%;
         enabled: root.visible;
         pointer-event(event) => {
             if event.button == PointerEventButton.left && event.kind == PointerEventKind.down {

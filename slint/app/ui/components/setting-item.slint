@@ -168,7 +168,6 @@ export component SettingItem inherits Rectangle {
         padding-bottom: 10px;
         padding-left: 14px;
         padding-right: 16px;
-        spacing: 0px;
         cross-axis-alignment: center;
 
         // ----- left: icon + text -----
@@ -223,7 +222,6 @@ export component SettingItem inherits Rectangle {
                         // separates it from the reset button and the chevron. A
                         // `Text` carries no padding, so the margin is a padding on
                         // a box around it.
-                        spacing: 0px;
                         cross-axis-alignment: center;
                         padding-right: 8px;
 
@@ -415,7 +413,6 @@ export component SettingItem inherits Rectangle {
         // ----- right: control / chevron -----
         HorizontalLayout {
             horizontal-stretch: 0;
-            spacing: 0px;
             cross-axis-alignment: center;
 
             if root.navigable : AppIcon {

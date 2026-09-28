@@ -24,8 +24,6 @@ export component DropdownOverlay inherits Rectangle {
     animate panel-opacity { duration: 200ms; easing: ease; }
 
     outside := TouchArea {
-        width: parent.width;
-        height: parent.height;
         enabled: Dropdown.open || root.panel-height > 0.5px;
         scroll-event(event) => {
             if (Dropdown.open || root.panel-height > 0.5px) {
