@@ -72,15 +72,16 @@ component ContentRow inherits Rectangle {
     height: 36px;
     border-radius: 8px;
     background: row-touch.pressed ? Theme.surface-1
-        : row-touch.has-hover ? Theme.surface-0
-        : Theme.surface-0.with-alpha(0.7);
+    : row-touch.has-hover ? Theme.surface-0
+    : Theme.surface-0.with-alpha(0.7);
     opacity: root.disabled ? 0.6 : 1.0;
     animate background { duration: 100ms; }
 
+    // `.current-instance-contents > div { padding: 8px 16px }` — a padding, not
+    // three hand-kept numbers. The layout fills the row by default.
     HorizontalLayout {
-        x: 16px;
-        width: parent.width - 32px;
-        height: parent.height;
+        padding-left: 16px;
+        padding-right: 16px;
         spacing: 0px;
         cross-axis-alignment: center;
 
@@ -159,15 +160,19 @@ component ContentRow inherits Rectangle {
 // The current-instance panel: title, metadata row, launch/actions row and the
 // local-content previews (src/views/game/InstanceSummary.vue).
 //
-// The rows are stacked with explicit `y` positions instead of a `VerticalLayout`
-// because the intro slides each row in horizontally (the Vue `playIntro`
-// animates `x` from -50px → 0) and a layout owns the x of its children.
+// The four blocks are stacked by a `VerticalLayout` with a 16px `spacing` — the
+// Vue's `margin-top: 16px` on three of them — so the panel's height is the
+// layout's own rather than a running sum down to the last block.
+//
+// The intro slides each block in horizontally, and Slint *refuses* an `x` on a
+// layout child rather than merely overriding it, so a block cannot carry its own
+// slide where it sits in the stack. Each block is therefore wrapped twice: a
+// plain `Rectangle` cell that the layout positions, and inside it a second
+// `Rectangle` that carries the `x`, one level down where `x` is its own again.
 export component InstanceSummary inherits Rectangle {
-    // The panel is as wide as the widest row; the contents block (408px) is the
-    // usual floor. Referencing the rows' intrinsic preferred widths avoids a
-    // binding loop with the panel's own width.
-    width: max(408px, max(title-text.preferred-width, row2.preferred-width));
-    height: contents.y + contents.height;
+    // The panel is as wide as its widest block, which the layout reports.
+    width: stack.preferred-width;
+    height: stack.preferred-height;
     background: transparent;
 
     // Vue `playIntro`: the three detail rows slide in from -50px over 0.33s
@@ -176,7 +181,7 @@ export component InstanceSummary inherits Rectangle {
     // after the first batch started.
     private property <duration> intro-stagger: 30ms;
     private property <[DropdownOption]> launch-options: [
-        { key: "repair", label: @tr("Repair game and launch"), icon: "build" },
+    { key: "repair", label: @tr("Repair game and launch"), icon: "build" },
     ];
     private property <bool> launch-menu-is-open: Dropdown.open && Dropdown.owner == "launch-menu";
     private property <float> launch-chevron-flip: root.launch-menu-is-open ? 1.0 : 0.0;
@@ -190,361 +195,373 @@ export component InstanceSummary inherits Rectangle {
         }
     }
 
-    // ----- row-1: instance name -----
-    row1 := Rectangle {
-        y: 0;
-        width: title-text.preferred-width;
-        height: title-text.preferred-height;
-        background: transparent;
-        x: self.intro-dx;
-        opacity: self.intro-alpha;
+    stack := VerticalLayout {
+        spacing: 16px;
+        cross-axis-alignment: start;
 
-        private property <length> intro-dx: GameIntro.played ? 0px : -50px;
-        private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-        // First beat: no delay.
-        animate intro-dx { duration: 330ms; easing: ease-out-quart; }
-        animate intro-alpha { duration: 330ms; easing: ease-out-quart; }
-
-        title-text := Text {
-            text: GameState.has-current ? GameState.current-name : @tr("no instance selected!");
-            font-size: 38px;
-            font-weight: Theme.font-weight-normal;
-            color: Theme.default-text-color.transparentize(0.1);
-        }
-    }
-
-    // ----- row-2: metadata -----
-    row2 := HorizontalLayout {
-        y: row1.height + 16px;
-        // A layout defaults to filling its parent; the panel's height is derived
-        // from the rows, so this one has to size itself to its content.
-        width: row2.preferred-width;
-        height: row2.preferred-height;
-        spacing: 0px;
-        cross-axis-alignment: center;
-        x: self.intro-dx;
-        opacity: self.intro-alpha;
-
-        private property <length> intro-dx: GameIntro.played ? 0px : -50px;
-        private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-        animate intro-dx { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
-        animate intro-alpha { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
-
-        MetaColumn {
-            label: @tr("Minecraft version");
-            value: GameState.has-current ? GameState.current-minecraft : "--";
-        }
-
-        if GameState.current-has-loader : MetaSeparator { }
-        if GameState.current-has-loader : MetaColumn {
-            label: "\{GameState.current-loader} \{@tr("version")}";
-            value: GameState.current-loader-version;
-        }
-
-        MetaSeparator { }
-        MetaColumn {
-            label: @tr("Last played date");
-            value: GameState.has-current
-                ? GameTime.last-played(
-                    GameState.current-last-played-kind,
-                    GameState.current-last-played-hours,
-                    GameState.current-last-played-month,
-                    GameState.current-last-played-day,
-                    GameState.current-last-played-year,
-                )
-                : "--";
-        }
-
-        if GameState.current-has-playtime : MetaSeparator { }
-        // `<AppIcon name="time" :size="22" style="margin-right: 2px">`, and the
-        // `MetaColumn` beside it carries the `p { padding: 2px 4px }` the Vue
-        // puts every metadata cell in — so the gap is 2 + 4 = 6px, and the row's
-        // `spacing: 0px` supplied none of it.
-        if GameState.current-has-playtime : time-icon := HorizontalLayout {
-            spacing: 0px;
-            cross-axis-alignment: center;
-            padding-right: 2px;
-
-            AppIcon {
-                name: "time";
-                size: 22px;
-            }
-        }
-        if GameState.current-has-playtime : MetaColumn {
-            label: @tr("Play time");
-            value: GameTime.play-time(GameState.current-playtime-kind, GameState.current-playtime-value);
-        }
-    }
-
-    // ----- row-3: launch + actions -----
-    row3 := Rectangle {
-        y: row2.y + row2.height + 16px;
-        width: actions.x + actions.width;
-        height: max(launch-buttons.height, actions.height);
-        background: transparent;
-        x: self.intro-dx;
-        opacity: self.intro-alpha;
-
-        private property <length> intro-dx: GameIntro.played ? 0px : -50px;
-        private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-        animate intro-dx { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
-        animate intro-alpha { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
-
-        launch-buttons := Rectangle {
-            x: 0;
-            width: 154px;
-            height: 42px;
+        // ----- row-1: instance name -----
+        row1-cell := Rectangle {
             background: transparent;
 
-            launch-button := Rectangle {
-                x: 0;
-                y: 0;
-                width: 128px;
-                height: parent.height;
-                background: #7287fd;
-                border-top-left-radius: 8px;
-                border-bottom-left-radius: 8px;
-                opacity: launch-touch.pressed ? 0.9 : root-launch-disabled ? 0.6 : 1.0;
+            // The slide, one level down: Slint *refuses* an `x` on a layout
+            // child, so the cell cannot carry it and its own child does.
+            row1-slide := Rectangle {
+                background: transparent;
+                x: self.intro-dx;
+                opacity: self.intro-alpha;
 
-                HorizontalLayout {
-                    alignment: center;
-                    spacing: 4px;
-                    cross-axis-alignment: center;
+                private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+                // First beat: no delay.
+                animate intro-dx { duration: 330ms; easing: ease-out-quart; }
+                animate intro-alpha { duration: 330ms; easing: ease-out-quart; }
 
-                    AppIcon { name: "play"; size: 20px; icon-color: #ffffff; }
-                    Text {
-                        text: @tr("Launch");
-                        font-size: 15px;
-                        font-weight: Theme.font-weight-normal;
-                        color: #ffffff;
-                    }
-                }
-
-                launch-touch := TouchArea {
-                    width: parent.width;
-                    height: parent.height;
-                    enabled: GameState.has-current;
-                    clicked => { GameState.launch(); }
+                title1 := Text {
+                    text: GameState.has-current ? GameState.current-name : @tr("no instance selected!");
+                    font-size: 38px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.default-text-color.transparentize(0.1);
                 }
             }
+        }
 
-            launch-sub-button := Rectangle {
-                x: 130px;
-                y: 0;
-                width: 24px;
-                height: parent.height;
-                background: #7287fd;
-                border-top-right-radius: 8px;
-                border-bottom-right-radius: 8px;
-                opacity: sub-touch.pressed ? 0.9 : root-launch-disabled ? 0.6 : 1.0;
+        // ----- row-2: metadata -----
+        row2-cell := Rectangle {
+            background: transparent;
 
-                AppIcon {
-                    name: "chevron-down";
-                    size: 16px;
-                    icon-color: #ffffff;
-                    transform-scale-y: (1.0 - 2.0 * root.launch-chevron-flip) * 100%;
-                    opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.launch-chevron-flip));
+            row2-slide := Rectangle {
+                background: transparent;
+                x: self.intro-dx;
+                opacity: self.intro-alpha;
+
+                private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+                animate intro-dx { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
+                animate intro-alpha { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
+
+                // `vertical-stretch: 0` because the panel's height comes from
+                // this layout: a child that fills would ask the parent for its
+                // height, which asks it again.
+                row2 := HorizontalLayout {
+                    spacing: 0px;
+                    cross-axis-alignment: center;
+                    vertical-stretch: 0;
+                    horizontal-stretch: 0;
+
+                    MetaColumn {
+                        label: @tr("Minecraft version");
+                        value: GameState.has-current ? GameState.current-minecraft : "--";
+                    }
+
+                    if GameState.current-has-loader : MetaSeparator { }
+                    if GameState.current-has-loader : MetaColumn {
+                        label: "\{GameState.current-loader} \{@tr("version")}";
+                        value: GameState.current-loader-version;
+                    }
+
+                    MetaSeparator { }
+                    MetaColumn {
+                        label: @tr("Last played date");
+                        value: GameState.has-current
+                        ? GameTime.last-played(
+                        GameState.current-last-played-kind,
+                        GameState.current-last-played-hours,
+                        GameState.current-last-played-month,
+                        GameState.current-last-played-day,
+                        GameState.current-last-played-year,
+                        )
+                        : "--";
+                    }
+
+                    if GameState.current-has-playtime : MetaSeparator { }
+                    // `<AppIcon name="time" :size="22" style="margin-right: 2px">`, and the
+                    // `MetaColumn` beside it carries the `p { padding: 2px 4px }` the Vue
+                    // puts every metadata cell in — so the gap is 2 + 4 = 6px, and the row's
+                    // `spacing: 0px` supplied none of it.
+                    if GameState.current-has-playtime : time-icon := HorizontalLayout {
+                        spacing: 0px;
+                        cross-axis-alignment: center;
+                        padding-right: 2px;
+
+                        AppIcon {
+                            name: "time";
+                            size: 22px;
+                        }
+                    }
+                    if GameState.current-has-playtime : MetaColumn {
+                        label: @tr("Play time");
+                        value: GameTime.play-time(GameState.current-playtime-kind, GameState.current-playtime-value);
+                    }
                 }
+            }
+        }
 
-                sub-touch := TouchArea {
-                    width: parent.width;
-                    height: parent.height;
-                    enabled: GameState.has-current;
-                    clicked => {
-                        FocusManager.clear();
-                        if (root.launch-menu-is-open) {
-                            Dropdown.open = false;
-                        } else {
-                            Dropdown.options = root.launch-options;
-                            Dropdown.accounts = [];
-                            Dropdown.account-mode = false;
-                            Dropdown.current = "";
-                            Dropdown.owner = "launch-menu";
-                            Dropdown.anchor-x = launch-buttons.absolute-position.x;
-                            Dropdown.anchor-y = launch-buttons.absolute-position.y
-                                + launch-buttons.height + 4px;
-                            Dropdown.anchor-width = launch-buttons.width;
-                            Dropdown.expand-upwards = false;
-                            Dropdown.open = true;
+        // ----- row-3: launch + actions -----
+        row3-cell := Rectangle {
+            background: transparent;
+
+            row3-slide := Rectangle {
+                background: transparent;
+                x: self.intro-dx;
+                opacity: self.intro-alpha;
+
+                private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+                animate intro-dx { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
+                animate intro-alpha { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
+
+                // `.row-3 { display: flex; align-items: center }` with the actions 16px
+                // after the launch buttons (`div.actions { margin-left: 16px }`), which
+                // is what puts the 32px pills 5px below the top of the 42px launch
+                // button — as `align-items: center` does and pinning them to the top did
+                // not.
+                row3 := HorizontalLayout {
+                    spacing: 16px;
+                    cross-axis-alignment: center;
+                    vertical-stretch: 0;
+                    horizontal-stretch: 0;
+
+                    // `.launch-sub-button { margin-left: 2px }` beside a 128px
+                    // button, so `spacing: 2px` and the 130px falls out.
+                    launch-buttons := HorizontalLayout {
+                        vertical-stretch: 0;
+                        width: 154px;
+                        height: 42px;
+                        cross-axis-alignment: stretch;
+                        spacing: 2px;
+
+                        launch-button := Rectangle {
+                            width: 128px;
+                            height: parent.height;
+                            background: #7287fd;
+                            border-top-left-radius: 8px;
+                            border-bottom-left-radius: 8px;
+                            opacity: launch-touch.pressed ? 0.9 : root-launch-disabled ? 0.6 : 1.0;
+
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                cross-axis-alignment: center;
+
+                                AppIcon { name: "play"; size: 20px; icon-color: #ffffff; }
+                                Text {
+                                    text: @tr("Launch");
+                                    font-size: 15px;
+                                    font-weight: Theme.font-weight-normal;
+                                    color: #ffffff;
+                                }
+                            }
+
+                            launch-touch := TouchArea {
+                                width: parent.width;
+                                height: parent.height;
+                                enabled: GameState.has-current;
+                                clicked => { GameState.launch(); }
+                            }
+                        }
+
+                        launch-sub-button := Rectangle {
+                            vertical-stretch: 1;
+                            width: 24px;
+                            background: #7287fd;
+                            border-top-right-radius: 8px;
+                            border-bottom-right-radius: 8px;
+                            opacity: sub-touch.pressed ? 0.9 : root-launch-disabled ? 0.6 : 1.0;
+
+                            AppIcon {
+                                name: "chevron-down";
+                                size: 16px;
+                                icon-color: #ffffff;
+                                transform-scale-y: (1.0 - 2.0 * root.launch-chevron-flip) * 100%;
+                                opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.launch-chevron-flip));
+                            }
+
+                            sub-touch := TouchArea {
+                                width: parent.width;
+                                height: parent.height;
+                                enabled: GameState.has-current;
+                                clicked => {
+                                    FocusManager.clear();
+                                    if (root.launch-menu-is-open) {
+                                        Dropdown.open = false;
+                                        } else {
+                                        Dropdown.options = root.launch-options;
+                                        Dropdown.accounts = [];
+                                        Dropdown.account-mode = false;
+                                        Dropdown.current = "";
+                                        Dropdown.owner = "launch-menu";
+                                        Dropdown.anchor-x = launch-buttons.absolute-position.x;
+                                        Dropdown.anchor-y = launch-buttons.absolute-position.y
+                                        + launch-buttons.height + 4px;
+                                        Dropdown.anchor-width = launch-buttons.width;
+                                        Dropdown.expand-upwards = false;
+                                        Dropdown.open = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    actions := Rectangle {
+                        vertical-stretch: 0;
+                        width: 112px;
+                        height: 32px;
+                        background: transparent;
+                        opacity: GameState.has-current ? 1.0 : 0.6;
+
+                        HorizontalLayout {
+                            spacing: 8px;
+                            cross-axis-alignment: center;
+
+                            Rectangle {
+                                width: 32px;
+                                height: 32px;
+                                border-radius: 100px;
+                                background: folder-touch.pressed ? Theme.surface-0
+                                : folder-touch.has-hover ? Theme.surface-1
+                                : transparent;
+
+                                AppIcon {
+                                    name: "folder";
+                                    size: 20px;
+                                }
+
+                                folder-touch := TouchArea {
+                                    width: parent.width;
+                                    height: parent.height;
+                                    enabled: GameState.has-current;
+                                    clicked => { GameState.open-instance-folder(); }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 32px;
+                                height: 32px;
+                                border-radius: 100px;
+                                background: star-touch.pressed ? Theme.surface-0
+                                : star-touch.has-hover ? Theme.surface-1
+                                : transparent;
+
+                                AppIcon {
+                                    name: GameState.current-starred ? "star" : "star-outline";
+                                    size: 20px;
+                                }
+
+                                star-touch := TouchArea {
+                                    width: parent.width;
+                                    height: parent.height;
+                                    enabled: GameState.has-current;
+                                    clicked => { GameState.toggle-starred(); }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 32px;
+                                height: 32px;
+                                border-radius: 100px;
+                                background: settings-touch.pressed ? Theme.surface-0
+                                : settings-touch.has-hover ? Theme.surface-1
+                                : transparent;
+
+                                AppIcon {
+                                    name: "settings";
+                                    size: 20px;
+                                }
+
+                                settings-touch := TouchArea {
+                                    width: parent.width;
+                                    height: parent.height;
+                                    enabled: GameState.has-current;
+                                    clicked => { GameState.open-instance-settings(); }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        actions := Rectangle {
-            x: launch-buttons.width + 16px;
-            y: 0;
-            width: 112px;
-            height: 32px;
+        // ----- current instance contents -----
+        // The four previews carry the second batch of the intro: the same slide,
+        // starting 0.03s after the detail rows did — and the dimming for having
+        // no instance is on the whole block, where each of the four rows used to
+        // carry its own share of it.
+        contents-cell := Rectangle {
+            border-radius: 12px;
             background: transparent;
-            opacity: GameState.has-current ? 1.0 : 0.6;
 
-            HorizontalLayout {
-                spacing: 8px;
-                cross-axis-alignment: center;
+            contents-slide := Rectangle {
+                background: transparent;
+                x: self.intro-dx;
+                opacity: (GameState.has-current ? 1.0 : 0.6) * self.intro-alpha;
 
-                Rectangle {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 100px;
-                    background: folder-touch.pressed ? Theme.surface-0
-                        : folder-touch.has-hover ? Theme.surface-1
-                        : transparent;
+                private property <length> intro-dx: GameIntro.played ? 0px : -50px;
+                private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+                animate intro-dx { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
+                animate intro-alpha { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
 
-                    AppIcon {
-                        name: "folder";
-                        size: 20px;
+                // `.current-instance-contents { padding: 4px 4px; gap: 4px }` around
+                // four 400px rows. The slide is on the box above, so each row here is
+                // just a row.
+                contents := VerticalLayout {
+                    padding: 4px;
+                    spacing: 4px;
+                    vertical-stretch: 0;
+                    horizontal-stretch: 0;
+
+                    saves-row := ContentRow {
+                        height: 36px;
+                        icon: "save";
+                        type-label: @tr("Saves");
+                        count: GameState.content-saves;
+                        icons: GameState.preview-saves;
+                        loading: GameState.content-loading;
+                        disabled: !GameState.has-current;
+                        unit: GameState.count-unit;
+                        clicked => { GameState.open-content("saves"); }
+
                     }
 
-                    folder-touch := TouchArea {
-                        width: parent.width;
-                        height: parent.height;
-                        enabled: GameState.has-current;
-                        clicked => { GameState.open-instance-folder(); }
-                    }
-                }
+                    mods-row := ContentRow {
+                        height: 36px;
+                        icon: "extension-puzzle";
+                        type-label: @tr("Mods");
+                        count: GameState.content-mods;
+                        icons: GameState.preview-mods;
+                        loading: GameState.content-loading;
+                        disabled: !GameState.has-current || !GameState.current-has-loader;
+                        unit: GameState.count-unit;
+                        clicked => { GameState.open-content("mods"); }
 
-                Rectangle {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 100px;
-                    background: star-touch.pressed ? Theme.surface-0
-                        : star-touch.has-hover ? Theme.surface-1
-                        : transparent;
-
-                    AppIcon {
-                        name: GameState.current-starred ? "star" : "star-outline";
-                        size: 20px;
                     }
 
-                    star-touch := TouchArea {
-                        width: parent.width;
-                        height: parent.height;
-                        enabled: GameState.has-current;
-                        clicked => { GameState.toggle-starred(); }
-                    }
-                }
+                    resourcepacks-row := ContentRow {
+                        height: 36px;
+                        icon: "folder";
+                        type-label: @tr("Resource packs");
+                        count: GameState.content-resourcepacks;
+                        icons: GameState.preview-resourcepacks;
+                        loading: GameState.content-loading;
+                        disabled: !GameState.has-current;
+                        unit: GameState.count-unit;
+                        clicked => { GameState.open-content("resourcepacks"); }
 
-                Rectangle {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 100px;
-                    background: settings-touch.pressed ? Theme.surface-0
-                        : settings-touch.has-hover ? Theme.surface-1
-                        : transparent;
-
-                    AppIcon {
-                        name: "settings";
-                        size: 20px;
                     }
 
-                    settings-touch := TouchArea {
-                        width: parent.width;
-                        height: parent.height;
-                        enabled: GameState.has-current;
-                        clicked => { GameState.open-instance-settings(); }
+                    screenshots-row := ContentRow {
+                        height: 36px;
+                        icon: "images-outline";
+                        type-label: @tr("Screenshots");
+                        count: GameState.content-screenshots;
+                        icons: GameState.preview-screenshots;
+                        loading: GameState.content-loading;
+                        disabled: !GameState.has-current || GameState.content-screenshots == 0;
+                        unit: GameState.count-unit;
+                        clicked => { GameState.open-content("screenshots"); }
+
                     }
                 }
             }
-        }
-    }
-
-    // ----- current instance contents -----
-    // The four previews carry the second batch of the intro: same slide, starting
-    // 0.03s after the detail rows did.
-    contents := Rectangle {
-        y: row3.y + row3.height + 16px;
-        width: 408px;
-        height: 4 * 36px + 3 * 4px + 8px;
-        border-radius: 12px;
-        background: transparent;
-        opacity: GameState.has-current ? 1.0 : 0.6;
-
-        saves-row := ContentRow {
-            x: 4px + self.intro-dx;
-            y: 4px;
-            width: parent.width - 8px;
-            height: 36px;
-            icon: "save";
-            type-label: @tr("Saves");
-            count: GameState.content-saves;
-            icons: GameState.preview-saves;
-            loading: GameState.content-loading;
-            disabled: !GameState.has-current;
-            unit: GameState.count-unit;
-            clicked => { GameState.open-content("saves"); }
-
-            // `disabled` is the component's own dimming; the intro multiplies on
-            // top of it.
-            private property <length> intro-dx: GameIntro.played ? 0px : -50px;
-            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-            opacity: (self.disabled ? 0.6 : 1.0) * self.intro-alpha;
-            animate intro-dx { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
-            animate intro-alpha { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
-        }
-
-        mods-row := ContentRow {
-            x: 4px + self.intro-dx;
-            y: 4px + 36px + 4px;
-            width: parent.width - 8px;
-            height: 36px;
-            icon: "extension-puzzle";
-            type-label: @tr("Mods");
-            count: GameState.content-mods;
-            icons: GameState.preview-mods;
-            loading: GameState.content-loading;
-            disabled: !GameState.has-current || !GameState.current-has-loader;
-            unit: GameState.count-unit;
-            clicked => { GameState.open-content("mods"); }
-
-            private property <length> intro-dx: GameIntro.played ? 0px : -50px;
-            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-            opacity: (self.disabled ? 0.6 : 1.0) * self.intro-alpha;
-            animate intro-dx { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
-            animate intro-alpha { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
-        }
-
-        resourcepacks-row := ContentRow {
-            x: 4px + self.intro-dx;
-            y: 4px + 2 * (36px + 4px);
-            width: parent.width - 8px;
-            height: 36px;
-            icon: "folder";
-            type-label: @tr("Resource packs");
-            count: GameState.content-resourcepacks;
-            icons: GameState.preview-resourcepacks;
-            loading: GameState.content-loading;
-            disabled: !GameState.has-current;
-            unit: GameState.count-unit;
-            clicked => { GameState.open-content("resourcepacks"); }
-
-            private property <length> intro-dx: GameIntro.played ? 0px : -50px;
-            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-            opacity: (self.disabled ? 0.6 : 1.0) * self.intro-alpha;
-            animate intro-dx { duration: 330ms; delay: 3 * root.intro-stagger; easing: ease-out-quart; }
-            animate intro-alpha { duration: 330ms; delay: 3 * root.intro-stagger; easing: ease-out-quart; }
-        }
-
-        screenshots-row := ContentRow {
-            x: 4px + self.intro-dx;
-            y: 4px + 3 * (36px + 4px);
-            width: parent.width - 8px;
-            height: 36px;
-            icon: "images-outline";
-            type-label: @tr("Screenshots");
-            count: GameState.content-screenshots;
-            icons: GameState.preview-screenshots;
-            loading: GameState.content-loading;
-            disabled: !GameState.has-current || GameState.content-screenshots == 0;
-            unit: GameState.count-unit;
-            clicked => { GameState.open-content("screenshots"); }
-
-            private property <length> intro-dx: GameIntro.played ? 0px : -50px;
-            private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-            opacity: (self.disabled ? 0.6 : 1.0) * self.intro-alpha;
-            animate intro-dx { duration: 330ms; delay: 4 * root.intro-stagger; easing: ease-out-quart; }
-            animate intro-alpha { duration: 330ms; delay: 4 * root.intro-stagger; easing: ease-out-quart; }
         }
     }
 
