@@ -16,6 +16,14 @@
 // in here; the view writes back only what is pure UI (the search box, the
 // selected save).
 
+// The types a laid-out body is made of. They belong to the Markdown renderer
+// (`slint/crates/markdown`), which ships its `.slint` files as data for the app
+// to compile — a Slint struct's Rust type belongs to the compilation that
+// produced it, so the crate cannot compile them itself and hand them over. See
+// `build.rs` for the include path and
+// `ui/overlays/content/markdown-body.slint` for the component that draws them.
+import { MdItem, MarkdownImage, MdChunk } from "../../../crates/markdown/ui/markdown-view.slint";
+
 /// One tag on a card — the Vue's `<span class="loader-type">` family
 /// (`styles/content-card.less`). Its `kind` picks the surface colour.
 export struct CardTag {
@@ -238,8 +246,50 @@ export global ContentState {
     in-out property <string> detail-followers: "";
     in-out property <bool> detail-has-followers: false;
     in-out property <string> detail-description: "";
-    /// The README body, before rendering (see `markdown-plain.slint`).
+    /// The body, before rendering: the Markdown a Modrinth project ships, or the
+    /// HTML a CurseForge project ships. Rust parses and lays it out for the
+    /// width the panel gives it and fills the three properties below; the panel
+    /// draws only those, and this string is never drawn.
+    ///
+    /// It used to be flattened to text by `markdown_to_text` in `content.rs`
+    /// before it got here, which is what `markdown-plain.slint` drew.
     in-out property <string> detail-body: "";
+    /// The laid-out body, as the runs a view stacks. Empty until Rust has laid it
+    /// out. Each run carries its own items and bitmaps, because a run is what
+    /// moves when a `<details>` above it opens or closes.
+    in-out property <[MdChunk]> detail-body-chunks: [];
+    /// How tall the laid-out body is, measured *inside* the box's padding. The
+    /// box adds the padding back, because `markdown-body.less` puts it on the
+    /// container rather than on the document.
+    in-out property <length> detail-body-height: 0px;
+    /// Which runs are open, index-aligned with `detail-body-chunks`. A run that is
+    /// not a `<details>` has nothing to open and the value it holds is never read.
+    ///
+    /// Rust owns it so the state survives the re-layout a width change causes,
+    /// seeding each section from its own `open` — a README's `<details>` has no
+    /// `open` attribute, so it starts closed, as it does on GitHub.
+    in-out property <[bool]> detail-body-section-open: [];
+    /// A `<details>` summary row was clicked. The parameter is the run's index.
+    callback body-section-toggled(int);
+    /// Whether the body holds a link the pointer is over. The panel clears it
+    /// when the body scrolls out from under the pointer, which is the only way
+    /// a hover can outlive the item it was on.
+    in-out property <string> detail-body-hovered: "";
+    /// The monospace family code is drawn in, which the panel's font style does
+    /// not know: `markdown-body.less` asks CSS for `monospace` and lets the
+    /// browser resolve it, and Slint's `font-family` takes a name rather than a
+    /// generic, so "monospace" there means "no such family" and the view would
+    /// fall back to the body face. Rust resolves it — see `monospace_family` in
+    /// `content.rs` — and puts the answer here.
+    in-out property <string> detail-body-mono-family: "";
+    /// The body needs laying out for this width, in logical pixels. The view
+    /// reports it because a document is a function of its width, and a width
+    /// nobody is told about is a document that never re-wraps.
+    ///
+    /// A link in the body opens through `open-url`, the same callback the header's
+    /// repository link uses, so it goes through one `open_external` path rather
+    /// than two.
+    callback body-resized(length);
     /// Whether the body's box is drawn even when the body is empty. The three
     /// Modrinth panels render it unconditionally — an empty one still takes a
     /// 32px box plus its 16px margin — while the CurseForge ones put it behind
