@@ -1978,3 +1978,195 @@ msgstr "재생 목록"
 
 msgid "Nothing here"
 msgstr "아무것도 없습니다"
+
+# Instance settings overlay (src/overlays/InstanceSetting.vue) and the
+# delete dialog it opens (src/overlays/dialogs/ConfirmDeleteInstance.vue).
+# The overlay's strings are seeded from `game.instance.*` in
+# src/locales/<lang>.ts; the dialog's were never internationalized there, so
+# its Chinese source text is kept and translated here.
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Instance settings"
+msgstr "인스턴스 설정"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Images"
+msgstr "이미지"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Set background image"
+msgstr "배경 이미지 설정"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Remove image"
+msgstr "이미지 제거"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Use instance background as launcher background"
+msgstr "인스턴스 배경을 런처 배경으로 사용"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Selected {}"
+msgstr "{} 선택됨"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Enable instance-specific settings"
+msgstr "인스턴스별 설정 활성화"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Launch options"
+msgstr "실행 옵션"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Window size"
+msgstr "창 크기"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Initial game window size"
+msgstr "게임 창의 초기 크기"
+#: ui
+msgctxt "InstanceSettings"
+msgid "W"
+msgstr "너비"
+#: ui
+msgctxt "InstanceSettings"
+msgid "H"
+msgstr "높이"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Fullscreen"
+msgstr "전체 화면"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Quit launcher after launching game"
+msgstr "게임 실행 후 런처 종료"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Skip game file check"
+msgstr "게임 파일 검사 건너뛰기"
+#: ui
+msgctxt "InstanceSettings"
+msgid "The launcher will not attempt to verify or repair game files before launching"
+msgstr "활성화하면 게임 실행 전에 게임 파일을 검증하거나 복구하지 않습니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Memory"
+msgstr "메모리"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Auto-allocate memory"
+msgstr "메모리 자동 할당"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Manual memory allocation"
+msgstr "메모리 수동 할당"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
+msgstr "Java 최대 힙 크기를 직접 설정합니다. 자동 할당이 비활성화된 경우 적용됩니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Advanced launch options"
+msgstr "고급 실행 옵션"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Java garbage collector"
+msgstr "Java 가비지 컬렉터"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra JVM arguments"
+msgstr "추가 JVM 인수"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Appended after default JVM arguments"
+msgstr "기본 JVM 인수 뒤에 추가됩니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra game arguments"
+msgstr "추가 게임 인수"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Additional arguments for the game"
+msgstr "게임에 전달되는 추가 인수입니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra class paths"
+msgstr "추가 클래스 경로"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Separated by semicolons on Windows, colons on other systems"
+msgstr "Windows에서는 세미콜론(;), 그 외 운영체제에서는 콜론(:)으로 구분합니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Execute before launch"
+msgstr "실행 전 명령"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added before the launch command"
+msgstr "실행 명령 앞에 추가됩니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Wrap command"
+msgstr "명령 감싸기"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added at the beginning of the launch command"
+msgstr "실행 명령 맨 앞에 추가됩니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Execute after launch"
+msgstr "실행 후 명령"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added at the end of the launch script"
+msgstr "실행 스크립트 끝에 추가됩니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Ignore invalid Minecraft certificates"
+msgstr "잘못된 Minecraft 인증서 무시"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
+msgstr "JVM 인수에 -Dfml.ignoreInvalidMinecraftCertificates=true를 추가합니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Ignore patch discrepancies"
+msgstr "패치 불일치 무시"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
+msgstr "JVM 인수에 -Dfml.ignorePatchDiscrepancies=true를 추가합니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Delete instance"
+msgstr "인스턴스 삭제"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Deleting this instance will permanently lose all saves, resource packs, and other game data"
+msgstr "이 인스턴스를 삭제하면 모든 월드, 리소스 팩 및 기타 게임 데이터가 영구적으로 삭제됩니다"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Reset instance"
+msgstr "인스턴스 초기화"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved"
+msgstr "이 인스턴스를 초기화하면 모든 월드, 리소스 팩 및 기타 게임 데이터가 손실되며 인스턴스 구성만 유지됩니다"
+
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
+msgstr "이 인스턴스를 삭제하시겠습니까? 세이브 데이터, 리소스 팩, 모드 등의 파일도 영구적으로 사라집니다 (정말 오래 걸립니다!)"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "游戏时间："
+msgstr "플레이 시간:"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "取消"
+msgstr "취소"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "确认删除"
+msgstr "삭제 확인"

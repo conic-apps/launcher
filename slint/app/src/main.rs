@@ -20,6 +20,7 @@ mod config_bridge;
 mod content;
 mod create_instance;
 mod game;
+mod instance_settings;
 mod launch;
 mod multiplayer;
 mod music;
@@ -163,6 +164,7 @@ fn main() {
     // Settings + game view + overlay "scripts".
     settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     game::setup(&ui, Rc::clone(&shared));
+    instance_settings::setup(&ui, Rc::clone(&shared));
     content::setup(&ui);
     launch::setup(&ui, Rc::clone(&shared));
     create_instance::setup(&ui, Rc::clone(&shared));

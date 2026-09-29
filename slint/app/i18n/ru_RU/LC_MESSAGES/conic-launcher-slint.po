@@ -1978,3 +1978,195 @@ msgstr "Плейлист"
 
 msgid "Nothing here"
 msgstr "Здесь ничего нет"
+
+# Instance settings overlay (src/overlays/InstanceSetting.vue) and the
+# delete dialog it opens (src/overlays/dialogs/ConfirmDeleteInstance.vue).
+# The overlay's strings are seeded from `game.instance.*` in
+# src/locales/<lang>.ts; the dialog's were never internationalized there, so
+# its Chinese source text is kept and translated here.
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Instance settings"
+msgstr "Настройки сборки"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Images"
+msgstr "Изображения"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Set background image"
+msgstr "Установить фоновое изображение"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Remove image"
+msgstr "Удалить изображение"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Use instance background as launcher background"
+msgstr "Использовать фон сборки как фон лаунчера"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Selected {}"
+msgstr "Выбрано: {}"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Enable instance-specific settings"
+msgstr "Включить индивидуальные настройки сборки"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Launch options"
+msgstr "Параметры запуска"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Window size"
+msgstr "Размер окна"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Initial game window size"
+msgstr "Начальный размер игрового окна"
+#: ui
+msgctxt "InstanceSettings"
+msgid "W"
+msgstr "Ш"
+#: ui
+msgctxt "InstanceSettings"
+msgid "H"
+msgstr "В"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Fullscreen"
+msgstr "Полноэкранный режим"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Quit launcher after launching game"
+msgstr "Закрывать лаунчер после запуска игры"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Skip game file check"
+msgstr "Пропускать проверку файлов игры"
+#: ui
+msgctxt "InstanceSettings"
+msgid "The launcher will not attempt to verify or repair game files before launching"
+msgstr "Лаунчер не будет проверять и восстанавливать файлы игры перед запуском"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Memory"
+msgstr "Память"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Auto-allocate memory"
+msgstr "Автоматическое выделение памяти"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Manual memory allocation"
+msgstr "Выделение памяти вручную"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
+msgstr "Задайте максимальный размер кучи Java вручную. Применяется, когда автоматическое выделение отключено"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Advanced launch options"
+msgstr "Дополнительные параметры запуска"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Java garbage collector"
+msgstr "Сборщик мусора Java"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra JVM arguments"
+msgstr "Дополнительные аргументы JVM"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Appended after default JVM arguments"
+msgstr "Добавляются после стандартных аргументов JVM"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra game arguments"
+msgstr "Дополнительные аргументы игры"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Additional arguments for the game"
+msgstr "Дополнительные аргументы для игры"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra class paths"
+msgstr "Дополнительные пути классов"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Separated by semicolons on Windows, colons on other systems"
+msgstr "Разделяются точкой с запятой в Windows и двоеточием в других системах"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Execute before launch"
+msgstr "Выполнять перед запуском"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added before the launch command"
+msgstr "Добавляется перед командой запуска"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Wrap command"
+msgstr "Команда-обертка"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added at the beginning of the launch command"
+msgstr "Добавляется в начало команды запуска"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Execute after launch"
+msgstr "Выполнять после запуска"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added at the end of the launch script"
+msgstr "Добавляется в конец сценария запуска"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Ignore invalid Minecraft certificates"
+msgstr "Игнорировать недействительные сертификаты Minecraft"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
+msgstr "Добавляет -Dfml.ignoreInvalidMinecraftCertificates=true в аргументы JVM"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Ignore patch discrepancies"
+msgstr "Игнорировать расхождения патчей"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
+msgstr "Добавляет -Dfml.ignorePatchDiscrepancies=true в аргументы JVM"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Delete instance"
+msgstr "Удалить сборку"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Deleting this instance will permanently lose all saves, resource packs, and other game data"
+msgstr "При удалении этой сборки будут безвозвратно утеряны все сохранения, ресурспаки и другие игровые данные"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Reset instance"
+msgstr "Сбросить сборку"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved"
+msgstr "При сбросе этой сборки будут утеряны все сохранения, ресурспаки и другие игровые данные. Сохранится только конфигурация сборки"
+
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
+msgstr "Вы уверены, что хотите удалить этот экземпляр? Сохранения, ресурспаки, моды и остальные файлы экземпляра будут потеряны навсегда (это действительно долго!)"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "游戏时间："
+msgstr "Время игры: "
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "取消"
+msgstr "Отмена"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "确认删除"
+msgstr "Подтвердить удаление"

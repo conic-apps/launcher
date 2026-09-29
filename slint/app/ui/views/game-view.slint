@@ -6,6 +6,7 @@ import { GameIntro } from "../globals/game.slint";
 import { InstanceSummary } from "game/instance-summary.slint";
 import { InstancesList } from "game/instances-list.slint";
 import { GameFooterBar } from "game/footer.slint";
+import { InstanceSettingsRoot } from "../overlays/instance-settings.slint";
 import { ContentRoot } from "../overlays/content/content-root.slint";
 
 // The game screen (src/views/GameView.vue): current-instance summary on the
@@ -54,6 +55,12 @@ export component GameView inherits Rectangle {
     GameFooterBar {
         y: parent.height - self.height;
     }
+
+    // The instance settings overlay (`GameView.vue`'s
+    // `.instance-settings-wrapper`). Declared before `ContentRoot` because the
+    // Vue mounts it first, and its DOM order is what decides which of the two is
+    // on top when both are open.
+    InstanceSettingsRoot { }
 
     // The content overlays (src/overlays/content/*). Mounted here rather than
     // at the app root because the Vue mounts them inside `GameView.vue`: the
