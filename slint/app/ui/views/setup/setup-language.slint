@@ -42,7 +42,11 @@ component LanguageButton inherits Rectangle {
         text: root.label;
         vertical-alignment: center;
         horizontal-alignment: center;
-        font-size: Theme.font-size-base;
+        // The Vue's `button.language-item` sets no `font-size`, so the label
+        // renders at 11px — a button's UA default, and rather small for a row
+        // the user reads rather than recognises. One pixel up is the size this
+        // port wants; the button's own box is the Vue's 42px either way.
+        font-size: 12px;
         font-weight: Theme.font-weight-normal;
         color: root.selected ? Theme.mauve : Theme.default-text-color.transparentize(0.1);
     }
