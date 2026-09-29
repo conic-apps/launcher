@@ -1118,6 +1118,21 @@ the very first play at startup would start silently. This is the same clock
   `SettingsAbout.vue`) renders at the embedded font's natural ~10px leading and
   comes out a few pixels shorter than the original over its three or four
   lines. The one rich-text string in the app, and the only place it shows.
+- **An element that carries `clip` *or* an `opacity` below 1 bounds its
+  children's rendering to its own box.** `clip` is explicit about it, and it is
+  the reason the palette tile's 4px selected outline and its label had to be
+  drawn outside the 60px tile it belongs to. `opacity` does it silently: a
+  translucent element is composited through a layer the size of that element,
+  so a child that overflows is simply not in the layer. The palette tiles set
+  `opacity: 0.6` on the component root when *Follow system dark mode* is on,
+  and the label — which is the Vue's `margin-top: calc(100% - 20px)`, ten
+  pixels below the tile — vanished with it, so the palette showed four
+  unlabelled tiles for as long as that switch was on and looked fine the moment
+  it was turned off. The Vue is `.color-style-disabled * { opacity: 0.6 }`: the
+  opacity belongs on each **descendant**, which is both what it says and the only
+  arrangement where nothing that dims has a child escaping its box. The general
+  rule: an element that clips or dims must not have a child drawn outside it —
+  put the opacity on the child.
 - **A rounded `clip` is a Windows-only no-op** — the reason the settings page's
   cards came out with square corners there and nowhere else. Slint's desktop
   default is femtovg over OpenGL, but the winit backend **silently falls back to

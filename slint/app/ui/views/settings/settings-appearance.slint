@@ -31,7 +31,18 @@ component PaletteSwatch inherits Rectangle {
 
     width: 90px;
     height: 60px;
-    opacity: root.swatch-disabled ? 0.6 : 1.0;
+
+    // `.color-style-disabled * { opacity: 0.6 }` dims every *descendant*, and
+    // that is written here rather than on the component root on purpose. An
+    // element carrying `opacity` below 1 is composited through a layer bounded
+    // by its own box, so an opacity on this root clipped the label off
+    // altogether: the label is the Vue's `margin-top: calc(100% - 20px)`, ten
+    // pixels *below* this 60px box, and with follow-system on — which is the
+    // only state in which anything here is disabled — the palette showed four
+    // unlabelled tiles. Per-element opacity is also what the Vue says, and
+    // nothing that dims has a child escaping its box: the outline draws nothing,
+    // the image fills the box it dims, and the label draws inside its own.
+    private property <float> dim: root.swatch-disabled ? 0.6 : 1.0;
 
     if root.selected : Rectangle {
         x: -4px;
@@ -40,6 +51,7 @@ component PaletteSwatch inherits Rectangle {
         height: parent.height + 8px;
         border-radius: 10px;
         background: Theme.blue;
+        opacity: root.dim;
     }
 
     image-box := Rectangle {
@@ -47,6 +59,7 @@ component PaletteSwatch inherits Rectangle {
         height: 60px;
         border-radius: 6px;
         clip: true;
+        opacity: root.dim;
 
         Image {
             width: 100%;
@@ -61,6 +74,7 @@ component PaletteSwatch inherits Rectangle {
         font-size: 12.3px;
         font-weight: Theme.font-weight-normal;
         color: Theme.default-text-color.transparentize(0.1);
+        opacity: root.dim;
         y: parent.width - 20px;
         width: 100%;
         horizontal-alignment: center;
