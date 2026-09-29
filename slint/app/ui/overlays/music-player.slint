@@ -346,7 +346,14 @@ export component MusicPlayerOverlay inherits Rectangle {
                             // so the literal is the Vue's weight, as it is elsewhere in
                             // the app where the CSS says 600.
                             font-weight: 600;
-                            color: Theme.text;
+                            // Dimmed while the player is still waiting on audio. The
+                            // Vue had nothing to dim: an `<audio>` element's wait
+                            // was not visible, so a slow load was silence with no
+                            // explanation. A native player streams from a file, and
+                            // a starved buffer is worth saying out loud — but only
+                            // through colour, so the card does not grow a row the
+                            // Vue's layout never had.
+                            color: MusicState.buffering ? Theme.subtext-0 : Theme.text;
                             horizontal-alignment: center;
                             overflow: elide;
                         }
@@ -408,7 +415,13 @@ export component MusicPlayerOverlay inherits Rectangle {
                                 width: parent.width * MusicState.progress;
                                 height: parent.height;
                                 border-radius: 4px;
-                                background: Theme.mauve;
+                                // Faded with the title while the player is
+                                // waiting on audio, for the same reason: the
+                                // bar is the one thing that visibly stops
+                                // moving when the buffer is empty.
+                                background: MusicState.buffering
+                                    ? Theme.mauve.transparentize(0.45)
+                                    : Theme.mauve;
                             }
 
                             // The Vue registers `pointermove`/`pointerup` on `window` for the

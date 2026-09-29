@@ -36,6 +36,11 @@ export global MusicState {
     in-out property <bool> is-playing: false;
     in-out property <bool> shuffle: false;
     in-out property <bool> repeat: false;
+    /// Whether the transport is waiting on audio: a selection being opened, or
+    /// the player running out of buffered samples. The store had no equivalent —
+    /// an `<audio>` element could not be seen to be behind — so this is the one
+    /// piece of state the panel has that the Vue did not.
+    in-out property <bool> buffering: false;
     /// `currentTime` and `duration`, in seconds.
     in-out property <float> current-time: 0;
     in-out property <float> duration: 0;
