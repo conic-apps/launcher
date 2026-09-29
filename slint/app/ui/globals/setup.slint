@@ -1,0 +1,60 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The first-run setup wizard's state (src/views/SetupView.vue and the six
+// `views/setup/SetupWizard*.vue` screens).
+//
+// The wizard's own `ref`s are split the way the migration splits every screen:
+// the *pure UI* state (which step is on screen, which way the last swap slid)
+// stays in the view, and what Rust has to see or drive is a global. Only the
+// import-instances screen needs the latter — it fetches the Mojang manifest and
+// writes an `instance.toml`, exactly the two `@conic/*` calls the Vue makes from
+// the component.
+//
+// Which step is mounted is deliberately *not* here: the swap is a
+// `mode="out-in"` transition whose mounted screen lags the wanted one by the
+// 80ms leave half, and a `changed` handler cannot observe a global's qualified
+// property, so the machine reads better next to the transition that plays it
+// (see `views/setup-view.slint`).
+export global SetupWizardState {
+    // ----- the Java settings screen -----
+    /// Whether this machine can have a Java runtime downloaded for it, which is
+    /// what `SetupWizardJavaSettings.vue`'s `isSupportedJVMAutoInstallPlatform`
+    /// asks: x86-64 or arm64 on Windows and macOS, and x86-64 only on Linux
+    /// (the Mojang runtimes are not published for anything else).
+    ///
+    /// It is a platform fact, so it is answered by Rust from
+    /// `slint-platform`'s `PLATFORM_INFO` rather than worked out here.
+    in property <bool> jvm-auto-install-supported: true;
+
+    // ----- the import-instances screen -----
+    /// One of the two "create a blank instance" buttons is running
+    /// (Vue `creatingLatestRelease` / `creatingLatestSnapshot`).
+    in-out property <bool> creating-release: false;
+    in-out property <bool> creating-snapshot: false;
+    /// …and failed (`createLatestReleaseErrorOccured` and its snapshot twin).
+    /// The flag is what turns the button red; it is never cleared, exactly like
+    /// the Vue's, so a failed attempt stays red for the rest of the session.
+    in-out property <bool> release-error: false;
+    in-out property <bool> snapshot-error: false;
+    /// The version the created instance is on, or empty. The Vue puts it in the
+    /// same `ref` it assigns on success and reads as the button's label.
+    in-out property <string> created-release: "";
+    in-out property <string> created-snapshot: "";
+
+    /// The name the release button's instance is created under. It is a
+    /// `@tr` here rather than in Rust so a language change renames it with the
+    /// rest of the screen — the same reason `CreateInstanceState.default-name`
+    /// is a property of the view.
+    out property <string> latest-release-name: @tr("SetupImportInstances" => "Latest release");
+    out property <string> latest-snapshot-name: @tr("SetupImportInstances" => "Latest snapshot");
+
+    // ----- the script (app/src/setup.rs) -----
+    /// Fetches the Mojang manifest and creates an instance on its latest
+    /// release. Rust then refreshes the game view, which is what picks the new
+    /// instance up.
+    callback create-latest-release();
+    /// …and the same for the latest snapshot.
+    callback create-latest-snapshot();
+}

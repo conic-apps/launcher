@@ -2170,3 +2170,147 @@ msgstr "Отмена"
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "Подтвердить удаление"
+#: ui
+msgctxt "SetupView"
+msgid "First-run setup"
+msgstr "Первоначальная настройка"
+#: ui
+msgctxt "SetupView"
+msgid "Customize Conic Launcher to suit your preferences"
+msgstr "Настройте Conic Launcher под себя"
+#: ui
+msgctxt "SetupView"
+msgid "Back"
+msgstr "Назад"
+#: ui
+msgctxt "SetupView"
+msgid "Let's get started!"
+msgstr "Давайте начнем!"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Add account)"
+msgstr "Далее (Добавить аккаунт)"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Java settings)"
+msgstr "Далее (Настройки Java)"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Launch options)"
+msgstr "Далее (Параметры запуска)"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Import instances)"
+msgstr "Далее (Импорт сборок)"
+#: ui
+msgctxt "SetupView"
+msgid "Finish"
+msgstr "Готово"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Welcome"
+msgstr "Добро пожаловать"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Welcome to the first-run setup wizard!"
+msgstr "Добро пожаловать в мастер первоначальной настройки!"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Conic Launcher is highly customizable, but the complex settings might be overwhelming."
+msgstr "Conic Launcher обладает широкими возможностями настройки, но сложные параметры могут показаться запутанными."
+#: ui
+msgctxt "SetupLanguage"
+msgid "This wizard will quickly walk you through some important settings so you can start playing right away."
+msgstr "Этот мастер быстро проведет вас по важным настройкам, чтобы вы могли сразу приступить к игре."
+#: ui
+msgctxt "SetupPalette"
+msgid "Choose a color scheme"
+msgstr "Выберите цветовую схему"
+#: ui
+msgctxt "SetupPalette"
+msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
+msgstr "Conic Launcher поддерживает несколько цветовых схем. Выберите ту, что подходит вашему стилю."
+#: ui
+msgctxt "SetupPalette"
+msgid "Follow system dark mode"
+msgstr "Следовать темной теме системы"
+#: ui
+msgctxt "SetupPalette"
+msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
+msgstr "Используется Latte при светлой теме системы, в противном случае — Mocha"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Account added!"
+msgstr "Аккаунт добавлен!"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance"
+msgstr "Следующий профиль установлен по умолчанию. Лаунчер будет использовать его для входа в игру, если сборке не назначен отдельный профиль"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Microsoft (Official account)"
+msgstr "Microsoft (официальный аккаунт)"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Yggdrasil (External login)"
+msgstr "Yggdrasil (сторонний аккаунт)"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "No auth service (Offline account)"
+msgstr "Без сервиса авторизации (офлайн-аккаунт)"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Java settings"
+msgstr "Настройки Java"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Conic Launcher can greatly simplify Java environment configuration. Enable \"Auto-install Java runtime\" to avoid manual installation!"
+msgstr "Conic Launcher может значительно упростить настройку окружения Java. Включите «Автоустановку среды Java», чтобы не устанавливать ее вручную!"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\""
+msgstr "Примечание: автоустановка Java может быть недоступна на текущей платформе. Рекомендуется установить Java вручную и отключить «Автоустановку среды Java»"
+#: ui
+msgctxt "SetupLaunchOptions"
+msgid "Game launch options"
+msgstr "Параметры запуска игры"
+#: ui
+msgctxt "SetupLaunchOptions"
+msgid "Here are some basic launch options. You can change more options later in Settings and instance-specific settings."
+msgstr "Это базовые параметры запуска. Позже вы сможете изменить больше опций в настройках лаунчера и отдельных сборок."
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Import instances"
+msgstr "Импорт сборок"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Import previously played instances from other launchers to get started quickly"
+msgstr "Импортируйте сборки из других лаунчеров, чтобы быстро начать игру"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "If you're new to Minecraft, you can also create a blank instance with the latest version right away"
+msgstr "Если вы новичок в Minecraft, можете сразу создать пустую сборку последней версии"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Latest release"
+msgstr "Последний релиз"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Latest snapshot"
+msgstr "Последний снапшот"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "An error occurred"
+msgstr "Произошла ошибка"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Creating..."
+msgstr "Создание..."
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Create instance with latest release"
+msgstr "Создать сборку с последним релизом"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Create instance with latest snapshot"
+msgstr "Создать сборку с последним снапшотом"

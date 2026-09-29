@@ -1,0 +1,420 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "../components/app-icon.slint";
+import { ScrollView } from "../components/scroll-view.slint";
+import { SlideTransition } from "../components/slide-transition.slint";
+import { FocusManager } from "../globals/focus.slint";
+import { Navigation } from "../globals/navigation.slint";
+import { SetupWizardState } from "../globals/setup.slint";
+import { SetupLanguage } from "setup/setup-language.slint";
+import { SetupPalette } from "setup/setup-palette.slint";
+import { SetupAddAccount } from "setup/setup-add-account.slint";
+import { SetupJavaSettings } from "setup/setup-java-settings.slint";
+import { SetupLaunchOptions } from "setup/setup-launch-options.slint";
+import { SetupImportInstances } from "setup/setup-import-instances.slint";
+
+// A button of the wizard's bottom bar (`.footer button`): 40px tall, 8px
+// rounded, a `--ctp-text-inverse` label at 13px, and the white wash the import
+// screen's buttons also get. `.prev` is 200px of `--ctp-blue` with a chevron in
+// front of its label; `.next` takes the rest of the row in `--ctp-mauve`.
+component FooterButton inherits Rectangle {
+    in property <string> text: "";
+    in property <bool> show-icon: false;
+    in property <color> fill: Theme.blue;
+    /// `button.disabled { opacity: 0.7; pointer-events: none }`, which is what
+    /// the "Back" button carries on the first step.
+    in property <bool> disabled: false;
+    callback clicked;
+
+    horizontal-stretch: 1;
+    height: 40px;
+    border-radius: 8px;
+    background: root.fill;
+    opacity: root.disabled ? 0.7 : 1.0;
+
+    // `&:hover { background-image: linear-gradient(#ffffff2f, #ffffff2f), … }`
+    // and `#ffffff6f` on the press — the same two washes as
+    // `.import-instances button`, over the fill rather than mixed into it.
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        background: touch.pressed ? #ffffff6f : touch.has-hover ? #ffffff2f : #ffffff00;
+        animate background { duration: 100ms; easing: ease; }
+    }
+
+    HorizontalLayout {
+        width: 100%;
+        height: 100%;
+        alignment: center;
+        cross-axis-alignment: center;
+        // `gap: 4px` between the chevron and the label.
+        spacing: 4px;
+
+        if root.show-icon : AppIcon {
+            name: "chevron-back";
+            size: 20px;
+            // `.prev svg path { stroke: var(--ctp-text-inverse) }`; the icon is
+            // a stroked path, so the label colour is the stroke colour.
+            icon-color: Theme.text-inverse;
+        }
+
+        Text {
+            text: root.text;
+            font-size: 13px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.text-inverse;
+        }
+    }
+
+    touch := TouchArea {
+        enabled: !root.disabled;
+        clicked => {
+            FocusManager.clear();
+            root.clicked();
+        }
+    }
+}
+
+// src/views/SetupView.vue — the first-run wizard.
+//
+// A column of three bands: the mauve header, the translucent card that holds
+// the step, and the translucent button bar pinned to the bottom of the window.
+// The header and the bar slide in from above and below on mount, and the card
+// fades up, which is the `gsap` timeline `onMounted` plays.
+//
+// The step swap is the Vue's `<Transition :name="transitionName" mode="out-in">`
+// over the six screens, with `transitionName` flipped to `slide-right` by
+// `prevPhase` and back to `slide-left` by `nextPhase` — the same state machine
+// the add-account dialog runs (see `AccountAdd`).
+export component SetupView inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // `* { margin: 0 }` and the reset mean these are the wizard's own
+    // dimensions: the header band is 100px narrower than the window and the
+    // card 186px, both centred (`align-items: center` on the column).
+    private property <length> header-inset: 100px;
+    private property <length> body-inset: 186px;
+    // `height: calc(100% - 176px)`, the wizard's own arithmetic: the card does
+    // not reach the button bar, and the gap it leaves is what the 48px bar
+    // sits in.
+    private property <length> body-height: root.height - 176px;
+
+    // ----- the header -----
+    // `.header-wrapper { background: var(--ctp-base); border-radius: 0 0 12px
+    // 12px; padding-bottom: 8px }` with the mauve `.header` inside it. The 8px
+    // of the wrapper's padding is the strip of plain `base` under the header.
+    header-wrapper := Rectangle {
+        x: (root.width - self.width) / 2;
+        y: root.intro-played ? 0px : -118px;
+        width: root.width - root.header-inset;
+        height: header.height + 8px;
+        background: Theme.base;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+        // gsap `power3.out`, over 0.33s, the first thing on the timeline.
+        animate y { duration: 330ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
+
+        // `.header { background: rgba(var(--ctp-mauve-rgb), 0.2); border: 1px
+        // solid rgba(var(--ctp-mauve-rgb), 0.2); padding: 16px 32px; border-
+        // radius: 0 0 12px 12px; position: relative }`.
+        header := Rectangle {
+            width: 100%;
+            height: 76px;
+            background: Theme.mauve.with-alpha(0.2);
+            border-width: 1px;
+            border-color: Theme.mauve.with-alpha(0.2);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+
+            // The two paragraphs, at 16px and 12px with a 4px gap. The close
+            // button is pinned over the right-hand end, as `position: absolute;
+            // right: 32px; top: 16px` puts it inside the relative `.header`.
+            Text {
+                x: 32px;
+                y: 16px;
+                text: @tr("SetupView" => "First-run setup");
+                font-size: 16px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+
+            Text {
+                x: 32px;
+                y: 36px;
+                text: @tr("SetupView" => "Customize Conic Launcher to suit your preferences");
+                font-size: 12px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+
+            // `.close { position: absolute; right: 32px; top: 16px; padding: 2px;
+            // border-radius: 100px; transition: background 100ms ease }` — a
+            // 20x20 box around the 16px glyph.
+            close := Rectangle {
+                x: parent.width - self.width - 32px;
+                y: 16px;
+                width: 20px;
+                height: 20px;
+                border-radius: 100px;
+                background: close-touch.pressed ? Theme.mauve.with-alpha(0.5)
+                    : close-touch.has-hover ? Theme.mauve.with-alpha(0.4)
+                    : #ffffff00;
+                animate background { duration: 100ms; easing: ease; }
+
+                AppIcon {
+                    x: 2px;
+                    y: 2px;
+                    name: "xmark";
+                    size: 16px;
+                    icon-color: Theme.default-text-color.transparentize(0.1);
+                }
+
+                close-touch := TouchArea {
+                    clicked => {
+                        FocusManager.clear();
+                        Navigation.navigate("game");
+                    }
+                }
+            }
+        }
+    }
+
+    // ----- the card -----
+    // `.body { width: calc(100% - 186px); height: calc(100% - 176px);
+    // padding: 24px 36px; background: rgba(var(--ctp-base-rgb), 0.9);
+    // border-radius: 12px; margin-top: 16px; overflow: hidden; position:
+    // relative }`.
+    //
+    // The padding is the `ScrollView`'s own content padding rather than the
+    // card's, which is what puts the scrollbar where the Vue's does: the Vue's
+    // `.scrollbar { position: absolute; right: 8px }` resolves against the
+    // card — the nearest positioned ancestor — so it lands 8px from the card's
+    // own edge, inside the 36px of padding, rather than 36px further in. A
+    // Slint `ScrollView` pins its scrollbar to its own right edge, and this is
+    // the one arrangement that makes the two the same.
+    body := Rectangle {
+        x: (root.width - self.width) / 2;
+        y: header-wrapper.height + 16px;
+        width: root.width - root.body-inset;
+        height: root.body-height;
+        background: Theme.base.with-alpha(0.9);
+        border-radius: 12px;
+        clip: true;
+        // gsap `opacity: 0, scale: 0.9`, 0.06s after the header, 0.33s,
+        // `power3.out`.
+        opacity: root.intro-played ? 1.0 : 0.0;
+        transform-scale: root.intro-played ? 100% : 90%;
+        animate opacity, transform-scale {
+            delay: 60ms;
+            duration: 330ms;
+            easing: cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+
+        ScrollView {
+            content-column := VerticalLayout {
+                padding-top: 24px;
+                padding-bottom: 24px;
+                padding-left: 36px;
+                padding-right: 36px;
+                alignment: start;
+
+                if root.shown == "language" : SlideTransition {
+                    phase: root.leaving ? "leave" : root.arrive-phase;
+                    direction: root.direction;
+                    SetupLanguage { }
+                }
+
+                if root.shown == "palette" : SlideTransition {
+                    phase: root.leaving ? "leave" : root.arrive-phase;
+                    direction: root.direction;
+                    SetupPalette { }
+                }
+
+                if root.shown == "add-account" : SlideTransition {
+                    phase: root.leaving ? "leave" : root.arrive-phase;
+                    direction: root.direction;
+                    SetupAddAccount { }
+                }
+
+                if root.shown == "java-settings" : SlideTransition {
+                    phase: root.leaving ? "leave" : root.arrive-phase;
+                    direction: root.direction;
+                    SetupJavaSettings { }
+                }
+
+                if root.shown == "launch-options" : SlideTransition {
+                    phase: root.leaving ? "leave" : root.arrive-phase;
+                    direction: root.direction;
+                    SetupLaunchOptions { }
+                }
+
+                if root.shown == "import-instances" : SlideTransition {
+                    phase: root.leaving ? "leave" : root.arrive-phase;
+                    direction: root.direction;
+                    SetupImportInstances { }
+                }
+            }
+        }
+    }
+
+    // ----- the step machine -----
+    // The six phases of `SetupView.vue`'s `phases` array, and the labels of
+    // `nextPhaseTexts` beside them.
+    private property <[string]> phases: [
+        "language",
+        "palette",
+        "add-account",
+        "java-settings",
+        "launch-options",
+        "import-instances",
+    ];
+
+    /// The step the user asked for (`currentPhaseIndex`), written by
+    /// `goto-step` and read by the swap and by the button labels.
+    private property <int> wanted: 0;
+    /// The step actually mounted (`currentPhase`) — one 80ms beat behind
+    /// `wanted`.
+    private property <string> shown: "";
+    private property <string> direction: "left";
+    private property <bool> leaving: false;
+    private property <bool> leave-armed: false;
+    private property <bool> enter-armed: false;
+    private property <string> arrive-phase: "shown";
+
+    /// The "Next" button's label (`nextPhaseTexts[currentPhaseIndex]`, which
+    /// moves with the request and not with the 80ms beat).
+    out property <string> next-label:
+        root.wanted == 0 ? @tr("SetupView" => "Let's get started!")
+        : root.wanted == 1 ? @tr("SetupView" => "Next (Add account)")
+        : root.wanted == 2 ? @tr("SetupView" => "Next (Java settings)")
+        : root.wanted == 3 ? @tr("SetupView" => "Next (Launch options)")
+        : root.wanted == 4 ? @tr("SetupView" => "Next (Import instances)")
+        : @tr("SetupView" => "Finish");
+
+    // `<Transition>` has no `appear`, and the page stack rebuilds this view on
+    // every navigation to it, so the first step is simply mounted.
+    init => {
+        root.shown = root.phases[0];
+    }
+
+    // The `mode="out-in"` beat: the mounted step plays its 80ms leave, and the
+    // one the user asked for is mounted when that is over — at its enter rest,
+    // moving to "shown" a frame later, since an element created and finished in
+    // the same frame has nothing to animate from.
+    leave-timer := Timer {
+        interval: 80ms;
+        running: root.leave-armed;
+        triggered => {
+            root.leave-armed = false;
+            root.leaving = false;
+            if root.phases[root.wanted] != root.shown {
+                root.shown = root.phases[root.wanted];
+                root.arrive-phase = "enter";
+                root.enter-armed = true;
+            }
+        }
+    }
+
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.enter-armed;
+        triggered => {
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+        }
+    }
+
+    function goto-step(index: int, towards-left: bool) {
+        if index < 0 || index >= root.phases.length || index == root.wanted {
+            return;
+        }
+        // `nextPhase()` and `prevPhase()`, which set `transitionName` from the
+        // direction they move in and then step the index.
+        root.direction = towards-left ? "left" : "right";
+        root.wanted = index;
+        if root.shown == "" {
+            root.shown = root.phases[index];
+            return;
+        }
+        root.leaving = true;
+        root.leave-armed = true;
+        leave-timer.restart();
+    }
+
+    // ----- the intro -----
+    // `gsap.timeline().from(header, { y: -118, … }, "<").from(body, { opacity:
+    // 0, scale: 0.9, … }, "<0.06").from(footer, { y: 100, … }, "<0.03")` — the
+    // positions are relative to the previous tween's start, so the three begin
+    // at 0ms, 60ms and 90ms.
+    private property <bool> intro-played: false;
+
+    intro-timer := Timer {
+        interval: 16ms;
+        running: true;
+        triggered => {
+            root.intro-played = true;
+            intro-timer.running = false;
+        }
+    }
+
+    // ----- the button bar -----
+    // `.footer { width: 100%; height: 48px; background:
+    // rgba(var(--ctp-surface0-rgb), 0.6); backdrop-filter: blur(4px); position:
+    // absolute; bottom: 0; left: 0; display: flex; gap: 32px; padding: 16px }`.
+    //
+    // The bar has no `backdrop-filter` here (Slint 1.18 has no backdrop blur,
+    // like the toolbar and the footer of the game view), so the content
+    // scrolling under it shows through unblurred. The rule's `position:
+    // absolute` resolves against `body` — the wizard itself is not a containing
+    // block — which puts the bar at the bottom of the *window*; the wizard fills
+    // everything below the title bar, so that is the same place.
+    footer := Rectangle {
+        x: 0px;
+        y: root.intro-played ? root.height - self.height : root.height - self.height + 100px;
+        width: 100%;
+        height: 48px;
+        background: Theme.surface-0.with-alpha(0.6);
+        animate y { delay: 90ms; duration: 330ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
+
+        // `display: flex; gap: 32px; padding: 16px` with `button { margin-top:
+        // -24px; height: 40px }`: the buttons are 40px tall in a 16px-tall
+        // content box, pulled up 24px, so they sit 8px above the bar and stop
+        // 16px short of its bottom edge. The bar is a plain `Rectangle` rather
+        // than a layout, so that is said with the numbers rather than with a
+        // padding.
+        row := HorizontalLayout {
+            x: 16px;
+            y: 16px - 24px;
+            width: parent.width - 32px;
+            height: 40px;
+            spacing: 32px;
+
+            FooterButton {
+                horizontal-stretch: 0;
+                width: 200px;
+                text: @tr("SetupView" => "Back");
+                show-icon: true;
+                disabled: root.wanted == 0;
+                clicked => { root.goto-step(root.wanted - 1, false); }
+            }
+
+            FooterButton {
+                fill: Theme.mauve;
+                text: root.next-label;
+                clicked => {
+                    if root.wanted < root.phases.length - 1 {
+                        root.goto-step(root.wanted + 1, true);
+                    } else {
+                        Navigation.navigate("game");
+                    }
+                }
+            }
+        }
+    }
+}

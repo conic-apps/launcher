@@ -26,8 +26,25 @@ export component AccountAdd inherits VerticalLayout {
     /// (see `overlays/dialogs/account-add.slint`).
     in property <length> content-width: 540px;
 
+    /// Mounted inside the setup wizard rather than the add-account dialog
+    /// (`SetupWizardAddAccount.vue`, which renders it with
+    /// `style="width: 100%; height: 100%"`).
+    ///
+    /// It is a flag rather than three separate properties because the Vue says
+    /// the same thing with scoped `:deep()` rules on the wizard's own markup:
+    /// `.account-add { padding: 0 }` and `.cancel-login { display: none }`, so
+    /// every screen's "Cancel" goes with it. It is forwarded to the three
+    /// screens, which is where the buttons are.
+    ///
+    /// The wizard's other two `:deep()` rules — `.account-add-container,
+    /// .auth-code { height: 100% }` and `.add-microsoft-account-container
+    /// { flex: 1 }` — are not reproduced: they only stretch a top-aligned block
+    /// over the box it already starts at the top of, which is what
+    /// `alignment: start` already does.
+    in property <bool> wizard-host: false;
+
     width: root.content-width;
-    padding: 8px;
+    padding: root.wizard-host ? 0px : 8px;
     spacing: 0px;
     // `start`, not the default `stretch`: the panel's height is tweened, so
     // while that runs there is a surplus (or a deficit) to hand out, and a
@@ -128,18 +145,18 @@ export component AccountAdd inherits VerticalLayout {
     if root.shown == "microsoft" : SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
-        AccountAddMicrosoft { }
+        AccountAddMicrosoft { wizard-host: root.wizard-host; }
     }
 
     if root.shown == "yggdrasil" : SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
-        AccountAddYggdrasil { }
+        AccountAddYggdrasil { wizard-host: root.wizard-host; }
     }
 
     if root.shown == "offline" : SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;
-        AccountAddOffline { }
+        AccountAddOffline { wizard-host: root.wizard-host; }
     }
 }

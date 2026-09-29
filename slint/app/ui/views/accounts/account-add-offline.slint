@@ -23,6 +23,10 @@ export component AccountAddOffline inherits VerticalLayout {
     // `AccountAdd`).
     alignment: start;
 
+    // Mounted inside the setup wizard, which hides the "Cancel" button
+    // (`:deep(.cancel-login) { display: none }`). See `AccountAdd`.
+    in property <bool> wizard-host: false;
+
     init => {
         // The Vue's `onMounted`, and also what makes a reopened dialog start
         // blank: the screen is destroyed and rebuilt whenever the dialog
@@ -132,7 +136,7 @@ export component AccountAddOffline inherits VerticalLayout {
         padding-top: 12px;
         spacing: 8px;
 
-        BaseButton {
+        if !root.wizard-host : BaseButton {
             horizontal-stretch: 1;
             text: @tr("Cancel");
             clicked => { AccountAddState.close(); }

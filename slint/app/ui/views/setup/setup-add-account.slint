@@ -1,0 +1,139 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AccountAvatar } from "../../components/account-avatar.slint";
+import { AccountAdd } from "../accounts/account-add.slint";
+import { GameState } from "../../globals/game.slint";
+import { WizardTitle, WizardMessage } from "wizard-text.slint";
+
+// src/views/setup/SetupWizardAddAccount.vue
+//
+// The screen is one of two: no account yet, so the add-account body fills it; an
+// account, so the profile card the wizard promises to have made the default.
+//
+// The Vue reads `configStore.current_account`, which is the account the game
+// view already has pushed into `GameState`: Rust owns it, and a finished
+// add-account writes the config and then asks that view to reload, so the card
+// appears on its own once the sign-in is through.
+export component SetupAddAccount inherits VerticalLayout {
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+    // `.account-view-container { align-items: center }`. Both of the paragraphs
+    // below carry the `width: 100%` their own rules ask for (`.wizard-message`
+    // from the body, `p.wizard-title { width: 100% }` from the account view), so
+    // the centring is only visible on the card.
+    cross-axis-alignment: center;
+
+    if !GameState.has-account : AccountAdd {
+        content-width: root.width;
+        // The wizard's own 24/36 padding is the dialog's 8px, and the wizard's
+        // close/next buttons stand in for the "Cancel" ones it hides — see
+        // `AccountAdd`.
+        wizard-host: true;
+    }
+
+    if GameState.has-account : WizardTitle {
+        title: @tr("SetupAddAccount" => "Account added!");
+    }
+
+    if GameState.has-account : WizardMessage {
+        width: 100%;
+        message: @tr("SetupAddAccount" => "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance");
+    }
+
+    // `.profile-card { background: var(--ctp-surface0); display: flex;
+    // flex-direction: column; align-items: center; justify-content: center;
+    // border-radius: 12px; padding: 24px; margin-top: 24px; width: 320px }`
+    // — the *raw* surface0, not `--setting-item-background`, which is what
+    // Latte remaps onto its mantle.
+    if GameState.has-account : Rectangle {
+        width: 320px;
+        height: card-rows.preferred-height + 48px;
+        background: Theme.surface-0;
+        border-radius: 12px;
+
+        card-rows := VerticalLayout {
+            x: 24px;
+            y: 24px;
+            width: parent.width - 48px;
+            alignment: start;
+            spacing: 0px;
+
+            // The 56px head, centred by the card's `align-items: center`, and
+            // the `filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5))` the Vue puts
+            // on it (`.avatar`), which is the CSS `filter` Slint spells with the
+            // element's own drop shadow.
+            Rectangle {
+                width: 100%;
+                height: 56px;
+                background: transparent;
+
+                AccountAvatar {
+                    x: (parent.width - self.width) / 2;
+                    y: 0px;
+                    size: 56px;
+                    kind: GameState.current-account-kind;
+                    skin: GameState.current-account-avatar;
+                    drop-shadow-blur: 8px;
+                    drop-shadow-offset-x: 0px;
+                    drop-shadow-offset-y: 0px;
+                    drop-shadow-color: #00000080;
+                }
+            }
+
+            // `p.profile-name { margin-top: 16px; font-size: 16px }` — the margin
+            // as the spacer a layout has none of.
+            Rectangle {
+                width: 100%;
+                height: 16px;
+                background: transparent;
+            }
+
+            Text {
+                width: 100%;
+                text: GameState.current-account-name;
+                font-size: 16px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+                horizontal-alignment: center;
+            }
+
+            // `p.profile-type { margin-top: 8px; font-size: 13px }`.
+            Rectangle {
+                width: 100%;
+                height: 8px;
+                background: transparent;
+            }
+
+            Text {
+                width: 100%;
+                text: GameState.current-account-kind == "Microsoft"
+                    ? @tr("SetupAddAccount" => "Microsoft (Official account)")
+                    : GameState.current-account-kind == "Yggdrasil"
+                    ? @tr("SetupAddAccount" => "Yggdrasil (External login)")
+                    : @tr("SetupAddAccount" => "No auth service (Offline account)");
+                font-size: 13px;
+                font-weight: Theme.font-weight-normal;
+                // `&.microsoft { color: green } &.yggdrasil { color: yellow }
+                // &.offline { color: red }` — the same three colours
+                // `AccountAvatar` rings a head with.
+                color: GameState.current-account-kind == "Microsoft" ? Theme.green
+                    : GameState.current-account-kind == "Yggdrasil" ? Theme.yellow
+                    : Theme.red;
+                horizontal-alignment: center;
+            }
+        }
+    }
+
+    // The 24px `margin-top` of `.profile-card`, which a layout has no margin
+    // for. The add-account branch carries no such margin in the Vue, so it is
+    // part of the card's own cell rather than a sibling.
+    if GameState.has-account : Rectangle {
+        width: 0px;
+        height: 24px;
+        background: transparent;
+    }
+}

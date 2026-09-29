@@ -2170,3 +2170,147 @@ msgstr "İptal"
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "Silmeyi onayla"
+#: ui
+msgctxt "SetupView"
+msgid "First-run setup"
+msgstr "İlk açılış kurulumu"
+#: ui
+msgctxt "SetupView"
+msgid "Customize Conic Launcher to suit your preferences"
+msgstr "Conic Launcher'ı tercihlerinize göre özelleştirin"
+#: ui
+msgctxt "SetupView"
+msgid "Back"
+msgstr "Geri"
+#: ui
+msgctxt "SetupView"
+msgid "Let's get started!"
+msgstr "Hadi başlayalım!"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Add account)"
+msgstr "Sonraki (Hesap ekle)"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Java settings)"
+msgstr "Sonraki (Java ayarları)"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Launch options)"
+msgstr "Sonraki (Başlatma seçenekleri)"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Import instances)"
+msgstr "Sonraki (Örnekleri içe aktar)"
+#: ui
+msgctxt "SetupView"
+msgid "Finish"
+msgstr "Bitir"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Welcome"
+msgstr "Hoş geldiniz"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Welcome to the first-run setup wizard!"
+msgstr "İlk açılış kurulum sihirbazına hoş geldiniz!"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Conic Launcher is highly customizable, but the complex settings might be overwhelming."
+msgstr "Conic Launcher yüksek ölçüde özelleştirilebilir, ancak karmaşık ayarlar bunaltıcı olabilir."
+#: ui
+msgctxt "SetupLanguage"
+msgid "This wizard will quickly walk you through some important settings so you can start playing right away."
+msgstr "Bu sihirbaz, hemen oynamaya başlayabilmeniz için bazı önemli ayarlarda size hızlıca yol gösterecek."
+#: ui
+msgctxt "SetupPalette"
+msgid "Choose a color scheme"
+msgstr "Bir renk şeması seçin"
+#: ui
+msgctxt "SetupPalette"
+msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
+msgstr "Conic Launcher birden fazla renk şemasını destekler. Tarzınıza uygun olanı seçin."
+#: ui
+msgctxt "SetupPalette"
+msgid "Follow system dark mode"
+msgstr "Sistem karanlık modunu takip et"
+#: ui
+msgctxt "SetupPalette"
+msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
+msgstr "Sistem açık moddayken Latte kullanır, aksi halde Mocha kullanır"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Account added!"
+msgstr "Hesap eklendi!"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance"
+msgstr "Aşağıdaki profil varsayılan olarak ayarlandı. Bir örneğe profil atanmadığında başlatıcı, oyunda oturum açmak için bu profili kullanacak"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Microsoft (Official account)"
+msgstr "Microsoft (Resmi hesap)"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Yggdrasil (External login)"
+msgstr "Yggdrasil (Harici giriş)"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "No auth service (Offline account)"
+msgstr "Kimlik doğrulama servisi yok (Çevrimdışı hesap)"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Java settings"
+msgstr "Java ayarları"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Conic Launcher can greatly simplify Java environment configuration. Enable \"Auto-install Java runtime\" to avoid manual installation!"
+msgstr "Conic Launcher, Java ortamı yapılandırmasını büyük ölçüde basitleştirebilir. Manuel kurulumdan kaçınmak için \"Java çalışma ortamını otomatik kur\" seçeneğini etkinleştirin!"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\""
+msgstr "Not: Java otomatik kurulumu geçerli platformda kullanılamayabilir. Java\\'yı elle kurmanız ve \"Java çalışma ortamını otomatik kur\" seçeneğini devre dışı bırakmanız önerilir"
+#: ui
+msgctxt "SetupLaunchOptions"
+msgid "Game launch options"
+msgstr "Oyun başlatma seçenekleri"
+#: ui
+msgctxt "SetupLaunchOptions"
+msgid "Here are some basic launch options. You can change more options later in Settings and instance-specific settings."
+msgstr "Bunlar bazı temel başlatma seçenekleridir. Daha fazla seçeneği daha sonra Ayarlar'dan ve örneğe özel ayarlardan değiştirebilirsiniz."
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Import instances"
+msgstr "Örnekleri içe aktar"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Import previously played instances from other launchers to get started quickly"
+msgstr "Daha önce oynanan örnekleri diğer başlatıcılardan içe aktararak hızlıca başlayın"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "If you're new to Minecraft, you can also create a blank instance with the latest version right away"
+msgstr "Minecraft'ta yeniyseniz, en son sürümle hemen boş bir örnek de oluşturabilirsiniz"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Latest release"
+msgstr "En son kararlı sürüm"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Latest snapshot"
+msgstr "En son anlık görüntü"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "An error occurred"
+msgstr "Bir hata oluştu"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Creating..."
+msgstr "Oluşturuluyor..."
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Create instance with latest release"
+msgstr "En son kararlı sürümle örnek oluştur"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Create instance with latest snapshot"
+msgstr "En son anlık görüntüyle örnek oluştur"

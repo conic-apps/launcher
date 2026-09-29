@@ -31,6 +31,7 @@ slint/
       create_instance.rs            # the create-instance dialog's script
       account_add.rs                # the add-account dialog's script
       account_avatar.rs             # player-head avatars (the Vue's canvas crop)
+      setup.rs                      # the first-run wizard's script
       music.rs                      # the music player's script (see Music player)
       instance_settings.rs          # the instance settings overlay's script
     ui/
@@ -55,6 +56,7 @@ slint/
         window-drag.slint           # the Vue's `data-tauri-drag-region` regions
         music.slint                 # background-music state (src/store/music.ts)
         instance-settings.slint     # the overlay's own form state (useInstanceSettings.ts)
+        setup.slint                 # the first-run wizard's import-instances state
       components/                   # shared/reusable pieces
         title-bar.slint
         window-background.slint     # the window's background layers (src/components/WindowBackground.vue)
@@ -85,12 +87,16 @@ slint/
         item-loading-icon.slint
         beat-map.slint              # the footer audio visualizer (src/components/BeatMap.vue)
         instance-card.slint         # the instance card (InstanceSetting.vue's `.instance`)
+        palette-row.slint           # the four palette tiles (SettingsAppearance.vue /
+                                    #   SetupWizardPalette.vue — the same block)
       views/
         settings-view.slint         # src/views/SettingsView.vue
         settings/                   # the eight settings sections + InfoBox
         game-view.slint             # src/views/GameView.vue
         game/                       # summary, list, toolbar, footer, dropdowns
         launch-view.slint           # src/views/LaunchView.vue
+        setup-view.slint            # src/views/SetupView.vue
+        setup/                      # the wizard's six screens + their shared paragraphs
         game-placeholder.slint      # stand-in for the not-yet-migrated views
         accounts/                   # the add-account dialog's three screens
       overlays/
@@ -772,7 +778,32 @@ and tags, and the instal/remove actions go through `slint-download`.
   The card's background picture is decoded with the `image` crate, like the
   window background and the content overlays — see the deviations.
 
-Not yet migrated: `AccountsView`, the setup wizard and the command palette;
+- **The first-run setup wizard** (`views/setup-view.slint`,
+  `views/setup/Setup*.slint`, `globals/setup.slint`, `app/src/setup.rs`).
+  `SetupView.vue` and the six `views/setup/SetupWizard*.vue` screens: the
+  header band, the translucent card, the button bar, and the
+  `mode="out-in"` `slide-left` / `slide-right` swap between the steps. The two
+  steps that are only *settings* are the settings screen's own sections —
+  `SettingsJvm` and `SettingsGame` — taken with `group-inset: 0px`, which is the
+  wizard's `:deep(.setting-group) { width: 100% }`; and the palette step reuses
+  the settings appearance's palette group, which `components/palette-row.slint`
+  now holds for both (the two Vue files carry the same markup and CSS verbatim).
+  The add-account step embeds `AccountAdd` with `wizard-host`, which is what the
+  Vue's `:deep()` rules over that screen say: the dialog's 8px of padding is the
+  wizard's own, and its "Cancel" buttons go.
+  `app/src/setup.rs` holds the two things the screens cannot do: the
+  import-instances step's two "create a blank instance" buttons, which fetch
+  the Mojang manifest and write an `instance.toml` (the `@conic/install` and
+  `@conic/instance` calls the component makes), and the platform answer the Java
+  screen asks — the Mojang runtimes are published for x86-64 and arm64 on
+  Windows and macOS and for x86-64 only on Linux, so anything else gets
+  `prefer_mojang_java` turned off on arrival, which is the Vue's `onMounted`.
+  The two instance names are `@tr`s on the global rather than Rust strings, so a
+  language change renames them with the rest of the screen.
+  The twelve catalogs gain 36 entries each, seeded from `setup.*` in
+  `src/locales/*.ts` by `slint/tools/seed-setup-i18n.py`.
+
+Not yet migrated: `AccountsView` and the command palette;
 `views/game-placeholder.slint` stands in for the not-yet-migrated views. The
 account avatars (the footer's 56px head, its switcher's 18px rows and the
 add-account dialog's profile rows) all draw the real skin now; `AccountAvatar`
@@ -1943,6 +1974,57 @@ the very first play at startup would start silently. This is the same clock
   Without it symphonia reads a WAV header and then has no decoder for the samples
   it found, which fails every WAV in the folder with "unsupported codec" — the one
   thing a music folder is most likely to be full of.
+- **Setup wizard deviations**, all deliberate:
+  - **The card's padding is the scroll area's, not the card's.** `.body` is
+    `padding: 24px 36px; overflow: hidden` around the wizard's own `ScrollView`,
+    and `ScrollView.vue`'s `.scrollbar` is `position: absolute; right: 8px`
+    against the nearest positioned ancestor — the card. So the Vue's scrollbar
+    lands 8px from the *card's* edge, inside the 36px of padding. A Slint
+    `ScrollView` pins its scrollbar to its own right edge, so the padding is put
+    on the scroll area's content instead, which puts the scrollbar where the
+    Vue's is. The card keeps the border-radius, the fill and the clip.
+  - **The language grid is laid out by hand.** `grid-template-columns:
+    repeat(auto-fill, minmax(100px, 1fr))` has no counterpart: `GridLayout`'s
+    `col`/`row` bindings have to be compile-time constants, so an `auto-fill`
+    track list cannot be expressed, and a wrapping `FlexboxLayout` measures
+    itself at √(total area) rather than at the width the `ScrollView` gives it —
+    which is exactly the trap the content panels' `filter_row_height` works
+    around. The track count and the column width are computed instead
+    (`floor((width + 8px) / 108px)`, and what is left over divided between
+    them), which is what the browser does with the same two rules.
+  - **The language screen's own intro is not played.** The screen exposes it with
+    `defineExpose({ playIntro })` — a staggered `opacity: 0, scale: 0.8` over the
+    title, the three paragraphs and the twelve buttons — and nothing ever calls
+    it: `SetupView.vue` takes the ref and plays only its own header/body/footer
+    timeline. Dead code is not carried over; `SetupView`'s intro is.
+  - **The import button is a dead button, as it is in the Vue.**
+    `.import-from-other-launcher` has no `@click` in the original, so importing
+    from another launcher is a feature the app does not have yet. It is ported
+    as the button it is rather than dropped, so the screen still looks the way
+    it does.
+  - **The Java screen's inner `ScrollView` is not reproduced, and nothing scrolls
+    differently without it.** `.wrapper { height: 100% }` resolves against an
+    auto-height block parent, so that scroll area grows with its content and
+    never scrolls — the card's own `ScrollView` is what moves. One scroller is
+    also the better arrangement, since a nested one would take the wheel.
+  - **The add-account screen fills the card, and that changes nothing.** The
+    wizard's `:deep()` rules `.account-add-container, .auth-code { height:
+    100% }` and `.add-microsoft-account-container { flex: 1 }` only stretch a
+    top-aligned block over the box it already starts at the top of, which is what
+    `alignment: start` does. The two rules that do change something — the
+    padding and the hidden "Cancel" buttons — are the `wizard-host` flag.
+  - **`.wizard-message`'s 1.5 line height is 1.115× taller than the
+    stylesheet's.** 1.18 has no CSS `line-height`, and `line-height-factor`
+    multiplies the font's natural line box rather than the font size, so 19.5px
+    comes out as 21.7px. The same trade the rest of the port makes; the
+    paragraphs are one line taller per wrapped line than the Vue's.
+  - **The profile card's type colour is the switch's other half.** The Vue has
+    three mutually exclusive classes (`.microsoft`, `.yggdrasil`, `.offline`)
+    and an account is always one of the three, so the colours are chosen from
+    `GameState.current-account-kind` instead.
+  - **The button bar has no backdrop blur** (the same as the toolbar's and the
+    game view footer's): Slint 1.18 has none, so the card scrolling under it
+    shows through its own `surface0` at 60% unblurred.
 
 - **Icons**: the original uses Font Awesome Pro (`fa-pro`), which can't be
   shipped. The search glyph is currently a hand-embedded path; a proper icon
