@@ -33,6 +33,7 @@ slint/
       account_avatar.rs             # player-head avatars (the Vue's canvas crop)
       music.rs                      # the music player's script (see Music player)
       command_palette.rs            # the command palette's script
+      instance_settings.rs          # the instance settings overlay's script
     ui/
       app.slint                     # root `App` Window (mirrors src/App.vue)
       theme.slint                   # palette + typography tokens, embeds fonts
@@ -55,6 +56,7 @@ slint/
         window-drag.slint           # the Vue's `data-tauri-drag-region` regions
         music.slint                 # background-music state (src/store/music.ts)
         command-palette.slint       # the command palette's state + its labels
+        instance-settings.slint     # the overlay's own form state (useInstanceSettings.ts)
       components/                   # shared/reusable pieces
         title-bar.slint
         window-background.slint     # the window's background layers (src/components/WindowBackground.vue)
@@ -84,6 +86,7 @@ slint/
         slide-transition.slint      # the slide-left / slide-right screen swap
         item-loading-icon.slint
         beat-map.slint              # the footer audio visualizer (src/components/BeatMap.vue)
+        instance-card.slint         # the instance card (InstanceSetting.vue's `.instance`)
       views/
         settings-view.slint         # src/views/SettingsView.vue
         settings/                   # the eight settings sections + InfoBox
@@ -96,9 +99,11 @@ slint/
         dialog-root.slint           # src/overlays/DialogRoot.vue
         music-player.slint          # src/overlays/MusicPlayer.vue
         command-palette.slint       # src/overlays/CommandPalette.vue
+        instance-settings.slint     # src/overlays/InstanceSetting.vue
         dialogs/
           account-add.slint         # src/overlays/dialogs/AccountAdd.vue
           create-instance.slint     # src/overlays/dialogs/CreateInstance.vue
+          confirm-delete-instance.slint # …/dialogs/ConfirmDeleteInstance.vue
           launch-errors.slint       # the four launch error dialogs
           multiplayer-extension.slint  # …/dialogs/MultiplayerExtension.vue
           multiplayer/
@@ -234,6 +239,14 @@ Uses Slint's built-in translation support:
   use e.g. `msgctxt "App"` / `msgctxt "TitleBar"`. Globals can set an explicit
   context with `@tr("GameTime" => "…")`, which `GameTime` uses for the relative
   time strings.
+
+The instance settings overlay's strings name their context explicitly
+(`@tr("InstanceSettings" => …)`) and the delete dialog's do the same
+(`ConfirmDeleteInstance`), so a lookup does not move when one of them is written
+into a local `component` instead. The overlay's 42 are seeded from
+`game.instance.*` in `src/locales/*.ts`; the dialog's four were hard-coded
+Chinese in the Vue, so their Chinese is the source text and the catalogs
+translate them.
 
 All 12 launcher languages ship a catalog (`en_US` is the fallback):
 `zh_CN`, `zh_TW`, `ja_JP`, `ko_KR`, `de_DE`, `fr_FR`, `es_ES`, `pt_BR`, `ru_RU`,
@@ -768,16 +781,25 @@ and tags, and the instal/remove actions go through `slint-download`.
       would leave it at 0. That put the input row in the middle of the panel
       until every child was given an explicit `y`; the component says so where it
       matters.
-    - **The shortcut is two `KeyBinding`s, not one.** Slint's `@keys` modifier
-      names are the *physical* keys, so `Control` is the control key on macOS
-      too and never matches `⌘`. The Vue's `isMacOS() ? event.metaKey :
-      event.ctrlKey` is a platform choice, so it is one here as well. The
-      bindings sit on a `FocusScope` that wraps the whole window, which is what
-      the Vue's document-level listener amounts to: a window with nothing focused
-      discards its key events, and a `FocusScope` beside the content would not be
-      an ancestor of a settings text field's. `forward-focus` points at it, so it
-      holds the focus from the first frame, and the palette hands it back when it
-      closes (`app.slint`) for the same reason.
+    - **The shortcut is one `KeyBinding`, on a `FocusScope` that wraps the whole
+      window.** Slint's `@keys` modifier names are the *physical* keys, so
+      `Control` is the control key on macOS too; a second binding naming `Meta`
+      is what `⌘` would match, and one binding per platform is the shape the
+      Vue's `isMacOS() ? event.metaKey : event.ctrlKey` has. The binding sits on
+      a scope that wraps the window, which is what the Vue's document-level
+      listener amounts to: a window with nothing focused discards its key events,
+      and a scope beside the content would not be an ancestor of a settings text
+      field's. `forward-focus` points at it, so it holds the focus from the first
+      frame, and the palette hands it back when it closes (`app.slint`) for the
+      same reason.
+    - **`revealSelected` is in the `content-y` sign, and so is `scroll-to`.** The
+      Vue reads the row's `offsetTop`; `ScrollView.content-y` counts *down*, so a
+      row 400px into the content is `-400px`, and that is the sign `scroll-to`
+      takes as well. The two targets do not read alike — the row below the
+      viewport comes out as `bottom + height - 8px` and the one above as
+      `top + 8px` — and the second is the quiet one: the other sign still scrolls
+      in the right direction, just 16px short, which leaves the row's top above
+      the viewport and a fifth of it cut off.
 
     The list is built in Rust — the order, the filter, the section headings and
     every row's height have to agree, and a Slint expression can neither build a
@@ -801,11 +823,99 @@ and tags, and the instal/remove actions go through `slint-download`.
     translation. Making the filter see the translation would mean filtering in an
     expression, and Slint can neither build a model nor index one.
 
-Not yet migrated: `AccountsView`, the setup wizard and the instance-settings
-overlay; `views/game-placeholder.slint` stands in for the not-yet-migrated
-views. The account avatars (the footer's 56px head, its switcher's 18px rows and
-the add-account dialog's profile rows) all draw the real skin now; `AccountAvatar`
+- **The instance settings overlay** (`overlays/instance-settings.slint`,
+  `globals/instance-settings.slint`, `app/src/instance_settings.rs`), and the
+  **delete-instance dialog** its last row opens
+  (`overlays/dialogs/confirm-delete-instance.slint`). The panel is the Vue's
+  `.game-content-wrapper.instance-settings-wrapper`, so it is mounted on the same
+  shared `ContentOverlay` as the content panels with `panel-inset: 200px`, and
+  everything inside it is the original's markup: the 52px mantle header that
+  scrolls away with the content, the instance card, and the eight settings
+  blocks. `InstanceCard` is one component for the card the overlay and the
+  delete dialog both draw (`InstanceSetting.vue`, `ConfirmDeleteInstance.vue`
+  and `CreateInstance.vue` carry the same block verbatim).
+  `app/src/instance_settings.rs` owns the instance being edited: it re-reads it
+  from `instance.toml`, merges the overlay's fields into the config, and writes
+  it back — the work the Vue's `watchEffect` did. Rust, not the UI, is where the
+  two branches of that effect live (switching
+  `enable_instance_specific_settings` on copies the launcher's own launch
+  settings into the instance, switching it off drops everything but the flag), so
+  the panels are pushed what was actually stored rather than what was asked for.
+  The card's background picture is decoded with the `image` crate, like the
+  window background and the content overlays — see the deviations.
+
+Not yet migrated: `AccountsView` and the setup wizard; `views/game-placeholder.slint` stands in for the not-yet-migrated views. The account avatars (the footer's 56px head, its switcher's 18px rows and the add-account dialog's profile rows) all draw the real skin now; `AccountAvatar`
 still falls back to the placeholder disc for a skin Rust could not decode.
+
+- **Instance settings overlay deviations**, all deliberate:
+  - **The write is debounced by 400 ms and the app is never locked.** The Vue
+    adds `saving-instance-settings` to `<body>` on every edit, which
+    `main.css` turns into `pointer-events: none !important` over the whole app
+    until the write resolves, and `updateInstance` runs once per keystroke. A
+    Slint write is a synchronous call on the UI thread with no IPC in front of
+    it, so there is no window for a second edit to slip into and nothing to lock;
+    what is left is the cost of one `toml` write per keystroke, which the debounce
+    the settings screen already uses absorbs. The instance travels with the
+    scheduled write rather than being looked up when it fires, so closing the
+    overlay and selecting another instance in between cannot write the edit to the
+    wrong one.
+  - **`java_path` survives a write.** The Vue replaces the whole `launch_config`
+    with an object literal on every save, and `java_path` is not a field of its
+    TypeScript type, so the original silently drops the instance's Java override
+    whenever any setting is touched — including a rename. The field is read by the
+    launcher (`instance_java_path`), so it is carried over here instead.
+  - **A rename asks the game view to read the list again.** The Vue edits the very
+    object its Pinia store holds, so the summary and the instance's list card
+    re-render off it for free; here the store is on disk, so `GameState.refresh()`
+    is called — and only for the edits the game view actually shows (the name and
+    the two flags the window background resolves on), so a keystroke in the JVM
+    arguments does not rebuild the list. The one visible consequence is that an
+    instance whose name was changed re-sorts if the list is sorted by name, which
+    the original leaves in place until the next `loadInstances`.
+  - **The card's background is decoded, not handed to `Image::load_from_path`.**
+    The instance keeps the picture at a bare `background` with no extension, and
+    Slint's `image-default-formats` covers png and jpeg only while the app's own
+    `image` dependency also reads webp and gif — so this goes through the same
+    decode as the window background, and a format none of them reads (avif, svg,
+    bmp, ico) still stores and still shows as no picture, which is the
+    create-instance dialog's documented limit too.
+  - **The `Minecraft` row and the `Reset instance` row stay inert.** Both are
+    `navigable` in the Vue — they light up, grow a chevron and take the hover
+    background — and neither binds a handler; the mod loader and loader version
+    rows below the first are commented out in the original. Reproduced as it is,
+    rather than quietly wired to something.
+  - **The file picker's filter label is translated.** `InstanceSetting.vue`
+    hard-codes the English `"Images"` — one of the strings `AGENTS.md` lists as
+    not yet internationalized — where the create-instance dialog translates the
+    same filter. The Slint app follows the latter.
+  - **`SettingGroup` and `SettingCollapse` grew a `disabled` state.** The launch
+    options, the memory group and the advanced options are inert until the
+    instance overrides the launcher's own launch settings
+    (`.setting-group-disabled` / `.setting-collapse-disabled`: `opacity: 0.6` and
+    `pointer-events: none` on everything). Slint has no inherited "ignore the
+    pointer" switch, so the rows are covered by a bare `TouchArea` instead —
+    declared after them, and rejecting the wheel so the scroller still takes it.
+    The collapse's header uses `clickable: false` rather than a cover, which also
+    takes the hover fill with it, as CSS `pointer-events: none` does.
+  - **The delete dialog's four strings are translated.** They are hard-coded
+    Chinese in the Vue (that dialog was never internationalized), so the Chinese
+    is kept as the `@tr` source text and the catalogs translate it — the treatment
+    the four launch error dialogs already have. Its warning paragraph's
+    `line-height: 1.3` is dropped: Slint 1.18 has no CSS `line-height`, and
+    `line-height-factor` multiplies the font's *natural* line height rather than
+    the font size, which is not in a fixed ratio to it (Comfortaa's is 1.115em and
+    the CJK fallback this sentence actually draws with is nearer 1.4em), so one
+    factor cannot hold both scripts. Its buttons' 4px radius needed one new
+    `BaseButton` override (`button-radius`), the same kind the multiplayer dialog's
+    red "Stop download" button needed.
+  - The **`image` icon is missing its frame and its sun**, so the "Set background
+    image" row draws the bare mountain range of `src/assets/icons/image.svg`:
+    `icons.slint` is transcribed by hand and the file is one of the ten
+    `slint/tools/check-icons.py` reports as differing, because the checker's
+    `d`-only reading cannot see a `<rect>` and this icon's frame is one. Left
+    alone here (it is the icon the already-migrated settings and create-instance
+    screens draw too) rather than fixed inside an overlay migration; the fix
+    belongs in the icon pass, where `--fix` can be taught the missing shape.
 
 
 ## Rendering the README bodies
@@ -1405,6 +1515,17 @@ the very first play at startup would start silently. This is the same clock
       several rows here use instead is `cross-axis-alignment: stretch` with
       `horizontal-alignment: center` on the text — the glyphs land in the same
       place as a shrink-to-fit box, and the wrap has a width to happen at.
+    - **A child with no `x` or `y` is *centred* in its parent, not placed at
+      its top-left.** `i-slint-core`'s default geometry is `x = (parent.width -
+      width) / 2`, `y = (parent.height - height) / 2` — which reads as a
+      deliberate choice for a lone child and is, in fact, how Slint marks "this
+      element does not care". A `Rectangle` child with a fixed `y` is at that
+      `y`; one without is in the middle. The palette's row put its title line in
+      a plain `Rectangle` with no `y` and the line landed 8.5px low — exactly
+      half of what the 30px column had spare, which is the tell — and a second
+      time, inside a `FocusScope`, the whole input row sat in the middle of the
+      panel. Every child of a non-layout parent needs an explicit `y`; the
+      palette's says so where it lays them out.
     - **A child with an `x` or `y` contributes nothing to its parent's preferred
       size.** `gen_layout_info_prop` (`passes/default_geometry.rs`) skips those
       children, so a component or element whose children are *all* absolutely

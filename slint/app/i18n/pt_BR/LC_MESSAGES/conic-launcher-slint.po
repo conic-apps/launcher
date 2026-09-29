@@ -1979,6 +1979,198 @@ msgstr "Playlist"
 msgid "Nothing here"
 msgstr "Nada por aqui"
 
+# Instance settings overlay (src/overlays/InstanceSetting.vue) and the
+# delete dialog it opens (src/overlays/dialogs/ConfirmDeleteInstance.vue).
+# The overlay's strings are seeded from `game.instance.*` in
+# src/locales/<lang>.ts; the dialog's were never internationalized there, so
+# its Chinese source text is kept and translated here.
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Instance settings"
+msgstr "Configurações da instância"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Images"
+msgstr "Imagens"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Set background image"
+msgstr "Definir imagem de fundo"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Remove image"
+msgstr "Remover imagem"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Use instance background as launcher background"
+msgstr "Usar o fundo da instância como fundo do launcher"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Selected {}"
+msgstr "Selecionada: {}"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Enable instance-specific settings"
+msgstr "Ativar configurações específicas da instância"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Launch options"
+msgstr "Opções de inicialização"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Window size"
+msgstr "Tamanho da janela"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Initial game window size"
+msgstr "Tamanho inicial da janela do jogo"
+#: ui
+msgctxt "InstanceSettings"
+msgid "W"
+msgstr "L"
+#: ui
+msgctxt "InstanceSettings"
+msgid "H"
+msgstr "A"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Fullscreen"
+msgstr "Tela cheia"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Quit launcher after launching game"
+msgstr "Fechar o launcher após iniciar o jogo"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Skip game file check"
+msgstr "Ignorar verificação dos arquivos do jogo"
+#: ui
+msgctxt "InstanceSettings"
+msgid "The launcher will not attempt to verify or repair game files before launching"
+msgstr "O launcher não tentará verificar nem reparar os arquivos do jogo antes da inicialização"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Memory"
+msgstr "Memória"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Auto-allocate memory"
+msgstr "Alocar memória automaticamente"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Manual memory allocation"
+msgstr "Alocação manual de memória"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
+msgstr "Define manualmente o tamanho máximo do heap do Java. Tem efeito quando a alocação automática está desativada"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Advanced launch options"
+msgstr "Opções de inicialização avançadas"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Java garbage collector"
+msgstr "Garbage collector do Java"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra JVM arguments"
+msgstr "Argumentos extras da JVM"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Appended after default JVM arguments"
+msgstr "Adicionados após os argumentos padrão da JVM"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra game arguments"
+msgstr "Argumentos extras do jogo"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Additional arguments for the game"
+msgstr "Argumentos adicionais para o jogo"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra class paths"
+msgstr "Caminhos de classe extras"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Separated by semicolons on Windows, colons on other systems"
+msgstr "Separados por ponto e vírgula no Windows e por dois-pontos nos demais sistemas"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Execute before launch"
+msgstr "Executar antes da inicialização"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added before the launch command"
+msgstr "Adicionado antes do comando de inicialização"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Wrap command"
+msgstr "Comando wrapper"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added at the beginning of the launch command"
+msgstr "Adicionado ao início do comando de inicialização"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Execute after launch"
+msgstr "Executar após a inicialização"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added at the end of the launch script"
+msgstr "Adicionado ao final do script de inicialização"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Ignore invalid Minecraft certificates"
+msgstr "Ignorar certificados inválidos do Minecraft"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
+msgstr "Adiciona -Dfml.ignoreInvalidMinecraftCertificates=true aos argumentos da JVM"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Ignore patch discrepancies"
+msgstr "Ignorar divergências de patches"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
+msgstr "Adiciona -Dfml.ignorePatchDiscrepancies=true aos argumentos da JVM"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Delete instance"
+msgstr "Excluir instância"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Deleting this instance will permanently lose all saves, resource packs, and other game data"
+msgstr "Ao excluir esta instância, todos os mundos, pacotes de recursos e outros dados do jogo serão perdidos permanentemente"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Reset instance"
+msgstr "Redefinir instância"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved"
+msgstr "Ao redefinir esta instância, todos os mundos, pacotes de recursos e outros dados do jogo serão perdidos. Apenas a configuração da instância será preservada"
+
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
+msgstr "Tem certeza de que deseja excluir esta instância? Saves, pacotes de recursos, mods e os demais arquivos da instância serão perdidos para sempre (demora mesmo!)"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "游戏时间："
+msgstr "Tempo de jogo: "
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "取消"
+msgstr "Cancelar"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "确认删除"
+msgstr "Confirmar exclusão"
+
 #: ui
 msgctxt "CommandText"
 msgid "Launch instance"
@@ -2091,6 +2283,7 @@ msgstr "Fechar"
 
 #: ui
 msgctxt "CommandText"
+
 #: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on CurseForge"
@@ -2100,7 +2293,6 @@ msgstr "Digite palavras-chave para pesquisar no CurseForge"
 msgctxt "CommandText"
 msgid "Type keywords to search on Modrinth"
 msgstr "Digite palavras-chave para pesquisar no Modrinth"
-
 
 #: ui
 msgctxt "CommandText"

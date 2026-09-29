@@ -581,7 +581,7 @@ fn reveal_rows(model: &VecModel<GameRow>) {
 }
 
 /// Formats a play time in seconds into a `GameTime.play-time` kind + value.
-fn format_play_time(seconds: u64) -> (&'static str, String) {
+pub(crate) fn format_play_time(seconds: u64) -> (&'static str, String) {
     if seconds < 60 {
         return ("seconds", seconds.to_string());
     }
@@ -859,10 +859,16 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
         });
     }
 
-    // The remaining callbacks open overlays/dialogs that are not migrated yet.
-    state.on_open_instance_settings(
-        || log::info!(target: "game", "instance settings (not migrated)"),
-    );
+    {
+        // The summary's gear opens the instance settings overlay, whose own
+        // script (`instance_settings.rs`) fills it.
+        let weak = ui.as_weak();
+        state.on_open_instance_settings(move || {
+            if let Some(ui) = weak.upgrade() {
+                crate::instance_settings::open(&ui);
+            }
+        });
+    }
     // `open-content` and `open-packs` belong to the content overlays' script
     // (`content.rs`), which registers them after this one — a Slint `on_*`
     // setter replaces the handler, so nothing is wired for them here.
