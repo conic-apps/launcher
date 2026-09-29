@@ -50,16 +50,12 @@ export component AccountAddYggdrasil inherits VerticalLayout {
 
     // ----- the form -----
     if AccountAddState.yggdrasil-view == "form" : VerticalLayout {
-        spacing: 0px;
         alignment: start;
 
-        Rectangle {
-            height: 8px;
-            background: transparent;
-        }
-
-        // `div.form { gap: 8px }`.
+        // `div.form { gap: 8px }`, and the `p.description { margin-bottom: 8px }`
+        // above it, which a layout has no margin for.
         VerticalLayout {
+            padding-top: 8px;
             spacing: 8px;
 
             // ----- the API root, with the server's own name under the label
@@ -136,22 +132,18 @@ export component AccountAddYggdrasil inherits VerticalLayout {
         }
 
         // `div.buttons { justify-content: flex-end; margin-top: 12px; gap: 8px }`.
-        Rectangle {
-            height: 12px;
-            background: transparent;
-        }
-
         HorizontalLayout {
+            padding-top: 12px;
             spacing: 8px;
 
             BaseButton {
-                button-width: (parent.width - 8px) / 2;
+                horizontal-stretch: 1;
                 text: @tr("Cancel");
                 clicked => { AccountAddState.close(); }
             }
 
             BaseButton {
-                button-width: (parent.width - 8px) / 2;
+                horizontal-stretch: 1;
                 text: @tr("Verify and add profile");
                 button-background: Theme.latte-lavender;
                 text-color: #000;
@@ -175,9 +167,12 @@ export component AccountAddYggdrasil inherits VerticalLayout {
             alignment: center;
             spacing: 8px;
 
+            // `.loading { padding: 8px }` around the arc — a padding, and not
+            // the row's `gap: 8px`, which a single child would not see.
             HorizontalLayout {
                 alignment: center;
-                spacing: 8px;
+                cross-axis-alignment: center;
+                padding: 8px;
 
                 BaseLoading {
                     size: 40px;
@@ -201,17 +196,26 @@ export component AccountAddYggdrasil inherits VerticalLayout {
         background: transparent;
 
         // `.error-state { align-items: center; justify-content: center;
-        // gap: 16px }`.
+        // gap: 16px }`, with the container-level `p.description { margin-bottom:
+        // 8px }` on top of the 16px gap.
         VerticalLayout {
             width: parent.width;
             height: parent.height;
             alignment: center;
             cross-axis-alignment: center;
             spacing: 16px;
+            padding-bottom: 8px;
 
+            // `align-items: center` gives the Vue's `<p>` a shrink-to-fit width
+            // capped at the container, so a long server error wraps there.
+            // `cross-axis-alignment: center` hands over the *unwrapped* width
+            // instead, which is why this one is a stretch and the glyphs are
+            // centred inside it — the text's left edge lands in the same place
+            // either way, and the wrap has a width to happen at.
             Text {
                 text: AccountAddState.yggdrasil-error;
                 font-size: 14px;
+                horizontal-stretch: 1;
                 horizontal-alignment: center;
                 wrap: word-wrap;
                 color: Theme.red;
@@ -228,7 +232,6 @@ export component AccountAddYggdrasil inherits VerticalLayout {
 
     // ----- choosing between the account's profiles -----
     if AccountAddState.yggdrasil-view == "profiles" : VerticalLayout {
-        spacing: 0px;
         alignment: start;
 
         Text {
@@ -283,7 +286,6 @@ export component AccountAddYggdrasil inherits VerticalLayout {
 
                         BaseCheckbox {
                             x: 10px;
-                            y: (parent.height - self.height) / 2;
                             checked: profile.selected;
                             checkbox-enabled: false;
                         }
@@ -293,7 +295,6 @@ export component AccountAddYggdrasil inherits VerticalLayout {
                         // and `AccountAddYggdrasil.vue` does not.
                         Rectangle {
                             x: 38px;
-                            y: (parent.height - self.height) / 2;
                             width: 28px;
                             height: 28px;
                             background: transparent;
@@ -332,24 +333,21 @@ export component AccountAddYggdrasil inherits VerticalLayout {
         }
 
         // `div.buttons { justify-content: flex-end; margin-top: 12px; gap: 8px }`.
-        Rectangle {
-            height: 12px;
-            background: transparent;
-        }
-
-        // The Vue gives the second button a `margin-left: 8px` on top of the
-        // row's 8px gap, so this pair shares the width with 16px between them.
+        // `div.buttons { margin-top: 12px; gap: 8px }`, and the
+        // `margin-left: 8px` the Vue puts on the second button, so this pair has
+        // 16px between them.
         HorizontalLayout {
+            padding-top: 12px;
             spacing: 16px;
 
             BaseButton {
-                button-width: (parent.width - 16px) / 2;
+                horizontal-stretch: 1;
                 text: @tr("Back");
                 clicked => { AccountAddState.yggdrasil-view = "form"; }
             }
 
             BaseButton {
-                button-width: (parent.width - 16px) / 2;
+                horizontal-stretch: 1;
                 text: @tr("Add profiles");
                 button-background: Theme.latte-lavender;
                 text-color: #000;

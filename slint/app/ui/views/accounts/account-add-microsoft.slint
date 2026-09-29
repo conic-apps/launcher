@@ -15,19 +15,29 @@ import { AccountAddState } from "../../globals/dialogs.slint";
 // It is a component of its own because it is only ever placed by its bottom
 // edge, so the anchor does the positioning and both call sites share it.
 component CopiedTooltip inherits Rectangle {
-    width: label.width + 20px;
-    height: label.height + 8px;
+    width: row.preferred-width;
+    height: row.preferred-height;
     background: Theme.card-background;
     border-width: 1px;
     border-color: Theme.overlay-2.with-alpha(0.5);
     border-radius: 4px;
 
-    label := Text {
-        x: 10px;
-        y: 4px;
-        text: @tr("AccountAddMicrosoft" => "Copied!");
-        font-size: 12px;
-        color: Theme.default-text-color.transparentize(0.1);
+    // `.tooltip { padding: 4px 10px; white-space: nowrap }`, so the box measures
+    // its content rather than the content plus the padding twice.
+    row := HorizontalLayout {
+        padding-top: 4px;
+        padding-bottom: 4px;
+        padding-left: 10px;
+        padding-right: 10px;
+        cross-axis-alignment: center;
+
+        Text {
+            text: @tr("AccountAddMicrosoft" => "Copied!");
+            font-size: 12px;
+            // `.tooltip { color: rgb(var(--default-text-color)) }`, which beats
+            // the `rgba(…, 0.9)` every element inherits from `main.css`.
+            color: Theme.default-text-color;
+        }
     }
 }
 
@@ -120,12 +130,9 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         triggered => { AccountAddState.ms-expires-in -= 1; }
     }
 
-    // The three "copied!" hints, each cleared 1.5s after it was set.
-    copied-link-timer := Timer {
-        interval: 1500ms;
-        running: AccountAddState.ms-copied-link;
-        triggered => { AccountAddState.ms-copied-link = false; }
-    }
+    // The "copied!" hints, each cleared 1.5s after it was set. The Vue has a
+    // third, on the "copy the link" span inside the description; it is not
+    // ported, and `Dialogs.ms-copied` records why.
     copied-timer := Timer {
         interval: 1500ms;
         running: AccountAddState.ms-copied;
@@ -192,10 +199,12 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             alignment: center;
             spacing: 8px;
 
-            // The arc, in a row that carries `.loading { padding: 8px }`.
+            // The arc, in a row that carries `.loading { padding: 8px }` — a
+            // padding, which a single child would not see as a `spacing`.
             HorizontalLayout {
                 alignment: center;
-                spacing: 8px;
+                cross-axis-alignment: center;
+                padding: 8px;
 
                 BaseLoading {
                     size: 40px;
@@ -203,17 +212,16 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                 }
             }
 
-            // `p.description { font-size: 14px; margin-bottom: 8px }`, on top of
-            // the column's own 8px gap.
+            // `p.description { font-size: 14px; margin-bottom: 8px }`. In the
+            // Vue that margin collapses with the column's own 8px `gap`, so the
+            // gap below the caption is 8px and not the 16px a trailing spacer
+            // produced here — which is what `padding-bottom` says.
             Text {
                 text: root.progress-text(AccountAddState.ms-progress);
                 font-size: 14px;
                 horizontal-alignment: center;
+                wrap: word-wrap;
                 color: Theme.default-text-color.transparentize(0.1);
-            }
-            Rectangle {
-                height: 8px;
-                background: transparent;
             }
         }
     }
@@ -253,11 +261,13 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             height: 48px;
             background: transparent;
 
-            // `ch` is the advance of "0" in the element's font, which Slint has
-            // no unit for, so the glyph is measured and multiplied.
+            // `ch` is the advance of "0" in the *element's own* font, and
+            // `.code-box` sets no `font-size` — the 20px belongs to the
+            // `.link-text` it contains. So the glyph is measured at the inherited
+            // base size, which is what `main.css` leaves the element at.
             zero-glyph := Text {
                 text: "0";
-                font-size: 20px;
+                font-size: Theme.font-size-base;
                 visible: false;
             }
 
@@ -266,7 +276,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             // its background — and adds no padding, so the code is centred in
             // the 20ch.
             code-box := Rectangle {
-                x: (parent.width - self.width) / 2;
                 width: zero-glyph.preferred-width * 20;
                 height: parent.height;
                 border-radius: Theme.controllers-border-radius;
@@ -297,7 +306,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                 // the tooltip it carries.
                 Rectangle {
                     x: parent.width - self.width - 8px;
-                    y: (parent.height - self.height) / 2;
                     width: checkmark.width;
                     height: checkmark.height;
                     background: transparent;
@@ -312,7 +320,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                     }
 
                     CopiedTooltip {
-                        x: (parent.width - self.width) / 2;
                         y: -self.height - 8px;
                     }
                 }
@@ -330,18 +337,14 @@ export component AccountAddMicrosoft inherits VerticalLayout {
 
         // `div.buttons { margin-top: 16px; gap: 8px }`, which this row does not
         // push to the right (unlike the other screens').
-        Rectangle {
-            height: 16px;
-            background: transparent;
-        }
-
         HorizontalLayout {
+            padding-top: 16px;
             spacing: 8px;
 
             BaseButton {
                 // The Vue's `width: 100%` on a lone button in a flex row: it
-                // fills the row.
-                button-width: parent.width;
+                // takes the row.
+                horizontal-stretch: 1;
                 text: @tr("Cancel");
                 clicked => { AccountAddState.cancel-microsoft-login(); }
             }
@@ -363,21 +366,20 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                 if link == "conic:device-code" {
                     AccountAddState.use-device-code-flow();
                 } else {
+                    // No bubble here: the Vue's hangs off an inline
+                    // `<span class="copy-link-wrapper">` inside this paragraph,
+                    // and the paragraph is a `StyledText`, which has nowhere to
+                    // put one. The link box below has the same hint and is a
+                    // plain element, so it can carry the tooltip.
                     AccountAddState.copy-text(AccountAddState.auth-code-login-url);
-                    AccountAddState.ms-copied-link = true;
                 }
             }
         }
 
         // `div.link { margin-top: 8px }`: the label, then the link box over the
         // rest of the row.
-        Rectangle {
-            height: 8px;
-            background: transparent;
-        }
-
         HorizontalLayout {
-            spacing: 0px;
+            padding-top: 8px;
             cross-axis-alignment: center;
 
             Text {
@@ -413,7 +415,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
 
                 check-wrapper := Rectangle {
                     x: parent.width - self.width - 8px;
-                    y: (parent.height - self.height) / 2;
                     width: check-mark.width;
                     height: check-mark.height;
                     background: transparent;
@@ -428,7 +429,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                     }
 
                     CopiedTooltip {
-                        x: (parent.width - self.width) / 2;
                         y: -self.height - 8px;
                     }
                 }
@@ -446,22 +446,19 @@ export component AccountAddMicrosoft inherits VerticalLayout {
 
         // `div.buttons { margin-top: 16px; gap: 8px }`, left-aligned like the
         // device code's.
-        Rectangle {
-            height: 16px;
-            background: transparent;
-        }
-
+        // `div.buttons { margin-top: 16px; display: flex; gap: 8px }`.
         HorizontalLayout {
+            padding-top: 16px;
             spacing: 8px;
 
             BaseButton {
-                button-width: (parent.width - 8px) / 2;
+                horizontal-stretch: 1;
                 text: @tr("Cancel");
                 clicked => { AccountAddState.cancel-microsoft-login(); }
             }
 
             BaseButton {
-                button-width: (parent.width - 8px) / 2;
+                horizontal-stretch: 1;
                 text: @tr("Log in");
                 button-background: Theme.blue;
                 text-color: Theme.text-inverse;

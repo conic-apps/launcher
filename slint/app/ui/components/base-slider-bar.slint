@@ -143,7 +143,6 @@ export component BaseSliderBar inherits Rectangle {
 
     track := Rectangle {
         x: 0;
-        y: (root.height - self.height) / 2;
         width: root.width;
         height: 3.5px;
         border-radius: 10px;
@@ -152,7 +151,6 @@ export component BaseSliderBar inherits Rectangle {
 
     fill := Rectangle {
         x: 0;
-        y: (root.height - self.height) / 2;
         width: root.shown-percent * root.width;
         height: 3.5px;
         border-radius: 10px;
@@ -175,7 +173,6 @@ export component BaseSliderBar inherits Rectangle {
         border-radius: 100px;
         background: Theme.lavender;
         x: root.shown-percent * root.width - self.width / 2;
-        y: (root.height - self.height) / 2;
         transform-origin: { x: self.width / 2, y: self.height / 2 };
         transform-scale-x: root.dragging ? 0.9 : thumb-touch.has-hover ? 1.1 : 1.0;
         transform-scale-y: root.dragging ? 0.9 : thumb-touch.has-hover ? 1.1 : 1.0;
@@ -189,7 +186,17 @@ export component BaseSliderBar inherits Rectangle {
         border-width: 1px;
         border-color: Theme.overlay-0;
         background: Theme.base;
-        x: root.shown-percent * root.width - self.width / 2 + 6px - 0.12 * (root.shown-percent * 100) * 1px;
+        // Strictly centred on the thumb, which sits at
+        // `shown-percent * root.width - 6px` (its own half-width subtracted).
+        //
+        // The Vue's `transform` was
+        // `translateX(calc(-50% + ${6 - 0.12 * percent}px))` — the `-50%` that
+        // centres it, plus a nudge that walks from +6px at 0% to -6px at 100% and
+        // so pulls the tooltip off the thumb by up to half a digit at either
+        // end. That ramp is gone: it reads as the tooltip's track being a
+        // different length from the slider's, and nothing in the design wants
+        // it. Same centre as the thumb, whatever the value.
+        x: root.shown-percent * root.width - self.width / 2;
         y: -32px;
 
         tooltip-label := Text {
@@ -198,8 +205,6 @@ export component BaseSliderBar inherits Rectangle {
             font-size: 12px;
             font-weight: Theme.font-weight-normal;
             color: Theme.default-text-color.transparentize(0.1);
-            x: (parent.width - self.width) / 2;
-            y: (parent.height - self.height) / 2;
         }
     }
 

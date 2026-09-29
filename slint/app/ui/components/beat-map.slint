@@ -44,12 +44,15 @@ export component BeatMap inherits Rectangle {
     height: 100%;
     // `border-radius: 8px`, dropped by `.fill`. The fixed block's own 48px
     // height is a state rather than a ternary, because Slint will not unify the
-    // `100%` of a filled box with a `48px` length in one expression.
+    // `100%` of a filled box with a `48px` length in one expression. The radius
+    // *is* a plain ternary, so it is one — the state block is for the height
+    // alone, and the radius is a second thing it would otherwise have carried.
     states [
         block when !root.fill : {
             height: 48px;
         }
     ]
+    border-radius: root.fill ? 0 : 8px;
     background: (root.fill || root.transparent) ? Colors.transparent : Theme.mantle;
 
     // ----- geometry (BeatMap.vue's module constants) -----

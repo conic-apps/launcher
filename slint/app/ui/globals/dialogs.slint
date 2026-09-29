@@ -195,9 +195,14 @@ export global AccountAddState {
     /// Seconds left on the device code, counted down by the screen (Vue
     /// `expiresIn`).
     in-out property <int> ms-expires-in: 0;
-    /// The three "copied!" hints, each on its own timer: the link inside the
-    /// description, the link box, and the device code box.
-    in-out property <bool> ms-copied-link: false;
+    /// The two "copied!" hints, each on its own timer: the link box and the
+    /// device code box.
+    ///
+    /// The Vue has a third — the "已复制！" bubble on the "copy the link" span
+    /// inside the description paragraph — and it is not ported. It is anchored to
+    /// an inline `<span class="copy-link-wrapper">` in the middle of a `<p>`, and
+    /// the paragraph is one `StyledText` here, which takes no children and so has
+    /// nowhere to put one. `AccountAddMicrosoft.slint` says so where the link is.
     in-out property <bool> ms-copied: false;
     in-out property <bool> ms-copied-code: false;
     /// The URL the browser flow opens (Vue `AUTH_CODE_LOGIN_URL`).

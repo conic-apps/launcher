@@ -114,7 +114,7 @@ slint/
           content-search-panel.slint#   ContentSearchPanel.vue
           content-pagination.slint  #   ContentPagination.vue
           content-not-found.slint   #   ContentNotFound.vue + the loading block
-          markdown-plain.slint      #   styles/markdown-body.less, as plain text
+          markdown-body.slint      #   styles/markdown-body.less, over slint-markdown
           panels.slint              #   the five panels and the nine lists
           details.slint             #   the six detail panels
   crates/
@@ -136,6 +136,8 @@ slint/
     java-runtime/                   # Tauri-free mirror of crates/java-runtime (whole crate)
     single-instance/                # single-instance guard (no Tauri plugin here)
     multiplayer/                    # Tauri-free mirror of crates/multiplayer (whole crate)
+    markdown/                       # Markdown/HTML layout engine: parses, measures,
+                                    #   lays out, hands the view positioned boxes
     music/                          # Tauri-free mirror of crates/music + the Web Audio
                                     # graph the webview's store owned (see Music player)
       lib.rs                        #   the original crate verbatim: the folder listing
@@ -710,6 +712,11 @@ Per the migration plan:
       rewritten with `set_row_data`, so a card keeps its hover and its decoded
       icon. Cards outside the viewport are `visible: false`, as the renderer
       struggles past roughly 150 painted elements in a frame.
+    - The detail panels' **README body is a real renderer**, not flattened text:
+      `slint/crates/markdown` and `overlays/content/markdown-body.slint`, in the
+      Vue's own `.markdown-body` box at its own measurements. See
+      [Rendering the README bodies](#rendering-the-readme-bodies) for what that
+      does and does not carry over, and the crate's `README.md` for the engine.
 
 **The content overlay layer is complete and verified against the Vue.** The five
 panels, the six detail panels, the search panel with its paginated version
@@ -744,45 +751,53 @@ still falls back to the placeholder disc for a skin Rust could not decode.
 A project detail panel shows the project's README (`Modrinth`'s `body`,
 `CurseForge`'s description markup). The Vue renders it with `marked` into
 `v-html`, so headings, lists, code blocks, links, images and tables all come out
-styled. **Slint has nothing that can render an arbitrary Markdown document**, so
-the body is drawn as plain text for now — `markdown-plain.slint`, in the Vue's
-`.markdown-body` box (surface0, an 8px radius, 16px of padding, a 14px body),
-with Rust having flattened the document to text (tags dropped, entities
-unescaped, paragraph breaks kept). What that costs: no headings, no lists, no
-code blocks, no links, no images, and — because Slint 1.18 has no `line-height`
-at all — none of the `line-height: 1.6` the original sets on this one box.
+styled by `.markdown-body`. **Slint has nothing that can render an arbitrary
+Markdown document**, so this is its own crate: `slint/crates/markdown` parses the
+body in Rust (`comrak`, which also takes CurseForge's HTML), measures it with the
+same text engine Slint renders with (`parley`), lays every run out itself, and
+hands `overlays/content/markdown-body.slint` a flat list of positioned boxes to
+paint — with the run's `y`s in the view's own coordinate space, because Slint
+offers no baseline to place a run on and no line box to grow. The crate's own
+`README.md` is the reference; this is only where the decision sits.
 
-The options, in the order they are worth considering:
+The shape is the one the rest of the app already uses: plain data in a model,
+`for` in the view. `GameRow` is the same idea. It needs no browser engine, every
+string stays translatable, and the model is where the panel's own images are
+spliced in.
 
-1. **Parse in Rust into a block model and draw it with Slint components.** A
-   small parser (`pulldown-cmark` is already in the workspace lockfile through
-   Tauri) turns the body into a `[MarkdownBlock]` — heading level, paragraph,
-   list item with depth, code block, quote, rule, image — and a handful of Slint
-   components draw each kind. This is the shape the rest of the app already
-   uses: plain data in a model, `for` in the view (`GameRow` is the same idea).
-   It needs no browser engine, keeps every string translatable and selectable,
-   and the model is where the panel's own images can be spliced in. The cost is
-   the parser plus a component per block kind, and a block model has to grow to
-   cover tables and inline emphasis when they matter.
-2. **Render to a list of styled spans.** The same parser, but emitting runs of
-   text with weight/colour/underline rather than blocks — enough for emphasis,
-   inline code and links, at the cost of doing the line-breaking by hand.
-3. **`StyledText`'s `@markdown`.** Slint has a Markdown-ish rich-text element,
-   and the About tab already uses it. It is **not usable here**: `@markdown`
-   takes a compile-time literal which the parser reads out of the source map, so
-   it cannot be handed a runtime string. It would only work for bodies known at
-   build time.
-4. **An offscreen webview rendered to an image.** `wry`/`tao` are in the
-   workspace, so the HTML could be laid out offscreen, rasterised and handed to
-   Slint as a bitmap. The rendering would be exact — and it would pull a browser
-   engine into the binary the migration exists to remove, break scrolling and
-   text selection, and make the body unstyleable by the palette.
-5. **Pre-render server-side.** The MCIM mirror this app already talks to could
-   serve a rendered image or a pre-flattened document. No client work, but the
-   mirror has to grow the capability and the body stops working offline.
+What it costs against the Vue, all of it recorded in the crate's README:
 
-Option 1 is the intended direction: it is the only one that keeps the panel's
-typography, its palette and its scroll behaviour under the app's own control.
+- **No text selection or copy.** The display list has shaped runs, not source
+  spans, so there is nothing to map a pointer back to a selection range — and
+  the Vue's `.markdown-body` explicitly *allows* selection (`:deep(*) {
+  -webkit-user-select: unset }`), so this is a real loss.
+- **No horizontal scrolling.** `pre { overflow: auto }` and `table { display:
+  block; overflow: auto }` both scroll in the Vue. A table wider than its box is
+  scaled to fit with wrapping cells, and a code block wraps or is clipped.
+- **Raw HTML is parsed, not passed through.** Safer, but different: the
+  CurseForge path went through `v-html` before, and a `tagfilter` now escapes
+  `<script>`, `<style>`, `<iframe>` and friends to text.
+- **`line-height: 1.6` is reproduced by the engine, not by the view.** 1.18 has
+  no CSS `line-height`; `Text` grew `line-height-factor`, but it multiplies the
+  font's natural line box rather than the font size, and `StyledText` has no such
+  property at all.
+
+And what it gains, which the Vue did not have: GFM footnotes, `^superscript^`,
+description lists, and a `<details>` drawn as the app's own collapsible row
+rather than a bare browser triangle.
+
+The two options that were weighed and rejected are worth keeping on the record
+because they are the obvious ones:
+
+- **`StyledText`'s `@markdown`.** Slint has a Markdown-ish rich-text element and
+  the About tab already uses it. It is not usable here: `@markdown` takes a
+  compile-time literal the parser reads out of the source map, so it cannot be
+  handed a document that arrives at runtime.
+- **An offscreen webview rendered to an image.** `wry`/`tao` are in the
+  workspace, so the HTML could be laid out offscreen, rasterised and handed to
+  Slint as a bitmap. The rendering would be exact — and it would pull a browser
+  engine into the binary the migration exists to remove, break scrolling and
+  selection, and make the body unstyleable by the palette.
 
 ## Music player
 
@@ -1082,6 +1097,42 @@ the very first play at startup would start silently. This is the same clock
       `backdrop-filter: blur(4px)`, and Slint 1.18 has no backdrop blur (its only
       blur is `drop-shadow-blur`). They stay translucent, so the rows scrolling
       under the toolbar show through it unblurred.
+- **Boxes the port made taller than the stylesheet's, on purpose.** Slint 1.18
+  has no CSS `line-height`: `Text` grew `line-height-factor`, but that multiplies
+  the *font's* line box (ascent + descent + line gap, ~1.115em for Comfortaa
+  Nunito) rather than the font size, so it is not a drop-in for a stylesheet's
+  `line-height: 1` — the original's `* { line-height: 1 }` boxes a line at its
+  font size, and Slint's is a shade taller. Two boxes are therefore grown rather
+  than matched:
+    - the instance list's group-count pill and loader tag, `13px` where the CSS
+      box is `10px + 1px × 2 = 12px` (`views/game/instances-list.slint`), and
+    - `SettingItem`'s pinned description line, `18px` where the CSS is `13.2px`
+      (`components/setting-item.slint`).
+
+  In both cases the CSS number would clip the text. This is the same shape as
+  the `for`-built row heights above, which are pinned for a related reason.
+  Everywhere else the port takes the stylesheet's number.
+- **A `StyledText` has no line height at all** in 1.18 — not even
+  `line-height-factor`, which `Text` has and `StyledText` does not — so the About
+  tab's disclaimer (`font-size: 9px; line-height: 1.5` in
+  `SettingsAbout.vue`) renders at the embedded font's natural ~10px leading and
+  comes out a few pixels shorter than the original over its three or four
+  lines. The one rich-text string in the app, and the only place it shows.
+- **An element that carries `clip` *or* an `opacity` below 1 bounds its
+  children's rendering to its own box.** `clip` is explicit about it, and it is
+  the reason the palette tile's 4px selected outline and its label had to be
+  drawn outside the 60px tile it belongs to. `opacity` does it silently: a
+  translucent element is composited through a layer the size of that element,
+  so a child that overflows is simply not in the layer. The palette tiles set
+  `opacity: 0.6` on the component root when *Follow system dark mode* is on,
+  and the label — which is the Vue's `margin-top: calc(100% - 20px)`, ten
+  pixels below the tile — vanished with it, so the palette showed four
+  unlabelled tiles for as long as that switch was on and looked fine the moment
+  it was turned off. The Vue is `.color-style-disabled * { opacity: 0.6 }`: the
+  opacity belongs on each **descendant**, which is both what it says and the only
+  arrangement where nothing that dims has a child escaping its box. The general
+  rule: an element that clips or dims must not have a child drawn outside it —
+  put the opacity on the child.
 - **A rounded `clip` is a Windows-only no-op** — the reason the settings page's
   cards came out with square corners there and nowhere else. Slint's desktop
   default is femtovg over OpenGL, but the winit backend **silently falls back to
@@ -1142,6 +1193,119 @@ the very first play at startup would start silently. This is the same clock
       `scroll-to(y, smooth)`, mirroring the Vue's `scrollTo(target, smooth)`.
 - **Slint notes** learned the hard way while porting the content overlays, kept
   here because each cost real debugging time:
+    - **`x` and `y` already default to centring.** An element outside a layout
+      with no `x`/`y` binding is placed at `(parent.width - self.width) / 2` and
+      `(parent.height - self.height) / 2` — the values that centre it. Writing
+      that formula out is a no-op, and the port had 137 copies of it before a
+      pass took them out. (Inside a layout it is not a no-op in the other
+      direction: see the `x`-on-a-child note below.)
+    - **So `x: 0` is only dead when the width really is the parent's.** The
+      centring default above is `(parent.width - self.width) / 2`, which is `0`
+      *only* when `self.width == parent.width`. The music player's progress fill
+      binds `width: parent.width * progress`, so deleting its `x: 0` as a
+      no-op centred the drawn bar inside the track instead of pinning it left —
+      a half-drawn bar floating in the middle. An unbound `x` is a positioning
+      decision, not a stylistic one; the sweep that removed the 137 copies
+      guarded on the width being the full parent for exactly this reason, and
+      the guard is the part worth keeping.
+    - **A layout child cannot set `x` or `y` at all.** Not "is overridden" —
+      Slint *rejects* it: "The property 'x' cannot be set for elements placed in
+      this layout, because the layout is already setting it." So an element that
+      slides in on a `y` or an `x` cannot be the layout's child. It can be a
+      child *of* the cell the layout places, which is where the intro slides in
+      `views/game/instance-summary.slint` and the cards' entrance in
+      `overlays/music-player.slint` ended up.
+    - **An overlay is not a layout child.** A `TouchArea` that covers a whole
+      row belongs to the row's *parent*, not to the row: as a layout child it is
+      a column like any other, it takes its share of the free space away from
+      the element that wanted it, and a `width: 100%` on it hands it the entire
+      row as its *preferred* size besides. That is what the sort/group
+      dropdown's `head-touch` was doing — every layout mistake in this file
+      arrived through it at once, and the symptom was never a missing button but
+      a label squeezed to `…` with its chevron stranded mid-dropdown. A
+      `Rectangle` fills its parent by default and a layout does not, which is
+      the same distinction as the note below, and the reason a *nested* layout
+      needs an explicit `width`/`height` to fill the `Rectangle` around it.
+    - **A `TouchArea` defaults to 100% of its parent only *outside* a layout.**
+      Inside one it is laid out like any other child, so with no size of its own
+      its preferred size is 0x0 and it is a zero-area hit target that looks
+      perfectly fine. This is the sort/group dropdown: its `head` was a
+      `Rectangle` in the baseline and became a `HorizontalLayout` here, and the
+      `TouchArea` that makes the whole component clickable went with it — the
+      two dropdowns stopped responding and nothing looked wrong. The baseline
+      carried `width: parent.width; height: parent.height` on it, and dropping
+      those looked safe because the doc sentence above is true *most* of the
+      time. Same trap as the `x: 0` sweep, one level down: a default that
+      holds outside a layout does not hold inside one.
+    - **`z` is global to the window, so declaration order only orders what has
+      no `z` of its own.** Mounting the dropdown panel *after* the page stack
+      puts it above every element that does not opt into a `z`, and nothing
+      more: the instance list's toolbar (`z: 114`) and both scrollbars
+      (`z: 500`) are exactly what a toolbar dropdown opens over, and at the
+      default `z: 0` the panel was painted underneath the list it belongs to.
+      The Vue's `.dropdown-list` is `z-index: 100000`, above the list's 114,
+      so the fix is to carry that number's *position* rather than a number
+      picked to clear the offenders — and then anything the Vue stacks above
+      the dropdown (the dialogs, 11451419) needs one too, because it was
+      relying on being declared later. The z's are sparse enough here that
+      they have to be read as a scale, not as local tweaks.
+    - **`box-sizing: border-box` is set globally, so padding and border do not
+      grow a box.** `src/assets/styles/main.css` has `* { box-sizing:
+      border-box }`, which makes every `padding`/`border` in the Vue *inside*
+      the size it is applied to. Reading the footer's avatar as content-box —
+      `:size="56"` plus `padding: 2px` plus a `border: 2px` — gave 64px and an
+      8px-too-big circle, and dragged the 18px overhang to 22 and the account
+      pill out to 76 with it, since both are measured from where the avatar
+      ends. `BaseSliderBar.vue` opts back into `content-box`; almost nothing
+      else does, and the difference is worth checking before doing arithmetic
+      on a box.
+    - **A child's `preferred-width` may not read its parent's width.** Stating
+      "exactly half the row" as `preferred-width: (other-row.width -
+      other-row.spacing) / 2` is a binding loop — the preferred size feeds the
+      layout cache that decides the width it just read — and Slint reports it
+      as one the moment anything else in the subtree asks the layout for its
+      own size. `flex: 1` is a zero basis and a grow of 1, so the Slint
+      spelling is `preferred-width: 0` plus `horizontal-stretch: 1`: equal
+      floors and equal factors make the children exactly equal *whatever* the
+      floor is, and no floor has to know the row's width to say so.
+    - **A stretch factor of 0 is the one you have to write, and 1 is the
+      default.** Not a niche setting: *every* layout child grows by default, so
+      an element the CSS pins (`flex-shrink: 0`, a fixed width, a `width:
+      fit-content`) silently starts competing for the row's free space the
+      moment it is put in a layout, and the free space is split by the factors
+      rather than given to the one element that wanted it. It cost three
+      separate bugs before it was written down: `BaseButton` and `BaseInput`
+      filling a row they were only meant to size themselves to, the sort/group
+      dropdown's label taking half its own dropdown away from the selection and
+      pushing the chevron off the right end, and both clock labels growing
+      alongside the music player's progress bar until the duration sat on top of
+      it. Two things make it worse: the factor reads as opt-*in* because
+      `horizontal-stretch: 1` looks like an instruction rather than the
+      default, and CSS expresses the same idea in the opposite direction — a
+      child's `flex: 1` is something the *parent's* `justify-content` honours,
+      whereas Slint's factor belongs to the child and defaults to growing.
+    - **A main-axis alignment other than `stretch` cancels every stretch
+      factor.** `horizontal-stretch: 1` only has meaning under the default
+      `alignment: stretch`; write `alignment: start` (or `end`, `center`) and
+      the layout hands each child its *preferred* size and distributes the free
+      space to nobody. A row of two `horizontal-stretch: 1` buttons written that
+      way packs both at the left of the row at their text widths instead of
+      splitting it — which is also why ordering matters: only the element
+      declared *last* can be pushed to the far end by a stretch, so a
+      field-then-button row has to be written in that order and cannot be
+      rescued with `alignment: end` (that packs the whole group at the end and
+      leaves the row unfilled).
+    - **A layout child under a non-stretch alignment is sized by its
+      *preferred* size, and a bare `Rectangle`'s preferred size is 0.** This is
+      the one that bit twice: the `cell` wrappers
+      `views/game/instance-summary.slint` puts between the stack and each
+      sliding row are plain `Rectangle`s, so `cross-axis-alignment: start`
+      collapsed every cell to 0x0, the row inside it then took the *centring*
+      default `x`/`y` of a zero-sized parent (half its own width off to the
+      left), and `width: stack.preferred-width` on the component root went to
+      zero as well. Each cell now binds `preferred-width`/`preferred-height` to
+      the row it wraps. Keep the `x`-bearing slide *below* the cell, and give
+      the cell the size.
     - **`padding` and `border-radius` take exactly one value.** The CSS
       shorthands do not carry over: `padding: 8px 24px` and
       `border-radius: 8px 0 0 8px` are both parse errors, and landing a bare `0`
@@ -1170,7 +1334,15 @@ the very first play at startup would start silently. This is the same clock
       zero width (so the chips were clipped away), and the wrapping chip rows
       wrapped at their own "roughly square" preferred width instead of the
       panel's edge — a wrapping `FlexboxLayout` measures itself as √(total area),
-      deliberately, not as its longest line.
+      deliberately, not as its longest line. The same switch is why a row holding
+      a `wrap: word-wrap` `Text` under `alignment: start` never wraps at all: the
+      text's *preferred* width is the whole unwrapped line, which is what it is
+      given. (`min-width` is the longest word, so `stretch` shrinks it and it
+      wraps; a `Text` that neither wraps nor elides has
+      `min-width == preferred-width` and does not care either way.) The fix
+      several rows here use instead is `cross-axis-alignment: stretch` with
+      `horizontal-alignment: center` on the text — the glyphs land in the same
+      place as a shrink-to-fit box, and the wrap has a width to happen at.
     - **A child with an `x` or `y` contributes nothing to its parent's preferred
       size.** `gen_layout_info_prop` (`passes/default_geometry.rs`) skips those
       children, so a component or element whose children are *all* absolutely

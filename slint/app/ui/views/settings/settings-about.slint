@@ -79,17 +79,19 @@ export component SettingsAbout inherits VerticalLayout {
     version-info := VerticalLayout {
         width: 100%;
         padding-top: 16px;
-        spacing: 0px;
         // Center the logo and text horizontally. In a `VerticalLayout`,
         // `cross-axis-alignment` controls the horizontal axis (`alignment`
         // would only affect the vertical packing).
         cross-axis-alignment: center;
 
-        Image {
-            width: 24px;
-            height: 24px;
+        // `.logo svg { width: 24px }` with no height: an SVG's height follows its
+        // own ratio, which for `logo-flat.svg` is `886.371 / 840.793`, so a 24px
+        // width is 25.31px tall. A 24 × 24 box letterboxes it to 22.77px wide.
+        logo := Image {
             source: @image-url("../../assets/logo-flat.svg");
             colorize: Theme.text;
+            width: 24px;
+            height: self.preferred-height;
         }
 
         spacer-logo := Rectangle {

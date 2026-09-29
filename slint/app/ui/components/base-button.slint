@@ -10,9 +10,12 @@ import { FocusManager } from "../globals/focus.slint";
 //
 // The Vue component is `width: 100%`: it fills whatever row it is placed in,
 // which in an auto-sized flex row means shrinking to its content. Slint has no
-// such two-way sizing, so the width is the label plus the 16px horizontal
-// padding by default and callers that put the button in a sized row (the
-// create-instance dialog's button pair) pass `button-width` explicitly.
+// such two-way sizing, so the *preferred* width is the label plus the 16px
+// horizontal padding — and it is a preference rather than a `width`, so a
+// `HorizontalLayout` can still grow the button with `horizontal-stretch: 1`.
+// That is what the Vue's `flex: 1` rows ask for, and it is why the callers that
+// put two buttons in a row (the create-instance dialog, the account dialogs,
+// the multiplayer screens) no longer hand-compute a half-width each.
 export component BaseButton inherits Rectangle {
     in property <string> text: "";
     in property <color> text-color: Theme.default-text-color.transparentize(0.1);
@@ -35,7 +38,20 @@ export component BaseButton inherits Rectangle {
     in property <color> hover-text-color: transparent;
     callback clicked;
 
-    width: root.button-width > 0px ? root.button-width : button-label.preferred-width + 32px;
+    // A `min-width`/`preferred-width` pair rather than a `width`: an element with
+    // an explicit `width` gets `min == max == width` as its size constraints, so
+    // a layout can neither grow nor shrink it. Without an explicit `width` the
+    // default is `max(preferred-width, min-width)`, which still shrink-wraps an
+    // unsized button exactly as before — and lets a row give it a share of the
+    // free space with `horizontal-stretch`.
+    min-width: root.button-width > 0px ? root.button-width : button-label.preferred-width + 32px;
+    preferred-width: self.min-width;
+    // Pinned to 0, so the button keeps the content width it has always had unless
+    // a caller asks for a share. An element with no `horizontal-stretch` takes
+    // whatever the layout's free-space split gives it, and that split is even
+    // whenever every item's factor is 0 — so leaving this unbound would quietly
+    // stretch every unsized button in the app to fill its row.
+    horizontal-stretch: 0;
     height: 30px;
     border-radius: Theme.controllers-border-radius;
     border-width: 1px;
@@ -65,13 +81,9 @@ export component BaseButton inherits Rectangle {
         color: root.hover-text-color != transparent && button-touch.has-hover
             ? root.hover-text-color
             : root.text-color;
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
     }
 
     button-touch := TouchArea {
-        width: parent.width;
-        height: parent.height;
         enabled: root.button-enabled;
         clicked => {
             FocusManager.clear();

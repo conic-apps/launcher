@@ -15,7 +15,11 @@ import { MultiplayerState } from "../../../globals/multiplayer.slint";
 // before the buttons is 16px — the spacers below spell that out.
 export component MultiplayerDownloadDescription inherits VerticalLayout {
     width: 100%;
-    spacing: 0px;
+    // `.title { margin-bottom: 16px }` and `.buttons { margin-top: 16px }` both
+    // land on 16px once their margins collapse against what is between them, so
+    // one `spacing` carries the two of them and the two spacers that spelled them
+    // out are gone. The 8px gaps are a different value and stay.
+    spacing: 16px;
     alignment: start;
 
     Text {
@@ -25,8 +29,6 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
         horizontal-alignment: center;
         color: Theme.default-text-color.transparentize(0.1);
     }
-
-    Rectangle { height: 16px; background: transparent; }
 
     Text {
         text: @tr("Multiplayer" => "The Conic Nexus extension is built on EasyTier and implements the Scaffolding protocol, so it can play together with many other launchers, HMCL included.");
@@ -75,29 +77,24 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
         }
     }
 
-    Rectangle { height: 16px; background: transparent; }
+    // `div.buttons { display: flex; gap: 12px }` — a bare row, so the wrapper
+    // it had here (only there to hand the buttons a `parent.width`) is gone.
+    // The default `stretch`, not `alignment: start` — see `create-instance.slint`.
+    HorizontalLayout {
+        spacing: 12px;
 
-    actions := Rectangle {
-        width: 100%;
-        height: 30px;
-        background: transparent;
+        BaseButton {
+            horizontal-stretch: 1;
+            text: @tr("Multiplayer" => "Cancel");
+            clicked => { MultiplayerState.close(); }
+        }
 
-        HorizontalLayout {
-            spacing: 12px;
-
-            BaseButton {
-                button-width: (parent.width - 12px) / 2;
-                text: @tr("Multiplayer" => "Cancel");
-                clicked => { MultiplayerState.close(); }
-            }
-
-            BaseButton {
-                button-width: (parent.width - 12px) / 2;
-                text: @tr("Multiplayer" => "Start download");
-                text-color: Theme.text-inverse;
-                button-background: Theme.blue;
-                clicked => { MultiplayerState.component = "downloadProgress"; }
-            }
+        BaseButton {
+            horizontal-stretch: 1;
+            text: @tr("Multiplayer" => "Start download");
+            text-color: Theme.text-inverse;
+            button-background: Theme.blue;
+            clicked => { MultiplayerState.component = "downloadProgress"; }
         }
     }
 }

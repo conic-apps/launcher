@@ -24,8 +24,6 @@ export component DropdownOverlay inherits Rectangle {
     animate panel-opacity { duration: 200ms; easing: ease; }
 
     outside := TouchArea {
-        width: parent.width;
-        height: parent.height;
         enabled: Dropdown.open || root.panel-height > 0.5px;
         scroll-event(event) => {
             if (Dropdown.open || root.panel-height > 0.5px) {
@@ -45,7 +43,9 @@ export component DropdownOverlay inherits Rectangle {
         height: root.panel-height;
         opacity: root.panel-opacity;
         clip: true;
-        border-radius: 10px;
+        // `var(--dialog-border-radius)` — 10px on every palette, but the token is
+        // the token.
+        border-radius: Theme.dialog-border-radius;
         border-width: 1px;
         border-color: Theme.controllers-border;
         background: Theme.base;
@@ -76,7 +76,9 @@ export component DropdownOverlay inherits Rectangle {
 
             for player in Dropdown.accounts : Rectangle {
                 height: 26px;
-                border-radius: 6px;
+                // `var(--controllers-border-radius)`, which is 4px in Latte
+                // rather than the 6px the dark flavors use.
+                border-radius: Theme.controllers-border-radius;
                 background: Dropdown.current == player.key ? #ffffff17
                     : player-touch.has-hover ? #ffffff1f
                     : transparent;
@@ -86,7 +88,6 @@ export component DropdownOverlay inherits Rectangle {
                     size: 18px;
                     skin: player.avatar;
                     x: 8px;
-                    y: (parent.height - self.height) / 2;
                 }
 
                 Text {
@@ -95,7 +96,6 @@ export component DropdownOverlay inherits Rectangle {
                     font-weight: Theme.font-weight-normal;
                     color: Theme.default-text-color.transparentize(0.1);
                     x: 34px;
-                    y: (parent.height - self.height) / 2;
                     width: parent.width - 42px;
                     overflow: elide;
                     wrap: no-wrap;
@@ -127,7 +127,9 @@ export component DropdownOverlay inherits Rectangle {
 
             for option in Dropdown.options : Rectangle {
                 height: 26px;
-                border-radius: 6px;
+                // `var(--controllers-border-radius)`, which is 4px in Latte
+                // rather than the 6px the dark flavors use.
+                border-radius: Theme.controllers-border-radius;
                 background: Dropdown.current == option.key ? #ffffff17
                     : option-touch.has-hover ? #ffffff1f
                     : transparent;
@@ -137,7 +139,6 @@ export component DropdownOverlay inherits Rectangle {
                     name: option.icon;
                     size: 14px;
                     x: 8px;
-                    y: (parent.height - self.height) / 2;
                 }
 
                 Text {
@@ -146,7 +147,6 @@ export component DropdownOverlay inherits Rectangle {
                     font-weight: Theme.font-weight-normal;
                     color: Theme.default-text-color.transparentize(0.1);
                     x: option.icon != "" ? 30px : 8px;
-                    y: (parent.height - self.height) / 2;
                     width: parent.width - (option.icon != "" ? 38px : 16px);
                     overflow: elide;
                     wrap: no-wrap;

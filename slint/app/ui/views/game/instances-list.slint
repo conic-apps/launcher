@@ -381,8 +381,7 @@ export component InstancesList inherits Rectangle {
                             name: "chevron-forward";
                             size: 14px;
                             icon-color: Theme.text-inverse;
-                            x: 3px;
-                            y: (parent.height - self.height) / 2;
+                            x: 4px;
                             transform-origin: { x: self.width / 2, y: self.height / 2 };
                             transform-rotation: row.collapsed ? 0deg : 90deg;
                             animate transform-rotation { duration: 200ms; easing: ease; }
@@ -392,7 +391,6 @@ export component InstancesList inherits Rectangle {
                         // the title sits 36px in.
                         HorizontalLayout {
                             x: 20px + 16px;
-                            y: (parent.height - self.height) / 2;
                             height: 14px;
                             spacing: 8px;
                             alignment: start;
@@ -418,8 +416,6 @@ export component InstancesList inherits Rectangle {
                                     font-size: 10px;
                                     font-weight: 500;
                                     color: Theme.text-inverse;
-                                    x: (parent.width - self.width) / 2;
-                                    y: (parent.height - self.height) / 2;
                                 }
                             }
                         }
@@ -510,13 +506,15 @@ export component InstancesList inherits Rectangle {
                                     font-size: 10px;
                                     font-weight: 700;
                                     color: Theme.text-inverse;
-                                    x: (parent.width - self.width) / 2;
-                                    y: (parent.height - self.height) / 2;
                                 }
                             }
 
                             HorizontalLayout {
-                                spacing: 4px;
+                                // No `spacing`: `.last-play` is an inline span
+                                // with no gap and no margin, so the only separator
+                                // between the label and the value is the one
+                                // collapsed whitespace character — which is what
+                                // the label's own trailing string already is.
                                 cross-axis-alignment: center;
 
                                 Text {
@@ -576,7 +574,6 @@ export component InstancesList inherits Rectangle {
 
         placeholder-layout := VerticalLayout {
             alignment: center;
-            spacing: 0px;
             width: parent.width;
 
             Rectangle {
@@ -587,7 +584,6 @@ export component InstancesList inherits Rectangle {
                 AppIcon {
                     name: "about";
                     size: 64px;
-                    x: (parent.width - self.width) / 2;
                 }
             }
 

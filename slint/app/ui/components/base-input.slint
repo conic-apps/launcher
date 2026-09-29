@@ -24,7 +24,17 @@ export component BaseInput inherits Rectangle {
     in-out property <string> value: "";
     callback edited;
 
-    width: input-width;
+    // A `min-width`/`preferred-width` pair rather than a `width`: an element with
+    // an explicit `width` gets `min == max == width` as its size constraints, so
+    // a layout can neither grow nor shrink it — which is what the multiplayer
+    // dialog's "invite code" row needs (`flex: 1` next to a fit-content button).
+    // Without an explicit `width` the default is `max(preferred-width,
+    // min-width)`, which still sizes an unsized field exactly as before.
+    min-width: root.input-width;
+    preferred-width: self.min-width;
+    // Pinned to 0 so an unsized field keeps its declared width rather than taking
+    // whatever the layout's free-space split gives it; see `base-button.slint`.
+    horizontal-stretch: 0;
     height: 30px;
     border-radius: Theme.controllers-border-radius;
     border-width: 1px;
@@ -54,8 +64,6 @@ export component BaseInput inherits Rectangle {
 
     // Hover tracker (declared before the field so the field stays clickable).
     input-touch := TouchArea {
-        width: parent.width;
-        height: parent.height;
     }
 
     text-input := TextInput {
@@ -85,7 +93,6 @@ export component BaseInput inherits Rectangle {
         font-weight: Theme.font-weight-normal;
         color: Theme.default-text-color.transparentize(0.2);
         x: 8px;
-        y: (parent.height - self.height) / 2;
     }
 
     // Native spinner replacement: two stacked buttons in a single column at the
@@ -111,8 +118,6 @@ export component BaseInput inherits Rectangle {
                 size: 9px;
                 icon-color: Theme.default-text-color.transparentize(0.25);
                 transform-rotation: 180deg;
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
             }
 
             up-touch := TouchArea {
@@ -136,8 +141,6 @@ export component BaseInput inherits Rectangle {
                 name: "chevron-down";
                 size: 9px;
                 icon-color: Theme.default-text-color.transparentize(0.25);
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
             }
 
             down-touch := TouchArea {
