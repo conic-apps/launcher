@@ -1200,6 +1200,18 @@ the very first play at startup would start silently. This is the same clock
       child *of* the cell the layout places, which is where the intro slides in
       `views/game/instance-summary.slint` and the cards' entrance in
       `overlays/music-player.slint` ended up.
+    - **`z` is global to the window, so declaration order only orders what has
+      no `z` of its own.** Mounting the dropdown panel *after* the page stack
+      puts it above every element that does not opt into a `z`, and nothing
+      more: the instance list's toolbar (`z: 114`) and both scrollbars
+      (`z: 500`) are exactly what a toolbar dropdown opens over, and at the
+      default `z: 0` the panel was painted underneath the list it belongs to.
+      The Vue's `.dropdown-list` is `z-index: 100000`, above the list's 114,
+      so the fix is to carry that number's *position* rather than a number
+      picked to clear the offenders — and then anything the Vue stacks above
+      the dropdown (the dialogs, 11451419) needs one too, because it was
+      relying on being declared later. The z's are sparse enough here that
+      they have to be read as a scale, not as local tweaks.
     - **A stretch factor of 0 is the one you have to write, and 1 is the
       default.** Not a niche setting: *every* layout child grows by default, so
       an element the CSS pins (`flex-shrink: 0`, a fixed width, a `width:

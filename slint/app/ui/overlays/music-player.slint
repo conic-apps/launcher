@@ -447,15 +447,21 @@ export component MusicPlayerOverlay inherits Rectangle {
                                     }
                                 }
                             }
+                        }
 
-                            duration-text := Text {
-                                horizontal-stretch: 0;
-                                height: 11px;
-                                text: MusicState.duration-text;
-                                font-size: 11px;
-                                font-weight: Theme.font-weight-normal;
-                                color: Theme.subtext-0;
-                            }
+                        // The third child of the row, not the last child of the
+                        // bar. It is a sibling here, and was one in the Vue too
+                        // (`.progress-area` is a flex row of the two clocks and
+                        // the bar) — which is the whole reason it belongs here
+                        // rather than inside `progress-bar`, where it centred
+                        // itself on the track and printed over it.
+                        duration-text := Text {
+                            horizontal-stretch: 0;
+                            height: 11px;
+                            text: MusicState.duration-text;
+                            font-size: 11px;
+                            font-weight: Theme.font-weight-normal;
+                            color: Theme.subtext-0;
                         }
                     }
 

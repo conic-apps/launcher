@@ -176,7 +176,18 @@ export component App inherits Window {
 
         // Floating dropdown list + outside-click layer, mounted above the page
         // stack (see `DropdownOverlay`).
-        DropdownOverlay { }
+        //
+        // The `z` is the load-bearing part. Mounting it after `page-stack` only
+        // orders it above the elements that carry no `z` of their own; the
+        // instance list's toolbar (`z: 114`) and both scrollbars (`z: 500`) do,
+        // and they are exactly what a toolbar dropdown opens over — so at the
+        // default 0 the panel was painted underneath the list it belongs to.
+        // The Vue's `.dropdown-list` is `z-index: 100000`, above the list's 114
+        // and the scrollbars, and this reproduces that rather than a number
+        // picked to clear them.
+        DropdownOverlay {
+            z: 1000;
+        }
 
         // The description tooltip, on the same footing: it is taller than the row
         // it belongs to and both the settings collapse and the settings scroll
@@ -197,6 +208,11 @@ export component App inherits Window {
 
         // The dialog layer (DialogRoot.vue): mounted last so a dialog covers
         // both the page and the floating dropdown.
-        DialogRoot { }
+        // And the dialogs have to stay above *that*: `BaseDialog.vue` is
+        // `z-index: 11451419`, the top of the Vue's stack, where before this sat
+        // at 0 and beat the dropdown only by being declared later.
+        DialogRoot {
+            z: 2000;
+        }
     }
 }

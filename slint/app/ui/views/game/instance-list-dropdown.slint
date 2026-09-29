@@ -45,7 +45,16 @@ export component InstanceListDropdown inherits Rectangle {
     // 12px from the end. The three widths the hand-placement needed (the label
     // plus 24, `parent.width - label-box.width`, and `- min(parent.width, 38px)`
     // for the elide) are the layout's own arithmetic.
+    // Spelled out rather than left to the default: the geometry default is
+    // specified per element type, and this is the box the only `TouchArea` in
+    // the component lives in — a layout whose children are all `Rectangle`s has
+    // a preferred size of 0, so if the default is ever the preferred size
+    // rather than the parent's, the dropdown stops being clickable rather than
+    // merely looking wrong. The baseline's `head` was a `Rectangle` with these
+    // two bindings for the same reason.
     head := HorizontalLayout {
+        width: root.width;
+        height: root.height;
         cross-axis-alignment: center;
 
         // `.label { padding: 6px 12px; flex-shrink: 0 }`. The
