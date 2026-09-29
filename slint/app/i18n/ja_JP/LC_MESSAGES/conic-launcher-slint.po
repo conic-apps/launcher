@@ -1978,3 +1978,136 @@ msgstr "プレイリスト"
 
 msgid "Nothing here"
 msgstr "何もありません"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch instance"
+msgstr "インスタンスを起動"
+
+#: ui
+msgctxt "CommandText"
+msgid "Create instance"
+msgstr "インスタンスを作成"
+
+#: ui
+msgctxt "CommandText"
+msgid "Add game profile"
+msgstr "ゲームプロファイルを追加"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth"
+msgstr "Modrinth で検索"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge"
+msgstr "CurseForge で検索"
+
+#: ui
+msgctxt "CommandText"
+msgid "by {}"
+msgstr "作成者: {}"
+
+#: ui
+msgctxt "CommandText"
+msgid "Mod"
+msgstr "Mod"
+
+#: ui
+msgctxt "CommandText"
+msgid "Modpack"
+msgstr "Modpack"
+
+#: ui
+msgctxt "CommandText"
+msgid "Resource Pack"
+msgstr "リソースパック"
+
+#: ui
+msgctxt "CommandText"
+msgid "Shader"
+msgstr "シェーダー"
+
+#: ui
+msgctxt "CommandText"
+msgid "Switch to"
+msgstr "切り替え"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch"
+msgstr "起動"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open"
+msgstr "開く"
+
+#: ui
+msgctxt "CommandText"
+msgid "Instances"
+msgstr "インスタンス"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search results"
+msgstr "検索結果"
+
+#: ui
+msgctxt "CommandText"
+msgid "Commands"
+msgstr "コマンド"
+
+#: ui
+msgctxt "CommandText"
+msgid "Select an instance to launch…"
+msgstr "起動するインスタンスを選択…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth…"
+msgstr "Modrinth で検索…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge…"
+msgstr "CurseForge で検索…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search commands or instances…"
+msgstr "コマンドまたはインスタンスを検索…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Back"
+msgstr "戻る"
+
+#: ui
+msgctxt "CommandText"
+msgid "Close"
+msgstr "閉じる"
+
+#: ui
+msgctxt "CommandText"
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on CurseForge"
+msgstr "キーワードを入力して CurseForge で検索"
+
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on Modrinth"
+msgstr "キーワードを入力して Modrinth で検索"
+
+
+#: ui
+msgctxt "CommandText"
+msgid "Search failed, please try again"
+msgstr "検索に失敗しました。もう一度お試しください"
+
+#: ui
+msgctxt "CommandText"
+msgid "No matching results"
+msgstr "一致する結果がありません"

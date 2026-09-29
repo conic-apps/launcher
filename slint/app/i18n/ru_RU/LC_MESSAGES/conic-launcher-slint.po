@@ -1978,3 +1978,136 @@ msgstr "Плейлист"
 
 msgid "Nothing here"
 msgstr "Здесь ничего нет"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch instance"
+msgstr "Запустить экземпляр"
+
+#: ui
+msgctxt "CommandText"
+msgid "Create instance"
+msgstr "Создать экземпляр"
+
+#: ui
+msgctxt "CommandText"
+msgid "Add game profile"
+msgstr "Добавить игровой профиль"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth"
+msgstr "Поиск в Modrinth"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge"
+msgstr "Поиск в CurseForge"
+
+#: ui
+msgctxt "CommandText"
+msgid "by {}"
+msgstr "от {}"
+
+#: ui
+msgctxt "CommandText"
+msgid "Mod"
+msgstr "Мод"
+
+#: ui
+msgctxt "CommandText"
+msgid "Modpack"
+msgstr "Модпак"
+
+#: ui
+msgctxt "CommandText"
+msgid "Resource Pack"
+msgstr "Ресурспак"
+
+#: ui
+msgctxt "CommandText"
+msgid "Shader"
+msgstr "Шейдер"
+
+#: ui
+msgctxt "CommandText"
+msgid "Switch to"
+msgstr "Переключиться на"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch"
+msgstr "Запустить"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open"
+msgstr "Открыть"
+
+#: ui
+msgctxt "CommandText"
+msgid "Instances"
+msgstr "Экземпляры"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search results"
+msgstr "Результаты поиска"
+
+#: ui
+msgctxt "CommandText"
+msgid "Commands"
+msgstr "Команды"
+
+#: ui
+msgctxt "CommandText"
+msgid "Select an instance to launch…"
+msgstr "Выберите экземпляр для запуска…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth…"
+msgstr "Поиск в Modrinth…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge…"
+msgstr "Поиск в CurseForge…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search commands or instances…"
+msgstr "Поиск команд или экземпляров…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Back"
+msgstr "Назад"
+
+#: ui
+msgctxt "CommandText"
+msgid "Close"
+msgstr "Закрыть"
+
+#: ui
+msgctxt "CommandText"
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on CurseForge"
+msgstr "Введите ключевые слова для поиска на CurseForge"
+
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on Modrinth"
+msgstr "Введите ключевые слова для поиска на Modrinth"
+
+
+#: ui
+msgctxt "CommandText"
+msgid "Search failed, please try again"
+msgstr "Поиск не удался, попробуйте ещё раз"
+
+#: ui
+msgctxt "CommandText"
+msgid "No matching results"
+msgstr "Нет подходящих результатов"

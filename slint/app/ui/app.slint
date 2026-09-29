@@ -5,10 +5,12 @@
 import { Theme, ThemeProvider } from "theme.slint";
 import { TitleBar, WindowControl } from "components/title-bar.slint";
 import { AppConfig } from "globals/settings.slint";
+import { CommandPaletteState } from "globals/command-palette.slint";
 import { Navigation } from "globals/navigation.slint";
 import { DropdownOverlay } from "components/dropdown-overlay.slint";
 import { DescriptionTooltipOverlay } from "components/description-tooltip.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
+import { CommandPaletteOverlay } from "overlays/command-palette.slint";
 import { MusicPlayerOverlay } from "overlays/music-player.slint";
 import { WindowDrag } from "globals/window-drag.slint";
 import { WindowBackground } from "components/window-background.slint";
@@ -32,6 +34,7 @@ export { WindowControl } from "components/title-bar.slint";
 export { Background } from "globals/background.slint";
 export { ContentState, ContentSearch, ContentCard, CardTag, FilterChip, FilterRow, PageButton } from "globals/content.slint";
 export { MusicState, MusicTrack } from "globals/music.slint";
+export { CommandPaletteState, PaletteItem } from "globals/command-palette.slint";
 
 // Application root window (App.vue). macOS keeps the native traffic lights,
 // Linux draws the window controls itself, and Windows draws the platform's own
@@ -62,6 +65,14 @@ export component App inherits Window {
     // `src/windows_caption.rs`), so both draw over the whole window.
     no-frame: self.linux || self.windows;
     resize-border-width: (self.linux || self.windows) ? 6px : 0px;
+    // The initial focus element, and the only thing that keeps the `Ctrl`/`⌘` + `/`
+    // shortcut alive: a window with nothing focused discards its key events, so
+    // the shortcut would work until the first click and never again. The scope
+    // wraps the whole window so a key event from any focused field inside it —
+    // a settings text input, the palette's own search box — reaches its binding
+    // on the way up. `App.vue` gets the same thing for free from a
+    // `document.addEventListener("keydown", …)`.
+    forward-focus: app-scope;
 
     in-out property <bool> macos: false;
     in-out property <bool> linux: false;
@@ -92,7 +103,6 @@ export component App inherits Window {
     in-out property <string> search-placeholder: @tr("Search or type a command…");
     in-out property <string> search-hotkey: "";
 
-    callback open-search();
     callback toggle-music();
     callback maximize-or-fullscreen();
     callback minimize-window();
@@ -108,111 +118,150 @@ export component App inherits Window {
         caption-dark-changed(dark) => { root.set-caption-dark(dark); }
     }
 
-    // The content layer stays full-size; the title bar owns the top row and
-    // the platform owns the remaining window edge.
-    container := Rectangle {
-        width: root.width;
-        height: root.height;
-        // The Vue's `#window` background: the palette's `crust`, flat. The
-        // hyperbola sky over it is only 30% opaque, so the base shows through
-        // and is part of the picture.
-        background: Theme.crust;
-        border-radius: 16px;
-        // `#window { border: 1px solid rgba(255, 255, 255, 0.16) }`. A Slint
-        // border is drawn inside the box and does not inset the children, where
-        // the Vue's `box-sizing: border-box` leaves 1px of padding on every side;
-        // the hairline is the visible part, and the inset is not reproduced.
-        border-width: 1px;
-        border-color: #ffffff.with-alpha(0.16);
-        clip: true;
+    // The window's key handler. Neither focus-on-click nor tab traversal is on:
+    // a `FocusScope` covering the window would take every click in the app away
+    // from the control under it, and it is only ever focused explicitly.
+    app-scope := FocusScope {
+        width: 100%;
+        height: 100%;
+        focus-on-click: false;
+        focus-on-tab-navigation: false;
 
-        // Behind every page and every overlay, as the Vue's `WindowBackground`
-        // is the first child of `.window`.
-        WindowBackground { }
+        // `isMacOS() ? event.metaKey : event.ctrlKey` with `event.key === "/"`,
+        // and Slint's `Control` is exactly that on both: the command key on macOS
+        // and the control key everywhere else, so one binding covers the Vue's
+        // ternary. (`Meta` is the *other* one — the physical control key on macOS
+        // — which is the opposite of what the name suggests.)
+        //
+        // The binding lives on the app scope rather than on the palette, which is
+        // hidden most of the time and whose subtree a click outside never focuses.
+        KeyBinding {
+            keys: @keys(Control + "/");
+            activated => { CommandPaletteState.toggle(); }
+        }
 
-        VerticalLayout {
+        // The focus goes to the palette's search field while it is open and comes
+        // back here when it closes, so the bindings above keep working: a window
+        // with nothing focused discards its key events entirely.
+        private property <bool> palette-open: CommandPaletteState.visible;
+        changed palette-open => {
+            if !palette-open {
+                app-scope.focus();
+            }
+        }
+
+        // The content layer stays full-size; the title bar owns the top row and
+        // the platform owns the remaining window edge.
+        container := Rectangle {
             width: root.width;
             height: root.height;
+            // The Vue's `#window` background: the palette's `crust`, flat. The
+            // hyperbola sky over it is only 30% opaque, so the base shows through
+            // and is part of the picture.
+            background: Theme.crust;
+            border-radius: 16px;
+            // `#window { border: 1px solid rgba(255, 255, 255, 0.16) }`. A Slint
+            // border is drawn inside the box and does not inset the children, where
+            // the Vue's `box-sizing: border-box` leaves 1px of padding on every side;
+            // the hairline is the visible part, and the inset is not reproduced.
+            border-width: 1px;
+            border-color: #ffffff.with-alpha(0.16);
+            clip: true;
 
-            TitleBar {
-                macos: root.macos;
-                linux: root.linux;
-                windows: root.windows;
-                fullscreen: root.window-fullscreen;
-                height: root.title-bar-height;
-                window-controls-inset: root.window-controls-inset;
-                window-controls: root.window-controls;
-                window-control-hovered: root.window-control-hovered;
-                window-control-pressed: root.window-control-pressed;
-                search-placeholder: root.search-placeholder;
-                search-hotkey: root.search-hotkey;
-                current-page: Navigation.current-page;
-                music-enabled: AppConfig.music-enabled;
+            // Behind every page and every overlay, as the Vue's `WindowBackground`
+            // is the first child of `.window`.
+            WindowBackground { }
 
-                // Navigation is global now: the title bar drives it directly.
-                open-home => { Navigation.navigate("game"); }
-                open-settings => { Navigation.navigate("settings"); }
-                open-search => { root.open-search(); }
-                toggle-music => { root.toggle-music(); }
-                maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
-                minimize-window => { root.minimize-window(); }
-                close-window => { root.close(); }
+            VerticalLayout {
+                width: root.width;
+                height: root.height;
+
+                TitleBar {
+                    macos: root.macos;
+                    linux: root.linux;
+                    windows: root.windows;
+                    fullscreen: root.window-fullscreen;
+                    height: root.title-bar-height;
+                    window-controls-inset: root.window-controls-inset;
+                    window-controls: root.window-controls;
+                    window-control-hovered: root.window-control-hovered;
+                    window-control-pressed: root.window-control-pressed;
+                    search-placeholder: root.search-placeholder;
+                    search-hotkey: root.search-hotkey;
+                    current-page: Navigation.current-page;
+                    music-enabled: AppConfig.music-enabled;
+
+                    // Navigation is global now: the title bar drives it directly.
+                    open-home => { Navigation.navigate("game"); }
+                    open-settings => { Navigation.navigate("settings"); }
+                    open-search => { CommandPaletteState.open(); }
+                    toggle-music => { root.toggle-music(); }
+                    maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
+                    minimize-window => { root.minimize-window(); }
+                    close-window => { root.close(); }
+                }
+
+                // Page stack (App.vue `<component :is="pages[...]">`). Only the
+                // settings page is migrated for real; the rest keeps the
+                // placeholder until later phases.
+                page-stack := Rectangle {
+                    width: 100%;
+                    vertical-stretch: 1;
+                    clip: true;
+
+                    if Navigation.current-page == "settings" : SettingsView { }
+                    if Navigation.current-page == "game" : GameView { }
+                    if Navigation.current-page == "launch" : LaunchView { }
+                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" : GameViewPlaceholder { }
+                }
             }
 
-            // Page stack (App.vue `<component :is="pages[...]">`). Only the
-            // settings page is migrated for real; the rest keeps the
-            // placeholder until later phases.
-            page-stack := Rectangle {
-                width: 100%;
-                vertical-stretch: 1;
-                clip: true;
-
-                if Navigation.current-page == "settings" : SettingsView { }
-                if Navigation.current-page == "game" : GameView { }
-                if Navigation.current-page == "launch" : LaunchView { }
-                if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" : GameViewPlaceholder { }
+            // Floating dropdown list + outside-click layer, mounted above the page
+            // stack (see `DropdownOverlay`).
+            //
+            // The `z` is the load-bearing part. Mounting it after `page-stack` only
+            // orders it above the elements that carry no `z` of their own; the
+            // instance list's toolbar (`z: 114`) and both scrollbars (`z: 500`) do,
+            // and they are exactly what a toolbar dropdown opens over — so at the
+            // default 0 the panel was painted underneath the list it belongs to.
+            // The Vue's `.dropdown-list` is `z-index: 100000`, above the list's 114
+            // and the scrollbars, and this reproduces that rather than a number
+            // picked to clear them.
+            DropdownOverlay {
+                z: 1000;
             }
-        }
 
-        // Floating dropdown list + outside-click layer, mounted above the page
-        // stack (see `DropdownOverlay`).
-        //
-        // The `z` is the load-bearing part. Mounting it after `page-stack` only
-        // orders it above the elements that carry no `z` of their own; the
-        // instance list's toolbar (`z: 114`) and both scrollbars (`z: 500`) do,
-        // and they are exactly what a toolbar dropdown opens over — so at the
-        // default 0 the panel was painted underneath the list it belongs to.
-        // The Vue's `.dropdown-list` is `z-index: 100000`, above the list's 114
-        // and the scrollbars, and this reproduces that rather than a number
-        // picked to clear them.
-        DropdownOverlay {
-            z: 1000;
-        }
+            // The description tooltip, on the same footing: it is taller than the row
+            // it belongs to and both the settings collapse and the settings scroll
+            // area clip, so it is drawn here and anchored to the description line
+            // (see `components/description-tooltip.slint`).
+            DescriptionTooltipOverlay { }
 
-        // The description tooltip, on the same footing: it is taller than the row
-        // it belongs to and both the settings collapse and the settings scroll
-        // area clip, so it is drawn here and anchored to the description line
-        // (see `components/description-tooltip.slint`).
-        DescriptionTooltipOverlay { }
+            // The background-music panel (`<MusicPlayer>` in App.vue), mounted on the
+            // same layer and covering everything below the title bar. It comes after
+            // the dropdowns and the tooltip but before the dialogs, which is the Vue's
+            // order: its `.music-overlay` is `z-index: 100` against the command
+            // palette's 114515 and the dialogs' 11451419. Its `top: 44px` is applied
+            // here, where the title bar's height is known.
+            MusicPlayerOverlay {
+                y: root.title-bar-height;
+                height: root.height - root.title-bar-height;
+            }
 
-        // The background-music panel (`<MusicPlayer>` in App.vue), mounted on the
-        // same layer and covering everything below the title bar. It comes after
-        // the dropdowns and the tooltip but before the dialogs, which is the Vue's
-        // order: its `.music-overlay` is `z-index: 100` against the command
-        // palette's 114515 and the dialogs' 11451419. Its `top: 44px` is applied
-        // here, where the title bar's height is known.
-        MusicPlayerOverlay {
-            y: root.title-bar-height;
-            height: root.height - root.title-bar-height;
-        }
+            // The command palette (`<CommandPalette>` in App.vue), between the music
+            // player and the dialogs because that is where the Vue's `z-index` puts
+            // it: 114515, above the player's 100 and the content overlays' 114514,
+            // below the dialogs' 11451419.
+            CommandPaletteOverlay { }
 
-        // The dialog layer (DialogRoot.vue): mounted last so a dialog covers
-        // both the page and the floating dropdown.
-        // And the dialogs have to stay above *that*: `BaseDialog.vue` is
-        // `z-index: 11451419`, the top of the Vue's stack, where before this sat
-        // at 0 and beat the dropdown only by being declared later.
-        DialogRoot {
-            z: 2000;
+            // The dialog layer (DialogRoot.vue): mounted last so a dialog covers
+            // both the page and the floating dropdown.
+            // And the dialogs have to stay above *that*: `BaseDialog.vue` is
+            // `z-index: 11451419`, the top of the Vue's stack, where before this sat
+            // at 0 and beat the dropdown only by being declared later.
+            DialogRoot {
+                z: 2000;
+            }
         }
     }
 }

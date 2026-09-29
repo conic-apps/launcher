@@ -1978,3 +1978,136 @@ msgstr "Çalma listesi"
 
 msgid "Nothing here"
 msgstr "Burada bir şey yok"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch instance"
+msgstr "Örneği başlat"
+
+#: ui
+msgctxt "CommandText"
+msgid "Create instance"
+msgstr "Örnek oluştur"
+
+#: ui
+msgctxt "CommandText"
+msgid "Add game profile"
+msgstr "Oyun profili ekle"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth"
+msgstr "Modrinth'te ara"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge"
+msgstr "CurseForge'ta ara"
+
+#: ui
+msgctxt "CommandText"
+msgid "by {}"
+msgstr "{} tarafından"
+
+#: ui
+msgctxt "CommandText"
+msgid "Mod"
+msgstr "Mod"
+
+#: ui
+msgctxt "CommandText"
+msgid "Modpack"
+msgstr "Mod paketi"
+
+#: ui
+msgctxt "CommandText"
+msgid "Resource Pack"
+msgstr "Kaynak paketi"
+
+#: ui
+msgctxt "CommandText"
+msgid "Shader"
+msgstr "Gölgelendirici"
+
+#: ui
+msgctxt "CommandText"
+msgid "Switch to"
+msgstr "Şuraya geç"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch"
+msgstr "Başlat"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open"
+msgstr "Aç"
+
+#: ui
+msgctxt "CommandText"
+msgid "Instances"
+msgstr "Örnekler"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search results"
+msgstr "Arama sonuçları"
+
+#: ui
+msgctxt "CommandText"
+msgid "Commands"
+msgstr "Komutlar"
+
+#: ui
+msgctxt "CommandText"
+msgid "Select an instance to launch…"
+msgstr "Başlatılacak örneği seç…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth…"
+msgstr "Modrinth'te ara…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge…"
+msgstr "CurseForge'ta ara…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search commands or instances…"
+msgstr "Komut veya örnek ara…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Back"
+msgstr "Geri"
+
+#: ui
+msgctxt "CommandText"
+msgid "Close"
+msgstr "Kapat"
+
+#: ui
+msgctxt "CommandText"
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on CurseForge"
+msgstr "CurseForge'ta arama yapmak için anahtar kelimeler girin"
+
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on Modrinth"
+msgstr "Modrinth'te arama yapmak için anahtar kelimeler girin"
+
+
+#: ui
+msgctxt "CommandText"
+msgid "Search failed, please try again"
+msgstr "Arama başarısız oldu, lütfen tekrar deneyin"
+
+#: ui
+msgctxt "CommandText"
+msgid "No matching results"
+msgstr "Eşleşen sonuç yok"

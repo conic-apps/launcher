@@ -1,0 +1,266 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// Command palette state (src/overlays/CommandPalette.vue).
+//
+// The Vue keeps this in the component's own `ref`s (`mode`, `query`,
+// `selectedIndex`, `onlineItems`, …) and computes `renderItems`, `placeholderText`,
+// `breadcrumbText` and `primaryAction` from them as Vue `computed`s. Slint has no
+// per-instance state and no computed properties, so the split follows the one the
+// rest of the port uses:
+//
+//   * the *pure-UI* state lives in this global and is written from the view —
+//     whether the palette is open, which mode it is in, what has been typed and
+//     which row is selected;
+//   * the *domain* state lives in Rust — the instance list, the Modrinth and
+//     CurseForge searches — and is pushed in as a plain model of `PaletteItem`.
+//
+// The rendered list is built in Rust (`app/src/command_palette.rs`) rather than
+// assembled in an expression, for the reason the instance list and the content
+// cards give: a Slint expression can neither build a model nor index one, and the
+// list's order, filtering, section labels and heights all have to agree.
+
+/// One row of the palette's result list.
+///
+/// A row is a command, an instance or a project from an online search, and the
+/// three differ in what they carry. The translatable parts are *not* strings but
+/// keys: a string pushed into a model is fixed at the moment it is pushed and
+/// would not follow a language change, where an `@tr` binding re-evaluates — so
+/// `CommandText` resolves these (see the note on that global).
+export struct PaletteItem {
+    /// What `hover` / `perform` report and what `selected-key` is compared
+    /// against. The Vue's `PaletteItem.key`: `instance-<id>`, `modrinth-<id>`,
+    /// `curseforge-<id>`, or the command's own name.
+    key: string,
+    title: string,
+    /// "" for a title that is data (an instance's name, a project's), or the
+    /// command's key when the title is one of the five fixed commands:
+    /// "launch-instance" | "create-instance" | "add-account" | "search-modrinth"
+    /// | "search-curseforge".
+    title-kind: string,
+    /// The project's author, or "" — the Vue's optional `author`.
+    author: string,
+    /// The mod loader tags, in the API's own slugs (fabric | forge | quilt |
+    /// neoforge), already filtered. The tag's *label* is
+    /// `ContentText.loader()`'s — the Vue's `LOADER_NAMES[loader] ?? loader`,
+    /// which is a name map and not a translation either.
+    loaders: [string],
+    subtitle: string,
+    /// "" or the project type the subtitle is the label of: "mod" | "modpack" |
+    /// "resourcepack" | "shader" (the Vue's `categoryLabel`).
+    subtitle-kind: string,
+    /// The `AppIcon` name: a command's or an instance's glyph ("play", "add",
+    /// "user-add", "minecraft"), or the site an online result came from
+    /// ("modrinth" / "curseforge").
+    icon: string,
+    /// Whether `icon` is a site mark rather than a glyph. The Vue draws the two
+    /// from different elements with different rules — an `<AppIcon>` for the
+    /// first, the `ModrinthImage` / `CurseForgeImage` component for the second —
+    /// and they take their ink from different variables: the glyph from the
+    /// `.item-icon` colour, the mark from a `fill` of its own.
+    icon-is-brand: bool,
+    /// The project's own icon, when the search returned one (the Vue's
+    /// `imageUrl`). It takes the place of the mark entirely, as the `<img>` does.
+    icon-image: image,
+    has-icon-image: bool,
+    /// Whether the trailing chevron is drawn (the Vue's `hasChildren`).
+    has-children: bool,
+    /// The action the footer reports for the selected row: "open" | "select" |
+    /// "launch" (the Vue's `action`).
+    action-kind: string,
+    /// The section heading drawn above this row, or "" — "commands" |
+    /// "instances" | "results". Only the first row of a section carries one, the
+    /// way the Vue's `withSectionLabel` gives the label to index 0 alone.
+    section-kind: string,
+    /// `.section-label`'s own height: `padding: 6px 10px 2px` around an 11px
+    /// line — 19px — plus 4px of margin below the text, so 23px. 0 when the row
+    /// carries no heading.
+    label-height: length,
+    /// `.palette-item`'s height: `padding: 8px 10px` around `max(24px, .item-main)`.
+    /// 40px without the loader tags and 46px with them, the tag row being
+    /// `13px` title + `3px` gap + `14px` tags.
+    row-height: length,
+}
+
+/// The palette's translated strings.
+///
+/// The context is set explicitly (`@tr("CommandText" => …)`) because these are
+/// not one component's own strings: the rows, the placeholder, the breadcrumb and
+/// the footer hints are separate elements, exactly as they are separate elements
+/// of `CommandPalette.vue`.
+export global CommandText {
+    /// A row's title — the command's own, or the data Rust pushed.
+    public pure function title(kind: string, text: string) -> string {
+        if kind == "launch-instance" { return @tr("CommandText" => "Launch instance"); }
+        if kind == "create-instance" { return @tr("CommandText" => "Create instance"); }
+        if kind == "add-account" { return @tr("CommandText" => "Add game profile"); }
+        if kind == "search-modrinth" { return @tr("CommandText" => "Search on Modrinth"); }
+        if kind == "search-curseforge" { return @tr("CommandText" => "Search on CurseForge"); }
+        return text;
+    }
+
+    /// The `by <author>` suffix of a project's title line.
+    public pure function author(name: string) -> string {
+        if name == "" { return ""; }
+        return @tr("CommandText" => "by {}", name);
+    }
+
+    /// The right-hand subtitle of a row — the project's category.
+    public pure function category(kind: string) -> string {
+        if kind == "modpack" { return @tr("CommandText" => "Modpack"); }
+        if kind == "resourcepack" { return @tr("CommandText" => "Resource Pack"); }
+        if kind == "shader" { return @tr("CommandText" => "Shader"); }
+        if kind == "mod" { return @tr("CommandText" => "Mod"); }
+        return "";
+    }
+
+    /// The footer's action hint for the selected row.
+    public pure function action(kind: string) -> string {
+        if kind == "select" { return @tr("CommandText" => "Switch to"); }
+        if kind == "launch" { return @tr("CommandText" => "Launch"); }
+        if kind == "open" { return @tr("CommandText" => "Open"); }
+        return "";
+    }
+
+    /// The heading above a section of results.
+    public pure function section(kind: string) -> string {
+        if kind == "instances" { return @tr("CommandText" => "Instances"); }
+        if kind == "results" { return @tr("CommandText" => "Search results"); }
+        if kind == "commands" { return @tr("CommandText" => "Commands"); }
+        return "";
+    }
+
+    /// The search field's placeholder, which the Vue picks per mode.
+    public pure function placeholder(mode: string, source: string) -> string {
+        if mode == "launch-instance" { return @tr("CommandText" => "Select an instance to launch…"); }
+        if mode == "search-online" {
+            if source == "curseforge" { return @tr("CommandText" => "Search on CurseForge…"); }
+            return @tr("CommandText" => "Search on Modrinth…");
+        }
+        return @tr("CommandText" => "Search commands or instances…");
+    }
+
+    /// The footer's left-hand label, which names the current mode.
+    public pure function breadcrumb(mode: string, source: string) -> string {
+        if mode == "launch-instance" { return @tr("CommandText" => "Launch instance"); }
+        if mode == "search-online" {
+            if source == "curseforge" { return @tr("CommandText" => "Search on CurseForge"); }
+            return @tr("CommandText" => "Search on Modrinth");
+        }
+        return @tr("CommandText" => "Commands");
+    }
+
+    /// "Back" — shown instead of "Close" outside the root mode.
+    public pure function back-hint() -> string {
+        return @tr("CommandText" => "Back");
+    }
+
+    /// "Close".
+    public pure function close-hint() -> string {
+        return @tr("CommandText" => "Close");
+    }
+
+    /// The empty-list messages. `kind` is the Vue's chain of `v-else-if`s:
+    /// "searching" | "type-to-search" | "failed" | "none", and `source` is the
+    /// site for the one that names it.
+    public pure function empty(kind: string, source: string) -> string {
+        if kind == "type-to-search" {
+            // The site is named rather than left implicit: the message sits in an
+            // empty list under a field whose placeholder already says which site is
+            // being searched, and the Vue's wording — "and press Enter" — promises
+            // that a key does something the field never asked it to. Only Enter
+            // performs a search, and there is nothing to perform here.
+            if source == "curseforge" {
+                return @tr("CommandText" => "Type keywords to search on CurseForge");
+            }
+            return @tr("CommandText" => "Type keywords to search on Modrinth");
+        }
+        if kind == "failed" { return @tr("CommandText" => "Search failed, please try again"); }
+        if kind == "none" { return @tr("CommandText" => "No matching results"); }
+        return "";
+    }
+}
+
+/// The command palette's state and the callbacks its controller answers.
+///
+/// `visible` is the Vue's `visible` prop, renamed because `visible` is an element
+/// property of its own — the same rename `BaseDialog` makes.
+export global CommandPaletteState {
+    in-out property <bool> visible: false;
+    /// "root" | "launch-instance" | "search-online" (the Vue's `PaletteMode.type`).
+    in-out property <string> mode: "root";
+    /// "modrinth" | "curseforge" — which site `search-online` searches, the Vue's
+    /// `PaletteMode.source`.
+    in-out property <string> source: "modrinth";
+    in-out property <string> query: "";
+    /// Whether the query with its surrounding whitespace removed is empty — the
+    /// Vue's `query.trim() === ''`, which the empty state and the search both
+    /// ask about. Slint has no `trim`, so Rust answers it.
+    in-out property <bool> query-empty: true;
+
+    // ----- the rendered list -----
+    in-out property <[PaletteItem]> items: [];
+    /// The height of `items` laid out end to end, headings included. The results
+    /// area is `min(320px, this + 12px)` tall, which is the Vue's
+    /// `.palette-results { max-height: 320px; padding: 6px }`.
+    in-out property <length> items-content-height: 0px;
+    /// Bumped whenever `items` is replaced, so the view can drop the scroll offset
+    /// — the Vue's `scrollViewRef.value?.scrollTo(0, false)` on the `query` and
+    /// `onlineItems` watchers. A sequence number rather than the model itself
+    /// because two rebuilds can produce the same list.
+    in-out property <int> items-seq: 0;
+
+    // ----- the selection -----
+    /// The key of the selected row, what the view compares a row's `key` against
+    /// to draw the highlight, and what the footer's action belongs to.
+    in-out property <string> selected-key: "";
+    /// The key of the row the pointer is over, which is *not* the selection. The
+    /// Vue had no hover of its own — it moved the selection with `@mousemove` —
+    /// so this is the one deliberate departure: the keyboard's selection stays put
+    /// and the pointer only says where it is. "" is "no row".
+    in-out property <string> hovered-key: "";
+    in-out property <string> selected-action-kind: "";
+    in-out property <length> selected-row-y: 0px;
+    in-out property <length> selected-row-height: 0px;
+    /// Bumped on every selection change, arrow key or pointer, so the view
+    /// re-runs the Vue's `revealSelected()`.
+    in-out property <int> selected-seq: 0;
+
+    // ----- the online search -----
+    in-out property <bool> online-searching: false;
+    in-out property <bool> online-error: false;
+
+    /// Opens the palette, or closes it if it is already open: the `Ctrl`/`⌘` + `/`
+    /// shortcut of `App.vue`.
+    callback toggle();
+    /// The title bar's search field was clicked.
+    callback open();
+    /// The backdrop, Escape, or a command that finishes its work.
+    callback close();
+    /// A row was clicked. It becomes the selection, and a click on the row that
+    /// already is the selection opens it.
+    callback click(int);
+    /// Enter, which acts on the selected row — the view has no index of its own
+    /// to report, the way the Vue reads `renderItems[selectedIndex]`.
+    callback perform-selected();
+    /// The pointer moved onto a row, or off one (a negative index).
+    callback hover(int);
+    /// `ArrowUp` (-1) and `ArrowDown` (1), wrapping at both ends.
+    callback move-selection(int);
+    /// The user typed in the search field. Resets the selection, as the Vue's
+    /// `watch([query, mode])` does.
+    callback query-changed();
+    /// Escape with a non-empty query: the query is emptied, which resets the
+    /// selection and the online results with it.
+    callback clear-query();
+    /// A command that opens another mode was chosen. `kind` is "launch-instance"
+    /// or "search-online", and `source` the site for the latter.
+    callback enter-mode(string, string);
+    /// Escape with an empty query, or Backspace on an empty query, outside the
+    /// root mode — the Vue's `backToRoot()`.
+    callback back-to-root();
+    /// The 250ms debounce after the last keystroke elapsed. The search itself runs
+    /// on the tokio runtime (`app/src/command_palette.rs`).
+    callback run-search();
+}

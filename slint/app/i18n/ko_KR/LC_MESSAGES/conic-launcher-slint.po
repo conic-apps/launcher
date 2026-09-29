@@ -1978,3 +1978,136 @@ msgstr "재생 목록"
 
 msgid "Nothing here"
 msgstr "아무것도 없습니다"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch instance"
+msgstr "인스턴스 실행"
+
+#: ui
+msgctxt "CommandText"
+msgid "Create instance"
+msgstr "인스턴스 생성"
+
+#: ui
+msgctxt "CommandText"
+msgid "Add game profile"
+msgstr "게임 프로필 추가"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth"
+msgstr "Modrinth에서 검색"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge"
+msgstr "CurseForge에서 검색"
+
+#: ui
+msgctxt "CommandText"
+msgid "by {}"
+msgstr "제작자: {}"
+
+#: ui
+msgctxt "CommandText"
+msgid "Mod"
+msgstr "모드"
+
+#: ui
+msgctxt "CommandText"
+msgid "Modpack"
+msgstr "모드팩"
+
+#: ui
+msgctxt "CommandText"
+msgid "Resource Pack"
+msgstr "리소스 팩"
+
+#: ui
+msgctxt "CommandText"
+msgid "Shader"
+msgstr "셰이더"
+
+#: ui
+msgctxt "CommandText"
+msgid "Switch to"
+msgstr "전환"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch"
+msgstr "실행"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open"
+msgstr "열기"
+
+#: ui
+msgctxt "CommandText"
+msgid "Instances"
+msgstr "인스턴스"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search results"
+msgstr "검색 결과"
+
+#: ui
+msgctxt "CommandText"
+msgid "Commands"
+msgstr "명령"
+
+#: ui
+msgctxt "CommandText"
+msgid "Select an instance to launch…"
+msgstr "실행할 인스턴스 선택…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth…"
+msgstr "Modrinth에서 검색…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge…"
+msgstr "CurseForge에서 검색…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search commands or instances…"
+msgstr "명령 또는 인스턴스 검색…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Back"
+msgstr "뒤로"
+
+#: ui
+msgctxt "CommandText"
+msgid "Close"
+msgstr "닫기"
+
+#: ui
+msgctxt "CommandText"
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on CurseForge"
+msgstr "키워드를 입력하여 CurseForge에서 검색"
+
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on Modrinth"
+msgstr "키워드를 입력하여 Modrinth에서 검색"
+
+
+#: ui
+msgctxt "CommandText"
+msgid "Search failed, please try again"
+msgstr "검색에 실패했습니다. 다시 시도해 주세요"
+
+#: ui
+msgctxt "CommandText"
+msgid "No matching results"
+msgstr "일치하는 결과가 없습니다"
