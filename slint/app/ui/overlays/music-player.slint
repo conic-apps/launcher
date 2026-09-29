@@ -356,8 +356,18 @@ export component MusicPlayerOverlay inherits Rectangle {
                     // `.progress-area` is a flex row of the two clock labels and the bar,
                     // with `gap: 8px` and the labels `flex-shrink: 0`; everything centres
                     // in an 11px row, and the bar takes what is left, which is what its
-                    // `flex: 1` asks for. The row is 19px — the 11px line box plus the
-                    // `margin-bottom: 8px` under it — with the bar at the top of it.
+                    // `flex: 1` asks for.
+                    //
+                    // `align-items: center` is the load-bearing line: the clocks are 11px
+                    // and the bar 4px, so centring is what puts the bar's centre line on
+                    // the clocks' — `start` left the bar sitting against the top of the
+                    // row, three and a half pixels above where its centre belonged.
+                    //
+                    // The row is 19px because of the `margin-bottom: 8px`, which in CSS
+                    // sits *outside* an 11px element. `padding-bottom` is the same thing
+                    // expressed inside one, and it is what keeps the content box 11px so
+                    // that centring lands on the Vue's 5.5px centre line rather than the
+                    // 19px row's.
                     //
                     // `flex-shrink: 0` on the labels is `horizontal-stretch: 0`,
                     // and it is not optional: stretch factors default to **1**, so
@@ -368,8 +378,9 @@ export component MusicPlayerOverlay inherits Rectangle {
                     // is why it went unnoticed for as long as it did.)
                     progress-area := HorizontalLayout {
                         height: 19px;
+                        padding-bottom: 8px;
                         spacing: 8px;
-                        cross-axis-alignment: start;
+                        cross-axis-alignment: center;
 
                         current-time-text := Text {
                             horizontal-stretch: 0;
