@@ -54,6 +54,47 @@ export global Dialogs {
     in-out property <bool> no-microsoft-account-error-visible: false;
     in-out property <bool> account-refresh-failed-visible: false;
     in-out property <bool> no-suitable-java-error-visible: false;
+    // The instance settings overlay's "Delete instance" row.
+    in-out property <bool> confirm-delete-instance-visible: false;
+}
+
+// The "delete instance" dialog
+// (src/overlays/dialogs/ConfirmDeleteInstance.vue).
+//
+// The Vue's `confirmDeleteInstance` holds the whole `Instance` to delete, which
+// the dialog store seeds with a placeholder so there is always something to
+// render before it is opened; Rust fills the fields below instead, from the
+// instance that was current when the row was pressed.
+export global DeleteInstanceState {
+    in-out property <string> id: "";
+    in-out property <string> name: "";
+    /// The mod loader's display name, empty for a vanilla instance.
+    in-out property <string> loader: "";
+    in-out property <string> minecraft-version: "";
+    in-out property <bool> has-background: false;
+    /// The instance's background picture, loaded by Rust for the same reason the
+    /// settings overlay's is.
+    in-out property <image> background;
+    /// The play time, as `GameTime.play-time`'s two parts — the card's third
+    /// detail row draws them as one string.
+    in-out property <string> playtime-kind: "";
+    in-out property <string> playtime-value: "";
+    /// The card's playtime label. The Vue hard-codes it in Chinese (that dialog
+    /// was never internationalized); it is a `@tr` here so the sentence can be
+    /// translated, with the Chinese kept as the source text.
+    out property <string> playtime-label: @tr("ConfirmDeleteInstance" => "游戏时间：");
+    /// The dialog's warning sentence, likewise.
+    out property <string> warning: @tr(
+        "ConfirmDeleteInstance" => "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
+    );
+
+    /// A delete is running: the confirm button is disabled (Vue `deleting`).
+    in-out property <bool> deleting: false;
+    /// The "Cancel" button.
+    callback cancel();
+    /// The "Confirm delete" button. Rust deletes the instance, refreshes the
+    /// game view and closes the dialog.
+    callback confirm();
 }
 
 // The "create instance" dialog

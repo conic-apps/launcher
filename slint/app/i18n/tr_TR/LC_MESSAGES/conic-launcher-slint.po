@@ -1978,3 +1978,195 @@ msgstr "Çalma listesi"
 
 msgid "Nothing here"
 msgstr "Burada bir şey yok"
+
+# Instance settings overlay (src/overlays/InstanceSetting.vue) and the
+# delete dialog it opens (src/overlays/dialogs/ConfirmDeleteInstance.vue).
+# The overlay's strings are seeded from `game.instance.*` in
+# src/locales/<lang>.ts; the dialog's were never internationalized there, so
+# its Chinese source text is kept and translated here.
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Instance settings"
+msgstr "Örnek ayarları"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Images"
+msgstr "Görüntüler"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Set background image"
+msgstr "Arka plan resmi ayarla"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Remove image"
+msgstr "Resmi kaldır"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Use instance background as launcher background"
+msgstr "Örnek arka planını başlatıcı arka planı olarak kullan"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Selected {}"
+msgstr "{} seçildi"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Enable instance-specific settings"
+msgstr "Örneğe özel ayarları etkinleştir"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Launch options"
+msgstr "Başlatma seçenekleri"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Window size"
+msgstr "Pencere boyutu"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Initial game window size"
+msgstr "Oyunun başlangıç pencere boyutu"
+#: ui
+msgctxt "InstanceSettings"
+msgid "W"
+msgstr "G"
+#: ui
+msgctxt "InstanceSettings"
+msgid "H"
+msgstr "Y"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Fullscreen"
+msgstr "Tam ekran"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Quit launcher after launching game"
+msgstr "Oyun başlatıldıktan sonra başlatıcıdan çık"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Skip game file check"
+msgstr "Oyun dosyası kontrolünü atla"
+#: ui
+msgctxt "InstanceSettings"
+msgid "The launcher will not attempt to verify or repair game files before launching"
+msgstr "Başlatıcı, oyunu başlatmadan önce oyun dosyalarını doğrulamaya veya onarmaya çalışmaz"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Memory"
+msgstr "Bellek"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Auto-allocate memory"
+msgstr "Belleği otomatik ayır"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Manual memory allocation"
+msgstr "Elle bellek ayırma"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
+msgstr "Maksimum Java heap boyutunu elle ayarlayın. Otomatik ayırma devre dışı bırakıldığında geçerli olur"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Advanced launch options"
+msgstr "Gelişmiş başlatma seçenekleri"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Java garbage collector"
+msgstr "Java çöp toplayıcı"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra JVM arguments"
+msgstr "Ek JVM argümanları"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Appended after default JVM arguments"
+msgstr "Varsayılan JVM argümanlarının sonuna eklenir"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra game arguments"
+msgstr "Ek oyun argümanları"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Additional arguments for the game"
+msgstr "Oyun için ek argümanlar"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra class paths"
+msgstr "Ek sınıf yolları"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Separated by semicolons on Windows, colons on other systems"
+msgstr "Windows'ta noktalı virgül, diğer sistemlerde iki nokta ile ayrılır"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Execute before launch"
+msgstr "Başlatmadan önce çalıştır"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added before the launch command"
+msgstr "Başlatma komutundan önce eklenir"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Wrap command"
+msgstr "Komutu sarmala"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added at the beginning of the launch command"
+msgstr "Başlatma komutunun başına eklenir"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Execute after launch"
+msgstr "Başlattıktan sonra çalıştır"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added at the end of the launch script"
+msgstr "Başlatma betiğinin sonuna eklenir"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Ignore invalid Minecraft certificates"
+msgstr "Geçersiz Minecraft sertifikalarını yoksay"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
+msgstr "JVM argümanlarına -Dfml.ignoreInvalidMinecraftCertificates=true ekler"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Ignore patch discrepancies"
+msgstr "Yama tutarsızlıklarını yoksay"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
+msgstr "JVM argümanlarına -Dfml.ignorePatchDiscrepancies=true ekler"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Delete instance"
+msgstr "Örneği sil"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Deleting this instance will permanently lose all saves, resource packs, and other game data"
+msgstr "Bu örneğin silinmesi tüm kayıtları, kaynak paketlerini ve diğer oyun verilerini kalıcı olarak kaybettirir"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Reset instance"
+msgstr "Örneği sıfırla"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved"
+msgstr "Bu örneğin sıfırlanması tüm kayıtları, kaynak paketlerini ve diğer oyun verilerini kaybettirir. Yalnızca örnek yapılandırması korunur"
+
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
+msgstr "Bu örneği silmek istediğinizden emin misiniz? Örnek altındaki kayıtlar, kaynak paketleri, modlar ve diğer dosyalar da kalıcı olarak kaybolacak (gerçekten çok uzun sürüyor!)"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "游戏时间："
+msgstr "Oynama süresi: "
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "取消"
+msgstr "İptal"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "确认删除"
+msgstr "Silmeyi onayla"

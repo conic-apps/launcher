@@ -1,0 +1,496 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "../components/app-icon.slint";
+import { ScrollView } from "../components/scroll-view.slint";
+import { SettingGroup } from "../components/setting-group.slint";
+import { SettingItem } from "../components/setting-item.slint";
+import { SettingCollapse } from "../components/setting-collapse.slint";
+import { BaseButton } from "../components/base-button.slint";
+import { BaseInput } from "../components/base-input.slint";
+import { BaseSelect } from "../components/base-select.slint";
+import { BaseSwitch } from "../components/base-switch.slint";
+import { InstanceCard } from "../components/instance-card.slint";
+import { InstanceSettingsState } from "../globals/instance-settings.slint";
+import { AppConfig } from "../globals/settings.slint";
+import { ContentOverlay } from "content/content-overlay.slint";
+
+// The instance settings overlay (src/overlays/InstanceSetting.vue) — the panel
+// `GameView.vue`'s `.instance-settings-wrapper` slides up.
+//
+// The wrapper itself is `ContentOverlay`: this is one of the Vue's
+// `.game-content-wrapper`s, with its narrower container (`calc(100% - 200px)`
+// instead of `150px`) and the same scrim and slide. See `instance-settings-root`.
+//
+// Everything here is a *static* subtree — no `for`, no `if` around a measured row
+// — which is what lets `ScrollView` measure the panel's height: a repeated row is
+// measured at its own preferred width (see `SettingItem`'s `description-lines`),
+// and none of these rows is built by a `for`.
+export component InstanceSettings inherits Rectangle {
+    /// The overlay container's size, passed in rather than read off `parent`:
+    /// the container is inset from the game view the elements are written in
+    /// (see `ContentOverlay`).
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    ScrollView {
+        // ----- `.title` -----
+        // A 52px mantle bar with a settings glyph and the panel's name. It is
+        // inside the scroller, so it scrolls away with the content — which is
+        // what the Vue does, its `.title` being the first child of `ScrollView`.
+        title-bar := Rectangle {
+            width: 100%;
+            height: 52px;
+            background: Theme.mantle;
+
+            HorizontalLayout {
+                padding-left: 32px;
+                padding-right: 32px;
+                spacing: 8px;
+                cross-axis-alignment: center;
+
+                AppIcon {
+                    name: "settings";
+                    size: 20px;
+                }
+
+                Text {
+                    text: @tr("InstanceSettings" => "Instance settings");
+                    font-size: 16px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+            }
+        }
+
+        // `.title { margin-bottom: 16px }` — `flex-shrink: 0` in the Vue, which
+        // the scroller's `alignment: start` gives for free.
+        Rectangle {
+            width: 100%;
+            height: 16px;
+            background: transparent;
+        }
+
+        // `<div style="padding: 0 16px">`, with the groups' own 8px inset
+        // (`width: calc(100% - 16px); margin: 0 auto`) inside it.
+        body := VerticalLayout {
+            width: 100%;
+            spacing: 0px;
+            alignment: start;
+            padding-left: 16px;
+            padding-right: 16px;
+
+            // `.instance { margin: 4px 8px 12px 8px }`.
+            Rectangle {
+                width: 100%;
+                height: 4px;
+                background: transparent;
+            }
+
+            // The card is inset by its own `margin: 0 8px` and 16px narrower, so
+            // it needs a box to sit in: a layout child cannot carry an `x`, and
+            // `height` is what keeps the column measured.
+            Rectangle {
+                width: 100%;
+                height: 60px;
+                background: transparent;
+
+                InstanceCard {
+                    x: 8px;
+                    y: 0px;
+                    width: parent.width - 16px;
+                    height: 60px;
+                    name <=> InstanceSettingsState.name;
+                    name-editing <=> InstanceSettingsState.name-editing;
+                    name-editable: true;
+                    loader: InstanceSettingsState.loader;
+                    minecraft-version: InstanceSettingsState.minecraft-version;
+                    has-background: InstanceSettingsState.has-background;
+                    card-background: InstanceSettingsState.background;
+                    backdrop: Theme.base;
+                    name-clicked => { InstanceSettingsState.name-editing = true; }
+                    name-edited => { InstanceSettingsState.changed(); }
+                }
+            }
+
+            Rectangle {
+                width: 100%;
+                height: 12px;
+                background: transparent;
+            }
+
+            // Everything below is a group, and `.setting-items` carries a 16px
+            // `margin-bottom` — which is the gap `spacing` expresses here. The 8px
+            // padding is the `width: calc(100% - 16px); margin: 0 auto` the Slint
+            // `SettingGroup` leaves to its caller (see `setting-group.slint`).
+            groups := VerticalLayout {
+                width: 100%;
+                spacing: 16px;
+                alignment: start;
+                padding-left: 8px;
+                padding-right: 8px;
+
+                // ----- background -----
+                SettingGroup {
+                    SettingItem {
+                        group-first: true;
+                        title: @tr("InstanceSettings" => "Set background image");
+                        icon: "image";
+                        // The Vue's chevron *replaces* the slot's contents while
+                        // the row is navigable (`v-if` / `v-else`), so the button
+                        // below is drawn exactly when the chevron is not.
+                        navigable: !InstanceSettingsState.has-background;
+                        clicked => {
+                            InstanceSettingsState.pick-background(
+                                @tr("InstanceSettings" => "Images"));
+                        }
+
+                        if InstanceSettingsState.has-background : BaseButton {
+                            text: @tr("InstanceSettings" => "Remove image");
+                            text-color: Theme.red;
+                            clicked => { InstanceSettingsState.remove-background(); }
+                        }
+                    }
+
+                    SettingItem {
+                        group-last: true;
+                        title: @tr("InstanceSettings" => "Use instance background as launcher background");
+                        item-disabled: !InstanceSettingsState.has-background;
+
+                        BaseSwitch {
+                            checked <=> InstanceSettingsState.use-as-launcher-background;
+                            toggled => { InstanceSettingsState.changed(); }
+                        }
+                    }
+                }
+
+                // ----- runtime -----
+                SettingGroup {
+                    SettingItem {
+                        group-first: true;
+                        group-last: true;
+                        title: "Minecraft";
+                        icon: "minecraft";
+                        description: @tr(
+                            "InstanceSettings" => "Selected {}",
+                            InstanceSettingsState.minecraft-version);
+                        // Navigable, but with no handler: the row has always been
+                        // a dead end in the original (the mod loader and loader
+                        // version rows below it are commented out there).
+                        navigable: true;
+                    }
+                }
+
+                // ----- the switch that turns the rest on -----
+                SettingGroup {
+                    SettingItem {
+                        group-first: true;
+                        group-last: true;
+                        title: @tr("InstanceSettings" => "Enable instance-specific settings");
+                        icon: "settings";
+
+                        BaseSwitch {
+                            checked <=> InstanceSettingsState.enable-specific;
+                            toggled => {
+                                InstanceSettingsState.set-specific(
+                                    InstanceSettingsState.enable-specific);
+                            }
+                        }
+                    }
+                }
+
+                // ----- launch options -----
+                SettingGroup {
+                    title: @tr("InstanceSettings" => "Launch options");
+                    group-disabled: !InstanceSettingsState.specific-enabled;
+
+                    SettingItem {
+                        group-first: true;
+                        title: @tr("InstanceSettings" => "Window size");
+                        description: @tr("InstanceSettings" => "Initial game window size");
+
+                        HorizontalLayout {
+                            cross-axis-alignment: center;
+
+                            BaseInput {
+                                input-width: 100px;
+                                placeholder: @tr("InstanceSettings" => "W");
+                                number-only: true;
+                                // The Vue disables these from the *launcher's*
+                                // fullscreen setting, not the instance's.
+                                input-enabled: !AppConfig.launch-fullscreen;
+                                value <=> InstanceSettingsState.width;
+                                edited => { InstanceSettingsState.changed(); }
+                            }
+
+                            spacer-16 := Rectangle {
+                                width: 16px;
+                                background: transparent;
+                            }
+
+                            BaseInput {
+                                input-width: 100px;
+                                placeholder: @tr("InstanceSettings" => "H");
+                                number-only: true;
+                                input-enabled: !AppConfig.launch-fullscreen;
+                                value <=> InstanceSettingsState.height;
+                                edited => { InstanceSettingsState.changed(); }
+                            }
+
+                            spacer-8 := Rectangle {
+                                width: 8px;
+                                background: transparent;
+                            }
+
+                            Text {
+                                text: @tr("InstanceSettings" => "Fullscreen") + ":";
+                                font-size: 12px;
+                                font-weight: Theme.font-weight-normal;
+                                color: Theme.default-text-color.transparentize(0.1);
+                            }
+
+                            BaseSwitch {
+                                checked <=> InstanceSettingsState.fullscreen;
+                                toggled => { InstanceSettingsState.changed(); }
+                            }
+                        }
+                    }
+
+                    SettingItem {
+                        title: @tr("InstanceSettings" => "Quit launcher after launching game");
+
+                        BaseSwitch {
+                            checked <=> InstanceSettingsState.quit-after-launch;
+                            toggled => { InstanceSettingsState.changed(); }
+                        }
+                    }
+
+                    SettingItem {
+                        group-last: true;
+                        title: @tr("InstanceSettings" => "Skip game file check");
+                        description: @tr("InstanceSettings" => "The launcher will not attempt to verify or repair game files before launching");
+
+                        BaseSwitch {
+                            checked <=> InstanceSettingsState.skip-file-check;
+                            toggled => { InstanceSettingsState.changed(); }
+                        }
+                    }
+                }
+
+                // ----- memory -----
+                SettingGroup {
+                    title: @tr("InstanceSettings" => "Memory");
+                    group-disabled: !InstanceSettingsState.specific-enabled;
+
+                    SettingItem {
+                        group-first: true;
+                        title: @tr("InstanceSettings" => "Auto-allocate memory");
+
+                        BaseSwitch {
+                            checked <=> InstanceSettingsState.auto-memory;
+                            toggled => { InstanceSettingsState.changed(); }
+                        }
+                    }
+
+                    SettingItem {
+                        group-last: true;
+                        title: @tr("InstanceSettings" => "Manual memory allocation");
+                        description: @tr("InstanceSettings" => "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled");
+                        item-disabled: InstanceSettingsState.auto-memory;
+
+                        HorizontalLayout {
+                            cross-axis-alignment: center;
+
+                            BaseInput {
+                                input-width: 100px;
+                                number-only: true;
+                                input-enabled: !InstanceSettingsState.auto-memory;
+                                value <=> InstanceSettingsState.max-memory;
+                                edited => { InstanceSettingsState.changed(); }
+                            }
+
+                            spacer-mb := Rectangle {
+                                width: 8px;
+                                background: transparent;
+                            }
+
+                            Text {
+                                text: "MB";
+                                font-size: 12px;
+                                font-weight: Theme.font-weight-normal;
+                                color: Theme.default-text-color.transparentize(0.1);
+                            }
+                        }
+                    }
+                }
+
+                // ----- advanced launch options -----
+                SettingCollapse {
+                    title: @tr("InstanceSettings" => "Advanced launch options");
+                    collapse-disabled: !InstanceSettingsState.specific-enabled;
+                    resetable: InstanceSettingsState.advanced-changed;
+                    reset => { InstanceSettingsState.reset-advanced(); }
+
+                    SettingItem {
+                        title: @tr("InstanceSettings" => "Java garbage collector");
+
+                        BaseSelect {
+                            options: ["G1", "Z", "Parallel", "Serial"];
+                            display-name: ["G1", "Z", "Parallel", "Serial"];
+                            value <=> InstanceSettingsState.gc;
+                            selected(value) => { InstanceSettingsState.changed(); }
+                        }
+                    }
+
+                    SettingItem {
+                        title: @tr("InstanceSettings" => "Extra JVM arguments");
+                        description: @tr("InstanceSettings" => "Appended after default JVM arguments");
+
+                        BaseInput {
+                            input-width: 300px;
+                            value <=> InstanceSettingsState.extra-jvm-args;
+                            edited => { InstanceSettingsState.changed(); }
+                        }
+                    }
+
+                    SettingItem {
+                        title: @tr("InstanceSettings" => "Extra game arguments");
+                        description: @tr("InstanceSettings" => "Additional arguments for the game");
+
+                        BaseInput {
+                            input-width: 300px;
+                            value <=> InstanceSettingsState.extra-mc-args;
+                            edited => { InstanceSettingsState.changed(); }
+                        }
+                    }
+
+                    SettingItem {
+                        title: @tr("InstanceSettings" => "Extra class paths");
+                        description: @tr("InstanceSettings" => "Separated by semicolons on Windows, colons on other systems");
+
+                        BaseInput {
+                            input-width: 300px;
+                            value <=> InstanceSettingsState.extra-class-paths;
+                            edited => { InstanceSettingsState.changed(); }
+                        }
+                    }
+
+                    SettingItem {
+                        title: @tr("InstanceSettings" => "Execute before launch");
+                        description: @tr("InstanceSettings" => "Added before the launch command");
+
+                        BaseInput {
+                            input-width: 300px;
+                            value <=> InstanceSettingsState.before-launch;
+                            edited => { InstanceSettingsState.changed(); }
+                        }
+                    }
+
+                    SettingItem {
+                        title: @tr("InstanceSettings" => "Wrap command");
+                        description: @tr("InstanceSettings" => "Added at the beginning of the launch command");
+
+                        BaseInput {
+                            input-width: 300px;
+                            value <=> InstanceSettingsState.wrap-command;
+                            edited => { InstanceSettingsState.changed(); }
+                        }
+                    }
+
+                    SettingItem {
+                        title: @tr("InstanceSettings" => "Execute after launch");
+                        description: @tr("InstanceSettings" => "Added at the end of the launch script");
+
+                        BaseInput {
+                            input-width: 300px;
+                            value <=> InstanceSettingsState.after-launch;
+                            edited => { InstanceSettingsState.changed(); }
+                        }
+                    }
+
+                    SettingItem {
+                        title: @tr("InstanceSettings" => "Ignore invalid Minecraft certificates");
+                        description: @tr("InstanceSettings" => "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments");
+
+                        BaseSwitch {
+                            checked <=> InstanceSettingsState.ignore-invalid-certs;
+                            toggled => { InstanceSettingsState.changed(); }
+                        }
+                    }
+
+                    SettingItem {
+                        group-last: true;
+                        title: @tr("InstanceSettings" => "Ignore patch discrepancies");
+                        description: @tr("InstanceSettings" => "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments");
+
+                        BaseSwitch {
+                            checked <=> InstanceSettingsState.ignore-patch-discrepancies;
+                            toggled => { InstanceSettingsState.changed(); }
+                        }
+                    }
+                }
+
+                // ----- delete / reset -----
+                SettingGroup {
+                    danger: true;
+
+                    SettingItem {
+                        group-first: true;
+                        title: @tr("InstanceSettings" => "Delete instance");
+                        description: @tr("InstanceSettings" => "Deleting this instance will permanently lose all saves, resource packs, and other game data");
+                        icon: "trash";
+                        navigable: true;
+                        clicked => { InstanceSettingsState.open-delete(); }
+                    }
+
+                    SettingItem {
+                        group-last: true;
+                        title: @tr("InstanceSettings" => "Reset instance");
+                        description: @tr("InstanceSettings" => "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved");
+                        icon: "refresh";
+                        // Navigable and inert: the original binds no handler to
+                        // this row either.
+                        navigable: true;
+                    }
+                }
+            }
+
+            // `.setting-items { margin-bottom: 16px }` on the last group as well:
+            // the Vue gives every block one, and `spacing` only accounts for the
+            // ones between them — so the danger group would otherwise sit flush
+            // against the bottom of the panel. It is here rather than inside
+            // `groups` because that layout's own 16px `spacing` would add a
+            // second one in front of it.
+            Rectangle {
+                width: 100%;
+                height: 16px;
+                background: transparent;
+            }
+        }
+    }
+}
+
+// The overlay layer's mount point, mirroring `GameView.vue`'s single
+// `.game-content-wrapper.instance-settings-wrapper`: the shared shell with this
+// overlay's narrower container, and the panel itself inside it.
+export component InstanceSettingsRoot inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    overlay := ContentOverlay {
+        overlay-visible: InstanceSettingsState.visible;
+        panel-inset: 200px;
+        closed => { InstanceSettingsState.close(); }
+
+        InstanceSettings {
+            panel-width: overlay.panel-width;
+            panel-height: overlay.panel-height;
+        }
+    }
+}

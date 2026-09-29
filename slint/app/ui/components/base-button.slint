@@ -22,6 +22,10 @@ export component BaseButton inherits Rectangle {
     in property <bool> button-enabled: true;
     /// 0 keeps the content width.
     in property <length> button-width: 0px;
+    /// The corner radius (`--controllers-border-radius` by default). The delete
+    /// dialog's own `.buttons button { border-radius: 4px }` overrides it, which
+    /// a component's own properties cannot express.
+    in property <length> button-radius: Theme.controllers-border-radius;
     /// Fills the button instead of the default surface. The Vue's callers set
     /// an inline `background`, which beats the class and so covers the hover and
     /// pressed states too — the accented buttons of the add-account dialog are
@@ -53,7 +57,7 @@ export component BaseButton inherits Rectangle {
     // stretch every unsized button in the app to fill its row.
     horizontal-stretch: 0;
     height: 30px;
-    border-radius: Theme.controllers-border-radius;
+    border-radius: root.button-radius;
     border-width: 1px;
     border-color: root.button-border-color != transparent ? root.button-border-color : Theme.controllers-border;
     // Vue BaseButton: normal `--controllers-background`, hover `surface2` at

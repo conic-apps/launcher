@@ -1,0 +1,106 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The instance-settings overlay's state (src/overlays/InstanceSetting.vue and
+// the `useInstanceSettings` composable beside it).
+//
+// The Vue keeps the whole `InstanceConfig` in its Pinia store and rewrites
+// `instance.toml` from a `watchEffect` on every edit. Here the edited fields
+// live below and Rust (`app/src/instance_settings.rs`) is the writer: the UI
+// edits one of them and calls `changed()`, and Rust reads them all back, merges
+// them into the config it re-reads from disk and writes it. Everything the
+// overlay does not show is therefore never round-tripped through the UI, which
+// is what keeps `group`, `icon` and `runtime` from being able to drift.
+
+export global InstanceSettingsState {
+    // ----- the overlay -----
+    /// `useInstanceSettings`'s ref: set by the game view's settings button
+    /// (`InstanceSummary.vue`'s gear) and cleared by the overlay's scrim.
+    in-out property <bool> visible: false;
+
+    // ----- the instance card -----
+    /// The instance's name, edited in place on the card.
+    in-out property <string> name: "";
+    /// The Vue's `editingInstanceName`: clicking the card's title row swaps its
+    /// text for a field, and losing the focus swaps it back.
+    in-out property <bool> name-editing: false;
+    /// The mod loader's display name, empty for a vanilla instance
+    /// (`ModLoaderType::to_string`).
+    in-out property <string> loader: "";
+    in-out property <string> minecraft-version: "";
+    in-out property <bool> has-background: false;
+    /// The instance's background picture. Rust loads it, because Slint can only
+    /// read a runtime path through Rust; a file it could not decode reports a
+    /// zero width, which is the same test as the Vue's `imgLoaded`.
+    in-out property <image> background;
+
+    // ----- launch_config -----
+    in-out property <bool> use-as-launcher-background: false;
+    in-out property <bool> enable-specific: false;
+    // Numbers are strings, as everywhere else in this app: `TextInput` edits text
+    // and Rust parses it back, keeping the previous value for what it cannot
+    // read (see `globals/settings.slint`).
+    in-out property <string> width: "";
+    in-out property <string> height: "";
+    in-out property <bool> fullscreen: false;
+    in-out property <bool> quit-after-launch: false;
+    in-out property <bool> skip-file-check: false;
+    in-out property <bool> auto-memory: false;
+    in-out property <string> max-memory: "";
+    /// Empty for an instance whose `launch_config.gc` was never set, which is
+    /// what the select draws as "no option selected".
+    in-out property <string> gc: "";
+    in-out property <string> extra-jvm-args: "";
+    in-out property <string> extra-mc-args: "";
+    in-out property <string> extra-class-paths: "";
+    in-out property <string> before-launch: "";
+    in-out property <string> wrap-command: "";
+    in-out property <string> after-launch: "";
+    in-out property <bool> ignore-invalid-certs: false;
+    in-out property <bool> ignore-patch-discrepancies: false;
+
+    /// Whether the launch options, the memory group and the advanced options
+    /// apply: they are inert until the instance overrides the launcher's own
+    /// launch settings (Vue `enableInstanceSpecificSettings`).
+    out property <bool> specific-enabled: root.enable-specific;
+
+    /// Whether any of the nine advanced launch options is off its default, which
+    /// is what puts the reset button on the collapse's header (Vue
+    /// `advancedLaunchOptionsChanged`). A `gc` that was never set reads as
+    /// changed, which is exactly what the Vue's `gc === "G1"` comparison says.
+    out property <bool> advanced-changed:
+        root.gc != "G1"
+        || root.extra-jvm-args != ""
+        || root.extra-mc-args != ""
+        || root.extra-class-paths != ""
+        || root.before-launch != ""
+        || root.wrap-command != ""
+        || root.after-launch != ""
+        || root.ignore-invalid-certs
+        || root.ignore-patch-discrepancies;
+
+    /// Opens the overlay on the current instance.
+    callback open();
+    /// The overlay's scrim was clicked (`@click.self`).
+    callback close();
+    /// A setting was edited: Rust merges the fields into the instance's config
+    /// and writes `instance.toml`.
+    callback changed();
+    /// `enable_instance_specific_settings` was flipped. Switching it on copies
+    /// the launcher's own launch settings into the instance; switching it off
+    /// drops everything but the flag. Both are the two branches of the Vue's
+    /// `watchEffect`, and Rust then pushes the result back into the fields
+    /// above so the panels show what was actually stored.
+    callback set-specific(bool);
+    /// The advanced options' reset button (`resetAdvanceOptions`).
+    callback reset-advanced();
+    /// "Set background image": the native file picker, then the copy into the
+    /// instance. The picker label is passed along, since it is translated.
+    callback pick-background(string);
+    /// The red "Remove image" button.
+    callback remove-background();
+    /// "Delete instance": closes this overlay and opens the confirm dialog
+    /// (`openDeleteInstanceDialog`).
+    callback open-delete();
+}

@@ -6,6 +6,7 @@ import { AccountAddDialog } from "dialogs/account-add.slint";
 import { CreateInstance } from "dialogs/create-instance.slint";
 import { LaunchErrorDialogs } from "dialogs/launch-errors.slint";
 import { MultiplayerExtension } from "dialogs/multiplayer-extension.slint";
+import { ConfirmDeleteInstance } from "dialogs/confirm-delete-instance.slint";
 
 // The overlay layer (src/overlays/DialogRoot.vue): one instance per dialog,
 // mounted once above the whole app. Each dialog stays hidden until its flag in
@@ -20,6 +21,11 @@ export component DialogRoot inherits Rectangle {
     background: transparent;
 
     CreateInstance { }
+    // The instance settings overlay's "Delete instance" row. `DialogRoot.vue`
+    // lists `ConfirmDeleteInstance` right after `CreateInstance` and ahead of the
+    // four launch errors, so a create-instance dialog that is still open covers
+    // it and a launch error covers it in turn — the same order.
+    ConfirmDeleteInstance { }
     // Slint draws and hit-tests in declaration order, where the Vue's z-index
     // decides. `DialogRoot.vue` puts the four launch-error dialogs ahead of
     // `MultiplayerExtension` and `AccountAdd`, so a launch error raised while

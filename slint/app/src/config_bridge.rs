@@ -251,7 +251,7 @@ pub fn gc_to_str(gc: &slint_config::launch::GC) -> &'static str {
     }
 }
 
-fn gc_from_str(value: &str) -> slint_config::launch::GC {
+pub(crate) fn gc_from_str(value: &str) -> slint_config::launch::GC {
     match value {
         "Z" => slint_config::launch::GC::Z,
         "Parallel" => slint_config::launch::GC::Parallel,
