@@ -17,11 +17,14 @@ export component InstanceListDropdown inherits Rectangle {
 
     out property <bool> opened: root.is-open;
 
-    width: 100%;
+    // No `width` here on purpose. A `Rectangle` fills its parent anyway, so the
+    // row below does not need to be told the component's width — but a *layout*
+    // child must not bind one, and `width: 100%` on the root was quietly taking
+    // the width back from the layout that was supposed to be dividing it. With
+    // the two instances in `instances-list-tool-bar.slint` both at
+    // `horizontal-stretch: 1` the row stopped splitting in half.
     height: 25px;
-    // `.head`'s own fill, on the component root — which is a `Rectangle` and
-    // fills its caller, so the row inside does not have to be wrapped in a box
-    // that then has to be told the component's width.
+    // `.head`'s own fill, on the component root.
     background: Theme.surface-0;
     border-radius: 4px;
 
@@ -45,8 +48,13 @@ export component InstanceListDropdown inherits Rectangle {
     head := HorizontalLayout {
         cross-axis-alignment: center;
 
-        // `.label { padding: 6px 12px; flex-shrink: 0 }`.
+        // `.label { padding: 6px 12px; flex-shrink: 0 }`. The
+        // `horizontal-stretch: 0` is the whole of `flex-shrink: 0`: stretch
+        // factors default to 1, so without it the label claims half the row
+        // away from `.selected { flex: 1 }` and the chevron stops being 12px
+        // from the end.
         label-box := Rectangle {
+            horizontal-stretch: 0;
             vertical-stretch: 0;
             background: Theme.surface-1;
             border-radius: 4px;

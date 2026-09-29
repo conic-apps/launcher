@@ -154,12 +154,19 @@ export component InstancesListToolBar inherits Rectangle {
 
             // ----- sort / group -----
             // `.other { display: flex; gap: 8px }` with `> div { flex: 1 }` on
-            // both, so each takes half of what is left.
+            // both, so each takes half of what is left. `flex: 1` is a zero
+            // basis and a grow of 1, which is an *exact* half of the row;
+            // `horizontal-stretch: 1` on its own is not, because it only hands
+            // out the space left over after each child's preferred size, and
+            // these two prefer different widths ("Sort" against "Group",
+            // "Play time" against "Ungrouped"). So the half is stated, and the
+            // stretch kept only so the row still divides rather than packing.
             other-row := HorizontalLayout {
                 height: 25px;
                 spacing: 8px;
 
                 InstanceListDropdown {
+                    preferred-width: (other-row.width - other-row.spacing) / 2;
                     horizontal-stretch: 1;
                     label: @tr("Sort");
                     selected: root.sort-label;
@@ -170,6 +177,7 @@ export component InstancesListToolBar inherits Rectangle {
                 }
 
                 InstanceListDropdown {
+                    preferred-width: (other-row.width - other-row.spacing) / 2;
                     horizontal-stretch: 1;
                     label: @tr("Group");
                     selected: root.group-label;

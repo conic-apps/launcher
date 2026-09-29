@@ -359,15 +359,20 @@ export component MusicPlayerOverlay inherits Rectangle {
                     // `flex: 1` asks for. The row is 19px — the 11px line box plus the
                     // `margin-bottom: 8px` under it — with the bar at the top of it.
                     //
-                    // The labels need no width of their own: a `Text` that neither wraps
-                    // nor elides reports `min-width == preferred-width`, which *is*
-                    // `flex-shrink: 0`.
+                    // `flex-shrink: 0` on the labels is `horizontal-stretch: 0`,
+                    // and it is not optional: stretch factors default to **1**, so
+                    // without it both clocks grow along with the bar and the
+                    // duration text walks left over the top of it. (That this row
+                    // used to be hand-placed — `x: 16px` and
+                    // `x: parent.width - 16px - self.width`, which pinned them —
+                    // is why it went unnoticed for as long as it did.)
                     progress-area := HorizontalLayout {
                         height: 19px;
                         spacing: 8px;
                         cross-axis-alignment: start;
 
                         current-time-text := Text {
+                            horizontal-stretch: 0;
                             height: 11px;
                             text: MusicState.current-time-text;
                             font-size: 11px;
@@ -406,8 +411,17 @@ export component MusicPlayerOverlay inherits Rectangle {
                                 // `seekRatio(clamp((clientX - left) / width, 0, 1))`. The
                                 // division is written in pixels because Slint cannot divide
                                 // one length by another.
+                                //
+                                // `self.mouse-x` is already relative to *this* element,
+                                // and this element covers the bar, so its origin is the
+                                // bar's left edge. There is no `clientX - left` left to
+                                // do: subtracting `parent.x` — the bar's own offset
+                                // within the row — as well shifted every seek by a
+                                // constant fraction of the bar, which is why the fill
+                                // stopped following the pointer and sat a fixed
+                                // distance to its left.
                                 private property <float> ratio: clamp(
-                                (self.mouse-x - parent.x) / 1px / (parent.width / 1px),
+                                self.mouse-x / 1px / (parent.width / 1px),
                                 0,
                                 1,
                                 );
@@ -435,6 +449,7 @@ export component MusicPlayerOverlay inherits Rectangle {
                             }
 
                             duration-text := Text {
+                                horizontal-stretch: 0;
                                 height: 11px;
                                 text: MusicState.duration-text;
                                 font-size: 11px;

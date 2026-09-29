@@ -357,16 +357,27 @@ component SettingsStep inherits ZoomTransition {
     // than `stretch` sizes every child to its *preferred* width and distributes
     // the free space to nobody, which would pack both buttons at the left of the
     // row instead of splitting it.
-    HorizontalLayout {
+    actions := HorizontalLayout {
         spacing: 12px;
 
+        // The Vue's `BaseButton` is `width: 100%`, so in that flex row each
+        // button asks for the whole row and the two shrink by the same factor —
+        // which is what made them come out the same width whatever their
+        // labels. `horizontal-stretch` only hands out the *extra* space, so on
+        // its own it leaves them differing by the difference in label widths
+        // ("Cancel" against "Create instance"). An equal `button-width` on both
+        // is what restores the split, and naming the row lets it be the real
+        // half of the row rather than a magic number: the two stay equal at any
+        // width, and neither can outgrow the row into the gap.
         BaseButton {
+            button-width: (actions.width - actions.spacing) / 2;
             horizontal-stretch: 1;
             text: @tr("CreateInstance" => "Cancel");
             clicked => { Dialogs.create-instance-visible = false; }
         }
 
         BaseButton {
+            button-width: (actions.width - actions.spacing) / 2;
             horizontal-stretch: 1;
             text: CreateInstanceState.creating
                 ? @tr("CreateInstance" => "Creating...")

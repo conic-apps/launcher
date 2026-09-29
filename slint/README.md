@@ -1200,6 +1200,22 @@ the very first play at startup would start silently. This is the same clock
       child *of* the cell the layout places, which is where the intro slides in
       `views/game/instance-summary.slint` and the cards' entrance in
       `overlays/music-player.slint` ended up.
+    - **A stretch factor of 0 is the one you have to write, and 1 is the
+      default.** Not a niche setting: *every* layout child grows by default, so
+      an element the CSS pins (`flex-shrink: 0`, a fixed width, a `width:
+      fit-content`) silently starts competing for the row's free space the
+      moment it is put in a layout, and the free space is split by the factors
+      rather than given to the one element that wanted it. It cost three
+      separate bugs before it was written down: `BaseButton` and `BaseInput`
+      filling a row they were only meant to size themselves to, the sort/group
+      dropdown's label taking half its own dropdown away from the selection and
+      pushing the chevron off the right end, and both clock labels growing
+      alongside the music player's progress bar until the duration sat on top of
+      it. Two things make it worse: the factor reads as opt-*in* because
+      `horizontal-stretch: 1` looks like an instruction rather than the
+      default, and CSS expresses the same idea in the opposite direction — a
+      child's `flex: 1` is something the *parent's* `justify-content` honours,
+      whereas Slint's factor belongs to the child and defaults to growing.
     - **A main-axis alignment other than `stretch` cancels every stretch
       factor.** `horizontal-stretch: 1` only has meaning under the default
       `alignment: stretch`; write `alignment: start` (or `end`, `center`) and
