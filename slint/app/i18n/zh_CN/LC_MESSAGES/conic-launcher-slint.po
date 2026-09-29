@@ -2008,3 +2008,195 @@ msgstr "播放列表"
 
 msgid "Nothing here"
 msgstr "啥也没"
+
+# Instance settings overlay (src/overlays/InstanceSetting.vue) and the
+# delete dialog it opens (src/overlays/dialogs/ConfirmDeleteInstance.vue).
+# The overlay's strings are seeded from `game.instance.*` in
+# src/locales/<lang>.ts; the dialog's were never internationalized there, so
+# its Chinese source text is kept and translated here.
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Instance settings"
+msgstr "实例设置"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Images"
+msgstr "图片"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Set background image"
+msgstr "设置背景图像"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Remove image"
+msgstr "移除图像"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Use instance background as launcher background"
+msgstr "在启动器背景使用实例背景"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Selected {}"
+msgstr "已选择 {}"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Enable instance-specific settings"
+msgstr "启用实例独立设置"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Launch options"
+msgstr "启动选项"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Window size"
+msgstr "窗口大小"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Initial game window size"
+msgstr "游戏窗口的初始大小"
+#: ui
+msgctxt "InstanceSettings"
+msgid "W"
+msgstr "宽"
+#: ui
+msgctxt "InstanceSettings"
+msgid "H"
+msgstr "高"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Fullscreen"
+msgstr "全屏"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Quit launcher after launching game"
+msgstr "启动游戏后退出启动器"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Skip game file check"
+msgstr "跳过游戏文件检查"
+#: ui
+msgctxt "InstanceSettings"
+msgid "The launcher will not attempt to verify or repair game files before launching"
+msgstr "启动游戏前启动器将不会尝试检查或补全游戏文件"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Memory"
+msgstr "内存"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Auto-allocate memory"
+msgstr "自动分配内存"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Manual memory allocation"
+msgstr "手动分配内存"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
+msgstr "手动指定 Java 堆的最大大小，关闭自动分配后生效"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Advanced launch options"
+msgstr "高级启动选项"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Java garbage collector"
+msgstr "Java 垃圾回收器"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra JVM arguments"
+msgstr "添加 JVM 参数"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Appended after default JVM arguments"
+msgstr "将会放在默认 JVM 参数后面"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra game arguments"
+msgstr "添加游戏参数"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Additional arguments for the game"
+msgstr "添加游戏需要的其他参数"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Extra class paths"
+msgstr "添加类路径"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Separated by semicolons on Windows, colons on other systems"
+msgstr "Windows 下用分号隔开，其他系统用冒号"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Execute before launch"
+msgstr "启动前执行"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added before the launch command"
+msgstr "将会添加至启动命令的前一行"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Wrap command"
+msgstr "包装命令"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added at the beginning of the launch command"
+msgstr "将会添加至启动命令的开头"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Execute after launch"
+msgstr "启动后执行"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Added at the end of the launch script"
+msgstr "将会添加至启动脚本的最后一行"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Ignore invalid Minecraft certificates"
+msgstr "忽略无效的 Minecraft 凭证"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
+msgstr "将 -Dfml.ignoreInvalidMinecraftCertificates=true 添加到 JVM 参数中"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Ignore patch discrepancies"
+msgstr "忽略补丁差异"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
+msgstr "将 -Dfml.ignorePatchDiscrepancies=true 添加到 JVM 参数中"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Delete instance"
+msgstr "删除实例"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Deleting this instance will permanently lose all saves, resource packs, and other game data"
+msgstr "一旦删除此实例，该实例下的存档、材质包等一切游戏数据都将丢失"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Reset instance"
+msgstr "重置实例"
+#: ui
+msgctxt "InstanceSettings"
+msgid "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved"
+msgstr "一旦重置实例，该实例下的存档、材质包等一切游戏数据都将丢失，仅实例配置会被保留"
+
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
+msgstr "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "游戏时间："
+msgstr "游戏时间："
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "取消"
+msgstr "取消"
+#: ui
+msgctxt "ConfirmDeleteInstance"
+msgid "确认删除"
+msgstr "确认删除"

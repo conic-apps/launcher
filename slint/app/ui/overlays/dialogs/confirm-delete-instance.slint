@@ -1,0 +1,120 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { BaseDialog } from "../../components/base-dialog.slint";
+import { BaseButton } from "../../components/base-button.slint";
+import { InstanceCard } from "../../components/instance-card.slint";
+import { Dialogs, DeleteInstanceState } from "../../globals/dialogs.slint";
+import { GameTime } from "../../globals/game.slint";
+
+// The dialog the instance settings overlay's "Delete instance" row opens
+// (src/overlays/dialogs/ConfirmDeleteInstance.vue).
+//
+// The Vue is a `<BaseDialog :width="500">` with no height, so its panel is
+// `fit-content`; `BaseDialog` has no such mode, so the height comes from the
+// measuring layout the body is written in — the arrangement the add-account and
+// multiplayer dialogs use.
+//
+// The Vue original was never internationalized: its warning, its "游戏时间：" label
+// and its two button labels are hard-coded Chinese. The Chinese is kept as the
+// source text of a `@tr`, so a locale without an entry still reads like the
+// original while the catalogues can translate it — the treatment the four launch
+// error dialogs already have.
+
+// `.confirm-delete-instance { padding: 12px }`, with the paragraph's 16px
+// `margin-bottom` and the buttons' 16px `margin-top` as the layout's own spacing.
+component ConfirmDeleteBody inherits VerticalLayout {
+    in property <length> content-width: 0px;
+
+    width: root.content-width;
+    spacing: 16px;
+    padding: 12px;
+    alignment: start;
+
+    Text {
+        text: DeleteInstanceState.warning;
+        font-size: 16px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.default-text-color.transparentize(0.1);
+        wrap: word-wrap;
+        // The Vue's `line-height: 1.3` is deliberately not reproduced: Slint 1.18
+        // has no CSS `line-height` — `line-height-factor` multiplies the font's
+        // *natural* line height rather than the font size, and the two are not in
+        // a fixed ratio (Comfortaa's is 1.115em, the CJK fallback this sentence
+        // actually draws with is nearer 1.4em), so one factor cannot hold both.
+        // The paragraph keeps its natural leading, like every other text in the
+        // app; see `README.md`.
+    }
+
+    InstanceCard {
+        width: 100%;
+        height: 60px;
+        vertical-stretch: 0;
+        name: DeleteInstanceState.name;
+        loader: DeleteInstanceState.loader;
+        minecraft-version: DeleteInstanceState.minecraft-version;
+        // The delete dialog's copy of the card has no `v-if` on this span.
+        version-always: true;
+        has-background: DeleteInstanceState.has-background;
+        card-background: DeleteInstanceState.background;
+        playtime: GameTime.play-time(DeleteInstanceState.playtime-kind, DeleteInstanceState.playtime-value);
+        playtime-label: DeleteInstanceState.playtime-label;
+        backdrop: Theme.dialog-background;
+    }
+
+    HorizontalLayout {
+        width: 100%;
+        cross-axis-alignment: center;
+
+        BaseButton {
+            horizontal-stretch: 1;
+            text: @tr("ConfirmDeleteInstance" => "取消");
+            text-color: Theme.text-inverse;
+            // `.buttons button { border-radius: 4px }`, the dialog's own scoped
+            // rule overriding the controllers radius.
+            button-radius: 4px;
+            button-background: Theme.blue;
+            clicked => { DeleteInstanceState.cancel(); }
+        }
+
+        // `.back { margin-right: 8px }` — the Vue's two buttons are both
+        // `width: 100%` flex items, which shrink to leave the 8px between them.
+        Rectangle {
+            width: 8px;
+            background: transparent;
+        }
+
+        BaseButton {
+            horizontal-stretch: 1;
+            text: @tr("ConfirmDeleteInstance" => "确认删除");
+            text-color: Theme.text-inverse;
+            button-radius: 4px;
+            button-background: Theme.red;
+            button-enabled: !DeleteInstanceState.deleting;
+            clicked => { DeleteInstanceState.confirm(); }
+        }
+    }
+}
+
+export component ConfirmDeleteInstance inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    dialog := BaseDialog {
+        dialog-visible: Dialogs.confirm-delete-instance-visible;
+        dialog-width: 500px;
+        // `fit-content`: `BaseDialog` keeps 32px of its own (the 16px padding of
+        // `.dialog > .content` and the 1px clip the Vue's `overflow` computes).
+        dialog-height: body.preferred-height + 32px;
+
+        // Sized against the slot's width, not `parent` — the elements written in
+        // a component's braces have the element they are written *in* as their
+        // parent, which here is the whole window.
+        body := ConfirmDeleteBody {
+            content-width: dialog.content-width;
+        }
+    }
+}
