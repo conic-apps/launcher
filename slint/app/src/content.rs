@@ -220,8 +220,12 @@ impl PendingCard {
 /// one that would stall the window — happens on the background thread, and what
 /// crosses is its result: a plain buffer. Building the `Image` from it on the
 /// UI thread is a copy.
+///
+/// `pub(crate)` because the command palette shows the same project icons beside
+/// its search results, and shares the `ICONS` cache rather than keeping a second
+/// copy of every bitmap.
 #[derive(Clone)]
-struct PendingImage {
+pub(crate) struct PendingImage {
     /// The URL or path it came from, which is also its cache key.
     key: String,
     width: u32,
@@ -2692,6 +2696,34 @@ fn curseforge_loader_type(loader: &str) -> Option<i64> {
 // detail panels
 // ---------------------------------------------------------------------------
 
+/// Opens a project's detail panel from outside the content overlays — the
+/// command palette's "open" on a Modrinth or CurseForge search result.
+///
+/// The Vue writes the id into `useShowContentDetails().value.{modrinth,curseforge}.mod`
+/// and the detail component watches it; here a card click and a palette result
+/// take the same `open_detail` path, so the only thing to set up first is the
+/// kind and the platform. Both are the mods' whatever the project actually is:
+/// the Vue has a `mod` slot per site and fills it from a search that was sent
+/// without facets, so a resource pack opened this way opens the *mod* panel,
+/// exactly as it does there.
+pub(crate) fn open_project_detail(ui: &App, platform: &str, id: &str) {
+    let platform = if platform == "curseforge" {
+        Platform::CurseForge
+    } else {
+        Platform::Modrinth
+    };
+    {
+        let state = controller();
+        let mut state = state.borrow_mut();
+        state.sync_instance(ui);
+        state.platform = platform;
+        state.kind = RemoteKind::Mods;
+    }
+    ui.global::<ContentState>()
+        .set_remote_kind(SharedString::from(RemoteKind::Mods.key()));
+    open_detail(ui, platform, id.to_string());
+}
+
 fn open_detail(ui: &App, platform: Platform, id: String) {
     let (seq, kind) = {
         let state = controller();
@@ -3891,20 +3923,35 @@ fn pick_modrinth_version<'a>(
 /// A local icon is a `data:` URL — what the `content` crate emits for a mod's,
 /// a resource pack's or a save's own icon — and a remote project's is an
 /// `https:` one. Blocking, which is what `crate::runtime::block_on` is for.
-fn fetch_icon(url: &str) -> Option<PendingImage> {
+pub(crate) fn fetch_icon(url: &str) -> Option<PendingImage> {
+    let bytes = crate::runtime::block_on(fetch_icon_bytes(url))?;
+    decode_icon(url, bytes)
+}
+
+/// The icon's bytes, and nothing else.
+///
+/// Split out of [`fetch_icon`] so a caller that wants the icons of a whole page
+/// at once can *await* the network and leave only the decode to a blocking
+/// thread. Downloading twenty of them one after another on one thread is what
+/// makes a list of remote results look dead while its images arrive.
+pub(crate) async fn fetch_icon_bytes(url: &str) -> Option<Vec<u8>> {
     if url.is_empty() {
         return None;
     }
-    // Already decoded for an earlier list: nothing to fetch or decode.
+    // Already decoded for an earlier list: nothing to fetch.
     if ICONS.with(|cache| cache.borrow().contains_key(url)) {
         return None;
     }
-    let bytes = if let Some(data) = url.strip_prefix("data:") {
-        decode_base64(data)?
-    } else {
-        let response = crate::runtime::block_on(slint_shared::HTTP_CLIENT.get(url).send()).ok()?;
-        crate::runtime::block_on(response.bytes()).ok()?.to_vec()
-    };
+    if let Some(data) = url.strip_prefix("data:") {
+        return decode_base64(data);
+    }
+    let response = slint_shared::HTTP_CLIENT.get(url).send().await.ok()?;
+    Some(response.bytes().await.ok()?.to_vec())
+}
+
+/// Decodes what [`fetch_icon_bytes`] brought back. A local icon and a remote
+/// project's differ only in how the bytes were obtained.
+pub(crate) fn decode_icon(url: &str, bytes: Vec<u8>) -> Option<PendingImage> {
     let (width, height, rgba) = decode_to_rgba(&bytes)?;
     Some(PendingImage {
         key: url.to_string(),
@@ -3917,8 +3964,20 @@ fn fetch_icon(url: &str) -> Option<PendingImage> {
 /// Builds an `Image` on the UI thread, memoised by key — a card is rebuilt on
 /// every relayout, so without the cache a resize would re-make every icon on
 /// screen.
-fn resolve_icon(image: PendingImage) -> Option<Image> {
+pub(crate) fn resolve_icon(image: PendingImage) -> Option<Image> {
     resolve_image(image, &ICONS)
+}
+
+/// The icon at `url`, if some earlier list already fetched and decoded it.
+///
+/// `fetch_icon` reports a cache hit by returning nothing, so a caller that wants
+/// the icon either way — the command palette redraws its results on every
+/// keystroke — asks for the cache when the fetch came back empty.
+pub(crate) fn cached_icon(url: &str) -> Option<Image> {
+    if url.is_empty() {
+        return None;
+    }
+    ICONS.with(|cache| cache.borrow().get(url).cloned())
 }
 
 /// One image of a detail panel's gallery strip: the bitmap plus the box it

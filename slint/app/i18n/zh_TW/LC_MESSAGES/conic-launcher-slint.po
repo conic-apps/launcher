@@ -2170,3 +2170,136 @@ msgstr "取消"
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "確認刪除"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch instance"
+msgstr "啟動實例"
+
+#: ui
+msgctxt "CommandText"
+msgid "Create instance"
+msgstr "建立實例"
+
+#: ui
+msgctxt "CommandText"
+msgid "Add game profile"
+msgstr "新增遊戲設定檔"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth"
+msgstr "在 Modrinth 搜尋"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge"
+msgstr "在 CurseForge 搜尋"
+
+#: ui
+msgctxt "CommandText"
+msgid "by {}"
+msgstr "作者：{}"
+
+#: ui
+msgctxt "CommandText"
+msgid "Mod"
+msgstr "模組"
+
+#: ui
+msgctxt "CommandText"
+msgid "Modpack"
+msgstr "整合包"
+
+#: ui
+msgctxt "CommandText"
+msgid "Resource Pack"
+msgstr "資源包"
+
+#: ui
+msgctxt "CommandText"
+msgid "Shader"
+msgstr "著色器"
+
+#: ui
+msgctxt "CommandText"
+msgid "Switch to"
+msgstr "切換實例"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch"
+msgstr "啟動"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open"
+msgstr "開啟"
+
+#: ui
+msgctxt "CommandText"
+msgid "Instances"
+msgstr "實例"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search results"
+msgstr "搜尋結果"
+
+#: ui
+msgctxt "CommandText"
+msgid "Commands"
+msgstr "命令"
+
+#: ui
+msgctxt "CommandText"
+msgid "Select an instance to launch…"
+msgstr "選擇要啟動的實例…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth…"
+msgstr "在 Modrinth 中搜尋…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge…"
+msgstr "在 CurseForge 中搜尋…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search commands or instances…"
+msgstr "搜尋命令或實例…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Back"
+msgstr "返回"
+
+#: ui
+msgctxt "CommandText"
+msgid "Close"
+msgstr "關閉"
+
+#: ui
+msgctxt "CommandText"
+
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on CurseForge"
+msgstr "輸入關鍵字以在 CurseForge 上搜尋"
+
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on Modrinth"
+msgstr "輸入關鍵字以在 Modrinth 上搜尋"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search failed, please try again"
+msgstr "搜尋失敗，請稍後重試"
+
+#: ui
+msgctxt "CommandText"
+msgid "No matching results"
+msgstr "沒有匹配的結果"

@@ -1,0 +1,844 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "../components/app-icon.slint";
+import { BaseLoading } from "../components/base-loading.slint";
+import { ScrollView } from "../components/scroll-view.slint";
+import { ContentText } from "../globals/content.slint";
+import { CommandPaletteState, CommandText, PaletteItem } from "../globals/command-palette.slint";
+
+// A `kbd`: `font-family: inherit; font-size: 11px; padding: 1px 5px;
+// border-radius: 4px` on surface0. Its own height is 13px, and it is the
+// 14px `corner-down-left` glyph beside the primary hint that makes the hint row
+// 14px tall.
+component KeyCap inherits Rectangle {
+    in property <string> text: "";
+    // `padding: 1px 5px`. An explicit width rather than a `min-width`: a minimum
+    // is something the surrounding layout has to solve for, and solving for it
+    // reads the widths of the very elements that width is measured from, which is
+    // a loop. Pinning it ends the argument.
+    width: key-text.width + 10px;
+    height: 13px;
+    border-radius: 4px;
+    background: Theme.surface-0;
+
+    key-text := Text {
+        text: root.text;
+        font-size: 11px;
+        font-weight: Theme.font-weight-normal;
+        // Inherited from `.hints`, which only the `primary` hint overrides.
+        color: Theme.subtext-0;
+        vertical-alignment: center;
+        horizontal-alignment: center;
+    }
+}
+
+// One row of the result list: `.palette-item` and everything inside it.
+//
+// The row is 8px of padding around `max(24px, .item-main)`, and `.item-main` is
+// the title line plus — when the project carries loader tags — a `3px` gap and a
+// `14px` tag row. The 24px icon box decides the height whenever there are no
+// tags, which is why `PaletteItem.row-height` is 40px or 46px and nothing in
+// between. Rust works both out, so this component never measures itself.
+component PaletteRow inherits Rectangle {
+    in property <PaletteItem> item;
+    in property <bool> selected: false;
+    in property <bool> hovered: false;
+    in property <int> index: 0;
+
+    callback pointer-moved(int);
+    callback pressed(int);
+
+    width: 100%;
+    height: root.item.row-height;
+    // `&.selected { background: var(--ctp-surface1) }` for the row the keyboard
+    // chose, and a lighter step for the one the pointer is over. The Vue had only
+    // the first, because its selection followed the pointer and so *was* the
+    // hover; separating them is the deliberate departure, and telling the two
+    // apart is what a second colour is for.
+    background: root.selected ? Theme.surface-1
+        : root.hovered ? Theme.surface-0
+        : transparent;
+    border-radius: 8px;
+    border-width: 0px;
+
+    // `display: flex; align-items: center; gap: 10px; padding: 8px 10px`, and the
+    // row is laid out as one flex line rather than by hand: `.item-main` is the
+    // only child that flexes, so the title takes whatever the icon, the subtitle
+    // and the chevron leave it — and the subtitle's own width is its text, which
+    // is something a hand-placed box cannot ask for.
+    //
+    // `.item-main`'s height is the other thing the flex line settles on its own,
+    // except that a plain `Rectangle` reports none, so it is the 13px title line
+    // plus the column's `gap: 3px` and the 14px tag row when there are tags.
+    private property <length> main-height: root.item.loaders.length > 0 ? 30px : 13px;
+
+    HorizontalLayout {
+        x: 0px;
+        y: 8px;
+        width: 100%;
+        height: parent.height - 16px;
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        cross-axis-alignment: center;
+
+        // ----- the leading icon: a 24px box, the glyph itself 18px -----
+        icon-box := Rectangle {
+            width: 24px;
+            height: 24px;
+            background: transparent;
+
+            // The Vue's `v-if="item.imageUrl"` / `v-else-if="item.icon"` chain, as
+            // two mutually exclusive branches: Slint has no `else if` in the
+            // element form.
+            if root.item.has-icon-image : Rectangle {
+                // `.item-image-url`: 18px square, 4px radius, `object-fit: cover`.
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                clip: true;
+
+                Image {
+                    source: root.item.icon-image;
+                    width: 100%;
+                    height: 100%;
+                    image-fit: cover;
+                }
+            }
+            if !root.item.has-icon-image && root.item.icon != "" : AppIcon {
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                name: root.item.icon;
+                size: 18px;
+                // `.item-icon { color: rgba(var(--default-text-color), 0.85) }` for
+                // a glyph from the icon set; a site mark is an SVG component of
+                // its own, whose paths the stylesheet fills with
+                // `rgba(var(--ctp-text-rgb), 0.85)`. The two differ under high
+                // contrast, where `--default-text-color` is forced to pure white
+                // or black while `--ctp-text` is not.
+                icon-color: root.item.icon-is-brand
+                    ? Theme.text.transparentize(0.15)
+                    : Theme.default-text-color.transparentize(0.15);
+            }
+        }
+
+        // ----- `.item-main`: the title line and, below it, the loader tags -----
+        main := Rectangle {
+            horizontal-stretch: 1;
+            height: root.main-height;
+            background: transparent;
+            clip: true;
+
+            // The 13px line the 13px title takes. `align-items: baseline` has no
+            // Slint equivalent, so the 11px author is centred in it instead,
+            // which puts it within a pixel of where the baseline alignment would.
+            // `gap: 6px` between the two, and the author is `flex-shrink: 0` while
+            // the title elides.
+            // The explicit `y` is not decoration: a child of a plain element with no
+            // `y` is *centred* in it, which put the title 8.5px — exactly half of the
+            // 9px the 30px column has spare — below where it belongs, on top of the
+            // loader tags.
+            HorizontalLayout {
+                y: 0px;
+                width: 100%;
+                height: 13px;
+                spacing: 6px;
+                cross-axis-alignment: center;
+
+                title-text := Text {
+                    // `overflow: elide` drops this to a zero minimum, so the layout
+                    // may shrink it and the title elides; its `preferred-width` is
+                    // still the whole text, which is what it is given when there is
+                    // room. The Vue's `.item-title` is the same: `flex-shrink: 1`,
+                    // no `flex-grow`.
+                    horizontal-stretch: 0;
+                    height: 13px;
+                    text: CommandText.title(root.item.title-kind, root.item.title);
+                    font-size: 13px;
+                    font-weight: Theme.font-weight-normal;
+                    // `rgb(var(--default-text-color))` — the row's own colour at
+                    // full strength, where the app-wide `*` rule would have left
+                    // it at 0.9.
+                    color: Theme.default-text-color;
+                    horizontal-alignment: left;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+
+                // `flex-shrink: 0`, which is what keeps the author's name whole: with
+                // no `overflow: elide` its minimum width is the whole string, so the
+                // title is what gives way when the line is too narrow.
+                if root.item.author != "" : author-text := Text {
+                    horizontal-stretch: 0;
+                    height: 13px;
+                    text: CommandText.author(root.item.author);
+                    font-size: 11px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.subtext-0;
+                    horizontal-alignment: right;
+                    vertical-alignment: center;
+                }
+
+                // The slack, taken after the author rather than before it. This is
+                // the whole of `justify-content: flex-start` for a line whose items
+                // do not grow, and it is why the author sits against the title
+                // instead of against the row's right edge.
+                Rectangle {
+                    min-width: 0px;
+                    horizontal-stretch: 1;
+                }
+            }
+
+            // `.item-loaders`: `gap: 4px` between tags, each `font-size: 10px;
+            // line-height: 1; padding: 2px 5px` — a 14px box on surface0, below
+            // the title's 13px and the column's `gap: 3px`.
+            if root.item.loaders.length > 0 : Rectangle {
+                x: 0px;
+                y: 16px;
+                width: 100%;
+                height: 14px;
+                background: transparent;
+
+                HorizontalLayout {
+                    width: 100%;
+                    height: 100%;
+                    spacing: 4px;
+                    cross-axis-alignment: center;
+
+                    for loader in root.item.loaders : loader-tag := Rectangle {
+                        height: 14px;
+                        width: loader-text.width + 10px;
+                        border-radius: 4px;
+                        background: Theme.surface-0;
+
+                        loader-text := Text {
+                            text: ContentText.loader(loader);
+                            font-size: 10px;
+                            font-weight: Theme.font-weight-normal;
+                            color: Theme.subtext-1;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+
+        // ----- the subtitle, right-aligned against the chevron -----
+        if root.item.subtitle-kind != "" || root.item.subtitle != "" : subtitle-text := Text {
+            horizontal-stretch: 0;
+            height: 12px;
+            // A project's category is a label and is resolved from its key; an
+            // instance's own `loader · version` is data and comes through as it
+            // is.
+            text: root.item.subtitle-kind != ""
+                ? CommandText.category(root.item.subtitle-kind)
+                : root.item.subtitle;
+            font-size: 12px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.subtext-0;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+
+        // ----- the trailing chevron (`chevron-forward`, 14px, overlay1) -----
+        if root.item.has-children : AppIcon {
+            name: "chevron-forward";
+            size: 14px;
+            icon-color: Theme.overlay-1;
+        }
+    }
+
+    // `@mousemove="selectedIndex = index"` and `@click="performItem(item)"`. The
+    // whole row is the target, its own 8px padding included — in the Vue that
+    // padding is dead space for the pointer.
+    //
+    // The hover is a raw `move`, not `TouchArea.moved`: that one is the *drag*,
+    // which only arrives with the button held, and the selection is meant to
+    // follow a pointer that is merely over the row.
+    pointer := TouchArea {
+        width: 100%;
+        height: 100%;
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.move {
+                root.pointer-moved(root.index);
+            }
+            // The scroll area under the row still wants its own moves.
+            return EventResult.reject;
+        }
+        clicked => { root.pressed(root.index); }
+    }
+}
+
+// The whole overlay: the `#00000042` scrim and the palette panel under it.
+//
+// The Vue has no entrance animation — a `v-if` with no `<Transition>` — so there
+// is none here either; the panel simply appears. What *is* reproduced is the key
+// handling the Vue hangs on its `<input>`'s `@keydown`:
+//
+//   ↑ ↓        move the selection, wrapping at both ends
+//   Enter      perform the selected row — the `TextInput`'s `accepted` callback,
+//              which is the one Slint does call for a single-line field
+//   Escape     clear the query, else go back a mode, else close
+//   Backspace  on an *empty* query, go back a mode
+//
+// All four are read in `capture-key-pressed` and not in `key-pressed`, and that is
+// not a stylistic choice: a `TextInput` accepts Backspace unconditionally — it
+// has nothing to delete and says so anyway — and it accepts the arrow keys to
+// move the caret, so an ancestor's `key-pressed` is never reached. `accept` in
+// `capture-key-pressed` keeps the event from being delivered at all. A Backspace
+// with text in the field is rejected, which is what lets the field delete a
+// character as usual.
+export component CommandPaletteOverlay inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    // `position: fixed; inset: 0; z-index: 114515; background: #00000042`.
+    background: #00000042;
+    border-radius: 16px;
+    // Above the music player (100) and the content overlays (114514, which the
+    // title bar shares), below the dialogs (11451419) — so this sits between the
+    // two in `app.slint`.
+    z: 1500;
+
+    // The backdrop's `@click="close()"`, declared before the panel so that the
+    // panel — and everything inside it — stays on top of it: Slint hit-tests the
+    // last-declared element first.
+    scrim := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => { CommandPaletteState.close(); }
+        // The wheel has to be taken here for the same reason
+        // `content-overlay.slint`'s scrim takes it: every panel in the Vue sits
+        // inside a wrapper whose own scroller calls `preventDefault()` on every
+        // wheel, so a wheel over an open panel never reaches the game view behind
+        // it. Slint has no such rule — an unhandled wheel falls through to
+        // whatever is underneath — so without this the instance list and the
+        // settings page kept scrolling while the palette was open.
+        scroll-event(event) => { accept }
+    }
+
+    // `.palette-results` is `max-height: 320px` *including* its 6px of padding
+    // and shrinks to its content, so the panel is the input row plus the results
+    // plus the footer. Each of the first and last is a fixed height; the results
+    // are the list's own height, capped.
+    // `max(320px, …)`, over the list's own height *or* the empty state's, whichever
+    // is taller: the Vue's `.palette-results` is sized by its content, and while a
+    // search is running that content is the 72px spinner rather than no rows at all.
+    // Measuring the list alone left the area 12px tall and the spinner clipped.
+    private property <length> results-height: min(320px, max(CommandPaletteState.items-content-height, root.empty-height) + 12px);
+    // 1px of border + the input row (12 + 16 + 12 + a 1px rule) + the results +
+    // the footer (8 + 14 + 8 + a 1px rule) + 1px of border.
+    private property <length> panel-height: 74px + root.results-height + 2px;
+
+    // `v-if="visible"`, and the focus the Vue gives the field on its next tick.
+    private property <bool> shown: CommandPaletteState.visible;
+    visible: root.shown;
+
+    panel := Rectangle {
+        // `width: calc(100vw - 500px); min-width: 600px` — the same span the title
+        // bar's search field is given.
+        width: max(600px, root.width - 500px);
+        height: root.panel-height;
+        // `left: 50%; transform: translateX(-50%)`.
+        x: (root.width - self.width) / 2;
+        // `top: 4px`, which is inside the title bar: the backdrop is the whole
+        // window, so the panel hangs 4px below its top edge.
+        y: 4px;
+        // `box-shadow: 0 0 50px 0 #00000071`.
+        drop-shadow-color: #00000071;
+        drop-shadow-blur: 50px;
+        // `background: var(--ctp-base)`, `border: 1px solid
+        // rgba(var(--ctp-surface1-rgb), 0.9)` and `border-radius: 12px`.
+        background: Theme.base;
+        border-width: 1px;
+        border-color: Theme.surface-1.with-alpha(0.9);
+        border-radius: 12px;
+
+        // A Slint border is drawn inside the box and does not inset the children,
+        // so the content box starts 1px in — the Vue's `box-sizing: border-box`
+        // inset it by the same pixel, which is what keeps the hairline visible.
+        // `clip` lives here rather than on the panel because the panel carries the
+        // drop shadow, and `overflow: hidden` there is the corner rounding the
+        // input row's rule and the footer's would otherwise run past. The radius
+        // is one pixel smaller so the clip *is* the panel's rounded box.
+        content := Rectangle {
+            x: 1px;
+            y: 1px;
+            width: parent.width - 2px;
+            height: parent.height - 2px;
+            border-radius: 11px;
+            clip: true;
+            background: transparent;
+
+            // The key scope wraps the content rather than sitting beside it: a
+            // `FocusScope` only sees the key events of what it *contains*, and
+            // the search field is the focused element.
+            //
+            // Every child below therefore carries an explicit `y`. A `FocusScope`
+            // *centres* the children it lays out — a child with no `y` lands at
+            // `(scope.height - child.height) / 2` rather than at the top, which
+            // put the input row in the middle of the panel. A plain `Rectangle`
+            // leaves such a child at 0; the `FocusScope` does not.
+            scope := FocusScope {
+                width: 100%;
+                height: 100%;
+
+                // `await nextTick(); inputRef.value?.focus()` on the way in, and
+                // the Vue's `void nextTick(() => inputRef.value?.focus())` after a
+                // mode change — which Slint needs no equivalent for, since nothing
+                // is re-created and the field keeps its focus.
+                //
+                // The focus is given *back* on the way out, from `app.slint`: Slint
+                // drops the focus of an element that is not visible, but only on
+                // the next key press, by which time the shortcut that opened the
+                // palette has been swallowed and thrown away.
+                private property <bool> shown: CommandPaletteState.visible;
+                changed shown => {
+                    if shown {
+                        input.focus();
+                    }
+                }
+
+                capture-key-pressed(event) => {
+                    if (event.text == Key.Backspace && CommandPaletteState.query == "" && CommandPaletteState.mode != "root") {
+                        CommandPaletteState.back-to-root();
+                        return accept;
+                    }
+                    if (event.text == Key.DownArrow) {
+                        CommandPaletteState.move-selection(1);
+                        return accept;
+                    }
+                    if (event.text == Key.UpArrow) {
+                        CommandPaletteState.move-selection(-1);
+                        return accept;
+                    }
+                    if (event.text == Key.Escape) {
+                        if (CommandPaletteState.query != "") {
+                            CommandPaletteState.clear-query();
+                        } else if (CommandPaletteState.mode != "root") {
+                            CommandPaletteState.back-to-root();
+                        } else {
+                            CommandPaletteState.close();
+                        }
+                        return accept;
+                    }
+                    return reject;
+                }
+
+                // `@click.stop` on `.command-palette`: the panel swallows the
+                // clicks that reach it, so only the scrim's own clicks close the
+                // palette. The rows are declared after this, so they are the ones
+                // a click lands on.
+                panel-touch := TouchArea {
+                    x: 0px;
+                    y: 0px;
+                    width: 100%;
+                    height: 100%;
+
+                    // Over the panel but not over a row, so the pointer is nowhere
+                    // in particular. The rows are declared after this, so a move
+                    // over one lands on the row instead.
+                    pointer-event(event) => {
+                        if event.kind == PointerEventKind.move {
+                            CommandPaletteState.hover(-1);
+                        }
+                        return EventResult.reject;
+                    }
+                }
+
+                // ----- `.palette-input-row` -----
+                input-row := Rectangle {
+                    x: 0px;
+                    y: 0px;
+                    width: 100%;
+                    height: 41px;
+                    background: transparent;
+
+                    // `border-bottom: 1px solid rgba(var(--ctp-surface1-rgb), 0.8)`.
+                    Rectangle {
+                        x: 0px;
+                        y: 40px;
+                        width: 100%;
+                        height: 1px;
+                        background: Theme.surface-1.with-alpha(0.8);
+                    }
+
+                    AppIcon {
+                        // `padding: 12px 16px`, and a 16px icon centred in the
+                        // 16px content box the row's `align-items: center` leaves.
+                        x: 16px;
+                        y: 12px;
+                        name: "search";
+                        size: 16px;
+                        // The row's own `color: rgba(var(--default-text-color), 0.8)`.
+                        icon-color: Theme.default-text-color.transparentize(0.2);
+                    }
+
+                    if CommandPaletteState.query == "" : Text {
+                        x: 42px;
+                        y: 12px;
+                        width: parent.width - 42px - 16px;
+                        height: 16px;
+                        text: CommandText.placeholder(CommandPaletteState.mode, CommandPaletteState.source);
+                        font-size: 15px;
+                        font-weight: Theme.font-weight-normal;
+                        // `input::placeholder { color: rgba(var(--default-text-color), 0.5) }`.
+                        color: Theme.default-text-color.transparentize(0.5);
+                        vertical-alignment: center;
+                        overflow: elide;
+                    }
+
+                    input := TextInput {
+                        // `padding: 12px 16px` + the 16px icon + `gap: 10px`.
+                        x: 42px;
+                        y: 12px;
+                        width: parent.width - 42px - 16px;
+                        height: 16px;
+                        text <=> CommandPaletteState.query;
+                        font-size: 15px;
+                        font-weight: Theme.font-weight-normal;
+                        // `color: rgb(var(--default-text-color))`, at full strength.
+                        color: Theme.default-text-color;
+                        // The macOS backend draws the caret in the selection
+                        // background colour, forced to full alpha, so a
+                        // translucent one gives a text-coloured caret.
+                        selection-background-color: Theme.default-text-color.with-alpha(0.3);
+                        selection-foreground-color: Theme.default-text-color;
+                        single-line: true;
+                        vertical-alignment: center;
+                        input-type: text;
+                        accepted => { CommandPaletteState.perform-selected(); }
+                        edited => { CommandPaletteState.query-changed(); }
+                    }
+                }                // ----- `.palette-results` -----
+                // `max-height: 320px; padding: 6px`, so the area is as tall as the
+                // list needs and no taller — `min(320px, this + 12px)` over the
+                // content height Rust sums, the 12px being the padding.
+                results := Rectangle {
+                    x: 0px;
+                    y: 41px;
+                    width: 100%;
+                    height: root.results-height;
+                    background: transparent;
+
+                    results-view := ScrollView {
+                        // `padding: 6px`.
+                        x: 6px;
+                        y: 6px;
+                        width: parent.width - 12px;
+                        height: parent.height - 12px;
+
+                        // The Vue's `watch([query, mode])` and
+                        // `watch(onlineItems)` both drop the offset, so a new list
+                        // starts at the top. Both globals are mirrored onto a local
+                        // property first: Slint's `changed` does not take a
+                        // qualified global.
+                        private property <int> items-seq: CommandPaletteState.items-seq;
+                        private property <int> selected-seq: CommandPaletteState.selected-seq;
+                        changed items-seq => { self.scroll-to(0px, false); }
+                        changed selected-seq => { self.reveal-selected(); }
+
+                        // `watch(selectedIndex) => revealSelected()`: the row is scrolled
+                        // to only when the arrow keys took it off screen, with 8px of
+                        // slack, and a row already inside the viewport is left alone —
+                        // which is what keeps a key press from yanking the list back.
+                        //
+                        // The Vue's `revealSelected(row)`: `row.offsetTop` is where the row
+                        // sits inside the scroller, `top` and `bottom` are that and its
+                        // height, and `first` / `last` are what the scroll area shows.
+                        //
+                        // All of it is in the `content-y` sign rather than the `offsetTop`
+                        // one. `ScrollView.content-y` counts *down*, so a row 400px into the
+                        // content is `-400px`, and that is the sign `scroll-to` takes as
+                        // well — its argument is documented as "the same sign as
+                        // `content-y`". Handing it the `offsetTop` directly clamps every
+                        // call to zero, which is a view that knows exactly which row to
+                        // show and never moves.
+                        //
+                        // The two targets do not read alike, and that is the arithmetic
+                        // rather than a choice. `scroll-to(y)` lands on `scroll-y = -y`,
+                        // and a row at `-top` needs `scroll-y = -top - 8px` to sit 8px
+                        // below the viewport's top — so the argument is `top + 8px`. The
+                        // row below the viewport is the mirror image: it needs its bottom
+                        // 8px above the viewport's bottom, which comes out as
+                        // `bottom + height - 8px`.
+                        //
+                        // Getting the first one wrong is quiet: `top - 8px` still moves,
+                        // because it asks to scroll *up* past a row that is above the
+                        // viewport — but it stops 16px short of where it meant to, leaving
+                        // the row's top 8px above the viewport and a fifth of a 40px row
+                        // cut off. Only the arrow key that scrolls back up hits that branch.
+                        function reveal-selected() {
+                            let top = -CommandPaletteState.selected-row-y;
+                            let bottom = top - CommandPaletteState.selected-row-height;
+                            let first = self.content-y;
+                            let last = self.content-y - self.height;
+                            if top > first {
+                                // Above the viewport: 8px below its top.
+                                self.scroll-to(top + 8px, true);
+                            } else if bottom < last {
+                                // Below it: 8px above its bottom.
+                                self.scroll-to(bottom + self.height - 8px, true);
+                            }
+                        }
+
+                        // The list. Each row carries its own heading's height with it, so
+                        // the loop is a flat stack of `label-height + row-height` boxes —
+                        // `withSectionLabel` in the Vue hands the heading to the first row
+                        // of a section and to that row alone, and `label-height` is 0 for
+                        // every other one.
+                        for item[index] in CommandPaletteState.items : row-slot := Rectangle {
+                            width: 100%;
+                            height: item.label-height + item.row-height;
+                            background: transparent;
+
+                            // `.section-label`: `padding: 6px 10px 2px` around an 11px
+                            // line. The box is `label-height` — 23px, not the 19px
+                            // those three add up to — because the last 4px are a margin
+                            // under the heading, which the Vue does not have: there the
+                            // grey text sits flush on the row below it, and the two read
+                            // as one block. The line itself is unchanged; only the space
+                            // under it is.
+                            if item.label-height > 0 : section-label := Text {
+                                x: 10px;
+                                y: 6px;
+                                width: parent.width - 20px;
+                                height: 11px;
+                                text: CommandText.section(item.section-kind);
+                                font-size: 11px;
+                                font-weight: Theme.font-weight-normal;
+                                color: Theme.subtext-0;
+                            }
+
+                            PaletteRow {
+                                x: 0px;
+                                y: item.label-height;
+                                width: 100%;
+                                height: item.row-height;
+                                item: item;
+                                index: index;
+                                selected: item.key == CommandPaletteState.selected-key;
+                                hovered: item.key == CommandPaletteState.hovered-key;
+                                // A row that is not the selection becomes it, and a click on
+                                // the row that already is opens it. The Vue performs on every
+                                // click, which is the same thing while the selection follows
+                                // the pointer — and not the same thing now that it does not.
+                                pressed(row) => { CommandPaletteState.click(row); }
+                                pointer-moved(row) => { CommandPaletteState.hover(row); }
+                            }
+                        }
+
+                        // The empty state, standing in for the whole list where the Vue's
+                        // `v-else-if` chain does. `.palette-empty` is a centred
+                        // `padding: 24px 16px` box.
+                        if CommandPaletteState.items.length == 0 && root.empty-kind != "none" : Rectangle {
+                            width: 100%;
+                            height: root.empty-height;
+                            background: transparent;
+
+                            if root.empty-kind == "searching" : BaseLoading {
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                                size: 24px;
+                                stroke-width: 4;
+                            }
+                            if root.empty-kind != "searching" : empty-text := Text {
+                                x: 16px;
+                                y: (parent.height - self.height) / 2;
+                                width: parent.width - 32px;
+                                height: 13px;
+                                text: CommandText.empty(root.empty-kind, CommandPaletteState.source);
+                                font-size: 13px;
+                                font-weight: Theme.font-weight-normal;
+                                color: Theme.subtext-0;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // ----- `.palette-footer` -----
+                // `padding: 8px 12px` around a 14px line, with a 1px rule above it:
+                // 31px, and the last of the three bands `panel-height` adds up.
+                footer := Rectangle {
+                    x: 0px;
+                    y: parent.height - self.height;
+                    width: 100%;
+                    height: 31px;
+                    background: transparent;
+                    // `border-top: 1px solid rgba(var(--ctp-surface1-rgb), 0.8)`.
+                    border-width: 1px;
+                    border-color: Theme.surface-1.with-alpha(0.8);
+
+                    // `display: flex; align-items: center; justify-content:
+                    // space-between; gap: 12px`. With two children `space-between`
+                    // is the same as giving the slack to the first one, so the
+                    // breadcrumb stretches and elides while the hints keep the width
+                    // they ask for.
+                    // `alignment` is the layout's *main* axis, so `center` here
+                    // centred the breadcrumb and the hints as a single group — the
+                    // default `stretch` is what puts one at each end, because the
+                    // breadcrumb takes the slack and the hints do not.
+                    HorizontalLayout {
+                        x: 12px;
+                        y: 8px;
+                        width: parent.width - 24px;
+                        height: 14px;
+                        spacing: 12px;
+
+                        // `overflow: hidden; text-overflow: ellipsis;
+                        // white-space: nowrap`.
+                        breadcrumb := Text {
+                            horizontal-stretch: 1;
+                            text: CommandText.breadcrumb(
+                                CommandPaletteState.mode,
+                                CommandPaletteState.source
+                            );
+                            font-size: 12px;
+                            font-weight: Theme.font-weight-normal;
+                            color: Theme.subtext-0;
+                            // Slint centres text in its box; `.breadcrumb` is
+                            // `text-overflow: ellipsis`, which is a left-aligned line.
+                            horizontal-alignment: left;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+
+                        // `.hints`: `gap: 12px` between the hints, `flex-shrink: 0`.
+                        hints := HorizontalLayout {
+                            horizontal-stretch: 0;
+                            spacing: 12px;
+                            // `display: flex` with no `justify-content`, which is
+                            // flex-start: the hints are packed against each other.
+                            alignment: start;
+
+                            // `<span class="hint"><kbd>↑</kbd><kbd>↓</kbd></span>`
+                            navigate := HorizontalLayout {
+                                vertical-stretch: 0;
+                                spacing: 4px;
+                                alignment: start;
+
+                                KeyCap { text: "↑"; }
+                                KeyCap { text: "↓"; }
+                            }
+
+                            // `v-if="mode.type !== 'root'"` is `<kbd>⌫</kbd>Back` and
+                            // its `v-else` is `<kbd>esc</kbd>Close` — one hint either
+                            // way, which is why the cap is the mode's own.
+                            //
+                            // Each hint is a `gap: 4px` row of a cap and a label, and it
+                            // is a layout rather than a box with a computed width: the
+                            // cap's width is its own glyph's, which is not a number to
+                            // write down, and using the row's height for it put the
+                            // label inside the cap.
+                            if CommandPaletteState.mode != "root" : back-hint := HorizontalLayout {
+                                vertical-stretch: 0;
+                                spacing: 4px;
+                                alignment: start;
+
+                                KeyCap { text: "⌫"; }
+                                back-text := Text {
+                                    text: CommandText.back-hint();
+                                    font-size: 12px;
+                                    font-weight: Theme.font-weight-normal;
+                                    color: Theme.subtext-0;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            if CommandPaletteState.mode == "root" : close-hint := HorizontalLayout {
+                                vertical-stretch: 0;
+                                spacing: 4px;
+                                alignment: start;
+
+                                KeyCap { text: "esc"; }
+                                close-text := Text {
+                                    text: CommandText.close-hint();
+                                    font-size: 12px;
+                                    font-weight: Theme.font-weight-normal;
+                                    color: Theme.subtext-0;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            // `v-if="primaryAction"`: the selected row's own action,
+                            // and the only hint in `--default-text-color` rather than
+                            // subtext0 (`.hint.primary`).
+                            if CommandPaletteState.selected-action-kind != "" : primary := HorizontalLayout {
+                                vertical-stretch: 0;
+                                spacing: 4px;
+                                alignment: start;
+
+                                action-text := Text {
+                                    text: CommandText.action(
+                                        CommandPaletteState.selected-action-kind
+                                    );
+                                    font-size: 12px;
+                                    font-weight: Theme.font-weight-normal;
+                                    color: Theme.default-text-color;
+                                    vertical-alignment: center;
+                                }
+                                AppIcon {
+                                    name: "corner-down-left";
+                                    size: 14px;
+                                    icon-color: Theme.default-text-color;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ----- the empty state, which the Vue picks with a chain of `v-else-if`s -----
+    // Only the online mode has one: the root mode always has its five commands and
+    // the instance mode its instances, so neither list is ever empty. A chain of
+    // `if`s rather than one `v-else-if` chain, in the order the Vue tests them.
+    private property <string> empty-kind: {
+        if (CommandPaletteState.mode != "search-online") { return "none"; }
+        if (CommandPaletteState.online-searching) { return "searching"; }
+        if (CommandPaletteState.query-empty) { return "type-to-search"; }
+        if (CommandPaletteState.online-error) { return "failed"; }
+        return "none";
+    }
+
+    // 24px of padding above and below, around a 13px line — or a 24px spinner.
+    private property <length> empty-height: root.empty-kind == "searching" ? 72px : 61px;
+
+    // `scheduleOnlineSearch`'s 250ms debounce, restarted by every change to the
+    // query or the mode — the Vue's `watch([query, mode], …)`.
+    //
+    // `changed` cannot watch a qualified global, so the two are folded into one
+    // local property. The separator is a control character neither can hold, so
+    // two different states can never fold into the same string.
+    private property <string> debounce-key: CommandPaletteState.query + "\u{1}" + CommandPaletteState.mode;
+    debounce := Timer {
+        interval: 250ms;
+        running: false;
+        triggered => {
+            // One shot. A `Timer` whose `running` stays true repeats every
+            // `interval`, which would search for as long as the palette is open.
+            debounce.stop();
+            CommandPaletteState.run-search();
+        }
+    }
+    changed debounce-key => {
+        // `Timer.restart()` is documented as "restarts the timer *if it was
+        // previously started*", and `start()` is only `running = true` — so a
+        // timer that has not run yet is started, and every change after that
+        // restarts it. That pair is the debounce: the deadline moves with every
+        // keystroke, so the one that fires is the last one's. Restarting a
+        // `running: false` timer is a no-op, which is why the search never ran.
+        if debounce.running {
+            debounce.restart();
+        } else {
+            debounce.start();
+        }
+    }
+}
