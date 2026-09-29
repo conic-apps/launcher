@@ -137,10 +137,10 @@ export component GameFooterBar inherits Rectangle {
             background: transparent;
 
             pill := AccountListDropdown {
-                // 28 + 64 − 16: the avatar's right edge, less the
+                // 28 + 56 − 16: the avatar's right edge, less the
                 // `margin-left: -16px` AccountListDropdown.vue carries so the pill
                 // tucks under the circle.
-                x: 76px;
+                x: 68px;
                 y: -6px + self.intro-dy;
                 name: GameState.current-account-name;
                 kind: GameState.current-account-kind;
@@ -175,9 +175,9 @@ export component GameFooterBar inherits Rectangle {
             background: transparent;
 
             unlogged-pill := Rectangle {
-                // 28 + 64 − 16, as the logged-in pill above: the avatar's right
+                // 28 + 56 − 16, as the logged-in pill above: the avatar's right
                 // edge less the `.profile-name-unlogged { margin-left: -16px }`.
-                x: 76px;
+                x: 68px;
                 y: -6px + self.intro-dy;
                 width: 32px + unlogged-text.preferred-width + 16px;
                 height: 36px;
@@ -232,15 +232,19 @@ export component GameFooterBar inherits Rectangle {
         //
         // The box is 64px, not 56: `> .avatar :deep(.avatar-image)` is
         // `padding: 2px` inside a `border: 2px solid`, so the *flex item* the
-        // Vue's footer lays out is the 56px image plus 4px of padding and 4px of
-        // border. `AccountAvatar` already insets its own 4px for that, so it is
-        // this box that has to be 64 — and the pill, which the Vue offsets by
-        // `-16px` from where the avatar *ends*, moves out with it.
+        // 56px, the `:size="56"` the Vue passes. Its `padding: 2px` and its
+        // `border: 2px` do not grow it: `src/assets/styles/main.css` sets
+        // `* { box-sizing: border-box }`, so both sit *inside* those 56px and
+        // the flex item is 56px wide. Reading them as content-box additions —
+        // which is what I did here, and it made the avatar 8px too big all round
+        // — also moved the 18px overhang to 22 and the pill out to 76, since
+        // both are measured from where the avatar *ends*. `AccountAvatar` insets
+        // its own 4px for that padding and border, which is all it needs.
         avatar-wrap := Rectangle {
             x: 28px;
-            y: -22px + self.intro-dy;
-            width: 64px;
-            height: 64px;
+            y: -18px + self.intro-dy;
+            width: 56px;
+            height: 56px;
             background: transparent;
             opacity: self.intro-alpha;
 

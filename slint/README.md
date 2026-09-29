@@ -1215,6 +1215,17 @@ the very first play at startup would start silently. This is the same clock
       child *of* the cell the layout places, which is where the intro slides in
       `views/game/instance-summary.slint` and the cards' entrance in
       `overlays/music-player.slint` ended up.
+    - **An overlay is not a layout child.** A `TouchArea` that covers a whole
+      row belongs to the row's *parent*, not to the row: as a layout child it is
+      a column like any other, it takes its share of the free space away from
+      the element that wanted it, and a `width: 100%` on it hands it the entire
+      row as its *preferred* size besides. That is what the sort/group
+      dropdown's `head-touch` was doing — every layout mistake in this file
+      arrived through it at once, and the symptom was never a missing button but
+      a label squeezed to `…` with its chevron stranded mid-dropdown. A
+      `Rectangle` fills its parent by default and a layout does not, which is
+      the same distinction as the note below, and the reason a *nested* layout
+      needs an explicit `width`/`height` to fill the `Rectangle` around it.
     - **A `TouchArea` defaults to 100% of its parent only *outside* a layout.**
       Inside one it is laid out like any other child, so with no size of its own
       its preferred size is 0x0 and it is a zero-area hit target that looks
@@ -1238,6 +1249,16 @@ the very first play at startup would start silently. This is the same clock
       the dropdown (the dialogs, 11451419) needs one too, because it was
       relying on being declared later. The z's are sparse enough here that
       they have to be read as a scale, not as local tweaks.
+    - **`box-sizing: border-box` is set globally, so padding and border do not
+      grow a box.** `src/assets/styles/main.css` has `* { box-sizing:
+      border-box }`, which makes every `padding`/`border` in the Vue *inside*
+      the size it is applied to. Reading the footer's avatar as content-box —
+      `:size="56"` plus `padding: 2px` plus a `border: 2px` — gave 64px and an
+      8px-too-big circle, and dragged the 18px overhang to 22 and the account
+      pill out to 76 with it, since both are measured from where the avatar
+      ends. `BaseSliderBar.vue` opts back into `content-box`; almost nothing
+      else does, and the difference is worth checking before doing arithmetic
+      on a box.
     - **A child's `preferred-width` may not read its parent's width.** Stating
       "exactly half the row" as `preferred-width: (other-row.width -
       other-row.spacing) / 2` is a binding loop — the preferred size feeds the

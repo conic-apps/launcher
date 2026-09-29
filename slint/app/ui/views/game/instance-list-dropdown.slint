@@ -57,11 +57,19 @@ export component InstanceListDropdown inherits Rectangle {
         height: root.height;
         cross-axis-alignment: center;
 
-        // `.label { padding: 6px 12px; flex-shrink: 0 }`. The
-        // `horizontal-stretch: 0` is the whole of `flex-shrink: 0`: stretch
+        // Both halves are layouts rather than `Rectangle`s wrapping a layout.
+        // A nested `HorizontalLayout` does not fill a `Rectangle` parent the way
+        // the `Rectangle` itself does — it shrink-wraps — and `width: 100%` on
+        // it did not rescue that here: the row stayed a few pixels wide, the
+        // selection elided to a bare "…", and the chevron, 12px from the end of
+        // a tiny box, sat in the middle of the dropdown instead of at its edge.
+        // Made a layout, it is placed by `head` like anything else, so it is
+        // given the room it is entitled to and its own padding applies.
+        //
+        // `.label { padding: 6px 12px; flex-shrink: 0 }` — the
+        // `horizontal-stretch: 0` is the whole of `flex-shrink: 0`. Stretch
         // factors default to 1, so without it the label claims half the row
-        // away from `.selected { flex: 1 }` and the chevron stops being 12px
-        // from the end.
+        // away from `.selected { flex: 1 }`.
         label-box := Rectangle {
             horizontal-stretch: 0;
             vertical-stretch: 0;
@@ -70,79 +78,86 @@ export component InstanceListDropdown inherits Rectangle {
 
             HorizontalLayout {
                 padding-top: 6px;
-                padding-bottom: 6px;
-                padding-left: 12px;
-                padding-right: 12px;
-                cross-axis-alignment: center;
+            padding-bottom: 6px;
+            padding-left: 12px;
+            padding-right: 12px;
+            cross-axis-alignment: center;
 
-                label-text := Text {
-                    text: root.label;
-                    font-size: 13px;
-                    font-weight: Theme.font-weight-normal;
-                    color: Theme.default-text-color.transparentize(0.1);
-                }
+            label-text := Text {
+                text: root.label;
+                font-size: 13px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
             }
         }
 
+        // `.selected { display: flex; align-items: center; overflow: hidden }
+        // .text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+        // .chevron { margin-left: auto }` — the last of which is the chevron's
+        // `horizontal-stretch: 0`: it takes its own 14px and the selection takes
+        // the rest, so the arrow is 12px from the end whatever the text is
+        // doing. Stretch factors default to 1, and a stretching chevron claims
+        // half the free space with the text and drags the arrow inward.
         selected-box := Rectangle {
             horizontal-stretch: 1;
             background: transparent;
 
-            // `.selected { display: flex; align-items: center; overflow: hidden }
-            // .text { overflow: hidden; text-overflow: ellipsis; white-space:
-            // nowrap } .chevron { margin-left: auto }`.
             HorizontalLayout {
-                padding-left: 12px;
-                padding-right: 12px;
-                cross-axis-alignment: center;
+            width: 100%;
+            height: 100%;
+            padding-left: 12px;
+            padding-right: 12px;
+            cross-axis-alignment: center;
 
-                Text {
-                    text: root.selected;
-                    font-size: 13px;
-                    font-weight: Theme.font-weight-normal;
-                    color: Theme.default-text-color.transparentize(0.1);
-                    horizontal-stretch: 1;
-                    overflow: elide;
-                    wrap: no-wrap;
-                }
+            Text {
+                text: root.selected;
+                font-size: 13px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+                horizontal-stretch: 1;
+                overflow: elide;
+                wrap: no-wrap;
+            }
 
-                AppIcon {
-                    name: "chevron-down";
-                    size: 14px;
-                    icon-color: Theme.default-text-color.transparentize(0.1);
-                    transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
-                    opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
+            AppIcon {
+                name: "chevron-down";
+                horizontal-stretch: 0;
+                size: 14px;
+                icon-color: Theme.default-text-color.transparentize(0.1);
+                transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
+                opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
                 }
             }
         }
+    }
 
-        // The two size bindings are load-bearing, and the comment that said
-        // otherwise was the bug. A `TouchArea` defaults to 100% of its parent
-        // *outside* a layout; inside one it is laid out like anything else, and
-        // with no size of its own its preferred size is 0x0. So once `head`
-        // became a `HorizontalLayout` this element silently became a
-        // zero-sized hit area and neither dropdown responded to a click — the
-        // baseline had these bindings, precisely because `head` was a `Rectangle`
-        // and could be relied on to fill.
-        head-touch := TouchArea {
-            width: 100%;
-            height: 100%;
-            clicked => {
-                FocusManager.clear();
-                if (root.is-open) {
-                    Dropdown.open = false;
-                    } else {
-                    Dropdown.options = root.options;
-                    Dropdown.accounts = [];
-                    Dropdown.account-mode = false;
-                    Dropdown.current = root.selected-key;
-                    Dropdown.owner = root.dropdown-id;
-                    Dropdown.anchor-x = root.absolute-position.x;
-                    Dropdown.anchor-y = root.absolute-position.y + root.height + 4px;
-                    Dropdown.anchor-width = root.width;
-                    Dropdown.expand-upwards = false;
-                    Dropdown.open = true;
-                }
+    // The whole component is the click target, so this hangs off the *root*
+    // and not off `head`. Inside the layout it was a column like any other:
+    // stretch factors default to 1, so it took a share of the free space away
+    // from `.selected { flex: 1 }`, and `width: 100%` handed it the whole row as
+    // its preferred size besides — the selection elided to a bare "…" and the
+    // chevron stopped being 12px from the end. Out here it is in no layout at
+    // all, so the `TouchArea` rule applies in full: 100% of its parent, which is
+    // the whole dropdown, and it costs the row nothing.
+    head-touch := TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => {
+            FocusManager.clear();
+            if (root.is-open) {
+                Dropdown.open = false;
+                } else {
+                Dropdown.options = root.options;
+                Dropdown.accounts = [];
+                Dropdown.account-mode = false;
+                Dropdown.current = root.selected-key;
+                Dropdown.owner = root.dropdown-id;
+                Dropdown.anchor-x = root.absolute-position.x;
+                Dropdown.anchor-y = root.absolute-position.y + root.height + 4px;
+                Dropdown.anchor-width = root.width;
+                Dropdown.expand-upwards = false;
+                Dropdown.open = true;
             }
         }
     }
