@@ -1184,6 +1184,15 @@ the very first play at startup would start silently. This is the same clock
       that formula out is a no-op, and the port had 137 copies of it before a
       pass took them out. (Inside a layout it is not a no-op in the other
       direction: see the `x`-on-a-child note below.)
+    - **So `x: 0` is only dead when the width really is the parent's.** The
+      centring default above is `(parent.width - self.width) / 2`, which is `0`
+      *only* when `self.width == parent.width`. The music player's progress fill
+      binds `width: parent.width * progress`, so deleting its `x: 0` as a
+      no-op centred the drawn bar inside the track instead of pinning it left —
+      a half-drawn bar floating in the middle. An unbound `x` is a positioning
+      decision, not a stylistic one; the sweep that removed the 137 copies
+      guarded on the width being the full parent for exactly this reason, and
+      the guard is the part worth keeping.
     - **A layout child cannot set `x` or `y` at all.** Not "is overridden" —
       Slint *rejects* it: "The property 'x' cannot be set for elements placed in
       this layout, because the layout is already setting it." So an element that
@@ -1191,6 +1200,28 @@ the very first play at startup would start silently. This is the same clock
       child *of* the cell the layout places, which is where the intro slides in
       `views/game/instance-summary.slint` and the cards' entrance in
       `overlays/music-player.slint` ended up.
+    - **A main-axis alignment other than `stretch` cancels every stretch
+      factor.** `horizontal-stretch: 1` only has meaning under the default
+      `alignment: stretch`; write `alignment: start` (or `end`, `center`) and
+      the layout hands each child its *preferred* size and distributes the free
+      space to nobody. A row of two `horizontal-stretch: 1` buttons written that
+      way packs both at the left of the row at their text widths instead of
+      splitting it — which is also why ordering matters: only the element
+      declared *last* can be pushed to the far end by a stretch, so a
+      field-then-button row has to be written in that order and cannot be
+      rescued with `alignment: end` (that packs the whole group at the end and
+      leaves the row unfilled).
+    - **A layout child under a non-stretch alignment is sized by its
+      *preferred* size, and a bare `Rectangle`'s preferred size is 0.** This is
+      the one that bit twice: the `cell` wrappers
+      `views/game/instance-summary.slint` puts between the stack and each
+      sliding row are plain `Rectangle`s, so `cross-axis-alignment: start`
+      collapsed every cell to 0x0, the row inside it then took the *centring*
+      default `x`/`y` of a zero-sized parent (half its own width off to the
+      left), and `width: stack.preferred-width` on the component root went to
+      zero as well. Each cell now binds `preferred-width`/`preferred-height` to
+      the row it wraps. Keep the `x`-bearing slide *below* the cell, and give
+      the cell the size.
     - **`padding` and `border-radius` take exactly one value.** The CSS
       shorthands do not carry over: `padding: 8px 24px` and
       `border-radius: 8px 0 0 8px` are both parse errors, and landing a bare `0`

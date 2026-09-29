@@ -535,26 +535,29 @@ component GuestCodeInputScreen inherits VerticalLayout {
 
             Rectangle { height: 16px; background: transparent; }
 
-            // `display: flex; width: 100%; align-items: center; gap: 8px` with
-            // `flex: 1` on the field and `flex-shrink: 0; width: fit-content` on
-            // the button, so the field takes what is left and the button lands at
-            // the end. `alignment: end` is what puts it there.
+            // `display: flex; width: 100%; align-items: center; gap: 8px`, and
+            // the field is *before* the button in the Vue's markup: `flex: 1` on
+            // the field, `flex-shrink: 0; width: fit-content` on the button. So
+            // the order here has to be the field then the button, under the
+            // default `stretch` — the field takes the free space and the button
+            // lands at the end. Written the other way round it cannot work: a
+            // `horizontal-stretch` child has to be the one that grows, and it
+            // would push the button to the left of the row rather than the right.
             row := HorizontalLayout {
                 spacing: 8px;
                 cross-axis-alignment: center;
-                alignment: end;
-
-                join-button := BaseButton {
-                    text: @tr("Multiplayer" => "Join");
-                    button-enabled: MultiplayerState.code-input-valid;
-                    clicked => { MultiplayerState.join-room(); }
-                }
 
                 BaseInput {
                     horizontal-stretch: 1;
                     placeholder: @tr("Multiplayer" => "Invite code format: U/BBBB-AAAA-KKKK-AAAA");
                     value <=> MultiplayerState.code-input;
                     edited => { MultiplayerState.code-input-changed(); }
+                }
+
+                join-button := BaseButton {
+                    text: @tr("Multiplayer" => "Join");
+                    button-enabled: MultiplayerState.code-input-valid;
+                    clicked => { MultiplayerState.join-room(); }
                 }
             }
         }

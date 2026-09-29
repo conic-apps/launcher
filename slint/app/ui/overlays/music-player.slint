@@ -382,7 +382,13 @@ export component MusicPlayerOverlay inherits Rectangle {
                             border-radius: 4px;
                             background: Theme.surface-2.transparentize(0.2);
 
+                            // `x: 0` is load-bearing, not the default: the
+                            // fill's width is a *fraction* of the bar's, and an
+                            // unbound `x` centres an element rather than pinning
+                            // it left — which is what a half-drawn bar looked
+                            // like, floating in the middle of the track.
                             Rectangle {
+                                x: 0px;
                                 width: parent.width * MusicState.progress;
                                 height: parent.height;
                                 border-radius: 4px;

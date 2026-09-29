@@ -199,6 +199,13 @@ export component InstanceSummary inherits Rectangle {
         // ----- row-1: instance name -----
         row1-cell := Rectangle {
             background: transparent;
+            // `cross-axis-alignment: start` on the stack sizes each cell to its
+            // *preferred* size, and a `Rectangle`'s preferred size is 0 — so
+            // without these two the cell collapses, the slide inside it is 0x0,
+            // and the row lands at the default `x`/`y` of a zero-sized parent
+            // (centred, i.e. half its own width off to the left).
+            preferred-width: title1.preferred-width;
+            preferred-height: title1.preferred-height;
 
             // The slide, one level down: Slint *refuses* an `x` on a layout
             // child, so the cell cannot carry it and its own child does.
@@ -225,6 +232,13 @@ export component InstanceSummary inherits Rectangle {
         // ----- row-2: metadata -----
         row2-cell := Rectangle {
             background: transparent;
+            // `cross-axis-alignment: start` on the stack sizes each cell to its
+            // *preferred* size, and a `Rectangle`'s preferred size is 0 — so
+            // without these two the cell collapses, the slide inside it is 0x0,
+            // and the row lands at the default `x`/`y` of a zero-sized parent
+            // (centred, i.e. half its own width off to the left).
+            preferred-width: row2.preferred-width;
+            preferred-height: row2.preferred-height;
 
             row2-slide := Rectangle {
                 background: transparent;
@@ -294,6 +308,13 @@ export component InstanceSummary inherits Rectangle {
         // ----- row-3: launch + actions -----
         row3-cell := Rectangle {
             background: transparent;
+            // `cross-axis-alignment: start` on the stack sizes each cell to its
+            // *preferred* size, and a `Rectangle`'s preferred size is 0 — so
+            // without these two the cell collapses, the slide inside it is 0x0,
+            // and the row lands at the default `x`/`y` of a zero-sized parent
+            // (centred, i.e. half its own width off to the left).
+            preferred-width: row3.preferred-width;
+            preferred-height: row3.preferred-height;
 
             row3-slide := Rectangle {
                 background: transparent;
@@ -484,6 +505,13 @@ export component InstanceSummary inherits Rectangle {
         contents-cell := Rectangle {
             border-radius: 12px;
             background: transparent;
+            // `cross-axis-alignment: start` on the stack sizes each cell to its
+            // *preferred* size, and a `Rectangle`'s preferred size is 0 — so
+            // without these two the cell collapses, the slide inside it is 0x0,
+            // and the row lands at the default `x`/`y` of a zero-sized parent
+            // (centred, i.e. half its own width off to the left).
+            preferred-width: contents.preferred-width;
+            preferred-height: contents.preferred-height;
 
             contents-slide := Rectangle {
                 background: transparent;

@@ -353,9 +353,12 @@ component SettingsStep inherits ZoomTransition {
     // row adds none: its buttons line up with the setting rows above. A bare
     // `div { display: flex; padding: 0 8px; gap: 12px }` in the Vue — the
     // wrapper it had here existed only to hand the buttons a `parent.width`.
+    // The default `stretch`, not `alignment: start`: a main-axis alignment other
+    // than `stretch` sizes every child to its *preferred* width and distributes
+    // the free space to nobody, which would pack both buttons at the left of the
+    // row instead of splitting it.
     HorizontalLayout {
         spacing: 12px;
-        alignment: start;
 
         BaseButton {
             horizontal-stretch: 1;

@@ -106,7 +106,9 @@ export component ContentSavesPanel inherits Rectangle {
     // Its wrapper is `position: absolute; top: 0; left: 0; width: 100%; height:
     // 100%` against a `position: relative` `.content-saves`, so the block it
     // centres the placeholder in is the panel's own height — not the 150px this
-    // used to settle for, which put the placeholder 200px too high.
+    // used to settle for, which put the placeholder 200px too high. Nothing
+    // comes off it here, because `.content-saves` has no title bar of its own
+    // (unlike the mods and resource-pack panels above).
     saves-not-found := ContentNotFound {
         show: !ContentState.saves-loading && ContentState.saves.length == 0;
         block-height: ContentState.panel-height;
@@ -500,10 +502,15 @@ export component ContentModsPanel inherits Rectangle {
 
         if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length == 0) : ContentNotFound {
             show: true;
-            // The Vue's wrapper is the same `position: absolute; … height: 100%`
-            // one, over a `position: relative` panel, so this is the whole panel
-            // too — the old `panel-height - 52px` left it 26px low.
-            block-height: ContentState.panel-height;
+            // The Vue's empty-state wrapper is `position: absolute; top: 0;
+            // height: 100%` and `.content-mods` is `position: relative;
+            // height: 100%`, so the block it centres the placeholder in is the
+            // whole panel — title bar included. This element is a sibling
+            // *after* the `ContentTitleBar` rather than overlaid on it, so the
+            // 52px of title bar has to come off the block to land the body in
+            // the same place; leaving the full panel height here is what pushed
+            // it 26px up into the title bar.
+            block-height: ContentState.panel-height - 52px;
             description: @tr("Consider downloading some mods from the internet");
         }
 
@@ -607,8 +614,8 @@ export component ContentResourcepacksPanel inherits Rectangle {
 
         if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length == 0) : ContentNotFound {
             show: true;
-            // As with the local mods above: the whole panel.
-            block-height: ContentState.panel-height;
+            // As with the local mods above: the whole panel less its title bar.
+            block-height: ContentState.panel-height - 52px;
             description: @tr("Consider downloading some resource packs from the internet");
         }
 

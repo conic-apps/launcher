@@ -79,9 +79,9 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
 
     // `div.buttons { display: flex; gap: 12px }` — a bare row, so the wrapper
     // it had here (only there to hand the buttons a `parent.width`) is gone.
+    // The default `stretch`, not `alignment: start` — see `create-instance.slint`.
     HorizontalLayout {
         spacing: 12px;
-        alignment: start;
 
         BaseButton {
             horizontal-stretch: 1;
