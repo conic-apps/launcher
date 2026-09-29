@@ -37,8 +37,6 @@ component SourceButton inherits Rectangle {
         : Theme.peach;
 
     AppIcon {
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
         name: root.source == "local" ? "file-tray-full-outline"
             : root.source == "modrinth" ? "modrinth"
             : "curseforge";
@@ -77,39 +75,42 @@ export component ContentTitleBar inherits Rectangle {
         background: Theme.mantle;
         clip: true;
 
-        AppIcon {
-            x: 32px;
-            y: (parent.height - self.height) / 2;
-            name: root.icon;
-            size: root.icon-size;
-        }
+        // `.title { display: flex; align-items: center; padding: 0 32px; gap: 8px }`
+        // with `.select-source { margin-left: auto; gap: 4px }` — so the title
+        // takes what the buttons leave and the row is pushed against the right
+        // padding edge. The spacer is `margin-left: auto`.
+        HorizontalLayout {
+            padding-left: 32px;
+            padding-right: 32px;
+            spacing: 8px;
+            cross-axis-alignment: center;
 
-        Text {
-            x: 32px + root.icon-size + 8px;
-            y: (parent.height - self.height) / 2;
-            text: root.title;
-            font-size: 16px;
-            color: Theme.default-text-color.transparentize(0.1);
-        }
+            AppIcon {
+                name: root.icon;
+                size: root.icon-size;
+            }
 
-        switcher := HorizontalLayout {
-            // `margin-left: auto` — the row is pushed against the bar's right
-            // padding edge. Its size has to be spelled out: a layout with no
-            // `width` of its own takes its parent's, so `parent.width -
-            // self.width` would come out at -32px and the buttons would be laid
-            // out over the title. The height is the buttons' own 32px for the
-            // same kind of reason — `y` is only their centre once the row is as
-            // tall as they are.
-            width: root.sources.length * 40px + max(0, root.sources.length - 1) * 4px;
-            height: 32px;
-            x: parent.width - 32px - self.width;
-            y: (parent.height - self.height) / 2;
-            spacing: 4px;
+            Text {
+                text: root.title;
+                font-size: 16px;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
 
-            for source in root.sources : SourceButton {
-                source: source;
-                active: source == root.active-source;
-                clicked => { root.source-selected(source); }
+            Rectangle { horizontal-stretch: 1; }
+
+            switcher := HorizontalLayout {
+                // The buttons' own 32px, and their width is what they measure —
+                // a layout with no `width` of its own takes its parent's, which
+                // would run them back over the title.
+                height: 32px;
+                vertical-stretch: 0;
+                spacing: 4px;
+
+                for source in root.sources : SourceButton {
+                    source: source;
+                    active: source == root.active-source;
+                    clicked => { root.source-selected(source); }
+                }
             }
         }
     }

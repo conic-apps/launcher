@@ -31,8 +31,11 @@ export component AccountListDropdown inherits Rectangle {
     private property <float> chevron-flip: root.is-open ? 1.0 : 0.0;
     animate chevron-flip { duration: 200ms; easing: ease-in-out; }
 
+    // `.dropdown { padding: 8px 10px }` around `li.dropdown-option { height: 26px;
+    // margin: 4px 0 }`. Adjacent margins collapse, so the list is
+    // `8 + 4 + 26n + 4(n-1) + 8` — the 16 that ends it, not 18.
     private property <length> panel-height: root.players.length * 26px
-        + max(0, root.players.length - 1) * 4px + 18px;
+        + max(0, root.players.length - 1) * 4px + 16px;
     private property <int> serial: Dropdown.choose-serial;
     changed serial => {
         if Dropdown.choose-owner == root.dropdown-id {
@@ -46,7 +49,6 @@ export component AccountListDropdown inherits Rectangle {
         font-weight: Theme.font-weight-normal;
         color: Theme.default-text-color.transparentize(0.1);
         x: 32px;
-        y: (parent.height - self.height) / 2;
     }
 
     switch-btn := Rectangle {
@@ -64,8 +66,6 @@ export component AccountListDropdown inherits Rectangle {
             name: "chevron-up";
             size: 16px;
             icon-color: Theme.default-text-color.transparentize(0.1);
-            x: (parent.width - self.width) / 2;
-            y: (parent.height - self.height) / 2;
             transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
             opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
         }

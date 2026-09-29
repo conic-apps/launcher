@@ -15,7 +15,10 @@ export component SearchBar inherits Rectangle {
     border-radius: Theme.controllers-border-radius;
     border-width: 1px;
     border-color: Theme.controllers-border;
-    background: Theme.controllers-background;
+    // Not `--controllers-background`: the title bar's own rules override it with
+    // the flavor's surface0 on every dark flavor, and leave it as the controller
+    // background on Latte. See `Theme.titlebar-search-background`.
+    background: Theme.titlebar-search-background;
     clip: true;
 
     accessible-role: button;
@@ -29,7 +32,6 @@ export component SearchBar inherits Rectangle {
         width: 20px;
         height: 20px;
         x: 10px;
-        y: (root.height - self.height) / 2;
         fill: Theme.default-text-color.transparentize(0.1);
     }
 
@@ -38,7 +40,6 @@ export component SearchBar inherits Rectangle {
         font-size: 13px;
         color: Theme.default-text-color.transparentize(0.2);
         x: 36px;
-        y: (root.height - self.height) / 2;
     }
 
     touch := TouchArea {

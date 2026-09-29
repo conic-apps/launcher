@@ -20,8 +20,13 @@ export component DialogRoot inherits Rectangle {
     background: transparent;
 
     CreateInstance { }
-    // Listed before the add-account dialog, as the Vue's `DialogRoot` does.
+    // Slint draws and hit-tests in declaration order, where the Vue's z-index
+    // decides. `DialogRoot.vue` puts the four launch-error dialogs ahead of
+    // `MultiplayerExtension` and `AccountAdd`, so a launch error raised while
+    // one of those is open is drawn *over* it there — which is the case that
+    // matters, since a launch is what raises one. Listed here in the same
+    // order for the same reason: the last instance is the top one.
+    LaunchErrorDialogs { }
     MultiplayerExtension { }
     AccountAddDialog { }
-    LaunchErrorDialogs { }
 }

@@ -36,7 +36,9 @@ export component SettingGroup inherits VerticalLayout {
 
         HorizontalLayout {
             padding-left: 8px;
-            spacing: 4px;
+            // `> p.title` is a flex row with no `gap`, so the 3px the reset button
+            // carries on its left *is* the space between the two.
+            spacing: 3px;
             cross-axis-alignment: center;
             alignment: start;
 
@@ -58,8 +60,6 @@ export component SettingGroup inherits VerticalLayout {
                     name: "refresh";
                     size: 16px;
                     icon-color: Theme.default-text-color.transparentize(0.1);
-                    x: (parent.width - self.width) / 2;
-                    y: (parent.height - self.height) / 2;
                 }
 
                 group-reset-touch := TouchArea {
@@ -73,7 +73,6 @@ export component SettingGroup inherits VerticalLayout {
     }
 
     items := Rectangle {
-        width: 100%;
         background: transparent;
 
         VerticalLayout {
@@ -85,8 +84,6 @@ export component SettingGroup inherits VerticalLayout {
         // Drawn as an overlay after the rows so the 1px hairline sits on top;
         // it is transparent (no-op) on the dark flavors without high contrast.
         group-border := Rectangle {
-            width: 100%;
-            height: 100%;
             border-radius: 8px;
             border-width: 1px;
             border-color: root.danger

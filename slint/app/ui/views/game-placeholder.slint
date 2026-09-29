@@ -16,8 +16,6 @@ export component GameViewPlaceholder inherits Rectangle {
     card := Rectangle {
         width: min(parent.width - 120px, 520px);
         height: min(parent.height - 140px, 300px);
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
         border-radius: 16px;
         border-width: 1px;
         border-color: Theme.lavender.transparentize(0.82);

@@ -3237,6 +3237,11 @@ struct BodyLayout {
     /// `<details open>` attribute: a README's sections have none, so they start
     /// closed.
     section_open: Vec<bool>,
+    /// How tall the engine laid the document out, with every section open. The
+    /// panel does not use it — the box measures itself from the view, which
+    /// shrinks as sections close, and the engine's height would leave a band of
+    /// empty space under the document — but it is what the layout tests assert
+    /// on, and what says whether the engine produced anything at all.
     height: f32,
 }
 
@@ -3501,8 +3506,8 @@ fn clear_body_models() {
 /// Empties what the panel draws, leaving the engine's document alone.
 fn clear_detail_body_model(ui: &App) {
     let state = ui.global::<ContentState>();
-    state.set_detail_body_height(0.0);
     state.set_detail_body_hovered(SharedString::default());
+    state.set_detail_body_height(0.0);
     clear_body_models();
 }
 

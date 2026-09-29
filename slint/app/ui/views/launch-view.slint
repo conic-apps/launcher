@@ -38,10 +38,8 @@ export component LaunchView inherits Rectangle {
         // Vue's `align-items: center` on `.launch-view` work.
         width: self.preferred-width;
         height: self.preferred-height;
-        x: (parent.width - self.width) / 2;
         y: (parent.height - self.height) / 2 - 16px;
         cross-axis-alignment: center;
-        spacing: 0px;
 
         // `> .avatar { margin-bottom: 16px }`. The Vue's `.avatar-image` wrapper
         // is the 48px head plus its `padding: 2px`, so it measures 52px; the
@@ -115,7 +113,6 @@ export component LaunchView inherits Rectangle {
                 padding-bottom: 16px;
                 padding-left: 32px;
                 padding-right: 32px;
-                spacing: 0px;
                 alignment: center;
 
                 // The Vue's `mode="out-in"` fade between the description and the
@@ -219,8 +216,6 @@ export component LaunchView inherits Rectangle {
             animate background, transform-scale { duration: 200ms; easing: ease; }
 
             Text {
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
                 text: @tr("LaunchView" => "Cancel launch");
                 font-size: 11px;
                 color: back-touch.has-hover && !LaunchState.back-disabled

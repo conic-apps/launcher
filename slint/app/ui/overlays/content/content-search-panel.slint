@@ -19,8 +19,6 @@ component ChipPager inherits Rectangle {
     opacity: root.disabled ? 0.4 : 1.0;
 
     AppIcon {
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
         name: "chevron-forward";
         size: 12px;
         icon-color: Theme.default-text-color.transparentize(0.1);
@@ -75,7 +73,6 @@ component FilterChipView inherits Rectangle {
             : root.chip.text;
         font-size: 12px;
         x: 8px;
-        y: (parent.height - self.height) / 2;
         color: root.chip.selected ? Theme.text-inverse : Theme.default-text-color.transparentize(0.1);
     }
 
@@ -239,91 +236,97 @@ component FilterRowView inherits Rectangle {
 }
 export component ContentSearchPanel inherits Rectangle {
     width: 100%;
-    height: self.preferred-height;
-    // `.search-panel { background: rgba(var(--ctp-crust-rgb), .92) }` — the
-    // Vue also asks for `backdrop-filter: blur(4px)`, which Slint has no
-    // equivalent for, so the panel stays translucent without the blur (the
-    // same trade the game view's toolbar and footer make).
-    background: Theme.crust.with-alpha(0.92);
+    // `.search-panel { display: flex; flex-direction: column; gap: 16px;
+    // margin-bottom: 16px; padding: 24px }` — a Slint layout has no margin, so
+    // the box is the content plus that bottom 16px, and the background stops
+    // where the panel does instead of running behind the gap.
+    height: panel-content.preferred-height + 16px;
+    background: Colors.transparent;
 
-    VerticalLayout {
-        padding: 24px;
-        spacing: 16px;
+    panel := Rectangle {
+        width: 100%;
+        height: panel-content.preferred-height;
+        // `.search-panel { background: rgba(var(--ctp-crust-rgb), .92) }` — the
+        // Vue also asks for `backdrop-filter: blur(4px)`, which Slint has no
+        // equivalent for, so the panel stays translucent without the blur (the
+        // same trade the game view's toolbar and footer make).
+        background: Theme.crust.with-alpha(0.92);
 
-        // ----- the search bar -----
-        HorizontalLayout {
-            height: 36px;
-            spacing: 8px;
+        panel-content := VerticalLayout {
+            padding: 24px;
+            spacing: 16px;
 
-            search-field := Rectangle {
-                horizontal-stretch: 1;
+            // ----- the search bar -----
+            HorizontalLayout {
                 height: 36px;
-                border-radius: 8px;
-                // `&:hover { background: var(--ctp-surface1) }`
-                background: field-touch.has-hover ? Theme.surface-1 : Theme.surface-0;
+                spacing: 8px;
 
-                input := TextInput {
-                    x: 12px;
-                    y: 0;
-                    width: parent.width - 24px;
-                    height: parent.height;
-                    text <=> ContentSearch.query;
-                    font-size: 13px;
-                    color: Theme.default-text-color.transparentize(0.1);
-                    selection-background-color: Theme.default-text-color.with-alpha(0.3);
-                    selection-foreground-color: Theme.default-text-color;
-                    single-line: true;
-                    vertical-alignment: center;
-                    // The Vue commits on Enter (`@keyup.enter`); the input
-                    // itself is bound to the model as it is typed.
-                    accepted => { ContentSearch.search(); }
+                search-field := Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border-radius: 8px;
+                    // `&:hover { background: var(--ctp-surface1) }`
+                    background: field-touch.has-hover ? Theme.surface-1 : Theme.surface-0;
+
+                    input := TextInput {
+                        x: 12px;
+                        y: 0;
+                        width: parent.width - 24px;
+                        height: parent.height;
+                        text <=> ContentSearch.query;
+                        font-size: 13px;
+                        color: Theme.default-text-color.transparentize(0.1);
+                        selection-background-color: Theme.default-text-color.with-alpha(0.3);
+                        selection-foreground-color: Theme.default-text-color;
+                        single-line: true;
+                        vertical-alignment: center;
+                        // The Vue commits on Enter (`@keyup.enter`); the input
+                        // itself is bound to the model as it is typed.
+                        accepted => { ContentSearch.search(); }
+                    }
+
+                    if ContentSearch.query == "" : Text {
+                        text: ContentText.search-placeholder(ContentState.remote-kind);
+                        font-size: 13px;
+                        // `&::placeholder { color: var(--ctp-subtext0) }`
+                        color: Theme.subtext-0;
+                        x: 12px;
+                    }
+
+                    field-touch := TouchArea {
+                        // The field has no border in the Vue (`border: none` wins
+                        // over the 1px surface1 above it), only the hover fill.
+                        //
+                        // The area sits *over* the input (it is declared after it, so
+                        // it takes the press), which is what gives the field its
+                        // hover fill — so it has to hand the focus over explicitly,
+                        // or clicking the field would never put a cursor in it.
+                        clicked => { input.focus(); }
+                    }
                 }
 
-                if ContentSearch.query == "" : Text {
-                    text: ContentText.search-placeholder(ContentState.remote-kind);
-                    font-size: 13px;
-                    // `&::placeholder { color: var(--ctp-subtext0) }`
-                    color: Theme.subtext-0;
-                    x: 12px;
-                    y: (parent.height - self.height) / 2;
-                }
+                search-button := Rectangle {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 8px;
+                    background: button-touch.pressed ? Theme.lavender
+                        : button-touch.has-hover ? Theme.surface-1
+                        : Theme.surface-0;
 
-                field-touch := TouchArea {
-                    // The field has no border in the Vue (`border: none` wins
-                    // over the 1px surface1 above it), only the hover fill.
-                    //
-                    // The area sits *over* the input (it is declared after it, so
-                    // it takes the press), which is what gives the field its
-                    // hover fill — so it has to hand the focus over explicitly,
-                    // or clicking the field would never put a cursor in it.
-                    clicked => { input.focus(); }
+                    AppIcon {
+                        name: "search";
+                        size: 16px;
+                        // `&:active { color: var(--ctp-text-inverse) }`
+                        icon-color: button-touch.pressed
+                            ? Theme.text-inverse
+                            : Theme.default-text-color.transparentize(0.1);
+                    }
+
+                    button-touch := TouchArea {
+                        clicked => { ContentSearch.search(); }
+                    }
                 }
             }
-
-            search-button := Rectangle {
-                width: 36px;
-                height: 36px;
-                border-radius: 8px;
-                background: button-touch.pressed ? Theme.lavender
-                    : button-touch.has-hover ? Theme.surface-1
-                    : Theme.surface-0;
-
-                AppIcon {
-                    x: (parent.width - self.width) / 2;
-                    y: (parent.height - self.height) / 2;
-                    name: "search";
-                    size: 16px;
-                    // `&:active { color: var(--ctp-text-inverse) }`
-                    icon-color: button-touch.pressed
-                        ? Theme.text-inverse
-                        : Theme.default-text-color.transparentize(0.1);
-                }
-
-                button-touch := TouchArea {
-                    clicked => { ContentSearch.search(); }
-                }
-            }
-        }
 
         // ----- the filter rows -----
         VerticalLayout {
@@ -333,6 +336,7 @@ export component ContentSearchPanel inherits Rectangle {
                 row-data: filter-row;
                 is-version-row: index == ContentSearch.version-row;
             }
+        }
         }
     }
 }

@@ -258,9 +258,12 @@ export global ContentState {
     /// out. Each run carries its own items and bitmaps, because a run is what
     /// moves when a `<details>` above it opens or closes.
     in-out property <[MdChunk]> detail-body-chunks: [];
-    /// How tall the laid-out body is, measured *inside* the box's padding. The
-    /// box adds the padding back, because `markdown-body.less` puts it on the
-    /// container rather than on the document.
+    /// How tall the engine laid the body out, measured *inside* the box's
+    /// padding and with every `<details>` open. The box does not size itself
+    /// from it — the view measures the runs as they are, so a closing section
+    /// shrinks the document — but the view reads it while there are no runs to
+    /// measure, which is the state between the engine answering and the rows
+    /// being pushed.
     in-out property <length> detail-body-height: 0px;
     /// Which runs are open, index-aligned with `detail-body-chunks`. A run that is
     /// not a `<details>` has nothing to open and the value it holds is never read.

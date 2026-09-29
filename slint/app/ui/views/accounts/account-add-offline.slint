@@ -39,13 +39,10 @@ export component AccountAddOffline inherits VerticalLayout {
         color: Theme.default-text-color.transparentize(0.1);
     }
 
-    Rectangle {
-        height: 8px;
-        background: transparent;
-    }
-
-    // `div.form { gap: 8px }`.
+    // `div.form { gap: 8px }`, and the `p.description { margin-bottom: 8px }`
+    // above it, which a layout has no margin for.
     form := VerticalLayout {
+        padding-top: 8px;
         spacing: 8px;
 
         // ----- username -----
@@ -128,25 +125,21 @@ export component AccountAddOffline inherits VerticalLayout {
         }
     }
 
-    Rectangle {
-        height: 12px;
-        background: transparent;
-    }
-
     // `div.buttons { justify-content: flex-end; margin-top: 12px; gap: 8px }`.
-        // `button.base-button { width: 100% }` in a flex row: each button takes
-        // an equal share of the row minus the gap between them.
+    // `button.base-button { width: 100% }` in a flex row: each button takes an
+    // equal share of the row minus the gap between them.
     HorizontalLayout {
+        padding-top: 12px;
         spacing: 8px;
 
         BaseButton {
-            button-width: (parent.width - 8px) / 2;
+            horizontal-stretch: 1;
             text: @tr("Cancel");
             clicked => { AccountAddState.close(); }
         }
 
         BaseButton {
-            button-width: (parent.width - 8px) / 2;
+            horizontal-stretch: 1;
             text: @tr("Create offline profile");
             button-background: Theme.latte-lavender;
             text-color: #000;

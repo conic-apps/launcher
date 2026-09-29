@@ -251,6 +251,11 @@ export global Theme {
 
     // ----- title bar / controllers -----
     in-out property <color> titlebar-background;
+    // The title bar's search field. `body.theme-<Flavor> .title-bar .search-bar`
+    // overrides `.search-bar`'s own `var(--controllers-background)` with the
+    // flavor's `surface0` on all three dark flavors — and on Latte, where there
+    // is no such rule, the controller background is what shows.
+    in-out property <color> titlebar-search-background;
     in-out property <color> controllers-background;
     in-out property <color> controllers-background-hover;
     in-out property <color> controllers-background-focus;
@@ -427,6 +432,8 @@ export component ThemeProvider inherits Rectangle {
         Theme.active-palette == "Latte" ? Catppuccin.mocha.text : Catppuccin.latte.text;
 
     in-out property <color> titlebar-background: ctp.surface0;
+    in-out property <color> titlebar-search-background:
+        root.dark ? ctp.surface0 : ctp.crust;
 
     in-out property <color> controllers-background: root.dark ? ctp.surface1 : ctp.crust;
     in-out property <color> controllers-background-hover: root.dark ? ctp.surface2 : ctp.surface0;
@@ -446,9 +453,14 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> setting-item-background-hover: root.dark ? ctp.surface1 : ctp.crust;
     in-out property <color> setting-item-background-active: root.dark ? ctp.surface2 : ctp.surface0;
     // No group hairline on the dark flavors without high contrast; Latte draws
-    // one in `crust`, every high-contrast scheme in `overlay2`.
+    // one in `crust`, every high-contrast scheme in `overlay2`. Mocha is the one
+    // that does not: `catppuccin-theme-hc.css:423` points it at *Latte*'s
+    // overlay2, where Macchiato, Frappé and Latte all use their own — an
+    // upstream slip, reproduced rather than corrected.
     in-out property <color> setting-group-border:
-        root.hc ? ctp.overlay2 : (root.dark ? transparent : ctp.crust);
+        root.hc
+            ? (Theme.active-palette == "Mocha" ? Catppuccin.latte.overlay2 : ctp.overlay2)
+            : (root.dark ? transparent : ctp.crust);
     in-out property <color> setting-group-danger-border: ctp.red;
 
     in-out property <color> toggle-switch-background: root.dark ? ctp.surface1 : ctp.crust;
@@ -462,10 +474,14 @@ export component ThemeProvider inherits Rectangle {
 
     // `--dialog-*`. The dark flavors draw a fixed dark hairline; high contrast
     // swaps it for the flavor's overlay2, and Latte keeps its own crust border
-    // and background.
+    // and background. Frappé is the one that does not: `-hc.css:670` leaves it
+    // at the plain hairline, where Mocha and Macchiato swap — the opposite of
+    // the surrounding edits, and again reproduced rather than corrected.
     in-out property <color> dialog-background: root.dark ? ctp.base : ctp.crust;
     in-out property <color> dialog-border:
-        root.dark ? (root.hc ? ctp.overlay2 : #383b41) : ctp.crust;
+        root.dark
+            ? (root.hc && Theme.active-palette != "Frappe" ? ctp.overlay2 : #383b41)
+            : ctp.crust;
     in-out property <length> dialog-border-radius: 10px;
 
     // The Slint equivalent of `.changing-theme`, for the changes that are
@@ -477,7 +493,7 @@ export component ThemeProvider inherits Rectangle {
         rosewater, flamingo, pink, mauve, maroon, red, peach, yellow, green,
         teal, sky, sapphire, blue, lavender,
         default-text-color, text-inverse,
-        titlebar-background,
+        titlebar-background, titlebar-search-background,
         controllers-background, controllers-background-hover, controllers-background-focus,
         controllers-border, controllers-outline-focus,
         setting-item-background, setting-item-background-hover, setting-item-background-active,
@@ -523,6 +539,7 @@ export component ThemeProvider inherits Rectangle {
         Theme.default-text-color = root.default-text-color;
         Theme.text-inverse = root.text-inverse;
         Theme.titlebar-background = root.titlebar-background;
+        Theme.titlebar-search-background = root.titlebar-search-background;
         Theme.controllers-background = root.controllers-background;
         Theme.controllers-background-hover = root.controllers-background-hover;
         Theme.controllers-background-focus = root.controllers-background-focus;
@@ -578,6 +595,7 @@ export component ThemeProvider inherits Rectangle {
     changed default-text-color => { Theme.default-text-color = root.default-text-color; }
     changed text-inverse => { Theme.text-inverse = root.text-inverse; }
     changed titlebar-background => { Theme.titlebar-background = root.titlebar-background; }
+    changed titlebar-search-background => { Theme.titlebar-search-background = root.titlebar-search-background; }
     changed controllers-background => { Theme.controllers-background = root.controllers-background; }
     changed controllers-background-hover => { Theme.controllers-background-hover = root.controllers-background-hover; }
     changed controllers-background-focus => { Theme.controllers-background-focus = root.controllers-background-focus; }

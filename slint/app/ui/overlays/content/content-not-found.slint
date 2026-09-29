@@ -22,10 +22,15 @@ export component ContentNotFound inherits Rectangle {
     in property <bool> show: false;
     /// The second line, which the Vue only draws when it is given one.
     in property <string> description: "";
-    /// The block it occupies. A definite height rather than `100%` or a
-    /// measured one: it is a child of a column, and a component whose height is
-    /// measured collapses to nothing there (see the note in `panels.slint`).
+    /// The block it occupies, and the box the body is centred in. A definite
+    /// height rather than `100%` or a measured one: it is a child of a column,
+    /// and a component whose height is measured collapses to nothing there (see
+    /// the note in `panels.slint`). What the block *is* differs per call site —
+    /// see `panels.slint`, which is the only place that decides.
     in property <length> block-height: 150px;
+    /// How tall the placeholder's own content is, for the call sites whose block
+    /// is that content plus a padding (`.search-status { padding: 40px 0 }`).
+    out property <length> content-height: body.preferred-height;
 
     width: 100%;
     height: block-height;
@@ -86,11 +91,12 @@ export component ContentNotFound inherits Rectangle {
     }
 
     body := Rectangle {
-        // `.content-placeholder { right: 320px; width: 380px; height: fit-content }`
-        // — centred in the grid area the instance list leaves free, which is
-        // what the `right: 320px` offset comes to on an 840px-wide window.
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
+        // `.content-placeholder { right: 320px; width: 380px; height:
+        // fit-content; display: flex; align-items: center; flex-direction:
+        // column }`. Its `right` is on a *static* element — the Vue never gives
+        // it `position: absolute` — so it has no effect; the wrapper the panel
+        // puts it in is the `display: flex; align-items: center; justify-content:
+        // center` one, and that is what centres this 380px box.
         width: 380px;
         height: self.preferred-height;
         background: transparent;
@@ -109,7 +115,6 @@ export component ContentNotFound inherits Rectangle {
                 background: transparent;
 
                 AppIcon {
-                    x: (parent.width - self.width) / 2;
                     y: 0;
                     name: "about";
                     size: 64px;
@@ -163,8 +168,6 @@ export component ContentLoading inherits Rectangle {
             border-radius: 8px;
 
             BaseLoading {
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
                 size: 32px;
                 stroke-width: 4;
             }

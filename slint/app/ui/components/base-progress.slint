@@ -43,14 +43,12 @@ export component BaseProgress inherits Rectangle {
     Rectangle {
         width: 100%;
         height: 1px;
-        y: (root.height - self.height) / 2;
         background: Theme.surface-2;
     }
 
     if root.loading : Rectangle {
         width: root.width * 0.5;
         height: 3px;
-        y: (root.height - self.height) / 2;
         x: root.sweep-x;
         background: #f0f0f0;
     }
@@ -59,7 +57,6 @@ export component BaseProgress inherits Rectangle {
         width: root.max > 0.0 ? min(root.value / root.max, 1.0) * root.width : 0px;
         height: 3px;
         x: 0px;
-        y: (root.height - self.height) / 2;
         background: #f0f0f0;
         animate width { duration: 300ms; easing: ease; }
     }

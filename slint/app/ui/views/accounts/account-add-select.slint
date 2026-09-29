@@ -52,8 +52,6 @@ component ServiceButton inherits Rectangle {
     }
 
     button-touch := TouchArea {
-        width: parent.width;
-        height: parent.height;
         clicked => { root.clicked(); }
     }
 }
@@ -104,8 +102,6 @@ export component AccountAddSelect inherits Rectangle {
 
     // `&.disabled { pointer-events: none }`.
     blocker := TouchArea {
-        width: parent.width;
-        height: parent.height;
         enabled: !root.select-enabled;
     }
 }

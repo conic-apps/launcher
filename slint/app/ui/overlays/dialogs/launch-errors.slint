@@ -31,11 +31,12 @@ export component LaunchErrorDialogs inherits Rectangle {
         dialog-width: 500px;
         dialog-height: 146px;
 
+        // `.no-account-error { padding: 8px }` and `.buttons { margin-top: 16px }`
+        // are a padding and a gap — which is what they are here, where the inset
+        // and the spacer rectangle were both written out by hand.
         VerticalLayout {
-            x: 8px;
-            y: 8px;
-            width: no-account.content-width - 16px;
-            spacing: 0px;
+            padding: 8px;
+            spacing: 16px;
 
             HorizontalLayout {
                 height: 50px;
@@ -50,9 +51,8 @@ export component LaunchErrorDialogs inherits Rectangle {
                     text: @tr("LaunchDialogs" => "To launch the game, you must have added at least one account");
                 }
             }
-            Rectangle { height: 16px; }
             BaseButton {
-                button-width: no-account.content-width - 16px;
+                horizontal-stretch: 1;
                 text: @tr("LaunchDialogs" => "Cancel launch");
                 clicked => {
                     Dialogs.no-account-error-visible = false;
@@ -69,10 +69,8 @@ export component LaunchErrorDialogs inherits Rectangle {
         dialog-height: 146px;
 
         VerticalLayout {
-            x: 8px;
-            y: 8px;
-            width: no-microsoft-account.content-width - 16px;
-            spacing: 0px;
+            padding: 8px;
+            spacing: 16px;
 
             HorizontalLayout {
                 height: 50px;
@@ -87,9 +85,8 @@ export component LaunchErrorDialogs inherits Rectangle {
                     text: @tr("LaunchDialogs" => "To launch the game, you must have added at least one Microsoft account");
                 }
             }
-            Rectangle { height: 16px; }
             BaseButton {
-                button-width: no-microsoft-account.content-width - 16px;
+                horizontal-stretch: 1;
                 text: @tr("LaunchDialogs" => "Cancel launch");
                 clicked => {
                     Dialogs.no-microsoft-account-error-visible = false;
@@ -106,10 +103,8 @@ export component LaunchErrorDialogs inherits Rectangle {
         dialog-height: 146px;
 
         VerticalLayout {
-            x: 8px;
-            y: 8px;
-            width: refresh-failed.content-width - 16px;
-            spacing: 0px;
+            padding: 8px;
+            spacing: 16px;
 
             HorizontalLayout {
                 height: 50px;
@@ -124,9 +119,8 @@ export component LaunchErrorDialogs inherits Rectangle {
                     text: @tr("LaunchDialogs" => "Failed to refresh the account. Check your network connection and try again, or log in to the account again");
                 }
             }
-            Rectangle { height: 16px; }
             BaseButton {
-                button-width: refresh-failed.content-width - 16px;
+                horizontal-stretch: 1;
                 text: @tr("LaunchDialogs" => "Cancel launch");
                 clicked => {
                     Dialogs.account-refresh-failed-visible = false;
@@ -143,10 +137,8 @@ export component LaunchErrorDialogs inherits Rectangle {
         dialog-height: 144px;
 
         VerticalLayout {
-            x: 8px;
-            y: 8px;
-            width: no-java.content-width - 16px;
-            spacing: 0px;
+            padding: 8px;
+            spacing: 16px;
 
             HorizontalLayout {
                 height: 50px;
@@ -170,9 +162,8 @@ export component LaunchErrorDialogs inherits Rectangle {
                     }
                 }
             }
-            Rectangle { height: 16px; }
             BaseButton {
-                button-width: no-java.content-width - 16px;
+                horizontal-stretch: 1;
                 text: @tr("LaunchDialogs" => "Cancel launch");
                 text-color: Theme.text-inverse;
                 button-background: Theme.blue;
