@@ -2170,3 +2170,136 @@ msgstr "Abbrechen"
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "Löschen bestätigen"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch instance"
+msgstr "Instanz starten"
+
+#: ui
+msgctxt "CommandText"
+msgid "Create instance"
+msgstr "Instanz erstellen"
+
+#: ui
+msgctxt "CommandText"
+msgid "Add game profile"
+msgstr "Spielprofil hinzufügen"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth"
+msgstr "Auf Modrinth suchen"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge"
+msgstr "Auf CurseForge suchen"
+
+#: ui
+msgctxt "CommandText"
+msgid "by {}"
+msgstr "von {}"
+
+#: ui
+msgctxt "CommandText"
+msgid "Mod"
+msgstr "Mod"
+
+#: ui
+msgctxt "CommandText"
+msgid "Modpack"
+msgstr "Modpack"
+
+#: ui
+msgctxt "CommandText"
+msgid "Resource Pack"
+msgstr "Ressourcenpaket"
+
+#: ui
+msgctxt "CommandText"
+msgid "Shader"
+msgstr "Shader"
+
+#: ui
+msgctxt "CommandText"
+msgid "Switch to"
+msgstr "Wechseln zu"
+
+#: ui
+msgctxt "CommandText"
+msgid "Launch"
+msgstr "Starten"
+
+#: ui
+msgctxt "CommandText"
+msgid "Open"
+msgstr "Öffnen"
+
+#: ui
+msgctxt "CommandText"
+msgid "Instances"
+msgstr "Instanzen"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search results"
+msgstr "Suchergebnisse"
+
+#: ui
+msgctxt "CommandText"
+msgid "Commands"
+msgstr "Befehle"
+
+#: ui
+msgctxt "CommandText"
+msgid "Select an instance to launch…"
+msgstr "Instanz zum Starten auswählen…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth…"
+msgstr "Auf Modrinth suchen…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge…"
+msgstr "Auf CurseForge suchen…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search commands or instances…"
+msgstr "Befehle oder Instanzen suchen…"
+
+#: ui
+msgctxt "CommandText"
+msgid "Back"
+msgstr "Zurück"
+
+#: ui
+msgctxt "CommandText"
+msgid "Close"
+msgstr "Schließen"
+
+#: ui
+msgctxt "CommandText"
+
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on CurseForge"
+msgstr "Tippe Stichwörter, um auf CurseForge zu suchen"
+
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on Modrinth"
+msgstr "Tippe Stichwörter, um auf Modrinth zu suchen"
+
+#: ui
+msgctxt "CommandText"
+msgid "Search failed, please try again"
+msgstr "Suche fehlgeschlagen, bitte erneut versuchen"
+
+#: ui
+msgctxt "CommandText"
+msgid "No matching results"
+msgstr "Keine passenden Ergebnisse"
