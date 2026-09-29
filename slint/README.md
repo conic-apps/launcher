@@ -1215,6 +1215,17 @@ the very first play at startup would start silently. This is the same clock
       child *of* the cell the layout places, which is where the intro slides in
       `views/game/instance-summary.slint` and the cards' entrance in
       `overlays/music-player.slint` ended up.
+    - **A `TouchArea` defaults to 100% of its parent only *outside* a layout.**
+      Inside one it is laid out like any other child, so with no size of its own
+      its preferred size is 0x0 and it is a zero-area hit target that looks
+      perfectly fine. This is the sort/group dropdown: its `head` was a
+      `Rectangle` in the baseline and became a `HorizontalLayout` here, and the
+      `TouchArea` that makes the whole component clickable went with it — the
+      two dropdowns stopped responding and nothing looked wrong. The baseline
+      carried `width: parent.width; height: parent.height` on it, and dropping
+      those looked safe because the doc sentence above is true *most* of the
+      time. Same trap as the `x: 0` sweep, one level down: a default that
+      holds outside a layout does not hold inside one.
     - **`z` is global to the window, so declaration order only orders what has
       no `z` of its own.** Mounting the dropdown panel *after* the page stack
       puts it above every element that does not opt into a `z`, and nothing
@@ -1227,6 +1238,15 @@ the very first play at startup would start silently. This is the same clock
       the dropdown (the dialogs, 11451419) needs one too, because it was
       relying on being declared later. The z's are sparse enough here that
       they have to be read as a scale, not as local tweaks.
+    - **A child's `preferred-width` may not read its parent's width.** Stating
+      "exactly half the row" as `preferred-width: (other-row.width -
+      other-row.spacing) / 2` is a binding loop — the preferred size feeds the
+      layout cache that decides the width it just read — and Slint reports it
+      as one the moment anything else in the subtree asks the layout for its
+      own size. `flex: 1` is a zero basis and a grow of 1, so the Slint
+      spelling is `preferred-width: 0` plus `horizontal-stretch: 1`: equal
+      floors and equal factors make the children exactly equal *whatever* the
+      floor is, and no floor has to know the row's width to say so.
     - **A stretch factor of 0 is the one you have to write, and 1 is the
       default.** Not a niche setting: *every* layout child grows by default, so
       an element the CSS pins (`flex-shrink: 0`, a fixed width, a `width:

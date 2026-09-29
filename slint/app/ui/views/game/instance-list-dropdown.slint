@@ -116,10 +116,17 @@ export component InstanceListDropdown inherits Rectangle {
             }
         }
 
-        // Unbound: a `TouchArea` fills its parent, and asking the row for the
-        // width it is still measuring is a binding loop once the *caller* sizes
-        // this component.
+        // The two size bindings are load-bearing, and the comment that said
+        // otherwise was the bug. A `TouchArea` defaults to 100% of its parent
+        // *outside* a layout; inside one it is laid out like anything else, and
+        // with no size of its own its preferred size is 0x0. So once `head`
+        // became a `HorizontalLayout` this element silently became a
+        // zero-sized hit area and neither dropdown responded to a click — the
+        // baseline had these bindings, precisely because `head` was a `Rectangle`
+        // and could be relied on to fill.
         head-touch := TouchArea {
+            width: 100%;
+            height: 100%;
             clicked => {
                 FocusManager.clear();
                 if (root.is-open) {

@@ -154,19 +154,26 @@ export component InstancesListToolBar inherits Rectangle {
 
             // ----- sort / group -----
             // `.other { display: flex; gap: 8px }` with `> div { flex: 1 }` on
-            // both, so each takes half of what is left. `flex: 1` is a zero
-            // basis and a grow of 1, which is an *exact* half of the row;
-            // `horizontal-stretch: 1` on its own is not, because it only hands
-            // out the space left over after each child's preferred size, and
-            // these two prefer different widths ("Sort" against "Group",
-            // "Play time" against "Ungrouped"). So the half is stated, and the
-            // stretch kept only so the row still divides rather than packing.
+            // both. `flex: 1` is a zero basis and a grow of 1, which is an
+            // *exact* half of the row — and `horizontal-stretch: 1` is not, on
+            // its own, because it only hands out what is left after each child's
+            // preferred size, and these two prefer different widths ("Sort"
+            // against "Group", "Play time" against "Ungrouped").
+            //
+            // So the preferred size is zero on both, which is the Slint spelling
+            // of `flex-basis: 0`: equal floors plus equal stretch factors make
+            // the two come out exactly equal whatever the value is, and the row
+            // divides rather than packs. Stating the half directly — reading
+            // `other-row.width` — is what this *cannot* do: a child's preferred
+            // size feeding the layout cache that decides the very width it read
+            // is a binding loop, and it is one that cost the dropdowns their
+            // click handling outright.
             other-row := HorizontalLayout {
                 height: 25px;
                 spacing: 8px;
 
                 InstanceListDropdown {
-                    preferred-width: (other-row.width - other-row.spacing) / 2;
+                    preferred-width: 0px;
                     horizontal-stretch: 1;
                     label: @tr("Sort");
                     selected: root.sort-label;
@@ -177,7 +184,7 @@ export component InstancesListToolBar inherits Rectangle {
                 }
 
                 InstanceListDropdown {
-                    preferred-width: (other-row.width - other-row.spacing) / 2;
+                    preferred-width: 0px;
                     horizontal-stretch: 1;
                     label: @tr("Group");
                     selected: root.group-label;
