@@ -44,7 +44,8 @@ ICON_FILES = sorted(
 )
 # Names the app draws itself rather than reading from an SVG, so a literal of the
 # same name in a binding is not a missing icon. These are the window-control
-# glyphs in `title-bar.slint` and the placeholder artwork in `game-placeholder`.
+# glyphs in `title-bar.slint` and the placeholder artwork in
+# `views/todo-placeholder.slint`.
 DRAWN_IN_CODE = {"minimize-icon", "maximize-icon", "close-icon", "cubes-icon"}
 
 

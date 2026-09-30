@@ -32,6 +32,7 @@ export component SettingsAppearance inherits VerticalLayout {
             title: @tr("Follow system dark mode");
             description: @tr("Uses Latte when the system is set to light mode, otherwise uses Mocha");
             icon: "moon";
+            icon-outline: true;
 
             BaseSwitch {
                 checked <=> AppConfig.palette-follow-system;

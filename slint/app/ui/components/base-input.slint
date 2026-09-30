@@ -16,11 +16,18 @@ import { FocusManager } from "../globals/focus.slint";
 // `number-only` fields draw the two step buttons (up/down chevrons stacked in
 // one column) that the native `<input type="number">` spinner provides in the
 // Vue original.
+//
+// `error` is the Vue's invalid state: it drops the field's own border for a red
+// one. The Vue spells that `border: none; outline: 1px solid var(--ctp-red)` as
+// an inline style, which outranks the stylesheet's `:focus-within` outline, so a
+// focused invalid field stays red there too — hence the check ahead of the focus
+// test below rather than after it.
 export component BaseInput inherits Rectangle {
     in property <string> placeholder: "";
     in property <length> input-width: 400px;
     in property <bool> number-only: false;
     in property <bool> input-enabled: true;
+    in property <bool> error: false;
     in-out property <string> value: "";
     callback edited;
 
@@ -38,7 +45,9 @@ export component BaseInput inherits Rectangle {
     height: 30px;
     border-radius: Theme.controllers-border-radius;
     border-width: 1px;
-    border-color: text-input.has-focus ? Theme.controllers-outline-focus : Theme.controllers-border;
+    border-color: root.error ? Theme.red
+        : text-input.has-focus ? Theme.controllers-outline-focus
+        : Theme.controllers-border;
     background: text-input.has-focus ? Theme.controllers-background-focus
         : input-touch.has-hover ? Theme.controllers-background-hover
         : Theme.controllers-background;

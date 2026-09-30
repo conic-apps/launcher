@@ -34,8 +34,14 @@ export component BaseDialog inherits Rectangle {
     /// Panel size (the Vue's `width` / `height` props). Left at 0 the panel
     /// fills the window, which is also where the Vue's `max-width` /
     /// `max-height` clamp it; a dialog that lets its content size it (the Vue's
-    /// `fit-content` default) needs a layout to measure the slot and arrives
-    /// with one of those dialogs.
+    /// `fit-content` default) measures the slot itself and passes the result
+    /// here — see `overlays/dialogs/account-add.slint` for the arrangement.
+    ///
+    /// A *change* to this is eased (see `panel-height` below), which is what the
+    /// Vue's `watch(() => props.height)` did for a dialog with `animateHeight`:
+    /// the add-account dialog, the multiplayer dialog and anything else that
+    /// swaps a taller body for a shorter one. Only the height is animated; the
+    /// width still switches instantly, as it did there.
     in property <length> dialog-width: 0px;
     in property <length> dialog-height: 0px;
     /// Size of the area the content is laid out in (the panel minus the 16px
@@ -119,6 +125,27 @@ export component BaseDialog inherits Rectangle {
         easing: ease-out-quad;
     }
 
+    // The height the panel is drawn at: `dialog-height`, eased.
+    //
+    // The Vue had this in two halves. `watch(() => props.height)` tweened
+    // `height` over 300ms `power2.out` for a dialog that had `animateHeight`, and
+    // the same tween was what `onContentResize` ran for a dialog that had none
+    // but sized itself — either way a body that changes height does so over
+    // 300ms, never in one frame.
+    //
+    // `enabled` is what keeps *opening* out of it. The Vue pinned the panel to
+    // the height it already had and skipped the first observation
+    // (`skipNextResize`), so a dialog appeared at its content's natural height
+    // and only *subsequent* resizes tweened; a tween on the way in would grow
+    // the panel from wherever it last was. It is off before the dialog is
+    // "shown" and during the leave, which is the same exclusion.
+    private property <length> panel-height: root.dialog-height;
+    animate panel-height {
+        enabled: root.phase == "shown";
+        duration: 300ms;
+        easing: ease-out-quad;
+    }
+
     private property <float> content-alpha: root.phase == "shown" ? 1.0 : 0.0;
     private property <float> content-scale: root.phase == "shown" ? 1.0 : 0.9;
     animate content-alpha {
@@ -161,7 +188,7 @@ export component BaseDialog inherits Rectangle {
         // A dialog that sizes itself, clamped to the window — the Vue's
         // `max-width` / `max-height` of `calc(100vw - 20px)`.
         width: min(root.dialog-width > 0px ? root.dialog-width : root.width - 20px, root.width - 20px);
-        height: min(root.dialog-height > 0px ? root.dialog-height : root.height - 20px, root.height - 20px);
+        height: min(root.panel-height > 0px ? root.panel-height : root.height - 20px, root.height - 20px);
         background: Theme.dialog-background;
         border-width: 1px;
         border-color: Theme.dialog-border;

@@ -337,8 +337,17 @@ export global ContentState {
     callback select-card(string);
     /// The saves' folder button, the local mods' folder button.
     callback open-path(string);
-    /// The saves' delete button.
+    /// A local mod's / resource pack's / pack's delete button.
+    ///
+    /// The saves grid does not come through here: it goes to
+    /// `request-delete-save` first, because its button is the only destructive
+    /// one in the content layer and it asks before it acts. This one is wired to
+    /// the local mods' and resource packs' buttons, which the Vue leaves inert
+    /// (no `@click` at all) and which are left as they are.
     callback delete-save(string);
+    /// The saves' delete button: opens `ConfirmDeleteSave` rather than deleting.
+    /// `folder` is the card's id, `level-name` what the dialog names it by.
+    callback request-delete-save(string, string);
     /// The remote grids' link button / the detail panel's source link.
     callback open-url(string);
     callback toggle-favorite(string);
@@ -750,6 +759,22 @@ export global ContentText {
     /// `GameTime.last-played`'s, which the card tag calls.
     public pure function last-played-label() -> string {
         return @tr("ContentText" => "Last played: ");
+    }
+
+    /// A save card's game-mode and cheats tags. `kind` is the tag's own `kind`,
+    /// so the one table covers both families the Vue's `span.game-mode.*` and
+    /// `span.command-enabled` rules name.
+    ///
+    /// These are resolved here rather than composed in Rust for the reason the
+    /// chip labels are: a string Rust pushed is fixed at that moment and would
+    /// not follow a language change.
+    public pure function save-tag(kind: string) -> string {
+        if kind == "game-mode-survival" { return @tr("ContentText" => "Survival"); }
+        if kind == "game-mode-creative" { return @tr("ContentText" => "Creative"); }
+        if kind == "game-mode-adventure" { return @tr("ContentText" => "Adventure"); }
+        if kind == "game-mode-spectator" { return @tr("ContentText" => "Spectator"); }
+        if kind == "command-enabled" { return @tr("ContentText" => "Cheats"); }
+        return "";
     }
 
     /// A detail panel's header title. `kind` is the `ContentState.remote-kind`

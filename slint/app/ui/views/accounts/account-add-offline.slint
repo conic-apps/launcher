@@ -121,8 +121,9 @@ export component AccountAddOffline inherits VerticalLayout {
 
             BaseInput {
                 input-width: 260px;
-                placeholder: "UUID";
+                placeholder: @tr("UUID");
                 input-enabled: AccountAddState.offline-advanced;
+                error: AccountAddState.offline-uuid-invalid;
                 value <=> AccountAddState.offline-uuid;
                 edited => { AccountAddState.sync-offline-uuid(); }
             }

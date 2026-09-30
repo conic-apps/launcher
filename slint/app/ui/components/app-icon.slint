@@ -12,6 +12,11 @@ import { Icons } from "../icons.slint";
 // explicit `color` (default: body text at 90% opacity, matching
 // `main.css` `* { color: rgba(var(--default-text-color), 0.9) }`).
 //
+// `build.rs` splits every icon's geometry into the pass each shape's own paint
+// calls for, so `icon-color` has to stay one colour for both — except where the
+// Vue asked for one of them not to be painted at all, which is what `no-fill`
+// is (`:fill="none"`).
+//
 // Stroke width is expressed in the icon's view box units and converted to
 // element pixels the same way the title bar does it: an 18px glyph on a 512
 // view box with stroke-width 32 becomes 18 * 32 / 512 = 1.125px.
@@ -19,6 +24,11 @@ export component AppIcon inherits Rectangle {
     in property <string> name;
     in property <length> size: 20px;
     in property <color> icon-color: Theme.default-text-color.transparentize(0.1);
+    /// Draws the fill pass in the icon's own colour, whatever `icon-color` is.
+    /// The Vue's `<AppIcon :fill="none">`: the stroke keeps `currentColor` and
+    /// only the fill is suppressed, which is why this is a separate switch
+    /// rather than a second colour.
+    in property <bool> no-fill: false;
 
     width: size;
     height: size;
@@ -42,7 +52,7 @@ export component AppIcon inherits Rectangle {
         viewbox-height: Icons.viewbox(root.name);
         width: root.width;
         height: root.height;
-        fill: root.icon-color;
+        fill: root.no-fill ? transparent : root.icon-color;
         stroke: transparent;
     }
 }

@@ -51,6 +51,18 @@ import { ScrollInput, ScrollSource } from "../globals/scroll.slint";
 // screens read the same values as before: 0 at the top, negative when scrolled
 // down. Everything below works with its positive twin, `scroll-y`.
 export component ScrollView inherits Rectangle {
+    /// Distance between the view's top edge and the top of the scrollbar track
+    /// (the Vue's `scrollbar-top`, the `:style` half of
+    /// `.scrollbar { top; bottom }`).
+    in property <length> scrollbar-top: 8px;
+    /// Distance between the view's bottom edge and the bottom of the track.
+    in property <length> scrollbar-bottom: 8px;
+    /// Hides the scrollbar without touching the scrolling (the Vue's
+    /// `disabled`, which `InstancesList.vue` passed as `overlaid` so the bar went
+    /// away behind a content panel or the instance-settings overlay). The Vue's
+    /// `display: none` and this are the same thing; the offset still moves.
+    in property <bool> scrollbar-disabled: false;
+
     width: 100%;
     height: 100%;
     clip: true;
@@ -66,12 +78,12 @@ export component ScrollView inherits Rectangle {
     out property <length> content-y: -root.scroll-y;
 
     // ----- geometry (the Vue stylesheet) -----
-    // `.scrollbar { right: 8px; width: 6px }` with the default `top`/`bottom` of
-    // 8px: the track runs from 8px below the top edge to 8px above the bottom
-    // one, and the thumb hangs 2px off each side of it while hovered or dragged.
-    private property <length> scrollbar-inset: 8px;
+    // `.scrollbar { right: 8px; width: 6px }`, with the track's `top`/`bottom`
+    // both defaulting to 8px, and the thumb hanging 2px off each side of the
+    // track while hovered or dragged.
+    private property <length> scrollbar-inset-right: 8px;
     private property <length> scrollbar-width: 6px;
-    private property <length> track-height: max(0px, root.height - 2 * root.scrollbar-inset);
+    private property <length> track-height: max(0px, root.height - root.scrollbar-top - root.scrollbar-bottom);
 
     // ----- scroll state -----
     /// Smoothed offset: 0 at the top, growing as the content scrolls down.
@@ -249,9 +261,9 @@ export component ScrollView inherits Rectangle {
     // window, subtracts the overhang instead). A 6px track with an 8px thumb that
     // widens to 10px on hover and shrinks slightly while dragged.
     scrollbar := Rectangle {
-        visible: root.max-scroll > 0.5px;
-        x: root.width - root.scrollbar-inset - root.scrollbar-width;
-        y: root.scrollbar-inset;
+        visible: !root.scrollbar-disabled && root.max-scroll > 0.5px;
+        x: root.width - root.scrollbar-inset-right - root.scrollbar-width;
+        y: root.scrollbar-top;
         width: root.scrollbar-width;
         height: root.track-height;
         background: transparent;

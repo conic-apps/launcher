@@ -7,6 +7,7 @@ import { AppIcon } from "../../components/app-icon.slint";
 import { BaseLoading } from "../../components/base-loading.slint";
 import { ContentState, ContentText } from "../../globals/content.slint";
 import { ScrollView } from "../../components/scroll-view.slint";
+import { ScrollViewHorizontal } from "../../components/scroll-view-horizontal.slint";
 import { ContentOverlay } from "content-overlay.slint";
 import { ContentTitleBar } from "content-title-bar.slint";
 import { MarkdownBody } from "markdown-body.slint";
@@ -186,7 +187,9 @@ component DetailBody inherits Rectangle {
                 BaseLoading {
                     y: 40px;
                     size: 32px;
+
                     stroke-width: 4;
+                    gap: 8;
                 }
             }
 
@@ -399,29 +402,40 @@ component DetailBody inherits Rectangle {
 
                         // `.gallery-list { height: 100%; padding: 0 8px; gap: 12px;
                         // align-items: center }` inside the 16px padding, so the
-                        // items start 24px in and the row is 220px tall.
-                        HorizontalLayout {
+                        // items start 24px in and the row is 220px tall. The Vue
+                        // scrolled this with a `ScrollViewHorizontal`, which is
+                        // what it is again here: the box clips, so a plain
+                        // `HorizontalLayout` in it would have shown the first few
+                        // shots and nothing else.
+                        gallery-scroll := ScrollViewHorizontal {
                             x: 24px;
                             y: 16px;
                             width: parent.width - 48px;
                             height: parent.height - 32px;
-                            spacing: 12px;
-                            cross-axis-alignment: center;
+                            // `.gallery-list`'s own `padding: 0 8px`, against the
+                            // track rather than the row.
+                            scrollbar-left: 8px;
+                            scrollbar-right: 8px;
 
-                            // `.gallery-item { height: calc(100% - 16px) }` — 204px
-                            // in the 220px row, centred.
-                            for shot in ContentState.detail-gallery : Rectangle {
-                                width: shot.ratio * 204px;
-                                height: 204px;
-                                border-radius: 8px;
-                                clip: true;
-                                background: transparent;
+                            HorizontalLayout {
+                                spacing: 12px;
+                                cross-axis-alignment: center;
 
-                                Image {
-                                    width: parent.width;
-                                    height: parent.height;
-                                    source: shot.image;
-                                    image-fit: cover;
+                                // `.gallery-item { height: calc(100% - 16px) }` —
+                                // 204px in the 220px row, centred.
+                                for shot in ContentState.detail-gallery : Rectangle {
+                                    width: shot.ratio * 204px;
+                                    height: 204px;
+                                    border-radius: 8px;
+                                    clip: true;
+                                    background: transparent;
+
+                                    Image {
+                                        width: parent.width;
+                                        height: parent.height;
+                                        source: shot.image;
+                                        image-fit: cover;
+                                    }
                                 }
                             }
                         }

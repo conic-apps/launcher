@@ -170,6 +170,9 @@ export component ContentLoading inherits Rectangle {
             BaseLoading {
                 size: 32px;
                 stroke-width: 4;
+                // The seven `.loading` blocks this component replaces all pass
+                // the same three: `:size="32" :gap="8" :strokeWidth="4"`.
+                gap: 8;
             }
         }
     }

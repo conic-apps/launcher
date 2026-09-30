@@ -93,7 +93,9 @@ export component ContentSavesPanel inherits Rectangle {
 
             select(id) => { ContentState.select-save(id); }
             open-path(id) => { ContentState.open-path(id); }
-            delete(id) => { ContentState.delete-save(id); }
+            // `askDeleteSave`: the Vue opens `ConfirmDeleteSave` here rather than
+            // deleting, so a click that misses cannot destroy a world.
+            delete(id, title) => { ContentState.request-delete-save(id, title); }
             // The play button carries no handler in the Vue — the click bubbles
             // to the panel and clears the expanded save, which is what this
             // comes to.
@@ -497,7 +499,10 @@ export component ContentModsPanel inherits Rectangle {
 
             select(id) => { ContentState.select-card(id); }
             open-path(id) => { ContentState.open-path(id); }
-            delete(id) => { ContentState.delete-save(id); }
+            // Inert in the Vue: `ContentModsLocal.vue`'s and
+            // `ContentResourcepacksLocal.vue`'s delete buttons carry no
+            // `@click`, and they are left that way here.
+            delete(id, title) => { ContentState.delete-save(id); }
         }
 
         if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length == 0) : ContentNotFound {
@@ -609,7 +614,10 @@ export component ContentResourcepacksPanel inherits Rectangle {
 
             select(id) => { ContentState.select-card(id); }
             open-path(id) => { ContentState.open-path(id); }
-            delete(id) => { ContentState.delete-save(id); }
+            // Inert in the Vue: `ContentModsLocal.vue`'s and
+            // `ContentResourcepacksLocal.vue`'s delete buttons carry no
+            // `@click`, and they are left that way here.
+            delete(id, title) => { ContentState.delete-save(id); }
         }
 
         if (ContentState.source == "local" && !ContentState.local-resourcepacks-loading && ContentState.local-resourcepacks.length == 0) : ContentNotFound {

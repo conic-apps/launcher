@@ -138,6 +138,11 @@ impl DataLocation {
 
     pub fn init(&self) {
         std::fs::create_dir_all(&self.music).expect("Unable to create application data directory");
+        // The log file lives here (see `app/src/logs.rs`), and
+        // `Settings → About` opens the folder whether or not anything has been
+        // written to it yet — so it is made here rather than by the logger, which
+        // is a fallback path and can decline to.
+        let _ = std::fs::create_dir_all(&self.logs);
         let launcher_profiles_path = self.root.join("launcher_profiles.json");
         let override_json_profile_result =
             std::fs::write(&launcher_profiles_path, DEFAULT_LAUNCHER_PROFILE);

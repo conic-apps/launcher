@@ -786,14 +786,17 @@ async fn launch_game(
     let mut ticker = tokio::time::interval(Duration::from_millis(100));
     let mut last: Option<LaunchKey> = None;
     let mut last_log: Option<Instant> = None;
+    // Whether one of the game's own startup markers has been seen. Latched per
+    // run, and read by `flush_launch` before the event dedupe — see there.
+    let mut game_up = false;
     loop {
         tokio::select! {
             result = &mut future => {
-                flush_launch(weak, run, &status, &mut last, &mut last_log);
+                flush_launch(weak, run, &status, &mut last, &mut last_log, &mut game_up);
                 return result.map(|_pid| ());
             }
             _ = ticker.tick() => {
-                flush_launch(weak, run, &status, &mut last, &mut last_log);
+                flush_launch(weak, run, &status, &mut last, &mut last_log, &mut game_up);
             }
         }
     }
@@ -850,10 +853,27 @@ fn flush_launch(
     status: &Arc<Mutex<LaunchEvent>>,
     last: &mut Option<LaunchKey>,
     last_log: &mut Option<Instant>,
+    game_up: &mut bool,
 ) {
     let Ok(event) = status.lock().map(|guard| guard.clone()) else {
         return;
     };
+    // "The game is up" is read here, off the raw event and *before* the dedupe
+    // below, because the three startup markers collapse into one `LaunchKey`:
+    // `WaitForLaunch` has usually arrived first, so the other two are dropped and
+    // `apply_launch_event` never sees them at all. The set is the launch crate's
+    // own — the three it breaks its twenty-second wait on.
+    if !*game_up
+        && matches!(
+            event,
+            LaunchEvent::LogLwjglVersion
+                | LaunchEvent::LogOpenALLoaded
+                | LaunchEvent::LogTextureLoaded
+        )
+    {
+        *game_up = true;
+        dismiss_quit_dialog(weak);
+    }
     let key = launch_key(&event);
     if last.as_ref() == Some(&key) {
         return;
@@ -892,6 +912,21 @@ fn log_progress(
     }
 }
 
+/// The game is up, so there is nothing left in progress to abort and
+/// `ConfirmQuitApp` has stopped having anything to warn about. A user who opened
+/// it and then watched the game start should find it gone rather than still being
+/// asked.
+///
+/// It is dismissed and *not* treated as a cancel: the flow is deliberately still
+/// running — the back button is disabled and the screen waits for the process to
+/// exit — and only the dialog's own flag goes down, which is all its "Wait a
+/// moment…" button does.
+fn dismiss_quit_dialog(weak: &Weak<App>) {
+    let _ = weak.upgrade_in_event_loop(move |ui| {
+        ui.global::<Dialogs>().set_confirm_quit_app_visible(false);
+    });
+}
+
 /// The Vue's `launchGame()` `onProgress`.
 fn apply_launch_event(weak: &Weak<App>, run: &Run, event: &LaunchEvent) {
     match event {
@@ -927,6 +962,9 @@ fn apply_launch_event(weak: &Weak<App>, run: &Run, event: &LaunchEvent) {
             state.set_progress_kind("generate-script".into());
             state.set_progress_loading(true);
         }),
+        // `LogTextureLoaded` alone gets the "Game started" *description*, which is
+        // what the Vue gave it. That is a separate concern from the launch being
+        // over, which any of the three markers means — see `flush_launch`.
         LaunchEvent::WaitForLaunch
         | LaunchEvent::LogSettingUser
         | LaunchEvent::LogLwjglVersion

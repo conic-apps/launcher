@@ -1,0 +1,118 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/app-icon.slint";
+import { BaseButton } from "../../components/base-button.slint";
+
+// The body shared by the two "are you sure?" dialogs that are a warning icon, a
+// two-line message and a blue/red button pair:
+//
+//   src/overlays/dialogs/ConfirmDeleteSave.vue
+//   src/overlays/dialogs/ConfirmQuitApp.vue
+//
+// The two are the same component in the Vue too — same markup, same `.message`
+// and `.buttons` rules, differing only in what the four strings say — which is
+// why they are one here. (The launch error dialogs in `launch-errors.slint` share
+// the icon and the message as well, but end in a single button, so they are not
+// part of this.)
+//
+// The strings are passed in rather than `@tr`'d here, so each dialog's sentences
+// are catalogued under its own context and a translator can tell which of the
+// two a "Confirm delete" belongs to.
+//
+// **Both callbacks have to be handled by the dialog that mounts this.** Slint
+// lets a consumer leave a `callback` unhandled without a word, and a button whose
+// callback nobody answers is a button that does nothing — which is exactly what
+// an unhandled `cancel` is.
+export component ConfirmWarningBody inherits VerticalLayout {
+    in property <length> content-width: 0px;
+    /// `p { font-size: 17px }` — the question.
+    in property <string> title-text: "";
+    /// `p { font-size: 12px; margin-top: 8px }` — why it cannot be undone.
+    in property <string> detail-text: "";
+    in property <string> cancel-text: "";
+    in property <string> confirm-text: "";
+    /// The confirm button's `disabled` (Vue `deleting`, set while the delete runs).
+    in property <bool> confirm-enabled: true;
+
+    callback cancel();
+    callback confirm();
+
+    // `.confirm-delete-save { padding: 8px }` (and the identical rule in
+    // `ConfirmQuitApp.vue`), with the buttons' 16px `margin-top` as the layout's
+    // own spacing.
+    width: root.content-width;
+    spacing: 16px;
+    padding: 8px;
+    alignment: start;
+
+    // The Vue's `div[style="display: flex; align-items: center"]` around the icon
+    // and the message. The 50px icon is the taller of the two, and the message
+    // column centres itself in it (`.message { justify-content: center }`).
+    HorizontalLayout {
+        height: 50px;
+        spacing: 16px;
+        cross-axis-alignment: center;
+
+        AppIcon {
+            name: "warning";
+            size: 50px;
+        }
+
+        // `.message { display: flex; flex-direction: column; margin-left: 16px }`
+        // — the margin is the 16px above.
+        VerticalLayout {
+            alignment: center;
+            spacing: 8px;
+
+            Text {
+                text: root.title-text;
+                font-size: 17px;
+                color: Theme.default-text-color.transparentize(0.1);
+                wrap: word-wrap;
+            }
+
+            Text {
+                text: root.detail-text;
+                font-size: 12px;
+                color: Theme.default-text-color.transparentize(0.1);
+                wrap: word-wrap;
+            }
+        }
+    }
+
+    HorizontalLayout {
+        width: 100%;
+        cross-axis-alignment: center;
+
+        BaseButton {
+            horizontal-stretch: 1;
+            text: root.cancel-text;
+            text-color: Theme.text-inverse;
+            // `.buttons button { border-radius: 4px }`, the dialogs' own scoped
+            // rule overriding the controllers radius.
+            button-radius: 4px;
+            button-background: Theme.blue;
+            clicked => { root.cancel(); }
+        }
+
+        // `.back { margin-right: 8px }` — the two buttons are both `width: 100%`
+        // flex items, which shrink to leave the 8px between them.
+        Rectangle {
+            width: 8px;
+            background: transparent;
+        }
+
+        BaseButton {
+            horizontal-stretch: 1;
+            text: root.confirm-text;
+            text-color: Theme.text-inverse;
+            button-radius: 4px;
+            button-background: Theme.red;
+            button-enabled: root.confirm-enabled;
+            clicked => { root.confirm(); }
+        }
+    }
+}

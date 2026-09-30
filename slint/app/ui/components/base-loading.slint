@@ -5,22 +5,40 @@
 import { Theme } from "../theme.slint";
 
 // Spinning arc (src/components/BaseLoading.vue): a 48-unit circle with a round
-// cap and a gap, rotated continuously. The Vue version uses
-// `stroke-dasharray`; Slint has no dash arrays, so the arc is drawn as an
-// explicit ~88% sweep (matching the default gap + stroke settings used in the
-// game view).
+// cap, `pathLength="100"` and a gap, rotated continuously.
+//
+// The Vue splits the two with `stroke-dasharray: 100 - (gap + strokeWidth)` —
+// the `strokeWidth` is part of the gap because a round cap that straddles the
+// start of the dash paints half its width on each side of it, so a dash
+// shortened by only `gap` would close the ring. Normalising the circumference
+// to 100 is what makes that arithmetic in the same units as the dash.
+//
+// Slint has no dash arrays, so the arc is drawn as a real one instead: an
+// `ArcTo` between the same two ends the dash would have had, with its sweep
+// computed from the same two numbers. That is what the `MoveTo`/`ArcTo` pair
+// below is for — a `Path` also takes its geometry as a command *string*, and
+// that route would mean formatting the end point as text, which Slint can only
+// do with the locale's decimal separator in it.
 export component BaseLoading inherits Rectangle {
     in property <length> size: 32px;
     // Stroke width in the SVG's 48-unit view box (matches the Vue prop).
     in property <int> stroke-width: 4;
+    /// Size of the gap in the same units, split with the stroke width the way
+    /// `100 - (gap + strokeWidth)` splits it.
+    in property <int> gap: 6;
     in property <color> icon-color: Theme.default-text-color.transparentize(0.1);
+
+    /// How much of the circle the dash covers, as an angle: `100 - (gap +
+    /// strokeWidth)` out of 100 of the circumference. Clamped at both ends
+    /// because the Vue's own arithmetic is unclamped — a `gap` past 100 leaves
+    /// nothing to paint, and a negative one has no arc to draw.
+    private property <angle> arc-sweep: max(0deg, min(360deg, (100 - root.gap - root.stroke-width) * 3.6deg));
 
     width: size;
     height: size;
     background: transparent;
 
     Path {
-        commands: "M24 4A20 20 0 1 1 10.31 9.42";
         viewbox-width: 48;
         viewbox-height: 48;
         width: root.width;
@@ -31,5 +49,23 @@ export component BaseLoading inherits Rectangle {
         stroke-line-cap: LineCap.round;
         transform-rotation: mod(animation-tick(), 1.9s) / 1.9s * 360deg;
         transform-origin: { x: root.size / 2, y: root.size / 2 };
+
+        // Clockwise from the top of the circle, which is where
+        // `base-loading-circle`'s `transform-origin: 24px 24px` rotation starts
+        // it in the original too.
+        MoveTo {
+            x: 24;
+            y: 4;
+        }
+        ArcTo {
+            radius-x: 20;
+            radius-y: 20;
+            x: 24 + 20 * sin(root.arc-sweep);
+            y: 24 - 20 * cos(root.arc-sweep);
+            // Past a half turn the two arcs between the same pair of points are
+            // no longer told apart by the sweep flag alone.
+            large-arc: root.arc-sweep > 180deg;
+            sweep: true;
+        }
     }
 }

@@ -613,8 +613,6 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "Kurulu Java çalışma ortamları taranıyor"
 
-# Game view strings, seeded from src/locales/tr_tr.ts.
-
 #: ui
 msgctxt "GameTime"
 msgid "Just now"
@@ -1430,514 +1428,637 @@ msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "Ağ ortamınız: {0}"
 
+#: ui
 msgctxt "ContentModsPanel"
 msgid "Mods"
 msgstr "Modlar"
 
+#: ui
 msgctxt "ContentModsPanel"
 msgid "Consider downloading some mods from the internet"
 msgstr "İnternetten birkaç mod indirmeyi düşünebilirsiniz"
 
+#: ui
 msgctxt "ContentResourcepacksPanel"
 msgid "Resource Packs"
 msgstr "Kaynak Paketleri"
 
+#: ui
 msgctxt "ContentResourcepacksPanel"
 msgid "Consider downloading some resource packs from the internet"
 msgstr "İnternetten birkaç kaynak paketi indirmeyi düşünebilirsiniz"
 
+#: ui
 msgctxt "ContentPacksPanel"
 msgid "Modpacks"
 msgstr "Mod Paketleri"
 
+#: ui
 msgctxt "ContentSavesPanel"
 msgid "Saves"
 msgstr "Kayıtlar"
 
+#: ui
 msgctxt "ContentSavesPanel"
 msgid "Consider launching the game and creating some saves"
 msgstr "Oyunu başlatıp birkaç kayıt oluşturmayı düşünebilirsiniz"
 
+#: ui
 msgctxt "ContentScreenshotsPanel"
 msgid "Loading..."
 msgstr "Yükleniyor..."
 
+#: ui
 msgctxt "ContentScreenshotsPanel"
 msgid "No screenshots"
 msgstr "Ekran görüntüsü yok"
 
+#: ui
 msgctxt "ContentNotFound"
 msgid "No results match the current filter"
 msgstr "Geçerli filtreyle eşleşen sonuç yok"
 
-msgctxt "RemoteListView"
-msgid "Try adjusting keywords or filters and search again"
-msgstr "Anahtar kelimeleri veya filtreleri ayarlayıp yeniden aramayı deneyin"
-
+#: ui
 msgctxt "DetailBody"
 msgid "Download"
 msgstr "İndir"
 
+#: ui
 msgctxt "DetailBody"
 msgid "Remove"
 msgstr "Kaldır"
 
+#: ui
 msgctxt "DetailBody"
 msgid "Installed: {}"
 msgstr "Kurulu: {}"
 
+#: ui
 msgctxt "ContentText"
 msgid "Favorites"
 msgstr "Favoriler"
 
+#: ui
 msgctxt "ContentText"
 msgid "[Disabled] "
 msgstr "[Devre dışı] "
 
+#: ui
 msgctxt "ContentText"
 msgid "Loader"
 msgstr "Yükleyici"
 
+#: ui
 msgctxt "ContentText"
 msgid "Version"
 msgstr "Sürüm"
 
+#: ui
 msgctxt "ContentText"
 msgid "Category"
 msgstr "Kategori"
 
+#: ui
 msgctxt "ContentText"
 msgid "Mod info"
 msgstr "Mod bilgisi"
 
+#: ui
 msgctxt "ContentText"
 msgid "Resource pack info"
 msgstr "Kaynak paketi bilgisi"
 
+#: ui
 msgctxt "ContentText"
 msgid "Modpack info"
 msgstr "Mod paketi bilgisi"
 
+#: ui
 msgctxt "ContentText"
 msgid "Search mods..."
 msgstr "Mod ara..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Search resource packs..."
 msgstr "Kaynak paketi ara..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Search modpacks..."
 msgstr "Mod paketi ara..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Last played: "
 msgstr "Son oynanma: "
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Adventure & RPG"
 msgstr "Macera ve RPG"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Armor, Tools & Weapons"
 msgstr "Zırh, Aletler ve Silahlar"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "World Generation"
 msgstr "Dünya Oluşturma"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Technology"
 msgstr "Teknoloji"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Magic"
 msgstr "Büyü"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Storage"
 msgstr "Depolama"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Library & API"
 msgstr "Kütüphane ve API"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Maps & Info"
 msgstr "Haritalar ve Bilgi"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Utility & QoL"
 msgstr "Yardımcı Araçlar ve Kolaylıklar"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Server Utility"
 msgstr "Sunucu Yardımcıları"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Food"
 msgstr "Yiyecek"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Performance"
 msgstr "Performans"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Bug Fixes"
 msgstr "Hata Düzeltmeleri"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Redstone"
 msgstr "Redstone"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Cosmetic"
 msgstr "Kozmetik"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Miscellaneous"
 msgstr "Çeşitli"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Adventure"
 msgstr "Macera"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Cursed"
 msgstr "Tuhaf"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Decoration"
 msgstr "Dekorasyon"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Economy"
 msgstr "Ekonomi"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Equipment"
 msgstr "Ekipman"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Food"
 msgstr "Yiyecek"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Game Mechanics"
 msgstr "Oyun Mekanikleri"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Library"
 msgstr "Kütüphane"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Magic"
 msgstr "Büyü"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Management"
 msgstr "Yönetim"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Minigame"
 msgstr "Mini oyun"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Mobs"
 msgstr "Moblar"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Optimization"
 msgstr "Optimizasyon"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Social"
 msgstr "Sosyal"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Storage"
 msgstr "Depolama"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Technology"
 msgstr "Teknoloji"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Transportation"
 msgstr "Ulaşım"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Utility"
 msgstr "Yardımcı Araçlar"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "World Generation"
 msgstr "Dünya Oluşturma"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Crafted"
 msgstr "El Yapımı"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Photorealistic"
 msgstr "Fotogerçekçi"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Semi-Realistic"
 msgstr "Yarı Gerçekçi"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Simple"
 msgstr "Basit"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Traditional"
 msgstr "Geleneksel"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Animated"
 msgstr "Hareketli"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Modern"
 msgstr "Modern"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Themed"
 msgstr "Temalı"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Mod Support"
 msgstr "Mod Desteği"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "RPG"
 msgstr "RPG"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Gameplay"
 msgstr "Oynanış"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "GUI"
 msgstr "Arayüz"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Sound"
 msgstr "Ses"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Environment"
 msgstr "Çevre"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "World Generation"
 msgstr "Dünya Oluşturma"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Blocks"
 msgstr "Bloklar"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Items"
 msgstr "Eşyalar"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Mobs"
 msgstr "Moblar"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Weather"
 msgstr "Hava Durumu"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Faithful"
 msgstr "Faithful"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "16x"
 msgstr "16x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "32x"
 msgstr "32x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "64x"
 msgstr "64x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "128x"
 msgstr "128x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "256x"
 msgstr "256x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Photorealistic"
 msgstr "Fotogerçekçi"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Semi-Realistic"
 msgstr "Yarı Gerçekçi"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Simple"
 msgstr "Basit"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Modern"
 msgstr "Modern"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Themed"
 msgstr "Temalı"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Classic"
 msgstr "Klasik"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Dark"
 msgstr "Karanlık"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Medieval"
 msgstr "Orta Çağ"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Anime"
 msgstr "Anime"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Cartoon"
 msgstr "Çizgi Film"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Pixel Art"
 msgstr "Piksel Sanatı"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Vanilla Plus"
 msgstr "Vanilla Artı"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Utility"
 msgstr "Yardımcı Araçlar"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Other"
 msgstr "Diğer"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Technology"
 msgstr "Teknoloji"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Magic"
 msgstr "Büyü"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Sci-Fi"
 msgstr "Bilim Kurgu"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Adventure & RPG"
 msgstr "Macera ve RPG"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Exploration"
 msgstr "Keşif"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Minigame"
 msgstr "Mini oyun"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Quests"
 msgstr "Görevler"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Hardcore"
 msgstr "Hardcore"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Map-Based"
 msgstr "Harita Tabanlı"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Lightweight"
 msgstr "Hafif"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Extra Large"
 msgstr "Çok Büyük"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Combat PvP"
 msgstr "Savaş PvP"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Multiplayer"
 msgstr "Çok Oyunculu"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "FTB Modpacks"
 msgstr "FTB Mod Paketleri"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Skyblock"
 msgstr "Skyblock"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Vanilla Plus"
 msgstr "Vanilla Artı"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Horror"
 msgstr "Korku"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Expert"
 msgstr "Uzman"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Adventure"
 msgstr "Macera"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Challenging"
 msgstr "Zorlu"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Combat"
 msgstr "Savaş"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "Kitchen Sink"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Lightweight"
 msgstr "Hafif"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Magic"
 msgstr "Büyü"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Multiplayer"
 msgstr "Çok Oyunculu"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Optimization"
 msgstr "Optimizasyon"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Quests"
 msgstr "Görevler"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "Teknoloji"
@@ -1947,203 +2068,256 @@ msgctxt "MusicPlayerOverlay"
 msgid "No music"
 msgstr "Müzik yok"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Shuffle"
 msgstr "Karıştır"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Repeat"
 msgstr "Tekrarla"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Previous"
 msgstr "Önceki"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Play"
 msgstr "Oynat"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Pause"
 msgstr "Duraklat"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Next"
 msgstr "Sonraki"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Open music folder"
 msgstr "Müzik klasörünü aç"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Playlist"
 msgstr "Çalma listesi"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Nothing here"
 msgstr "Burada bir şey yok"
-
-# Instance settings overlay (src/overlays/InstanceSetting.vue) and the
-# delete dialog it opens (src/overlays/dialogs/ConfirmDeleteInstance.vue).
-# The overlay's strings are seeded from `game.instance.*` in
-# src/locales/<lang>.ts; the dialog's were never internationalized there, so
-# its Chinese source text is kept and translated here.
 
 #: ui
 msgctxt "InstanceSettings"
 msgid "Instance settings"
 msgstr "Örnek ayarları"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Images"
 msgstr "Görüntüler"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Set background image"
 msgstr "Arka plan resmi ayarla"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Remove image"
 msgstr "Resmi kaldır"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Use instance background as launcher background"
 msgstr "Örnek arka planını başlatıcı arka planı olarak kullan"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Selected {}"
 msgstr "{} seçildi"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Enable instance-specific settings"
 msgstr "Örneğe özel ayarları etkinleştir"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Launch options"
 msgstr "Başlatma seçenekleri"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Window size"
 msgstr "Pencere boyutu"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Initial game window size"
 msgstr "Oyunun başlangıç pencere boyutu"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "W"
 msgstr "G"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "H"
 msgstr "Y"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Fullscreen"
 msgstr "Tam ekran"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Quit launcher after launching game"
 msgstr "Oyun başlatıldıktan sonra başlatıcıdan çık"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Skip game file check"
 msgstr "Oyun dosyası kontrolünü atla"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "The launcher will not attempt to verify or repair game files before launching"
 msgstr "Başlatıcı, oyunu başlatmadan önce oyun dosyalarını doğrulamaya veya onarmaya çalışmaz"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Memory"
 msgstr "Bellek"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Auto-allocate memory"
 msgstr "Belleği otomatik ayır"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Manual memory allocation"
 msgstr "Elle bellek ayırma"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
 msgstr "Maksimum Java heap boyutunu elle ayarlayın. Otomatik ayırma devre dışı bırakıldığında geçerli olur"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Advanced launch options"
 msgstr "Gelişmiş başlatma seçenekleri"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Java garbage collector"
 msgstr "Java çöp toplayıcı"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra JVM arguments"
 msgstr "Ek JVM argümanları"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Appended after default JVM arguments"
 msgstr "Varsayılan JVM argümanlarının sonuna eklenir"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra game arguments"
 msgstr "Ek oyun argümanları"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Additional arguments for the game"
 msgstr "Oyun için ek argümanlar"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra class paths"
 msgstr "Ek sınıf yolları"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Separated by semicolons on Windows, colons on other systems"
 msgstr "Windows'ta noktalı virgül, diğer sistemlerde iki nokta ile ayrılır"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Execute before launch"
 msgstr "Başlatmadan önce çalıştır"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added before the launch command"
 msgstr "Başlatma komutundan önce eklenir"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Wrap command"
 msgstr "Komutu sarmala"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added at the beginning of the launch command"
 msgstr "Başlatma komutunun başına eklenir"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Execute after launch"
 msgstr "Başlattıktan sonra çalıştır"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added at the end of the launch script"
 msgstr "Başlatma betiğinin sonuna eklenir"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Ignore invalid Minecraft certificates"
 msgstr "Geçersiz Minecraft sertifikalarını yoksay"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
 msgstr "JVM argümanlarına -Dfml.ignoreInvalidMinecraftCertificates=true ekler"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Ignore patch discrepancies"
 msgstr "Yama tutarsızlıklarını yoksay"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
 msgstr "JVM argümanlarına -Dfml.ignorePatchDiscrepancies=true ekler"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Delete instance"
 msgstr "Örneği sil"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Deleting this instance will permanently lose all saves, resource packs, and other game data"
 msgstr "Bu örneğin silinmesi tüm kayıtları, kaynak paketlerini ve diğer oyun verilerini kalıcı olarak kaybettirir"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Reset instance"
 msgstr "Örneği sıfırla"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved"
@@ -2153,158 +2327,197 @@ msgstr "Bu örneğin sıfırlanması tüm kayıtları, kaynak paketlerini ve di�
 msgctxt "ConfirmDeleteInstance"
 msgid "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
 msgstr "Bu örneği silmek istediğinizden emin misiniz? Örnek altındaki kayıtlar, kaynak paketleri, modlar ve diğer dosyalar da kalıcı olarak kaybolacak (gerçekten çok uzun sürüyor!)"
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "游戏时间："
 msgstr "Oynama süresi: "
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "取消"
 msgstr "İptal"
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "Silmeyi onayla"
+
 #: ui
 msgctxt "SetupView"
 msgid "First-run setup"
 msgstr "İlk açılış kurulumu"
+
 #: ui
 msgctxt "SetupView"
 msgid "Customize Conic Launcher to suit your preferences"
 msgstr "Conic Launcher'ı tercihlerinize göre özelleştirin"
+
 #: ui
 msgctxt "SetupView"
 msgid "Back"
 msgstr "Geri"
+
 #: ui
 msgctxt "SetupView"
 msgid "Let's get started!"
 msgstr "Hadi başlayalım!"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Add account)"
 msgstr "Sonraki (Hesap ekle)"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Java settings)"
 msgstr "Sonraki (Java ayarları)"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Launch options)"
 msgstr "Sonraki (Başlatma seçenekleri)"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Import instances)"
 msgstr "Sonraki (Örnekleri içe aktar)"
+
 #: ui
 msgctxt "SetupView"
 msgid "Finish"
 msgstr "Bitir"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Welcome"
 msgstr "Hoş geldiniz"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Welcome to the first-run setup wizard!"
 msgstr "İlk açılış kurulum sihirbazına hoş geldiniz!"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Conic Launcher is highly customizable, but the complex settings might be overwhelming."
 msgstr "Conic Launcher yüksek ölçüde özelleştirilebilir, ancak karmaşık ayarlar bunaltıcı olabilir."
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "This wizard will quickly walk you through some important settings so you can start playing right away."
 msgstr "Bu sihirbaz, hemen oynamaya başlayabilmeniz için bazı önemli ayarlarda size hızlıca yol gösterecek."
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Choose a color scheme"
 msgstr "Bir renk şeması seçin"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
 msgstr "Conic Launcher birden fazla renk şemasını destekler. Tarzınıza uygun olanı seçin."
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Follow system dark mode"
 msgstr "Sistem karanlık modunu takip et"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
 msgstr "Sistem açık moddayken Latte kullanır, aksi halde Mocha kullanır"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Account added!"
 msgstr "Hesap eklendi!"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance"
 msgstr "Aşağıdaki profil varsayılan olarak ayarlandı. Bir örneğe profil atanmadığında başlatıcı, oyunda oturum açmak için bu profili kullanacak"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Microsoft (Official account)"
 msgstr "Microsoft (Resmi hesap)"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Yggdrasil (External login)"
 msgstr "Yggdrasil (Harici giriş)"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "No auth service (Offline account)"
 msgstr "Kimlik doğrulama servisi yok (Çevrimdışı hesap)"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Java settings"
 msgstr "Java ayarları"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Conic Launcher can greatly simplify Java environment configuration. Enable \"Auto-install Java runtime\" to avoid manual installation!"
 msgstr "Conic Launcher, Java ortamı yapılandırmasını büyük ölçüde basitleştirebilir. Manuel kurulumdan kaçınmak için \"Java çalışma ortamını otomatik kur\" seçeneğini etkinleştirin!"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\""
 msgstr "Not: Java otomatik kurulumu geçerli platformda kullanılamayabilir. Java\\'yı elle kurmanız ve \"Java çalışma ortamını otomatik kur\" seçeneğini devre dışı bırakmanız önerilir"
+
 #: ui
 msgctxt "SetupLaunchOptions"
 msgid "Game launch options"
 msgstr "Oyun başlatma seçenekleri"
+
 #: ui
 msgctxt "SetupLaunchOptions"
 msgid "Here are some basic launch options. You can change more options later in Settings and instance-specific settings."
 msgstr "Bunlar bazı temel başlatma seçenekleridir. Daha fazla seçeneği daha sonra Ayarlar'dan ve örneğe özel ayarlardan değiştirebilirsiniz."
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Import instances"
 msgstr "Örnekleri içe aktar"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Import previously played instances from other launchers to get started quickly"
 msgstr "Daha önce oynanan örnekleri diğer başlatıcılardan içe aktararak hızlıca başlayın"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "If you're new to Minecraft, you can also create a blank instance with the latest version right away"
 msgstr "Minecraft'ta yeniyseniz, en son sürümle hemen boş bir örnek de oluşturabilirsiniz"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Latest release"
 msgstr "En son kararlı sürüm"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Latest snapshot"
 msgstr "En son anlık görüntü"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "An error occurred"
 msgstr "Bir hata oluştu"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Creating..."
 msgstr "Oluşturuluyor..."
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Create instance with latest release"
 msgstr "En son kararlı sürümle örnek oluştur"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Create instance with latest snapshot"
@@ -2314,126 +2527,278 @@ msgstr "En son anlık görüntüyle örnek oluştur"
 msgctxt "AccountAddMicrosoft"
 msgid "Waiting for the sign-in"
 msgstr "Oturum açılıyor"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Finish signing in in your browser — this page will change when it is done."
 msgstr "Oturumunuzu tarayıcınızda tamamlayın — bitince bu sayfa değişecek."
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Signed in"
 msgstr "Oturum açıldı"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "You can close this tab and go back to Conic Launcher."
 msgstr "Bu sekmeyi kapatıp Conic Launcher’a geri dönebilirsiniz."
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Sign-in failed"
 msgstr "Oturum açılamadı"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
 msgstr "Conic Launcher geçerli bir oturum bilgisi alamadı. Bu sekmeyi kapatıp yeniden deneyin."
 
+#: ui
 msgctxt "CommandText"
 msgid "Launch instance"
 msgstr "Örneği başlat"
+
 #: ui
 msgctxt "CommandText"
 msgid "Create instance"
 msgstr "Örnek oluştur"
+
 #: ui
 msgctxt "CommandText"
 msgid "Add game profile"
 msgstr "Oyun profili ekle"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth"
 msgstr "Modrinth'te ara"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge"
 msgstr "CurseForge'ta ara"
+
 #: ui
 msgctxt "CommandText"
 msgid "by {}"
 msgstr "{} tarafından"
+
 #: ui
 msgctxt "CommandText"
 msgid "Mod"
 msgstr "Mod"
+
 #: ui
 msgctxt "CommandText"
 msgid "Modpack"
 msgstr "Mod paketi"
+
 #: ui
 msgctxt "CommandText"
 msgid "Resource Pack"
 msgstr "Kaynak paketi"
+
 #: ui
 msgctxt "CommandText"
 msgid "Shader"
 msgstr "Gölgelendirici"
+
 #: ui
 msgctxt "CommandText"
 msgid "Switch to"
 msgstr "Şuraya geç"
+
 #: ui
 msgctxt "CommandText"
 msgid "Launch"
 msgstr "Başlat"
+
 #: ui
 msgctxt "CommandText"
 msgid "Open"
 msgstr "Aç"
+
 #: ui
 msgctxt "CommandText"
 msgid "Instances"
 msgstr "Örnekler"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search results"
 msgstr "Arama sonuçları"
+
 #: ui
 msgctxt "CommandText"
 msgid "Commands"
 msgstr "Komutlar"
+
 #: ui
 msgctxt "CommandText"
 msgid "Select an instance to launch…"
 msgstr "Başlatılacak örneği seç…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth…"
 msgstr "Modrinth'te ara…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge…"
 msgstr "CurseForge'ta ara…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search commands or instances…"
 msgstr "Komut veya örnek ara…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Back"
 msgstr "Geri"
+
 #: ui
 msgctxt "CommandText"
 msgid "Close"
 msgstr "Kapat"
+
+#: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on CurseForge"
 msgstr "CurseForge'ta arama yapmak için anahtar kelimeler girin"
+
 #: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on Modrinth"
 msgstr "Modrinth'te arama yapmak için anahtar kelimeler girin"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search failed, please try again"
 msgstr "Arama başarısız oldu, lütfen tekrar deneyin"
+
 #: ui
 msgctxt "CommandText"
 msgid "No matching results"
 msgstr "Eşleşen sonuç yok"
+
+#: ui
+msgctxt "ContentText"
+msgid "Survival"
+msgstr "Hayatta Kalma"
+
+#: ui
+msgctxt "ContentText"
+msgid "Creative"
+msgstr "Yaratıcı"
+
+#: ui
+msgctxt "ContentText"
+msgid "Adventure"
+msgstr "Macera"
+
+#: ui
+msgctxt "ContentText"
+msgid "Spectator"
+msgstr "İzleyici"
+
+#: ui
+msgctxt "ContentText"
+msgid "Cheats"
+msgstr "Hileler"
+
+#: ui
+msgctxt "InstancesList"
+msgid "No matching instances"
+msgstr "Eşleşen örnek yok"
+
+#: ui
+msgctxt "InstancesList"
+msgid "Consider creating a new instance"
+msgstr "Yeni bir örnek oluşturmayı düşünebilirsiniz"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "To launch the game, you must have added at least one account"
+msgstr "Oyunu başlatmak için en az bir hesap eklemiş olmalısın"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "To launch the game, you must have added at least one Microsoft account"
+msgstr "Oyunu başlatmak için en az bir Microsoft hesabı eklemiş olmalısın"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Failed to refresh the account. Check your network connection and try again, or log in to the account again"
+msgstr "Hesap yenilenemedi. Ağ bağlantını kontrol edip yeniden dene ya da hesaba yeniden giriş yap"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Could not find a suitable Java runtime"
+msgstr "Uygun bir Java çalışma zamanı bulunamadı"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "You can set one manually in the instance settings"
+msgstr "Örnek ayarlarından elle bir tane belirtebilirsin"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Cancel launch"
+msgstr "Başlatmayı iptal et"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "是否确认删除存档「{}」？"
+msgstr "“{}” kaydı silinsin mi?"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "存档文件夹将永久删除，这是最后的反悔机会"
+msgstr "Kayıt klasörü kalıcı olarak silinecek — fikrini değiştirmek için son şansın"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "稍等一下..."
+msgstr "Biraz bekle…"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "确认删除"
+msgstr "Silmeyi onayla"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "正在进行的任务将被中止，你确定要退出吗？"
+msgstr "Devam eden görev iptal edilecek. Çıkmak istediğinizden emin misiniz?"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "最后的反悔机会"
+msgstr "Fikrini değiştirmek için son şansın"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "稍等一下..."
+msgstr "Biraz bekle…"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "让我出去！"
+msgstr "Beni çıkar!"
+
+#: ui
+msgctxt "ContentModsPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "Anahtar kelimeleri veya filtreleri ayarlayıp yeniden aramayı deneyin"
+
+#: ui
+msgctxt "ContentResourcepacksPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "Anahtar kelimeleri veya filtreleri ayarlayıp yeniden aramayı deneyin"
+
+#: ui
+msgctxt "ContentPacksPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "Anahtar kelimeleri veya filtreleri ayarlayıp yeniden aramayı deneyin"

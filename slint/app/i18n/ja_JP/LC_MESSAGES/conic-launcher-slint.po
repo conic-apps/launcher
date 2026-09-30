@@ -613,8 +613,6 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "インストール済みのJavaランタイムをスキャン中"
 
-# Game view strings, seeded from src/locales/ja_jp.ts.
-
 #: ui
 msgctxt "GameTime"
 msgid "Just now"
@@ -1430,514 +1428,637 @@ msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "あなたのネットワーク環境：{0}"
 
+#: ui
 msgctxt "ContentModsPanel"
 msgid "Mods"
 msgstr "Mod"
 
+#: ui
 msgctxt "ContentModsPanel"
 msgid "Consider downloading some mods from the internet"
 msgstr "インターネットからModをダウンロードしてみましょう"
 
+#: ui
 msgctxt "ContentResourcepacksPanel"
 msgid "Resource Packs"
 msgstr "リソースパック"
 
+#: ui
 msgctxt "ContentResourcepacksPanel"
 msgid "Consider downloading some resource packs from the internet"
 msgstr "インターネットからリソースパックをダウンロードしてみましょう"
 
+#: ui
 msgctxt "ContentPacksPanel"
 msgid "Modpacks"
 msgstr "Modpack"
 
+#: ui
 msgctxt "ContentSavesPanel"
 msgid "Saves"
 msgstr "ワールド"
 
+#: ui
 msgctxt "ContentSavesPanel"
 msgid "Consider launching the game and creating some saves"
 msgstr "ゲームを起動してワールドを作成してみましょう"
 
+#: ui
 msgctxt "ContentScreenshotsPanel"
 msgid "Loading..."
 msgstr "読み込み中..."
 
+#: ui
 msgctxt "ContentScreenshotsPanel"
 msgid "No screenshots"
 msgstr "スクリーンショットがありません"
 
+#: ui
 msgctxt "ContentNotFound"
 msgid "No results match the current filter"
 msgstr "現在のフィルターに一致する結果はありません"
 
-msgctxt "RemoteListView"
-msgid "Try adjusting keywords or filters and search again"
-msgstr "キーワードやフィルターを調整して、もう一度検索してください"
-
+#: ui
 msgctxt "DetailBody"
 msgid "Download"
 msgstr "ダウンロード"
 
+#: ui
 msgctxt "DetailBody"
 msgid "Remove"
 msgstr "削除"
 
+#: ui
 msgctxt "DetailBody"
 msgid "Installed: {}"
 msgstr "インストール済み：{}"
 
+#: ui
 msgctxt "ContentText"
 msgid "Favorites"
 msgstr "お気に入り"
 
+#: ui
 msgctxt "ContentText"
 msgid "[Disabled] "
 msgstr "[無効] "
 
+#: ui
 msgctxt "ContentText"
 msgid "Loader"
 msgstr "ローダー"
 
+#: ui
 msgctxt "ContentText"
 msgid "Version"
 msgstr "バージョン"
 
+#: ui
 msgctxt "ContentText"
 msgid "Category"
 msgstr "カテゴリ"
 
+#: ui
 msgctxt "ContentText"
 msgid "Mod info"
 msgstr "Mod情報"
 
+#: ui
 msgctxt "ContentText"
 msgid "Resource pack info"
 msgstr "リソースパック情報"
 
+#: ui
 msgctxt "ContentText"
 msgid "Modpack info"
 msgstr "Modpack情報"
 
+#: ui
 msgctxt "ContentText"
 msgid "Search mods..."
 msgstr "Modを検索..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Search resource packs..."
 msgstr "リソースパックを検索..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Search modpacks..."
 msgstr "Modpackを検索..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Last played: "
 msgstr "最終プレイ: "
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Adventure & RPG"
 msgstr "アドベンチャー & RPG"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Armor, Tools & Weapons"
 msgstr "防具・ツール・武器"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "World Generation"
 msgstr "ワールド生成"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Technology"
 msgstr "テクノロジー"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Magic"
 msgstr "魔法"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Storage"
 msgstr "ストレージ"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Library & API"
 msgstr "ライブラリ & API"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Maps & Info"
 msgstr "地図・情報"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Utility & QoL"
 msgstr "ユーティリティ & QoL"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Server Utility"
 msgstr "サーバーユーティリティ"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Food"
 msgstr "食料"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Performance"
 msgstr "パフォーマンス"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Bug Fixes"
 msgstr "バグ修正"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Redstone"
 msgstr "レッドストーン"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Cosmetic"
 msgstr "装飾"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Miscellaneous"
 msgstr "その他"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Adventure"
 msgstr "アドベンチャー"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Cursed"
 msgstr "呪い"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Decoration"
 msgstr "装飾"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Economy"
 msgstr "経済"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Equipment"
 msgstr "装備"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Food"
 msgstr "食料"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Game Mechanics"
 msgstr "ゲームメカニクス"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Library"
 msgstr "ライブラリ"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Magic"
 msgstr "魔法"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Management"
 msgstr "管理"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Minigame"
 msgstr "ミニゲーム"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Mobs"
 msgstr "Mob"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Optimization"
 msgstr "最適化"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Social"
 msgstr "ソーシャル"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Storage"
 msgstr "ストレージ"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Technology"
 msgstr "テクノロジー"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Transportation"
 msgstr "輸送"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Utility"
 msgstr "ユーティリティ"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "World Generation"
 msgstr "ワールド生成"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Crafted"
 msgstr "クラフト風"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Photorealistic"
 msgstr "フォトリアル"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Semi-Realistic"
 msgstr "セミリアル"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Simple"
 msgstr "シンプル"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Traditional"
 msgstr "トラディショナル"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Animated"
 msgstr "アニメーション"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Modern"
 msgstr "モダン"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Themed"
 msgstr "テーマ"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Mod Support"
 msgstr "Mod対応"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "RPG"
 msgstr "RPG"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Gameplay"
 msgstr "ゲームプレイ"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "GUI"
 msgstr "GUI"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Sound"
 msgstr "サウンド"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Environment"
 msgstr "環境"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "World Generation"
 msgstr "ワールド生成"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Blocks"
 msgstr "ブロック"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Items"
 msgstr "アイテム"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Mobs"
 msgstr "Mob"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Weather"
 msgstr "天候"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Faithful"
 msgstr "Faithful"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "16x"
 msgstr "16x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "32x"
 msgstr "32x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "64x"
 msgstr "64x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "128x"
 msgstr "128x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "256x"
 msgstr "256x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Photorealistic"
 msgstr "フォトリアル"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Semi-Realistic"
 msgstr "セミリアル"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Simple"
 msgstr "シンプル"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Modern"
 msgstr "モダン"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Themed"
 msgstr "テーマ"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Classic"
 msgstr "クラシック"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Dark"
 msgstr "ダーク"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Medieval"
 msgstr "中世"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Anime"
 msgstr "アニメ"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Cartoon"
 msgstr "カートゥーン"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Pixel Art"
 msgstr "ドット絵"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Vanilla Plus"
 msgstr "Vanilla+"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Utility"
 msgstr "ユーティリティ"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Other"
 msgstr "その他"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Technology"
 msgstr "テクノロジー"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Magic"
 msgstr "魔法"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Sci-Fi"
 msgstr "SF"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Adventure & RPG"
 msgstr "アドベンチャー & RPG"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Exploration"
 msgstr "探索"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Minigame"
 msgstr "ミニゲーム"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Quests"
 msgstr "クエスト"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Hardcore"
 msgstr "ハードコア"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Map-Based"
 msgstr "マップベース"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Lightweight"
 msgstr "軽量"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Extra Large"
 msgstr "超大規模"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Combat PvP"
 msgstr "戦闘 & PvP"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Multiplayer"
 msgstr "マルチプレイヤー"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "FTB Modpacks"
 msgstr "FTB Modpack"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Skyblock"
 msgstr "スカイブロック"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Vanilla Plus"
 msgstr "Vanilla+"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Horror"
 msgstr "ホラー"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Expert"
 msgstr "エキスパート"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Adventure"
 msgstr "アドベンチャー"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Challenging"
 msgstr "高難度"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Combat"
 msgstr "戦闘"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "キッチンシンク"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Lightweight"
 msgstr "軽量"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Magic"
 msgstr "魔法"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Multiplayer"
 msgstr "マルチプレイヤー"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Optimization"
 msgstr "最適化"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Quests"
 msgstr "クエスト"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "テクノロジー"
@@ -1947,203 +2068,256 @@ msgctxt "MusicPlayerOverlay"
 msgid "No music"
 msgstr "音楽がありません"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Shuffle"
 msgstr "シャッフル"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Repeat"
 msgstr "リピート"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Previous"
 msgstr "前へ"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Play"
 msgstr "再生"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Pause"
 msgstr "一時停止"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Next"
 msgstr "次へ"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Open music folder"
 msgstr "音楽フォルダを開く"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Playlist"
 msgstr "プレイリスト"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Nothing here"
 msgstr "何もありません"
-
-# Instance settings overlay (src/overlays/InstanceSetting.vue) and the
-# delete dialog it opens (src/overlays/dialogs/ConfirmDeleteInstance.vue).
-# The overlay's strings are seeded from `game.instance.*` in
-# src/locales/<lang>.ts; the dialog's were never internationalized there, so
-# its Chinese source text is kept and translated here.
 
 #: ui
 msgctxt "InstanceSettings"
 msgid "Instance settings"
 msgstr "インスタンス設定"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Images"
 msgstr "画像"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Set background image"
 msgstr "背景画像を設定"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Remove image"
 msgstr "画像を削除"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Use instance background as launcher background"
 msgstr "インスタンスの背景をランチャーの背景として使用"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Selected {}"
 msgstr "{} を選択中"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Enable instance-specific settings"
 msgstr "インスタンス固有の設定を有効にする"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Launch options"
 msgstr "起動オプション"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Window size"
 msgstr "ウィンドウサイズ"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Initial game window size"
 msgstr "ゲーム起動時のウィンドウサイズ"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "W"
 msgstr "幅"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "H"
 msgstr "高さ"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Fullscreen"
 msgstr "フルスクリーン"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Quit launcher after launching game"
 msgstr "ゲーム起動後にランチャーを終了"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Skip game file check"
 msgstr "ゲームファイルの検証をスキップ"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "The launcher will not attempt to verify or repair game files before launching"
 msgstr "起動前にゲームファイルの検証や修復を行いません"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Memory"
 msgstr "メモリ"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Auto-allocate memory"
 msgstr "メモリを自動割り当て"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Manual memory allocation"
 msgstr "メモリを手動割り当て"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
 msgstr "Javaヒープの最大サイズを手動で設定します。自動割り当てが無効な場合に有効になります"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Advanced launch options"
 msgstr "高度な起動オプション"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Java garbage collector"
 msgstr "Javaガベージコレクター"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra JVM arguments"
 msgstr "追加のJVM引数"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Appended after default JVM arguments"
 msgstr "デフォルトのJVM引数の後に追加されます"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra game arguments"
 msgstr "追加のゲーム引数"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Additional arguments for the game"
 msgstr "ゲームに渡す追加の引数です"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra class paths"
 msgstr "追加のクラスパス"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Separated by semicolons on Windows, colons on other systems"
 msgstr "Windowsではセミコロン、その他のOSではコロンで区切ります"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Execute before launch"
 msgstr "起動前に実行"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added before the launch command"
 msgstr "起動コマンドの前に追加されます"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Wrap command"
 msgstr "ラップコマンド"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added at the beginning of the launch command"
 msgstr "起動コマンドの先頭に追加されます"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Execute after launch"
 msgstr "起動後に実行"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added at the end of the launch script"
 msgstr "起動スクリプトの末尾に追加されます"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Ignore invalid Minecraft certificates"
 msgstr "無効なMinecraft証明書を無視"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
 msgstr "JVM引数に -Dfml.ignoreInvalidMinecraftCertificates=true を追加します"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Ignore patch discrepancies"
 msgstr "パッチの不整合を無視"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
 msgstr "JVM引数に -Dfml.ignorePatchDiscrepancies=true を追加します"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Delete instance"
 msgstr "インスタンスを削除"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Deleting this instance will permanently lose all saves, resource packs, and other game data"
 msgstr "このインスタンスを削除すると、ワールド、リソースパック、その他のゲームデータがすべて失われます"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Reset instance"
 msgstr "インスタンスをリセット"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved"
@@ -2153,158 +2327,197 @@ msgstr "このインスタンスをリセットすると、ワールド、リソ
 msgctxt "ConfirmDeleteInstance"
 msgid "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
 msgstr "このインスタンスを削除してもよろしいですか？セーブデータ、リソースパック、Mod などのファイルも完全に失われます（本当に長い！）"
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "游戏时间："
 msgstr "プレイ時間："
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "取消"
 msgstr "キャンセル"
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "削除を確認"
+
 #: ui
 msgctxt "SetupView"
 msgid "First-run setup"
 msgstr "初回セットアップ"
+
 #: ui
 msgctxt "SetupView"
 msgid "Customize Conic Launcher to suit your preferences"
 msgstr "Conic Launcher をお好みに合わせてカスタマイズしましょう"
+
 #: ui
 msgctxt "SetupView"
 msgid "Back"
 msgstr "戻る"
+
 #: ui
 msgctxt "SetupView"
 msgid "Let's get started!"
 msgstr "さあ、はじめましょう！"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Add account)"
 msgstr "次へ（アカウントの追加）"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Java settings)"
 msgstr "次へ（Javaの設定）"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Launch options)"
 msgstr "次へ（起動オプション）"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Import instances)"
 msgstr "次へ（インスタンスのインポート）"
+
 #: ui
 msgctxt "SetupView"
 msgid "Finish"
 msgstr "完了"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Welcome"
 msgstr "ようこそ"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Welcome to the first-run setup wizard!"
 msgstr "初回セットアップウィザードへようこそ！"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Conic Launcher is highly customizable, but the complex settings might be overwhelming."
 msgstr "Conic Launcher は高度にカスタマイズできますが、複雑な設定は難しく感じられるかもしれません。"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "This wizard will quickly walk you through some important settings so you can start playing right away."
 msgstr "このウィザードで重要な設定を簡単に確認して、すぐにゲームを始めましょう。"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Choose a color scheme"
 msgstr "カラースキームを選択"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
 msgstr "Conic Launcher は複数のカラースキームに対応しています。お好みのものを選んでください。"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Follow system dark mode"
 msgstr "システムのダークモードに従う"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
 msgstr "システムがライトモードの場合は Latte、それ以外の場合は Mocha を使用します"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Account added!"
 msgstr "アカウントを追加しました！"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance"
 msgstr "以下のプロファイルがデフォルトとして設定されました。インスタンスにプロファイルが割り当てられていない場合、ランチャーはこのプロファイルを使用してゲームにログインします"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Microsoft (Official account)"
 msgstr "Microsoft（公式アカウント）"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Yggdrasil (External login)"
 msgstr "Yggdrasil（外部ログイン）"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "No auth service (Offline account)"
 msgstr "認証サービスなし（オフラインアカウント）"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Java settings"
 msgstr "Javaの設定"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Conic Launcher can greatly simplify Java environment configuration. Enable \"Auto-install Java runtime\" to avoid manual installation!"
 msgstr "Conic Launcher を使えばJava環境の構築を大幅に簡略化できます。「Javaランタイムを自動インストール」を有効にして、手動インストールを不要にしましょう！"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\""
 msgstr "注意：現在のプラットフォームではJavaの自動インストールを利用できない場合があります。Javaを手動でインストールし、「Javaランタイムを自動インストール」を無効にすることをおすすめします"
+
 #: ui
 msgctxt "SetupLaunchOptions"
 msgid "Game launch options"
 msgstr "ゲームの起動オプション"
+
 #: ui
 msgctxt "SetupLaunchOptions"
 msgid "Here are some basic launch options. You can change more options later in Settings and instance-specific settings."
 msgstr "ここでは基本的な起動オプションを設定できます。さらに詳しいオプションは、後から設定画面やインスタンス個別の設定で変更できます。"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Import instances"
 msgstr "インスタンスのインポート"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Import previously played instances from other launchers to get started quickly"
 msgstr "他のランチャーで使っていたインスタンスをインポートして、すぐに遊び始められます"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "If you're new to Minecraft, you can also create a blank instance with the latest version right away"
 msgstr "Minecraftが初めての方は、最新バージョンの空のインスタンスをすぐに作成することもできます"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Latest release"
 msgstr "最新リリース"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Latest snapshot"
 msgstr "最新スナップショット"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "An error occurred"
 msgstr "エラーが発生しました"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Creating..."
 msgstr "作成中..."
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Create instance with latest release"
 msgstr "最新リリースでインスタンスを作成"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Create instance with latest snapshot"
@@ -2314,126 +2527,278 @@ msgstr "最新スナップショットでインスタンスを作成"
 msgctxt "AccountAddMicrosoft"
 msgid "Waiting for the sign-in"
 msgstr "サインインを待っています"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Finish signing in in your browser — this page will change when it is done."
 msgstr "ブラウザでサインインを完了してください。完了するとこのページが更新されます。"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Signed in"
 msgstr "サインインしました"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "You can close this tab and go back to Conic Launcher."
 msgstr "このタブを閉じて、Conic Launcher に戻ってください。"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Sign-in failed"
 msgstr "サインインに失敗しました"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
 msgstr "Conic Launcher は有効なサインイン情報を受け取りませんでした。このタブを閉じて、もう一度お試しください。"
 
+#: ui
 msgctxt "CommandText"
 msgid "Launch instance"
 msgstr "インスタンスを起動"
+
 #: ui
 msgctxt "CommandText"
 msgid "Create instance"
 msgstr "インスタンスを作成"
+
 #: ui
 msgctxt "CommandText"
 msgid "Add game profile"
 msgstr "ゲームプロファイルを追加"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth"
 msgstr "Modrinth で検索"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge"
 msgstr "CurseForge で検索"
+
 #: ui
 msgctxt "CommandText"
 msgid "by {}"
 msgstr "作成者: {}"
+
 #: ui
 msgctxt "CommandText"
 msgid "Mod"
 msgstr "Mod"
+
 #: ui
 msgctxt "CommandText"
 msgid "Modpack"
 msgstr "Modpack"
+
 #: ui
 msgctxt "CommandText"
 msgid "Resource Pack"
 msgstr "リソースパック"
+
 #: ui
 msgctxt "CommandText"
 msgid "Shader"
 msgstr "シェーダー"
+
 #: ui
 msgctxt "CommandText"
 msgid "Switch to"
 msgstr "切り替え"
+
 #: ui
 msgctxt "CommandText"
 msgid "Launch"
 msgstr "起動"
+
 #: ui
 msgctxt "CommandText"
 msgid "Open"
 msgstr "開く"
+
 #: ui
 msgctxt "CommandText"
 msgid "Instances"
 msgstr "インスタンス"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search results"
 msgstr "検索結果"
+
 #: ui
 msgctxt "CommandText"
 msgid "Commands"
 msgstr "コマンド"
+
 #: ui
 msgctxt "CommandText"
 msgid "Select an instance to launch…"
 msgstr "起動するインスタンスを選択…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth…"
 msgstr "Modrinth で検索…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge…"
 msgstr "CurseForge で検索…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search commands or instances…"
 msgstr "コマンドまたはインスタンスを検索…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Back"
 msgstr "戻る"
+
 #: ui
 msgctxt "CommandText"
 msgid "Close"
 msgstr "閉じる"
+
+#: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on CurseForge"
 msgstr "キーワードを入力して CurseForge で検索"
+
 #: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on Modrinth"
 msgstr "キーワードを入力して Modrinth で検索"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search failed, please try again"
 msgstr "検索に失敗しました。もう一度お試しください"
+
 #: ui
 msgctxt "CommandText"
 msgid "No matching results"
 msgstr "一致する結果がありません"
+
+#: ui
+msgctxt "ContentText"
+msgid "Survival"
+msgstr "サバイバル"
+
+#: ui
+msgctxt "ContentText"
+msgid "Creative"
+msgstr "クリエイティブ"
+
+#: ui
+msgctxt "ContentText"
+msgid "Adventure"
+msgstr "アドベンチャー"
+
+#: ui
+msgctxt "ContentText"
+msgid "Spectator"
+msgstr "スペクテイター"
+
+#: ui
+msgctxt "ContentText"
+msgid "Cheats"
+msgstr "チート"
+
+#: ui
+msgctxt "InstancesList"
+msgid "No matching instances"
+msgstr "一致するインスタンスがありません"
+
+#: ui
+msgctxt "InstancesList"
+msgid "Consider creating a new instance"
+msgstr "新しいインスタンスを作成してみましょう"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "To launch the game, you must have added at least one account"
+msgstr "ゲームを起動するには、少なくとも1つのアカウントを追加する必要があります"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "To launch the game, you must have added at least one Microsoft account"
+msgstr "ゲームを起動するには、少なくとも1つの Microsoft アカウントを追加する必要があります"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Failed to refresh the account. Check your network connection and try again, or log in to the account again"
+msgstr "アカウントの更新に失敗しました。ネットワーク接続を確認して再試行するか、もう一度ログインしてください"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Could not find a suitable Java runtime"
+msgstr "適切な Java ランタイムが見つかりませんでした"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "You can set one manually in the instance settings"
+msgstr "インスタンス設定でを手動で指定できます"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Cancel launch"
+msgstr "起動をキャンセル"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "是否确认删除存档「{}」？"
+msgstr "セーブ「{}」を削除してもよろしいですか？"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "存档文件夹将永久删除，这是最后的反悔机会"
+msgstr "セーブフォルダは完全に削除されます。これは最後の一度です"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "稍等一下..."
+msgstr "少しだけ待って…"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "确认删除"
+msgstr "削除する"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "正在进行的任务将被中止，你确定要退出吗？"
+msgstr "実行中のタスクは中止されます。終了してもよろしいですか？"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "最后的反悔机会"
+msgstr "これは最後の一度です"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "稍等一下..."
+msgstr "少しだけ待って…"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "让我出去！"
+msgstr "閉じさせて！"
+
+#: ui
+msgctxt "ContentModsPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "キーワードやフィルターを調整して、もう一度検索してください"
+
+#: ui
+msgctxt "ContentResourcepacksPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "キーワードやフィルターを調整して、もう一度検索してください"
+
+#: ui
+msgctxt "ContentPacksPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "キーワードやフィルターを調整して、もう一度検索してください"

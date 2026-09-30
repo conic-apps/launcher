@@ -7,6 +7,8 @@ import { CreateInstance } from "dialogs/create-instance.slint";
 import { LaunchErrorDialogs } from "dialogs/launch-errors.slint";
 import { MultiplayerExtension } from "dialogs/multiplayer-extension.slint";
 import { ConfirmDeleteInstance } from "dialogs/confirm-delete-instance.slint";
+import { ConfirmDeleteSave } from "dialogs/confirm-delete-save.slint";
+import { ConfirmQuitApp } from "dialogs/confirm-quit-app.slint";
 
 // The overlay layer (src/overlays/DialogRoot.vue): one instance per dialog,
 // mounted once above the whole app. Each dialog stays hidden until its flag in
@@ -19,6 +21,10 @@ export component DialogRoot inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
+
+    /// The "Let me out!" button of `ConfirmQuitApp`, forwarded to the app root
+    /// (which plays the exit animation and closes the window).
+    callback confirm-quit();
 
     CreateInstance { }
     // The instance settings overlay's "Delete instance" row. `DialogRoot.vue`
@@ -35,4 +41,11 @@ export component DialogRoot inherits Rectangle {
     LaunchErrorDialogs { }
     MultiplayerExtension { }
     AccountAddDialog { }
+    // The saves grid's trash button and the title bar's close button, last, the
+    // way `DialogRoot.vue` has them: a delete or a quit is the thing the user
+    // reached the app for, so it is asked over whatever else is open.
+    ConfirmDeleteSave { }
+    ConfirmQuitApp {
+        confirm => { root.confirm-quit(); }
+    }
 }
