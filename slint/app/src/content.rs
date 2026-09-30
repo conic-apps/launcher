@@ -189,6 +189,10 @@ struct PendingCard {
     action_kind: &'static str,
     shows_play: bool,
     mod_disabled: bool,
+    /// A save's spawn point, which its world map opens centred on. Zero on
+    /// every other kind of card, and on a save whose `level.dat` has no
+    /// `spawn.pos` — which asks the world for its own instead.
+    spawn: Option<(i32, i32)>,
 }
 
 impl PendingCard {
@@ -208,6 +212,8 @@ impl PendingCard {
             action_kind: SharedString::from(self.action_kind),
             shows_play: self.shows_play,
             mod_disabled: self.mod_disabled,
+            spawn_x: self.spawn.map_or(0, |(x, _)| x),
+            spawn_z: self.spawn.map_or(0, |(_, z)| z),
             ..Default::default()
         }
     }
@@ -1751,6 +1757,11 @@ fn save_card(
         icon,
         action_kind: "file",
         shows_play: true,
+        // `ContentSaves.vue`'s `saveSpawnX` / `saveSpawnZ`, handed to
+        // `WorldMap` as `:center-x` / `:center-z`. `None` where there is no
+        // `Data.spawn.pos`, which is the same as `(0, 0)` here and asks the
+        // world for its own spawn.
+        spawn: level.spawn.map(|pos| (pos[0], pos[2])),
         ..Default::default()
     }
 }

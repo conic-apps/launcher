@@ -18,11 +18,15 @@
 //!
 //! Two deviations, both deliberate:
 //!
-//!   * `worldmap.rs` is **not** mirrored. The saves overlay's card expansion
-//!     draws a live world map through the external `conic-worldmap` crate; that
-//!     is a feature of its own and is left for a later pass (see the Slint
-//!     README's Known issues), so the error variants that existed only for it
-//!     (`WorldMap`, `WorldMapTask`, `WorldMapPng`) are gone too.
+//!   * `worldmap.rs` is mirrored, but **without the PNG round trip**. The
+//!     original rendered a tile, encoded it to PNG, base64'd it into a JSON
+//!     string for the webview, and had the page decode it back into an
+//!     `ImageBitmap` — a codec trip that exists only because the two runtimes
+//!     cannot share a buffer. Here `render_map` hands the RGBA buffer straight
+//!     back and the caller wraps it in a `SharedPixelBuffer`, so the encode,
+//!     the base64 and the decode are all gone rather than moved. That is also
+//!     why `Error::WorldMapPng` and `Error::WorldMapTask` are not here: the
+//!     first was the encoder's, the second the `#[command]`'s `spawn_blocking`.
 //!   * The entry points take `&str` where the original took `String`. The
 //!     owned strings were what Tauri's IPC deserialization produced; nothing
 //!     here needs them.
@@ -40,6 +44,7 @@ pub mod mods;
 pub mod resourcepack;
 pub mod saves;
 pub mod screenshots;
+pub mod worldmap;
 
 /// How many items of each kind the current instance contains.
 #[derive(Clone, Copy, Default)]

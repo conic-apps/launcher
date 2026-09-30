@@ -97,6 +97,12 @@ export struct ContentCard {
     /// Whether a selected save expands upwards (the Vue flips it when the card
     /// sits within 160px of the bottom of the window, `ContentSaves.vue`).
     expand-up: bool,
+    /// A save's spawn point, which its world map opens centred on
+    /// (`level.dat`'s `Data.spawn.pos`, via `ContentSaves.vue`'s `saveSpawnX` /
+    /// `saveSpawnZ`). `0, 0` when the tag is absent, which asks the world for
+    /// its own spawn. Zero on every other kind of card.
+    spawn-x: int,
+    spawn-z: int,
 }
 
 /// One filter chip of the search panel's filter rows.

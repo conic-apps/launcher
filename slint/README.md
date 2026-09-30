@@ -35,6 +35,7 @@ slint/
       music.rs                      # the music player's script (see Music player)
       command_palette.rs            # the command palette's script
       instance_settings.rs          # the instance settings overlay's script
+      worldmap.rs                   # the world map's tile cache + render queue
     ui/
       app.slint                     # root `App` Window (mirrors src/App.vue)
       theme.slint                   # palette + typography tokens, embeds fonts
@@ -59,6 +60,7 @@ slint/
         command-palette.slint       # the command palette's state + its labels
         instance-settings.slint     # the overlay's own form state (useInstanceSettings.ts)
         setup.slint                 # the first-run wizard's import-instances state
+        worldmap.slint              # the world map's world + tile model (WorldMap.vue)
       components/                   # shared/reusable pieces
         title-bar.slint
         window-background.slint     # the window's background layers (src/components/WindowBackground.vue)
@@ -88,6 +90,7 @@ slint/
         slide-transition.slint      # the slide-left / slide-right screen swap
         item-loading-icon.slint
         beat-map.slint              # the footer audio visualizer (src/components/BeatMap.vue)
+        world-map.slint             # a save's world map (src/components/WorldMap.vue)
         instance-card.slint         # the instance card (InstanceSetting.vue's `.instance`)
         palette-row.slint           # the four palette tiles (SettingsAppearance.vue /
                                     #   SetupWizardPalette.vue — the same block)
@@ -477,10 +480,9 @@ Per the migration plan:
 - `slint-content` grew from a file counter into the whole of `crates/content`:
   `mods/` (the four loader archive parsers with their nested-jar recursion, and
   `remote.rs`'s four-file cache with its 24h TTL and read-merge-write lock),
-  `saves/`, `resourcepack.rs`, `screenshots.rs` and `favorites.rs`, all kept
-  file for file against the original so the two can be diffed. `worldmap.rs` is
-  the one module not mirrored (see the world map note below), so its three error
-  variants are gone with it. The entry points take `&str` where the original
+  `saves/`, `resourcepack.rs`, `screenshots.rs`, `favorites.rs` and
+  `worldmap.rs`, all kept file for file against the original so the two can be
+  diffed. The entry points take `&str` where the original
   took `String`, which was only ever what Tauri's IPC deserialization produced,
   and the four commands that had no function of their own to call
   (`cmd_get_save_icon`, `cmd_get_save_path`, `cmd_delete_save`,
@@ -828,6 +830,16 @@ and tags, and the instal/remove actions go through `slint-download`.
   composed in Rust.
 - `config_bridge::reveal_in_dir` is the Vue's `revealItemInDir`.
 
+- **The world map**, in the saves panel's card expansion
+  (`components/world-map.slint`, `globals/worldmap.slint` and
+  `app/src/worldmap.rs`), replacing `src/components/WorldMap.vue`: the map of a
+  world, rasterised from its region files by `conic-worldmap` through
+  `slint-content`'s mirror of `crates/content/src/worldmap.rs`. Pan, wheel zoom
+  with the original's lerp and anchor, the cursor's block, the loading and error
+  states and the tile fade are all here, and so is one thing the Vue could not
+  do — see **World map** below for the cache that came with it and for the
+  trackpad gestures.
+
 - **The command palette** (`overlays/command-palette.slint`,
   `globals/command-palette.slint` and `app/src/command_palette.rs`), replacing
   `src/overlays/CommandPalette.vue` — the panel the title bar's search field and
@@ -1128,6 +1140,151 @@ or the panel open — and `PlayerState::pending` is what covers the second case,
 the very first play at startup would start silently. This is the same clock
 `background/controller.rs` runs the camera on.
 
+## World map
+
+A save's card expansion draws a live map of the world — `WorldMap.vue` over the
+external `conic-worldmap` crate, which rasterises a save's region files into
+tiles in Rust. It is the one screen whose *cache architecture* is a webview
+detail rather than a browser rendering choice, so it is worth saying what
+changed and why.
+
+### The PNG round trip is gone, and with it one of the two caches
+
+`WorldMap.vue` kept two tile caches, and both existed because the two runtimes
+cannot share a buffer:
+
+- **`pngCache`** — every tile's **PNG bytes**, kept for the whole session so a
+  tile that scrolled away and came back did not have to be rendered again. It
+  got to the page base64'd inside a JSON string, which the page turned into a
+  `Blob` and decoded with `createImageBitmap`.
+- **`renderCache`** — the **decoded `ImageBitmap`s**, pruned to the visible
+  range plus `TILE_RENDER_MARGIN` rings, because a decoded bitmap is what the GPU
+  holds and there is a limit on how many.
+
+and a third queue for the work in between: PNG bytes had to be base64'd, wrapped
+in a `Blob` and decoded one tile at a time, off the main thread but still inside
+the page.
+
+None of it survives. `slint-content`'s `worldmap.rs` is the same file as
+`crates/content`'s with the `#[command]`, the PNG encoder and the base64 taken
+out — `render_map` hands back the RGBA buffer `conic-worldmap` already produced,
+and the caller wraps it in a `SharedPixelBuffer`. A Slint `Image` is a
+reference-counted handle: cloning one is free, there is no encoded form to keep a
+second copy of, and the renderer drops its own GPU copy under memory pressure on
+its own. So there is **one** cache, in `app/src/worldmap.rs`, keyed by tile and
+holding the finished `Image`, and the two tiers collapse into "cached" and "not
+cached yet". `MapCache` — the crate's own cache of open `WorldMap`s, which is
+what makes a re-render read a warm region cache instead of the disk — is
+unchanged, and is still the reason panning back over old ground is cheap.
+
+The model the component draws is a *view* of that cache: the tiles in the
+visible range, written row by row so a tile keeps its element (and its fade)
+for as long as it is on screen. The load queue is the Vue's four pieces moved to
+where the queue actually is — the `pending` / `inFlight` sets, the
+nearest-to-the-middle priority scan and the 50ms debounce — and the debounce
+keeps the Vue's exact shape: the model is refilled from the cache *immediately*
+when the range moves (its `dispatchCacheHits`, which ran outside the timer) and
+only the renders are debounced.
+
+Three things the Vue's shape did not need and this one does:
+
+- **A cap, evicted in visit order.** Its `pngCache` held *compressed* bytes, a
+  twentieth of what a decoded tile costs, so a session's worth of panning added
+  up to something nobody noticed. A 64×64 RGBA tile is 16 KiB and a map the user
+  has panned right across is thousands of them, so the cache is capped at
+  `MAX_CACHED_TILES` (2048, about 32 MiB — twenty screens at the default zoom).
+  What goes is the **least recently on screen**, from a counter bumped each time
+  a range is asked for. The order is the whole point: an earlier version dropped
+  whichever off-screen tiles a `HashMap` yielded first, and the tiles behind you
+  are exactly the ones not on screen — so a pan evicted the ground it had just
+  come from and panning back re-rendered it, which reads as "the cache does not
+  work". Anything dropped is re-rendered on demand off the warm region cache,
+  which is the same price the Vue paid for a `pngCache` *miss*.
+- **A queue that follows the view.** The Vue never dropped a pending tile that
+  left the range, and got away with it because its cache made the return trip
+  free. Here a long pan would leave hundreds of jobs for tiles already panned
+  past, all competing for the 24 slots with the ones being looked at, and the
+  trip back would be as slow as the trip out. Jobs more than `QUEUE_MARGIN` tiles
+  outside the range are dropped from the queue when the range moves.
+- **A `VRc` rule.** Every crossing onto the UI thread here is
+  `Weak::upgrade_in_event_loop`, never `Weak::upgrade`: a Slint handle's strong
+  count lives in the thread that created it, so a weak upgraded from a tokio
+  worker comes back `None` and the work is simply dropped. The debounce was the
+  one place that got it wrong first.
+
+### The trackpad
+
+The browser reports a trackpad pinch as a wheel event with a synthesized
+`ctrlKey`, which is why the Vue has to track a *physical* Ctrl (`physicalCtrl`) to
+tell a pinch from a real Ctrl+wheel, and why its two-finger scroll **zoomed**.
+A native app gets the real thing: winit hands the magnification to Slint as a
+`PinchGesture`, which `ScaleRotateGestureHandler` reports with the cursor as its
+centre. So:
+
+- **A two-finger scroll pans the map**, the deltas followed exactly rather than
+  eased towards — the same reading of a trackpad delta as `scroll-view.slint`,
+  and the opposite of what the Vue did with them. It is told apart from a wheel
+  with `ScrollInput.source()`, which is the same classifier the scroll containers
+  use. The delta is *added* to the offset, which is what makes the content track
+  the fingers the way a mouse drag does. Subtracting it is what a scroll view
+  does — it moves the viewport towards the end of the content — and it sends the
+  map the opposite way from the gesture. The Vue's canvas had no such sign to
+  get wrong: it redrew from `offsetX`, and a wheel never reached it.
+- **A pinch zooms**, through `ScaleRotateGestureHandler`, applying its cumulative
+  factor to the scale and the block under the cursor. That is `zoomImmediate`
+  written once for a gesture that reports a *factor* rather than a per-event
+  delta, and `physicalCtrl` has nothing left to do. Two things keep it honest,
+  both of which the first version got wrong and the view showed as *the pinch
+  throwing the map back to the world origin*:
+  - **The glide can only be started by a wheel notch.** The Vue's
+    `zoomRAF !== undefined` is a flag, but this was written as
+    `abs(target-zoom - scale) >= epsilon`, which any write to `scale` that is not
+    matched by a write to `target-zoom` starts — and a pinch writes `scale` on
+    every update. The glide's last act is to put the view back on its anchor, and
+    before the first notch the anchor is (0, 0), which is the origin. An explicit
+    `zooming` flag, set only by `zoom-at`, is the Vue's flag again.
+  - **An update with no start is dropped.** winit discards a magnify event whose
+    phase is anything but Began, Changed, Cancelled or Ended, so a gesture can
+    arrive already under way; applying its update would scale against the
+    *initial* scale of 1 and a world point of (0, 0), which is the same jump.
+- **A wheel zooms exactly as before**, with the same `exp(-delta * 0.0016)` and
+  the same lerp towards a target, pinned to the block under the cursor. A ⌘ or
+  Ctrl on it is no longer the browser faking a pinch, but it is still the gesture
+  that means "zoom", so it keeps the steeper `0.01` factor and the immediate
+  path. Slint maps ⌘ to `control` on macOS, so one test covers both platforms.
+
+### Smaller things
+
+- **`canvas.width = viewportW * devicePixelRatio` is gone.** Slint has no
+  device-pixel grid — the renderer works in logical pixels throughout — so the
+  Vue's `ctx.setTransform(dpr, …)` has no counterpart, and a tile is exactly the
+  size the transform says it is.
+- **`image-rendering: pixelated`** is the same property here, and it is also what
+  the canvas' `imageSmoothingEnabled = false` did: nearest neighbour, so a tile
+  stays a grid of hard block-coloured pixels instead of turning to mush when
+  zoomed in.
+- **The wheel never reaches the panel.** The Vue's `e.preventDefault()` and its
+  `<!-- FIXME: Disable page scroll when scale -->` are the same line, and here
+  they are one `accept`: the map swallows the wheel instead of the saves list
+  behind it scrolling while the map zooms.
+- **The opening framing waits for the box to stop moving.** The Vue sets the view
+  from the first size its `ResizeObserver` reports, which for this component is
+  the *collapsed* box — the card's expansion grows over 200ms, and the map is
+  mounted at the start of it. A view framed from the collapsed box opens far
+  more zoomed out than `INITIAL_VIEW_BLOCKS` asks for, and asks Rust for seven
+  times the tiles. So the box is sampled until it has held still for 60ms, and
+  every sample re-frames. The samples come from a `Timer` rather than from
+  `changed width` / `changed height`, which do not fire for a property the card
+  assigns from outside.
+- **The two debug counters are not ported.** The Vue's
+  `DEBUG_SHOW_TILE_CACHE_COUNT` and `DEBUG_SHOW_TILE_CACHE_STATS` are `const
+  false` and their overlay is therefore dead code; with one cache they would
+  have been one number anyway. The count is a `cache.len()` in `worldmap.rs`.
+- **The tiles outlive the card.** The Vue's `v-if` tore the component down and
+  `onBeforeUnmount` emptied both caches, so re-opening a save re-rendered it
+  from scratch. Here the cache is keyed by world and capped, and re-opening a
+  save draws what is already there.
+
 ## Conventions
 
 - `.slint` files use **kebab-case** names (`title-bar.slint`); exported
@@ -1293,14 +1450,6 @@ the very first play at startup would start silently. This is the same clock
       the ones that would otherwise leak into the UI's own drawing.
 
 - **Content overlay deviations**, all deliberate:
-    - The **world map** is not migrated. The saves panel's card expansion shows
-      a live map of the world (`.extra` in `ContentSaves.vue`), drawn by the
-      814-line `WorldMap.vue` over the external `conic-worldmap` crate, which
-      rasterises region files into tiles in Rust. It is a feature of its own —
-      its own renderer, its own pan/zoom, its own tile cache — so the card, its
-      hover, its selection and the expansion's 160px rise and blue outline are
-      all migrated and the panel inside `.extra` is left empty. `worldmap.rs`'s
-      error variants are gone from the mirrored `slint-content` with it.
     - A card's **name is not struck through** when a local mod is disabled. The
       Vue has `text-decoration: line-through` on it; Slint has no text
       decoration at all. The dimmed card and the `[disabled]` prefix carry the

@@ -22,6 +22,10 @@ mod nbt;
 /// `__fastnbt_int_array` shape and all). Pulling the handful of fields out here
 /// keeps the NBT shape inside this crate and gives the app a plain, `Send`
 /// summary to carry across threads.
+///
+/// The spawn position is a second kind of field: no card shows it, but the
+/// world map opens centred on it (`ContentSaves.vue`'s `saveSpawnX` /
+/// `saveSpawnZ`, handed to `WorldMap` as `center-x` / `center-z`).
 #[derive(Debug, Clone, Default)]
 pub struct LevelSummary {
     /// The world's display name, absent when `level.dat` does not carry one.
@@ -31,6 +35,8 @@ pub struct LevelSummary {
     pub allow_commands: bool,
     /// `Data.LastPlayed`, in milliseconds since the epoch.
     pub last_played: Option<u64>,
+    /// `Data.spawn.pos` — the world's spawn point, `[x, y, z]` in blocks.
+    pub spawn: Option<[i32; 3]>,
 }
 
 /// Reads a [`LevelSummary`] out of a `level.dat` root (`level::get_all_levels`).
@@ -48,7 +54,24 @@ pub fn summarize_level(root: &Value) -> LevelSummary {
         // The launch script stores milliseconds, which is what the Vue hands
         // straight to `new Date(timestamp)`.
         last_played: integer_field(data, "LastPlayed").map(|value| value as u64),
+        spawn: spawn_field(data),
     }
+}
+
+/// `Data.spawn.pos`, the `ListTag` of three ints the Java writes as
+/// `[x, y, z]`. A world that predates the tag (or a `level.dat` that carries
+/// `SpawnX`/`SpawnZ` instead, which the format did before 1.2) has none, and
+/// `worldmap.rs` falls back to the spawn `conic-worldmap` reads for itself.
+fn spawn_field(data: &Value) -> Option<[i32; 3]> {
+    let pos = compound_field(compound_field(data, "spawn")?, "pos")?;
+    let coords: &[i32] = match pos {
+        Value::IntArray(values) => values,
+        _ => return None,
+    };
+    let [x, y, z] = coords else {
+        return None;
+    };
+    Some([*x, *y, *z])
 }
 
 fn compound_field<'a>(value: &'a Value, name: &str) -> Option<&'a Value> {
@@ -99,4 +122,77 @@ pub fn get_save_path(instance_id: &str, folder_name: &str) -> Result<String> {
 pub async fn delete_save(instance_id: &str, folder_name: &str) -> Result<()> {
     tokio::fs::remove_dir_all(save_folder(instance_id, folder_name)).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use fastnbt::{IntArray, LongArray, Value};
+
+    use super::*;
+
+    /// A `Data` compound out of the three shapes `summarize_level` has to tell
+    /// apart: the modern `spawn.pos` list, the pre-1.2 `SpawnX`/`SpawnZ` pair
+    /// with no list at all, and a list of the wrong length.
+    fn data_with_spawn(spawn: Option<Value>) -> Value {
+        let mut fields = HashMap::new();
+        fields.insert(
+            "LevelName".to_string(),
+            Value::String("New World".to_string()),
+        );
+        fields.insert("GameType".to_string(), Value::Int(1));
+        fields.insert("LastPlayed".to_string(), Value::Long(1_700_000_000_000));
+        if let Some(spawn) = spawn {
+            fields.insert(
+                "spawn".to_string(),
+                Value::Compound(HashMap::from([("pos".to_string(), spawn)])),
+            );
+        }
+        Value::Compound(HashMap::from([(
+            "Data".to_string(),
+            Value::Compound(fields),
+        )]))
+    }
+
+    #[test]
+    fn reads_the_spawn_point_out_of_the_modern_tag() {
+        let root = data_with_spawn(Some(Value::IntArray(IntArray::new(vec![-128, 70, 512]))));
+        let summary = summarize_level(&root);
+        assert_eq!(summary.spawn, Some([-128, 70, 512]));
+        assert_eq!(summary.name.as_deref(), Some("New World"));
+        assert_eq!(summary.game_type, Some(1));
+        assert_eq!(summary.last_played, Some(1_700_000_000_000));
+    }
+
+    #[test]
+    fn a_world_without_a_spawn_tag_has_none() {
+        // `worldmap.rs` reads `(0, 0)` as "ask the world for its own spawn",
+        // which is the fallback the crate's `WorldMap::spawn` provides.
+        assert_eq!(summarize_level(&data_with_spawn(None)).spawn, None);
+    }
+
+    #[test]
+    fn a_spawn_list_of_the_wrong_shape_has_none() {
+        assert_eq!(
+            summarize_level(&data_with_spawn(Some(Value::IntArray(IntArray::new(
+                vec![1, 2]
+            )))))
+            .spawn,
+            None
+        );
+        assert_eq!(
+            summarize_level(&data_with_spawn(Some(Value::IntArray(IntArray::new(
+                Vec::new()
+            )))))
+            .spawn,
+            None
+        );
+        // A list of the right length but the wrong tag is not a position either.
+        assert_eq!(
+            summarize_level(&data_with_spawn(Some(Value::LongArray(LongArray::new(
+                vec![1, 2, 3]
+            )))))
+            .spawn,
+            None
+        );
+    }
 }
