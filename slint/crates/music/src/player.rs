@@ -282,34 +282,18 @@ impl GraphState {
         (low, capacity)
     }
 
-    /// The worker's side of the ring: takes what has been resampled and keeps
-    /// the analyser's input in step with it.
+    /// The worker's side of the ring.
     ///
     /// `reader_position` is how far the reader has got, which is *ahead* of the
     /// playhead by whatever is still waiting. The UI's position is the difference,
     /// so the progress bar does not run ahead of the sound.
-    fn push(&mut self, samples: &[f32], fft_size: usize, reader_position: f64) {
-        let channels = self.device_channels.max(1);
+    fn push(&mut self, samples: &[f32], reader_position: f64) {
         if let Some(last) = samples.last() {
             self.tail = *last;
         }
         self.ring.extend(samples);
 
-        // The analyser's input, the mean of the channels: the same mono the
-        // callback used to build out of the source frame.
-        let frames = samples.len() / channels;
-        self.tap.reserve(frames);
-        for frame in 0..frames {
-            let sum: f32 = samples[frame * channels..(frame + 1) * channels]
-                .iter()
-                .sum();
-            self.tap.push(sum / channels as f32);
-        }
-        if self.tap.len() > fft_size * 2 {
-            let excess = self.tap.len() - fft_size * 2;
-            self.tap.drain(..excess);
-        }
-
+        let channels = self.device_channels.max(1);
         let buffered = self.ring.len() as f64 / (self.sample_rate * channels as f64);
         let position = (reader_position - buffered).max(0.0);
         self.cursor = if self.duration > 0.0 {
@@ -317,6 +301,33 @@ impl GraphState {
         } else {
             position
         };
+    }
+
+    /// The analyser's input, extended with what is being played right now.
+    ///
+    /// This is the mean of the channels of the samples the device has just been
+    /// given, which is the signal the spectrum has to describe: the visualiser
+    /// sits *before* the gain, so lowering the volume dims the music and leaves
+    /// the bars where they were, and both of those only hold if the analyser is
+    /// looking at what is playing rather than at what the worker has read ahead
+    /// into the ring — which is up to [`RING_SECONDS`] of the future.
+    fn tap_out(&mut self, out: &[f32], fft_size: usize) {
+        let channels = self.device_channels.max(1);
+        let frames = out.len() / channels;
+        // Reserved once per size change rather than per buffer, so the common
+        // path cannot allocate on the audio thread.
+        if self.tap.capacity() < fft_size * 2 {
+            self.tap.reserve(fft_size * 2 - self.tap.len());
+        }
+        self.tap.reserve(frames);
+        for frame in 0..frames {
+            let sum: f32 = out[frame * channels..(frame + 1) * channels].iter().sum();
+            self.tap.push(sum / channels as f32);
+        }
+        if self.tap.len() > fft_size * 2 {
+            let excess = self.tap.len() - fft_size * 2;
+            self.tap.drain(..excess);
+        }
     }
 
     /// Throws the ring and the analyser's history away, for when the samples in
@@ -1115,8 +1126,7 @@ fn feed(
         stalled = 0;
 
         let position = track.position();
-        let fft_size = graph.fft_size.load(Ordering::Relaxed);
-        lock(&graph.state).push(resampled, fft_size, position);
+        lock(&graph.state).push(resampled, position);
     }
 }
 
@@ -1392,17 +1402,6 @@ fn render(out: &mut [f32], graph: &Graph, channels: usize) {
     let due = state
         .last_analysis
         .is_none_or(|last| now.saturating_duration_since(last) >= ANALYSIS_INTERVAL);
-    if due {
-        state.last_analysis = Some(now);
-        state.analyser.set_fft_size(fft_size);
-        let GraphState {
-            analyser,
-            tap,
-            spectrum,
-            ..
-        } = &mut *state;
-        analyser.read_into(tap, spectrum);
-    }
 
     let available = state.ring.len().min(out.len());
     let starved = available < out.len();
@@ -1415,6 +1414,27 @@ fn render(out: &mut [f32], graph: &Graph, channels: usize) {
     for sample in out[available..].iter_mut() {
         *sample = held;
     }
+
+    // The analyser's input, taken from what the device has just been given. It
+    // has to be here and not on the worker: the ring holds up to `RING_SECONDS`
+    // of audio the device has not played yet, and a spectrum taken from the
+    // leading edge of that describes the wrong moment — and, since the worker
+    // refills in one go after the device has drained half of it, arrives in
+    // steps rather than as the music does.
+    state.tap_out(out, fft_size);
+
+    if due {
+        state.last_analysis = Some(now);
+        state.analyser.set_fft_size(fft_size);
+        let GraphState {
+            analyser,
+            tap,
+            spectrum,
+            ..
+        } = &mut *state;
+        analyser.read_into(tap, spectrum);
+    }
+
     if starved {
         state.starved = true;
     }
@@ -1520,6 +1540,47 @@ mod tests {
             low < capacity,
             "the low-water mark has to leave room to refill"
         );
+    }
+
+    #[test]
+    fn the_analyser_is_fed_what_is_played_not_what_is_queued() {
+        // The worker fills the ring, and the ring holds up to `RING_SECONDS` of
+        // audio the device has not played yet. Taking the analyser's input from
+        // there made the spectrum describe the leading edge of the queue: the
+        // bars came out as a smooth ramp rather than a spectrum, and they
+        // arrived in the worker's refill steps — a burst every time the ring
+        // dropped to half, which is the visualiser appearing to update about
+        // once a second. Only the callback knows what is actually playing.
+        let graph = new_graph(48_000.0, 2);
+        {
+            let mut state = lock(&graph.state);
+            state.push(&vec![0.25; 4_096], 0.0);
+            assert!(
+                state.tap.is_empty(),
+                "the worker fed the analyser from the queue"
+            );
+            assert_eq!(state.ring.len(), 4_096, "…but it did fill the ring");
+        }
+
+        // The callback is the one that moves it, and it moves it by what it was
+        // given. The input is interleaved, so 2048 samples of stereo is 1024
+        // frames of the mono the transform is given.
+        lock(&graph.state).tap_out(&vec![1.0; 2_048], 1_024);
+        assert_eq!(lock(&graph.state).tap.len(), 1_024);
+        assert!(lock(&graph.state).tap.iter().all(|s| *s == 1.0));
+    }
+
+    #[test]
+    fn the_analysers_input_stays_bounded_to_two_transforms() {
+        // The callback runs forever, so the tap is trimmed to the two most recent
+        // transforms' worth: unbounded, it would grow for as long as the music
+        // played.
+        let graph = new_graph(48_000.0, 2);
+        for _ in 0..64 {
+            lock(&graph.state).tap_out(&vec![0.5; 512], 1_024);
+        }
+        let tap = lock(&graph.state);
+        assert_eq!(tap.tap.len(), 2_048, "the tap grew past the trim");
     }
 
     #[test]
