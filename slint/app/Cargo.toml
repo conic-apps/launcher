@@ -8,6 +8,15 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[dev-dependencies]
+# Slint's own testing backend, for the one unit test that builds the real UI:
+# a display-less, event-loop-less platform, so the add-account dialog's binding
+# can be exercised without a window and without a main thread (winit's macOS
+# event loop insists on one, which is what makes a test binary unusable here).
+# Default features only — `i-slint-core` and `i-slint-common` are already in the
+# tree through `slint`, and the renderers are optional.
+i-slint-backend-testing = "=1.18.1"
+
 [build-dependencies]
 slint-build.workspace = true
 
@@ -24,6 +33,9 @@ slint-window.workspace = true
 slint-config.workspace = true
 slint-folder.workspace = true
 slint-account.workspace = true
+# The loopback listener the Microsoft browser flow's authorization code comes
+# back on, and the page the browser is shown there (see `app/src/account_add.rs`).
+slint-authcode.workspace = true
 slint-instance.workspace = true
 slint-content.workspace = true
 slint-shared.workspace = true

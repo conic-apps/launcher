@@ -1337,6 +1337,7 @@ dependencies = [
  "env_logger",
  "euclid",
  "glow",
+ "i-slint-backend-testing",
  "i-slint-backend-winit",
  "image",
  "log",
@@ -1346,6 +1347,7 @@ dependencies = [
  "serde_json",
  "slint",
  "slint-account",
+ "slint-authcode",
  "slint-build",
  "slint-config",
  "slint-content",
@@ -7323,6 +7325,17 @@ dependencies = [
  "thiserror 2.0.19",
  "tokio",
  "url",
+ "uuid",
+]
+
+[[package]]
+name = "slint-authcode"
+version = "0.0.0"
+dependencies = [
+ "log",
+ "regex",
+ "thiserror 2.0.19",
+ "tokio",
  "uuid",
 ]
 

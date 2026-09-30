@@ -7,7 +7,7 @@ import { AppIcon } from "../../components/app-icon.slint";
 import { BaseButton } from "../../components/base-button.slint";
 import { BaseLoading } from "../../components/base-loading.slint";
 import { SlideTransition } from "../../components/slide-transition.slint";
-import { AccountAddState } from "../../globals/dialogs.slint";
+import { Dialogs, AccountAddState } from "../../globals/dialogs.slint";
 
 // The "copied!" bubble (`.link-box .tooltip`): 12px text in a card-coloured
 // box with a hairline, floating 8px above whatever it is anchored to.
@@ -142,6 +142,31 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         interval: 1500ms;
         running: AccountAddState.ms-copied-code;
         triggered => { AccountAddState.ms-copied-code = false; }
+    }
+
+    // ----- the loopback listener behind the browser flow -----
+    // The URL on this screen is only meaningful while something is serving
+    // it: the code comes back on `http://localhost:<port>/callback`, and the
+    // port is the OS's, so the link cannot be written down once like the Vue
+    // wrote its `conic-launcher://` one. Both "log in" and "copy the link" send
+    // a browser to exactly that URL, so the listener lives exactly as long as
+    // this screen is on show with the dialog open — which is also exactly as
+    // long as the URL can be used.
+    //
+    // `shown` rather than `view`: the swap is `out-in`, so `view` changes
+    // eighty milliseconds before the arriving screen is mounted, and a
+    // listener bound in that gap would be serving a URL nobody is looking at.
+    // Mirrored into a property of its own because a `changed` handler cannot
+    // take a qualified global (`base-input.slint` does the same with its focus
+    // counter).
+    private property <bool> dialog-visible: Dialogs.account-add-visible;
+    private property <bool> browser-flow-on-screen: root.shown == "auth-code" && root.dialog-visible;
+    changed browser-flow-on-screen => {
+        if root.browser-flow-on-screen {
+            AccountAddState.prepare-auth-code-flow();
+        } else {
+            AccountAddState.release-auth-code-flow();
+        }
     }
 
     /// The step a running login is on (Vue `describeProgress`).
@@ -462,6 +487,11 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                 text: @tr("Log in");
                 button-background: Theme.blue;
                 text-color: Theme.text-inverse;
+                // The Vue's `openUrl(AUTH_CODE_LOGIN_URL)`, and still the whole
+                // of it: the URL is one Rust filled in when it bound the
+                // listener above, and the waiting for the code that comes back
+                // to it is already running. Only where the URL comes from
+                // changed, and only so that it can be the one actually served.
                 clicked => { AccountAddState.open-url(AccountAddState.auth-code-login-url); }
             }
         }

@@ -10,6 +10,10 @@
 // version lists and creates the instance (`app/src/create_instance.rs`) has to
 // read and write that state.
 
+// For the OAuth callback page's palette, which is handed to `slint-authcode`
+// rather than drawn here.
+import { Theme } from "../theme.slint";
+
 /// A row of the Minecraft version chooser.
 export struct MinecraftVersionItem {
     /// The version id, e.g. "1.20.1".
@@ -38,6 +42,50 @@ export struct YggdrasilProfileItem {
     /// The head `AccountAvatar` draws. Rust builds it from the profile's
     /// `textures` property, because Slint cannot crop an image itself.
     avatar: image,
+}
+
+/// The six sentences of the page the browser lands on when the OAuth redirect
+/// fires (`slint/crates/authcode/page.html`).
+///
+/// They live here rather than in the catalog's Rust side because this is where
+/// every other string in the app lives: a `@tr` in a `.slint` file, which is
+/// what the `.po` files are written against. Rust reads the struct and hands it
+/// to the callback, and the page template has no sentence of its own.
+export struct AuthCodePageText {
+    /// Shown on `/` — the page a browser reaches without the OAuth parameters.
+    waiting-title: string,
+    waiting-body: string,
+    /// Shown once the code has been taken.
+    success-title: string,
+    success-body: string,
+    /// Shown when the sign-in was refused, or the callback was not ours.
+    failure-title: string,
+    failure-body: string,
+}
+
+/// The colours that page is drawn in, straight off the `Theme` tokens.
+///
+/// A struct like this rather than a read of `Theme` in Rust: `Theme` is a
+/// global of the UI thread, and the listener is built on the UI thread and
+/// serves from a worker, so the theme is snapshotted where it is defined
+/// rather than read across that boundary. The tokens are named here so the two
+/// sides cannot drift: `--window-background` is the window's own `crust`,
+/// `--dialog-*` is the card, `--ctp-green`/`--ctp-red` are the two states.
+export struct AuthCodePageTheme {
+    window: color,
+    card: color,
+    card-border: color,
+    title: color,
+    body: color,
+    success: color,
+    danger: color,
+    /// Whether the palette is one of the three dark flavors, which is
+    /// `main.css`'s `color-scheme: dark` on `body`.
+    dark: bool,
+    /// `main.css`'s own `font-family` stack. The fonts in it are embedded in
+    /// the launcher binary rather than installed, so a browser resolves this to
+    /// the system UI font — the same fallback the Vue frontend had.
+    font-family: string,
 }
 
 // The Vue dialog store: one visibility flag per dialog, written by whoever
@@ -247,7 +295,37 @@ export global AccountAddState {
     in-out property <bool> ms-copied: false;
     in-out property <bool> ms-copied-code: false;
     /// The URL the browser flow opens (Vue `AUTH_CODE_LOGIN_URL`).
-    out property <string> auth-code-login-url: "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=94a1414e-e9ad-4bda-94f0-3368d979b0cc&response_type=code&redirect_uri=conic-launcher%3A%2F%2Foauth2%2Fmicrosoft%2Fcallback&response_mode=query&prompt=select_account&scope=XboxLive.signin%20offline_access";
+    ///
+    /// It is not a constant any more: the code comes back on a loopback
+    /// listener this app owns, and the port is the OS's choice, so Rust fills
+    /// this in when it binds the listener and empties it when the flow is over.
+    /// The `redirect_uri` inside it is repeated verbatim at the token endpoint
+    /// (RFC 6749 §4.1.3), which is why the one string is kept whole.
+    in-out property <string> auth-code-login-url: "";
+
+    // ----- the browser callback page (slint/crates/authcode/page.html) -----
+    /// Its six sentences, in the launcher's language.
+    out property <AuthCodePageText> auth-code-page-text: {
+        waiting-title: @tr("AccountAddMicrosoft" => "Waiting for the sign-in"),
+        waiting-body: @tr("AccountAddMicrosoft" => "Finish signing in in your browser — this page will change when it is done."),
+        success-title: @tr("AccountAddMicrosoft" => "Signed in"),
+        success-body: @tr("AccountAddMicrosoft" => "You can close this tab and go back to Conic Launcher."),
+        failure-title: @tr("AccountAddMicrosoft" => "Sign-in failed"),
+        failure-body: @tr("AccountAddMicrosoft" => "Conic Launcher did not receive a valid sign-in. Close this tab and try again."),
+    };
+    /// Its colours, off the live `Theme`. Read when the listener is bound, so
+    /// the tab and the window the login came from are the same palette.
+    out property <AuthCodePageTheme> auth-code-page-theme: {
+        window: Theme.crust,
+        card: Theme.dialog-background,
+        card-border: Theme.dialog-border,
+        title: Theme.default-text-color.transparentize(0.1),
+        body: Theme.default-text-color.transparentize(0.3),
+        success: Theme.green,
+        danger: Theme.red,
+        dark: Theme.active-palette != "Latte",
+        font-family: "'Nunito', 'Comfortaa', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif, 'Yu Gothic UI', 'Microsoft YaHei UI'",
+    };
 
     // ----- the Yggdrasil screen (AccountAddYggdrasil.vue) -----
     /// "form" | "processing" | "error" | "profiles".
@@ -304,6 +382,14 @@ export global AccountAddState {
     callback use-auth-code-flow();
     /// A "Cancel" button of the Microsoft screen.
     callback cancel-microsoft-login();
+    /// The browser screen is on show and the dialog is open: bind the loopback
+    /// listener the code will come back on, and put its URL in
+    /// `auth-code-login-url`. Does nothing when one is already bound, so the
+    /// screen can ask for this every time it is shown.
+    callback prepare-auth-code-flow();
+    /// The browser screen is off, or the dialog is closed: drop the listener and
+    /// the URL with it, which frees the port.
+    callback release-auth-code-flow();
 
     // ----- the Yggdrasil screen -----
     /// Resets the form to what the Vue's `onMounted` leaves it in.

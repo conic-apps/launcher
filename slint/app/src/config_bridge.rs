@@ -7,8 +7,18 @@
 //! Also hosts the OS integration helpers used by the settings callbacks.
 
 use std::path::PathBuf;
+use std::sync::{LazyLock, RwLock};
 
 use crate::slint_backend::AppConfig;
+
+/// The catalog [`apply_locale`] last selected, for the things that have to agree
+/// with the text rather than with the config (see [`active_language_tag`]).
+///
+/// A lock rather than a `OnceLock`, because a language change calls
+/// `apply_locale` again and the last one has to win. It starts empty, which
+/// means "not chosen yet" — the reads below then fall back to what the config
+/// would say, and a *read* never pins the value.
+static APPLIED_LOCALE: LazyLock<RwLock<String>> = LazyLock::new(|| RwLock::new(String::new()));
 
 /// Maps a launcher language code to the bundled gettext locale (the catalog
 /// folder name). All 12 launcher languages ship a catalog.
@@ -41,11 +51,37 @@ pub fn resolve_locale(language: &str) -> &'static str {
     .unwrap_or("en_US")
 }
 
+/// The catalog that is actually in effect, as a BCP 47 tag.
+///
+/// For markup that is not a Slint UI — the `<html lang>` of the OAuth callback
+/// page. The tag follows the *applied* catalog rather than the config's
+/// `language`, because those are two different things: `select_locale` honours
+/// `CONIC_LOCALE` and prefers the system locale when the config is empty, and a
+/// document whose sentences are in one language and whose `lang` says another
+/// is a document a screen reader and a hyphenator get wrong.
+pub fn active_language_tag() -> String {
+    let applied = APPLIED_LOCALE
+        .read()
+        .map(|locale| locale.clone())
+        .unwrap_or_default();
+    if applied.is_empty() {
+        resolve_locale("")
+    } else {
+        &applied
+    }
+    .replace('_', "-")
+}
+
 pub fn apply_locale(locale: &str) {
     if let Err(error) = slint::select_bundled_translation(locale) {
         log::warn!("failed to select locale '{locale}': {error}");
     } else {
         log::debug!(target: "app", "selected locale '{locale}'");
+        // Only remembered on success: a catalog that would not load is not the
+        // one a document should be tagged with.
+        if let Ok(mut applied) = APPLIED_LOCALE.write() {
+            *applied = locale.to_string();
+        }
     }
     // The catalog only carries text; which font draws the Han characters in it
     // is a separate, also locale-dependent choice (see `cjk_font`). Kept here so

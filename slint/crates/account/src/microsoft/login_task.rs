@@ -75,13 +75,17 @@ impl LoginReporter {
 }
 
 /// Logs in using an authorization code obtained from the browser flow.
+///
+/// `redirect_uri` is the URI the code was issued against, which the token
+/// request has to repeat exactly — see [`microsoft::redeem_access_token`].
 pub(crate) async fn login_with_auth_code(
     code: &str,
+    redirect_uri: &str,
     reporter: &LoginReporter,
 ) -> Result<MicrosoftAccount> {
     reporter.report(LoginEvent::RedeemAccessToken);
     let (access_token, refresh_token) = {
-        let tokens = microsoft::redeem_access_token(code).await?;
+        let tokens = microsoft::redeem_access_token(code, redirect_uri).await?;
         (tokens.access_token, tokens.refresh_token)
     };
     finish_login(access_token, refresh_token, reporter).await

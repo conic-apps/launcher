@@ -29,6 +29,25 @@ use crate::{
     },
 };
 
+/// Which of the two Microsoft flows a login task runs.
+///
+/// `Option<String>` stood for this in the original — `None` being the device
+/// code — but the browser flow has grown a second half since: the code is only
+/// half of it, and the `redirect_uri` it was issued against has to be repeated
+/// exactly at the token endpoint. The two travel together here so that neither
+/// can be passed without the other.
+#[derive(Clone, Debug)]
+pub enum LoginRequest {
+    /// The device-code flow: no browser round trip, nothing to wait for but the
+    /// user's own code entry.
+    DeviceCode,
+    /// The browser flow's authorization code, and the `redirect_uri` the browser
+    /// came back to — which is a loopback listener this app owns (see
+    /// `slint-authcode`), so the port is chosen when the flow starts and is not
+    /// known before that.
+    AuthCode { code: String, redirect_uri: String },
+}
+
 /// The at-most-one running Microsoft login task (the original's `PluginState`).
 #[derive(Clone, Default)]
 pub struct LoginTaskState {
@@ -44,12 +63,11 @@ impl LoginTaskState {
     /// Starts the login task and awaits it, reporting its progress through
     /// `reporter` (`cmd_spawn_microsoft_login_task`).
     ///
-    /// `code` is the authorization code of the browser flow; `None` runs the
-    /// device-code flow instead. A call while another task is running fails
-    /// with [`Error::LoginInProgress`].
+    /// A call while another task is running fails with
+    /// [`Error::LoginInProgress`].
     pub async fn spawn(
         &self,
-        code: Option<String>,
+        request: LoginRequest,
         reporter: LoginReporter,
     ) -> Result<MicrosoftAccount> {
         {
@@ -60,9 +78,11 @@ impl LoginTaskState {
         }
         let handle = tokio::spawn(async move {
             reporter.report(LoginEvent::Prepare);
-            match code {
-                Some(code) => login_with_auth_code(&code, &reporter).await,
-                None => login_with_device_code(&reporter).await,
+            match request {
+                LoginRequest::AuthCode { code, redirect_uri } => {
+                    login_with_auth_code(&code, &redirect_uri, &reporter).await
+                }
+                LoginRequest::DeviceCode => login_with_device_code(&reporter).await,
             }
         });
         *self.task.lock().expect("Internal error") = Some(handle.abort_handle());
