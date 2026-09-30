@@ -52,10 +52,6 @@ pub mod vanilla;
 
 pub use error::*;
 
-/// The shared HTTP client and its proxy preference. The original crate reads
-/// them from `shared`; the mirror keeps that role in `slint-shared`.
-pub use slint_shared::set_system_proxy;
-
 /// How long a fetched version list stays fresh, mirroring
 /// `CACHE_EXPIRATION_SECONDS` in `crates/install/src/lib.rs`.
 static CACHE_EXPIRATION_SECONDS: u64 = 1800;

@@ -8,12 +8,12 @@ repository.workspace = true
 
 [dependencies]
 slint-folder.workspace = true
+slint-shared.workspace = true
 
 base64.workspace = true
 futures.workspace = true
 log.workspace = true
 md-5.workspace = true
-once_cell.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
