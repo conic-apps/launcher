@@ -36,6 +36,7 @@ use crate::slint_backend::{
 };
 use slint_content::mods::remote::RemoteModPlatform;
 use slint_content::mods::{ModLoader, ResolvedMod};
+use slint_instance::InstanceRuntime;
 
 /// How many results a remote page holds (`useSearchPagination.ts`'s `PAGE_SIZE`).
 const PAGE_SIZE: usize = 20;
@@ -608,7 +609,7 @@ pub fn setup(ui: &App) {
         let weak = ui.as_weak();
         ui.global::<GameState>().on_open_packs(move || {
             let Some(ui) = weak.upgrade() else { return };
-            {
+            let instance_id = {
                 let state = controller();
                 let mut state = state.borrow_mut();
                 state.sync_instance(&ui);
@@ -616,18 +617,31 @@ pub fn setup(ui: &App) {
                 state.platform = Platform::Modrinth;
                 state.source = "modrinth".into();
                 state.form = SearchForm::default();
-                let list = list_key(state.kind, state.platform.key());
-                initialize_list(&mut state, &list);
-                state.targets.clear();
-            }
-            let ui_state = ui.global::<ContentState>();
-            ui_state.set_open_panel(SharedString::from("packs"));
-            ui_state.set_source(SharedString::from("modrinth"));
-            ui_state.set_remote_kind(SharedString::from(RemoteKind::Packs.key()));
-            ensure_version_options(&ui);
-            push_search(&ui);
-            show_grid(&ui, Grid::Remote);
-            run_search(&ui, 1);
+                state.instance_id.clone()
+            };
+            // The lists are seeded from the instance's own loader and version, so
+            // `instance.toml` is read on the runtime before the panel is filled in.
+            let weak = weak.clone();
+            crate::runtime::spawn(async move {
+                let runtime = instance_runtime(&instance_id).await;
+                let _ = weak.upgrade_in_event_loop(move |ui| {
+                    {
+                        let state = controller();
+                        let mut state = state.borrow_mut();
+                        let list = list_key(state.kind, state.platform.key());
+                        initialize_list(&mut state, &list, &runtime);
+                        state.targets.clear();
+                    }
+                    let ui_state = ui.global::<ContentState>();
+                    ui_state.set_open_panel(SharedString::from("packs"));
+                    ui_state.set_source(SharedString::from("modrinth"));
+                    ui_state.set_remote_kind(SharedString::from(RemoteKind::Packs.key()));
+                    ensure_version_options(&ui);
+                    push_search(&ui);
+                    show_grid(&ui, Grid::Remote);
+                    run_search(&ui, 1);
+                });
+            });
         });
     }
 
@@ -653,47 +667,62 @@ pub fn setup(ui: &App) {
                     // filters it seeds come back only if this list has not
                     // already been opened on this instance.
                     state.form = SearchForm::default();
-                    let list = list_key(state.kind, state.platform.key());
-                    initialize_list(&mut state, &list);
-                    state.targets.clear();
                 }
             }
-            ui.global::<ContentState>()
-                .set_source(SharedString::from(source.as_str()));
-            // The list being shown is the grid a resize re-lays out from here
-            // on, and it is re-laid out now — the local list in particular was
-            // loaded while another source was open, at whatever width the panel
-            // had then.
-            show_grid(
-                &ui,
-                if source == "local" {
-                    if controller().borrow().kind == RemoteKind::Mods {
-                        Grid::LocalMods
-                    } else {
-                        Grid::LocalResourcePacks
+            // The remote lists are seeded from the instance's own loader and
+            // version, so `instance.toml` is read on the runtime before the
+            // panel is filled in. A local list has nothing to seed.
+            let instance_id = controller().borrow().instance_id.clone();
+            let source = source.clone();
+            let weak = weak.clone();
+            crate::runtime::spawn(async move {
+                let runtime = instance_runtime(&instance_id).await;
+                let _ = weak.upgrade_in_event_loop(move |ui| {
+                    if source != "local" {
+                        let state = controller();
+                        let mut state = state.borrow_mut();
+                        let list = list_key(state.kind, state.platform.key());
+                        initialize_list(&mut state, &list, &runtime);
+                        state.targets.clear();
                     }
-                } else {
-                    Grid::Remote
-                },
-            );
-            // A source switch shows the other list's own page state, which for
-            // a list that has not searched yet is a hidden bar.
-            push_pages(&ui);
-            match source.as_str() {
-                "modrinth" | "curseforge" => {
-                    ensure_version_options(&ui);
-                    push_search(&ui);
-                    run_search(&ui, 1);
-                }
-                _ => {
-                    let kind = controller().borrow().kind;
-                    match kind {
-                        RemoteKind::Mods => load_local_mods(&ui),
-                        RemoteKind::ResourcePacks => load_local_resourcepacks(&ui),
-                        RemoteKind::Packs => {}
+                    ui.global::<ContentState>()
+                        .set_source(SharedString::from(source.as_str()));
+                    // The list being shown is the grid a resize re-lays out from
+                    // here on, and it is re-laid out now — the local list in
+                    // particular was loaded while another source was open, at
+                    // whatever width the panel had then.
+                    show_grid(
+                        &ui,
+                        if source == "local" {
+                            if controller().borrow().kind == RemoteKind::Mods {
+                                Grid::LocalMods
+                            } else {
+                                Grid::LocalResourcePacks
+                            }
+                        } else {
+                            Grid::Remote
+                        },
+                    );
+                    // A source switch shows the other list's own page state, which
+                    // for a list that has not searched yet is a hidden bar.
+                    push_pages(&ui);
+                    match source.as_str() {
+                        "modrinth" | "curseforge" => {
+                            ensure_version_options(&ui);
+                            push_search(&ui);
+                            run_search(&ui, 1);
+                        }
+                        _ => {
+                            let kind = controller().borrow().kind;
+                            match kind {
+                                RemoteKind::Mods => load_local_mods(&ui),
+                                RemoteKind::ResourcePacks => load_local_resourcepacks(&ui),
+                                RemoteKind::Packs => {}
+                            }
+                        }
                     }
-                }
-            }
+                });
+            });
         });
     }
 
@@ -1091,42 +1120,43 @@ fn favorite_key(platform: &str, kind: &str, id: &str) -> String {
     format!("{platform}:{kind}:{id}")
 }
 
-/// The loader and Minecraft version the remote lists start from
-/// (`ensureModrinthInitialized` reads them off the instance's runtime).
+/// The instance's loader and Minecraft version, read off `instance.toml`.
+///
+/// The remote lists are seeded from it (`ensureModrinthInitialized` in the Vue
+/// reads it off the instance store), so it is fetched on the runtime whenever a
+/// list opens rather than on the UI thread. An instance that cannot be read
+/// seeds nothing, which is the empty key the seeding below compares against.
+async fn instance_runtime(instance_id: &str) -> InstanceRuntime {
+    slint_instance::get_instance_by_id(instance_id)
+        .await
+        .map(|instance| instance.config.runtime)
+        .unwrap_or_default()
+}
+
 /// `ensure…Initialized`: the loader and version the list opens on, seeded from
 /// the instance's runtime. `curseForgeInitializedFor` makes it happen once per
 /// instance per list — the Vue's `if (…InitializedFor === key) return` — so a
 /// list that is switched away from and back is *not* re-seeded: its selections
 /// lived in the component, which the `v-if` destroyed.
-fn initialize_list(state: &mut ContentController, list: &str) {
-    let key = match slint_instance::get_instance_by_id(&state.instance_id) {
-        Some(instance) => {
-            let runtime = &instance.config.runtime;
-            format!(
-                "{}|{}",
-                runtime
-                    .mod_loader_type
-                    .as_ref()
-                    .map(|loader| loader.to_string())
-                    .unwrap_or_default(),
-                runtime.minecraft
-            )
-        }
-        None => String::new(),
-    };
+fn initialize_list(state: &mut ContentController, list: &str, runtime: &InstanceRuntime) {
+    let key = format!(
+        "{}|{}",
+        runtime
+            .mod_loader_type
+            .as_ref()
+            .map(|loader| loader.to_string())
+            .unwrap_or_default(),
+        runtime.minecraft
+    );
     let entry = state.lists.entry(list.to_string()).or_default();
     if entry.initialized_for.as_deref() == Some(key.as_str()) {
         return;
     }
     entry.initialized_for = Some(key);
-    seed_filters(state);
+    seed_filters(state, runtime);
 }
 
-fn seed_filters(state: &mut ContentController) {
-    let Some(instance) = slint_instance::get_instance_by_id(&state.instance_id) else {
-        return;
-    };
-    let runtime = &instance.config.runtime;
+fn seed_filters(state: &mut ContentController, runtime: &InstanceRuntime) {
     if state.kind.has_loaders()
         && let Some(loader) = &runtime.mod_loader_type
     {
@@ -3726,8 +3756,9 @@ fn refresh_favorited(ui: &App) {
 /// Resolves the project's best file for the instance's runtime and downloads it
 /// — `useContentActions.ts`'s `resolveDownloadTask` and `install`.
 async fn install(instance_id: &str, detail: &OpenDetail) -> Result<(), String> {
-    let runtime =
-        slint_instance::get_instance_by_id(instance_id).map(|instance| instance.config.runtime);
+    let runtime = slint_instance::get_instance_by_id(instance_id)
+        .await
+        .map(|instance| instance.config.runtime);
     // `InstanceRuntime.minecraft` is a plain string; empty means unset.
     let minecraft = runtime
         .as_ref()
