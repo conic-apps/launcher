@@ -34,25 +34,49 @@ const SAVE_DEBOUNCE: Duration = Duration::from_millis(400);
 
 /// Opens the overlay on the current instance (`useInstanceSettings().value =
 /// true`, from the game view's settings button).
+///
+/// The read of `instance.toml` runs on the runtime, as in the original where it
+/// was a Tauri command off the UI thread, and the fields are filled in on the
+/// far side of it.
 pub fn open(ui: &App) {
-    let Some(instance) = current_instance(ui) else {
-        log::warn!("the instance settings were opened without a current instance");
-        return;
-    };
-    let state = ui.global::<InstanceSettingsState>();
-    apply(&state, &instance);
-    state.set_background(load_background(&instance));
-    state.set_visible(true);
-}
-
-/// The instance the overlay is editing: the game view's current one, which cannot
-/// change while the overlay covers it.
-fn current_instance(ui: &App) -> Option<Instance> {
     let id = ui.global::<GameState>().get_current_id();
     if id.is_empty() {
-        return None;
+        log::warn!("the instance settings were opened without a current instance");
+        return;
     }
-    slint_instance::get_instance_by_id(id.as_str())
+    let weak = ui.as_weak();
+    crate::runtime::spawn(async move {
+        let Some(instance) = slint_instance::get_instance_by_id(id.as_str()).await else {
+            log::warn!("the instance settings were opened without a current instance");
+            return;
+        };
+        let _ = weak.upgrade_in_event_loop(move |ui| show(&ui, &instance));
+    });
+}
+
+/// Fills the overlay in and shows it, for an instance already read off disk.
+fn show(ui: &App, instance: &Instance) {
+    let state = ui.global::<InstanceSettingsState>();
+    apply(&state, instance);
+    state.set_background(load_background(instance));
+    state.set_visible(true);
+    EDITING.with(|editing| *editing.borrow_mut() = Some(instance.clone()));
+}
+
+thread_local! {
+    /// The instance the overlay is editing.
+    ///
+    /// `open` reads it off disk, on the runtime, and the callbacks that follow
+    /// need its *stored* config synchronously — to diff an edit against what is
+    /// on disk before the debounced write replaces it. That is the one instance
+    /// the overlay covers, so it cannot change underneath: the game view behind
+    /// it does not take a selection while an overlay is up.
+    static EDITING: RefCell<Option<Instance>> = const { RefCell::new(None) };
+}
+
+/// The instance the overlay is editing.
+fn current_instance() -> Option<Instance> {
+    EDITING.with(|editing| editing.borrow().clone())
 }
 
 /// Puts an instance into the overlay's fields.
@@ -196,9 +220,11 @@ fn touches_game_view(before: &InstanceConfig, after: &InstanceConfig) -> bool {
 /// the overlay can be closed — and the current instance changed — in between.
 /// A run of keystrokes is therefore one `instance.toml`.
 fn schedule_save(save_timer: &Rc<Timer>, ui: &App, config: InstanceConfig, touches: bool) {
-    let Some(id) = current_instance(ui).map(|instance| instance.id) else {
+    let id = ui.global::<GameState>().get_current_id();
+    if id.is_empty() {
         return;
-    };
+    }
+    let id = id.to_string();
     let weak = ui.as_weak();
     let save_timer = Rc::clone(save_timer);
     // The timer takes an `FnMut`, so the config it carries is taken out of an
@@ -207,22 +233,24 @@ fn schedule_save(save_timer: &Rc<Timer>, ui: &App, config: InstanceConfig, touch
     // the first rather than queue behind it.
     let mut pending = Some(config);
     save_timer.start(TimerMode::SingleShot, SAVE_DEBOUNCE, move || {
-        let Some(ui) = weak.upgrade() else {
-            return;
-        };
         let Some(config) = pending.take() else {
             return;
         };
-        if let Err(error) = slint_instance::update_instance(config, &id) {
-            log::error!("failed to save the instance '{id}': {error}");
-            return;
-        }
-        if touches {
+        let weak = weak.clone();
+        let id = id.clone();
+        crate::runtime::spawn(async move {
+            if let Err(error) = slint_instance::update_instance(config, &id).await {
+                log::error!("failed to save the instance '{id}': {error}");
+                return;
+            }
+            if !touches {
+                return;
+            }
             // The Vue edits the very object its Pinia store holds, so the
             // summary and the list card re-render off it for free. Here the
             // store is on disk, so the game view is asked to read it again.
-            ui.global::<GameState>().invoke_refresh();
-        }
+            let _ = weak.upgrade_in_event_loop(move |ui| ui.global::<GameState>().invoke_refresh());
+        });
     });
 }
 
@@ -239,7 +267,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let Some(ui) = weak.upgrade() else {
                 return;
             };
-            let Some(instance) = current_instance(&ui) else {
+            let Some(instance) = current_instance() else {
                 return;
             };
             let state = ui.global::<InstanceSettingsState>();
@@ -259,7 +287,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let Some(ui) = weak.upgrade() else {
                 return;
             };
-            let Some(instance) = current_instance(&ui) else {
+            let Some(instance) = current_instance() else {
                 return;
             };
             // Started from the overlay's own fields, not from what is on disk: a
@@ -293,7 +321,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let Some(ui) = weak.upgrade() else {
                 return;
             };
-            let Some(instance) = current_instance(&ui) else {
+            let Some(instance) = current_instance() else {
                 return;
             };
             let defaults = slint_config::Config::default().launch;
@@ -325,25 +353,34 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let Some(ui) = weak.upgrade() else {
                 return;
             };
-            let Some(instance) = current_instance(&ui) else {
+            let id = ui.global::<GameState>().get_current_id();
+            if id.is_empty() {
                 return;
-            };
+            }
+            // The picker is a native dialog, so it opens here on the UI thread;
+            // the copy and the re-read behind it do not belong on it.
             let Some(path) = config_bridge::pick_image_file_named(filter_name.as_str()) else {
                 return;
             };
-            if let Err(error) = slint_instance::add_background_image(&path, &instance.id) {
-                log::error!("failed to set the background of '{}': {error}", instance.id);
-                return;
-            }
-            // `has_background` is the file's existence, so the instance has to be
-            // read again rather than patched.
-            let Some(instance) = slint_instance::get_instance_by_id(&instance.id) else {
-                return;
-            };
-            let state = ui.global::<InstanceSettingsState>();
-            state.set_has_background(instance.has_background);
-            state.set_background(load_background(&instance));
-            ui.global::<GameState>().invoke_refresh();
+            let id = id.to_string();
+            let weak = weak.clone();
+            crate::runtime::spawn(async move {
+                if let Err(error) = slint_instance::add_background_image(&path, &id).await {
+                    log::error!("failed to set the background of '{id}': {error}");
+                    return;
+                }
+                // `has_background` is the file's existence, so the instance has
+                // to be read again rather than patched.
+                let Some(instance) = slint_instance::get_instance_by_id(&id).await else {
+                    return;
+                };
+                let _ = weak.upgrade_in_event_loop(move |ui| {
+                    let state = ui.global::<InstanceSettingsState>();
+                    state.set_has_background(instance.has_background);
+                    state.set_background(load_background(&instance));
+                    ui.global::<GameState>().invoke_refresh();
+                });
+            });
         });
     }
 
@@ -355,20 +392,24 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let Some(ui) = weak.upgrade() else {
                 return;
             };
-            let Some(instance) = current_instance(&ui) else {
-                return;
-            };
-            if let Err(error) = slint_instance::remove_background(&instance.id) {
-                log::error!(
-                    "failed to remove the background of '{}': {error}",
-                    instance.id
-                );
+            let id = ui.global::<GameState>().get_current_id();
+            if id.is_empty() {
                 return;
             }
-            let state = ui.global::<InstanceSettingsState>();
-            state.set_has_background(false);
-            state.set_background(Image::default());
-            ui.global::<GameState>().invoke_refresh();
+            let id = id.to_string();
+            let weak = weak.clone();
+            crate::runtime::spawn(async move {
+                if let Err(error) = slint_instance::remove_background(&id).await {
+                    log::error!("failed to remove the background of '{id}': {error}");
+                    return;
+                }
+                let _ = weak.upgrade_in_event_loop(move |ui| {
+                    let state = ui.global::<InstanceSettingsState>();
+                    state.set_has_background(false);
+                    state.set_background(Image::default());
+                    ui.global::<GameState>().invoke_refresh();
+                });
+            });
         });
     }
 
@@ -379,11 +420,19 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let Some(ui) = weak.upgrade() else {
                 return;
             };
-            let Some(instance) = current_instance(&ui) else {
+            let id = ui.global::<GameState>().get_current_id();
+            if id.is_empty() {
                 return;
-            };
+            }
             ui.global::<InstanceSettingsState>().set_visible(false);
-            open_delete_dialog(&ui, &instance);
+            let id = id.to_string();
+            let weak = weak.clone();
+            crate::runtime::spawn(async move {
+                let Some(instance) = slint_instance::get_instance_by_id(&id).await else {
+                    return;
+                };
+                let _ = weak.upgrade_in_event_loop(move |ui| open_delete_dialog(&ui, &instance));
+            });
         });
     }
 
@@ -533,11 +582,11 @@ fn setup_delete_dialog(ui: &App) {
             ui.global::<DeleteInstanceState>().set_deleting(true);
 
             // Removing the instance directory walks the whole tree, so it belongs
-            // on the blocking pool rather than on the UI thread — the original
-            // runs it in a Tauri command, off the UI thread too.
+            // off the UI thread — the original runs it in a Tauri command, off
+            // the UI thread too.
             let weak = weak.clone();
-            crate::runtime::spawn_blocking(move || {
-                let result = slint_instance::delete_instance(&id);
+            crate::runtime::spawn(async move {
+                let result = slint_instance::delete_instance(&id).await;
                 let _ = weak.upgrade_in_event_loop(move |ui| {
                     ui.global::<DeleteInstanceState>().set_deleting(false);
                     match result {

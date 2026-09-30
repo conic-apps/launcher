@@ -40,6 +40,24 @@ thread_local! {
     /// closure writes it through here (and persists it), exactly like the Vue's
     /// `configStore.current_account = …`.
     static SHARED_CONFIG: RefCell<Option<Rc<RefCell<Config>>>> = const { RefCell::new(None) };
+
+    /// The one controller, for use on the UI thread.
+    ///
+    /// It lives in a thread-local rather than in a value `setup` owns because an
+    /// `upgrade_in_event_loop` closure has to be `Send`, and the `Rc<RefCell<…>>`
+    /// cannot cross into one. Slint's callbacks and the event-loop closures both
+    /// run on the UI thread, so both reach it through [`launch_controller`]; the
+    /// async task carries only owned values and a `Weak<App>`.
+    static CONTROLLER: RefCell<Option<Rc<RefCell<LaunchController>>>> =
+        const { RefCell::new(None) };
+}
+
+/// The controller, for use on the UI thread. Named apart from `setup`'s own
+/// `controller` binding, which would otherwise shadow it.
+fn launch_controller() -> Rc<RefCell<LaunchController>> {
+    CONTROLLER
+        .with(|cell| cell.borrow().clone())
+        .expect("the launch controller is set up before any of its callbacks run")
 }
 
 /// One run of the launch flow. Everything the run schedules carries a clone of
@@ -110,6 +128,7 @@ impl LaunchController {
 pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
     SHARED_CONFIG.with(|slot| *slot.borrow_mut() = Some(Rc::clone(&config)));
     let controller = Rc::new(RefCell::new(LaunchController::new()));
+    CONTROLLER.with(|cell| *cell.borrow_mut() = Some(Rc::clone(&controller)));
     let state = ui.global::<LaunchState>();
 
     // `LaunchView.vue`'s `onMounted(launch)`.
@@ -121,24 +140,32 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             controller.borrow_mut().cancel();
             let run = controller.borrow_mut().begin();
 
-            // Everything the flow needs is gathered on the UI thread, because
-            // `GameState`/`LaunchState` and the config are not reachable from
-            // the runtime.
+            // Everything the flow needs that is not on disk is gathered on the
+            // UI thread, because `GameState`/`LaunchState` and the config are
+            // not reachable from the runtime.
             let current_id = ui.global::<GameState>().get_current_id().to_string();
-            let instance = slint_instance::get_instance_by_id(&current_id);
             let config_snapshot = SHARED_CONFIG.with(|slot| {
                 slot.borrow()
                     .as_ref()
                     .map(|config| config.borrow().clone())
                     .unwrap_or_default()
             });
-            reset_state(&ui, instance.as_ref(), &config_snapshot);
 
-            let weak = ui.as_weak();
-            let task = crate::runtime::spawn(async move {
-                run_flow(weak, run, config_snapshot, instance).await;
+            // `instance.toml` is read on the runtime, as the original read it
+            // in a Tauri command, and the state is reset behind that read.
+            let weak = weak.clone();
+            crate::runtime::spawn(async move {
+                let instance = slint_instance::get_instance_by_id(&current_id).await;
+                let flow_weak = weak.clone();
+                let flow_config = config_snapshot.clone();
+                let _ = weak.upgrade_in_event_loop(move |ui| {
+                    reset_state(&ui, instance.as_ref(), &flow_config);
+                    let task = crate::runtime::spawn(async move {
+                        run_flow(flow_weak, run, config_snapshot, instance).await;
+                    });
+                    launch_controller().borrow_mut().task = Some(task);
+                });
             });
-            controller.borrow_mut().task = Some(task);
         });
     }
 

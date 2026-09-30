@@ -7,7 +7,7 @@ use std::result;
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::shared::UrlExtError;
+use slint_shared::UrlExtError;
 
 pub type Result<T> = result::Result<T, Error>;
 

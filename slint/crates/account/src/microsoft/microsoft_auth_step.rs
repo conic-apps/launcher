@@ -5,7 +5,7 @@
 use serde_json::Value;
 
 use crate::error::*;
-use crate::shared::HTTP_CLIENT;
+use slint_shared::HTTP_CLIENT;
 
 pub struct TokenPair {
     pub access_token: String,

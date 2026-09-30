@@ -5,8 +5,12 @@
 //! Tauri-free mirror of `crates/instance`: CRUD for game instances.
 //!
 //! The original crate exposes the same operations through Tauri commands; the
-//! Slint app calls these functions directly (synchronously) and owns the UI
-//! state itself. Only the data model and filesystem logic live here.
+//! Slint app calls these functions directly and owns the UI state itself. Only
+//! the data model and filesystem logic live here.
+//!
+//! The filesystem half stays `async` and on `tokio::fs`, as in the original —
+//! listing instances reads and parses one `instance.toml` per instance, which
+//! has no business running on the thread that draws.
 
 use std::{
     cmp::Ordering,
@@ -28,15 +32,15 @@ pub use config::*;
 pub use error::*;
 
 /// Creates a new game instance using the provided configuration.
-pub fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {
+pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {
     let random_uuid = Uuid::new_v4().to_string();
     let id = id.unwrap_or(&random_uuid);
     let instance_root = DATA_LOCATION.get_instance_root(id);
     let config_file_path = instance_root.join("instance.toml");
     if let Some(parent) = config_file_path.parent() {
-        std::fs::create_dir_all(parent)?;
+        tokio::fs::create_dir_all(parent).await?
     }
-    std::fs::write(config_file_path, toml::to_string_pretty(&config)?)?;
+    tokio::fs::write(config_file_path, toml::to_string_pretty(&config)?).await?;
     info!("Created instance: {}", config.name);
     Ok(id.to_string())
 }
@@ -55,17 +59,18 @@ pub enum SortBy {
 }
 
 /// Reads all instances stored in the data directory.
-pub fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
+pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     let instances_folder = &DATA_LOCATION.instances;
-    std::fs::create_dir_all(instances_folder)?;
+    tokio::fs::create_dir_all(instances_folder).await?;
+    let mut folder_entries = tokio::fs::read_dir(instances_folder).await?;
     let mut instances = Vec::new();
 
-    for entry in std::fs::read_dir(instances_folder)? {
-        let entry = match entry {
+    while let Some(entry) = folder_entries.next_entry().await? {
+        let file_type = match entry.file_type().await {
             Err(_) => continue,
-            Ok(entry) => entry,
+            Ok(file_type) => file_type,
         };
-        if !entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+        if !file_type.is_dir() {
             continue;
         }
         let path = entry.path();
@@ -83,7 +88,7 @@ pub fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
         if metadata.len() > 2_000_000 || !instance_config.is_file() {
             continue;
         }
-        let config_content = match std::fs::read_to_string(instance_config) {
+        let config_content = match tokio::fs::read_to_string(instance_config).await {
             Err(_) => continue,
             Ok(content) => content,
         };
@@ -93,7 +98,9 @@ pub fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
                 Ok(config) => config,
                 Err(_) => continue,
             },
-            installed: path.join(".install.lock").is_file(),
+            installed: tokio::fs::metadata(path.join(".install.lock"))
+                .await
+                .is_ok(),
             last_played: get_launch_script_timestamp(&instance_id),
             id: instance_id,
             has_background: path.join("background").is_file(),
@@ -303,15 +310,17 @@ fn release_week(patch: u8) -> u8 {
 }
 
 /// Reads a single instance by id.
-pub fn get_instance_by_id(id: &str) -> Option<Instance> {
+pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
     let instance_root = DATA_LOCATION.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
-    if let Ok(config_content) = std::fs::read_to_string(config_file)
+    if let Ok(config_content) = tokio::fs::read_to_string(config_file).await
         && let Ok(config) = toml::from_str::<InstanceConfig>(&config_content)
     {
         Some(Instance {
             config,
-            installed: instance_root.join(".install.lock").is_file(),
+            installed: tokio::fs::metadata(instance_root.join(".install.lock"))
+                .await
+                .is_ok(),
             id: id.to_string(),
             last_played: get_launch_script_timestamp(id),
             has_background: instance_root.join("background").is_file(),
@@ -322,25 +331,25 @@ pub fn get_instance_by_id(id: &str) -> Option<Instance> {
 }
 
 /// Updates the configuration file of an existing instance.
-pub fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
+pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
     let instance_root = DATA_LOCATION.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
-    std::fs::write(config_file, toml::to_string_pretty(&config)?)?;
+    tokio::fs::write(config_file, toml::to_string_pretty(&config)?).await?;
     info!("Updated instance: {}", config.name);
     Ok(())
 }
 
 /// Deletes the instance directory corresponding to the given id.
-pub fn delete_instance(id: &str) -> Result<()> {
-    std::fs::remove_dir_all(DATA_LOCATION.get_instance_root(id))?;
+pub async fn delete_instance(id: &str) -> Result<()> {
+    tokio::fs::remove_dir_all(DATA_LOCATION.get_instance_root(id)).await?;
     info!("Deleted {id}");
     Ok(())
 }
 
 /// Removes the `.install.lock` marker file of an instance.
-pub fn remove_install_lock(id: &str) -> Result<()> {
+pub async fn remove_install_lock(id: &str) -> Result<()> {
     let lock_file = DATA_LOCATION.get_instance_root(id).join(".install.lock");
-    if let Err(err) = std::fs::remove_file(lock_file)
+    if let Err(err) = tokio::fs::remove_file(lock_file).await
         && err.kind() != std::io::ErrorKind::NotFound
     {
         return Err(err.into());
@@ -354,14 +363,14 @@ pub fn get_background_path(id: &str) -> PathBuf {
 }
 
 /// Copies `path` over the instance's background image.
-pub fn add_background_image(path: &std::path::Path, id: &str) -> Result<()> {
-    std::fs::copy(path, get_background_path(id))?;
+pub async fn add_background_image(path: &std::path::Path, id: &str) -> Result<()> {
+    tokio::fs::copy(path, get_background_path(id)).await?;
     Ok(())
 }
 
 /// Removes an instance's background image.
-pub fn remove_background(id: &str) -> Result<()> {
-    std::fs::remove_file(get_background_path(id))?;
+pub async fn remove_background(id: &str) -> Result<()> {
+    tokio::fs::remove_file(get_background_path(id)).await?;
     Ok(())
 }
 

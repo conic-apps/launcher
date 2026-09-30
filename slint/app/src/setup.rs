@@ -99,51 +99,47 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
                 Channel::Snapshot => manifest.latest.snapshot,
             })
             .map_err(|error| error.to_string());
-        let weak = weak.clone();
-        // Creating an instance writes a file and walks the instance folder, so
-        // it belongs on the blocking pool (the original runs it in a Tauri
-        // command, off the UI thread too).
-        crate::runtime::spawn_blocking(move || {
-            // The version, not the new instance's id, is what the button shows
-            // afterwards — the Vue's `createdLatestRelease.value` is
-            // `minecraftVersionManifest.latest.release`.
-            let created = version.and_then(|version| {
-                create_instance(&name, &version)
-                    .map(|_| SharedString::from(version))
-                    .map_err(|error| error.to_string())
-            });
-            let _ = weak.upgrade_in_event_loop(move |ui| {
-                let state = ui.global::<SetupWizardState>();
-                match (channel, &created) {
-                    (Channel::Release, Ok(version)) => {
-                        state.set_created_release(version.clone());
-                        state.set_release_error(false);
-                    }
-                    (Channel::Release, Err(error)) => {
-                        log::error!("failed to create the latest-release instance: {error}");
-                        state.set_release_error(true);
-                    }
-                    (Channel::Snapshot, Ok(version)) => {
-                        state.set_created_snapshot(version.clone());
-                        state.set_snapshot_error(false);
-                    }
-                    (Channel::Snapshot, Err(error)) => {
-                        log::error!("failed to create the latest-snapshot instance: {error}");
-                        state.set_snapshot_error(true);
-                    }
+        // The version, not the new instance's id, is what the button shows
+        // afterwards — the Vue's `createdLatestRelease.value` is
+        // `minecraftVersionManifest.latest.release`.
+        let created = match version {
+            Ok(version) => create_instance(&name, &version)
+                .await
+                .map(|_| SharedString::from(version))
+                .map_err(|error| error.to_string()),
+            Err(error) => Err(error),
+        };
+        let _ = weak.clone().upgrade_in_event_loop(move |ui| {
+            let state = ui.global::<SetupWizardState>();
+            match (channel, &created) {
+                (Channel::Release, Ok(version)) => {
+                    state.set_created_release(version.clone());
+                    state.set_release_error(false);
                 }
-                match channel {
-                    Channel::Release => state.set_creating_release(false),
-                    Channel::Snapshot => state.set_creating_snapshot(false),
+                (Channel::Release, Err(error)) => {
+                    log::error!("failed to create the latest-release instance: {error}");
+                    state.set_release_error(true);
                 }
-                // The Vue's `createInstance` writes the file and nothing else;
-                // its instance list is read again when the game view is entered,
-                // which is where the wizard's last step ends. Asking for the
-                // refresh here rather than there is the same work one page
-                // earlier, and it is what `create_instance.rs` does for the
-                // create-instance dialog.
-                ui.global::<GameState>().invoke_refresh();
-            });
+                (Channel::Snapshot, Ok(version)) => {
+                    state.set_created_snapshot(version.clone());
+                    state.set_snapshot_error(false);
+                }
+                (Channel::Snapshot, Err(error)) => {
+                    log::error!("failed to create the latest-snapshot instance: {error}");
+                    state.set_snapshot_error(true);
+                }
+            }
+            match channel {
+                Channel::Release => state.set_creating_release(false),
+                Channel::Snapshot => state.set_creating_snapshot(false),
+            }
+            // The Vue's `createInstance` writes the file and nothing else;
+            // its instance list is read again when the game view is entered,
+            // which is where the wizard's last step ends. Asking for the
+            // refresh here rather than there is the same work one page
+            // earlier, and it is what `create_instance.rs` does for the
+            // create-instance dialog.
+            ui.global::<GameState>().invoke_refresh();
         });
     });
 }
@@ -151,11 +147,11 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
 /// `createInstance({ launch_config: { enable_instance_specific_settings:
 /// false }, name, runtime: { minecraft } })` — the whole of the Vue's call. No
 /// `id`, so the instance gets a random one, exactly as the original's.
-fn create_instance(name: &str, version: &str) -> Result<String, slint_instance::Error> {
+async fn create_instance(name: &str, version: &str) -> Result<String, slint_instance::Error> {
     let mut config = InstanceConfig::new(name, version);
     config.launch_config = InstanceLaunchConfig {
         enable_instance_specific_settings: false,
         ..Default::default()
     };
-    slint_instance::create_instance(config, None)
+    slint_instance::create_instance(config, None).await
 }

@@ -357,12 +357,31 @@ impl PaletteController {
 
     /// The Vue's `watch(() => props.visible)`: everything is reset on the way
     /// in, never on the way out.
-    fn open(&mut self, ui: &App) {
-        // The list is read from the crate rather than borrowed from `game.rs`'s
-        // rows, which are the *grouped, filtered* model the game view draws and
-        // not the instance list the palette filters. What it comes back sorted by
-        // does not matter: `filtered` sorts by last played itself.
-        self.instances = slint_instance::list_instances(SortBy::Playtime).unwrap_or_default();
+    ///
+    /// The instance list is read on the runtime and the reset happens in the
+    /// event loop behind it, so opening the palette does not wait on a read of
+    /// every `instance.toml` (the original read it in a Tauri command, off the
+    /// UI thread, for the same reason).
+    fn open(ui: &App) {
+        let weak = ui.as_weak();
+        crate::runtime::spawn(async move {
+            // The list is read from the crate rather than borrowed from
+            // `game.rs`'s rows, which are the *grouped, filtered* model the game
+            // view draws and not the instance list the palette filters. What it
+            // comes back sorted by does not matter: `filtered` sorts by last
+            // played itself.
+            let instances = slint_instance::list_instances(SortBy::Playtime)
+                .await
+                .unwrap_or_default();
+            let _ = weak.upgrade_in_event_loop(move |ui| {
+                controller().borrow_mut().open_with(&ui, instances);
+            });
+        });
+    }
+
+    /// The reset [`PaletteController::open`] performs, for a list already read.
+    fn open_with(&mut self, ui: &App, instances: Vec<Instance>) {
+        self.instances = instances;
         self.mode = "root";
         self.source = "modrinth";
         self.results.clear();
@@ -390,7 +409,7 @@ impl PaletteController {
         if ui.global::<CommandPaletteState>().get_visible() {
             self.close(ui);
         } else {
-            self.open(ui);
+            Self::open(ui);
         }
     }
 
@@ -1073,14 +1092,13 @@ pub fn setup(ui: &App) {
     // Opening an open palette does nothing, which is what
     // `@click="commandPaletteVisible = true"` does.
     {
-        let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
         ui.global::<CommandPaletteState>().on_open(move || {
             let Some(ui) = weak.upgrade() else { return };
             if ui.global::<CommandPaletteState>().get_visible() {
                 return;
             }
-            controller.borrow_mut().open(&ui);
+            PaletteController::open(&ui);
         });
     }
     {
