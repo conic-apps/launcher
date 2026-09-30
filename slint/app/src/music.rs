@@ -52,10 +52,17 @@ struct Controller {
     player: slint_music::Player,
     beat_map: BeatMap,
     /// The playlist the model was last built from, so the rows are not rebuilt
-    /// (and the popup's scroll position dropped) on every tick.
-    tracks: Vec<slint_music::MusicFile>,
+    /// (and the popup's scroll position dropped) on every tick. The player hands
+    /// out an `Arc` that is only replaced when the folder is re-listed, so the
+    /// check is a pointer comparison rather than a hundred string comparisons
+    /// sixty times a second.
+    playlist: Option<Arc<Vec<slint_music::MusicFile>>>,
     /// The volume the device was last given, for the same reason.
     volume: Option<u8>,
+    /// The last frame of bar heights, kept so that reading the analyser sixty
+    /// times a second does not allocate sixty times a second. The idle branch
+    /// leaves it alone, so the next live frame reuses whatever capacity it has.
+    levels: Vec<f32>,
     /// Whether the window has the focus — the store's `backgrounded`.
     focused: bool,
     /// Whether the clock is running (see [`start_clock`]).
@@ -110,9 +117,15 @@ impl BeatMap {
     /// One frame of bars: `bins` in dB (the analyser's own output) turned into
     /// `bar_count` levels in 0..1, spread logarithmically over the frequency
     /// range the visualizer shows.
-    fn sample(&mut self, bins: &[f32], sample_rate: f64) -> Vec<f32> {
+    ///
+    /// `out` is the caller's and is cleared first, so the caller can hand the
+    /// same buffer to every frame: this runs sixty times a second, and a fresh
+    /// `Vec` each time would be sixty allocations a second for a few hundred
+    /// bytes.
+    fn sample(&mut self, bins: &[f32], sample_rate: f64, out: &mut Vec<f32>) {
+        out.clear();
         if self.bar_count == 0 || bins.is_empty() || sample_rate <= 0.0 {
-            return Vec::new();
+            return;
         }
         let nyquist = sample_rate / 2.0;
         let bin_count = bins.len();
@@ -122,7 +135,7 @@ impl BeatMap {
         let min_bin = Self::min_bin(bin_count, nyquist, max_bin);
         let min_log_bin = min_bin.max(1);
 
-        let mut values = Vec::with_capacity(self.bar_count);
+        out.reserve(self.bar_count);
         let mut frame_max = 0.0f32;
         for bar in 0..self.bar_count {
             let ratio = bar as f64 / self.bar_count as f64;
@@ -149,17 +162,16 @@ impl BeatMap {
             if value > frame_max {
                 frame_max = value;
             }
-            values.push(value);
+            out.push(value);
         }
 
         self.peak_level = frame_max
             .max(self.peak_level * Self::PEAK_DECAY)
             .max(Self::MIN_PEAK_LEVEL);
         let scale = 1.0 / self.peak_level;
-        values
-            .into_iter()
-            .map(|value| (value * scale).min(1.0))
-            .collect()
+        for level in out.iter_mut() {
+            *level = (*level * scale).min(1.0);
+        }
     }
 
     /// The lower end of the frequency range: `Math.min(round(binCount *
@@ -213,8 +225,9 @@ pub fn setup(ui: &App) {
         *slot.borrow_mut() = Some(Controller {
             player,
             beat_map: BeatMap::new(),
-            tracks: Vec::new(),
+            playlist: None,
             volume: Some(volume),
+            levels: Vec::new(),
             // The store assumes the window is focused and corrects itself from
             // `isFocused()`. A correct answer needs a live window, so the first
             // focus event after startup settles it; until then the main volume
@@ -308,6 +321,17 @@ fn register_callbacks(ui: &App) {
     {
         let weak = ui.as_weak();
         state.on_toggle_play(move || with_player(&weak, |player| player.toggle_play()));
+    }
+    {
+        // The progress bar's drag, which stops the music for its duration and
+        // asks for it back on the release. Explicit rather than two toggles, so
+        // the second half cannot undo the wrong thing.
+        let weak = ui.as_weak();
+        state.on_pause(move || with_player(&weak, |player| player.pause()));
+    }
+    {
+        let weak = ui.as_weak();
+        state.on_resume(move || with_player(&weak, |player| player.resume()));
     }
     {
         let weak = ui.as_weak();
@@ -440,8 +464,14 @@ fn apply(ui: &App) {
         // store's `ontimeupdate` used.
         let snapshot = controller.player.tick();
 
-        if controller.tracks != snapshot.tracks {
-            controller.tracks = snapshot.tracks.clone();
+        // The playlist is an `Arc` the player replaces only when the folder is
+        // re-listed, so this is a pointer comparison: the rows are rebuilt when
+        // it changed, not sixty times a second.
+        let relisted = controller
+            .playlist
+            .as_ref()
+            .is_none_or(|playlist| !Arc::ptr_eq(playlist, &snapshot.tracks));
+        if relisted {
             let rows: Vec<MusicTrack> = snapshot
                 .tracks
                 .iter()
@@ -451,6 +481,7 @@ fn apply(ui: &App) {
                 })
                 .collect();
             state.set_tracks(ModelRc::new(VecModel::from(rows)));
+            controller.playlist = Some(Arc::clone(&snapshot.tracks));
         }
         state.set_current_index(snapshot.current_index.map_or(-1, |index| index as i32));
         state.set_is_playing(snapshot.is_playing);
@@ -465,16 +496,24 @@ fn apply(ui: &App) {
         } else {
             0.0
         });
+        state.set_buffering(snapshot.buffering);
 
         // The visualizer's own condition: `analyser && hasTrack && isPlaying`.
         let live = snapshot.current_track().is_some() && snapshot.is_playing;
         state.set_live(live);
         if live {
-            let levels = controller.beat_map.sample(
-                &controller.player.spectrum(),
-                controller.player.sample_rate(),
-            );
-            state.set_levels(ModelRc::new(VecModel::from(levels)));
+            // The bins are handed over under the player's own lock, so the
+            // mapping reads them in place instead of the player handing out a
+            // copy sixty times a second for a reader that copies again. The
+            // levels go out and the buffer comes back empty, ready for the next
+            // frame.
+            let sample_rate = controller.player.sample_rate();
+            let beat_map = &mut controller.beat_map;
+            let levels = &mut controller.levels;
+            controller
+                .player
+                .with_spectrum(|bins| beat_map.sample(bins, sample_rate, levels));
+            state.set_levels(ModelRc::new(VecModel::from(std::mem::take(levels))));
         } else {
             // The idle branch draws its own baseline, so the levels it would have
             // read are not carried over from the last playing frame.
@@ -482,7 +521,7 @@ fn apply(ui: &App) {
         }
 
         // The clock is only worth running while something is moving — or about
-        // to: a selection is asynchronous (the file has to be decoded before the
+        // to: a selection is asynchronous (the file has to be opened before the
         // transport can report it as playing), and a `restore_session` at startup
         // is nothing but one. Without that the very first play would start
         // silently, because the tick that would have noticed it had already
@@ -566,7 +605,8 @@ mod tests {
             peak_level: 0.0,
         };
         let bins = vec![-90.0; 1024];
-        let quiet = beat_map.sample(&bins, 48000.0);
+        let mut quiet = Vec::new();
+        beat_map.sample(&bins, 48000.0, &mut quiet);
         assert!(quiet.iter().all(|level| level.is_finite()));
         assert!(quiet.iter().all(|level| (0.0..=1.0).contains(level)));
     }
@@ -580,7 +620,8 @@ mod tests {
         // -100dB is below `MIN_DB` (-70), so every bar is 0 — and the peak then
         // settles on `MIN_PEAK_LEVEL` (0.05), which is what keeps the noise floor
         // from being divided by zero.
-        let levels = beat_map.sample(&vec![-100.0; 1024], 48000.0);
+        let mut levels = Vec::new();
+        beat_map.sample(&vec![-100.0; 1024], 48000.0, &mut levels);
         assert!(levels.iter().all(|level| *level == 0.0));
         assert_eq!(beat_map.peak_level, BeatMap::MIN_PEAK_LEVEL);
     }
@@ -588,7 +629,25 @@ mod tests {
     #[test]
     fn no_bars_means_no_levels() {
         let mut beat_map = BeatMap::new();
-        assert!(beat_map.sample(&[0.0; 1024], 48000.0).is_empty());
+        let mut levels = Vec::new();
+        beat_map.sample(&[0.0; 1024], 48000.0, &mut levels);
+        assert!(levels.is_empty());
+    }
+
+    #[test]
+    fn a_frame_reuses_the_callers_buffer() {
+        // The visualizer runs sixty times a second and hands the same `Vec`
+        // round every time; a frame must replace its contents rather than
+        // append to them.
+        let mut beat_map = BeatMap {
+            bar_count: 8,
+            peak_level: 0.0,
+        };
+        let mut levels = Vec::new();
+        beat_map.sample(&vec![-20.0; 1024], 48000.0, &mut levels);
+        assert_eq!(levels.len(), 8);
+        beat_map.sample(&vec![-20.0; 1024], 48000.0, &mut levels);
+        assert_eq!(levels.len(), 8, "a second frame appended to the first");
     }
 
     #[test]

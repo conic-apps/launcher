@@ -44,6 +44,9 @@ pub struct Analyser {
     fft: Arc<dyn Fft<f32>>,
     /// The smoothed magnitudes, in linear units — not dB (see the module docs).
     smoothed: Vec<f32>,
+    /// The transform's input, kept between reads. A fresh `Vec` per read would be
+    /// an allocation on the audio thread sixty times a second.
+    scratch: Vec<Complex32>,
 }
 
 impl Analyser {
@@ -56,6 +59,7 @@ impl Analyser {
             window: blackman_window(fft_size),
             fft: plan_fft(fft_size),
             smoothed: Vec::new(),
+            scratch: Vec::new(),
         };
         analyser
             .smoothed
@@ -97,20 +101,35 @@ impl Analyser {
     /// truncated to the newest `fftSize`, exactly as the node's own ring buffer
     /// behaves.
     pub fn read(&mut self, input: &[f32]) -> Vec<f32> {
+        let mut bins = Vec::with_capacity(self.frequency_bin_count());
+        self.read_into(input, &mut bins);
+        bins
+    }
+
+    /// [`Self::read`] writing into `bins`, which is cleared first.
+    ///
+    /// The audio callback uses this rather than `read`: the node it stands in for
+    /// wrote into an array the caller already had, and handing out a fresh `Vec`
+    /// every read would put an allocation on the one thread that cannot afford
+    /// one.
+    pub fn read_into(&mut self, input: &[f32], bins: &mut Vec<f32>) {
         let size = self.fft_size;
         let skip = input.len().saturating_sub(size);
-        let mut buffer: Vec<Complex32> = Vec::with_capacity(size);
+        self.scratch.clear();
+        self.scratch
+            .reserve(size.saturating_sub(self.scratch.capacity()));
         for index in 0..size {
             let sample = input.get(skip + index).copied().unwrap_or(0.0);
-            buffer.push(Complex32::new(sample * self.window[index], 0.0));
+            self.scratch
+                .push(Complex32::new(sample * self.window[index], 0.0));
         }
-        self.fft.process(&mut buffer);
+        self.fft.process(&mut self.scratch);
 
         // The spec's `1/N` normalisation, applied to the magnitudes.
         let scale = 1.0 / size as f32;
         let carry = SMOOTHING_TIME_CONSTANT;
         let keep = 1.0 - carry;
-        for (slot, spectrum) in self.smoothed.iter_mut().zip(buffer.iter()) {
+        for (slot, spectrum) in self.smoothed.iter_mut().zip(self.scratch.iter()) {
             // A silent bin is 0, not `-inf`: `getFloatFrequencyData` reports the
             // floor of the representable range, and the visualiser treats
             // anything at or below its own `MIN_DB` as silence anyway.
@@ -118,10 +137,12 @@ impl Analyser {
             *slot = carry * *slot + keep * magnitude;
         }
 
-        self.smoothed
-            .iter()
-            .map(|magnitude| 20.0 * magnitude.log10())
-            .collect()
+        bins.clear();
+        bins.extend(
+            self.smoothed
+                .iter()
+                .map(|magnitude| 20.0 * magnitude.log10()),
+        );
     }
 }
 
