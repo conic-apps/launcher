@@ -38,7 +38,7 @@ slint/
     ui/
       app.slint                     # root `App` Window (mirrors src/App.vue)
       theme.slint                   # palette + typography tokens, embeds fonts
-      icons.slint                   # icon path data (mirrors src/assets/icons/*.svg)
+      icons.slint                   # GENERATED icon path data (see slint/app/build.rs)
       fonts/ComfortaaNunito.ttf      # Comfortaa with Nunito digits merged (see Fonts)
       assets/                       # palette previews, about logos, version icons
       assets/skins/                 # the 18 bundled default skins (slim + wide)
@@ -1018,6 +1018,8 @@ still falls back to the placeholder disc for a skin Rust could not decode.
     alone here (it is the icon the already-migrated settings and create-instance
     screens draw too) rather than fixed inside an overlay migration; the fix
     belongs in the icon pass, where `--fix` can be taught the missing shape.
+    **Fixed since**: `icons.slint` is generated from the SVGs now, so the frame
+    and the sun are there.
 
 
 ## Rendering the README bodies
@@ -2129,12 +2131,35 @@ the very first play at startup would start silently. This is the same clock
   that knows the footer's box (`views/game/footer.slint`, as `parent.width` /
   `parent.height`), which is the honest translation of `inset: 0`. Worth
   remembering for any component mounted under an `if` that has to fill something.
-- **`icons.slint` is transcribed by hand, and it drifts.**
-  `slint/tools/check-icons.py` re-derives both command passes from the SVGs and
-  reports (or `--fix`es) every icon that does not match, including the `<circle>`
-  elements a `d`-only reading misses. The music player's `list` was missing all
-  three of its discs for that reason; ten other icons still differ and are
-  untouched here, so run it before blaming a component for an odd glyph.
+- **`icons.slint` is generated, not written.** `slint/app/build.rs` reads every
+  SVG under `src/assets/icons/` (plus the two brand marks in
+  `src/assets/images/`) with `usvg` — the same crate Slint rasterizes them with,
+  reached through `resvg` — and writes the `Icons` global the app imports. So
+  the table cannot drift from the SVGs: attribute inheritance, `<rect rx>`,
+  `<circle>`, `<ellipse>`, `<line>` and `<polyline>` are all resolved by the
+  library that will draw them, rather than by a `d`-only reading of the file.
+  **Adding an icon is dropping the `.svg` into `src/assets/icons/` and
+  rebuilding** — the generator re-scans the directory (a `rerun-if-changed` on
+  it, so a new file triggers it) and every icon in it becomes a valid
+  `AppIcon { name: "..." }`. The file is gitignored; it is a build product.
+  The one thing a generator cannot catch is a *name* that does not exist —
+  `Icons.stroke-commands()` returns `""` and the icon is simply missing, with
+  nothing logged — so `slint/tools/check-icon-names.py` asserts every name any
+  `.slint` asks for has an SVG behind it.
+
+  This replaced a hand-transcribed table, which had drifted: ten icons had lost
+  their `<circle>` geometry (`gamepad`, `branch`, `palette`, …) and seven more
+  had lost every `<rect>`/`<line>`/`<ellipse>`/`<polyline>` — `apps-outline`,
+  `server`, `bell`, `badge-check`, `arrow-down-tray`, `package` and `image` drew
+  *nothing at all*. `warning` was worse than missing: its `!` stroke begins with
+  a lower-case `m` (a relative move from the origin) that the transcription read
+  as a mid-path move, so the exclamation mark sat in the wrong place.
+
+  Three glyphs stay hand-written because they are not icons: the
+  minimize/maximize/close window controls in `title-bar.slint` (drawn to the
+  platform's own metrics) and the placeholder artwork in `game-placeholder.slint`.
+  `base-loading`'s arc and `item-loading-icon`'s three states are animation
+  frames, not a set.
 - **The `pcm` feature of symphonia is a codec of its own, not part of `wav`.**
   Without it symphonia reads a WAV header and then has no decoder for the samples
   it found, which fails every WAV in the folder with "unsupported codec" — the one
@@ -2198,6 +2223,10 @@ the very first play at startup would start silently. This is the same clock
     shows through its own `surface0` at 60% unblurred.
 
 - **Icons**: the original uses Font Awesome Pro (`fa-pro`), which can't be
-  shipped. The search glyph is currently a hand-embedded path; a proper icon
-  strategy (e.g. the SVGs in `src/assets/icons/`) is still to be decided.- The placeholder view contains dev-only English strings; real localized text
+  shipped, so the set is the free subset the Vue app already ships in
+  `src/assets/icons/`. `ui/icons.slint` is **generated** from those SVGs by
+  `slint/app/build.rs` on every build (see the note on `icons.slint` above), so
+  a call site is `AppIcon { name: "folder"; }` and the geometry follows the SVG.
+  `music-folder` (a `fa-pro` glyph in a different style) and `icons.svg` (an
+  unreferenced multi-glyph sprite) were removed rather than ported.- The placeholder view contains dev-only English strings; real localized text
   arrives with the actual views.

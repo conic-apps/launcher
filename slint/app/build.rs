@@ -1,5 +1,26 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+use std::collections::BTreeMap;
+use std::fmt::Write as _;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use usvg::tiny_skia_path::PathSegment;
+use usvg::{Node, Tree};
+
+/// Where the icon SVGs live, relative to this crate (`slint/app`).
+///
+/// They are the **Vue app's** own files, read in place rather than copied: the
+/// two frontends are one product and an icon is one drawing. The two brand
+/// marks are not next to the rest because the Vue original keeps them in
+/// `assets/images/` (`AppIcon.vue` globs both, so they are reachable there
+/// either way).
+const ICON_SOURCES: &[(&str, &str)] = &[
+    ("../../src/assets/icons", ""),
+    ("../../src/assets/images", "modrinth,curseforge"),
+];
 
 fn main() {
     // `slint-build` compiles the UI files below `ui/` into `gen` and emits Rust
@@ -8,7 +29,11 @@ fn main() {
     // Custom fonts are embedded via `import "*.ttf"` in `ui/theme.slint`;
     // translations are bundled from `i18n/<lang>/LC_MESSAGES/<crate>.po` and
     // selected at runtime with `slint::select_bundled_translation()`.
+    //
+    // `ui/icons.slint` is generated first: it is a build product, and the
+    // compiler reads it like any other `.slint` file.
     check_embedded_font();
+    generate_icons();
     let config = slint_build::CompilerConfiguration::new().with_bundled_translations("i18n");
     slint_build::compile_with_config("ui/app.slint", config).expect("failed to compile the app UI");
 }
@@ -32,5 +57,367 @@ fn check_embedded_font() {
              slint/tools/merge-digit-font.py`.",
             path.display()
         );
+    }
+}
+
+/// One icon's geometry, split into the two passes `AppIcon` draws.
+struct Icon {
+    /// Sub-paths with a stroke, concatenated. Drawn with `stroke` over
+    /// `fill: transparent`.
+    stroke: String,
+    /// Sub-paths with a fill, concatenated. Drawn with `fill` and
+    /// `stroke: transparent`.
+    fill: String,
+    /// The stroke width in view box units, or `None` when nothing is stroked.
+    /// One per icon because `AppIcon` scales a single value; the generator
+    /// rejects an icon whose strokes disagree rather than picking one.
+    stroke_width: Option<f32>,
+    /// The view box edge, assumed square (see `check_square`).
+    viewbox: i32,
+}
+
+/// Generate `ui/icons.slint` from the SVGs the Vue app renders.
+///
+/// **Why generated rather than written by hand.** The table used to be
+/// transcribed, and it drifted: ten icons had lost their `<circle>` geometry
+/// and seven more had lost every `<rect>`/`<line>`/`<ellipse>`/`<polyline>`
+/// (`apps-outline`, `server` and `bell` among them drew *nothing*). Every SVG
+/// shape type had to be re-implemented by hand, which is a losing game.
+///
+/// So the SVGs are read with `usvg` -- the same crate Slint rasterizes them
+/// with, reached through `resvg` -- and the geometry comes back already
+/// resolved: attribute inheritance applied, `<rect rx>`, `<circle>`,
+/// `<ellipse>`, `<line>` and `<polyline>` all converted to path segments by
+/// the library that will draw them. The generated data cannot disagree with
+/// the rendering, and an icon is repaired by editing its SVG.
+///
+/// Adding an icon is dropping the file into `src/assets/icons/`; there is
+/// nothing else to update.
+fn generate_icons() {
+    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let mut icons: BTreeMap<String, Icon> = BTreeMap::new();
+
+    for (directory, only) in ICON_SOURCES {
+        let directory = manifest.join(directory);
+        // A directory watch covers files added *and* removed, which a
+        // per-file `rerun-if-changed` would miss.
+        println!("cargo:rerun-if-changed={}", directory.display());
+        let only: Vec<&str> = only.split(',').filter(|name| !name.is_empty()).collect();
+
+        let entries = fs::read_dir(&directory)
+            .unwrap_or_else(|error| panic!("failed to read {}: {error}", directory.display()));
+        for entry in entries {
+            let path = entry.expect("failed to read a directory entry").path();
+            if path.extension().and_then(|extension| extension.to_str()) != Some("svg") {
+                continue;
+            }
+            let Some(name) = path.file_stem().and_then(|stem| stem.to_str()) else {
+                continue;
+            };
+            if !only.is_empty() && !only.contains(&name) {
+                continue;
+            }
+            if icons.contains_key(name) {
+                // `only` lists the two brand marks, which are in `images/`
+                // precisely so they cannot collide with the `icons/` set.
+                continue;
+            }
+            let icon = parse_icon(&path);
+            assert!(
+                icons.insert(name.to_owned(), icon).is_none(),
+                "{name}: found twice in {}",
+                ICON_SOURCES
+                    .iter()
+                    .map(|(directory, _)| *directory)
+                    .collect::<Vec<_>>()
+                    .join(" and ")
+            );
+        }
+    }
+
+    assert!(
+        !icons.is_empty(),
+        "no icon SVGs found; the table would be empty"
+    );
+    let source = render_icons_table(&icons);
+    let out = manifest.join("ui/icons.slint");
+    fs::write(&out, source)
+        .unwrap_or_else(|error| panic!("failed to write {}: {error}", out.display()));
+}
+
+/// Read one SVG into the two passes `AppIcon` draws.
+fn parse_icon(path: &Path) -> Icon {
+    let data =
+        fs::read(path).unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
+    let tree = Tree::from_data(&data, &usvg::Options::default()).unwrap_or_else(|error| {
+        panic!("failed to parse {}: {error}", path.display());
+    });
+    check_square(path, &tree);
+
+    let mut icon = Icon {
+        stroke: String::new(),
+        fill: String::new(),
+        stroke_width: None,
+        viewbox: viewbox_edge(&tree),
+    };
+    collect_group(tree.root(), &mut icon, path);
+    icon
+}
+
+/// The view box edge, which every icon in the set happens to make square.
+///
+/// `AppIcon` passes one number as both `viewbox-width` and `viewbox-height`, so
+/// a non-square view box would be drawn stretched. Nothing in the set is, and
+/// an icon that arrives that way is a mistake worth hearing about rather than
+/// a silent distortion.
+fn check_square(path: &Path, tree: &Tree) {
+    let size = tree.size();
+    if (size.width() - size.height()).abs() > f32::EPSILON {
+        panic!(
+            "{}: view box is {}x{}, but `AppIcon` assumes a square one (it passes a single \
+             number as both `viewbox-width` and `viewbox-height`, so the glyph would be drawn \
+             stretched).",
+            path.display(),
+            size.width(),
+            size.height()
+        );
+    }
+}
+
+fn viewbox_edge(tree: &Tree) -> i32 {
+    // `Tree::size` is the view box in user units, which is the unit the path
+    // data is in and the unit `stroke-width` is expressed against.
+    (tree.size().width().round() as i32).max(1)
+}
+
+/// Walk the tree in document order, splitting each shape into the pass its own
+/// paint calls for.
+///
+/// The split is `usvg`'s, not a guess: it has already applied the CSS
+/// inheritance that decides it, so an element reads as filled or stroked
+/// exactly as it will be rasterized. (`AppIcon.vue` had to emulate this with
+/// `stroke: currentColor; fill: currentColor` on the root, which is why a shape
+/// with `fill="none"` is the only kind that is *not* filled.)
+fn collect_group(group: &usvg::Group, icon: &mut Icon, path: &Path) {
+    for node in group.children() {
+        match node {
+            Node::Group(child) => collect_group(child, icon, path),
+            Node::Path(shape) => collect_shape(shape, icon, path),
+            // Nothing in the icon set is an embedded raster, and `<text>` would
+            // need a font to outline. Neither is a shape `AppIcon` can draw,
+            // so skipping them is right -- but silently is not, because an
+            // icon that is *only* one of them would generate an empty table.
+            Node::Image(image) => {
+                println!(
+                    "cargo:warning={}: ignoring <image> ({}); an icon must be vector geometry",
+                    path.display(),
+                    image.id()
+                );
+            }
+            Node::Text(text) => {
+                println!(
+                    "cargo:warning={}: ignoring <text id={}>; an icon must be vector geometry",
+                    path.display(),
+                    text.id()
+                );
+            }
+        }
+    }
+}
+
+/// Split one shape into the pass its own paint calls for.
+///
+/// The split is `usvg`'s, not a guess: it has already applied the CSS
+/// inheritance that decides it, so a shape reads as filled or stroked exactly
+/// as it will be rasterized. (`AppIcon.vue` had to emulate this with
+/// `stroke: currentColor; fill: currentColor` on the root, which is why a shape
+/// with `fill="none"` is the only kind that is *not* filled.)
+fn collect_shape(shape: &usvg::Path, icon: &mut Icon, path: &Path) {
+    if !shape.is_visible() {
+        return;
+    }
+    // `abs_transform` is the element's own transform composed with those of
+    // its ancestors; `data` is the geometry without it. `transform` returns
+    // `None` for a degenerate (zero-area) transform, which leaves nothing to
+    // draw either way.
+    let Some(data) = shape.data().clone().transform(shape.abs_transform()) else {
+        return;
+    };
+    let commands = serialize(&data);
+    if commands.is_empty() {
+        return;
+    }
+    if shape.fill().is_some() {
+        icon.fill.push_str(&commands);
+    }
+    if let Some(stroke) = shape.stroke() {
+        icon.stroke.push_str(&commands);
+        let width = stroke.width().get();
+        match icon.stroke_width {
+            // A file's shapes share one `stroke-width` (SVG would let them
+            // differ, and `AppIcon` cannot express that), so a second value
+            // means the icon needs a different renderer, not a coin flip.
+            Some(existing) if (existing - width).abs() > f32::EPSILON => {
+                panic!(
+                    "{}: stroked shapes disagree on stroke-width ({existing} and {width}), which \
+                     `AppIcon` cannot express -- it scales a single value.",
+                    path.display()
+                );
+            }
+            _ => icon.stroke_width = Some(width),
+        }
+    }
+}
+
+/// `tiny-skia-path` segments back into an SVG path data string.
+///
+/// Slint's `Path.commands` takes SVG syntax, and `usvg` hands back the same
+/// geometry as `tiny-skia-path` segments (move / line / quad / cubic / close),
+/// so this is a change of spelling rather than of shape. Numbers are printed
+/// with `{v}` -- Rust's shortest round-trip form -- which keeps the generated
+/// file small and the numbers exactly round-trippable.
+fn serialize(path: &usvg::tiny_skia_path::Path) -> String {
+    let mut out = String::new();
+    for segment in path.segments() {
+        match segment {
+            PathSegment::MoveTo(point) => {
+                let _ = write!(out, "M{} {}", point.x, point.y);
+            }
+            PathSegment::LineTo(point) => {
+                let _ = write!(out, "L{} {}", point.x, point.y);
+            }
+            PathSegment::QuadTo(control, point) => {
+                let _ = write!(out, "Q{} {} {} {}", control.x, control.y, point.x, point.y);
+            }
+            PathSegment::CubicTo(from, control, point) => {
+                let _ = write!(
+                    out,
+                    "C{} {} {} {} {} {}",
+                    from.x, from.y, control.x, control.y, point.x, point.y
+                );
+            }
+            PathSegment::Close => out.push('Z'),
+        }
+    }
+    out
+}
+
+/// Write out the `Icons` global `AppIcon` and `markdown-body.slint` import.
+///
+/// The four functions and the values they fall back to are unchanged from the
+/// table this replaces, so no call site has to change: `AppIcon` is the only
+/// consumer of the first three, and the 58 `name:` bindings keep working
+/// because every icon in the directory is a key.
+fn render_icons_table(icons: &BTreeMap<String, Icon>) -> String {
+    let mut out = String::new();
+    out.push_str(
+        "// Conic Launcher\n\
+         // Copyright 2022-2026 ConicMC developers. All rights reserved.\n\
+         // SPDX-License-Identifier: GPL-3.0-only\n\
+         \n\
+         // GENERATED by `slint/app/build.rs` from the SVGs the Vue app renders -- do not edit.\n\
+         // Edit the `.svg` (or add one to `src/assets/icons/`) and rebuild; see the icon section\n\
+         // of `slint/README.md`.\n\
+         //\n\
+         // The geometry below is `usvg`'s, i.e. Slint's own: attribute inheritance applied and\n\
+         // every shape type (`<rect rx>`, `<circle>`, `<ellipse>`, `<line>`, `<polyline>`) already\n\
+         // converted to path data, which is what the hand-written table this replaces used to\n\
+         // get wrong.\n\
+         //\n\
+         // An icon is described by four lookups:\n\
+         //   * `stroke-commands` -- outline sub-paths, drawn with `stroke` over a transparent fill;\n\
+         //   * `fill-commands`   -- solid sub-paths, drawn with `fill` and a transparent stroke.\n\
+         //                         Several icons are both, which is why the two lists are separate;\n\
+         //   * `viewbox`         -- the square view box edge (24, 26, 512, 593 or 640);\n\
+         //   * `stroke-width`    -- stroke width in view box units, absent when nothing is stroked.\n\
+         //\n\
+         // The icon set is Font Awesome Free and Ionicons; the two brand marks (`modrinth`,\n\
+         // `curseforge`) are the SVGs under `src/assets/images/`, inlined here as path data so\n\
+         // that `AppIcon` can tint them.\n\
+         export global Icons {\n",
+    );
+
+    let mut viewbox = String::new();
+    for (name, icon) in icons {
+        let _ = writeln!(
+            viewbox,
+            "        if name == \"{name}\" {{ return {}; }}",
+            icon.viewbox
+        );
+    }
+    // A 512 view box is what an unlisted name falls back to, so an icon added
+    // without a regenerated table would at least be drawn at a plausible scale
+    // rather than at 1:1.
+    // A 512 view box is what an unlisted name falls back to, so an icon added
+    // without a regenerated table would at least be drawn at a plausible scale
+    // rather than at 1:1.
+    let _ = writeln!(viewbox, "        return 512;");
+
+    let mut stroke_width = String::new();
+    for (name, icon) in icons {
+        if let Some(width) = icon.stroke_width {
+            let _ = writeln!(
+                stroke_width,
+                "        if name == \"{name}\" {{ return {}; }}",
+                trim_float(width)
+            );
+        }
+    }
+    // The Ionicons half of the set is authored at `stroke-width: 32` on a 512
+    // view box, so 32 is both the most common value and the right thing for an
+    // icon this generator has not seen (a name reaching the table from a
+    // dynamic binding) to fall back to.
+    let _ = writeln!(stroke_width, "        return 32.0;");
+
+    for (signature, body) in [
+        (
+            "public pure function viewbox(name: string) -> int",
+            &viewbox,
+        ),
+        (
+            "public pure function stroke-width(name: string) -> float",
+            &stroke_width,
+        ),
+        (
+            "public pure function stroke-commands(name: string) -> string",
+            &render_commands(icons, |icon| &icon.stroke),
+        ),
+        (
+            "public pure function fill-commands(name: string) -> string",
+            &render_commands(icons, |icon| &icon.fill),
+        ),
+    ] {
+        let _ = writeln!(out, "    {signature} {{\n{body}\n    }}\n");
+    }
+    out.push_str("}\n");
+    out
+}
+
+/// The body of a `commands` lookup: one `if` per icon that has that pass, and
+/// a final `return ""` so an unknown or unstroked name yields an empty path
+/// rather than a parse error.
+fn render_commands(icons: &BTreeMap<String, Icon>, select: impl Fn(&Icon) -> &String) -> String {
+    let mut out = String::new();
+    for (name, icon) in icons {
+        let commands = select(icon);
+        if commands.is_empty() {
+            continue;
+        }
+        let _ = writeln!(
+            out,
+            "        if name == \"{name}\" {{ return \"{commands}\"; }}"
+        );
+    }
+    out.push_str("        return \"\";\n");
+    out
+}
+
+/// Print a float without a trailing `.0` where an integer will do, so the
+/// generated table reads like the SVG path data it came from.
+fn trim_float(value: f32) -> String {
+    if (value.fract()).abs() < f32::EPSILON && value.abs() < 1.0e9 {
+        format!("{}", value as i64)
+    } else {
+        format!("{value}")
     }
 }
