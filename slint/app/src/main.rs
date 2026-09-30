@@ -36,6 +36,8 @@ mod traffic_lights;
 #[cfg(target_os = "windows")]
 mod windows_caption;
 
+mod worldmap;
+
 use std::{cell::RefCell, rc::Rc};
 
 use log::LevelFilter;
@@ -177,6 +179,10 @@ fn main() {
     multiplayer::setup(&ui);
     // The clock and the wheel/trackpad classification the scroll containers use.
     scroll_input::setup(&ui);
+    // The saves panel's world map. It reads the clock above for its tile fades,
+    // and its own component reports the world and the visible range, so it is
+    // wired after both.
+    worldmap::setup(&ui);
     // The background-music player: `MusicPlayer.vue` mounted itself on the Vue
     // app's root, so this runs for the whole session rather than per page.
     music::setup(&ui);

@@ -12,6 +12,10 @@ slint-modrinth.workspace = true
 slint-curseforge.workspace = true
 
 base64.workspace = true
+# The world map renderer (`worldmap.rs`): reads a save's region files and hands
+# back an RGBA tile. The Tauri plugin had it too; here it is used without the
+# PNG round trip the webview needed.
+conic-worldmap.workspace = true
 fastnbt.workspace = true
 flate2.workspace = true
 futures.workspace = true

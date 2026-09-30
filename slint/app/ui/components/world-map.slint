@@ -1,0 +1,665 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { BaseLoading } from "./base-loading.slint";
+import { ItemLoadingIcon } from "./item-loading-icon.slint";
+import { ScrollInput, ScrollSource } from "../globals/scroll.slint";
+import { WorldMapState, WorldSource } from "../globals/worldmap.slint";
+
+// The live world map of a save (src/components/WorldMap.vue).
+//
+// The Vue drew a `<canvas>`: a 2D context, one `drawImage` per tile out of a
+// `Map<string, ImageBitmap>`, and a `requestAnimationFrame` loop for the zoom
+// glide. Slint has no imperative canvas, so the same picture is a `for` over
+// `WorldMapState.tiles` — one `Image` per tile, placed by the same transform
+// the canvas used, which is what the properties below are.
+//
+// # What is the same
+//
+//   * The render transform: `scale` pixels per block, and `offset-x` /
+//     `offset-y` the screen position of block (0, 0). A tile at (tx, tz) is
+//     drawn at `(tx * tile-size * scale + offset-x, …)`, `tile-size * scale`
+//     square — the Vue's `drawImage(bitmap, tx * T * s + offsetX, …, T * s, T * s)`.
+//   * The opening view: `min(width, height) / 512` px per block, clamped to the
+//     scale range, centred on the spawn.
+//   * The mouse: a drag pans, the wheel zooms *smoothly* towards a target with a
+//     lerp, keeping the block under the cursor pinned under the cursor.
+//   * A tile fades in over 100ms the first time it is rendered, and does not
+//     fade when it comes back out of the cache.
+//
+// # What is different, and why
+//
+//   * **The caches moved to Rust** (`app/src/worldmap.rs`). The webview had to
+//     keep PNG bytes *and* decoded `ImageBitmap`s, because those were the two
+//     forms a tile could take across the IPC boundary; a `SharedPixelBuffer`
+//     needs no such round trip (see `globals/worldmap.slint`). There is one
+//     cache here, and this component only draws what Rust hands it.
+//   * **`canvas.width = viewportW * devicePixelRatio` is gone.** Slint has no
+//     device-pixel grid — the renderer works in logical pixels throughout — so
+//     the Vue's `ctx.setTransform(dpr, …)` has no counterpart, and a tile is
+//     exactly the size the transform says it is.
+//   * **`image-rendering: pixelated`** is the same property here, and it is
+//     also what the canvas' `imageSmoothingEnabled = false` did: nearest
+//     neighbour, so a tile stays a grid of hard block-coloured pixels instead
+//     of turning to mush when zoomed in.
+//   * **The trackpad.** The browser reports a trackpad pinch as a wheel event
+//     with a synthesized `ctrlKey`, which is why the Vue has to track a
+//     *physical* Ctrl (`physicalCtrl`) to tell a pinch from a real Ctrl+wheel,
+//     and why its two-finger scroll zoomed. A native app gets the real thing:
+//     winit hands the magnification to Slint as a `PinchGesture`, which
+//     `ScaleRotateGestureHandler` reports with the cursor as its centre. So a
+//     two-finger *scroll* pans the map — what it does everywhere else on macOS
+//     — and only a pinch zooms. The synthesized-ctrl detection is gone with the
+//     reason for it.
+//   * **The scroll reaches nothing behind the map.** The Vue's `e
+//     .preventDefault()` and its `<!-- FIXME: Disable page scroll when scale -->`
+//     are the same line, and here they are one `accept`: the map swallows the
+//     wheel instead of the saves list behind it scrolling while the map zooms.
+
+export component WorldMap inherits Rectangle {
+    // ----- what it is showing -----
+    /// The save's folder name — the world's own identifier in the saves list.
+    in property <string> folder-name: "";
+    /// The instance the save belongs to.
+    in property <string> instance-id: "";
+    /// The world's spawn point, which the map opens centred on. `(0, 0)` asks
+    /// Rust for the world's own spawn instead, which is what a `level.dat`
+    /// without a `spawn.pos` gets.
+    in property <int> center-x: 0;
+    in property <int> center-z: 0;
+    /// `dimension`: a namespaced id, or "" for the overworld.
+    in property <string> dimension: "";
+    /// Blocks along one edge of a tile. The Vue's `tileSize` prop, and the
+    /// render request's `width` / `height`.
+    in property <int> tile-size: 64;
+    in property <bool> water: true;
+    in property <bool> shading: true;
+    in property <bool> altitude-shading: true;
+    /// The zoom limits, in pixels per block.
+    in property <float> min-scale: 0.15;
+    in property <float> max-scale: 64;
+    /// `.world-map-coords` — the block the cursor is over. `ContentSaves.vue`
+    /// turns it on for the expansion.
+    in property <bool> show-cursor-coords: false;
+    in property <string> cursor-coordinates-position: "bottom-center";
+
+    // ----- geometry -----
+    // `.world-map { width: 100%; height: 100%; overflow: hidden; border-radius:
+    // 8px; background: var(--ctp-base) }`. The size is given by the caller
+    // rather than read off `parent`: a component under an `if` does not get its
+    // parent's size for free (see the README's note on `BeatMap`), and this one
+    // is mounted inside a card's expansion.
+    //
+    // The Vue's `min-height: 160px` is not reproduced. Slint has no
+    // `min-height` on a plain element — it is a layout constraint, and a bare
+    // `Rectangle` is not a layout — and the box this is mounted into is a fixed
+    // `height + 160px`, so the floor could never have bound anyway.
+    width: 100%;
+    height: 100%;
+    clip: true;
+    border-radius: 8px;
+    background: Theme.base;
+
+    // ----- the render transform -----
+    // `in-out` rather than `in` because these are written here as well as read:
+    // the Vue exposed the same three through `defineExpose`, and the zoom
+    // animation assigns them every frame.
+    /// Pixels per block. The Vue's `scale` ref.
+    in-out property <float> scale: 1;
+    /// Screen position of block (0, 0), the Vue's `offsetX` / `offsetY`.
+    in-out property <length> offset-x: 0px;
+    in-out property <length> offset-y: 0px;
+
+    /// One block on screen — the tile size times the scale, which is both a
+    /// tile's edge and the divisor that turns a screen position into a block.
+    private property <length> block-size: root.tile-size * root.scale * 1px;
+    /// Blocks across the smaller edge of the opening view
+    /// (`INITIAL_VIEW_BLOCKS`).
+    private property <int> initial-view-blocks: 512;
+    /// Whether the opening view is still being established. The Vue's
+    /// `pendingInit`, with the reason it exists spelled out, because the Slint
+    /// side has to *end* it differently.
+    ///
+    /// The card's expansion grows over 200ms, so the first layout the map ever
+    /// sees is the collapsed box, and a view framed from that opens far more
+    /// zoomed out than `INITIAL_VIEW_BLOCKS` asks for — and asks Rust for three
+    /// times the tiles to fill it. So the box is sampled until it stops moving
+    /// (`open-timer` below), and every sample re-frames.
+    private property <bool> pending-init: true;
+    /// The size the framing was last taken from, and when it changed, to tell a
+    /// still-growing box from a settled one. -1px is a size no box has.
+    private property <length> open-width: -1px;
+    private property <length> open-height: -1px;
+    private property <float> open-changed-ms: 0;
+    /// How long the box has to hold still. Long enough to outlast a dropped
+    /// frame of the expansion's 200ms animation — the timer and the animation
+    /// are not the same clock, and a 16ms tick can see the same size twice in a
+    /// row simply because a frame was late.
+    private property <float> settle-ms: 60;
+
+    open-timer := Timer {
+        interval: 16ms;
+        running: root.pending-init;
+        triggered => { root.reframe-until-settled(); }
+    }
+
+    /// The tile range the transform puts on screen — the Vue's
+    /// `visibleTileRange`, and what Rust is asked to fill the model with.
+    private property <int> tile-x0: floor(-root.offset-x / root.block-size);
+    private property <int> tile-x1: floor(
+        (root.width - root.offset-x) / root.block-size
+    );
+    private property <int> tile-z0: floor(-root.offset-y / root.block-size);
+    private property <int> tile-z1: floor(
+        (root.height - root.offset-y) / root.block-size
+    );
+
+    /// The world a tile request is about. Every change re-opens the world,
+    /// which is the Vue's `watch([instanceId, folderName, dimension, tileSize,
+    /// centerX, centerZ, …], resetWorld, { immediate: true })` — the same list,
+    /// the render options included.
+    private property <string> world-key: root.instance-id + "\u{1}" + root.folder-name
+        + "\u{1}" + root.dimension + "\u{1}" + root.tile-size
+        + "\u{1}" + root.center-x + "\u{1}" + root.center-z
+        + "\u{1}" + (root.water ? 1 : 0) + "\u{1}" + (root.shading ? 1 : 0)
+        + "\u{1}" + (root.altitude-shading ? 1 : 0);
+
+    init => {
+        root.open-world();
+        root.fade-clock = ScrollInput.now-ms();
+    }
+    changed world-key => { root.reset-world(); }
+
+    /// The Vue debounced the *fetches* by 50ms but restored its cache hits
+    /// immediately; that split is Rust's now (the queue it throttles lives
+    /// there), so the call is the same either way and is made straight away.
+    ///
+    /// Four handlers rather than one folded key: `changed` takes a single
+    /// identifier, and this runs on a per-frame path where building a key
+    /// string every frame would be an allocation for nothing.
+    changed tile-x0 => { root.request-visible-tiles(); }
+    changed tile-x1 => { root.request-visible-tiles(); }
+    changed tile-z0 => { root.request-visible-tiles(); }
+    changed tile-z1 => { root.request-visible-tiles(); }
+
+    function request-visible-tiles() {
+        WorldMapState.request-tiles(
+            root.tile-x0,
+            root.tile-x1,
+            root.tile-z0,
+            root.tile-z1
+        );
+    }
+
+    /// The world this map is showing, as the tuple Rust keys its caches by.
+    /// `world-key` above is the same information folded into one string, for
+    /// the `changed` that has to be an identifier.
+    private property <WorldSource> world: {
+        instance-id: root.instance-id,
+        folder: root.folder-name,
+        dimension: root.dimension,
+        spawn-x: root.center-x,
+        spawn-z: root.center-z,
+        tile-size: root.tile-size,
+        water: root.water,
+        shading: root.shading,
+        altitude-shading: root.altitude-shading,
+    };
+
+    /// Tells Rust which world is on screen, which is what keys its caches. The
+    /// Vue's `init`-time prop write, done once per element — and again from
+    /// `reset-world`, which is the same call its `watch` made.
+    ///
+    /// The world is built into a local property rather than passed as an
+    /// argument because Slint has no struct literal in an expression: a struct
+    /// is only ever built in a binding.
+    function open-world() {
+        WorldMapState.world = self.world;
+        WorldMapState.open();
+    }
+
+    /// Re-frames the opening view until the box stops moving.
+    ///
+    /// A `changed width` / `changed height` handler is the obvious way to do
+    /// this and does not work: those only fire for a property this component
+    /// *binds*, and the card assigns the map's size from outside (which is also
+    /// what the README's note about a component under an `if` is about). A timer
+    /// that samples the box is not clever about it.
+    function reframe-until-settled() {
+        if root.width <= 0px || root.height <= 0px {
+            return;
+        }
+        if root.width == self.open-width && root.height == self.open-height {
+            if ScrollInput.now-ms() - self.open-changed-ms >= self.settle-ms {
+                root.pending-init = false;
+            }
+            return;
+        }
+        self.open-width = root.width;
+        self.open-height = root.height;
+        self.open-changed-ms = ScrollInput.now-ms();
+        root.reset-view();
+    }
+
+    /// `resetView`: the opening framing, centred on the spawn.
+    ///
+    /// Whether the framing is final is `reframe-until-settled`'s business, not
+    /// this one's — it is called once per sample while the box is still moving.
+    ///
+    /// The target is realigned to the new scale *after* it is set, which is the
+    /// Vue's `targetZoom = s` and the line that is easy to leave out.
+    /// `stopZoomAnimation()` on its own realigns the target to the scale as it
+    /// was *before* the call, so a map that opened straight into its framing
+    /// would glide from the default 1 towards the opening zoom instead of
+    /// sitting still — and the offsets come out zeroed too, because the glide
+    /// moves the view back onto the anchor a wheel notch would have set, and
+    /// there has not been one.
+    function reset-view() {
+        if root.width <= 0px || root.height <= 0px {
+            return;
+        }
+        root.scale = clamp(
+            min(root.width, root.height) / root.initial-view-blocks / 1px,
+            root.min-scale,
+            root.max-scale
+        );
+        root.target-zoom = root.scale;
+        root.offset-x = root.width / 2 - root.center-x * 1px * root.scale;
+        root.offset-y = root.height / 2 - root.center-z * 1px * root.scale;
+    }
+
+    /// `resetWorld`: a different world, instance, dimension, tile size, spawn or
+    /// render option — the old tiles are meaningless and the view starts over.
+    /// The Vue emptied both caches and bumped `requestSeq`, which every
+    /// in-flight response checked; here the caches are Rust's and keyed by the
+    /// same tuple, and `seq` is that check, so `open-world` *is* the reset — it
+    /// is what drops the tiles, the queue and the stale renders. Only the view
+    /// is this component's own business.
+    function reset-world() {
+        root.open-world();
+        root.stop-zoom();
+        root.pending-init = true;
+        self.open-width = -1px;
+        self.open-height = -1px;
+        // The size is usually known already — a prop changing on an existing
+        // element does not re-run `init` — so the first sample happens here.
+        root.reframe-until-settled();
+        root.request-visible-tiles();
+    }
+
+    // ----- the fade clock -----
+    // A tile fades in over `FADE_MS` from its own `appear-ms`, which is the
+    // Vue's `min(1, (now - tileAppear.get(key)) / FADE_MS)` read on every
+    // `draw()` frame. The clock is `ScrollInput.now-ms()` — Slint has no clock
+    // of its own a binding can read, and a callback call is not pure enough to
+    // go into one — so it is held here and written by the timer. The timer only
+    // runs while a tile is inside its window, so a settled map has no timer at
+    // all; the fold is because `changed` takes an identifier, not
+    // `WorldMapState.fade-until`.
+    private property <float> fade-clock: 0;
+    private property <float> fade-until: WorldMapState.fade-until;
+    changed fade-until => {
+        if self.fade-until > 0 {
+            fade-timer.start();
+        }
+    }
+
+    fade-timer := Timer {
+        interval: 16ms;
+        running: false;
+        triggered => {
+            root.fade-clock = ScrollInput.now-ms();
+            if root.fade-clock >= root.fade-until {
+                fade-timer.stop();
+            }
+        }
+    }
+
+    // ----- the tiles -----
+    //
+    // The Vue's `draw()` loop, as a repetition: same range, same order, same
+    // `drawImage` geometry. The one thing that is not the same is *when* it
+    // runs — the canvas redrew imperatively on every change, while these are
+    // bindings, so a pan or a zoom frame re-evaluates four numbers per tile and
+    // Slint redraws. Nothing is recomputed in Rust per frame.
+    for tile in WorldMapState.tiles : Image {
+        x: tile.tx * root.block-size + root.offset-x;
+        y: tile.tz * root.block-size + root.offset-y;
+        width: root.block-size;
+        height: root.block-size;
+        source: tile.image;
+        // `.world-map-canvas { image-rendering: pixelated }`, and the canvas'
+        // `imageSmoothingEnabled = false` behind it.
+        image-rendering: ImageRendering.pixelated;
+
+        // A tile fades in over 100ms from the moment it first reached the model.
+        // A tile that has been in the model before — panned away from and back
+        // over — keeps its original stamp, so it does not fade again, and a tile
+        // that has not been stamped yet is at full strength. Data rather than an
+        // animation on the element, so a tile that lands on a row another tile
+        // had fades exactly like one that got a row of its own.
+        opacity: tile.appear-ms <= 0
+            ? 1
+            : clamp((root.fade-clock - tile.appear-ms) / 100, 0, 1);
+    }
+
+    // ----- status -----
+    // `.world-map-status`: `inset: 0`, centred, `gap: 8px`, 12px,
+    // `--ctp-subtext0` on `--ctp-base`. The Vue swapped the spinner for an
+    // error glyph + message with a `v-else-if` on one element, so this is one
+    // element with two contents.
+    if WorldMapState.loading || WorldMapState.error != "" : Rectangle {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: parent.height;
+        background: Theme.base;
+
+        status := HorizontalLayout {
+            x: 0;
+            y: (parent.height - self.height) / 2;
+            width: parent.width;
+            // The 22px the Vue's `BaseLoading :size="22"` asked for; a row of
+            // glyph + text is the same height as the glyph.
+            height: 22px;
+            alignment: center;
+            spacing: 8px;
+
+            if WorldMapState.loading : BaseLoading {
+                size: 22px;
+                stroke-width: 5;
+                icon-color: Theme.subtext-0;
+            }
+
+            if WorldMapState.error != "" : ItemLoadingIcon {
+                status: "error";
+            }
+
+            if WorldMapState.error != "" : Text {
+                text: WorldMapState.error;
+                color: Theme.red;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+        }
+    }
+
+    // ----- the cursor's block -----
+    // `.world-map-coords`: `padding: 4px 10px`, 12px, `--ctp-text` on
+    // `rgba(mantle, .7)`, a 1px `--ctp-surface0` border, 6px radius, and one of
+    // six corners 8px in. `pointer-events: none` in the Vue, which is what the
+    // declaration order does here: it is written after the area that reads the
+    // pointer, so it never takes an event.
+    if root.show-cursor-coords && map-area.has-hover : Rectangle {
+        x: root.cursor-coordinates-position == "top-left" || root.cursor-coordinates-position == "bottom-left"
+            ? 8px
+            : root.cursor-coordinates-position == "top-right" || root.cursor-coordinates-position == "bottom-right"
+                ? parent.width - self.width - 8px
+                : (parent.width - self.width) / 2;
+        y: root.cursor-coordinates-position == "top-left" || root.cursor-coordinates-position == "top-center"
+                || root.cursor-coordinates-position == "top-right" ? 8px
+            : root.cursor-coordinates-position == "bottom-left" || root.cursor-coordinates-position == "bottom-center"
+                || root.cursor-coordinates-position == "bottom-right"
+                ? parent.height - self.height - 8px
+            : (parent.height - self.height) / 2;
+        width: coords-text.width + 20px;
+        height: coords-text.height + 8px;
+        border-radius: 6px;
+        border-width: 1px;
+        border-color: Theme.surface-0;
+        // `rgba(var(--ctp-mantle-rgb), 0.7)`
+        background: Theme.mantle.transparentize(0.3);
+
+        coords-text := Text {
+            x: 10px;
+            y: (parent.height - self.height) / 2;
+            // `x: {{ cursorX }}, z: {{ cursorZ }}` — the two are read off the
+            // same transform the tiles are placed with (`screenToBlock`).
+            text: "x: " + root.cursor-x + ", z: " + root.cursor-z;
+            color: Theme.text;
+            font-size: 12px;
+        }
+    }
+
+    private property <int> cursor-x: floor((map-area.mouse-x - root.offset-x) / root.block-size);
+    private property <int> cursor-z: floor((map-area.mouse-y - root.offset-y) / root.block-size);
+
+    // ----- input -----
+    // The Vue's three pointer handlers and one wheel listener, on the same
+    // element: a drag pans, a wheel zooms.
+    //
+    // It sits *under* the coords label and the status overlay in declaration
+    // order, so neither of those takes an event.
+    map-area := TouchArea {
+        // `cursor: grab`, and `.is-dragging .world-map-canvas { cursor: grabbing }`.
+        mouse-cursor: root.dragging ? MouseCursor.grabbing : MouseCursor.grab;
+
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                // Dragging and zooming are mutually exclusive: the zoom glide is
+                // dropped before the drag starts, or the anchor would snap the
+                // view back on the next frame.
+                root.stop-zoom();
+                root.dragging = true;
+                root.drag-x = map-area.mouse-x;
+                root.drag-y = map-area.mouse-y;
+            } else if event.kind == PointerEventKind.move && root.dragging {
+                // Each move is a delta from the last one, not from where the
+                // drag started — the Vue's `lastX` / `lastY`.
+                root.offset-x = root.offset-x + map-area.mouse-x - root.drag-x;
+                root.offset-y = root.offset-y + map-area.mouse-y - root.drag-y;
+                root.drag-x = map-area.mouse-x;
+                root.drag-y = map-area.mouse-y;
+            } else if event.kind == PointerEventKind.up
+                || event.kind == PointerEventKind.cancel {
+                root.dragging = false;
+            }
+        }
+
+        scroll-event(event) => {
+            if ScrollInput.source() == ScrollSource.wheel {
+                // A *wheel* zooms, exactly as in the Vue. A Ctrl or ⌘ on it is
+                // no longer the browser faking a pinch — there is no browser —
+                // but it is still the gesture that means "zoom", and it is the
+                // one that zooms *immediately* with the Vue's steeper factor,
+                // which is also what a pinch does below.
+                //
+                // ⌘ is Slint's `control` on macOS (the platform swaps the two),
+                // so one test covers both platforms' zoom modifier.
+                root.zoom-at(
+                    map-area.mouse-x,
+                    map-area.mouse-y,
+                    clamp(event.modifiers.control || event.modifiers.meta
+                        ? exp(-(event.delta-y / 1px) * 0.01)
+                        : exp(-(event.delta-y / 1px) * 0.0016), 0.2, 5)
+                );
+            } else {
+                // Two fingers, or the momentum macOS keeps sending after they
+                // lift: the deltas *are* the motion, so the view follows them
+                // exactly rather than easing towards them — the same reading of
+                // a trackpad delta as `components/scroll-view.slint`, and the
+                // opposite of what the Vue did with them.
+                //
+                // `+`, not `-`. `offset-x`/`offset-y` are the screen position of
+                // block (0, 0), so *adding* the delta moves block (0, 0) down
+                // and the content with it: the map follows the fingers, which is
+                // what a drag does and what a canvas does. Subtracting is what
+                // a scroll view does — it moves the viewport towards the end of
+                // the content — and it sends the map the opposite way from the
+                // gesture. (The Vue's canvas had no such sign to get wrong: it
+                // redrew from `offsetX` and a wheel never reached it.)
+                root.offset-x = root.offset-x + event.delta-x;
+                root.offset-y = root.offset-y + event.delta-y;
+                // It also drops a wheel glide in flight, the way the scroll view
+                // does, so the two cannot fight over the view.
+                root.stop-zoom();
+            }
+            // The Vue's `e.preventDefault()`: a wheel over the map is the map's
+            // and never reaches the panel behind it. Without it the saves list
+            // scrolls while the map zooms, which is the `<!-- FIXME: Disable
+            // page scroll when scale -->` in `ContentSaves.vue`.
+            return accept;
+        }
+    }
+
+    private property <bool> dragging: false;
+    /// The pointer's position when the drag last moved.
+    private property <length> drag-x: 0px;
+    private property <length> drag-y: 0px;
+
+    // The Vue's `:hover` on a parent, which stays true while a descendant is
+    // hovered. The card's expansion needs it, and cannot read a property of
+    // this component (a conditional element's id is not in scope outside the
+    // `if`), so it goes through the global. The fold is the same trick
+    // `command-palette.slint` uses for its debounce key: `changed` takes a
+    // bare identifier, not `map-area.has-hover`.
+    private property <bool> pointed: map-area.has-hover;
+    changed pointed => { WorldMapState.hovered = self.pointed; }
+
+    // ----- the zoom animation -----
+    // The Vue's `targetZoom` / `zoomAnchor*` / `zoomRAF`, which a
+    // `requestAnimationFrame` loop lerped towards. A `Timer` is the same pump
+    // (see `components/scroll-view.slint`), and the step is scaled by the real
+    // elapsed time so the glide lasts the same at 30fps as at 120.
+    /// Where the scale is heading. A wheel notch only moves this; the animation
+    /// walks `scale` up to it.
+    private property <float> target-zoom: 1;
+    /// The world point the zoom is anchored on and where it sits on screen —
+    /// the Vue's `zoomAnchorWorldX/Z` and `zoomAnchorPX/PY`. The point is what
+    /// keeps the block under the cursor under the cursor.
+    private property <float> anchor-world-x: 0;
+    private property <float> anchor-world-z: 0;
+    private property <length> anchor-x: 0px;
+    private property <length> anchor-y: 0px;
+    /// The Vue's `ZOOM_LERP_FACTOR`, per 60Hz frame.
+    private property <float> zoom-lerp: 0.25;
+    /// The Vue's `ZOOM_STOP_EPSILON`.
+    private property <float> zoom-epsilon: 0.0005;
+    private property <float> last-tick-ms: 0;
+    /// Whether the glide is in flight, and whether the anchor below is worth
+    /// anything.
+    ///
+    /// An explicit flag, and not `abs(target-zoom - scale) >= epsilon` the way
+    /// the Vue's `zoomRAF !== undefined` reads. Deriving it means *any* write to
+    /// `scale` that is not matched by a write to `target-zoom` starts the glide
+    /// — and the glide's last act is to put the view back on the anchor, which
+    /// before the first wheel notch is (0, 0). A pinch writes `scale` on every
+    /// update, so the view jumped to the world origin: the glide was running with
+    /// an anchor no gesture had set. Only `zoom-at` may start it, and only it
+    /// sets the anchor.
+    private property <bool> zooming: false;
+
+    zoom-timer := Timer {
+        interval: 8ms;
+        running: root.zooming;
+        triggered => {
+            if abs(root.target-zoom - root.scale) < root.zoom-epsilon {
+                // Converged: land on the target exactly, as the Vue's
+                // `ZOOM_STOP_EPSILON` branch does, and stop.
+                root.scale = root.target-zoom;
+                root.zooming = false;
+            } else {
+                // `zoom = lerp(zoom, targetZoom, ZOOM_LERP_FACTOR)`, with the
+                // step scaled by the frame time the way Lenis' is (see
+                // `scroll-view`).
+                root.scale = root.scale + (root.target-zoom - root.scale) * (1 - pow(
+                    1 - root.zoom-lerp,
+                    clamp((ScrollInput.now-ms() - root.last-tick-ms) / 1000, 0.004, 0.05) * 60,
+                ));
+            }
+            root.last-tick-ms = ScrollInput.now-ms();
+            // The anchor holds the block under the pointer still, at whatever
+            // the scale is *this* frame.
+            root.offset-x = root.anchor-x - root.anchor-world-x * 1px * root.scale;
+            root.offset-y = root.anchor-y - root.anchor-world-z * 1px * root.scale;
+        }
+    }
+
+    /// `zoomAt`: a smooth zoom towards a target, pinned to a screen point.
+    function zoom-at(px: length, py: length, factor: float) {
+        if root.width <= 0px || root.height <= 0px {
+            return;
+        }
+        root.anchor-world-x = (px - root.offset-x) / root.block-size;
+        root.anchor-world-z = (py - root.offset-y) / root.block-size;
+        root.anchor-x = px;
+        root.anchor-y = py;
+        root.target-zoom = clamp(root.target-zoom * factor, root.min-scale, root.max-scale);
+        root.last-tick-ms = ScrollInput.now-ms();
+        root.zooming = true;
+    }
+
+    /// `stopZoomAnimation`, with the target realigned to where the scale
+    /// actually is: a drag or a two-finger pan takes over from here.
+    function stop-zoom() {
+        root.zooming = false;
+        root.target-zoom = root.scale;
+    }
+
+    // ----- pinch -----
+    // The one gesture the browser could not give the Vue: macOS reports a
+    // trackpad pinch as a wheel event with a synthesized `ctrlKey`, which is
+    // what `physicalCtrl` and `zoomImmediate` were working around. winit hands
+    // the magnification over as its own event, with the cursor as the centre
+    // and a factor already relative to the start of the gesture — so this is
+    // `zoomImmediate` written once, for a gesture that reports a *factor*
+    // rather than a per-event delta, and `physicalCtrl` has nothing left to do.
+    //
+    // Declared before the `TouchArea` on purpose: while a pinch is active the
+    // handler intercepts everything else, so a second finger landing
+    // mid-gesture cannot start a drag against it.
+    pinch := ScaleRotateGestureHandler {
+        // The scale and the block under the cursor when the gesture started, so
+        // its cumulative factor can be applied to both.
+        started => {
+            root.pinch-began = true;
+            root.pinch-scale = root.scale;
+            root.pinch-world-x = (pinch.center.x - root.offset-x) / root.block-size;
+            root.pinch-world-z = (pinch.center.y - root.offset-y) / root.block-size;
+            // A pinch takes the view off the wheel's glide, for the same reason a
+            // drag does: the two must not both be writing the offsets.
+            root.stop-zoom();
+        }
+        updated => {
+            // An update with no start is a gesture whose beginning was dropped
+            // (winit discards a magnify event whose phase is anything but Began,
+            // Changed, Cancelled or Ended). Applying it anyway would scale
+            // against the *initial* scale of 1 and against a world point of
+            // (0, 0), which puts the view on the world origin — the one thing a
+            // pinch must never do. So it waits for the real beginning.
+            if !root.pinch-began {
+                return;
+            }
+            // Read the handler's cumulative factor into a local rather than
+            // reading `root.scale` back after writing it: the next three lines
+            // all want the same value, and one binding evaluation between the
+            // write and the reads is all it takes to see the old one.
+            //
+            // `pinch.scale` and not `self.scale` — the same value, but named for
+            // the element it comes from.
+            root.pinch-next = clamp(root.pinch-scale * pinch.scale, root.min-scale, root.max-scale);
+            root.scale = root.pinch-next;
+            root.target-zoom = root.pinch-next;
+            // The block under the cursor stays under the cursor, as it does for
+            // a wheel. The centre moves as the fingers do, so it is re-read
+            // every update rather than captured once.
+            root.offset-x = pinch.center.x - root.pinch-world-x * 1px * root.pinch-next;
+            root.offset-y = pinch.center.y - root.pinch-world-z * 1px * root.pinch-next;
+        }
+        ended => { root.pinch-began = false; }
+        cancelled => {
+            root.pinch-began = false;
+            root.stop-zoom();
+        }
+    }
+    /// Whether a `started` has been seen for the gesture in flight. Cleared by
+    /// `ended` / `cancelled` and by nothing else, so an update that arrives
+    /// before its beginning is dropped rather than applied to a stale anchor.
+    private property <bool> pinch-began: false;
+    private property <float> pinch-scale: 1;
+    private property <float> pinch-world-x: 0;
+    private property <float> pinch-world-z: 0;
+    private property <float> pinch-next: 1;
+}

@@ -4,8 +4,10 @@
 
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/app-icon.slint";
+import { WorldMap } from "../../components/world-map.slint";
+import { WorldMapState } from "../../globals/worldmap.slint";
 import { CardTag, ContentCard as CardData, ContentText } from "../../globals/content.slint";
-import { GameTime } from "../../globals/game.slint";
+import { GameState, GameTime } from "../../globals/game.slint";
 
 // One card of a content grid (`styles/content-card.less` `.content`), shared by
 // all nine grids — the five local lists, the six remote ones and the saves.
@@ -530,21 +532,35 @@ export component ContentCard inherits Rectangle {
         expansion-touch := TouchArea { }
 
         // `.map-previewer-container { position: absolute; inset: 0; padding:
-        // 8px }` around the world map. The map itself is not migrated
-        // (`WorldMap.vue` over the `conic-worldmap` crate — see the README), so
-        // this is the box it would draw into: the map's own `.world-map {
-        // border-radius: 8px; background: var(--ctp-base) }`.
-        Rectangle {
+        // 8px }` around `<WorldMap>`, which draws the map's own `.world-map {
+        // border-radius: 8px; background: var(--ctp-base) }` itself.
+        //
+        // The Vue's `v-if="selectedSave === folderName && instanceStore
+        // .currentInstance"` is `if root.card.selected && GameState.has-current`:
+        // one world map exists at a time, and it is torn down when the card is
+        // deselected — which is also what drops the tiles, since the cache is
+        // keyed by world.
+        if root.card.selected && GameState.has-current : WorldMap {
             x: 8px;
             y: 8px;
             width: parent.width - 16px;
             height: parent.height - 16px;
-            border-radius: 8px;
-            background: Theme.base;
+            folder-name: root.card.id;
+            instance-id: GameState.current-id;
+            // `ContentSaves.vue` reads the spawn out of `level.dat` and hands
+            // it over as `:center-x` / `:center-z`. `0, 0` is what a world
+            // without a `spawn.pos` gets, and Rust falls back to the world's
+            // own spawn for that — see `worldmap.rs`.
+            center-x: root.card.spawn-x;
+            center-z: root.card.spawn-z;
+            show-cursor-coords: true;
+            cursor-coordinates-position: "bottom-center";
         }
 
-        // Declared after the area it reads — an id is only in scope from its
-        // own declaration onwards.
-        out property <bool> pointed: expansion-touch.has-hover;
+        // The map's own hover counts, the way `:hover` on a parent does in the
+        // Vue: `.extra` is a child of `.content`, and hovering a descendant
+        // leaves the parent hovered. `expansion-touch` is *under* the map, so
+        // it stops being hovered the moment the pointer reaches it.
+        out property <bool> pointed: expansion-touch.has-hover || WorldMapState.hovered;
     }
 }
