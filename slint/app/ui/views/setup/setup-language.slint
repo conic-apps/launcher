@@ -1,0 +1,150 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { FocusManager } from "../../globals/focus.slint";
+import { AppConfig } from "../../globals/settings.slint";
+import { WizardTitle, WizardMessage } from "wizard-text.slint";
+
+// One language of the grid (`button.language-item`): 42px tall, centred label,
+// `--setting-item-background` filling in on hover, press and selection.
+component LanguageButton inherits Rectangle {
+    in property <string> code;
+    in property <string> label;
+    in property <length> track-width;
+    in property <bool> selected: false;
+
+    width: root.track-width;
+    height: 42px;
+    border-radius: 8px;
+    // `&:hover { background: var(--ctp-surface0) }` comes before
+    // `&:active { … surface1 }` and `&.selected { … surface1 }`, and the three
+    // selectors weigh the same, so the later ones win: a selected button does
+    // not react to the pointer at all. (The same rule `AccountAddSelect`'s
+    // service buttons follow.)
+    background: root.selected ? Theme.surface-1
+        : touch.pressed ? Theme.surface-1
+        : touch.has-hover ? Theme.surface-0
+        : transparent;
+    // `transition: background 100ms ease` with `:hover { transition: none }` and
+    // `:active, :selected { transition: background 200ms ease }` — the app's
+    // "arrive instantly, leave eased" rule, which an `animate` expresses by
+    // reading the duration with the state the animation is heading for.
+    animate background {
+        duration: root.selected || touch.pressed ? 200ms : touch.has-hover ? 0ms : 100ms;
+        easing: ease;
+    }
+
+    Text {
+        width: 100%;
+        height: 100%;
+        text: root.label;
+        vertical-alignment: center;
+        horizontal-alignment: center;
+        // The Vue's `button.language-item` sets no `font-size`, so the label
+        // renders at 11px — a button's UA default, and rather small for a row
+        // the user reads rather than recognises. One pixel up is the size this
+        // port wants; the button's own box is the Vue's 42px either way.
+        font-size: 12px;
+        font-weight: Theme.font-weight-normal;
+        color: root.selected ? Theme.mauve : Theme.default-text-color.transparentize(0.1);
+    }
+
+    touch := TouchArea {
+        clicked => {
+            FocusManager.clear();
+            AppConfig.language = root.code;
+            AppConfig.changed();
+        }
+    }
+}
+
+// src/views/setup/SetupWizardLanguage.vue — the wizard's first screen.
+//
+// The Vue's own intro timeline (a staggered `opacity: 0, scale: 0.8` over the
+// title, the three paragraphs and the buttons) is *not* reproduced: the screen
+// exposes it with `defineExpose({ playIntro })` and nothing ever calls it —
+// `SetupView.vue` takes the ref and plays only its own header/body/footer
+// timeline. Dead code is not carried over.
+export component SetupLanguage inherits VerticalLayout {
+    /// The 12 codes, in the Vue's own order — the same list
+    /// `SettingsGeneral.vue`'s dropdown walks, spelled out again because the two
+    /// Vue files each carry their own copy.
+    private property <[string]> codes: [
+        "en_us",
+        "zh_cn",
+        "zh_tw",
+        "ja_jp",
+        "ko_kr",
+        "de_de",
+        "fr_fr",
+        "es_es",
+        "pt_br",
+        "ru_ru",
+        "tr_tr",
+        "pl_pl",
+    ];
+
+    /// A language code as its endonym.
+    pure function language-label(value: string) -> string {
+        if value == "en_us" { return "English"; }
+        if value == "zh_cn" { return "简体中文"; }
+        if value == "zh_tw" { return "繁體中文"; }
+        if value == "ja_jp" { return "日本語"; }
+        if value == "ko_kr" { return "한국어"; }
+        if value == "de_de" { return "Deutsch"; }
+        if value == "fr_fr" { return "Français"; }
+        if value == "es_es" { return "Español"; }
+        if value == "pt_br" { return "Português (Brasil);"; }
+        if value == "ru_ru" { return "Русский"; }
+        if value == "tr_tr" { return "Türkçe"; }
+        if value == "pl_pl" { return "Polski"; }
+        return "";
+    }
+
+    width: 100%;
+    spacing: 0px;
+    alignment: start;
+
+    WizardTitle { title: @tr("SetupLanguage" => "Welcome"); }
+
+    WizardMessage { message: @tr("SetupLanguage" => "Welcome to the first-run setup wizard!"); }
+    WizardMessage {
+        message: @tr("SetupLanguage" => "Conic Launcher is highly customizable, but the complex settings might be overwhelming.");
+    }
+    WizardMessage {
+        message: @tr("SetupLanguage" => "This wizard will quickly walk you through some important settings so you can start playing right away.");
+    }
+
+    // `.language-setting-container { display: grid; grid-template-columns:
+    // repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: 16px }`.
+    //
+    // `GridLayout` cannot do an `auto-fill` track list — its `col`/`row` bindings
+    // have to be compile-time constants — and a wrapping `FlexboxLayout`
+    // measures itself as √(total area) rather than at the width it is given,
+    // which the `ScrollView` above asks for. So the track count and the column
+    // width are worked out here instead, which is also what the browser does: as
+    // many 100px tracks with 8px gaps between them as fit, each then stretched
+    // over what is left over.
+    grid := Rectangle {
+        width: 100%;
+        background: transparent;
+        private property <int> columns: max(1, floor((self.width + 8px) / 108px));
+        private property <int> rows: ceil(root.codes.length / self.columns);
+        private property <length> track-width: (self.width - (self.columns - 1) * 8px) / self.columns;
+        // The 16px `margin-top` is folded into the box rather than taken as a
+        // padding: a `Rectangle` has no padding, and the first row would have to
+        // carry it on its own.
+        height: 16px + self.rows * 42px + (self.rows - 1) * 8px;
+
+        for code[index] in root.codes : LanguageButton {
+            x: mod(index, grid.columns) * (grid.track-width + 8px);
+            y: 16px + floor(index / grid.columns) * 50px;
+            track-width: grid.track-width;
+            code: code;
+            label: root.language-label(code);
+            selected: AppConfig.language == code;
+        }
+    }
+}

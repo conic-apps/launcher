@@ -2195,6 +2195,150 @@ msgstr "Cancel"
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "Confirm delete"
+#: ui
+msgctxt "SetupView"
+msgid "First-run setup"
+msgstr "First-run setup"
+#: ui
+msgctxt "SetupView"
+msgid "Customize Conic Launcher to suit your preferences"
+msgstr "Customize Conic Launcher to suit your preferences"
+#: ui
+msgctxt "SetupView"
+msgid "Back"
+msgstr "Back"
+#: ui
+msgctxt "SetupView"
+msgid "Let's get started!"
+msgstr "Let's get started!"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Add account)"
+msgstr "Next (Add account)"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Java settings)"
+msgstr "Next (Java settings)"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Launch options)"
+msgstr "Next (Launch options)"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Import instances)"
+msgstr "Next (Import instances)"
+#: ui
+msgctxt "SetupView"
+msgid "Finish"
+msgstr "Finish"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Welcome"
+msgstr "Welcome"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Welcome to the first-run setup wizard!"
+msgstr "Welcome to the first-run setup wizard!"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Conic Launcher is highly customizable, but the complex settings might be overwhelming."
+msgstr "Conic Launcher is highly customizable, but the complex settings might be overwhelming."
+#: ui
+msgctxt "SetupLanguage"
+msgid "This wizard will quickly walk you through some important settings so you can start playing right away."
+msgstr "This wizard will quickly walk you through some important settings so you can start playing right away."
+#: ui
+msgctxt "SetupPalette"
+msgid "Choose a color scheme"
+msgstr "Choose a color scheme"
+#: ui
+msgctxt "SetupPalette"
+msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
+msgstr "Conic Launcher supports multiple color schemes. Pick one that suits your style."
+#: ui
+msgctxt "SetupPalette"
+msgid "Follow system dark mode"
+msgstr "Follow system dark mode"
+#: ui
+msgctxt "SetupPalette"
+msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
+msgstr "Uses Latte when the system is set to light mode, otherwise uses Mocha"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Account added!"
+msgstr "Account added!"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance"
+msgstr "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Microsoft (Official account)"
+msgstr "Microsoft (Official account)"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Yggdrasil (External login)"
+msgstr "Yggdrasil (External login)"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "No auth service (Offline account)"
+msgstr "No auth service (Offline account)"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Java settings"
+msgstr "Java settings"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Conic Launcher can greatly simplify Java environment configuration. Enable \"Auto-install Java runtime\" to avoid manual installation!"
+msgstr "Conic Launcher can greatly simplify Java environment configuration. Enable \"Auto-install Java runtime\" to avoid manual installation!"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\""
+msgstr "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\""
+#: ui
+msgctxt "SetupLaunchOptions"
+msgid "Game launch options"
+msgstr "Game launch options"
+#: ui
+msgctxt "SetupLaunchOptions"
+msgid "Here are some basic launch options. You can change more options later in Settings and instance-specific settings."
+msgstr "Here are some basic launch options. You can change more options later in Settings and instance-specific settings."
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Import instances"
+msgstr "Import instances"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Import previously played instances from other launchers to get started quickly"
+msgstr "Import previously played instances from other launchers to get started quickly"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "If you're new to Minecraft, you can also create a blank instance with the latest version right away"
+msgstr "If you're new to Minecraft, you can also create a blank instance with the latest version right away"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Latest release"
+msgstr "Latest release"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Latest snapshot"
+msgstr "Latest snapshot"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "An error occurred"
+msgstr "An error occurred"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Creating..."
+msgstr "Creating..."
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Create instance with latest release"
+msgstr "Create instance with latest release"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Create instance with latest snapshot"
+msgstr "Create instance with latest snapshot"
 
 #: ui
 msgctxt "AccountAddMicrosoft"

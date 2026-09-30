@@ -57,6 +57,21 @@ export component AccountAddMicrosoft inherits VerticalLayout {
     // `AccountAdd`).
     alignment: start;
 
+    // Mounted inside the setup wizard, which hides this screen's "Cancel"
+    // buttons (`:deep(.cancel-login) { display: none }` — they would close a
+    // dialog that is not there) and gives the link box more room
+    // (`:deep(.link) { margin: 36px 0 }`). See `AccountAdd`.
+    in property <bool> wizard-host: false;
+
+    /// The gap the link box sits in: `div.link { margin-top: 8px }` above it and
+    /// `div.buttons { margin-top: 16px }` below it in the dialog, and 36px on
+    /// both sides in the wizard.
+    ///
+    /// The two margins collapse in the Vue's block flow, so the row below the
+    /// link is `max(link-margin, 16px)` away rather than their sum — which is
+    /// what the padding below says.
+    private property <length> link-margin: root.wizard-host ? 36px : 8px;
+
     // ----- the swap between the four states -----
     // A `changed` handler cannot take a qualified global property, so the view
     // is mirrored into a local first (`base-input.slint` does the same with the
@@ -275,9 +290,13 @@ export component AccountAddMicrosoft inherits VerticalLayout {
             }
         }
 
-        // `div.link { width: 100%; margin-top: 8px }`, centred.
+        // `div.link { width: 100%; margin-top: 8px }`, centred. The wizard's
+        // `:deep(.device-code .link) { margin-top: 36px }` is the same 36px
+        // `:deep(.link) { margin: 36px 0 }` already gives, and the 36px of
+        // bottom margin is spent below the row instead, where the button row's
+        // own 16px would have collapsed into it.
         Rectangle {
-            height: 8px;
+            height: root.link-margin;
             background: transparent;
         }
 
@@ -361,12 +380,13 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         }
 
         // `div.buttons { margin-top: 16px; gap: 8px }`, which this row does not
-        // push to the right (unlike the other screens').
+        // push to the right (unlike the other screens'). Its own 16px only
+        // applies where the link's margin does not already exceed it.
         HorizontalLayout {
-            padding-top: 16px;
+            padding-top: max(root.link-margin, 16px);
             spacing: 8px;
 
-            BaseButton {
+            if !root.wizard-host : BaseButton {
                 // The Vue's `width: 100%` on a lone button in a flex row: it
                 // takes the row.
                 horizontal-stretch: 1;
@@ -404,7 +424,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         // `div.link { margin-top: 8px }`: the label, then the link box over the
         // rest of the row.
         HorizontalLayout {
-            padding-top: 8px;
+            padding-top: root.link-margin;
             cross-axis-alignment: center;
 
             Text {
@@ -470,13 +490,13 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         }
 
         // `div.buttons { margin-top: 16px; gap: 8px }`, left-aligned like the
-        // device code's.
-        // `div.buttons { margin-top: 16px; display: flex; gap: 8px }`.
+        // device code's. `div.buttons { margin-top: 16px; display: flex; gap:
+        // 8px }`.
         HorizontalLayout {
-            padding-top: 16px;
+            padding-top: max(root.link-margin, 16px);
             spacing: 8px;
 
-            BaseButton {
+            if !root.wizard-host : BaseButton {
                 horizontal-stretch: 1;
                 text: @tr("Cancel");
                 clicked => { AccountAddState.cancel-microsoft-login(); }

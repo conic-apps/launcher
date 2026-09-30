@@ -28,6 +28,7 @@ mod music;
 mod runtime;
 mod scroll_input;
 mod settings;
+mod setup;
 
 #[cfg(target_os = "macos")]
 mod traffic_lights;
@@ -170,6 +171,9 @@ fn main() {
     launch::setup(&ui, Rc::clone(&shared));
     create_instance::setup(&ui, Rc::clone(&shared));
     account_add::setup(&ui);
+    // The first-run wizard: the import-instances screen's two "create a blank
+    // instance" buttons, and the platform answer its Java screen asks for.
+    setup::setup(&ui);
     multiplayer::setup(&ui);
     // The clock and the wheel/trackpad classification the scroll containers use.
     scroll_input::setup(&ui);

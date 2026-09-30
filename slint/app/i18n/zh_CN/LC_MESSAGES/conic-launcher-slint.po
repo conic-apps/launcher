@@ -2195,6 +2195,150 @@ msgstr "取消"
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "确认删除"
+#: ui
+msgctxt "SetupView"
+msgid "First-run setup"
+msgstr "首次启动设置"
+#: ui
+msgctxt "SetupView"
+msgid "Customize Conic Launcher to suit your preferences"
+msgstr "调整 Conic Launcher 以更贴合你的习惯"
+#: ui
+msgctxt "SetupView"
+msgid "Back"
+msgstr "返回"
+#: ui
+msgctxt "SetupView"
+msgid "Let's get started!"
+msgstr "让我们开始吧！"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Add account)"
+msgstr "下一个（添加帐户）"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Java settings)"
+msgstr "下一个（Java 虚拟机设置）"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Launch options)"
+msgstr "下一个（游戏启动选项）"
+#: ui
+msgctxt "SetupView"
+msgid "Next (Import instances)"
+msgstr "下一个（导入实例）"
+#: ui
+msgctxt "SetupView"
+msgid "Finish"
+msgstr "完成"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Welcome"
+msgstr "欢迎"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Welcome to the first-run setup wizard!"
+msgstr "欢迎来到首次启动设置指南页！"
+#: ui
+msgctxt "SetupLanguage"
+msgid "Conic Launcher is highly customizable, but the complex settings might be overwhelming."
+msgstr "Conic Launcher 是可高度自定义的启动器，但那些复杂的设置可能会让你不知所措。"
+#: ui
+msgctxt "SetupLanguage"
+msgid "This wizard will quickly walk you through some important settings so you can start playing right away."
+msgstr "这个指南将快速带你完成一些重要的设置项，以便待会儿你能够快速上手并启动你的游戏。"
+#: ui
+msgctxt "SetupPalette"
+msgid "Choose a color scheme"
+msgstr "选择配色方案"
+#: ui
+msgctxt "SetupPalette"
+msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
+msgstr "Conic Launcher 支持多种配色方案，你可以按自己的喜好选择一个。"
+#: ui
+msgctxt "SetupPalette"
+msgid "Follow system dark mode"
+msgstr "跟随系统深色设置"
+#: ui
+msgctxt "SetupPalette"
+msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
+msgstr "如果系统设置中设置为浅色，则使用 Latte ，否则使用 Mocha"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Account added!"
+msgstr "帐户已添加！"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance"
+msgstr "以下档案已设为默认档案。当你没有给实例设置要使用的档案时，启动器会使用此档案登录游戏"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Microsoft (Official account)"
+msgstr "微软（正版帐户）"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "Yggdrasil (External login)"
+msgstr "Yggdrasil（外置登录）"
+#: ui
+msgctxt "SetupAddAccount"
+msgid "No auth service (Offline account)"
+msgstr "无认证服务（离线帐户）"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Java settings"
+msgstr "Java 虚拟机设置"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Conic Launcher can greatly simplify Java environment configuration. Enable \"Auto-install Java runtime\" to avoid manual installation!"
+msgstr "Conic Launcher 能够极大地简化 Java 环境的配置。启用「自动安装 Java 运行环境」即可免于手动安装它们！"
+#: ui
+msgctxt "SetupJavaSettings"
+msgid "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\""
+msgstr "注意：当前平台可能无法自动安装 Java 运行环境，建议手动安装并禁用「自动安装 Java 运行环境」"
+#: ui
+msgctxt "SetupLaunchOptions"
+msgid "Game launch options"
+msgstr "游戏启动选项"
+#: ui
+msgctxt "SetupLaunchOptions"
+msgid "Here are some basic launch options. You can change more options later in Settings and instance-specific settings."
+msgstr "这里列出了一些基本的启动选项。稍后你还可以在设置和实例独立设置中更改更多选项。"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Import instances"
+msgstr "导入实例"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Import previously played instances from other launchers to get started quickly"
+msgstr "你可以从其他启动器导入先前游玩的实例以便快速开始游戏"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "If you're new to Minecraft, you can also create a blank instance with the latest version right away"
+msgstr "如果你第一次接触 Minecraft，你也可以选择以最新 Minecraft 版本立刻创建空白实例"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Latest release"
+msgstr "最新版本"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Latest snapshot"
+msgstr "最新快照"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "An error occurred"
+msgstr "出现错误"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Creating..."
+msgstr "正在创建..."
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Create instance with latest release"
+msgstr "以最新正式版创建实例"
+#: ui
+msgctxt "SetupImportInstances"
+msgid "Create instance with latest snapshot"
+msgstr "以最新快照版创建实例"
 
 #: ui
 msgctxt "AccountAddMicrosoft"
