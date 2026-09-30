@@ -1370,6 +1370,7 @@ dependencies = [
  "slint-window",
  "tokio",
  "url",
+ "usvg",
  "uuid",
  "windows 0.62.2",
  "winit",
