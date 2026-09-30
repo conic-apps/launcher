@@ -37,6 +37,14 @@ update = { path = "./crates/update", version = "0.0.0"}
 version = { path = "./crates/version", version = "0.0.0"}
 slint = { version = "1.18", default-features = true }
 slint-build = "1.18"
+# The icon generator in `slint/app/build.rs` parses the SVGs with the same
+# `usvg` Slint's own renderer rasterizes them with, so the generated path data
+# cannot disagree with what is drawn. Pinned to the version `slint` 1.18 pulls
+# in (via resvg) on purpose: a second copy would drag in its own `tiny-skia`.
+# `default-features = false` because the generator only reads geometry, and
+# `slint` already turns on the features the union needs — leaving them on here
+# would add `fontconfig-parser` and `memmap2` to the lockfile for nothing.
+usvg = { version = "0.48", default-features = false }
 slint-shared = { path = "./slint/crates/shared", version = "0.0.0" }
 slint-platform = { path = "./slint/crates/platform", version = "0.0.0" }
 slint-window = { path = "./slint/crates/window", version = "0.0.0" }
