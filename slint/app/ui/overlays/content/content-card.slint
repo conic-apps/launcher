@@ -121,7 +121,8 @@ component TagChip inherits Rectangle {
 
     // A last-played tag's halves are both translated, so neither can be
     // composed in Rust; the relative time comes from the same `GameTime` helper
-    // the instance cards use.
+    // the instance cards use, and the game-mode / cheats tags are words the card
+    // resolves itself, for the same reason.
     private property <string> resolved: root.tag.kind == "last-played"
         ? ContentText.last-played-label()
             + GameTime.last-played(
@@ -131,6 +132,9 @@ component TagChip inherits Rectangle {
                 root.tag.time-day,
                 root.tag.time-year,
             )
+        : root.tag.kind == "game-mode-survival" || root.tag.kind == "game-mode-creative"
+            || root.tag.kind == "game-mode-adventure" || root.tag.kind == "game-mode-spectator"
+            || root.tag.kind == "command-enabled" ? ContentText.save-tag(root.tag.kind)
         : root.tag.label + root.tag.text;
 
     pill-box := Rectangle {
@@ -496,8 +500,7 @@ export component ContentCard inherits Rectangle {
     // The Vue's `.content.selected .extra` grows to `height + 160px` (or hangs
     // upwards when the card sits near the bottom of the window), takes an
     // outline and rises above the neighbouring cards. It is declared last so it
-    // paints over the info block. Its content is the world map, which is not
-    // migrated yet, so only the panel and its outline are drawn.
+    // paints over the info block, and it holds the save's world map.
     // `.content .extra { height: 100%; opacity: 0; transition: all 200ms ease }`
     // → `.content.selected .extra { height: calc(100% + 160px); opacity: 1 }`:
     // the box *grows* by 160px over 200ms rather than appearing. Expanding

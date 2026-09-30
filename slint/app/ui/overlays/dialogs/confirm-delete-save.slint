@@ -1,0 +1,60 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { BaseDialog } from "../../components/base-dialog.slint";
+import { ConfirmWarningBody } from "confirm-warning.slint";
+import { DeleteSaveState, Dialogs } from "../../globals/dialogs.slint";
+
+// The dialog the saves grid's trash button opens
+// (src/overlays/dialogs/ConfirmDeleteSave.vue).
+//
+// Without it the button went straight to `deleteSave`, so one click destroyed a
+// world; the Vue asked first, and this is that question again.
+//
+// The Vue is a `<BaseDialog :width="500">` with no height, so its panel is
+// `fit-content`; `BaseDialog` has no such mode, so the height comes from the
+// measuring layout the body is written in — the arrangement the add-account,
+// multiplayer and delete-instance dialogs use.
+//
+// The Vue original was never internationalized: all four sentences are hard-coded
+// Chinese. The Chinese is kept as the source text of a `@tr`, so a locale without
+// an entry still reads like the original while the catalogues can translate it —
+// the treatment the launch error dialogs and `ConfirmDeleteInstance` already
+// have.
+export component ConfirmDeleteSave inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // `save?.Data.LevelName ?? folderName` — a save with no name in its
+    // `level.dat` is named after its folder.
+    private property <string> save-name: DeleteSaveState.level-name != ""
+        ? DeleteSaveState.level-name
+        : DeleteSaveState.folder;
+
+    dialog := BaseDialog {
+        dialog-visible: Dialogs.confirm-delete-save-visible;
+        dialog-width: 500px;
+        // `fit-content`: `BaseDialog` keeps 32px of its own (the 16px padding of
+        // `.dialog > .content` and the 1px clip the Vue's `overflow` computes).
+        dialog-height: body.preferred-height + 32px;
+
+        // Sized against the slot's width, not `parent` — the elements written in
+        // a component's braces have the element they are written *in* as their
+        // parent, which here is the whole window.
+        body := ConfirmWarningBody {
+            content-width: dialog.content-width;
+            // The Vue's `{{ dialogStore.confirmDeleteSave.levelName }}`, in the
+            // middle of one sentence. The `「`/`」` are the CJK quotation marks
+            // the sentence is written with, not braces.
+            title-text: @tr("ConfirmDeleteSave" => "是否确认删除存档「{}」？", root.save-name);
+            detail-text: @tr("ConfirmDeleteSave" => "存档文件夹将永久删除，这是最后的反悔机会");
+            cancel-text: @tr("ConfirmDeleteSave" => "稍等一下...");
+            confirm-text: @tr("ConfirmDeleteSave" => "确认删除");
+            confirm-enabled: !DeleteSaveState.deleting;
+            cancel => { DeleteSaveState.cancel(); }
+            confirm => { DeleteSaveState.confirm(); }
+        }
+    }
+}

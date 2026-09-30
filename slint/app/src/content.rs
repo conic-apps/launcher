@@ -31,8 +31,8 @@ use serde_json::{Value, json};
 use slint::{ComponentHandle, Image, Model, ModelRc, SharedPixelBuffer, SharedString, VecModel};
 
 use crate::slint_backend::{
-    App, AppConfig, CardTag, ContentCard, ContentSearch, ContentState, FilterChip, FilterRow,
-    GalleryShot, GameState, MarkdownImage, MdChunk, MdItem, PageButton,
+    App, AppConfig, CardTag, ContentCard, ContentSearch, ContentState, DeleteSaveState, Dialogs,
+    FilterChip, FilterRow, GalleryShot, GameState, MarkdownImage, MdChunk, MdItem, PageButton,
 };
 use slint_content::mods::remote::RemoteModPlatform;
 use slint_content::mods::{ModLoader, ResolvedMod};
@@ -209,7 +209,11 @@ impl PendingCard {
             has_subtitle: self.has_subtitle,
             description: SharedString::from(self.description),
             tags: ModelRc::from(Rc::new(VecModel::from(tags))),
-            icon: self.icon.and_then(resolve_icon).unwrap_or_default(),
+            icon: self
+                .icon
+                .and_then(resolve_icon)
+                .or_else(unknown_icon)
+                .unwrap_or_default(),
             action_kind: SharedString::from(self.action_kind),
             shows_play: self.shows_play,
             mod_disabled: self.mod_disabled,
@@ -520,6 +524,8 @@ thread_local! {
     /// every time.
     static ICONS: RefCell<HashMap<String, Image>> = RefCell::new(HashMap::new());
     static SCREENSHOTS: RefCell<HashMap<String, Image>> = RefCell::new(HashMap::new());
+    /// The world a card shows when it has no icon of its own, decoded once.
+    static UNKNOWN_ICON: RefCell<Option<Image>> = const { RefCell::new(None) };
 }
 
 /// One Modrinth category: its slug is both the filter value and the label key.
@@ -824,6 +830,63 @@ pub fn setup(ui: &App) {
                     return;
                 }
                 let _ = weak.upgrade_in_event_loop(move |ui| load_saves(&ui));
+            });
+        });
+    }
+    {
+        // The saves grid's trash button. It opens `ConfirmDeleteSave` rather than
+        // deleting, which is what `askDeleteSave` did — the dialog is the only
+        // thing standing between a mis-click and a lost world.
+        let weak = ui.as_weak();
+        ui.global::<ContentState>()
+            .on_request_delete_save(move |folder, level_name| {
+                let Some(ui) = weak.upgrade() else { return };
+                {
+                    let state = ui.global::<DeleteSaveState>();
+                    state.set_folder(folder);
+                    state.set_level_name(level_name);
+                    // A delete cannot be left half-done from a previous one.
+                    state.set_deleting(false);
+                }
+                ui.global::<Dialogs>().set_confirm_delete_save_visible(true);
+            });
+    }
+    {
+        let weak = ui.as_weak();
+        ui.global::<DeleteSaveState>().on_cancel(move || {
+            let Some(ui) = weak.upgrade() else { return };
+            ui.global::<Dialogs>()
+                .set_confirm_delete_save_visible(false);
+        });
+    }
+    {
+        let weak = ui.as_weak();
+        ui.global::<DeleteSaveState>().on_confirm(move || {
+            let Some(ui) = weak.upgrade() else { return };
+            let folder = ui.global::<DeleteSaveState>().get_folder();
+            if folder.is_empty() {
+                return;
+            }
+            ui.global::<DeleteSaveState>().set_deleting(true);
+            let instance = controller().borrow().instance_id.clone();
+            // The event loop is reached through a weak handle: a strong `App`
+            // may not cross into the spawned task.
+            let weak = ui.as_weak();
+            crate::runtime::spawn(async move {
+                let result = slint_content::saves::delete_save(&instance, &folder).await;
+                let _ = weak.upgrade_in_event_loop(move |ui| {
+                    ui.global::<DeleteSaveState>().set_deleting(false);
+                    // The Vue caught the failure, logged it and left the dialog
+                    // open (`ConfirmDeleteSave.vue`), so a save that could not be
+                    // removed is still there to be retried.
+                    if let Err(error) = result {
+                        log::error!("failed to delete the save {folder}: {error}");
+                        return;
+                    }
+                    ui.global::<Dialogs>()
+                        .set_confirm_delete_save_visible(false);
+                    load_saves(&ui);
+                });
             });
         });
     }
@@ -1745,19 +1808,22 @@ fn save_card(
 
     let mut tags: Vec<PendingTag> = Vec::new();
     if let Some(game_type) = level.game_type {
-        let (kind, text) = match game_type {
-            0 => ("game-mode-survival", "Survival"),
-            1 => ("game-mode-creative", "Creative"),
-            2 => ("game-mode-adventure", "Adventure"),
-            3 => ("game-mode-spectator", "Spectator"),
-            _ => ("", ""),
+        // The four names are words the user reads, so they are resolved in the
+        // card (`ContentText.save-tag`) rather than composed here: a string Rust
+        // pushed is fixed at that moment and would not follow a language change.
+        let kind = match game_type {
+            0 => "game-mode-survival",
+            1 => "game-mode-creative",
+            2 => "game-mode-adventure",
+            3 => "game-mode-spectator",
+            _ => "",
         };
         if !kind.is_empty() {
-            tags.push(tag(text, kind));
+            tags.push(translated_tag(kind));
         }
     }
     if cheats {
-        tags.push(tag("Cheats", "command-enabled"));
+        tags.push(translated_tag("command-enabled"));
     }
     if last_played.is_some() {
         // The label and the relative time are both translated, so neither can
@@ -1800,6 +1866,18 @@ fn save_card(
 fn tag(text: &str, kind: &str) -> PendingTag {
     PendingTag {
         text: text.to_string(),
+        label: String::new(),
+        kind: kind.to_string(),
+        time: None,
+    }
+}
+
+/// A tag whose *text* is a word the user reads and the card has to resolve:
+/// the saves' game-mode and cheats chips. Only the kind travels, and
+/// `ContentText.save-tag` turns it into the sentence in the current language.
+fn translated_tag(kind: &str) -> PendingTag {
+    PendingTag {
+        text: String::new(),
         label: String::new(),
         kind: kind.to_string(),
         time: None,
@@ -2812,8 +2890,13 @@ fn open_detail(ui: &App, platform: Platform, id: String) {
                 Ok(loaded) => {
                     let ui_state = ui.global::<ContentState>();
                     ui_state.set_detail_title(SharedString::from(loaded.title));
-                    ui_state
-                        .set_detail_icon(loaded.icon.and_then(resolve_icon).unwrap_or_default());
+                    ui_state.set_detail_icon(
+                        loaded
+                            .icon
+                            .and_then(resolve_icon)
+                            .or_else(unknown_icon)
+                            .unwrap_or_default(),
+                    );
                     ui_state.set_detail_source(SharedString::from(loaded.source_url));
                     ui_state.set_detail_source_label(SharedString::from(loaded.source_label));
                     ui_state.set_detail_source_is_github(loaded.source_is_github);
@@ -4008,6 +4091,24 @@ pub(crate) fn decode_icon(url: &str, bytes: Vec<u8>) -> Option<PendingImage> {
 /// screen.
 pub(crate) fn resolve_icon(image: PendingImage) -> Option<Image> {
     resolve_image(image, &ICONS)
+}
+
+/// The card icon a save, mod, resource pack or pack falls back to — the
+/// `v-else` branch every content card in the Vue carried, which pointed at
+/// `src/assets/images/Unknown_server.webp`. A card whose icon is missing or
+/// failed to decode used to come out as an empty 72x72 box here.
+///
+/// Decoded on first use and kept: it is the same 120x120 bitmap every time, and
+/// a card is rebuilt on every relayout.
+pub(crate) fn unknown_icon() -> Option<Image> {
+    if let Some(image) = UNKNOWN_ICON.with(|cached| cached.borrow().clone()) {
+        return Some(image);
+    }
+    let bytes = include_bytes!("../ui/assets/unknown-server.webp");
+    let (width, height, rgba) = decode_to_rgba(bytes)?;
+    let image = Image::from_rgba8(SharedPixelBuffer::clone_from_slice(&rgba, width, height));
+    UNKNOWN_ICON.with(|cached| *cached.borrow_mut() = Some(image.clone()));
+    Some(image)
 }
 
 /// The icon at `url`, if some earlier list already fetched and decoded it.

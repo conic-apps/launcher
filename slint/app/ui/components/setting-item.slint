@@ -20,6 +20,19 @@ export component SettingItem inherits Rectangle {
     in property <[string]> tags: [];
     in property <string> description: "";
     in property <string> icon: "";
+    /// The row's icon and chevron are drawn stroke-only, with the fill pass
+    /// suppressed — the Vue's `icon-fill="none"`, which it forwarded to both
+    /// `<AppIcon>`s (the row's icon and the trailing chevron). It is a switch
+    /// rather than a colour because that is all the original ever used it for:
+    /// `:fill="none"` over a shared `currentColor` stroke.
+    ///
+    /// The five rows that pass it (`moon`, `bell`, `server` — in the settings
+    /// screens and the wizard's palette screen) draw stroke-only glyphs either
+    /// way, because `build.rs` splits an icon by what each of its shapes paints
+    /// and those three declare `fill="none"` themselves, so their fill pass is
+    /// empty. It is carried through so the rows say what they meant, and so a
+    /// row that swaps in a filled glyph keeps the outline it asked for.
+    in property <bool> icon-outline: false;
     in property <image> custom-icon;
     in property <bool> custom-icon-rounded: false;
     in property <bool> navigable: false;
@@ -196,6 +209,7 @@ export component SettingItem inherits Rectangle {
                 if root.custom-icon.width <= 0 : AppIcon {
                     name: root.icon;
                     size: 26px;
+                    no-fill: root.icon-outline;
                 }
             }
 
@@ -285,6 +299,7 @@ export component SettingItem inherits Rectangle {
                         BaseLoading {
                             size: 15px;
                             stroke-width: 8;
+                            gap: 8;
                             icon-color: Theme.default-text-color.transparentize(0.1);
                         }
                     }
@@ -419,6 +434,7 @@ export component SettingItem inherits Rectangle {
                 name: "chevron-forward";
                 size: 17px;
                 icon-color: Theme.default-text-color.transparentize(0.1);
+                no-fill: root.icon-outline;
             }
 
             // `.setting-item .icon` chevron has `margin-right: 4px`.

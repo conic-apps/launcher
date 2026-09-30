@@ -265,11 +265,16 @@ impl PendingItem {
     /// The row's icon: the one just decoded, or the one an earlier list already
     /// decoded. `fetch_icon` reports a cache hit by returning nothing, and a
     /// project icon is the same bitmap wherever it is shown, so the content
-    /// overlays' cache answers for it.
+    /// overlays' cache answers for it. A project with no icon at all gets the
+    /// same unknown world a content card would.
     fn icon(&self) -> slint::Image {
         match &self.icon_image {
-            Some(pending) => content::resolve_icon(pending.clone()).unwrap_or_default(),
-            None => content::cached_icon(&self.icon_url).unwrap_or_default(),
+            Some(pending) => content::resolve_icon(pending.clone())
+                .or_else(content::unknown_icon)
+                .unwrap_or_default(),
+            None => content::cached_icon(&self.icon_url)
+                .or_else(content::unknown_icon)
+                .unwrap_or_default(),
         }
     }
 }
