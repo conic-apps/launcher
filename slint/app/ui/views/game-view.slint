@@ -37,6 +37,12 @@ export component GameView inherits Rectangle {
         running: true;
         triggered => {
             instance-list.scroll-to-current(false);
+            // The entrance is ordered against the window the list settled on, so
+            // the list has to be told where that is *after* the centring and
+            // before the flag flips — otherwise the cards stagger from the top of
+            // the whole list and a list opened on its last instance has every
+            // visible card waiting the same step.
+            instance-list.begin-intro();
             GameIntro.played = true;
             intro-timer.running = false;
         }
