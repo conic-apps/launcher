@@ -8,7 +8,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-
 #: ui
 msgctxt "App"
 msgid "Conic Launcher"
@@ -615,7 +614,6 @@ msgid "Scanning for installed Java runtimes"
 msgstr "Buscando runtimes de Java instalados"
 
 # Game view strings, seeded from src/locales/es_es.ts.
-
 
 #: ui
 msgctxt "GameTime"
@@ -1246,7 +1244,6 @@ msgstr "Juego iniciado"
 msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
-
 
 #: ui
 msgctxt "Multiplayer"
@@ -1921,7 +1918,6 @@ msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "Kitchen Sink"
 
-
 msgctxt "CategoryPacksModrinth"
 msgid "Lightweight"
 msgstr "Ligero"
@@ -1945,7 +1941,6 @@ msgstr "Misiones"
 msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "Tecnología"
-
 
 #: ui
 msgctxt "MusicPlayerOverlay"
@@ -2172,133 +2167,128 @@ msgid "确认删除"
 msgstr "Confirmar eliminación"
 
 #: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Waiting for the sign-in"
+msgstr "Esperando el inicio de sesión"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Finish signing in in your browser — this page will change when it is done."
+msgstr "Completa el inicio de sesión en tu navegador: esta página se actualizará cuando termines."
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Signed in"
+msgstr "Sesión iniciada"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "You can close this tab and go back to Conic Launcher."
+msgstr "Puedes cerrar esta pestaña y volver a Conic Launcher."
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Sign-in failed"
+msgstr "Error al iniciar sesión"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
+msgstr "Conic Launcher no recibió un inicio de sesión válido. Cierra esta pestaña e inténtalo de nuevo."
+
 msgctxt "CommandText"
 msgid "Launch instance"
 msgstr "Iniciar instancia"
-
 #: ui
 msgctxt "CommandText"
 msgid "Create instance"
 msgstr "Crear instancia"
-
 #: ui
 msgctxt "CommandText"
 msgid "Add game profile"
 msgstr "Añadir perfil de juego"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth"
 msgstr "Buscar en Modrinth"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge"
 msgstr "Buscar en CurseForge"
-
 #: ui
 msgctxt "CommandText"
 msgid "by {}"
 msgstr "por {}"
-
 #: ui
 msgctxt "CommandText"
 msgid "Mod"
 msgstr "Mod"
-
 #: ui
 msgctxt "CommandText"
 msgid "Modpack"
 msgstr "Modpack"
-
 #: ui
 msgctxt "CommandText"
 msgid "Resource Pack"
 msgstr "Paquete de recursos"
-
 #: ui
 msgctxt "CommandText"
 msgid "Shader"
 msgstr "Shader"
-
 #: ui
 msgctxt "CommandText"
 msgid "Switch to"
 msgstr "Cambiar a"
-
 #: ui
 msgctxt "CommandText"
 msgid "Launch"
 msgstr "Iniciar"
-
 #: ui
 msgctxt "CommandText"
 msgid "Open"
 msgstr "Abrir"
-
 #: ui
 msgctxt "CommandText"
 msgid "Instances"
 msgstr "Instancias"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search results"
 msgstr "Resultados de búsqueda"
-
 #: ui
 msgctxt "CommandText"
 msgid "Commands"
 msgstr "Comandos"
-
 #: ui
 msgctxt "CommandText"
 msgid "Select an instance to launch…"
 msgstr "Selecciona una instancia para iniciar…"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth…"
 msgstr "Buscar en Modrinth…"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge…"
 msgstr "Buscar en CurseForge…"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search commands or instances…"
 msgstr "Buscar comandos o instancias…"
-
 #: ui
 msgctxt "CommandText"
 msgid "Back"
 msgstr "Volver"
-
 #: ui
 msgctxt "CommandText"
 msgid "Close"
 msgstr "Cerrar"
-
-#: ui
-msgctxt "CommandText"
-
-#: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on CurseForge"
 msgstr "Escribe palabras clave para buscar en CurseForge"
-
 #: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on Modrinth"
 msgstr "Escribe palabras clave para buscar en Modrinth"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search failed, please try again"
 msgstr "La búsqueda ha fallado, inténtalo de nuevo"
-
 #: ui
 msgctxt "CommandText"
 msgid "No matching results"

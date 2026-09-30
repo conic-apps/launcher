@@ -56,6 +56,9 @@ slint-statistics = { path = "./slint/crates/statistics", version = "0.0.0" }
 slint-single-instance = { path = "./slint/crates/single-instance", version = "0.0.0" }
 slint-multiplayer = { path = "./slint/crates/multiplayer", version = "0.0.0" }
 slint-markdown = { path = "./slint/crates/markdown", version = "0.0.0" }
+# The loopback callback the Microsoft browser flow hands its authorization code
+# to, replacing the deep link the Tauri app registers (slint/crates/authcode).
+slint-authcode = { path = "./slint/crates/authcode", version = "0.0.0" }
 slint-music = { path = "./slint/crates/music", version = "0.0.0" }
 # The background music player (slint/crates/music). The Tauri build had the
 # webview decode and play the tracks through the Web Audio API; a native app has

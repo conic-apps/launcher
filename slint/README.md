@@ -146,6 +146,15 @@ slint/
     multiplayer/                    # Tauri-free mirror of crates/multiplayer (whole crate)
     markdown/                       # Markdown/HTML layout engine: parses, measures,
                                     #   lays out, hands the view positioned boxes
+    authcode/                       # the loopback callback the Microsoft browser flow
+                                    #   hands its code to, and the page it serves
+      page.html                    #   the page itself — open it, it is the design
+      lib.rs                       #   the listener: bind, accept, route, hand over
+      http.rs                      #   the request line and the response, and nothing
+                                    #     else (no framework: see Migrated so far)
+      page.rs                      #   fills page.html in from Theme and @tr
+      error.rs                     #   binding the socket is the only failure
+      tests/callback.rs            #   it, over a real socket
     music/                          # Tauri-free mirror of crates/music + the Web Audio
                                     # graph the webview's store owned (see Music player)
       lib.rs                        #   the original crate verbatim: the folder listing
@@ -652,16 +661,75 @@ Per the migration plan:
   contain a `|`), and a later launch waiting up to two seconds for the primary
   to publish its window instead of quietly running a second copy when it catches
   it mid-startup.
-  The arguments are logged and nothing acts on them yet: they are the deep-link
-  payload (`conic-launcher://…?code=…`, which the desktop entry hands over), and
-  the accounts view that consumes it is not migrated. The Tauri app's half of
-  that still runs as it always did — its own plugin, its own lock, its own
-  `onOpenUrl` listener.
+  The arguments are logged and nothing acts on them yet: the desktop entry
+  hands over the deep-link payload (`conic-launcher://…?code=…`), and nothing
+  asks for that URI any more — the Microsoft browser flow comes back to a
+  loopback listener of the app's own (see `slint-authcode` below). The Tauri
+  app's half of the deep link still runs as it always did: its own plugin, its
+  own lock, its own `onOpenUrl` listener.
+- `slint-authcode`, the loopback callback the Microsoft **browser** flow hands
+  its authorization code to, and the page the browser is shown there. This
+  replaces the deep link the Tauri app registers with
+  `tauri-plugin-deep-link`, which a Slint application cannot do: registering a
+  scheme means asking the desktop environment, claiming single-instance
+  ownership of it, and trusting each of the three platforms to route it back.
+  Microsoft's own guidance for a native app is a loopback redirect, and that is
+  what the browser is sent to — `http://localhost:<port>/callback`, on a port
+  the OS picks.
+  Four decisions are worth knowing about, and the crate's own module docs say
+  more about each:
+  - **The port is port 0.** The socket is bound with `bind(…, 0)` and the port
+    the OS hands back is read off the bound address, so there is no port to
+    collide over — a second launcher, a leftover listener, or anything else
+    already holding it cannot stop the flow, and Microsoft accepts
+    `http://localhost` on any port for a native client. The port is gone with
+    the socket, which is why the URL on the dialog's browser screen cannot be a
+    constant the way the Vue's was: it is filled in when the listener is bound.
+  - **The listener is the screen's.** It is bound when the browser screen comes
+    on with the dialog open and released the moment it goes — the user switched
+    to the device code, or closed the dialog — which is exactly as long as the
+    URL beside it can be used. `AccountAddMicrosoft.slint` owns *when*
+    (`prepare-auth-code-flow` / `release-auth-code-flow`, one `changed` handler
+    on `shown == "auth-code" && account-add-visible`); `app/src/account_add.rs`
+    owns *what* it is bound to and what an answer does.
+  - **It is `state`-checked.** The authorize URL carries a random `state`, and
+    a callback whose `state` is not ours is refused and does **not** end the
+    login. A loopback listener is reachable by every process on the machine, and
+    a port can be guessed; without this, a page in a browser could hand the
+    launcher an authorization code of its own choosing and sign the user into
+    somebody else's account. This is OAuth's own CSRF token (RFC 6749 §10.12).
+  - **The server is a request line and a body.** It answers one `GET` and goes
+    away, so the framing is `http.rs`'s: a request line, a status line, a
+    `Content-Length`, and `Connection: close`. A web framework would bring a
+    dependency tree, a router, a middleware stack and a connection state
+    machine for that. The only dependency added is `tokio`'s `net`/`io-util`/
+    `sync` (the app already carries `net`) and `regex`, already in the tree
+    through `slint-launch`. Every read is bounded in size and in time, because
+    the listener is not reachable only by the browser.
+  The page the browser lands on is `slint/crates/authcode/page.html`, filled in
+  by `page.rs`: a self-contained document — no stylesheet, no script, no image,
+  no font file, because it goes over a loopback socket in one response — in the
+  app's own theme. The colours are read off the `Theme` tokens
+  (`--window-background`'s `crust`, `--dialog-*` for the card, `--ctp-green` and
+  `--ctp-red` for the two states, `main.css`'s own font stack) and the six
+  sentences off the `@tr` catalog, both handed in by the app rather than looked
+  up in the crate, so the tab and the window the login came from are the same
+  application in the same language. The glyphs are transcribed from
+  `ui/icons.slint`: `checkmark-outline` and `warning` for the two answers, and
+  `BaseLoading`'s arc (1.9s and all) for the one that says to go on waiting.
+  `cargo run -p slint-authcode --example preview` renders the three screens to
+  files if you want to look at them.
+  The token request has to repeat the `redirect_uri` byte for byte
+  (RFC 6749 §4.1.3), so `slint_account::microsoft::redeem_access_token` takes
+  it and `LoginTaskState::spawn` takes a `LoginRequest` rather than the original's
+  `Option<String>` — the code and the URI it was issued against travel together
+  or not at all.
 - `app/src/runtime.rs`: the tokio runtime the background work runs on, standing
   in for the one Tauri builds at startup. `spawn` carries the async work (the
-  HTTP calls of `slint-install`) and `spawn_blocking` the disk work (the Java
-  scan, creating an instance), both reporting back through
-  `upgrade_in_event_loop` — Slint itself is not thread-safe.
+  HTTP calls of `slint-install`, the `slint-authcode` listener) and
+  `spawn_blocking` the disk work (the Java scan, creating an instance), both
+  reporting back through `upgrade_in_event_loop` — Slint itself is not
+  thread-safe.
 - `app/src/scroll_input.rs` backs `globals/scroll.slint`. Slint's
   `PointerScrollEvent` carries the deltas and the modifiers and nothing else, so
   the two facts the Lenis-style scrollers are built on are read from the
@@ -1682,12 +1750,26 @@ the very first play at startup would start silently. This is the same clock
       where a span landed. The link itself works (`StyledText`'s
       `link-clicked`), so only the bubble is missing — the dialog's other two
       "已复制！" bubbles (the link box and the device code) are exact.
-    - The Microsoft **auth-code flow cannot be finished**. The browser hands the
-      code back over the `conic-launcher://` scheme, which the Tauri app
-      registers with `tauri-plugin-deep-link` + `tauri-plugin-single-instance`
-      and the Slint app has no equivalent of. The screen is 1:1 and "Log in"
-      opens the browser; the **device-code flow is the one that completes**,
-      until the platform layer grows a deep-link handler.
+    - The Microsoft **auth-code flow comes back to a loopback listener**, not to
+      the `conic-launcher://` scheme the Tauri app registers with
+      `tauri-plugin-deep-link` + `tauri-plugin-single-instance`. The screen is
+      1:1 and "Log in" opens the browser; what changed is behind it, and both
+      flows now complete — see `slint-authcode` under Migrated so far for the
+      port, the `state` check, and the page the browser is shown. Two visible
+      differences:
+      - **A refusal comes back at all.** Microsoft's consent screen sends
+        `error=access_denied&error_description=…` rather than no code at all,
+        and the listener reads it. The Vue's `onOpenUrl` only ever read `code`,
+        so a refusal there was silence. A refusal and a timeout now both return
+        to the browser screen, which rebinds a fresh listener — the error screen
+        has no buttons (the Vue's does not either), so it is a dead end, and the
+        browser has just shown a page that says what happened. This is also what
+        the device-code flow does with `DeviceCodeExpired`.
+      - **The URL is not a constant.** It is filled in when the listener is
+        bound, so the link box and the "copy the link" span show the one that is
+        being served. The listener is bounded by `AUTH_CODE_TIMEOUT`, the life
+        of Microsoft's authorization code, and released the moment the code
+        arrives, the user switches to the device code, or the dialog closes.
     - Coming back to the device code after leaving it starts a fresh one. The
       Vue keeps the stale code on screen and never polls it again, which leaves
       the dialog stuck.

@@ -26,9 +26,18 @@
 //!   * `shared::HTTP_CLIENT` and `shared::UrlExt` are inlined in [`shared`],
 //!     the way `slint-install` inlines the client.
 //!
-//! The only other difference is mechanical: the original's private
+//! The only other difference is mechanical — the original's private
 //! `save_accounts(&Vec<Account>)` helpers take a slice here, which is what
-//! clippy asks for and changes nothing about what is written.
+//! clippy asks for and changes nothing about what is written — except for the
+//! one place the two frontends part company: the browser flow's redirect. The
+//! original asks
+//! the OS for `conic-launcher://oauth2/microsoft/callback` through
+//! `tauri-plugin-deep-link`; a Slint application cannot, so the redirect is a
+//! loopback listener of this app's own (`slint-authcode`) and
+//! [`microsoft::redeem_access_token`] is given the `redirect_uri` to repeat
+//! rather than carrying the original's as a literal. The refresh request, which
+//! the original also spells a `redirect_uri` into, sends none: RFC 6749 §6
+//! makes it conditional, and a device-code authorization never had one.
 //!
 //! Structures, request bodies and on-disk formats match `crates/account/src`,
 //! and so does the serialized form of [`Account`], so both frontends share the
@@ -55,7 +64,7 @@ pub mod shared;
 pub mod yggdrasil;
 
 pub use error::*;
-pub use microsoft_task::LoginTaskState;
+pub use microsoft_task::{LoginRequest, LoginTaskState};
 pub use shared::set_system_proxy;
 
 #[derive(Clone, Serialize, Deserialize)]

@@ -8,7 +8,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-
 #: ui
 msgctxt "App"
 msgid "Conic Launcher"
@@ -615,7 +614,6 @@ msgid "Scanning for installed Java runtimes"
 msgstr "インストール済みのJavaランタイムをスキャン中"
 
 # Game view strings, seeded from src/locales/ja_jp.ts.
-
 
 #: ui
 msgctxt "GameTime"
@@ -1246,7 +1244,6 @@ msgstr "ゲームを起動しました"
 msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
-
 
 #: ui
 msgctxt "Multiplayer"
@@ -1921,7 +1918,6 @@ msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "キッチンシンク"
 
-
 msgctxt "CategoryPacksModrinth"
 msgid "Lightweight"
 msgstr "軽量"
@@ -1945,7 +1941,6 @@ msgstr "クエスト"
 msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "テクノロジー"
-
 
 #: ui
 msgctxt "MusicPlayerOverlay"
@@ -2172,133 +2167,128 @@ msgid "确认删除"
 msgstr "削除を確認"
 
 #: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Waiting for the sign-in"
+msgstr "サインインを待っています"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Finish signing in in your browser — this page will change when it is done."
+msgstr "ブラウザでサインインを完了してください。完了するとこのページが更新されます。"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Signed in"
+msgstr "サインインしました"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "You can close this tab and go back to Conic Launcher."
+msgstr "このタブを閉じて、Conic Launcher に戻ってください。"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Sign-in failed"
+msgstr "サインインに失敗しました"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
+msgstr "Conic Launcher は有効なサインイン情報を受け取りませんでした。このタブを閉じて、もう一度お試しください。"
+
 msgctxt "CommandText"
 msgid "Launch instance"
 msgstr "インスタンスを起動"
-
 #: ui
 msgctxt "CommandText"
 msgid "Create instance"
 msgstr "インスタンスを作成"
-
 #: ui
 msgctxt "CommandText"
 msgid "Add game profile"
 msgstr "ゲームプロファイルを追加"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth"
 msgstr "Modrinth で検索"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge"
 msgstr "CurseForge で検索"
-
 #: ui
 msgctxt "CommandText"
 msgid "by {}"
 msgstr "作成者: {}"
-
 #: ui
 msgctxt "CommandText"
 msgid "Mod"
 msgstr "Mod"
-
 #: ui
 msgctxt "CommandText"
 msgid "Modpack"
 msgstr "Modpack"
-
 #: ui
 msgctxt "CommandText"
 msgid "Resource Pack"
 msgstr "リソースパック"
-
 #: ui
 msgctxt "CommandText"
 msgid "Shader"
 msgstr "シェーダー"
-
 #: ui
 msgctxt "CommandText"
 msgid "Switch to"
 msgstr "切り替え"
-
 #: ui
 msgctxt "CommandText"
 msgid "Launch"
 msgstr "起動"
-
 #: ui
 msgctxt "CommandText"
 msgid "Open"
 msgstr "開く"
-
 #: ui
 msgctxt "CommandText"
 msgid "Instances"
 msgstr "インスタンス"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search results"
 msgstr "検索結果"
-
 #: ui
 msgctxt "CommandText"
 msgid "Commands"
 msgstr "コマンド"
-
 #: ui
 msgctxt "CommandText"
 msgid "Select an instance to launch…"
 msgstr "起動するインスタンスを選択…"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth…"
 msgstr "Modrinth で検索…"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge…"
 msgstr "CurseForge で検索…"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search commands or instances…"
 msgstr "コマンドまたはインスタンスを検索…"
-
 #: ui
 msgctxt "CommandText"
 msgid "Back"
 msgstr "戻る"
-
 #: ui
 msgctxt "CommandText"
 msgid "Close"
 msgstr "閉じる"
-
-#: ui
-msgctxt "CommandText"
-
-#: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on CurseForge"
 msgstr "キーワードを入力して CurseForge で検索"
-
 #: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on Modrinth"
 msgstr "キーワードを入力して Modrinth で検索"
-
 #: ui
 msgctxt "CommandText"
 msgid "Search failed, please try again"
 msgstr "検索に失敗しました。もう一度お試しください"
-
 #: ui
 msgctxt "CommandText"
 msgid "No matching results"
