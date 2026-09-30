@@ -32,6 +32,7 @@ slint/
       account_add.rs                # the add-account dialog's script
       account_avatar.rs             # player-head avatars (the Vue's canvas crop)
       music.rs                      # the music player's script (see Music player)
+      command_palette.rs            # the command palette's script
       instance_settings.rs          # the instance settings overlay's script
     ui/
       app.slint                     # root `App` Window (mirrors src/App.vue)
@@ -54,6 +55,7 @@ slint/
         tooltip.slint               # the description tooltip's anchor + hover state
         window-drag.slint           # the Vue's `data-tauri-drag-region` regions
         music.slint                 # background-music state (src/store/music.ts)
+        command-palette.slint       # the command palette's state + its labels
         instance-settings.slint     # the overlay's own form state (useInstanceSettings.ts)
       components/                   # shared/reusable pieces
         title-bar.slint
@@ -96,6 +98,7 @@ slint/
       overlays/
         dialog-root.slint           # src/overlays/DialogRoot.vue
         music-player.slint          # src/overlays/MusicPlayer.vue
+        command-palette.slint       # src/overlays/CommandPalette.vue
         instance-settings.slint     # src/overlays/InstanceSetting.vue
         dialogs/
           account-add.slint         # src/overlays/dialogs/AccountAdd.vue
@@ -819,6 +822,75 @@ and tags, and the instal/remove actions go through `slint-download`.
   composed in Rust.
 - `config_bridge::reveal_in_dir` is the Vue's `revealItemInDir`.
 
+- **The command palette** (`overlays/command-palette.slint`,
+  `globals/command-palette.slint` and `app/src/command_palette.rs`), replacing
+  `src/overlays/CommandPalette.vue` — the panel the title bar's search field and
+  the `Ctrl`/`⌘` + `/` shortcut open. All three modes are there (the five
+  commands and the instance list at the root, the instance list to launch from,
+  and a Modrinth or CurseForge search), with the same rows, section headings,
+  placeholder, breadcrumb, footer hints, empty states, 250ms debounce and
+  selection rules, and every box at the original's measurement.
+
+    Three things about it are not the shape of the rest of the tree:
+
+    - **The key handling is a `capture-key-pressed`, not a `key-pressed`.** The
+      Vue hangs `@keydown` on the `<input>`, and a `TextInput` answers for three
+      of the four keys before an ancestor ever sees them: Backspace is accepted
+      unconditionally (it has nothing to delete and says so anyway) and the arrow
+      keys are accepted to move the caret. `capture-key-pressed` runs on the
+      ancestors *first*, and `accept` stops delivery altogether; rejecting it is
+      what lets an ordinary Backspace delete a character. Enter is the exception
+      — the `TextInput`'s own `accepted` callback is the one Slint calls for a
+      single-line field, so that is what it uses.
+    - **The `FocusScope` that reads those keys has to *contain* the search
+      field**, because a `FocusScope` only sees the events of what it contains.
+      And a `FocusScope` *centres* the children it lays out — a child with no `y`
+      lands at `(scope.height - child.height) / 2`, where a plain `Rectangle`
+      would leave it at 0. That put the input row in the middle of the panel
+      until every child was given an explicit `y`; the component says so where it
+      matters.
+    - **The shortcut is one `KeyBinding`, on a `FocusScope` that wraps the whole
+      window.** Slint's `@keys` modifier names are the *physical* keys, so
+      `Control` is the control key on macOS too; a second binding naming `Meta`
+      is what `⌘` would match, and one binding per platform is the shape the
+      Vue's `isMacOS() ? event.metaKey : event.ctrlKey` has. The binding sits on
+      a scope that wraps the window, which is what the Vue's document-level
+      listener amounts to: a window with nothing focused discards its key events,
+      and a scope beside the content would not be an ancestor of a settings text
+      field's. `forward-focus` points at it, so it holds the focus from the first
+      frame, and the palette hands it back when it closes (`app.slint`) for the
+      same reason.
+    - **`revealSelected` is in the `content-y` sign, and so is `scroll-to`.** The
+      Vue reads the row's `offsetTop`; `ScrollView.content-y` counts *down*, so a
+      row 400px into the content is `-400px`, and that is the sign `scroll-to`
+      takes as well. The two targets do not read alike — the row below the
+      viewport comes out as `bottom + height - 8px` and the one above as
+      `top + 8px` — and the second is the quiet one: the other sign still scrolls
+      in the right direction, just 16px short, which leaves the row's top above
+      the viewport and a fifth of it cut off.
+
+    The list is built in Rust — the order, the filter, the section headings and
+    every row's height have to agree, and a Slint expression can neither build a
+    model nor index one, which is why `game.rs` and `content.rs` lay their lists
+    out there too. Rows carry the *key* of every label rather than the label
+    itself, and `CommandText` resolves them, so a language change follows as it
+    does everywhere else. The searches run on the tokio runtime with the content
+    overlays' icon pipeline (`content::fetch_icon` / `content::cached_icon`, and
+    the same `ICONS` cache — a project icon is the same bitmap wherever it is
+    shown), and a project opens through `content::open_project_detail`, the
+    `open_detail` a card click takes. The twelve `.po` catalogs carry its 25
+    strings, seeded from `src/locales/{en_us,zh_cn}.ts` and worded after each
+    catalog's existing entries.
+
+    One deviation, on the **filter that picks which of the two root-mode groups
+    is shown**: the Vue matches the five commands against `command.title`, and
+    `title` is whatever `t()` returned, so a query in one language matches a
+    command named in another. Rust builds the list and has no translated titles,
+    so it matches the *source* strings instead — the behaviour is exactly right
+    in English and in any locale that falls back to it. The rows still show the
+    translation. Making the filter see the translation would mean filtering in an
+    expression, and Slint can neither build a model nor index one.
+
 - **The instance settings overlay** (`overlays/instance-settings.slint`,
   `globals/instance-settings.slint`, `app/src/instance_settings.rs`), and the
   **delete-instance dialog** its last row opens
@@ -840,10 +912,7 @@ and tags, and the instal/remove actions go through `slint-download`.
   The card's background picture is decoded with the `image` crate, like the
   window background and the content overlays — see the deviations.
 
-Not yet migrated: `AccountsView`, the setup wizard and the command palette;
-`views/game-placeholder.slint` stands in for the not-yet-migrated views. The
-account avatars (the footer's 56px head, its switcher's 18px rows and the
-add-account dialog's profile rows) all draw the real skin now; `AccountAvatar`
+Not yet migrated: `AccountsView` and the setup wizard; `views/game-placeholder.slint` stands in for the not-yet-migrated views. The account avatars (the footer's 56px head, its switcher's 18px rows and the add-account dialog's profile rows) all draw the real skin now; `AccountAvatar`
 still falls back to the placeholder disc for a skin Rust could not decode.
 
 - **Instance settings overlay deviations**, all deliberate:
@@ -1514,6 +1583,17 @@ the very first play at startup would start silently. This is the same clock
       several rows here use instead is `cross-axis-alignment: stretch` with
       `horizontal-alignment: center` on the text — the glyphs land in the same
       place as a shrink-to-fit box, and the wrap has a width to happen at.
+    - **A child with no `x` or `y` is *centred* in its parent, not placed at
+      its top-left.** `i-slint-core`'s default geometry is `x = (parent.width -
+      width) / 2`, `y = (parent.height - height) / 2` — which reads as a
+      deliberate choice for a lone child and is, in fact, how Slint marks "this
+      element does not care". A `Rectangle` child with a fixed `y` is at that
+      `y`; one without is in the middle. The palette's row put its title line in
+      a plain `Rectangle` with no `y` and the line landed 8.5px low — exactly
+      half of what the 30px column had spare, which is the tell — and a second
+      time, inside a `FocusScope`, the whole input row sat in the middle of the
+      panel. Every child of a non-layout parent needs an explicit `y`; the
+      palette's says so where it lays them out.
     - **A child with an `x` or `y` contributes nothing to its parent's preferred
       size.** `gen_layout_info_prop` (`passes/default_geometry.rs`) skips those
       children, so a component or element whose children are *all* absolutely

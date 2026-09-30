@@ -8,7 +8,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-
 #: ui
 msgctxt "App"
 msgid "Conic Launcher"
@@ -615,7 +614,6 @@ msgid "Scanning for installed Java runtimes"
 msgstr "Kurulu Java çalışma ortamları taranıyor"
 
 # Game view strings, seeded from src/locales/tr_tr.ts.
-
 
 #: ui
 msgctxt "GameTime"
@@ -1246,7 +1244,6 @@ msgstr "Oyun başladı"
 msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
-
 
 #: ui
 msgctxt "Multiplayer"
@@ -1921,7 +1918,6 @@ msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "Kitchen Sink"
 
-
 msgctxt "CategoryPacksModrinth"
 msgid "Lightweight"
 msgstr "Hafif"
@@ -1945,7 +1941,6 @@ msgstr "Görevler"
 msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "Teknoloji"
-
 
 #: ui
 msgctxt "MusicPlayerOverlay"
@@ -2175,28 +2170,126 @@ msgstr "Silmeyi onayla"
 msgctxt "AccountAddMicrosoft"
 msgid "Waiting for the sign-in"
 msgstr "Oturum açılıyor"
-
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Finish signing in in your browser — this page will change when it is done."
 msgstr "Oturumunuzu tarayıcınızda tamamlayın — bitince bu sayfa değişecek."
-
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Signed in"
 msgstr "Oturum açıldı"
-
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "You can close this tab and go back to Conic Launcher."
 msgstr "Bu sekmeyi kapatıp Conic Launcher’a geri dönebilirsiniz."
-
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Sign-in failed"
 msgstr "Oturum açılamadı"
-
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
 msgstr "Conic Launcher geçerli bir oturum bilgisi alamadı. Bu sekmeyi kapatıp yeniden deneyin."
+
+msgctxt "CommandText"
+msgid "Launch instance"
+msgstr "Örneği başlat"
+#: ui
+msgctxt "CommandText"
+msgid "Create instance"
+msgstr "Örnek oluştur"
+#: ui
+msgctxt "CommandText"
+msgid "Add game profile"
+msgstr "Oyun profili ekle"
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth"
+msgstr "Modrinth'te ara"
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge"
+msgstr "CurseForge'ta ara"
+#: ui
+msgctxt "CommandText"
+msgid "by {}"
+msgstr "{} tarafından"
+#: ui
+msgctxt "CommandText"
+msgid "Mod"
+msgstr "Mod"
+#: ui
+msgctxt "CommandText"
+msgid "Modpack"
+msgstr "Mod paketi"
+#: ui
+msgctxt "CommandText"
+msgid "Resource Pack"
+msgstr "Kaynak paketi"
+#: ui
+msgctxt "CommandText"
+msgid "Shader"
+msgstr "Gölgelendirici"
+#: ui
+msgctxt "CommandText"
+msgid "Switch to"
+msgstr "Şuraya geç"
+#: ui
+msgctxt "CommandText"
+msgid "Launch"
+msgstr "Başlat"
+#: ui
+msgctxt "CommandText"
+msgid "Open"
+msgstr "Aç"
+#: ui
+msgctxt "CommandText"
+msgid "Instances"
+msgstr "Örnekler"
+#: ui
+msgctxt "CommandText"
+msgid "Search results"
+msgstr "Arama sonuçları"
+#: ui
+msgctxt "CommandText"
+msgid "Commands"
+msgstr "Komutlar"
+#: ui
+msgctxt "CommandText"
+msgid "Select an instance to launch…"
+msgstr "Başlatılacak örneği seç…"
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth…"
+msgstr "Modrinth'te ara…"
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge…"
+msgstr "CurseForge'ta ara…"
+#: ui
+msgctxt "CommandText"
+msgid "Search commands or instances…"
+msgstr "Komut veya örnek ara…"
+#: ui
+msgctxt "CommandText"
+msgid "Back"
+msgstr "Geri"
+#: ui
+msgctxt "CommandText"
+msgid "Close"
+msgstr "Kapat"
+msgctxt "CommandText"
+msgid "Type keywords to search on CurseForge"
+msgstr "CurseForge'ta arama yapmak için anahtar kelimeler girin"
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on Modrinth"
+msgstr "Modrinth'te arama yapmak için anahtar kelimeler girin"
+#: ui
+msgctxt "CommandText"
+msgid "Search failed, please try again"
+msgstr "Arama başarısız oldu, lütfen tekrar deneyin"
+#: ui
+msgctxt "CommandText"
+msgid "No matching results"
+msgstr "Eşleşen sonuç yok"
