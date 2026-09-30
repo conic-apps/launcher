@@ -2,9 +2,68 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use std::cell::{Cell, RefCell};
 use std::sync::Arc;
 
 use slint::ComponentHandle;
+
+/// One thing watching the app window's winit events. See [`on_window_event`].
+type EventFilter = Box<dyn FnMut(&winit::event::WindowEvent)>;
+
+thread_local! {
+    /// Everyone watching, in the order they asked.
+    static EVENT_FILTERS: RefCell<Vec<EventFilter>> = const { RefCell::new(Vec::new()) };
+    /// Whether the one filter the winit backend accepts has been registered.
+    static EVENT_HOOK: Cell<bool> = const { Cell::new(false) };
+}
+
+/// Registers `filter` to see every winit window event the app window gets.
+///
+/// **The winit backend keeps exactly one event filter per Slint window, and
+/// `on_winit_window_event` *replaces* it** rather than adding to it — the slot
+/// is a `Cell<Option<Box<dyn FnMut(..)>>>`. So the second caller of the raw API
+/// silently unhooks the first, and the symptom is whichever watcher happened to
+/// register last simply never running: that is how the window controls lost
+/// their hook (`windows_caption`) and the background lost its pointer.
+///
+/// This fans every subscriber out through the one slot, so the order they
+/// register in no longer decides which of them works. Call it instead.
+///
+/// Events are always propagated: nothing in the app consumes one, and a filter
+/// that stopped propagation would take the event away from all the others and
+/// from Slint's own handling as well.
+///
+/// The filters run on the thread that owns the window — the one running the
+/// event loop — which is why the list is thread-local and needs no locking.
+/// The window is looked up once, on the first registration, because a winit
+/// window does not exist until the loop has created it; there is only one, and
+/// the app has one window.
+pub fn on_window_event<H: ComponentHandle>(
+    component: &H,
+    filter: impl FnMut(&winit::event::WindowEvent) + 'static,
+) {
+    use i_slint_backend_winit::{EventResult, WinitWindowAccessor};
+
+    EVENT_FILTERS.with(|filters| filters.borrow_mut().push(Box::new(filter)));
+
+    if EVENT_HOOK.replace(true) {
+        // The slot already holds the dispatcher, and it reads the list above,
+        // so a later subscriber is picked up without touching it again.
+        return;
+    }
+    component.window().on_winit_window_event(|_, event| {
+        EVENT_FILTERS.with(|filters| {
+            // The borrow is held across the calls on purpose: a filter cannot be
+            // removed while it is running, and none of them can reach back in
+            // here (the backend takes its own slot out for the duration of the
+            // dispatch, so a registration from inside would be lost anyway).
+            for filter in filters.borrow_mut().iter_mut() {
+                filter(event);
+            }
+        });
+        EventResult::Propagate
+    });
+}
 
 /// Thin wrapper around a Slint component's window exposing the window-control
 /// operations the title bar needs.
@@ -82,13 +141,11 @@ impl<H: ComponentHandle> WindowService<H> {
     /// The callback runs on the event loop's thread, and the event is propagated
     /// afterwards so Slint still sees it.
     pub fn on_focus_changed(&self, callback: impl FnMut(bool) + 'static) {
-        use i_slint_backend_winit::{EventResult, WinitWindowAccessor};
         let mut callback = callback;
-        self.window().on_winit_window_event(move |_, event| {
+        on_window_event(self.component.as_ref(), move |event| {
             if let winit::event::WindowEvent::Focused(focused) = event {
                 callback(*focused);
             }
-            EventResult::Propagate
         });
     }
 

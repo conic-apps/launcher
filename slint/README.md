@@ -136,7 +136,9 @@ slint/
           details.slint             #   the six detail panels
   crates/
     platform/                       # Tauri-free mirror of crates/platform
-    window/                         # window-control service (min/max/fullscreen)
+    window/                         # window-control service (min/max/fullscreen) and
+                                    #   the app's one winit window-event hook
+                                    #   (see Window events)
     config/                         # Tauri-free mirror of crates/config
     folder/                         # Tauri-free mirror of crates/folder
     account/                        # Tauri-free mirror of crates/account (whole crate)
@@ -345,6 +347,34 @@ Per the migration plan:
 - Vue's Pinia stores and composables are **not** ported 1:1 — their
   responsibilities map to Rust controllers plus small Slint globals.
 
+## Window events
+
+Three parts of the app need the platform's own window events, and none of them
+can get them from a `TouchArea`:
+
+- the window background's parallax pointer, and the two layers' size
+  (`app/src/background/controller.rs`),
+- the Windows window controls, which need the first winit event because there is
+  no `HWND` before the event loop has created the window
+  (`app/src/windows_caption.rs`),
+- the music player's focus, which ramps its background volume over a second
+  rather than applying it at once (`app/src/music.rs`, through
+  `WindowService::on_focus_changed`).
+
+`WinitWindowAccessor::on_winit_window_event` looks like it registers a filter,
+but the backend keeps **one** per Slint window and `set`s it
+(`WinitWindowAdapter::window_event_filter` is a
+`Cell<Option<Box<dyn FnMut(..)>>>`), so a second caller silently unhooks the
+first. Registering all three therefore left whichever registered last as the
+only one that ran: the window controls' hook was gone, so the subclass was never
+installed and no caption button was ever drawn — and the background had lost its
+pointer to the same mechanism before that, when the controls' hook took over from
+it.
+
+`slint_window::on_window_event` is the way in: it fans every subscriber out
+through the single slot, so registration order no longer decides which watcher
+works. It also always propagates, since nothing here consumes an event.
+
 ## Migrated so far
 
 - Application window (`App`) with the custom title bar and native window chrome.
@@ -409,7 +439,10 @@ Per the migration plan:
   resize border is the hit test, and a maximized window is exactly the monitor's
   work area. The glyphs come from the font Windows draws its caption buttons with
   and the fills are DWM's — see Known issues for why uxtheme could not supply
-  them. macOS has the mirror-image arrangement in `traffic_lights.rs`.
+  them. macOS has the mirror-image arrangement in `traffic_lights.rs`. Attaching
+  it needs the first winit event (there is no `HWND` before the event loop has
+  created the window), which it takes through `slint_window::on_window_event` —
+  see **Window events** below for why that is not the backend's own hook.
 - Title bar: home/settings navigation, centered search bar + hotkey chip, music
   action (`components/title-bar*`, `components/search-bar.slint`) — the last one
   gated on `config.music.enabled`, as the Vue's `v-if` is.

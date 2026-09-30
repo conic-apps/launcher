@@ -205,9 +205,13 @@ fn format_record(buffer: &mut Formatter, record: &Record) -> std::io::Result<()>
 
 /// Installs the logger: stderr as before, plus the file.
 ///
-/// The level is the same `LevelFilter::Info` the stderr logger had, and
-/// `RUST_LOG` still overrides it (`from_default_env`). The Tauri app ran at
-/// `Debug`; the `debug!` lines this app does emit are about the window chrome
+/// The level is `info`, and `RUST_LOG` overrides it. That default goes through
+/// `default_filter_or("info")` rather than a `builder.filter_level(Info)`: the
+/// latter is `self.filter = Some(level)`, applied *after* `RUST_LOG` is parsed,
+/// so it discards whatever `RUST_LOG` asked for and `RUST_LOG=debug` produced
+/// nothing at all — which is how a hook that never runs stays invisible, since
+/// the `debug!` lines are the ones that would have named it. The Tauri app ran
+/// at `Debug`; the `debug!` lines this app does emit are about the window chrome
 /// and the background, and a launch log that has to be read by hand is a launch
 /// log that is not.
 pub fn init() {
@@ -225,8 +229,8 @@ pub fn init() {
         }
     };
 
-    let mut builder = env_logger::Builder::from_default_env();
-    builder.filter_level(log::LevelFilter::Info);
+    let mut builder =
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"));
     builder.format(format_record);
     // A log file is read with a text editor, not a terminal that can render
     // colour, and the plugin's file target was plain in a release build. The
@@ -240,8 +244,8 @@ pub fn init() {
 }
 
 fn init_stderr() {
-    let mut builder = env_logger::Builder::from_default_env();
-    builder.filter_level(log::LevelFilter::Info);
+    let mut builder =
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"));
     builder.format(format_record);
     builder.target(env_logger::Target::Stderr);
     let _ = builder.try_init();
