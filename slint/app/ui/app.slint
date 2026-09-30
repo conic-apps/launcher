@@ -17,6 +17,7 @@ import { WindowBackground } from "components/window-background.slint";
 import { SettingsView } from "views/settings-view.slint";
 import { GameView } from "views/game-view.slint";
 import { LaunchView } from "views/launch-view.slint";
+import { SetupView } from "views/setup-view.slint";
 import { GameViewPlaceholder } from "views/game-placeholder.slint";
 
 // Re-export so the Rust side can access the globals and build the Java runtime
@@ -36,6 +37,7 @@ export { ContentState, ContentSearch, ContentCard, CardTag, FilterChip, FilterRo
 export { MusicState, MusicTrack } from "globals/music.slint";
 export { CommandPaletteState, PaletteItem } from "globals/command-palette.slint";
 export { InstanceSettingsState } from "globals/instance-settings.slint";
+export { SetupWizardState } from "globals/setup.slint";
 
 // Application root window (App.vue). macOS keeps the native traffic lights,
 // Linux draws the window controls itself, and Windows draws the platform's own
@@ -213,7 +215,8 @@ export component App inherits Window {
                     if Navigation.current-page == "settings" : SettingsView { }
                     if Navigation.current-page == "game" : GameView { }
                     if Navigation.current-page == "launch" : LaunchView { }
-                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" : GameViewPlaceholder { }
+                    if Navigation.current-page == "setup" : SetupView { }
+                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "setup" : GameViewPlaceholder { }
                 }
             }
 

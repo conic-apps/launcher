@@ -1,0 +1,91 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+
+// The two paragraphs every wizard screen opens with, which `SetupView.vue`
+// styles through the body's `:deep()` selectors:
+//
+//   :deep(.wizard-title)   { color: var(--ctp-lavender); font-size: 22px; margin-bottom: 8px }
+//   :deep(.wizard-message) { font-size: 13px; line-height: 1.5; width: 100% }
+//
+// `WizardMessage` inherits `Text` rather than wrapping one, so a screen can put
+// it straight into its own column: Slint measures a word-wrapping `Text` for
+// the width it is going to be given only while the chain from the layout that
+// owns that width is short enough to resolve (see the Yggdrasil paragraph in
+// `AccountAddYggdrasil`), and the wizard's `ScrollView` measures its content
+// height, so a message one layout level too deep would come out one line per
+// wrapped line short and take the bottom of the screen with it.
+//
+// `WizardTitle` does add a level, which is safe: all six titles are single
+// lines in every catalog.
+export component WizardTitle inherits VerticalLayout {
+    in property <string> title;
+
+    width: 100%;
+    // The `margin-bottom: 8px`, which a layout has no margin for.
+    padding-bottom: 8px;
+    // `start`, so the single `Text` keeps its own height instead of being given
+    // the box's — the same reasoning as the wizard screens' own columns.
+    alignment: start;
+
+    Text {
+        text: root.title;
+        font-size: 22px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.lavender;
+    }
+}
+
+// `.wizard-message`: the 13px, 1.5-line-height paragraph the six screens share.
+export component WizardMessage inherits Text {
+    in property <string> message;
+
+    text: root.message;
+    font-size: 13px;
+    font-weight: Theme.font-weight-normal;
+    color: Theme.default-text-color.transparentize(0.1);
+    wrap: word-wrap;
+    // 1.18 has no CSS `line-height`; `line-height-factor` multiplies the font's
+    // natural line box (~1.115em) rather than the font size, so this comes out
+    // a shade taller than the stylesheet's 19.5px — the same trade the rest of
+    // the port makes (see the README's line-height note).
+    line-height-factor: 1.5;
+}
+
+// `.wizard-message.warn`: the same paragraph inside a yellow hairline box
+// (`border: 1px solid var(--ctp-yellow); border-radius: 4px; padding: 4px 8px;
+// background: rgba(var(--ctp-yellow-rgb), 0.1)`).
+//
+// The padding is one pixel larger on every side than the stylesheet's: a Slint
+// border is drawn *inside* the box and does not inset the children, where the
+// Vue's global `box-sizing: border-box` leaves 1px of padding under it. That is
+// also why this is a `Rectangle` around a layout rather than a laid-out box —
+// only a graphical element carries a border and a fill.
+export component WizardWarning inherits Rectangle {
+    in property <string> message;
+
+    width: 100%;
+    height: warn-layout.preferred-height + 10px;
+    border-width: 1px;
+    border-color: Theme.yellow;
+    border-radius: 4px;
+    background: Theme.yellow.with-alpha(0.1);
+
+    warn-layout := VerticalLayout {
+        x: 9px;
+        y: 5px;
+        width: parent.width - 18px;
+        alignment: start;
+
+        Text {
+            text: root.message;
+            font-size: 13px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.1);
+            wrap: word-wrap;
+            line-height-factor: 1.5;
+        }
+    }
+}

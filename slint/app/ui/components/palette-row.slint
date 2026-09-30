@@ -1,0 +1,161 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppConfig } from "../globals/settings.slint";
+
+// A palette preview tile (`.color-style > div`, 90x60, rounded, label at
+// `width - 20`).
+//
+// Neither the 4px blue outline nor the label is inside the tile: the outline is
+// the Vue's `outline: 4px solid var(--ctp-blue)`, drawn 4px outside the 90x60
+// box, and the label is its `p { margin-top: calc(100% - 20px) }`, 70px down a
+// 60px box. The Vue's tile has no `overflow: hidden`, so both show. This one
+// cannot carry a `clip` for the same reason — Slint's `clip` cuts the children
+// to the element's box, which would take the outline and the label with it. The
+// radius is therefore on the image box, which is the one element that has to be
+// rounded and cropped.
+component PaletteSwatch inherits Rectangle {
+    in property <image> preview;
+    in property <string> label;
+    in property <bool> selected: false;
+    in property <bool> swatch-disabled: false;
+    callback chosen;
+
+    width: 90px;
+    height: 60px;
+
+    // `.color-style-disabled * { opacity: 0.6 }` dims every *descendant*, and
+    // that is written here rather than on the component root on purpose. An
+    // element carrying `opacity` below 1 is composited through a layer bounded
+    // by its own box, so an opacity on this root clipped the label off
+    // altogether: the label is the Vue's `margin-top: calc(100% - 20px)`, ten
+    // pixels *below* this 60px box, and with follow-system on — which is the
+    // only state in which anything here is disabled — the palette showed four
+    // unlabelled tiles. Per-element opacity is also what the Vue says, and
+    // nothing that dims has a child escaping its box: the outline draws nothing,
+    // the image fills the box it dims, and the label draws inside its own.
+    private property <float> dim: root.swatch-disabled ? 0.6 : 1.0;
+
+    if root.selected : Rectangle {
+        x: -4px;
+        y: -4px;
+        width: parent.width + 8px;
+        height: parent.height + 8px;
+        border-radius: 10px;
+        background: Theme.blue;
+        opacity: root.dim;
+    }
+
+    image-box := Rectangle {
+        width: 90px;
+        height: 60px;
+        border-radius: 6px;
+        clip: true;
+        opacity: root.dim;
+
+        Image {
+            width: 100%;
+            height: 100%;
+            source: root.preview;
+            image-fit: contain;
+        }
+    }
+
+    Text {
+        text: root.label;
+        font-size: 12.3px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.default-text-color.transparentize(0.1);
+        opacity: root.dim;
+        y: parent.width - 20px;
+        width: 100%;
+        horizontal-alignment: center;
+    }
+
+    TouchArea {
+        enabled: !root.swatch-disabled;
+        clicked => { root.chosen(); }
+    }
+}
+
+// The four palette tiles, i.e. `SettingsAppearance.vue`'s and
+// `SetupWizardPalette.vue`'s `.color-style` — the same block of markup and CSS
+// in both, so it is one component here too. The Vue puts it in a `SettingGroup`
+// as the last child, which is what rounds the two bottom corners (`group-last`).
+export component PaletteRow inherits Rectangle {
+    /// The palette a tile is outlined for. The one `active-palette` resolves to
+    /// is the selected one, which is what the Vue's `currentTheme` computes:
+    /// with "follow system" on it is Mocha or Latte whichever the system is, and
+    /// otherwise the configured one.
+    in property <string> selected: "";
+    in property <bool> swatches-disabled: false;
+    /// Rounds the two bottom corners (`:last-child` of `.setting-items`).
+    in property <bool> group-last: true;
+
+    width: 100%;
+    height: 120px;
+    background: Theme.setting-item-background;
+    border-bottom-left-radius: root.group-last ? 8px : 0px;
+    border-bottom-right-radius: root.group-last ? 8px : 0px;
+
+    // `.color-style { display: flex; align-items: center;
+// justify-content: center }` with the tiles' `margin: -24px 12px 0`
+    // — a 24px side that is really a gap, and a -24px top that is what
+    // `align-items: center` then measures against. Spacing and padding
+    // say so directly, so the 456px of hand-computed offsets (4 × 90 +
+    // 8 × 12) and the 114px pitch are gone: a fifth tile, or a wider one,
+    // needs nothing changed here.
+    HorizontalLayout {
+        alignment: center;
+        cross-axis-alignment: start;
+        padding-top: 18px;
+        spacing: 24px;
+
+        PaletteSwatch {
+            preview: @image-url("../assets/palette-latte.png");
+            label: "Latte";
+            selected: root.selected == "Latte";
+            swatch-disabled: root.swatches-disabled;
+            chosen => {
+                Theme.transitions-enabled = true;
+                AppConfig.palette = "Latte";
+                AppConfig.changed();
+            }
+        }
+        PaletteSwatch {
+            preview: @image-url("../assets/palette-frappe.png");
+            label: "Frappé";
+            selected: root.selected == "Frappe";
+            swatch-disabled: root.swatches-disabled;
+            chosen => {
+                Theme.transitions-enabled = true;
+                AppConfig.palette = "Frappe";
+                AppConfig.changed();
+            }
+        }
+        PaletteSwatch {
+            preview: @image-url("../assets/palette-macchiato.png");
+            label: "Macchiato";
+            selected: root.selected == "Macchiato";
+            swatch-disabled: root.swatches-disabled;
+            chosen => {
+                Theme.transitions-enabled = true;
+                AppConfig.palette = "Macchiato";
+                AppConfig.changed();
+            }
+        }
+        PaletteSwatch {
+            preview: @image-url("../assets/palette-mocha.png");
+            label: "Mocha";
+            selected: root.selected == "Mocha";
+            swatch-disabled: root.swatches-disabled;
+            chosen => {
+                Theme.transitions-enabled = true;
+                AppConfig.palette = "Mocha";
+                AppConfig.changed();
+            }
+        }
+    }
+}

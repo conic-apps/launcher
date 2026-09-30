@@ -57,9 +57,15 @@ component JavaRuntimeList inherits VerticalLayout {
 
 // src/views/settings/SettingsJVM.vue
 export component SettingsJvm inherits VerticalLayout {
+    /// The 8px of `SettingGroup.vue`'s `width: calc(100% - 16px); margin: 0
+    /// auto`, which the settings page's `padding: 0 8px` is one half of. The
+    /// setup wizard's `:deep(.setting-group) { width: 100% }` drops it, and
+    /// passes `0px` here.
+    in property <length> group-inset: 8px;
+
     width: 100%;
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: root.group-inset;
+    padding-right: root.group-inset;
     spacing: 16px;
     alignment: start;
 
