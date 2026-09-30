@@ -102,7 +102,7 @@ slint/
         launch-view.slint           # src/views/LaunchView.vue
         setup-view.slint            # src/views/SetupView.vue
         setup/                      # the wizard's six screens + their shared paragraphs
-        game-placeholder.slint      # stand-in for the not-yet-migrated views
+        todo-placeholder.slint      # stand-in for a page that has no screen yet
         accounts/                   # the add-account dialog's three screens
       overlays/
         dialog-root.slint           # src/overlays/DialogRoot.vue
@@ -281,8 +281,36 @@ All 12 launcher languages ship a catalog (`en_US` is the fallback):
 and game strings; the `msgid`s are the `@tr()` source strings and the `msgctxt`
 is the component name. To add or refresh a language, add/update its directory
 under `app/i18n/` (and the `bundled_locale()` mapping in
-`src/config_bridge.rs`). Catalogs can be (re)generated with
-`slint-tr-extractor` (not currently installed).
+`src/config_bridge.rs`).
+
+**Keeping a catalog in step with the `.slint` files** is
+`slint/tools/update-i18n.py`, and running it is the whole job:
+
+```bash
+cargo install slint-tr-extractor          # the .pot side
+cd slint/app
+find ui -name '*.slint' | xargs slint-tr-extractor -o messages.pot
+python3 ../tools/update-i18n.py messages.pot
+```
+
+It takes the truth from the `.pot` — which `(context, msgid)` pairs the sources
+actually contain — and writes each catalog back with the missing pairs added, the
+dropped ones removed and the re-keyed ones moved. **The translations live in the
+script**, as a `(context, msgid) -> { language: text }` table, because they were
+being hand-seeded and hand-drifted; a pair that has no row is *reported and left
+alone* rather than written as an identity, so a gap in the catalog is visible
+instead of being a sentence nobody notices is English.
+
+That last point is the reason the script exists at all. A drifted entry is
+invisible at runtime: `@tr` resolves under the **component's** name, so a pair
+catalogued under a name no component has simply misses and falls back to its
+English source, in every language, forever. Three sets of sentences were in that
+state — the music player's nine transport labels (catalogued with no context at
+all), the remote lists' empty state (under `RemoteListView`, a component that
+`panels.slint` replaced with one file per panel), and the two instance-list
+placeholder strings (added to `instances-list.slint` after the last extraction).
+All twelve catalogs are now complete against the `.pot`: 559 pairs each, none
+empty.
 
 The `msgid` of a `@tr()` with more than one argument is the source string as it
 is written — `@tr("{}/{}/{}", month, day, year)` is looked up as `"{}/{}/{}"`,
@@ -320,6 +348,55 @@ Per the migration plan:
 ## Migrated so far
 
 - Application window (`App`) with the custom title bar and native window chrome.
+- **The two "are you sure?" dialogs that guard something irreversible**:
+  `ConfirmDeleteSave` (a save's trash button) and `ConfirmQuitApp` (any close
+  while the launch page is up). They are one component,
+  `dialogs/confirm-warning.slint`, because in the Vue they were the same
+  component twice — same markup, same `.message` and `.buttons` rules, four
+  different strings. `ConfirmQuitApp` also brings the exit animation its own
+  script played: `App` scales and fades the one box that holds everything the
+  Vue's `body` held, over the same 250ms `cubic-bezier(0, 0.74, 0.65, 1)`, and
+  closes 500ms later. Without it the close button dropped a running install on
+  the floor.
+  - **It is raised from `on_close_requested`, not from a button.** The title
+    bar's `close-window` callback covers the controls *this app draws* (Linux) and
+    the caption buttons Windows substitutes (`windows_caption.rs` sends
+    `SC_CLOSE`, which does reach Slint) — but on macOS the red button is
+    AppKit's, and it closes the window without the UI ever seeing it. Asking at
+    the window covers all three, plus `Alt`+`F4` and a taskbar's close, and is
+    where a close that is not a button at all belongs.
+  - **The game coming up dismisses it** (`app/src/launch.rs`). Once the process
+    is running there is nothing in progress to abort and the question is stale,
+    so a user who opened it and then watched the game start finds it gone. It is
+    dismissed and *not* cancelled: the flow is still running and only the flag
+    goes down, which is all the dialog's own cancel button does. The signal is
+    the three startup log markers the launch crate breaks its own 20-second wait
+    on, read off the raw event in `flush_launch` **before** the `LaunchKey`
+    dedupe — the three collapse into one key, and `WaitForLaunch` has usually got
+    there first, so only the first of them reaches `apply_launch_event`.
+    (`LogTextureLoaded` alone still gets the "Game started" *description*, which
+    is what the Vue gave it; that is a separate concern from the launch being
+    over.)
+- **The log file** (`app/src/logs.rs`). `Settings → About → "View launcher logs"`
+  opens the data directory's `logs` folder, and nothing was writing to it: the
+  app logged to stderr only, so the button opened an empty directory. It now
+  writes there on the plugin's own terms — `conic-launcher.log`, 50 kB, ten
+  files, archives named `<stem>_<timestamp>.log` — so the folder looks the same
+  whichever frontend filled it. `env_logger` has no rotating target, so the
+  writer is a `Write` of its own (`Target::Pipe`); the count is in bytes because
+  that is what a 50 kB limit means. See Known issues for the level.
+- **The instance list's own state between runs** (`app/src/instance_view.rs`):
+  which instance was selected, the sort order, the grouping, and which groups
+  were left open. The Vue kept all four in the webview's `localStorage`
+  (`currentInstanceId`, `instancesSortMode`, `instancesGroupMode`,
+  `instancesGroupExpanded`), so a native app that dropped them started every
+  launch on the first instance with the default order. They go to
+  `instance_view.json` beside `config.toml`, which is the arrangement
+  `slint-music`'s `session` already established for the player — and the same
+  one thing the two frontends cannot share. Each value falls back on its own: a
+  mode that is not one of the four costs that one setting, as the Vue's
+  `SORT_MODES.includes(…)` did, rather than the whole file as a `serde` enum
+  would have.
 - **Windows caption buttons** (`app/src/windows_caption.rs`): the window has no
   system title bar, and the minimize/maximize/close controls are the platform's
   own — real non-client area, not buttons the app drew. `WM_NCHITTEST` answers
@@ -384,7 +461,54 @@ Per the migration plan:
   in one column) that the native `<input type="number">` spinner provides in the
   Vue original; the caret is tinted with the text colour via the selection
   background. Clicking outside a text field blurs it (`globals/focus.slint`).
+  `error` is the Vue's invalid state (`border: none` for `outline: 1px solid
+  var(--ctp-red)`, as an inline style, so it outranks the stylesheet's
+  `:focus-within` and a focused invalid field stays red) and the offline-account
+  dialog's UUID field is the one row that uses it.
+- `BaseDialog` **eases its own height**. The Vue had this in two halves —
+  `watch(() => props.height)` for a dialog with `animateHeight`, and the same
+  300ms `power2.out` tween for one that sized itself — and both meant a body that
+  changes height does so over 300ms, never in one frame. The two call sites that
+  needed it (`account-add.slint`, `multiplayer-extension.slint`) each carried
+  their own copy of the animation; the height now eases in `BaseDialog` off
+  whatever `dialog-height` says, and a caller only measures. The animation is
+  gated on the dialog being `shown`, which is what keeps *opening* out of it: the
+  Vue pinned the panel to the height it already had and skipped the first
+  observation, so a dialog appeared at its content's natural height and only
+  subsequent resizes tweened.
+- `BaseLoading` takes the Vue's `gap`, so the arc is the sweep
+  `100 - (gap + strokeWidth)` out of 100 rather than a fixed ~88% (which is what
+  the default `6` and `4` do not make it). It is a real `ArcTo` between the two
+  ends the dash would have had, not a `Path.commands` string: that route means
+  formatting a number into the path, and Slint can only do that with the
+  *locale's* decimal separator in it. The seven call sites that passed a `gap`
+  pass it again.
+- `ScrollView` takes the Vue's `scrollbarTop` / `scrollbarBottom` / `disabled`.
+  The instance list's asymmetric insets were never affected — it draws its own
+  scrollbar and already had them — so no caller needs these yet; they are here so
+  the component's surface matches.
+- `ScrollViewHorizontal` (`components/scroll-view-horizontal.slint`) is
+  `ScrollView` on its side, and the detail panel's gallery is its user. The box
+  clips, so the gallery's plain `HorizontalLayout` inside it showed the first few
+  screenshots and nothing else. The wheel is read as `delta-x` **falling back to
+  `delta-y`**, which is what Lenis does for a horizontal-only wrapper: a plain
+  vertical wheel reports no `deltaX` at all, so reading only that would have left
+  the strip unscrollable with a mouse — the one input it has. What is *not* here
+  is the original's `scrollToCenter(element)`: the items live in a `@children`
+  slot and Slint cannot reach a slot's child by index, so a caller that needs to
+  centre something has to own the distance. The gallery can, from its model.
+- `SettingItem` takes the Vue's `icon-fill="none"` as `icon-outline`, and
+  `AppIcon` the `no-fill` under it. The five rows that pass it draw stroke-only
+  glyphs either way, because `build.rs` splits an icon by what each of its shapes
+  paints and `moon` / `bell` / `server` declare `fill="none"` themselves — so
+  their fill pass is empty and there was nothing to suppress. It is carried
+  through so the rows say what they meant.
 - Icon rendering for the migrated screens (`icons.slint` + `AppIcon`).
+- **The unknown-world icon** (`ui/assets/unknown-server.webp`), the `v-else`
+  branch every content card in the Vue carried. A card whose icon was missing or
+  failed to decode used to come out as an empty 72x72 box; it now decodes the
+  bundled texture once and falls back to it, which is also what a project row in
+  the command palette does.
 - Config load/save (`slint-config`) wired to the `AppConfig` global: every
   setting is persisted to the same `~/.conic[-debug]/config.toml` as the Tauri
   app. Editing text fields saves on a 400 ms debounce.
@@ -964,11 +1088,18 @@ and tags, and the instal/remove actions go through `slint-download`.
   The twelve catalogs gain 36 entries each, seeded from `setup.*` in
   `src/locales/*.ts` by `slint/tools/seed-setup-i18n.py`.
 
-Not yet migrated: `AccountsView`;
-`views/game-placeholder.slint` stands in for the not-yet-migrated views. The
-account avatars (the footer's 56px head, its switcher's 18px rows and the
-add-account dialog's profile rows) all draw the real skin now; `AccountAvatar`
-still falls back to the placeholder disc for a skin Rust could not decode.
+Not yet migrated: `AccountsView`. The accounts page is being redesigned rather
+than ported, so nothing of `src/views/accounts/AccountManager.vue`,
+`ActivityCalendar.vue` or the two `src/overlays/account/*` overlays is coming
+across, and `views/todo-placeholder.slint` is what `"accounts"` lands on until the
+new page exists. The account avatars (the footer's 56px head, its switcher's 18px
+rows and the add-account dialog's profile rows) all draw the real skin now;
+`AccountAvatar` still falls back to the placeholder disc for a skin Rust could
+not decode. The launcher's *own* update (`crates/update`, `UpdateApp.vue`,
+`TitleBarUpdateIndicator.vue`, `src/store/update.ts`) and the Minecraft
+release/snapshot reminder (`src/store/minecraftUpdate.ts`, `UpdateReminder.vue`)
+are out for the same reason: they are features, not screens, and they are not
+being ported.
 
 - **Instance settings overlay deviations**, all deliberate:
   - **The write is debounced by 400 ms and the app is never locked.** The Vue
@@ -1309,6 +1440,15 @@ centre. So:
 
 ## Known issues / notes
 
+- **The log file is written at `Info`, not the Tauri app's `Debug`.** The Vue
+  ran `tauri-plugin-log` at `LevelFilter::Debug`, but the lines below `Info` in
+  this app are `debug!(target: "shell", …)` about window chrome and `debug!`s
+  from the background's own bookkeeping — none of which a user opening
+  `Settings → About → "View launcher logs"` is looking for, and all of which would
+  bury the launch output that is. `RUST_LOG` still overrides the level
+  (`from_default_env`), so a debug run is one environment variable away. This is
+  the one place the file target is deliberately quieter than the original; the
+  file name, the 50 kB rotation and the ten files are all as it had them.
 - **The startup palette moves twice, and the second move is the platform's.**
   `Palette.color-scheme` is `Unknown` until the window exists — AppKit, Win32 and
   the XDG portal all need a window to answer — so `Theme.active-palette` resolves
@@ -2315,7 +2455,7 @@ centre. So:
 
   Three glyphs stay hand-written because they are not icons: the
   minimize/maximize/close window controls in `title-bar.slint` (drawn to the
-  platform's own metrics) and the placeholder artwork in `game-placeholder.slint`.
+  platform's own metrics) and the placeholder artwork in `todo-placeholder.slint`.
   `base-loading`'s arc and `item-loading-icon`'s three states are animation
   frames, not a set.
 - **The `pcm` feature of symphonia is a codec of its own, not part of `wav`.**

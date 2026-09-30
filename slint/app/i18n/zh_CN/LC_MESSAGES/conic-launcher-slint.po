@@ -613,8 +613,6 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "正在扫描已安装的 Java 运行环境"
 
-# Game view strings, seeded from src/locales/zh_cn.ts.
-
 #: ui
 msgctxt "GameTime"
 msgid "Just now"
@@ -1460,514 +1458,637 @@ msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "你的网络环境：{0}"
 
+#: ui
 msgctxt "ContentModsPanel"
 msgid "Mods"
 msgstr "模组列表"
 
+#: ui
 msgctxt "ContentModsPanel"
 msgid "Consider downloading some mods from the internet"
 msgstr "考虑从互联网下载一些模组"
 
+#: ui
 msgctxt "ContentResourcepacksPanel"
 msgid "Resource Packs"
 msgstr "资源包列表"
 
+#: ui
 msgctxt "ContentResourcepacksPanel"
 msgid "Consider downloading some resource packs from the internet"
 msgstr "考虑从互联网下载一些资源包"
 
+#: ui
 msgctxt "ContentPacksPanel"
 msgid "Modpacks"
 msgstr "整合包列表"
 
+#: ui
 msgctxt "ContentSavesPanel"
 msgid "Saves"
 msgstr "存档列表"
 
+#: ui
 msgctxt "ContentSavesPanel"
 msgid "Consider launching the game and creating some saves"
 msgstr "考虑启动游戏并创建一些存档"
 
+#: ui
 msgctxt "ContentScreenshotsPanel"
 msgid "Loading..."
 msgstr "加载中..."
 
+#: ui
 msgctxt "ContentScreenshotsPanel"
 msgid "No screenshots"
 msgstr "暂无截图"
 
+#: ui
 msgctxt "ContentNotFound"
 msgid "No results match the current filter"
 msgstr "此视图筛选条件无匹配结果"
 
-msgctxt "RemoteListView"
-msgid "Try adjusting keywords or filters and search again"
-msgstr "尝试调整关键词或筛选条件后再次搜索"
-
+#: ui
 msgctxt "DetailBody"
 msgid "Download"
 msgstr "下载"
 
+#: ui
 msgctxt "DetailBody"
 msgid "Remove"
 msgstr "删除"
 
+#: ui
 msgctxt "DetailBody"
 msgid "Installed: {}"
 msgstr "已安装：{}"
 
+#: ui
 msgctxt "ContentText"
 msgid "Favorites"
 msgstr "收藏"
 
+#: ui
 msgctxt "ContentText"
 msgid "[Disabled] "
 msgstr "[已禁用] "
 
+#: ui
 msgctxt "ContentText"
 msgid "Loader"
 msgstr "加载器"
 
+#: ui
 msgctxt "ContentText"
 msgid "Version"
 msgstr "版本"
 
+#: ui
 msgctxt "ContentText"
 msgid "Category"
 msgstr "分类"
 
+#: ui
 msgctxt "ContentText"
 msgid "Mod info"
 msgstr "模组信息"
 
+#: ui
 msgctxt "ContentText"
 msgid "Resource pack info"
 msgstr "资源包信息"
 
+#: ui
 msgctxt "ContentText"
 msgid "Modpack info"
 msgstr "整合包信息"
 
+#: ui
 msgctxt "ContentText"
 msgid "Search mods..."
 msgstr "搜索模组..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Search resource packs..."
 msgstr "搜索资源包..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Search modpacks..."
 msgstr "搜索整合包..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Last played: "
 msgstr "上次游玩: "
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Adventure & RPG"
 msgstr "冒险与RPG"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Armor, Tools & Weapons"
 msgstr "护甲、工具与武器"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "World Generation"
 msgstr "世界生成"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Technology"
 msgstr "科技"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Magic"
 msgstr "魔法"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Storage"
 msgstr "存储"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Library & API"
 msgstr "库与API"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Maps & Info"
 msgstr "地图与信息"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Utility & QoL"
 msgstr "实用与QoL"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Server Utility"
 msgstr "服务器实用"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Food"
 msgstr "食物"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Performance"
 msgstr "性能"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Bug Fixes"
 msgstr "漏洞修复"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Redstone"
 msgstr "红石"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Cosmetic"
 msgstr "外观装饰"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Miscellaneous"
 msgstr "杂项"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Adventure"
 msgstr "冒险"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Cursed"
 msgstr "诡异"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Decoration"
 msgstr "装饰"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Economy"
 msgstr "经济"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Equipment"
 msgstr "装备"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Food"
 msgstr "食物"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Game Mechanics"
 msgstr "游戏机制"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Library"
 msgstr "库"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Magic"
 msgstr "魔法"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Management"
 msgstr "管理"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Minigame"
 msgstr "小游戏"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Mobs"
 msgstr "生物"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Optimization"
 msgstr "优化"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Social"
 msgstr "社交"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Storage"
 msgstr "存储"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Technology"
 msgstr "科技"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Transportation"
 msgstr "交通"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Utility"
 msgstr "实用"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "World Generation"
 msgstr "世界生成"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Crafted"
 msgstr "手工制作"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Photorealistic"
 msgstr "照片写实"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Semi-Realistic"
 msgstr "半写实"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Simple"
 msgstr "简约"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Traditional"
 msgstr "传统"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Animated"
 msgstr "动态"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Modern"
 msgstr "现代"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Themed"
 msgstr "主题风格"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Mod Support"
 msgstr "模组支持"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "RPG"
 msgstr "RPG"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Gameplay"
 msgstr "游戏玩法"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "GUI"
 msgstr "界面"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Sound"
 msgstr "声音"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Environment"
 msgstr "环境"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "World Generation"
 msgstr "世界生成"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Blocks"
 msgstr "方块"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Items"
 msgstr "物品"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Mobs"
 msgstr "生物"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Weather"
 msgstr "天气"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Faithful"
 msgstr "忠实原版"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "16x"
 msgstr "16x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "32x"
 msgstr "32x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "64x"
 msgstr "64x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "128x"
 msgstr "128x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "256x"
 msgstr "256x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Photorealistic"
 msgstr "照片写实"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Semi-Realistic"
 msgstr "半写实"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Simple"
 msgstr "简约"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Modern"
 msgstr "现代"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Themed"
 msgstr "主题风格"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Classic"
 msgstr "经典"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Dark"
 msgstr "暗色"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Medieval"
 msgstr "中世纪"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Anime"
 msgstr "动漫"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Cartoon"
 msgstr "卡通"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Pixel Art"
 msgstr "像素画"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Vanilla Plus"
 msgstr "原版加强"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Utility"
 msgstr "实用"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Other"
 msgstr "其他"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Technology"
 msgstr "科技"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Magic"
 msgstr "魔法"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Sci-Fi"
 msgstr "科幻"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Adventure & RPG"
 msgstr "冒险RPG"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Exploration"
 msgstr "探索"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Minigame"
 msgstr "小游戏"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Quests"
 msgstr "任务"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Hardcore"
 msgstr "高难度"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Map-Based"
 msgstr "有特定地图"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Lightweight"
 msgstr "轻量整合包"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Extra Large"
 msgstr "大型整合包"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Combat PvP"
 msgstr "战斗PvP"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Multiplayer"
 msgstr "多人"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "FTB Modpacks"
 msgstr "FTB整合包"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Skyblock"
 msgstr "空岛"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Vanilla Plus"
 msgstr "原版增强"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Horror"
 msgstr "恐怖"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Expert"
 msgstr "专家"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Adventure"
 msgstr "冒险"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Challenging"
 msgstr "挑战"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Combat"
 msgstr "战斗"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "综合"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Lightweight"
 msgstr "轻量"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Magic"
 msgstr "魔法"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Multiplayer"
 msgstr "多人"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Optimization"
 msgstr "优化"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Quests"
 msgstr "任务"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "科技"
@@ -1977,203 +2098,256 @@ msgctxt "MusicPlayerOverlay"
 msgid "No music"
 msgstr "暂无音乐"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Shuffle"
 msgstr "随机播放"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Repeat"
 msgstr "循环播放"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Previous"
 msgstr "上一曲"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Play"
 msgstr "播放"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Pause"
 msgstr "暂停"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Next"
 msgstr "下一曲"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Open music folder"
 msgstr "打开音乐文件夹"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Playlist"
 msgstr "播放列表"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Nothing here"
 msgstr "啥也没"
-
-# Instance settings overlay (src/overlays/InstanceSetting.vue) and the
-# delete dialog it opens (src/overlays/dialogs/ConfirmDeleteInstance.vue).
-# The overlay's strings are seeded from `game.instance.*` in
-# src/locales/<lang>.ts; the dialog's were never internationalized there, so
-# its Chinese source text is kept and translated here.
 
 #: ui
 msgctxt "InstanceSettings"
 msgid "Instance settings"
 msgstr "实例设置"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Images"
 msgstr "图片"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Set background image"
 msgstr "设置背景图像"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Remove image"
 msgstr "移除图像"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Use instance background as launcher background"
 msgstr "在启动器背景使用实例背景"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Selected {}"
 msgstr "已选择 {}"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Enable instance-specific settings"
 msgstr "启用实例独立设置"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Launch options"
 msgstr "启动选项"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Window size"
 msgstr "窗口大小"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Initial game window size"
 msgstr "游戏窗口的初始大小"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "W"
 msgstr "宽"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "H"
 msgstr "高"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Fullscreen"
 msgstr "全屏"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Quit launcher after launching game"
 msgstr "启动游戏后退出启动器"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Skip game file check"
 msgstr "跳过游戏文件检查"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "The launcher will not attempt to verify or repair game files before launching"
 msgstr "启动游戏前启动器将不会尝试检查或补全游戏文件"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Memory"
 msgstr "内存"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Auto-allocate memory"
 msgstr "自动分配内存"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Manual memory allocation"
 msgstr "手动分配内存"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
 msgstr "手动指定 Java 堆的最大大小，关闭自动分配后生效"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Advanced launch options"
 msgstr "高级启动选项"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Java garbage collector"
 msgstr "Java 垃圾回收器"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra JVM arguments"
 msgstr "添加 JVM 参数"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Appended after default JVM arguments"
 msgstr "将会放在默认 JVM 参数后面"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra game arguments"
 msgstr "添加游戏参数"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Additional arguments for the game"
 msgstr "添加游戏需要的其他参数"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra class paths"
 msgstr "添加类路径"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Separated by semicolons on Windows, colons on other systems"
 msgstr "Windows 下用分号隔开，其他系统用冒号"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Execute before launch"
 msgstr "启动前执行"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added before the launch command"
 msgstr "将会添加至启动命令的前一行"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Wrap command"
 msgstr "包装命令"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added at the beginning of the launch command"
 msgstr "将会添加至启动命令的开头"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Execute after launch"
 msgstr "启动后执行"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added at the end of the launch script"
 msgstr "将会添加至启动脚本的最后一行"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Ignore invalid Minecraft certificates"
 msgstr "忽略无效的 Minecraft 凭证"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
 msgstr "将 -Dfml.ignoreInvalidMinecraftCertificates=true 添加到 JVM 参数中"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Ignore patch discrepancies"
 msgstr "忽略补丁差异"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
 msgstr "将 -Dfml.ignorePatchDiscrepancies=true 添加到 JVM 参数中"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Delete instance"
 msgstr "删除实例"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Deleting this instance will permanently lose all saves, resource packs, and other game data"
 msgstr "一旦删除此实例，该实例下的存档、材质包等一切游戏数据都将丢失"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Reset instance"
 msgstr "重置实例"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved"
@@ -2183,158 +2357,197 @@ msgstr "一旦重置实例，该实例下的存档、材质包等一切游戏数
 msgctxt "ConfirmDeleteInstance"
 msgid "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
 msgstr "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "游戏时间："
 msgstr "游戏时间："
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "取消"
 msgstr "取消"
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "确认删除"
+
 #: ui
 msgctxt "SetupView"
 msgid "First-run setup"
 msgstr "首次启动设置"
+
 #: ui
 msgctxt "SetupView"
 msgid "Customize Conic Launcher to suit your preferences"
 msgstr "调整 Conic Launcher 以更贴合你的习惯"
+
 #: ui
 msgctxt "SetupView"
 msgid "Back"
 msgstr "返回"
+
 #: ui
 msgctxt "SetupView"
 msgid "Let's get started!"
 msgstr "让我们开始吧！"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Add account)"
 msgstr "下一个（添加帐户）"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Java settings)"
 msgstr "下一个（Java 虚拟机设置）"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Launch options)"
 msgstr "下一个（游戏启动选项）"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Import instances)"
 msgstr "下一个（导入实例）"
+
 #: ui
 msgctxt "SetupView"
 msgid "Finish"
 msgstr "完成"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Welcome"
 msgstr "欢迎"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Welcome to the first-run setup wizard!"
 msgstr "欢迎来到首次启动设置指南页！"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Conic Launcher is highly customizable, but the complex settings might be overwhelming."
 msgstr "Conic Launcher 是可高度自定义的启动器，但那些复杂的设置可能会让你不知所措。"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "This wizard will quickly walk you through some important settings so you can start playing right away."
 msgstr "这个指南将快速带你完成一些重要的设置项，以便待会儿你能够快速上手并启动你的游戏。"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Choose a color scheme"
 msgstr "选择配色方案"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
 msgstr "Conic Launcher 支持多种配色方案，你可以按自己的喜好选择一个。"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Follow system dark mode"
 msgstr "跟随系统深色设置"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
 msgstr "如果系统设置中设置为浅色，则使用 Latte ，否则使用 Mocha"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Account added!"
 msgstr "帐户已添加！"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance"
 msgstr "以下档案已设为默认档案。当你没有给实例设置要使用的档案时，启动器会使用此档案登录游戏"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Microsoft (Official account)"
 msgstr "微软（正版帐户）"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Yggdrasil (External login)"
 msgstr "Yggdrasil（外置登录）"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "No auth service (Offline account)"
 msgstr "无认证服务（离线帐户）"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Java settings"
 msgstr "Java 虚拟机设置"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Conic Launcher can greatly simplify Java environment configuration. Enable \"Auto-install Java runtime\" to avoid manual installation!"
 msgstr "Conic Launcher 能够极大地简化 Java 环境的配置。启用「自动安装 Java 运行环境」即可免于手动安装它们！"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\""
 msgstr "注意：当前平台可能无法自动安装 Java 运行环境，建议手动安装并禁用「自动安装 Java 运行环境」"
+
 #: ui
 msgctxt "SetupLaunchOptions"
 msgid "Game launch options"
 msgstr "游戏启动选项"
+
 #: ui
 msgctxt "SetupLaunchOptions"
 msgid "Here are some basic launch options. You can change more options later in Settings and instance-specific settings."
 msgstr "这里列出了一些基本的启动选项。稍后你还可以在设置和实例独立设置中更改更多选项。"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Import instances"
 msgstr "导入实例"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Import previously played instances from other launchers to get started quickly"
 msgstr "你可以从其他启动器导入先前游玩的实例以便快速开始游戏"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "If you're new to Minecraft, you can also create a blank instance with the latest version right away"
 msgstr "如果你第一次接触 Minecraft，你也可以选择以最新 Minecraft 版本立刻创建空白实例"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Latest release"
 msgstr "最新版本"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Latest snapshot"
 msgstr "最新快照"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "An error occurred"
 msgstr "出现错误"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Creating..."
 msgstr "正在创建..."
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Create instance with latest release"
 msgstr "以最新正式版创建实例"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Create instance with latest snapshot"
@@ -2344,126 +2557,248 @@ msgstr "以最新快照版创建实例"
 msgctxt "AccountAddMicrosoft"
 msgid "Waiting for the sign-in"
 msgstr "正在等待登录"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Finish signing in in your browser — this page will change when it is done."
 msgstr "请在浏览器中完成登录——完成后此页面会自动更新。"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Signed in"
 msgstr "登录成功"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "You can close this tab and go back to Conic Launcher."
 msgstr "你可以关闭此标签页并返回 Conic Launcher。"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Sign-in failed"
 msgstr "登录失败"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
 msgstr "Conic Launcher 未收到有效的登录信息。请关闭此标签页后重试。"
 
+#: ui
 msgctxt "CommandText"
 msgid "Launch instance"
 msgstr "启动实例"
+
 #: ui
 msgctxt "CommandText"
 msgid "Create instance"
 msgstr "创建实例"
+
 #: ui
 msgctxt "CommandText"
 msgid "Add game profile"
 msgstr "添加游戏档案"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth"
 msgstr "在 Modrinth 搜索"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge"
 msgstr "在 CurseForge 搜索"
+
 #: ui
 msgctxt "CommandText"
 msgid "by {}"
 msgstr "作者：{}"
+
 #: ui
 msgctxt "CommandText"
 msgid "Mod"
 msgstr "模组"
+
 #: ui
 msgctxt "CommandText"
 msgid "Modpack"
 msgstr "整合包"
+
 #: ui
 msgctxt "CommandText"
 msgid "Resource Pack"
 msgstr "资源包"
+
 #: ui
 msgctxt "CommandText"
 msgid "Shader"
 msgstr "着色器"
+
 #: ui
 msgctxt "CommandText"
 msgid "Switch to"
 msgstr "切换实例"
+
 #: ui
 msgctxt "CommandText"
 msgid "Launch"
 msgstr "启动"
+
 #: ui
 msgctxt "CommandText"
 msgid "Open"
 msgstr "打开"
+
 #: ui
 msgctxt "CommandText"
 msgid "Instances"
 msgstr "实例"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search results"
 msgstr "搜索结果"
+
 #: ui
 msgctxt "CommandText"
 msgid "Commands"
 msgstr "命令"
+
 #: ui
 msgctxt "CommandText"
 msgid "Select an instance to launch…"
 msgstr "选择要启动的实例…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth…"
 msgstr "在 Modrinth 中搜索…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge…"
 msgstr "在 CurseForge 中搜索…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search commands or instances…"
 msgstr "搜索命令或实例…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Back"
 msgstr "返回"
+
 #: ui
 msgctxt "CommandText"
 msgid "Close"
 msgstr "关闭"
+
+#: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on CurseForge"
 msgstr "输入关键词以在 CurseForge 上搜索"
+
 #: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on Modrinth"
 msgstr "输入关键词以在 Modrinth 上搜索"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search failed, please try again"
 msgstr "搜索失败，请稍后重试"
+
 #: ui
 msgctxt "CommandText"
 msgid "No matching results"
 msgstr "没有匹配的结果"
+
+#: ui
+msgctxt "ContentText"
+msgid "Survival"
+msgstr "生存"
+
+#: ui
+msgctxt "ContentText"
+msgid "Creative"
+msgstr "创造"
+
+#: ui
+msgctxt "ContentText"
+msgid "Adventure"
+msgstr "冒险"
+
+#: ui
+msgctxt "ContentText"
+msgid "Spectator"
+msgstr "旁观"
+
+#: ui
+msgctxt "ContentText"
+msgid "Cheats"
+msgstr "作弊"
+
+#: ui
+msgctxt "InstancesList"
+msgid "No matching instances"
+msgstr "没有匹配的实例"
+
+#: ui
+msgctxt "InstancesList"
+msgid "Consider creating a new instance"
+msgstr "考虑创建一个新实例"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "是否确认删除存档「{}」？"
+msgstr "是否确认删除存档「{}」？"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "存档文件夹将永久删除，这是最后的反悔机会"
+msgstr "存档文件夹将永久删除，这是最后的反悔机会"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "稍等一下..."
+msgstr "稍等一下..."
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "确认删除"
+msgstr "确认删除"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "正在进行的任务将被中止，你确定要退出吗？"
+msgstr "正在进行的任务将被中止，你确定要退出吗？"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "最后的反悔机会"
+msgstr "最后的反悔机会"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "稍等一下..."
+msgstr "稍等一下..."
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "让我出去！"
+msgstr "让我出去！"
+
+#: ui
+msgctxt "ContentModsPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "尝试调整关键词或筛选条件后再次搜索"
+
+#: ui
+msgctxt "ContentResourcepacksPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "尝试调整关键词或筛选条件后再次搜索"
+
+#: ui
+msgctxt "ContentPacksPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "尝试调整关键词或筛选条件后再次搜索"

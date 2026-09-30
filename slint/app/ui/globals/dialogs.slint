@@ -104,6 +104,10 @@ export global Dialogs {
     in-out property <bool> no-suitable-java-error-visible: false;
     // The instance settings overlay's "Delete instance" row.
     in-out property <bool> confirm-delete-instance-visible: false;
+    // The saves grid's trash button.
+    in-out property <bool> confirm-delete-save-visible: false;
+    // The title bar's close button, while a task is running.
+    in-out property <bool> confirm-quit-app-visible: false;
 }
 
 // The "delete instance" dialog
@@ -142,6 +146,27 @@ export global DeleteInstanceState {
     callback cancel();
     /// The "Confirm delete" button. Rust deletes the instance, refreshes the
     /// game view and closes the dialog.
+    callback confirm();
+}
+
+// The "delete save" dialog (src/overlays/dialogs/ConfirmDeleteSave.vue).
+//
+// The Vue's `confirmDeleteSave` holds the save's folder name and its
+// `Data.LevelName`; Rust fills the two below from the card whose trash button was
+// pressed, which is the same pair `askDeleteSave` read out of the saves list.
+export global DeleteSaveState {
+    /// The save's folder under `saves/`, which is what gets deleted.
+    in-out property <string> folder: "";
+    /// `level.dat`'s `Data.LevelName`, which is what the dialog names. Empty
+    /// when the save has none, in which case the dialog shows the folder, as the
+    /// Vue's `save?.Data.LevelName ?? folderName` did.
+    in-out property <string> level-name: "";
+    /// A delete is running: the confirm button is disabled (Vue `deleting`).
+    in-out property <bool> deleting: false;
+    /// The "Wait a moment…" button.
+    callback cancel();
+    /// The "Confirm delete" button. Rust deletes the save, reloads the saves
+    /// grid and closes the dialog.
     callback confirm();
 }
 

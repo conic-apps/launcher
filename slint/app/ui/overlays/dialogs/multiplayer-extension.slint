@@ -98,10 +98,10 @@ component MultiplayerConnect inherits VerticalLayout {
 //
 // The Vue's `BaseDialog` is used `animate-height`: the panel is `fit-content`
 // and tweens to the mounted component's height over 300ms `power2.out` (an
-// `ease-out-quad` here), with the width switching instantly between the three
-// components (580 / 480 / 600). Slint has no fit-content panel mode, so the
-// height comes from the measuring layout the body is written in, exactly like
-// the add-account dialog.
+// `ease-out-quad` here, applied by `BaseDialog` itself off this height), with
+// the width switching instantly between the three components (580 / 480 / 600).
+// Slint has no fit-content panel mode, so the height comes from the measuring
+// layout the body is written in, exactly like the add-account dialog.
 export component MultiplayerExtension inherits Rectangle {
     width: 100%;
     height: 100%;
@@ -112,16 +112,10 @@ export component MultiplayerExtension inherits Rectangle {
         ? 600px
         : MultiplayerState.component == "downloadProgress" ? 480px : 580px;
 
-    private property <length> panel-height: body.preferred-height + 32px;
-    animate panel-height {
-        duration: 300ms;
-        easing: ease-out-quad;
-    }
-
     dialog := BaseDialog {
         dialog-visible: MultiplayerState.visible;
         dialog-width: root.dialog-width;
-        dialog-height: root.panel-height;
+        dialog-height: body.preferred-height + 32px;
 
         body := MultiplayerConnect {
             content-width: dialog.content-width;

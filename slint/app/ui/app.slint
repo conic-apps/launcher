@@ -7,6 +7,7 @@ import { TitleBar, WindowControl } from "components/title-bar.slint";
 import { AppConfig } from "globals/settings.slint";
 import { CommandPaletteState } from "globals/command-palette.slint";
 import { Navigation } from "globals/navigation.slint";
+import { Dialogs } from "globals/dialogs.slint";
 import { DropdownOverlay } from "components/dropdown-overlay.slint";
 import { DescriptionTooltipOverlay } from "components/description-tooltip.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
@@ -18,7 +19,7 @@ import { SettingsView } from "views/settings-view.slint";
 import { GameView } from "views/game-view.slint";
 import { LaunchView } from "views/launch-view.slint";
 import { SetupView } from "views/setup-view.slint";
-import { GameViewPlaceholder } from "views/game-placeholder.slint";
+import { TodoPlaceholder } from "views/todo-placeholder.slint";
 
 // Re-export so the Rust side can access the globals and build the Java runtime
 // model (`slint_backend::AppConfig` / `slint_backend::JavaRuntime` /
@@ -28,7 +29,7 @@ export { Navigation } from "globals/navigation.slint";
 export { GameState, GameRow, AccountItem } from "globals/game.slint";
 export { LaunchState } from "globals/launch.slint";
 export { ScrollInput, ScrollSource } from "globals/scroll.slint";
-export { Dialogs, CreateInstanceState, MinecraftVersionItem, AccountAddState, YggdrasilProfileItem, DeleteInstanceState } from "globals/dialogs.slint";
+export { Dialogs, CreateInstanceState, MinecraftVersionItem, AccountAddState, YggdrasilProfileItem, DeleteInstanceState, DeleteSaveState } from "globals/dialogs.slint";
 export { WindowDrag } from "globals/window-drag.slint";
 export { MultiplayerState, MultiplayerPlayer, MultiplayerPeer } from "globals/multiplayer.slint";
 export { WindowControl } from "components/title-bar.slint";
@@ -107,6 +108,36 @@ export component App inherits Window {
     in-out property <string> search-placeholder: @tr("Search or type a command…");
     in-out property <string> search-hotkey: "";
 
+    // ----- quitting -----
+    //
+    // `App.vue`'s `closeWindow()` asks before it closes while a task is running
+    // (`Dialogs.confirm-quit-app-visible`); `ConfirmQuitApp`'s own script then
+    // played a 250ms `scale(0.93)` + fade on `document.body` and closed the
+    // window 500ms later. Both halves are here: the scale and the fade are the
+    // container's own `transform-scale` / `opacity` about its centre (which is
+    // where CSS scales `body` from), and the wait is the timer.
+    //
+    // A close on any other page never gets here — the title bar's close button
+    // closes the window outright, as `closeWindow()` did.
+    private property <bool> quitting: false;
+    private property <float> quit-alpha: root.quitting ? 0.0 : 1.0;
+    private property <float> quit-scale: root.quitting ? 93% : 100%;
+    animate quit-alpha, quit-scale {
+        duration: 250ms;
+        easing: cubic-bezier(0, 0.74, 0.65, 1);
+    }
+
+    quit-timer := Timer {
+        // `setTimeout(…, 500)`, i.e. the transition and then as much again.
+        interval: 500ms;
+        running: root.quitting;
+        triggered => { root.close(); }
+    }
+
+    function quit() {
+        root.quitting = true;
+    }
+
     callback toggle-music();
     callback maximize-or-fullscreen();
     callback minimize-window();
@@ -159,6 +190,13 @@ export component App inherits Window {
         container := Rectangle {
             width: root.width;
             height: root.height;
+            // `ConfirmQuitApp`'s exit: `document.body`'s `transform: scale(0.93)`
+            // and `opacity: 0`, over the transition the dialog's own script
+            // started. Both are on this one box because it holds everything the
+            // Vue's `body` held; the easing is on the two root properties they
+            // read, so it is written once.
+            opacity: root.quit-alpha;
+            transform-scale: root.quit-scale;
             // The Vue's `#window` background: the palette's `crust`, flat. The
             // hyperbola sky over it is only 30% opaque, so the base shows through
             // and is part of the picture.
@@ -202,12 +240,21 @@ export component App inherits Window {
                     toggle-music => { root.toggle-music(); }
                     maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
                     minimize-window => { root.minimize-window(); }
-                    close-window => { root.close(); }
+                    // `App.vue`'s `closeWindow()`: the launch page is the one
+                    // where closing abandons a running task, so it asks first.
+                    close-window => {
+                        if Navigation.current-page == "launch" {
+                            Dialogs.confirm-quit-app-visible = true;
+                        } else {
+                            root.close();
+                        }
+                    }
                 }
 
-                // Page stack (App.vue `<component :is="pages[...]">`). Only the
-                // settings page is migrated for real; the rest keeps the
-                // placeholder until later phases.
+                // Page stack (App.vue `<component :is="pages[...]">`).
+                // "accounts" is the one page with no screen yet: it is being
+                // redesigned rather than ported, so it lands on
+                // `TodoPlaceholder` — see that component for why.
                 page-stack := Rectangle {
                     width: 100%;
                     vertical-stretch: 1;
@@ -217,7 +264,7 @@ export component App inherits Window {
                     if Navigation.current-page == "game" : GameView { }
                     if Navigation.current-page == "launch" : LaunchView { }
                     if Navigation.current-page == "setup" : SetupView { }
-                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "setup" : GameViewPlaceholder { }
+                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "setup" : TodoPlaceholder { }
                 }
             }
 
@@ -266,6 +313,7 @@ export component App inherits Window {
             // at 0 and beat the dropdown only by being declared later.
             DialogRoot {
                 z: 2000;
+                confirm-quit => { root.quit(); }
             }
         }
     }

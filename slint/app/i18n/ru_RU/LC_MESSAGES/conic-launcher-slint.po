@@ -613,8 +613,6 @@ msgctxt "SettingsJvm"
 msgid "Scanning for installed Java runtimes"
 msgstr "Поиск установленных сред Java"
 
-# Game view strings, seeded from src/locales/ru_ru.ts.
-
 #: ui
 msgctxt "GameTime"
 msgid "Just now"
@@ -1430,514 +1428,637 @@ msgctxt "Multiplayer"
 msgid "Your network environment: {}"
 msgstr "Ваше сетевое окружение: {0}"
 
+#: ui
 msgctxt "ContentModsPanel"
 msgid "Mods"
 msgstr "Моды"
 
+#: ui
 msgctxt "ContentModsPanel"
 msgid "Consider downloading some mods from the internet"
 msgstr "Попробуйте скачать моды из интернета"
 
+#: ui
 msgctxt "ContentResourcepacksPanel"
 msgid "Resource Packs"
 msgstr "Ресурспаки"
 
+#: ui
 msgctxt "ContentResourcepacksPanel"
 msgid "Consider downloading some resource packs from the internet"
 msgstr "Попробуйте скачать ресурспаки из интернета"
 
+#: ui
 msgctxt "ContentPacksPanel"
 msgid "Modpacks"
 msgstr "Модпаки"
 
+#: ui
 msgctxt "ContentSavesPanel"
 msgid "Saves"
 msgstr "Сохранения"
 
+#: ui
 msgctxt "ContentSavesPanel"
 msgid "Consider launching the game and creating some saves"
 msgstr "Попробуйте запустить игру и создать сохранения"
 
+#: ui
 msgctxt "ContentScreenshotsPanel"
 msgid "Loading..."
 msgstr "Загрузка..."
 
+#: ui
 msgctxt "ContentScreenshotsPanel"
 msgid "No screenshots"
 msgstr "Нет скриншотов"
 
+#: ui
 msgctxt "ContentNotFound"
 msgid "No results match the current filter"
 msgstr "Нет результатов, соответствующих текущему фильтру"
 
-msgctxt "RemoteListView"
-msgid "Try adjusting keywords or filters and search again"
-msgstr "Попробуйте изменить ключевые слова или фильтры и выполнить поиск снова"
-
+#: ui
 msgctxt "DetailBody"
 msgid "Download"
 msgstr "Скачать"
 
+#: ui
 msgctxt "DetailBody"
 msgid "Remove"
 msgstr "Удалить"
 
+#: ui
 msgctxt "DetailBody"
 msgid "Installed: {}"
 msgstr "Установлено: {}"
 
+#: ui
 msgctxt "ContentText"
 msgid "Favorites"
 msgstr "Избранное"
 
+#: ui
 msgctxt "ContentText"
 msgid "[Disabled] "
 msgstr "[Отключен] "
 
+#: ui
 msgctxt "ContentText"
 msgid "Loader"
 msgstr "Загрузчик"
 
+#: ui
 msgctxt "ContentText"
 msgid "Version"
 msgstr "Версия"
 
+#: ui
 msgctxt "ContentText"
 msgid "Category"
 msgstr "Категория"
 
+#: ui
 msgctxt "ContentText"
 msgid "Mod info"
 msgstr "О моде"
 
+#: ui
 msgctxt "ContentText"
 msgid "Resource pack info"
 msgstr "О ресурспаке"
 
+#: ui
 msgctxt "ContentText"
 msgid "Modpack info"
 msgstr "О модпаке"
 
+#: ui
 msgctxt "ContentText"
 msgid "Search mods..."
 msgstr "Поиск модов..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Search resource packs..."
 msgstr "Поиск ресурспаков..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Search modpacks..."
 msgstr "Поиск модпаков..."
 
+#: ui
 msgctxt "ContentText"
 msgid "Last played: "
 msgstr "Последний запуск: "
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Adventure & RPG"
 msgstr "Приключения и RPG"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Armor, Tools & Weapons"
 msgstr "Броня, инструменты и оружие"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "World Generation"
 msgstr "Генерация мира"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Technology"
 msgstr "Технологии"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Magic"
 msgstr "Магия"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Storage"
 msgstr "Хранение"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Library & API"
 msgstr "Библиотеки и API"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Maps & Info"
 msgstr "Карты и информация"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Utility & QoL"
 msgstr "Утилиты и QoL"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Server Utility"
 msgstr "Серверные утилиты"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Food"
 msgstr "Еда"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Performance"
 msgstr "Производительность"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Bug Fixes"
 msgstr "Исправление ошибок"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Redstone"
 msgstr "Редстоун"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Cosmetic"
 msgstr "Косметика"
 
+#: ui
 msgctxt "CategoryModsCurseforge"
 msgid "Miscellaneous"
 msgstr "Разное"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Adventure"
 msgstr "Приключения"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Cursed"
 msgstr "Cursed"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Decoration"
 msgstr "Декор"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Economy"
 msgstr "Экономика"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Equipment"
 msgstr "Экипировка"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Food"
 msgstr "Еда"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Game Mechanics"
 msgstr "Игровая механика"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Library"
 msgstr "Библиотеки"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Magic"
 msgstr "Магия"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Management"
 msgstr "Управление"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Minigame"
 msgstr "Мини-игры"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Mobs"
 msgstr "Мобы"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Optimization"
 msgstr "Оптимизация"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Social"
 msgstr "Социальные"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Storage"
 msgstr "Хранение"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Technology"
 msgstr "Технологии"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Transportation"
 msgstr "Транспорт"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "Utility"
 msgstr "Утилиты"
 
+#: ui
 msgctxt "CategoryModsModrinth"
 msgid "World Generation"
 msgstr "Генерация мира"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Crafted"
 msgstr "Крафтовые"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Photorealistic"
 msgstr "Фотореалистичные"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Semi-Realistic"
 msgstr "Полуреалистичные"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Simple"
 msgstr "Простые"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Traditional"
 msgstr "Традиционные"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Animated"
 msgstr "Анимированные"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Modern"
 msgstr "Современные"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Themed"
 msgstr "Тематические"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Mod Support"
 msgstr "Поддержка модов"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "RPG"
 msgstr "RPG"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Gameplay"
 msgstr "Игровой процесс"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "GUI"
 msgstr "GUI"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Sound"
 msgstr "Звук"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Environment"
 msgstr "Окружение"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "World Generation"
 msgstr "Генерация мира"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Blocks"
 msgstr "Блоки"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Items"
 msgstr "Предметы"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Mobs"
 msgstr "Мобы"
 
+#: ui
 msgctxt "CategoryResourcepacksCurseforge"
 msgid "Weather"
 msgstr "Погода"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Faithful"
 msgstr "Faithful"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "16x"
 msgstr "16x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "32x"
 msgstr "32x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "64x"
 msgstr "64x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "128x"
 msgstr "128x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "256x"
 msgstr "256x"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Photorealistic"
 msgstr "Фотореалистичные"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Semi-Realistic"
 msgstr "Полуреалистичные"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Simple"
 msgstr "Простые"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Modern"
 msgstr "Современные"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Themed"
 msgstr "Тематические"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Classic"
 msgstr "Классические"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Dark"
 msgstr "Темные"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Medieval"
 msgstr "Средневековые"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Anime"
 msgstr "Аниме"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Cartoon"
 msgstr "Мультяшные"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Pixel Art"
 msgstr "Пиксель-арт"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Vanilla Plus"
 msgstr "Vanilla Plus"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Utility"
 msgstr "Утилиты"
 
+#: ui
 msgctxt "CategoryResourcepacksModrinth"
 msgid "Other"
 msgstr "Другие"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Technology"
 msgstr "Технологии"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Magic"
 msgstr "Магия"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Sci-Fi"
 msgstr "Научная фантастика"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Adventure & RPG"
 msgstr "Приключения и RPG"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Exploration"
 msgstr "Исследование"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Minigame"
 msgstr "Мини-игры"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Quests"
 msgstr "Квесты"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Hardcore"
 msgstr "Хардкор"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Map-Based"
 msgstr "Карты"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Lightweight"
 msgstr "Легковесные"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Extra Large"
 msgstr "Очень большие"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Combat PvP"
 msgstr "Бой и PvP"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Multiplayer"
 msgstr "Мультиплеер"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "FTB Modpacks"
 msgstr "Модпаки FTB"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Skyblock"
 msgstr "Skyblock"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Vanilla Plus"
 msgstr "Vanilla Plus"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Horror"
 msgstr "Хоррор"
 
+#: ui
 msgctxt "CategoryPacksCurseforge"
 msgid "Expert"
 msgstr "Экспертные"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Adventure"
 msgstr "Приключения"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Challenging"
 msgstr "Сложные"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Combat"
 msgstr "Бой"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "Kitchen Sink"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Lightweight"
 msgstr "Легковесные"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Magic"
 msgstr "Магия"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Multiplayer"
 msgstr "Мультиплеер"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Optimization"
 msgstr "Оптимизация"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Quests"
 msgstr "Квесты"
 
+#: ui
 msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "Технологии"
@@ -1947,203 +2068,256 @@ msgctxt "MusicPlayerOverlay"
 msgid "No music"
 msgstr "Нет музыки"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Shuffle"
 msgstr "Перемешать"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Repeat"
 msgstr "Повтор"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Previous"
 msgstr "Предыдущий"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Play"
 msgstr "Воспроизвести"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Pause"
 msgstr "Пауза"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Next"
 msgstr "Следующий"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Open music folder"
 msgstr "Открыть папку с музыкой"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Playlist"
 msgstr "Плейлист"
 
+#: ui
+msgctxt "MusicPlayerOverlay"
 msgid "Nothing here"
 msgstr "Здесь ничего нет"
-
-# Instance settings overlay (src/overlays/InstanceSetting.vue) and the
-# delete dialog it opens (src/overlays/dialogs/ConfirmDeleteInstance.vue).
-# The overlay's strings are seeded from `game.instance.*` in
-# src/locales/<lang>.ts; the dialog's were never internationalized there, so
-# its Chinese source text is kept and translated here.
 
 #: ui
 msgctxt "InstanceSettings"
 msgid "Instance settings"
 msgstr "Настройки сборки"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Images"
 msgstr "Изображения"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Set background image"
 msgstr "Установить фоновое изображение"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Remove image"
 msgstr "Удалить изображение"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Use instance background as launcher background"
 msgstr "Использовать фон сборки как фон лаунчера"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Selected {}"
 msgstr "Выбрано: {}"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Enable instance-specific settings"
 msgstr "Включить индивидуальные настройки сборки"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Launch options"
 msgstr "Параметры запуска"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Window size"
 msgstr "Размер окна"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Initial game window size"
 msgstr "Начальный размер игрового окна"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "W"
 msgstr "Ш"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "H"
 msgstr "В"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Fullscreen"
 msgstr "Полноэкранный режим"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Quit launcher after launching game"
 msgstr "Закрывать лаунчер после запуска игры"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Skip game file check"
 msgstr "Пропускать проверку файлов игры"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "The launcher will not attempt to verify or repair game files before launching"
 msgstr "Лаунчер не будет проверять и восстанавливать файлы игры перед запуском"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Memory"
 msgstr "Память"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Auto-allocate memory"
 msgstr "Автоматическое выделение памяти"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Manual memory allocation"
 msgstr "Выделение памяти вручную"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Manually set the maximum Java heap size. Takes effect when auto-allocation is disabled"
 msgstr "Задайте максимальный размер кучи Java вручную. Применяется, когда автоматическое выделение отключено"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Advanced launch options"
 msgstr "Дополнительные параметры запуска"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Java garbage collector"
 msgstr "Сборщик мусора Java"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra JVM arguments"
 msgstr "Дополнительные аргументы JVM"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Appended after default JVM arguments"
 msgstr "Добавляются после стандартных аргументов JVM"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra game arguments"
 msgstr "Дополнительные аргументы игры"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Additional arguments for the game"
 msgstr "Дополнительные аргументы для игры"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Extra class paths"
 msgstr "Дополнительные пути классов"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Separated by semicolons on Windows, colons on other systems"
 msgstr "Разделяются точкой с запятой в Windows и двоеточием в других системах"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Execute before launch"
 msgstr "Выполнять перед запуском"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added before the launch command"
 msgstr "Добавляется перед командой запуска"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Wrap command"
 msgstr "Команда-обертка"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added at the beginning of the launch command"
 msgstr "Добавляется в начало команды запуска"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Execute after launch"
 msgstr "Выполнять после запуска"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Added at the end of the launch script"
 msgstr "Добавляется в конец сценария запуска"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Ignore invalid Minecraft certificates"
 msgstr "Игнорировать недействительные сертификаты Minecraft"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments"
 msgstr "Добавляет -Dfml.ignoreInvalidMinecraftCertificates=true в аргументы JVM"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Ignore patch discrepancies"
 msgstr "Игнорировать расхождения патчей"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments"
 msgstr "Добавляет -Dfml.ignorePatchDiscrepancies=true в аргументы JVM"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Delete instance"
 msgstr "Удалить сборку"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Deleting this instance will permanently lose all saves, resource packs, and other game data"
 msgstr "При удалении этой сборки будут безвозвратно утеряны все сохранения, ресурспаки и другие игровые данные"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Reset instance"
 msgstr "Сбросить сборку"
+
 #: ui
 msgctxt "InstanceSettings"
 msgid "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved"
@@ -2153,158 +2327,197 @@ msgstr "При сбросе этой сборки будут утеряны вс
 msgctxt "ConfirmDeleteInstance"
 msgid "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
 msgstr "Вы уверены, что хотите удалить этот экземпляр? Сохранения, ресурспаки, моды и остальные файлы экземпляра будут потеряны навсегда (это действительно долго!)"
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "游戏时间："
 msgstr "Время игры: "
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "取消"
 msgstr "Отмена"
+
 #: ui
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "Подтвердить удаление"
+
 #: ui
 msgctxt "SetupView"
 msgid "First-run setup"
 msgstr "Первоначальная настройка"
+
 #: ui
 msgctxt "SetupView"
 msgid "Customize Conic Launcher to suit your preferences"
 msgstr "Настройте Conic Launcher под себя"
+
 #: ui
 msgctxt "SetupView"
 msgid "Back"
 msgstr "Назад"
+
 #: ui
 msgctxt "SetupView"
 msgid "Let's get started!"
 msgstr "Давайте начнем!"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Add account)"
 msgstr "Далее (Добавить аккаунт)"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Java settings)"
 msgstr "Далее (Настройки Java)"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Launch options)"
 msgstr "Далее (Параметры запуска)"
+
 #: ui
 msgctxt "SetupView"
 msgid "Next (Import instances)"
 msgstr "Далее (Импорт сборок)"
+
 #: ui
 msgctxt "SetupView"
 msgid "Finish"
 msgstr "Готово"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Welcome"
 msgstr "Добро пожаловать"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Welcome to the first-run setup wizard!"
 msgstr "Добро пожаловать в мастер первоначальной настройки!"
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "Conic Launcher is highly customizable, but the complex settings might be overwhelming."
 msgstr "Conic Launcher обладает широкими возможностями настройки, но сложные параметры могут показаться запутанными."
+
 #: ui
 msgctxt "SetupLanguage"
 msgid "This wizard will quickly walk you through some important settings so you can start playing right away."
 msgstr "Этот мастер быстро проведет вас по важным настройкам, чтобы вы могли сразу приступить к игре."
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Choose a color scheme"
 msgstr "Выберите цветовую схему"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Conic Launcher supports multiple color schemes. Pick one that suits your style."
 msgstr "Conic Launcher поддерживает несколько цветовых схем. Выберите ту, что подходит вашему стилю."
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Follow system dark mode"
 msgstr "Следовать темной теме системы"
+
 #: ui
 msgctxt "SetupPalette"
 msgid "Uses Latte when the system is set to light mode, otherwise uses Mocha"
 msgstr "Используется Latte при светлой теме системы, в противном случае — Mocha"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Account added!"
 msgstr "Аккаунт добавлен!"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance"
 msgstr "Следующий профиль установлен по умолчанию. Лаунчер будет использовать его для входа в игру, если сборке не назначен отдельный профиль"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Microsoft (Official account)"
 msgstr "Microsoft (официальный аккаунт)"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "Yggdrasil (External login)"
 msgstr "Yggdrasil (сторонний аккаунт)"
+
 #: ui
 msgctxt "SetupAddAccount"
 msgid "No auth service (Offline account)"
 msgstr "Без сервиса авторизации (офлайн-аккаунт)"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Java settings"
 msgstr "Настройки Java"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Conic Launcher can greatly simplify Java environment configuration. Enable \"Auto-install Java runtime\" to avoid manual installation!"
 msgstr "Conic Launcher может значительно упростить настройку окружения Java. Включите «Автоустановку среды Java», чтобы не устанавливать ее вручную!"
+
 #: ui
 msgctxt "SetupJavaSettings"
 msgid "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\""
 msgstr "Примечание: автоустановка Java может быть недоступна на текущей платформе. Рекомендуется установить Java вручную и отключить «Автоустановку среды Java»"
+
 #: ui
 msgctxt "SetupLaunchOptions"
 msgid "Game launch options"
 msgstr "Параметры запуска игры"
+
 #: ui
 msgctxt "SetupLaunchOptions"
 msgid "Here are some basic launch options. You can change more options later in Settings and instance-specific settings."
 msgstr "Это базовые параметры запуска. Позже вы сможете изменить больше опций в настройках лаунчера и отдельных сборок."
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Import instances"
 msgstr "Импорт сборок"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Import previously played instances from other launchers to get started quickly"
 msgstr "Импортируйте сборки из других лаунчеров, чтобы быстро начать игру"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "If you're new to Minecraft, you can also create a blank instance with the latest version right away"
 msgstr "Если вы новичок в Minecraft, можете сразу создать пустую сборку последней версии"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Latest release"
 msgstr "Последний релиз"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Latest snapshot"
 msgstr "Последний снапшот"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "An error occurred"
 msgstr "Произошла ошибка"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Creating..."
 msgstr "Создание..."
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Create instance with latest release"
 msgstr "Создать сборку с последним релизом"
+
 #: ui
 msgctxt "SetupImportInstances"
 msgid "Create instance with latest snapshot"
@@ -2314,126 +2527,278 @@ msgstr "Создать сборку с последним снапшотом"
 msgctxt "AccountAddMicrosoft"
 msgid "Waiting for the sign-in"
 msgstr "Ожидание входа"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Finish signing in in your browser — this page will change when it is done."
 msgstr "Завершите вход в браузере — эта страница обновится, когда всё будет готово."
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Signed in"
 msgstr "Вход выполнен"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "You can close this tab and go back to Conic Launcher."
 msgstr "Можно закрыть эту вкладку и вернуться в Conic Launcher."
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Sign-in failed"
 msgstr "Не удалось войти"
+
 #: ui
 msgctxt "AccountAddMicrosoft"
 msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
 msgstr "Conic Launcher не получил действительные данные для входа. Закройте эту вкладку и попробуйте ещё раз."
 
+#: ui
 msgctxt "CommandText"
 msgid "Launch instance"
 msgstr "Запустить экземпляр"
+
 #: ui
 msgctxt "CommandText"
 msgid "Create instance"
 msgstr "Создать экземпляр"
+
 #: ui
 msgctxt "CommandText"
 msgid "Add game profile"
 msgstr "Добавить игровой профиль"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth"
 msgstr "Поиск в Modrinth"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge"
 msgstr "Поиск в CurseForge"
+
 #: ui
 msgctxt "CommandText"
 msgid "by {}"
 msgstr "от {}"
+
 #: ui
 msgctxt "CommandText"
 msgid "Mod"
 msgstr "Мод"
+
 #: ui
 msgctxt "CommandText"
 msgid "Modpack"
 msgstr "Модпак"
+
 #: ui
 msgctxt "CommandText"
 msgid "Resource Pack"
 msgstr "Ресурспак"
+
 #: ui
 msgctxt "CommandText"
 msgid "Shader"
 msgstr "Шейдер"
+
 #: ui
 msgctxt "CommandText"
 msgid "Switch to"
 msgstr "Переключиться на"
+
 #: ui
 msgctxt "CommandText"
 msgid "Launch"
 msgstr "Запустить"
+
 #: ui
 msgctxt "CommandText"
 msgid "Open"
 msgstr "Открыть"
+
 #: ui
 msgctxt "CommandText"
 msgid "Instances"
 msgstr "Экземпляры"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search results"
 msgstr "Результаты поиска"
+
 #: ui
 msgctxt "CommandText"
 msgid "Commands"
 msgstr "Команды"
+
 #: ui
 msgctxt "CommandText"
 msgid "Select an instance to launch…"
 msgstr "Выберите экземпляр для запуска…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on Modrinth…"
 msgstr "Поиск в Modrinth…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search on CurseForge…"
 msgstr "Поиск в CurseForge…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search commands or instances…"
 msgstr "Поиск команд или экземпляров…"
+
 #: ui
 msgctxt "CommandText"
 msgid "Back"
 msgstr "Назад"
+
 #: ui
 msgctxt "CommandText"
 msgid "Close"
 msgstr "Закрыть"
+
+#: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on CurseForge"
 msgstr "Введите ключевые слова для поиска на CurseForge"
+
 #: ui
 msgctxt "CommandText"
 msgid "Type keywords to search on Modrinth"
 msgstr "Введите ключевые слова для поиска на Modrinth"
+
 #: ui
 msgctxt "CommandText"
 msgid "Search failed, please try again"
 msgstr "Поиск не удался, попробуйте ещё раз"
+
 #: ui
 msgctxt "CommandText"
 msgid "No matching results"
 msgstr "Нет подходящих результатов"
+
+#: ui
+msgctxt "ContentText"
+msgid "Survival"
+msgstr "Выживание"
+
+#: ui
+msgctxt "ContentText"
+msgid "Creative"
+msgstr "Творческий"
+
+#: ui
+msgctxt "ContentText"
+msgid "Adventure"
+msgstr "Приключение"
+
+#: ui
+msgctxt "ContentText"
+msgid "Spectator"
+msgstr "Наблюдатель"
+
+#: ui
+msgctxt "ContentText"
+msgid "Cheats"
+msgstr "Читы"
+
+#: ui
+msgctxt "InstancesList"
+msgid "No matching instances"
+msgstr "Нет подходящих сборок"
+
+#: ui
+msgctxt "InstancesList"
+msgid "Consider creating a new instance"
+msgstr "Попробуйте создать новую сборку"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "To launch the game, you must have added at least one account"
+msgstr "Чтобы запустить игру, нужно добавить хотя бы один аккаунт"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "To launch the game, you must have added at least one Microsoft account"
+msgstr "Чтобы запустить игру, нужно добавить хотя бы один аккаунт Microsoft"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Failed to refresh the account. Check your network connection and try again, or log in to the account again"
+msgstr "Не удалось обновить аккаунт. Проверьте подключение к сети и повторите попытку или войдите в аккаунт заново"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Could not find a suitable Java runtime"
+msgstr "Подходящая среда Java не найдена"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "You can set one manually in the instance settings"
+msgstr "Её можно указать вручную в настройках сборки"
+
+#: ui
+msgctxt "LaunchDialogs"
+msgid "Cancel launch"
+msgstr "Отменить запуск"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "是否确认删除存档「{}」？"
+msgstr "Удалить сохранение «{}»?"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "存档文件夹将永久删除，这是最后的反悔机会"
+msgstr "Папка сохранения будет удалена безвозвратно — это последняя возможность передумать"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "稍等一下..."
+msgstr "Подождите…"
+
+#: ui
+msgctxt "ConfirmDeleteSave"
+msgid "确认删除"
+msgstr "Подтвердить удаление"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "正在进行的任务将被中止，你确定要退出吗？"
+msgstr "Текущая задача будет прервана. Вы уверены, что хотите выйти?"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "最后的反悔机会"
+msgstr "Это последняя возможность передумать"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "稍等一下..."
+msgstr "Подождите…"
+
+#: ui
+msgctxt "ConfirmQuitApp"
+msgid "让我出去！"
+msgstr "Выпустите меня!"
+
+#: ui
+msgctxt "ContentModsPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "Попробуйте изменить ключевые слова или фильтры и выполнить поиск снова"
+
+#: ui
+msgctxt "ContentResourcepacksPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "Попробуйте изменить ключевые слова или фильтры и выполнить поиск снова"
+
+#: ui
+msgctxt "ContentPacksPanel"
+msgid "Try adjusting keywords or filters and search again"
+msgstr "Попробуйте изменить ключевые слова или фильтры и выполнить поиск снова"

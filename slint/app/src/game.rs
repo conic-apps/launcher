@@ -23,6 +23,8 @@ use slint::Image;
 use slint_account::Account;
 use slint_instance::{Instance, ModLoaderType, SortBy};
 
+use crate::instance_view::{self, GroupMode, InstanceViewState, SortMode as SavedSortMode};
+
 thread_local! {
     /// The one controller, for use on the UI thread.
     ///
@@ -99,14 +101,32 @@ impl GameController {
                 },
             );
         }
+        // What the Vue read back out of `localStorage` before its first paint
+        // (`instance.ts`'s `currentInstanceId` and `InstancesList.vue`'s three
+        // keys), so a restart comes back to the list the user left.
+        let saved = instance_view::load();
+        let sort = match saved.sort_mode() {
+            SavedSortMode::Name => SortBy::Name,
+            SavedSortMode::Version => SortBy::Version,
+            SavedSortMode::LastPlay => SortBy::LastPlayed,
+            SavedSortMode::Playtime => SortBy::Playtime,
+        };
+        let group_mode = match saved.group() {
+            GroupMode::Loader => "loader",
+            GroupMode::None => "none",
+        };
+        // The id is not checked against the listing here: the instances have not
+        // been read yet. `set_instances` drops it if the instance is gone, which
+        // is the same fallback the Vue's `find(…) ?? listedInstances[0]` made.
+        let current_id = (!saved.current_id.is_empty()).then_some(saved.current_id);
         Self {
             config,
             instances: Vec::new(),
-            current_id: None,
-            sort: SortBy::Playtime,
-            group_mode: "none",
+            current_id,
+            sort,
+            group_mode,
             search: String::new(),
-            expanded: HashMap::new(),
+            expanded: saved.expanded.into_iter().collect(),
             accounts: Vec::new(),
             playtime: HashMap::new(),
             content: HashMap::new(),
@@ -143,13 +163,17 @@ impl GameController {
         // Re-scan the per-instance caches so a refresh picks up external changes.
         self.playtime.clear();
         self.content.clear();
-        // Keep the selection valid, falling back to the first instance.
-        if !self
+        // Keep the selection valid, falling back to the first instance. The
+        // Vue's `find(…) ?? listedInstances[0]` did the same, and its
+        // `watch(currentInstance, …)` wrote the new id out — which is how a
+        // deleted instance stops being restored on the next run.
+        let kept = self
             .current_id
             .as_ref()
-            .is_some_and(|id| self.instances.iter().any(|instance| &instance.id == id))
-        {
+            .is_some_and(|id| self.instances.iter().any(|instance| &instance.id == id));
+        if !kept {
             self.current_id = self.instances.first().map(|instance| instance.id.clone());
+            self.persist();
         }
         self.reload_accounts();
     }
@@ -225,6 +249,38 @@ impl GameController {
 
     fn expanded(&self, key: &str) -> bool {
         self.expanded.get(key).copied().unwrap_or(true)
+    }
+
+    /// Writes the four values the Vue kept in `localStorage` back out.
+    ///
+    /// `instance.ts`'s `watch(currentInstance, …)` and the three
+    /// `watch(…, { deep: true })` in `InstancesList.vue` each fired on their own
+    /// value, and each write was a single `setItem`. Here they are one file, and
+    /// it is written at the same moments: a write is a few kilobytes of JSON and
+    /// it happens on a sort, a grouping, a group toggle and an instance switch —
+    /// not on a scroll, a search or a refresh.
+    fn persist(&self) {
+        let state = InstanceViewState {
+            current_id: self.current_id.clone().unwrap_or_default(),
+            sort: match self.sort {
+                SortBy::Name => "name",
+                SortBy::Version => "version",
+                SortBy::LastPlayed => "lastplay",
+                SortBy::Playtime => "playtime",
+            }
+            .to_string(),
+            group_mode: match self.group_mode {
+                "loader" => "loader",
+                _ => "none",
+            }
+            .to_string(),
+            expanded: self
+                .expanded
+                .iter()
+                .map(|(key, value)| (key.clone(), *value))
+                .collect(),
+        };
+        instance_view::save(&state);
     }
 
     /// Builds the flattened list, assigning each row its y/height (so the view
@@ -747,6 +803,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
                 return;
             }
             controller.borrow_mut().current_id = Some(id);
+            controller.borrow().persist();
             if let Some(ui) = weak.upgrade() {
                 controller.borrow_mut().apply(&ui);
             }
@@ -764,6 +821,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             // animates a collapse by hand and everything else with its FLIP).
             controller.flip = expanded;
             controller.expanded.insert(key, !expanded);
+            controller.persist();
             if let Some(ui) = weak.upgrade() {
                 controller.apply(&ui);
             }
@@ -782,6 +840,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             // The sort is read by the listing, so it has to be in place before
             // `reload` spawns; the rows follow when the listing lands.
             controller.borrow_mut().sort = sort;
+            controller.borrow().persist();
             if let Some(ui) = weak.upgrade() {
                 GameController::reload(&ui);
             }
@@ -797,6 +856,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             } else {
                 "none"
             };
+            controller.persist();
             if let Some(ui) = weak.upgrade() {
                 controller.apply(&ui);
             }

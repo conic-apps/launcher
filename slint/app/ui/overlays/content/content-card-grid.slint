@@ -33,7 +33,10 @@ export component ContentCardGrid inherits Rectangle {
 
     callback select(string);
     callback open-path(string);
-    callback delete(string);
+    /// The card's trash button. Carries the card's title as well as its id,
+    /// because the saves grid has to name the save in the confirmation dialog
+    /// (`ConfirmDeleteSave`) and the id is the folder, not the name.
+    callback delete(string, string);
     callback toggle-favorite(string);
     callback open-link(string);
     callback play(string);
@@ -64,7 +67,7 @@ export component ContentCardGrid inherits Rectangle {
             subtitle-style: root.subtitle-style;
             select => { root.select(card.id); }
             open-path => { root.open-path(card.id); }
-            delete => { root.delete(card.id); }
+            delete => { root.delete(card.id, card.title); }
             toggle-favorite => { root.toggle-favorite(card.id); }
             open-link => { root.open-link(card.link); }
             play => { root.play(card.id); }

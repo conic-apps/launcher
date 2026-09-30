@@ -22,7 +22,9 @@ mod content;
 mod create_instance;
 mod game;
 mod instance_settings;
+mod instance_view;
 mod launch;
+mod logs;
 mod multiplayer;
 mod music;
 mod runtime;
@@ -40,20 +42,16 @@ mod worldmap;
 
 use std::{cell::RefCell, rc::Rc};
 
-use log::LevelFilter;
 use slint::{ComponentHandle, Timer, Weak};
 
 use slint_backend::{App, AppConfig};
 use slint_window::WindowService;
 
 fn main() {
-    env_logger::Builder::from_default_env()
-        .filter_level(LevelFilter::Info)
-        .init();
-
     // Create the data directory layout (shares `~/.conic[-debug]` with the
-    // Tauri app) before anything reads from it.
+    // Tauri app) before anything reads from it — the logger writes into it.
     slint_folder::DATA_LOCATION.init();
+    logs::init();
 
     // Claim the single-instance role before anything else: a second launch of
     // the app is not a second window, it is this window coming forward. The
@@ -224,6 +222,42 @@ fn main() {
     let minimize_window = window.clone();
     ui.on_minimize_window(move || {
         minimize_window.minimize();
+    });
+
+    // The window system's own close — the macOS traffic light, `Alt`+`F4`, a
+    // window menu's Close, a taskbar's close — asks here first.
+    //
+    // This is the only place `ConfirmQuitApp` can be raised from. The title bar's
+    // `close-window` callback covers the controls *this app draws* (Linux) and
+    // the caption buttons Windows substitutes (`windows_caption.rs` sends
+    // `SC_CLOSE`, which does come through Slint) — but on macOS the red button is
+    // AppKit's, and it closes the window without the UI ever seeing it. Asking at
+    // the window covers all three, and is also where a close that is not a button
+    // at all belongs.
+    //
+    // `Dialogs.confirm-quit-app-visible` is the flag the title bar's callback sets
+    // too, which is what makes it the "already answered" test below as well as
+    // the dialog's own: `App.close()` at the end of the exit animation comes back
+    // through here, and the only close that must not be re-asked about is that one.
+    window.window().on_close_requested({
+        let weak = ui.as_weak();
+        move || {
+            let Some(ui) = weak.upgrade() else {
+                return slint::CloseRequestResponse::HideWindow;
+            };
+            let dialogs = ui.global::<slint_backend::Dialogs>();
+            // Already on the way out: this is `App`'s own `close()` after the exit
+            // animation, and answering anything but `HideWindow` here would
+            // cancel the quit the user just confirmed.
+            if dialogs.get_confirm_quit_app_visible() {
+                return slint::CloseRequestResponse::HideWindow;
+            }
+            if ui.global::<slint_backend::Navigation>().get_current_page() == "launch" {
+                dialogs.set_confirm_quit_app_visible(true);
+                return slint::CloseRequestResponse::KeepWindowShown;
+            }
+            slint::CloseRequestResponse::HideWindow
+        }
     });
 
     // The music player's background volume follows the window's focus (the
