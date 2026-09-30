@@ -22,9 +22,7 @@
 //!     attributes that describe a *wire* format — the `camelCase` renames on
 //!     the Yggdrasil request bodies, the `textureKey` rename on a Microsoft
 //!     skin — stay, because the servers and the shared `config.toml` still
-//!     speak them;
-//!   * `shared::HTTP_CLIENT` and `shared::UrlExt` are inlined in [`shared`],
-//!     the way `slint-install` inlines the client.
+//!     speak them.
 //!
 //! The only other difference is mechanical — the original's private
 //! `save_accounts(&Vec<Account>)` helpers take a slice here, which is what
@@ -60,12 +58,10 @@ mod error;
 pub mod microsoft;
 mod microsoft_task;
 pub mod offline;
-pub mod shared;
 pub mod yggdrasil;
 
 pub use error::*;
 pub use microsoft_task::{LoginRequest, LoginTaskState};
-pub use shared::set_system_proxy;
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]

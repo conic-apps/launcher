@@ -23,6 +23,25 @@ use slint::Image;
 use slint_account::Account;
 use slint_instance::{Instance, ModLoaderType, SortBy};
 
+thread_local! {
+    /// The one controller, for use on the UI thread.
+    ///
+    /// It lives in a thread-local rather than in a value `setup` owns because an
+    /// `upgrade_in_event_loop` closure has to be `Send`, and the `Rc<RefCell<…>>`
+    /// a Slint model is cannot cross into one. Slint's callbacks and the
+    /// event-loop closures both run on the UI thread, so both reach it through
+    /// [`controller`]; the async tasks carry only owned values and a `Weak<App>`.
+    static CONTROLLER: RefCell<Option<Rc<RefCell<GameController>>>> =
+        const { RefCell::new(None) };
+}
+
+/// The controller, for use on the UI thread.
+fn controller() -> Rc<RefCell<GameController>> {
+    CONTROLLER
+        .with(|cell| cell.borrow().clone())
+        .expect("the game controller is set up before any of its callbacks run")
+}
+
 /// A ready-to-display relative time (`GameTime.last-played`).
 pub(crate) struct RelativeTime {
     pub(crate) kind: &'static str,
@@ -99,8 +118,28 @@ impl GameController {
         }
     }
 
-    fn reload(&mut self) {
-        self.instances = slint_instance::list_instances(self.sort).unwrap_or_default();
+    /// Re-reads the instance list on the runtime and applies it in the event
+    /// loop, so the listing — one `instance.toml` read and parse per instance —
+    /// never runs on the thread that draws.
+    fn reload(ui: &App) {
+        let sort = controller().borrow().sort;
+        let weak = ui.as_weak();
+        crate::runtime::spawn(async move {
+            let instances = slint_instance::list_instances(sort)
+                .await
+                .unwrap_or_default();
+            let _ = weak.upgrade_in_event_loop(move |ui| {
+                let controller = controller();
+                controller.borrow_mut().set_instances(instances);
+                controller.borrow_mut().apply(&ui);
+            });
+        });
+    }
+
+    /// Adopts a freshly listed set of instances and re-reads everything derived
+    /// from it. Runs on the UI thread, on the far side of [`GameController::reload`].
+    fn set_instances(&mut self, instances: Vec<Instance>) {
+        self.instances = instances;
         // Re-scan the per-instance caches so a refresh picks up external changes.
         self.playtime.clear();
         self.content.clear();
@@ -686,18 +725,16 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
     // `sync_rows`, so the rows the view renders are never recreated.
     ui.global::<GameState>()
         .set_rows(ModelRc::new(controller.borrow().rows_model.clone()));
-    controller.borrow_mut().reload();
-    controller.borrow_mut().apply(ui);
+    CONTROLLER.with(|cell| *cell.borrow_mut() = Some(Rc::clone(&controller)));
+    GameController::reload(ui);
 
     let state = ui.global::<GameState>();
 
     {
-        let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
         state.on_refresh(move || {
-            controller.borrow_mut().reload();
             if let Some(ui) = weak.upgrade() {
-                controller.borrow_mut().apply(&ui);
+                GameController::reload(&ui);
             }
         });
     }
@@ -742,11 +779,11 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
                 "lastplay" => SortBy::LastPlayed,
                 _ => SortBy::Playtime,
             };
-            let mut controller = controller.borrow_mut();
-            controller.sort = sort;
-            controller.reload();
+            // The sort is read by the listing, so it has to be in place before
+            // `reload` spawns; the rows follow when the listing lands.
+            controller.borrow_mut().sort = sort;
             if let Some(ui) = weak.upgrade() {
-                controller.apply(&ui);
+                GameController::reload(&ui);
             }
         });
     }
@@ -810,14 +847,17 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let Some(id) = controller.borrow().current_id.clone() else {
                 return;
             };
-            if let Err(error) = slint_instance::remove_install_lock(&id) {
-                log::error!("failed to remove install lock: {error}");
-                return;
-            }
-            if let Some(ui) = weak.upgrade() {
-                // The launch page re-runs the install flow when the lock is gone.
-                ui.global::<Navigation>().invoke_navigate("launch".into());
-            }
+            let weak = weak.clone();
+            crate::runtime::spawn(async move {
+                if let Err(error) = slint_instance::remove_install_lock(&id).await {
+                    log::error!("failed to remove install lock: {error}");
+                    return;
+                }
+                let _ = weak.upgrade_in_event_loop(move |ui| {
+                    // The launch page re-runs the install flow when the lock is gone.
+                    ui.global::<Navigation>().invoke_navigate("launch".into());
+                });
+            });
         });
     }
     {
@@ -836,8 +876,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
         state.on_toggle_starred(move || {
-            let mut controller = controller.borrow_mut();
-            let Some(instance) = controller.current().cloned() else {
+            let Some(instance) = controller.borrow().current().cloned() else {
                 return;
             };
             let mut config = instance.config.clone();
@@ -848,14 +887,17 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
                 groups.push("starred".to_string());
             }
             config.group = Some(groups);
-            if let Err(error) = slint_instance::update_instance(config, &instance.id) {
-                log::error!("failed to update instance: {error}");
-                return;
-            }
-            controller.reload();
-            if let Some(ui) = weak.upgrade() {
-                controller.apply(&ui);
-            }
+            let id = instance.id;
+            let weak = weak.clone();
+            crate::runtime::spawn(async move {
+                if let Err(error) = slint_instance::update_instance(config, &id).await {
+                    log::error!("failed to update instance: {error}");
+                    return;
+                }
+                // The row is rebuilt from the listing, so re-read it rather than
+                // patching the one row in place.
+                let _ = weak.upgrade_in_event_loop(move |ui| GameController::reload(&ui));
+            });
         });
     }
 

@@ -132,17 +132,19 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             state.set_creating(true);
 
             let weak = weak.clone();
-            // Creating an instance writes files and walks the instance folder,
-            // so it belongs on the blocking pool rather than on a runtime thread
-            // (the original runs in a Tauri command, off the UI thread too).
-            crate::runtime::spawn_blocking(move || {
+            // Creating an instance writes files and walks the instance folder, so
+            // it belongs off the UI thread (the original runs it in a Tauri
+            // command, off the UI thread too).
+            crate::runtime::spawn(async move {
                 if let Err(error) = create_instance(
                     &name,
                     &minecraft,
                     &loader_type,
                     &loader_version,
                     &background,
-                ) {
+                )
+                .await
+                {
                     log::error!("failed to create the instance: {error}");
                 }
                 let _ = weak.upgrade_in_event_loop(move |ui| {
@@ -386,14 +388,16 @@ fn neoforge_groups(version: &str, count: usize) -> Option<Vec<&str>> {
 ///
 /// A name that is already taken gets a " 2", " 3", … suffix — the Vue compares
 /// the candidate against the instance *ids*.
-fn create_instance(
+async fn create_instance(
     name: &str,
     minecraft: &str,
     loader_type: &str,
     loader_version: &str,
     background: &str,
 ) -> Result<String, slint_instance::Error> {
-    let instances = slint_instance::list_instances(SortBy::Name).unwrap_or_default();
+    let instances = slint_instance::list_instances(SortBy::Name)
+        .await
+        .unwrap_or_default();
     let mut suffix = 0;
     let id = loop {
         let candidate = if suffix == 0 {
@@ -425,9 +429,9 @@ fn create_instance(
         },
         ..Default::default()
     };
-    slint_instance::create_instance(config, Some(&id))?;
+    slint_instance::create_instance(config, Some(&id)).await?;
     if !background.is_empty() {
-        slint_instance::add_background_image(Path::new(background), &id)?;
+        slint_instance::add_background_image(Path::new(background), &id).await?;
     }
     Ok(id)
 }

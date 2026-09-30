@@ -6,9 +6,11 @@
 //!
 //! The Slint app shares the same `~/.conic[-debug]` data directory as the
 //! Tauri app, so the same `config.toml` is read and written by both. The data
-//! directory layout itself comes from [`slint_folder::DATA_LOCATION`]; unknown
-//! keys (e.g. `current_account`, which the Slint app does not model yet) are
-//! preserved across a load/save round-trip via [`Config::extra`].
+//! directory layout itself comes from [`slint_folder::DATA_LOCATION`]. Every key
+//! the original models is modelled here too, with the same names, so the two
+//! frontends stay interchangeable; [`Config::extra`] is the catch-all for
+//! anything neither of them models, kept so a load/save round-trip cannot drop
+//! a key a newer build wrote.
 //!
 //! Everything is synchronous: the Slint host loads the config before building
 //! the UI and writes it back from a debounced timer.
@@ -190,8 +192,8 @@ pub struct Config {
     pub download: download::DownloadConfig,
     pub music: music::MusicConfig,
 
-    /// Unknown keys (e.g. `current_account`) kept so a round-trip does not drop
-    /// data written by the Tauri app.
+    /// The keys neither frontend models, kept so a load/save round-trip does
+    /// not drop one a newer build wrote.
     #[serde(flatten)]
     pub extra: BTreeMap<String, toml::Value>,
 }
