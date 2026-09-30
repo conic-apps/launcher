@@ -365,11 +365,77 @@ impl GraphState {
     }
 }
 
-/// Writes the position out and records that it was written, holding no lock
-/// while the file is touched.
+/// The graph a device of this shape would be fed by.
+///
+/// Split out of [`Player::new`] so the tests can have one without an output
+/// device — the deadlock this exists next to was only ever reachable through a
+/// machine with a sound card, and a test that needs one does not get run.
+fn new_graph(device_rate: f64, device_channels: usize) -> Arc<Graph> {
+    Arc::new(Graph {
+        state: Mutex::new(GraphState {
+            tracks: Arc::new(Vec::new()),
+            current_index: None,
+            loaded: false,
+            cursor: 0.0,
+            duration: 0.0,
+            playing: false,
+            ended: false,
+            sample_rate: device_rate,
+            device_channels,
+            volume: 1.0,
+            gain: 1.0,
+            ramp_from: 1.0,
+            ramp_started: None,
+            ring: VecDeque::with_capacity(
+                (device_rate * device_channels as f64 * RING_SECONDS) as usize,
+            ),
+            tail: 0.0,
+            tap: Vec::new(),
+            analyser: Analyser::new(DEFAULT_FFT_SIZE),
+            spectrum: vec![0.0; DEFAULT_FFT_SIZE / 2],
+            starved: false,
+            last_analysis: None,
+            shuffle: false,
+            repeat: false,
+            error: None,
+            pending: 0,
+            last_persisted: None,
+            random: seed_random(),
+            seek: None,
+            generation: 0,
+        }),
+        signal: Condvar::new(),
+        fft_size: AtomicUsize::new(DEFAULT_FFT_SIZE),
+    })
+}
+
+/// The position to write to the session file, with the "written" mark set.
+///
+/// The state is read and the mark set under *one* guard, which is released
+/// before the caller touches the filesystem. Both halves matter:
+///
+///   * a second acquisition while the first is alive is a deadlock rather than
+///     an error, because `std::sync::Mutex` is not reentrant — so the two steps
+///     have to share a guard and the file write has to be outside it, or the
+///     audio callback waits on the disk;
+///   * `if let` keeps the temporaries of its scrutinee alive through its body,
+///     so `if let Some(save) = locked().read() { locked().write(); }` holds the
+///     first guard across the second acquisition. That is what this function is,
+///     and the first version was not, and it hung the UI thread during
+///     `applicationDidFinishLaunching` — which is to say before the window
+///     existed at all.
+fn take_session(graph: &Graph) -> Option<SavedTrack> {
+    let mut state = lock(&graph.state);
+    let save = state.pending_session();
+    if save.is_some() {
+        state.persisted();
+    }
+    save
+}
+
+/// Writes the position out, holding no lock while the file is touched.
 fn save_position(graph: &Graph) {
-    if let Some(save) = lock(&graph.state).pending_session() {
-        lock(&graph.state).persisted();
+    if let Some(save) = take_session(graph) {
         session::save(&save);
     }
 }
@@ -406,42 +472,7 @@ impl Player {
         let device_channels = config.channels() as usize;
 
         let (commands, receiver) = channel::<Command>();
-        let graph = Arc::new(Graph {
-            state: Mutex::new(GraphState {
-                tracks: Arc::new(Vec::new()),
-                current_index: None,
-                loaded: false,
-                cursor: 0.0,
-                duration: 0.0,
-                playing: false,
-                ended: false,
-                sample_rate: device_rate,
-                device_channels,
-                volume: 1.0,
-                gain: 1.0,
-                ramp_from: 1.0,
-                ramp_started: None,
-                ring: VecDeque::with_capacity(
-                    (device_rate * device_channels as f64 * RING_SECONDS) as usize,
-                ),
-                tail: 0.0,
-                tap: Vec::new(),
-                analyser: Analyser::new(DEFAULT_FFT_SIZE),
-                spectrum: vec![0.0; DEFAULT_FFT_SIZE / 2],
-                starved: false,
-                last_analysis: None,
-                shuffle: false,
-                repeat: false,
-                error: None,
-                pending: 0,
-                last_persisted: None,
-                random: seed_random(),
-                seek: None,
-                generation: 0,
-            }),
-            signal: Condvar::new(),
-            fft_size: AtomicUsize::new(DEFAULT_FFT_SIZE),
-        });
+        let graph = new_graph(device_rate, device_channels);
 
         let stream = build_stream(&device, &config, Arc::clone(&graph), device_channels)?;
 
@@ -980,7 +1011,14 @@ fn feed(
         }
 
         // A seek the UI asked for while this track was playing.
-        if let Some((generation, seconds)) = lock(&graph.state).seek.take() {
+        //
+        // The request is taken out into a local first, so the guard is released
+        // before `service_seek` runs: that takes the same lock again, and the
+        // mutex is not reentrant. Written as one `if let` over the locked
+        // expression the guard would live through the body and deadlock the
+        // worker on the first scrub of the session.
+        let request = lock(&graph.state).seek.take();
+        if let Some((generation, seconds)) = request {
             service_seek(graph, track, resampler, generation, seconds);
             draining = false;
             stalled = 0;
@@ -1396,4 +1434,103 @@ fn seed_random() -> u64 {
         .unwrap_or(0x9E37_79B9_7F4A_7C15);
     // Never zero: xorshift cannot leave it.
     nanos | 1
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A graph with one track selected, which is the state a position write and
+    /// a seek request both need to be meaningful.
+    fn graph_with_a_track() -> (Arc<Graph>, String) {
+        let graph = new_graph(48_000.0, 2);
+        let path = "/nonexistent/track.wav".to_string();
+        {
+            let mut state = lock(&graph.state);
+            state.tracks = Arc::new(vec![MusicFile {
+                name: "track.wav".to_string(),
+                path: path.clone(),
+            }]);
+            state.current_index = Some(0);
+            state.loaded = true;
+            state.duration = 120.0;
+            state.playing = true;
+            state.cursor = 42.5;
+        }
+        (graph, path)
+    }
+
+    #[test]
+    fn taking_the_session_releases_the_lock_before_the_next_take() {
+        // The exact shape that hung the app: read the state under the graph's
+        // lock, then take the same lock again straight afterwards. A `std::sync::
+        // Mutex` is not reentrant, so a guard that outlives its statement does
+        // not panic — it waits, forever, on a thread holding it. This hangs the
+        // test rather than failing it, which is the whole reason the reading and
+        // the writing are separate functions.
+        let (graph, path) = graph_with_a_track();
+
+        let first = take_session(&graph).expect("a selected track has a position");
+        let second = take_session(&graph).expect("and so does the next read");
+
+        assert_eq!(first.path, path);
+        assert_eq!(first.current_time, 42.5);
+        assert_eq!(second.current_time, 42.5);
+        // And the mark was set, so `Player::tick` will not write it again for
+        // another `PERSIST_INTERVAL`.
+        let due = lock(&graph.state)
+            .last_persisted
+            .is_none_or(|last| last.elapsed() >= PERSIST_INTERVAL);
+        assert!(!due, "the position was not marked as written");
+    }
+
+    #[test]
+    fn taking_a_seek_request_releases_the_lock_before_the_worker_acts_on_it() {
+        // The same hazard on the worker's side. `feed` has to read the request
+        // out from under the lock and let the guard go before `service_seek`
+        // takes it again — the seek itself is a container seek plus a decoder
+        // reset, so the guard cannot be held across it in any case.
+        let (graph, _) = graph_with_a_track();
+        {
+            let mut state = lock(&graph.state);
+            state.generation = state.generation.wrapping_add(1);
+            state.seek = Some((state.generation, 90.0));
+        }
+
+        // Read out, then take the lock as the rest of `feed` does. If the read
+        // kept its guard this would never return.
+        let request = lock(&graph.state).seek.take();
+        let state_is_reachable = { lock(&graph.state).cursor };
+        assert_eq!(state_is_reachable, 42.5);
+
+        let (generation, seconds) = request.expect("the request was there");
+        assert_eq!(seconds, 90.0);
+        assert_eq!(generation, 1);
+        // Consumed, so a second pass does not seek again.
+        assert!(lock(&graph.state).seek.is_none());
+    }
+
+    #[test]
+    fn the_ring_holds_the_configured_number_of_seconds() {
+        let graph = new_graph(48_000.0, 2);
+        let (low, capacity) = lock(&graph.state).ring_bounds();
+        assert_eq!(capacity, (48_000.0 * 2.0 * RING_SECONDS) as usize);
+        assert_eq!(low, (capacity as f64 * RING_LOW_WATER) as usize);
+        assert!(
+            low < capacity,
+            "the low-water mark has to leave room to refill"
+        );
+    }
+
+    #[test]
+    fn a_starved_ring_reports_buffering_rather_than_playing() {
+        // What the panel shows: the transport waiting on audio, either because a
+        // selection is being opened or because the device has run the buffer
+        // dry. The second used to be indistinguishable from "playing, and
+        // quietly nothing".
+        let (graph, _) = graph_with_a_track();
+        assert!(!lock(&graph.state).starved);
+        lock(&graph.state).starved = true;
+        assert!(lock(&graph.state).starved, "the flag did not take");
+    }
 }
