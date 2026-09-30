@@ -22,6 +22,20 @@ const ICON_SOURCES: &[(&str, &str)] = &[
     ("../../src/assets/images", "modrinth,curseforge"),
 ];
 
+/// The stack `slint-build`'s compiler is given.
+///
+/// Its stack use grows with the whole `ui/` tree, and the build script's **main
+/// thread** only gets the linker's default: 1 MiB on `*-pc-windows-msvc`,
+/// where rustc does not raise the PE stack reserve for a build script. The
+/// tree has outgrown that, and the symptom is a bare
+/// `STATUS_STACK_OVERFLOW` from the build script -- the compiler dies in the
+/// middle of a file and names no file, so it reads like a corrupt `.slint`.
+///
+/// 64 MiB is ~30x what the tree needs today (it fits in 2 MiB), which leaves the
+/// next few screens off the same cliff. A thread stack is *reserved*, not
+/// committed, so the headroom costs nothing until the compiler touches it.
+const COMPILER_STACK_BYTES: usize = 64 * 1024 * 1024;
+
 fn main() {
     // `slint-build` compiles the UI files below `ui/` into `gen` and emits Rust
     // source that `slint::include_modules!()` pulls into `main`.
@@ -34,6 +48,17 @@ fn main() {
     // compiler reads it like any other `.slint` file.
     check_embedded_font();
     generate_icons();
+    std::thread::Builder::new()
+        .name("slint-compile".into())
+        .stack_size(COMPILER_STACK_BYTES)
+        .spawn(compile_ui)
+        .expect("failed to spawn the UI compiler thread")
+        .join()
+        .expect("the UI compiler thread panicked");
+}
+
+/// Compile the UI, on the thread [`main`] set up for it.
+fn compile_ui() {
     let config = slint_build::CompilerConfiguration::new().with_bundled_translations("i18n");
     slint_build::compile_with_config("ui/app.slint", config).expect("failed to compile the app UI");
 }
@@ -141,6 +166,15 @@ fn generate_icons() {
     );
     let source = render_icons_table(&icons);
     let out = manifest.join("ui/icons.slint");
+    // Write only when the table actually changed. `slint-build` registers every
+    // file the compiler imports as a `rerun-if-changed` path, and that includes
+    // this one -- it is read like any other `.slint` file. Rewriting it with
+    // identical content still moves its mtime, the build script therefore
+    // always looks stale, and every `cargo build` recompiles the whole
+    // five-minute app crate instead of being a no-op.
+    if fs::read_to_string(&out).is_ok_and(|existing| existing == source) {
+        return;
+    }
     fs::write(&out, source)
         .unwrap_or_else(|error| panic!("failed to write {}: {error}", out.display()));
 }

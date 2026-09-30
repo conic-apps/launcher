@@ -197,6 +197,15 @@ cargo fmt -p conic-launcher-slint
 the Rust pulled in by `slint::include_modules!()`. Custom fonts and translations
 are embedded/bundled at compile time.
 
+The compiler runs on a **thread with a 64 MiB stack**, not on the build
+script's main thread. `slint-build`'s compiler is recursive-descent and its
+stack use grows with the whole `ui/` tree, while a build script's main thread
+gets the linker's default — 1 MiB on `*-pc-windows-msvc`, where rustc does not
+raise the PE stack reserve. The tree has outgrown that, and it fails as a bare
+`STATUS_STACK_OVERFLOW` in the build script, naming no file. It needs about
+2 MiB as it stands; the rest is headroom, and it is reserved rather than
+committed, so it costs nothing.
+
 ## Fonts
 
 The original stylesheet (`src/assets/styles/main.css`) used:
