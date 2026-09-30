@@ -67,6 +67,11 @@ export global MusicState {
 
     // ----- transport actions (the store's actions) -----
     callback toggle-play();
+    // `pause` and `resume` rather than two `toggle-play`s: the progress bar stops
+    // the music for the duration of a drag and puts back what was there, and a
+    // toggle would land on whatever the last seek left instead.
+    callback pause();
+    callback resume();
     callback play-index(int);
     callback previous();
     callback next();

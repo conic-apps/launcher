@@ -323,6 +323,17 @@ fn register_callbacks(ui: &App) {
         state.on_toggle_play(move || with_player(&weak, |player| player.toggle_play()));
     }
     {
+        // The progress bar's drag, which stops the music for its duration and
+        // asks for it back on the release. Explicit rather than two toggles, so
+        // the second half cannot undo the wrong thing.
+        let weak = ui.as_weak();
+        state.on_pause(move || with_player(&weak, |player| player.pause()));
+    }
+    {
+        let weak = ui.as_weak();
+        state.on_resume(move || with_player(&weak, |player| player.resume()));
+    }
+    {
         let weak = ui.as_weak();
         state.on_play_index(move |index| {
             let index = index.max(0) as usize;
