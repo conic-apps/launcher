@@ -2200,3 +2200,33 @@ msgstr "取消"
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "确认删除"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Waiting for the sign-in"
+msgstr "正在等待登录"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Finish signing in in your browser — this page will change when it is done."
+msgstr "请在浏览器中完成登录——完成后此页面会自动更新。"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Signed in"
+msgstr "登录成功"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "You can close this tab and go back to Conic Launcher."
+msgstr "你可以关闭此标签页并返回 Conic Launcher。"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Sign-in failed"
+msgstr "登录失败"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
+msgstr "Conic Launcher 未收到有效的登录信息。请关闭此标签页后重试。"

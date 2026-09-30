@@ -2170,3 +2170,33 @@ msgstr "Cancelar"
 msgctxt "ConfirmDeleteInstance"
 msgid "确认删除"
 msgstr "Confirmar eliminación"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Waiting for the sign-in"
+msgstr "Esperando el inicio de sesión"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Finish signing in in your browser — this page will change when it is done."
+msgstr "Completa el inicio de sesión en tu navegador: esta página se actualizará cuando termines."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Signed in"
+msgstr "Sesión iniciada"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "You can close this tab and go back to Conic Launcher."
+msgstr "Puedes cerrar esta pestaña y volver a Conic Launcher."
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Sign-in failed"
+msgstr "Error al iniciar sesión"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
+msgstr "Conic Launcher no recibió un inicio de sesión válido. Cierra esta pestaña e inténtalo de nuevo."
