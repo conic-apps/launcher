@@ -1,0 +1,124 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The world map's state (src/components/WorldMap.vue).
+//
+// The Vue component held all of this in itself — the render transform, the two
+// tile caches, the in-flight sets and the load queue — because a `<canvas>` can
+// only be redrawn by imperative `drawImage` calls from JavaScript. Slint draws
+// declaratively, so the split moves: the *view transform* (scale, offset, the
+// zoom animation, the pointer and the gestures) is the component's own state,
+// because that is what its bindings read, while the *tiles* are a model here,
+// filled in by `app/src/worldmap.rs`.
+//
+// # The caches, and what happened to them
+//
+// The Vue kept two, for reasons that were entirely about the webview:
+//
+//   * `pngCache` — the PNG bytes of every tile it had ever fetched, so a tile
+//     that scrolled off screen and came back could be drawn again without
+//     asking Rust to render it a second time.
+//   * `renderCache` — the decoded `ImageBitmap`s, pruned to the visible range
+//     plus `TILE_RENDER_MARGIN` rings, because a decoded bitmap is what the GPU
+//     holds and there is a limit on how many.
+//
+// With a shared `Image` neither split is needed. A Slint `Image` is a
+// reference-counted handle, cloning one is free, there is no encoded form to
+// keep a second copy of, and the renderer drops its own GPU copy under memory
+// pressure on its own. So there is one cache — in Rust, keyed by tile, holding
+// the finished `Image` — and this model is a *view* of it: the tiles in the
+// visible range, and nothing else.
+
+/// One rendered tile of the world, as `render_map` produced it.
+export struct WorldTile {
+    /// The tile's origin in world blocks, which is its identity: the tile
+    /// covers `[tx * tile-size, …) × [tz * tile-size, …)`.
+    tx: int,
+    tz: int,
+    /// The decoded tile: one block per pixel, drawn nearest-neighbour.
+    image: image,
+    /// When the tile was first drawn, on `ScrollInput.now-ms()`'s clock.
+    ///
+    /// A tile fades in over 100ms from this, and a tile that comes back out of
+    /// the cache does not fade at all — which is the Vue's `tileAppear` map,
+    /// except that the stamp is kept rather than being deleted by the render
+    /// cache's prune. Rust writes it once, the first time a tile reaches the
+    /// model; `0` only before that, where the tile is drawn at full strength.
+    appear-ms: float,
+}
+
+/// The world the map is showing, and how it wants it rendered. What Rust keys
+/// its caches by, so a `change` here is a `resetWorld` in the Vue.
+export struct WorldSource {
+    instance-id: string,
+    /// The save's folder name — the world's own identifier in the saves list.
+    folder: string,
+    /// A namespaced id, or "" for the overworld.
+    dimension: string,
+    /// The spawn to open centred on. `(0, 0)` asks the world for its own, which
+    /// is what a `level.dat` without a `spawn.pos` gets.
+    spawn-x: int,
+    spawn-z: int,
+    /// Blocks along one edge of a tile. The Vue's `tileSize` prop, and the
+    /// render request's `width` / `height`.
+    tile-size: int,
+    water: bool,
+    shading: bool,
+    altitude-shading: bool,
+}
+
+export global WorldMapState {
+    // ----- the tiles -----
+    /// The tiles in the visible range. Rewritten in place, row by row, so a
+    /// tile keeps its element for as long as it is on screen.
+    in-out property <[WorldTile]> tiles: [];
+    /// Whether any tile is on screen — the Vue's `hasTiles`, which is what
+    /// hides the loading spinner.
+    out property <bool> has-tiles: WorldMapState.tiles.length > 0;
+    /// The Vue's `loading`: nothing drawn yet and nothing gone wrong.
+    out property <bool> loading: WorldMapState.tiles.length == 0
+        && WorldMapState.error == "";
+
+    // ----- status -----
+    /// The first error of a world, shown over the map. Cleared by the next tile
+    /// that arrives, as in the Vue.
+    in-out property <string> error: "";
+    /// The latest tile's `appear-ms` plus the 100ms fade, on the same clock.
+    /// The component runs its fade clock only while now is below this, so the
+    /// window has no idle timer and a tile that arrives late still gets its
+    /// full fade — its own `appear-ms` is what the opacity is measured from.
+    in-out property <float> fade-until: 0;
+
+    /// Whether the pointer is over the map.
+    ///
+    /// A global rather than a property of the component because the card's
+    /// expansion cannot read it: a conditional element's id is not in scope
+    /// outside the `if`, and the expansion is exactly the thing that needs to
+    /// know. It stands in for the Vue's `:hover` on a parent, which stays true
+    /// while a descendant is hovered — the card's own `TouchArea` is *under*
+    /// the map, so without this the card would stop being hovered the moment
+    /// the pointer reached it.
+    in-out property <bool> hovered: false;
+
+    /// The world on screen. The component writes it and then calls `open`,
+    /// which is what empties the caches when the tuple is not the one Rust
+    /// already has — the Vue's `watch(…, resetWorld, { immediate: true })`.
+    in-out property <WorldSource> world: {
+        instance-id: "",
+        folder: "",
+        dimension: "",
+        spawn-x: 0,
+        spawn-z: 0,
+        tile-size: 64,
+        water: true,
+        shading: true,
+        altitude-shading: true,
+    };
+
+    /// The world was (re)reported. Rust drops the cache, the model, the queue
+    /// and the in-flight renders when it is a different one.
+    callback open();
+    /// The visible tile range moved; refill the model and queue what is missing.
+    callback request-tiles(int, int, int, int);
+}
