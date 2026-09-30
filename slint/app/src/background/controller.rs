@@ -1075,14 +1075,15 @@ pub fn palette_changed(ui: &App) {
 /// `TouchArea` that covers the window swallows every click in the app, and one
 /// underneath the content never sees a move, because any `TouchArea` the
 /// pointer is over accepts the event and ends the walk. The winit backend
-/// hands out its window events instead, and these are window-wide.
+/// hands out its window events instead, and these are window-wide — through
+/// `slint_window::on_window_event`, which shares the backend's single event
+/// filter with the window controls and the music player rather than taking it
+/// over from them.
 fn install_window_hook(ui: &App) {
-    use i_slint_backend_winit::EventResult;
-    use i_slint_backend_winit::WinitWindowAccessor;
     use winit::event::WindowEvent;
 
     let weak = ui.as_weak();
-    ui.window().on_winit_window_event(move |_window, event| {
+    slint_window::on_window_event(ui, move |event| {
         match event {
             WindowEvent::CursorMoved { position, .. } => {
                 POINTER.with(|pointer| {
@@ -1098,7 +1099,7 @@ fn install_window_hook(ui: &App) {
             WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. } => {
                 let controller = CONTROLLER.with(|slot| slot.borrow().clone());
                 let (Some(controller), Some(ui)) = (controller, weak.upgrade()) else {
-                    return EventResult::Propagate;
+                    return;
                 };
                 let mut controller = controller.borrow_mut();
                 controller.world_dirty = true;
@@ -1106,7 +1107,5 @@ fn install_window_hook(ui: &App) {
             }
             _ => {}
         }
-        // The app's own input handling must not notice this hook at all.
-        EventResult::Propagate
     });
 }
