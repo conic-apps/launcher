@@ -124,11 +124,9 @@ fn main() {
     // Tell the HTTP client whether to go through the system proxy, like
     // `crates/config` does for `shared::HTTP_CLIENT`. Has to happen before the
     // first request, which is why it is done here rather than when a version
-    // list is first fetched.
-    slint_install::set_system_proxy(config.download.use_system_proxy);
-    // The account crate keeps its own client (see its `shared` module), so it
-    // needs the same answer.
-    slint_account::set_system_proxy(config.download.use_system_proxy);
+    // list is first fetched. `slint-shared` owns the one client the whole app
+    // shares, so one call reaches every crate that uses it.
+    slint_shared::set_system_proxy(config.download.use_system_proxy);
 
     // Pick the bundled translation. Must run after a component exists (that's
     // what installs the translation bundle).
@@ -270,6 +268,25 @@ fn main() {
     // The original stops the multiplayer plugin on `RunEvent::Exit`: the poll
     // thread is joined and the Conic Nexus session destroyed.
     multiplayer::shutdown();
+
+    cleanup_temp_folder();
+}
+
+/// Removes the per-run scratch directory [`slint_folder::DATA_LOCATION`]
+/// creates, the same thing `core/src/main.rs` does on `RunEvent::Exit` and
+/// `RunEvent::ExitRequested`.
+///
+/// The installers stage a bootstrapper jar here (`slint_install`), and the
+/// directory is `create_dir_all`-ed in a fresh UUID-named path on every launch,
+/// so without this it accumulates one directory per run in the OS temp folder.
+fn cleanup_temp_folder() {
+    match std::fs::remove_dir_all(&slint_folder::DATA_LOCATION.temp) {
+        Ok(_) => log::info!("Temporary files cleared"),
+        Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
+            log::error!("Could not clear temp folder: {error}")
+        }
+        _ => (),
+    }
 }
 
 /// Brings the window forward for every later launch of the app.
