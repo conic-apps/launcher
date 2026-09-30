@@ -95,7 +95,7 @@ use std::ptr::{addr_of, null_mut};
 use std::slice;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use i_slint_backend_winit::{EventResult, WinitWindowAccessor};
+use i_slint_backend_winit::WinitWindowAccessor;
 use slint::{
     Color, ComponentHandle, Image, ModelRc, Rgba8Pixel, SharedPixelBuffer, VecModel, Weak,
 };
@@ -331,15 +331,17 @@ pub fn install(ui: &App) {
 
     // There is no `HWND` until the event loop has created the window, so this
     // takes the first winit event the window gets rather than polling for one.
+    // The hook is the app's shared one rather than the backend's own single slot
+    // (see `slint_window::on_window_event`), which is what keeps this watcher
+    // alive alongside the others.
     let weak = ui.as_weak();
     let attached = AtomicBool::new(false);
-    ui.window().on_winit_window_event(move |_, _| {
+    slint_window::on_window_event(ui, move |_| {
         if !attached.swap(true, Ordering::Relaxed)
             && let Some(ui) = weak.upgrade()
         {
             attach(&ui);
         }
-        EventResult::Propagate
     });
 }
 
