@@ -176,6 +176,12 @@ export component MusicPlayerOverlay inherits Rectangle {
         triggered => {
             root.phase = "closed";
             root.playlist-phase = "closed";
+            // The overlay stays mounted between shows, so a drag that was still
+            // in flight when the panel left would keep the music stopped, and the
+            // flag that remembers it did the stopping, next time it opened. The
+            // release that ends a drag normally arrives as a cancel; this is for
+            // the drag that never got one.
+            root.end-drag();
         }
     }
 
@@ -238,6 +244,38 @@ export component MusicPlayerOverlay inherits Rectangle {
     // Whether the progress bar is being dragged, so a move only seeks while it
     // is.
     private property <bool> dragging: false;
+
+    // Whether this drag is the one that stopped the music, so the release puts
+    // it back. A drag that began while already paused leaves it paused: the
+    // release restores what was there, which is what "the same whichever way it
+    // was" means.
+    private property <bool> drag-paused-playback: false;
+
+    // Stops the music for the duration of a drag.
+    //
+    // A drag is a question about *where*, not about whether the music is running,
+    // so it is answered with the transport stopped: what comes back afterwards is
+    // the state that was there before, rather than a play/pause toggle that
+    // would land wherever the last seek happened to leave it. The Vue bound the
+    // button straight to `music.isPlaying` and had no notion of a drag at all, so
+    // a scrub of a playing track showed a pause icon over a position still
+    // catching up with the pointer, and the music played straight through it.
+    function begin-drag() {
+        root.dragging = true;
+        if (MusicState.is-playing) {
+            MusicState.pause();
+            root.drag-paused-playback = true;
+        }
+    }
+
+    // Ends it, and is safe to call when no drag is in flight.
+    function end-drag() {
+        root.dragging = false;
+        if (root.drag-paused-playback) {
+            root.drag-paused-playback = false;
+            MusicState.resume();
+        }
+    }
 
     // ----- playlist geometry -----
     // `padding: 7px 8px` around a 12px line box (`line-height: 1`) is a row;
@@ -346,7 +384,14 @@ export component MusicPlayerOverlay inherits Rectangle {
                             // so the literal is the Vue's weight, as it is elsewhere in
                             // the app where the CSS says 600.
                             font-weight: 600;
-                            color: Theme.text;
+                            // Dimmed while the player is still waiting on audio. The
+                            // Vue had nothing to dim: an `<audio>` element's wait
+                            // was not visible, so a slow load was silence with no
+                            // explanation. A native player streams from a file, and
+                            // a starved buffer is worth saying out loud — but only
+                            // through colour, so the card does not grow a row the
+                            // Vue's layout never had.
+                            color: MusicState.buffering ? Theme.subtext-0 : Theme.text;
                             horizontal-alignment: center;
                             overflow: elide;
                         }
@@ -408,7 +453,13 @@ export component MusicPlayerOverlay inherits Rectangle {
                                 width: parent.width * MusicState.progress;
                                 height: parent.height;
                                 border-radius: 4px;
-                                background: Theme.mauve;
+                                // Faded with the title while the player is
+                                // waiting on audio, for the same reason: the
+                                // bar is the one thing that visibly stops
+                                // moving when the buffer is empty.
+                                background: MusicState.buffering
+                                    ? Theme.mauve.transparentize(0.45)
+                                    : Theme.mauve;
                             }
 
                             // The Vue registers `pointermove`/`pointerup` on `window` for the
@@ -447,12 +498,12 @@ export component MusicPlayerOverlay inherits Rectangle {
                                     if event.kind == PointerEventKind.down
                                     && event.button == PointerEventButton.left
                                     {
-                                        root.dragging = true;
+                                        root.begin-drag();
                                         self.seek();
                                     } else if event.kind == PointerEventKind.up
                                     || event.kind == PointerEventKind.cancel
                                     {
-                                        root.dragging = false;
+                                        root.end-drag();
                                         } else if event.kind == PointerEventKind.move && root.dragging {
                                         self.seek();
                                     }

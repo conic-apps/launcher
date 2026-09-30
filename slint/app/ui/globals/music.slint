@@ -36,6 +36,11 @@ export global MusicState {
     in-out property <bool> is-playing: false;
     in-out property <bool> shuffle: false;
     in-out property <bool> repeat: false;
+    /// Whether the transport is waiting on audio: a selection being opened, or
+    /// the player running out of buffered samples. The store had no equivalent —
+    /// an `<audio>` element could not be seen to be behind — so this is the one
+    /// piece of state the panel has that the Vue did not.
+    in-out property <bool> buffering: false;
     /// `currentTime` and `duration`, in seconds.
     in-out property <float> current-time: 0;
     in-out property <float> duration: 0;
@@ -62,6 +67,11 @@ export global MusicState {
 
     // ----- transport actions (the store's actions) -----
     callback toggle-play();
+    // `pause` and `resume` rather than two `toggle-play`s: the progress bar stops
+    // the music for the duration of a drag and puts back what was there, and a
+    // toggle would land on whatever the last seek left instead.
+    callback pause();
+    callback resume();
     callback play-index(int);
     callback previous();
     callback next();
