@@ -223,6 +223,26 @@ export component InstancesList inherits Rectangle {
     private property <duration> intro-list-delay: 50ms;
     private property <duration> intro-card-delay: 165ms;
     private property <duration> intro-stagger: 30ms;
+    /// The row pitch the stagger counts in: one card row, i.e. `CARD_HEIGHT` in
+    /// `GameController::build_rows`, so neighbouring cards are one step apart.
+    private property <length> intro-row-pitch: 58px;
+    /// How many steps the entrance has, one per card row the viewport holds. The
+    /// Vue original staggers every card it can see (`stagger: 0.03` on the cards
+    /// inside the viewport), so a window that fits more rows has to spread over
+    /// more steps — otherwise the cards past the cap would all share the last one.
+    private property <float> intro-steps: max(1, root.height / root.intro-row-pitch);
+    /// Where the list sat when the entrance started. The stagger counts from the
+    /// first row *on screen* (the list opens centred on the current instance),
+    /// not from the first row of the list — and it is captured rather than read
+    /// live so that scrolling mid-entrance cannot reshuffle the order.
+    private property <length> intro-top: 0px;
+
+    /// Called by `GameView` once the list has settled on the current instance
+    /// and just before it plays the entrance. Everything the entrance is ordered
+    /// against — the layout, the offset — is only final at that point.
+    public function begin-intro() {
+        root.intro-top = root.scroll-y;
+    }
 
     // The toolbar keeps its own size and is positioned relative to the list's
     // right edge (Vue `right: 320px`, `z-index: 114`). The z has to be set *here*,
@@ -301,8 +321,23 @@ export component InstancesList inherits Rectangle {
                     // grouping, starring) slides in from +24px instead. Both are
                     // offsets on top of the rail, so the card enters *along* the
                     // curve rather than merely fading.
+                    //
+                    // The stagger counts the card rows between the top of the
+                    // window and this one, which is the order the entrance has to
+                    // follow. It is deliberately not the `for` index: the index
+                    // runs over the whole model, so it both saturates (a list
+                    // opened on its last instance gave every row on screen the
+                    // same step, and they all arrived in the same frame) and,
+                    // after a sort change, no longer matches the visual order at
+                    // all — `sync_rows` keeps the model's order and moves the rows
+                    // by their `row-y`.
+                    private property <float> intro-rank: clamp(
+                        (row.row-y - root.intro-top) / root.intro-row-pitch,
+                        0,
+                        root.intro-steps,
+                    );
                     private property <duration> intro-delay: root.intro-card-delay
-                        + min(i, 12) * root.intro-stagger;
+                        + self.intro-rank * root.intro-stagger;
                     private property <length> intro-dx: GameIntro.played ? 0px : 40px;
                     private property <length> appear-dx: row.appear ? 0px : 24px;
                     private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
