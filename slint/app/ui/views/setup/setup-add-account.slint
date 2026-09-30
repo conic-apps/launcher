@@ -62,10 +62,15 @@ export component SetupAddAccount inherits VerticalLayout {
             alignment: start;
             spacing: 0px;
 
-            // The 56px head, centred by the card's `align-items: center`, and
-            // the `filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5))` the Vue puts
-            // on it (`.avatar`), which is the CSS `filter` Slint spells with the
-            // element's own drop shadow.
+            // The 56px head, centred by the card's `align-items: center`.
+            //
+            // The Vue's `.avatar { filter: drop-shadow(0 0 8px rgba(0, 0, 0,
+            // 0.5)) }` is **not** reproduced. A CSS `filter` drop-shadow follows
+            // the element's rendered shape, so on a round avatar it is a round
+            // shadow; Slint's `drop-shadow-*` draws the shape of the element's
+            // *box*, so the same four properties put a square 56x56 shadow
+            // behind a circle — worse than no shadow at all. There is no way to
+            // soften a shape Slint has no mask for, so the shadow is dropped.
             Rectangle {
                 width: 100%;
                 height: 56px;
@@ -77,10 +82,6 @@ export component SetupAddAccount inherits VerticalLayout {
                     size: 56px;
                     kind: GameState.current-account-kind;
                     skin: GameState.current-account-avatar;
-                    drop-shadow-blur: 8px;
-                    drop-shadow-offset-x: 0px;
-                    drop-shadow-offset-y: 0px;
-                    drop-shadow-color: #00000080;
                 }
             }
 

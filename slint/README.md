@@ -2018,6 +2018,12 @@ the very first play at startup would start silently. This is the same clock
     multiplies the font's natural line box rather than the font size, so 19.5px
     comes out as 21.7px. The same trade the rest of the port makes; the
     paragraphs are one line taller per wrapped line than the Vue's.
+  - **The profile card's avatar has no drop shadow.** The Vue's `.avatar
+    { filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5)) }` follows the element's
+    rendered shape, so on a round avatar it is a round shadow. Slint's
+    `drop-shadow-*` draws the shape of the element's *box* — the same four
+    properties put a square 56×56 shadow behind a circle — and there is no mask
+    to soften it with, so the shadow is dropped rather than drawn wrong.
   - **The profile card's type colour is the switch's other half.** The Vue has
     three mutually exclusive classes (`.microsoft`, `.yggdrasil`, `.offline`)
     and an account is always one of the three, so the colours are chosen from
