@@ -8,7 +8,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-
 #: ui
 msgctxt "App"
 msgid "Conic Launcher"
@@ -615,7 +614,6 @@ msgid "Scanning for installed Java runtimes"
 msgstr "Installierte Java-Laufzeitumgebungen werden gesucht"
 
 # Game view strings, seeded from src/locales/de_de.ts.
-
 
 #: ui
 msgctxt "GameTime"
@@ -1246,7 +1244,6 @@ msgstr "Spiel gestartet"
 msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
-
 
 #: ui
 msgctxt "Multiplayer"
@@ -1921,7 +1918,6 @@ msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "Kitchen Sink"
 
-
 msgctxt "CategoryPacksModrinth"
 msgid "Lightweight"
 msgstr "Leichtgewichtig"
@@ -1945,7 +1941,6 @@ msgstr "Quests"
 msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "Technologie"
-
 
 #: ui
 msgctxt "MusicPlayerOverlay"
@@ -2314,3 +2309,131 @@ msgstr "Instanz mit neuestem Release erstellen"
 msgctxt "SetupImportInstances"
 msgid "Create instance with latest snapshot"
 msgstr "Instanz mit neuestem Snapshot erstellen"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Waiting for the sign-in"
+msgstr "Warten auf die Anmeldung"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Finish signing in in your browser — this page will change when it is done."
+msgstr "Melde dich in deinem Browser an – diese Seite aktualisiert sich, sobald du fertig bist."
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Signed in"
+msgstr "Angemeldet"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "You can close this tab and go back to Conic Launcher."
+msgstr "Du kannst diesen Tab schließen und zu Conic Launcher zurückkehren."
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Sign-in failed"
+msgstr "Anmeldung fehlgeschlagen"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
+msgstr "Conic Launcher hat keine gültige Anmeldung erhalten. Schließe diesen Tab und versuche es erneut."
+
+msgctxt "CommandText"
+msgid "Launch instance"
+msgstr "Instanz starten"
+#: ui
+msgctxt "CommandText"
+msgid "Create instance"
+msgstr "Instanz erstellen"
+#: ui
+msgctxt "CommandText"
+msgid "Add game profile"
+msgstr "Spielprofil hinzufügen"
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth"
+msgstr "Auf Modrinth suchen"
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge"
+msgstr "Auf CurseForge suchen"
+#: ui
+msgctxt "CommandText"
+msgid "by {}"
+msgstr "von {}"
+#: ui
+msgctxt "CommandText"
+msgid "Mod"
+msgstr "Mod"
+#: ui
+msgctxt "CommandText"
+msgid "Modpack"
+msgstr "Modpack"
+#: ui
+msgctxt "CommandText"
+msgid "Resource Pack"
+msgstr "Ressourcenpaket"
+#: ui
+msgctxt "CommandText"
+msgid "Shader"
+msgstr "Shader"
+#: ui
+msgctxt "CommandText"
+msgid "Switch to"
+msgstr "Wechseln zu"
+#: ui
+msgctxt "CommandText"
+msgid "Launch"
+msgstr "Starten"
+#: ui
+msgctxt "CommandText"
+msgid "Open"
+msgstr "Öffnen"
+#: ui
+msgctxt "CommandText"
+msgid "Instances"
+msgstr "Instanzen"
+#: ui
+msgctxt "CommandText"
+msgid "Search results"
+msgstr "Suchergebnisse"
+#: ui
+msgctxt "CommandText"
+msgid "Commands"
+msgstr "Befehle"
+#: ui
+msgctxt "CommandText"
+msgid "Select an instance to launch…"
+msgstr "Instanz zum Starten auswählen…"
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth…"
+msgstr "Auf Modrinth suchen…"
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge…"
+msgstr "Auf CurseForge suchen…"
+#: ui
+msgctxt "CommandText"
+msgid "Search commands or instances…"
+msgstr "Befehle oder Instanzen suchen…"
+#: ui
+msgctxt "CommandText"
+msgid "Back"
+msgstr "Zurück"
+#: ui
+msgctxt "CommandText"
+msgid "Close"
+msgstr "Schließen"
+msgctxt "CommandText"
+msgid "Type keywords to search on CurseForge"
+msgstr "Tippe Stichwörter, um auf CurseForge zu suchen"
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on Modrinth"
+msgstr "Tippe Stichwörter, um auf Modrinth zu suchen"
+#: ui
+msgctxt "CommandText"
+msgid "Search failed, please try again"
+msgstr "Suche fehlgeschlagen, bitte erneut versuchen"
+#: ui
+msgctxt "CommandText"
+msgid "No matching results"
+msgstr "Keine passenden Ergebnisse"

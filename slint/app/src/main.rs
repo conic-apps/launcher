@@ -16,6 +16,7 @@ mod account_add;
 mod account_avatar;
 mod background;
 mod cjk_font;
+mod command_palette;
 mod config_bridge;
 mod content;
 mod create_instance;
@@ -179,11 +180,13 @@ fn main() {
     // The background-music player: `MusicPlayer.vue` mounted itself on the Vue
     // app's root, so this runs for the whole session rather than per page.
     music::setup(&ui);
-
-    // TODO(migration): wire this to the real command palette.
-    ui.on_open_search(move || {
-        log::info!(target: "shell", "search activated (placeholder)");
-    });
+    // The command palette, mounted on the same layer — it opens from the title
+    // bar's search field and from the `Ctrl`/`⌘` + `/` shortcut, so it is up for
+    // the whole session too. Its two openers are wired in the view, the way the
+    // title bar's other actions are: `CommandPaletteState.open()` for the search
+    // field's click, and `CommandPaletteState.toggle()` for the `Ctrl`/`⌘` + `/`
+    // shortcut, which the app-level key scope in `app.slint` binds.
+    command_palette::setup(&ui);
 
     // The title bar stops leaving room for the traffic lights while they are
     // hidden by fullscreen. Registered after `App::new()` because it reports

@@ -8,7 +8,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-
 #: ui
 msgctxt "App"
 msgid "Conic Launcher"
@@ -615,7 +614,6 @@ msgid "Scanning for installed Java runtimes"
 msgstr "Поиск установленных сред Java"
 
 # Game view strings, seeded from src/locales/ru_ru.ts.
-
 
 #: ui
 msgctxt "GameTime"
@@ -1246,7 +1244,6 @@ msgstr "Игра запущена"
 msgctxt "LaunchView"
 msgid "Error: {}"
 msgstr "Error: {}"
-
 
 #: ui
 msgctxt "Multiplayer"
@@ -1921,7 +1918,6 @@ msgctxt "CategoryPacksModrinth"
 msgid "Kitchen Sink"
 msgstr "Kitchen Sink"
 
-
 msgctxt "CategoryPacksModrinth"
 msgid "Lightweight"
 msgstr "Легковесные"
@@ -1945,7 +1941,6 @@ msgstr "Квесты"
 msgctxt "CategoryPacksModrinth"
 msgid "Technology"
 msgstr "Технологии"
-
 
 #: ui
 msgctxt "MusicPlayerOverlay"
@@ -2314,3 +2309,131 @@ msgstr "Создать сборку с последним релизом"
 msgctxt "SetupImportInstances"
 msgid "Create instance with latest snapshot"
 msgstr "Создать сборку с последним снапшотом"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Waiting for the sign-in"
+msgstr "Ожидание входа"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Finish signing in in your browser — this page will change when it is done."
+msgstr "Завершите вход в браузере — эта страница обновится, когда всё будет готово."
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Signed in"
+msgstr "Вход выполнен"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "You can close this tab and go back to Conic Launcher."
+msgstr "Можно закрыть эту вкладку и вернуться в Conic Launcher."
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Sign-in failed"
+msgstr "Не удалось войти"
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Conic Launcher did not receive a valid sign-in. Close this tab and try again."
+msgstr "Conic Launcher не получил действительные данные для входа. Закройте эту вкладку и попробуйте ещё раз."
+
+msgctxt "CommandText"
+msgid "Launch instance"
+msgstr "Запустить экземпляр"
+#: ui
+msgctxt "CommandText"
+msgid "Create instance"
+msgstr "Создать экземпляр"
+#: ui
+msgctxt "CommandText"
+msgid "Add game profile"
+msgstr "Добавить игровой профиль"
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth"
+msgstr "Поиск в Modrinth"
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge"
+msgstr "Поиск в CurseForge"
+#: ui
+msgctxt "CommandText"
+msgid "by {}"
+msgstr "от {}"
+#: ui
+msgctxt "CommandText"
+msgid "Mod"
+msgstr "Мод"
+#: ui
+msgctxt "CommandText"
+msgid "Modpack"
+msgstr "Модпак"
+#: ui
+msgctxt "CommandText"
+msgid "Resource Pack"
+msgstr "Ресурспак"
+#: ui
+msgctxt "CommandText"
+msgid "Shader"
+msgstr "Шейдер"
+#: ui
+msgctxt "CommandText"
+msgid "Switch to"
+msgstr "Переключиться на"
+#: ui
+msgctxt "CommandText"
+msgid "Launch"
+msgstr "Запустить"
+#: ui
+msgctxt "CommandText"
+msgid "Open"
+msgstr "Открыть"
+#: ui
+msgctxt "CommandText"
+msgid "Instances"
+msgstr "Экземпляры"
+#: ui
+msgctxt "CommandText"
+msgid "Search results"
+msgstr "Результаты поиска"
+#: ui
+msgctxt "CommandText"
+msgid "Commands"
+msgstr "Команды"
+#: ui
+msgctxt "CommandText"
+msgid "Select an instance to launch…"
+msgstr "Выберите экземпляр для запуска…"
+#: ui
+msgctxt "CommandText"
+msgid "Search on Modrinth…"
+msgstr "Поиск в Modrinth…"
+#: ui
+msgctxt "CommandText"
+msgid "Search on CurseForge…"
+msgstr "Поиск в CurseForge…"
+#: ui
+msgctxt "CommandText"
+msgid "Search commands or instances…"
+msgstr "Поиск команд или экземпляров…"
+#: ui
+msgctxt "CommandText"
+msgid "Back"
+msgstr "Назад"
+#: ui
+msgctxt "CommandText"
+msgid "Close"
+msgstr "Закрыть"
+msgctxt "CommandText"
+msgid "Type keywords to search on CurseForge"
+msgstr "Введите ключевые слова для поиска на CurseForge"
+#: ui
+msgctxt "CommandText"
+msgid "Type keywords to search on Modrinth"
+msgstr "Введите ключевые слова для поиска на Modrinth"
+#: ui
+msgctxt "CommandText"
+msgid "Search failed, please try again"
+msgstr "Поиск не удался, попробуйте ещё раз"
+#: ui
+msgctxt "CommandText"
+msgid "No matching results"
+msgstr "Нет подходящих результатов"
