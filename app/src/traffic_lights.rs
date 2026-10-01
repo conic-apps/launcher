@@ -308,6 +308,14 @@ fn install_theme_frame_class() -> bool {
 ///
 /// `types` is the Objective-C type encoding, and it is what tells the runtime
 /// how to call the implementation — so it has to match the function's signature.
+///
+/// The cast is not noise. `class_addMethod` returns an Objective-C `BOOL`,
+/// which `objc-sys` types as `bool` on arm64 (where C's `BOOL` is `_Bool`) and
+/// as `i8` on x86_64 (where it is `signed char`). Returning the value directly
+/// therefore compiles on Apple Silicon and fails on Intel with
+/// `expected bool, found i8`; and testing it against `0` fails the other way,
+/// because Rust has no `PartialEq<i8>` for `bool`. Going through `i8` is what
+/// satisfies both — `bool as i8` is `0` or `1`, and so is every `BOOL`.
 fn add_method(
     cls: *mut ffi::objc_class,
     selector: &CStr,
@@ -317,12 +325,13 @@ fn add_method(
     // SAFETY: `cls` is a class pair that has not been registered yet, and both
     // the selector and the encoding are NUL-terminated C strings.
     unsafe {
-        ffi::class_addMethod(
+        (ffi::class_addMethod(
             cls,
             ffi::sel_registerName(selector.as_ptr()),
             as_imp(implementation),
             types.as_ptr(),
-        )
+        ) as i8)
+            != 0
     }
 }
 
