@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use config::launch::{GC, Server};
 
 /// Represents supported mod loader types.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum ModLoaderType {
     /// Fabric mod loader
     Fabric,
@@ -33,7 +33,7 @@ impl fmt::Display for ModLoaderType {
 }
 
 /// Defines the runtime environment for a Minecraft instance.
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Clone, Deserialize, Serialize, Default)]
 pub struct InstanceRuntime {
     /// Minecraft version (e.g., "1.20.1")
     pub minecraft: String,
@@ -46,8 +46,8 @@ pub struct InstanceRuntime {
 }
 
 /// Configuration for how the instance should be launched.
-/// The global launch config will be override by this.
-#[derive(Deserialize, Serialize, Default)]
+/// The global launch config will be overridden by this.
+#[derive(Clone, Deserialize, Serialize, Default)]
 pub struct InstanceLaunchConfig {
     /// Whether to use instance-specific settings
     pub enable_instance_specific_settings: bool,
@@ -59,8 +59,6 @@ pub struct InstanceLaunchConfig {
     pub auto_memory: Option<bool>,
 
     /// Maximum allocated memory in MB (adds `-Xmx` to JVM args).
-    ///
-    /// Only used when [`InstanceLaunchConfig::auto_memory`] is disabled.
     pub max_memory: Option<usize>,
 
     /// Minecraft server configuration for the instance
@@ -115,7 +113,7 @@ pub struct InstanceLaunchConfig {
 }
 
 /// Main configuration structure for a Minecraft instance.
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Clone, Deserialize, Serialize, Default)]
 pub struct InstanceConfig {
     /// Instance name (displayed to user)
     pub name: String,
@@ -139,16 +137,8 @@ pub struct InstanceConfig {
 }
 
 impl InstanceConfig {
-    /// Creates a new instance configuration with the specified name and Minecraft version.
-    ///
-    /// # Arguments
-    ///
-    /// * `instance_name` - The name of the instance.
-    /// * `minecraft_version` - The version of Minecraft to use.
-    ///
-    /// # Returns
-    ///
-    /// A fully initialized `InstanceConfig` with default settings.
+    /// Creates a new instance configuration with the specified name and
+    /// Minecraft version.
     pub fn new(instance_name: &str, minecraft_version: &str) -> Self {
         Self {
             name: instance_name.to_string(),

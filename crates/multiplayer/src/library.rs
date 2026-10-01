@@ -12,6 +12,12 @@ use libloader::libloading::Library;
 use sha2::Digest;
 use std::{ffi::OsStr, path::Path};
 
+/// The directory the Conic Nexus dynamic library lives in
+/// (`DATA_LOCATION.runtime/conic-nexus`).
+pub fn library_dir() -> std::path::PathBuf {
+    DATA_LOCATION.runtime.join("conic-nexus")
+}
+
 pub async fn check_library_valid() -> Result<()> {
     let mut sha256_hasher = sha2::Sha256::new();
     let file_content = tokio::fs::read(

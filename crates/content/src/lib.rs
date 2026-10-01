@@ -2,10 +2,41 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use tauri::{
-    Manager, Runtime,
-    plugin::{Builder, TauriPlugin},
-};
+//! Tauri-free mirror of `crates/content`: the instance's local content.
+//!
+//! The original is a Tauri plugin whose fifteen commands are thin wrappers —
+//! none of them takes `State`, `AppHandle` or a `Channel` — so the mirror drops
+//! the command layer and keeps the modules themselves, which can then be
+//! diffed against the original file for file:
+//!
+//!   * `mods/` reads the mods folder and resolves each jar's metadata, offline
+//!     from the archive itself and online through Modrinth and CurseForge;
+//!   * `saves/` reads `level.dat` out of each world and serves a world's icon
+//!     and path;
+//!   * `resourcepack.rs` and `screenshots.rs` list the other two content kinds;
+//!   * `favorites.rs` is the shared favorites file.
+//!
+//! Two deviations, both deliberate:
+//!
+//!   * `worldmap.rs` is mirrored, but **without the PNG round trip**. The
+//!     original rendered a tile, encoded it to PNG, base64'd it into a JSON
+//!     string for the webview, and had the page decode it back into an
+//!     `ImageBitmap` — a codec trip that exists only because the two runtimes
+//!     cannot share a buffer. Here `render_map` hands the RGBA buffer straight
+//!     back and the caller wraps it in a `SharedPixelBuffer`, so the encode,
+//!     the base64 and the decode are all gone rather than moved. That is also
+//!     why `Error::WorldMapPng` and `Error::WorldMapTask` are not here: the
+//!     first was the encoder's, the second the `#[command]`'s `spawn_blocking`.
+//!   * The entry points take `&str` where the original took `String`. The
+//!     owned strings were what Tauri's IPC deserialization produced; nothing
+//!     here needs them.
+//!
+//! [`content_counts`] is not part of the original — it is what the game view's
+//! preview rows read for their "n items" labels.
+
+use std::path::{Path, PathBuf};
+
+use folder::DATA_LOCATION;
 
 pub mod error;
 pub mod favorites;
@@ -15,28 +46,92 @@ pub mod saves;
 pub mod screenshots;
 pub mod worldmap;
 
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("content")
-        .invoke_handler(tauri::generate_handler![
-            saves::cmd_get_all_levels,
-            saves::datapack::cmd_get_all_datapacks,
-            saves::cmd_get_save_icon,
-            saves::cmd_get_save_path,
-            saves::cmd_delete_save,
-            resourcepack::cmd_get_all_resourcepacks,
-            worldmap::cmd_render_world_map,
-            screenshots::cmd_list_screenshots,
-            mods::remote::cmd_parse_mods,
-            mods::remote::cmd_check_mod_installed,
-            mods::remote::cmd_remove_mod_files,
-            favorites::cmd_list_favorites,
-            favorites::cmd_add_favorite,
-            favorites::cmd_remove_favorite,
-            favorites::cmd_is_favorited,
-        ])
-        .setup(|app, _| {
-            app.manage(worldmap::MapCache::default());
-            Ok(())
+/// How many items of each kind the current instance contains.
+#[derive(Clone, Copy, Default)]
+pub struct ContentCounts {
+    pub saves: u32,
+    pub mods: u32,
+    pub resourcepacks: u32,
+    pub screenshots: u32,
+}
+
+impl ContentCounts {
+    /// Whether every category is empty (used to disable the preview rows).
+    pub fn is_empty(&self) -> bool {
+        self.saves == 0 && self.mods == 0 && self.resourcepacks == 0 && self.screenshots == 0
+    }
+}
+
+/// Scans the local content of an instance.
+pub fn content_counts(instance_id: &str) -> ContentCounts {
+    let root = DATA_LOCATION.get_instance_root(instance_id);
+    ContentCounts {
+        saves: count_saves(&root.join("saves")),
+        mods: count_mods(&root.join("mods")),
+        resourcepacks: count_entries(&root.join("resourcepacks")),
+        screenshots: count_images(&root.join("screenshots")),
+    }
+}
+
+/// A save is a directory that contains a `level.dat` (and usually `region/`).
+fn count_saves(dir: &Path) -> u32 {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return 0;
+    };
+    entries
+        .flatten()
+        .filter(|entry| entry.path().join("level.dat").is_file())
+        .count() as u32
+}
+
+/// Mods are `*.jar` files (including disabled `*.jar.disabled`).
+fn count_mods(dir: &Path) -> u32 {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return 0;
+    };
+    entries
+        .flatten()
+        .filter(|entry| entry.path().is_file())
+        .filter(|entry| {
+            entry
+                .file_name()
+                .to_string_lossy()
+                .to_lowercase()
+                .contains(".jar")
         })
-        .build()
+        .count() as u32
+}
+
+/// Resource packs are either directories or `.zip` archives.
+fn count_entries(dir: &Path) -> u32 {
+    std::fs::read_dir(dir)
+        .map(|entries| entries.flatten().count() as u32)
+        .unwrap_or(0)
+}
+
+/// Screenshots are image files.
+fn count_images(dir: &Path) -> u32 {
+    const IMAGE_EXTENSIONS: [&str; 6] = ["png", "jpg", "jpeg", "gif", "webp", "bmp"];
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return 0;
+    };
+    entries
+        .flatten()
+        .map(|entry| entry.path())
+        .filter(|path| path.is_file())
+        .filter(|path| {
+            path.extension()
+                .and_then(|ext| ext.to_str())
+                .is_some_and(|ext| {
+                    IMAGE_EXTENSIONS
+                        .iter()
+                        .any(|allowed| ext.eq_ignore_ascii_case(allowed))
+                })
+        })
+        .count() as u32
+}
+
+/// Absolute path of an instance directory (helper for the app layer).
+pub fn instance_root(instance_id: &str) -> PathBuf {
+    DATA_LOCATION.get_instance_root(instance_id)
 }

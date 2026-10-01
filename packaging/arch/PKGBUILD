@@ -1,65 +1,92 @@
-# Arch Linux source package for Conic Launcher.
+# Maintainer: ConicMC developers <dev@conicmc.app>
 
 pkgname=conic-launcher
 pkgver=0.1.0alpha.2
 pkgrel=1
 _version=0.1.0-alpha.2
-pkgdesc='A modern Minecraft launcher built with Tauri and Vue'
+pkgdesc='A modern Minecraft launcher'
 arch=('x86_64' 'aarch64')
 url='https://github.com/conic-apps/launcher'
 license=('GPL-3.0-only' 'LicenseRef-Conic-Additional-Terms')
+# The Slint/winit runtime. There is no webview here any more, so the Tauri set
+# (gtk3, libsoup3, webkit2gtk-4.1, gdk-pixbuf2, cairo, glib2, appindicator) is
+# gone, and what replaces it is what the binary actually opens:
+#   fontconfig     — `fontique`, for the interface's own text layout
+#   libxkbcommon   — winit's keymap handling
+#   libx11, libxcb — winit's X11 backend (x11-dl and the pure-Rust x11rb)
+#   libxcursor, libxrender, libxi — what winit's X11 backend `dlopen`s
+#   wayland-libs   — winit's Wayland backend; a `dlopen`ed libwayland-client
+#   libglvnd       — provides both libGL.so and libEGL.so, which Skia and glutin
+#                    load at runtime rather than link against
+#   alsa-lib       — `cpal`, for the background music player
+#   hicolor-icon-theme — where the icon set is installed
+#   ca-certificates — `rustls-platform-verifier` reads the system trust store
+#
+# The `dlopen`ed ones are the reason this list is longer than the ELF's `NEEDED`
+# entries: no dependency scanner can see them, and a system missing any of them
+# gets an app that dies at startup with "error while loading shared libraries".
 depends=(
+  'alsa-lib'
   'ca-certificates'
-  'cairo'
+  'fontconfig'
   'gcc-libs'
-  'gdk-pixbuf2'
-  'glib2'
   'glibc'
-  'gtk3'
-  'libsoup3'
+  'hicolor-icon-theme'
+  'libglvnd'
   'libx11'
-  'webkit2gtk-4.1'
+  'libxcb'
+  'libxcursor'
+  'libxi'
+  'libxkbcommon'
+  'libxrender'
+  'wayland-libs'
+  # `xdg-open`, which the launcher runs to open the login browser and every link
+  # in a detail panel.
   'xdg-utils'
 )
+# `dbus-send` for "show in folder", which falls back to opening the parent
+# directory when there is no FileManager1 service; and `zenity` for the custom
+# background picker, which has no fallback but backs one button.
+optdepends=(
+  'dbus: select a file in the file manager'
+  'java-runtime: use a system Java runtime instead of downloading one in the launcher'
+  'zenity: pick a custom background image'
+)
+# Cargo's release profile already enables LTO and strips the binary
+# (`profile.release` in the workspace `Cargo.toml`), so makepkg's own `-flto` and
+# `-s` would only repeat it.
+options=('!lto' '!debug')
 makedepends=(
   'cargo'
   'desktop-file-utils'
-  'git'
-  'nodejs-lts-krypton'
   'pkgconf'
-  'pnpm>=11.7.0'
+  'rust'
 )
-optdepends=('java-runtime: use a system Java runtime instead of downloading one in the launcher')
-# Cargo's release profile already enables LTO and strips the binary.
-options=('!lto' '!debug')
-source=(
-  "$pkgname-$_version.tar.gz::$url/archive/refs/tags/v$_version.tar.gz"
-  "$pkgname.desktop"
-)
-sha256sums=(
-  '20f8b7a52e9ff5162eb0d175dab0b7c08b729b8ac137d8cd07261de59bc10f26'
-  'b9e6b9a66d77b610f695994d06b06c5af576ff958ec1dec0e2d35394a843da28'
-)
+source=("$pkgname-$_version.tar.gz::$url/archive/refs/tags/v$_version.tar.gz")
+sha256sums=('20f8b7a52e9ff5162eb0d175dab0b7c08b729b8ac137d8cd07261de59bc10f26')
 
 prepare() {
   cd "$srcdir/launcher-$_version"
 
-  # Match package.json instead of the obsolete pnpm 10 entry in this release.
-  printf 'package-manager=pnpm@11.18.0\n' > .npmrc
-  pnpm install --frozen-lockfile
+  # Rust dependencies only. There is no `pnpm install` and no `.npmrc` to realign:
+  # the app is a Slint/Rust binary with no frontend build step at all.
   cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
 }
 
 build() {
   cd "$srcdir/launcher-$_version"
 
+  # `--locked` so the released source builds the dependency set it was released
+  # with. `$CARCH` is the host on a native build, so this is not cross-compiling
+  # -- it just names the target so the binary lands in a predictable directory.
   export CARGO_TARGET_DIR="$srcdir/target"
-  pnpm exec tauri build --ci --no-bundle \
-    --target "$CARCH-unknown-linux-gnu" -- --frozen
+  cargo build --release --locked --target "$CARCH-unknown-linux-gnu"
 }
 
 check() {
-  desktop-file-validate "$srcdir/$pkgname.desktop"
+  # Catches a malformed entry before it is installed, where the symptom would
+  # otherwise be a launcher that does not appear in the menu at all.
+  desktop-file-validate "$srcdir/launcher-$_version/packaging/linux/conic-launcher.desktop"
 }
 
 package() {
@@ -67,15 +94,19 @@ package() {
 
   install -Dm755 "$srcdir/target/$CARCH-unknown-linux-gnu/release/$pkgname" \
     "$pkgdir/usr/bin/$pkgname"
-  install -Dm644 "$srcdir/$pkgname.desktop" \
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # `packaging/linux/` is the one copy of the payload: the desktop entry and the
+  # icon set, shared with the deb, the rpm and the AppImage. See
+  # `packaging/linux/README.md`.
+  install -Dm644 packaging/linux/conic-launcher.desktop \
     "$pkgdir/usr/share/applications/$pkgname.desktop"
 
   local size
-  for size in 32 64 128; do
-    install -Dm644 "core/icons/${size}x${size}.png" \
+  for size in 16 22 24 32 48 64 128 256 512; do
+    install -Dm644 "packaging/linux/icons/${size}x${size}.png" \
       "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/$pkgname.png"
   done
-  install -Dm644 core/icons/128x128@2x.png \
-    "$pkgdir/usr/share/icons/hicolor/256x256/apps/$pkgname.png"
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 packaging/linux/icons/scalable.svg \
+    "$pkgdir/usr/share/icons/hicolor/scalable/apps/$pkgname.svg"
 }

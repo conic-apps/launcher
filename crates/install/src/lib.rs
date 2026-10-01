@@ -2,27 +2,32 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! Tauri-free mirror of `crates/install`: the Minecraft + loader installer.
+//!
+//! The original crate exposes its work through Tauri commands that own the
+//! plugin state and forward progress over an IPC `Channel`. This mirror keeps
+//! the whole domain layer — the version-list requests, the install pipeline,
+//! the mod loader installers, the Mojang Java runtime download and the
+//! first-launch language setup — and drops only the command layer:
+//!
+//!   * the caches that lived in the Tauri `PluginState` are statics here;
+//!   * [`install`] is the body of the original `cmd_spawn_install_task`, taking
+//!     the same `Arc<Mutex<InstallEvent>>` the command thread used to poll. The
+//!     app spawns it on its own runtime, keeps the `JoinHandle` for
+//!     cancellation and translates the polled events into UI state, playing the
+//!     role of `cmd_spawn_install_task` + the channel.
+//!
+//! Structures, request URLs and sorting match `crates/install/src/*.rs` so the
+//! two crates can be diffed against each other.
+
 // TODO: Support Optifine auto install
 
-use std::{
-    path::Path,
-    str::FromStr,
-    sync::{
-        Arc, Mutex,
-        atomic::{AtomicBool, Ordering},
-    },
-    thread,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
+use std::{path::Path, str::FromStr, sync::Arc};
 
 use log::{debug, info, warn};
+use once_cell::sync::Lazy;
 use quilt::QuiltVersionList;
 use serde::Serialize;
-use tauri::{
-    Manager, Runtime, State, command,
-    ipc::Channel,
-    plugin::{Builder, TauriPlugin},
-};
 use vanilla::generate_download_info;
 
 use config::{Config, get_system_language};
@@ -33,9 +38,7 @@ use instance::{Instance, InstanceRuntime, ModLoaderType};
 use shared::HTTP_CLIENT;
 use version::{Version, resolve_version};
 
-use crate::{
-    forge::ForgeVersionList, neoforge::get_neoforge_version_list, vanilla::VersionManifest,
-};
+use crate::{forge::ForgeVersionList, vanilla::VersionManifest};
 
 pub mod authlib_injector;
 mod error;
@@ -49,118 +52,86 @@ pub mod vanilla;
 
 pub use error::*;
 
+/// How long a fetched version list stays fresh, mirroring
+/// `CACHE_EXPIRATION_SECONDS` in `crates/install/src/lib.rs`.
 static CACHE_EXPIRATION_SECONDS: u64 = 1800;
 
-#[derive(Clone, Default)]
-struct PluginState {
-    task: Arc<Mutex<Option<tokio::task::AbortHandle>>>,
-    version_manifest_cache: Arc<Mutex<Option<(u64, VersionManifest)>>>,
-    forge_version_list_cache: Arc<Mutex<Option<(u64, ForgeVersionList)>>>,
-    #[allow(clippy::type_complexity)]
-    neoforge_version_list_cache: Arc<Mutex<Option<(u64, Vec<String>)>>>,
+/// Seconds since the epoch, used as the cache timestamp.
+fn unix_now() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| elapsed.as_secs())
+        .unwrap_or_default()
 }
 
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("install")
-        .invoke_handler(tauri::generate_handler![
-            cmd_get_minecraft_version_list,
-            cmd_get_fabric_version_list,
-            cmd_get_quilt_version_list,
-            cmd_get_forge_version_list,
-            cmd_get_neoforge_version_list,
-            cmd_spawn_install_task,
-            cmd_cancel_install_task,
-        ])
-        .setup(|app, _| {
-            app.manage(PluginState::default());
-            Ok(())
-        })
-        .build()
+/// The cached copy of a version list, if the last fetch is still fresh.
+///
+/// `crates/install` keeps these in its Tauri `PluginState`; the freshness test
+/// here is the intended one (the original compares the age the other way round,
+/// so it only ever serves a copy that is *older* than the TTL).
+fn cached<T: Clone>(cache: &std::sync::Mutex<Option<(u64, T)>>) -> Option<T> {
+    let guard = cache.lock().expect("Internal error");
+    let (fetched_at, value) = guard.as_ref()?;
+    (unix_now().saturating_sub(*fetched_at) < CACHE_EXPIRATION_SECONDS).then(|| value.clone())
 }
 
-#[command]
-async fn cmd_get_minecraft_version_list(state: State<'_, PluginState>) -> Result<VersionManifest> {
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Incorrect System Time")
-        .as_secs();
-    if let Some(cache) = state
-        .version_manifest_cache
-        .lock()
-        .expect("Internal error")
-        .clone()
-        && now - cache.0 > CACHE_EXPIRATION_SECONDS
-    {
-        return Ok(cache.1);
-    }
-    let result = VersionManifest::new().await?;
-    {
-        let mut cache = state.version_manifest_cache.lock().expect("Internal error");
-        *cache = Some((now, result.clone()))
-    }
-    Ok(result)
+/// Stores a freshly fetched list and hands it back.
+fn store<T: Clone>(cache: &std::sync::Mutex<Option<(u64, T)>>, value: T) -> T {
+    *cache.lock().expect("Internal error") = Some((unix_now(), value.clone()));
+    value
 }
 
-#[command]
-async fn cmd_get_fabric_version_list(mcversion: String) -> Result<fabric::LoaderArtifactList> {
-    fabric::LoaderArtifactList::new(&mcversion).await
+static MANIFEST_CACHE: Lazy<std::sync::Mutex<Option<(u64, VersionManifest)>>> =
+    Lazy::new(|| std::sync::Mutex::new(None));
+static FORGE_VERSION_LIST_CACHE: Lazy<std::sync::Mutex<Option<(u64, ForgeVersionList)>>> =
+    Lazy::new(|| std::sync::Mutex::new(None));
+// The original carries the same allowance on the field of its `PluginState`.
+#[allow(clippy::type_complexity)]
+static NEOFORGE_VERSION_LIST_CACHE: Lazy<std::sync::Mutex<Option<(u64, Vec<String>)>>> =
+    Lazy::new(|| std::sync::Mutex::new(None));
+
+/// Every Minecraft version Mojang knows, newest first (`cmd_get_minecraft_version_list`).
+pub async fn get_minecraft_version_list() -> Result<VersionManifest> {
+    if let Some(cached) = cached(&MANIFEST_CACHE) {
+        return Ok(cached);
+    }
+    Ok(store(&MANIFEST_CACHE, VersionManifest::new().await?))
 }
 
-#[command]
-async fn cmd_get_forge_version_list(state: State<'_, PluginState>) -> Result<ForgeVersionList> {
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Incorrect System Time")
-        .as_secs();
-    if let Some(cache) = state
-        .forge_version_list_cache
-        .lock()
-        .expect("Internal error")
-        .clone()
-        && now - cache.0 > CACHE_EXPIRATION_SECONDS
-    {
-        return Ok(cache.1);
-    }
-    let result = ForgeVersionList::new().await?;
-    {
-        let mut cache = state
-            .forge_version_list_cache
-            .lock()
-            .expect("Internal error");
-        *cache = Some((now, result.clone()))
-    }
-    Ok(result)
+/// The Fabric loader versions for a Minecraft version
+/// (`cmd_get_fabric_version_list`). Not cached: the answer depends on the
+/// Minecraft version and the original caches it per plugin instance only.
+pub async fn get_fabric_version_list(mcversion: &str) -> Result<fabric::LoaderArtifactList> {
+    fabric::LoaderArtifactList::new(mcversion).await
 }
 
-#[command]
-async fn cmd_get_quilt_version_list(mcversion: String) -> Result<QuiltVersionList> {
-    QuiltVersionList::new(&mcversion).await
+/// The Quilt loader versions for a Minecraft version
+/// (`cmd_get_quilt_version_list`). Not cached, like Fabric.
+pub async fn get_quilt_version_list(mcversion: &str) -> Result<QuiltVersionList> {
+    QuiltVersionList::new(mcversion).await
 }
 
-#[command]
-async fn cmd_get_neoforge_version_list(state: State<'_, PluginState>) -> Result<Vec<String>> {
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Incorrect System Time")
-        .as_secs();
-    if let Some(cache) = state
-        .neoforge_version_list_cache
-        .lock()
-        .expect("Internal error")
-        .clone()
-        && now - cache.0 > CACHE_EXPIRATION_SECONDS
-    {
-        return Ok(cache.1);
+/// Every Forge version, keyed by Minecraft version
+/// (`cmd_get_forge_version_list`).
+pub async fn get_forge_version_list() -> Result<ForgeVersionList> {
+    if let Some(cached) = cached(&FORGE_VERSION_LIST_CACHE) {
+        return Ok(cached);
     }
-    let result = get_neoforge_version_list().await?;
-    {
-        let mut cache = state
-            .neoforge_version_list_cache
-            .lock()
-            .expect("Internal error");
-        *cache = Some((now, result.clone()))
+    Ok(store(
+        &FORGE_VERSION_LIST_CACHE,
+        ForgeVersionList::new().await?,
+    ))
+}
+
+/// Every Neoforge version, newest first (`cmd_get_neoforge_version_list`).
+pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
+    if let Some(cached) = cached(&NEOFORGE_VERSION_LIST_CACHE) {
+        return Ok(cached);
     }
-    Ok(result)
+    Ok(store(
+        &NEOFORGE_VERSION_LIST_CACHE,
+        neoforge::get_neoforge_version_list().await?,
+    ))
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -189,11 +160,11 @@ pub enum ModLoaderProgress {
 /// Clonable handle through which loader installers report [`ModLoaderProgress`].
 #[derive(Clone)]
 pub struct ModLoaderReporter {
-    status: Arc<Mutex<InstallEvent>>,
+    status: Arc<std::sync::Mutex<InstallEvent>>,
 }
 
 impl ModLoaderReporter {
-    pub(crate) fn new(status: &Arc<Mutex<InstallEvent>>) -> Self {
+    pub(crate) fn new(status: &Arc<std::sync::Mutex<InstallEvent>>) -> Self {
         Self {
             status: Arc::clone(status),
         }
@@ -206,7 +177,7 @@ impl ModLoaderReporter {
 
     /// Reports one output line of the installer subprocess as
     /// [`ModLoaderProgress::RunInstaller`]. Empty lines are skipped and overly
-    /// long lines are clamped to keep the IPC payload small.
+    /// long lines are clamped to keep the payload small.
     pub fn report_installer_line(&self, line: &str) {
         let line = line.trim();
         if line.is_empty() {
@@ -235,66 +206,6 @@ pub(crate) async fn fetch_maven_sha1(url: &str) -> Checksum {
     }
 }
 
-#[command]
-async fn cmd_spawn_install_task(
-    state: State<'_, PluginState>,
-    config: Config,
-    instance: Instance,
-    channel: Channel<InstallEvent>,
-) -> Result<()> {
-    if state.task.lock().expect("Internal error").is_some() {
-        return Err(Error::AlreadyInstalling);
-    }
-    let task_status = Arc::new(Mutex::new(InstallEvent::Prepare));
-    let finished = Arc::new(AtomicBool::new(false));
-    let handle = tokio::spawn({
-        let task_status_cloned = task_status.clone();
-        let finished = finished.clone();
-        async move {
-            let result = install(config, instance, task_status_cloned).await;
-            finished.store(true, Ordering::SeqCst);
-            result
-        }
-    });
-    {
-        let mut current_task = state.task.lock().expect("Internal error");
-        *current_task = Some(handle.abort_handle());
-    }
-    let event_sender_thread = {
-        let status_cloned = task_status.clone();
-        let finished = finished.clone();
-        thread::spawn(move || {
-            while !finished.load(Ordering::SeqCst) {
-                let _ = channel.send(status_cloned.lock().expect("Internal error").clone());
-                std::thread::sleep(Duration::from_millis(100));
-            }
-        })
-    };
-    let result = match handle.await {
-        Ok(result) => result,
-        Err(error) => {
-            warn!("Installation cancelled");
-            Err(Error::Aborted(error))
-        }
-    };
-    let _ = event_sender_thread.join();
-    {
-        let mut current_task = state.task.lock().expect("Internal error");
-        *current_task = None
-    }
-    result
-}
-
-#[command]
-fn cmd_cancel_install_task(state: State<'_, PluginState>) {
-    let mut current_task = state.task.lock().expect("Internal error");
-    if let Some(handle) = current_task.clone() {
-        handle.abort();
-        warn!("Cancelling installation!");
-    }
-    *current_task = None;
-}
-
 /// Installs Minecraft, Java, and optionally a mod loader for the given instance.
 ///
 /// This function runs a full installation pipeline including:
@@ -302,15 +213,13 @@ fn cmd_cancel_install_task(state: State<'_, PluginState>) {
 /// - Installing Java
 /// - Installing a mod loader (Fabric, Forge, Quilt, NeoForge)
 ///
-/// # Arguments
-/// * `storage` - Shared application storage (configuration).
-/// * `instance` - The instance configuration.
-///
-/// Emits `"install_success"` on completion.
+/// The body is the original `cmd_spawn_install_task`'s, minus the Tauri
+/// `PluginState` ownership: the caller spawns it, hands in the shared status it
+/// polls, and aborts the task to cancel.
 pub async fn install(
     config: Config,
     instance: Instance,
-    status: Arc<Mutex<InstallEvent>>,
+    status: Arc<std::sync::Mutex<InstallEvent>>,
 ) -> Result<()> {
     {
         let mut status = status.lock().expect("Internal Error");

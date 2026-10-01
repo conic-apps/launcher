@@ -2,10 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The `forge` module contains functionality related to Forge installation and version management.
-//!
-//! This module re-exports the `install` function from the `install` submodule,
-//! and exposes the `version_list` submodule for managing Forge versions.
+//! The Forge version list and installer (`crates/install/src/forge.rs`).
 
 use std::{
     cmp::Reverse,
@@ -16,14 +13,14 @@ use std::{
     process::{Child, Stdio},
 };
 
+use log::{debug, error, info};
+use serde::{Deserialize, Serialize};
+
 use config::download::DownloadConfig;
 use download::{DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState};
 use folder::{DATA_LOCATION, MinecraftLocation};
-use log::{debug, error, info};
-use serde::{Deserialize, Serialize};
-use shared::HTTP_CLIENT;
-
 use platform::{DELIMITER, strip_unc_prefix};
+use shared::HTTP_CLIENT;
 use version::{Version, resolve_libraries};
 use zip::ZipArchive;
 
@@ -50,12 +47,20 @@ impl ForgeVersionList {
             .get("https://files.minecraftforge.net/net/minecraftforge/forge/maven-metadata.json")
             .send()
             .await?
-            .json::<Self>()
+            .json()
             .await?;
         for versions in list.0.values_mut() {
             versions.sort_by_cached_key(|version| Reverse(tokenize_version(version)));
         }
         Ok(list)
+    }
+
+    /// The Forge versions of a Minecraft version, newest first.
+    ///
+    /// `None` when the list has no entry for that Minecraft version at all
+    /// (the frontend's `response[mcVersion]` lookup).
+    pub fn get(&self, mcversion: &str) -> Option<&[String]> {
+        self.0.get(mcversion).map(Vec::as_slice)
     }
 }
 

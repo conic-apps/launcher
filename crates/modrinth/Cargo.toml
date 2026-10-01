@@ -1,26 +1,19 @@
 [package]
 name = "modrinth"
+description = "Tauri-free mirror of crates/modrinth for the Slint app"
 version = "0.0.0"
-authors = ["OakChaser"]
-
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
 shared.workspace = true
 download.workspace = true
-folder.workspace= true
 
-log.workspace = true
-tauri.workspace = true
-uuid.workspace = true
+reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-thiserror.workspace = true
 serde_with.workspace = true
-reqwest.workspace = true
-futures.workspace = true
-url.workspace = true
+thiserror.workspace = true
 tokio.workspace = true
+url.workspace = true

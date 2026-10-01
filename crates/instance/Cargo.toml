@@ -1,26 +1,19 @@
 [package]
 name = "instance"
+description = "Tauri-free mirror of crates/instance for the Slint app"
 version = "0.0.0"
-authors = ["OakChaser"]
-
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
-shared.workspace = true
 config.workspace = true
 folder.workspace = true
-
 log.workspace = true
-serde.workspace = true
-uuid.workspace = true
-tauri.workspace = true
-toml.workspace = true
-futures.workspace = true
-thiserror.workspace = true
-serde_with.workspace = true
-flate2.workspace = true
 rayon.workspace = true
+serde.workspace = true
 tokio.workspace = true
+toml.workspace = true
+uuid.workspace = true
+flate2.workspace = true
+thiserror.workspace = true

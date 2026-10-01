@@ -2,6 +2,17 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! `crates/content/src/error.rs`, minus the world map's Tauri-only variants.
+//!
+//! The `Serialize` derive and the `serde_with::DisplayFromStr` shims are kept
+//! so the shape the frontend sees (`{"kind": …, "message": …}`, with
+//! `{"kind": …}` alone for the unit variants) does not change.
+//!
+//! `WorldMap` is back now that `worldmap.rs` is mirrored. `WorldMapTask` and
+//! `WorldMapPng` are not: the first was the `spawn_blocking` join of the
+//! `#[command]`, which the Slint side runs on its own runtime, and the second
+//! was a PNG encoder that has no counterpart (see `worldmap.rs`).
+
 use std::result;
 
 use serde::Serialize;
@@ -50,10 +61,6 @@ pub enum Error {
         #[serde_as(as = "serde_with::DisplayFromStr")]
         conic_worldmap::WorldError,
     ),
-    #[error("World map render task failed: {0}")]
-    WorldMapTask(String),
-    #[error("World map PNG encoding failed: {0}")]
-    WorldMapPng(String),
     #[error("Not a mod file")]
     NotAModFile,
     #[error("Failed to parse mod metadata: {0}")]

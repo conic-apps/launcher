@@ -4,10 +4,11 @@
 
 use std::io::Read;
 
-use download::{Checksum, DownloadTask, DownloadTaskType, progress::DownloadState};
-use folder::DATA_LOCATION;
 use serde_json::Value;
 use sha2::Digest;
+
+use download::{Checksum, DownloadTask, DownloadTaskType, progress::DownloadState};
+use folder::DATA_LOCATION;
 use shared::HTTP_CLIENT;
 
 use crate::error::*;

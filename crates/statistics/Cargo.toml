@@ -1,22 +1,17 @@
 [package]
 name = "statistics"
+description = "Tauri-free mirror of crates/statistics for the Slint app"
 version = "0.0.0"
-authors = ["OakChaser"]
-
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
-shared.workspace = true
 folder.workspace = true
 
-tauri.workspace = true
-tokio.workspace = true
-libloader.workspace = true
-thiserror.workspace = true
-serde_with.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_with.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
 uuid.workspace = true

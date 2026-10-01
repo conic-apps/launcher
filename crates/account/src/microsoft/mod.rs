@@ -4,12 +4,12 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use folder::DATA_LOCATION;
 use log::info;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{error::*, microsoft::account_profile_step::Profile};
-use folder::DATA_LOCATION;
 
 mod account_profile_step;
 pub mod device_code;
@@ -126,7 +126,7 @@ pub async fn refresh_account(uuid: Uuid, force_refresh: bool) -> Result<Microsof
     Ok(refreshed_account)
 }
 
-async fn save_accounts(accounts: &Vec<MicrosoftAccount>) -> Result<()> {
+async fn save_accounts(accounts: &[MicrosoftAccount]) -> Result<()> {
     let accounts_list_file = DATA_LOCATION.accounts.join("microsoft.json");
     let serialized_accounts_list = serde_json::to_string_pretty(accounts)?;
     tokio::fs::create_dir_all(&DATA_LOCATION.accounts).await?;

@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use serde_json::Value;
-use shared::HTTP_CLIENT;
 
 use crate::error::*;
+use shared::HTTP_CLIENT;
 
 pub(super) async fn get_game_profile(minecraft_access_token: &str) -> Result<Value> {
     Ok(HTTP_CLIENT

@@ -2,25 +2,27 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Discovery, parsing and classification of installed Java runtimes.
+//! Tauri-free mirror of `crates/java-runtime`: discovery, parsing and
+//! classification of the Java runtimes installed on the system.
 //!
-//! The overall design is inspired by HMCL's Java toolchain management
-//! (https://github.com/HMCL-dev/HMCL):
+//! The original crate exposes these through an `async` Tauri command that
+//! caches its answer in the plugin state. This mirror keeps the same shape:
 //!
-//! - well-known search paths per platform, plus `JAVA_HOME`, `PATH`, Windows
-//!   registry keys, Minecraft's bundled runtimes and launcher-managed homes
-//!   (see [`scanner`]);
-//! - metadata from the JDK `release` file merged with the output of
-//!   `java -XshowSettings:properties -version` (see [`parser`]);
-//! - deduplication by canonical executable path and classification by Java
-//!   major version and normalized vendor, so the UI never has to parse version
-//!   strings (see [`models`]).
+//!   * [`scan_java_runtimes`] / [`scan_java_runtimes_with`] are the blocking
+//!     functions the original's command runs on `spawn_blocking`;
+//!   * [`scan_java_runtimes_cached`] stands in for the command itself
+//!     (`cmd_scan_java`) and owns the cache the Tauri plugin keeps in its
+//!     `PluginState`, down to the same 30 s TTL;
+//!   * `resolve.rs` (which runtime to launch the game with) and `mojang.rs`
+//!     (the launcher-managed runtimes it downloads) are mirrored too, now that
+//!     the launch view uses them; the only change is that the scan runs through
+//!     the app's own tokio runtime instead of `tauri::async_runtime`.
 //!
-//! The crate also ships a thin Tauri plugin ([`init`]) exposing a cached
-//! [`cmd_scan_java`] command to the frontend. All heavy work runs on a blocking
-//! thread pool via `spawn_blocking` so the async runtime (and therefore the UI)
-//! is never blocked, and scan results are cached briefly so repeated frontend
-//! refreshes do not re-scan the system.
+//! Structures, search paths and sorting match `crates/java-runtime/src/*.rs` so
+//! the two crates can be diffed against each other. The one deliberate
+//! difference is the `serde` derives: the original's exist for the Tauri IPC
+//! boundary, which the Slint app does not have, so the UI calls
+//! [`JavaVendor::display_name`] / [`JavaArch::display_name`] instead.
 
 pub mod error;
 pub mod models;
@@ -34,11 +36,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use folder::DATA_LOCATION;
-use tauri::{
-    Manager, Runtime, State, command,
-    plugin::{Builder, TauriPlugin},
-};
+use once_cell::sync::Lazy;
 
 pub use error::{Error, Result};
 pub use models::{
@@ -47,48 +45,29 @@ pub use models::{
 pub use resolve::{ResolveJavaOptions, ResolvedJava, resolve_java_executable};
 pub use scanner::{scan_java_runtimes, scan_java_runtimes_with};
 
-/// How long a scan result is reused before the next `cmd_scan_java` rescans.
+/// How long a scan result is reused before the next scan, mirroring
+/// `SCAN_CACHE_TTL` in `crates/java-runtime/src/lib.rs`.
 const SCAN_CACHE_TTL: Duration = Duration::from_secs(30);
 
-#[derive(Default)]
-struct ScanState {
-    cache: Mutex<Option<(Instant, JavaScanResult)>>,
-}
+/// The last scan, standing in for the `ScanState` the Tauri plugin manages.
+static SCAN_CACHE: Lazy<Mutex<Option<(Instant, JavaScanResult)>>> = Lazy::new(|| Mutex::new(None));
 
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("java-runtime")
-        .setup(|app, _| {
-            app.manage(ScanState::default());
-            Ok(())
-        })
-        .invoke_handler(tauri::generate_handler![cmd_scan_java])
-        .build()
-}
-
-/// Scans the system for installed Java runtimes.
+/// Scans the system for installed Java runtimes, reusing the previous result
+/// while it is younger than [`SCAN_CACHE_TTL`] (`cmd_scan_java`).
 ///
-/// The scan runs on a background thread (`spawn_blocking`) so it never blocks
-/// the async runtime. Launcher-managed runtimes under `DATA_LOCATION.runtime`
-/// are scanned and flagged as `is_managed`.
-#[command]
-async fn cmd_scan_java(state: State<'_, ScanState>) -> Result<JavaScanResult> {
-    if let Some((cached_at, cached)) = state.cache.lock().expect("Internal error").as_ref()
-        && cached_at.elapsed() < SCAN_CACHE_TTL
+/// The settings page rescans every time it is built, so the cache is what keeps
+/// that from starting a JVM per candidate on every visit, as in the original.
+pub fn scan_java_runtimes_cached(options: &ScanOptions) -> Result<JavaScanResult> {
+    if let Ok(cache) = SCAN_CACHE.lock()
+        && let Some((scanned_at, cached)) = cache.as_ref()
+        && scanned_at.elapsed() < SCAN_CACHE_TTL
     {
         return Ok(cached.clone());
     }
 
-    let options = ScanOptions {
-        extra_home_dirs: Vec::new(),
-        managed_dirs: vec![DATA_LOCATION.runtime.clone()],
-    };
-    let result = tauri::async_runtime::spawn_blocking(move || -> Result<JavaScanResult> {
-        Ok(JavaScanResult::from_runtimes(scan_java_runtimes_with(
-            &options,
-        )?))
-    })
-    .await??;
-
-    *state.cache.lock().expect("Internal error") = Some((Instant::now(), result.clone()));
+    let result = JavaScanResult::from_runtimes(scan_java_runtimes_with(options)?);
+    if let Ok(mut cache) = SCAN_CACHE.lock() {
+        *cache = Some((Instant::now(), result.clone()));
+    }
     Ok(result)
 }

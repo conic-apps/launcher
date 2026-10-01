@@ -1,33 +1,30 @@
 [package]
 name = "install"
+description = "Tauri-free mirror of crates/install for the Slint app"
 version = "0.0.0"
-authors = ["OakChaser"]
-
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
-shared.workspace = true
-folder.workspace = true
 config.workspace = true
+folder.workspace = true
 instance.workspace = true
 download.workspace = true
 platform.workspace = true
 version.workspace = true
 java-runtime.workspace = true
+shared.workspace = true
 
 log.workspace = true
-uuid.workspace = true
+once_cell.workspace = true
+reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-sha2.workspace = true
-tauri.workspace = true
-url.workspace = true
-futures.workspace = true
-thiserror.workspace = true
 serde_with.workspace = true
-reqwest.workspace = true
-zip.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
 tokio.workspace = true
+url.workspace = true
+uuid.workspace = true
+zip.workspace = true
