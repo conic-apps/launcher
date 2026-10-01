@@ -239,14 +239,36 @@ plutil -lint "$PLIST" > /dev/null || die "the rendered Info.plist is invalid"
 # here is the kind of thing that only shows up as a launch failure on someone
 # else's machine, so it is checked rather than assumed.
 #
-# Two `sed` paths because the answer moved: a Mach-O built by a current
-# toolchain carries `LC_BUILD_VERSION` with a `minos` field, while an older one
-# carries `LC_VERSION_MIN_MACOSX` with a `version` field. Reading only the first
-# would compare against an empty string and pass.
-MINOS="$(otool -l "$MACOS_DIR/$CRATE" | sed -n 's/^ *minos \([0-9.]*\)$/\1/p' | head -1)"
-[[ -n "$MINOS" ]] ||
-    MINOS="$(otool -l "$MACOS_DIR/$CRATE" |
-        sed -n '/LC_VERSION_MIN_MACOSX/,/^ *version /{s/^ *version \([0-9.]*\)$/\1/p;q}')"
+# Both forms a Mach-O can carry, and *not* one sed program guessing: a build
+# from a current toolchain has `LC_BUILD_VERSION` with a `minos` field, an older
+# one `LC_VERSION_MIN_MACOSX` with a `version` field, and the two are mutually
+# exclusive in practice. Reading only the first would compare against an empty
+# string on an old binary and quietly pass.
+#
+# `awk` rather than `sed`, and that is the fix rather than a preference:
+# `sed -n '/re/,/re/{...;q}'` is a GNU extension that BSD sed -- which is what
+# macOS ships and what the Intel runner runs -- rejects with `extra characters at
+# the end of q command`. It only ever worked on a developer machine because the
+# arm64 path already matched and the `[[ -n ]]` short-circuited, so the fallback
+# was dead code until a CI run reached it. `awk` gets this right on both, and it
+# also drops the `head -1` by stopping at the first match.
+MINOS="$(otool -l "$MACOS_DIR/$CRATE" | awk '
+    /^ *cmd LC_BUILD_VERSION$/      { in_build = 1; next }
+    /^ *cmd /                       { in_build = 0 }
+    in_build && /^ *minos /         && !have_build { sub(/^ *minos /, ""); build = $0; have_build = 1 }
+
+    /^ *cmd LC_VERSION_MIN_MACOSX$/ { in_old = 1; next }
+    /^ *cmd /                       { in_old = 0 }
+    in_old && /^ *version /         && !have_old   { sub(/^ *version /, ""); old = $0; have_old = 1 }
+
+    # Both can be present in one binary -- and are, for a build with a modern
+    # toolchain -- so this cannot stop at whichever comes first in the output.
+    # `LC_BUILD_VERSION` is authoritative: `LC_VERSION_MIN_MACOSX` is the
+    # pre-10.14 spelling of the same intent and reads *lower* (10.12 against a
+    # real `minos` of 11.0 here), so preferring it would make the plist and the
+    # binary look like they disagree when they do not.
+    END { print (have_build ? build : (have_old ? old : "")) }
+')"
 
 PLIST_MINOS="$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$PLIST")"
 [[ -n "$MINOS" ]] ||
