@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Conic Launcher
+    Copyright 2022-2026 ConicMC developers. All rights reserved.
+    SPDX-License-Identifier: GPL-3.0-only
+
+    The Windows installer, built by `tools/package-windows.ps1` with the WiX
+    toolset (see `packaging/windows/README.md`).
+
+    Everything version- or machine-specific comes in through the preprocessor,
+    because the package is built once per architecture from this one file:
+    $(var.ProductVersion), $(var.ProductCode), $(var.ExeFile), $(var.LicenseFile)
+    and $(var.IconFile). The identities below are the exception — they are
+    decisions rather than inputs, and changing one of them orphans an install.
+
+    The WiX v4+ schema and namespace, i.e. WiX 5/6/7. Not the WiX v3 one: that
+    variant is EOL, and its `candle`/`light` pair is a *different dialect* rather
+    than an older spelling of this one.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+    <Package Name="Conic Launcher"
+             Manufacturer="ConicMC developers"
+             Version="$(var.ProductVersion)"
+             ProductCode="$(var.ProductCode)"
+             UpgradeCode="FD94E4AF-6B94-40EF-ABD0-6ED38AFA2F39"
+             Language="1033"
+             Codepage="1252"
+             InstallerVersion="500"
+             Scope="perMachine">
+
+        <!--
+            The summary information stream, which is what Add/Remove Programs and
+            the file properties of the `.msi` itself read. WiX v4+ dropped the
+            `<Title>` and `<Description>` *elements* for this one, and it takes
+            `Description` rather than the `Subject` the MSI property table calls
+            it. `Manufacturer` is spelled out here as well even though the
+            attribute above already says it: the attribute fills the
+            `Manufacturer` property, this fills the summary stream's `Author` row,
+            and Explorer's properties for the `.msi` file itself read the latter.
+        -->
+        <SummaryInformation Description="A modern Minecraft launcher"
+                            Manufacturer="ConicMC developers" />
+
+        <!--
+            `ProductCode` is the MSI's own identity. Left out, WiX mints a fresh
+            random one on every build, and a package whose identity changes
+            between builds cannot be reinstalled, repaired or upgraded from a copy
+            the user already has. The script derives it from the version and the
+            architecture, so the same commit produces the same product code and a
+            rebuild of the same version is recognisably the same product.
+
+            `InstallerVersion` is the Windows Installer engine the package
+            declares it needs, not a Cargo version. 500 is the floor for an arm64
+            package (ARM64 support arrived in Windows Installer 5.0) and is what
+            WiX 5+ assumes, so it is written out rather than inherited.
+
+            `Scope="perMachine"` installs into `%ProgramFiles%` for every user
+            rather than per-user, which is what the folder below asks for and
+            what a launcher holding game instances and accounts should be.
+
+            `Language="1033"` is en-US and it is the *installer's* language, not
+            the app's: the app ships 12 locales of its own, chosen at runtime.
+            Localising the installer is a `.wxl` this file does not carry yet,
+            and an installer UI in one fixed language is no worse than the
+            desktop entry or `Info.plist`, which are not localised either.
+
+            `Codepage` 1252 because the summary information above is authored
+            here in ASCII and the `Icon` table's bitmaps are not text; WiX needs
+            one spelled out to build a package with dialogs.
+        -->
+
+        <!--
+            One embedded cabinet rather than an external one, and an external
+            `.cab` next to an `.msi` is the thing users lose half of when a
+            download manager splits the two. `MediaTemplate` is what carries
+            this; there is no `<Media>` element in WiX v4+.
+        -->
+        <MediaTemplate EmbedCab="yes" />
+
+        <!--
+            The installer icon, which is also what the Start menu shortcut and the
+            Add/Remove Programs row use. `ARPPRODUCTICON` is what makes
+            Add/Remove Programs show it, and the `Icon` element is what puts the
+            frames in the `Icon` table in the first place.
+
+            The frames have to be DIBs, not the PNGs Pillow writes by default:
+            the `Icon` table's `Data` column is a `BITMAPINFOHEADER` and nothing
+            else, and WiX copies whatever it is given into it without checking.
+            See `tools/generate-ico.py`, which is also why the `.ico` is
+            committed rather than generated at package time.
+        -->
+        <Icon Id="ConicLauncherIcon" SourceFile="$(var.IconFile)" />
+        <Property Id="ARPPRODUCTICON" Value="ConicLauncherIcon" />
+        <Property Id="ARPCONTACT" Value="dev@conicmc.app" />
+        <Property Id="ARPHELPLINK" Value="https://github.com/conic-apps/launcher" />
+
+        <!--
+            How a second install of this app replaces the first.
+
+            `AllowSameVersionUpgrades` is not optional decoration here, it is what
+            makes upgrading work at all. `$(var.ProductVersion)` cannot carry a
+            pre-release suffix — MSI has no field for one, which is the same
+            constraint `CFBundleShortVersionString` imposes on the macOS bundle —
+            so `0.1.0-alpha.2` and `0.1.0-alpha.3` are both `0.1.0` as far as
+            Windows Installer is concerned. Without this attribute it refuses to
+            treat the second as an upgrade of the first and the user ends up with
+            two installs of the same app in the same folder.
+
+            What that costs: Windows Installer can no longer order two products whose
+            `ProductVersion` is identical, so an older pre-release installed over
+            a newer one is accepted too rather than refused. With no
+            self-updater there is nothing that does that by accident, and
+            `DowngradeErrorMessage` is what keeps a *final* release from being
+            replaced by a pre-release of itself — the case where the version
+            strings really do differ and the refusal is meaningful.
+
+            The two attributes cannot be left out or left to their defaults: WiX
+            5+ requires `DowngradeErrorMessage` unless `AllowDowngrades="yes"`
+            opts out of it, and refuses `AllowSameVersionUpgrades` outright once
+            `AllowDowngrades` is `yes`. Which is to say the combination above is
+            the only one that both upgrades same-version packages and still
+            refuses a downgrade.
+
+            `RemoveExistingProducts` runs after `InstallInitialize` (WiX 5+'s
+            default) rather than before it: the old product's files have to be
+            gone before the new ones land in the same folder, and both
+            architectures of the MSI share one `UpgradeCode`, so on an ARM64
+            machine — where both run — installing one has to remove the other.
+        -->
+        <MajorUpgrade AllowSameVersionUpgrades="yes"
+                      DowngradeErrorMessage="A newer version of [ProductName] is already installed. Remove it first if you meant to install this one." />
+
+        <!--
+            No `LicensePath`: `WixUI_InstallDir` would render it as RTF and
+            `LICENSE` is the GPL's plain text, so the dialog would come up blank.
+            The licence is installed beside the executable instead, which is what
+            the `.dmg` and the rpm do too.
+        -->
+        <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+
+        <Feature Id="Launcher" Title="Conic Launcher" Level="1" ConfigurableDirectory="INSTALLFOLDER">
+            <ComponentGroupRef Id="LauncherComponents" />
+            <ComponentGroupRef Id="StartMenuComponents" />
+        </Feature>
+
+        <!--
+            `ConfigurableDirectory` on the feature is what makes the folder a
+            property (`INSTALLFOLDER`) rather than a hardcoded path, and it has to
+            agree with the `InstallDirectory` above — the UI extension and the
+            feature are two readers of the same value, and a mismatch leaves the
+            dialog writing a path nothing installs into.
+
+            The three component GUIDs are stable forever, which is what lets
+            Windows Installer find and replace this app's own files on an upgrade
+            instead of leaving the old ones behind. They are not derived from the
+            version: a per-version component GUID is a new component every
+            release, and the old one then has nothing to remove the files with.
+
+            Shortcut in `ApplicationProgramsFolder` (below) rather than
+            `ProgramMenuFolder`, so uninstalling removes the folder it created
+            instead of leaving an empty one on a Start menu that had nothing else
+            in it. That is the `RemoveFolder` below.
+        -->
+        <ComponentGroup Id="LauncherComponents" Directory="INSTALLFOLDER">
+            <Component Id="Executable" Guid="69C7EAC7-1359-4685-ACD5-763CADD06F32">
+                <File Id="LauncherExe"
+                      Name="conic-launcher.exe"
+                      Source="$(var.ExeFile)"
+                      KeyPath="yes" />
+            </Component>
+
+            <Component Id="License" Guid="19E58EB7-3D25-4914-B3E2-EF76D7C11D8A">
+                <File Id="LicenseFile"
+                      Name="LICENSE"
+                      Source="$(var.LicenseFile)"
+                      KeyPath="yes" />
+            </Component>
+        </ComponentGroup>
+
+        <ComponentGroup Id="StartMenuComponents" Directory="ApplicationProgramsFolder">
+            <Component Id="StartMenuShortcut" Guid="8311FA6E-AF90-46C2-B89D-4CE3EDFF81A6">
+                <Shortcut Id="ConicLauncherShortcut"
+                          Name="Conic Launcher"
+                          Description="A modern Minecraft launcher"
+                          Target="[INSTALLFOLDER]conic-launcher.exe"
+                          WorkingDirectory="INSTALLFOLDER"
+                          Icon="ConicLauncherIcon" />
+                <RemoveFolder Id="RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+                <!--
+                    A `Shortcut` is not a file, so it cannot be its own key path,
+                    and a component with no key path fails the build. This value
+                    exists to be that key path, and for what every per-machine
+                    installer leaves behind anyway: a marker under `Software` that
+                    says the app is installed.
+
+                    `HKLM` rather than `HKCU` because the package is `perMachine`,
+                    which is also why this needs an elevated install. Nothing reads
+                    it — no crate in this project writes to the registry at all, so
+                    there was no existing key to match and `Software\ConicMC` is
+                    simply the conventional one for a per-machine application.
+                -->
+                <RegistryValue Root="HKLM"
+                               Key="Software\ConicMC\Conic Launcher"
+                               Name="Installed"
+                               Type="integer"
+                               Value="1"
+                               KeyPath="yes" />
+            </Component>
+        </ComponentGroup>
+    </Package>
+
+    <Fragment>
+        <!--
+            `ProgramFiles64Folder`, not `ProgramFilesFolder`. **The latter is the
+            32-bit folder**, in MSI as much as in WiX: it is the `PFiles` short
+            folder name, and `PFiles` resolves to `C:\Program Files (x86)` whatever
+            the package's platform says. WiX does not translate it for `-arch` and
+            neither does anything else — a package built with `-arch x64` whose
+            summary `Template` reads `x64;1033` still installs into
+            `C:\Program Files (x86)`, silently and with exit code 0. Nothing in the
+            package's tables shows it either, which is why only installing it finds
+            that out, and why the workflow installs it.
+
+            `ProgramFiles64Folder` is right for both architectures here, and in an
+            x86 package it would be a build error rather than a wrong folder — a
+            better failure than the one above. This app has no x86 build.
+        -->
+        <StandardDirectory Id="ProgramFiles64Folder">
+            <Directory Id="INSTALLFOLDER" Name="Conic Launcher" />
+        </StandardDirectory>
+
+        <StandardDirectory Id="ProgramMenuFolder">
+            <Directory Id="ApplicationProgramsFolder" Name="Conic Launcher" />
+        </StandardDirectory>
+    </Fragment>
+</Wix>

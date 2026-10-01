@@ -32,6 +32,8 @@ Python tooling in `tools/` is not part of any CI gate:
 
 | Script                                   | Does                                                       |
 | ---------------------------------------- | ---------------------------------------------------------- |
+| `generate-icns.py`                       | writes `packaging/macos/conic-launcher.icns` (committed)   |
+| `generate-ico.py`                        | writes `packaging/windows/conic-launcher.ico` (committed)  |
 | `generate-icons.py`                      | writes `packaging/linux/icons/` (committed; see Packaging) |
 | `check-icon-names.py`                    | every `AppIcon`/`icon:` name in a `.slint` has an SVG      |
 | `update-i18n.py`                         | re-keys the `.po` catalogues against `slint-tr-extractor`  |
@@ -159,23 +161,27 @@ tools/package-linux.sh deb rpm      # a subset
 tools/package-macos.sh              # .app + .dmg, native arch
 tools/package-macos.sh --universal  # both arches in one binary (local only; CI
                                     # builds each natively instead — see macOS)
+
+pwsh tools/package-windows.ps1      # .exe + .msi, native arch
+pwsh tools/package-windows.ps1 msi  # a subset
 ```
 
 Linux's three are assembled by `dpkg-deb`, `rpmbuild` and `appimagetool`, none of
 which exist elsewhere, so `package-linux.sh` refuses to run off Linux. Needs
 `cargo-deb`, `cargo-rpm`, `appimagetool`, `file`, and `dpkg-dev` (for
 `dpkg-shlibdeps`, without which `depends = "$auto"` resolves to nothing
-_silently_). Both scripts write to `<target-dir>/package/`.
+_silently_). All three scripts write to `<target-dir>/package/`.
 
 | Format        | Recipe                                                                |
 | ------------- | --------------------------------------------------------------------- |
+| `.msi`/`.exe` | `tools/package-windows.ps1`, see Windows                              |
 | `.deb`        | `[package.metadata.deb]` in `app/Cargo.toml`                          |
 | `.rpm`        | `[package.metadata.rpm]` + the spec at `app/.rpm/conic-launcher.spec` |
 | `.AppImage`   | the AppDir `tools/package-linux.sh` assembles, then `appimagetool`    |
 | `.app`/`.dmg` | the bundle `tools/package-macos.sh` assembles, then `hdiutil`         |
 | Arch          | `packaging/arch/PKGBUILD` — `makepkg -si`                             |
 
-Four things that are easy to break here:
+Four things that are easy to break here, all of them Linux:
 
 1. **The spec is required.** `cargo rpm` reads `app/.rpm/<name>.spec` and
    substitutes only `@@VERSION@@` / `@@RELEASE@@`. There is no embedded fallback,
@@ -222,9 +228,98 @@ Three more, each of which cost a build to find:
    returns success whatever the signature, so it proves nothing — `codesign
 --verify --deep --strict` is the check that is actually meaningful.
 
+9. **An MSI's version field cannot hold a pre-release.** `Package/@Version` is
+   three integers, so `0.1.0-alpha.2` and `0.1.0-alpha.3` are one *version* to
+   Windows Installer and are distinguishable only by `ProductCode`, which
+   `tools/package-windows.ps1` derives from the full Cargo version. Two
+   consequences, both of them load-bearing:
+   `MajorUpgrade/@AllowSameVersionUpgrades="yes"` or the second of two
+   same-version packages installs *beside* the first instead of replacing it, and
+   the script refuses a Cargo version it cannot split rather than writing `0.1`
+   into the field.
+10. **WiX's v4+ schema is not the v3 one.** The `.wxs` uses
+    `Package/@ProductCode` (there is no `@PackageCode`),
+    `<SummaryInformation Description="…" />` (there is no `<Description>` child of
+    `<Package>`), and a `<MajorUpgrade>` whose `AllowSameVersionUpgrades` and
+    `DowngradeErrorMessage` are *both* required and cannot be swapped for
+    `AllowDowngrades`. Each wrong spelling is a hard `WIX0004`/`WIX0010`/`WIX0035`
+    at build time, which is the good case; the trap is that the v3
+    `candle`/`light` pair in the `windows-2025` image would accept neither file as
+    it stands.
+11. **The `.ico`'s frames have to be BMPs, and WiX does not check.** The MSI
+    `Icon` table stores `BITMAPINFOHEADER` DIBs. Pillow writes PNG frames by
+    default, and WiX copies them into the table unconverted with the build
+    succeeding — so the only symptom is an installer that cannot draw its own
+    icon. `tools/generate-ico.py` forces `bitmap_format="bmp"` and verifies what
+    it wrote.
+12. **`ProgramFilesFolder` is the *32-bit* folder.** `ProgramFiles64Folder` is
+    the 64-bit one, and neither Windows Installer nor WiX translates the first for
+    the package's platform: a package built `wix build -arch x64`, whose summary
+    `Template` reads `x64;1033`, installs into `C:\Program Files (x86)` and
+    reports success with exit code 0. Nothing in the tables says so either — the
+    `Directory` row reads `PFiles` either way. This is the one thing about the
+    `.msi` that only installing it can find, which is why `build.yml` installs
+    and uninstalls it rather than reading its tables and calling it a day.
+
 `tools/package-linux.sh` needs Linux: `dpkg-deb`, `rpmbuild`, `dpkg-shlibdeps`
 and `appimagetool` have no counterpart elsewhere, and it says so rather than
 failing three steps in.
+
+## Windows
+
+Tauri's bundler is gone here too, so `tools/package-windows.ps1` assembles the
+`.msi` out of the WiX toolset and copies the standalone `.exe` beside it. The
+payload is `packaging/windows/` — the `.wxs` and the `.ico`, both committed — and
+is read the way `app/Cargo.toml`'s `[package.metadata.deb]` is on Linux. See
+`packaging/windows/README.md` for the per-file detail.
+
+- **PowerShell, not bash**, unlike the other two scripts. Not a preference: `wix`,
+  `msiexec` and `dotnet` are Windows programs, and a bash script driving them
+  spends its length fighting Git-Bash's path rewriting on exactly the strings the
+  installer needs verbatim. Preconditions are checked and named, the way
+  `package-linux.sh` checks `dpkg-shlibdeps`.
+- **WiX 6 is installed as a .NET tool on both runners rather than taken from the
+  image.** `windows-2025` carries WiX v3.14.1 and `windows-11-arm` carries no WiX
+  at all, so using the image's copy means two dialects and two install paths for
+  two packages that come out of one `.wxs`. WiX v3 is also EOL. The version is
+  pinned (6.0.2): an installer that builds one week and not the next is not a
+  reproducible release.
+- **`WixToolset.UI.wixext` is a separate package, and its absence is not an
+  error.** Without it the MSI builds and installs with no interface at all — a
+  window that flashes and an install that happens behind it — so the workflow
+  installs it explicitly and the `.wxs` refers to `ui:WixUI`.
+- **CI builds each architecture natively** (`windows-2025` and `windows-11-arm`),
+  for the reason the macOS section gives: a `--target` build runs every build
+  script on the host, so Skia and `aws-lc-rs` — both through `cc` — come out
+  subtly wrong rather than failing. The script therefore has no `--target` and
+  reads its architecture out of `rustc -vV`, mapping `x86_64`→`x64` and
+  `aarch64`→`arm64`: Windows' own vocabulary, which is also what `wix build
+  -arch` and an MSI's platform field want. A cross build from the ARM64 machine to
+  x64 is possible and deliberately not offered, for the same reason
+  `--universal` is only a local convenience.
+- **The workflow installs and uninstalls the MSI.** `wix` validates XML;
+  `msiexec` is what refuses a package the processor type does not support, and it
+  is the only check in the job that finds the packaged binary is the one that was
+  built. A `perMachine` package needs an elevated shell, which a runner has and a
+  developer's machine may not.
+- **Nothing is signed.** No certificate exists in this repository, so both
+  artifacts ship unsigned and SmartScreen warns on both — the same gap the macOS
+  bundle has, which `package-windows.ps1` does not paper over.
+- **The `.exe` is one file, but it imports `VCRUNTIME140.dll`.** 31 of its 32 PE
+  imports are Windows itself; the 32nd is the Visual C++ Redistributable, which is
+  a redistributable and not an OS component. Every machine with Office or .NET has
+  it and a bare one does not, and because the `.msi` installs the same executable
+  this is a question about the Windows distribution as a whole rather than about
+  the portable artifact. `-C target-feature=+crt-static` in a
+  `.cargo/config.toml`, a WiX Burn chainer and app-local deployment are the three
+  ways out; none of them is a `packaging/windows/` change, and picking one is a
+  distribution decision rather than a packaging one. See
+  `packaging/windows/README.md`.
+- **The `.exe` carries no resource.** No `.rc`, so no embedded icon and no version
+  information: Explorer shows the default icon for the file. The window icon is
+  set at runtime from the embedded image and the Start menu shortcut takes its icon
+  out of the MSI `Icon` table, so only Explorer's listing is affected. Fixing it
+  is an `app/build.rs` change (a `winres`-style build step), not a packaging one.
 
 ## macOS
 
