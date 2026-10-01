@@ -60,7 +60,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: install dependencies
-        if: matrix.platform == 'ubuntu-latest'
+        if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -94,7 +94,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: install dependencies
-        if: matrix.platform == 'ubuntu-latest'
+        if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
