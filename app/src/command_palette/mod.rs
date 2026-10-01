@@ -32,10 +32,16 @@ use std::rc::Rc;
 
 use instance::{Instance, SortBy};
 use serde_json::Value;
-use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
+use slint::{ComponentHandle, ModelRc, SharedString, VecModel, Weak};
 
 use crate::content::{self, PendingImage};
 use crate::slint_backend::{App, CommandPaletteState, Dialogs, GameState, Navigation, PaletteItem};
+
+mod search;
+mod wiring;
+
+pub(crate) use search::*;
+pub(crate) use wiring::*;
 
 thread_local! {
     /// The one state.
@@ -50,7 +56,7 @@ thread_local! {
 }
 
 /// The controller, for use on the UI thread.
-fn controller() -> Rc<RefCell<PaletteController>> {
+pub(crate) fn controller() -> Rc<RefCell<PaletteController>> {
     CONTROLLER.with(Rc::clone)
 }
 
@@ -62,27 +68,24 @@ fn controller() -> Rc<RefCell<PaletteController>> {
 /// 11px line — plus 4px more, so the heading does not sit flush on the row under
 /// it. The Vue puts no gap here; this one is a deliberate change, and it is why
 /// the constant is not just the sum of that padding and that line.
-const LABEL_HEIGHT: f32 = 23.0;
+pub(crate) const LABEL_HEIGHT: f32 = 23.0;
 /// `.palette-item` with no loader tags: `padding: 8px 10px` around the 24px
 /// icon box, which is taller than the 13px title line on its own.
-const ROW_HEIGHT: f32 = 40.0;
+pub(crate) const ROW_HEIGHT: f32 = 40.0;
 /// The same row with the tag line: 13px of title, a `gap: 3px` and a 14px tag
 /// (`font-size: 10px` + `padding: 2px 5px`) make `.item-main` 30px, and 30 > 24
 /// is what decides the row.
-const ROW_HEIGHT_TAGGED: f32 = 46.0;
-
-/// The mod loader slugs the palette shows as tags (`LOADER_SLUGS`).
-const LOADER_SLUGS: [&str; 4] = ["fabric", "forge", "quilt", "neoforge"];
+pub(crate) const ROW_HEIGHT_TAGGED: f32 = 46.0;
 
 /// How many hits a search asks for: `limit: 20` / `pageSize: 20` in the Vue.
-const SEARCH_LIMIT: usize = 20;
+pub(crate) const SEARCH_LIMIT: usize = 20;
 
 /// How long one project icon may take before the row keeps the site's mark.
 ///
 /// The shared client has no timeout of its own, so a CDN that accepts the
 /// connection and then says nothing would hold the icon pass open indefinitely —
 /// and with it the next search's.
-const ICON_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
+pub(crate) const ICON_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
 
 // ---------------------------------------------------------------------------
 // the five fixed commands
@@ -93,7 +96,7 @@ const ICON_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
 /// `title` is the source string, which is what the *filter* matches against. The
 /// row shows `CommandText.title(title_kind)`, the translated form; see `build`
 /// for why the two can differ.
-struct Command {
+pub(crate) struct Command {
     key: &'static str,
     title_kind: &'static str,
     title: &'static str,
@@ -102,7 +105,7 @@ struct Command {
     action: Action,
 }
 
-const COMMANDS: [Command; 5] = [
+pub(crate) const COMMANDS: [Command; 5] = [
     Command {
         key: "launch-instance",
         title_kind: "launch-instance",
@@ -162,7 +165,7 @@ const COMMANDS: [Command; 5] = [
 /// than from the key on the way out, so a callback carrying only an index can
 /// find the thing behind it — the arrangement `content.rs`'s `CardTarget` uses.
 #[derive(Clone, Default)]
-enum Action {
+pub(crate) enum Action {
     /// A row with no action: only ever a blank `PendingItem` mid-build.
     #[default]
     None,
@@ -189,7 +192,7 @@ enum Action {
 /// belongs in an `upgrade_in_event_loop` closure, so the search results cross as
 /// plain data and are finished here, on the UI thread.
 #[derive(Clone, Default)]
-struct PendingItem {
+pub(crate) struct PendingItem {
     key: String,
     title: String,
     title_kind: String,
@@ -280,7 +283,7 @@ impl PendingItem {
 }
 
 /// A project as the search returned it, before it becomes a row.
-struct RemoteResult {
+pub(crate) struct RemoteResult {
     key: String,
     title: String,
     author: String,
@@ -317,7 +320,7 @@ impl RemoteResult {
     }
 }
 
-struct PaletteController {
+pub(crate) struct PaletteController {
     /// The instance list, read from the crate when the palette opens.
     instances: Vec<Instance>,
     /// The rows on screen, and where the selection is in them.
@@ -773,85 +776,38 @@ impl PaletteController {
                 .map(|(index, result)| (index, result.icon_url.clone()))
                 .filter(|(_, url)| !url.is_empty())
                 .collect();
-            let _ = weak.upgrade_in_event_loop(move |ui| {
-                let controller = controller();
-                let mut state = controller.borrow_mut();
-                // `if (token !== onlineSearchToken) return` — an answer for a
-                // request the user has typed past is dropped, and dropped before
-                // it becomes the list, exactly as the Vue drops it.
-                if state.token != token {
-                    return;
-                }
-                state.results = results.iter().map(|result| result.to_item(None)).collect();
-                state.searching = false;
-                state.error = failed;
-                // `watch(onlineItems)`: the selection goes back to the first row.
-                state.selected = 0;
-                let ui_state = ui.global::<CommandPaletteState>();
-                ui_state.set_online_searching(false);
-                ui_state.set_online_error(failed);
-                state.build(&ui);
+            let list_weak = weak.clone();
+            let _ = list_weak.upgrade_in_event_loop(move |ui| {
+                controller()
+                    .borrow_mut()
+                    .apply_online_results(&ui, token, results, failed);
             });
-
-            // The icons, afterwards and on their own. They are not worth waiting
-            // for: the Vue's `<img>` fills in beside a row that is already there,
-            // and holding the list back for twenty of them made the palette look
-            // dead for as long as the slowest CDN took. Each is a separate task,
-            // so twenty of them take one round trip rather than twenty, and each
-            // gives up on its own so one dead host cannot hold the rest.
-            let icon_weak = weak.clone();
-            crate::runtime::spawn(async move {
-                let mut tasks = Vec::with_capacity(wanted.len());
-                for (index, url) in wanted {
-                    tasks.push(crate::runtime::spawn(async move {
-                        let bytes = match tokio::time::timeout(
-                            ICON_TIMEOUT,
-                            content::fetch_icon_bytes(&url),
-                        )
-                        .await
-                        {
-                            Ok(bytes) => bytes,
-                            Err(_) => {
-                                log::warn!("command palette icon timed out: {url}");
-                                None
-                            }
-                        };
-                        (index, url, bytes)
-                    }));
-                }
-                let mut icons: Vec<(usize, String, Option<Vec<u8>>)> =
-                    Vec::with_capacity(tasks.len());
-                for task in tasks {
-                    match task.await {
-                        Ok(entry) => icons.push(entry),
-                        Err(error) => log::error!("the icon fetch panicked: {error}"),
-                    }
-                }
-                // Only the decode is left, and that is the part that wants a
-                // blocking thread.
-                let decoded = crate::runtime::spawn_blocking(move || {
-                    icons
-                        .into_iter()
-                        .map(|(index, url, bytes)| {
-                            (
-                                index,
-                                bytes.and_then(|bytes| content::decode_icon(&url, bytes)),
-                            )
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .await
-                .unwrap_or_default();
-                let _ = icon_weak.upgrade_in_event_loop(move |ui| {
-                    let controller = controller();
-                    let mut state = controller.borrow_mut();
-                    if state.token != token {
-                        return;
-                    }
-                    state.attach_icons(&ui, decoded);
-                });
-            });
+            spawn_icon_fetch(weak, token, wanted);
         });
+    }
+
+    /// Shows a landed search, unless the user has typed past it — the Vue's
+    /// `if (token !== onlineSearchToken) return`, before the answer becomes the
+    /// list.
+    fn apply_online_results(
+        &mut self,
+        ui: &App,
+        token: u64,
+        results: Vec<RemoteResult>,
+        failed: bool,
+    ) {
+        if self.token != token {
+            return;
+        }
+        self.results = results.iter().map(|result| result.to_item(None)).collect();
+        self.searching = false;
+        self.error = failed;
+        // `watch(onlineItems)`: the selection goes back to the first row.
+        self.selected = 0;
+        let ui_state = ui.global::<CommandPaletteState>();
+        ui_state.set_online_searching(false);
+        ui_state.set_online_error(failed);
+        self.build(ui);
     }
 }
 
@@ -860,7 +816,7 @@ impl PaletteController {
 /// Read off the global rather than kept, because the search field's two-way
 /// binding writes it: a second copy would be a second answer to "what has been
 /// typed".
-fn keyword_of(ui: &App) -> String {
+pub(crate) fn keyword_of(ui: &App) -> String {
     ui.global::<CommandPaletteState>()
         .get_query()
         .trim()
@@ -868,7 +824,7 @@ fn keyword_of(ui: &App) -> String {
 }
 
 /// `toInstanceItem`.
-fn instance_item(instance: &Instance, action_kind: &'static str) -> PendingItem {
+pub(crate) fn instance_item(instance: &Instance, action_kind: &'static str) -> PendingItem {
     let runtime = &instance.config.runtime;
     let loader = runtime.mod_loader_type.as_ref().map(ToString::to_string);
     PendingItem {
@@ -892,7 +848,7 @@ fn instance_item(instance: &Instance, action_kind: &'static str) -> PendingItem 
     }
 }
 
-fn command_item(command: &Command, first: bool) -> PendingItem {
+pub(crate) fn command_item(command: &Command, first: bool) -> PendingItem {
     PendingItem {
         key: command.key.to_string(),
         title: command.title.to_string(),
@@ -910,7 +866,7 @@ fn command_item(command: &Command, first: bool) -> PendingItem {
 }
 
 /// `mod_loader_type ?? "vanilla"`, as the instance filter compares it.
-fn loader_name(instance: &Instance) -> String {
+pub(crate) fn loader_name(instance: &Instance) -> String {
     instance
         .config
         .runtime
@@ -918,292 +874,6 @@ fn loader_name(instance: &Instance) -> String {
         .as_ref()
         .map(ToString::to_string)
         .unwrap_or_else(|| "vanilla".to_string())
-}
-
-// ---------------------------------------------------------------------------
-// the two searches
-// ---------------------------------------------------------------------------
-
-/// `searchModrinthMods`: `searchProjects({ query, offset: 0, limit: 20 })` with
-/// no facets, so the hits are mods, resource packs, modpacks and shaders alike —
-/// which is what the row's category subtitle is for.
-async fn search_modrinth(keyword: &str) -> Result<Vec<RemoteResult>, String> {
-    let params = modrinth::SearchParameters {
-        query: Some(keyword.to_string()),
-        facets: None,
-        index: None,
-        offset: Some(0),
-        limit: Some(SEARCH_LIMIT),
-    };
-    let response = modrinth::search_projects(&params)
-        .await
-        .map_err(|error| error.to_string())?;
-    let hits = response
-        .get("hits")
-        .and_then(Value::as_array)
-        .ok_or("the search response carried no hits")?;
-    Ok(hits
-        .iter()
-        .map(|hit| {
-            let project_id = field(hit, "project_id");
-            RemoteResult {
-                key: format!("modrinth-{project_id}"),
-                // `hit.title ?? hit.slug ?? hit.project_id`.
-                title: first_present(hit, &["title", "slug", "project_id"]),
-                author: field(hit, "author"),
-                icon_url: field(hit, "icon_url"),
-                loaders: strings(hit.get("display_categories")),
-                subtitle_kind: modrinth_type(&field(hit, "project_type")),
-                platform: "modrinth",
-                id: project_id,
-            }
-        })
-        .collect())
-}
-
-/// `searchCurseForgeModsList`: `searchMods({ searchFilter, index: 0, pageSize: 20 })`.
-async fn search_curseforge(keyword: &str) -> Result<Vec<RemoteResult>, String> {
-    let params = serde_json::json!({
-        "searchFilter": keyword,
-        "index": 0,
-        "pageSize": SEARCH_LIMIT,
-    });
-    let response = curseforge::search_mods(&params)
-        .await
-        .map_err(|error| error.to_string())?;
-    let mods = response
-        .get("data")
-        .and_then(Value::as_array)
-        .ok_or("the search response carried no data")?;
-    Ok(mods
-        .iter()
-        .map(|entry| {
-            let id = entry.get("id").and_then(Value::as_i64).unwrap_or_default();
-            RemoteResult {
-                key: format!("curseforge-{id}"),
-                title: field(entry, "name"),
-                // `mod.authors?.[0]?.name`.
-                author: entry
-                    .get("authors")
-                    .and_then(Value::as_array)
-                    .and_then(|authors| authors.first())
-                    .map(|author| field(author, "name"))
-                    .unwrap_or_default(),
-                // `mod.logo?.thumbnailUrl || undefined`.
-                icon_url: entry
-                    .pointer("/logo/thumbnailUrl")
-                    .and_then(Value::as_str)
-                    .unwrap_or_default()
-                    .to_string(),
-                loaders: entry
-                    .get("categories")
-                    .and_then(Value::as_array)
-                    .map(|categories| {
-                        categories
-                            .iter()
-                            .filter_map(|category| category.get("slug").and_then(Value::as_str))
-                            .filter(|slug| LOADER_SLUGS.contains(slug))
-                            .map(ToString::to_string)
-                            .collect()
-                    })
-                    .unwrap_or_default(),
-                subtitle_kind: curseforge_type(entry.get("classId").and_then(Value::as_i64)),
-                platform: "curseforge",
-                id: id.to_string(),
-            }
-        })
-        .collect())
-}
-
-/// `CURSEFORGE_CLASS_TYPES`: 6 mods, 12 resource packs, 4471 modpacks. A class the
-/// map has no entry for — a shader, say — leaves the row without a subtitle, which
-/// is what `CURSEFORGE_CLASS_TYPES[mod.classId]` being `undefined` does.
-fn curseforge_type(class_id: Option<i64>) -> &'static str {
-    match class_id {
-        Some(6) => "mod",
-        Some(12) => "resourcepack",
-        Some(4471) => "modpack",
-        _ => "",
-    }
-}
-
-/// The Modrinth `project_type`, which the search types as a plain string.
-fn modrinth_type(project_type: &str) -> &'static str {
-    match project_type {
-        "mod" => "mod",
-        "modpack" => "modpack",
-        "resourcepack" => "resourcepack",
-        "shader" => "shader",
-        _ => "",
-    }
-}
-
-fn field(value: &Value, name: &str) -> String {
-    value
-        .get(name)
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_string()
-}
-
-/// The loader slugs of a Modrinth hit's `display_categories`, the ones the
-/// palette has a tag for.
-fn strings(value: Option<&Value>) -> Vec<String> {
-    value
-        .and_then(Value::as_array)
-        .map(|values| {
-            values
-                .iter()
-                .filter_map(Value::as_str)
-                .filter(|slug| LOADER_SLUGS.contains(slug))
-                .map(ToString::to_string)
-                .collect()
-        })
-        .unwrap_or_default()
-}
-
-/// `hit.title ?? hit.slug ?? hit.project_id`.
-fn first_present(value: &Value, names: &[&str]) -> String {
-    names
-        .iter()
-        .filter_map(|name| value.get(name).and_then(Value::as_str))
-        .find(|found| !found.is_empty())
-        .unwrap_or_default()
-        .to_string()
-}
-
-// ---------------------------------------------------------------------------
-// wiring
-// ---------------------------------------------------------------------------
-
-/// Registers every command-palette callback on `CommandPaletteState`.
-///
-/// The two openers are wired in the view, the way the title bar's other actions
-/// are: `CommandPaletteState.open()` for the search field's click and
-/// `CommandPaletteState.toggle()` for the `Ctrl`/`⌘` + `/` shortcut, which the
-/// app-level key scope in `app.slint` binds.
-pub fn setup(ui: &App) {
-    let controller = controller();
-
-    // The `Ctrl`/`⌘` + `/` shortcut of `App.vue`.
-    {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>().on_toggle(move || {
-            let Some(ui) = weak.upgrade() else { return };
-            controller.borrow_mut().toggle(&ui);
-        });
-    }
-    // Opening an open palette does nothing, which is what
-    // `@click="commandPaletteVisible = true"` does.
-    {
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>().on_open(move || {
-            let Some(ui) = weak.upgrade() else { return };
-            if ui.global::<CommandPaletteState>().get_visible() {
-                return;
-            }
-            PaletteController::open(&ui);
-        });
-    }
-    {
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>().on_close(move || {
-            if let Some(ui) = weak.upgrade() {
-                ui.global::<CommandPaletteState>().set_visible(false);
-            }
-        });
-    }
-    // A row's click.
-    {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>().on_click(move |index| {
-            let Some(ui) = weak.upgrade() else { return };
-            controller.borrow_mut().click(&ui, index.max(0) as usize);
-        });
-    }
-    // Enter, which acts on the selection rather than on a row.
-    {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>()
-            .on_perform_selected(move || {
-                let Some(ui) = weak.upgrade() else { return };
-                let selected = controller.borrow().selected;
-                controller.borrow_mut().perform(&ui, selected);
-            });
-    }
-    {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
-        // The pointer marks a row; it does not choose it.
-        ui.global::<CommandPaletteState>().on_hover(move |index| {
-            let Some(ui) = weak.upgrade() else { return };
-            let index = if index < 0 {
-                None
-            } else {
-                Some(index as usize)
-            };
-            controller.borrow_mut().hover(&ui, index);
-        });
-    }
-    {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>()
-            .on_move_selection(move |delta| {
-                let Some(ui) = weak.upgrade() else { return };
-                controller.borrow_mut().move_selection(&ui, delta);
-            });
-    }
-    {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>()
-            .on_query_changed(move || {
-                let Some(ui) = weak.upgrade() else { return };
-                controller.borrow_mut().query_changed(&ui);
-            });
-    }
-    {
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>().on_clear_query(move || {
-            let Some(ui) = weak.upgrade() else { return };
-            ui.global::<CommandPaletteState>()
-                .set_query(SharedString::new());
-            CONTROLLER.with(|controller| controller.borrow_mut().query_changed(&ui));
-        });
-    }
-    {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>()
-            .on_enter_mode(move |kind, source| {
-                let Some(ui) = weak.upgrade() else { return };
-                let (kind, source) = (kind.to_string(), source.to_string());
-                controller
-                    .borrow_mut()
-                    .enter_mode(&ui, kind.as_str(), source.as_str());
-            });
-    }
-    {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>().on_back_to_root(move || {
-            let Some(ui) = weak.upgrade() else { return };
-            controller.borrow_mut().back_to_root(&ui);
-        });
-    }
-    // The 250ms debounce elapsed, so the search itself runs.
-    {
-        let controller = Rc::clone(&controller);
-        let weak = ui.as_weak();
-        ui.global::<CommandPaletteState>().on_run_search(move || {
-            let Some(ui) = weak.upgrade() else { return };
-            controller.borrow_mut().run_search(&ui);
-        });
-    }
 }
 
 #[cfg(test)]

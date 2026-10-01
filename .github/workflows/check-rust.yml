@@ -49,38 +49,18 @@ jobs:
     strategy:
       matrix:
         include:
-          - platform: "ubuntu-latest"
-          # Both macOS architectures as *native* runners, not one runner with a
-          # cross-compiled x86_64 target: a `--target` build compiles the code for
-          # Intel while running every build script on the host, so a
-          # host-only mistake in a `-sys` crate passes here and fails in a real
-          # Intel build. A native runner is the only thing that checks the target
-          # for real.
-          #
-          # It is also how the `objc2` `BOOL` bug was found at all: `BOOL` is
-          # `bool` on arm64 and `i8` on x86_64, so
-          # `app/src/traffic_lights.rs::add_method` compiled on Apple Silicon and
-          # not on Intel for the whole life of the Tauri CI.
-          #
-          # `macos-15` and `macos-15-intel` rather than `macos-latest`, because
-          # `latest` is arm64 only and would make the Intel entry ambiguous.
+          - platform: "ubuntu-22.04"
+          - platform: "ubuntu-22.04-arm"
           - platform: "macos-15"
           - platform: "macos-15-intel"
           - platform: "windows-latest"
+          - platform: "windows-11-arm"
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v7
 
-      # The Slint/winit stack. `cargo check` reaches `fontique`, `alsa-sys` and
-      # `libudev-sys`, whose build scripts each shell out to `pkg-config` for a
-      # development package — so these are build dependencies of the *check*, not
-      # only of a release build.
-      #
-      # `webkit2gtk-4.1` and `libayatana-appindicator3-dev` were here for Tauri.
-      # There is no webview and no tray plugin in the tree any more, and installing
-      # them did nothing but slow the job down.
       - name: install dependencies
-        if: matrix.platform == 'ubuntu-latest'
+        if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -103,17 +83,18 @@ jobs:
     strategy:
       matrix:
         include:
-          - platform: "ubuntu-latest"
+          - platform: "ubuntu-22.04"
+          - platform: "ubuntu-22.04-arm"
+          - platform: "macos-15"
+          - platform: "macos-15-intel"
           - platform: "windows-latest"
+          - platform: "windows-11-arm"
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v7
 
-      # Same three development packages as the clippy job, and for the same
-      # reason. Without them the job fails in `cargo build.rs` long before it
-      # reaches the tests.
       - name: install dependencies
-        if: matrix.platform == 'ubuntu-latest'
+        if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -125,4 +106,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Run cargo test
-        run: cargo check --all --release --verbose --all-targets
+        run: cargo test --all --release --verbose --all-targets
