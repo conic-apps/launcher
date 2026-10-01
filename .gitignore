@@ -28,3 +28,8 @@ app/ui/icons.slint
 # `tools/package-linux.sh` out of `packaging/linux/` and `LICENSE`. The spec next
 # to it is hand-written and IS committed -- see `app/.rpm/conic-launcher.spec`.
 /app/.rpm/usr/
+
+# Where `build.yml` installs the WiX toolset, with `dotnet tool install
+# --tool-path .tools`, so the job does not depend on the image's
+# `%USERPROFILE%\.dotnet\tools` being on PATH.
+/.tools/

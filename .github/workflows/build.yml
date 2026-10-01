@@ -14,7 +14,9 @@ on:
       - "app/Cargo.toml"
       - "packaging/**"
       - "tools/package-linux.sh"
+      - "tools/package-windows.ps1"
       - "tools/generate-icons.py"
+      - "tools/generate-ico.py"
   push:
     branches:
       - master
@@ -287,8 +289,209 @@ jobs:
           name: macOS disk image(${{ matrix.arch }})
           path: ${{ github.workspace }}/target/package/*.dmg
 
+  # One job per architecture, each building natively on its own runner, and for
+  # the same reasons `build-macos` gives: a `--target` build compiles for the guest
+  # while running every build script on the host, so Skia and `aws-lc-rs` — both
+  # built through `cc` — come out subtly wrong rather than failing, and nothing in
+  # CI would ever run a cross-compiled slice. A native runner at least executes the
+  # build script and the MSI install there.
+  build-windows:
+    needs: [get-version]
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Both labels spelled out rather than `windows-latest`: `latest` is a
+          # moveable target, and the ARM64 one has no `latest` spelling at all. The
+          # Rust targets are `x86_64-pc-windows-msvc` and `aarch64-pc-windows-msvc`,
+          # and neither is ever passed to cargo — the runner *is* the architecture,
+          # which is the point of one job per architecture here.
+          - platform: "windows-2025"
+            arch: "x64"
+          - platform: "windows-11-arm"
+            arch: "arm64"
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      # No dependency install step, unlike the Linux job: the Slint/winit stack
+      # needs `pkg-config`, `libfontconfig1-dev`, `libasound2-dev` and
+      # `libudev-dev`, none of which exist here. What a Windows build does need is
+      # already in the image — Visual Studio's C++ toolset and the Windows SDK for
+      # `cc`, and prebuilt Skia binaries from `skia-bindings`' `binary-cache`,
+      # which has `aarch64-pc-windows-msvc` releases.
+      #
+      # WiX is the one thing not in the image, and it is installed as a .NET tool
+      # (v6, `dotnet tool install`) rather than taken from the image, for three
+      # reasons:
+      #   * `windows-11-arm` has no WiX at all, so the v3 toolset would need a
+      #     separate install path for one of the two jobs anyway,
+      #   * WiX v3 is EOL, and its `candle`/`light` pair reads a *different* XML
+      #     dialect rather than an older spelling of the v4+ one the `.wxs` is
+      #     written in, so both toolsets cannot be kept in step from one file,
+      #   * the version is then the same on both runners, which is what makes one
+      #     `.wxs` and one script produce two packages.
+      # Pinned rather than floating: an installer that builds on one week and not
+      # the next is not a reproducible release.
+      - name: install the WiX toolset
+        shell: pwsh
+        run: |
+          # `--tool-path` rather than `--global`, so the tool lands in the checkout
+          # and the job does not depend on the image's `%USERPROFILE%\.dotnet\tools`
+          # being on PATH.
+          New-Item -ItemType Directory -Force .\.tools | Out-Null
+          dotnet tool install --tool-path .\.tools wix --version 6.0.2
+          # The dialogs are a *separate* package, into the per-user extension cache
+          # that `wix build -ext` reads. Without it the MSI builds and installs
+          # with no interface at all — a window that flashes and an install that
+          # happens behind it — so a missing extension is not a build failure.
+          .\.tools\wix.exe extension add -g WixToolset.UI.wixext/6.0.2
+          .\.tools\wix.exe extension list -g
+          .\.tools\wix.exe --version
+          ".\.tools" | Out-File $env:GITHUB_PATH -Append -Encoding utf8
+
+      - name: Build the .exe and the .msi
+        env:
+          # Read at compile time by `crates/curseforge/build.rs`; unset just means
+          # the official CurseForge API is unauthenticated.
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+        run: tools/package-windows.ps1
+
+      - name: Inspect the msi
+        shell: pwsh
+        run: |
+          # Not a smoke test — a check that the things a broken packaging run gets
+          # wrong are actually in the package: the version split (an MSI cannot
+          # hold `0.1.0-alpha.2`), the identity (a `ProductCode` WiX would have
+          # invented, which cannot be repaired or upgraded), the icon (a `PNG` in
+          # the `Icon` table, which Windows Installer cannot draw), and the folder
+          # the shortcut points into.
+          $msi = @(Get-ChildItem target/package/*.msi)
+          if ($msi.Count -ne 1) { throw "expected one .msi, found $($msi.Count)" }
+          if ($msi.Name -notlike "*-${{ matrix.arch }}.msi") {
+            throw "$($msi.Name) is not named for ${{ matrix.arch }}"
+          }
+          Write-Host "### $($msi.Name) ($('{0:N1} MiB' -f ($msi.Length / 1MB)))"
+
+          $installer = New-Object -ComObject WindowsInstaller.Installer
+          $db = $installer.OpenDatabase($msi.FullName, 0)
+          function Query([string]$Sql, [int]$Columns) {
+            $view = $db.OpenView($Sql)
+            $view.Execute()
+            while ($record = $view.Fetch()) {
+              $fields = for ($i = 1; $i -le $Columns; $i++) { $record.StringData($i) }
+              "  " + ($fields -join ' | ')
+            }
+          }
+
+          Write-Host "### properties"
+          Query "SELECT Property, Value FROM Property" 2 |
+            Where-Object { $_ -match 'Product|Upgrade|ARP|ALLUSERS' }
+          Write-Host "### files"
+          Query "SELECT FileName FROM File" 1
+          Write-Host "### icon"
+          # One row, or `ARPPRODUCTICON` points at nothing and Add/Remove Programs
+          # shows the default icon.
+          Query "SELECT Name FROM Icon" 1
+          Write-Host "### folders"
+          Query "SELECT Directory, Directory_Parent FROM Directory" 2
+          Write-Host "### summary"
+          $summary = $db.SummaryInformation(0)
+          # 3 = Subject, 4 = Author, 14 = the Windows Installer version required.
+          foreach ($property in 3, 4, 14) { "  $property = $($summary.Property($property))" }
+
+      # An MSI that builds is not an MSI that installs, and the two failures are
+      # different: `wix` validates the XML against its schema, `msiexec` is the one
+      # that refuses a package the machine's processor type does not support, a
+      # component with no key path, or a folder that cannot be written. That last
+      # one is why this is an install and not just a table read.
+      #
+      # It also installs the app's own `.exe` on the runner, which is the only check
+      # in this workflow that the packaged binary is the one that was built.
+      - name: Install the msi and uninstall it again
+        shell: pwsh
+        run: |
+          $msi = @(Get-ChildItem target/package/*.msi)[0].FullName
+          $log = Join-Path $env:RUNNER_TEMP 'install.log'
+          # `WaitForExit(ms)` rather than `-Wait`: an msiexec that never returns would sit
+          # here until the job is killed hours later, with its log unread. Three
+          # minutes is orders of magnitude more than the install needs -- it takes
+          # about a second and a half on a runner.
+          $process = Start-Process msiexec `
+            -ArgumentList '/i', "`"$msi`"", '/qn', '/L*v', "`"$log`"" -PassThru
+          if (-not $process.WaitForExit(180000)) {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            Get-Content $log -Tail 40
+            throw 'msiexec /i is still running after 3 minutes'
+          }
+          if ($process.ExitCode -ne 0) {
+            Get-Content $log -Tail 60
+            throw "msiexec /i exited $($process.ExitCode)"
+          }
+
+          $installed = Join-Path $env:ProgramFiles 'Conic Launcher'
+          $exe = Join-Path $installed 'conic-launcher.exe'
+          if (-not (Test-Path $exe)) { throw "$exe is missing after the install" }
+          $license = Join-Path $installed 'LICENSE'
+          if (-not (Test-Path $license)) { throw "$license is missing after the install" }
+          Write-Host "installed to $installed"
+          # The Start menu shortcut, which is the one thing the `.wxs` authors by
+          # hand and nothing above has checked exists.
+          $shortcut = Join-Path $env:ProgramData `
+            'Microsoft\Windows\Start Menu\Programs\Conic Launcher\Conic Launcher.lnk'
+          if (-not (Test-Path $shortcut)) { throw "$shortcut is missing after the install" }
+
+          $process = Start-Process msiexec `
+            -ArgumentList '/x', "`"$msi`"", '/qn', '/L*v', "`"$log`"" -PassThru
+          if (-not $process.WaitForExit(180000)) {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            Get-Content $log -Tail 40
+            throw 'msiexec /x is still running after 3 minutes'
+          }
+          if ($process.ExitCode -ne 0) {
+            Get-Content $log -Tail 60
+            throw "msiexec /x exited $($process.ExitCode)"
+          }
+          if (Test-Path $exe) { throw "$exe survived the uninstall" }
+          Write-Host "uninstalled cleanly"
+
+      - name: Upload the msi
+        uses: actions/upload-artifact@v7
+        with:
+          name: Windows installer(${{ matrix.arch }})
+          path: ${{ github.workspace }}/target/package/*.msi
+          if-no-files-found: error
+
+      # `archive: false` because the artifact *is* the executable: unzipping a
+      # `.exe` to get an `.exe` helps nobody, and the release upload then has the
+      # real file rather than a zip of one.
+      #
+      # No `name:` here, which is the tool's doing rather than an omission: an
+      # unarchived upload takes the *file's* name as the artifact's name, because
+      # there is no archive to name after. It has to match exactly one file either
+      # way, which the glob does. So the artifact turns up in a run's own list as
+      # `conic-launcher-0.1.0-alpha.2-x64.exe` -- its own name, which is the point,
+      # and the reason this is not `Windows executable(${{ matrix.arch }})` the way
+      # the `.msi` above is.
+      - name: Upload the exe
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ github.workspace }}/target/package/*.exe
+          archive: false
+          if-no-files-found: error
+
   release:
-    needs: [build-linux, build-macos, get-version]
+    needs: [build-linux, build-macos, build-windows, get-version]
     permissions:
       contents: write
     runs-on: ubuntu-22.04
