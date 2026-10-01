@@ -636,8 +636,15 @@ unsafe fn render_glyph(
             SelectObject(screen, previous_font);
             let _ = DeleteObject(HGDIOBJ(font.0));
 
+            // `as_chunks` rather than `chunks_exact`: the latter iterates a
+            // wrapper that skips the remainder in every step, where `as_chunks`
+            // splits once and hands back a `&[[u8; 4]]`. Clippy prefers it, and
+            // the remainder (`bytes` is `width * height * 4`, so there is none)
+            // is what makes it equivalent here rather than merely tolerated.
             if slice::from_raw_parts(bits.cast::<u8>(), bytes)
-                .chunks_exact(4)
+                .as_chunks::<4>()
+                .0
+                .iter()
                 .any(|pixel| pixel[0] > 0)
             {
                 break;
@@ -654,7 +661,7 @@ unsafe fn render_glyph(
         let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(width as u32, height as u32);
         let raw = slice::from_raw_parts(bits.cast::<u8>(), bytes);
         let pixels = buffer.make_mut_slice();
-        for (pixel, source) in pixels.iter_mut().zip(raw.chunks_exact(4)) {
+        for (pixel, source) in pixels.iter_mut().zip(raw.as_chunks::<4>().0) {
             let coverage = f32::from(source[0]) / 255.0;
             *pixel = Rgba8Pixel {
                 r: (f32::from(ink.0) * coverage) as u8,
@@ -701,7 +708,7 @@ unsafe fn ink_offset(
     let mut top = height;
     let mut right = 0;
     let mut bottom = 0;
-    for (index, pixel) in raw.chunks_exact(4).enumerate() {
+    for (index, pixel) in raw.as_chunks::<4>().0.iter().enumerate() {
         if pixel[0] == 0 {
             continue;
         }
