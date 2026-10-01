@@ -2,9 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use folder::DATA_LOCATION;
 use log::warn;
 use serde::{Deserialize, Serialize};
-use slint_folder::DATA_LOCATION;
 
 use crate::error::Result;
 

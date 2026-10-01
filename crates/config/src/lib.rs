@@ -6,7 +6,7 @@
 //!
 //! The Slint app shares the same `~/.conic[-debug]` data directory as the
 //! Tauri app, so the same `config.toml` is read and written by both. The data
-//! directory layout itself comes from [`slint_folder::DATA_LOCATION`]. Every key
+//! directory layout itself comes from [`folder::DATA_LOCATION`]. Every key
 //! the original models is modelled here too, with the same names, so the two
 //! frontends stay interchangeable; [`Config::extra`] is the catch-all for
 //! anything neither of them models, kept so a load/save round-trip cannot drop
@@ -17,10 +17,10 @@
 
 use std::{collections::BTreeMap, path::Path};
 
+use account::Account;
+use folder::DATA_LOCATION;
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
-use slint_account::Account;
-use slint_folder::DATA_LOCATION;
 
 pub mod download;
 pub mod error;

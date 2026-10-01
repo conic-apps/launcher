@@ -34,14 +34,14 @@ single-instance = { path = "./crates/single-instance", version = "0.0.0" }
 multiplayer = { path = "./crates/multiplayer", version = "0.0.0" }
 markdown = { path = "./crates/markdown", version = "0.0.0" }
 # The loopback callback the Microsoft browser flow hands its authorization code
-# to, replacing the deep link the Tauri app registers (slint/crates/authcode).
+# to, replacing the deep link the Tauri app registers (crates/authcode).
 authcode = { path = "./crates/authcode", version = "0.0.0" }
 music = { path = "./crates/music", version = "0.0.0" }
 
 # ----- non-local crates -----
 slint = { version = "1.18", default-features = true }
-build = "1.18"
-# The icon generator in `slint/app/build.rs` parses the SVGs with the same
+slint-build = "1.18"
+# The icon generator in `app/build.rs` parses the SVGs with the same
 # `usvg` Slint's own renderer rasterizes them with, so the generated path data
 # cannot disagree with what is drawn. Pinned to the version `slint` 1.18 pulls
 # in (via resvg) on purpose: a second copy would drag in its own `tiny-skia`.
@@ -49,7 +49,7 @@ build = "1.18"
 # `slint` already turns on the features the union needs — leaving them on here
 # would add `fontconfig-parser` and `memmap2` to the lockfile for nothing.
 usvg = { version = "0.48", default-features = false }
-# The background music player (slint/crates/music). The Tauri build had the
+# The background music player (crates/music). The Tauri build had the
 # webview decode and play the tracks through the Web Audio API; a native app has
 # to do it itself, so the decoders and the output device come from here.
 # `default-features = false` keeps symphonia to the formats the player's
@@ -69,11 +69,11 @@ symphonia = { version = "0.5", default-features = false, features = [
     "alac",
 ] }
 cpal = "0.15"
-# The `AnalyserNode` of the Vue's Web Audio graph (slint/crates/music/analyser.rs).
+# The `AnalyserNode` of the Vue's Web Audio graph (crates/music/analyser.rs).
 rustfft = "6.4"
 
 # Drawing the window background's shaders on the GPU: the notifier hands over
-# `get_proc_address`, and this is the loader (see slint/app/src/background/gl.rs).
+# `get_proc_address`, and this is the loader (see app/src/background/gl.rs).
 glow = "0.18"
 bytemuck = "1"
 # `IntSize` for the borrowed-texture builder — the type Slint asks for.
@@ -84,7 +84,7 @@ conic-worldmap = { git="https://github.com/conic-apps/conic-worldmap", rev="a864
 env_logger = "0.11.5"
 futures = "0.3"
 # PNG for the skin textures `account` resolves and webp for the bundled
-# default skins (`slint/app/ui/assets/skins`). Slint already pulls `image` in
+# default skins (`app/ui/assets/skins`). Slint already pulls `image` in
 # for `image-default-formats`; these are the two codecs the Slint app needs by
 # name, so they are requested explicitly rather than inherited.
 image = { version = "0.25", default-features = false, features = ["png", "webp"] }
@@ -116,7 +116,7 @@ flate2 = "1"
 fastnbt = "2"
 png = "0.18"
 sysinfo = "0.38"
-# The Markdown/HTML body of a content detail panel (slint/crates/markdown).
+# The Markdown/HTML body of a content detail panel (crates/markdown).
 # `parley` and `fontique` are the text engine Slint itself renders with, and
 # they are already in the tree as Slint's own dependencies: reusing the same
 # versions is not an optimisation but a requirement, because the engine is handed

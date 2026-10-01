@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use base64::{Engine, engine::general_purpose};
+use folder::DATA_LOCATION;
 use serde_json::Value;
-use slint_folder::DATA_LOCATION;
 use uuid::Uuid;
 
 use crate::error::*;

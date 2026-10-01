@@ -31,8 +31,8 @@ use std::{
 
 use chrono::Local;
 use env_logger::fmt::Formatter;
+use folder::DATA_LOCATION;
 use log::Record;
-use slint_folder::DATA_LOCATION;
 
 /// The active log file's stem. See the module comment for why it is not the
 /// crate's name.

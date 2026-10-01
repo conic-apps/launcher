@@ -6,7 +6,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use slint_config::launch::{GC, Server};
+use config::launch::{GC, Server};
 
 /// Represents supported mod loader types.
 #[derive(Clone, Deserialize, Serialize)]

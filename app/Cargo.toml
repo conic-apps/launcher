@@ -16,7 +16,7 @@ repository.workspace = true
 i-slint-backend-testing = "=1.18.1"
 
 [build-dependencies]
-build.workspace = true
+slint-build.workspace = true
 # `build.rs` generates `ui/icons.slint` from the SVGs under `src/assets/icons/`.
 usvg.workspace = true
 

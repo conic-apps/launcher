@@ -9,9 +9,9 @@ use log::info;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use slint_folder::MinecraftLocation;
-use slint_shared::HTTP_CLIENT;
-use slint_version::Version;
+use folder::MinecraftLocation;
+use shared::HTTP_CLIENT;
+use version::Version;
 
 use crate::error::*;
 

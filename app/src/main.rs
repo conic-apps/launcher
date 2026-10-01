@@ -45,12 +45,12 @@ use std::{cell::RefCell, rc::Rc};
 use slint::{ComponentHandle, Timer, Weak};
 
 use slint_backend::{App, AppConfig};
-use slint_window::WindowService;
+use window::WindowService;
 
 fn main() {
     // Create the data directory layout (shares `~/.conic[-debug]` with the
     // Tauri app) before anything reads from it — the logger writes into it.
-    slint_folder::DATA_LOCATION.init();
+    folder::DATA_LOCATION.init();
     logs::init();
 
     // Claim the single-instance role before anything else: a second launch of
@@ -59,7 +59,7 @@ fn main() {
     // with it arrive long after this function has moved on — the running
     // instance cannot be told about them yet, so they queue up until the
     // watcher below picks them up.
-    let Ok(single_instance) = slint_single_instance::try_acquire() else {
+    let Ok(single_instance) = single_instance::try_acquire() else {
         // The instance that is already running has just been told about this
         // launch, so this process has nothing left to do but go away.
         log::info!(target: "shell", "another instance is already running");
@@ -115,26 +115,26 @@ fn main() {
     let ui = App::new().expect("failed to construct the app UI");
 
     // Configuration (shared with the Tauri app).
-    let config = slint_config::load_config_file().unwrap_or_else(|error| {
+    let config = config::load_config_file().unwrap_or_else(|error| {
         log::error!("failed to load config: {error}");
-        slint_config::Config::default()
+        config::Config::default()
     });
     // Tell the HTTP client whether to go through the system proxy, like
     // `crates/config` does for `shared::HTTP_CLIENT`. Has to happen before the
     // first request, which is why it is done here rather than when a version
     // list is first fetched. `slint-shared` owns the one client the whole app
     // shares, so one call reaches every crate that uses it.
-    slint_shared::set_system_proxy(config.download.use_system_proxy);
+    shared::set_system_proxy(config.download.use_system_proxy);
 
     // Pick the bundled translation. Must run after a component exists (that's
     // what installs the translation bundle).
     config_bridge::select_locale(config.language.as_deref());
 
     // Platform (mirrors crates/platform; tauri-free variant).
-    let platform = slint_platform::PLATFORM_INFO.clone();
-    ui.set_macos(platform.os_family == slint_platform::OsFamily::Macos);
-    ui.set_linux(platform.os_family == slint_platform::OsFamily::Linux);
-    ui.set_windows(platform.os_family == slint_platform::OsFamily::Windows);
+    let platform = platform::PLATFORM_INFO.clone();
+    ui.set_macos(platform.os_family == platform::OsFamily::Macos);
+    ui.set_linux(platform.os_family == platform::OsFamily::Linux);
+    ui.set_windows(platform.os_family == platform::OsFamily::Windows);
     log::info!(
         "detected platform: {:?} ({})",
         platform.os_type,
@@ -306,15 +306,15 @@ fn main() {
     cleanup_temp_folder();
 }
 
-/// Removes the per-run scratch directory [`slint_folder::DATA_LOCATION`]
+/// Removes the per-run scratch directory [`folder::DATA_LOCATION`]
 /// creates, the same thing `core/src/main.rs` does on `RunEvent::Exit` and
 /// `RunEvent::ExitRequested`.
 ///
-/// The installers stage a bootstrapper jar here (`slint_install`), and the
+/// The installers stage a bootstrapper jar here (`install`), and the
 /// directory is `create_dir_all`-ed in a fresh UUID-named path on every launch,
 /// so without this it accumulates one directory per run in the OS temp folder.
 fn cleanup_temp_folder() {
-    match std::fs::remove_dir_all(&slint_folder::DATA_LOCATION.temp) {
+    match std::fs::remove_dir_all(&folder::DATA_LOCATION.temp) {
         Ok(_) => log::info!("Temporary files cleared"),
         Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
             log::error!("Could not clear temp folder: {error}")
@@ -334,7 +334,7 @@ fn cleanup_temp_folder() {
 /// the event loop, which is what the weak handle is upgraded in. `SingleInstance`
 /// moves in here as well: it holds the single-instance claim, which has to
 /// outlive the setup in `main`.
-fn watch_launches(single_instance: slint_single_instance::SingleInstance, app: Weak<App>) {
+fn watch_launches(single_instance: single_instance::SingleInstance, app: Weak<App>) {
     std::thread::Builder::new()
         .name("conic-single-instance".into())
         .spawn(move || {
@@ -371,7 +371,7 @@ fn set_macos_app_icon() {
     use objc2::runtime::AnyObject;
     use objc2::{class, msg_send};
 
-    const ICON: &[u8] = include_bytes!("../ui/assets/app-icon.png");
+    const ICON: &[u8] = include_bytes!("../ui/assets/images/app-icon.png");
 
     unsafe {
         let data: *mut AnyObject = msg_send![

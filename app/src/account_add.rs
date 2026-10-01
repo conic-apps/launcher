@@ -13,7 +13,7 @@
 //! heads — which Slint only lets the drawing thread create.
 //!
 //! The Microsoft flow is where this module reads state it did not write: the
-//! login runs as a task (see `slint_account::LoginTaskState`) whose progress
+//! login runs as a task (see `account::LoginTaskState`) whose progress
 //! arrives as events, so which of the screen's four states is mounted is
 //! decided here rather than in the screen. The browser flow's half of it —
 //! waiting for the code to come back — is here too: the screen owns when the
@@ -33,12 +33,12 @@ use uuid::Uuid;
 
 use crate::account_avatar;
 use crate::slint_backend::{AccountAddState, App, Dialogs, GameState, YggdrasilProfileItem};
-use slint_account::{
+use account::{
     Error, LoginRequest, LoginTaskState, get_uuid_from_username,
     microsoft::{LoginEvent, LoginReporter},
     yggdrasil::{self, yggdrasil_user_api::Profile as YggdrasilProfile},
 };
-use slint_authcode::Outcome;
+use authcode::Outcome;
 
 /// How long the browser flow's listener waits before giving the port back.
 ///
@@ -68,7 +68,7 @@ thread_local! {
 /// The state the Microsoft screen's two flows carry between callbacks.
 ///
 /// The login task is the Tauri plugin's `PluginState` (see
-/// `slint_account::LoginTaskState`): at most one, cancellable, and the only
+/// `account::LoginTaskState`): at most one, cancellable, and the only
 /// thing that owns a running Microsoft login. The listener is the browser
 /// flow's other half, and it lives in the same box because it is released in
 /// the same places — leaving the screen, cancelling, closing.
@@ -78,7 +78,7 @@ struct MicrosoftFlow {
     /// The task blocked on the loopback listener the browser flow's code comes
     /// back on, while the browser screen is on show.
     ///
-    /// An abort handle and not the [`slint_authcode::AuthCallback`] itself: the
+    /// An abort handle and not the [`authcode::AuthCallback`] itself: the
     /// callback moves into `wait` and comes back as an `Outcome`, and the one
     /// thing to be done to it from the UI thread is to stop waiting — which is
     /// what the two ways off this screen have in common.
@@ -211,7 +211,7 @@ pub fn setup(ui: &App) {
 
             let weak = weak.clone();
             crate::runtime::spawn(async move {
-                if let Err(error) = slint_account::offline::add_account(username, uuid).await {
+                if let Err(error) = account::offline::add_account(username, uuid).await {
                     // The Vue has no error path here either: the dialog simply
                     // stays open.
                     log::error!("failed to add the offline account: {error}");
@@ -541,14 +541,14 @@ fn prepare_auth_code_flow(ui: &App) {
         return;
     }
     let state = ui.global::<AccountAddState>();
-    let callback =
-        match slint_authcode::AuthCallback::start(callback_palette(ui), callback_messages(ui)) {
-            Ok(callback) => callback,
-            Err(error) => {
-                log::error!("cannot listen for the Microsoft sign-in callback: {error}");
-                return;
-            }
-        };
+    let callback = match authcode::AuthCallback::start(callback_palette(ui), callback_messages(ui))
+    {
+        Ok(callback) => callback,
+        Err(error) => {
+            log::error!("cannot listen for the Microsoft sign-in callback: {error}");
+            return;
+        }
+    };
 
     // The Vue's `AUTH_CODE_LOGIN_URL`, with the deep link's `redirect_uri`
     // replaced by the listener's and the `state` added — OAuth's own CSRF
@@ -637,9 +637,9 @@ fn auth_code_flow_finished(ui: &App, redirect_uri: &str, outcome: Outcome) {
 /// Read on the UI thread, where the global lives, and handed to the listener as
 /// plain numbers: the page is rendered on a worker, minutes later, and a Slint
 /// handle is not something that can cross.
-fn callback_palette(ui: &App) -> slint_authcode::Palette {
+fn callback_palette(ui: &App) -> authcode::Palette {
     let theme = ui.global::<AccountAddState>().get_auth_code_page_theme();
-    slint_authcode::Palette {
+    authcode::Palette {
         window: rgba(theme.window),
         card: rgba(theme.card),
         card_border: rgba(theme.card_border),
@@ -653,9 +653,9 @@ fn callback_palette(ui: &App) -> slint_authcode::Palette {
 }
 
 /// The callback page's sentences, off the `@tr` catalog.
-fn callback_messages(ui: &App) -> slint_authcode::Messages {
+fn callback_messages(ui: &App) -> authcode::Messages {
     let text = ui.global::<AccountAddState>().get_auth_code_page_text();
-    slint_authcode::Messages {
+    authcode::Messages {
         waiting_title: text.waiting_title.to_string(),
         waiting_body: text.waiting_body.to_string(),
         success_title: text.success_title.to_string(),
@@ -676,9 +676,9 @@ fn callback_messages(ui: &App) -> slint_authcode::Messages {
 /// is read as `f32` rather than `u8` for the same reason — a `transparentize`
 /// is a float until something rounds it, and rounding it here would make the
 /// page's text a shade off the window's.
-fn rgba(color: slint::Color) -> slint_authcode::Rgba {
+fn rgba(color: slint::Color) -> authcode::Rgba {
     let color = color.to_argb_f32();
-    slint_authcode::Rgba::new(
+    authcode::Rgba::new(
         (color.red * 255.0).round() as u8,
         (color.green * 255.0).round() as u8,
         (color.blue * 255.0).round() as u8,
@@ -699,7 +699,7 @@ fn rgba(color: slint::Color) -> slint_authcode::Rgba {
 /// value, and the `:` and the two `/` left bare are the difference between a
 /// redirect Microsoft accepts and one it does not. It has to come back out of
 /// the query byte for byte, which is why the same encoded form is what
-/// `slint_account::microsoft::redeem_access_token` is given.
+/// `account::microsoft::redeem_access_token` is given.
 fn authorize_url(redirect_uri: &str, state: &str) -> String {
     format!(
         "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize\
@@ -790,7 +790,7 @@ fn handle_login_error(ui: &App, error: Error, device_flow: bool) {
 
 /// Fills the profile chooser (Vue `shouldChooseProfile`).
 fn show_profile_chooser(ui: &App, credentials: &PendingYggdrasil) {
-    let existing = slint_account::list_accounts();
+    let existing = account::list_accounts();
     let rows: Vec<YggdrasilProfileItem> = credentials
         .profiles
         .iter()
@@ -832,9 +832,9 @@ fn show_profile_chooser(ui: &App, credentials: &PendingYggdrasil) {
 /// Every profile gets its own identifier and its own copy of the credentials,
 /// exactly as the Vue's loop does.
 fn add_yggdrasil_accounts(ui: &App, credentials: &PendingYggdrasil, profiles: &[YggdrasilProfile]) {
-    let accounts: Vec<slint_account::yggdrasil::YggdrasilAccount> = profiles
+    let accounts: Vec<account::yggdrasil::YggdrasilAccount> = profiles
         .iter()
-        .map(|profile| slint_account::yggdrasil::YggdrasilAccount {
+        .map(|profile| account::yggdrasil::YggdrasilAccount {
             api_root: credentials.api_root.clone(),
             username: credentials.username.clone(),
             access_token: credentials.access_token.clone(),
@@ -852,7 +852,7 @@ fn add_yggdrasil_accounts(ui: &App, credentials: &PendingYggdrasil, profiles: &[
     let weak = ui.as_weak();
     crate::runtime::spawn(async move {
         for account in accounts {
-            if let Err(error) = slint_account::yggdrasil::add_account(account).await {
+            if let Err(error) = account::yggdrasil::add_account(account).await {
                 log::error!("failed to add the Yggdrasil account: {error}");
                 return;
             }

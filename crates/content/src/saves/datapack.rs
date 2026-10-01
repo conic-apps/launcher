@@ -5,8 +5,8 @@
 use std::{ffi::OsStr, fs, io::Read, path::Path};
 
 use base64::{Engine, engine::general_purpose};
+use folder::DATA_LOCATION;
 use serde_json::Value;
-use slint_folder::DATA_LOCATION;
 use zip::ZipArchive;
 
 use crate::error::*;

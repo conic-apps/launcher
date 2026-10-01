@@ -12,7 +12,7 @@ use url::Url;
 use uuid::Uuid;
 
 use crate::error::*;
-use slint_shared::{HTTP_CLIENT, UrlExt};
+use shared::{HTTP_CLIENT, UrlExt};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

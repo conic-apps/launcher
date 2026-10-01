@@ -45,9 +45,9 @@
 use std::path::Path;
 
 use base64::{Engine, engine::general_purpose};
+use folder::DATA_LOCATION;
 use md5::{Digest, Md5};
 use serde::{Deserialize, Serialize};
-use slint_folder::DATA_LOCATION;
 use uuid::Uuid;
 
 use crate::microsoft::MicrosoftAccount;

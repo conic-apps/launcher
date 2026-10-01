@@ -5,7 +5,7 @@
 use serde_json::Value;
 
 use crate::error::*;
-use slint_shared::HTTP_CLIENT;
+use shared::HTTP_CLIENT;
 
 pub(super) async fn get_game_profile(minecraft_access_token: &str) -> Result<Value> {
     Ok(HTTP_CLIENT

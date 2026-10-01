@@ -4,8 +4,8 @@
 
 //! The player-head image `AccountAvatar` draws — `src/components/AccountAvatar.vue`
 //! and the two helpers it calls from `crates/account/index.ts`
-//! (`getAvatarFromUrl`, `getDefaultSkin`), plus the 18 default skins the Vue
-//! globs out of `src/assets/images/skins`.
+//! (`getAvatarFromUrl`, `getDefaultSkin`), plus the 18 default skins bundled in
+//! `app/ui/assets/skins`.
 //!
 //! The Vue crops the head out of the skin texture on a `<canvas>`: the 8x8 face
 //! region is drawn inset into the square, then the 8x8 hat layer is stretched
@@ -19,9 +19,9 @@
 //! `slint-install`'s README puts in `app/src` for the same reason
 //! (`filterNeoforgeVersionList`).
 
+use account::Account;
 use base64::{Engine, engine::general_purpose};
 use slint::{Image, SharedPixelBuffer};
-use slint_account::Account;
 
 /// A skin of the bundled default set, as `getDefaultSkin` returns it.
 ///
@@ -217,7 +217,7 @@ fn grayscale(image: Image) -> Image {
 pub fn account_skin_url(account: &Account) -> Option<String> {
     match account {
         Account::Microsoft(account) => account.profile.skins.first().map(|skin| skin.url.clone()),
-        Account::Yggdrasil(account) => slint_account::yggdrasil::get_skin_url(&account.profile),
+        Account::Yggdrasil(account) => account::yggdrasil::get_skin_url(&account.profile),
         Account::Offline(account) => account.skin.clone(),
     }
 }

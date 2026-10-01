@@ -30,9 +30,9 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use instance::{Instance, SortBy};
 use serde_json::Value;
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
-use slint_instance::{Instance, SortBy};
 
 use crate::content::{self, PendingImage};
 use crate::slint_backend::{App, CommandPaletteState, Dialogs, GameState, Navigation, PaletteItem};
@@ -375,7 +375,7 @@ impl PaletteController {
             // view draws and not the instance list the palette filters. What it
             // comes back sorted by does not matter: `filtered` sorts by last
             // played itself.
-            let instances = slint_instance::list_instances(SortBy::Playtime)
+            let instances = instance::list_instances(SortBy::Playtime)
                 .await
                 .unwrap_or_default();
             let _ = weak.upgrade_in_event_loop(move |ui| {
@@ -928,14 +928,14 @@ fn loader_name(instance: &Instance) -> String {
 /// no facets, so the hits are mods, resource packs, modpacks and shaders alike —
 /// which is what the row's category subtitle is for.
 async fn search_modrinth(keyword: &str) -> Result<Vec<RemoteResult>, String> {
-    let params = slint_modrinth::SearchParameters {
+    let params = modrinth::SearchParameters {
         query: Some(keyword.to_string()),
         facets: None,
         index: None,
         offset: Some(0),
         limit: Some(SEARCH_LIMIT),
     };
-    let response = slint_modrinth::search_projects(&params)
+    let response = modrinth::search_projects(&params)
         .await
         .map_err(|error| error.to_string())?;
     let hits = response
@@ -968,7 +968,7 @@ async fn search_curseforge(keyword: &str) -> Result<Vec<RemoteResult>, String> {
         "index": 0,
         "pageSize": SEARCH_LIMIT,
     });
-    let response = slint_curseforge::search_mods(&params)
+    let response = curseforge::search_mods(&params)
         .await
         .map_err(|error| error.to_string())?;
     let mods = response

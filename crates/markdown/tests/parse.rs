@@ -6,8 +6,8 @@
 //! document. These tests are the ones that can run without a font collection,
 //! which is why the layout tests live in `layout.rs` and need one.
 
-use slint_markdown::doc::{Align, Block, Inline, Inlines, plain_text};
-use slint_markdown::{SourceFormat, parse};
+use markdown::doc::{Align, Block, Inline, Inlines, plain_text};
+use markdown::{SourceFormat, parse};
 
 fn md(source: &str) -> Vec<Block> {
     parse::parse(source)
@@ -428,7 +428,7 @@ fn an_empty_document_is_no_blocks() {
 
 #[test]
 fn a_source_format_round_trips_through_the_renderer() {
-    let mut renderer = slint_markdown::Renderer::new();
+    let mut renderer = markdown::Renderer::new();
     renderer.set_source("**x**", SourceFormat::Markdown);
     assert_eq!(renderer.blocks().len(), 1);
     renderer.set_source("<b>y</b>", SourceFormat::Html);

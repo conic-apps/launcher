@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The settings "script": translating between the persisted [`slint_config::Config`]
+//! The settings "script": translating between the persisted [`config::Config`]
 //! and the Slint `AppConfig` global (src/store/config.ts + the settings screens).
 //! Also hosts the OS integration helpers used by the settings callbacks.
 
@@ -44,7 +44,7 @@ pub fn bundled_locale(code: &str) -> Option<&'static str> {
 /// to a bundled locale, falling back to English.
 pub fn resolve_locale(language: &str) -> &'static str {
     if language.is_empty() {
-        bundled_locale(slint_config::get_system_language())
+        bundled_locale(config::get_system_language())
     } else {
         bundled_locale(language)
     }
@@ -99,14 +99,14 @@ pub fn select_locale(preferred: Option<&str>) {
     }
     let locale = match preferred {
         Some(language) if !language.is_empty() => bundled_locale(language),
-        _ => bundled_locale(slint_config::get_system_language()),
+        _ => bundled_locale(config::get_system_language()),
     }
     .unwrap_or("en_US");
     apply_locale(locale);
 }
 
 /// Seeds the Slint `AppConfig` global from the loaded configuration.
-pub fn apply_config(settings: &AppConfig, config: &slint_config::Config) {
+pub fn apply_config(settings: &AppConfig, config: &config::Config) {
     settings.set_language(config.language.clone().unwrap_or_default().into());
     settings.set_auto_update(config.auto_update);
     settings.set_update_channel(config.update_channel.as_str().into());
@@ -186,7 +186,7 @@ pub fn active_language_code(configured: Option<&str>) -> String {
                 .map(str::to_string)
                 .filter(|value| !value.is_empty())
         })
-        .unwrap_or_else(|| slint_config::get_system_language().to_string())
+        .unwrap_or_else(|| config::get_system_language().to_string())
 }
 
 /// The suffix shown after content counts. Only Chinese uses one; it is derived
@@ -202,10 +202,7 @@ pub fn count_unit(configured: Option<&str>) -> &'static str {
 /// Reads the Slint `AppConfig` global back into a configuration, keeping the
 /// previous values for unparseable numbers and for state not represented in
 /// the UI (the Java disabled list is driven by `set-java-enabled`).
-pub fn collect_config(
-    settings: &AppConfig,
-    mut config: slint_config::Config,
-) -> slint_config::Config {
+pub fn collect_config(settings: &AppConfig, mut config: config::Config) -> config::Config {
     let language = settings.get_language().to_string();
     config.language = if language.is_empty() {
         None
@@ -213,7 +210,7 @@ pub fn collect_config(
         Some(language)
     };
     config.auto_update = settings.get_auto_update();
-    config.update_channel = slint_config::UpdateChannel::from_slug(&settings.get_update_channel());
+    config.update_channel = config::UpdateChannel::from_slug(&settings.get_update_channel());
 
     config.launch.width = parse_usize_keep(&settings.get_launch_width(), config.launch.width);
     config.launch.height = parse_usize_keep(&settings.get_launch_height(), config.launch.height);
@@ -278,21 +275,21 @@ pub fn collect_config(
     config
 }
 
-pub fn gc_to_str(gc: &slint_config::launch::GC) -> &'static str {
+pub fn gc_to_str(gc: &config::launch::GC) -> &'static str {
     match gc {
-        slint_config::launch::GC::Z => "Z",
-        slint_config::launch::GC::Parallel => "Parallel",
-        slint_config::launch::GC::Serial => "Serial",
-        slint_config::launch::GC::G1 => "G1",
+        config::launch::GC::Z => "Z",
+        config::launch::GC::Parallel => "Parallel",
+        config::launch::GC::Serial => "Serial",
+        config::launch::GC::G1 => "G1",
     }
 }
 
-pub(crate) fn gc_from_str(value: &str) -> slint_config::launch::GC {
+pub(crate) fn gc_from_str(value: &str) -> config::launch::GC {
     match value {
-        "Z" => slint_config::launch::GC::Z,
-        "Parallel" => slint_config::launch::GC::Parallel,
-        "Serial" => slint_config::launch::GC::Serial,
-        _ => slint_config::launch::GC::G1,
+        "Z" => config::launch::GC::Z,
+        "Parallel" => config::launch::GC::Parallel,
+        "Serial" => config::launch::GC::Serial,
+        _ => config::launch::GC::G1,
     }
 }
 

@@ -9,12 +9,10 @@ use std::{io::BufRead, path::Path, path::PathBuf, process::Stdio};
 use log::{debug, error, info};
 use serde_json::Value;
 
-use slint_config::download::DownloadConfig;
-use slint_download::{
-    DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState,
-};
-use slint_folder::DATA_LOCATION;
-use slint_shared::HTTP_CLIENT;
+use config::download::DownloadConfig;
+use download::{DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState};
+use folder::DATA_LOCATION;
+use shared::HTTP_CLIENT;
 
 use crate::{ModLoaderProgress, ModLoaderReporter, error::*};
 

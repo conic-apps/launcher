@@ -15,7 +15,7 @@
 //! passes in (`Theme.crust`, `Theme.dialog-background`, …) — see
 //! `app/src/account_add.rs` for the live version.
 
-use slint_authcode::{Messages, Palette, Rgba, Screen};
+use authcode::{Messages, Palette, Rgba, Screen};
 
 fn main() {
     let palette = Palette {
@@ -59,7 +59,7 @@ fn main() {
         (Screen::Failure, "failure"),
     ] {
         let path = directory.join(format!("{name}.html"));
-        let page = slint_authcode::page::render(screen, &palette, &messages);
+        let page = authcode::page::render(screen, &palette, &messages);
         std::fs::write(&path, &page).expect("failed to write the page");
         println!("{}", path.display());
     }

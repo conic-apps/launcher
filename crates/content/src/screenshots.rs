@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use slint_folder::DATA_LOCATION;
+use folder::DATA_LOCATION;
 
 use crate::error::*;
 

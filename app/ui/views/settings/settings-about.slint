@@ -52,7 +52,7 @@ export component SettingsAbout inherits VerticalLayout {
             group-first: true;
             title: "osu!";
             description: @tr("The UI interaction style of Conic Launcher is inspired by osu!");
-            custom-icon: @image-url("../../assets/osu-logo.png");
+            custom-icon: @image-url("../../assets/images/osu-logo.png");
             navigable: true;
             clicked => { AppConfig.open-url("https://osu.ppy.sh"); }
         }
@@ -60,7 +60,7 @@ export component SettingsAbout inherits VerticalLayout {
         SettingItem {
             title: "Catppuccin";
             description: @tr("The four built-in color schemes of Conic Launcher come from Catppuccin");
-            custom-icon: @image-url("../../assets/catppuccin-circle.png");
+            custom-icon: @image-url("../../assets/images/catppuccin-circle.png");
             navigable: true;
             clicked => { AppConfig.open-url("https://catppuccin.com"); }
         }
@@ -69,7 +69,7 @@ export component SettingsAbout inherits VerticalLayout {
             group-last: true;
             title: "BMCLAPI";
             description: @tr("The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources");
-            custom-icon: @image-url("../../assets/bangbang93-avatar.png");
+            custom-icon: @image-url("../../assets/images/bangbang93-avatar.png");
             custom-icon-rounded: true;
             navigable: true;
             clicked => { AppConfig.open-url("https://bmclapidoc.bangbang93.com"); }
@@ -88,7 +88,7 @@ export component SettingsAbout inherits VerticalLayout {
         // own ratio, which for `logo-flat.svg` is `886.371 / 840.793`, so a 24px
         // width is 25.31px tall. A 24 × 24 box letterboxes it to 22.77px wide.
         logo := Image {
-            source: @image-url("../../assets/logo-flat.svg");
+            source: @image-url("../../assets/images/logo-flat.svg");
             colorize: Theme.text;
             width: 24px;
             height: self.preferred-height;

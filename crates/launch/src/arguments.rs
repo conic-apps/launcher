@@ -13,16 +13,16 @@ use log::info;
 use regex::Regex;
 use zip::ZipArchive;
 
-use slint_account::Account;
-use slint_config::launch::GC;
-use slint_folder::DATA_LOCATION;
-use slint_folder::MinecraftLocation;
-use slint_install::vanilla::LOF4J2_CONFIGURATION;
-use slint_instance::Instance;
-use slint_platform::PLATFORM_INFO;
-use slint_platform::{DELIMITER, OsFamily};
-use slint_shared::APP_VERSION;
-use slint_version::{ResolvedLibrary, ResolvedVersion};
+use account::Account;
+use config::launch::GC;
+use folder::DATA_LOCATION;
+use folder::MinecraftLocation;
+use install::vanilla::LOF4J2_CONFIGURATION;
+use instance::Instance;
+use platform::PLATFORM_INFO;
+use platform::{DELIMITER, OsFamily};
+use shared::APP_VERSION;
+use version::{ResolvedLibrary, ResolvedVersion};
 
 use super::error::*;
 use super::options::LaunchOptions;
@@ -120,7 +120,7 @@ pub async fn generate_command_arguments(
         ));
         command_arguments.push("-Dauthlibinjector.side=client".to_string());
         if let Ok(prefetched_yggdrasil_server_metadata) =
-            slint_account::yggdrasil::yggdrasil_server::get_server_info_base64(
+            account::yggdrasil::yggdrasil_server::get_server_info_base64(
                 &yggdrasil_account.api_root,
             )
             .await

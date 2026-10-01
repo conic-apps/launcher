@@ -28,8 +28,8 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
+use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
-use slint_folder::DATA_LOCATION;
 
 /// The file the state is kept in, under the data directory's root.
 fn state_file() -> PathBuf {

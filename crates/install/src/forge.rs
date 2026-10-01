@@ -16,14 +16,12 @@ use std::{
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 
-use slint_config::download::DownloadConfig;
-use slint_download::{
-    DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState,
-};
-use slint_folder::{DATA_LOCATION, MinecraftLocation};
-use slint_platform::{DELIMITER, strip_unc_prefix};
-use slint_shared::HTTP_CLIENT;
-use slint_version::{Version, resolve_libraries};
+use config::download::DownloadConfig;
+use download::{DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState};
+use folder::{DATA_LOCATION, MinecraftLocation};
+use platform::{DELIMITER, strip_unc_prefix};
+use shared::HTTP_CLIENT;
+use version::{Version, resolve_libraries};
 use zip::ZipArchive;
 
 use crate::{

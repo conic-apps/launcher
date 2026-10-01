@@ -19,7 +19,7 @@
 //!   * [`session`] is the `localStorage` entry the store kept its position in.
 //!
 //! The listing itself is the original's, unchanged, and the folder it reads is
-//! the shared one (`slint_folder::DATA_LOCATION.music`), so both frontends see
+//! the shared one (`folder::DATA_LOCATION.music`), so both frontends see
 //! the same files.
 
 use std::path::Path;
@@ -49,7 +49,7 @@ pub struct MusicFile {
 
 /// Lists all supported audio files inside the music directory.
 pub fn list_music_files() -> Result<Vec<MusicFile>> {
-    let entries = std::fs::read_dir(&slint_folder::DATA_LOCATION.music)?;
+    let entries = std::fs::read_dir(&folder::DATA_LOCATION.music)?;
     let mut files = Vec::new();
     for entry in entries {
         let entry = match entry {

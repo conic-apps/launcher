@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The music "script": drives [`slint_music::Player`] and pushes what it reports
+//! The music "script": drives [`music::Player`] and pushes what it reports
 //! into the `MusicState` global (src/store/music.ts + src/overlays/MusicPlayer.vue
 //! + src/components/BeatMap.vue).
 //!
@@ -34,7 +34,7 @@ use crate::slint_backend::{App, AppConfig, MusicState, MusicTrack};
 
 /// The cadence the UI is refreshed at.
 ///
-/// The analyser smooths on a 60Hz clock (see `slint_music::player`) and the
+/// The analyser smooths on a 60Hz clock (see `music::player`) and the
 /// visualizer reads it once per frame, so this is the visualizer's frame rate —
 /// the one the Vue gave its canvas through `requestAnimationFrame`. 16ms is also
 /// comfortably faster than the ~4Hz the browser's `ontimeupdate` moved the
@@ -49,14 +49,14 @@ thread_local! {
 }
 
 struct Controller {
-    player: slint_music::Player,
+    player: music::Player,
     beat_map: BeatMap,
     /// The playlist the model was last built from, so the rows are not rebuilt
     /// (and the popup's scroll position dropped) on every tick. The player hands
     /// out an `Arc` that is only replaced when the folder is re-listed, so the
     /// check is a pointer comparison rather than a hundred string comparisons
     /// sixty times a second.
-    playlist: Option<Arc<Vec<slint_music::MusicFile>>>,
+    playlist: Option<Arc<Vec<music::MusicFile>>>,
     /// The volume the device was last given, for the same reason.
     volume: Option<u8>,
     /// The last frame of bar heights, kept so that reading the analyser sixty
@@ -199,7 +199,7 @@ fn format_time(seconds: f64) -> String {
 /// `music.restoreSession()`), in that order: `init` wires the volume and the focus
 /// tracking, `restoreSession` reads the folder and the saved position.
 pub fn setup(ui: &App) {
-    let player = match slint_music::Player::new() {
+    let player = match music::Player::new() {
         Ok(player) => player,
         Err(error) => {
             // The store's `loadTracks` failure path leaves an empty playlist and
@@ -246,7 +246,7 @@ pub fn setup(ui: &App) {
 /// A focus change is the one volume change the store ramps over a second instead
 /// of applying at once — the point being that the user is looking at something
 /// else while it happens.
-pub fn watch_focus(window: &slint_window::WindowService<App>) {
+pub fn watch_focus(window: &window::WindowService<App>) {
     let weak = window.component_weak();
     window.on_focus_changed(move |focused| {
         let Some(ui) = weak.upgrade() else {
@@ -364,7 +364,7 @@ fn register_callbacks(ui: &App) {
     }
     {
         state.on_open_music_folder(|| {
-            let path = slint_folder::DATA_LOCATION.music.clone();
+            let path = folder::DATA_LOCATION.music.clone();
             if let Err(error) = crate::config_bridge::open_external(&path.to_string_lossy()) {
                 log::warn!("failed to open the music folder: {error}");
             }
@@ -423,7 +423,7 @@ fn register_callbacks(ui: &App) {
 }
 
 /// Runs `action` on the player, then refreshes the global.
-fn with_player(weak: &Weak<App>, action: impl FnOnce(&slint_music::Player)) {
+fn with_player(weak: &Weak<App>, action: impl FnOnce(&music::Player)) {
     let Some(ui) = weak.upgrade() else {
         return;
     };

@@ -37,12 +37,12 @@ export component MinecraftChoose inherits ZoomTransition {
     /// the ancient debris for everything older.
     pure function version-icon(kind: string) -> image {
         if kind == "release" {
-            return @image-url("../../../assets/minecraft.webp");
+            return @image-url("../../../assets/images/minecraft.webp");
         }
         if kind == "snapshot" {
-            return @image-url("../../../assets/command-block.webp");
+            return @image-url("../../../assets/images/command-block.webp");
         }
-        return @image-url("../../../assets/ancient-debris.webp");
+        return @image-url("../../../assets/images/ancient-debris.webp");
     }
 
     // ----- version category -----

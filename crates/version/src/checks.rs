@@ -2,9 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use platform::{OsArch, OsFamily, PLATFORM_INFO};
 use regex::Regex;
 use serde_json::Value;
-use slint_platform::{OsArch, OsFamily, PLATFORM_INFO};
 
 /// Check if all the rules in Rule[] are acceptable in certain OS platform and features.
 pub(crate) fn check_allowed(rules: Vec<Value>, enabled_features: &[String]) -> bool {

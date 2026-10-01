@@ -30,13 +30,13 @@ use quilt::QuiltVersionList;
 use serde::Serialize;
 use vanilla::generate_download_info;
 
-use slint_config::{Config, get_system_language};
-use slint_download::progress::DownloadState;
-use slint_download::{Checksum, download_concurrent};
-use slint_folder::{DATA_LOCATION, MinecraftLocation};
-use slint_instance::{Instance, InstanceRuntime, ModLoaderType};
-use slint_shared::HTTP_CLIENT;
-use slint_version::{Version, resolve_version};
+use config::{Config, get_system_language};
+use download::progress::DownloadState;
+use download::{Checksum, download_concurrent};
+use folder::{DATA_LOCATION, MinecraftLocation};
+use instance::{Instance, InstanceRuntime, ModLoaderType};
+use shared::HTTP_CLIENT;
+use version::{Version, resolve_version};
 
 use crate::{forge::ForgeVersionList, vanilla::VersionManifest};
 
@@ -301,14 +301,14 @@ fn print_runtime_info(runtime: &InstanceRuntime) {
 async fn resolve_installer_java(
     config: &Config,
     instance: &Instance,
-) -> Result<slint_java_runtime::ResolvedJava> {
+) -> Result<java_runtime::ResolvedJava> {
     let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
     let raw_version_json = tokio::fs::read_to_string(version_json_path).await?;
     let unresolved_version = serde_json::from_str::<Version>(&raw_version_json)?;
     let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[]).await?;
     Ok(
-        slint_java_runtime::resolve_java_executable(&slint_java_runtime::ResolveJavaOptions {
+        java_runtime::resolve_java_executable(&java_runtime::ResolveJavaOptions {
             instance_java_path: instance.config.launch_config.java_path.clone(),
             prefer_mojang_java: config.prefer_mojang_java,
             disabled_java_runtimes: config.disabled_java_runtime.clone(),

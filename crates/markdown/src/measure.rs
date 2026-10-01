@@ -151,7 +151,7 @@ impl Measurer {
     /// Creates a measurer over the caller's own font collection.
     ///
     /// A Slint app passes the one the renderer draws with:
-    /// `slint_markdown::slint::fontique_011::shared_collection()`, which holds
+    /// `markdown::slint::fontique_011::shared_collection()`, which holds
     /// the families embedded in the UI *and* the script fallbacks an
     /// application registered with it.
     pub fn with_collection(collection: Collection) -> Self {

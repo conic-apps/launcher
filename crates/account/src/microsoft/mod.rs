@@ -4,9 +4,9 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use folder::DATA_LOCATION;
 use log::info;
 use serde::{Deserialize, Serialize};
-use slint_folder::DATA_LOCATION;
 use uuid::Uuid;
 
 use crate::{error::*, microsoft::account_profile_step::Profile};

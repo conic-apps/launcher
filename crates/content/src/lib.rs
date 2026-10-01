@@ -36,7 +36,7 @@
 
 use std::path::{Path, PathBuf};
 
-use slint_folder::DATA_LOCATION;
+use folder::DATA_LOCATION;
 
 pub mod error;
 pub mod favorites;

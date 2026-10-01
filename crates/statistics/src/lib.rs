@@ -11,8 +11,8 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
-use slint_folder::DATA_LOCATION;
 use uuid::Uuid;
 
 use error::*;

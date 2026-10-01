@@ -20,7 +20,7 @@ use std::{
 use log::error;
 use once_cell::sync::Lazy;
 
-use slint_platform::{OsFamily, PLATFORM_INFO};
+use platform::{OsFamily, PLATFORM_INFO};
 
 pub static DATA_LOCATION: Lazy<DataLocation> = Lazy::new(DataLocation::default);
 

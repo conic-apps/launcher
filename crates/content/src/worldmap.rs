@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use conic_worldmap::{RenderOptions, RenderRequest, WorldMap};
-use slint_folder::DATA_LOCATION;
+use folder::DATA_LOCATION;
 
 use crate::error::*;
 

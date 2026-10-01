@@ -19,17 +19,19 @@ use std::{
 };
 
 use flate2::read::GzDecoder;
+use folder::DATA_LOCATION;
 use log::info;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use slint_folder::DATA_LOCATION;
 use uuid::Uuid;
 
 mod config;
 mod error;
 
-pub use config::*;
-pub use error::*;
+// `crate::` on both: this crate root declares a `config` module *and* depends
+// on the `config` crate, so a bare `config::` is ambiguous here (E0659).
+pub use crate::config::*;
+pub use crate::error::*;
 
 /// Creates a new game instance using the provided configuration.
 pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {

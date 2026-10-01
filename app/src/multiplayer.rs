@@ -8,7 +8,7 @@
 //!
 //! The Vue keeps the store in Pinia and lets the Tauri plugin own the session
 //! and its event poll thread. Here the poll thread lives in
-//! [`slint_multiplayer::NexusService`] and reports every notice to a sink this
+//! [`multiplayer::NexusService`] and reports every notice to a sink this
 //! module installs; the sink marshals the notice onto the Slint event loop,
 //! which is where the store's `on(...)` handlers (`handle_event`) run.
 //!
@@ -28,7 +28,7 @@ use std::{
 use slint::{ComponentHandle, ModelRc, Timer, TimerMode, VecModel, Weak};
 
 use crate::slint_backend::{App, GameState, MultiplayerPeer, MultiplayerPlayer, MultiplayerState};
-use slint_multiplayer::{NexusService, PeerInfo, SessionEvent, SessionState};
+use multiplayer::{NexusService, PeerInfo, SessionEvent, SessionState};
 
 /// `NAT_POLL_UNKNOWN_INTERVAL` / `NAT_POLL_KNOWN_INTERVAL` of the Vue store.
 const NAT_POLL_UNKNOWN_INTERVAL: Duration = Duration::from_secs(10);
@@ -58,7 +58,7 @@ pub fn setup(ui: &App) {
     // necessarily `Sync`, which the sink type asks for, so it goes behind a
     // mutex.
     let ui_weak = Arc::new(Mutex::new(ui.as_weak()));
-    let sink: slint_multiplayer::EventSink = Arc::new(move |event| {
+    let sink: multiplayer::EventSink = Arc::new(move |event| {
         let weak = ui_weak.lock().map(|weak| weak.clone()).ok();
         if let Some(weak) = weak {
             let _ = weak.upgrade_in_event_loop(move |ui| handle_event(&ui, event));
@@ -82,7 +82,7 @@ pub fn setup(ui: &App) {
         state.on_open(move || {
             let weak_task = weak.clone();
             crate::runtime::spawn(async move {
-                let valid = slint_multiplayer::check_library().await.is_ok();
+                let valid = multiplayer::check_library().await.is_ok();
                 let _ = weak_task.upgrade_in_event_loop(move |ui| {
                     let state = ui.global::<MultiplayerState>();
                     state.set_component(
@@ -222,7 +222,7 @@ pub fn setup(ui: &App) {
         state.on_code_input_changed(move || {
             let Some(ui) = weak.upgrade() else { return };
             let state = ui.global::<MultiplayerState>();
-            let valid = slint_multiplayer::is_room_code_valid(state.get_code_input().as_str());
+            let valid = multiplayer::is_room_code_valid(state.get_code_input().as_str());
             state.set_code_input_valid(valid);
         });
     }
@@ -495,12 +495,12 @@ fn start_download(ui: &App, controller: &Rc<Controller>) {
         state.set_download_max_text("".into());
     }
 
-    let progress = slint_download::progress::DownloadState::default();
+    let progress = download::progress::DownloadState::default();
     let weak = ui.as_weak();
     let task = crate::runtime::spawn({
         let progress = progress.clone();
         async move {
-            let future = slint_multiplayer::download_library(&progress);
+            let future = multiplayer::download_library(&progress);
             tokio::pin!(future);
             let mut ticker = tokio::time::interval(Duration::from_millis(50));
             loop {
@@ -531,7 +531,7 @@ fn cancel_download(controller: &Rc<Controller>) {
 }
 
 /// One tick of the download's progress.
-fn push_download(weak: &Weak<App>, progress: &slint_download::progress::DownloadState) {
+fn push_download(weak: &Weak<App>, progress: &download::progress::DownloadState) {
     let phase = progress
         .phase
         .lock()
@@ -540,8 +540,8 @@ fn push_download(weak: &Weak<App>, progress: &slint_download::progress::Download
     let completed = progress.completed_bytes.load(Ordering::SeqCst);
     let total = progress.total_bytes.load(Ordering::SeqCst);
     let (name, loading, value, max) = match phase {
-        slint_download::progress::DownloadPhase::VerifyExistingFiles => ("prepare", true, 0, 10),
-        slint_download::progress::DownloadPhase::DownloadFiles => (
+        download::progress::DownloadPhase::VerifyExistingFiles => ("prepare", true, 0, 10),
+        download::progress::DownloadPhase::DownloadFiles => (
             if total == 0 { "prepare" } else { "downloading" },
             total == 0,
             completed,

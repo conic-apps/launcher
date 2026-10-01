@@ -7,8 +7,8 @@
 //! in front of it (`offline_commands.rs`) only forwarded their arguments, so
 //! these functions are the whole surface.
 
+use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
-use slint_folder::DATA_LOCATION;
 use uuid::Uuid;
 
 use crate::error::*;

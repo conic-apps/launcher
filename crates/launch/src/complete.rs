@@ -10,12 +10,12 @@ use std::{
 
 use log::{info, warn};
 
-use slint_config::download::DownloadConfig;
-use slint_download::progress::DownloadState;
-use slint_folder::{DATA_LOCATION, MinecraftLocation};
-use slint_install::vanilla::{generate_assets_downloads, generate_libraries_downloads};
-use slint_instance::Instance;
-use slint_version::{Version, resolve_version};
+use config::download::DownloadConfig;
+use download::progress::DownloadState;
+use folder::{DATA_LOCATION, MinecraftLocation};
+use install::vanilla::{generate_assets_downloads, generate_libraries_downloads};
+use instance::Instance;
+use version::{Version, resolve_version};
 
 use crate::error::*;
 
@@ -102,7 +102,7 @@ async fn complete_assets_files(
     .await?;
     if let Some(asset_index) = resolved_version.asset_index {
         let assets_downloads = generate_assets_downloads(minecraft_location, &asset_index).await?;
-        slint_download::download_concurrent(assets_downloads, &progress, config).await?;
+        download::download_concurrent(assets_downloads, &progress, config).await?;
     };
     Ok(())
 }
@@ -124,7 +124,7 @@ async fn complete_libraries_files(
     .await?;
     let library_downloads =
         generate_libraries_downloads(minecraft_location, &resolved_version.libraries);
-    slint_download::download_concurrent(library_downloads, &progress, config).await?;
+    download::download_concurrent(library_downloads, &progress, config).await?;
     Ok(())
 }
 
@@ -141,7 +141,7 @@ async fn complete_java_runtime_files(
         return Ok(());
     }
     info!("Checking and completing Mojang-provided Java runtime");
-    slint_install::java::install_for_instance(instance, progress, config).await?;
+    install::java::install_for_instance(instance, progress, config).await?;
     info!("Saving Java runtime lock file");
     let _ = save_lock_file(&lock_file);
     Ok(())

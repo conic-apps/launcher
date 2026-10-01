@@ -26,12 +26,12 @@ use std::{
 use slint::{ComponentHandle, Weak};
 
 use crate::slint_backend::{App, Dialogs, GameState, LaunchState, Navigation};
-use slint_account::Account;
-use slint_config::Config;
-use slint_download::progress::{DownloadPhase, DownloadState};
-use slint_install::{InstallEvent, ModLoaderProgress};
-use slint_instance::Instance;
-use slint_launch::LaunchEvent;
+use account::Account;
+use config::Config;
+use download::progress::{DownloadPhase, DownloadState};
+use install::{InstallEvent, ModLoaderProgress};
+use instance::Instance;
+use launch::LaunchEvent;
 
 thread_local! {
     /// The app's shared config, for the event-loop half of the account refresh.
@@ -125,7 +125,7 @@ impl LaunchController {
 }
 
 /// Registers the launch view's callbacks.
-pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
+pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     SHARED_CONFIG.with(|slot| *slot.borrow_mut() = Some(Rc::clone(&config)));
     let controller = Rc::new(RefCell::new(LaunchController::new()));
     CONTROLLER.with(|cell| *cell.borrow_mut() = Some(Rc::clone(&controller)));
@@ -155,7 +155,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             // in a Tauri command, and the state is reset behind that read.
             let weak = weak.clone();
             crate::runtime::spawn(async move {
-                let instance = slint_instance::get_instance_by_id(&current_id).await;
+                let instance = instance::get_instance_by_id(&current_id).await;
                 let flow_weak = weak.clone();
                 let flow_config = config_snapshot.clone();
                 let _ = weak.upgrade_in_event_loop(move |ui| {
@@ -278,7 +278,7 @@ fn reset_state(ui: &App, instance: Option<&Instance>, config: &Config) {
 async fn run_flow(weak: Weak<App>, run: Run, mut config: Config, instance: Option<Instance>) {
     log::info!(target: "launch", "launch flow started");
     // `if (configStore.language !== "zh_cn" && accountStore.microsoft.length === 0)`.
-    let accounts = slint_account::list_accounts();
+    let accounts = account::list_accounts();
     if config.language.as_deref() != Some("zh_cn") && accounts.microsoft.is_empty() {
         log::info!(target: "launch", "refused: no Microsoft account and the language is not zh_cn");
         show_dialog(&weak, &run, Dialog::NoMicrosoftAccount);
@@ -383,13 +383,13 @@ enum Failure {
 }
 
 impl Failure {
-    fn from_install(error: slint_install::Error) -> Self {
+    fn from_install(error: install::Error) -> Self {
         Self::Message(error.to_string())
     }
 
-    fn from_launch(error: slint_launch::Error) -> Self {
+    fn from_launch(error: launch::Error) -> Self {
         match error {
-            slint_launch::Error::NoSuitableJavaRuntime => Self::NoSuitableJava,
+            launch::Error::NoSuitableJavaRuntime => Self::NoSuitableJava,
             other => Self::Message(other.to_string()),
         }
     }
@@ -429,7 +429,7 @@ fn store_account(weak: &Weak<App>, run: &Run, account: Account) {
         SHARED_CONFIG.with(|slot| {
             if let Some(config) = slot.borrow().as_ref() {
                 config.borrow_mut().current_account = Some(account.clone());
-                if let Err(error) = slint_config::save_config(&config.borrow()) {
+                if let Err(error) = config::save_config(&config.borrow()) {
                     log::warn!("failed to save the refreshed account: {error}");
                 }
             }
@@ -475,22 +475,22 @@ async fn refresh_account(
 
     match account {
         Account::Microsoft(account) => {
-            let refreshed = slint_account::microsoft::refresh_account(account.profile.uuid, false)
+            let refreshed = account::microsoft::refresh_account(account.profile.uuid, false)
                 .await
                 .map_err(|error| error.to_string())?;
             Ok(Some(Account::Microsoft(refreshed)))
         }
         Account::Yggdrasil(account) => {
-            if slint_account::yggdrasil::yggdrasil_user_api::validate(account.clone())
+            if account::yggdrasil::yggdrasil_user_api::validate(account.clone())
                 .await
                 .map_err(|error| error.to_string())?
             {
                 return Ok(None);
             }
-            let refreshed = slint_account::yggdrasil::yggdrasil_user_api::refresh(account.clone())
+            let refreshed = account::yggdrasil::yggdrasil_user_api::refresh(account.clone())
                 .await
                 .map_err(|error| error.to_string())?;
-            slint_account::yggdrasil::update_account(refreshed.identifier, refreshed.clone())
+            account::yggdrasil::update_account(refreshed.identifier, refreshed.clone())
                 .await
                 .map_err(|error| error.to_string())?;
             Ok(Some(Account::Yggdrasil(refreshed)))
@@ -506,7 +506,7 @@ async fn install_game(
     run: &Run,
     config: Config,
     instance: Instance,
-) -> Result<(), slint_install::Error> {
+) -> Result<(), install::Error> {
     let loader = instance
         .config
         .runtime
@@ -521,7 +521,7 @@ async fn install_game(
         loader
     );
     let status = Arc::new(Mutex::new(InstallEvent::Prepare));
-    let future = slint_install::install(config, instance, Arc::clone(&status));
+    let future = install::install(config, instance, Arc::clone(&status));
     tokio::pin!(future);
     let mut ticker = tokio::time::interval(Duration::from_millis(100));
     // The change detection has to run on plain numbers: an `InstallEvent` holds
@@ -779,9 +779,9 @@ async fn launch_game(
     run: &Run,
     config: Config,
     instance: Instance,
-) -> Result<(), slint_launch::Error> {
+) -> Result<(), launch::Error> {
     let status = Arc::new(Mutex::new(LaunchEvent::Prepare));
-    let future = slint_launch::launch(config, instance, Arc::clone(&status));
+    let future = launch::launch(config, instance, Arc::clone(&status));
     tokio::pin!(future);
     let mut ticker = tokio::time::interval(Duration::from_millis(100));
     let mut last: Option<LaunchKey> = None;

@@ -55,15 +55,15 @@ export component ModLoaderChoose inherits ZoomTransition {
 
     pure function loader-icon(loader-type: string) -> image {
         if loader-type == "Fabric" {
-            return @image-url("../../../assets/fabric.webp");
+            return @image-url("../../../assets/images/fabric.webp");
         }
         if loader-type == "Quilt" {
-            return @image-url("../../../assets/quilt.svg");
+            return @image-url("../../../assets/images/quilt.svg");
         }
         if loader-type == "Forge" {
-            return @image-url("../../../assets/forge.svg");
+            return @image-url("../../../assets/images/forge.svg");
         }
-        return @image-url("../../../assets/neoforge.png");
+        return @image-url("../../../assets/images/neoforge.png");
     }
 
     // A row is 54px tall (see `BaseListItem`), which is what lets the list's

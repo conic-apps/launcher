@@ -61,15 +61,15 @@ pub enum Error {
     ),
 }
 
-impl From<slint_download::Error> for Error {
-    fn from(value: slint_download::Error) -> Self {
+impl From<download::Error> for Error {
+    fn from(value: download::Error) -> Self {
         match value {
-            slint_download::Error::Io(error) => Self::Io(error),
-            slint_download::Error::ChecksumMissmatch(error) => Self::ChecksumMissmatch(error),
-            slint_download::Error::Network(error) => Self::Network(error),
-            slint_download::Error::UrlParse(error) => Self::UrlParse(error),
-            slint_download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
-            slint_download::Error::Aborted(error) => Self::Aborted(error),
+            download::Error::Io(error) => Self::Io(error),
+            download::Error::ChecksumMissmatch(error) => Self::ChecksumMissmatch(error),
+            download::Error::Network(error) => Self::Network(error),
+            download::Error::UrlParse(error) => Self::UrlParse(error),
+            download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
+            download::Error::Aborted(error) => Self::Aborted(error),
         }
     }
 }

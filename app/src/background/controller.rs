@@ -286,7 +286,7 @@ impl SkyCache {
 }
 
 pub struct Controller {
-    config: Rc<RefCell<slint_config::Config>>,
+    config: Rc<RefCell<config::Config>>,
     /// The current instance, as `(id, use_as_launcher_background, has_background)`.
     instance: Option<(String, bool, bool)>,
     /// What the app's state resolves to, and what is fully on screen.
@@ -336,7 +336,7 @@ pub struct Controller {
 }
 
 impl Controller {
-    fn new(ui: &App, config: Rc<RefCell<slint_config::Config>>) -> Self {
+    fn new(ui: &App, config: Rc<RefCell<config::Config>>) -> Self {
         let gpu_shared = gl::Shared::new();
         let gpu = Arc::clone(&gpu_shared.gpu);
         Self {
@@ -373,7 +373,7 @@ impl Controller {
             && *use_as_launcher
             && *has_background
         {
-            let path = slint_instance::get_background_path(id);
+            let path = instance::get_background_path(id);
             if path.is_file() {
                 return Source::Image {
                     path,
@@ -383,7 +383,7 @@ impl Controller {
         }
         let config = self.config.borrow();
         if let Some(name) = &config.appearance.background_image {
-            let path = slint_folder::DATA_LOCATION.root.join(name);
+            let path = folder::DATA_LOCATION.root.join(name);
             if path.is_file() {
                 return Source::Image { path, global: true };
             }
@@ -982,7 +982,7 @@ fn decode(path: &PathBuf) -> Result<Decoded, String> {
 }
 
 /// The Rust entry points for the rest of the app.
-pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
+pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     let controller = Rc::new(RefCell::new(Controller::new(ui, config)));
     CONTROLLER.with(|slot| *slot.borrow_mut() = Some(Rc::clone(&controller)));
     install_window_hook(ui);
@@ -1076,14 +1076,14 @@ pub fn palette_changed(ui: &App) {
 /// underneath the content never sees a move, because any `TouchArea` the
 /// pointer is over accepts the event and ends the walk. The winit backend
 /// hands out its window events instead, and these are window-wide — through
-/// `slint_window::on_window_event`, which shares the backend's single event
+/// `window::on_window_event`, which shares the backend's single event
 /// filter with the window controls and the music player rather than taking it
 /// over from them.
 fn install_window_hook(ui: &App) {
     use winit::event::WindowEvent;
 
     let weak = ui.as_weak();
-    slint_window::on_window_event(ui, move |event| {
+    window::on_window_event(ui, move |event| {
         match event {
             WindowEvent::CursorMoved { position, .. } => {
                 POINTER.with(|pointer| {

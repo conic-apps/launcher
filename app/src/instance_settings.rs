@@ -18,8 +18,8 @@ use slint::{ComponentHandle, Image, SharedPixelBuffer, Timer, TimerMode};
 use crate::config_bridge;
 use crate::game::format_play_time;
 use crate::slint_backend::{App, DeleteInstanceState, Dialogs, GameState, InstanceSettingsState};
-use slint_config::launch::{LaunchConfig, Server};
-use slint_instance::{Instance, InstanceConfig, InstanceLaunchConfig};
+use config::launch::{LaunchConfig, Server};
+use instance::{Instance, InstanceConfig, InstanceLaunchConfig};
 
 /// How long an edit waits before it reaches `instance.toml`.
 ///
@@ -46,7 +46,7 @@ pub fn open(ui: &App) {
     }
     let weak = ui.as_weak();
     crate::runtime::spawn(async move {
-        let Some(instance) = slint_instance::get_instance_by_id(id.as_str()).await else {
+        let Some(instance) = instance::get_instance_by_id(id.as_str()).await else {
             log::warn!("the instance settings were opened without a current instance");
             return;
         };
@@ -239,7 +239,7 @@ fn schedule_save(save_timer: &Rc<Timer>, ui: &App, config: InstanceConfig, touch
         let weak = weak.clone();
         let id = id.clone();
         crate::runtime::spawn(async move {
-            if let Err(error) = slint_instance::update_instance(config, &id).await {
+            if let Err(error) = instance::update_instance(config, &id).await {
                 log::error!("failed to save the instance '{id}': {error}");
                 return;
             }
@@ -255,7 +255,7 @@ fn schedule_save(save_timer: &Rc<Timer>, ui: &App, config: InstanceConfig, touch
 }
 
 /// Registers every instance settings callback, and the delete dialog's.
-pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
+pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     let state = ui.global::<InstanceSettingsState>();
     let save_timer = Rc::new(Timer::default());
 
@@ -324,7 +324,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let Some(instance) = current_instance() else {
                 return;
             };
-            let defaults = slint_config::Config::default().launch;
+            let defaults = config::Config::default().launch;
             let state = ui.global::<InstanceSettingsState>();
             // From the overlay's own fields, for the same reason the switch above
             // is: this write replaces whatever was waiting on the debounce.
@@ -365,13 +365,13 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let id = id.to_string();
             let weak = weak.clone();
             crate::runtime::spawn(async move {
-                if let Err(error) = slint_instance::add_background_image(&path, &id).await {
+                if let Err(error) = instance::add_background_image(&path, &id).await {
                     log::error!("failed to set the background of '{id}': {error}");
                     return;
                 }
                 // `has_background` is the file's existence, so the instance has
                 // to be read again rather than patched.
-                let Some(instance) = slint_instance::get_instance_by_id(&id).await else {
+                let Some(instance) = instance::get_instance_by_id(&id).await else {
                     return;
                 };
                 let _ = weak.upgrade_in_event_loop(move |ui| {
@@ -399,7 +399,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let id = id.to_string();
             let weak = weak.clone();
             crate::runtime::spawn(async move {
-                if let Err(error) = slint_instance::remove_background(&id).await {
+                if let Err(error) = instance::remove_background(&id).await {
                     log::error!("failed to remove the background of '{id}': {error}");
                     return;
                 }
@@ -428,7 +428,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let id = id.to_string();
             let weak = weak.clone();
             crate::runtime::spawn(async move {
-                let Some(instance) = slint_instance::get_instance_by_id(&id).await else {
+                let Some(instance) = instance::get_instance_by_id(&id).await else {
                     return;
                 };
                 let _ = weak.upgrade_in_event_loop(move |ui| open_delete_dialog(&ui, &instance));
@@ -502,7 +502,7 @@ fn load_background(instance: &Instance) -> Image {
     if !instance.has_background {
         return Image::default();
     }
-    let path = slint_instance::get_background_path(&instance.id);
+    let path = instance::get_background_path(&instance.id);
     let decode = || {
         let bytes = std::fs::read(&path).ok()?;
         let rgba = image::load_from_memory(&bytes).ok()?.to_rgba8();
@@ -546,7 +546,7 @@ fn open_delete_dialog(ui: &App, instance: &Instance) {
     delete.set_background(load_background(instance));
     // `calculatePlaytime` on the instance being deleted, which the dialog's
     // `watch(..., { immediate: true })` resolves before it can show anything.
-    let playtime = slint_instance::calculate_playtime(&instance.id).unwrap_or_default();
+    let playtime = instance::calculate_playtime(&instance.id).unwrap_or_default();
     let (kind, value) = format_play_time(playtime);
     delete.set_playtime_kind(kind.into());
     delete.set_playtime_value(value.into());
@@ -586,7 +586,7 @@ fn setup_delete_dialog(ui: &App) {
             // the UI thread too.
             let weak = weak.clone();
             crate::runtime::spawn(async move {
-                let result = slint_instance::delete_instance(&id).await;
+                let result = instance::delete_instance(&id).await;
                 let _ = weak.upgrade_in_event_loop(move |ui| {
                     ui.global::<DeleteInstanceState>().set_deleting(false);
                     match result {

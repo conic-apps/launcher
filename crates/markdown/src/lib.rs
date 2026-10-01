@@ -19,7 +19,7 @@
 //! `for item in items` and three cases: a run of text, a box, a bitmap.
 //!
 //! ```no_run
-//! use slint_markdown::{Renderer, SourceFormat};
+//! use markdown::{Renderer, SourceFormat};
 //!
 //! let mut renderer = Renderer::new();
 //! renderer.set_source("# Conic Launcher\n\nA **mod** loader.\n", SourceFormat::Markdown);
@@ -91,7 +91,7 @@ pub mod fonts {
 /// ```no_run
 /// // In the caller's build.rs, with `slint-build` as a build dependency:
 /// //   slint_build::CompilerConfiguration::new()
-/// //       .with_include_paths(vec![slint_markdown::ui_path()])
+/// //       .with_include_paths(vec![markdown::ui_path()])
 /// ```
 ///
 /// The crate ships them as data rather than compiling them itself: a Slint
@@ -135,7 +135,7 @@ impl Renderer {
     /// application is the one the renderer draws with:
     ///
     /// ```ignore
-    /// let renderer = slint_markdown::Renderer::with_collection(
+    /// let renderer = markdown::Renderer::with_collection(
     ///     slint::fontique_011::shared_collection(),
     /// );
     /// ```

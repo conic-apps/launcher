@@ -19,9 +19,9 @@ use slint::{ComponentHandle, Model, ModelRc, SharedString, Timer, TimerMode, Vec
 use crate::slint_backend::{
     AccountItem, App, Dialogs, GameRow, GameState, MultiplayerState, Navigation,
 };
+use account::Account;
+use instance::{Instance, ModLoaderType, SortBy};
 use slint::Image;
-use slint_account::Account;
-use slint_instance::{Instance, ModLoaderType, SortBy};
 
 use crate::instance_view::{self, GroupMode, InstanceViewState, SortMode as SavedSortMode};
 
@@ -54,7 +54,7 @@ pub(crate) struct RelativeTime {
 }
 
 struct GameController {
-    config: Rc<RefCell<slint_config::Config>>,
+    config: Rc<RefCell<config::Config>>,
     instances: Vec<Instance>,
     current_id: Option<String>,
     sort: SortBy,
@@ -63,7 +63,7 @@ struct GameController {
     expanded: HashMap<String, bool>,
     accounts: Vec<Account>,
     playtime: HashMap<String, u64>,
-    content: HashMap<String, slint_content::ContentCounts>,
+    content: HashMap<String, content::ContentCounts>,
     /// The account heads the footer and its switcher draw, by `<key>@<size>`.
     /// Memoised because a skin is a base64 PNG (or a bundled webp) that has to
     /// be decoded and cropped, and `apply` runs on every list change.
@@ -85,7 +85,7 @@ struct GameController {
 }
 
 impl GameController {
-    fn new(config: Rc<RefCell<slint_config::Config>>) -> Self {
+    fn new(config: Rc<RefCell<config::Config>>) -> Self {
         let rows_model = Rc::new(VecModel::<GameRow>::default());
         let reveal_timer = Timer::default();
         {
@@ -145,9 +145,7 @@ impl GameController {
         let sort = controller().borrow().sort;
         let weak = ui.as_weak();
         crate::runtime::spawn(async move {
-            let instances = slint_instance::list_instances(sort)
-                .await
-                .unwrap_or_default();
+            let instances = instance::list_instances(sort).await.unwrap_or_default();
             let _ = weak.upgrade_in_event_loop(move |ui| {
                 let controller = controller();
                 controller.borrow_mut().set_instances(instances);
@@ -179,7 +177,7 @@ impl GameController {
     }
 
     fn reload_accounts(&mut self) {
-        let accounts = slint_account::list_accounts();
+        let accounts = account::list_accounts();
         self.accounts.clear();
         // The set of accounts is what the cache is keyed on.
         self.avatars.clear();
@@ -200,16 +198,16 @@ impl GameController {
         if let Some(value) = self.playtime.get(id) {
             return *value;
         }
-        let value = slint_instance::calculate_playtime(id).unwrap_or_default();
+        let value = instance::calculate_playtime(id).unwrap_or_default();
         self.playtime.insert(id.to_string(), value);
         value
     }
 
-    fn content(&mut self, id: &str) -> slint_content::ContentCounts {
+    fn content(&mut self, id: &str) -> content::ContentCounts {
         if let Some(value) = self.content.get(id) {
             return *value;
         }
-        let value = slint_content::content_counts(id);
+        let value = content::content_counts(id);
         self.content.insert(id.to_string(), value);
         value
     }
@@ -775,7 +773,7 @@ pub(crate) fn relative_time(timestamp: Option<u64>) -> RelativeTime {
 }
 
 /// Registers every game view callback on the `GameState` global.
-pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
+pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     let controller = Rc::new(RefCell::new(GameController::new(config)));
     // The list model is handed to the view once and then kept in sync in place by
     // `sync_rows`, so the rows the view renders are never recreated.
@@ -886,7 +884,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let Some(account) = account else { return };
             let config_rc = controller.borrow().config.clone();
             config_rc.borrow_mut().current_account = Some(account);
-            let _ = slint_config::save_config(&config_rc.borrow());
+            let _ = config::save_config(&config_rc.borrow());
             if let Some(ui) = weak.upgrade() {
                 controller.borrow_mut().apply(&ui);
             }
@@ -909,7 +907,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             };
             let weak = weak.clone();
             crate::runtime::spawn(async move {
-                if let Err(error) = slint_instance::remove_install_lock(&id).await {
+                if let Err(error) = instance::remove_install_lock(&id).await {
                     log::error!("failed to remove install lock: {error}");
                     return;
                 }
@@ -926,7 +924,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let Some(id) = controller.borrow().current_id.clone() else {
                 return;
             };
-            let path = slint_folder::DATA_LOCATION.get_instance_root(&id);
+            let path = folder::DATA_LOCATION.get_instance_root(&id);
             if let Err(error) = crate::config_bridge::open_external(&path.to_string_lossy()) {
                 log::warn!("failed to open instance folder: {error}");
             }
@@ -950,7 +948,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
             let id = instance.id;
             let weak = weak.clone();
             crate::runtime::spawn(async move {
-                if let Err(error) = slint_instance::update_instance(config, &id).await {
+                if let Err(error) = instance::update_instance(config, &id).await {
                     log::error!("failed to update instance: {error}");
                     return;
                 }
@@ -1058,11 +1056,11 @@ fn account_avatar(
 /// The precedence is Microsoft, then offline, then Yggdrasil — note that it is
 /// *not* the order `reload_accounts` pushes them into the footer's list in. The
 /// original runs this only after an add or a delete, never at startup.
-pub fn select_first_account_if_none(config: &Rc<RefCell<slint_config::Config>>) {
+pub fn select_first_account_if_none(config: &Rc<RefCell<config::Config>>) {
     if config.borrow().current_account.is_some() {
         return;
     }
-    let accounts = slint_account::list_accounts();
+    let accounts = account::list_accounts();
     let selected = accounts
         .microsoft
         .first()
@@ -1071,5 +1069,5 @@ pub fn select_first_account_if_none(config: &Rc<RefCell<slint_config::Config>>) 
         .or_else(|| accounts.offline.first().cloned().map(Account::Offline))
         .or_else(|| accounts.yggdrasil.first().cloned().map(Account::Yggdrasil));
     config.borrow_mut().current_account = selected;
-    let _ = slint_config::save_config(&config.borrow());
+    let _ = config::save_config(&config.borrow());
 }

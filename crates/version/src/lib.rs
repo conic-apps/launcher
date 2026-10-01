@@ -16,7 +16,7 @@ use serde::Serialize;
 use serde_json::Value;
 use std::{collections::HashMap, fs::read_to_string, path::PathBuf};
 
-use slint_folder::MinecraftLocation;
+use folder::MinecraftLocation;
 
 pub mod argument;
 mod checks;

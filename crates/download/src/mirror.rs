@@ -10,9 +10,9 @@ use std::{
     },
 };
 
+use config::download::MirrorConfig;
 use log::debug;
 use serde::{Deserialize, Serialize};
-use slint_config::download::MirrorConfig;
 
 pub(crate) struct Mirror(pub(crate) String, pub(crate) Arc<AtomicU64>);
 

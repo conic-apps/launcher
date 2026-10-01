@@ -9,7 +9,7 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use crate::error::*;
-use slint_shared::HTTP_CLIENT;
+use shared::HTTP_CLIENT;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Skin {

@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use base64::{Engine, engine::general_purpose};
 use fastnbt::Value;
-use slint_folder::DATA_LOCATION;
+use folder::DATA_LOCATION;
 
 use crate::error::*;
 

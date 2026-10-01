@@ -7,8 +7,8 @@
 
 use std::{cell::RefCell, path::PathBuf, rc::Rc, time::Duration};
 
+use java_runtime::{JavaRuntime as ScannedJava, ScanOptions, scan_java_runtimes_cached};
 use slint::{ComponentHandle, ModelRc, SharedString, Timer, TimerMode, VecModel};
-use slint_java_runtime::{JavaRuntime as ScannedJava, ScanOptions, scan_java_runtimes_cached};
 
 use crate::config_bridge;
 use crate::slint_backend::{App, AppConfig, GameState, JavaRuntime};
@@ -59,7 +59,7 @@ fn java_model(runtimes: &[ScannedJava], disabled: &[String]) -> ModelRc<JavaRunt
 }
 
 /// Registers every settings callback on the `AppConfig` global.
-pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<Timer>) {
+pub fn wire(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>) {
     let settings = ui.global::<AppConfig>();
     // `CONIC_LOCALE` forces the translation and disables runtime switching.
     let forced_locale = std::env::var("CONIC_LOCALE").is_ok();
@@ -103,7 +103,7 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
                 Duration::from_millis(400),
                 move || {
                     let config = shared.borrow();
-                    if let Err(error) = slint_config::save_config(&config) {
+                    if let Err(error) = config::save_config(&config) {
                         log::error!("failed to save config: {error}");
                     }
                 },
@@ -119,8 +119,8 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
 
     settings.on_open_path(move |key| {
         let path = match key.as_str() {
-            "music" => slint_folder::DATA_LOCATION.music.clone(),
-            "logs" => slint_folder::DATA_LOCATION.logs.clone(),
+            "music" => folder::DATA_LOCATION.music.clone(),
+            "logs" => folder::DATA_LOCATION.logs.clone(),
             other => PathBuf::from(other.to_string()),
         };
         if let Err(error) = config_bridge::open_external(&path.to_string_lossy()) {
@@ -136,7 +136,7 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
             let Some(path) = config_bridge::pick_image_file() else {
                 return;
             };
-            match slint_config::set_background_image(&path) {
+            match config::set_background_image(&path) {
                 Ok(filename) => {
                     let mut config = shared.borrow_mut();
                     config.appearance.background_image = Some(filename.clone());
@@ -156,7 +156,7 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
                         Duration::from_millis(50),
                         move || {
                             let config = shared.borrow();
-                            let _ = slint_config::save_config(&config);
+                            let _ = config::save_config(&config);
                         },
                     );
                 }
@@ -169,7 +169,7 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
         let shared = Rc::clone(&shared);
         let weak = ui.as_weak();
         settings.on_remove_background_image(move || {
-            if let Err(error) = slint_config::remove_background_image() {
+            if let Err(error) = config::remove_background_image() {
                 log::warn!("failed to remove background image: {error}");
             }
             if let Some(ui) = weak.upgrade() {
@@ -182,7 +182,7 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
                 crate::background::controller::config_changed(&ui);
             }
             let config = shared.borrow();
-            let _ = slint_config::save_config(&config);
+            let _ = config::save_config(&config);
         });
     }
 
@@ -206,7 +206,7 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
             crate::runtime::spawn_blocking(move || {
                 let options = ScanOptions {
                     extra_home_dirs: Vec::new(),
-                    managed_dirs: vec![slint_folder::DATA_LOCATION.runtime.clone()],
+                    managed_dirs: vec![folder::DATA_LOCATION.runtime.clone()],
                 };
                 // The Vue lists the system runtimes only:
                 // `result.runtimes.filter((runtime) => !runtime.is_managed)`.
@@ -251,7 +251,7 @@ pub fn wire(ui: &App, shared: Rc<RefCell<slint_config::Config>>, save_timer: Rc<
                 settings.set_java_runtimes(model);
             }
             let config = shared.borrow();
-            let _ = slint_config::save_config(&config);
+            let _ = config::save_config(&config);
         });
     }
 }

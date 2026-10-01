@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::error::*;
-use slint_shared::HTTP_CLIENT;
+use shared::HTTP_CLIENT;
 
 pub(super) struct XboxAuth {
     pub(super) xbl_token: String,

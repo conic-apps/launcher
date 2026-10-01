@@ -27,7 +27,7 @@
 //! # Use
 //!
 //! ```no_run
-//! let Ok(single_instance) = slint_single_instance::try_acquire() else {
+//! let Ok(single_instance) = single_instance::try_acquire() else {
 //!     // Another instance is running and has just been told about this launch.
 //!     return;
 //! };

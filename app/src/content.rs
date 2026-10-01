@@ -34,9 +34,9 @@ use crate::slint_backend::{
     App, AppConfig, CardTag, ContentCard, ContentSearch, ContentState, DeleteSaveState, Dialogs,
     FilterChip, FilterRow, GalleryShot, GameState, MarkdownImage, MdChunk, MdItem, PageButton,
 };
-use slint_content::mods::remote::RemoteModPlatform;
-use slint_content::mods::{ModLoader, ResolvedMod};
-use slint_instance::InstanceRuntime;
+use content::mods::remote::RemoteModPlatform;
+use content::mods::{ModLoader, ResolvedMod};
+use instance::InstanceRuntime;
 
 /// How many results a remote page holds (`useSearchPagination.ts`'s `PAGE_SIZE`).
 const PAGE_SIZE: usize = 20;
@@ -825,7 +825,7 @@ pub fn setup(ui: &App) {
             // may not cross into the spawned task.
             let weak = ui.as_weak();
             crate::runtime::spawn(async move {
-                if let Err(error) = slint_content::saves::delete_save(&instance, &folder).await {
+                if let Err(error) = content::saves::delete_save(&instance, &folder).await {
                     log::error!("failed to delete the save {folder}: {error}");
                     return;
                 }
@@ -873,7 +873,7 @@ pub fn setup(ui: &App) {
             // may not cross into the spawned task.
             let weak = ui.as_weak();
             crate::runtime::spawn(async move {
-                let result = slint_content::saves::delete_save(&instance, &folder).await;
+                let result = content::saves::delete_save(&instance, &folder).await;
                 let _ = weak.upgrade_in_event_loop(move |ui| {
                     ui.global::<DeleteSaveState>().set_deleting(false);
                     // The Vue caught the failure, logged it and left the dialog
@@ -916,9 +916,9 @@ pub fn setup(ui: &App) {
                 added
             };
             let write = if added {
-                slint_content::favorites::add_favorite(platform.key().into(), kind.into(), id)
+                content::favorites::add_favorite(platform.key().into(), kind.into(), id)
             } else {
-                slint_content::favorites::remove_favorite(platform.key().into(), kind.into(), id)
+                content::favorites::remove_favorite(platform.key().into(), kind.into(), id)
             };
             if let Err(error) = write {
                 log::error!("failed to write favorites: {error}");
@@ -1121,7 +1121,7 @@ pub fn setup(ui: &App) {
                 .map(|mod_info| mod_info.path.to_string_lossy().to_string())
                 .collect();
             let instance = controller().borrow().instance_id.clone();
-            match slint_content::mods::remote::remove_mod_files(&instance, files) {
+            match content::mods::remote::remove_mod_files(&instance, files) {
                 Ok(()) => {
                     refresh_installed(&ui);
                     load_local_mods(&ui);
@@ -1160,7 +1160,7 @@ pub fn setup(ui: &App) {
     {
         let weak = ui.as_weak();
         crate::runtime::spawn(async move {
-            let favorites = slint_content::favorites::list_favorites().unwrap_or_default();
+            let favorites = content::favorites::list_favorites().unwrap_or_default();
             let keys: HashSet<String> = favorites
                 .into_iter()
                 .map(|favorite| {
@@ -1190,7 +1190,7 @@ fn favorite_key(platform: &str, kind: &str, id: &str) -> String {
 /// list opens rather than on the UI thread. An instance that cannot be read
 /// seeds nothing, which is the empty key the seeding below compares against.
 async fn instance_runtime(instance_id: &str) -> InstanceRuntime {
-    slint_instance::get_instance_by_id(instance_id)
+    instance::get_instance_by_id(instance_id)
         .await
         .map(|instance| instance.config.runtime)
         .unwrap_or_default()
@@ -1247,7 +1247,7 @@ fn ensure_version_options(ui: &App) {
     }
     let weak = ui.as_weak();
     crate::runtime::spawn(async move {
-        let manifest = match slint_install::get_minecraft_version_list().await {
+        let manifest = match install::get_minecraft_version_list().await {
             Ok(manifest) => manifest,
             Err(error) => {
                 log::warn!(
@@ -1755,12 +1755,10 @@ fn load_saves(ui: &App) {
         let levels = crate::runtime::spawn_blocking({
             let instance = instance.clone();
             move || {
-                slint_content::saves::get_all_levels(&instance).map(|levels| {
+                content::saves::get_all_levels(&instance).map(|levels| {
                     levels
                         .into_iter()
-                        .map(|(folder, root)| {
-                            (folder, slint_content::saves::summarize_level(&root))
-                        })
+                        .map(|(folder, root)| (folder, content::saves::summarize_level(&root)))
                         .collect::<Vec<_>>()
                 })
             }
@@ -1772,7 +1770,7 @@ fn load_saves(ui: &App) {
 
         let mut cards = Vec::new();
         for (folder, level) in levels {
-            let icon = slint_content::saves::get_save_icon(&instance, &folder)
+            let icon = content::saves::get_save_icon(&instance, &folder)
                 .await
                 .ok()
                 .and_then(|data| fetch_icon(&data));
@@ -1799,7 +1797,7 @@ fn load_saves(ui: &App) {
 /// One save's card, from the summary `slint-content` reads out of `level.dat`.
 fn save_card(
     folder: &str,
-    level: &slint_content::saves::LevelSummary,
+    level: &content::saves::LevelSummary,
     icon: Option<PendingImage>,
 ) -> PendingCard {
     let name = level.name.clone().unwrap_or_else(|| folder.to_string());
@@ -1889,7 +1887,7 @@ fn load_local_mods(ui: &App) {
     let weak = ui.as_weak();
     let instance = controller().borrow().instance_id.clone();
     crate::runtime::spawn(async move {
-        let mods = slint_content::mods::remote::parse_mods(&instance).await;
+        let mods = content::mods::remote::parse_mods(&instance).await;
         let cards: Vec<PendingCard> = mods
             .iter()
             // The Vue filters the embedded (jar-in-jar) mods out of the list.
@@ -1976,7 +1974,7 @@ fn load_local_resourcepacks(ui: &App) {
         // Reading a pack means opening a zip, so it is blocking work.
         let packs = crate::runtime::spawn_blocking({
             let instance = instance.clone();
-            move || slint_content::resourcepack::get_instance_resourcepacks(&instance)
+            move || content::resourcepack::get_instance_resourcepacks(&instance)
         })
         .await
         .ok()
@@ -2000,7 +1998,7 @@ fn load_local_resourcepacks(ui: &App) {
     });
 }
 
-fn resourcepack_card(pack: &slint_content::resourcepack::Resourcepack) -> PendingCard {
+fn resourcepack_card(pack: &content::resourcepack::Resourcepack) -> PendingCard {
     let mut tags: Vec<PendingTag> = Vec::new();
     // `formatRange` in `ContentResourcepacksLocal.vue`.
     let min = pack
@@ -2054,14 +2052,14 @@ pub fn refresh_preview_icons(ui: &App, instance_id: &str) {
             let instance = instance.clone();
             move || {
                 let mut saves: Vec<PendingImage> = Vec::new();
-                if let Ok(levels) = slint_content::saves::get_all_levels(&instance) {
+                if let Ok(levels) = content::saves::get_all_levels(&instance) {
                     let mut folders: Vec<String> = levels.keys().cloned().collect();
                     folders.sort();
                     for folder in folders.into_iter().take(PREVIEW_ICONS) {
                         // Blocking: it reads the level's `icon.png` and encodes it.
-                        let Ok(icon) = crate::runtime::block_on(
-                            slint_content::saves::get_save_icon(&instance, &folder),
-                        ) else {
+                        let Ok(icon) = crate::runtime::block_on(content::saves::get_save_icon(
+                            &instance, &folder,
+                        )) else {
                             continue;
                         };
                         if let Some(image) = fetch_icon(&icon) {
@@ -2074,7 +2072,7 @@ pub fn refresh_preview_icons(ui: &App, instance_id: &str) {
                 // completion here — this whole closure is already off the UI
                 // thread.
                 let mods: Vec<PendingImage> =
-                    crate::runtime::block_on(slint_content::mods::remote::parse_mods(&instance))
+                    crate::runtime::block_on(content::mods::remote::parse_mods(&instance))
                         .iter()
                         .filter(|mod_info| !mod_info.embedded)
                         .filter_map(|mod_info| mod_info.icon.as_deref())
@@ -2082,29 +2080,28 @@ pub fn refresh_preview_icons(ui: &App, instance_id: &str) {
                         .filter_map(fetch_icon)
                         .collect();
                 let packs: Vec<PendingImage> =
-                    slint_content::resourcepack::get_instance_resourcepacks(&instance)
+                    content::resourcepack::get_instance_resourcepacks(&instance)
                         .unwrap_or_default()
                         .iter()
                         .filter_map(|pack| pack.icon.as_deref())
                         .take(PREVIEW_ICONS)
                         .filter_map(fetch_icon)
                         .collect();
-                let shots: Vec<PendingImage> =
-                    slint_content::screenshots::list_screenshots(&instance)
-                        .unwrap_or_default()
-                        .iter()
-                        .take(PREVIEW_ICONS)
-                        .filter_map(|path| {
-                            let bytes = std::fs::read(path).ok()?;
-                            let (width, height, rgba) = decode_to_rgba(&bytes)?;
-                            Some(PendingImage {
-                                key: path.clone(),
-                                width,
-                                height,
-                                rgba,
-                            })
+                let shots: Vec<PendingImage> = content::screenshots::list_screenshots(&instance)
+                    .unwrap_or_default()
+                    .iter()
+                    .take(PREVIEW_ICONS)
+                    .filter_map(|path| {
+                        let bytes = std::fs::read(path).ok()?;
+                        let (width, height, rgba) = decode_to_rgba(&bytes)?;
+                        Some(PendingImage {
+                            key: path.clone(),
+                            width,
+                            height,
+                            rgba,
                         })
-                        .collect();
+                    })
+                    .collect();
                 (saves, mods, packs, shots)
             }
         })
@@ -2133,7 +2130,7 @@ fn load_screenshots(ui: &App) {
     let weak = ui.as_weak();
     let instance = controller().borrow().instance_id.clone();
     crate::runtime::spawn(async move {
-        let paths = slint_content::screenshots::list_screenshots(&instance).unwrap_or_default();
+        let paths = content::screenshots::list_screenshots(&instance).unwrap_or_default();
         let images: Vec<PendingImage> = paths
             .iter()
             .filter_map(|path| {
@@ -2468,12 +2465,12 @@ fn ensure_translations(ui: &App, platform: Platform, ids: Vec<String>) {
     let weak = ui.as_weak();
     crate::runtime::spawn(async move {
         let response = match platform {
-            Platform::Modrinth => slint_modrinth::get_project_translations(&missing)
+            Platform::Modrinth => modrinth::get_project_translations(&missing)
                 .await
                 .map_err(|error| error.to_string()),
             Platform::CurseForge => {
                 let ids: Vec<i64> = missing.iter().filter_map(|id| id.parse().ok()).collect();
-                slint_curseforge::get_mod_translations(&ids)
+                curseforge::get_mod_translations(&ids)
                     .await
                     .map_err(|error| error.to_string())
             }
@@ -2590,14 +2587,14 @@ async fn search_modrinth(
                 .collect(),
         );
     }
-    let params = slint_modrinth::SearchParameters {
+    let params = modrinth::SearchParameters {
         query: Some(form.query.trim().to_string()).filter(|query| !query.is_empty()),
         facets: Some(serde_json::to_string(&facets).map_err(|error| error.to_string())?),
         index: None,
         offset: Some(form.page.saturating_sub(1) * PAGE_SIZE),
         limit: Some(PAGE_SIZE),
     };
-    let response = slint_modrinth::search_projects(&params)
+    let response = modrinth::search_projects(&params)
         .await
         .map_err(|error| error.to_string())?;
     let total = response
@@ -2682,7 +2679,7 @@ async fn search_curseforge(
     form: &SearchForm,
 ) -> Result<(Vec<BuiltCard>, usize), String> {
     let mut params = json!({
-        "gameId": slint_curseforge::MINECRAFT_GAME_ID,
+        "gameId": curseforge::MINECRAFT_GAME_ID,
         "classId": kind.curseforge_class(),
         "index": form.page.saturating_sub(1) * PAGE_SIZE,
         "pageSize": PAGE_SIZE,
@@ -2725,7 +2722,7 @@ async fn search_curseforge(
         );
     }
 
-    let response = slint_curseforge::search_mods(&params)
+    let response = curseforge::search_mods(&params)
         .await
         .map_err(|error| error.to_string())?;
     let total = response
@@ -2950,7 +2947,7 @@ struct LoadedDetail {
 async fn load_detail(platform: Platform, id: &str) -> Result<LoadedDetail, String> {
     match platform {
         Platform::Modrinth => {
-            let project = slint_modrinth::get_project(id)
+            let project = modrinth::get_project(id)
                 .await
                 .map_err(|error| error.to_string())?;
             let source_url = project
@@ -3011,7 +3008,7 @@ async fn load_detail(platform: Platform, id: &str) -> Result<LoadedDetail, Strin
             let mod_id: i64 = id
                 .parse()
                 .map_err(|_| "not a CurseForge mod id".to_string())?;
-            let response = slint_curseforge::get_mod(mod_id)
+            let response = curseforge::get_mod(mod_id)
                 .await
                 .map_err(|error| error.to_string())?;
             let mod_info = response.get("data").cloned().unwrap_or(Value::Null);
@@ -3020,10 +3017,9 @@ async fn load_detail(platform: Platform, id: &str) -> Result<LoadedDetail, Strin
                 .and_then(Value::as_str)
                 .unwrap_or_default()
                 .to_string();
-            let description =
-                slint_curseforge::get_mod_description(mod_id, &json!({ "markup": true }))
-                    .await
-                    .map_err(|error| error.to_string())?;
+            let description = curseforge::get_mod_description(mod_id, &json!({ "markup": true }))
+                .await
+                .map_err(|error| error.to_string())?;
             let html = description
                 .get("data")
                 .and_then(Value::as_str)
@@ -3089,7 +3085,7 @@ thread_local! {
 }
 
 struct BodyRenderer {
-    renderer: slint_markdown::Renderer,
+    renderer: markdown::Renderer,
     /// The width the display list was last laid out for, so a repeat of the same
     /// width — which a `changed width` binding produces while nothing has moved —
     /// does not re-measure the document.
@@ -3137,10 +3133,9 @@ impl BodyRenderer {
     /// the engine when the width arrives.
     #[cfg(test)]
     fn for_test() -> Self {
-        let mut renderer =
-            slint_markdown::Renderer::with_collection(slint_markdown::fonts::system());
+        let mut renderer = markdown::Renderer::with_collection(markdown::fonts::system());
         renderer.set_style(
-            slint_markdown::MdStyle::default().with_families(theme_font_family(), "monospace"),
+            markdown::MdStyle::default().with_families(theme_font_family(), "monospace"),
         );
         Self {
             renderer,
@@ -3164,10 +3159,10 @@ impl BodyRenderer {
     /// is that face.
     fn new() -> Self {
         let mut renderer =
-            slint_markdown::Renderer::with_collection(slint::fontique_011::shared_collection());
+            markdown::Renderer::with_collection(slint::fontique_011::shared_collection());
         let mono = monospace_family();
         renderer.set_style(
-            slint_markdown::MdStyle::default().with_families(theme_font_family(), mono.clone()),
+            markdown::MdStyle::default().with_families(theme_font_family(), mono.clone()),
         );
         // The view is told the same name, and it has to be told: see
         // [`monospace_family`].
@@ -3330,9 +3325,9 @@ fn set_body_source(body: &str, is_html: bool) -> bool {
 /// `shared_collection()` initialises, once, on the main thread.
 fn set_body_source_with(body: &str, is_html: bool, new_engine: fn() -> BodyRenderer) -> bool {
     let format = if is_html {
-        slint_markdown::SourceFormat::Html
+        markdown::SourceFormat::Html
     } else {
-        slint_markdown::SourceFormat::Markdown
+        markdown::SourceFormat::Markdown
     };
     BODY.with(|slot| {
         let mut slot = slot.borrow_mut();
@@ -3438,7 +3433,7 @@ fn body_layout() -> Option<BodyLayout> {
                 // empty in a struct literal, so an item without one would not be a
                 // value the panel could build at all. The two lists share one
                 // coordinate space and the view draws each in its own loop.
-                if item.kind == slint_markdown::ItemKind::Image {
+                if item.kind == markdown::ItemKind::Image {
                     images.push(MarkdownImage {
                         x: item.x,
                         y,
@@ -3691,7 +3686,7 @@ fn forget_body_document() {
     BODY.with(|slot| {
         if let Some(body) = slot.borrow_mut().as_mut() {
             body.renderer
-                .set_source(String::new(), slint_markdown::SourceFormat::Markdown);
+                .set_source(String::new(), markdown::SourceFormat::Markdown);
         }
     });
 }
@@ -3794,12 +3789,9 @@ fn refresh_installed(ui: &App) {
     let weak = ui.as_weak();
     let instance = controller().borrow().instance_id.clone();
     crate::runtime::spawn(async move {
-        let info = slint_content::mods::remote::check_installed(
-            &instance,
-            detail.platform.api(),
-            &detail.id,
-        )
-        .await;
+        let info =
+            content::mods::remote::check_installed(&instance, detail.platform.api(), &detail.id)
+                .await;
         let _ = weak.upgrade_in_event_loop(move |ui| {
             {
                 let state = controller();
@@ -3839,7 +3831,7 @@ fn refresh_favorited(ui: &App) {
 /// Resolves the project's best file for the instance's runtime and downloads it
 /// — `useContentActions.ts`'s `resolveDownloadTask` and `install`.
 async fn install(instance_id: &str, detail: &OpenDetail) -> Result<(), String> {
-    let runtime = slint_instance::get_instance_by_id(instance_id)
+    let runtime = instance::get_instance_by_id(instance_id)
         .await
         .map(|instance| instance.config.runtime);
     // `InstanceRuntime.minecraft` is a plain string; empty means unset.
@@ -3855,16 +3847,16 @@ async fn install(instance_id: &str, detail: &OpenDetail) -> Result<(), String> {
     // A modpack is not installed into the instance; the Vue downloads it into
     // the launcher's own `modpacks` folder.
     let target_dir = if detail.kind == RemoteKind::Packs {
-        slint_folder::DATA_LOCATION.root.join("modpacks")
+        folder::DATA_LOCATION.root.join("modpacks")
     } else {
-        slint_folder::DATA_LOCATION
+        folder::DATA_LOCATION
             .get_instance_root(instance_id)
             .join(detail.kind.folder())
     };
 
     let task = match detail.platform {
         Platform::Modrinth => {
-            let params = slint_modrinth::ListProjectVersionsParams {
+            let params = modrinth::ListProjectVersionsParams {
                 loaders: (detail.kind.has_loaders() && loader.is_some()).then(|| {
                     serde_json::to_string(&[loader.clone().unwrap_or_default()]).unwrap_or_default()
                 }),
@@ -3874,7 +3866,7 @@ async fn install(instance_id: &str, detail: &OpenDetail) -> Result<(), String> {
                 featured: None,
                 include_changelog: None,
             };
-            let versions = slint_modrinth::list_project_versions(&detail.id, &params)
+            let versions = modrinth::list_project_versions(&detail.id, &params)
                 .await
                 .map_err(|error| error.to_string())?;
             let versions = versions.as_array().cloned().unwrap_or_default();
@@ -3903,7 +3895,7 @@ async fn install(instance_id: &str, detail: &OpenDetail) -> Result<(), String> {
                 file.pointer("/hashes/sha512")
                     .and_then(Value::as_str)
                     .map(str::to_string),
-                slint_download::DownloadTaskType::ModrinthMod,
+                download::DownloadTaskType::ModrinthMod,
             )
         }
         Platform::CurseForge => {
@@ -3921,7 +3913,7 @@ async fn install(instance_id: &str, detail: &OpenDetail) -> Result<(), String> {
             {
                 object.insert("modLoaderType".into(), json!(loader));
             }
-            let response = slint_curseforge::get_mod_files(mod_id, &params)
+            let response = curseforge::get_mod_files(mod_id, &params)
                 .await
                 .map_err(|error| error.to_string())?;
             let files = response
@@ -3939,7 +3931,7 @@ async fn install(instance_id: &str, detail: &OpenDetail) -> Result<(), String> {
                 Some(url) if !url.is_empty() => url.to_string(),
                 // `downloadUrl` is null for some files and the API has a
                 // separate endpoint for those.
-                _ => slint_curseforge::get_mod_file_download_url(mod_id, file_id)
+                _ => curseforge::get_mod_file_download_url(mod_id, file_id)
                     .await
                     .map_err(|error| error.to_string())?
                     .get("data")
@@ -3966,20 +3958,20 @@ async fn install(instance_id: &str, detail: &OpenDetail) -> Result<(), String> {
                 ),
                 file.get("fileLength").and_then(Value::as_u64),
                 sha1,
-                slint_download::DownloadTaskType::CurseforgeMod,
+                download::DownloadTaskType::CurseforgeMod,
             )
         }
     };
 
     std::fs::create_dir_all(&target_dir).map_err(|error| error.to_string())?;
-    let progress = slint_download::progress::DownloadState::default();
-    slint_download::download(&task, &progress)
+    let progress = download::progress::DownloadState::default();
+    download::download(&task, &progress)
         .await
         .map_err(|error| error.to_string())?;
 
     // Re-read the mods so a later list shows the new file with its metadata.
     if detail.kind == RemoteKind::Mods {
-        slint_content::mods::remote::parse_mods(instance_id).await;
+        content::mods::remote::parse_mods(instance_id).await;
     }
     Ok(())
 }
@@ -3989,18 +3981,18 @@ fn make_task(
     file: &std::path::Path,
     size_bytes: Option<u64>,
     sha: Option<String>,
-    task_type: slint_download::DownloadTaskType,
-) -> slint_download::DownloadTask {
-    slint_download::DownloadTask {
+    task_type: download::DownloadTaskType,
+) -> download::DownloadTask {
+    download::DownloadTask {
         url: url.to_string(),
         file: file.to_path_buf(),
         size_bytes,
         // A Modrinth file carries a SHA-512 and a CurseForge one a SHA-1; the
         // two lengths tell them apart.
         checksum: match sha {
-            Some(sha) if sha.len() == 40 => slint_download::Checksum::Sha1(sha),
-            Some(sha) => slint_download::Checksum::Sha512(sha),
-            None => slint_download::Checksum::None,
+            Some(sha) if sha.len() == 40 => download::Checksum::Sha1(sha),
+            Some(sha) => download::Checksum::Sha512(sha),
+            None => download::Checksum::None,
         },
         task_type,
     }
@@ -4070,7 +4062,7 @@ pub(crate) async fn fetch_icon_bytes(url: &str) -> Option<Vec<u8>> {
     if let Some(data) = url.strip_prefix("data:") {
         return decode_base64(data);
     }
-    let response = slint_shared::HTTP_CLIENT.get(url).send().await.ok()?;
+    let response = shared::HTTP_CLIENT.get(url).send().await.ok()?;
     Some(response.bytes().await.ok()?.to_vec())
 }
 
@@ -4095,7 +4087,8 @@ pub(crate) fn resolve_icon(image: PendingImage) -> Option<Image> {
 
 /// The card icon a save, mod, resource pack or pack falls back to — the
 /// `v-else` branch every content card in the Vue carried, which pointed at
-/// `src/assets/images/Unknown_server.webp`. A card whose icon is missing or
+/// `Unknown_server.webp` (now `app/ui/assets/images/unknown-server.webp`). A
+/// card whose icon is missing or
 /// failed to decode used to come out as an empty 72x72 box here.
 ///
 /// Decoded on first use and kept: it is the same 120x120 bitmap every time, and
@@ -4104,7 +4097,7 @@ pub(crate) fn unknown_icon() -> Option<Image> {
     if let Some(image) = UNKNOWN_ICON.with(|cached| cached.borrow().clone()) {
         return Some(image);
     }
-    let bytes = include_bytes!("../ui/assets/unknown-server.webp");
+    let bytes = include_bytes!("../ui/assets/images/unknown-server.webp");
     let (width, height, rgba) = decode_to_rgba(bytes)?;
     let image = Image::from_rgba8(SharedPixelBuffer::clone_from_slice(&rgba, width, height));
     UNKNOWN_ICON.with(|cached| *cached.borrow_mut() = Some(image.clone()));

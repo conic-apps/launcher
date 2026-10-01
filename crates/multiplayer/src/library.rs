@@ -6,10 +6,10 @@ use crate::{
     error::*,
     metadata::{self, LIBRARY},
 };
+use download::{DownloadTask, progress::DownloadState};
+use folder::DATA_LOCATION;
 use libloader::libloading::Library;
 use sha2::Digest;
-use slint_download::{DownloadTask, progress::DownloadState};
-use slint_folder::DATA_LOCATION;
 use std::{ffi::OsStr, path::Path};
 
 /// The directory the Conic Nexus dynamic library lives in
@@ -44,13 +44,10 @@ pub async fn download_library(progress: &DownloadState) -> Result<()> {
             url: source.to_string(),
             file: library_path.clone(),
             size_bytes: Some(LIBRARY.size),
-            checksum: slint_download::Checksum::Sha256(LIBRARY.sha256.to_string()),
-            task_type: slint_download::DownloadTaskType::ConicNexus,
+            checksum: download::Checksum::Sha256(LIBRARY.sha256.to_string()),
+            task_type: download::DownloadTaskType::ConicNexus,
         };
-        if slint_download::download(&download_task, progress)
-            .await
-            .is_ok()
-        {
+        if download::download(&download_task, progress).await.is_ok() {
             return Ok(());
         };
     }

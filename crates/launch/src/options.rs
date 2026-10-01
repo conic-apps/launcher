@@ -4,14 +4,14 @@
 
 use log::info;
 
-use slint_account::Account;
-use slint_config::{
+use account::Account;
+use config::{
     Config,
     launch::{GC, Server},
 };
-use slint_folder::DATA_LOCATION;
-use slint_instance::Instance;
-use slint_java_runtime::JavaArch;
+use folder::DATA_LOCATION;
+use instance::Instance;
+use java_runtime::JavaArch;
 
 use crate::error::*;
 
@@ -98,7 +98,7 @@ impl LaunchOptions {
             .unwrap_or(global_launch_config.auto_memory);
         let is_32_bit = is_32_bit_java(java_arch);
         let (max_memory, xmn_memory) = if auto_memory {
-            let available = slint_platform::get_available_memory_bytes();
+            let available = platform::get_available_memory_bytes();
             let mod_count = count_instance_mods(instance);
             let (max_memory, xmn_memory) = auto_allocate_memory(
                 available,

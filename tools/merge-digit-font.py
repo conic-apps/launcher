@@ -18,10 +18,10 @@
 # stale Comfortaa digit HVAR rows are zeroed instead.
 #
 # Inputs:
-#   slint/tools/fonts/Comfortaa-Latin.woff2 (variable, wght 300-700)
-#   slint/tools/fonts/Nunito-Digits.woff2   (variable, wght 200-1000, digits only)
+#   tools/fonts/Comfortaa-Latin.woff2 (variable, wght 300-700)
+#   tools/fonts/Nunito-Digits.woff2   (variable, wght 200-1000, digits only)
 # Output:
-#   slint/app/ui/fonts/ComfortaaNunito.ttf  (family "Comfortaa Nunito")
+#   app/ui/fonts/ComfortaaNunito.ttf  (family "Comfortaa Nunito")
 #
 # Usage: python3 merge-digit-font.py [--verify]
 

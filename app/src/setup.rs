@@ -18,7 +18,7 @@
 use slint::{ComponentHandle, SharedString, Weak};
 
 use crate::slint_backend::{App, GameState, SetupWizardState};
-use slint_instance::{InstanceConfig, InstanceLaunchConfig};
+use instance::{InstanceConfig, InstanceLaunchConfig};
 
 /// Which end of the Mojang manifest a wizard-created instance is built on —
 /// `latest.release` or `latest.snapshot`.
@@ -35,13 +35,13 @@ pub fn setup(ui: &App) {
     // Mojang runtimes are published for x86-64 and arm64 on Windows and macOS,
     // and for x86-64 only on Linux. The Vue reads the same two fields off the
     // `window.__PLATFORM__` the Rust host fills at startup.
-    let platform = &slint_platform::PLATFORM_INFO;
+    let platform = &platform::PLATFORM_INFO;
     let supported = match platform.os_family {
-        slint_platform::OsFamily::Windows | slint_platform::OsFamily::Macos => matches!(
+        platform::OsFamily::Windows | platform::OsFamily::Macos => matches!(
             platform.arch,
-            slint_platform::OsArch::X64 | slint_platform::OsArch::Aarch64
+            platform::OsArch::X64 | platform::OsArch::Aarch64
         ),
-        slint_platform::OsFamily::Linux => platform.arch == slint_platform::OsArch::X64,
+        platform::OsFamily::Linux => platform.arch == platform::OsArch::X64,
     };
     ui.global::<SetupWizardState>()
         .set_jvm_auto_install_supported(supported);
@@ -92,7 +92,7 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
 
     let weak = weak.clone();
     crate::runtime::spawn(async move {
-        let version = slint_install::get_minecraft_version_list()
+        let version = install::get_minecraft_version_list()
             .await
             .map(|manifest| match channel {
                 Channel::Release => manifest.latest.release,
@@ -147,11 +147,11 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
 /// `createInstance({ launch_config: { enable_instance_specific_settings:
 /// false }, name, runtime: { minecraft } })` — the whole of the Vue's call. No
 /// `id`, so the instance gets a random one, exactly as the original's.
-async fn create_instance(name: &str, version: &str) -> Result<String, slint_instance::Error> {
+async fn create_instance(name: &str, version: &str) -> Result<String, instance::Error> {
     let mut config = InstanceConfig::new(name, version);
     config.launch_config = InstanceLaunchConfig {
         enable_instance_specific_settings: false,
         ..Default::default()
     };
-    slint_instance::create_instance(config, None).await
+    instance::create_instance(config, None).await
 }

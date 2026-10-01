@@ -332,11 +332,11 @@ pub fn install(ui: &App) {
     // There is no `HWND` until the event loop has created the window, so this
     // takes the first winit event the window gets rather than polling for one.
     // The hook is the app's shared one rather than the backend's own single slot
-    // (see `slint_window::on_window_event`), which is what keeps this watcher
+    // (see `window::on_window_event`), which is what keeps this watcher
     // alive alongside the others.
     let weak = ui.as_weak();
     let attached = AtomicBool::new(false);
-    slint_window::on_window_event(ui, move |_| {
+    window::on_window_event(ui, move |_| {
         if !attached.swap(true, Ordering::Relaxed)
             && let Some(ui) = weak.upgrade()
         {

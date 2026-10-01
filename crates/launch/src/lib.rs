@@ -35,15 +35,15 @@ use arguments::generate_command_arguments;
 use complete::complete_files;
 use options::LaunchOptions;
 
-use slint_account::Account;
-use slint_config::Config;
-use slint_download::progress::DownloadState;
-use slint_folder::{DATA_LOCATION, MinecraftLocation};
-use slint_instance::Instance;
-use slint_java_runtime::ResolveJavaOptions;
-use slint_platform::{OsFamily, PLATFORM_INFO, strip_unc_prefix};
-use slint_statistics::{StatisticsProfile, log_launch};
-use slint_version::{Version, resolve_version};
+use account::Account;
+use config::Config;
+use download::progress::DownloadState;
+use folder::{DATA_LOCATION, MinecraftLocation};
+use instance::Instance;
+use java_runtime::ResolveJavaOptions;
+use platform::{OsFamily, PLATFORM_INFO, strip_unc_prefix};
+use statistics::{StatisticsProfile, log_launch};
+use version::{Version, resolve_version};
 
 mod arguments;
 mod complete;
@@ -135,7 +135,7 @@ pub async fn launch(
         &[],
     )
     .await?;
-    let resolved_java = slint_java_runtime::resolve_java_executable(&ResolveJavaOptions {
+    let resolved_java = java_runtime::resolve_java_executable(&ResolveJavaOptions {
         instance_java_path: instance.config.launch_config.java_path.clone(),
         prefer_mojang_java: config.prefer_mojang_java,
         disabled_java_runtimes: config.disabled_java_runtime.clone(),
@@ -150,7 +150,7 @@ pub async fn launch(
     let launch_options = LaunchOptions::new(&config, &instance, resolved_java.arch)?;
     if let Account::Yggdrasil(_) = launch_options.selected_account {
         let progress = DownloadState::default();
-        slint_install::authlib_injector::ensure_latest(&progress).await?;
+        install::authlib_injector::ensure_latest(&progress).await?;
     }
     let command_arguments = generate_command_arguments(
         &minecraft_location,

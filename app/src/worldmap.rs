@@ -47,7 +47,7 @@ use std::time::Duration;
 use slint::{ComponentHandle, Image, Model, ModelRc, SharedPixelBuffer, SharedString, VecModel};
 
 use crate::slint_backend::{App, ScrollInput, WorldMapState, WorldSource, WorldTile};
-use slint_content::worldmap::{MapCache, WorldMapRequest};
+use content::worldmap::{MapCache, WorldMapRequest};
 
 /// How many tiles may be rendering at once (`MAX_CONCURRENT`).
 ///
@@ -580,7 +580,7 @@ fn pump(ui: &App) {
                 shading: Some(options.shading),
                 altitude_shading: Some(options.altitude_shading),
             };
-            let result = slint_content::worldmap::render_map(&maps, &request);
+            let result = content::worldmap::render_map(&maps, &request);
             // The render crossed a thread, so what comes back is the buffer
             // rather than the `Image` — the `PendingImage` trick `content.rs`
             // uses for its icons, and for the same reason.
@@ -599,7 +599,7 @@ fn finish_tile(
     ui: &App,
     key: TileKey,
     seq: u64,
-    result: Result<slint_content::worldmap::WorldMapResult, slint_content::error::Error>,
+    result: Result<content::worldmap::WorldMapResult, content::error::Error>,
 ) {
     let state = ui.global::<WorldMapState>();
     let mut fresh = false;

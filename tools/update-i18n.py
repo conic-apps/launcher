@@ -23,7 +23,7 @@ A pair that is in the `.pot` and has no translation below is reported and left
 alone, rather than being written as an identity — a visible gap in the catalogue
 is better than a sentence nobody will notice is missing.
 
-    slint/app: find ui -name '*.slint' | xargs slint-tr-extractor -o messages.pot
+    app: find ui -name '*.slint' | xargs slint-tr-extractor -o messages.pot
     python3 tools/update-i18n.py messages.pot
 """
 
@@ -35,7 +35,7 @@ from pathlib import Path
 
 APP = Path(__file__).resolve().parent.parent
 I18N = APP / "app" / "i18n"
-DOMAIN = "conic-launcher-slint"
+DOMAIN = "conic-launcher"
 
 # The languages, in the order the settings pickers list them.
 LANGUAGES = [

@@ -12,7 +12,7 @@
 //! cancel), so this mirror carries only the downloader itself —
 //! [`download`], [`download_concurrent`] and the task model — byte-for-byte
 //! like `crates/download/src/*.rs`, save for the `shared::HTTP_CLIENT` →
-//! `slint_shared::HTTP_CLIENT` rename.
+//! `shared::HTTP_CLIENT` rename.
 //!
 //! The original's **chunked** download path (`inner_chunk_download_executer`
 //! and the `Accept-Ranges` probe that selects it) is disabled here: it is
@@ -37,9 +37,9 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncWriteExt;
 
+use config::download::DownloadConfig;
 use progress::{DownloadPhase, DownloadState};
-use slint_config::download::DownloadConfig;
-use slint_shared::HTTP_CLIENT;
+use shared::HTTP_CLIENT;
 
 pub mod checksum;
 pub mod error;

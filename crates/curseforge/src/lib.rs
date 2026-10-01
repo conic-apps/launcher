@@ -23,7 +23,7 @@ pub mod error;
 
 use error::*;
 use serde_json::Value;
-use slint_shared::{HTTP_CLIENT, UrlExt};
+use shared::{HTTP_CLIENT, UrlExt};
 use std::path::Path;
 use url::Url;
 

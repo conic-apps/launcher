@@ -18,9 +18,7 @@ use slint::{ComponentHandle, Image, ModelRc, SharedString, VecModel, Weak};
 
 use crate::config_bridge;
 use crate::slint_backend::{App, CreateInstanceState, Dialogs, GameState, MinecraftVersionItem};
-use slint_instance::{
-    InstanceConfig, InstanceLaunchConfig, InstanceRuntime, ModLoaderType, SortBy,
-};
+use instance::{InstanceConfig, InstanceLaunchConfig, InstanceRuntime, ModLoaderType, SortBy};
 
 thread_local! {
     /// The whole Minecraft manifest. Only the rows of the selected category are
@@ -34,7 +32,7 @@ thread_local! {
 const MOD_LOADERS: [&str; 4] = ["Fabric", "Quilt", "Forge", "Neoforge"];
 
 /// Registers every create-instance callback on the `CreateInstanceState` global.
-pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
+pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     let state = ui.global::<CreateInstanceState>();
 
     // MinecraftChoose.vue's `onMounted`: fetch the manifest, then filter it.
@@ -47,7 +45,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<slint_config::Config>>) {
 
             let weak = weak.clone();
             crate::runtime::spawn(async move {
-                let result = slint_install::get_minecraft_version_list()
+                let result = install::get_minecraft_version_list()
                     .await
                     .map(|manifest| manifest.versions.into_iter().map(version_item).collect());
                 let _ = weak.upgrade_in_event_loop(move |ui| {
@@ -214,7 +212,7 @@ fn apply_category(state: &CreateInstanceState, manifest: &[MinecraftVersionItem]
 
 /// A manifest entry as the chooser shows it: the id, its type and the release
 /// date split into parts (`new Date(releaseTime)` in local time).
-fn version_item(info: slint_install::vanilla::VersionInfo) -> MinecraftVersionItem {
+fn version_item(info: install::vanilla::VersionInfo) -> MinecraftVersionItem {
     let date = chrono::DateTime::parse_from_rfc3339(&info.release_time)
         .map(|time| time.with_timezone(&Local));
     MinecraftVersionItem {
@@ -231,8 +229,8 @@ fn version_item(info: slint_install::vanilla::VersionInfo) -> MinecraftVersionIt
 /// `updateModLoaderVersions`).
 fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: String) {
     crate::runtime::spawn(async move {
-        let result: Result<Vec<String>, slint_install::Error> = match loader {
-            "Fabric" => slint_install::get_fabric_version_list(&mcversion)
+        let result: Result<Vec<String>, install::Error> = match loader {
+            "Fabric" => install::get_fabric_version_list(&mcversion)
                 .await
                 .map(|list| {
                     list.as_slice()
@@ -240,7 +238,7 @@ fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: Stri
                         .map(|artifact| artifact.loader.version.clone())
                         .collect()
                 }),
-            "Quilt" => slint_install::get_quilt_version_list(&mcversion)
+            "Quilt" => install::get_quilt_version_list(&mcversion)
                 .await
                 .map(|list| {
                     list.as_slice()
@@ -248,14 +246,14 @@ fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: Stri
                         .map(|version| version.loader.version.clone())
                         .collect()
                 }),
-            "Forge" => slint_install::get_forge_version_list().await.map(|list| {
+            "Forge" => install::get_forge_version_list().await.map(|list| {
                 list.get(&mcversion)
                     .unwrap_or_default()
                     .iter()
                     .map(|version| forge_version_label(version))
                     .collect()
             }),
-            _ => slint_install::get_neoforge_version_list()
+            _ => install::get_neoforge_version_list()
                 .await
                 .map(|list| filter_neoforge_version_list(&mcversion, &list)),
         };
@@ -394,8 +392,8 @@ async fn create_instance(
     loader_type: &str,
     loader_version: &str,
     background: &str,
-) -> Result<String, slint_instance::Error> {
-    let instances = slint_instance::list_instances(SortBy::Name)
+) -> Result<String, instance::Error> {
+    let instances = instance::list_instances(SortBy::Name)
         .await
         .unwrap_or_default();
     let mut suffix = 0;
@@ -429,9 +427,9 @@ async fn create_instance(
         },
         ..Default::default()
     };
-    slint_instance::create_instance(config, Some(&id)).await?;
+    instance::create_instance(config, Some(&id)).await?;
     if !background.is_empty() {
-        slint_instance::add_background_image(Path::new(background), &id).await?;
+        instance::add_background_image(Path::new(background), &id).await?;
     }
     Ok(id)
 }
