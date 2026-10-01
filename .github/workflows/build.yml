@@ -118,8 +118,12 @@ jobs:
       - name: install cargo-deb and cargo-rpm
         run: |
           cargo install --locked cargo-deb cargo-rpm
+          # Verified through the *subcommand*, not `--version`: `cargo rpm`
+          # passes its flags to abscissa, and abscissa does not know `--version`,
+          # so `cargo rpm --version` exits 1 and takes the whole step with it.
+          # `cargo rpm version` is its actual version subcommand.
           cargo deb --version
-          cargo rpm --version
+          cargo rpm version
 
       # `appimagetool` is an AppImage itself, so installing it is three steps
       # rather than one:
