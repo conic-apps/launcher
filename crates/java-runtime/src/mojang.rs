@@ -11,8 +11,8 @@
 
 use std::path::PathBuf;
 
-use folder::DATA_LOCATION;
-use platform::{OsArch, OsFamily, PLATFORM_INFO};
+use slint_folder::DATA_LOCATION;
+use slint_platform::{OsArch, OsFamily, PLATFORM_INFO};
 
 use crate::error::*;
 use crate::models::JavaArch;

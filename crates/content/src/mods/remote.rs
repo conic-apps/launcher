@@ -4,7 +4,7 @@
 
 //! Online mod metadata lookup with a persistent on-disk cache.
 //!
-//! Four cache files live under [`folder::DATA_LOCATION`]'s cache directory:
+//! Four cache files live under [`slint_folder::DATA_LOCATION`]'s cache directory:
 //!
 //! - `modrinth.json` and `curseforge.json` cache the result of each platform's
 //!   file-feature lookup, keyed by the file's SHA-512 checksum. Entries expire
@@ -44,7 +44,6 @@ use log::warn;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha512};
-use tauri::command;
 
 use crate::error::Result;
 use crate::mods::{ModLoader, ResolvedAuthorInfo, ResolvedMod, is_disabled_file, parse_mod};
@@ -143,7 +142,7 @@ fn now() -> u64 {
 }
 
 fn cache_dir() -> std::path::PathBuf {
-    folder::DATA_LOCATION.cache.join("mods")
+    slint_folder::DATA_LOCATION.cache.join("mods")
 }
 
 async fn load_remote_cache(name: &str) -> RemoteCache {
@@ -484,7 +483,7 @@ async fn query_modrinth_batch(
     if hashes.is_empty() {
         return (HashMap::new(), identity);
     }
-    let versions = match modrinth::get_versions_from_hashes(hashes, "sha512").await {
+    let versions = match slint_modrinth::get_versions_from_hashes(hashes, "sha512").await {
         Ok(versions) => versions,
         Err(error) => {
             warn!("Failed to look up mods on Modrinth: {error}");
@@ -502,7 +501,7 @@ async fn query_modrinth_batch(
         .map(str::to_string)
         .collect();
     let id_refs: Vec<&str> = project_ids.iter().map(String::as_str).collect();
-    let projects = match modrinth::get_projects(&id_refs).await {
+    let projects = match slint_modrinth::get_projects(&id_refs).await {
         Ok(projects) => projects,
         Err(error) => {
             warn!("Failed to fetch Modrinth projects: {error}");
@@ -542,7 +541,7 @@ async fn query_modrinth_batch(
         };
         // Team members are not served by the mirror, so fetch them from the
         // official API on a best-effort basis.
-        let members = modrinth::get_team_members(team).await;
+        let members = slint_modrinth::get_team_members(team).await;
         let authors = match members {
             Ok(members) => members
                 .as_array()
@@ -652,7 +651,7 @@ async fn query_curseforge_batch(
     for hash in hashes {
         let path = files_by_hash.get(hash);
         let fingerprint = match path {
-            Some(path) => curseforge::compute_fingerprint(path),
+            Some(path) => slint_curseforge::compute_fingerprint(path),
             None => continue,
         };
         let fingerprint = match fingerprint {
@@ -670,16 +669,18 @@ async fn query_curseforge_batch(
     }
 
     let fingerprints: Vec<u32> = fingerprint_of.keys().copied().collect();
-    let value =
-        match curseforge::get_fingerprint_matches(curseforge::MINECRAFT_GAME_ID, &fingerprints)
-            .await
-        {
-            Ok(value) => value,
-            Err(error) => {
-                warn!("Failed to look up mods on CurseForge: {error}");
-                return (HashMap::new(), identity);
-            }
-        };
+    let value = match slint_curseforge::get_fingerprint_matches(
+        slint_curseforge::MINECRAFT_GAME_ID,
+        &fingerprints,
+    )
+    .await
+    {
+        Ok(value) => value,
+        Err(error) => {
+            warn!("Failed to look up mods on CurseForge: {error}");
+            return (HashMap::new(), identity);
+        }
+    };
     let Some(exact_matches) = value
         .pointer("/data/exactMatches")
         .and_then(serde_json::Value::as_array)
@@ -706,7 +707,7 @@ async fn query_curseforge_batch(
         let Some(mod_id) = file.get("modId").and_then(serde_json::Value::as_i64) else {
             continue;
         };
-        let mod_value = match curseforge::get_mod(mod_id).await {
+        let mod_value = match slint_curseforge::get_mod(mod_id).await {
             Ok(value) => value,
             Err(error) => {
                 warn!("Failed to fetch CurseForge mod {mod_id}: {error}");
@@ -864,7 +865,7 @@ pub async fn check_mod_installed(
     }
 
     // Scan the instance's mods folder for a file carrying one of the hashes.
-    let mods_folder = folder::DATA_LOCATION
+    let mods_folder = slint_folder::DATA_LOCATION
         .get_instance_root(instance_id)
         .join("mods");
     let files: Vec<PathBuf> = mods_folder
@@ -1004,35 +1005,32 @@ fn merge_remote(mod_info: &mut ResolvedMod, remote: &RemoteModInfo) {
     mod_info.version_id = remote.version_id.clone();
 }
 
-/// Tauri command: list every mod of an instance, merged with online info.
-#[command]
-pub(crate) async fn cmd_parse_mods(instance_id: String) -> Vec<ResolvedMod> {
-    let mods_folder = folder::DATA_LOCATION
-        .get_instance_root(&instance_id)
+/// List every mod of an instance, merged with online info.
+pub async fn parse_mods(instance_id: &str) -> Vec<ResolvedMod> {
+    let mods_folder = slint_folder::DATA_LOCATION
+        .get_instance_root(instance_id)
         .join("mods");
     parse_folder_with_remote(&mods_folder).await
 }
 
-/// Tauri command: check whether the mod with the given id on the given
-/// platform is installed in an instance.
-#[command]
-pub(crate) async fn cmd_check_mod_installed(
-    instance_id: String,
+/// Check whether the mod with the given id on the given platform is
+/// installed in an instance.
+pub async fn check_installed(
+    instance_id: &str,
     platform: RemoteModPlatform,
-    project_id: String,
+    project_id: &str,
 ) -> ModInstalledInfo {
-    check_mod_installed(&instance_id, platform, &project_id).await
+    check_mod_installed(instance_id, platform, project_id).await
 }
 
-/// Tauri command: delete the given files from an instance.
+/// Delete the given files from an instance.
 ///
 /// Only files under the instance root are accepted; paths outside it are
 /// silently skipped so the launcher never deletes arbitrary user data. The
 /// frontend only shows the remove action for mods, but the check is done
 /// against the whole instance root so partial-download cleanup stays possible.
-#[command]
-pub(crate) fn cmd_remove_mod_files(instance_id: String, files: Vec<String>) -> Result<()> {
-    let instance_root = folder::DATA_LOCATION.get_instance_root(&instance_id);
+pub fn remove_mod_files(instance_id: &str, files: Vec<String>) -> Result<()> {
+    let instance_root = slint_folder::DATA_LOCATION.get_instance_root(instance_id);
     let instance_root_canonical = instance_root.canonicalize().unwrap_or(instance_root);
     for file in files {
         let path = PathBuf::from(file);

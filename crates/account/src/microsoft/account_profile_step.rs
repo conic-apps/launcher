@@ -6,10 +6,10 @@ use base64::{Engine, engine::general_purpose};
 use futures::stream::{self, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use shared::HTTP_CLIENT;
 use uuid::Uuid;
 
 use crate::error::*;
+use slint_shared::HTTP_CLIENT;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Skin {

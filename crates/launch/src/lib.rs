@@ -2,66 +2,55 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! Tauri-free mirror of `crates/launch`: turning an installed instance into a
+//! running Minecraft process.
+//!
+//! The original exposes its work through two Tauri commands
+//! (`cmd_spawn_launch_task` / `cmd_cancel_launch_task`) and forwards progress
+//! over an IPC `Channel`. This mirror keeps the whole launch pipeline — file
+//! completion, version resolution, Java selection, authlib-injector setup, the
+//! argument list and the generated launch script with its stdout log watcher —
+//! and drops only the command layer: [`launch`] is the same function the
+//! command ran, taking the `Arc<Mutex<LaunchEvent>>` the command thread polled.
+//! The app plays the command's role (spawn, poll, abort to cancel).
+
 use std::{
     io::BufRead,
     path::PathBuf,
     process::{Command, Stdio},
     str::FromStr,
-    sync::{
-        Arc, Mutex,
-        atomic::{AtomicBool, Ordering},
-    },
+    sync::{Arc, Mutex},
     thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
-use account::Account;
-use arguments::generate_command_arguments;
-use complete::complete_files;
-use config::Config;
-use download::progress::DownloadState;
-use folder::{DATA_LOCATION, MinecraftLocation};
-use instance::Instance;
-use java_runtime::ResolveJavaOptions;
-use log::{debug, error, info, warn};
-use options::LaunchOptions;
-use platform::{OsFamily, PLATFORM_INFO, strip_unc_prefix};
-use serde::Serialize;
-use statistics::{StatisticsProfile, log_launch};
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
-use tauri::{
-    Manager, Runtime, State, command,
-    ipc::Channel,
-    plugin::{Builder, TauriPlugin},
-};
+
+use log::{debug, error, info};
+use serde::Serialize;
 use uuid::Uuid;
-use version::{Version, resolve_version};
+
+use arguments::generate_command_arguments;
+use complete::complete_files;
+use options::LaunchOptions;
+
+use slint_account::Account;
+use slint_config::Config;
+use slint_download::progress::DownloadState;
+use slint_folder::{DATA_LOCATION, MinecraftLocation};
+use slint_instance::Instance;
+use slint_java_runtime::ResolveJavaOptions;
+use slint_platform::{OsFamily, PLATFORM_INFO, strip_unc_prefix};
+use slint_statistics::{StatisticsProfile, log_launch};
+use slint_version::{Version, resolve_version};
 
 mod arguments;
 mod complete;
 pub mod error;
 mod options;
 
-use error::*;
-
-#[derive(Clone, Default)]
-struct PluginState {
-    task: Arc<Mutex<Option<tokio::task::AbortHandle>>>,
-}
-
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("launch")
-        .invoke_handler(tauri::generate_handler![
-            cmd_spawn_launch_task,
-            cmd_cancel_launch_task
-        ])
-        .setup(|app, _| {
-            app.manage(PluginState::default());
-            Ok(())
-        })
-        .build()
-}
+pub use error::*;
 
 #[derive(Clone, Serialize, PartialEq)]
 #[serde(tag = "job", content = "progress")]
@@ -77,67 +66,6 @@ pub enum LaunchEvent {
     LogTextureLoaded,
 }
 
-#[command]
-async fn cmd_spawn_launch_task(
-    state: State<'_, PluginState>,
-    config: Config,
-    instance: Instance,
-    channel: Channel<LaunchEvent>,
-) -> Result<u32> {
-    if state.task.lock().expect("Internal error").is_some() {
-        return Err(Error::AnothorInstanceLaunching);
-    }
-    let task_status = Arc::new(Mutex::new(LaunchEvent::Prepare));
-    let finished = Arc::new(AtomicBool::new(false));
-    let handle = tokio::spawn({
-        let task_status_cloned = task_status.clone();
-        let finished = finished.clone();
-        async move {
-            let result = launch(config, instance, task_status_cloned).await;
-            finished.store(true, Ordering::SeqCst);
-            result
-        }
-    });
-    {
-        let mut current_task = state.task.lock().expect("Internal error");
-        *current_task = Some(handle.abort_handle());
-    }
-    let event_sender_thread = {
-        let status_cloned = task_status.clone();
-        let finished = finished.clone();
-        thread::spawn(move || {
-            while !finished.load(Ordering::SeqCst) {
-                let _ = channel.send(status_cloned.lock().expect("Internal error").clone());
-                std::thread::sleep(Duration::from_millis(100));
-            }
-        })
-    };
-    let result = match handle.await {
-        Ok(result) => result,
-        Err(e) => {
-            warn!("Launch cancelled");
-            Err(Error::Aborted(e))
-        }
-    };
-    let _ = event_sender_thread.join();
-    {
-        let mut current_task = state.task.lock().expect("Internal error");
-        *current_task = None;
-    }
-    result
-}
-
-#[command]
-async fn cmd_cancel_launch_task(state: State<'_, PluginState>) -> Result<()> {
-    let mut current_task = state.task.lock().expect("Internal error");
-    if let Some(handle) = current_task.clone() {
-        handle.abort();
-        warn!("Cancelling launch!");
-    }
-    *current_task = None;
-    Ok(())
-}
-
 /// Represents a log message associated with a specific instance.
 #[derive(Clone, Serialize)]
 pub struct Log {
@@ -149,15 +77,16 @@ pub struct Log {
     pub content: String,
 }
 
-/// Launches a Minecraft instance asynchronously via the Tauri command system.
+/// Launches a Minecraft instance.
 ///
 /// # Arguments
-/// * `storage` - Application state that holds shared configuration and data.
+/// * `config` - The launcher configuration (account, launch and download settings).
 /// * `instance` - The Minecraft instance to launch.
+/// * `status` - The shared progress slot the caller polls.
 ///
 /// # Returns
-/// * `Ok(())` - If the instance was successfully launched.
-/// * `Err(())` - If there was an error during launch (e.g., account not found).
+/// * `Ok(u32)` - The PID of the spawned Minecraft process.
+/// * `Err(Error)` - The failure that stopped the launch.
 ///
 /// # Side Effects
 /// * Optionally checks files before launch.
@@ -206,7 +135,7 @@ pub async fn launch(
         &[],
     )
     .await?;
-    let resolved_java = java_runtime::resolve_java_executable(&ResolveJavaOptions {
+    let resolved_java = slint_java_runtime::resolve_java_executable(&ResolveJavaOptions {
         instance_java_path: instance.config.launch_config.java_path.clone(),
         prefer_mojang_java: config.prefer_mojang_java,
         disabled_java_runtimes: config.disabled_java_runtime.clone(),
@@ -221,7 +150,7 @@ pub async fn launch(
     let launch_options = LaunchOptions::new(&config, &instance, resolved_java.arch)?;
     if let Account::Yggdrasil(_) = launch_options.selected_account {
         let progress = DownloadState::default();
-        install::authlib_injector::ensure_latest(&progress).await?;
+        slint_install::authlib_injector::ensure_latest(&progress).await?;
     }
     let command_arguments = generate_command_arguments(
         &minecraft_location,
@@ -263,16 +192,13 @@ fn print_instance_info(instance: &Instance) {
 ///
 /// # Arguments
 /// * `command_arguments` - A list of parsed arguments.
-/// * `minecraft_location` - Path to the Minecraft game files.
 /// * `launch_options` - Launch customization options (pre/post-execution hooks, wrappers, etc.).
-/// * `version_id` - The Minecraft version to launch.
 /// * `instance` - The instance metadata and configuration.
 ///
 /// # Behavior
 /// * Creates a platform-specific shell script/batch file for launching the game.
 /// * Runs the generated script using a subprocess.
 /// * Streams stdout to detect key launch indicators and forward logs to the frontend.
-/// * Emits `launch_success` event once LWJGL is detected.
 /// * Handles cleanup of native libraries after game launch completes.
 async fn spawn_minecraft_process(
     command_arguments: Vec<String>,
@@ -406,7 +332,6 @@ async fn spawn_minecraft_process(
         };
         if !output.status.success() {
             // TODO: log analysis and remove libraries lock file
-            // NOTE: Should use tauri global event here
             // WARN: When failed, frontend should stop all "launching" animation
             error!("Minecraft exits with error code {}", output.status);
         } else {

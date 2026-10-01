@@ -2,12 +2,21 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! Tauri-free mirror of `crates/version`: parsing and resolution of the
+//! Minecraft `version.json` format.
+//!
+//! The original is a plain library crate with no Tauri dependency, so this
+//! mirror is a file-for-file copy: only the crate names of its two workspace
+//! dependencies change (`platform` → `slint-platform`, `folder` →
+//! `slint-folder`). Structures, inheritance merging and the argument
+//! resolution match `crates/version/src/*.rs`.
+
 use once_cell::sync::Lazy;
 use serde::Serialize;
 use serde_json::Value;
 use std::{collections::HashMap, fs::read_to_string, path::PathBuf};
 
-use folder::MinecraftLocation;
+use slint_folder::MinecraftLocation;
 
 pub mod argument;
 mod checks;

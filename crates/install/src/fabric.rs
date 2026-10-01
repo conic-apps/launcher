@@ -2,13 +2,16 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! The Fabric loader version list and profile installer
+//! (`crates/install/src/fabric.rs`).
+
 use log::info;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use folder::MinecraftLocation;
-use shared::HTTP_CLIENT;
-use version::Version;
+use slint_folder::MinecraftLocation;
+use slint_shared::HTTP_CLIENT;
+use slint_version::Version;
 
 use crate::error::*;
 
@@ -53,14 +56,8 @@ pub struct FabricLoaderArtifact {
     pub launcher_meta: LauncherMeta,
 }
 
-/// Wrapper for a list of Yarn artifact versions.
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct YarnArtifactList(Vec<FabricArtifactVersion>);
-
 /// Wrapper for a list of Fabric loader artifacts.
 #[derive(Deserialize, Serialize, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct LoaderArtifactList(Vec<FabricLoaderArtifact>);
 
 impl LoaderArtifactList {
@@ -74,7 +71,17 @@ impl LoaderArtifactList {
             .json()
             .await?)
     }
+
+    /// The loader artifacts, in the order the Fabric meta API returned them.
+    pub fn as_slice(&self) -> &[FabricLoaderArtifact] {
+        &self.0
+    }
 }
+
+/// Wrapper for a list of Yarn artifact versions.
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct YarnArtifactList(Vec<FabricArtifactVersion>);
 
 /// Metadata information for the Fabric launcher.
 #[derive(Deserialize, Serialize, Clone)]

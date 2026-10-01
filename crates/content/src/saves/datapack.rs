@@ -5,9 +5,8 @@
 use std::{ffi::OsStr, fs, io::Read, path::Path};
 
 use base64::{Engine, engine::general_purpose};
-use folder::DATA_LOCATION;
 use serde_json::Value;
-use tauri::command;
+use slint_folder::DATA_LOCATION;
 use zip::ZipArchive;
 
 use crate::error::*;
@@ -72,11 +71,10 @@ pub fn get_all_datapacks<P: AsRef<Path>>(datapacks_folder_path: P) -> Result<Vec
         .collect::<Vec<_>>())
 }
 
-#[command]
-pub(crate) async fn cmd_get_all_datapacks(
-    instance_id: &str,
-    world_folder_name: String,
-) -> Result<Vec<DataPack>> {
+/// Every datapack of one of an instance's worlds.
+///
+/// The original reaches this through the body of `cmd_get_all_datapacks`.
+pub fn get_instance_datapacks(instance_id: &str, world_folder_name: &str) -> Result<Vec<DataPack>> {
     get_all_datapacks(
         DATA_LOCATION
             .get_instance_root(instance_id)

@@ -4,9 +4,9 @@
 
 use std::collections::HashMap;
 
-use platform::{OsFamily, PLATFORM_INFO};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use slint_platform::{OsFamily, PLATFORM_INFO};
 
 use crate::checks::check_allowed;
 use crate::error::*;

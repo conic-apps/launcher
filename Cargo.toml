@@ -1,9 +1,7 @@
 [workspace]
 members = [
-    "core/",
+    "app/",
     "crates/*",
-    "slint/app",
-    "slint/crates/*"
 ]
 resolver = "3"
 
@@ -16,27 +14,33 @@ rust-version = "1.88"
 [workspace.dependencies]
 # ----- local crates -----
 # NOTE: local crates that aren't published to crates.io. These should not have versions.
-shared = { path = "./crates/shared", version = "0.0.0"}
-account = { path = "./crates/account", version = "0.0.0"}
-beat_this = { path = "./crates/beat_this", version = "0.0.0"}
-config = { path = "./crates/config", version = "0.0.0"}
-download = { path = "./crates/download", version = "0.0.0"}
-folder = { path = "./crates/folder", version = "0.0.0"}
-content = { path = "./crates/content", version = "0.0.0"}
-curseforge = { path = "./crates/curseforge", version = "0.0.0"}
-java-runtime = { path = "./crates/java-runtime", version = "0.0.0"}
-install = { path = "./crates/install", version = "0.0.0"}
-instance = { path = "./crates/instance", version = "0.0.0"}
+shared = { path = "./crates/shared", version = "0.0.0" }
+platform = { path = "./crates/platform", version = "0.0.0" }
+window = { path = "./crates/window", version = "0.0.0" }
+config = { path = "./crates/config", version = "0.0.0" }
+folder = { path = "./crates/folder", version = "0.0.0" }
+account = { path = "./crates/account", version = "0.0.0" }
+instance = { path = "./crates/instance", version = "0.0.0" }
+content = { path = "./crates/content", version = "0.0.0" }
 modrinth = { path = "./crates/modrinth", version = "0.0.0" }
-music = { path = "./crates/music", version = "0.0.0" }
+curseforge = { path = "./crates/curseforge", version = "0.0.0" }
+version = { path = "./crates/version", version = "0.0.0" }
+download = { path = "./crates/download", version = "0.0.0" }
+install = { path = "./crates/install", version = "0.0.0" }
+launch = { path = "./crates/launch", version = "0.0.0" }
+java-runtime = { path = "./crates/java-runtime", version = "0.0.0" }
+statistics = { path = "./crates/statistics", version = "0.0.0" }
+single-instance = { path = "./crates/single-instance", version = "0.0.0" }
 multiplayer = { path = "./crates/multiplayer", version = "0.0.0" }
-launch = { path = "./crates/launch", version = "0.0.0"}
-platform = { path = "./crates/platform", version = "0.0.0"}
-statistics = { path = "./crates/statistics", version = "0.0.0"}
-update = { path = "./crates/update", version = "0.0.0"}
-version = { path = "./crates/version", version = "0.0.0"}
+markdown = { path = "./crates/markdown", version = "0.0.0" }
+# The loopback callback the Microsoft browser flow hands its authorization code
+# to, replacing the deep link the Tauri app registers (slint/crates/authcode).
+authcode = { path = "./crates/authcode", version = "0.0.0" }
+music = { path = "./crates/music", version = "0.0.0" }
+
+# ----- non-local crates -----
 slint = { version = "1.18", default-features = true }
-slint-build = "1.18"
+build = "1.18"
 # The icon generator in `slint/app/build.rs` parses the SVGs with the same
 # `usvg` Slint's own renderer rasterizes them with, so the generated path data
 # cannot disagree with what is drawn. Pinned to the version `slint` 1.18 pulls
@@ -45,29 +49,6 @@ slint-build = "1.18"
 # `slint` already turns on the features the union needs — leaving them on here
 # would add `fontconfig-parser` and `memmap2` to the lockfile for nothing.
 usvg = { version = "0.48", default-features = false }
-slint-shared = { path = "./slint/crates/shared", version = "0.0.0" }
-slint-platform = { path = "./slint/crates/platform", version = "0.0.0" }
-slint-window = { path = "./slint/crates/window", version = "0.0.0" }
-slint-config = { path = "./slint/crates/config", version = "0.0.0" }
-slint-folder = { path = "./slint/crates/folder", version = "0.0.0" }
-slint-account = { path = "./slint/crates/account", version = "0.0.0" }
-slint-instance = { path = "./slint/crates/instance", version = "0.0.0" }
-slint-content = { path = "./slint/crates/content", version = "0.0.0" }
-slint-modrinth = { path = "./slint/crates/modrinth", version = "0.0.0" }
-slint-curseforge = { path = "./slint/crates/curseforge", version = "0.0.0" }
-slint-version = { path = "./slint/crates/version", version = "0.0.0" }
-slint-download = { path = "./slint/crates/download", version = "0.0.0" }
-slint-install = { path = "./slint/crates/install", version = "0.0.0" }
-slint-launch = { path = "./slint/crates/launch", version = "0.0.0" }
-slint-java-runtime = { path = "./slint/crates/java-runtime", version = "0.0.0" }
-slint-statistics = { path = "./slint/crates/statistics", version = "0.0.0" }
-slint-single-instance = { path = "./slint/crates/single-instance", version = "0.0.0" }
-slint-multiplayer = { path = "./slint/crates/multiplayer", version = "0.0.0" }
-slint-markdown = { path = "./slint/crates/markdown", version = "0.0.0" }
-# The loopback callback the Microsoft browser flow hands its authorization code
-# to, replacing the deep link the Tauri app registers (slint/crates/authcode).
-slint-authcode = { path = "./slint/crates/authcode", version = "0.0.0" }
-slint-music = { path = "./slint/crates/music", version = "0.0.0" }
 # The background music player (slint/crates/music). The Tauri build had the
 # webview decode and play the tracks through the Web Audio API; a native app has
 # to do it itself, so the decoders and the output device come from here.
@@ -97,21 +78,19 @@ glow = "0.18"
 bytemuck = "1"
 # `IntSize` for the borrowed-texture builder — the type Slint asks for.
 euclid = "0.22"
-
-# ----- non-local crates -----
 base64 = "0.22"
 chrono = "0.4"
 conic-worldmap = { git="https://github.com/conic-apps/conic-worldmap", rev="a86489bb0cf12c1ce7c8a3e2b07bdb01d5c09cf7" }
 env_logger = "0.11.5"
 futures = "0.3"
-# PNG for the skin textures `slint-account` resolves and webp for the bundled
+# PNG for the skin textures `account` resolves and webp for the bundled
 # default skins (`slint/app/ui/assets/skins`). Slint already pulls `image` in
 # for `image-default-formats`; these are the two codecs the Slint app needs by
 # name, so they are requested explicitly rather than inherited.
 image = { version = "0.25", default-features = false, features = ["png", "webp"] }
 log = "0.4"
 # The offline profile's UUID is the MD5 of `OfflinePlayer:<name>` (see
-# `slint-account`'s `get_uuid_from_username`), so the Rust side needs the same
+# `account`'s `get_uuid_from_username`), so the Rust side needs the same
 # digest the Vue frontend computed with `blueimp-md5`.
 md-5 = "0.10"
 num_cpus = "1"
@@ -126,10 +105,6 @@ serde_with = "3"
 sha1_smol = "1"
 sha2 = { version = "0.10", default-features = false }
 sys-locale = "0.3"
-# Do NOT enable tauri's "devtools" feature here: it would force-enable devtools
-# in release builds. Debug builds always have them; opt back in via core's own
-# `devtools` feature when debugging production issues.
-tauri = { version = "2", default-features = false, features = ["wry", "x11", "compression", "macos-private-api", "protocol-asset"] }
 thiserror = "2"
 toml = "1"
 url = "2"

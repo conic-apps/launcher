@@ -1,0 +1,26 @@
+[package]
+name = "authcode"
+description = "The loopback callback server the Microsoft browser flow hands its code to"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+# Nothing here is a new crate in the tree: `tokio` (which the Slint app already
+# runs with `net`), `regex` (through `launch`) and `uuid`'s `v4` (through
+# the offline profile UUIDs) are all already linked, and `thiserror` is how every
+# other crate in here writes an `Error`. What is missing is a web framework, and
+# that is the point — the HTTP this needs is a request line and a `Content-Length`,
+# which is a page of `std`/`tokio::io`; a framework would be orders of magnitude
+# more binary for a listener that answers one request and goes away.
+[dependencies]
+log.workspace = true
+# The template's `{{ … }}` substitution. Already in the tree through
+# `launch` and `version`, so it costs no more binary here, and it
+# buys the two things a hand-rolled `replace` chain cannot do: one pass that
+# finds every placeholder however it is spaced, and a name to check the
+# template's placeholders and the caller's values against each other.
+regex.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["net", "rt", "io-util", "sync", "time"] }
+uuid = { workspace = true, features = ["v4"] }

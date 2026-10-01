@@ -4,11 +4,12 @@
 
 use std::io::Read;
 
-use download::{Checksum, DownloadTask, DownloadTaskType, progress::DownloadState};
-use folder::DATA_LOCATION;
 use serde_json::Value;
 use sha2::Digest;
-use shared::HTTP_CLIENT;
+
+use slint_download::{Checksum, DownloadTask, DownloadTaskType, progress::DownloadState};
+use slint_folder::DATA_LOCATION;
+use slint_shared::HTTP_CLIENT;
 
 use crate::error::*;
 
@@ -35,7 +36,7 @@ pub async fn ensure_latest(progress: &DownloadState) -> Result<()> {
             checksum: Checksum::Sha256(sha256.to_string()),
             task_type: DownloadTaskType::AuthlibInjector,
         };
-        download::download(&download_task, progress).await?;
+        slint_download::download(&download_task, progress).await?;
     };
     Ok(())
 }

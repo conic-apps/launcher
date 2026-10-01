@@ -1,0 +1,120 @@
+[package]
+name = "conic-launcher"
+description = "Conic Launcher app"
+version = "0.1.0-alpha.2"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dev-dependencies]
+# Slint's own testing backend, for the one unit test that builds the real UI:
+# a display-less, event-loop-less platform, so the add-account dialog's binding
+# can be exercised without a window and without a main thread (winit's macOS
+# event loop insists on one, which is what makes a test binary unusable here).
+# Default features only — `i-slint-core` and `i-slint-common` are already in the
+# tree through `slint`, and the renderers are optional.
+i-slint-backend-testing = "=1.18.1"
+
+[build-dependencies]
+build.workspace = true
+# `build.rs` generates `ui/icons.slint` from the SVGs under `src/assets/icons/`.
+usvg.workspace = true
+
+[dependencies]
+# `image-default-formats` adds the raster formats the OS file pickers offer
+# (webp, gif, bmp, ico, …) to the decoders Slint builds in, so a picked
+# background image previews in its original format like it does in the browser.
+# `unstable-fontique-011` exposes `slint::fontique_011::shared_collection()`,
+# which `src/cjk_font.rs` uses to name a real CJK family for the Han script
+# (see that module for why the OS fallback is not enough on Windows).
+slint = { workspace = true, features = ["image-default-formats", "unstable-fontique-011"] }
+platform.workspace = true
+window.workspace = true
+config.workspace = true
+folder.workspace = true
+account.workspace = true
+# The loopback listener the Microsoft browser flow's authorization code comes
+# back on, and the page the browser is shown there (see `app/src/account_add.rs`).
+authcode.workspace = true
+instance.workspace = true
+content.workspace = true
+shared.workspace = true
+modrinth.workspace = true
+curseforge.workspace = true
+version.workspace = true
+download.workspace = true
+install.workspace = true
+launch.workspace = true
+java-runtime.workspace = true
+statistics.workspace = true
+single-instance.workspace = true
+multiplayer.workspace = true
+# The Markdown/HTML body of a content detail panel. `src/content.rs` drives it:
+# the body is parsed and laid out in Rust and the resulting display list is pushed
+# into the `ContentState` model the panel draws (see
+# `ui/overlays/content/markdown-body.slint`).
+markdown.workspace = true
+music.workspace = true
+
+glow.workspace = true
+bytemuck.workspace = true
+euclid.workspace = true
+# For the `data:` URLs the account crates store skins as (`account_avatar`).
+base64.workspace = true
+# Decoding a skin texture into the pixel buffer `AccountAvatar` draws, and the
+# content overlays' project icons. `image-default-formats` on Slint covers what
+# Slint itself loads; these are the codecs the icon hosts serve by name, which
+# the app decodes itself (`content.rs`).
+image = { version = "0.25", default-features = false, features = ["png", "webp", "jpeg", "gif"] }
+# Comparing two Yggdrasil API roots (`account_add`'s `same_api_root`), and the
+# repository URL a detail panel reduces to `owner/repo`.
+url.workspace = true
+# A Yggdrasil account's own identifier, minted per added profile.
+uuid.workspace = true
+chrono.workspace = true
+once_cell.workspace = true
+# The runtime the background work runs on, standing in for Tauri's (see
+# `src/runtime.rs`). Multi-threaded like Tauri's, and `net` for the HTTP client
+# of `install`, which reqwest turns on with its own dependency.
+# `time` is what the background's own clock sleeps on: it must not be a Slint
+# timer, which only ticks while the window is being painted (see
+# `src/background/controller.rs`).
+tokio = { workspace = true, features = ["rt-multi-thread", "net", "time"] }
+log.workspace = true
+env_logger.workspace = true
+# Reading the Conic Nexus event payloads the service hands over, and the
+# content overlays' own JSON (the search requests' query bodies).
+serde.workspace = true
+serde_json.workspace = true
+
+# Used to inject macOS window attributes (transparent title bar + full-size
+# content view) through the winit backend's window-attributes hook.
+i-slint-backend-winit = "1.18"
+winit = "0.30"
+
+# Used to position the native macOS traffic lights to match the custom title bar.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.5"
+objc2-foundation = { version = "0.2", features = [
+    "NSNotification",
+    "NSOperation",
+    "NSString",
+    "block2",
+] }
+block2 = "0.5"
+
+# Used to keep the platform's own window controls over the custom title bar on
+# Windows (see `src/windows_caption.rs`): the window frame and its messages, the
+# GDI text drawing the controls' glyphs come from, and the window subclassing the
+# frame needs. `Win32_UI_Shell` is where the SDK declares comctl32's
+# `SetWindowSubclass` / `DefSubclassProc`.
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_Graphics_Gdi",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }

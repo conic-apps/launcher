@@ -2,16 +2,29 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! Tauri-free mirror of `crates/curseforge`: the CurseForge API client.
+//!
+//! The original is a Tauri plugin whose eleven `#[command]`s wrap one-to-one
+//! around the functions below; there is no plugin state and no `Channel`, so the
+//! mirror drops the command layer and keeps the rest, including the request
+//! plumbing it is built on — the mirror-first `request_with_fallback` with its
+//! `response_is_valid` test and its API-key gate, the `apply_query` coercion
+//! (strings verbatim, everything else through `Value::to_string`, `null`
+//! dropped), and `compute_fingerprint` with its private MurmurHash2.
+//!
+//! Two deviations, both deliberate:
+//!
+//!   * The `#[tokio::test]` at the end of the original is not mirrored. It hits
+//!     the live network and only prints what it got.
+//!   * `build.rs` is kept as it is, so `CURSEFORGE_API_KEY` still decides
+//!     whether the official-API fallback exists.
+
 pub mod error;
 
 use error::*;
 use serde_json::Value;
-use shared::{HTTP_CLIENT, UrlExt};
+use slint_shared::{HTTP_CLIENT, UrlExt};
 use std::path::Path;
-use tauri::{
-    Runtime, command,
-    plugin::{Builder, TauriPlugin},
-};
 use url::Url;
 
 // MCIM mirror of the CurseForge API. Does not require an API key.
@@ -30,79 +43,6 @@ const API_KEY: &str = env!("CURSEFORGE_API_KEY");
 
 /// Minecraft's game id in the CurseForge API.
 pub const MINECRAFT_GAME_ID: i64 = 432;
-
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("curseforge")
-        .invoke_handler(tauri::generate_handler![
-            cmd_search_mods,
-            cmd_get_mod,
-            cmd_get_mods,
-            cmd_get_featured_mods,
-            cmd_get_mod_description,
-            cmd_get_mod_files,
-            cmd_get_mod_file,
-            cmd_get_files,
-            cmd_get_mod_file_changelog,
-            cmd_get_mod_file_download_url,
-            cmd_get_mod_translations,
-        ])
-        .build()
-}
-
-#[command]
-async fn cmd_search_mods(params: Value) -> Result<Value> {
-    search_mods(&params).await
-}
-
-#[command]
-async fn cmd_get_mod(mod_id: i64) -> Result<Value> {
-    get_mod(mod_id).await
-}
-
-#[command]
-async fn cmd_get_mods(body: Value) -> Result<Value> {
-    get_mods(&body).await
-}
-
-#[command]
-async fn cmd_get_featured_mods(body: Value) -> Result<Value> {
-    get_featured_mods(&body).await
-}
-
-#[command]
-async fn cmd_get_mod_description(mod_id: i64, params: Value) -> Result<Value> {
-    get_mod_description(mod_id, &params).await
-}
-
-#[command]
-async fn cmd_get_mod_files(mod_id: i64, params: Value) -> Result<Value> {
-    get_mod_files(mod_id, &params).await
-}
-
-#[command]
-async fn cmd_get_mod_file(mod_id: i64, file_id: i64) -> Result<Value> {
-    get_mod_file(mod_id, file_id).await
-}
-
-#[command]
-async fn cmd_get_files(body: Value) -> Result<Value> {
-    get_files(&body).await
-}
-
-#[command]
-async fn cmd_get_mod_file_changelog(mod_id: i64, file_id: i64) -> Result<Value> {
-    get_mod_file_changelog(mod_id, file_id).await
-}
-
-#[command]
-async fn cmd_get_mod_file_download_url(mod_id: i64, file_id: i64) -> Result<Value> {
-    get_mod_file_download_url(mod_id, file_id).await
-}
-
-#[command]
-async fn cmd_get_mod_translations(mod_ids: Vec<i64>) -> Result<Value> {
-    get_mod_translations(&mod_ids).await
-}
 
 fn build_url(base_url: &str, segments: &[&str]) -> Result<Url> {
     Ok(Url::parse(base_url)?
@@ -347,19 +287,4 @@ fn murmur2(data: &[u8], seed: u32) -> u32 {
     hash = hash.wrapping_mul(M);
     hash ^= hash >> 15;
     hash
-}
-
-#[tokio::test]
-async fn test_fallback() {
-    // Endpoints cached by the mirror return data with a `sync_at` field.
-    let cached = search_mods(&serde_json::from_str::<Value>("{}").unwrap())
-        .await
-        .unwrap();
-    dbg!(cached["sync_at"].as_str().is_some());
-    // Endpoints not cached by the mirror (e.g. description) fall back to the
-    // official API and carry no `sync_at` field.
-    let description = get_mod_description(238222, &serde_json::from_str::<Value>("{}").unwrap())
-        .await
-        .unwrap();
-    dbg!(description);
 }

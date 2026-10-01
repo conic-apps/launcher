@@ -2,20 +2,25 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use config::download::DownloadConfig;
-use download::{Checksum, progress::DownloadState};
-use folder::{DATA_LOCATION, MinecraftLocation};
-use instance::Instance;
-use log::info;
-use serde::{Deserialize, Serialize};
-use shared::HTTP_CLIENT;
+//! The Mojang-provided Java runtime download (`crates/install/src/java.rs`).
+
+use std::{collections::HashMap, path::Path};
+
 #[cfg(not(windows))]
 use std::os::unix::fs::PermissionsExt;
-use std::{collections::HashMap, path::Path};
-use version::resolve_version;
 
-use download::{DownloadTask, DownloadTaskType};
-use platform::{OsArch, OsFamily, PLATFORM_INFO};
+use log::info;
+use serde::{Deserialize, Serialize};
+
+use slint_config::download::DownloadConfig;
+use slint_download::{Checksum, progress::DownloadState};
+use slint_folder::{DATA_LOCATION, MinecraftLocation};
+use slint_instance::Instance;
+use slint_platform::{OsArch, OsFamily, PLATFORM_INFO};
+use slint_shared::HTTP_CLIENT;
+use slint_version::resolve_version;
+
+use slint_download::{DownloadTask, DownloadTaskType};
 
 use crate::error::*;
 
@@ -133,7 +138,7 @@ pub async fn install(
         .json::<Manifest>()
         .await?;
     let downloads = generate_downloads(install_directory, &manifest.files);
-    download::download_concurrent(downloads, progress, config).await?;
+    slint_download::download_concurrent(downloads, progress, config).await?;
     info!("Creating links and setting permissions");
     #[cfg(not(windows))]
     for (path, file_info) in manifest.files {
@@ -192,7 +197,7 @@ pub async fn install_for_instance(
 ) -> Result<()> {
     let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
-    let unresolved_version = serde_json::from_str::<version::Version>(
+    let unresolved_version = serde_json::from_str::<slint_version::Version>(
         &tokio::fs::read_to_string(version_json_path).await?,
     )?;
     let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[]).await?;
@@ -267,7 +272,7 @@ pub async fn install_for_instance(
     };
     install(
         java_runtime_info,
-        &java_runtime::mojang::get_installation_directory(
+        &slint_java_runtime::mojang::get_installation_directory(
             &resolved_version.java_version.component,
         )?,
         progress,

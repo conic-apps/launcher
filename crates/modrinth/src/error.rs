@@ -2,6 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! `crates/modrinth/src/error.rs`, minus the Tauri IPC boundary.
+//!
+//! The original derives `Serialize` so the error can cross `invoke()`; the
+//! attribute and the `serde_with::DisplayFromStr` shims are kept so the shape
+//! the frontend sees (`{"kind": …, "message": …}`, with `{"kind": …}` alone for
+//! the unit variant) does not change.
+
 use std::result;
 
 use serde::Serialize;
@@ -54,15 +61,15 @@ pub enum Error {
     ),
 }
 
-impl From<download::Error> for Error {
-    fn from(value: download::Error) -> Self {
+impl From<slint_download::Error> for Error {
+    fn from(value: slint_download::Error) -> Self {
         match value {
-            download::Error::Io(error) => Self::Io(error),
-            download::Error::ChecksumMissmatch(error) => Self::ChecksumMissmatch(error),
-            download::Error::Network(error) => Self::Network(error),
-            download::Error::UrlParse(error) => Self::UrlParse(error),
-            download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
-            download::Error::Aborted(error) => Self::Aborted(error),
+            slint_download::Error::Io(error) => Self::Io(error),
+            slint_download::Error::ChecksumMissmatch(error) => Self::ChecksumMissmatch(error),
+            slint_download::Error::Network(error) => Self::Network(error),
+            slint_download::Error::UrlParse(error) => Self::UrlParse(error),
+            slint_download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
+            slint_download::Error::Aborted(error) => Self::Aborted(error),
         }
     }
 }

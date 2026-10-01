@@ -2,18 +2,20 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! The Mojang version manifest and the vanilla download list
+//! (`crates/install/src/vanilla.rs`).
+
 use std::str::FromStr;
 
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use shared::HTTP_CLIENT;
 
-use download::{Checksum, DownloadTask, DownloadTaskType};
-use folder::MinecraftLocation;
-use version::{
+use slint_download::{Checksum, DownloadTask, DownloadTaskType};
+use slint_folder::MinecraftLocation;
+use slint_shared::HTTP_CLIENT;
+use slint_version::{
     self, AssetIndex, AssetIndexObject, ResolvedLibrary, ResolvedVersion, resolve_version,
 };
-
-use serde::{Deserialize, Serialize};
 
 use crate::error::*;
 
@@ -70,7 +72,7 @@ pub async fn generate_download_info(
 ) -> Result<Vec<DownloadTask>> {
     let raw_version_json = get_version_json(version_id).await?;
     let resolved_version = resolve_version(
-        &version::Version::from_str(&raw_version_json)?,
+        &slint_version::Version::from_str(&raw_version_json)?,
         &minecraft_location,
         &[],
     )

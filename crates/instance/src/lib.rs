@@ -2,19 +2,27 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! CRUD implementation for game instance
+//! Tauri-free mirror of `crates/instance`: CRUD for game instances.
+//!
+//! The original crate exposes the same operations through Tauri commands; the
+//! Slint app calls these functions directly and owns the UI state itself. Only
+//! the data model and filesystem logic live here.
+//!
+//! The filesystem half stays `async` and on `tokio::fs`, as in the original —
+//! listing instances reads and parses one `instance.toml` per instance, which
+//! has no business running on the thread that draws.
 
-use std::cmp::Ordering;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::{
+    cmp::Ordering,
+    io::{BufRead, BufReader},
+    path::PathBuf,
+};
 
 use flate2::read::GzDecoder;
-use folder::DATA_LOCATION;
 use log::info;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use tauri::plugin::{Builder, TauriPlugin};
-use tauri::{Runtime, command};
+use slint_folder::DATA_LOCATION;
 use uuid::Uuid;
 
 mod config;
@@ -22,80 +30,6 @@ mod error;
 
 pub use config::*;
 pub use error::*;
-
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("instance")
-        .invoke_handler(tauri::generate_handler![
-            cmd_create_instance,
-            cmd_list_instances,
-            cmd_get_instance_by_id,
-            cmd_update_instance,
-            cmd_delete_instance,
-            cmd_add_background_file,
-            cmd_get_background_path,
-            cmd_remove_background,
-            cmd_remove_install_lock,
-            cmd_calculate_playtime,
-        ])
-        .build()
-}
-
-#[command]
-async fn cmd_create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {
-    create_instance(config, id).await
-}
-
-#[command]
-async fn cmd_list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
-    list_instances(sort_by).await
-}
-
-#[command]
-async fn cmd_get_instance_by_id(id: String) -> Option<Instance> {
-    get_instance_by_id(&id).await
-}
-
-#[command]
-async fn cmd_update_instance(config: InstanceConfig, id: String) -> Result<()> {
-    update_instance(config, &id).await
-}
-
-#[command]
-async fn cmd_delete_instance(id: &str) -> Result<()> {
-    delete_instance(id).await
-}
-
-#[command]
-async fn cmd_add_background_file(path: String, id: &str) -> Result<()> {
-    let instance_root = DATA_LOCATION.get_instance_root(id);
-    tokio::fs::copy(path, instance_root.join("background")).await?;
-    Ok(())
-}
-
-#[command]
-async fn cmd_get_background_path(id: String) -> String {
-    let instance_root = DATA_LOCATION.get_instance_root(&id);
-    instance_root
-        .join("background")
-        .to_string_lossy()
-        .to_string()
-}
-
-#[command]
-async fn cmd_remove_background(id: &str) -> Result<()> {
-    let instance_root = DATA_LOCATION.get_instance_root(id);
-    Ok(tokio::fs::remove_file(instance_root.join("background")).await?)
-}
-
-#[command]
-async fn cmd_remove_install_lock(id: &str) -> Result<()> {
-    remove_install_lock(id).await
-}
-
-#[command]
-async fn cmd_calculate_playtime(id: &str) -> Result<u64> {
-    calculate_playtime(id)
-}
 
 /// Creates a new game instance using the provided configuration.
 pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {
@@ -112,7 +46,7 @@ pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result
 }
 
 /// Enum representing different sorting strategies for listing instances.
-#[derive(Deserialize)]
+#[derive(Clone, Copy, Deserialize)]
 pub enum SortBy {
     /// Sort by instance name (ascending).
     Name,
@@ -124,7 +58,7 @@ pub enum SortBy {
     LastPlayed,
 }
 
-/// Reads all instances stored in the data directory
+/// Reads all instances stored in the data directory.
 pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
     let instances_folder = &DATA_LOCATION.instances;
     tokio::fs::create_dir_all(instances_folder).await?;
@@ -220,7 +154,7 @@ fn compare_minecraft_versions(a: &str, b: &str) -> Ordering {
 enum VersionKey {
     /// Dated snapshot, e.g. "24w14a" or "25w14craftmine".
     Snapshot { year: u16, week: u8, letter: String },
-    /// Regular release, optionally with a "pre" / "rc" suffix, e.g. "1.20.1", "1.21-pre1".
+    /// Regular release, optionally with a "pre" / "rc" suffix, e.g. "1.20.1".
     Releaseish {
         major: u8,
         minor: u8,
@@ -307,8 +241,6 @@ fn compare_version_keys(a: &VersionKey, b: &VersionKey) -> Ordering {
             compare_snapshot_to_release(b, a).reverse()
         }
         (VersionKey::Unknown(x), VersionKey::Unknown(y)) => x.cmp(y),
-        // Unknown versions are treated as the oldest, so they sink to the bottom
-        // of a newest-first listing.
         (VersionKey::Unknown(_), _) => Ordering::Less,
         (_, VersionKey::Unknown(_)) => Ordering::Greater,
     }
@@ -360,11 +292,6 @@ fn compare_snapshot_to_release(snapshot: &VersionKey, release: &VersionKey) -> O
 }
 
 /// Approximate year in which the first release of a given minor version shipped.
-///
-/// Dated snapshots carry their calendar date (e.g. "24w14a") while releases carry
-/// only a version number. To sort snapshots relative to releases we map a release
-/// to an approximate (year, week) and compare by date. The mapping is a best-effort
-/// heuristic; ordering releases among themselves is exact.
 fn release_year(minor: u8) -> u16 {
     match minor {
         16 => 2020,
@@ -382,11 +309,12 @@ fn release_week(patch: u8) -> u8 {
     (24 + patch * 8).min(52)
 }
 
+/// Reads a single instance by id.
 pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
-    let instance_root = &DATA_LOCATION.get_instance_root(id);
+    let instance_root = DATA_LOCATION.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
-    if let Ok(config_file_content) = tokio::fs::read_to_string(config_file).await
-        && let Ok(config) = toml::from_str::<InstanceConfig>(&config_file_content)
+    if let Ok(config_content) = tokio::fs::read_to_string(config_file).await
+        && let Ok(config) = toml::from_str::<InstanceConfig>(&config_content)
     {
         Some(Instance {
             config,
@@ -402,8 +330,7 @@ pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
     }
 }
 
-/// Updates the configuration file of an existing instance
-/// specified by the given UUID.
+/// Updates the configuration file of an existing instance.
 pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
     let instance_root = DATA_LOCATION.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
@@ -412,7 +339,7 @@ pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
     Ok(())
 }
 
-/// Deletes the instance directory corresponding to the given UUID.
+/// Deletes the instance directory corresponding to the given id.
 pub async fn delete_instance(id: &str) -> Result<()> {
     tokio::fs::remove_dir_all(DATA_LOCATION.get_instance_root(id)).await?;
     info!("Deleted {id}");
@@ -420,9 +347,6 @@ pub async fn delete_instance(id: &str) -> Result<()> {
 }
 
 /// Removes the `.install.lock` marker file of an instance.
-///
-/// The lock file marks an instance as installed; deleting it makes the next
-/// launch re-run the full installation flow (repair).
 pub async fn remove_install_lock(id: &str) -> Result<()> {
     let lock_file = DATA_LOCATION.get_instance_root(id).join(".install.lock");
     if let Err(err) = tokio::fs::remove_file(lock_file).await
@@ -433,9 +357,26 @@ pub async fn remove_install_lock(id: &str) -> Result<()> {
     Ok(())
 }
 
-/// Represents a game instance, including its configuration,
-/// installation status, and unique ID.
-#[derive(Deserialize, Serialize, Default)]
+/// The path of an instance's background image.
+pub fn get_background_path(id: &str) -> PathBuf {
+    DATA_LOCATION.get_instance_root(id).join("background")
+}
+
+/// Copies `path` over the instance's background image.
+pub async fn add_background_image(path: &std::path::Path, id: &str) -> Result<()> {
+    tokio::fs::copy(path, get_background_path(id)).await?;
+    Ok(())
+}
+
+/// Removes an instance's background image.
+pub async fn remove_background(id: &str) -> Result<()> {
+    tokio::fs::remove_file(get_background_path(id)).await?;
+    Ok(())
+}
+
+/// Represents a game instance, including its configuration, installation status
+/// and unique id.
+#[derive(Clone, Deserialize, Serialize, Default)]
 pub struct Instance {
     /// The configuration of the instance.
     pub config: InstanceConfig,
@@ -448,6 +389,7 @@ pub struct Instance {
 }
 
 impl Instance {
+    /// The version id used as the game directory, including the loader prefix.
     pub fn get_version_id(&self) -> Result<String> {
         let config = &self.config;
         config
@@ -466,20 +408,29 @@ impl Instance {
                         format!("fabric-loader-{mod_loader_version}-{minecraft_version}")
                     }
                     ModLoaderType::Quilt => {
-                        format!("quilt-loader-{mod_loader_version}-{minecraft_version}",)
+                        format!("quilt-loader-{mod_loader_version}-{minecraft_version}")
                     }
                     ModLoaderType::Forge => {
-                        format!("{minecraft_version}-forge-{mod_loader_version}",)
+                        format!("{minecraft_version}-forge-{mod_loader_version}")
                     }
                     ModLoaderType::Neoforge => {
-                        format!("neoforge-{mod_loader_version}",)
+                        format!("neoforge-{mod_loader_version}")
                     }
                 })
             })
             .unwrap_or(Ok(config.runtime.minecraft.clone()))
     }
+
+    /// Whether the instance is marked as a favorite.
+    pub fn is_starred(&self) -> bool {
+        self.config
+            .group
+            .as_ref()
+            .is_some_and(|groups| groups.iter().any(|group| group == "starred"))
+    }
 }
 
+/// Total play time of an instance in seconds, parsed from its game logs.
 pub fn calculate_playtime(instance_id: &str) -> Result<u64> {
     let instance_root = DATA_LOCATION.get_instance_root(instance_id);
     let logs_root = instance_root.join("logs");
@@ -581,15 +532,13 @@ fn parse_log_time(line: &str) -> Option<u64> {
 
 fn get_launch_script_timestamp(instance_id: &str) -> Option<u64> {
     #[cfg(not(target_os = "windows"))]
-    let script_path = DATA_LOCATION
-        .get_instance_root(instance_id)
-        .join(".cache")
-        .join("conic-launch.sh");
+    let script_name = "conic-launch.sh";
     #[cfg(target_os = "windows")]
+    let script_name = "conic-launch.bat";
     let script_path = DATA_LOCATION
         .get_instance_root(instance_id)
         .join(".cache")
-        .join("conic-launch.bat");
+        .join(script_name);
     let file = std::fs::File::open(script_path).ok()?;
     let reader = BufReader::new(file);
     for line in reader.lines().take(10) {

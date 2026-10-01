@@ -7,9 +7,9 @@ use std::collections::HashMap;
 use base64::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use shared::HTTP_CLIENT;
 
 use crate::error::*;
+use slint_shared::HTTP_CLIENT;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

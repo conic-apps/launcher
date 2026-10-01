@@ -60,8 +60,12 @@ pub enum Error {
     #[error("No suitable Java runtime found")]
     NoSuitableJavaRuntime,
 
+    // The account crate's error is not `Serialize` in the Slint workspace (the
+    // mirror drops its IPC-boundary derives), and the Slint app never serializes
+    // a launch error, so this variant is left out of the serialized form.
+    #[serde(skip)]
     #[error(transparent)]
-    AccountError(#[from] account::Error),
+    AccountError(#[from] slint_account::Error),
 
     #[error(transparent)]
     Aborted(
@@ -77,60 +81,61 @@ pub enum Error {
     Other,
 }
 
-impl From<version::Error> for Error {
-    fn from(value: version::Error) -> Self {
+impl From<slint_version::Error> for Error {
+    fn from(value: slint_version::Error) -> Self {
         match value {
-            version::Error::Io(error) => Self::Io(error),
-            version::Error::JsonParse(error) => Self::VersionJsonParse(error),
-            version::Error::InvalidVersionJson => Self::InvalidVersionJson("".to_string()),
-            version::Error::InvalidMinecraftVersion => Self::InvalidMinecraftVersion,
+            slint_version::Error::Io(error) => Self::Io(error),
+            slint_version::Error::JsonParse(error) => Self::VersionJsonParse(error),
+            slint_version::Error::InvalidVersionJson => Self::InvalidVersionJson("".to_string()),
+            slint_version::Error::InvalidMinecraftVersion => Self::InvalidMinecraftVersion,
         }
     }
 }
 
-impl From<instance::Error> for Error {
-    fn from(value: instance::Error) -> Self {
+impl From<slint_instance::Error> for Error {
+    fn from(value: slint_instance::Error) -> Self {
         match value {
-            instance::Error::Io(error) => Self::Io(error),
-            instance::Error::TomlSerialize(error) => Self::InvalidInstance(error.to_string()),
-            instance::Error::InvalidInstanceConfig => {
+            slint_instance::Error::Io(error) => Self::Io(error),
+            slint_instance::Error::TomlSer(error) => Self::InvalidInstance(error.to_string()),
+            slint_instance::Error::TomlDe(error) => Self::InvalidInstance(error.to_string()),
+            slint_instance::Error::InvalidInstanceConfig => {
                 Self::InvalidInstance("Invalid instance config".to_string())
             }
         }
     }
 }
 
-impl From<install::Error> for Error {
-    fn from(value: install::Error) -> Self {
+impl From<slint_install::Error> for Error {
+    fn from(value: slint_install::Error) -> Self {
         match value {
-            install::Error::Io(error) => Self::Io(error),
-            install::Error::Network(error) => Self::Network(error),
-            install::Error::InstanceBroken => Self::InvalidInstance("".to_string()),
-            install::Error::JsonParse(error) => Self::VersionJsonParse(error),
-            install::Error::InvalidVersionJson(error) => Self::InvalidVersionJson(error),
+            slint_install::Error::Io(error) => Self::Io(error),
+            slint_install::Error::Network(error) => Self::Network(error),
+            slint_install::Error::InstanceBroken => Self::InvalidInstance("".to_string()),
+            slint_install::Error::JsonParse(error) => Self::VersionJsonParse(error),
+            slint_install::Error::InvalidVersionJson(error) => Self::InvalidVersionJson(error),
             _ => Self::Other,
         }
     }
 }
 
-impl From<download::Error> for Error {
-    fn from(value: download::Error) -> Self {
+impl From<slint_download::Error> for Error {
+    fn from(value: slint_download::Error) -> Self {
         match value {
-            download::Error::Io(e) => Self::Io(e),
-            download::Error::ChecksumMissmatch(e) => Self::ChecksumMissmatch(e),
-            download::Error::Network(e) => Self::Network(e),
-            download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
-            download::Error::UrlParse(_) => Self::Other,
-            download::Error::Aborted(error) => Self::Aborted(error),
+            slint_download::Error::Io(e) => Self::Io(e),
+            slint_download::Error::ChecksumMissmatch(e) => Self::ChecksumMissmatch(e),
+            slint_download::Error::Network(e) => Self::Network(e),
+            slint_download::Error::ChunkLengthMismatch => Self::ChunkLengthMismatch,
+            slint_download::Error::UrlParse(_) => Self::Other,
+            slint_download::Error::Aborted(error) => Self::Aborted(error),
         }
     }
 }
 
-impl From<java_runtime::Error> for Error {
-    fn from(value: java_runtime::Error) -> Self {
+impl From<slint_java_runtime::Error> for Error {
+    fn from(value: slint_java_runtime::Error) -> Self {
         match value {
-            java_runtime::Error::Io(error) => Self::Io(error),
-            java_runtime::Error::NoSuitableJavaRuntime => Self::NoSuitableJavaRuntime,
+            slint_java_runtime::Error::Io(error) => Self::Io(error),
+            slint_java_runtime::Error::NoSuitableJavaRuntime => Self::NoSuitableJavaRuntime,
             _ => Self::Other,
         }
     }

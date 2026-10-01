@@ -2,12 +2,29 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! Tauri-free mirror of `crates/download`: the resumable / mirrored downloader
+//! the installer and the launcher use.
+//!
+//! The original crate exposes its two entry points through Tauri commands
+//! (`cmd_spawn_download_task` / `cmd_cancel_download_task`) and keeps the
+//! in-flight tasks in a `PluginState`. That command layer has no counterpart
+//! here: the Slint app owns the tasks (it aborts the tokio `JoinHandle` to
+//! cancel), so this mirror carries only the downloader itself —
+//! [`download`], [`download_concurrent`] and the task model — byte-for-byte
+//! like `crates/download/src/*.rs`, save for the `shared::HTTP_CLIENT` →
+//! `slint_shared::HTTP_CLIENT` rename.
+//!
+//! The original's **chunked** download path (`inner_chunk_download_executer`
+//! and the `Accept-Ranges` probe that selects it) is disabled here: it is
+//! known to misbehave in the original design, so every task goes through the
+//! sequential path below. The removed code is kept commented out next to where
+//! it used to run.
+
 use std::{
-    collections::HashMap,
-    io::{Read, SeekFrom},
+    io::Read,
     path::PathBuf,
     sync::{
-        Arc, Mutex,
+        Arc,
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
     thread,
@@ -17,112 +34,22 @@ use std::{
 use futures::{StreamExt, TryStreamExt};
 use log::{debug, error, info, trace, warn};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use reqwest::{IntoUrl, header::ACCEPT_RANGES};
 use serde::{Deserialize, Serialize};
-use tokio::fs::OpenOptions;
-use tokio::io::{AsyncSeekExt, AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 
-use config::download::DownloadConfig;
 use progress::{DownloadPhase, DownloadState};
-use shared::HTTP_CLIENT;
+use slint_config::download::DownloadConfig;
+use slint_shared::HTTP_CLIENT;
 
 pub mod checksum;
 pub mod error;
 pub(crate) mod mirror;
 pub mod progress;
-// pub mod state;
 
 pub use checksum::*;
 pub use error::*;
 use mirror::*;
-use tauri::{
-    Manager, Runtime, State, command,
-    ipc::Channel,
-    plugin::{Builder, TauriPlugin},
-};
 use url::Url;
-use uuid::Uuid;
-
-#[derive(Clone, Default)]
-struct PluginState {
-    task: Arc<Mutex<HashMap<Uuid, tokio::task::AbortHandle>>>,
-}
-
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("download")
-        .invoke_handler(tauri::generate_handler![
-            cmd_spawn_download_task,
-            cmd_cancel_download_task
-        ])
-        .setup(|app, _| {
-            app.manage(PluginState::default());
-            Ok(())
-        })
-        .build()
-}
-
-#[command]
-async fn cmd_spawn_download_task(
-    state: State<'_, PluginState>,
-    download_task: DownloadTask,
-    task_id: Uuid,
-    channel: Channel<DownloadState>,
-) -> Result<()> {
-    info!(
-        "Starting download task {task_id}: {} -> {}",
-        download_task.url,
-        download_task.file.display()
-    );
-    let task_status = DownloadState::default();
-    let finished = Arc::new(AtomicBool::new(false));
-    let handle = tokio::spawn({
-        let task_status_cloned = task_status.clone();
-        let finished = finished.clone();
-        async move {
-            let result = download(&download_task, &task_status_cloned).await;
-            finished.store(true, Ordering::SeqCst);
-            result
-        }
-    });
-    {
-        let mut current_task = state.task.lock().expect("Internal error");
-        (*current_task).insert(task_id, handle.abort_handle());
-    }
-    let event_sender_thread = {
-        let status_cloned = task_status.clone();
-        let finished = finished.clone();
-        thread::spawn(move || {
-            while !finished.load(Ordering::SeqCst) {
-                let _ = channel.send(status_cloned.clone());
-                std::thread::sleep(Duration::from_millis(100));
-            }
-        })
-    };
-    let result = match handle.await {
-        Ok(result) => result,
-        Err(error) => {
-            warn!("Download task {task_id} cancelled");
-            Err(Error::Aborted(error))
-        }
-    };
-    let _ = event_sender_thread.join();
-    {
-        let mut current_task = state.task.lock().expect("Internal error");
-        (*current_task).remove(&task_id);
-    }
-    info!("Download task {task_id} finished");
-    result
-}
-
-#[command]
-fn cmd_cancel_download_task(state: State<'_, PluginState>, task_id: Uuid) {
-    let mut current_task = state.task.lock().expect("Internal error");
-    if let Some(handle) = current_task.get(&task_id) {
-        handle.abort();
-        warn!("Cancelling download task {task_id}");
-    }
-    (*current_task).remove(&task_id);
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum DownloadTaskType {
@@ -515,16 +442,16 @@ async fn inner_download_executer(
     progress: DownloadState,
     speed_counter_input: Arc<AtomicU64>,
 ) -> Result<()> {
-    if let Some(length) = task.size_bytes
-        && is_support_range(&task.url).await == Some(true)
-    {
-        debug!(
-            "Server supports range requests, using chunked download for {} ({length} bytes)",
-            task.url
-        );
-        return inner_chunk_download_executer(task, length, config, &progress, speed_counter_input)
-            .await;
-    }
+    // if let Some(length) = task.size_bytes
+    //     && is_support_range(&task.url).await == Some(true)
+    // {
+    //     debug!(
+    //         "Server supports range requests, using chunked download for {} ({length} bytes)",
+    //         task.url
+    //     );
+    //     return inner_chunk_download_executer(task, length, config, &progress, speed_counter_input)
+    //         .await;
+    // }
     debug!("Using sequential download for {}", task.url);
     let file_path = task.file.clone();
     let url = task.url.clone();
@@ -560,180 +487,180 @@ async fn inner_download_executer(
     Ok(())
 }
 
-async fn is_support_range<U: IntoUrl>(url: U) -> Option<bool> {
-    let url = url.into_url().ok()?;
-    let response = HTTP_CLIENT.head(url.clone()).send().await.ok()?;
-    let accept_ranges = response
-        .headers()
-        .get(ACCEPT_RANGES)
-        .and_then(|x| x.to_str().ok())
-        .unwrap_or("");
-    let support = accept_ranges.eq_ignore_ascii_case("bytes");
-    trace!("HEAD {url}: Accept-Ranges={accept_ranges:?}, range_supported={support}");
-    Some(support)
-}
+// async fn is_support_range<U: IntoUrl>(url: U) -> Option<bool> {
+//     let url = url.into_url().ok()?;
+//     let response = HTTP_CLIENT.head(url.clone()).send().await.ok()?;
+//     let accept_ranges = response
+//         .headers()
+//         .get(ACCEPT_RANGES)
+//         .and_then(|x| x.to_str().ok())
+//         .unwrap_or("");
+//     let support = accept_ranges.eq_ignore_ascii_case("bytes");
+//     trace!("HEAD {url}: Accept-Ranges={accept_ranges:?}, range_supported={support}");
+//     Some(support)
+// }
 
-async fn inner_chunk_download_executer(
-    task: &DownloadTask,
-    length: u64,
-    config: &DownloadConfig,
-    progress: &DownloadState,
-    speed_counter_input: Arc<AtomicU64>,
-) -> Result<()> {
-    let chunks = calculate_chunks_length(length);
-    debug!(
-        "Chunked download of {length} bytes via {} chunk(s) for {}",
-        chunks.len(),
-        task.url
-    );
-    for (start, end) in &chunks {
-        debug!(
-            "Chunk range: bytes {start}-{end} (size {}) for {}, total file size {length}",
-            end - start + 1,
-            task.url
-        );
-    }
-    let file_path = task.file.clone();
-    if let Some(parent) = file_path.parent() {
-        tokio::fs::create_dir_all(parent).await?;
-    }
-    {
-        let file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&file_path)
-            .await?;
-        file.set_len(length).await?;
-        file.sync_all().await?;
-    }
-    futures::stream::iter(chunks)
-        .map(Ok)
-        .try_for_each_concurrent(4, async |range| {
-            let mut result = Ok(());
-            for retried in 0..10 {
-                match download_slice(
-                    task.clone(),
-                    config,
-                    progress,
-                    speed_counter_input.clone(),
-                    range,
-                )
-                .await
-                {
-                    Ok(()) => {
-                        trace!("Chunk {}-{} of {} downloaded", range.0, range.1, task.url);
-                        return Ok(());
-                    }
-                    Err(e) => {
-                        error!(
-                            "Chunk {}-{} of {} failed: {e:?}",
-                            range.0, range.1, task.url
-                        );
-                        result = Err(e);
-                    }
-                };
-                warn!("retried: {retried}");
-            }
-            result
-        })
-        .await?;
-    let mut file = std::fs::File::open(&task.file)?;
-    let check_result = verify_checksum_from_read(&mut file, &task.checksum);
-    if let Some(result) = check_result
-        && result
-    {
-        debug!("Chunked download checksum verified for {}", task.url);
-        Ok(())
-    } else {
-        error!(
-            "Chunked download checksum verification failed for {}",
-            task.url
-        );
-        Err(Error::ChecksumMissmatch(task.url.clone()))
-    }
-}
+// async fn inner_chunk_download_executer(
+//     task: &DownloadTask,
+//     length: u64,
+//     config: &DownloadConfig,
+//     progress: &DownloadState,
+//     speed_counter_input: Arc<AtomicU64>,
+// ) -> Result<()> {
+//     let chunks = calculate_chunks_length(length);
+//     debug!(
+//         "Chunked download of {length} bytes via {} chunk(s) for {}",
+//         chunks.len(),
+//         task.url
+//     );
+//     for (start, end) in &chunks {
+//         debug!(
+//             "Chunk range: bytes {start}-{end} (size {}) for {}, total file size {length}",
+//             end - start + 1,
+//             task.url
+//         );
+//     }
+//     let file_path = task.file.clone();
+//     if let Some(parent) = file_path.parent() {
+//         tokio::fs::create_dir_all(parent).await?;
+//     }
+//     {
+//         let file = OpenOptions::new()
+//             .write(true)
+//             .create(true)
+//             .truncate(true)
+//             .open(&file_path)
+//             .await?;
+//         file.set_len(length).await?;
+//         file.sync_all().await?;
+//     }
+//     futures::stream::iter(chunks)
+//         .map(Ok)
+//         .try_for_each_concurrent(4, async |range| {
+//             let mut result = Ok(());
+//             for retried in 0..10 {
+//                 match download_slice(
+//                     task.clone(),
+//                     config,
+//                     progress,
+//                     speed_counter_input.clone(),
+//                     range,
+//                 )
+//                 .await
+//                 {
+//                     Ok(()) => {
+//                         trace!("Chunk {}-{} of {} downloaded", range.0, range.1, task.url);
+//                         return Ok(());
+//                     }
+//                     Err(e) => {
+//                         error!(
+//                             "Chunk {}-{} of {} failed: {e:?}",
+//                             range.0, range.1, task.url
+//                         );
+//                         result = Err(e);
+//                     }
+//                 };
+//                 warn!("retried: {retried}");
+//             }
+//             result
+//         })
+//         .await?;
+//     let mut file = std::fs::File::open(&task.file)?;
+//     let check_result = verify_checksum_from_read(&mut file, &task.checksum);
+//     if let Some(result) = check_result
+//         && result
+//     {
+//         debug!("Chunked download checksum verified for {}", task.url);
+//         Ok(())
+//     } else {
+//         error!(
+//             "Chunked download checksum verification failed for {}",
+//             task.url
+//         );
+//         Err(Error::ChecksumMissmatch(task.url.clone()))
+//     }
+// }
 
-fn calculate_chunks_length(length: u64) -> Vec<(u64, u64)> {
-    if length < 4 * 1000 * 1000 {
-        trace!(
-            "File size {length} bytes < 4MB, using a single chunk (0-{})",
-            length - 1
-        );
-        return vec![(0, length - 1)];
-    }
-    let chunk_count = if length < 30 * 1000 * 1000 {
-        length / (2 * 1000 * 1000) + 1
-    } else if length < 100 {
-        length / (4 * 1000 * 1000) + 1
-    } else {
-        length / (10 * 1000 * 1000) + 1
-    };
-    let chunk_size = length / chunk_count;
-    trace!("File size {length} bytes split into {chunk_count} chunks of ~{chunk_size} bytes");
-    let mut chunks = Vec::with_capacity(chunk_count as usize);
-    for i in 0..chunk_count {
-        if i == chunk_count - 1 {
-            chunks.push((i * chunk_size, length - 1));
-        } else {
-            chunks.push((i * chunk_size, (i + 1) * chunk_size - 1));
-        }
-    }
-    chunks
-}
+// fn calculate_chunks_length(length: u64) -> Vec<(u64, u64)> {
+//     if length < 4 * 1000 * 1000 {
+//         trace!(
+//             "File size {length} bytes < 4MB, using a single chunk (0-{})",
+//             length - 1
+//         );
+//         return vec![(0, length - 1)];
+//     }
+//     let chunk_count = if length < 30 * 1000 * 1000 {
+//         length / (2 * 1000 * 1000) + 1
+//     } else if length < 100 {
+//         length / (4 * 1000 * 1000) + 1
+//     } else {
+//         length / (10 * 1000 * 1000) + 1
+//     };
+//     let chunk_size = length / chunk_count;
+//     trace!("File size {length} bytes split into {chunk_count} chunks of ~{chunk_size} bytes");
+//     let mut chunks = Vec::with_capacity(chunk_count as usize);
+//     for i in 0..chunk_count {
+//         if i == chunk_count - 1 {
+//             chunks.push((i * chunk_size, length - 1));
+//         } else {
+//             chunks.push((i * chunk_size, (i + 1) * chunk_size - 1));
+//         }
+//     }
+//     chunks
+// }
 
-async fn download_slice(
-    task: DownloadTask,
-    config: &DownloadConfig,
-    progress: &DownloadState,
-    speed_counter_input: Arc<AtomicU64>,
-    range: (u64, u64),
-) -> Result<()> {
-    let url = task.url.clone();
-    trace!(
-        "Downloading slice bytes {}-{} of {}",
-        range.0, range.1, task.url
-    );
-    if let Some(parent) = task.file.parent() {
-        tokio::fs::create_dir_all(parent).await?;
-    }
-    let mut target_file = OpenOptions::new().write(true).open(task.file).await?;
-    target_file.seek(SeekFrom::Start(range.0)).await?;
-    let mut response = HTTP_CLIENT
-        .get(&url)
-        .header("Range", format!("bytes={}-{}", range.0, range.1))
-        .send()
-        .await?
-        .error_for_status()?;
-    let mut size = 0u64;
-    while let Some(chunk) = response.chunk().await? {
-        while progress.speed.load(Ordering::SeqCst) > config.max_download_speed
-            && config.max_download_speed > 1024
-        {
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-        target_file.write_all(&chunk).await?;
-        speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);
-        progress
-            .completed_bytes
-            .fetch_add(chunk.len() as u64, Ordering::SeqCst);
-        size += chunk.len() as u64;
-    }
-    target_file.sync_all().await?;
-    if size != range.1 - range.0 + 1 {
-        error!(
-            "Slice bytes {}-{} of {} received {size} byte(s), expected {}",
-            range.0,
-            range.1,
-            task.url,
-            range.1 - range.0 + 1
-        );
-        Err(Error::ChunkLengthMismatch)
-    } else {
-        trace!(
-            "Slice bytes {}-{} of {} received {size} byte(s)",
-            range.0, range.1, task.url
-        );
-        Ok(())
-    }
-}
+// async fn download_slice(
+//     task: DownloadTask,
+//     config: &DownloadConfig,
+//     progress: &DownloadState,
+//     speed_counter_input: Arc<AtomicU64>,
+//     range: (u64, u64),
+// ) -> Result<()> {
+//     let url = task.url.clone();
+//     trace!(
+//         "Downloading slice bytes {}-{} of {}",
+//         range.0, range.1, task.url
+//     );
+//     if let Some(parent) = task.file.parent() {
+//         tokio::fs::create_dir_all(parent).await?;
+//     }
+//     let mut target_file = OpenOptions::new().write(true).open(task.file).await?;
+//     target_file.seek(SeekFrom::Start(range.0)).await?;
+//     let mut response = HTTP_CLIENT
+//         .get(&url)
+//         .header("Range", format!("bytes={}-{}", range.0, range.1))
+//         .send()
+//         .await?
+//         .error_for_status()?;
+//     let mut size = 0u64;
+//     while let Some(chunk) = response.chunk().await? {
+//         while progress.speed.load(Ordering::SeqCst) > config.max_download_speed
+//             && config.max_download_speed > 1024
+//         {
+//             tokio::time::sleep(Duration::from_millis(100)).await;
+//         }
+//         target_file.write_all(&chunk).await?;
+//         speed_counter_input.fetch_add(chunk.len() as u64, Ordering::SeqCst);
+//         progress
+//             .completed_bytes
+//             .fetch_add(chunk.len() as u64, Ordering::SeqCst);
+//         size += chunk.len() as u64;
+//     }
+//     target_file.sync_all().await?;
+//     if size != range.1 - range.0 + 1 {
+//         error!(
+//             "Slice bytes {}-{} of {} received {size} byte(s), expected {}",
+//             range.0,
+//             range.1,
+//             task.url,
+//             range.1 - range.0 + 1
+//         );
+//         Err(Error::ChunkLengthMismatch)
+//     } else {
+//         trace!(
+//             "Slice bytes {}-{} of {} received {size} byte(s)",
+//             range.0, range.1, task.url
+//         );
+//         Ok(())
+//     }
+// }

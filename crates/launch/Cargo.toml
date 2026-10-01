@@ -1,11 +1,9 @@
-[package]
+ge]
 name = "launch"
+description = "Tauri-free mirror of crates/launch for the Slint app"
 version = "0.0.0"
-authors = ["OakChaser"]
-
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
@@ -21,18 +19,14 @@ version.workspace = true
 download.workspace = true
 statistics.workspace = true
 
-regex.workspace = true
-zip.workspace = true
 log.workspace = true
-tauri.workspace = true
-uuid.workspace = true
+num_cpus.workspace = true
+regex.workspace = true
+reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-num_cpus.workspace = true
-rayon.workspace = true
-sha1_smol.workspace = true
-thiserror.workspace = true
 serde_with.workspace = true
-reqwest.workspace = true
-futures.workspace = true
+thiserror.workspace = true
 tokio.workspace = true
+uuid.workspace = true
+zip.workspace = true

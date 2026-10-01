@@ -8,11 +8,11 @@ use base64::{Engine, engine::general_purpose};
 use futures::{StreamExt, stream};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use shared::{HTTP_CLIENT, UrlExt};
 use url::Url;
 use uuid::Uuid;
 
 use crate::error::*;
+use slint_shared::{HTTP_CLIENT, UrlExt};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -42,19 +42,27 @@ pub struct ProfileProperty {
     pub signature: Option<String>,
 }
 
+/// The answer of `authserver/authenticate`.
+///
+/// The `camelCase` renames are the Yggdrasil wire format the server speaks —
+/// unlike the other `serde` attributes in this crate, they are not about an IPC
+/// boundary and stay. The fields are `pub` because the original's were read
+/// through serde on the way to the webview, where `crates/account/index.ts`
+/// models them as `AuthResponse`; with no such boundary the caller reads them
+/// directly.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthResponse {
-    access_token: String,
-    client_token: String,
-    available_profiles: Vec<Profile>,
-    selected_profile: Option<Profile>,
+    pub access_token: String,
+    pub client_token: String,
+    pub available_profiles: Vec<Profile>,
+    pub selected_profile: Option<Profile>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Texture {
-    url: String,
-    metadata: Option<HashMap<String, String>>,
+    pub url: String,
+    pub metadata: Option<HashMap<String, String>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]

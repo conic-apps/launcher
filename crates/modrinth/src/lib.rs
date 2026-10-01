@@ -2,57 +2,41 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! Tauri-free mirror of `crates/modrinth`: the Modrinth API client.
+//!
+//! The original is a Tauri plugin, so every function is wrapped in a
+//! `#[command]` that exists only to hand the value back over IPC. There is no
+//! plugin state and no `Channel` anywhere in it, so the mirror drops the whole
+//! command layer and keeps the functions themselves — the two files can be
+//! diffed against each other line for line apart from that.
+//!
+//! Everything the requests depend on is kept as it is: the same three base
+//! URLs (the MCIM mirror for everything the mirror serves, the official API for
+//! the one endpoint it does not), the same `shared` HTTP client and URL
+//! builder, and the same response handling, including `get_versions_from_hashes`
+//! treating a client error as "no hash matched".
+//!
+//! Two deviations, both deliberate:
+//!
+//!   * `get_multiple_projects` is **not** mirrored — it is broken upstream. It
+//!     hands a `&[&str]` to `RequestBuilder::query`, and reqwest serializes a
+//!     top-level sequence through `serde_urlencoded`'s pair serializer, which
+//!     rejects a bare string, so the request never carries a query string and
+//!     the command always fails. `get_projects` — which the same file already
+//!     has, and which `crates/content/src/mods/remote.rs` already uses — takes
+//!     the same ids as one JSON parameter and works.
+//!   * The two request structs' fields are `pub`. Upstream they are private
+//!     because Tauri deserializes them from the IPC payload and nothing else
+//!     constructs them; here the app builds them directly.
+
 pub mod error;
 
 use error::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use shared::{HTTP_CLIENT, UrlExt};
+use slint_shared::{HTTP_CLIENT, UrlExt};
 use std::collections::HashMap;
-use tauri::{
-    Runtime, command,
-    plugin::{Builder, TauriPlugin},
-};
 use url::Url;
-
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("modrinth")
-        .invoke_handler(tauri::generate_handler![
-            cmd_search_projects,
-            cmd_get_project,
-            cmd_get_multiple_projects,
-            cmd_get_all_dependencies,
-            cmd_list_project_versions,
-            cmd_get_project_translations,
-            cmd_get_team_members
-        ])
-        .build()
-}
-
-#[command]
-async fn cmd_search_projects(params: SearchParameters) -> Result<Value> {
-    search_projects(&params).await
-}
-
-#[command]
-async fn cmd_get_project(id_or_slug: &str) -> Result<Value> {
-    get_project(id_or_slug).await
-}
-
-#[command]
-async fn cmd_get_multiple_projects(ids: Vec<&str>) -> Result<Value> {
-    get_multiple_projects(&ids).await
-}
-
-#[command]
-async fn cmd_get_all_dependencies(id: &str) -> Result<Value> {
-    get_all_dependencies(id).await
-}
-
-#[command]
-async fn cmd_get_team_members(team_id: &str) -> Result<Value> {
-    get_team_members(team_id).await
-}
 
 // const BASE_URL: &str = "https://api.modrinth.com";
 const BASE_URL: &str = "https://mod.mcimirror.top/modrinth";
@@ -60,19 +44,6 @@ const OFFICIAL_BASE_URL: &str = "https://api.modrinth.com";
 // MCIM translate API for project descriptions.
 // See https://github.com/mcmod-info-mirror/translate-mod-summary
 const TRANSLATE_BASE_URL: &str = "https://mod.mcimirror.top/translate";
-
-#[command]
-async fn cmd_list_project_versions(
-    id_or_slug: &str,
-    params: ListProjectVersionsParams,
-) -> Result<Value> {
-    list_project_versions(id_or_slug, &params).await
-}
-
-#[command]
-async fn cmd_get_project_translations(project_ids: Vec<String>) -> Result<Value> {
-    get_project_translations(&project_ids).await
-}
 
 /// Fetch the translated descriptions of the given Modrinth projects. Projects
 /// without a translation are simply absent from the response.
@@ -92,11 +63,11 @@ pub async fn get_project_translations(project_ids: &[String]) -> Result<Value> {
 
 #[derive(Serialize, Deserialize)]
 pub struct SearchParameters {
-    query: Option<String>,
-    facets: Option<String>,
-    index: Option<String>,
-    offset: Option<usize>,
-    limit: Option<usize>,
+    pub query: Option<String>,
+    pub facets: Option<String>,
+    pub index: Option<String>,
+    pub offset: Option<usize>,
+    pub limit: Option<usize>,
 }
 
 pub async fn search_projects(params: &SearchParameters) -> Result<Value> {
@@ -119,13 +90,6 @@ pub async fn get_project(id_or_slug: &str) -> Result<Value> {
     Ok(HTTP_CLIENT.get(url).send().await?.json().await?)
 }
 
-pub async fn get_multiple_projects(ids: &[&str]) -> Result<Value> {
-    let url = Url::parse(BASE_URL)?
-        .append_path(["v2", "projects"])
-        .expect("Internal error");
-    Ok(HTTP_CLIENT.get(url).query(ids).send().await?.json().await?)
-}
-
 pub async fn get_all_dependencies(id: &str) -> Result<Value> {
     let url = Url::parse(BASE_URL)?
         .append_path(["v2", "project", id, "dependencies"])
@@ -135,10 +99,10 @@ pub async fn get_all_dependencies(id: &str) -> Result<Value> {
 
 #[derive(Serialize, Deserialize)]
 pub struct ListProjectVersionsParams {
-    loaders: Option<String>,
-    game_versions: Option<String>,
-    featured: Option<String>,
-    include_changelog: Option<String>,
+    pub loaders: Option<String>,
+    pub game_versions: Option<String>,
+    pub featured: Option<String>,
+    pub include_changelog: Option<String>,
 }
 
 pub async fn list_project_versions(
