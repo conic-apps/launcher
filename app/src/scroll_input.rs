@@ -77,6 +77,12 @@ pub fn setup(ui: &App) {
 
 /// Records what the observer last saw, and logs a change so a run says which of
 /// the three the platform reported.
+///
+/// macOS-only: the observer in the submodule below is the only caller, so on
+/// Linux and Windows this is dead code — and CI runs `clippy -- -D warnings`,
+/// which turns that into a build failure. The `cfg` is the same one the
+/// submodule uses.
+#[cfg(target_os = "macos")]
 fn record(source: ScrollSource) {
     LAST.with(|last| {
         if last.get().map(|(previous, _)| previous) != Some(source) {
