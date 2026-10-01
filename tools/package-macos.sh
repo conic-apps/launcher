@@ -235,23 +235,33 @@ for key in CFBundleShortVersionString CFBundleVersion; do
 done
 plutil -lint "$PLIST" > /dev/null || die "the rendered Info.plist is invalid"
 
-# The bundle must agree with the binary about what macOS it needs. A mismatch
-# here is the kind of thing that only shows up as a launch failure on someone
-# else's machine, so it is checked rather than assumed.
+# The bundle must not claim a *lower* macOS than the binary needs, or Launch
+# Services will happily start the app on a system that cannot run it and the
+# failure surfaces as a link error about a missing symbol rather than as "this
+# Mac is too old". So the check is one-directional: `MINOS` is what the binary
+# demands and it must not exceed what the plist promises.
 #
-# Both forms a Mach-O can carry, and *not* one sed program guessing: a build
-# from a current toolchain has `LC_BUILD_VERSION` with a `minos` field, an older
-# one `LC_VERSION_MIN_MACOSX` with a `version` field, and the two are mutually
-# exclusive in practice. Reading only the first would compare against an empty
-# string on an old binary and quietly pass.
+# Both load commands are read, because which one a binary carries depends on its
+# architecture and on nothing else:
 #
-# `awk` rather than `sed`, and that is the fix rather than a preference:
-# `sed -n '/re/,/re/{...;q}'` is a GNU extension that BSD sed -- which is what
-# macOS ships and what the Intel runner runs -- rejects with `extra characters at
-# the end of q command`. It only ever worked on a developer machine because the
-# arm64 path already matched and the `[[ -n ]]` short-circuited, so the fallback
-# was dead code until a CI run reached it. `awk` gets this right on both, and it
-# also drops the `head -1` by stopping at the first match.
+#   aarch64-apple-darwin  LC_BUILD_VERSION       minos 11.0
+#   x86_64-apple-darwin   LC_VERSION_MIN_MACOSX  version 10.12
+#
+# Those are each target's *own* `rust-std` default rather than a choice made
+# here -- this script passes `--target` and never sets
+# `MACOSX_DEPLOYMENT_TARGET` -- so the two builds genuinely disagree, and a
+# `--universal` binary carries both commands at once.
+#
+# `awk`, not `sed`, and that is a fix rather than a preference:
+# `sed -n '/re/,/re/{s/../../\1/p;q}'` is a GNU extension that BSD sed -- what
+# macOS ships and what the `macos-15-intel` runner runs -- rejects outright with
+# `extra characters at the end of q command`. It only ever worked on a
+# developer machine because the arm64 binary happens to be the one carrying
+# `LC_BUILD_VERSION`, and the Intel runner was the first to reach the other
+# branch.
+#
+# `LC_BUILD_VERSION` wins when both are present: it is the current spelling, and
+# in a `--universal` binary the other command belongs to the other slice.
 MINOS="$(otool -l "$MACOS_DIR/$CRATE" | awk '
     /^ *cmd LC_BUILD_VERSION$/      { in_build = 1; next }
     /^ *cmd /                       { in_build = 0 }
@@ -261,22 +271,20 @@ MINOS="$(otool -l "$MACOS_DIR/$CRATE" | awk '
     /^ *cmd /                       { in_old = 0 }
     in_old && /^ *version /         && !have_old   { sub(/^ *version /, ""); old = $0; have_old = 1 }
 
-    # Both can be present in one binary -- and are, for a build with a modern
-    # toolchain -- so this cannot stop at whichever comes first in the output.
-    # `LC_BUILD_VERSION` is authoritative: `LC_VERSION_MIN_MACOSX` is the
-    # pre-10.14 spelling of the same intent and reads *lower* (10.12 against a
-    # real `minos` of 11.0 here), so preferring it would make the plist and the
-    # binary look like they disagree when they do not.
     END { print (have_build ? build : (have_old ? old : "")) }
 ')"
 
 PLIST_MINOS="$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$PLIST")"
 [[ -n "$MINOS" ]] ||
     die "could not read the binary's minimum macOS version out of its load commands"
-if [[ "$MINOS" != "$PLIST_MINOS" ]]; then
-    die "LSMinimumSystemVersion is $PLIST_MINOS but the binary's minimum is $MINOS"
+# Compared with `sort -V` rather than `!=`, because the two need not be equal:
+# the x86_64 slice carries a lower default (10.12) than the plist promises
+# (11.0), and that is fine -- the plist is the stricter of the two and macOS
+# only ever consults the plist. What must not happen is the reverse.
+if [[ "$(printf '%s\n%s\n' "$PLIST_MINOS" "$MINOS" | sort -V | head -1)" != "$MINOS" ]]; then
+    die "LSMinimumSystemVersion is $PLIST_MINOS but the binary needs $MINOS"
 fi
-note "  LSMinimumSystemVersion $PLIST_MINOS matches the binary's minimum $MINOS"
+note "  LSMinimumSystemVersion $PLIST_MINOS covers the binary's $MINOS"
 
 # ---------------------------------------------------------------------------
 # Signing

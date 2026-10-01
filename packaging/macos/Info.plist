@@ -17,10 +17,15 @@
     * `CFBundleExecutable` — must equal the file name in `Contents/MacOS/`, and
       that is the *binary* name, not the product name. They differ in case only.
 
-    * `LSMinimumSystemVersion` — 11.0, which is what winit 0.30 requires and
-      therefore what the linked Mach-O's `LC_BUILD_VERSION.minos` says. It has to
-      agree with the binary or App Store validation rejects the bundle, so it is
-      asserted against the binary in the packaging script rather than trusted.
+    * `LSMinimumSystemVersion` — 11.0, which is what winit 0.30 requires. It has
+      to be at least as high as whatever the built binary asks for, and the two
+      architectures ask for different things: an `aarch64-apple-darwin` build
+      carries `LC_BUILD_VERSION minos 11.0` while an `x86_64-apple-darwin` build
+      carries `LC_VERSION_MIN_MACOSX version 10.12`, those being each target's
+      own `rust-std` default rather than anything chosen here. 11.0 is the stricter
+      of the two and is what both slices actually run on, so it is what goes in.
+      `tools/package-macos.sh` asserts this one-directionally — the plist may
+      promise more than the binary needs, never less.
 
     * `LSApplicationCategoryType` — `public.app-category.games`. Taun `bundle.macOS`
       did not set this, so the Tauri app had no category in Finder's Get Info and
