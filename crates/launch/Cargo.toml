@@ -1,4 +1,4 @@
-ge]
+[package]
 name = "launch"
 description = "Tauri-free mirror of crates/launch for the Slint app"
 version = "0.0.0"
