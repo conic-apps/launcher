@@ -106,11 +106,20 @@ jobs:
         with:
           cache-on-failure: true
 
-      - name: install cargo-deb
-        uses: taiki-e/install-action@cargo-deb
-
-      - name: install cargo-rpm
-        uses: taiki-e/install-action@cargo-rpm
+      # `taiki-e/install-action` only knows how to *download a release binary*,
+      # and `cargo-rpm` publishes no such binary -- it has to be compiled. So both
+      # of these are `cargo install`, into the toolchain directory that is already
+      # on `PATH` from the step above.
+      #
+      # `--locked` in both: `cargo-rpm` builds `abscissa_core 0.5`, which still
+      # emits `future-incompat` warnings on current stable, and without the
+      # lockfile it can also fail outright when one of its transitive
+      # dependencies needs a newer rustc than the runner has.
+      - name: install cargo-deb and cargo-rpm
+        run: |
+          cargo install --locked cargo-deb cargo-rpm
+          cargo deb --version
+          cargo rpm --version
 
       # `appimagetool` is an AppImage itself, so installing it is three steps
       # rather than one:
