@@ -1,22 +1,19 @@
 # Conic Launcher — Agent Guide
 
-> **The app is native Slint + Rust.** It was Tauri + Vue until the migration
-> completed: `core/`, `src/`, `slint/` and the whole `pnpm` toolchain are gone.
-> `docs/slint-migration.md` still describes the *old* layout and a `slint/`
-> directory that no longer exists — treat it as history, not as a map.
+The app is native Slint + Rust. Before updating any `.slint` files, you must reat the documents of Slint.
 
 ## Quick start
 
 ```bash
-cargo run -p conic-launcher                    # debug build, run it
-cargo run -p conic-launcher --release          # release build
-cargo build --release --locked -p conic-launcher   # what the packages ship
+cargo run                   # debug build, run it
+cargo run --release         # release build
+cargo build --release       # what the packages ship
 ```
 
-There is no frontend build step. Debug builds use the `~/.conic-debug` data
-directory; release builds use `~/.conic` (see `folder::DATA_LOCATION`).
+Debug builds use the `~/conic-debug` data
+directory; release builds use `~/conic` (see `folder::DATA_LOCATION`).
 
-Delete `~/.conic-debug` by hand to reset a debug install.
+Delete `~/conic-debug` by hand to reset a debug install.
 
 ## Verification
 
@@ -29,16 +26,16 @@ cargo test
 
 Matching `check-rust.yml`, which runs `fmt` on Linux, and `check` + `clippy`
 (`--all-targets --release -- -D warnings`) on Linux **and** Windows, plus a
-"test" job that is really `cargo check --all --all-targets`.
+"test" job that is really `cargo test --all --all-targets`.
 
 Python tooling in `tools/` is not part of any CI gate:
 
-| Script                     | Does                                                        |
-| -------------------------- | ----------------------------------------------------------- |
-| `generate-icons.py`        | writes `packaging/linux/icons/` (committed; see Packaging)  |
-| `check-icon-names.py`      | every `AppIcon`/`icon:` name in a `.slint` has an SVG      |
-| `update-i18n.py`           | re-keys the `.po` catalogues against `slint-tr-extractor`   |
-| `merge-digit-font.py`, `verify_merge.py` | build the merged digit font                    |
+| Script                                   | Does                                                       |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| `generate-icons.py`                      | writes `packaging/linux/icons/` (committed; see Packaging) |
+| `check-icon-names.py`                    | every `AppIcon`/`icon:` name in a `.slint` has an SVG      |
+| `update-i18n.py`                         | re-keys the `.po` catalogues against `slint-tr-extractor`  |
+| `merge-digit-font.py`, `verify_merge.py` | build the merged digit font                                |
 
 ## Architecture
 
@@ -72,29 +69,29 @@ Python tooling in `tools/` is not part of any CI gate:
 
 ## Crate map
 
-| Crate             | Purpose                                                  |
-| ----------------- | -------------------------------------------------------- |
-| `account`         | Microsoft / offline / Authlib / Yggdrasil accounts       |
-| `authcode`        | Loopback listener for the Microsoft login callback        |
-| `config`          | App config load/save, background image                   |
-| `content`         | Saves, datapacks, resourcepacks, screenshots, mods       |
+| Crate             | Purpose                                                    |
+| ----------------- | ---------------------------------------------------------- |
+| `account`         | Microsoft / offline / Authlib / Yggdrasil accounts         |
+| `authcode`        | Loopback listener for the Microsoft login callback         |
+| `config`          | App config load/save, background image                     |
+| `content`         | Saves, datapacks, resourcepacks, screenshots, mods         |
 | `curseforge`      | CurseForge API client (`CURSEFORGE_API_KEY` at build time) |
-| `download`        | Generic downloader tasks                                 |
-| `folder`          | Data directory layout (`DATA_LOCATION`)                  |
-| `install`         | Minecraft + loader installation                          |
-| `instance`        | Instance CRUD, playtime                                  |
-| `java-runtime`    | Java scanning/parsing                                    |
-| `launch`          | Game launch with progress reporting                      |
-| `markdown`        | Markdown/HTML body of a content detail panel             |
-| `modrinth`        | Modrinth API client                                      |
-| `multiplayer`     | Conic Nexus cross-LAN multiplayer                        |
-| `music`           | Local music files + playback                             |
-| `platform`        | OS detection                                             |
-| `shared`          | Common types/utilities (the shared `HTTP_CLIENT`)        |
-| `single-instance` | One instance per machine                                 |
-| `statistics`      | Playtime statistics                                      |
-| `version`         | Minecraft version metadata                               |
-| `window`          | Window operations and the winit backend hook             |
+| `download`        | Generic downloader tasks                                   |
+| `folder`          | Data directory layout (`DATA_LOCATION`)                    |
+| `install`         | Minecraft + loader installation                            |
+| `instance`        | Instance CRUD, playtime                                    |
+| `java-runtime`    | Java scanning/parsing                                      |
+| `launch`          | Game launch with progress reporting                        |
+| `markdown`        | Markdown/HTML body of a content detail panel               |
+| `modrinth`        | Modrinth API client                                        |
+| `multiplayer`     | Conic Nexus cross-LAN multiplayer                          |
+| `music`           | Local music files + playback                               |
+| `platform`        | OS detection                                               |
+| `shared`          | Common types/utilities (the shared `HTTP_CLIENT`)          |
+| `single-instance` | One instance per machine                                   |
+| `statistics`      | Playtime statistics                                        |
+| `version`         | Minecraft version metadata                                 |
+| `window`          | Window operations and the winit backend hook               |
 
 ## Rust conventions
 
@@ -111,7 +108,7 @@ Python tooling in `tools/` is not part of any CI gate:
   so the build downloads a prebuilt and needs no `gn`/`ninja`/`clang`.
 - File header convention: `// Conic Launcher` / copyright /
   `// SPDX-License-Identifier: GPL-3.0-only`.
-- Comment density is a house style here: explain *why*, and the alternatives that
+- Comment density is a house style here: explain _why_, and the alternatives that
   were rejected. Match it.
 
 ## UI conventions
@@ -168,15 +165,15 @@ Linux's three are assembled by `dpkg-deb`, `rpmbuild` and `appimagetool`, none o
 which exist elsewhere, so `package-linux.sh` refuses to run off Linux. Needs
 `cargo-deb`, `cargo-rpm`, `appimagetool`, `file`, and `dpkg-dev` (for
 `dpkg-shlibdeps`, without which `depends = "$auto"` resolves to nothing
-*silently*). Both scripts write to `<target-dir>/package/`.
+_silently_). Both scripts write to `<target-dir>/package/`.
 
-| Format       | Recipe                                                        |
-| ------------ | ------------------------------------------------------------- |
-| `.deb`       | `[package.metadata.deb]` in `app/Cargo.toml`                  |
-| `.rpm`       | `[package.metadata.rpm]` + the spec at `app/.rpm/conic-launcher.spec` |
-| `.AppImage`  | the AppDir `tools/package-linux.sh` assembles, then `appimagetool` |
-| `.app`/`.dmg`| the bundle `tools/package-macos.sh` assembles, then `hdiutil`  |
-| Arch         | `packaging/arch/PKGBUILD` — `makepkg -si`                      |
+| Format        | Recipe                                                                |
+| ------------- | --------------------------------------------------------------------- |
+| `.deb`        | `[package.metadata.deb]` in `app/Cargo.toml`                          |
+| `.rpm`        | `[package.metadata.rpm]` + the spec at `app/.rpm/conic-launcher.spec` |
+| `.AppImage`   | the AppDir `tools/package-linux.sh` assembles, then `appimagetool`    |
+| `.app`/`.dmg` | the bundle `tools/package-macos.sh` assembles, then `hdiutil`         |
+| Arch          | `packaging/arch/PKGBUILD` — `makepkg -si`                             |
 
 Four things that are easy to break here:
 
@@ -223,7 +220,7 @@ Three more, each of which cost a build to find:
    this repository does not have. Note the consequence for CI: with Gatekeeper
    assessments off on a runner (as they are on a dev machine), `spctl --assess`
    returns success whatever the signature, so it proves nothing — `codesign
-   --verify --deep --strict` is the check that is actually meaningful.
+--verify --deep --strict` is the check that is actually meaningful.
 
 `tools/package-linux.sh` needs Linux: `dpkg-deb`, `rpmbuild`, `dpkg-shlibdeps`
 and `appimagetool` have no counterpart elsewhere, and it says so rather than

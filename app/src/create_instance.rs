@@ -33,6 +33,14 @@ const MOD_LOADERS: [&str; 4] = ["Fabric", "Quilt", "Forge", "Neoforge"];
 
 /// Registers every create-instance callback on the `CreateInstanceState` global.
 pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
+    setup_minecraft_choose(ui);
+    setup_create(ui);
+    setup_background_and_wiki(ui, config);
+}
+
+/// `MinecraftChoose.vue`: the manifest, its category filter and the four mod
+/// loader fetches a picked version kicks off.
+fn setup_minecraft_choose(ui: &App) {
     let state = ui.global::<CreateInstanceState>();
 
     // MinecraftChoose.vue's `onMounted`: fetch the manifest, then filter it.
@@ -106,9 +114,12 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             }
         });
     }
+}
 
-    // `confirmCreate()`: a free id, the instance, the background, then the game
-    // view refreshes and the dialog closes.
+/// `confirmCreate()`: a free id, the instance, the background, then the game
+/// view refreshes and the dialog closes.
+fn setup_create(ui: &App) {
+    let state = ui.global::<CreateInstanceState>();
     {
         let weak = ui.as_weak();
         state.on_create(move || {
@@ -156,6 +167,11 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             });
         });
     }
+}
+
+/// The background picker's preview and the version wiki link.
+fn setup_background_and_wiki(ui: &App, config: Rc<RefCell<config::Config>>) {
+    let state = ui.global::<CreateInstanceState>();
 
     // `getBackground()`: the native file picker, then the preview image.
     {
