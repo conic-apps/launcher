@@ -2,23 +2,66 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use base64::{Engine, engine::general_purpose};
-use serde::{Deserialize, Serialize};
-use tauri::{
-    Manager, Runtime, command,
-    plugin::{Builder, TauriPlugin},
-};
+//! Tauri-free mirror of `crates/account`: the account model, and the flows
+//! that create and refresh accounts — Microsoft (OAuth → Xbox Live → XSTS →
+//! Minecraft services), offline profiles, and Yggdrasil (authlib-injector)
+//! servers.
+//!
+//! The original is a Tauri plugin whose logic lives in its modules
+//! (`offline.rs`, `microsoft/`, `yggdrasil/`); `offline_commands.rs`,
+//! `microsoft_commands.rs` and `yggdrasil_commands.rs` only put an IPC surface
+//! in front of that logic. This mirror keeps the module tree, so the two
+//! crates can be diffed against each other, with these differences:
+//!
+//!   * the command modules are gone. Two of them were pure pass-throughs to
+//!     functions that are `pub` already; the third, which owns the at-most-one
+//!     running login task, becomes [`microsoft_task`];
+//!   * `microsoft::LoginReporter` reports through a closure instead of a
+//!     `tauri::ipc::Channel`, and the `serde` derives the original carries for
+//!     the IPC boundary are dropped (`slint-java-runtime`'s rule). The
+//!     attributes that describe a *wire* format — the `camelCase` renames on
+//!     the Yggdrasil request bodies, the `textureKey` rename on a Microsoft
+//!     skin — stay, because the servers and the shared `config.toml` still
+//!     speak them.
+//!
+//! The only other difference is mechanical — the original's private
+//! `save_accounts(&Vec<Account>)` helpers take a slice here, which is what
+//! clippy asks for and changes nothing about what is written — except for the
+//! one place the two frontends part company: the browser flow's redirect. The
+//! original asks
+//! the OS for `conic-launcher://oauth2/microsoft/callback` through
+//! `tauri-plugin-deep-link`; a Slint application cannot, so the redirect is a
+//! loopback listener of this app's own (`slint-authcode`) and
+//! [`microsoft::redeem_access_token`] is given the `redirect_uri` to repeat
+//! rather than carrying the original's as a literal. The refresh request, which
+//! the original also spells a `redirect_uri` into, sends none: RFC 6749 §6
+//! makes it conditional, and a device-code authorization never had one.
+//!
+//! Structures, request bodies and on-disk formats match `crates/account/src`,
+//! and so does the serialized form of [`Account`], so both frontends share the
+//! same `~/.conic[-debug]/accounts/*.json` and the same `current_account` in
+//! `config.toml`.
 
-use crate::{microsoft::MicrosoftAccount, offline::OfflineAccount, yggdrasil::YggdrasilAccount};
-pub use error::*;
+use std::path::Path;
+
+use base64::{Engine, engine::general_purpose};
+use folder::DATA_LOCATION;
+use md5::{Digest, Md5};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::microsoft::MicrosoftAccount;
+use crate::offline::OfflineAccount;
+use crate::yggdrasil::YggdrasilAccount;
 
 mod error;
 pub mod microsoft;
-mod microsoft_commands;
+mod microsoft_task;
 pub mod offline;
-mod offline_commands;
 pub mod yggdrasil;
-mod yggdrasil_commands;
+
+pub use error::*;
+pub use microsoft_task::{LoginRequest, LoginTaskState};
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
@@ -29,6 +72,8 @@ pub enum Account {
 }
 
 impl Account {
+    /// The display name of the account's current profile
+    /// (`crates/account/src/lib.rs`).
     pub fn get_profile_name(&self) -> String {
         match self {
             Account::Microsoft(account) => account.profile.profile_name.to_string(),
@@ -37,6 +82,8 @@ impl Account {
         }
     }
 
+    /// The profile UUID, as the original returns it — the hyphenated form
+    /// (`crates/account/src/lib.rs`).
     pub fn get_profile_uuid(&self) -> String {
         match self {
             Account::Microsoft(account) => account.profile.uuid.to_string(),
@@ -45,6 +92,7 @@ impl Account {
         }
     }
 
+    /// The token a launch passes to the game (`crates/account/src/lib.rs`).
     pub fn get_access_token(&self) -> String {
         match self {
             Account::Microsoft(account) => account.minecraft_access_token.to_string(),
@@ -53,6 +101,8 @@ impl Account {
         }
     }
 
+    /// The `--userType` a launch passes to the game: `msa` for a Microsoft
+    /// account, `mojang` for everything else (`crates/account/src/lib.rs`).
     pub fn get_user_type(&self) -> String {
         match self {
             Account::Microsoft(_) => "msa".to_string(),
@@ -60,66 +110,65 @@ impl Account {
             Account::Offline(_) => "mojang".to_string(),
         }
     }
-}
 
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("account")
-        .invoke_handler(tauri::generate_handler![
-            cmd_list_accounts,
-            cmd_save_skin,
-            microsoft_commands::cmd_microsoft_get_account,
-            microsoft_commands::cmd_microsoft_delete_account,
-            microsoft_commands::cmd_microsoft_add_account,
-            microsoft_commands::cmd_microsoft_update_account,
-            microsoft_commands::cmd_microsoft_redeem_access_token,
-            microsoft_commands::cmd_microsoft_access_token_auth_flow,
-            microsoft_commands::cmd_microsoft_refresh_account,
-            microsoft_commands::cmd_microsoft_request_device_code,
-            microsoft_commands::cmd_microsoft_poll_device_code,
-            microsoft_commands::cmd_spawn_microsoft_login_task,
-            microsoft_commands::cmd_cancel_microsoft_login_task,
-            offline_commands::cmd_offline_add_account,
-            offline_commands::cmd_offline_delete_account,
-            offline_commands::cmd_offline_update_account,
-            offline_commands::cmd_offline_get_account,
-            yggdrasil_commands::cmd_yggdrasil_get_server_info,
-            yggdrasil_commands::cmd_yggdrasil_authenticate_account,
-            yggdrasil_commands::cmd_yggdrasil_validate_account,
-            yggdrasil_commands::cmd_yggdrasil_refresh_account,
-            yggdrasil_commands::cmd_yggdrasil_invalidate_account,
-            yggdrasil_commands::cmd_yggdrasil_get_profile,
-            yggdrasil_commands::cmd_yggdrasil_get_profiles,
-            yggdrasil_commands::cmd_yggdrasil_add_account,
-            yggdrasil_commands::cmd_yggdrasil_delete_account,
-            yggdrasil_commands::cmd_yggdrasil_get_account,
-            yggdrasil_commands::cmd_yggdrasil_list_accounts,
-            yggdrasil_commands::cmd_yggdrasil_update_account,
-        ])
-        .setup(|app, _| {
-            app.manage(microsoft_commands::PluginState::default());
-            Ok(())
-        })
-        .build()
-}
+    /// The account type as the frontend names it: `Microsoft`, `Offline` or
+    /// `Yggdrasil` — the tag [`Account`] serializes itself under.
+    pub fn kind(&self) -> &'static str {
+        match self {
+            Account::Microsoft(_) => "Microsoft",
+            Account::Offline(_) => "Offline",
+            Account::Yggdrasil(_) => "Yggdrasil",
+        }
+    }
 
-#[derive(Serialize, Deserialize)]
-struct Accounts {
-    microsoft: Vec<MicrosoftAccount>,
-    offline: Vec<OfflineAccount>,
-    yggdrasil: Vec<YggdrasilAccount>,
-}
-
-#[command]
-async fn cmd_list_accounts() -> Accounts {
-    Accounts {
-        microsoft: microsoft::list_accounts().await.unwrap_or_default(),
-        offline: offline::list_accounts().await.unwrap_or_default(),
-        yggdrasil: yggdrasil::list_accounts().await.unwrap_or_default(),
+    /// A stable key identifying the account, matching the Vue frontend's
+    /// (`${type.toLowerCase()}-${uuid}`).
+    pub fn key(&self) -> String {
+        format!("{}-{}", self.kind().to_lowercase(), self.get_profile_uuid())
     }
 }
 
-#[command]
-async fn cmd_save_skin(base64_skin_url: String, path: String) -> Result<()> {
+/// Every stored account, grouped by kind. `cmd_list_accounts` of the original,
+/// whose answer the frontend's `Accounts` type mirrors.
+#[derive(Serialize, Deserialize)]
+pub struct Accounts {
+    pub microsoft: Vec<MicrosoftAccount>,
+    pub offline: Vec<OfflineAccount>,
+    pub yggdrasil: Vec<YggdrasilAccount>,
+}
+
+/// Reads and merges all stored accounts (`cmd_list_accounts`).
+///
+/// The one place the mirror is not `async`: the original's command awaits
+/// three async readers because a Tauri command returns a future, but the Slint
+/// app's game view rebuilds its account list synchronously, from the same
+/// files and with the same lenient parsing the read-only `slint-account` it
+/// replaces used. The three account files are a few kilobytes.
+pub fn list_accounts() -> Accounts {
+    Accounts {
+        microsoft: read_json(&DATA_LOCATION.accounts.join("microsoft.json")),
+        offline: read_json(&DATA_LOCATION.accounts.join("offline.json")),
+        yggdrasil: read_json(&DATA_LOCATION.accounts.join("yggdrasil-accounts.json")),
+    }
+}
+
+/// A stored list, or an empty one when the file is missing or unreadable —
+/// the `unwrap_or_default` every reader in the crate applies.
+fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Vec<T> {
+    let Ok(data) = std::fs::read_to_string(path) else {
+        return Vec::new();
+    };
+    serde_json::from_str(&data).unwrap_or_else(|error| {
+        log::warn!("failed to parse {}: {error}", path.display());
+        Vec::new()
+    })
+}
+
+/// Writes a skin handed over as a `data:` URL to `path` (`cmd_save_skin`).
+///
+/// The value is what a Microsoft profile's `skins[].url` holds — a
+/// base64 PNG, with or without the `data:image/png;base64,` prefix.
+pub async fn save_skin(base64_skin_url: String, path: String) -> Result<()> {
     let data = base64_skin_url
         .split_once(',')
         .map(|(_, data)| data)
@@ -130,4 +179,18 @@ async fn cmd_save_skin(base64_skin_url: String, path: String) -> Result<()> {
         .or_else(|_| general_purpose::STANDARD.decode(data))?;
     tokio::fs::write(path, bytes).await?;
     Ok(())
+}
+
+/// The UUID Minecraft derives for an offline player of `username`.
+///
+/// The frontend's `getUuidFromUsername` (`crates/account/index.ts`): the MD5 of
+/// `OfflinePlayer:<name>` with the version/variant bits of a name-based (v3)
+/// UUID set, which is what the game computes for itself — so an offline
+/// profile identifies as the same player on a server.
+pub fn get_uuid_from_username(username: &str) -> Uuid {
+    let digest = Md5::digest(format!("OfflinePlayer:{username}").as_bytes());
+    let mut bytes: [u8; 16] = digest.into();
+    bytes[6] = (bytes[6] & 0x0f) | 0x30;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    Uuid::from_bytes(bytes)
 }

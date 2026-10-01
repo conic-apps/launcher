@@ -60,6 +60,10 @@ pub enum Error {
     #[error("No suitable Java runtime found")]
     NoSuitableJavaRuntime,
 
+    // The account crate's error is not `Serialize` in the Slint workspace (the
+    // mirror drops its IPC-boundary derives), and the Slint app never serializes
+    // a launch error, so this variant is left out of the serialized form.
+    #[serde(skip)]
     #[error(transparent)]
     AccountError(#[from] account::Error),
 
@@ -92,7 +96,8 @@ impl From<instance::Error> for Error {
     fn from(value: instance::Error) -> Self {
         match value {
             instance::Error::Io(error) => Self::Io(error),
-            instance::Error::TomlSerialize(error) => Self::InvalidInstance(error.to_string()),
+            instance::Error::TomlSer(error) => Self::InvalidInstance(error.to_string()),
+            instance::Error::TomlDe(error) => Self::InvalidInstance(error.to_string()),
             instance::Error::InvalidInstanceConfig => {
                 Self::InvalidInstance("Invalid instance config".to_string())
             }

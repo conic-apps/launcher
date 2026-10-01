@@ -44,7 +44,6 @@ use log::warn;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha512};
-use tauri::command;
 
 use crate::error::Result;
 use crate::mods::{ModLoader, ResolvedAuthorInfo, ResolvedMod, is_disabled_file, parse_mod};
@@ -1004,35 +1003,32 @@ fn merge_remote(mod_info: &mut ResolvedMod, remote: &RemoteModInfo) {
     mod_info.version_id = remote.version_id.clone();
 }
 
-/// Tauri command: list every mod of an instance, merged with online info.
-#[command]
-pub(crate) async fn cmd_parse_mods(instance_id: String) -> Vec<ResolvedMod> {
+/// List every mod of an instance, merged with online info.
+pub async fn parse_mods(instance_id: &str) -> Vec<ResolvedMod> {
     let mods_folder = folder::DATA_LOCATION
-        .get_instance_root(&instance_id)
+        .get_instance_root(instance_id)
         .join("mods");
     parse_folder_with_remote(&mods_folder).await
 }
 
-/// Tauri command: check whether the mod with the given id on the given
-/// platform is installed in an instance.
-#[command]
-pub(crate) async fn cmd_check_mod_installed(
-    instance_id: String,
+/// Check whether the mod with the given id on the given platform is
+/// installed in an instance.
+pub async fn check_installed(
+    instance_id: &str,
     platform: RemoteModPlatform,
-    project_id: String,
+    project_id: &str,
 ) -> ModInstalledInfo {
-    check_mod_installed(&instance_id, platform, &project_id).await
+    check_mod_installed(instance_id, platform, project_id).await
 }
 
-/// Tauri command: delete the given files from an instance.
+/// Delete the given files from an instance.
 ///
 /// Only files under the instance root are accepted; paths outside it are
 /// silently skipped so the launcher never deletes arbitrary user data. The
 /// frontend only shows the remove action for mods, but the check is done
 /// against the whole instance root so partial-download cleanup stays possible.
-#[command]
-pub(crate) fn cmd_remove_mod_files(instance_id: String, files: Vec<String>) -> Result<()> {
-    let instance_root = folder::DATA_LOCATION.get_instance_root(&instance_id);
+pub fn remove_mod_files(instance_id: &str, files: Vec<String>) -> Result<()> {
+    let instance_root = folder::DATA_LOCATION.get_instance_root(instance_id);
     let instance_root_canonical = instance_root.canonicalize().unwrap_or(instance_root);
     for file in files {
         let path = PathBuf::from(file);

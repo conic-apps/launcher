@@ -2,17 +2,25 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! The Neoforge version list and installer (`crates/install/src/neoforge.rs`).
+
 use std::{io::BufRead, path::Path, path::PathBuf, process::Stdio};
+
+use log::{debug, error, info};
+use serde_json::Value;
 
 use config::download::DownloadConfig;
 use download::{DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState};
 use folder::DATA_LOCATION;
-use log::{debug, error, info};
-use serde_json::Value;
 use shared::HTTP_CLIENT;
 
 use crate::{ModLoaderProgress, ModLoaderReporter, error::*};
 
+/// Fetches every published Neoforge version, newest first.
+///
+/// The modem versions live under `net/neoforged/neoforge`, the pre-1.20.2
+/// ("legacy") ones under `net/neoforged/forge`; both are appended into one
+/// list, like the original.
 pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
     let legacy_versions = HTTP_CLIENT
         .get("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge")

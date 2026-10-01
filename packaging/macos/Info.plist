@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Conic Launcher bundle metadata. `tools/package-macos.sh` fills in the two
+  @VERSION@ placeholders and renders this with PlistBuddy.
+
+  Hand-written rather than generated, because every key here is a decision:
+
+    * `CFBundleIdentifier` — the Slint app uses `app.conicmc.launcher.slint`,
+      matching `single_instance::APP_ID`. macOS derives several things from it
+      (the TCC permission prompts, the notification centre identity, whether two
+      copies are "the same app"), so it has to be the constant in the Rust code
+      and not a second literal that can drift from it. Note this is what makes the
+      app distinct from the old Tauri build of the same product, which is the
+      point: both can be installed at once.
+
+    * `CFBundleExecutable` — must equal the file name in `Contents/MacOS/`, and
+      that is the *binary* name, not the product name. They differ in case only.
+
+    * `LSMinimumSystemVersion` — 11.0, which is what winit 0.30 requires. It has
+      to be at least as high as whatever the built binary asks for, and the two
+      architectures ask for different things: an `aarch64-apple-darwin` build
+      carries `LC_BUILD_VERSION minos 11.0` while an `x86_64-apple-darwin` build
+      carries `LC_VERSION_MIN_MACOSX version 10.12`, those being each target's
+      own `rust-std` default rather than anything chosen here. 11.0 is the stricter
+      of the two and is what both slices actually run on, so it is what goes in.
+      `tools/package-macos.sh` asserts this one-directionally — the plist may
+      promise more than the binary needs, never less.
+
+    * `LSApplicationCategoryType` — `public.app-category.games`. Taun `bundle.macOS`
+      did not set this, so the Tauri app had no category in Finder's Get Info and
+      sorted nowhere useful in Spotlight.
+
+    * `NSHighResolutionCapable` — the app is Retina-native through Skia and
+      femtovg; this is what makes AppKit hand it a backing scale of 2 rather than
+      rasterising once at 1x and letting it look soft.
+
+    * `NSRequiresAquaSystemAppearance` — absent on purpose. Its presence would
+      force the light appearance regardless of the user's setting, and the app
+      draws its own theme (Catppuccin, four variants) into the window.
+
+    * `CFBundleIconFile` — the `.icns` in `Contents/Resources/`, without the
+      extension. `CFBundleIconName` is deliberately *not* set: that key is for
+      named assets in an asset catalog, which this bundle has none of.
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>conic-launcher</string>
+	<key>CFBundleIconFile</key>
+	<string>conic-launcher.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>app.conicmc.launcher.slint</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Conic Launcher</string>
+	<!-- Marketing version. Must be three dot-separated integers with no suffix:
+	     this is the key `CFBundleVersion` is compared against and the one the
+	     Mac App Store validates. -->
+	<key>CFBundleShortVersionString</key>
+	<string>@VERSION@</string>
+	<!-- Build version. This is where the pre-release suffix goes, because unlike
+	     `CFBundleShortVersionString` this one is free-form and sorts
+	     lexicographically after the same version without it. -->
+	<key>CFBundleVersion</key>
+	<string>@VERSION@</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.games</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>11.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+</dict>
+</plist>

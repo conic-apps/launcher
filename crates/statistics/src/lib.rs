@@ -2,38 +2,22 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! Tauri-free mirror of `crates/statistics`: the per-launch log the launcher
+//! writes to `statistics.json`.
+//!
+//! The original exposes the two getters through Tauri commands; the launch
+//! path calls [`log_launch`] directly. Only the command layer is dropped, so
+//! the file format and the functions match `crates/statistics/src/lib.rs`.
+
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
-use tauri::{
-    Runtime, command,
-    plugin::{Builder, TauriPlugin},
-};
 use uuid::Uuid;
 
 use error::*;
 
 pub mod error;
-
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("statistics")
-        .invoke_handler(tauri::generate_handler![
-            cmd_get_statistics,
-            cmd_get_statistics_by_profile
-        ])
-        .build()
-}
-
-#[command]
-async fn cmd_get_statistics() -> Result<Vec<StatisticsEntry>> {
-    get_statistics().await
-}
-
-#[command]
-async fn cmd_get_statistics_by_profile(profile: StatisticsProfile) -> Result<Vec<StatisticsEntry>> {
-    get_statistics_by_profile(profile).await
-}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum StatisticsProfile {

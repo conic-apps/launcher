@@ -2,6 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use log::info;
+
 use account::Account;
 use config::{
     Config,
@@ -10,7 +12,6 @@ use config::{
 use folder::DATA_LOCATION;
 use instance::Instance;
 use java_runtime::JavaArch;
-use log::info;
 
 use crate::error::*;
 

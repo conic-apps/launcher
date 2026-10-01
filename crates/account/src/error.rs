@@ -4,60 +4,42 @@
 
 use std::result;
 
-use serde::Serialize;
-use serde_with::serde_as;
 use thiserror::Error;
 use uuid::Uuid;
 
+use shared::UrlExtError;
+
 pub type Result<T> = result::Result<T, Error>;
 
-#[serde_as]
-#[derive(Debug, Error, Serialize)]
-#[serde(tag = "kind", content = "message")]
+/// Every failure the account flows can end in, variant for variant as
+/// `crates/account/src/error.rs` declares it.
+///
+/// The original derives `Serialize` (through `serde_with`) so a command can
+/// hand the error to the webview, where `crates/account/index.ts` models it as
+/// `{ kind, message }`. There is no IPC boundary here, so the derives are gone
+/// and callers read [`std::error::Error::to_string`] — the same text the
+/// frontend showed, because the messages are the originals'.
+#[derive(Debug, Error)]
 pub enum Error {
     #[error("Another login task is already running")]
     LoginInProgress,
 
     #[error(transparent)]
-    Io(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        std::io::Error,
-    ),
+    Io(#[from] std::io::Error),
 
     #[error(transparent)]
-    UrlParse(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        url::ParseError,
-    ),
+    UrlParse(#[from] url::ParseError),
     #[error(transparent)]
-    InvalidBaseUrl(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        shared::UrlExtError,
-    ),
+    InvalidBaseUrl(#[from] UrlExtError),
 
     #[error(transparent)]
-    JsonParse(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        serde_json::error::Error,
-    ),
+    JsonParse(#[from] serde_json::error::Error),
 
     #[error(transparent)]
-    ToStr(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        reqwest::header::ToStrError,
-    ),
+    ToStr(#[from] reqwest::header::ToStrError),
 
     #[error(transparent)]
-    Network(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        reqwest::Error,
-    ),
+    Network(#[from] reqwest::Error),
 
     #[error("Account not found: {0}")]
     AccountNotfound(Uuid),
@@ -75,11 +57,7 @@ pub enum Error {
     YggdrasilTextureParseError,
 
     #[error(transparent)]
-    Base64DecodeError(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        base64::DecodeError,
-    ),
+    Base64DecodeError(#[from] base64::DecodeError),
 
     #[error("The device code has expired, please try again")]
     DeviceCodeExpired,
@@ -94,9 +72,5 @@ pub enum Error {
     HttpResponse { status: u16, body: String },
 
     #[error(transparent)]
-    Aborted(
-        #[from]
-        #[serde_as(as = "serde_with::DisplayFromStr")]
-        tokio::task::JoinError,
-    ),
+    Aborted(#[from] tokio::task::JoinError),
 }

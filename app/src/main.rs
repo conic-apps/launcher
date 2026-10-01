@@ -1,0 +1,413 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![deny(clippy::unwrap_used)]
+
+// Slint-generated code uses `unwrap()` extensively; the crate-level deny below
+// stays in place for hand-written code only.
+#[allow(clippy::unwrap_used)]
+pub(crate) mod slint_backend {
+    slint::include_modules!();
+}
+
+mod account_add;
+mod account_avatar;
+mod background;
+mod cjk_font;
+mod command_palette;
+mod config_bridge;
+mod content;
+mod create_instance;
+mod game;
+mod instance_settings;
+mod instance_view;
+mod launch;
+mod logs;
+mod multiplayer;
+mod music;
+mod runtime;
+mod scroll_input;
+mod settings;
+mod setup;
+
+#[cfg(target_os = "macos")]
+mod traffic_lights;
+
+#[cfg(target_os = "windows")]
+mod windows_caption;
+
+mod worldmap;
+
+use std::{cell::RefCell, rc::Rc};
+
+use slint::{ComponentHandle, Timer, Weak};
+
+use slint_backend::{App, AppConfig};
+use window::WindowService;
+
+fn main() {
+    // Create the data directory layout (shares `~/.conic[-debug]` with the
+    // Tauri app) before anything reads from it — the logger writes into it.
+    folder::DATA_LOCATION.init();
+    logs::init();
+
+    // Claim the single-instance role before anything else: a second launch of
+    // the app is not a second window, it is this window coming forward. The
+    // claim has to happen before the window exists, and the launches that come
+    // with it arrive long after this function has moved on — the running
+    // instance cannot be told about them yet, so they queue up until the
+    // watcher below picks them up.
+    let Ok(single_instance) = single_instance::try_acquire() else {
+        // The instance that is already running has just been told about this
+        // launch, so this process has nothing left to do but go away.
+        log::info!(target: "shell", "another instance is already running");
+        return;
+    };
+
+    // macOS gets the Chrome-style window: a native titled window with a
+    // transparent, title-less titlebar and a full-size content view, so the
+    // custom title bar draws under the real AppKit traffic lights while all
+    // native behavior (drag, resize, corner rounding, fullscreen) keeps
+    // working. The hook runs before every winit window is created.
+    #[cfg(target_os = "macos")]
+    {
+        use slint::platform::set_platform;
+        use winit::platform::macos::WindowAttributesExtMacOS;
+
+        let backend = i_slint_backend_winit::Backend::builder()
+            .with_window_attributes_hook(|attributes| {
+                attributes
+                    .with_titlebar_transparent(true)
+                    .with_title_hidden(true)
+                    .with_fullsize_content_view(true)
+            })
+            .build()
+            .expect("failed to build the winit backend");
+        set_platform(Box::new(backend)).expect("failed to install the winit backend");
+    }
+
+    // Windows is frameless in the same sense as macOS: the client area covers
+    // the whole window, so the custom title bar reaches the top edge and the
+    // platform's own window controls sit on top of it (see `windows_caption`).
+    // The window is *created* that way rather than left to `app.slint`'s
+    // `no-frame`, because Slint only applies that once the window exists — and
+    // winit would size the first, still-decorated window for a caption that is
+    // about to disappear, leaving the app a frame's width and height too big.
+    #[cfg(target_os = "windows")]
+    {
+        use slint::platform::set_platform;
+
+        let backend = i_slint_backend_winit::Backend::builder()
+            .with_window_attributes_hook(|attributes| attributes.with_decorations(false))
+            .build()
+            .expect("failed to build the winit backend");
+        set_platform(Box::new(backend)).expect("failed to install the winit backend");
+    }
+
+    // The custom title bar is 44px tall, so the native traffic lights have to
+    // sit lower than AppKit's own title bar would put them. This has to happen
+    // before the first window exists — see the `traffic_lights` module.
+    #[cfg(target_os = "macos")]
+    traffic_lights::install();
+
+    let ui = App::new().expect("failed to construct the app UI");
+
+    // Configuration (shared with the Tauri app).
+    let config = config::load_config_file().unwrap_or_else(|error| {
+        log::error!("failed to load config: {error}");
+        config::Config::default()
+    });
+    // Tell the HTTP client whether to go through the system proxy, like
+    // `crates/config` does for `shared::HTTP_CLIENT`. Has to happen before the
+    // first request, which is why it is done here rather than when a version
+    // list is first fetched. `slint-shared` owns the one client the whole app
+    // shares, so one call reaches every crate that uses it.
+    shared::set_system_proxy(config.download.use_system_proxy);
+
+    // Pick the bundled translation. Must run after a component exists (that's
+    // what installs the translation bundle).
+    config_bridge::select_locale(config.language.as_deref());
+
+    // Platform (mirrors crates/platform; tauri-free variant).
+    let platform = platform::PLATFORM_INFO.clone();
+    ui.set_macos(platform.os_family == platform::OsFamily::Macos);
+    ui.set_linux(platform.os_family == platform::OsFamily::Linux);
+    ui.set_windows(platform.os_family == platform::OsFamily::Windows);
+    log::info!(
+        "detected platform: {:?} ({})",
+        platform.os_type,
+        platform.os_family
+    );
+
+    // Windows draws the platform's own window controls over the title bar, so
+    // the title bar has to leave room for them (see `windows_caption`).
+    #[cfg(target_os = "windows")]
+    ui.set_window_controls_inset(windows_caption::controls_inset());
+
+    // The search placeholder is translated in app.slint via `@tr`; the hotkey
+    // is platform-specific (not translated).
+    ui.set_search_hotkey(if ui.get_macos() { "⌘/" } else { "Ctrl+/" }.into());
+
+    // Seed the settings global and keep the in-memory config in sync with it.
+    let settings = ui.global::<AppConfig>();
+    config_bridge::apply_config(&settings, &config);
+
+    let shared = Rc::new(RefCell::new(config));
+    let save_timer = Rc::new(Timer::default());
+
+    // The window background comes first: the game view reports the current
+    // instance to it as it is set up, and that report has to land somewhere.
+    background::controller::setup(&ui, Rc::clone(&shared));
+
+    // Settings + game view + overlay "scripts".
+    settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
+    game::setup(&ui, Rc::clone(&shared));
+    instance_settings::setup(&ui, Rc::clone(&shared));
+    content::setup(&ui);
+    launch::setup(&ui, Rc::clone(&shared));
+    create_instance::setup(&ui, Rc::clone(&shared));
+    account_add::setup(&ui);
+    // The first-run wizard: the import-instances screen's two "create a blank
+    // instance" buttons, and the platform answer its Java screen asks for.
+    setup::setup(&ui);
+    multiplayer::setup(&ui);
+    // The clock and the wheel/trackpad classification the scroll containers use.
+    scroll_input::setup(&ui);
+    // The saves panel's world map. It reads the clock above for its tile fades,
+    // and its own component reports the world and the visible range, so it is
+    // wired after both.
+    worldmap::setup(&ui);
+    // The background-music player: `MusicPlayer.vue` mounted itself on the Vue
+    // app's root, so this runs for the whole session rather than per page.
+    music::setup(&ui);
+    // The command palette, mounted on the same layer — it opens from the title
+    // bar's search field and from the `Ctrl`/`⌘` + `/` shortcut, so it is up for
+    // the whole session too. Its two openers are wired in the view, the way the
+    // title bar's other actions are: `CommandPaletteState.open()` for the search
+    // field's click, and `CommandPaletteState.toggle()` for the `Ctrl`/`⌘` + `/`
+    // shortcut, which the app-level key scope in `app.slint` binds.
+    command_palette::setup(&ui);
+
+    // The title bar stops leaving room for the traffic lights while they are
+    // hidden by fullscreen. Registered after `App::new()` because it reports
+    // into the UI; the observer itself is armed from then on.
+    #[cfg(target_os = "macos")]
+    traffic_lights::watch_fullscreen(&ui);
+
+    // macOS draws the Dock icon from NSApplication, not from the window, and the
+    // icon can only be set once `applicationDidFinishLaunching` has run (inside
+    // `ui.run()`) — setting it earlier is overwritten by AppKit during launch.
+    #[cfg(target_os = "macos")]
+    install_app_icon_observer();
+
+    let window = WindowService::new(ui.clone_strong());
+
+    // Windows: hand the window frame to the platform so it draws its own window
+    // controls over the custom title bar. The window procedure that does it is
+    // installed as soon as there is a window to install it on, and the controls
+    // take their ink from whatever theme the app resolved to.
+    #[cfg(target_os = "windows")]
+    {
+        windows_caption::install(&ui);
+
+        let frame = window.clone();
+        ui.on_set_caption_dark(move |dark| windows_caption::set_dark(frame.window(), dark));
+    }
+    // Nothing else has a caption of its own to colour.
+    #[cfg(not(target_os = "windows"))]
+    ui.on_set_caption_dark(|_| {});
+
+    let minimize_window = window.clone();
+    ui.on_minimize_window(move || {
+        minimize_window.minimize();
+    });
+
+    // The window system's own close — the macOS traffic light, `Alt`+`F4`, a
+    // window menu's Close, a taskbar's close — asks here first.
+    //
+    // This is the only place `ConfirmQuitApp` can be raised from. The title bar's
+    // `close-window` callback covers the controls *this app draws* (Linux) and
+    // the caption buttons Windows substitutes (`windows_caption.rs` sends
+    // `SC_CLOSE`, which does come through Slint) — but on macOS the red button is
+    // AppKit's, and it closes the window without the UI ever seeing it. Asking at
+    // the window covers all three, and is also where a close that is not a button
+    // at all belongs.
+    //
+    // `Dialogs.confirm-quit-app-visible` is the flag the title bar's callback sets
+    // too, which is what makes it the "already answered" test below as well as
+    // the dialog's own: `App.close()` at the end of the exit animation comes back
+    // through here, and the only close that must not be re-asked about is that one.
+    window.window().on_close_requested({
+        let weak = ui.as_weak();
+        move || {
+            let Some(ui) = weak.upgrade() else {
+                return slint::CloseRequestResponse::HideWindow;
+            };
+            let dialogs = ui.global::<slint_backend::Dialogs>();
+            // Already on the way out: this is `App`'s own `close()` after the exit
+            // animation, and answering anything but `HideWindow` here would
+            // cancel the quit the user just confirmed.
+            if dialogs.get_confirm_quit_app_visible() {
+                return slint::CloseRequestResponse::HideWindow;
+            }
+            if ui.global::<slint_backend::Navigation>().get_current_page() == "launch" {
+                dialogs.set_confirm_quit_app_visible(true);
+                return slint::CloseRequestResponse::KeepWindowShown;
+            }
+            slint::CloseRequestResponse::HideWindow
+        }
+    });
+
+    // The music player's background volume follows the window's focus (the
+    // store's `onFocusChanged`). Registered here, where the window service exists.
+    music::watch_focus(&window);
+
+    // Drag regions (`globals/window-drag.slint`): a press on one — the dialog's
+    // scrim, as in the Vue's `data-tauri-drag-region` — moves the window.
+    ui.global::<slint_backend::WindowDrag>().on_start({
+        let window = window.clone();
+        move || {
+            log::debug!(target: "shell", "window drag requested");
+            window.drag_window();
+        }
+    });
+    log::debug!(target: "shell", "init window state — maximized: {}", window.is_maximized());
+
+    // The app is the only instance of it now, so it can be told about the next
+    // launch. The claim moves onto the watcher's thread, which is where the
+    // launches arrive, and stays there for as long as the process lives.
+    //
+    // A weak handle is what crosses over: a Slint component is `Send` but not
+    // `Sync`, so a strong one cannot be moved onto the watcher's thread at all.
+    watch_launches(single_instance, ui.as_weak());
+
+    // Double-clicking the title bar zooms (macOS: native fullscreen space,
+    // elsewhere: maximized), matching the system convention.
+    let macos = ui.get_macos();
+    let ws = window.clone();
+    ui.on_maximize_or_fullscreen(move || {
+        if macos {
+            log::debug!(target: "shell", "toggle fullscreen");
+            ws.toggle_fullscreen();
+        } else {
+            log::debug!(target: "shell", "toggle maximized");
+            ws.toggle_maximize();
+        }
+    });
+
+    ui.run().expect("failed to run the shell event loop");
+
+    // The original stops the multiplayer plugin on `RunEvent::Exit`: the poll
+    // thread is joined and the Conic Nexus session destroyed.
+    multiplayer::shutdown();
+
+    cleanup_temp_folder();
+}
+
+/// Removes the per-run scratch directory [`folder::DATA_LOCATION`]
+/// creates, the same thing `core/src/main.rs` does on `RunEvent::Exit` and
+/// `RunEvent::ExitRequested`.
+///
+/// The installers stage a bootstrapper jar here (`install`), and the
+/// directory is `create_dir_all`-ed in a fresh UUID-named path on every launch,
+/// so without this it accumulates one directory per run in the OS temp folder.
+fn cleanup_temp_folder() {
+    match std::fs::remove_dir_all(&folder::DATA_LOCATION.temp) {
+        Ok(_) => log::info!("Temporary files cleared"),
+        Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
+            log::error!("Could not clear temp folder: {error}")
+        }
+        _ => (),
+    }
+}
+
+/// Brings the window forward for every later launch of the app.
+///
+/// This is the Slint half of what `tauri-plugin-single-instance` does for the
+/// Tauri app: its callback focuses the first webview window, and this does the
+/// same through [`WindowService::bring_to_front`].
+///
+/// The launches arrive on a platform thread — a D-Bus worker, a `WM_COPYDATA`
+/// window message, a socket reader — so the window is only ever touched from
+/// the event loop, which is what the weak handle is upgraded in. `SingleInstance`
+/// moves in here as well: it holds the single-instance claim, which has to
+/// outlive the setup in `main`.
+fn watch_launches(single_instance: single_instance::SingleInstance, app: Weak<App>) {
+    std::thread::Builder::new()
+        .name("conic-single-instance".into())
+        .spawn(move || {
+            while let Some(launch) = single_instance.next_launch() {
+                log::info!(
+                    target: "shell",
+                    "another launch was handed over: {:?} (in {})",
+                    launch.args,
+                    launch.cwd
+                );
+                // TODO(migration): the arguments are the deep-link payload the
+                // accounts view consumes (the Microsoft login's `?code=…`,
+                // reached through the desktop entry's `conic-launcher://`
+                // handler) — route them there once it is migrated.
+                let app = app.clone();
+                if let Err(error) = app.upgrade_in_event_loop(move |app| {
+                    WindowService::new(app).bring_to_front();
+                }) {
+                    log::debug!(target: "shell", "the window was not brought forward: {error}");
+                }
+            }
+        })
+        .expect("failed to start the single-instance watcher");
+}
+
+/// Sets the macOS Dock / task-switcher icon.
+///
+/// The Slint `Window.icon` binding can't reach it: the winit backend forwards
+/// that to `winit::Window::set_window_icon`, which is a no-op on macOS. Instead
+/// the embedded PNG is loaded into an `NSImage` and handed to the shared
+/// `NSApplication`. Windows and Linux use the `icon:` binding in `app.slint`.
+#[cfg(target_os = "macos")]
+fn set_macos_app_icon() {
+    use objc2::runtime::AnyObject;
+    use objc2::{class, msg_send};
+
+    const ICON: &[u8] = include_bytes!("../ui/assets/images/app-icon.png");
+
+    unsafe {
+        let data: *mut AnyObject = msg_send![
+            class!(NSData),
+            dataWithBytes: ICON.as_ptr() as *const core::ffi::c_void,
+            length: ICON.len()
+        ];
+        let image: *mut AnyObject = msg_send![class!(NSImage), alloc];
+        let image: *mut AnyObject = msg_send![image, initWithData: data];
+        let app: *mut AnyObject = msg_send![class!(NSApplication), sharedApplication];
+        let _: () = msg_send![app, setApplicationIconImage: image];
+        // `setApplicationIconImage:` retains the image; balance our alloc/init.
+        let _: () = msg_send![image, release];
+    }
+}
+
+/// Defers `set_macos_app_icon` until the app has finished launching.
+///
+/// `setApplicationIconImage:` only sticks after `applicationDidFinishLaunching:`
+/// (which AppKit runs inside `ui.run()`); setting it before that is discarded
+/// when AppKit initializes the app icon during launch.
+#[cfg(target_os = "macos")]
+fn install_app_icon_observer() {
+    use core::ptr::NonNull;
+    use objc2_foundation::{NSNotification, NSNotificationCenter, ns_string};
+
+    let block = block2::RcBlock::new(move |_notification: NonNull<NSNotification>| {
+        set_macos_app_icon();
+    });
+
+    unsafe {
+        NSNotificationCenter::defaultCenter().addObserverForName_object_queue_usingBlock(
+            Some(ns_string!("NSApplicationDidFinishLaunchingNotification")),
+            None,
+            None,
+            &block,
+        );
+    }
+}

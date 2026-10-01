@@ -2,20 +2,25 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! The Mojang-provided Java runtime download (`crates/install/src/java.rs`).
+
+use std::{collections::HashMap, path::Path};
+
+#[cfg(not(windows))]
+use std::os::unix::fs::PermissionsExt;
+
+use log::info;
+use serde::{Deserialize, Serialize};
+
 use config::download::DownloadConfig;
 use download::{Checksum, progress::DownloadState};
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::Instance;
-use log::info;
-use serde::{Deserialize, Serialize};
+use platform::{OsArch, OsFamily, PLATFORM_INFO};
 use shared::HTTP_CLIENT;
-#[cfg(not(windows))]
-use std::os::unix::fs::PermissionsExt;
-use std::{collections::HashMap, path::Path};
 use version::resolve_version;
 
 use download::{DownloadTask, DownloadTaskType};
-use platform::{OsArch, OsFamily, PLATFORM_INFO};
 
 use crate::error::*;
 

@@ -8,16 +8,15 @@
 //! inspired by how HMCL presents Java toolchains in its Java management page:
 //! runtimes are grouped by Java major version and shown with a friendly vendor
 //! label, so the UI never has to re-parse raw version strings.
+//!
+//! The original derives `Serialize` on these types for the Tauri IPC boundary;
+//! the Slint app calls [`JavaVendor::display_name`] / [`JavaArch::display_name`]
+//! instead, so the derives are dropped here.
 
 use std::{cmp::Ordering, collections::BTreeMap, path::PathBuf};
 
-use serde::Serialize;
-
 /// Normalized Java vendor, safe for the frontend to display directly.
-///
-/// Every value is lowercase snake_case when serialized to the frontend.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JavaVendor {
     Oracle,
     OpenJdk,
@@ -52,8 +51,7 @@ impl JavaVendor {
 }
 
 /// CPU architecture of a Java runtime.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JavaArch {
     X64,
     X86,
@@ -76,7 +74,7 @@ impl JavaArch {
 }
 
 /// A single discovered Java runtime, ready for display in the UI.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JavaRuntime {
     /// Absolute path to the `java` (or `java.exe`) executable.
     pub path: PathBuf,
@@ -119,7 +117,7 @@ impl PartialOrd for JavaRuntime {
 }
 
 /// Runtimes sharing the same Java major version.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct JavaVersionGroup {
     pub major_version: u32,
     pub runtimes: Vec<JavaRuntime>,
@@ -127,7 +125,7 @@ pub struct JavaVersionGroup {
 
 /// The full result of a Java scan, structured so the frontend can render it
 /// without parsing any strings.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct JavaScanResult {
     /// Flat list of all runtimes, sorted newest major version first.
     pub runtimes: Vec<JavaRuntime>,

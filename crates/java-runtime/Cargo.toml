@@ -1,11 +1,9 @@
 [package]
 name = "java-runtime"
+description = "Tauri-free mirror of crates/java-runtime for the Slint app"
 version = "0.0.0"
-authors = ["OakChaser"]
-
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
@@ -13,10 +11,6 @@ folder.workspace = true
 platform.workspace = true
 
 log.workspace = true
-serde.workspace = true
-serde_with.workspace = true
-tauri.workspace = true
+once_cell.workspace = true
 thiserror.workspace = true
-
-[dev-dependencies]
-serde_json.workspace = true
+tokio.workspace = true

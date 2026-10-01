@@ -9,11 +9,11 @@ use std::{
     path::Path,
 };
 
-use account::Account;
 use log::info;
 use regex::Regex;
 use zip::ZipArchive;
 
+use account::Account;
 use config::launch::GC;
 use folder::DATA_LOCATION;
 use folder::MinecraftLocation;

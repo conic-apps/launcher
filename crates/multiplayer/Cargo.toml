@@ -1,11 +1,9 @@
 [package]
 name = "multiplayer"
+description = "Tauri-free mirror of crates/multiplayer for the Slint app"
 version = "0.0.0"
-authors = ["OakChaser"]
-
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
@@ -13,7 +11,6 @@ shared.workspace = true
 folder.workspace = true
 download.workspace = true
 
-tauri.workspace = true
 reqwest.workspace = true
 tokio.workspace = true
 libloader.workspace = true

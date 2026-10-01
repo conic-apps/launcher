@@ -8,9 +8,9 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use config::download::DownloadConfig;
 use log::{info, warn};
 
+use config::download::DownloadConfig;
 use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use install::vanilla::{generate_assets_downloads, generate_libraries_downloads};

@@ -12,7 +12,6 @@ use std::{
 use base64::{Engine, engine::general_purpose};
 use folder::DATA_LOCATION;
 use serde_json::Value;
-use tauri::command;
 use zip::ZipArchive;
 
 use crate::error::*;
@@ -96,8 +95,12 @@ pub fn get_all_resourcepacks<P: AsRef<Path>>(
         .collect::<Vec<_>>())
 }
 
-#[command]
-pub(crate) async fn cmd_get_all_resourcepacks(instance_id: &str) -> Result<Vec<Resourcepack>> {
+/// Every resource pack of an instance.
+///
+/// The original reaches this through the body of `cmd_get_all_resourcepacks`;
+/// the mirror keeps the instance-id entry point next to the path-taking one so
+/// callers do not have to know the folder layout.
+pub fn get_instance_resourcepacks(instance_id: &str) -> Result<Vec<Resourcepack>> {
     get_all_resourcepacks(
         DATA_LOCATION
             .get_instance_root(instance_id)

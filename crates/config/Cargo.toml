@@ -1,29 +1,16 @@
 [package]
 name = "config"
+description = "Tauri-free mirror of crates/config for the Slint app"
 version = "0.0.0"
-authors = ["OakChaser"]
-description = "User config"
-
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
-account.workspace = true
 folder.workspace = true
-shared.workspace = true
-
+account.workspace = true
 serde.workspace = true
-log.workspace = true
-tauri.workspace = true
-sys-locale.workspace = true
 toml.workspace = true
-uuid.workspace = true
+log.workspace = true
+sys-locale.workspace = true
 thiserror.workspace = true
-serde_with.workspace = true
-serde_json.workspace = true
-tokio.workspace = true
-
-[build-dependencies]
-tauri-plugin = { version = "2.3.1", features = ["build"] }

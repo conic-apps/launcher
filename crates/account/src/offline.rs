@@ -2,6 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! Locally created ("offline") accounts: `crates/account/src/offline.rs` with
+//! no changes beyond the ones the crate doc lists. The four commands that sat
+//! in front of it (`offline_commands.rs`) only forwarded their arguments, so
+//! these functions are the whole surface.
+
 use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -58,7 +63,7 @@ pub async fn update_account(account: OfflineAccount) -> Result<()> {
     Ok(())
 }
 
-async fn save_accounts(accounts: &Vec<OfflineAccount>) -> Result<()> {
+async fn save_accounts(accounts: &[OfflineAccount]) -> Result<()> {
     let accounts_list_file = DATA_LOCATION.accounts.join("offline.json");
     tokio::fs::create_dir_all(&DATA_LOCATION.accounts).await?;
     let content = serde_json::to_string(accounts)?;

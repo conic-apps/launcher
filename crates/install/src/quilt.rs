@@ -2,10 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! The Quilt loader version list and profile installer
+//! (`crates/install/src/quilt.rs`).
+
 use serde::{Deserialize, Serialize};
-use shared::HTTP_CLIENT;
 
 use folder::MinecraftLocation;
+use shared::HTTP_CLIENT;
 use version::Version;
 
 use crate::error::*;
@@ -13,12 +16,15 @@ use crate::error::*;
 /// Represents a Quilt loader artifact version, including its Maven coordinates and version.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct QuiltArtifactVersion {
+    // Kept private like the original: only `version` is read by the frontend.
+    #[allow(dead_code)]
     separator: String,
+    #[allow(dead_code)]
     build: u32,
 
     /// Maven coordinates, e.g., "org.quiltmc.quilt-loader:0.16.1"
-    maven: String,
-    version: String,
+    pub maven: String,
+    pub version: String,
 }
 
 /// Represents a hashed Quilt version, with Maven coordinates.
@@ -78,7 +84,7 @@ pub struct QuiltVersion {
     pub launcher_meta: QuiltLauncherMeta,
 }
 
-/// Holds a list of available Quilt versions.
+/// Holds a list of available Quilt versions, newest first.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct QuiltVersionList(Vec<QuiltVersion>);
 
@@ -99,6 +105,11 @@ impl QuiltVersionList {
             .0
             .sort_by(|a, b| b.loader.version.cmp(&a.loader.version));
         Ok(response)
+    }
+
+    /// The versions, in the order the Quilt meta API returned them (newest first).
+    pub fn as_slice(&self) -> &[QuiltVersion] {
+        &self.0
     }
 }
 

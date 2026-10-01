@@ -2,18 +2,20 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! The Mojang version manifest and the vanilla download list
+//! (`crates/install/src/vanilla.rs`).
+
 use std::str::FromStr;
 
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use shared::HTTP_CLIENT;
 
 use download::{Checksum, DownloadTask, DownloadTaskType};
 use folder::MinecraftLocation;
+use shared::HTTP_CLIENT;
 use version::{
     self, AssetIndex, AssetIndexObject, ResolvedLibrary, ResolvedVersion, resolve_version,
 };
-
-use serde::{Deserialize, Serialize};
 
 use crate::error::*;
 

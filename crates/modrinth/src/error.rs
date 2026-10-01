@@ -2,6 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+//! `crates/modrinth/src/error.rs`, minus the Tauri IPC boundary.
+//!
+//! The original derives `Serialize` so the error can cross `invoke()`; the
+//! attribute and the `serde_with::DisplayFromStr` shims are kept so the shape
+//! the frontend sees (`{"kind": …, "message": …}`, with `{"kind": …}` alone for
+//! the unit variant) does not change.
+
 use std::result;
 
 use serde::Serialize;

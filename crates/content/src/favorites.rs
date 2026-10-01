@@ -5,7 +5,6 @@
 use folder::DATA_LOCATION;
 use log::warn;
 use serde::{Deserialize, Serialize};
-use tauri::command;
 
 use crate::error::Result;
 
@@ -37,13 +36,13 @@ fn write_favorites(favorites: &[Favorite]) -> Result<()> {
     Ok(())
 }
 
-#[command]
-pub fn cmd_list_favorites() -> Result<Vec<Favorite>> {
+/// Every favorite, read from the shared file. This is the body of the
+/// original's `cmd_list_favorites`.
+pub fn list_favorites() -> Result<Vec<Favorite>> {
     read_favorites()
 }
 
-#[command]
-pub fn cmd_add_favorite(platform: String, content_type: String, project_id: String) -> Result<()> {
+pub fn add_favorite(platform: String, content_type: String, project_id: String) -> Result<()> {
     let mut favorites = read_favorites()?;
     let new_favorite = Favorite {
         platform,
@@ -60,12 +59,7 @@ pub fn cmd_add_favorite(platform: String, content_type: String, project_id: Stri
     Ok(())
 }
 
-#[command]
-pub fn cmd_remove_favorite(
-    platform: String,
-    content_type: String,
-    project_id: String,
-) -> Result<()> {
+pub fn remove_favorite(platform: String, content_type: String, project_id: String) -> Result<()> {
     let mut favorites = read_favorites()?;
     let target = Favorite {
         platform,
@@ -80,12 +74,7 @@ pub fn cmd_remove_favorite(
     Ok(())
 }
 
-#[command]
-pub fn cmd_is_favorited(
-    platform: String,
-    content_type: String,
-    project_id: String,
-) -> Result<bool> {
+pub fn is_favorited(platform: String, content_type: String, project_id: String) -> Result<bool> {
     let favorites = read_favorites()?;
     let target = Favorite {
         platform,

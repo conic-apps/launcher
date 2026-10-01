@@ -1,18 +1,14 @@
 [package]
 name = "folder"
+description = "Tauri-free mirror of crates/folder for the Slint app"
 version = "0.0.0"
-authors = ["OakChaser"]
-
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
 platform.workspace = true
 
-serde.workspace = true
-tauri.workspace = true
-uuid.workspace = true
-once_cell.workspace = true
 log.workspace = true
+once_cell.workspace = true
+uuid.workspace = true

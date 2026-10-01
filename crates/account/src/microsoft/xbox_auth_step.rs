@@ -4,9 +4,9 @@
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use shared::HTTP_CLIENT;
 
 use crate::error::*;
+use shared::HTTP_CLIENT;
 
 pub(super) struct XboxAuth {
     pub(super) xbl_token: String,

@@ -2,7 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
+use base64::{Engine, engine::general_purpose};
 use folder::DATA_LOCATION;
+use serde_json::Value;
 use uuid::Uuid;
 
 use crate::error::*;
@@ -11,6 +13,8 @@ pub mod yggdrasil_server;
 pub mod yggdrasil_user_api;
 
 pub use yggdrasil_user_api::YggdrasilAccount;
+
+use yggdrasil_user_api::Profile;
 
 pub async fn add_account(account: YggdrasilAccount) -> Result<()> {
     let mut accounts = list_accounts()
@@ -90,4 +94,43 @@ pub async fn update_account(account_identifier: Uuid, account: YggdrasilAccount)
         .collect::<Vec<_>>();
     save_accounts(result).await?;
     Ok(())
+}
+
+/// The skin URL a profile's `textures` property carries.
+///
+/// The frontend's `yggdrasilGetSkinUrl` (`crates/account/index.ts`): the
+/// property is the base64 of a JSON document whose `textures.SKIN.url` is the
+/// texture. Anything malformed reads as "no skin", like the original's empty
+/// `catch`.
+pub fn get_skin_url(profile: &Profile) -> Option<String> {
+    texture_url(profile, "SKIN")
+}
+
+/// The cape URL a profile's `textures` property carries
+/// (`yggdrasilGetCapeUrl`).
+pub fn get_cape_url(profile: &Profile) -> Option<String> {
+    texture_url(profile, "CAPE")
+}
+
+fn texture_url(profile: &Profile, model: &str) -> Option<String> {
+    let property = profile
+        .properties
+        .as_ref()?
+        .iter()
+        .find(|property| property.name == "textures")?;
+    // `atob` tolerates the padding a server may have left off, and the line
+    // breaks some servers wrap the value with.
+    let compact: String = property
+        .value
+        .chars()
+        .filter(|character| !character.is_ascii_whitespace())
+        .collect();
+    let decoded = general_purpose::STANDARD
+        .decode(&compact)
+        .or_else(|_| general_purpose::STANDARD_NO_PAD.decode(&compact))
+        .ok()?;
+    let document: Value = serde_json::from_slice(&decoded).ok()?;
+    document["textures"][model]["url"]
+        .as_str()
+        .map(str::to_string)
 }

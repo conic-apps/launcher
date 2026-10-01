@@ -12,6 +12,9 @@
 //!    installed under the launcher runtime directory;
 //! 3. A system-installed Java runtime matching the required major version,
 //!    excluding launcher-managed and user-disabled runtimes.
+//!
+//! The original runs the system scan through `tauri::async_runtime::spawn_blocking`;
+//! the mirror uses the app's own tokio runtime, which is the same trade.
 
 use std::path::PathBuf;
 
@@ -83,7 +86,9 @@ pub async fn resolve_java_executable(options: &ResolveJavaOptions) -> Result<Res
 
     let required_major_version = options.required_major_version;
     let disabled_java_runtimes = &options.disabled_java_runtimes;
-    let runtimes = tauri::async_runtime::spawn_blocking(scan_java_runtimes).await??;
+    let runtimes = tokio::task::spawn_blocking(scan_java_runtimes)
+        .await
+        .map_err(|error| Error::Scan(error.to_string()))??;
     let system_java = runtimes.into_iter().find(|runtime| {
         runtime.major_version == required_major_version
             && runtime.is_valid

@@ -6,11 +6,8 @@ use std::collections::{HashMap, hash_map::Entry};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use base64::{Engine, engine::general_purpose};
 use conic_worldmap::{RenderOptions, RenderRequest, WorldMap};
 use folder::DATA_LOCATION;
-use serde::{Deserialize, Serialize};
-use tauri::{Manager, Runtime, command};
 
 use crate::error::*;
 
@@ -61,8 +58,7 @@ impl From<&WorldMapRequest> for WorldMapKey {
 /// The rectangle is centered on `(center_x, center_z)`; when the center is
 /// omitted it falls back to the world spawn. `dimension` is a namespaced id
 /// such as `minecraft:the_nether` and defaults to the overworld.
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
 pub struct WorldMapRequest {
     pub instance_id: String,
     pub folder_name: String,
@@ -76,17 +72,15 @@ pub struct WorldMapRequest {
     pub altitude_shading: Option<bool>,
 }
 
-/// Render result: a PNG-encoded bitmap (base64-encoded), one Minecraft block
-/// per pixel, row-major.
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
+/// Render result: an RGBA bitmap, one Minecraft block per pixel, row-major.
+#[derive(Debug)]
 pub struct WorldMapResult {
     pub width: usize,
     pub height: usize,
-    pub png: String,
+    pub pixels: Vec<u8>,
 }
 
-/// Renders a rectangle of a world save into a PNG bitmap.
+/// Renders a rectangle of a world save into an RGBA bitmap.
 pub fn render_map(cache: &MapCache, request: &WorldMapRequest) -> Result<WorldMapResult> {
     let key = WorldMapKey::from(request);
     let world_dir = key.world_dir();
@@ -121,40 +115,114 @@ pub fn render_map(cache: &MapCache, request: &WorldMapRequest) -> Result<WorldMa
         },
     )?;
 
-    let png = encode_png(result.width as u32, result.height as u32, &result.pixels)?;
-
     Ok(WorldMapResult {
         width: result.width,
         height: result.height,
-        png: general_purpose::STANDARD.encode(png),
+        pixels: result.pixels,
     })
 }
 
-fn encode_png(width: u32, height: u32, rgba: &[u8]) -> Result<Vec<u8>> {
-    let mut png = Vec::new();
-    {
-        let mut encoder = png::Encoder::new(&mut png, width, height);
-        encoder.set_color(png::ColorType::Rgba);
-        encoder.set_depth(png::BitDepth::Eight);
-        let mut writer = encoder
-            .write_header()
-            .map_err(|e| Error::WorldMapPng(e.to_string()))?;
-        writer
-            .write_image_data(rgba)
-            .map_err(|e| Error::WorldMapPng(e.to_string()))?;
+#[cfg(test)]
+mod tests {
+    use std::io::Write;
+
+    use flate2::Compression;
+    use flate2::write::GzEncoder;
+
+    use super::*;
+
+    /// A world directory the renderer will open: a `level.dat` naming a data
+    /// version the colour tables cover, and the `region/` the legacy overworld
+    /// layout keeps its `r.*.*.mca` files in. Empty on the inside, so a tile
+    /// comes back transparent — which is all this is about: the request goes
+    /// out, an RGBA buffer comes back, and the same world is served from the
+    /// cache the second time.
+    fn write_world(folder: &str) -> String {
+        let world_dir = DATA_LOCATION
+            .get_instance_root("worldmap-test")
+            .join("saves")
+            .join(folder);
+        let _ = std::fs::remove_dir_all(&world_dir);
+        std::fs::create_dir_all(world_dir.join("region")).expect("world region directory");
+
+        let root: HashMap<String, fastnbt::Value> = HashMap::from([(
+            "Data".to_string(),
+            fastnbt::Value::Compound(HashMap::from([
+                ("DataVersion".to_string(), fastnbt::Value::Int(3700)),
+                (
+                    "LevelName".to_string(),
+                    fastnbt::Value::String(folder.to_string()),
+                ),
+                ("SpawnX".to_string(), fastnbt::Value::Int(8)),
+                ("SpawnZ".to_string(), fastnbt::Value::Int(-24)),
+            ])),
+        )]);
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::fast());
+        encoder
+            .write_all(&fastnbt::to_bytes(&root).expect("level.dat"))
+            .expect("level.dat");
+        std::fs::write(
+            world_dir.join("level.dat"),
+            encoder.finish().expect("level.dat"),
+        )
+        .expect("level.dat");
+        folder.to_string()
     }
-    Ok(png)
-}
 
-#[command]
-pub(crate) async fn cmd_render_world_map<R: Runtime>(
-    app: tauri::AppHandle<R>,
-    request: WorldMapRequest,
-) -> Result<WorldMapResult> {
-    tauri::async_runtime::spawn_blocking(move || {
-        let cache = app.state::<MapCache>();
-        render_map(&cache, &request)
-    })
-    .await
-    .map_err(|e| Error::WorldMapTask(e.to_string()))?
+    fn request(folder: &str) -> WorldMapRequest {
+        WorldMapRequest {
+            instance_id: "worldmap-test".to_string(),
+            folder_name: folder.to_string(),
+            width: 64,
+            height: 64,
+            // No centre, so the render falls back to the world's own spawn —
+            // the `SpawnX` / `SpawnZ` above, which is the fallback the app's
+            // `(0, 0)` centre relies on.
+            center_x: None,
+            center_z: None,
+            dimension: None,
+            water: None,
+            shading: None,
+            altitude_shading: None,
+        }
+    }
+
+    #[test]
+    fn renders_a_raw_rgba_tile_and_keeps_the_world_cached() {
+        let folder = write_world("flatworld");
+        let cache = MapCache::default();
+
+        let first = render_map(&cache, &request(&folder)).expect("a tile");
+        assert_eq!((first.width, first.height), (64, 64));
+        // One block per pixel, four bytes of RGBA — the buffer the Slint side
+        // wraps in a `SharedPixelBuffer`. No PNG, no base64.
+        assert_eq!(first.pixels.len(), 64 * 64 * 4);
+
+        // A second tile of the same world is served with the world still open,
+        // which is what `MapCache` is for: the region cache inside
+        // `conic-worldmap` is not rebuilt from the disk.
+        let second = render_map(&cache, &request(&folder)).expect("a second tile");
+        assert_eq!(second.pixels.len(), 64 * 64 * 4);
+        assert_eq!(cache.maps.lock().expect("Internal error").len(), 1);
+    }
+
+    #[test]
+    fn a_centred_tile_comes_from_the_requested_rectangle() {
+        let folder = write_world("centred");
+        let cache = MapCache::default();
+        let mut request = request(&folder);
+        request.center_x = Some(1000);
+        request.center_z = Some(-1000);
+
+        let tile = render_map(&cache, &request).expect("a tile");
+        assert_eq!((tile.width, tile.height), (64, 64));
+    }
+
+    #[test]
+    fn a_missing_world_is_an_error_rather_than_an_empty_tile() {
+        let cache = MapCache::default();
+        let mut request = request("no-such-world");
+        request.dimension = Some("minecraft:the_nether".to_string());
+        assert!(render_map(&cache, &request).is_err());
+    }
 }

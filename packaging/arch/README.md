@@ -21,18 +21,16 @@ makepkg -si
 ```
 
 `makepkg` installs the declared dependencies, downloads and verifies the release,
-then builds and installs the package. Compilation requires Rust 1.88 or newer,
-Node.js 24 LTS (`nodejs-lts-krypton`) and pnpm 11. The LTS Node package conflicts
-with Arch's rolling `nodejs` package; a clean build chroot can be used if you need
-to keep another Node version on your system.
+then builds and installs the package. Compilation requires Rust 1.88 or newer.
 
-Frontend and Rust dependencies are fetched during `prepare()` using the release's
-lockfiles. The obsolete pnpm entry in the downloaded `.npmrc` is aligned with
-`package.json`. The Tauri build produces a native executable without generating
-AppImage, deb or rpm bundles or requiring an updater signing key.
+There is no Node.js, pnpm or Tauri step: the app is a Slint/Rust binary, and
+`cargo build --release --locked` is the whole build. The `.deb`, `.rpm` and
+`.AppImage` that `tools/package-linux.sh` produces are not used here — Arch takes
+a native package.
 
 Launch **Conic Launcher** from the application menu or run `conic-launcher`.
 The package also installs icons and the `conic-launcher://` URL handler.
+
 Java is optional at installation time: the launcher can download a suitable
 runtime for Minecraft, or use an installed `java-runtime` provider.
 
@@ -46,14 +44,28 @@ CURSEFORGE_API_KEY='your-key' makepkg -si
 The key is embedded in the compiled executable. Without it, the official
 CurseForge API is unauthenticated.
 
-Update this installation through rebuilt Arch packages. The launcher's built-in
-Linux updater targets AppImage installations.
+Update this installation through rebuilt Arch packages. The launcher has no
+built-in updater: the Tauri app's self-update and its AppImage signatures were
+removed along with Tauri, so an update is a new release downloaded from
+[the releases page](https://github.com/conic-apps/launcher/releases).
+
+## The payload
+
+The desktop entry and the icon set live in `packaging/linux/` at the repository
+root, shared with the deb, the rpm and the AppImage — they are one product with
+one set of files. `package()` above installs from there; the icon ladder is
+regenerated with `python3 tools/generate-icons.py` and committed, so no Python or
+Pillow is needed to build this package.
+
+The full upstream license, including its additional terms, is installed in
+`/usr/share/licenses/conic-launcher/LICENSE`.
 
 ## Updating the package recipe
 
-Update `_version` and `pkgver` for a new release, reset `pkgrel` to `1`, and refresh
-the source checksums. For packaging-only changes, increment `pkgrel` instead.
-After changing the recipe or desktop file, regenerate metadata from this directory:
+Update `_version` and `pkgver` for a new release, reset `pkgrel` to `1`, and
+refresh the source checksum. For packaging-only changes, increment `pkgrel`
+instead. Regenerate the metadata from this directory after changing the recipe or
+the dependency list:
 
 ```bash
 updpkgsums # provided by pacman-contrib
@@ -61,5 +73,5 @@ makepkg --printsrcinfo > .SRCINFO
 makepkg --verifysource
 ```
 
-The full upstream license, including its additional terms, is installed in
-`/usr/share/licenses/conic-launcher/LICENSE`.
+`.SRCINFO` is what an AUR page reads, so it has to match `PKGBUILD`; a stale copy
+shows users the old dependency list and the old `pkgver`.

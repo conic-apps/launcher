@@ -2,46 +2,54 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Music file listing for the launcher background music player.
+//! Tauri-free mirror of `crates/music`, the launcher background music player.
+//!
+//! The original crate is a Tauri plugin with a single command, the listing of
+//! the music folder. Everything else the player did — decoding, the output
+//! device, the analyser, the transport, the playlist, the saved position —
+//! lived in the webview (`src/store/music.ts` and the `<audio>` element it drove
+//! through the Web Audio API). A native app has no webview, so all of it is here,
+//! split the way the store's responsibilities were:
+//!
+//!   * [`decode`] is the `src` the element was pointed at: a file becomes PCM.
+//!   * [`analyser`] is the `AnalyserNode`, down to the Blackman window and the
+//!     smoothing constant.
+//!   * [`player`] is the graph (`source → analyser → gain → destination`) and the
+//!     `useMusicStore` actions driving it.
+//!   * [`session`] is the `localStorage` entry the store kept its position in.
+//!
+//! The listing itself is the original's, unchanged, and the folder it reads is
+//! the shared one (`folder::DATA_LOCATION.music`), so both frontends see
+//! the same files.
 
 use std::path::Path;
 
-use folder::DATA_LOCATION;
 use log::warn;
-use serde::Serialize;
-use tauri::{
-    Runtime, command,
-    plugin::{Builder, TauriPlugin},
-};
 
 use error::Result;
 
+pub mod analyser;
+pub mod decode;
 pub mod error;
+pub mod player;
+pub mod session;
+
+pub use error::Error;
+pub use player::{PERSIST_INTERVAL, Player, PlayerState};
 
 const SUPPORTED_EXTENSIONS: &[&str] = &[
     "mp3", "wav", "ogg", "flac", "m4a", "aac", "opus", "wma", "aiff", "aif",
 ];
 
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("music")
-        .invoke_handler(tauri::generate_handler![cmd_list_music_files])
-        .build()
-}
-
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MusicFile {
     pub name: String,
     pub path: String,
 }
 
-#[command]
-fn cmd_list_music_files() -> Result<Vec<MusicFile>> {
-    list_music_files()
-}
-
 /// Lists all supported audio files inside the music directory.
 pub fn list_music_files() -> Result<Vec<MusicFile>> {
-    let entries = std::fs::read_dir(&DATA_LOCATION.music)?;
+    let entries = std::fs::read_dir(&folder::DATA_LOCATION.music)?;
     let mut files = Vec::new();
     for entry in entries {
         let entry = match entry {

@@ -1,19 +1,17 @@
 [package]
 name = "music"
+description = "Tauri-free mirror of crates/music for the Slint app"
 version = "0.0.0"
-authors = ["OakChaser"]
-
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
-shared.workspace = true
 folder.workspace = true
-
-tauri.workspace = true
 thiserror.workspace = true
-serde_with.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 log.workspace = true
+symphonia.workspace = true
+cpal.workspace = true
+rustfft.workspace = true
