@@ -60,6 +60,16 @@ fn java_model(runtimes: &[ScannedJava], disabled: &[String]) -> ModelRc<JavaRunt
 
 /// Registers every settings callback on the `AppConfig` global.
 pub fn wire(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>) {
+    wire_config_changes(ui, Rc::clone(&shared), Rc::clone(&save_timer));
+    wire_link_actions(ui);
+
+    wire_background_actions(ui, Rc::clone(&shared), Rc::clone(&save_timer));
+    wire_java_actions(ui, shared);
+}
+
+/// The `AppConfig.changed` handler: collect the global into the config,
+/// re-apply the locale if it moved, and persist on a short debounce.
+fn wire_config_changes(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>) {
     let settings = ui.global::<AppConfig>();
     // `CONIC_LOCALE` forces the translation and disables runtime switching.
     let forced_locale = std::env::var("CONIC_LOCALE").is_ok();
@@ -110,6 +120,11 @@ pub fn wire(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>
             );
         });
     }
+}
+
+/// The settings screens' link and data-directory openers.
+fn wire_link_actions(ui: &App) {
+    let settings = ui.global::<AppConfig>();
 
     settings.on_open_url(move |url| {
         if let Err(error) = config_bridge::open_external(url.as_str()) {
@@ -127,6 +142,12 @@ pub fn wire(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>
             log::warn!("failed to open path '{}': {error}", path.display());
         }
     });
+}
+
+/// The wallpaper picker and its removal, both of which bypass `AppConfig.changed`
+/// and have to nudge the background controller themselves.
+fn wire_background_actions(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>) {
+    let settings = ui.global::<AppConfig>();
 
     {
         let shared = Rc::clone(&shared);
@@ -185,8 +206,12 @@ pub fn wire(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>
             let _ = config::save_config(&config);
         });
     }
+}
 
-    // Java runtime management.
+/// Java runtime management: the on-disk scan and the enable/disable toggles.
+fn wire_java_actions(ui: &App, shared: Rc<RefCell<config::Config>>) {
+    let settings = ui.global::<AppConfig>();
+
     {
         let shared = Rc::clone(&shared);
         let weak = ui.as_weak();

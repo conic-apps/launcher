@@ -55,15 +55,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # `deb`/`rpm` architecture names on the left, Rust targets derived by
-          # the runner itself on the right. The runner *is* the target: both jobs
-          # build natively, so there is no cross-compilation sysroot to keep in
-          # step with the host.
           - platform: "ubuntu-22.04"
             rpm: "x86_64"
             deb: "amd64"
             appimage: "x86_64"
-
           - platform: "ubuntu-22.04-arm"
             rpm: "aarch64"
             deb: "arm64"
