@@ -18,6 +18,9 @@ on:
   push:
     branches:
       - master
+      # The Tauri removal is in review here, and its packaging cannot be tested
+      # without a run. Temporary: drop this when the branch merges.
+      - RIP-Tauri
 
 jobs:
   get-version:
@@ -44,7 +47,7 @@ jobs:
       app_version: ${{ steps.current_version.outputs.text }}
       previous_app_version: ${{ steps.previous_version.outputs.text }}
 
-  build:
+  build-linux:
     needs: [get-version]
     permissions:
       contents: write
@@ -184,8 +187,100 @@ jobs:
           name: AppImage bundle(${{ matrix.appimage }})
           path: ${{ github.workspace }}/target/package/*.AppImage
 
+  # One job per architecture, each building natively on its own runner.
+  #
+  # A single Apple Silicon runner with `rustup target add x86_64-apple-darwin`
+  # plus `lipo` would produce one universal `.dmg` instead of two, which is
+  # tidier for a user. It is not worth it, for reasons this project has already
+  # paid for:
+  #
+  #   * A cross-compiled x86_64 slice is *linked*, never *run*. Nothing in CI
+  #     launches it, so an x86_64-only runtime fault ships uncaught. A native
+  #     runner at least executes the build script and the test suite there.
+  #   * The compiler is not the only thing that has to be cross-configured. Skia
+  #     is built from source through `cc`, and `aws-lc-rs` likewise; a
+  #     host-arch `cc` in a `--target` build produces a subtly wrong binary
+  #     rather than an error. Native runners cannot get that wrong.
+  #   * `macos-15-intel` exists and is the last x86_64 image GitHub will offer
+  #     (retiring after the macOS 15 image, in Fall 2027), so this is the window
+  #     in which native Intel builds are available at all.
+  #
+  # Two thin images, each of which was built *on* the architecture it runs on.
+  # `--universal` is still available locally for a hand-built single image.
+  build-macos:
+    needs: [get-version]
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: "macos-15"
+            arch: "arm64"
+          - platform: "macos-15-intel"
+            arch: "x86_64"
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      # No `--target` and no `--universal`: the runner *is* the architecture, so
+      # `package-macos.sh` builds exactly what this machine can run. It reads the
+      # architecture out of `rustc -vV` and names the image after it, so the two
+      # jobs produce `…-arm64.dmg` and `…-x86_64.dmg`.
+      - name: Build the .app and the .dmg
+        env:
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+        run: tools/package-macos.sh
+
+      - name: Inspect the app
+        run: |
+          app=target/package/conic-launcher.app
+          echo "### the bundle"
+          find "$app" | sed "s|$app|.|" | sort
+          echo "### Info.plist"
+          for key in CFBundleIdentifier CFBundleName CFBundleExecutable \
+                     CFBundleShortVersionString CFBundleVersion \
+                     LSMinimumSystemVersion LSApplicationCategoryType; do
+            printf '  %-26s %s\n' "$key" "$(/usr/libexec/PlistBuddy -c "Print :$key" "$app/Contents/Info.plist")"
+          done
+          echo "### architecture"
+          # Thin and native, which is the point of the matrix. A universal binary
+          # here would mean this job had silently cross-compiled.
+          lipo -info "$app/Contents/MacOS/conic-launcher"
+          echo "### signature"
+          # Ad-hoc (`codesign -s -`), which is what makes an arm64 binary
+          # executable at all. NOT a Developer ID signature, so Gatekeeper will
+          # block the app on another user's machine and they have to clear the
+          # quarantine flag themselves; that needs a certificate and notarization
+          # credentials this workflow does not have.
+          codesign --verify --deep --strict --verbose=2 "$app"
+          codesign -dv "$app" 2>&1 | grep -E "Identifier|Format|Signature|TeamIdentifier"
+
+      - name: Upload the app bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: macOS app bundle(${{ matrix.arch }})
+          # Zipped rather than a bare `.app`, because an artifact upload turns a
+          # directory into a file on its own and the symlinks inside the bundle
+          # need the archiver to preserve them.
+          path: ${{ github.workspace }}/target/package/conic-launcher.app
+
+      - name: Upload the dmg
+        uses: actions/upload-artifact@v7
+        with:
+          name: macOS disk image(${{ matrix.arch }})
+          path: ${{ github.workspace }}/target/package/*.dmg
+
   release:
-    needs: [build, get-version]
+    needs: [build-linux, build-macos, get-version]
     permissions:
       contents: write
     runs-on: ubuntu-22.04

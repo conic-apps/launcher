@@ -8,8 +8,12 @@ on:
       - "app/**"
       - "Cargo.toml"
       - "Cargo.lock"
+  # `push` has no `branches` filter, so it already runs on every branch —
+  # including RIP-Tauri. `pull_request` is the one that needs the branch added,
+  # because it is restricted to master and the Tauri removal is reviewed there.
+  # Temporary: drop RIP-Tauri when the branch merges.
   pull_request:
-    branches: ["master"]
+    branches: ["master", "RIP-Tauri"]
     paths:
       - ".github/workflows/check-rust.yml"
       - "crates/**"
@@ -46,6 +50,22 @@ jobs:
       matrix:
         include:
           - platform: "ubuntu-latest"
+          # Both macOS architectures as *native* runners, not one runner with a
+          # cross-compiled x86_64 target: a `--target` build compiles the code for
+          # Intel while running every build script on the host, so a
+          # host-only mistake in a `-sys` crate passes here and fails in a real
+          # Intel build. A native runner is the only thing that checks the target
+          # for real.
+          #
+          # It is also how the `objc2` `BOOL` bug was found at all: `BOOL` is
+          # `bool` on arm64 and `i8` on x86_64, so
+          # `app/src/traffic_lights.rs::add_method` compiled on Apple Silicon and
+          # not on Intel for the whole life of the Tauri CI.
+          #
+          # `macos-15` and `macos-15-intel` rather than `macos-latest`, because
+          # `latest` is arm64 only and would make the Intel entry ambiguous.
+          - platform: "macos-15"
+          - platform: "macos-15-intel"
           - platform: "windows-latest"
     runs-on: ${{ matrix.platform }}
     steps:
