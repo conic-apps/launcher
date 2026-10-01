@@ -12,6 +12,8 @@ logs
 *.sln
 *.sw?
 *.key
+.vscode/
+.idea/
 
 /target/
 

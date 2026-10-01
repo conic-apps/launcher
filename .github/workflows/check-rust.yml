@@ -13,7 +13,7 @@ on:
   # because it is restricted to master and the Tauri removal is reviewed there.
   # Temporary: drop RIP-Tauri when the branch merges.
   pull_request:
-    branches: ["master", "RIP-Tauri"]
+    branches: ["dev"]
     paths:
       - ".github/workflows/check-rust.yml"
       - "crates/**"
