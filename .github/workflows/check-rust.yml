@@ -5,7 +5,7 @@ on:
     paths:
       - ".github/workflows/check-rust.yml"
       - "crates/**"
-      - "core/**"
+      - "app/**"
       - "Cargo.toml"
       - "Cargo.lock"
   pull_request:
@@ -13,7 +13,7 @@ on:
     paths:
       - ".github/workflows/check-rust.yml"
       - "crates/**"
-      - "core/**"
+      - "app/**"
       - "Cargo.toml"
       - "Cargo.lock"
 env:
@@ -51,11 +51,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # The Slint/winit stack. `cargo check` reaches `fontique`, `alsa-sys` and
+      # `libudev-sys`, whose build scripts each shell out to `pkg-config` for a
+      # development package — so these are build dependencies of the *check*, not
+      # only of a release build.
+      #
+      # `webkit2gtk-4.1` and `libayatana-appindicator3-dev` were here for Tauri.
+      # There is no webview and no tray plugin in the tree any more, and installing
+      # them did nothing but slow the job down.
       - name: install dependencies
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y webkit2gtk-4.1 libayatana-appindicator3-dev
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libfontconfig1-dev libasound2-dev libudev-dev
 
       - name: install Rust stable with clippy
         uses: dtolnay/rust-toolchain@stable
@@ -80,11 +89,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Same three development packages as the clippy job, and for the same
+      # reason. Without them the job fails in `cargo build.rs` long before it
+      # reaches the tests.
       - name: install dependencies
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y webkit2gtk-4.1 libayatana-appindicator3-dev
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libfontconfig1-dev libasound2-dev libudev-dev
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable

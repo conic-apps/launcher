@@ -4,8 +4,17 @@ on:
     branches:
       - dev
   pull_request:
+    # Not every pull request: a release build is `lto = true` with
+    # `codegen-units = 1`, so building one to check a Rust change is expensive.
+    # What must not slip through unbuilt is a change to *how the packages are
+    # made* — the payload, the recipe, the packaging metadata or the script —
+    # because nothing else would notice it breaking.
     paths:
       - ".github/workflows/build.yml"
+      - "app/Cargo.toml"
+      - "packaging/**"
+      - "tools/package-linux.sh"
+      - "tools/generate-icons.py"
   push:
     branches:
       - master
@@ -17,18 +26,24 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 2
+      # `app/Cargo.toml` is the only place the version lives now. It was
+      # `core/tauri.conf.json` before the Slint migration, and this job spent a
+      # long time after that reading a file that no longer exists.
       - name: Get app version
         id: current_version
         run: |
-          echo "text=$(jq -r .version core/tauri.conf.json)" >> "$GITHUB_OUTPUT"
+          version="$(sed -n 's/^version = "\(.*\)"$/\1/p' app/Cargo.toml | head -1)"
+          test -n "$version" || { echo "no version in app/Cargo.toml" >&2; exit 1; }
+          echo "text=$version" >> "$GITHUB_OUTPUT"
 
       - name: Get previous version
         id: previous_version
         run: |
-          echo "text=$(git show HEAD~1:core/tauri.conf.json | jq -r .version)" >> $GITHUB_OUTPUT
+          echo "text=$(git show HEAD~1:app/Cargo.toml | sed -n 's/^version = "\(.*\)"$/\1/p' | head -1)" >> $GITHUB_OUTPUT
     outputs:
       app_version: ${{ steps.current_version.outputs.text }}
       previous_app_version: ${{ steps.previous_version.outputs.text }}
+
   build:
     needs: [get-version]
     permissions:
@@ -37,48 +52,48 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: "macos-15"
-            arch: "aarch64"
-
-          - platform: "macos-15-intel"
-            arch: "x64"
-
+          # `deb`/`rpm` architecture names on the left, Rust targets derived by
+          # the runner itself on the right. The runner *is* the target: both jobs
+          # build natively, so there is no cross-compilation sysroot to keep in
+          # step with the host.
           - platform: "ubuntu-22.04"
             rpm: "x86_64"
             deb: "amd64"
-            appimage: "amd64"
+            appimage: "x86_64"
 
           - platform: "ubuntu-22.04-arm"
-            deb: "arm64"
             rpm: "aarch64"
+            deb: "arm64"
             appimage: "aarch64"
-
-          - platform: "windows-2025"
-            arch: "x64"
-
-          - platform: "windows-11-arm"
-            arch: "arm64"
 
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v7
 
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
+      # The Slint/winit stack, not the Tauri/webview one this list used to
+      # install. None of these are declared anywhere in the build, so a missing
+      # one only shows up as a link error deep in a release build:
+      #   pkg-config          — all three build scripts below go through it
+      #   libfontconfig1-dev  — `fontique` -> `yeslogic-fontconfig-sys`
+      #   libasound2-dev      — `alsa-sys`, via `cpal` in the music player
+      #   libudev-dev         — `libudev-sys`, via `i-slint-backend-linuxkms`
+      # GL, xkbcommon and the X11 libraries are `dlopen`ed by glutin, winit and
+      # Skia rather than linked, so they are runtime dependencies of the package
+      # and not build dependencies of the crate.
+      #
+      # `webkit2gtk-4.1` and `libappindicator3-dev` were here for Tauri. There is
+      # no webview and no tray plugin any more.
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+          sudo apt-get install -y --no-install-recommends \
+            build-essential ca-certificates pkg-config \
+            libfontconfig1-dev libasound2-dev libudev-dev \
+            dpkg-dev rpm file desktop-file-utils
 
-      - name: setup node
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache-dependency-path: "pnpm-lock.yaml"
-
-      - name: Enable Corepack and install pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@latest --activate
+      # `dpkg-dev` is separate from `dpkg`: it is what provides `dpkg-shlibdeps`,
+      # and without it `depends = "$auto"` resolves to nothing *silently* — the
+      # package builds and is then missing every shared library it needs.
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -88,112 +103,86 @@ jobs:
         with:
           cache-on-failure: true
 
-      - name: install frontend dependencies
-        run: pnpm install
+      - name: install cargo-deb
+        uses: taiki-e/install-action@cargo-deb
 
-      - name: Build the app
+      - name: install cargo-rpm
+        uses: taiki-e/install-action@cargo-rpm
+
+      # `appimagetool` is an AppImage itself, so installing it is three steps
+      # rather than one:
+      #   1. download the continuous build for this runner's architecture,
+      #   2. neutralise its magic bytes so the kernel will not try to run it as
+      #      an ELF (`AI\x02` -> three NULs),
+      #   3. chmod it.
+      # Step 2 is the documented workaround and is what the upstream README
+      # tells you to do; without it `file` reports a broken AppImage and
+      # appimagetool refuses to start.
+      - name: install appimagetool
+        run: |
+          curl -sSfL \
+            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$(uname -m).AppImage" \
+            -o /usr/local/bin/appimagetool
+          sed -i 's|AI\x02|\x00\x00\x00|' /usr/local/bin/appimagetool
+          chmod +x /usr/local/bin/appimagetool
+
+      - name: Validate the desktop entry
+        run: desktop-file-validate packaging/linux/conic-launcher.desktop
+
+      # The one build step. `tools/package-linux.sh` assembles the `.deb` with
+      # `cargo deb`, the `.rpm` with `cargo rpm`, and the AppDir it hands to
+      # `appimagetool`, then leaves everything in `target/package/`.
+      - name: Build the packages
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # The Tauri's `TAURI_SIGNING_PRIVATE_KEY` pair is gone with the
+          # updater: the Slint app has no self-update, so there is nothing to
+          # sign and no `.sig` artifact to upload.
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
         run: |
-          pnpm run tauri build --verbose
+          # `APPIMAGE_EXTRACT_AND_RUN=1` because a runner cannot mount a squashfs
+          # image without FUSE. It affects this step only; the artifact still
+          # mounts normally for whoever downloads it.
+          APPIMAGE_EXTRACT_AND_RUN=1 tools/package-linux.sh
+
+      - name: Show what was produced
+        run: ls -lh target/package/
+
+      - name: Inspect the deb
+        run: |
+          # Not a smoke test — a check that the three things a broken packaging
+          # run gets wrong are actually in the archive: the control metadata, the
+          # executable's mode, and the payload the desktop entry depends on.
+          deb=$(ls target/package/*.deb)
+          dpkg-deb --info "$deb"
+          dpkg-deb --contents "$deb"
+          dpkg-deb --field "$deb" Depends
+
+      - name: Inspect the rpm
+        run: |
+          # `Requires` here is rpmbuild's automatic dependency generator, not
+          # something written down anywhere — if the ELF's `NEEDED` entries stop
+          # resolving, this is where it shows.
+          rpm=$(ls target/package/*.rpm)
+          rpm -qip "$rpm"
+          rpm -qlvp "$rpm"
 
       - name: Upload deb bundle
         uses: actions/upload-artifact@v7
-        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: Debian bundle(${{ matrix.deb }})
-          path: ${{ github.workspace }}/target/release/bundle/deb/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.deb }}.deb
+          path: ${{ github.workspace }}/target/package/*.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v7
-        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: RPM bundle(${{ matrix.rpm }})
-          path: ${{ github.workspace }}/target/release/bundle/rpm/conic-launcher-${{ needs.get-version.outputs.app_version }}-1.${{ matrix.rpm }}.rpm
+          path: ${{ github.workspace }}/target/package/*.rpm
 
       - name: Upload appimage bundle
         uses: actions/upload-artifact@v7
-        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         with:
           name: AppImage bundle(${{ matrix.appimage }})
-          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.appimage }}.AppImage
-
-      - name: Upload appimage updater signature
-        uses: actions/upload-artifact@v7
-        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
-        with:
-          name: Updater signature(${{ matrix.appimage }}-appimage)
-          path: ${{ github.workspace }}/target/release/bundle/appimage/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.appimage }}.AppImage.sig
-
-      - name: Rename Windows installation-free exe
-        if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
-        run: ren "${{ github.workspace }}/target/release/conic-launcher.exe" "${{ github.workspace }}/target/release/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.exe"
-
-      - name: Upload Windows installation-free exe
-        uses: actions/upload-artifact@v7
-        if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
-        with:
-          name: Windows Installation-free(${{ matrix.arch }}-exe)
-          path: ${{ github.workspace }}/target/release/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.exe
-
-      - name: Upload Microsoft Installer bundle
-        uses: actions/upload-artifact@v7
-        if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
-        with:
-          name: Microsoft Installer bundle(${{ matrix.arch }})
-          path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}_en-US.msi
-
-      - name: Upload Microsoft Installer signature
-        uses: actions/upload-artifact@v7
-        if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
-        with:
-          name: Updater signature(${{ matrix.arch }}-msi)
-          path: ${{ github.workspace }}/target/release/bundle/msi/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}_en-US.msi.sig
-
-      - name: Upload NSIS bundle
-        uses: actions/upload-artifact@v7
-        if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
-        with:
-          name: NSIS bundle(${{ matrix.arch }})
-          path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}-setup.exe
-
-      - name: Upload NSIS updater signature
-        uses: actions/upload-artifact@v7
-        if: matrix.platform == 'windows-2025' || matrix.platform == 'windows-11-arm'
-        with:
-          name: Updater signature(${{ matrix.arch }}-nsis)
-          path: ${{ github.workspace }}/target/release/bundle/nsis/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}-setup.exe.sig
-
-      - name: Upload dmg bundle
-        uses: actions/upload-artifact@v7
-        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-15-intel'
-        with:
-          name: MacOS ${{ matrix.arch }} bundle(dmg)
-          path: ${{ github.workspace }}/target/release/bundle/dmg/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.dmg
-
-      - name: Rename macos updater bundle
-        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-15-intel'
-        run: mv "${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz" "${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz"
-
-      - name: Upload macos updater bundle
-        uses: actions/upload-artifact@v7
-        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-15-intel'
-        with:
-          name: MacOS ${{ matrix.arch }} updater bundle
-          path: ${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz
-
-      - name: Rename macos updater signature
-        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-15-intel'
-        run: mv "${{ github.workspace }}/target/release/bundle/macos/conic-launcher.app.tar.gz.sig" "${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz.sig"
-
-      - name: Upload macos updater signature
-        uses: actions/upload-artifact@v7
-        if: matrix.platform == 'macos-15' || matrix.platform == 'macos-15-intel'
-        with:
-          name: MacOS ${{ matrix.arch }} updater signature
-          path: ${{ github.workspace }}/target/release/bundle/macos/conic-launcher_${{ needs.get-version.outputs.app_version }}_${{ matrix.arch }}.app.tar.gz.sig
+          path: ${{ github.workspace }}/target/package/*.AppImage
 
   release:
     needs: [build, get-version]

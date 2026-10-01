@@ -1,10 +1,33 @@
 [package]
 name = "conic-launcher"
-description = "Conic Launcher app"
+# Not just a build-time label: `cargo-deb` and `cargo-rpm` both take the
+# package's one-line summary straight from this field, and "Conic Launcher app"
+# reads as a crate name in a package manager's search results.
+description = "A modern Minecraft launcher"
 version = "0.1.0-alpha.2"
 edition.workspace = true
-license.workspace = true
+# NOT `license.workspace = true`, unlike every other crate here, and it must not
+# be "fixed" back.
+#
+# `cargo-rpm` 0.8.0 reads this file with its own deserialiser rather than
+# `cargo metadata`. `PackageConfig` declares `license` as a `#[serde(flatten)]`
+# enum of the two string forms Cargo allows (`license` and `license-file`), and
+# workspace inheritance makes the key a *table* (`{ workspace = true }`) instead
+# of a string. It then fails to parse the whole file with
+#
+#   parse error: invalid type: map, expected a string for key `package`
+#
+# which names neither `license` nor `edition` and points at the top of the file,
+# so it reads like a corrupt manifest. `edition.workspace` is harmless by luck;
+# only `license` is consulted.
+#
+# The literal is the same SPDX identifier the workspace declares. Nothing
+# downstream has to know: `cargo deb` and `cargo rpm` both want a plain string.
+license = "GPL-3.0-only"
 repository.workspace = true
+# `cargo-rpm` reads `homepage` and *not* `repository` (its `PackageConfig` only
+# has the former), and rpmbuild rejects a spec with an empty `%url`.
+homepage = "https://github.com/conic-apps/launcher"
 
 [dev-dependencies]
 # Slint's own testing backend, for the one unit test that builds the real UI:
@@ -118,3 +141,114 @@ windows = { version = "0.62", features = [
     "Win32_UI_Shell",
     "Win32_UI_WindowsAndMessaging",
 ] }
+
+# ---------------------------------------------------------------------------
+# Linux packaging
+# ---------------------------------------------------------------------------
+# `packaging/linux/` holds the only copy of the payload both formats install
+# (the desktop entry and the icon set), so nothing below is duplicated between
+# them. See `packaging/linux/README.md`.
+#
+# The versions come from `version` above; nothing here repeats them.
+
+[package.metadata.deb]
+maintainer = "ConicMC developers <dev@conicmc.app>"
+copyright = "2022-2026 ConicMC developers"
+# Skipping 0 lines: `LICENSE` is the GPL text with no header of its own. It
+# becomes `/usr/share/doc/conic-launcher/copyright`.
+license-file = ["../LICENSE", "0"]
+section = "games"
+priority = "optional"
+# Not the repo README: that is HTML badges and relative image links, which is
+# not a package description.
+extended-description = """\
+ A small, fast, and nimble Minecraft launcher.
+
+ Multi-instance management, a mod and resource pack marketplace, cross-LAN \
+multiplayer and multi-theme support, with 12 interface languages.
+
+ Instances, accounts (Microsoft, offline, Authlib Injector and Yggdrasil), \
+saves, datapacks and resourcepacks are all managed in place. A suitable Java \
+runtime is located on the system or downloaded on demand."""
+# `$auto` resolves the *linked* shared libraries from the built ELF with
+# `dpkg-shlibdeps`. On their own they are only `libc`, `libgcc_s`, `libm`,
+# `libfontconfig1` and `libasound2` — which is not the list the binary needs.
+#
+# Everything below is `dlopen`ed rather than linked, so it is invisible to
+# `dpkg-shlibdeps`, and an installed package missing any of it dies at startup
+# with `error while loading shared libraries: …` and no explanation:
+#
+#   glutin (x11-dl, glutin_glx_sys)  libX11, libX11-xcb, libGL, libXi
+#   winit    (x11-dl)                libX11, libXcursor, libXrender, libxcb
+#   winit    (xkbcommon-dl)          libxkbcommon, libxkbcommon-x11
+#   winit    (wayland-backend)       libwayland-client, libwayland-egl
+#   Skia / i-slint-renderer-skia     libGL, libEGL
+#
+# X11 and Wayland are both listed even though a session uses one of them: every
+# current desktop ships the other through Xwayland, so both are present, and a
+# `Depends` that encodes which one is running is not expressible.
+#
+# The rest is what actually breaks first on a bare system and cannot be a shared
+# library at all:
+#   ca-certificates — `rustls-platform-verifier` reads the system trust store, so
+#                     without it every HTTPS request fails, version list included.
+#   xdg-utils       — the executable `xdg-open` (`config_bridge::open_external`),
+#                     which opens the login browser and every link in a panel.
+depends = """\
+$auto, ca-certificates, xdg-utils, \
+libegl1, libgl1, libx11-6, libxcb1, libxcursor1, libxi6, \
+libxkbcommon-x11-0, libxkbcommon0, libxrender1, \
+libwayland-client0, libwayland-egl1"""
+# Both are optional by construction: `reveal_in_dir` falls back to opening the
+# parent directory when there is no `FileManager1` service, and the image picker
+# (`zenity`) has no fallback but only backs one button in the background
+# setting.
+recommends = "dbus, zenity"
+assets = [
+  # NOTE: the literal `target/release/` prefix is cargo-deb's convention for "the
+  # binary cargo built" -- it is how the subcommand finds the real target dir
+  # under CARGO_TARGET_DIR, a custom profile or cross-compilation. Rewriting it
+  # to a real path makes it package a stale file.
+  ["target/release/conic-launcher", "usr/bin/conic-launcher", "755"],
+  ["../packaging/linux/conic-launcher.desktop", "usr/share/applications/conic-launcher.desktop", "644"],
+  ["../packaging/linux/icons/16x16.png", "usr/share/icons/hicolor/16x16/apps/conic-launcher.png", "644"],
+  ["../packaging/linux/icons/22x22.png", "usr/share/icons/hicolor/22x22/apps/conic-launcher.png", "644"],
+  ["../packaging/linux/icons/24x24.png", "usr/share/icons/hicolor/24x24/apps/conic-launcher.png", "644"],
+  ["../packaging/linux/icons/32x32.png", "usr/share/icons/hicolor/32x32/apps/conic-launcher.png", "644"],
+  ["../packaging/linux/icons/48x48.png", "usr/share/icons/hicolor/48x48/apps/conic-launcher.png", "644"],
+  ["../packaging/linux/icons/64x64.png", "usr/share/icons/hicolor/64x64/apps/conic-launcher.png", "644"],
+  ["../packaging/linux/icons/128x128.png", "usr/share/icons/hicolor/128x128/apps/conic-launcher.png", "644"],
+  ["../packaging/linux/icons/256x256.png", "usr/share/icons/hicolor/256x256/apps/conic-launcher.png", "644"],
+  ["../packaging/linux/icons/512x512.png", "usr/share/icons/hicolor/512x512/apps/conic-launcher.png", "644"],
+  ["../packaging/linux/icons/scalable.svg", "usr/share/icons/hicolor/scalable/apps/conic-launcher.svg", "644"],
+]
+
+# `cargo rpm` reads its extra files from the `.rpm/` directory next to *this*
+# file rather than from arbitrary paths, so the entries below are keys into
+# `app/.rpm/` -- populated from `packaging/linux/` by
+# `tools/package-linux.sh`. The spec that consumes them is `app/.rpm/`.
+[package.metadata.rpm.cargo]
+# Only used when `cargo rpm` builds for itself, which the script does not do (it
+# passes `--no-cargo-build` so the executable above is the one packaged). Here so
+# that a bare `cd app && cargo rpm build` is still reproducible.
+buildflags = ["--locked"]
+
+[package.metadata.rpm.targets.conic-launcher]
+path = "/usr/bin/conic-launcher"
+
+# Declared one entry per file rather than as a single `usr` directory: cargo-rpm
+# walks a directory key into entries of its own, and a directory that is never
+# listed in the spec's `%files` makes rpmbuild fail on unpackaged files.
+[package.metadata.rpm.files]
+"usr/share/applications/conic-launcher.desktop" = { path = "/usr/share/applications/conic-launcher.desktop" }
+"usr/share/icons/hicolor/16x16/apps/conic-launcher.png" = { path = "/usr/share/icons/hicolor/16x16/apps/conic-launcher.png" }
+"usr/share/icons/hicolor/22x22/apps/conic-launcher.png" = { path = "/usr/share/icons/hicolor/22x22/apps/conic-launcher.png" }
+"usr/share/icons/hicolor/24x24/apps/conic-launcher.png" = { path = "/usr/share/icons/hicolor/24x24/apps/conic-launcher.png" }
+"usr/share/icons/hicolor/32x32/apps/conic-launcher.png" = { path = "/usr/share/icons/hicolor/32x32/apps/conic-launcher.png" }
+"usr/share/icons/hicolor/48x48/apps/conic-launcher.png" = { path = "/usr/share/icons/hicolor/48x48/apps/conic-launcher.png" }
+"usr/share/icons/hicolor/64x64/apps/conic-launcher.png" = { path = "/usr/share/icons/hicolor/64x64/apps/conic-launcher.png" }
+"usr/share/icons/hicolor/128x128/apps/conic-launcher.png" = { path = "/usr/share/icons/hicolor/128x128/apps/conic-launcher.png" }
+"usr/share/icons/hicolor/256x256/apps/conic-launcher.png" = { path = "/usr/share/icons/hicolor/256x256/apps/conic-launcher.png" }
+"usr/share/icons/hicolor/512x512/apps/conic-launcher.png" = { path = "/usr/share/icons/hicolor/512x512/apps/conic-launcher.png" }
+"usr/share/icons/hicolor/scalable/apps/conic-launcher.svg" = { path = "/usr/share/icons/hicolor/scalable/apps/conic-launcher.svg" }
+"usr/share/licenses/conic-launcher/LICENSE" = { path = "/usr/share/licenses/conic-launcher/LICENSE" }
