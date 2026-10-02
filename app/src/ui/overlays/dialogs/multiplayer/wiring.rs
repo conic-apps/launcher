@@ -43,7 +43,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
         state.on_open(move || {
             let weak_task = weak.clone();
             crate::support::runtime::spawn(async move {
-                let valid = multiplayer::check_library().await.is_ok();
+                let valid = crate::usecases::multiplayer::library_ready().await;
                 crate::ui::services::report::report(&weak_task, move |ui| {
                     let state = ui.global::<MultiplayerState>();
                     state.set_component(
@@ -84,7 +84,9 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             ui.global::<MultiplayerState>().set_has_fault(false);
             let service = Arc::clone(&controller.service);
             crate::support::runtime::spawn(async move {
-                if let Err(error) = service.create_room(Some(player_name.as_str()), None).await {
+                if let Err(error) =
+                    crate::usecases::multiplayer::create_room(&service, &player_name).await
+                {
                     log::error!(target: "multiplayer", "failed to create a room: {error}");
                 }
             });
@@ -109,7 +111,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             let weak_task = weak.clone();
             let service = Arc::clone(&controller.service);
             crate::support::runtime::spawn(async move {
-                match service.join_room(&code, Some(player_name.as_str())).await {
+                match crate::usecases::multiplayer::join_room(&service, &code, &player_name).await {
                     Ok(()) => {
                         crate::ui::services::report::report(&weak_task, |ui| {
                             ui.global::<MultiplayerState>().set_code_input_open(false);
@@ -133,7 +135,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             let weak_task = weak.clone();
             let service = Arc::clone(&controller.service);
             crate::support::runtime::spawn(async move {
-                let result = service.leave_room().await;
+                let result = crate::usecases::multiplayer::leave_room(&service).await;
                 crate::ui::services::report::report(&weak_task, move |ui| match result {
                     Ok(()) => {
                         let state = ui.global::<MultiplayerState>();
