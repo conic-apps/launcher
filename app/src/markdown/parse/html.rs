@@ -23,7 +23,7 @@
 //! contents: their text is not prose, and the launcher's own detail panels
 //! refuse a body carrying a `<script>` outright rather than sanitising it.
 
-use crate::doc::{Align, Block, Cell, Inline, Inlines, ListItem};
+use crate::markdown::doc::{Align, Block, Cell, Inline, Inlines, ListItem};
 
 /// Parses an HTML fragment into its top-level blocks.
 pub fn parse(source: &str) -> Vec<Block> {
@@ -894,7 +894,7 @@ fn wrap(tag: &str, context: &InlineContext, contents: Inlines) -> Inline {
     } else if flags.code && !context.flags.code {
         // A code span with nested markup keeps the text and drops the markup,
         // which is what the `code` element means.
-        Inline::Code(crate::doc::plain_text(&contents))
+        Inline::Code(crate::markdown::doc::plain_text(&contents))
     } else if flags.sup && !context.flags.sup {
         Inline::Sup(contents)
     } else if contents.len() == 1 {
@@ -988,7 +988,7 @@ fn other_text(inline: &Inline) -> String {
                 Inline::Link { inlines, .. } => out.extend(inlines.iter().cloned()),
                 _ => {}
             }
-            crate::doc::plain_text(&out)
+            crate::markdown::doc::plain_text(&out)
         }
     }
 }

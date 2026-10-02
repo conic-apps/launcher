@@ -13,7 +13,7 @@ allow = [
     "Apache-2.0 WITH LLVM-exception",
     "BSD-3-Clause",
     # comrak, the Markdown parser behind the content panels' body
-    # (crates/markdown).
+    # (app/src/markdown).
     "BSD-2-Clause",
     "BSL-1.0",
     # libfuzzer-sys, reached through rav1e -> ravif -> image when the

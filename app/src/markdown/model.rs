@@ -311,7 +311,7 @@ impl std::fmt::Debug for ImageAsset {
     }
 }
 
-/// The images a document references, as handed to [`crate::Renderer::set_image`].
+/// The images a document references, as handed to [`crate::markdown::Renderer::set_image`].
 ///
 /// A README can reference dozens of images; fetching and decoding them is the
 /// caller's job (it needs a network client and a background thread), so the
@@ -354,7 +354,7 @@ impl ImageStore {
     ///
     /// The caller uses this to decide what to fetch; until an asset is handed
     /// over, the layout draws the image's alt text where the picture would be.
-    pub fn referenced(&self, blocks: &[crate::Block]) -> Vec<String> {
+    pub fn referenced(&self, blocks: &[crate::markdown::Block]) -> Vec<String> {
         let mut out: Vec<String> = Vec::new();
         for block in blocks {
             block.walk_images(&mut |url| {
@@ -764,6 +764,6 @@ pub struct MdSection {
     /// where this one ends to know where the next begins.
     pub flow_bottom: f32,
     /// Whether the document asked for the section open (`<details open>`). A view
-    /// that keeps its own state seeds it from here; see [`Block::Details`](crate::Block::Details).
+    /// that keeps its own state seeds it from here; see [`Block::Details`](crate::markdown::Block::Details).
     pub open: bool,
 }

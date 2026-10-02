@@ -65,7 +65,11 @@ Python tooling in `tools/` is not part of any CI gate:
   ships. `app/src/*.rs` is the wiring layer between the Rust crates and the UI;
   `app/ui/**.slint` is the whole interface; `app/build.rs` compiles the `.slint`
   tree and generates `app/ui/icons.slint` from the SVGs under
-  `app/ui/assets/icons/`. The generated file is gitignored.
+  `app/ui/assets/icons/`. The generated file is gitignored. `app/src/markdown/`
+  is the Slint-bound Markdown/HTML renderer: `comrak` + `parley`/`fontique` render
+  a content panel's body and push a display list into the Slint model, and the
+  companion views live at `app/ui/components/markdown/`. It sits in `app/` rather
+  than under `crates/` because it is not independent of the UI.
 - **`crates/*/`** — Rust domain crates, one per capability, independent of the
   UI. The interface talks to them directly; there is no IPC layer.
 - **`packaging/`** — see Packaging.
@@ -90,8 +94,6 @@ Python tooling in `tools/` is not part of any CI gate:
   login it serves.
 - `crates/music` — local music listing **and** playback. `symphonia` decodes and
   `cpal` plays natively.
-- `crates/markdown` — `comrak` + `parley`/`fontique` render a content panel's
-  body and push a display list into the Slint model.
 
 ## Crate map
 
@@ -107,7 +109,6 @@ Python tooling in `tools/` is not part of any CI gate:
 | `instance`        | Instance CRUD, playtime                                    |
 | `java-discovery`  | Java discovery/parsing                                     |
 | `launch`          | Game launch with progress reporting                        |
-| `markdown`        | Markdown/HTML body of a content detail panel               |
 | `modrinth`        | Modrinth API client                                        |
 | `multiplayer`     | Conic Nexus cross-LAN multiplayer                          |
 | `music`           | Local music files + playback                               |
