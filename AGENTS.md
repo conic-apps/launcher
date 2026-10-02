@@ -62,7 +62,7 @@ Python tooling in `tools/` is not part of any CI gate:
 - `crates/window` — window operations (minimize/maximize/fullscreen,
   `bring_to_front`) and the winit event-filter fan-out. macOS gets a
   transparent title bar with the real traffic lights; Windows gets
-  `with_decorations(false)` plus `app/src/windows_caption.rs` drawing the
+  `with_decorations(false)` plus `app/src/native/windows/caption.rs` drawing the
   controls itself; Linux draws them in the title bar.
 - `crates/single-instance` — the second launch is not a second window. Linux uses
   D-Bus (`zbus`), macOS a socket, Windows a named mutex.
@@ -126,8 +126,10 @@ Python tooling in `tools/` is not part of any CI gate:
 - Rust touches a Slint component only from the event loop. From another thread,
   go through `upgrade_in_event_loop` — a `Weak` crosses threads, a strong handle
   cannot.
-- Keep the winit backend hook (`app/src/main.rs`) as the only place window
-  attributes are set. It has to run before any winit window exists.
+- Keep the winit backend hook (`app/src/native/`, reached through
+  `native::install_backend`) as the only place window attributes are set. It has
+  to run before any winit window exists, which is why `main` calls it before
+  `App::new`.
 - Translations go through `@tr()`; never hardcode user-visible text. Add the
   string to all 12 catalogues via `tools/update-i18n.py`.
 
@@ -336,7 +338,8 @@ either script:
   types an Objective-C `BOOL` as `bool` on arm64 (where C's `BOOL` is `_Bool`)
   and as `i8` on x86_64 (where it is `signed char`), so code that returns one
   straight out of an FFI call builds for Apple Silicon and fails for Intel with
-  `expected bool, found i8`. `app/src/traffic_lights.rs`'s `add_method` is the
+  `expected bool, found i8`. `app/src/native/macos/traffic_lights.rs`'s
+  `add_method` is the
   one place this bites; it goes through `i8` to satisfy both. A `--universal`
   build is what surfaces this, and it is one reason CI builds each architecture
   on its own native runner instead of a cross-compiled universal one.
