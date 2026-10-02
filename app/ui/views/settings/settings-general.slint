@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { SettingGroup } from "../../components/setting-group.slint";
+import { SettingCollapse } from "../../components/setting-collapse.slint";
 import { SettingItem } from "../../components/setting-item.slint";
 import { BaseSwitch } from "../../components/base-switch.slint";
 import { BaseSelect } from "../../components/base-select.slint";
@@ -97,11 +98,10 @@ export component SettingsGeneral inherits VerticalLayout {
     // The three storage roots. They are not part of `config.toml` — that file
     // lives inside the launcher location — so clicking a row opens the folder
     // chooser, writes the bootstrap file and asks for a restart.
-    SettingGroup {
+    SettingCollapse {
         title: @tr("Data storage");
 
         SettingItem {
-            group-first: true;
             title: @tr("Launcher data");
             description: AppConfig.launcher-location;
             navigable: true;

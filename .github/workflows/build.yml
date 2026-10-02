@@ -4,11 +4,6 @@ on:
     branches:
       - dev
   pull_request:
-    # Not every pull request: a release build is `lto = true` with
-    # `codegen-units = 1`, so building one to check a Rust change is expensive.
-    # What must not slip through unbuilt is a change to *how the packages are
-    # made* — the payload, the recipe, the packaging metadata or the script —
-    # because nothing else would notice it breaking.
     paths:
       - ".github/workflows/build.yml"
       - "app/Cargo.toml"
@@ -19,7 +14,7 @@ on:
       - "tools/generate-ico.py"
   push:
     branches:
-      - master
+      - dev
 
 jobs:
   get-version:
@@ -28,7 +23,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 2
-      # `app/Cargo.toml` is the only place the version lives.
+
       - name: Get app version
         id: current_version
         run: |
