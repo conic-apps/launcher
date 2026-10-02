@@ -15,7 +15,16 @@ allow = [
     # comrak, the Markdown parser behind the content panels' body
     # (crates/markdown).
     "BSD-2-Clause",
-    "BSL-1.0"
+    "BSL-1.0",
+    # libfuzzer-sys, reached through rav1e -> ravif -> image when the
+    # `image` crate enables AVIF. Permissive and FSF Free/Libre, so it is
+    # compatible with GPL-3.0-only.
+    "NCSA"
 ]
 unused-allowed-license = "deny"
 confidence-threshold = 0.8
+
+# `libloader` (crates/multiplayer) publishes only a `LICENSE` file, no `license`
+# field, so every run prints a `no-license-field` warning while falling back to
+# the file, which is the MIT text and therefore allowed. The warning is expected
+# and does not fail the check.
