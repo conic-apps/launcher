@@ -357,7 +357,7 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
                 .map_err(|error| error.to_string()),
             Err(error) => Err(error),
         };
-        let _ = weak.clone().upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             let state = ui.global::<SetupWizardState>();
             match (channel, &created) {
                 (Channel::Release, Ok(version)) => {

@@ -71,7 +71,7 @@ pub(crate) fn start_microsoft_login(weak: Weak<App>, request: LoginRequest, devi
         let weak = weak.clone();
         LoginReporter::new(move |event| {
             let weak = weak.clone();
-            let _ = weak.upgrade_in_event_loop(move |ui| apply_login_event(&ui, event));
+            crate::report::report(&weak, move |ui| apply_login_event(&ui, event));
         })
     };
 
@@ -81,7 +81,7 @@ pub(crate) fn start_microsoft_login(weak: Weak<App>, request: LoginRequest, devi
     let task = MICROSOFT.with(|flow| flow.borrow().login.clone());
     crate::runtime::spawn(async move {
         let result = task.spawn(request, reporter).await;
-        let _ = weak.upgrade_in_event_loop(move |ui| match result {
+        crate::report::report(&weak, move |ui| match result {
             Ok(_) => finish_add(&ui),
             Err(error) => handle_login_error(&ui, error, device_flow),
         });
@@ -129,7 +129,7 @@ pub(crate) fn prepare_auth_code_flow(ui: &App) {
     let for_the_token_request = redirect_uri.clone();
     let waiter = crate::runtime::spawn(async move {
         let outcome = callback.wait(AUTH_CODE_TIMEOUT).await;
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             auth_code_flow_finished(&ui, &for_the_token_request, outcome)
         });
     });
@@ -421,7 +421,7 @@ pub(crate) fn add_yggdrasil_accounts(
                 return;
             }
         }
-        let _ = weak.upgrade_in_event_loop(move |ui| finish_add(&ui));
+        crate::report::report(&weak, move |ui| finish_add(&ui));
     });
 }
 

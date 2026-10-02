@@ -68,7 +68,7 @@ pub(crate) fn open_detail(ui: &App, platform: Platform, id: String) {
     let weak = ui.as_weak();
     crate::runtime::spawn(async move {
         let loaded = load_detail(platform, &id).await;
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             // A different panel has been opened since this request started.
             if controller().borrow().detail_seq != seq {
                 return;

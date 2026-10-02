@@ -134,7 +134,7 @@ pub(crate) fn setup_offline_screen(ui: &App) {
                     log::error!("failed to add the offline account: {error}");
                     return;
                 }
-                let _ = weak.upgrade_in_event_loop(move |ui| finish_add(&ui));
+                crate::report::report(&weak, move |ui| finish_add(&ui));
             });
         });
     }
@@ -241,7 +241,7 @@ pub(crate) fn setup_yggdrasil_form(ui: &App) {
             let weak = weak.clone();
             crate::runtime::spawn(async move {
                 let info = yggdrasil::yggdrasil_server::get_server_info(&api_root).await;
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     // Only a string `meta.serverName` is taken, and the previous
                     // name stays up when the request fails.
                     let Ok(info) = info else { return };
@@ -280,7 +280,7 @@ pub(crate) fn setup_yggdrasil_login(ui: &App) {
                     password,
                 )
                 .await;
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     let response = match result {
                         Ok(response) => response,
                         Err(error) => {

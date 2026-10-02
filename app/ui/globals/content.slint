@@ -291,6 +291,12 @@ export global ContentState {
     in-out property <string> detail-installed-version: "";
     in-out property <bool> detail-checking-installed: false;
     in-out property <bool> detail-operating: false;
+    /// The in-flight install/remove's download, as `value`/`max` plus a
+    /// pre-formatted byte label. `max` is 0 while the size is unknown or the
+    /// files are being verified, and the bar is hidden until it is known.
+    in-out property <float> detail-progress: 0;
+    in-out property <float> detail-progress-max: 0;
+    in-out property <string> detail-progress-text: "";
     /// Whether this detail panel has an installed state at all. The mod panels
     /// offer a remove button; the pack and resource-pack ones only ever draw a
     /// download button.

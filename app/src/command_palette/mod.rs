@@ -364,7 +364,7 @@ impl PaletteController {
             let instances = instance::list_instances(SortBy::Playtime)
                 .await
                 .unwrap_or_default();
-            let _ = weak.upgrade_in_event_loop(move |ui| {
+            crate::report::report(&weak, move |ui| {
                 controller().borrow_mut().open_with(&ui, instances);
             });
         });
@@ -741,7 +741,7 @@ impl PaletteController {
                 .filter(|(_, url)| !url.is_empty())
                 .collect();
             let list_weak = weak.clone();
-            let _ = list_weak.upgrade_in_event_loop(move |ui| {
+            crate::report::report(&list_weak, move |ui| {
                 controller()
                     .borrow_mut()
                     .apply_online_results(&ui, token, results, failed);

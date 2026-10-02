@@ -36,7 +36,7 @@ pub(crate) fn ensure_version_options(ui: &App) {
         // line, and the list carries no 1.x variants that would differ.
         options.sort_by_key(|id| std::cmp::Reverse(version_order(id)));
         options.dedup();
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             {
                 let state = controller();
                 let mut state = state.borrow_mut();
@@ -438,7 +438,7 @@ pub(crate) fn run_search(ui: &App, page: usize) {
             Platform::Modrinth => search_modrinth(kind, &form).await,
             Platform::CurseForge => search_curseforge(kind, &form).await,
         };
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             // An answer for a request the user has paged (or switched) away
             // from is dropped, and dropped *before* it is cached.
             let newest = {
@@ -659,7 +659,7 @@ pub(crate) fn ensure_translations(ui: &App, platform: Platform, ids: Vec<String>
         if found.is_empty() {
             return;
         }
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             {
                 let state = controller();
                 let mut state = state.borrow_mut();

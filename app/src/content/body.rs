@@ -664,7 +664,7 @@ pub(crate) fn fetch_body_images(ui: &App) {
         if fetched.is_empty() {
             return;
         }
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             let mut changed = false;
             for (url, image) in &fetched {
                 changed |= BODY.with(|slot| {
@@ -732,7 +732,7 @@ pub(crate) fn refresh_installed(ui: &App) {
         let info =
             content::mods::remote::check_installed(&instance, detail.platform.api(), &detail.id)
                 .await;
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             {
                 let state = controller();
                 let mut state = state.borrow_mut();

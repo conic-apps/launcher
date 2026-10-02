@@ -23,7 +23,7 @@ pub fn open(ui: &App) {
             log::warn!("the instance settings were opened without a current instance");
             return;
         };
-        let _ = weak.upgrade_in_event_loop(move |ui| show(&ui, &instance));
+        crate::report::report(&weak, move |ui| show(&ui, &instance));
     });
 }
 
@@ -227,7 +227,7 @@ pub(crate) fn schedule_save(
             }
             // The store is on disk, so the game view is asked to read it again
             // for the summary and the list card to re-render.
-            let _ = weak.upgrade_in_event_loop(move |ui| ui.global::<GameState>().invoke_refresh());
+            crate::report::report(&weak, move |ui| ui.global::<GameState>().invoke_refresh());
         });
     });
 }
@@ -364,7 +364,7 @@ pub(crate) fn setup_background(ui: &App) {
                 let Some(instance) = instance::get_instance_by_id(&id).await else {
                     return;
                 };
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     let state = ui.global::<InstanceSettingsState>();
                     state.set_has_background(instance.has_background);
                     state.set_background(load_background(&instance));
@@ -392,7 +392,7 @@ pub(crate) fn setup_background(ui: &App) {
                     log::error!("failed to remove the background of '{id}': {error}");
                     return;
                 }
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     let state = ui.global::<InstanceSettingsState>();
                     state.set_has_background(false);
                     state.set_background(Image::default());
@@ -424,7 +424,7 @@ pub(crate) fn setup_delete(ui: &App) {
                 let Some(instance) = instance::get_instance_by_id(&id).await else {
                     return;
                 };
-                let _ = weak.upgrade_in_event_loop(move |ui| open_delete_dialog(&ui, &instance));
+                crate::report::report(&weak, move |ui| open_delete_dialog(&ui, &instance));
             });
         });
     }

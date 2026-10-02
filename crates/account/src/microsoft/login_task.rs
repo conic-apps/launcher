@@ -8,6 +8,7 @@ use std::{
 };
 
 use log::{info, warn};
+use shared::Sink;
 
 use crate::{
     error::*,
@@ -45,17 +46,21 @@ pub enum LoginEvent {
 /// Clonable handle through which the login flow reports [`LoginEvent`]s.
 ///
 /// The flow runs off the UI thread, so the closure the app supplies forwards
-/// each event with `upgrade_in_event_loop`.
+/// each event with `upgrade_in_event_loop`. The mechanism is [`shared::Sink`],
+/// the same one every other crate's progress port uses; only the vocabulary
+/// ([`LoginEvent`]) is this crate's.
 #[derive(Clone)]
 pub struct LoginReporter {
-    on_event: Arc<dyn Fn(LoginEvent) + Send + Sync>,
+    on_event: Sink<LoginEvent>,
 }
 
 impl LoginReporter {
     /// A reporter that ignores every event, for a caller that has no UI to
     /// report to.
     pub fn silent() -> Self {
-        Self::new(|_| {})
+        Self {
+            on_event: shared::silent(),
+        }
     }
 
     pub fn new(on_event: impl Fn(LoginEvent) + Send + Sync + 'static) -> Self {

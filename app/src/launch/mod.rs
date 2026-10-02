@@ -3,39 +3,34 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The launch view's flow: account refresh, install when needed, then the
-//! launch, driving the `install` and `launch` crates and pushing progress into
-//! the `LaunchState` global.
+//! launch, driving the `install` and `launch` crates through their output ports
+//! and writing the `LaunchState` global.
 //!
-//! The whole flow is one task on the app's runtime, which polls an
-//! `Arc<Mutex<…Event>>` and translates it into `LaunchState` writes. Cancelling
-//! aborts the task.
+//! The whole flow is one task on the app's runtime. The `install` and `launch`
+//! crates sample their own progress and report through an
+//! [`install::InstallSink`] / [`launch::LaunchSink`]; this module's port
+//! implementations turn each report into a [`presenter::LaunchView`] and
+//! deliver it, gated by a [`Token`] so a cancelled or superseded run cannot
+//! draw. Cancelling aborts the task.
 
-use std::{
-    cell::RefCell,
-    rc::Rc,
-    sync::{
-        Arc, Mutex,
-        atomic::{AtomicBool, AtomicU64, Ordering},
-    },
-    time::{Duration, Instant},
-};
+use std::{cell::RefCell, rc::Rc};
 
 use slint::{ComponentHandle, Weak};
 
+use crate::report::{Gate, Token, deliver};
 use crate::slint_backend::{App, Dialogs, GameState, LaunchState, Navigation};
 use account::Account;
 use config::Config;
-use download::progress::{DownloadPhase, DownloadState};
-use install::{InstallEvent, ModLoaderProgress};
 use instance::Instance;
-use launch::LaunchEvent;
+use launch::LaunchProgress;
 
-mod events;
 mod flow;
+mod ports;
+mod presenter;
 mod wiring;
 
-pub(crate) use events::*;
 pub(crate) use flow::*;
+pub(crate) use ports::*;
 pub(crate) use wiring::*;
 
 thread_local! {
@@ -64,63 +59,34 @@ pub(crate) fn launch_controller() -> Rc<RefCell<LaunchController>> {
         .expect("the launch controller is set up before any of its callbacks run")
 }
 
-/// One run of the launch flow. Everything the run schedules carries a clone of
-/// it, so a late event from a cancelled run is dropped instead of writing into
-/// a fresh one.
-#[derive(Clone)]
-pub(crate) struct Run {
-    id: u64,
-    cancelled: Arc<AtomicBool>,
-    current_id: Arc<AtomicU64>,
-}
-
-impl Run {
-    fn is_current(&self) -> bool {
-        !self.cancelled.load(Ordering::SeqCst) && self.current_id.load(Ordering::SeqCst) == self.id
-    }
-}
-
+/// One run of the launch flow.
+///
+/// A run's [`Token`] is invalidated when it is cancelled or superseded, so a
+/// late report from a dead run is dropped instead of writing into a fresh one.
 pub(crate) struct LaunchController {
     /// The running flow, aborted by [`LaunchController::cancel`].
     task: Option<tokio::task::JoinHandle<()>>,
-    current_id: Arc<AtomicU64>,
-    next_id: u64,
-    /// The cancelled flags of every run that was started, so `cancel` can stop
-    /// their in-flight event deliveries as well as the task itself.
-    runs: Vec<Arc<AtomicBool>>,
+    /// Issues the run's [`Token`] and invalidates it on cancel.
+    gate: Gate,
 }
 
 impl LaunchController {
     fn new() -> Self {
         Self {
             task: None,
-            current_id: Arc::new(AtomicU64::new(0)),
-            next_id: 1,
-            runs: Vec::new(),
+            gate: Gate::new(),
         }
     }
 
-    fn begin(&mut self) -> Run {
-        let id = self.next_id;
-        self.next_id += 1;
-        let cancelled = Arc::new(AtomicBool::new(false));
-        self.runs.push(Arc::clone(&cancelled));
-        self.current_id.store(id, Ordering::SeqCst);
-        Run {
-            id,
-            cancelled,
-            current_id: Arc::clone(&self.current_id),
-        }
+    fn begin(&mut self) -> Token {
+        self.gate.issue()
     }
 
     /// Cancels the running flow. Returns whether one was running, which tells
     /// the caller to reload the instance list.
     fn cancel(&mut self) -> bool {
         let had_task = self.task.is_some();
-        for cancelled in self.runs.drain(..) {
-            cancelled.store(true, Ordering::SeqCst);
-        }
-        self.current_id.store(0, Ordering::SeqCst);
+        self.gate.invalidate();
         if let Some(task) = self.task.take() {
             task.abort();
         }
