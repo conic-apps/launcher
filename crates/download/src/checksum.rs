@@ -59,3 +59,51 @@ impl Hasher {
         result
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The SHA digests of the bytes `abc`.
+    const SHA1_ABC: &str = "a9993e364706816aba3e25717850c26c9cd0d89d";
+    const SHA256_ABC: &str = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+    const SHA512_ABC: &str = "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f";
+
+    fn verify(checksum: &Checksum, data: &[u8]) -> bool {
+        let mut hasher = Hasher::from(checksum);
+        hasher.update(data);
+        hasher.verify(checksum)
+    }
+
+    #[test]
+    fn a_matching_sha1_passes() {
+        assert!(verify(&Checksum::Sha1(SHA1_ABC.to_string()), b"abc"));
+    }
+
+    #[test]
+    fn a_non_matching_sha1_fails() {
+        assert!(!verify(&Checksum::Sha1("deadbeef".to_string()), b"abc"));
+    }
+
+    #[test]
+    fn a_matching_sha256_passes() {
+        assert!(verify(&Checksum::Sha256(SHA256_ABC.to_string()), b"abc"));
+        assert!(!verify(&Checksum::Sha256(SHA256_ABC.to_string()), b"abcd"));
+    }
+
+    #[test]
+    fn a_matching_sha512_passes() {
+        assert!(verify(&Checksum::Sha512(SHA512_ABC.to_string()), b"abc"));
+    }
+
+    #[test]
+    fn no_checksum_accepts_anything() {
+        assert!(verify(&Checksum::None, b"anything at all"));
+    }
+
+    #[test]
+    fn a_digest_of_another_algorithm_does_not_match() {
+        // A SHA-256 hasher checked against a SHA-1 digest's shape.
+        assert!(!verify(&Checksum::Sha256(SHA1_ABC.to_string()), b"abc"));
+    }
+}

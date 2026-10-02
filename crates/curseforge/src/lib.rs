@@ -282,3 +282,91 @@ fn murmur2(data: &[u8], seed: u32) -> u32 {
     hash ^= hash >> 15;
     hash
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        path::PathBuf,
+        sync::atomic::{AtomicU64, Ordering},
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn murmur2_matches_the_reference_values() {
+        // The standard MurmurHash2 (32-bit, little-endian) with seed 1.
+        assert_eq!(murmur2(b"", 1), 0x5bd1_5e36);
+        assert_eq!(murmur2(b"abc", 1), 0x60a4_fcc1);
+        assert_eq!(murmur2(b"hello", 1), 0xa631_918e);
+    }
+
+    #[test]
+    fn build_url_joins_the_segments_below_the_base() {
+        let url = build_url("https://api.curseforge.com", &["v1", "mods", "search"]).unwrap();
+        assert_eq!(url.as_str(), "https://api.curseforge.com/v1/mods/search");
+    }
+
+    #[test]
+    fn build_url_rejects_a_non_url_base() {
+        assert!(build_url("not a url", &["v1"]).is_err());
+    }
+
+    #[test]
+    fn a_response_is_valid_only_when_its_data_is_non_empty() {
+        assert!(!response_is_valid(&json!({})));
+        assert!(!response_is_valid(&json!({ "data": null })));
+        assert!(!response_is_valid(&json!({ "data": "" })));
+        assert!(!response_is_valid(&json!({ "data": [] })));
+        assert!(!response_is_valid(&json!({ "data": {} })));
+
+        assert!(response_is_valid(&json!({ "data": "x" })));
+        assert!(response_is_valid(&json!({ "data": [1] })));
+        assert!(response_is_valid(&json!({ "data": { "a": 1 } })));
+        assert!(response_is_valid(&json!({ "data": 0 })));
+    }
+
+    #[test]
+    fn apply_query_drops_nulls_and_stringifies_the_rest() {
+        let url = Url::parse("https://example.com/").unwrap();
+        let builder = apply_query(
+            HTTP_CLIENT.get(url),
+            &json!({ "text": "hello", "null": null, "size": 8, "flag": true }),
+        );
+        let request = builder.build().expect("a valid request");
+        let pairs: Vec<(String, String)> = request
+            .url()
+            .query_pairs()
+            .map(|(key, value)| (key.into_owned(), value.into_owned()))
+            .collect();
+
+        assert!(pairs.contains(&("text".to_string(), "hello".to_string())));
+        assert!(pairs.contains(&("size".to_string(), "8".to_string())));
+        assert!(pairs.contains(&("flag".to_string(), "true".to_string())));
+        assert!(!pairs.iter().any(|(key, _)| key == "null"));
+    }
+
+    fn temp_path() -> PathBuf {
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("time moves forward")
+            .as_nanos();
+        std::env::temp_dir().join(format!(
+            "conic-fingerprint-{}-{nanos}-{counter}",
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn a_fingerprint_ignores_whitespace_bytes() {
+        let path = temp_path();
+        std::fs::write(&path, b"a b\tc\nd\r").expect("writable temp file");
+        // Stripped, the bytes are "abcd", whose MurmurHash2 is the reference
+        // value below.
+        assert_eq!(compute_fingerprint(&path).unwrap(), 0xc93f_7a16);
+        std::fs::remove_file(&path).expect("clean up the temp file");
+    }
+}
