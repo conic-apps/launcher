@@ -678,10 +678,6 @@ pub(crate) fn setup_grid_resize(ui: &App) {
         });
 }
 
-pub(crate) fn favorite_key(platform: &str, kind: &str, id: &str) -> String {
-    format!("{platform}:{kind}:{id}")
-}
-
 /// The instance's loader and Minecraft version, read off `instance.toml`.
 ///
 /// The remote lists are seeded from it, so it is fetched on the runtime whenever

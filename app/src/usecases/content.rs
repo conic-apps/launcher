@@ -10,10 +10,12 @@
 //! second frontend. Turning a [`PendingCard`] into the Slint `ContentCard` is
 //! the adapter's job and stays in `ui/overlays/content`.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use content::mods::ResolvedMod;
 use content::mods::remote::RemoteModPlatform;
+
+use crate::usecases::generation::Gate;
 
 /// Which remote list is showing: the kind and the platform are state, because
 /// only one is ever open.
@@ -215,4 +217,74 @@ pub(crate) struct OpenDetail {
     pub(crate) id: String,
     /// The installed mods the project resolved to, for the remove button.
     pub(crate) installed_mods: Vec<ResolvedMod>,
+}
+
+/// `<platform>:<kind>:<id>` — the favourites key.
+pub(crate) fn favorite_key(platform: &str, kind: &str, id: &str) -> String {
+    format!("{platform}:{kind}:{id}")
+}
+
+/// The content browser's session state: what list is open, its query, the
+/// search cache and page numbers, the favourites and the open detail.
+///
+/// Plain data, so a second frontend can own the same state and run the same
+/// logic. The Slint models and the measured layout live in the adapter.
+pub(crate) struct ContentSession {
+    /// The game view's current instance. Re-read whenever a panel opens.
+    pub(crate) instance_id: String,
+    /// `<platform>:<kind>:<id>` — the favourites key.
+    pub(crate) favorites: HashSet<String>,
+    pub(crate) targets: HashMap<String, CardTarget>,
+    pub(crate) kind: RemoteKind,
+    pub(crate) platform: Platform,
+    /// "" | "local" | "modrinth" | "curseforge"
+    pub(crate) source: String,
+    pub(crate) form: SearchForm,
+    /// The Minecraft release list, newest first. Empty until it arrives.
+    pub(crate) version_options: Vec<String>,
+    /// `<kind>:<source>` → that list's `(current page, total pages)`.
+    ///
+    /// Every list has its own pair, and a source switch destroys and re-creates
+    /// one of them, so one list's page numbers are never shown against another's
+    /// results.
+    pub(crate) pages: HashMap<String, (usize, usize)>,
+    /// `<kind>:<source>` → that list's own search cache and request token.
+    pub(crate) lists: HashMap<String, ListSearch>,
+    /// Translated project descriptions, keyed `<platform>:<id>`. Only filled
+    /// for a Chinese locale, and only for the ids that have been on screen.
+    pub(crate) translations: HashMap<String, String>,
+    pub(crate) detail: Option<OpenDetail>,
+    /// Bumped on every open, so a slow detail response cannot overwrite a newer
+    /// panel.
+    pub(crate) detail_seq: u64,
+    /// Issues the detail download's token and invalidates it on a newer one.
+    pub(crate) detail_download_gate: Gate,
+}
+
+impl Default for ContentSession {
+    fn default() -> Self {
+        Self {
+            instance_id: String::new(),
+            favorites: HashSet::new(),
+            targets: HashMap::new(),
+            kind: RemoteKind::Mods,
+            platform: Platform::Modrinth,
+            source: "local".into(),
+            form: SearchForm::default(),
+            version_options: Vec::new(),
+            pages: HashMap::new(),
+            lists: HashMap::new(),
+            translations: HashMap::new(),
+            detail: None,
+            detail_seq: 0,
+            detail_download_gate: Gate::new(),
+        }
+    }
+}
+
+impl ContentSession {
+    pub(crate) fn is_favorited(&self, platform: Platform, id: &str) -> bool {
+        self.favorites
+            .contains(&favorite_key(platform.key(), self.kind.key(), id))
+    }
 }

@@ -40,7 +40,7 @@ use crate::slint_backend::{
     FilterChip, FilterRow, GalleryShot, GameState, MarkdownImage, MdChunk, MdItem, PageButton,
 };
 use crate::ui::services::report::deliver;
-use crate::usecases::generation::{Gate, Token};
+use crate::usecases::generation::Token;
 use content::mods::{ModLoader, ResolvedMod};
 use instance::InstanceRuntime;
 
@@ -184,26 +184,6 @@ pub(crate) struct ContentController {
     local_mods: Rc<VecModel<ContentCard>>,
     local_resourcepacks: Rc<VecModel<ContentCard>>,
     remote: Rc<VecModel<ContentCard>>,
-    /// The game view's current instance. Re-read whenever a panel opens.
-    instance_id: String,
-    /// `<platform>:<kind>:<id>` — the favourites key.
-    favorites: HashSet<String>,
-    targets: HashMap<String, CardTarget>,
-    kind: RemoteKind,
-    platform: Platform,
-    /// "" | "local" | "modrinth" | "curseforge"
-    source: String,
-    form: SearchForm,
-    /// The Minecraft release list, newest first. Empty until it arrives.
-    version_options: Vec<String>,
-    /// `<kind>:<source>` → that list's `(current page, total pages)`.
-    ///
-    /// Every list has its own pair, and a source switch destroys and re-creates
-    /// one of them, so one list's page numbers are never shown against another's
-    /// results.
-    pages: HashMap<String, (usize, usize)>,
-    /// `<kind>:<source>` → that list's own search cache and request token.
-    lists: HashMap<String, ListSearch>,
     /// Every filter chip's measured width, by its value. The wrapping rows are
     /// laid out from these (`filter_row_height`), because Slint measures a
     /// wrapping `FlexboxLayout` at its own "roughly square" preferred width
@@ -213,9 +193,6 @@ pub(crate) struct ContentController {
     /// chip's width report can rewrite one row's height in place — replacing
     /// the model would re-create every chip and start the measurement again.
     filter_rows: Rc<VecModel<FilterRow>>,
-    /// Translated project descriptions, keyed `<platform>:<id>`. Only filled
-    /// for a Chinese locale, and only for the ids that have been on screen.
-    translations: HashMap<String, String>,
     /// Which carousel page is showing. Follows the selection when a panel opens
     /// and the pagers from then on.
     version_page: usize,
@@ -229,12 +206,25 @@ pub(crate) struct ContentController {
     panel_height: i32,
     /// Which grid is on screen, so a resize knows what to lay out again.
     open_grid: Option<Grid>,
-    detail: Option<OpenDetail>,
-    /// Bumped on every open, so a slow detail response cannot overwrite a newer
-    /// panel.
-    detail_seq: u64,
-    /// Issues the detail download's token and invalidates it on a newer one.
-    detail_download_gate: Gate,
+    /// The browser's UI-neutral session state (the open list, its query, the
+    /// search cache, the favourites, the open detail). It lives in the use case
+    /// so a second frontend can own the same state and run the same logic; this
+    /// controller reaches it through `Deref`, so `self.form` and the like still
+    /// read as fields.
+    state: ContentSession,
+}
+
+impl std::ops::Deref for ContentController {
+    type Target = ContentSession;
+    fn deref(&self) -> &ContentSession {
+        &self.state
+    }
+}
+
+impl std::ops::DerefMut for ContentController {
+    fn deref_mut(&mut self) -> &mut ContentSession {
+        &mut self.state
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -252,27 +242,14 @@ impl ContentController {
             local_mods: Rc::new(VecModel::default()),
             local_resourcepacks: Rc::new(VecModel::default()),
             remote: Rc::new(VecModel::default()),
-            instance_id: String::new(),
-            favorites: HashSet::new(),
-            targets: HashMap::new(),
-            kind: RemoteKind::Mods,
-            platform: Platform::Modrinth,
-            source: "local".into(),
-            form: SearchForm::default(),
-            version_options: Vec::new(),
-            pages: HashMap::new(),
-            lists: HashMap::new(),
             filter_widths: HashMap::new(),
             filter_rows: Rc::new(VecModel::default()),
-            translations: HashMap::new(),
             version_page: 0,
             version_widths: Vec::new(),
             grid_width: 0,
             panel_height: 0,
             open_grid: None,
-            detail: None,
-            detail_seq: 0,
-            detail_download_gate: Gate::new(),
+            state: ContentSession::default(),
         }
     }
 
@@ -312,11 +289,6 @@ impl ContentController {
             })
             .map(|index| index / VERSIONS_PER_PAGE)
             .unwrap_or(0);
-    }
-
-    fn is_favorited(&self, platform: Platform, id: &str) -> bool {
-        self.favorites
-            .contains(&favorite_key(platform.key(), self.kind.key(), id))
     }
 
     /// The category table of the platform in use, as `(value, label key)`. The
