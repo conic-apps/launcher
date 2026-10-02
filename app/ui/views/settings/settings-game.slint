@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { SettingGroup } from "../../components/setting-group.slint";
-import { SettingItem } from "../../components/setting-item.slint";
-import { SettingCollapse } from "../../components/setting-collapse.slint";
-import { BaseInput } from "../../components/base-input.slint";
-import { BaseSwitch } from "../../components/base-switch.slint";
-import { BaseSelect } from "../../components/base-select.slint";
+import { SettingGroup } from "../../components/settings/setting-group.slint";
+import { SettingItem } from "../../components/settings/setting-item.slint";
+import { SettingCollapse } from "../../components/settings/setting-collapse.slint";
+import { Input } from "../../components/controls/input.slint";
+import { Switch } from "../../components/controls/switch.slint";
+import { Select } from "../../components/controls/select.slint";
 import { AppConfig } from "../../globals/settings.slint";
 
 export component SettingsGame inherits VerticalLayout {
@@ -44,7 +44,7 @@ export component SettingsGame inherits VerticalLayout {
             HorizontalLayout {
                 cross-axis-alignment: center;
 
-                BaseInput {
+                Input {
                     input-width: 100px;
                     placeholder: @tr("W");
                     number-only: true;
@@ -58,7 +58,7 @@ export component SettingsGame inherits VerticalLayout {
                     background: transparent;
                 }
 
-                BaseInput {
+                Input {
                     input-width: 100px;
                     placeholder: @tr("H");
                     number-only: true;
@@ -79,7 +79,7 @@ export component SettingsGame inherits VerticalLayout {
                     color: Theme.default-text-color.transparentize(0.1);
                 }
 
-                BaseSwitch {
+                Switch {
                     checked <=> AppConfig.launch-fullscreen;
                     toggled => { AppConfig.changed(); }
                 }
@@ -90,7 +90,7 @@ export component SettingsGame inherits VerticalLayout {
             group-last: true;
             title: @tr("Quit launcher after launching game");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.quit-after-launch;
                 toggled => { AppConfig.changed(); }
             }
@@ -104,7 +104,7 @@ export component SettingsGame inherits VerticalLayout {
             group-first: true;
             title: @tr("Auto-allocate memory");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.auto-memory;
                 toggled => { AppConfig.changed(); }
             }
@@ -119,7 +119,7 @@ export component SettingsGame inherits VerticalLayout {
             HorizontalLayout {
                 cross-axis-alignment: center;
 
-                BaseInput {
+                Input {
                     input-width: 100px;
                     number-only: true;
                     input-enabled: !AppConfig.auto-memory;
@@ -161,7 +161,7 @@ export component SettingsGame inherits VerticalLayout {
         SettingItem {
             title: @tr("Java garbage collector");
 
-            BaseSelect {
+            Select {
                 options: ["G1", "Z", "Parallel", "Serial"];
                 display-name: ["G1", "Z", "Parallel", "Serial"];
                 value <=> AppConfig.gc;
@@ -173,7 +173,7 @@ export component SettingsGame inherits VerticalLayout {
             title: @tr("Extra JVM arguments");
             description: @tr("Appended after default JVM arguments");
 
-            BaseInput {
+            Input {
                 input-width: 260px;
                 value <=> AppConfig.extra-jvm-args;
                 edited => { AppConfig.changed(); }
@@ -184,7 +184,7 @@ export component SettingsGame inherits VerticalLayout {
             title: @tr("Extra game arguments");
             description: @tr("Additional arguments for the game");
 
-            BaseInput {
+            Input {
                 input-width: 260px;
                 value <=> AppConfig.extra-mc-args;
                 edited => { AppConfig.changed(); }
@@ -195,7 +195,7 @@ export component SettingsGame inherits VerticalLayout {
             title: @tr("Extra class paths");
             description: @tr("Separated by semicolons on Windows, colons on other systems");
 
-            BaseInput {
+            Input {
                 input-width: 260px;
                 value <=> AppConfig.extra-class-paths;
                 edited => { AppConfig.changed(); }
@@ -206,7 +206,7 @@ export component SettingsGame inherits VerticalLayout {
             title: @tr("Execute before launch");
             description: @tr("Added before the launch command");
 
-            BaseInput {
+            Input {
                 input-width: 260px;
                 value <=> AppConfig.before-launch;
                 edited => { AppConfig.changed(); }
@@ -217,7 +217,7 @@ export component SettingsGame inherits VerticalLayout {
             title: @tr("Wrap command");
             description: @tr("Added at the beginning of the launch command");
 
-            BaseInput {
+            Input {
                 input-width: 260px;
                 value <=> AppConfig.wrap-command;
                 edited => { AppConfig.changed(); }
@@ -228,7 +228,7 @@ export component SettingsGame inherits VerticalLayout {
             title: @tr("Execute after launch");
             description: @tr("Added at the end of the launch script");
 
-            BaseInput {
+            Input {
                 input-width: 260px;
                 value <=> AppConfig.after-launch;
                 edited => { AppConfig.changed(); }
@@ -239,7 +239,7 @@ export component SettingsGame inherits VerticalLayout {
             title: @tr("Ignore invalid Minecraft certificates");
             description: @tr("Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.ignore-invalid-certs;
                 toggled => { AppConfig.changed(); }
             }
@@ -249,7 +249,7 @@ export component SettingsGame inherits VerticalLayout {
             title: @tr("Ignore patch discrepancies");
             description: @tr("Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.ignore-patch-discrepancies;
                 toggled => { AppConfig.changed(); }
             }
@@ -260,7 +260,7 @@ export component SettingsGame inherits VerticalLayout {
             title: @tr("Skip game file check");
             description: @tr("The launcher will not attempt to verify or repair game files before launching");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.skip-file-check;
                 toggled => { AppConfig.changed(); }
             }

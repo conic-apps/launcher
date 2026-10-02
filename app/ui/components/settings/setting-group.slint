@@ -1,0 +1,110 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../display/app-icon.slint";
+import { FocusManager } from "../../globals/focus.slint";
+
+// A titled group of settings.
+//
+// It is a full-width layout whose items are inset by the settings page.
+//
+// The corners are the rows', not the wrapper's, and the two obvious ways of
+// doing it are both wrong. Clipping the wrapper rounds the rows, but cuts off
+// the value tooltip a control in the first row draws above itself. Rounding
+// every row and painting the card behind them leaves a notch at each row's
+// corners and at every 1px seam, which only the card's colour hides — and a
+// hovered row is a lighter colour, so its four corners show the base one
+// through. `SettingItem`'s `group-first` / `group-last` round only the two rows
+// that end the group, and nothing else rounds anything.
+export component SettingGroup inherits VerticalLayout {
+    in property <string> title: "";
+    in property <bool> resetable: false;
+    in property <bool> danger: false;
+    /// Dims and disables every control in the group. The instance settings
+    /// overlay's launch options and memory groups use it: they are inert until
+    /// the instance overrides the launcher's own launch settings, which is what
+    /// `enable_instance_specific_settings` means.
+    in property <bool> group-disabled: false;
+    callback reset;
+
+    width: 100%;
+    spacing: 10px;
+    opacity: root.group-disabled ? 0.6 : 1.0;
+
+    if root.title != "" : Rectangle {
+        height: 16px;
+        background: transparent;
+
+        HorizontalLayout {
+            padding-left: 8px;
+            // The title Text has no right padding; the layout's 3px spacing is
+            // the gap between the two.
+            spacing: 3px;
+            cross-axis-alignment: center;
+            alignment: start;
+
+            Text {
+                text: root.title;
+                font-size: 13.5px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+
+            if root.resetable : Rectangle {
+                width: 20px;
+                height: 20px;
+                border-radius: 3px;
+                background: group-reset-touch.has-hover ? #ffffff1c : transparent;
+                opacity: group-reset-touch.pressed ? 0.8 : 1.0;
+
+                AppIcon {
+                    name: "refresh";
+                    size: 16px;
+                    icon-color: Theme.default-text-color.transparentize(0.1);
+                }
+
+                group-reset-touch := TouchArea {
+                    clicked => {
+                        FocusManager.clear();
+                        if !root.group-disabled {
+                            root.reset();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    items := Rectangle {
+        background: transparent;
+
+        VerticalLayout {
+            spacing: 1px;
+            @children
+        }
+
+        // The group border (Latte, and every high-contrast scheme). Drawn as an
+        // overlay after the rows so the 1px hairline sits on top; it is
+        // transparent on the dark flavors without high contrast.
+        group-border := Rectangle {
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: root.danger
+                ? Theme.setting-group-danger-border
+                : Theme.setting-group-border;
+            background: transparent;
+        }
+
+        // Slint has no inherited "ignore the pointer" switch, so the rows are
+        // covered instead. Declared last so it is the topmost element of the
+        // box, and a bare `TouchArea` because that is the only thing that
+        // intercepts: `scroll-event` still defaults to reject, so the wheel
+        // carries on to the scroller the group sits in.
+        if root.group-disabled : TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+    }
+}

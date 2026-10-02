@@ -1,0 +1,72 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { FocusManager } from "../../globals/focus.slint";
+
+// Segmented select.
+//
+// A row of options with 1px separators, the active option filled with the
+// lavender accent. It shrinks to its content and grows to fit it, so the
+// component's preferred size is derived from the inner layout.
+export component Select inherits Rectangle {
+    in property <[string]> options;
+    in property <[string]> display-name;
+    /// Which options can be picked, parallel to `options`; shorter than
+    /// `options` means "the remaining ones are enabled".
+    ///
+    /// Slint arrays have no `contains` (only the experimental `index-of`), so
+    /// the caller derives a flag per option instead of a list of disabled names.
+    in property <[bool]> option-enabled: [];
+    in-out property <string> value;
+    callback selected(string);
+
+    // The option's 22px height plus a 1px border on each side => 24px total.
+    //
+    // The width is the options' own width plus those borders: without it the
+    // select has no preferred size, and a layout would stretch it (and its last
+    // option with it) to whatever space is left.
+    width: options-row.preferred-width + 2px;
+    height: 24px;
+    background: Theme.controllers-background;
+    border-width: 1px;
+    border-color: Theme.controllers-border;
+    border-radius: 4px;
+    clip: true;
+
+    options-row := HorizontalLayout {
+        for option[index] in root.options : Rectangle {
+            width: option-label.preferred-width + 16px;
+            height: 22px;
+            background: root.value == option ? Theme.lavender : transparent;
+            opacity: index < root.option-enabled.length && !root.option-enabled[index] ? 0.4 : 1.0;
+
+            option-label := Text {
+                text: root.display-name[index];
+                font-size: 12px;
+                font-weight: Theme.font-weight-normal;
+                color: root.value == option ? Theme.text-inverse : Theme.default-text-color.transparentize(0.1);
+                x: 8px;
+            }
+
+            // Separator, all but the last option.
+            if index < root.options.length - 1 : Rectangle {
+                x: parent.width - 1px;
+                width: 1px;
+                height: parent.height;
+                background: Theme.controllers-border;
+            }
+
+            TouchArea {
+                // A disabled option takes no pointer events.
+                enabled: index >= root.option-enabled.length || root.option-enabled[index];
+                clicked => {
+                    FocusManager.clear();
+                    root.value = option;
+                    root.selected(option);
+                }
+            }
+        }
+    }
+}

@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { AppIcon } from "../../components/app-icon.slint";
-import { BaseButton } from "../../components/base-button.slint";
+import { AppIcon } from "../../components/display/app-icon.slint";
+import { Button } from "../../components/controls/button.slint";
 
 // The body shared by the two "are you sure?" dialogs that are a warning icon, a
 // two-line message and a blue/red button pair:
@@ -82,7 +82,7 @@ export component ConfirmWarningBody inherits VerticalLayout {
         width: 100%;
         cross-axis-alignment: center;
 
-        BaseButton {
+        Button {
             horizontal-stretch: 1;
             text: root.cancel-text;
             text-color: Theme.text-inverse;
@@ -99,7 +99,7 @@ export component ConfirmWarningBody inherits VerticalLayout {
             background: transparent;
         }
 
-        BaseButton {
+        Button {
             horizontal-stretch: 1;
             text: root.confirm-text;
             text-color: Theme.text-inverse;

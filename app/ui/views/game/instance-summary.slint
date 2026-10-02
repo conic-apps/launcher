@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { AppIcon } from "../../components/app-icon.slint";
-import { BaseLoading } from "../../components/base-loading.slint";
+import { AppIcon } from "../../components/display/app-icon.slint";
+import { Loading } from "../../components/controls/loading.slint";
 import { Dropdown, DropdownOption } from "../../globals/dropdown.slint";
 import { FocusManager } from "../../globals/focus.slint";
 import { GameState, GameIntro, GameTime } from "../../globals/game.slint";
@@ -134,7 +134,7 @@ component ContentRow inherits Rectangle {
                 }
             }
 
-            if root.loading : BaseLoading {
+            if root.loading : Loading {
                 size: 16px;
                 stroke-width: 6;
             }

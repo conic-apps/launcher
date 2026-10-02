@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The world map's "script": the tile cache and the render queue behind
-//! `ui/components/world-map.slint`.
+//! `ui/overlays/content/world-map.slint`.
 //!
 //! # The tile cache
 //!

@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../../theme.slint";
-import { AppIcon } from "../../../components/app-icon.slint";
-import { BaseButton } from "../../../components/base-button.slint";
-import { BaseInput } from "../../../components/base-input.slint";
-import { BaseProgress } from "../../../components/base-progress.slint";
-import { SlideTransition } from "../../../components/slide-transition.slint";
-import { ZoomTransition } from "../../../components/zoom-transition.slint";
+import { AppIcon } from "../../../components/display/app-icon.slint";
+import { Button } from "../../../components/controls/button.slint";
+import { Input } from "../../../components/controls/input.slint";
+import { Progress } from "../../../components/controls/progress.slint";
+import { SlideTransition } from "../../../components/containers/slide-transition.slint";
+import { ZoomTransition } from "../../../components/containers/zoom-transition.slint";
 import { MultiplayerState, MultiplayerPlayer } from "../../../globals/multiplayer.slint";
 
 // One member row of the group's player list.
@@ -206,10 +206,10 @@ component ScanProgress inherits Rectangle {
             // 10px below the status line.
             Rectangle { height: 10px; background: transparent; }
 
-            BaseProgress { loading: true; value: 0; max: 1; }
+            Progress { loading: true; value: 0; max: 1; }
         }
 
-        BaseButton {
+        Button {
             text: @tr("Multiplayer" => "Cancel");
             clicked => { root.cancel(); }
         }
@@ -442,7 +442,7 @@ component HostReadyScreen inherits VerticalLayout {
                 // A bare child of the card's column, so `alignment: space-between`
                 // puts it at the bottom and the default cross-axis stretch makes
                 // it the card's width.
-                BaseButton {
+                Button {
                     horizontal-stretch: 1;
                     text: @tr("Multiplayer" => "Close connection");
                     clicked => { MultiplayerState.leave-room(); }
@@ -524,14 +524,14 @@ component GuestCodeInputScreen inherits VerticalLayout {
                 spacing: 8px;
                 cross-axis-alignment: center;
 
-                BaseInput {
+                Input {
                     horizontal-stretch: 1;
                     placeholder: @tr("Multiplayer" => "Invite code format: U/BBBB-AAAA-KKKK-AAAA");
                     value <=> MultiplayerState.code-input;
                     edited => { MultiplayerState.code-input-changed(); }
                 }
 
-                join-button := BaseButton {
+                join-button := Button {
                     text: @tr("Multiplayer" => "Join");
                     button-enabled: MultiplayerState.code-input-valid;
                     clicked => { MultiplayerState.join-room(); }
@@ -579,7 +579,7 @@ component GuestReadyScreen inherits VerticalLayout {
                 }
             }
 
-            BaseButton {
+            Button {
                 horizontal-stretch: 1;
                 text: @tr("Multiplayer" => "Leave group");
                 clicked => { MultiplayerState.leave-room(); }
@@ -617,7 +617,7 @@ component ExceptionScreen inherits VerticalLayout {
                 color: Theme.red;
             }
 
-            BaseButton {
+            Button {
                 text: @tr("Multiplayer" => "Start over");
                 clicked => { MultiplayerState.leave-room(); }
             }
@@ -648,7 +648,7 @@ component ExceptionScreen inherits VerticalLayout {
                 color: Theme.red;
             }
 
-            BaseButton {
+            Button {
                 text: @tr("Multiplayer" => "Start over");
                 clicked => { MultiplayerState.leave-room(); }
             }
@@ -824,7 +824,7 @@ export component MultiplayerManager inherits VerticalLayout {
             spacing: 12px;
 
             // A "Back" button that closes the join-code screen.
-            if root.screen == "guestCodeInput" : BaseButton {
+            if root.screen == "guestCodeInput" : Button {
                 horizontal-stretch: 1;
                 text: @tr("Multiplayer" => "Back");
                 clicked => {
@@ -834,7 +834,7 @@ export component MultiplayerManager inherits VerticalLayout {
                 }
             }
 
-            if root.screen != "guestCodeInput" : BaseButton {
+            if root.screen != "guestCodeInput" : Button {
                 horizontal-stretch: 1;
                 text: MultiplayerState.bottom-label;
                 clicked => {

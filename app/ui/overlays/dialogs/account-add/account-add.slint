@@ -1,0 +1,149 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../../theme.slint";
+import { SlideTransition } from "../../../components/containers/slide-transition.slint";
+import { AccountAddState } from "../../../globals/dialogs.slint";
+import { AccountAddMicrosoft } from "account-add-microsoft.slint";
+import { AccountAddOffline } from "account-add-offline.slint";
+import { AccountAddSelect } from "account-add-select.slint";
+import { AccountAddYggdrasil } from "account-add-yggdrasil.slint";
+
+// The body of the add-account dialog: a 540px column with the title and the
+// service selector in its header, and the three service screens swapping below
+// it.
+//
+// The swap has its own rule for which way the screens travel: away from
+// Microsoft (and from Yggdrasil to Offline) slides left, away from Offline (and
+// from Yggdrasil to Microsoft) slides right. The *outgoing* screen decides,
+// which is why the direction is worked out when the swap starts rather than
+// read from the arriving service. The out-in beat itself is the same state
+// machine the create-instance dialog and the Microsoft screen use.
+export component AccountAdd inherits VerticalLayout {
+    /// The dialog's inner width; the panel itself is 16px wider on each side
+    /// (see `overlays/dialogs/account-add/account-add-dialog.slint`).
+    in property <length> content-width: 540px;
+
+    /// Mounted inside the setup wizard rather than the add-account dialog, at
+    /// full width and height.
+    ///
+    /// A flag rather than three separate properties: in the wizard the panel's
+    /// own padding goes and every screen's "Cancel" goes with it. It is
+    /// forwarded to the three screens, which is where the buttons are.
+    ///
+    /// The wizard needs nothing else: the panel is already top-aligned, which is
+    /// what `alignment: start` gives it.
+    in property <bool> wizard-host: false;
+
+    width: root.content-width;
+    padding: root.wizard-host ? 0px : 8px;
+    spacing: 0px;
+    // `start`, not the default `stretch`: the panel's height is tweened, so
+    // while that runs there is a surplus (or a deficit) to hand out, and a
+    // stretching column would split it between the header and the screen — the
+    // header visibly breathes for the 300ms.
+    alignment: start;
+
+    private property <string> service: AccountAddState.auth-service;
+    /// The screen actually mounted — one 80ms beat behind `service`.
+    private property <string> shown: "";
+    private property <string> direction: "left";
+    private property <bool> leaving: false;
+    private property <bool> leave-armed: false;
+    private property <bool> enter-armed: false;
+    private property <string> arrive-phase: "shown";
+
+    init => {
+        // The first screen is simply mounted.
+        root.shown = root.service;
+    }
+
+    changed service => {
+        if root.shown == "" {
+            root.shown = root.service;
+        } else if root.service == root.shown {
+            root.leaving = false;
+            root.leave-armed = false;
+        } else {
+            // The *old* service decides, so it is read before it changes.
+            root.direction = root.shown == "microsoft" ? "left"
+                : root.shown == "offline" ? "right"
+                : root.service == "microsoft" ? "right"
+                : "left";
+            root.leaving = true;
+            root.leave-armed = true;
+            leave-timer.restart();
+        }
+    }
+
+    leave-timer := Timer {
+        interval: 80ms;
+        running: root.leave-armed;
+        triggered => {
+            root.leave-armed = false;
+            root.leaving = false;
+            if root.service != root.shown {
+                root.shown = root.service;
+                root.arrive-phase = "enter";
+                root.enter-armed = true;
+            }
+        }
+    }
+
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.enter-armed;
+        triggered => {
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+        }
+    }
+
+    // The selector sits at the right-hand end of the header.
+    //
+    // The title stretches rather than keeping its natural width, which is what
+    // pins the selector to the right-hand end. It still wraps, so a longer
+    // translation cannot push the selector out through the panel's edge.
+    HorizontalLayout {
+        // The default `stretch` distribution, not `start`: it is what gives the
+        // stretching title the leftover width and so pins the selector to the
+        // right-hand end. With `start` every cell keeps its preferred width and
+        // the remainder falls after the last one, which leaves the selector next
+        // to the title.
+        cross-axis-alignment: center;
+        padding-bottom: 16px;
+
+        Text {
+            text: @tr("Sign in");
+            font-size: 22px;
+            horizontal-stretch: 1;
+            wrap: word-wrap;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        AccountAddSelect {
+            value: AccountAddState.auth-service;
+            select-enabled: !AccountAddState.switch-disabled;
+            selected(service) => { AccountAddState.select-auth-service(service); }
+        }
+    }
+
+    if root.shown == "microsoft" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+        AccountAddMicrosoft { wizard-host: root.wizard-host; }
+    }
+
+    if root.shown == "yggdrasil" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+        AccountAddYggdrasil { wizard-host: root.wizard-host; }
+    }
+
+    if root.shown == "offline" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: root.direction;
+        AccountAddOffline { wizard-host: root.wizard-host; }
+    }
+}

@@ -1,0 +1,122 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Dialog } from "../dialog.slint";
+import { SlideTransition } from "../../../components/containers/slide-transition.slint";
+import { MultiplayerState } from "../../../globals/multiplayer.slint";
+import { MultiplayerDownloadDescription } from "download-description.slint";
+import { MultiplayerDownloadProgress } from "download-progress.slint";
+import { MultiplayerManager } from "multiplayer-manager.slint";
+
+// The dialog body: 8px of padding around whichever of the three components is
+// mounted, swapping with a left slide-out/in.
+//
+// The swap is the same state machine the create-instance dialog uses: the
+// mounted screen plays its 80ms leave, the slot changes, and the arriving screen
+// moves from its enter rest to `shown` a frame later.
+component MultiplayerConnect inherits VerticalLayout {
+    /// The dialog's inner width (the panel minus its 16px padding); see
+    /// `Dialog` for why the body sizes itself against this.
+    in property <length> content-width: 0px;
+
+    width: root.content-width;
+    padding: 8px;
+    spacing: 0px;
+    alignment: start;
+
+    private property <string> component: MultiplayerState.component;
+    private property <string> shown: "";
+    private property <bool> leaving: false;
+    private property <string> arrive-phase: "shown";
+    private property <bool> leave-armed: false;
+    private property <bool> enter-armed: false;
+
+    init => { root.shown = root.component; }
+
+    changed component => {
+        if root.component == "" {
+            root.shown = "";
+            root.leaving = false;
+            root.leave-armed = false;
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+        } else if root.shown == "" {
+            root.shown = root.component;
+        } else if root.component == root.shown {
+            root.leaving = false;
+            root.leave-armed = false;
+        } else {
+            root.leaving = true;
+            root.leave-armed = true;
+            leave-timer.restart();
+        }
+    }
+
+    leave-timer := Timer {
+        interval: 80ms;
+        running: root.leave-armed;
+        triggered => {
+            root.leave-armed = false;
+            root.leaving = false;
+            if root.component != root.shown {
+                root.shown = root.component;
+                root.arrive-phase = "enter";
+                root.enter-armed = true;
+            }
+        }
+    }
+
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.enter-armed;
+        triggered => {
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+        }
+    }
+
+    if root.shown == "downloadDescription" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: "left";
+        MultiplayerDownloadDescription { }
+    }
+    if root.shown == "downloadProgress" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: "left";
+        MultiplayerDownloadProgress { }
+    }
+    if root.shown == "multiplayerManager" : SlideTransition {
+        phase: root.leaving ? "leave" : root.arrive-phase;
+        direction: "left";
+        MultiplayerManager { }
+    }
+}
+
+// The multiplayer floating dialog.
+//
+// The panel animates its height: it sizes to the mounted component and tweens to
+// it over 300ms, an ease-out-quad applied by `Dialog` itself off this height,
+// with the width switching instantly between the three components (580 / 480 /
+// 600). Slint has no fit-content panel mode, so the height comes from the
+// measuring layout the body is written in, exactly like the add-account dialog.
+export component MultiplayerExtension inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // 600 for the manager, otherwise the component's own width.
+    private property <length> dialog-width: MultiplayerState.component == "multiplayerManager"
+        ? 600px
+        : MultiplayerState.component == "downloadProgress" ? 480px : 580px;
+
+    dialog := Dialog {
+        dialog-visible: MultiplayerState.visible;
+        dialog-width: root.dialog-width;
+        dialog-height: body.preferred-height + 32px;
+
+        body := MultiplayerConnect {
+            content-width: dialog.content-width;
+        }
+    }
+}
