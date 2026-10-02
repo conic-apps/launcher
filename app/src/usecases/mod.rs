@@ -9,3 +9,5 @@
 //! could call the same functions.
 
 pub(crate) mod game;
+pub(crate) mod generation;
+pub(crate) mod launch;

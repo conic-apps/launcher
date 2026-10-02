@@ -25,7 +25,8 @@ use std::{
 use slint::{ComponentHandle, ModelRc, Timer, TimerMode, VecModel};
 
 use crate::slint_backend::{App, GameState, MultiplayerPeer, MultiplayerPlayer, MultiplayerState};
-use crate::ui::services::report::{Gate, deliver};
+use crate::ui::services::report::deliver;
+use crate::usecases::generation::Gate;
 use multiplayer::{NexusService, PeerInfo, SessionEvent, SessionState};
 
 /// How often to poll peers when the local NAT code is unknown / known.

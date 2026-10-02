@@ -38,12 +38,18 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             let weak = weak.clone();
             crate::support::runtime::spawn(async move {
                 let instance = instance::get_instance_by_id(&current_id).await;
+                let loader = instance
+                    .as_ref()
+                    .and_then(|instance| instance.config.runtime.mod_loader_type.as_ref())
+                    .map(std::string::ToString::to_string)
+                    .unwrap_or_default();
                 let flow_weak = weak.clone();
                 let flow_config = config_snapshot.clone();
                 crate::ui::services::report::report(&weak, move |ui| {
                     reset_state(&ui, instance.as_ref(), &flow_config);
+                    let sink = update_sink(flow_weak.clone(), token, loader);
                     let task = crate::support::runtime::spawn(async move {
-                        run_flow(flow_weak, token, config_snapshot, instance).await;
+                        crate::usecases::launch::run(flow_config, instance, sink).await;
                     });
                     launch_controller().borrow_mut().task = Some(task);
                 });

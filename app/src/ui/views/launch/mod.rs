@@ -2,42 +2,40 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch view's flow: account refresh, install when needed, then the
-//! launch, driving the `install` and `launch` crates through their output ports
-//! and writing the `LaunchState` global.
+//! The launch view's adapter: it runs the [`crate::usecases::launch`] use case
+//! on the app's runtime and turns its [`LaunchUpdate`]s into `LaunchState`.
 //!
-//! The whole flow is one task on the app's runtime. The `install` and `launch`
-//! crates sample their own progress and report through an
-//! [`install::InstallSink`] / [`launch::LaunchSink`]; this module's port
-//! implementations turn each report into a [`presenter::LaunchView`] and
-//! deliver it, gated by a [`Token`] so a cancelled or superseded run cannot
-//! draw. Cancelling aborts the task.
+//! The use case is UI-neutral; this module builds the output port it reports
+//! through, gated by a [`Token`] so a cancelled or superseded run cannot draw.
+//! Cancelling aborts the task.
 
 use std::{cell::RefCell, rc::Rc};
 
 use slint::{ComponentHandle, Weak};
 
 use crate::slint_backend::{App, Dialogs, GameState, LaunchState, Navigation};
-use crate::ui::services::report::{Gate, Token, deliver};
+use crate::ui::services::report::deliver;
+use crate::usecases::generation::{Gate, Token};
+use crate::usecases::launch::{LaunchDialog, LaunchUpdate};
 use account::Account;
 use config::Config;
 use instance::Instance;
-use launch::LaunchProgress;
+use shared::Sink;
 
-mod flow;
 mod ports;
 mod presenter;
+mod view;
 mod wiring;
 
-pub(crate) use flow::*;
 pub(crate) use ports::*;
+pub(crate) use view::*;
 pub(crate) use wiring::*;
 
 thread_local! {
     /// The app's shared config, for the event-loop half of the account refresh.
     /// The runtime task cannot hold the `Rc<RefCell<…>>` (it is neither `Send`
-    /// nor `Sync`); it reports the refreshed account back, and the event-loop
-    /// closure writes it through here (and persists it).
+    /// nor `Sync`); the use case reports the refreshed account back, and the
+    /// event-loop closure writes it through here (and persists it).
     static SHARED_CONFIG: RefCell<Option<Rc<RefCell<Config>>>> = const { RefCell::new(None) };
 
     /// The one controller, for use on the UI thread.

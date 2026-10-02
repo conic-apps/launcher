@@ -39,7 +39,8 @@ use crate::slint_backend::{
     App, AppConfig, CardTag, ContentCard, ContentSearch, ContentState, DeleteSaveState, Dialogs,
     FilterChip, FilterRow, GalleryShot, GameState, MarkdownImage, MdChunk, MdItem, PageButton,
 };
-use crate::ui::services::report::{Gate, Token, deliver};
+use crate::ui::services::report::deliver;
+use crate::usecases::generation::{Gate, Token};
 use content::mods::remote::RemoteModPlatform;
 use content::mods::{ModLoader, ResolvedMod};
 use instance::InstanceRuntime;
