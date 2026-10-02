@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../../theme.slint";
-import { BaseButton } from "../../../components/base-button.slint";
+import { Button } from "../../../components/controls/button.slint";
 import { MultiplayerState } from "../../../globals/multiplayer.slint";
 
 // The "download the Conic Nexus extension" screen: the title, the three
@@ -73,17 +73,17 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
     }
 
     // A bare row of two buttons with a 12px gap.
-    // The default `stretch`, not `alignment: start` — see `create-instance.slint`.
+    // The default `stretch`, not `alignment: start` — see `overlays/dialogs/create-instance/create-instance.slint`.
     HorizontalLayout {
         spacing: 12px;
 
-        BaseButton {
+        Button {
             horizontal-stretch: 1;
             text: @tr("Multiplayer" => "Cancel");
             clicked => { MultiplayerState.close(); }
         }
 
-        BaseButton {
+        Button {
             horizontal-stretch: 1;
             text: @tr("Multiplayer" => "Start download");
             text-color: Theme.text-inverse;

@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { BaseDialog } from "../../components/base-dialog.slint";
+import { Dialog } from "dialog.slint";
 import { ConfirmWarningBody } from "confirm-warning.slint";
 import { Dialogs } from "../../globals/dialogs.slint";
 
@@ -13,7 +13,7 @@ import { Dialogs } from "../../globals/dialogs.slint";
 // multiplayer download. Everywhere else the close button closed straight away and
 // still does.
 //
-// `BaseDialog` has no `fit-content` height mode, so the height comes from the
+// `Dialog` has no `fit-content` height mode, so the height comes from the
 // measuring layout the body is written in — the arrangement the add-account,
 // multiplayer, delete-instance and delete-save dialogs use.
 //
@@ -30,10 +30,10 @@ export component ConfirmQuitApp inherits Rectangle {
     /// and the 500ms wait before the window actually closes.
     callback confirm();
 
-    dialog := BaseDialog {
+    dialog := Dialog {
         dialog-visible: Dialogs.confirm-quit-app-visible;
         dialog-width: 500px;
-        // `fit-content`: `BaseDialog` keeps 32px of its own — 16px on each side
+        // `fit-content`: `Dialog` keeps 32px of its own — 16px on each side
         // (a 1px clip and 15px of padding).
         dialog-height: body.preferred-height + 32px;
 

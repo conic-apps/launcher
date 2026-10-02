@@ -3,15 +3,15 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { BaseDialog } from "../../components/base-dialog.slint";
-import { BaseButton } from "../../components/base-button.slint";
-import { InstanceCard } from "../../components/instance-card.slint";
+import { Dialog } from "dialog.slint";
+import { Button } from "../../components/controls/button.slint";
+import { InstanceCard } from "../../components/display/instance-card.slint";
 import { Dialogs, DeleteInstanceState } from "../../globals/dialogs.slint";
 import { GameTime } from "../../globals/game.slint";
 
 // The dialog the instance settings overlay's "Delete instance" row opens.
 //
-// `BaseDialog` has no `fit-content` height mode, so the height comes from the
+// `Dialog` has no `fit-content` height mode, so the height comes from the
 // measuring layout the body is written in — the arrangement the add-account and
 // multiplayer dialogs use.
 //
@@ -65,7 +65,7 @@ component ConfirmDeleteBody inherits VerticalLayout {
         width: 100%;
         cross-axis-alignment: center;
 
-        BaseButton {
+        Button {
             horizontal-stretch: 1;
             text: @tr("ConfirmDeleteInstance" => "取消");
             text-color: Theme.text-inverse;
@@ -82,7 +82,7 @@ component ConfirmDeleteBody inherits VerticalLayout {
             background: transparent;
         }
 
-        BaseButton {
+        Button {
             horizontal-stretch: 1;
             text: @tr("ConfirmDeleteInstance" => "确认删除");
             text-color: Theme.text-inverse;
@@ -99,10 +99,10 @@ export component ConfirmDeleteInstance inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    dialog := BaseDialog {
+    dialog := Dialog {
         dialog-visible: Dialogs.confirm-delete-instance-visible;
         dialog-width: 500px;
-        // `fit-content`: `BaseDialog` keeps 32px of its own — 16px on each side
+        // `fit-content`: `Dialog` keeps 32px of its own — 16px on each side
         // (a 1px clip and 15px of padding).
         dialog-height: body.preferred-height + 32px;
 

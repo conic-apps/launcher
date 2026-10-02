@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../../theme.slint";
-import { AppIcon } from "../../../components/app-icon.slint";
-import { BaseButton } from "../../../components/base-button.slint";
-import { BaseProgress } from "../../../components/base-progress.slint";
+import { AppIcon } from "../../../components/display/app-icon.slint";
+import { Button } from "../../../components/controls/button.slint";
+import { Progress } from "../../../components/controls/progress.slint";
 import { MultiplayerState } from "../../../globals/multiplayer.slint";
 
 // The Conic Nexus library download screen: the download glyph, the phase / byte
@@ -62,7 +62,7 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
 
             Rectangle { height: 16px; background: transparent; }
 
-            BaseProgress {
+            Progress {
                 loading: MultiplayerState.download-loading;
                 value: MultiplayerState.download-value;
                 max: MultiplayerState.download-max;
@@ -77,7 +77,7 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
         spacing: 12px;
 
         // A red outline that fills red on hover.
-        BaseButton {
+        Button {
             horizontal-stretch: 1;
             text: @tr("Multiplayer" => "Stop download");
             text-color: Theme.red;

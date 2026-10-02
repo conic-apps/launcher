@@ -3,16 +3,16 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { SettingGroup } from "../../components/setting-group.slint";
-import { SettingItem } from "../../components/setting-item.slint";
-import { BaseSwitch } from "../../components/base-switch.slint";
-import { BaseButton } from "../../components/base-button.slint";
-import { BaseSliderBar } from "../../components/base-slider-bar.slint";
-import { PaletteRow } from "../../components/palette-row.slint";
+import { SettingGroup } from "../../components/settings/setting-group.slint";
+import { SettingItem } from "../../components/settings/setting-item.slint";
+import { Switch } from "../../components/controls/switch.slint";
+import { Button } from "../../components/controls/button.slint";
+import { SliderBar } from "../../components/controls/slider-bar.slint";
+import { PaletteRow } from "../../components/display/palette-row.slint";
 import { AppConfig } from "../../globals/settings.slint";
 import { Background } from "../../globals/background.slint";
 
-// The palette row itself is `components/palette-row.slint`, which the setup
+// The palette row itself is `components/display/palette-row.slint`, which the setup
 // wizard's palette step also uses.
 export component SettingsAppearance inherits VerticalLayout {
     width: 100%;
@@ -31,13 +31,13 @@ export component SettingsAppearance inherits VerticalLayout {
             icon: "moon";
             icon-outline: true;
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.palette-follow-system;
                 // Arms the palette transition, which is what makes a change a
                 // *user* change (see `Theme.transitions-enabled`); without it
                 // the app would snap, which is right at startup and wrong here.
                 //
-                // `BaseSwitch` writes `checked` through the two-way binding
+                // `Switch` writes `checked` through the two-way binding
                 // before it calls `toggled`, so this is not the first mutation
                 // of the change — and does not need to be. Slint evaluates the
                 // tokens lazily, from the change handlers, which run on the
@@ -70,7 +70,7 @@ export component SettingsAppearance inherits VerticalLayout {
             navigable: AppConfig.background-image == "";
             clicked => { AppConfig.pick-background-image(); }
 
-            if AppConfig.background-image != "" : BaseButton {
+            if AppConfig.background-image != "" : Button {
                 text: @tr("Remove image");
                 text-color: Theme.red;
                 clicked => { AppConfig.remove-background-image(); }
@@ -82,7 +82,7 @@ export component SettingsAppearance inherits VerticalLayout {
             description: AppConfig.background-darkness + "%";
             item-disabled: AppConfig.background-image == "";
 
-            BaseSliderBar {
+            SliderBar {
                 max: 100;
                 min: 0;
                 step: 5;
@@ -99,7 +99,7 @@ export component SettingsAppearance inherits VerticalLayout {
             // OpenGL, so the background is the hyperbola sky alone.
             item-disabled: Background.software-only;
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.background-camera-move;
                 toggled => { AppConfig.changed(); }
             }
@@ -110,7 +110,7 @@ export component SettingsAppearance inherits VerticalLayout {
             title: @tr("Background parallax");
             description: @tr("When disabled, the background no longer moves with the mouse");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.background-parallax;
                 toggled => { AppConfig.changed(); }
             }

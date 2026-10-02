@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { AppIcon } from "../../components/app-icon.slint";
-import { BaseLoading } from "../../components/base-loading.slint";
+import { AppIcon } from "../../components/display/app-icon.slint";
+import { Loading } from "../../components/controls/loading.slint";
 
 // The "nothing here" placeholder, drawn over an empty grid, and the spinner
 // block the list views show instead of their grid while the first response is
@@ -16,7 +16,7 @@ import { BaseLoading } from "../../components/base-loading.slint";
 // newly created element
 // never plays an `animate` (its first evaluation takes the not-animating
 // branch), which is why this shows itself for one frame at the rest values
-// first, exactly like `BaseDialog` and `DescriptionTooltip` do.
+// first, exactly like `Dialog` and `DescriptionTooltip` do.
 export component ContentNotFound inherits Rectangle {
     /// Whether the placeholder is shown.
     in property <bool> show: false;
@@ -157,7 +157,7 @@ export component ContentLoading inherits Rectangle {
             background: Theme.mantle;
             border-radius: 8px;
 
-            BaseLoading {
+            Loading {
                 size: 32px;
                 stroke-width: 4;
                 // Every spinner passes the same three values: size 32, gap 8,

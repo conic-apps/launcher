@@ -1,0 +1,258 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "app-icon.slint";
+import { FocusManager } from "../../globals/focus.slint";
+
+// The instance card. The instance settings and the delete-confirmation dialog
+// draw the same block, so it is one component rather than two near-copies.
+//
+// Geometry:
+//
+//   the content box starts at  x = 16 (the left bar) + 16 (the title inset)
+//                        and   y =  1 (the 1px hairline)   +  8 (the top inset),
+//   so the title row sits at (32, 9) and the details 6px under it.
+//
+// The background image is a child of the card, so its `x`/`y` are measured from
+// the card's own corner. It starts at x = 116, clear of the 16px left bar, and
+// is inset 1px on the top, right and bottom — so its right edge lands 1px inside
+// the card and the 1px hairline the border rectangle draws stays visible.
+export component InstanceCard inherits Rectangle {
+    /// The instance's name; two-way, because the card is where it is edited.
+    in-out property <string> name: "";
+    /// Whether this card's title row can be edited at all. The settings overlay
+    /// can; the delete dialog's copy of the card has no editor.
+    in property <bool> name-editable: false;
+    /// The title row is swapped for a field.
+    in-out property <bool> name-editing: false;
+    /// The mod loader's display name, empty for a vanilla instance
+    /// (`ModLoaderType::to_string`), which draws the "Vanilla" tag.
+    in property <string> loader: "";
+    in property <string> minecraft-version: "";
+    in property <bool> has-background: false;
+    /// The instance's background picture, loaded by Rust. An image that could
+    /// not be decoded reports a zero width, so the picture is drawn only once it
+    /// has loaded.
+    in property <image> card-background;
+    /// The delete dialog's third detail line (its play time). Empty draws
+    /// nothing, which is the settings view's case: it has no such row.
+    in property <string> playtime: "";
+    in property <string> playtime-label: "";
+    /// The Minecraft version row is drawn even with no version. The delete
+    /// dialog's copy of the card always shows it; the settings view's hides it
+    /// at the default.
+    in property <bool> version-always: false;
+    /// The colour behind the card, which the background image's fade has to be
+    /// mixed with: the overlay's panel is `Theme.base`, the create-instance
+    /// dialog's `Theme.dialog-background`.
+    in property <color> backdrop: Theme.base;
+
+    /// The title row was clicked while it was not being edited.
+    callback name-clicked();
+    /// The name was typed.
+    callback name-edited();
+
+    /// The fill of the loader tag; the vanilla case is the fallback.
+    pure function tag-color(key: string) -> color {
+        if key == "quilt" { return Theme.mauve; }
+        if key == "fabric" { return Theme.yellow; }
+        if key == "forge" { return Theme.blue; }
+        if key == "neoforge" { return Theme.peach; }
+        return Theme.green;
+    }
+
+    width: 100%;
+    height: 60px;
+    border-radius: 8px;
+    clip: true;
+    background: Theme.surface-0.with-alpha(0.4);
+
+    Rectangle {
+        border-width: 1px;
+        border-color: Theme.surface-1.with-alpha(0.8);
+        background: transparent;
+    }
+
+    /// The lavender left bar, drawn over the hairline: Slint has one
+    /// `border-width` for the whole box.
+    Rectangle {
+        x: 0;
+        y: 0;
+        width: 16px;
+        height: parent.height;
+        background: Theme.lavender.with-alpha(0.8);
+    }
+
+    // The background image is pinned to the card's top right, cover-fit, and
+    // faded out towards the left.
+    if root.has-background && root.card-background.width > 0 : Rectangle {
+        x: 116px;
+        y: 1px;
+        width: parent.width - 116px - 1px;
+        height: parent.height - 2px;
+        background: transparent;
+
+        Image {
+            width: 100%;
+            height: 100%;
+            source: root.card-background;
+            image-fit: cover;
+        }
+
+        // The image is faded out to the left with a gradient over it instead of
+        // a mask: at the image's left edge the overlay is the card fill over the
+        // backdrop — an opaque 40/60 mix of the two — and `mix` weights its
+        // *receiver*, so the backdrop is named first.
+        Rectangle {
+            background: @linear-gradient(
+                90deg,
+                root.backdrop.mix(Theme.surface-0, 0.6) 0%,
+                transparent 100%);
+        }
+    }
+
+    // ----- the name -----
+    if !root.name-editing : name-row := Rectangle {
+        x: 32px;
+        y: 9px;
+        width: parent.width - 49px;
+        height: 16px;
+        background: transparent;
+
+        name-text := Text {
+            x: 0px;
+            // The name takes its own width and elides once it would reach the
+            // edit icon 30px away. A bare `Text` outside a layout is centred on
+            // its own width, so the alignment is explicit.
+            width: min(self.preferred-width, parent.width - 30px);
+            height: 16px;
+            text: root.name;
+            font-size: 16px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.1);
+            horizontal-alignment: left;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+
+        if root.name-editable : edit-icon := AppIcon {
+            name: "create-outline";
+            size: 16px;
+            x: name-text.width + 4px;
+            icon-color: Theme.default-text-color.transparentize(0.1);
+            // Hover swells the icon; pressing shrinks it.
+            transform-scale: edit-touch.pressed ? 97% : edit-touch.has-hover ? 102% : 100%;
+            animate transform-scale { duration: 100ms; }
+        }
+
+        edit-touch := TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => {
+                FocusManager.clear();
+                root.name-clicked();
+            }
+        }
+    }
+
+    // The name field is focused as soon as it appears and left on blur.
+    if root.name-editable && root.name-editing : name-input := TextInput {
+        x: 32px;
+        y: 9px;
+        width: parent.width - 49px;
+        height: 16px;
+        text <=> root.name;
+        font-size: 16px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.default-text-color.transparentize(0.1);
+        // The macOS backend paints the caret with the selection colour, so a
+        // translucent tint yields a text-coloured caret.
+        selection-background-color: Theme.default-text-color.with-alpha(0.3);
+        selection-foreground-color: Theme.default-text-color;
+        single-line: true;
+        vertical-alignment: center;
+        init => { self.focus(); }
+        changed has-focus => {
+            if !self.has-focus && root.name-editing {
+                root.name-editing = false;
+            }
+        }
+        edited => { root.name-edited(); }
+        // Clicking any control elsewhere in the overlay drops the focus (see
+        // `FocusManager`), which ends the edit as well.
+        private property <int> clear-sequence: FocusManager.clear-sequence;
+        changed clear-sequence => { self.clear-focus(); }
+    }
+
+    // ----- details -----
+    details := HorizontalLayout {
+        x: 32px;
+        // 6px under the 16px title row.
+        y: 9px + 16px + 6px;
+        width: parent.width - 49px;
+        height: 13px;
+        // The tag is always first and carries no margin of its own.
+        spacing: 8px;
+        alignment: start;
+        cross-axis-alignment: center;
+
+        tag := Rectangle {
+            width: tag-text.preferred-width + 12px;
+            height: 13px;
+            border-radius: 100px;
+            background: root.tag-color(root.loader.to-lowercase());
+
+            tag-text := Text {
+                text: root.loader == "" ? "Vanilla" : root.loader;
+                font-size: 11px;
+                font-weight: 500;
+                color: Theme.text-inverse;
+            }
+        }
+
+        // The settings view hides this when the runtime names no version; the
+        // delete dialog always shows it.
+        if root.version-always || root.minecraft-version != "" : HorizontalLayout {
+            spacing: 0px;
+            alignment: start;
+            cross-axis-alignment: center;
+
+            Text {
+                text: "Minecraft: ";
+                font-size: 11px;
+                font-weight: 300;
+                color: Theme.default-text-color.transparentize(0.1).with-alpha(0.72);
+            }
+
+            Text {
+                text: root.minecraft-version;
+                font-size: 11px;
+                font-weight: 500;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+        }
+
+        // The delete dialog's third row.
+        if root.playtime != "" : HorizontalLayout {
+            spacing: 0px;
+            alignment: start;
+            cross-axis-alignment: center;
+
+            Text {
+                text: root.playtime-label;
+                font-size: 11px;
+                font-weight: 300;
+                color: Theme.default-text-color.transparentize(0.1).with-alpha(0.72);
+            }
+
+            Text {
+                text: root.playtime;
+                font-size: 11px;
+                font-weight: 500;
+                color: Theme.default-text-color.transparentize(0.1);
+            }
+        }
+    }
+}

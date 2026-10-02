@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { BaseDialog } from "../../components/base-dialog.slint";
-import { BaseButton } from "../../components/base-button.slint";
-import { AppIcon } from "../../components/app-icon.slint";
+import { Dialog } from "dialog.slint";
+import { Button } from "../../components/controls/button.slint";
+import { AppIcon } from "../../components/display/app-icon.slint";
 import { Dialogs } from "../../globals/dialogs.slint";
 import { Navigation } from "../../globals/navigation.slint";
 
@@ -22,7 +22,7 @@ export component LaunchErrorDialogs inherits Rectangle {
     height: 100%;
     background: transparent;
 
-    no-account := BaseDialog {
+    no-account := Dialog {
         dialog-visible: Dialogs.no-account-error-visible;
         dialog-width: 500px;
         dialog-height: 146px;
@@ -45,7 +45,7 @@ export component LaunchErrorDialogs inherits Rectangle {
                     text: @tr("LaunchDialogs" => "To launch the game, you must have added at least one account");
                 }
             }
-            BaseButton {
+            Button {
                 horizontal-stretch: 1;
                 text: @tr("LaunchDialogs" => "Cancel launch");
                 clicked => {
@@ -56,7 +56,7 @@ export component LaunchErrorDialogs inherits Rectangle {
         }
     }
 
-    no-microsoft-account := BaseDialog {
+    no-microsoft-account := Dialog {
         dialog-visible: Dialogs.no-microsoft-account-error-visible;
         dialog-width: 500px;
         dialog-height: 146px;
@@ -78,7 +78,7 @@ export component LaunchErrorDialogs inherits Rectangle {
                     text: @tr("LaunchDialogs" => "To launch the game, you must have added at least one Microsoft account");
                 }
             }
-            BaseButton {
+            Button {
                 horizontal-stretch: 1;
                 text: @tr("LaunchDialogs" => "Cancel launch");
                 clicked => {
@@ -89,7 +89,7 @@ export component LaunchErrorDialogs inherits Rectangle {
         }
     }
 
-    refresh-failed := BaseDialog {
+    refresh-failed := Dialog {
         dialog-visible: Dialogs.account-refresh-failed-visible;
         dialog-width: 500px;
         dialog-height: 146px;
@@ -111,7 +111,7 @@ export component LaunchErrorDialogs inherits Rectangle {
                     text: @tr("LaunchDialogs" => "Failed to refresh the account. Check your network connection and try again, or log in to the account again");
                 }
             }
-            BaseButton {
+            Button {
                 horizontal-stretch: 1;
                 text: @tr("LaunchDialogs" => "Cancel launch");
                 clicked => {
@@ -123,7 +123,7 @@ export component LaunchErrorDialogs inherits Rectangle {
     }
 
     // A two-line message and a filled blue button.
-    no-java := BaseDialog {
+    no-java := Dialog {
         dialog-visible: Dialogs.no-suitable-java-error-visible;
         dialog-width: 500px;
         dialog-height: 144px;
@@ -154,7 +154,7 @@ export component LaunchErrorDialogs inherits Rectangle {
                     }
                 }
             }
-            BaseButton {
+            Button {
                 horizontal-stretch: 1;
                 text: @tr("LaunchDialogs" => "Cancel launch");
                 text-color: Theme.text-inverse;
