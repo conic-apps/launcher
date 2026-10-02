@@ -12,34 +12,9 @@ pub(crate) mod slint_backend {
     slint::include_modules!();
 }
 
-mod account_add;
-mod account_avatar;
-mod background;
-mod command_palette;
-mod config_bridge;
-mod content;
-mod create_instance;
-mod formatting;
-mod game;
-mod instance_settings;
-mod instance_view;
-mod json;
-mod launch;
-mod logs;
-// The Markdown/HTML renderer behind the content detail panels. It came in from
-// a standalone crate and keeps that crate's habit of `unwrap`/`expect` in
-// internal invariants, so the crate-level deny is opted out of here.
-#[allow(clippy::unwrap_used)]
-mod markdown;
-mod multiplayer;
-mod music;
-mod native;
-mod report;
-mod runtime;
-mod scroll_input;
-mod settings;
-mod setup;
-mod worldmap;
+mod support;
+mod ui;
+mod usecases;
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -50,7 +25,7 @@ use window::WindowService;
 
 /// Claims the single-instance role, waiting out a relaunch.
 ///
-/// A normal launch tries once. A process started by [`config_bridge::relaunch`]
+/// A normal launch tries once. A process started by [`ui::services::app_config::relaunch`]
 /// carries `CONIC_RELAUNCH`, and the parent it is replacing is still releasing
 /// the claim, so it retries for a few seconds before giving up.
 fn acquire_single_instance() -> Option<single_instance::SingleInstance> {
@@ -72,7 +47,7 @@ fn main() {
     // Create the data directory layout before anything reads from it — the
     // logger writes into it.
     storage::LOCATIONS.init();
-    logs::init();
+    support::logs::init();
 
     // Claim the single-instance role before anything else: a second launch of
     // the app is not a second window, it is this window coming forward. The
@@ -89,8 +64,8 @@ fn main() {
 
     // The platform's winit backend hook — the macOS transparent titlebar, the
     // Windows frameless window — has to be installed before any window exists,
-    // which is why it runs here rather than beside `native::install` below.
-    native::install_backend();
+    // which is why it runs here rather than beside `support::platform::install` below.
+    support::platform::install_backend();
 
     let ui = App::new().expect("failed to construct the app UI");
 
@@ -108,7 +83,7 @@ fn main() {
 
     // Pick the bundled translation. Must run after a component exists (that's
     // what installs the translation bundle).
-    config_bridge::select_locale(config.language.as_deref());
+    ui::services::app_config::select_locale(config.language.as_deref());
 
     // Platform.
     let platform = platform::PLATFORM_INFO.clone();
@@ -127,50 +102,50 @@ fn main() {
 
     // Seed the settings global and keep the in-memory config in sync with it.
     let settings = ui.global::<AppConfig>();
-    config_bridge::apply_config(&settings, &config);
+    ui::services::app_config::apply_config(&settings, &config);
 
     let shared = Rc::new(RefCell::new(config));
     let save_timer = Rc::new(Timer::default());
 
     // The window background comes first: the game view reports the current
     // instance to it as it is set up, and that report has to land somewhere.
-    background::controller::setup(&ui, Rc::clone(&shared));
+    ui::components::background::controller::setup(&ui, Rc::clone(&shared));
 
     // Settings + game view + overlay "scripts".
-    settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
-    game::setup(&ui, Rc::clone(&shared));
-    instance_settings::setup(&ui, Rc::clone(&shared));
-    content::setup(&ui);
-    launch::setup(&ui, Rc::clone(&shared));
-    create_instance::setup(&ui, Rc::clone(&shared));
-    account_add::setup(&ui);
+    ui::views::settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
+    ui::views::game::setup(&ui, Rc::clone(&shared));
+    ui::overlays::instance_settings::setup(&ui, Rc::clone(&shared));
+    ui::overlays::content::setup(&ui);
+    ui::views::launch::setup(&ui, Rc::clone(&shared));
+    ui::overlays::dialogs::create_instance::setup(&ui, Rc::clone(&shared));
+    ui::overlays::dialogs::account_add::setup(&ui);
     // The first-run wizard: the import-instances screen's two "create a blank
     // instance" buttons, the platform answer its Java screen asks for, and the
     // storage step that commits the location choice when the wizard finishes.
-    setup::setup(&ui, Rc::clone(&shared));
-    multiplayer::setup(&ui);
+    ui::views::setup::setup(&ui, Rc::clone(&shared));
+    ui::overlays::dialogs::multiplayer::setup(&ui);
     // The clock and the wheel/trackpad classification the scroll containers use.
-    scroll_input::setup(&ui);
+    ui::services::scroll::setup(&ui);
     // The saves panel's world map. It reads the clock above for its tile fades,
     // and its own component reports the world and the visible range, so it is
     // wired after both.
-    worldmap::setup(&ui);
+    ui::overlays::content::world_map::setup(&ui);
     // The background-music player: it runs for the whole session rather than
     // per page.
-    music::setup(&ui);
+    ui::overlays::music_player::setup(&ui);
     // The command palette, mounted on the same layer — it opens from the title
     // bar's search field and from the `Ctrl`/`⌘` + `/` shortcut, so it is up for
     // the whole session too. Its two openers are wired in the view, the way the
     // title bar's other actions are: `CommandPaletteState.open()` for the search
     // field's click, and `CommandPaletteState.toggle()` for the `Ctrl`/`⌘` + `/`
     // shortcut, which the app-level key scope in `app.slint` binds.
-    command_palette::setup(&ui);
+    ui::overlays::command_palette::setup(&ui);
 
     let window = WindowService::new(ui.clone_strong());
 
     // Everything the platform has to do differently: the AppKit traffic lights
     // and Dock icon, the Windows caption buttons and the frame they sit in.
-    native::install(&ui);
+    support::platform::install(&ui);
 
     let minimize_window = window.clone();
     ui.on_minimize_window(move || {
@@ -178,8 +153,8 @@ fn main() {
     });
 
     // Settings → Data storage changed a root: start a fresh process and stop
-    // this one. See `config_bridge::relaunch` for the hand-over.
-    ui.on_restart_app(config_bridge::relaunch);
+    // this one. See `ui::services::app_config::relaunch` for the hand-over.
+    ui.on_restart_app(ui::services::app_config::relaunch);
 
     // The window system's own close — the macOS traffic light, `Alt`+`F4`, a
     // window menu's Close, a taskbar's close — asks here first.
@@ -219,7 +194,7 @@ fn main() {
 
     // The music player's background volume follows the window's focus (the
     // store's `onFocusChanged`). Registered here, where the window service exists.
-    music::watch_focus(&window);
+    ui::overlays::music_player::watch_focus(&window);
 
     // Drag regions (`globals/window-drag.slint`): a press on one — the dialog's
     // scrim — moves the window.
@@ -270,7 +245,7 @@ fn main() {
 
     // On exit the multiplayer poll thread is joined and the Conic Nexus session
     // destroyed.
-    multiplayer::shutdown();
+    ui::overlays::dialogs::multiplayer::shutdown();
 
     cleanup_temp_folder();
 }

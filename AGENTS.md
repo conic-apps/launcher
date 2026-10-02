@@ -62,19 +62,46 @@ Python tooling in `tools/` is not part of any CI gate:
 ## Architecture
 
 - **`app/`** — the application crate (`conic-launcher`), the binary everything
-  ships. `app/src/*.rs` is the wiring layer between the Rust crates and the UI;
-  `app/ui/**.slint` is the whole interface; `app/build.rs` compiles the `.slint`
-  tree and generates `app/ui/icons.slint` from the SVGs under
-  `app/ui/assets/icons/`. The generated file is gitignored. `app/src/markdown/`
-  is the Slint-bound Markdown/HTML renderer: `comrak` + `parley`/`fontique` render
-  a content panel's body and push a display list into the Slint model, and the
-  companion views live at `app/ui/components/markdown/`. It sits in `app/` rather
-  than under `crates/` because it is not independent of the UI.
+  ships. `app/ui/**.slint` is the whole interface and `app/build.rs` compiles it,
+  generating `app/ui/icons.slint` from the SVGs under `app/ui/assets/icons/`
+  (gitignored). `app/src/` is layered — see *App layering* below. The
+  Slint-bound Markdown/HTML renderer lives at `app/src/ui/components/markdown/`
+  (its `.slint` half at `app/ui/components/markdown/`): `comrak` +
+  `parley`/`fontique` render a content panel's body and push a display list into
+  the Slint model, and the companion views draw it. It sits in `app/` rather than
+  under `crates/` because it is not independent of the UI.
 - **`crates/*/`** — Rust domain crates, one per capability, independent of the
   UI. The interface talks to them directly; there is no IPC layer.
 - **`packaging/`** — see Packaging.
 - **`app/i18n/<locale>/LC_MESSAGES/conic-launcher.po`** — 12 locales.
   `tools/update-i18n.py` owns them; do not hand-edit.
+
+### App layering (`app/src/`)
+
+Three layers, one direction: `main.rs` → `ui/` → `usecases/` → `crates/*`, with
+`support/` usable by any of them.
+
+- **`support/`** — process and OS plumbing with no UI counterpart: `runtime`,
+  `logs`, `json`, `formatting`, and `platform/` (the winit backend hook, the
+  macOS traffic lights and Dock icon, the Windows caption). `platform/` is the
+  window-shell driver and the one support module that touches `slint_backend`.
+- **`usecases/`** — the app's use cases: UI-neutral orchestration over the domain
+  crates. Nothing here mentions Slint, `slint_backend` or `ui/`. A use case
+  reports progress through a `shared::Sink<T>` port and staleness through
+  `usecases::generation::{Gate, Token}`.
+- **`ui/`** — the Slint adapter, and the only layer that touches `slint_backend`.
+  It **mirrors `app/ui/` bucket for bucket**: `ui/views/<surface>` ↔
+  `app/ui/views/…`, `ui/overlays/<surface>` ↔ `app/ui/overlays/…`,
+  `ui/components/<component>` ↔ `app/ui/components/…`, plus `ui/services/` for
+  the cross-surface concerns (`report` — delivery onto the event loop;
+  `app_config` — the `AppConfig` adapter and locale; `scroll`). The mirror is by
+  surface/component, not per `.slint` file, and `ui/components/` does not repeat
+  the `controls`/`display`/… role split.
+
+`main.rs` is the composition root: it loads the config, seeds `AppConfig`, and
+wires every surface's `setup`. A background task never touches the UI; it reports
+through `crate::ui::services::report::{report, deliver}` (or a crate's `Sink`,
+whose implementation lives in a `ui/` port).
 
 ### UI layout (`app/ui/`)
 
@@ -91,7 +118,7 @@ the bucket — not the feature — is what decides where a file goes:
   - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`,
     `PaletteRow`, `WindowBackground`.
   - `settings/` — `SettingItem`, `SettingGroup`, `SettingCollapse`.
-  - `markdown/` — the `.slint` half of `app/src/markdown/`.
+  - `markdown/` — the `.slint` half of `app/src/ui/components/markdown/`.
   - `title-bar.slint` plus a `title-bar/` folder of its private children
     (`navigation-button`, `title-bar-action-button`, `search-bar`). A component
     gets a same-named folder only when it has private children, and keeps them
@@ -108,7 +135,8 @@ the bucket — not the feature — is what decides where a file goes:
 - **`globals/`** — one singleton per domain (`Navigation`, `AppConfig`,
   `ContentState`, …). Slint components are only reachable from Rust through a
   global, and a global is also how cross-screen state is shared without prop
-  drilling; `app/src/<domain>/` wires each one.
+  drilling; the owning `app/src/ui/…` surface wires each one, and the ones no
+  single surface owns (`scroll`) live in `app/src/ui/services/`.
 
 Naming, once a file is placed: `*View` is a page, `*Overlay`/`*Dialog`/`*Panel`/
 `*Card` is a surface, `*Root` is an overlay layer host. There is **no `base-`
@@ -125,7 +153,7 @@ and is what catches a missed one.
 - `crates/window` — window operations (minimize/maximize/fullscreen,
   `bring_to_front`) and the winit event-filter fan-out. macOS gets a
   transparent title bar with the real traffic lights; Windows gets
-  `with_decorations(false)` plus `app/src/native/windows/caption.rs` drawing the
+  `with_decorations(false)` plus `app/src/support/platform/windows/caption.rs` drawing the
   controls itself; Linux draws them in the title bar.
 - `crates/single-instance` — the second launch is not a second window. Linux uses
   D-Bus (`zbus`), macOS a socket, Windows a named mutex.
@@ -155,6 +183,7 @@ and is what catches a missed one.
 | `platform`        | OS detection                                               |
 | `shared`          | Common types/utilities (the shared `HTTP_CLIENT`)          |
 | `single-instance` | One instance per machine                                   |
+| `tilemap`         | World-map tile source port (`TileSource`) and its plain data |
 | `statistics`      | Playtime statistics                                        |
 | `version`         | Minecraft version metadata                                 |
 | `window`          | Window operations and the winit backend hook               |
@@ -186,7 +215,7 @@ and is what catches a missed one.
 - Rust touches a Slint component only from the event loop. From another thread,
   go through `upgrade_in_event_loop` — a `Weak` crosses threads, a strong handle
   cannot.
-- Keep the winit backend hook (`app/src/native/`, reached through
+- Keep the winit backend hook (`app/src/support/platform/`, reached through
   `native::install_backend`) as the only place window attributes are set. It has
   to run before any winit window exists, which is why `main` calls it before
   `App::new`.
@@ -398,7 +427,7 @@ either script:
   types an Objective-C `BOOL` as `bool` on arm64 (where C's `BOOL` is `_Bool`)
   and as `i8` on x86_64 (where it is `signed char`), so code that returns one
   straight out of an FFI call builds for Apple Silicon and fails for Intel with
-  `expected bool, found i8`. `app/src/native/macos/traffic_lights.rs`'s
+  `expected bool, found i8`. `app/src/support/platform/macos/traffic_lights.rs`'s
   `add_method` is the
   one place this bites; it goes through `i8` to satisfy both. A `--universal`
   build is what surfaces this, and it is one reason CI builds each architecture

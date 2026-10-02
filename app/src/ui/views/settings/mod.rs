@@ -1,0 +1,316 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+//! The settings "script": wires the `AppConfig` global callbacks (the settings
+//! screens) to the config crate and the OS integrations.
+
+use std::{cell::RefCell, path::PathBuf, rc::Rc, time::Duration};
+
+use java_discovery::{JavaRuntime as ScannedJava, ScanOptions, scan_java_runtimes_cached};
+use slint::{ComponentHandle, ModelRc, SharedString, Timer, TimerMode, VecModel};
+
+use crate::slint_backend::{App, AppConfig, Dialogs, GameState, JavaRuntime};
+use crate::ui::services::app_config;
+
+thread_local! {
+    /// The last Java scan: the non-managed runtimes, after the `!is_managed`
+    /// filter. Only accessed on the UI thread so it can stay an `Rc`-free,
+    /// `Send`-free `RefCell` while the scan itself runs on a worker; it is what
+    /// lets the enable/disable toggles redraw the list without rescanning the
+    /// disk.
+    static JAVA_CACHE: RefCell<Vec<ScannedJava>> = const { RefCell::new(Vec::new()) };
+}
+
+/// Windows reports the extended-length form of a path, which is not what a user
+/// should be shown.
+///
+/// This is display only — the switch's callback and `disabled_java_runtime` keep
+/// the raw path, formatted only for the description.
+fn format_java_path(path: &str) -> String {
+    if let Some(rest) = path.strip_prefix(r"\\?\UNC\") {
+        format!(r"\\{rest}")
+    } else if let Some(rest) = path.strip_prefix(r"\\?\") {
+        rest.to_string()
+    } else {
+        path.to_string()
+    }
+}
+
+/// Builds the Java runtime model, marking the paths present in `disabled`.
+fn java_model(runtimes: &[ScannedJava], disabled: &[String]) -> ModelRc<JavaRuntime> {
+    let rows: Vec<JavaRuntime> = runtimes
+        .iter()
+        .map(|runtime| {
+            let path = runtime.path.to_string_lossy().to_string();
+            JavaRuntime {
+                major: runtime.major_version as i32,
+                vendor: runtime.vendor.display_name().into(),
+                version: runtime.version.clone().into(),
+                arch: runtime.arch.display_name().into(),
+                enabled: !disabled.iter().any(|disabled| disabled == &path),
+                display_path: format_java_path(&path).into(),
+                path: path.into(),
+            }
+        })
+        .collect();
+    ModelRc::new(VecModel::from(rows))
+}
+
+/// Registers every settings callback on the `AppConfig` global.
+pub fn wire(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>) {
+    wire_config_changes(ui, Rc::clone(&shared), Rc::clone(&save_timer));
+    wire_link_actions(ui);
+    wire_storage_actions(ui);
+
+    wire_background_actions(ui, Rc::clone(&shared), Rc::clone(&save_timer));
+    wire_java_actions(ui, shared);
+}
+
+/// The Data storage rows: a folder chooser per location, whose result is written
+/// to the bootstrap file rather than the config, then a restart prompt.
+fn wire_storage_actions(ui: &App) {
+    let settings = ui.global::<AppConfig>();
+    let weak = ui.as_weak();
+    settings.on_pick_data_location(move |which| {
+        let which = which.to_string();
+        let current = match which.as_str() {
+            "launcher" => storage::LOCATIONS.launcher.root.clone(),
+            "minecraft" => storage::LOCATIONS.minecraft.root.clone(),
+            "instances" => storage::LOCATIONS.instances.root.clone(),
+            _ => return,
+        };
+        let Some(chosen) = app_config::pick_directory("Select a folder", &current) else {
+            return;
+        };
+        let mut overrides = storage::load_overrides();
+        // Answering storage here means the wizard's storage step is skipped if
+        // the wizard is opened later.
+        overrides.initialized = true;
+        match which.as_str() {
+            "launcher" => overrides.launcher = Some(chosen),
+            "minecraft" => overrides.minecraft = Some(chosen),
+            "instances" => overrides.instances = Some(chosen),
+            _ => return,
+        }
+        if let Err(error) = storage::save_overrides(&overrides) {
+            log::error!("failed to save the storage location: {error}");
+            return;
+        }
+        if let Some(ui) = weak.upgrade() {
+            ui.global::<Dialogs>().set_restart_required_visible(true);
+        }
+    });
+}
+
+/// The `AppConfig.changed` handler: collect the global into the config,
+/// re-apply the locale if it moved, and persist on a short debounce.
+fn wire_config_changes(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>) {
+    let settings = ui.global::<AppConfig>();
+    // `CONIC_LOCALE` forces the translation and disables runtime switching.
+    let forced_locale = std::env::var("CONIC_LOCALE").is_ok();
+
+    // Debounced persistence: editing a text field fires `changed` per keypress.
+    {
+        let shared = Rc::clone(&shared);
+        let save_timer = Rc::clone(&save_timer);
+        let weak = ui.as_weak();
+        settings.on_changed(move || {
+            let mut language_changed = None;
+            if let Some(ui) = weak.upgrade() {
+                let settings = ui.global::<AppConfig>();
+                let mut config = shared.borrow_mut();
+                let old_language = config.language.clone();
+                *config = app_config::collect_config(&settings, config.clone());
+                if !forced_locale && config.language != old_language {
+                    language_changed = Some(config.language.clone().unwrap_or_default());
+                }
+                // The content count suffix is locale-dependent, not translated.
+                ui.global::<GameState>()
+                    .set_count_unit(app_config::count_unit(config.language.as_deref()).into());
+            }
+            // A background setting may have moved — including the ones that
+            // decide *which* background shows, and the volumes and the switch
+            // the music player reads. Cheap when nothing did: the background
+            // controller compares what the config resolves to, and the music
+            // script only re-applies a volume that actually changed.
+            if let Some(ui) = weak.upgrade() {
+                crate::ui::components::background::controller::config_changed(&ui);
+                crate::ui::overlays::music_player::config_changed(&ui);
+            }
+            // Slint re-evaluates every `@tr` binding after this call, so the UI
+            // switches language without a restart.
+            if let Some(language) = language_changed {
+                app_config::apply_locale(app_config::resolve_locale(&language));
+            }
+            let shared = Rc::clone(&shared);
+            save_timer.start(
+                TimerMode::SingleShot,
+                Duration::from_millis(400),
+                move || {
+                    let config = shared.borrow();
+                    if let Err(error) = config::save_config(&config) {
+                        log::error!("failed to save config: {error}");
+                    }
+                },
+            );
+        });
+    }
+}
+
+/// The settings screens' link and data-directory openers.
+fn wire_link_actions(ui: &App) {
+    let settings = ui.global::<AppConfig>();
+
+    settings.on_open_url(move |url| {
+        if let Err(error) = app_config::open_external(url.as_str()) {
+            log::warn!("failed to open url '{url}': {error}");
+        }
+    });
+
+    settings.on_open_path(move |key| {
+        let path = match key.as_str() {
+            "music" => storage::LOCATIONS.launcher.music.clone(),
+            "logs" => storage::LOCATIONS.launcher.logs.clone(),
+            other => PathBuf::from(other.to_string()),
+        };
+        if let Err(error) = app_config::open_external(&path.to_string_lossy()) {
+            log::warn!("failed to open path '{}': {error}", path.display());
+        }
+    });
+}
+
+/// The wallpaper picker and its removal, both of which bypass `AppConfig.changed`
+/// and have to nudge the background controller themselves.
+fn wire_background_actions(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>) {
+    let settings = ui.global::<AppConfig>();
+
+    {
+        let shared = Rc::clone(&shared);
+        let save_timer = Rc::clone(&save_timer);
+        let weak = ui.as_weak();
+        settings.on_pick_background_image(move || {
+            let Some(path) = app_config::pick_image_file() else {
+                return;
+            };
+            match config::set_background_image(&path) {
+                Ok(filename) => {
+                    let mut config = shared.borrow_mut();
+                    config.appearance.background_image = Some(filename.clone());
+                    drop(config);
+                    if let Some(ui) = weak.upgrade() {
+                        ui.global::<AppConfig>()
+                            .set_background_image(filename.into());
+                        // This path writes the config itself rather than going
+                        // through `AppConfig.changed`, so nothing else would
+                        // tell the background to resolve its source again.
+                        crate::ui::components::background::controller::config_changed(&ui);
+                    }
+                    let shared = Rc::clone(&shared);
+                    save_timer.start(
+                        TimerMode::SingleShot,
+                        Duration::from_millis(50),
+                        move || {
+                            let config = shared.borrow();
+                            let _ = config::save_config(&config);
+                        },
+                    );
+                }
+                Err(error) => log::error!("failed to set background image: {error}"),
+            }
+        });
+    }
+
+    {
+        let shared = Rc::clone(&shared);
+        let weak = ui.as_weak();
+        settings.on_remove_background_image(move || {
+            if let Err(error) = config::remove_background_image() {
+                log::warn!("failed to remove background image: {error}");
+            }
+            if let Some(ui) = weak.upgrade() {
+                ui.global::<AppConfig>()
+                    .set_background_image(SharedString::default());
+            }
+            shared.borrow_mut().appearance.background_image = None;
+            // As above: this does not go through `AppConfig.changed`.
+            if let Some(ui) = weak.upgrade() {
+                crate::ui::components::background::controller::config_changed(&ui);
+            }
+            let config = shared.borrow();
+            let _ = config::save_config(&config);
+        });
+    }
+}
+
+/// Java runtime management: the on-disk scan and the enable/disable toggles.
+fn wire_java_actions(ui: &App, shared: Rc<RefCell<config::Config>>) {
+    let settings = ui.global::<AppConfig>();
+
+    {
+        let shared = Rc::clone(&shared);
+        let weak = ui.as_weak();
+        settings.on_rescan_java(move || {
+            let disabled = shared.borrow().disabled_java_runtime.clone();
+            if let Some(ui) = weak.upgrade() {
+                let settings = ui.global::<AppConfig>();
+                settings.set_java_scanning(true);
+                settings.set_java_scan_error(SharedString::default());
+            }
+            let weak = weak.clone();
+            // The scan walks the disk and starts a JVM per candidate, so it runs
+            // on the runtime's blocking pool. `scan_java_runtimes_cached` reuses a
+            // result younger than 30s, so revisiting the page does not re-probe
+            // every candidate.
+            crate::support::runtime::spawn_blocking(move || {
+                let options = ScanOptions {
+                    extra_home_dirs: Vec::new(),
+                    managed_dirs: vec![storage::LOCATIONS.minecraft.runtime.clone()],
+                };
+                // Only the non-managed (system) runtimes are listed; the managed
+                // ones the launcher installs are hidden.
+                let scanned = scan_java_runtimes_cached(&options).map(|result| {
+                    result
+                        .runtimes
+                        .into_iter()
+                        .filter(|runtime| !runtime.is_managed)
+                        .collect::<Vec<_>>()
+                });
+                crate::ui::services::report::report(&weak, move |ui| {
+                    let settings = ui.global::<AppConfig>();
+                    let (runtimes, error) = match scanned {
+                        Ok(runtimes) => (runtimes, SharedString::default()),
+                        Err(error) => (Vec::new(), SharedString::from(error.to_string())),
+                    };
+                    settings.set_java_runtimes(java_model(&runtimes, &disabled));
+                    settings.set_java_scanning(false);
+                    settings.set_java_scan_error(error);
+                    JAVA_CACHE.with(|cache| *cache.borrow_mut() = runtimes);
+                });
+            });
+        });
+    }
+    {
+        let shared = Rc::clone(&shared);
+        let weak = ui.as_weak();
+        settings.on_set_java_enabled(move |path, enabled| {
+            let path = path.to_string();
+            {
+                let mut config = shared.borrow_mut();
+                if enabled {
+                    config.disabled_java_runtime.retain(|p| p != &path);
+                } else if !config.disabled_java_runtime.iter().any(|p| p == &path) {
+                    config.disabled_java_runtime.push(path);
+                }
+            }
+            if let Some(ui) = weak.upgrade() {
+                let settings = ui.global::<AppConfig>();
+                let disabled = shared.borrow().disabled_java_runtime.clone();
+                let model = JAVA_CACHE.with(|cache| java_model(&cache.borrow(), &disabled));
+                settings.set_java_runtimes(model);
+            }
+            let config = shared.borrow();
+            let _ = config::save_config(&config);
+        });
+    }
+}

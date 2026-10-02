@@ -24,7 +24,7 @@ import { WorldMapState, WorldSource } from "../../globals/worldmap.slint";
 //   * A tile fades in over 100ms the first time it is rendered, and does not
 //     fade when it comes back out of the cache.
 //
-// The caches live in Rust (`app/src/worldmap/`): this component only draws
+// The caches live in Rust (`app/src/ui/overlays/content/world_map/`): this component only draws
 // what Rust hands it, and a `SharedPixelBuffer` needs no encode-decode round
 // trip (see `globals/worldmap.slint`).
 //

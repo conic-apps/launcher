@@ -12,7 +12,7 @@
 //   * the *domain* state lives in Rust — the instance list, the Modrinth and
 //     CurseForge searches — and is pushed in as a plain model of `PaletteItem`.
 //
-// The rendered list is built in Rust (`app/src/command_palette/`) rather than
+// The rendered list is built in Rust (`app/src/ui/overlays/command_palette/`) rather than
 // assembled in an expression, for the reason the instance list and the content
 // cards give: a Slint expression can neither build a model nor index one, and
 // the list's order, filtering, section labels and heights all have to agree.
@@ -243,6 +243,6 @@ export global CommandPaletteState {
     /// root mode.
     callback back-to-root();
     /// The 250ms debounce after the last keystroke elapsed. The search itself runs
-    /// on the tokio runtime (`app/src/command_palette/`).
+    /// on the tokio runtime (`app/src/ui/overlays/command_palette/`).
     callback run-search();
 }
