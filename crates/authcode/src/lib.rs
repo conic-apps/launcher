@@ -3,28 +3,26 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The loopback listener the Microsoft browser flow hands its authorization
-//! code to, standing in for the deep link the Tauri app registers.
+//! code to.
 //!
 //! # Why a listener at all
 //!
 //! The authorization-code flow ends with the browser being redirected to a URI
-//! the app is expected to receive. The original design asks the OS for
-//! `conic-launcher://oauth2/microsoft/callback` through
-//! `tauri-plugin-deep-link`, which means registering a scheme with the desktop
-//! environment, claiming single-instance ownership of it, and trusting the
-//! platform to route it — none of which a Slint application can do, and each
-//! of which the three desktops the launcher ships on do differently.
-//! Microsoft's own guidance for a native app is a loopback redirect instead,
-//! and that is what this is: the browser is sent to
-//! `http://localhost:<port>/callback`, and the code arrives as an ordinary
-//! `GET` to a socket this process already holds.
+//! the app is expected to receive. The alternative is a custom URI scheme
+//! (`conic-launcher://oauth2/microsoft/callback`) registered with the desktop
+//! environment, which means claiming single-instance ownership of it and
+//! trusting the platform to route it — something each of the three desktops
+//! the launcher ships on does differently. Microsoft's own guidance for a
+//! native app is a loopback redirect instead, and that is what this is: the
+//! browser is sent to `http://localhost:<port>/callback`, and the code arrives
+//! as an ordinary `GET` to a socket this process already holds.
 //!
 //! # Why so little of a server
 //!
 //! It answers one request and goes away. A web framework would bring a
 //! dependency tree, a router, a middleware stack and a connection state
 //! machine for a single `GET` carrying a code in its query string, so the
-//! framing is [`http`]'s: a request line, a status line, a body. All of it is
+//! framing is `http`'s: a request line, a status line, a body. All of it is
 //! bounded — a loopback listener is reachable by every process on the machine
 //! — and the bounds are in `http`.
 //!
@@ -60,8 +58,8 @@ use uuid::Uuid;
 pub use error::{Error, Result};
 pub use page::{Messages, Palette, Rgba, Screen};
 
-/// The path the browser is redirected to, and the only one that answers with
-/// anything but the "still waiting" page.
+/// The path the browser is redirected to, and the only one that can end the
+/// login; every other path only gets a page.
 const CALLBACK_PATH: &str = "/callback";
 
 /// What the browser's redirect turned out to be.
@@ -72,8 +70,8 @@ pub enum Outcome {
     Code(String),
     /// The sign-in was refused — by the user at Microsoft's consent screen, or
     /// by Microsoft itself. Carries `error_description` where there was one and
-    /// `error` otherwise, which is what the browser page shows and what the
-    /// caller's log line says.
+    /// `error` otherwise, which is what the caller's log line records; the
+    /// browser page itself only ever shows the generic failure sentence.
     Declined(String),
     /// Nothing usable came back: the caller's deadline passed, or the listener
     /// could not go on accepting.
@@ -216,8 +214,8 @@ impl Shared {
     }
 
     /// The page one browser is to be shown, rendered on the spot rather than at
-    /// bind time: a request can be minutes after the bind, and rendering it
-    /// costs one `format!`.
+    /// bind time: a request can be minutes after the bind, and rendering it is
+    /// one pass over the template.
     fn render(&self, screen: Screen) -> String {
         page::render(screen, &self.page.palette, &self.page.messages)
     }

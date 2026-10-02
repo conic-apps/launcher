@@ -8,9 +8,7 @@ pkgdesc='A modern Minecraft launcher'
 arch=('x86_64' 'aarch64')
 url='https://github.com/conic-apps/launcher'
 license=('GPL-3.0-only' 'LicenseRef-Conic-Additional-Terms')
-# The Slint/winit runtime. There is no webview here any more, so the Tauri set
-# (gtk3, libsoup3, webkit2gtk-4.1, gdk-pixbuf2, cairo, glib2, appindicator) is
-# gone, and what replaces it is what the binary actually opens:
+# The Slint/winit runtime. These are the libraries the binary actually opens:
 #   fontconfig     — `fontique`, for the interface's own text layout
 #   libxkbcommon   — winit's keymap handling
 #   libx11, libxcb — winit's X11 backend (x11-dl and the pure-Rust x11rb)

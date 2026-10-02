@@ -2,19 +2,15 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The player: the audio graph the webview built out of an `<audio>` element,
-//! an `AudioContext`, an `AnalyserNode` and a `GainNode`, together with the
-//! transport the `useMusicStore` actions drove it with (src/store/music.ts).
+//! The player: the audio graph and the transport that drives it.
 //!
 //! # The graph
 //!
-//! `source → analyser → gain → destination` becomes
-//! `decoded track → resampler → (analyser tap) → gain → output device`, in that
-//! order, because the order is visible: the analyser sits *before* the gain, so
-//! the visualiser is unaffected by the volume. The resampler is new and has no
-//! counterpart — the element was handed the device's own pipeline and never had
-//! to convert rates, while a native player has to (a 44.1 kHz track on a 48 kHz
-//! device would otherwise play 9% fast).
+//! `decoded track → resampler → gain → output device`, with the analyser tapping
+//! the post-gain output, because the order is visible: a volume change scales the
+//! bars along with the sound. The resampler converts the track's rate to the
+//! device's, which is not optional: a 44.1 kHz track on a 48 kHz device would
+//! otherwise play 9% fast.
 //!
 //! # The threads
 //!
@@ -31,13 +27,9 @@
 //!     to seek. Neither blocks, so a track change and a scrub are both instant
 //!     even though the audio behind them is not.
 //!
-//! The first version had two threads and no ring buffer: it decoded a whole
-//! track into a `Vec<i16>` before playback started, so every track change cost a
-//! full-file read — seconds, for the hundred-megabyte lossless files a music
-//! library tends to hold.
-//!
-//! The read side — [`Player::state`], [`Player::with_spectrum`] — is a lock and
-//! a borrow, so the UI can poll it as often as it likes without allocating.
+//! The read side — [`Player::state`], [`Player::with_spectrum`] — takes only the
+//! graph's lock, so the UI can poll it as often as it likes without waking the
+//! worker.
 
 use std::cell::RefCell;
 use std::collections::VecDeque;
@@ -58,21 +50,18 @@ use crate::decode::TrackSource;
 use crate::error::{Error, Result};
 use crate::session::{self, SavedTrack};
 
-/// How often the store's `ontimeupdate` handler persisted the position. The web
-/// view persisted at most every 5s while a track played; the poll the app drives
-/// through [`Player::tick`] keeps the same limit.
+/// How often [`Player::tick`] persists the position: at most every 5 seconds
+/// while a track plays.
 pub const PERSIST_INTERVAL: Duration = Duration::from_millis(5000);
 
-/// How long `applyVolume(true)` ramps the gain for, the `linearRampToValueAtTime
-/// (volume, now + 1.0)` of the store.
+/// How long a smooth volume change ramps the gain over.
 const VOLUME_RAMP: Duration = Duration::from_secs(1);
 
 /// How often the audio thread runs the transform.
 ///
-/// The webview read the analyser once per animation frame, so the smoothing
-/// advanced at the display's refresh rate. Nothing here knows that rate, so the
-/// transform runs on a fixed 60Hz clock instead — the same cadence on every
-/// machine, and within one frame of the original on a 60Hz display.
+/// The transform runs on a fixed 16 ms clock (about 60 Hz) so its cadence is the
+/// same on every machine, rather than tying the smoothing to a display refresh
+/// rate the player cannot know.
 const ANALYSIS_INTERVAL: Duration = Duration::from_millis(16);
 
 /// How much decoded audio the ring buffer holds, in seconds.
@@ -83,17 +72,17 @@ const ANALYSIS_INTERVAL: Duration = Duration::from_millis(16);
 /// visibly lead the sound.
 const RING_SECONDS: f64 = 2.0;
 
-/// The fraction of the ring the worker refills to before it waits again.
+/// The fraction of the ring below which the callback wakes the worker to refill.
 ///
-/// Aiming at half rather than full leaves room to keep the device fed while the
-/// next batch is being decoded, and it is the level the worker calls "enough".
+/// Waking at half rather than waiting for the ring to run dry leaves room to keep
+/// the device fed while the next batch is being decoded.
 const RING_LOW_WATER: f64 = 0.5;
 
 /// How many consecutive reads may produce nothing before a track is given up on.
 ///
-/// A single undecodable packet is skipped, which the element also did; a run of
-/// them means the rest of the file is not going to decode either, and the worker
-/// must not spin on a track that will never yield another sample.
+/// A single undecodable packet is skipped; a run of them means the rest of the
+/// file is not going to decode either, and the worker must not spin on a track
+/// that will never yield another sample.
 const MAX_STALLED_READS: u32 = 64;
 
 /// Everything the UI shows about the transport, as one snapshot.
@@ -116,21 +105,21 @@ pub struct PlayerState {
     pub shuffle: bool,
     /// The `repeat` flag.
     pub repeat: bool,
-    /// The last failure, the one the store logged through `console.error`.
+    /// The last failure, to show in the UI.
     pub error: Option<String>,
     /// How many track selections are still being opened. A selection is
-    /// asynchronous — the file has to be read and its decoder built before the
-    /// transport can say it is playing — so a caller has to be able to tell "not
-    /// playing yet" from "never going to play".
+    /// asynchronous — the container has to be opened and its decoder built before
+    /// the transport can say it is playing — so a caller has to be able to tell
+    /// "not playing yet" from "never going to play".
     pub pending: u32,
     /// Whether the transport is waiting on audio: a selection being opened, or
-    /// the ring buffer having run dry. `buffering` is what a UI shows instead of
-    /// silently sitting still.
+    /// the ring buffer having run short. `buffering` is what a UI shows instead
+    /// of silently sitting still.
     pub buffering: bool,
 }
 
 impl PlayerState {
-    /// The selected track, the `currentTrack` getter.
+    /// The selected track, if any.
     pub fn current_track(&self) -> Option<&MusicFile> {
         self.current_index.and_then(|index| self.tracks.get(index))
     }
@@ -142,18 +131,18 @@ struct Graph {
     /// Woken for either of the two things the worker sleeps on: the device
     /// needing samples, or a command having been sent.
     signal: Condvar,
-    /// The requested `fftSize`, read by the audio thread (the Vue's module-level
-    /// `targetFftSize`). An atomic rather than a field of `GraphState` because it
-    /// is the one piece of configuration that arrives from the UI thread and is
-    /// only *applied* on the audio thread, which owns the transform.
+    /// The requested `fftSize`, set by the UI thread and only *applied* on the
+    /// audio thread, which owns the transform. An atomic rather than a field of
+    /// `GraphState` because it is the one piece of configuration that arrives
+    /// from the UI thread.
     fft_size: AtomicUsize,
 }
 
 /// Locks the graph, recovering from a poisoned mutex.
 ///
-/// A panic anywhere in the graph must not silence the device: the callback
-/// borrows the lock twice a second and a poisoned one would otherwise take the
-/// music down for the rest of the session.
+/// A panic anywhere in the graph must not silence the device: the callback takes
+/// the lock on every buffer and a poisoned one would otherwise take the music
+/// down for the rest of the session.
 fn lock(state: &Mutex<GraphState>) -> MutexGuard<'_, GraphState> {
     state
         .lock()
@@ -166,9 +155,6 @@ fn lock(state: &Mutex<GraphState>) -> MutexGuard<'_, GraphState> {
 /// nothing may be done to the graph before the caller has re-checked why it was
 /// waiting.
 fn wait(graph: &Graph, guard: MutexGuard<'_, GraphState>) {
-    // The guard this hands back is dropped here: waking is the point, not the
-    // state, and nothing may be done to the graph before the caller has
-    // re-checked why it was waiting.
     drop(
         graph
             .signal
@@ -180,8 +166,7 @@ fn wait(graph: &Graph, guard: MutexGuard<'_, GraphState>) {
 struct GraphState {
     tracks: Arc<Vec<MusicFile>>,
     current_index: Option<usize>,
-    /// Whether a track is open on the worker, playing or not — the `audio.src`
-    /// the store re-prepared when it was empty.
+    /// Whether a track is open on the worker, playing or not.
     loaded: bool,
     /// How far into the current track, in seconds. Published by the worker, which
     /// is the only thing that knows how far its reader has got and how much of it
@@ -193,7 +178,7 @@ struct GraphState {
     playing: bool,
     /// The track ran out and the ring drained; the worker picks this up.
     ended: bool,
-    /// The device's rate and channel count — the `AudioContext`'s.
+    /// The device's rate and channel count.
     sample_rate: f64,
     device_channels: usize,
     /// The target gain, and the gain itself, which is what the 1s ramp moves.
@@ -209,14 +194,14 @@ struct GraphState {
     /// it rather than jumping to silence. A step to zero from mid-waveform is an
     /// audible click; a held sample is not.
     tail: f32,
-    /// The pre-gain signal the analyser reads, newest last.
+    /// The post-gain output the analyser reads, newest last.
     tap: Vec<f32>,
     /// The transform, owned by the audio thread (it is the only writer).
     analyser: Analyser,
     /// The last spectrum, in dB. Read under the same lock as everything else, so
     /// it needs no copy of its own.
     spectrum: Vec<f32>,
-    /// The ring has run dry and the device is playing into an empty one.
+    /// The ring ran short and the device had to repeat the held sample.
     starved: bool,
     last_analysis: Option<Instant>,
     shuffle: bool,
@@ -227,7 +212,7 @@ struct GraphState {
     pending: u32,
     /// When the position was last written to the session file.
     last_persisted: Option<Instant>,
-    /// The `Math.random()` of `randomIndex`, seeded from the clock.
+    /// State for the shuffle pick, seeded from the clock.
     random: u64,
     /// A position the UI thread asked to move to, with the generation it was
     /// asked in. The worker performs it, because on a compressed track a seek
@@ -242,9 +227,9 @@ struct GraphState {
 #[derive(Debug)]
 enum Command {
     /// Open a track and make it the current one, starting playback when
-    /// `autoplay` — the `playIndex` / `preparePlayback` pair.
+    /// `autoplay`.
     Select { index: usize, autoplay: bool },
-    /// `restoreSession`: put the playlist and the saved position back.
+    /// Put the playlist and the saved position back.
     Restore {
         tracks: Arc<Vec<MusicFile>>,
         saved: Option<SavedTrack>,
@@ -273,8 +258,8 @@ impl GraphState {
         self.gain
     }
 
-    /// How full the ring may be, and how full counts as "enough" — the point the
-    /// worker refills to and the level the device wakes it at.
+    /// How full counts as "enough" (the level the callback wakes the worker at),
+    /// and the most the ring may hold (the point the worker stops refilling).
     fn ring_bounds(&self) -> (usize, usize) {
         let per_second = (self.sample_rate * self.device_channels as f64).max(1.0);
         let capacity = (per_second * RING_SECONDS) as usize;
@@ -306,11 +291,10 @@ impl GraphState {
     /// The analyser's input, extended with what is being played right now.
     ///
     /// This is the mean of the channels of the samples the device has just been
-    /// given, which is the signal the spectrum has to describe: the visualiser
-    /// sits *before* the gain, so lowering the volume dims the music and leaves
-    /// the bars where they were, and both of those only hold if the analyser is
-    /// looking at what is playing rather than at what the worker has read ahead
-    /// into the ring — which is up to [`RING_SECONDS`] of the future.
+    /// given (after the gain), which is the signal the spectrum has to describe.
+    /// That only works if the analyser is looking at what is playing rather than
+    /// at what the worker has read ahead into the ring — which is up to
+    /// [`RING_SECONDS`] of the future.
     fn tap_out(&mut self, out: &[f32], fft_size: usize) {
         let channels = self.device_channels.max(1);
         let frames = out.len() / channels;
@@ -331,7 +315,7 @@ impl GraphState {
     }
 
     /// Throws the ring and the analyser's history away, for when the samples in
-    /// them no longer belong to anything the device is about to play.
+    /// them are not what the device is about to play.
     fn flush(&mut self) {
         self.ring.clear();
         self.tap.clear();
@@ -360,8 +344,8 @@ impl GraphState {
     }
 
     fn next_random(&mut self) -> f64 {
-        // xorshift64*, seeded from the clock. The store only needs a draw that
-        // is not always the same, which is not worth a dependency for.
+        // xorshift64*, seeded from the clock. The shuffle pick only needs a draw
+        // that is not always the same, which is not worth a dependency for.
         let mut state = self.random;
         state ^= state << 13;
         state ^= state >> 7;
@@ -370,7 +354,7 @@ impl GraphState {
         (state >> 11) as f64 / (1u64 << 53) as f64
     }
 
-    /// `pause`: stop feeding the device.
+    /// Stops feeding the device.
     fn pause(&mut self) {
         self.playing = false;
     }
@@ -422,19 +406,14 @@ fn new_graph(device_rate: f64, device_channels: usize) -> Arc<Graph> {
 
 /// The position to write to the session file, with the "written" mark set.
 ///
-/// The state is read and the mark set under *one* guard, which is released
-/// before the caller touches the filesystem. Both halves matter:
-///
-///   * a second acquisition while the first is alive is a deadlock rather than
-///     an error, because `std::sync::Mutex` is not reentrant — so the two steps
-///     have to share a guard and the file write has to be outside it, or the
-///     audio callback waits on the disk;
-///   * `if let` keeps the temporaries of its scrutinee alive through its body,
-///     so `if let Some(save) = locked().read() { locked().write(); }` holds the
-///     first guard across the second acquisition. That is what this function is,
-///     and the first version was not, and it hung the UI thread during
-///     `applicationDidFinishLaunching` — which is to say before the window
-///     existed at all.
+/// The state is read and the mark set under *one* guard, released before the
+/// caller touches the filesystem. A second acquisition while the first is alive
+/// is a deadlock rather than an error, because `std::sync::Mutex` is not
+/// reentrant — so the two steps share a guard and the file write happens outside
+/// it, or the audio callback waits on the disk. Written as
+/// `if let Some(save) = locked().read() { locked().write(); }` the first guard
+/// would live through the body and take the lock a second time, which is the
+/// shape this function exists to avoid.
 fn take_session(graph: &Graph) -> Option<SavedTrack> {
     let mut state = lock(&graph.state);
     let save = state.pending_session();
@@ -470,9 +449,7 @@ impl Player {
     /// Opens the default output device and starts the graph.
     ///
     /// The device is opened once, up front, and left running: the stream is
-    /// silent whenever nothing plays, which is also what saves the store from
-    /// having to create an `AudioContext` lazily — a web page may only resume one
-    /// from a user gesture, a rule that does not exist outside one.
+    /// silent whenever nothing plays, so no lazy creation is needed.
     pub fn new() -> Result<Player> {
         let host = cpal::default_host();
         let device = host.default_output_device().ok_or(Error::NoOutputDevice)?;
@@ -500,7 +477,7 @@ impl Player {
         })
     }
 
-    /// The playlist, the store's `tracks`.
+    /// The playlist.
     pub fn tracks(&self) -> Arc<Vec<MusicFile>> {
         Arc::clone(&lock(&self.graph.state).tracks)
     }
@@ -532,17 +509,17 @@ impl Player {
         lock(&self.graph.state).cursor
     }
 
-    /// Whether the device is being fed samples (`isPlaying`).
+    /// Whether the device is being fed samples.
     pub fn is_playing(&self) -> bool {
         lock(&self.graph.state).playing
     }
 
-    /// Starts a track and plays it (`playIndex`).
+    /// Starts a track and plays it.
     pub fn play_index(&self, index: usize) {
         self.select(index, true);
     }
 
-    /// Loads a track without playing it (`preparePlayback`).
+    /// Loads a track without playing it.
     pub fn prepare_index(&self, index: usize) {
         self.select(index, false);
     }
@@ -570,8 +547,8 @@ impl Player {
         }
     }
 
-    /// `togglePlay`: with nothing selected the first track starts, otherwise
-    /// this is the play/pause switch.
+    /// With nothing selected the first track starts, otherwise this is the
+    /// play/pause switch.
     pub fn toggle_play(&self) {
         let (current_index, playing) = {
             let state = lock(&self.graph.state);
@@ -590,15 +567,15 @@ impl Player {
         }
     }
 
-    /// `resume`: start feeding the device again.
+    /// Starts feeding the device again.
     pub fn resume(&self) {
         let (loaded, index) = {
             let state = lock(&self.graph.state);
             (state.loaded, state.current_index)
         };
         if !loaded {
-            // The store re-prepared the source when `audio.src` was empty, which
-            // is the case right after a startup with no track restored.
+            // The track is selected but not open, which is the case right after
+            // a startup that restored no source.
             if let Some(index) = index {
                 self.prepare_index(index);
                 return;
@@ -610,7 +587,7 @@ impl Player {
         self.graph.signal.notify_all();
     }
 
-    /// `pause`.
+    /// Pauses playback and saves the position.
     pub fn pause(&self) {
         {
             let mut state = lock(&self.graph.state);
@@ -620,7 +597,7 @@ impl Player {
         save_position(&self.graph);
     }
 
-    /// `next`.
+    /// Plays the next track.
     pub fn next(&self) {
         let (count, shuffle, index) = {
             let state = lock(&self.graph.state);
@@ -636,8 +613,8 @@ impl Player {
         });
     }
 
-    /// `prev`: within the first three seconds this restarts the track, otherwise
-    /// it steps back one.
+    /// Past the first three seconds this restarts the track from the top,
+    /// otherwise it steps back to the previous one.
     pub fn previous(&self) {
         let (count, position, index) = {
             let state = lock(&self.graph.state);
@@ -653,8 +630,7 @@ impl Player {
         self.play_index(index.map_or(count - 1, |index| (index + count - 1) % count));
     }
 
-    /// `seek`: records where the position should go, the `audio.currentTime` the
-    /// store assigned.
+    /// Records where the position should go.
     ///
     /// It does not move the reader — that is the worker's job, and on a
     /// compressed track it means re-decoding, which the thread that pressed the
@@ -675,26 +651,26 @@ impl Player {
         self.graph.signal.notify_all();
     }
 
-    /// `seekRatio`.
+    /// Seeks to `ratio` of the track's duration.
     pub fn seek_ratio(&self, ratio: f64) {
         let duration = lock(&self.graph.state).duration;
         self.seek(ratio * duration);
     }
 
-    /// `toggleShuffle`.
+    /// Toggles shuffle.
     pub fn toggle_shuffle(&self) {
         let mut state = lock(&self.graph.state);
         state.shuffle = !state.shuffle;
     }
 
-    /// `cycleRepeat`.
+    /// Toggles repeat.
     pub fn cycle_repeat(&self) {
         let mut state = lock(&self.graph.state);
         state.repeat = !state.repeat;
     }
 
-    /// `applyVolume`: `smooth` is the store's flag, the 1s ramp it applies when
-    /// the window loses or regains focus.
+    /// Sets the target volume; `smooth` ramps it over `VOLUME_RAMP` instead of
+    /// jumping.
     pub fn set_volume(&self, volume: f32, smooth: bool) {
         let mut state = lock(&self.graph.state);
         let volume = volume.clamp(0.0, 1.0);
@@ -708,14 +684,13 @@ impl Player {
         state.volume = volume;
     }
 
-    /// `setAnalyserFftSize`: what the visualiser asks for as its bar count
-    /// changes. Takes effect on the next analysis, as the store's did.
+    /// Sets the `fftSize` the analyser transforms, as the visualiser asks when
+    /// its bar count changes. Takes effect on the next analysis.
     pub fn set_fft_size(&self, size: usize) {
         self.graph.fft_size.store(size.max(32), Ordering::Relaxed);
     }
 
-    /// The analyser's frequency bins in dB — one `getFloatFrequencyData` read,
-    /// already smoothed.
+    /// The analyser's frequency bins in dB, already smoothed.
     ///
     /// `action` is handed the bins under the graph's lock, so the caller can
     /// copy them into whatever it renders without this having to hand out a copy
@@ -725,16 +700,15 @@ impl Player {
         action(&state.spectrum);
     }
 
-    /// The device's sample rate, the `getAudioSampleRate` the visualiser maps
-    /// its frequency range against.
+    /// The device's sample rate, which the visualiser maps its frequency range
+    /// against.
     pub fn sample_rate(&self) -> f64 {
         lock(&self.graph.state).sample_rate
     }
 
-    /// A periodic poll, standing in for the `audio.ontimeupdate` the webview
-    /// fires while a track plays: it writes the position to the session file at
-    /// most every [`PERSIST_INTERVAL`] and hands back the transport state, so
-    /// the caller has one read instead of six.
+    /// A periodic poll: it writes the position to the session file at most every
+    /// [`PERSIST_INTERVAL`] and hands back the transport state, so the caller has
+    /// one read instead of six.
     pub fn tick(&self) -> PlayerState {
         let due = {
             let state = lock(&self.graph.state);
@@ -751,10 +725,9 @@ impl Player {
         self.state()
     }
 
-    /// `restoreSession`: loads the playlist, puts the saved track back where it
-    /// was and — when `enabled` and `resume_on_startup` both say so — starts it
-    /// playing. A saved track that is no longer in the folder falls back to the
-    /// first one, paused, exactly as the Vue store did.
+    /// Loads the playlist, puts the saved track back where it was and — when
+    /// `enabled` and `resume_on_startup` both say so — starts it playing. A saved
+    /// track missing from the folder falls back to the first one, paused.
     pub fn restore_session(&self, enabled: bool, resume_on_startup: bool) {
         let tracks = Arc::new(crate::list_music_files().unwrap_or_default());
         {
@@ -787,8 +760,8 @@ impl Player {
     }
 }
 
-/// `randomIndex`: a track other than the current one, or 0 when the playlist
-/// holds a single entry.
+/// A track other than the current one, or 0 when the playlist holds a single
+/// entry.
 fn random_index(graph: &Graph, count: usize, current: Option<usize>) -> usize {
     if count <= 1 {
         return 0;
@@ -934,8 +907,7 @@ fn select(
             *source = None;
             let mut state = lock(&graph.state);
             // The track stays selected — it is what the panel and the playlist
-            // show — but nothing plays. This is the store's
-            // `console.error("Failed to play music", error)`.
+            // show — but nothing plays.
             state.current_index = Some(index);
             state.loaded = false;
             state.duration = 0.0;
@@ -953,13 +925,14 @@ fn select(
     }
     graph.signal.notify_all();
     if autoplay {
-        // `playIndex` persists; `preparePlayback`, which is the same call with
-        // `autoplay` off, does not.
+        // A selection that starts playback persists the position; one that only
+        // prepares the track does not.
         save_position(graph);
     }
 }
 
-/// `restoreSession`, on the worker so that its steps cannot overtake each other.
+/// The worker's half of [`Player::restore_session`], so that its steps cannot
+/// overtake each other.
 fn restore(
     graph: &Graph,
     source: &mut Option<TrackSource>,
@@ -1037,7 +1010,7 @@ fn feed(
 
         // The reader is done; the audio it produced is still in the ring, so the
         // transport is not told the track ended until the device has actually
-        // played it. That is what the element's `onended` meant.
+        // played it.
         if draining {
             if lock(&graph.state).ring.is_empty() {
                 let mut state = lock(&graph.state);
@@ -1171,8 +1144,8 @@ fn track_path(graph: &Graph) -> String {
         .map_or_else(String::new, |track| track.path.clone())
 }
 
-/// `handleTrackEnded`: repeat plays the same track again, otherwise the playlist
-/// advances — shuffled when the flag is on.
+/// Repeat plays the same track again, otherwise the playlist advances — shuffled
+/// when the flag is on.
 fn advance(graph: &Graph, source: &mut Option<TrackSource>, resampler: &mut Resampler) {
     let (repeat, shuffle, count, index) = {
         let state = lock(&graph.state);
@@ -1382,10 +1355,9 @@ fn with_conversion(len: usize, action: impl FnOnce(&mut [f32])) {
 /// Fills one output buffer: what the worker left in the ring, scaled by the gain,
 /// plus the analyser's transform for this instant.
 ///
-/// It allocates nothing, reads no file and takes the lock once. Everything that
-/// used to happen here — the cursor walk, the resampling, the per-frame
-/// interpolation, the two `vec!`s per callback — belongs to the worker now,
-/// because a callback that does any of it can miss its deadline, and a missed
+/// It allocates nothing, reads no file and takes the lock once. The cursor walk,
+/// the resampling and the per-frame interpolation all belong to the worker,
+/// because a callback that does any of them can miss its deadline, and a missed
 /// deadline on an audio callback is a click.
 fn render(out: &mut [f32], graph: &Graph, channels: usize) {
     let now = Instant::now();
@@ -1446,7 +1418,7 @@ fn render(out: &mut [f32], graph: &Graph, channels: usize) {
     }
 }
 
-/// A clock-seeded xorshift state, for `Math.random()`.
+/// A clock-seeded xorshift state for the shuffle pick.
 fn seed_random() -> u64 {
     let nanos = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -1482,12 +1454,11 @@ mod tests {
 
     #[test]
     fn taking_the_session_releases_the_lock_before_the_next_take() {
-        // The exact shape that hung the app: read the state under the graph's
-        // lock, then take the same lock again straight afterwards. A `std::sync::
-        // Mutex` is not reentrant, so a guard that outlives its statement does
-        // not panic — it waits, forever, on a thread holding it. This hangs the
-        // test rather than failing it, which is the whole reason the reading and
-        // the writing are separate functions.
+        // Read the state under the graph's lock, then take the same lock again
+        // straight afterwards. A `std::sync::Mutex` is not reentrant, so a guard
+        // that outlives its statement does not panic — it waits, forever, on a
+        // thread holding it. This hangs the test rather than failing it, which is
+        // the whole reason the reading and the writing are separate functions.
         let (graph, path) = graph_with_a_track();
 
         let first = take_session(&graph).expect("a selected track has a position");
@@ -1586,9 +1557,7 @@ mod tests {
     #[test]
     fn a_starved_ring_reports_buffering_rather_than_playing() {
         // What the panel shows: the transport waiting on audio, either because a
-        // selection is being opened or because the device has run the buffer
-        // dry. The second used to be indistinguishable from "playing, and
-        // quietly nothing".
+        // selection is being opened or because the device has run the buffer dry.
         let (graph, _) = graph_with_a_track();
         assert!(!lock(&graph.state).starved);
         lock(&graph.state).starved = true;

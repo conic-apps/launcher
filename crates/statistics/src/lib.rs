@@ -2,12 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/statistics`: the per-launch log the launcher
-//! writes to `statistics.json`.
+//! The per-launch log the launcher writes to `statistics.json`.
 //!
-//! The original exposes the two getters through Tauri commands; the launch
-//! path calls [`log_launch`] directly. Only the command layer is dropped, so
-//! the file format and the functions match `crates/statistics/src/lib.rs`.
+//! [`log_launch`] appends one entry per launch; the two getters read the file
+//! back, either all of it or filtered to one profile.
 
 use std::time::{SystemTime, UNIX_EPOCH};
 

@@ -6,17 +6,13 @@ import { Theme } from "../theme.slint";
 import { AppIcon } from "app-icon.slint";
 import { FocusManager } from "../globals/focus.slint";
 
-// A row of a list panel (src/components/BaseListItem.vue): a 28px rounded icon,
-// a title with an optional description, and optional buttons on the right.
+// A row of a list panel: a 28px rounded icon, a title with an optional
+// description, and optional buttons on the right.
 //
-// The Vue exposes an `#icon` slot and emits one `click-<name>` event per entry
-// of `buttons`; its only two users are the create-instance screens, which pass
-// an image and the `about` button, so this version takes an image and reports
-// the pressed button by name.
+// The create-instance screens, its only users, pass an image and the `about`
+// button, so this takes an image and reports the pressed button by name.
 //
-// One deliberate difference: the Vue hangs the click on the inner content box,
-// which leaves the row's 10px padding strips dead. Here the whole row is
-// clickable.
+// The whole row is clickable, so the 10px padding strips are live too.
 export component BaseListItem inherits Rectangle {
     in property <string> title: "";
     in property <string> description: "";
@@ -31,7 +27,7 @@ export component BaseListItem inherits Rectangle {
     callback button-clicked(string);
 
     width: 100%;
-    // CSS `height: 53px` plus the 1px `margin-bottom` that separates two rows.
+    // The 53px row plus the 1px that separates two rows.
     height: 54px;
     background: transparent;
 
@@ -41,7 +37,6 @@ export component BaseListItem inherits Rectangle {
         background: touch.pressed ? Theme.surface-2
             : touch.has-hover ? Theme.surface-1
             : Theme.surface-0;
-        // CSS `transition: all 0.1s cubic-bezier(0, 0.43, 0.25, 1)`.
         animate background { duration: 100ms; easing: cubic-bezier(0, 0.43, 0.25, 1); }
 
         HorizontalLayout {
@@ -51,7 +46,7 @@ export component BaseListItem inherits Rectangle {
             padding-bottom: 10px;
             cross-axis-alignment: center;
 
-            // ----- the leading icon (`max-width: 28px; margin: 0 4px`) -----
+            // ----- the leading icon -----
             icon-box := Rectangle {
                 width: 28px + 8px;
                 height: 28px;
@@ -80,24 +75,21 @@ export component BaseListItem inherits Rectangle {
                 background: transparent;
                 clip: true;
 
-                // `vertical-stretch: 0` is what says "do not fill me". The `y`
-                // this replaces said the same thing by repeating the default, but
-                // a layout that *fills* a box whose width the outer layout is
-                // still measuring is a binding loop the compiler is right to
-                // refuse, and the factor says it without a coordinate. (A layout
-                // cannot `clip` in 1.18, which is why the box stays at all.)
+                // `vertical-stretch: 0` is what says "do not fill me". A layout
+                // that *fills* a box whose width the outer layout is still
+                // measuring is a binding loop the compiler is right to refuse,
+                // and the factor says it without a coordinate. (A layout cannot
+                // `clip` in 1.18, which is why the box stays at all.)
                 VerticalLayout {
                     vertical-stretch: 0;
                     horizontal-stretch: 0;
                     spacing: 3px;
                     // The layout fills the column, so the alignment is what
-                    // places the text: the Vue centres the title/description
-                    // block in the row (`align-items: center` on the row's
-                    // content box). `start` pinned the title to the top of the
-                    // column instead — invisible while a description filled the
-                    // block out, but a row without one (the mod loader list)
-                    // drew its title too high, with the description's room
-                    // still taken.
+                    // places the text: the title/description block is centred in
+                    // the row. `start` pinned the title to the top of the column
+                    // instead — invisible while a description filled the block
+                    // out, but a row without one (the mod loader list) drew its
+                    // title too high, with the description's room still taken.
                     alignment: center;
                     cross-axis-alignment: start;
 
@@ -116,7 +108,6 @@ export component BaseListItem inherits Rectangle {
                         width: 100%;
                         font-size: 12px;
                         font-weight: Theme.font-weight-normal;
-                        // CSS `rgba(var(--ctp-text-rgb), 0.6)`.
                         color: Theme.text.with-alpha(0.6);
                         vertical-alignment: center;
                         overflow: elide;
@@ -124,7 +115,7 @@ export component BaseListItem inherits Rectangle {
                 }
             }
 
-            // ----- buttons (`margin: 0 6px` around a 16px icon) -----
+            // ----- buttons -----
             for button in root.buttons : Rectangle {
                 width: 16px + 12px;
                 height: 100%;

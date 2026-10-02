@@ -2,22 +2,16 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/curseforge`: the CurseForge API client.
+//! The CurseForge API client.
 //!
-//! The original is a Tauri plugin whose eleven `#[command]`s wrap one-to-one
-//! around the functions below; there is no plugin state and no `Channel`, so the
-//! mirror drops the command layer and keeps the rest, including the request
-//! plumbing it is built on — the mirror-first `request_with_fallback` with its
-//! `response_is_valid` test and its API-key gate, the `apply_query` coercion
-//! (strings verbatim, everything else through `Value::to_string`, `null`
-//! dropped), and `compute_fingerprint` with its private MurmurHash2.
+//! The request plumbing this is built on: the mirror-first
+//! `request_with_fallback` with its `response_is_valid` test and its API-key
+//! gate, the `apply_query` coercion (strings verbatim, everything else through
+//! `Value::to_string`, `null` dropped), and `compute_fingerprint` with its
+//! private MurmurHash2.
 //!
-//! Two deviations, both deliberate:
-//!
-//!   * The `#[tokio::test]` at the end of the original is not mirrored. It hits
-//!     the live network and only prints what it got.
-//!   * `build.rs` is kept as it is, so `CURSEFORGE_API_KEY` still decides
-//!     whether the official-API fallback exists.
+//! `build.rs` bakes in `CURSEFORGE_API_KEY`, which decides whether the
+//! official-API fallback exists.
 
 pub mod error;
 
@@ -239,8 +233,8 @@ pub async fn get_mod_translations(mod_ids: &[i64]) -> Result<Value> {
     .await
 }
 
-/// Fingerprint lookup. Returns the mods whose files carry one of the given
-/// fingerprints, keyed by the requested fingerprint.
+/// Fingerprint lookup. Returns the raw API response; its `data.exactMatches`
+/// lists the mods whose files carry one of the given fingerprints.
 pub async fn get_fingerprint_matches(game_id: i64, fingerprints: &[u32]) -> Result<Value> {
     let body = serde_json::json!({ "fingerprints": fingerprints });
     request_with_fallback(

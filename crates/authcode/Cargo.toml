@@ -6,10 +6,11 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
-# Nothing here is a new crate in the tree: `tokio` (which the Slint app already
+# Nothing here is a new crate in the tree: `tokio` (which the app already
 # runs with `net`), `regex` (through `launch`) and `uuid`'s `v4` (through
-# the offline profile UUIDs) are all already linked, and `thiserror` is how every
-# other crate in here writes an `Error`. What is missing is a web framework, and
+# `instance`'s random ids and `folder`'s temp directories) are all already
+# linked, and `thiserror` is how every other crate in here writes an `Error`.
+# What is missing is a web framework, and
 # that is the point — the HTTP this needs is a request line and a `Content-Length`,
 # which is a page of `std`/`tokio::io`; a framework would be orders of magnitude
 # more binary for a listener that answers one request and goes away.

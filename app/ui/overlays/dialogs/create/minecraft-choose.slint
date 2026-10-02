@@ -12,25 +12,21 @@ import { BaseLoading } from "../../../components/base-loading.slint";
 import { Dialogs, CreateInstanceState } from "../../../globals/dialogs.slint";
 import { GameTime } from "../../../globals/game.slint";
 
-// The Minecraft version chooser
-// (src/overlays/dialogs/create/MinecraftChoose.vue): a category filter, the
-// version list and a Cancel button.
+// The Minecraft version chooser: a category filter, the version list and a
+// Cancel button.
 //
 // The list is the dialog's own `ScrollView`, so it keeps that component's slim
-// scrollbar — the Vue nests the very same component here.
+// scrollbar.
 //
-// One deliberate difference: the Vue's flex column overflows (`height: calc(100%
-// - 42px)` on the screen and `height: 100%` on the list leave the filter and the
-// button no room, and flexbox shrinks them to ~32px and ~24px). Here the filter
-// and the button keep the heights their padding and content ask for, and the
-// list takes what is left — see `slint/README.md`.
+// The filter and the button keep the heights their padding and content ask for,
+// and the list takes what is left.
 export component MinecraftChoose inherits ZoomTransition {
     /// The dialog's inner area minus its title: what this screen has to fill.
     in property <length> screen-height: 0px;
 
     height: root.screen-height;
     padding: 8px;
-    // The filter's `margin-bottom: 8px` and the button's `margin-top: 8px`.
+    // 8px between the filter, the list and the button.
     spacing: 8px;
 
     /// The row icon: the release texture, the command block for a snapshot and
@@ -45,7 +41,6 @@ export component MinecraftChoose inherits ZoomTransition {
         return @image-url("../../../assets/images/ancient-debris.webp");
     }
 
-    // ----- version category -----
     filter := Rectangle {
         width: 100%;
         // 8px vertical padding around the 24px segmented select.
@@ -54,10 +49,9 @@ export component MinecraftChoose inherits ZoomTransition {
         background: Theme.surface-0;
 
         // The label takes the free space, the select keeps its own width — the
-        // same shape the settings rows use, and what the Vue's
-        // `justify-content: space-between` amounts to. Giving the select a fixed
-        // width would leave the strip the options do not fill empty, which is
-        // what showed to the right of the last one.
+        // same shape the settings rows use. Giving the select a fixed width would
+        // leave the strip the options do not fill empty, which showed to the
+        // right of the last one.
         HorizontalLayout {
             padding-left: 16px;
             padding-right: 16px;
@@ -76,8 +70,7 @@ export component MinecraftChoose inherits ZoomTransition {
                 options: ["releases", "snapshot", "old"];
                 display-name: [@tr("Releases"), @tr("Snapshots"), @tr("Old versions")];
                 value <=> CreateInstanceState.version-category;
-                // Rust re-filters the list behind it (the Vue's
-                // `filteredVersions`).
+                // Rust re-filters the list behind it.
                 selected(value) => { CreateInstanceState.set-version-category(value); }
             }
         }
@@ -99,7 +92,6 @@ export component MinecraftChoose inherits ZoomTransition {
     private property <length> window-bottom: -versions-scroll.content-y + versions-scroll.height
         + 2 * root.row-height;
 
-    // ----- the versions -----
     list := Rectangle {
         width: 100%;
         vertical-stretch: 1;
@@ -134,15 +126,14 @@ export component MinecraftChoose inherits ZoomTransition {
                         CreateInstanceState.select-minecraft-version(version.id);
                         CreateInstanceState.step = "settings";
                     }
-                    // The Vue's `click-about`: every version has a Minecraft wiki
-                    // page, under a different URL per language.
+                    // Every version has a Minecraft wiki page, under a different
+                    // URL per language.
                     button-clicked(name) => { CreateInstanceState.open-version-wiki(version.id); }
                 }
             }
         }
 
-        // Loading veil. The Vue wraps it in a `<Transition>` whose default `v-`
-        // classes are not defined anywhere, so it simply appears.
+        // Loading veil. It appears without a transition.
         if CreateInstanceState.minecraft-loading : Rectangle {
             width: 100%;
             height: 100%;

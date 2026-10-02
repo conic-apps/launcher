@@ -8,20 +8,20 @@ import { GameState, GameIntro } from "../../globals/game.slint";
 import { DropdownOption } from "../../globals/dropdown.slint";
 import { InstanceListDropdown } from "instance-list-dropdown.slint";
 
-// Search + sort/group toolbar above the instance list
-// (src/views/game/InstancesListToolBar.vue). Anchored to the top-right.
+// Search + sort/group toolbar above the instance list, anchored to the
+// top-right.
 export component InstancesListToolBar inherits Rectangle {
     width: 400px;
     height: 112px;
     // The root is only the 400×112 box `InstancesList` positions against; the
-    // panel the Vue `.tool-bar` element corresponds to — background included —
-    // is `body` below, because the intro animates that whole element.
+    // panel with the background is `body` below, because the intro animates that
+    // whole element.
     background: transparent;
-    // NOTE: the `z-index: 114` of the Vue original is *not* set here. A component
-    // root's `z` only reaches the parent's stacking order when the parent places
-    // it from a `for` loop — for a plain instance the compiler's z-order pass
-    // reads the instance's own binding and drops the rest. `InstancesList` sets it
-    // where the toolbar has to sit above the scrolling rows.
+    // NOTE: a `z` is not set here. A component root's `z` only reaches the
+    // parent's stacking order when the parent places it from a `for` loop — for
+    // a plain instance the compiler's z-order pass reads the instance's own
+    // binding and drops the rest. `InstancesList` sets it where the toolbar has
+    // to sit above the scrolling rows.
 
     private property <[DropdownOption]> sort-options: [
     { key: "name", label: @tr("Name"), icon: "" },
@@ -42,20 +42,19 @@ export component InstancesListToolBar inherits Rectangle {
     private property <string> group-label:
     GameState.group-mode == "loader" ? @tr("Mod loader") : @tr("Ungrouped");
 
-    // Intro: the toolbar slides in from 100px to the right over 0.5s
-    // `power3.out` (`power3` is GSAP's quart, Slint's `ease-out-quart`). It is the
-    // first beat of the list's intro, which the game view starts 0.05s after the
-    // footer and the summary, so the shared delay is 50ms.
+    // Intro: the toolbar slides in from 100px to the right over 0.5s, easing
+    // out quart. It is the first beat of the list's intro, which the game view
+    // starts 0.05s after the footer and the summary, so the shared delay is
+    // 50ms.
     private property <length> intro-dx: GameIntro.played ? 0px : 100px;
     private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
 
     animate intro-dx { duration: 500ms; delay: 50ms; easing: ease-out-quart; }
     animate intro-alpha { duration: 500ms; delay: 50ms; easing: ease-out-quart; }
 
-    // The whole panel is one element in the Vue original: the intro animates
-    // `.tool-bar` itself (`gsap.fromTo(toolbar, { opacity: 0, x: 100 }, ...)`),
-    // so the translucent background slides in together with the controls rather
-    // than staying put under them.
+    // The whole panel is one element: the intro animates it as a unit, so the
+    // translucent background slides in together with the controls rather than
+    // staying put under them.
     body := Rectangle {
         x: root.intro-dx;
         y: 0;
@@ -71,31 +70,24 @@ export component InstancesListToolBar inherits Rectangle {
         // `Rectangle` does not take pointer events: Slint dispatches to the
         // topmost item first and falls through to the items below whenever one
         // ignores the event, so a press on the panel's empty area would reach the
-        // card underneath and select it (Vue: the toolbar's `z-index: 114` puts
-        // it above the rows, so it covers the press). The shield swallows it; it
-        // is declared first so the controls below still get their own events.
+        // card underneath and select it. The shield swallows it; it is declared
+        // first so the controls below still get their own events.
         shield := TouchArea {
             width: parent.width;
             height: parent.height;
             // A bare `TouchArea`'s `scroll-event` defaults to `reject`, which
-            // would let the wheel through to the list. Vue's Lenis listens on the
-            // scroll container, which the panel covers, so accept it to match.
+            // would let the wheel through to the list, so accept it to keep the
+            // list from scrolling under the panel.
             scroll-event(event) => { accept }
         }
 
-        // `.search { margin-top: 16px; margin-left: 16px }` and `.other {
-        // margin-left: 16px; margin-top: 12px }` are a padding and a `gap`. The
-        // 68px the second row sat at was `16 + 40 + 12` written out, the 332px
-        // was the row less a 40px button, and the two 182px dropdowns were half
-        // of what was left.
+        // A 16px padding and a 12px gap lay out the two rows.
         VerticalLayout {
             padding: 16px;
             spacing: 12px;
             alignment: start;
 
-            // ----- search -----
-            // `.search { display: flex }` of a `width: 100%` field and a
-            // `flex-shrink: 0` 40px button.
+            // A full-width field beside a fixed 40px button.
             search-row := HorizontalLayout {
                 height: 40px;
 
@@ -136,8 +128,6 @@ export component InstancesListToolBar inherits Rectangle {
                     border-top-right-radius: 8px;
                     border-bottom-right-radius: 8px;
 
-                    // `.search-button { display: flex; align-items: center;
-                    // justify-content: center }`.
                     HorizontalLayout {
                         alignment: center;
                         cross-axis-alignment: center;
@@ -152,22 +142,18 @@ export component InstancesListToolBar inherits Rectangle {
                 }
             }
 
-            // ----- sort / group -----
-            // `.other { display: flex; gap: 8px }` with `> div { flex: 1 }` on
-            // both. `flex: 1` is a zero basis and a grow of 1, which is an
-            // *exact* half of the row — and `horizontal-stretch: 1` is not, on
-            // its own, because it only hands out what is left after each child's
-            // preferred size, and these two prefer different widths ("Sort"
-            // against "Group", "Play time" against "Ungrouped").
+            // The two dropdowns split the row exactly in half. `horizontal-stretch:
+            // 1` alone cannot do that: it only hands out what is left after each
+            // child's preferred size, and these two prefer different widths
+            // ("Sort" against "Group", "Play time" against "Ungrouped").
             //
-            // So the preferred size is zero on both, which is the Slint spelling
-            // of `flex-basis: 0`: equal floors plus equal stretch factors make
-            // the two come out exactly equal whatever the value is, and the row
-            // divides rather than packs. Stating the half directly — reading
-            // `other-row.width` — is what this *cannot* do: a child's preferred
-            // size feeding the layout cache that decides the very width it read
-            // is a binding loop, and it is one that cost the dropdowns their
-            // click handling outright.
+            // So the preferred size is zero on both: equal floors plus equal
+            // stretch factors make the two come out exactly equal whatever the
+            // value is, and the row divides rather than packs. Stating the half
+            // directly — reading `other-row.width` — is what this *cannot* do: a
+            // child's preferred size feeding the layout cache that decides the
+            // very width it read is a binding loop, and it is one that cost the
+            // dropdowns their click handling outright.
             other-row := HorizontalLayout {
                 height: 25px;
                 spacing: 8px;

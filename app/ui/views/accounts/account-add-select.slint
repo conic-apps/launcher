@@ -17,10 +17,8 @@ component ServiceButton inherits Rectangle {
     width: content.preferred-width;
     height: 32px;
     border-radius: 4px;
-    // `background: none`, then surface0 on hover, surface1 while pressed and
-    // surface2 for the selected one. The selected fill comes first: the Vue
-    // declares `.item.active` after its `:hover` / `:active` rules and both
-    // selectors weigh the same, so the later one wins there — a selected button
+    // Surface 0 on hover, surface 1 while pressed and surface 2 for the
+    // selected one. The selected fill is checked first, so a selected button
     // does not react to the pointer at all.
     background: root.active ? Theme.surface-2
         : button-touch.pressed ? Theme.surface-1
@@ -40,7 +38,7 @@ component ServiceButton inherits Rectangle {
         AppIcon {
             name: root.icon;
             size: 15px;
-            // `color: rgba(var(--ctp-text-rgb), 0.7)`, fully opaque when active.
+            // Fully opaque when active, 70% otherwise.
             icon-color: Theme.text.with-alpha(root.active ? 1.0 : 0.7);
         }
 
@@ -56,14 +54,12 @@ component ServiceButton inherits Rectangle {
     }
 }
 
-// The auth-service selector of the add-account dialog
-// (src/views/accounts/AccountAddSelect.vue): "Microsoft | External | Offline",
-// at the right-hand end of the dialog's header.
+// The auth-service selector of the add-account dialog: "Microsoft | External |
+// Offline", at the right-hand end of the dialog's header.
 export component AccountAddSelect inherits Rectangle {
     /// Which service is selected — "microsoft" | "yggdrasil" | "offline".
     in-out property <string> value: "microsoft";
-    /// Frozen while a screen is mid-flow (Vue `disabled`: 0.6 opacity and no
-    /// pointer events).
+    /// Frozen while a screen is mid-flow: 0.6 opacity and no pointer events.
     in property <bool> select-enabled: true;
     callback selected(string);
 

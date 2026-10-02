@@ -7,8 +7,7 @@
 
 use super::*;
 
-/// The Minecraft release list the version filter is built from
-/// (`useSearchPagination.ts`'s `loadVersionOptions`), fetched once.
+/// The Minecraft release list the version filter is built from, fetched once.
 pub(crate) fn ensure_version_options(ui: &App) {
     if !controller().borrow().version_options.is_empty() {
         // Already fetched: the sync still has to run, because every open
@@ -33,9 +32,8 @@ pub(crate) fn ensure_version_options(ui: &App) {
             .filter(|version| version.r#type == "release")
             .map(|version| version.id.clone())
             .collect();
-        // The Vue sorts by `releaseTime` descending; the ids sort the same way
-        // for the release line, and the list carries no 1.x variants that
-        // would differ.
+        // The ids sort the same way as `releaseTime` descending for the release
+        // line, and the list carries no 1.x variants that would differ.
         options.sort_by_key(|id| std::cmp::Reverse(version_order(id)));
         options.dedup();
         let _ = weak.upgrade_in_event_loop(move |ui| {
@@ -43,8 +41,8 @@ pub(crate) fn ensure_version_options(ui: &App) {
                 let state = controller();
                 let mut state = state.borrow_mut();
                 state.version_options = options;
-                // The Vue awaits the manifest before syncing the page, so the
-                // selection is only found once this list exists.
+                // The selection can only be found once this list exists, so the
+                // sync waits for the manifest.
                 state.sync_version_page();
             }
             push_search(&ui);
@@ -66,10 +64,10 @@ pub(crate) fn version_page_count(state: &ContentController) -> usize {
     state.version_options.len().div_ceil(VERSIONS_PER_PAGE)
 }
 
-/// `chips[page * 6].offsetLeft`: the width of every chip before the page's
-/// first, each followed by the track's 6px gap. The widths are the ones the
-/// chips reported through `chip-measured`; a chip that has not been laid out
-/// yet counts as nothing, and the offset is recomputed when it reports.
+/// The width of every chip before the page's first, each followed by the
+/// track's 6px gap. The widths are the ones the chips reported through
+/// `chip-measured`; a chip that has not been laid out yet counts as nothing,
+/// and the offset is recomputed when it reports.
 pub(crate) fn version_offset(state: &ContentController) -> f32 {
     let first = state.version_page * VERSIONS_PER_PAGE;
     (0..first.min(state.version_widths.len()))
@@ -77,10 +75,8 @@ pub(crate) fn version_offset(state: &ContentController) -> f32 {
         .sum()
 }
 
-/// The key one list's page state is filed under: the Vue keeps a component per
-/// kind per source (`ContentModsLocal.vue`, `ContentModsModrinth.vue`,
-/// `ContentPacksCurseforge.vue`, …), each with its own `currentPage` and
-/// `totalPages`.
+/// The key one list's page state is filed under: each kind and source pair is a
+/// list of its own, with its own page numbers.
 ///
 /// The key is the *source* (`"local" | "modrinth" | "curseforge"`), not the
 /// platform: the local lists have no platform of their own, and keying them on
@@ -125,15 +121,15 @@ pub(crate) fn push_pages(ui: &App) {
     )))));
 }
 
-/// `.filter-chip { height: 20px }` and `.filter-chips { gap: 6px }`.
+/// A filter chip's height.
 pub(crate) const FILTER_CHIP_HEIGHT: f32 = 20.0;
+/// The gap between filter chips.
 pub(crate) const FILTER_CHIP_GAP: f32 = 6.0;
-/// `.filter-row`'s carousel: the 26px pager row.
+/// The filter row's carousel: the 26px pager row.
 pub(crate) const FILTER_CAROUSEL_HEIGHT: f32 = 26.0;
 
-/// `.filter-chips { flex-wrap: wrap; gap: 6px }` in a row whose label takes
-/// 52px and 10px of gap out of the panel's content box — so the chips wrap
-/// inside `panel - 48 (padding) - 62 (label and gap)`.
+/// A row's label takes 52px and 10px of gap out of the panel's content box —
+/// so the chips wrap inside `panel - 48 (padding) - 62 (label and gap)`.
 ///
 /// Returns the row's height: 20px per line with the 6px gap between them.
 pub(crate) fn filter_row_height(state: &ContentController, chips: &ModelRc<FilterChip>) -> f32 {
@@ -202,7 +198,7 @@ pub(crate) fn push_version(ui: &App) {
 }
 
 /// Every chip of the version row. The carousel draws the whole track and clips
-/// it, the way the Vue does, so this is the whole list rather than one page.
+/// it, so this is the whole list rather than one page.
 pub(crate) fn version_chips(state: &ContentController) -> Vec<FilterChip> {
     state
         .version_options
@@ -336,8 +332,7 @@ pub(crate) fn toggle_chip(ui: &App, value: &str) {
         } else if value == "favorites" {
             state.form.favorites_only = !state.form.favorites_only;
         } else {
-            // Selecting a category clears the favourites filter, as the Vue
-            // does.
+            // Selecting a category clears the favourites filter.
             state.form.favorites_only = false;
             toggle(&mut state.form.categories, value);
         }
@@ -355,8 +350,8 @@ pub(crate) fn toggle(list: &mut Vec<String>, value: &str) {
     }
 }
 
-/// `paginationPages` (`useSearchPagination.ts`): the numbered buttons with an
-/// ellipsis on either side of a long run, and no ellipsis at all up to 15 pages.
+/// The page bar: the numbered buttons with an ellipsis on either side of a long
+/// run, and no ellipsis at all up to 15 pages.
 pub(crate) fn pagination_pages(total: usize, current: usize) -> Vec<PageButton> {
     let number = |page: usize| PageButton {
         text: SharedString::from(page.to_string()),
@@ -395,26 +390,23 @@ pub(crate) struct BuiltCard {
 }
 
 pub(crate) fn run_search(ui: &App, page: usize) {
-    // `let token = ++searchToken; const params = buildParams(); const cacheKey =
-    // JSON.stringify(params);` — the request is identified, and every earlier
-    // request for this list is invalidated, before anything else happens.
+    // The request is identified, and every earlier request for this list is
+    // invalidated, before anything else happens.
     let (list, request) = {
         let state = controller();
         let mut state = state.borrow_mut();
         state.form.page = page;
         let list = list_key(state.kind, state.platform.key());
         let request = request_key_of(&state, page);
-        // `currentPage.value = page` — the page the user picked is the page the
-        // bar shows *now*, before the answer arrives; only the total comes from
-        // the result.
+        // The page the user picked is the page the bar shows *now*, before the
+        // answer arrives; only the total comes from the result.
         state.pages.entry(list.clone()).or_insert((page, 0)).0 = page;
         state.lists.entry(list.clone()).or_default().token += 1;
         (list, request)
     };
 
-    // `const cached = cache.get(cacheKey); if (cached) { …; return }` — read
-    // *before* the loading flag is raised, so a page that has been seen is
-    // drawn without the spinner a fresh request shows.
+    // The cache is read *before* the loading flag is raised, so a page that has
+    // been seen is drawn without the spinner a fresh request shows.
     let cached = {
         let state = controller();
         let state = state.borrow();
@@ -447,9 +439,8 @@ pub(crate) fn run_search(ui: &App, page: usize) {
             Platform::CurseForge => search_curseforge(kind, &form).await,
         };
         let _ = weak.upgrade_in_event_loop(move |ui| {
-            // `if (token !== …SearchToken) return` — an answer for a request the
-            // user has paged (or switched) away from is dropped, and dropped
-            // *before* it is cached, exactly as the Vue drops it.
+            // An answer for a request the user has paged (or switched) away
+            // from is dropped, and dropped *before* it is cached.
             let newest = {
                 let state = controller();
                 let state = state.borrow();
@@ -462,10 +453,9 @@ pub(crate) fn run_search(ui: &App, page: usize) {
             if !newest {
                 return;
             }
-            // `catch (error) { console.error(error) }` — a failed request draws
-            // nothing and caches nothing: the page it was replacing stays on
-            // screen, and the next attempt asks the server again rather than
-            // reading back an empty page out of the cache.
+            // A failed request draws nothing and caches nothing: the page it was
+            // replacing stays on screen, and the next attempt asks the server
+            // again rather than reading back an empty page out of the cache.
             let (cards, total) = match result {
                 Ok(result) => result,
                 Err(error) => {
@@ -474,8 +464,8 @@ pub(crate) fn run_search(ui: &App, page: usize) {
                     return;
                 }
             };
-            // `cache.set(cacheKey, result)` — the *unfiltered* page: the
-            // favourites chip filters what is drawn, not what was requested.
+            // The *unfiltered* page is cached: the favourites chip filters what
+            // is drawn, not what was requested.
             {
                 let state = controller();
                 let mut state = state.borrow_mut();
@@ -492,12 +482,9 @@ pub(crate) fn run_search(ui: &App, page: usize) {
     });
 }
 
-/// What one request is identified by — the Vue's `JSON.stringify(params)`, and
-/// it has to cover everything the request carries and nothing it does not. The
-/// favourites chip is not in it: it filters what comes back, it does not change
-/// what is asked for.
-///
-/// The fields are in the order the list's `build…Params` writes them.
+/// What one request is identified by, and it has to cover everything the
+/// request carries and nothing it does not. The favourites chip is not in it:
+/// it filters what comes back, it does not change what is asked for.
 pub(crate) fn request_key_of(state: &ContentController, page: usize) -> String {
     request_key(state.kind, state.platform, page, &state.form)
 }
@@ -523,8 +510,8 @@ pub(crate) fn request_key(
 /// Draws a page of results — from the cache or straight off the wire.
 ///
 /// `list` is the list the request was made *for*: a slow answer for a list the
-/// user has since switched away from is cached but not drawn, which is what the
-/// Vue gets from each list component owning its own `searchResult` ref.
+/// user has since switched away from is cached but not drawn, because each list
+/// owns its own results.
 pub(crate) fn show_results(ui: &App, list: &str, page: usize, cards: Vec<BuiltCard>, total: usize) {
     let (open, favorites_only) = {
         let state = controller();
@@ -537,9 +524,9 @@ pub(crate) fn show_results(ui: &App, list: &str, page: usize, cards: Vec<BuiltCa
     if !open {
         return;
     }
-    // `filterByFavorites(result)` — the favourites chip narrows what is drawn,
-    // against the favourites as they are now; the page itself, and the hit count
-    // its page numbers come from, are untouched.
+    // The favourites chip narrows what is drawn, against the favourites as they
+    // are now; the page itself, and the hit count its page numbers come from,
+    // are untouched.
     let cards: Vec<BuiltCard> = if favorites_only {
         let state = controller();
         let state = state.borrow();
@@ -590,23 +577,22 @@ pub(crate) fn show_results(ui: &App, list: &str, page: usize, cards: Vec<BuiltCa
     ensure_translations(ui, platform, ids);
 }
 
-/// `<platform>:<id>` — the Vue's two caches (`modrinthCache`, `curseforgeCache`)
-/// in one, keyed so the two platforms' ids cannot collide.
+/// `<platform>:<id>` — one cache for both platforms, keyed so their ids cannot
+/// collide.
 pub(crate) fn translation_key(platform: Platform, id: &str) -> String {
     format!("{}:{id}", platform.key())
 }
 
-/// Whether the launcher is showing Chinese, which is the only locale the Vue
-/// asks for a translation in (`i18n.locale.value.startsWith("zh")`).
+/// Whether the launcher is showing Chinese, the only locale a translation is
+/// asked for in.
 pub(crate) fn chinese_locale(ui: &App) -> bool {
     let language = ui.global::<AppConfig>().get_language();
     crate::config_bridge::resolve_locale(language.as_str()).starts_with("zh")
 }
 
-/// `useDescriptionTranslation`: fetches the translated descriptions of the
-/// projects now on screen, for the ids that are not cached yet. The translation
-/// is what the Vue shows in place of the API's own English text, on the cards
-/// and in the detail panel alike.
+/// Fetches the translated descriptions of the projects now on screen, for the
+/// ids that are not cached yet. The translation replaces the API's own English
+/// text, on the cards and in the detail panel alike.
 pub(crate) fn ensure_translations(ui: &App, platform: Platform, ids: Vec<String>) {
     if !chinese_locale(ui) {
         return;
@@ -867,8 +853,7 @@ pub(crate) async fn search_curseforge(
 
 /// The CurseForge search body. `apply_query` passes a string through verbatim
 /// and `Value::to_string`es everything else, so the list parameters are
-/// JSON-encoded here — which is what the Vue's `JSON.stringify` does to the same
-/// fields.
+/// JSON-encoded here.
 pub(crate) fn curseforge_search_params(kind: RemoteKind, form: &SearchForm) -> Value {
     let mut params = json!({
         "gameId": curseforge::MINECRAFT_GAME_ID,
@@ -961,7 +946,7 @@ pub(crate) fn curseforge_card(entry: &Value) -> Option<BuiltCard> {
     })
 }
 
-/// CurseForge's `ModLoaderType` numbering (`index.ts`'s enum).
+/// CurseForge's `ModLoaderType` numbering.
 pub(crate) fn curseforge_loader_type(loader: &str) -> Option<i64> {
     match loader {
         "forge" => Some(1),
@@ -972,12 +957,9 @@ pub(crate) fn curseforge_loader_type(loader: &str) -> Option<i64> {
     }
 }
 
-/// Modrinth's mod categories (`ContentModsModrinth.vue`'s `CATEGORIES`).
-/// The category tables each list offers, in the order the Vue declares them
-/// (`Content{Mods,Resourcepacks,Packs}{Modrinth,Curseforge}.vue`'s `CATEGORIES`
-/// / `CURSEFORGE_CATEGORIES`). A CurseForge entry is `(id, slug)`: the id is
-/// what the API filters by and the slug is what names the label. The favourites
-/// chip is not here — every list appends it last.
+/// The category tables each list offers. A CurseForge entry is `(id, slug)`:
+/// the id is what the API filters by and the slug is what names the label. The
+/// favourites chip is not here — every list appends it last.
 pub(crate) const CURSEFORGE_MOD_CATEGORIES: [(&str, &str); 16] = [
     ("422", "adventure-rpg"),
     ("434", "armor-weapons-tools"),
@@ -1164,10 +1146,10 @@ mod tests {
         );
     }
 
-    /// The rule that was broken: the page state is filed per *list*, so a local
-    /// list has none of its own and must never read a remote one's — the local
-    /// mods grid used to draw curseforge's 158 pages. A page the user moved to
-    /// on one list belongs to that list alone as well.
+    /// The page state is filed per *list*, so a local list has none of its own
+    /// and must never read a remote one's — a local mods grid must not draw
+    /// curseforge's page count. A page the user moved to on one list belongs to
+    /// that list alone as well.
     #[test]
     fn a_list_only_ever_reads_its_own_pages() {
         let mut pages = HashMap::new();

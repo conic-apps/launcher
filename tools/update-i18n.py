@@ -187,9 +187,8 @@ SAVE_TAGS = {
             "pl_PL": "Rozważ utworzenie nowej instancji",
         },
     },
-    # The four launch error dialogs. The Chinese is the sentence the Vue wrote
-    # in `NoAccountError.vue` and friends; `ConfirmDeleteInstance` is catalogued
-    # the same way.
+    # The four launch error dialogs, catalogued with their Chinese source
+    # sentences; `ConfirmDeleteInstance` is catalogued the same way.
     "LaunchDialogs": {
         "To launch the game, you must have added at least one account": {
             "zh_CN": "要启动游戏，你必须至少已添加一个帐户",
@@ -270,8 +269,8 @@ SAVE_TAGS = {
             "pl_PL": "Anuluj uruchamianie",
         },
     },
-    # The save and the running task, both of which the Vue wrote in Chinese and
-    # neither of which was ever internationalized.
+    # The save and the running task, whose source sentences are Chinese and
+    # which had never been internationalized.
     "ConfirmDeleteSave": {
         "是否确认删除存档「{}」？": {
             "en_US": "Delete the save “{}”?",
@@ -511,10 +510,9 @@ def main() -> int:
                     # `en_US` is the fallback: the msgid is the English source.
                     value = msgid
                 if value is None and language == "zh_CN" and not msgid.isascii():
-                    # The Chinese msgids are the source language — the Vue wrote
-                    # those dialogs in Chinese and never internationalized them —
-                    # so there is nothing to look up for `zh_CN` and the source
-                    # is the right answer.
+                    # The Chinese msgids are the source language — those dialogs
+                    # were never internationalized — so there is nothing to look
+                    # up for `zh_CN` and the source is the right answer.
                     value = msgid
                 if value is None:
                     untranslated.append((language, context, msgid))

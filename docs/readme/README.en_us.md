@@ -17,7 +17,7 @@
 
 ## What is this
 
-Conic Launcher is a modern desktop Minecraft launcher: core logic implemented in Rust, UI built with Tauri 2 + Vue 3. It features a small installation footprint, fast startup, low resource consumption, and even helps reduce carbon emissions.
+Conic Launcher is a modern desktop Minecraft launcher: the core logic is implemented in Rust and the interface is built with [Slint](https://slint.dev), a native UI toolkit. It features a small installation footprint, fast startup, low resource consumption, and even helps reduce carbon emissions.
 
 From creating instances and installing loaders, to searching for mods and inviting friends to play together, to launching the game and tracking playtime — the entire workflow can be completed in a single app.
 
@@ -98,14 +98,13 @@ The app includes built-in auto-updates — no manual upgrades needed after insta
 
 ## Build from Source
 
-Make sure you have [Rust 1.88+](https://rustup.rs/), [Node.js 24](https://nodejs.org/), and [pnpm](https://pnpm.io/) installed, and follow the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your platform.
+Make sure you have [Rust 1.88+](https://rustup.rs/) installed; on Linux, install the [build dependencies](../../AGENTS.md#linux-build-dependencies) as well.
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
 cd launcher
-pnpm install
-pnpm tauri dev      # Development & debugging
-pnpm tauri build    # Production build
+cargo run              # Development & debugging
+cargo build --release  # Production build
 ```
 
 ## Contributing
@@ -113,16 +112,19 @@ pnpm tauri build    # Production build
 Issues and Pull Requests (targeting the `dev` branch) are welcome. Before submitting, please run:
 
 ```bash
-pnpm check
+cargo fmt --all -- --check
+cargo check
+cargo clippy --all-targets --release -- -D warnings
+cargo test
 ```
 
 ## Architecture
 
 <div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Architecture diagram: Vue 3 frontend communicates with Rust core via Tauri IPC, with domain-split crates below">
+  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Architecture diagram: the Slint interface wired directly to domain-split Rust crates">
 </div>
 
-The frontend (Vue 3 + Pinia) communicates with Rust capabilities via Tauri IPC. The `core` handles Tauri app assembly, while specific capabilities are split into domain-focused `crates/*` workspace modules that evolve independently and compose as needed.
+The interface is built with [Slint](https://slint.dev) and wired to the domain crates directly — there is no IPC layer. `app/` holds the binary and the `.slint` tree; each capability lives in its own `crates/*` workspace module, so they evolve independently and compose as needed.
 
 ## License
 

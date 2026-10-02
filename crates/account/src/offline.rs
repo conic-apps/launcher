@@ -2,10 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Locally created ("offline") accounts: `crates/account/src/offline.rs` with
-//! no changes beyond the ones the crate doc lists. The four commands that sat
-//! in front of it (`offline_commands.rs`) only forwarded their arguments, so
-//! these functions are the whole surface.
+//! Locally created ("offline") accounts: CRUD over `offline.json` in the data
+//! directory.
 
 use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};

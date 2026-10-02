@@ -2,16 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The launch view's "script" (src/views/LaunchView.vue): it plays the Vue's
-//! `launch()` — account refresh, install when needed, then the launch — against
-//! the `slint-install` / `slint-launch` crates and pushes progress into the
-//! `LaunchState` global.
+//! The launch view's flow: account refresh, install when needed, then the
+//! launch, driving the `install` and `launch` crates and pushing progress into
+//! the `LaunchState` global.
 //!
-//! The Vue kept the two tasks as Tauri commands that reported progress over an
-//! IPC channel; here the whole flow is one task on the app's runtime, which
-//! polls the same `Arc<Mutex<…Event>>` the commands used and translates it into
-//! `LaunchState` writes. Cancelling aborts the task, exactly like the Vue's
-//! `cancel()` did through `cmd_cancel_*_task`.
+//! The whole flow is one task on the app's runtime, which polls an
+//! `Arc<Mutex<…Event>>` and translates it into `LaunchState` writes. Cancelling
+//! aborts the task.
 
 use std::{
     cell::RefCell,
@@ -45,8 +42,7 @@ thread_local! {
     /// The app's shared config, for the event-loop half of the account refresh.
     /// The runtime task cannot hold the `Rc<RefCell<…>>` (it is neither `Send`
     /// nor `Sync`); it reports the refreshed account back, and the event-loop
-    /// closure writes it through here (and persists it), exactly like the Vue's
-    /// `configStore.current_account = …`.
+    /// closure writes it through here (and persists it).
     static SHARED_CONFIG: RefCell<Option<Rc<RefCell<Config>>>> = const { RefCell::new(None) };
 
     /// The one controller, for use on the UI thread.
@@ -117,8 +113,8 @@ impl LaunchController {
         }
     }
 
-    /// Cancels the running flow. Returns whether one was running, which is the
-    /// Vue's `onUnmounted` `instanceStore.loadInstances()` trigger.
+    /// Cancels the running flow. Returns whether one was running, which tells
+    /// the caller to reload the instance list.
     fn cancel(&mut self) -> bool {
         let had_task = self.task.is_some();
         for cancelled in self.runs.drain(..) {

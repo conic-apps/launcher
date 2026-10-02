@@ -11,7 +11,7 @@ two constraints:
   nowhere else, so a build machine that is not macOS cannot produce the `.icns`
   — and the `.app` bundle is assembled from files in this directory.
 * **One master, downsampled.** `app/ui/assets/logo.png` is the 4267px artwork.
-  The 512px `app/ui/assets/images/app-icon.png` is what the *window* draws (it is
+  The 512px `app/ui/assets/images/app-icon.png` is the macOS Dock icon (it is
   embedded in the binary by `app/src/main.rs`), so it is also the worst possible
   source for a `.icns`: macOS asks for 1024px, and upscaling produces the
   blurriest possible result at the one size a Dock icon is judged at.

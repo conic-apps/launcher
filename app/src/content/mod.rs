@@ -2,16 +2,15 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The content overlays' "script": drives `slint-content`, `slint-modrinth` and
-//! `slint-curseforge` from what the panels ask for, and pushes the results into
-//! the `ContentState` / `ContentSearch` globals.
+//! The content overlays' "script": drives `content`, `modrinth` and
+//! `curseforge` from what the panels ask for, and pushes the results into the
+//! `ContentState` / `ContentSearch` globals.
 //!
-//! This is the Slint half of `src/overlays/content/`: `useContentActions.ts`
-//! (the install and remove actions and the installed check), `useFavorites.ts`,
-//! `useSearchPagination.ts` (the page list and the version carousel) and the
-//! loading that the Vue spreads over nine components' `onMounted`s.
+//! It owns the install and remove actions and the installed check, the
+//! favourites, the page list and the version carousel, and the loading the
+//! panels ask for.
 //!
-//! Two conventions it follows from the rest of the port:
+//! Two conventions it follows from the rest of the app:
 //!
 //!   * Everything that touches the network or the disk runs on the tokio
 //!     runtime (`crate::runtime`) and reports back through
@@ -20,8 +19,8 @@
 //!     model is fixed at the moment it is pushed and would not follow a
 //!     language change, where an `@tr` binding re-evaluates; the labels live in
 //!     `ContentText` (`ui/globals/content.slint`) and the views resolve them.
-//!     Only data the Vue also keeps untranslated — author names, version
-//!     numbers, loader names — is built here.
+//!     Only data that stays untranslated — author names, version numbers,
+//!     loader names — is built here.
 //!
 //! The code is split by concern: the controller and the types it pushes live
 //! here, the callback wiring is in `wiring`, and the per-list work is in
@@ -60,27 +59,25 @@ pub(crate) use lists::*;
 pub(crate) use search::*;
 pub(crate) use wiring::*;
 
-/// How many results a remote page holds (`useSearchPagination.ts`'s `PAGE_SIZE`).
+/// How many results a remote page holds.
 pub(crate) const PAGE_SIZE: usize = 20;
-/// How many chips one page of the version carousel *steps* by
-/// (`useSearchPagination.ts`'s `VERSIONS_PER_PAGE`). It is not how many are
-/// visible: the track is drawn whole and clipped, so a wider panel shows more.
+/// How many chips one page of the version carousel *steps* by. It is not how
+/// many are visible: the track is drawn whole and clipped, so a wider panel
+/// shows more.
 pub(crate) const VERSIONS_PER_PAGE: usize = 6;
-/// `.filter-chips-track-inner { gap: 6px }`, which `offsetLeft` counts.
+/// The gap between the carousel's chips, which its offset sums.
 pub(crate) const VERSION_GAP: f32 = 6.0;
 
-// ----- the grid's geometry -----
-// The Vue's grid is `repeat(auto-fill, minmax(290px, 1fr))` with a 12px gap and
-// `16px 32px 32px 32px` of padding, and Slint has no wrapping grid — its only
-// multi-column construct is `Row`, which never wraps — so the column count has
-// to come from outside in any case and every card is placed by hand.
+// Cards are at least 290px wide with a 12px gap and `16px 32px 32px 32px` of
+// padding. Slint's `GridLayout` does not wrap and a wrapping `FlexboxLayout`
+// measures itself at its own preferred width (see `globals/content.slint`), so
+// the column count has to come from outside and every card is placed by hand.
 pub(crate) const GRID_MIN_CARD: i32 = 290;
 pub(crate) const GRID_GAP: i32 = 12;
 pub(crate) const GRID_PAD_X: i32 = 32;
 pub(crate) const GRID_PAD_TOP: i32 = 16;
 pub(crate) const GRID_PAD_BOTTOM: i32 = 32;
-/// `.content { transform: translateX(4px) }` — a card sits 4px right of its
-/// column.
+/// A card sits 4px right of its column.
 pub(crate) const CARD_SHIFT: i32 = 4;
 /// The height of a panel's header bar, which the empty-state placeholder is
 /// given the room below.
@@ -88,19 +85,17 @@ pub(crate) const TITLE_BAR_HEIGHT: i32 = 52;
 
 /// A card's height.
 ///
-/// The Vue's cards have no height of their own: the grid row stretches them to
-/// the tallest, and every card of one list has the same shape, so it comes to a
-/// single number per list. That number is the info block's padding plus its
-/// lines, and the line box of each `<p>` is **its own** font size — `line-height:
-/// 1` is set on `*` (src/assets/styles/main.css), and a block's strut comes from
-/// its own font, not its parent's:
+/// Every card of one list has the same shape, so it comes to a single number
+/// per list. That number is the info block's padding plus its lines, and the
+/// line box of each `<p>` is **its own** font size — `line-height: 1` is set on
+/// `*`, and a block's strut comes from its own font, not its parent's:
 ///
 ///   16 padding + 14 (name) + 2+11+2 (authors) + 2+10+2 (description)
 ///   + 16 (the tags' line, whose strut *is* the block's 16px) = 75
 ///
 /// Getting this wrong stretches the icon: `img { width: 72px; height: 100% }`
-/// makes it as tall as the card, so the Vue's is 72x75 (near square) and a card
-/// 13px too tall shows a visibly squeezed one.
+/// makes the icon as tall as the card — near square at 75px — so an over-tall
+/// card shows a visibly squeezed one.
 pub(crate) const CARD_HEIGHT: i32 = 75;
 /// The same sum for the resource-pack cards, which have no authors line.
 pub(crate) const CARD_HEIGHT_NO_SUBTITLE: i32 = 60;
@@ -109,8 +104,8 @@ pub(crate) const CARD_HEIGHT_NO_SUBTITLE: i32 = 60;
 /// so that line is absent — which is what `CARD_HEIGHT` subtracts.
 pub(crate) const CARD_HEIGHT_SAVES: i32 = 64;
 
-/// Which remote list is showing. The Vue has a component per kind per platform;
-/// here the kind and the platform are state, because only one is ever open.
+/// Which remote list is showing: the kind and the platform are state, because
+/// only one is ever open.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RemoteKind {
     Mods,
@@ -196,8 +191,8 @@ impl Platform {
 /// A Slint model is not `Send`, so a `ContentCard` — whose `tags` are a
 /// `ModelRc` — cannot be moved into an `upgrade_in_event_loop` closure. The
 /// built cards therefore travel as plain data and become `ContentCard`s inside
-/// the closure, on the UI thread. (`Image` is `Send`, so the decoded icons
-/// cross with them.)
+/// the closure, on the UI thread. An icon travels as a `PendingImage` — a plain
+/// RGBA buffer — because Slint's `Image` itself is not `Send` either.
 #[derive(Clone, Default)]
 pub(crate) struct PendingCard {
     id: String,
@@ -308,9 +303,8 @@ pub(crate) enum CardTarget {
     Save(String),
 }
 
-/// The open remote list's query and selections — `useSearchPagination.ts`'s
-/// refs plus each list's own `selected*` arrays, which are the same shape for
-/// all six.
+/// The open remote list's query and selections, the same shape for all six
+/// lists.
 #[derive(Clone, Default)]
 pub(crate) struct SearchForm {
     query: String,
@@ -324,27 +318,22 @@ pub(crate) struct SearchForm {
 
 /// One remote list's search bookkeeping.
 ///
-/// The Vue keeps these as *module-level* variables in each list component —
-/// `ContentModsModrinth.vue` declares `modrinthCache` and
-/// `modrinthSearchToken`, `ContentModsCurseforge.vue` its own pair — so there
-/// is one of each per list, and a list that is destroyed and re-created by a
-/// source switch keeps the cache it built.
+/// There is one of each per list, and a list that is destroyed and re-created
+/// by a source switch keeps the cache it built.
 #[derive(Default)]
 pub(crate) struct ListSearch {
-    /// `JSON.stringify(params)` → what that exact request returned: the cards
-    /// and the total hit count the page count comes from. A page that has been
-    /// seen is drawn straight away, without the spinner a fresh request shows.
+    /// The request key → what that exact request returned: the cards and the
+    /// total hit count the page count comes from. A page that has been seen is
+    /// drawn straight away, without the spinner a fresh request shows.
     cache: HashMap<String, (Vec<BuiltCard>, usize)>,
-    /// The newest request's number. `let token = ++searchToken` and the check
-    /// after the `await` mean an answer that belongs to an older request is
-    /// dropped rather than drawn over a newer one — which is what rapid paging
-    /// needs, since the answers do not come back in order.
+    /// The newest request's number. An answer that belongs to an older request
+    /// is dropped rather than drawn over a newer one — which is what rapid
+    /// paging needs, since the answers do not come back in order.
     token: u64,
-    /// The instance runtime this list last seeded its filters from —
-    /// `curseForgeInitializedFor`'s `searchInitKey()`, `"<loader>|<minecraft>"`.
-    /// A list seeds once per instance and not again, so switching away and back
-    /// gives a list with no filters on it (its selections are per-mount in the
-    /// Vue) while the cache above survives.
+    /// The instance runtime this list last seeded its filters from, as
+    /// `"<loader>|<minecraft>"`. A list seeds once per instance and not again,
+    /// so switching away and back gives a list with no filters on it while the
+    /// cache above survives.
     initialized_for: Option<String>,
 }
 
@@ -386,7 +375,7 @@ pub(crate) struct ContentController {
     remote: Rc<VecModel<ContentCard>>,
     /// The game view's current instance. Re-read whenever a panel opens.
     instance_id: String,
-    /// `<platform>:<kind>:<id>` — the Vue's `useFavorites` key.
+    /// `<platform>:<kind>:<id>` — the favourites key.
     favorites: HashSet<String>,
     targets: HashMap<String, CardTarget>,
     kind: RemoteKind,
@@ -398,13 +387,11 @@ pub(crate) struct ContentController {
     version_options: Vec<String>,
     /// `<kind>:<source>` → that list's `(current page, total pages)`.
     ///
-    /// The Vue gives every list its own pair of refs — `ContentModsModrinth.vue`
-    /// and `ContentModsCurseforge.vue` each declare `currentPage` and
-    /// `totalPages`, and a source switch destroys and re-creates one of them —
-    /// so one list's page numbers are never shown against another's results.
+    /// Every list has its own pair, and a source switch destroys and re-creates
+    /// one of them, so one list's page numbers are never shown against another's
+    /// results.
     pages: HashMap<String, (usize, usize)>,
-    /// `<kind>:<source>` → that list's own search cache and request token, the
-    /// way each Vue list component has its own.
+    /// `<kind>:<source>` → that list's own search cache and request token.
     lists: HashMap<String, ListSearch>,
     /// Every filter chip's measured width, by its value. The wrapping rows are
     /// laid out from these (`filter_row_height`), because Slint measures a
@@ -415,9 +402,8 @@ pub(crate) struct ContentController {
     /// chip's width report can rewrite one row's height in place — replacing
     /// the model would re-create every chip and start the measurement again.
     filter_rows: Rc<VecModel<FilterRow>>,
-    /// Translated project descriptions, keyed `<platform>:<id>`
-    /// (`useDescriptionTranslation`). Only filled for a Chinese locale, and only
-    /// for the ids that have been on screen.
+    /// Translated project descriptions, keyed `<platform>:<id>`. Only filled
+    /// for a Chinese locale, and only for the ids that have been on screen.
     translations: HashMap<String, String>,
     /// Which carousel page is showing. Follows the selection when a panel opens
     /// and the pagers from then on.
@@ -498,10 +484,10 @@ impl ContentController {
         }
     }
 
-    /// `syncVersionPageToSelection`: the carousel opens on the page holding the
-    /// selected version, so it starts at the instance's own version rather than
-    /// at the newest release. Run when a remote list opens, never while paging —
-    /// the pagers move the page without touching the selection.
+    /// The carousel opens on the page holding the selected version, so it
+    /// starts at the instance's own version rather than at the newest release.
+    /// Run when a remote list opens, never while paging — the pagers move the
+    /// page without touching the selection.
     fn sync_version_page(&mut self) {
         let selected = self.form.versions.first().cloned();
         self.version_page = selected

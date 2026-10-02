@@ -4,15 +4,14 @@
 
 // Window drag regions.
 //
-// The Vue marks the elements the window can be dragged by with Tauri's
-// `data-tauri-drag-region` (the dialog's scrim, the app's title bar, the
-// multiplayer dialog), and Tauri starts an OS window drag on a press there —
-// only on the marked element itself, never on its children.
+// A drag region is an element the window can be dragged by — the dialog's
+// scrim, the app's title bar, the multiplayer dialog. The drag starts on a
+// press inside the marked element itself, never on one of its children.
 //
 // Slint has no drag region and no window-drag method of its own, so a marked
 // element calls this global instead: `WindowDrag.start()` from the press
-// handler. `src/main.rs` wires it to `WindowService::drag_window()`, which
-// hands the drag to the platform, exactly like Tauri does.
+// handler. `app/src/main.rs` wires it to `WindowService::drag_window()`, which
+// hands the drag to the platform.
 export global WindowDrag {
     /// Raised on a press inside a drag region. Must be answered by starting the
     /// platform's own window drag while the press is still being handled: on

@@ -12,11 +12,8 @@ import { PaletteRow } from "../../components/palette-row.slint";
 import { AppConfig } from "../../globals/settings.slint";
 import { Background } from "../../globals/background.slint";
 
-// src/views/settings/SettingsAppearance.vue
-//
 // The palette row itself is `components/palette-row.slint`, which the setup
-// wizard's palette step also uses — the two Vue files carry the same block of
-// markup and CSS verbatim.
+// wizard's palette step also uses.
 export component SettingsAppearance inherits VerticalLayout {
     width: 100%;
     padding-left: 8px;
@@ -54,8 +51,8 @@ export component SettingsAppearance inherits VerticalLayout {
         }
 
         // The palette row is `PaletteRow` rather than a `SettingItem`, so it does
-        // not pick up the `group-last` rounding the Vue gives `:last-child`; it
-        // is the last child here, so it rounds its own.
+        // not pick up the `group-last` rounding; it is the last child here, so
+        // it rounds its own.
         PaletteRow {
             selected: Theme.active-palette;
             swatches-disabled: AppConfig.palette-follow-system;

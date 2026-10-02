@@ -93,14 +93,17 @@ fn resolve_common_libraries(library: &Value) -> Result<Option<ResolvedLibrary>> 
     }
 }
 
-/// URL in mod loader version.json is NOT include path
+/// A mod loader `version.json` `url` is the maven root, not the artifact path.
 /// For example:
+///
+/// ```text
 /// "libraries": [
 ///     {
 ///       "name": "net.fabricmc:tiny-mappings-parser:0.3.0+build.17",
 ///       "url": "https://maven.fabricmc.net/"
 ///     },
 ///   ]
+/// ```
 fn resolve_modloader_libraries(library: &Value) -> Result<ResolvedLibrary> {
     let name = library["name"].as_str().ok_or(Error::InvalidVersionJson)?;
     let name: Vec<&str> = name.split(":").collect();

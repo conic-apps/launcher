@@ -7,16 +7,15 @@ import { AppIcon } from "app-icon.slint";
 import { Dropdown, DropdownOption } from "../globals/dropdown.slint";
 import { FocusManager } from "../globals/focus.slint";
 
-// Dropdown select (src/components/BaseDropdownSelect.vue), used for the
-// language picker.
+// Dropdown select, used for the language picker.
 //
 // The list itself is rendered by `DropdownOverlay` at the application root, so
 // it can float above the settings scroll area. This component:
 //   * fills the `Dropdown` global with its data and anchor on open;
-//   * flips its chevron over `CHEVRON_FLIP_DURATION` = 200ms `ease-in-out`
-//     (`rotateX(0 -> 90 -> 180)`, including the 0.7 opacity dip). Slint has no
-//     3D rotateX, so a vertical scale through zero (100% -> -100%) reproduces
-//     the flip, with opacity following the angle;
+//   * flips its chevron over 200ms `ease-in-out`, including the opacity dip at
+//     the halfway point. Slint has no 3D rotation, so a vertical scale through
+//     zero (100% -> -100%) reproduces the flip, with opacity following the
+//     angle;
 //   * applies the choice reported back through `Dropdown.chosen` /
 //     `choose-serial`.
 //
@@ -76,7 +75,7 @@ export component BaseDropdownSelect inherits Rectangle {
                 size: 14px;
                 icon-color: Theme.default-text-color.transparentize(0.1);
                 transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
-                // `rotateX` keyframes dip to 0.7 at 90deg (scale 0 here).
+                // The opacity dips to 0.7 at the halfway point (scale 0 here).
                 opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
             }
         }

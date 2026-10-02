@@ -22,12 +22,12 @@ thread_local! {
 /// **The winit backend keeps exactly one event filter per Slint window, and
 /// `on_winit_window_event` *replaces* it** rather than adding to it — the slot
 /// is a `Cell<Option<Box<dyn FnMut(..)>>>`. So the second caller of the raw API
-/// silently unhooks the first, and the symptom is whichever watcher happened to
-/// register last simply never running: that is how the window controls lost
-/// their hook (`windows_caption`) and the background lost its pointer.
+/// silently unhooks the first, and the symptom is every watcher but the one
+/// that registered last simply never running: that is how the window controls
+/// lost their hook (`windows_caption`) and the background lost its pointer.
 ///
 /// This fans every subscriber out through the one slot, so the order they
-/// register in no longer decides which of them works. Call it instead.
+/// register in does not decide which of them works. Call it instead.
 ///
 /// Events are always propagated: nothing in the app consumes one, and a filter
 /// that stopped propagation would take the event away from all the others and
@@ -133,10 +133,10 @@ impl<H: ComponentHandle> WindowService<H> {
     /// volume ramp the music player follows a focus change with is not something
     /// to discover half a second late.
     ///
-    /// There is deliberately no matching "read it once" accessor. The Vue store
-    /// asks the window for its focus state at startup as well, but a Slint window
-    /// does not exist until the event loop runs, so the read would always answer
-    /// "focused" and the first event is what actually settles it.
+    /// There is deliberately no matching "read it once" accessor. A read at
+    /// startup would always answer "focused", because a Slint window does not
+    /// exist until the event loop runs, so the first event is what actually
+    /// settles it.
     ///
     /// The callback runs on the event loop's thread, and the event is propagated
     /// afterwards so Slint still sees it.
@@ -162,8 +162,8 @@ impl<H: ComponentHandle> WindowService<H> {
     /// Brings the window back in front of the user and gives it the input focus.
     ///
     /// This is what a second launch of the app does to the one that is already
-    /// running (`slint-single-instance`): the user asked for the launcher
-    /// again, and the answer is the window they already have, not a second one.
+    /// running (`single-instance`): the user asked for the launcher again, and
+    /// the answer is the window they already have, not a second one.
     ///
     /// A minimized window is restored first, because the platform's own
     /// activation does nothing for one — it is not on screen to bring forward.
@@ -216,14 +216,13 @@ impl<H: ComponentHandle> WindowService<H> {
         }
     }
 
-    /// Starts an OS window drag, for a `data-tauri-drag-region`-style region.
+    /// Starts an OS window drag, for a title-bar drag region.
     ///
-    /// This is `performWindowDragWithEvent:` on macOS — what Chromium, Electron
-    /// and tao (Tauri's own windowing layer) do for their drag regions: the drag
-    /// is handed to the platform, which tracks it in its own event loop, so it
-    /// keeps working outside the window, over other applications, and with the
-    /// system's window snapping, and the window is composited by the OS rather
-    /// than repainted here.
+    /// This is `performWindowDragWithEvent:` on macOS — what Chromium and
+    /// Electron do for their drag regions: the drag is handed to the platform,
+    /// which tracks it in its own event loop, so it keeps working outside the
+    /// window, over other applications, and with the system's window snapping,
+    /// and the window is composited by the OS rather than repainted here.
     ///
     /// It has to be called while a mouse event is being dispatched: the drag is
     /// started from that event (`NSApp.currentEvent`). Slint runs a `TouchArea`'s

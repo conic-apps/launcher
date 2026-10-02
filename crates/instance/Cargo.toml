@@ -1,6 +1,6 @@
 [package]
 name = "instance"
-description = "Tauri-free mirror of crates/instance for the Slint app"
+description = "Instance CRUD and playtime"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true

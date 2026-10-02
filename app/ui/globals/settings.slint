@@ -4,10 +4,9 @@
 
 // Global settings state.
 //
-// Mirrors the Vue config store (src/store/config.ts + crates/config). Rust owns
-// the authoritative `Config` and seeds these properties before the window is
-// shown; the settings pages mutate them and call `changed()`, after which Rust
-// reads the properties back and persists them (debounced).
+// Rust owns the authoritative `Config` and seeds these properties before the
+// window is shown; the settings pages mutate them and call `changed()`, after
+// which Rust reads the properties back and persists them (debounced).
 //
 // Numeric text fields are strings on purpose: `TextInput` edits text, and Rust
 // parses them back into `usize` / `u64`. Sliders are `int`.
@@ -16,22 +15,20 @@ export struct JavaRuntime {
     vendor: string,
     version: string,
     arch: string,
-    // The path as the switch identifies the runtime by, and the form the
-    // disabled list stores (`SettingsJVM.vue`'s `runtime.path`).
+    // The path the switch identifies the runtime by, and the form the disabled
+    // list stores.
     path: string,
     // The same path as it is shown: Windows reports the extended-length form,
-    // which `formatJavaPath` strips (see `format_java_path` in `settings.rs`).
+    // which `format_java_path` in `settings.rs` strips.
     display-path: string,
     enabled: bool,
 }
 
 export global AppConfig {
-    // ----- general -----
     in-out property <string> language: "";
     in-out property <bool> auto-update: true;
     in-out property <string> update-channel: "stable";
 
-    // ----- launch -----
     in-out property <string> launch-width: "854";
     in-out property <string> launch-height: "480";
     in-out property <bool> launch-fullscreen: false;
@@ -49,13 +46,11 @@ export global AppConfig {
     in-out property <bool> ignore-patch-discrepancies: false;
     in-out property <bool> skip-file-check: false;
 
-    // ----- jvm -----
     in-out property <bool> prefer-mojang-java: true;
     in-out property <[JavaRuntime]> java-runtimes: [];
     in-out property <bool> java-scanning: false;
     in-out property <string> java-scan-error: "";
 
-    // ----- appearance -----
     in-out property <bool> palette-follow-system: true;
     in-out property <string> palette: "Mocha";
     in-out property <string> background-image: "";
@@ -63,7 +58,6 @@ export global AppConfig {
     in-out property <bool> background-camera-move: true;
     in-out property <bool> background-parallax: true;
 
-    // ----- audio -----
     in-out property <bool> music-enabled: false;
     in-out property <bool> resume-on-startup: true;
     in-out property <bool> show-visualizer: true;
@@ -71,18 +65,15 @@ export global AppConfig {
     in-out property <int> main-volume: 100;
     in-out property <int> background-volume: 25;
 
-    // ----- download -----
     in-out property <string> max-connections: "100";
     in-out property <string> max-download-speed: "0";
     in-out property <bool> use-system-proxy: true;
 
-    // ----- accessibility -----
     in-out property <bool> release-reminder: false;
     in-out property <bool> snapshot-reminder: false;
     in-out property <bool> auto-game-lang: true;
     in-out property <bool> high-contrast: false;
 
-    // ----- about -----
     in-out property <string> app-version: "0.0.0";
 
     // A setting was edited: Rust reads the properties back and saves.

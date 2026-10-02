@@ -24,7 +24,7 @@ export component InstanceListDropdown inherits Rectangle {
     // the two instances in `instances-list-tool-bar.slint` both at
     // `horizontal-stretch: 1` the row stopped splitting in half.
     height: 25px;
-    // `.head`'s own fill, on the component root.
+    // The root carries the head's fill.
     background: Theme.surface-0;
     border-radius: 4px;
 
@@ -39,19 +39,15 @@ export component InstanceListDropdown inherits Rectangle {
         }
     }
 
-    // `.head { display: flex; align-items: center }` with `.label { flex-shrink: 0;
-    // padding: 6px 12px }` and `.selected { flex: 1; padding: 0 12px }` — so the
-    // label is its own text and the selection takes the rest, with the chevron
-    // 12px from the end. The three widths the hand-placement needed (the label
-    // plus 24, `parent.width - label-box.width`, and `- min(parent.width, 38px)`
-    // for the elide) are the layout's own arithmetic.
+    // The label is its own text and the selection takes the rest, with the
+    // chevron 12px from the end.
+    //
     // Spelled out rather than left to the default: the geometry default is
     // specified per element type, and this is the box the only `TouchArea` in
     // the component lives in — a layout whose children are all `Rectangle`s has
     // a preferred size of 0, so if the default is ever the preferred size
     // rather than the parent's, the dropdown stops being clickable rather than
-    // merely looking wrong. The baseline's `head` was a `Rectangle` with these
-    // two bindings for the same reason.
+    // merely looking wrong.
     head := HorizontalLayout {
         width: root.width;
         height: root.height;
@@ -66,10 +62,9 @@ export component InstanceListDropdown inherits Rectangle {
         // Made a layout, it is placed by `head` like anything else, so it is
         // given the room it is entitled to and its own padding applies.
         //
-        // `.label { padding: 6px 12px; flex-shrink: 0 }` — the
-        // `horizontal-stretch: 0` is the whole of `flex-shrink: 0`. Stretch
-        // factors default to 1, so without it the label claims half the row
-        // away from `.selected { flex: 1 }`.
+        // `horizontal-stretch: 0` keeps the label at its own width. Stretch
+        // factors default to 1, so without it the label would claim half the row
+        // away from the selection.
         label-box := Rectangle {
             horizontal-stretch: 0;
             vertical-stretch: 0;
@@ -92,12 +87,9 @@ export component InstanceListDropdown inherits Rectangle {
             }
         }
 
-        // `.selected { display: flex; align-items: center; overflow: hidden }
-        // .text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-        // .chevron { margin-left: auto }` — the last of which is the chevron's
-        // `horizontal-stretch: 0`: it takes its own 14px and the selection takes
-        // the rest, so the arrow is 12px from the end whatever the text is
-        // doing. Stretch factors default to 1, and a stretching chevron claims
+        // The chevron's `horizontal-stretch: 0` gives it its own 14px and the
+        // selection the rest, so the arrow is 12px from the end whatever the text
+        // is doing. Stretch factors default to 1, and a stretching chevron claims
         // half the free space with the text and drags the arrow inward.
         selected-box := Rectangle {
             horizontal-stretch: 1;
@@ -135,8 +127,8 @@ export component InstanceListDropdown inherits Rectangle {
     // The whole component is the click target, so this hangs off the *root*
     // and not off `head`. Inside the layout it was a column like any other:
     // stretch factors default to 1, so it took a share of the free space away
-    // from `.selected { flex: 1 }`, and `width: 100%` handed it the whole row as
-    // its preferred size besides — the selection elided to a bare "…" and the
+    // from the selection, and `width: 100%` handed it the whole row as its
+    // preferred size besides — the selection elided to a bare "…" and the
     // chevron stopped being 12px from the end. Out here it is in no layout at
     // all, so the `TouchArea` rule applies in full: 100% of its parent, which is
     // the whole dropdown, and it costs the row nothing.

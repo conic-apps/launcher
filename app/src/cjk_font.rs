@@ -14,7 +14,7 @@
 //! font covering one sample character and uses the answer for the whole script.
 //!
 //! On Windows that answer is *Yu Gothic UI*, a **Japanese** font, and it has no
-//! glyph for 91 of the 364 distinct CJK characters the `zh_CN` catalog uses
+//! glyph for some of the CJK characters the `zh_CN` catalog uses
 //! (动, 戏, 图, 环, 级, 组, 统 …), so those render blank — typically in the middle
 //! of otherwise fine text, which is why it reads as "some characters are
 //! missing". macOS (CoreText) and Linux (fontconfig) answer with a
@@ -72,7 +72,7 @@ mod windows {
 
         // zh_TW is the only bundled locale that wants Traditional glyph forms.
         // Everything else — including `en_US` and the language picker, which
-        // hardcodes 简体中文/繁體語言 regardless of the UI language — is served
+        // hardcodes 简体中文/繁體中文 regardless of the UI language — is served
         // by the Simplified list, because a missing glyph is a far worse failure
         // than a shared ideograph drawn in its mainland form.
         let hani = if locale == "zh_TW" {

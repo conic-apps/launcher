@@ -1,6 +1,6 @@
 [package]
 name = "download"
-description = "Tauri-free mirror of crates/download for the Slint app"
+description = "Generic downloader tasks"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true
@@ -15,9 +15,8 @@ log.workspace = true
 rayon.workspace = true
 reqwest.workspace = true
 # `rc` is what implements `Serialize`/`Deserialize` for the `Arc<Atomic…>`
-# progress fields of `DownloadState`. The Tauri workspace gets it through
-# feature unification with `crates/download`; the Slint app builds on its own,
-# so it has to ask for it here.
+# progress fields of `DownloadState`. It is not enabled by default, so the
+# crate asks for it here.
 serde = { workspace = true, features = ["rc"] }
 serde_with.workspace = true
 sha1_smol.workspace = true

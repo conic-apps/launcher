@@ -2,16 +2,14 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! `crates/content/src/error.rs`, minus the world map's Tauri-only variants.
+//! Errors for the content crate.
 //!
-//! The `Serialize` derive and the `serde_with::DisplayFromStr` shims are kept
-//! so the shape the frontend sees (`{"kind": …, "message": …}`, with
-//! `{"kind": …}` alone for the unit variants) does not change.
+//! The `Serialize` derive and the `serde_with::DisplayFromStr` shims keep the
+//! shape the frontend sees (`{"kind": …, "message": …}`, with `{"kind": …}`
+//! alone for the unit variants) stable.
 //!
-//! `WorldMap` is back now that `worldmap.rs` is mirrored. `WorldMapTask` and
-//! `WorldMapPng` are not: the first was the `spawn_blocking` join of the
-//! `#[command]`, which the Slint side runs on its own runtime, and the second
-//! was a PNG encoder that has no counterpart (see `worldmap.rs`).
+//! `WorldMap` wraps the renderer's error; the renderer runs on the app's own
+//! runtime and hands back raw RGBA rather than a PNG (see `worldmap.rs`).
 
 use std::result;
 

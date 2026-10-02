@@ -2,16 +2,14 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// The multiplayer dialog's state: `src/store/multiplayer.ts` plus the
-// `multiplayerExtension` slice of `src/store/dialog.ts` and the pure-UI `ref`s
-// the manager keeps (`MultiplayerManager.vue`'s `guestCodeInput`, `codeInput`,
-// `showCopyMessage`, the scan countdown …).
+// The multiplayer dialog's state, both the session and the manager's own
+// pure-UI flags (the join-code field, the copy hint, the scan countdown).
 //
-// The session itself stays in Rust (`slint-multiplayer` + `app/src/multiplayer.rs`),
+// The session itself stays in Rust (`multiplayer` + `app/src/multiplayer/`),
 // which is the source of truth for `state`/`room-code`/`players`/`peers`/`url`/
 // `fault`; this global is the surface the dialog reads and writes.
 
-/// One member of the room (`PlayerProfile` in `crates/multiplayer/index.ts`).
+/// One member of the room (`PlayerProfile` in the `multiplayer` crate).
 export struct MultiplayerPlayer {
     machine-id: string,
     name: string,
@@ -29,13 +27,11 @@ export struct MultiplayerPeer {
 }
 
 export global MultiplayerState {
-    // ----- the dialog store (src/store/dialog.ts `multiplayerExtension`) -----
-    /// The `visible` flag of `MultiplayerExtension.vue`'s `BaseDialog`.
+    /// The visibility flag of the `BaseDialog` this extends.
     in-out property <bool> visible: false;
     /// "downloadDescription" | "downloadProgress" | "multiplayerManager".
     in-out property <string> component: "downloadDescription";
 
-    // ----- the session store (src/store/multiplayer.ts) -----
     /// "waiting" | "host-scanning" | "host-starting" | "host-ok" |
     /// "guest-connecting" | "guest-starting" | "guest-ok" | "exception" |
     /// "unknown".
@@ -48,21 +44,18 @@ export global MultiplayerState {
     in-out property <int> fault-code: 0;
     in-out property <string> fault-message: "";
 
-    // ----- the manager's own state (MultiplayerManager.vue) -----
-    /// `guestCodeInput`: the join-code screen is up regardless of the session
-    /// state.
+    /// The join-code screen is up regardless of the session state.
     in-out property <bool> code-input-open: false;
-    /// `codeInput`, bound to the field.
+    /// The typed join code.
     in-out property <string> code-input: "";
-    /// `codeInputValid`, computed in Rust (Slint has no regular expressions).
+    /// Whether the typed code is valid; computed in Rust, since Slint has no
+    /// regular expressions.
     in-out property <bool> code-input-valid: false;
-    /// `showCopyMessage`: the "Copied!" bubble that replaces the code.
+    /// The "Copied!" bubble that replaces the code.
     in-out property <bool> code-copied: false;
-    /// `scanRemaining`, counted down by the manager (`MultiplayerManager.vue`'s
-    /// `watch(scanning)` + one-second interval).
+    /// Seconds left in the scan, counted down by the manager.
     in-out property <int> scan-remaining: 60;
 
-    // ----- the download screen -----
     /// "prepare" | "downloading" | "finished".
     in-out property <string> download-phase: "prepare";
     in-out property <bool> download-loading: true;
@@ -73,30 +66,30 @@ export global MultiplayerState {
     in-out property <string> download-value-text: "";
     in-out property <string> download-max-text: "";
 
-    /// `uiComponent`: which of the manager's seven screens is mounted.
+    /// Which of the manager's seven screens is mounted.
     out property <string> screen: root.code-input-open ? "guestCodeInput"
         : root.state == "host-scanning" || root.state == "host-starting" ? "hostScan"
         : root.state == "host-ok" ? "hostReady"
         : root.state == "guest-connecting" || root.state == "guest-starting" ? "guestJoining"
         : root.state == "guest-ok" ? "guestReady"
         : root.state == "exception" ? "exception"
-        // "waiting", and the "unknown" fallback of the Vue's `switch`.
+        // "waiting", and the fallback for an unknown state.
         : "waiting";
 
-    /// `transitionName`: a swap that lands on `waiting` comes from the right.
+    /// A swap that lands on `waiting` comes from the right.
     out property <string> screen-direction: root.screen == "waiting" ? "right" : "left";
 
-    /// The local peer's NAT code, or -1 when the store has no local peer yet
-    /// (the Vue's `localNatCode !== null`). Rust fills both when it publishes
-    /// the peer list — Slint functions cannot loop over an array.
+    /// The local peer's NAT code, or -1 when there is no local peer yet. Rust
+    /// fills both when it publishes the peer list — Slint functions cannot loop
+    /// over an array.
     in-out property <int> local-nat-code: -1;
     in-out property <bool> has-local-peer: false;
 
-    /// The label beside "你的网络环境：", which the Vue maps through
-    /// `NAT_TYPE_NAMES` and leaves untranslated (they are library-defined names).
+    /// The label beside "你的网络环境："; the names are library-defined and left
+    /// untranslated.
     out property <string> local-nat-label: root.nat-label(root.local-nat-code);
 
-    /// Whether to show the NAT line at all (`v-if="localNatCode !== null"`).
+    /// Whether to show the NAT line at all.
     out property <bool> show-nat: root.has-local-peer;
 
     /// The bottom button's label. The join-code screen swaps the whole bar for
@@ -105,15 +98,14 @@ export global MultiplayerState {
         ? @tr("Multiplayer" => "Close")
         : @tr("Multiplayer" => "Hide window (connection stays open)");
 
-    /// The download screen's headline (`ProgressPhase`).
+    /// The download screen's headline.
     out property <string> download-phase-text: root.download-phase == "finished"
         ? @tr("Multiplayer" => "Done!")
         : root.download-phase == "downloading"
             ? @tr("Multiplayer" => "Downloading the Conic Nexus extension")
             : @tr("Multiplayer" => "Preparing to download the Conic Nexus extension");
 
-    /// The byte counter is only drawn once both values are known
-    /// (`v-if="progressBar.value && progressBar.max"`).
+    /// The byte counter is only drawn once both values are known.
     out property <bool> show-download-bytes: root.download-value > 0 && root.download-max > 0;
 
     public pure function nat-label(code: int) -> string {
@@ -130,13 +122,11 @@ export global MultiplayerState {
         return "NAT" + code;
     }
 
-    // ----- the script (app/src/multiplayer.rs) -----
-    /// The footer's connect button (the Vue footer's `openConnect`): checks the
-    /// library and opens the dialog on the manager or the download screen.
+    /// The footer's connect button: checks the library and opens the dialog on
+    /// the manager or the download screen.
     callback open();
-    /// The manager's `onMounted` (`multiplayerStore.init()`, named `start`
-    /// because a global cannot declare a callback called `init`): subscribes to
-    /// the session and reads its first snapshot.
+    /// Subscribes to the session and reads its first snapshot; named `start`
+    /// because a global cannot declare a callback called `init`.
     callback start();
     /// "创建小组".
     callback create-room();
@@ -148,7 +138,7 @@ export global MultiplayerState {
     callback copy-room-code();
     /// The join-code field changed: recompute `code-input-valid`.
     callback code-input-changed();
-    /// "开始下载" (the download screen's `onMounted`).
+    /// "开始下载".
     callback start-download();
     /// "停止下载".
     callback cancel-download();

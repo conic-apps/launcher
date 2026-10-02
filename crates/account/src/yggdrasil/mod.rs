@@ -98,16 +98,13 @@ pub async fn update_account(account_identifier: Uuid, account: YggdrasilAccount)
 
 /// The skin URL a profile's `textures` property carries.
 ///
-/// The frontend's `yggdrasilGetSkinUrl` (`crates/account/index.ts`): the
-/// property is the base64 of a JSON document whose `textures.SKIN.url` is the
-/// texture. Anything malformed reads as "no skin", like the original's empty
-/// `catch`.
+/// The property is the base64 of a JSON document whose `textures.SKIN.url` is
+/// the texture. Anything malformed reads as "no skin".
 pub fn get_skin_url(profile: &Profile) -> Option<String> {
     texture_url(profile, "SKIN")
 }
 
-/// The cape URL a profile's `textures` property carries
-/// (`yggdrasilGetCapeUrl`).
+/// The cape URL a profile's `textures` property carries.
 pub fn get_cape_url(profile: &Profile) -> Option<String> {
     texture_url(profile, "CAPE")
 }
@@ -118,8 +115,9 @@ fn texture_url(profile: &Profile, model: &str) -> Option<String> {
         .as_ref()?
         .iter()
         .find(|property| property.name == "textures")?;
-    // `atob` tolerates the padding a server may have left off, and the line
-    // breaks some servers wrap the value with.
+    // Servers may leave off the padding or wrap the value with line breaks,
+    // so whitespace is stripped and both padded and unpadded decoding are
+    // tried.
     let compact: String = property
         .value
         .chars()

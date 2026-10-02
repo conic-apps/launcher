@@ -2,12 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/content`: the instance's local content.
+//! The instance's local content.
 //!
-//! The original is a Tauri plugin whose fifteen commands are thin wrappers —
-//! none of them takes `State`, `AppHandle` or a `Channel` — so the mirror drops
-//! the command layer and keeps the modules themselves, which can then be
-//! diffed against the original file for file:
+//! Each module is a self-contained reader of one content kind:
 //!
 //!   * `mods/` reads the mods folder and resolves each jar's metadata, offline
 //!     from the archive itself and online through Modrinth and CurseForge;
@@ -16,23 +13,17 @@
 //!   * `resourcepack.rs` and `screenshots.rs` list the other two content kinds;
 //!   * `favorites.rs` is the shared favorites file.
 //!
-//! Two deviations, both deliberate:
+//! Two design notes, both deliberate:
 //!
-//!   * `worldmap.rs` is mirrored, but **without the PNG round trip**. The
-//!     original rendered a tile, encoded it to PNG, base64'd it into a JSON
-//!     string for the webview, and had the page decode it back into an
-//!     `ImageBitmap` — a codec trip that exists only because the two runtimes
-//!     cannot share a buffer. Here `render_map` hands the RGBA buffer straight
-//!     back and the caller wraps it in a `SharedPixelBuffer`, so the encode,
-//!     the base64 and the decode are all gone rather than moved. That is also
-//!     why `Error::WorldMapPng` and `Error::WorldMapTask` are not here: the
-//!     first was the encoder's, the second the `#[command]`'s `spawn_blocking`.
-//!   * The entry points take `&str` where the original took `String`. The
-//!     owned strings were what Tauri's IPC deserialization produced; nothing
-//!     here needs them.
+//!   * `worldmap.rs` renders a save's map **without a PNG round trip**.
+//!     `render_map` hands the RGBA buffer straight back and the caller wraps it
+//!     in a `SharedPixelBuffer`, so no encode, base64 or decode is involved.
+//!   * The entry points take borrowed names (`&str`, `impl AsRef<Path>`) rather
+//!     than owned strings; the favorites helpers and `remove_mod_files` are the
+//!     exceptions, taking owned `String`s.
 //!
-//! [`content_counts`] is not part of the original — it is what the game view's
-//! preview rows read for their "n items" labels.
+//! [`content_counts`] backs the game view's content counts — the "n items"
+//! labels on its preview rows.
 
 use std::path::{Path, PathBuf};
 
@@ -56,7 +47,7 @@ pub struct ContentCounts {
 }
 
 impl ContentCounts {
-    /// Whether every category is empty (used to disable the preview rows).
+    /// Whether every category is empty.
     pub fn is_empty(&self) -> bool {
         self.saves == 0 && self.mods == 0 && self.resourcepacks == 0 && self.screenshots == 0
     }

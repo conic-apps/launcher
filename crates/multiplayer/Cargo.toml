@@ -1,6 +1,6 @@
 [package]
 name = "multiplayer"
-description = "Tauri-free mirror of crates/multiplayer for the Slint app"
+description = "Conic Nexus cross-LAN multiplayer"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true

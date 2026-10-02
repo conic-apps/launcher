@@ -2,12 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The frequency analyser the footer visualizer reads — the Web Audio
-//! `AnalyserNode` of the Vue's graph, reproduced step for step.
+//! The frequency analyser the footer visualizer reads, reproducing the Web Audio
+//! `AnalyserNode` step for step.
 //!
-//! The original built `source → analyser → gain → destination` and
-//! `BeatMap.vue` called `getFloatFrequencyData` once per animation frame. The
-//! Web Audio spec (and every implementation of it) defines that read as:
+//! The Web Audio spec (and every implementation of it) defines one
+//! `getFloatFrequencyData` read as:
 //!
 //!   1. Blackman-window the last `fftSize` samples of the signal,
 //!   2. a DFT of that size, normalised by `1/fftSize`,
@@ -19,25 +18,25 @@
 //! the other way round (a plain average of the previous frame's dB) is a
 //! different filter, and the visualizer is the only thing that reads this.
 //!
-//! Note where the node sits: *before* the gain, so lowering the volume dims the
-//! music and leaves the bars where they were.
+//! The analyser taps what the device is given, after the gain has been applied,
+//! so the volume scales the bars along with the sound.
 
 use std::sync::Arc;
 
 use rustfft::{Fft, FftPlanner, num_complex::Complex32};
 
-/// The default `fftSize`, and the one the store's analyser is created with.
+/// The default `fftSize`.
 pub const DEFAULT_FFT_SIZE: usize = 2048;
 
-/// The `smoothingTimeConstant` the store's analyser is created with.
+/// The `smoothingTimeConstant`, matching the Web Audio default.
 pub const SMOOTHING_TIME_CONSTANT: f32 = 0.8;
 
 /// A Web Audio `AnalyserNode`.
 ///
-/// `fftSize` is a power of two in the range 32..32768 there; the visualiser is
-/// the only thing that ever sets it (through the bar count) and it always
-/// rounds to a power of two itself, so an out-of-range value is clamped rather
-/// than rejected.
+/// `fftSize` is a power of two in the range 32..32768 in Web Audio; the
+/// visualiser is the only thing that ever sets it (through the bar count) and it
+/// always rounds to a power of two itself, so an out-of-range value is clamped
+/// rather than rejected.
 pub struct Analyser {
     fft_size: usize,
     window: Vec<f32>,
@@ -50,8 +49,7 @@ pub struct Analyser {
 }
 
 impl Analyser {
-    /// A new analyser with the store's own `fftSize` and
-    /// `smoothingTimeConstant`.
+    /// A new analyser with the given `fftSize`.
     pub fn new(fft_size: usize) -> Self {
         let fft_size = normalize_fft_size(fft_size);
         let mut analyser = Self {
@@ -89,17 +87,16 @@ impl Analyser {
         self.window = blackman_window(fft_size);
         self.fft = plan_fft(fft_size);
         // The smoothed magnitudes belong to the old transform, so they start
-        // over — which is what changing `fftSize` does to the node as well.
+        // over, which is what changing `fftSize` does under Web Audio too.
         self.smoothed.clear();
         self.smoothed.resize(self.frequency_bin_count(), 0.0);
     }
 
     /// One `getFloatFrequencyData`: the spectrum of `input` (the samples the
-    /// node has been fed, newest last), in dB, one value per frequency bin.
+    /// analyser has been fed, newest last), in dB, one value per frequency bin.
     ///
     /// Fewer samples than `fftSize` are zero-padded at the front and more are
-    /// truncated to the newest `fftSize`, exactly as the node's own ring buffer
-    /// behaves.
+    /// truncated to the newest `fftSize`, matching the Web Audio ring buffer.
     pub fn read(&mut self, input: &[f32]) -> Vec<f32> {
         let mut bins = Vec::with_capacity(self.frequency_bin_count());
         self.read_into(input, &mut bins);
@@ -108,10 +105,9 @@ impl Analyser {
 
     /// [`Self::read`] writing into `bins`, which is cleared first.
     ///
-    /// The audio callback uses this rather than `read`: the node it stands in for
-    /// wrote into an array the caller already had, and handing out a fresh `Vec`
-    /// every read would put an allocation on the one thread that cannot afford
-    /// one.
+    /// The audio callback uses this rather than `read` so that a read allocates
+    /// nothing: handing out a fresh `Vec` every read would put an allocation on
+    /// the one thread that cannot afford one.
     pub fn read_into(&mut self, input: &[f32], bins: &mut Vec<f32>) {
         let size = self.fft_size;
         let skip = input.len().saturating_sub(size);
@@ -130,9 +126,9 @@ impl Analyser {
         let carry = SMOOTHING_TIME_CONSTANT;
         let keep = 1.0 - carry;
         for (slot, spectrum) in self.smoothed.iter_mut().zip(self.scratch.iter()) {
-            // A silent bin is 0, not `-inf`: `getFloatFrequencyData` reports the
-            // floor of the representable range, and the visualiser treats
-            // anything at or below its own `MIN_DB` as silence anyway.
+            // A silent bin is clamped to `f32::MIN_POSITIVE`, not left at 0: the
+            // logarithm of 0 is `-inf`, and the visualiser treats anything at or
+            // below its own `MIN_DB` as silence anyway.
             let magnitude = (spectrum.norm() * scale).max(f32::MIN_POSITIVE);
             *slot = carry * *slot + keep * magnitude;
         }

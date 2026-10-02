@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The Forge version list and installer (`crates/install/src/forge.rs`).
+//! The Forge version list and installer.
 
 use std::{
     cmp::Reverse,
@@ -33,15 +33,7 @@ use crate::{
 pub struct ForgeVersionList(HashMap<String, Vec<String>>);
 
 impl ForgeVersionList {
-    /// Fetches the Forge version list for a specified Minecraft version.
-    ///
-    /// # Arguments
-    ///
-    /// * `mcversion` - The target Minecraft version (e.g., "1.20.1").
-    ///
-    /// # Returns
-    ///
-    /// A `ForgeVersionList` containing all available Forge versions for the specified Minecraft version.
+    /// Fetches every Forge version, keyed by Minecraft version.
     pub async fn new() -> Result<Self> {
         let mut list: Self = HTTP_CLIENT
             .get("https://files.minecraftforge.net/net/minecraftforge/forge/maven-metadata.json")
@@ -57,8 +49,7 @@ impl ForgeVersionList {
 
     /// The Forge versions of a Minecraft version, newest first.
     ///
-    /// `None` when the list has no entry for that Minecraft version at all
-    /// (the frontend's `response[mcVersion]` lookup).
+    /// `None` when the list has no entry for that Minecraft version at all.
     pub fn get(&self, mcversion: &str) -> Option<&[String]> {
         self.0.get(mcversion).map(Vec::as_slice)
     }
@@ -78,7 +69,7 @@ enum VersionToken {
 ///
 /// `.` and `-` act as separators; digit runs become [`VersionToken::Num`],
 /// all other runs become [`VersionToken::Text`] (branch suffixes such as
-/// `-1.7.10` or `-prerelease`).
+/// `-prerelease`).
 fn tokenize_version(version: &str) -> Vec<VersionToken> {
     fn push(tokens: &mut Vec<VersionToken>, run: &mut String) {
         if run.is_empty() {
@@ -105,40 +96,20 @@ fn tokenize_version(version: &str) -> Vec<VersionToken> {
     tokens
 }
 
-/// Forge Install Bootstrapper - by bangbang93
-/// [GitHub Repository](https://github.com/bangbang93/forge-install-bootstrapper)
-///
-/// Embedded JAR file used for bootstrapping Forge installation on newer Forge versions.
+/// Embedded bootstrapper JAR for installing newer Forge versions, from
+/// [bangbang93/forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper).
 const FORGE_INSTALL_BOOTSTRAPPER_BANGBANG93: &[u8] =
     include_bytes!("./forge-install-bootstrapper(bangbang93).jar");
-/// Forge Install Bootstrapper - by ConicMC
-///
-/// [GitHub Repository](https://github.com/conic-apps/forge-install-bootstrapper-legacy)
-///
-/// Embedded JAR file used for bootstrapping legacy Forge installation.
+/// Embedded bootstrapper JAR for legacy Forge installation, from
+/// [conic-apps/forge-install-bootstrapper-legacy](https://github.com/conic-apps/forge-install-bootstrapper-legacy).
 const FORGE_INSTALL_BOOTSTRAPPER_CONIC: &[u8] =
     include_bytes!("./forge-install-bootstrapper(conic).jar");
 
-/// Installs the specified Forge version for the given Minecraft version into the target directory.
+/// Installs the given Forge version into the target directory.
 ///
-/// This function downloads the Forge installer, optionally uses the bootstrapper JAR for Forge
-/// versions 25 and above, and executes the installer to install Forge.
-///
-/// # Arguments
-///
-/// * `minecraft_location` - The directory where Forge should be installed.
-/// * `forge_version` - The Forge version string to install (e.g., "1.20.1-47.1.0").
-/// * `mcversion` - The Minecraft version string associated with this Forge version.
-/// * `java_path` - The Java executable used to run the installer.
-/// * `reporter` - Progress reporter forwarded to the frontend.
-///
-/// # Errors
-///
-/// Returns an error if downloading the installer, writing files, or running the installer process fails.
-///
-/// # Notes
-///
-/// The function manages temporary files, logging progress and errors throughout the installation.
+/// Downloads the Forge installer, tries the bundled bangbang93 bootstrapper and
+/// falls back to the ConicMC bootstrapper for legacy versions. Temporary files
+/// are removed afterwards; progress and errors are logged.
 pub async fn install(
     minecraft_location: &MinecraftLocation,
     forge_version: &str,
@@ -181,23 +152,7 @@ pub async fn install(
     )
 }
 
-/// Downloads the Forge installer JAR for the specified Minecraft and Forge versions.
-///
-/// Saves the installer to a temporary file and returns the file path.
-///
-/// # Arguments
-///
-/// * `mcversion` - The Minecraft version string.
-/// * `forge_version` - The Forge version string.
-/// * `reporter` - Progress reporter forwarded to the frontend.
-///
-/// # Returns
-///
-/// A `PathBuf` pointing to the downloaded installer JAR.
-///
-/// # Errors
-///
-/// Returns an error if the download fails or the file cannot be written.
+/// Downloads the Forge installer JAR to a temporary file and returns its path.
 pub async fn download_installer(
     mcversion: &str,
     forge_version: &str,

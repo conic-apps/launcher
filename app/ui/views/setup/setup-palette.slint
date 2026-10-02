@@ -10,16 +10,13 @@ import { PaletteRow } from "../../components/palette-row.slint";
 import { AppConfig } from "../../globals/settings.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
-// src/views/setup/SetupWizardPalette.vue
-//
-// The same group `SettingsAppearance.vue` opens with — one `SettingItem` with a
-// switch, then the four palette tiles — without the group's title, and at the
-// full width the wizard's inline `style="width: 100%"` asks for.
+// The same group the appearance settings open with — one `SettingItem` with a
+// switch, then the four palette tiles — without the group's title, and at full
+// width.
 //
 // The palette change itself needs nothing here: `Theme.active-palette` already
-// resolves "follow system" to Mocha or Latte, which is the `currentTheme` the
-// Vue watches `prefers-color-scheme` into, and the tiles arm the 300ms palette
-// transition themselves (see `PaletteRow`).
+// resolves "follow system" to Mocha or Latte, and the tiles arm the 300ms
+// palette transition themselves (see `PaletteRow`).
 export component SetupPalette inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
@@ -28,7 +25,7 @@ export component SetupPalette inherits VerticalLayout {
     WizardTitle { title: @tr("SetupPalette" => "Choose a color scheme"); }
     WizardMessage { message: @tr("SetupPalette" => "Conic Launcher supports multiple color schemes. Pick one that suits your style."); }
 
-    // `style="margin-top: 16px"` on the `SettingGroup`.
+    // A 16px top margin before the group.
     VerticalLayout {
         width: 100%;
         padding-top: 16px;
@@ -36,9 +33,8 @@ export component SetupPalette inherits VerticalLayout {
         alignment: start;
 
         SettingGroup {
-            // `style="width: 100%"` beats `SettingGroup.vue`'s
-            // `width: calc(100% - 16px); margin: 0 auto`, and the wizard's
-            // column is the one that is already inset by the body's own 36px.
+            // Full width: the wizard's column is already inset by the body's own
+            // 36px.
             width: 100%;
 
             SettingItem {

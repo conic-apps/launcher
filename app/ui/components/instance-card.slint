@@ -6,64 +6,55 @@ import { Theme } from "../theme.slint";
 import { AppIcon } from "app-icon.slint";
 import { FocusManager } from "../globals/focus.slint";
 
-// The instance card: `InstanceSetting.vue`'s `.instance` block, which
-// `ConfirmDeleteInstance.vue` repeats almost line for line — so it is one
-// component here rather than two near-copies.
+// The instance card. The instance settings and the delete-confirmation dialog
+// draw the same block, so it is one component rather than two near-copies.
 //
-// Geometry, from `box-sizing: border-box` on `*`:
+// Geometry:
 //
-//   the content box starts at  x = 16 (the `border-left`) + 16 (`padding-left`)
-//                        and   y =  1 (the 1px hairline)   +  8 (`padding-top`),
+//   the content box starts at  x = 16 (the left bar) + 16 (the title inset)
+//                        and   y =  1 (the 1px hairline)   +  8 (the top inset),
 //   so the title row sits at (32, 9) and the details 6px under it.
 //
-// The absolutely positioned `img.background` is placed against the *padding* box,
-// which is the border box less the borders: `right: 0` therefore lands its right
-// edge 1px inside the card, and `width: calc(100% - 100px)` is 100px off a
-// padding box that starts at x = 16 — hence x = 116, not 100.
-//
-// `transition: border-left 200ms ease, margin 200ms ease` animates nothing: no
-// rule anywhere changes either property.
+// The background image is a child of the card, so its `x`/`y` are measured from
+// the card's own corner. It starts at x = 116, clear of the 16px left bar, and
+// is inset 1px on the top, right and bottom — so its right edge lands 1px inside
+// the card and the 1px hairline the border rectangle draws stays visible.
 export component InstanceCard inherits Rectangle {
     /// The instance's name; two-way, because the card is where it is edited.
     in-out property <string> name: "";
     /// Whether this card's title row can be edited at all. The settings overlay
     /// can; the delete dialog's copy of the card has no editor.
     in property <bool> name-editable: false;
-    /// The Vue's `editingInstanceName`: the title row is swapped for a field.
+    /// The title row is swapped for a field.
     in-out property <bool> name-editing: false;
     /// The mod loader's display name, empty for a vanilla instance
-    /// (`ModLoaderType::to_string`). The class is `tag <lowercased>`, and
-    /// `.tag.vanilla` is what the empty name gets.
+    /// (`ModLoaderType::to_string`), which draws the "Vanilla" tag.
     in property <string> loader: "";
     in property <string> minecraft-version: "";
     in property <bool> has-background: false;
     /// The instance's background picture, loaded by Rust. An image that could
-    /// not be decoded reports a zero width, which is the same test as the Vue's
-    /// `imgLoaded` — the `<img>` is drawn only once it has loaded.
+    /// not be decoded reports a zero width, so the picture is drawn only once it
+    /// has loaded.
     in property <image> card-background;
     /// The delete dialog's third detail line (its play time). Empty draws
-    /// nothing, which is the settings overlay's case: `InstanceSetting.vue` has
-    /// no such row.
+    /// nothing, which is the settings view's case: it has no such row.
     in property <string> playtime: "";
     in property <string> playtime-label: "";
     /// The Minecraft version row is drawn even with no version. The delete
-    /// dialog's copy of the card has no `v-if` on it; the settings overlay's
-    /// has, and passes this at its default.
+    /// dialog's copy of the card always shows it; the settings view's hides it
+    /// at the default.
     in property <bool> version-always: false;
     /// The colour behind the card, which the background image's fade has to be
     /// mixed with: the overlay's panel is `Theme.base`, the create-instance
     /// dialog's `Theme.dialog-background`.
     in property <color> backdrop: Theme.base;
 
-    /// The title row was clicked while it was not being edited — the Vue's
-    /// `@click="editInstanceName"`.
+    /// The title row was clicked while it was not being edited.
     callback name-clicked();
-    /// The name was typed. The Vue writes through `v-model` into
-    /// `currentInstance.config.name`, which its `watchEffect` then saves.
+    /// The name was typed.
     callback name-edited();
 
-    /// The fill of `.tag.<loader>`; `.tag.vanilla` is the fallback, since the
-    /// Vue applies it to the `v-else` branch.
+    /// The fill of the loader tag; the vanilla case is the fallback.
     pure function tag-color(key: string) -> color {
         if key == "quilt" { return Theme.mauve; }
         if key == "fabric" { return Theme.yellow; }
@@ -78,15 +69,14 @@ export component InstanceCard inherits Rectangle {
     clip: true;
     background: Theme.surface-0.with-alpha(0.4);
 
-    /// `border: 1px solid rgba(var(--ctp-surface1-rgb), 0.8)`.
     Rectangle {
         border-width: 1px;
         border-color: Theme.surface-1.with-alpha(0.8);
         background: transparent;
     }
 
-    /// `border-left: 16px solid rgba(var(--ctp-lavender-rgb), 0.8)`, drawn over
-    /// the hairline: Slint has one `border-width` for the whole box.
+    /// The lavender left bar, drawn over the hairline: Slint has one
+    /// `border-width` for the whole box.
     Rectangle {
         x: 0;
         y: 0;
@@ -95,7 +85,7 @@ export component InstanceCard inherits Rectangle {
         background: Theme.lavender.with-alpha(0.8);
     }
 
-    // `img.background`: `object-fit: cover`, pinned to the card's top right and
+    // The background image is pinned to the card's top right, cover-fit, and
     // faded out towards the left.
     if root.has-background && root.card-background.width > 0 : Rectangle {
         x: 116px;
@@ -111,12 +101,10 @@ export component InstanceCard inherits Rectangle {
             image-fit: cover;
         }
 
-        // `mask-image: linear-gradient(to left, black 0%, transparent 100%)`.
-        // Slint has no masks, so the card's own fill is laid over the image and
-        // faded out to the right instead: at the image's left edge it is exactly
-        // what the mask leaves behind there, which is `rgba(surface0, 0.4)` over
-        // the backdrop — an opaque 40/60 mix of the two, and `mix` weights its
-        // *receiver*, so the backdrop is the one named first.
+        // The image is faded out to the left with a gradient over it instead of
+        // a mask: at the image's left edge the overlay is the card fill over the
+        // backdrop — an opaque 40/60 mix of the two — and `mix` weights its
+        // *receiver*, so the backdrop is named first.
         Rectangle {
             background: @linear-gradient(
                 90deg,
@@ -125,7 +113,7 @@ export component InstanceCard inherits Rectangle {
         }
     }
 
-    // ----- `p.instance-name` -----
+    // ----- the name -----
     if !root.name-editing : name-row := Rectangle {
         x: 32px;
         y: 9px;
@@ -135,11 +123,9 @@ export component InstanceCard inherits Rectangle {
 
         name-text := Text {
             x: 0px;
-            // `span { max-width: calc(100% - 30px) }` with the ellipsis the row's
-            // own `overflow: hidden; white-space: nowrap; text-overflow` put
-            // there: the name takes its own width and is cut once it would
-            // reach the edit icon 30px away. A bare `Text` outside a layout is
-            // centred on its own width, so the alignment is explicit.
+            // The name takes its own width and elides once it would reach the
+            // edit icon 30px away. A bare `Text` outside a layout is centred on
+            // its own width, so the alignment is explicit.
             width: min(self.preferred-width, parent.width - 30px);
             height: 16px;
             text: root.name;
@@ -156,8 +142,7 @@ export component InstanceCard inherits Rectangle {
             size: 16px;
             x: name-text.width + 4px;
             icon-color: Theme.default-text-color.transparentize(0.1);
-            // `svg:hover { transform: scale(1.02) }` /
-            // `svg:active { transform: scale(0.97) }`.
+            // Hover swells the icon; pressing shrinks it.
             transform-scale: edit-touch.pressed ? 97% : edit-touch.has-hover ? 102% : 100%;
             animate transform-scale { duration: 100ms; }
         }
@@ -172,9 +157,7 @@ export component InstanceCard inherits Rectangle {
         }
     }
 
-    // The Vue swaps the `<p>` for a bare `<input>` (`appearance: none; border:
-    // none; background: none; height: 100%; width: 100%`), focused as soon as it
-    // appears (`nextTick` + `focus()`) and left on `@blur`.
+    // The name field is focused as soon as it appears and left on blur.
     if root.name-editable && root.name-editing : name-input := TextInput {
         x: 32px;
         y: 9px;
@@ -203,15 +186,14 @@ export component InstanceCard inherits Rectangle {
         changed clear-sequence => { self.clear-focus(); }
     }
 
-    // ----- `.details` -----
+    // ----- details -----
     details := HorizontalLayout {
         x: 32px;
-        // `margin-top: 6px`, under the 16px title row.
+        // 6px under the 16px title row.
         y: 9px + 16px + 6px;
         width: parent.width - 49px;
         height: 13px;
-        // `.tag` carries no margin of its own and every following span an 8px
-        // `margin-left`, and the tag is always first.
+        // The tag is always first and carries no margin of its own.
         spacing: 8px;
         alignment: start;
         cross-axis-alignment: center;
@@ -225,14 +207,13 @@ export component InstanceCard inherits Rectangle {
             tag-text := Text {
                 text: root.loader == "" ? "Vanilla" : root.loader;
                 font-size: 11px;
-                // The Vue's `font-weight: 500`.
                 font-weight: 500;
                 color: Theme.text-inverse;
             }
         }
 
-        // `<span class="minecraft-version">`, which the settings overlay hides
-        // when the runtime names no version and the delete dialog always shows.
+        // The settings view hides this when the runtime names no version; the
+        // delete dialog always shows it.
         if root.version-always || root.minecraft-version != "" : HorizontalLayout {
             spacing: 0px;
             alignment: start;
@@ -241,7 +222,6 @@ export component InstanceCard inherits Rectangle {
             Text {
                 text: "Minecraft: ";
                 font-size: 11px;
-                // `.label { opacity: 0.8; font-weight: 300 }`.
                 font-weight: 300;
                 color: Theme.default-text-color.transparentize(0.1).with-alpha(0.72);
             }
@@ -254,7 +234,7 @@ export component InstanceCard inherits Rectangle {
             }
         }
 
-        // `<span class="playtime">` — the delete dialog's third row.
+        // The delete dialog's third row.
         if root.playtime != "" : HorizontalLayout {
             spacing: 0px;
             alignment: start;

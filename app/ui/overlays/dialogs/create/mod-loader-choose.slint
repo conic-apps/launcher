@@ -7,33 +7,29 @@ import { BaseListItem } from "../../../components/base-list-item.slint";
 import { ScrollView } from "../../../components/scroll-view.slint";
 import { CreateInstanceState } from "../../../globals/dialogs.slint";
 
-// The mod loader version chooser
-// (src/overlays/dialogs/create/ModLoaderChoose.vue): the versions of the loader
-// the settings screen picked.
+// The mod loader version chooser: the versions of the loader the settings screen
+// picked.
 //
-// The Vue writes one `v-if` branch per loader although all four render the same
-// list, so this version picks the list (and the icon) from the loader type.
-// Forge rows show the version without its Minecraft prefix, which Rust strips
-// when it builds the list.
+// All four loaders render the same list, so the list (and the icon) is picked
+// from the loader type. Forge rows show the version without its Minecraft prefix,
+// which Rust strips when it builds the list.
 //
-// The list is built exactly like the Minecraft chooser's, bar its height: a
-// 1px bordered, rounded box around the app's `ScrollView` (and its slim thumb),
-// with only the visible rows drawn. Two things about that differ from the Vue,
-// both deliberate:
+// The list is built like the Minecraft chooser's, bar its height: a 1px bordered,
+// rounded box around the app's `ScrollView` (and its slim thumb), with only the
+// visible rows drawn. Three things about it are deliberate:
 //
 //   * the list scrolls in an area of its own instead of growing to its full
-//     height and letting the dialog's scroll area carry it, as the Vue's
-//     `.content` does. Slint's renderer cannot paint an element taller than
-//     8192px *inside an opacity/transform group*, and a screen is exactly such a
-//     group — the zoom transition — while a list is 13 700px tall for Fabric on
-//     1.20.1 (Quilt: 16 600px). The layer allocation fails and the dialog stops being
-//     painted altogether. A bounded scroller keeps the group small.
-//   * that area draws a 1px border and a scrollbar, neither of which the Vue has
-//     on this screen (its list is a plain rounded box, and the app hides
-//     scrollbars globally). The border makes it match the version chooser, whose
-//     list carries one, and the thumb shows that the list can be scrolled.
-//   * the screen opens with the settings screen's 4px gap rather than the Vue's
-//     empty SettingGroup hairline plus the 16px margin of its item list.
+//     height and letting the dialog's scroll area carry it. Slint's renderer
+//     cannot paint an element taller than 8192px *inside an opacity/transform
+//     group*, and a screen is exactly such a group — the zoom transition — while
+//     a list is 13 700px tall for Fabric on 1.20.1 (Quilt: 16 600px). The layer
+//     allocation fails and the dialog stops being painted altogether. A bounded
+//     scroller keeps the group small.
+//   * that area draws a 1px border and a scrollbar. The border makes it match the
+//     version chooser, whose list carries one, and the thumb shows that the list
+//     can be scrolled.
+//   * the screen opens with the settings screen's 4px gap rather than an empty
+//     `SettingGroup` hairline plus the 16px margin of its item list.
 //
 // Only the visible rows are built as well — past roughly 150 rows drawn in a
 // frame the renderer gives up too (see `window-top`).
@@ -77,18 +73,16 @@ export component ModLoaderChoose inherits ZoomTransition {
     private property <length> window-bottom: -versions-scroll.content-y + versions-scroll.height
         + 2 * root.row-height;
 
-    // `.instance { margin: 4px 8px 12px 8px }`: the gap the settings screen opens
-    // with, which is what this screen uses too. The Vue opens this one with an
-    // empty `<SettingGroup style="padding: 0">` — its 1px hairline box plus the
-    // 16px bottom margin of its item list, so 18px — and that read as a second
-    // border just above the list's own.
+    // The gap the settings screen opens with, which is what this screen uses too.
+    // The 4px replaces an empty `SettingGroup` hairline box plus the 16px bottom
+    // margin of its item list, which read as a second border just above the
+    // list's own.
     Rectangle {
         width: 100%;
         height: 4px;
         background: transparent;
     }
 
-    // ----- the versions -----
     list := Rectangle {
         width: 100%;
         vertical-stretch: 1;

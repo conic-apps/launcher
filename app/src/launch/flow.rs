@@ -6,8 +6,7 @@
 
 use super::*;
 
-/// Resets `LaunchState` and seeds the instance/account fields — the Vue's
-/// template computed values plus its `onMounted` initial `ref`s.
+/// Resets `LaunchState` and seeds the instance and account fields.
 pub(crate) fn reset_state(ui: &App, instance: Option<&Instance>, config: &Config) {
     let state = ui.global::<LaunchState>();
     state.set_error(false);
@@ -77,7 +76,7 @@ pub(crate) fn reset_state(ui: &App, instance: Option<&Instance>, config: &Config
     }
 }
 
-/// The Vue's `launch()`: the checks, the account refresh, the install (when the
+/// The launch flow: the checks, the account refresh, the install (when the
 /// instance is not installed) and the launch.
 pub(crate) async fn run_flow(
     weak: Weak<App>,
@@ -86,7 +85,7 @@ pub(crate) async fn run_flow(
     instance: Option<Instance>,
 ) {
     log::info!(target: "launch", "launch flow started");
-    // `if (configStore.language !== "zh_cn" && accountStore.microsoft.length === 0)`.
+    // Only a zh_cn user may launch with no Microsoft account.
     let accounts = account::list_accounts();
     if config.language.as_deref() != Some("zh_cn") && accounts.microsoft.is_empty() {
         log::info!(target: "launch", "refused: no Microsoft account and the language is not zh_cn");
@@ -132,7 +131,6 @@ pub(crate) async fn run_flow(
     match launch_game(&weak, &run, config.clone(), instance.clone()).await {
         Ok(()) => {
             log::info!(target: "launch", "launch task finished");
-            // `if (configStore.music.pause_on_launch) musicStore.pause()`.
             if config.music.pause_on_launch {
                 crate::music::pause();
             }
@@ -148,7 +146,6 @@ pub(crate) async fn run_flow(
                     return;
                 }
                 if quit {
-                    // `appWindow.getCurrentWindow().close()`.
                     let _ = ui.hide();
                     let _ = slint::quit_event_loop();
                 } else {
@@ -204,7 +201,7 @@ impl Failure {
     }
 }
 
-/// The Vue's `isNoSuitableJavaError` branch of `handleError`.
+/// Shows the right dialog or error message for a failure.
 pub(crate) fn handle_failure(weak: &Weak<App>, run: &Run, failure: Failure) {
     match failure {
         Failure::NoSuitableJava => show_dialog(weak, run, Dialog::NoSuitableJava),
@@ -212,7 +209,7 @@ pub(crate) fn handle_failure(weak: &Weak<App>, run: &Run, failure: Failure) {
     }
 }
 
-/// The Vue's `handleError`.
+/// Shows an error message on the launch screen.
 pub(crate) fn set_error(weak: &Weak<App>, run: &Run, message: String) {
     let run = run.clone();
     let _ = weak.upgrade_in_event_loop(move |ui| {
@@ -253,8 +250,8 @@ pub(crate) fn store_account(weak: &Weak<App>, run: &Run, account: Account) {
     });
 }
 
-/// Pushes one `LaunchState` write on the event loop, dropping it if the run is
-/// no longer the current one.
+/// Pushes one `LaunchState` write on the event loop, dropping it if the run has
+/// been superseded.
 pub(crate) fn push(
     weak: &Weak<App>,
     run: &Run,
@@ -269,7 +266,7 @@ pub(crate) fn push(
     });
 }
 
-/// The Vue's `refreshAccountCredentials()`.
+/// Refreshes the account's credentials before launch.
 ///
 /// Returns the refreshed account when one was fetched (the caller stores it),
 /// `None` when nothing had to change.
@@ -312,8 +309,7 @@ pub(crate) async fn refresh_account(
     }
 }
 
-/// The Vue's `installGame()`: runs the install task while polling its progress
-/// (the Tauri command's channel thread, folded into the flow).
+/// Runs the install task while polling its progress.
 pub(crate) async fn install_game(
     weak: &Weak<App>,
     run: &Run,
@@ -347,8 +343,7 @@ pub(crate) async fn install_game(
         tokio::select! {
             result = &mut future => {
                 // Flush the last status the poll may have missed before the
-                // future resolved (the Vue's channel thread sends once more
-                // before it is joined).
+                // future resolved.
                 flush_install(weak, run, &status, &mut last, &mut last_log, &loader);
                 log::info!(target: "launch", "install finished: {result:?}");
                 return result;

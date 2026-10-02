@@ -108,7 +108,7 @@ pub(crate) fn flush_install(
     apply_install_event(weak, run, &event, loader);
 }
 
-/// The Vue's `installGame()` `onProgress`.
+/// Applies an install event to the progress screen.
 pub(crate) fn apply_install_event(weak: &Weak<App>, run: &Run, event: &InstallEvent, loader: &str) {
     match event {
         InstallEvent::Prepare => push(weak, run, |state| {
@@ -232,7 +232,7 @@ pub(crate) fn apply_loader_download(
     });
 }
 
-/// The Vue's `launchGame()`.
+/// Runs the launch while polling its progress.
 pub(crate) async fn launch_game(
     weak: &Weak<App>,
     run: &Run,
@@ -262,7 +262,7 @@ pub(crate) async fn launch_game(
 }
 
 /// A scalar snapshot of a launch event, for change detection and logging (see
-/// `InstallKey` for why the event itself cannot be compared).
+/// `install_game` for why the event itself cannot be compared).
 #[derive(Clone, PartialEq, Debug)]
 pub(crate) enum LaunchKey {
     Prepare,
@@ -271,7 +271,7 @@ pub(crate) enum LaunchKey {
     /// `WaitForLaunch` and the three startup log markers share one screen state.
     Waiting,
     GameStarted,
-    /// The authlib-injector step, which the Vue does not show either.
+    /// The authlib-injector step, which the UI does not show either.
     Other,
 }
 
@@ -386,7 +386,7 @@ pub(crate) fn dismiss_quit_dialog(weak: &Weak<App>) {
     });
 }
 
-/// The Vue's `launchGame()` `onProgress`.
+/// Applies a launch event to the progress screen.
 pub(crate) fn apply_launch_event(weak: &Weak<App>, run: &Run, event: &LaunchEvent) {
     match event {
         LaunchEvent::Prepare => push(weak, run, |state| {
@@ -402,8 +402,8 @@ pub(crate) fn apply_launch_event(weak: &Weak<App>, run: &Run, event: &LaunchEven
                     state.set_progress_loading(true);
                 });
             } else if phase == DownloadPhase::DownloadFiles {
-                // The Vue passes the raw byte counts here (unlike the install
-                // path, which formats them with `formatBytes`).
+                // Raw byte counts here, unlike the install path, which formats
+                // them with `format_bytes`.
                 let completed = progress.completed_bytes.load(Ordering::SeqCst);
                 let current = completed.to_string();
                 let total_text = total.to_string();
@@ -421,9 +421,9 @@ pub(crate) fn apply_launch_event(weak: &Weak<App>, run: &Run, event: &LaunchEven
             state.set_progress_kind("generate-script".into());
             state.set_progress_loading(true);
         }),
-        // `LogTextureLoaded` alone gets the "Game started" *description*, which is
-        // what the Vue gave it. That is a separate concern from the launch being
-        // over, which any of the three markers means — see `flush_launch`.
+        // `LogTextureLoaded` alone gets the "Game started" *description*. That is
+        // a separate concern from the launch being over, which any of the three
+        // markers means — see `flush_launch`.
         LaunchEvent::WaitForLaunch
         | LaunchEvent::LogSettingUser
         | LaunchEvent::LogLwjglVersion
@@ -437,7 +437,7 @@ pub(crate) fn apply_launch_event(weak: &Weak<App>, run: &Run, event: &LaunchEven
             state.set_progress_loading(true);
             state.set_back_disabled(true);
         }),
-        // No Vue branch updates the screen for this event.
+        // The authlib-injector step updates no screen state.
         LaunchEvent::InstallAuthlibInjector(_) => {}
     }
 }
@@ -450,7 +450,7 @@ pub(crate) fn phase_of(state: &DownloadState) -> DownloadPhase {
         .unwrap_or_default()
 }
 
-/// The Vue frontend's `formatBytes` (`crates/download/index.ts`).
+/// Formats a byte count in binary units (`B`, `KB`, `MB`, `GB`, `TB`).
 pub(crate) fn format_bytes(bytes: u64) -> String {
     if bytes < 1024 {
         return format!("{bytes} B");

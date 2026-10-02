@@ -8,7 +8,7 @@
 //!
 //! - `modrinth.json` and `curseforge.json` cache the result of each platform's
 //!   file-feature lookup, keyed by the file's SHA-512 checksum. Entries expire
-//!   after [`REMOTE_CACHE_TTL_SECS`] and only carry list-display fields.
+//!   after `REMOTE_CACHE_TTL_SECS` and only carry list-display fields.
 //! - `local.json` caches the local parse result so parsing is skipped on the
 //!   next run. It never expires.
 //! - `identity.json` maps each file's SHA-512 checksum to the project/mod ids
@@ -25,7 +25,7 @@
 //!   records `null` for its id in the identity entry.
 //!
 //! Cache files are shared between concurrent parse requests, so every
-//! read-merge-write goes through [`CACHE_WRITE_LOCK`] and re-reads the current
+//! read-merge-write goes through `CACHE_WRITE_LOCK` and re-reads the current
 //! on-disk state before merging, so two parses never overwrite each other's
 //! entries. Online info takes priority over the local parse result; local data
 //! supplements whatever the platform does not provide. Icons found online are
@@ -343,8 +343,9 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
     let mut modrinth_dirty = false;
     let mut curseforge_dirty = false;
 
-    // Group A: both platform ids known. Modrinth cache first, then Modrinth,
-    // then the CurseForge cache and CurseForge — the same order as before.
+    // Group A: both platform ids known. Each platform's cache is consulted
+    // first; whatever is still missing is queried from Modrinth, then
+    // CurseForge.
     let mut needs_modrinth: Vec<String> = Vec::new();
     for hash in &group_a {
         if let Some(entry) = modrinth_cache.get(hash)
@@ -1024,7 +1025,7 @@ pub async fn check_installed(
 /// Delete the given files from an instance.
 ///
 /// Only files under the instance root are accepted; paths outside it are
-/// silently skipped so the launcher never deletes arbitrary user data. The
+/// skipped with a warning so the launcher never deletes arbitrary user data. The
 /// frontend only shows the remove action for mods, but the check is done
 /// against the whole instance root so partial-download cleanup stays possible.
 pub fn remove_mod_files(instance_id: &str, files: Vec<String>) -> Result<()> {

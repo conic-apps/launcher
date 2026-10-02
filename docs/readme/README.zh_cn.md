@@ -17,7 +17,7 @@
 
 ## 这是什么
 
-Conic Launcher 是一个现代的桌面版 Minecraft 启动器：核心逻辑由 Rust 实现，界面基于 Tauri 2 + Vue 3，安装包小、启动快、资源占用低，甚至有助于减少碳排放。
+Conic Launcher 是一个现代的桌面版 Minecraft 启动器：核心逻辑由 Rust 实现，界面基于 [Slint](https://slint.dev) 这一原生 UI 工具包构建。安装包小、启动快、资源占用低，甚至有助于减少碳排放。
 
 从创建实例、安装加载器，到搜索模组、邀请好友联机，再到启动游戏与统计游戏时长——整个流程都可以在一个应用里完成。
 
@@ -98,14 +98,13 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## 从源码构建
 
-确保已安装 [Rust 1.88+](https://rustup.rs/)、[Node.js 24](https://nodejs.org/) 与 [pnpm](https://pnpm.io/)，并参照 [Tauri 文档](https://tauri.app/start/prerequisites/) 准备各平台依赖。
+确保已安装 [Rust 1.88+](https://rustup.rs/)；在 Linux 上，还需安装[构建依赖](../../AGENTS.md#linux-build-dependencies)。
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
 cd launcher
-pnpm install
-pnpm tauri dev      # 开发调试
-pnpm tauri build    # 构建生产版本
+cargo run              # 开发调试
+cargo build --release  # 构建生产版本
 ```
 
 ## 参与贡献
@@ -113,16 +112,19 @@ pnpm tauri build    # 构建生产版本
 欢迎提交 [Issue](https://github.com/conic-apps/launcher/issues/new/choose) 与 Pull Request（请指向 `dev` 分支）。提交前请运行检查：
 
 ```bash
-pnpm check
+cargo fmt --all -- --check
+cargo check
+cargo clippy --all-targets --release -- -D warnings
+cargo test
 ```
 
 ## 架构
 
 <div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="架构图：Vue 3 前端经 Tauri IPC 与 Rust core 通信，下层为按领域划分的 crates 模块">
+  <img src="../../docs/screenshots/architecture.png" width="100%" alt="架构图：Slint 界面直接连接按领域划分的 Rust crates">
 </div>
 
-前端（Vue 3 + Pinia）通过 Tauri IPC 调用 Rust 能力；`core` 负责 Tauri 应用装配，具体能力按领域拆分在 `crates/*` 工作区中，各模块独立演进、按需组合。
+界面使用 [Slint](https://slint.dev) 构建，并直接连接各领域 crates——没有 IPC 层。`app/` 存放二进制与 `.slint` 界面树；每项能力各自位于独立的 `crates/*` 工作区模块中，独立演进、按需组合。
 
 ## 许可证
 

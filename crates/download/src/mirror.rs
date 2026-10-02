@@ -22,8 +22,6 @@ pub(crate) struct MirrorUsage {
     pub(crate) assets: HashMap<String, Arc<AtomicU64>>,
 }
 
-// TODO: concurrent download return total bytes and bytes progress
-
 impl MirrorUsage {
     pub(crate) fn new(mirror_config: &MirrorConfig) -> Self {
         Self {
@@ -39,7 +37,7 @@ impl MirrorUsage {
                 .collect(),
         }
     }
-    /// Get a fewest connections libraries mirror
+    /// Selects the libraries mirror with the fewest active connections.
     pub(crate) fn get_libraries_mirror(&self, disabled: &[String]) -> Option<Mirror> {
         let (k, v) = self
             .libraries
@@ -53,7 +51,7 @@ impl MirrorUsage {
         );
         Some(Mirror(k.clone(), v.clone()))
     }
-    /// Get a fewest connections assets mirror
+    /// Selects the assets mirror with the fewest active connections.
     pub(crate) fn get_assets_mirror(&self, disabled: &[String]) -> Option<Mirror> {
         let (k, v) = self
             .assets

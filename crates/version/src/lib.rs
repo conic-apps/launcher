@@ -2,14 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/version`: parsing and resolution of the
-//! Minecraft `version.json` format.
+//! Parsing and resolution of the Minecraft `version.json` format.
 //!
-//! The original is a plain library crate with no Tauri dependency, so this
-//! mirror is a file-for-file copy: only the crate names of its two workspace
-//! dependencies change (`platform` → `slint-platform`, `folder` →
-//! `slint-folder`). Structures, inheritance merging and the argument
-//! resolution match `crates/version/src/*.rs`.
+//! The resolver follows `inheritsFrom` up to the root version and merges each
+//! level's libraries, arguments and metadata into a single [`ResolvedVersion`].
 
 use once_cell::sync::Lazy;
 use serde::Serialize;
@@ -84,10 +80,8 @@ static DEFAULT_JVM_ARGS: Lazy<Vec<String>> = Lazy::new(|| {
     ]
 });
 
-/// Resolved version.json
-///
-/// Use `new` to parse a Minecraft version json, and see the detail info of the version,
-/// equivalent to `crate::core::version::Version::parse`.
+/// A fully resolved `version.json`: the merged inheritance chain with its
+/// libraries, arguments and asset index ready to launch.
 #[derive(Clone, Serialize, Default)]
 pub struct ResolvedVersion {
     pub id: String,
@@ -107,14 +101,14 @@ pub struct ResolvedVersion {
 
     /// The version inheritances of this whole resolved version.
     ///
-    /// The first element is this version, and the last element is the root Minecraft version.
+    /// The first element is this version's direct parent, and the last element is the root Minecraft version.
     /// The dependencies of \[\<a\>, \<b\>, \<c\>\] should be \<a\> -> \<b\> -> \<c\>, where c is a Minecraft version.
     pub inheritances: Vec<String>,
 
     /// All array of json file paths.
     ///
     /// It's the chain of inherits json path. The root json will be the last element of the array.
-    /// The first element is the user provided version.
+    /// The first element is this version's direct parent.
     pub path_chain: Vec<PathBuf>,
 }
 
@@ -254,9 +248,11 @@ impl ResolvedVersion {
     }
 }
 
-/// parse a Minecraft version json
+/// Resolves a Minecraft version JSON, walking its `inheritsFrom` chain and
+/// merging each version into the result.
 ///
-/// If you are not use this to launch the game, you can set `enabled_features` to `&vec![]`
+/// Pass an empty `enabled_features` when the result is not used to launch the
+/// game.
 pub async fn resolve_version(
     version: &Version,
     minecraft: &MinecraftLocation,

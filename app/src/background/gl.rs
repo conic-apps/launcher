@@ -2,25 +2,24 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The 3D world, drawn on the GPU — `WindowBackground.vue`'s WebGL2 canvas.
+//! The 3D world, drawn on the GPU.
 //!
 //! Slint's declarative API has no custom-shader hook, but it has an escape
 //! hatch meant for exactly this: `Window::set_rendering_notifier` calls back
 //! with the OpenGL context *current*, and hands over `get_proc_address`, so the
 //! same code loads the GL entry points on every platform — and
-//! `Image::from_borrowed_gl_texture` lets Slint composite a texture we drew
-//! into. That is the arrangement the original's WebGL canvas has: the shaders
-//! run on the GPU, and only the final compositing belongs to Slint.
+//! `BorrowedOpenGLTextureBuilder` lets Slint composite a texture we drew into:
+//! the shaders run on the GPU, and only the final compositing belongs to
+//! Slint.
 //!
-//! The two passes are the original's, shader for shader: the fills are blended
-//! with `ONE, ONE_MINUS_SRC_ALPHA` into a depth buffer and are *premultiplied*,
-//! the outlines are screen-space quads drawn over them with blending off. Both
+//! The two passes, shader for shader: the fills are blended with
+//! `ONE, ONE_MINUS_SRC_ALPHA` into a depth buffer and are *premultiplied*, the
+//! outlines are screen-space quads drawn over them with blending off. Both
 //! write into an offscreen framebuffer that Slint then samples, so there is no
 //! per-frame copy back to the CPU.
 //!
-//! The geometry comes from [`Scene`], which is the verified port of the
-//! original's terrain; only the projection and the outline expansion happen on
-//! the GPU here, exactly where the original put them.
+//! The geometry comes from [`Scene`], the verified terrain; only the projection
+//! and the outline expansion happen on the GPU here.
 //!
 //! The callback runs inside Slint's own render pass, so whatever GL state it
 //! touches has to be put back before returning. Everything here is saved and
@@ -98,8 +97,8 @@ impl Flag {
 pub struct Shared {
     pub gpu: Arc<Flag>,
     /// The camera. The GPU renderer advances it as it draws, so its speed is
-    /// the rate frames actually arrive at — the original's `requestAnimationFrame`
-    /// loop, where a frame that never happens also never moves the camera.
+    /// the rate frames actually arrive at, so a frame that never happens also
+    /// never moves the camera.
     pub cam_z: Cell<f32>,
     /// Whether the camera is meant to be running at all (the setting, and the
     /// world being what the window shows).
@@ -201,12 +200,10 @@ fn target_size(ui: &App) -> (i32, i32) {
 
 // ---------------------------------------------------------------- the shaders
 //
-// The original's `FILL_VS`/`FILL_FS`/`EDGE_VS`/`EDGE_FS`, with two differences:
-// the corner-radius clipping is gone (Slint rounds the window's corners when it
-// composites the image, where the original had to reconstruct window
-// coordinates from the canvas's own position), and the layer's 0.3 opacity —
-// the `opacity: .3` on the original's canvases — is folded in, because this
-// image is one layer of Slint's composite rather than an element of its own.
+// The four shaders, with two differences: the corner-radius clipping is gone
+// (Slint rounds the window's corners when it composites the image), and the
+// layer's 0.3 opacity is folded in, because this image is one layer of Slint's
+// composite rather than an element of its own.
 
 const FILL_VERTEX: &str = r#"
 layout(location = 0) in vec3 aPos;
@@ -231,7 +228,7 @@ void main() {
 }
 "#;
 
-// Premultiplied, as the original's shader is. Slint hands a borrowed texture to
+// Premultiplied. Slint hands a borrowed texture to
 // femtovg *without* `ImageFlags::PREMULTIPLIED`, so femtovg multiplies by alpha
 // as it samples — the framebuffer therefore holds premultiplied colour and a
 // resolve pass divides it back out (see `RESOLVE_FRAGMENT`).
@@ -758,8 +755,8 @@ impl Renderer {
             let texture = make_texture()?;
             let resolved = make_texture()?;
             // The world is drawn in a depth buffer and never sampled from, so a
-            // renderbuffer is enough. (A 16-bit one — what the original's WebGL2
-            // canvas gets by default — was measured and changes nothing.)
+            // renderbuffer is enough. (A 16-bit one was measured and changes
+            // nothing.)
             let renderbuffer = gl.create_renderbuffer()?;
             gl.bind_renderbuffer(glow::RENDERBUFFER, Some(renderbuffer));
             gl.renderbuffer_storage(glow::RENDERBUFFER, glow::DEPTH_COMPONENT24, size.0, size.1);
@@ -828,7 +825,7 @@ impl Renderer {
             f32::from(crust.green()) / 255.0,
             f32::from(crust.blue()) / 255.0,
         ];
-        // The original's `lineColor`: every flavour but Latte outlines in white
+        // Line colour: every flavour but Latte outlines in white
         // (`const c = latte ? 0 : 255`).
         let edge = if background.get_dark() {
             [1.0, 1.0, 1.0]
@@ -863,8 +860,8 @@ impl Renderer {
             gl.bind_framebuffer(glow::FRAMEBUFFER, Some(framebuffer));
             gl.viewport(0, 0, self.size.0, self.size.1);
             gl.disable(glow::SCISSOR_TEST);
-            // Transparent, so the sky layer under this one shows through — the
-            // original's `clearColor(0, 0, 0, 0)`. The depth mask is set first,
+            // Transparent, so the sky layer under this one shows through —
+            // `clear_color(0, 0, 0, 0)`. The depth mask is set first,
             // because the outline pass leaves it off and a frame that cannot
             // clear its depth buffer would let the ground quad fail `LEQUAL`
             // against the previous frame's depth.
@@ -974,7 +971,7 @@ impl Renderer {
     }
 
     /// Writes the frame this renderer just drew to `CONIC_GL_DUMP`, for
-    /// comparing the GPU's world with [`dump_background`](super::tests)'s.
+    /// comparing the GPU's world with `dump_background`'s.
     ///
     /// The frame is read back from the framebuffer rather than grabbed off the
     /// window, so what is compared is the world on its own — no layer opacity,

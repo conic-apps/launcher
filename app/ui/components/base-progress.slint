@@ -4,26 +4,22 @@
 
 import { Theme } from "../theme.slint";
 
-// Linear progress bar (src/components/BaseProgress.vue): a 1px track with a 3px
-// bar over it, clipped to the 2px box.
+// Linear progress bar: a 1px track with a 3px bar over it, clipped to the 2px
+// box.
 //
 //   * `loading` shows the indeterminate bar sweeping left↔right;
-//   * otherwise the bar's width is `value / max` and eases over 300ms, exactly
-//     like the Vue's `transition: width 300ms ease`.
+//   * otherwise the bar's width is `value / max` and eases over 300ms.
 //
-// The Vue's sweep is a CSS keyframe animation (`progress-loading`, 2.5s,
-// `cubic-bezier(0.66, 0.01, 0.5, 0.97)`) that jumps back to the left at the
-// halfway point. Slint has no keyframe timelines, so the same sawtooth is
-// computed from `animation-tick()`: a 1.25s phase per sweep with an instant
-// reset, eased with a smoothstep standing in for the cubic-bezier (a 3px bar,
-// so the difference is not visible).
+// The sweep is a sawtooth: a 1.25s phase per sweep with an instant reset,
+// computed from `animation-tick()` because Slint has no keyframe timelines, and
+// eased with a smoothstep standing in for a cubic-bezier (a 3px bar, so the
+// difference is not visible).
 //
-// The travel has to account for the Vue's flex centring: `.progress` is
-// `display:flex; justify-content:center`, so the 50%-wide bar is centred first
-// and `left: -85%…85%` is an offset from *that* position. The bar therefore
-// moves over `0.25W + [-0.85W, +0.85W]` = `[-0.6W, +1.1W]`, which clears the
-// track at both ends — `[-0.85W, +0.85W]` would leave a 15% tail visible on the
-// right when the animation restarts.
+// The travel accounts for the bar's own centring: the 50%-wide bar is centred
+// first, and its offset is measured from there, so the bar moves over
+// `0.25W + [-0.85W, +0.85W]` = `[-0.6W, +1.1W]`. That clears the track at both
+// ends; `[-0.85W, +0.85W]` would leave a 15% tail visible on the right when the
+// animation restarts.
 export component BaseProgress inherits Rectangle {
     in property <bool> loading: false;
     in property <float> value: 0;
@@ -39,7 +35,7 @@ export component BaseProgress inherits Rectangle {
     // `parent` would be the implicit conditional item rather than this component.
     private property <length> sweep-x: root.width * (-0.60 + self.sweep * 1.70);
 
-    // `.progress-track`: 1px, full width, vertically centred.
+    // The track: 1px, full width, vertically centred.
     Rectangle {
         width: 100%;
         height: 1px;

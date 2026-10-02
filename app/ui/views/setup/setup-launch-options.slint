@@ -5,11 +5,9 @@
 import { SettingsGame } from "../settings/settings-game.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
-// src/views/setup/SetupWizardLaunchOptions.vue
-//
 // The settings page's launch section with the wizard's two overrides on top: the
-// groups run the body's full width rather than the settings page's `width:
-// calc(100% - 16px)`, and the section carries the inline `margin-top: 16px`.
+// groups run the body's full width rather than the settings page's, and the
+// section carries a 16px top margin.
 export component SetupLaunchOptions inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
@@ -21,7 +19,7 @@ export component SetupLaunchOptions inherits VerticalLayout {
         message: @tr("SetupLaunchOptions" => "Here are some basic launch options. You can change more options later in Settings and instance-specific settings.");
     }
 
-    // `style="margin-top: 16px"` on the `<SettingsGame>` element.
+    // A 16px top margin before the settings section.
     Rectangle {
         width: 100%;
         height: 16px;
@@ -29,7 +27,7 @@ export component SetupLaunchOptions inherits VerticalLayout {
     }
 
     SettingsGame {
-        // `:deep(.setting-group), :deep(.setting-collapse) { width: 100% }`.
+        // The wizard drops the settings page's inset.
         group-inset: 0px;
     }
 }

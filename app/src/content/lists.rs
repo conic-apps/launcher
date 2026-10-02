@@ -11,8 +11,7 @@ pub(crate) fn load_saves(ui: &App) {
     let weak = ui.as_weak();
     let instance = controller().borrow().instance_id.clone();
     crate::runtime::spawn(async move {
-        // Gzip and NBT parsing is blocking, so it runs on the blocking pool the
-        // way `game.rs` scans the instance folders.
+        // Gzip and NBT parsing is blocking, so it runs on the blocking pool.
         let levels = crate::runtime::spawn_blocking({
             let instance = instance.clone();
             move || {
@@ -55,7 +54,7 @@ pub(crate) fn load_saves(ui: &App) {
     });
 }
 
-/// One save's card, from the summary `slint-content` reads out of `level.dat`.
+/// One save's card, from the summary read out of `level.dat`.
 pub(crate) fn save_card(
     folder: &str,
     level: &content::saves::LevelSummary,
@@ -112,10 +111,9 @@ pub(crate) fn save_card(
         icon,
         action_kind: "file",
         shows_play: true,
-        // `ContentSaves.vue`'s `saveSpawnX` / `saveSpawnZ`, handed to
-        // `WorldMap` as `:center-x` / `:center-z`. `None` where there is no
-        // `Data.spawn.pos`, which is the same as `(0, 0)` here and asks the
-        // world for its own spawn.
+        // The save's spawn point, handed to the world map as its center. `None`
+        // where there is no `Data.spawn.pos`, which is the same as `(0, 0)` here
+        // and asks the world for its own spawn.
         spawn: level.spawn.map(|pos| (pos[0], pos[2])),
         ..Default::default()
     }
@@ -151,7 +149,7 @@ pub(crate) fn load_local_mods(ui: &App) {
         let mods = content::mods::remote::parse_mods(&instance).await;
         let cards: Vec<PendingCard> = mods
             .iter()
-            // The Vue filters the embedded (jar-in-jar) mods out of the list.
+            // Embedded (jar-in-jar) mods are filtered out of the list.
             .filter(|mod_info| !mod_info.embedded)
             .map(local_mod_card)
             .collect();
@@ -215,9 +213,8 @@ pub(crate) fn loader_key(loader: ModLoader) -> &'static str {
     }
 }
 
-/// `fabric` → `Fabric`. The Vue does the same to its `ModLoader` enum's name
-/// (`mod.loader.charAt(0).toUpperCase() + mod.loader.slice(1)`) and never
-/// translates it, so this is not a `ContentText` label.
+/// `fabric` → `Fabric`. A loader name is never translated, so this is not a
+/// `ContentText` label.
 pub(crate) fn capitalize(key: &str) -> String {
     let mut chars = key.chars();
     match chars.next() {
@@ -261,7 +258,6 @@ pub(crate) fn load_local_resourcepacks(ui: &App) {
 
 pub(crate) fn resourcepack_card(pack: &content::resourcepack::Resourcepack) -> PendingCard {
     let mut tags: Vec<PendingTag> = Vec::new();
-    // `formatRange` in `ContentResourcepacksLocal.vue`.
     let min = pack
         .metadata
         .pointer("/pack/min_format/0")
@@ -295,16 +291,17 @@ pub(crate) fn resourcepack_card(pack: &content::resourcepack::Resourcepack) -> P
     }
 }
 
-/// How many icons a preview row shows (`InstanceSummary.vue`'s `.slice(0, 5)`).
+/// How many icons a preview row shows.
 pub(crate) const PREVIEW_ICONS: usize = 5;
 
 /// The four preview rows' icons: the first five saves, mods, resource packs and
 /// screenshots of the instance, each decoded here — the game view's rows are a
-/// view of the same content the panels show, and every one of these is a local
-/// file or a data URL, so nothing is fetched.
+/// view of the same content the panels show. A save's, a resource pack's and a
+/// screenshot's icon is a local file or a data URL; a mod's may be a remote URL,
+/// because `parse_mods` merges online info into it.
 ///
-/// Called whenever the current instance changes (`game.rs` re-reads its counts
-/// then).
+/// Called whenever the current instance changes, as the game view re-reads its
+/// counts then.
 pub fn refresh_preview_icons(ui: &App, instance_id: &str) {
     let instance = instance_id.to_string();
     let weak = ui.as_weak();
@@ -434,9 +431,8 @@ pub(crate) fn set_screenshot(ui: &App, index: i32) {
     }
 }
 
-/// The Vue's `selectSave`: one card expands and the rest collapse, and the
-/// expansion flips upwards when the card sits within 160px of the window's
-/// bottom edge.
+/// One card expands and the rest collapse, and the expansion flips upwards when
+/// the card sits within 160px of the window's bottom edge.
 pub(crate) fn select_save(ui: &App, folder: &str) {
     let state = ui.global::<ContentState>();
     let model = state.get_saves();

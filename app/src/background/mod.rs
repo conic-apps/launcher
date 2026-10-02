@@ -2,22 +2,19 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The window background (`src/components/WindowBackground.vue`).
+//! The window background.
 //!
-//! Two layers, composited over the window's own colour exactly as the Vue
-//! composites them over `#window`'s `--window-background` (the palette's
-//! `crust`): the hyperbola sky at 30% opacity, then the 3D block world at 30%.
-//! Above them are the user's custom backgrounds — the global one from
-//! Settings → Appearance, or the current instance's — as up to two images that
-//! cross-fade.
+//! Two layers, composited over the window's own colour (the palette's `crust`):
+//! the hyperbola sky at 30% opacity, then the 3D block world at 30%. Above them
+//! are the user's custom backgrounds — the global one from Settings →
+//! Appearance, or the current instance's — as up to two images that cross-fade.
 //!
-//! The Vue renders the sky with Canvas2D and the world with WebGL2. Slint 1.18
-//! has no custom-shader hook and no way to express tens of thousands of
-//! depth-ordered quads, so both are software-rasterised here into
-//! `SharedPixelBuffer`s that Slint uploads and composites on the GPU:
+//! Slint's declarative API has no custom-shader hook and no way to express tens
+//! of thousands of depth-ordered quads, so the sky and the world are
+//! software-rasterised here into `SharedPixelBuffer`s that Slint uploads and
+//! composites on the GPU; the world also has a direct GPU path (see [`gl`]).
 //!
-//! * [`scene`] is the world's terrain, trees and face culling — a faithful port
-//!   of the original's functions and constants.
+//! * [`scene`] is the world's terrain, trees and face culling.
 //! * [`raster`] is the z-buffered quad rasteriser the world's two draw passes
 //!   are expressed in.
 //! * [`world`] projects the scene and runs those two passes.
@@ -28,9 +25,9 @@
 //! themselves then only need `visible` toggles and the fades between custom
 //! backgrounds.
 //!
-//! Rendering happens on a worker thread (see `Renderer` below) so a frame that
-//! takes longer than a display frame cannot stall the UI, and the camera only
-//! advances when the world can actually be seen.
+//! Rendering happens on a worker thread (see `controller::Renderer`) so a frame
+//! that takes longer than a display frame cannot stall the UI, and the camera
+//! only advances when the world can actually be seen.
 
 pub mod controller;
 pub mod gl;
@@ -45,10 +42,9 @@ mod tests {
 
     /// The outlines are the whole picture on a dark palette: every fill is the
     /// crust, which is also the window's own colour, so a face is visible only
-    /// through its edges. The original puts them in white on the dark flavours
-    /// and in black on Latte (`const c = latte ? 0 : 255`); with that backwards
-    /// the world disappears into a flat window colour, which is what it once
-    /// did.
+    /// through its edges. They are white on the dark flavours and black on
+    /// Latte (`const c = latte ? 0 : 255`); with that backwards the world
+    /// disappears into a flat window colour.
     ///
     /// Rendering the same scene both ways leaves the fills identical and only
     /// the outlines different, so those pixels can be compared directly.
@@ -111,11 +107,11 @@ mod tests {
     }
 
     /// Renders the world and the sky and composites them the way Slint will,
-    /// writing PNGs to `/tmp` so the pipeline can be inspected (and diffed
-    /// against the Vue) without starting the app:
+    /// writing PNGs to `/tmp` so the pipeline can be inspected without starting
+    /// the app:
     ///
     /// ```text
-    /// cargo test -p conic-launcher-slint dump_background -- --nocapture
+    /// cargo test -p conic-launcher dump_background -- --nocapture
     /// ```
     #[test]
     fn dump_background() {
@@ -175,8 +171,8 @@ mod tests {
         write("world", world.as_bytes());
 
         // The same frame in Latte, where the outlines are black instead of
-        // white (`const c = latte ? 0 : 255` in the original) and the fills
-        // disappear into the light crust.
+        // white (`const c = latte ? 0 : 255`) and the fills disappear into the
+        // light crust.
         let latte_crust = [
             0xdc as f32 / 255.0,
             0xe0 as f32 / 255.0,
@@ -234,7 +230,7 @@ mod tests {
     /// anything optimised.
     ///
     /// ```text
-    /// cargo test --release -p conic-launcher-slint timings -- --nocapture
+    /// cargo test --release -p conic-launcher timings -- --nocapture
     /// ```
     #[test]
     fn timings() {

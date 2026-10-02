@@ -6,10 +6,9 @@
 //!
 //! There is no session bus on macOS, and no way to pass a payload through one
 //! anyway, so the primary binds a socket and a later launch connects to it,
-//! writes its command line and quits. `tauri-plugin-single-instance` does the
-//! same; the one difference is the name, which is qualified with the uid so a
-//! socket belonging to another user in the shared `/tmp` cannot be taken for
-//! ours.
+//! writes its command line and quits. The socket name is qualified with the
+//! uid so a socket belonging to another user in a shared temp directory cannot
+//! be taken for ours.
 //!
 //! The socket is the lock: a launch that can connect to it is a later launch,
 //! and one that cannot has to bind it. A socket file left behind by a process

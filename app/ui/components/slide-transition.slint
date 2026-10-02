@@ -2,8 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// The Vue `slide-left` / `slide-right` transition
-// (src/assets/styles/transitions.css), used by the add-account dialog: the
+// The slide-left / slide-right transition, used by the add-account dialog: the
 // swap between its three screens, and the Microsoft screen's own swap between
 // its four states.
 //
@@ -23,13 +22,13 @@
 // animated `x`, and a layout child's `x` belongs to its layout. The root is
 // therefore a plain rectangle whose height the content dictates through
 // `min-height`, with the content in a layout of its own that the `x` moves.
-// The screen is clipped by the dialog it sits in (`BaseDialog`'s content slot,
-// where the Vue's own clip lands) and not here — see the comment on the root.
+// The screen is clipped by the dialog it sits in (`BaseDialog`'s content slot),
+// not here — see the comment on the root.
 export component SlideTransition inherits Rectangle {
     /// "enter" (waiting at the start of the enter half), "shown" (at rest) or
     /// "leave" (playing the leave half).
     in property <string> phase: "shown";
-    /// "left" or "right", as the CSS class spells it.
+    /// "left" or "right".
     in property <string> direction: "left";
 
     width: 100%;
@@ -38,11 +37,10 @@ export component SlideTransition inherits Rectangle {
     min-height: content.preferred-height;
     background: transparent;
     // Deliberately unclipped: the sliding screen overruns its own box, and the
-    // Vue clips it in `BaseDialog` — at the dialog's content box, which is
-    // 8px wider on each side than a screen here. Clipping at the screen
-    // instead would cut both the slide (24px short of the original) and any
-    // control that grows past the screen's edge, which the buttons do on hover
-    // (`scale(1.02)`).
+    // dialog clips it — at the dialog's content box, which is 8px wider on each
+    // side than a screen here. Clipping at the screen instead would cut both the
+    // slide and any control that grows past the screen's edge, which the buttons
+    // do on hover.
     opacity: root.phase == "shown" ? 1.0 : 0.0;
 
     private property <length> offset: root.phase == "enter"

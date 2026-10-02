@@ -10,37 +10,30 @@ import { AccountAddOffline } from "account-add-offline.slint";
 import { AccountAddSelect } from "account-add-select.slint";
 import { AccountAddYggdrasil } from "account-add-yggdrasil.slint";
 
-// The body of the add-account dialog (src/views/accounts/AccountAdd.vue): a
-// 540px column with the title and the service selector in its header, and the
-// three service screens swapping below it.
+// The body of the add-account dialog: a 540px column with the title and the
+// service selector in its header, and the three service screens swapping below
+// it.
 //
-// The swap is the Vue's `<Transition mode="out-in" :name="transitionName">`
-// with its own rule for which way the screens travel: away from Microsoft (and
-// from Yggdrasil to Offline) slides left, away from Offline (and from Yggdrasil
-// to Microsoft) slides right. That is the *outgoing* screen that decides, which
-// is why the direction is worked out when the swap starts rather than read from
-// the arriving service. The out-in beat itself is the same state machine the
-// create-instance dialog and the Microsoft screen use.
+// The swap has its own rule for which way the screens travel: away from
+// Microsoft (and from Yggdrasil to Offline) slides left, away from Offline (and
+// from Yggdrasil to Microsoft) slides right. The *outgoing* screen decides,
+// which is why the direction is worked out when the swap starts rather than
+// read from the arriving service. The out-in beat itself is the same state
+// machine the create-instance dialog and the Microsoft screen use.
 export component AccountAdd inherits VerticalLayout {
     /// The dialog's inner width; the panel itself is 16px wider on each side
     /// (see `overlays/dialogs/account-add.slint`).
     in property <length> content-width: 540px;
 
-    /// Mounted inside the setup wizard rather than the add-account dialog
-    /// (`SetupWizardAddAccount.vue`, which renders it with
-    /// `style="width: 100%; height: 100%"`).
+    /// Mounted inside the setup wizard rather than the add-account dialog, at
+    /// full width and height.
     ///
-    /// It is a flag rather than three separate properties because the Vue says
-    /// the same thing with scoped `:deep()` rules on the wizard's own markup:
-    /// `.account-add { padding: 0 }` and `.cancel-login { display: none }`, so
-    /// every screen's "Cancel" goes with it. It is forwarded to the three
-    /// screens, which is where the buttons are.
+    /// A flag rather than three separate properties: in the wizard the panel's
+    /// own padding goes and every screen's "Cancel" goes with it. It is
+    /// forwarded to the three screens, which is where the buttons are.
     ///
-    /// The wizard's other two `:deep()` rules — `.account-add-container,
-    /// .auth-code { height: 100% }` and `.add-microsoft-account-container
-    /// { flex: 1 }` — are not reproduced: they only stretch a top-aligned block
-    /// over the box it already starts at the top of, which is what
-    /// `alignment: start` already does.
+    /// The wizard needs nothing else: the panel is already top-aligned, which is
+    /// what `alignment: start` gives it.
     in property <bool> wizard-host: false;
 
     width: root.content-width;
@@ -49,8 +42,7 @@ export component AccountAdd inherits VerticalLayout {
     // `start`, not the default `stretch`: the panel's height is tweened, so
     // while that runs there is a surplus (or a deficit) to hand out, and a
     // stretching column would split it between the header and the screen — the
-    // header visibly breathes for the 300ms. The Vue's flex column does the
-    // same thing: `height: auto` rows, and the panel clips.
+    // header visibly breathes for the 300ms.
     alignment: start;
 
     private property <string> service: AccountAddState.auth-service;
@@ -63,7 +55,7 @@ export component AccountAdd inherits VerticalLayout {
     private property <string> arrive-phase: "shown";
 
     init => {
-        // `<Transition>` has no `appear`: the first screen is simply mounted.
+        // The first screen is simply mounted.
         root.shown = root.service;
     }
 
@@ -74,7 +66,7 @@ export component AccountAdd inherits VerticalLayout {
             root.leaving = false;
             root.leave-armed = false;
         } else {
-            // The Vue's `selectAuthService`, which reads the *old* service.
+            // The *old* service decides, so it is read before it changes.
             root.direction = root.shown == "microsoft" ? "left"
                 : root.shown == "offline" ? "right"
                 : root.service == "microsoft" ? "right"
@@ -108,21 +100,19 @@ export component AccountAdd inherits VerticalLayout {
         }
     }
 
-    // `.header { align-items: center; margin-bottom: 16px }`, with the selector
-    // pushed to the right-hand end (`.account-add-selection { margin-left: auto }`).
+    // The selector sits at the right-hand end of the header.
     //
-    // The title stretches and wraps rather than keeping its natural width: the
-    // Vue's flex row shrinks it the same way, and in English "Choose an auth
-    // service and add an account" is wider than the 540px column on its own —
-    // unwrapped it would push the selector out through the panel's edge. The
-    // Chinese original is short enough to fit on one line, so this only shows up
-    // in the longer translations.
+    // The title stretches and wraps rather than keeping its natural width: in
+    // English "Choose an auth service and add an account" is wider than the
+    // 540px column on its own, and unwrapped it would push the selector out
+    // through the panel's edge. Chinese is short enough to fit on one line, so
+    // this only shows up in the longer translations.
     HorizontalLayout {
         // The default `stretch` distribution, not `start`: it is what gives the
         // stretching title the leftover width and so pins the selector to the
-        // right-hand end, the way the Vue's `margin-left: auto` does. With
-        // `start` every cell keeps its preferred width and the remainder falls
-        // after the last one, which leaves the selector next to the title.
+        // right-hand end. With `start` every cell keeps its preferred width and
+        // the remainder falls after the last one, which leaves the selector next
+        // to the title.
         cross-axis-alignment: center;
         padding-bottom: 16px;
 
@@ -141,7 +131,6 @@ export component AccountAdd inherits VerticalLayout {
         }
     }
 
-    // ----- the screen -----
     if root.shown == "microsoft" : SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: root.direction;

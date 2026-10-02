@@ -44,12 +44,8 @@ pub struct ProfileProperty {
 
 /// The answer of `authserver/authenticate`.
 ///
-/// The `camelCase` renames are the Yggdrasil wire format the server speaks —
-/// unlike the other `serde` attributes in this crate, they are not about an IPC
-/// boundary and stay. The fields are `pub` because the original's were read
-/// through serde on the way to the webview, where `crates/account/index.ts`
-/// models them as `AuthResponse`; with no such boundary the caller reads them
-/// directly.
+/// The `camelCase` renames are the Yggdrasil wire format the server speaks and
+/// stay. The fields are `pub` because the caller reads them directly.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthResponse {

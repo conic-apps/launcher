@@ -41,16 +41,16 @@ export { InstanceSettingsState } from "globals/instance-settings.slint";
 export { SetupWizardState } from "globals/setup.slint";
 export { WorldMapState, WorldSource, WorldTile } from "globals/worldmap.slint";
 
-// Application root window (App.vue). macOS keeps the native traffic lights,
-// Linux draws the window controls itself, and Windows draws the platform's own
-// over the title bar (`src/windows_caption.rs`) — neither of the last two leaves
-// a system title bar behind.
+// Application root window. macOS keeps the native traffic lights, Linux draws
+// the window controls itself, and Windows draws the platform's own over the
+// title bar (`app/src/windows_caption.rs`) — neither of the last two leaves a
+// system title bar behind.
 export component App inherits Window {
     title: @tr("Conic Launcher");
     // Window/taskbar icon for Windows and Linux WMs (see the shared asset). macOS
     // is handled separately in main.rs: winit's window icon path is a no-op there.
     icon: @image-url("assets/images/app-icon.png");
-    // Base typography from the original stylesheet (see theme.slint).
+    // Base typography, whose tokens live in `theme.slint`.
     default-font-family: Theme.font-family;
     default-font-size: Theme.font-size-base;
     default-font-weight: Theme.font-weight-normal;
@@ -60,14 +60,14 @@ export component App inherits Window {
     background: self.macos || self.linux ? transparent : Theme.crust;
     // 840x532 is the floor, not a fixed size: fixed `width`/`height` on the
     // root Window pin min == max (making the window non-resizable), so the
-    // original window size is expressed as the minimum + preferred size.
+    // intended size is expressed as the minimum + preferred size.
     min-width: 840px;
     min-height: 532px;
     preferred-width: 840px;
     preferred-height: 532px;
     // Linux has no window controls of its own, and Windows drops the caption so
     // that the platform's have the app's title bar to sit on (see
-    // `src/windows_caption.rs`), so both draw over the whole window.
+    // `app/src/windows_caption.rs`), so both draw over the whole window.
     no-frame: self.linux || self.windows;
     resize-border-width: (self.linux || self.windows) ? 6px : 0px;
     // The initial focus element, and the only thing that keeps the `Ctrl`/`⌘` + `/`
@@ -75,8 +75,7 @@ export component App inherits Window {
     // the shortcut would work until the first click and never again. The scope
     // wraps the whole window so a key event from any focused field inside it —
     // a settings text input, the palette's own search box — reaches its binding
-    // on the way up. `App.vue` gets the same thing for free from a
-    // `document.addEventListener("keydown", …)`.
+    // on the way up.
     forward-focus: app-scope;
 
     in-out property <bool> macos: false;
@@ -84,7 +83,7 @@ export component App inherits Window {
     in-out property <bool> windows: false;
     /// The custom title bar's height. Declared here rather than in
     /// `title-bar.slint` because the platform sizes the window controls to it and
-    /// hit tests them against it (see `src/windows_caption.rs`), so the two sides
+    /// hit tests them against it (see `app/src/windows_caption.rs`), so the two sides
     /// have to read the same number.
     in property <length> title-bar-height: 44px;
     /// How much of the title bar's right-hand end the platform's own window
@@ -108,17 +107,14 @@ export component App inherits Window {
     in-out property <string> search-placeholder: @tr("Search or type a command…");
     in-out property <string> search-hotkey: "";
 
-    // ----- quitting -----
-    //
-    // `App.vue`'s `closeWindow()` asks before it closes while a task is running
-    // (`Dialogs.confirm-quit-app-visible`); `ConfirmQuitApp`'s own script then
-    // played a 250ms `scale(0.93)` + fade on `document.body` and closed the
-    // window 500ms later. Both halves are here: the scale and the fade are the
-    // container's own `transform-scale` / `opacity` about its centre (which is
-    // where CSS scales `body` from), and the wait is the timer.
+    // Closing while a task is running asks first
+    // (`Dialogs.confirm-quit-app-visible`); the confirm then plays a 250ms
+    // `scale(0.93)` plus fade and closes the window 500ms later. Both halves live
+    // here: the scale and the fade are the container's own `transform-scale` and
+    // `opacity` about its centre, and the wait is the timer.
     //
     // A close on any other page never gets here — the title bar's close button
-    // closes the window outright, as `closeWindow()` did.
+    // closes the window outright.
     private property <bool> quitting: false;
     private property <float> quit-alpha: root.quitting ? 0.0 : 1.0;
     private property <float> quit-scale: root.quitting ? 93% : 100%;
@@ -128,7 +124,7 @@ export component App inherits Window {
     }
 
     quit-timer := Timer {
-        // `setTimeout(…, 500)`, i.e. the transition and then as much again.
+        // Waits out the transition, then as much again before closing.
         interval: 500ms;
         running: root.quitting;
         triggered => { root.close(); }
@@ -144,7 +140,7 @@ export component App inherits Window {
     callback close-window();
     /// Tells the platform which theme the app resolved to, so the window controls
     /// it draws take their ink from this title bar. Answered on Windows
-    /// (`windows_caption.rs`) and ignored everywhere else.
+    /// (`app/src/windows_caption.rs`) and ignored everywhere else.
     callback set-caption-dark(dark: bool);
 
     // Drives the palette selection and animates the Theme tokens (see
@@ -162,11 +158,10 @@ export component App inherits Window {
         focus-on-click: false;
         focus-on-tab-navigation: false;
 
-        // `isMacOS() ? event.metaKey : event.ctrlKey` with `event.key === "/"`,
-        // and Slint's `Control` is exactly that on both: the command key on macOS
-        // and the control key everywhere else, so one binding covers the Vue's
-        // ternary. (`Meta` is the *other* one — the physical control key on macOS
-        // — which is the opposite of what the name suggests.)
+        // Slint's `Control` is the command key on macOS and the control key
+        // everywhere else, so one binding covers both platforms. (`Meta` is the
+        // *other* one — the physical control key on macOS — which is the opposite
+        // of what the name suggests.)
         //
         // The binding lives on the app scope rather than on the palette, which is
         // hidden most of the time and whose subtree a click outside never focuses.
@@ -190,28 +185,25 @@ export component App inherits Window {
         container := Rectangle {
             width: root.width;
             height: root.height;
-            // `ConfirmQuitApp`'s exit: `document.body`'s `transform: scale(0.93)`
-            // and `opacity: 0`, over the transition the dialog's own script
-            // started. Both are on this one box because it holds everything the
-            // Vue's `body` held; the easing is on the two root properties they
-            // read, so it is written once.
+            // The quit animation: `scale(0.93)` and `opacity: 0`, over the
+            // transition the confirm dialog starts. Both are on this one box
+            // because it holds everything; the easing lives on the two root
+            // properties they read, so it is written once.
             opacity: root.quit-alpha;
             transform-scale: root.quit-scale;
-            // The Vue's `#window` background: the palette's `crust`, flat. The
-            // hyperbola sky over it is only 30% opaque, so the base shows through
-            // and is part of the picture.
+            // The window background: the palette's flat `crust`. The hyperbola sky
+            // over it is only 30% opaque, so the base shows through and is part of
+            // the picture.
             background: Theme.crust;
             border-radius: 16px;
-            // `#window { border: 1px solid rgba(255, 255, 255, 0.16) }`. A Slint
-            // border is drawn inside the box and does not inset the children, where
-            // the Vue's `box-sizing: border-box` leaves 1px of padding on every side;
-            // the hairline is the visible part, and the inset is not reproduced.
+            // A 1px hairline at 16% white. A Slint border is drawn inside the box
+            // and does not inset its children, so only the hairline is reproduced,
+            // not the 1px inset.
             border-width: 1px;
             border-color: #ffffff.with-alpha(0.16);
             clip: true;
 
-            // Behind every page and every overlay, as the Vue's `WindowBackground`
-            // is the first child of `.window`.
+            // Behind every page and every overlay.
             WindowBackground { }
 
             VerticalLayout {
@@ -233,15 +225,15 @@ export component App inherits Window {
                     current-page: Navigation.current-page;
                     music-enabled: AppConfig.music-enabled;
 
-                    // Navigation is global now: the title bar drives it directly.
+                    // Navigation is global: the title bar drives it directly.
                     open-home => { Navigation.navigate("game"); }
                     open-settings => { Navigation.navigate("settings"); }
                     open-search => { CommandPaletteState.open(); }
                     toggle-music => { root.toggle-music(); }
                     maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
                     minimize-window => { root.minimize-window(); }
-                    // `App.vue`'s `closeWindow()`: the launch page is the one
-                    // where closing abandons a running task, so it asks first.
+                    // The launch page is the one where closing abandons a running
+                    // task, so it asks first.
                     close-window => {
                         if Navigation.current-page == "launch" {
                             Dialogs.confirm-quit-app-visible = true;
@@ -251,10 +243,9 @@ export component App inherits Window {
                     }
                 }
 
-                // Page stack (App.vue `<component :is="pages[...]">`).
-                // "accounts" is the one page with no screen yet: it is being
-                // redesigned rather than ported, so it lands on
-                // `TodoPlaceholder` — see that component for why.
+                // Page stack. "accounts" is the one page with no screen yet: it is
+                // being redesigned, so it lands on `TodoPlaceholder` — see that
+                // component for why.
                 page-stack := Rectangle {
                     width: 100%;
                     vertical-stretch: 1;
@@ -271,14 +262,11 @@ export component App inherits Window {
             // Floating dropdown list + outside-click layer, mounted above the page
             // stack (see `DropdownOverlay`).
             //
-            // The `z` is the load-bearing part. Mounting it after `page-stack` only
-            // orders it above the elements that carry no `z` of their own; the
-            // instance list's toolbar (`z: 114`) and both scrollbars (`z: 500`) do,
-            // and they are exactly what a toolbar dropdown opens over — so at the
-            // default 0 the panel was painted underneath the list it belongs to.
-            // The Vue's `.dropdown-list` is `z-index: 100000`, above the list's 114
-            // and the scrollbars, and this reproduces that rather than a number
-            // picked to clear them.
+            // The `z` is load-bearing. Mounting after `page-stack` only orders it
+            // above the elements that carry no `z` of their own; the instance
+            // list's toolbar (`z: 114`) and both scrollbars (`z: 500`) do, and
+            // those are exactly what a toolbar dropdown opens over — at the
+            // default 0 the panel is painted underneath the list it belongs to.
             DropdownOverlay {
                 z: 1000;
             }
@@ -289,28 +277,23 @@ export component App inherits Window {
             // (see `components/description-tooltip.slint`).
             DescriptionTooltipOverlay { }
 
-            // The background-music panel (`<MusicPlayer>` in App.vue), mounted on the
-            // same layer and covering everything below the title bar. It comes after
-            // the dropdowns and the tooltip but before the dialogs, which is the Vue's
-            // order: its `.music-overlay` is `z-index: 100` against the command
-            // palette's 114515 and the dialogs' 11451419. Its `top: 44px` is applied
-            // here, where the title bar's height is known.
+            // The background-music panel, mounted on the same layer and covering
+            // everything below the title bar. It comes after the dropdowns and the
+            // tooltip but before the dialogs. Its `top: 44px` is applied here,
+            // where the title bar's height is known.
             MusicPlayerOverlay {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
             }
 
-            // The command palette (`<CommandPalette>` in App.vue), between the music
-            // player and the dialogs because that is where the Vue's `z-index` puts
-            // it: 114515, above the player's 100 and the content overlays' 114514,
-            // below the dialogs' 11451419.
+            // The command palette, mounted between the music player and the dialog
+            // layer.
             CommandPaletteOverlay { }
 
-            // The dialog layer (DialogRoot.vue): mounted last so a dialog covers
-            // both the page and the floating dropdown.
-            // And the dialogs have to stay above *that*: `BaseDialog.vue` is
-            // `z-index: 11451419`, the top of the Vue's stack, where before this sat
-            // at 0 and beat the dropdown only by being declared later.
+            // The dialog layer, mounted last so a dialog covers both the page and
+            // the floating dropdown. It has to stay above the command palette and
+            // the music player, so it carries an explicit `z` rather than relying
+            // on declaration order.
             DialogRoot {
                 z: 2000;
                 confirm-quit => { root.quit(); }

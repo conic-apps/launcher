@@ -4,10 +4,9 @@
 
 //! The world render pass: projects the `Scene`'s faces and draws them.
 //!
-//! This is `WindowBackground.vue`'s `draw()`, in two halves, exactly as the
-//! WebGL one: the fills (blended, writing depth, far to near in emission order,
-//! with the ground quad first), then the outlines — screen-space quads two
-//! device pixels wide, `LEQUAL`, replacing whatever they land on.
+//! Two halves: the fills (blended, writing depth, far to near in emission
+//! order, with the ground quad first), then the outlines — screen-space quads
+//! two device pixels wide, `LEQUAL`, replacing whatever they land on.
 
 use slint::{Rgba8Pixel, SharedPixelBuffer};
 
@@ -17,7 +16,7 @@ use super::scene::{self, EDGE_WIDTH_DEVICE_PX, Scene};
 /// Everything the world needs for one frame.
 pub struct FrameRequest {
     /// Render target size in pixels (the window's device size times the render
-    /// scale — see `background::RENDER_SCALE_MAX`).
+    /// scale — see `background::controller::WORLD_PIXEL_BUDGET`).
     pub width: u32,
     pub height: u32,
     /// Buffer pixels per *device* pixel: the outline is two device pixels wide,
@@ -98,10 +97,10 @@ impl WorldRenderer {
         }
         clock.mark("fills");
 
-        // The Vue's `lineColor`: the flavours that draw on a dark crust outline
-        // in white and Latte outlines in black (`const c = latte ? 0 : 255`).
-        // The fills are the crust itself, so in a dark palette these outlines
-        // are the whole picture.
+        // Line colour: the flavours that draw on a dark crust outline in white,
+        // and Latte in black (`const c = latte ? 0 : 255`). The fills are the
+        // crust itself, so in a dark palette these outlines are the whole
+        // picture.
         let outline = if request.dark { 1.0 } else { 0.0 };
         let half_edge = EDGE_WIDTH_DEVICE_PX * request.edge_scale / 2.0;
         for (face, quad) in self.scene.faces.iter().zip(self.projected.iter()) {
@@ -115,7 +114,7 @@ impl WorldRenderer {
             for i in 0..4 {
                 let a = quad[i];
                 let b = quad[(i + 1) % 4];
-                // The original expands the edge into a quad in the vertex
+                // The GPU path expands the edge into a quad in the vertex
                 // shader, in a y-up pixel space, so the normal is computed
                 // there and only the result comes back here.
                 let dx = b.x - a.x;
@@ -215,7 +214,7 @@ impl Default for WorldRenderer {
     }
 }
 
-/// The original's vertex shader: `ndcX = (x - camX) * focal / dz / halfW` and
+/// The vertex shader's projection: `ndcX = (x - camX) * focal / dz / halfW` and
 /// the same for y with the sign flipped, mapped into window pixels.
 ///
 /// The depth is clamped to the near and far planes before being inverted, which

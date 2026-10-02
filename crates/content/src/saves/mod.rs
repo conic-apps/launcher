@@ -17,15 +17,11 @@ mod nbt;
 
 /// The fields a save's card shows, read out of its `level.dat` root.
 ///
-/// Not part of the original: it hands the whole NBT `Value` to the frontend and
-/// lets it walk the tree (`Level` in `crates/content/index.ts`, with the
-/// `__fastnbt_int_array` shape and all). Pulling the handful of fields out here
-/// keeps the NBT shape inside this crate and gives the app a plain, `Send`
-/// summary to carry across threads.
+/// Pulling the handful of fields out here keeps the NBT shape inside this crate
+/// and gives the app a plain, `Send` summary to carry across threads.
 ///
 /// The spawn position is a second kind of field: no card shows it, but the
-/// world map opens centred on it (`ContentSaves.vue`'s `saveSpawnX` /
-/// `saveSpawnZ`, handed to `WorldMap` as `center-x` / `center-z`).
+/// world map opens centred on it.
 #[derive(Debug, Clone, Default)]
 pub struct LevelSummary {
     /// The world's display name, absent when `level.dat` does not carry one.
@@ -51,8 +47,8 @@ pub fn summarize_level(root: &Value) -> LevelSummary {
         },
         game_type: integer_field(data, "GameType").map(|value| value as i32),
         allow_commands: integer_field(data, "allowCommands").is_some_and(|value| value != 0),
-        // The launch script stores milliseconds, which is what the Vue hands
-        // straight to `new Date(timestamp)`.
+        // The launch script stores milliseconds, the unit the frontend's date
+        // formatting expects.
         last_played: integer_field(data, "LastPlayed").map(|value| value as u64),
         spawn: spawn_field(data),
     }
@@ -60,8 +56,9 @@ pub fn summarize_level(root: &Value) -> LevelSummary {
 
 /// `Data.spawn.pos`, the `ListTag` of three ints the Java writes as
 /// `[x, y, z]`. A world that predates the tag (or a `level.dat` that carries
-/// `SpawnX`/`SpawnZ` instead, which the format did before 1.2) has none, and
-/// `worldmap.rs` falls back to the spawn `conic-worldmap` reads for itself.
+/// `SpawnX`/`SpawnZ` instead, which the format did before 1.2) has none.
+/// `worldmap.rs` falls back to the spawn `conic-worldmap` reads for itself only
+/// when a render request carries no centre.
 fn spawn_field(data: &Value) -> Option<[i32; 3]> {
     let pos = compound_field(compound_field(data, "spawn")?, "pos")?;
     let coords: &[i32] = match pos {
@@ -165,8 +162,8 @@ mod tests {
 
     #[test]
     fn a_world_without_a_spawn_tag_has_none() {
-        // `worldmap.rs` reads `(0, 0)` as "ask the world for its own spawn",
-        // which is the fallback the crate's `WorldMap::spawn` provides.
+        // A missing spawn tag yields `None`; `worldmap.rs` asks the world for
+        // its own spawn only when a request carries no centre, not for `(0, 0)`.
         assert_eq!(summarize_level(&data_with_spawn(None)).spawn, None);
     }
 

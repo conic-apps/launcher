@@ -6,11 +6,11 @@
 # Merge the Nunito digit glyphs into the variable Comfortaa font and save the
 # result as "Comfortaa Nunito", the TTF the Slint frontend embeds.
 #
-# The Vue original rendered digits with a digits-only Nunito subset selected
-# per character via CSS `unicode-range: U+0030-0039`, on top of Comfortaa for
-# everything else. Slint has no unicode-range fallback, so this script bakes
-# the Nunito digit outlines into Comfortaa itself: a single family whose
-# '0'..'9' glyphs are Nunito's while every other glyph stays Comfortaa's.
+# Slint has no CSS `unicode-range` fallback, so a digits-only Nunito subset
+# (`U+0030`-`U+0039`) cannot be selected per character over Comfortaa for
+# everything else. This script instead bakes the Nunito digit outlines into
+# Comfortaa itself: a single family whose '0'..'9' glyphs are Nunito's while
+# every other glyph stays Comfortaa's.
 #
 # The digit outlines get their own gvar deltas along the 'wght' axis so they
 # interpolate like the original variable fonts. Nunito advances for the digits
@@ -40,8 +40,8 @@ from fontTools.varLib.instancer import instantiateVariableFont
 from fontTools.varLib.models import VariationModel
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
-MERGE_OUT = os.path.join(ROOT, "slint", "app", "ui", "fonts", "ComfortaaNunito.ttf")
+ROOT = os.path.abspath(os.path.join(HERE, ".."))
+MERGE_OUT = os.path.join(ROOT, "app", "ui", "fonts", "ComfortaaNunito.ttf")
 COMFORTAA = os.path.join(HERE, "fonts", "Comfortaa-Latin.woff2")
 NUNITO = os.path.join(HERE, "fonts", "Nunito-Digits.woff2")
 

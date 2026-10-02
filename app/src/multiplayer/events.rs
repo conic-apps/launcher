@@ -17,8 +17,7 @@ pub(crate) fn with_controller(body: impl FnOnce(&Rc<Controller>)) {
     });
 }
 
-/// The store's `refresh()`: read the session snapshot and follow it with a peer
-/// refresh.
+/// Reads the session snapshot and (re)schedules the peer poll.
 pub(crate) fn push_refresh(ui: &App, controller: &Rc<Controller>) {
     let weak = ui.as_weak();
     let service = Arc::clone(&controller.service);
@@ -37,7 +36,7 @@ pub(crate) fn push_refresh(ui: &App, controller: &Rc<Controller>) {
     });
 }
 
-/// The store's `refreshPeers()`.
+/// Reads the peer list.
 pub(crate) fn push_refresh_peers(ui: &App, controller: &Rc<Controller>) {
     let weak = ui.as_weak();
     let service = Arc::clone(&controller.service);
@@ -50,7 +49,7 @@ pub(crate) fn push_refresh_peers(ui: &App, controller: &Rc<Controller>) {
     });
 }
 
-/// The store's `schedulePeersPolling()` + `watch(state)`.
+/// Schedules or stops the peer poll according to the session state.
 pub(crate) fn schedule_peers_polling(ui: &App, controller: &Rc<Controller>) {
     let state = ui.global::<MultiplayerState>();
     let session = state.get_state();
@@ -75,8 +74,7 @@ pub(crate) fn schedule_peers_polling(ui: &App, controller: &Rc<Controller>) {
         });
 }
 
-/// One notice from the poll thread, dispatched like the store's `on(...)`
-/// handlers.
+/// One notice from the poll thread, dispatched to the view.
 pub(crate) fn handle_event(ui: &App, event: SessionEvent) {
     let state = ui.global::<MultiplayerState>();
     match event.r#type {
@@ -124,7 +122,7 @@ pub(crate) fn handle_event(ui: &App, event: SessionEvent) {
     }
 }
 
-/// Applies a session snapshot (`refresh`'s body).
+/// Applies a session snapshot to the view.
 pub(crate) fn apply_session(ui: &App, session: SessionState) {
     let state = ui.global::<MultiplayerState>();
     state.set_state(session.state.into());
@@ -198,8 +196,8 @@ pub(crate) fn apply_peers(ui: &App, peers: &[PeerInfo]) {
     state.set_local_nat_code(local_nat);
 }
 
-/// `toStateName(state)`: the library reports the state as a name already, but
-/// the FFI event may carry the numeric code instead.
+/// The library reports the state as a name already, but the FFI event may carry
+/// the numeric code instead.
 pub(crate) fn state_of(value: &serde_json::Value) -> String {
     if let Some(name) = value.as_str() {
         return name.to_string();

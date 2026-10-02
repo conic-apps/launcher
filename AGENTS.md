@@ -1,6 +1,6 @@
 # Conic Launcher — Agent Guide
 
-The app is native Slint + Rust. Before updating any `.slint` files, you must reat the documents of Slint.
+The app is native Slint + Rust. Before updating any `.slint` files, read the Slint documentation first.
 
 ## Quick start
 
@@ -10,10 +10,12 @@ cargo run --release         # release build
 cargo build --release       # what the packages ship
 ```
 
-Debug builds use the `~/conic-debug` data
-directory; release builds use `~/conic` (see `folder::DATA_LOCATION`).
+Debug builds use the `conic-debug` data directory; release builds use `conic`
+(under `$HOME` on macOS, `$HOME/.conic` on Linux, `%APPDATA%` on Windows; see
+`folder::DATA_LOCATION`).
 
-Delete `~/conic-debug` by hand to reset a debug install.
+Delete the debug data directory by hand to reset a debug install (`~/conic-debug`
+on macOS, `~/.conic-debug` on Linux, `%APPDATA%\conic-debug` on Windows).
 
 ## Verification
 
@@ -21,12 +23,14 @@ Delete `~/conic-debug` by hand to reset a debug install.
 cargo fmt --all -- --check
 cargo check
 cargo clippy --all-targets --release -- -D warnings   # warnings fail CI
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --document-private-items
 cargo test
 ```
 
-Matching `check-rust.yml`, which runs `fmt` on Linux, and `check` + `clippy`
-(`--all-targets --release -- -D warnings`) on Linux **and** Windows, plus a
-"test" job that is really `cargo test --all --all-targets`.
+Matching `check-rust.yml`, which runs `fmt` on Linux; `check` + `clippy`
+(`--all-targets --release -- -D warnings`) and `doc` (`RUSTDOCFLAGS="-D warnings"
+cargo doc --no-deps --document-private-items`) on Linux, macOS **and** Windows;
+plus a "test" job that is `cargo test --all --release --verbose --all-targets`.
 
 Python tooling in `tools/` is not part of any CI gate:
 
@@ -37,7 +41,7 @@ Python tooling in `tools/` is not part of any CI gate:
 | `generate-icons.py`                      | writes `packaging/linux/icons/` (committed; see Packaging) |
 | `check-icon-names.py`                    | every `AppIcon`/`icon:` name in a `.slint` has an SVG      |
 | `update-i18n.py`                         | re-keys the `.po` catalogues against `slint-tr-extractor`  |
-| `merge-digit-font.py`, `verify_merge.py` | build the merged digit font                                |
+| `merge-digit-font.py`, `verify_merge.py` | build and verify the merged font                           |
 
 ## Architecture
 
@@ -46,8 +50,8 @@ Python tooling in `tools/` is not part of any CI gate:
   `app/ui/**.slint` is the whole interface; `app/build.rs` compiles the `.slint`
   tree and generates `app/ui/icons.slint` from the SVGs under
   `app/ui/assets/icons/`. The generated file is gitignored.
-- **`crates/*/`** — Rust domain crates, one per capability, all
-  Tauri-agnostic. The frontend talks to them directly; there is no IPC layer.
+- **`crates/*/`** — Rust domain crates, one per capability, independent of the
+  UI. The interface talks to them directly; there is no IPC layer.
 - **`packaging/`** — see Packaging.
 - **`app/i18n/<locale>/LC_MESSAGES/conic-launcher.po`** — 12 locales.
   `tools/update-i18n.py` owns them; do not hand-edit.
@@ -56,7 +60,7 @@ Python tooling in `tools/` is not part of any CI gate:
 
 - `crates/platform` — OS detection (`PLATFORM_INFO`, `OsFamily`).
 - `crates/window` — window operations (minimize/maximize/fullscreen,
-  `bring_to_front`) and the winit window-attributes hook. macOS gets a
+  `bring_to_front`) and the winit event-filter fan-out. macOS gets a
   transparent title bar with the real traffic lights; Windows gets
   `with_decorations(false)` plus `app/src/windows_caption.rs` drawing the
   controls itself; Linux draws them in the title bar.
@@ -64,8 +68,8 @@ Python tooling in `tools/` is not part of any CI gate:
   D-Bus (`zbus`), macOS a socket, Windows a named mutex.
 - `crates/authcode` — the loopback listener the Microsoft browser flow hands its
   authorization code back on.
-- `crates/music` — local music listing **and** playback. `cpal` decodes and plays
-  natively; the Vue version used the Web Audio API.
+- `crates/music` — local music listing **and** playback. `symphonia` decodes and
+  `cpal` plays natively.
 - `crates/markdown` — `comrak` + `parley`/`fontique` render a content panel's
   body and push a display list into the Slint model.
 
@@ -101,13 +105,14 @@ Python tooling in `tools/` is not part of any CI gate:
 - `#![deny(clippy::unwrap_used)]` applies to `app/src/main.rs` only. The
   Slint-generated module is opted out with `#[allow(clippy::unwrap_used)]` —
   keep that scoped, do not widen it.
-- All external deps live in the root `Cargo.toml` `[workspace.dependencies]`; the
-  local crates are declared there too and are not published.
+- External deps are declared in the root `Cargo.toml` `[workspace.dependencies]`
+  and pulled in with `workspace = true`; the local crates are declared there too
+  and are not published. Platform-gated deps (winit, zbus, objc2, windows) are
+  declared in the crate that needs them.
 - Release profile: `panic = "abort"`, `lto`, `codegen-units = 1`,
   `opt-level = "z"`, `strip`. A release build is slow on purpose.
-- `slint` is pulled with `default-features = true`, which includes the Skia
-  renderer. Skia resolves its binaries through `skia-bindings`' `binary-cache`,
-  so the build downloads a prebuilt and needs no `gn`/`ninja`/`clang`.
+- `slint` is pulled with `default-features = true`, which brings the femtovg
+  (OpenGL) and software renderers.
 - File header convention: `// Conic Launcher` / copyright /
   `// SPDX-License-Identifier: GPL-3.0-only`.
 - Comment density is a house style here: explain _why_, and the alternatives that
@@ -115,7 +120,7 @@ Python tooling in `tools/` is not part of any CI gate:
 
 ## UI conventions
 
-- Slint, not Vue: properties and bindings, `callback` for events, `@tr()` for
+- Slint: properties and bindings, `callback` for events, `@tr()` for
   translated strings, `@image-url` for assets.
 - **Never** add `cursor: pointer`; this is a desktop app.
 - Rust touches a Slint component only from the event loop. From another thread,
@@ -128,31 +133,31 @@ Python tooling in `tools/` is not part of any CI gate:
 
 ## Testing
 
-Rust unit tests exist only where there is logic worth isolating (`install`,
-`java-runtime`, `markdown`); run `cargo test`. There is no UI test framework in
-use beyond `i-slint-backend-testing` as a dev-dependency of `app`.
+Rust unit tests live beside the code they cover, under `app/src/` and in several
+crates; run `cargo test`. There is no UI test framework in use beyond
+`i-slint-backend-testing` as a dev-dependency of `app`.
 
 ## Versioning & releases
 
-The app version is `version` in **`app/Cargo.toml`** — the single source. It used
-to be `core/tauri.conf.json`. `build.yml` reads it with `sed` (no toolchain
-needed in the version job), builds the Linux packages on push to `master`, and
-publishes a release only when the version differs from `HEAD~1`. README asks
-contributors to target `dev`; releases are cut from `master`.
+The app version is `version` in **`app/Cargo.toml`** — the single source.
+`build.yml` reads it with `sed` (no toolchain needed in the version job), builds
+the Linux packages on push to `master`, and publishes a release only when the
+version differs from `HEAD~1`. README asks contributors to target `dev`;
+releases are cut from `master`.
 
-The Tauri self-updater and its signing keys are **gone**: there is no `.sig`
-artifact and no `TAURI_SIGNING_PRIVATE_KEY` anywhere. `CURSEFORGE_API_KEY` is
-still read at build time by `crates/curseforge/build.rs`; without it the official
-CurseForge API is simply unauthenticated.
+`CURSEFORGE_API_KEY` is read at build time by `crates/curseforge/build.rs`;
+without it the official CurseForge API is simply unauthenticated.
 
 ## Packaging
 
 `packaging/linux/` holds the **only** copy of the payload the Linux formats
 install — the desktop entry and the hicolor icon set. `packaging/macos/` holds
-the `.icns` and the `Info.plist` template for the `.app`. Both are **committed**,
-regenerated by `tools/generate-icons.py` / `tools/generate-icns.py`; do not add a
-step that needs Python at package time, because `dpkg-deb`, `rpmbuild` and
-`makepkg` run on machines without it, and `iconutil` only exists on macOS.
+the `.icns` and the `Info.plist` template for the `.app`. Both directories are
+**committed**; the icon sets are regenerated by `tools/generate-icons.py` /
+`tools/generate-icns.py`, while the desktop entry and `Info.plist` are
+hand-written. Do not add a step that needs Python at package time, because
+`dpkg-deb`, `rpmbuild` and `makepkg` run on machines without it, and `iconutil`
+only exists on macOS.
 
 ```bash
 tools/package-linux.sh              # deb + rpm + AppImage
@@ -267,8 +272,8 @@ failing three steps in.
 
 ## Windows
 
-Tauri's bundler is gone here too, so `tools/package-windows.ps1` assembles the
-`.msi` out of the WiX toolset and copies the standalone `.exe` beside it. The
+`tools/package-windows.ps1` assembles the `.msi` out of the WiX toolset and
+copies the standalone `.exe` beside it. The
 payload is `packaging/windows/` — the `.wxs` and the `.ico`, both committed — and
 is read the way `app/Cargo.toml`'s `[package.metadata.deb]` is on Linux. See
 `packaging/windows/README.md` for the per-file detail.
@@ -323,17 +328,18 @@ is read the way `app/Cargo.toml`'s `[package.metadata.deb]` is on Linux. See
 
 ## macOS
 
-Tauri's bundler is gone, so `tools/package-macos.sh` assembles the `.app` and
-`.dmg` itself out of `codesign`, `hdiutil` and `lipo`. Three things worth knowing
-before touching either script:
+`tools/package-macos.sh` assembles the `.app` and `.dmg` itself out of
+`codesign`, `hdiutil` and `lipo`. Three things worth knowing before touching
+either script:
 
-- **`x86_64-apple-darwin` did not compile until this was fixed.** `objc-sys`
+- **`x86_64-apple-darwin` needs care here.** `objc-sys`
   types an Objective-C `BOOL` as `bool` on arm64 (where C's `BOOL` is `_Bool`)
   and as `i8` on x86_64 (where it is `signed char`), so code that returns one
   straight out of an FFI call builds for Apple Silicon and fails for Intel with
   `expected bool, found i8`. `app/src/traffic_lights.rs`'s `add_method` is the
   one place this bites; it goes through `i8` to satisfy both. A `--universal`
-  build is what surfaces this, and it is why the CI job builds one.
+  build is what surfaces this, and it is one reason CI builds each architecture
+  on its own native runner instead of a cross-compiled universal one.
 - **CI builds each macOS architecture on a native runner** (`macos-15` and
   `macos-15-intel`), not one runner cross-compiling the other. A `--target`
   build compiles for the guest while running every build script on the host, so

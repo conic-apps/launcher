@@ -9,9 +9,8 @@ import { MusicState } from "../globals/music.slint";
 
 // A player button (`.player-btn`): 34px square, 10px radius, transparent at
 // rest, `surface2` on hover, `overlay0` pressed, and `mauve` when it is *on*
-// (shuffle / repeat, the playlist toggle) or is the play button — the Vue's
-// `&.play-btn { color: var(--ctp-mauve) }`, which is why the transport's play and
-// pause are purple and not text-coloured.
+// (shuffle / repeat, the playlist toggle) or is the play button — which is why
+// the transport's play and pause are purple and not text-coloured.
 //
 // `transition: all 120ms ease` moves the ink as well as the fill, so the colour
 // is animated through a property of its own: the icon is a child, and its
@@ -21,8 +20,8 @@ component PlayerButton inherits Rectangle {
     in property <length> size: 34px;
     in property <bool> on: false;
     in property <bool> primary: false;
-    /// The `title` attribute. Slint has no tooltip on an icon button, so this is
-    /// the accessible label the Vue's `title` was the only carrier of.
+    /// The tooltip text. Slint has no tooltip on an icon button, so this is the
+    /// accessible label instead.
     in property <string> label: "";
     callback clicked;
 
@@ -36,8 +35,8 @@ component PlayerButton inherits Rectangle {
     : Colors.transparent;
     animate background { duration: 120ms; easing: Easing.ease; }
 
-    /// `&.active { color: var(--ctp-mauve) }`, and `.play-btn` mauve whatever
-    /// the state — its `:hover` keeps the colour and only changes the fill.
+    /// The icon ink: `mauve` while the button is *on* or is the primary play
+    /// button, otherwise text with a lighter hover step.
     private property <color> ink: root.primary || root.on
     ? Theme.mauve
     : touch.has-hover ? Theme.text : Theme.subtext-0;
@@ -58,15 +57,14 @@ component PlayerButton inherits Rectangle {
     }
 }
 
-// A playlist row (`.playlist-item`), which is also what the playing one looks
-// like (`&.playing { color: var(--ctp-blue) }`).
+// A playlist row (`.playlist-item`); the playing row draws its name in blue.
 component PlaylistItem inherits Rectangle {
     in property <string> name;
     in property <bool> playing: false;
     callback clicked;
 
     width: 100%;
-    // `padding: 7px 8px` around a 12px line box (`line-height: 1`).
+    // A 12px line box with 7px of padding above and below.
     height: 26px;
     border-radius: 8px;
     background: touch.has-hover
@@ -78,10 +76,8 @@ component PlaylistItem inherits Rectangle {
     accessible-label: root.name;
     accessible-action-default => { root.clicked(); }
 
-    // `.playlist-item { padding: 7px 8px; display: flex; align-items: center }`.
-    // The 12px height stays: it is what reproduces `line-height: 1` against the
-    // embedded font's taller natural line box, and the 26px row height is derived
-    // from it.
+    // The 12px text height stays: it keeps the line tight against the embedded
+    // font's taller natural line box, and the 26px row height is derived from it.
     HorizontalLayout {
         padding-left: 8px;
         padding-right: 8px;
@@ -104,17 +100,16 @@ component PlaylistItem inherits Rectangle {
     }
 }
 
-// The background-music panel (src/overlays/MusicPlayer.vue).
+// The background-music panel.
 //
 // A scrim over everything below the title bar, the 340px player card in its
 // top-right corner, and — when it is open — the playlist popup underneath it.
-// Both cards are the Vue's own: `base`, a 1px `overlay0` border at half opacity,
-// a 14px radius and the `0 4px 24px rgba(0,0,0,.3)` shadow (the `box-shadow`'s
-// x/y offsets do not exist in Slint, which only has a blur).
+// Both cards use `base`, a 1px `overlay0` border at half opacity, a 14px radius
+// and a 24px blur shadow; Slint has no shadow offset, only a blur.
 //
-// The card's own height, which the stylesheet leaves to its content:
+// The card's own height, computed from its content:
 //
-//   padding 16
+//   padding 32 (16 + 16)
 //   .track-info    16px line box + the 18px `margin-bottom` = 34
 //   .progress-area 11px (the `.time` line box; the 4px bar centres in it)
 //                   + the 8px `margin-bottom`
@@ -122,18 +117,17 @@ component PlaylistItem inherits Rectangle {
 //   ─────────────────────────────
 //                  125px
 export component MusicPlayerOverlay inherits Rectangle {
-    // `MusicState.panel-open` is the Vue's `v-if` on `.music-overlay`.
+    // Whether the panel is open.
     in property <bool> open: MusicState.panel-open;
 
     width: 100%;
     height: 100%;
     background: #000000.with-alpha(0.45 * root.scrim-alpha);
 
-    // The Vue's `v-if` plus a `<Transition name="music-overlay">`: the scrim fades
-    // over 150ms and the card slides in from -8px over the same 150ms. As in
-    // `BaseDialog`, the phase is plain state and the panel is shown for one frame
-    // at the start values, because an animated property is only advanced while
-    // something reads it.
+    // The scrim fades over 150ms and the card slides in from -8px over the same
+    // 150ms. As in `BaseDialog`, the phase is plain state and the panel is shown
+    // for one frame at the start values, because an animated property is only
+    // advanced while something reads it.
     private property <string> phase: "closed";
     visible: root.phase != "closed";
 
@@ -147,19 +141,18 @@ export component MusicPlayerOverlay inherits Rectangle {
                 // leave had got to.
                 root.phase = "shown";
             }
-            // The overlay is the Vue's `v-if`, so the whole subtree — the playlist
-            // included — is built and destroyed with it. Re-entering therefore
-            // re-enters the playlist too, and a `showPlaylist` that was still true
-            // is not forgotten (it is a `ref` in `MusicPlayer.vue`, which stays
-            // mounted; only the inner `v-if` comes and goes).
+            // The whole subtree — the playlist included — is built and destroyed
+            // with the overlay, so re-entering re-enters the playlist too. A
+            // `playlist-open` that was still true is not forgotten: it lives in
+            // `MusicState`, not in this subtree.
             if root.playlist-open {
                 root.playlist-phase = "starting";
                 playlist-start.restart();
             }
             } else if root.phase != "closed" && root.phase != "leaving" {
-            // The playlist does *not* leave here: in the Vue it is inside the
-            // overlay's own subtree, so it fades out with it. It is dropped when
-            // the overlay's leave is over (see `leave-timer`).
+            // The playlist does *not* leave here: it is inside the overlay's own
+            // subtree, so it fades out with it. It is dropped when the overlay's
+            // leave is over (see `leave-timer`).
             root.phase = "leaving";
         }
     }
@@ -191,15 +184,14 @@ export component MusicPlayerOverlay inherits Rectangle {
         }
     }
 
-    // ----- the playlist's own transition -----
-    // `<Transition name="playlist-fade">`: 120ms of `all`, from opacity 0 and
-    // -4px, and it is a *separate* transition from the overlay's. So it needs its
-    // own phase machine: driving it off the overlay's phase would leave the
-    // playlist with nothing to animate when the user toggles it while the overlay
-    // stays open — the case the button is for. The same two rules as `BaseDialog`
-    // apply: "starting" is a frame at the start values, because an animated
-    // property is only advanced while something reads it, and "leaving" keeps the
-    // card on screen until the timer drops it.
+    // The playlist's own transition: 120ms from opacity 0 and -4px, and it is a
+    // *separate* transition from the overlay's. So it needs its own phase machine:
+    // driving it off the overlay's phase would leave the playlist with nothing to
+    // animate when the user toggles it while the overlay stays open — the case the
+    // button is for. The same two rules as `BaseDialog` apply: "starting" is a
+    // frame at the start values, because an animated property is only advanced
+    // while something reads it, and "leaving" keeps the card on screen until the
+    // timer drops it.
     private property <bool> playlist-open: MusicState.playlist-open;
     private property <string> playlist-phase: "closed";
     private property <float> playlist-alpha: root.playlist-phase == "shown" ? 1.0 : 0.0;
@@ -256,10 +248,7 @@ export component MusicPlayerOverlay inherits Rectangle {
     // A drag is a question about *where*, not about whether the music is running,
     // so it is answered with the transport stopped: what comes back afterwards is
     // the state that was there before, rather than a play/pause toggle that
-    // would land wherever the last seek happened to leave it. The Vue bound the
-    // button straight to `music.isPlaying` and had no notion of a drag at all, so
-    // a scrub of a playing track showed a pause icon over a position still
-    // catching up with the pointer, and the music played straight through it.
+    // would land wherever the last seek happened to leave it.
     function begin-drag() {
         root.dragging = true;
         if (MusicState.is-playing) {
@@ -277,14 +266,12 @@ export component MusicPlayerOverlay inherits Rectangle {
         }
     }
 
-    // ----- playlist geometry -----
-    // `padding: 7px 8px` around a 12px line box (`line-height: 1`) is a row;
-    // `.playlist-empty { padding: 12px }` around the same line box is the message
-    // that stands in for the rows. The card is sized from these rather than
-    // measured, because the list is built by a `for` and a repeated element's
-    // height is measured at its own preferred width — so a measurement would not
-    // be the height the layout uses (the same trap the content grid's
-    // `filter_row_height` works around).
+    // Playlist geometry. A 12px line box with 7px of padding above and below is
+    // a row; the empty message adds 12px around the same line box. The card is
+    // sized from these rather than measured, because the list is built by a `for`
+    // and a repeated element's height is measured at its own preferred width — so
+    // a measurement would not be the height the layout uses (the same trap the
+    // content grid's `filter_row_height` works around).
     private property <length> playlist-row-height: 26px;
     private property <length> playlist-empty-height: 36px;
     private property <length> playlist-items-height: 4px
@@ -293,12 +280,11 @@ export component MusicPlayerOverlay inherits Rectangle {
     : playlist-empty-height)
     + 8px;
 
-    // The column is `.music-overlay { padding: 16px; gap: 12px }` and its height
-    // is the window's less the 44px title bar — 488px at the 532px floor
-    // `core/tauri.conf.json` sets. The Vue's column is `overflow-y: auto`, so a
-    // 125px card plus a 320px playlist plus 16 + 12 + 16 does not quite fit and
-    // scrolls by a pixel. Clamping the playlist to what is left keeps the two
-    // cards inside the panel at any window size instead.
+    // The column has 16px of padding and a 12px gap, and its height is the
+    // window's less the 44px title bar — 488px at the 532px minimum window
+    // height. A 125px card plus a 320px playlist plus 16 + 12 + 16 does not quite
+    // fit and would scroll by a pixel. Clamping the playlist to what is left
+    // keeps the two cards inside the panel at any window size instead.
     private property <length> card-height: 125px;
     private property <length> overlay-padding: 16px;
     private property <length> card-gap: 12px;
@@ -308,9 +294,8 @@ export component MusicPlayerOverlay inherits Rectangle {
     );
 
     // The scrim swallows the presses meant for the window below, and a press that
-    // is not on a card closes the panel — the Vue's `@pointerdown.self`. The two
-    // cards stop it (`@pointerdown.stop`), which is why each carries its own
-    // touch area and both are declared after this one.
+    // is not on a card closes the panel. The two cards stop it, which is why each
+    // carries its own touch area and both are declared after this one.
     scrim-touch := TouchArea {
         pointer-event(event) => {
             if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
@@ -319,15 +304,13 @@ export component MusicPlayerOverlay inherits Rectangle {
         }
     }
 
-    // `.music-overlay` is a flex column with `align-items: flex-end` and
-    // `padding: 16px`, so both cards are flush to the right inset by 16px and
-    // separated by the column's 12px gap.
+    // The column is aligned to the end with 16px of padding, so both cards are
+    // flush to the right inset by 16px and separated by the 12px gap.
     //
     // Each card is *wrapped* rather than placed here. A layout child cannot set
-    // its own `y`, which is what this used to work around — but the element that
-    // slides in does not have to be the layout's child. It is a plain child of a
-    // cell the layout sizes, so the layout keeps the `y` and the gap and the
-    // right-hand inset, and the card keeps the animation.
+    // its own `y`, so the sliding element is not the layout's child: it is a plain
+    // child of a cell the layout sizes, letting the layout keep the `y`, the gap
+    // and the right-hand inset while the card keeps the animation.
     VerticalLayout {
         padding: 16px;
         spacing: 12px;
@@ -355,15 +338,13 @@ export component MusicPlayerOverlay inherits Rectangle {
                     height: 100%;
                 }
 
-                // `.music-card { padding: 16px }` around the three rows. A layout
-                // gives the card its height too, which is how the `125px` and the
-                // running `y: 16px + 34px + …` offsets that placed them stop being
-                // arithmetic — but the card itself cannot be the layout, because it
-                // carries a background, a border and a shadow.
+                // 16px of padding around the three rows. A layout gives the card
+                // its height too, so the 125px falls out of the rows rather than
+                // being written down — but the card itself cannot be the layout,
+                // because it carries a background, a border and a shadow.
                 card-body := VerticalLayout {
                     padding: 16px;
 
-                    // ----- track title -----
                     // `.track-info` is a flex row that centres its one child, and the
                     // child carries an 18px `margin-bottom` — so the text sits 9px above
                     // the middle of a box 18px taller than the line itself. That is the
@@ -380,47 +361,38 @@ export component MusicPlayerOverlay inherits Rectangle {
                             ? MusicState.current-name
                             : @tr("No music");
                             font-size: 16px;
-                            // `.track-name { font-weight: 600 }`. The `bold` token is 700,
-                            // so the literal is the Vue's weight, as it is elsewhere in
-                            // the app where the CSS says 600.
+                            // The `bold` token is 700, so the literal 600 is used
+                            // instead, as elsewhere in the app where the weight is 600.
                             font-weight: 600;
-                            // Dimmed while the player is still waiting on audio. The
-                            // Vue had nothing to dim: an `<audio>` element's wait
-                            // was not visible, so a slow load was silence with no
-                            // explanation. A native player streams from a file, and
-                            // a starved buffer is worth saying out loud — but only
-                            // through colour, so the card does not grow a row the
-                            // Vue's layout never had.
+                            // Dimmed while the player is still waiting on audio: a
+                            // native player streams from a file, and a starved
+                            // buffer is worth saying out loud — but only through
+                            // colour, so the card does not grow a row.
                             color: MusicState.buffering ? Theme.subtext-0 : Theme.text;
                             horizontal-alignment: center;
                             overflow: elide;
                         }
                     }
 
-                    // ----- progress -----
-                    // `.progress-area` is a flex row of the two clock labels and the bar,
-                    // with `gap: 8px` and the labels `flex-shrink: 0`; everything centres
-                    // in an 11px row, and the bar takes what is left, which is what its
-                    // `flex: 1` asks for.
+                    // The two clock labels and the bar are one row: 8px gaps, the
+                    // labels fixed at their own width, everything centred in an
+                    // 11px box, and the bar taking what is left.
                     //
-                    // `align-items: center` is the load-bearing line: the clocks are 11px
-                    // and the bar 4px, so centring is what puts the bar's centre line on
-                    // the clocks' — `start` left the bar sitting against the top of the
-                    // row, three and a half pixels above where its centre belonged.
+                    // `cross-axis-alignment: center` is the load-bearing line: the
+                    // clocks are 11px and the bar 4px, so centring puts the bar's
+                    // centre line on the clocks'. `start` left the bar against the
+                    // top of the row, three and a half pixels too high.
                     //
-                    // The row is 19px because of the `margin-bottom: 8px`, which in CSS
-                    // sits *outside* an 11px element. `padding-bottom` is the same thing
-                    // expressed inside one, and it is what keeps the content box 11px so
-                    // that centring lands on the Vue's 5.5px centre line rather than the
-                    // 19px row's.
+                    // The row is 19px because of the 8px below it, which sits
+                    // *outside* the 11px content box. `padding-bottom` expresses
+                    // the same thing inside the row, and it keeps the content box
+                    // 11px so that centring lands on the 5.5px centre line rather
+                    // than the 19px row's.
                     //
-                    // `flex-shrink: 0` on the labels is `horizontal-stretch: 0`,
-                    // and it is not optional: stretch factors default to **1**, so
-                    // without it both clocks grow along with the bar and the
-                    // duration text walks left over the top of it. (That this row
-                    // used to be hand-placed — `x: 16px` and
-                    // `x: parent.width - 16px - self.width`, which pinned them —
-                    // is why it went unnoticed for as long as it did.)
+                    // `horizontal-stretch: 0` on the labels is not optional:
+                    // stretch factors default to **1**, so without it both clocks
+                    // grow along with the bar and the duration text walks left over
+                    // the top of it.
                     progress-area := HorizontalLayout {
                         height: 19px;
                         padding-bottom: 8px;
@@ -436,18 +408,18 @@ export component MusicPlayerOverlay inherits Rectangle {
                             color: Theme.subtext-0;
                         }
 
-                        // `.progress-bar`, the drag target of `onProgressPointerDown`.
+                        // The progress bar, and the drag target for seeking.
                         progress-bar := Rectangle {
                             horizontal-stretch: 1;
                             height: 4px;
                             border-radius: 4px;
                             background: Theme.surface-2.transparentize(0.2);
 
-                            // `x: 0` is load-bearing, not the default: the
-                            // fill's width is a *fraction* of the bar's, and an
-                            // unbound `x` centres an element rather than pinning
-                            // it left — which is what a half-drawn bar looked
-                            // like, floating in the middle of the track.
+                            // `x: 0` is load-bearing, not the default: the fill's
+                            // width is a *fraction* of the bar's, and an unbound
+                            // `x` centres an element rather than pinning it left,
+                            // which would float a half-drawn bar in the middle of
+                            // the track.
                             Rectangle {
                                 x: 0px;
                                 width: parent.width * MusicState.progress;
@@ -462,33 +434,31 @@ export component MusicPlayerOverlay inherits Rectangle {
                                     : Theme.mauve;
                             }
 
-                            // The Vue registers `pointermove`/`pointerup` on `window` for the
-                            // duration of a drag, so the bar keeps following the pointer once
-                            // it has left the bar itself. Slint cannot listen outside the
-                            // element, so the drag is tracked here instead — a press inside
-                            // the bar still seeks, which is what a click does.
+                            // A drag keeps following the pointer once it has left
+                            // the bar. Slint cannot listen outside the element, so
+                            // the drag is tracked here instead — a press inside the
+                            // bar still seeks, which is what a click does.
                             touch := TouchArea {
                                 width: parent.width;
                                 height: parent.height;
-                                // `seekRatio(clamp((clientX - left) / width, 0, 1))`. The
-                                // division is written in pixels because Slint cannot divide
-                                // one length by another.
+                                // The ratio is clamped to 0..1, and the division is
+                                // written in pixels because Slint cannot divide one
+                                // length by another.
                                 //
-                                // `self.mouse-x` is already relative to *this* element,
-                                // and this element covers the bar, so its origin is the
-                                // bar's left edge. There is no `clientX - left` left to
-                                // do: subtracting `parent.x` — the bar's own offset
-                                // within the row — as well shifted every seek by a
-                                // constant fraction of the bar, which is why the fill
-                                // stopped following the pointer and sat a fixed
-                                // distance to its left.
+                                // `self.mouse-x` is already relative to *this*
+                                // element, and this element covers the bar, so its
+                                // origin is the bar's left edge. Subtracting
+                                // `parent.x` — the bar's own offset within the row —
+                                // as well would shift every seek by a constant
+                                // fraction of the bar, leaving the fill a fixed
+                                // distance to the pointer's left.
                                 private property <float> ratio: clamp(
                                 self.mouse-x / 1px / (parent.width / 1px),
                                 0,
                                 1,
                                 );
-                                // The bar is seekable only once there is a duration to seek
-                                // within, which is the Vue's `music.duration <= 0` guard.
+                                // The bar is seekable only once there is a duration
+                                // to seek within.
                                 function seek() {
                                     if MusicState.duration > 0 {
                                         MusicState.seek-ratio(self.ratio);
@@ -512,11 +482,10 @@ export component MusicPlayerOverlay inherits Rectangle {
                         }
 
                         // The third child of the row, not the last child of the
-                        // bar. It is a sibling here, and was one in the Vue too
-                        // (`.progress-area` is a flex row of the two clocks and
-                        // the bar) — which is the whole reason it belongs here
-                        // rather than inside `progress-bar`, where it centred
-                        // itself on the track and printed over it.
+                        // bar: it is a sibling of the bar, which is the whole
+                        // reason it belongs here rather than inside `progress-bar`,
+                        // where it would centre itself on the track and print over
+                        // it.
                         duration-text := Text {
                             horizontal-stretch: 0;
                             height: 11px;
@@ -527,7 +496,6 @@ export component MusicPlayerOverlay inherits Rectangle {
                         }
                     }
 
-                    // ----- transport -----
                     // `.controls` is a flex row of three `flex: 1` groups — left, centre,
                     // right — each `gap: 2px`, and the play button is 40px. The centre
                     // group's buttons are 34+2+40+2+34 = 112px in a third of the 308px
@@ -605,7 +573,6 @@ export component MusicPlayerOverlay inherits Rectangle {
             }
         }
 
-        // ----- playlist -----
         // `.playlist-card` is 340px wide, at most 320px tall, and holds the app's
         // own `ScrollView` in its 8px padding. The card's own fade and slide are
         // `playlist-alpha` / `playlist-dy` above.
@@ -640,13 +607,13 @@ export component MusicPlayerOverlay inherits Rectangle {
                     height: 100%;
                 }
 
-                // `.playlist-card { padding: 8px }`.
+                // 8px of padding for the scroll view.
                 VerticalLayout {
                     padding: 8px;
 
                     ScrollView {
 
-                        // `.playlist-items { padding: 4px 0 8px }`.
+                        // 4px above and 8px below the rows.
                         playlist-items := VerticalLayout {
                             alignment: start;
                             padding-top: 4px;

@@ -8,9 +8,9 @@
 //! `app.conicmc.launcher.slint.SingleInstance` and serves
 //! `/app/conicmc/launcher/slint/SingleInstance`; a later launch finds the name
 //! taken, calls the primary's `ExecuteCallback` with its own command line and
-//! quits. This is what `tauri-plugin-single-instance` does on Linux, and it is
-//! the only mechanism that carries a later launch's arguments: the bus is the
-//! one thing both processes can agree on without a shared file.
+//! quits. The bus is the only mechanism that carries a later launch's
+//! arguments: it is the one thing both processes can agree on without a shared
+//! file.
 
 use std::sync::mpsc::Sender;
 
@@ -18,11 +18,10 @@ use zbus::{blocking::Connection, interface, names::WellKnownName};
 
 use crate::{APP_ID, AlreadyRunning, Launch, current_launch, report};
 
-/// The interface the primary serves, kept as the Tauri plugin has it so a
-/// secondary of one frontend still reaches a primary of the other.
+/// The interface the primary serves the `ExecuteCallback` method on.
 const INTERFACE: &str = "org.SingleInstance.DBus";
 
-/// The service the primary serves the launch report on.
+/// The object path the primary serves the launch report on.
 fn object_path() -> String {
     format!("/{}", APP_ID.replace('.', "/").replace('-', "_"))
 }
@@ -52,8 +51,8 @@ impl Server {
 ///
 /// # Errors
 ///
-/// [`AlreadyRunning`] once the name has been handed to the instance that owns
-/// it — the launch is delivered first, so the caller can quit right after.
+/// [`AlreadyRunning`] once the name is taken. The launch is handed over first;
+/// if that hand-over fails, it is logged and this launch quits anyway.
 pub(crate) fn claim(launches: Sender<Launch>) -> Result<Guard, AlreadyRunning> {
     let name = bus_name();
     let path = object_path();
@@ -95,8 +94,7 @@ pub(crate) fn claim(launches: Sender<Launch>) -> Result<Guard, AlreadyRunning> {
                 // bus takes the name away as soon as the connection owning it
                 // goes, so this is not a primary that is still starting up —
                 // it is a name something else has taken. There is nothing to
-                // take it back from, and quitting is what the Tauri app's
-                // plugin does in the same situation.
+                // take it back from, so the launch quits.
                 log::warn!(target: "shell", "the running instance did not answer: {error}");
             }
             Err(AlreadyRunning)

@@ -148,11 +148,9 @@ pub fn parse_mcmod_info(content: &str, transform_newlines: bool) -> Result<Vec<F
     Ok(infos)
 }
 
-/// This file defines the metadata of your mod. Its information may be viewed by users from the main
-/// screen of the game through the Mods button. A single info file can describe several mods.
-///
-/// The `mods.toml` file is formatted as TOML. A single mods.toml can describe several mods (the
-/// BuildCraft-style sub-modules), so this struct keeps the full `[[mods]]` list.
+/// The `mods.toml` metadata is formatted as TOML. A single mods.toml can describe
+/// several mods (the BuildCraft-style sub-modules), so this struct keeps the
+/// full `[[mods]]` list.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ForgeModTOMLData {
     #[serde(rename = "modLoader")]
@@ -286,7 +284,7 @@ impl ForgeModTOMLMod {
 }
 
 /// Resolve the `${file.jarVersion}` placeholder against the `Implementation-Version`
-/// attribute of the manifest, like xmcl (forge.ts) and HMCL do.
+/// attribute of the manifest, like xmcl and HMCL do.
 fn resolve_jar_version(version: Option<String>, jar_version: Option<&str>) -> Option<String> {
     match version {
         Some(v) if v == "${file.jarVersion}" => jar_version.map(|s| s.to_string()).or(Some(v)),
@@ -388,7 +386,8 @@ pub fn parse_manifest(content: &str) -> HashMap<String, String> {
 }
 
 /// Build the [`ManifestMetadata`] from raw manifest attributes, optionally
-/// reading the `TweakMetaFile` JSON from the archive to fill missing fields.
+/// reading the `TweakMetaFile` JSON from the archive; its non-empty fields
+/// override the manifest-derived values.
 pub fn manifest_metadata<R: Read + Seek>(
     manifest: &HashMap<String, String>,
     archive: &mut ZipArchive<R>,

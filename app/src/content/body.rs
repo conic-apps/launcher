@@ -9,7 +9,7 @@ use super::*;
 thread_local! {
     /// The Markdown engine behind the detail panel's body.
     ///
-    /// A `thread_local` for the same reason [`CONTROLLER`] is one: a
+    /// A `thread_local` for the same reason `CONTROLLER` is one: a
     /// `fontique::Collection` is not `Send`, and the engine holds one. It is also
     /// worth keeping between panels, because the collection is a font cache and
     /// throwing it away per panel would re-read every font file on every open.
@@ -81,7 +81,7 @@ impl BodyRenderer {
         }
     }
 
-    /// A new engine, with the style `markdown-body.less` describes.
+    /// A new engine, with the body's Markdown style.
     ///
     /// The collection is Slint's own, and that is not a convenience: the engine
     /// measures with it and the panel draws with it, so two collections would be
@@ -120,18 +120,18 @@ thread_local! {
 
 /// The monospace family, named the way *this* platform's font stack names it.
 ///
-/// `markdown-body.less` asks CSS for `monospace` and lets the browser resolve it.
-/// Slint's `font-family` is not CSS: it takes a family *name*, and the generic
-/// names mean nothing to it, so a view given `"monospace"` falls back to the
-/// window's default face. The engine, on the other hand, resolves
-/// `GenericFamily::Monospace` and shaped with a real monospace font — so the two
+/// CSS resolves the generic `monospace` itself. Slint's `font-family` is not
+/// CSS: it takes a family *name*, and the generic names mean nothing to it, so
+/// a view given `"monospace"` falls back to the window's default face. The
+/// engine, on the other hand, resolves `GenericFamily::Monospace` and shaped
+/// with a real monospace font — so the two
 /// halves measured and drew in *different faces*, which is the worst of both
 /// worlds: the code came out in the body typeface, and its advances were narrower
 /// than the box the engine had reserved for it, which showed as a band of empty
 /// space at the right of every inline-code capsule.
 ///
 /// Asking fontique which family it registers as the generic monospace is portable
-/// and always answers with something that exists. On this machine it answers
+/// and names a real family when it has an answer. On this machine it answers
 /// *Courier*, though, which is a monospace face from 1954 and looks like it next
 /// to a rounded sans — and a browser asked the same question on the same machine
 /// says Menlo or SF Mono. So a short preference list is tried first, and
@@ -693,10 +693,8 @@ pub(crate) fn fetch_body_images(ui: &App) {
     });
 }
 
-/// `formatGithubRepo` (`ContentModrinth*Details.vue`): `owner/repo`, when the
-/// URL is a GitHub one. The Vue's own hostname check compares against
-/// `"://github.com"` as well, which can never match a parsed host; only the
-/// real host is tested here.
+/// `owner/repo`, when the URL is a GitHub one. Only the real host is tested,
+/// never a `"://github.com"` substring, which can never match a parsed host.
 pub(crate) fn github_repo(url: &str) -> Option<String> {
     let parsed = url::Url::parse(url.trim()).ok()?;
     if parsed.host_str() != Some("github.com") {
@@ -717,7 +715,7 @@ pub(crate) fn number_label(value: Option<i64>) -> String {
     value.map(|value| value.to_string()).unwrap_or_default()
 }
 
-/// `useContentActions.ts`'s `checkingInstalled` → `installed` state.
+/// Checks whether the open project is installed and writes the result.
 pub(crate) fn refresh_installed(ui: &App) {
     let Some(detail) = controller().borrow().detail.clone() else {
         return;
@@ -794,11 +792,11 @@ mod tests {
 
     #[test]
     fn a_body_set_before_the_panel_is_measured_survives_until_the_width_arrives() {
-        // The bug this is here for. Setting a document and then finding no width
-        // used to go through the "empty the body" path, which emptied the engine
-        // too -- so the width arrived a moment later, by which point the engine
-        // held an empty string and laid *that* out. The panel drew nothing, for a
-        // body that had arrived perfectly intact.
+        // The bug this is here for. Sending a document with no width through the
+        // "empty the body" path would empty the engine too -- so the width would
+        // arrive a moment later, by which point the engine would hold an empty
+        // string and lay *that* out. The panel would draw nothing, for a body
+        // that had arrived perfectly intact.
         reset_body();
 
         assert!(!set_source("# A heading\n\nA paragraph.\n"));

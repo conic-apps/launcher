@@ -469,7 +469,7 @@ struct Atom {
     /// Byte range within that run's text.
     start: usize,
     end: usize,
-    /// The cluster's own advance, plus [`Self::margin`]. Baked in rather than
+    /// The cluster's own advance, plus [`Self::leading`]. Baked in rather than
     /// added by every reader, so the line breaker, the line's width and the
     /// drawing all agree without each of them knowing about it.
     advance: f32,
@@ -709,8 +709,8 @@ fn break_lines(atoms: &[Atom], avail: f32, wrap: bool) -> Vec<Vec<usize>> {
     // is added and then subtracted again, so the round trip through `f32` can land
     // a few thousandths short. "State" then breaks to "Stat" / "e" in the middle of
     // a row of one-word headings, for a margin no eye could ever see. A twentieth
-    // of a pixel is far below the 1/64th the display list snaps to anyway, so it
-    // changes nothing that is drawn and everything about whether a word breaks.
+    // of a pixel is far below anything an eye could see, so it changes nothing
+    // that is drawn and everything about whether a word breaks.
     const FITS: f32 = 0.05;
     let limit = avail + FITS;
     let mut lines: Vec<Vec<usize>> = Vec::new();
@@ -939,7 +939,7 @@ impl Ctx<'_> {
                 let mut below = y + height;
                 if let Some(HeadingRule { width, padding }) = self.style.heading_rule[level] {
                     // `padding-bottom: 0.3em` sits between the text and the
-                    // rule, and both are relative to the heading's own size.
+                    // rule, resolved against the heading's own size.
                     below += padding * base.size;
                     let mut rule = MdItem::rect(x, below, avail, width);
                     rule.color = ColorRole::Rule;
@@ -1142,8 +1142,8 @@ impl Ctx<'_> {
             false,
         );
 
-        // The content is indented to the summary's title rather than to the
-        // chevron, which is what a nested list under a settings row does too.
+        // The content is indented from the section's left edge by
+        // `details_content_inset`, which defaults to the row's own padding.
         let content_x = x + style.details_content_inset;
         let content_y = y + head_height + style.details_gap;
         let mut inner = content_y;
@@ -1500,10 +1500,9 @@ impl Ctx<'_> {
                 // from the baseline *downwards* — is the font's own answer to
                 // where that is. The box's top is the baseline less the ascent, so
                 // the distance down from the box's top is the ascent plus the
-                // offset. (It used to be `underline_offset - descent`, which is
-                // negative for every font and clamped to zero: the rule landed on
-                // the box's top edge, a line through the tops of the letters
-                // rather than a line under them.)
+                // offset. `underline_offset - descent` would be negative for every
+                // font and clamp to zero, landing the rule on the box's top edge —
+                // a line through the tops of the letters rather than under them.
                 //
                 // A font with no underline position in its metrics reports zero,
                 // and a rule *on* the baseline touches the letters instead of
@@ -1524,8 +1523,8 @@ impl Ctx<'_> {
         }
     }
 
-    /// The `pre` box: the code in the code font, on a `mantle` fill, inside
-    /// 16px of padding.
+    /// The `pre` box: the code in the code font, on the code block's background
+    /// fill, inside `code_block_padding` of padding.
     fn code_block(&mut self, code: &str, x: f32, y: f32, avail: f32) -> f32 {
         let padding = self.style.code_block_padding;
         let wrap = self.style.code_block_wrap;
@@ -1613,9 +1612,8 @@ impl Ctx<'_> {
         let total: f32 = column_widths.iter().sum();
         if total > avail {
             // Every column keeps a share of what its cells need, and the cells
-            // wrap inside it. The Vue lets a wide table scroll sideways; see the
-            // crate's README for why a view that cannot scroll sideways gets
-            // this instead.
+            // wrap inside it. A view that cannot scroll sideways gets this
+            // instead; see the crate's README for why.
             let factor = avail / total;
             let floor = style.font_size * 2.0;
             for width in &mut column_widths {
@@ -1733,8 +1731,7 @@ impl Ctx<'_> {
                 let slack = (*column - cell_chrome - plan.widest).max(0.0);
                 let offset = cell.align.align_factor() * slack;
                 // The same chrome the plan was given, so a cell that gave up its
-                // padding has its text where the padding used to be instead of
-                // where the padding would have been.
+                // padding keeps its text at the inset it planned for.
                 let inset = (cell_chrome * 0.5).max(0.0);
                 self.draw(
                     plan,
@@ -1795,7 +1792,7 @@ impl Ctx<'_> {
             &text,
             &SpanStyle {
                 family: self.style.font_family.clone(),
-                // A list marker inherits the body face: `markdown-body.less`
+                // A list marker inherits the body face: GitHub's `.markdown-body`
                 // gives `code` a monospace family and nothing else one.
                 mono: false,
                 size,
@@ -1898,8 +1895,8 @@ fn line_advance(atoms: &[Atom], line: &[usize]) -> f32 {
     line.iter().map(|index| atoms[*index].advance).sum()
 }
 
-/// The natural width of a run set: every run's advance, plus the padding of the
-/// inline-code capsules.
+/// The natural width of a run set: every run's advance, plus the padding and
+/// margin of the inline-code capsules.
 fn natural_width(metrics: &Metrics) -> f32 {
     let mut width = 0.0;
     for (index, run) in metrics.runs.iter().enumerate() {

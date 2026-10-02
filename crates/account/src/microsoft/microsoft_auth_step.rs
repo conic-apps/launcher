@@ -26,10 +26,10 @@ async fn check_response(response: reqwest::Response) -> Result<Value> {
 
 /// Trades an authorization code for a token pair.
 ///
-/// `redirect_uri` has to be the URI the code was issued against, byte for
-/// byte — that is the whole of RFC 6749 §4.1.3, and it is why the Slint app
-/// cannot keep the original's hard-coded `conic-launcher://…`: its listener
-/// binds an OS-chosen port, so the URI only exists once the flow is under way.
+/// `redirect_uri` has to be the URI the code was issued against, byte for byte
+/// — RFC 6749 §4.1.3. It is a parameter rather than a literal because the
+/// loopback listener binds an OS-chosen port, so the URI only exists once the
+/// flow is under way.
 pub async fn redeem_access_token(code: &str, redirect_uri: &str) -> Result<TokenPair> {
     let response = HTTP_CLIENT
         .post("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
@@ -66,12 +66,10 @@ pub async fn redeem_access_token(code: &str, redirect_uri: &str) -> Result<Token
 
 /// Percent-encodes a form value.
 ///
-/// `reqwest`'s `form()` would do this, and would rebuild the body out of a
-/// `serde` map; the body is hand-built here because that is how the original
-/// crate writes it, and the two requests it makes here have to keep matching
-/// it line for line. The one character that matters in a `redirect_uri` is the
-/// `:` and the two `/` — which is exactly what the original's literal
-/// `conic-launcher%3A%2F%2Foauth2%2Fmicrosoft%2Fcallback` encoded.
+/// The request bodies are hand-built form strings rather than `reqwest`'s
+/// `form()`, which would rebuild them from a `serde` map. The characters that
+/// matter in a `redirect_uri` are its `:` and the two `/`, which this encodes
+/// as `%3A%2F%2F`.
 fn urlencoding(value: &str) -> String {
     let mut encoded = String::with_capacity(value.len());
     for byte in value.bytes() {
@@ -89,14 +87,10 @@ pub(super) async fn get_access_token_from_refresh_token(refresh_token: &str) -> 
     let response = HTTP_CLIENT
         .post("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
         .header("Content-Type", "application/x-www-form-urlencoded")
-        // No `redirect_uri`, where the original sends a hard-coded
-        // `conic-launcher://…`. RFC 6749 §6 makes it conditional — it is only
-        // required when the original authorization request carried one, and
-        // every refresh this crate issues follows a device-code authorization,
-        // which never did. It is not among the parameters Microsoft's token
-        // endpoint documents for this grant either, so what the original sends
-        // was never read. Carrying a URI that this app does not use would be
-        // worse than not sending one.
+        // No `redirect_uri`: RFC 6749 §6 makes it conditional — required only
+        // when the authorization request carried one. An account keeps its
+        // refresh token but not the URI the code was issued against, so a
+        // refresh has none to send.
         .body(
             "client_id=94a1414e-e9ad-4bda-94f0-3368d979b0cc".to_string()
                 + "&grant_type=refresh_token"

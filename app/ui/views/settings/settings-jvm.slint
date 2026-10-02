@@ -9,14 +9,13 @@ import { BaseSwitch } from "../../components/base-switch.slint";
 import { ItemLoadingIcon } from "../../components/item-loading-icon.slint";
 import { AppConfig, JavaRuntime } from "../../globals/settings.slint";
 
-// Runtime rows (JavaRuntime[]). Mirrors the `v-if`/`v-else-if`/`v-for` chain
-// in SettingsJVM.vue: error, then empty, then the list.
+// Runtime rows (JavaRuntime[]). Three branches: error, then empty, then the
+// list.
 component JavaRuntimeList inherits VerticalLayout {
     in property <[JavaRuntime]> runtimes: [];
     in property <string> scan-error: "";
-    // Whether this list ends a `SettingCollapse` (the Vue's
-    // `.setting-collapse-content > div:last-child`). Which row that is depends
-    // on the branch showing, so it is worked out here and handed to that one row.
+    // Whether this list ends a `SettingCollapse`. Which row that is depends on
+    // the branch showing, so it is worked out here and handed to that one row.
     in property <bool> group-last: false;
 
     width: 100%;
@@ -55,12 +54,9 @@ component JavaRuntimeList inherits VerticalLayout {
     }
 }
 
-// src/views/settings/SettingsJVM.vue
 export component SettingsJvm inherits VerticalLayout {
-    /// The 8px of `SettingGroup.vue`'s `width: calc(100% - 16px); margin: 0
-    /// auto`, which the settings page's `padding: 0 8px` is one half of. The
-    /// setup wizard's `:deep(.setting-group) { width: 100% }` drops it, and
-    /// passes `0px` here.
+    /// The 8px inset each group carries inside the settings page, which the
+    /// setup wizard drops by passing `0px`.
     in property <length> group-inset: 8px;
 
     width: 100%;

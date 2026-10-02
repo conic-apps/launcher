@@ -4,7 +4,7 @@
 
 //! The page the browser lands on when the OAuth redirect fires.
 //!
-//! The page itself is [`page.html`], at the crate root: it is markup, it wants
+//! The page itself is `page.html`, at the crate root: it is markup, it wants
 //! to be read and previewed as markup, and everything in it — the rules, the
 //! three glyphs, the layout — is the design, not logic. This module is the part
 //! that cannot live in a stylesheet: which theme the launcher is in, and what
@@ -44,9 +44,9 @@ static PLACEHOLDER_RE: LazyLock<Regex> =
 /// A colour for the page, as the app's `slint::Color` reduced to what CSS
 /// takes.
 ///
-/// Alpha is kept rather than composited here: the app's text tokens are
-/// `default-text-color.transparentize(0.1)`, and handing the browser the same
-/// 10% alpha over the same card colour lands on the same pixel the window does.
+/// Alpha is kept rather than composited here: the app's title token is
+/// `default-text-color.transparentize(0.1)`, whose 0.9 alpha over the same card
+/// colour lands on the same pixel the window does.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rgba {
     pub r: u8,
@@ -82,25 +82,25 @@ impl Rgba {
 /// The theme the page is drawn in, read off the app's own tokens.
 #[derive(Clone, Debug)]
 pub struct Palette {
-    /// `--window-background`: what the launcher window itself sits on.
+    /// `--window`: what the launcher window itself sits on.
     pub window: Rgba,
-    /// `--dialog-background`: the card the page is drawn on.
+    /// `--card`: the card the page is drawn on.
     pub card: Rgba,
-    /// `--dialog-border`.
+    /// `--card-border`.
     pub card_border: Rgba,
     /// The title, at the app-wide 0.9.
     pub title: Rgba,
     /// The sentence under it, one step quieter.
     pub body: Rgba,
-    /// `--ctp-green`, on the success page.
+    /// `--success`, on the success page.
     pub success: Rgba,
-    /// `--ctp-red`, on the failure page.
+    /// `--danger`, on the failure page.
     pub danger: Rgba,
-    /// Whether the palette is one of the three dark flavors. `main.css` sets
-    /// `color-scheme: dark` on `body`, and passing it on is what stops a Latte
-    /// user from getting a white flash before the stylesheet is parsed.
+    /// Whether the palette is one of the three dark flavors. The page sets
+    /// `color-scheme` from this, which is what stops a Latte user from getting
+    /// a white flash before the stylesheet is parsed.
     pub dark: bool,
-    /// `--font-family-base`, the stack `main.css` sets on `body`.
+    /// `--font-family`: the stack the page sets on `body`.
     pub font_family: String,
 }
 
@@ -145,7 +145,7 @@ impl Screen {
 /// Renders one of the three pages.
 ///
 /// Filled in on the spot rather than at bind time: a request can be minutes
-/// after the listener was bound, and this is one pass over a 4 KB template.
+/// after the listener was bound, and this is one pass over a 6 KB template.
 pub fn render(screen: Screen, palette: &Palette, messages: &Messages) -> String {
     let (title, body) = match screen {
         Screen::Waiting => (&messages.waiting_title, &messages.waiting_body),
@@ -169,7 +169,6 @@ fn fields(
     messages: &Messages,
 ) -> Vec<(String, String)> {
     vec![
-        // ----- the theme -----
         ("window".to_string(), palette.window.opaque_css()),
         ("card".to_string(), palette.card.opaque_css()),
         ("card-border".to_string(), palette.card_border.css()),
@@ -182,7 +181,6 @@ fn fields(
             if palette.dark { "dark" } else { "light" }.to_string(),
         ),
         ("font-family".to_string(), palette.font_family.clone()),
-        // ----- the two sentences, and which of the three screens they are -----
         ("screen".to_string(), screen.name().to_string()),
         ("lang".to_string(), messages.language_tag.clone()),
         ("title".to_string(), escape(title)),

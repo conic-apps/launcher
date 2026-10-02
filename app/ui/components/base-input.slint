@@ -6,22 +6,20 @@ import { Theme } from "../theme.slint";
 import { AppIcon } from "app-icon.slint";
 import { FocusManager } from "../globals/focus.slint";
 
-// Text / number input (src/components/BaseInput.vue).
+// Text / number input.
 //
-// 30px tall, 6px radius, surface-1 background; focus turns the outline
-// lavender and the background surface-2. The Vue original only commits the
-// model on blur (lazy-update-model); this version commits on `edited` and lets
-// the Rust side debounce disk writes, which behaves the same for the user.
+// 30px tall, with the controller radius (6px on the dark flavors, 4px on
+// Latte) and the controller background. Focus turns the outline lavender and the
+// background to the controller's focus token (surface-2 on the dark flavors,
+// surface-0 on Latte). The field commits on `edited` and lets
+// the Rust side debounce disk writes, which behaves the same to the user as
+// committing on blur.
 //
-// `number-only` fields draw the two step buttons (up/down chevrons stacked in
-// one column) that the native `<input type="number">` spinner provides in the
-// Vue original.
+// `number-only` fields draw up/down step buttons stacked in one column.
 //
-// `error` is the Vue's invalid state: it drops the field's own border for a red
-// one. The Vue spells that `border: none; outline: 1px solid var(--ctp-red)` as
-// an inline style, which outranks the stylesheet's `:focus-within` outline, so a
-// focused invalid field stays red there too — hence the check ahead of the focus
-// test below rather than after it.
+// `error` is the invalid state: it drops the field's own border for a red one.
+// The error border outranks the focus outline, so a focused invalid field stays
+// red — hence the check ahead of the focus test below rather than after it.
 export component BaseInput inherits Rectangle {
     in property <string> placeholder: "";
     in property <length> input-width: 400px;
@@ -34,8 +32,8 @@ export component BaseInput inherits Rectangle {
     // A `min-width`/`preferred-width` pair rather than a `width`: an element with
     // an explicit `width` gets `min == max == width` as its size constraints, so
     // a layout can neither grow nor shrink it — which is what the multiplayer
-    // dialog's "invite code" row needs (`flex: 1` next to a fit-content button).
-    // Without an explicit `width` the default is `max(preferred-width,
+    // dialog's "invite code" row needs (a stretching field next to a fit-content
+    // button). Without an explicit `width` the default is `max(preferred-width,
     // min-width)`, which still sizes an unsized field exactly as before.
     min-width: root.input-width;
     preferred-width: self.min-width;
@@ -104,8 +102,8 @@ export component BaseInput inherits Rectangle {
         x: 8px;
     }
 
-    // Native spinner replacement: two stacked buttons in a single column at the
-    // right edge. Reuses the `chevron-down` glyph, flipped for the up step.
+    // Two stacked step buttons at the right edge, reusing the `chevron-down`
+    // glyph flipped for the up step.
     if root.number-only : Rectangle {
         x: parent.width - root.spinner-width;
         y: 1px;

@@ -4,8 +4,8 @@
 
 //! Single-instance guard for a platform that has none.
 //!
-//! `slint-platform` refuses to report a platform outside Windows, Linux and
-//! macOS, so this backend is never reached. It keeps the app startable anyway:
+//! `platform` refuses to report a platform outside Windows, Linux and macOS,
+//! so this backend is never reached. It keeps the app startable anyway:
 //! there is no lock to take, so every launch claims the role and none of them
 //! is reported to another.
 

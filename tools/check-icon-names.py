@@ -12,12 +12,14 @@ returns `""` for one, `AppIcon` draws an empty `Path`, and the icon is simply
 missing with nothing logged. This is the one failure mode left, so it is worth
 a check.
 
-The names come from three places, all of them string literals in the tree:
+The names come from two places, both of them string literals in the tree:
 
-  * `AppIcon { name: "..." }`      -- the 58 call sites
+  * `AppIcon { name: "..." }`      -- the call sites
   * `icon: "..."`                  -- a `SettingItem` / `ContentCard` / model row
                                        property, bound to an `AppIcon` further down
-  * `marker-icon: { ... }`         -- `markdown-body.slint`, handed to the markdown crate
+
+Direct `Icons.*("...")` lookups (e.g. the `chevron-forward` in
+`markdown-body.slint`) are not scanned.
 
 Run:  python3 tools/check-icon-names.py
 

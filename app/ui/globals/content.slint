@@ -2,30 +2,24 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Content overlay state, mirroring the Vue's `useContent.ts`, `store/content.ts`
-// and the composables under `src/overlays/content/`.
+// Content overlay state.
 //
-// The Vue keeps eleven independent flags in two reactive objects — five panels
-// (`showContent.*`, src/overlays/content/Content*.vue) and six detail ids
-// (`showContentDetails.*`, the *Details.vue panels). Nothing ever opens two
-// panels at once, and the six detail ids are one family of one panel, so the
-// same thing is an enumerable "which overlay is open" plus the id it shows —
-// which a view can switch on directly where the Vue needs eleven `v-if`s.
+// Nothing ever opens two panels at once, and the six kinds of detail panel are
+// one family, so what the UI needs is an enumerable "which overlay is open"
+// plus the id it shows, which a view can switch on directly.
 //
-// As everywhere else in this port the domain state lives in Rust and is pushed
-// in here; the view writes back only what is pure UI (the search box, the
-// selected save).
+// The domain state lives in Rust and is pushed in here; the view writes back
+// only what is pure UI (the search box, the selected save).
 
 // The types a laid-out body is made of. They belong to the Markdown renderer
-// (`slint/crates/markdown`), which ships its `.slint` files as data for the app
-// to compile — a Slint struct's Rust type belongs to the compilation that
-// produced it, so the crate cannot compile them itself and hand them over. See
-// `build.rs` for the include path and
-// `ui/overlays/content/markdown-body.slint` for the component that draws them.
+// (`crates/markdown`), which ships its `.slint` files as data for the app to
+// compile — a Slint struct's Rust type belongs to the compilation that produced
+// it, so the crate cannot compile them itself and hand them over. See `build.rs`
+// for the include path and `ui/overlays/content/markdown-body.slint` for the
+// component that draws them.
 import { MdItem, MarkdownImage, MdChunk } from "../../../crates/markdown/ui/markdown-view.slint";
 
-/// One tag on a card — the Vue's `<span class="loader-type">` family
-/// (`styles/content-card.less`). Its `kind` picks the surface colour.
+/// One tag on a card. Its `kind` picks the surface colour.
 export struct CardTag {
     text: string,
     /// A dimmed label drawn before the text, with no gap between them. Only the
@@ -48,7 +42,7 @@ export struct CardTag {
     time-year: int,
 }
 
-/// One card of a content grid (`styles/content-card.less` `.content`).
+/// One card of a content grid.
 ///
 /// Its geometry is part of the row rather than derived in the view: the grid's
 /// column count comes from the panel's width, so Rust lays the cards out and
@@ -61,9 +55,8 @@ export struct ContentCard {
     y: length,
     width: length,
     height: length,
-    /// False for a card scrolled out of the viewport. The renderer struggles
-    /// past roughly 150 painted elements in a frame and a mods folder easily
-    /// has more, so Rust keeps a window of rows visible.
+    /// Whether the card is drawn. Rust sets it true for every card it lays
+    /// out, so no card is culled.
     in-view: bool,
     /// What `select` reports back: a Modrinth/CurseForge project id, a local
     /// file path, or a save folder name.
@@ -72,13 +65,13 @@ export struct ContentCard {
     link: string,
     title: string,
     subtitle: string,
-    /// Whether the "by …" line is drawn at all; a card without authors keeps
-    /// the row out of the layout rather than drawing an empty line.
+    /// Whether the subtitle line is drawn (a project's "by …", a save's folder
+    /// name); a card without one keeps the row out of the layout rather than
+    /// drawing an empty line.
     has-subtitle: bool,
     description: string,
     tags: [CardTag],
-    /// The decoded icon. Rust falls back to the bundled unknown-world texture,
-    /// which is what the Vue's `v-else` branch shows.
+    /// The decoded icon. Rust falls back to the bundled unknown-server texture.
     icon: image,
     /// Which trailing action column the card draws: "" | "favorite" (heart +
     /// link) | "file" (folder + trash). The two buttons fade and scale in on
@@ -92,15 +85,14 @@ export struct ContentCard {
     /// `[disabled] ` prefix, and the whole card dimmed.
     mod-disabled: bool,
     /// The saves' expanded state: the card lifts above its neighbours and its
-    /// `.extra` panel slides out.
+    /// extra panel slides out.
     selected: bool,
-    /// Whether a selected save expands upwards (the Vue flips it when the card
-    /// sits within 160px of the bottom of the window, `ContentSaves.vue`).
+    /// Whether a selected save expands upwards — set when the card sits within
+    /// 160px of the bottom of the window.
     expand-up: bool,
     /// A save's spawn point, which its world map opens centred on
-    /// (`level.dat`'s `Data.spawn.pos`, via `ContentSaves.vue`'s `saveSpawnX` /
-    /// `saveSpawnZ`). `0, 0` when the tag is absent, which asks the world for
-    /// its own spawn. Zero on every other kind of card.
+    /// (`level.dat`'s `Data.spawn.pos`). `0, 0` when the tag is absent, which
+    /// asks the world for its own spawn. Zero on every other kind of card.
     spawn-x: int,
     spawn-z: int,
 }
@@ -127,9 +119,8 @@ export struct FilterChip {
     accent: string,
 }
 
-/// One filter row (`ContentSearchPanel.vue`'s `.filter-row`). The version row
-/// is the paginated one, and is the only one that draws its chips in a carousel
-/// rather than wrapping.
+/// One filter row. The version row is the paginated one, and is the only one
+/// that draws its chips in a carousel rather than wrapping.
 export struct FilterRow {
     /// The row's key — "loader" | "version" | "category" — which
     /// `ContentText.row-label` turns into the label the row draws. A key rather
@@ -158,11 +149,10 @@ export struct PageButton {
 }
 
 /// One image of a strip whose items are a fixed height and whose width follows
-/// the image's own aspect ratio — a detail panel's gallery
-/// (`.gallery-item { height: calc(100% - 16px) }` + `img { height: 100%;
-/// width: auto }`) and the screenshots viewer's thumbnail row. The ratio comes
-/// from Rust, which has just decoded the bitmap: Slint cannot read an image's
-/// natural size, and the two strips scale it to different heights.
+/// the image's own aspect ratio — a detail panel's gallery and the screenshots
+/// viewer's thumbnail row. The ratio comes from Rust, which has just decoded the
+/// bitmap: Slint cannot read an image's natural size, and the two strips scale
+/// it to different heights.
 export struct GalleryShot {
     image: image,
     /// width / height of the decoded bitmap.
@@ -174,11 +164,11 @@ export struct GalleryShot {
 export global ContentState {
     /// "" | "saves" | "mods" | "resourcepacks" | "screenshots" | "packs"
     in-out property <string> open-panel: "";
-    /// "" | "modrinth-mod" | "modrinth-resourcepack" | "modrinth-pack"
-    /// | "curseforge-mod" | "curseforge-resourcepack" | "curseforge-pack"
+    /// "" | "modrinth" | "curseforge" — the site the open detail panel belongs
+    /// to; the view only reads whether it is empty.
     in-out property <string> open-detail: "";
-    /// The id the open detail panel is showing (a project id either way — the
-    /// CurseForge numeric id as a string, which is how the Vue passes it).
+    /// The id the open detail panel is showing — a project id either way, the
+    /// CurseForge numeric id as a string.
     in-out property <string> detail-id: "";
     /// The height Rust gave the visible grid. `ContentCardGrid` takes this as
     /// its own height: the cards are positioned absolutely and an absolutely
@@ -193,7 +183,7 @@ export global ContentState {
     /// folder's 3 081px for its 906px of cards, which is the blank that sat
     /// between the last row and the page bar.
     ///
-    /// The four names are the four models (`Grid` in `app/src/content.rs`).
+    /// The four names are the four models (`Grid` in `app/src/content/`).
     in-out property <length> saves-grid-height: 0px;
     in-out property <length> local-mods-grid-height: 0px;
     in-out property <length> local-resourcepacks-grid-height: 0px;
@@ -210,7 +200,6 @@ export global ContentState {
     /// for the placeholder.
     callback grid-resized(length, length);
 
-    // ----- local grids -----
     in-out property <[ContentCard]> saves: [];
     in-out property <bool> saves-loading: false;
     in-out property <[ContentCard]> local-mods: [];
@@ -218,33 +207,28 @@ export global ContentState {
     in-out property <[ContentCard]> local-resourcepacks: [];
     in-out property <bool> local-resourcepacks-loading: false;
 
-    // ----- the active remote list -----
-    // Only one sub-view is on screen at a time (`v-if` in the Vue), and the Vue
-    // re-mounts the sub-view — resetting its query, page and selections — every
-    // time it is switched to. Rust clears these on the same switch.
+    // Only one sub-view is on screen at a time; switching to another resets its
+    // query, page and selections, which Rust clears.
     /// Which of the open panel's sub-views is showing: "local" | "modrinth"
-    /// | "curseforge". The Vue keeps one `ref` per panel for this; it is one
-    /// value here because only one panel is ever open.
+    /// | "curseforge". One value covers every panel because only one panel is
+    /// ever open.
     in-out property <string> source: "local";
     /// "mods" | "resourcepacks" | "packs" — which panel the remote list belongs
     /// to. It decides the card's tag set and where a download lands.
     in-out property <string> remote-kind: "mods";
     in-out property <[ContentCard]> remote-cards: [];
-    /// The Vue shows the spinner while the result is null *or* a request is in
-    /// flight (`modrinthSearchResult === null || modrinthLoading`), so this
-    /// covers both.
+    /// The spinner shows while there is no result yet *or* a request is in
+    /// flight, so this covers both.
     in-out property <bool> remote-loading: true;
 
-    // ----- the open detail panel -----
     in-out property <bool> detail-loading: false;
     in-out property <string> detail-title: "";
     in-out property <image> detail-icon;
-    /// The repository link, already reduced to "owner/repo" when it is a GitHub
-    /// URL (`ContentModrinth*Details.vue`'s `formatGithubRepo`). `detail-source`
-    /// is the URL the link opens.
+    /// The repository URL the link opens. `detail-source-label` is its display
+    /// form.
     in-out property <string> detail-source: "";
-    /// "owner/repo" when the source is a GitHub URL, which is what the Vue's
-    /// `formatGithubRepo` reduces it to, and the URL itself otherwise.
+    /// "owner/repo" when the source is a GitHub URL, and the URL itself
+    /// otherwise.
     in-out property <string> detail-source-label: "";
     /// Whether the source is GitHub, which decides the entry's glyph.
     in-out property <bool> detail-source-is-github: false;
@@ -256,9 +240,6 @@ export global ContentState {
     /// HTML a CurseForge project ships. Rust parses and lays it out for the
     /// width the panel gives it and fills the three properties below; the panel
     /// draws only those, and this string is never drawn.
-    ///
-    /// It used to be flattened to text by `markdown_to_text` in `content.rs`
-    /// before it got here, which is what `markdown-plain.slint` drew.
     in-out property <string> detail-body: "";
     /// The laid-out body, as the runs a view stacks. Empty until Rust has laid it
     /// out. Each run carries its own items and bitmaps, because a run is what
@@ -285,11 +266,10 @@ export global ContentState {
     /// a hover can outlive the item it was on.
     in-out property <string> detail-body-hovered: "";
     /// The monospace family code is drawn in, which the panel's font style does
-    /// not know: `markdown-body.less` asks CSS for `monospace` and lets the
-    /// browser resolve it, and Slint's `font-family` takes a name rather than a
-    /// generic, so "monospace" there means "no such family" and the view would
-    /// fall back to the body face. Rust resolves it — see `monospace_family` in
-    /// `content.rs` — and puts the answer here.
+    /// not know: Slint's `font-family` takes a name rather than a generic, so
+    /// "monospace" would mean "no such family" and the view would fall back to
+    /// the body face. Rust resolves it (see `monospace_family` in
+    /// `content/body.rs`) and puts the answer here.
     in-out property <string> detail-body-mono-family: "";
     /// The body needs laying out for this width, in logical pixels. The view
     /// reports it because a document is a function of its width, and a width
@@ -301,8 +281,8 @@ export global ContentState {
     callback body-resized(length);
     /// Whether the body's box is drawn even when the body is empty. The three
     /// Modrinth panels render it unconditionally — an empty one still takes a
-    /// 32px box plus its 16px margin — while the CurseForge ones put it behind
-    /// `v-if="modDescription"`. Rust sets this from the platform it loaded.
+    /// 32px box plus its 16px margin — while the CurseForge ones draw it only
+    /// when there is a description. Rust sets this from the platform it loaded.
     in-out property <bool> detail-body-always: false;
     in-out property <[GalleryShot]> detail-gallery: [];
     in-out property <bool> detail-favorited: false;
@@ -313,12 +293,11 @@ export global ContentState {
     in-out property <string> detail-installed-version: "";
     in-out property <bool> detail-checking-installed: false;
     in-out property <bool> detail-operating: false;
-    /// Whether this detail panel has an installed state at all. The Vue's mod
-    /// panels check it and offer a remove button; the pack and resource-pack
-    /// ones only ever draw a download button.
+    /// Whether this detail panel has an installed state at all. The mod panels
+    /// offer a remove button; the pack and resource-pack ones only ever draw a
+    /// download button.
     in-out property <bool> detail-can-remove: true;
 
-    // ----- screenshots -----
     in-out property <[GalleryShot]> screenshots: [];
     in-out property <bool> screenshots-loading: false;
     in-out property <int> screenshot-index: 0;
@@ -342,8 +321,8 @@ export global ContentState {
     /// The saves grid does not come through here: it goes to
     /// `request-delete-save` first, because its button is the only destructive
     /// one in the content layer and it asks before it acts. This one is wired to
-    /// the local mods' and resource packs' buttons, which the Vue leaves inert
-    /// (no `@click` at all) and which are left as they are.
+    /// the local mods' and resource packs' buttons, which are inert: they have
+    /// no click handler.
     callback delete-save(string);
     /// The saves' delete button: opens `ConfirmDeleteSave` rather than deleting.
     /// `folder` is the card's id, `level-name` what the dialog names it by.
@@ -374,14 +353,12 @@ export global ContentSearch {
     in-out property <int> version-page: 0;
     in-out property <int> version-page-count: 0;
     /// Every version the filter offers. The carousel draws the whole track and
-    /// clips it, the way the Vue's `.filter-chips-track-inner` does: a page is
-    /// what the track is *translated* by (`chips[page * 6].offsetLeft`), not how
-    /// many chips are drawn, so more than a page's worth shows at once.
+    /// clips it: a page is what the track is *translated* by, not how many chips
+    /// are drawn, so more than a page's worth can show at once.
     in-out property <[FilterChip]> version-chips: [];
     /// How far the track is scrolled left, in pixels. Rust sums the chips'
-    /// measured widths up to the page's first one — the Vue reads their
-    /// `offsetLeft`, which Slint cannot (`A repeated element's geometry is
-    /// unreachable from outside`).
+    /// measured widths up to the page's first one — Slint cannot read a repeated
+    /// element's geometry from outside.
     in-out property <length> version-offset: 0px;
     in-out property <[PageButton]> pages: [];
     in-out property <int> current-page: 1;
@@ -412,14 +389,11 @@ export global ContentSearch {
 /// not a component's own strings: Slint's default context is the component name,
 /// and the callers are the chips and cards rather than one component.
 export global ContentText {
-    /// The local mods' disabled marker. The Vue resolves it in the template
-    /// (`{{ t("overlays.content.mods.disabledPrefix") }}`) rather than in Rust,
-    /// so it follows a language change; the prefix carries its own trailing
-    /// space.
+    /// The local mods' disabled marker. It resolves through a `@tr` so it
+    /// follows a language change; the prefix carries its own trailing space.
     out property <string> disabled-prefix: @tr("ContentText" => "[Disabled] ");
 
-    /// The loader names. The Vue keeps these in a plain `LOADER_NAMES` map and
-    /// never translates them.
+    /// The loader names, never translated.
     public pure function loader(key: string) -> string {
         if key == "fabric" { return "Fabric"; }
         if key == "forge" { return "Forge"; }
@@ -762,8 +736,7 @@ export global ContentText {
     }
 
     /// A save card's game-mode and cheats tags. `kind` is the tag's own `kind`,
-    /// so the one table covers both families the Vue's `span.game-mode.*` and
-    /// `span.command-enabled` rules name.
+    /// so the one table covers both the game-mode and command-enabled families.
     ///
     /// These are resolved here rather than composed in Rust for the reason the
     /// chip labels are: a string Rust pushed is fixed at that moment and would

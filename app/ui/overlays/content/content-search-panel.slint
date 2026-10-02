@@ -33,8 +33,7 @@ component ChipPager inherits Rectangle {
 }
 component FilterChipView inherits Rectangle {
     in property <FilterChip> chip;
-    /// The chip's own width, which the version carousel needs: the Vue places
-    /// its track by reading `chips[page * 6].offsetLeft`, and a repeated
+    /// The chip's own width, which the version carousel needs: a repeated
     /// element's geometry cannot be read from outside in Slint, so each chip
     /// reports what it measured. Unhandled by the wrapping rows.
     callback measured(length);
@@ -54,11 +53,8 @@ component FilterChipView inherits Rectangle {
         : root.chip.accent == "favorites" ? Theme.yellow
         : Theme.lavender;
 
-    // `.filter-chip { transition: background 120ms ease, border-color 120ms ease,
-    // color 120ms ease; &:hover { transition: none } }` — the *leave* eases and
-    // the enter does not, which is what `duration` bound to the hover state
-    // says. A pressed or selected chip eases either way: those rules come after
-    // `:hover` in the stylesheet, so they win while both apply.
+    // The *leave* eases and the enter does not, which is what `duration` bound
+    // to the hover state says. A pressed or selected chip eases either way.
     animate background {
         duration: touch.has-hover && !touch.pressed && !root.chip.selected ? 0ms : 120ms;
         easing: ease-out;
@@ -95,12 +91,10 @@ component VersionCarousel inherits Rectangle {
 
     HorizontalLayout {
         spacing: 6px;
-        // The Vue's `.filter-chips.paged { align-items: center }` — the *cross*
-        // axis. It must not be `alignment`, which is the main axis: a main-axis
+        // Centring is on the *cross* axis, not the main axis: a main-axis
         // alignment other than the default `stretch` makes the layout hand every
         // child its preferred width and drop its `horizontal-stretch`, which
-        // collapses the viewport below to zero (see the Slint notes in
-        // `slint/README.md`).
+        // collapses the viewport below to zero.
         cross-axis-alignment: center;
 
         ChipPager {
@@ -109,20 +103,18 @@ component VersionCarousel inherits Rectangle {
             clicked => { ContentSearch.version-page-prev(); }
         }
 
-        // `.filter-chips-track { flex: 1; min-width: 0; overflow: hidden }`
+        // The viewport that clips the track.
         viewport := Rectangle {
             horizontal-stretch: 1;
             height: parent.height;
             clip: true;
             background: transparent;
 
-            // `.filter-chips-track-inner { width: max-content; transform:
-            // translateX(offset) }`, with `transition: transform 240ms ease`.
-            // The whole track is drawn and the viewport clips it, exactly as the
-            // Vue does — which is why more than one page's worth of chips shows
-            // at once. Rust computes the offset from the widths the chips report
-            // (`ContentSearch.chip-measured`), because `chips[page * 6]
-            // .offsetLeft` is not readable here.
+            // The whole track is drawn and the viewport clips it, which is why
+            // more than one page's worth of chips shows at once. Rust computes
+            // the offset from the widths the chips report
+            // (`ContentSearch.chip-measured`), because a repeated element's
+            // geometry is not readable here.
             //
             // A layout child's own `x` belongs to its layout, so this is a plain
             // `Rectangle` holding the track: it is the thing that moves.
@@ -139,9 +131,8 @@ component VersionCarousel inherits Rectangle {
                     measured(width) => { ContentSearch.chip-measured(chip.value, width); }
                 }
 
-                // `.filter-chips-track-inner { transition: transform 240ms ease }`
-                // — declared in the element that owns the property; an `animate`
-                // cannot reach into a sibling.
+                // The animate is declared on the element that owns the property;
+                // it cannot reach into a sibling.
                 animate x {
                     duration: 240ms;
                     easing: ease-out-quad;
@@ -157,28 +148,26 @@ component VersionCarousel inherits Rectangle {
     }
 }
 
-// The remote lists' search + filter header (`ContentSearchPanel.vue`).
+// The remote lists' search + filter header.
 //
 // A translucent crust panel with a 36px search field and a button beside it,
 // then one row per filter: a 52px label and a run of pill chips. The loader and
 // category rows wrap; the version row is the paginated one and does not.
 //
-// The wrapping rows are a `FlexboxLayout` with `flex-wrap: wrap` — Slint's
-// equivalent of the Vue's `flex-wrap: wrap`. (The plain `HorizontalLayout` used
-// everywhere else in this app never wraps.)
+// The wrapping rows are a `FlexboxLayout` with `flex-wrap: wrap`. (The plain
+// `HorizontalLayout` used everywhere else in this app never wraps.)
 //
-// The version row is where the Vue measures the DOM: it reads
-// `chips[page * 6].offsetLeft` and translates the track by its negative, with a
-// 240ms ease. Slint cannot read a repeated element's geometry from outside, and
-// an id inside a `for` is deliberately unreachable — but each chip can *report*
-// the width it measured, and the offset is the sum of the ones before the page.
-// That is what makes the same track-and-clip arrangement possible here.
-// `.filter-chip` — a 20px pill. Its `accent` picks the selected fill.
-// `.chip-pager` — a 26px round arrow button.
-// The version row's carousel: a pager, the whole track in a clipped viewport,
-// and a pager.
-// One `.filter-row`: the label, then either the chip carousel or a wrapping
-// run of chips.
+// The version row is paginated by translating the whole track by its negative
+// offset with a 240ms ease. Slint cannot read a repeated element's geometry from
+// outside, and an id inside a `for` is deliberately unreachable — but each chip
+// can *report* the width it measured, and the offset is the sum of the ones
+// before the page. That is what makes the same track-and-clip arrangement
+// possible here.
+//
+// A filter chip is a 20px pill whose `accent` picks the selected fill. A pager
+// is a 26px round arrow button. The version row's carousel is a pager, the whole
+// track in a clipped viewport, and a pager. One filter row is the label, then
+// either the chip carousel or a wrapping run of chips.
 component FilterRowView inherits Rectangle {
     in property <FilterRow> row-data;
     in property <bool> is-version-row: false;
@@ -189,24 +178,23 @@ component FilterRowView inherits Rectangle {
 
     HorizontalLayout {
         spacing: 10px;
-        // The cross axis is left at its default (`stretch`) even though the Vue
-        // says `align-items: start`, and that is deliberate: a non-stretch
-        // alignment hands each child its **preferred** size, and a wrapping
-        // `FlexboxLayout`'s preferred height is measured at its own "roughly
-        // square" width — about twice the lines it actually draws — so the chip
-        // run would be given a box twice as tall as its content and would spread
-        // its lines across it. Stretched, it takes the row's own height, which
-        // Rust computed from the chips' measured widths. The label and the
-        // carousel are unaffected: both set an explicit height.
+        // The cross axis is left at its default (`stretch`) deliberately: a
+        // non-stretch alignment hands each child its **preferred** size, and a
+        // wrapping `FlexboxLayout`'s preferred height is measured at its own
+        // "roughly square" width — about twice the lines it actually draws — so
+        // the chip run would be given a box twice as tall as its content and
+        // would spread its lines across it. Stretched, it takes the row's own
+        // height, which Rust computed from the chips' measured widths. The label
+        // and the carousel are unaffected: both set an explicit height.
 
         Text {
-            // `.filter-label { min-width: 52px; line-height: 20px; font-size: 12px }`
+            // A 52px label column.
             text: ContentText.row-label(root.row-data.label);
             font-size: 12px;
             color: Theme.subtext-0;
             min-width: 52px;
             horizontal-alignment: left;
-            // `line-height: 20px` centres the 12px text in the 20px line box.
+            // The 20px line box centres the 12px text.
             vertical-alignment: center;
             height: 20px;
         }
@@ -236,27 +224,24 @@ component FilterRowView inherits Rectangle {
 }
 export component ContentSearchPanel inherits Rectangle {
     width: 100%;
-    // `.search-panel { display: flex; flex-direction: column; gap: 16px;
-    // margin-bottom: 16px; padding: 24px }` — a Slint layout has no margin, so
-    // the box is the content plus that bottom 16px, and the background stops
-    // where the panel does instead of running behind the gap.
+    // A Slint layout has no margin, so the box is the content plus the bottom
+    // 16px, and the background stops where the panel does instead of running
+    // behind the gap.
     height: panel-content.preferred-height + 16px;
     background: Colors.transparent;
 
     panel := Rectangle {
         width: 100%;
         height: panel-content.preferred-height;
-        // `.search-panel { background: rgba(var(--ctp-crust-rgb), .92) }` — the
-        // Vue also asks for `backdrop-filter: blur(4px)`, which Slint has no
-        // equivalent for, so the panel stays translucent without the blur (the
-        // same trade the game view's toolbar and footer make).
+        // `backdrop-filter: blur(4px)` has no Slint equivalent, so the panel
+        // stays translucent without the blur (the same trade the game view's
+        // toolbar and footer make).
         background: Theme.crust.with-alpha(0.92);
 
         panel-content := VerticalLayout {
             padding: 24px;
             spacing: 16px;
 
-            // ----- the search bar -----
             HorizontalLayout {
                 height: 36px;
                 spacing: 8px;
@@ -265,7 +250,7 @@ export component ContentSearchPanel inherits Rectangle {
                     horizontal-stretch: 1;
                     height: 36px;
                     border-radius: 8px;
-                    // `&:hover { background: var(--ctp-surface1) }`
+                    // A lighter fill on hover.
                     background: field-touch.has-hover ? Theme.surface-1 : Theme.surface-0;
 
                     input := TextInput {
@@ -280,22 +265,20 @@ export component ContentSearchPanel inherits Rectangle {
                         selection-foreground-color: Theme.default-text-color;
                         single-line: true;
                         vertical-alignment: center;
-                        // The Vue commits on Enter (`@keyup.enter`); the input
-                        // itself is bound to the model as it is typed.
+                        // The query is committed on Enter; the input is bound to
+                        // the model as it is typed.
                         accepted => { ContentSearch.search(); }
                     }
 
                     if ContentSearch.query == "" : Text {
                         text: ContentText.search-placeholder(ContentState.remote-kind);
                         font-size: 13px;
-                        // `&::placeholder { color: var(--ctp-subtext0) }`
                         color: Theme.subtext-0;
                         x: 12px;
                     }
 
                     field-touch := TouchArea {
-                        // The field has no border in the Vue (`border: none` wins
-                        // over the 1px surface1 above it), only the hover fill.
+                        // The field carries only the hover fill, no border.
                         //
                         // The area sits *over* the input (it is declared after it, so
                         // it takes the press), which is what gives the field its
@@ -316,7 +299,7 @@ export component ContentSearchPanel inherits Rectangle {
                     AppIcon {
                         name: "search";
                         size: 16px;
-                        // `&:active { color: var(--ctp-text-inverse) }`
+                        // Inverse text while pressed.
                         icon-color: button-touch.pressed
                             ? Theme.text-inverse
                             : Theme.default-text-color.transparentize(0.1);
@@ -328,7 +311,6 @@ export component ContentSearchPanel inherits Rectangle {
                 }
             }
 
-        // ----- the filter rows -----
         VerticalLayout {
             spacing: 8px;
 

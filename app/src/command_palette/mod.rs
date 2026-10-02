@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The command palette (`src/overlays/CommandPalette.vue`).
+//! The command palette.
 //!
 //! Three modes, one list. The root mode offers the five fixed commands and —
 //! when the query matches none of them — the instance list; "launch-instance"
@@ -11,13 +11,13 @@
 //! footer, and the mode picks the placeholder, the breadcrumb and which of the
 //! two footer hints is shown.
 //!
-//! Two conventions it follows from the rest of the port:
+//! Two conventions it follows:
 //!
 //!   * The rendered list is built here rather than in an expression. Slint can
 //!     neither build a model nor index one, and the list's order, its filtering,
 //!     its section headings and every row's height have to agree — which is the
-//!     same reason `game.rs` builds `GameRow`s and `content.rs` lays the card
-//!     grid out.
+//!     same reason `game/controller.rs` builds `GameRow`s and `content/grid.rs`
+//!     lays the card grid out.
 //!   * Nothing here composes a *translatable* string. A string pushed into a
 //!     model is fixed at the moment it is pushed and would not follow a language
 //!     change, where an `@tr` binding re-evaluates, so a row carries the *key* of
@@ -60,14 +60,10 @@ pub(crate) fn controller() -> Rc<RefCell<PaletteController>> {
     CONTROLLER.with(Rc::clone)
 }
 
-// ---------------------------------------------------------------------------
-// geometry, from the stylesheet
-// ---------------------------------------------------------------------------
-
 /// `.section-label`'s own box — `padding: 6px 10px 2px` around a `line-height: 1`
 /// 11px line — plus 4px more, so the heading does not sit flush on the row under
-/// it. The Vue puts no gap here; this one is a deliberate change, and it is why
-/// the constant is not just the sum of that padding and that line.
+/// it. The extra 4px is deliberate, and it is why the constant is not just the
+/// sum of that padding and that line.
 pub(crate) const LABEL_HEIGHT: f32 = 23.0;
 /// `.palette-item` with no loader tags: `padding: 8px 10px` around the 24px
 /// icon box, which is taller than the 13px title line on its own.
@@ -77,7 +73,7 @@ pub(crate) const ROW_HEIGHT: f32 = 40.0;
 /// is what decides the row.
 pub(crate) const ROW_HEIGHT_TAGGED: f32 = 46.0;
 
-/// How many hits a search asks for: `limit: 20` / `pageSize: 20` in the Vue.
+/// How many hits a search asks for (`limit` / `pageSize` 20).
 pub(crate) const SEARCH_LIMIT: usize = 20;
 
 /// How long one project icon may take before the row keeps the site's mark.
@@ -87,14 +83,10 @@ pub(crate) const SEARCH_LIMIT: usize = 20;
 /// and with it the next search's.
 pub(crate) const ICON_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
 
-// ---------------------------------------------------------------------------
-// the five fixed commands
-// ---------------------------------------------------------------------------
-
 /// One of the root mode's five commands.
 ///
 /// `title` is the source string, which is what the *filter* matches against. The
-/// row shows `CommandText.title(title_kind)`, the translated form; see `build`
+/// row shows `CommandText.title(title_kind, title)`, the translated form; see `build`
 /// for why the two can differ.
 pub(crate) struct Command {
     key: &'static str,
@@ -157,13 +149,10 @@ pub(crate) const COMMANDS: [Command; 5] = [
     },
 ];
 
-// ---------------------------------------------------------------------------
-// state
-// ---------------------------------------------------------------------------
-
 /// What a row does when it is chosen. Resolved when the list is built rather
 /// than from the key on the way out, so a callback carrying only an index can
-/// find the thing behind it — the arrangement `content.rs`'s `CardTarget` uses.
+/// find the thing behind it — the arrangement `content/mod.rs`'s `CardTarget`
+/// uses.
 #[derive(Clone, Default)]
 pub(crate) enum Action {
     /// A row with no action: only ever a blank `PendingItem` mid-build.
@@ -175,12 +164,12 @@ pub(crate) enum Action {
         kind: &'static str,
         source: &'static str,
     },
-    /// `dialogStore.createInstance.visible = true`.
+    /// Opens the create-instance dialog.
     CreateInstance,
-    /// `dialogStore.accountAdd.visible = true`.
+    /// Opens the add-account dialog.
     AddAccount,
-    /// `instanceStore.currentInstance = instance`, and the launch page when the
-    /// row came out of the "launch instance" mode.
+    /// Selects the instance, and opens the launch page when the row came out of
+    /// the "launch instance" mode.
     SelectInstance { id: String, launch: bool },
     /// The game page, then the project's detail panel.
     OpenProject { platform: &'static str, id: String },
@@ -252,9 +241,8 @@ impl PendingItem {
             subtitle_kind: SharedString::from(self.subtitle_kind.as_str()),
             icon: SharedString::from(self.icon.as_str()),
             icon_is_brand: self.icon_is_brand,
-            // The `<img>` is drawn whenever the search returned a URL, whether or
-            // not the bitmap arrived; the empty image is that `<img>`'s broken
-            // state.
+            // The image is drawn whenever the search returned a URL, whether or
+            // not the bitmap arrived; the empty image is its broken state.
             icon_image: self.icon(),
             has_icon_image: !self.icon_url.is_empty(),
             has_children: self.has_children,
@@ -303,9 +291,8 @@ impl RemoteResult {
             author: self.author.clone(),
             loaders: self.loaders.clone(),
             subtitle_kind: self.subtitle_kind.to_string(),
-            // The site's own mark stands in for the project icon when the search
-            // returned none, which is the Vue's `v-else-if` chain: an `<img>`,
-            // then an `AppIcon`, then the brand component.
+            // The site's own mark is used as the project icon when the search
+            // returned none.
             icon: self.platform.to_string(),
             icon_is_brand: true,
             icon_url: self.icon_url.clone(),
@@ -326,10 +313,10 @@ pub(crate) struct PaletteController {
     /// The rows on screen, and where the selection is in them.
     items: Vec<PendingItem>,
     selected: usize,
-    /// The key last published as the selection. The Vue's `watch(selectedIndex)`
-    /// does not fire when a `mousemove` reports the index the row already had,
-    /// and a reveal on every mouse move would drag the list along with the
-    /// pointer — so the sequence the view watches is bumped on a move only.
+    /// The key last published as the selection. A reveal on every pointer move
+    /// would drag the list along with the pointer, and a move that reports the
+    /// index the row already has must not, so the sequence the view watches is
+    /// bumped only when the selected key actually changes.
     selected_key: String,
     selected_seq: u64,
     items_seq: u64,
@@ -337,7 +324,7 @@ pub(crate) struct PaletteController {
     searching: bool,
     error: bool,
     /// Bumped on every search, so an answer for a request the user has typed past
-    /// is dropped — the Vue's `onlineSearchToken`.
+    /// is dropped.
     token: u64,
     mode: &'static str,
     source: &'static str,
@@ -361,23 +348,19 @@ impl PaletteController {
         }
     }
 
-    // ----- opening and closing -----
-
-    /// The Vue's `watch(() => props.visible)`: everything is reset on the way
-    /// in, never on the way out.
+    /// Everything is reset on the way in, never on the way out.
     ///
     /// The instance list is read on the runtime and the reset happens in the
     /// event loop behind it, so opening the palette does not wait on a read of
-    /// every `instance.toml` (the original read it in a Tauri command, off the
-    /// UI thread, for the same reason).
+    /// every `instance.toml`.
     fn open(ui: &App) {
         let weak = ui.as_weak();
         crate::runtime::spawn(async move {
             // The list is read from the crate rather than borrowed from
-            // `game.rs`'s rows, which are the *grouped, filtered* model the game
-            // view draws and not the instance list the palette filters. What it
-            // comes back sorted by does not matter: `filtered` sorts by last
-            // played itself.
+            // `game/controller.rs`'s rows, which are the *grouped, filtered*
+            // model the game view draws and not the instance list the palette
+            // filters. What it comes back sorted by does not matter: `filtered`
+            // sorts by last played itself.
             let instances = instance::list_instances(SortBy::Playtime)
                 .await
                 .unwrap_or_default();
@@ -411,8 +394,7 @@ impl PaletteController {
         ui.global::<CommandPaletteState>().set_visible(false);
     }
 
-    /// The `Ctrl`/`⌘` + `/` shortcut: `commandPaletteVisible.value =
-    /// !commandPaletteVisible.value`.
+    /// The `Ctrl`/`⌘` + `/` shortcut: toggles the palette's visibility.
     fn toggle(&mut self, ui: &App) {
         if ui.global::<CommandPaletteState>().get_visible() {
             self.close(ui);
@@ -421,8 +403,8 @@ impl PaletteController {
         }
     }
 
-    /// `enterMode`: the mode changes and the query is emptied, which puts the
-    /// search back to nothing as well.
+    /// Switches mode and empties the query, which puts the search back to nothing
+    /// as well.
     fn enter_mode(&mut self, ui: &App, kind: &str, source: &str) {
         self.mode = match kind {
             "launch-instance" => "launch-instance",
@@ -447,12 +429,10 @@ impl PaletteController {
         self.build(ui);
     }
 
-    /// `backToRoot`.
+    /// Returns to the root mode.
     fn back_to_root(&mut self, ui: &App) {
         self.enter_mode(ui, "root", self.source);
     }
-
-    // ----- the list -----
 
     /// Rebuilds the model from the mode, the query and the results.
     fn build(&mut self, ui: &App) {
@@ -461,13 +441,13 @@ impl PaletteController {
 
     /// Puts the rows on screen.
     ///
-    /// `reset_scroll` is the Vue's `scrollViewRef.scrollTo(0, false)`, which
-    /// every one of its `query` / `mode` / `onlineItems` watchers does — but not
-    /// what refilling the icons should do, since no row has moved. Re-running it
-    /// there would throw the reader back to the top every time an image landed.
+    /// `reset_scroll` scrolls back to the top whenever the query, mode or results
+    /// change — but not what refilling the icons should do, since no row has
+    /// moved. Re-running it there would throw the reader back to the top every
+    /// time an image landed.
     fn publish(&mut self, ui: &App, reset_scroll: bool) {
         let state = ui.global::<CommandPaletteState>();
-        // `normalizedQuery`: `query.value.trim().toLowerCase()`.
+        // The trimmed, lower-cased query.
         let query = state.get_query().trim().to_lowercase();
         state.set_query_empty(state.get_query().trim().is_empty());
 
@@ -483,8 +463,7 @@ impl PaletteController {
                 .cloned()
                 .enumerate()
                 .map(|(index, mut item)| {
-                    // `withSectionLabel(onlineItems, …)` gives the heading to the
-                    // first row alone.
+                    // The heading belongs to the first row alone.
                     item.section_kind = if index == 0 { "results" } else { "" };
                     item
                 })
@@ -494,12 +473,10 @@ impl PaletteController {
                 // the query, or — when none of them does — the instances.
                 //
                 // The title it matches is the *source* string rather than the
-                // translated one, and that is the one deviation from the Vue: it
-                // filters on `command.title`, and `title` is whatever `t()`
-                // returned. A model cannot be filtered in an expression (Slint can
-                // neither build a model nor index one), so the list has to be
-                // built here, and the translated titles do not exist here. The
-                // row still shows the translation, because that is resolved in
+                // translated one. A model cannot be filtered in an expression
+                // (Slint can neither build a model nor index one), so the list has
+                // to be built here, and the translated titles do not exist here.
+                // The row still shows the translation, because that is resolved in
                 // the view.
                 let matched: Vec<&Command> = COMMANDS
                     .iter()
@@ -564,15 +541,12 @@ impl PaletteController {
         self.publish(ui, false);
     }
 
-    /// `filteredInstances`: the instances whose name, Minecraft version or
-    /// loader contains the query, most recently played first.
+    /// The instances whose name, Minecraft version or loader contains the query,
+    /// most recently played first.
     ///
-    /// The Vue's comparator is `b.last_played - a.last_played`, and
-    /// `last_played` is null for an instance that has never been played — a
-    /// subtraction that is then `NaN`, which every engine reads as "keep the
-    /// order" and which leaves those instances wherever the store's own sort put
-    /// them. Comparing the `Option` puts them last instead, which is the order
-    /// the expression gives for every instance that *has* been played.
+    /// An instance that has never been played has no last-played time, so it
+    /// sorts last rather than first — the order the played instances already
+    /// have.
     fn filtered(&self, query: &str) -> Vec<&Instance> {
         let mut instances: Vec<&Instance> = self
             .instances
@@ -582,7 +556,7 @@ impl PaletteController {
                     || [
                         instance.config.name.as_str(),
                         instance.config.runtime.minecraft.as_str(),
-                        // `mod_loader_type ?? "vanilla"`.
+                        // The loader name, or "vanilla" when there is none.
                         loader_name(instance).as_str(),
                     ]
                     .iter()
@@ -593,24 +567,21 @@ impl PaletteController {
         instances
     }
 
-    // ----- the selection -----
-
     fn move_selection(&mut self, ui: &App, delta: i32) {
         let count = self.items.len();
         if count == 0 {
             return;
         }
-        // `(selected + 1) % count` and `(selected - 1 + count) % count`.
+        // Wrap around both ends of the list.
         let next = (self.selected as i32 + delta).rem_euclid(count as i32) as usize;
         self.select(ui, next);
     }
 
     /// The row the pointer is over, which is *not* the selection.
     ///
-    /// The Vue moved the selection with `@mousemove` and had no hover of its own;
-    /// this separates the two, so the keyboard's selection stays where it was put
-    /// and the pointer only says where it is. `None` is "no row" — the pointer is
-    /// over the panel rather than over one.
+    /// The keyboard's selection stays where it was put and the pointer only says
+    /// where it is. `None` is "no row" — the pointer is over the panel rather
+    /// than over one.
     fn hover(&mut self, ui: &App, index: Option<usize>) {
         let key = index
             .and_then(|index| self.items.get(index))
@@ -648,13 +619,10 @@ impl PaletteController {
         }
     }
 
-    // ----- performing a row -----
-
-    /// A click on a row. This is *not* `performItem` and it is a deliberate
-    /// departure from the Vue, which opened on the first click: a click on a row
-    /// that is not the selection moves the selection, and a click on the row that
-    /// already is the selection opens it. Enter opens the selection outright, so a
-    /// pointer and the keyboard reach the same row by the same two steps.
+    /// A click on a row. A click on a row that is not the selection moves the
+    /// selection, and a click on the selected row opens it. Enter opens the
+    /// selection outright, so a pointer and the keyboard reach the same row by the
+    /// same two steps.
     fn click(&mut self, ui: &App, index: usize) {
         if index >= self.items.len() {
             return;
@@ -667,7 +635,7 @@ impl PaletteController {
         self.perform(ui, index);
     }
 
-    /// `performItem(item)` for the row at `index`.
+    /// Performs the action of the row at `index`.
     fn perform(&mut self, ui: &App, index: usize) {
         if index < self.items.len() {
             self.select(ui, index);
@@ -687,9 +655,9 @@ impl PaletteController {
                 ui.global::<Dialogs>().set_account_add_visible(true);
             }
             Action::SelectInstance { id, launch } => {
-                // The Vue assigns `instanceStore.currentInstance` *before* it
-                // closes, so the background has already been told by the time the
-                // palette is gone.
+                // The instance is selected *before* the palette closes, so the
+                // background has already been told by the time the palette is
+                // gone.
                 ui.global::<GameState>().invoke_select_instance(id.into());
                 self.close(ui);
                 if launch {
@@ -699,8 +667,7 @@ impl PaletteController {
             Action::OpenProject { platform, id } => {
                 self.close(ui);
                 // The detail panels are mounted by the game view, so the page has
-                // to be there before the id is set — the Vue's
-                // `if (navigationStore.currentPage !== "game") navigate("game")`.
+                // to be there before the id is set.
                 if ui.global::<Navigation>().get_current_page() != "game" {
                     ui.global::<Navigation>().invoke_navigate("game".into());
                 }
@@ -709,23 +676,20 @@ impl PaletteController {
         }
     }
 
-    // ----- the online search -----
-
-    /// The Vue's `watch([query, mode])` half that is not the search itself: the
-    /// selection goes back to the first row.
+    /// A query or mode change that is not the search itself: the selection goes
+    /// back to the first row.
     fn query_changed(&mut self, ui: &App) {
         self.selected = 0;
-        // `scheduleOnlineSearch` runs *synchronously* for an emptied query, so
-        // the results go at once rather than 250ms later and a list is never
-        // left under a field that has no keyword in it.
+        // An emptied query resets the results at once rather than 250ms later,
+        // so a list is never left under a field that has no keyword in it.
         if self.mode == "search-online" && keyword_of(ui).is_empty() {
             self.reset_search(ui);
         }
         self.build(ui);
     }
 
-    /// `scheduleOnlineSearch`'s emptied branch: the results, the spinner and the
-    /// error all go, and every request in flight becomes stale.
+    /// The emptied-query reset: the results, the spinner and the error all go,
+    /// and every request in flight becomes stale.
     fn reset_search(&mut self, ui: &App) {
         self.token += 1;
         self.results.clear();
@@ -736,7 +700,7 @@ impl PaletteController {
         state.set_online_error(false);
     }
 
-    /// `runOnlineSearch(source, keyword)`, started by the view's 250ms debounce.
+    /// Runs the online search, started by the view's 250ms debounce.
     fn run_search(&mut self, ui: &App) {
         if self.mode != "search-online" {
             return;
@@ -786,9 +750,8 @@ impl PaletteController {
         });
     }
 
-    /// Shows a landed search, unless the user has typed past it — the Vue's
-    /// `if (token !== onlineSearchToken) return`, before the answer becomes the
-    /// list.
+    /// Shows a landed search, unless the user has typed past it, before the
+    /// answer becomes the list.
     fn apply_online_results(
         &mut self,
         ui: &App,
@@ -802,7 +765,7 @@ impl PaletteController {
         self.results = results.iter().map(|result| result.to_item(None)).collect();
         self.searching = false;
         self.error = failed;
-        // `watch(onlineItems)`: the selection goes back to the first row.
+        // The results changed, so the selection goes back to the first row.
         self.selected = 0;
         let ui_state = ui.global::<CommandPaletteState>();
         ui_state.set_online_searching(false);
@@ -823,7 +786,7 @@ pub(crate) fn keyword_of(ui: &App) -> String {
         .to_string()
 }
 
-/// `toInstanceItem`.
+/// Builds a row for an instance.
 pub(crate) fn instance_item(instance: &Instance, action_kind: &'static str) -> PendingItem {
     let runtime = &instance.config.runtime;
     let loader = runtime.mod_loader_type.as_ref().map(ToString::to_string);
@@ -831,8 +794,8 @@ pub(crate) fn instance_item(instance: &Instance, action_kind: &'static str) -> P
         key: format!("instance-{}", instance.id),
         title: instance.config.name.clone(),
         icon: "minecraft".to_string(),
-        // `${loader} · ${minecraft}` when there is a loader, the version alone
-        // when there is not.
+        // The loader and version together when there is a loader, the version
+        // alone when there is not.
         subtitle: match &loader {
             Some(loader) => format!("{loader} · {}", runtime.minecraft),
             None => runtime.minecraft.clone(),
@@ -841,7 +804,7 @@ pub(crate) fn instance_item(instance: &Instance, action_kind: &'static str) -> P
         action: Action::SelectInstance {
             id: instance.id.clone(),
             // The "launch instance" mode launches what it selects; the root mode's
-            // instance list only switches, which is the Vue's `shouldLaunch`.
+            // instance list only switches.
             launch: action_kind == "launch",
         },
         ..Default::default()
@@ -865,7 +828,8 @@ pub(crate) fn command_item(command: &Command, first: bool) -> PendingItem {
     }
 }
 
-/// `mod_loader_type ?? "vanilla"`, as the instance filter compares it.
+/// The mod loader type, or "vanilla" when there is none, as the instance filter
+/// compares it.
 pub(crate) fn loader_name(instance: &Instance) -> String {
     instance
         .config
@@ -904,7 +868,7 @@ mod tests {
         assert_eq!(curseforge_type(Some(6)), "mod");
         assert_eq!(curseforge_type(Some(12)), "resourcepack");
         assert_eq!(curseforge_type(Some(4471)), "modpack");
-        // A class the Vue's map has no entry for.
+        // A class the map has no entry for.
         assert_eq!(curseforge_type(Some(6552)), "");
         assert_eq!(curseforge_type(None), "");
     }

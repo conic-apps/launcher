@@ -4,23 +4,20 @@
 
 // The README body of a project detail panel.
 //
-// The Vue renders the body with `marked` into `v-html` (and a CurseForge
-// summary as HTML straight from the API), so headings, lists, code blocks, links
-// and images all come out styled by `.markdown-body`. This is that box: the same
-// `surface0` fill, the same 8px radius, the same 16px of padding, and the same
-// 14px body with a 1.6 line height.
+// Headings, lists, code blocks, links and images all come out styled here: the
+// same `surface0` fill, the same 8px radius, the same 16px of padding, and the
+// same 14px body with a 1.6 line height.
 //
-// What draws the body is `slint-markdown`, which is not Slint's own text. Slint
-// 1.18 has no CSS `line-height` — `Text` grew `line-height-factor`, but that
-// multiplies the font's *natural* line height rather than the font size, so it
-// is not a drop-in for the `1.6` this box is set at — and it has no
+// What draws the body is the `markdown` crate, which is not Slint's own text.
+// Slint 1.18 has no CSS `line-height` — `Text` grew `line-height-factor`, but
+// that multiplies the font's *natural* line height rather than the font size, so
+// it is not a drop-in for the `1.6` this box is set at — and it has no
 // strikethrough, no way to turn a link's underline off, and `@markdown` is a
-// compile-time literal the parser reads out
-// of the source, so it cannot take a string that arrives at runtime. So the
-// engine parses the body and measures it with the same text engine Slint renders
-// with, lays every run out itself, and hands this component a flat list of
-// positioned boxes to paint. `content.rs` owns that engine; see the crate's
-// `README.md`.
+// compile-time literal the parser reads out of the source, so it cannot take a
+// string that arrives at runtime. So the crate parses the body and measures it
+// with the same text engine Slint renders with, lays every run out itself, and
+// hands this component a flat list of positioned boxes to paint. The crate's
+// `README.md` covers it.
 //
 // One thing the box has to do itself: the padding. The engine lays out the
 // *content* of the box, because that is what a width means, so the 16px is
@@ -49,9 +46,9 @@ export component MarkdownBody inherits Rectangle {
     /// using it here would make the visible window as tall as the document and
     /// skip nothing.
     in property <length> viewport-height: 0px;
-    /// `.markdown-body { padding: 16px }`. Stated once: the height, the view's
-    /// box and the culling offset all need it, and three copies of the number
-    /// are three chances to change one of them.
+    /// 16px of padding. Stated once: the height, the view's box and the culling
+    /// offset all need it, and three copies of the number are three chances to
+    /// change one of them.
     private property <length> inset: 16px;
 
     width: 100%;
@@ -107,15 +104,15 @@ export component MarkdownBody inherits Rectangle {
         // Two-way, because the view writes it: a one-way binding is dropped the
         // first time the view assigns, and the global would go write-only.
         hovered-link <=> ContentState.detail-body-hovered;
-        // The Vue intercepts a click on the `v-html` body and opens the href
-        // itself, so a link in a description does not navigate the app away. It
-        // is the same `open-url` the header's repository link uses.
+        // A link in a description opens the href itself rather than navigating
+        // the app away. It is the same `open-url` the header's repository link
+        // uses.
         link-clicked(url) => { ContentState.open-url(url); }
         // The engine has to hear about a width change or the document never
         // re-wraps; this is the whole of the resize story.
         resized(width) => { ContentState.body-resized(width); }
         section-toggled(id) => { ContentState.body-section-toggled(id); }
-        // A stylesheet swap repaints without the display list changing, which is
+        // A palette change repaints without the display list changing, which is
         // why the palette is bound here rather than baked into the items.
         palette: {
             text: Theme.text,
@@ -131,14 +128,11 @@ export component MarkdownBody inherits Rectangle {
             table-head-text: Theme.text,
             table-head-background: Theme.mantle,
             rule: Theme.surface-1,
-            // `markdown-body.less` has no rule for `del`, so a browser falls
-            // back to `text-decoration-color: currentcolor` and draws the rule in
-            // the text's own colour. `Theme.red` would be GitHub's choice, not
-            // this stylesheet's.
+            // Strikethrough keeps the text's own colour rather than turning red:
+            // red would be GitHub's choice, not this app's.
             strike: Theme.text,
-            // `markdown-body.less` has no `li::marker` rule and no
-            // broken-image rule, so a browser draws the bullet and the alt text
-            // in the text's own colour rather than dimming either.
+            // The bullet and a broken image's alt text keep the text's own
+            // colour rather than being dimmed.
             marker: Theme.text,
             placeholder: Theme.text,
             // A `<details>` is a control, and it is drawn like the one control

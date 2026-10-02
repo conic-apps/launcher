@@ -2,13 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Errors of the music crate (mirror of `crates/music/src/error.rs`).
+//! Errors of the music crate.
 //!
-//! The original tags its variants for the Tauri IPC boundary, which a
-//! Tauri-free mirror does not have, so the `Serialize`/`serde_with` derives are
-//! gone. The variants themselves are the original's `Io` plus what the playback
-//! engine — the part the webview used to do with an `<audio>` element and the
-//! Web Audio API — can fail at.
+//! [`Error::Io`] covers the filesystem; the rest cover what the playback engine
+//! — decoding, the output device — can fail at.
 
 use thiserror::Error;
 
@@ -19,8 +16,8 @@ pub enum Error {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     /// The file is not an audio file the decoders understand, or its container
-    /// is one they do not read. The webview reported this through
-    /// `audio.onerror`; there is nothing left of that here, so it is a value.
+    /// is one they do not read. Reported as a value rather than a panic, so the
+    /// caller can show it.
     #[error("could not decode '{path}': {message}")]
     Decode { path: String, message: String },
     /// The platform has no output device the music could be played on.

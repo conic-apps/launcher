@@ -6,10 +6,11 @@
 //!
 //! A request is read up to the blank line that ends the headers, and the
 //! request line is all that is looked at; every header is skipped. The response
-//! is a status line, two headers, a `Content-Length` and the body, then the
-//! socket is shut down. There is no keep-alive, no chunked decoding, no
-//! request body and no compression — a browser redirect carries none of those,
-//! and every one of them would be code that nothing here can exercise.
+//! is a status line, a fixed set of headers including `Content-Length`, and the
+//! body, then the socket is shut down. There is no keep-alive, no chunked
+//! decoding, no request body and no compression — a browser redirect carries
+//! none of those, and every one of them would be code that nothing here can
+//! exercise.
 //!
 //! Every read is bounded, in both size and time: the listener is reachable by
 //! anything on the machine (and, on a machine that forwards, by anything on the
@@ -51,7 +52,7 @@ impl Request {
     /// `+` is left as it is. A query string has no `+`-is-a-space rule —
     /// `application/x-www-form-urlencoded` bodies have, and this is not one of
     /// those — and the values read here are the ones that must not be mangled:
-    /// an authorization code is base64url and may carry a `+` of its own.
+    /// a `+` in a query is a literal plus, not a space.
     pub fn param(&self, name: &str) -> Option<String> {
         self.value(name, false)
     }

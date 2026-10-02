@@ -19,8 +19,8 @@ component FooterButton inherits Rectangle {
     in property <string> label-text: "";
     callback clicked;
 
-    // `padding: 0 12px` around a 22px icon on each side; the labelled
-    // "New instance" adds the icon's own `margin-right: 8px` and the label.
+    // 12px of padding around a 22px icon on each side; the labelled "New
+    // instance" adds an 8px gap and the label.
     width: root.show-label ? 54px + label.preferred-width : 46px;
     private property <length> label-width: root.show-label ? label.preferred-width : 0px;
     height: 36px;
@@ -63,19 +63,17 @@ component FooterButton inherits Rectangle {
     }
 }
 
-// Bottom bar: account avatar + switcher, connect / new instance / install pack
-// (src/views/game/Footer.vue), over the background music visualizer.
+// Bottom bar: account avatar + switcher, connect / new instance / install pack,
+// over the background music visualizer.
 export component GameFooterBar inherits Rectangle {
     width: 100%;
     height: 56px;
     background: transparent;
 
-    // Vue `playIntro`: the bar slides up from 56px below the window over 0.6s
-    // `power3.out`, then its contents fade in from +10px, staggered — the avatar
-    // at 0.1s, the account name at 0.15s, connect at 0.2s. The right-hand actions
-    // form a second group that the timeline starts alongside the first
-    // (`"<"` is the *start* of the previous animation, not its end), so they take
-    // the same 0.1s / 0.15s beats.
+    // The bar slides up from 56px below the window over 0.6s, then its contents
+    // fade in from +10px, staggered — the avatar at 0.1s, the account name at
+    // 0.15s, connect at 0.2s. The right-hand actions run alongside the first
+    // group, so they take the same 0.1s / 0.15s beats.
     private property <duration> item-duration: 200ms;
     private property <length> intro-dy: GameIntro.played ? 0px : 56px;
     animate intro-dy { duration: 600ms; easing: ease-out-quart; }
@@ -84,15 +82,14 @@ export component GameFooterBar inherits Rectangle {
     // not take pointer events: Slint dispatches to the topmost item first and
     // falls through to the items below whenever one ignores the event, so a
     // press on the bar's empty area would reach the card underneath and select
-    // it (Vue: the footer is a positioned sibling painted above the list, so it
-    // covers the press). The shield swallows it; it is declared first so the
-    // controls in `body` below still get their own events.
+    // it. The shield swallows it; it is declared first so the controls in `body`
+    // below still get their own events.
     shield := TouchArea {
         width: root.width;
         height: root.height;
         // A bare `TouchArea`'s `scroll-event` defaults to `reject`, which would
-        // let the wheel through to the list. Vue's Lenis listens on the scroll
-        // container, which the bar covers, so accept it here to match.
+        // let the wheel through to the list, so accept it to keep the list from
+        // scrolling under the bar.
         scroll-event(event) => { accept }
     }
 
@@ -103,42 +100,33 @@ export component GameFooterBar inherits Rectangle {
         height: root.height;
         background: Theme.surface-0.transparentize(0.4);
 
-        // ----- the music visualizer -----
-        // `.footer-visualizer` in the Vue, declared first because every sibling
-        // is `z-index: 1` and it is `z-index: 0` (`.game-view-footer >
-        // :not(.footer-visualizer)`), so it is the layer under all of them.
+        // Declared first: it is the layer under every sibling.
         //
-        // The Vue's opacity is 0.3, not the 0.5 its class asks for: the element
-        // carries `style="opacity: 0.3"`, and an inline style outranks a class
-        // rule.
+        // Its opacity is 0.3, not 0.5.
         //
-        // It takes no pointer events in either build — a `Rectangle` here, and
-        // `pointer-events: none` there.
+        // It takes no pointer events.
         if AppConfig.show-visualizer : BeatMap {
             fill: true;
             transparent: true;
             opacity: 0.3;
-            // `.beat-map.fill` is `position: absolute; inset: 0` — it fills the
-            // footer, so its box is the footer's. It is given here, at the one
-            // place that knows that box, because a percentage on a component's
-            // own root does *not* resolve against the element the instance was
-            // written in: it is evaluated before the wrapper an `if` puts around
-            // a conditional child has a size, and stays at the 100px it could not
-            // resolve (see Known issues).
+            // The visualizer fills the footer, so its box is the footer's. It is
+            // given here, at the one place that knows that box, because a
+            // percentage on a component's own root does *not* resolve against
+            // the element the instance was written in: it is evaluated before
+            // the wrapper an `if` puts around a conditional child has a size,
+            // and stays at the 100px it could not resolve.
             width: parent.width;
             height: parent.height;
             resized(bar-count) => { MusicState.resized(bar-count); }
         }
 
-        // ----- account name / switcher + connect -----
         if GameState.has-account : account-layer := Rectangle {
             width: parent.width;
             height: parent.height;
             background: transparent;
 
             pill := AccountListDropdown {
-                // 28 + 56 − 16: the avatar's right edge, less the
-                // `margin-left: -16px` AccountListDropdown.vue carries so the pill
+                // 28 + 56 − 16: the avatar's right edge, less the 16px the pill
                 // tucks under the circle.
                 x: 68px;
                 y: -6px + self.intro-dy;
@@ -176,7 +164,7 @@ export component GameFooterBar inherits Rectangle {
 
             unlogged-pill := Rectangle {
                 // 28 + 56 − 16, as the logged-in pill above: the avatar's right
-                // edge less the `.profile-name-unlogged { margin-left: -16px }`.
+                // edge less the 16px the pill tucks under the circle.
                 x: 68px;
                 y: -6px + self.intro-dy;
                 width: 32px + unlogged-text.preferred-width + 16px;
@@ -221,25 +209,15 @@ export component GameFooterBar inherits Rectangle {
             }
         }
 
-        // ----- account avatar -----
-        // Declared after the account layers, although the Vue's template puts it
-        // first: there the avatar is `z-index: 2` and every sibling `z-index: 1`
-        // (`.game-view-footer > :not(.footer-visualizer)`), so its circle —
-        // inset 28px from the left, overhanging the bar — is painted *over* the
-        // left 16px of the name pill it overlaps. Slint paints siblings in
-        // declaration order unless `z` is set, and the compiler ignores `z` on a
-        // component instance's root, so here the order is the z-order.
+        // Declared after the account layers so the avatar's circle — inset 28px
+        // from the left, overhanging the bar — is painted *over* the left 16px of
+        // the name pill it overlaps. Slint paints siblings in declaration order
+        // unless `z` is set, and the compiler ignores `z` on a component
+        // instance's root, so here the order is the z-order.
         //
-        // The box is 64px, not 56: `> .avatar :deep(.avatar-image)` is
-        // `padding: 2px` inside a `border: 2px solid`, so the *flex item* the
-        // 56px, the `:size="56"` the Vue passes. Its `padding: 2px` and its
-        // `border: 2px` do not grow it: `src/assets/styles/main.css` sets
-        // `* { box-sizing: border-box }`, so both sit *inside* those 56px and
-        // the flex item is 56px wide. Reading them as content-box additions —
-        // which is what I did here, and it made the avatar 8px too big all round
-        // — also moved the 18px overhang to 22 and the pill out to 76, since
-        // both are measured from where the avatar *ends*. `AccountAvatar` insets
-        // its own 4px for that padding and border, which is all it needs.
+        // The box is 56px. `AccountAvatar` insets its own 4px for the avatar's
+        // padding and border, so both sit inside those 56px and need no extra
+        // room here.
         avatar-wrap := Rectangle {
             x: 28px;
             y: -18px + self.intro-dy;
@@ -274,7 +252,6 @@ export component GameFooterBar inherits Rectangle {
             }
         }
 
-        // ----- right actions -----
         install-pack-button := FooterButton {
             x: parent.width - 52px - self.width;
             y: -6px + self.intro-dy;

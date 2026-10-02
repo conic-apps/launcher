@@ -8,14 +8,10 @@ use thiserror::Error;
 
 pub type Result<T> = result::Result<T, Error>;
 
-/// Errors of the mirrored Java runtime scanning.
+/// Errors from Java runtime scanning and launch-time resolution.
 ///
-/// The variants are the subset of `crates/java-runtime/src/error.rs` that the
-/// scan and the launch-time resolution carry. `Aborted` wraps `tauri::Error`
-/// and goes away with the Tauri plugin.
-///
-/// Scanning is best-effort either way: individual candidates that fail to
-/// execute are skipped with a log line rather than aborting the whole scan.
+/// Scanning is best-effort: individual candidates that fail to execute are
+/// skipped with a log line rather than aborting the whole scan.
 #[derive(Debug, Error)]
 pub enum Error {
     #[error(transparent)]

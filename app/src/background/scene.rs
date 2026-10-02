@@ -2,16 +2,14 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The 3D background world — a faithful port of `WindowBackground.vue`'s
-//! terrain, trees and face culling.
+//! The 3D background world — terrain, trees and face culling.
 //!
-//! The Vue builds GPU vertex and index buffers here; nothing about the *scene*
-//! is WebGL-specific, so this module keeps the original's functions and
-//! constants (and their names) and emits faces instead of vertices. The face
-//! list is rebuilt only when the camera crosses into a new block — the ring
-//! height cache and the per-rebuild row invalidation are the original's, and
-//! the invalidation is load-bearing: the ring maps z's 128 apart to the same
-//! slot.
+//! Nothing about the *scene* is WebGL-specific, so this module keeps the same
+//! functions and constants (and their names) and emits the face list along with
+//! the GPU vertex and index buffers. The face list is rebuilt when the camera
+//! crosses into a new block, the aspect changes or the buffer set changes — the
+//! ring height cache and the per-rebuild row invalidation are load-bearing: the
+//! ring maps z's 128 apart to the same slot.
 //!
 //! Everything a face needs to be drawn (four world-space corners, its fill
 //! alpha and its edge mix) is baked here, because those depend on the camera's
@@ -41,9 +39,8 @@ pub const CAM_Y: f32 = BASE_HEIGHT as f32 + EYE_HEIGHT;
 /// The overlay opacity of the world layer (`.world { opacity: 0.3 }`).
 pub const LAYER_ALPHA: f32 = 0.3;
 
-/// The outline width, in *device* pixels: the original's `EDGE_WIDTH_DEVICE_PX`.
-/// The outlines are expanded into quads in screen space, so this is a width on
-/// screen rather than in the world.
+/// The outline width, in *device* pixels. The outlines are expanded into quads
+/// in screen space, so this is a width on screen rather than in the world.
 pub const EDGE_WIDTH_DEVICE_PX: f32 = 2.0;
 
 // ----- constants that only the scene itself needs -----
@@ -65,8 +62,8 @@ const FILL_ALPHA_FAR: f32 = 0.15;
 /// The block column the camera travels down: `floor(CAM_X)`, `floor(CAM_Y)`.
 /// A tree whose blocks would occupy it is not grown, which is what
 /// `tree_hits_camera` is for. (With `CAM_Y = 14.6` and trees topping out at
-/// `y = 13`, no tree can reach it — the check is kept for fidelity with the
-/// original, and would matter if the camera height ever changed.)
+/// `y = 13`, no tree can reach it — the check is kept, and would matter if the
+/// camera height ever changed.)
 const CAM_X_CELL: i32 = -1;
 const CAM_Y_CELL: i32 = 14;
 
@@ -85,7 +82,7 @@ const HEIGHT_X_OFF: i32 = -79; // floor(CAM_X - MAX_HALF_X) - 4
 const HEIGHT_X_SPAN: i32 = 164; // 2 * MAX_HALF_X + 16
 const HEIGHT_Z_SPAN: i32 = 128; // VIEW_DISTANCE + 8
 
-/// The eight corners of a unit block, numbered as the original numbers them.
+/// The eight corners of a unit block; the face constants below index into it.
 const CORNER_OFFSETS: [[f32; 3]; 8] = [
     [0.0, 0.0, 0.0],
     [1.0, 0.0, 0.0],
@@ -106,7 +103,7 @@ const FACE_PY: [usize; 4] = [2, 3, 7, 6];
 const FACE_NY: [usize; 4] = [0, 1, 5, 4];
 
 /// Tree shape: `[dx, dy, dz]` from the block above the surface. Editing this
-/// list is how the original's trees are reshaped.
+/// list reshapes every tree.
 const TREE_SHAPE: [[i32; 3]; 68] = [
     // trunk, four blocks tall
     [0, 0, 0],
@@ -199,16 +196,16 @@ pub struct Scene {
     /// Every block a tree occupies in the visible area, for occlusion tests.
     tree_blocks: HashSet<(i32, i32, i32)>,
     /// Faces in emission order: z rows far to near, x ascending, and within a
-    /// block front, left, right, top — the order the original uploads them in,
-    /// which decides how overlapping fills and tied edges resolve.
+    /// block front, left, right, top — the order they are uploaded in, which
+    /// decides how overlapping fills and tied edges resolve.
     pub faces: Vec<Face>,
     /// The far-plane quad covering everything below the horizon, emitted first.
     pub ground: [[f32; 3]; 4],
-    /// The GPU path's buffers, in the original's layouts: fill vertices are
-    /// `x y z alpha` with six indices per quad, and each outline is six
+    /// The GPU path's buffers: fill vertices are `x y z alpha` with six indices
+    /// per quad, and each outline is six
     /// `x y z mix other_x other_y other_z side` vertices — the screen-space
-    /// expansion happens in the vertex shader, exactly as in the original.
-    /// Built only when a GPU renderer is going to draw them.
+    /// expansion happens in the vertex shader. Built only when a GPU renderer is
+    /// going to draw them.
     pub fill_vertices: Vec<f32>,
     pub fill_indices: Vec<u32>,
     pub edge_vertices: Vec<f32>,
@@ -233,8 +230,8 @@ impl Scene {
         }
     }
 
-    /// Rebuilds when the camera has crossed into a new block; returns whether
-    /// it did.
+    /// Rebuilds when the camera block, the aspect or the buffer set changed;
+    /// returns whether it did.
     pub fn update(&mut self, cam_z: f32, aspect: f32, buffers: bool) -> bool {
         let floor = cam_z.floor() as i32;
         // The aspect decides how far down the ground quad reaches, so a window
@@ -265,8 +262,7 @@ impl Scene {
         self.edge_vertices.clear();
 
         // The ground base quad: a background-coloured slab on the far plane
-        // that hides the hyperbola sky below the horizon (the Canvas2D version
-        // shifted a fillRect down by the same amount).
+        // that hides the hyperbola sky below the horizon.
         let x_reach = FADE_END * FOV_HALF_TAN;
         let y_reach = FADE_END * aspect * FOV_HALF_TAN;
         let wz = cam_z + FADE_END;
@@ -311,8 +307,7 @@ impl Scene {
     /// Whether a column can project into the viewport at all while this
     /// geometry is in use.
     ///
-    /// The Vue emits the whole ±74 band and lets the GPU clip; on the CPU the
-    /// off-screen columns would cost more than the visible ones, so they are
+    /// Off-screen columns would cost more than the visible ones, so they are
     /// skipped here — the image is identical, because a column outside the
     /// frustum projects outside it for every camera position in this block. The
     /// frustum widens with distance, so the test uses the block's *nearest*
@@ -327,12 +322,11 @@ impl Scene {
 
     // ----- terrain -----
 
-    /// A deterministic hash of a lattice point, `hash2i` in the original.
+    /// A deterministic hash of a lattice point.
     ///
-    /// Ported operation for operation (`Math.imul` is `wrapping_mul`, `>>>` is
-    /// a shift on `u32`) and evaluated in `f64` like JavaScript's numbers, so a
-    /// column gets exactly the height it does in the Vue: both frontends scroll
-    /// through the same landscape.
+    /// Implemented operation for operation (`Math.imul` is `wrapping_mul`, `>>>`
+    /// is a shift on `u32`) and evaluated in `f64` like JavaScript's numbers, so
+    /// the terrain reproduces the golden table in the tests exactly.
     fn hash2i(ix: i32, iz: i32, seed: i32) -> f64 {
         let mut h = ix.wrapping_mul(374_761_393) ^ iz.wrapping_mul(668_265_263);
         h = h.wrapping_add(seed);
@@ -546,11 +540,9 @@ impl Default for Scene {
 mod tests {
     use super::*;
 
-    /// `(x, z, height, hash2i(x, z, 0x5eed))` sampled from
-    /// `src/components/WindowBackground.vue`'s own `terrainHeight`/`hash2i`,
-    /// which were run through Node to produce this table. The world is only
-    /// "the same world" if the port agrees with the original value for value,
-    /// so this is asserted rather than eyeballed.
+    /// `(x, z, height, hash2i(x, z, 0x5eed))` reference values, generated from a
+    /// JavaScript implementation run through Node. The terrain must agree with
+    /// them value for value, so this is asserted rather than eyeballed.
     const GOLDEN: [(i32, i32, i32, f64); 50] = [
         (-80, 17, 5, 0.768376867),
         (-80, 83, 5, 0.816261004),

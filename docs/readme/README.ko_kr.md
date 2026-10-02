@@ -17,7 +17,7 @@
 
 ## 이것이 무엇인가
 
-Conic Launcher는 현대적인 데스크톱 Minecraft 런처입니다: 코어 로직은 Rust로 구현되었고, UI는 Tauri 2 + Vue 3로 구축되었습니다. 설치 용량이 작고, 시작이 빠르며, 리소스 소비가 적어 탄소 배출 감소에도 기여합니다.
+Conic Launcher는 현대적인 데스크톱 Minecraft 런처입니다: 코어 로직은 Rust로 구현되었고, UI는 네이티브 UI 툴킷인 [Slint](https://slint.dev)로 구축되었습니다. 설치 용량이 작고, 시작이 빠르며, 리소스 소비가 적어 탄소 배출 감소에도 기여합니다.
 
 인스턴스 생성, 로더 설치, 모드 검색, 친구 초대하여 함께 플레이, 게임 시작 및 플레이 시간 추적까지 — 전체 워크플로우를 하나의 앱에서 완료할 수 있습니다.
 
@@ -98,14 +98,13 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## 소스에서 빌드
 
-[Rust 1.88+](https://rustup.rs/), [Node.js 24](https://nodejs.org/), [pnpm](https://pnpm.io/)가 설치되어 있는지 확인하고, [Tauri 사전 요구사항](https://tauri.app/start/prerequisites/)에 따라 각 플랫폼의 의존성을 준비하세요.
+[Rust 1.88+](https://rustup.rs/)가 설치되어 있는지 확인하세요. Linux에서는 [빌드 의존성](../../AGENTS.md#linux-build-dependencies)도 설치하세요.
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
 cd launcher
-pnpm install
-pnpm tauri dev      # 개발 및 디버깅
-pnpm tauri build    # 프로덕션 빌드
+cargo run              # 개발 및 디버깅
+cargo build --release  # 프로덕션 빌드
 ```
 
 ## 기여하기
@@ -113,16 +112,19 @@ pnpm tauri build    # 프로덕션 빌드
 [Issue](https://github.com/conic-apps/launcher/issues/new/choose)와 Pull Request(`dev` 브랜치 대상)를 환영합니다. 제출 전에 다음을 실행해 주세요:
 
 ```bash
-pnpm check
+cargo fmt --all -- --check
+cargo check
+cargo clippy --all-targets --release -- -D warnings
+cargo test
 ```
 
 ## 아키텍처
 
 <div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="아키텍처 다이어그램: Vue 3 프론트엔드가 Tauri IPC를 통해 Rust 코어와 통신, 하위에 도메인별 crates 모듈">
+  <img src="../../docs/screenshots/architecture.png" width="100%" alt="아키텍처 다이어그램: Slint 인터페이스가 도메인별 Rust crates에 직접 연결됨">
 </div>
 
-프론트엔드(Vue 3 + Pinia)는 Tauri IPC를 통해 Rust 기능과 통신합니다. `core`는 Tauri 앱 조립을 담당하며, 구체적인 기능은 도메인별로 `crates/*` 워크스페이스 모듈로 분리되어 독립적으로 발전하고 필요에 따라 조합됩니다.
+인터페이스는 [Slint](https://slint.dev)로 구축되었으며 도메인 crates에 직접 연결됩니다——IPC 계층은 없습니다. `app/`는 바이너리와 `.slint` 트리를 담고, 각 기능은 자체 `crates/*` 워크스페이스 모듈에 있어 독립적으로 발전하고 필요에 따라 조합됩니다.
 
 ## 라이선스
 

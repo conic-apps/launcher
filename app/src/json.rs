@@ -7,8 +7,8 @@
 //! The remote responses (`modrinth`, `curseforge`, the Yggdrasil server info)
 //! are walked by hand, and to this layer every field is optional: a missing one
 //! reads as empty rather than failing the whole response. The same
-//! `get(name).and_then(as_str).unwrap_or_default()` chain was spelled out at
-//! every one of those sites, in two modules that did not know about each other.
+//! `get(name).and_then(as_str).unwrap_or_default()` chain would otherwise be
+//! spelled out at every one of those sites.
 
 use serde_json::Value;
 

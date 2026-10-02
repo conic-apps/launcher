@@ -12,13 +12,12 @@ import { ContentSearchPanel } from "content-search-panel.slint";
 import { ContentPagination } from "content-pagination.slint";
 import { ContentLoading, ContentNotFound } from "content-not-found.slint";
 
-// The five content panels the game view opens (src/overlays/content/
-// Content{Saves,Mods,Resourcepacks,Packs,Screenshots}.vue).
+// The five content panels the game view opens.
 //
 // Each is the same skeleton: a `ScrollView` holding a 52px header bar and then
-// whatever that panel shows. The Vue wraps the whole panel in one `ScrollView`
-// and lets the search header scroll away with the grid, which is what these do
-// too — there is no second scroller anywhere inside a panel.
+// whatever that panel shows. The whole panel is one `ScrollView`, so the search
+// header scrolls away with the grid — there is no second scroller anywhere
+// inside a panel.
 //
 // `content-root.slint` mounts each of these inside a `ContentOverlay`, so they
 // are the container's content rather than the overlay itself.
@@ -59,13 +58,12 @@ export component ContentSavesPanel inherits Rectangle {
     changed width => { ContentState.grid-resized(root.width, root.height); }
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
-    // The Vue clears the selection when the panel itself is clicked
-    // (`@click="selectedSave = null"`) and wraps the list in the scroller. The
-    // click has to come from *inside* the scroller: a `TouchArea` over the whole
-    // panel would sit on top of the cards and swallow every hover and click in
-    // them, which is exactly what it did.
-    // The Vue re-mounts a list every time it opens, which puts it back at the
-    // top; these panels stay alive, so the scroll is reset by hand.
+    // A click on the panel clears the selection. The click has to come from
+    // *inside* the scroller: a `TouchArea` over the whole panel would sit on top
+    // of the cards and swallow every hover and click in them.
+    //
+    // A list would otherwise re-mount every time it opens, which puts it back at
+    // the top; these panels stay alive, so the scroll is reset by hand.
     private property <bool> panel-open: ContentState.open-panel == "saves";
     changed panel-open => {
         if root.panel-open {
@@ -79,7 +77,7 @@ export component ContentSavesPanel inherits Rectangle {
         ContentTitleBar {
             icon: "save";
             title: @tr("Saves");
-            // `.title { margin-bottom: 16px }` on this panel alone.
+            // A 16px gap below the bar on this panel alone.
             title-gap: 16px;
         }
 
@@ -93,24 +91,20 @@ export component ContentSavesPanel inherits Rectangle {
 
             select(id) => { ContentState.select-save(id); }
             open-path(id) => { ContentState.open-path(id); }
-            // `askDeleteSave`: the Vue opens `ConfirmDeleteSave` here rather than
-            // deleting, so a click that misses cannot destroy a world.
+            // The click opens `ConfirmDeleteSave` rather than deleting, so a
+            // click that misses cannot destroy a world.
             delete(id, title) => { ContentState.request-delete-save(id, title); }
-            // The play button carries no handler in the Vue — the click bubbles
-            // to the panel and clears the expanded save, which is what this
-            // comes to.
+            // The play button carries no handler of its own: the click clears
+            // the expanded save.
             play(id) => { ContentState.select-save(""); }
         }
     }
 
-    // The empty state sits over the *whole* panel in the Vue, outside the
-    // scroller and with `pointer-events: none`, so the cards stay clickable.
-    // Its wrapper is `position: absolute; top: 0; left: 0; width: 100%; height:
-    // 100%` against a `position: relative` `.content-saves`, so the block it
-    // centres the placeholder in is the panel's own height — not the 150px this
-    // used to settle for, which put the placeholder 200px too high. Nothing
-    // comes off it here, because `.content-saves` has no title bar of its own
-    // (unlike the mods and resource-pack panels above).
+    // The empty state sits over the *whole* panel, outside the scroller, with
+    // pointer events passing through so the cards stay clickable. The block it
+    // centres the placeholder in is the panel's own height. Nothing comes off it
+    // here, because the placeholder is outside the scroller — unlike the mods and
+    // resource-pack panels above, whose placeholders sit after their title bars.
     saves-not-found := ContentNotFound {
         show: !ContentState.saves-loading && ContentState.saves.length == 0;
         block-height: ContentState.panel-height;
@@ -118,21 +112,17 @@ export component ContentSavesPanel inherits Rectangle {
     }
 }
 
-// ----- screenshots -----
+// The screenshots viewer.
 //
-// The full-window viewer (`ContentScreenshots.vue`). Unlike the five panels it
-// is mounted without a container — `GameView.vue` puts it straight in the
-// wrapper — so it spans the window and only the scrim fades.
+// Unlike the five panels it is mounted without a container, so it spans the
+// window and only the scrim fades.
 //
-// Its motion is GSAP in the original (`playIntro` / `playOutro`), not CSS: the
-// strip rises from the bottom over 600ms, the thumbnails and the stage/arrows/
-// close button scale up from 0.6 — those with `back.out`, the thumbnails
-// staggered 30ms apart — and closing plays the reverse (300/330ms, `power3.in`)
-// *before* the panel is dismissed. `power3.out` is `ease-out-cubic`, `back.out`
-// is `ease-out-back` and `power3.in` is `ease-in-cubic`.
+// The motion: the strip rises from the bottom over 600ms, the thumbnails and the
+// stage/arrows/close button scale up from 0.6, and closing plays the reverse
+// (300/330ms) *before* the panel is dismissed.
 //
 // The close button, the stage and Escape run that outro; a click on the scrim
-// does not (the Vue's `@click.self` on the wrapper clears the flag directly).
+// does not.
 export component ContentScreenshotsPanel inherits Rectangle {
     /// The overlay container's size. Passed in rather than taken from `parent`,
     /// which is the game view — the container is inset from it.
@@ -183,8 +173,7 @@ export component ContentScreenshotsPanel inherits Rectangle {
         triggered => { root.phase = "closed"; }
     }
 
-    // `.close()`: the outro plays, and the panel is dismissed when it ends
-    // (`playOutro(() => { showContent.screenshots = false })`).
+    // The outro plays, and the panel is dismissed when it ends.
     close-timer := Timer {
         interval: 330ms;
         running: root.closing;
@@ -196,7 +185,6 @@ export component ContentScreenshotsPanel inherits Rectangle {
 
     private property <bool> shown-state: root.phase == "shown" && !root.closing;
 
-    // ----- what moves -----
     // The strip slides in from one full height below; the thumbnails and the
     // stage fade and scale up from 0.6.
     private property <length> strip-y: root.phase == "shown" && !root.closing ? 0px : root.height;
@@ -226,15 +214,10 @@ export component ContentScreenshotsPanel inherits Rectangle {
         easing: root.leaving || root.closing ? cubic-bezier(0.55, 0.055, 0.675, 0.19) : ease-out-back;
     }
 
-    // The panel *is* the column: `.content-screenshots` is
-    // `display: flex; flex-direction: column` with `.main { flex: 1 }` above
-    // `.thumbnails { flex-shrink: 0 }`. A wrapper sized to its own content
-    // would leave the strip wherever the content happened to end rather than
-    // at the bottom.
-    // `.content-screenshots { display: flex; flex-direction: column }` with
-    // `.main { flex: 1 }` above `.thumbnails { flex-shrink: 0 }` — the stage
-    // keeps the space the strip leaves. Two boxes rather than a layout,
-    // because the strip slides and a layout owns its children's `y`.
+    // The stage keeps the space the strip leaves. Two boxes rather than a
+    // layout, because the strip slides and a layout owns its children's `y`. A
+    // wrapper sized to its own content would leave the strip wherever the
+    // content happened to end rather than at the bottom.
     private property <length> strip-height: clamp(92px, root.height * 12 / 100, 116px);
 
     stage := Rectangle {
@@ -258,10 +241,8 @@ export component ContentScreenshotsPanel inherits Rectangle {
                 background: transparent;
                 opacity: root.main-alpha;
 
-                // `.nav { top: 50%; 44px; border-radius: 50%; border: 1px solid
-                // surface1; background: rgba(surface0, .85); &.prev { left:
-                // 24px } &.next { right: 24px } }` with a 22px chevron, the
-                // left one rotated.
+                // A 44px round button with a 22px chevron, the left one
+                // rotated.
                 prev-button := Rectangle {
                     x: 24px;
                     width: 44px;
@@ -316,14 +297,9 @@ export component ContentScreenshotsPanel inherits Rectangle {
                     }
                 }
 
-                // `.stage { padding: 32px 96px }` with
-                // `img { max-width: 100%; max-height: 100%; object-fit:
-                // contain; border-radius: 8px; box-shadow: 0 8px 32px
-                // rgba(0,0,0,.4) }` — an `Image` given the padded box and
-                // `contain` lands the same way.
-                // `.stage`'s own `@click.self="close"` is what the touch
-                // area under the image is for; the image swallows its own
-                // clicks, as a click on the `<img>` did in the Vue.
+                // The image is given the padded box and `contain`; the touch
+                // area under it closes the viewer, while the image swallows its
+                // own clicks.
                 stage-touch := TouchArea {
                     clicked => { root.closing = true; }
                 }
@@ -337,8 +313,7 @@ export component ContentScreenshotsPanel inherits Rectangle {
                 }
 
                 // A box of its own so the shadow follows the image's alpha:
-                // `drop-shadow-*` is a Rectangle's property, and the Vue's
-                // `box-shadow: 0 8px 32px rgba(0,0,0,.4)` hugs the picture.
+                // `drop-shadow-*` is a Rectangle's property.
                 shadow := Rectangle {
                     x: 96px;
                     y: 32px;
@@ -367,8 +342,8 @@ export component ContentScreenshotsPanel inherits Rectangle {
         background: Theme.surface-0.with-alpha(0.8);
         clip: true;
 
-        // `border-top: 1px solid var(--ctp-surface1)` — a hairline of its
-        // own, because Slint's `border-width` is all four sides.
+        // A hairline of its own, because Slint's `border-width` is all four
+        // sides.
         Rectangle {
             x: 0;
             y: 0;
@@ -377,12 +352,9 @@ export component ContentScreenshotsPanel inherits Rectangle {
             background: Theme.surface-1;
         }
 
-        // `.thumbnails-list { gap: 10px; height: 100%; width: max-content }
-        // .thumbnail { height: calc(100% - 20px); &:first-child { margin-left:
-        // 96px } &:last-child { margin-right: 96px } }` — the strip is a single
-        // clipped row, so the symmetric end margins are the row's own padding,
-        // which is what keeps the first and last thumbnails off the window edge
-        // and clear of the `‹` / `›` buttons.
+        // The strip is a single clipped row, so the 96px end margins are the
+        // row's own padding, which keeps the first and last thumbnails off the
+        // window edge and clear of the arrows.
         thumbnail-strip := HorizontalLayout {
             y: 10px;
             height: parent.height - 20px;
@@ -391,8 +363,7 @@ export component ContentScreenshotsPanel inherits Rectangle {
             spacing: 10px;
 
             for shot[index] in ContentState.screenshots : Rectangle {
-                // `img { height: 100%; width: auto }` — the width follows
-                // the image's own ratio at the row's height.
+                // The width follows the image's own ratio at the row's height.
                 width: shot.ratio * parent.height;
                 height: parent.height;
                     border-radius: 6px;
@@ -424,7 +395,7 @@ export component ContentScreenshotsPanel inherits Rectangle {
             }
     }
 
-    // `.close { top: 16px; right: 16px; 36px round }`
+    // A 36px round button 16px from the top-right.
     close-button := Rectangle {
         x: parent.width - 16px - self.width;
         y: 16px;
@@ -472,8 +443,8 @@ export component ContentModsPanel inherits Rectangle {
     changed width => { ContentState.grid-resized(root.width, root.height); }
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
-    // The Vue re-mounts a list every time it opens, which puts it back at the
-    // top; these panels stay alive, so the scroll is reset by hand.
+    // A list would otherwise re-mount every time it opens, which puts it back at
+    // the top; these panels stay alive, so the scroll is reset by hand.
     private property <bool> panel-open: ContentState.open-panel == "mods";
     changed panel-open => {
         if root.panel-open {
@@ -499,27 +470,20 @@ export component ContentModsPanel inherits Rectangle {
 
             select(id) => { ContentState.select-card(id); }
             open-path(id) => { ContentState.open-path(id); }
-            // Inert in the Vue: `ContentModsLocal.vue`'s and
-            // `ContentResourcepacksLocal.vue`'s delete buttons carry no
-            // `@click`, and they are left that way here.
+            // The local delete button is wired to `ContentState.delete-save`.
             delete(id, title) => { ContentState.delete-save(id); }
         }
 
         if (ContentState.source == "local" && !ContentState.local-mods-loading && ContentState.local-mods.length == 0) : ContentNotFound {
             show: true;
-            // The Vue's empty-state wrapper is `position: absolute; top: 0;
-            // height: 100%` and `.content-mods` is `position: relative;
-            // height: 100%`, so the block it centres the placeholder in is the
-            // whole panel — title bar included. This element is a sibling
-            // *after* the `ContentTitleBar` rather than overlaid on it, so the
-            // 52px of title bar has to come off the block to land the body in
-            // the same place; leaving the full panel height here is what pushed
-            // it 26px up into the title bar.
+            // The block the placeholder is centred in is the whole panel — title
+            // bar included. This element is a sibling *after* the
+            // `ContentTitleBar` rather than overlaid on it, so the 52px of title
+            // bar has to come off the block to land the body in the same place.
             block-height: ContentState.panel-height - 52px;
             description: @tr("Consider downloading some mods from the internet");
         }
 
-        // ----- the remote list -----
         if ContentState.source != "local" : ContentSearchPanel { }
 
         if ContentState.source != "local" && ContentState.remote-loading : ContentLoading { }
@@ -536,24 +500,21 @@ export component ContentModsPanel inherits Rectangle {
 
         if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : remote-not-found := ContentNotFound {
             show: true;
-            // `.search-status { padding: 40px 0 }` around this one, so the block
-            // is the placeholder plus 80px — the 150px this used to settle for
-            // put the icon 23px too high (and 29px with a two-line description).
+            // 40px of padding above and below, so the block is the placeholder
+            // plus 80px.
             block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
         }
 
-        // `ContentModsModrinth.vue`'s own `ContentPagination` — one element per
-        // remote list, each drawn only while *its* list is the open one, and
-        // backed by that list's own page state in Rust (`list_key`).
-        // `ContentModsLocal.vue` has no pagination at all, so a local list has
-        // no element here either and can never draw another list's pages.
+        // One element per remote list, each drawn only while *its* list is the
+        // open one, and backed by that list's own page state in Rust
+        // (`list_key`). A local list has no pagination at all, so it has no
+        // element here either and can never draw another list's pages.
         //
-        // `ContentPagination.vue`'s own `v-if="totalPages > 1"`: the bar is
-        // drawn from the result's page count alone. A page change, a filter or a
-        // query keeps it — those never clear the result — while opening a panel,
-        // or switching the source, does (Rust resets it), which is exactly when
-        // the Vue's bar disappears.
+        // The bar is drawn from the result's page count alone. A page change, a
+        // filter or a query keeps it — those never clear the result — while
+        // opening a panel or switching the source does (Rust resets it), which
+        // is exactly when the bar disappears.
         ContentPagination {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
@@ -562,7 +523,7 @@ export component ContentModsPanel inherits Rectangle {
             page-change(page) => { ContentSearch.go-to-page(page); }
         }
 
-        // `ContentModsCurseforge.vue`'s own.
+        // The CurseForge list's own.
         ContentPagination {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
@@ -587,8 +548,8 @@ export component ContentResourcepacksPanel inherits Rectangle {
     changed width => { ContentState.grid-resized(root.width, root.height); }
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
-    // The Vue re-mounts a list every time it opens, which puts it back at the
-    // top; these panels stay alive, so the scroll is reset by hand.
+    // A list would otherwise re-mount every time it opens, which puts it back at
+    // the top; these panels stay alive, so the scroll is reset by hand.
     private property <bool> panel-open: ContentState.open-panel == "resourcepacks";
     changed panel-open => {
         if root.panel-open {
@@ -614,9 +575,7 @@ export component ContentResourcepacksPanel inherits Rectangle {
 
             select(id) => { ContentState.select-card(id); }
             open-path(id) => { ContentState.open-path(id); }
-            // Inert in the Vue: `ContentModsLocal.vue`'s and
-            // `ContentResourcepacksLocal.vue`'s delete buttons carry no
-            // `@click`, and they are left that way here.
+            // The local delete button is wired to `ContentState.delete-save`.
             delete(id, title) => { ContentState.delete-save(id); }
         }
 
@@ -643,17 +602,15 @@ export component ContentResourcepacksPanel inherits Rectangle {
 
         if (ContentState.source != "local" && !ContentState.remote-loading && ContentState.remote-cards.length == 0) : remote-not-found := ContentNotFound {
             show: true;
-            // `.search-status { padding: 40px 0 }` around this one, so the block
-            // is the placeholder plus 80px — the 150px this used to settle for
-            // put the icon 23px too high (and 29px with a two-line description).
+            // 40px of padding above and below, so the block is the placeholder
+            // plus 80px.
             block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
         }
 
-        // `ContentResourcepacksModrinth.vue`'s own `ContentPagination`, and
-        // `…Curseforge.vue`'s — one element each, drawn only for its own list,
-        // over its own page state (`list_key`). The local list has none, as in
-        // the Vue.
+        // One element each for the Modrinth and CurseForge lists, drawn only for
+        // its own list, over its own page state (`list_key`). The local list has
+        // none.
         ContentPagination {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;
@@ -693,8 +650,8 @@ export component ContentPacksPanel inherits Rectangle {
     changed width => { ContentState.grid-resized(root.width, root.height); }
     changed height => { ContentState.grid-resized(root.width, root.height); }
 
-    // The Vue re-mounts a list every time it opens, which puts it back at the
-    // top; these panels stay alive, so the scroll is reset by hand.
+    // A list would otherwise re-mount every time it opens, which puts it back at
+    // the top; these panels stay alive, so the scroll is reset by hand.
     private property <bool> panel-open: ContentState.open-panel == "packs";
     changed panel-open => {
         if root.panel-open {
@@ -727,14 +684,14 @@ export component ContentPacksPanel inherits Rectangle {
 
         if !ContentState.remote-loading && ContentState.remote-cards.length == 0 : remote-not-found := ContentNotFound {
             show: true;
-            // As with the mods and resource-pack panels: `.search-status`'s
-            // `padding: 40px 0` is the block.
+            // As with the mods and resource-pack panels: 40px of padding is the
+            // block.
             block-height: remote-not-found.content-height + 80px;
             description: @tr("Try adjusting keywords or filters and search again");
         }
 
-        // `ContentPacksModrinth.vue`'s own `ContentPagination` and
-        // `ContentPacksCurseforge.vue`'s — this panel has no local list.
+        // One element each for the Modrinth and CurseForge lists; this panel has
+        // no local list.
         ContentPagination {
             pages: ContentSearch.pages;
             current-page: ContentSearch.current-page;

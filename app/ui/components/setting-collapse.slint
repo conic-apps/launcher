@@ -6,30 +6,27 @@ import { Theme } from "../theme.slint";
 import { SettingItem } from "setting-item.slint";
 import { AppIcon } from "app-icon.slint";
 
-// Collapsible settings group (src/components/SettingCollapse.vue).
+// Collapsible settings group.
 //
-// The Vue component animates height/opacity over 200ms with
-// `cubic-bezier(0.215, 0.61, 0.355, 1)` and flips the chevron over 200ms
-// `ease-in-out`. Slint's `animate` is interruptible, so re-toggling mid-flight
-// behaves like the original Web Animations API implementation.
+// Height and opacity animate over 200ms with `cubic-bezier(0.215, 0.61, 0.355,
+// 1)`, and the chevron flips over 200ms `ease-in-out`. Slint's `animate` is
+// interruptible, so re-toggling mid-flight behaves well.
 //
 // `border-radius` corners are applied per side: when closed the header is fully
-// rounded; when open only its top corners are, and the content keeps the
-// bottom corners (matching the Vue class toggling).
+// rounded; when open only its top corners are, and the content keeps the bottom
+// corners.
 //
 // As in `SettingGroup`, the corners are the rows' and nothing is clipped to a
-// radius — the Vue puts `overflow: hidden` on these two but gives the content's
-// last child its bottom radii as well, and a rounded `clip` is what Slint's
-// software renderer drops (see `README.md`). So the header is the first row, and
-// the last one while it is closed, and the content's last row says so itself.
+// radius — a rounded `clip` is what Slint's software renderer drops. The header
+// is the first row, and the last one while it is closed, and the content's last
+// row says so itself.
 export component SettingCollapse inherits VerticalLayout {
     in property <string> title;
     in property <string> description: "";
     in property <bool> resetable: false;
-    /// `.setting-collapse-disabled { opacity: 0.6 }` with `* { pointer-events:
-    /// none }`, and a `toggle()` that returns early — the instance settings
-    /// overlay's advanced options, which are inert until the instance overrides
-    /// the launcher's own launch settings.
+    /// Dims and disables every control in the group. The instance settings
+    /// overlay's advanced options use it: they are inert until the instance
+    /// overrides the launcher's own launch settings.
     in property <bool> collapse-disabled: false;
     callback reset;
 
@@ -48,14 +45,13 @@ export component SettingCollapse inherits VerticalLayout {
             width: parent.width;
             group-first: true;
             group-last: !root.opened;
-            // `pointer-events: none` also takes the header's hover with it: CSS
-            // `:hover` needs the element to be the pointer's target, so a
-            // disabled header never changes background. `clickable` is what
-            // gates both the hover fill and the click, so one property stands in
-            // for all of it.
+            // Disabling also takes the header's hover with it: hover needs the
+            // element to be the pointer's target, so a disabled header never
+            // changes background. `clickable` gates both the hover fill and the
+            // click, so one property stands in for all of it.
             clickable: !root.collapse-disabled;
-            // The Vue's `border-radius: 8px` -> `8px 8px 0 0` on `.opened`, over
-            // 200ms; a row's bottom corners are where that is carried here.
+            // The header's bottom corners round off over 200ms when it opens; a
+            // row's corners are where that is carried.
             animate border-bottom-left-radius, border-bottom-right-radius {
                 duration: 200ms;
                 easing: ease;
@@ -107,11 +103,10 @@ export component SettingCollapse inherits VerticalLayout {
                 @children
             }
 
-            // The `* { pointer-events: none }` half of
-            // `.setting-collapse-disabled`, covering the rows the slot placed
-            // here. Declared after them so it is on top; a bare `TouchArea`
-            // because that is the only thing that intercepts, and it rejects the
-            // wheel so the scroller above still takes it.
+            // Covers the rows the slot placed here, to disable them. Declared
+            // after them so it is on top; a bare `TouchArea` because that is the
+            // only thing that intercepts, and it rejects the wheel so the
+            // scroller above still takes it.
             if root.collapse-disabled : TouchArea {
                 width: 100%;
                 height: 100%;

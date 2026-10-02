@@ -13,7 +13,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     CONTROLLER.with(|cell| *cell.borrow_mut() = Some(Rc::clone(&controller)));
     let state = ui.global::<LaunchState>();
 
-    // `LaunchView.vue`'s `onMounted(launch)`.
+    // The launch button: cancel any running flow and start a new one.
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
@@ -33,8 +33,8 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
                     .unwrap_or_default()
             });
 
-            // `instance.toml` is read on the runtime, as the original read it
-            // in a Tauri command, and the state is reset behind that read.
+            // `instance.toml` is read on the runtime, and the state is reset
+            // behind that read.
             let weak = weak.clone();
             crate::runtime::spawn(async move {
                 let instance = instance::get_instance_by_id(&current_id).await;
@@ -51,7 +51,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
 
-    // The back button (the Vue's `back()`; `onUnmounted` cancels too).
+    // The back button. Leaving the page cancels the flow too.
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
@@ -66,16 +66,14 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
 
-    // Leaving the page (title bar Home/Settings) cancels the flow, like the
-    // Vue's `onUnmounted`.
+    // Leaving the page (title bar Home/Settings) cancels the flow.
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
         ui.global::<Navigation>().on_page_changed(move |page| {
             if page.as_str() != "launch" && controller.borrow_mut().cancel() {
-                // The Vue's `onUnmounted` for the launch view: the instance
-                // list is reloaded, so `.install.lock` written by a fresh
-                // install shows up on the game screen.
+                // The instance list is reloaded, so `.install.lock` written by
+                // a fresh install shows up on the game screen.
                 if let Some(ui) = weak.upgrade() {
                     ui.global::<GameState>().invoke_refresh();
                 }

@@ -97,7 +97,8 @@ pub struct ResolvedMod {
     pub icon: Option<String>,
     pub loader: ModLoader,
     /// Whether the mod is disabled, i.e. its file name carries the
-    /// `.jar.disabled` suffix and the loader will not load it.
+    /// `.jar.disabled` (or `.jar.disable`) suffix and the loader will not load
+    /// it.
     pub disabled: bool,
     /// Whether the mod was resolved from a jar embedded inside another mod
     /// (jar-in-jar dependency). The frontend can hide these to show only the

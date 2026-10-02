@@ -3,23 +3,20 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The music "script": drives [`music::Player`] and pushes what it reports
-//! into the `MusicState` global (src/store/music.ts + src/overlays/MusicPlayer.vue
-//! + src/components/BeatMap.vue).
+//! into the `MusicState` global.
 //!
 //! Three things live here rather than in the crate, because they belong to the
 //! app and not to the player:
 //!
 //!   * the *configuration* — the two volumes and the enable switch — and the
-//!     window focus the background volume follows (the store's `init` and its
-//!     two `watch`es);
-//!   * [`BeatMap`]'s mapping of the analyser's bins onto bars, which is a
-//!     component's own maths (see that type for why it is not in the .slint
-//!     file);
+//!     window focus the background volume follows;
+//!   * [`BeatMap`]'s mapping of the analyser's bins onto bars, which is UI maths
+//!     (see that type for why it is not in the .slint file);
 //!   * the *clock* that decides how often the UI is refreshed.
 //!
 //! The player itself is not `Send` — cpal's stream is not — so it lives in a
 //! `thread_local` and is only ever touched from the event loop's thread, the same
-//! reason `content.rs` keeps its caches there.
+//! reason `content` keeps its caches there.
 
 use std::cell::RefCell;
 use std::sync::{
@@ -35,10 +32,8 @@ use crate::slint_backend::{App, AppConfig, MusicState, MusicTrack};
 /// The cadence the UI is refreshed at.
 ///
 /// The analyser smooths on a 60Hz clock (see `music::player`) and the
-/// visualizer reads it once per frame, so this is the visualizer's frame rate —
-/// the one the Vue gave its canvas through `requestAnimationFrame`. 16ms is also
-/// comfortably faster than the ~4Hz the browser's `ontimeupdate` moved the
-/// progress bar at, so nothing the panel shows is coarser here than it was.
+/// visualizer reads it once per frame, so this is the visualizer's frame rate.
+/// 16ms is also comfortably faster than the progress bar needs.
 pub(crate) const TICK_MS: u64 = 16;
 
 mod player;
@@ -50,7 +45,7 @@ pub(crate) use wiring::*;
 thread_local! {
     /// The player and the visualizer's mapping. `None` when the platform has no
     /// output device, in which case the panel still opens — with an empty
-    /// playlist, which is what the store's `loadTracks` failure left behind.
+    /// playlist, as a failed load leaves behind.
     static CONTROLLER: RefCell<Option<Controller>> = const { RefCell::new(None) };
 }
 
@@ -69,21 +64,20 @@ pub(crate) struct Controller {
     /// times a second does not allocate sixty times a second. The idle branch
     /// leaves it alone, so the next live frame reuses whatever capacity it has.
     levels: Vec<f32>,
-    /// Whether the window has the focus — the store's `backgrounded`.
+    /// Whether the window has the focus.
     focused: bool,
     /// Whether the clock is running (see [`start_clock`]).
     ticking: Arc<AtomicBool>,
 }
 
-/// `BeatMap.vue`'s mapping of the analyser's bins onto bar heights.
+/// The mapping of the analyser's bins onto bar heights.
 ///
-/// It is here rather than in `components/beat-map.slint` because it cannot be
+/// It is here rather than in the component's `.slint` file because it cannot be
 /// written as a Slint binding: every bar is normalised against the loudest *bar
 /// of the frame*, which needs a pass over all of them before any of them can be
 /// drawn, and the decaying peak is state only a callback may write. Slint
-/// expressions can do neither. What the component draws is what the Vue drew —
-/// the same bins, the same logarithmic spread, the same dB floor, the same 0.97
-/// peak decay — from `levels`, which this produces.
+/// expressions can do neither. The same bins, logarithmic spread, dB floor and
+/// 0.97 peak decay produce `levels`.
 pub(crate) struct BeatMap {
     /// How many bars the visualizer asked for, derived from its own width.
     bar_count: usize,
@@ -92,7 +86,7 @@ pub(crate) struct BeatMap {
 }
 
 impl BeatMap {
-    // `BeatMap.vue`'s module constants, which are not props of it.
+    // The mapping's constants.
     const MIN_DB: f32 = -70.0;
     const PEAK_DECAY: f32 = 0.97;
     const MIN_PEAK_LEVEL: f32 = 0.05;
@@ -109,8 +103,7 @@ impl BeatMap {
         }
     }
 
-    /// The FFT size that keeps a roughly constant bins-per-bar ratio, which is
-    /// what `fftSizeForBars` picks.
+    /// The FFT size that keeps a roughly constant bins-per-bar ratio.
     fn fft_size_for_bars(bar_count: usize) -> usize {
         let bins = bar_count * Self::BINS_PER_BAR;
         let mut size = Self::MIN_FFT_SIZE;
@@ -146,8 +139,8 @@ impl BeatMap {
         for bar in 0..self.bar_count {
             let ratio = bar as f64 / self.bar_count as f64;
             let position = min_log_bin as f64 * (max_bin as f64 / min_log_bin as f64).powf(ratio);
-            // `interpolate`: the value halfway between two bins, so a bar does
-            // not jump as the logarithmic spread moves across a bin edge.
+            // The value interpolated between two bins, so a bar does not jump as
+            // the logarithmic spread moves across a bin edge.
             let lower = (position.floor() as usize).min(max_bin);
             let upper = (lower + 1).min(max_bin);
             let fraction = (position - position.floor()) as f32;
@@ -180,8 +173,8 @@ impl BeatMap {
         }
     }
 
-    /// The lower end of the frequency range: `Math.min(round(binCount *
-    /// (minFrequency / nyquist)), maxBin - 1)`.
+    /// The lower end of the frequency range, rounded and clamped to
+    /// `max_bin - 1`.
     fn min_bin(bin_count: usize, nyquist: f64, max_bin: usize) -> usize {
         let bin = ((bin_count as f64) * (Self::MIN_FREQUENCY / nyquist))
             .round()
@@ -190,7 +183,7 @@ impl BeatMap {
     }
 }
 
-/// The panel's two clock labels, the `formatTime` of `MusicPlayer.vue`.
+/// Formats a time in seconds as the panel's `mm:ss` clock.
 pub(crate) fn format_time(seconds: f64) -> String {
     if !seconds.is_finite() || seconds < 0.0 {
         return "00:00".to_string();
@@ -205,7 +198,7 @@ mod tests {
 
     #[test]
     fn the_fft_size_keeps_the_bins_per_bar_ratio() {
-        // `fftSizeForBars`: 256 until twice the bins fit, capped at 16384.
+        // 256 until twice the bins fit, capped at 16384.
         assert_eq!(BeatMap::fft_size_for_bars(32), 256);
         assert_eq!(BeatMap::fft_size_for_bars(64), 512);
         assert_eq!(BeatMap::fft_size_for_bars(140), 2048);
@@ -216,16 +209,16 @@ mod tests {
     fn the_frequency_range_clamps_to_the_spectrum() {
         // 48kHz, 1024 bins: 200Hz is bin 9 and 4000Hz is bin 171.
         assert_eq!(BeatMap::min_bin(1024, 24000.0, 171), 9);
-        // A range that starts above the top bin collapses to `maxBin - 1`, which
-        // is 0 here — the same value the Vue computes. `minLogBin` is what keeps
-        // the logarithmic spread off bin 0 (0Hz), and it is applied in `sample`.
+        // A range that starts above the top bin collapses to `max_bin - 1`,
+        // which is 0 here. `min_log_bin` in `sample` keeps the logarithmic spread
+        // off bin 0 (0Hz).
         assert_eq!(BeatMap::min_bin(1024, 24000.0, 1), 0);
     }
 
     #[test]
     fn a_quiet_frame_is_scaled_up_to_fill_the_range() {
-        // `normalize` divides by the frame's own peak, so a very quiet signal
-        // still reaches the top of the range — that is the whole point of it.
+        // The frame's own peak is the divisor, so a very quiet signal still
+        // reaches the top of the range — that is the whole point of it.
         let mut beat_map = BeatMap {
             bar_count: 32,
             peak_level: 0.0,
@@ -283,7 +276,7 @@ mod tests {
         assert_eq!(format_time(61.0), "01:01");
         assert_eq!(format_time(600.0), "10:00");
         assert_eq!(format_time(3599.0), "59:59");
-        // `Number.isFinite(time) || time < 0` is the Vue's own guard.
+        // A non-finite or negative time falls back to `00:00`.
         assert_eq!(format_time(-1.0), "00:00");
         assert_eq!(format_time(f64::NAN), "00:00");
         assert_eq!(format_time(f64::INFINITY), "00:00");

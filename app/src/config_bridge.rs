@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! The settings "script": translating between the persisted [`config::Config`]
-//! and the Slint `AppConfig` global (src/store/config.ts + the settings screens).
-//! Also hosts the OS integration helpers used by the settings callbacks.
+//! and the Slint `AppConfig` global. Also hosts the OS integration helpers used
+//! by the settings callbacks.
 
 use std::path::PathBuf;
 use std::sync::{LazyLock, RwLock};
@@ -16,8 +16,8 @@ use crate::slint_backend::AppConfig;
 ///
 /// A lock rather than a `OnceLock`, because a language change calls
 /// `apply_locale` again and the last one has to win. It starts empty, which
-/// means "not chosen yet" — the reads below then fall back to what the config
-/// would say, and a *read* never pins the value.
+/// means "not chosen yet" — the read below then falls back to the system
+/// locale, and a *read* never pins the value.
 static APPLIED_LOCALE: LazyLock<RwLock<String>> = LazyLock::new(|| RwLock::new(String::new()));
 
 /// Maps a launcher language code to the bundled gettext locale (the catalog
@@ -312,12 +312,11 @@ pub fn open_external(target: &str) -> std::io::Result<()> {
 
 /// Opens the file manager with `path` selected.
 ///
-/// The `revealItemInDir` the Vue gets from `tauri-plugin-opener`: on macOS
-/// `open -R`, on Windows `explorer /select,`, and on Linux the same
-/// `org.freedesktop.FileManager1` D-Bus call the plugin makes (with the parent
-/// directory as the fallback, since a desktop without that service cannot
-/// select a file). `open_external` is *not* a substitute — it launches the
-/// file, it does not show it in its folder.
+/// On macOS `open -R`, on Windows `explorer /select,`, and on Linux the
+/// `org.freedesktop.FileManager1` D-Bus call (with the parent directory as the
+/// fallback, since a desktop without that service cannot select a file).
+/// `open_external` is *not* a substitute — it launches the file, it does not
+/// show it in its folder.
 pub fn reveal_in_dir(path: &str) -> std::io::Result<()> {
     #[cfg(target_os = "macos")]
     {
@@ -365,10 +364,10 @@ pub fn reveal_in_dir(path: &str) -> std::io::Result<()> {
 ///
 /// Slint 1.18 has no application-level clipboard API — `Platform::set_clipboard_text`
 /// is only reachable from inside a backend, which the app is not — so the
-/// add-account dialog's two "copy" buttons go to the platform directly, the way
-/// `open_external` and `pick_image_file_named` above already do. The strings
-/// copied there (the device code and the login URL) are ASCII, which is why the
-/// Windows path can go through `clip`'s OEM code page.
+/// app's "copy" buttons go to the platform directly, the way `open_external`
+/// above and `pick_image_file_named` below already do. The strings copied
+/// (device codes, login URLs, room codes) are ASCII, which is why the Windows
+/// path can go through `clip`'s OEM code page.
 pub fn copy_to_clipboard(text: &str) -> std::io::Result<()> {
     #[cfg(target_os = "macos")]
     {
@@ -445,12 +444,13 @@ pub fn pick_image_file() -> Option<PathBuf> {
     pick_image_file_named("Select an image")
 }
 
-/// The same picker with the filter label the caller wants to show. The Vue
-/// passes a translated name here (`overlays.dialogs.createInstance.imagesFilter`
-/// in the create-instance dialog), and the file types match the filter it uses.
+/// The same picker with the filter label the caller wants to show. The caller
+/// passes a translated name here (`@tr("CreateInstance" => "Images")` in the
+/// create-instance dialog, for example), and the file types match the filter it
+/// uses.
 pub fn pick_image_file_named(name: &str) -> Option<PathBuf> {
-    /// The file types the Vue's filter offers. macOS takes only the prompt, so
-    /// the pattern list is unused there.
+    /// The file types the filter offers. macOS takes only the prompt, so the
+    /// pattern list is unused there.
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     const EXTENSIONS: &str = "*.png *.jpg *.jpeg *.webp *.gif *.bmp *.avif *.svg *.ico";
     #[cfg(target_os = "macos")]

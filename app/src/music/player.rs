@@ -17,8 +17,7 @@ pub(crate) fn with_player(weak: &Weak<App>, action: impl FnOnce(&music::Player))
 
 /// Pauses playback, for the launch flow's `pause_on_launch`.
 ///
-/// The Vue called `musicStore.pause()` straight from `LaunchView.vue`; there is
-/// no view to hang that on here, so the music script owns it.
+/// Owned by the music script because the launch flow runs without a view.
 pub fn pause() {
     with_controller(|controller| controller.player.pause());
 }
@@ -44,8 +43,7 @@ pub(crate) fn apply(ui: &App) {
             return false;
         };
 
-        // `tick` is also what persists the position, on the same limit the
-        // store's `ontimeupdate` used.
+        // `tick` is also what persists the position.
         let snapshot = controller.player.tick();
 
         // The playlist is an `Arc` the player replaces only when the folder is
@@ -82,7 +80,7 @@ pub(crate) fn apply(ui: &App) {
         });
         state.set_buffering(snapshot.buffering);
 
-        // The visualizer's own condition: `analyser && hasTrack && isPlaying`.
+        // The visualizer draws only while a track is playing.
         let live = snapshot.current_track().is_some() && snapshot.is_playing;
         state.set_live(live);
         if live {

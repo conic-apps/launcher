@@ -757,8 +757,7 @@ impl Parser {
         vec![Block::Table { head, rows, align }]
     }
 
-    /// The verbatim text of the element the caller is inside, used for `pre`
-    /// and for the `alt` of an image.
+    /// The verbatim text of the element the caller is inside, used for `pre`.
     fn raw_text(&mut self) -> String {
         // The caller has consumed the open tag, so the matching close is what
         // ends this. Anything that looks like a tag before it is dropped, which
@@ -952,8 +951,7 @@ fn flush_paragraph(pending: &mut Inlines, out: &mut Vec<Block>) {
         return;
     }
     let inlines = std::mem::take(pending);
-    // A run that is nothing but a `<br>` is a line break inside the paragraph
-    // before it, and one that is nothing but whitespace disappears.
+    // A run that is nothing but whitespace, or a lone `<br>`, disappears.
     let text: String = inlines
         .iter()
         .map(|inline| match inline {

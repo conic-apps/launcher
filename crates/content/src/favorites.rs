@@ -36,8 +36,7 @@ fn write_favorites(favorites: &[Favorite]) -> Result<()> {
     Ok(())
 }
 
-/// Every favorite, read from the shared file. This is the body of the
-/// original's `cmd_list_favorites`.
+/// Every favorite, read from the shared file.
 pub fn list_favorites() -> Result<Vec<Favorite>> {
     read_favorites()
 }

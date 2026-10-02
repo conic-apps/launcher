@@ -11,9 +11,9 @@
 
 use crate::Launch;
 
-/// Separates the working directory from the arguments inside a report. Two of
-/// them, because a path is never empty and a command line always has `argv[0]`,
-/// so the first pair can only be the boundary between the two.
+/// Separates the working directory from the arguments inside a report. The
+/// arguments are separated by one, and neither a path nor an argument can hold
+/// a NUL, so the first pair is always the boundary between the two fields.
 const SEPARATOR: &str = "\0\0";
 
 /// Frames a launch for the trip to the process that is already running.
@@ -56,8 +56,7 @@ mod tests {
     #[test]
     fn a_field_may_look_like_the_boundary() {
         // A NUL cannot appear in either field, so the first pair of them is
-        // always the boundary — a `|` in a path, which the Tauri app's
-        // pipe-separated Windows protocol has to special-case, is just a byte.
+        // always the boundary: a `|` in a path is just a byte.
         let launch = Launch {
             args: vec!["conic-launcher".into(), "|not a boundary|".into()],
             cwd: "/home/user/Games|weird".into(),

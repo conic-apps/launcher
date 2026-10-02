@@ -6,7 +6,9 @@ use platform::{OsArch, OsFamily, PLATFORM_INFO};
 use regex::Regex;
 use serde_json::Value;
 
-/// Check if all the rules in Rule[] are acceptable in certain OS platform and features.
+/// Checks whether the rules allow the entry on the current OS platform and
+/// enabled features. Matching rules are applied in order, so the last match
+/// wins; an empty rule list is allowed, a non-empty one defaults to disallowed.
 pub(crate) fn check_allowed(rules: Vec<Value>, enabled_features: &[String]) -> bool {
     // by default it's allowed
     if rules.is_empty() {

@@ -2,18 +2,15 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/shared`: the process-wide helpers (the launcher
-//! version, the shared HTTP client and its proxy preference, and the `Url`
-//! extension the API clients use).
+//! Process-wide helpers: the shared crate's version constant (`APP_VERSION`),
+//! the shared HTTP client and its proxy preference, and the `Url` extension the
+//! API clients use.
 //!
-//! The original is not a plugin — it has no Tauri dependency of its own beyond
-//! the workspace-wide `reqwest` client — so the mirror is a file-for-file copy
-//! with no behavioural changes. It exists as its own crate (rather than modules
-//! inlined into each of its consumers) so every crate shares one client, exactly
-//! like the original workspace: `slint-account`, `slint-curseforge`,
-//! `slint-download`, `slint-install`, `slint-launch`, `slint-modrinth` and
-//! `slint-multiplayer` all take [`HTTP_CLIENT`] from here, and the app sets the
-//! proxy preference once through [`set_system_proxy`].
+//! The crate exists on its own — rather than as a module inlined into each
+//! consumer — so every crate that makes requests shares one client: `account`,
+//! `curseforge`, `download`, `install` and `modrinth` all take [`HTTP_CLIENT`]
+//! from here, and the app sets the proxy preference once through
+//! [`set_system_proxy`].
 
 use std::time::Duration;
 

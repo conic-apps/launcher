@@ -2,21 +2,18 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The multiplayer dialog's "script": drives `slint-multiplayer` and pushes the
-//! session into the `MultiplayerState` global
-//! (src/store/multiplayer.ts + src/overlays/dialogs/multiplayer/*).
+//! The multiplayer dialog's "script": drives [`multiplayer`] and pushes the
+//! session into the `MultiplayerState` global.
 //!
-//! The Vue keeps the store in Pinia and lets the Tauri plugin own the session
-//! and its event poll thread. Here the poll thread lives in
-//! [`multiplayer::NexusService`] and reports every notice to a sink this
-//! module installs; the sink marshals the notice onto the Slint event loop,
-//! which is where the store's `on(...)` handlers (`handle_event`) run.
+//! The poll thread lives in [`multiplayer::NexusService`] and reports every
+//! notice to a sink this module installs; the sink marshals the notice onto the
+//! Slint event loop, which is where `handle_event` runs.
 //!
 //! Everything that touches the disk, the network or the library runs on the
 //! app's tokio runtime (`crate::runtime`) and reports back with
 //! `upgrade_in_event_loop`. A `Rc<Controller>` cannot cross into a task, so the
 //! event-loop half reaches it through the `CONTROLLER` thread-local (the same
-//! arrangement `launch.rs` uses for the shared config).
+//! arrangement the launch module uses for its controller).
 
 use std::{
     cell::{Cell, RefCell},
@@ -30,7 +27,7 @@ use slint::{ComponentHandle, ModelRc, Timer, TimerMode, VecModel, Weak};
 use crate::slint_backend::{App, GameState, MultiplayerPeer, MultiplayerPlayer, MultiplayerState};
 use multiplayer::{NexusService, PeerInfo, SessionEvent, SessionState};
 
-/// `NAT_POLL_UNKNOWN_INTERVAL` / `NAT_POLL_KNOWN_INTERVAL` of the Vue store.
+/// How often to poll peers when the local NAT code is unknown / known.
 pub(crate) const NAT_POLL_UNKNOWN_INTERVAL: Duration = Duration::from_secs(10);
 pub(crate) const NAT_POLL_KNOWN_INTERVAL: Duration = Duration::from_secs(60);
 
@@ -50,12 +47,13 @@ thread_local! {
 
 pub(crate) struct Controller {
     service: Arc<NexusService>,
-    /// `setInterval` behind `schedulePeersPolling`.
+    /// The peer poll timer.
     peers_timer: Timer,
-    /// The Vue's `setTimeout(..., 500)` after a finished download.
+    /// The half-second delay before switching to the manager after a finished
+    /// download.
     switch_timer: Timer,
-    /// `initialized` in `store/multiplayer.ts`.
+    /// Whether the manager has been initialized.
     initialized: Cell<bool>,
-    /// The running library download (the Tauri command's task handle).
+    /// The running library download.
     download_task: RefCell<Option<tokio::task::JoinHandle<()>>>,
 }

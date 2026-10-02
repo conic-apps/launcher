@@ -10,14 +10,14 @@
 //! to it closes, which is what makes a crashed primary recoverable. The primary
 //! also creates a message window under a class name derived from the same id,
 //! because a mutex cannot carry a payload: a later launch finds that window with
-//! `FindWindowW` and hands it its command line with `WM_COPYDATA`. This is the
-//! pair `tauri-plugin-single-instance` uses on Windows.
+//! `FindWindowW` and hands it its command line with `WM_COPYDATA`.
 //!
 //! The window is never shown and never activated (`WS_EX_NOACTIVATE`,
-//! `WS_EX_TOOLWINDOW`, `WS_EX_LAYERED`, and no `WS_VISIBLE`), so it is
-//! invisible, stays out of the taskbar and cannot take the focus; it exists to
-//! be found and to receive the message. `WM_COPYDATA` does not need a visible
-//! window, and it is the only message the loop ever sends it.
+//! `WS_EX_TOOLWINDOW`, `WS_EX_LAYERED`, `WS_EX_TRANSPARENT`, and no
+//! `WS_VISIBLE`), so it is invisible, stays out of the taskbar and cannot take
+//! the focus; it exists to be found and to receive the message. `WM_COPYDATA`
+//! does not need a visible window, and it is the only message the window
+//! procedure acts on.
 
 use std::{
     ffi::OsStr,
@@ -74,8 +74,9 @@ fn launches() -> &'static Mutex<Option<Sender<Launch>>> {
 ///
 /// # Errors
 ///
-/// [`AlreadyRunning`] once the launch has been handed to the process that took
-/// the mutex first.
+/// [`AlreadyRunning`] once the mutex is held by a process that has also
+/// published its window. The launch is handed over first; if that hand-over
+/// fails, it is logged and this launch quits anyway.
 pub(crate) fn claim(launches: Sender<Launch>) -> Result<Guard, AlreadyRunning> {
     let class_name = wide(&format!("{APP_ID}-sic"));
     let window_name = wide(&format!("{APP_ID}-siw"));
@@ -307,8 +308,8 @@ impl Drop for Guard {
     }
 }
 
-/// The calling thread's id, which the window and the mutex want to compare
-/// against the thread that created them.
+/// The calling thread's id, which the window wants to compare against the
+/// thread that created it.
 fn current_thread() -> u32 {
     unsafe { GetCurrentThreadId() }
 }

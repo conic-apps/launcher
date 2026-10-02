@@ -8,27 +8,21 @@ import { SetupWizardState } from "../../globals/setup.slint";
 import { SettingsJvm } from "../settings/settings-jvm.slint";
 import { WizardTitle, WizardMessage, WizardWarning } from "wizard-text.slint";
 
-// src/views/setup/SetupWizardJavaSettings.vue
+// The settings page's Java section with the wizard's two overrides on top: the
+// groups run the body's full width rather than the settings page's, and the
+// section carries a 16px top margin.
 //
-// The screen is the settings page's Java section with the wizard's two
-// overrides on top: the groups run the body's full width rather than the
-// settings page's `width: calc(100% - 16px)`, and the section carries the
-// inline `margin-top: 16px`.
-//
-// The Vue wraps the section in a second `ScrollView`. It is not reproduced, and
-// nothing scrolls differently without it: `.wrapper { height: 100% }` resolves
-// against an auto-height block parent, so that inner scroll area grows with its
-// content and never scrolls — the body's own `ScrollView` is what moves, in the
-// Vue as here.
+// The body's own `ScrollView` is the one that moves; this screen adds no nested
+// scroll area, which would only grow with its content and never scroll.
 export component SetupJavaSettings inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
 
-    // The Vue's `onMounted`: a platform that cannot fetch a Java runtime gets
-    // the auto-install switch turned off, since it would never resolve. The
-    // screen is created when the step is entered and destroyed when it is
-    // left, so this runs once per visit, exactly as `onMounted` does.
+    // A platform that cannot fetch a Java runtime gets the auto-install switch
+    // turned off, since it would never resolve. The screen is created when the
+    // step is entered and destroyed when it is left, so this runs once per
+    // visit.
     init => {
         if !SetupWizardState.jvm-auto-install-supported && AppConfig.prefer-mojang-java {
             AppConfig.prefer-mojang-java = false;
@@ -46,7 +40,7 @@ export component SetupJavaSettings inherits VerticalLayout {
         message: @tr("SetupJavaSettings" => "Note: Auto-installation of Java may not be available on the current platform. It is recommended to install Java manually and disable \"Auto-install Java runtime\"");
     }
 
-    // `style="margin-top: 16px"` on the `<SettingsJVM>` element.
+    // A 16px top margin before the settings section.
     Rectangle {
         width: 100%;
         height: 16px;
@@ -54,7 +48,7 @@ export component SetupJavaSettings inherits VerticalLayout {
     }
 
     SettingsJvm {
-        // `:deep(.setting-group), :deep(.setting-collapse) { width: 100% }`.
+        // The wizard drops the settings page's inset.
         group-inset: 0px;
     }
 }

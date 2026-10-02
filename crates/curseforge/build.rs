@@ -2,9 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// `crates/curseforge/build.rs`, kept as it is: without the key the official-API
-// fallback in `request_with_fallback` never fires, and the crate silently
-// answers from the mirror alone.
+// Without the key the official-API fallback in `request_with_fallback` never
+// fires, and the crate answers from the mirror alone.
 
 fn main() {
     println!("cargo:rerun-if-env-changed=CURSEFORGE_API_KEY");

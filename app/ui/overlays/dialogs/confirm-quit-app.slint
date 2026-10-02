@@ -6,39 +6,35 @@ import { BaseDialog } from "../../components/base-dialog.slint";
 import { ConfirmWarningBody } from "confirm-warning.slint";
 import { Dialogs } from "../../globals/dialogs.slint";
 
-// The dialog the title bar's close button opens while a task is running
-// (src/overlays/dialogs/ConfirmQuitApp.vue).
+// The dialog the title bar's close button opens while a task is running.
 //
-// `App.vue`'s `closeWindow()` raised it instead of closing whenever the current
-// page was `launch`, which is the one page where closing means abandoning
-// something: an install, a launch, a multiplayer download. Everywhere else the
-// close button closed straight away and still does.
+// It is raised instead of closing whenever the current page is `launch`, which is
+// the one page where closing means abandoning something: an install, a launch, a
+// multiplayer download. Everywhere else the close button closed straight away and
+// still does.
 //
-// The Vue is a `<BaseDialog :width="500">` with no height, so its panel is
-// `fit-content`; `BaseDialog` has no such mode, so the height comes from the
+// `BaseDialog` has no `fit-content` height mode, so the height comes from the
 // measuring layout the body is written in — the arrangement the add-account,
 // multiplayer, delete-instance and delete-save dialogs use.
 //
-// The Vue original was never internationalized: all four sentences are hard-coded
-// Chinese. The Chinese is kept as the source text of a `@tr`, so a locale without
-// an entry still reads like the original while the catalogues can translate it —
-// the treatment the launch error dialogs and `ConfirmDeleteInstance` already
-// have.
+// All four sentences are hard-coded Chinese. The Chinese is kept as the source
+// text of a `@tr`, so a locale without an entry still reads these strings while
+// the catalogues can translate them — the treatment the launch error dialogs and
+// `ConfirmDeleteInstance` already have.
 export component ConfirmQuitApp inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
-    /// Hands the exit to the app root, which owns the 250ms
-    /// `scale(0.93)` + fade the Vue played on `document.body` and the 500ms wait
-    /// before the window actually closed (`ConfirmQuitApp.vue`'s `closeWindow`).
+    /// Hands the exit to the app root, which owns the 250ms `scale(0.93)` + fade
+    /// and the 500ms wait before the window actually closes.
     callback confirm();
 
     dialog := BaseDialog {
         dialog-visible: Dialogs.confirm-quit-app-visible;
         dialog-width: 500px;
-        // `fit-content`: `BaseDialog` keeps 32px of its own (the 16px padding of
-        // `.dialog > .content` and the 1px clip the Vue's `overflow` computes).
+        // `fit-content`: `BaseDialog` keeps 32px of its own — 16px on each side
+        // (a 1px clip and 15px of padding).
         dialog-height: body.preferred-height + 32px;
 
         // Sized against the slot's width, not `parent` — the elements written in
@@ -50,7 +46,6 @@ export component ConfirmQuitApp inherits Rectangle {
             detail-text: @tr("ConfirmQuitApp" => "最后的反悔机会");
             cancel-text: @tr("ConfirmQuitApp" => "稍等一下...");
             confirm-text: @tr("ConfirmQuitApp" => "让我出去！");
-            // The Vue's `@click="dialogStore.confirmQuitApp.visible = false"`.
             // Only the flag goes down: the launch is left running, which is the
             // whole point of the button.
             cancel => { Dialogs.confirm-quit-app-visible = false; }

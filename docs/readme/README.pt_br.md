@@ -17,7 +17,7 @@
 
 ## O que é isso
 
-Conic Launcher é um launcher de Minecraft moderno para desktop: a lógica principal é implementada em Rust, a interface é construída com Tauri 2 + Vue 3. Possui uma pequena footprint de instalação, inicialização rápida e baixo consumo de recursos, até ajudando a reduzir as emissões de carbono.
+Conic Launcher é um launcher de Minecraft moderno para desktop: a lógica principal é implementada em Rust e a interface é construída com [Slint](https://slint.dev), um toolkit de UI nativo. Possui uma pequena pegada de instalação, inicialização rápida e baixo consumo de recursos, até ajudando a reduzir as emissões de carbono.
 
 Desde criar instâncias e instalar loaders até pesquisar mods e convidar amigos para jogar juntos, iniciar o jogo e rastrear o tempo de jogo — todo o fluxo de trabalho pode ser concluído em um único aplicativo.
 
@@ -98,14 +98,13 @@ O aplicativo inclui atualizações automáticas — não são necessárias atual
 
 ## Compilar a partir do código-fonte
 
-Certifique-se de ter [Rust 1.88+](https://rustup.rs/), [Node.js 24](https://nodejs.org/) e [pnpm](https://pnpm.io/) instalados, e siga os [pré-requisitos do Tauri](https://tauri.app/start/prerequisites/) para sua plataforma.
+Certifique-se de ter o [Rust 1.88+](https://rustup.rs/) instalado; no Linux, instale também as [dependências de compilação](../../AGENTS.md#linux-build-dependencies).
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
 cd launcher
-pnpm install
-pnpm tauri dev      # Desenvolvimento e depuração
-pnpm tauri build    # Build de produção
+cargo run              # Desenvolvimento e depuração
+cargo build --release  # Build de produção
 ```
 
 ## Contribuir
@@ -113,16 +112,19 @@ pnpm tauri build    # Build de produção
 Issues e Pull Requests (direcionados à branch `dev`) são bem-vindos. Antes de enviar, por favor execute:
 
 ```bash
-pnpm check
+cargo fmt --all -- --check
+cargo check
+cargo clippy --all-targets --release -- -D warnings
+cargo test
 ```
 
 ## Arquitetura
 
 <div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Diagrama de arquitetura: o frontend Vue 3 se comunica com o core Rust via Tauri IPC, com módulos crates separados por domínio abaixo">
+  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Diagrama de arquitetura: a interface Slint conectada diretamente aos crates Rust separados por domínio">
 </div>
 
-O frontend (Vue 3 + Pinia) se comunica com as funcionalidades Rust via Tauri IPC. O `core` cuida do montagem da aplicação Tauri, enquanto as funcionalidades específicas são divididas em módulos `crates/*` do workspace, organizados por domínio, que evoluem independentemente e se combinam conforme necessário.
+A interface é construída com [Slint](https://slint.dev) e conectada diretamente aos crates de domínio — não há camada IPC. `app/` contém o binário e a árvore `.slint`; cada capacidade reside em seu próprio módulo `crates/*` do workspace, então evoluem independentemente e se combinam conforme necessário.
 
 ## Licença
 

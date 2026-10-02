@@ -5,7 +5,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![deny(clippy::unwrap_used)]
 
-// Slint-generated code uses `unwrap()` extensively; the crate-level deny below
+// Slint-generated code uses `unwrap()` extensively; the crate-level deny above
 // stays in place for hand-written code only.
 #[allow(clippy::unwrap_used)]
 pub(crate) mod slint_backend {
@@ -50,8 +50,8 @@ use slint_backend::{App, AppConfig};
 use window::WindowService;
 
 fn main() {
-    // Create the data directory layout (shares `~/.conic[-debug]` with the
-    // Tauri app) before anything reads from it — the logger writes into it.
+    // Create the data directory layout before anything reads from it — the
+    // logger writes into it.
     folder::DATA_LOCATION.init();
     logs::init();
 
@@ -116,7 +116,7 @@ fn main() {
 
     let ui = App::new().expect("failed to construct the app UI");
 
-    // Configuration (shared with the Tauri app).
+    // Configuration.
     let config = config::load_config_file().unwrap_or_else(|error| {
         log::error!("failed to load config: {error}");
         config::Config::default()
@@ -124,15 +124,15 @@ fn main() {
     // Tell the HTTP client whether to go through the system proxy, like
     // `crates/config` does for `shared::HTTP_CLIENT`. Has to happen before the
     // first request, which is why it is done here rather than when a version
-    // list is first fetched. `slint-shared` owns the one client the whole app
-    // shares, so one call reaches every crate that uses it.
+    // list is first fetched. `shared` owns the one client the whole app shares,
+    // so one call reaches every crate that uses it.
     shared::set_system_proxy(config.download.use_system_proxy);
 
     // Pick the bundled translation. Must run after a component exists (that's
     // what installs the translation bundle).
     config_bridge::select_locale(config.language.as_deref());
 
-    // Platform (mirrors crates/platform; tauri-free variant).
+    // Platform.
     let platform = platform::PLATFORM_INFO.clone();
     ui.set_macos(platform.os_family == platform::OsFamily::Macos);
     ui.set_linux(platform.os_family == platform::OsFamily::Linux);
@@ -181,8 +181,8 @@ fn main() {
     // and its own component reports the world and the visible range, so it is
     // wired after both.
     worldmap::setup(&ui);
-    // The background-music player: `MusicPlayer.vue` mounted itself on the Vue
-    // app's root, so this runs for the whole session rather than per page.
+    // The background-music player: it runs for the whole session rather than
+    // per page.
     music::setup(&ui);
     // The command palette, mounted on the same layer — it opens from the title
     // bar's search field and from the `Ctrl`/`⌘` + `/` shortcut, so it is up for
@@ -229,7 +229,7 @@ fn main() {
     // The window system's own close — the macOS traffic light, `Alt`+`F4`, a
     // window menu's Close, a taskbar's close — asks here first.
     //
-    // This is the only place `ConfirmQuitApp` can be raised from. The title bar's
+    // This is where the platform's own close arrives. The title bar's
     // `close-window` callback covers the controls *this app draws* (Linux) and
     // the caption buttons Windows substitutes (`windows_caption.rs` sends
     // `SC_CLOSE`, which does come through Slint) — but on macOS the red button is
@@ -267,7 +267,7 @@ fn main() {
     music::watch_focus(&window);
 
     // Drag regions (`globals/window-drag.slint`): a press on one — the dialog's
-    // scrim, as in the Vue's `data-tauri-drag-region` — moves the window.
+    // scrim — moves the window.
     ui.global::<slint_backend::WindowDrag>().on_start({
         let window = window.clone();
         move || {
@@ -281,8 +281,8 @@ fn main() {
     // launch. The claim moves onto the watcher's thread, which is where the
     // launches arrive, and stays there for as long as the process lives.
     //
-    // A weak handle is what crosses over: a Slint component is `Send` but not
-    // `Sync`, so a strong one cannot be moved onto the watcher's thread at all.
+    // A weak handle is what crosses over: a strong one cannot be moved onto the
+    // watcher's thread, but `Weak` is `Send` (and `Sync`).
     watch_launches(single_instance, ui.as_weak());
 
     // Double-clicking the title bar zooms (macOS: native fullscreen space,
@@ -301,16 +301,14 @@ fn main() {
 
     ui.run().expect("failed to run the shell event loop");
 
-    // The original stops the multiplayer plugin on `RunEvent::Exit`: the poll
-    // thread is joined and the Conic Nexus session destroyed.
+    // On exit the multiplayer poll thread is joined and the Conic Nexus session
+    // destroyed.
     multiplayer::shutdown();
 
     cleanup_temp_folder();
 }
 
-/// Removes the per-run scratch directory [`folder::DATA_LOCATION`]
-/// creates, the same thing `core/src/main.rs` does on `RunEvent::Exit` and
-/// `RunEvent::ExitRequested`.
+/// Removes the per-run scratch directory [`folder::DATA_LOCATION`] creates.
 ///
 /// The installers stage a bootstrapper jar here (`install`), and the
 /// directory is `create_dir_all`-ed in a fresh UUID-named path on every launch,
@@ -327,9 +325,8 @@ fn cleanup_temp_folder() {
 
 /// Brings the window forward for every later launch of the app.
 ///
-/// This is the Slint half of what `tauri-plugin-single-instance` does for the
-/// Tauri app: its callback focuses the first webview window, and this does the
-/// same through [`WindowService::bring_to_front`].
+/// Each later launch brings the running window forward through
+/// [`WindowService::bring_to_front`].
 ///
 /// The launches arrive on a platform thread — a D-Bus worker, a `WM_COPYDATA`
 /// window message, a socket reader — so the window is only ever touched from
@@ -347,10 +344,10 @@ fn watch_launches(single_instance: single_instance::SingleInstance, app: Weak<Ap
                     launch.args,
                     launch.cwd
                 );
-                // TODO(migration): the arguments are the deep-link payload the
-                // accounts view consumes (the Microsoft login's `?code=…`,
-                // reached through the desktop entry's `conic-launcher://`
-                // handler) — route them there once it is migrated.
+                // TODO: the arguments are the deep-link payload the accounts
+                // view consumes (the Microsoft login's `?code=…`, reached
+                // through the desktop entry's `conic-launcher://` handler) —
+                // route them there.
                 let app = app.clone();
                 if let Err(error) = app.upgrade_in_event_loop(move |app| {
                     WindowService::new(app).bring_to_front();

@@ -141,8 +141,8 @@ pub async fn access_token_auth_flow(
     access_token_auth_flow_with_reporter(access_token, refresh_token, None).await
 }
 
-/// Same as [`access_token_auth_flow`], but reports each stage of the chain to
-/// the frontend when a [`LoginReporter`] is provided.
+/// Like [`access_token_auth_flow`], but reports each stage of the chain
+/// through the given [`LoginReporter`].
 pub(crate) async fn access_token_auth_flow_with_reporter(
     access_token: &str,
     refresh_token: &str,

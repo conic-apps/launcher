@@ -4,19 +4,17 @@
 
 import { Theme } from "../theme.slint";
 
-// Window background state (the layer stack of `WindowBackground.vue`).
+// Window background state: the layer stack the `WindowBackground` component
+// reads.
 //
 // Rust owns all of it: it renders the 3D world and the hyperbola sky into the
 // two images, decides which custom background is showing, and drives the
-// cross-fade between them. `WindowBackground` is the only reader, and it is
-// what animates the alphas — a global cannot animate (see `theme.slint`'s
-// `ThemeProvider` for the same arrangement).
+// cross-fade between them. `WindowBackground` is the only reader.
 export global Background {
-    // ----- the 3D world -----
     // Two layers, composited over the window's colour in this order: the
-    // hyperbola sky at 30% opacity, then the world at 30% — the Vue's two
-    // canvases. Both are drawn 1.08x the window (the parallax wrapper's scale)
-    // with their opacity baked into the pixels.
+    // hyperbola sky at 30% opacity, then the world at 30%. Both are drawn 1.08x
+    // the window (the parallax wrapper's scale) with their opacity baked into
+    // the pixels.
     in-out property <image> sky-image;
     in-out property <image> world-image;
     // Whether the world layer is on screen at all. False while a custom
@@ -31,7 +29,6 @@ export global Background {
     // camera option while it is set.
     in-out property <bool> software-only: false;
 
-    // ----- the user's custom backgrounds -----
     // Two slots, so one can fade in over the other. `custom-a` is the one a
     // transition starts from when both are free.
     in-out property <image> custom-a;
@@ -41,21 +38,18 @@ export global Background {
 
     /// Black over the custom background, at the user's "background darkness"
     /// percentage — and only while the *global* custom image is the one on
-    /// screen, as in the Vue (`v-if="isGlobalCustomBg"`).
+    /// screen.
     in-out property <float> dim-alpha: 0;
 
-    // ----- the mouse parallax -----
     /// Offsets of the wrapper, in logical pixels. The wrapper is scaled by 1.08
     /// and follows the pointer by up to `MAX_OFFSET` (4px) at the window edges.
     in-out property <length> parallax-x: 0px;
     in-out property <length> parallax-y: 0px;
 
-    /// While true, the layer alphas jump to their new values instead of
-    /// animating: what a fade does to the layer it leaves behind once the
-    /// incoming one covers it.
+    /// Set by Rust around a layer change. The view does not read it, so the
+    /// layer alphas jump to their new values either way.
     in-out property <bool> snap: true;
 
-    // ----- what Rust needs from the theme -----
     /// The palette's `crust`, the world's fill colour — read every frame, so it
     /// follows the 300ms palette transition.
     out property <color> crust: Theme.crust;

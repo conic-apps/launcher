@@ -6,8 +6,10 @@ use serde::{Deserialize, Serialize};
 
 /// Configuration for mirror sources used to download libraries and assets.
 ///
-/// You can customize the download URLs for Minecraft libraries and asset files.
-/// Each field provides a list of mirrors that will be attempted in order.
+/// The download URLs for Minecraft libraries and asset files can be
+/// customized. Each field provides a list of mirror URLs; the downloader picks
+/// the one with the fewest active connections and falls back to another if a
+/// download through it fails.
 #[derive(Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct MirrorConfig {
@@ -18,32 +20,17 @@ pub struct MirrorConfig {
     pub assets: Vec<String>,
 }
 
-// impl Default for MirrorConfig {
-//     fn default() -> Self {
-//         Self {
-//             libraries: vec![
-//                 "https://libraries.minecraft.net".to_string(),
-//                 "https://bmclapi2.bangbang93.com/maven".to_string(),
-//             ],
-//             assets: vec![
-//                 "https://resources.download.minecraft.net".to_string(),
-//                 "https://bmclapi2.bangbang93.com/assets".to_string(),
-//             ],
-//         }
-//     }
-// }
-
 /// Configuration for controlling download behavior.
 ///
-/// Includes concurrency limits, speed throttling, and mirror settings.
+/// Includes a connection cap, speed throttling, and mirror settings.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct DownloadConfig {
     /// Maximum number of concurrent download tasks.
     ///
-    /// This limits how many downloads can happen at the same time (i.e. max connections).
-    /// A higher number increases parallelism, but may use more system/network resources.
-    /// Default is `100`.
+    /// Stored as a launcher setting and surfaced in the UI, but the concurrent
+    /// downloader runs a fixed eight tasks at a time, so this value is not
+    /// consulted. Default is `100`.
     pub max_connections: usize,
 
     /// Maximum download speed (in bytes per second).

@@ -10,7 +10,7 @@
 //! same font collection and the same family fallback chain* the renderer uses,
 //! or the two drift apart and lines overflow or under-fill. That is why this
 //! shapes with `parley` against
-//! [`slint::fontique_011::shared_collection`] rather than with a font parser of
+//! `slint::fontique_011::shared_collection` rather than with a font parser of
 //! its own: it is the collection Slint registered its embedded families and its
 //! script fallbacks into.
 //!
@@ -35,8 +35,8 @@ use parley::{FontContext, Layout, LayoutContext};
 type Brush = ();
 
 /// The generic families Slint appends behind a `Text`'s own family, in the order
-/// `i-slint-common::sharedfontique::FALLBACK_FAMILIES` lists them. FemtoVG needs
-/// `SansSerif` first, which is why the order is not alphabetical.
+/// `i-slint-common::sharedfontique::FALLBACK_FAMILIES` lists them, which puts
+/// `SansSerif` first for FemtoVG.
 const FALLBACK_FAMILIES: [GenericFamily; 2] = [GenericFamily::SansSerif, GenericFamily::SystemUi];
 
 /// The same, for a run set in the monospace face. CSS resolves
@@ -63,7 +63,7 @@ pub struct SpanStyle {
     /// `font-family: monospace` asks for. It changes the *fallback chain* and
     /// nothing else: the family above is still tried first, so a caller that
     /// names a real monospace face gets that face, and a caller that leaves the
-    /// generic name — as `markdown-body.less` does — gets the platform's.
+    /// generic name — as GitHub's `.markdown-body` does — gets the platform's.
     pub mono: bool,
     /// The font size, in logical pixels.
     pub size: f32,
@@ -89,13 +89,10 @@ pub struct Cluster {
 /// how wide the run is, and where its decorations belong.
 #[derive(Debug, Clone, Default)]
 pub struct SpanMetrics {
-    /// The text the shaper actually laid out.
-    ///
-    /// Not the text that went in: parley collapses the runs of whitespace a
-    /// paragraph carries, and *its* clusters index into the collapsed string. A
-    /// run that asks for whitespace to be preserved gets its own text back
-    /// unchanged. Either way this is the string the cluster ranges address, and
-    /// the display list slices it rather than the original.
+    /// The text the shaper actually laid out, which — because every run here
+    /// asks the shaper to preserve whitespace — is the text that went in. The
+    /// clusters index into this string, and the display list slices it rather
+    /// than the input.
     pub text: String,
     /// The clusters, in reading order. Their advances add up to `width`.
     pub clusters: Vec<Cluster>,
@@ -151,9 +148,9 @@ impl Measurer {
     /// Creates a measurer over the caller's own font collection.
     ///
     /// A Slint app passes the one the renderer draws with:
-    /// `markdown::slint::fontique_011::shared_collection()`, which holds
-    /// the families embedded in the UI *and* the script fallbacks an
-    /// application registered with it.
+    /// `slint::fontique_011::shared_collection()`, which holds the families
+    /// embedded in the UI *and* the script fallbacks an application registered
+    /// with it.
     pub fn with_collection(collection: Collection) -> Self {
         // `shared: true` so a second measurer does not load the same font files
         // twice.

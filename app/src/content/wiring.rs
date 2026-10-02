@@ -45,8 +45,7 @@ pub(crate) fn push_grid_models(ui: &App) {
     ui_state.set_remote_cards(ModelRc::from(Rc::clone(&state.remote)));
 }
 
-/// `GameState.open-content(kind)` — the instance summary's preview rows. This
-/// replaces the placeholder `game.rs` used to install.
+/// `GameState.open-content(kind)` — the instance summary's preview rows.
 pub(crate) fn setup_open_content(ui: &App) {
     let weak = ui.as_weak();
     ui.global::<GameState>().on_open_content(move |kind| {
@@ -151,10 +150,9 @@ pub(crate) fn setup_source_switch(ui: &App) {
                 } else {
                     Platform::CurseForge
                 };
-                // The Vue re-mounts the sub-view on every switch, which
-                // resets its query, its page and its selections — the
-                // filters it seeds come back only if this list has not
-                // already been opened on this instance.
+                // A source switch resets the query, the page and the
+                // selections — the filters it seeds come back only if this list
+                // has not already been opened on this instance.
                 state.form = SearchForm::default();
             }
         }
@@ -239,8 +237,8 @@ pub(crate) fn setup_close(ui: &App) {
 }
 
 /// A remote card opens its detail panel, and a card's folder button reveals it.
-/// A local card has no detail view; the Vue's local cards only carry the folder
-/// and delete buttons.
+/// A local card has no detail view and carries only the folder and delete
+/// buttons.
 pub(crate) fn setup_card_selection(ui: &App) {
     {
         let weak = ui.as_weak();
@@ -266,8 +264,8 @@ pub(crate) fn setup_card_selection(ui: &App) {
             }) else {
                 return;
             };
-            // The Vue's `revealItemInDir`: the file manager opens with the file
-            // selected, which `open_external` would not do — it launches it.
+            // The file manager opens with the file selected, which
+            // `open_external` would not do — it launches it.
             if let Err(error) = crate::config_bridge::reveal_in_dir(&path) {
                 log::warn!("failed to reveal {path}: {error}");
             }
@@ -329,8 +327,8 @@ pub(crate) fn setup_save_deletion(ui: &App) {
     }
     {
         // The saves grid's trash button. It opens `ConfirmDeleteSave` rather than
-        // deleting, which is what `askDeleteSave` did — the dialog is the only
-        // thing standing between a mis-click and a lost world.
+        // deleting — the dialog is the only thing standing between a mis-click
+        // and a lost world.
         let weak = ui.as_weak();
         ui.global::<ContentState>()
             .on_request_delete_save(move |folder, level_name| {
@@ -370,9 +368,8 @@ pub(crate) fn setup_save_deletion(ui: &App) {
                 let result = content::saves::delete_save(&instance, &folder).await;
                 let _ = weak.upgrade_in_event_loop(move |ui| {
                     ui.global::<DeleteSaveState>().set_deleting(false);
-                    // The Vue caught the failure, logged it and left the dialog
-                    // open (`ConfirmDeleteSave.vue`), so a save that could not be
-                    // removed is still there to be retried.
+                    // A failure is logged and the dialog left open, so a save
+                    // that could not be removed is still there to be retried.
                     if let Err(error) = result {
                         log::error!("failed to delete the save {folder}: {error}");
                         return;
@@ -386,8 +383,7 @@ pub(crate) fn setup_save_deletion(ui: &App) {
     }
 }
 
-/// Favourites. Updated optimistically and rolled back if the write fails, which
-/// is what `useFavorites.ts` does.
+/// Favourites. Updated optimistically and rolled back if the write fails.
 pub(crate) fn setup_favorite_toggle(ui: &App) {
     let weak = ui.as_weak();
     ui.global::<ContentState>().on_toggle_favorite(move |id| {
@@ -451,9 +447,8 @@ pub(crate) fn setup_search_form(ui: &App) {
         let weak = ui.as_weak();
         ui.global::<ContentSearch>().on_go_to_page(move |page| {
             let Some(ui) = weak.upgrade() else { return };
-            // `function goToPage(page) { if (page < 1 || page > totalPages)
-            // return ; … }` — with no result yet the count is 0, so every page
-            // is out of range and nothing is requested.
+            // With no result yet the count is 0, so every page is out of range
+            // and nothing is requested.
             let (_, total_pages) = {
                 let state = controller();
                 let state = state.borrow();
@@ -469,9 +464,8 @@ pub(crate) fn setup_search_form(ui: &App) {
 }
 
 /// The version carousel: chip widths are what its offset is summed from, and
-/// the pagers step it. The Vue reads `chips[page * 6].offsetLeft` off the DOM
-/// instead; an index would land the other rows' widths on the version slots, so
-/// every chip reports its value.
+/// the pagers step it. An index would land the other rows' widths on the
+/// version slots, so every chip reports its value.
 pub(crate) fn setup_version_carousel(ui: &App) {
     {
         let weak = ui.as_weak();
@@ -579,9 +573,8 @@ pub(crate) fn setup_saves_and_screenshots(ui: &App) {
     }
 }
 
-/// Reads the stored favourites into the controller once at startup
-/// (`useFavorites.ts` keeps the same module-level cache), since every panel
-/// shares them.
+/// Reads the stored favourites into the controller once at startup, since every
+/// panel shares them.
 pub(crate) fn load_favorites(ui: &App) {
     let weak = ui.as_weak();
     crate::runtime::spawn(async move {
@@ -672,10 +665,9 @@ pub(crate) fn setup_grid_resize(ui: &App) {
             }
             // The search panel's rows wrap at the panel's width, so a resize
             // changes how many lines each of them takes — and with it the
-            // panel's height. In the Vue the DOM re-measures itself; here the
-            // row heights were computed for the old width and the rows then sat
-            // too close together (or too far apart) until something else
-            // re-measured them.
+            // panel's height. The row heights were computed for the old width,
+            // and the rows then sat too close together (or too far apart) until
+            // something else re-measured them.
             relayout_filters(&ui);
             relayout(&ui);
         });
@@ -687,10 +679,10 @@ pub(crate) fn favorite_key(platform: &str, kind: &str, id: &str) -> String {
 
 /// The instance's loader and Minecraft version, read off `instance.toml`.
 ///
-/// The remote lists are seeded from it (`ensureModrinthInitialized` in the Vue
-/// reads it off the instance store), so it is fetched on the runtime whenever a
-/// list opens rather than on the UI thread. An instance that cannot be read
-/// seeds nothing, which is the empty key the seeding below compares against.
+/// The remote lists are seeded from it, so it is fetched on the runtime whenever
+/// a list opens rather than on the UI thread. An instance that cannot be read
+/// seeds nothing, which is the empty-loader/version key the seeding below
+/// compares against.
 pub(crate) async fn instance_runtime(instance_id: &str) -> InstanceRuntime {
     instance::get_instance_by_id(instance_id)
         .await
@@ -698,11 +690,9 @@ pub(crate) async fn instance_runtime(instance_id: &str) -> InstanceRuntime {
         .unwrap_or_default()
 }
 
-/// `ensure…Initialized`: the loader and version the list opens on, seeded from
-/// the instance's runtime. `curseForgeInitializedFor` makes it happen once per
-/// instance per list — the Vue's `if (…InitializedFor === key) return` — so a
-/// list that is switched away from and back is *not* re-seeded: its selections
-/// lived in the component, which the `v-if` destroyed.
+/// The loader and version the list opens on, seeded from the instance's
+/// runtime. It happens once per instance per list, so a list that is switched
+/// away from and back is *not* re-seeded.
 pub(crate) fn initialize_list(
     state: &mut ContentController,
     list: &str,

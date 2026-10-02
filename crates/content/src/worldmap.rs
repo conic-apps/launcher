@@ -55,8 +55,8 @@ impl From<&WorldMapRequest> for WorldMapKey {
 
 /// A map render request: an axis-aligned rectangle of world blocks.
 ///
-/// The rectangle is centered on `(center_x, center_z)`; when the center is
-/// omitted it falls back to the world spawn. `dimension` is a namespaced id
+/// The rectangle is centered on `(center_x, center_z)`; when either coordinate
+/// is omitted it falls back to the world spawn. `dimension` is a namespaced id
 /// such as `minecraft:the_nether` and defaults to the overworld.
 #[derive(Debug, Clone)]
 pub struct WorldMapRequest {
@@ -176,8 +176,7 @@ mod tests {
             width: 64,
             height: 64,
             // No centre, so the render falls back to the world's own spawn —
-            // the `SpawnX` / `SpawnZ` above, which is the fallback the app's
-            // `(0, 0)` centre relies on.
+            // the `SpawnX` / `SpawnZ` above.
             center_x: None,
             center_z: None,
             dimension: None,

@@ -11,8 +11,7 @@ import { SlideTransition } from "../../../components/slide-transition.slint";
 import { ZoomTransition } from "../../../components/zoom-transition.slint";
 import { MultiplayerState, MultiplayerPlayer } from "../../../globals/multiplayer.slint";
 
-// One member row of a `.group-guests-list` (the `v-for` template of
-// `MultiplayerManager.vue`).
+// One member row of the group's player list.
 component PlayerRow inherits VerticalLayout {
     in property <MultiplayerPlayer> player;
 
@@ -23,7 +22,7 @@ component PlayerRow inherits VerticalLayout {
     HorizontalLayout {
         alignment: start;
         cross-axis-alignment: center;
-        // `span.tag { margin-left: 4px }`.
+        // 4px between the name and the tag.
         spacing: 4px;
 
         Text {
@@ -33,7 +32,7 @@ component PlayerRow inherits VerticalLayout {
             color: Theme.default-text-color.transparentize(0.1);
         }
 
-        // `<span class="tag" v-if="player.kind === 'HOST'">`.
+        // Only the host carries the tag.
         if root.player.kind == "HOST" : tag := Rectangle {
             width: tag-text.preferred-width + 8px;
             height: 15px;
@@ -49,10 +48,9 @@ component PlayerRow inherits VerticalLayout {
         }
     }
 
-    // `p.vendor { font-size: 12px; padding-top: 4px; opacity: 0.8 }`.
-    // `p.vendor { font-size: 12px; padding-top: 4px }` — the padding is above the
-    // line, and the box is as tall as the text needs it, so a vendor string that
-    // wraps grows the row instead of running past the card.
+    // The padding is above the line, and the box is as tall as the text needs
+    // it, so a vendor string that wraps grows the row instead of running past the
+    // card.
     Rectangle {
         width: 100%;
         height: vendor-text.preferred-height + 4px;
@@ -71,9 +69,7 @@ component PlayerRow inherits VerticalLayout {
     }
 }
 
-// One of the two group cards of the waiting screen (`.waiting-actions button`).
-// Both icons render 30px: the Vue passes 26 and 30, but the scoped
-// `button svg { width: 30px }` rule wins over the attribute.
+// One of the two group cards of the waiting screen. Both icons render at 30px.
 component WaitAction inherits Rectangle {
     in property <string> icon: "add-circle";
     in property <string> label: "";
@@ -86,7 +82,7 @@ component WaitAction inherits Rectangle {
     background: action-touch.pressed ? Theme.surface-2
         : action-touch.has-hover ? Theme.surface-2.with-alpha(0.85)
         : Theme.surface-0;
-    // `&:hover { transform: scale(1.01) }` / `&:active { scale(0.98) }`.
+    // A slight grow on hover and a slight shrink while pressed.
     transform-scale: action-touch.pressed ? 98% : action-touch.has-hover ? 101% : 100%;
     animate background, transform-scale { duration: 150ms; easing: ease; }
 
@@ -95,13 +91,12 @@ component WaitAction inherits Rectangle {
         padding-bottom: 12px;
         padding-left: 16px;
         padding-right: 16px;
-        // `p { margin-left: 8px }`.
+        // 8px between the icon and the text column.
         spacing: 8px;
         cross-axis-alignment: center;
-        // No `alignment`: the Vue's `button { width: 100% }` inside a flex row
-        // with no `justify-content` leaves the text column the rest of the row,
-        // which is the width `wrap: word-wrap` then wraps at. A main-axis
-        // `alignment` other than the default `stretch` sizes a child to its
+        // No `alignment`: the default `stretch` leaves the text column the rest
+        // of the row, which is the width `wrap: word-wrap` then wraps at. A
+        // main-axis `alignment` other than the default sizes a child to its
         // *preferred* width instead — the unwrapped line — so the wrapping would
         // never happen and a long locale would run past the card.
 
@@ -138,7 +133,7 @@ component WaitAction inherits Rectangle {
     }
 }
 
-// `.description.description-info`: the blue bordered note.
+// The blue bordered note.
 //
 // The paragraph is placed by hand rather than in a nested layout: a wrapping
 // `Text` one layout level away from the column that owns its width reports a
@@ -168,8 +163,8 @@ component InfoNote inherits Rectangle {
     }
 }
 
-// `.host-scan-progress`: the surface card with the status line, the
-// indeterminate bar and the Cancel button beside them.
+// The surface card with the status line, the indeterminate bar and the Cancel
+// button beside them.
 component ScanProgress inherits Rectangle {
     in property <string> status: "";
     in property <bool> show-countdown: false;
@@ -182,7 +177,7 @@ component ScanProgress inherits Rectangle {
 
     HorizontalLayout {
         padding: 16px;
-        // The Vue's `margin-left: 16px` on the button.
+        // 16px between the text and the button.
         spacing: 16px;
         cross-axis-alignment: start;
 
@@ -208,7 +203,7 @@ component ScanProgress inherits Rectangle {
                 }
             }
 
-            // `p { margin-bottom: 10px }`.
+            // 10px below the status line.
             Rectangle { height: 10px; background: transparent; }
 
             BaseProgress { loading: true; value: 0; max: 1; }
@@ -221,9 +216,8 @@ component ScanProgress inherits Rectangle {
     }
 }
 
-// ----- the seven screens -----
+// The seven screens.
 
-// `.waiting`.
 component WaitingScreen inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
@@ -267,7 +261,6 @@ component WaitingScreen inherits VerticalLayout {
     }
 }
 
-// `.host-scan`.
 component HostScanScreen inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
@@ -317,16 +310,13 @@ component HostScanScreen inherits VerticalLayout {
     }
 }
 
-// `.host-ready`.
 component HostReadyScreen inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
 
-    // "已复制！" swaps in for the invite code with
-    // `<Transition :name="showCopyMessage ? 'zoom-out' : 'zoom-in'"
-    // mode="out-in">`. Both halves are driven by `MultiplayerState.code-copied`
-    // (the manager's 1.5s timer puts it back).
+    // "已复制！" swaps in for the invite code, out-in. Both halves are driven by
+    // `MultiplayerState.code-copied` (the manager's 1.5s timer puts it back).
     private property <bool> copied: MultiplayerState.code-copied;
     private property <bool> copy-shown: false;
     private property <bool> copy-leaving: false;
@@ -370,14 +360,12 @@ component HostReadyScreen inherits VerticalLayout {
     }
 
     HorizontalLayout {
-        // `gap: 16px`.
+        // 16px between the two cards.
         spacing: 16px;
         padding-top: 16px;
 
-        // `.group-actions` is 44% and `.group-guests-list` 56%, which in the Vue
-        // overflow by one gap and `flex-shrink` reclaims it in proportion — so
-        // each cell is 44/56 of `W - 16`. A stretch factor says that directly
-        // and keeps saying it when the gap changes.
+        // The two cells are 44% and 56% of the row less the gap. A stretch factor
+        // says that directly and keeps saying it when the gap changes.
         actions := Rectangle {
             horizontal-stretch: 44;
             background: Theme.surface-0;
@@ -390,18 +378,16 @@ component HostReadyScreen inherits VerticalLayout {
 
                 VerticalLayout {
                     alignment: start;
-                    // `.group-actions` is `align-items: center`, so the Vue's
-                    // `<p>` shrink-to-fits, is capped at the card's width, and
-                    // sits centred. `cross-axis-alignment: center` would hand over
-                    // the *unwrapped* width and so never wrap; stretching the box
-                    // and centring the glyphs inside it puts the text's left edge
-                    // in the same place either way, and gives the wrap somewhere
-                    // to happen.
+                    // The label shrink-to-fits, capped at the card's width.
+                    // `cross-axis-alignment: center` would hand over the
+                    // *unwrapped* width and so never wrap; stretching the box and
+                    // centring the glyphs inside it puts the text's left edge in
+                    // the same place either way, and gives the wrap somewhere to
+                    // happen.
                     cross-axis-alignment: stretch;
-                    // `p { margin-top: 6px }` then `p { margin-top: 12px }`, as
-                    // paddings — the column carries two different gaps and
-                    // `space-between` on the card is what put a third between the
-                    // ends.
+                    // 6px above the label and 12px below it, as paddings. The
+                    // column carries two different gaps; `space-between` on the
+                    // card puts a third between the ends.
                     padding-top: 6px;
                     spacing: 12px;
 
@@ -418,9 +404,6 @@ component HostReadyScreen inherits VerticalLayout {
                         phase: root.copy-leaving ? "leave" : root.copy-phase;
                         direction: MultiplayerState.code-copied ? "out" : "in";
 
-                        // The Vue swaps the code for the copied bubble with
-                        // `<Transition :name="showCopyMessage ? 'zoom-out' :
-                        // 'zoom-in'" mode="out-in">`.
                         if root.copy-shown : Rectangle {
                             width: 100%;
                             height: 16px;
@@ -446,7 +429,7 @@ component HostReadyScreen inherits VerticalLayout {
                                 color: Theme.default-text-color.transparentize(0.1);
                             }
 
-                            // `<p @click="copyCode">`.
+                            // Clicking the code copies it.
                             code-touch := TouchArea {
                                 width: parent.width;
                                 height: parent.height;
@@ -456,11 +439,9 @@ component HostReadyScreen inherits VerticalLayout {
                     }
                 }
 
-                // `<BaseButton @click="leaveRoom">` — a bare child of the card's
-                // column, so `alignment: space-between` puts it at the bottom and
-                // the default cross-axis stretch makes it the card's width. The
-                // `Rectangle` wrapper it used to be wrapped in existed only to
-                // hand it a `parent.width` to read.
+                // A bare child of the card's column, so `alignment: space-between`
+                // puts it at the bottom and the default cross-axis stretch makes
+                // it the card's width.
                 BaseButton {
                     horizontal-stretch: 1;
                     text: @tr("Multiplayer" => "Close connection");
@@ -469,7 +450,7 @@ component HostReadyScreen inherits VerticalLayout {
             }
         }
 
-        // `.group-guests-list`: 56% of the row.
+        // The player list, 56% of the row.
         guests := Rectangle {
             horizontal-stretch: 56;
             background: Theme.surface-0;
@@ -487,9 +468,9 @@ component HostReadyScreen inherits VerticalLayout {
                     player: player;
                 }
 
-                // `p.message`; the italic is dropped: Slint has no oblique
-                // style for the embedded variable font. Its `margin-top: 8px` is
-                // the list's own `gap: 8px` once there are rows to separate from,
+                // The waiting message; the italic is dropped: Slint has no
+                // oblique style for the embedded variable font. The 8px above it
+                // is the list's own spacing once there are rows to separate from,
                 // so it is a padding here — where the message is the list's only
                 // child and the gap has nothing to sit between, and where a
                 // `Text` cannot carry the padding itself.
@@ -511,7 +492,6 @@ component HostReadyScreen inherits VerticalLayout {
     }
 }
 
-// `.guest-input-code`.
 component GuestCodeInputScreen inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
@@ -535,14 +515,11 @@ component GuestCodeInputScreen inherits VerticalLayout {
 
             Rectangle { height: 16px; background: transparent; }
 
-            // `display: flex; width: 100%; align-items: center; gap: 8px`, and
-            // the field is *before* the button in the Vue's markup: `flex: 1` on
-            // the field, `flex-shrink: 0; width: fit-content` on the button. So
-            // the order here has to be the field then the button, under the
-            // default `stretch` — the field takes the free space and the button
-            // lands at the end. Written the other way round it cannot work: a
-            // `horizontal-stretch` child has to be the one that grows, and it
-            // would push the button to the left of the row rather than the right.
+            // The field comes before the button, under the default `stretch` —
+            // the field takes the free space and the button lands at the end.
+            // Written the other way round it cannot work: a `horizontal-stretch`
+            // child has to be the one that grows, and it would push the button to
+            // the left of the row rather than the right.
             row := HorizontalLayout {
                 spacing: 8px;
                 cross-axis-alignment: center;
@@ -564,7 +541,6 @@ component GuestCodeInputScreen inherits VerticalLayout {
     }
 }
 
-// `.guest-joining`.
 component GuestJoiningScreen inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
@@ -576,7 +552,6 @@ component GuestJoiningScreen inherits VerticalLayout {
     }
 }
 
-// `.guest-ready`.
 component GuestReadyScreen inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
@@ -594,7 +569,7 @@ component GuestReadyScreen inherits VerticalLayout {
             spacing: 8px;
             alignment: space-between;
 
-            // `div { gap: 12px }` around the member rows.
+            // 12px between the member rows.
             players := VerticalLayout {
                 alignment: start;
                 spacing: 12px;
@@ -613,13 +588,12 @@ component GuestReadyScreen inherits VerticalLayout {
     }
 }
 
-// `.exception`.
 component ExceptionScreen inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
 
-    // `p.description.description-error` with the fault's code and message.
+    // The fault's code and message.
     if MultiplayerState.has-fault : Rectangle {
         background: Theme.red.with-alpha(0.15);
         border-width: 1px;
@@ -650,7 +624,7 @@ component ExceptionScreen inherits VerticalLayout {
         }
     }
 
-    // The Vue's `v-else`, without the fault's code and message.
+    // The generic message, without the fault's code and message.
     if !MultiplayerState.has-fault : Rectangle {
         background: Theme.red.with-alpha(0.15);
         border-width: 1px;
@@ -682,26 +656,19 @@ component ExceptionScreen inherits VerticalLayout {
     }
 }
 
-// The manager body (`MultiplayerManager.vue`): the title row with the NAT
-// label, the screen swap and the bottom button bar.
+// The manager body: the title row with the NAT label, the screen swap and the
+// bottom button bar.
 //
-// The Vue's `.buttons` is `position: absolute; bottom: 24px`, but its
-// containing block is the full-window `.dialog` scrim -- no ancestor between it
-// and the panel is positioned -- so the bar actually lands at the bottom of the
-// *window*, detached from the panel it is meant to sit in, while the panel
-// still reserves the manager's 48px `padding-bottom`. The bar is laid out in
-// flow here instead: the same 24px it would sit from the panel's bottom edge,
-// with the `margin-top: 16px` the rule already declares above it.
+// The bar is laid out in flow rather than absolutely: it sits 24px from the
+// panel's bottom edge, with the 16px above it.
 export component MultiplayerManager inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
 
-    // ----- the screen swap -----
-    // `<Transition mode="out-in" :name="transitionName">` (see `CreateInstance`
-    // for the state machine): the mounted screen plays its 80ms leave, the slot
-    // switches, and the arriving screen moves from its enter rest to `shown` a
-    // frame later.
+    // The out-in swap (see `CreateInstance` for the state machine): the mounted
+    // screen plays its 80ms leave, the slot switches, and the arriving screen
+    // moves from its enter rest to `shown` a frame later.
     private property <string> screen: MultiplayerState.screen;
     private property <string> shown: "";
     private property <bool> leaving: false;
@@ -709,19 +676,17 @@ export component MultiplayerManager inherits VerticalLayout {
     private property <bool> leave-armed: false;
     private property <bool> enter-armed: false;
 
-    // `scanning` in the Vue's `watch(scanning, ...)`. The comparison is
-    // mirrored so a `changed` handler can see it — a qualified global property
-    // cannot be watched directly.
+    // The comparison is mirrored onto a local property so a `changed` handler can
+    // see it — a qualified global property cannot be watched directly.
     private property <bool> scanning: MultiplayerState.state == "host-scanning";
 
     init => {
         root.shown = root.screen;
-        // `multiplayerStore.init()` in the Vue's `<script setup>`.
+        // Start the multiplayer layer.
         MultiplayerState.start();
     }
 
-    // `watch(scanning, (active) => { ... }, { immediate: true })`: a scan
-    // starts over from 60 every time one begins.
+    // A scan starts over from 60 every time one begins.
     changed scanning => {
         if root.scanning {
             MultiplayerState.scan-remaining = 60;
@@ -765,15 +730,14 @@ export component MultiplayerManager inherits VerticalLayout {
         }
     }
 
-    // `setInterval(..., 1500)` behind `showCopyMessage`.
+    // The 1.5s timer behind the copied message.
     copy-timer := Timer {
         interval: 1500ms;
         running: MultiplayerState.code-copied;
         triggered => { MultiplayerState.code-copied = false; }
     }
 
-    // The LAN-scan countdown (`watch(scanning)` + the Vue's `setInterval`, which
-    // `stopScanCountdown` clears at zero and `onUnmounted`).
+    // The LAN-scan countdown.
     //
     // The timer is driven purely by its `running` binding, like the add-account
     // dialog's device-code countdown: `restart()` only restarts a timer that has
@@ -786,9 +750,8 @@ export component MultiplayerManager inherits VerticalLayout {
         triggered => { MultiplayerState.scan-remaining -= 1; }
     }
 
-    // ----- the header -----
     HorizontalLayout {
-        // `.title { padding: 4px 0 }` plus `.header { margin-bottom: 16px }`.
+        // 4px above the title and 20px below it.
         padding-top: 4px;
         padding-bottom: 20px;
         spacing: 8px;
@@ -802,8 +765,7 @@ export component MultiplayerManager inherits VerticalLayout {
             color: Theme.default-text-color.transparentize(0.1);
         }
 
-        // `p.nat { margin-left: auto; font-size: 14px; opacity: 0.7 }`, only
-        // while the store knows the local peer.
+        // Shown only while the local peer is known.
         if MultiplayerState.show-nat : Text {
             text: @tr("Multiplayer" => "Your network environment: {}", MultiplayerState.local-nat-label);
             font-size: 14px;
@@ -814,7 +776,6 @@ export component MultiplayerManager inherits VerticalLayout {
         }
     }
 
-    // ----- the screen -----
     if root.shown == "waiting" : SlideTransition {
         phase: root.leaving ? "leave" : root.arrive-phase;
         direction: MultiplayerState.screen-direction;
@@ -851,7 +812,7 @@ export component MultiplayerManager inherits VerticalLayout {
         ExceptionScreen { }
     }
 
-    // `.buttons { margin-top: 16px }`.
+    // 16px above the button bar.
     Rectangle { height: 16px; background: transparent; }
 
     buttons := Rectangle {
@@ -862,8 +823,7 @@ export component MultiplayerManager inherits VerticalLayout {
         HorizontalLayout {
             spacing: 12px;
 
-            // The `v-if="...multiplayerManagerComponent === 'guestCodeInput'"`
-            // branch: a "Back" button that closes the join-code screen.
+            // A "Back" button that closes the join-code screen.
             if root.screen == "guestCodeInput" : BaseButton {
                 horizontal-stretch: 1;
                 text: @tr("Multiplayer" => "Back");

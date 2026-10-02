@@ -17,7 +17,7 @@
 
 ## これは何
 
-Conic Launcher はモダンなデスクトップ Minecraft ランチャーです。コアロジックは Rust で実装され、UI は Tauri 2 + Vue 3 で構成されています。インストールサイズが小さく、起動が高速で、リソース消費が少なく、 carbon emission の削減にも貢献します。
+Conic Launcher はモダンなデスクトップ Minecraft ランチャーです。コアロジックは Rust で実装され、UI はネイティブ UI ツールキットの [Slint](https://slint.dev) で構築されています。インストールサイズが小さく、起動が高速で、リソース消費が少なく、炭素排出の削減にも貢献します。
 
 インスタンスの作成、ローダーのインストール、Mod の検索、フレンドを招待して一緒にプレイ、ゲームの起動とプレイ時間の統計まで——すべてのワークフローを一つのアプリで完結できます。
 
@@ -98,14 +98,13 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## ソースからビルド
 
-[Rust 1.88+](https://rustup.rs/)、[Node.js 24](https://nodejs.org/)、[pnpm](https://pnpm.io/) がインストールされていることを確認し、[Tauri の前提条件](https://tauri.app/start/prerequisites/) に従って各プラットフォームの依存関係を準備してください。
+[Rust 1.88+](https://rustup.rs/) がインストールされていることを確認してください。Linux では、[ビルド依存関係](../../AGENTS.md#linux-build-dependencies) もインストールしてください。
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
 cd launcher
-pnpm install
-pnpm tauri dev      # 開発・デバッグ
-pnpm tauri build    # 本番ビルド
+cargo run              # 開発・デバッグ
+cargo build --release  # 本番ビルド
 ```
 
 ## コントリビュート
@@ -113,16 +112,19 @@ pnpm tauri build    # 本番ビルド
 [Issue](https://github.com/conic-apps/launcher/issues/new/choose) や Pull Request（`dev` ブランチを対象）の提出を歓迎します。提出前に以下を実行してください：
 
 ```bash
-pnpm check
+cargo fmt --all -- --check
+cargo check
+cargo clippy --all-targets --release -- -D warnings
+cargo test
 ```
 
 ## アーキテクチャ
 
 <div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="アーキテクチャ図：Vue 3 フロントエンドが Tauri IPC 経由で Rust コアと通信、下位にドメイン別 crates モジュール">
+  <img src="../../docs/screenshots/architecture.png" width="100%" alt="アーキテクチャ図：Slint インターフェースがドメイン別 Rust crates に直接接続">
 </div>
 
-フロントエンド（Vue 3 + Pinia）は Tauri IPC 経由で Rust の機能と通信します。`core` は Tauri アプリの組み立てを担当し、具体的な機能はドメインごとに `crates/*` ワークスペースモジュールに分割され、独立して進化し、必要に応じて組み合わせられます。
+インターフェースは [Slint](https://slint.dev) で構築され、ドメイン crates に直接接続されています——IPC 層はありません。`app/` はバイナリと `.slint` ツリーを保持し、各機能はそれぞれの `crates/*` ワークスペースモジュールに存在するため、独立して進化し、必要に応じて組み合わせられます。
 
 ## ライセンス
 

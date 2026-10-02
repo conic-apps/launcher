@@ -5,27 +5,24 @@
 import { Theme } from "../theme.slint";
 import { FocusManager } from "../globals/focus.slint";
 
-// Segmented select (src/components/BaseSelect.vue).
+// Segmented select.
 //
 // A row of options with 1px separators, the active option filled with the
-// lavender accent. The Vue component has no explicit width: it shrinks to its
-// content and grows to fit it, which Slint handles by deriving the component's
-// preferred size from the inner layout.
+// lavender accent. It shrinks to its content and grows to fit it, so the
+// component's preferred size is derived from the inner layout.
 export component BaseSelect inherits Rectangle {
     in property <[string]> options;
     in property <[string]> display-name;
     /// Which options can be picked, parallel to `options`; shorter than
     /// `options` means "the remaining ones are enabled".
     ///
-    /// The Vue takes the *names* that cannot be picked (`disabled: string[]`).
     /// Slint arrays have no `contains` (only the experimental `index-of`), so
-    /// the caller derives a flag per option instead.
+    /// the caller derives a flag per option instead of a list of disabled names.
     in property <[bool]> option-enabled: [];
     in-out property <string> value;
     callback selected(string);
 
-    // CSS: option height 22px + 1px border on each side of the (auto-height)
-    // wrapper => 24px total (box-sizing: border-box).
+    // The option's 22px height plus a 1px border on each side => 24px total.
     //
     // The width is the options' own width plus those borders: without it the
     // select has no preferred size, and a layout would stretch it (and its last
@@ -43,7 +40,6 @@ export component BaseSelect inherits Rectangle {
             width: option-label.preferred-width + 16px;
             height: 22px;
             background: root.value == option ? Theme.lavender : transparent;
-            // CSS `.disabled { opacity: 0.4; }`
             opacity: index < root.option-enabled.length && !root.option-enabled[index] ? 0.4 : 1.0;
 
             option-label := Text {
@@ -54,7 +50,7 @@ export component BaseSelect inherits Rectangle {
                 x: 8px;
             }
 
-            // separator (all but the last option)
+            // Separator, all but the last option.
             if index < root.options.length - 1 : Rectangle {
                 x: parent.width - 1px;
                 width: 1px;
@@ -63,7 +59,7 @@ export component BaseSelect inherits Rectangle {
             }
 
             TouchArea {
-                // CSS `pointer-events: none` on a disabled option.
+                // A disabled option takes no pointer events.
                 enabled: index >= root.option-enabled.length || root.option-enabled[index];
                 clicked => {
                     FocusManager.clear();

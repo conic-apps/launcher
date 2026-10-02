@@ -2,15 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Background-music state (mirrors src/store/music.ts).
+// Background-music state.
 //
-// The store was one Pinia store with a module-level audio graph beside it. Here
-// the graph lives in `slint-music` (the mirror of `crates/music`) and this
-// global carries what the UI reads: the playlist, the transport flags, the two
-// clocks and the bar levels the footer visualizer draws. `panel-open` and
-// `playlist-open` are the one piece of state that stays here rather than in Rust
-// — the store kept `panelOpen` in itself only so the title bar could reach it,
-// and `showPlaylist` was a `ref` inside `MusicPlayer.vue` all along.
+// The audio graph lives in the `music` crate and this global carries what the
+// UI reads: the playlist, the transport flags, the two clocks and the bar
+// levels the footer visualizer draws. `panel-open` and `playlist-open` are the
+// one piece of state that stays here rather than in Rust, because the title bar
+// has to reach them.
 
 /// One entry of the playlist, as `list_music_files` returns it.
 export struct MusicTrack {
@@ -21,9 +19,8 @@ export struct MusicTrack {
 }
 
 export global MusicState {
-    // ----- playlist -----
     in-out property <[MusicTrack]> tracks: [];
-    /// Which track is selected, or -1 for none (`currentIndex`).
+    /// Which track is selected, or -1 for none.
     in-out property <int> current-index: -1;
     /// The selected track's name, empty when nothing is selected. Resolved here
     /// rather than pushed from Rust so the two cannot disagree.
@@ -32,40 +29,34 @@ export global MusicState {
             ? MusicState.tracks[MusicState.current-index].name
             : "";
 
-    // ----- transport -----
     in-out property <bool> is-playing: false;
     in-out property <bool> shuffle: false;
     in-out property <bool> repeat: false;
     /// Whether the transport is waiting on audio: a selection being opened, or
-    /// the player running out of buffered samples. The store had no equivalent —
-    /// an `<audio>` element could not be seen to be behind — so this is the one
-    /// piece of state the panel has that the Vue did not.
+    /// the player running out of buffered samples. The audio backend cannot be
+    /// asked whether it is behind, so the state is tracked here.
     in-out property <bool> buffering: false;
-    /// `currentTime` and `duration`, in seconds.
+    /// Playback position and total length, in seconds.
     in-out property <float> current-time: 0;
     in-out property <float> duration: 0;
-    /// The panel's two clocks, the `formatTime` of `MusicPlayer.vue` (`mm:ss`,
-    /// zero-padded, `00:00` for anything that is not a time). Composed in Rust
-    /// because Slint has no number-to-string conversion.
+    /// The panel's two clocks (`mm:ss`, zero-padded, `00:00` for anything that
+    /// is not a time). Composed in Rust because Slint has no number-to-string
+    /// conversion.
     in-out property <string> current-time-text: "00:00";
     in-out property <string> duration-text: "00:00";
-    /// The `progress` getter: 0 while the duration is unknown, so the bar is
-    /// empty rather than a division by zero.
+    /// 0 while the duration is unknown, so the bar is empty rather than a
+    /// division by zero.
     in-out property <float> progress: 0;
 
-    // ----- footer visualizer (BeatMap.vue) -----
     /// One bar height per bar, 0..1 of the visualizer's height, already mapped
-    /// and normalised by `src/music.rs`. The component only draws them.
+    /// and normalised by `app/src/music/`. The component only draws them.
     in-out property <[float]> levels: [];
-    /// Whether the bars show a live spectrum or the idle baseline: the Vue's
-    /// `analyser && hasTrack && isPlaying`.
+    /// Whether the bars show a live spectrum or the idle baseline.
     in-out property <bool> live: false;
 
-    // ----- panel -----
     in-out property <bool> panel-open: false;
     in-out property <bool> playlist-open: false;
 
-    // ----- transport actions (the store's actions) -----
     callback toggle-play();
     // `pause` and `resume` rather than two `toggle-play`s: the progress bar stops
     // the music for the duration of a drag and puts back what was there, and a
@@ -80,12 +71,10 @@ export global MusicState {
     callback cycle-repeat();
     callback open-music-folder();
 
-    // ----- panel actions -----
     callback close-panel();
     callback toggle-playlist();
 
-    // ----- visualizer -----
     /// The visualizer reports its bar count, which is what decides the analyser's
-    /// resolution (`BeatMap.vue`'s `ResizeObserver` → `setAnalyserFftSize`).
+    /// resolution.
     callback resized(int);
 }

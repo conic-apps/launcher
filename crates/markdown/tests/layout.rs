@@ -734,9 +734,9 @@ fn a_squeezed_table_never_narrows_a_column_past_its_longest_word() {
 
 #[test]
 fn a_link_rule_sits_below_the_text_and_above_the_box_top() {
-    // The rule used to be placed at `underline_offset - descent`, which is
-    // negative for every font and clamped to the box's top edge — so a hovered
-    // link got a line through the tops of its letters instead of under them.
+    // The rule must land below the middle of the glyphs' box. Placing it at
+    // `underline_offset - descent` is negative for every font and clamps to the
+    // box's top edge — a line through the tops of the letters, not under them.
     let items = render("[label](https://example.com)\n");
     let link = items
         .iter()

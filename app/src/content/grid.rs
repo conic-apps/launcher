@@ -8,10 +8,11 @@ use super::*;
 
 /// Lays the cards out and returns the grid's height.
 ///
-/// The cards are positioned by hand because Slint has no wrapping grid; doing it
-/// here also means a resize rewrites the model with `set_row_data` and the same
-/// elements move, keeping their hover and their decoded icons, where a rebuilt
-/// model would re-create every one of them.
+/// The cards are positioned by hand — Slint's `GridLayout` does not wrap and a
+/// wrapping `FlexboxLayout` is measured at its own preferred width — and doing
+/// it here also means a resize rewrites the model with `set_row_data` and the
+/// same elements move, keeping their hover and their decoded icons, where a
+/// rebuilt model would re-create every one of them.
 pub(crate) fn layout(cards: &mut [ContentCard], grid_width: i32, card_height: i32) -> i32 {
     let content = (grid_width - 2 * GRID_PAD_X).max(0);
     let columns = (((content + GRID_GAP) / (GRID_MIN_CARD + GRID_GAP)).max(1)) as usize;

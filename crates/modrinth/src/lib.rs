@@ -2,32 +2,23 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/modrinth`: the Modrinth API client.
+//! The Modrinth API client.
 //!
-//! The original is a Tauri plugin, so every function is wrapped in a
-//! `#[command]` that exists only to hand the value back over IPC. There is no
-//! plugin state and no `Channel` anywhere in it, so the mirror drops the whole
-//! command layer and keeps the functions themselves — the two files can be
-//! diffed against each other line for line apart from that.
+//! The requests depend on three base URLs (the MCIM mirror for everything the
+//! mirror serves, the official API for the one endpoint it does not), the
+//! `shared` HTTP client and URL builder, and response handling in which
+//! `get_versions_from_hashes` treats a client error as "no hash matched".
 //!
-//! Everything the requests depend on is kept as it is: the same three base
-//! URLs (the MCIM mirror for everything the mirror serves, the official API for
-//! the one endpoint it does not), the same `shared` HTTP client and URL
-//! builder, and the same response handling, including `get_versions_from_hashes`
-//! treating a client error as "no hash matched".
+//! Two deliberate choices shape the public surface:
 //!
-//! Two deviations, both deliberate:
-//!
-//!   * `get_multiple_projects` is **not** mirrored — it is broken upstream. It
-//!     hands a `&[&str]` to `RequestBuilder::query`, and reqwest serializes a
-//!     top-level sequence through `serde_urlencoded`'s pair serializer, which
-//!     rejects a bare string, so the request never carries a query string and
-//!     the command always fails. `get_projects` — which the same file already
-//!     has, and which `crates/content/src/mods/remote.rs` already uses — takes
-//!     the same ids as one JSON parameter and works.
-//!   * The two request structs' fields are `pub`. Upstream they are private
-//!     because Tauri deserializes them from the IPC payload and nothing else
-//!     constructs them; here the app builds them directly.
+//!   * `get_multiple_projects` is omitted: it is broken upstream. It hands a
+//!     `&[&str]` to `RequestBuilder::query`, and reqwest serializes a top-level
+//!     sequence through `serde_urlencoded`'s pair serializer, which rejects a
+//!     bare string, so the request never carries a query string and the call
+//!     always fails. `get_projects`, which takes the same ids as one JSON
+//!     parameter, works and is what `crates/content/src/mods/remote.rs` uses.
+//!   * The two request structs' fields are `pub` so the app can build them
+//!     directly.
 
 pub mod error;
 
@@ -38,7 +29,6 @@ use shared::{HTTP_CLIENT, UrlExt};
 use std::collections::HashMap;
 use url::Url;
 
-// const BASE_URL: &str = "https://api.modrinth.com";
 const BASE_URL: &str = "https://mod.mcimirror.top/modrinth";
 const OFFICIAL_BASE_URL: &str = "https://api.modrinth.com";
 // MCIM translate API for project descriptions.
@@ -123,7 +113,8 @@ pub async fn list_project_versions(
 
 /// Look up the versions matching the given file hashes.
 ///
-/// `algorithm` accepts `sha1`, `sha512`, `sha256`, `md5` and `murmd5`.
+/// `algorithm` is the hash algorithm the API is asked for; this crate passes
+/// `sha512`.
 /// The response maps each requested hash to its version. Hashes that did not
 /// match are simply absent; when none of the hashes match the API answers with
 /// a client error, which is treated as an empty result here.

@@ -6,18 +6,16 @@
 
   Hand-written rather than generated, because every key here is a decision:
 
-    * `CFBundleIdentifier` — the Slint app uses `app.conicmc.launcher.slint`,
-      matching `single_instance::APP_ID`. macOS derives several things from it
-      (the TCC permission prompts, the notification centre identity, whether two
-      copies are "the same app"), so it has to be the constant in the Rust code
-      and not a second literal that can drift from it. Note this is what makes the
-      app distinct from the old Tauri build of the same product, which is the
-      point: both can be installed at once.
+    * `CFBundleIdentifier` — the app uses `app.conicmc.launcher.slint`, matching
+      `single_instance::APP_ID`. macOS derives several things from it (the TCC
+      permission prompts, the notification centre identity, whether two copies
+      are "the same app"), so it has to be the constant in the Rust code and not
+      a second literal that can drift from it.
 
     * `CFBundleExecutable` — must equal the file name in `Contents/MacOS/`, and
       that is the *binary* name, not the product name. They differ in case only.
 
-    * `LSMinimumSystemVersion` — 11.0, which is what winit 0.30 requires. It has
+    * `LSMinimumSystemVersion` — 11.0. It has
       to be at least as high as whatever the built binary asks for, and the two
       architectures ask for different things: an `aarch64-apple-darwin` build
       carries `LC_BUILD_VERSION minos 11.0` while an `x86_64-apple-darwin` build
@@ -27,9 +25,8 @@
       `tools/package-macos.sh` asserts this one-directionally — the plist may
       promise more than the binary needs, never less.
 
-    * `LSApplicationCategoryType` — `public.app-category.games`. Taun `bundle.macOS`
-      did not set this, so the Tauri app had no category in Finder's Get Info and
-      sorted nowhere useful in Spotlight.
+    * `LSApplicationCategoryType` — `public.app-category.games`, so Finder's Get
+      Info and Spotlight categorise the app as a game.
 
     * `NSHighResolutionCapable` — the app is Retina-native through Skia and
       femtovg; this is what makes AppKit hand it a backing scale of 2 rather than
@@ -39,9 +36,10 @@
       force the light appearance regardless of the user's setting, and the app
       draws its own theme (Catppuccin, four variants) into the window.
 
-    * `CFBundleIconFile` — the `.icns` in `Contents/Resources/`, without the
-      extension. `CFBundleIconName` is deliberately *not* set: that key is for
-      named assets in an asset catalog, which this bundle has none of.
+    * `CFBundleIconFile` — the `.icns` in `Contents/Resources/`; the extension
+      is optional and is included here. `CFBundleIconName` is deliberately
+      *not* set: that key is for named assets in an asset catalog, which this
+      bundle has none of.
 -->
 <plist version="1.0">
 <dict>

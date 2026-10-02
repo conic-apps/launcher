@@ -8,12 +8,12 @@ import { BaseLoading } from "base-loading.slint";
 import { DescriptionTooltip } from "../globals/tooltip.slint";
 import { FocusManager } from "../globals/focus.slint";
 
-// A single settings row (src/components/SettingItem.vue).
+// A single settings row.
 //
-// Layout mirrors the CSS: 10/16/10/14 padding, a 40px icon column with an 8px
-// right margin, a text column (13px title, 12px 60%-opacity description) and a
-// right-aligned control area. Navigable rows show a chevron and get the hover /
-// active background; rows with a control use the caller's children.
+// Layout: 10/16/10/14 padding, a 40px icon column with an 8px right margin, a
+// text column (13px title, 12px description at ~51% alpha) and a right-aligned
+// control area. Navigable rows show a chevron and get the hover / active
+// background; rows with a control use the caller's children.
 export component SettingItem inherits Rectangle {
     in property <string> title: "";
     // Optional blue tag chips appended to the title (Java runtime versions).
@@ -21,10 +21,8 @@ export component SettingItem inherits Rectangle {
     in property <string> description: "";
     in property <string> icon: "";
     /// The row's icon and chevron are drawn stroke-only, with the fill pass
-    /// suppressed — the Vue's `icon-fill="none"`, which it forwarded to both
-    /// `<AppIcon>`s (the row's icon and the trailing chevron). It is a switch
-    /// rather than a colour because that is all the original ever used it for:
-    /// `:fill="none"` over a shared `currentColor` stroke.
+    /// suppressed on both. It is a switch rather than a colour because that is
+    /// all it is ever used for: suppressing the fill over a shared stroke.
     ///
     /// The five rows that pass it (`moon`, `bell`, `server` — in the settings
     /// screens and the wizard's palette screen) draw stroke-only glyphs either
@@ -41,30 +39,26 @@ export component SettingItem inherits Rectangle {
     in property <bool> resetable: false;
     /// Shows a small spinner after the title while the row's value is loading.
     in property <bool> loading: false;
-    /// A second string drawn after the title, in the Vue's own styling for it:
-    /// `CreateInstance.vue` puts `<span style="font-size: 14px; opacity: 0.8;
-    /// margin-right: 8px">{{ minecraftVersion }}</span>` in the title slot, so a
-    /// row can name the value the rest of it is about. A `title` property cannot
-    /// carry it, and the Vue's `title` *slot* has no counterpart here: Slint's
-    /// only slot is the anonymous `@children`, which this component already
-    /// spends on its trailing chevron.
+    /// A second string drawn after the title, so a row can name the value the
+    /// rest of it is about. A `title` property cannot carry it, and there is no
+    /// named slot: Slint's only slot is the anonymous `@children`, which this
+    /// component already spends on its trailing chevron.
     in property <string> title-suffix: "";
-    // Hover/pressed state driven by the parent for rows that are not navigable
-    // but still clickable (the collapse header).
+    // Hover/pressed state a parent can drive for rows that are not navigable
+    // but still clickable.
     in property <bool> hovered: false;
     in property <bool> pressed: false;
     in property <bool> item-disabled: false;
     // Whether this row sits on the top / bottom edge of the group it belongs to.
     //
-    // The Vue rounds the group's first and last child and nothing else
-    // (`.setting-items > div:first-child` / `:last-child`) — there is no
-    // `overflow` on `.setting-items`, so the corners are the rows' own. Slint
-    // has no `:first-child` selector and cannot reach into a `@children` slot,
-    // so the row that ends the group says so itself.
+    // The group rounds its first and last row and nothing else, and there is no
+    // `overflow` on the group, so the corners are the rows' own. Slint has no
+    // `:first-child` selector and cannot reach into a `@children` slot, so the
+    // row that ends the group says so itself.
     //
-    // This cannot be a clip instead, and not only because of what it costs the
-    // Vue: a `clip: true` + `border-radius` box is clipped *rectangularly* by
-    // Slint's software renderer (`i-slint-renderer-software`'s `combine_clip`
+    // This cannot be a clip instead: a `clip: true` + `border-radius` box is
+    // clipped *rectangularly* by Slint's software renderer
+    // (`i-slint-renderer-software`'s `combine_clip`
     // ignores the radius), and the winit backend silently falls back to that
     // renderer when femtovg's OpenGL context cannot be created — a VM, an RDP
     // session, a disabled or outdated GPU driver — with no log. A rounded fill
@@ -72,7 +66,7 @@ export component SettingItem inherits Rectangle {
     in property <bool> group-first: false;
     in property <bool> group-last: false;
     // Pin the description to a fixed number of lines, eliding the rest (0 = as
-    // many lines as it takes, the Vue's `<p class="description">`).
+    // many lines as it takes).
     //
     // This is not a cosmetic choice, it is what makes such a row measurable at
     // all. Slint measures a *repeated* element's height (`for runtime in ...`)
@@ -102,7 +96,7 @@ export component SettingItem inherits Rectangle {
     callback clicked;
     callback reset;
 
-    // The 8px of `SettingGroup.vue`.
+    // The group radius.
     private property <length> group-radius: 8px;
     // The pitch a pinned description is given per line. The text itself keeps the
     // `1.1` line-height factor the unpinned branch uses, so 18px is the box each
@@ -231,8 +225,8 @@ export component SettingItem inherits Rectangle {
                     }
 
                     if root.title-suffix != "" : title-suffix-box := HorizontalLayout {
-                        // The Vue's span: 14px rather than the title's 13, 80%
-                        // opaque, and 8px of margin on its right — which is what
+                        // The suffix: 14px rather than the title's 13, 80%
+                        // opaque, and 8px of margin on its right — which
                         // separates it from the reset button and the chevron. A
                         // `Text` carries no padding, so the margin is a padding on
                         // a box around it.
@@ -282,17 +276,16 @@ export component SettingItem inherits Rectangle {
                         }
                     }
 
-                    // The Vue wraps the spinner in `<Transition name="fade">`
-                    // (100ms opacity). Keeping the box in the tree and animating
-                    // its opacity is what gives the fade: a freshly created
-                    // element would simply appear.
+                    // Keeping the box in the tree and animating its opacity is
+                    // what gives the fade: a freshly created element would simply
+                    // appear.
                     loading-box := Rectangle {
                         width: 15px;
                         height: 15px;
                         background: transparent;
                         opacity: root.loading ? 1.0 : 0.0;
                         visible: root.loading || self.opacity > 0.001;
-                        // The Vue's `<span style="transform: scale(0.8)">`.
+                        // The spinner is drawn at 80% scale.
                         transform-scale: 80%;
                         animate opacity { duration: 100ms; easing: ease; }
 
@@ -305,15 +298,14 @@ export component SettingItem inherits Rectangle {
                     }
                 }
 
-                // The description as the Vue's `<p class="description">` has it:
-                // as many lines as it takes. Correct wherever the row's height is
-                // not measured across a width it is not given — see
-                // `description-lines`.
+                // The description at its natural height: as many lines as it
+                // takes. Correct wherever the row's height is not measured across
+                // a width it is not given — see `description-lines`.
                 if root.description != "" && root.description-lines <= 0 : Text {
                     text: root.description;
                     font-size: 12px;
                     font-weight: Theme.font-weight-normal;
-                    // CSS: rgba(default-text, 0.849) at 60% element opacity.
+                    // The text colour at ~51% alpha.
                     color: Theme.default-text-color.with-alpha(0.509);
                     wrap: word-wrap;
                     line-height-factor: 1.1;
@@ -375,8 +367,8 @@ export component SettingItem inherits Rectangle {
                         // A hover change is the only other signal this area has to
                         // give: `pointer-event` reports `Cancel` on losing the
                         // hover only while it holds the grab, so the widget idiom
-                        // (`menu-base.slint`) is a `changed` on the property.
-                        // Declared after the text so it is on top of it.
+                        // is a `changed` on the property. Declared after the text
+                        // so it is on top of it.
                         changed has-hover => {
                             if self.has-hover && parent.clipped {
                                 root.claim-description-anchor(root.description);
@@ -437,7 +429,7 @@ export component SettingItem inherits Rectangle {
                 no-fill: root.icon-outline;
             }
 
-            // `.setting-item .icon` chevron has `margin-right: 4px`.
+            // The chevron's 4px right margin.
             if root.navigable : Rectangle {
                 width: 4px;
                 background: transparent;
@@ -447,7 +439,7 @@ export component SettingItem inherits Rectangle {
         }
     }
 
-    // Disabled rows swallow pointer events (CSS `pointer-events: none`).
+    // Disabled rows swallow pointer events.
     if root.item-disabled : TouchArea {
         width: root.width;
         height: root.height;

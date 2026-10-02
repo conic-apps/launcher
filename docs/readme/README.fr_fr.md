@@ -17,7 +17,7 @@
 
 ## Qu'est-ce que c'est
 
-Conic Launcher est un lanceur Minecraft moderne pour bureau : la logique principale est implémentée en Rust, l'interface est construite avec Tauri 2 + Vue 3. Il se caractérise par une petite taille d'installation, un démarrage rapide et une faible consommation de ressources, contribuant même à réduire les émissions de carbone.
+Conic Launcher est un lanceur Minecraft moderne pour bureau : la logique principale est implémentée en Rust et l'interface est construite avec [Slint](https://slint.dev), une boîte à outils d'interface native. Il se caractérise par une petite taille d'installation, un démarrage rapide et une faible consommation de ressources, contribuant même à réduire les émissions de carbone.
 
 De la création d'instances et l'installation de chargeurs à la recherche de mods et l'invitation d'amis pour jouer ensemble, en passant par le lancement du jeu et le suivi du temps de jeu — l'ensemble du workflow peut être complété dans une seule application.
 
@@ -98,14 +98,13 @@ L'application intègre des mises à jour automatiques — aucune mise à niveau 
 
 ## Compilation depuis les sources
 
-Assurez-vous d'avoir [Rust 1.88+](https://rustup.rs/), [Node.js 24](https://nodejs.org/) et [pnpm](https://pnpm.io/) installés, et suivez les [prérequis Tauri](https://tauri.app/start/prerequisites/) pour votre plateforme.
+Assurez-vous d'avoir [Rust 1.88+](https://rustup.rs/) installé ; sous Linux, installez également les [dépendances de compilation](../../AGENTS.md#linux-build-dependencies).
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
 cd launcher
-pnpm install
-pnpm tauri dev      # Développement et débogage
-pnpm tauri build    # Build de production
+cargo run              # Développement et débogage
+cargo build --release  # Build de production
 ```
 
 ## Contribuer
@@ -113,16 +112,19 @@ pnpm tauri build    # Build de production
 Les Issues et Pull Requests (ciblant la branche `dev`) sont les bienvenus. Avant de soumettre, veuillez exécuter :
 
 ```bash
-pnpm check
+cargo fmt --all -- --check
+cargo check
+cargo clippy --all-targets --release -- -D warnings
+cargo test
 ```
 
 ## Architecture
 
 <div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Diagramme d'architecture : le frontend Vue 3 communique avec le noyau Rust via Tauri IPC, avec des modules crates séparés par domaine en dessous">
+  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Diagramme d'architecture : l'interface Slint reliée directement aux crates Rust séparés par domaine">
 </div>
 
-Le frontend (Vue 3 + Pinia) communique avec les fonctionnalités Rust via Tauri IPC. Le `core` gère l'assemblage de l'application Tauri, tandis que les fonctionnalités spécifiques sont réparties en modules `crates/*` du workspace, organisés par domaine, qui évoluent indépendamment et se combinent selon les besoins.
+L'interface est construite avec [Slint](https://slint.dev) et reliée directement aux crates de domaine — il n'y a pas de couche IPC. `app/` contient le binaire et l'arbre `.slint` ; chaque capacité réside dans son propre module `crates/*` du workspace, de sorte qu'elles évoluent indépendamment et se composent au besoin.
 
 ## Licence
 
