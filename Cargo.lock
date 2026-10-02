@@ -1103,6 +1103,7 @@ dependencies = [
  "slint-build",
  "statistics",
  "storage",
+ "tilemap",
  "tokio",
  "url",
  "usvg",
@@ -1163,6 +1164,7 @@ dependencies = [
  "sha2",
  "storage",
  "thiserror 2.0.19",
+ "tilemap",
  "tokio",
  "toml",
  "zip",
@@ -6654,6 +6656,10 @@ dependencies = [
  "weezl",
  "zune-jpeg",
 ]
+
+[[package]]
+name = "tilemap"
+version = "0.0.0"
 
 [[package]]
 name = "time"

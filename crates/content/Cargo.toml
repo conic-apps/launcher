@@ -10,6 +10,7 @@ repository.workspace = true
 storage.workspace = true
 modrinth.workspace = true
 curseforge.workspace = true
+tilemap.workspace = true
 
 base64.workspace = true
 # The world map renderer (`worldmap.rs`): reads a save's region files and hands

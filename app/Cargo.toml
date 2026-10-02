@@ -59,6 +59,7 @@ storage.workspace = true
 account.workspace = true
 instance.workspace = true
 content.workspace = true
+tilemap.workspace = true
 shared.workspace = true
 modrinth.workspace = true
 curseforge.workspace = true

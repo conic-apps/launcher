@@ -183,6 +183,7 @@ and is what catches a missed one.
 | `platform`        | OS detection                                               |
 | `shared`          | Common types/utilities (the shared `HTTP_CLIENT`)          |
 | `single-instance` | One instance per machine                                   |
+| `tilemap`         | World-map tile source port (`TileSource`) and its plain data |
 | `statistics`      | Playtime statistics                                        |
 | `version`         | Minecraft version metadata                                 |
 | `window`          | Window operations and the winit backend hook               |

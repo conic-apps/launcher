@@ -13,3 +13,4 @@ pub(crate) mod content;
 pub(crate) mod game;
 pub(crate) mod generation;
 pub(crate) mod launch;
+pub(crate) mod worldmap;

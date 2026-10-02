@@ -18,9 +18,9 @@ pub(crate) fn request_tiles(ui: &App, x0: i32, x1: i32, z0: i32, z1: i32) {
 
     let changed = STATE.with(|map| {
         let mut map = map.borrow_mut();
-        let Some(world) = map.world.clone() else {
+        if map.world.is_none() {
             return false;
-        };
+        }
         if map.range == Some(range) {
             return false;
         }
@@ -87,7 +87,7 @@ pub(crate) fn request_tiles(ui: &App, x0: i32, x1: i32, z0: i32, z1: i32) {
 
         // The uncached half, queued. The debounce decides when to spend a slot
         // on any of it.
-        let tile_size = world.tile_size as i32;
+        let tile_size = map.tile_size as i32;
         let seq = map.seq;
         for key in range.tiles() {
             if map.cache.contains_key(&key) || busy.contains(&key) || map.failed.contains(&key) {
@@ -219,7 +219,7 @@ pub(crate) fn pump(ui: &App) {
         let Some(range) = map.range else {
             return Vec::new();
         };
-        let tile_size = world.tile_size as i32;
+        let tile_size = map.tile_size as i32;
         let centre = range.centre(tile_size);
 
         let mut jobs = Vec::new();
@@ -237,24 +237,25 @@ pub(crate) fn pump(ui: &App) {
     });
 
     for (world, job) in started {
-        let maps = STATE.with(|map| Arc::clone(&map.borrow().maps));
+        let (source, tile_size) = STATE.with(|map| {
+            let map = map.borrow();
+            (map.source.clone(), map.tile_size)
+        });
+        let Some(source) = source else {
+            return;
+        };
         let options = STATE.with(|map| map.borrow().options);
         let weak = ui.as_weak();
         let key = job.key;
         crate::support::runtime::spawn_blocking(move || {
-            let request = WorldMapRequest {
-                instance_id: world.instance_id.clone(),
-                folder_name: world.folder.clone(),
-                width: world.tile_size,
-                height: world.tile_size,
-                center_x: Some(job.center_x),
-                center_z: Some(job.center_z),
-                dimension: Some(world.dimension.clone()),
-                water: Some(options.water),
-                shading: Some(options.shading),
-                altitude_shading: Some(options.altitude_shading),
+            let request = tilemap::TileRequest {
+                world,
+                tile: tilemap::TileKey { x: key.0, z: key.1 },
+                center: (job.center_x, job.center_z),
+                size: tile_size,
+                options,
             };
-            let result = content::worldmap::render_map(&maps, &request);
+            let result = source.render(&request);
             // The render crossed a thread, so what comes back is the buffer
             // rather than the `Image` — the `PendingImage` trick `content`
             // uses for its icons, and for the same reason.
@@ -273,7 +274,7 @@ pub(crate) fn finish_tile(
     ui: &App,
     key: TileKey,
     seq: u64,
-    result: Result<content::worldmap::WorldMapResult, content::error::Error>,
+    result: Result<tilemap::TileImage, tilemap::Error>,
 ) {
     let state = ui.global::<WorldMapState>();
     let mut fresh = false;
@@ -288,8 +289,8 @@ pub(crate) fn finish_tile(
             Ok(result) => {
                 let image = Image::from_rgba8(SharedPixelBuffer::clone_from_slice(
                     &result.pixels,
-                    result.width as u32,
-                    result.height as u32,
+                    result.width,
+                    result.height,
                 ));
                 fresh = !map.appear.contains_key(&key);
                 map.cache.insert(key, image);

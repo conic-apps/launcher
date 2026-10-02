@@ -31,7 +31,7 @@ use std::time::Duration;
 use slint::{ComponentHandle, Image, Model, ModelRc, SharedPixelBuffer, SharedString, VecModel};
 
 use crate::slint_backend::{App, ScrollInput, WorldMapState, WorldSource, WorldTile};
-use content::worldmap::{MapCache, WorldMapRequest};
+use tilemap::{RenderOptions, TileSource, WorldId};
 
 /// How many tiles may be rendering at once.
 ///
@@ -74,17 +74,6 @@ pub(crate) const QUEUE_MARGIN: i32 = 8;
 /// component multiplies by the tile size to place a tile.
 pub(crate) type TileKey = (i32, i32);
 
-/// The world a tile belongs to, and how it is rendered. The cache's own key: a
-/// different save is a different map and its tiles mean nothing here. This is
-/// the `WorldSource` the component reports, reduced to what a cache key needs.
-#[derive(Clone, PartialEq, Eq)]
-pub(crate) struct WorldKey {
-    instance_id: String,
-    folder: String,
-    dimension: String,
-    tile_size: u32,
-}
-
 /// What one tile of the queue needs to be rendered.
 #[derive(Clone)]
 pub(crate) struct Job {
@@ -100,13 +89,15 @@ pub(crate) struct Job {
 
 pub(crate) struct MapState {
     /// The world on screen. `None` until a map reports one.
-    world: Option<WorldKey>,
+    world: Option<WorldId>,
+    /// Blocks along one edge of a tile, which the component reports.
+    tile_size: u32,
     /// The render options the component declared, which every tile is asked for.
     options: RenderOptions,
-    /// The `conic-worldmap` worlds, kept alive so a tile that scrolls back into
-    /// view re-reads a warm region cache instead of the disk — `content`'s
-    /// `MapCache`.
-    maps: Arc<MapCache>,
+    /// The source every tile of `world` is rendered from. The save source keeps
+    /// the `conic-worldmap` worlds alive, so a tile that scrolls back into view
+    /// re-reads a warm region cache instead of the disk.
+    source: Option<Arc<dyn TileSource>>,
     /// Every tile rendered for `world`, by position: there is nothing cheaper to
     /// keep than the finished image, and nothing to decode.
     cache: HashMap<TileKey, Image>,
@@ -137,25 +128,6 @@ pub(crate) struct MapState {
     debounce: Option<tokio::task::JoinHandle<()>>,
     /// Bumped on every world change, so a render that lands late is dropped.
     seq: u64,
-}
-
-/// The render toggles `RenderOptions` carries, kept in one place because every
-/// tile of a world is asked for the same ones.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) struct RenderOptions {
-    water: bool,
-    shading: bool,
-    altitude_shading: bool,
-}
-
-impl Default for RenderOptions {
-    fn default() -> Self {
-        Self {
-            water: true,
-            shading: true,
-            altitude_shading: true,
-        }
-    }
 }
 
 /// An inclusive tile range: `x0..=x1` by `z0..=z1`.
@@ -202,8 +174,9 @@ impl MapState {
     fn new() -> Self {
         Self {
             world: None,
+            tile_size: 1,
             options: RenderOptions::default(),
-            maps: Arc::new(MapCache::default()),
+            source: None,
             cache: HashMap::new(),
             touched: HashMap::new(),
             tick: 0,

@@ -39,7 +39,7 @@ pub fn setup(ui: &App) {
 /// every tile: the cache, the model, the queue and the in-flight renders, and
 /// bumps `seq`.
 pub(crate) fn open(ui: &App, source: WorldSource) {
-    let world = WorldKey {
+    let world = WorldId::Save {
         instance_id: source.instance_id.to_string(),
         folder: source.folder.to_string(),
         dimension: if source.dimension.is_empty() {
@@ -47,8 +47,8 @@ pub(crate) fn open(ui: &App, source: WorldSource) {
         } else {
             source.dimension.to_string()
         },
-        tile_size: source.tile_size.max(1) as u32,
     };
+    let tile_size = source.tile_size.max(1) as u32;
     let options = RenderOptions {
         water: source.water,
         shading: source.shading,
@@ -60,13 +60,18 @@ pub(crate) fn open(ui: &App, source: WorldSource) {
         // The component reports the world from `init` and from every change to
         // it, so this is called repeatedly with the same tuple; only a real
         // change resets anything.
-        if map.world.as_ref() == Some(&world) && map.options == options {
+        if map.world.as_ref() == Some(&world)
+            && map.tile_size == tile_size
+            && map.options == options
+        {
             return;
         }
         if let Some(handle) = map.debounce.take() {
             handle.abort();
         }
+        map.source = Some(crate::usecases::worldmap::source_for(&world));
         map.world = Some(world);
+        map.tile_size = tile_size;
         map.options = options;
         map.cache.clear();
         map.touched.clear();
