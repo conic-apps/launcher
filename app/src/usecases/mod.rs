@@ -8,6 +8,7 @@
 //! (`ui/`) owns the state and the ports, and calls into these; a second frontend
 //! could call the same functions.
 
+pub(crate) mod account_login;
 pub(crate) mod game;
 pub(crate) mod generation;
 pub(crate) mod launch;

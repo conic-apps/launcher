@@ -11,19 +11,20 @@ use account::authcode;
 /// Recomputes whether the offline form can be submitted. The test trims the
 /// username; Slint has no `trim`, so it lives here.
 pub(crate) fn refresh_offline_submit(state: &AccountAddState) {
-    let username = state.get_offline_username().trim().to_string();
-    state.set_offline_can_submit(!username.is_empty() && !state.get_offline_uuid_invalid());
+    let can_submit = crate::usecases::account_login::offline_can_submit(
+        &state.get_offline_username(),
+        state.get_offline_uuid_invalid(),
+    );
+    state.set_offline_can_submit(can_submit);
 }
 
 /// The same for the Yggdrasil form, whose three fields are trimmed as well.
 pub(crate) fn refresh_yggdrasil_submit(state: &AccountAddState) {
-    let ready = [
-        state.get_yggdrasil_api_root(),
-        state.get_yggdrasil_username(),
-        state.get_yggdrasil_password(),
-    ]
-    .iter()
-    .all(|value| !value.trim().is_empty());
+    let ready = crate::usecases::account_login::yggdrasil_can_submit(
+        &state.get_yggdrasil_api_root(),
+        &state.get_yggdrasil_username(),
+        &state.get_yggdrasil_password(),
+    );
     state.set_yggdrasil_can_submit(ready);
 }
 
@@ -369,8 +370,10 @@ pub(crate) fn show_profile_chooser(ui: &App, credentials: &PendingYggdrasil) {
                 .unwrap_or_default(),
                 // The same profile on the same server is already added.
                 added: existing.yggdrasil.iter().any(|account| {
-                    same_api_root(&account.api_root, &credentials.api_root)
-                        && account.profile.name == profile.name
+                    crate::usecases::account_login::same_api_root(
+                        &account.api_root,
+                        &credentials.api_root,
+                    ) && account.profile.name == profile.name
                         && account.profile.id == profile.id
                 }),
                 selected: false,
@@ -423,15 +426,4 @@ pub(crate) fn add_yggdrasil_accounts(
         }
         crate::ui::services::report::report(&weak, move |ui| finish_add(&ui));
     });
-}
-
-/// Compares API roots: the same host and port, and the same path with any
-/// trailing slashes ignored.
-pub(crate) fn same_api_root(a: &str, b: &str) -> bool {
-    let (Ok(a), Ok(b)) = (Url::parse(a), Url::parse(b)) else {
-        return false;
-    };
-    a.host_str() == b.host_str()
-        && a.port() == b.port()
-        && a.path().trim_end_matches('/') == b.path().trim_end_matches('/')
 }

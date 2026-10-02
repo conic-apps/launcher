@@ -27,7 +27,6 @@ use std::{
 };
 
 use slint::{ComponentHandle, Model, ModelRc, VecModel, Weak};
-use url::Url;
 use uuid::Uuid;
 
 use crate::slint_backend::{AccountAddState, App, Dialogs, GameState, YggdrasilProfileItem};
