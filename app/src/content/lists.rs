@@ -38,7 +38,7 @@ pub(crate) fn load_saves(ui: &App) {
         }
         cards.sort_by(|a, b| a.id.cmp(&b.id));
 
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             {
                 let state = controller();
                 let mut state = state.borrow_mut();
@@ -153,7 +153,7 @@ pub(crate) fn load_local_mods(ui: &App) {
             .filter(|mod_info| !mod_info.embedded)
             .map(local_mod_card)
             .collect();
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             {
                 let state = controller();
                 let mut state = state.borrow_mut();
@@ -239,7 +239,7 @@ pub(crate) fn load_local_resourcepacks(ui: &App) {
         .and_then(Result::ok)
         .unwrap_or_default();
         let cards: Vec<PendingCard> = packs.iter().map(resourcepack_card).collect();
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             {
                 let state = controller();
                 let mut state = state.borrow_mut();
@@ -365,7 +365,7 @@ pub fn refresh_preview_icons(ui: &App, instance_id: &str) {
         })
         .await
         .unwrap_or_default();
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             let state = ui.global::<GameState>();
             let images = |pending: Vec<PendingImage>| {
                 ModelRc::from(Rc::new(VecModel::from(
@@ -402,7 +402,7 @@ pub(crate) fn load_screenshots(ui: &App) {
                 })
             })
             .collect();
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             let shots: Vec<GalleryShot> = images
                 .into_iter()
                 .filter_map(|image| resolve_gallery_shot_with(image, &SCREENSHOTS))

@@ -68,7 +68,7 @@ impl GameController {
         let weak = ui.as_weak();
         crate::runtime::spawn(async move {
             let instances = instance::list_instances(sort).await.unwrap_or_default();
-            let _ = weak.upgrade_in_event_loop(move |ui| {
+            crate::report::report(&weak, move |ui| {
                 let controller = controller();
                 controller.borrow_mut().set_instances(instances);
                 controller.borrow_mut().apply(&ui);

@@ -171,17 +171,21 @@ pub async fn download_installer(
     }
     let checksum = crate::fetch_maven_sha1(&installer_url).await;
     let progress = DownloadState::default();
-    reporter.report(ModLoaderProgress::DownloadInstaller(progress.clone()));
-    download_concurrent(
-        vec![DownloadTask {
-            url: installer_url,
-            file: installer_path.clone(),
-            checksum,
-            size_bytes: None,
-            task_type: DownloadTaskType::Unknown,
-        }],
+    reporter.report(ModLoaderProgress::DownloadInstaller(progress.snapshot()));
+    download::progress::watch(
         &progress,
-        DownloadConfig::default(),
+        |snapshot| reporter.report(ModLoaderProgress::DownloadInstaller(snapshot)),
+        download_concurrent(
+            vec![DownloadTask {
+                url: installer_url,
+                file: installer_path.clone(),
+                checksum,
+                size_bytes: None,
+                task_type: DownloadTaskType::Unknown,
+            }],
+            &progress,
+            DownloadConfig::default(),
+        ),
     )
     .await?;
     info!("Downloaded forge installer");
@@ -201,8 +205,13 @@ async fn prefetch_installer_dependencies(
         let libraries = resolve_libraries(libraries)?;
         let download_entries = generate_libraries_downloads(minecraft_location, &libraries);
         let progress = DownloadState::default();
-        reporter.report(ModLoaderProgress::PrefetchDependencies(progress.clone()));
-        download_concurrent(download_entries, &progress, DownloadConfig::default()).await?;
+        reporter.report(ModLoaderProgress::PrefetchDependencies(progress.snapshot()));
+        download::progress::watch(
+            &progress,
+            |snapshot| reporter.report(ModLoaderProgress::PrefetchDependencies(snapshot)),
+            download_concurrent(download_entries, &progress, DownloadConfig::default()),
+        )
+        .await?;
     }
     Ok(())
 }

@@ -140,7 +140,7 @@ pub(crate) fn setup_delete_dialog(ui: &App) {
             let weak = weak.clone();
             crate::runtime::spawn(async move {
                 let result = instance::delete_instance(&id).await;
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     ui.global::<DeleteInstanceState>().set_deleting(false);
                     match result {
                         Ok(()) => {

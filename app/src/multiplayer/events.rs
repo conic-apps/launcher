@@ -24,7 +24,7 @@ pub(crate) fn push_refresh(ui: &App, controller: &Rc<Controller>) {
     crate::runtime::spawn(async move {
         match service.get_session_state().await {
             Ok(session) => {
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     apply_session(&ui, session);
                     with_controller(|controller| schedule_peers_polling(&ui, controller));
                 });
@@ -42,7 +42,7 @@ pub(crate) fn push_refresh_peers(ui: &App, controller: &Rc<Controller>) {
     let service = Arc::clone(&controller.service);
     crate::runtime::spawn(async move {
         let peers = service.query_peers().await.unwrap_or_default();
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             apply_peers(&ui, &peers);
             with_controller(|controller| schedule_peers_polling(&ui, controller));
         });

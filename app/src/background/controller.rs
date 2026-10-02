@@ -214,7 +214,7 @@ impl Renderer {
                     let weak = weak.clone();
                     let busy = Arc::clone(&worker_busy);
                     let state = Arc::clone(&worker_state);
-                    let _ = weak.upgrade_in_event_loop(move |ui| {
+                    crate::report::report(&weak, move |ui| {
                         // The GPU may have taken over while this frame was being
                         // rasterised; its texture is the one the layers show.
                         let gpu = state.get() == Gpu::Running;
@@ -530,7 +530,7 @@ impl Controller {
         let requested = path.clone();
         runtime::spawn_blocking(move || {
             let decoded = decode(&requested);
-            let _ = weak.upgrade_in_event_loop(move |ui| {
+            crate::report::report(&weak, move |ui| {
                 let controller = CONTROLLER.with(|slot| slot.borrow().clone());
                 let Some(controller) = controller else { return };
                 let decoded = match decoded {
@@ -910,7 +910,7 @@ impl Controller {
 /// Runs [`Controller::tick`] every [`TICK_MS`] until the flag is cleared.
 ///
 /// The tick has to reach the UI thread (everything it touches is Slint's), so it
-/// is handed over with `upgrade_in_event_loop`, which also wakes the event loop
+/// is handed over with `crate::report::report`, which also wakes the event loop
 /// — that is what makes the clock independent of whether anything is being
 /// painted. The task stops itself when `ticking` goes false, and a new one is
 /// started if the controller needs the clock again.
@@ -925,7 +925,7 @@ fn tick_on_the_runtime(ui: &App, ticking: Arc<AtomicBool>) {
             }
             let weak = weak.clone();
             let ticking = Arc::clone(&ticking);
-            let _ = weak.upgrade_in_event_loop(move |ui| {
+            crate::report::report(&weak, move |ui| {
                 if !ticking.load(Ordering::Relaxed) {
                     return;
                 }

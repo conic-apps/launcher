@@ -31,8 +31,11 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use serde_json::{Value, json};
-use slint::{ComponentHandle, Image, Model, ModelRc, SharedPixelBuffer, SharedString, VecModel};
+use slint::{
+    ComponentHandle, Image, Model, ModelRc, SharedPixelBuffer, SharedString, VecModel, Weak,
+};
 
+use crate::report::{Gate, Token, deliver};
 use crate::slint_backend::{
     App, AppConfig, CardTag, ContentCard, ContentSearch, ContentState, DeleteSaveState, Dialogs,
     FilterChip, FilterRow, GalleryShot, GameState, MarkdownImage, MdChunk, MdItem, PageButton,
@@ -47,6 +50,7 @@ mod detail;
 mod grid;
 mod icon;
 mod lists;
+mod presenter;
 mod search;
 mod wiring;
 
@@ -56,6 +60,7 @@ pub(crate) use detail::*;
 pub(crate) use grid::*;
 pub(crate) use icon::*;
 pub(crate) use lists::*;
+pub(crate) use presenter::*;
 pub(crate) use search::*;
 pub(crate) use wiring::*;
 
@@ -422,6 +427,8 @@ pub(crate) struct ContentController {
     /// Bumped on every open, so a slow detail response cannot overwrite a newer
     /// panel.
     detail_seq: u64,
+    /// Issues the detail download's token and invalidates it on a newer one.
+    detail_download_gate: Gate,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -459,6 +466,7 @@ impl ContentController {
             open_grid: None,
             detail: None,
             detail_seq: 0,
+            detail_download_gate: Gate::new(),
         }
     }
 

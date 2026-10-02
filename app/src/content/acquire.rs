@@ -8,7 +8,16 @@ use super::*;
 
 /// Resolves the project's best file for the instance's runtime and downloads
 /// it.
-pub(crate) async fn install(instance_id: &str, detail: &OpenDetail) -> Result<(), String> {
+///
+/// The download's progress is reported into the detail panel through `weak` and
+/// `token`, sampled by [`download::progress::watch`] rather than by this
+/// function.
+pub(crate) async fn install(
+    instance_id: &str,
+    detail: &OpenDetail,
+    weak: Weak<App>,
+    token: Token,
+) -> Result<(), String> {
     let runtime = instance::get_instance_by_id(instance_id)
         .await
         .map(|instance| instance.config.runtime);
@@ -46,9 +55,25 @@ pub(crate) async fn install(instance_id: &str, detail: &OpenDetail) -> Result<()
 
     std::fs::create_dir_all(&target_dir).map_err(|error| error.to_string())?;
     let progress = download::progress::DownloadState::default();
-    download::download(&task, &progress)
-        .await
-        .map_err(|error| error.to_string())?;
+    // The change-detecting reporter drops the 100ms ticks where nothing moved,
+    // so the event loop is only woken for a real byte count.
+    let reporter = shared::ChangeReporter::new({
+        let weak = weak.clone();
+        let token = token.clone();
+        std::sync::Arc::new(move |snapshot| {
+            let view = download_view(&snapshot);
+            deliver(&weak, &token, move |ui| {
+                view.apply(&ui.global::<ContentState>())
+            });
+        })
+    });
+    download::progress::watch(
+        &progress,
+        |snapshot| reporter.report(snapshot),
+        download::download(&task, &progress),
+    )
+    .await
+    .map_err(|error| error.to_string())?;
 
     // Re-read the mods so a later list shows the new file with its metadata.
     if detail.kind == RemoteKind::Mods {

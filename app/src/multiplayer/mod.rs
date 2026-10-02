@@ -18,12 +18,13 @@
 use std::{
     cell::{Cell, RefCell},
     rc::Rc,
-    sync::{Arc, Mutex, atomic::Ordering},
+    sync::{Arc, Mutex},
     time::Duration,
 };
 
-use slint::{ComponentHandle, ModelRc, Timer, TimerMode, VecModel, Weak};
+use slint::{ComponentHandle, ModelRc, Timer, TimerMode, VecModel};
 
+use crate::report::{Gate, deliver};
 use crate::slint_backend::{App, GameState, MultiplayerPeer, MultiplayerPlayer, MultiplayerState};
 use multiplayer::{NexusService, PeerInfo, SessionEvent, SessionState};
 
@@ -33,10 +34,12 @@ pub(crate) const NAT_POLL_KNOWN_INTERVAL: Duration = Duration::from_secs(60);
 
 mod events;
 mod library;
+mod presenter;
 mod wiring;
 
 pub(crate) use events::*;
 pub(crate) use library::*;
+pub(crate) use presenter::*;
 pub(crate) use wiring::*;
 
 thread_local! {
@@ -56,4 +59,6 @@ pub(crate) struct Controller {
     initialized: Cell<bool>,
     /// The running library download.
     download_task: RefCell<Option<tokio::task::JoinHandle<()>>>,
+    /// Issues the library download's token and invalidates it on cancel.
+    download_gate: Gate,
 }
