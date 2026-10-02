@@ -21,6 +21,10 @@
 //! A pending set, an in-flight set, a nearest-to-centre priority scan and a 50ms
 //! debounce, all driven from the event loop. The model is refilled from the cache
 //! **immediately** when the range moves, and only the *renders* are debounced.
+//!
+//! The tiles themselves come from a `tilemap::TileSource` chosen in
+//! `crate::usecases::worldmap` (the save renderer today, a seed source later);
+//! this module owns only the queue, the `Image` cache and the model.
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
