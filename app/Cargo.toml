@@ -57,9 +57,6 @@ window.workspace = true
 config.workspace = true
 storage.workspace = true
 account.workspace = true
-# The loopback listener the Microsoft browser flow's authorization code comes
-# back on, and the page the browser is shown there (see `app/src/account_add/`).
-authcode.workspace = true
 instance.workspace = true
 content.workspace = true
 shared.workspace = true

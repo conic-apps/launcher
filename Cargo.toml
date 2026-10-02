@@ -33,9 +33,6 @@ statistics = { path = "./crates/statistics", version = "0.0.0" }
 single-instance = { path = "./crates/single-instance", version = "0.0.0" }
 multiplayer = { path = "./crates/multiplayer", version = "0.0.0" }
 markdown = { path = "./crates/markdown", version = "0.0.0" }
-# The loopback listener the Microsoft browser flow hands its authorization code
-# to (crates/authcode).
-authcode = { path = "./crates/authcode", version = "0.0.0" }
 music = { path = "./crates/music", version = "0.0.0" }
 
 # ----- non-local crates -----
