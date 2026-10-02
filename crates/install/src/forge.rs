@@ -18,9 +18,9 @@ use serde::{Deserialize, Serialize};
 
 use config::download::DownloadConfig;
 use download::{DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState};
-use folder::{DATA_LOCATION, MinecraftLocation};
 use platform::{DELIMITER, strip_unc_prefix};
 use shared::HTTP_CLIENT;
+use storage::{LOCATIONS, MinecraftLocation};
 use version::{Version, resolve_libraries};
 use zip::ZipArchive;
 
@@ -162,7 +162,8 @@ pub async fn download_installer(
         "https://maven.minecraftforge.net/net/minecraftforge/forge/{mcversion}-{forge_version}/forge-{mcversion}-{forge_version}-installer.jar"
     );
     info!("The installer url is: {installer_url}");
-    let installer_path = DATA_LOCATION
+    let installer_path = LOCATIONS
+        .launcher
         .temp
         .join(format!("forge-installer-{forge_version}.jar"));
     if let Some(parent) = installer_path.parent() {
@@ -290,7 +291,10 @@ fn wait_child(mut child: Child, reporter: &ModLoaderReporter) -> Result<()> {
 }
 
 async fn save_bootstrapper(data: &[u8]) -> Result<PathBuf> {
-    let bootstrapper_path = DATA_LOCATION.temp.join("forge-install-bootstrapper.jar");
+    let bootstrapper_path = LOCATIONS
+        .launcher
+        .temp
+        .join("forge-install-bootstrapper.jar");
     tokio::fs::write(&bootstrapper_path, data).await?;
     Ok(bootstrapper_path)
 }

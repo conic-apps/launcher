@@ -49,10 +49,30 @@ use slint::{ComponentHandle, Timer, Weak};
 use slint_backend::{App, AppConfig};
 use window::WindowService;
 
+/// Claims the single-instance role, waiting out a relaunch.
+///
+/// A normal launch tries once. A process started by [`config_bridge::relaunch`]
+/// carries `CONIC_RELAUNCH`, and the parent it is replacing is still releasing
+/// the claim, so it retries for a few seconds before giving up.
+fn acquire_single_instance() -> Option<single_instance::SingleInstance> {
+    let relaunch = std::env::var_os("CONIC_RELAUNCH").is_some();
+    let attempts = if relaunch { 50 } else { 1 };
+    for attempt in 0..attempts {
+        match single_instance::try_acquire() {
+            Ok(instance) => return Some(instance),
+            Err(_) if attempt + 1 < attempts => {
+                std::thread::sleep(std::time::Duration::from_millis(100));
+            }
+            Err(_) => return None,
+        }
+    }
+    None
+}
+
 fn main() {
     // Create the data directory layout before anything reads from it — the
     // logger writes into it.
-    folder::DATA_LOCATION.init();
+    storage::LOCATIONS.init();
     logs::init();
 
     // Claim the single-instance role before anything else: a second launch of
@@ -61,7 +81,7 @@ fn main() {
     // with it arrive long after this function has moved on — the running
     // instance cannot be told about them yet, so they queue up until the
     // watcher below picks them up.
-    let Ok(single_instance) = single_instance::try_acquire() else {
+    let Some(single_instance) = acquire_single_instance() else {
         // The instance that is already running has just been told about this
         // launch, so this process has nothing left to do but go away.
         log::info!(target: "shell", "another instance is already running");
@@ -172,8 +192,9 @@ fn main() {
     create_instance::setup(&ui, Rc::clone(&shared));
     account_add::setup(&ui);
     // The first-run wizard: the import-instances screen's two "create a blank
-    // instance" buttons, and the platform answer its Java screen asks for.
-    setup::setup(&ui);
+    // instance" buttons, the platform answer its Java screen asks for, and the
+    // storage step that commits the location choice when the wizard finishes.
+    setup::setup(&ui, Rc::clone(&shared));
     multiplayer::setup(&ui);
     // The clock and the wheel/trackpad classification the scroll containers use.
     scroll_input::setup(&ui);
@@ -225,6 +246,10 @@ fn main() {
     ui.on_minimize_window(move || {
         minimize_window.minimize();
     });
+
+    // Settings → Data storage changed a root: start a fresh process and stop
+    // this one. See `config_bridge::relaunch` for the hand-over.
+    ui.on_restart_app(config_bridge::relaunch);
 
     // The window system's own close — the macOS traffic light, `Alt`+`F4`, a
     // window menu's Close, a taskbar's close — asks here first.
@@ -299,6 +324,18 @@ fn main() {
         }
     });
 
+    // A fresh install lands on the setup wizard rather than the game view. The
+    // flag is stored in the config, so a wizard that was finished or skipped
+    // does not come back; an older config without the key reads it as `false`
+    // and is shown the wizard once.
+    //
+    // Set before `run` so the wizard is the first frame, and after the config is
+    // loaded and applied, since the wizard's steps read the `AppConfig` global.
+    if !shared.borrow().setup_completed {
+        ui.global::<slint_backend::Navigation>()
+            .set_current_page("setup".into());
+    }
+
     ui.run().expect("failed to run the shell event loop");
 
     // On exit the multiplayer poll thread is joined and the Conic Nexus session
@@ -308,13 +345,13 @@ fn main() {
     cleanup_temp_folder();
 }
 
-/// Removes the per-run scratch directory [`folder::DATA_LOCATION`] creates.
+/// Removes the per-run scratch directory [`storage::LOCATIONS`] creates.
 ///
 /// The installers stage a bootstrapper jar here (`install`), and the
 /// directory is `create_dir_all`-ed in a fresh UUID-named path on every launch,
 /// so without this it accumulates one directory per run in the OS temp folder.
 fn cleanup_temp_folder() {
-    match std::fs::remove_dir_all(&folder::DATA_LOCATION.temp) {
+    match std::fs::remove_dir_all(&storage::LOCATIONS.launcher.temp) {
         Ok(_) => log::info!("Temporary files cleared"),
         Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
             log::error!("Could not clear temp folder: {error}")

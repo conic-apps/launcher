@@ -904,11 +904,6 @@ msgid "Cancel"
 msgstr "Anuluj"
 
 #: ui
-msgctxt "AccountAdd"
-msgid "Choose an auth service and add an account"
-msgstr "Wybierz serwis uwierzytelniania i dodaj konto"
-
-#: ui
 msgctxt "AccountAddSelect"
 msgid "Microsoft"
 msgstr "Microsoft"
@@ -2802,3 +2797,78 @@ msgstr "Spróbuj zmienić słowa kluczowe lub filtry i wyszukaj ponownie"
 msgctxt "ContentPacksPanel"
 msgid "Try adjusting keywords or filters and search again"
 msgstr "Spróbuj zmienić słowa kluczowe lub filtry i wyszukaj ponownie"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Data storage"
+msgstr "Przechowywanie danych"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Launcher data"
+msgstr "Dane launchera"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Minecraft install"
+msgstr "Instalacja Minecraft"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart required"
+msgstr "Wymagane ponowne uruchomienie"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "The launcher must restart before the new storage location is used."
+msgstr "Launcher musi zostać ponownie uruchomiony, zanim nowa lokalizacja magazynu zostanie użyta."
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Later"
+msgstr "Później"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart now"
+msgstr "Uruchom ponownie teraz"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Data storage"
+msgstr "Przechowywanie danych"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Choose where Conic Launcher keeps its data. You can change this later in Settings."
+msgstr "Wybierz, gdzie Conic Launcher przechowuje swoje dane. Możesz to zmienić później w ustawieniach."
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Launcher data"
+msgstr "Dane launchera"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Minecraft install"
+msgstr "Instalacja Minecraft"
+
+#: ui
+msgctxt "SetupView"
+msgid "Next (Color scheme)"
+msgstr "Dalej (Schemat kolorów)"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Instances and game data"
+msgstr "Instancje i dane gry"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Instances and game data"
+msgstr "Instancje i dane gry"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Sign in"
+msgstr "Zaloguj się"

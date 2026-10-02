@@ -2,9 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use folder::DATA_LOCATION;
 use log::warn;
 use serde::{Deserialize, Serialize};
+use storage::LOCATIONS;
 
 use crate::error::Result;
 
@@ -16,7 +16,7 @@ pub struct Favorite {
 }
 
 fn favorites_path() -> std::path::PathBuf {
-    DATA_LOCATION.root.join("favorites.json")
+    LOCATIONS.launcher.root.join("favorites.json")
 }
 
 fn read_favorites() -> Result<Vec<Favorite>> {

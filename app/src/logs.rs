@@ -24,8 +24,8 @@ use std::{
 
 use chrono::Local;
 use env_logger::fmt::Formatter;
-use folder::DATA_LOCATION;
 use log::Record;
+use storage::LOCATIONS;
 
 /// The active log file's stem. See the module comment.
 const FILE_NAME: &str = "conic-launcher";
@@ -199,7 +199,7 @@ fn format_record(buffer: &mut Formatter, record: &Record) -> std::io::Result<()>
 /// this app does emit are about the window chrome and the background, and a
 /// launch log that has to be read by hand is a launch log that is not.
 pub fn init() {
-    let directory = DATA_LOCATION.logs.clone();
+    let directory = LOCATIONS.launcher.logs.clone();
     let rotating = match fs::create_dir_all(&directory).and_then(|()| Rotating::open(&directory)) {
         Ok(rotating) => rotating,
         Err(error) => {

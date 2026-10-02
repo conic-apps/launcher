@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use conic_worldmap::{RenderOptions, RenderRequest, WorldMap};
-use folder::DATA_LOCATION;
+use storage::LOCATIONS;
 
 use crate::error::*;
 
@@ -33,7 +33,8 @@ struct WorldMapKey {
 
 impl WorldMapKey {
     fn world_dir(&self) -> PathBuf {
-        DATA_LOCATION
+        LOCATIONS
+            .instances
             .get_instance_root(&self.instance_id)
             .join("saves")
             .join(&self.folder_name)
@@ -138,7 +139,8 @@ mod tests {
     /// out, an RGBA buffer comes back, and the same world is served from the
     /// cache the second time.
     fn write_world(folder: &str) -> String {
-        let world_dir = DATA_LOCATION
+        let world_dir = LOCATIONS
+            .instances
             .get_instance_root("worldmap-test")
             .join("saves")
             .join(folder);

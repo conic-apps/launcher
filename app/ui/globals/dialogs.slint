@@ -104,6 +104,9 @@ export global Dialogs {
     in-out property <bool> confirm-delete-save-visible: false;
     // The title bar's close button, while a task is running.
     in-out property <bool> confirm-quit-app-visible: false;
+    // Settings → Data storage, after a location changed: the launcher has to be
+    // restarted before the new root is used.
+    in-out property <bool> restart-required-visible: false;
 }
 
 // The "delete instance" dialog.

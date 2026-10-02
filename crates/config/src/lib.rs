@@ -6,7 +6,7 @@
 //!
 //! `config.toml` lives in the launcher's data directory (`conic`, or
 //! `conic-debug` for a debug build; the exact path is platform-dependent), whose
-//! layout comes from [`folder::DATA_LOCATION`]. Every key the launcher models is
+//! layout comes from [`storage::LOCATIONS`]. Every key the launcher models is
 //! named here, and [`Config::extra`] is the catch-all for anything it does not,
 //! kept so a load/save round-trip cannot drop a key a newer build wrote.
 //!
@@ -16,9 +16,9 @@
 use std::{collections::BTreeMap, path::Path};
 
 use account::Account;
-use folder::DATA_LOCATION;
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
+use storage::LOCATIONS;
 
 pub mod download;
 pub mod error;
@@ -31,7 +31,7 @@ pub use error::{Error, Result};
 ///
 /// If the file does not exist, a default configuration is generated and saved.
 pub fn load_config_file() -> Result<Config> {
-    let config_file_path = &DATA_LOCATION.config;
+    let config_file_path = &LOCATIONS.launcher.config;
     if !config_file_path.exists() {
         info!("No config file, using default config");
         return reset_config();
@@ -63,12 +63,20 @@ pub fn reset_config() -> Result<Config> {
 
 /// Saves the configuration to the configuration file.
 pub fn save_config(config: &Config) -> Result<()> {
-    let config_file_path = &DATA_LOCATION.config;
-    if let Some(parent) = config_file_path.parent() {
+    save_config_to(&LOCATIONS.launcher.config, config)
+}
+
+/// Saves `config` to an arbitrary path.
+///
+/// The setup wizard uses this when the user picks a launcher data directory:
+/// the config has to be written to the new directory before the process
+/// restarts into it, so the choice made in the wizard survives the move.
+pub fn save_config_to(path: &Path, config: &Config) -> Result<()> {
+    if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
     let data = toml::to_string_pretty(config)?;
-    std::fs::write(config_file_path, data)?;
+    std::fs::write(path, data)?;
     debug!("Saved config to file");
     Ok(())
 }
@@ -76,7 +84,7 @@ pub fn save_config(config: &Config) -> Result<()> {
 /// Copies `path` to the data directory as the custom background image,
 /// returning the stored file name.
 pub fn set_background_image(path: &Path) -> Result<String> {
-    let dest = DATA_LOCATION.root.join("background_image");
+    let dest = LOCATIONS.launcher.root.join("background_image");
     if let Some(parent) = dest.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -86,7 +94,7 @@ pub fn set_background_image(path: &Path) -> Result<String> {
 
 /// Removes the stored custom background image, if any.
 pub fn remove_background_image() -> Result<()> {
-    let dest = DATA_LOCATION.root.join("background_image");
+    let dest = LOCATIONS.launcher.root.join("background_image");
     if dest.exists() {
         std::fs::remove_file(&dest)?;
     }
@@ -178,6 +186,12 @@ impl Default for AppearanceConfig {
 #[serde(default)]
 pub struct Config {
     pub auto_update: bool,
+    /// Whether the first-run setup wizard has been finished or skipped.
+    ///
+    /// A key that predates this field is missing from an older `config.toml`,
+    /// so it reads as `false` and the wizard is shown once; the wizard writes it
+    /// back as `true` when it finishes or is dismissed.
+    pub setup_completed: bool,
     /// The currently selected account.
     pub current_account: Option<Account>,
     pub appearance: AppearanceConfig,
@@ -200,6 +214,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             auto_update: true,
+            setup_completed: false,
             current_account: None,
             appearance: AppearanceConfig::default(),
             accessibility: AccessibilityConfig::default(),
@@ -274,6 +289,17 @@ mod tests {
         assert_eq!(config.download.max_connections, 100);
         assert_eq!(config.music.main_volumn, 100);
         assert_eq!(config.music.main_volumn_background, 25);
+        // A fresh config shows the setup wizard.
+        assert!(!config.setup_completed);
+    }
+
+    #[test]
+    fn a_config_without_the_setup_flag_is_not_set_up() {
+        let config: Config = toml::from_str("auto_update = false\n").expect("valid toml");
+        assert!(!config.setup_completed);
+
+        let done: Config = toml::from_str("setup_completed = true\n").expect("valid toml");
+        assert!(done.setup_completed);
     }
 
     #[test]

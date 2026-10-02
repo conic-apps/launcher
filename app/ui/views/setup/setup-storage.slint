@@ -1,0 +1,53 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { SettingGroup } from "../../components/setting-group.slint";
+import { SettingItem } from "../../components/setting-item.slint";
+import { AppConfig } from "../../globals/settings.slint";
+import { SetupWizardState } from "../../globals/setup.slint";
+import { WizardTitle, WizardMessage } from "wizard-text.slint";
+
+// The storage step: the three roots, defaulted to the platform's own. Choosing a
+// folder here only updates the row; Rust applies the choice when the wizard
+// finishes, because a launcher-data change moves `config.toml` and the process
+// has to restart into the new location anyway.
+export component SetupStorage inherits VerticalLayout {
+    width: 100%;
+    spacing: 16px;
+    alignment: start;
+
+    WizardTitle { title: @tr("Data storage"); }
+
+    WizardMessage {
+        message: @tr("Choose where Conic Launcher keeps its data. You can change this later in Settings.");
+    }
+
+    SettingGroup {
+        SettingItem {
+            group-first: true;
+            title: @tr("Launcher data");
+            description: AppConfig.launcher-location;
+            navigable: true;
+            description-lines: 1;
+            clicked => { SetupWizardState.pick-storage("launcher"); }
+        }
+
+        SettingItem {
+            title: @tr("Minecraft install");
+            description: AppConfig.minecraft-location;
+            navigable: true;
+            description-lines: 1;
+            clicked => { SetupWizardState.pick-storage("minecraft"); }
+        }
+
+        SettingItem {
+            group-last: true;
+            title: @tr("Instances and game data");
+            description: AppConfig.instances-location;
+            navigable: true;
+            description-lines: 1;
+            clicked => { SetupWizardState.pick-storage("instances"); }
+        }
+    }
+}

@@ -6,8 +6,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use folder::MinecraftLocation;
 use shared::HTTP_CLIENT;
+use storage::MinecraftLocation;
 use version::Version;
 
 use crate::error::*;

@@ -11,8 +11,8 @@
 
 use std::path::PathBuf;
 
-use folder::DATA_LOCATION;
 use platform::{OsArch, OsFamily, PLATFORM_INFO};
+use storage::LOCATIONS;
 
 use crate::error::*;
 use crate::models::JavaArch;
@@ -32,7 +32,7 @@ pub fn host_java_arch() -> JavaArch {
 /// Returns the installation directory of the launcher-managed runtime with the
 /// given component name (e.g. `java-runtime-gamma`).
 pub fn get_installation_directory(java_component: &str) -> Result<PathBuf> {
-    let root = &DATA_LOCATION.runtime;
+    let root = &LOCATIONS.minecraft.runtime;
     let platform_folder_name = match PLATFORM_INFO.os_family {
         OsFamily::Windows => match PLATFORM_INFO.arch {
             OsArch::X64 => "windows_x64",

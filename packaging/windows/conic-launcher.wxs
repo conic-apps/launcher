@@ -196,10 +196,12 @@
                     says the app is installed.
 
                     `HKLM` rather than `HKCU` because the package is `perMachine`,
-                    which is also why this needs an elevated install. Nothing reads
-                    it — no crate in this project writes to the registry at all, so
-                    there was no existing key to match and `Software\ConicMC` is
-                    simply the conventional one for a per-machine application.
+                    which is also why this needs an elevated install. `Software\ConicMC`
+                    is simply the conventional key for a per-machine application.
+                    The app reads both values below (`storage`'s `portable_root`):
+                    an executable that was copied out of this directory is the
+                    single-file portable build, which keeps its data next to itself
+                    instead of under the platform anchor.
                 -->
                 <RegistryValue Root="HKLM"
                                Key="Software\ConicMC\Conic Launcher"
@@ -207,6 +209,19 @@
                                Type="integer"
                                Value="1"
                                KeyPath="yes" />
+                <!--
+                    Where the executable really is. Written as the resolved
+                    `INSTALLFOLDER` rather than the preprocessor's idea of it, so a
+                    user who changed the directory in the install dialog records
+                    where the files went. `KeyPath="no"`: the value above is the
+                    component's only key path.
+                -->
+                <RegistryValue Root="HKLM"
+                               Key="Software\ConicMC\Conic Launcher"
+                               Name="InstallLocation"
+                               Type="string"
+                               Value="[INSTALLFOLDER]"
+                               KeyPath="no" />
             </Component>
         </ComponentGroup>
     </Package>

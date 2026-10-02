@@ -14,10 +14,10 @@ use serde::{Deserialize, Serialize};
 
 use config::download::DownloadConfig;
 use download::{Checksum, progress::DownloadState};
-use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::Instance;
 use platform::{OsArch, OsFamily, PLATFORM_INFO};
 use shared::HTTP_CLIENT;
+use storage::LOCATIONS;
 use version::resolve_version;
 
 use download::{DownloadTask, DownloadTaskType};
@@ -182,7 +182,7 @@ pub async fn install_for_instance(
     progress: &DownloadState,
     config: DownloadConfig,
 ) -> Result<()> {
-    let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
+    let minecraft_location = LOCATIONS.minecraft.clone();
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
     let unresolved_version = serde_json::from_str::<version::Version>(
         &tokio::fs::read_to_string(version_json_path).await?,

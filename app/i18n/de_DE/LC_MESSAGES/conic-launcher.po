@@ -904,11 +904,6 @@ msgid "Cancel"
 msgstr "Abbrechen"
 
 #: ui
-msgctxt "AccountAdd"
-msgid "Choose an auth service and add an account"
-msgstr "Auth-Dienst wählen und Konto hinzufügen"
-
-#: ui
 msgctxt "AccountAddSelect"
 msgid "Microsoft"
 msgstr "Microsoft"
@@ -2802,3 +2797,78 @@ msgstr "Passe Suchbegriffe oder Filter an und suche erneut"
 msgctxt "ContentPacksPanel"
 msgid "Try adjusting keywords or filters and search again"
 msgstr "Passe Suchbegriffe oder Filter an und suche erneut"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Data storage"
+msgstr "Datenspeicher"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Launcher data"
+msgstr "Launcher-Daten"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Minecraft install"
+msgstr "Minecraft-Installation"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart required"
+msgstr "Neustart erforderlich"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "The launcher must restart before the new storage location is used."
+msgstr "Der Launcher muss neu gestartet werden, bevor der neue Speicherort verwendet wird."
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Later"
+msgstr "Später"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart now"
+msgstr "Jetzt neu starten"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Data storage"
+msgstr "Datenspeicher"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Choose where Conic Launcher keeps its data. You can change this later in Settings."
+msgstr "Wähle, wo Conic Launcher seine Daten speichert. Du kannst das später in den Einstellungen ändern."
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Launcher data"
+msgstr "Launcher-Daten"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Minecraft install"
+msgstr "Minecraft-Installation"
+
+#: ui
+msgctxt "SetupView"
+msgid "Next (Color scheme)"
+msgstr "Weiter (Farbschema)"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Instances and game data"
+msgstr "Instanzen und Spieldaten"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Instances and game data"
+msgstr "Instanzen und Spieldaten"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Sign in"
+msgstr "Anmelden"

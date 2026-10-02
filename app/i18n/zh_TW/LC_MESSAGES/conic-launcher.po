@@ -904,11 +904,6 @@ msgid "Cancel"
 msgstr "取消"
 
 #: ui
-msgctxt "AccountAdd"
-msgid "Choose an auth service and add an account"
-msgstr "選擇認證服務並新增帳號"
-
-#: ui
 msgctxt "AccountAddSelect"
 msgid "Microsoft"
 msgstr "Microsoft"
@@ -2802,3 +2797,78 @@ msgstr "嘗試調整關鍵字或篩選條件後再次搜尋"
 msgctxt "ContentPacksPanel"
 msgid "Try adjusting keywords or filters and search again"
 msgstr "嘗試調整關鍵字或篩選條件後再次搜尋"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Data storage"
+msgstr "資料儲存"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Launcher data"
+msgstr "啟動器資料"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Minecraft install"
+msgstr "Minecraft 安裝"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart required"
+msgstr "需要重新啟動"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "The launcher must restart before the new storage location is used."
+msgstr "必須重新啟動啟動器才能使用新的儲存位置。"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Later"
+msgstr "稍後"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart now"
+msgstr "立即重新啟動"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Data storage"
+msgstr "資料儲存"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Choose where Conic Launcher keeps its data. You can change this later in Settings."
+msgstr "選擇 Conic Launcher 儲存資料的位置。你可以稍後在設定中變更。"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Launcher data"
+msgstr "啟動器資料"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Minecraft install"
+msgstr "Minecraft 安裝"
+
+#: ui
+msgctxt "SetupView"
+msgid "Next (Color scheme)"
+msgstr "下一步（配色方案）"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Instances and game data"
+msgstr "實例與遊戲資料"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Instances and game data"
+msgstr "實例與遊戲資料"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Sign in"
+msgstr "登入"
