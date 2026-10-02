@@ -2,6 +2,7 @@ name: Check Rust
 
 on:
   push:
+    branches: ["dev"]
     paths:
       - ".github/workflows/check-rust.yml"
       - "crates/**"
