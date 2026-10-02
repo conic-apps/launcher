@@ -7,7 +7,7 @@
 
 use std::{cell::RefCell, path::PathBuf, rc::Rc, time::Duration};
 
-use java_runtime::{JavaRuntime as ScannedJava, ScanOptions, scan_java_runtimes_cached};
+use java_discovery::{JavaRuntime as ScannedJava, ScanOptions, scan_java_runtimes_cached};
 use slint::{ComponentHandle, ModelRc, SharedString, Timer, TimerMode, VecModel};
 
 use crate::config_bridge;

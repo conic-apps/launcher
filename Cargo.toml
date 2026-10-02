@@ -28,7 +28,7 @@ version = { path = "./crates/version", version = "0.0.0" }
 download = { path = "./crates/download", version = "0.0.0" }
 install = { path = "./crates/install", version = "0.0.0" }
 launch = { path = "./crates/launch", version = "0.0.0" }
-java-runtime = { path = "./crates/java-runtime", version = "0.0.0" }
+java-discovery = { path = "./crates/java-discovery", version = "0.0.0" }
 statistics = { path = "./crates/statistics", version = "0.0.0" }
 single-instance = { path = "./crates/single-instance", version = "0.0.0" }
 multiplayer = { path = "./crates/multiplayer", version = "0.0.0" }

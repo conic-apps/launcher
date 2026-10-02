@@ -54,7 +54,7 @@
       <g fill="#cdd6f4">
         <text x="378.5" y="336" text-anchor="middle">install</text><text x="475.5" y="336" text-anchor="middle">version</text>
         <text x="378.5" y="374" text-anchor="middle">launch</text><text x="486" y="374" text-anchor="middle">download</text>
-        <text x="409" y="412" text-anchor="middle">java-runtime</text>
+        <text x="409" y="412" text-anchor="middle">java-discovery</text>
       </g>
 
       <!-- col 3 chips -->

@@ -86,7 +86,7 @@ Python tooling in `tools/` is not part of any CI gate:
 | `folder`          | Data directory layout (`DATA_LOCATION`)                    |
 | `install`         | Minecraft + loader installation                            |
 | `instance`        | Instance CRUD, playtime                                    |
-| `java-runtime`    | Java scanning/parsing                                      |
+| `java-discovery`  | Java discovery/parsing                                     |
 | `launch`          | Game launch with progress reporting                        |
 | `markdown`        | Markdown/HTML body of a content detail panel               |
 | `modrinth`        | Modrinth API client                                        |

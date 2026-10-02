@@ -102,10 +102,10 @@ impl From<download::Error> for Error {
     }
 }
 
-impl From<java_runtime::Error> for Error {
-    fn from(value: java_runtime::Error) -> Self {
+impl From<java_discovery::Error> for Error {
+    fn from(value: java_discovery::Error) -> Self {
         match value {
-            java_runtime::Error::Io(error) => Self::Io(error),
+            java_discovery::Error::Io(error) => Self::Io(error),
             _ => Self::NoSupportedJavaRuntime,
         }
     }

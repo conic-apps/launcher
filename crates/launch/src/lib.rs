@@ -37,7 +37,7 @@ use config::Config;
 use download::progress::DownloadState;
 use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::Instance;
-use java_runtime::ResolveJavaOptions;
+use java_discovery::ResolveJavaOptions;
 use platform::{OsFamily, PLATFORM_INFO, strip_unc_prefix};
 use statistics::{StatisticsProfile, log_launch};
 use version::{Version, resolve_version};
@@ -132,7 +132,7 @@ pub async fn launch(
         &[],
     )
     .await?;
-    let resolved_java = java_runtime::resolve_java_executable(&ResolveJavaOptions {
+    let resolved_java = java_discovery::resolve_java_executable(&ResolveJavaOptions {
         instance_java_path: instance.config.launch_config.java_path.clone(),
         prefer_mojang_java: config.prefer_mojang_java,
         disabled_java_runtimes: config.disabled_java_runtime.clone(),

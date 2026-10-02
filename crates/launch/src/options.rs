@@ -11,7 +11,7 @@ use config::{
 };
 use folder::DATA_LOCATION;
 use instance::Instance;
-use java_runtime::JavaArch;
+use java_discovery::JavaArch;
 
 use crate::error::*;
 
