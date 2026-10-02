@@ -17,7 +17,7 @@ thread_local! {
 }
 
 pub(crate) struct BodyRenderer {
-    renderer: markdown::Renderer,
+    renderer: crate::markdown::Renderer,
     /// The width the display list was last laid out for, so a repeat of the same
     /// width — which a `changed width` binding produces while nothing has moved —
     /// does not re-measure the document.
@@ -65,9 +65,10 @@ impl BodyRenderer {
     /// the engine when the width arrives.
     #[cfg(test)]
     fn for_test() -> Self {
-        let mut renderer = markdown::Renderer::with_collection(markdown::fonts::system());
+        let mut renderer =
+            crate::markdown::Renderer::with_collection(crate::markdown::fonts::system());
         renderer.set_style(
-            markdown::MdStyle::default().with_families(theme_font_family(), "monospace"),
+            crate::markdown::MdStyle::default().with_families(theme_font_family(), "monospace"),
         );
         Self {
             renderer,
@@ -91,10 +92,10 @@ impl BodyRenderer {
     /// is that face.
     fn new() -> Self {
         let mut renderer =
-            markdown::Renderer::with_collection(slint::fontique_011::shared_collection());
+            crate::markdown::Renderer::with_collection(slint::fontique_011::shared_collection());
         let mono = monospace_family();
         renderer.set_style(
-            markdown::MdStyle::default().with_families(theme_font_family(), mono.clone()),
+            crate::markdown::MdStyle::default().with_families(theme_font_family(), mono.clone()),
         );
         // The view is told the same name, and it has to be told: see
         // [`monospace_family`].
@@ -261,9 +262,9 @@ pub(crate) fn set_body_source_with(
     new_engine: fn() -> BodyRenderer,
 ) -> bool {
     let format = if is_html {
-        markdown::SourceFormat::Html
+        crate::markdown::SourceFormat::Html
     } else {
-        markdown::SourceFormat::Markdown
+        crate::markdown::SourceFormat::Markdown
     };
     BODY.with(|slot| {
         let mut slot = slot.borrow_mut();
@@ -369,7 +370,7 @@ pub(crate) fn body_layout() -> Option<BodyLayout> {
                 // empty in a struct literal, so an item without one would not be a
                 // value the panel could build at all. The two lists share one
                 // coordinate space and the view draws each in its own loop.
-                if item.kind == markdown::ItemKind::Image {
+                if item.kind == crate::markdown::ItemKind::Image {
                     images.push(MarkdownImage {
                         x: item.x,
                         y,
@@ -627,7 +628,7 @@ pub(crate) fn forget_body_document() {
     BODY.with(|slot| {
         if let Some(body) = slot.borrow_mut().as_mut() {
             body.renderer
-                .set_source(String::new(), markdown::SourceFormat::Markdown);
+                .set_source(String::new(), crate::markdown::SourceFormat::Markdown);
         }
     });
 }

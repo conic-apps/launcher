@@ -20,7 +20,7 @@
 //!
 //! # Line breaking
 //!
-//! Runs are measured one at a time (see [`crate::measure`]) and the breaks are
+//! Runs are measured one at a time (see [`crate::markdown::measure`]) and the breaks are
 //! found here, which is what keeps a measured width and a drawn width the same
 //! number. The break opportunities are the ones a browser uses for the scripts
 //! this renderer sees: after a space, after a hyphen or a slash, and between two
@@ -30,9 +30,9 @@
 //! comes out a little different from Chromium's is invisible, whereas a wrong
 //! *width* would not be.
 
-use crate::doc::{Align, Block, Cell, Inline};
-use crate::measure::{Measurer, SpanMetrics, SpanStyle};
-use crate::model::{
+use crate::markdown::doc::{Align, Block, Cell, Inline};
+use crate::markdown::measure::{Measurer, SpanMetrics, SpanStyle};
+use crate::markdown::model::{
     ColorRole, DisplayList, HeadingRule, ImageStore, ItemKind, MdChunk, MdItem, MdSection, MdStyle,
 };
 
@@ -1043,7 +1043,7 @@ impl Ctx<'_> {
         ordered: bool,
         start: u64,
         tight: bool,
-        items: &[crate::doc::ListItem],
+        items: &[crate::markdown::doc::ListItem],
         x: f32,
         y: f32,
         avail: f32,

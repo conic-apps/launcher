@@ -14,12 +14,12 @@
 //! underlines every link whether the pointer is over it or not, and it has no
 //! way to say where a span landed.
 //!
-//! So this crate does the part a browser's layout engine does, in Rust, and
+//! So this module does the part a browser's layout engine does, in Rust, and
 //! hands the view a flat list of positioned items. The view's whole job is
 //! `for item in items` and three cases: a run of text, a box, a bitmap.
 //!
-//! ```no_run
-//! use markdown::{Renderer, SourceFormat};
+//! ```ignore
+//! use crate::markdown::{Renderer, SourceFormat};
 //!
 //! let mut renderer = Renderer::new();
 //! renderer.set_source("# Conic Launcher\n\nA **mod** loader.\n", SourceFormat::Markdown);
@@ -40,10 +40,10 @@
 //!
 //! # The view
 //!
-//! `ui/markdown-view.slint` is the companion component. A caller adds its
-//! directory to slint-build's include path, imports `MarkdownView`, and pushes
-//! the display list into it. The engine itself has no Slint item tree in it, so
-//! the same crate serves a caller that draws with `Text`/`Image` directly.
+//! `app/ui/components/markdown/markdown-view.slint` is the companion component.
+//! The app imports it by relative path, and the display list is pushed into it.
+//! The engine itself has no Slint item tree in it, so the same module serves a
+//! caller that draws with `Text`/`Image` directly.
 //!
 //! # Two things to know
 //!
@@ -58,13 +58,21 @@
 //!   [`MdStyle::code_block_wrap`] for the same trade on a `pre`.
 
 #![forbid(unsafe_code)]
-#![warn(missing_docs)]
+// The renderer keeps the full API it grew as a standalone library; the launcher's
+// content panels only touch part of it, and the tests use more. Now that the
+// module is internal rather than a published crate, the unused accessors and
+// re-exports are expected here instead of a sign of rot, so they are allowed
+// rather than pruned.
+#![allow(dead_code, unused_imports)]
 
 pub mod doc;
 pub mod layout;
 pub mod measure;
 pub mod model;
 pub mod parse;
+
+#[cfg(test)]
+mod tests;
 
 pub use doc::{Align, Block, Cell, Inline, Inlines, ListItem};
 pub use layout::layout;
@@ -82,25 +90,6 @@ pub mod fonts {
     pub fn system() -> fontique::Collection {
         fontique::Collection::new(fontique::CollectionOptions::default())
     }
-}
-
-/// The directory the companion `.slint` files live in.
-///
-/// A caller that wants the component adds this to slint-build's include path in
-/// its own `build.rs`:
-///
-/// ```text
-/// slint_build::CompilerConfiguration::new()
-///     .with_include_paths(vec![markdown::ui_path()])
-/// ```
-///
-/// The crate ships them as data rather than compiling them itself: a Slint
-/// struct's Rust type belongs to the *compilation* that produced it, so a
-/// library that compiled the component and a caller that imported the same file
-/// would end up with two unrelated types and no way to move an item between
-/// them. Compiling once, in the caller, is what keeps the two the same type.
-pub fn ui_path() -> std::path::PathBuf {
-    std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("ui")
 }
 
 /// A document, and the display list it lays out to.

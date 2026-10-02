@@ -26,6 +26,11 @@ mod instance_view;
 mod json;
 mod launch;
 mod logs;
+// The Markdown/HTML renderer behind the content detail panels. It came in from
+// a standalone crate and keeps that crate's habit of `unwrap`/`expect` in
+// internal invariants, so the crate-level deny is opted out of here.
+#[allow(clippy::unwrap_used)]
+mod markdown;
 mod multiplayer;
 mod music;
 mod native;
