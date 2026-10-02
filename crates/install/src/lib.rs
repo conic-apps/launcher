@@ -276,18 +276,18 @@ fn print_runtime_info(runtime: &InstanceRuntime) {
 }
 
 /// Resolves the Java executable used to run mod loader installers, applying the
-/// same selection logic as game launching (see `java_runtime::resolve_java_executable`).
+/// same selection logic as game launching (see `java_discovery::resolve_java_executable`).
 async fn resolve_installer_java(
     config: &Config,
     instance: &Instance,
-) -> Result<java_runtime::ResolvedJava> {
+) -> Result<java_discovery::ResolvedJava> {
     let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
     let raw_version_json = tokio::fs::read_to_string(version_json_path).await?;
     let unresolved_version = serde_json::from_str::<Version>(&raw_version_json)?;
     let resolved_version = resolve_version(&unresolved_version, &minecraft_location, &[]).await?;
     Ok(
-        java_runtime::resolve_java_executable(&java_runtime::ResolveJavaOptions {
+        java_discovery::resolve_java_executable(&java_discovery::ResolveJavaOptions {
             instance_java_path: instance.config.launch_config.java_path.clone(),
             prefer_mojang_java: config.prefer_mojang_java,
             disabled_java_runtimes: config.disabled_java_runtime.clone(),

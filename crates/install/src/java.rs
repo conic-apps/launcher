@@ -259,7 +259,7 @@ pub async fn install_for_instance(
     };
     install(
         java_runtime_info,
-        &java_runtime::mojang::get_installation_directory(
+        &java_discovery::mojang::get_installation_directory(
             &resolved_version.java_version.component,
         )?,
         progress,
