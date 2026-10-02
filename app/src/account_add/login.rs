@@ -6,6 +6,8 @@
 
 use super::*;
 
+use account::authcode;
+
 /// Recomputes whether the offline form can be submitted. The test trims the
 /// username; Slint has no `trim`, so it lives here.
 pub(crate) fn refresh_offline_submit(state: &AccountAddState) {

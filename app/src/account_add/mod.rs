@@ -32,12 +32,12 @@ use uuid::Uuid;
 
 use crate::account_avatar;
 use crate::slint_backend::{AccountAddState, App, Dialogs, GameState, YggdrasilProfileItem};
+use account::authcode::Outcome;
 use account::{
     Error, LoginRequest, LoginTaskState, get_uuid_from_username,
     microsoft::{LoginEvent, LoginReporter},
     yggdrasil::{self, yggdrasil_user_api::Profile as YggdrasilProfile},
 };
-use authcode::Outcome;
 
 pub(crate) mod login;
 mod wiring;
@@ -82,7 +82,7 @@ pub(crate) struct MicrosoftFlow {
     /// The task blocked on the loopback listener the browser flow's code comes
     /// back on, while the browser screen is on show.
     ///
-    /// An abort handle and not the [`authcode::AuthCallback`] itself: the
+    /// An abort handle and not the [`account::authcode::AuthCallback`] itself: the
     /// callback moves into `wait` and comes back as an `Outcome`, and the one
     /// thing to be done to it from the UI thread is to stop waiting — which is
     /// what the two ways off this screen have in common.

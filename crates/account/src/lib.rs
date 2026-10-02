@@ -37,6 +37,7 @@ use crate::microsoft::MicrosoftAccount;
 use crate::offline::OfflineAccount;
 use crate::yggdrasil::YggdrasilAccount;
 
+pub mod authcode;
 mod error;
 pub mod microsoft;
 mod microsoft_task;

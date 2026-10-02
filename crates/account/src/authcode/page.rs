@@ -4,9 +4,9 @@
 
 //! The page the browser lands on when the OAuth redirect fires.
 //!
-//! The page itself is `page.html`, at the crate root: it is markup, it wants
-//! to be read and previewed as markup, and everything in it — the rules, the
-//! three glyphs, the layout — is the design, not logic. This module is the part
+//! The page itself is `page.html`, next door: it is markup, it wants to be
+//! read and previewed as markup, and everything in it — the rules, the three
+//! glyphs, the layout — is the design, not logic. This module is the part
 //! that cannot live in a stylesheet: which theme the launcher is in, and what
 //! the two sentences say.
 //!
@@ -21,7 +21,7 @@ use log::error;
 use regex::Regex;
 
 /// The page, as written next door.
-const TEMPLATE: &str = include_str!("../page.html");
+const TEMPLATE: &str = include_str!("page.html");
 
 /// One `{{ name }}` placeholder, however it is spaced.
 ///

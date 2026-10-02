@@ -85,8 +85,9 @@ Python tooling in `tools/` is not part of any CI gate:
   controls itself; Linux draws them in the title bar.
 - `crates/single-instance` — the second launch is not a second window. Linux uses
   D-Bus (`zbus`), macOS a socket, Windows a named mutex.
-- `crates/authcode` — the loopback listener the Microsoft browser flow hands its
-  authorization code back on.
+- `crates/account` — the account model and its flows; the Microsoft browser
+  flow's loopback listener (the `authcode` module) lives here too, next to the
+  login it serves.
 - `crates/music` — local music listing **and** playback. `symphonia` decodes and
   `cpal` plays natively.
 - `crates/markdown` — `comrak` + `parley`/`fontique` render a content panel's
@@ -96,8 +97,7 @@ Python tooling in `tools/` is not part of any CI gate:
 
 | Crate             | Purpose                                                    |
 | ----------------- | ---------------------------------------------------------- |
-| `account`         | Microsoft / offline / Authlib / Yggdrasil accounts         |
-| `authcode`        | Loopback listener for the Microsoft login callback         |
+| `account`         | Microsoft / offline / Authlib / Yggdrasil accounts, and the Microsoft login loopback callback listener (`authcode`) |
 | `config`          | App config load/save, background image                     |
 | `content`         | Saves, datapacks, resourcepacks, screenshots, mods         |
 | `curseforge`      | CurseForge API client (`CURSEFORGE_API_KEY` at build time) |
