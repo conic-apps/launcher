@@ -364,3 +364,60 @@ fn collapse_duplicate_options(arguments: Vec<String>) -> Vec<String> {
     }
     collapsed
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn collapse(arguments: &[&str]) -> Vec<String> {
+        collapse_duplicate_options(arguments.iter().map(ToString::to_string).collect())
+    }
+
+    #[test]
+    fn distinct_options_are_left_alone() {
+        assert_eq!(
+            collapse(&["--a", "1", "--b", "2"]),
+            ["--a", "1", "--b", "2"]
+        );
+    }
+
+    #[test]
+    fn a_repeated_option_keeps_its_first_position_and_last_value() {
+        // launchwrapper's single-value specs reject the option twice, so only
+        // the last value survives, where the option first appeared.
+        assert_eq!(collapse(&["--a", "1", "--a", "2"]), ["--a", "2"]);
+        assert_eq!(
+            collapse(&["--a", "1", "--b", "2", "--a", "3"]),
+            ["--a", "3", "--b", "2"]
+        );
+    }
+
+    #[test]
+    fn tweak_class_accumulates_every_value() {
+        assert_eq!(
+            collapse(&["--tweakClass", "a", "--tweakClass", "b"]),
+            ["--tweakClass", "a", "b"]
+        );
+    }
+
+    #[test]
+    fn bare_values_before_the_first_option_stay_at_the_front() {
+        assert_eq!(collapse(&["foo", "--a", "1"]), ["foo", "--a", "1"]);
+    }
+
+    #[test]
+    fn joining_minecraft_arguments_collapses_duplicates() {
+        let mut resolved = ResolvedVersion::default();
+        resolved.join_minecraft_arguments(&Some("--a 1 --a 2 --b 3".to_string()));
+        assert_eq!(resolved.game_arguments, ["--a", "2", "--b", "3"]);
+    }
+
+    #[test]
+    fn joining_minimum_launcher_version_keeps_the_highest() {
+        let mut resolved = ResolvedVersion::default();
+        resolved
+            .join_minimum_launcher_version(Some(21))
+            .join_minimum_launcher_version(Some(5));
+        assert_eq!(resolved.minimum_launcher_version, 21);
+    }
+}

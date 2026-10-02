@@ -199,3 +199,43 @@ pub(crate) fn spawn_icon_fetch(weak: Weak<App>, token: u64, wanted: Vec<(usize, 
         });
     });
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn curseforge_class_ids_map_to_a_subtitle() {
+        assert_eq!(curseforge_type(Some(6)), "mod");
+        assert_eq!(curseforge_type(Some(12)), "resourcepack");
+        assert_eq!(curseforge_type(Some(4471)), "modpack");
+        // A shader has no entry and therefore no subtitle.
+        assert_eq!(curseforge_type(Some(999)), "");
+        assert_eq!(curseforge_type(None), "");
+    }
+
+    #[test]
+    fn modrinth_project_types_map_to_a_subtitle() {
+        assert_eq!(modrinth_type("mod"), "mod");
+        assert_eq!(modrinth_type("modpack"), "modpack");
+        assert_eq!(modrinth_type("shader"), "shader");
+        assert_eq!(modrinth_type("plugin"), "");
+    }
+
+    #[test]
+    fn only_loader_slugs_survive_the_category_filter() {
+        let value = serde_json::json!(["fabric", "shader", "forge", "quilt", 3, null]);
+        assert_eq!(strings(Some(&value)), ["fabric", "forge", "quilt"]);
+        assert!(strings(None).is_empty());
+    }
+
+    #[test]
+    fn the_first_non_empty_named_field_wins() {
+        let value = serde_json::json!({ "title": "", "slug": "lithium", "project_id": "abc" });
+        assert_eq!(
+            first_present(&value, &["title", "slug", "project_id"]),
+            "lithium"
+        );
+        assert_eq!(first_present(&value, &["missing"]), "");
+    }
+}

@@ -95,7 +95,7 @@ pub fn remove_background_image() -> Result<()> {
 
 /// Update channel selection. Serialized as the lowercase values `nightly`,
 /// `stable` and `beta`.
-#[derive(Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum UpdateChannel {
     #[serde(alias = "Weekly")]
@@ -254,5 +254,75 @@ pub fn get_system_language() -> &'static str {
         "tr" => "tr_tr",
         "pl" => "pl_pl",
         _ => "en_us",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_default_config_is_the_documented_one() {
+        let config = Config::default();
+        assert!(config.auto_update);
+        assert!(config.prefer_mojang_java);
+        assert_eq!(config.update_channel, UpdateChannel::Stable);
+        assert_eq!(config.appearance.palette, "Mocha");
+        assert!(config.accessibility.change_game_language);
+        assert_eq!(config.launch.launcher_name, "Conic_Launcher");
+        assert_eq!(config.launch.width, 854);
+        assert_eq!(config.download.max_connections, 100);
+        assert_eq!(config.music.main_volumn, 100);
+        assert_eq!(config.music.main_volumn_background, 25);
+    }
+
+    #[test]
+    fn update_channel_maps_its_slug_and_back() {
+        assert_eq!(UpdateChannel::from_slug("nightly"), UpdateChannel::Nightly);
+        assert_eq!(UpdateChannel::from_slug("beta"), UpdateChannel::Beta);
+        assert_eq!(UpdateChannel::from_slug("stable"), UpdateChannel::Stable);
+        // Anything else falls back to the default channel.
+        assert_eq!(UpdateChannel::from_slug("nonsense"), UpdateChannel::Stable);
+        assert_eq!(UpdateChannel::Nightly.as_str(), "nightly");
+        assert_eq!(UpdateChannel::Stable.as_str(), "stable");
+        assert_eq!(UpdateChannel::Beta.as_str(), "beta");
+    }
+
+    #[test]
+    fn update_channel_reads_its_legacy_aliases() {
+        #[derive(Deserialize)]
+        struct Wrapper {
+            update_channel: UpdateChannel,
+        }
+
+        let parse = |value: &str| -> UpdateChannel {
+            let wrapper: Wrapper =
+                toml::from_str(&format!("update_channel = \"{value}\"")).expect("valid channel");
+            wrapper.update_channel
+        };
+        assert_eq!(parse("Weekly"), UpdateChannel::Nightly);
+        assert_eq!(parse("Release"), UpdateChannel::Stable);
+        assert_eq!(parse("Snapshot"), UpdateChannel::Beta);
+    }
+
+    #[test]
+    fn a_partial_config_is_filled_in_with_defaults() {
+        let config: Config = toml::from_str("auto_update = false\n").expect("valid toml");
+        assert!(!config.auto_update);
+        // Every unmentioned section keeps its default.
+        assert_eq!(config.launch.width, 854);
+        assert_eq!(config.appearance.palette, "Mocha");
+    }
+
+    #[test]
+    fn unknown_keys_survive_a_load_save_round_trip() {
+        let config: Config = toml::from_str("a_key_from_a_newer_build = 42\n").expect("valid toml");
+        assert_eq!(
+            config.extra.get("a_key_from_a_newer_build"),
+            Some(&toml::Value::Integer(42))
+        );
+
+        let written = toml::to_string_pretty(&config).expect("serialisable");
+        assert!(written.contains("a_key_from_a_newer_build = 42"));
     }
 }
