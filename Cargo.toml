@@ -33,6 +33,7 @@ statistics = { path = "./crates/statistics", version = "0.0.0" }
 single-instance = { path = "./crates/single-instance", version = "0.0.0" }
 multiplayer = { path = "./crates/multiplayer", version = "0.0.0" }
 music = { path = "./crates/music", version = "0.0.0" }
+tilemap = { path = "./crates/tilemap", version = "0.0.0" }
 
 # ----- non-local crates -----
 slint = { version = "1.18", default-features = true }
@@ -68,7 +69,7 @@ cpal = "0.15"
 rustfft = "6.4"
 
 # Drawing the window background's shaders on the GPU: the notifier hands over
-# `get_proc_address`, and this is the loader (see app/src/background/gl.rs).
+# `get_proc_address`, and this is the loader (see app/src/ui/components/background/gl.rs).
 glow = "0.18"
 bytemuck = "1"
 # `IntSize` for the borrowed-texture builder — the type Slint asks for.
@@ -110,7 +111,7 @@ flate2 = "1"
 fastnbt = "2"
 png = "0.18"
 sysinfo = "0.38"
-# The Markdown/HTML body of a content detail panel (app/src/markdown).
+# The Markdown/HTML body of a content detail panel (app/src/ui/components/markdown).
 # `parley` and `fontique` are the text engine Slint itself renders with, and
 # they are already in the tree as Slint's own dependencies: reusing the same
 # versions is not an optimisation but a requirement, because the engine is handed

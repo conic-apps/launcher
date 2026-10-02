@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use conic_worldmap::{RenderOptions, RenderRequest, WorldMap};
 use storage::LOCATIONS;
+use tilemap::{TileImage, TileRequest, TileSource, WorldId};
 
 use crate::error::*;
 
@@ -121,6 +122,51 @@ pub fn render_map(cache: &MapCache, request: &WorldMapRequest) -> Result<WorldMa
         height: result.height,
         pixels: result.pixels,
     })
+}
+
+/// The save-backed [`tilemap::TileSource`].
+///
+/// Holds the [`MapCache`] so the worlds it opens stay warm across tiles. A seed
+/// map is a separate source implementing the same port, not a branch here.
+#[derive(Default)]
+pub struct LocalSaveSource {
+    cache: MapCache,
+}
+
+impl TileSource for LocalSaveSource {
+    fn render(&self, request: &TileRequest) -> std::result::Result<TileImage, tilemap::Error> {
+        let WorldId::Save {
+            instance_id,
+            folder,
+            dimension,
+        } = &request.world
+        else {
+            return Err(tilemap::Error(
+                "the save source cannot render a seed world".to_string(),
+            ));
+        };
+        let result = render_map(
+            &self.cache,
+            &WorldMapRequest {
+                instance_id: instance_id.clone(),
+                folder_name: folder.clone(),
+                width: request.size,
+                height: request.size,
+                center_x: Some(request.center.0),
+                center_z: Some(request.center.1),
+                dimension: Some(dimension.clone()),
+                water: Some(request.options.water),
+                shading: Some(request.options.shading),
+                altitude_shading: Some(request.options.altitude_shading),
+            },
+        )
+        .map_err(|error| tilemap::Error(error.to_string()))?;
+        Ok(TileImage {
+            width: result.width as u32,
+            height: result.height as u32,
+            pixels: result.pixels,
+        })
+    }
 }
 
 #[cfg(test)]

@@ -90,7 +90,7 @@ pub struct Log {
 /// # Arguments
 /// * `config` - The launcher configuration (account, launch and download settings).
 /// * `instance` - The Minecraft instance to launch.
-/// * `status` - The shared progress slot the caller polls.
+/// * `sink` - The output port the progress is reported through.
 ///
 /// # Returns
 /// * `Ok(u32)` - The PID of the spawned Minecraft process.
