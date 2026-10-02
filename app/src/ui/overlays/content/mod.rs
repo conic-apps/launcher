@@ -41,7 +41,6 @@ use crate::slint_backend::{
 };
 use crate::ui::services::report::deliver;
 use crate::usecases::generation::{Gate, Token};
-use content::mods::remote::RemoteModPlatform;
 use content::mods::{ModLoader, ResolvedMod};
 use instance::InstanceRuntime;
 
@@ -67,6 +66,11 @@ pub(crate) use lists::*;
 pub(crate) use presenter::*;
 pub(crate) use search::*;
 pub(crate) use wiring::*;
+// The browser's plain data (cards, the search cache, the open query) is
+// UI-neutral and lives in the use case. Re-exported here so the rest of the
+// module keeps seeing the names it always did; only the Slint-facing `finish*`
+// below stays in this layer.
+pub(crate) use crate::usecases::content::*;
 
 /// How many results a remote page holds.
 pub(crate) const PAGE_SIZE: usize = 20;
@@ -113,247 +117,45 @@ pub(crate) const CARD_HEIGHT_NO_SUBTITLE: i32 = 60;
 /// so that line is absent — which is what `CARD_HEIGHT` subtracts.
 pub(crate) const CARD_HEIGHT_SAVES: i32 = 64;
 
-/// Which remote list is showing: the kind and the platform are state, because
-/// only one is ever open.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum RemoteKind {
-    Mods,
-    ResourcePacks,
-    Packs,
-}
-
-impl RemoteKind {
-    fn key(self) -> &'static str {
-        match self {
-            Self::Mods => "mods",
-            Self::ResourcePacks => "resourcepacks",
-            Self::Packs => "packs",
-        }
-    }
-
-    /// CurseForge's `classId`: 6 mods, 12 resource packs, 4471 modpacks.
-    fn curseforge_class(self) -> i64 {
-        match self {
-            Self::Mods => 6,
-            Self::ResourcePacks => 12,
-            Self::Packs => 4471,
-        }
-    }
-
-    /// The Modrinth `project_type` facet.
-    fn modrinth_type(self) -> &'static str {
-        match self {
-            Self::Mods => "mod",
-            Self::ResourcePacks => "resourcepack",
-            Self::Packs => "modpack",
-        }
-    }
-
-    /// Whether the kind's cards carry loader tags and use the loader filter.
-    /// A resource pack has no loader.
-    fn has_loaders(self) -> bool {
-        matches!(self, Self::Mods | Self::Packs)
-    }
-
-    /// Where a download of this kind lands, under the instance root.
-    fn folder(self) -> &'static str {
-        match self {
-            Self::Mods => "mods",
-            Self::ResourcePacks => "resourcepacks",
-            Self::Packs => "modpacks",
-        }
-    }
-
-    fn from_key(key: &str) -> Self {
-        match key {
-            "resourcepacks" => Self::ResourcePacks,
-            "packs" => Self::Packs,
-            _ => Self::Mods,
-        }
+/// Turns a pending card into the Slint card. Runs on the UI thread, which is
+/// the only place a model may be made.
+pub(crate) fn finish_card(card: PendingCard) -> ContentCard {
+    let tags: Vec<CardTag> = card.tags.into_iter().map(finish_tag).collect();
+    ContentCard {
+        id: SharedString::from(card.id),
+        link: SharedString::from(card.link),
+        title: SharedString::from(card.title),
+        subtitle: SharedString::from(card.subtitle),
+        has_subtitle: card.has_subtitle,
+        description: SharedString::from(card.description),
+        tags: ModelRc::from(Rc::new(VecModel::from(tags))),
+        icon: card
+            .icon
+            .and_then(resolve_icon)
+            .or_else(unknown_icon)
+            .unwrap_or_default(),
+        action_kind: SharedString::from(card.action_kind),
+        shows_play: card.shows_play,
+        mod_disabled: card.mod_disabled,
+        spawn_x: card.spawn.map_or(0, |(x, _)| x),
+        spawn_z: card.spawn.map_or(0, |(_, z)| z),
+        ..Default::default()
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Platform {
-    Modrinth,
-    CurseForge,
-}
-
-impl Platform {
-    fn key(self) -> &'static str {
-        match self {
-            Self::Modrinth => "modrinth",
-            Self::CurseForge => "curseforge",
-        }
+/// The Slint tag behind one [`PendingTag`].
+fn finish_tag(tag: PendingTag) -> CardTag {
+    let (time_kind, hours, month, day, year) = tag.time.unwrap_or(("", 0, 0, 0, 0));
+    CardTag {
+        text: SharedString::from(tag.text),
+        label: SharedString::from(tag.label),
+        kind: SharedString::from(tag.kind),
+        time_kind: SharedString::from(time_kind),
+        time_hours: hours,
+        time_month: month,
+        time_day: day,
+        time_year: year,
     }
-
-    fn api(self) -> RemoteModPlatform {
-        match self {
-            Self::Modrinth => RemoteModPlatform::Modrinth,
-            Self::CurseForge => RemoteModPlatform::CurseForge,
-        }
-    }
-}
-
-/// A card as the background work builds it.
-///
-/// A Slint model is not `Send`, so a `ContentCard` — whose `tags` are a
-/// `ModelRc` — cannot be moved into an `upgrade_in_event_loop` closure. The
-/// built cards therefore travel as plain data and become `ContentCard`s inside
-/// the closure, on the UI thread. An icon travels as a `PendingImage` — a plain
-/// RGBA buffer — because Slint's `Image` itself is not `Send` either.
-#[derive(Clone, Default)]
-pub(crate) struct PendingCard {
-    id: String,
-    link: String,
-    title: String,
-    subtitle: String,
-    has_subtitle: bool,
-    description: String,
-    tags: Vec<PendingTag>,
-    icon: Option<PendingImage>,
-    /// "" | "favorite" | "file"
-    action_kind: &'static str,
-    shows_play: bool,
-    mod_disabled: bool,
-    /// A save's spawn point, which its world map opens centred on. Zero on
-    /// every other kind of card, and on a save whose `level.dat` has no
-    /// `spawn.pos` — which asks the world for its own instead.
-    spawn: Option<(i32, i32)>,
-}
-
-impl PendingCard {
-    /// The Slint card. Runs on the UI thread, which is the only place a model
-    /// may be made.
-    fn finish(self) -> ContentCard {
-        let tags: Vec<CardTag> = self.tags.into_iter().map(PendingTag::finish).collect();
-        ContentCard {
-            id: SharedString::from(self.id),
-            link: SharedString::from(self.link),
-            title: SharedString::from(self.title),
-            subtitle: SharedString::from(self.subtitle),
-            has_subtitle: self.has_subtitle,
-            description: SharedString::from(self.description),
-            tags: ModelRc::from(Rc::new(VecModel::from(tags))),
-            icon: self
-                .icon
-                .and_then(resolve_icon)
-                .or_else(unknown_icon)
-                .unwrap_or_default(),
-            action_kind: SharedString::from(self.action_kind),
-            shows_play: self.shows_play,
-            mod_disabled: self.mod_disabled,
-            spawn_x: self.spawn.map_or(0, |(x, _)| x),
-            spawn_z: self.spawn.map_or(0, |(_, z)| z),
-            ..Default::default()
-        }
-    }
-}
-
-/// An image on its way to the UI thread.
-///
-/// Slint's `Image` is not `Send`, so a decoded image cannot cross into an
-/// `upgrade_in_event_loop` closure. The *decode* — the expensive half, and the
-/// one that would stall the window — happens on the background thread, and what
-/// crosses is its result: a plain buffer. Building the `Image` from it on the
-/// UI thread is a copy.
-///
-/// `pub(crate)` because the command palette shows the same project icons beside
-/// its search results, and shares the `ICONS` cache rather than keeping a second
-/// copy of every bitmap.
-#[derive(Clone)]
-pub(crate) struct PendingImage {
-    /// The URL or path it came from, which is also its cache key.
-    key: String,
-    width: u32,
-    height: u32,
-    rgba: Vec<u8>,
-}
-
-/// One tag, before it becomes a Slint struct.
-#[derive(Clone)]
-pub(crate) struct PendingTag {
-    text: String,
-    label: String,
-    kind: String,
-    /// A relative time's `(kind, hours, month, day, year)`, for the saves'
-    /// last-played tag — which is translated on the Slint side.
-    time: Option<(&'static str, i32, i32, i32, i32)>,
-}
-
-impl PendingTag {
-    fn finish(self) -> CardTag {
-        let (time_kind, hours, month, day, year) = self.time.unwrap_or(("", 0, 0, 0, 0));
-        CardTag {
-            text: SharedString::from(self.text),
-            label: SharedString::from(self.label),
-            kind: SharedString::from(self.kind),
-            time_kind: SharedString::from(time_kind),
-            time_hours: hours,
-            time_month: month,
-            time_day: day,
-            time_year: year,
-        }
-    }
-}
-
-/// What a card's id stands for, so a callback carrying only the id can find the
-/// thing behind it. Rebuilt whenever a list is loaded.
-#[derive(Clone)]
-pub(crate) enum CardTarget {
-    Remote {
-        platform: Platform,
-        id: String,
-    },
-    /// A local file — a mod jar or a resource pack — whose folder the card
-    /// opens.
-    Path(String),
-    /// A save folder.
-    Save(String),
-}
-
-/// The open remote list's query and selections, the same shape for all six
-/// lists.
-#[derive(Clone, Default)]
-pub(crate) struct SearchForm {
-    query: String,
-    loaders: Vec<String>,
-    versions: Vec<String>,
-    /// Modrinth category slugs, or CurseForge category ids as strings.
-    categories: Vec<String>,
-    favorites_only: bool,
-    page: usize,
-}
-
-/// One remote list's search bookkeeping.
-///
-/// There is one of each per list, and a list that is destroyed and re-created
-/// by a source switch keeps the cache it built.
-#[derive(Default)]
-pub(crate) struct ListSearch {
-    /// The request key → what that exact request returned: the cards and the
-    /// total hit count the page count comes from. A page that has been seen is
-    /// drawn straight away, without the spinner a fresh request shows.
-    cache: HashMap<String, (Vec<BuiltCard>, usize)>,
-    /// The newest request's number. An answer that belongs to an older request
-    /// is dropped rather than drawn over a newer one — which is what rapid
-    /// paging needs, since the answers do not come back in order.
-    token: u64,
-    /// The instance runtime this list last seeded its filters from, as
-    /// `"<loader>|<minecraft>"`. A list seeds once per instance and not again,
-    /// so switching away and back gives a list with no filters on it while the
-    /// cache above survives.
-    initialized_for: Option<String>,
-}
-
-/// The detail panel that is open, and what its buttons act on.
-#[derive(Clone)]
-pub(crate) struct OpenDetail {
-    platform: Platform,
-    kind: RemoteKind,
-    id: String,
-    /// The installed mods the project resolved to, for the remove button.
-    installed_mods: Vec<ResolvedMod>,
 }
 
 thread_local! {

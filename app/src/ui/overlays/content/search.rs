@@ -382,13 +382,6 @@ pub(crate) fn pagination_pages(total: usize, current: usize) -> Vec<PageButton> 
     pages
 }
 
-/// A card and the targets its callbacks need, which only the search knows.
-#[derive(Clone)]
-pub(crate) struct BuiltCard {
-    card: PendingCard,
-    target: CardTarget,
-}
-
 pub(crate) fn run_search(ui: &App, page: usize) {
     // The request is identified, and every earlier request for this list is
     // invalidated, before anything else happens.

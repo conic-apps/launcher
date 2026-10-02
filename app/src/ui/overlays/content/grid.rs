@@ -61,7 +61,7 @@ pub(crate) fn set_cards(ui: &App, grid: Grid, pending: Vec<PendingCard>) {
         (state.grid_width, state.panel_height, state.model(grid))
     };
     let ui_state = ui.global::<ContentState>();
-    let mut cards: Vec<ContentCard> = pending.into_iter().map(PendingCard::finish).collect();
+    let mut cards: Vec<ContentCard> = pending.into_iter().map(finish_card).collect();
     let height = if cards.is_empty() {
         // Nothing to place: give the placeholder the room the grid would have
         // taken, so it sits where the cards would have been.
