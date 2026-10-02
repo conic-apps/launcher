@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # Conic Launcher
-# Copyright (C) 2026 Conic Launcher Contributors
+# Copyright 2022-2026 ConicMC developers. All rights reserved.
 # SPDX-License-Identifier: GPL-3.0-only
-#
+
 # Merge the Nunito digit glyphs into the variable Comfortaa font and save the
 # result as "Comfortaa Nunito", the TTF the Slint frontend embeds.
 #

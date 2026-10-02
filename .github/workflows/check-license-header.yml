@@ -1,0 +1,43 @@
+name: Check license headers
+
+on:
+  push:
+    paths:
+      - ".github/workflows/check-license-header.yml"
+      - "licenserc.toml"
+      - "**/*.rs"
+      - "**/*.slint"
+      - "**/*.py"
+      - "**/*.sh"
+  pull_request:
+    branches: ["dev"]
+    paths:
+      - ".github/workflows/check-license-header.yml"
+      - "licenserc.toml"
+      - "**/*.rs"
+      - "**/*.slint"
+      - "**/*.py"
+      - "**/*.sh"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hawkeye:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # `hawkeye check` only reports; `hawkeye format` is the local fix. The
+      # header itself lives in `licenserc.toml`, which is where the exact three
+      # lines and the per-extension comment styles are configured.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: hawkeye
+
+      - name: Check SPDX headers
+        run: hawkeye check

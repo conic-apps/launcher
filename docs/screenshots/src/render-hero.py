@@ -1,3 +1,7 @@
+# Conic Launcher
+# Copyright 2022-2026 ConicMC developers. All rights reserved.
+# SPDX-License-Identifier: GPL-3.0-only
+
 # Re-render hero.png from hero-layout.svg.
 #
 # rsvg-convert refuses external file references, so this script inlines the
