@@ -134,6 +134,7 @@ dependencies = [
  "futures",
  "log",
  "md-5",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",
@@ -566,17 +567,6 @@ dependencies = [
  "atspi-common",
  "serde",
  "zbus",
-]
-
-[[package]]
-name = "authcode"
-version = "0.0.0"
-dependencies = [
- "log",
- "regex",
- "thiserror 2.0.19",
- "tokio",
- "uuid",
 ]
 
 [[package]]
@@ -1076,7 +1066,6 @@ name = "conic-launcher"
 version = "0.1.0-alpha.2"
 dependencies = [
  "account",
- "authcode",
  "base64 0.22.1",
  "block2 0.5.1",
  "bytemuck",

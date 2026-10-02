@@ -4,8 +4,8 @@
   Copyright 2022-2026 ConicMC developers. All rights reserved.
   SPDX-License-Identifier: GPL-3.0-only
 
-  The page the browser lands on when the OAuth redirect fires. `src/page.rs`
-  pulls this in with `include_str!`, fills in the `{{ … }}` placeholders and
+  The page the browser lands on when the OAuth redirect fires. `page.rs` next
+  door pulls this in with `include_str!`, fills in the `{{ … }}` placeholders and
   the custom properties in `:root`, and hands the result to the loopback
   listener — which is why every rule is inline and every glyph is inline too:
   the whole thing goes over a loopback socket in one response, and a browser

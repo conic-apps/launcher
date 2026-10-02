@@ -10,7 +10,7 @@
 
 use std::time::Duration;
 
-use authcode::{AuthCallback, Messages, Outcome, Palette, Rgba};
+use account::authcode::{AuthCallback, Messages, Outcome, Palette, Rgba};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::oneshot;

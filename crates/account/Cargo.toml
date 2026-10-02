@@ -14,10 +14,16 @@ base64.workspace = true
 futures.workspace = true
 log.workspace = true
 md-5.workspace = true
+# The callback page's `{{ … }}` substitution (`authcode::page`): one pass that
+# finds every placeholder however it is spaced, and a name to check the
+# template's placeholders and the caller's values against each other.
+regex.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
-tokio.workspace = true
+# `net`/`io-util`/`sync` are the callback listener (`authcode`'s loopback
+# socket and its `oneshot`); the rest is the account flows themselves.
+tokio = { workspace = true, features = ["net", "io-util", "sync"] }
 url.workspace = true
 uuid.workspace = true
