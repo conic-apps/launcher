@@ -8,8 +8,10 @@
 //! installers, the Mojang Java runtime download and the first-launch language
 //! setup. The version-list caches are process-wide statics.
 //!
-//! [`install`] is spawned by the app, which hands in the shared status it polls
-//! and aborts the task to cancel.
+//! [`install`] is spawned by the app, which hands in the [`InstallSink`] its
+//! progress is reported through and aborts the task to cancel. The crate owns
+//! the sampling of its own [`DownloadState`], so the caller never sees a shared
+//! counter.
 
 // TODO: Support Optifine auto install
 
@@ -18,14 +20,14 @@ use std::{path::Path, str::FromStr, sync::Arc};
 use log::{debug, info, warn};
 use once_cell::sync::Lazy;
 use quilt::QuiltVersionList;
-use serde::Serialize;
 use vanilla::generate_download_info;
 
 use config::{Config, get_system_language};
-use download::progress::DownloadState;
+use download::progress::{DownloadSnapshot, DownloadState};
 use download::{Checksum, download_concurrent};
 use instance::{Instance, InstanceRuntime, ModLoaderType};
 use shared::HTTP_CLIENT;
+use shared::{ChangeReporter, Sink};
 use storage::LOCATIONS;
 use version::{Version, resolve_version};
 
@@ -116,45 +118,52 @@ pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
     ))
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(tag = "job", content = "progress")]
-pub enum InstallEvent {
+/// What an install reports, in the order it reports it.
+///
+/// Each variant holds a plain [`DownloadSnapshot`] rather than a
+/// [`DownloadState`], so an event can cross a thread and compare by value —
+/// which is what lets the reporter drop the ticks where nothing moved.
+#[derive(Debug, Clone, PartialEq)]
+pub enum InstallProgress {
     Prepare,
-    InstallGame(DownloadState),
-    InstallJava(DownloadState),
+    InstallGame(DownloadSnapshot),
+    InstallJava(DownloadSnapshot),
     InstallModLoader(ModLoaderProgress),
 }
 
 /// Fine-grained progress of a mod loader installation.
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(tag = "phase", content = "detail", rename_all = "camelCase")]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ModLoaderProgress {
     /// Preparing the installation (resolving versions and Java).
     Prepare,
     /// Downloading the loader installer JAR.
-    DownloadInstaller(DownloadState),
+    DownloadInstaller(DownloadSnapshot),
     /// Prefetching the libraries named in the installer JAR (Forge).
-    PrefetchDependencies(DownloadState),
+    PrefetchDependencies(DownloadSnapshot),
     /// Running the installer subprocess, carrying its latest log line.
     RunInstaller { message: String },
 }
 
-/// Clonable handle through which loader installers report [`ModLoaderProgress`].
+/// The output port [`install`] reports through.
+pub type InstallSink = Sink<InstallProgress>;
+
+/// Reports [`ModLoaderProgress`] to the install's port.
+///
+/// The loader installers run on the install task but only know their own
+/// sub-progress, so they report through this rather than the whole event enum.
 #[derive(Clone)]
 pub struct ModLoaderReporter {
-    status: Arc<std::sync::Mutex<InstallEvent>>,
+    reporter: Arc<ChangeReporter<InstallProgress>>,
 }
 
 impl ModLoaderReporter {
-    pub(crate) fn new(status: &Arc<std::sync::Mutex<InstallEvent>>) -> Self {
-        Self {
-            status: Arc::clone(status),
-        }
+    fn new(reporter: Arc<ChangeReporter<InstallProgress>>) -> Self {
+        Self { reporter }
     }
 
     pub fn report(&self, progress: ModLoaderProgress) {
-        let mut current = self.status.lock().expect("Internal error");
-        *current = InstallEvent::InstallModLoader(progress);
+        self.reporter
+            .report(InstallProgress::InstallModLoader(progress));
     }
 
     /// Reports one output line of the installer subprocess as
@@ -193,17 +202,12 @@ pub(crate) async fn fetch_maven_sha1(url: &str) -> Checksum {
 /// Runs the full pipeline: download the game files, install Java, then install
 /// the mod loader (Fabric, Forge, Quilt or NeoForge).
 ///
-/// The caller spawns this, hands in the shared status it polls, and aborts the
-/// task to cancel.
-pub async fn install(
-    config: Config,
-    instance: Instance,
-    status: Arc<std::sync::Mutex<InstallEvent>>,
-) -> Result<()> {
-    {
-        let mut status = status.lock().expect("Internal Error");
-        *status = InstallEvent::Prepare;
-    }
+/// The caller spawns this and hands in the [`InstallSink`] the progress is
+/// reported through, then aborts the task to cancel. The crate samples its own
+/// download counters, so a caller sees only [`InstallProgress`] snapshots.
+pub async fn install(config: Config, instance: Instance, sink: InstallSink) -> Result<()> {
+    let reporter = Arc::new(ChangeReporter::new(sink));
+    reporter.report(InstallProgress::Prepare);
     info!(
         "Start installing the game for instance {}",
         instance.config.name
@@ -217,33 +221,36 @@ pub async fn install(
         generate_download_info(&runtime.minecraft, LOCATIONS.minecraft.clone()).await?;
 
     let progress = DownloadState::default();
-    {
-        let mut status = status.lock().expect("internal error");
-        *status = InstallEvent::InstallGame(progress.clone())
-    }
+    reporter.report(InstallProgress::InstallGame(progress.snapshot()));
     info!("Downloading files");
-    download_concurrent(download_list, &progress, config.download.clone()).await?;
+    download::progress::watch(
+        &progress,
+        |snapshot| reporter.report(InstallProgress::InstallGame(snapshot)),
+        download_concurrent(download_list, &progress, config.download.clone()),
+    )
+    .await?;
 
     info!("Installing Java");
     let progress = DownloadState::default();
-    {
-        let mut status = status.lock().expect("Internal error");
-        *status = InstallEvent::InstallJava(progress.clone())
-    }
+    reporter.report(InstallProgress::InstallJava(progress.snapshot()));
 
     if instance.config.launch_config.java_path.is_none() && config.prefer_mojang_java {
-        java::install_for_instance(&instance, &progress, config.download.clone()).await?;
+        download::progress::watch(
+            &progress,
+            |snapshot| reporter.report(InstallProgress::InstallJava(snapshot)),
+            java::install_for_instance(&instance, &progress, config.download.clone()),
+        )
+        .await?;
     }
 
     if runtime.mod_loader_type.is_some() {
         info!("Install mod loader");
-        {
-            let mut status = status.lock().expect("Internal error");
-            *status = InstallEvent::InstallModLoader(ModLoaderProgress::Prepare);
-        }
-        let reporter = ModLoaderReporter::new(&status);
+        reporter.report(InstallProgress::InstallModLoader(
+            ModLoaderProgress::Prepare,
+        ));
+        let mod_reporter = ModLoaderReporter::new(Arc::clone(&reporter));
         let installer_java = resolve_installer_java(&config, &instance).await?;
-        install_mod_loader(runtime, installer_java.path.as_path(), &reporter).await?;
+        install_mod_loader(runtime, installer_java.path.as_path(), &mod_reporter).await?;
     };
 
     configure_first_launch_language(config, &instance).await;

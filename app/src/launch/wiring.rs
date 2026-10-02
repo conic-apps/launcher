@@ -20,7 +20,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         state.on_start(move || {
             let Some(ui) = weak.upgrade() else { return };
             controller.borrow_mut().cancel();
-            let run = controller.borrow_mut().begin();
+            let token = controller.borrow_mut().begin();
 
             // Everything the flow needs that is not on disk is gathered on the
             // UI thread, because `GameState`/`LaunchState` and the config are
@@ -40,10 +40,10 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
                 let instance = instance::get_instance_by_id(&current_id).await;
                 let flow_weak = weak.clone();
                 let flow_config = config_snapshot.clone();
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     reset_state(&ui, instance.as_ref(), &flow_config);
                     let task = crate::runtime::spawn(async move {
-                        run_flow(flow_weak, run, config_snapshot, instance).await;
+                        run_flow(flow_weak, token, config_snapshot, instance).await;
                     });
                     launch_controller().borrow_mut().task = Some(task);
                 });

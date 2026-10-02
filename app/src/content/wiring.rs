@@ -112,7 +112,7 @@ pub(crate) fn setup_open_packs(ui: &App) {
         let weak = weak.clone();
         crate::runtime::spawn(async move {
             let runtime = instance_runtime(&instance_id).await;
-            let _ = weak.upgrade_in_event_loop(move |ui| {
+            crate::report::report(&weak, move |ui| {
                 {
                     let state = controller();
                     let mut state = state.borrow_mut();
@@ -164,7 +164,7 @@ pub(crate) fn setup_source_switch(ui: &App) {
         let weak = weak.clone();
         crate::runtime::spawn(async move {
             let runtime = instance_runtime(&instance_id).await;
-            let _ = weak.upgrade_in_event_loop(move |ui| {
+            crate::report::report(&weak, move |ui| {
                 if source != "local" {
                     let state = controller();
                     let mut state = state.borrow_mut();
@@ -321,7 +321,7 @@ pub(crate) fn setup_save_deletion(ui: &App) {
                     log::error!("failed to delete the save {folder}: {error}");
                     return;
                 }
-                let _ = weak.upgrade_in_event_loop(move |ui| load_saves(&ui));
+                crate::report::report(&weak, move |ui| load_saves(&ui));
             });
         });
     }
@@ -366,7 +366,7 @@ pub(crate) fn setup_save_deletion(ui: &App) {
             let weak = ui.as_weak();
             crate::runtime::spawn(async move {
                 let result = content::saves::delete_save(&instance, &folder).await;
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     ui.global::<DeleteSaveState>().set_deleting(false);
                     // A failure is logged and the dialog left open, so a save
                     // that could not be removed is still there to be retried.
@@ -589,7 +589,7 @@ pub(crate) fn load_favorites(ui: &App) {
                 )
             })
             .collect();
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             controller().borrow_mut().favorites = keys;
             refresh_favorite_flags(&ui);
         });
@@ -607,11 +607,16 @@ pub(crate) fn setup_detail_actions(ui: &App) {
             };
             let instance = controller().borrow().instance_id.clone();
             ui.global::<ContentState>().set_detail_operating(true);
+            let token = controller().borrow_mut().detail_download_gate.issue();
             let weak = ui.as_weak();
             crate::runtime::spawn(async move {
-                let outcome = install(&instance, &detail).await;
-                let _ = weak.upgrade_in_event_loop(move |ui| {
-                    ui.global::<ContentState>().set_detail_operating(false);
+                let outcome = install(&instance, &detail, weak.clone(), token.clone()).await;
+                deliver(&weak, &token, move |ui| {
+                    let state = ui.global::<ContentState>();
+                    state.set_detail_operating(false);
+                    state.set_detail_progress(0.0);
+                    state.set_detail_progress_max(0.0);
+                    state.set_detail_progress_text("".into());
                     match outcome {
                         Ok(()) => {
                             refresh_installed(&ui);

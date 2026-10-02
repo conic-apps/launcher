@@ -31,7 +31,9 @@ pub mod nexus;
 pub mod room_code;
 
 pub use error::Error;
-pub use library::{check_library_valid as check_library, download_library, library_dir};
+pub use library::{
+    LibrarySink, check_library_valid as check_library, download_library, library_dir,
+};
 pub use nexus::{NexusSession, PeerInfo, SessionConfig, SessionEvent, SessionState};
 pub use room_code::is_room_code_valid;
 
@@ -47,7 +49,7 @@ pub const RECONCILE_EVERY: u32 = 5;
 /// Receives every notice the poll loop drains. It is called from the poll
 /// thread, so whatever it closes over has to be `Send + Sync`; the app marshals
 /// the event onto the Slint event loop itself.
-pub type EventSink = Arc<dyn Fn(SessionEvent) + Send + Sync + 'static>;
+pub type EventSink = shared::Sink<SessionEvent>;
 
 /// The lazily loaded session, its background poll thread and the reconciler's
 /// bookkeeping.

@@ -8,15 +8,19 @@
 //! [`launch`] runs the whole pipeline — file completion, version resolution,
 //! Java selection, authlib-injector setup, the argument list and the generated
 //! launch script with its stdout log watcher — and reports progress through the
-//! `Arc<Mutex<LaunchEvent>>` the caller polls. The app owns the process: it
-//! spawns the launch task, polls this state, and aborts the task to cancel.
+//! [`LaunchSink`] the caller hands in. The crate samples its own download
+//! counters; the caller never sees one. The app owns the process: it spawns the
+//! launch task and aborts the task to cancel.
 
 use std::{
     io::BufRead,
     path::PathBuf,
     process::{Command, Stdio},
     str::FromStr,
-    sync::{Arc, Mutex},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
     thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
@@ -34,10 +38,11 @@ use options::LaunchOptions;
 
 use account::Account;
 use config::Config;
-use download::progress::DownloadState;
+use download::progress::{DownloadSnapshot, DownloadState};
 use instance::Instance;
 use java_discovery::ResolveJavaOptions;
 use platform::{OsFamily, PLATFORM_INFO, strip_unc_prefix};
+use shared::{ChangeReporter, Sink};
 use statistics::{StatisticsProfile, log_launch};
 use storage::LOCATIONS;
 use version::{Version, resolve_version};
@@ -49,12 +54,15 @@ mod options;
 
 pub use error::*;
 
-#[derive(Clone, Serialize, PartialEq)]
-#[serde(tag = "job", content = "progress")]
-pub enum LaunchEvent {
+/// What a launch reports, in the order it reports it.
+///
+/// Each download variant holds a plain [`DownloadSnapshot`] rather than a
+/// [`DownloadState`], so an event can cross a thread and compare by value.
+#[derive(Debug, Clone, PartialEq)]
+pub enum LaunchProgress {
     Prepare,
-    InstallAuthlibInjector(DownloadState),
-    CompleteFiles(DownloadState),
+    InstallAuthlibInjector(DownloadSnapshot),
+    CompleteFiles(DownloadSnapshot),
     GenerateScriptlet,
     WaitForLaunch,
     LogSettingUser,
@@ -62,6 +70,9 @@ pub enum LaunchEvent {
     LogOpenALLoaded,
     LogTextureLoaded,
 }
+
+/// The output port [`launch`] reports through.
+pub type LaunchSink = Sink<LaunchProgress>;
 
 /// Represents a log message associated with a specific instance.
 #[derive(Clone, Serialize)]
@@ -88,11 +99,12 @@ pub struct Log {
 /// # Side Effects
 /// * Optionally checks files before launch.
 /// * Spawns the Minecraft process and generates launch script.
-pub async fn launch(
-    config: Config,
-    instance: Instance,
-    status: Arc<Mutex<LaunchEvent>>,
-) -> Result<u32> {
+///
+/// `sink` is the port the progress is reported through; the caller aborts the
+/// task to cancel the launch.
+pub async fn launch(config: Config, instance: Instance, sink: LaunchSink) -> Result<u32> {
+    let reporter = Arc::new(ChangeReporter::new(sink));
+    reporter.report(LaunchProgress::Prepare);
     info!(
         "Starting Minecraft client, instance: {}",
         instance.config.name
@@ -109,16 +121,17 @@ pub async fn launch(
         info!("File checking disabled by user")
     } else {
         let progress = DownloadState::default();
-        {
-            let mut status = status.lock().expect("Internal error");
-            *status = LaunchEvent::CompleteFiles(progress.clone());
-        }
-        complete_files(
-            &instance,
-            &minecraft_location,
-            progress,
-            config.prefer_mojang_java,
-            &config.download,
+        reporter.report(LaunchProgress::CompleteFiles(progress.snapshot()));
+        download::progress::watch(
+            &progress,
+            |snapshot| reporter.report(LaunchProgress::CompleteFiles(snapshot)),
+            complete_files(
+                &instance,
+                &minecraft_location,
+                progress.clone(),
+                config.prefer_mojang_java,
+                &config.download,
+            ),
         )
         .await?;
     }
@@ -140,14 +153,17 @@ pub async fn launch(
         mojang_component: resolved_version.java_version.component.clone(),
     })
     .await?;
-    {
-        let mut status = status.lock().expect("Internal error");
-        *status = LaunchEvent::GenerateScriptlet;
-    }
+    reporter.report(LaunchProgress::GenerateScriptlet);
     let launch_options = LaunchOptions::new(&config, &instance, resolved_java.arch)?;
     if let Account::Yggdrasil(_) = launch_options.selected_account {
         let progress = DownloadState::default();
-        install::authlib_injector::ensure_latest(&progress).await?;
+        reporter.report(LaunchProgress::InstallAuthlibInjector(progress.snapshot()));
+        download::progress::watch(
+            &progress,
+            |snapshot| reporter.report(LaunchProgress::InstallAuthlibInjector(snapshot)),
+            install::authlib_injector::ensure_latest(&progress),
+        )
+        .await?;
     }
     let command_arguments = generate_command_arguments(
         &minecraft_location,
@@ -162,7 +178,7 @@ pub async fn launch(
         launch_options,
         instance,
         resolved_java.path,
-        status,
+        reporter,
     )
     .await;
     if let Err(e) = &result {
@@ -195,13 +211,14 @@ fn print_instance_info(instance: &Instance) {
 /// # Behavior
 /// * Creates a platform-specific shell script/batch file for launching the game.
 /// * Runs the generated script using a subprocess.
-/// * Streams stdout to detect key launch indicators and publishes them on `status`.
+/// * Streams stdout to detect key launch indicators and reports them through
+///   `reporter`.
 async fn spawn_minecraft_process(
     command_arguments: Vec<String>,
     launch_options: LaunchOptions,
     instance: Instance,
     java_path: PathBuf,
-    status: Arc<Mutex<LaunchEvent>>,
+    reporter: Arc<ChangeReporter<LaunchProgress>>,
 ) -> Result<u32> {
     // TODO: ask Java to use the high-performance GPU.
     let instance_root = LOCATIONS.instances.get_instance_root(&instance.id);
@@ -273,10 +290,7 @@ async fn spawn_minecraft_process(
     }
     .stdout(Stdio::piped())
     .spawn()?;
-    {
-        let mut status = status.lock().expect("Internal error");
-        *status = LaunchEvent::WaitForLaunch;
-    }
+    reporter.report(LaunchProgress::WaitForLaunch);
     info!("Spawning minecraft process");
     let out = minecraft_process
         .stdout
@@ -284,7 +298,11 @@ async fn spawn_minecraft_process(
         .ok_or(Error::TakeMinecraftStdoutFailed)?;
     let mut out = std::io::BufReader::new(out);
     let pid = minecraft_process.id();
-    let status_cloned = status.clone();
+    let reporter_thread = Arc::clone(&reporter);
+    // Latched by the stdout thread on any of the three markers the wait below
+    // breaks on, so the launch task does not read the reporter's own last value.
+    let game_up = Arc::new(AtomicBool::new(false));
+    let game_up_thread = Arc::clone(&game_up);
     let mut buf = String::new();
     thread::spawn(move || {
         loop {
@@ -299,23 +317,22 @@ async fn spawn_minecraft_process(
             let line = buf.trim();
             debug!("[{pid}] {line}");
             if line.contains("Setting user:") {
-                let mut status = status.lock().expect("Internal error");
-                *status = LaunchEvent::LogSettingUser;
+                reporter_thread.report(LaunchProgress::LogSettingUser);
             }
             if line.to_lowercase().contains("lwjgl version") {
                 info!("Found LWJGL version, the game seems to have started successfully.");
-                let mut status = status.lock().expect("Internal error");
-                *status = LaunchEvent::LogLwjglVersion;
+                reporter_thread.report(LaunchProgress::LogLwjglVersion);
+                game_up_thread.store(true, Ordering::SeqCst);
             }
             if line.contains("OpenAL initialized") {
-                let mut status = status.lock().expect("Internal error");
-                *status = LaunchEvent::LogOpenALLoaded;
+                reporter_thread.report(LaunchProgress::LogOpenALLoaded);
+                game_up_thread.store(true, Ordering::SeqCst);
             }
             if (line.contains("Created") && line.contains("textures") && line.contains("-atlas"))
                 || line.contains("Found animation info")
             {
-                let mut status = status.lock().expect("Internal error");
-                *status = LaunchEvent::LogTextureLoaded;
+                reporter_thread.report(LaunchProgress::LogTextureLoaded);
+                game_up_thread.store(true, Ordering::SeqCst);
             }
         }
 
@@ -336,12 +353,7 @@ async fn spawn_minecraft_process(
     });
     let start = Instant::now();
     while start.elapsed().as_secs() < 20 {
-        if matches!(
-            &*status_cloned.lock().expect("Internal error"),
-            LaunchEvent::LogTextureLoaded
-                | LaunchEvent::LogLwjglVersion
-                | LaunchEvent::LogOpenALLoaded
-        ) {
+        if game_up.load(Ordering::SeqCst) {
             break;
         }
         tokio::time::sleep(Duration::from_secs(1)).await;

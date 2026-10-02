@@ -276,7 +276,7 @@ fn wire_java_actions(ui: &App, shared: Rc<RefCell<config::Config>>) {
                         .filter(|runtime| !runtime.is_managed)
                         .collect::<Vec<_>>()
                 });
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     let settings = ui.global::<AppConfig>();
                     let (runtimes, error) = match scanned {
                         Ok(runtimes) => (runtimes, SharedString::default()),

@@ -80,7 +80,7 @@ pub(crate) fn reset_state(ui: &App, instance: Option<&Instance>, config: &Config
 /// instance is not installed) and the launch.
 pub(crate) async fn run_flow(
     weak: Weak<App>,
-    run: Run,
+    token: Token,
     mut config: Config,
     instance: Option<Instance>,
 ) {
@@ -89,46 +89,46 @@ pub(crate) async fn run_flow(
     let accounts = account::list_accounts();
     if config.language.as_deref() != Some("zh_cn") && accounts.microsoft.is_empty() {
         log::info!(target: "launch", "refused: no Microsoft account and the language is not zh_cn");
-        show_dialog(&weak, &run, Dialog::NoMicrosoftAccount);
+        show_dialog(&weak, &token, Dialog::NoMicrosoftAccount);
         return;
     }
     let Some(account) = config.current_account.clone() else {
         log::info!(target: "launch", "refused: no current account");
-        show_dialog(&weak, &run, Dialog::NoAccount);
+        show_dialog(&weak, &token, Dialog::NoAccount);
         return;
     };
     let Some(instance) = instance else {
         log::info!(target: "launch", "refused: no current instance");
-        set_error(&weak, &run, "currentInstance is null".to_string());
+        set_error(&weak, &token, "currentInstance is null".to_string());
         return;
     };
 
     if !config.launch.skip_refresh_account {
         log::info!(target: "launch", "refreshing the {} account", account.kind());
-        match refresh_account(&weak, &run, &account).await {
+        match refresh_account(&weak, &token, &account).await {
             Ok(Some(refreshed)) => {
                 config.current_account = Some(refreshed.clone());
-                store_account(&weak, &run, refreshed);
+                store_account(&weak, &token, refreshed);
             }
             Ok(None) => {}
             Err(error) => {
                 log::error!("failed to refresh the account: {error}");
-                show_dialog(&weak, &run, Dialog::AccountRefreshFailed);
+                show_dialog(&weak, &token, Dialog::AccountRefreshFailed);
                 return;
             }
         }
     }
 
     if !instance.installed
-        && let Err(error) = install_game(&weak, &run, config.clone(), instance.clone()).await
+        && let Err(error) = install_game(&weak, &token, config.clone(), instance.clone()).await
     {
         log::error!(target: "launch", "install failed: {error}");
-        handle_failure(&weak, &run, Failure::from_install(error));
+        handle_failure(&weak, &token, Failure::from_install(error));
         return;
     }
 
     log::info!(target: "launch", "launching instance '{}'", instance.config.name);
-    match launch_game(&weak, &run, config.clone(), instance.clone()).await {
+    match launch_game(&weak, &token, config.clone(), instance.clone()).await {
         Ok(()) => {
             log::info!(target: "launch", "launch task finished");
             if config.music.pause_on_launch {
@@ -139,12 +139,7 @@ pub(crate) async fn run_flow(
                 .launch_config
                 .quit_app_after_launch
                 .unwrap_or(config.launch.quit_app_after_launch);
-            let weak = weak.clone();
-            let run = run.clone();
-            let _ = weak.upgrade_in_event_loop(move |ui| {
-                if !run.is_current() {
-                    return;
-                }
+            deliver(&weak, &token, move |ui| {
                 if quit {
                     let _ = ui.hide();
                     let _ = slint::quit_event_loop();
@@ -155,9 +150,46 @@ pub(crate) async fn run_flow(
         }
         Err(error) => {
             log::error!(target: "launch", "launch failed: {error}");
-            handle_failure(&weak, &run, Failure::from_launch(error));
+            handle_failure(&weak, &token, Failure::from_launch(error));
         }
     }
+}
+
+/// Runs the install task. The `install` crate owns the sampling; this only
+/// hands it the port.
+pub(crate) async fn install_game(
+    weak: &Weak<App>,
+    token: &Token,
+    config: Config,
+    instance: Instance,
+) -> Result<(), install::Error> {
+    let loader = instance
+        .config
+        .runtime
+        .mod_loader_type
+        .as_ref()
+        .map(std::string::ToString::to_string)
+        .unwrap_or_default();
+    log::info!(
+        target: "launch",
+        "instance '{}' is not installed, starting the install (loader: '{}')",
+        instance.config.name,
+        loader
+    );
+    let sink = install_sink(weak.clone(), token.clone(), loader);
+    install::install(config, instance, sink).await
+}
+
+/// Runs the launch task. The `launch` crate owns the sampling; this only hands
+/// it the port.
+pub(crate) async fn launch_game(
+    weak: &Weak<App>,
+    token: &Token,
+    config: Config,
+    instance: Instance,
+) -> Result<(), launch::Error> {
+    let sink = launch_sink(weak.clone(), token.clone());
+    launch::launch(config, instance, sink).await.map(|_pid| ())
 }
 
 pub(crate) enum Dialog {
@@ -167,12 +199,8 @@ pub(crate) enum Dialog {
     NoSuitableJava,
 }
 
-pub(crate) fn show_dialog(weak: &Weak<App>, run: &Run, dialog: Dialog) {
-    let run = run.clone();
-    let _ = weak.upgrade_in_event_loop(move |ui| {
-        if !run.is_current() {
-            return;
-        }
+pub(crate) fn show_dialog(weak: &Weak<App>, token: &Token, dialog: Dialog) {
+    deliver(weak, token, move |ui| {
         let dialogs = ui.global::<Dialogs>();
         match dialog {
             Dialog::NoAccount => dialogs.set_no_account_error_visible(true),
@@ -202,20 +230,16 @@ impl Failure {
 }
 
 /// Shows the right dialog or error message for a failure.
-pub(crate) fn handle_failure(weak: &Weak<App>, run: &Run, failure: Failure) {
+pub(crate) fn handle_failure(weak: &Weak<App>, token: &Token, failure: Failure) {
     match failure {
-        Failure::NoSuitableJava => show_dialog(weak, run, Dialog::NoSuitableJava),
-        Failure::Message(message) => set_error(weak, run, message),
+        Failure::NoSuitableJava => show_dialog(weak, token, Dialog::NoSuitableJava),
+        Failure::Message(message) => set_error(weak, token, message),
     }
 }
 
 /// Shows an error message on the launch screen.
-pub(crate) fn set_error(weak: &Weak<App>, run: &Run, message: String) {
-    let run = run.clone();
-    let _ = weak.upgrade_in_event_loop(move |ui| {
-        if !run.is_current() {
-            return;
-        }
+pub(crate) fn set_error(weak: &Weak<App>, token: &Token, message: String) {
+    deliver(weak, token, move |ui| {
         let state = ui.global::<LaunchState>();
         state.set_error(true);
         state.set_progress_kind("error".into());
@@ -226,12 +250,8 @@ pub(crate) fn set_error(weak: &Weak<App>, run: &Run, message: String) {
 
 /// Pushes the refreshed account into the shared config and the view, on the
 /// event loop.
-pub(crate) fn store_account(weak: &Weak<App>, run: &Run, account: Account) {
-    let run = run.clone();
-    let _ = weak.upgrade_in_event_loop(move |ui| {
-        if !run.is_current() {
-            return;
-        }
+pub(crate) fn store_account(weak: &Weak<App>, token: &Token, account: Account) {
+    deliver(weak, token, move |ui| {
         SHARED_CONFIG.with(|slot| {
             if let Some(config) = slot.borrow().as_ref() {
                 config.borrow_mut().current_account = Some(account.clone());
@@ -254,14 +274,10 @@ pub(crate) fn store_account(weak: &Weak<App>, run: &Run, account: Account) {
 /// been superseded.
 pub(crate) fn push(
     weak: &Weak<App>,
-    run: &Run,
+    token: &Token,
     update: impl FnOnce(&LaunchState) + Send + 'static,
 ) {
-    let run = run.clone();
-    let _ = weak.upgrade_in_event_loop(move |ui| {
-        if !run.is_current() {
-            return;
-        }
+    deliver(weak, token, move |ui| {
         update(&ui.global::<LaunchState>());
     });
 }
@@ -272,13 +288,13 @@ pub(crate) fn push(
 /// `None` when nothing had to change.
 pub(crate) async fn refresh_account(
     weak: &Weak<App>,
-    run: &Run,
+    token: &Token,
     account: &Account,
 ) -> Result<Option<Account>, String> {
     if matches!(account, Account::Offline(_)) {
         return Ok(None);
     }
-    push(weak, run, |state| {
+    push(weak, token, |state| {
         state.set_progress_kind("refresh-account".into());
         state.set_progress_loading(true);
     });
@@ -306,51 +322,5 @@ pub(crate) async fn refresh_account(
             Ok(Some(Account::Yggdrasil(refreshed)))
         }
         Account::Offline(_) => Ok(None),
-    }
-}
-
-/// Runs the install task while polling its progress.
-pub(crate) async fn install_game(
-    weak: &Weak<App>,
-    run: &Run,
-    config: Config,
-    instance: Instance,
-) -> Result<(), install::Error> {
-    let loader = instance
-        .config
-        .runtime
-        .mod_loader_type
-        .as_ref()
-        .map(std::string::ToString::to_string)
-        .unwrap_or_default();
-    log::info!(
-        target: "launch",
-        "instance '{}' is not installed, starting the install (loader: '{}')",
-        instance.config.name,
-        loader
-    );
-    let status = Arc::new(Mutex::new(InstallEvent::Prepare));
-    let future = install::install(config, instance, Arc::clone(&status));
-    tokio::pin!(future);
-    let mut ticker = tokio::time::interval(Duration::from_millis(100));
-    // The change detection has to run on plain numbers: an `InstallEvent` holds
-    // a `DownloadState`, whose counters sit behind `Arc`s — so a saved clone and
-    // the "current" event share the same atomics and always compare equal, which
-    // is what froze the progress bar and the byte counters.
-    let mut last: Option<InstallKey> = None;
-    let mut last_log: Option<Instant> = None;
-    loop {
-        tokio::select! {
-            result = &mut future => {
-                // Flush the last status the poll may have missed before the
-                // future resolved.
-                flush_install(weak, run, &status, &mut last, &mut last_log, &loader);
-                log::info!(target: "launch", "install finished: {result:?}");
-                return result;
-            }
-            _ = ticker.tick() => {
-                flush_install(weak, run, &status, &mut last, &mut last_log, &loader);
-            }
-        }
     }
 }

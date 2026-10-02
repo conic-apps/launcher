@@ -145,7 +145,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
                     log::error!("failed to remove install lock: {error}");
                     return;
                 }
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     // The launch page re-runs the install flow when the lock is gone.
                     ui.global::<Navigation>().invoke_navigate("launch".into());
                 });
@@ -188,7 +188,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
                 }
                 // The row is rebuilt from the listing, so re-read it rather than
                 // patching the one row in place.
-                let _ = weak.upgrade_in_event_loop(move |ui| GameController::reload(&ui));
+                crate::report::report(&weak, move |ui| GameController::reload(&ui));
             });
         });
     }

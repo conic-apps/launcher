@@ -189,7 +189,7 @@ pub(crate) fn spawn_icon_fetch(weak: Weak<App>, token: u64, wanted: Vec<(usize, 
         })
         .await
         .unwrap_or_default();
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             let controller = controller();
             let mut state = controller.borrow_mut();
             if state.token != token {

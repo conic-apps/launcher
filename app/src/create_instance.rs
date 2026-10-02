@@ -6,7 +6,7 @@
 //! state and its two screens.
 //!
 //! Everything that touches the network or the disk runs on the tokio runtime
-//! (`crate::runtime`) and reports back through `upgrade_in_event_loop`, so the
+//! (`crate::runtime`) and reports back through `crate::report::report`, so the
 //! window keeps drawing while a version list is fetched. The one exception is
 //! the background picker's image decode, which Slint only lets the UI thread
 //! create (see `setup_background_and_wiki`).
@@ -56,7 +56,7 @@ fn setup_minecraft_choose(ui: &App) {
                 let result = install::get_minecraft_version_list()
                     .await
                     .map(|manifest| manifest.versions.into_iter().map(version_item).collect());
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     let state = ui.global::<CreateInstanceState>();
                     match result {
                         Ok(versions) => {
@@ -154,7 +154,7 @@ fn setup_create(ui: &App) {
                 {
                     log::error!("failed to create the instance: {error}");
                 }
-                let _ = weak.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak, move |ui| {
                     ui.global::<CreateInstanceState>().set_creating(false);
                     // Reload the instance list, then close — also after a
                     // failure, since the dialog is not a place to report an
@@ -271,7 +271,7 @@ fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: Stri
                 .map(|list| filter_neoforge_version_list(&mcversion, &list)),
         };
 
-        let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::report::report(&weak, move |ui| {
             let state = ui.global::<CreateInstanceState>();
             match result {
                 Ok(versions) => {

@@ -107,11 +107,11 @@ pub(crate) fn request_tiles(ui: &App, x0: i32, x1: i32, z0: i32, z1: i32) {
         let weak = ui.as_weak();
         map.debounce = Some(crate::runtime::spawn(async move {
             tokio::time::sleep(LOAD_DEBOUNCE).await;
-            // `upgrade_in_event_loop` and not `upgrade()`: a Slint handle's
+            // `crate::report::report` and not `upgrade()`: a Slint handle's
             // strong count lives in the thread that created it, so a weak
             // upgraded from a runtime thread comes back `None`. Every other
             // crossing in this file is the same.
-            let _ = weak.upgrade_in_event_loop(|ui| pump(&ui));
+            crate::report::report(&weak, |ui| pump(&ui));
         }));
         true
     });

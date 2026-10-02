@@ -12,7 +12,7 @@
 //!     (the disk scans).
 //!
 //! Neither may touch the UI: Slint is not thread-safe. A task reports back with
-//! `Weak::upgrade_in_event_loop` — see `create_instance.rs`.
+//! `crate::report::report` — see `create_instance.rs`.
 
 use std::future::Future;
 

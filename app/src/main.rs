@@ -34,6 +34,7 @@ mod markdown;
 mod multiplayer;
 mod music;
 mod native;
+mod report;
 mod runtime;
 mod scroll_input;
 mod settings;

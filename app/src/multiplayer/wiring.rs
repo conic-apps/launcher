@@ -15,7 +15,7 @@ pub fn setup(ui: &App) {
     let sink: multiplayer::EventSink = Arc::new(move |event| {
         let weak = ui_weak.lock().map(|weak| weak.clone()).ok();
         if let Some(weak) = weak {
-            let _ = weak.upgrade_in_event_loop(move |ui| handle_event(&ui, event));
+            crate::report::report(&weak, move |ui| handle_event(&ui, event));
         }
     });
 
@@ -25,6 +25,7 @@ pub fn setup(ui: &App) {
         switch_timer: Timer::default(),
         initialized: Cell::new(false),
         download_task: RefCell::new(None),
+        download_gate: Gate::new(),
     });
     CONTROLLER.with(|slot| *slot.borrow_mut() = Some(Rc::clone(&controller)));
 
@@ -43,7 +44,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             let weak_task = weak.clone();
             crate::runtime::spawn(async move {
                 let valid = multiplayer::check_library().await.is_ok();
-                let _ = weak_task.upgrade_in_event_loop(move |ui| {
+                crate::report::report(&weak_task, move |ui| {
                     let state = ui.global::<MultiplayerState>();
                     state.set_component(
                         (if valid {
@@ -110,7 +111,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             crate::runtime::spawn(async move {
                 match service.join_room(&code, Some(player_name.as_str())).await {
                     Ok(()) => {
-                        let _ = weak_task.upgrade_in_event_loop(|ui| {
+                        crate::report::report(&weak_task, |ui| {
                             ui.global::<MultiplayerState>().set_code_input_open(false);
                         });
                     }
@@ -133,7 +134,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             let service = Arc::clone(&controller.service);
             crate::runtime::spawn(async move {
                 let result = service.leave_room().await;
-                let _ = weak_task.upgrade_in_event_loop(move |ui| match result {
+                crate::report::report(&weak_task, move |ui| match result {
                     Ok(()) => {
                         let state = ui.global::<MultiplayerState>();
                         state.set_state("waiting".into());

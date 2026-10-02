@@ -12,7 +12,10 @@
 //! from here, and the app sets the proxy preference once through
 //! [`set_system_proxy`].
 
-use std::time::Duration;
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 use log::{info, warn};
 use once_cell::sync::{Lazy, OnceCell};
@@ -20,6 +23,78 @@ use thiserror::Error;
 use url::Url;
 
 pub static APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// The callback through which a crate reports a task's state to whoever owns
+/// the interface.
+///
+/// This is the one shape every inner crate uses for an output port. It is
+/// `Send + Sync` so the use case may report from any worker or task and clone
+/// the handle into several of them, and `'static` because the port outlives any
+/// one call. The crate names a type alias over it for its own event, so the
+/// vocabulary (`InstallSink`, `LoginSink`, …) is the crate's and the mechanism
+/// is not.
+///
+/// The sink must not do the work: a use case reports a *plain snapshot* and
+/// returns, and the sink (in the app) marshals it onto the event loop. A crate
+/// that called `upgrade_in_event_loop` itself would depend on Slint, which is
+/// exactly the dependency the port exists to remove.
+pub type Sink<T> = Arc<dyn Fn(T) + Send + Sync + 'static>;
+
+/// A sink that drops every event, for a caller that has no interface to report
+/// to (a headless run, a test).
+pub fn silent<T>() -> Sink<T> {
+    Arc::new(|_| {})
+}
+
+/// A [`Sink`] wrapper that drops repeated values.
+///
+/// The counter half of progress is sampled on a clock, so the same value is
+/// read many times while nothing moves; only a change is worth crossing a
+/// thread boundary and waking the event loop for. `PartialEq` is the change
+/// test, which is why the value has to be a plain snapshot and not a handle: a
+/// struct whose state sits behind `Arc`s compares equal to its own past, which
+/// would drop every update (see `download::progress::DownloadSnapshot`).
+///
+/// ```
+/// # use shared::{ChangeReporter, Sink};
+/// let seen = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+/// let sink: Sink<i32> = {
+///     let seen = seen.clone();
+///     std::sync::Arc::new(move |value| seen.lock().unwrap().push(value))
+/// };
+/// let reporter = ChangeReporter::new(sink);
+/// reporter.report(1);
+/// reporter.report(1);
+/// reporter.report(2);
+/// assert_eq!(*seen.lock().unwrap(), vec![1, 2]);
+/// ```
+pub struct ChangeReporter<T> {
+    sink: Sink<T>,
+    last: Mutex<Option<T>>,
+}
+
+impl<T: PartialEq + Clone> ChangeReporter<T> {
+    pub fn new(sink: Sink<T>) -> Self {
+        Self {
+            sink,
+            last: Mutex::new(None),
+        }
+    }
+
+    /// Reports `value` unless it equals the last value reported.
+    pub fn report(&self, value: T) {
+        // A poisoned lock is a panicking sink: nothing useful is left to report,
+        // so the event is dropped rather than propagating the panic.
+        let Ok(mut last) = self.last.lock() else {
+            return;
+        };
+        if last.as_ref() == Some(&value) {
+            return;
+        }
+        *last = Some(value.clone());
+        (self.sink)(value);
+    }
+}
 
 pub static SHOULD_USE_SYSTEM_PROXY: OnceCell<bool> = OnceCell::new();
 

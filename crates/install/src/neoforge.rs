@@ -115,17 +115,21 @@ pub async fn download_installer(
 
     let checksum = crate::fetch_maven_sha1(&installer_url).await;
     let progress = DownloadState::default();
-    reporter.report(ModLoaderProgress::DownloadInstaller(progress.clone()));
-    download_concurrent(
-        vec![DownloadTask {
-            url: installer_url,
-            file: installer_path.clone(),
-            checksum,
-            size_bytes: None,
-            task_type: DownloadTaskType::Unknown,
-        }],
+    reporter.report(ModLoaderProgress::DownloadInstaller(progress.snapshot()));
+    download::progress::watch(
         &progress,
-        DownloadConfig::default(),
+        |snapshot| reporter.report(ModLoaderProgress::DownloadInstaller(snapshot)),
+        download_concurrent(
+            vec![DownloadTask {
+                url: installer_url,
+                file: installer_path.clone(),
+                checksum,
+                size_bytes: None,
+                task_type: DownloadTaskType::Unknown,
+            }],
+            &progress,
+            DownloadConfig::default(),
+        ),
     )
     .await?;
     Ok(installer_path)

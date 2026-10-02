@@ -6,10 +6,12 @@
 
 use super::*;
 
-/// Runs the library download on the runtime while a 50ms ticker reports the
-/// shared `DownloadState`.
+/// Runs the library download. The `multiplayer` crate samples its own progress
+/// and reports through the sink built here; only the abort handle and the
+/// `Gate` are the app's.
 pub(crate) fn start_download(ui: &App, controller: &Rc<Controller>) {
     cancel_download(controller);
+    let token = controller.download_gate.issue();
 
     // The screen's initial state.
     {
@@ -22,70 +24,39 @@ pub(crate) fn start_download(ui: &App, controller: &Rc<Controller>) {
         state.set_download_max_text("".into());
     }
 
-    let progress = download::progress::DownloadState::default();
     let weak = ui.as_weak();
+    let sink: multiplayer::LibrarySink = {
+        let weak = weak.clone();
+        let token = token.clone();
+        Arc::new(move |snapshot| {
+            let view = download_view(&snapshot);
+            deliver(&weak, &token, move |ui| {
+                view.apply(&ui.global::<MultiplayerState>())
+            });
+        })
+    };
     let task = crate::runtime::spawn({
-        let progress = progress.clone();
+        let weak = weak.clone();
+        let token = token.clone();
         async move {
-            let future = multiplayer::download_library(&progress);
-            tokio::pin!(future);
-            let mut ticker = tokio::time::interval(Duration::from_millis(50));
-            loop {
-                tokio::select! {
-                    result = &mut future => {
-                        let ok = result.is_ok();
-                        if let Err(error) = result {
-                            log::error!(target: "multiplayer", "failed to download the library: {error}");
-                        }
-                        let _ = weak.upgrade_in_event_loop(move |ui| finish_download(&ui, ok));
-                        break;
-                    }
-                    _ = ticker.tick() => {
-                        push_download(&weak, &progress);
-                    }
-                }
+            let result = multiplayer::download_library(sink).await;
+            if let Err(error) = &result {
+                log::error!(target: "multiplayer", "failed to download the library: {error}");
             }
+            deliver(&weak, &token, move |ui| {
+                finish_download(&ui, result.is_ok())
+            });
         }
     });
     *controller.download_task.borrow_mut() = Some(task);
 }
 
-/// Stops the running download task.
+/// Stops the running download task and stops its in-flight reports from drawing.
 pub(crate) fn cancel_download(controller: &Rc<Controller>) {
+    controller.download_gate.invalidate();
     if let Some(task) = controller.download_task.borrow_mut().take() {
         task.abort();
     }
-}
-
-/// One tick of the download's progress.
-pub(crate) fn push_download(weak: &Weak<App>, progress: &download::progress::DownloadState) {
-    let phase = progress
-        .phase
-        .lock()
-        .map(|phase| phase.clone())
-        .unwrap_or_default();
-    let completed = progress.completed_bytes.load(Ordering::SeqCst);
-    let total = progress.total_bytes.load(Ordering::SeqCst);
-    let (name, loading, value, max) = match phase {
-        download::progress::DownloadPhase::VerifyExistingFiles => ("prepare", true, 0, 10),
-        download::progress::DownloadPhase::DownloadFiles => (
-            if total == 0 { "prepare" } else { "downloading" },
-            total == 0,
-            completed,
-            total,
-        ),
-    };
-    let value_text = crate::formatting::bytes(value);
-    let max_text = crate::formatting::bytes(max);
-    let _ = weak.upgrade_in_event_loop(move |ui| {
-        let state = ui.global::<MultiplayerState>();
-        state.set_download_phase(name.into());
-        state.set_download_loading(loading);
-        state.set_download_value(value as f32);
-        state.set_download_max(max as f32);
-        state.set_download_value_text(value_text.into());
-        state.set_download_max_text(max_text.into());
-    });
 }
 
 /// Shows the finished bar, then switches to the manager half a second later.

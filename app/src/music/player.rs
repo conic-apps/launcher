@@ -116,7 +116,7 @@ pub(crate) fn apply(ui: &App) {
 /// Starts (or stops) the 60Hz clock that pushes the player into the global.
 ///
 /// The tick has to reach the UI thread — everything it touches is Slint's — so it
-/// is handed over with `upgrade_in_event_loop`, which also wakes the event loop.
+/// is handed over with `crate::report::report`, which also wakes the event loop.
 /// That is what makes it independent of whether anything is being painted: a Slint
 /// `Timer` would stop the moment the window went quiet, which is exactly when the
 /// progress bar has to keep moving. The task stops itself once nothing needs it
@@ -146,7 +146,7 @@ pub(crate) fn tick_on_the_runtime(ui: &App, ticking: Arc<AtomicBool>) {
             }
             let weak = weak.clone();
             let ticking = Arc::clone(&ticking);
-            let _ = weak.upgrade_in_event_loop(move |ui| {
+            crate::report::report(&weak, move |ui| {
                 if ticking.load(Ordering::Relaxed) {
                     apply(&ui);
                 }
