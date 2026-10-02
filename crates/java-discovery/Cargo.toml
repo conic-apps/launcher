@@ -7,7 +7,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-folder.workspace = true
+storage.workspace = true
 platform.workspace = true
 
 log.workspace = true

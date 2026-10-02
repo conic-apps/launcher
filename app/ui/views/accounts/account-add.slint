@@ -102,11 +102,9 @@ export component AccountAdd inherits VerticalLayout {
 
     // The selector sits at the right-hand end of the header.
     //
-    // The title stretches and wraps rather than keeping its natural width: in
-    // English "Choose an auth service and add an account" is wider than the
-    // 540px column on its own, and unwrapped it would push the selector out
-    // through the panel's edge. Chinese is short enough to fit on one line, so
-    // this only shows up in the longer translations.
+    // The title stretches rather than keeping its natural width, which is what
+    // pins the selector to the right-hand end. It still wraps, so a longer
+    // translation cannot push the selector out through the panel's edge.
     HorizontalLayout {
         // The default `stretch` distribution, not `start`: it is what gives the
         // stretching title the leftover width and so pins the selector to the
@@ -117,7 +115,7 @@ export component AccountAdd inherits VerticalLayout {
         padding-bottom: 16px;
 
         Text {
-            text: @tr("Choose an auth service and add an account");
+            text: @tr("Sign in");
             font-size: 22px;
             horizontal-stretch: 1;
             wrap: word-wrap;

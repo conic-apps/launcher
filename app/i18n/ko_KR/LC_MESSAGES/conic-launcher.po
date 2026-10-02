@@ -904,11 +904,6 @@ msgid "Cancel"
 msgstr "취소"
 
 #: ui
-msgctxt "AccountAdd"
-msgid "Choose an auth service and add an account"
-msgstr "인증 서비스를 선택하고 계정 추가"
-
-#: ui
 msgctxt "AccountAddSelect"
 msgid "Microsoft"
 msgstr "Microsoft"
@@ -2802,3 +2797,78 @@ msgstr "키워드나 필터를 조정한 후 다시 검색해 보세요"
 msgctxt "ContentPacksPanel"
 msgid "Try adjusting keywords or filters and search again"
 msgstr "키워드나 필터를 조정한 후 다시 검색해 보세요"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Data storage"
+msgstr "데이터 저장소"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Launcher data"
+msgstr "런처 데이터"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Minecraft install"
+msgstr "Minecraft 설치"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart required"
+msgstr "재시작 필요"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "The launcher must restart before the new storage location is used."
+msgstr "새 저장 위치를 사용하려면 런처를 다시 시작해야 합니다."
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Later"
+msgstr "나중에"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart now"
+msgstr "지금 재시작"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Data storage"
+msgstr "데이터 저장소"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Choose where Conic Launcher keeps its data. You can change this later in Settings."
+msgstr "Conic Launcher가 데이터를 저장할 위치를 선택하세요. 나중에 설정에서 변경할 수 있습니다."
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Launcher data"
+msgstr "런처 데이터"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Minecraft install"
+msgstr "Minecraft 설치"
+
+#: ui
+msgctxt "SetupView"
+msgid "Next (Color scheme)"
+msgstr "다음 (색 구성표)"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Instances and game data"
+msgstr "인스턴스 및 게임 데이터"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Instances and game data"
+msgstr "인스턴스 및 게임 데이터"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Sign in"
+msgstr "로그인"

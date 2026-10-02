@@ -1,0 +1,24 @@
+[package]
+name = "storage"
+description = "Launcher data, Minecraft install and instance layout"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+platform.workspace = true
+
+log.workspace = true
+once_cell.workspace = true
+serde.workspace = true
+toml.workspace = true
+uuid.workspace = true
+
+# Reading the MSI's install marker to tell a portable build from an installed
+# one (see `platform::portable_root`).
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_System_Registry",
+] }

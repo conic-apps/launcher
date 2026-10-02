@@ -9,9 +9,9 @@ use config::{
     Config,
     launch::{GC, Server},
 };
-use folder::DATA_LOCATION;
 use instance::Instance;
 use java_discovery::JavaArch;
+use storage::LOCATIONS;
 
 use crate::error::*;
 
@@ -184,7 +184,10 @@ fn is_32_bit_java(arch: JavaArch) -> bool {
 ///
 /// This is a rough estimate based on the file count only, no archive parsing.
 fn count_instance_mods(instance: &Instance) -> usize {
-    let mods_folder = DATA_LOCATION.get_instance_root(&instance.id).join("mods");
+    let mods_folder = LOCATIONS
+        .instances
+        .get_instance_root(&instance.id)
+        .join("mods");
     match std::fs::read_dir(&mods_folder) {
         Ok(entries) => entries
             .flatten()

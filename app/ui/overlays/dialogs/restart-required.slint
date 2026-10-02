@@ -1,0 +1,38 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { BaseDialog } from "../../components/base-dialog.slint";
+import { ConfirmWarningBody } from "confirm-warning.slint";
+import { Dialogs } from "../../globals/dialogs.slint";
+
+// Raised after a storage location changed in Settings. The roots are resolved
+// once at startup, so the new one only takes effect on the next run; the confirm
+// button spawns that run and quits this one.
+export component RestartRequired inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    /// Fired on "Restart now"; the app root re-execs the binary.
+    callback confirm();
+
+    dialog := BaseDialog {
+        dialog-visible: Dialogs.restart-required-visible;
+        dialog-width: 500px;
+        dialog-height: body.preferred-height + 32px;
+
+        body := ConfirmWarningBody {
+            content-width: dialog.content-width;
+            title-text: @tr("Restart required");
+            detail-text: @tr("The launcher must restart before the new storage location is used.");
+            cancel-text: @tr("Later");
+            confirm-text: @tr("Restart now");
+            cancel => { Dialogs.restart-required-visible = false; }
+            confirm => {
+                Dialogs.restart-required-visible = false;
+                root.confirm();
+            }
+        }
+    }
+}

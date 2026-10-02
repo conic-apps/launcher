@@ -5,8 +5,8 @@
 use std::{ffi::OsStr, fs, io::Read, path::Path};
 
 use base64::{Engine, engine::general_purpose};
-use folder::DATA_LOCATION;
 use serde_json::Value;
+use storage::LOCATIONS;
 use zip::ZipArchive;
 
 use crate::error::*;
@@ -74,7 +74,8 @@ pub fn get_all_datapacks<P: AsRef<Path>>(datapacks_folder_path: P) -> Result<Vec
 /// Every datapack of one of an instance's worlds.
 pub fn get_instance_datapacks(instance_id: &str, world_folder_name: &str) -> Result<Vec<DataPack>> {
     get_all_datapacks(
-        DATA_LOCATION
+        LOCATIONS
+            .instances
             .get_instance_root(instance_id)
             .join("saves")
             .join(world_folder_name)

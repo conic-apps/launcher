@@ -27,7 +27,7 @@
 
 use std::path::{Path, PathBuf};
 
-use folder::DATA_LOCATION;
+use storage::LOCATIONS;
 
 pub mod error;
 pub mod favorites;
@@ -55,7 +55,7 @@ impl ContentCounts {
 
 /// Scans the local content of an instance.
 pub fn content_counts(instance_id: &str) -> ContentCounts {
-    let root = DATA_LOCATION.get_instance_root(instance_id);
+    let root = LOCATIONS.instances.get_instance_root(instance_id);
     ContentCounts {
         saves: count_saves(&root.join("saves")),
         mods: count_mods(&root.join("mods")),
@@ -124,5 +124,5 @@ fn count_images(dir: &Path) -> u32 {
 
 /// Absolute path of an instance directory (helper for the app layer).
 pub fn instance_root(instance_id: &str) -> PathBuf {
-    DATA_LOCATION.get_instance_root(instance_id)
+    LOCATIONS.instances.get_instance_root(instance_id)
 }

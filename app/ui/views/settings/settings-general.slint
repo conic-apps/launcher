@@ -93,4 +93,39 @@ export component SettingsGeneral inherits VerticalLayout {
             clicked => { Navigation.navigate("setup"); }
         }
     }
+
+    // The three storage roots. They are not part of `config.toml` — that file
+    // lives inside the launcher location — so clicking a row opens the folder
+    // chooser, writes the bootstrap file and asks for a restart.
+    SettingGroup {
+        title: @tr("Data storage");
+
+        SettingItem {
+            group-first: true;
+            title: @tr("Launcher data");
+            description: AppConfig.launcher-location;
+            navigable: true;
+            // A path is a single elided line, with the whole of it in the hover
+            // tooltip (see `SettingItem`'s `description-lines`).
+            description-lines: 1;
+            clicked => { AppConfig.pick-data-location("launcher"); }
+        }
+
+        SettingItem {
+            title: @tr("Minecraft install");
+            description: AppConfig.minecraft-location;
+            navigable: true;
+            description-lines: 1;
+            clicked => { AppConfig.pick-data-location("minecraft"); }
+        }
+
+        SettingItem {
+            group-last: true;
+            title: @tr("Instances and game data");
+            description: AppConfig.instances-location;
+            navigable: true;
+            description-lines: 1;
+            clicked => { AppConfig.pick-data-location("instances"); }
+        }
+    }
 }

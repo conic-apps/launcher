@@ -383,7 +383,7 @@ impl Controller {
         }
         let config = self.config.borrow();
         if let Some(name) = &config.appearance.background_image {
-            let path = folder::DATA_LOCATION.root.join(name);
+            let path = storage::LOCATIONS.launcher.root.join(name);
             if path.is_file() {
                 return Source::Image { path, global: true };
             }

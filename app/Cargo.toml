@@ -55,7 +55,7 @@ slint = { workspace = true, features = ["image-default-formats", "unstable-fonti
 platform.workspace = true
 window.workspace = true
 config.workspace = true
-folder.workspace = true
+storage.workspace = true
 account.workspace = true
 # The loopback listener the Microsoft browser flow's authorization code comes
 # back on, and the page the browser is shown there (see `app/src/account_add/`).

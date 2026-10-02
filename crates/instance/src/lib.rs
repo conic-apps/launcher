@@ -17,10 +17,10 @@ use std::{
 };
 
 use flate2::read::GzDecoder;
-use folder::DATA_LOCATION;
 use log::info;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use storage::LOCATIONS;
 use uuid::Uuid;
 
 mod config;
@@ -35,7 +35,7 @@ pub use crate::error::*;
 pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result<String> {
     let random_uuid = Uuid::new_v4().to_string();
     let id = id.unwrap_or(&random_uuid);
-    let instance_root = DATA_LOCATION.get_instance_root(id);
+    let instance_root = LOCATIONS.instances.get_instance_root(id);
     let config_file_path = instance_root.join("instance.toml");
     if let Some(parent) = config_file_path.parent() {
         tokio::fs::create_dir_all(parent).await?
@@ -60,7 +60,7 @@ pub enum SortBy {
 
 /// Reads all instances stored in the data directory.
 pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
-    let instances_folder = &DATA_LOCATION.instances;
+    let instances_folder = &LOCATIONS.instances.root;
     tokio::fs::create_dir_all(instances_folder).await?;
     let mut folder_entries = tokio::fs::read_dir(instances_folder).await?;
     let mut instances = Vec::new();
@@ -311,7 +311,7 @@ fn release_week(patch: u8) -> u8 {
 
 /// Reads a single instance by id.
 pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
-    let instance_root = DATA_LOCATION.get_instance_root(id);
+    let instance_root = LOCATIONS.instances.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
     if let Ok(config_content) = tokio::fs::read_to_string(config_file).await
         && let Ok(config) = toml::from_str::<InstanceConfig>(&config_content)
@@ -332,7 +332,7 @@ pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
 
 /// Updates the configuration file of an existing instance.
 pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
-    let instance_root = DATA_LOCATION.get_instance_root(id);
+    let instance_root = LOCATIONS.instances.get_instance_root(id);
     let config_file = instance_root.join("instance.toml");
     tokio::fs::write(config_file, toml::to_string_pretty(&config)?).await?;
     info!("Updated instance: {}", config.name);
@@ -341,14 +341,17 @@ pub async fn update_instance(config: InstanceConfig, id: &str) -> Result<()> {
 
 /// Deletes the instance directory corresponding to the given id.
 pub async fn delete_instance(id: &str) -> Result<()> {
-    tokio::fs::remove_dir_all(DATA_LOCATION.get_instance_root(id)).await?;
+    tokio::fs::remove_dir_all(LOCATIONS.instances.get_instance_root(id)).await?;
     info!("Deleted {id}");
     Ok(())
 }
 
 /// Removes the `.install.lock` marker file of an instance.
 pub async fn remove_install_lock(id: &str) -> Result<()> {
-    let lock_file = DATA_LOCATION.get_instance_root(id).join(".install.lock");
+    let lock_file = LOCATIONS
+        .instances
+        .get_instance_root(id)
+        .join(".install.lock");
     if let Err(err) = tokio::fs::remove_file(lock_file).await
         && err.kind() != std::io::ErrorKind::NotFound
     {
@@ -359,7 +362,7 @@ pub async fn remove_install_lock(id: &str) -> Result<()> {
 
 /// The path of an instance's background image.
 pub fn get_background_path(id: &str) -> PathBuf {
-    DATA_LOCATION.get_instance_root(id).join("background")
+    LOCATIONS.instances.get_instance_root(id).join("background")
 }
 
 /// Copies `path` over the instance's background image.
@@ -433,7 +436,7 @@ impl Instance {
 
 /// Total play time of an instance in seconds, parsed from its game logs.
 pub fn calculate_playtime(instance_id: &str) -> Result<u64> {
-    let instance_root = DATA_LOCATION.get_instance_root(instance_id);
+    let instance_root = LOCATIONS.instances.get_instance_root(instance_id);
     let logs_root = instance_root.join("logs");
     let total_play_time: u64 = std::fs::read_dir(logs_root)?
         .filter_map(|entry| {
@@ -536,7 +539,8 @@ fn get_launch_script_timestamp(instance_id: &str) -> Option<u64> {
     let script_name = "conic-launch.sh";
     #[cfg(target_os = "windows")]
     let script_name = "conic-launch.bat";
-    let script_path = DATA_LOCATION
+    let script_path = LOCATIONS
+        .instances
         .get_instance_root(instance_id)
         .join(".cache")
         .join(script_name);

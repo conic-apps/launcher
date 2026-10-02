@@ -2,14 +2,15 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-use folder::DATA_LOCATION;
+use storage::LOCATIONS;
 
 use crate::error::*;
 
 const IMAGE_EXTENSIONS: [&str; 6] = ["png", "jpg", "jpeg", "gif", "webp", "bmp"];
 
 pub fn list_screenshots(instance_id: &str) -> Result<Vec<String>> {
-    let screenshots_path = DATA_LOCATION
+    let screenshots_path = LOCATIONS
+        .instances
         .get_instance_root(instance_id)
         .join("screenshots");
     let mut screenshots = std::fs::read_dir(screenshots_path)?

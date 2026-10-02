@@ -4,7 +4,7 @@
 
 //! Online mod metadata lookup with a persistent on-disk cache.
 //!
-//! Four cache files live under [`folder::DATA_LOCATION`]'s cache directory:
+//! Four cache files live under [`storage::LOCATIONS`]'s cache directory:
 //!
 //! - `modrinth.json` and `curseforge.json` cache the result of each platform's
 //!   file-feature lookup, keyed by the file's SHA-512 checksum. Entries expire
@@ -142,7 +142,7 @@ fn now() -> u64 {
 }
 
 fn cache_dir() -> std::path::PathBuf {
-    folder::DATA_LOCATION.cache.join("mods")
+    storage::LOCATIONS.launcher.cache.join("mods")
 }
 
 async fn load_remote_cache(name: &str) -> RemoteCache {
@@ -864,7 +864,8 @@ pub async fn check_mod_installed(
     }
 
     // Scan the instance's mods folder for a file carrying one of the hashes.
-    let mods_folder = folder::DATA_LOCATION
+    let mods_folder = storage::LOCATIONS
+        .instances
         .get_instance_root(instance_id)
         .join("mods");
     let files: Vec<PathBuf> = mods_folder
@@ -1006,7 +1007,8 @@ fn merge_remote(mod_info: &mut ResolvedMod, remote: &RemoteModInfo) {
 
 /// List every mod of an instance, merged with online info.
 pub async fn parse_mods(instance_id: &str) -> Vec<ResolvedMod> {
-    let mods_folder = folder::DATA_LOCATION
+    let mods_folder = storage::LOCATIONS
+        .instances
         .get_instance_root(instance_id)
         .join("mods");
     parse_folder_with_remote(&mods_folder).await
@@ -1029,7 +1031,7 @@ pub async fn check_installed(
 /// frontend only shows the remove action for mods, but the check is done
 /// against the whole instance root so partial-download cleanup stays possible.
 pub fn remove_mod_files(instance_id: &str, files: Vec<String>) -> Result<()> {
-    let instance_root = folder::DATA_LOCATION.get_instance_root(instance_id);
+    let instance_root = storage::LOCATIONS.instances.get_instance_root(instance_id);
     let instance_root_canonical = instance_root.canonicalize().unwrap_or(instance_root);
     for file in files {
         let path = PathBuf::from(file);

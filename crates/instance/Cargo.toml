@@ -8,7 +8,7 @@ repository.workspace = true
 
 [dependencies]
 config.workspace = true
-folder.workspace = true
+storage.workspace = true
 log.workspace = true
 rayon.workspace = true
 serde.workspace = true

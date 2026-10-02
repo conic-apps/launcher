@@ -8,7 +8,7 @@ repository.workspace = true
 
 [dependencies]
 platform.workspace = true
-folder.workspace = true
+storage.workspace = true
 
 serde.workspace = true
 serde_json.workspace = true

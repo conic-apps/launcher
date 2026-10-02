@@ -35,11 +35,11 @@ use options::LaunchOptions;
 use account::Account;
 use config::Config;
 use download::progress::DownloadState;
-use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::Instance;
 use java_discovery::ResolveJavaOptions;
 use platform::{OsFamily, PLATFORM_INFO, strip_unc_prefix};
 use statistics::{StatisticsProfile, log_launch};
+use storage::LOCATIONS;
 use version::{Version, resolve_version};
 
 mod arguments;
@@ -98,7 +98,7 @@ pub async fn launch(
         instance.config.name
     );
     print_instance_info(&instance);
-    let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
+    let minecraft_location = LOCATIONS.minecraft.clone();
 
     if instance
         .config
@@ -204,7 +204,7 @@ async fn spawn_minecraft_process(
     status: Arc<Mutex<LaunchEvent>>,
 ) -> Result<u32> {
     // TODO: ask Java to use the high-performance GPU.
-    let instance_root = DATA_LOCATION.get_instance_root(&instance.id);
+    let instance_root = LOCATIONS.instances.get_instance_root(&instance.id);
     let mut commands = String::new();
     if PLATFORM_INFO.os_family != OsFamily::Windows {
         commands.push_str("#!/bin/sh\n\n");

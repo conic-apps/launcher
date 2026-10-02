@@ -2,13 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The data-directory layout: every path is built from the root and the
-//! version/asset names the game uses, so the shape is asserted here without
-//! touching the filesystem.
+//! The storage layout: the Minecraft folder shape, the instance folder, and how
+//! the three roots are derived from a root and its overrides.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use folder::{DataLocation, MinecraftLocation};
+use storage::{LocationOverrides, Locations, MinecraftLocation};
 
 fn location() -> MinecraftLocation {
     MinecraftLocation::new("/minecraft")
@@ -21,6 +20,7 @@ fn the_subfolders_hang_off_the_root() {
     assert_eq!(location.assets, Path::new("/minecraft/assets"));
     assert_eq!(location.libraries, Path::new("/minecraft/libraries"));
     assert_eq!(location.versions, Path::new("/minecraft/versions"));
+    assert_eq!(location.runtime, Path::new("/minecraft/runtime"));
 }
 
 #[test]
@@ -75,10 +75,32 @@ fn libraries_assets_and_logs_are_found_under_their_roots() {
 }
 
 #[test]
+fn a_default_layout_hangs_minecraft_and_instances_off_the_root() {
+    let locations = Locations::from_overrides(PathBuf::from("/root"), LocationOverrides::default());
+    assert_eq!(locations.launcher.root, Path::new("/root"));
+    assert_eq!(locations.minecraft.root, Path::new("/root/minecraft"));
+    assert_eq!(locations.instances.root, Path::new("/root/instances"));
+}
+
+#[test]
+fn an_override_replaces_only_its_own_location() {
+    let overrides = LocationOverrides {
+        initialized: true,
+        launcher: None,
+        minecraft: Some(PathBuf::from("/elsewhere/mc")),
+        instances: None,
+    };
+    let locations = Locations::from_overrides(PathBuf::from("/root"), overrides);
+    assert_eq!(locations.launcher.root, Path::new("/root"));
+    assert_eq!(locations.minecraft.root, Path::new("/elsewhere/mc"));
+    assert_eq!(locations.instances.root, Path::new("/root/instances"));
+}
+
+#[test]
 fn an_instance_lives_below_the_instances_folder() {
-    let data = DataLocation::new("/data");
+    let locations = Locations::from_overrides(PathBuf::from("/root"), LocationOverrides::default());
     assert_eq!(
-        data.get_instance_root("abc"),
-        Path::new("/data/instances/abc")
+        locations.instances.get_instance_root("abc"),
+        Path::new("/root/instances/abc")
     );
 }

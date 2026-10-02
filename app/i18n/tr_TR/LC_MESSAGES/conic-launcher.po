@@ -904,11 +904,6 @@ msgid "Cancel"
 msgstr "İptal"
 
 #: ui
-msgctxt "AccountAdd"
-msgid "Choose an auth service and add an account"
-msgstr "Bir kimlik doğrulama servisi seçin ve hesap ekleyin"
-
-#: ui
 msgctxt "AccountAddSelect"
 msgid "Microsoft"
 msgstr "Microsoft"
@@ -2802,3 +2797,78 @@ msgstr "Anahtar kelimeleri veya filtreleri ayarlayıp yeniden aramayı deneyin"
 msgctxt "ContentPacksPanel"
 msgid "Try adjusting keywords or filters and search again"
 msgstr "Anahtar kelimeleri veya filtreleri ayarlayıp yeniden aramayı deneyin"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Data storage"
+msgstr "Veri depolama"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Launcher data"
+msgstr "Başlatıcı verileri"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Minecraft install"
+msgstr "Minecraft kurulumu"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart required"
+msgstr "Yeniden başlatma gerekli"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "The launcher must restart before the new storage location is used."
+msgstr "Yeni depolama konumunun kullanılması için başlatıcının yeniden başlatılması gerekir."
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Later"
+msgstr "Daha sonra"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart now"
+msgstr "Şimdi yeniden başlat"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Data storage"
+msgstr "Veri depolama"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Choose where Conic Launcher keeps its data. You can change this later in Settings."
+msgstr "Conic Launcher'ın verilerini nerede saklayacağını seçin. Bunu daha sonra Ayarlar'dan değiştirebilirsiniz."
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Launcher data"
+msgstr "Başlatıcı verileri"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Minecraft install"
+msgstr "Minecraft kurulumu"
+
+#: ui
+msgctxt "SetupView"
+msgid "Next (Color scheme)"
+msgstr "İleri (Renk şeması)"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Instances and game data"
+msgstr "Örnekler ve oyun verileri"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Instances and game data"
+msgstr "Örnekler ve oyun verileri"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Sign in"
+msgstr "Giriş yap"

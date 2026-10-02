@@ -15,13 +15,13 @@ use zip::ZipArchive;
 
 use account::Account;
 use config::launch::GC;
-use folder::DATA_LOCATION;
-use folder::MinecraftLocation;
 use install::vanilla::LOF4J2_CONFIGURATION;
 use instance::Instance;
 use platform::PLATFORM_INFO;
 use platform::{DELIMITER, OsFamily};
 use shared::APP_VERSION;
+use storage::LOCATIONS;
+use storage::MinecraftLocation;
 use version::{ResolvedLibrary, ResolvedVersion};
 
 use super::error::*;
@@ -112,7 +112,7 @@ pub async fn generate_command_arguments(
         }
     }
     if let Account::Yggdrasil(yggdrasil_account) = &launch_options.selected_account {
-        let authlib_injector_path = DATA_LOCATION.clone().authlib_injector;
+        let authlib_injector_path = LOCATIONS.launcher.authlib_injector.clone();
         command_arguments.push(format!(
             "-javaagent:{jar}={server}",
             jar = authlib_injector_path.to_string_lossy(),
@@ -151,7 +151,7 @@ pub async fn generate_command_arguments(
     jvm_options.insert("version_name", version.id.clone());
     jvm_options.insert(
         "library_directory",
-        DATA_LOCATION.root.join("libraries").display().to_string(),
+        LOCATIONS.minecraft.libraries.display().to_string(),
     );
     let mut jvm_arguments = Vec::with_capacity(version.jvm_arguments.len() + 1);
     let log_config_path = minecraft_location.get_log_config(&version.id);
@@ -227,7 +227,8 @@ pub async fn generate_command_arguments(
     );
     game_options.insert(
         "game_directory",
-        DATA_LOCATION
+        LOCATIONS
+            .instances
             .get_instance_root(&instance.id)
             .to_string_lossy()
             .to_string(),

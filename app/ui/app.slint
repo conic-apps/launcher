@@ -139,6 +139,8 @@ export component App inherits Window {
     callback maximize-or-fullscreen();
     callback minimize-window();
     callback close-window();
+    /// Settings → Data storage asked for a restart after a location changed.
+    callback restart-app();
     /// Tells the platform which theme the app resolved to, so the window controls
     /// it draws take their ink from this title bar. Answered on Windows
     /// (`app/src/native/windows/caption.rs`) and ignored everywhere else.
@@ -298,6 +300,7 @@ export component App inherits Window {
             DialogRoot {
                 z: 2000;
                 confirm-quit => { root.quit(); }
+                restart-app => { root.restart-app(); }
             }
         }
     }

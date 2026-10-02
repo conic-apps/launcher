@@ -7,7 +7,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-folder.workspace = true
+storage.workspace = true
 shared.workspace = true
 
 base64.workspace = true

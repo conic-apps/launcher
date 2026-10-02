@@ -5,9 +5,11 @@
 // The first-run setup wizard's state.
 //
 // The pure UI state (which step is on screen, which way the last swap slid)
-// stays in the view, and what Rust has to see or drive is a global. Only the
-// import-instances screen needs the latter — it fetches the Mojang manifest and
-// writes an `instance.toml`.
+// stays in the view, and what Rust has to see or drive is a global. The
+// import-instances screen needs the latter (it fetches the Mojang manifest and
+// writes an `instance.toml`), and so does the storage step: choosing a folder
+// opens the OS picker, and finishing or closing the wizard commits the choice
+// and the "setup done" flag in Rust.
 //
 // Which step is mounted is deliberately *not* here: the swap is a transition
 // whose mounted screen lags the wanted one by the 80ms leave half, and a
@@ -22,6 +24,11 @@ export global SetupWizardState {
     /// It is a platform fact, so it is answered by Rust from `platform`'s
     /// `PLATFORM_INFO` rather than worked out here.
     in property <bool> jvm-auto-install-supported: true;
+
+    /// Whether storage has already been answered — a `locations.toml` marked
+    /// `initialized`. The view drops the storage step from its phases while
+    /// this is true, so reopening the wizard does not ask again.
+    in property <bool> storage-configured: false;
 
     /// One of the two "create a blank instance" buttons is running.
     in-out property <bool> creating-release: false;
@@ -48,4 +55,16 @@ export global SetupWizardState {
     callback create-latest-release();
     /// …and the same for the latest snapshot.
     callback create-latest-snapshot();
+
+    /// The storage step's rows ask Rust for a folder chooser. `which` is
+    /// "launcher", "minecraft" or "instances"; the chosen path only updates the
+    /// row, and Rust applies it when the wizard finishes.
+    callback pick-storage(string);
+    /// The user reached the end of the wizard: Rust commits the storage choice
+    /// (writing the config to the new location and moving the data) and marks
+    /// the wizard done.
+    callback finish();
+    /// The user closed the wizard: Rust keeps the default storage and marks the
+    /// wizard done.
+    callback skip();
 }

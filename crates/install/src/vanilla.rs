@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use download::{Checksum, DownloadTask, DownloadTaskType};
-use folder::MinecraftLocation;
 use shared::HTTP_CLIENT;
+use storage::MinecraftLocation;
 use version::{
     self, AssetIndex, AssetIndexObject, ResolvedLibrary, ResolvedVersion, resolve_version,
 };

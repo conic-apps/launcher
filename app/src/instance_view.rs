@@ -17,12 +17,12 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
+use storage::LOCATIONS;
 
 /// The file the state is kept in, under the data directory's root.
 fn state_file() -> PathBuf {
-    DATA_LOCATION.root.join("instance_view.json")
+    LOCATIONS.launcher.root.join("instance_view.json")
 }
 
 /// How the list is ordered.

@@ -10,6 +10,7 @@ import { FocusManager } from "../globals/focus.slint";
 import { Navigation } from "../globals/navigation.slint";
 import { SetupWizardState } from "../globals/setup.slint";
 import { SetupLanguage } from "setup/setup-language.slint";
+import { SetupStorage } from "setup/setup-storage.slint";
 import { SetupPalette } from "setup/setup-palette.slint";
 import { SetupAddAccount } from "setup/setup-add-account.slint";
 import { SetupJavaSettings } from "setup/setup-java-settings.slint";
@@ -162,6 +163,9 @@ export component SetupView inherits Rectangle {
                 close-touch := TouchArea {
                     clicked => {
                         FocusManager.clear();
+                        // Closing the wizard means skipping it: Rust keeps the
+                        // default storage and marks the wizard done.
+                        SetupWizardState.skip();
                         Navigation.navigate("game");
                     }
                 }
@@ -204,6 +208,12 @@ export component SetupView inherits Rectangle {
                     SetupLanguage { }
                 }
 
+                if root.shown == "storage" : SlideTransition {
+                    phase: root.leaving ? "leave" : root.arrive-phase;
+                    direction: root.direction;
+                    SetupStorage { }
+                }
+
                 if root.shown == "palette" : SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
@@ -237,15 +247,27 @@ export component SetupView inherits Rectangle {
         }
     }
 
-    // The wizard's six phases, in order.
-    private property <[string]> phases: [
-        "language",
-        "palette",
-        "add-account",
-        "java-settings",
-        "launch-options",
-        "import-instances",
-    ];
+    // The wizard's phases, in order. The storage step is dropped once storage has
+    // been answered, so a wizard reopened from Settings does not ask again.
+    private property <[string]> phases:
+        SetupWizardState.storage-configured
+        ? [
+            "language",
+            "palette",
+            "add-account",
+            "java-settings",
+            "launch-options",
+            "import-instances",
+        ]
+        : [
+            "language",
+            "storage",
+            "palette",
+            "add-account",
+            "java-settings",
+            "launch-options",
+            "import-instances",
+        ];
 
     /// The step the user asked for, written by `goto-step` and read by the
     /// swap and by the button labels.
@@ -260,13 +282,17 @@ export component SetupView inherits Rectangle {
 
     /// The "Next" button's label, which moves with the request and not with the
     /// 80ms beat.
+    // Keyed on the *next* phase's name rather than its index, because the
+    // storage step's presence shifts every index after it.
     out property <string> next-label:
         root.wanted == 0 ? @tr("SetupView" => "Let's get started!")
-        : root.wanted == 1 ? @tr("SetupView" => "Next (Add account)")
-        : root.wanted == 2 ? @tr("SetupView" => "Next (Java settings)")
-        : root.wanted == 3 ? @tr("SetupView" => "Next (Launch options)")
-        : root.wanted == 4 ? @tr("SetupView" => "Next (Import instances)")
-        : @tr("SetupView" => "Finish");
+        : root.wanted >= root.phases.length - 1 ? @tr("SetupView" => "Finish")
+        : root.phases[root.wanted + 1] == "palette" ? @tr("SetupView" => "Next (Color scheme)")
+        : root.phases[root.wanted + 1] == "add-account" ? @tr("SetupView" => "Next (Add account)")
+        : root.phases[root.wanted + 1] == "java-settings" ? @tr("SetupView" => "Next (Java settings)")
+        : root.phases[root.wanted + 1] == "launch-options" ? @tr("SetupView" => "Next (Launch options)")
+        : root.phases[root.wanted + 1] == "import-instances" ? @tr("SetupView" => "Next (Import instances)")
+        : @tr("SetupView" => "Next");
 
     // The page stack rebuilds this view on every navigation to it, so the first
     // step is simply mounted.
@@ -368,6 +394,9 @@ export component SetupView inherits Rectangle {
                     if root.wanted < root.phases.length - 1 {
                         root.goto-step(root.wanted + 1, true);
                     } else {
+                        // The last step: commit the storage choice and the
+                        // "setup done" flag, then leave for the game view.
+                        SetupWizardState.finish();
                         Navigation.navigate("game");
                     }
                 }

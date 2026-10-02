@@ -170,7 +170,7 @@ pub(crate) fn register_callbacks(ui: &App) {
     }
     {
         state.on_open_music_folder(|| {
-            let path = folder::DATA_LOCATION.music.clone();
+            let path = storage::LOCATIONS.launcher.music.clone();
             if let Err(error) = crate::config_bridge::open_external(&path.to_string_lossy()) {
                 log::warn!("failed to open the music folder: {error}");
             }

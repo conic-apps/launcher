@@ -11,8 +11,8 @@ use serde_json::Value;
 
 use config::download::DownloadConfig;
 use download::{DownloadTask, DownloadTaskType, download_concurrent, progress::DownloadState};
-use folder::DATA_LOCATION;
 use shared::HTTP_CLIENT;
+use storage::LOCATIONS;
 
 use crate::{ModLoaderProgress, ModLoaderReporter, error::*};
 
@@ -105,7 +105,8 @@ pub async fn download_installer(
     );
     info!("The installer url is: {installer_url}");
 
-    let installer_path = DATA_LOCATION
+    let installer_path = LOCATIONS
+        .launcher
         .temp
         .join(format!("{}.jar", uuid::Uuid::new_v4()));
     if let Some(parent) = installer_path.parent() {

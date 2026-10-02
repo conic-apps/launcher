@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use base64::{Engine, engine::general_purpose};
-use folder::DATA_LOCATION;
 use serde_json::Value;
+use storage::LOCATIONS;
 use uuid::Uuid;
 
 use crate::error::*;
@@ -48,8 +48,8 @@ pub async fn delete_account(account: YggdrasilAccount) -> Result<()> {
 }
 
 async fn save_accounts(accounts: Vec<YggdrasilAccount>) -> Result<()> {
-    let yggdrasil_accounts_list_file = DATA_LOCATION.accounts.join("yggdrasil-accounts.json");
-    tokio::fs::create_dir_all(&DATA_LOCATION.accounts).await?;
+    let yggdrasil_accounts_list_file = LOCATIONS.launcher.accounts.join("yggdrasil-accounts.json");
+    tokio::fs::create_dir_all(&LOCATIONS.launcher.accounts).await?;
     let serialized_yggdrasil_accounts_list = serde_json::to_string_pretty(&accounts)?;
     tokio::fs::write(
         yggdrasil_accounts_list_file,
@@ -60,8 +60,8 @@ async fn save_accounts(accounts: Vec<YggdrasilAccount>) -> Result<()> {
 }
 
 pub async fn list_accounts() -> Result<Vec<YggdrasilAccount>> {
-    let yggdrasil_accounts_list_file = DATA_LOCATION.accounts.join("yggdrasil-accounts.json");
-    tokio::fs::create_dir_all(&DATA_LOCATION.accounts).await?;
+    let yggdrasil_accounts_list_file = LOCATIONS.launcher.accounts.join("yggdrasil-accounts.json");
+    tokio::fs::create_dir_all(&LOCATIONS.launcher.accounts).await?;
     if !yggdrasil_accounts_list_file.exists() {
         return Ok(vec![]);
     }

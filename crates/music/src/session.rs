@@ -9,12 +9,12 @@
 
 use std::path::PathBuf;
 
-use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
+use storage::LOCATIONS;
 
 /// The file the state is kept in, under the data directory's root.
 fn session_file() -> PathBuf {
-    DATA_LOCATION.root.join("music_session.json")
+    LOCATIONS.launcher.root.join("music_session.json")
 }
 
 /// The saved track and its position.

@@ -25,9 +25,10 @@ pub(crate) async fn install(instance_id: &str, detail: &OpenDetail) -> Result<()
     // A modpack is not installed into the instance; it goes into the launcher's
     // own `modpacks` folder.
     let target_dir = if detail.kind == RemoteKind::Packs {
-        folder::DATA_LOCATION.root.join("modpacks")
+        storage::LOCATIONS.launcher.root.join("modpacks")
     } else {
-        folder::DATA_LOCATION
+        storage::LOCATIONS
+            .instances
             .get_instance_root(instance_id)
             .join(detail.kind.folder())
     };

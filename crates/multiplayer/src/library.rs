@@ -7,22 +7,23 @@ use crate::{
     metadata::{self, LIBRARY},
 };
 use download::{DownloadTask, progress::DownloadState};
-use folder::DATA_LOCATION;
 use libloader::libloading::Library;
 use sha2::Digest;
 use std::{ffi::OsStr, path::Path};
+use storage::LOCATIONS;
 
 /// The directory the Conic Nexus dynamic library lives in
-/// (`DATA_LOCATION.runtime/conic-nexus`).
+/// (`LOCATIONS.launcher.native/conic-nexus`).
 pub fn library_dir() -> std::path::PathBuf {
-    DATA_LOCATION.runtime.join("conic-nexus")
+    LOCATIONS.launcher.native.join("conic-nexus")
 }
 
 pub async fn check_library_valid() -> Result<()> {
     let mut sha256_hasher = sha2::Sha256::new();
     let file_content = tokio::fs::read(
-        &DATA_LOCATION
-            .runtime
+        &LOCATIONS
+            .launcher
+            .native
             .join("conic-nexus")
             .join(LIBRARY.filename),
     )
@@ -35,8 +36,9 @@ pub async fn check_library_valid() -> Result<()> {
 }
 
 pub async fn download_library(progress: &DownloadState) -> Result<()> {
-    let library_path = DATA_LOCATION
-        .runtime
+    let library_path = LOCATIONS
+        .launcher
+        .native
         .join("conic-nexus")
         .join(LIBRARY.filename);
     for source in LIBRARY.sources {

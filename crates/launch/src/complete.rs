@@ -12,9 +12,9 @@ use log::{info, warn};
 
 use config::download::DownloadConfig;
 use download::progress::DownloadState;
-use folder::{DATA_LOCATION, MinecraftLocation};
 use install::vanilla::{generate_assets_downloads, generate_libraries_downloads};
 use instance::Instance;
+use storage::{LOCATIONS, MinecraftLocation};
 use version::{Version, resolve_version};
 
 use crate::error::*;
@@ -41,10 +41,12 @@ pub async fn complete_files(
     prefer_mojang_java: bool,
     config: &DownloadConfig,
 ) -> Result<()> {
-    let assets_lock_file = DATA_LOCATION
+    let assets_lock_file = LOCATIONS
+        .instances
         .get_instance_root(&instance.id)
         .join(".conic-assets-ok");
-    let libraries_lock_file = DATA_LOCATION
+    let libraries_lock_file = LOCATIONS
+        .instances
         .get_instance_root(&instance.id)
         .join(".conic-libraries-ok");
     if try_load_lock_file(&assets_lock_file).is_some() {
@@ -135,7 +137,8 @@ async fn complete_java_runtime_files(
     progress: &DownloadState,
     config: DownloadConfig,
 ) -> Result<()> {
-    let lock_file = DATA_LOCATION
+    let lock_file = LOCATIONS
+        .instances
         .get_instance_root(&instance.id)
         .join(".java-runtime-ok");
     if try_load_lock_file(&lock_file).is_some() {

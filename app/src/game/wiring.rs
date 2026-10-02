@@ -158,7 +158,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             let Some(id) = controller.borrow().current_id.clone() else {
                 return;
             };
-            let path = folder::DATA_LOCATION.get_instance_root(&id);
+            let path = storage::LOCATIONS.instances.get_instance_root(&id);
             if let Err(error) = crate::config_bridge::open_external(&path.to_string_lossy()) {
                 log::warn!("failed to open instance folder: {error}");
             }
