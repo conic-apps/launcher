@@ -8,7 +8,7 @@ repository.workspace = true
 
 [dependencies]
 shared.workspace = true
-folder.workspace = true
+storage.workspace = true
 download.workspace = true
 
 reqwest.workspace = true

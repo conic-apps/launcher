@@ -904,11 +904,6 @@ msgid "Cancel"
 msgstr "Cancel"
 
 #: ui
-msgctxt "AccountAdd"
-msgid "Choose an auth service and add an account"
-msgstr "Choose an auth service and add an account"
-
-#: ui
 msgctxt "AccountAddSelect"
 msgid "Microsoft"
 msgstr "Microsoft"
@@ -2802,3 +2797,78 @@ msgstr "Try adjusting keywords or filters and search again"
 msgctxt "ContentPacksPanel"
 msgid "Try adjusting keywords or filters and search again"
 msgstr "Try adjusting keywords or filters and search again"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Data storage"
+msgstr "Data storage"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Launcher data"
+msgstr "Launcher data"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Minecraft install"
+msgstr "Minecraft install"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart required"
+msgstr "Restart required"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "The launcher must restart before the new storage location is used."
+msgstr "The launcher must restart before the new storage location is used."
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Later"
+msgstr "Later"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart now"
+msgstr "Restart now"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Data storage"
+msgstr "Data storage"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Choose where Conic Launcher keeps its data. You can change this later in Settings."
+msgstr "Choose where Conic Launcher keeps its data. You can change this later in Settings."
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Launcher data"
+msgstr "Launcher data"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Minecraft install"
+msgstr "Minecraft install"
+
+#: ui
+msgctxt "SetupView"
+msgid "Next (Color scheme)"
+msgstr "Next (Color scheme)"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Instances and game data"
+msgstr "Instances and game data"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Instances and game data"
+msgstr "Instances and game data"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Sign in"
+msgstr "Sign in"

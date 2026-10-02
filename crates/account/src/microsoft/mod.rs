@@ -4,9 +4,9 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use folder::DATA_LOCATION;
 use log::info;
 use serde::{Deserialize, Serialize};
+use storage::LOCATIONS;
 use uuid::Uuid;
 
 use crate::{error::*, microsoft::account_profile_step::Profile};
@@ -33,8 +33,8 @@ pub struct MicrosoftAccount {
 }
 
 pub async fn list_accounts() -> Result<Vec<MicrosoftAccount>> {
-    let accounts_list_file = DATA_LOCATION.accounts.join("microsoft.json");
-    tokio::fs::create_dir_all(&DATA_LOCATION.accounts).await?;
+    let accounts_list_file = LOCATIONS.launcher.accounts.join("microsoft.json");
+    tokio::fs::create_dir_all(&LOCATIONS.launcher.accounts).await?;
     if !accounts_list_file.exists() {
         return Ok(vec![]);
     }
@@ -127,9 +127,9 @@ pub async fn refresh_account(uuid: Uuid, force_refresh: bool) -> Result<Microsof
 }
 
 async fn save_accounts(accounts: &[MicrosoftAccount]) -> Result<()> {
-    let accounts_list_file = DATA_LOCATION.accounts.join("microsoft.json");
+    let accounts_list_file = LOCATIONS.launcher.accounts.join("microsoft.json");
     let serialized_accounts_list = serde_json::to_string_pretty(accounts)?;
-    tokio::fs::create_dir_all(&DATA_LOCATION.accounts).await?;
+    tokio::fs::create_dir_all(&LOCATIONS.launcher.accounts).await?;
     tokio::fs::write(accounts_list_file, serialized_accounts_list).await?;
     Ok(())
 }

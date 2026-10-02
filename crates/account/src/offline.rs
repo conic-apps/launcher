@@ -5,8 +5,8 @@
 //! Locally created ("offline") accounts: CRUD over `offline.json` in the data
 //! directory.
 
-use folder::DATA_LOCATION;
 use serde::{Deserialize, Serialize};
+use storage::LOCATIONS;
 use uuid::Uuid;
 
 use crate::error::*;
@@ -62,15 +62,15 @@ pub async fn update_account(account: OfflineAccount) -> Result<()> {
 }
 
 async fn save_accounts(accounts: &[OfflineAccount]) -> Result<()> {
-    let accounts_list_file = DATA_LOCATION.accounts.join("offline.json");
-    tokio::fs::create_dir_all(&DATA_LOCATION.accounts).await?;
+    let accounts_list_file = LOCATIONS.launcher.accounts.join("offline.json");
+    tokio::fs::create_dir_all(&LOCATIONS.launcher.accounts).await?;
     let content = serde_json::to_string(accounts)?;
     tokio::fs::write(accounts_list_file, content).await?;
     Ok(())
 }
 
 pub async fn list_accounts() -> Result<Vec<OfflineAccount>> {
-    let accounts_list_file = DATA_LOCATION.accounts.join("offline.json");
+    let accounts_list_file = LOCATIONS.launcher.accounts.join("offline.json");
     if !accounts_list_file.exists() {
         return Ok(vec![]);
     }

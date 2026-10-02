@@ -76,6 +76,13 @@ export global AppConfig {
 
     in-out property <string> app-version: "0.0.0";
 
+    // The resolved storage roots, shown in Settings → Data storage. They are
+    // chosen through the bootstrap file rather than `config.toml`, so Rust only
+    // ever writes them here and the pages only read them.
+    in-out property <string> launcher-location: "";
+    in-out property <string> minecraft-location: "";
+    in-out property <string> instances-location: "";
+
     // A setting was edited: Rust reads the properties back and saves.
     callback changed();
     // OS integrations (implemented in main.rs).
@@ -86,4 +93,7 @@ export global AppConfig {
     callback rescan-java();
     // A Java runtime's enabled toggle changed (path, enabled).
     callback set-java-enabled(string, bool);
+    // The Data storage rows ask Rust for a folder chooser. `which` is
+    // "launcher", "minecraft" or "instances".
+    callback pick-data-location(string);
 }

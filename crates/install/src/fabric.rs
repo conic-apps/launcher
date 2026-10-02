@@ -8,8 +8,8 @@ use log::info;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use folder::MinecraftLocation;
 use shared::HTTP_CLIENT;
+use storage::MinecraftLocation;
 use version::Version;
 
 use crate::error::*;

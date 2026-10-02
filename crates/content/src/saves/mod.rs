@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use base64::{Engine, engine::general_purpose};
 use fastnbt::Value;
-use folder::DATA_LOCATION;
+use storage::LOCATIONS;
 
 use crate::error::*;
 
@@ -91,14 +91,20 @@ fn integer_field(value: &Value, name: &str) -> Option<i64> {
 }
 
 fn save_folder(instance_id: &str, folder_name: &str) -> PathBuf {
-    DATA_LOCATION
+    LOCATIONS
+        .instances
         .get_instance_root(instance_id)
         .join("saves")
         .join(folder_name)
 }
 
 pub fn get_all_levels(instance_id: &str) -> Result<HashMap<String, Value>> {
-    level::get_all_levels(DATA_LOCATION.get_instance_root(instance_id).join("saves"))
+    level::get_all_levels(
+        LOCATIONS
+            .instances
+            .get_instance_root(instance_id)
+            .join("saves"),
+    )
 }
 
 pub async fn get_save_icon(instance_id: &str, folder_name: &str) -> Result<String> {

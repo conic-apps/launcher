@@ -24,9 +24,9 @@ use vanilla::generate_download_info;
 use config::{Config, get_system_language};
 use download::progress::DownloadState;
 use download::{Checksum, download_concurrent};
-use folder::{DATA_LOCATION, MinecraftLocation};
 use instance::{Instance, InstanceRuntime, ModLoaderType};
 use shared::HTTP_CLIENT;
+use storage::LOCATIONS;
 use version::{Version, resolve_version};
 
 use crate::{forge::ForgeVersionList, vanilla::VersionManifest};
@@ -213,11 +213,8 @@ pub async fn install(
     print_runtime_info(runtime);
 
     info!("Generating download task...");
-    let download_list = generate_download_info(
-        &runtime.minecraft,
-        MinecraftLocation::new(&DATA_LOCATION.root),
-    )
-    .await?;
+    let download_list =
+        generate_download_info(&runtime.minecraft, LOCATIONS.minecraft.clone()).await?;
 
     let progress = DownloadState::default();
     {
@@ -253,7 +250,8 @@ pub async fn install(
 
     debug!("Saving lock file");
     tokio::fs::write(
-        DATA_LOCATION
+        LOCATIONS
+            .instances
             .get_instance_root(&instance.id)
             .join(".install.lock"),
         b"ok",
@@ -281,7 +279,7 @@ async fn resolve_installer_java(
     config: &Config,
     instance: &Instance,
 ) -> Result<java_discovery::ResolvedJava> {
-    let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
+    let minecraft_location = LOCATIONS.minecraft.clone();
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
     let raw_version_json = tokio::fs::read_to_string(version_json_path).await?;
     let unresolved_version = serde_json::from_str::<Version>(&raw_version_json)?;
@@ -320,7 +318,7 @@ pub async fn install_mod_loader(
             fabric::install(
                 &runtime.minecraft,
                 mod_loader_version,
-                MinecraftLocation::new(&DATA_LOCATION.root),
+                LOCATIONS.minecraft.clone(),
             )
             .await?
         }
@@ -328,13 +326,13 @@ pub async fn install_mod_loader(
             quilt::install(
                 &runtime.minecraft,
                 mod_loader_version,
-                MinecraftLocation::new(&DATA_LOCATION.root),
+                LOCATIONS.minecraft.clone(),
             )
             .await?
         }
         ModLoaderType::Forge => {
             forge::install(
-                &MinecraftLocation::new(&DATA_LOCATION.root),
+                &LOCATIONS.minecraft,
                 mod_loader_version,
                 &runtime.minecraft,
                 java_path,
@@ -343,7 +341,13 @@ pub async fn install_mod_loader(
             .await?
         }
         ModLoaderType::Neoforge => {
-            neoforge::install(&DATA_LOCATION.root, mod_loader_version, java_path, reporter).await?
+            neoforge::install(
+                &LOCATIONS.minecraft.root,
+                mod_loader_version,
+                java_path,
+                reporter,
+            )
+            .await?
         }
     }
 
@@ -360,7 +364,8 @@ async fn configure_first_launch_language(config: Config, instance: &Instance) {
     if !config.accessibility.change_game_language {
         return;
     }
-    let options_txt_path = DATA_LOCATION
+    let options_txt_path = LOCATIONS
+        .instances
         .get_instance_root(&instance.id)
         .join("options.txt");
     let launcher_language = config
@@ -382,7 +387,7 @@ async fn configure_first_launch_language(config: Config, instance: &Instance) {
 /// Reads the `releaseTime` of the Minecraft version from the version.json that has
 /// already been downloaded during the installation.
 async fn get_version_release_time(instance: &Instance) -> Option<String> {
-    let minecraft_location = MinecraftLocation::new(&DATA_LOCATION.root);
+    let minecraft_location = LOCATIONS.minecraft.clone();
     let version_json_path = minecraft_location.get_version_json(&instance.config.runtime.minecraft);
     let raw_version_json = tokio::fs::read_to_string(version_json_path).await.ok()?;
     Version::from_str(&raw_version_json).ok()?.release_time

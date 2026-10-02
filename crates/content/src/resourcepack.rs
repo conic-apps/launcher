@@ -10,8 +10,8 @@ use std::{
 };
 
 use base64::{Engine, engine::general_purpose};
-use folder::DATA_LOCATION;
 use serde_json::Value;
+use storage::LOCATIONS;
 use zip::ZipArchive;
 
 use crate::error::*;
@@ -101,7 +101,8 @@ pub fn get_all_resourcepacks<P: AsRef<Path>>(
 /// not have to know the folder layout.
 pub fn get_instance_resourcepacks(instance_id: &str) -> Result<Vec<Resourcepack>> {
     get_all_resourcepacks(
-        DATA_LOCATION
+        LOCATIONS
+            .instances
             .get_instance_root(instance_id)
             .join("resourcepacks"),
     )

@@ -10,12 +10,28 @@ cargo run --release         # release build
 cargo build --release       # what the packages ship
 ```
 
-Debug builds use the `conic-debug` data directory; release builds use `conic`
-(under `$HOME` on macOS, `$HOME/.conic` on Linux, `%APPDATA%` on Windows; see
-`folder::DATA_LOCATION`).
+The launcher resolves three storage roots at startup — the launcher's own data,
+the shared Minecraft install and the instances — under `storage::LOCATIONS`. By
+default they hang off one root, with the launcher data at the root itself and
+`minecraft/` and `instances/` under it. The root is platform and packaging
+dependent: `~/Library/Application Support/app.conicmc.launcher` on macOS,
+`$XDG_DATA_HOME/conic` (falling back to `~/.local/share/conic`) on Linux, and
+`%APPDATA%\conic` on Windows — except a single-file portable Windows build, which
+keeps everything in `.minecraft-conic` next to the executable. Debug builds
+append `-debug` to the folder name.
 
-Delete the debug data directory by hand to reset a debug install (`~/conic-debug`
-on macOS, `~/.conic-debug` on Linux, `%APPDATA%\conic-debug` on Windows).
+`Settings → General → Data storage` redirects each root. That choice cannot live
+in `config.toml`, because the config file is inside the launcher location, so it
+is written to a `locations.toml` bootstrap file at the platform anchor and applied
+on the next start.
+
+A first run (`Config.setup_completed` is `false`) opens the setup wizard. Its
+storage step, right after the language step, offers the same three roots;
+finishing writes the config into the chosen launcher directory, moves the data
+there and restarts, so a mid-wizard location change does not lose the steps
+before it. Closing the wizard keeps the defaults and marks it done.
+
+Delete the debug folder by hand to reset a debug install.
 
 ## Verification
 
@@ -59,6 +75,9 @@ Python tooling in `tools/` is not part of any CI gate:
 ### Platform plumbing worth knowing
 
 - `crates/platform` — OS detection (`PLATFORM_INFO`, `OsFamily`).
+- `crates/storage` — the three storage roots (`LOCATIONS`), which resolve the
+  launcher data, the shared Minecraft install and the instances from the platform
+  default plus the `locations.toml` bootstrap file.
 - `crates/window` — window operations (minimize/maximize/fullscreen,
   `bring_to_front`) and the winit event-filter fan-out. macOS gets a
   transparent title bar with the real traffic lights; Windows gets
@@ -83,7 +102,7 @@ Python tooling in `tools/` is not part of any CI gate:
 | `content`         | Saves, datapacks, resourcepacks, screenshots, mods         |
 | `curseforge`      | CurseForge API client (`CURSEFORGE_API_KEY` at build time) |
 | `download`        | Generic downloader tasks                                   |
-| `folder`          | Data directory layout (`DATA_LOCATION`)                    |
+| `storage`         | Data directory layout (`LOCATIONS`)                       |
 | `install`         | Minecraft + loader installation                            |
 | `instance`        | Instance CRUD, playtime                                    |
 | `java-discovery`  | Java discovery/parsing                                     |

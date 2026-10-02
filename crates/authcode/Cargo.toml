@@ -8,7 +8,7 @@ repository.workspace = true
 
 # Nothing here is a new crate in the tree: `tokio` (which the app already
 # runs with `net`), `regex` (through `launch`) and `uuid`'s `v4` (through
-# `instance`'s random ids and `folder`'s temp directories) are all already
+# `instance`'s random ids and `storage`'s temp directories) are all already
 # linked, and `thiserror` is how every other crate in here writes an `Error`.
 # What is missing is a web framework, and
 # that is the point — the HTTP this needs is a request line and a `Content-Length`,

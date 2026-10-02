@@ -6,7 +6,7 @@
 //! and the Slint `AppConfig` global. Also hosts the OS integration helpers used
 //! by the settings callbacks.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, RwLock};
 
 use crate::slint_backend::AppConfig;
@@ -161,6 +161,34 @@ pub fn apply_config(settings: &AppConfig, config: &config::Config) {
     settings.set_high_contrast(config.accessibility.high_contrast_mode);
 
     settings.set_app_version(env!("CARGO_PKG_VERSION").into());
+
+    // The storage roots come from the bootstrap file rather than the config, so
+    // they are seeded from the already-resolved layout. The settings page shows
+    // them and opens them, and the Change buttons write an override.
+    settings.set_launcher_location(
+        storage::LOCATIONS
+            .launcher
+            .root
+            .to_string_lossy()
+            .to_string()
+            .into(),
+    );
+    settings.set_minecraft_location(
+        storage::LOCATIONS
+            .minecraft
+            .root
+            .to_string_lossy()
+            .to_string()
+            .into(),
+    );
+    settings.set_instances_location(
+        storage::LOCATIONS
+            .instances
+            .root
+            .to_string_lossy()
+            .to_string()
+            .into(),
+    );
 }
 
 fn parse_usize_keep(value: &str, previous: usize) -> usize {
@@ -508,4 +536,102 @@ pub fn pick_image_file_named(name: &str) -> Option<PathBuf> {
     }
     #[allow(unreachable_code)]
     None
+}
+
+/// Native "choose a folder" dialog (no extra dependency), opened at `current`.
+pub fn pick_directory(prompt: &str, current: &Path) -> Option<PathBuf> {
+    #[cfg(target_os = "macos")]
+    {
+        // AppleScript strings need their quotes and backslashes escaped; the
+        // starting directory is handed over as a `POSIX file`.
+        let prompt = prompt.replace('\\', "\\\\").replace('"', "\\\"");
+        let start = current
+            .to_string_lossy()
+            .replace('\\', "\\\\")
+            .replace('"', "\\\"");
+        let script = format!(
+            "POSIX path of (choose folder with prompt \"{prompt}\" \
+             default location POSIX file \"{start}\")"
+        );
+        let output = std::process::Command::new("osascript")
+            .args(["-e", &script])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        return (!path.is_empty()).then(|| PathBuf::from(path));
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let output = std::process::Command::new("zenity")
+            .args([
+                "--file-selection",
+                "--directory",
+                &format!("--title={prompt}"),
+                &format!("--filename={}/", current.display()),
+            ])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        return (!path.is_empty()).then(|| PathBuf::from(path));
+    }
+    #[cfg(target_os = "windows")]
+    {
+        // A single-quoted PowerShell string, so only the apostrophe is escaped.
+        let current = current.to_string_lossy().replace('\'', "''");
+        let script = format!(
+            "Add-Type -AssemblyName System.Windows.Forms; \
+             $d = New-Object System.Windows.Forms.FolderBrowserDialog; \
+             $d.Description = '{prompt}'; \
+             $d.SelectedPath = '{current}'; \
+             if ($d.ShowDialog() -eq 'OK') {{ $d.SelectedPath }}"
+        );
+        let output = std::process::Command::new("powershell")
+            .args(["-NoProfile", "-Command", &script])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        return (!path.is_empty()).then(|| PathBuf::from(path));
+    }
+    #[allow(unreachable_code)]
+    None
+}
+
+/// Re-executes the launcher so a changed storage location takes effect.
+///
+/// The child carries `CONIC_RELAUNCH`, which tells `main` to wait for this
+/// process' single-instance claim to be released before trying to take it: the
+/// parent is still shutting down when the child starts, and without that wait
+/// the child would see `AlreadyRunning` and exit, losing the restart.
+pub fn relaunch() {
+    let exe = match std::env::current_exe() {
+        Ok(exe) => exe,
+        Err(error) => {
+            log::error!("failed to restart: {error}");
+            return;
+        }
+    };
+    let args: Vec<std::ffi::OsString> = std::env::args_os().skip(1).collect();
+    match std::process::Command::new(exe)
+        .args(args)
+        .env("CONIC_RELAUNCH", "1")
+        .spawn()
+    {
+        // The child waits for this process to exit, which `quit_event_loop`
+        // brings about after `ui.run` returns and the cleanup runs.
+        Ok(_) => {
+            if let Err(error) = slint::quit_event_loop() {
+                log::error!("failed to stop the running instance: {error}");
+            }
+        }
+        Err(error) => log::error!("failed to restart: {error}"),
+    }
 }

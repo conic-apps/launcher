@@ -9,6 +9,7 @@ import { MultiplayerExtension } from "dialogs/multiplayer-extension.slint";
 import { ConfirmDeleteInstance } from "dialogs/confirm-delete-instance.slint";
 import { ConfirmDeleteSave } from "dialogs/confirm-delete-save.slint";
 import { ConfirmQuitApp } from "dialogs/confirm-quit-app.slint";
+import { RestartRequired } from "dialogs/restart-required.slint";
 
 // The overlay layer: one instance per dialog, mounted once above the whole app.
 // Each dialog stays hidden until its flag in `Dialogs` is set, and draws its own
@@ -21,6 +22,10 @@ export component DialogRoot inherits Rectangle {
     /// The "Let me out!" button of `ConfirmQuitApp`, forwarded to the app root
     /// (which plays the exit animation and closes the window).
     callback confirm-quit();
+
+    /// The "Restart now" button of `RestartRequired`, forwarded to the app root
+    /// (which re-execs the binary).
+    callback restart-app();
 
     CreateInstance { }
     // The instance settings overlay's "Delete instance" row. It sits right after
@@ -41,5 +46,10 @@ export component DialogRoot inherits Rectangle {
     ConfirmDeleteSave { }
     ConfirmQuitApp {
         confirm => { root.confirm-quit(); }
+    }
+    // The storage-location restart prompt, after the quit prompt: a restart is
+    // asked for from Settings, never while a quit is already up.
+    RestartRequired {
+        confirm => { root.restart-app(); }
     }
 }

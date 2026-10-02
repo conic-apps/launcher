@@ -28,9 +28,9 @@
 use std::path::Path;
 
 use base64::{Engine, engine::general_purpose};
-use folder::DATA_LOCATION;
 use md5::{Digest, Md5};
 use serde::{Deserialize, Serialize};
+use storage::LOCATIONS;
 use uuid::Uuid;
 
 use crate::microsoft::MicrosoftAccount;
@@ -123,9 +123,9 @@ pub struct Accounts {
 /// rendering, and the three account files are a few kilobytes.
 pub fn list_accounts() -> Accounts {
     Accounts {
-        microsoft: read_json(&DATA_LOCATION.accounts.join("microsoft.json")),
-        offline: read_json(&DATA_LOCATION.accounts.join("offline.json")),
-        yggdrasil: read_json(&DATA_LOCATION.accounts.join("yggdrasil-accounts.json")),
+        microsoft: read_json(&LOCATIONS.launcher.accounts.join("microsoft.json")),
+        offline: read_json(&LOCATIONS.launcher.accounts.join("offline.json")),
+        yggdrasil: read_json(&LOCATIONS.launcher.accounts.join("yggdrasil-accounts.json")),
     }
 }
 

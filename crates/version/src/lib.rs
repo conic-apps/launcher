@@ -12,7 +12,7 @@ use serde::Serialize;
 use serde_json::Value;
 use std::{collections::HashMap, fs::read_to_string, path::PathBuf};
 
-use folder::MinecraftLocation;
+use storage::MinecraftLocation;
 
 pub mod argument;
 mod checks;

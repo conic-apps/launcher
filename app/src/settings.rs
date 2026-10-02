@@ -11,7 +11,7 @@ use java_discovery::{JavaRuntime as ScannedJava, ScanOptions, scan_java_runtimes
 use slint::{ComponentHandle, ModelRc, SharedString, Timer, TimerMode, VecModel};
 
 use crate::config_bridge;
-use crate::slint_backend::{App, AppConfig, GameState, JavaRuntime};
+use crate::slint_backend::{App, AppConfig, Dialogs, GameState, JavaRuntime};
 
 thread_local! {
     /// The last Java scan: the non-managed runtimes, after the `!is_managed`
@@ -61,9 +61,46 @@ fn java_model(runtimes: &[ScannedJava], disabled: &[String]) -> ModelRc<JavaRunt
 pub fn wire(ui: &App, shared: Rc<RefCell<config::Config>>, save_timer: Rc<Timer>) {
     wire_config_changes(ui, Rc::clone(&shared), Rc::clone(&save_timer));
     wire_link_actions(ui);
+    wire_storage_actions(ui);
 
     wire_background_actions(ui, Rc::clone(&shared), Rc::clone(&save_timer));
     wire_java_actions(ui, shared);
+}
+
+/// The Data storage rows: a folder chooser per location, whose result is written
+/// to the bootstrap file rather than the config, then a restart prompt.
+fn wire_storage_actions(ui: &App) {
+    let settings = ui.global::<AppConfig>();
+    let weak = ui.as_weak();
+    settings.on_pick_data_location(move |which| {
+        let which = which.to_string();
+        let current = match which.as_str() {
+            "launcher" => storage::LOCATIONS.launcher.root.clone(),
+            "minecraft" => storage::LOCATIONS.minecraft.root.clone(),
+            "instances" => storage::LOCATIONS.instances.root.clone(),
+            _ => return,
+        };
+        let Some(chosen) = config_bridge::pick_directory("Select a folder", &current) else {
+            return;
+        };
+        let mut overrides = storage::load_overrides();
+        // Answering storage here means the wizard's storage step is skipped if
+        // the wizard is opened later.
+        overrides.initialized = true;
+        match which.as_str() {
+            "launcher" => overrides.launcher = Some(chosen),
+            "minecraft" => overrides.minecraft = Some(chosen),
+            "instances" => overrides.instances = Some(chosen),
+            _ => return,
+        }
+        if let Err(error) = storage::save_overrides(&overrides) {
+            log::error!("failed to save the storage location: {error}");
+            return;
+        }
+        if let Some(ui) = weak.upgrade() {
+            ui.global::<Dialogs>().set_restart_required_visible(true);
+        }
+    });
 }
 
 /// The `AppConfig.changed` handler: collect the global into the config,
@@ -133,8 +170,8 @@ fn wire_link_actions(ui: &App) {
 
     settings.on_open_path(move |key| {
         let path = match key.as_str() {
-            "music" => folder::DATA_LOCATION.music.clone(),
-            "logs" => folder::DATA_LOCATION.logs.clone(),
+            "music" => storage::LOCATIONS.launcher.music.clone(),
+            "logs" => storage::LOCATIONS.launcher.logs.clone(),
             other => PathBuf::from(other.to_string()),
         };
         if let Err(error) = config_bridge::open_external(&path.to_string_lossy()) {
@@ -228,7 +265,7 @@ fn wire_java_actions(ui: &App, shared: Rc<RefCell<config::Config>>) {
             crate::runtime::spawn_blocking(move || {
                 let options = ScanOptions {
                     extra_home_dirs: Vec::new(),
-                    managed_dirs: vec![folder::DATA_LOCATION.runtime.clone()],
+                    managed_dirs: vec![storage::LOCATIONS.minecraft.runtime.clone()],
                 };
                 // Only the non-managed (system) runtimes are listed; the managed
                 // ones the launcher installs are hidden.

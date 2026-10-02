@@ -904,11 +904,6 @@ msgid "Cancel"
 msgstr "Cancelar"
 
 #: ui
-msgctxt "AccountAdd"
-msgid "Choose an auth service and add an account"
-msgstr "Escolha um serviço de autenticação e adicione uma conta"
-
-#: ui
 msgctxt "AccountAddSelect"
 msgid "Microsoft"
 msgstr "Microsoft"
@@ -2802,3 +2797,78 @@ msgstr "Tente ajustar as palavras-chave ou os filtros e pesquise novamente"
 msgctxt "ContentPacksPanel"
 msgid "Try adjusting keywords or filters and search again"
 msgstr "Tente ajustar as palavras-chave ou os filtros e pesquise novamente"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Data storage"
+msgstr "Armazenamento de dados"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Launcher data"
+msgstr "Dados do launcher"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Minecraft install"
+msgstr "Instalação do Minecraft"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart required"
+msgstr "Reinicialização necessária"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "The launcher must restart before the new storage location is used."
+msgstr "O launcher precisa ser reiniciado antes que o novo local de armazenamento seja usado."
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Later"
+msgstr "Mais tarde"
+
+#: ui
+msgctxt "RestartRequired"
+msgid "Restart now"
+msgstr "Reiniciar agora"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Data storage"
+msgstr "Armazenamento de dados"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Choose where Conic Launcher keeps its data. You can change this later in Settings."
+msgstr "Escolha onde o Conic Launcher guarda seus dados. Você pode alterar isso depois nas configurações."
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Launcher data"
+msgstr "Dados do launcher"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Minecraft install"
+msgstr "Instalação do Minecraft"
+
+#: ui
+msgctxt "SetupView"
+msgid "Next (Color scheme)"
+msgstr "Avançar (Esquema de cores)"
+
+#: ui
+msgctxt "SetupStorage"
+msgid "Instances and game data"
+msgstr "Instâncias e dados do jogo"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Instances and game data"
+msgstr "Instâncias e dados do jogo"
+
+#: ui
+msgctxt "AccountAdd"
+msgid "Sign in"
+msgstr "Entrar"
