@@ -28,7 +28,7 @@
 Name:           conic-launcher
 Version:        @@VERSION@@
 Release:        @@RELEASE@@%{?dist}
-Summary:        A modern Minecraft launcher
+Summary:        A small, fast, and nimble Minecraft launcher
 
 License:        GPL-3.0-only
 URL:            https://github.com/conic-apps/launcher

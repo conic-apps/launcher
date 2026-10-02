@@ -59,5 +59,31 @@ The desktop entry, installed to
 - `StartupWMClass=conic-launcher` matches the WM_CLASS the winit backend reports,
   which is the executable name.
 
+### The localized `Comment`
+
+`Comment` is the one localized key here, in all twelve of the launcher's
+languages. Two things about it are easy to get wrong from memory:
+
+- **The unlocalized `Comment` is the English one, not a missing translation.**
+  It is the specification's default value, and it is what a session whose
+  `LC_MESSAGES` matches none of the postfixes falls back to — so
+  `Comment[en_US]` would be redundant, and adding it changes nothing for an
+  `en_US` session, which already reads `Comment`.
+- **The postfix is not the catalogue's directory name.** The specification
+  matches a locale in this order: an `LC_MESSAGES` of `lang_COUNTRY` tries
+  `lang_COUNTRY`, then `lang`, then the default; an `LC_MESSAGES` of plain
+  `lang` tries `lang` and then the default. So `Comment[de_DE]` is found *only*
+  by a session whose `LC_MESSAGES` is literally `de_DE` — `de`, `de_AT` and
+  `de_CH` would each fall through to the English default. Every language the
+  launcher ships one catalogue for therefore carries a bare language code, and
+  only `pt_BR`, `zh_CN` and `zh_TW` — whose text genuinely differs by country —
+  carry the region.
+
+The strings are the tagline from `README.md`, whose twelve translations already
+exist under `docs/readme/README.<locale>.md` (the line under the badges), so a
+new language is a line in both places rather than a new translation. Nothing in
+the build fails when a catalogue is added and its `Comment` is not: keeping this
+file in step with `app/i18n/` is a reviewer's job.
+
 Validate changes with `desktop-file-validate` (the `desktop-file-utils`
 package); `packaging/arch/PKGBUILD` runs it in its `check()` and CI runs it too.

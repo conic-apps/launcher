@@ -40,7 +40,7 @@
             `Manufacturer` property, this fills the summary stream's `Author` row,
             and Explorer's properties for the `.msi` file itself read the latter.
         -->
-        <SummaryInformation Description="A modern Minecraft launcher"
+        <SummaryInformation Description="A small, fast, and nimble Minecraft launcher"
                             Manufacturer="ConicMC developers" />
 
         <!--
@@ -183,7 +183,7 @@
             <Component Id="StartMenuShortcut" Guid="8311FA6E-AF90-46C2-B89D-4CE3EDFF81A6">
                 <Shortcut Id="ConicLauncherShortcut"
                           Name="Conic Launcher"
-                          Description="A modern Minecraft launcher"
+                          Description="A small, fast, and nimble Minecraft launcher"
                           Target="[INSTALLFOLDER]conic-launcher.exe"
                           WorkingDirectory="INSTALLFOLDER"
                           Icon="ConicLauncherIcon" />
