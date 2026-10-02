@@ -28,11 +28,6 @@ proposed changes in your own words. This includes the pull request body and
 responses to questions. **Do not copy responses from the AI when replying to
 questions from maintainers.**
 
-Due to the foundational nature of our projects, we require a human in the loop
-who understands the work produced by AI. **We do not allow autonomous agents to
-be used for contributing to our projects**. We will close any pull requests
-that we believe were created autonomously.
-
 If you wish to include context from an interaction with AI in your comments, it
 must be in a quote block (e.g., using `>`) and disclosed as such. It must be
 accompanied by human commentary explaining the relevance and implications of the
@@ -49,3 +44,7 @@ localized READMEs under `docs/readme/`. Machine translation is welcome there,
 and machine-generated comments are not: a locale's users are being asked to
 trust text nobody wrote, and a mistranslated string is indistinguishable from a
 broken feature.
+
+This policy was inspired by [uv's AI policy].
+
+[uv's AI policy]: https://github.com/astral-sh/.github/blob/c5187e200db51bfe11d56e13053d29bd3793fdd8/AI_POLICY.md
