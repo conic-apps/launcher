@@ -70,11 +70,20 @@ java-discovery.workspace = true
 statistics.workspace = true
 single-instance.workspace = true
 multiplayer.workspace = true
-# The Markdown/HTML body of a content detail panel. `app/src/content/` drives it:
-# the body is parsed and laid out in Rust and the resulting display list is pushed
-# into the `ContentState` model the panel draws (see
+# The Markdown/HTML body of a content detail panel. `app/src/markdown/` parses
+# and lays the body out in Rust and the resulting display list is pushed into the
+# `ContentState` model the panel draws (see
 # `app/ui/overlays/content/markdown-body.slint`).
-markdown.workspace = true
+# `comrak` parses it; its `default-features = false` is set in the workspace
+# entry, which drops `cli` (clap, xdg) and `syntect`, the latter of which would
+# pull an oniguruma C library into the GUI app. `parley`/`fontique` are the text
+# engine Slint itself renders with, and the *same* crate instances are a
+# requirement rather than an optimisation: the engine is handed Slint's own font
+# collection and two `fontique` versions would be two unrelated `Collection`
+# types.
+comrak.workspace = true
+parley.workspace = true
+fontique.workspace = true
 music.workspace = true
 
 glow.workspace = true

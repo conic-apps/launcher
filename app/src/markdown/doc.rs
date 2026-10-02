@@ -11,6 +11,10 @@
 /// A block-level node. The variants cover everything GitHub's renderer draws
 /// inside a `.markdown-body`.
 #[derive(Debug, Clone, PartialEq)]
+// `CodeBlock` reads clearer than `Code` beside the inline `Code`, and the lint
+// that dislikes it was only suppressed while the type was a library's exported
+// API. Keep the name.
+#[allow(clippy::enum_variant_names)]
 pub enum Block {
     /// `# …` through `###### …`, or a setext heading. `level` is 0-based, so
     /// `h1` is `0`.

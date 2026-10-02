@@ -12,12 +12,10 @@
 // only what is pure UI (the search box, the selected save).
 
 // The types a laid-out body is made of. They belong to the Markdown renderer
-// (`crates/markdown`), which ships its `.slint` files as data for the app to
-// compile — a Slint struct's Rust type belongs to the compilation that produced
-// it, so the crate cannot compile them itself and hand them over. See `build.rs`
-// for the include path and `ui/overlays/content/markdown-body.slint` for the
-// component that draws them.
-import { MdItem, MarkdownImage, MdChunk } from "../../../crates/markdown/ui/markdown-view.slint";
+// (`src/markdown/`), whose `.slint` files live under `ui/components/markdown/`.
+// See `ui/overlays/content/markdown-body.slint` for the component that draws
+// them.
+import { MdItem, MarkdownImage, MdChunk } from "../components/markdown/markdown-view.slint";
 
 /// One tag on a card. Its `kind` picks the surface colour.
 export struct CardTag {

@@ -24,7 +24,7 @@ type Node<'a> = AstNode<'a, RefCell<Ast>>;
 use comrak::nodes::{Ast, NodeValue, TableAlignment};
 use comrak::{Arena, ComrakOptions, parse_document};
 
-use crate::doc::{Align, Block, Cell, Inline, Inlines, ListItem};
+use crate::markdown::doc::{Align, Block, Cell, Inline, Inlines, ListItem};
 
 /// The extensions the renderer understands.
 ///

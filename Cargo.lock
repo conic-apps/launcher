@@ -1070,12 +1070,14 @@ dependencies = [
  "block2 0.5.1",
  "bytemuck",
  "chrono",
+ "comrak",
  "config",
  "content",
  "curseforge",
  "download",
  "env_logger",
  "euclid",
+ "fontique",
  "glow",
  "i-slint-backend-testing",
  "i-slint-backend-winit",
@@ -1085,13 +1087,13 @@ dependencies = [
  "java-discovery",
  "launch",
  "log",
- "markdown",
  "modrinth",
  "multiplayer",
  "music",
  "objc2 0.5.2",
  "objc2-foundation 0.2.2",
  "once_cell",
+ "parley",
  "platform",
  "serde",
  "serde_json",
@@ -3704,17 +3706,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d640282b302c0bb0a2a8e0233ead9035e3bed871f0b7e81fe4a1ec829765db44"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "markdown"
-version = "0.0.0"
-dependencies = [
- "comrak",
- "fontique",
- "log",
- "parley",
- "slint",
 ]
 
 [[package]]

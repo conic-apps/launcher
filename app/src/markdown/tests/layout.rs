@@ -10,7 +10,7 @@
 //! nothing overlaps) or about a count (three lines, two rows), both of which hold
 //! whichever font the machine has.
 
-use markdown::{ColorRole, ItemKind, MdItem, MdStyle, Measurer, Renderer, SourceFormat};
+use crate::markdown::{ColorRole, ItemKind, MdItem, MdStyle, Measurer, Renderer, SourceFormat};
 
 const WIDTH: f32 = 600.0;
 
@@ -21,9 +21,9 @@ fn render(source: &str) -> Vec<MdItem> {
 
 fn render_with(source: &str, style: MdStyle) -> Vec<MdItem> {
     let mut measurer = Measurer::new();
-    let blocks = markdown::parse::parse(source);
-    let images = markdown::ImageStore::default();
-    markdown::layout::layout(&blocks, &style, WIDTH, &images, &mut measurer).items
+    let blocks = crate::markdown::parse::parse(source);
+    let images = crate::markdown::ImageStore::default();
+    crate::markdown::layout::layout(&blocks, &style, WIDTH, &images, &mut measurer).items
 }
 
 fn texts(items: &[MdItem]) -> Vec<&str> {
@@ -84,12 +84,17 @@ fn a_narrower_box_wraps_earlier() {
     let paragraph = "The quick brown fox jumps over the lazy dog. ".repeat(12);
     let wide = render(&paragraph).len();
     let mut measurer = Measurer::new();
-    let blocks = markdown::parse::parse(&paragraph);
-    let images = markdown::ImageStore::default();
-    let narrow =
-        markdown::layout::layout(&blocks, &MdStyle::default(), 200.0, &images, &mut measurer)
-            .items
-            .len();
+    let blocks = crate::markdown::parse::parse(&paragraph);
+    let images = crate::markdown::ImageStore::default();
+    let narrow = crate::markdown::layout::layout(
+        &blocks,
+        &MdStyle::default(),
+        200.0,
+        &images,
+        &mut measurer,
+    )
+    .items
+    .len();
     assert!(
         narrow > wide,
         "narrower should not use fewer items: {narrow} vs {wide}"
@@ -609,10 +614,11 @@ fn a_table_cells_hold_their_text_inside_them() {
                 ..MdStyle::default()
             };
             let mut measurer = Measurer::new();
-            let blocks = markdown::parse::parse(source);
-            let images = markdown::ImageStore::default();
+            let blocks = crate::markdown::parse::parse(source);
+            let images = crate::markdown::ImageStore::default();
             let items =
-                markdown::layout::layout(&blocks, &style, width, &images, &mut measurer).items;
+                crate::markdown::layout::layout(&blocks, &style, width, &images, &mut measurer)
+                    .items;
             let cells: Vec<&MdItem> = rects(&items)
                 .iter()
                 .copied()
@@ -709,10 +715,11 @@ fn a_squeezed_table_never_narrows_a_column_past_its_longest_word() {
         | a cell with a great deal of text in it | done | and more of it |\n";
     let style = MdStyle::default();
     let mut measurer = Measurer::new();
-    let blocks = markdown::parse::parse(source);
-    let images = markdown::ImageStore::default();
+    let blocks = crate::markdown::parse::parse(source);
+    let images = crate::markdown::ImageStore::default();
     // A box narrow enough that the table has to be squeezed.
-    let items = markdown::layout::layout(&blocks, &style, 240.0, &images, &mut measurer).items;
+    let items =
+        crate::markdown::layout::layout(&blocks, &style, 240.0, &images, &mut measurer).items;
     // Every word in the head is on one line: a text item is a run, and a broken
     // word is two of them.
     for word in ["Feature", "State", "Notes"] {
@@ -768,12 +775,12 @@ fn a_link_rule_sits_below_the_text_and_above_the_box_top() {
 // ---------------------------------------------------------------------------
 
 /// An image store holding one bitmap of the given size, at `url`.
-fn store_with(url: &str, width: u32, height: u32) -> markdown::ImageStore {
-    let mut store = markdown::ImageStore::default();
+fn store_with(url: &str, width: u32, height: u32) -> crate::markdown::ImageStore {
+    let mut store = crate::markdown::ImageStore::default();
     let buffer = slint::SharedPixelBuffer::<slint::Rgba8Pixel>::new(width, height);
     store.insert(
         url,
-        markdown::ImageAsset {
+        crate::markdown::ImageAsset {
             image: slint::Image::from_rgba8(buffer),
             size: (width, height),
         },
@@ -781,11 +788,11 @@ fn store_with(url: &str, width: u32, height: u32) -> markdown::ImageStore {
     store
 }
 
-fn render_with_images(source: &str, images: &markdown::ImageStore) -> Vec<MdItem> {
+fn render_with_images(source: &str, images: &crate::markdown::ImageStore) -> Vec<MdItem> {
     let style = MdStyle::default();
     let mut measurer = Measurer::new();
-    let blocks = markdown::parse::parse(source);
-    markdown::layout::layout(&blocks, &style, WIDTH, images, &mut measurer).items
+    let blocks = crate::markdown::parse::parse(source);
+    crate::markdown::layout::layout(&blocks, &style, WIDTH, images, &mut measurer).items
 }
 
 #[test]
@@ -861,13 +868,13 @@ fn a_row_of_badges_wraps_like_a_row_of_words() {
     // The reason a line may start and end either side of an image: a badge row is
     // the single most common image in a Modrinth README, and a row that cannot
     // wrap runs off the edge of the panel.
-    let mut store = markdown::ImageStore::default();
+    let mut store = crate::markdown::ImageStore::default();
     let source = (0..8)
         .map(|index| {
             let url = format!("https://example.com/badge{index}.png");
             store.insert(
                 &url,
-                markdown::ImageAsset {
+                crate::markdown::ImageAsset {
                     image: slint::Image::from_rgba8(
                         slint::SharedPixelBuffer::<slint::Rgba8Pixel>::new(120, 40),
                     ),
@@ -901,26 +908,26 @@ fn an_image_has_the_same_below_it_as_a_paragraph_does() {
     // without a margin of its own the next line starts against the picture.
     let style = MdStyle::default();
     let mut measurer = Measurer::new();
-    let blocks = markdown::parse::parse("![a](https://example.com/i.png)\n\nafter\n");
+    let blocks = crate::markdown::parse::parse("![a](https://example.com/i.png)\n\nafter\n");
     let tight = {
         let mut style = style.clone();
         style.image_margin_bottom = 0.0;
-        markdown::layout::layout(
+        crate::markdown::layout::layout(
             &blocks,
             &style,
             WIDTH,
-            &markdown::ImageStore::default(),
+            &crate::markdown::ImageStore::default(),
             &mut measurer,
         )
         .height
     };
     let loose = {
         let mut measurer = Measurer::new();
-        markdown::layout::layout(
+        crate::markdown::layout::layout(
             &blocks,
             &style,
             WIDTH,
-            &markdown::ImageStore::default(),
+            &crate::markdown::ImageStore::default(),
             &mut measurer,
         )
         .height
@@ -938,11 +945,11 @@ fn an_image_has_the_same_below_it_as_a_paragraph_does() {
 // ---------------------------------------------------------------------------
 
 /// A renderer over a document, keeping the sections as well as the items.
-fn display(source: &str) -> markdown::DisplayList {
+fn display(source: &str) -> crate::markdown::DisplayList {
     let mut measurer = Measurer::new();
-    let blocks = markdown::parse::parse(source);
-    let images = markdown::ImageStore::default();
-    markdown::layout::layout(&blocks, &MdStyle::default(), WIDTH, &images, &mut measurer)
+    let blocks = crate::markdown::parse::parse(source);
+    let images = crate::markdown::ImageStore::default();
+    crate::markdown::layout::layout(&blocks, &MdStyle::default(), WIDTH, &images, &mut measurer)
 }
 
 /// The `<details>` sections of a laid-out document, in document order.
@@ -950,7 +957,7 @@ fn display(source: &str) -> markdown::DisplayList {
 /// A section is reached through the run that holds it, because the run is what a
 /// view stacks and what actually moves; this is the same list with the runs taken
 /// out, for the tests that are about the section rather than about the flow.
-fn sections(list: &markdown::DisplayList) -> Vec<&markdown::model::MdSection> {
+fn sections(list: &crate::markdown::DisplayList) -> Vec<&crate::markdown::model::MdSection> {
     list.chunks
         .iter()
         .filter_map(|chunk| chunk.section.as_ref())
@@ -958,7 +965,7 @@ fn sections(list: &markdown::DisplayList) -> Vec<&markdown::model::MdSection> {
 }
 
 /// The runs, in order, as `(top, height, is_section, first_item, item_count)`.
-fn runs(list: &markdown::DisplayList) -> Vec<(f32, f32, bool, usize, usize)> {
+fn runs(list: &crate::markdown::DisplayList) -> Vec<(f32, f32, bool, usize, usize)> {
     list.chunks
         .iter()
         .map(|chunk| {

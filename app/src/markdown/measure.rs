@@ -142,7 +142,7 @@ impl Measurer {
     /// does — must use [`Self::with_collection`] instead, or every advance will
     /// be the wrong width and every line will break in the wrong place.
     pub fn new() -> Self {
-        Self::with_collection(crate::fonts::system())
+        Self::with_collection(crate::markdown::fonts::system())
     }
 
     /// Creates a measurer over the caller's own font collection.

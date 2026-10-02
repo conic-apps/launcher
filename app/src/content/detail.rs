@@ -182,7 +182,7 @@ pub(crate) async fn load_modrinth_detail(id: &str) -> Result<LoadedDetail, Strin
             .is_some_and(|value| !value.is_null()),
         description: crate::json::string(&project, "description"),
         // The README, as the project ships it. The body is parsed and laid out
-        // by the `markdown` crate and drawn by `markdown-body.slint`, so the
+        // by the `markdown` module and drawn by `markdown-body.slint`, so the
         // markup reaches the panel intact.
         body: crate::json::string(&project, "body"),
         body_is_html: false,

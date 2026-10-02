@@ -1,7 +1,8 @@
 # markdown
 
-A Markdown and HTML renderer for Slint, as a layout engine. `comrak` parses,
-`parley` measures, and the caller paints.
+The app's Markdown and HTML renderer, as a layout engine: `comrak` parses,
+`parley` measures, and the caller paints. It lives at `app/src/markdown/`, with
+its companion views at `app/ui/components/markdown/`.
 
 The split is not a preference. Slint 1.18's `Text` has no strikethrough, no
 underline control and no text background, and its `line-height-factor` multiplies
@@ -10,19 +11,19 @@ the font's *natural* line height rather than the font size, so it is not the
 underlines every link whether or not the pointer is over it; and `@markdown` is a
 compile-time literal the parser reads out of the source, so it cannot take a
 document that arrives at runtime. None of what a `.markdown-body` stylesheet asks
-for is expressible in Slint's own text elements. So this crate positions every
+for is expressible in Slint's own text elements. So this module positions every
 run itself and hands the view a flat list of boxes — which is also what makes the
 geometry testable without a window.
 
 ## Using it
 
-The caller compiles `ui/*.slint`. A Slint struct's Rust type belongs to the
-compilation that produced it, so a crate that compiled the component and an app
-that imported the same file would hold two unrelated types with no way to move an
-item between them.
+`app/build.rs` compiles the `.slint` tree that imports
+`ui/components/markdown/markdown-view.slint`. A Slint struct's Rust type belongs
+to the compilation that produced it, which is why the view is compiled here once
+rather than by a separate library the app then imported.
 
 ```slint
-import { MarkdownView, MdChunk } from "path/to/markdown/ui/markdown-view.slint";
+import { MarkdownView, MdChunk } from "ui/components/markdown/markdown-view.slint";
 
 MarkdownView {
     chunks: <[MdChunk]>;            // the runs, in document order
@@ -74,7 +75,7 @@ closing run's own content against what it is still showing.
 
 **A run's items carry `y` relative to the run**, not to the document. That is the
 caller's copy, not the engine's: the document's coordinates stay absolute there,
-and everything else in the crate is written against them.
+and everything else in the module is written against them.
 
 `MdStyle::details_gap` is 8px, not the 1px `SettingCollapse` puts between its rows.
 That is a seam *inside* one group, where the rows below carry on; a `<summary>` is
@@ -95,10 +96,10 @@ of the first hidden line would sit inside it.
 The view draws a row per section: `palette.details-head` and its hover and active
 states, and a chevron. The chevron is **the caller's**, handed over as `marker-icon`
 — path data, a view box and a stroke width, which is what the launcher's `Icons`
-holds and what `AppIcon` draws — because the crate has no icon set and a glyph from
-the body family would be a box on `Comfortaa`, which has none of the triangles a
-disclosure wants. An empty `marker-icon` draws a built-in path instead, which is
-what keeps the crate usable with nothing but a palette.
+holds and what `AppIcon` draws — because this module has no icon set and a glyph
+from the body family would be a box on `Comfortaa`, which has none of the triangles
+a disclosure wants. An empty `marker-icon` draws a built-in path instead, which is
+what keeps it usable with nothing but a palette.
 
 The icon is `chevron-forward` and turns a **quarter** turn when the section opens.
 A quarter turn is only honest because the icon set's `chevron-forward` and
@@ -182,15 +183,15 @@ importing it, keep both lines.
 ## Tests
 
 ```
-cargo test -p markdown
+cargo test --bin conic-launcher markdown
 ```
 
-`tests/layout.rs` asserts on geometry without a window: that every item sits
+`src/markdown/tests/layout.rs` asserts on geometry without a window: that every item sits
 inside the width it was given, that a wrapped link gets a hit box per line
 sharing one id, that a link's colour reaches the glyphs but its box is never a
 fill, that a table's text stays inside the cell that holds it at every size and
 width, and that a task list's tick is visible against its own box.
-`tests/parse.rs` covers both parsers, including the HTML one on the awkward input
+`src/markdown/tests/parse.rs` covers both parsers, including the HTML one on the awkward input
 real descriptions contain.
 
 `MdStyle`'s defaults are GitHub's `.markdown-body` at a 14px body — except the
