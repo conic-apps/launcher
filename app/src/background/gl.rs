@@ -970,8 +970,8 @@ impl Renderer {
         true
     }
 
-    /// Writes the frame this renderer just drew to `CONIC_GL_DUMP`, for
-    /// comparing the GPU's world with `dump_background`'s.
+    /// Writes the frame this renderer just drew to `CONIC_GL_DUMP`, so the
+    /// GPU's world can be inspected as a PNG without a window.
     ///
     /// The frame is read back from the framebuffer rather than grabbed off the
     /// window, so what is compared is the world on its own — no layer opacity,
