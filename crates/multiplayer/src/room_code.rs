@@ -51,3 +51,45 @@ pub fn is_room_code_valid(input: &str) -> bool {
     }
     value.is_multiple_of(7)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn an_all_zero_code_is_valid() {
+        assert!(is_room_code_valid("U/0000-0000-0000-0000"));
+    }
+
+    #[test]
+    fn a_code_whose_digits_are_a_multiple_of_seven_is_valid() {
+        // The little-endian digit value is 7, so the checksum passes.
+        assert!(is_room_code_valid("U/7000-0000-0000-0000"));
+    }
+
+    #[test]
+    fn a_code_whose_checksum_is_wrong_is_rejected() {
+        // 1 * 34^0 at the first position, and 1 * 34^3 at the fourth.
+        assert!(!is_room_code_valid("U/1000-0000-0000-0000"));
+        assert!(!is_room_code_valid("U/0001-0000-0000-0000"));
+    }
+
+    #[test]
+    fn the_shape_is_a_u_slash_and_three_separators() {
+        assert!(!is_room_code_valid(""));
+        assert!(!is_room_code_valid("U/0000-0000-0000-000")); // one short
+        assert!(!is_room_code_valid("U/00000-000-0000-0000")); // separators moved
+        assert!(!is_room_code_valid("X/0000-0000-0000-0000")); // wrong prefix
+        assert!(!is_room_code_valid("U0000-0000-0000-0000")); // missing slash
+    }
+
+    #[test]
+    fn the_alphabet_accepts_the_letters_it_should_and_skips_i_and_o() {
+        // 'E' has digit value 14, and 14 * 34^15 is a multiple of 7, so this
+        // letter at the last position is a valid checksum.
+        assert!(is_room_code_valid("U/0000-0000-0000-000E"));
+        assert!(!is_room_code_valid("U/000I-0000-0000-0000"));
+        assert!(!is_room_code_valid("U/000O-0000-0000-0000"));
+        assert!(!is_room_code_valid("U/0000-0000-0000-000*"));
+    }
+}

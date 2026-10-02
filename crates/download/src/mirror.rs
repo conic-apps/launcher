@@ -66,3 +66,53 @@ impl MirrorUsage {
         Some(Mirror(k.clone(), v.clone()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn usage(libraries: &[&str], assets: &[&str]) -> MirrorUsage {
+        MirrorUsage::new(&MirrorConfig {
+            libraries: libraries.iter().map(|x| x.to_string()).collect(),
+            assets: assets.iter().map(|x| x.to_string()).collect(),
+        })
+    }
+
+    #[test]
+    fn no_mirror_configured_selects_nothing() {
+        let usage = usage(&[], &[]);
+        assert!(usage.get_libraries_mirror(&[]).is_none());
+        assert!(usage.get_assets_mirror(&[]).is_none());
+    }
+
+    #[test]
+    fn the_only_mirror_is_selected() {
+        let usage = usage(&["a"], &["b"]);
+        assert_eq!(usage.get_libraries_mirror(&[]).unwrap().0, "a");
+        assert_eq!(usage.get_assets_mirror(&[]).unwrap().0, "b");
+    }
+
+    #[test]
+    fn the_mirror_with_the_fewest_connections_is_selected() {
+        let usage = usage(&["busy", "idle"], &[]);
+        usage.libraries["busy"].store(3, Ordering::SeqCst);
+        let selected = usage.get_libraries_mirror(&[]).expect("one is free");
+        assert_eq!(selected.0, "idle");
+    }
+
+    #[test]
+    fn a_disabled_mirror_is_skipped() {
+        let usage = usage(&["a", "b"], &[]);
+        assert_eq!(
+            usage.get_libraries_mirror(&["b".to_string()]).unwrap().0,
+            "a"
+        );
+    }
+
+    #[test]
+    fn disabling_every_mirror_selects_nothing() {
+        let usage = usage(&["a", "b"], &[]);
+        let disabled = ["a".to_string(), "b".to_string()];
+        assert!(usage.get_libraries_mirror(&disabled).is_none());
+    }
+}

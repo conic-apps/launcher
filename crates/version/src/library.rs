@@ -184,3 +184,107 @@ pub enum Library {
     PlatformSpecific(PlatformSpecificLibrary),
     Legacy(LegacyLibrary),
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn common(info: &ResolvedLibrary) -> &LibraryDownloadInfo {
+        match info {
+            ResolvedLibrary::Common(info) => info,
+            ResolvedLibrary::Native(_) => panic!("expected a common library"),
+        }
+    }
+
+    #[test]
+    fn a_mod_loader_url_is_the_maven_root() {
+        let library = json!({
+            "name": "net.fabricmc:tiny-mappings-parser:0.3.0+build.17",
+            "url": "https://maven.fabricmc.net/",
+        });
+        let resolved = resolve_modloader_libraries(&library).expect("should resolve");
+        let info = common(&resolved);
+        assert_eq!(
+            info.url,
+            "https://maven.fabricmc.net/net/fabricmc/tiny-mappings-parser/0.3.0+build.17/tiny-mappings-parser-0.3.0+build.17.jar"
+        );
+        assert_eq!(
+            info.path,
+            "net/fabricmc/tiny-mappings-parser/0.3.0+build.17/tiny-mappings-parser-0.3.0+build.17.jar"
+        );
+    }
+
+    #[test]
+    fn a_mod_loader_without_a_url_uses_the_mojang_root() {
+        let library = json!({ "name": "example:demo:1.0" });
+        let resolved = resolve_modloader_libraries(&library).expect("should resolve");
+        assert_eq!(
+            common(&resolved).url,
+            "https://libraries.minecraft.net/example/demo/1.0/demo-1.0.jar"
+        );
+    }
+
+    #[test]
+    fn a_malformed_coordinate_is_rejected() {
+        assert!(resolve_modloader_libraries(&json!({ "name": "example:demo" })).is_err());
+        assert!(resolve_modloader_libraries(&json!({})).is_err());
+    }
+
+    #[test]
+    fn a_common_library_uses_its_artifact_download() {
+        let library = json!({
+            "downloads": {
+                "artifact": {
+                    "sha1": "abc",
+                    "size": 12,
+                    "url": "https://example.com/demo.jar",
+                    "path": "example/demo/1.0/demo-1.0.jar",
+                }
+            }
+        });
+        let resolved = resolve_common_libraries(&library)
+            .expect("should not error")
+            .expect("should resolve");
+        let info = common(&resolved);
+        assert_eq!(info.url, "https://example.com/demo.jar");
+        assert_eq!(info.path, "example/demo/1.0/demo-1.0.jar");
+        assert_eq!(info.sha1.as_deref(), Some("abc"));
+    }
+
+    #[test]
+    fn a_library_without_an_artifact_is_not_common() {
+        assert!(resolve_common_libraries(&json!({ "downloads": {} })).is_ok());
+        assert!(
+            resolve_common_libraries(&json!({ "downloads": {} }))
+                .unwrap()
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn a_library_the_rules_disallow_is_dropped() {
+        let libraries = vec![json!({
+            "name": "example:demo:1.0",
+            "rules": [{ "action": "disallow" }],
+        })];
+        assert!(resolve_libraries(libraries).unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_library_the_client_does_not_need_is_dropped() {
+        let libraries = vec![json!({
+            "name": "example:demo:1.0",
+            "clientreq": false,
+        })];
+        assert!(resolve_libraries(libraries).unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_legacy_library_without_downloads_still_resolves() {
+        let libraries = vec![json!({ "name": "example:demo:1.0" })];
+        let resolved = resolve_libraries(libraries).unwrap();
+        assert_eq!(resolved.len(), 1);
+        assert_eq!(common(&resolved[0]).path, "example/demo/1.0/demo-1.0.jar");
+    }
+}

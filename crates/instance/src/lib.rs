@@ -554,3 +554,166 @@ fn get_launch_script_timestamp(instance_id: &str) -> Option<u64> {
     }
     None
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn order(a: &str, b: &str) -> Ordering {
+        compare_minecraft_versions(a, b)
+    }
+
+    #[test]
+    fn releases_are_ordered_by_major_minor_patch() {
+        assert_eq!(order("1.20.1", "1.20.2"), Ordering::Less);
+        assert_eq!(order("1.20.10", "1.21"), Ordering::Less);
+        assert_eq!(order("1.7.10", "1.8"), Ordering::Less);
+        assert_eq!(order("1.20.1", "1.20.1"), Ordering::Equal);
+    }
+
+    #[test]
+    fn a_prerelease_sorts_before_its_release() {
+        assert_eq!(order("1.20.1-pre1", "1.20.1"), Ordering::Less);
+        // rc is newer than pre.
+        assert_eq!(order("1.20.1-pre2", "1.20.1-rc1"), Ordering::Less);
+        assert_eq!(order("1.20.1-rc1", "1.20.1"), Ordering::Less);
+    }
+
+    #[test]
+    fn snapshots_are_ordered_by_year_week_and_letter() {
+        assert_eq!(order("24w14a", "24w15a"), Ordering::Less);
+        assert_eq!(order("24w14a", "24w14b"), Ordering::Less);
+        assert_eq!(order("25w01a", "24w50a"), Ordering::Greater);
+    }
+
+    #[test]
+    fn a_snapshot_sits_between_the_releases_around_it() {
+        // 24w14a shipped in early 2024, after 1.20 (2023) and before 1.21.
+        assert_eq!(order("24w14a", "1.20"), Ordering::Greater);
+        assert_eq!(order("24w14a", "1.21"), Ordering::Less);
+    }
+
+    #[test]
+    fn an_unparseable_version_sorts_before_a_known_one() {
+        assert_eq!(order("not-a-version", "1.20.1"), Ordering::Less);
+        assert_eq!(order("1.20.1", "not-a-version"), Ordering::Greater);
+        assert_eq!(order("alpha", "beta"), Ordering::Less);
+    }
+
+    #[test]
+    fn the_version_parsers_split_the_expected_pieces() {
+        assert_eq!(
+            parse_snapshot("24w14a"),
+            Some(VersionKey::Snapshot {
+                year: 24,
+                week: 14,
+                letter: "a".to_string()
+            })
+        );
+        assert_eq!(
+            parse_release("1.21.4"),
+            Some(VersionKey::Releaseish {
+                major: 1,
+                minor: 21,
+                patch: 4,
+                prerelease: None
+            })
+        );
+        assert_eq!(
+            parse_release("1.21-rc2"),
+            Some(VersionKey::Releaseish {
+                major: 1,
+                minor: 21,
+                patch: 0,
+                prerelease: Some((1, 2))
+            })
+        );
+        assert_eq!(parse_prerelease("pre3"), Some((0, 3)));
+        assert_eq!(parse_prerelease("rc10"), Some((1, 10)));
+        assert_eq!(parse_prerelease("beta1"), None);
+    }
+
+    #[test]
+    fn a_log_timestamp_is_seconds_since_midnight() {
+        assert_eq!(
+            parse_log_time("[12:34:56] [Client thread/INFO]"),
+            Some(45296)
+        );
+        assert_eq!(parse_log_time("[00:00:00]"), Some(0));
+        assert_eq!(parse_log_time("[23:59:59]"), Some(86399));
+    }
+
+    #[test]
+    fn something_that_is_not_a_log_timestamp_is_ignored() {
+        assert_eq!(parse_log_time("12:34:56 no brackets"), None);
+        assert_eq!(parse_log_time("[24:00:00] hour out of range"), None);
+        assert_eq!(parse_log_time("[12:60:00] minute out of range"), None);
+        assert_eq!(parse_log_time("[ab:cd:ef]"), None);
+        assert_eq!(parse_log_time(""), None);
+    }
+
+    #[test]
+    fn the_version_id_carries_the_loader_prefix() {
+        let instance = |loader, version: Option<&str>| {
+            let mut config = InstanceConfig::new("Test", "1.20.1");
+            config.runtime.mod_loader_type = loader;
+            config.runtime.mod_loader_version = version.map(ToString::to_string);
+            Instance {
+                config,
+                ..Default::default()
+            }
+        };
+
+        assert_eq!(
+            instance(Some(ModLoaderType::Fabric), Some("0.15.0"))
+                .get_version_id()
+                .unwrap(),
+            "fabric-loader-0.15.0-1.20.1"
+        );
+        assert_eq!(
+            instance(Some(ModLoaderType::Quilt), Some("0.20.0"))
+                .get_version_id()
+                .unwrap(),
+            "quilt-loader-0.20.0-1.20.1"
+        );
+        assert_eq!(
+            instance(Some(ModLoaderType::Forge), Some("47.2.0"))
+                .get_version_id()
+                .unwrap(),
+            "1.20.1-forge-47.2.0"
+        );
+        assert_eq!(
+            instance(Some(ModLoaderType::Neoforge), Some("21.1.0"))
+                .get_version_id()
+                .unwrap(),
+            "neoforge-21.1.0"
+        );
+        assert_eq!(instance(None, None).get_version_id().unwrap(), "1.20.1");
+    }
+
+    #[test]
+    fn a_loader_without_a_version_is_an_error() {
+        let mut config = InstanceConfig::new("Test", "1.20.1");
+        config.runtime.mod_loader_type = Some(ModLoaderType::Fabric);
+        let instance = Instance {
+            config,
+            ..Default::default()
+        };
+        assert!(instance.get_version_id().is_err());
+    }
+
+    #[test]
+    fn starred_is_a_membership_test_on_the_groups() {
+        let with_groups = |groups: Option<Vec<String>>| {
+            let mut config = InstanceConfig::new("Test", "1.20.1");
+            config.group = groups;
+            Instance {
+                config,
+                ..Default::default()
+            }
+        };
+        assert!(with_groups(Some(vec!["starred".to_string()])).is_starred());
+        assert!(!with_groups(Some(vec!["favourites".to_string()])).is_starred());
+        assert!(!with_groups(None).is_starred());
+    }
+}

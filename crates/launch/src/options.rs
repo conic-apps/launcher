@@ -248,3 +248,57 @@ fn auto_allocate_memory(
     let xmn_memory = (ram_give * 1024.0 * 0.15).floor() as usize;
     (max_memory, xmn_memory)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const GIB: u64 = 1024 * 1024 * 1024;
+
+    #[test]
+    fn only_x86_and_arm_java_count_as_32_bit() {
+        assert!(is_32_bit_java(JavaArch::X86));
+        assert!(is_32_bit_java(JavaArch::Arm));
+        assert!(!is_32_bit_java(JavaArch::X64));
+        assert!(!is_32_bit_java(JavaArch::Aarch64));
+        assert!(!is_32_bit_java(JavaArch::Unknown));
+    }
+
+    #[test]
+    fn there_is_always_a_minimum_heap() {
+        // Nothing available still leaves the 0.5 GiB floor.
+        let (max_memory, xmn_memory) = auto_allocate_memory(0, false, 0, false);
+        assert_eq!(max_memory, 512);
+        assert_eq!(xmn_memory, 76);
+    }
+
+    #[test]
+    fn a_32_bit_runtime_is_capped_at_one_gib() {
+        let (max_memory, _) = auto_allocate_memory(64 * GIB, false, 0, true);
+        assert_eq!(max_memory, 1024);
+    }
+
+    #[test]
+    fn more_available_memory_never_allocates_less() {
+        let two = auto_allocate_memory(2 * GIB, false, 0, false).0;
+        let four = auto_allocate_memory(4 * GIB, false, 0, false).0;
+        let eight = auto_allocate_memory(8 * GIB, false, 0, false).0;
+        assert!(two <= four);
+        assert!(four <= eight);
+        // ...and a 64 GiB machine reaches the 8 GiB ceiling.
+        assert_eq!(auto_allocate_memory(64 * GIB, false, 0, false).0, 8192);
+    }
+
+    #[test]
+    fn the_young_generation_is_a_fraction_of_the_heap() {
+        let (max_memory, xmn_memory) = auto_allocate_memory(64 * GIB, false, 0, false);
+        assert_eq!(xmn_memory, (max_memory as f64 * 0.15).floor() as usize);
+    }
+
+    #[test]
+    fn a_mod_loader_and_its_mods_raise_the_allocation() {
+        let vanilla = auto_allocate_memory(4 * GIB, false, 0, false).0;
+        let modded = auto_allocate_memory(4 * GIB, true, 100, false).0;
+        assert!(modded > vanilla);
+    }
+}

@@ -144,3 +144,31 @@ fn parse_arch(arch_str: Option<&str>) -> OsArch {
         _ => OsArch::Unknown,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_known_architecture_names_map_to_their_variant() {
+        assert_eq!(parse_arch(Some("x86_64")), OsArch::X64);
+        assert_eq!(parse_arch(Some("amd64")), OsArch::X64);
+        assert_eq!(parse_arch(Some("i386")), OsArch::X86);
+        assert_eq!(parse_arch(Some("aarch64")), OsArch::Aarch64);
+        assert_eq!(parse_arch(Some("arm64")), OsArch::Aarch64);
+        assert_eq!(parse_arch(Some("armv7l")), OsArch::Arm);
+    }
+
+    #[test]
+    fn an_unknown_or_missing_name_is_unknown() {
+        assert_eq!(parse_arch(Some("riscv64")), OsArch::Unknown);
+        assert_eq!(parse_arch(None), OsArch::Unknown);
+    }
+
+    #[test]
+    fn the_os_family_display_matches_the_version_json_vocabulary() {
+        assert_eq!(OsFamily::Windows.to_string(), "windows");
+        assert_eq!(OsFamily::Linux.to_string(), "linux");
+        assert_eq!(OsFamily::Macos.to_string(), "macos");
+    }
+}

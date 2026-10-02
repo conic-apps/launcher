@@ -88,3 +88,48 @@ impl UrlExt for Url {
         Ok(self)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn append(base: &str, segments: &[&str]) -> String {
+        Url::parse(base)
+            .expect("valid base")
+            .append_path(segments.iter().copied())
+            .expect("can be a base")
+            .to_string()
+    }
+
+    #[test]
+    fn segments_are_appended_below_the_existing_path() {
+        assert_eq!(
+            append("https://example.com/api", &["v2", "project"]),
+            "https://example.com/api/v2/project"
+        );
+    }
+
+    #[test]
+    fn a_segment_needing_encoding_is_encoded() {
+        assert_eq!(
+            append("https://example.com", &["hello world"]),
+            "https://example.com/hello%20world"
+        );
+    }
+
+    #[test]
+    fn appending_nothing_leaves_the_url_alone() {
+        assert_eq!(
+            append("https://example.com/api", &[]),
+            "https://example.com/api"
+        );
+    }
+
+    #[test]
+    fn a_url_that_cannot_be_a_base_is_rejected() {
+        let result = Url::parse("mailto:someone@example.com")
+            .unwrap()
+            .append_path(["x"]);
+        assert!(matches!(result, Err(UrlExtError::InvalidBaseUrl)));
+    }
+}

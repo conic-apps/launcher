@@ -121,7 +121,7 @@ pub struct Platform {
 }
 
 /// A Minecraft version parsed from a version string into release, snapshot or unknown form.
-#[derive(Clone, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub enum MinecraftVersion {
     Release(u8, u8, Option<u8>),
     Snapshot(u8, u8, String),
@@ -158,6 +158,11 @@ fn parse_version(raw: &str) -> Result<MinecraftVersion> {
     } else if raw.contains("w") {
         let split = raw.split("w").collect::<Vec<&str>>();
         let minor_version = split.get(1).ok_or(Error::InvalidMinecraftVersion)?;
+        // The week is two digits; slicing a shorter tail would panic rather
+        // than reject the input.
+        if minor_version.len() < 2 {
+            return Err(Error::InvalidMinecraftVersion);
+        }
         Ok(MinecraftVersion::Snapshot(
             split
                 .first()
@@ -171,5 +176,55 @@ fn parse_version(raw: &str) -> Result<MinecraftVersion> {
         ))
     } else {
         Ok(MinecraftVersion::Unknown(raw.to_string()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parse(raw: &str) -> MinecraftVersion {
+        MinecraftVersion::from_str(raw).expect("should parse")
+    }
+
+    #[test]
+    fn a_dotted_version_is_a_release() {
+        assert_eq!(parse("1.20.1"), MinecraftVersion::Release(1, 20, Some(1)));
+        assert_eq!(parse("1.21"), MinecraftVersion::Release(1, 21, None));
+    }
+
+    #[test]
+    fn a_w_version_is_a_snapshot() {
+        assert_eq!(
+            parse("24w14a"),
+            MinecraftVersion::Snapshot(24, 14, "a".to_string())
+        );
+        // The snapshot letter is whatever trails the two week digits.
+        assert_eq!(
+            parse("25w14craftmine"),
+            MinecraftVersion::Snapshot(25, 14, "craftmine".to_string())
+        );
+    }
+
+    #[test]
+    fn something_that_is_neither_is_kept_verbatim() {
+        assert_eq!(
+            parse("not-a-version"),
+            MinecraftVersion::Unknown("not-a-version".to_string())
+        );
+    }
+
+    #[test]
+    fn a_malformed_version_is_an_error_not_a_panic() {
+        assert!(MinecraftVersion::from_str("1.").is_err());
+        assert!(MinecraftVersion::from_str("1.a").is_err());
+        // Fewer than two week digits used to slice out of bounds.
+        assert!(MinecraftVersion::from_str("24w").is_err());
+        assert!(MinecraftVersion::from_str("24wa").is_err());
+    }
+
+    #[test]
+    fn an_empty_string_falls_back_to_unknown() {
+        assert_eq!(parse(""), MinecraftVersion::Unknown(String::new()));
     }
 }

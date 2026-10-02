@@ -98,3 +98,72 @@ pub(crate) fn check_features(rule: &Value, enabled_features: &[String]) -> bool 
         true
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn allowed(rules: Vec<Value>) -> bool {
+        check_allowed(rules, &[])
+    }
+
+    #[test]
+    fn no_rules_means_allowed() {
+        assert!(allowed(Vec::new()));
+    }
+
+    #[test]
+    fn an_unmatched_non_empty_rule_list_is_disallowed() {
+        // A rule with no action is skipped, but the non-empty list still
+        // defaults to disallowed.
+        assert!(!allowed(vec![json!({ "os": { "name": "windows" } })]));
+    }
+
+    #[test]
+    fn the_last_matching_rule_wins() {
+        assert!(allowed(vec![
+            json!({ "action": "disallow" }),
+            json!({ "action": "allow" }),
+        ]));
+        assert!(!allowed(vec![
+            json!({ "action": "allow" }),
+            json!({ "action": "disallow" }),
+        ]));
+    }
+
+    #[test]
+    fn a_feature_rule_needs_the_feature_enabled() {
+        let rules = || vec![json!({ "action": "allow", "features": { "demo": true } })];
+        assert!(!check_allowed(rules(), &[]));
+        assert!(check_allowed(rules(), &["demo".to_string()]));
+    }
+
+    #[test]
+    fn a_feature_disabled_by_the_rule_never_matches() {
+        let rule = json!({ "features": { "demo": false } });
+        assert!(!check_features(&rule, &["demo".to_string()]));
+        // An empty feature map is vacuously satisfied.
+        assert!(check_features(&json!({ "features": {} }), &[]));
+        // No features key at all is always satisfied.
+        assert!(check_features(&json!({ "action": "allow" }), &[]));
+    }
+
+    #[test]
+    fn the_os_rule_is_checked_against_this_machine() {
+        let current = match PLATFORM_INFO.os_family {
+            OsFamily::Windows => "windows",
+            OsFamily::Linux => "linux",
+            OsFamily::Macos => "osx",
+        };
+        assert!(check_os(&json!({ "os": { "name": current } })));
+        assert!(!check_os(
+            &json!({ "os": { "name": "definitely-not-this-os" } })
+        ));
+    }
+
+    #[test]
+    fn a_rule_without_an_os_key_matches_everywhere() {
+        assert!(check_os(&json!({ "action": "allow" })));
+    }
+}
