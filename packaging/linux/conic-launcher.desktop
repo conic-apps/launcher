@@ -1,8 +1,18 @@
 [Desktop Entry]
 Type=Application
 Name=Conic Launcher
-Comment=A modern Minecraft launcher
-Comment[es]=Un lanzador moderno de Minecraft
+Comment=A small, fast, and nimble Minecraft launcher
+Comment[de]=Ein kleiner, schneller und wendiger Minecraft-Launcher
+Comment[es]=Un lanzador de Minecraft pequeño, rápido y ágil
+Comment[fr]=Un lanceur Minecraft petit, rapide et léger
+Comment[ja]=小さく、速く、軽い Minecraft ランチャー
+Comment[ko]=작고 빠르고 가벼운 Minecraft 런처
+Comment[pl]=Mały, szybki i zwinny launcher Minecraft
+Comment[pt_BR]=Um launcher de Minecraft pequeno, rápido e ágil
+Comment[ru]=Маленький, быстрый и лёгкий лаунчер Minecraft
+Comment[tr]=Küçük, hızlı ve çevik bir Minecraft başlatıcı
+Comment[zh_CN]=一款小快灵的 Minecraft 启动器
+Comment[zh_TW]=一款小快靈的 Minecraft 啟動器
 Exec=conic-launcher %U
 Icon=conic-launcher
 Terminal=false

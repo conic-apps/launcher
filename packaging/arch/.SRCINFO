@@ -1,5 +1,5 @@
 pkgbase = conic-launcher
-	pkgdesc = A modern Minecraft launcher
+	pkgdesc = A small, fast, and nimble Minecraft launcher
 	pkgver = 0.1.0alpha.2
 	pkgrel = 1
 	url = https://github.com/conic-apps/launcher

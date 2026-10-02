@@ -3,7 +3,7 @@ name = "conic-launcher"
 # Not just a build-time label: `cargo-deb` and `cargo-rpm` both take the
 # package's one-line summary straight from this field, and "Conic Launcher app"
 # reads as a crate name in a package manager's search results.
-description = "A modern Minecraft launcher"
+description = "A small, fast, and nimble Minecraft launcher"
 version = "0.1.0-alpha.2"
 edition.workspace = true
 # NOT `license.workspace = true`, unlike every other crate here, and it must not
