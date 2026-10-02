@@ -2,25 +2,22 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Global page navigation (src/store/navigation.ts).
+// Global page navigation.
 //
-// The Vue app keeps the current page in a global Pinia store so the title bar,
-// the main view stack and any overlay can drive navigation. Slint globals are
-// the equivalent mechanism: every component can read `Navigation.current-page`
-// and call `Navigation.navigate(page)` without prop drilling.
+// Every component can read `Navigation.current-page` and call
+// `Navigation.navigate(page)` without prop drilling, which is what lets the
+// title bar, the main view stack and any overlay drive navigation.
 //
-// `Page` values mirror the Vue type: "setup" | "game" | "launch" | "settings" |
-// "accounts". The Vue store keeps a full history stack and implements `back()`;
-// the back button is currently commented out in App.vue, so only the one-level
-// `previous-page` is tracked here.
+// `Page` values are "setup" | "game" | "launch" | "settings" | "accounts".
+// Only the one-level `previous-page` is tracked, which is all `back()` needs.
 export global Navigation {
     in-out property <string> current-page: "game";
     in-out property <string> previous-page: "";
 
     /// Fired whenever `current-page` changes, so a screen can run its
-    /// "unmounted" work without polling. The launch view is the first user: the
-    /// Vue's `onUnmounted` cancels a running install/launch, and the title bar
-    /// can navigate away from it without going through the back button.
+    /// teardown without polling. The launch view is the first user: leaving it
+    /// has to cancel a running install/launch, and the title bar can navigate
+    /// away from it without going through the back button.
     callback page-changed(string);
 
     changed current-page => {

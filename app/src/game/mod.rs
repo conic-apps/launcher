@@ -2,9 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The game view "script": drives the Rust domain crates and pushes the results
-//! into the `GameState` global (src/views/GameView.vue + src/store/instance.ts,
-//! src/store/content.ts and the game composables).
+//! The game view's script: drives the Rust domain crates and pushes the results
+//! into the `GameState` global.
 
 use std::{
     cell::RefCell,
@@ -77,15 +76,15 @@ pub(crate) struct GameController {
     /// `sync_rows`), so the view's row items survive a relayout and can animate
     /// along the rail to their new slot instead of being recreated in place.
     rows_model: Rc<VecModel<GameRow>>,
-    /// Reveals the rows that `sync_rows` added, one frame after they appeared.
+    /// Reveals the rows that `sync_rows` added, 50ms after they appeared.
     reveal_timer: Timer,
     /// Whether the list has been handed to the view at least once. The rows of
     /// that first layout are the ones the view's intro slides in, so they start
     /// revealed and only rows added later use the appear animation.
     synced: bool,
-    /// How the rows about to be laid out should animate to their new slots. A
-    /// group collapse glides 300ms (`easeOutCubic`); everything else is the 400ms
-    /// gsap FLIP the Vue original runs for reordered rows. Reset by `apply`.
+    /// Whether the rows about to be laid out animate to their new slots on the
+    /// 400ms FLIP (`true`) or the 300ms `cubic-bezier(0.33, 1, 0.68, 1)` collapse
+    /// curve (`false`). Reset to `true` by `apply`.
     flip: bool,
 }
 
@@ -115,8 +114,7 @@ pub(crate) fn format_play_time(seconds: u64) -> (&'static str, String) {
     ("hours", format_decimal(minutes / 60.0))
 }
 
-/// Rounds to one decimal and strips a trailing `.0` (mirrors
-/// `Number(value.toFixed(1)).toString()`).
+/// Rounds to one decimal and strips a trailing `.0`.
 pub(crate) fn format_decimal(value: f64) -> String {
     let rounded = (value * 10.0).round() / 10.0;
     if (rounded.fract()).abs() < f64::EPSILON {
@@ -126,9 +124,8 @@ pub(crate) fn format_decimal(value: f64) -> String {
     }
 }
 
-/// Resolves the relative-time parts of a last-played timestamp (mirrors
-/// `formatLastPlayed` in crates/instance/index.ts). Shared with the content
-/// overlays' saves cards (`content.rs`).
+/// Resolves the relative-time parts of a last-played timestamp. Shared with the
+/// content overlays' saves cards (`content`).
 pub(crate) fn relative_time(timestamp: Option<u64>) -> RelativeTime {
     let Some(timestamp) = timestamp else {
         return RelativeTime {
@@ -139,8 +136,7 @@ pub(crate) fn relative_time(timestamp: Option<u64>) -> RelativeTime {
             year: 0,
         };
     };
-    // The launch script stores the timestamp in milliseconds (the Vue
-    // `formatLastPlayed` passes it straight to `new Date(timestamp)`).
+    // The launch script stores the timestamp in milliseconds.
     let Some(date) = Local.timestamp_millis_opt(timestamp as i64).single() else {
         return RelativeTime {
             kind: "never",

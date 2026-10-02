@@ -6,13 +6,12 @@
 
 use super::*;
 
-/// `ConicNexusLibraryDownloadTask` + the progress `Channel` the Tauri command
-/// fed: the download runs on the runtime while a 50ms ticker reports the shared
-/// `DownloadState`.
+/// Runs the library download on the runtime while a 50ms ticker reports the
+/// shared `DownloadState`.
 pub(crate) fn start_download(ui: &App, controller: &Rc<Controller>) {
     cancel_download(controller);
 
-    // The screen's initial `ref`s (`progressBar`, `ProgressPhase.Prepare`).
+    // The screen's initial state.
     {
         let state = ui.global::<MultiplayerState>();
         state.set_download_phase("prepare".into());
@@ -51,7 +50,7 @@ pub(crate) fn start_download(ui: &App, controller: &Rc<Controller>) {
     *controller.download_task.borrow_mut() = Some(task);
 }
 
-/// `cancelDownloadHandle()`.
+/// Stops the running download task.
 pub(crate) fn cancel_download(controller: &Rc<Controller>) {
     if let Some(task) = controller.download_task.borrow_mut().take() {
         task.abort();
@@ -89,8 +88,7 @@ pub(crate) fn push_download(weak: &Weak<App>, progress: &download::progress::Dow
     });
 }
 
-/// The tail of `DownloadProgress.vue`'s `onMounted`: the finished bar, then the
-/// switch to the manager half a second later.
+/// Shows the finished bar, then switches to the manager half a second later.
 pub(crate) fn finish_download(ui: &App, ok: bool) {
     let state = ui.global::<MultiplayerState>();
     if !ok {

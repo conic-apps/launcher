@@ -5,14 +5,13 @@
 import { Theme } from "../theme.slint";
 import { FocusManager } from "../globals/focus.slint";
 
-// Toggle switch (src/components/BaseSwitch.vue).
+// Toggle switch.
 //
-// Mirrors the CSS: a 32x16 track with a 1px outline drawn *outside* the box
-// (CSS `outline` does not affect layout, so it is a larger rectangle behind the
-// track), and a 10.5px thumb that travels from x:3 to x:19 (padding 3 + the
-// 16px `margin-left` applied when checked). The root is 44px wide to include
-// the Vue `.input-box { margin: 0 6px }`. The thumb's hover and press are the
-// Vue's `transform: scale()` on the inner `div`, kept as a scale (see below).
+// A 32x16 track with a 1px outline drawn *outside* the box (the outline does not
+// affect layout, so it is a larger rectangle behind the track), and a 10.5px
+// thumb that travels from x:3 to x:19. The root is 44px wide to include the 6px
+// margin on each side. The thumb's hover and press are a uniform scale (see
+// below).
 export component BaseSwitch inherits Rectangle {
     in-out property <bool> checked: false;
     callback toggled;
@@ -42,12 +41,11 @@ export component BaseSwitch inherits Rectangle {
             : Theme.toggle-switch-background;
         animate background { duration: 300ms; easing: cubic-bezier(0, 0.6, 0.32, 0.99); }
 
-        // The thumb is the Vue's `div`: 10.5px, `transform: scale(1.1)` while the
-        // label is hovered and `scale(0.85)` while it is active, on a 0.3s
-        // `cubic-bezier(0, 0.6, 0.32, 0.99)`. Those are scales, so they are
-        // ported as one — the sizes they stand for (11.55px / 8.925px) are what
-        // a `width`/`height` pair has to spell out, and spelling out both is what
-        // lets the two drift apart should the sizes ever stop matching.
+        // The thumb is 10.5px and scales to 1.1 while hovered and 0.85 while
+        // active, over 0.3s. It is kept as a scale rather than a width/height
+        // pair: the sizes those stand for (11.55px / 8.925px) would have to be
+        // spelled out in both axes, and spelling out both is what lets the two
+        // drift apart should the sizes ever stop matching.
         thumb := Rectangle {
             width: 10.5px;
             height: 10.5px;

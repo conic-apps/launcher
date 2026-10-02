@@ -36,8 +36,8 @@ pub fn setup(ui: &App) {
 }
 
 /// The component reported which world it is showing. A different one drops
-/// every tile: the cache, the model, the queue and the in-flight renders, which
-/// is the Vue's `resetWorld` (whose `requestSeq++` is `seq` here).
+/// every tile: the cache, the model, the queue and the in-flight renders, and
+/// bumps `seq`.
 pub(crate) fn open(ui: &App, source: WorldSource) {
     let world = WorldKey {
         instance_id: source.instance_id.to_string(),

@@ -5,15 +5,16 @@
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/app-icon.slint";
 
-// The panels' header row (`styles/title-bar.less` `.title`): a 52px mantle bar
-// with the panel's icon, its title, and — on the panels that can show content
-// from more than one place — the source switcher pushed to the right.
+// The panels' header row: a 52px mantle bar with the panel's icon, its title,
+// and — on the panels that can show content from more than one place — the
+// source switcher pushed to the right.
 //
-// The switcher is the Vue's `.select-source`: 40x32 buttons in a 4px-gapped row,
-// each tinted by the source it selects (blue for local, Modrinth's green,
-// CurseForge's peach) and backed by `surface2` while active.
-// One `.select-source button`. The local button draws a stroked glyph, the two
-// platform marks are filled, which is `AppIcon`'s stroke/fill split.
+// The switcher is 40x32 buttons in a 4px-gapped row, each tinted by the source
+// it selects (blue for local, Modrinth's green, CurseForge's peach) and backed
+// by `surface2` while active.
+//
+// The local button draws a stroked glyph, the two platform marks are filled,
+// which is `AppIcon`'s stroke/fill split.
 component SourceButton inherits Rectangle {
     in property <string> source: "";
     in property <bool> active: false;
@@ -26,10 +27,8 @@ component SourceButton inherits Rectangle {
         : touch.has-hover ? Theme.surface-0
         : (root.active ? Theme.surface-2 : transparent);
 
-    // `button.local.active { stroke: var(--ctp-blue) }`,
-    // `button.active.modrinth { fill: var(--ctp-green) }`,
-    // `button.active.curseforge { fill: var(--ctp-peach) }`, and otherwise the
-    // body text at 70%.
+    // Blue for local, green for Modrinth, peach for CurseForge, and otherwise
+    // the body text at 70%.
     private property <color> tint:
         !root.active ? Theme.default-text-color.transparentize(0.3)
         : root.source == "local" ? Theme.blue
@@ -41,8 +40,7 @@ component SourceButton inherits Rectangle {
             : root.source == "modrinth" ? "modrinth"
             : "curseforge";
         // The Modrinth mark is a 593-unit view box and reads a size larger than
-        // the 512-unit ionicons at the same number, so it is drawn 3px smaller —
-        // the Vue's inline `padding: 3px` on that one button's svg.
+        // the 512-unit ionicons at the same number, so it is drawn 3px smaller.
         size: root.source == "modrinth" ? 18px : 24px;
         icon-color: root.tint;
     }
@@ -55,8 +53,8 @@ export component ContentTitleBar inherits Rectangle {
     in property <string> icon: "";
     in property <length> icon-size: 20px;
     in property <string> title: "";
-    /// Gap below the bar. The Vue only sets one on the saves panel
-    /// (`ContentSaves.vue`'s `margin-bottom: 16px`); the others leave it at 0.
+    /// Gap below the bar. Only the saves panel sets one; the others leave it at
+    /// 0.
     in property <length> title-gap: 0px;
     /// "" when the panel has a single source. Otherwise the switcher is drawn
     /// with `sources` — "local", "modrinth", "curseforge".
@@ -75,10 +73,8 @@ export component ContentTitleBar inherits Rectangle {
         background: Theme.mantle;
         clip: true;
 
-        // `.title { display: flex; align-items: center; padding: 0 32px; gap: 8px }`
-        // with `.select-source { margin-left: auto; gap: 4px }` — so the title
-        // takes what the buttons leave and the row is pushed against the right
-        // padding edge. The spacer is `margin-left: auto`.
+        // The title takes what the buttons leave, and the row is pushed against
+        // the right padding edge by the spacer.
         HorizontalLayout {
             padding-left: 32px;
             padding-right: 32px;

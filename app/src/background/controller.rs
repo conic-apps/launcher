@@ -49,9 +49,9 @@ use crate::slint_backend::{App, Background};
 /// The pixels one world frame is allowed to cost. The renderer rasterises on
 /// the CPU and the cost is very nearly linear in the target's area, so the
 /// window is drawn at whatever scale brings it under this. The default window
-/// (840×532 at 2x) is comfortably under it and gets the full device
-/// resolution; a maximised window on a Retina display is scaled down, which
-/// costs it a little sharpness and keeps the frame rate.
+/// (840×532 at 1x) is comfortably under it and gets the full device
+/// resolution; a 2x display or a maximised window is scaled down, which costs
+/// it a little sharpness and keeps the frame rate.
 const WORLD_PIXEL_BUDGET: u32 = 1_400_000;
 
 /// How often the background looks at its clock. Faster than any display, like
@@ -59,7 +59,7 @@ const WORLD_PIXEL_BUDGET: u32 = 1_400_000;
 /// elapsed time, not from the tick interval.
 const TICK_MS: u64 = 8;
 
-/// The cross-fade length: the Vue's 0.4s on the background images.
+/// The cross-fade length: 0.4s on the background images.
 const FADE_MS: u64 = 400;
 
 /// A target arriving within this of the previous one is part of the same burst:
@@ -68,17 +68,17 @@ const BURST_MS: u64 = 500;
 /// How long a burst has to be quiet before the target it settled on is applied.
 const DEBOUNCE_MS: u64 = 200;
 
-/// The Vue's `MAX_OFFSET`: how far the background shifts at the window's edge.
+/// How far the background shifts at the window's edge.
 const MAX_OFFSET: f32 = 4.0;
 /// The parallax's time constant: the background is within a couple of percent of
-/// where it belongs about 100ms after anything changes, which is what an eased
-/// 100ms transition looks like. Every change is eased — the pointer entering the
+/// where it belongs about 140ms after anything changes, which is what an eased
+/// short transition looks like. Every change is eased — the pointer entering the
 /// window as much as leaving it — and because the *position* always approaches
 /// its target rather than being set to it, a pointer flicking in and out moves
 /// the background a little and then brings it back, with nothing to flash.
 const PARALLAX_EASE_SECS: f32 = 0.035;
-/// The parallax wrapper's scale (the Vue's `SCALE`); the images are rendered
-/// oversized by it so the scaling lands them 1:1 on device pixels.
+/// The parallax wrapper's scale; the images are rendered oversized by it so the
+/// scaling lands them 1:1 on device pixels.
 const WRAPPER_SCALE: f32 = 1.08;
 
 /// The longest edge a background image is kept at, before Slint scales it to
@@ -319,8 +319,8 @@ pub struct Controller {
     software_only: bool,
     /// The parallax offsets last written.
     parallax: (f32, f32),
-    /// Background images by path, with the time they were read at, whether they
-    /// have transparency, and their pixels.
+    /// Background images by path, with the time they were read at and whether
+    /// they have transparency. The pixels themselves live in the slots.
     cache: HashMap<PathBuf, (SystemTime, Alpha)>,
     /// Bumped per load; a load whose generation is stale when it lands was for
     /// a target the user has already moved past, and is dropped.
@@ -792,7 +792,7 @@ impl Controller {
                 if size.width == 0 || size.height == 0 {
                     return Some((0.0, 0.0));
                 }
-                // The Vue: (clientX - innerWidth / 2) / (innerWidth / 2).
+                // Normalized to -1 at the left edge, +1 at the right.
                 let normalized_x = (x / scale) / (size.width as f32 / scale) * 2.0 - 1.0;
                 let normalized_y = (y / scale) / (size.height as f32 / scale) * 2.0 - 1.0;
                 Some((
@@ -827,9 +827,9 @@ impl Controller {
     // ----- the layers -----
 
     fn camera_moves(&self) -> bool {
-        // The camera only advances while the world is what the window shows:
-        // the Vue cancels its animation frame while a custom background is up.
-        // With no renderer for it, the world is not on screen at all.
+        // The camera only advances while the world is what the window shows: it
+        // stops while a custom background is up. With no renderer for it, the
+        // world is not on screen at all.
         !self.software_only
             && self.shown.is_none()
             && self.config.borrow().appearance.background_camera_move
@@ -866,8 +866,8 @@ impl Controller {
         self.update_dim(ui);
     }
 
-    /// The Vue dims only the *global* custom background, at the user's
-    /// percentage — an instance background and the world are never dimmed.
+    /// Only the *global* custom background is dimmed, at the user's percentage
+    /// — an instance background and the world are never dimmed.
     fn update_dim(&self, ui: &App) {
         let darkness = f32::from(self.config.borrow().appearance.background_darkness) / 100.0;
         let global_alpha = self
@@ -1012,8 +1012,9 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         controller.borrow().gpu(),
     );
     controller.borrow_mut().refresh(ui);
-    // The rasteriser draws the first frame, before the window is shown, so the
-    // background is there from the start rather than appearing a frame later.
+    // A first frame is asked for now, but the window has no size until it is
+    // shown, so `request_frame` declines here; the ticker comes back to it once
+    // there is a window to fill.
     controller.borrow_mut().request_frame(ui);
     // It hands the world over to the GPU once the GPU has actually drawn one
     // (see `background::gl`) — so a renderer without OpenGL keeps this frame.

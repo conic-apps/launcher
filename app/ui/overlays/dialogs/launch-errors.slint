@@ -9,31 +9,25 @@ import { AppIcon } from "../../components/app-icon.slint";
 import { Dialogs } from "../../globals/dialogs.slint";
 import { Navigation } from "../../globals/navigation.slint";
 
-// The four dialogs the launch view raises before/while starting
-// (src/overlays/dialogs/{NoAccountError,NoMicrosoftAccountError,
-// AccountRefreshFailed,NoSuitableJavaError}.vue).
+// The four dialogs the launch view raises before/while starting.
 //
 // They share one shape: a 50px warning icon, the message beside it and a
-// full-width "Cancel launch" button below, which hides the dialog and goes back
-// — the Vue's inline `@click` written out in each component.
+// full-width "Cancel launch" button below, which hides the dialog and goes back.
 //
-// The Vue originals are not internationalized (their sentences are hard-coded
-// Chinese); the Slint catalogues translate them, with the Chinese kept as the
-// source text so a locale without an entry still reads like the original.
+// The four sentences are hard-coded English. The English is kept as the source
+// text of a `@tr`, so a locale without an entry still reads these strings while
+// the catalogues can translate them.
 export component LaunchErrorDialogs inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
-    // `NoAccountError.vue`.
     no-account := BaseDialog {
         dialog-visible: Dialogs.no-account-error-visible;
         dialog-width: 500px;
         dialog-height: 146px;
 
-        // `.no-account-error { padding: 8px }` and `.buttons { margin-top: 16px }`
-        // are a padding and a gap — which is what they are here, where the inset
-        // and the spacer rectangle were both written out by hand.
+        // 8px of padding and a 16px gap between the message and the button.
         VerticalLayout {
             padding: 8px;
             spacing: 16px;
@@ -62,7 +56,6 @@ export component LaunchErrorDialogs inherits Rectangle {
         }
     }
 
-    // `NoMicrosoftAccountError.vue`.
     no-microsoft-account := BaseDialog {
         dialog-visible: Dialogs.no-microsoft-account-error-visible;
         dialog-width: 500px;
@@ -96,7 +89,6 @@ export component LaunchErrorDialogs inherits Rectangle {
         }
     }
 
-    // `AccountRefreshFailed.vue`.
     refresh-failed := BaseDialog {
         dialog-visible: Dialogs.account-refresh-failed-visible;
         dialog-width: 500px;
@@ -130,7 +122,7 @@ export component LaunchErrorDialogs inherits Rectangle {
         }
     }
 
-    // `NoSuitableJavaError.vue` — a two-line message and a filled blue button.
+    // A two-line message and a filled blue button.
     no-java := BaseDialog {
         dialog-visible: Dialogs.no-suitable-java-error-visible;
         dialog-width: 500px;

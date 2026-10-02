@@ -20,14 +20,14 @@ Regenerate with `python3 tools/generate-icns.py`. It renders the ladder from
 `app/ui/assets/logo.png` and hands it to `iconutil`.
 
 **Not** from `app/ui/assets/images/app-icon.png`, which is also in the tree and
-looks like the obvious choice: that one is 512px and is embedded in the binary for
-the *window* icon (see `app/src/main.rs`). macOS asks for a 1024px render for the
+looks like the obvious choice: that one is 512px and is embedded in the binary as
+the macOS Dock icon (see `app/src/main.rs`). macOS asks for a 1024px render for the
 512x512@2x slot, so using it would mean upscaling the worst possible source at the
 one size a Dock icon is judged at.
 
 `conic-launcher.iconset/` next to it is the rendered input, kept so the ladder
-that went in can be seen and diffed. It is not a place to hand-edit —
-`iconutil` refuses to write into a non-empty directory — so regenerate instead.
+that went in can be seen and diffed. It is not a place to hand-edit: the script
+regenerates it into a fresh directory on each run, so regenerate instead.
 
 ## `Info.plist`
 

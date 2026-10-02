@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 // The data a `MarkdownView` draws. The field names and their meanings are the
-// Rust `MdItem`'s, which the caller copies into; `ColorRole` in
+// Rust `MdItem`'s, which the caller copies into; `MarkdownColors.resolve` in
 // `markdown-view.slint` is the other half of the engine's `ColorRole` enum.
 //
 // A struct's Rust type belongs to the compilation that produced it, which is why
@@ -50,7 +50,7 @@ export struct MarkdownPalette {
     strike: color,
     /// A list marker, an ordered marker, a task box and its tick.
     marker: color,
-    /// An image that could not be fetched, drawn as its alt text.
+    /// An inline image that could not be fetched, drawn as its alt text.
     placeholder: color,
     /// A `<details>` summary row at rest.
     details-head: color,

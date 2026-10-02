@@ -2,22 +2,19 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Decoding a track — what the webview did by pointing an `<audio>` element's
-//! `src` at the file.
+//! Decoding a track.
 //!
-//! The element streamed: it decoded lazily, kept only a small window in memory,
-//! and started playing as soon as the first buffer was ready. A first attempt at
-//! this crate did the opposite — it read the whole file into a `Vec` of frames
-//! before a single sample reached the device — which made every track change
-//! cost a full-file read. With a library of lossless 16/44.1 kHz WAVs that is a
-//! hundred megabytes per switch, and a switch took seconds.
+//! [`TrackSource`] streams: opening it reads the container header and nothing
+//! else, so the duration is known and playback can start immediately, and the
+//! audio itself is pulled in only as the device consumes it
+//! ([`TrackSource::decode_into`]). Seeking is a real seek on the container: the
+//! decoder is reset and the reported position moves to the target.
 //!
-//! [`TrackSource`] is the streaming shape: opening it reads the container header
-//! and nothing else, so the duration is known and playback can start
-//! immediately, and the audio itself is pulled in only as the device consumes it
-//! ([`TrackSource::decode_into`]). Seeking is a real seek on the container, plus
-//! discarding the frames before the target, which is what every other player
-//! does and what the element did behind the scenes.
+//! The streaming shape matters because the alternative — reading the whole file
+//! into a `Vec` of frames before a single sample reaches the device — makes
+//! every track change cost a full-file read. With a library of lossless
+//! 16/44.1 kHz WAVs that is a hundred megabytes per switch, and a switch takes
+//! seconds.
 //!
 //! One [`TrackSource`] belongs to one thread: it owns the reader and the
 //! decoder, so it lives on the player's worker (see `player.rs`) and never on the
@@ -38,16 +35,15 @@ use crate::error::{Error, Result};
 
 /// How many samples [`TrackSource::decode_into`] aims to append per call.
 ///
-/// It doubles as the granularity a seek is resolved to: the reader hands out
-/// packets of at most 1152 frames (`MAX_FRAMES_PER_PACKET`), so a read this size
-/// discards at most one packet on the way past a target — around 26 ms at
-/// 44.1 kHz, which is the shortest hop a compressed track can take anyway.
+/// A call keeps decoding whole packets until it has appended at least this many
+/// samples, so it returns a little more than this, or however much is left at
+/// the end of the track.
 const READ_SIZE: usize = 2048;
 
 /// A track that is opened but not yet decoded: the reader, the decoder, and
 /// enough of the header to answer "how long is this" and "where am I".
 pub struct TrackSource {
-    /// The file, kept only so a failure can name it — the original's errors did.
+    /// The file, kept only so a failure can name it.
     path: PathBuf,
     format: Box<dyn FormatReader>,
     decoder: Box<dyn Decoder>,
@@ -96,9 +92,9 @@ impl TrackSource {
             })?
             .format;
 
-        // The first track with a codec is the one the element played; the rest are
-        // artwork, lyrics or an alternate language, and the player has never had
-        // a way to choose between them.
+        // The first track with a codec is the one played; the rest are artwork,
+        // lyrics or an alternate language, and the player has no way to choose
+        // between them.
         let (track_id, params) = {
             let track = format
                 .tracks()
@@ -118,10 +114,10 @@ impl TrackSource {
                 message: error.to_string(),
             })?;
 
-        // What the decoder was made from is what to believe to begin with, but a
-        // container is free to disagree with it, so whatever the first decoded
-        // packet says takes over. Until one arrives, `channels() == 0` is how the
-        // player knows it has to wait.
+        // What the decoder was made from is what to believe to begin with. The
+        // channel count has to come from here: `decode_into` only pulls packets
+        // once `channels` is non-zero, so a container that does not say leaves
+        // the source unable to start.
         let sample_rate = params.sample_rate.unwrap_or(0);
         let channels = params
             .channels
@@ -152,8 +148,9 @@ impl TrackSource {
         self.sample_rate
     }
 
-    /// How many channels the track has. `0` until the first packet is decoded,
-    /// when the packet's own `SignalSpec` is the authority.
+    /// How many channels the track has, from the container's codec parameters.
+    /// `0` when the container did not say, which the player reads as "cannot
+    /// start".
     pub fn channels(&self) -> u16 {
         self.channels
     }
@@ -174,9 +171,8 @@ impl TrackSource {
     ///
     /// `0` means the end of the track, but it may also mean a run of undecodable
     /// packets was skipped — one bad frame in an MP3 is not a reason to refuse
-    /// the track, and the element skipped it too. Callers should therefore keep
-    /// reading until the source reports itself [`finished`](Self::finished)
-    /// rather than stopping at the first `0`.
+    /// the track. Callers should therefore keep reading until the source reports
+    /// itself [`finished`](Self::finished) rather than stopping at the first `0`.
     ///
     /// `out` is the caller's so that a read allocates nothing per call. It is
     /// trimmed to whole frames on the way in and on the way out, so its contents
@@ -263,12 +259,11 @@ impl TrackSource {
 
     /// Moves the reader to `seconds`, clamped to the track.
     ///
-    /// The container is asked to seek, which lands on a packet boundary rather
-    /// than a sample one; the frames between there and `seconds` are decoded and
-    /// dropped by the next [`decode_into`](Self::decode_into). On a lossless file
-    /// that is a seek and a handful of samples; on a compressed one it is a
-    /// re-decode of up to one packet, which is why this runs on the worker
-    /// rather than on the thread that asked for it.
+    /// The container is asked for an accurate seek — which on a compressed track
+    /// can mean decoding from a frame just before the target — and the decoder is
+    /// reset, because a seek makes the next packet discontinuous with the last.
+    /// That re-decode is why this runs on the worker rather than on the thread
+    /// that asked for it.
     pub fn seek(&mut self, seconds: f64) -> Result<()> {
         if !seconds.is_finite() || seconds < 0.0 {
             return Ok(());

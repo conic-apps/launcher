@@ -6,10 +6,6 @@
 
 use super::*;
 
-// ---------------------------------------------------------------------------
-// wiring
-// ---------------------------------------------------------------------------
-
 /// Registers every command-palette callback on `CommandPaletteState`.
 ///
 /// The two openers are wired in the view, the way the title bar's other actions
@@ -25,7 +21,6 @@ pub fn setup(ui: &App) {
 /// Opening, closing and the `Ctrl`/`⌘` + `/` toggle.
 pub(crate) fn setup_visibility(ui: &App) {
     let controller = controller();
-    // The `Ctrl`/`⌘` + `/` shortcut of `App.vue`.
     {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
@@ -34,8 +29,7 @@ pub(crate) fn setup_visibility(ui: &App) {
             controller.borrow_mut().toggle(&ui);
         });
     }
-    // Opening an open palette does nothing, which is what
-    // `@click="commandPaletteVisible = true"` does.
+    // Opening an already-open palette does nothing.
     {
         let weak = ui.as_weak();
         ui.global::<CommandPaletteState>().on_open(move || {

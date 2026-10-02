@@ -8,8 +8,7 @@ import { BaseInput } from "../../components/base-input.slint";
 import { BaseSwitch } from "../../components/base-switch.slint";
 import { AccountAddState } from "../../globals/dialogs.slint";
 
-// "Create an offline profile" — the third screen of the add-account dialog
-// (src/views/accounts/AccountAddOffline.vue).
+// "Create an offline profile" — the third screen of the add-account dialog.
 //
 // The UUID is derived from the username unless "advanced settings" is on, in
 // which case the field is typed into and validated; both live in Rust
@@ -23,18 +22,16 @@ export component AccountAddOffline inherits VerticalLayout {
     // `AccountAdd`).
     alignment: start;
 
-    // Mounted inside the setup wizard, which hides the "Cancel" button
-    // (`:deep(.cancel-login) { display: none }`). See `AccountAdd`.
+    // Mounted inside the setup wizard, which hides the "Cancel" button. See
+    // `AccountAdd`.
     in property <bool> wizard-host: false;
 
     init => {
-        // The Vue's `onMounted`, and also what makes a reopened dialog start
-        // blank: the screen is destroyed and rebuilt whenever the dialog
-        // switches services.
+        // Also what makes a reopened dialog start blank: the screen is destroyed
+        // and rebuilt whenever the dialog switches services.
         AccountAddState.reset-offline-form();
     }
 
-    // `p.description { font-size: 14px; line-height: 1.3; margin-bottom: 8px }`.
     Text {
         text: @tr("Log in without any auth service. Skins are usually invisible in multiplayer, and servers with online-mode enabled will not let you join.");
         font-size: 14px;
@@ -43,13 +40,12 @@ export component AccountAddOffline inherits VerticalLayout {
         color: Theme.default-text-color.transparentize(0.1);
     }
 
-    // `div.form { gap: 8px }`, and the `p.description { margin-bottom: 8px }`
-    // above it, which a layout has no margin for.
+    // The 8px gap between rows, plus the description's 8px bottom margin as a
+    // top padding, which a layout has no margin for.
     form := VerticalLayout {
         padding-top: 8px;
         spacing: 8px;
 
-        // ----- username -----
         HorizontalLayout {
             alignment: space-between;
             cross-axis-alignment: center;
@@ -68,7 +64,6 @@ export component AccountAddOffline inherits VerticalLayout {
             }
         }
 
-        // ----- advanced settings -----
         HorizontalLayout {
             alignment: space-between;
             cross-axis-alignment: center;
@@ -80,15 +75,13 @@ export component AccountAddOffline inherits VerticalLayout {
             }
 
             // The switch does not write the state itself: the script handles the
-            // toggle, because switching it on hands the UUID field over empty
-            // (the Vue's `watch(advancedMode)`).
+            // toggle, because switching it on hands the UUID field over empty.
             BaseSwitch {
                 checked: AccountAddState.offline-advanced;
                 toggled => { AccountAddState.toggle-offline-advanced(); }
             }
         }
 
-        // ----- UUID -----
         // `&.disabled { opacity: 0.4 }`: the whole row fades while the field is
         // left to its derived value.
         HorizontalLayout {
@@ -107,8 +100,7 @@ export component AccountAddOffline inherits VerticalLayout {
                     color: Theme.default-text-color.transparentize(0.1);
                 }
 
-                // `p.field-description { font-size: 12px; margin-top: 2px }`,
-                // turning red while the typed UUID does not parse.
+                // Turns red while the typed UUID does not parse.
                 Text {
                     text: AccountAddState.offline-uuid-invalid
                         ? @tr("The UUID you entered is not valid")
@@ -130,9 +122,8 @@ export component AccountAddOffline inherits VerticalLayout {
         }
     }
 
-    // `div.buttons { justify-content: flex-end; margin-top: 12px; gap: 8px }`.
-    // `button.base-button { width: 100% }` in a flex row: each button takes an
-    // equal share of the row minus the gap between them.
+    // Each button takes an equal share of the row minus the 8px gap between
+    // them.
     HorizontalLayout {
         padding-top: 12px;
         spacing: 8px;

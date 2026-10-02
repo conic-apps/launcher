@@ -6,14 +6,14 @@
 
 use super::*;
 
-/// Recomputes whether the offline form can be submitted — the Vue's `:disabled`
-/// test, which trims the username; Slint has no `trim`, so the test lives here.
+/// Recomputes whether the offline form can be submitted. The test trims the
+/// username; Slint has no `trim`, so it lives here.
 pub(crate) fn refresh_offline_submit(state: &AccountAddState) {
     let username = state.get_offline_username().trim().to_string();
     state.set_offline_can_submit(!username.is_empty() && !state.get_offline_uuid_invalid());
 }
 
-/// The same for the Yggdrasil form, whose three fields the Vue trims as well.
+/// The same for the Yggdrasil form, whose three fields are trimmed as well.
 pub(crate) fn refresh_yggdrasil_submit(state: &AccountAddState) {
     let ready = [
         state.get_yggdrasil_api_root(),
@@ -25,8 +25,8 @@ pub(crate) fn refresh_yggdrasil_submit(state: &AccountAddState) {
     state.set_yggdrasil_can_submit(ready);
 }
 
-/// Picks a default account, reloads the account list and dismisses the dialog —
-/// the three lines the Vue runs after *every* successful add.
+/// Picks a default account, reloads the account list and dismisses the dialog
+/// after every successful add.
 ///
 /// The default is picked through a `GameState` callback rather than here: the
 /// config lives on the UI thread, and `upgrade_in_event_loop`'s closure has to
@@ -57,8 +57,7 @@ pub(crate) fn progress_kind(event: &LoginEvent) -> Option<&'static str> {
     })
 }
 
-/// Runs the login task and reports its outcome back into the dialog (the Vue's
-/// `startLogin`).
+/// Runs the login task and reports its outcome back into the dialog.
 pub(crate) fn start_microsoft_login(weak: Weak<App>, request: LoginRequest, device_flow: bool) {
     let Some(ui) = weak.upgrade() else { return };
     let state = ui.global::<AccountAddState>();
@@ -114,11 +113,10 @@ pub(crate) fn prepare_auth_code_flow(ui: &App) {
         }
     };
 
-    // The Vue's `AUTH_CODE_LOGIN_URL`, with the deep link's `redirect_uri`
-    // replaced by the listener's and the `state` added — OAuth's own CSRF
-    // token, which the callback is checked against so that nothing else on the
-    // machine (or on the network, on a machine that forwards) can hand this
-    // launcher a code of its own choosing.
+    // The authorize URL carries the listener's `redirect_uri`, and the `state`
+    // is added — OAuth's own CSRF token, which the callback is checked against
+    // so that nothing else on the machine (or on the network, on a machine that
+    // forwards) can hand this launcher a code of its own choosing.
     let redirect_uri = callback.redirect_uri();
     state.set_auth_code_login_url(authorize_url(&redirect_uri, callback.state()).into());
 
@@ -170,10 +168,9 @@ pub(crate) fn auth_code_flow_finished(ui: &App, redirect_uri: &str, outcome: Out
         // to the error one, and neither says anything in the dialog. Two
         // reasons, and they are the reason this flow has a page at all:
         //
-        //   * the error screen has no buttons. The Vue's does not either, so
-        //     this is not a regression — but it means "Log in" is not
-        //     reachable from there, and a message that says to press it would
-        //     be a message about a button that is not on the screen;
+        //   * the error screen has no buttons, so "Log in" is not reachable
+        //     from there, and a message that says to press it would be a
+        //     message about a button that is not on the screen;
         //   * the browser has just shown a page — themed, translated, and
         //     carrying Microsoft's own `error_description` for a refusal —
         //     that says what happened and what to do. The dialog saying it a
@@ -250,20 +247,18 @@ pub(crate) fn rgba(color: slint::Color) -> authcode::Rgba {
     )
 }
 
-/// The authorize URL of the browser flow (the Vue's `AUTH_CODE_LOGIN_URL`),
-/// pointed at the loopback listener and carrying its `state`.
+/// The authorize URL of the browser flow, pointed at the loopback listener and
+/// carrying its `state`.
 ///
-/// The original's is a constant with a `conic-launcher://` `redirect_uri` in
-/// it. This cannot be a constant, for two reasons that are the same reason: the
-/// port is the OS's, and the `state` is per login. Everything else — the
-/// endpoint, the client id, `response_mode`, `prompt`, the scope — is the Vue's,
-/// unchanged, so the two frontends are asking the same question of Microsoft.
+/// The endpoint, the client id, `response_mode`, `prompt` and the scope are
+/// fixed; the `redirect_uri` and the `state` are the two that vary. That is why
+/// this cannot be a constant: the port is the OS's, and the `state` is per
+/// login.
 ///
 /// `redirect_uri` is percent-encoded because a whole URL is going into a query
-/// value, and the `:` and the two `/` left bare are the difference between a
-/// redirect Microsoft accepts and one it does not. It has to come back out of
-/// the query byte for byte, which is why the same encoded form is what
-/// `account::microsoft::redeem_access_token` is given.
+/// value; it has to come back out of the query byte for byte, which is why the
+/// same encoded form is what `account::microsoft::redeem_access_token` is
+/// given.
 pub(crate) fn authorize_url(redirect_uri: &str, state: &str) -> String {
     format!(
         "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize\
@@ -279,7 +274,8 @@ pub(crate) fn authorize_url(redirect_uri: &str, state: &str) -> String {
     )
 }
 
-/// Percent-encodes a URL for a query value, the two characters that need it.
+/// Percent-encodes a string for a query value: every byte outside the
+/// unreserved set (`A-Z a-z 0-9 - _ . ~`) becomes a `%XX` escape.
 ///
 /// The authorize URL is hand-built rather than handed to `reqwest`'s serializer
 /// because the dialog shows it to the user: it has to be the exact string the
@@ -311,8 +307,8 @@ pub(crate) fn apply_login_event(ui: &App, event: LoginEvent) {
         state.set_ms_user_code(user_code.clone().into());
         state.set_ms_verification_uri(verification_uri.into());
         state.set_ms_expires_in(expires_in as i32);
-        // The Vue hands the code straight to the clipboard, so the user only
-        // has to paste it.
+        // The code goes straight to the clipboard, so the user only has to
+        // paste it.
         if let Err(error) = crate::config_bridge::copy_to_clipboard(&user_code) {
             log::warn!("failed to copy the device code: {error}");
         }
@@ -325,12 +321,12 @@ pub(crate) fn apply_login_event(ui: &App, event: LoginEvent) {
     }
 }
 
-/// The Vue's `handleError`.
+/// Handles a failed login.
 pub(crate) fn handle_login_error(ui: &App, error: Error, device_flow: bool) {
     let state = ui.global::<AccountAddState>();
     match error {
-        // The user cancelled: the Vue silently returns to the screen it was
-        // on, which for a device login is the code it is still showing.
+        // The user cancelled: silently return to the screen it was on, which
+        // for a device login is the code it is still showing.
         Error::Aborted(_) => {
             state.set_ms_view(
                 if device_flow {
@@ -341,7 +337,7 @@ pub(crate) fn handle_login_error(ui: &App, error: Error, device_flow: bool) {
                 .into(),
             );
         }
-        // The Vue asks for a new code and carries on.
+        // Ask for a new code and carry on.
         Error::DeviceCodeExpired if device_flow => {
             start_microsoft_login(ui.as_weak(), LoginRequest::DeviceCode, true);
         }
@@ -352,7 +348,7 @@ pub(crate) fn handle_login_error(ui: &App, error: Error, device_flow: bool) {
     }
 }
 
-/// Fills the profile chooser (Vue `shouldChooseProfile`).
+/// Fills the profile chooser.
 pub(crate) fn show_profile_chooser(ui: &App, credentials: &PendingYggdrasil) {
     let existing = account::list_accounts();
     let rows: Vec<YggdrasilProfileItem> = credentials
@@ -369,7 +365,7 @@ pub(crate) fn show_profile_chooser(ui: &App, credentials: &PendingYggdrasil) {
                     28,
                 )
                 .unwrap_or_default(),
-                // Vue `profileDisabled`: the same profile on the same server.
+                // The same profile on the same server is already added.
                 added: existing.yggdrasil.iter().any(|account| {
                     same_api_root(&account.api_root, &credentials.api_root)
                         && account.profile.name == profile.name
@@ -390,11 +386,9 @@ pub(crate) fn show_profile_chooser(ui: &App, credentials: &PendingYggdrasil) {
     state.set_yggdrasil_view("profiles".into());
 }
 
-/// Stores one account per chosen profile (the Vue's `addSelectedProfiles`, and
-/// the single-profile tail of its `login`).
+/// Stores one account per chosen profile.
 ///
-/// Every profile gets its own identifier and its own copy of the credentials,
-/// exactly as the Vue's loop does.
+/// Every profile gets its own identifier and its own copy of the credentials.
 pub(crate) fn add_yggdrasil_accounts(
     ui: &App,
     credentials: &PendingYggdrasil,
@@ -429,7 +423,7 @@ pub(crate) fn add_yggdrasil_accounts(
     });
 }
 
-/// The Vue's `sameApiRoot`: the same host and port, and the same path with any
+/// Compares API roots: the same host and port, and the same path with any
 /// trailing slashes ignored.
 pub(crate) fn same_api_root(a: &str, b: &str) -> bool {
     let (Ok(a), Ok(b)) = (Url::parse(a), Url::parse(b)) else {

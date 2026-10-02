@@ -9,14 +9,12 @@ import { BaseButton } from "../../components/base-button.slint";
 // The body shared by the two "are you sure?" dialogs that are a warning icon, a
 // two-line message and a blue/red button pair:
 //
-//   src/overlays/dialogs/ConfirmDeleteSave.vue
-//   src/overlays/dialogs/ConfirmQuitApp.vue
+//   ConfirmDeleteSave
+//   ConfirmQuitApp
 //
-// The two are the same component in the Vue too — same markup, same `.message`
-// and `.buttons` rules, differing only in what the four strings say — which is
-// why they are one here. (The launch error dialogs in `launch-errors.slint` share
-// the icon and the message as well, but end in a single button, so they are not
-// part of this.)
+// The two dialogs differ only in what the four strings say, which is why they are
+// one here. (The launch error dialogs in `launch-errors.slint` share the icon and
+// the message as well, but end in a single button, so they are not part of this.)
 //
 // The strings are passed in rather than `@tr`'d here, so each dialog's sentences
 // are catalogued under its own context and a translator can tell which of the
@@ -28,29 +26,27 @@ import { BaseButton } from "../../components/base-button.slint";
 // an unhandled `cancel` is.
 export component ConfirmWarningBody inherits VerticalLayout {
     in property <length> content-width: 0px;
-    /// `p { font-size: 17px }` — the question.
+    /// The question, drawn at 17px.
     in property <string> title-text: "";
-    /// `p { font-size: 12px; margin-top: 8px }` — why it cannot be undone.
+    /// The consequence line, drawn at 12px.
     in property <string> detail-text: "";
     in property <string> cancel-text: "";
     in property <string> confirm-text: "";
-    /// The confirm button's `disabled` (Vue `deleting`, set while the delete runs).
+    /// The confirm button's enabled state, cleared while the delete runs.
     in property <bool> confirm-enabled: true;
 
     callback cancel();
     callback confirm();
 
-    // `.confirm-delete-save { padding: 8px }` (and the identical rule in
-    // `ConfirmQuitApp.vue`), with the buttons' 16px `margin-top` as the layout's
-    // own spacing.
+    // 8px of padding, with the buttons separated by the layout's own 16px
+    // spacing.
     width: root.content-width;
     spacing: 16px;
     padding: 8px;
     alignment: start;
 
-    // The Vue's `div[style="display: flex; align-items: center"]` around the icon
-    // and the message. The 50px icon is the taller of the two, and the message
-    // column centres itself in it (`.message { justify-content: center }`).
+    // The row around the icon and the message. The 50px icon is the taller of the
+    // two, and the message column centres itself in it.
     HorizontalLayout {
         height: 50px;
         spacing: 16px;
@@ -61,8 +57,7 @@ export component ConfirmWarningBody inherits VerticalLayout {
             size: 50px;
         }
 
-        // `.message { display: flex; flex-direction: column; margin-left: 16px }`
-        // — the margin is the 16px above.
+        // The message column; its 16px gap from the icon is the row's spacing.
         VerticalLayout {
             alignment: center;
             spacing: 8px;
@@ -91,15 +86,14 @@ export component ConfirmWarningBody inherits VerticalLayout {
             horizontal-stretch: 1;
             text: root.cancel-text;
             text-color: Theme.text-inverse;
-            // `.buttons button { border-radius: 4px }`, the dialogs' own scoped
-            // rule overriding the controllers radius.
+            // A 4px radius, overriding the controller's own.
             button-radius: 4px;
             button-background: Theme.blue;
             clicked => { root.cancel(); }
         }
 
-        // `.back { margin-right: 8px }` — the two buttons are both `width: 100%`
-        // flex items, which shrink to leave the 8px between them.
+        // The 8px between the two buttons: both stretch equally, which leaves the
+        // gap between them.
         Rectangle {
             width: 8px;
             background: transparent;

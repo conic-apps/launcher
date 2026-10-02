@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The hyperbola sky — a port of `WindowBackground.vue`'s Canvas2D layer.
+//! The hyperbola sky.
 //!
 //! Six hyperbolae (`x²/a² - y²/b² = 1`, a = 40 … 640, b = 200) are stroked in
 //! all four branches, the whole set rotated -40° about a point a quarter of the
@@ -59,8 +59,8 @@ pub fn render(request: &SkyRequest) -> SharedPixelBuffer<Rgba8Pixel> {
     let pixel_count = width as usize;
 
     // Coverage of the curve being stroked, and the alpha accumulated over the
-    // curves already composited. The original strokes each curve in one path
-    // and composites the paths with `source-over`; blending per segment instead
+    // curves already composited. Each curve is meant to be stroked in one path
+    // and the paths composited with `source-over`; blending per segment instead
     // would double-count the joins, where the polyline's points crowd together
     // near the asymptote. Both are bytes — a 255th of accuracy is invisible on
     // a line this faint, and it is a quarter of the memory traffic.
@@ -70,9 +70,9 @@ pub fn render(request: &SkyRequest) -> SharedPixelBuffer<Rgba8Pixel> {
     let center = (width as f32 / 2.0, height as f32 * CENTER_Y_PERCENT);
     let radians = ROTATION_DEGREES.to_radians();
     let (sin, cos) = radians.sin_cos();
-    // The original draws in CSS pixels on a canvas scaled by the device pixel
-    // ratio; here the buffer is addressed directly, so everything is scaled by
-    // how many buffer pixels a CSS pixel is.
+    // The sky is specified in CSS pixels, as the design is; here the buffer is
+    // addressed directly, so everything is scaled by how many buffer pixels a
+    // CSS pixel is.
     let scale = request.scale;
     let range = width.max(height) as f32 / scale * 1.5;
 
@@ -117,8 +117,8 @@ pub fn render(request: &SkyRequest) -> SharedPixelBuffer<Rgba8Pixel> {
         top = top.min(curve_top);
         bottom = bottom.max(curve_bottom);
 
-        // `A = A + a·c·(1 - A)`, in fixed point: the source-over the original's
-        // two paths compose with.
+        // `A = A + a·c·(1 - A)`, in fixed point: the source-over the
+        // accumulated curves compose with.
         let line_alpha = ((LINE_ALPHA - index as f32 * LINE_ALPHA_STEP).max(0.0) * 255.0) as u32;
         for y in curve_top..=curve_bottom {
             let row = (y * width) as usize;
@@ -143,7 +143,7 @@ pub fn render(request: &SkyRequest) -> SharedPixelBuffer<Rgba8Pixel> {
     let band = height as f32 * SKY_FADE_HEIGHT_RATIO;
     let fade_top = height as f32 / SKY_FADE_CENTER_DIVISOR - band / 2.0;
     let fade_bottom = fade_top + band;
-    // The Vue's `lineColor`: white on the dark flavours, black on Latte.
+    // Line colour: white on the dark flavours, black on Latte.
     let line = if request.dark { 1.0 } else { 0.0 };
 
     let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(width, height);

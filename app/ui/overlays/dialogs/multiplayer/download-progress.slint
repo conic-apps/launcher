@@ -8,17 +8,15 @@ import { BaseButton } from "../../../components/base-button.slint";
 import { BaseProgress } from "../../../components/base-progress.slint";
 import { MultiplayerState } from "../../../globals/multiplayer.slint";
 
-// The Conic Nexus library download screen
-// (src/overlays/dialogs/multiplayer/DownloadProgress.vue): the download glyph,
-// the phase / byte counter pair and the progress bar beside it, then the
-// red-outlined "Stop download" button.
+// The Conic Nexus library download screen: the download glyph, the phase / byte
+// counter pair and the progress bar beside it, then the red-outlined "Stop
+// download" button.
 export component MultiplayerDownloadProgress inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
 
-    // `onMounted(async () => { ... downloadTask.start() })` — the screen mounts
-    // when the description's "Start download" swaps it in.
+    // The screen mounts when the description's "Start download" swaps it in.
     init => { MultiplayerState.start-download(); }
 
     // `display: flex; align-items: center` — the icon is the taller of the two,
@@ -37,7 +35,7 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
             horizontal-stretch: 1;
             alignment: center;
 
-            // `p { display: flex; justify-content: space-between; align-items: end }`.
+            // The phase on the left and the counter on the right, bottom-aligned.
             HorizontalLayout {
                 alignment: space-between;
                 cross-axis-alignment: end;
@@ -47,13 +45,13 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
                     text: MultiplayerState.download-phase-text;
                     font-size: 16px;
                     line-height-factor: 1;
-                    // The Vue's flex row shrinks the two spans; the headline
-                    // wraps rather than pushing the counter out of the panel.
+                    // The headline wraps rather than pushing the counter out of
+                    // the panel.
                     wrap: word-wrap;
                     color: Theme.default-text-color.transparentize(0.1);
                 }
 
-                // `v-if="progressBar.value && progressBar.max"`.
+                // Shown while the byte counter has a value and a maximum.
                 if MultiplayerState.show-download-bytes : Text {
                     text: MultiplayerState.download-value-text + " / " + MultiplayerState.download-max-text;
                     font-size: 14px;
@@ -72,14 +70,13 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
         }
     }
 
-    // `div.buttons { margin-top: 16px; display: flex; gap: 12px }` with a lone
-    // `BaseButton` in it — so the 16px is padding below and the row is the
-    // button itself, the `gap` being dead for a single child either way.
+    // The 16px above the button is padding below, and the row is the button
+    // itself; the 12px gap is dead for a single child.
     actions := HorizontalLayout {
         padding-top: 16px;
         spacing: 12px;
 
-        // `.stop`: a red outline that fills red on hover.
+        // A red outline that fills red on hover.
         BaseButton {
             horizontal-stretch: 1;
             text: @tr("Multiplayer" => "Stop download");

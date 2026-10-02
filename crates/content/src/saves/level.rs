@@ -17,7 +17,8 @@ use crate::saves::nbt::modify_nbt;
 
 /// Get level data
 ///
-/// Note: This function will return the `Data` tag in `level.dat`
+/// Note: This function returns the `level.dat` root compound; the level fields
+/// live under its `Data` tag.
 pub fn parse_level_data<P: AsRef<Path>>(leveldat_path: P) -> Result<Value> {
     let file = fs::File::open(leveldat_path)?;
     let mut decoder = GzDecoder::new(file);

@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// Game view state (mirrors the Vue game stores + composables).
+// Game view state.
 //
 // Domain state (the instance list, the current instance, accounts) lives in
 // Rust and is pushed into this global; pure-UI state (search query, sort/group
@@ -19,8 +19,7 @@ export struct GameRow {
     key: string,
     /// Identity of the *rendered* row, `<group-key>:<instance-id>` for cards and
     /// the group key for headers. A starred instance is listed twice (in its
-    /// group and in "all"), so the instance id alone is not unique — this is the
-    /// Vue `data-key` (see `InstancesList.vue`).
+    /// group and in "all"), so the instance id alone is not unique.
     uid: string,
     /// Row position and height inside the list content (Rust lays the list out
     /// so the view can position rows absolutely and compute the parallax rail).
@@ -60,9 +59,9 @@ export struct GameRow {
     /// Rust flips it one frame after the row appears in the model, which is what
     /// triggers the animation.
     appear: bool,
-    /// Whether this row's next position change animates like the Vue FLIP — the
-    /// 400ms `cubic-bezier(0.22,1,0.36,1)` a reordered list travels with — rather
-    /// than the 300ms `cubic-bezier(0.33,1,0.68,1)` of a group collapse.
+    /// Whether this row's next position change animates the 400ms
+    /// `cubic-bezier(0.22,1,0.36,1)` a reordered list travels with, rather than
+    /// the 300ms `cubic-bezier(0.33,1,0.68,1)` of a group collapse.
     flip: bool,
 }
 
@@ -83,8 +82,8 @@ export struct AccountItem {
 /// Slint evaluates `@tr` bindings again when the locale changes, so keeping the
 /// formatting here (rather than in Rust) preserves runtime language switching.
 export global GameTime {
-    /// A year-month-day date (the Vue `game.time.yearMonthDay`), used for the
-    /// relative times below and for the release dates in the version chooser.
+    /// A year-month-day date, used for the relative times below and for the
+    /// release dates in the version chooser.
     public pure function year-month-day(month: int, day: int, year: int) -> string {
         return @tr("GameTime" => "{}/{}/{}", month, day, year);
     }
@@ -130,20 +129,18 @@ export global GameTime {
     }
 }
 
-/// Entrance animation state of the game view (`GameView.vue`'s gsap timeline).
+/// Entrance animation state of the game view.
 ///
 /// `GameView` resets `played` to false on every instantiation and flips it true
-/// once the list has been measured, exactly like the Vue `onMounted` waiting for
-/// the footer/list `ready` promises before playing the timeline. Every animated
-/// intro property in the game view reads it; the ordering of the gsap timeline
-/// (the list starting 50ms in, the cards 115ms after that, the footer's inner
-/// rows staggered) is expressed as the `delay` of each `animate`.
+/// once the list has been measured. Every animated intro property in the game
+/// view reads it; the ordering of the intro (the list starting 50ms in, the
+/// cards 115ms after that, the footer's inner rows staggered) is expressed as
+/// the `delay` of each `animate`.
 export global GameIntro {
     in-out property <bool> played: false;
 }
 
 export global GameState {
-    // ----- instance list -----
     in-out property <[GameRow]> rows: [];
     /// Total scrollable height of the instance list content (gap top + rows +
     /// gap bottom).
@@ -159,11 +156,10 @@ export global GameState {
     // "none" | "loader"
     in-out property <string> group-mode: "none";
 
-    // ----- current instance summary -----
     in-out property <bool> has-current: false;
     in-out property <string> current-name: "";
     /// The current instance's id, which the launch view resolves back into an
-    /// `Instance` (the Vue's `instanceStore.currentInstance`).
+    /// `Instance`.
     in-out property <string> current-id: "";
     in-out property <string> current-minecraft: "";
     in-out property <bool> current-has-loader: false;
@@ -179,14 +175,13 @@ export global GameState {
     in-out property <string> current-playtime-value: "";
     in-out property <bool> current-starred: false;
 
-    // ----- current instance content counts -----
     in-out property <int> content-saves: 0;
     in-out property <int> content-mods: 0;
     in-out property <int> content-resourcepacks: 0;
     in-out property <int> content-screenshots: 0;
     /// The icons the game view's preview rows draw — up to five of each kind,
-    /// in a 20px circle (`InstanceSummary.vue`'s `.content-img` run). Decoded
-    /// by `content.rs`, which owns the content caches.
+    /// in a 20px circle. Decoded by `content/`, which owns the content
+    /// caches.
     in-out property <[image]> preview-saves: [];
     in-out property <[image]> preview-mods: [];
     in-out property <[image]> preview-resourcepacks: [];
@@ -196,21 +191,19 @@ export global GameState {
     // Rust derives it from the language so it is not a gettext key.
     in-out property <string> count-unit: "";
 
-    // ----- accounts (footer) -----
     in-out property <[AccountItem]> accounts: [];
     in-out property <bool> has-account: false;
     in-out property <string> current-account-key: "";
     in-out property <string> current-account-name: "";
     in-out property <string> current-account-kind: "";
     /// The 56px head on the footer's avatar. The wide Steve while no account is
-    /// selected, which is what the Vue's logged-out branch passes.
+    /// selected.
     in-out property <image> current-account-avatar;
 
     // Called once at startup and whenever something changed on disk.
     callback refresh();
-    // An account was added or removed: pick one when none is selected (the
-    // Vue store's `selectNextAccount`). Rust owns the config, so this runs
-    // there rather than in the dialog's script.
+    // An account was added or removed: pick one when none is selected. Rust
+    // owns the config, so this runs there rather than in the dialog's script.
     callback select-first-account();
     // An instance card was clicked.
     callback select-instance(string);

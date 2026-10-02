@@ -6,12 +6,11 @@
 
 use super::*;
 
-/// Opens the overlay on the current instance (`useInstanceSettings().value =
-/// true`, from the game view's settings button).
+/// Opens the overlay on the current instance, from the game view's settings
+/// button.
 ///
-/// The read of `instance.toml` runs on the runtime, as in the original where it
-/// was a Tauri command off the UI thread, and the fields are filled in on the
-/// far side of it.
+/// The read of `instance.toml` runs on the runtime, and the fields are filled
+/// in on the far side of it.
 pub fn open(ui: &App) {
     let id = ui.global::<GameState>().get_current_id();
     if id.is_empty() {
@@ -67,7 +66,7 @@ pub(crate) fn apply(state: &InstanceSettingsState, instance: &Instance) {
 ///
 /// Every number is a string because `TextInput` edits text (see
 /// `globals/instance-settings.slint`); an `Option` the instance never set is an
-/// empty field, which is what the Vue's `<input>` shows its placeholder in.
+/// empty field, which is where the placeholder shows.
 pub(crate) fn apply_launch(state: &InstanceSettingsState, config: &InstanceConfig) {
     let launch = &config.launch_config;
     state.set_use_as_launcher_background(config.use_as_launcher_background);
@@ -79,9 +78,9 @@ pub(crate) fn apply_launch(state: &InstanceSettingsState, config: &InstanceConfi
     state.set_skip_file_check(launch.skip_check_files.unwrap_or(false));
     state.set_auto_memory(launch.auto_memory.unwrap_or(false));
     state.set_max_memory(number(launch.max_memory).into());
-    // An unset collector is an empty string rather than the default one: the
-    // Vue's select shows no option highlighted in that case, and its "is this
-    // still the default?" test is `gc === "G1"`, which an unset `gc` fails.
+    // An unset collector is an empty string rather than the default one, so no
+    // option is highlighted and the "is this still the default?" test against
+    // `"G1"` fails, which is what an unset `gc` should do.
     state.set_gc(match launch.gc {
         Some(ref gc) => config_bridge::gc_to_str(gc).into(),
         None => "".into(),
@@ -119,11 +118,11 @@ pub(crate) fn number(value: Option<usize>) -> String {
 
 /// A field's text as the number it names.
 ///
-/// A blank field is `None`, which clears the setting — the Vue's `v-model.number`
-/// leaves a blank field blank rather than making it zero. Anything else that does
-/// not parse keeps `previous`, the way `config_bridge::parse_usize_keep` does for
-/// the settings screen: a field mid-edit is briefly unparseable, and a save must
-/// not throw the setting away over it.
+/// A blank field is `None`, which clears the setting rather than making it
+/// zero. Anything else that does not parse keeps `previous`, the way
+/// `config_bridge::parse_usize_keep` does for the settings screen: a field
+/// mid-edit is briefly unparseable, and a save must not throw the setting away
+/// over it.
 pub(crate) fn parse_number(value: &str, previous: Option<usize>) -> Option<usize> {
     let value = value.trim();
     if value.is_empty() {
@@ -134,9 +133,11 @@ pub(crate) fn parse_number(value: &str, previous: Option<usize>) -> Option<usize
 
 /// The instance's config with the overlay's edits merged into it.
 ///
-/// Only what the overlay shows is read back: the runtime, the group and the
-/// starred flag are taken from the config that was just re-read from disk, so
-/// nothing the UI does not touch can be lost through it.
+/// Only what the overlay shows is read back: the name, `use_as_launcher_background`
+/// and the launch settings are replaced, and the rest of the config — the icon,
+/// the runtime and the group (which carries the starred flag) — is kept from the
+/// instance the overlay opened with, so nothing the UI does not touch can be
+/// lost through it.
 pub(crate) fn collect(state: &InstanceSettingsState, mut config: InstanceConfig) -> InstanceConfig {
     config.name = state.get_name().to_string();
     config.use_as_launcher_background = state.get_use_as_launcher_background();
@@ -146,10 +147,9 @@ pub(crate) fn collect(state: &InstanceSettingsState, mut config: InstanceConfig)
     let mut previous = std::mem::take(&mut config.launch_config);
     let launch = InstanceLaunchConfig {
         enable_instance_specific_settings: state.get_enable_specific(),
-        // Not a field of the Vue's TypeScript type, and the Vue replaces the
-        // whole `launch_config` on every write — which silently drops it. The
-        // launcher reads it (`instance_java_path`), so it is carried over here
-        // instead of cleared.
+        // The whole `launch_config` is replaced on every write, which would
+        // silently drop this field. The launcher reads it (`instance_java_path`),
+        // so it is carried over here instead of cleared.
         java_path: previous.java_path.take(),
         auto_memory: Some(state.get_auto_memory()),
         max_memory: parse_number(state.get_max_memory().as_str(), previous.max_memory),
@@ -180,9 +180,9 @@ pub(crate) fn collect(state: &InstanceSettingsState, mut config: InstanceConfig)
 }
 
 /// Whether the game view shows something an edit changed: the instance's name
-/// (the summary's title and its list card) and the two flags the window
-/// background resolves on. Everything else the overlay edits is read when the
-/// game is launched.
+/// (the summary's title and its list card) and `use_as_launcher_background`, the
+/// flag the window background resolves on. Everything else the overlay edits is
+/// read when the game is launched.
 pub(crate) fn touches_game_view(before: &InstanceConfig, after: &InstanceConfig) -> bool {
     before.name != after.name
         || before.use_as_launcher_background != after.use_as_launcher_background
@@ -225,9 +225,8 @@ pub(crate) fn schedule_save(
             if !touches {
                 return;
             }
-            // The Vue edits the very object its Pinia store holds, so the
-            // summary and the list card re-render off it for free. Here the
-            // store is on disk, so the game view is asked to read it again.
+            // The store is on disk, so the game view is asked to read it again
+            // for the summary and the list card to re-render.
             let _ = weak.upgrade_in_event_loop(move |ui| ui.global::<GameState>().invoke_refresh());
         });
     });
@@ -298,9 +297,9 @@ pub(crate) fn setup_form(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
 
-    // `resetAdvanceOptions`: the nine advanced fields back to what a fresh config
-    // holds, and nothing else — the window size, the memory and the file check
-    // are left as they are.
+    // The nine advanced fields back to what a fresh config holds, and nothing
+    // else — the window size, the memory and the file check are left as they
+    // are.
     {
         let weak = ui.as_weak();
         let save_timer = Rc::clone(&save_timer);
@@ -336,8 +335,8 @@ pub(crate) fn setup_form(ui: &App, config: Rc<RefCell<config::Config>>) {
 /// The instance background: the native picker and the red remove button.
 pub(crate) fn setup_background(ui: &App) {
     let state = ui.global::<InstanceSettingsState>();
-    // `getBackground()`: the native picker, the copy into the instance, and a
-    // re-list so the window background picks the new file up.
+    // The native picker, the copy into the instance, and a re-list so the
+    // window background picks the new file up.
     {
         let weak = ui.as_weak();
         state.on_pick_background(move |filter_name| {
@@ -375,8 +374,7 @@ pub(crate) fn setup_background(ui: &App) {
         });
     }
 
-    // The red "Remove image" button, and the Vue's `removeBackground` +
-    // `loadInstances()` after it.
+    // The red "Remove image" button.
     {
         let weak = ui.as_weak();
         state.on_remove_background(move || {
@@ -408,7 +406,7 @@ pub(crate) fn setup_background(ui: &App) {
 /// The overlay's own close, the open-delete hand-off, and the delete dialog.
 pub(crate) fn setup_delete(ui: &App) {
     let state = ui.global::<InstanceSettingsState>();
-    // `openDeleteInstanceDialog`, which closes this overlay first.
+    // Closes this overlay first, then opens the delete dialog.
     {
         let weak = ui.as_weak();
         state.on_open_delete(move || {

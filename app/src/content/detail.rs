@@ -9,13 +9,10 @@ use super::*;
 /// Opens a project's detail panel from outside the content overlays — the
 /// command palette's "open" on a Modrinth or CurseForge search result.
 ///
-/// The Vue writes the id into `useShowContentDetails().value.{modrinth,curseforge}.mod`
-/// and the detail component watches it; here a card click and a palette result
-/// take the same `open_detail` path, so the only thing to set up first is the
-/// kind and the platform. Both are the mods' whatever the project actually is:
-/// the Vue has a `mod` slot per site and fills it from a search that was sent
-/// without facets, so a resource pack opened this way opens the *mod* panel,
-/// exactly as it does there.
+/// A card click and a palette result take the same `open_detail` path, so the
+/// only thing to set up first is the kind and the platform. Both are the mods'
+/// whatever the project actually is: a palette search is sent without facets,
+/// so a resource pack opened this way opens the *mod* panel.
 pub(crate) fn open_project_detail(ui: &App, platform: &str, id: &str) {
     let platform = if platform == "curseforge" {
         Platform::CurseForge
@@ -55,7 +52,7 @@ pub(crate) fn open_detail(ui: &App, platform: Platform, id: String) {
     // ever draws the download button.
     ui_state.set_detail_can_remove(kind == RemoteKind::Mods);
     // The Modrinth panels render the body's box unconditionally, the CurseForge
-    // ones behind `v-if="modDescription"` — an empty body still draws an empty
+    // ones only when there is a description — an empty body still draws an empty
     // surface0 box on the first, and nothing on the second.
     ui_state.set_detail_body_always(platform == Platform::Modrinth);
     ui_state.set_detail_installed(false);
@@ -95,9 +92,10 @@ pub(crate) fn open_detail(ui: &App, platform: Platform, id: String) {
                     ui_state.set_detail_followers(SharedString::from(loaded.followers));
                     ui_state.set_detail_has_followers(loaded.has_followers);
                     ui_state.set_detail_description(SharedString::from(loaded.description));
-                    // The string goes in for the record — the panel's own `v-if`
-                    // reads it, and so does anything that wants to know whether
-                    // there is a body at all — and the layout follows from it.
+                    // The string goes in for the record — the panel's own
+                    // conditional reads it, and so does anything that wants to
+                    // know whether there is a body at all — and the layout
+                    // follows from it.
                     ui_state.set_detail_body(SharedString::from(loaded.body.as_str()));
                     set_detail_body(&ui, &loaded.body, loaded.body_is_html);
                     ui_state.set_detail_gallery(ModelRc::from(Rc::new(VecModel::from(
@@ -131,9 +129,9 @@ pub(crate) struct LoadedDetail {
     has_followers: bool,
     description: String,
     body: String,
-    /// Whether `body` is HTML rather than Markdown. A CurseForge summary arrives
-    /// as HTML, a Modrinth body as Markdown, and the two go through different
-    /// parsers.
+    /// Whether `body` is HTML rather than Markdown. A CurseForge description
+    /// arrives as HTML, a Modrinth body as Markdown, and the two go through
+    /// different parsers.
     body_is_html: bool,
     gallery: Vec<PendingImage>,
 }
@@ -155,7 +153,7 @@ pub(crate) async fn load_modrinth_detail(id: &str) -> Result<LoadedDetail, Strin
         .and_then(Value::as_str)
         .unwrap_or_default()
         .to_string();
-    // `formatGithubRepo`: a GitHub URL is shown as `owner/repo`.
+    // A GitHub URL is shown as `owner/repo`.
     let github = github_repo(&source_url);
     let gallery: Vec<PendingImage> = project
         .get("gallery")
@@ -183,10 +181,9 @@ pub(crate) async fn load_modrinth_detail(id: &str) -> Result<LoadedDetail, Strin
             .get("followers")
             .is_some_and(|value| !value.is_null()),
         description: crate::json::string(&project, "description"),
-        // The README, as the project ships it. Nothing flattens it any more: the
-        // body is parsed and laid out by `slint-markdown` and drawn by
-        // `markdown-body.slint`, so the markup reaches the panel intact for the
-        // first time since the Vue's `v-html`.
+        // The README, as the project ships it. The body is parsed and laid out
+        // by the `markdown` crate and drawn by `markdown-body.slint`, so the
+        // markup reaches the panel intact.
         body: crate::json::string(&project, "body"),
         body_is_html: false,
         gallery,
@@ -216,8 +213,8 @@ pub(crate) async fn load_curseforge_detail(id: &str) -> Result<LoadedDetail, Str
         .get("data")
         .and_then(Value::as_str)
         .unwrap_or_default();
-    // The Vue refuses a description carrying a `<script>` or `<style>` block
-    // outright instead of sanitising it.
+    // A description carrying a `<script>` or `<style>` block is refused outright
+    // rather than sanitised.
     let unsafe_html = {
         let lower = html.to_lowercase();
         lower.contains("<script") || lower.contains("<style")
@@ -234,7 +231,7 @@ pub(crate) async fn load_curseforge_detail(id: &str) -> Result<LoadedDetail, Str
         source_url,
         downloads: number_label(mod_info.get("downloadCount").and_then(Value::as_i64)),
         followers: number_label(thumbs_up),
-        // The Vue only draws the thumbs-up entry when it is non-zero.
+        // The thumbs-up entry is only drawn when it is non-zero.
         has_followers: thumbs_up.is_some_and(|count| count > 0),
         description: crate::json::string(&mod_info, "summary"),
         body: if unsafe_html {
@@ -243,7 +240,7 @@ pub(crate) async fn load_curseforge_detail(id: &str) -> Result<LoadedDetail, Str
             html.trim().to_string()
         },
         body_is_html: true,
-        // The Vue's galleries are a Modrinth-only feature.
+        // Galleries are a Modrinth-only feature.
         gallery: Vec::new(),
     })
 }

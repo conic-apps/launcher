@@ -293,8 +293,8 @@ fn convert<'a>(node: &'a Node<'a>, list_depth: usize, out: &mut Sink, footnotes:
             });
         }
 
-        // A list item outside a list. Only the HTML front end can produce this,
-        // and it renders the item's contents.
+        // A list item outside a list, which comrak's parser does not build but a
+        // hand-made arena could. Keep the item's contents.
         NodeValue::Item(_) => {
             let blocks = inner_blocks(node, list_depth, footnotes);
             out.extend(blocks);

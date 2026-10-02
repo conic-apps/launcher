@@ -15,10 +15,9 @@ component MetadataEntry inherits Rectangle {
     in property <string> icon: "";
     in property <string> text: "";
     in property <bool> link: false;
-    /// The Vue puts a 1px hairline in front of every entry but the first
-    /// (`.metadata > * + *::before`), *inside* the entry and followed by its
-    /// own 12px margin. With the row's 12px gap that is 25px between the
-    /// entries, not 13px.
+    /// A 1px hairline in front of every entry but the first, *inside* the entry
+    /// and followed by its own 12px margin. With the row's 12px gap that is 25px
+    /// between the entries, not 13px.
     in property <bool> divider: false;
     callback clicked;
 
@@ -28,8 +27,8 @@ component MetadataEntry inherits Rectangle {
     // (`passes/default_geometry.rs`), so a bare `self.preferred-width` here
     // measured 0 and every entry of the row was drawn at the same place.
     width: entry.preferred-width + (root.divider ? 13px : 0px);
-    // The Vue's `.metadata` row is as tall as its tallest child, which is the
-    // 20px icon — the 14px label sits centred in it.
+    // The row is as tall as its tallest child, the 20px icon; the 14px label
+    // sits centred in it.
     height: 20px;
     background: transparent;
 
@@ -47,7 +46,7 @@ component MetadataEntry inherits Rectangle {
         alignment: center;
 
         AppIcon {
-            // `:deep(svg) { stroke: var(--ctp-mauve); fill: var(--ctp-mauve) }`
+            // Mauve in both stroke and fill.
             name: root.icon;
             size: 20px;
             icon-color: Theme.mauve;
@@ -56,7 +55,7 @@ component MetadataEntry inherits Rectangle {
         Text {
             text: root.text;
             font-size: 14px;
-            // `a { color: var(--ctp-blue) }`
+            // Links are blue.
             color: root.link ? Theme.blue : Theme.default-text-color.transparentize(0.1);
             vertical-alignment: center;
             height: 20px;
@@ -77,42 +76,39 @@ component DetailButton inherits Rectangle {
     height: 36px;
     border-radius: 6px;
     opacity: root.on ? 1.0 : 0.6;
-    // `button.remove { background: var(--ctp-surface0); border: 1px solid var(--ctp-red) }`
-    // — and every other action button is the Latte teal the stylesheet picks
-    // once in `:root`, so it stays teal in every palette.
+    // The remove button is surface0 with a red outline; every other action
+    // button is the Latte teal, which stays teal in every palette.
     background: root.kind == "remove" ? Theme.surface-0 : Theme.latte-teal;
     border-width: root.kind == "remove" ? 1px : 0px;
     border-color: Theme.red;
 
-    // `button { color: #fff }`, with `.remove:hover` and `.heart-favorited`
-    // the only two that leave it.
+    // White ink, except a hovered remove button and a favourited heart, which
+    // turn red.
     private property <color> ink:
         root.kind == "remove"
             ? (touch.has-hover ? Theme.red : white)
             : root.kind == "heart" && root.favorited ? Theme.red : white;
 
     HorizontalLayout {
-        // `button { display: flex; align-items: center; justify-content: center;
-        // gap: 4px }` — the row fills the button and the glyph and the label are
-        // centred in it as one run. Sizing the row to its content instead
-        // (`x: (parent.width - self.width) / 2`) left the two at the button's
-        // ends for the 120px labelled buttons, and the lone heart off-centre.
+        // The row fills the button and the glyph and the label are centred in it
+        // as one run, 4px apart. Sizing the row to its content instead left the
+        // two at the button's ends for the 120px labelled buttons, and the lone
+        // heart off-centre.
         x: 0;
         y: 0;
         width: parent.width;
         height: parent.height;
         spacing: 4px;
-        // `justify-content: center` — the main (horizontal) axis.
+        // The main (horizontal) axis is centred.
         alignment: center;
-        // `align-items: center` — the cross axis. `alignment` is the main
-        // (horizontal) axis, and on its own it leaves the 16px glyph at the top
-        // of the 36px button instead of centred on the label.
+        // The cross axis is centred too: `alignment` is the main (horizontal)
+        // axis, and on its own it leaves the 16px glyph at the top of the 36px
+        // button instead of centred on the label.
         cross-axis-alignment: center;
 
         if root.kind == "heart" : AppIcon {
-            // The Vue passes no `:size`, so these are `AppIcon`'s default 20px —
-            // the glyph inside the view box is smaller than that, which is what
-            // makes 16px look too small.
+            // `AppIcon`'s default 20px: the glyph inside the view box is smaller
+            // than that, which is what makes 16px look too small.
             name: root.favorited ? "heart" : "heart-outline";
             size: 20px;
             icon-color: root.ink;
@@ -144,20 +140,20 @@ component DetailButton inherits Rectangle {
     }
 }
 
-// The six detail panels (`Content{Modrinth,Curseforge}{Mod,Resourcepack,Pack}
-// Details.vue`).
+// The six detail panels.
 //
-// The Vue has six near-identical files: the same header, the same action row
-// and the same body, differing only in which API fills them and in two
-// conditionals — whether the panel offers a remove button (mods only) and
-// whether it has a gallery (Modrinth only). They are one component here, with
-// the differences carried by `ContentState`; Rust already knows which of the
-// six is open, so nothing is lost but about 1 200 lines of duplication.
+// The same header, the same action row and the same body serve all six,
+// differing only in which API fills them and in two conditionals — whether the
+// panel offers a remove button (mods only) and whether it has a gallery
+// (Modrinth only). The differences are carried by `ContentState`; Rust already
+// knows which of the six is open.
+//
 // One of the action row's buttons. `kind` picks the fill and the glyph: the
-// heart is a lavender square, the download a lavender pill with a label, and
+// heart is a Latte teal square, the download a Latte teal pill with a label, and
 // the remove a surface0 pill with a red outline that turns red on hover.
-// One entry of the metadata row. The Vue separates them with a CSS `::before`
-// hairline on every child but the first, which is the `divider` here.
+//
+// One entry of the metadata row. The entries are separated by a hairline on
+// every one but the first, which is the `divider` here.
 component DetailBody inherits Rectangle {
     width: 100%;
     height: 100%;
@@ -168,17 +164,15 @@ component DetailBody inherits Rectangle {
     scroller := ScrollView {
         details-column := VerticalLayout {
             ContentTitleBar {
-                // `ContentModrinth/CurseforgePackDetails.vue` open with
-                // `<AppIcon name="package">`; the mod and resource-pack panels
-                // with `extension-puzzle`.
+                // The pack panels open with a package glyph; the mod and
+                // resource-pack panels with `extension-puzzle`.
                 icon: ContentState.remote-kind == "packs" ? "package" : "extension-puzzle";
                 title: ContentText.detail-title(ContentState.remote-kind);
             }
 
-            // `.search-status { padding: 40px 0 }` with the spinner as its only
-            // child: 112px, full panel width. The list panels use the same class
-            // but wrap the spinner in a `.loading` box — that one is
-            // `ContentLoading`, 144px tall with a 64px mantle square.
+            // 40px of padding above and below the spinner: 112px, full panel
+            // width. The list panels instead use `ContentLoading`, 144px tall
+            // with a 64px mantle square.
             if ContentState.detail-loading : Rectangle {
                 width: 100%;
                 height: 112px;
@@ -198,9 +192,9 @@ component DetailBody inherits Rectangle {
                 height: self.preferred-height;
                 background: transparent;
 
-                // `.details { padding: 8px 24px }`. The Vue gives the action
-                // row, the body and the gallery a 16px `margin-top` each, which
-                // is the layout's spacing.
+                // 8px vertically and 24px horizontally. The action row, the body
+                // and the gallery are each separated by the layout's 16px
+                // spacing.
                 details-inner := VerticalLayout {
                     padding-left: 24px;
                     padding-right: 24px;
@@ -208,12 +202,11 @@ component DetailBody inherits Rectangle {
                     padding-bottom: 8px;
                     spacing: 16px;
 
-                    // ----- the header -----
                     HorizontalLayout {
                         height: self.preferred-height;
                         spacing: 16px;
 
-                        // `.icon img { width: 88px; height: 88px; border-radius: 12px }`
+                        // An 88px rounded icon.
                         Rectangle {
                             width: 88px;
                             height: 88px;
@@ -229,18 +222,15 @@ component DetailBody inherits Rectangle {
                             }
                         }
 
-                        // `.info { display: flex; flex-direction: column; justify-content: center }`
-                        // — `justify-content` is the main (vertical) axis, so the
-                        // three lines are centred in the 88px the icon gives the
-                        // header, and the 8px between them is the name's and the
-                        // metadata's `margin-bottom` (there is no `gap`).
+                        // The three lines are centred in the 88px the icon gives
+                        // the header, with 8px between them.
                         VerticalLayout {
                             horizontal-stretch: 1;
                             vertical-stretch: 1;
                             spacing: 8px;
                             alignment: center;
 
-                            // `.project-name { font-size: 24px; font-weight: 600; margin-bottom: 8px }`
+                            // The name is 24px, weight 600.
                             if ContentState.detail-title != "" : Text {
                                 text: ContentState.detail-title;
                                 font-size: 24px;
@@ -250,15 +240,14 @@ component DetailBody inherits Rectangle {
                                 vertical-alignment: center;
                             }
 
-                            // `.metadata { font-size: 14px; margin-bottom: 8px; gap: 12px }`
-                            // with a 1px divider before every entry but the first.
+                            // 12px between the entries, with a 1px divider before
+                            // every one but the first.
                             metadata := FlexboxLayout {
                                 flex-wrap: wrap;
                                 height: 20px;
                                 spacing: 12px;
-                                // `align-items: center` — the cross axis. The main
-                                // axis has no `justify-content`, so the entries
-                                // start at the left.
+                                // The entries are centred on the cross axis and
+                                // start at the left on the main axis.
                                 cross-axis-alignment: center;
 
                                 if ContentState.detail-source != "" : MetadataEntry {
@@ -284,9 +273,8 @@ component DetailBody inherits Rectangle {
                                 }
                             }
 
-                            // `.description { font-size: 14px }` — a wrapping
-                            // block with no set height, unlike the card's, which
-                            // is one elided line.
+                            // A wrapping block with no set height, unlike the
+                            // card's, which is one elided line.
                             if ContentState.detail-description != "" : Text {
                                 text: ContentState.detail-description;
                                 font-size: 14px;
@@ -296,36 +284,31 @@ component DetailBody inherits Rectangle {
                         }
                     }
 
-                    // ----- the action row -----
                     HorizontalLayout {
-                        // `.actions-section { gap: 8px }`
+                        // 8px between the buttons.
                         height: 36px;
                         spacing: 8px;
                         alignment: start;
 
-                        // `button.heart { width: 36px; height: 36px }`
+                        // The heart is a 36px square.
                         DetailButton {
                             kind: "heart";
                             label: "";
                             width: 36px;
-                            // `button.heart-favorited { color: var(--ctp-red) }`
                             favorited: ContentState.detail-favorited;
                             on: true;
                             clicked => { ContentState.toggle-favorite(ContentState.detail-id); }
                         }
 
-                        // The Vue swaps three buttons in and out:
-                        // `checkingInstalled` → a spinner, `installed` → remove,
-                        // otherwise → download. Only a mod panel has the
-                        // installed state at all; a pack or resource-pack panel
-                        // draws the plain download button.
+                        // Three buttons swap in and out: checking → a spinner,
+                        // installed → remove, otherwise → download. Only a mod
+                        // panel has the installed state at all; a pack or
+                        // resource-pack panel draws the plain download button.
                         if ContentState.detail-can-remove && ContentState.detail-checking-installed : Rectangle {
                             width: 120px;
                             height: 36px;
                             border-radius: 6px;
-                            // `button.download-loading`, which `details.less:17-34`
-                            // gives the same `--ctp-latte-teal` as the heart, the
-                            // download and the remove button.
+                            // The same Latte teal as the heart and the download.
                             background: Theme.latte-teal;
                             opacity: 0.6;
 
@@ -356,8 +339,7 @@ component DetailBody inherits Rectangle {
                             clicked => { ContentState.download(); }
                         }
 
-                        // `.installed-version { font-size: 13px; font-style: italic;
-                        // opacity: .6 }`
+                        // The installed version is 13px italic at 60%.
                         if ContentState.detail-installed-version != "" : Text {
                             text: @tr("Installed: {}", ContentState.detail-installed-version);
                             font-size: 13px;
@@ -370,10 +352,8 @@ component DetailBody inherits Rectangle {
                         }
                     }
 
-                    // ----- the body -----
-                    // The CurseForge panels put the box behind `v-if`, the
-                    // Modrinth ones do not — an empty body still draws the
-                    // surface0 box there (`ContentState.detail-body-always`).
+                    // An empty body still draws the surface0 box when
+                    // `ContentState.detail-body-always` is set.
                     if ContentState.detail-body != "" || ContentState.detail-body-always : markdown-body := MarkdownBody {
                         // The scroller's offset and height, for the body to cull
                         // against. The view is a grandchild of the scroller and
@@ -392,28 +372,23 @@ component DetailBody inherits Rectangle {
                             + markdown-body.y;
                     }
 
-                    // ----- the gallery (Modrinth projects) -----
                     if ContentState.detail-gallery.length > 0 : Rectangle {
-                        // `.gallery { padding: 16px; height: 252px }`
+                        // A 252px gallery with 16px of padding.
                         width: 100%;
                         height: 252px;
                         background: Theme.surface-0;
                         border-radius: 8px;
 
-                        // `.gallery-list { height: 100%; padding: 0 8px; gap: 12px;
-                        // align-items: center }` inside the 16px padding, so the
-                        // items start 24px in and the row is 220px tall. The Vue
-                        // scrolled this with a `ScrollViewHorizontal`, which is
-                        // what it is again here: the box clips, so a plain
-                        // `HorizontalLayout` in it would have shown the first few
-                        // shots and nothing else.
+                        // 8px inside the 16px padding, so the items start 24px
+                        // in and the row is 220px tall. The box clips, so a plain
+                        // `HorizontalLayout` would have shown the first few shots
+                        // and nothing else.
                         gallery-scroll := ScrollViewHorizontal {
                             x: 24px;
                             y: 16px;
                             width: parent.width - 48px;
                             height: parent.height - 32px;
-                            // `.gallery-list`'s own `padding: 0 8px`, against the
-                            // track rather than the row.
+                            // 8px against the track rather than the row.
                             scrollbar-left: 8px;
                             scrollbar-right: 8px;
 
@@ -421,7 +396,6 @@ component DetailBody inherits Rectangle {
                                 spacing: 12px;
                                 cross-axis-alignment: center;
 
-                                // `.gallery-item { height: calc(100% - 16px) }` —
                                 // 204px in the 220px row, centred.
                                 for shot in ContentState.detail-gallery : Rectangle {
                                     width: shot.ratio * 204px;

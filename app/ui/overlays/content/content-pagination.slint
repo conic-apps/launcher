@@ -13,7 +13,7 @@ component PageNumber inherits Rectangle {
     width: max(30px, self.preferred-width);
     height: 30px;
     border-width: 1px;
-    // `.active { border-color: var(--ctp-lavender); background: var(--ctp-lavender) }`
+    // The active page takes the lavender border and fill.
     border-color: root.active ? Theme.lavender : Theme.surface-1;
     border-radius: 6px;
     background: root.active ? Theme.lavender
@@ -31,21 +31,20 @@ component PageNumber inherits Rectangle {
     }
 
     touch := TouchArea {
-        // `.active { pointer-events: none }`
+        // The active page stops taking clicks.
         enabled: !root.active;
         clicked => { root.clicked(); }
     }
 }
 
-// The remote lists' page bar (`ContentPagination.vue`), drawn only when there
-// is more than one page.
+// The remote lists' page bar, drawn only when there is more than one page.
 //
-// 30px-tall buttons in a centred row with a 6px gap and `20px 0 32px` padding;
-// the current page takes the lavender fill and stops taking clicks, an
-// ellipsis is a plain label in the same slot, and the two arrows are disabled
-// at the ends.
-// `button.page-number`, and the lavender `.active` state.
-// `button.page-nav` — a chevron in a 30px square, the left one mirrored.
+// 30px-tall buttons in a centred row with a 6px gap and 20px / 32px padding;
+// the current page takes the lavender fill and stops taking clicks, an ellipsis
+// is a plain label in the same slot, and the two arrows are disabled at the
+// ends.
+//
+// A chevron in a 30px square, the left one mirrored.
 component ArrowButton inherits Rectangle {
     in property <bool> flipped: false;
     in property <bool> disabled: false;
@@ -80,19 +79,18 @@ export component ContentPagination inherits Rectangle {
     in property <int> total-pages: 0;
     /// Whether this list's bar is the one on screen.
     ///
-    /// Each remote list owns a bar (`ContentModsModrinth.vue` and
-    /// `ContentModsCurseforge.vue` each mount their own), so a panel holds one
-    /// per list and only one of them is ever shown. `visible` alone is not
-    /// enough to take the others out of the layout: a hidden `ContentPagination`
-    /// still took its 82px in the scroller, which is the blank that was left
-    /// under the page buttons (and under a *local* list's last row, where both
-    /// bars are hidden). The height is therefore stated rather than inherited
-    /// from `self.preferred-height`, which cannot be read while overriding it.
+    /// Each remote list owns a bar, so a panel holds one per list and only one
+    /// of them is ever shown. `visible` alone is not enough to take the others
+    /// out of the layout: a hidden `ContentPagination` would still take its 82px
+    /// in the scroller, leaving a blank under the page buttons (and under a
+    /// *local* list's last row, where both bars are hidden). The height is
+    /// therefore stated rather than inherited from `self.preferred-height`,
+    /// which cannot be read while overriding it.
     in property <bool> shown: true;
 
     callback page-change(int);
 
-    /// `.pagination { padding: 20px 0 32px }` around the 30px buttons.
+    /// 20px above and 32px below the 30px buttons.
     private property <length> bar-height: 82px;
 
     width: 100%;
@@ -113,19 +111,17 @@ export component ContentPagination inherits Rectangle {
         }
 
         for page in root.pages : Rectangle {
-            // `.pagination button, .page-ellipsis { min-width: 30px }` — and 30px
-            // is what every slot comes to in practice, since a page button has no
-            // horizontal padding and its number is a few characters wide. It has
-            // to be given rather than measured: both of this wrapper's children
-            // are conditionals, and Slint measures such an element as zero (see
-            // the Slint notes in `slint/README.md`), which stacked every number
-            // on top of the first.
+            // 30px is what every slot comes to in practice, since a page button
+            // has no horizontal padding and its number is a few characters wide.
+            // It has to be given rather than measured: both of this wrapper's
+            // children are conditionals, and Slint measures such an element as
+            // zero, which stacked every number on top of the first.
             width: 30px;
             height: 30px;
             background: transparent;
 
             if page.page < 0 : Text {
-                // `.page-ellipsis` — a label in a page button's slot.
+                // An ellipsis in a page button's slot.
                 text: page.text;
                 font-size: 12px;
                 color: Theme.subtext-0;

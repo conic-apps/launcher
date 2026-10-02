@@ -11,14 +11,10 @@ use shared::UrlExtError;
 
 pub type Result<T> = result::Result<T, Error>;
 
-/// Every failure the account flows can end in, variant for variant as
-/// `crates/account/src/error.rs` declares it.
+/// Every failure the account flows can end in.
 ///
-/// The original derives `Serialize` (through `serde_with`) so a command can
-/// hand the error to the webview, where `crates/account/index.ts` models it as
-/// `{ kind, message }`. There is no IPC boundary here, so the derives are gone
-/// and callers read [`std::error::Error::to_string`] — the same text the
-/// frontend showed, because the messages are the originals'.
+/// These messages are user-visible: callers read them through
+/// [`ToString::to_string`], so they are worded to be shown as-is.
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Another login task is already running")]

@@ -36,7 +36,7 @@ pub fn setup(ui: &App) {
 /// Opening, joining, creating and leaving a room.
 pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
     let state = ui.global::<MultiplayerState>();
-    // The footer's connect button (`openConnect`).
+    // The footer's connect button.
     {
         let weak = ui.as_weak();
         state.on_open(move || {
@@ -58,7 +58,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             });
         });
     }
-    // The manager's `onMounted` (`multiplayerStore.init()`).
+    // The manager's one-time initialization.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -70,7 +70,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             push_refresh(&ui, &controller);
         });
     }
-    // `createRoom(profileName)`.
+    // Create a room with the current profile name.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -89,7 +89,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             });
         });
     }
-    // `submitJoin` + `joinRoom(code, profileName)`.
+    // Join a room with the entered code and the current profile name.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -121,7 +121,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
             });
         });
     }
-    // `leaveRoom()`.
+    // Leave the room and reset the session state.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -161,7 +161,7 @@ pub(crate) fn setup_session_actions(ui: &App, controller: Rc<Controller>) {
 /// The room code's copy button and its validity test.
 pub(crate) fn setup_code_actions(ui: &App) {
     let state = ui.global::<MultiplayerState>();
-    // `copyCode()`.
+    // Copy the room code to the clipboard.
     {
         let weak = ui.as_weak();
         state.on_copy_room_code(move || {
@@ -175,7 +175,7 @@ pub(crate) fn setup_code_actions(ui: &App) {
             state.set_code_copied(true);
         });
     }
-    // `codeInputValid = isRoomCodeValid(codeInput)`.
+    // Recompute the room code's validity as it changes.
     {
         let weak = ui.as_weak();
         state.on_code_input_changed(move || {
@@ -190,7 +190,7 @@ pub(crate) fn setup_code_actions(ui: &App) {
 /// The library download screen: start, cancel, and the dialog's close.
 pub(crate) fn setup_download_actions(ui: &App, controller: Rc<Controller>) {
     let state = ui.global::<MultiplayerState>();
-    // `DownloadProgress.vue`'s `onMounted` (`downloadTask.start()`).
+    // The download screen's startup.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -199,7 +199,7 @@ pub(crate) fn setup_download_actions(ui: &App, controller: Rc<Controller>) {
             start_download(&ui, &controller);
         });
     }
-    // `cancelDownload()`: stop the task, then fall back to the description.
+    // Stop the task, then fall back to the description.
     {
         let weak = ui.as_weak();
         let controller = Rc::clone(&controller);
@@ -222,8 +222,8 @@ pub(crate) fn setup_download_actions(ui: &App, controller: Rc<Controller>) {
     }
 }
 
-/// Stops the session (the original's `RunEvent::Exit` handler): the poll thread
-/// is joined and the Conic Nexus session is destroyed before the process goes.
+/// Stops the session at exit: the poll thread is joined and the Conic Nexus
+/// session is destroyed before the process goes.
 pub fn shutdown() {
     with_controller(|controller| controller.service.shutdown());
 }

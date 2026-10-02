@@ -2,28 +2,17 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The instance list's own state, kept between runs (`src/store/instance.ts`
-//! and `InstancesList.vue`'s `localStorage`).
+//! The instance list's own state, kept between runs.
 //!
-//! Four things survive a restart in the Vue, none of them in `config.toml`:
-//! which instance was selected (`currentInstanceId`), the list's sort order
-//! (`instancesSortMode`), its grouping (`instancesGroupMode`) and which groups
-//! were left open (`instancesGroupExpanded`). They went to the webview's local
-//! storage, which is per-webview and therefore invisible to anything else.
+//! Four things survive a restart, none of them in `config.toml`: which instance
+//! was selected, the list's sort order, its grouping and which groups were left
+//! open. They go to a file next to `config.toml` in the shared data directory,
+//! the arrangement `music`'s session already uses for the player.
 //!
-//! A native app has no such store, so the same four go to a file next to
-//! `config.toml` in the shared data directory — the arrangement
-//! `slint-music`'s `session` already established for the player. It is one of
-//! the few things the two frontends cannot share: the Tauri app cannot read this
-//! file, and this one cannot read the webview's storage, so a launcher that is
-//! run one way and then the other starts from the defaults.
-//!
-//! What is read back is deliberately forgiving. The Vue wrote each of the three
-//! scalars straight out and checked the value against its own list of modes on
-//! the way in, and wrapped the group map's `JSON.parse` in a `try` that
-//! discarded anything that was not an object of booleans; the same is done here,
-//! so a file written by an older build, or edited by hand, costs the defaults
-//! and nothing else.
+//! What is read back is deliberately forgiving: a `sort` or `group_mode` string
+//! that names no known mode falls back to that setting's default, so a file
+//! written by an older build, or edited by hand, loses only that one setting. A
+//! file that does not parse at all falls back to the defaults.
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -36,7 +25,7 @@ fn state_file() -> PathBuf {
     DATA_LOCATION.root.join("instance_view.json")
 }
 
-/// How the list is ordered (`InstancesList.vue`'s `SortMode`).
+/// How the list is ordered.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum SortMode {
     Name,
@@ -47,15 +36,11 @@ pub enum SortMode {
 }
 
 impl SortMode {
-    /// The one place the two spellings meet: the webview wrote `"lastplay"`
-    /// straight into `localStorage`, while the listing's own enum spells it
-    /// `LastPlayed`.
+    /// Parses a saved sort key, falling back to the default for anything else.
     ///
-    /// The Vue checked a read value against its list of modes
-    /// (`SORT_MODES.includes(…)`) and fell back to `"playtime"` for anything
-    /// else. The saved file carries the raw string and the check happens here
-    /// rather than in `serde`, because a value that does not parse costs *this*
-    /// one setting and nothing else — the Vue's read was per value too.
+    /// This is the one place the saved spelling (`lastplay`) meets the enum's
+    /// (`LastPlay`). The check happens here rather than in `serde`, because a
+    /// value that does not parse costs *this* one setting and nothing else.
     pub fn from_key(key: &str) -> Self {
         match key {
             "name" => Self::Name,
@@ -66,7 +51,7 @@ impl SortMode {
     }
 }
 
-/// How the list is grouped (`InstancesList.vue`'s `GroupMode`).
+/// How the list is grouped.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum GroupMode {
     #[default]
@@ -75,8 +60,7 @@ pub enum GroupMode {
 }
 
 impl GroupMode {
-    /// The `GROUP_MODES.includes(…)` of the original, with the same per-value
-    /// fallback.
+    /// Parses a saved group key, falling back to the default per value.
     pub fn from_key(key: &str) -> Self {
         match key {
             "loader" => Self::Loader,
@@ -85,19 +69,17 @@ impl GroupMode {
     }
 }
 
-/// The four saved values.
+/// The saved values.
 ///
-/// Each is a string rather than an enum on purpose: the Vue read its two modes
-/// with an `includes` check and its group map inside a `try`, so a hand-edited or
-/// out-of-date file lost the one value that was wrong and kept the rest. A
-/// `serde`-derived enum would take the whole file down with it.
+/// `sort` and `group_mode` are strings rather than enums on purpose: a
+/// hand-edited or out-of-date value loses only that one setting and keeps the
+/// rest, where a `serde`-derived enum would take the whole file down with it.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct InstanceViewState {
     /// The selected instance's id, `""` when there is none.
     #[serde(default)]
     pub current_id: String,
-    /// The sort order, as the webview spelled it: "name" | "version" |
-    /// "playtime" | "lastplay".
+    /// The sort order: "name" | "version" | "playtime" | "lastplay".
     #[serde(default)]
     pub sort: String,
     /// The grouping: "none" | "loader".
@@ -119,8 +101,7 @@ impl InstanceViewState {
     }
 
     /// Parses a saved file. A `serde_json` error anywhere in it costs the
-    /// defaults, which is `music_session.rs`'s `load` and the Vue's
-    /// `loadExpanded` both doing.
+    /// defaults.
     pub fn from_slice(raw: &[u8]) -> Self {
         serde_json::from_slice(raw).unwrap_or_default()
     }
@@ -128,9 +109,9 @@ impl InstanceViewState {
 
 /// Writes the state.
 ///
-/// The Vue's three `localStorage.setItem` calls cannot fail in a way the user
-/// would see; here a failure is logged and otherwise ignored, so a read-only or
-/// full data directory costs the saved state and nothing else.
+/// A write cannot fail in a way the user would see, so a failure is logged and
+/// otherwise ignored: a read-only or full data directory costs the saved state
+/// and nothing else.
 pub fn save(state: &InstanceViewState) {
     let path = state_file();
     let Ok(bytes) = serde_json::to_vec_pretty(state) else {
@@ -146,10 +127,9 @@ pub fn save(state: &InstanceViewState) {
 
 /// Reads the state back, or the defaults when there is none to read.
 ///
-/// Every failure — a missing file, a truncated write, a mode that is not one of
-/// the four — falls back to the default for that one value, and the rest of the
-/// file is still used. The Vue discarded the whole group map on a parse failure
-/// but read its two scalars through `includes`, which is what this matches.
+/// A missing or unparseable file — a truncated write — costs the defaults. A
+/// `sort` or `group_mode` value that names no known mode costs only that one
+/// setting, and the rest of the file is still used.
 pub fn load() -> InstanceViewState {
     let Ok(raw) = std::fs::read(state_file()) else {
         return InstanceViewState::default();

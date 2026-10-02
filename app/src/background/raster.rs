@@ -4,27 +4,26 @@
 
 //! A z-buffered software rasteriser for the window background.
 //!
-//! The Vue renders the 3D world with WebGL2 (`WindowBackground.vue`); Slint
-//! 1.18 has no custom-shader hook, so the same pipeline runs here on the CPU
-//! instead. Only two primitives are needed, and they are the original's two
-//! draw calls:
+//! This is the CPU path for the 3D world, which the GPU path in
+//! [`gl`](super::gl) also draws; the two implement the same pipeline. Only two
+//! primitives are needed, matching the GPU path's two draw calls:
 //!
 //! * [`Canvas::fill_quad`] — the world pass: convex quads (one per block face,
-//!   split into the two triangles the original's index buffer names: `(0,1,2)`
-//!   and `(0,2,3)`) blended premultiplied source-over into the buffer, writing
-//!   depth. The faces are emitted far-to-near, exactly as there, so a nearer
-//!   face blends over a farther one covering the same pixel.
+//!   split into the two triangles the index buffer names: `(0,1,2)` and
+//!   `(0,2,3)`) blended premultiplied source-over into the buffer, writing
+//!   depth. The faces are emitted far-to-near, so a nearer face blends over a
+//!   farther one covering the same pixel.
 //! * [`Canvas::edge_quad`] — the stroke pass: the same quads, expanded to the
 //!   2px screen-space outlines, drawn afterwards with a *less-or-equal* depth
-//!   test, blending disabled (they overwrite) and no depth write — the
-//!   original's `disable(BLEND); depthFunc(LEQUAL); depthMask(false);`.
+//!   test, blending disabled (they overwrite) and no depth write — the GPU
+//!   path's `disable(BLEND); depthFunc(LEQUAL); depthMask(false);`.
 //!
 //! Depth is stored as `1 / dz`, where `dz` is the vertex's distance along the
 //! view axis. The projection divides by `dz`, so `1 / dz` is what varies
 //! *linearly* across a planar quad in screen space: interpolating it
 //! barycentrically reproduces what the GPU's perspective-correct interpolation
 //! hands the depth test. Comparing reciprocals inverts the test — "greater or
-//! equal" is the original's `LEQUAL` — and a cleared buffer of zeroes means
+//! equal" is the GPU path's `LEQUAL` — and a cleared buffer of zeroes means
 //! "infinitely far", which is where a cleared depth buffer starts.
 //!
 //! Triangles are rasterised as per-row spans: each row's x interval comes from
@@ -33,12 +32,11 @@
 //! costs a thin, steep quad its whole rectangle — which is most of the outlines
 //! and the fill of every face seen at a grazing angle.
 //!
-//! The original's fragment shaders also `discard` outside the window's bottom
-//! two rounded corners (a CSS `border-radius` cannot clip a GPU-composited
-//! WebGL layer). That is not ported: the window's container in `app.slint`
-//! already clips the background to its 16px radius, and the canvas there is
-//! larger than the window (the parallax wrapper scales it by 1.08), so the
-//! original's own discard lands 4% outside the visible corners anyway.
+//! A `discard` outside the window's bottom two rounded corners would be needed
+//! if the compositor could not clip the layer. It is not done: the window's
+//! container in `app.slint` already clips the background to its 16px radius, and
+//! the canvas there is larger than the window (the parallax wrapper scales it by
+//! 1.08), so the discard would land 4% outside the visible corners anyway.
 
 use slint::{Rgba8Pixel, SharedPixelBuffer};
 
@@ -143,7 +141,7 @@ impl Canvas {
 
     /// Blends one convex quad into the colour buffer and writes depth.
     pub fn fill_quad(&mut self, quad: &[Vertex; 4], packed: u32) {
-        // The original's index buffer draws `(0,1,2)` and `(0,2,3)`; the two
+        // The index buffer draws `(0,1,2)` and `(0,2,3)`; the two
         // triangles meet on the `(0,2)` diagonal, where the pixel centres fall
         // on one side or the other and so are painted once.
         self.quad(quad, packed, Write::Blend);

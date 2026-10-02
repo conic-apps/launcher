@@ -6,8 +6,8 @@
 
 use super::*;
 
-/// Resolves the project's best file for the instance's runtime and downloads it
-/// — `useContentActions.ts`'s `resolveDownloadTask` and `install`.
+/// Resolves the project's best file for the instance's runtime and downloads
+/// it.
 pub(crate) async fn install(instance_id: &str, detail: &OpenDetail) -> Result<(), String> {
     let runtime = instance::get_instance_by_id(instance_id)
         .await
@@ -22,8 +22,8 @@ pub(crate) async fn install(instance_id: &str, detail: &OpenDetail) -> Result<()
         .and_then(|runtime| runtime.mod_loader_type.as_ref())
         .map(|loader| loader.to_string().to_lowercase());
 
-    // A modpack is not installed into the instance; the Vue downloads it into
-    // the launcher's own `modpacks` folder.
+    // A modpack is not installed into the instance; it goes into the launcher's
+    // own `modpacks` folder.
     let target_dir = if detail.kind == RemoteKind::Packs {
         folder::DATA_LOCATION.root.join("modpacks")
     } else {
@@ -197,10 +197,9 @@ pub(crate) fn make_task(
     }
 }
 
-/// `pickModrinthVersion` (`useContentActions.ts`): the first version that has a
-/// file and matches the instance's loader and Minecraft version, falling back to
-/// the first that has a file at all. An empty loader/version list on the
-/// version means "no constraint".
+/// The first version that has a file and matches the instance's loader and
+/// Minecraft version, falling back to the first that has a file at all. An empty
+/// loader/version list on the version means "no constraint".
 pub(crate) fn pick_modrinth_version<'a>(
     versions: &'a [Value],
     minecraft: Option<&str>,

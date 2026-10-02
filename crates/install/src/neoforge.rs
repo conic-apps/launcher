@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The Neoforge version list and installer (`crates/install/src/neoforge.rs`).
+//! The Neoforge version list and installer.
 
 use std::{io::BufRead, path::Path, path::PathBuf, process::Stdio};
 
@@ -18,9 +18,9 @@ use crate::{ModLoaderProgress, ModLoaderReporter, error::*};
 
 /// Fetches every published Neoforge version, newest first.
 ///
-/// The modem versions live under `net/neoforged/neoforge`, the pre-1.20.2
+/// Modern versions live under `net/neoforged/neoforge`, the pre-1.20.2
 /// ("legacy") ones under `net/neoforged/forge`; both are appended into one
-/// list, like the original.
+/// list.
 pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
     let legacy_versions = HTTP_CLIENT
         .get("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge")
@@ -42,20 +42,7 @@ pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
     Ok(modern_versions)
 }
 
-/// Installs the specified version of Neoforge.
-///
-/// Downloads the installer, runs it using the given Java Runtime,
-/// and then cleans up the temporary installer file.
-///
-/// # Arguments
-/// * `install_dir` - The target directory where the client will be installed.
-/// * `neoforge_version` - The version of Neoforge to install.
-/// * `java_path` - The Java executable used to run the installer.
-/// * `reporter` - Progress reporter forwarded to the frontend.
-///
-/// # Returns
-/// * `Ok(())` on successful installation.
-/// * `Err(Error)` if installation fails.
+/// Downloads and runs the Neoforge installer, then removes the temporary JAR.
 pub async fn install(
     install_dir: &PathBuf,
     neoforge_version: &str,
@@ -108,17 +95,7 @@ pub async fn install(
     Ok(())
 }
 
-/// Downloads the Neoforge installer JAR for the given version.
-///
-/// # Arguments
-///
-/// * `neoforge_version` - The version to download.
-/// * `reporter` - Progress reporter forwarded to the frontend.
-///
-/// # Returns
-///
-/// * `Ok(PathBuf)` containing the path to the downloaded installer.
-/// * `Err(Error)` if downloading fails.
+/// Downloads the Neoforge installer JAR to a temp file and returns its path.
 pub async fn download_installer(
     neoforge_version: &str,
     reporter: &ModLoaderReporter,

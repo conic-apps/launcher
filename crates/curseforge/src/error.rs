@@ -2,10 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! `crates/curseforge/src/error.rs`, minus the Tauri IPC boundary.
+//! Errors for the CurseForge client.
 //!
-//! The `Serialize` derive and the `serde_with::DisplayFromStr` shims are kept
-//! so the shape the frontend sees (`{"kind": …, "message": …}`) does not change.
+//! The `Serialize` derive and the `serde_with::DisplayFromStr` shims keep the
+//! shape the frontend sees (`{"kind": …, "message": …}`) stable.
 
 use std::result;
 

@@ -60,9 +60,8 @@ pub enum Error {
     #[error("No suitable Java runtime found")]
     NoSuitableJavaRuntime,
 
-    // The account crate's error is not `Serialize` in the Slint workspace (the
-    // mirror drops its IPC-boundary derives), and the Slint app never serializes
-    // a launch error, so this variant is left out of the serialized form.
+    // `account::Error` is not `Serialize`, and the app never serializes a launch
+    // error, so this variant is left out of the serialized form.
     #[serde(skip)]
     #[error(transparent)]
     AccountError(#[from] account::Error),

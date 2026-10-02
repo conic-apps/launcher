@@ -56,10 +56,10 @@ pub fn scan_java_runtimes() -> Result<Vec<JavaRuntime>> {
 
 /// Scans the system for installed Java runtimes.
 ///
-/// Returns runtimes sorted by major version (newest first). Runtimes that could
-/// be identified (a version string was obtained) are returned; broken or
-/// misconfigured executables are still included with `is_valid == false` so the
-/// UI can surface them.
+/// Returns runtimes sorted by major version (newest first). A runtime is
+/// returned once a version string is known; when the probe could not run but
+/// the `release` file supplied one, it is still included with `is_valid ==
+/// false` so the UI can surface broken installs.
 pub fn scan_java_runtimes_with(options: &ScanOptions) -> Result<Vec<JavaRuntime>> {
     let candidates = collect_candidates(options);
     debug!("Found {} Java candidates", candidates.len());

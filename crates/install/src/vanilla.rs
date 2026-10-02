@@ -2,8 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The Mojang version manifest and the vanilla download list
-//! (`crates/install/src/vanilla.rs`).
+//! The Mojang version manifest and the vanilla download list.
 
 use std::str::FromStr;
 
@@ -27,7 +26,7 @@ pub struct VersionManifest {
 
 impl VersionManifest {
     pub async fn new() -> Result<VersionManifest> {
-        // Not allow custom source to avoid attack
+        // The source is fixed to avoid a tampered manifest.
         Ok(HTTP_CLIENT
             .get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
             .send()
@@ -55,17 +54,8 @@ pub struct VersionInfo {
     pub compliance_level: u8,
 }
 
-/// Generate a complete list of required files to download for the specified Minecraft version,
-/// including version metadata, libraries, assets, and client JAR.
-///
-/// # Arguments
-///
-/// * `version_id` - The Minecraft version ID (e.g., `"1.20.1"`).
-/// * `minecraft_location` - The root location of the Minecraft installation.
-///
-/// # Returns
-///
-/// A vector of [`Download`] entries describing what files need to be downloaded.
+/// Builds the download list for a Minecraft version — the client JAR, the
+/// libraries and the assets — and saves the version metadata.
 pub async fn generate_download_info(
     version_id: &str,
     minecraft_location: MinecraftLocation,
@@ -155,16 +145,7 @@ fn generate_client_download_task(
     })
 }
 
-/// Generate download entries for all resolved libraries.
-///
-/// # Arguments
-///
-/// * `libraries` - A slice of resolved libraries to download.
-/// * `minecraft_location` - The Minecraft installation directory.
-///
-/// # Returns
-///
-/// A vector of [`Download`] objects describing library files to download.
+/// Generates download entries for all resolved libraries.
 pub fn generate_libraries_downloads(
     minecraft_location: &MinecraftLocation,
     resolved_libraries: &[ResolvedLibrary],
@@ -192,16 +173,8 @@ pub fn generate_libraries_downloads(
         .collect()
 }
 
-/// Generate download entries for all asset files from the asset index.
-///
-/// # Arguments
-///
-/// * `asset_index` - The asset index containing metadata of assets.
-/// * `minecraft_location` - The Minecraft installation directory.
-///
-/// # Returns
-///
-/// A vector of [`Download`] objects for assets, including the index file itself.
+/// Generates download entries for every asset in the index, plus the index file
+/// itself.
 pub async fn generate_assets_downloads(
     minecraft_location: &MinecraftLocation,
     asset_index: &AssetIndex,
@@ -245,16 +218,7 @@ pub async fn generate_assets_downloads(
 
 pub const LOF4J2_CONFIGURATION: &[u8] = include_bytes!("./log4j2.xml");
 
-/// Override the `log4j2.xml` configuration file for the given version.
-///
-/// # Arguments
-///
-/// * `version` - The resolved Minecraft version.
-/// * `minecraft_location` - The Minecraft installation directory.
-///
-/// # Returns
-///
-/// An empty [`Result`] indicating success or failure.
+/// Overrides the `log4j2.xml` configuration file for the given version.
 pub async fn override_log4j2_configuration_file(
     minecraft_location: &MinecraftLocation,
     version: &ResolvedVersion,

@@ -2,14 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The saved track and playback position (src/store/music.ts's `localStorage`).
+//! The saved track and playback position.
 //!
-//! The Vue kept `{ path, currentTime }` under `conic.music.lastTrack` in the
-//! webview's local storage, which is per-webview and therefore invisible to
-//! anything else. A native app has no such store, so the same two fields go to
-//! a file next to `config.toml` in the shared data directory. It is the only
-//! part of the music player the two frontends do not share: the Tauri app
-//! cannot read this file, and this one cannot read the webview's storage.
+//! The two fields `{ path, current_time }` go to a JSON file next to
+//! `config.toml` in the shared data directory.
 
 use std::path::PathBuf;
 
@@ -21,7 +17,7 @@ fn session_file() -> PathBuf {
     DATA_LOCATION.root.join("music_session.json")
 }
 
-/// The `{ path, currentTime }` pair `SAVED_TRACK_KEY` held.
+/// The saved track and its position.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SavedTrack {
     /// Absolute path of the track that was playing.
@@ -33,9 +29,8 @@ pub struct SavedTrack {
 
 /// Writes the state.
 ///
-/// The Vue wrapped the write in a `try`/`catch` and ignored the failure
-/// (`localStorage may be unavailable`); the same is done here, with the reason
-/// logged instead of swallowed.
+/// A failed write is logged rather than propagated: losing the saved position
+/// must not interrupt playback.
 pub fn save(state: &SavedTrack) {
     let path = session_file();
     if let Err(error) = std::fs::write(&path, serde_json::to_vec(state).unwrap_or_default()) {
@@ -48,8 +43,8 @@ pub fn save(state: &SavedTrack) {
 
 /// Reads the state back, or `None` when there is none to read.
 ///
-/// Every failure — a missing file, a truncated write, a `currentTime` that is
-/// not a number — is "no saved state", as in the Vue's `loadTrackState`.
+/// Every failure — a missing file, a truncated write, a `current_time` that is
+/// not a number — means "no saved state" rather than an error.
 pub fn load() -> Option<SavedTrack> {
     let raw = std::fs::read(session_file()).ok()?;
     let state: SavedTrack = serde_json::from_slice(&raw).ok()?;

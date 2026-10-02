@@ -2,14 +2,14 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The create-instance dialog's "script": drives `slint-install` from the
-//! dialog's state (src/overlays/dialogs/CreateInstance.vue and the two screens
-//! under `create/`).
+//! The create-instance dialog's "script": drives `install` from the dialog's
+//! state and its two screens.
 //!
 //! Everything that touches the network or the disk runs on the tokio runtime
 //! (`crate::runtime`) and reports back through `upgrade_in_event_loop`, so the
-//! window keeps drawing while a version list is fetched — like the Vue, whose
-//! `@conic/install` calls are async Tauri commands.
+//! window keeps drawing while a version list is fetched. The one exception is
+//! the background picker's image decode, which Slint only lets the UI thread
+//! create (see `setup_background_and_wiki`).
 
 use std::{cell::RefCell, path::Path, rc::Rc};
 
@@ -38,12 +38,12 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     setup_background_and_wiki(ui, config);
 }
 
-/// `MinecraftChoose.vue`: the manifest, its category filter and the four mod
-/// loader fetches a picked version kicks off.
+/// The manifest, its category filter and the four mod loader fetches a picked
+/// version kicks off.
 fn setup_minecraft_choose(ui: &App) {
     let state = ui.global::<CreateInstanceState>();
 
-    // MinecraftChoose.vue's `onMounted`: fetch the manifest, then filter it.
+    // Fetch the manifest, then filter it.
     {
         let weak = ui.as_weak();
         state.on_load_minecraft_versions(move || {
@@ -76,7 +76,7 @@ fn setup_minecraft_choose(ui: &App) {
         });
     }
 
-    // The category select: re-filter the manifest (Vue `filteredVersions`).
+    // The category select: re-filter the manifest.
     {
         let weak = ui.as_weak();
         state.on_set_version_category(move |category| {
@@ -87,15 +87,14 @@ fn setup_minecraft_choose(ui: &App) {
         });
     }
 
-    // Picking a version stores it and refreshes the four loader lists — the
-    // Vue's `watch(minecraftVersion, updateModLoaderVersions)`.
+    // Picking a version stores it and refreshes the four loader lists.
     {
         let weak = ui.as_weak();
         state.on_select_minecraft_version(move |version| {
             let Some(ui) = weak.upgrade() else { return };
             let state = ui.global::<CreateInstanceState>();
-            // A watch only fires on a change; re-picking the same version does
-            // not refetch anything.
+            // Re-picking the already selected version would otherwise refetch
+            // all four loader lists; the early return makes it a no-op.
             if state.get_minecraft_version() == version {
                 return;
             }
@@ -116,8 +115,8 @@ fn setup_minecraft_choose(ui: &App) {
     }
 }
 
-/// `confirmCreate()`: a free id, the instance, the background, then the game
-/// view refreshes and the dialog closes.
+/// The create callback (`on_create`): a free id, the instance, the background,
+/// then the game view refreshes and the dialog closes.
 fn setup_create(ui: &App) {
     let state = ui.global::<CreateInstanceState>();
     {
@@ -142,8 +141,7 @@ fn setup_create(ui: &App) {
 
             let weak = weak.clone();
             // Creating an instance writes files and walks the instance folder, so
-            // it belongs off the UI thread (the original runs it in a Tauri
-            // command, off the UI thread too).
+            // it belongs off the UI thread.
             crate::runtime::spawn(async move {
                 if let Err(error) = create_instance(
                     &name,
@@ -158,9 +156,9 @@ fn setup_create(ui: &App) {
                 }
                 let _ = weak.upgrade_in_event_loop(move |ui| {
                     ui.global::<CreateInstanceState>().set_creating(false);
-                    // The Vue's `finally`: reload the instance list, then close
-                    // (also after a failure — the dialog is not a place to
-                    // report an error).
+                    // Reload the instance list, then close — also after a
+                    // failure, since the dialog is not a place to report an
+                    // error.
                     ui.global::<GameState>().invoke_refresh();
                     ui.global::<Dialogs>().set_create_instance_visible(false);
                 });
@@ -173,7 +171,8 @@ fn setup_create(ui: &App) {
 fn setup_background_and_wiki(ui: &App, config: Rc<RefCell<config::Config>>) {
     let state = ui.global::<CreateInstanceState>();
 
-    // `getBackground()`: the native file picker, then the preview image.
+    // The background callback (`on_pick_background`): the native file picker,
+    // then the preview image.
     {
         let weak = ui.as_weak();
         state.on_pick_background(move |filter_name| {
@@ -183,9 +182,9 @@ fn setup_background_and_wiki(ui: &App, config: Rc<RefCell<config::Config>>) {
             };
             let state = ui.global::<CreateInstanceState>();
             state.set_background_path(path.to_string_lossy().to_string().into());
-            // The Vue shows the picture as soon as its `<img>` has loaded. Slint
-            // can only build an `Image` on the calling thread (it is not `Send`),
-            // so unlike the other work here this decode stays on the UI thread.
+            // The picture decodes as soon as it is picked. Slint can only build
+            // an `Image` on the calling thread (it is not `Send`), so unlike the
+            // other work here this decode stays on the UI thread.
             match Image::load_from_path(&path) {
                 Ok(image) => state.set_background_image(image),
                 Err(error) => log::warn!("failed to load '{}': {error}", path.display()),
@@ -193,8 +192,8 @@ fn setup_background_and_wiki(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
 
-    // `clickAbout()`: every version has a wiki page — on the Chinese wiki for
-    // the Chinese locales, on the English one otherwise.
+    // Every version has a wiki page — on the Chinese wiki for the Chinese
+    // locales, on the English one otherwise.
     let language = config_bridge::active_language_code(config.borrow().language.as_deref());
     let chinese = language.starts_with("zh");
     state.on_open_version_wiki(move |version| {
@@ -209,9 +208,8 @@ fn setup_background_and_wiki(ui: &App, config: Rc<RefCell<config::Config>>) {
     });
 }
 
-/// Replaces the chooser's rows with the ones of `category` (the Vue's
-/// `filteredVersions`; its older categories are matched with
-/// `type.includes("old")`).
+/// Replaces the chooser's rows with the ones of `category`; the "old" category
+/// matches any kind containing "old".
 fn apply_category(state: &CreateInstanceState, manifest: &[MinecraftVersionItem], category: &str) {
     let rows: Vec<MinecraftVersionItem> = manifest
         .iter()
@@ -227,7 +225,7 @@ fn apply_category(state: &CreateInstanceState, manifest: &[MinecraftVersionItem]
 }
 
 /// A manifest entry as the chooser shows it: the id, its type and the release
-/// date split into parts (`new Date(releaseTime)` in local time).
+/// date split into parts, in local time.
 fn version_item(info: install::vanilla::VersionInfo) -> MinecraftVersionItem {
     let date = chrono::DateTime::parse_from_rfc3339(&info.release_time)
         .map(|time| time.with_timezone(&Local));
@@ -241,8 +239,7 @@ fn version_item(info: install::vanilla::VersionInfo) -> MinecraftVersionItem {
 }
 
 /// Fetches one mod loader's versions for `mcversion` and reports the result
-/// into the dialog's state (one of the four promises of
-/// `updateModLoaderVersions`).
+/// into the dialog's state.
 fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: String) {
     crate::runtime::spawn(async move {
         let result: Result<Vec<String>, install::Error> = match loader {
@@ -278,8 +275,7 @@ fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: Stri
             let state = ui.global::<CreateInstanceState>();
             match result {
                 Ok(versions) => {
-                    // The Vue marks a loader available only when its list is not
-                    // empty.
+                    // A loader is available only when its list is not empty.
                     let available = !versions.is_empty();
                     let versions: ModelRc<SharedString> = ModelRc::new(VecModel::from(
                         versions
@@ -310,7 +306,7 @@ fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: Stri
                     log::error!("failed to fetch the {loader} version list: {error}");
                 }
             }
-            // The `finally` of every promise.
+            // Regardless of the outcome, the loader is no longer loading.
             match loader {
                 "Fabric" => state.set_fabric_loading(false),
                 "Quilt" => state.set_quilt_loading(false),
@@ -322,17 +318,15 @@ fn spawn_mod_loader_fetch(weak: Weak<App>, loader: &'static str, mcversion: Stri
 }
 
 /// A Forge version as the list shows it: everything after the Minecraft
-/// version (`forgeVersion.split('-').slice(1).join('-')`).
+/// version.
 fn forge_version_label(version: &str) -> String {
     version.split('-').skip(1).collect::<Vec<_>>().join("-")
 }
 
-/// A Neoforge version as the Vue's `filterNeoforgeVersionList` picks them:
-/// those whose version string encodes the given Minecraft version.
+/// A Neoforge version as the filter picks them: those whose version string
+/// encodes the given Minecraft version.
 ///
-/// The function lives in `crates/install/index.ts` on the Vue side — i.e. in the
-/// frontend, next to the component that calls it — so it is mirrored here rather
-/// than in `slint-install`.
+/// It is a UI-layer helper, so it lives here rather than in `install`.
 fn filter_neoforge_version_list(mcversion: &str, versions: &[String]) -> Vec<String> {
     versions
         .iter()
@@ -344,12 +338,13 @@ fn filter_neoforge_version_list(mcversion: &str, versions: &[String]) -> Vec<Str
         .collect()
 }
 
-/// The Minecraft version a Neoforge version targets (the Vue's
-/// `parseNeoforgeVersion`).
+/// The Minecraft version a Neoforge version targets.
 ///
-/// `21.0.0.0-beta` / `20.2.57-beta` are the modern ("neoforge") scheme, where
-/// the leading groups carry the Minecraft version (`1.21`, `1.20.2`); the
-/// legacy ("forge") scheme puts it in the first three groups (`1.20.1-47.1.0`).
+/// A version is dot-separated numeric groups plus an optional `-suffix`. A
+/// four-group version's first three groups are the Minecraft version, with a
+/// trailing `0` dropped (`26.3.0.39-beta` yields `26.3`); a three-group version
+/// omits the Minecraft version's leading `1`, which is restored here
+/// (`20.2.57-beta` yields `1.20.2`).
 fn neoforge_minecraft_version(version: &str) -> Option<String> {
     // `^(\d+)\.(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9_]+))?$`
     if let Some(groups) = neoforge_groups(version, 4) {
@@ -364,9 +359,9 @@ fn neoforge_minecraft_version(version: &str) -> Option<String> {
             format!("{major}.{minor}.{patch}")
         });
     }
-    // `^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9_]+))?$` — the Vue destructures
-    // `[, minor, patch]`, which skips the whole match and so reads the *first*
-    // group as `minor` and the second as `patch`.
+    // The three-group form omits the leading `1`, so its first group reads as
+    // `minor` and its second as `patch`:
+    // `^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9_]+))?$`.
     if let Some(groups) = neoforge_groups(version, 3) {
         let (minor, patch) = (groups[0], groups[1]);
         return Some(if patch == "0" {
@@ -379,7 +374,7 @@ fn neoforge_minecraft_version(version: &str) -> Option<String> {
 }
 
 /// Splits `version` into `count` dot-separated numeric groups plus an optional
-/// `-suffix`, the shape both of the Vue's regexes accept.
+/// `-suffix`.
 fn neoforge_groups(version: &str, count: usize) -> Option<Vec<&str>> {
     let (numbers, suffix) = match version.split_once('-') {
         Some((numbers, suffix)) => (numbers, Some(suffix)),
@@ -398,10 +393,10 @@ fn neoforge_groups(version: &str, count: usize) -> Option<Vec<&str>> {
     (groups.len() == count && groups.iter().all(numeric)).then_some(groups)
 }
 
-/// `confirmCreate()`: writes the instance and copies the background over.
+/// Writes the instance and copies the background over.
 ///
-/// A name that is already taken gets a " 2", " 3", … suffix — the Vue compares
-/// the candidate against the instance *ids*.
+/// A name that is already taken gets a " 1", " 2", … suffix, compared against
+/// the instance *ids*.
 async fn create_instance(
     name: &str,
     minecraft: &str,

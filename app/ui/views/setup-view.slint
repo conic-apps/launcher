@@ -16,16 +16,15 @@ import { SetupJavaSettings } from "setup/setup-java-settings.slint";
 import { SetupLaunchOptions } from "setup/setup-launch-options.slint";
 import { SetupImportInstances } from "setup/setup-import-instances.slint";
 
-// A button of the wizard's bottom bar (`.footer button`): 40px tall, 8px
-// rounded, a `--ctp-text-inverse` label at 13px, and the white wash the import
-// screen's buttons also get. `.prev` is 200px of `--ctp-blue` with a chevron in
-// front of its label; `.next` takes the rest of the row in `--ctp-mauve`.
+// A button of the wizard's bottom bar: 40px tall, 8px rounded, with the white
+// hover and press wash. "Back" is 200px with a chevron in front of its label;
+// "Next" takes the rest of the row.
 component FooterButton inherits Rectangle {
     in property <string> text: "";
     in property <bool> show-icon: false;
     in property <color> fill: Theme.blue;
-    /// `button.disabled { opacity: 0.7; pointer-events: none }`, which is what
-    /// the "Back" button carries on the first step.
+    /// A disabled button dims and stops taking clicks; "Back" carries this on
+    /// the first step.
     in property <bool> disabled: false;
     callback clicked;
 
@@ -35,9 +34,8 @@ component FooterButton inherits Rectangle {
     background: root.fill;
     opacity: root.disabled ? 0.7 : 1.0;
 
-    // `&:hover { background-image: linear-gradient(#ffffff2f, #ffffff2f), … }`
-    // and `#ffffff6f` on the press — the same two washes as
-    // `.import-instances button`, over the fill rather than mixed into it.
+    // The white hover and press washes sit over the fill rather than mixed
+    // into it, the same arrangement as the import buttons.
     Rectangle {
         width: 100%;
         height: 100%;
@@ -51,14 +49,13 @@ component FooterButton inherits Rectangle {
         height: 100%;
         alignment: center;
         cross-axis-alignment: center;
-        // `gap: 4px` between the chevron and the label.
         spacing: 4px;
 
         if root.show-icon : AppIcon {
             name: "chevron-back";
             size: 20px;
-            // `.prev svg path { stroke: var(--ctp-text-inverse) }`; the icon is
-            // a stroked path, so the label colour is the stroke colour.
+            // The icon is a stroked path, so the label colour is the stroke
+            // colour.
             icon-color: Theme.text-inverse;
         }
 
@@ -79,36 +76,29 @@ component FooterButton inherits Rectangle {
     }
 }
 
-// src/views/SetupView.vue — the first-run wizard.
+// The first-run wizard.
 //
 // A column of three bands: the mauve header, the translucent card that holds
 // the step, and the translucent button bar pinned to the bottom of the window.
-// The header and the bar slide in from above and below on mount, and the card
-// fades up, which is the `gsap` timeline `onMounted` plays.
+// The header and the bar slide in from above and below, and the card fades up.
 //
-// The step swap is the Vue's `<Transition :name="transitionName" mode="out-in">`
-// over the six screens, with `transitionName` flipped to `slide-right` by
-// `prevPhase` and back to `slide-left` by `nextPhase` — the same state machine
-// the add-account dialog runs (see `AccountAdd`).
+// The step swap plays the outgoing screen out and then the incoming one in, the
+// same state machine the add-account dialog runs (see `AccountAdd`).
 export component SetupView inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
-    // `* { margin: 0 }` and the reset mean these are the wizard's own
-    // dimensions: the header band is 100px narrower than the window and the
-    // card 186px, both centred (`align-items: center` on the column).
+    // The header band is 100px narrower than the window and the card 186px,
+    // both centred.
     private property <length> header-inset: 100px;
     private property <length> body-inset: 186px;
-    // `height: calc(100% - 176px)`, the wizard's own arithmetic: the card does
-    // not reach the button bar, and the gap it leaves is what the 48px bar
-    // sits in.
+    // The card's height is the window's less 176px: the header band and its
+    // 16px gap take 100px above it, and the bottom 76px hold the 48px button
+    // bar plus 28px of space above it.
     private property <length> body-height: root.height - 176px;
 
-    // ----- the header -----
-    // `.header-wrapper { background: var(--ctp-base); border-radius: 0 0 12px
-    // 12px; padding-bottom: 8px }` with the mauve `.header` inside it. The 8px
-    // of the wrapper's padding is the strip of plain `base` under the header.
+    // The wrapper carries 8px of plain `base` below the mauve header.
     header-wrapper := Rectangle {
         x: (root.width - self.width) / 2;
         y: root.intro-played ? 0px : -118px;
@@ -117,12 +107,9 @@ export component SetupView inherits Rectangle {
         background: Theme.base;
         border-bottom-left-radius: 12px;
         border-bottom-right-radius: 12px;
-        // gsap `power3.out`, over 0.33s, the first thing on the timeline.
+        // Easing out over 0.33s, the first thing on the timeline.
         animate y { duration: 330ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
 
-        // `.header { background: rgba(var(--ctp-mauve-rgb), 0.2); border: 1px
-        // solid rgba(var(--ctp-mauve-rgb), 0.2); padding: 16px 32px; border-
-        // radius: 0 0 12px 12px; position: relative }`.
         header := Rectangle {
             width: 100%;
             height: 76px;
@@ -132,9 +119,8 @@ export component SetupView inherits Rectangle {
             border-bottom-left-radius: 12px;
             border-bottom-right-radius: 12px;
 
-            // The two paragraphs, at 16px and 12px with a 4px gap. The close
-            // button is pinned over the right-hand end, as `position: absolute;
-            // right: 32px; top: 16px` puts it inside the relative `.header`.
+            // The two paragraphs sit at 16px and 12px with a 4px gap; the close
+            // button is pinned over the right-hand end.
             Text {
                 x: 32px;
                 y: 16px;
@@ -153,9 +139,7 @@ export component SetupView inherits Rectangle {
                 color: Theme.default-text-color.transparentize(0.1);
             }
 
-            // `.close { position: absolute; right: 32px; top: 16px; padding: 2px;
-            // border-radius: 100px; transition: background 100ms ease }` — a
-            // 20x20 box around the 16px glyph.
+            // A 20x20 box around the 16px glyph.
             close := Rectangle {
                 x: parent.width - self.width - 32px;
                 y: 16px;
@@ -185,19 +169,10 @@ export component SetupView inherits Rectangle {
         }
     }
 
-    // ----- the card -----
-    // `.body { width: calc(100% - 186px); height: calc(100% - 176px);
-    // padding: 24px 36px; background: rgba(var(--ctp-base-rgb), 0.9);
-    // border-radius: 12px; margin-top: 16px; overflow: hidden; position:
-    // relative }`.
-    //
     // The padding is the `ScrollView`'s own content padding rather than the
-    // card's, which is what puts the scrollbar where the Vue's does: the Vue's
-    // `.scrollbar { position: absolute; right: 8px }` resolves against the
-    // card — the nearest positioned ancestor — so it lands 8px from the card's
-    // own edge, inside the 36px of padding, rather than 36px further in. A
-    // Slint `ScrollView` pins its scrollbar to its own right edge, and this is
-    // the one arrangement that makes the two the same.
+    // card's, which is what puts the scrollbar 8px from the card's own edge,
+    // inside the 36px of padding, rather than 36px further in: a Slint
+    // `ScrollView` pins its scrollbar to its own right edge.
     body := Rectangle {
         x: (root.width - self.width) / 2;
         y: header-wrapper.height + 16px;
@@ -206,8 +181,7 @@ export component SetupView inherits Rectangle {
         background: Theme.base.with-alpha(0.9);
         border-radius: 12px;
         clip: true;
-        // gsap `opacity: 0, scale: 0.9`, 0.06s after the header, 0.33s,
-        // `power3.out`.
+        // Fades and scales up 0.06s after the header, over 0.33s.
         opacity: root.intro-played ? 1.0 : 0.0;
         transform-scale: root.intro-played ? 100% : 90%;
         animate opacity, transform-scale {
@@ -263,9 +237,7 @@ export component SetupView inherits Rectangle {
         }
     }
 
-    // ----- the step machine -----
-    // The six phases of `SetupView.vue`'s `phases` array, and the labels of
-    // `nextPhaseTexts` beside them.
+    // The wizard's six phases, in order.
     private property <[string]> phases: [
         "language",
         "palette",
@@ -275,11 +247,10 @@ export component SetupView inherits Rectangle {
         "import-instances",
     ];
 
-    /// The step the user asked for (`currentPhaseIndex`), written by
-    /// `goto-step` and read by the swap and by the button labels.
+    /// The step the user asked for, written by `goto-step` and read by the
+    /// swap and by the button labels.
     private property <int> wanted: 0;
-    /// The step actually mounted (`currentPhase`) — one 80ms beat behind
-    /// `wanted`.
+    /// The step actually mounted — one 80ms beat behind `wanted`.
     private property <string> shown: "";
     private property <string> direction: "left";
     private property <bool> leaving: false;
@@ -287,8 +258,8 @@ export component SetupView inherits Rectangle {
     private property <bool> enter-armed: false;
     private property <string> arrive-phase: "shown";
 
-    /// The "Next" button's label (`nextPhaseTexts[currentPhaseIndex]`, which
-    /// moves with the request and not with the 80ms beat).
+    /// The "Next" button's label, which moves with the request and not with the
+    /// 80ms beat.
     out property <string> next-label:
         root.wanted == 0 ? @tr("SetupView" => "Let's get started!")
         : root.wanted == 1 ? @tr("SetupView" => "Next (Add account)")
@@ -297,16 +268,16 @@ export component SetupView inherits Rectangle {
         : root.wanted == 4 ? @tr("SetupView" => "Next (Import instances)")
         : @tr("SetupView" => "Finish");
 
-    // `<Transition>` has no `appear`, and the page stack rebuilds this view on
-    // every navigation to it, so the first step is simply mounted.
+    // The page stack rebuilds this view on every navigation to it, so the first
+    // step is simply mounted.
     init => {
         root.shown = root.phases[0];
     }
 
-    // The `mode="out-in"` beat: the mounted step plays its 80ms leave, and the
-    // one the user asked for is mounted when that is over — at its enter rest,
-    // moving to "shown" a frame later, since an element created and finished in
-    // the same frame has nothing to animate from.
+    // The out-in beat: the mounted step plays its 80ms leave, and the one the
+    // user asked for is mounted when that is over — at its enter rest, moving
+    // to "shown" a frame later, since an element created and finished in the
+    // same frame has nothing to animate from.
     leave-timer := Timer {
         interval: 80ms;
         running: root.leave-armed;
@@ -334,8 +305,7 @@ export component SetupView inherits Rectangle {
         if index < 0 || index >= root.phases.length || index == root.wanted {
             return;
         }
-        // `nextPhase()` and `prevPhase()`, which set `transitionName` from the
-        // direction they move in and then step the index.
+        // The direction follows the way the index moves.
         root.direction = towards-left ? "left" : "right";
         root.wanted = index;
         if root.shown == "" {
@@ -347,11 +317,7 @@ export component SetupView inherits Rectangle {
         leave-timer.restart();
     }
 
-    // ----- the intro -----
-    // `gsap.timeline().from(header, { y: -118, … }, "<").from(body, { opacity:
-    // 0, scale: 0.9, … }, "<0.06").from(footer, { y: 100, … }, "<0.03")` — the
-    // positions are relative to the previous tween's start, so the three begin
-    // at 0ms, 60ms and 90ms.
+    // The header, card and button bar begin at 0ms, 60ms and 90ms.
     private property <bool> intro-played: false;
 
     intro-timer := Timer {
@@ -363,17 +329,10 @@ export component SetupView inherits Rectangle {
         }
     }
 
-    // ----- the button bar -----
-    // `.footer { width: 100%; height: 48px; background:
-    // rgba(var(--ctp-surface0-rgb), 0.6); backdrop-filter: blur(4px); position:
-    // absolute; bottom: 0; left: 0; display: flex; gap: 32px; padding: 16px }`.
-    //
-    // The bar has no `backdrop-filter` here (Slint 1.18 has no backdrop blur,
-    // like the toolbar and the footer of the game view), so the content
-    // scrolling under it shows through unblurred. The rule's `position:
-    // absolute` resolves against `body` — the wizard itself is not a containing
-    // block — which puts the bar at the bottom of the *window*; the wizard fills
-    // everything below the title bar, so that is the same place.
+    // The bar has no backdrop blur, so the content scrolling under it shows
+    // through unblurred (Slint 1.18 has no backdrop blur, like the game view's
+    // toolbar and footer). It is pinned to the bottom of the *window*; the
+    // wizard fills everything below the title bar, so that is the same place.
     footer := Rectangle {
         x: 0px;
         y: root.intro-played ? root.height - self.height : root.height - self.height + 100px;
@@ -382,12 +341,10 @@ export component SetupView inherits Rectangle {
         background: Theme.surface-0.with-alpha(0.6);
         animate y { delay: 90ms; duration: 330ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
 
-        // `display: flex; gap: 32px; padding: 16px` with `button { margin-top:
-        // -24px; height: 40px }`: the buttons are 40px tall in a 16px-tall
-        // content box, pulled up 24px, so they sit 8px above the bar and stop
-        // 16px short of its bottom edge. The bar is a plain `Rectangle` rather
-        // than a layout, so that is said with the numbers rather than with a
-        // padding.
+        // The buttons are 40px tall in a 16px-tall content box, pulled up 24px,
+        // so they sit 8px above the bar and stop 16px short of its bottom edge.
+        // The bar is a plain `Rectangle` rather than a layout, so that is said
+        // with the numbers rather than with a padding.
         row := HorizontalLayout {
             x: 16px;
             y: 16px - 24px;

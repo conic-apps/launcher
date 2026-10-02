@@ -23,7 +23,7 @@ makepkg -si
 `makepkg` installs the declared dependencies, downloads and verifies the release,
 then builds and installs the package. Compilation requires Rust 1.88 or newer.
 
-There is no Node.js, pnpm or Tauri step: the app is a Slint/Rust binary, and
+There is no Node.js or pnpm step: the app is a Slint/Rust binary, and
 `cargo build --release --locked` is the whole build. The `.deb`, `.rpm` and
 `.AppImage` that `tools/package-linux.sh` produces are not used here — Arch takes
 a native package.
@@ -45,8 +45,7 @@ The key is embedded in the compiled executable. Without it, the official
 CurseForge API is unauthenticated.
 
 Update this installation through rebuilt Arch packages. The launcher has no
-built-in updater: the Tauri app's self-update and its AppImage signatures were
-removed along with Tauri, so an update is a new release downloaded from
+built-in updater, so an update is a new release downloaded from
 [the releases page](https://github.com/conic-apps/launcher/releases).
 
 ## The payload

@@ -18,7 +18,7 @@ pub enum DownloadPhase {
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
-/// We use this to store the progress of installation task
+/// Tracks the progress of an installation task.
 pub struct DownloadState {
     pub completed_tasks: Arc<AtomicU64>,
     pub total_tasks: Arc<AtomicU64>,

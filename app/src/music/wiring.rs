@@ -8,15 +8,15 @@ use super::*;
 
 /// Creates the player, restores the session and starts the clock.
 ///
-/// The store's two calls at the top of `MusicPlayer.vue` (`music.init()` and
-/// `music.restoreSession()`), in that order: `init` wires the volume and the focus
-/// tracking, `restoreSession` reads the folder and the saved position.
+/// It wires the initial volume from the settings; `restore_session` reads the
+/// folder and the saved position. Focus tracking is wired separately by
+/// `watch_focus`.
 pub fn setup(ui: &App) {
     let player = match music::Player::new() {
         Ok(player) => player,
         Err(error) => {
-            // The store's `loadTracks` failure path leaves an empty playlist and
-            // logs; the panel still opens and reports that there is no music.
+            // A failed load leaves an empty playlist and logs; the panel still
+            // opens and reports that there is no music.
             log::error!("background music is unavailable: {error}");
             return;
         }
@@ -41,10 +41,9 @@ pub fn setup(ui: &App) {
             playlist: None,
             volume: Some(volume),
             levels: Vec::new(),
-            // The store assumes the window is focused and corrects itself from
-            // `isFocused()`. A correct answer needs a live window, so the first
-            // focus event after startup settles it; until then the main volume
-            // applies, which is the common case.
+            // Assume the window is focused until the first focus event settles
+            // it; a correct answer needs a live window. Until then the main
+            // volume applies, which is the common case.
             focused: true,
             ticking: Arc::new(AtomicBool::new(false)),
         })
@@ -54,11 +53,11 @@ pub fn setup(ui: &App) {
     apply(ui);
 }
 
-/// Watches the window's focus, the store's `onFocusChanged`.
+/// Watches the window's focus.
 ///
-/// A focus change is the one volume change the store ramps over a second instead
-/// of applying at once — the point being that the user is looking at something
-/// else while it happens.
+/// A focus change is the one volume change that ramps over a second instead of
+/// applying at once — the point being that the user is looking at something else
+/// while it happens.
 pub fn watch_focus(window: &window::WindowService<App>) {
     let weak = window.component_weak();
     window.on_focus_changed(move |focused| {
@@ -72,10 +71,8 @@ pub fn watch_focus(window: &window::WindowService<App>) {
                 return;
             }
             controller.focused = focused;
-            // Smoothed in *both* directions, which is what the store's
-            // `onFocusChanged` does: it passes `true` to `applyVolume` whether the
-            // window gained or lost the focus, and the unsmoothed call is the one
-            // `init` makes from `isFocused()`.
+            // Smoothed in *both* directions, whether the window gained or lost
+            // the focus; the unsmoothed call is the one `setup` makes at startup.
             apply_volume(controller, if focused { main } else { background }, true);
         });
         apply(&ui);
@@ -85,9 +82,8 @@ pub fn watch_focus(window: &window::WindowService<App>) {
 /// Reacts to a settings change: the volumes, and the switch that stops the music
 /// outright.
 ///
-/// The last part is the `watch` on `config.music.enabled` at the top of
-/// `MusicPlayer.vue`: turning music off pauses it *and* closes the panel, so the
-/// overlay cannot be left open over a player that is not playing.
+/// Turning music off pauses it *and* closes the panel, so the overlay cannot be
+/// left open over a player that is not playing.
 pub fn config_changed(ui: &App) {
     let settings = ui.global::<AppConfig>();
     let (enabled, main, background) = (
@@ -103,15 +99,13 @@ pub fn config_changed(ui: &App) {
         }
     });
     if !enabled {
-        // `music.pause(); music.closePanel();` — and the Vue's watcher leaves
-        // `showPlaylist` alone, exactly as above.
         ui.global::<MusicState>().set_panel_open(false);
     }
     apply(ui);
 }
 
-/// Gives the device the volume the configuration asks for, remembering it so the
-/// tick does not hand the same value over sixty times a second.
+/// Gives the device the volume the configuration asks for, remembering it so an
+/// unchanged unsmoothed value is not handed over again.
 pub(crate) fn apply_volume(controller: &mut Controller, percent: i32, smooth: bool) {
     let percent = volume_percent(percent);
     if !smooth && controller.volume == Some(percent) {
@@ -121,8 +115,7 @@ pub(crate) fn apply_volume(controller: &mut Controller, percent: i32, smooth: bo
     controller.player.set_volume(percent as f32 / 100.0, smooth);
 }
 
-/// A config percentage as the whole 0..100 range the slider allows:
-/// `Math.min(Math.max(percent / 100, 0), 1)`.
+/// A config percentage clamped to the 0..100 range the slider allows.
 pub(crate) fn volume_percent(percent: i32) -> u8 {
     percent.clamp(0, 100) as u8
 }
@@ -187,9 +180,8 @@ pub(crate) fn register_callbacks(ui: &App) {
         let weak = ui.as_weak();
         state.on_close_panel(move || {
             if let Some(ui) = weak.upgrade() {
-                // Only `panelOpen`: the Vue's `showPlaylist` is a `ref` in a
-                // component that stays mounted, and `closePanel()` does not touch
-                // it, so reopening the panel brings the playlist back as it was.
+                // Only `panelOpen`: the playlist stays as it was, so reopening
+                // the panel brings it back unchanged.
                 ui.global::<MusicState>().set_panel_open(false);
             }
         });
@@ -224,7 +216,7 @@ pub(crate) fn register_callbacks(ui: &App) {
         });
     }
 
-    // The title bar's music button (App.vue's `music.togglePanel()`).
+    // The title bar's music button.
     let weak = ui.as_weak();
     ui.on_toggle_music(move || {
         if let Some(ui) = weak.upgrade() {

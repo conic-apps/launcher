@@ -15,19 +15,21 @@ import { MarkdownPalette, MdIconPath } from "markdown-types.slint";
 
 /// One item of the engine's display list, in paint order.
 ///
-/// Mirrors the Rust `MdItem`; the caller copies one into the other. `visible` is
-/// the one field the engine does not set: it is how a view skips the parts of a
-/// long document that are scrolled out of sight, which a README of any length
-/// needs because a renderer struggles well before a thousand elements.
+/// Mirrors the Rust `MdItem`'s text and rectangle fields; the caller copies one
+/// into the other. A bitmap is a `MarkdownImage` rather than an `MdItem`, and
+/// `visible` is set on the wrapper a view draws each item in, not carried here:
+/// it is how a view skips the parts of a long document that are scrolled out of
+/// sight, which a README of any length needs because a renderer struggles well
+/// before a thousand elements.
 export struct MdItem {
-    /// "text" | "rect" | "image".
+    /// "text" | "rect". A bitmap is a `MarkdownImage`, not one of these.
     kind: string,
     x: length,
     y: length,
     width: length,
     height: length,
-    /// The glyphs of a `text` item. An `image` item carries its alternative text
-    /// here, for a label or a tooltip.
+    /// The glyphs of a `text` item, and empty for a `rect`. An image is a
+    /// `MarkdownImage` with its own `alt` field rather than one of these.
     text: string,
     font-size: length,
     font-weight: int,
@@ -35,7 +37,7 @@ export struct MdItem {
     /// Set with the code font rather than the text font.
     mono: bool,
     /// The name of the palette slot this item takes its colour from, resolved by
-    /// `MarkdownView.color`.
+    /// `MarkdownColors.resolve`.
     color: string,
     /// A `rect` item's corner radius.
     radius: length,
@@ -92,20 +94,23 @@ export struct MarkdownImage {
 
 /// One run of the document: the unit a view stacks vertically.
 ///
-/// Mirrors the Rust `MdChunk`; the caller copies one into the other. A run is what
-/// moves as one thing, which is why a collapsible section is one: closing it
-/// shortens its run, and a column of runs puts everything below it back where it
-/// belongs. Covering the content instead would hide it and reclaim nothing.
+/// Mirrors the Rust `MdChunk` with its `MdSection`'s geometry flattened in; the
+/// caller copies one into the other. A run is what moves as one thing, which is
+/// why a collapsible section is one: closing it shortens its run, and a column of
+/// runs puts everything below it back where it belongs. Covering the content
+/// instead would hide it and reclaim nothing.
 export struct MdChunk {
-    /// The index of the section this run is, or -1 for a run of ordinary blocks.
+    /// The id of the section this run is (the engine's `MdSection.id`), or -1 for
+    /// a run of ordinary blocks.
     section-index: int,
     /// Where the run starts in the engine's *open* layout, which is the origin
     /// its items' own `y` are measured from.
     top: length,
     /// How tall the run is with its section open.
     height: length,
-    /// How much of that the section hides while it is closed — its content, and
-    /// not the summary row. Zero for a run that is not a section.
+    /// How much of that the section hides while it is closed — its content and
+    /// the margin under it, not the summary row. Zero for a run that is not a
+    /// section.
     hidden: length,
     /// The summary row's box. All zero for a run that is not a section.
     head-x: length,
@@ -225,11 +230,11 @@ component MdImage inherits Rectangle {
         image-fit: contain;
     }
 
-    // `![alt](img)` inside a link is a link: `markdown-body.less` styles every
-    // `a` under the body, image or not, and the Vue's `onReadmeClick` opens any
-    // anchor it finds. `text-decoration` does not reach a replaced element, so
-    // there is no rule to draw over the picture — but the press is the same
-    // press, and the hand says so.
+    // `![alt](img)` inside a link is a link: GitHub's `.markdown-body` styles
+    // every `a` under the body, image or not, and a click on any anchor opens
+    // it. `text-decoration` does not reach a replaced element, so there is no
+    // rule to draw over the picture — but the press is the same press, and the
+    // hand says so.
     if root.picture.link-url != "" : TouchArea {
         mouse-cursor: pointer;
         clicked => { root.link-clicked(root.picture.link-url); }
@@ -310,7 +315,7 @@ component MdSectionRow inherits Rectangle {
     border-top-right-radius: chunk.head-radius;
     border-bottom-left-radius: chunk.head-radius;
     border-bottom-right-radius: chunk.head-radius;
-    // The three states of a settings row, and the 50ms the Vue gives them.
+    // The three states of a settings row, and its 50ms transition.
     background: touch.pressed ? palette.details-head-active
         : touch.has-hover ? palette.details-head-hover
         : palette.details-head;
@@ -375,7 +380,7 @@ component MdSectionRow inherits Rectangle {
 /// Draws a document.
 ///
 /// The caller owns the state: it runs the Rust `Renderer`, copies the resulting
-/// items into [`MdItem`]s, and pushes them in as `items` with `content-height`
+/// runs into [`MdChunk`]s, and pushes them in as `chunks` with `content-height`
 /// beside them. The component's job is to draw them, to answer a click on a link,
 /// and to leave everything it is given a way to override.
 ///
@@ -400,7 +405,8 @@ export component MarkdownView inherits Rectangle {
     // Every slot is named. A struct's unset fields take their *type* default,
     // which for a color is opaque black, and `MarkdownColors.resolve` only falls
     // back to `text` for a name it does not know — not for one that was left out.
-    // Nine of the twenty roles would otherwise come out black.
+    // Twelve of the twenty roles are set to something other than black here, and
+    // would come out black without this literal.
     in property <MarkdownPalette> palette: {
         text: #000000,
         heading: #000000,
@@ -416,8 +422,8 @@ export component MarkdownView inherits Rectangle {
         table-head-background: #dddddd,
         rule: #888888,
         strike: #000000,
-        // `markdown-body.less` has no `::marker` and no broken-image rule, so a
-        // browser draws both in the text's own colour.
+        // GitHub's `.markdown-body` has no `::marker` and no broken-image rule,
+        // so a browser draws both in the text's own colour.
         marker: #000000,
         placeholder: #000000,
         details-head: #ffffff,
@@ -428,15 +434,15 @@ export component MarkdownView inherits Rectangle {
     /// The family body text is set in. A run with `mono` is set in `mono-family`
     /// instead, and an empty one falls back to the window's default.
     in property <string> family: "";
-    /// The family code spans and code blocks are set in. `monospace` resolves the
-    /// way it does in a browser.
+    /// The family code spans and code blocks are set in. Slint's `font-family`
+    /// does not resolve a generic name like `monospace` the way CSS does, so name
+    /// the same real family the engine measures with.
     in property <string> mono-family: "monospace";
     /// The chevron a `<details>` row draws, when the caller has an icon set. An
     /// empty one — a `viewbox` of zero — draws the built-in path instead.
     in property <MdIconPath> marker-icon: { commands: "", viewbox: 0, stroke-width: 0 };
-    /// The scroll offset of whatever contains this view, in the same sign
-    /// `content-y` uses: 0 at the top, negative scrolled down. Only read when
-    /// culling is on.
+    /// The scroll offset of whatever contains this view: 0 at the top, negative
+    /// scrolled down. Only read when culling is on.
     in property <length> viewport-y: 0px;
     /// The height of the window onto the document, for the same reason.
     in property <length> viewport-height: 0px;
@@ -469,7 +475,8 @@ export component MarkdownView inherits Rectangle {
     /// this way it reads each section's own `open` as the answer for a run it has
     /// no state for.
     in-out property <[bool]> section-open: [];
-    /// A summary row was clicked. The parameter is the run's index in `chunks`.
+    /// A summary row was clicked. The parameter is the section's id (the run's
+    /// `section-index`, not its position in `chunks`).
     callback section-toggled(int);
     /// The document's height with every run at the height it is at right now.
     ///
@@ -576,7 +583,7 @@ export component MarkdownView inherits Rectangle {
             // with it.
             //
             // One loop and a conditional per kind, because the run's *paint order*
-            // is the engine's: a chip's background is emitted after the run of text
+            // is the engine's: a chip's background is emitted before the run of text
             // it sits behind, and drawing every rectangle after every piece of text
             // would put the capsule over its own code.
             for item in chunk.items : Rectangle {

@@ -4,10 +4,8 @@
 
 import { Theme } from "../theme.slint";
 
-// 16px status glyph (src/components/ItemLoadingIcon.vue): success check, error
-// cross, pending dot and an in-progress spinner. The spinner uses
-// `animation-tick()` for continuous rotation (same approach as the bundled
-// Slint spinner).
+// 16px status glyph: success check, error cross, pending dot and an in-progress
+// spinner. The spinner uses `animation-tick()` for continuous rotation.
 export component ItemLoadingIcon inherits Rectangle {
     in property <string> status: "pending";
 

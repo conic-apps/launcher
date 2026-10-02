@@ -15,53 +15,50 @@ use java_runtime::JavaArch;
 
 use crate::error::*;
 
-/// Represents all launch options required to start a Minecraft instance.
-///
-/// These include memory settings, screen resolution, authentication tokens,
-/// optional server connection info, and custom JVM/MC arguments.
+/// All launch options required to start a Minecraft instance: memory settings,
+/// screen resolution, authentication tokens, optional server connection info,
+/// and custom JVM/MC arguments.
 pub struct LaunchOptions {
     pub selected_account: Account,
 
     pub user_properties: String,
 
-    /// Max memory, this will add a jvm flag -Xmx to the command result
+    /// Maximum heap, added as the `-Xmx` JVM flag.
     pub max_memory: usize,
 
-    /// Young generation size in MB, this will add a jvm flag -Xmn to the
-    /// command result. Only set when auto memory allocation is used.
+    /// Young generation size in MB, added as the `-Xmn` JVM flag. Only set when
+    /// auto memory allocation is used.
     pub xmn_memory: usize,
 
-    /// Enter a server after launch. TODO: support 1.21.1
+    /// Server to join after launch. TODO: support 1.21.1
     pub server: Option<Server>,
 
-    /// window width
+    /// Window width.
     pub width: usize,
 
-    /// window height
+    /// Window height.
     pub height: usize,
 
     pub fullscreen: bool,
 
     /// User custom additional java virtual machine command line arguments.
-    ///
-    /// If this is empty, the `DEFAULT_EXTRA_JVM_ARGS` will be used.
     pub extra_jvm_args: String,
 
     /// User custom additional minecraft command line arguments.
     pub extra_mc_args: String,
 
-    /// Launch game in demo mode, I don't know who want it:)
-    /// NOTE: Should NOT allow user who don't have the game access this launcher because legal
-    /// issues
+    /// Launch the game in demo mode.
+    ///
+    /// NOTE: A user without game access must not reach this, for legal reasons.
     pub is_demo: bool,
 
-    /// Adds `-Dfml.ignoreInvalidMinecraftCertificates=true` to jvm argument
+    /// Adds `-Dfml.ignoreInvalidMinecraftCertificates=true` to the JVM arguments.
     pub ignore_invalid_minecraft_certificates: bool,
 
-    /// Adds `-Dfml.ignorePatchDiscrepancies=true` to jvm argument
+    /// Adds `-Dfml.ignorePatchDiscrepancies=true` to the JVM arguments.
     pub ignore_patch_discrepancies: bool,
 
-    /// Adds extra classpath
+    /// Adds extra classpath entries.
     pub extra_class_paths: String,
 
     pub gc: GC,

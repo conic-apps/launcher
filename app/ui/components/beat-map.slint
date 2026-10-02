@@ -5,48 +5,43 @@
 import { Theme } from "../theme.slint";
 import { MusicState } from "../globals/music.slint";
 
-// Audio visualizer (src/components/BeatMap.vue).
+// Audio visualizer.
 //
-// A row of bars across the container: the live spectrum while a track is playing,
-// and a 2px baseline in `surface2` when it is not. The Vue drew it into a
-// `<canvas>` sized to the container times the device pixel ratio; this draws the
-// same bars as elements, in logical pixels, which is the one difference — see
-// `src/music.rs` for why the spectrum-to-bars maths is on the Rust side rather
-// than in a binding.
+// A row of bars across the container: the live spectrum while a track is
+// playing, and a 2px baseline when it is not. The bars are elements in logical
+// pixels; see `app/src/music/` for why the spectrum-to-bars maths is on the Rust
+// side rather than in a binding.
 //
-// The colours come from a gradient the Vue built once for the whole canvas, from
-// `lavender` at the bottom to `blue` at the top. A gradient here is relative to
-// the element it fills, so a bar draws the range *it* covers: from `lavender` at
-// its own foot to wherever the canvas gradient is at the bar's head. That is the
-// same colour everywhere, which is what `level` (a fraction of the canvas height)
-// is for.
+// A gradient is relative to the element it fills, so a bar draws the range *it*
+// covers: from `lavender` at its own foot to wherever the full-height gradient
+// is at the bar's head — the same colour everywhere, which is what `level` (a
+// fraction of the container height) is for.
 export component BeatMap inherits Rectangle {
-    /// The Vue's `.fill`: take the whole container and drop the block's own
-    /// `border-radius` (and, with `transparent`, its opaque background). The
-    /// size itself is the caller's, for the reason above.
+    /// Take the whole container and drop the block's own border radius (and,
+    /// with `transparent`, its opaque background). The size itself is the
+    /// caller's.
     in property <bool> fill: false;
     /// Skip the opaque background so the parent shows through.
     in property <bool> transparent: false;
-    /// Live spectrum (`MusicState.live`, the Vue's `analyser && hasTrack &&
-    /// isPlaying`) or the idle baseline.
+    /// Live spectrum (`MusicState.live`) or the idle baseline.
     in property <bool> live: MusicState.live;
     /// One bar height per bar, 0..1 of `height`.
     in property <[float]> levels: MusicState.levels;
-    /// `minBarWidth`, in logical pixels: the bar count is the container's width
-    /// divided by this, which is what the Vue's `resizeCanvas` did on every
-    /// resize. A plain number because Slint cannot divide one length by another.
+    /// Minimum bar width in logical pixels: the bar count is the container's
+    /// width divided by this. A plain number because Slint cannot divide one
+    /// length by another.
     in property <float> min-bar-width: 10;
-    /// The Vue's `ResizeObserver` reported a resize; the bar count — and through
-    /// it the analyser's resolution — follow.
+    /// Reports a resize; the bar count — and through it the analyser's
+    /// resolution — follow.
     callback resized(int);
 
     width: 100%;
     height: 100%;
-    // `border-radius: 8px`, dropped by `.fill`. The fixed block's own 48px
-    // height is a state rather than a ternary, because Slint will not unify the
-    // `100%` of a filled box with a `48px` length in one expression. The radius
-    // *is* a plain ternary, so it is one — the state block is for the height
-    // alone, and the radius is a second thing it would otherwise have carried.
+    // The fixed block's own 48px height is a state rather than a ternary,
+    // because Slint will not unify the `100%` of a filled box with a `48px`
+    // length in one expression. The radius *is* a plain ternary, so it is one —
+    // the state block is for the height alone, and the radius is a second thing
+    // it would otherwise have carried.
     states [
         block when !root.fill : {
             height: 48px;
@@ -55,25 +50,23 @@ export component BeatMap inherits Rectangle {
     border-radius: root.fill ? 0 : 8px;
     background: (root.fill || root.transparent) ? Colors.transparent : Theme.mantle;
 
-    // ----- geometry (BeatMap.vue's module constants) -----
+    // ----- geometry -----
     private property <int> bar-count: clamp(
         floor(root.width / 1px / root.min-bar-width),
         32,
         256,
     );
     private property <length> bar-width: root.width / root.bar-count;
-    // `Math.max(1, Math.floor(barWidth * 0.25))`.
+    // A quarter of a bar's width, floored, at least 1px.
     private property <length> bar-gap: max(1px, floor(root.bar-width * 0.25 / 1px) * 1px);
-    /// `Math.max(barHeight, 1)`, the floor that keeps a silent bar visible.
+    /// The floor that keeps a silent bar visible.
     private property <length> min-bar-height: 1px;
-    /// The idle branch's 2px baseline, `height - 2`.
+    /// The idle branch's 2px baseline.
     private property <length> idle-height: 2px;
 
-    // The Vue's `ResizeObserver` fired on the container's box changing, which for
-    // this app is the window being resized. `init` is what covers the first
-    // layout: the width is not known yet, so the count is the `MIN_BARS` floor,
-    // and a window that really is that narrow leaves it there — which is the right
-    // answer either way.
+    // `init` covers the first layout: the width is not known yet, so the count
+    // is the floor, and a window that really is that narrow leaves it there —
+    // which is the right answer either way.
     init => {
         root.resized(root.bar-count);
     }
@@ -101,13 +94,13 @@ export component BeatMap inherits Rectangle {
             x: floor(index * root.bar-width / 1px) * 1px;
             y: root.height - self.height;
             width: root.bar-width - root.bar-gap;
-            // The live branch's `barHeight`, with the `Math.max(…, 1)` that keeps a
-            // silent bar visible.
+            // The live branch's bar height, floored so a silent bar stays
+            // visible.
             height: max(root.min-bar-height, level * root.height);
-            // The Vue's canvas gradient, drawn for the part of it this bar
-            // covers: from `lavender` at the bar's own foot to wherever the canvas
-            // gradient is at the bar's head, which is what `level` — a fraction of
-            // the canvas height — is for.
+            // The full-height gradient, drawn for the part of it this bar
+            // covers: from `lavender` at the bar's own foot to wherever the
+            // gradient is at the bar's head, which is what `level` — a fraction
+            // of the container height — is for.
             background: @linear-gradient(
                 0deg,
                 Theme.lavender 0%,
@@ -116,14 +109,12 @@ export component BeatMap inherits Rectangle {
         }
     }
 
-    // The idle branch: the same number of bars, two pixels of `surface2` at the
-    // bottom, which is what the Vue drew when there was no spectrum to read. It
-    // is its own loop because a gradient cannot share a `background` ternary
-    // with a plain colour — the two do not unify into a brush, and the bars come
-    // out invisible.
+    // The idle branch: the same number of bars, two pixels of `surface-2` at the
+    // bottom. It is its own loop because a gradient cannot share a `background`
+    // ternary with a plain colour — the two do not unify into a brush, and the
+    // bars come out invisible.
     if !root.live : idle := Rectangle {
-        // One bar per `barCount`, which is what an integer as a model repeats
-        // over.
+        // An integer model repeats once per bar.
         for index in root.bar-count : Rectangle {
             x: floor(index * root.bar-width / 1px) * 1px;
             y: root.height - root.idle-height;

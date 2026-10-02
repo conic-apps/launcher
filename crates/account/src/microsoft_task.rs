@@ -2,21 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Stands in for `crates/account/src/microsoft_commands.rs` — the one command
-//! module of the original that carries state of its own.
+//! The at-most-one running Microsoft login task.
 //!
-//! `cmd_spawn_microsoft_login_task` runs at most one login task at a time and
-//! `cmd_cancel_microsoft_login_task` aborts it; between them they own the
-//! `PluginState { task: Arc<Mutex<Option<AbortHandle>>> }` that the Tauri plugin
-//! `manage`s and a command reaches through `State<'_, PluginState>`. With no
-//! IPC layer the same state becomes a plain value the app holds and calls:
-//! [`LoginTaskState::spawn`] does what the command did — it awaits the task it
-//! started, reporting progress through the [`LoginReporter`] as it runs — and
-//! [`LoginTaskState::cancel`] is the other command.
-//!
-//! The original's other two command modules (`offline_commands.rs`,
-//! `yggdrasil_commands.rs`) only forwarded their arguments to the module
-//! functions, which are `pub` already, so they have no counterpart here.
+//! [`LoginTaskState::spawn`] starts the flow and awaits it, reporting progress
+//! through the [`LoginReporter`]; a call while one is already running fails
+//! with [`Error::LoginInProgress`]. [`LoginTaskState::cancel`] aborts it.
 
 use std::sync::{Arc, Mutex};
 
@@ -31,24 +21,22 @@ use crate::{
 
 /// Which of the two Microsoft flows a login task runs.
 ///
-/// `Option<String>` stood for this in the original — `None` being the device
-/// code — but the browser flow has grown a second half since: the code is only
-/// half of it, and the `redirect_uri` it was issued against has to be repeated
-/// exactly at the token endpoint. The two travel together here so that neither
-/// can be passed without the other.
+/// The browser flow carries two inseparable values: the authorization code and
+/// the `redirect_uri` it was issued against, which has to be repeated exactly
+/// at the token endpoint. They travel together so neither can be passed
+/// without the other.
 #[derive(Clone, Debug)]
 pub enum LoginRequest {
     /// The device-code flow: no browser round trip, nothing to wait for but the
     /// user's own code entry.
     DeviceCode,
     /// The browser flow's authorization code, and the `redirect_uri` the browser
-    /// came back to — which is a loopback listener this app owns (see
-    /// `slint-authcode`), so the port is chosen when the flow starts and is not
-    /// known before that.
+    /// came back to — a loopback listener this app owns (`authcode`), so the
+    /// port is chosen when the flow starts and is not known before that.
     AuthCode { code: String, redirect_uri: String },
 }
 
-/// The at-most-one running Microsoft login task (the original's `PluginState`).
+/// The at-most-one running Microsoft login task.
 #[derive(Clone, Default)]
 pub struct LoginTaskState {
     task: Arc<Mutex<Option<tokio::task::AbortHandle>>>,
@@ -61,7 +49,7 @@ impl LoginTaskState {
     }
 
     /// Starts the login task and awaits it, reporting its progress through
-    /// `reporter` (`cmd_spawn_microsoft_login_task`).
+    /// `reporter`.
     ///
     /// A call while another task is running fails with
     /// [`Error::LoginInProgress`].
@@ -97,7 +85,7 @@ impl LoginTaskState {
         result
     }
 
-    /// Aborts the running login task (`cmd_cancel_microsoft_login_task`).
+    /// Aborts the running login task.
     pub fn cancel(&self) {
         let mut current_task = self.task.lock().expect("Internal error");
         if let Some(handle) = current_task.take() {

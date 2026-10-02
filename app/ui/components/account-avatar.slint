@@ -4,12 +4,12 @@
 
 import { Theme } from "../theme.slint";
 
-// Player head avatar (src/components/AccountAvatar.vue).
+// Player head avatar.
 //
-// The Vue component fetches the skin texture and crops the 8x8 face to a
-// `<canvas>`. That image pipeline is not ported yet, so this component renders
-// the placeholder disc with the per-account-type ring; wiring a real skin later
-// only needs to fill `skin`.
+// The head image comes from Rust (`app/src/account_avatar.rs`), which crops the
+// 8x8 face out of the profile's skin and stretches the 8x8 hat layer over it,
+// falling back to one of the bundled default skins. `skin` carries that image;
+// the placeholder disc with the per-account-type ring is drawn while it is empty.
 export component AccountAvatar inherits Rectangle {
     in property <length> size: 56px;
     in property <image> skin;

@@ -2,17 +2,14 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/launch`: turning an installed instance into a
-//! running Minecraft process.
+//! The launch pipeline: turning an installed instance into a running Minecraft
+//! process.
 //!
-//! The original exposes its work through two Tauri commands
-//! (`cmd_spawn_launch_task` / `cmd_cancel_launch_task`) and forwards progress
-//! over an IPC `Channel`. This mirror keeps the whole launch pipeline — file
-//! completion, version resolution, Java selection, authlib-injector setup, the
-//! argument list and the generated launch script with its stdout log watcher —
-//! and drops only the command layer: [`launch`] is the same function the
-//! command ran, taking the `Arc<Mutex<LaunchEvent>>` the command thread polled.
-//! The app plays the command's role (spawn, poll, abort to cancel).
+//! [`launch`] runs the whole pipeline — file completion, version resolution,
+//! Java selection, authlib-injector setup, the argument list and the generated
+//! launch script with its stdout log watcher — and reports progress through the
+//! `Arc<Mutex<LaunchEvent>>` the caller polls. The app owns the process: it
+//! spawns the launch task, polls this state, and aborts the task to cancel.
 
 use std::{
     io::BufRead,
@@ -198,8 +195,7 @@ fn print_instance_info(instance: &Instance) {
 /// # Behavior
 /// * Creates a platform-specific shell script/batch file for launching the game.
 /// * Runs the generated script using a subprocess.
-/// * Streams stdout to detect key launch indicators and forward logs to the frontend.
-/// * Handles cleanup of native libraries after game launch completes.
+/// * Streams stdout to detect key launch indicators and publishes them on `status`.
 async fn spawn_minecraft_process(
     command_arguments: Vec<String>,
     launch_options: LaunchOptions,
@@ -207,7 +203,7 @@ async fn spawn_minecraft_process(
     java_path: PathBuf,
     status: Arc<Mutex<LaunchEvent>>,
 ) -> Result<u32> {
-    // TODO: 要求 Java 使用高性能显卡
+    // TODO: ask Java to use the high-performance GPU.
     let instance_root = DATA_LOCATION.get_instance_root(&instance.id);
     let mut commands = String::new();
     if PLATFORM_INFO.os_family != OsFamily::Windows {
@@ -332,7 +328,7 @@ async fn spawn_minecraft_process(
         };
         if !output.status.success() {
             // TODO: log analysis and remove libraries lock file
-            // WARN: When failed, frontend should stop all "launching" animation
+            // WARN: On failure the caller should stop all "launching" animations.
             error!("Minecraft exits with error code {}", output.status);
         } else {
             info!("Minecraft exits with error code {}", output.status);

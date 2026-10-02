@@ -2,15 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Single-instance guard for the Slint app.
+//! Single-instance guard for the app.
 //!
-//! The Tauri app gets this from `tauri-plugin-single-instance`: it claims a
-//! platform-wide lock while it starts, and any later launch of the app finds
-//! the lock, hands its command line to the process that is already running and
-//! exits — so the user gets the window they just asked for rather than a second
-//! copy of the launcher. This crate is the same mechanism without Tauri: the
-//! Slint app owns its event loop, so it claims the lock itself and is told
-//! about later launches through a channel.
+//! A platform-wide lock is claimed while the app starts, and any later launch
+//! finds the lock, hands its command line to the process that is already
+//! running and exits — so the user gets the window they just asked for rather
+//! than a second copy of the launcher. The app owns its event loop, so it
+//! claims the lock itself and is told about later launches through a channel.
 //!
 //! One backend per platform, all behind the same two types:
 //!
@@ -21,8 +19,8 @@
 //! | Windows  | a named mutex           | a `WM_COPYDATA` message       |
 //!
 //! Any other platform has no backend and always claims the role, so the app
-//! still starts there — a case that does not arise today, since
-//! `slint-platform` only reports Windows, Linux and macOS.
+//! still starts there — a case that does not arise today, since `platform`
+//! only reports Windows, Linux and macOS.
 //!
 //! # Use
 //!
@@ -49,14 +47,8 @@ mod macos;
 #[cfg(target_os = "windows")]
 mod windows;
 
-/// The identity the platform locks are derived from.
-///
-/// The Tauri app's identifier is `app.conicmc.launcher` (`core/tauri.conf.json`);
-/// the Slint app takes `.slint` so the two frontends can be run side by side
-/// while both exist — sharing the identifier would mean one of them exits
-/// immediately in favour of the other. Drop the suffix once the Slint app
-/// replaces the Tauri one, so the desktop entry's `conic-launcher://` handler
-/// reaches whichever build is installed.
+/// The identity the platform locks are derived from. It matches the macOS
+/// bundle identifier, so every platform names the same app.
 pub const APP_ID: &str = "app.conicmc.launcher.slint";
 
 #[cfg(target_os = "linux")]
@@ -99,8 +91,9 @@ pub struct AlreadyRunning;
 ///
 /// # Errors
 ///
-/// [`AlreadyRunning`] when the role was taken: the running instance has been
-/// told about this launch, and the caller should exit.
+/// [`AlreadyRunning`] when the role was taken: the running instance is handed
+/// this launch first (or the failed hand-over is logged), and the caller should
+/// exit.
 ///
 /// A backend that cannot claim the role for an unrelated reason (no D-Bus
 /// session, no session to hand the report to) logs a warning and lets the
@@ -144,9 +137,12 @@ pub(crate) fn current_launch() -> Launch {
     }
 }
 
-/// A backend reports a launch it cannot hand over (the process holding the lock
-/// is gone, the socket has no listener) by returning an error; there is nothing
-/// the caller can do about it beyond the log line, which keeps the noise down.
+/// Hands a launch to the feed the app reads.
+///
+/// The send is the last step of a backend passing a launch on, so its only
+/// failure is a receiver that is already gone — the app is shutting down — and
+/// there is nothing the caller can do about it beyond the log line, which stays
+/// at `debug` to keep the noise down.
 pub(crate) fn report(launches: &Sender<Launch>, launch: Launch) {
     if let Err(error) = launches.send(launch) {
         log::debug!(target: "shell", "a launch was not handed over: {error}");

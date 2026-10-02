@@ -23,10 +23,9 @@
 //!
 //! The components *pull*: a `scroll-event` handler asks for the source while it
 //! handles the event. On macOS an `NSEvent` observer records the classification
-//! as the event goes by, before Slint sees it (see [`macos`]), so the answer
+//! as the event goes by, before Slint sees it (see `macos` below), so the answer
 //! belongs to the very event being handled. Everything else — every other
-//! platform, and any reading that is not fresh — is `wheel`, which is the
-//! Lenis-smoothed behaviour those platforms had before this existed.
+//! platform, and any reading that is not fresh — is `wheel`.
 
 use std::cell::Cell;
 use std::sync::OnceLock;

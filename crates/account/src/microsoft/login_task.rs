@@ -21,10 +21,9 @@ const MAX_FAILED_POLLS: u32 = 3;
 
 /// Progress events reported while a Microsoft login task is running.
 ///
-/// The variants are the original's, which serialized them with the same
-/// `job`/`progress` tagging as the install/launch events; the frontend's
-/// `LoginProgress` type mirrors that shape and the Slint UI maps these to the
-/// same progress strings. The `serde` derives go with the IPC boundary.
+/// The UI maps most variants to a progress string; `WaitingForAuthorization`
+/// instead carries the device-code screen's data. No `serde` derives are
+/// needed: the events cross no process boundary.
 #[derive(Debug, Clone, PartialEq)]
 pub enum LoginEvent {
     Prepare,
@@ -45,17 +44,16 @@ pub enum LoginEvent {
 
 /// Clonable handle through which the login flow reports [`LoginEvent`]s.
 ///
-/// The original holds a `tauri::ipc::Channel<LoginEvent>`; this holds a
-/// closure, which the app points at the UI thread (it forwards the event with
-/// `upgrade_in_event_loop`). Nothing else about the flow changes.
+/// The flow runs off the UI thread, so the closure the app supplies forwards
+/// each event with `upgrade_in_event_loop`.
 #[derive(Clone)]
 pub struct LoginReporter {
     on_event: Arc<dyn Fn(LoginEvent) + Send + Sync>,
 }
 
 impl LoginReporter {
-    /// A reporter that has no UI to report to — used by callers that only want
-    /// the account, e.g. a token refresh driven from the launch flow.
+    /// A reporter that ignores every event, for a caller that has no UI to
+    /// report to.
     pub fn silent() -> Self {
         Self::new(|_| {})
     }

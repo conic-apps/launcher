@@ -10,9 +10,7 @@ mod memory;
 
 pub use memory::get_available_memory_bytes;
 
-/// Tauri-free mirror of `crates/platform`. The original crate is a Tauri
-/// plugin; this one keeps the same data model without the Tauri dependency
-/// so the Slint app can interrogate the OS directly.
+/// The host platform, detected once on first use.
 pub static PLATFORM_INFO: Lazy<PlatformInfo> = Lazy::new(PlatformInfo::new);
 
 /// The path delimiter character used in environment variables like `PATH`.

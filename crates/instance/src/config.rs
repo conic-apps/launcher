@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use config::launch::{GC, Server};
 
-/// Represents supported mod loader types.
+/// Supported mod loader types.
 #[derive(Clone, Deserialize, Serialize)]
 pub enum ModLoaderType {
     /// Fabric mod loader

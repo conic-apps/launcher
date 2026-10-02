@@ -9,26 +9,25 @@
 //! The buttons' geometry belongs to AppKit: every titlebar layout pass
 //! re-derives the `NSTitlebarContainerView`'s frame and the buttons' positions
 //! from its own metrics, discarding anything written with `setFrame:`. Moving
-//! the frames and re-applying them from notification callbacks (what this
-//! module used to do, and what Electron still does) therefore always races
-//! AppKit's layout — and it loses exactly when it matters: during the window
-//! open animation and while swiping between Spaces the window is composited by
-//! the window server, `NSWindowDidUpdateNotification` is not delivered, and the
-//! reverted geometry is what ends up on screen.
+//! the frames and re-applying them from notification callbacks (what Electron
+//! still does) therefore always races AppKit's layout — and it loses exactly
+//! when it matters: during the window open animation, and while swiping between
+//! Spaces the window is composited by the window server,
+//! `NSWindowDidUpdateNotification` is not delivered, and the reverted geometry
+//! is what ends up on screen.
 //!
-//! Chromium hit the same thing and changed model in 2018 (commit `6b3c8c76f9`,
-//! "This fixes the window button position"): rather than writing a position, it
-//! answers the *metrics* AppKit asks for, and AppKit lays the buttons out
-//! itself. Nothing is stored that AppKit could reset, so the geometry survives
-//! every animation by construction.
+//! Chromium hit the same thing and changed model: rather than writing a
+//! position, it answers the *metrics* AppKit asks for, and AppKit lays the
+//! buttons out itself. Nothing is stored that AppKit could reset, so the
+//! geometry survives every animation by construction.
 //!
 //! # How
 //!
 //! `NSWindow` asks `+frameViewClassForStyleMask:` which class to use as its
 //! frame view (AppKit's answer is `NSThemeFrame`). We swizzle that to hand out
 //! `ConicThemeFrame` for titled windows, and register four AppKit methods on
-//! that subclass — all private, all added through the runtime so no private
-//! symbol is referenced at link time:
+//! that subclass — added through the runtime so no symbol is referenced at link
+//! time. Three are private SPI; `setStyleMask:` overrides a public one:
 //!
 //! | selector | answer |
 //! |---|---|
@@ -37,20 +36,18 @@
 //! | `-_shouldCenterTrafficLights` | `YES` — centres the buttons vertically inside that height |
 //! | `-setStyleMask:` | records the fullscreen bit, then forwards to AppKit |
 //!
-//! The pitch between buttons stays AppKit's own; the `16/38/60` the old code
-//! hardcoded were simply its values at the time.
+//! The pitch between buttons stays AppKit's own rather than being hardcoded.
 //!
 //! # When the buttons are not there
 //!
 //! Native fullscreen hides them (AppKit hides the whole titlebar container), so
 //! the title bar stops having to leave room for them: [`watch_fullscreen`]
 //! reports the state into the UI, which is what moves the leading controls back
-//! into the corner they occupy on every other platform. The Vue original keeps
-//! the gap in fullscreen; this is a deliberate deviation.
+//! into the corner they occupy on every other platform.
 //!
 //! # Keeping the fallback honest
 //!
-//! All four selectors are private API, so [`install`] arms a one-shot
+//! The three metric selectors are private API, so [`install()`] arms a one-shot
 //! self-check: it asks the window for its frame-view class and measures the
 //! close button. If the metric route did not take (no `NSThemeFrame`, renamed
 //! selector, AppKit ignoring the overrides), the check installs
@@ -734,18 +731,16 @@ unsafe fn inherits_from(mut class: *const ffi::objc_class, target: *const ffi::o
 // --- Fallback -----------------------------------------------------------------
 //
 // Everything below is only used when the metric route is unavailable. It is the
-// frame-writing approach this module started with, with two changes taken from
-// Electron's `WindowButtonsProxy` and from its macOS 26 fix "re-apply the
-// calculated geometry after visibility changes": the geometry is derived from
-// AppKit instead of hardcoded, and the container is never hidden — hiding it is
-// what let AppKit re-lay the titlebar out from under us.
+// frame-writing approach, with two safeguards taken from Electron's
+// `WindowButtonsProxy`: the geometry is derived from AppKit instead of
+// hardcoded, and the container is never hidden — hiding it lets AppKit re-lay
+// the titlebar out from under us.
 
 /// AppKit's own button geometry, read before anything is moved.
 struct Metrics {
     /// How far the buttons' bottom edge sits above the container's bottom edge.
     ///
-    /// AppKit's own value, so the fallback does not have to assume the 9pt this
-    /// used to hardcode.
+    /// AppKit's own value, so the fallback does not have to hardcode the 9pt.
     pad_below: f64,
     /// Distance between the left edges of two neighbouring buttons.
     pitch: f64,

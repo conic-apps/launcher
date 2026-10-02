@@ -6,42 +6,39 @@ import { Theme } from "../theme.slint";
 import { FocusManager } from "../globals/focus.slint";
 import { WindowDrag } from "../globals/window-drag.slint";
 
-// Modal dialog shell (src/components/BaseDialog.vue).
+// Modal dialog shell.
 //
-// A full-window scrim with a centred panel. The Vue animates the pair with a
-// gsap timeline; Slint's `animate` has no timeline, so each track becomes the
-// `delay` of the properties it drives:
+// A full-window scrim with a centred panel. Slint's `animate` has no timeline,
+// so each track becomes the `delay` of the properties it drives:
 //
-//   enter  scrim   opacity 0 → 1     200ms `power1.out`, from 0ms
-//          content opacity 0 → 1     300ms `back.out`,    from 200ms
+//   enter  scrim   opacity 0 → 1     200ms ease-out, from 0ms
+//          content opacity 0 → 1     300ms overshoot, from 200ms
 //          content scale   0.9 → 1
-//   leave  content opacity 1 → 0     180ms `power1.out`, from 0ms
+//   leave  content opacity 1 → 0     180ms ease-out, from 0ms
 //          content scale   1 → 0.9
-//          scrim   opacity 1 → 0     200ms `power1.out`,  from 100ms
+//          scrim   opacity 1 → 0     200ms ease-out, from 100ms
 //
-// `back.out` overshoots its target (its control points sit above 1); Slint
-// interpolates a `cubic-bezier` the same way, so the usual easeOutBack
-// approximation stands in for it.
+// The entering content easing overshoots its target (its control points sit
+// above 1); Slint interpolates a `cubic-bezier` the same way, so the usual
+// easeOutBack approximation is used.
 //
 // The panel keeps its place in the tree while it animates out and is drawn no
-// more afterwards — the closest Slint gets to the Vue's `v-if` after the leave
-// transition. Its touch area is disabled as soon as the dialog is asked to
-// close, so the window underneath is clickable while it fades.
+// more afterwards. Its scrim touch area stays enabled for as long as the dialog
+// is visible — including through the leave — so the window underneath becomes
+// clickable only once the phase reaches "closed".
 export component BaseDialog inherits Rectangle {
-    /// Whether the dialog is open (the Vue's `visible` prop, renamed because
-    /// `visible` is an element property of its own).
+    /// Whether the dialog is open. Named with a prefix because `visible` is an
+    /// element property of its own.
     in property <bool> dialog-visible: false;
-    /// Panel size (the Vue's `width` / `height` props). Left at 0 the panel
-    /// fills the window, which is also where the Vue's `max-width` /
-    /// `max-height` clamp it; a dialog that lets its content size it (the Vue's
-    /// `fit-content` default) measures the slot itself and passes the result
-    /// here — see `overlays/dialogs/account-add.slint` for the arrangement.
+    /// Panel size. Left at 0 the panel grows to the window, leaving a 20px
+    /// margin. A dialog that lets its content size it measures the slot itself
+    /// and passes the result here — see `overlays/dialogs/account-add.slint`
+    /// for the arrangement.
     ///
-    /// A *change* to this is eased (see `panel-height` below), which is what the
-    /// Vue's `watch(() => props.height)` did for a dialog with `animateHeight`:
-    /// the add-account dialog, the multiplayer dialog and anything else that
-    /// swaps a taller body for a shorter one. Only the height is animated; the
-    /// width still switches instantly, as it did there.
+    /// A *change* to the height is eased (see `panel-height` below), so a dialog
+    /// that swaps a taller body for a shorter one — the add-account dialog, the
+    /// multiplayer dialog — grows or shrinks smoothly. Only the height is
+    /// animated; the width switches instantly.
     in property <length> dialog-width: 0px;
     in property <length> dialog-height: 0px;
     /// Size of the area the content is laid out in (the panel minus the 16px
@@ -56,10 +53,9 @@ export component BaseDialog inherits Rectangle {
 
     width: 100%;
     height: 100%;
-    // The scrim (`background: #00000042`), faded in and out with the dialog —
-    // the Vue fades the whole `.dialog` while its content scales. The alpha has
-    // to be part of the colour: an element `opacity` here would put the scrim's
-    // own children in a layer.
+    // The scrim, faded in and out with the dialog while its content scales. The
+    // alpha has to be part of the colour: an element `opacity` here would put
+    // the scrim's own children in a layer.
     background: #000000.with-alpha(0.259 * root.scrim-alpha);
     border-radius: 16px;
 
@@ -127,18 +123,13 @@ export component BaseDialog inherits Rectangle {
 
     // The height the panel is drawn at: `dialog-height`, eased.
     //
-    // The Vue had this in two halves. `watch(() => props.height)` tweened
-    // `height` over 300ms `power2.out` for a dialog that had `animateHeight`, and
-    // the same tween was what `onContentResize` ran for a dialog that had none
-    // but sized itself — either way a body that changes height does so over
-    // 300ms, never in one frame.
+    // A body that changes height does so over 300ms, never in one frame.
     //
-    // `enabled` is what keeps *opening* out of it. The Vue pinned the panel to
-    // the height it already had and skipped the first observation
-    // (`skipNextResize`), so a dialog appeared at its content's natural height
-    // and only *subsequent* resizes tweened; a tween on the way in would grow
-    // the panel from wherever it last was. It is off before the dialog is
-    // "shown" and during the leave, which is the same exclusion.
+    // `enabled` is what keeps *opening* out of it: the panel is pinned to the
+    // height it already had and the first observation is skipped, so a dialog
+    // appears at its content's natural height and only *subsequent* resizes are
+    // eased; an ease on the way in would grow the panel from wherever it last
+    // was. It is off before the dialog is "shown" and during the leave.
     private property <length> panel-height: root.dialog-height;
     animate panel-height {
         enabled: root.phase == "shown";
@@ -161,32 +152,31 @@ export component BaseDialog inherits Rectangle {
 
     // Swallows clicks meant for the window below. Declared before the panel so
     // the panel — and the controls inside it — stay on top: Slint hit-tests the
-    // last-declared element first. Disabled the moment the dialog is asked to
-    // close, so the window is usable again while the panel fades out.
+    // last-declared element first. Enabled while the dialog is visible, so it
+    // keeps swallowing clicks through the leave; it is disabled only once the
+    // phase reaches "closed".
     //
-    // The Vue marks this element with Tauri's `data-tauri-drag-region`, so a
-    // press on the scrim also moves the window — by its shadow area, like any
-    // other window background. The drops-focus part has to run on the press
-    // rather than on the click: the platform takes the drag over from there and
-    // the release never reaches Slint.
+    // A press on the scrim moves the window, by its shadow area, like any other
+    // window background. The drops-focus part has to run on the press rather
+    // than on the click: the platform takes the drag over from there and the
+    // release never reaches Slint.
     scrim-touch := TouchArea {
         enabled: root.visible;
         pointer-event(event) => {
             if event.button == PointerEventButton.left && event.kind == PointerEventKind.down {
-                // A press outside the panel drops any focused text field, the
-                // way the browser blurs an input its user clicks away from.
+                // A press outside the panel drops any focused text field.
                 FocusManager.clear();
                 WindowDrag.start();
             }
         }
     }
 
-    // The press-swallower for the panel: Tauri's drag regions only cover the
-    // element that carries the attribute, so pressing the panel — or anything on
-    // it — does not start a window drag while pressing the scrim does.
+    // The press-swallower for the panel: a drag region only covers the element
+    // that carries it, so pressing the panel — or anything on it — does not
+    // start a window drag while pressing the scrim does.
     panel := Rectangle {
-        // A dialog that sizes itself, clamped to the window — the Vue's
-        // `max-width` / `max-height` of `calc(100vw - 20px)`.
+        // A self-sizing dialog, clamped to the window: never less than 20px of
+        // the window visible around it.
         width: min(root.dialog-width > 0px ? root.dialog-width : root.width - 20px, root.width - 20px);
         height: min(root.panel-height > 0px ? root.panel-height : root.height - 20px, root.height - 20px);
         background: Theme.dialog-background;
@@ -203,18 +193,16 @@ export component BaseDialog inherits Rectangle {
             height: 100%;
         }
 
-        // `padding: 16px` of `.dialog > .content`.
+        // The content's 16px padding.
         //
-        // This is also where the Vue's clip sits, and it is a box *outside* the
-        // padding: `overflow-y: overlay` on `.content` makes `overflow-x` compute
-        // to `auto`, so `.content` clips at its **padding** edge — the border box
-        // less the 1px `border`, and including the 16px of padding. Clipping the
-        // content box itself would cut 16px tighter than the original, and that
-        // margin matters: a control that grows (the buttons scale to 102% on
-        // hover) overflows into the body's own padding, and a clip at the inner
-        // edge slices the growth off. So the clip is its own box here, a box
-        // either side of the content — and it is a plain `Rectangle` clip, which
-        // is what keeps the subtree out of a render layer.
+        // The clip is a box *outside* the padding: the content clips at its
+        // **padding** edge — the border box less the 1px border, including the
+        // 16px of padding — not at the content box. Clipping the content box
+        // itself would cut 16px tighter, and that margin matters: a control that
+        // grows (the buttons scale to 102% on hover) overflows into the body's
+        // own padding, and a clip at the inner edge slices the growth off. So
+        // the clip is its own box here, either side of the content — and it is a
+        // plain `Rectangle` clip, which keeps the subtree out of a render layer.
         clip-box := Rectangle {
             x: 1px;
             y: 1px;

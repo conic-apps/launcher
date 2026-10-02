@@ -4,17 +4,15 @@
 
 import { Theme } from "../../theme.slint";
 
-// The content overlays' shared shell (`GameView.vue`'s `.game-content-wrapper`
-// + `.game-content-container`).
+// The content overlays' shared shell.
 //
 // Every panel the game view opens — the five content panels and the six detail
 // panels behind them — is the same two elements: a full-window scrim, and a
 // container `calc(100% - 150px)` wide and full height that slides up from
-// `translateY(100%)`. The screenshots viewer is the one exception: the Vue
-// mounts it *without* the container, so it spans the window and only the scrim
-// fades (`slide: false`).
+// `translateY(100%)`. The screenshots viewer is the one exception: it spans the
+// window and only the scrim fades (`slide: false`).
 //
-// The transitions are the Vue's:
+// The transitions:
 //
 //   enter  scrim     #00000000 → #00000080   200ms `ease`
 //          container translateY(100%) → 0   400ms `cubic-bezier(0, .47, .25, 1)`
@@ -25,11 +23,10 @@ import { Theme } from "../../theme.slint";
 //
 //   * No `opacity` or `transform` on the panel — only `y` moves. Either of the
 //     other two would put the whole subtree in a render layer, and the renderer
-//     gives up on a layer taller than 8192px (see the mod-loader list's note in
-//     the README). The scrim's fade lives in its background colour instead.
-//   * No window drag on the scrim. The Vue's `.game-content-wrapper` carries no
-//     `data-tauri-drag-region` (unlike the dialogs' scrim), so a press on it
-//     only closes the panel.
+//     gives up on a layer taller than 8192px (see the mod-loader list's note).
+//     The scrim's fade lives in its background colour instead.
+//   * No window drag on the scrim: unlike the dialogs' scrim, a press on it only
+//     closes the panel.
 //
 // Showing it for one frame at the start value before moving to "shown" is what
 // makes the entrance play at all: a hidden element is never painted, so an
@@ -38,15 +35,14 @@ import { Theme } from "../../theme.slint";
 // reason, and its differing enter/leave durations are the same shape as the
 // two below.
 export component ContentOverlay inherits Rectangle {
-    /// Whether the overlay is open (the Vue's `v-if`).
+    /// Whether the overlay is open.
     in property <bool> overlay-visible: false;
-    /// How much of the window width the container leaves free — the Vue's
-    /// `calc(100% - 150px)`, or 200px for the instance-settings panel.
+    /// How much of the window width the container leaves free — 150px, or 200px
+    /// for the instance-settings panel.
     in property <length> panel-inset: 150px;
-    /// False for the screenshots viewer, which the Vue mounts without the
-    /// sliding container.
+    /// False for the screenshots viewer, which has no sliding container.
     in property <bool> slide: true;
-    /// The container's fill (`var(--ctp-base)`).
+    /// The container's fill.
     in property <color> panel-background: Theme.base;
 
     /// Size of the container. Elements written between the braces are laid out
@@ -132,7 +128,6 @@ export component ContentOverlay inherits Rectangle {
         }
     }
 
-    // ----- the slide -----
     // One property, whose target is the container's offset from the top: the
     // window height while it is parked below, 0 once it has arrived. Each
     // transition moves the value, which is what lets the duration be read again
@@ -148,9 +143,7 @@ export component ContentOverlay inherits Rectangle {
         easing: root.leaving ? cubic-bezier(0.47, 0, 1, 0.75) : cubic-bezier(0, 0.47, 0.25, 1);
     }
 
-    // ----- the scrim -----
-    // 200ms `ease` both ways; on the way out the Vue delays it by 100ms
-    // (`.game-content-leave-active { transition-delay: 100ms }`).
+    // 200ms both ways; on the way out it is delayed by 100ms.
     private property <float> scrim-alpha: root.settled == "shown" ? 1.0 : 0.0;
     animate scrim-alpha {
         duration: 200ms;
@@ -160,18 +153,15 @@ export component ContentOverlay inherits Rectangle {
 
     scrim-touch := TouchArea {
         clicked => { root.closed(); }
-        // Every panel's wrapper in the Vue covers the game view, and its own
-        // scroller swallows the wheel (`Lenis` calls `preventDefault()` on every
-        // wheel it sees), so a wheel over an open panel can never reach the
-        // instance list behind it. Slint has no such rule — an unhandled wheel
-        // falls through to whatever is underneath — so the scrim takes it.
+        // A wheel over an open panel must not reach the instance list behind it.
+        // Slint lets an unhandled wheel fall through to whatever is underneath,
+        // so the scrim takes it.
         scroll-event(event) => { accept }
     }
 
     container := Rectangle {
-        // Centred horizontally the way the Vue's flexbox centres it, and moved
-        // by `panel-y` — which for the screenshots viewer stays 0. This is a
-        // plain `Rectangle` rather than a layout child: a layout owns its
+        // Moved by `panel-y` — which for the screenshots viewer stays 0. This is
+        // a plain `Rectangle` rather than a layout child: a layout owns its
         // children's `y`, and this one is animated (`SlideTransition` is a
         // `Rectangle` for the same reason).
         y: root.slide ? root.panel-y : 0px;
@@ -179,10 +169,10 @@ export component ContentOverlay inherits Rectangle {
         height: root.panel-height;
         background: root.panel-background;
 
-        // The Vue closes the panel from a click on the wrapper itself
-        // (`@click.self`), so a click anywhere on the container has to stop
-        // there rather than reach the scrim. Declared before the content, so
-        // the controls inside it stay on top of this and keep their own clicks.
+        // A click anywhere on the container has to stop there rather than reach
+        // the scrim, so a press on the panel does not close it. Declared before
+        // the content, so the controls inside it stay on top of this and keep
+        // their own clicks.
         swallow := TouchArea { }
 
         // The slot, as a plain `Rectangle` rather than a layout: the elements

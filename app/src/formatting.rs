@@ -5,16 +5,12 @@
 //! Human-readable formatting shared by the views.
 //!
 //! These are presentation concerns, not domain ones, so they live beside the
-//! UI instead of in a crate: `launch` and `multiplayer` each used to carry a
-//! private copy of [`bytes`], and a third copy would have been the moment the
-//! rule was worth enforcing. Only `formatBytes` so far — nothing else has been
-//! duplicated enough to earn a place here.
+//! UI instead of in a crate. `bytes` is used by `multiplayer`; `launch` still
+//! carries its own `format_bytes` copy. Nothing else has been duplicated enough
+//! to earn a place here.
 
-/// `formatBytes` from the Vue frontend (`crates/download/index.ts`).
-///
-/// Binary units, two decimals, and a bare `B` below a kibibyte — the same
-/// output the Vue produced, so a progress line does not change shape now that
-/// the views are Slint.
+/// Human-readable byte sizes: binary units, two decimals, and a bare `B` below a
+/// kibibyte.
 pub(crate) fn bytes(value: u64) -> String {
     const UNITS: [&str; 4] = ["KB", "MB", "GB", "TB"];
     if value < 1024 {

@@ -22,10 +22,12 @@ use crate::error::*;
 /// Completes and verifies all assets, libraries and Mojang-provided Java
 /// runtime files for the given instance and Minecraft location.
 ///
-/// This function checks if lock files exist to skip redundant verification. If lock files are missing,
-/// it will verify and download missing or corrupted assets, libraries and the
-/// Mojang-provided Java runtime (when preferred), then create the lock files.
-/// > NOTE: If game crashed, the lock file should be delete!
+/// This function checks if lock files exist to skip redundant verification. If a
+/// lock file is missing or older than its TTL, it will verify and download
+/// missing or corrupted assets, libraries and the Mojang-provided Java runtime
+/// (when preferred and the instance has no Java path of its own), then create
+/// the lock files.
+/// > NOTE: If the game crashes, the lock file must be deleted before the next launch.
 ///
 /// # Arguments
 ///

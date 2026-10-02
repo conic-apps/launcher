@@ -2,47 +2,39 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The player-head image `AccountAvatar` draws — `src/components/AccountAvatar.vue`
-//! and the two helpers it calls from `crates/account/index.ts`
-//! (`getAvatarFromUrl`, `getDefaultSkin`), plus the 18 default skins bundled in
-//! `app/ui/assets/skins`.
+//! The player-head image `AccountAvatar` draws, plus the 18 default skins
+//! bundled in `app/ui/assets/skins`.
 //!
-//! The Vue crops the head out of the skin texture on a `<canvas>`: the 8x8 face
-//! region is drawn inset into the square, then the 8x8 hat layer is stretched
-//! over the whole of it — both with `imageSmoothingEnabled = false`, i.e.
-//! nearest-neighbour, which is what `image-rendering: pixelated` then shows.
-//! This reproduces that in a pixel buffer, including the source-over blend the
-//! canvas does where the hat is opaque.
+//! The head is cropped out of the skin texture: the 8x8 face region is drawn
+//! inset into the square, then the 8x8 hat layer is stretched over the whole of
+//! it — both nearest-neighbour, which is what `image-rendering: pixelated`
+//! shows. This reproduces that in a pixel buffer, including the source-over
+//! blend where the hat is opaque.
 //!
-//! It lives in the app rather than in `slint-account` because it produces a
-//! Slint `Image` and reads the app's bundled assets; the frontend helpers
-//! `slint-install`'s README puts in `app/src` for the same reason
-//! (`filterNeoforgeVersionList`).
+//! It lives in the app rather than in `account` because it produces a Slint
+//! `Image` and reads the app's bundled assets; `filter_neoforge_version_list`
+//! lives in `app/src` for the same reason.
 
 use account::Account;
 use base64::{Engine, engine::general_purpose};
 use slint::{Image, SharedPixelBuffer};
 
-/// A skin of the bundled default set, as `getDefaultSkin` returns it.
+/// A skin of the bundled default set.
 ///
-/// `getDefaultSkin` is the frontend's, so it returns the two names rather than
-/// the texture; the account manager (not migrated yet) builds a URL out of them
-/// (`AccountManager.vue`'s `getDefaultSkinUrl`). The bytes are carried
-/// alongside because `include_bytes!` needs a literal path, so the table is the
-/// only place the name and the file are known together.
+/// It carries the two names and the texture bytes together because
+/// `include_bytes!` needs a literal path, so the table is the only place the
+/// name and the file are known together.
 #[derive(Clone, Copy)]
 pub struct DefaultSkin {
-    // The two names `getDefaultSkin` returns. `bundled_skin_image` looks a skin
-    // up by them; the account manager — not migrated yet — builds a texture URL
-    // out of them instead (`AccountManager.vue`'s `getDefaultSkinUrl`).
+    // The two names `bundled_skin_image` looks a skin up by.
     pub texture_name: &'static str,
     pub model_type: &'static str,
     texture: &'static [u8],
 }
 
-/// `DEFAULT_SKINS` of `crates/account/index.ts`: the slim models first, then
-/// the wide ones, each in the same order. `getDefaultSkin` indexes into this,
-/// so the order is part of the mapping and must not be sorted.
+/// The slim models first, then the wide ones, each in the same order.
+/// `get_default_skin` indexes into this, so the order is part of the mapping and
+/// must not be sorted.
 const DEFAULT_SKINS: [DefaultSkin; 18] = [
     DefaultSkin {
         texture_name: "alex",
@@ -136,23 +128,20 @@ const DEFAULT_SKINS: [DefaultSkin; 18] = [
     },
 ];
 
-/// The default skin a UUID picks (`getDefaultSkin`).
+/// The default skin a UUID picks.
 ///
-/// The Vue hashes the UUID the way Java's `UUID.hashCode()` does — the two
-/// halves of the 128 bits XORed together, then folded to an `int` — and
-/// reduces it modulo the 18 skins with `floorMod`, so the index is always in
-/// range. `None` for a UUID that does not parse, which is where the Vue's
-/// `getDefaultSkin` throws and its caller leaves the placeholder up.
+/// The UUID is hashed the way Java's `UUID.hashCode()` does — the two halves of
+/// the 128 bits XORed together, then folded to an `int` — and reduced modulo the
+/// 18 skins, so the index is always in range. `None` for a UUID that does not
+/// parse, and the caller then leaves the placeholder up.
 pub fn get_default_skin(uuid: &str) -> Option<DefaultSkin> {
     let hash = uuid_hash_code(uuid)?;
     Some(DEFAULT_SKINS[hash.rem_euclid(DEFAULT_SKINS.len() as i32) as usize])
 }
 
 /// The image `AccountAvatar` shows for a profile: its own skin when it has one,
-/// the default skin of its UUID otherwise.
-///
-/// The two watches of `AccountAvatar.vue`, in other words, with their order:
-/// a skin wins, and the default skin is only reached without one.
+/// the default skin of its UUID otherwise. A skin wins; the default skin is only
+/// reached without one.
 pub fn avatar_image(skin_url: Option<&str>, uuid: &str, size: u32) -> Option<Image> {
     let texture = match skin_url {
         Some(url) => decode_skin_url(url)?,
@@ -161,12 +150,11 @@ pub fn avatar_image(skin_url: Option<&str>, uuid: &str, size: u32) -> Option<Ima
     Some(head(&texture, size))
 }
 
-/// The head of one of the bundled default skins, by the two names
-/// [`get_default_skin`] returns.
+/// The head of one of the bundled default skins, by the two names a
+/// [`DefaultSkin`] carries.
 ///
-/// `Footer.vue` reaches for the wide Steve this way for its logged-out avatar
-/// (`import SteveSkin from "@/assets/images/skins/wide/steve.webp?url"`); every
-/// other caller goes through [`account_head`].
+/// The footer reaches for the wide Steve this way for its logged-out avatar;
+/// every other caller goes through [`account_head`].
 pub fn bundled_skin_image(texture_name: &str, model_type: &str, size: u32) -> Option<Image> {
     let skin = DEFAULT_SKINS
         .iter()
@@ -174,15 +162,13 @@ pub fn bundled_skin_image(texture_name: &str, model_type: &str, size: u32) -> Op
     Some(head(&decode(skin.texture)?, size))
 }
 
-/// The head the footer draws for an account — `Footer.vue`'s `accountSkin`,
-/// with the `:skin="SteveSkin"` of its logged-out branch.
+/// The head the footer draws for an account.
 ///
-/// `None` is that logged-out branch, and the Vue dims the Steve it passes there
-/// with `filter: grayscale(1)` (`.avatar.unlogin`), which Slint has no
-/// equivalent of — so the pixels are desaturated here instead. A skin that
-/// cannot be turned into pixels (a URL the crate failed to download, a UUID
-/// that does not parse) falls back to the caller's placeholder disc, which is
-/// what the Vue's empty `src` leaves too.
+/// `None` is the logged-out branch, where the Steve head is dimmed with the CSS
+/// `filter: grayscale(1)`, which Slint has no equivalent of — so the pixels are
+/// desaturated here instead. A skin that cannot be turned into pixels (a URL the
+/// crate failed to download, a UUID that does not parse) falls back to the
+/// caller's placeholder disc.
 pub fn account_head(account: Option<&Account>, size: u32) -> Option<Image> {
     let Some(account) = account else {
         return Some(grayscale(bundled_skin_image("steve", "wide", size)?));
@@ -212,8 +198,7 @@ fn grayscale(image: Image) -> Image {
     Image::from_rgba8(buffer)
 }
 
-/// The texture URL an account's own skin lives at, if it has one — the three
-/// branches of `Footer.vue`'s `accountSkin`.
+/// The texture URL an account's own skin lives at, if it has one.
 pub fn account_skin_url(account: &Account) -> Option<String> {
     match account {
         Account::Microsoft(account) => account.profile.skins.first().map(|skin| skin.url.clone()),
@@ -225,9 +210,8 @@ pub fn account_skin_url(account: &Account) -> Option<String> {
 /// Decodes a `data:` URL — what the account crates store a skin as once they
 /// have downloaded it.
 ///
-/// A skin the crate could *not* download is left as its original URL, which the
-/// Vue's `<img>` would still have loaded; Slint cannot fetch an image itself,
-/// so those fall back to the placeholder head.
+/// A skin the crate could *not* download is left as the URL it came with; Slint
+/// cannot fetch an image itself, so those fall back to the placeholder head.
 fn decode_skin_url(url: &str) -> Option<image::RgbaImage> {
     if !url.starts_with("data:") {
         return None;
@@ -248,18 +232,16 @@ fn decode(bytes: &[u8]) -> Option<image::RgbaImage> {
 
 /// Draws the head of `skin` into a `size`x`size` buffer.
 ///
-/// The two regions are the Vue's `drawImage` calls: the face inset by
-/// `round(size / 18)` on every side, then the hat stretched over the whole
-/// square and blended on top.
+/// The face is inset by `round(size / 18)` on every side, then the hat is
+/// stretched over the whole square and blended on top.
 fn head(skin: &image::RgbaImage, size: u32) -> Image {
     let size = size.max(1);
-    // `const scale = img.width / 64`: an HD skin crops the same face.
+    // An HD skin crops the same face: the texture is scaled from its 64px width.
     let scale = skin.width() as f32 / 64.0;
-    // `const faceOffset = Math.round(size / 18.0)`.
     let inset = ((size as f32) / 18.0).round() as u32;
     let face_side = size.saturating_sub(inset.saturating_mul(2)).max(1);
 
-    // The face first, then the hat over it — the Vue's two calls in order.
+    // The face first, then the hat over it.
     let face = Layer {
         region: (8.0, 8.0),
         origin: inset,
@@ -293,24 +275,24 @@ fn head(skin: &image::RgbaImage, size: u32) -> Image {
     Image::from_rgba8(SharedPixelBuffer::clone_from_slice(&pixels, size, size))
 }
 
-/// One `drawImage` call: the source region in skin pixels, and where the
-/// destination square sits in the canvas.
+/// One draw layer: the source region in skin pixels, and where the destination
+/// square sits in the image.
 struct Layer {
     /// The region's top-left in skin pixels (8x8 of them).
     region: (f32, f32),
-    /// The canvas coordinate the destination square starts at.
+    /// The image coordinate the destination square starts at.
     origin: u32,
     /// The destination square's side.
     side: u32,
 }
 
 impl Layer {
-    /// Nearest-neighbour sample for the canvas pixel (`dest_x`, `dest_y`).
+    /// Nearest-neighbour sample for the destination pixel (`dest_x`, `dest_y`).
     ///
-    /// The browser samples a destination pixel at its centre, which is what
-    /// makes the mapping line up with the canvas instead of being half a pixel
-    /// off everywhere; the region is `dest_side` wide in the canvas and 8 skin
-    /// pixels wide in the texture, so both are scaled by `scale` in between.
+    /// A destination pixel is sampled at its centre, which is what makes the
+    /// mapping line up instead of being half a pixel off everywhere; the region
+    /// is 8 skin pixels wide and the destination square is `self.side` wide, so
+    /// the two are scaled by `scale` in between.
     fn sample(
         &self,
         skin: &image::RgbaImage,
@@ -339,7 +321,7 @@ fn to_bytes(pixel: [f32; 4]) -> [u8; 4] {
     pixel.map(|channel| (channel * 255.0).round().clamp(0.0, 255.0) as u8)
 }
 
-/// Source-over compositing, the blend the canvas applies for the hat layer.
+/// Source-over compositing, the blend used for the hat layer.
 fn over(source: [f32; 4], destination: [f32; 4]) -> [f32; 4] {
     let alpha = source[3] + destination[3] * (1.0 - source[3]);
     if alpha <= 0.0 {
@@ -354,8 +336,8 @@ fn over(source: [f32; 4], destination: [f32; 4]) -> [f32; 4] {
 
 /// Java's `UUID.hashCode()`: the two halves XORed, then folded to an `int`.
 ///
-/// `uuidToLongs` of `crates/account/index.ts` accepts the hyphenated and the
-/// plain form alike, so the separators are dropped first.
+/// Both the hyphenated and the plain form are accepted, so the separators are
+/// dropped first.
 fn uuid_hash_code(uuid: &str) -> Option<i32> {
     let hex: String = uuid.chars().filter(|character| *character != '-').collect();
     if hex.len() != 32 || !hex.chars().all(|character| character.is_ascii_hexdigit()) {

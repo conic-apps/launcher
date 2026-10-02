@@ -4,14 +4,14 @@
 
 import { Theme } from "../theme.slint";
 
-// Spinning arc (src/components/BaseLoading.vue): a 48-unit circle with a round
-// cap, `pathLength="100"` and a gap, rotated continuously.
+// Spinning arc: a 48-unit circle with a round cap and a gap, rotated
+// continuously.
 //
-// The Vue splits the two with `stroke-dasharray: 100 - (gap + strokeWidth)` —
-// the `strokeWidth` is part of the gap because a round cap that straddles the
-// start of the dash paints half its width on each side of it, so a dash
-// shortened by only `gap` would close the ring. Normalising the circumference
-// to 100 is what makes that arithmetic in the same units as the dash.
+// The dash is split as `100 - (gap + strokeWidth)` — the `strokeWidth` is part
+// of the gap because a round cap that straddles the start of the dash paints
+// half its width on each side of it, so a dash shortened by only `gap` would
+// close the ring. Normalising the circumference to 100 is what makes that
+// arithmetic in the same units as the dash.
 //
 // Slint has no dash arrays, so the arc is drawn as a real one instead: an
 // `ArcTo` between the same two ends the dash would have had, with its sweep
@@ -21,7 +21,7 @@ import { Theme } from "../theme.slint";
 // do with the locale's decimal separator in it.
 export component BaseLoading inherits Rectangle {
     in property <length> size: 32px;
-    // Stroke width in the SVG's 48-unit view box (matches the Vue prop).
+    // Stroke width in the SVG's 48-unit view box.
     in property <int> stroke-width: 4;
     /// Size of the gap in the same units, split with the stroke width the way
     /// `100 - (gap + strokeWidth)` splits it.
@@ -30,8 +30,8 @@ export component BaseLoading inherits Rectangle {
 
     /// How much of the circle the dash covers, as an angle: `100 - (gap +
     /// strokeWidth)` out of 100 of the circumference. Clamped at both ends
-    /// because the Vue's own arithmetic is unclamped — a `gap` past 100 leaves
-    /// nothing to paint, and a negative one has no arc to draw.
+    /// because the arithmetic is unclamped — a `gap` past 100 leaves nothing to
+    /// paint, and a negative one has no arc to draw.
     private property <angle> arc-sweep: max(0deg, min(360deg, (100 - root.gap - root.stroke-width) * 3.6deg));
 
     width: size;
@@ -50,9 +50,8 @@ export component BaseLoading inherits Rectangle {
         transform-rotation: mod(animation-tick(), 1.9s) / 1.9s * 360deg;
         transform-origin: { x: root.size / 2, y: root.size / 2 };
 
-        // Clockwise from the top of the circle, which is where
-        // `base-loading-circle`'s `transform-origin: 24px 24px` rotation starts
-        // it in the original too.
+        // Clockwise from the top of the circle, where the rotation's centre
+        // puts the start.
         MoveTo {
             x: 24;
             y: 4;

@@ -9,22 +9,19 @@ import { InstanceCard } from "../../components/instance-card.slint";
 import { Dialogs, DeleteInstanceState } from "../../globals/dialogs.slint";
 import { GameTime } from "../../globals/game.slint";
 
-// The dialog the instance settings overlay's "Delete instance" row opens
-// (src/overlays/dialogs/ConfirmDeleteInstance.vue).
+// The dialog the instance settings overlay's "Delete instance" row opens.
 //
-// The Vue is a `<BaseDialog :width="500">` with no height, so its panel is
-// `fit-content`; `BaseDialog` has no such mode, so the height comes from the
+// `BaseDialog` has no `fit-content` height mode, so the height comes from the
 // measuring layout the body is written in — the arrangement the add-account and
 // multiplayer dialogs use.
 //
-// The Vue original was never internationalized: its warning, its "游戏时间：" label
-// and its two button labels are hard-coded Chinese. The Chinese is kept as the
-// source text of a `@tr`, so a locale without an entry still reads like the
-// original while the catalogues can translate it — the treatment the four launch
-// error dialogs already have.
+// The warning, its "游戏时间：" label and its two button labels are hard-coded
+// Chinese. The Chinese is kept as the source text of a `@tr`, so a locale without
+// an entry still reads these strings while the catalogues can translate them —
+// the treatment the four launch error dialogs already have.
 
-// `.confirm-delete-instance { padding: 12px }`, with the paragraph's 16px
-// `margin-bottom` and the buttons' 16px `margin-top` as the layout's own spacing.
+// The panel has 12px of padding; the paragraph and the buttons are separated by
+// the layout's own 16px spacing.
 component ConfirmDeleteBody inherits VerticalLayout {
     in property <length> content-width: 0px;
 
@@ -39,13 +36,13 @@ component ConfirmDeleteBody inherits VerticalLayout {
         font-weight: Theme.font-weight-normal;
         color: Theme.default-text-color.transparentize(0.1);
         wrap: word-wrap;
-        // The Vue's `line-height: 1.3` is deliberately not reproduced: Slint 1.18
-        // has no CSS `line-height` — `line-height-factor` multiplies the font's
-        // *natural* line height rather than the font size, and the two are not in
-        // a fixed ratio (Comfortaa's is 1.115em, the CJK fallback this sentence
-        // actually draws with is nearer 1.4em), so one factor cannot hold both.
-        // The paragraph keeps its natural leading, like every other text in the
-        // app; see `README.md`.
+        // A `line-height: 1.3` is deliberately not reproduced: Slint 1.18 has no
+        // CSS `line-height` — `line-height-factor` multiplies the font's *natural*
+        // line height rather than the font size, and the two are not in a fixed
+        // ratio (Comfortaa's is 1.115em, the CJK fallback this sentence actually
+        // draws with is nearer 1.4em), so one factor cannot hold both. The
+        // paragraph keeps its natural leading, like every other text in the app;
+        // see `README.md`.
     }
 
     InstanceCard {
@@ -55,7 +52,7 @@ component ConfirmDeleteBody inherits VerticalLayout {
         name: DeleteInstanceState.name;
         loader: DeleteInstanceState.loader;
         minecraft-version: DeleteInstanceState.minecraft-version;
-        // The delete dialog's copy of the card has no `v-if` on this span.
+        // The delete dialog's copy of the card always shows the version.
         version-always: true;
         has-background: DeleteInstanceState.has-background;
         card-background: DeleteInstanceState.background;
@@ -72,15 +69,14 @@ component ConfirmDeleteBody inherits VerticalLayout {
             horizontal-stretch: 1;
             text: @tr("ConfirmDeleteInstance" => "取消");
             text-color: Theme.text-inverse;
-            // `.buttons button { border-radius: 4px }`, the dialog's own scoped
-            // rule overriding the controllers radius.
+            // A 4px radius, overriding the controller's own.
             button-radius: 4px;
             button-background: Theme.blue;
             clicked => { DeleteInstanceState.cancel(); }
         }
 
-        // `.back { margin-right: 8px }` — the Vue's two buttons are both
-        // `width: 100%` flex items, which shrink to leave the 8px between them.
+        // The 8px between the two buttons: both stretch equally, which leaves the
+        // gap between them.
         Rectangle {
             width: 8px;
             background: transparent;
@@ -106,8 +102,8 @@ export component ConfirmDeleteInstance inherits Rectangle {
     dialog := BaseDialog {
         dialog-visible: Dialogs.confirm-delete-instance-visible;
         dialog-width: 500px;
-        // `fit-content`: `BaseDialog` keeps 32px of its own (the 16px padding of
-        // `.dialog > .content` and the 1px clip the Vue's `overflow` computes).
+        // `fit-content`: `BaseDialog` keeps 32px of its own — 16px on each side
+        // (a 1px clip and 15px of padding).
         dialog-height: body.preferred-height + 32px;
 
         // Sized against the slot's width, not `parent` — the elements written in
