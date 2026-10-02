@@ -1,0 +1,161 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../display/app-icon.slint";
+import { FocusManager } from "../../globals/focus.slint";
+
+// Text / number input.
+//
+// 30px tall, with the controller radius (6px on the dark flavors, 4px on
+// Latte) and the controller background. Focus turns the outline lavender and the
+// background to the controller's focus token (surface-2 on the dark flavors,
+// surface-0 on Latte). The field commits on `edited` and lets
+// the Rust side debounce disk writes, which behaves the same to the user as
+// committing on blur.
+//
+// `number-only` fields draw up/down step buttons stacked in one column.
+//
+// `error` is the invalid state: it drops the field's own border for a red one.
+// The error border outranks the focus outline, so a focused invalid field stays
+// red — hence the check ahead of the focus test below rather than after it.
+export component Input inherits Rectangle {
+    in property <string> placeholder: "";
+    in property <length> input-width: 400px;
+    in property <bool> number-only: false;
+    in property <bool> input-enabled: true;
+    in property <bool> error: false;
+    in-out property <string> value: "";
+    callback edited;
+
+    // A `min-width`/`preferred-width` pair rather than a `width`: an element with
+    // an explicit `width` gets `min == max == width` as its size constraints, so
+    // a layout can neither grow nor shrink it — which is what the multiplayer
+    // dialog's "invite code" row needs (a stretching field next to a fit-content
+    // button). Without an explicit `width` the default is `max(preferred-width,
+    // min-width)`, which still sizes an unsized field exactly as before.
+    min-width: root.input-width;
+    preferred-width: self.min-width;
+    // Pinned to 0 so an unsized field keeps its declared width rather than taking
+    // whatever the layout's free-space split gives it; see `button.slint`.
+    horizontal-stretch: 0;
+    height: 30px;
+    border-radius: Theme.controllers-border-radius;
+    border-width: 1px;
+    border-color: root.error ? Theme.red
+        : text-input.has-focus ? Theme.controllers-outline-focus
+        : Theme.controllers-border;
+    background: text-input.has-focus ? Theme.controllers-background-focus
+        : input-touch.has-hover ? Theme.controllers-background-hover
+        : Theme.controllers-background;
+    opacity: root.input-enabled ? 1.0 : 0.6;
+    animate background { duration: 100ms; }
+
+    private property <length> spinner-width: root.number-only ? 17px : 0px;
+
+    // Mirrors the global counter so a local `changed` handler can drop focus
+    // (Slint's `changed` does not accept a qualified global property).
+    private property <int> clear-sequence: FocusManager.clear-sequence;
+    changed clear-sequence => { text-input.clear-focus(); }
+
+    // Steps a number-only field by `delta`, ignoring empty / non-numeric text.
+    // `round` returns an int, which Slint renders into the string property
+    // without a decimal part.
+    function step(delta: int) {
+        if (root.value.is-float()) {
+            root.value = round(root.value.to-float() + delta);
+            root.edited();
+        }
+    }
+
+    // Hover tracker (declared before the field so the field stays clickable).
+    input-touch := TouchArea {
+    }
+
+    text-input := TextInput {
+        x: 8px;
+        y: 2px;
+        width: parent.width - 16px - root.spinner-width;
+        height: parent.height - 4px;
+        text <=> root.value;
+        font-size: 13px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.default-text-color.transparentize(0.1);
+        // The macOS backend draws the caret in the selection background colour
+        // (forced to full alpha), so a translucent text tint yields a text-
+        // coloured caret while keeping the selection highlight subtle.
+        selection-background-color: Theme.default-text-color.with-alpha(0.3);
+        selection-foreground-color: Theme.default-text-color;
+        input-type: root.number-only ? number : text;
+        single-line: true;
+        vertical-alignment: center;
+        enabled: root.input-enabled;
+        edited => { root.edited(); }
+    }
+
+    if root.value == "" && root.placeholder != "" : Text {
+        text: root.placeholder;
+        font-size: 13px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.default-text-color.transparentize(0.2);
+        x: 8px;
+    }
+
+    // Two stacked step buttons at the right edge, reusing the `chevron-down`
+    // glyph flipped for the up step.
+    if root.number-only : Rectangle {
+        x: parent.width - root.spinner-width;
+        y: 1px;
+        width: root.spinner-width;
+        height: parent.height - 2px;
+        background: transparent;
+
+        up-button := Rectangle {
+            y: 0;
+            width: parent.width;
+            height: parent.height / 2;
+            border-top-right-radius: 5px;
+            background: up-touch.pressed ? Theme.controllers-background-focus
+                : up-touch.has-hover ? Theme.controllers-background-hover
+                : transparent;
+
+            AppIcon {
+                name: "chevron-down";
+                size: 9px;
+                icon-color: Theme.default-text-color.transparentize(0.25);
+                transform-rotation: 180deg;
+            }
+
+            up-touch := TouchArea {
+                width: parent.width;
+                height: parent.height;
+                enabled: root.input-enabled;
+                clicked => { root.step(1); }
+            }
+        }
+
+        down-button := Rectangle {
+            y: parent.height / 2;
+            width: parent.width;
+            height: parent.height / 2;
+            border-bottom-right-radius: 5px;
+            background: down-touch.pressed ? Theme.controllers-background-focus
+                : down-touch.has-hover ? Theme.controllers-background-hover
+                : transparent;
+
+            AppIcon {
+                name: "chevron-down";
+                size: 9px;
+                icon-color: Theme.default-text-color.transparentize(0.25);
+            }
+
+            down-touch := TouchArea {
+                width: parent.width;
+                height: parent.height;
+                enabled: root.input-enabled;
+                clicked => { root.step(-1); }
+            }
+        }
+    }
+}

@@ -4,8 +4,8 @@
 
 import { Theme } from "../theme.slint";
 import { LaunchState } from "../globals/launch.slint";
-import { AccountAvatar } from "../components/account-avatar.slint";
-import { BaseProgress } from "../components/base-progress.slint";
+import { AccountAvatar } from "../components/display/account-avatar.slint";
+import { Progress } from "../components/controls/progress.slint";
 
 // The launch screen: the current instance's avatar, name and version, a
 // progress panel and the account summary, with a red "Cancel launch" button
@@ -124,7 +124,7 @@ export component LaunchView inherits Rectangle {
                     text: LaunchState.description();
                 }
                 if !LaunchState.error : Rectangle { height: 10px; }
-                if !LaunchState.error : BaseProgress {
+                if !LaunchState.error : Progress {
                     width: 100%;
                     loading: LaunchState.progress-loading;
                     value: LaunchState.progress-value;

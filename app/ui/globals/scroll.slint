@@ -4,7 +4,7 @@
 
 // What the Lenis-style scroll containers need from the platform.
 //
-// `components/scroll-view.slint` and `views/game/instances-list.slint` both ease
+// `components/containers/scroll-view.slint` and `views/game/instances-list.slint` both ease
 // their offset towards the wheel target (`lerp`, the way Lenis does), and both
 // have to know one thing Slint's `PointerScrollEvent` does not carry: where the
 // event came from, because the two kinds of event mean different things.
@@ -16,7 +16,7 @@
 // they were moving at when they left. Easing those would make the content trail
 // the hand, and easing the momentum would stall the content at the moment of
 // release (the offset has no distance left to cover, so there is nothing for an
-// easing to start from) — see `components/scroll-view.slint`.
+// easing to start from) — see `components/containers/scroll-view.slint`.
 //
 // Slint hands over the delta and the modifiers only, so both answers come from
 // the platform (`app/src/scroll_input.rs`, which watches the AppKit scroll

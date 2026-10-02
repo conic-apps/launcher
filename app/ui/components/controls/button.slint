@@ -1,0 +1,90 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { FocusManager } from "../../globals/focus.slint";
+
+// Small button. Used for "Remove image", the dialog buttons, …
+//
+// The button fills whatever row it is placed in, but shrinks to its content in
+// an auto-sized row. Slint has no such two-way sizing, so the *preferred* width
+// is the label plus the 16px horizontal padding — and it is a preference rather
+// than a `width`, so a `HorizontalLayout` can still grow the button with
+// `horizontal-stretch: 1`. That is why callers that put two buttons in a row
+// (the create-instance dialog, the account dialogs, the multiplayer screens)
+// give each a share rather than hand-computing a half-width.
+export component Button inherits Rectangle {
+    in property <string> text: "";
+    in property <color> text-color: Theme.default-text-color.transparentize(0.1);
+    in property <bool> button-enabled: true;
+    /// 0 keeps the content width.
+    in property <length> button-width: 0px;
+    /// The corner radius (the controller radius by default). The delete dialog
+    /// overrides it, which a component's own properties cannot express.
+    in property <length> button-radius: Theme.controllers-border-radius;
+    /// Fills the button instead of the default surface, covering the hover and
+    /// pressed states too — the accented buttons of the add-account dialog are
+    /// exactly that. `transparent` (the default) keeps the default look.
+    in property <color> button-background: transparent;
+    /// The outline (the controller border by default). The multiplayer dialog's
+    /// red-outlined "Stop download" overrides it.
+    in property <color> button-border-color: transparent;
+    /// The fill and the label colour while the pointer is over the button.
+    /// `transparent` keeps the defaults (surface-2 at 85% on the inherited
+    /// label).
+    in property <color> hover-background: transparent;
+    in property <color> hover-text-color: transparent;
+    callback clicked;
+
+    // A `min-width`/`preferred-width` pair rather than a `width`: an element with
+    // an explicit `width` gets `min == max == width` as its size constraints, so
+    // a layout can neither grow nor shrink it. Without an explicit `width` the
+    // default is `max(preferred-width, min-width)`, which still shrink-wraps an
+    // unsized button exactly as before — and lets a row give it a share of the
+    // free space with `horizontal-stretch`.
+    min-width: root.button-width > 0px ? root.button-width : button-label.preferred-width + 32px;
+    preferred-width: self.min-width;
+    // Pinned to 0, so the button keeps the content width it has always had unless
+    // a caller asks for a share. An element with no `horizontal-stretch` takes
+    // whatever the layout's free-space split gives it, and that split is even
+    // whenever every item's factor is 0 — so leaving this unbound would quietly
+    // stretch every unsized button in the app to fill its row.
+    horizontal-stretch: 0;
+    height: 30px;
+    border-radius: root.button-radius;
+    border-width: 1px;
+    border-color: root.button-border-color != transparent ? root.button-border-color : Theme.controllers-border;
+    // Normal controller background, hover surface-2 at 85%, active raw
+    // surface-2.
+    background: root.button-background != transparent ? root.button-background
+        : button-touch.pressed ? Theme.surface-2
+        : button-touch.has-hover ? (root.hover-background != transparent
+            ? root.hover-background
+            : Theme.surface-2.transparentize(0.15))
+        : Theme.controllers-background;
+    // The press scale. A `button-background` pins the fill above and so leaves
+    // the press with no colour feedback of its own — this is what the accented
+    // buttons have left.
+    transform-scale: button-touch.pressed ? 97% : button-touch.has-hover ? 102% : 100%;
+    opacity: root.button-enabled ? 1.0 : 0.5;
+    // One 150ms ease covers both tracks.
+    animate background, transform-scale { duration: 150ms; easing: ease; }
+
+    button-label := Text {
+        text: root.text;
+        font-size: 11px;
+        font-weight: Theme.font-weight-normal;
+        color: root.hover-text-color != transparent && button-touch.has-hover
+            ? root.hover-text-color
+            : root.text-color;
+    }
+
+    button-touch := TouchArea {
+        enabled: root.button-enabled;
+        clicked => {
+            FocusManager.clear();
+            root.clicked();
+        }
+    }
+}

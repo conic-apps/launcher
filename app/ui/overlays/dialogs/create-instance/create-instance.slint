@@ -1,0 +1,607 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../../theme.slint";
+import { Dialog } from "../dialog.slint";
+import { Button } from "../../../components/controls/button.slint";
+import { Select } from "../../../components/controls/select.slint";
+import { Switch } from "../../../components/controls/switch.slint";
+import { SettingGroup } from "../../../components/settings/setting-group.slint";
+import { SettingItem } from "../../../components/settings/setting-item.slint";
+import { AppIcon } from "../../../components/display/app-icon.slint";
+import { ZoomTransition } from "../../../components/containers/zoom-transition.slint";
+import { FocusManager } from "../../../globals/focus.slint";
+import { Dropdown } from "../../../globals/dropdown.slint";
+import { Dialogs, CreateInstanceState } from "../../../globals/dialogs.slint";
+import { MinecraftChoose } from "minecraft-choose.slint";
+import { ModLoaderChoose } from "mod-loader-choose.slint";
+
+// The dialog's "settings" step.
+//
+// It is a component of its own (rather than markup in `CreateInstance`) because
+// of the swap: each screen mounts fresh when the step changes, which is what
+// lets its zoom animation start from the right place. See `CreateInstance`.
+component SettingsStep inherits ZoomTransition {
+    spacing: 0px;
+    // The blocks are inset by 8px.
+    padding-left: 8px;
+    padding-right: 8px;
+
+    pure function tag-color(loader: string) -> color {
+        if loader == "quilt" { return Theme.mauve; }
+        if loader == "fabric" { return Theme.yellow; }
+        if loader == "forge" { return Theme.blue; }
+        if loader == "neoforge" { return Theme.peach; }
+        return Theme.green;
+    }
+
+    // The 4px above the card.
+    Rectangle {
+        width: 100%;
+        height: 4px;
+        background: transparent;
+    }
+
+    card := Rectangle {
+        width: 100%;
+        height: 60px;
+        border-radius: 8px;
+        clip: true;
+        background: Theme.surface-0.with-alpha(0.4);
+
+        // A 1px surface1 border at 80%.
+        Rectangle {
+            border-width: 1px;
+            border-color: Theme.surface-1.with-alpha(0.8);
+            background: transparent;
+        }
+
+        // A 16px lavender bar at 80%, drawn over the hairline, which Slint
+        // cannot leave out of one edge only.
+        Rectangle {
+            x: 0;
+            y: 0;
+            width: 16px;
+            height: parent.height;
+            background: Theme.lavender.with-alpha(0.8);
+        }
+
+        // The picked background, under a left-to-right fade. Slint has no masks,
+        // so the card's own colour is laid over the image and fades out to the
+        // right instead.
+        //
+        // The image is shown once it has loaded; a Slint image that failed to
+        // load reports a zero width, which is the same test. Rust loads the file,
+        // because Slint can only read a runtime path through Rust.
+        if CreateInstanceState.background-path != ""
+            && CreateInstanceState.background-image.width > 0 : Rectangle {
+            x: 116px;
+            y: 1px;
+            width: parent.width - 116px - 1px;
+            height: parent.height - 2px;
+            background: transparent;
+
+            Image {
+                width: 100%;
+                height: 100%;
+                source: CreateInstanceState.background-image;
+                image-fit: cover;
+            }
+
+            Rectangle {
+                background: @linear-gradient(
+                    90deg,
+                    Theme.dialog-background.mix(Theme.surface-0, 0.4) 0%,
+                    transparent 100%);
+            }
+        }
+
+        if !CreateInstanceState.name-editing : name-row := Rectangle {
+            x: 32px;
+            y: 9px;
+            width: parent.width - 32px - 17px;
+            height: 16px;
+            background: transparent;
+
+            name-text := Text {
+                text: CreateInstanceState.custom-name != ""
+                    ? CreateInstanceState.custom-name
+                    : CreateInstanceState.default-name;
+                // The name takes its own width, elided once it would reach the
+                // edit icon. A bare `Text` outside a layout is centred by Slint,
+                // so it is pinned left here, with the edit icon next to it.
+                x: 0;
+                width: min(self.preferred-width, parent.width - 30px);
+                height: 16px;
+                font-size: 16px;
+                font-weight: Theme.font-weight-normal;
+                color: Theme.default-text-color.transparentize(0.1);
+                horizontal-alignment: left;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+
+            edit-icon := AppIcon {
+                name: "create-outline";
+                size: 16px;
+                x: name-text.width + 4px;
+                icon-color: Theme.default-text-color.transparentize(0.1);
+                transform-scale: edit-touch.pressed ? 97% : edit-touch.has-hover ? 102% : 100%;
+                animate transform-scale { duration: 100ms; }
+            }
+
+            // Clicking the row starts the edit.
+            edit-touch := TouchArea {
+                width: parent.width;
+                height: parent.height;
+                clicked => {
+                    FocusManager.clear();
+                    CreateInstanceState.name-editing = true;
+                }
+            }
+        }
+
+        // The edit field, swapped in for the name text while editing.
+        if CreateInstanceState.name-editing : name-input := TextInput {
+            x: 32px;
+            y: 9px;
+            width: parent.width - 32px - 17px;
+            height: 16px;
+            text <=> CreateInstanceState.custom-name;
+            font-size: 16px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.1);
+            // The macOS backend paints the caret with the selection colour, so
+            // a translucent tint gives a text-coloured caret.
+            selection-background-color: Theme.default-text-color.with-alpha(0.3);
+            selection-foreground-color: Theme.default-text-color;
+            single-line: true;
+            vertical-alignment: center;
+            // The field takes focus as soon as it appears, and leaves edit mode
+            // when it loses it.
+            init => { self.focus(); }
+            changed has-focus => {
+                if !self.has-focus && CreateInstanceState.name-editing {
+                    CreateInstanceState.name-editing = false;
+                }
+            }
+            // Clicking any control elsewhere in the dialog drops the focus (see
+            // `FocusManager`), which ends the edit as well.
+            private property <int> clear-sequence: FocusManager.clear-sequence;
+            changed clear-sequence => { self.clear-focus(); }
+        }
+
+        // The default name while the field is empty. Slint's `TextInput` has no
+        // placeholder of its own, so it is drawn over the field like `Input`
+        // does.
+        if CreateInstanceState.name-editing && CreateInstanceState.custom-name == "" : Text {
+            x: 32px;
+            y: 9px;
+            width: parent.width - 32px - 17px;
+            height: 16px;
+            text: CreateInstanceState.default-name;
+            font-size: 16px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.2);
+            vertical-alignment: center;
+            overflow: elide;
+        }
+
+        details := HorizontalLayout {
+            x: 32px;
+            // 6px below the 16px name row.
+            y: 9px + 16px + 6px;
+            width: parent.width - 32px - 17px;
+            height: 13px;
+            spacing: 8px;
+            alignment: start;
+            cross-axis-alignment: center;
+
+            tag := Rectangle {
+                width: tag-text.preferred-width + 12px;
+                height: 13px;
+                border-radius: 100px;
+                background: root.tag-color(CreateInstanceState.mod-loader-type.to-lowercase());
+
+                tag-text := Text {
+                    text: CreateInstanceState.mod-loader-type == "None"
+                        ? "Vanilla"
+                        : CreateInstanceState.mod-loader-type;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: Theme.text-inverse;
+                }
+            }
+
+            if CreateInstanceState.minecraft-version != "" : HorizontalLayout {
+                spacing: 0px;
+                alignment: start;
+                cross-axis-alignment: center;
+
+                Text {
+                    text: "Minecraft: ";
+                    font-size: 11px;
+                    // The label is lighter: weight 300 at 72%.
+                    font-weight: 300;
+                    color: Theme.default-text-color.transparentize(0.1).with-alpha(0.72);
+                }
+
+                Text {
+                    text: CreateInstanceState.minecraft-version;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+            }
+        }
+    }
+
+    // The 12px below the card.
+    Rectangle {
+        width: 100%;
+        height: 12px;
+        background: transparent;
+    }
+
+    SettingGroup {
+        SettingItem {
+            group-first: true;
+            title: @tr("CreateInstance" => "Set background image");
+            icon: "image";
+            navigable: CreateInstanceState.background-path == "";
+            clicked => { CreateInstanceState.pick-background(@tr("CreateInstance" => "Images")); }
+
+            // The chevron is replaced by a red "Remove image" button once a file
+            // is picked.
+            if CreateInstanceState.background-path != "" : Button {
+                text: @tr("CreateInstance" => "Remove image");
+                text-color: Theme.red;
+                clicked => { CreateInstanceState.background-path = ""; }
+            }
+        }
+
+        SettingItem {
+            group-last: true;
+            title: @tr("CreateInstance" => "Use instance background as launcher background");
+            item-disabled: CreateInstanceState.background-path == "";
+            // The switch is inert: the choice is not persisted yet.
+            Switch { }
+        }
+    }
+
+    // 16px between two groups.
+    Rectangle {
+        width: 100%;
+        height: 16px;
+        background: transparent;
+    }
+
+    SettingGroup {
+        title: @tr("CreateInstance" => "Version settings");
+
+        SettingItem {
+            group-first: true;
+            title: "Minecraft";
+            icon: "minecraft";
+            description: CreateInstanceState.minecraft-version != ""
+                ? @tr("CreateInstance" => "Selected {}", CreateInstanceState.minecraft-version)
+                : "";
+            navigable: true;
+            clicked => { CreateInstanceState.step = "minecraft-choose"; }
+        }
+
+        SettingItem {
+            title: @tr("CreateInstance" => "Mod loader");
+            loading: CreateInstanceState.mod-loader-loading;
+
+            Select {
+                options: ["None", "Fabric", "Quilt", "Neoforge", "Forge"];
+                display-name: [@tr("CreateInstance" => "None"), "Fabric", "Quilt", "Neoforge", "Forge"];
+                option-enabled: CreateInstanceState.loader-option-enabled();
+                value <=> CreateInstanceState.mod-loader-type;
+                // Selecting a loader clears the version.
+                selected(value) => { CreateInstanceState.mod-loader-version = ""; }
+            }
+        }
+
+        SettingItem {
+            group-last: true;
+            title: @tr("CreateInstance" => "Loader version");
+            // The version the rest of the row is about, shown as a suffix to the
+            // title.
+            title-suffix: CreateInstanceState.minecraft-version;
+            icon: "extension-puzzle";
+            description: CreateInstanceState.minecraft-version != ""
+                ? (CreateInstanceState.mod-loader-version != ""
+                    ? @tr(
+                        "CreateInstance" => "Selected {}",
+                        CreateInstanceState.mod-loader-type + " " + CreateInstanceState.mod-loader-version)
+                    : @tr("CreateInstance" => "Click to select a mod loader version"))
+                : @tr("CreateInstance" => "Select a Minecraft version first");
+            navigable: true;
+            item-disabled: CreateInstanceState.minecraft-version == ""
+                || CreateInstanceState.mod-loader-type == "None";
+            clicked => { CreateInstanceState.step = "mod-loader-choose"; }
+        }
+    }
+
+    // 16px before the buttons.
+    Rectangle {
+        width: 100%;
+        height: 16px;
+        background: transparent;
+    }
+
+    // The step insets its children by 8px (see its padding), so this row adds
+    // none: its buttons line up with the setting rows above.
+    // The default `stretch`, not `alignment: start`: a main-axis alignment other
+    // than `stretch` sizes every child to its *preferred* width and distributes
+    // the free space to nobody, which would pack both buttons at the left of the
+    // row instead of splitting it.
+    actions := HorizontalLayout {
+        spacing: 12px;
+
+        // Both buttons ask for the whole row and shrink by the same factor, so
+        // they come out the same width whatever their labels. `horizontal-stretch`
+        // only hands out the *extra* space, so on its own it leaves them differing
+        // by the difference in label widths ("Cancel" against "Create instance").
+        // An equal `button-width` on both restores the split, and naming the row
+        // lets it be the real half of the row rather than a magic number: the two
+        // stay equal at any width, and neither can outgrow the row into the gap.
+        Button {
+            button-width: (actions.width - actions.spacing) / 2;
+            horizontal-stretch: 1;
+            text: @tr("CreateInstance" => "Cancel");
+            clicked => { Dialogs.create-instance-visible = false; }
+        }
+
+        Button {
+            button-width: (actions.width - actions.spacing) / 2;
+            horizontal-stretch: 1;
+            text: CreateInstanceState.creating
+                ? @tr("CreateInstance" => "Creating...")
+                : @tr("CreateInstance" => "Create instance");
+            // Disabled while creating and until both a Minecraft version and (for
+            // a modded instance) a loader version are set.
+            button-enabled: !CreateInstanceState.creating
+                && CreateInstanceState.minecraft-version != ""
+                && (CreateInstanceState.mod-loader-type == "None"
+                    || CreateInstanceState.mod-loader-version != "");
+            clicked => { CreateInstanceState.create(); }
+        }
+    }
+}
+
+// The create-instance dialog: a 480×480 panel that swaps between three screens.
+//
+// The swap is an out-in transition: the outgoing screen plays its 80ms zoom-out
+// first, then the incoming one plays its 250ms zoom-in. Slint has no transition
+// component, so the state machine below drives it with the `phase` the screens
+// read: the mounted screen plays its leave first (`shown` stays put for the 80ms
+// beat), then the `shown` slot changes — which destroys the old element and
+// creates the new one, so the arriving screen starts from the enter rest state
+// instead of animating away from the previous screen's — and its `phase` moves to
+// "shown" one frame later.
+//
+// The direction is picked from the screen being left: into the version chooser
+// and back from the loader chooser are `zoom-in`, into the loader chooser and back
+// from the version chooser are `zoom-out`.
+export component CreateInstance inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    // 8px top + a 16px line + 16px bottom.
+    private property <length> title-height: 40px;
+    // The version chooser is `height: calc(100% - 42px)` and the mod loader one
+    // is `height: 100%`, so each screen gets its own number here rather than one
+    // shared with the title, so that neither is quietly the other's. The mod
+    // loader one is the normalized reading: a `height: 100%` child in a column
+    // with a title above it overflows by the title, which the dialog's scroller
+    // absorbs.
+    private property <length> version-screen-height: 42px;
+    private property <bool> open: Dialogs.create-instance-visible;
+    // The step the user asked for; the title follows it at once.
+    private property <string> step: CreateInstanceState.step;
+    // The screen actually mounted. It follows `step` only once the mounted screen
+    // has played its leave: the outgoing component stays until the incoming one
+    // is mounted.
+    //
+    // Driving the leave from the mounted screen (instead of from a copy of it
+    // mounted ahead of time) is what makes it play: Slint only advances an
+    // `animate` while the property is read, so a copy that is kept out of
+    // sight — `visible: false`, or clipped away — jumps straight to the leave
+    // values the moment it is shown, without animating.
+    private property <string> shown: "";
+    // Whether the mounted screen is playing its leave.
+    private property <bool> leaving: false;
+    // "enter" while the arriving screen sits at the start of its enter, then
+    // "shown".
+    private property <string> arrive-phase: "shown";
+    // "in" = zoom-in, "out" = zoom-out.
+    private property <string> direction: "in";
+    private property <bool> leave-armed: false;
+    private property <bool> enter-armed: false;
+
+    changed open => {
+        if open {
+            // Every open starts at the chooser.
+            CreateInstanceState.step = "minecraft-choose";
+        } else {
+            // Clean the form on close: clearing the step unmounts the screens so
+            // the next open builds them again.
+            CreateInstanceState.step = "";
+            CreateInstanceState.custom-name = "";
+            CreateInstanceState.name-editing = false;
+            CreateInstanceState.minecraft-version = "";
+            CreateInstanceState.mod-loader-type = "None";
+            CreateInstanceState.mod-loader-version = "";
+            CreateInstanceState.background-path = "";
+            CreateInstanceState.creating = false;
+        }
+    }
+
+    changed step => {
+        if root.step == "" {
+            root.shown = "";
+            root.leaving = false;
+            root.leave-armed = false;
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+            root.direction = "in";
+        } else {
+            // The direction comes from the screen being left: into the version
+            // chooser and back from the loader chooser are `zoom-in`, into the
+            // loader chooser and back from the version chooser are `zoom-out`.
+            root.direction = (root.step == "minecraft-choose"
+                || (root.step == "settings" && root.shown == "mod-loader-choose"))
+                ? "in"
+                : "out";
+
+            // Entering the chooser fetches the manifest again (the crate caches
+            // it for 30 minutes).
+            if root.step == "minecraft-choose" {
+                CreateInstanceState.load-minecraft-versions();
+            }
+
+            if root.shown == "" {
+                // The first screen of this open just appears; mounting is not
+                // animated.
+                root.shown = root.step;
+            } else if root.step == root.shown {
+                // Switching back to the screen that is leaving calls it off.
+                root.leaving = false;
+                root.leave-armed = false;
+            } else {
+                root.leaving = true;
+                root.leave-armed = true;
+                leave-timer.restart();
+            }
+        }
+    }
+
+    // The out-in beat: the mounted screen plays its 80ms leave, and the arriving
+    // one is mounted when that is over.
+    leave-timer := Timer {
+        interval: 80ms;
+        running: root.leave-armed;
+        triggered => {
+            root.leave-armed = false;
+            root.leaving = false;
+            if root.step != root.shown {
+                root.shown = root.step;
+                root.arrive-phase = "enter";
+                root.enter-armed = true;
+            }
+        }
+    }
+
+    // The arriving screen is mounted at the enter rest and moves to "shown" one
+    // frame later: an element created and finished in the same frame has nothing
+    // to animate from, and the enter became a jump. Long enough for a frame,
+    // short enough not to be seen.
+    enter-timer := Timer {
+        interval: 16ms;
+        running: root.enter-armed;
+        triggered => {
+            root.enter-armed = false;
+            root.arrive-phase = "shown";
+        }
+    }
+
+    // A `Dialog` instance rather than a base to inherit from: inside an
+    // inherited component a `parent` reference resolves against the *root* of
+    // the base (the whole window) instead of the element that hosts the
+    // `@children` slot, which would size everything below to the window.
+    dialog := Dialog {
+        dialog-visible: Dialogs.create-instance-visible;
+        dialog-width: 480px;
+        dialog-height: 480px;
+
+        // The dialog's inner area, inset 4px. Its size comes from `Dialog` —
+        // a `parent` reference here is the dialog's root (the window), not the
+        // slot the content is laid out in.
+        scroll := Rectangle {
+            x: 4px;
+            y: 4px;
+            width: dialog.content-width - 8px;
+            height: dialog.content-height - 8px;
+            background: transparent;
+            // The Flickable cannot clip itself (only a Rectangle can), and without
+            // it the screen would draw over the panel's rounded edges.
+            clip: true;
+
+            // The dialog's scroll area: `overflow-y: auto`, and its scrollbar is
+            // hidden globally.
+            flick := Flickable {
+                width: 100%;
+                height: 100%;
+                interactive: !Dropdown.open;
+                mouse-drag-pan-enabled: false;
+                // Pin the content to the dialog's inner width, like `ScrollView` does —
+                // without it the column would be laid out at its preferred width.
+                content-width: scroll.width;
+
+                VerticalLayout {
+                    alignment: start;
+
+                    // The title.
+                    title := Rectangle {
+                        width: 100%;
+                        height: root.title-height;
+                        background: transparent;
+
+                        Text {
+                            x: 8px;
+                            y: 8px;
+                            width: parent.width - 8px;
+                            height: 16px;
+                            text: root.step == "minecraft-choose"
+                                ? @tr("Select Minecraft version")
+                                : root.step == "mod-loader-choose" ? @tr("Select mod loader") : @tr("Create new instance");
+                            font-size: 16px;
+                            font-weight: Theme.font-weight-normal;
+                            color: Theme.default-text-color.transparentize(0.1);
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // One slot per screen, keyed on the screen that is *mounted*
+                    // (`shown`) rather than on the one asked for: that is what
+                    // keeps the element alive (and its animation running) while it
+                    // plays its leave, and what makes the arriving screen a fresh
+                    // element that starts at its enter rest.
+                    if root.shown == "settings" : SettingsStep {
+                        phase: root.leaving ? "leave" : root.arrive-phase;
+                        direction: root.direction;
+                    }
+                    if root.shown == "minecraft-choose" : MinecraftChoose {
+                        phase: root.leaving ? "leave" : root.arrive-phase;
+                        direction: root.direction;
+                        // The chooser is the dialog's inner area less the title.
+                        screen-height: flick.height - root.version-screen-height;
+                    }
+                    if root.shown == "mod-loader-choose" : ModLoaderChoose {
+                        phase: root.leaving ? "leave" : root.arrive-phase;
+                        direction: root.direction;
+                        // The screen fills what the title leaves of the dialog's
+                        // inner area (see `version-screen-height`). It scrolls
+                        // its own list either way.
+                        screen-height: flick.height - root.title-height;
+                    }
+                }
+            }
+
+            dropdown-scroll-blocker := TouchArea {
+                x: 0;
+                y: 0;
+                width: parent.width;
+                height: parent.height;
+                enabled: Dropdown.open;
+                scroll-event(event) => { return accept; }
+                clicked => { Dropdown.open = false; }
+            }
+        }
+    }
+}

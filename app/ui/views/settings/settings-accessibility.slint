@@ -2,9 +2,9 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { SettingGroup } from "../../components/setting-group.slint";
-import { SettingItem } from "../../components/setting-item.slint";
-import { BaseSwitch } from "../../components/base-switch.slint";
+import { SettingGroup } from "../../components/settings/setting-group.slint";
+import { SettingItem } from "../../components/settings/setting-item.slint";
+import { Switch } from "../../components/controls/switch.slint";
 import { AppConfig } from "../../globals/settings.slint";
 import { Theme } from "../../theme.slint";
 
@@ -25,7 +25,7 @@ export component SettingsAccessibility inherits VerticalLayout {
             icon: "bell";
             icon-outline: true;
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.release-reminder;
                 toggled => { AppConfig.changed(); }
             }
@@ -37,7 +37,7 @@ export component SettingsAccessibility inherits VerticalLayout {
             icon: "bell";
             icon-outline: true;
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.snapshot-reminder;
                 toggled => { AppConfig.changed(); }
             }
@@ -49,7 +49,7 @@ export component SettingsAccessibility inherits VerticalLayout {
             description: @tr("Set the game language to your launcher language on first launch");
             icon: "language";
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.auto-game-lang;
                 toggled => { AppConfig.changed(); }
             }
@@ -66,12 +66,12 @@ export component SettingsAccessibility inherits VerticalLayout {
             description: @tr("Enable high contrast mode for the current theme (if available)");
             icon: "contrast";
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.high-contrast;
                 // Swaps the semantic tokens like a palette change does, so it
                 // animates the same way (see `Theme.transitions-enabled`).
                 //
-                // As in the palette row, `BaseSwitch` writes `checked` through
+                // As in the palette row, `Switch` writes `checked` through
                 // the two-way binding first; the tokens are only evaluated from
                 // the event loop's change handlers, so arming here in `toggled`
                 // is early enough.

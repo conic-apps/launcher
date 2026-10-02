@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../theme.slint";
-import { AppIcon } from "../components/app-icon.slint";
-import { ScrollView } from "../components/scroll-view.slint";
+import { AppIcon } from "../components/display/app-icon.slint";
+import { ScrollView } from "../components/containers/scroll-view.slint";
 import { MusicState } from "../globals/music.slint";
 
 // A player button (`.player-btn`): 34px square, 10px radius, transparent at
@@ -125,7 +125,7 @@ export component MusicPlayerOverlay inherits Rectangle {
     background: #000000.with-alpha(0.45 * root.scrim-alpha);
 
     // The scrim fades over 150ms and the card slides in from -8px over the same
-    // 150ms. As in `BaseDialog`, the phase is plain state and the panel is shown
+    // 150ms. As in `Dialog`, the phase is plain state and the panel is shown
     // for one frame at the start values, because an animated property is only
     // advanced while something reads it.
     private property <string> phase: "closed";
@@ -188,7 +188,7 @@ export component MusicPlayerOverlay inherits Rectangle {
     // *separate* transition from the overlay's. So it needs its own phase machine:
     // driving it off the overlay's phase would leave the playlist with nothing to
     // animate when the user toggles it while the overlay stays open — the case the
-    // button is for. The same two rules as `BaseDialog` apply: "starting" is a
+    // button is for. The same two rules as `Dialog` apply: "starting" is a
     // frame at the start values, because an animated property is only advanced
     // while something reads it, and "leaving" keeps the card on screen until the
     // timer drops it.

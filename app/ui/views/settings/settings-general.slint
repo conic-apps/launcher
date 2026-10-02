@@ -2,12 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { SettingGroup } from "../../components/setting-group.slint";
-import { SettingCollapse } from "../../components/setting-collapse.slint";
-import { SettingItem } from "../../components/setting-item.slint";
-import { BaseSwitch } from "../../components/base-switch.slint";
-import { BaseSelect } from "../../components/base-select.slint";
-import { BaseDropdownSelect } from "../../components/base-dropdown-select.slint";
+import { SettingGroup } from "../../components/settings/setting-group.slint";
+import { SettingCollapse } from "../../components/settings/setting-collapse.slint";
+import { SettingItem } from "../../components/settings/setting-item.slint";
+import { Switch } from "../../components/controls/switch.slint";
+import { Select } from "../../components/controls/select.slint";
+import { DropdownSelect } from "../../components/controls/dropdown-select.slint";
 import { AppConfig } from "../../globals/settings.slint";
 import { Navigation } from "../../globals/navigation.slint";
 
@@ -41,7 +41,7 @@ export component SettingsGeneral inherits VerticalLayout {
             title: @tr("Language");
             icon: "language";
 
-            BaseDropdownSelect {
+            DropdownSelect {
                 options: [
                     { key: "en_us", label: "English", icon: "" },
                     { key: "zh_cn", label: "简体中文", icon: "" },
@@ -67,7 +67,7 @@ export component SettingsGeneral inherits VerticalLayout {
             title: @tr("Auto update");
             description: @tr("Automatically download and install updates when available");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.auto-update;
                 toggled => { AppConfig.changed(); }
             }
@@ -78,7 +78,7 @@ export component SettingsGeneral inherits VerticalLayout {
             description: @tr("Controls how frequently the launcher receives updates");
             item-disabled: !AppConfig.auto-update;
 
-            BaseSelect {
+            Select {
                 options: ["stable", "beta"];
                 display-name: [@tr("Stable"), @tr("Beta")];
                 value <=> AppConfig.update-channel;

@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { BaseDialog } from "../../components/base-dialog.slint";
+import { Dialog } from "dialog.slint";
 import { ConfirmWarningBody } from "confirm-warning.slint";
 import { Dialogs } from "../../globals/dialogs.slint";
 
@@ -17,7 +17,7 @@ export component RestartRequired inherits Rectangle {
     /// Fired on "Restart now"; the app root re-execs the binary.
     callback confirm();
 
-    dialog := BaseDialog {
+    dialog := Dialog {
         dialog-visible: Dialogs.restart-required-visible;
         dialog-width: 500px;
         dialog-height: body.preferred-height + 32px;

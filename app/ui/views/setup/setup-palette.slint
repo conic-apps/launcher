@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { SettingGroup } from "../../components/setting-group.slint";
-import { SettingItem } from "../../components/setting-item.slint";
-import { BaseSwitch } from "../../components/base-switch.slint";
-import { PaletteRow } from "../../components/palette-row.slint";
+import { SettingGroup } from "../../components/settings/setting-group.slint";
+import { SettingItem } from "../../components/settings/setting-item.slint";
+import { Switch } from "../../components/controls/switch.slint";
+import { PaletteRow } from "../../components/display/palette-row.slint";
 import { AppConfig } from "../../globals/settings.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
@@ -44,7 +44,7 @@ export component SetupPalette inherits VerticalLayout {
                 icon: "moon";
             icon-outline: true;
 
-                BaseSwitch {
+                Switch {
                     checked <=> AppConfig.palette-follow-system;
                     // Arms the palette transition, which is what makes a change
                     // a *user* change (see `Theme.transitions-enabled`).

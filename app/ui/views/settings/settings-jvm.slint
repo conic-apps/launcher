@@ -2,11 +2,11 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { SettingGroup } from "../../components/setting-group.slint";
-import { SettingItem } from "../../components/setting-item.slint";
-import { SettingCollapse } from "../../components/setting-collapse.slint";
-import { BaseSwitch } from "../../components/base-switch.slint";
-import { ItemLoadingIcon } from "../../components/item-loading-icon.slint";
+import { SettingGroup } from "../../components/settings/setting-group.slint";
+import { SettingItem } from "../../components/settings/setting-item.slint";
+import { SettingCollapse } from "../../components/settings/setting-collapse.slint";
+import { Switch } from "../../components/controls/switch.slint";
+import { Loading } from "../../components/controls/loading.slint";
 import { AppConfig, JavaRuntime } from "../../globals/settings.slint";
 
 // Runtime rows (JavaRuntime[]). Three branches: error, then empty, then the
@@ -47,7 +47,7 @@ component JavaRuntimeList inherits VerticalLayout {
         // `description-lines`.
         description-lines: 1;
 
-        BaseSwitch {
+        Switch {
             checked: runtime.enabled;
             toggled => { AppConfig.set-java-enabled(runtime.path, !runtime.enabled); }
         }
@@ -74,7 +74,7 @@ export component SettingsJvm inherits VerticalLayout {
             title: @tr("Auto-install Java runtime");
             description: @tr("When enabled, the launcher will automatically download the appropriate Java runtime before launching. When disabled, only system-installed Java will be used");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.prefer-mojang-java;
                 toggled => { AppConfig.changed(); }
             }
@@ -88,7 +88,7 @@ export component SettingsJvm inherits VerticalLayout {
         if AppConfig.java-scanning : SettingItem {
             group-last: true;
             title: @tr("Scanning for installed Java runtimes");
-            ItemLoadingIcon { status: "in-progress"; }
+            Loading { size: 16px; stroke-width: 8; gap: 8; }
         }
         if !AppConfig.java-scanning : JavaRuntimeList {
             group-last: true;

@@ -76,6 +76,46 @@ Python tooling in `tools/` is not part of any CI gate:
 - **`app/i18n/<locale>/LC_MESSAGES/conic-launcher.po`** — 12 locales.
   `tools/update-i18n.py` owns them; do not hand-edit.
 
+### UI layout (`app/ui/`)
+
+`app.slint` is the root `Window`, `theme.slint` the design tokens and
+`icons.slint` a `build.rs` product. Everything else is one of four buckets, and
+the bucket — not the feature — is what decides where a file goes:
+
+- **`components/`** — reusable, feature-agnostic widgets, split by role:
+  - `controls/` — form and display primitives, with **no prefix**: `Button`,
+    `Checkbox`, `Input`, `Select`, `DropdownSelect`, `Switch`, `SliderBar`,
+    `ListItem`, `Progress`, `Loading`.
+  - `containers/` — layout/behaviour wrappers: `ScrollView`,
+    `ScrollViewHorizontal`, `SlideTransition`, `ZoomTransition`.
+  - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`,
+    `PaletteRow`, `WindowBackground`.
+  - `settings/` — `SettingItem`, `SettingGroup`, `SettingCollapse`.
+  - `markdown/` — the `.slint` half of `app/src/markdown/`.
+  - `title-bar.slint` plus a `title-bar/` folder of its private children
+    (`navigation-button`, `title-bar-action-button`, `search-bar`). A component
+    gets a same-named folder only when it has private children, and keeps them
+    there rather than in `components/`.
+- **`views/`** — the top-level pages: one `*-view.slint` each (`game-view`,
+  `settings-view`, `launch-view`, `setup-view`, `todo-placeholder`) with a
+  same-named folder for its parts (`game/`, `settings/`, `setup/`).
+- **`overlays/`** — everything drawn above a page. The app-root layers
+  (`dialog-root`, `dropdown-overlay`, `description-tooltip`, `command-palette`,
+  `music-player`, `instance-settings`) sit here; a dialog *flow* gets a folder
+  (`dialogs/account-add/`, `dialogs/create-instance/`, `dialogs/multiplayer/`)
+  with `dialogs/dialog.slint` as the shared modal shell, and the content browser
+  is `content/`.
+- **`globals/`** — one singleton per domain (`Navigation`, `AppConfig`,
+  `ContentState`, …). Slint components are only reachable from Rust through a
+  global, and a global is also how cross-screen state is shared without prop
+  drilling; `app/src/<domain>/` wires each one.
+
+Naming, once a file is placed: `*View` is a page, `*Overlay`/`*Dialog`/`*Panel`/
+`*Card` is a surface, `*Root` is an overlay layer host. There is **no `base-`
+family** — the control itself is the base. Imports are relative paths, so moving
+a file means updating every importer; `cargo check` compiles the `.slint` tree
+and is what catches a missed one.
+
 ### Platform plumbing worth knowing
 
 - `crates/platform` — OS detection (`PLATFORM_INFO`, `OsFamily`).

@@ -2,10 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { SettingGroup } from "../../components/setting-group.slint";
-import { SettingItem } from "../../components/setting-item.slint";
-import { BaseSwitch } from "../../components/base-switch.slint";
-import { BaseSliderBar } from "../../components/base-slider-bar.slint";
+import { SettingGroup } from "../../components/settings/setting-group.slint";
+import { SettingItem } from "../../components/settings/setting-item.slint";
+import { Switch } from "../../components/controls/switch.slint";
+import { SliderBar } from "../../components/controls/slider-bar.slint";
 import { AppConfig } from "../../globals/settings.slint";
 
 export component SettingsAudio inherits VerticalLayout {
@@ -23,7 +23,7 @@ export component SettingsAudio inherits VerticalLayout {
             title: @tr("Enable background music");
             description: @tr("Play background music in the launcher.");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.music-enabled;
                 toggled => { AppConfig.changed(); }
             }
@@ -33,7 +33,7 @@ export component SettingsAudio inherits VerticalLayout {
             title: @tr("Resume on start");
             description: @tr("Resume the last track and its progress when the application starts.");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.resume-on-startup;
                 toggled => { AppConfig.changed(); }
             }
@@ -43,7 +43,7 @@ export component SettingsAudio inherits VerticalLayout {
             title: @tr("Audio visualizer");
             description: @tr("Show audio visualization at the bottom of the game page.");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.show-visualizer;
                 toggled => { AppConfig.changed(); }
             }
@@ -53,7 +53,7 @@ export component SettingsAudio inherits VerticalLayout {
             title: @tr("Pause on game launch");
             description: @tr("Automatically pause background music when the game finishes launching.");
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.pause-on-launch;
                 toggled => { AppConfig.changed(); }
             }
@@ -76,7 +76,7 @@ export component SettingsAudio inherits VerticalLayout {
             title: @tr("Master volume");
             description: AppConfig.main-volume + "%";
 
-            BaseSliderBar {
+            SliderBar {
                 max: 100;
                 min: 0;
                 step: 5;
@@ -90,7 +90,7 @@ export component SettingsAudio inherits VerticalLayout {
             title: @tr("Master volume (window inactive)");
             description: AppConfig.background-volume + "%";
 
-            BaseSliderBar {
+            SliderBar {
                 max: 100;
                 min: 0;
                 step: 5;

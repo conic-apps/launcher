@@ -2,10 +2,10 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { SettingGroup } from "../../components/setting-group.slint";
-import { SettingItem } from "../../components/setting-item.slint";
-import { BaseInput } from "../../components/base-input.slint";
-import { BaseSwitch } from "../../components/base-switch.slint";
+import { SettingGroup } from "../../components/settings/setting-group.slint";
+import { SettingItem } from "../../components/settings/setting-item.slint";
+import { Input } from "../../components/controls/input.slint";
+import { Switch } from "../../components/controls/switch.slint";
 import { AppConfig } from "../../globals/settings.slint";
 
 export component SettingsDownload inherits VerticalLayout {
@@ -24,7 +24,7 @@ export component SettingsDownload inherits VerticalLayout {
             description: @tr("Limit the number of simultaneous connections to servers. Only applies to downloads during installation. Setting too high may reduce speed!");
             icon: "link";
 
-            BaseInput {
+            Input {
                 input-width: 100px;
                 number-only: true;
                 value <=> AppConfig.max-connections;
@@ -37,7 +37,7 @@ export component SettingsDownload inherits VerticalLayout {
             description: @tr("Limit download speed. Only applies to downloads during installation. Must be greater than 1024 to take effect. Set to 0 to disable");
             icon: "speedometer";
 
-            BaseInput {
+            Input {
                 input-width: 100px;
                 number-only: true;
                 value <=> AppConfig.max-download-speed;
@@ -65,7 +65,7 @@ export component SettingsDownload inherits VerticalLayout {
             description: @tr("Currently only proxy via environment variables is supported");
             icon: "globe";
 
-            BaseSwitch {
+            Switch {
                 checked <=> AppConfig.use-system-proxy;
                 toggled => { AppConfig.changed(); }
             }

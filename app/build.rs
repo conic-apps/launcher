@@ -328,7 +328,9 @@ fn serialize(path: &usvg::tiny_skia_path::Path) -> String {
 }
 
 /// Write out the `Icons` global that `AppIcon` and the direct `Icons.*()` call
-/// sites (`markdown-body.slint`, `search-bar.slint`, `title-bar.slint`) read.
+/// sites (`overlays/content/markdown-body.slint`,
+/// `components/title-bar/search-bar.slint`, `components/title-bar.slint`)
+/// read.
 ///
 /// The four functions and their fallback values keep the call sites stable:
 /// every icon in the directory is a key, so a `name:` binding and a direct

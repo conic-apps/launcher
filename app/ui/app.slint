@@ -8,13 +8,13 @@ import { AppConfig } from "globals/settings.slint";
 import { CommandPaletteState } from "globals/command-palette.slint";
 import { Navigation } from "globals/navigation.slint";
 import { Dialogs } from "globals/dialogs.slint";
-import { DropdownOverlay } from "components/dropdown-overlay.slint";
-import { DescriptionTooltipOverlay } from "components/description-tooltip.slint";
+import { DropdownOverlay } from "overlays/dropdown-overlay.slint";
+import { DescriptionTooltipOverlay } from "overlays/description-tooltip.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
 import { CommandPaletteOverlay } from "overlays/command-palette.slint";
 import { MusicPlayerOverlay } from "overlays/music-player.slint";
 import { WindowDrag } from "globals/window-drag.slint";
-import { WindowBackground } from "components/window-background.slint";
+import { WindowBackground } from "components/display/window-background.slint";
 import { SettingsView } from "views/settings-view.slint";
 import { GameView } from "views/game-view.slint";
 import { LaunchView } from "views/launch-view.slint";
@@ -277,7 +277,7 @@ export component App inherits Window {
             // The description tooltip, on the same footing: it is taller than the row
             // it belongs to and both the settings collapse and the settings scroll
             // area clip, so it is drawn here and anchored to the description line
-            // (see `components/description-tooltip.slint`).
+            // (see `overlays/description-tooltip.slint`).
             DescriptionTooltipOverlay { }
 
             // The background-music panel, mounted on the same layer and covering

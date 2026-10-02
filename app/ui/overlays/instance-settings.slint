@@ -3,16 +3,16 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../theme.slint";
-import { AppIcon } from "../components/app-icon.slint";
-import { ScrollView } from "../components/scroll-view.slint";
-import { SettingGroup } from "../components/setting-group.slint";
-import { SettingItem } from "../components/setting-item.slint";
-import { SettingCollapse } from "../components/setting-collapse.slint";
-import { BaseButton } from "../components/base-button.slint";
-import { BaseInput } from "../components/base-input.slint";
-import { BaseSelect } from "../components/base-select.slint";
-import { BaseSwitch } from "../components/base-switch.slint";
-import { InstanceCard } from "../components/instance-card.slint";
+import { AppIcon } from "../components/display/app-icon.slint";
+import { ScrollView } from "../components/containers/scroll-view.slint";
+import { SettingGroup } from "../components/settings/setting-group.slint";
+import { SettingItem } from "../components/settings/setting-item.slint";
+import { SettingCollapse } from "../components/settings/setting-collapse.slint";
+import { Button } from "../components/controls/button.slint";
+import { Input } from "../components/controls/input.slint";
+import { Select } from "../components/controls/select.slint";
+import { Switch } from "../components/controls/switch.slint";
+import { InstanceCard } from "../components/display/instance-card.slint";
 import { InstanceSettingsState } from "../globals/instance-settings.slint";
 import { AppConfig } from "../globals/settings.slint";
 import { ContentOverlay } from "content/content-overlay.slint";
@@ -146,7 +146,7 @@ export component InstanceSettings inherits Rectangle {
                                 @tr("InstanceSettings" => "Images"));
                         }
 
-                        if InstanceSettingsState.has-background : BaseButton {
+                        if InstanceSettingsState.has-background : Button {
                             text: @tr("InstanceSettings" => "Remove image");
                             text-color: Theme.red;
                             clicked => { InstanceSettingsState.remove-background(); }
@@ -158,7 +158,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Use instance background as launcher background");
                         item-disabled: !InstanceSettingsState.has-background;
 
-                        BaseSwitch {
+                        Switch {
                             checked <=> InstanceSettingsState.use-as-launcher-background;
                             toggled => { InstanceSettingsState.changed(); }
                         }
@@ -186,7 +186,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Enable instance-specific settings");
                         icon: "settings";
 
-                        BaseSwitch {
+                        Switch {
                             checked <=> InstanceSettingsState.enable-specific;
                             toggled => {
                                 InstanceSettingsState.set-specific(
@@ -208,7 +208,7 @@ export component InstanceSettings inherits Rectangle {
                         HorizontalLayout {
                             cross-axis-alignment: center;
 
-                            BaseInput {
+                            Input {
                                 input-width: 100px;
                                 placeholder: @tr("InstanceSettings" => "W");
                                 number-only: true;
@@ -224,7 +224,7 @@ export component InstanceSettings inherits Rectangle {
                                 background: transparent;
                             }
 
-                            BaseInput {
+                            Input {
                                 input-width: 100px;
                                 placeholder: @tr("InstanceSettings" => "H");
                                 number-only: true;
@@ -245,7 +245,7 @@ export component InstanceSettings inherits Rectangle {
                                 color: Theme.default-text-color.transparentize(0.1);
                             }
 
-                            BaseSwitch {
+                            Switch {
                                 checked <=> InstanceSettingsState.fullscreen;
                                 toggled => { InstanceSettingsState.changed(); }
                             }
@@ -255,7 +255,7 @@ export component InstanceSettings inherits Rectangle {
                     SettingItem {
                         title: @tr("InstanceSettings" => "Quit launcher after launching game");
 
-                        BaseSwitch {
+                        Switch {
                             checked <=> InstanceSettingsState.quit-after-launch;
                             toggled => { InstanceSettingsState.changed(); }
                         }
@@ -266,7 +266,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Skip game file check");
                         description: @tr("InstanceSettings" => "The launcher will not attempt to verify or repair game files before launching");
 
-                        BaseSwitch {
+                        Switch {
                             checked <=> InstanceSettingsState.skip-file-check;
                             toggled => { InstanceSettingsState.changed(); }
                         }
@@ -281,7 +281,7 @@ export component InstanceSettings inherits Rectangle {
                         group-first: true;
                         title: @tr("InstanceSettings" => "Auto-allocate memory");
 
-                        BaseSwitch {
+                        Switch {
                             checked <=> InstanceSettingsState.auto-memory;
                             toggled => { InstanceSettingsState.changed(); }
                         }
@@ -296,7 +296,7 @@ export component InstanceSettings inherits Rectangle {
                         HorizontalLayout {
                             cross-axis-alignment: center;
 
-                            BaseInput {
+                            Input {
                                 input-width: 100px;
                                 number-only: true;
                                 input-enabled: !InstanceSettingsState.auto-memory;
@@ -328,7 +328,7 @@ export component InstanceSettings inherits Rectangle {
                     SettingItem {
                         title: @tr("InstanceSettings" => "Java garbage collector");
 
-                        BaseSelect {
+                        Select {
                             options: ["G1", "Z", "Parallel", "Serial"];
                             display-name: ["G1", "Z", "Parallel", "Serial"];
                             value <=> InstanceSettingsState.gc;
@@ -340,7 +340,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Extra JVM arguments");
                         description: @tr("InstanceSettings" => "Appended after default JVM arguments");
 
-                        BaseInput {
+                        Input {
                             input-width: 300px;
                             value <=> InstanceSettingsState.extra-jvm-args;
                             edited => { InstanceSettingsState.changed(); }
@@ -351,7 +351,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Extra game arguments");
                         description: @tr("InstanceSettings" => "Additional arguments for the game");
 
-                        BaseInput {
+                        Input {
                             input-width: 300px;
                             value <=> InstanceSettingsState.extra-mc-args;
                             edited => { InstanceSettingsState.changed(); }
@@ -362,7 +362,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Extra class paths");
                         description: @tr("InstanceSettings" => "Separated by semicolons on Windows, colons on other systems");
 
-                        BaseInput {
+                        Input {
                             input-width: 300px;
                             value <=> InstanceSettingsState.extra-class-paths;
                             edited => { InstanceSettingsState.changed(); }
@@ -373,7 +373,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Execute before launch");
                         description: @tr("InstanceSettings" => "Added before the launch command");
 
-                        BaseInput {
+                        Input {
                             input-width: 300px;
                             value <=> InstanceSettingsState.before-launch;
                             edited => { InstanceSettingsState.changed(); }
@@ -384,7 +384,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Wrap command");
                         description: @tr("InstanceSettings" => "Added at the beginning of the launch command");
 
-                        BaseInput {
+                        Input {
                             input-width: 300px;
                             value <=> InstanceSettingsState.wrap-command;
                             edited => { InstanceSettingsState.changed(); }
@@ -395,7 +395,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Execute after launch");
                         description: @tr("InstanceSettings" => "Added at the end of the launch script");
 
-                        BaseInput {
+                        Input {
                             input-width: 300px;
                             value <=> InstanceSettingsState.after-launch;
                             edited => { InstanceSettingsState.changed(); }
@@ -406,7 +406,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Ignore invalid Minecraft certificates");
                         description: @tr("InstanceSettings" => "Adds -Dfml.ignoreInvalidMinecraftCertificates=true to JVM arguments");
 
-                        BaseSwitch {
+                        Switch {
                             checked <=> InstanceSettingsState.ignore-invalid-certs;
                             toggled => { InstanceSettingsState.changed(); }
                         }
@@ -417,7 +417,7 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Ignore patch discrepancies");
                         description: @tr("InstanceSettings" => "Adds -Dfml.ignorePatchDiscrepancies=true to JVM arguments");
 
-                        BaseSwitch {
+                        Switch {
                             checked <=> InstanceSettingsState.ignore-patch-discrepancies;
                             toggled => { InstanceSettingsState.changed(); }
                         }

@@ -31,7 +31,7 @@ import { Theme } from "../../theme.slint";
 // Showing it for one frame at the start value before moving to "shown" is what
 // makes the entrance play at all: a hidden element is never painted, so an
 // animated property that is not being read snaps straight to its target, and
-// the slide would be skipped. `BaseDialog` makes the same detour, for the same
+// the slide would be skipped. `Dialog` makes the same detour, for the same
 // reason, and its differing enter/leave durations are the same shape as the
 // two below.
 export component ContentOverlay inherits Rectangle {
@@ -48,7 +48,7 @@ export component ContentOverlay inherits Rectangle {
     /// Size of the container. Elements written between the braces are laid out
     /// in it, but their `parent` is the element they are written *in* — the
     /// game view, not this component — so anything that sizes itself against
-    /// the container has to read these (the same arrangement as `BaseDialog`).
+    /// the container has to read these (the same arrangement as `Dialog`).
     out property <length> panel-width: max(0px, root.width - root.panel-inset);
     out property <length> panel-height: root.height;
 
@@ -65,7 +65,7 @@ export component ContentOverlay inherits Rectangle {
     // would put the whole panel in a layer.
     background: #000000.with-alpha(0.502 * root.scrim-alpha);
 
-    // "closed" | "starting" | "shown" | "leaving" — `BaseDialog`'s machine.
+    // "closed" | "starting" | "shown" | "leaving" — `Dialog`'s machine.
     private property <string> phase: "closed";
     visible: root.phase != "closed";
 
@@ -132,7 +132,7 @@ export component ContentOverlay inherits Rectangle {
     // window height while it is parked below, 0 once it has arrived. Each
     // transition moves the value, which is what lets the duration be read again
     // — `ShouldStart` is only reached when there is a change to animate, so the
-    // 400ms/280ms pair takes effect per direction (`BaseDialog`'s enter/leave
+    // 400ms/280ms pair takes effect per direction (`Dialog`'s enter/leave
     // asymmetry works the same way).
     private property <length> panel-y:
         root.settled == "shown" || root.settled == "starting" ? 0px : root.height;
@@ -178,7 +178,7 @@ export component ContentOverlay inherits Rectangle {
         // The slot, as a plain `Rectangle` rather than a layout: the elements
         // written between a component's braces get their `parent` from the
         // element they are written *in* (the game view, not this container), so
-        // a layout here would size them against the wrong box. `BaseDialog`
+        // a layout here would size them against the wrong box. `Dialog`
         // hosts its slot the same way, and its panels size themselves from the
         // `content-width`/`content-height` it exposes — which is what
         // `panel-width`/`panel-height` are for here.
