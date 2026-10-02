@@ -5,9 +5,10 @@
 //! The add-account dialog's "script": drives `account` from the dialog's state
 //! and its four screens.
 //!
-//! Like `create_instance.rs`, everything that touches the network or the disk
+//! Like `create_instance/`, everything that touches the network or the disk
 //! runs on the tokio runtime (`crate::support::runtime`) and reports back through
-//! `upgrade_in_event_loop`, so the window keeps drawing while a server answers.
+//! `crate::ui::services::report`, so the window keeps drawing while a server
+//! answers.
 //! The one exception is anything that builds a Slint `Image` — the profile
 //! heads — which Slint only lets the drawing thread create.
 //!
@@ -57,9 +58,9 @@ thread_local! {
     /// The chooser's rows. Kept across the dialog's screens so a click can flip
     /// one in place instead of re-creating every row, and reached through a
     /// thread-local rather than an `Rc` captured by the callbacks: the UI half
-    /// of `upgrade_in_event_loop` has to be `Send`, so a worker cannot carry it
-    /// across (`MANIFEST` in `create_instance.rs` is a thread-local for the same
-    /// reason).
+    /// of `crate::ui::services::report` has to be `Send`, so a worker cannot
+    /// carry it across (`MANIFEST` in `create_instance/` is a thread-local for
+    /// the same reason).
     static PROFILES: Rc<VecModel<YggdrasilProfileItem>> = Rc::new(VecModel::default());
 
     /// The credentials the chooser's rows belong to.

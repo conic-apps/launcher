@@ -2,19 +2,22 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The content overlays' "script": drives `content`, `modrinth` and
-//! `curseforge` from what the panels ask for, and pushes the results into the
-//! `ContentState` / `ContentSearch` globals.
+//! The content overlays' Slint adapter: the models the panels draw, the
+//! presenters that turn the use case's plain cards into `ContentCard`s, and the
+//! callbacks registered on the `ContentState` / `ContentSearch` globals.
 //!
-//! It owns the install and remove actions and the installed check, the
-//! favourites, the page list and the version carousel, and the loading the
-//! panels ask for.
+//! It owns the install and remove actions and the installed check, the page
+//! list and the version carousel, and the loading the panels ask for. The
+//! browser's UI-neutral session state — the open list, its query, the search
+//! cache, the favourites and the open detail — lives in
+//! [`crate::usecases::content`] as `ContentSession`, and this controller reaches
+//! it through `Deref`.
 //!
 //! Two conventions it follows from the rest of the app:
 //!
 //!   * Everything that touches the network or the disk runs on the tokio
 //!     runtime (`crate::support::runtime`) and reports back through
-//!     `upgrade_in_event_loop` — Slint is not thread-safe.
+//!     `crate::ui::services::report` — Slint is not thread-safe.
 //!   * Nothing here composes a *translatable* string. A string pushed into a
 //!     model is fixed at the moment it is pushed and would not follow a
 //!     language change, where an `@tr` binding re-evaluates; the labels live in
@@ -22,8 +25,8 @@
 //!     Only data that stays untranslated — author names, version numbers,
 //!     loader names — is built here.
 //!
-//! The code is split by concern: the controller and the types it pushes live
-//! here, the callback wiring is in `wiring`, and the per-list work is in
+//! The code is split by concern: the controller, the presenters and the models
+//! live here, the callback wiring is in `wiring`, and the per-list work is in
 //! `lists`, `search`, `grid`, `body`, `detail`, `acquire` and `icon`.
 
 use std::cell::RefCell;

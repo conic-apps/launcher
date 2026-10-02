@@ -1,7 +1,7 @@
 # markdown
 
 The app's Markdown and HTML renderer, as a layout engine: `comrak` parses,
-`parley` measures, and the caller paints. It lives at `app/src/markdown/`, with
+`parley` measures, and the caller paints. It lives at `app/src/ui/components/markdown/`, with
 its companion views at `app/ui/components/markdown/`.
 
 The split is not a preference. Slint 1.18's `Text` has no strikethrough, no

@@ -11,9 +11,9 @@
 //!
 //! Everything that touches the disk, the network or the library runs on the
 //! app's tokio runtime (`crate::support::runtime`) and reports back with
-//! `upgrade_in_event_loop`. A `Rc<Controller>` cannot cross into a task, so the
-//! event-loop half reaches it through the `CONTROLLER` thread-local (the same
-//! arrangement the launch module uses for its controller).
+//! `crate::ui::services::report`. A `Rc<Controller>` cannot cross into a task,
+//! so the event-loop half reaches it through the `CONTROLLER` thread-local (the
+//! same arrangement the launch view uses for its controller).
 
 use std::{
     cell::{Cell, RefCell},

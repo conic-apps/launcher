@@ -7,7 +7,7 @@
 //! Everything a background task produces has to reach the UI through
 //! `Weak::upgrade_in_event_loop`: Slint is not thread-safe, and the strong
 //! handle cannot cross a thread. The two helpers here are the one way the app
-//! does that, so a task reports through a [`Token`](crate::usecases::generation::Token)
+//! does that, so a task reports through a [`Token`]
 //! rather than open-coding the same marshalling, and a superseded request
 //! cannot draw over a newer one.
 //!
