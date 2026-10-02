@@ -15,7 +15,6 @@ pub(crate) mod slint_backend {
 mod account_add;
 mod account_avatar;
 mod background;
-mod cjk_font;
 mod command_palette;
 mod config_bridge;
 mod content;
@@ -29,17 +28,11 @@ mod launch;
 mod logs;
 mod multiplayer;
 mod music;
+mod native;
 mod runtime;
 mod scroll_input;
 mod settings;
 mod setup;
-
-#[cfg(target_os = "macos")]
-mod traffic_lights;
-
-#[cfg(target_os = "windows")]
-mod windows_caption;
-
 mod worldmap;
 
 use std::{cell::RefCell, rc::Rc};
@@ -68,51 +61,10 @@ fn main() {
         return;
     };
 
-    // macOS gets the Chrome-style window: a native titled window with a
-    // transparent, title-less titlebar and a full-size content view, so the
-    // custom title bar draws under the real AppKit traffic lights while all
-    // native behavior (drag, resize, corner rounding, fullscreen) keeps
-    // working. The hook runs before every winit window is created.
-    #[cfg(target_os = "macos")]
-    {
-        use slint::platform::set_platform;
-        use winit::platform::macos::WindowAttributesExtMacOS;
-
-        let backend = i_slint_backend_winit::Backend::builder()
-            .with_window_attributes_hook(|attributes| {
-                attributes
-                    .with_titlebar_transparent(true)
-                    .with_title_hidden(true)
-                    .with_fullsize_content_view(true)
-            })
-            .build()
-            .expect("failed to build the winit backend");
-        set_platform(Box::new(backend)).expect("failed to install the winit backend");
-    }
-
-    // Windows is frameless in the same sense as macOS: the client area covers
-    // the whole window, so the custom title bar reaches the top edge and the
-    // platform's own window controls sit on top of it (see `windows_caption`).
-    // The window is *created* that way rather than left to `app.slint`'s
-    // `no-frame`, because Slint only applies that once the window exists — and
-    // winit would size the first, still-decorated window for a caption that is
-    // about to disappear, leaving the app a frame's width and height too big.
-    #[cfg(target_os = "windows")]
-    {
-        use slint::platform::set_platform;
-
-        let backend = i_slint_backend_winit::Backend::builder()
-            .with_window_attributes_hook(|attributes| attributes.with_decorations(false))
-            .build()
-            .expect("failed to build the winit backend");
-        set_platform(Box::new(backend)).expect("failed to install the winit backend");
-    }
-
-    // The custom title bar is 44px tall, so the native traffic lights have to
-    // sit lower than AppKit's own title bar would put them. This has to happen
-    // before the first window exists — see the `traffic_lights` module.
-    #[cfg(target_os = "macos")]
-    traffic_lights::install();
+    // The platform's winit backend hook — the macOS transparent titlebar, the
+    // Windows frameless window — has to be installed before any window exists,
+    // which is why it runs here rather than beside `native::install` below.
+    native::install_backend();
 
     let ui = App::new().expect("failed to construct the app UI");
 
@@ -142,11 +94,6 @@ fn main() {
         platform.os_type,
         platform.os_family
     );
-
-    // Windows draws the platform's own window controls over the title bar, so
-    // the title bar has to leave room for them (see `windows_caption`).
-    #[cfg(target_os = "windows")]
-    ui.set_window_controls_inset(windows_caption::controls_inset());
 
     // The search placeholder is translated in app.slint via `@tr`; the hotkey
     // is platform-specific (not translated).
@@ -192,34 +139,11 @@ fn main() {
     // shortcut, which the app-level key scope in `app.slint` binds.
     command_palette::setup(&ui);
 
-    // The title bar stops leaving room for the traffic lights while they are
-    // hidden by fullscreen. Registered after `App::new()` because it reports
-    // into the UI; the observer itself is armed from then on.
-    #[cfg(target_os = "macos")]
-    traffic_lights::watch_fullscreen(&ui);
-
-    // macOS draws the Dock icon from NSApplication, not from the window, and the
-    // icon can only be set once `applicationDidFinishLaunching` has run (inside
-    // `ui.run()`) — setting it earlier is overwritten by AppKit during launch.
-    #[cfg(target_os = "macos")]
-    install_app_icon_observer();
-
     let window = WindowService::new(ui.clone_strong());
 
-    // Windows: hand the window frame to the platform so it draws its own window
-    // controls over the custom title bar. The window procedure that does it is
-    // installed as soon as there is a window to install it on, and the controls
-    // take their ink from whatever theme the app resolved to.
-    #[cfg(target_os = "windows")]
-    {
-        windows_caption::install(&ui);
-
-        let frame = window.clone();
-        ui.on_set_caption_dark(move |dark| windows_caption::set_dark(frame.window(), dark));
-    }
-    // Nothing else has a caption of its own to colour.
-    #[cfg(not(target_os = "windows"))]
-    ui.on_set_caption_dark(|_| {});
+    // Everything the platform has to do differently: the AppKit traffic lights
+    // and Dock icon, the Windows caption buttons and the frame they sit in.
+    native::install(&ui);
 
     let minimize_window = window.clone();
     ui.on_minimize_window(move || {
@@ -231,7 +155,7 @@ fn main() {
     //
     // This is where the platform's own close arrives. The title bar's
     // `close-window` callback covers the controls *this app draws* (Linux) and
-    // the caption buttons Windows substitutes (`windows_caption.rs` sends
+    // the caption buttons Windows substitutes (`native/windows/caption.rs` sends
     // `SC_CLOSE`, which does come through Slint) — but on macOS the red button is
     // AppKit's, and it closes the window without the UI ever seeing it. Asking at
     // the window covers all three, and is also where a close that is not a button
@@ -357,56 +281,4 @@ fn watch_launches(single_instance: single_instance::SingleInstance, app: Weak<Ap
             }
         })
         .expect("failed to start the single-instance watcher");
-}
-
-/// Sets the macOS Dock / task-switcher icon.
-///
-/// The Slint `Window.icon` binding can't reach it: the winit backend forwards
-/// that to `winit::Window::set_window_icon`, which is a no-op on macOS. Instead
-/// the embedded PNG is loaded into an `NSImage` and handed to the shared
-/// `NSApplication`. Windows and Linux use the `icon:` binding in `app.slint`.
-#[cfg(target_os = "macos")]
-fn set_macos_app_icon() {
-    use objc2::runtime::AnyObject;
-    use objc2::{class, msg_send};
-
-    const ICON: &[u8] = include_bytes!("../ui/assets/images/app-icon.png");
-
-    unsafe {
-        let data: *mut AnyObject = msg_send![
-            class!(NSData),
-            dataWithBytes: ICON.as_ptr() as *const core::ffi::c_void,
-            length: ICON.len()
-        ];
-        let image: *mut AnyObject = msg_send![class!(NSImage), alloc];
-        let image: *mut AnyObject = msg_send![image, initWithData: data];
-        let app: *mut AnyObject = msg_send![class!(NSApplication), sharedApplication];
-        let _: () = msg_send![app, setApplicationIconImage: image];
-        // `setApplicationIconImage:` retains the image; balance our alloc/init.
-        let _: () = msg_send![image, release];
-    }
-}
-
-/// Defers `set_macos_app_icon` until the app has finished launching.
-///
-/// `setApplicationIconImage:` only sticks after `applicationDidFinishLaunching:`
-/// (which AppKit runs inside `ui.run()`); setting it before that is discarded
-/// when AppKit initializes the app icon during launch.
-#[cfg(target_os = "macos")]
-fn install_app_icon_observer() {
-    use core::ptr::NonNull;
-    use objc2_foundation::{NSNotification, NSNotificationCenter, ns_string};
-
-    let block = block2::RcBlock::new(move |_notification: NonNull<NSNotification>| {
-        set_macos_app_icon();
-    });
-
-    unsafe {
-        NSNotificationCenter::defaultCenter().addObserverForName_object_queue_usingBlock(
-            Some(ns_string!("NSApplicationDidFinishLaunchingNotification")),
-            None,
-            None,
-            &block,
-        );
-    }
 }
