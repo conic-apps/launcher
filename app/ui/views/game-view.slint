@@ -7,6 +7,7 @@ import { InstanceSummary } from "game/instance-summary.slint";
 import { InstancesList } from "game/instances-list.slint";
 import { GameFooterBar } from "game/footer.slint";
 import { InstanceSettingsRoot } from "../overlays/instance-settings.slint";
+import { AccountViewRoot } from "../overlays/account-view.slint";
 import { ContentRoot } from "../overlays/content/content-root.slint";
 
 // The game screen: current-instance summary on the left, the grouped instance
@@ -66,4 +67,9 @@ export component GameView inherits Rectangle {
     // The content overlays. Mounted here rather than at the app root so the
     // panels sit below the title bar and only exist on the game screen.
     ContentRoot { }
+
+    // The account view. Declared last so it is the topmost of the game view's
+    // overlays: it is opened from the footer and nothing inside it opens another
+    // overlay underneath.
+    AccountViewRoot { }
 }

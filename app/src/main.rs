@@ -14,6 +14,7 @@ pub(crate) mod slint_backend {
 
 mod account_add;
 mod account_avatar;
+mod account_view;
 mod background;
 mod command_palette;
 mod config_bridge;
@@ -138,6 +139,7 @@ fn main() {
     // Settings + game view + overlay "scripts".
     settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     game::setup(&ui, Rc::clone(&shared));
+    account_view::setup(&ui, Rc::clone(&shared));
     instance_settings::setup(&ui, Rc::clone(&shared));
     content::setup(&ui);
     launch::setup(&ui, Rc::clone(&shared));

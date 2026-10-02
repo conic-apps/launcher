@@ -250,10 +250,11 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     }
     state.on_debug_log(|message| log::info!(target: "probe", "{message}"));
     {
+        // The footer's avatar opens the account view overlay.
         let weak = ui.as_weak();
         state.on_open_accounts(move || {
             if let Some(ui) = weak.upgrade() {
-                ui.global::<Navigation>().invoke_navigate("accounts".into());
+                crate::account_view::open(&ui);
             }
         });
     }

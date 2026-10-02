@@ -36,6 +36,7 @@ pub(crate) fn refresh_yggdrasil_submit(state: &AccountAddState) {
 pub(crate) fn finish_add(ui: &App) {
     ui.global::<GameState>().invoke_select_first_account();
     ui.global::<GameState>().invoke_refresh();
+    crate::account_view::on_accounts_changed(ui);
     ui.global::<Dialogs>().set_account_add_visible(false);
 }
 

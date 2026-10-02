@@ -134,8 +134,10 @@ export component GameFooterBar inherits Rectangle {
                 kind: GameState.current-account-kind;
                 players: GameState.accounts;
                 current-key: GameState.current-account-key;
+                include-add-account: true;
                 opacity: self.intro-alpha;
                 select(key) => { GameState.select-account(key); }
+                add-account => { GameState.open-add-account(); }
 
                 private property <length> intro-dy: GameIntro.played ? 0px : 10px;
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;

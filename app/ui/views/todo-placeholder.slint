@@ -4,11 +4,11 @@
 
 import { Theme } from "../theme.slint";
 
-// The stand-in a page shows while it is still to be written.
+// The stand-in the page stack shows for a `Navigation` page with no screen.
 //
-// The only page left without a screen is the accounts page: `Navigation` carries
-// `"accounts"`, the footer's avatar navigates to it, and nothing answers yet.
-// This keeps the navigation honest instead of landing on nothing.
+// Every current page (`game`, `launch`, `settings`, `setup`) has one; the
+// account view is an overlay on the game screen rather than a page, so this is
+// only ever reached by an unrecognized value.
 //
 // The strings are dev-only English: the page has no copy yet.
 export component TodoPlaceholder inherits Rectangle {

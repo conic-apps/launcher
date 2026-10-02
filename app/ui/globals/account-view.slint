@@ -1,0 +1,109 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The account view overlay's state.
+//
+// The overlay shows one account at a time — the launcher's current account when
+// it opens, and whichever account its switcher picks after that. Rust owns the
+// account files and the statistics, so every property below is written by
+// `app/src/account_view/mod.rs`; the view only reads them and calls the
+// callbacks back.
+//
+// The switcher's rows are `GameState.accounts` rather than a second copy here:
+// the footer's dropdown already renders that model, and the two must not be able
+// to drift.
+
+/// One day of the contribution graph.
+///
+/// `column`/`row` come from Rust rather than being derived in Slint, because a
+/// year starts on an arbitrary weekday and Slint has no date arithmetic. The
+/// grid then places each cell by its position alone.
+export struct AccountDay {
+    /// 0 (none) through 4 (most), GitHub's own levels.
+    level: int,
+    column: int,
+    row: int,
+}
+
+/// A month caption above the graph.
+export struct AccountMonthLabel {
+    /// The column the caption starts at.
+    column: int,
+    /// 1 through 12.
+    month: int,
+}
+
+/// One recent launch, for the activity list.
+///
+/// The relative time is carried as the same kind + parts `GameTime.last-played`
+/// takes, so the sentence is formatted (and translated) in the UI.
+export struct AccountActivity {
+    name: string,
+    kind: string,
+    hours: int,
+    month: int,
+    day: int,
+    year: int,
+}
+
+export global AccountViewState {
+    /// Whether the overlay is open.
+    in-out property <bool> visible: false;
+
+    in-out property <bool> has-account: false;
+    in-out property <string> viewed-key: "";
+    in-out property <string> name: "";
+    /// "Microsoft" | "Yggdrasil" | "Offline".
+    in-out property <string> kind: "";
+    /// The viewed account's 72px head.
+    in-out property <image> avatar;
+
+    in-out property <string> uuid: "";
+    /// The third-party server's name for a Yggdrasil account; empty otherwise.
+    in-out property <string> auth-server: "";
+
+    /// "never" | "year-month-day" — the last token refresh, for the detail row.
+    in-out property <string> refresh-kind: "never";
+    in-out property <int> refresh-year: 0;
+    in-out property <int> refresh-month: 0;
+    in-out property <int> refresh-day: 0;
+
+    // ----- contribution graph + activity -----
+    /// Whether the statistics have been read for the viewed account.
+    in-out property <bool> stats-loaded: false;
+    in-out property <int> total-launches: 0;
+    in-out property <int> leading: 0;
+    /// The graph's column count, so the view does not have to reduce the model.
+    in-out property <int> column-count: 0;
+    in-out property <[AccountDay]> days: [];
+    in-out property <[AccountMonthLabel]> months: [];
+    in-out property <[AccountActivity]> activities: [];
+    /// The empty-state flag for the activity list.
+    in-out property <bool> activities-empty: true;
+
+    // ----- skin and cape -----
+    in-out property <bool> has-skin: false;
+    in-out property <bool> has-cape: false;
+    /// The front-facing model, drawn by Rust from the skin texture.
+    in-out property <image> skin-model;
+    in-out property <image> cape;
+    /// Whether the account's own skin can be exported to a file.
+    in-out property <bool> can-save-skin: false;
+    /// Whether a local skin can be chosen (offline accounts).
+    in-out property <bool> can-set-skin: false;
+    /// Whether a local skin can be removed (offline accounts).
+    in-out property <bool> can-clear-skin: false;
+
+    /// Closes the overlay.
+    callback close();
+    /// The switcher picked another account to show. This only changes what the
+    /// overlay looks at; it does not touch the launcher's current account.
+    callback select-account(string);
+    /// The switcher's "Add account" row: opens the add-account dialog.
+    callback add-account();
+    /// "Delete from Conic Launcher": opens the confirmation dialog.
+    callback delete-account();
+    /// The skin section's buttons: "save" | "set" | "clear".
+    callback skin-action(string);
+}

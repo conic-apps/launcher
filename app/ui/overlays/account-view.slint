@@ -1,0 +1,640 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "../components/display/app-icon.slint";
+import { ScrollView } from "../components/containers/scroll-view.slint";
+import { ScrollViewHorizontal } from "../components/containers/scroll-view-horizontal.slint";
+import { SettingGroup } from "../components/settings/setting-group.slint";
+import { SettingItem } from "../components/settings/setting-item.slint";
+import { Button } from "../components/controls/button.slint";
+import { AccountListDropdown } from "../views/game/account-list-dropdown.slint";
+import { ContentOverlay } from "content/content-overlay.slint";
+import { GameState, GameTime } from "../globals/game.slint";
+import { AccountViewState } from "../globals/account-view.slint";
+
+// One icon + label pair of the details row.
+//
+// `flexible` lets a pair take the leftover width and elide; the others keep
+// their natural width and are never clipped.
+component DetailItem inherits HorizontalLayout {
+    in property <string> icon;
+    in property <string> label;
+    in property <bool> flexible: false;
+    spacing: 6px;
+    cross-axis-alignment: center;
+    horizontal-stretch: root.flexible ? 1 : 0;
+
+    AppIcon {
+        name: root.icon;
+        size: 16px;
+        icon-color: Theme.default-text-color.with-alpha(0.509);
+    }
+
+    Text {
+        text: root.label;
+        font-size: 12px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.default-text-color.with-alpha(0.65);
+        overflow: root.flexible ? elide : clip;
+        wrap: no-wrap;
+        vertical-alignment: center;
+    }
+}
+
+// The account view overlay: the player's head, the auth details, the launch
+// contribution graph, recent activity, the skin / cape preview and the danger
+// zone. It slides in on the shared `ContentOverlay` shell, like the instance
+// settings it mirrors.
+//
+// Every section is a `SettingGroup` with an item-styled box inside, so the three
+// upper sections read exactly like the skin / danger ones below them.
+export component AccountView inherits Rectangle {
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+    /// The graph cells' side and the gap between them.
+    private property <length> cell: 11px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    pure function auth-icon() -> string {
+        if AccountViewState.kind == "Microsoft" {
+            return "logo-microsoft";
+        }
+        if AccountViewState.kind == "Yggdrasil" {
+            return "server";
+        }
+        return "cloud-offline-outline";
+    }
+
+    pure function auth-text() -> string {
+        if AccountViewState.kind == "Microsoft" {
+            return @tr("AccountView" => "Microsoft (auth service)");
+        }
+        if AccountViewState.kind == "Yggdrasil" {
+            return @tr(
+                "AccountView" => "{} (third-party Yggdrasil)",
+                AccountViewState.auth-server);
+        }
+        return @tr("AccountView" => "No auth service (offline account)");
+    }
+
+    pure function refresh-text() -> string {
+        if AccountViewState.refresh-kind == "year-month-day" {
+            return GameTime.year-month-day(
+                AccountViewState.refresh-month,
+                AccountViewState.refresh-day,
+                AccountViewState.refresh-year);
+        }
+        return @tr("AccountView" => "Never");
+    }
+
+    pure function month-label(month: int) -> string {
+        return @tr("AccountView" => "{}月", month);
+    }
+
+    pure function level-color(level: int) -> color {
+        if level <= 0 {
+            return Theme.overlay-0.with-alpha(0.2);
+        }
+        if level == 1 {
+            return Theme.green.with-alpha(0.25);
+        }
+        if level == 2 {
+            return Theme.green.with-alpha(0.45);
+        }
+        if level == 3 {
+            return Theme.green.with-alpha(0.7);
+        }
+        return Theme.green;
+    }
+
+    ScrollView {
+        // The same 52px mantle bar the instance settings panel uses, so the two
+        // overlays read as one family. It scrolls away with the content.
+        title-bar := Rectangle {
+            width: 100%;
+            height: 52px;
+            background: Theme.mantle;
+
+            HorizontalLayout {
+                padding-left: 32px;
+                padding-right: 32px;
+                spacing: 8px;
+                cross-axis-alignment: center;
+
+                AppIcon {
+                    name: "person-circle-outline";
+                    size: 20px;
+                }
+
+                Text {
+                    text: @tr("AccountView" => "Account details");
+                    font-size: 16px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                }
+            }
+        }
+
+        Rectangle {
+            width: 100%;
+            height: 16px;
+            background: transparent;
+        }
+
+        body := VerticalLayout {
+            width: 100%;
+            spacing: 16px;
+            alignment: start;
+            padding-left: 24px;
+            padding-right: 24px;
+
+            if AccountViewState.has-account : VerticalLayout {
+                width: 100%;
+                spacing: 16px;
+                alignment: start;
+
+                // ----- 1. header -----
+                SettingGroup {
+                    header-box := Rectangle {
+                        width: 100%;
+                        height: 108px;
+                        background: Theme.setting-item-background;
+                        border-radius: 8px;
+
+                        HorizontalLayout {
+                            width: 100%;
+                            height: 100%;
+                            padding-left: 20px;
+                            padding-right: 20px;
+                            padding-top: 18px;
+                            padding-bottom: 18px;
+                            spacing: 18px;
+                            cross-axis-alignment: center;
+
+                            // A square head with a drop shadow, the way the Vue
+                            // build drew it. The fill is only the shadow's
+                            // caster — the opaque head image covers it.
+                            avatar-box := Rectangle {
+                                width: 72px;
+                                height: 72px;
+                                background: Theme.surface-0;
+                                drop-shadow-color: #00000066;
+                                drop-shadow-blur: 10px;
+                                drop-shadow-offset-x: 0px;
+                                drop-shadow-offset-y: 3px;
+
+                                Image {
+                                    width: 100%;
+                                    height: 100%;
+                                    source: AccountViewState.avatar;
+                                    image-rendering: pixelated;
+                                }
+                            }
+
+                            info := VerticalLayout {
+                                horizontal-stretch: 1;
+                                spacing: 10px;
+                                alignment: center;
+
+                                // The name and its switch button sit together on
+                                // the left, a fixed 8px apart.
+                                HorizontalLayout {
+                                    alignment: start;
+                                    spacing: 8px;
+                                    cross-axis-alignment: center;
+
+                                    Text {
+                                        text: AccountViewState.name;
+                                        font-size: 20px;
+                                        font-weight: Theme.font-weight-bold;
+                                        color: Theme.default-text-color.transparentize(0.05);
+                                        overflow: elide;
+                                        wrap: no-wrap;
+                                        vertical-alignment: center;
+                                    }
+
+                                    AccountListDropdown {
+                                        show-label: false;
+                                        expand-upwards: false;
+                                        button-icon: "swap-horizontal-outline";
+                                        flip-icon: false;
+                                        include-add-account: true;
+                                        panel-width: 240px;
+                                        players: GameState.accounts;
+                                        current-key: AccountViewState.viewed-key;
+                                        dropdown-id: "account-view-switch";
+                                        select(key) => {
+                                            AccountViewState.select-account(key);
+                                        }
+                                        add-account => { AccountViewState.add-account(); }
+                                    }
+                                }
+
+                                // Auth service first, then the last refresh, then
+                                // the UUID, which is the one that may be squeezed
+                                // down to an ellipsis.
+                                //
+                                // TODO(account-view): the UUID may be elided here
+                                // with no way to read it in full. Add a hover
+                                // tooltip (DescriptionTooltip) and a click-to-copy
+                                // action.
+                                HorizontalLayout {
+                                    spacing: 18px;
+                                    cross-axis-alignment: center;
+
+                                    DetailItem {
+                                        icon: auth-icon();
+                                        label: auth-text();
+                                    }
+
+                                    DetailItem {
+                                        icon: "time";
+                                        label: refresh-text();
+                                    }
+
+                                    DetailItem {
+                                        flexible: true;
+                                        icon: "finger-print";
+                                        label: AccountViewState.uuid;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ----- 2. contribution graph -----
+                SettingGroup {
+                    title: @tr("AccountView" => "Launch activity");
+
+                    stats-box := Rectangle {
+                        width: 100%;
+                        // The month captions, seven 13px rows and the legend,
+                        // with the box's own padding.
+                        height: 200px;
+                        background: Theme.setting-item-background;
+                        border-radius: 8px;
+
+                        VerticalLayout {
+                            width: 100%;
+                            height: 100%;
+                            padding: 16px;
+                            spacing: 4px;
+                            alignment: start;
+
+                            Text {
+                                text: @tr(
+                                    "AccountView" => "Launched this account {} times in the past year",
+                                    AccountViewState.total-launches);
+                                font-size: 14px;
+                                color: Theme.default-text-color.transparentize(0.1);
+                            }
+
+                            graph-scroll := ScrollViewHorizontal {
+                                width: 100%;
+                                height: 112px;
+
+                                graph-content := Rectangle {
+                                    // 13px per column (11px cell + 2px gap): the
+                                    // graph's own pitch, matching the cells below.
+                                    width: max(
+                                        root.panel-width,
+                                        AccountViewState.column-count * 13px);
+                                    height: 112px;
+                                    background: transparent;
+
+                                    for label in AccountViewState.months : Text {
+                                        x: label.column * 13px;
+                                        y: 0px;
+                                        text: month-label(label.month);
+                                        font-size: 10px;
+                                        color: Theme.default-text-color.with-alpha(0.45);
+                                    }
+
+                                    for day in AccountViewState.days : Rectangle {
+                                        x: day.column * 13px;
+                                        y: 16px + day.row * 13px;
+                                        width: root.cell;
+                                        height: root.cell;
+                                        border-radius: 2px;
+                                        background: root.level-color(day.level);
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 100%;
+                                height: 12px;
+                                background: transparent;
+                            }
+
+                            HorizontalLayout {
+                                width: 100%;
+                                spacing: 4px;
+                                cross-axis-alignment: center;
+
+                                // The "Less" side of the legend, right-aligned
+                                // by the spacer before it.
+                                spacer := Rectangle {
+                                    horizontal-stretch: 1;
+                                    background: transparent;
+                                }
+
+                                Text {
+                                    text: @tr("AccountView" => "Less");
+                                    font-size: 10px;
+                                    color: Theme.default-text-color.with-alpha(0.45);
+                                }
+
+                                for level in [0, 1, 2, 3, 4] : Rectangle {
+                                    width: 10px;
+                                    height: 10px;
+                                    border-radius: 2px;
+                                    background: root.level-color(level);
+                                }
+
+                                Text {
+                                    text: @tr("AccountView" => "More");
+                                    font-size: 10px;
+                                    color: Theme.default-text-color.with-alpha(0.45);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ----- 3. recent activity -----
+                SettingGroup {
+                    title: @tr("AccountView" => "Recent activity");
+
+                    activity-box := Rectangle {
+                        width: 100%;
+                        height: max(
+                            96px,
+                            60px + AccountViewState.activities.length * 44px);
+                        background: Theme.setting-item-background;
+                        border-radius: 8px;
+
+                        VerticalLayout {
+                            width: 100%;
+                            height: 100%;
+                            padding: 16px;
+                            spacing: 4px;
+                            alignment: start;
+
+                            if AccountViewState.activities-empty : Text {
+                                text: @tr("AccountView" => "No launches recorded yet");
+                                font-size: 12px;
+                                color: Theme.default-text-color.with-alpha(0.509);
+                                vertical-stretch: 1;
+                                vertical-alignment: center;
+                            }
+
+                            for activity in AccountViewState.activities : HorizontalLayout {
+                                height: 40px;
+                                spacing: 10px;
+                                cross-axis-alignment: center;
+
+                                AppIcon {
+                                    name: "play-circle-outline";
+                                    size: 20px;
+                                    icon-color: Theme.green;
+                                }
+
+                                VerticalLayout {
+                                    horizontal-stretch: 1;
+                                    spacing: 2px;
+                                    alignment: center;
+
+                                    Text {
+                                        text: activity.name;
+                                        font-size: 13px;
+                                        color: Theme.default-text-color.transparentize(0.1);
+                                        overflow: elide;
+                                        wrap: no-wrap;
+                                    }
+
+                                    Text {
+                                        text: GameTime.last-played(
+                                            activity.kind,
+                                            activity.hours,
+                                            activity.month,
+                                            activity.day,
+                                            activity.year);
+                                        font-size: 11px;
+                                        color: Theme.default-text-color.with-alpha(0.45);
+                                        overflow: elide;
+                                        wrap: no-wrap;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ----- 4. skin and cape -----
+                //
+                // The box is split by a hairline: the model and cape are centred
+                // in the left half, the actions in the right.
+                SettingGroup {
+                    title: @tr("AccountView" => "Skin and cape");
+
+                    skin-box := Rectangle {
+                        width: 100%;
+                        height: 168px;
+                        background: Theme.setting-item-background;
+                        border-radius: 8px;
+
+                        // The two halves are laid out by percentage rather than
+                        // by a layout's stretch factors: the ratio has to be
+                        // exact (4:6), and a `horizontal-stretch` split is
+                        // biased by each half's content width.
+                        //
+                        // Left half (40%): the previews, centred both ways.
+                        Rectangle {
+                            x: 0px;
+                            y: 0px;
+                            width: 40%;
+                            height: 100%;
+                            background: transparent;
+
+                            HorizontalLayout {
+                                width: 100%;
+                                height: 100%;
+                                alignment: center;
+                                cross-axis-alignment: center;
+                                spacing: 20px;
+
+                                Rectangle {
+                                    width: 64px;
+                                    height: 128px;
+                                    background: transparent;
+
+                                    if AccountViewState.skin-model.width > 0 : Image {
+                                        width: 100%;
+                                        height: 100%;
+                                        source: AccountViewState.skin-model;
+                                        image-fit: contain;
+                                        image-rendering: pixelated;
+                                    }
+                                }
+
+                                if AccountViewState.has-cape : Rectangle {
+                                    width: 40px;
+                                    height: 68px;
+                                    background: transparent;
+
+                                    Image {
+                                        width: 100%;
+                                        height: 100%;
+                                        source: AccountViewState.cape;
+                                        image-fit: contain;
+                                        image-rendering: pixelated;
+                                    }
+                                }
+                            }
+                        }
+
+                        // The hairline between the halves.
+                        Rectangle {
+                            x: parent.width * 0.4;
+                            y: 0px;
+                            width: 1px;
+                            height: 100%;
+                            background: Theme.setting-group-border;
+                        }
+
+                        // Right half (60%): the actions, centred both ways.
+                        Rectangle {
+                            x: parent.width * 0.4;
+                            y: 0px;
+                            width: 60%;
+                            height: 100%;
+                            background: transparent;
+
+                            VerticalLayout {
+                                width: 100%;
+                                height: 100%;
+                                alignment: center;
+                                cross-axis-alignment: center;
+                                spacing: 8px;
+
+                                if AccountViewState.can-save-skin : Button {
+                                    text: @tr("AccountView" => "Save my Minecraft character skin");
+                                    button-width: 240px;
+                                    clicked => { AccountViewState.skin-action("save"); }
+                                }
+
+                                if AccountViewState.can-set-skin : Button {
+                                    text: @tr("AccountView" => "Set offline skin");
+                                    button-width: 240px;
+                                    clicked => { AccountViewState.skin-action("set"); }
+                                }
+
+                                if AccountViewState.can-clear-skin : Button {
+                                    text: @tr("AccountView" => "Clear skin");
+                                    button-width: 240px;
+                                    text-color: Theme.red;
+                                    clicked => { AccountViewState.skin-action("clear"); }
+                                }
+
+                                Text {
+                                    text: @tr(
+                                        "AccountView" => "Restart Minecraft after changing your skin to see it in game");
+                                    font-size: 11px;
+                                    color: Theme.default-text-color.with-alpha(0.45);
+                                    wrap: word-wrap;
+                                    width: 240px;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ----- 5. danger zone -----
+                SettingGroup {
+                    danger: true;
+                    title: @tr("AccountView" => "Delete account");
+
+                    SettingItem {
+                        group-first: true;
+                        group-last: true;
+                        title: @tr("AccountView" => "Delete from Conic Launcher");
+                        description: @tr(
+                            "AccountView" => "Removes the locally stored credentials. The account itself is not affected");
+                        icon: "trash";
+                        navigable: true;
+                        clicked => { AccountViewState.delete-account(); }
+                    }
+                }
+            }
+
+            // ----- no account selected -----
+            if !AccountViewState.has-account : SettingGroup {
+                empty-box := Rectangle {
+                    width: 100%;
+                    height: 220px;
+                    background: Theme.setting-item-background;
+                    border-radius: 8px;
+
+                    VerticalLayout {
+                        width: 100%;
+                        height: 100%;
+                        alignment: center;
+                        spacing: 12px;
+
+                        AppIcon {
+                            name: "person-circle-outline";
+                            size: 48px;
+                            icon-color: Theme.default-text-color.with-alpha(0.4);
+                        }
+
+                        Text {
+                            text: @tr("AccountView" => "No account selected");
+                            font-size: 15px;
+                            color: Theme.default-text-color.transparentize(0.2);
+                        }
+
+                        Button {
+                            text: @tr("Add account");
+                            button-width: 160px;
+                            clicked => { AccountViewState.add-account(); }
+                        }
+                    }
+                }
+            }
+
+            // A trailing 16px spacer, the way the instance settings panel has
+            // one: `spacing` does not account for the last group.
+            Rectangle {
+                width: 100%;
+                height: 16px;
+                background: transparent;
+            }
+        }
+    }
+}
+
+// The overlay layer's mount point: the shared shell with this overlay's
+// narrower container, and the panel itself inside it.
+export component AccountViewRoot inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    overlay := ContentOverlay {
+        overlay-visible: AccountViewState.visible;
+        panel-inset: 200px;
+        closed => { AccountViewState.close(); }
+
+        AccountView {
+            panel-width: overlay.panel-width;
+            panel-height: overlay.panel-height;
+        }
+    }
+}

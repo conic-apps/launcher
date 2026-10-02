@@ -13,7 +13,7 @@ export component DropdownOverlay inherits Rectangle {
     background: transparent;
 
     private property <int> option-count: Dropdown.account-mode
-        ? Dropdown.accounts.length
+        ? Dropdown.accounts.length + (Dropdown.include-add-account ? 1 : 0)
         : Dropdown.options.length;
     private property <length> natural-height: 18px + root.option-count * 26px
         + max(0, root.option-count - 1) * 4px;
@@ -105,6 +105,41 @@ export component DropdownOverlay inherits Rectangle {
                     height: parent.height;
                     clicked => {
                         Dropdown.chosen = player.key;
+                        Dropdown.choose-owner = Dropdown.owner;
+                        Dropdown.choose-serial = Dropdown.choose-serial + 1;
+                        Dropdown.open = false;
+                    }
+                }
+            }
+
+            if Dropdown.include-add-account : Rectangle {
+                height: 26px;
+                border-radius: Theme.controllers-border-radius;
+                background: add-touch.has-hover ? #ffffff1f : transparent;
+                animate background { duration: 30ms; }
+
+                AppIcon {
+                    name: "user-add";
+                    size: 14px;
+                    x: 8px;
+                }
+
+                Text {
+                    text: @tr("Add account");
+                    font-size: 12px;
+                    font-weight: Theme.font-weight-normal;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    x: 30px;
+                    width: parent.width - 38px;
+                    overflow: elide;
+                    wrap: no-wrap;
+                }
+
+                add-touch := TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    clicked => {
+                        Dropdown.chosen = "__add_account__";
                         Dropdown.choose-owner = Dropdown.owner;
                         Dropdown.choose-serial = Dropdown.choose-serial + 1;
                         Dropdown.open = false;

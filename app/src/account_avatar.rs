@@ -128,6 +128,18 @@ const DEFAULT_SKINS: [DefaultSkin; 18] = [
     },
 ];
 
+impl DefaultSkin {
+    /// The skin texture bytes, for callers that draw more than the head.
+    pub fn texture_bytes(&self) -> &'static [u8] {
+        self.texture
+    }
+
+    /// Whether this is one of the slim (3px-arm) models.
+    pub fn is_slim(&self) -> bool {
+        self.model_type == "slim"
+    }
+}
+
 /// The default skin a UUID picks.
 ///
 /// The UUID is hashed the way Java's `UUID.hashCode()` does — the two halves of
@@ -212,7 +224,7 @@ pub fn account_skin_url(account: &Account) -> Option<String> {
 ///
 /// A skin the crate could *not* download is left as the URL it came with; Slint
 /// cannot fetch an image itself, so those fall back to the placeholder head.
-fn decode_skin_url(url: &str) -> Option<image::RgbaImage> {
+pub(crate) fn decode_skin_url(url: &str) -> Option<image::RgbaImage> {
     if !url.starts_with("data:") {
         return None;
     }
@@ -224,7 +236,8 @@ fn decode_skin_url(url: &str) -> Option<image::RgbaImage> {
     decode(&bytes)
 }
 
-fn decode(bytes: &[u8]) -> Option<image::RgbaImage> {
+/// Decodes encoded image bytes (a PNG/WebP skin or cape) into pixels.
+pub(crate) fn decode(bytes: &[u8]) -> Option<image::RgbaImage> {
     image::load_from_memory(bytes)
         .ok()
         .map(|image| image.into_rgba8())
