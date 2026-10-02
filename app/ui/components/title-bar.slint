@@ -47,7 +47,7 @@ component LinuxWindowControlButton inherits Rectangle {
 //
 // The artwork is the platform's own: the glyph comes from the font Windows draws
 // its caption buttons with, and the fills are DWM's, both rendered by
-// `src/windows_caption.rs`. The state is the platform's too — the controls are
+// `src/native/windows/caption.rs`. The state is the platform's too — the controls are
 // non-client area, so the system hit tests and clicks them, and reports the
 // pointer through `window-control-hovered` / `-pressed`.
 //
@@ -73,14 +73,14 @@ export struct WindowControl {
     /// two are stacked, so this is an increment. Compositing two washes of `a` and
     /// `b` lands on `a + b - a·b`, so the increment that reaches the pressed
     /// strength is `(pressed - hover) / (1 - hover)` — worked out in
-    /// `src/windows_caption.rs`, where the numbers live.
+    /// `src/native/windows/caption.rs`, where the numbers live.
     press-fill: color,
 }
 
 // Draws one of the platform's window controls. There is deliberately no TouchArea
 // and no callback: the platform owns these, presses and all, so a handler here
 // would never fire. The platform places them with the same inset this component
-// is given, which is what keeps the two in step (see `src/windows_caption.rs`).
+// is given, which is what keeps the two in step (see `src/native/windows/caption.rs`).
 component SystemWindowControl inherits Rectangle {
     in property <WindowControl> control;
     in property <int> hovered: -1;
@@ -151,7 +151,7 @@ export component TitleBar inherits Rectangle {
     in property <bool> fullscreen: false;
     /// How much of the bar's right-hand end the platform's own window controls
     /// take, and the controls themselves with their state. All pushed in from
-    /// `src/windows_caption.rs`, which is also where they are placed.
+    /// `src/native/windows/caption.rs`, which is also where they are placed.
     in property <length> window-controls-inset: 0px;
     in property <[WindowControl]> window-controls: [];
     in property <int> window-control-hovered: -1;

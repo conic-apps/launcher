@@ -48,8 +48,9 @@ usvg.workspace = true
 # (webp, gif, bmp, ico, …) to the decoders Slint builds in, so a picked
 # background image previews in its original format like it does in the browser.
 # `unstable-fontique-011` exposes `slint::fontique_011::shared_collection()`,
-# which `app/src/cjk_font.rs` uses to name a real CJK family for the Han script
-# (see that module for why the OS fallback is not enough on Windows).
+# which `app/src/native/windows/cjk_font.rs` uses to name a real CJK family for
+# the Han script (see that module for why the OS fallback is not enough on
+# Windows).
 slint = { workspace = true, features = ["image-default-formats", "unstable-fontique-011"] }
 platform.workspace = true
 window.workspace = true
@@ -127,10 +128,10 @@ objc2-foundation = { version = "0.2", features = [
 block2 = "0.5"
 
 # Used to keep the platform's own window controls over the custom title bar on
-# Windows (see `app/src/windows_caption.rs`): the window frame and its messages, the
-# GDI text drawing the controls' glyphs come from, and the window subclassing the
-# frame needs. `Win32_UI_Shell` is where the SDK declares comctl32's
-# `SetWindowSubclass` / `DefSubclassProc`.
+# Windows (see `app/src/native/windows/caption.rs`): the window frame and its
+# messages, the GDI text drawing the controls' glyphs come from, and the window
+# subclassing the frame needs. `Win32_UI_Shell` is where the SDK declares
+# comctl32's `SetWindowSubclass` / `DefSubclassProc`.
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.62", features = [
     "Win32_Foundation",

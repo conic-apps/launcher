@@ -100,7 +100,7 @@ fn record(source: ScrollSource) {
 /// dispatches, before the event reaches the window, and it returns the event
 /// untouched. A local monitor needs no permission (unlike a global one), and
 /// nothing is replaced — unlike the `NSThemeFrame` overrides in
-/// `traffic_lights.rs`, which had no such hook to use.
+/// `native/macos/traffic_lights.rs`, which had no such hook to use.
 ///
 /// # What it reads
 ///
