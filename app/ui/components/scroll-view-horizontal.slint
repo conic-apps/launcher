@@ -6,34 +6,31 @@ import { Theme } from "../theme.slint";
 import { FocusManager } from "../globals/focus.slint";
 import { ScrollInput, ScrollSource } from "../globals/scroll.slint";
 
-// Horizontal scroll container with a slim custom scrollbar on its bottom edge
-// (src/components/ScrollViewHorizontal.vue).
+// Horizontal scroll container with a slim custom scrollbar on its bottom edge.
 //
-// This is `ScrollView` turned on its side: the same Lenis lerp, the same
+// This is `ScrollView` turned on its side: the same eased lerp, the same
 // trackpad-passes-straight-through rule, the same thumb. The differences are all
 // in the details panel's gallery, which is the one place it is used:
 //
-//   * The track sits at the *bottom* (`bottom: 4px; height: 6px`) rather than
-//     the right, and is inset from the left and right edges by the caller's
-//     padding rather than by a fixed 8px.
-//   * The wheel is read as `delta-x`, falling back to `delta-y`. Lenis does the
-//     same for a wrapper that only scrolls horizontally — a plain vertical
-//     wheel reports no `deltaX` at all, so reading only that would make the
-//     strip unscrollable with a mouse, which is the one input it has.
+//   * The track sits at the *bottom* rather than the right, and is inset from
+//     the left and right edges by the caller's padding rather than by a fixed
+//     8px.
+//   * The wheel is read as `delta-x`, falling back to `delta-y`. A plain
+//     vertical wheel reports no `delta-x` at all, so reading only that would
+//     make the strip unscrollable with a mouse, which is the one input it has.
 //
-// What is *not* here is `scrollToCenter`, the original's other exposed method.
-// It took a live element to measure; here the items are written into a
-// `@children` slot, and Slint has no way to reach a slot's child by index, so
-// the offsets are not addressable from inside the component. A caller that needs
-// to centre something has to add the distance itself — the detail gallery can,
-// because its item widths come from its own model.
+// There is no scroll-to-centre here. Centring took a live element to measure;
+// here the items are written into a `@children` slot, and Slint has no way to
+// reach a slot's child by index, so the offsets are not addressable from inside
+// the component. A caller that needs to centre something has to add the distance
+// itself — the detail gallery can, because its item widths come from its own
+// model.
 export component ScrollViewHorizontal inherits Rectangle {
-    /// Distance between the view's left edge and the left of the scrollbar track
-    /// (the Vue's `scrollbar-left`).
+    /// Distance between the view's left edge and the left of the scrollbar track.
     in property <length> scrollbar-left: 8px;
     /// Distance between the view's right edge and the right of the track.
     in property <length> scrollbar-right: 8px;
-    /// Hides the scrollbar without touching the scrolling (the Vue's `disabled`).
+    /// Hides the scrollbar without touching the scrolling.
     in property <bool> scrollbar-disabled: false;
 
     width: 100%;
@@ -50,10 +47,10 @@ export component ScrollViewHorizontal inherits Rectangle {
     /// positive twin, the one the position and the thumb are written in.
     out property <length> content-x: -root.scroll-x;
 
-    // ----- geometry (the Vue stylesheet) -----
-    // `.scrollbar { bottom: 4px; height: 6px }` with the default `left`/`right`
-    // of 8px, and the thumb hanging 2px off the top of the track while hovered
-    // or dragged.
+    // ----- geometry -----
+    // The track sits 4px above the bottom, is 6px tall and 8px in from each
+    // edge, and the thumb hangs 2px off the top of the track while hovered or
+    // dragged.
     private property <length> scrollbar-inset-bottom: 4px;
     private property <length> scrollbar-height: 6px;
     private property <length> track-width: max(0px, root.width - root.scrollbar-left - root.scrollbar-right);
@@ -67,8 +64,8 @@ export component ScrollViewHorizontal inherits Rectangle {
     /// Wheel distance multiplier; see `ScrollView`'s for why it is 2.
     private property <float> wheel-step: 2;
 
-    // Lenis' `lerp`, 0.16 — see `ScrollView`: the Vue's two containers disagree
-    // (this one uses 0.12) and they sit in one app here, so both glide the same.
+    // The `lerp`, 0.16 — see `ScrollView`. The horizontal and vertical
+    // containers share one value so they glide identically.
     private property <float> lerp: 0.16;
     private property <float> last-tick-ms: 0;
 
@@ -95,7 +92,7 @@ export component ScrollViewHorizontal inherits Rectangle {
     }
 
     // The content getting wider (or narrower) can leave the offset past the end
-    // of the row, which the browser would clamp and Lenis would ease back from.
+    // of the row, which is clamped and eased back from.
     changed max-scroll => {
         root.target-x = clamp(root.target-x, 0px, root.max-scroll);
     }
@@ -111,7 +108,8 @@ export component ScrollViewHorizontal inherits Rectangle {
         }
     }
 
-    /// Moves the offset without easing (`immediate: true`).
+    /// Moves the offset without easing: both the offset and the target, so a
+    /// glide in flight is dropped rather than resumed.
     function jump-to(offset: length) {
         root.scroll-x = clamp(offset, 0px, root.max-scroll);
         root.target-x = root.scroll-x;
@@ -129,22 +127,22 @@ export component ScrollViewHorizontal inherits Rectangle {
             width: parent.width;
             height: parent.height;
 
-            // Blurs a focused text field, the way the browser blurs an input its
-            // user clicks away from. See `ScrollView` for why the area is here
-            // rather than on the container.
+            // Blurs a focused text field when its user clicks away from it. See
+            // `ScrollView` for why the area is here rather than on the
+            // container.
             clicked => { FocusManager.clear(); }
 
             scroll-event(event) => {
-                // Consumed whether or not there is anything to scroll: Lenis
-                // calls `preventDefault()` unconditionally, so a wheel over the
-                // gallery never reaches the detail panel's own scroller.
+                // Consumed whether or not there is anything to scroll, so a
+                // wheel over the gallery never reaches the detail panel's own
+                // scroller.
                 if root.max-scroll <= 0px {
                     return accept;
                 }
-                // A trackpad that is being swiped *sideways* reports `deltaX`; a
-                // wheel has none, and a trackpad swiped the other way reports a
-                // `deltaY` too. Taking whichever is larger is what makes one
-                // gesture path serve both.
+                // A trackpad swiped *sideways* reports `delta-x`; a wheel has
+                // none, and a trackpad swiped the other way reports a `delta-y`
+                // too. Taking whichever is larger is what makes one gesture path
+                // serve both.
                 let delta = abs(event.delta-x) >= abs(event.delta-y)
                     ? event.delta-x
                     : event.delta-y;

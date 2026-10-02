@@ -17,12 +17,12 @@ import { InstanceSettingsState } from "../globals/instance-settings.slint";
 import { AppConfig } from "../globals/settings.slint";
 import { ContentOverlay } from "content/content-overlay.slint";
 
-// The instance settings overlay (src/overlays/InstanceSetting.vue) — the panel
-// `GameView.vue`'s `.instance-settings-wrapper` slides up.
+// The instance settings overlay: the panel slides up inside the shared content
+// shell.
 //
-// The wrapper itself is `ContentOverlay`: this is one of the Vue's
-// `.game-content-wrapper`s, with its narrower container (`calc(100% - 200px)`
-// instead of `150px`) and the same scrim and slide. See `instance-settings-root`.
+// The wrapper is `ContentOverlay`, with a narrower container (`calc(100% - 200px)`
+// instead of `150px`), the same scrim and the same slide. See
+// `InstanceSettingsRoot`.
 //
 // Everything here is a *static* subtree — no `for`, no `if` around a measured row
 // — which is what lets `ScrollView` measure the panel's height: a repeated row is
@@ -40,10 +40,8 @@ export component InstanceSettings inherits Rectangle {
     background: transparent;
 
     ScrollView {
-        // ----- `.title` -----
         // A 52px mantle bar with a settings glyph and the panel's name. It is
-        // inside the scroller, so it scrolls away with the content — which is
-        // what the Vue does, its `.title` being the first child of `ScrollView`.
+        // inside the scroller, so it scrolls away with the content.
         title-bar := Rectangle {
             width: 100%;
             height: 52px;
@@ -68,15 +66,15 @@ export component InstanceSettings inherits Rectangle {
             }
         }
 
-        // `.title { margin-bottom: 16px }` — `flex-shrink: 0` in the Vue, which
-        // the scroller's `alignment: start` gives for free.
+        // 16px below the title bar; the scroller's `alignment: start` keeps it
+        // at its fixed height rather than stretching it.
         Rectangle {
             width: 100%;
             height: 16px;
             background: transparent;
         }
 
-        // `<div style="padding: 0 16px">`, with the groups' own 8px inset
+        // 16px of horizontal padding, with the groups' own 8px inset
         // (`width: calc(100% - 16px); margin: 0 auto`) inside it.
         body := VerticalLayout {
             width: 100%;
@@ -85,7 +83,7 @@ export component InstanceSettings inherits Rectangle {
             padding-left: 16px;
             padding-right: 16px;
 
-            // `.instance { margin: 4px 8px 12px 8px }`.
+            // The 4px above the instance card.
             Rectangle {
                 width: 100%;
                 height: 4px;
@@ -124,9 +122,8 @@ export component InstanceSettings inherits Rectangle {
                 background: transparent;
             }
 
-            // Everything below is a group, and `.setting-items` carries a 16px
-            // `margin-bottom` — which is the gap `spacing` expresses here. The 8px
-            // padding is the `width: calc(100% - 16px); margin: 0 auto` the Slint
+            // Everything below is a group; 16px is the gap between them. The 8px
+            // padding is the `width: calc(100% - 16px); margin: 0 auto` inset
             // `SettingGroup` leaves to its caller (see `setting-group.slint`).
             groups := VerticalLayout {
                 width: 100%;
@@ -135,15 +132,14 @@ export component InstanceSettings inherits Rectangle {
                 padding-left: 8px;
                 padding-right: 8px;
 
-                // ----- background -----
                 SettingGroup {
                     SettingItem {
                         group-first: true;
                         title: @tr("InstanceSettings" => "Set background image");
                         icon: "image";
-                        // The Vue's chevron *replaces* the slot's contents while
-                        // the row is navigable (`v-if` / `v-else`), so the button
-                        // below is drawn exactly when the chevron is not.
+                        // The chevron *replaces* the row's contents while the row
+                        // is navigable, so the button below is drawn exactly when
+                        // the chevron is not.
                         navigable: !InstanceSettingsState.has-background;
                         clicked => {
                             InstanceSettingsState.pick-background(
@@ -169,7 +165,6 @@ export component InstanceSettings inherits Rectangle {
                     }
                 }
 
-                // ----- runtime -----
                 SettingGroup {
                     SettingItem {
                         group-first: true;
@@ -179,14 +174,11 @@ export component InstanceSettings inherits Rectangle {
                         description: @tr(
                             "InstanceSettings" => "Selected {}",
                             InstanceSettingsState.minecraft-version);
-                        // Navigable, but with no handler: the row has always been
-                        // a dead end in the original (the mod loader and loader
-                        // version rows below it are commented out there).
+                        // Navigable, but with no handler: the row is a dead end.
                         navigable: true;
                     }
                 }
 
-                // ----- the switch that turns the rest on -----
                 SettingGroup {
                     SettingItem {
                         group-first: true;
@@ -204,7 +196,6 @@ export component InstanceSettings inherits Rectangle {
                     }
                 }
 
-                // ----- launch options -----
                 SettingGroup {
                     title: @tr("InstanceSettings" => "Launch options");
                     group-disabled: !InstanceSettingsState.specific-enabled;
@@ -221,8 +212,8 @@ export component InstanceSettings inherits Rectangle {
                                 input-width: 100px;
                                 placeholder: @tr("InstanceSettings" => "W");
                                 number-only: true;
-                                // The Vue disables these from the *launcher's*
-                                // fullscreen setting, not the instance's.
+                                // Disabled by the *launcher's* fullscreen setting,
+                                // not the instance's.
                                 input-enabled: !AppConfig.launch-fullscreen;
                                 value <=> InstanceSettingsState.width;
                                 edited => { InstanceSettingsState.changed(); }
@@ -282,7 +273,6 @@ export component InstanceSettings inherits Rectangle {
                     }
                 }
 
-                // ----- memory -----
                 SettingGroup {
                     title: @tr("InstanceSettings" => "Memory");
                     group-disabled: !InstanceSettingsState.specific-enabled;
@@ -329,7 +319,6 @@ export component InstanceSettings inherits Rectangle {
                     }
                 }
 
-                // ----- advanced launch options -----
                 SettingCollapse {
                     title: @tr("InstanceSettings" => "Advanced launch options");
                     collapse-disabled: !InstanceSettingsState.specific-enabled;
@@ -435,7 +424,6 @@ export component InstanceSettings inherits Rectangle {
                     }
                 }
 
-                // ----- delete / reset -----
                 SettingGroup {
                     danger: true;
 
@@ -453,18 +441,16 @@ export component InstanceSettings inherits Rectangle {
                         title: @tr("InstanceSettings" => "Reset instance");
                         description: @tr("InstanceSettings" => "Resetting this instance will lose all saves, resource packs, and other game data. Only instance configuration will be preserved");
                         icon: "refresh";
-                        // Navigable and inert: the original binds no handler to
-                        // this row either.
+                        // Navigable and inert: no handler is bound to this row.
                         navigable: true;
                     }
                 }
             }
 
-            // `.setting-items { margin-bottom: 16px }` on the last group as well:
-            // the Vue gives every block one, and `spacing` only accounts for the
-            // ones between them — so the danger group would otherwise sit flush
-            // against the bottom of the panel. It is here rather than inside
-            // `groups` because that layout's own 16px `spacing` would add a
+            // A trailing 16px spacer after the last group: `spacing` only accounts
+            // for the gaps *between* groups, so without it the danger group would
+            // sit flush against the bottom of the panel. It is here rather than
+            // inside `groups` because that layout's own 16px `spacing` would add a
             // second one in front of it.
             Rectangle {
                 width: 100%;
@@ -475,9 +461,8 @@ export component InstanceSettings inherits Rectangle {
     }
 }
 
-// The overlay layer's mount point, mirroring `GameView.vue`'s single
-// `.game-content-wrapper.instance-settings-wrapper`: the shared shell with this
-// overlay's narrower container, and the panel itself inside it.
+// The overlay layer's mount point: the shared shell with this overlay's narrower
+// container, and the panel itself inside it.
 export component InstanceSettingsRoot inherits Rectangle {
     width: 100%;
     height: 100%;

@@ -8,10 +8,6 @@ on:
       - "app/**"
       - "Cargo.toml"
       - "Cargo.lock"
-  # `push` has no `branches` filter, so it already runs on every branch —
-  # including RIP-Tauri. `pull_request` is the one that needs the branch added,
-  # because it is restricted to master and the Tauri removal is reviewed there.
-  # Temporary: drop RIP-Tauri when the branch merges.
   pull_request:
     branches: ["dev"]
     paths:
@@ -78,6 +74,37 @@ jobs:
 
       - name: Run clippy
         run: cargo clippy --manifest-path ./Cargo.toml --all-targets --release -- -D warnings
+
+  doc:
+    strategy:
+      matrix:
+        include:
+          - platform: "ubuntu-22.04"
+          - platform: "ubuntu-22.04-arm"
+          - platform: "macos-15"
+          - platform: "macos-15-intel"
+          - platform: "windows-latest"
+          - platform: "windows-11-arm"
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: install dependencies
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libfontconfig1-dev libasound2-dev libudev-dev
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run cargo doc
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --no-deps --document-private-items
 
   test:
     strategy:

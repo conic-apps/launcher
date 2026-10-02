@@ -43,7 +43,7 @@ pub enum ColorRole {
     /// (they inherit the container's), but a view may want to.
     Heading,
     /// The text of a link. Deliberately *not* the same as `Text`: links are the
-    /// one thing the Vue's stylesheet always recolours.
+    /// one thing a stylesheet always recolours.
     Link,
     /// Inline `code` glyphs.
     CodeText,
@@ -53,7 +53,7 @@ pub enum ColorRole {
     CodeBlockText,
     /// A fenced/indented code block's background.
     CodeBlockBackground,
-    /// A block quote's text, which the Vue dims to `--ctp-overlay2`.
+    /// A block quote's text, dimmed a shade below the body.
     QuoteText,
     /// A block quote's left rule.
     QuoteBar,
@@ -69,13 +69,14 @@ pub enum ColorRole {
     Strike,
     /// A list bullet, an ordered marker, a task box's tick.
     Marker,
-    /// An image that could not be fetched, drawn as its alt text.
+    /// An inline image that could not be fetched, drawn as its alt text. A block
+    /// image's alt text is drawn in the body colour instead.
     Placeholder,
 }
 
 impl ColorRole {
-    /// The stable name a view switches on. Kept in sync with the `ColorRole`
-    /// function of the `markdown-view.slint` companion by hand.
+    /// The stable name a view switches on. Kept in sync with
+    /// `MarkdownColors.resolve` in `markdown-view.slint` by hand.
     pub const fn name(self) -> &'static str {
         match self {
             Self::Text => "text",
@@ -153,15 +154,15 @@ pub struct MdItem {
     /// label or a tooltip.
     pub text: String,
     /// The `Text` item's font size. Slint centres the glyphs in `height`, which
-    /// is the line's box rather than the run's own, so a run of a different size
-    /// sitting next to a larger one still lands on the same baseline.
+    /// is the run's own ascent and descent rather than the line's box, so a run
+    /// of a different size sitting next to a larger one still lands on the same
+    /// baseline.
     pub font_size: f32,
     /// The `font-weight`, 100 to 900. A variable font interpolates it, which is
     /// how a heading gets 600 rather than the boldest weight the family has.
     pub font_weight: u16,
     /// Whether the run is slanted.
     pub font_italic: bool,
-    /// Draw with the code font instead of the text font.
     /// Draw with the code font instead of the text font.
     pub mono: bool,
     /// Which slot of the view's palette this item takes its colour from.
@@ -316,9 +317,8 @@ impl std::fmt::Debug for ImageAsset {
 /// caller's job (it needs a network client and a background thread), so the
 /// renderer takes them one at a time and re-layouts whenever one arrives. A
 /// document that has not been given an image yet draws the image's alt text in
-/// its place, at the width an image would have had if its size were known, or
-/// across the full line when it is not — which is what a browser does for a
-/// broken image.
+/// its place — as inline text for an image inside a sentence, and as a paragraph
+/// for a block image — which is what a browser does for a broken image.
 #[derive(Default, Clone)]
 pub struct ImageStore {
     assets: HashMap<String, ImageAsset>,
@@ -352,8 +352,8 @@ impl ImageStore {
 
     /// The URLs a document references, in document order and without repeats.
     ///
-    /// The caller uses this to decide what to fetch, and the renderer uses it to
-    /// reserve a box for an image that is on its way.
+    /// The caller uses this to decide what to fetch; until an asset is handed
+    /// over, the layout draws the image's alt text where the picture would be.
     pub fn referenced(&self, blocks: &[crate::Block]) -> Vec<String> {
         let mut out: Vec<String> = Vec::new();
         for block in blocks {
@@ -370,10 +370,11 @@ impl ImageStore {
 /// Every measurement, margin and radius the renderer uses.
 ///
 /// The defaults are GitHub's `.markdown-body` values scaled to a 14px body,
-/// which is what the launcher renders its detail panel with; a caller overrides
-/// whichever of them its own stylesheet disagrees about. Nothing is read from
-/// the environment: the renderer never looks at a palette, a font file or a
-/// window, it only produces geometry from what it is given.
+/// which is what the launcher renders its detail panel with — except the
+/// `<details>` fields, which are sized like a launcher settings row instead. A
+/// caller overrides whichever of them its own stylesheet disagrees about.
+/// Nothing is read from the environment: the renderer never looks at a palette,
+/// a font file or a window, it only produces geometry from what it is given.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MdStyle {
     // ----- type -----
@@ -381,17 +382,16 @@ pub struct MdStyle {
     pub font_family: String,
     /// The family inline `code` and code blocks are shaped with.
     pub mono_family: String,
-    /// The body size. Every `em` below is relative to this.
+    /// The body size. Heading sizes and line heights are relative to this.
     pub font_size: f32,
     /// The body line height, a multiple of the body size (CSS `line-height`).
     pub line_height: f32,
-    /// The weight of body text, and of the `ui` element that shows this in a
-    /// component's own documentation.
+    /// The weight of body text, a `<summary>` row and a list marker.
     pub weight_normal: u16,
-    /// The weight of a task list's tick and of `**strong**`, which is a document's
-    /// own choice and not a style.
+    /// The weight of a task list's tick. `**strong**` is set to at least 700 by
+    /// the layout rather than read from here.
     pub weight_bold: u16,
-    /// `font-weight` of every heading level.
+    /// `font-weight` of every heading level, and of a table's header cells.
     pub heading_weight: u16,
 
     /// `h1`…`h6` sizes as multiples of `font_size`. The last two are the
@@ -404,12 +404,16 @@ pub struct MdStyle {
     // ----- block spacing (logical pixels) -----
     /// `p { margin: 0 0 16px }`
     pub paragraph_margin_bottom: f32,
-    /// `h1..h6 { margin: 24px 0 16px }`
+    /// The `margin-top` half of `h1..h6 { margin: 24px 0 16px }`.
+    ///
+    /// The layout does not read it: a heading's separation from what precedes it
+    /// is that block's own bottom margin, so only `heading_margin_bottom` is
+    /// applied.
     pub heading_margin_top: f32,
     /// The space below a heading, before the next block's own top margin.
     pub heading_margin_bottom: f32,
-    /// `h1, h2 { border-bottom: 1px solid }` and `padding-bottom: 0.3em`, both
-    /// resolved against the heading's own size. `false` for `h3`–`h6`, which
+    /// `h1, h2 { border-bottom: 1px solid }` with `padding-bottom: 0.3em`, the
+    /// padding relative to the heading's own size. `false` for `h3`–`h6`, which
     /// carry no rule.
     pub heading_rule: [Option<HeadingRule>; 6],
     /// `ul, ol { margin: 0 0 16px }`
@@ -449,11 +453,12 @@ pub struct MdStyle {
     pub cell_border: f32,
     /// The gap between a task box and its label (`input { margin-right: 0.5em }`).
     pub task_marker_gap: f32,
-    /// The edge of a task list's checkbox. GitHub uses the platform control; a
-    /// 13px box is what a webkit checkbox comes out as at this text size.
+    /// The edge of a task list's checkbox. 13px matches the surrounding text
+    /// size; GitHub itself uses the platform control.
     pub task_marker_size: f32,
-    /// The gap between a table and the paragraph that follows it when the table
-    /// is the last block. Folded into `table_margin_bottom`.
+    /// Reserved for the space above the collected footnote definitions. The
+    /// layout draws the separator at `footnote_rule_margin` and does not read
+    /// this field.
     pub footnote_margin_top: f32,
     /// The separator drawn above the collected footnote definitions.
     pub footnote_rule_margin: f32,
@@ -480,8 +485,10 @@ pub struct MdStyle {
     pub details_marker_size: f32,
     /// The gap between the chevron and the title.
     pub details_marker_gap: f32,
-    /// The indent the hidden content is laid out at, so its first line sits under
-    /// the summary's title rather than under the chevron.
+    /// The indent the hidden content is laid out at, from the section's left
+    /// edge. The default equals `details_head_padding_x`, so the content starts
+    /// at the row's own padding edge — under the chevron rather than under the
+    /// title.
     pub details_content_inset: f32,
     /// The gap between the summary row and the content it hides.
     ///
@@ -521,10 +528,10 @@ pub struct MdStyle {
     pub image_radius: f32,
     /// The space under a block image, before the next block's own top margin.
     ///
-    /// `markdown-body.less` has no rule for it, because a browser needs none: a
-    /// lone `img` sits in a paragraph, and the paragraph's `margin-bottom: 16px`
-    /// is the gap. There is no paragraph here — the image *is* the block — so
-    /// without this the next line starts against the picture's edge.
+    /// A browser needs no rule for it: a lone `img` sits in a paragraph, and
+    /// the paragraph's `margin-bottom: 16px` is the gap. There is no paragraph
+    /// here — the image *is* the block — so without this the next line starts
+    /// against the picture's edge.
     pub image_margin_bottom: f32,
     /// The thickness of the rule a hovered link reveals, and of a
     /// strikethrough. One pixel is what a 1px CSS decoration comes out as.
@@ -533,6 +540,9 @@ pub struct MdStyle {
     // ----- behaviour -----
     /// `word-wrap: break-word` on the container: a word wider than the line is
     /// split instead of overflowing.
+    ///
+    /// The layout always allows that break while wrapping
+    /// (`allow_breaks_inside_long_units`); this flag is not currently consulted.
     pub break_long_words: bool,
     /// `pre { overflow: auto }`. When false a code block is one long line that
     /// is clipped; when true it is wrapped, which is not what a browser does
@@ -570,8 +580,8 @@ impl MdStyle {
 }
 
 impl Default for MdStyle {
-    /// GitHub's `.markdown-body` at a 14px body, which is what
-    /// `src/overlays/content/styles/markdown-body.less` describes.
+    /// GitHub's `.markdown-body` at a 14px body, with the `<details>` row sized
+    /// like a launcher settings row.
     fn default() -> Self {
         Self {
             font_family: String::new(),
@@ -661,8 +671,9 @@ pub struct DisplayList {
     pub width: f32,
     /// The widest single line, which is what a shrink-to-fit container wants.
     pub content_width: f32,
-    /// The document in runs, in document order. Never empty: a document with no
-    /// `<details>` in it is one run of everything.
+    /// The document in runs, in document order. Empty only for a document with
+    /// no items (and before the first layout); a document with no `<details>` in
+    /// it is one run of everything.
     ///
     /// This is what a view lays out *vertically*, and it is here because a
     /// collapsible region cannot be drawn over: hiding a section's content means
@@ -725,9 +736,9 @@ pub struct MdSection {
     pub head_height: f32,
     /// The corner radius of that box.
     pub head_radius: f32,
-    /// The disclosure marker's left edge — the chevron a view rotates by half a
-    /// turn when the section opens. A box rather than an item because the engine
-    /// has no icon font: a view draws what it has.
+    /// The disclosure marker's left edge — the chevron a view rotates by a
+    /// quarter turn when the section opens. A box rather than an item because the
+    /// engine has no icon font: a view draws what it has.
     pub marker_x: f32,
     /// The marker's top edge, centred in the row.
     pub marker_y: f32,
@@ -753,6 +764,6 @@ pub struct MdSection {
     /// where this one ends to know where the next begins.
     pub flow_bottom: f32,
     /// Whether the document asked for the section open (`<details open>`). A view
-    /// that keeps its own state seeds it from here; see [`Block::Details`].
+    /// that keeps its own state seeds it from here; see [`Block::Details`](crate::Block::Details).
     pub open: bool,
 }

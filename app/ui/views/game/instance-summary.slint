@@ -42,7 +42,7 @@ component MetaColumn inherits Rectangle {
     }
 }
 
-// The 1px divider between metadata columns (`margin: 0 8px`).
+// The 1px divider between metadata columns.
 component MetaSeparator inherits Rectangle {
     width: 17px;
     height: 26px;
@@ -77,8 +77,8 @@ component ContentRow inherits Rectangle {
     opacity: root.disabled ? 0.6 : 1.0;
     animate background { duration: 100ms; }
 
-    // `.current-instance-contents > div { padding: 8px 16px }` — a padding, not
-    // three hand-kept numbers. The layout fills the row by default.
+    // The row's 8px/16px padding, not three hand-kept numbers. The layout fills
+    // the row by default.
     HorizontalLayout {
         padding-left: 16px;
         padding-right: 16px;
@@ -109,9 +109,8 @@ component ContentRow inherits Rectangle {
             spacing: 8px;
             cross-axis-alignment: center;
 
-            // `InstanceSummary.vue`'s `.content-img`: the first five items of
-            // the row, each a 20px circle with a 1px lavender outline, 1px
-            // apart. The icons are decoded by `content.rs`.
+            // The first five items of the row, each a 20px circle with a 1px
+            // lavender outline, 1px apart. The icons are decoded by `content.rs`.
             HorizontalLayout {
                 spacing: 1px;
                 cross-axis-alignment: center;
@@ -155,11 +154,11 @@ component ContentRow inherits Rectangle {
 }
 
 // The current-instance panel: title, metadata row, launch/actions row and the
-// local-content previews (src/views/game/InstanceSummary.vue).
+// local-content previews.
 //
-// The four blocks are stacked by a `VerticalLayout` with a 16px `spacing` — the
-// Vue's `margin-top: 16px` on three of them — so the panel's height is the
-// layout's own rather than a running sum down to the last block.
+// The four blocks are stacked by a `VerticalLayout` with a 16px `spacing`, so
+// the panel's height is the layout's own rather than a running sum down to the
+// last block.
 //
 // The intro slides each block in horizontally, and Slint *refuses* an `x` on a
 // layout child rather than merely overriding it, so a block cannot carry its own
@@ -172,10 +171,9 @@ export component InstanceSummary inherits Rectangle {
     height: stack.preferred-height;
     background: transparent;
 
-    // Vue `playIntro`: the three detail rows slide in from -50px over 0.33s
-    // `power3.out` (GSAP's `power3` is quart, Slint's `ease-out-quart`), staggered
-    // by 0.03s; the four content previews repeat the same steps starting 0.03s
-    // after the first batch started.
+    // Intro: the three detail rows slide in from -50px over 0.33s, easing out
+    // quart, staggered by 0.03s; the four content previews repeat the same steps
+    // starting 0.03s after the first batch started.
     private property <duration> intro-stagger: 30ms;
     private property <[DropdownOption]> launch-options: [
     { key: "repair", label: @tr("Repair game and launch"), icon: "build" },
@@ -196,7 +194,6 @@ export component InstanceSummary inherits Rectangle {
         spacing: 16px;
         cross-axis-alignment: start;
 
-        // ----- row-1: instance name -----
         row1-cell := Rectangle {
             background: transparent;
             // `cross-axis-alignment: start` on the stack sizes each cell to its
@@ -229,7 +226,6 @@ export component InstanceSummary inherits Rectangle {
             }
         }
 
-        // ----- row-2: metadata -----
         row2-cell := Rectangle {
             background: transparent;
             // `cross-axis-alignment: start` on the stack sizes each cell to its
@@ -284,10 +280,8 @@ export component InstanceSummary inherits Rectangle {
                     }
 
                     if GameState.current-has-playtime : MetaSeparator { }
-                    // `<AppIcon name="time" :size="22" style="margin-right: 2px">`, and the
-                    // `MetaColumn` beside it carries the `p { padding: 2px 4px }` the Vue
-                    // puts every metadata cell in — so the gap is 2 + 4 = 6px, and the row's
-                    // `spacing: 0px` supplied none of it.
+                    // The time icon carries 2px of right padding and the
+                    // `MetaColumn` beside it 4px, so the gap is 6px.
                     if GameState.current-has-playtime : time-icon := HorizontalLayout {
                         cross-axis-alignment: center;
                         padding-right: 2px;
@@ -305,7 +299,6 @@ export component InstanceSummary inherits Rectangle {
             }
         }
 
-        // ----- row-3: launch + actions -----
         row3-cell := Rectangle {
             background: transparent;
             // `cross-axis-alignment: start` on the stack sizes each cell to its
@@ -326,19 +319,17 @@ export component InstanceSummary inherits Rectangle {
                 animate intro-dx { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
                 animate intro-alpha { duration: 330ms; delay: 2 * root.intro-stagger; easing: ease-out-quart; }
 
-                // `.row-3 { display: flex; align-items: center }` with the actions 16px
-                // after the launch buttons (`div.actions { margin-left: 16px }`), which
-                // is what puts the 32px pills 5px below the top of the 42px launch
-                // button — as `align-items: center` does and pinning them to the top did
-                // not.
+                // The actions sit 16px after the launch buttons. Centring puts the
+                // 32px pills 5px below the top of the 42px launch button, where
+                // pinning them to the top did not.
                 row3 := HorizontalLayout {
                     spacing: 16px;
                     cross-axis-alignment: center;
                     vertical-stretch: 0;
                     horizontal-stretch: 0;
 
-                    // `.launch-sub-button { margin-left: 2px }` beside a 128px
-                    // button, so `spacing: 2px` and the 130px falls out.
+                    // A 2px gap beside the 128px launch button, so the 130px
+                    // falls out.
                     launch-buttons := HorizontalLayout {
                         vertical-stretch: 0;
                         width: 154px;
@@ -497,11 +488,9 @@ export component InstanceSummary inherits Rectangle {
             }
         }
 
-        // ----- current instance contents -----
         // The four previews carry the second batch of the intro: the same slide,
         // starting 0.03s after the detail rows did — and the dimming for having
-        // no instance is on the whole block, where each of the four rows used to
-        // carry its own share of it.
+        // no instance is on the whole block rather than on each row.
         contents-cell := Rectangle {
             border-radius: 12px;
             background: transparent;
@@ -523,9 +512,8 @@ export component InstanceSummary inherits Rectangle {
                 animate intro-dx { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
                 animate intro-alpha { duration: 330ms; delay: 1 * root.intro-stagger; easing: ease-out-quart; }
 
-                // `.current-instance-contents { padding: 4px 4px; gap: 4px }` around
-                // four 400px rows. The slide is on the box above, so each row here is
-                // just a row.
+                // A 4px padding and gap around four 400px rows. The slide is on
+                // the box above, so each row here is just a row.
                 contents := VerticalLayout {
                     padding: 4px;
                     spacing: 4px;

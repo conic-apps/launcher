@@ -19,8 +19,8 @@ export component AccountListDropdown inherits Rectangle {
     out property <bool> opened: root.is-open;
 
     height: 36px;
-    // `padding: 0 0 0 32px` on the pill, the switch button's `margin-left: 16px`
-    // between the name and the chevron, and the 36px button itself.
+    // 32px of left padding on the pill for the avatar, a 16px gap between the
+    // name and the chevron, and the 36px button itself.
     width: 32px + name-text.preferred-width + 16px + 36px;
     background: Theme.surface-0;
     border-radius: 8px;
@@ -31,9 +31,8 @@ export component AccountListDropdown inherits Rectangle {
     private property <float> chevron-flip: root.is-open ? 1.0 : 0.0;
     animate chevron-flip { duration: 200ms; easing: ease-in-out; }
 
-    // `.dropdown { padding: 8px 10px }` around `li.dropdown-option { height: 26px;
-    // margin: 4px 0 }`. Adjacent margins collapse, so the list is
-    // `8 + 4 + 26n + 4(n-1) + 8` — the 16 that ends it, not 18.
+    // The panel's 8px padding around rows of 26px with 4px between them:
+    // `8 + 26n + 4(n-1) + 8`, a 16px constant.
     private property <length> panel-height: root.players.length * 26px
         + max(0, root.players.length - 1) * 4px + 16px;
     private property <int> serial: Dropdown.choose-serial;

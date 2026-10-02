@@ -56,11 +56,9 @@ pub(crate) fn resolve_icon(image: PendingImage) -> Option<Image> {
     resolve_image(image, &ICONS)
 }
 
-/// The card icon a save, mod, resource pack or pack falls back to — the
-/// `v-else` branch every content card in the Vue carried, which pointed at
-/// `Unknown_server.webp` (now `app/ui/assets/images/unknown-server.webp`). A
-/// card whose icon is missing or
-/// failed to decode used to come out as an empty 72x72 box here.
+/// The card icon a save, mod, resource pack or pack falls back to:
+/// `app/ui/assets/images/unknown-server.webp`. A card whose icon is missing or
+/// failed to decode would otherwise come out as an empty box.
 ///
 /// Decoded on first use and kept: it is the same 120x120 bitmap every time, and
 /// a card is rebuilt on every relayout.
@@ -88,9 +86,8 @@ pub(crate) fn cached_icon(url: &str) -> Option<Image> {
 }
 
 /// One image of a detail panel's gallery strip: the bitmap plus the box it
-/// takes. `.gallery-item img { height: 100%; width: auto }` sizes the box by the
-/// image's own aspect ratio, and Slint cannot read an image's natural size — the
-/// decoded bitmap's dimensions are only known here.
+/// takes. The box is sized by the image's own aspect ratio, computed from the
+/// decoded bitmap's dimensions.
 pub(crate) fn resolve_gallery_shot(image: PendingImage) -> Option<GalleryShot> {
     resolve_gallery_shot_with(image, &ICONS)
 }

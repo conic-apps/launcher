@@ -8,29 +8,24 @@ import { AccountAdd } from "../accounts/account-add.slint";
 import { GameState } from "../../globals/game.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
-// src/views/setup/SetupWizardAddAccount.vue
-//
 // The screen is one of two: no account yet, so the add-account body fills it; an
 // account, so the profile card the wizard promises to have made the default.
 //
-// The Vue reads `configStore.current_account`, which is the account the game
-// view already has pushed into `GameState`: Rust owns it, and a finished
-// add-account writes the config and then asks that view to reload, so the card
-// appears on its own once the sign-in is through.
+// `GameState` holds the account the game view already has: Rust owns it, and a
+// finished add-account writes the config and then asks that view to reload, so
+// the card appears on its own once the sign-in is through.
 export component SetupAddAccount inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
-    // `.account-view-container { align-items: center }`. Both of the paragraphs
-    // below carry the `width: 100%` their own rules ask for (`.wizard-message`
-    // from the body, `p.wizard-title { width: 100% }` from the account view), so
-    // the centring is only visible on the card.
+    // Both paragraphs below are full width, so the centring is only visible on
+    // the card.
     cross-axis-alignment: center;
 
     if !GameState.has-account : AccountAdd {
         content-width: root.width;
-        // The wizard's own 24/36 padding is the dialog's 8px, and the wizard's
-        // close/next buttons stand in for the "Cancel" ones it hides — see
+        // The wizard's own padding is the dialog's 8px, and the wizard's
+        // close/next buttons replace the hidden "Cancel" ones — see
         // `AccountAdd`.
         wizard-host: true;
     }
@@ -44,10 +39,7 @@ export component SetupAddAccount inherits VerticalLayout {
         message: @tr("SetupAddAccount" => "The following profile has been set as default. The launcher will use this profile to log in to the game when no profile is assigned to an instance");
     }
 
-    // `.profile-card { background: var(--ctp-surface0); display: flex;
-    // flex-direction: column; align-items: center; justify-content: center;
-    // border-radius: 12px; padding: 24px; margin-top: 24px; width: 320px }`
-    // — the *raw* surface0, not `--setting-item-background`, which is what
+    // The card uses the raw surface0, not the setting-item background, which
     // Latte remaps onto its mantle.
     if GameState.has-account : Rectangle {
         width: 320px;
@@ -62,13 +54,10 @@ export component SetupAddAccount inherits VerticalLayout {
             alignment: start;
             spacing: 0px;
 
-            // The 56px head, centred by the card's `align-items: center`.
+            // The 56px head, centred by the card.
             //
-            // The Vue's `.avatar { filter: drop-shadow(0 0 8px rgba(0, 0, 0,
-            // 0.5)) }` is **not** reproduced. A CSS `filter` drop-shadow follows
-            // the element's rendered shape, so on a round avatar it is a round
-            // shadow; Slint's `drop-shadow-*` draws the shape of the element's
-            // *box*, so the same four properties put a square 56x56 shadow
+            // A drop shadow is **not** drawn: Slint's `drop-shadow-*` follows the
+            // element's *box*, so on a round avatar it puts a square 56x56 shadow
             // behind a circle — worse than no shadow at all. There is no way to
             // soften a shape Slint has no mask for, so the shadow is dropped.
             Rectangle {
@@ -85,8 +74,8 @@ export component SetupAddAccount inherits VerticalLayout {
                 }
             }
 
-            // `p.profile-name { margin-top: 16px; font-size: 16px }` — the margin
-            // as the spacer a layout has none of.
+            // The name's 16px top margin as a spacer, which a layout has none
+            // of.
             Rectangle {
                 width: 100%;
                 height: 16px;
@@ -102,7 +91,7 @@ export component SetupAddAccount inherits VerticalLayout {
                 horizontal-alignment: center;
             }
 
-            // `p.profile-type { margin-top: 8px; font-size: 13px }`.
+            // The profile type's 8px top margin as a spacer.
             Rectangle {
                 width: 100%;
                 height: 8px;
@@ -129,9 +118,8 @@ export component SetupAddAccount inherits VerticalLayout {
         }
     }
 
-    // The 24px `margin-top` of `.profile-card`, which a layout has no margin
-    // for. The add-account branch carries no such margin in the Vue, so it is
-    // part of the card's own cell rather than a sibling.
+    // A 24px spacer after the card, which a layout has no margin for. It is a
+    // sibling `Rectangle` rather than part of the card.
     if GameState.has-account : Rectangle {
         width: 0px;
         height: 24px;

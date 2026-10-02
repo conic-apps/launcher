@@ -5,38 +5,22 @@
 //! The world map's "script": the tile cache and the render queue behind
 //! `ui/components/world-map.slint`.
 //!
-//! # The Vue's two caches, and the one here
+//! # The tile cache
 //!
-//! `WorldMap.vue` kept two, and both existed because of the IPC boundary:
-//!
-//!   * `pngCache` — every tile's **PNG bytes**, kept for the whole session so a
-//!     tile that scrolled away and came back did not have to be rendered again.
-//!     Base64'd into a JSON string on the way out.
-//!   * `renderCache` — the **decoded `ImageBitmap`s**, pruned to the visible
-//!     range plus `TILE_RENDER_MARGIN` rings, because a decoded bitmap is what
-//!     the GPU holds and there is a limit on how many.
-//!
-//! and a third queue for the work in between: PNG bytes had to be base64'd,
-//! wrapped in a `Blob` and decoded by `createImageBitmap`, one tile at a time,
-//! off the main thread but still inside the page.
-//!
-//! None of that survives the move. A Slint `Image` is a reference-counted handle
-//! over a `SharedPixelBuffer`: cloning one is free, there is no encoded form to
-//! keep a second copy of, and the renderer drops its own GPU copy under memory
-//! pressure on its own. So there is **one** cache, here, keyed by tile and
-//! holding the finished `Image`, and the two tiers collapse into "cached" and
-//! "not cached yet". The model the component draws is a *view* of it — the tiles
-//! in the visible range — and it is written row by row, so a tile keeps its
-//! element for as long as it is on screen.
+//! A Slint `Image` is a reference-counted handle over a `SharedPixelBuffer`:
+//! cloning one is free, there is no encoded form to keep a second copy of, and
+//! the renderer drops its own GPU copy under memory pressure on its own. So
+//! there is **one** cache, here, keyed by tile and holding the finished `Image`:
+//! a tile is either cached or not yet rendered, with no second tier to keep in
+//! step. The model the component draws is a *view* of it — the tiles in the
+//! visible range — and it is written row by row, so a tile keeps its element for
+//! as long as it is on screen.
 //!
 //! # The load queue
 //!
-//! `WorldMap.vue` had a `pending` set, an `inFlight` set, a nearest-to-centre
-//! priority scan and a 50ms debounce, all driven from JavaScript. The same four
-//! live here, where the queue actually is, and the debounce keeps the Vue's
-//! exact shape: the model is refilled from the cache **immediately** when the
-//! range moves (`dispatchCacheHits`, which ran outside the timer) and only the
-//! *renders* are debounced.
+//! A pending set, an in-flight set, a nearest-to-centre priority scan and a 50ms
+//! debounce, all driven from the event loop. The model is refilled from the cache
+//! **immediately** when the range moves, and only the *renders* are debounced.
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -49,33 +33,30 @@ use slint::{ComponentHandle, Image, Model, ModelRc, SharedPixelBuffer, SharedStr
 use crate::slint_backend::{App, ScrollInput, WorldMapState, WorldSource, WorldTile};
 use content::worldmap::{MapCache, WorldMapRequest};
 
-/// How many tiles may be rendering at once (`MAX_CONCURRENT`).
+/// How many tiles may be rendering at once.
 ///
-/// The Vue's number, and for its reason: a render walks every block column in a
-/// 64×64 tile, so a few dozen in flight saturate the disk and the CPU and
-/// everything past that is only queueing.
+/// A render walks every block column in a 64×64 tile, so a few dozen in flight
+/// saturate the disk and the CPU and everything past that is only queueing.
 pub(crate) const MAX_CONCURRENT: usize = 24;
 
-/// The Vue's `TILE_LOAD_DEBOUNCE`. A drag or a zoom glide moves the visible
-/// range many times a second, and every move would otherwise queue a fresh
-/// batch of renders for a range the user is about to leave.
+/// A drag or a zoom glide moves the visible range many times a second, and every
+/// move would otherwise queue a fresh batch of renders for a range the user is
+/// about to leave.
 pub(crate) const LOAD_DEBOUNCE: Duration = Duration::from_millis(50);
 
-/// The Vue's `FADE_MS`, which the component's own fade clock counts down. Rust
+/// The component's own fade clock runs until this much time has passed; Rust
 /// only needs it to publish how long the fade window stays open.
 pub(crate) const FADE_MS: f32 = 100.0;
 
-/// How many tiles the cache holds before it starts letting go. A cap the Vue
-/// did not need: its `pngCache` held *compressed* bytes, a twentieth of what a
-/// decoded tile costs, so a session's worth of panning added up to something
-/// nobody noticed. A 64×64 RGBA tile is 16 KiB, and a map the user has panned
-/// right across is thousands of them — 2048 is about 32 MiB, and roughly twenty
-/// screens of the default zoom, which is what makes coming back to where you
-/// were a hit rather than a re-render.
+/// How many tiles the cache holds before it starts letting go.
+///
+/// A 64×64 RGBA tile is 16 KiB, and a map the user has panned right across is
+/// thousands of them — 2048 is about 32 MiB, and roughly twenty screens of the
+/// default zoom, which is what makes coming back to where you were a hit rather
+/// than a re-render.
 ///
 /// What is dropped is re-rendered on demand, off the region cache the world
-/// keeps alive in `MapCache` — which is exactly what the Vue paid for a
-/// `pngCache` *miss*, and the price of its unbounded tier.
+/// keeps alive in `MapCache`, which is what a cache miss costs.
 pub(crate) const MAX_CACHED_TILES: usize = 2048;
 
 /// How far outside the visible range a queued render is kept.
@@ -109,13 +90,11 @@ pub(crate) struct WorldKey {
 pub(crate) struct Job {
     key: TileKey,
     /// The world block at the tile's centre — a render request is *centred*
-    /// (`RenderRequest::new`), the same way the Vue asked for
-    /// `centerX: (tx + 0.5) * tileSize`.
+    /// (`RenderRequest::new`).
     center_x: i32,
     center_z: i32,
     /// Which world the job belongs to. Checked on arrival, so a render that
-    /// lands after the user has picked a different save is dropped: the Vue's
-    /// `if (seq !== requestSeq) return`.
+    /// lands after the user has picked a different save is dropped.
     seq: u64,
 }
 
@@ -125,12 +104,11 @@ pub(crate) struct MapState {
     /// The render options the component declared, which every tile is asked for.
     options: RenderOptions,
     /// The `conic-worldmap` worlds, kept alive so a tile that scrolls back into
-    /// view re-reads a warm region cache instead of the disk — the crate's own
-    /// `MapCache`, and the one half of the Vue's caching that did not move.
+    /// view re-reads a warm region cache instead of the disk — `content`'s
+    /// `MapCache`.
     maps: Arc<MapCache>,
-    /// Every tile rendered for `world`, by position. The `pngCache` and the
-    /// `renderCache` merged: there is nothing cheaper to keep than the finished
-    /// image, and nothing to decode.
+    /// Every tile rendered for `world`, by position: there is nothing cheaper to
+    /// keep than the finished image, and nothing to decode.
     cache: HashMap<TileKey, Image>,
     /// When each cached tile was last inside a visible range, as a counter off
     /// [`MapState::tick`]. The eviction order — see [`prune_cache`].
@@ -140,9 +118,7 @@ pub(crate) struct MapState {
     /// it is dropped from here, and the model's rows are index-aligned with it.
     visible: Vec<TileKey>,
     /// When each tile first reached the model, for the fade. Kept after the tile
-    /// has faded — which is what stops a pan back over cached ground from
-    /// flashing, where the Vue's `tileAppear` entry was deleted by
-    /// `pruneRenderCache` and never set again for a cache hit.
+    /// has faded, so a pan back over cached ground does not flash.
     appear: HashMap<TileKey, f32>,
     /// The model itself, held so rows can be rewritten in place.
     model: Rc<VecModel<WorldTile>>,
@@ -153,8 +129,8 @@ pub(crate) struct MapState {
     queue: Vec<Job>,
     /// Tiles being rendered right now.
     in_flight: HashSet<TileKey>,
-    /// Tiles a render failed on. The Vue's `tilesFailed`, which is what stopped
-    /// it asking again for a region that cannot be read.
+    /// Tiles a render failed on, so a region that cannot be read is not asked
+    /// for again.
     failed: HashSet<TileKey>,
     /// The debounce handle. Restarting it is the debounce; aborting it drops a
     /// batch the user has already panned away from.
@@ -192,15 +168,13 @@ pub(crate) struct Range {
 }
 
 impl Range {
-    /// Every tile of the range, row by row — the loops the Vue's
-    /// `visibleTileRange()` is walked with.
+    /// Every tile of the range, row by row.
     fn tiles(&self) -> impl Iterator<Item = TileKey> + '_ {
         (self.z0..=self.z1).flat_map(|tz| (self.x0..=self.x1).map(move |tx| (tx, tz)))
     }
 
-    /// The middle of the range in world blocks — the Vue's
-    /// `(minX + maxX) / 2` of `visibleWorldRect`, which is what the queue
-    /// measures a tile's distance from.
+    /// The middle of the range in world blocks, which is what the queue measures
+    /// a tile's distance from.
     fn centre(&self, tile_size: i32) -> (f64, f64) {
         let size = f64::from(tile_size);
         (
@@ -294,7 +268,7 @@ mod tests {
         };
         assert_eq!(range.centre(64), (96.0, 96.0));
         // An even number of tiles has its centre on the seam between the two
-        // middle ones, which is what `visibleWorldRect`'s arithmetic gives.
+        // middle ones.
         let even = Range {
             x0: 0,
             x1: 3,
@@ -343,8 +317,8 @@ mod tests {
         let queue = vec![job((4, 0)), job((0, 0)), job((2, 0))];
         assert_eq!(nearest_job(&queue, wide, tile_size), Some(2));
 
-        // Two tiles equidistant from the middle of a two-wide range, where the
-        // scan keeps the one it saw first — the Vue's `if (d < bestDist)`.
+        // Two tiles equidistant from the middle of a two-wide range: the scan
+        // keeps the one it saw first.
         let tie = Range {
             x0: 0,
             x1: 1,

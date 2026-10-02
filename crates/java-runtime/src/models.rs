@@ -8,10 +8,6 @@
 //! inspired by how HMCL presents Java toolchains in its Java management page:
 //! runtimes are grouped by Java major version and shown with a friendly vendor
 //! label, so the UI never has to re-parse raw version strings.
-//!
-//! The original derives `Serialize` on these types for the Tauri IPC boundary;
-//! the Slint app calls [`JavaVendor::display_name`] / [`JavaArch::display_name`]
-//! instead, so the derives are dropped here.
 
 use std::{cmp::Ordering, collections::BTreeMap, path::PathBuf};
 

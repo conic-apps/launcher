@@ -16,7 +16,6 @@ pub struct Arguments {
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AssetIndex {
-    // pub sha1: String,
     pub size: u64,
     pub url: String,
     pub id: String,
@@ -60,11 +59,9 @@ pub struct LoggingFileDownload {
     pub url: String,
 }
 
-/// The raw json format provided by Minecraft.
+/// The raw version JSON as provided by Minecraft.
 ///
-/// Use `parse` to parse a Minecraft version json, and see the detail info of the version.
-///
-/// With `ResolvedVersion`, you can use the resolved version to launch the game.
+/// Resolve it into a [`ResolvedVersion`](crate::ResolvedVersion) to launch the game.
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Version {
@@ -123,9 +120,7 @@ pub struct Platform {
     pub version: Option<String>,
 }
 
-/// Minecraft Version
-///
-/// It used to compare the version of the game
+/// A Minecraft version parsed from a version string into release, snapshot or unknown form.
 #[derive(Clone, Serialize)]
 pub enum MinecraftVersion {
     Release(u8, u8, Option<u8>),

@@ -2,14 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/folder`: the game folders / data location
-//! layout. The original crate is a Tauri plugin; this one keeps the same data
-//! model (and the shared `~/.conic[-debug]` directory resolution) without the
-//! Tauri dependency so the Slint app can use it directly.
+//! The game folders and data-location layout.
 //!
 //! [`DATA_LOCATION`] is a lazy singleton holding every path of the launcher's
-//! data directory — the same one the Tauri app writes, so both frontends share
-//! `config.toml`, instances, logs and music.
+//! data directory, which is where `config.toml`, instances, logs and music
+//! live. Debug and release builds use separate data directories (`conic-debug`
+//! and `conic`).
 
 use std::{
     ffi::OsStr,
@@ -27,7 +25,8 @@ pub static DATA_LOCATION: Lazy<DataLocation> = Lazy::new(DataLocation::default);
 const DEFAULT_LAUNCHER_PROFILE: &[u8] = include_bytes!("./launcher_profiles.json");
 
 #[derive(Clone)]
-/// The Minecraft folder structure. All method will return the path related to a minecraft root like .minecraft.
+/// The Minecraft folder structure. Every method returns a path under a
+/// Minecraft root such as `.minecraft`.
 pub struct MinecraftLocation {
     pub root: PathBuf,
     pub libraries: PathBuf,
@@ -138,10 +137,9 @@ impl DataLocation {
 
     pub fn init(&self) {
         std::fs::create_dir_all(&self.music).expect("Unable to create application data directory");
-        // The log file lives here (see `app/src/logs.rs`), and
-        // `Settings → About` opens the folder whether or not anything has been
-        // written to it yet — so it is made here rather than by the logger, which
-        // is a fallback path and can decline to.
+        // The log file lives here (see `app/src/logs.rs`), and `Settings → About`
+        // opens the folder whether or not anything has been written to it yet, so
+        // it is created here rather than by the logger, which may not run.
         let _ = std::fs::create_dir_all(&self.logs);
         let launcher_profiles_path = self.root.join("launcher_profiles.json");
         let override_json_profile_result =

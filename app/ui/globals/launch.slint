@@ -2,16 +2,14 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// The launch screen's state (src/views/LaunchView.vue + the `ref`s it keeps).
+// The launch screen's state.
 //
-// Like `GameState`, the domain data comes from Rust (`app/src/launch.rs`); the
-// progress *description* is deliberately kept as a kind plus its parts rather
-// than a finished string, so the `@tr()` calls stay in the UI and can be
-// re-evaluated when the language changes at runtime. The byte counts are
-// pre-formatted by Rust (`formatBytes` from `crates/download/index.ts`) because
-// Slint cannot format them.
+// The domain data comes from Rust (`app/src/launch/`); the progress
+// *description* is deliberately kept as a kind plus its parts rather than a
+// finished string, so the `@tr()` calls stay in the UI and can be re-evaluated
+// when the language changes at runtime. The byte counts are pre-formatted by
+// Rust because Slint cannot format them.
 export global LaunchState {
-    // ----- the instance the screen is launching -----
     in-out property <bool> has-instance: false;
     in-out property <string> instance-name: "";
     in-out property <string> minecraft-version: "";
@@ -19,7 +17,6 @@ export global LaunchState {
     in-out property <string> loader-type: "";
     in-out property <string> loader-version: "";
 
-    // ----- the current account (`.other-info` + the avatar) -----
     in-out property <image> account-avatar;
     /// "Microsoft" | "Yggdrasil" | "Offline" | "" (the avatar ring colour and
     /// the "Auth service" value).
@@ -28,13 +25,13 @@ export global LaunchState {
     /// The profile name shown next to "Profile name".
     in-out property <string> profile-name: "";
 
-    // ----- the progress container -----
     in-out property <bool> error: false;
     /// The progress line's kind: "preparing", "refresh-account",
     /// "prepare-download", "verify-files", "download-files", "check-java",
     /// "download-java", "install-mod-loader", "download-installer",
-    /// "download-deps", "run-installer", "preparing-launch", "generate-script",
-    /// "wait-for-launch", "game-started" or "error".
+    /// "download-installer-progress", "download-deps", "download-deps-progress",
+    /// "run-installer", "preparing-launch", "generate-script", "wait-for-launch",
+    /// "game-started" or "error".
     in-out property <string> progress-kind: "preparing";
     in-out property <string> progress-name: "";
     in-out property <string> progress-current: "";
@@ -44,13 +41,13 @@ export global LaunchState {
     in-out property <bool> progress-loading: true;
     in-out property <float> progress-value: 0;
     in-out property <float> progress-max: 0;
-    /// The Vue's `pointer-events: none` on a disabled back button.
+    /// A disabled back button ignores the pointer, so a stray click cannot
+    /// cancel the launch.
     in-out property <bool> back-disabled: false;
 
-    /// The screen was mounted: start the launch flow (the Vue's
-    /// `onMounted(launch)`).
+    /// The screen was mounted: start the launch flow.
     callback start();
-    /// The back button (the Vue's `back()`) — cancels any running task first.
+    /// The back button — cancels any running task first.
     callback cancel();
     /// The progress line, translated from `progress-kind` and its parts.
     public pure function description() -> string {

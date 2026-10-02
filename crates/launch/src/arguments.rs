@@ -287,8 +287,9 @@ pub async fn generate_command_arguments(
 
 /// Resolves the classpath string needed for the Java launch command.
 ///
-/// This includes library paths (unzipping native libraries if needed),
-/// extra classpaths, and the version jar or inheritance jars.
+/// This includes the common library paths (unzipping native libraries as it
+/// goes), extra classpaths, and the version jar — or, when the version inherits,
+/// the root Minecraft jar at the end of the inheritance chain.
 ///
 /// # Arguments
 ///

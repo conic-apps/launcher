@@ -10,23 +10,21 @@ import { GameState, GameIntro, GameTime } from "../../globals/game.slint";
 import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 import { InstancesListToolBar } from "instances-list-tool-bar.slint";
 
-// Grouped instance list (src/views/game/InstancesList.vue +
-// InstancesListScrollView.vue).
+// Grouped instance list.
 //
 // The list is anchored so its right edge sits 320px past the viewport, with the
-// cards peeking from the right (the Vue `margin-left: auto` + `translateX(320px)`
-// / `right: -320px`).
+// cards peeking from the right.
 //
 // Scrolling
 // =========
-// The Vue original drives both the rail and its custom scrollbar from Lenis'
-// smoothed offset (`lerp: 0.16`: every frame the offset closes 16% of the
-// remaining distance to the target). That is reproduced here with a `Timer` that
-// eases `scroll-y` towards `target-y`, instead of a `Flickable`: a Flickable
-// would add its own fixed-duration wheel animation on top of the lerp, and its
-// input handling would fight the programmatic scrolling this view needs
-// (`scrollTo` on selection, the snap that centres the current instance when the
-// view opens, and the lock that freezes scrolling while a group collapses).
+// The rail and the custom scrollbar both follow a smoothed offset
+// (`lerp: 0.16`: every frame the offset closes 16% of the remaining distance to
+// the target). That is a `Timer` easing `scroll-y` towards `target-y`, instead
+// of a `Flickable`: a Flickable would add its own fixed-duration wheel
+// animation on top of the lerp, and its input handling would fight the
+// programmatic scrolling this view needs (`scroll-to-current` on selection, the
+// snap that centres the current instance when the view opens, and the lock that
+// freezes scrolling while a group collapses).
 //
 // Wheel events are captured by the `TouchArea` that *wraps* the content. The
 // cards' own `TouchArea`s never handle scroll events and Slint's `EventResult`
@@ -39,44 +37,41 @@ import { InstancesListToolBar } from "instances-list-tool-bar.slint";
 // The rail
 // ========
 // Cards glide along a parabola: `rail-x` pulls a row `rail-offset` to the left
-// while it crosses the vertical centre of the viewport and releases it back to
-// its resting x at the edges. It is a pure function of the row's *current* y, so
-// while a row animates to a new slot (collapse/expand, sort, grouping) its x
-// follows the same curve that the wheel draws — the gsap rail of the original.
+// at the vertical centre of the viewport and eases it part-way back towards its
+// resting x as it nears the top and bottom. It is a pure function of the row's
+// *current* y, so while a row animates to a new slot (collapse/expand, sort,
+// grouping) its x follows the same curve that the wheel draws.
 export component InstancesList inherits Rectangle {
     width: 680px;
     height: 100%;
     background: transparent;
 
-    // ----- geometry (the Vue `InstancesList.vue` stylesheet) -----
-    // `.scroll-content { padding-left: 200px }`; the group box carries a CSS
-    // `transform: translateX(-40px)`, so its resting x is 160px.
+    // The card content starts 200px in; the group box rests 40px to the left of
+    // that, at 160px.
     private property <length> card-left: 200px;
     private property <length> group-left: 160px;
     // `parallaxX`: `-maxOffset * (1 - t²)` with `maxOffset = 160`.
     private property <length> rail-offset: 160px;
-    // GROUP_HEIGHT / 2 — the gsap rail is sampled at the row *wrapper*'s centre.
+    // Half the group row's 42px height — the rail is sampled at the row
+    // *wrapper*'s centre.
     private property <length> group-half-height: 21px;
-    // The scrollbar: `right: 8px; width: 6px` against the *window* (the Vue
-    // version `Teleport`s it to `<body>`), spanning from below the toolbar
-    // (`top: calc(44px + 8px + 112px + 6px)`, i.e. 126px below the title bar,
-    // which is where this view starts) to above the footer
-    // (`bottom: calc(56px + 4px)`).
+    // The scrollbar is pinned against the *window*: 8px from its right edge,
+    // 6px wide, spanning from 126px below the title bar (below the toolbar) to
+    // 60px above the bottom.
     private property <length> scrollbar-right: 8px;
     private property <length> scrollbar-width: 6px;
     private property <length> scrollbar-top: 8px + 112px + 6px;
     private property <length> scrollbar-bottom: 56px + 4px;
 
-    // ----- scroll state -----
     /// Smoothed scroll offset: 0 at the top, growing as the list scrolls down.
     /// Drives the rail and the scrollbar thumb.
     in-out property <length> scroll-y: 0px;
     /// Where `scroll-y` is heading (wheel input, `scrollTo`, centring).
     in-out property <length> target-y: 0px;
     /// Wheel distance multiplier. A notch is `LineDelta * 60` in winit but ~120px
-    /// in the browser (the Lenis baseline this view is matched against), hence 2.
-    /// A trackpad scrolls with pixel deltas, which are already in browser units:
-    /// the wheel path scales by this, the trackpad path applies them as they are.
+    /// on a trackpad, hence 2. A trackpad scrolls with pixel deltas, which are
+    /// already in pixels: the wheel path scales by this, the trackpad path
+    /// applies them as they are.
     private property <float> wheel-step: 2;
     private property <length> max-scroll: max(0px, GameState.list-content-height - root.height);
     // While a toggle is settling the offset is left alone, even if the list just
@@ -89,8 +84,7 @@ export component InstancesList inherits Rectangle {
     // While a group collapses or expands the rows travel along the rail: scrolling
     // in the middle of that would drag their x along while they move, and a second
     // toggle would collapse cards that are still in flight, so both are held off
-    // for as long as the original does (Vue `lockScroll` 700ms, `toggleLocked`
-    // 350ms).
+    // for 700ms and 350ms respectively.
     //
     // The release is driven by the timers' `running` *bindings*. Calling
     // `restart()` would not work here: it only restarts a timer that has been
@@ -117,24 +111,23 @@ export component InstancesList inherits Rectangle {
     }
 
     // Collapsing the last group shortens the list under the current offset. The
-    // original collapses first and only then eases to the new end (the browser
-    // clamps the scroll container, Lenis eases to its recomputed limit), and
-    // expanding must not scroll back to where the collapse left off — so the
-    // *target* is clamped here, once, instead of the derived offset being clamped
-    // continuously while the collapse runs.
+    // collapse plays first and only then eases to the new end, and expanding must
+    // not scroll back to where the collapse left off — so the *target* is clamped
+    // here, once, instead of the derived offset being clamped continuously while
+    // the collapse runs.
     changed max-scroll => {
         if !root.settling {
             root.target-y = clamp(root.target-y, 0px, root.max-scroll);
         }
     }
 
-    // Lenis' `lerp: 0.16` — 16% of the remaining distance per 60Hz frame. Lenis
-    // scales the step by the frame time so the glide looks the same on a 120Hz
-    // display as on a 60Hz one (`1 - (1 - lerp)^(dt * 60)`), which is reproduced
-    // here: Slint fires the timer at whatever rate it can (its own frame rate),
-    // so the step has to be derived from the elapsed time rather than fixed.
-    // The timer only runs while there is distance left to cover: unlike a
-    // `Flickable` there is no momentum to integrate.
+    // `lerp: 0.16` — 16% of the remaining distance per 60Hz frame. The step is
+    // scaled by the frame time so the glide looks the same on a 120Hz display as
+    // on a 60Hz one (`1 - (1 - lerp)^(dt * 60)`), which is reproduced here:
+    // Slint fires the timer at whatever rate it can (its own frame rate), so the
+    // step has to be derived from the elapsed time rather than fixed. The timer
+    // only runs while there is distance left to cover: unlike a `Flickable`
+    // there is no momentum to integrate.
     private property <float> lerp: 0.16;
     private property <float> last-tick-ms: 0;
 
@@ -163,9 +156,9 @@ export component InstancesList inherits Rectangle {
         interval: 8ms;
         running: root.scrolling;
         triggered => {
-            // The step is scaled by the *real* elapsed time, so the glide lasts the
-            // same as it does in the browser even when Slint is running at a low
-            // frame rate (a debug build sits at 25-50ms per frame, and a fixed step
+            // The step is scaled by the *real* elapsed time, so the glide lasts
+            // the same real duration even when Slint is running at a low frame
+            // rate (a debug build sits at 25-50ms per frame, and a fixed step
             // would stretch the glide by as much). The upper bound only guards a
             // stall of the whole event loop, which would otherwise be spent in one
             // visible jump.
@@ -181,7 +174,7 @@ export component InstancesList inherits Rectangle {
         }
     }
 
-    /// The rail: `parallaxX(centerY)` of the Vue original.
+    /// The rail.
     /// `viewport-center-y` is the row's centre as it appears on screen, i.e. its
     /// content position minus the scroll offset — callers subtract `scroll-y`, so
     /// the sign of the scroll can only be got wrong in one place.
@@ -200,10 +193,9 @@ export component InstancesList inherits Rectangle {
         return value * value;
     }
 
-    /// Centres the current instance. `smooth` glides there along the rail (Vue
-    /// `scrollTo(id, true)`, used after every card selection) while `!smooth`
-    /// moves the offset with the target — the Vue `scrollTo(id, false)` that the
-    /// view uses to open on the selected instance.
+    /// Centres the current instance. `smooth` glides there along the rail and is
+    /// used after every card selection; `!smooth` moves the offset with the
+    /// target and is used to open on the selected instance.
     public function scroll-to-current(smooth: bool) {
         if GameState.current-row-y >= 0px {
             root.target-y = clamp(
@@ -217,19 +209,18 @@ export component InstancesList inherits Rectangle {
         }
     }
 
-    // ----- entrance animation (gsap timeline positions, in seconds) -----
     // `GameView` plays the list 0.05s after the footer and the summary, and the
-    // list's own intro starts the cards 0.1145s in (see `InstancesList.vue`).
+    // list's own intro starts the cards 0.115s in.
     private property <duration> intro-list-delay: 50ms;
     private property <duration> intro-card-delay: 165ms;
     private property <duration> intro-stagger: 30ms;
     /// The row pitch the stagger counts in: one card row, i.e. `CARD_HEIGHT` in
     /// `GameController::build_rows`, so neighbouring cards are one step apart.
     private property <length> intro-row-pitch: 58px;
-    /// How many steps the entrance has, one per card row the viewport holds. The
-    /// Vue original staggers every card it can see (`stagger: 0.03` on the cards
-    /// inside the viewport), so a window that fits more rows has to spread over
-    /// more steps — otherwise the cards past the cap would all share the last one.
+    /// How many steps the entrance has, one per card row the viewport holds.
+    /// The entrance staggers every card the viewport can see, so a window that
+    /// fits more rows has to spread over more steps — otherwise the cards past
+    /// the cap would all share the last one.
     private property <float> intro-steps: max(1, root.height / root.intro-row-pitch);
     /// Where the list sat when the entrance started. The stagger counts from the
     /// first row *on screen* (the list opens centred on the current instance),
@@ -245,10 +236,10 @@ export component InstancesList inherits Rectangle {
     }
 
     // The toolbar keeps its own size and is positioned relative to the list's
-    // right edge (Vue `right: 320px`, `z-index: 114`). The z has to be set *here*,
-    // on the instance: the rows scroll under the toolbar, and a component root's
-    // own `z` is only honoured for `for`-loop children (see the compiler's
-    // z-order pass), which is why the toolbar used to be painted underneath them.
+    // right edge. The z has to be set *here*, on the instance: the rows scroll
+    // under the toolbar, and a component root's own `z` is only honoured for
+    // `for`-loop children (see the compiler's z-order pass), which is why the
+    // toolbar was once painted underneath them.
     InstancesListToolBar {
         x: root.width - 320px - self.width;
         y: 8px;
@@ -315,8 +306,7 @@ export component InstancesList inherits Rectangle {
                     height: row.height;
                     background: transparent;
 
-                    // ----- entrance (intro + newly added rows) -----
-                    // Vue's intro slides cards in from +40px along the rail,
+                    // The intro slides cards in from +40px along the rail,
                     // staggered by 0.03s; a row that appears later (search, sort,
                     // grouping, starring) slides in from +24px instead. Both are
                     // offsets on top of the rail, so the card enters *along* the
@@ -374,9 +364,9 @@ export component InstancesList inherits Rectangle {
                     }
                     // The FLIP: when the slot changes the row glides there, and
                     // because its x is a pure function of its y the row travels
-                    // along the rail at the same eased progress. A reorder travels
-                    // on the gsap FLIP curve (400ms), a group collapse on the
-                    // original's `easeOutCubic` (300ms).
+                    // along the rail at the same eased progress. A reorder or a
+                    // re-open travels on the FLIP curve (400ms); a group collapse
+                    // on the cubic curve (300ms).
                     animate y {
                         duration: row.flip ? 400ms : 300ms;
                         easing: row.flip
@@ -384,7 +374,6 @@ export component InstancesList inherits Rectangle {
                             : cubic-bezier(0.33, 1, 0.68, 1);
                     }
 
-                    // ----- group header -----
                     if row.kind == "group" : group := Rectangle {
                         x: root.group-left + root.rail-x(
                             row-box.y + root.group-half-height - root.scroll-y);
@@ -399,7 +388,7 @@ export component InstancesList inherits Rectangle {
                             : Theme.surface-0.with-alpha(0.4);
                         animate background { duration: 200ms; }
 
-                        // Thick left border (CSS `border-left: 20px`).
+                        // Thick left border, 20px.
                         Rectangle {
                             x: 0;
                             y: 0;
@@ -410,8 +399,7 @@ export component InstancesList inherits Rectangle {
                             border-bottom-left-radius: 8px;
                         }
 
-                        // CSS `left: -16px` is relative to the padding box, i.e. 4px
-                        // inside the 20px accent bar.
+                        // 4px inside the 20px accent bar.
                         AppIcon {
                             name: "chevron-forward";
                             size: 14px;
@@ -422,8 +410,8 @@ export component InstancesList inherits Rectangle {
                             animate transform-rotation { duration: 200ms; easing: ease; }
                         }
 
-                        // `padding: 8px 16px` starts *after* the 20px accent bar, so
-                        // the title sits 36px in.
+                        // The 8px/16px padding starts *after* the 20px accent bar,
+                        // so the title sits 36px in.
                         HorizontalLayout {
                             x: 20px + 16px;
                             height: 14px;
@@ -471,11 +459,9 @@ export component InstancesList inherits Rectangle {
                         }
                     }
 
-                    // ----- instance card -----
                     if row.kind == "instance" : card := Rectangle {
-                        // The current card is pulled 20px further left
-                        // (`.card-container.current .instance { margin-left: -20px }`,
-                        // transitioned over 200ms).
+                        // The current card is pulled 20px further left, over
+                        // 200ms.
                         private property <length> current-shift: row.current ? -20px : 0px;
                         animate current-shift { duration: 200ms; easing: ease; }
 
@@ -509,8 +495,8 @@ export component InstancesList inherits Rectangle {
                             border-bottom-left-radius: 8px;
                         }
 
-                        // `padding: 8px 16px` starts *after* the 16px accent bar, so
-                        // the card's text sits 32px in (Vue's box model).
+                        // The 8px/16px padding starts *after* the 16px accent bar,
+                        // so the card's text sits 32px in.
                         Text {
                             text: row.name;
                             font-size: 15.2px;
@@ -545,11 +531,10 @@ export component InstancesList inherits Rectangle {
                             }
 
                             HorizontalLayout {
-                                // No `spacing`: `.last-play` is an inline span
-                                // with no gap and no margin, so the only separator
-                                // between the label and the value is the one
-                                // collapsed whitespace character — which is what
-                                // the label's own trailing string already is.
+                                // No `spacing`: the only separator between the
+                                // label and the value is the single collapsed
+                                // whitespace character, which is the label's own
+                                // trailing string.
                                 cross-axis-alignment: center;
 
                                 Text {
@@ -579,8 +564,7 @@ export component InstancesList inherits Rectangle {
                             clicked => {
                                 GameState.select-instance(row.key);
                                 // The selection is centred, even when the card was
-                                // already the current one (Vue always calls
-                                // `scrollTo(id, true)` here).
+                                // already the current one.
                                 root.scroll-to-current(true);
                             }
                         }
@@ -590,10 +574,9 @@ export component InstancesList inherits Rectangle {
         }
     }
 
-    // ----- empty / no match placeholder -----
-    // Vue's `instance-list-placeholder-transition`: 350ms
-    // `cubic-bezier(0.34, 1.56, 0.64, 1)` in (Slint's `ease-out-back`), 250ms
-    // `cubic-bezier(0.215, 0.61, 0.355, 1)` out.
+    // The placeholder fades and scales in over 350ms with
+    // `cubic-bezier(0.34, 1.56, 0.64, 1)` (Slint's `ease-out-back`); the `if`
+    // removes it directly, so there is no leave animation.
     if GameState.show-placeholder : placeholder := Rectangle {
         x: root.width - 320px - self.width;
         y: root.height / 2 - self.height / 2;
@@ -646,15 +629,13 @@ export component InstancesList inherits Rectangle {
         }
     }
 
-    // ----- scrollbar -----
-    // Vue `InstancesListScrollView.vue`: a 6px track pinned 8px from the right
-    // edge of the *window* (hence the -320px below: this view overhangs the
-    // window by that much), with an 8px thumb that widens to 10px on hover and
-    // can be dragged or used to jump.
+    // A 6px track pinned 8px from the right edge of the *window* (hence the
+    // -320px below: this view overhangs the window by that much), with an 8px
+    // thumb that widens to 10px on hover and can be dragged or used to jump.
     scrollbar := Rectangle {
         visible: root.max-scroll > 0.5px;
-        // Intro: the bar slides in from just past the window edge
-        // (Vue tweens it from `offsetWidth + right` to 0) while fading in.
+        // Intro: the bar slides in from just past the window edge while fading
+        // in.
         private property <length> intro-dx: GameIntro.played
             ? 0px
             : root.scrollbar-width + root.scrollbar-right;
@@ -677,7 +658,7 @@ export component InstancesList inherits Rectangle {
         thumb := Rectangle {
             width: track-touch.has-hover || track-touch.pressed ? 10px : 8px;
             x: track-touch.has-hover || track-touch.pressed ? -2px : 0px;
-            // Vue: `Math.max(32, trackHeight * containerHeight / contentHeight)`.
+            // At least 32px, or the track height scaled by the visible fraction.
             height: root.max-scroll > 0px
                 ? max(32px, parent.track-height * root.height
                     / max(GameState.list-content-height, root.height))
@@ -698,9 +679,8 @@ export component InstancesList inherits Rectangle {
         }
 
         // Grabbing the thumb drags it; pressing the track elsewhere jumps so the
-        // thumb centres under the cursor and then keeps dragging it, which is the
-        // `onScrollbarPointerDown` / `onThumbPointerDown` pair of the original
-        // (both move the offset without animating, `immediate: true`).
+        // thumb centres under the cursor and then keeps dragging it. Both move
+        // the offset without animating.
         //
         // The drag state has to be tracked here rather than keyed off the event's
         // button: Slint reports a *move* with `PointerEventButton.other`, so
@@ -738,7 +718,6 @@ export component InstancesList inherits Rectangle {
         }
     }
 
-    // ----- scrollbar drag -----
     private property <bool> dragging: false;
     /// Where inside the thumb the pointer grabbed it, so dragging does not make
     /// the thumb jump under the cursor.

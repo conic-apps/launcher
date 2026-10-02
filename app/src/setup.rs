@@ -2,14 +2,12 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The first-run setup wizard's "script" (`src/views/SetupView.vue` and the six
-//! `views/setup/SetupWizard*.vue` screens).
+//! The first-run setup wizard's "script".
 //!
 //! Two things need Rust. The import-instances screen fetches the Mojang version
-//! manifest and writes an `instance.toml` — the `@conic/install` and
-//! `@conic/instance` calls the Vue makes from that component — and the Java
-//! settings screen asks whether this machine can have a Java runtime downloaded
-//! for it at all, which is a property of the platform rather than of the config.
+//! manifest and writes an `instance.toml`, and the Java settings screen asks
+//! whether this machine can have a Java runtime downloaded for it at all, which
+//! is a property of the platform rather than of the config.
 //!
 //! Everything else the wizard touches is config (`AppConfig.language`,
 //! `AppConfig.palette`, …) or account state the game view already owns
@@ -31,10 +29,8 @@ enum Channel {
 /// Registers the wizard's callbacks and answers the platform question its Java
 /// screen asks.
 pub fn setup(ui: &App) {
-    // `SetupWizardJavaSettings.vue`'s `isSupportedJVMAutoInstallPlatform`: the
-    // Mojang runtimes are published for x86-64 and arm64 on Windows and macOS,
-    // and for x86-64 only on Linux. The Vue reads the same two fields off the
-    // `window.__PLATFORM__` the Rust host fills at startup.
+    // The Mojang runtimes are published for x86-64 and arm64 on Windows and
+    // macOS, and for x86-64 only on Linux.
     let platform = &platform::PLATFORM_INFO;
     let supported = match platform.os_family {
         platform::OsFamily::Windows | platform::OsFamily::Macos => matches!(
@@ -58,13 +54,12 @@ pub fn setup(ui: &App) {
     }
 }
 
-/// `createLatestReleaseInstance()` / `createLatestSnapshotInstance()`: fetch the
-/// manifest, then write the instance.
+/// Fetches the manifest, then writes the instance.
 ///
-/// The Vue's buttons carry `pointer-events: none` while they are running and
-/// after they have failed, so it never reaches this twice for one channel. The
-/// flags are checked anyway rather than assumed, since a second run would race
-/// the first one's write into the same instance folder.
+/// The buttons are disabled while this runs and after it has failed, so it is
+/// never reached twice for one channel. The flags are checked anyway rather than
+/// assumed, since a second run would race the first one's write into the same
+/// instance folder.
 fn create_latest(weak: &Weak<App>, channel: Channel) {
     let Some(ui) = weak.upgrade() else { return };
     let state = ui.global::<SetupWizardState>();
@@ -82,9 +77,8 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
             state.set_creating_snapshot(true);
         }
     }
-    // The instance is named after the translated `setup.importInstances.
-    // latestRelease` / `…latestSnapshot`, so the name is read here rather than
-    // on the worker: the global is only reachable from this thread.
+    // The name is read here rather than on the worker: the global is only
+    // reachable from this thread.
     let name: SharedString = match channel {
         Channel::Release => state.get_latest_release_name(),
         Channel::Snapshot => state.get_latest_snapshot_name(),
@@ -100,8 +94,7 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
             })
             .map_err(|error| error.to_string());
         // The version, not the new instance's id, is what the button shows
-        // afterwards — the Vue's `createdLatestRelease.value` is
-        // `minecraftVersionManifest.latest.release`.
+        // afterwards.
         let created = match version {
             Ok(version) => create_instance(&name, &version)
                 .await
@@ -133,8 +126,7 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
                 Channel::Release => state.set_creating_release(false),
                 Channel::Snapshot => state.set_creating_snapshot(false),
             }
-            // The Vue's `createInstance` writes the file and nothing else;
-            // its instance list is read again when the game view is entered,
+            // The instance list is read again when the game view is entered,
             // which is where the wizard's last step ends. Asking for the
             // refresh here rather than there is the same work one page
             // earlier, and it is what `create_instance.rs` does for the
@@ -144,9 +136,8 @@ fn create_latest(weak: &Weak<App>, channel: Channel) {
     });
 }
 
-/// `createInstance({ launch_config: { enable_instance_specific_settings:
-/// false }, name, runtime: { minecraft } })` — the whole of the Vue's call. No
-/// `id`, so the instance gets a random one, exactly as the original's.
+/// Writes the instance with the launch config the wizard uses. No `id`, so the
+/// instance gets a random one.
 async fn create_instance(name: &str, version: &str) -> Result<String, instance::Error> {
     let mut config = InstanceConfig::new(name, version);
     config.launch_config = InstanceLaunchConfig {

@@ -2,15 +2,14 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// The overlay layer's state: the dialogs of `src/store/dialog.ts` plus, for
-// each migrated dialog, the form state its Vue component kept in `ref`s.
+// The overlay layer's state: one visibility flag per dialog plus the form state
+// each dialog keeps.
 //
-// A Vue component's own `ref`s have to become a global here: Slint components
-// can only be reached from Rust through a global, and the script that fills the
-// version lists and creates the instance (`app/src/create_instance.rs`) has to
-// read and write that state.
+// This is a global because Slint components can only be reached from Rust
+// through a global, and the script that fills the version lists and creates the
+// instance (`app/src/create_instance.rs`) has to read and write that state.
 
-// For the OAuth callback page's palette, which is handed to `slint-authcode`
+// For the OAuth callback page's palette, which is handed to `authcode`
 // rather than drawn here.
 import { Theme } from "../theme.slint";
 
@@ -27,15 +26,14 @@ export struct MinecraftVersionItem {
     day: int,
 }
 
-/// A row of the Yggdrasil profile chooser (Vue `availableProfiles`).
+/// A row of the Yggdrasil profile chooser.
 export struct YggdrasilProfileItem {
-    /// The profile UUID, what `toggleProfile` keys the selection on.
+    /// The profile UUID, which the selection is keyed on.
     id: string,
     /// The profile name.
     name: string,
     /// Whether the launcher already holds this profile on this server, which
-    /// the row shows as an " (added)" suffix and does not let you pick
-    /// (Vue `profileDisabled`).
+    /// the row shows as an " (added)" suffix and does not let you pick.
     added: bool,
     /// Whether the row is selected.
     selected: bool,
@@ -45,7 +43,7 @@ export struct YggdrasilProfileItem {
 }
 
 /// The six sentences of the page the browser lands on when the OAuth redirect
-/// fires (`slint/crates/authcode/page.html`).
+/// fires (`crates/authcode/page.html`).
 ///
 /// They live here rather than in the catalog's Rust side because this is where
 /// every other string in the app lives: a `@tr` in a `.slint` file, which is
@@ -69,8 +67,8 @@ export struct AuthCodePageText {
 /// global of the UI thread, and the listener is built on the UI thread and
 /// serves from a worker, so the theme is snapshotted where it is defined
 /// rather than read across that boundary. The tokens are named here so the two
-/// sides cannot drift: `--window-background` is the window's own `crust`,
-/// `--dialog-*` is the card, `--ctp-green`/`--ctp-red` are the two states.
+/// sides cannot drift: `window` is the window's own `crust`, the `card` fields
+/// are the dialog, and `success`/`danger` are the two states.
 export struct AuthCodePageTheme {
     window: color,
     card: color,
@@ -79,25 +77,23 @@ export struct AuthCodePageTheme {
     body: color,
     success: color,
     danger: color,
-    /// Whether the palette is one of the three dark flavors, which is
-    /// `main.css`'s `color-scheme: dark` on `body`.
+    /// Whether the palette is one of the three dark flavors, which sets the
+    /// page's `color-scheme` to dark.
     dark: bool,
-    /// `main.css`'s own `font-family` stack. The fonts in it are embedded in
-    /// the launcher binary rather than installed, so a browser resolves this to
-    /// the system UI font — the same fallback the Vue frontend had.
+    /// The page's `font-family` stack. The fonts in it are embedded in the
+    /// launcher binary rather than installed, so a browser resolves this to the
+    /// system UI font.
     font-family: string,
 }
 
-// The Vue dialog store: one visibility flag per dialog, written by whoever
-// opens it (the footer's "New instance", the launch view's errors …) and by
-// Rust (an action that finishes and dismisses the dialog). Only the
-// create-instance and add-account dialogs are migrated so far; the other flags
-// of `src/store/dialog.ts` arrive with their dialogs.
+// One visibility flag per dialog, written by whoever opens it (the footer's
+// "New instance", the launch view's errors …) and by Rust (an action that
+// finishes and dismisses the dialog).
 export global Dialogs {
     in-out property <bool> create-instance-visible: false;
     in-out property <bool> account-add-visible: false;
-    // The launch view's error dialogs (src/store/dialog.ts). Rust raises them
-    // when a launch is refused before it starts.
+    // The launch view's error dialogs. Rust raises them when a launch is
+    // refused before it starts.
     in-out property <bool> no-account-error-visible: false;
     in-out property <bool> no-microsoft-account-error-visible: false;
     in-out property <bool> account-refresh-failed-visible: false;
@@ -110,13 +106,10 @@ export global Dialogs {
     in-out property <bool> confirm-quit-app-visible: false;
 }
 
-// The "delete instance" dialog
-// (src/overlays/dialogs/ConfirmDeleteInstance.vue).
+// The "delete instance" dialog.
 //
-// The Vue's `confirmDeleteInstance` holds the whole `Instance` to delete, which
-// the dialog store seeds with a placeholder so there is always something to
-// render before it is opened; Rust fills the fields below instead, from the
-// instance that was current when the row was pressed.
+// Rust fills the fields below from the instance that was current when the row
+// was pressed, so there is no placeholder instance to render before it opens.
 export global DeleteInstanceState {
     in-out property <string> id: "";
     in-out property <string> name: "";
@@ -131,8 +124,7 @@ export global DeleteInstanceState {
     /// detail row draws them as one string.
     in-out property <string> playtime-kind: "";
     in-out property <string> playtime-value: "";
-    /// The card's playtime label. The Vue hard-codes it in Chinese (that dialog
-    /// was never internationalized); it is a `@tr` here so the sentence can be
+    /// The card's playtime label. It is a `@tr` so the sentence can be
     /// translated, with the Chinese kept as the source text.
     out property <string> playtime-label: @tr("ConfirmDeleteInstance" => "游戏时间：");
     /// The dialog's warning sentence, likewise.
@@ -140,7 +132,7 @@ export global DeleteInstanceState {
         "ConfirmDeleteInstance" => "是否确认删除此实例？实例下存档、资源包、Mod 等文件也将永久丢失 (真的很久！)"
     );
 
-    /// A delete is running: the confirm button is disabled (Vue `deleting`).
+    /// A delete is running: the confirm button is disabled.
     in-out property <bool> deleting: false;
     /// The "Cancel" button.
     callback cancel();
@@ -149,19 +141,16 @@ export global DeleteInstanceState {
     callback confirm();
 }
 
-// The "delete save" dialog (src/overlays/dialogs/ConfirmDeleteSave.vue).
+// The "delete save" dialog.
 //
-// The Vue's `confirmDeleteSave` holds the save's folder name and its
-// `Data.LevelName`; Rust fills the two below from the card whose trash button was
-// pressed, which is the same pair `askDeleteSave` read out of the saves list.
+// Rust fills the two below from the card whose trash button was pressed.
 export global DeleteSaveState {
     /// The save's folder under `saves/`, which is what gets deleted.
     in-out property <string> folder: "";
     /// `level.dat`'s `Data.LevelName`, which is what the dialog names. Empty
-    /// when the save has none, in which case the dialog shows the folder, as the
-    /// Vue's `save?.Data.LevelName ?? folderName` did.
+    /// when the save has none, in which case the dialog shows the folder.
     in-out property <string> level-name: "";
-    /// A delete is running: the confirm button is disabled (Vue `deleting`).
+    /// A delete is running: the confirm button is disabled.
     in-out property <bool> deleting: false;
     /// The "Wait a moment…" button.
     callback cancel();
@@ -170,23 +159,18 @@ export global DeleteSaveState {
     callback confirm();
 }
 
-// The "create instance" dialog
-// (src/overlays/dialogs/CreateInstance.vue and the two screens under
-// `create/`).
+// The "create instance" dialog.
 export global CreateInstanceState {
-    // ----- the swap between the three screens -----
-    /// "settings" | "minecraft-choose" | "mod-loader-choose" (Vue
-    /// `currentComponent`); empty while the dialog is closed, so the step
-    /// machine in `CreateInstance` unmounts everything.
+    /// "settings" | "minecraft-choose" | "mod-loader-choose"; empty while the
+    /// dialog is closed, so the step machine in `CreateInstance` unmounts
+    /// everything.
     in-out property <string> step: "";
 
-    // ----- the form -----
     in-out property <string> minecraft-version: "";
     /// "None" | "Fabric" | "Quilt" | "Neoforge" | "Forge"
     in-out property <string> mod-loader-type: "None";
     in-out property <string> mod-loader-version: "";
-    /// What the user typed; an empty value falls back to `default-name`
-    /// (Vue `customInstanceName`).
+    /// What the user typed; an empty value falls back to `default-name`.
     in-out property <string> custom-name: "";
     in-out property <bool> name-editing: false;
     in-out property <bool> creating: false;
@@ -196,16 +180,14 @@ export global CreateInstanceState {
     in-out property <string> background-path: "";
     in-out property <image> background-image;
 
-    // ----- the Minecraft version chooser -----
     in-out property <bool> minecraft-loading: false;
     /// The versions of the selected category, filtered by the script from the
-    /// manifest (the Vue's `filteredVersions` computed — it holds ~900 versions,
-    /// so they are not all instantiated as rows).
+    /// manifest. It holds ~900 versions, so they are not all instantiated as
+    /// rows.
     in-out property <[MinecraftVersionItem]> minecraft-versions: [];
-    /// "releases" | "snapshot" | "old" (Vue `showVersionType`).
+    /// "releases" | "snapshot" | "old".
     in-out property <string> version-category: "releases";
 
-    // ----- the mod loader lists (Vue `modLoaderLoading` / `modLoaderAvailable`) -----
     in-out property <bool> fabric-loading: true;
     in-out property <bool> quilt-loading: true;
     in-out property <bool> forge-loading: true;
@@ -218,13 +200,13 @@ export global CreateInstanceState {
     in-out property <[string]> fabric-versions: [];
     in-out property <[string]> quilt-versions: [];
     /// Forge versions of the chosen Minecraft version, without the Minecraft
-    /// part of the version string (Vue shows `forgeVersion.split('-').slice(1)`).
+    /// part of the version string.
     in-out property <[string]> forge-versions: [];
     /// Neoforge versions of the chosen Minecraft version.
     in-out property <[string]> neoforge-versions: [];
 
-    /// The name offered when the user did not type one (Vue
-    /// `defaultInstanceName`). Rust reads it when it creates the instance.
+    /// The name offered when the user did not type one. Rust reads it when it
+    /// creates the instance.
     out property <string> default-name: (minecraft-version != ""
             ? minecraft-version
             : @tr("CreateInstance" => "Unnamed instance"))
@@ -232,13 +214,12 @@ export global CreateInstanceState {
             ? ""
             : "-" + mod-loader-type.to-lowercase() + mod-loader-version);
 
-    /// Any list still loading (Vue `modLoaderSettingLoading`).
+    /// Any list still loading.
     out property <bool> mod-loader-loading: fabric-loading || quilt-loading || forge-loading
         || neoforge-loading;
 
-    /// Which options of the mod loader select can be picked (Vue
-    /// `modLoaderTypeDisabled`, which lists the *names* of the loaders that
-    /// answered with an empty list).
+    /// Which options of the mod loader select can be picked — the loaders that
+    /// answered with an empty list are unavailable.
     ///
     /// Slint arrays have no `contains` — only the experimental `index-of` — so
     /// the select takes a list of flags parallel to its options instead. The
@@ -253,14 +234,11 @@ export global CreateInstanceState {
         ];
     }
 
-    // ----- the script (app/src/create_instance.rs) -----
-    /// Fetches the Mojang version manifest (the chooser's `onMounted`).
+    /// Fetches the Mojang version manifest.
     callback load-minecraft-versions();
-    /// The version category changed: re-filter the list (Vue
-    /// `filteredVersions`).
+    /// The version category changed: re-filter the list.
     callback set-version-category(string);
-    /// A version was picked: stores it and refreshes the mod loader lists
-    /// (Vue's `watch(minecraftVersion)`).
+    /// A version was picked: stores it and refreshes the mod loader lists.
     callback select-minecraft-version(string);
     /// The "Create instance" button: Rust creates the instance, refreshes the
     /// game view and closes the dialog.
@@ -272,64 +250,57 @@ export global CreateInstanceState {
     callback open-version-wiki(string);
 }
 
-// The "add account" dialog (src/overlays/dialogs/AccountAdd.vue and the four
-// screens it swaps between, under `src/views/accounts/`).
+// The "add account" dialog.
 export global AccountAddState {
-    // ----- the shell (views/accounts/AccountAdd.vue) -----
     /// Which auth service's screen is mounted: "microsoft" | "yggdrasil" |
-    /// "offline" (Vue `authServiceType`).
+    /// "offline".
     in-out property <string> auth-service: "microsoft";
     /// Whether the service selector is frozen — the Microsoft screen sets it
     /// while a login runs, so its progress cannot be lost by switching away
-    /// (Vue `switchComponentDisabled`, and the 0.6 opacity that goes with it).
+    /// (the selector is dimmed while it is set).
     out property <bool> switch-disabled: self.ms-view == "processing";
 
-    // ----- the offline screen (AccountAddOffline.vue) -----
     in-out property <string> offline-username: "";
     in-out property <string> offline-uuid: "";
     in-out property <bool> offline-advanced: false;
-    /// Whether the typed UUID is malformed; only ever true in advanced mode
-    /// (Vue `uuidInvalid`). Rust computes it — Slint has no regular expressions.
+    /// Whether the typed UUID is malformed; only ever true in advanced mode.
+    /// Rust computes it — Slint has no regular expressions.
     in-out property <bool> offline-uuid-invalid: false;
     /// Whether "Create offline profile" can be pressed. Rust computes it too:
-    /// the Vue's test trims the username, and Slint has no `trim`.
+    /// the test trims the username, and Slint has no `trim`.
     in-out property <bool> offline-can-submit: false;
 
-    // ----- the Microsoft screen (AccountAddMicrosoft.vue) -----
     /// "auth-code" | "processing" | "device-code" | "error".
     in-out property <string> ms-view: "auth-code";
     /// Which login step is running, named after its `LoginEvent` ("prepare",
     /// "request-device-code", …). The screen turns it into text, so the
-    /// translation stays in the UI (Vue `progressDescription`).
+    /// translation stays in the UI.
     in-out property <string> ms-progress: "";
-    /// The failure the screen reports (Vue `errorText`).
+    /// The failure the screen reports.
     in-out property <string> ms-error: "";
     in-out property <string> ms-user-code: "";
     in-out property <string> ms-verification-uri: "";
-    /// Seconds left on the device code, counted down by the screen (Vue
-    /// `expiresIn`).
+    /// Seconds left on the device code, counted down by the screen.
     in-out property <int> ms-expires-in: 0;
     /// The two "copied!" hints, each on its own timer: the link box and the
     /// device code box.
     ///
-    /// The Vue has a third — the "已复制！" bubble on the "copy the link" span
-    /// inside the description paragraph — and it is not ported. It is anchored to
-    /// an inline `<span class="copy-link-wrapper">` in the middle of a `<p>`, and
-    /// the paragraph is one `StyledText` here, which takes no children and so has
-    /// nowhere to put one. `AccountAddMicrosoft.slint` says so where the link is.
+    /// The third — the "已复制！" bubble on the "copy the link" span inside the
+    /// description paragraph — has nowhere to live: it is anchored mid-`<p>` in
+    /// a browser, and the paragraph is one `StyledText` here, which takes no
+    /// children. `AccountAddMicrosoft.slint` says so where the link is.
     in-out property <bool> ms-copied: false;
     in-out property <bool> ms-copied-code: false;
-    /// The URL the browser flow opens (Vue `AUTH_CODE_LOGIN_URL`).
+    /// The URL the browser flow opens.
     ///
-    /// It is not a constant any more: the code comes back on a loopback
-    /// listener this app owns, and the port is the OS's choice, so Rust fills
-    /// this in when it binds the listener and empties it when the flow is over.
-    /// The `redirect_uri` inside it is repeated verbatim at the token endpoint
-    /// (RFC 6749 §4.1.3), which is why the one string is kept whole.
+    /// It is not a constant: the code comes back on a loopback listener this app
+    /// owns, and the port is the OS's choice, so Rust fills this in when it binds
+    /// the listener and empties it when the flow is over. The `redirect_uri`
+    /// inside it is repeated verbatim at the token endpoint (RFC 6749 §4.1.3),
+    /// which is why the one string is kept whole.
     in-out property <string> auth-code-login-url: "";
 
-    // ----- the browser callback page (slint/crates/authcode/page.html) -----
-    /// Its six sentences, in the launcher's language.
+    /// The callback page's six sentences, in the launcher's language.
     out property <AuthCodePageText> auth-code-page-text: {
         waiting-title: @tr("AccountAddMicrosoft" => "Waiting for the sign-in"),
         waiting-body: @tr("AccountAddMicrosoft" => "Finish signing in in your browser — this page will change when it is done."),
@@ -352,31 +323,27 @@ export global AccountAddState {
         font-family: "'Nunito', 'Comfortaa', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif, 'Yu Gothic UI', 'Microsoft YaHei UI'",
     };
 
-    // ----- the Yggdrasil screen (AccountAddYggdrasil.vue) -----
     /// "form" | "processing" | "error" | "profiles".
     in-out property <string> yggdrasil-view: "form";
     in-out property <string> yggdrasil-api-root: "";
     in-out property <string> yggdrasil-username: "";
     in-out property <string> yggdrasil-password: "";
-    /// The failure the screen reports (Vue `errorMessage`).
+    /// The failure the screen reports.
     in-out property <string> yggdrasil-error: "";
-    /// The `meta.serverName` the API root answered with, shown under the field
-    /// (Vue `serverName`).
+    /// The `meta.serverName` the API root answered with, shown under the field.
     in-out property <string> yggdrasil-server-name: "";
-    /// The profiles the chooser offers (Vue `availableProfiles`).
+    /// The profiles the chooser offers.
     in-out property <[YggdrasilProfileItem]> yggdrasil-profiles: [];
-    /// Whether any row is selected (Vue `selectedProfileIds.size === 0`).
+    /// Whether any row is selected.
     in-out property <bool> yggdrasil-has-selection: false;
     /// Whether "Verify and add profile" can be pressed — the three fields are
     /// non-blank, after trimming, which is what Rust checks.
     in-out property <bool> yggdrasil-can-submit: false;
-    /// What the screen reports when a server answered with no profiles at all
-    /// (the Vue's hard-coded `该帐户没有任何游戏角色`). It is read by the script
-    /// so the sentence stays translatable.
+    /// What the screen reports when a server answered with no profiles at all.
+    /// It is read by the script so the sentence stays translatable.
     out property <string> no-profile-message: @tr("AccountAddYggdrasil" => "This account has no game profile");
 
-    // ----- shared -----
-    /// A service button of the selector (Vue `selectAuthService`).
+    /// A service button of the selector.
     callback select-auth-service(string);
     /// A "Cancel" button.
     callback close();
@@ -385,20 +352,17 @@ export global AccountAddState {
     /// Opens a URL with the platform's default handler.
     callback open-url(string);
 
-    // ----- the offline screen -----
-    /// Resets the form to what the Vue's `onMounted` leaves it in.
+    /// Resets the form to its initial state.
     callback reset-offline-form();
     /// The advanced switch was flipped: mirror the new mode into the button's
-    /// state and reset the UUID field the way the Vue's `watch(advancedMode)`
-    /// does.
+    /// state and reset the UUID field.
     callback toggle-offline-advanced();
     /// The username or the UUID field changed: recompute the derived UUID and
-    /// its validity (the Vue's two watchers).
+    /// its validity.
     callback sync-offline-uuid();
     /// "Create offline profile".
     callback add-offline-account();
 
-    // ----- the Microsoft screen -----
     /// The "log in with a device code" link. Starts a login when none is
     /// running.
     callback use-device-code-flow();
@@ -416,11 +380,9 @@ export global AccountAddState {
     /// the URL with it, which frees the port.
     callback release-auth-code-flow();
 
-    // ----- the Yggdrasil screen -----
-    /// Resets the form to what the Vue's `onMounted` leaves it in.
+    /// Resets the form to its initial state.
     callback reset-yggdrasil-form();
-    /// 500 ms after the API root stopped changing: look its name up (the Vue's
-    /// debounced `watch(apiRoot)`).
+    /// 500 ms after the API root stopped changing: look its name up.
     callback lookup-server-name();
     /// One of the three fields changed: recompute `yggdrasil-can-submit`.
     callback sync-yggdrasil-submit();
@@ -428,6 +390,6 @@ export global AccountAddState {
     callback yggdrasil-login();
     /// "Add profiles", for the rows selected in the chooser.
     callback yggdrasil-add-profiles();
-    /// A row of the chooser was clicked, by index (Vue `toggleProfile`).
+    /// A row of the chooser was clicked, by index.
     callback toggle-yggdrasil-profile(int);
 }

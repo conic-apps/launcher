@@ -2,45 +2,28 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/account`: the account model, and the flows
-//! that create and refresh accounts — Microsoft (OAuth → Xbox Live → XSTS →
-//! Minecraft services), offline profiles, and Yggdrasil (authlib-injector)
-//! servers.
+//! The account model and the flows that create and refresh accounts:
+//! Microsoft (OAuth → Xbox Live → XSTS → Minecraft services), offline
+//! profiles, and Yggdrasil (authlib-injector) servers.
 //!
-//! The original is a Tauri plugin whose logic lives in its modules
-//! (`offline.rs`, `microsoft/`, `yggdrasil/`); `offline_commands.rs`,
-//! `microsoft_commands.rs` and `yggdrasil_commands.rs` only put an IPC surface
-//! in front of that logic. This mirror keeps the module tree, so the two
-//! crates can be diffed against each other, with these differences:
+//! The logic lives in the modules (`offline.rs`, `microsoft/`, `yggdrasil/`),
+//! and `microsoft_task` owns the at-most-one running Microsoft login task.
 //!
-//!   * the command modules are gone. Two of them were pure pass-throughs to
-//!     functions that are `pub` already; the third, which owns the at-most-one
-//!     running login task, becomes [`microsoft_task`];
-//!   * `microsoft::LoginReporter` reports through a closure instead of a
-//!     `tauri::ipc::Channel`, and the `serde` derives the original carries for
-//!     the IPC boundary are dropped (`slint-java-runtime`'s rule). The
-//!     attributes that describe a *wire* format — the `camelCase` renames on
-//!     the Yggdrasil request bodies, the `textureKey` rename on a Microsoft
-//!     skin — stay, because the servers and the shared `config.toml` still
-//!     speak them.
+//! `serde` renames exist only where a *wire* format requires them — the
+//! `camelCase` renames on the Yggdrasil request bodies, the `textureKey` rename
+//! on a Microsoft skin — because the servers and the shared `config.toml` speak
+//! them. [`microsoft::LoginReporter`] reports through a closure the app points
+//! at its UI thread.
 //!
-//! The only other difference is mechanical — the original's private
-//! `save_accounts(&Vec<Account>)` helpers take a slice here, which is what
-//! clippy asks for and changes nothing about what is written — except for the
-//! one place the two frontends part company: the browser flow's redirect. The
-//! original asks
-//! the OS for `conic-launcher://oauth2/microsoft/callback` through
-//! `tauri-plugin-deep-link`; a Slint application cannot, so the redirect is a
-//! loopback listener of this app's own (`slint-authcode`) and
-//! [`microsoft::redeem_access_token`] is given the `redirect_uri` to repeat
-//! rather than carrying the original's as a literal. The refresh request, which
-//! the original also spells a `redirect_uri` into, sends none: RFC 6749 §6
-//! makes it conditional, and a device-code authorization never had one.
+//! The browser flow cannot be handed a fixed redirect URI, because its loopback
+//! listener (`authcode`) binds an OS-chosen port that is unknown until the flow
+//! starts. [`microsoft::redeem_access_token`] therefore takes the
+//! `redirect_uri` to repeat rather than carrying a literal. The refresh request
+//! sends none: RFC 6749 §6 makes it conditional, and an account does not keep
+//! the URI the code was issued against.
 //!
-//! Structures, request bodies and on-disk formats match `crates/account/src`,
-//! and so does the serialized form of [`Account`], so both frontends share the
-//! same `~/.conic[-debug]/accounts/*.json` and the same `current_account` in
-//! `config.toml`.
+//! The serialized [`Account`] form lives as `current_account` in `config.toml`,
+//! and the account files as `accounts/*.json` in the data directory.
 
 use std::path::Path;
 
@@ -72,8 +55,7 @@ pub enum Account {
 }
 
 impl Account {
-    /// The display name of the account's current profile
-    /// (`crates/account/src/lib.rs`).
+    /// The display name of the account's current profile.
     pub fn get_profile_name(&self) -> String {
         match self {
             Account::Microsoft(account) => account.profile.profile_name.to_string(),
@@ -82,8 +64,7 @@ impl Account {
         }
     }
 
-    /// The profile UUID, as the original returns it — the hyphenated form
-    /// (`crates/account/src/lib.rs`).
+    /// The profile UUID in hyphenated form.
     pub fn get_profile_uuid(&self) -> String {
         match self {
             Account::Microsoft(account) => account.profile.uuid.to_string(),
@@ -92,7 +73,7 @@ impl Account {
         }
     }
 
-    /// The token a launch passes to the game (`crates/account/src/lib.rs`).
+    /// The token a launch passes to the game.
     pub fn get_access_token(&self) -> String {
         match self {
             Account::Microsoft(account) => account.minecraft_access_token.to_string(),
@@ -102,7 +83,7 @@ impl Account {
     }
 
     /// The `--userType` a launch passes to the game: `msa` for a Microsoft
-    /// account, `mojang` for everything else (`crates/account/src/lib.rs`).
+    /// account, `mojang` for everything else.
     pub fn get_user_type(&self) -> String {
         match self {
             Account::Microsoft(_) => "msa".to_string(),
@@ -111,8 +92,8 @@ impl Account {
         }
     }
 
-    /// The account type as the frontend names it: `Microsoft`, `Offline` or
-    /// `Yggdrasil` — the tag [`Account`] serializes itself under.
+    /// The account type: `Microsoft`, `Offline` or `Yggdrasil` — the tag
+    /// [`Account`] serializes itself under.
     pub fn kind(&self) -> &'static str {
         match self {
             Account::Microsoft(_) => "Microsoft",
@@ -121,15 +102,14 @@ impl Account {
         }
     }
 
-    /// A stable key identifying the account, matching the Vue frontend's
-    /// (`${type.toLowerCase()}-${uuid}`).
+    /// A stable key identifying the account: the lowercased type and the
+    /// profile UUID, e.g. `microsoft-…`.
     pub fn key(&self) -> String {
         format!("{}-{}", self.kind().to_lowercase(), self.get_profile_uuid())
     }
 }
 
-/// Every stored account, grouped by kind. `cmd_list_accounts` of the original,
-/// whose answer the frontend's `Accounts` type mirrors.
+/// Every stored account, grouped by kind.
 #[derive(Serialize, Deserialize)]
 pub struct Accounts {
     pub microsoft: Vec<MicrosoftAccount>,
@@ -137,13 +117,10 @@ pub struct Accounts {
     pub yggdrasil: Vec<YggdrasilAccount>,
 }
 
-/// Reads and merges all stored accounts (`cmd_list_accounts`).
+/// Reads and merges all stored accounts.
 ///
-/// The one place the mirror is not `async`: the original's command awaits
-/// three async readers because a Tauri command returns a future, but the Slint
-/// app's game view rebuilds its account list synchronously, from the same
-/// files and with the same lenient parsing the read-only `slint-account` it
-/// replaces used. The three account files are a few kilobytes.
+/// Synchronous on purpose: the game view rebuilds its account list while
+/// rendering, and the three account files are a few kilobytes.
 pub fn list_accounts() -> Accounts {
     Accounts {
         microsoft: read_json(&DATA_LOCATION.accounts.join("microsoft.json")),
@@ -152,8 +129,8 @@ pub fn list_accounts() -> Accounts {
     }
 }
 
-/// A stored list, or an empty one when the file is missing or unreadable —
-/// the `unwrap_or_default` every reader in the crate applies.
+/// A stored list, or an empty one when the file is missing, unreadable, or
+/// malformed.
 fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Vec<T> {
     let Ok(data) = std::fs::read_to_string(path) else {
         return Vec::new();
@@ -164,10 +141,10 @@ fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Vec<T> {
     })
 }
 
-/// Writes a skin handed over as a `data:` URL to `path` (`cmd_save_skin`).
+/// Writes a skin handed over as a `data:` URL to `path`.
 ///
-/// The value is what a Microsoft profile's `skins[].url` holds — a
-/// base64 PNG, with or without the `data:image/png;base64,` prefix.
+/// The value is a Microsoft profile's `skins[].url` — a base64 PNG, with or
+/// without the `data:image/png;base64,` prefix.
 pub async fn save_skin(base64_skin_url: String, path: String) -> Result<()> {
     let data = base64_skin_url
         .split_once(',')
@@ -183,10 +160,9 @@ pub async fn save_skin(base64_skin_url: String, path: String) -> Result<()> {
 
 /// The UUID Minecraft derives for an offline player of `username`.
 ///
-/// The frontend's `getUuidFromUsername` (`crates/account/index.ts`): the MD5 of
-/// `OfflinePlayer:<name>` with the version/variant bits of a name-based (v3)
-/// UUID set, which is what the game computes for itself — so an offline
-/// profile identifies as the same player on a server.
+/// The MD5 of `OfflinePlayer:<name>` with the version/variant bits of a
+/// name-based (v3) UUID set — the same value the game computes for itself, so
+/// an offline profile identifies as the same player on a server.
 pub fn get_uuid_from_username(username: &str) -> Uuid {
     let digest = Md5::digest(format!("OfflinePlayer:{username}").as_bytes());
     let mut bytes: [u8; 16] = digest.into();

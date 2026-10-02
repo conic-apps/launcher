@@ -1,6 +1,6 @@
 [package]
 name = "modrinth"
-description = "Tauri-free mirror of crates/modrinth for the Slint app"
+description = "Modrinth API client"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true

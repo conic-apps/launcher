@@ -45,7 +45,7 @@ pub struct QuiltMetadata {
     pub contact: Option<HashMap<String, String>>,
     pub license: Option<Value>,
     pub icon: Option<ModIcon>,
-    /// Some mods still put the icon at the top level instead of in `metadata`.
+    /// A fallback icon, used when `icon` is absent.
     pub fabric_icon: Option<ModIcon>,
 }
 

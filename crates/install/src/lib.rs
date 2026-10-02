@@ -2,23 +2,14 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/install`: the Minecraft + loader installer.
+//! The Minecraft + loader installer.
 //!
-//! The original crate exposes its work through Tauri commands that own the
-//! plugin state and forward progress over an IPC `Channel`. This mirror keeps
-//! the whole domain layer — the version-list requests, the install pipeline,
-//! the mod loader installers, the Mojang Java runtime download and the
-//! first-launch language setup — and drops only the command layer:
+//! Owns the version-list requests, the install pipeline, the mod loader
+//! installers, the Mojang Java runtime download and the first-launch language
+//! setup. The version-list caches are process-wide statics.
 //!
-//!   * the caches that lived in the Tauri `PluginState` are statics here;
-//!   * [`install`] is the body of the original `cmd_spawn_install_task`, taking
-//!     the same `Arc<Mutex<InstallEvent>>` the command thread used to poll. The
-//!     app spawns it on its own runtime, keeps the `JoinHandle` for
-//!     cancellation and translates the polled events into UI state, playing the
-//!     role of `cmd_spawn_install_task` + the channel.
-//!
-//! Structures, request URLs and sorting match `crates/install/src/*.rs` so the
-//! two crates can be diffed against each other.
+//! [`install`] is spawned by the app, which hands in the shared status it polls
+//! and aborts the task to cancel.
 
 // TODO: Support Optifine auto install
 
@@ -52,8 +43,7 @@ pub mod vanilla;
 
 pub use error::*;
 
-/// How long a fetched version list stays fresh, mirroring
-/// `CACHE_EXPIRATION_SECONDS` in `crates/install/src/lib.rs`.
+/// How long a fetched version list stays fresh, in seconds.
 static CACHE_EXPIRATION_SECONDS: u64 = 1800;
 
 /// Seconds since the epoch, used as the cache timestamp.
@@ -65,10 +55,6 @@ fn unix_now() -> u64 {
 }
 
 /// The cached copy of a version list, if the last fetch is still fresh.
-///
-/// `crates/install` keeps these in its Tauri `PluginState`; the freshness test
-/// here is the intended one (the original compares the age the other way round,
-/// so it only ever serves a copy that is *older* than the TTL).
 fn cached<T: Clone>(cache: &std::sync::Mutex<Option<(u64, T)>>) -> Option<T> {
     let guard = cache.lock().expect("Internal error");
     let (fetched_at, value) = guard.as_ref()?;
@@ -85,12 +71,11 @@ static MANIFEST_CACHE: Lazy<std::sync::Mutex<Option<(u64, VersionManifest)>>> =
     Lazy::new(|| std::sync::Mutex::new(None));
 static FORGE_VERSION_LIST_CACHE: Lazy<std::sync::Mutex<Option<(u64, ForgeVersionList)>>> =
     Lazy::new(|| std::sync::Mutex::new(None));
-// The original carries the same allowance on the field of its `PluginState`.
 #[allow(clippy::type_complexity)]
 static NEOFORGE_VERSION_LIST_CACHE: Lazy<std::sync::Mutex<Option<(u64, Vec<String>)>>> =
     Lazy::new(|| std::sync::Mutex::new(None));
 
-/// Every Minecraft version Mojang knows, newest first (`cmd_get_minecraft_version_list`).
+/// Every Minecraft version Mojang knows, newest first.
 pub async fn get_minecraft_version_list() -> Result<VersionManifest> {
     if let Some(cached) = cached(&MANIFEST_CACHE) {
         return Ok(cached);
@@ -98,21 +83,18 @@ pub async fn get_minecraft_version_list() -> Result<VersionManifest> {
     Ok(store(&MANIFEST_CACHE, VersionManifest::new().await?))
 }
 
-/// The Fabric loader versions for a Minecraft version
-/// (`cmd_get_fabric_version_list`). Not cached: the answer depends on the
-/// Minecraft version and the original caches it per plugin instance only.
+/// The Fabric loader versions for a Minecraft version. Not cached: the answer
+/// depends on the Minecraft version.
 pub async fn get_fabric_version_list(mcversion: &str) -> Result<fabric::LoaderArtifactList> {
     fabric::LoaderArtifactList::new(mcversion).await
 }
 
-/// The Quilt loader versions for a Minecraft version
-/// (`cmd_get_quilt_version_list`). Not cached, like Fabric.
+/// The Quilt loader versions for a Minecraft version. Not cached, like Fabric.
 pub async fn get_quilt_version_list(mcversion: &str) -> Result<QuiltVersionList> {
     QuiltVersionList::new(mcversion).await
 }
 
-/// Every Forge version, keyed by Minecraft version
-/// (`cmd_get_forge_version_list`).
+/// Every Forge version, keyed by Minecraft version.
 pub async fn get_forge_version_list() -> Result<ForgeVersionList> {
     if let Some(cached) = cached(&FORGE_VERSION_LIST_CACHE) {
         return Ok(cached);
@@ -123,7 +105,7 @@ pub async fn get_forge_version_list() -> Result<ForgeVersionList> {
     ))
 }
 
-/// Every Neoforge version, newest first (`cmd_get_neoforge_version_list`).
+/// Every Neoforge version, newest first.
 pub async fn get_neoforge_version_list() -> Result<Vec<String>> {
     if let Some(cached) = cached(&NEOFORGE_VERSION_LIST_CACHE) {
         return Ok(cached);
@@ -151,7 +133,7 @@ pub enum ModLoaderProgress {
     Prepare,
     /// Downloading the loader installer JAR.
     DownloadInstaller(DownloadState),
-    /// Prefetching libraries bundled inside the installer JAR (Forge).
+    /// Prefetching the libraries named in the installer JAR (Forge).
     PrefetchDependencies(DownloadState),
     /// Running the installer subprocess, carrying its latest log line.
     RunInstaller { message: String },
@@ -208,14 +190,11 @@ pub(crate) async fn fetch_maven_sha1(url: &str) -> Checksum {
 
 /// Installs Minecraft, Java, and optionally a mod loader for the given instance.
 ///
-/// This function runs a full installation pipeline including:
-/// - Downloading Minecraft game files
-/// - Installing Java
-/// - Installing a mod loader (Fabric, Forge, Quilt, NeoForge)
+/// Runs the full pipeline: download the game files, install Java, then install
+/// the mod loader (Fabric, Forge, Quilt or NeoForge).
 ///
-/// The body is the original `cmd_spawn_install_task`'s, minus the Tauri
-/// `PluginState` ownership: the caller spawns it, hands in the shared status it
-/// polls, and aborts the task to cancel.
+/// The caller spawns this, hands in the shared status it polls, and aborts the
+/// task to cancel.
 pub async fn install(
     config: Config,
     instance: Instance,
@@ -319,18 +298,10 @@ async fn resolve_installer_java(
     )
 }
 
-/// Installs the specified mod loader for the provided runtime configuration.
+/// Installs the mod loader named by the runtime configuration.
 ///
-/// # Arguments
-/// * `runtime` - Instance runtime configuration containing loader type/version.
-/// * `java_path` - The Java executable used to run Java-based installers
-///   (Forge and NeoForge).
-/// * `reporter` - Progress reporter forwarded to the loader installation.
-///
-/// # Errors
-/// Returns an error if:
-/// - The loader type/version is missing or malformed.
-/// - The underlying installation function fails.
+/// `java_path` is only used by the Java-based installers (Forge and NeoForge).
+/// Fails if the loader type or version is missing, or if the installer fails.
 pub async fn install_mod_loader(
     runtime: &InstanceRuntime,
     java_path: &Path,

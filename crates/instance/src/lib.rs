@@ -2,15 +2,13 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/instance`: CRUD for game instances.
+//! CRUD for game instances: the data model and the filesystem logic.
 //!
-//! The original crate exposes the same operations through Tauri commands; the
-//! Slint app calls these functions directly and owns the UI state itself. Only
-//! the data model and filesystem logic live here.
+//! The app calls these functions directly and owns the UI state itself.
 //!
-//! The filesystem half stays `async` and on `tokio::fs`, as in the original —
-//! listing instances reads and parses one `instance.toml` per instance, which
-//! has no business running on the thread that draws.
+//! The CRUD path stays `async` and on `tokio::fs`: listing instances reads and
+//! parses one `instance.toml` per instance, which has no business running on
+//! the thread that draws.
 
 use std::{
     cmp::Ordering,
@@ -47,7 +45,7 @@ pub async fn create_instance(config: InstanceConfig, id: Option<&str>) -> Result
     Ok(id.to_string())
 }
 
-/// Enum representing different sorting strategies for listing instances.
+/// Sorting strategies for listing instances.
 #[derive(Clone, Copy, Deserialize)]
 pub enum SortBy {
     /// Sort by instance name (ascending).
@@ -391,7 +389,8 @@ pub struct Instance {
 }
 
 impl Instance {
-    /// The version id used as the game directory, including the loader prefix.
+    /// This instance's version id, including the loader prefix, which names the
+    /// version directory under `versions/`.
     pub fn get_version_id(&self) -> Result<String> {
         let config = &self.config;
         config

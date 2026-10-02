@@ -20,9 +20,6 @@ on:
   push:
     branches:
       - master
-      # The Tauri removal is in review here, and its packaging cannot be tested
-      # without a run. Temporary: drop this when the branch merges.
-      - RIP-Tauri
 
 jobs:
   get-version:
@@ -31,9 +28,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 2
-      # `app/Cargo.toml` is the only place the version lives now. It was
-      # `core/tauri.conf.json` before the Slint migration, and this job spent a
-      # long time after that reading a file that no longer exists.
+      # `app/Cargo.toml` is the only place the version lives.
       - name: Get app version
         id: current_version
         run: |
@@ -70,9 +65,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # The Slint/winit stack, not the Tauri/webview one this list used to
-      # install. None of these are declared anywhere in the build, so a missing
-      # one only shows up as a link error deep in a release build:
+      # The Slint/winit stack. None of these are declared anywhere in the
+      # build, so a missing one only shows up as a link error deep in a release
+      # build:
       #   pkg-config          — all three build scripts below go through it
       #   libfontconfig1-dev  — `fontique` -> `yeslogic-fontconfig-sys`
       #   libasound2-dev      — `alsa-sys`, via `cpal` in the music player
@@ -80,9 +75,6 @@ jobs:
       # GL, xkbcommon and the X11 libraries are `dlopen`ed by glutin, winit and
       # Skia rather than linked, so they are runtime dependencies of the package
       # and not build dependencies of the crate.
-      #
-      # `webkit2gtk-4.1` and `libappindicator3-dev` were here for Tauri. There is
-      # no webview and no tray plugin any more.
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -147,9 +139,8 @@ jobs:
       # `appimagetool`, then leaves everything in `target/package/`.
       - name: Build the packages
         env:
-          # The Tauri's `TAURI_SIGNING_PRIVATE_KEY` pair is gone with the
-          # updater: the Slint app has no self-update, so there is nothing to
-          # sign and no `.sig` artifact to upload.
+          # The app has no self-update, so there is nothing to sign and
+          # no `.sig` artifact to upload.
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
         run: |
           # `APPIMAGE_EXTRACT_AND_RUN=1` because a runner cannot mount a squashfs
@@ -521,11 +512,6 @@ jobs:
           publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v8
-        with:
-          path: ./release_files
 
       - name: Upload files
         env:

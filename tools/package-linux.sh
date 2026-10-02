@@ -17,8 +17,8 @@
 #
 # Everything lands in `<target-dir>/package/`.
 #
-# Deliberately not a Tauri/NPM script: there is no Tauri and no `package.json`
-# any more. `cargo build --release` is the whole build.
+# Not an NPM script: there is no `package.json`. `cargo build --release` is the
+# whole build.
 
 set -euo pipefail
 

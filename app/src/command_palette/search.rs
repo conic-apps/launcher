@@ -6,13 +6,9 @@
 
 use super::*;
 
-// ---------------------------------------------------------------------------
-// the two searches
-// ---------------------------------------------------------------------------
-
-/// `searchModrinthMods`: `searchProjects({ query, offset: 0, limit: 20 })` with
-/// no facets, so the hits are mods, resource packs, modpacks and shaders alike —
-/// which is what the row's category subtitle is for.
+/// Searches Modrinth with no facets, so the hits are mods, resource packs,
+/// modpacks and shaders alike — which is what the row's category subtitle is
+/// for.
 pub(crate) async fn search_modrinth(keyword: &str) -> Result<Vec<RemoteResult>, String> {
     let params = modrinth::SearchParameters {
         query: Some(keyword.to_string()),
@@ -34,7 +30,6 @@ pub(crate) async fn search_modrinth(keyword: &str) -> Result<Vec<RemoteResult>, 
             let project_id = crate::json::string(hit, "project_id");
             RemoteResult {
                 key: format!("modrinth-{project_id}"),
-                // `hit.title ?? hit.slug ?? hit.project_id`.
                 title: first_present(hit, &["title", "slug", "project_id"]),
                 author: crate::json::string(hit, "author"),
                 icon_url: crate::json::string(hit, "icon_url"),
@@ -47,7 +42,7 @@ pub(crate) async fn search_modrinth(keyword: &str) -> Result<Vec<RemoteResult>, 
         .collect())
 }
 
-/// `searchCurseForgeModsList`: `searchMods({ searchFilter, index: 0, pageSize: 20 })`.
+/// Searches CurseForge mods for the keyword.
 pub(crate) async fn search_curseforge(keyword: &str) -> Result<Vec<RemoteResult>, String> {
     let params = serde_json::json!({
         "searchFilter": keyword,
@@ -68,14 +63,12 @@ pub(crate) async fn search_curseforge(keyword: &str) -> Result<Vec<RemoteResult>
             RemoteResult {
                 key: format!("curseforge-{id}"),
                 title: crate::json::string(entry, "name"),
-                // `mod.authors?.[0]?.name`.
                 author: entry
                     .get("authors")
                     .and_then(Value::as_array)
                     .and_then(|authors| authors.first())
                     .map(|author| crate::json::string(author, "name"))
                     .unwrap_or_default(),
-                // `mod.logo?.thumbnailUrl || undefined`.
                 icon_url: entry
                     .pointer("/logo/thumbnailUrl")
                     .and_then(Value::as_str)
@@ -101,9 +94,9 @@ pub(crate) async fn search_curseforge(keyword: &str) -> Result<Vec<RemoteResult>
         .collect())
 }
 
-/// `CURSEFORGE_CLASS_TYPES`: 6 mods, 12 resource packs, 4471 modpacks. A class the
-/// map has no entry for — a shader, say — leaves the row without a subtitle, which
-/// is what `CURSEFORGE_CLASS_TYPES[mod.classId]` being `undefined` does.
+/// Maps a CurseForge class id to the row's subtitle kind: 6 mods, 12 resource
+/// packs, 4471 modpacks. A class with no entry — a shader, say — leaves the row
+/// without a subtitle.
 pub(crate) fn curseforge_type(class_id: Option<i64>) -> &'static str {
     match class_id {
         Some(6) => "mod",
@@ -140,7 +133,7 @@ pub(crate) fn strings(value: Option<&Value>) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// `hit.title ?? hit.slug ?? hit.project_id`.
+/// The first of `names` that `value` carries with a non-empty string.
 pub(crate) fn first_present(value: &Value, names: &[&str]) -> String {
     names
         .iter()
@@ -152,11 +145,11 @@ pub(crate) fn first_present(value: &Value, names: &[&str]) -> String {
 
 /// Fetches and decodes the results' icons, detached from the results themselves.
 ///
-/// They are not worth waiting for: the Vue's `<img>` fills in beside a row that
-/// is already there, and holding the list back for twenty of them made the
-/// palette look dead for as long as the slowest CDN took. Each is a separate
-/// task, so twenty of them take one round trip rather than twenty, and each
-/// gives up on its own so one dead host cannot hold the rest.
+/// They are not worth waiting for: the icon fills in beside a row that is
+/// already there, and holding the list back for twenty of them made the palette
+/// look dead for as long as the slowest CDN took. Each is a separate task, so
+/// twenty of them take one round trip rather than twenty, and each gives up on
+/// its own so one dead host cannot hold the rest.
 pub(crate) fn spawn_icon_fetch(weak: Weak<App>, token: u64, wanted: Vec<(usize, String)>) {
     crate::runtime::spawn(async move {
         let mut tasks = Vec::with_capacity(wanted.len());

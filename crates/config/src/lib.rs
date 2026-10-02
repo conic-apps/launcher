@@ -2,18 +2,16 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! App configuration (Tauri-free mirror of `crates/config`).
+//! App configuration.
 //!
-//! The Slint app shares the same `~/.conic[-debug]` data directory as the
-//! Tauri app, so the same `config.toml` is read and written by both. The data
-//! directory layout itself comes from [`folder::DATA_LOCATION`]. Every key
-//! the original models is modelled here too, with the same names, so the two
-//! frontends stay interchangeable; [`Config::extra`] is the catch-all for
-//! anything neither of them models, kept so a load/save round-trip cannot drop
-//! a key a newer build wrote.
+//! `config.toml` lives in the launcher's data directory (`conic`, or
+//! `conic-debug` for a debug build; the exact path is platform-dependent), whose
+//! layout comes from [`folder::DATA_LOCATION`]. Every key the launcher models is
+//! named here, and [`Config::extra`] is the catch-all for anything it does not,
+//! kept so a load/save round-trip cannot drop a key a newer build wrote.
 //!
-//! Everything is synchronous: the Slint host loads the config before building
-//! the UI and writes it back from a debounced timer.
+//! Everything is synchronous: the app loads the config before building the UI
+//! and writes it back from a debounced timer.
 
 use std::{collections::BTreeMap, path::Path};
 
@@ -95,7 +93,8 @@ pub fn remove_background_image() -> Result<()> {
     Ok(())
 }
 
-/// Update channel selection. Serialized values match the update server slugs.
+/// Update channel selection. Serialized as the lowercase values `nightly`,
+/// `stable` and `beta`.
 #[derive(Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum UpdateChannel {
@@ -179,8 +178,7 @@ impl Default for AppearanceConfig {
 #[serde(default)]
 pub struct Config {
     pub auto_update: bool,
-    /// The currently selected account, serialized exactly like the Tauri app's
-    /// `config.current_account` so the selection is shared between frontends.
+    /// The currently selected account.
     pub current_account: Option<Account>,
     pub appearance: AppearanceConfig,
     pub accessibility: AccessibilityConfig,
@@ -192,8 +190,8 @@ pub struct Config {
     pub download: download::DownloadConfig,
     pub music: music::MusicConfig,
 
-    /// The keys neither frontend models, kept so a load/save round-trip does
-    /// not drop one a newer build wrote.
+    /// Keys the config does not model, kept so a load/save round-trip does not
+    /// drop one a newer build wrote.
     #[serde(flatten)]
     pub extra: BTreeMap<String, toml::Value>,
 }

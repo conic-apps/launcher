@@ -6,18 +6,16 @@ import { Theme } from "../../theme.slint";
 import { SetupWizardState } from "../../globals/setup.slint";
 import { WizardTitle, WizardMessage } from "wizard-text.slint";
 
-// One of the three `.import-instances button`s: 240x36, `--ctp-lavender`, a
-// `--ctp-text-inverse` label, and a white wash on top of the fill for the hover
-// and the press (`linear-gradient(#ffffff2f, #ffffff2f)` and `#ffffff6f`).
+// One of the three import buttons: 240x36 with a white wash on top of the fill
+// for the hover and the press.
 //
 // The wash is drawn rather than mixed into the fill so the `error` variant can
-// still repaint the button underneath it — the Vue's `background` and
-// `background-image` are two properties, and one inline rule over the other.
+// still repaint the button underneath it.
 component ImportButton inherits Rectangle {
     in property <string> text;
-    /// `&.error { background: var(--ctp-red) }`, over the lavender.
+    /// Paints the button red, over the lavender.
     in property <bool> error: false;
-    /// `&.creating, &.error { opacity: 0.7; pointer-events: none }`.
+    /// Dims the button and stops it taking clicks.
     in property <bool> inactive: false;
     callback clicked;
 
@@ -27,10 +25,9 @@ component ImportButton inherits Rectangle {
     background: root.error ? Theme.red : Theme.lavender;
     opacity: root.inactive ? 0.7 : 1.0;
 
-    // The hover and press washes, which the Vue draws as a `background-image`
-    // layer *over* the `background` colour: `#ffffff2f` is white at 18% and
-    // `#ffffff6f` at 43%. A separate element rather than a mixed colour, since
-    // the error variant still repaints the button underneath it.
+    // The hover and press washes: `#ffffff2f` is white at 18% and `#ffffff6f` at
+    // 43%. A separate element over the fill rather than a mixed colour, since the
+    // error variant still repaints the button underneath it.
     Rectangle {
         width: 100%;
         height: 100%;
@@ -56,12 +53,8 @@ component ImportButton inherits Rectangle {
     }
 }
 
-// src/views/setup/SetupWizardImportInstances.vue
-//
-// Two of the three buttons do nothing in the Vue: `.import-from-other-launcher`
-// has no `@click` at all, so importing from another launcher is a button the
-// original never wired up. It is ported as the dead button it is rather than
-// left out, so the screen still looks the way it does.
+// The "Import instances" button does nothing yet: it has no click handler, so it
+// is left in place as the dead button it is rather than removed.
 export component SetupImportInstances inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
@@ -71,9 +64,8 @@ export component SetupImportInstances inherits VerticalLayout {
 
     WizardMessage { message: @tr("SetupImportInstances" => "Import previously played instances from other launchers to get started quickly"); }
 
-    // `<div style="width: 100%; display: flex; justify-content: center; margin:
-    // 12px 0">` — the margins are split into the two spacers around the row,
-    // since a layout has none.
+    // The row is centred, with its 12px margins split into the two spacers
+    // around it, since a layout has none.
     Rectangle {
         width: 100%;
         height: 12px;
@@ -103,8 +95,7 @@ export component SetupImportInstances inherits VerticalLayout {
         background: transparent;
     }
 
-    // `<div style="width: 100%; display: flex; justify-content: center; gap:
-    // 16px; margin: 12px 0">`.
+    // The row is centred, with a 16px gap and 12px margins.
     HorizontalLayout {
         width: 100%;
         alignment: center;

@@ -2,9 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The add-account dialog's "script": drives `slint-account` from the dialog's
-//! state (src/overlays/dialogs/AccountAdd.vue and the four screens under
-//! `src/views/accounts/`).
+//! The add-account dialog's "script": drives `account` from the dialog's state
+//! and its four screens.
 //!
 //! Like `create_instance.rs`, everything that touches the network or the disk
 //! runs on the tokio runtime (`crate::runtime`) and reports back through
@@ -40,6 +39,12 @@ use account::{
 };
 use authcode::Outcome;
 
+pub(crate) mod login;
+mod wiring;
+
+pub(crate) use login::*;
+pub(crate) use wiring::*;
+
 /// How long the browser flow's listener waits before giving the port back.
 ///
 /// An authorization code issued by Microsoft's `consumers` endpoint is good for
@@ -47,12 +52,6 @@ use authcode::Outcome;
 /// listener outlives anything shorter. It is the ceiling, not a prompt: the
 /// listener is released the moment the code arrives, the user switches to the
 /// device code, or the dialog closes.
-pub(crate) mod login;
-mod wiring;
-
-pub(crate) use login::*;
-pub(crate) use wiring::*;
-
 const AUTH_CODE_TIMEOUT: Duration = Duration::from_secs(600);
 
 thread_local! {
@@ -64,7 +63,7 @@ thread_local! {
     /// reason).
     static PROFILES: Rc<VecModel<YggdrasilProfileItem>> = Rc::new(VecModel::default());
 
-    /// The credentials the chooser's rows belong to (the Vue's `authResponse`).
+    /// The credentials the chooser's rows belong to.
     static PENDING: RefCell<Option<PendingYggdrasil>> = const { RefCell::new(None) };
 
     /// What the Microsoft screen's flow owns from one screen swap to the next.
@@ -73,11 +72,10 @@ thread_local! {
 
 /// The state the Microsoft screen's two flows carry between callbacks.
 ///
-/// The login task is the Tauri plugin's `PluginState` (see
-/// `account::LoginTaskState`): at most one, cancellable, and the only
-/// thing that owns a running Microsoft login. The listener is the browser
-/// flow's other half, and it lives in the same box because it is released in
-/// the same places — leaving the screen, cancelling, closing.
+/// The login task (see `account::LoginTaskState`) is at most one, cancellable,
+/// and the only thing that owns a running Microsoft login. The listener is the
+/// browser flow's other half, and it lives in the same box because it is
+/// released in the same places — leaving the screen, cancelling, closing.
 #[derive(Default)]
 pub(crate) struct MicrosoftFlow {
     login: LoginTaskState,
@@ -92,24 +90,18 @@ pub(crate) struct MicrosoftFlow {
 }
 
 /// The credentials and profiles of a successful Yggdrasil sign-in, held between
-/// the form and the profile chooser — the Vue keeps the whole `AuthResponse` in
-/// its `authResponse` ref.
+/// the form and the profile chooser.
 #[derive(Clone)]
 pub(crate) struct PendingYggdrasil {
     api_root: String,
     username: String,
     access_token: String,
     client_token: String,
-    /// `availableProfiles`, in the order the server answered with (the crate
-    /// sorts them by name).
+    /// `availableProfiles`, sorted by name (the crate reorders whatever the
+    /// server answered with).
     profiles: Vec<YggdrasilProfile>,
 }
 
-/// Registers every add-account callback on the `AccountAddState` global.
-///
-/// No configuration is involved: an add writes an account file and then asks
-/// the game view to reload (`finish_add`), which is what picks the default
-/// account and persists the choice.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -142,21 +134,22 @@ mod tests {
             query["redirect_uri"],
             "http%3A%2F%2Flocalhost%3A53421%2Fcallback"
         );
-        // And the deep link's is gone — it is not something this app can serve.
+        // And no `conic-launcher://` deep link is in it — it is not something
+        // this app can serve.
         assert!(!url.contains("conic-launcher"), "{url}");
     }
 
     #[test]
     fn the_authorize_url_is_the_vue_one_with_two_changes() {
         let query = query_of(&authorize_url("http://localhost:53421/callback", "abc123"));
-        // Everything the Vue's `AUTH_CODE_LOGIN_URL` had, unchanged, so both
-        // frontends ask Microsoft the same question.
+        // The endpoint, the client id, `response_mode`, `prompt` and the scope,
+        // unchanged.
         assert_eq!(query["client_id"], "94a1414e-e9ad-4bda-94f0-3368d979b0cc");
         assert_eq!(query["response_type"], "code");
         assert_eq!(query["response_mode"], "query");
         assert_eq!(query["prompt"], "select_account");
         assert_eq!(query["scope"], "XboxLive.signin%20offline_access");
-        // Plus the two this flow needs and the deep link did not.
+        // Plus the `state` this flow adds.
         assert_eq!(query["state"], "abc123");
     }
 
@@ -208,7 +201,8 @@ mod tests {
             .get_auth_code_login_url()
             .to_string();
         let query = query_of(&url);
-        // A `localhost` redirect, on a port the OS chose, and not the deep link.
+        // A `localhost` redirect, on a port the OS chose, not a
+        // `conic-launcher://` one.
         assert!(
             query["redirect_uri"].starts_with("http%3A%2F%2Flocalhost%3A"),
             "{url}"

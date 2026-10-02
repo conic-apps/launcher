@@ -40,7 +40,7 @@ i-slint-backend-testing = "=1.18.1"
 
 [build-dependencies]
 slint-build.workspace = true
-# `build.rs` generates `ui/icons.slint` from the SVGs under `src/assets/icons/`.
+# `build.rs` generates `app/ui/icons.slint` from the SVGs under `app/ui/assets/icons/`.
 usvg.workspace = true
 
 [dependencies]
@@ -48,7 +48,7 @@ usvg.workspace = true
 # (webp, gif, bmp, ico, …) to the decoders Slint builds in, so a picked
 # background image previews in its original format like it does in the browser.
 # `unstable-fontique-011` exposes `slint::fontique_011::shared_collection()`,
-# which `src/cjk_font.rs` uses to name a real CJK family for the Han script
+# which `app/src/cjk_font.rs` uses to name a real CJK family for the Han script
 # (see that module for why the OS fallback is not enough on Windows).
 slint = { workspace = true, features = ["image-default-formats", "unstable-fontique-011"] }
 platform.workspace = true
@@ -57,7 +57,7 @@ config.workspace = true
 folder.workspace = true
 account.workspace = true
 # The loopback listener the Microsoft browser flow's authorization code comes
-# back on, and the page the browser is shown there (see `app/src/account_add.rs`).
+# back on, and the page the browser is shown there (see `app/src/account_add/`).
 authcode.workspace = true
 instance.workspace = true
 content.workspace = true
@@ -72,10 +72,10 @@ java-runtime.workspace = true
 statistics.workspace = true
 single-instance.workspace = true
 multiplayer.workspace = true
-# The Markdown/HTML body of a content detail panel. `src/content.rs` drives it:
+# The Markdown/HTML body of a content detail panel. `app/src/content/` drives it:
 # the body is parsed and laid out in Rust and the resulting display list is pushed
 # into the `ContentState` model the panel draws (see
-# `ui/overlays/content/markdown-body.slint`).
+# `app/ui/overlays/content/markdown-body.slint`).
 markdown.workspace = true
 music.workspace = true
 
@@ -87,7 +87,7 @@ base64.workspace = true
 # Decoding a skin texture into the pixel buffer `AccountAvatar` draws, and the
 # content overlays' project icons. `image-default-formats` on Slint covers what
 # Slint itself loads; these are the codecs the icon hosts serve by name, which
-# the app decodes itself (`content.rs`).
+# the app decodes itself (`app/src/content/`).
 image = { version = "0.25", default-features = false, features = ["png", "webp", "jpeg", "gif"] }
 # Comparing two Yggdrasil API roots (`account_add`'s `same_api_root`), and the
 # repository URL a detail panel reduces to `owner/repo`.
@@ -96,12 +96,12 @@ url.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 once_cell.workspace = true
-# The runtime the background work runs on, standing in for Tauri's (see
-# `src/runtime.rs`). Multi-threaded like Tauri's, and `net` for the HTTP client
-# of `install`, which reqwest turns on with its own dependency.
+# The runtime the background work runs on (see `app/src/runtime.rs`).
+# Multi-threaded, and `net` for the HTTP client of `install`, which reqwest
+# turns on with its own dependency.
 # `time` is what the background's own clock sleeps on: it must not be a Slint
 # timer, which only ticks while the window is being painted (see
-# `src/background/controller.rs`).
+# `app/src/background/controller.rs`).
 tokio = { workspace = true, features = ["rt-multi-thread", "net", "time"] }
 log.workspace = true
 env_logger.workspace = true
@@ -127,7 +127,7 @@ objc2-foundation = { version = "0.2", features = [
 block2 = "0.5"
 
 # Used to keep the platform's own window controls over the custom title bar on
-# Windows (see `src/windows_caption.rs`): the window frame and its messages, the
+# Windows (see `app/src/windows_caption.rs`): the window frame and its messages, the
 # GDI text drawing the controls' glyphs come from, and the window subclassing the
 # frame needs. `Win32_UI_Shell` is where the SDK declares comctl32's
 # `SetWindowSubclass` / `DefSubclassProc`.
@@ -226,7 +226,7 @@ assets = [
 # `cargo rpm` reads its extra files from the `.rpm/` directory next to *this*
 # file rather than from arbitrary paths, so the entries below are keys into
 # `app/.rpm/` -- populated from `packaging/linux/` by
-# `tools/package-linux.sh`. The spec that consumes them is `app/.rpm/`.
+# `tools/package-linux.sh`. The spec that consumes them is `app/.rpm/conic-launcher.spec`.
 [package.metadata.rpm.cargo]
 # Only used when `cargo rpm` builds for itself, which the script does not do (it
 # passes `--no-cargo-build` so the executable above is the one packaged). Here so

@@ -9,29 +9,25 @@ import { GameFooterBar } from "game/footer.slint";
 import { InstanceSettingsRoot } from "../overlays/instance-settings.slint";
 import { ContentRoot } from "../overlays/content/content-root.slint";
 
-// The game screen (src/views/GameView.vue): current-instance summary on the
-// left, the grouped instance list on the right and the footer bar beneath.
-// The click-to-open content overlays live in ContentRoot.
+// The game screen: current-instance summary on the left, the grouped instance
+// list on the right and the footer bar beneath. The click-to-open content
+// overlays live in ContentRoot.
 export component GameView inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
     // The screen is recreated on every navigation to it (the page stack uses a
-    // conditional), so the intro replays exactly like the Vue `onMounted`.
+    // conditional), so the intro replays on every visit.
     init => {
         GameIntro.played = false;
     }
 
-    // Vue's `onMounted` starts a paused timeline with the footer's and the
-    // summary's intros, then chains the list's after awaiting both `ready`
-    // promises (the list resolving after a `nextTick` + a frame, i.e. once it has
-    // been measured). Here the same single beat is used: once the first frame has
-    // been rendered, centre the current instance without animating
-    // (Vue `scrollTo(id, false)` on mount, so the list opens on the selected
+    // The intro is a single beat: once the first frame has been rendered, centre
+    // the current instance without animating (so the list opens on the selected
     // instance rather than gliding to it) and then play every intro at once by
     // flipping the shared flag — each element's `animate` carries its own delay,
-    // which is how the gsap timeline positions are reproduced.
+    // which is how the timeline positions are reproduced.
     intro-timer := Timer {
         interval: 50ms;
         running: true;
@@ -62,14 +58,12 @@ export component GameView inherits Rectangle {
         y: parent.height - self.height;
     }
 
-    // The instance settings overlay (`GameView.vue`'s
-    // `.instance-settings-wrapper`). Declared before `ContentRoot` because the
-    // Vue mounts it first, and its DOM order is what decides which of the two is
-    // on top when both are open.
+    // The instance settings overlay. Declared before `ContentRoot` because it
+    // paints first, and their order is what decides which of the two is on top
+    // when both are open.
     InstanceSettingsRoot { }
 
-    // The content overlays (src/overlays/content/*). Mounted here rather than
-    // at the app root because the Vue mounts them inside `GameView.vue`: the
+    // The content overlays. Mounted here rather than at the app root so the
     // panels sit below the title bar and only exist on the game screen.
     ContentRoot { }
 }

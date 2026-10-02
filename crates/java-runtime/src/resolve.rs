@@ -5,16 +5,13 @@
 //! Selection of the Java executable used to launch the game or run mod loader
 //! installers.
 //!
-//! The resolution order mirrors what players expect from a launcher:
+//! The resolution order follows what players expect from a launcher:
 //!
 //! 1. An instance-specific `java_path`, when configured by the user;
 //! 2. When `prefer_mojang_java` is enabled, the Mojang-provided runtime
 //!    installed under the launcher runtime directory;
 //! 3. A system-installed Java runtime matching the required major version,
 //!    excluding launcher-managed and user-disabled runtimes.
-//!
-//! The original runs the system scan through `tauri::async_runtime::spawn_blocking`;
-//! the mirror uses the app's own tokio runtime, which is the same trade.
 
 use std::path::PathBuf;
 

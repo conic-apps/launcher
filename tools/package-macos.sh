@@ -3,7 +3,8 @@
 # Copyright 2022-2026 ConicMC developers. All rights reserved.
 # SPDX-License-Identifier: GPL-3.0-only
 
-# Build the macOS artifacts: the `.app` bundle, a universal binary, and a `.dmg`.
+# Build the macOS artifacts: the `.app` bundle, a binary (native, or universal
+# with `--universal`), and a `.dmg`.
 #
 # Usage:
 #   tools/package-macos.sh                    # .app + .dmg, native arch only
@@ -13,10 +14,9 @@
 #
 # Everything lands in `<target-dir>/package/`.
 #
-# What Tauri used to do and this does instead: Tauri's bundler assembled the
-# `.app`, produced a universal binary with `lipo`, ad-hoc signed it and ran
-# `create-dmg`. None of that is reachable now, so it is done here — with the same
-# system tools, so the result is the same shape of artifact.
+# This assembles the `.app`, makes a universal binary with `lipo`, ad-hoc signs
+# it and builds a `.dmg` — out of the same system tools, so the result is the
+# usual shape of artifact.
 
 set -euo pipefail
 
@@ -154,7 +154,7 @@ fi
 # Universal binary
 # ---------------------------------------------------------------------------
 
-# Assigned now, used by the `--version`-style substitution further down; declared
+# Assigned now, used throughout the bundle and image assembly below; declared
 # readonly together with the other derived facts so that everything computed from
 # the workspace is in one place.
 readonly STAGE="$TARGET_DIR/package"
@@ -223,10 +223,9 @@ for key in CFBundleShortVersionString CFBundleVersion; do
     value="$SHORT_VERSION"
     [[ "$key" == "CFBundleVersion" ]] && value="$VERSION"
 
-    # Replace the placeholder in place. `Add` rather than `Set` because the key
-    # already exists in the template and `Set` on a present key would rewrite it
-    # — either works, but `Set` fails loudly if the template ever loses the key,
-    # which is the failure worth catching.
+    # Replace the placeholder in place with `Set`. It fails loudly if the
+    # template ever loses the key, which is the failure worth catching; `Add`
+    # would refuse a key that is already present.
     if /usr/libexec/PlistBuddy -c "Set :$key $value" "$PLIST" 2> /dev/null; then
         :
     else
@@ -333,10 +332,8 @@ step "Building the .dmg"
 readonly DMG="$STAGE/$CRATE-$VERSION-$DMG_ARCH.dmg"
 readonly MOUNT_DIR="$(mktemp -d)"
 
-# `hdiutil create -srcfolder` on a staging directory, rather than Tauri's
-# `create-dmg`: `create-dmg` is an npm package the project no longer has a
-# toolchain for, and the layout it produces (app + Applications symlink) is a
-# handful of lines of shell.
+# `hdiutil create -srcfolder` on a staging directory: the layout it produces
+# (app + Applications symlink) is a handful of lines of shell.
 # `WORK` rather than a second scratch directory: it is already inside `$STAGE`,
 # it is already emptied above, and reusing it keeps the number of places this
 # script can leave something behind down to one.

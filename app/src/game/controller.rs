@@ -12,7 +12,7 @@ impl GameController {
         let rows_model = Rc::new(VecModel::<GameRow>::default());
         let reveal_timer = Timer::default();
         {
-            // Deferred by a frame: a row that is created with `appear: true`
+            // Deferred by 50ms: a row that is created with `appear: true`
             // already set is simply placed, so the flag has to flip afterwards for
             // the view to animate it in (see `GameRow::appear`).
             let rows = Rc::clone(&rows_model);
@@ -24,9 +24,8 @@ impl GameController {
                 },
             );
         }
-        // What the Vue read back out of `localStorage` before its first paint
-        // (`instance.ts`'s `currentInstanceId` and `InstancesList.vue`'s three
-        // keys), so a restart comes back to the list the user left.
+        // The persisted view state, read back before the first paint so a
+        // restart comes back to the list the user left.
         let saved = instance_view::load();
         let sort = match saved.sort_mode() {
             SavedSortMode::Name => SortBy::Name,
@@ -39,8 +38,8 @@ impl GameController {
             GroupMode::None => "none",
         };
         // The id is not checked against the listing here: the instances have not
-        // been read yet. `set_instances` drops it if the instance is gone, which
-        // is the same fallback the Vue's `find(…) ?? listedInstances[0]` made.
+        // been read yet. `set_instances` drops it if the instance is gone,
+        // falling back to the first instance.
         let current_id = (!saved.current_id.is_empty()).then_some(saved.current_id);
         Self {
             config,
@@ -84,10 +83,9 @@ impl GameController {
         // Re-scan the per-instance caches so a refresh picks up external changes.
         self.playtime.clear();
         self.content.clear();
-        // Keep the selection valid, falling back to the first instance. The
-        // Vue's `find(…) ?? listedInstances[0]` did the same, and its
-        // `watch(currentInstance, …)` wrote the new id out — which is how a
-        // deleted instance stops being restored on the next run.
+        // Keep the selection valid, falling back to the first instance and
+        // persisting it, so a deleted instance stops being restored on the next
+        // run.
         let kept = self
             .current_id
             .as_ref()
@@ -172,14 +170,12 @@ impl GameController {
         self.expanded.get(key).copied().unwrap_or(true)
     }
 
-    /// Writes the four values the Vue kept in `localStorage` back out.
+    /// Persists the view state: the current id, the sort, the grouping and the
+    /// expanded groups.
     ///
-    /// `instance.ts`'s `watch(currentInstance, …)` and the three
-    /// `watch(…, { deep: true })` in `InstancesList.vue` each fired on their own
-    /// value, and each write was a single `setItem`. Here they are one file, and
-    /// it is written at the same moments: a write is a few kilobytes of JSON and
-    /// it happens on a sort, a grouping, a group toggle and an instance switch —
-    /// not on a scroll, a search or a refresh.
+    /// It is written on a sort, a grouping, a group toggle and an instance
+    /// switch — not on a scroll, a search or a refresh — since a write is a few
+    /// kilobytes of JSON.
     pub(crate) fn persist(&self) {
         let state = InstanceViewState {
             current_id: self.current_id.clone().unwrap_or_default(),
@@ -279,10 +275,9 @@ impl GameController {
             row_y += GROUP_HEIGHT;
 
             // A collapsed group keeps its cards in the model, in the positions
-            // they would have when open, with `opacity: 0`. The original shrinks
-            // the group's box while its cards fade where they stand (they are in
-            // normal flow there), so the group has to fade as a whole — the gap is
-            // closed by the rows below gliding up, never by the cards moving.
+            // they would have when open, with `opacity: 0`. The group fades as a
+            // whole while its cards stay put — the gap is closed by the rows
+            // below gliding up, never by the cards moving.
             let mut member_y = row_y;
             for instance in members {
                 let opacity = if collapsed { 0.0 } else { 1.0 };
@@ -291,9 +286,8 @@ impl GameController {
                 if collapsed {
                     continue;
                 }
-                // The current instance is centred on the *first* row that shows it,
-                // which is the starred copy when it has one (the Vue `scrollTo`
-                // matches the first `data-id`).
+                // The current instance is centred on the *first* row that shows
+                // it, which is the starred copy when it has one.
                 if current_row.is_none() && self.current_id.as_deref() == Some(instance.id.as_str())
                 {
                     current_row = Some((row_y, CARD_HEIGHT));
@@ -343,7 +337,7 @@ impl GameController {
 
     /// Merges the freshly laid-out rows into the model the view is rendering.
     ///
-    /// Rows are matched by key rather than by position: reordering (sorting,
+    /// Rows are matched by `uid` rather than by position: reordering (sorting,
     /// grouping, starring) only changes their `row_y`, and the view animates the
     /// rows it already has. Resetting the model instead would destroy and recreate
     /// every row item, which is exactly what would stop them gliding along the
@@ -411,8 +405,8 @@ impl GameController {
         let show_placeholder =
             self.instances.is_empty() || (!self.search.trim().is_empty() && filtered.is_empty());
         let (rows, content_height, current_row) = self.build_rows();
-        // The motion kind has been baked into those rows: everything that follows
-        // is a FLIP unless a collapse asks for its own timing.
+        // The motion kind has been baked into those rows; reset the flag so the
+        // next layout defaults to the FLIP.
         self.flip = true;
 
         // Content counts + summary need the current instance; compute them
@@ -468,7 +462,7 @@ impl GameController {
         let current_id = current.as_ref().map(|instance| instance.id.clone());
         apply_current(&state, current.as_ref(), playtime);
         // The preview rows draw the first few icons of each kind as well as
-        // their counts; `content.rs` owns the decoding and the caches.
+        // their counts; `content` owns the decoding and the caches.
         apply_preview_rows(ui, &state, current_id.as_deref());
         apply_content_counts(&state, content);
         apply_account(&state, current_account.as_ref(), current_avatar);

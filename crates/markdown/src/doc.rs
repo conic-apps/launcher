@@ -104,8 +104,8 @@ pub enum Block {
     Footnote {
         /// The definition's label, as written in the document.
         name: String,
-        /// Its ordinal, which is the position of the definition among the
-        /// document's definitions.
+        /// Its ordinal: comrak's reference-order number, or the order the
+        /// definition was found in for one the extension did not number.
         number: usize,
         /// The definition's own blocks.
         blocks: Vec<Block>,

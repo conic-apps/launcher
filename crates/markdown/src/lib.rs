@@ -48,7 +48,7 @@
 //! # Two things to know
 //!
 //! - **Measurement needs the main thread.** Text is shaped against
-//!   [`slint::fontique_011::shared_collection`], which is Slint's font
+//!   `slint::fontique_011::shared_collection`, which is Slint's font
 //!   collection, and that is reached through the thread that owns the Slint
 //!   context. Parsing a document does not, and a caller with a big body should
 //!   parse on a worker and lay out on the main one.
@@ -86,12 +86,12 @@ pub mod fonts {
 
 /// The directory the companion `.slint` files live in.
 ///
-/// A caller that wants the component adds this to slint-build's include path:
+/// A caller that wants the component adds this to slint-build's include path in
+/// its own `build.rs`:
 ///
-/// ```no_run
-/// // In the caller's build.rs, with `slint-build` as a build dependency:
-/// //   slint_build::CompilerConfiguration::new()
-/// //       .with_include_paths(vec![markdown::ui_path()])
+/// ```text
+/// slint_build::CompilerConfiguration::new()
+///     .with_include_paths(vec![markdown::ui_path()])
 /// ```
 ///
 /// The crate ships them as data rather than compiling them itself: a Slint
@@ -197,9 +197,9 @@ impl Renderer {
         &self.style
     }
 
-    /// Sets the width the document is laid out for. Sub-pixel changes are
-    /// ignored, because they cannot change a line break by enough to matter and
-    /// a window drag produces one on every frame.
+    /// Sets the width the document is laid out for. Changes of half a pixel or
+    /// less are ignored, because they cannot change a line break by enough to
+    /// matter and a window drag produces one on every frame.
     ///
     /// Returns whether the document needs laying out again.
     pub fn set_width(&mut self, width: f32) -> bool {

@@ -6,29 +6,26 @@ import { Theme } from "../theme.slint";
 import { AppIcon } from "app-icon.slint";
 import { FocusManager } from "../globals/focus.slint";
 
-// A titled group of settings (src/components/SettingGroup.vue).
+// A titled group of settings.
 //
-// `width: calc(100% - 16px); margin: 0 auto` becomes a full-width layout whose
-// items are inset by the settings page (`padding: 0 8px`).
+// It is a full-width layout whose items are inset by the settings page.
 //
-// The corners are the rows', not the wrapper's: the Vue rounds `:first-child`
-// and `:last-child` and puts no `overflow` on `.setting-items`, so the two ways
-// of doing it here are both wrong. Clipping the wrapper rounds the rows, but
-// cuts off the value tooltip a control in the first row draws above itself.
-// Rounding every row and painting the card behind them leaves a notch at each
-// row's corners and at every 1px seam, which only the card's colour hides — and
-// a hovered row is a lighter colour, so its four corners show the base one
-// through. `SettingItem`'s `group-first` / `group-last` do what the Vue's
-// selectors do: the two rows that end the group round the two corners they are
-// on, and nothing else rounds anything.
+// The corners are the rows', not the wrapper's, and the two obvious ways of
+// doing it are both wrong. Clipping the wrapper rounds the rows, but cuts off
+// the value tooltip a control in the first row draws above itself. Rounding
+// every row and painting the card behind them leaves a notch at each row's
+// corners and at every 1px seam, which only the card's colour hides — and a
+// hovered row is a lighter colour, so its four corners show the base one
+// through. `SettingItem`'s `group-first` / `group-last` round only the two rows
+// that end the group, and nothing else rounds anything.
 export component SettingGroup inherits VerticalLayout {
     in property <string> title: "";
     in property <bool> resetable: false;
     in property <bool> danger: false;
-    /// `.setting-group-disabled { opacity: 0.6 }` with `* { pointer-events:
-    /// none }`. The instance settings overlay's launch options and memory groups
-    /// use it: they are inert until the instance overrides the launcher's own
-    /// launch settings, which is what `enable_instance_specific_settings` means.
+    /// Dims and disables every control in the group. The instance settings
+    /// overlay's launch options and memory groups use it: they are inert until
+    /// the instance overrides the launcher's own launch settings, which is what
+    /// `enable_instance_specific_settings` means.
     in property <bool> group-disabled: false;
     callback reset;
 
@@ -42,8 +39,8 @@ export component SettingGroup inherits VerticalLayout {
 
         HorizontalLayout {
             padding-left: 8px;
-            // `> p.title` is a flex row with no `gap`, so the 3px the reset button
-            // carries on its left *is* the space between the two.
+            // The title Text has no right padding; the layout's 3px spacing is
+            // the gap between the two.
             spacing: 3px;
             cross-axis-alignment: center;
             alignment: start;
@@ -88,9 +85,9 @@ export component SettingGroup inherits VerticalLayout {
             @children
         }
 
-        // `--setting-group-border` (Latte, and every high-contrast scheme).
-        // Drawn as an overlay after the rows so the 1px hairline sits on top;
-        // it is transparent (no-op) on the dark flavors without high contrast.
+        // The group border (Latte, and every high-contrast scheme). Drawn as an
+        // overlay after the rows so the 1px hairline sits on top; it is
+        // transparent on the dark flavors without high contrast.
         group-border := Rectangle {
             border-radius: 8px;
             border-width: 1px;
@@ -100,14 +97,11 @@ export component SettingGroup inherits VerticalLayout {
             background: transparent;
         }
 
-        // The `* { pointer-events: none }` half of `.setting-group-disabled`.
-        //
         // Slint has no inherited "ignore the pointer" switch, so the rows are
         // covered instead. Declared last so it is the topmost element of the
         // box, and a bare `TouchArea` because that is the only thing that
         // intercepts: `scroll-event` still defaults to reject, so the wheel
-        // carries on to the scroller the group sits in, exactly as an element
-        // with `pointer-events: none` lets it through.
+        // carries on to the scroller the group sits in.
         if root.group-disabled : TouchArea {
             width: 100%;
             height: 100%;

@@ -2,25 +2,21 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Tauri-free mirror of `crates/music`, the launcher background music player.
+//! The launcher's background music player.
 //!
-//! The original crate is a Tauri plugin with a single command, the listing of
-//! the music folder. Everything else the player did — decoding, the output
-//! device, the analyser, the transport, the playlist, the saved position —
-//! lived in the webview (`src/store/music.ts` and the `<audio>` element it drove
-//! through the Web Audio API). A native app has no webview, so all of it is here,
-//! split the way the store's responsibilities were:
+//! Everything the player needs — decoding, the output device, the analyser, the
+//! transport, the playlist, the saved position — lives here, split by
+//! responsibility:
 //!
-//!   * [`decode`] is the `src` the element was pointed at: a file becomes PCM.
-//!   * [`analyser`] is the `AnalyserNode`, down to the Blackman window and the
-//!     smoothing constant.
-//!   * [`player`] is the graph (`source → analyser → gain → destination`) and the
-//!     `useMusicStore` actions driving it.
-//!   * [`session`] is the `localStorage` entry the store kept its position in.
+//!   * [`decode`] turns a file into PCM.
+//!   * [`analyser`] is the frequency analyser the footer visualizer reads, down
+//!     to the Blackman window and the smoothing constant.
+//!   * [`player`] is the audio graph (`source → gain → destination`, with the
+//!     analyser tapping the post-gain output) and the transport driving it.
+//!   * [`session`] persists the current track and position.
 //!
-//! The listing itself is the original's, unchanged, and the folder it reads is
-//! the shared one (`folder::DATA_LOCATION.music`), so both frontends see
-//! the same files.
+//! [`list_music_files`] reads the shared music folder
+//! (`folder::DATA_LOCATION.music`).
 
 use std::path::Path;
 
@@ -47,7 +43,8 @@ pub struct MusicFile {
     pub path: String,
 }
 
-/// Lists all supported audio files inside the music directory.
+/// Lists the files in the music directory that carry a recognised audio
+/// extension.
 pub fn list_music_files() -> Result<Vec<MusicFile>> {
     let entries = std::fs::read_dir(&folder::DATA_LOCATION.music)?;
     let mut files = Vec::new();

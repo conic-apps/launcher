@@ -139,9 +139,9 @@ component SystemWindowControl inherits Rectangle {
     }
 }
 
-// Title bar (App.vue). macOS uses native traffic lights, Linux the custom window
-// controls below, and Windows the platform's own controls over the right-hand end
-// of the bar (`SystemWindowControl`).
+// Title bar. macOS uses native traffic lights, Linux the custom window controls
+// below, and Windows the platform's own controls over the right-hand end of the
+// bar (`SystemWindowControl`).
 export component TitleBar inherits Rectangle {
     in property <bool> macos: false;
     in property <bool> linux: false;
@@ -159,9 +159,8 @@ export component TitleBar inherits Rectangle {
     in property <string> search-placeholder;
     in property <string> search-hotkey;
     in property <string> current-page: "game";
-    /// Whether background music is on at all, which is the Vue's
-    /// `v-if="config.music.enabled"` on the music button. Turning it off pauses
-    /// the player and closes its panel (`src/music.rs`).
+    /// Whether background music is on at all. Turning it off pauses the player
+    /// and closes its panel (`app/src/music/`).
     in property <bool> music-enabled: true;
 
     callback open-home();
@@ -173,17 +172,16 @@ export component TitleBar inherits Rectangle {
     callback close-window();
 
     // What the right-hand actions have to stay clear of: the custom Linux
-    // controls (78px of buttons plus the gap that follows them, 86px in all) or
-    // the platform's own controls plus the same gap. macOS has nothing on the
-    // right, which is why it keeps the 10px edge padding the Vue gives every
-    // platform.
+    // controls (78px of buttons plus an 8px gap, 86px in all) or the platform's
+    // own controls plus a 10px gap. macOS has nothing on the right, so its
+    // inset is that 10px on its own.
     private property <length> controls-inset:
         root.linux ? 86px : root.window-controls-inset + 10px;
 
     // The navigation glyphs are Ionicons (stroked, 512 viewbox, stroke-width 32)
-    // read out of the generated `Icons` table rather than pasted in here: they
-    // used to be a second hand-written copy of three entries in it, free to drift.
-    // An 18px glyph on a 512 view box scales the stroke to 32 * 18 / 512 = 1.125px.
+    // read out of the generated `Icons` table rather than pasted in here, so they
+    // cannot drift from the icon set. An 18px glyph on a 512 view box scales the
+    // stroke to 32 * 18 / 512 = 1.125px.
     private property <length> stroked-icon-width: 1.125px;
     // The three Linux/Windows window-control glyphs below are *not* in the icon
     // set -- they are drawn to the platform's own metrics, and there is no SVG
@@ -224,11 +222,10 @@ export component TitleBar inherits Rectangle {
             double-clicked => { root.maximize-or-fullscreen(); }
         }
 
-        // Left navigation actions (settings, home). .title-bar-actions-left is
-        // at left:16, or left:90 on macOS to clear the native traffic lights —
-        // except in fullscreen, where AppKit hides them: the controls take the
-        // corner they leave behind instead of lining up behind nothing. (The
-        // Vue keeps the 90px gap there.)
+        // Left navigation actions (settings, home). At left:16, or left:90 on
+        // macOS to clear the native traffic lights — except in fullscreen, where
+        // AppKit hides them: the controls take the corner they leave behind
+        // instead of lining up behind nothing.
         Rectangle {
             x: root.macos && !root.fullscreen ? 90px : 16px;
             width: 60px;
@@ -284,10 +281,9 @@ export component TitleBar inherits Rectangle {
             }
         }
 
-        // Centered search bar. Mirrors App.vue: .title-bar-container is
-        // calc(100vw - 500px) centered; the search bar is given width:100%
-        // via inline style and fills the container; .search-hotkey floats
-        // right:10 of the container (i.e. 10px inside the bar's right edge).
+        // Centered search bar. The container is `calc(100vw - 500px)` wide,
+        // centred; the search bar fills it, and the hotkey chip floats 10px
+        // inside its right edge.
         search-container := Rectangle {
             width: max(0px, root.width - 500px);
             height: root.height;

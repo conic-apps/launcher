@@ -108,7 +108,7 @@ pub struct SessionConfig {
     pub motd: Option<String>,
 }
 
-/// Point-in-time view of the session, mirroring the FFI `state` contract.
+/// Point-in-time view of the session, matching the FFI `state` contract.
 #[derive(Debug, Clone, Serialize)]
 pub struct SessionState {
     pub version: u64,
@@ -447,11 +447,12 @@ unsafe fn read_string(value: &ConicNexusString) -> String {
     // defined as `u8` on aarch64 and `i8` on x86, so the cast is a real type
     // change on one and a no-op on the other. `clippy::unnecessary_cast`
     // evaluates against the target being checked, so it fires exactly where
-    // `c_char` is `u8` -- which is every macOS target, and Linux aarch64. On the
-    // `i8` targets the expectation below goes unfulfilled and *that* becomes an
-    // error under `-D warnings`, which is why it has to be `allow`: the lint's
-    // presence genuinely depends on the target, so neither `expect` nor a bare
-    // `allow` is right on its own.
+    // `c_char` is `u8` -- which among this project's targets is Linux aarch64
+    // (macOS, Windows and x86_64 all sign `char`). On the `i8` targets the
+    // expectation below goes unfulfilled and *that* becomes an error under
+    // `-D warnings`, which is why it has to be `allow`: the lint's presence
+    // genuinely depends on the target, so neither `expect` nor a bare `allow` is
+    // right on its own.
     //
     // The alternative is declaring the field `*const u8` and dropping the cast,
     // which is what clippy suggests. That trades an accurate mirror of the C

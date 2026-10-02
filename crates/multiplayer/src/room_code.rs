@@ -4,14 +4,10 @@
 
 //! The room-code format check.
 //!
-//! `crates/multiplayer` leaves this to the frontend: its `index.ts` carries a
-//! regular expression plus a base-34 checksum that decides whether the "Join"
-//! button is enabled, and the crate's own `conic_nexus_room_code_is_valid` FFI
-//! call is a second implementation behind the library. The Slint app has no
-//! JavaScript wrapper to hold that copy, so the same algorithm lives here,
-//! byte-for-byte like the TypeScript: a `U/XXXX-XXXX-XXXX-XXXX` shape over the
-//! 34-character alphabet and a modulo-7 checksum over the little-endian digit
-//! value of the four groups.
+//! The Conic Nexus library exposes `conic_nexus_room_code_is_valid`, but the UI
+//! needs the check before a session exists, so the same algorithm lives here:
+//! a `U/XXXX-XXXX-XXXX-XXXX` shape over the 34-character alphabet and a modulo-7
+//! checksum over the little-endian digit value of the four groups.
 
 /// The alphabet's value for a code character, or `None` when it is not part of
 /// it. `0`–`9`, `A`–`H`, `J`–`N` and `P`–`Z` skip `I` and `O`.
@@ -25,7 +21,7 @@ fn char_value(ch: char) -> Option<u32> {
     }
 }
 
-/// The `isRoomCodeValid` of `crates/multiplayer/index.ts`.
+/// Whether `input` has the room-code shape and a valid checksum.
 pub fn is_room_code_valid(input: &str) -> bool {
     let chars: Vec<char> = input.chars().collect();
     if chars.len() != 21 {

@@ -2,26 +2,19 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The log file (`src/log.ts` + `tauri-plugin-log`'s folder target).
+//! The log file.
 //!
-//! The Tauri app wrote to three places: stdout, the webview console, and a file
-//! in the data directory's `logs` folder, rotating at 50 kB and keeping ten
-//! files. `Settings → About → "View launcher logs"` opens that folder, so a
-//! native app that writes nothing to it opens an empty directory.
+//! Lines go to a file in the data directory's `logs` folder, rotating at 50 kB
+//! and keeping ten files. `Settings → About → "View launcher logs"` opens that
+//! folder, so an app that writes nothing to it opens an empty directory.
 //!
-//! The webview's half has no counterpart and needs none: everything the frontend
-//! used to print is now printed by the Rust that replaced it, and this module is
-//! what puts those lines on disk.
-//!
-//! The file name and the archive naming are the plugin's own, so the folder looks
-//! the same whichever frontend wrote to it. It is not this crate's name: the
-//! plugin derives it from the Tauri app's, and the two frontends are meant to be
-//! running against the same `~/.conic[-debug]`.
+//! The file name and the archive naming match what earlier installs wrote, so a
+//! folder shared across versions looks the same.
 //!
 //! `env_logger` has no rotation, so the writer is a `Target::Pipe` around a
 //! small one: it appends, counts what it has written, and moves the file aside
-//! once it passes the limit. The count is in bytes rather than lines for the same
-//! reason the plugin counts bytes — it is what a 50 kB file limit means.
+//! once it passes the limit. The count is in bytes rather than lines — it is what
+//! a 50 kB file limit means.
 
 use std::{
     fs::{self, OpenOptions},
@@ -34,20 +27,16 @@ use env_logger::fmt::Formatter;
 use folder::DATA_LOCATION;
 use log::Record;
 
-/// The active log file's stem. See the module comment for why it is not the
-/// crate's name.
+/// The active log file's stem. See the module comment.
 const FILE_NAME: &str = "conic-launcher";
 
-/// Rotate once the active file passes this many bytes
-/// (`max_file_size(50_000)`).
+/// Rotate once the active file passes this many bytes.
 const MAX_FILE_SIZE: u64 = 50_000;
 
-/// How many files to keep in the folder, the active one included
-/// (`RotationStrategy::KeepSome(10)`).
+/// How many files to keep in the folder, the active one included.
 const KEEP: usize = 10;
 
-/// The archive suffix the plugin writes:
-/// `[year]-[month]-[day]_[hour]-[minute]-[second]`.
+/// The archive suffix: `[year]-[month]-[day]_[hour]-[minute]-[second]`.
 const DATE_FORMAT: &str = "%Y-%m-%d_%H-%M-%S";
 
 /// The size of the active file, or where it is if there is none yet.
@@ -58,8 +47,8 @@ struct Rotating {
 
 impl Rotating {
     /// Opens (or accounts for) the active file, then prunes the folder down to
-    /// [`KEEP`]. The plugin prunes on open as well as on rotate, which is what
-    /// keeps a folder that was copied from another machine from growing.
+    /// [`KEEP`]. Pruning on open as well as on rotate keeps a folder that was
+    /// copied from another machine from growing.
     fn open(directory: &Path) -> std::io::Result<Self> {
         let stem = FILE_NAME.to_string();
         prune_archives(directory, &stem, KEEP.saturating_sub(1));
@@ -99,8 +88,7 @@ impl Rotating {
 
         let to = directory.join(format!("{stem}_{}.log", Local::now().format(DATE_FORMAT)));
         // Two rotations inside the same second would land on a file that is
-        // already there; the plugin renames that one to `.bak` rather than
-        // overwriting it, and so does this.
+        // already there; it is renamed to `.bak` rather than overwritten.
         if to.exists() {
             let mut to_bak = to.clone();
             to_bak.set_file_name(format!(
@@ -120,9 +108,9 @@ impl Rotating {
 /// Removes the oldest archives until `keep` of them are left.
 ///
 /// The sort is on the timestamp the name carries rather than on the file's
-/// modification time, which is the plugin's ordering and survives a folder that
-/// was copied around. Only names of the form `<stem>_<timestamp>.log` are
-/// touched, so anything else in the folder is left alone.
+/// modification time, so it survives a folder that was copied around. Only names
+/// of the form `<stem>_<timestamp>.log` are touched, so anything else in the
+/// folder is left alone.
 fn prune_archives(directory: &Path, stem: &str, keep: usize) {
     let Ok(entries) = fs::read_dir(directory) else {
         return;
@@ -170,26 +158,22 @@ impl io::Write for FileLog {
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        // `Rotating::write` opens and closes the file per record, so there is
+        // `Rotating::append` opens and closes the file per record, so there is
         // nothing buffered here to push out.
         Ok(())
     }
 }
 
-/// `[date][time][target][LEVEL] message` — the plugin's own line
-/// (`tauri-plugin-log`'s `Builder::default`), so the two frontends' lines read the
-/// same in a file they share.
+/// `[date][time][target][LEVEL] message` — the format earlier installs wrote, so
+/// lines read the same in a shared file.
 ///
 /// `env_logger` formats every target with one formatter, so this is also what
-/// stderr prints now. It is the shape a log file wants in either place, and one
-/// format beats a per-target pair.
+/// stderr prints. One format beats a per-target pair.
 fn format_record(buffer: &mut Formatter, record: &Record) -> std::io::Result<()> {
     let now = Local::now();
     // `Formatter` is an `io::Write`, not a `fmt::Write`, so this is
-    // `write_fmt` and not the `write!` macro.
-    //
-    // The plugin writes its brackets one part at a time so a style can be applied
-    // to each; there is nothing to colour here, so they are written plain.
+    // `write_fmt` and not the `write!` macro. The brackets are written plain:
+    // there is nothing to colour here.
     //
     // The trailing newline is this function's to write: `env_logger`'s own
     // default formatter is what normally ends a record, and this replaces it.
@@ -203,17 +187,17 @@ fn format_record(buffer: &mut Formatter, record: &Record) -> std::io::Result<()>
     ))
 }
 
-/// Installs the logger: stderr as before, plus the file.
+/// Installs the logger: the log file, with stderr as the fallback when the file
+/// cannot be opened.
 ///
 /// The level is `info`, and `RUST_LOG` overrides it. That default goes through
 /// `default_filter_or("info")` rather than a `builder.filter_level(Info)`: the
 /// latter is `self.filter = Some(level)`, applied *after* `RUST_LOG` is parsed,
 /// so it discards whatever `RUST_LOG` asked for and `RUST_LOG=debug` produced
 /// nothing at all — which is how a hook that never runs stays invisible, since
-/// the `debug!` lines are the ones that would have named it. The Tauri app ran
-/// at `Debug`; the `debug!` lines this app does emit are about the window chrome
-/// and the background, and a launch log that has to be read by hand is a launch
-/// log that is not.
+/// the `debug!` lines are the ones that would have named it. The `debug!` lines
+/// this app does emit are about the window chrome and the background, and a
+/// launch log that has to be read by hand is a launch log that is not.
 pub fn init() {
     let directory = DATA_LOCATION.logs.clone();
     let rotating = match fs::create_dir_all(&directory).and_then(|()| Rotating::open(&directory)) {
@@ -233,8 +217,8 @@ pub fn init() {
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"));
     builder.format(format_record);
     // A log file is read with a text editor, not a terminal that can render
-    // colour, and the plugin's file target was plain in a release build. The
-    // escape codes would be the first thing in the file nobody wants.
+    // colour. The escape codes would be the first thing in the file nobody
+    // wants.
     builder.write_style(env_logger::WriteStyle::Never);
     builder.target(env_logger::Target::Stderr);
     builder.target(env_logger::Target::Pipe(Box::new(FileLog {

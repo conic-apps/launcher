@@ -2,8 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The settings "script": wires the `AppConfig` global callbacks (src/store/config.ts
-//! + the settings screens) to the config crate and the OS integrations.
+//! The settings "script": wires the `AppConfig` global callbacks (the settings
+//! screens) to the config crate and the OS integrations.
 
 use std::{cell::RefCell, path::PathBuf, rc::Rc, time::Duration};
 
@@ -14,20 +14,19 @@ use crate::config_bridge;
 use crate::slint_backend::{App, AppConfig, GameState, JavaRuntime};
 
 thread_local! {
-    /// The last Java scan: the non-managed runtimes, as the list holds them
-    /// (the Vue's `runtimes.value`, after its `!is_managed` filter). Only
-    /// accessed on the UI thread so it can stay an `Rc`-free, `Send`-free
-    /// `RefCell` while the scan itself runs on a worker; it is what lets the
-    /// enable/disable toggles redraw the list without rescanning the disk.
+    /// The last Java scan: the non-managed runtimes, after the `!is_managed`
+    /// filter. Only accessed on the UI thread so it can stay an `Rc`-free,
+    /// `Send`-free `RefCell` while the scan itself runs on a worker; it is what
+    /// lets the enable/disable toggles redraw the list without rescanning the
+    /// disk.
     static JAVA_CACHE: RefCell<Vec<ScannedJava>> = const { RefCell::new(Vec::new()) };
 }
 
-/// Mirrors `formatJavaPath` in SettingsJVM.vue: Windows reports the
-/// extended-length form of a path, which is not what a user should be shown.
+/// Windows reports the extended-length form of a path, which is not what a user
+/// should be shown.
 ///
-/// This is display only — the switch's callback and `disabled_java_runtime`
-/// keep the raw path, exactly like the Vue, which formats `runtime.path` for
-/// the description but stores it unformatted.
+/// This is display only — the switch's callback and `disabled_java_runtime` keep
+/// the raw path, formatted only for the description.
 fn format_java_path(path: &str) -> String {
     if let Some(rest) = path.strip_prefix(r"\\?\UNC\") {
         format!(r"\\{rest}")
@@ -167,8 +166,7 @@ fn wire_background_actions(ui: &App, shared: Rc<RefCell<config::Config>>, save_t
                             .set_background_image(filename.into());
                         // This path writes the config itself rather than going
                         // through `AppConfig.changed`, so nothing else would
-                        // tell the background to resolve its source again — it
-                        // used to wait for the next unrelated settings change.
+                        // tell the background to resolve its source again.
                         crate::background::controller::config_changed(&ui);
                     }
                     let shared = Rc::clone(&shared);
@@ -224,17 +222,16 @@ fn wire_java_actions(ui: &App, shared: Rc<RefCell<config::Config>>) {
             }
             let weak = weak.clone();
             // The scan walks the disk and starts a JVM per candidate, so it runs
-            // on the runtime's blocking pool — the original's
-            // `tauri::async_runtime::spawn_blocking`. `scan_java_runtimes_cached`
-            // reuses a result younger than 30s, so revisiting the page does not
-            // re-probe every candidate.
+            // on the runtime's blocking pool. `scan_java_runtimes_cached` reuses a
+            // result younger than 30s, so revisiting the page does not re-probe
+            // every candidate.
             crate::runtime::spawn_blocking(move || {
                 let options = ScanOptions {
                     extra_home_dirs: Vec::new(),
                     managed_dirs: vec![folder::DATA_LOCATION.runtime.clone()],
                 };
-                // The Vue lists the system runtimes only:
-                // `result.runtimes.filter((runtime) => !runtime.is_managed)`.
+                // Only the non-managed (system) runtimes are listed; the managed
+                // ones the launcher installs are hidden.
                 let scanned = scan_java_runtimes_cached(&options).map(|result| {
                     result
                         .runtimes

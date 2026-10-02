@@ -6,14 +6,14 @@
 //! browser and looked at.
 //!
 //! `page.html` is the page; this is what puts a *filled-in* one on disk. Run
-//! `cargo run -p slint-authcode --example preview` and open the three files it
+//! `cargo run -p authcode --example preview` and open the three files it
 //! prints, or pass a directory to put them somewhere of your choosing:
-//! `cargo run -p slint-authcode --example preview -- ~/Desktop`.
+//! `cargo run -p authcode --example preview -- ~/Desktop`.
 //!
-//! The palette is Mocha and the sentences are the English ones, so what comes
-//! out is what a default install shows. The colours are the same tokens the app
-//! passes in (`Theme.crust`, `Theme.dialog-background`, …) — see
-//! `app/src/account_add.rs` for the live version.
+//! The palette is Mocha and the sentences are English, which makes the output a
+//! fair stand-in for a default install. The colours are the app's Mocha theme
+//! tokens (`Theme.crust`, `Theme.dialog-background`, …), hand-copied here rather
+//! than read live — see `app/src/account_add/login.rs` for the real thing.
 
 use authcode::{Messages, Palette, Rgba, Screen};
 

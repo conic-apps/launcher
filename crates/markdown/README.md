@@ -1,4 +1,4 @@
-# slint-markdown
+# markdown
 
 A Markdown and HTML renderer for Slint, as a layout engine. `comrak` parses,
 `parley` measures, and the caller paints.
@@ -22,7 +22,7 @@ that imported the same file would hold two unrelated types with no way to move a
 item between them.
 
 ```slint
-import { MarkdownView, MdChunk } from "path/to/slint-markdown/ui/markdown-view.slint";
+import { MarkdownView, MdChunk } from "path/to/markdown/ui/markdown-view.slint";
 
 MarkdownView {
     chunks: <[MdChunk]>;            // the runs, in document order
@@ -41,7 +41,7 @@ let list = renderer.layout();
 ```
 
 `layout()` returns a `DisplayList` of `MdItem`s. The `MdItem` here and the one in
-`markdown-view.slint` are the same fields under the same names, so copying the
+`markdown-types.slint` are the same fields under the same names, so copying the
 values across is a field-for-field transcription. A bitmap is the exception: it
 cannot be an `MdItem`, because a `slint::Image` cannot be left empty in a struct
 literal, so image items go into the separate `MarkdownImage` list instead. Both
@@ -115,7 +115,7 @@ engine's height is the open one.
 
 Two things about the item loop that look like choices and are not: it is one loop
 with a conditional per kind, because a run's *paint order* is the engine's and a
-chip's background is emitted after the run of text it sits behind; and each item
+chip's background is emitted before the run of text it sits behind; and each item
 is drawn straight onto its run, because a box of no size between the run and its
 text is harmless until something clips, and then it takes the text with it.
 
@@ -166,8 +166,8 @@ importing it, keep both lines.
   fit its padding gives the padding up rather than its text. A scroll view that
   only ever scrolls one way was the trade.
 - **Code blocks clip** by default, for the same reason; `MdStyle::code_block_wrap`
-  wraps them instead. Neither scrolls sideways, which is what the Vue's
-  `pre { overflow: auto }` does.
+  wraps them instead. Neither scrolls sideways, which is what `pre { overflow:
+  auto }` does in a browser.
 - **An inline-code capsule keeps a half-space from the text beside it**
   (`MdStyle::code_margin_x`). Padding is *inside* the capsule and this is not, which
   is the whole of it: `code_padding_x` alone leaves the capsule drawn straight over
@@ -182,7 +182,7 @@ importing it, keep both lines.
 ## Tests
 
 ```
-cargo test -p slint-markdown
+cargo test -p markdown
 ```
 
 `tests/layout.rs` asserts on geometry without a window: that every item sits
@@ -193,8 +193,9 @@ width, and that a task list's tick is visible against its own box.
 `tests/parse.rs` covers both parsers, including the HTML one on the awkward input
 real descriptions contain.
 
-`MdStyle`'s defaults are `src/overlays/content/styles/markdown-body.less` at a
-14px body, and each field's doc comment cites the rule it comes from.
+`MdStyle`'s defaults are GitHub's `.markdown-body` at a 14px body — except the
+`<details>` fields, which follow a launcher settings row — and most fields' doc
+comments cite the rule they come from.
 
 ## Licence
 

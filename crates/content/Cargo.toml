@@ -1,6 +1,6 @@
 [package]
 name = "content"
-description = "Tauri-free mirror of crates/content for the Slint app"
+description = "Saves, datapacks, resourcepacks, screenshots and mods"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true
@@ -13,8 +13,7 @@ curseforge.workspace = true
 
 base64.workspace = true
 # The world map renderer (`worldmap.rs`): reads a save's region files and hands
-# back an RGBA tile. The Tauri plugin had it too; here it is used without the
-# PNG round trip the webview needed.
+# back an RGBA tile. The buffer goes straight to the UI, with no PNG round trip.
 conic-worldmap.workspace = true
 fastnbt.workspace = true
 flate2.workspace = true

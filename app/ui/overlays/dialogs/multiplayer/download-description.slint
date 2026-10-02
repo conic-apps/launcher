@@ -6,19 +6,16 @@ import { Theme } from "../../../theme.slint";
 import { BaseButton } from "../../../components/base-button.slint";
 import { MultiplayerState } from "../../../globals/multiplayer.slint";
 
-// The "download the Conic Nexus extension" screen
-// (src/overlays/dialogs/multiplayer/DownloadDescription.vue): the title, the
-// three paragraphs and the Cancel / Start download pair.
+// The "download the Conic Nexus extension" screen: the title, the three
+// paragraphs and the Cancel / Start download pair.
 //
-// The Vue's `.title { margin-bottom: 16px }` and `.description { margin-bottom:
-// 8px }` margins collapse with `.buttons { margin-top: 16px }`, so the gap
-// before the buttons is 16px — the spacers below spell that out.
+// The title's 16px and the buttons' 16px do not stack, so the gap before the
+// buttons is 16px — the spacers below spell that out.
 export component MultiplayerDownloadDescription inherits VerticalLayout {
     width: 100%;
-    // `.title { margin-bottom: 16px }` and `.buttons { margin-top: 16px }` both
-    // land on 16px once their margins collapse against what is between them, so
-    // one `spacing` carries the two of them and the two spacers that spelled them
-    // out are gone. The 8px gaps are a different value and stay.
+    // The 16px title gap and the 16px button gap are both 16px, so one `spacing`
+    // carries the two. The 8px gaps are a different value and are kept as
+    // spacers.
     spacing: 16px;
     alignment: start;
 
@@ -50,8 +47,6 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
 
     Rectangle { height: 8px; background: transparent; }
 
-    // `p.description.description-important`.
-    //
     // The paragraph is measured by its wrap width rather than by a nested
     // layout: a `Text` one layout level away from the column that owns its width
     // reports a single line (see the account dialog's Yggdrasil note), so the
@@ -77,8 +72,7 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
         }
     }
 
-    // `div.buttons { display: flex; gap: 12px }` — a bare row, so the wrapper
-    // it had here (only there to hand the buttons a `parent.width`) is gone.
+    // A bare row of two buttons with a 12px gap.
     // The default `stretch`, not `alignment: start` — see `create-instance.slint`.
     HorizontalLayout {
         spacing: 12px;

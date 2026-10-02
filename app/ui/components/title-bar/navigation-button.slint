@@ -4,10 +4,9 @@
 
 import { Theme } from "../../theme.slint";
 
-// Title bar navigation icon button (App.vue .title-bar-action-btn). Icons are
-// Ionicons-style stroked paths (512 viewbox): fill is transparent and the
-// outline color follows the selection state. The selected underline mirrors
-// the ::after pseudo element: 14x2px, hugging the bottom edge (bottom: -2px).
+// Title bar navigation icon button. Icons are Ionicons-style stroked paths (512
+// viewbox): fill is transparent and the outline color follows the selection
+// state. The selected underline is 14x2px, hugging the bottom edge.
 export component NavigationButton inherits Rectangle {
     in property <string> icon-commands;
     in property <length> icon-stroke-width: 0px;

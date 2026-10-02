@@ -48,10 +48,10 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
             let key = key.to_string();
             let mut controller = controller.borrow_mut();
             let expanded = controller.expanded(&key);
-            // Collapsing closes the gap on the collapse curve; re-opening is a
-            // FLIP, like every other change to the layout (the Vue original
-            // animates a collapse by hand and everything else with its FLIP).
-            controller.flip = expanded;
+            // Collapsing closes the gap on the 300ms collapse curve; re-opening
+            // is a FLIP, like every other layout change. `expanded` is the state
+            // before the toggle, so the curve is keyed off its negation.
+            controller.flip = !expanded;
             controller.expanded.insert(key, !expanded);
             controller.persist();
             if let Some(ui) = weak.upgrade() {
@@ -204,7 +204,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
     // `open-content` and `open-packs` belong to the content overlays' script
-    // (`content.rs`), which registers them after this one — a Slint `on_*`
+    // (`content`), which registers them after this one — a Slint `on_*`
     // setter replaces the handler, so nothing is wired for them here.
     {
         // The footer's "+" avatar and its "not logged in" label open the
@@ -218,8 +218,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
     }
     {
         // The footer's globe opens the multiplayer dialog: it checks the Conic
-        // Nexus library and shows either the download screen or the manager
-        // (the Vue footer's `openConnect`).
+        // Nexus library and shows either the download screen or the manager.
         let weak = ui.as_weak();
         state.on_open_connect(move || {
             if let Some(ui) = weak.upgrade() {
@@ -237,10 +236,8 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
     {
-        // The add-account dialog runs this after every successful add, and the
-        // delete dialog will run it after every delete — the Vue's
-        // `selectNextAccount`, which its store calls in exactly those two
-        // places and never at startup.
+        // The add-account dialog runs this after every successful add; it is
+        // never run at startup.
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
         state.on_select_first_account(move || {
@@ -264,7 +261,7 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
 
 /// The head an account's avatar shows, memoised by `<key>@<size>`.
 ///
-/// `None` is the logged-out footer, which the Vue gives the bundled wide Steve.
+/// `None` is the logged-out footer, which shows the bundled wide Steve.
 pub(crate) fn account_avatar(
     account: Option<&Account>,
     size: u32,
@@ -278,18 +275,16 @@ pub(crate) fn account_avatar(
         return image.clone();
     }
     // A skin that cannot be decoded (a URL the crate failed to download) leaves
-    // the placeholder disc up, as the Vue's empty `<img src>` would.
+    // the placeholder disc up.
     let image = crate::account_avatar::account_head(account, size).unwrap_or_default();
     cache.insert(key, image.clone());
     image
 }
 
-/// Picks an account when none is selected, the way the Vue's
-/// `store/account.ts`'s `selectNextAccount` does after an account is added.
+/// Picks an account when none is selected, after an account is added.
 ///
 /// The precedence is Microsoft, then offline, then Yggdrasil — note that it is
-/// *not* the order `reload_accounts` pushes them into the footer's list in. The
-/// original runs this only after an add or a delete, never at startup.
+/// *not* the order `reload_accounts` pushes them into the footer's list in.
 pub fn select_first_account_if_none(config: &Rc<RefCell<config::Config>>) {
     if config.borrow().current_account.is_some() {
         return;

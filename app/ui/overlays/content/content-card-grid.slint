@@ -5,11 +5,10 @@
 import { ContentCard as CardData, ContentState } from "../../globals/content.slint";
 import { ContentCard } from "content-card.slint";
 
-// The card grid (`styles/content-card.less` `.content-card-grid`), shared by
-// all nine lists.
+// The card grid, shared by all nine lists.
 //
-// The Vue's grid is `repeat(auto-fill, minmax(290px, 1fr))` with a 12px gap and
-// `16px 32px 32px 32px` padding. Slint has no wrapping grid — its only
+// The intended grid is `repeat(auto-fill, minmax(290px, 1fr))` with a 12px gap
+// and `16px 32px 32px 32px` padding. Slint has no wrapping grid — its only
 // multi-column construct is `Row`, and a repeated child becomes a single cell —
 // so the column count has to come from outside in any case, and Rust computes
 // it from the panel's width and lays every card out. Each card's `x`/`y`/
@@ -28,8 +27,8 @@ export component ContentCardGrid inherits Rectangle {
     /// its parent's measurement, so the panel's `ScrollView` would otherwise
     /// see a grid of zero height and stop scrolling.
     in property <length> grid-height: 0px;
-    /// The Vue's `ContentNotFound` over an empty grid. `pointer-events: none`
-    /// there, so the cards stay clickable underneath.
+    /// The `ContentNotFound` over an empty grid, with pointer events passing
+    /// through so the cards stay clickable underneath.
 
     callback select(string);
     callback open-path(string);
@@ -41,19 +40,16 @@ export component ContentCardGrid inherits Rectangle {
     callback open-link(string);
     callback play(string);
 
-    // The height is *measured* from `grid` below, rather than read straight
-    // from `grid-height`: a layout cell's height is taken from the child's
-    // `height` binding, and a component whose root height follows a value Rust
-    // fills in after the first layout pass keeps the zero it was measured with —
-    // the grid painted nothing at all. Measuring through the child re-runs the
-    // measurement when `grid-height` changes.
+    // The height is `grid-height` itself, which Rust recomputes from the cards'
+    // positions. It has to be given rather than measured: the cards are
+    // positioned absolutely, so they contribute nothing to the grid's own
+    // measurement (see the property above).
     width: 100%;
     height: root.grid-height;
     background: transparent;
 
     // The grid's own padding. The visible cards live inside it; the empty state
-    // is centred over the whole area, padding included, which is what the Vue's
-    // absolutely-positioned overlay does.
+    // is centred over the whole area, padding included.
     grid := Rectangle {
         x: 32px;
         y: 16px;

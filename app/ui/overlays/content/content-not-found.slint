@@ -6,21 +6,21 @@ import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/app-icon.slint";
 import { BaseLoading } from "../../components/base-loading.slint";
 
-// The "nothing here" placeholder (`ContentNotFound.vue`), drawn over an empty
-// grid, and the spinner block the list views show instead of their grid while
-// the first response is on its way (`.search-status`).
+// The "nothing here" placeholder, drawn over an empty grid, and the spinner
+// block the list views show instead of their grid while the first response is
+// on its way.
 //
-// The Vue wraps the placeholder in a `<Transition>`: 350ms in on
-// `cubic-bezier(.34, 1.56, .64, 1)` — a slight overshoot — and 250ms out on
-// `cubic-bezier(.215, .61, .355, 1)`, both scaling from 0.9, so it springs open
-// rather than appearing. A newly created element never plays an `animate`
-// (its first evaluation takes the not-animating branch), which is why this
-// shows itself for one frame at the rest values first, exactly like
-// `BaseDialog` and `DescriptionTooltip` do.
+// The placeholder plays 350ms in on `cubic-bezier(.34, 1.56, .64, 1)` — a slight
+// overshoot — and 250ms out on `cubic-bezier(.215, .61, .355, 1)`, the body
+// fading in and scaling up from 0.9, so it springs open rather than appearing. A
+// newly created element
+// never plays an `animate` (its first evaluation takes the not-animating
+// branch), which is why this shows itself for one frame at the rest values
+// first, exactly like `BaseDialog` and `DescriptionTooltip` do.
 export component ContentNotFound inherits Rectangle {
-    /// The Vue's `show` prop.
+    /// Whether the placeholder is shown.
     in property <bool> show: false;
-    /// The second line, which the Vue only draws when it is given one.
+    /// The second line, drawn only when one is given.
     in property <string> description: "";
     /// The block it occupies, and the box the body is centred in. A definite
     /// height rather than `100%` or a measured one: it is a child of a column,
@@ -29,7 +29,7 @@ export component ContentNotFound inherits Rectangle {
     /// see `panels.slint`, which is the only place that decides.
     in property <length> block-height: 150px;
     /// How tall the placeholder's own content is, for the call sites whose block
-    /// is that content plus a padding (`.search-status { padding: 40px 0 }`).
+    /// is that content plus a padding.
     out property <length> content-height: body.preferred-height;
 
     width: 100%;
@@ -39,8 +39,7 @@ export component ContentNotFound inherits Rectangle {
     // "closed" | "starting" | "shown" | "leaving"
     private property <string> phase: "closed";
     visible: root.phase != "closed";
-    // The Vue's overlay is `pointer-events: none` — it sits over the grid
-    // without swallowing its clicks.
+    // The placeholder sits over the grid without swallowing its clicks.
     private property <float> reveal: root.phase == "shown" ? 1.0 : 0.0;
     private property <float> spring: root.phase == "shown" ? 1.0 : 0.9;
 
@@ -91,12 +90,7 @@ export component ContentNotFound inherits Rectangle {
     }
 
     body := Rectangle {
-        // `.content-placeholder { right: 320px; width: 380px; height:
-        // fit-content; display: flex; align-items: center; flex-direction:
-        // column }`. Its `right` is on a *static* element — the Vue never gives
-        // it `position: absolute` — so it has no effect; the wrapper the panel
-        // puts it in is the `display: flex; align-items: center; justify-content:
-        // center` one, and that is what centres this 380px box.
+        // A 380px box, centred by the wrapper the panel puts it in.
         width: 380px;
         height: self.preferred-height;
         background: transparent;
@@ -104,8 +98,7 @@ export component ContentNotFound inherits Rectangle {
         transform-scale: root.spring;
 
         VerticalLayout {
-            // `.message { margin-top: 12px }` and `.desc { margin-top: 12px }`
-            // — the two lines sit 12px below the icon and each other.
+            // The two lines sit 12px below the icon and each other.
             spacing: 12px;
 
             // A wrapper rather than an alignment on the icon: cell alignment
@@ -122,7 +115,6 @@ export component ContentNotFound inherits Rectangle {
             }
 
             Text {
-                // `.message { font-size: 16px; margin-top: 12px }`
                 text: @tr("No results match the current filter");
                 font-size: 16px;
                 color: Theme.default-text-color.transparentize(0.1);
@@ -131,8 +123,8 @@ export component ContentNotFound inherits Rectangle {
             }
 
             if root.description != "" : Text {
-                // `.desc { font-size: 12px; margin-top: 12px }`, wrapped at the
-                // block's 380px like any paragraph — no height of its own.
+                // Wrapped at the block's 380px like any paragraph — no height of
+                // its own.
                 text: root.description;
                 font-size: 12px;
                 color: Theme.default-text-color.transparentize(0.1);
@@ -143,10 +135,10 @@ export component ContentNotFound inherits Rectangle {
     }
 }
 
-// The spinner block the list views draw while the first response is in flight
-// (`.search-status` + `.loading`): a 32px spinner in a padded mantle box.
+// The spinner block the list views draw while the first response is in flight:
+// a 32px spinner in a padded mantle box.
 export component ContentLoading inherits Rectangle {
-    /// `.search-status { padding: 40px 0 }` around the 64px spinner box.
+    /// 40px of padding above and below the 64px spinner box.
     width: 100%;
     height: 144px;
     background: transparent;
@@ -155,10 +147,8 @@ export component ContentLoading inherits Rectangle {
         width: 100%;
         padding-top: 40px;
         padding-bottom: 40px;
-        // `.search-status { justify-content: center }` is the *main* axis of a
-        // flex row — the horizontal one here — so the mark is centred across the
-        // panel. `alignment` would centre it down the column instead and leave
-        // it against the left edge, which is where it was drawn.
+        // The mark is centred across the panel. `alignment` would centre it down
+        // the column instead and leave it against the left edge.
         cross-axis-alignment: center;
 
         Rectangle {
@@ -170,8 +160,8 @@ export component ContentLoading inherits Rectangle {
             BaseLoading {
                 size: 32px;
                 stroke-width: 4;
-                // The seven `.loading` blocks this component replaces all pass
-                // the same three: `:size="32" :gap="8" :strokeWidth="4"`.
+                // Every spinner passes the same three values: size 32, gap 8,
+                // stroke 4.
                 gap: 8;
             }
         }

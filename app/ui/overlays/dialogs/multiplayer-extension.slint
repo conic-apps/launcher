@@ -9,9 +9,8 @@ import { MultiplayerDownloadDescription } from "multiplayer/download-description
 import { MultiplayerDownloadProgress } from "multiplayer/download-progress.slint";
 import { MultiplayerManager } from "multiplayer/multiplayer-manager.slint";
 
-// The dialog body (`.connect` of `MultiplayerExtension.vue`): 8px of padding
-// around whichever of the three components is mounted, swapping with the Vue's
-// `<Transition name="slide-left" mode="out-in">`.
+// The dialog body: 8px of padding around whichever of the three components is
+// mounted, swapping with a left slide-out/in.
 //
 // The swap is the same state machine the create-instance dialog uses: the
 // mounted screen plays its 80ms leave, the slot changes, and the arriving screen
@@ -94,20 +93,19 @@ component MultiplayerConnect inherits VerticalLayout {
     }
 }
 
-// The multiplayer floating dialog (`src/overlays/dialogs/MultiplayerExtension.vue`).
+// The multiplayer floating dialog.
 //
-// The Vue's `BaseDialog` is used `animate-height`: the panel is `fit-content`
-// and tweens to the mounted component's height over 300ms `power2.out` (an
-// `ease-out-quad` here, applied by `BaseDialog` itself off this height), with
-// the width switching instantly between the three components (580 / 480 / 600).
-// Slint has no fit-content panel mode, so the height comes from the measuring
-// layout the body is written in, exactly like the add-account dialog.
+// The panel animates its height: it sizes to the mounted component and tweens to
+// it over 300ms, an ease-out-quad applied by `BaseDialog` itself off this height,
+// with the width switching instantly between the three components (580 / 480 /
+// 600). Slint has no fit-content panel mode, so the height comes from the
+// measuring layout the body is written in, exactly like the add-account dialog.
 export component MultiplayerExtension inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
-    // `dialogSize`: 600 for the manager, otherwise the component's own width.
+    // 600 for the manager, otherwise the component's own width.
     private property <length> dialog-width: MultiplayerState.component == "multiplayerManager"
         ? 600px
         : MultiplayerState.component == "downloadProgress" ? 480px : 580px;

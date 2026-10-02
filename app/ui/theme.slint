@@ -3,11 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 // Custom fonts are embedded at compile time (Slint supports `.ttf`/`.ttc`/
-// `.otf` imports; the original `.woff2` files were converted/merged).
-// `ComfortaaNunito.ttf` is the "Comfortaa Nunito" variable font: Comfortaa's
-// glyphs with the Nunito digit glyphs merged in (see
-// slint/tools/merge-digit-font.py), so digits render exactly like the original
-// CSS unicode-range setup without a second font family.
+// `.otf` imports). `ComfortaaNunito.ttf` is the "Comfortaa Nunito" variable
+// font: Comfortaa's glyphs with the Nunito digit glyphs merged in (see
+// `tools/merge-digit-font.py`), so digits render as a unicode-range setup would
+// without a second font family.
 import "fonts/ComfortaaNunito.ttf";
 
 // `Palette.color-scheme` reflects the OS light/dark preference and lets
@@ -17,9 +16,9 @@ import { Palette } from "std-widgets.slint";
 
 import { AppConfig } from "globals/settings.slint";
 
-// The 26 Catppuccin colors, copied from src/assets/styles/catppuccin-theme.css.
-// The four flavors below share this shape; high contrast reuses the same raw
-// colors and only changes the semantic tokens derived from them (see `Theme`).
+// The 26 Catppuccin colors. The four flavors below share this shape; high
+// contrast reuses the same raw colors and only changes the semantic tokens
+// derived from them (see `Theme`).
 export struct CatppuccinPalette {
     rosewater: color,
     flamingo: color,
@@ -49,9 +48,8 @@ export struct CatppuccinPalette {
     crust: color,
 }
 
-// The four Catppuccin flavors, mirroring the `--ctp-<flavor>-*` blocks in
-// src/assets/styles/catppuccin-theme.css. `text` for Latte is the launcher's
-// pure-black override, not upstream Catppuccin's `#4c4f69`.
+// The four Catppuccin flavors. `text` for Latte is the launcher's pure-black
+// override, not upstream Catppuccin's `#4c4f69`.
 global Catppuccin {
     in property <CatppuccinPalette> latte: {
         rosewater: #dc8a78,
@@ -172,27 +170,24 @@ global Catppuccin {
 // those settings in the UI restyles the whole app. The eight schemes are the
 // four flavors above, each with and without high contrast.
 //
-// The raw Catppuccin colors and the semantic tokens mirror
-// src/assets/styles/catppuccin-theme.css (and `-hc.css`): the dark flavors use
-// the raw surfaces, while Latte remaps the controller/group/card tokens, and
-// high contrast swaps the hairlines for opaque overlays and whitens the text.
+// The raw Catppuccin colors and the semantic tokens: the dark flavors use the
+// raw surfaces, while Latte remaps the controller/group/card tokens, and high
+// contrast swaps the hairlines for opaque overlays and whitens the text.
 //
 // Slint globals cannot animate (the compiler rejects `animate` inside a
 // `global`), so the colors below are declared here but produced and animated by
-// `ThemeProvider`, instantiated once at the app root. Components keep reading
-// `Theme.*` as before.
+// `ThemeProvider`, instantiated once at the app root.
 //
-// Smooth switching: the Vue frontend briefly applied `.changing-theme`
-// (`transition: all 0.3s ease !important`) to every element while swapping the
-// palette class. The Slint equivalent is to mark the tokens as animated: when
-// the palette/high-contrast changes, each token interpolates over 300ms `ease`.
-// The animation only fires on a token value change (i.e. a theme switch), so
+// Smooth switching: rather than transition every element while swapping the
+// palette, the tokens themselves are animated: when the palette or the
+// high-contrast flag changes, each token interpolates over 300ms `ease`. The
+// animation only fires on a token value change (i.e. a theme switch), so
 // hover/press states are unaffected, and the startup load is applied instantly
 // (see `ThemeProvider.transitions-enabled`).
 export global Theme {
     // The palette actually in effect. When following the system, dark mode uses
-    // Mocha and light mode Latte (mirrors `reloadPalette` in src/theme.ts).
-    // Slint only reports the real scheme once the window is mapped, so while it
+    // Mocha and light mode Latte. Slint only reports the real scheme once the
+    // window is mapped, so while it
     // is `Unknown` (everything before the window exists) fall back to the
     // configured palette instead of guessing light.
     //
@@ -207,11 +202,9 @@ export global Theme {
                 : Palette.color-scheme == ColorScheme.light ? "Latte"
                 : AppConfig.palette)
             : AppConfig.palette;
-    // High contrast swaps the semantic tokens for their `*-hc` counterparts
-    // (high contrast mode in src/views/settings/SettingsAccessibility.vue).
+    // High contrast swaps the semantic tokens for their `*-hc` counterparts.
     in property <bool> high-contrast: AppConfig.high-contrast;
 
-    // ----- raw Catppuccin colors (filled by ThemeProvider) -----
     in-out property <color> base;
     in-out property <color> mantle;
     in-out property <color> crust;
@@ -241,73 +234,61 @@ export global Theme {
     in-out property <color> blue;
     in-out property <color> lavender;
 
-    // ----- text -----
-    // `--default-text-color`: the app-wide inherited text color
-    // (`* { color: rgba(var(--default-text-color), 0.9) }`). High contrast turns
-    // it pure white on the two flavors whose raw text is not already white-ish.
+    // The app's main text color. High contrast turns it pure white on the two
+    // flavors whose raw text is not already white-ish.
     in-out property <color> default-text-color;
-    // `--ctp-text-inverse`: contrasting label on an accent fill.
+    // Contrasting label on an accent fill.
     in-out property <color> text-inverse;
 
-    // ----- title bar / controllers -----
     in-out property <color> titlebar-background;
-    // The title bar's search field. `body.theme-<Flavor> .title-bar .search-bar`
-    // overrides `.search-bar`'s own `var(--controllers-background)` with the
-    // flavor's `surface0` on all three dark flavors — and on Latte, where there
-    // is no such rule, the controller background is what shows.
+    // The title bar's search field. On the three dark flavors it is the flavor's
+    // `surface0`; on Latte it is the same `crust` the controller background uses.
     in-out property <color> titlebar-search-background;
     in-out property <color> controllers-background;
     in-out property <color> controllers-background-hover;
     in-out property <color> controllers-background-focus;
     in-out property <color> controllers-border;
     in-out property <color> controllers-outline-focus;
-    // `--controllers-border-radius` (6px dark, 4px Latte).
+    // 6px on the dark flavors, 4px on Latte.
     in-out property <length> controllers-border-radius;
 
-    // ----- setting rows / groups -----
     in-out property <color> setting-item-background;
     in-out property <color> setting-item-background-hover;
     in-out property <color> setting-item-background-active;
     in-out property <color> setting-group-border;
     in-out property <color> setting-group-danger-border;
 
-    // ----- toggle switch -----
     in-out property <color> toggle-switch-background;
     in-out property <color> toggle-switch-outline;
     in-out property <color> toggle-switch-button;
     in-out property <color> toggle-switch-active;
 
-    // ----- cards -----
     in-out property <color> card-background;
     in-out property <color> card-border;
 
-    // ----- dialogs (BaseDialog.vue) -----
     in-out property <color> dialog-background;
     in-out property <color> dialog-border;
     in-out property <length> dialog-border-radius;
 
-    // Typography (src/assets/styles/main.css). The original stack was
-    // 'Nunito', 'Comfortaa', system-ui, … where Nunito was restricted to
-    // digits (unicode-range U+0030-0039). Slint has no unicode-range fallback,
-    // so the digits are baked into the embedded "Comfortaa Nunito" variable
-    // font (slint/tools/merge-digit-font.py) and `font-family` is the only
-    // family.
+    // Typography. The original stack was 'Nunito', 'Comfortaa', system-ui, …
+    // where Nunito was restricted to digits (unicode-range U+0030-0039). Slint
+    // has no unicode-range fallback, so the digits are baked into the embedded
+    // "Comfortaa Nunito" variable font (`tools/merge-digit-font.py`) and
+    // `font-family` is the only family.
     //
     // That font is Latin + digits, and Slint only appends the
     // `[SansSerif, SystemUi]` generics behind it — which resolve to
-    // Arial/Segoe UI on Windows, also glyph-free for Han. The rest of the
-    // original stack ('Yu Gothic UI', 'Microsoft YaHei UI') therefore has to be
-    // registered separately; see `src/cjk_font.rs`.
+    // Arial/Segoe UI on Windows, also glyph-free for Han. The CJK fallbacks
+    // ('Yu Gothic UI', 'Microsoft YaHei UI') therefore have to be registered
+    // separately; see `app/src/cjk_font.rs`.
     in property <string> font-family: "Comfortaa Nunito";
     in property <length> font-size-base: 16px;
     in property <int> font-weight-normal: 400;
     in property <int> font-weight-bold: 700;
 
-    // `--ctp-latte-lavender`, which the stylesheet declares once in `:root`
-    // rather than per flavor: the add-account dialog's "create" buttons and its
-    // checkboxes use it, so they stay the same lavender in every palette (the
-    // original never themed them). Not a `ThemeProvider` token — there is
-    // nothing to animate.
+    // Always the same lavender, in every palette: the add-account dialog's
+    // "create" buttons and its checkboxes use it. Declared once rather than per
+    // flavor, and not a `ThemeProvider` token — there is nothing to animate.
     in property <color> latte-lavender: #7287fd;
 
     // Whether a palette change eases over `transitions-duration` or snaps.
@@ -328,21 +309,15 @@ export global Theme {
     // change handlers in the same call, so a timer armed at construction is
     // already up by the time the first frame's change handlers run.
     //
-    // This mirrors the Vue original, which never guessed either:
-    // `loadPalette()` (called once, from `App.vue`) swaps the theme class with
-    // no transition, and `reloadPalette()` — the one every settings screen and
-    // the setup wizard call — brackets the swap in `.changing-theme` for 300ms.
-    // So: the settings screens arm this before a change the user made, and
-    // nothing else ever does. Once armed it stays armed, which additionally
-    // eases a *system* theme change while the app is running — something the
-    // Vue never did, since it has no `prefers-color-scheme` listener and
-    // `Palette.color-scheme` is the only thing that notices here.
+    // The settings screens and the setup wizard arm this before a change the
+    // user made, and nothing else does. Once armed it stays armed, which
+    // additionally eases a *system* theme change while the app is running.
     in-out property <bool> transitions-enabled: false;
-    // `.changing-theme`'s `transition: all 0.3s ease`, in one place so the two
-    // ends of the pair cannot drift apart.
+    // The animation duration, in one place so the two ends of the pair cannot
+    // drift apart.
     in property <duration> transitions-duration: 300ms;
 
-    // `--ctp-latte-teal`, declared on the same terms: the detail panels' action
+    // Declared on the same terms as `latte-lavender`: the detail panels' action
     // buttons use it, so they stay the same teal in every palette.
     in property <color> latte-teal: #179299;
 }
@@ -358,15 +333,11 @@ export component ThemeProvider inherits Rectangle {
     // the first moment the platform can have reported its scheme (see
     // `Theme.transitions-enabled`). `changed dark` alone would not do: when the
     // configured palette already *is* the resolved one — the common case on a
-    // dark system — `dark` never changes, and `windows_caption.rs` would keep
-    // the default ink for a Latte window.
+    // dark system — `dark` never changes, and `app/src/windows_caption.rs` would
+    // keep the default ink for a Latte window.
     //
-    // This is deliberately the only thing this timer does. It used to arm the
-    // palette transition as well, which is what made the app fade through
-    // `AppConfig.palette` on its way to the real scheme: timers and change
-    // handlers run in the same `update_timers_and_animations()` call, so the
-    // guard was guaranteed to be open one tick before it was needed. The
-    // transition is now armed by the change itself (see the global).
+    // This is deliberately the only thing this timer does; the palette
+    // transition is armed by the change itself (see the global).
     startup-timer := Timer {
         interval: 100ms;
         running: true;
@@ -386,7 +357,7 @@ export component ThemeProvider inherits Rectangle {
     // whatever the system theme is doing. Hand it the palette this app actually
     // resolved to — "follow system" can only be known here. The tokens below
     // animate on a palette change; this does not, which is what the platform
-    // wants (it cannot interpolate its own glyphs). See `src/windows_caption.rs`.
+    // wants (it cannot interpolate its own glyphs). See `app/src/windows_caption.rs`.
     callback caption-dark-changed(dark: bool);
     changed dark => { root.caption-dark-changed(root.dark); }
 
@@ -396,7 +367,6 @@ export component ThemeProvider inherits Rectangle {
         : Theme.active-palette == "Macchiato" ? Catppuccin.macchiato
         : Catppuccin.mocha;
 
-    // ----- raw Catppuccin colors -----
     in-out property <color> base: ctp.base;
     in-out property <color> mantle: ctp.mantle;
     in-out property <color> crust: ctp.crust;
@@ -424,7 +394,6 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> blue: ctp.blue;
     in-out property <color> lavender: ctp.lavender;
 
-    // ----- semantic tokens -----
     in-out property <color> default-text-color:
         root.hc && (Theme.active-palette == "Mocha" || Theme.active-palette == "Macchiato")
             ? #ffffff : ctp.text;
@@ -439,7 +408,7 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> controllers-background-hover: root.dark ? ctp.surface2 : ctp.surface0;
     in-out property <color> controllers-background-focus: root.dark ? ctp.surface2 : ctp.surface0;
     // High contrast replaces the translucent lavender hairline with an opaque
-    // overlay; the normal alpha mirrors the per-flavor `--controllers-border`.
+    // overlay; the normal alpha is the per-flavor value.
     in-out property <color> controllers-border:
         root.hc ? ctp.overlay2
         : ctp.lavender.with-alpha(
@@ -454,9 +423,9 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> setting-item-background-active: root.dark ? ctp.surface2 : ctp.surface0;
     // No group hairline on the dark flavors without high contrast; Latte draws
     // one in `crust`, every high-contrast scheme in `overlay2`. Mocha is the one
-    // that does not: `catppuccin-theme-hc.css:423` points it at *Latte*'s
-    // overlay2, where Macchiato, Frappé and Latte all use their own — an
-    // upstream slip, reproduced rather than corrected.
+    // that does not: it points at *Latte*'s overlay2, where Macchiato, Frappé
+    // and Latte all use their own — an upstream slip, reproduced rather than
+    // corrected.
     in-out property <color> setting-group-border:
         root.hc
             ? (Theme.active-palette == "Mocha" ? Catppuccin.latte.overlay2 : ctp.overlay2)
@@ -472,11 +441,11 @@ export component ThemeProvider inherits Rectangle {
     in-out property <color> card-border:
         root.hc ? ctp.overlay2 : (root.dark ? ctp.surface1 : ctp.crust);
 
-    // `--dialog-*`. The dark flavors draw a fixed dark hairline; high contrast
-    // swaps it for the flavor's overlay2, and Latte keeps its own crust border
-    // and background. Frappé is the one that does not: `-hc.css:670` leaves it
-    // at the plain hairline, where Mocha and Macchiato swap — the opposite of
-    // the surrounding edits, and again reproduced rather than corrected.
+    // The dark flavors draw a fixed dark hairline; high contrast swaps it for
+    // the flavor's overlay2, and Latte keeps its own crust border and
+    // background. Frappé is the one that does not: it stays at the plain
+    // hairline where Mocha and Macchiato swap — the opposite of the surrounding
+    // edits, and again reproduced rather than corrected.
     in-out property <color> dialog-background: root.dark ? ctp.base : ctp.crust;
     in-out property <color> dialog-border:
         root.dark
@@ -484,8 +453,7 @@ export component ThemeProvider inherits Rectangle {
             : ctp.crust;
     in-out property <length> dialog-border-radius: 10px;
 
-    // The Slint equivalent of `.changing-theme`, for the changes that are
-    // allowed to fade (see `Theme.transitions-enabled`).
+    // The changes that are allowed to fade (see `Theme.transitions-enabled`).
     animate base, mantle, crust,
         surface-0, surface-1, surface-2,
         overlay-0, overlay-1, overlay-2,

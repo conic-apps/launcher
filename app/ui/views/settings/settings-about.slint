@@ -7,7 +7,6 @@ import { SettingGroup } from "../../components/setting-group.slint";
 import { SettingItem } from "../../components/setting-item.slint";
 import { AppConfig } from "../../globals/settings.slint";
 
-// src/views/settings/SettingsAbout.vue
 export component SettingsAbout inherits VerticalLayout {
     width: 100%;
     padding-left: 8px;
@@ -84,9 +83,9 @@ export component SettingsAbout inherits VerticalLayout {
         // would only affect the vertical packing).
         cross-axis-alignment: center;
 
-        // `.logo svg { width: 24px }` with no height: an SVG's height follows its
-        // own ratio, which for `logo-flat.svg` is `886.371 / 840.793`, so a 24px
-        // width is 25.31px tall. A 24 × 24 box letterboxes it to 22.77px wide.
+        // The logo has no fixed height: an SVG's height follows its own ratio,
+        // which for `logo-flat.svg` is `886.371 / 840.793`, so a 24px width is
+        // 25.31px tall. A 24 × 24 box letterboxes it to 22.77px wide.
         logo := Image {
             source: @image-url("../../assets/images/logo-flat.svg");
             colorize: Theme.text;
@@ -143,8 +142,8 @@ export component SettingsAbout inherits VerticalLayout {
             height: disclaimer-text.height;
             background: transparent;
 
-            // Only "Brand and Asset Guidelines" is a link (mirrors the Vue `<a>`
-            // + the click handler that only opens the URL for anchor targets).
+            // Only "Brand and Asset Guidelines" is a link; the click handler
+            // opens the URL only for anchor targets.
             // The sentence is split into before/link/after translations so the
             // link can hug the translated label. Slint always underlines
             // `Style::Link` spans (1.18 has no link-hover state), so the

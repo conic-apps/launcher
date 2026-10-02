@@ -6,20 +6,19 @@ import { Theme } from "../theme.slint";
 import { FocusManager } from "../globals/focus.slint";
 import { ScrollInput } from "../globals/scroll.slint";
 
-// Range slider (src/components/BaseSliderBar.vue).
+// Range slider.
 //
 // 300px wide; 3.5px rounded track, lavender fill and a 12px thumb, which grows
-// and shrinks as a uniform scale on hover and while dragging (the Vue's
-// `transform: scale()`; see the thumb below). The value tooltip appears above
-// the thumb while dragging (the Vue original fades it with GSAP on drag start
-// and grows its width on every change; here it is naturally sized).
+// and shrinks as a uniform scale on hover and while dragging (see the thumb
+// below). The value tooltip appears above the thumb while dragging, naturally
+// sized.
 //
 // # Dragging
 //
 // A press jumps the value to the pointer and every move while the button is
-// held follows it, which is what the `<input type="range">` the original wraps
-// does. The moves are read from `TouchArea.moved` rather than from the `move`
-// arm of `pointer-event`: Slint reports a move with `PointerEventButton.other`,
+// held follows it. The moves are read from `TouchArea.moved` rather than from
+// the `move` arm of `pointer-event`: Slint reports a move with
+// `PointerEventButton.other`,
 // never with the button that is held, so a `button == left` test — which the
 // press needs, to keep the right and middle buttons out — is false for every
 // move, and the thumb would follow the initial press alone. The scrollbar of
@@ -40,13 +39,10 @@ import { ScrollInput } from "../globals/scroll.slint";
 //
 // # Disabling
 //
-// `slider-enabled` reaches no further than `TouchArea.enabled`. Slint hands a
+// `slider-enabled` dims the slider and disables its `TouchArea`. Slint hands a
 // disabled touch area no pointer events at all (no press, no move, no
 // `pressed`), withholds the pointer cursor it was given, and cancels a press
-// that is in flight when the area becomes disabled. The original's extra
-// guards — `onMousedown` / `onInput` returning early, `cursor: default` on the
-// disabled thumb — work around a webview range input that keeps reacting after
-// `disabled`, and have no counterpart here.
+// that is in flight when the area becomes disabled.
 export component BaseSliderBar inherits Rectangle {
     in property <int> max: 100;
     in property <int> min: 0;
@@ -129,9 +125,8 @@ export component BaseSliderBar inherits Rectangle {
     }
 
     /// The value a pointer at `x`, in this component's coordinates, picks out:
-    /// how far along the track it is over the range, snapped to `step` (the
-    /// value the original handed to the range input's own `step`). A `step` of
-    /// zero or less is not one to snap to, so such a slider holds its minimum
+    /// how far along the track it is over the range, snapped to `step`. A `step`
+    /// of zero or less is not one to snap to, so such a slider holds its minimum
     /// — the builtin `min`/`max` are not callable from here, as the properties
     /// of those names shadow them.
     function value-at(x: length) -> int {
@@ -157,16 +152,15 @@ export component BaseSliderBar inherits Rectangle {
         background: Theme.lavender;
     }
 
-    // The thumb is the CSS `::-webkit-slider-thumb`, which grows to
-    // `scale(1.1)` on `:hover` and shrinks to `scale(0.9)` on `:active` over a
-    // `transition: all 0.2s ease` — a *uniform* scale about the thumb's centre,
+    // The thumb grows to `scale(1.1)` on hover and shrinks to `scale(0.9)` while
+    // dragging, over 200ms ease — a *uniform* scale about the thumb's centre,
     // which is what a `transform-scale` off its own middle is (the same port
     // `components/scroll-view.slint` makes of its scrollbar's press scale).
     // The size itself cannot be animated instead: with `height: self.width` the
     // height's target is a value that is already moving, so its own 200ms
     // animation re-targets every frame from the width's current value and the
     // dot grows wide first and tall only after it — 0.9/1.1 of the 12px it is
-    // kept at are the 10.8px/13.2px the old sizes stood for.
+    // kept at are the 10.8px/13.2px the scales stand for.
     thumb := Rectangle {
         width: 12px;
         height: 12px;
@@ -189,13 +183,11 @@ export component BaseSliderBar inherits Rectangle {
         // Strictly centred on the thumb, which sits at
         // `shown-percent * root.width - 6px` (its own half-width subtracted).
         //
-        // The Vue's `transform` was
-        // `translateX(calc(-50% + ${6 - 0.12 * percent}px))` — the `-50%` that
-        // centres it, plus a nudge that walks from +6px at 0% to -6px at 100% and
-        // so pulls the tooltip off the thumb by up to half a digit at either
-        // end. That ramp is gone: it reads as the tooltip's track being a
-        // different length from the slider's, and nothing in the design wants
-        // it. Same centre as the thumb, whatever the value.
+        // A nudge that walked the tooltip from one side to the other would pull
+        // it off the thumb by up to half a digit at either end, and it reads as
+        // the tooltip's track being a different length from the slider's.
+        // Nothing in the design wants it: same centre as the thumb, whatever the
+        // value.
         x: root.shown-percent * root.width - self.width / 2;
         y: -32px;
 
@@ -234,10 +226,10 @@ export component BaseSliderBar inherits Rectangle {
                 }
             } else if event.kind == PointerEventKind.cancel
                 || (event.kind == PointerEventKind.up && event.button == PointerEventButton.left) {
-                // The Vue's `mouseup`. A cancel — the pointer left the window
-                // with the button still down, or the slider was disabled
-                // mid-drag — ends the drag the same way, so the value the
-                // moves arrived at still reaches the config through `edited`.
+                // A cancel — the pointer left the window with the button still
+                // down, or the slider was disabled mid-drag — ends the drag the
+                // same way, so the value the moves arrived at still reaches the
+                // config through `edited`.
                 if root.dragging {
                     // Nothing to ease here: the target is the step the value is
                     // already on, and a slide still in flight carries on to it.

@@ -6,6 +6,11 @@
 
 use super::*;
 
+/// Registers every add-account callback on the `AccountAddState` global.
+///
+/// No configuration is involved: an add writes an account file and then asks
+/// the game view to reload (`finish_add`), which is what picks the default
+/// account and persists the choice.
 pub fn setup(ui: &App) {
     setup_shell(ui);
     setup_offline_screen(ui);
@@ -21,8 +26,7 @@ pub(crate) fn setup_shell(ui: &App) {
     {
         let weak = ui.as_weak();
         state.on_select_auth_service(move |service| {
-            // The screen swap itself is the shell's; this records the choice
-            // (Vue `authServiceType`).
+            // The screen swap itself is the shell's; this records the choice.
             let Some(ui) = weak.upgrade() else { return };
             ui.global::<AccountAddState>().set_auth_service(service);
         });
@@ -31,7 +35,7 @@ pub(crate) fn setup_shell(ui: &App) {
         let weak = ui.as_weak();
         state.on_close(move || {
             let Some(ui) = weak.upgrade() else { return };
-            // The Vue's `onUnmounted` cancels whatever was still running.
+            // Closing cancels whatever was still running.
             MICROSOFT.with(|flow| flow.borrow().login.cancel());
             release_auth_code_flow(&ui);
             ui.global::<Dialogs>().set_account_add_visible(false);
@@ -72,8 +76,8 @@ pub(crate) fn setup_offline_screen(ui: &App) {
             let advanced = !state.get_offline_advanced();
             state.set_offline_advanced(advanced);
             state.set_offline_uuid_invalid(false);
-            // The Vue's `watch(advancedMode)`: switching it on hands the field
-            // over empty, switching it off takes the derived value back.
+            // Switching advanced mode on hands the field over empty; switching
+            // it off takes the derived value back.
             if advanced {
                 state.set_offline_uuid("".into());
             } else {
@@ -92,8 +96,8 @@ pub(crate) fn setup_offline_screen(ui: &App) {
             let Some(ui) = weak.upgrade() else { return };
             let state = ui.global::<AccountAddState>();
             if state.get_offline_advanced() {
-                // The Vue's `uuidInvalid`: only a typed, unparsable value is
-                // wrong — an empty field simply has nothing to send yet.
+                // Only a typed, unparsable value is wrong — an empty field
+                // simply has nothing to send yet.
                 let uuid = state.get_offline_uuid().trim().to_string();
                 state.set_offline_uuid_invalid(!uuid.is_empty() && Uuid::parse_str(&uuid).is_err());
             } else {
@@ -114,7 +118,7 @@ pub(crate) fn setup_offline_screen(ui: &App) {
             let state = ui.global::<AccountAddState>();
             let username = state.get_offline_username().trim().to_string();
             let uuid = state.get_offline_uuid().trim().to_string();
-            // The Vue's `submitAccount` guard, on top of the disabled button.
+            // The submit guard, on top of the disabled button.
             if username.is_empty() {
                 return;
             }
@@ -125,8 +129,8 @@ pub(crate) fn setup_offline_screen(ui: &App) {
             let weak = weak.clone();
             crate::runtime::spawn(async move {
                 if let Err(error) = account::offline::add_account(username, uuid).await {
-                    // The Vue has no error path here either: the dialog simply
-                    // stays open.
+                    // There is no error path here: the dialog simply stays
+                    // open.
                     log::error!("failed to add the offline account: {error}");
                     return;
                 }
@@ -149,9 +153,8 @@ pub(crate) fn setup_microsoft_screen(ui: &App) {
                 state.set_ms_view("device-code".into());
                 return;
             }
-            // Deliberate divergence from the Vue: it keeps the previous code on
-            // screen and never polls it again, which leaves the dialog stuck.
-            // A fresh code is what the user asked for.
+            // A fresh code is what the user asked for; keeping the previous code
+            // on screen and never polling it again would leave the dialog stuck.
             state.set_ms_user_code("".into());
             state.set_ms_verification_uri("".into());
             start_microsoft_login(weak.clone(), LoginRequest::DeviceCode, true);
@@ -161,9 +164,9 @@ pub(crate) fn setup_microsoft_screen(ui: &App) {
         let weak = ui.as_weak();
         state.on_use_auth_code_flow(move || {
             let Some(ui) = weak.upgrade() else { return };
-            // The Vue's `watch(useDeviceCodeFlow)`: leaving the device code
-            // cancels the login behind it. The browser screen's own listener is
-            // the one this screen's swap tears down (see `release`).
+            // Leaving the device code cancels the login behind it. The browser
+            // screen's own listener is the one this screen's swap tears down
+            // (see `release_auth_code_flow`).
             MICROSOFT.with(|flow| flow.borrow().login.cancel());
             ui.global::<AccountAddState>()
                 .set_ms_view("auth-code".into());
@@ -173,7 +176,7 @@ pub(crate) fn setup_microsoft_screen(ui: &App) {
         let weak = ui.as_weak();
         state.on_cancel_microsoft_login(move || {
             let Some(ui) = weak.upgrade() else { return };
-            // The Vue's `closeDialog()`: cancel, then dismiss.
+            // Cancel, then dismiss.
             MICROSOFT.with(|flow| flow.borrow().login.cancel());
             release_auth_code_flow(&ui);
             ui.global::<Dialogs>().set_account_add_visible(false);
@@ -239,8 +242,8 @@ pub(crate) fn setup_yggdrasil_form(ui: &App) {
             crate::runtime::spawn(async move {
                 let info = yggdrasil::yggdrasil_server::get_server_info(&api_root).await;
                 let _ = weak.upgrade_in_event_loop(move |ui| {
-                    // The Vue only takes a string `meta.serverName`, and leaves
-                    // the previous name up when the request fails.
+                    // Only a string `meta.serverName` is taken, and the previous
+                    // name stays up when the request fails.
                     let Ok(info) = info else { return };
                     if let Some(name) = info.meta.get("serverName").and_then(|name| name.as_str()) {
                         ui.global::<AccountAddState>()
@@ -288,8 +291,8 @@ pub(crate) fn setup_yggdrasil_login(ui: &App) {
                         }
                     };
                     // The default profile is taken before the response is split
-                    // up: the Vue asks the user only when there is no default
-                    // *and* a choice to make.
+                    // up: the user is asked only when there is no default *and*
+                    // a choice to make.
                     let selected = response.selected_profile;
                     let credentials = PendingYggdrasil {
                         access_token: response.access_token,
@@ -326,8 +329,7 @@ pub(crate) fn setup_yggdrasil_login(ui: &App) {
                 let Some(mut row) = model.row_data(index) else {
                     return;
                 };
-                // `&.disabled { pointer-events: none }`: a profile the launcher
-                // already has cannot be picked.
+                // A profile the launcher already has cannot be picked.
                 if row.added {
                     return;
                 }

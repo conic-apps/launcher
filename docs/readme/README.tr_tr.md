@@ -17,7 +17,7 @@
 
 ## Bu nedir
 
-Conic Launcher modern bir masaüstü Minecraft başlatıcısıdır: çekirdek mantığı Rust ile uygulanmış, arayüz Tauri 2 + Vue 3 ile oluşturulmuştur. Küçük kurulum boyutu, hızlı başlangıç ve düşük kaynak tüketimi ile karbon emisyonlarını azaltmaya bile yardımcı olur.
+Conic Launcher modern bir masaüstü Minecraft başlatıcısıdır: çekirdek mantığı Rust ile uygulanmış, arayüz ise yerel bir UI araç takımı olan [Slint](https://slint.dev) ile oluşturulmuştur. Küçük kurulum boyutu, hızlı başlangıç ve düşük kaynak tüketimi ile karbon emisyonlarını azaltmaya bile yardımcı olur.
 
 Instance oluşturma ve loader kurulumundan, mod aramaya ve arkadaşları birlikte oynamaya davet etmeye, oyunu başlatmaya ve oyun süresini takip etmeye kadar — tüm iş akışı tek bir uygulamada tamamlanabilir.
 
@@ -98,14 +98,13 @@ Uygulama dahili otomatik güncelleme içerir — kurulumdan sonra manuel yüksel
 
 ## Kaynak kodundan derleme
 
-[Rust 1.88+](https://rustup.rs/), [Node.js 24](https://nodejs.org/) ve [pnpm](https://pnpm.io/) kurulu olduğundan emin olun ve platformunuz için [Tauri ön koşullarını](https://tauri.app/start/prerequisites/) takip edin.
+[Rust 1.88+](https://rustup.rs/) kurulu olduğundan emin olun; Linux'ta [derleme bağımlılıklarını](../../AGENTS.md#linux-build-dependencies) da kurun.
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
 cd launcher
-pnpm install
-pnpm tauri dev      # Geliştirme ve hata ayıklama
-pnpm tauri build    # Üretim derlemesi
+cargo run              # Geliştirme ve hata ayıklama
+cargo build --release  # Üretim derlemesi
 ```
 
 ## Katkıda bulunma
@@ -113,16 +112,19 @@ pnpm tauri build    # Üretim derlemesi
 [Issue'lar](https://github.com/conic-apps/launcher/issues/new/choose) ve Pull Request'ler (`dev` dalını hedefleyenler) hošgeldiniz. Göndermeden önce lütfen şunu çalıştırın:
 
 ```bash
-pnpm check
+cargo fmt --all -- --check
+cargo check
+cargo clippy --all-targets --release -- -D warnings
+cargo test
 ```
 
 ## Mimari
 
 <div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Mimari diyagramı: Vue 3 ön yüzü Tauri IPC üzerinden Rust çekirdeği ile iletişim kurar, altında alanlara ayrılmış crates modülleri">
+  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Mimari diyagramı: Slint arayüzü doğrudan alanlara ayrılmış Rust crates'e bağlı">
 </div>
 
-Ön yüz (Vue 3 + Pinia), Tauri IPC üzerinden Rust yetenekleriyle iletişim kurar. `core`, Tauri uygulama montajını yönetirken, belirli yetenekler alanlara göre `crates/*` çalışma alanı modüllerine bölünmüştür. Bu modüller bağımsız olarak gelişir ve ihtiyaçlarına göre birleştirilir.
+Arayüz [Slint](https://slint.dev) ile oluşturulmuş ve doğrudan alan crates'ine bağlanmıştır — IPC katmanı yoktur. `app/` ikili dosyayı ve `.slint` ağacını barındırır; her yetenek kendi `crates/*` çalışma alanı modülünde yer alır, böylece bağımsız olarak gelişir ve gerektiğinde birleşir.
 
 ## Lisans
 

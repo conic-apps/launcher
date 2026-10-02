@@ -4,8 +4,7 @@
 
 import { Background } from "../globals/background.slint";
 
-// The window's background: `WindowBackground.vue`'s layer stack, with Rust
-// rendering the two canvases it used to own.
+// The window's background, with Rust rendering the sky and world images.
 //
 //   window colour → hyperbola sky (30%) → 3D world (30%) → custom background
 //   → dim overlay
@@ -16,8 +15,7 @@ import { Background } from "../globals/background.slint";
 // let the window colour show through the middle of the transition — which is
 // the flash this arrangement exists to avoid.
 //
-// The whole stack sits in a wrapper scaled by 1.08 that follows the pointer,
-// as the original's `gsap.set(wrapper, {scale: SCALE})` and `quickTo` do. The
+// The whole stack sits in a wrapper scaled by 1.08 that follows the pointer. The
 // images are rendered 1.08x the window to match, so the scale lands them on
 // device pixels rather than stretching them.
 export component WindowBackground inherits Rectangle {
@@ -72,7 +70,7 @@ export component WindowBackground inherits Rectangle {
             visible: Background.world-shown;
         }
 
-        // `object-fit: cover`, like the Vue's `<img>`.
+        // Cover-fit.
         Image {
             source: Background.custom-a;
             width: 100%;

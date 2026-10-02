@@ -165,16 +165,15 @@ const GLYPH_CLOSE: u16 = 0xE8BB;
 /// falls through to the next rather than drawing boxes.
 const GLYPH_FONTS: [windows::core::PCWSTR; 2] = [w!("Segoe Fluent Icons"), w!("Segoe MDL2 Assets")];
 
-/// The point size the caption glyphs are drawn at, which is the caption's own:
-/// 10pt is what Windows 11 draws its caption buttons at, and the unit the caption
-/// itself uses, so the controls come out the size the platform's would be.
+/// The point size the caption glyphs are drawn at. It is a point size, converted
+/// to the font's character height at the window's DPI, so it scales with the
+/// display rather than being pinned to a pixel count — which is why 8 stays 8 on
+/// a 4K monitor.
 ///
-/// **This is the knob for the glyphs' size.** It is a point size, converted to the
-/// font's character height at the window's DPI, so it scales with the display
-/// rather than being pinned to a pixel count — which is why 10 stays 10 on a 4K
-/// monitor. Try 9 or 11 and re-run to compare; anything from about 8 to 12 reads
-/// well inside the 46px slot. Where the glyphs *sit* is not set here: that is
-/// measured from the rendered ink, see [`ink_offset`].
+/// **This is the knob for the glyphs' size.** Try 9 or 11 and re-run to compare;
+/// anything from about 8 to 12 reads well inside the 46px slot. Where the glyphs
+/// *sit* is not set here: that is measured from the rendered ink, see
+/// [`ink_offset`].
 const GLYPH_POINTS: i32 = 8;
 
 /// What goes behind a caption button on hover and while it is pressed: the
@@ -681,8 +680,9 @@ unsafe fn render_glyph(
 /// How far the glyph has to move from where GDI's text alignment put it for its
 /// *ink* to be centred in the control, or `None` if the DIB holds no ink at all.
 ///
-/// The DIB's alpha channel is the glyph's coverage, white-on-black, so the ink is
-/// simply the non-zero pixels. `TA_CENTER`/`TA_BOTTOM` centre the font's own box
+/// The glyph is drawn white on a zeroed black DIB, so its coverage is the pixel's
+/// colour, not the DIB's unwritten alpha; the ink is simply the non-zero pixels.
+/// `TA_CENTER`/`TA_BOTTOM` centre the font's own box
 /// (ascent to descent) rather than that, and a private-use glyph does not fill its
 /// em evenly: a thin horizontal dash sits high in the box, the cross and the square
 /// sit differently again. Measuring is what keeps all three looking centred instead
@@ -735,7 +735,7 @@ unsafe fn ink_offset(
 
 /// Keeps the window rounded, which is what the desktop window manager does for a
 /// top-level window on Windows 11. Asked for explicitly because the frame is the
-/// app's own now, and the app draws square corners inside it.
+/// app's own, and the app draws square corners inside it.
 ///
 /// SAFETY: `hwnd` is a live top-level window on this thread.
 unsafe fn round_corners(hwnd: HWND) {
