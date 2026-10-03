@@ -6,6 +6,7 @@ import { Theme } from "../theme.slint";
 import { AppIcon } from "../components/display/app-icon.slint";
 import { ScrollView } from "../components/containers/scroll-view.slint";
 import { FocusManager } from "../globals/focus.slint";
+import { PageMotion } from "../globals/page-motion.slint";
 import { SettingsGeneral } from "settings/settings-general.slint";
 import { SettingsGame } from "settings/settings-game.slint";
 import { SettingsJvm } from "settings/settings-jvm.slint";
@@ -98,6 +99,12 @@ export component SettingsView inherits Rectangle {
     height: 100%;
     background: Theme.base.transparentize(0.4);
 
+    // Entrance/exit of the *content* only: the root keeps its translucent
+    // background fixed while everything inside slides up from `intro-offset`
+    // below and fades in, and fades out in place.
+    private property <string> motion: PageMotion.phase("settings");
+    private property <length> intro-offset: 40px;
+
     // Background click layer: clicking empty space (page padding, section
     // titles, gaps between rows) blurs the focused text field. Controls and rows
     // declare their own touch areas on top and handle the click themselves.
@@ -105,7 +112,12 @@ export component SettingsView inherits Rectangle {
         clicked => { FocusManager.clear(); }
     }
 
+    // The page's content. The root background above stays put; this is what the
+    // entrance and exit move and fade.
     HorizontalLayout {
+        y: root.motion == "enter" ? root.intro-offset : 0px;
+        opacity: root.motion == "shown" ? 1.0 : 0.0;
+        animate opacity, y { duration: 250ms; easing: cubic-bezier(0, 0.65, 0.26, 1); }
 
         Rectangle {
             width: 224px;

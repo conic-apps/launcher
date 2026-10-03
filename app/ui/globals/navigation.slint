@@ -14,6 +14,28 @@ export global Navigation {
     in-out property <string> current-page: "game";
     in-out property <string> previous-page: "";
 
+    /// The page being left while a swap plays, "" at rest.
+    ///
+    /// Written *synchronously* by `navigate`/`back` — unlike a `changed`
+    /// handler, which Slint queues for a later event-loop pass — because the
+    /// page stack reads it in a binding to keep the outgoing page mounted. A
+    /// queued write would leave a frame in which neither page is mounted, and
+    /// the incoming one would flash at rest before its entrance.
+    in-out property <string> leaving-page: "";
+    /// Whether the in-flight navigation is a `back`. Offered to a view that
+    /// wants a directional animation; a plain fade ignores it.
+    in-out property <bool> back-navigation: false;
+    /// The page-swap lifecycle the `App` timers drive: "idle" (at rest),
+    /// "starting" (the incoming view held one frame at its start values) or
+    /// "running" (the animation plays).
+    ///
+    /// It lives here rather than in a component because it is set on the same
+    /// synchronous beat as `current-page`: a view bound only to a queued
+    /// notification would miss the first frame. What each stage *looks like* is
+    /// not decided here — `PageMotion` names the phases and each view draws its
+    /// own.
+    in-out property <string> transition-stage: "idle";
+
     /// Fired whenever `current-page` changes, so a screen can run its
     /// teardown without polling. The launch view is the first user: leaving it
     /// has to cancel a running install/launch, and the title bar can navigate
@@ -25,16 +47,28 @@ export global Navigation {
     }
 
     public function navigate(page: string) {
-        if (self.current-page != page && self.current-page != "launch") {
+        if (self.current-page == page) {
+            return;
+        }
+        // `previous-page` is left alone when leaving `launch`, so the back
+        // button returns to where the launch was started from.
+        if (self.current-page != "launch") {
             self.previous-page = self.current-page;
         }
+        self.leaving-page = self.current-page;
+        self.back-navigation = false;
         self.current-page = page;
+        self.transition-stage = "starting";
     }
 
     public function back() {
-        if (self.previous-page != "") {
-            self.current-page = self.previous-page;
-            self.previous-page = "";
+        if (self.previous-page == "") {
+            return;
         }
+        self.leaving-page = self.current-page;
+        self.back-navigation = true;
+        self.current-page = self.previous-page;
+        self.previous-page = "";
+        self.transition-stage = "starting";
     }
 }
