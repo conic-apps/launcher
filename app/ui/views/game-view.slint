@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { GameIntro } from "../globals/game.slint";
+import { PageMotion } from "../globals/page-motion.slint";
 import { InstanceSummary } from "game/instance-summary.slint";
 import { InstancesList } from "game/instances-list.slint";
 import { GameFooterBar } from "game/footer.slint";
@@ -16,6 +17,12 @@ export component GameView inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
+
+    // The exit: the whole page fades at once. The entrance is still the
+    // per-element `GameIntro` stagger, so this leaves `opacity` alone except on
+    // "leave" — an "enter" here would double the intro.
+    opacity: PageMotion.phase("game") == "leave" ? 0.0 : 1.0;
+    animate opacity { duration: 200ms; easing: ease-out-quad; }
 
     // The screen is recreated on every navigation to it (the page stack uses a
     // conditional), so the intro replays on every visit.

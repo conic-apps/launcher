@@ -1,0 +1,32 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Navigation } from "navigation.slint";
+
+// The presentation-facing view of a page swap.
+//
+// `Navigation` knows which page is leaving and on which lifecycle beat; this
+// global turns that into the three words a view animates against — "enter",
+// "shown" or "leave" — so the vocabulary of animation never leaks back into the
+// navigation policy. A view asks for its own page by name. There is no shared
+// transition component: each view draws its own phase however it likes.
+export global PageMotion {
+    /// The phase of `page` in the current swap:
+    ///
+    ///   "enter"  the incoming page, waiting at the entrance's start;
+    ///   "shown"  at rest, or the outgoing page waiting to leave;
+    ///   "leave"  the outgoing page playing its exit.
+    ///
+    /// A page that is neither current nor leaving reports "shown"; it is not
+    /// mounted in that state, so the answer is only ever a fallback.
+    public pure function phase(page: string) -> string {
+        if (Navigation.current-page == page) {
+            return Navigation.transition-stage == "starting" ? "enter" : "shown";
+        }
+        if (Navigation.leaving-page == page) {
+            return Navigation.transition-stage == "starting" ? "shown" : "leave";
+        }
+        return "shown";
+    }
+}
