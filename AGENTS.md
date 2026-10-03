@@ -54,7 +54,7 @@ plus a "test" job that is `cargo test --all --release --verbose --all-targets`.
 - Rust touches a Slint component only from the event loop. From another thread,
   go through `upgrade_in_event_loop` — a `Weak` crosses threads, a strong handle
   cannot.
-- Keep the winit backend hook (`app/src/support/platform/`, reached through
+- Keep the winit backend hook (`app/src/support/native/`, reached through
   `native::install_backend`) as the only place window attributes are set. It has
   to run before any winit window exists, which is why `main` calls it before
   `App::new`.

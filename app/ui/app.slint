@@ -43,7 +43,7 @@ export { WorldMapState, WorldSource, WorldTile } from "globals/worldmap.slint";
 
 // Application root window. macOS keeps the native traffic lights, Linux draws
 // the window controls itself, and Windows draws the platform's own over the
-// title bar (`app/src/support/platform/windows/caption.rs`) — neither of the last two leaves a
+// title bar (`app/src/support/native/windows/caption.rs`) — neither of the last two leaves a
 // system title bar behind.
 export component App inherits Window {
     title: @tr("Conic Launcher");
@@ -68,7 +68,7 @@ export component App inherits Window {
     preferred-height: 532px;
     // Linux has no window controls of its own, and Windows drops the caption so
     // that the platform's have the app's title bar to sit on (see
-    // `app/src/support/platform/windows/caption.rs`), so both draw over the whole window.
+    // `app/src/support/native/windows/caption.rs`), so both draw over the whole window.
     no-frame: self.linux || self.windows;
     resize-border-width: (self.linux || self.windows) ? 6px : 0px;
     // The initial focus element, and the only thing that keeps the `Ctrl`/`⌘` + `/`
@@ -84,7 +84,7 @@ export component App inherits Window {
     in-out property <bool> windows: false;
     /// The custom title bar's height. Declared here rather than in
     /// `title-bar.slint` because the platform sizes the window controls to it and
-    /// hit tests them against it (see `app/src/support/platform/windows/caption.rs`), so the two sides
+    /// hit tests them against it (see `app/src/support/native/windows/caption.rs`), so the two sides
     /// have to read the same number.
     in property <length> title-bar-height: 44px;
     /// How much of the title bar's right-hand end the platform's own window
@@ -143,7 +143,7 @@ export component App inherits Window {
     callback restart-app();
     /// Tells the platform which theme the app resolved to, so the window controls
     /// it draws take their ink from this title bar. Answered on Windows
-    /// (`app/src/support/platform/windows/caption.rs`) and ignored everywhere else.
+    /// (`app/src/support/native/windows/caption.rs`) and ignored everywhere else.
     callback set-caption-dark(dark: bool);
 
     // Drives the palette selection and animates the Theme tokens (see

@@ -2,7 +2,7 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Platform-specific window-shell integration.
+//! Native (platform-specific) window-shell integration.
 //!
 //! Everything the app has to do differently per OS lives behind this module:
 //! the winit window-attributes hook (which has to run before any window exists),
@@ -22,7 +22,7 @@ use crate::slint_backend::App;
 ///
 /// Must run before any window exists — i.e. before `App::new` — so the window is
 /// created with the frame the platform wants. A no-op where the platform needs
-/// no hook. See each platform module for what the hook does and why it cannot
+/// no hook. See each per-OS module for what the hook does and why it cannot
 /// wait.
 pub(crate) fn install_backend() {
     #[cfg(target_os = "macos")]
