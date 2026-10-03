@@ -87,6 +87,20 @@ export component AccountAddMicrosoft inherits VerticalLayout {
     init => {
         // The state the screen opens in is simply mounted.
         root.shown = root.view;
+        // The `changed` handler below cannot see this first mount. A Slint
+        // change tracker takes its baseline *after* `init` has run (the
+        // generated `user_init` sets `shown` and only then calls
+        // `change_tracker_init_erased`), so a screen that opens already on the
+        // browser flow rises straight to the baseline `true` and never fires.
+        // The dialog never does — it opens after this screen exists, so
+        // `dialog-visible` is the change it sees — but the wizard mounts this
+        // screen as an already-visible step, so its listener has to be asked
+        // for here or the login link stays empty and "Log in" opens the file
+        // manager. `prepare-auth-code-flow` is a no-op when one is already
+        // bound, so the two paths cannot bind twice.
+        if root.browser-flow-on-screen {
+            AccountAddState.prepare-auth-code-flow();
+        }
     }
 
     changed view => {
