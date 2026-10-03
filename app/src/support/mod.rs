@@ -5,12 +5,12 @@
 //! Process and OS plumbing shared by the app's layers.
 //!
 //! `usecases/` and `ui/` may both use it, and it uses neither — with one
-//! exception: `platform/` is the window-shell driver (the winit backend hook and
+//! exception: `native/` is the window-shell driver (the winit backend hook and
 //! the platform's window chrome), so it is the one part here that touches
 //! `slint_backend`.
 
 pub(crate) mod formatting;
 pub(crate) mod json;
 pub(crate) mod logs;
-pub(crate) mod platform;
+pub(crate) mod native;
 pub(crate) mod runtime;

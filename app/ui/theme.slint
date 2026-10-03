@@ -280,7 +280,7 @@ export global Theme {
     // `[SansSerif, SystemUi]` generics behind it — which resolve to
     // Arial/Segoe UI on Windows, also glyph-free for Han. The CJK fallbacks
     // ('Yu Gothic UI', 'Microsoft YaHei UI') therefore have to be registered
-    // separately; see `app/src/support/platform/windows/cjk_font.rs`.
+    // separately; see `app/src/support/native/windows/cjk_font.rs`.
     in property <string> font-family: "Comfortaa Nunito";
     in property <length> font-size-base: 16px;
     in property <int> font-weight-normal: 400;
@@ -333,7 +333,7 @@ export component ThemeProvider inherits Rectangle {
     // the first moment the platform can have reported its scheme (see
     // `Theme.transitions-enabled`). `changed dark` alone would not do: when the
     // configured palette already *is* the resolved one — the common case on a
-    // dark system — `dark` never changes, and `app/src/support/platform/windows/caption.rs` would
+    // dark system — `dark` never changes, and `app/src/support/native/windows/caption.rs` would
     // keep the default ink for a Latte window.
     //
     // This is deliberately the only thing this timer does; the palette
@@ -357,7 +357,7 @@ export component ThemeProvider inherits Rectangle {
     // whatever the system theme is doing. Hand it the palette this app actually
     // resolved to — "follow system" can only be known here. The tokens below
     // animate on a palette change; this does not, which is what the platform
-    // wants (it cannot interpolate its own glyphs). See `app/src/support/platform/windows/caption.rs`.
+    // wants (it cannot interpolate its own glyphs). See `app/src/support/native/windows/caption.rs`.
     callback caption-dark-changed(dark: bool);
     changed dark => { root.caption-dark-changed(root.dark); }
 
