@@ -64,6 +64,18 @@ impl GameController {
     /// loop, so the listing — one `instance.toml` read and parse per instance —
     /// never runs on the thread that draws.
     pub(crate) fn reload(ui: &App) {
+        Self::reload_selecting(ui, None);
+    }
+
+    /// Re-reads the instance list and makes `select` the current instance once
+    /// it lands.
+    ///
+    /// A freshly created instance has to end up selected, but it is not in the
+    /// listing loaded at the time: selecting it straight away would leave the
+    /// summary empty until the reload completes, and a plain [`Self::reload`]
+    /// would keep the instance that was current before. Carrying the id into the
+    /// completion sets the list and its selection in the same apply.
+    pub(crate) fn reload_selecting(ui: &App, select: Option<String>) {
         let sort = controller().borrow().sort;
         let weak = ui.as_weak();
         crate::support::runtime::spawn(async move {
@@ -71,6 +83,10 @@ impl GameController {
             crate::ui::services::report::report(&weak, move |ui| {
                 let controller = controller();
                 controller.borrow_mut().set_instances(instances);
+                if let Some(id) = select {
+                    controller.borrow_mut().current_id = Some(id);
+                    controller.borrow().persist();
+                }
                 controller.borrow_mut().apply(&ui);
             });
         });

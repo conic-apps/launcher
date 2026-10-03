@@ -27,6 +27,16 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
         });
     }
     {
+        // A reload that also moves the selection, for an instance that is only
+        // in the *new* listing (see `GameController::reload_selecting`).
+        let weak = ui.as_weak();
+        state.on_refresh_selecting(move |id| {
+            if let Some(ui) = weak.upgrade() {
+                GameController::reload_selecting(&ui, Some(id.to_string()));
+            }
+        });
+    }
+    {
         let controller = Rc::clone(&controller);
         let weak = ui.as_weak();
         state.on_select_instance(move |id| {

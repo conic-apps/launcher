@@ -202,6 +202,11 @@ export global GameState {
 
     // Called once at startup and whenever something changed on disk.
     callback refresh();
+    // Reloads the list and selects the given instance as it lands. Used after a
+    // create, where the instance is only in the *new* listing: plain `refresh`
+    // would keep the previous selection and `select-instance` would clear the
+    // summary until the reload completes.
+    callback refresh-selecting(string);
     // An account was added or removed: pick one when none is selected. Rust
     // owns the config, so this runs there rather than in the dialog's script.
     callback select-first-account();
