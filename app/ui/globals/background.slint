@@ -29,8 +29,10 @@ export global Background {
     // camera option while it is set.
     in-out property <bool> software-only: false;
 
-    // Two slots, so one can fade in over the other. `custom-a` is the one a
-    // transition starts from when both are free.
+    // Two slots, so one background can cross-fade into the other. Rust writes
+    // both alphas on every tick of a fade — the outgoing falling as the
+    // incoming rises — and the component only composites them. `custom-a` is
+    // the one a transition starts from when both are free.
     in-out property <image> custom-a;
     in-out property <float> custom-a-alpha: 0;
     in-out property <image> custom-b;
@@ -45,10 +47,6 @@ export global Background {
     /// and follows the pointer by up to `MAX_OFFSET` (4px) at the window edges.
     in-out property <length> parallax-x: 0px;
     in-out property <length> parallax-y: 0px;
-
-    /// Set by Rust around a layer change. The view does not read it, so the
-    /// layer alphas jump to their new values either way.
-    in-out property <bool> snap: true;
 
     /// The palette's `crust`, the world's fill colour — read every frame, so it
     /// follows the 300ms palette transition.
