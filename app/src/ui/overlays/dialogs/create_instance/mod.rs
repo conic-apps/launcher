@@ -143,23 +143,27 @@ fn setup_create(ui: &App) {
             // Creating an instance writes files and walks the instance folder, so
             // it belongs off the UI thread.
             crate::support::runtime::spawn(async move {
-                if let Err(error) = create_instance(
+                let created = create_instance(
                     &name,
                     &minecraft,
                     &loader_type,
                     &loader_version,
                     &background,
                 )
-                .await
-                {
+                .await;
+                if let Err(error) = &created {
                     log::error!("failed to create the instance: {error}");
                 }
                 crate::ui::services::report::report(&weak, move |ui| {
                     ui.global::<CreateInstanceState>().set_creating(false);
-                    // Reload the instance list, then close — also after a
-                    // failure, since the dialog is not a place to report an
-                    // error.
-                    ui.global::<GameState>().invoke_refresh();
+                    match created {
+                        // The new instance becomes current: the reload carries
+                        // its id so the list selects it as it lands.
+                        Ok(id) => ui.global::<GameState>().invoke_refresh_selecting(id.into()),
+                        // Reload after a failure too, since the dialog is not a
+                        // place to report an error.
+                        Err(_) => ui.global::<GameState>().invoke_refresh(),
+                    }
                     ui.global::<Dialogs>().set_create_instance_visible(false);
                 });
             });
