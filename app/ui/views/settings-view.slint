@@ -97,12 +97,18 @@ component SettingsSection inherits VerticalLayout {
 export component SettingsView inherits Rectangle {
     width: 100%;
     height: 100%;
-    background: Theme.base.transparentize(0.4);
 
-    // Entrance/exit of the *content* only: the root keeps its translucent
-    // background fixed while everything inside slides up from `intro-offset`
-    // below and fades in, and fades out in place.
     private property <string> motion: PageMotion.phase("settings");
+
+    // The entrance and exit are the tint and the content together. The root used
+    // to keep its translucent `base` fixed while only the content moved; the
+    // tint now fades on the content's own beat, so the whole page — backdrop
+    // included — comes and goes as one rather than the content sliding over a
+    // tint that is already there. `transparentize(1.0)` is the fully
+    // transparent end, the same colour at alpha 0.
+    background: Theme.base.transparentize(root.motion == "shown" ? 0.4 : 1.0);
+    animate background { duration: 250ms; easing: cubic-bezier(0, 0.65, 0.26, 1); }
+
     private property <length> intro-offset: 40px;
 
     // Background click layer: clicking empty space (page padding, section
@@ -112,8 +118,8 @@ export component SettingsView inherits Rectangle {
         clicked => { FocusManager.clear(); }
     }
 
-    // The page's content. The root background above stays put; this is what the
-    // entrance and exit move and fade.
+    // The page's content: it slides up from `intro-offset` below and fades in,
+    // and fades out in place, on the tint's beat above.
     HorizontalLayout {
         y: root.motion == "enter" ? root.intro-offset : 0px;
         opacity: root.motion == "shown" ? 1.0 : 0.0;
