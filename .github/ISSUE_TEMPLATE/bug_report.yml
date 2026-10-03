@@ -10,12 +10,11 @@ body:
         ## First of all
         1. Please search for [existing issues](https://github.com/conic-apps/launcher/issues?q=is%3Aissue) about this problem first.
         2. Make sure it's an issue with Conic Launcher and not something else you are using.
-        3. Remember to follow our community guidelines and be friendly.
 
   - type: markdown
     attributes:
       value: |
-        ## Basic Infomations
+        ## Basic Information
 
   - type: input
     id: version
@@ -65,7 +64,7 @@ body:
       description: |
         A link to a reproduction repo or steps to reproduce the behaviour.
         Please provide a minimal reproduction or steps to reproduce, see this guide https://stackoverflow.com/help/minimal-reproducible-example
-        Why reproduction is required? see this article https://antfu.me/posts/why-reproductions-are-required
+        Why is a reproduction required? See this article https://antfu.me/posts/why-reproductions-are-required
 
   - type: textarea
     id: expected-behavior
@@ -78,8 +77,6 @@ body:
     attributes:
       label: Full log
       render: text
-    validations:
-      required: true
 
   - type: textarea
     id: context

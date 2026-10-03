@@ -31,7 +31,8 @@ The WiX v4+ schema (`http://wixtoolset.org/schemas/v4/wxs`), which is WiX 5, 6
 and 7. **Not** the WiX v3 dialect: that variant is EOL, and `candle`/`light`
 read a different XML language rather than an older spelling of this one. The
 workflow installs the v6 tool with `dotnet tool install` on both runners — see
-`AGENTS.md` for why not the v3 one the x64 runner image happens to carry.
+[`CONTRIBUTING.md`](../../CONTRIBUTING.md#windows) for why not the v3 one the x64
+runner image happens to carry.
 
 Three spellings in here that are WiX 6's and not what the older documentation
 suggests, each of which is a build error rather than a warning:

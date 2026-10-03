@@ -1,13 +1,12 @@
 <div align="center">
-  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher —— a modern, cross-platform Minecraft launcher showcasing four Catppuccin themes">
+  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher — a modern, cross-platform Minecraft launcher showcasing four Catppuccin themes">
   <p>
     <a href="https://github.com/conic-apps/launcher/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/conic-apps/launcher/build.yml?label=build&logo=github" alt="Build status"></a>
     <a href="https://github.com/conic-apps/launcher/releases"><img src="https://img.shields.io/github/v/release/conic-apps/launcher?include_prereleases&label=release" alt="Release"></a>
     <a href="../../LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
-    <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
+    <a href="https://discord.gg/xWKY5NMuf7"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   </p>
-  <p><strong>A small, fast, and nimble Minecraft launcher</strong><br>
-  Multi-instance management · Mod & resource pack marketplace · Cross-LAN multiplayer · Multi-theme support</p>
+  <p><strong>A small, fast, and nimble Minecraft launcher</strong></p>
   <p>
     🌐 <a href="../../README.md"><strong>English</strong></a> · <a href="./README.zh_cn.md">简体中文</a> · <a href="./README.zh_tw.md">繁體中文</a> · <a href="./README.ja_jp.md">日本語</a> · <a href="./README.ko_kr.md">한국어</a> · <a href="./README.de_de.md">Deutsch</a> · <a href="./README.fr_fr.md">Français</a> · <a href="./README.es_es.md">Español</a> · <a href="./README.pt_br.md">Português (Brasil)</a> · <a href="./README.ru_ru.md">Русский</a> · <a href="./README.tr_tr.md">Türkçe</a> · <a href="./README.pl_pl.md">Polski</a>
   </p>
@@ -17,7 +16,7 @@
 
 ## What is this
 
-Conic Launcher is a modern desktop Minecraft launcher: the core logic is implemented in Rust and the interface is built with [Slint](https://slint.dev), a native UI toolkit. It features a small installation footprint, fast startup, low resource consumption, and even helps reduce carbon emissions.
+Conic Launcher is a small, fast, and nimble desktop Minecraft launcher: the core logic is implemented in Rust and the interface is built with [Slint](https://slint.dev), a native UI toolkit. It features a small installation footprint, fast startup, low resource consumption, and even helps reduce carbon emissions.
 
 From creating instances and installing loaders, to searching for mods and inviting friends to play together, to launching the game and tracking playtime — the entire workflow can be completed in a single app.
 
@@ -86,19 +85,21 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## Download
 
-Download the installer for your platform from [GitHub Releases](https://github.com/conic-apps/launcher/releases):
+Download the installer for your platform from [GitHub Releases](https://github.com/conic-apps/launcher/releases) or [Official Website](https://conicmc.app):
 
 | Platform | Architecture          | Formats                             |
 | -------- | --------------------- | ----------------------------------- |
-| Windows  | x64 · arm64           | MSI · NSIS installer · Portable exe |
+| Windows  | x64 · arm64           | MSI · Portable exe                  |
 | macOS    | Apple Silicon · Intel | DMG                                 |
 | Linux    | x64 · arm64           | deb · rpm · AppImage                |
 
 The app includes built-in auto-updates — no manual upgrades needed after installation.
 
+> The standalone Windows `.exe` is a single file, but it imports `VCRUNTIME140.dll`: a machine without the Visual C++ Redistributable (most with Office or .NET already have it) will not start it. The `.msi` installs the same executable.
+
 ## Build from Source
 
-Make sure you have [Rust 1.88+](https://rustup.rs/) installed; on Linux, install the [build dependencies](../../AGENTS.md#linux-build-dependencies) as well.
+Make sure you have [Rust 1.88+](https://rustup.rs/) installed; on Linux, install the [build dependencies](../../CONTRIBUTING.md#linux-build-dependencies) as well.
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -109,22 +110,13 @@ cargo build --release  # Production build
 
 ## Contributing
 
-Issues and Pull Requests (targeting the `dev` branch) are welcome. Before submitting, please run:
-
-```bash
-cargo fmt --all -- --check
-cargo check
-cargo clippy --all-targets --release -- -D warnings
-cargo test
-```
+Contributions are welcome! Please read [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines on how to get started, set up your development environment, and submit a pull request.
 
 ## Architecture
 
-<div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Architecture diagram: the Slint interface wired directly to domain-split Rust crates">
-</div>
-
 The interface is built with [Slint](https://slint.dev) and wired to the domain crates directly — there is no IPC layer. `app/` holds the binary and the `.slint` tree; each capability lives in its own `crates/*` workspace module, so they evolve independently and compose as needed.
+
+For the full picture — storage roots, app layering, the UI bucket layout and the crate map — see [ARCHITECTURE.md](../../ARCHITECTURE.md).
 
 ## License
 

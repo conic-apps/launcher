@@ -1,0 +1,35 @@
+name: 📚 Docs Report
+description: Report a problem with the documentation
+title: "[docs] "
+labels: ["type: documentation"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve the documentation! Please point to the file or
+        section and describe what is wrong or missing.
+
+  - type: input
+    id: location
+    attributes:
+      label: Where is the problem?
+      description: A link or path to the file and section, e.g. `CONTRIBUTING.md#packaging`.
+      placeholder: "CONTRIBUTING.md#packaging"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong?
+      description: What is incorrect, unclear, outdated, or missing?
+      placeholder: Describe the problem
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix (Optional)
+      description: If you have one, describe how the text should read.

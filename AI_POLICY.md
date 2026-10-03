@@ -14,12 +14,6 @@ their permissions, so the bar below is not a formality.
 maintainers**. We expect comments on our projects to be written by humans. We
 may hide any comments that we believe are AI generated.
 
-This applies to the source tree as well. Our [comment convention](./AGENTS.md#rust-conventions)
-asks a comment to explain _why_ something is the way it is and which
-alternatives were rejected — a statement of reasoning, not a restatement of the
-line below it. A generated comment reads as that reasoning without being it, and
-reviewing it costs more than writing it did. Write the comment yourself.
-
 If you are opening an issue, we expect you to describe the problem in your own
 words.
 

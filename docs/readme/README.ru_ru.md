@@ -4,10 +4,9 @@
     <a href="https://github.com/conic-apps/launcher/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/conic-apps/launcher/build.yml?label=build&logo=github" alt="Build status"></a>
     <a href="https://github.com/conic-apps/launcher/releases"><img src="https://img.shields.io/github/v/release/conic-apps/launcher?include_prereleases&label=release" alt="Release"></a>
     <a href="../../LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
-    <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
+    <a href="https://discord.gg/xWKY5NMuf7"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   </p>
-  <p><strong>Маленький, быстрый и лёгкий лаунчер Minecraft</strong><br>
-  Управление несколькими инстансами · Маркет модов и ресурс-паков · Кроссплатформенное сетевое взаимодействие · Поддержка нескольких тем</p>
+  <p><strong>Маленький, быстрый и лёгкий лаунчер Minecraft</strong></p>
   <p>
     🌐 <a href="../../README.md">English</a> · <a href="./README.zh_cn.md">简体中文</a> · <a href="./README.zh_tw.md">繁體中文</a> · <a href="./README.ja_jp.md">日本語</a> · <a href="./README.ko_kr.md">한국어</a> · <a href="./README.de_de.md">Deutsch</a> · <a href="./README.fr_fr.md">Français</a> · <a href="./README.es_es.md">Español</a> · <a href="./README.pt_br.md">Português (Brasil)</a> · <a href="./README.ru_ru.md"><strong>Русский</strong></a> · <a href="./README.tr_tr.md">Türkçe</a> · <a href="./README.pl_pl.md">Polski</a>
   </p>
@@ -17,7 +16,7 @@
 
 ## Что это такое
 
-Conic Launcher — это современный десктопный лаунчер Minecraft: основная логика реализована на Rust, а интерфейс построен на [Slint](https://slint.dev) — нативном UI-инструментарии. Он отличается малым размером установки, быстрым запуском и низким потреблением ресурсов, даже помогая сократить выбросы углерода.
+Conic Launcher — это маленький, быстрый и лёгкий десктопный лаунчер Minecraft: основная логика реализована на Rust, а интерфейс построен на [Slint](https://slint.dev) — нативном UI-инструментарии. Он отличается малым размером установки, быстрым запуском и низким потреблением ресурсов, даже помогая сократить выбросы углерода.
 
 От создания инстансов и установки загрузчиков до поиска модов и приглашения друзей для совместной игры, запуска игры и отслеживания игрового времени — весь рабочий процесс может быть завершён в одном приложении.
 
@@ -86,19 +85,21 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## Скачать
 
-Скачайте установщик для вашей платформы на [GitHub Releases](https://github.com/conic-apps/launcher/releases):
+Скачайте установщик для вашей платформы на [GitHub Releases](https://github.com/conic-apps/launcher/releases) или на [официальном сайте](https://conicmc.app):
 
 | Платформа | Архитектура           | Форматы                                 |
 | --------- | --------------------- | --------------------------------------- |
-| Windows   | x64 · arm64           | MSI · установщик NSIS · портативный exe |
+| Windows   | x64 · arm64           | MSI · портативный exe                   |
 | macOS     | Apple Silicon · Intel | DMG                                     |
 | Linux     | x64 · arm64           | deb · rpm · AppImage                    |
 
 Приложение включает автообновления — после установки ручное обновление не требуется.
 
+> Автономный Windows-`.exe` — это один файл, но он импортирует `VCRUNTIME140.dll`: на машине без Visual C++ Redistributable (на большинстве с Office или .NET он уже есть) он не запустится. `.msi` устанавливает тот же исполняемый файл.
+
 ## Сборка из исходного кода
 
-Убедитесь, что установлен [Rust 1.88+](https://rustup.rs/); в Linux дополнительно установите [зависимости для сборки](../../AGENTS.md#linux-build-dependencies).
+Убедитесь, что установлен [Rust 1.88+](https://rustup.rs/); в Linux дополнительно установите [зависимости для сборки](../../CONTRIBUTING.md#linux-build-dependencies).
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -109,22 +110,13 @@ cargo build --release  # Продакшн-сборка
 
 ## Участие
 
-Приветствуются Issues и Pull Requests (направленные на ветку `dev`). Перед отправкой, пожалуйста, выполните:
-
-```bash
-cargo fmt --all -- --check
-cargo check
-cargo clippy --all-targets --release -- -D warnings
-cargo test
-```
+Мы приветствуем вклад! Прочитайте [CONTRIBUTING.md](../../CONTRIBUTING.md), чтобы узнать, как начать, настроить среду разработки и отправить pull request.
 
 ## Архитектура
 
-<div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Схема архитектуры: интерфейс Slint напрямую связан с доменными Rust-crates">
-</div>
-
 Интерфейс построен на [Slint](https://slint.dev) и напрямую связан с доменными crates — слоя IPC нет. `app/` содержит бинарник и дерево `.slint`; каждая возможность живёт в собственном модуле `crates/*` рабочего пространства, поэтому они развиваются независимо и комбинируются по мере необходимости.
+
+Полная картина — корни хранилищ, слои приложения, структура UI и карта crates — в [ARCHITECTURE.md](../../ARCHITECTURE.md).
 
 ## Лицензия
 

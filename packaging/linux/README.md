@@ -87,3 +87,21 @@ file in step with `app/i18n/` is a reviewer's job.
 
 Validate changes with `desktop-file-validate` (the `desktop-file-utils`
 package); `packaging/arch/PKGBUILD` runs it in its `check()` and CI runs it too.
+
+## What the deb and rpm metadata has to spell out
+
+Three things in `app/Cargo.toml` and the spec are not obvious from the files:
+
+- **`target/release/` in `[package.metadata.deb]` `assets` is literal.** It is
+  cargo-deb's marker for "the binary cargo built"; a real path makes it package a
+  stale file.
+- **`app/Cargo.toml` must spell `license` out.** `cargo rpm` reads the manifest
+  with its own deserialiser, and `license.workspace = true` makes it a table
+  where it wants a string — the whole file then fails to parse with
+  `invalid type: map, expected a string for key 'package'`, which names neither
+  `license` nor the field at fault. There is a comment in the file.
+- **Neither deb nor rpm can see a `dlopen`ed library.** `$auto` and
+  `find-requires` only read the ELF's `NEEDED` entries, which for this binary are
+  `libc`, `libgcc_s`, `libm`, `libfontconfig1` and `libasound2`. GL, xkbcommon,
+  X11 and Wayland are all `dlopen`ed by glutin, winit and Skia, and are listed by
+  hand. A dependency scanner will never tell you this for you.
