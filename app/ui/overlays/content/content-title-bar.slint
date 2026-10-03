@@ -45,7 +45,10 @@ component SourceButton inherits Rectangle {
         icon-color: root.tint;
     }
 
+    // The active button ignores the pointer entirely: hovering or pressing it
+    // would otherwise shade it back to surface-0/1 over its surface-2 state.
     touch := TouchArea {
+        enabled: !root.active;
         clicked => { root.clicked(); }
     }
 }

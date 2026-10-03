@@ -154,8 +154,17 @@ export component AccountAddMicrosoft inherits VerticalLayout {
     // it: the code comes back on `http://localhost:<port>/callback`, and the
     // port is the OS's, so the link cannot be written down once. Both "log in"
     // and "copy the link" send a browser to exactly that URL, so the listener
-    // lives exactly as long as this screen is on show with the dialog open —
+    // lives exactly as long as this screen is on show with its host open —
     // which is also exactly as long as the URL can be used.
+    //
+    // The host is the add-account dialog in the ordinary case, but the setup
+    // wizard mounts this same screen as a step, and there it is neither
+    // `Dialogs.account-add-visible` nor dismissed by the dialog's own close —
+    // closed as a dialog, not hosted, it would never bind the listener, and the
+    // empty URL that left behind is what "Log in" handed to `open_external`,
+    // which opens the file manager. `wizard-host` is the flag that says the
+    // screen is on show without the dialog, so it stands in for the dialog's
+    // visibility.
     //
     // `shown` rather than `view`: the swap is out-in, so `view` changes eighty
     // milliseconds before the arriving screen is mounted, and a listener bound
@@ -163,7 +172,8 @@ export component AccountAddMicrosoft inherits VerticalLayout {
     // property of its own because a `changed` handler cannot take a qualified
     // global (`input.slint` does the same with its focus counter).
     private property <bool> dialog-visible: Dialogs.account-add-visible;
-    private property <bool> browser-flow-on-screen: root.shown == "auth-code" && root.dialog-visible;
+    private property <bool> browser-flow-on-screen: root.shown == "auth-code"
+        && (root.dialog-visible || root.wizard-host);
     changed browser-flow-on-screen => {
         if root.browser-flow-on-screen {
             AccountAddState.prepare-auth-code-flow();
