@@ -185,7 +185,7 @@ touching the script:
   `BOOL` as `bool` on arm64 (where C's `BOOL` is `_Bool`) and as `i8` on x86_64
   (where it is `signed char`), so code that returns one straight out of an FFI
   call builds for Apple Silicon and fails for Intel with `expected bool, found
-  i8`. `app/src/support/platform/macos/traffic_lights.rs`'s `add_method` is the
+  i8`. `app/src/support/native/macos/traffic_lights.rs`'s `add_method` is the
   one place this bites; it goes through `i8` to satisfy both. A `--universal`
   build is what surfaces this.
 

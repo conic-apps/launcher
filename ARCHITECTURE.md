@@ -61,8 +61,8 @@ Three layers, one direction: `main.rs` → `ui/` → `usecases/` → `crates/*`,
 `support/` usable by any of them.
 
 - **`support/`** — process and OS plumbing with no UI counterpart: `runtime`,
-  `logs`, `json`, `formatting`, and `platform/` (the winit backend hook, the
-  macOS traffic lights and Dock icon, the Windows caption). `platform/` is the
+  `logs`, `json`, `formatting`, and `native/` (the winit backend hook, the
+  macOS traffic lights and Dock icon, the Windows caption). `native/` is the
   window-shell driver and the one support module that touches `slint_backend`.
 - **`usecases/`** — the app's use cases: UI-neutral orchestration over the domain
   crates. Nothing here mentions Slint, `slint_backend` or `ui/`. A use case
@@ -132,7 +132,7 @@ and is what catches a missed one.
 - `crates/window` — window operations (minimize/maximize/fullscreen,
   `bring_to_front`) and the winit event-filter fan-out. macOS gets a
   transparent title bar with the real traffic lights; Windows gets
-  `with_decorations(false)` plus `app/src/support/platform/windows/caption.rs` drawing the
+  `with_decorations(false)` plus `app/src/support/native/windows/caption.rs` drawing the
   controls itself; Linux draws them in the title bar.
 - `crates/single-instance` — the second launch is not a second window. Linux uses
   D-Bus (`zbus`), macOS a socket, Windows a named mutex.

@@ -64,8 +64,8 @@ fn main() {
 
     // The platform's winit backend hook — the macOS transparent titlebar, the
     // Windows frameless window — has to be installed before any window exists,
-    // which is why it runs here rather than beside `support::platform::install` below.
-    support::platform::install_backend();
+    // which is why it runs here rather than beside `support::native::install` below.
+    support::native::install_backend();
 
     let ui = App::new().expect("failed to construct the app UI");
 
@@ -145,7 +145,7 @@ fn main() {
 
     // Everything the platform has to do differently: the AppKit traffic lights
     // and Dock icon, the Windows caption buttons and the frame they sit in.
-    support::platform::install(&ui);
+    support::native::install(&ui);
 
     let minimize_window = window.clone();
     ui.on_minimize_window(move || {
