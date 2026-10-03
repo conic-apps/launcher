@@ -662,6 +662,12 @@ pub(crate) fn setup_grid_resize(ui: &App) {
     ui.global::<ContentState>()
         .on_grid_resized(move |width, height| {
             let Some(ui) = weak.upgrade() else { return };
+            // The panels' placeholders read the height back from the global,
+            // because they centre themselves in it. The report is the only
+            // channel that carries it, so it has to be written here — leaving it
+            // at its `0px` default collapsed the empty local blocks to a negative
+            // height and pushed their body up over the title bar.
+            ui.global::<ContentState>().set_panel_height(height);
             {
                 let state = controller();
                 let mut state = state.borrow_mut();
