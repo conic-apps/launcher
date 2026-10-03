@@ -14,9 +14,12 @@
 //!
 //! A change starts a cross-fade unless one is already on screen, in which case
 //! the latest target is remembered and applied when the current one lands. The
-//! fades themselves are Slint's: the component animates its own layer alphas
-//! and this only says which slot holds what, so a fade in flight is never
-//! restarted by an unrelated refresh (see `window-background.slint`).
+//! cross-fade itself is driven here, on the tick: the outgoing layer's opacity
+//! eases to zero while the incoming one eases to one, both from the same clock,
+//! so the two move together. The component is only told the two opacities (see
+//! `window-background.slint`); owning the curve in Rust rather than in Slint's
+//! `animate` is what lets a test read the mid-fade value back and assert that
+//! the halves really overlap.
 //!
 //! Rendering runs on a thread of its own (see [`Renderer`]): a frame of the
 //! world costs several milliseconds of CPU and it must not be the UI's
@@ -26,8 +29,8 @@
 
 use std::{
     cell::RefCell,
-    collections::HashMap,
-    path::PathBuf,
+    collections::{HashMap, VecDeque},
+    path::{Path, PathBuf},
     rc::Rc,
     sync::{
         Arc,
@@ -60,7 +63,16 @@ const WORLD_PIXEL_BUDGET: u32 = 1_400_000;
 const TICK_MS: u64 = 8;
 
 /// The cross-fade length: 0.4s on the background images.
-const FADE_MS: u64 = 400;
+const FADE_MS: f32 = 400.0;
+
+/// How many decoded backgrounds are kept. The fixed on-disk file names
+/// (`background_image`, an instance's `background`) mean a path seen before is
+/// normally the same picture, so keeping its pixels skips the decode the next
+/// time the slot fills — which is what makes clicking back through instances
+/// instant rather than a fresh decode each time. A few is plenty (the visible
+/// slot holds its own copy, so an evicted image never blanks the window), and
+/// the bound keeps a long session from holding every wallpaper it ever showed.
+const CACHE_LIMIT: usize = 6;
 
 /// A target arriving within this of the previous one is part of the same burst:
 /// clicking through instances quickly should not start a fade per click.
@@ -93,6 +105,13 @@ thread_local! {
 }
 
 /// What the window should be showing.
+///
+/// The image's `modified` timestamp is part of its identity on purpose. The
+/// background is always stored under a fixed name — `background_image`, or an
+/// instance's `background` — so picking a new wallpaper replaces the file at
+/// the same path. Comparing only the path would call that "unchanged" and leave
+/// the old picture on screen; the timestamp is what tells a replacement from a
+/// re-resolution of the same one.
 #[derive(Clone, PartialEq, Eq, Debug)]
 enum Source {
     World,
@@ -101,6 +120,7 @@ enum Source {
     Image {
         path: PathBuf,
         global: bool,
+        modified: SystemTime,
     },
 }
 
@@ -119,7 +139,10 @@ struct Slot {
     source: Option<Source>,
     image: Image,
     alpha: Alpha,
-    /// The opacity target handed to Slint (which animates its own copy).
+    /// The opacity last written to the window, and where the slot is heading.
+    /// A fade interpolates `opacity` from the value it had when the fade began
+    /// to `target`; at rest the two are equal.
+    opacity: f32,
     target: f32,
 }
 
@@ -129,20 +152,92 @@ impl Default for Slot {
             source: None,
             image: Image::default(),
             alpha: Alpha::Unknown,
+            opacity: 0.0,
             target: 0.0,
         }
     }
 }
 
 /// A cross-fade in flight.
+///
+/// Both halves share one clock so they move together: the incoming layer eases
+/// from the opacity it had when the fade began to 1, the outgoing one from its
+/// opacity to 0. Either half may be absent — a background appearing over the
+/// world has no outgoing image, and one leaving to reveal the world has no
+/// incoming one.
 #[derive(Clone, Copy)]
 struct Fade {
-    /// The slot whose opacity is animating.
-    slot: usize,
+    /// The slot whose opacity rises to 1, if the incoming source is an image.
+    incoming: Option<usize>,
+    /// The slot whose opacity falls to 0, if an image is being replaced.
+    outgoing: Option<usize>,
+    /// The incoming slot's opacity when the fade began.
+    incoming_from: f32,
+    /// The outgoing slot's opacity when the fade began.
+    outgoing_from: f32,
     started: Instant,
-    /// The target the slot is heading for: 1 for an incoming background, 0 for
-    /// one that is leaving to reveal the world.
-    towards: f32,
+}
+
+/// The eased position within a fade: a smooth in-out so neither end of the
+/// cross-fade starts or stops abruptly.
+fn ease_in_out(progress: f32) -> f32 {
+    let t = progress.clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
+}
+
+/// The image [`Source`] for a path that is a readable file, carrying the
+/// timestamp that decides whether a later resolution is the same picture.
+fn image_source(path: PathBuf, global: bool) -> Option<Source> {
+    let metadata = std::fs::metadata(&path).ok()?;
+    if !metadata.is_file() {
+        return None;
+    }
+    // A filesystem without a usable mtime still shows the image; it just cannot
+    // tell a replacement at the same path from the first read, which is the
+    // floor for detection rather than a reason to hide the picture.
+    let modified = metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH);
+    Some(Source::Image {
+        path,
+        global,
+        modified,
+    })
+}
+
+/// One decoded background, with the timestamp it was decoded from. `Image` is a
+/// ref-counted handle, so the slot that is currently showing one and this cache
+/// hold the same pixels rather than a second copy.
+struct Cached {
+    modified: SystemTime,
+    alpha: Alpha,
+    image: Image,
+}
+
+/// The decoded backgrounds, oldest evicted first.
+#[derive(Default)]
+struct ImageCache {
+    entries: HashMap<PathBuf, Cached>,
+    order: VecDeque<PathBuf>,
+}
+
+impl ImageCache {
+    /// The decoded image for `path`, or `None` when the file on disk is no
+    /// longer the one that was decoded — a replacement at the same path.
+    fn get(&self, path: &Path, modified: SystemTime) -> Option<&Cached> {
+        self.entries
+            .get(path)
+            .filter(|cached| cached.modified == modified)
+    }
+
+    fn insert(&mut self, path: PathBuf, cached: Cached) {
+        if self.entries.insert(path.clone(), cached).is_none() {
+            self.order.push_back(path);
+        }
+        while self.order.len() > CACHE_LIMIT {
+            if let Some(oldest) = self.order.pop_front() {
+                self.entries.remove(&oldest);
+            }
+        }
+    }
 }
 
 /// What the renderer needs for one frame. Everything in it is something only
@@ -298,6 +393,11 @@ pub struct Controller {
     fade: Option<Fade>,
     /// The latest target seen while a fade was in flight.
     pending: Option<Source>,
+    /// Whether the first resolution has run. The first one is decoded on this
+    /// thread and placed without a cross-fade, so a configured background is
+    /// already on the first frame instead of the world appearing and then
+    /// fading into it.
+    initialized: bool,
     last_change: Instant,
     /// The burst debounce, while one is pending.
     debounce_until: Option<Instant>,
@@ -319,9 +419,13 @@ pub struct Controller {
     software_only: bool,
     /// The parallax offsets last written.
     parallax: (f32, f32),
-    /// Background images by path, with the time they were read at and whether
-    /// they have transparency. The pixels themselves live in the slots.
-    cache: HashMap<PathBuf, (SystemTime, Alpha)>,
+    /// Decoded background images by path, so a path already seen does not have
+    /// to be decoded again and a released slot can be refilled without a gap.
+    cache: ImageCache,
+    /// A `(path, modified)` that failed to decode. `resolve` skips it so the
+    /// window settles on the next source instead of retrying a corrupt file on
+    /// every resolution; a replacement (a new timestamp) is tried again.
+    failed: Option<(PathBuf, SystemTime)>,
     /// Bumped per load; a load whose generation is stale when it lands was for
     /// a target the user has already moved past, and is dropped.
     generation: u64,
@@ -348,6 +452,7 @@ impl Controller {
             shown: None,
             fade: None,
             pending: None,
+            initialized: false,
             last_change: Instant::now(),
             debounce_until: None,
             cam_z: 0.0,
@@ -358,7 +463,8 @@ impl Controller {
             gpu_asked: Instant::now(),
             software_only: false,
             parallax: (0.0, 0.0),
-            cache: HashMap::new(),
+            cache: ImageCache::default(),
+            failed: None,
             generation: 0,
             renderer: Renderer::spawn(ui, &gpu),
             ticking: Arc::new(AtomicBool::new(false)),
@@ -372,23 +478,29 @@ impl Controller {
         if let Some((id, use_as_launcher, has_background)) = &self.instance
             && *use_as_launcher
             && *has_background
+            && let Some(source) = image_source(instance::get_background_path(id), false)
+                .filter(|source| !self.is_failed(source))
         {
-            let path = instance::get_background_path(id);
-            if path.is_file() {
-                return Source::Image {
-                    path,
-                    global: false,
-                };
-            }
+            return source;
         }
         let config = self.config.borrow();
-        if let Some(name) = &config.appearance.background_image {
-            let path = storage::LOCATIONS.launcher.root.join(name);
-            if path.is_file() {
-                return Source::Image { path, global: true };
-            }
+        if let Some(name) = &config.appearance.background_image
+            && let Some(source) = image_source(storage::LOCATIONS.launcher.root.join(name), true)
+                .filter(|source| !self.is_failed(source))
+        {
+            return source;
         }
         Source::World
+    }
+
+    /// Whether `source` is the file that failed to decode.
+    fn is_failed(&self, source: &Source) -> bool {
+        let Source::Image { path, modified, .. } = source else {
+            return false;
+        };
+        self.failed
+            .as_ref()
+            .is_some_and(|(failed, at)| failed == path && at == modified)
     }
 
     /// Re-resolves and applies. Called on every config edit and instance
@@ -397,7 +509,16 @@ impl Controller {
     fn refresh(&mut self, ui: &App) {
         let target = self.resolve();
         let now = Instant::now();
+        if !self.initialized {
+            self.initialized = true;
+            self.initialize(ui, target, now);
+            return;
+        }
         if target == self.target {
+            // The source did not move, but the darkness and the parallax are
+            // read *through* this call and may have — the dim has to follow a
+            // slider that changes neither the picture nor which one shows.
+            self.update_dim(ui);
             self.sync(ui, now);
             return;
         }
@@ -423,32 +544,109 @@ impl Controller {
         self.sync(ui, now);
     }
 
+    /// Applies the very first resolution.
+    ///
+    /// A configured background is decoded on this thread and placed without a
+    /// cross-fade, unlike every later change. The window has not been shown
+    /// yet, so the decode only delays the first frame; doing it on the worker
+    /// would instead put the world on screen and then ease the picture in over
+    /// it, which is the "shows the default for a while" a launch should not
+    /// have. Nothing is lost by not fading from the world here: there is no
+    /// previous picture to move out.
+    fn initialize(&mut self, ui: &App, target: Source, now: Instant) {
+        self.target = target.clone();
+        let Source::Image { path, modified, .. } = &target else {
+            self.settled = Source::World;
+            self.update_dim(ui);
+            self.sync(ui, now);
+            return;
+        };
+        let cached = self
+            .cache
+            .get(path, *modified)
+            .map(|cached| (cached.alpha, cached.image.clone()));
+        let (alpha, image) = match cached {
+            Some(pair) => pair,
+            None => match decode(path) {
+                Ok((decoded_mtime, buffer, alpha)) => {
+                    let image = Image::from_rgba8_premultiplied(buffer);
+                    self.cache.insert(
+                        path.clone(),
+                        Cached {
+                            modified: decoded_mtime,
+                            alpha,
+                            image: image.clone(),
+                        },
+                    );
+                    (alpha, image)
+                }
+                Err(error) => {
+                    log::warn!("failed to load '{}': {error}", path.display());
+                    self.failed = Some((path.clone(), *modified));
+                    self.target = Source::World;
+                    self.settled = Source::World;
+                    self.update_dim(ui);
+                    self.sync(ui, now);
+                    return;
+                }
+            },
+        };
+        let slot = 0;
+        self.slots[slot].source = Some(target.clone());
+        self.slots[slot].image = image;
+        self.slots[slot].alpha = alpha;
+        self.slots[slot].opacity = 1.0;
+        self.slots[slot].target = 1.0;
+        self.shown = Some(slot);
+        self.settled = target;
+        self.set_slot_image(ui, slot);
+        self.write_alpha(ui, slot);
+        // An opaque picture is the whole background; a translucent one lets the
+        // world show through it.
+        self.set_world_shown(ui, alpha != Alpha::Opaque);
+        self.update_dim(ui);
+        self.sync(ui, now);
+    }
+
     /// Replaces the image of the layer still fading in, when it is early enough
     /// in its fade for the swap not to be visible. Returns whether it took the
     /// target.
+    ///
+    /// The pixels come from the cache, which now holds them: the layer being
+    /// replaced is the one still on screen, so its image cannot be borrowed to
+    /// draw the new target. A target that has not been decoded waits — the load
+    /// in flight may be for a different path, so taking it here would be wrong.
     fn retarget(&mut self, ui: &App, target: &Source) -> bool {
         let Some(fade) = self.fade else { return false };
-        let Source::Image { path, .. } = target else {
-            // The world cannot be swapped into an image slot; it waits.
+        let Some(incoming) = fade.incoming else {
+            // The incoming layer is the world; there is no image to swap.
             return false;
         };
-        let progress = (Instant::now() - fade.started).as_secs_f32() * 1000.0 / FADE_MS as f32;
+        let Source::Image { path, modified, .. } = target else {
+            return false;
+        };
+        let progress = (Instant::now() - fade.started).as_secs_f32() * 1000.0 / FADE_MS;
         if progress > 0.5 {
             return false;
         }
-        match self.cache.get(path) {
-            Some((_, alpha)) => {
-                let alpha = *alpha;
-                self.slots[fade.slot].source = Some(target.clone());
-                self.slots[fade.slot].alpha = alpha;
-                self.set_slot(ui, fade.slot);
-                self.update_dim(ui);
-                true
-            }
-            // Not loaded yet: the load in flight will land on the new target
-            // anyway, since its generation is stale.
-            None => false,
+        let Some(cached) = self.cache.get(path, *modified) else {
+            return false;
+        };
+        let alpha = cached.alpha;
+        let image = cached.image.clone();
+        let slot = &mut self.slots[incoming];
+        slot.source = Some(target.clone());
+        slot.alpha = alpha;
+        slot.image = image;
+        // The replacement may be translucent where the one it displaces was
+        // not, so the world still needs to be behind it.
+        if alpha != Alpha::Opaque {
+            self.set_world_shown(ui, true);
+            self.world_dirty = true;
         }
+        self.set_slot_image(ui, incoming);
+        self.update_dim(ui);
+        true
     }
 
     /// Begins the cross-fade to `target`.
@@ -467,44 +665,62 @@ impl Controller {
                 self.world_dirty = true;
                 match self.shown {
                     Some(slot) => {
+                        let from = self.slots[slot].opacity;
                         self.slots[slot].target = 0.0;
                         self.fade = Some(Fade {
-                            slot,
+                            incoming: None,
+                            outgoing: Some(slot),
+                            incoming_from: 0.0,
+                            outgoing_from: from,
                             started: Instant::now(),
-                            towards: 0.0,
                         });
-                        self.set_slot(ui, slot);
+                        self.apply_fade(ui, Instant::now());
                     }
                     None => self.settled = Source::World,
                 }
             }
-            Source::Image { path, global } => {
-                // The world has to stay under the fade unless the layer being
-                // replaced is already opaque and covers it.
-                let outgoing_covers = self
-                    .shown
-                    .is_some_and(|slot| self.slots[slot].alpha == Alpha::Opaque);
-                if !outgoing_covers {
-                    self.set_world_shown(ui, true);
-                    self.world_dirty = true;
-                }
+            Source::Image {
+                path,
+                global,
+                modified,
+            } => {
+                // The world may stop being drawn only when *both* layers are
+                // opaque: the outgoing has to cover it until the incoming has
+                // arrived, and the incoming has to keep covering it after. A
+                // translucent layer on either side leaves the world visible
+                // through the cross-fade, so it has to be there.
+                let outgoing = self.shown;
+                let outgoing_covers =
+                    outgoing.is_some_and(|slot| self.slots[slot].alpha == Alpha::Opaque);
                 // The slot that is not on screen takes the new image.
                 let slot = 1 - self.shown.unwrap_or(1);
                 self.slots[slot].source = Some(Source::Image {
                     path: path.clone(),
                     global,
+                    modified,
                 });
-                match self.cache.get(&path) {
-                    Some((_, alpha)) => {
-                        self.slots[slot].alpha = *alpha;
-                        self.begin_incoming(ui, slot);
+                match self.cache.get(&path, modified) {
+                    Some(cached) => {
+                        let alpha = cached.alpha;
+                        let image = cached.image.clone();
+                        self.slots[slot].alpha = alpha;
+                        self.slots[slot].image = image;
+                        if !outgoing_covers {
+                            self.set_world_shown(ui, true);
+                            self.world_dirty = true;
+                        }
+                        self.begin_crossfade(ui, slot, outgoing);
                     }
                     None => {
-                        // Assume the worst until it is decoded: a translucent
-                        // image must not have the world pulled out from under
-                        // it.
+                        // Not decoded yet: assume the worst until it is, so a
+                        // translucent image does not have the world pulled out
+                        // from under it.
                         self.slots[slot].alpha = Alpha::Unknown;
-                        self.load(ui, path, slot);
+                        if !outgoing_covers {
+                            self.set_world_shown(ui, true);
+                            self.world_dirty = true;
+                        }
+                        self.load(ui, path, modified, slot);
                     }
                 }
             }
@@ -512,22 +728,40 @@ impl Controller {
         self.sync(ui, Instant::now());
     }
 
-    /// Starts the fade for a slot whose image is on hand.
-    fn begin_incoming(&mut self, ui: &App, slot: usize) {
-        self.slots[slot].target = 1.0;
+    /// Starts the cross-fade for a slot whose image is on hand. `outgoing` is
+    /// the slot being replaced, if any: it eases out while `incoming` eases in.
+    fn begin_crossfade(&mut self, ui: &App, incoming: usize, outgoing: Option<usize>) {
+        // A translucent incoming layer is no cover for the world, whether it
+        // was cached or just decoded, so the world has to be under it.
+        if self.slots[incoming].alpha != Alpha::Opaque {
+            self.set_world_shown(ui, true);
+            self.world_dirty = true;
+        }
+        // An image does not animate, only its opacity; writing it first means
+        // the first animated frame already has the pixels to show.
+        self.set_slot_image(ui, incoming);
+        self.slots[incoming].target = 1.0;
+        let outgoing = outgoing.filter(|slot| *slot != incoming);
+        if let Some(slot) = outgoing {
+            self.set_slot_image(ui, slot);
+            self.slots[slot].target = 0.0;
+        }
         self.fade = Some(Fade {
-            slot,
+            incoming: Some(incoming),
+            outgoing,
+            incoming_from: self.slots[incoming].opacity,
+            outgoing_from: outgoing.map(|slot| self.slots[slot].opacity).unwrap_or(0.0),
             started: Instant::now(),
-            towards: 1.0,
         });
-        self.set_slot(ui, slot);
+        self.apply_fade(ui, Instant::now());
     }
 
-    fn load(&mut self, ui: &App, path: PathBuf, slot: usize) {
+    fn load(&mut self, ui: &App, path: PathBuf, modified: SystemTime, slot: usize) {
         self.generation += 1;
         let generation = self.generation;
         let weak = ui.as_weak();
         let requested = path.clone();
+        let failed = (path.clone(), modified);
         runtime::spawn_blocking(move || {
             let decoded = decode(&requested);
             crate::ui::services::report::report(&weak, move |ui| {
@@ -537,12 +771,15 @@ impl Controller {
                     Ok(decoded) => decoded,
                     Err(error) => {
                         log::warn!("failed to load '{}': {error}", path.display());
-                        // Fall back to the world rather than leaving a slot
-                        // pointing at nothing.
-                        controller.borrow_mut().target = Source::World;
-                        controller.borrow_mut().pending = None;
-                        controller.borrow_mut().debounce_until = None;
-                        controller.borrow_mut().refresh(&ui);
+                        // Remember the file that would not decode, and resolve
+                        // again. `refresh` will skip it and settle on the next
+                        // source — a corrupt image shows the world instead of
+                        // being retried forever on every resolution.
+                        let mut controller = controller.borrow_mut();
+                        controller.failed = Some(failed);
+                        controller.pending = None;
+                        controller.debounce_until = None;
+                        controller.refresh(&ui);
                         return;
                     }
                 };
@@ -551,16 +788,24 @@ impl Controller {
                     return;
                 }
                 let (mtime, buffer, alpha) = decoded;
-                controller.cache.insert(path.clone(), (mtime, alpha));
-                controller.slots[slot].image = Image::from_rgba8_premultiplied(buffer);
+                let image = Image::from_rgba8_premultiplied(buffer);
+                controller.cache.insert(
+                    path.clone(),
+                    Cached {
+                        modified: mtime,
+                        alpha,
+                        image: image.clone(),
+                    },
+                );
+                controller.slots[slot].image = image;
                 controller.slots[slot].alpha = alpha;
                 // The fade may have been started by something else in the
                 // meantime, or not started at all.
-                if controller.fade.map(|fade| fade.slot) == Some(slot) || controller.fade.is_none()
-                {
-                    controller.begin_incoming(&ui, slot);
+                if controller.fade.is_none() {
+                    let outgoing = controller.shown;
+                    controller.begin_crossfade(&ui, slot, outgoing);
                 } else {
-                    controller.set_slot(&ui, slot);
+                    controller.set_slot_image(&ui, slot);
                 }
                 controller.sync(&ui, Instant::now());
             });
@@ -587,12 +832,8 @@ impl Controller {
             }
         }
 
-        // A fade that has run its course.
-        if let Some(fade) = self.fade
-            && now.duration_since(fade.started) >= Duration::from_millis(FADE_MS)
-        {
-            self.on_fade_done(ui, fade);
-        }
+        // Move the cross-fade on, and finish it at its end.
+        self.apply_fade(ui, now);
 
         let moving = self.camera_moves();
         self.gpu_shared.moving.set(moving);
@@ -662,48 +903,57 @@ impl Controller {
         self.sync(ui, now);
     }
 
+    /// Writes the two opacities for the position `now` is at within the fade,
+    /// then finishes the fade when the clock has run out. Both layers are moved
+    /// from the one call, so the outgoing's fall and the incoming's rise are the
+    /// same curve and the same instant.
+    fn apply_fade(&mut self, ui: &App, now: Instant) {
+        let Some(fade) = self.fade else { return };
+        let elapsed = now.duration_since(fade.started).as_secs_f32() * 1000.0;
+        let eased = ease_in_out(elapsed / FADE_MS);
+        if let Some(slot) = fade.incoming {
+            let opacity = fade.incoming_from + (1.0 - fade.incoming_from) * eased;
+            self.slots[slot].opacity = opacity;
+            self.write_alpha(ui, slot);
+        }
+        if let Some(slot) = fade.outgoing {
+            let opacity = fade.outgoing_from * (1.0 - eased);
+            self.slots[slot].opacity = opacity;
+            self.write_alpha(ui, slot);
+        }
+        self.update_dim(ui);
+        if elapsed >= FADE_MS {
+            self.on_fade_done(ui, fade);
+        }
+    }
+
     fn on_fade_done(&mut self, ui: &App, fade: Fade) {
         self.fade = None;
-        let slot = fade.slot;
-        if fade.towards > 0.5 {
+        if let Some(incoming) = fade.incoming {
             // The incoming layer has arrived: it is what the window shows now.
-            self.shown = Some(slot);
-            self.settled = self.slots[slot].source.clone().unwrap_or(Source::World);
-            let other = 1 - slot;
-            if self.slots[other].target > 0.0 {
-                if self.slots[slot].alpha == Alpha::Opaque {
-                    // Fully covered, so dropping the layer it replaced is
-                    // invisible.
-                    self.slots[other].target = 0.0;
-                    self.slots[other].source = None;
-                    self.slots[other].image = Image::default();
-                    self.set_slot(ui, other);
-                } else {
-                    // A translucent one would show the replacement appearing
-                    // under it, so it is faded out instead.
-                    self.slots[other].target = 0.0;
-                    self.set_slot(ui, other);
-                    self.fade = Some(Fade {
-                        slot: other,
-                        started: Instant::now(),
-                        towards: 0.0,
-                    });
-                    return;
-                }
+            self.shown = Some(incoming);
+            self.settled = self.slots[incoming].source.clone().unwrap_or(Source::World);
+            self.slots[incoming].opacity = 1.0;
+            self.slots[incoming].target = 1.0;
+            self.write_alpha(ui, incoming);
+            if let Some(outgoing) = fade.outgoing {
+                self.clear_slot(ui, outgoing);
             }
             // With the image fully in place and opaque, the world has nothing
-            // to show and can stop rendering.
-            if self.slots[slot].alpha == Alpha::Opaque {
+            // to show and can stop rendering. A translucent one stays over the
+            // world, which has to keep being drawn behind it.
+            if self.slots[incoming].alpha == Alpha::Opaque {
                 self.set_world_shown(ui, false);
+            } else {
+                self.set_world_shown(ui, true);
             }
-        } else {
+        } else if let Some(outgoing) = fade.outgoing {
             // The world is back.
             self.shown = None;
             self.settled = Source::World;
-            self.slots[slot].source = None;
-            self.slots[slot].image = Image::default();
-            self.set_slot(ui, slot);
+            self.clear_slot(ui, outgoing);
         }
+        self.update_dim(ui);
 
         if let Some(next) = self.pending.take()
             && next != self.settled
@@ -836,54 +1086,67 @@ impl Controller {
     }
 
     fn world_visible(&self) -> bool {
-        // The world is drawn when it is what the window shows, and while it is
-        // still behind a transition. `world-shown` is the authority — it is
-        // what the layers actually do.
-        self.shown.is_none() || self.fade.is_some()
+        // The world is drawn when it is what the window shows, while it is
+        // still behind a transition, and behind a translucent custom image —
+        // which is not an opaque cover, so the world shows through it and has
+        // to be kept up to date. `world-shown` is the authority the layers act
+        // on; this is the same question asked of the controller's own state.
+        self.shown.is_none()
+            || self.fade.is_some()
+            || self
+                .shown
+                .is_some_and(|slot| self.slots[slot].alpha != Alpha::Opaque)
     }
 
     fn set_world_shown(&self, ui: &App, shown: bool) {
-        let background = ui.global::<Background>();
-        background.set_snap(true);
-        background.set_world_shown(shown);
-        background.set_snap(false);
+        ui.global::<Background>().set_world_shown(shown);
     }
 
-    fn set_slot(&self, ui: &App, slot: usize) {
+    /// Hands the slot's image to the window. Images do not animate, so this is
+    /// only ever called for a slot arriving at rest or just before a fade.
+    fn set_slot_image(&self, ui: &App, slot: usize) {
         let background = ui.global::<Background>();
-        background.set_snap(true);
         match slot {
-            0 => {
-                background.set_custom_a(self.slots[0].image.clone());
-                background.set_custom_a_alpha(self.slots[0].target);
-            }
-            _ => {
-                background.set_custom_b(self.slots[1].image.clone());
-                background.set_custom_b_alpha(self.slots[1].target);
-            }
+            0 => background.set_custom_a(self.slots[0].image.clone()),
+            _ => background.set_custom_b(self.slots[1].image.clone()),
         }
-        background.set_snap(false);
-        self.update_dim(ui);
+    }
+
+    /// Writes one slot's opacity. The cross-fade calls this for both slots from
+    /// the same tick, which is what makes them move together.
+    fn write_alpha(&self, ui: &App, slot: usize) {
+        let background = ui.global::<Background>();
+        match slot {
+            0 => background.set_custom_a_alpha(self.slots[0].opacity),
+            _ => background.set_custom_b_alpha(self.slots[1].opacity),
+        }
+    }
+
+    /// Puts a slot back to empty at rest, both the image and its opacity.
+    fn clear_slot(&mut self, ui: &App, slot: usize) {
+        self.slots[slot].source = None;
+        self.slots[slot].image = Image::default();
+        self.slots[slot].opacity = 0.0;
+        self.slots[slot].target = 0.0;
+        self.set_slot_image(ui, slot);
+        self.write_alpha(ui, slot);
     }
 
     /// Only the *global* custom background is dimmed, at the user's percentage
-    /// — an instance background and the world are never dimmed.
+    /// — an instance background and the world are never dimmed. It follows the
+    /// layer's *displayed* opacity, so the dim eases in and out with it, and
+    /// the two slots are combined as they are composited (`1 - (1-a)(1-b)`),
+    /// so replacing one global image with another does not lighten in the
+    /// middle of the cross-fade.
     fn update_dim(&self, ui: &App) {
         let darkness = f32::from(self.config.borrow().appearance.background_darkness) / 100.0;
-        let global_alpha = self
-            .shown
-            .into_iter()
-            .chain(self.fade.map(|fade| fade.slot))
-            .filter(|slot| {
-                matches!(
-                    &self.slots[*slot].source,
-                    Some(Source::Image { global: true, .. })
-                )
-            })
-            .map(|slot| self.slots[slot].target)
-            .fold(0.0f32, f32::max);
+        let uncovered = self
+            .slots
+            .iter()
+            .filter(|slot| matches!(&slot.source, Some(Source::Image { global: true, .. })))
+            .fold(1.0f32, |uncovered, slot| uncovered * (1.0 - slot.opacity));
         ui.global::<Background>()
-            .set_dim_alpha(darkness * global_alpha);
+            .set_dim_alpha(darkness * (1.0 - uncovered));
     }
 
     /// Keeps the tick running only while there is something to do.
@@ -948,32 +1211,47 @@ type Decoded = (SystemTime, SharedPixelBuffer<Rgba8Pixel>, Alpha);
 /// than [`IMAGE_MAX_EDGE`] is scaled down once here, which is also the only
 /// point at which it is cheap to ask whether the image has any transparency —
 /// the answer decides whether the world stays behind it.
+///
+/// The scale is `DynamicImage::thumbnail_exact`, not `imageops::thumbnail`
+/// directly, on purpose. The image-ops functions are generic and are
+/// instantiated in the crate that calls them, so calling them here would put
+/// the per-pixel loop in this (unoptimised) crate; going through the concrete
+/// `DynamicImage` method keeps it inside `image`, which the dev profile
+/// optimises (see the root `Cargo.toml`).
 fn decode(path: &PathBuf) -> Result<Decoded, String> {
+    let started = Instant::now();
     let mtime = std::fs::metadata(path)
         .and_then(|metadata| metadata.modified())
         .map_err(|error| error.to_string())?;
     let bytes = std::fs::read(path).map_err(|error| error.to_string())?;
-    let image = image::load_from_memory(&bytes)
-        .map_err(|error| error.to_string())?
-        .into_rgba8();
-    let (width, height) = image.dimensions();
+    let image = image::load_from_memory(&bytes).map_err(|error| error.to_string())?;
+    let (width, height) = (image.width(), image.height());
     let scaled = if width.max(height) > IMAGE_MAX_EDGE {
         let ratio = IMAGE_MAX_EDGE as f32 / width.max(height) as f32;
-        image::imageops::resize(
-            &image,
+        // `thumbnail_exact` is the fast integer box down-scale; `resize` with a
+        // Triangle filter gives a slightly smoother edge but costs an order of
+        // magnitude more on a 4K image, and the difference is invisible under
+        // `image-fit: cover`.
+        image.thumbnail_exact(
             ((width as f32 * ratio) as u32).max(1),
             ((height as f32 * ratio) as u32).max(1),
-            image::imageops::FilterType::Triangle,
         )
     } else {
         image
     };
+    let scaled = scaled.into_rgba8();
     let alpha = if scaled.pixels().any(|pixel| pixel.0[3] < 250) {
         Alpha::Translucent
     } else {
         Alpha::Opaque
     };
     let (width, height) = scaled.dimensions();
+    log::debug!(
+        target: "background",
+        "decoded '{}' at {width}x{height} in {:?}",
+        path.display(),
+        started.elapsed(),
+    );
     Ok((
         mtime,
         SharedPixelBuffer::clone_from_slice(scaled.as_raw(), width, height),
@@ -1030,9 +1308,11 @@ pub fn set_instance(ui: &App, current: Option<(&str, bool, bool)>) {
         (id.to_string(), use_as_launcher, has_background)
     });
     let mut controller = controller.borrow_mut();
-    if controller.instance == current {
-        return;
-    }
+    // It refreshes even when the tuple did not move: an instance's background
+    // keeps its file name, so replacing the image leaves the facts unchanged.
+    // The resolution compares the file's timestamp and is cheap when nothing
+    // moved, which is the guard that keeps this from doing work on every
+    // unrelated refresh.
     controller.instance = current;
     controller.refresh(ui);
 }
@@ -1109,4 +1389,197 @@ fn install_window_hook(ui: &App) {
             _ => {}
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mtime(seconds: u64) -> SystemTime {
+        SystemTime::UNIX_EPOCH + Duration::from_secs(seconds)
+    }
+
+    fn decoded() -> Cached {
+        Cached {
+            modified: mtime(1),
+            alpha: Alpha::Opaque,
+            image: Image::default(),
+        }
+    }
+
+    /// The background is stored under a fixed name, so replacing it changes the
+    /// file at the same path. The resolved source has to tell those apart or a
+    /// new wallpaper is dismissed as "the same one" and never loaded — which is
+    /// exactly the "it does not take effect" this fixes.
+    #[test]
+    fn a_replaced_file_is_a_new_source() {
+        let path = PathBuf::from("/tmp/conic-background-test");
+        let first = Source::Image {
+            path: path.clone(),
+            global: true,
+            modified: mtime(10),
+        };
+        let second = Source::Image {
+            path,
+            global: true,
+            modified: mtime(20),
+        };
+        assert_ne!(first, second);
+        assert_eq!(first.clone(), first);
+    }
+
+    /// A cache hit means "the pixels in it are the file on disk". Once the file
+    /// is replaced, the entry is stale and has to miss so the load happens
+    /// again — otherwise the old picture is reused forever.
+    #[test]
+    fn the_cache_only_returns_the_decoded_revision() {
+        let path = PathBuf::from("/tmp/conic-background-test");
+        let mut cache = ImageCache::default();
+        cache.insert(path.clone(), decoded());
+        assert!(cache.get(&path, mtime(1)).is_some());
+        assert!(cache.get(&path, mtime(2)).is_none());
+    }
+
+    /// The source reads the file's timestamp, and reports nothing for a path
+    /// that is not a readable file.
+    #[test]
+    fn image_source_reads_the_timestamp() {
+        let dir = std::env::temp_dir().join(format!("conic-bg-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("a temp dir");
+        let file = dir.join("background_image");
+        assert!(image_source(file.clone(), true).is_none());
+        std::fs::write(&file, b"not really an image").expect("a file");
+        match image_source(file.clone(), true) {
+            Some(Source::Image {
+                path,
+                global,
+                modified,
+            }) => {
+                assert_eq!(path, file);
+                assert!(global);
+                assert!(modified > SystemTime::UNIX_EPOCH);
+            }
+            other => panic!("expected an image source, got {other:?}"),
+        }
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// The cross-fade has to move *both* layers at once: at its midpoint the
+    /// outgoing and incoming layers are both half-way, rather than one waiting
+    /// for the other to finish. The real component is built with Slint's test
+    /// backend and the controller's own clock is driven by hand, so the two
+    /// opacities the view would draw can be read straight back.
+    #[test]
+    fn the_cross_fade_moves_both_layers_together() {
+        i_slint_backend_testing::init_no_event_loop();
+        let ui = App::new().expect("the app");
+        let config = Rc::new(RefCell::new(config::Config::default()));
+        let mut controller = Controller::new(&ui, Rc::clone(&config));
+
+        let source = |name: &str| Source::Image {
+            path: PathBuf::from(name),
+            global: true,
+            modified: mtime(1),
+        };
+        // Seed the pixels so each fade starts without a worker decode: the load
+        // path needs a live event loop, which the display-less backend has not
+        // got.
+        for name in ["/tmp/conic-a.png", "/tmp/conic-b.png"] {
+            controller.cache.insert(PathBuf::from(name), decoded());
+        }
+
+        // A first background arrives over the world.
+        controller.start_fade(&ui, source("/tmp/conic-a.png"));
+        let first = controller.fade.expect("the first fade");
+        assert_eq!(first.incoming, Some(0));
+        assert_eq!(first.outgoing, None);
+        // Part-way through, the incoming layer is really moving.
+        controller.apply_fade(&ui, first.started + Duration::from_millis(100));
+        assert!(ui.global::<Background>().get_custom_a_alpha() > 0.1);
+        // Let it land at rest.
+        controller.apply_fade(
+            &ui,
+            first.started + Duration::from_millis(FADE_MS as u64 + 1),
+        );
+        assert!(controller.fade.is_none(), "the first fade did not finish");
+        assert_eq!(controller.shown, Some(0));
+
+        // Cross-fade to a second background: the shown layer leaves while the
+        // free one arrives.
+        controller.start_fade(&ui, source("/tmp/conic-b.png"));
+        let fade = controller.fade.expect("the second fade");
+        assert_eq!(fade.incoming, Some(1));
+        assert_eq!(fade.outgoing, Some(0));
+
+        controller.apply_fade(
+            &ui,
+            fade.started + Duration::from_millis((FADE_MS / 2.0) as u64),
+        );
+        let background = ui.global::<Background>();
+        let (a, b) = (
+            background.get_custom_a_alpha(),
+            background.get_custom_b_alpha(),
+        );
+        assert!(
+            (a - b).abs() < 0.2,
+            "the cross-fade is lopsided: outgoing {a}, incoming {b}"
+        );
+        assert!(
+            a > 0.1 && b > 0.1,
+            "one layer is not moving: outgoing {a}, incoming {b}"
+        );
+
+        controller.apply_fade(
+            &ui,
+            fade.started + Duration::from_millis(FADE_MS as u64 + 1),
+        );
+        assert!(controller.fade.is_none(), "the second fade did not finish");
+        assert_eq!(controller.shown, Some(1));
+        assert_eq!(controller.slots[0].opacity, 0.0);
+        assert_eq!(controller.slots[1].opacity, 1.0);
+
+        // The ticker is a runtime task; leave it stopped so the test does not
+        // keep the process's worker awake.
+        controller.ticking.store(false, Ordering::Relaxed);
+    }
+
+    /// The configured background has to be on the very first frame, not eased
+    /// in from the world: the first resolution decodes it on this thread and
+    /// places it whole, so there is no fade at all.
+    #[test]
+    fn the_first_background_is_placed_without_a_fade() {
+        i_slint_backend_testing::init_no_event_loop();
+        let ui = App::new().expect("the app");
+        let config = Rc::new(RefCell::new(config::Config::default()));
+        let mut controller = Controller::new(&ui, Rc::clone(&config));
+
+        let dir = std::env::temp_dir().join(format!("conic-bg-init-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("a temp dir");
+        let path = dir.join("background_image");
+        image::RgbaImage::from_pixel(4, 4, image::Rgba([10, 20, 30, 255]))
+            .save_with_format(&path, image::ImageFormat::Png)
+            .expect("a png");
+        let modified = std::fs::metadata(&path)
+            .and_then(|metadata| metadata.modified())
+            .expect("a timestamp");
+
+        controller.initialize(
+            &ui,
+            Source::Image {
+                path,
+                global: true,
+                modified,
+            },
+            Instant::now(),
+        );
+
+        let background = ui.global::<Background>();
+        assert!(controller.fade.is_none(), "the first background faded");
+        assert_eq!(controller.shown, Some(0));
+        assert_eq!(background.get_custom_a_alpha(), 1.0);
+        // It is opaque, so the world has nothing to do behind it.
+        assert!(!background.get_world_shown());
+        controller.ticking.store(false, Ordering::Relaxed);
+        std::fs::remove_dir_all(&dir).ok();
+    }
 }
