@@ -126,6 +126,45 @@ fontique = "0.11"
 [profile.dev]
 incremental = true
 
+# A custom background is decoded at full size and then scaled down on the UI's
+# worker thread. That work — `DynamicImage::thumbnail_exact` and the codec it
+# calls — is hot enough that an unoptimised debug build takes seconds on a 4K
+# wallpaper: long enough that the window shows the world first and only
+# cross-fades to it later, and that picking a new one feels like it did not
+# take. `opt-level` alone is not enough, because the dev profile keeps
+# `debug-assertions` on and the per-pixel `debug_assert!`s and overflow checks
+# dominate the scale loop; both are turned off for just these crates, which
+# leaves the app crate itself unoptimised and fast to rebuild.
+[profile.dev.package.image]
+opt-level = 3
+debug-assertions = false
+overflow-checks = false
+
+[profile.dev.package.zune-jpeg]
+opt-level = 3
+debug-assertions = false
+overflow-checks = false
+
+[profile.dev.package.zune-core]
+opt-level = 3
+debug-assertions = false
+overflow-checks = false
+
+[profile.dev.package.png]
+opt-level = 3
+debug-assertions = false
+overflow-checks = false
+
+[profile.dev.package.gif]
+opt-level = 3
+debug-assertions = false
+overflow-checks = false
+
+[profile.dev.package.image-webp]
+opt-level = 3
+debug-assertions = false
+overflow-checks = false
+
 [profile.release]
 panic = "abort"
 codegen-units = 1

@@ -372,6 +372,13 @@ pub(crate) fn setup_background(ui: &App) {
                     let state = ui.global::<InstanceSettingsState>();
                     state.set_has_background(instance.has_background);
                     state.set_background(load_background(&instance));
+                    // Picking a picture means wanting to see it, so it becomes
+                    // the launcher background on the spot; the switch is left
+                    // in place for turning it back off. This goes through
+                    // `changed` so the write carries the rest of the form as it
+                    // stands, and the reload underneath picks the file up.
+                    state.set_use_as_launcher_background(true);
+                    state.invoke_changed();
                     ui.global::<GameState>().invoke_refresh();
                 });
             });
