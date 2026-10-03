@@ -1,13 +1,12 @@
 <div align="center">
-  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher —— 현대적이고 크로스 플랫폼인 Minecraft 런처, 4가지 Catppuccin 테마로 메인 인터페이스 표시">
+  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher — 현대적이고 크로스 플랫폼인 Minecraft 런처, 4가지 Catppuccin 테마로 메인 인터페이스 표시">
   <p>
     <a href="https://github.com/conic-apps/launcher/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/conic-apps/launcher/build.yml?label=build&logo=github" alt="Build status"></a>
     <a href="https://github.com/conic-apps/launcher/releases"><img src="https://img.shields.io/github/v/release/conic-apps/launcher?include_prereleases&label=release" alt="Release"></a>
     <a href="../../LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
   </p>
-  <p><strong>작고 빠르고 가벼운 Minecraft 런처</strong><br>
-  멀티 인스턴스 관리 · 모드 및 리소스팩 마켓플레이스 · 크로스 LAN 멀티플레이 · 멀티 테마 지원</p>
+  <p><strong>작고 빠르고 가벼운 Minecraft 런처</strong></p>
   <p>
     🌐 <a href="../../README.md">English</a> · <a href="./README.zh_cn.md">简体中文</a> · <a href="./README.zh_tw.md">繁體中文</a> · <a href="./README.ja_jp.md">日本語</a> · <a href="./README.ko_kr.md"><strong>한국어</strong></a> · <a href="./README.de_de.md">Deutsch</a> · <a href="./README.fr_fr.md">Français</a> · <a href="./README.es_es.md">Español</a> · <a href="./README.pt_br.md">Português (Brasil)</a> · <a href="./README.ru_ru.md">Русский</a> · <a href="./README.tr_tr.md">Türkçe</a> · <a href="./README.pl_pl.md">Polski</a>
   </p>
@@ -17,7 +16,7 @@
 
 ## 이것이 무엇인가
 
-Conic Launcher는 현대적인 데스크톱 Minecraft 런처입니다: 코어 로직은 Rust로 구현되었고, UI는 네이티브 UI 툴킷인 [Slint](https://slint.dev)로 구축되었습니다. 설치 용량이 작고, 시작이 빠르며, 리소스 소비가 적어 탄소 배출 감소에도 기여합니다.
+Conic Launcher는 작고 빠르고 가벼운 데스크톱 Minecraft 런처입니다: 코어 로직은 Rust로 구현되었고, UI는 네이티브 UI 툴킷인 [Slint](https://slint.dev)로 구축되었습니다. 설치 용량이 작고, 시작이 빠르며, 리소스 소비가 적어 탄소 배출 감소에도 기여합니다.
 
 인스턴스 생성, 로더 설치, 모드 검색, 친구 초대하여 함께 플레이, 게임 시작 및 플레이 시간 추적까지 — 전체 워크플로우를 하나의 앱에서 완료할 수 있습니다.
 
@@ -86,19 +85,21 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## 다운로드
 
-[GitHub Releases](https://github.com/conic-apps/launcher/releases)에서 플랫폼에 맞는 설치 프로그램을 다운로드하세요:
+[GitHub Releases](https://github.com/conic-apps/launcher/releases) 또는 [공식 웹사이트](https://conicmc.app)에서 플랫폼에 맞는 설치 프로그램을 다운로드하세요:
 
 | 플랫폼  | 아키텍처              | 형식                                  |
 | ------- | --------------------- | ------------------------------------- |
-| Windows | x64 · arm64           | MSI · NSIS 설치 프로그램 · 포터블 exe |
+| Windows | x64 · arm64           | MSI · 포터블 exe                      |
 | macOS   | Apple Silicon · Intel | DMG                                   |
 | Linux   | x64 · arm64           | deb · rpm · AppImage                  |
 
 앱에 자동 업데이트가 내장되어 있어, 설치 후 수동 업그레이드가 필요 없습니다.
 
+> 독립 실행형 Windows `.exe`는 단일 파일이지만 `VCRUNTIME140.dll`을 가져옵니다. Visual C++ 재배포 가능 패키지가 없는 컴퓨터(Office나 .NET이 있는 대부분의 컴퓨터에는 이미 있음)에서는 실행되지 않습니다. `.msi`도 동일한 실행 파일을 설치합니다.
+
 ## 소스에서 빌드
 
-[Rust 1.88+](https://rustup.rs/)가 설치되어 있는지 확인하세요. Linux에서는 [빌드 의존성](../../AGENTS.md#linux-build-dependencies)도 설치하세요.
+[Rust 1.88+](https://rustup.rs/)가 설치되어 있는지 확인하세요. Linux에서는 [빌드 의존성](../../CONTRIBUTING.md#linux-build-dependencies)도 설치하세요.
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -109,22 +110,13 @@ cargo build --release  # 프로덕션 빌드
 
 ## 기여하기
 
-[Issue](https://github.com/conic-apps/launcher/issues/new/choose)와 Pull Request(`dev` 브랜치 대상)를 환영합니다. 제출 전에 다음을 실행해 주세요:
-
-```bash
-cargo fmt --all -- --check
-cargo check
-cargo clippy --all-targets --release -- -D warnings
-cargo test
-```
+기여를 환영합니다! 시작 방법, 개발 환경 설정, Pull Request 제출 방법은 [CONTRIBUTING.md](../../CONTRIBUTING.md)를 참고하세요.
 
 ## 아키텍처
 
-<div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="아키텍처 다이어그램: Slint 인터페이스가 도메인별 Rust crates에 직접 연결됨">
-</div>
+인터페이스는 [Slint](https://slint.dev)로 구축되었으며 도메인 crates에 직접 연결됩니다—IPC 계층은 없습니다. `app/`는 바이너리와 `.slint` 트리를 담고, 각 기능은 자체 `crates/*` 워크스페이스 모듈에 있어 독립적으로 발전하고 필요에 따라 조합됩니다.
 
-인터페이스는 [Slint](https://slint.dev)로 구축되었으며 도메인 crates에 직접 연결됩니다——IPC 계층은 없습니다. `app/`는 바이너리와 `.slint` 트리를 담고, 각 기능은 자체 `crates/*` 워크스페이스 모듈에 있어 독립적으로 발전하고 필요에 따라 조합됩니다.
+저장 위치, 앱 계층 구조, UI 버킷 구성, crate 목록 등 전체 그림은 [ARCHITECTURE.md](../../ARCHITECTURE.md)를 참고하세요.
 
 ## 라이선스
 

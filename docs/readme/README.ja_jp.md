@@ -1,13 +1,12 @@
 <div align="center">
-  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher —— 現代的でクロスプラットフォームな Minecraft ランチャー、4つの Catppuccin テーマでメイン画面を表示">
+  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher — 現代的でクロスプラットフォームな Minecraft ランチャー、4つの Catppuccin テーマでメイン画面を表示">
   <p>
     <a href="https://github.com/conic-apps/launcher/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/conic-apps/launcher/build.yml?label=build&logo=github" alt="Build status"></a>
     <a href="https://github.com/conic-apps/launcher/releases"><img src="https://img.shields.io/github/v/release/conic-apps/launcher?include_prereleases&label=release" alt="Release"></a>
     <a href="../../LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
   </p>
-  <p><strong>小さく、速く、軽い Minecraft ランチャー</strong><br>
-  マルチインスタンス管理 · Mod・リソースパックマーケットプレイス · クロスLANマルチプレイ · マルチテーマ対応</p>
+  <p><strong>小さく、速く、軽い Minecraft ランチャー</strong></p>
   <p>
     🌐 <a href="../../README.md">English</a> · <a href="./README.zh_cn.md">简体中文</a> · <a href="./README.zh_tw.md">繁體中文</a> · <a href="./README.ja_jp.md"><strong>日本語</strong></a> · <a href="./README.ko_kr.md">한국어</a> · <a href="./README.de_de.md">Deutsch</a> · <a href="./README.fr_fr.md">Français</a> · <a href="./README.es_es.md">Español</a> · <a href="./README.pt_br.md">Português (Brasil)</a> · <a href="./README.ru_ru.md">Русский</a> · <a href="./README.tr_tr.md">Türkçe</a> · <a href="./README.pl_pl.md">Polski</a>
   </p>
@@ -17,9 +16,9 @@
 
 ## これは何
 
-Conic Launcher はモダンなデスクトップ Minecraft ランチャーです。コアロジックは Rust で実装され、UI はネイティブ UI ツールキットの [Slint](https://slint.dev) で構築されています。インストールサイズが小さく、起動が高速で、リソース消費が少なく、炭素排出の削減にも貢献します。
+Conic Launcher は小さく、速く、軽いデスクトップ Minecraft ランチャーです。コアロジックは Rust で実装され、UI はネイティブ UI ツールキットの [Slint](https://slint.dev) で構築されています。インストールサイズが小さく、起動が高速で、リソース消費が少なく、炭素排出の削減にも貢献します。
 
-インスタンスの作成、ローダーのインストール、Mod の検索、フレンドを招待して一緒にプレイ、ゲームの起動とプレイ時間の統計まで——すべてのワークフローを一つのアプリで完結できます。
+インスタンスの作成、ローダーのインストール、Mod の検索、フレンドを招待して一緒にプレイ、ゲームの起動とプレイ時間の統計まで—すべてのワークフローを一つのアプリで完結できます。
 
 > プロジェクトは現在早期アルファ段階です。機能と UI は急速に迭代されていますので、ぜひ試してフィードバックをお寄せください。
 
@@ -59,7 +58,7 @@ Microsoft アカウントログイン（デバイスコードフロー）、オ�
 
 システム上の Java を自動スキャンし、適切なランタイムを自動ダウンロードすることもできます。メモリは自動割り当て（32ビット Java の上限保護付き）。起動プロセスは完全に可視化：ゲームファイルのダウンロード、ローダーのインストール、依存関係の解決、プロセスの起動待ち。
 
-上級ユーザーも見逃されません——JVM ガベージコレクタ、JVM 引数、ゲーム引数、クラスパス、ラッパー コマンド、起動前后のコマンド実行がすべてカスタマイズ可能です。
+上級ユーザーも見逃されません—JVM ガベージコレクタ、JVM 引数、ゲーム引数、クラスパス、ラッパー コマンド、起動前后のコマンド実行がすべてカスタマイズ可能です。
 
 https://github.com/user-attachments/assets/1a6943f9-4e35-4391-9984-799cf42ee49d
 
@@ -86,19 +85,21 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## ダウンロード
 
-[GitHub Releases](https://github.com/conic-apps/launcher/releases) からお使いのプラットフォームに対応するインストーラーをダウンロード：
+[GitHub Releases](https://github.com/conic-apps/launcher/releases) または [公式サイト](https://conicmc.app) からお使いのプラットフォームに対応するインストーラーをダウンロード：
 
 | プラットフォーム | アーキテクチャ        | フォーマット                               |
 | ---------------- | --------------------- | ------------------------------------------ |
-| Windows          | x64 · arm64           | MSI · NSIS インストーラー · ポータブル exe |
+| Windows          | x64 · arm64           | MSI · ポータブル exe                       |
 | macOS            | Apple Silicon · Intel | DMG                                        |
 | Linux            | x64 · arm64           | deb · rpm · AppImage                       |
 
 アプリには自動更新機能が組み込まれており、インストール後の手動アップグレードは不要です。
 
+> 単体の Windows 用 `.exe` は 1 ファイルですが、`VCRUNTIME140.dll` をインポートします。Visual C++ 再頒布可能パッケージが入っていないマシン（Office や .NET のあるマシンにはほぼ入っています）では起動しません。`.msi` も同じ実行ファイルをインストールします。
+
 ## ソースからビルド
 
-[Rust 1.88+](https://rustup.rs/) がインストールされていることを確認してください。Linux では、[ビルド依存関係](../../AGENTS.md#linux-build-dependencies) もインストールしてください。
+[Rust 1.88+](https://rustup.rs/) がインストールされていることを確認してください。Linux では、[ビルド依存関係](../../CONTRIBUTING.md#linux-build-dependencies) もインストールしてください。
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -109,22 +110,13 @@ cargo build --release  # 本番ビルド
 
 ## コントリビュート
 
-[Issue](https://github.com/conic-apps/launcher/issues/new/choose) や Pull Request（`dev` ブランチを対象）の提出を歓迎します。提出前に以下を実行してください：
-
-```bash
-cargo fmt --all -- --check
-cargo check
-cargo clippy --all-targets --release -- -D warnings
-cargo test
-```
+コントリビュートを歓迎します！始め方、開発環境のセットアップ、Pull Request の提出方法については [CONTRIBUTING.md](../../CONTRIBUTING.md) をお読みください。
 
 ## アーキテクチャ
 
-<div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="アーキテクチャ図：Slint インターフェースがドメイン別 Rust crates に直接接続">
-</div>
+インターフェースは [Slint](https://slint.dev) で構築され、ドメイン crates に直接接続されています—IPC 層はありません。`app/` はバイナリと `.slint` ツリーを保持し、各機能はそれぞれの `crates/*` ワークスペースモジュールに存在するため、独立して進化し、必要に応じて組み合わせられます。
 
-インターフェースは [Slint](https://slint.dev) で構築され、ドメイン crates に直接接続されています——IPC 層はありません。`app/` はバイナリと `.slint` ツリーを保持し、各機能はそれぞれの `crates/*` ワークスペースモジュールに存在するため、独立して進化し、必要に応じて組み合わせられます。
+ストレージのルート、アプリのレイヤー構成、UI のバケット分け、crate 一覧などの全体像は [ARCHITECTURE.md](../../ARCHITECTURE.md) を参照してください。
 
 ## ライセンス
 

@@ -6,8 +6,7 @@
     <a href="../../LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
   </p>
-  <p><strong>Küçük, hızlı ve çevik bir Minecraft başlatıcı</strong><br>
-  Çoklu instance yönetimi · Mod ve resource pack pazar yeri · Çapraz LAN çoklu oyuncu · Çoklu tema desteği</p>
+  <p><strong>Küçük, hızlı ve çevik bir Minecraft başlatıcı</strong></p>
   <p>
     🌐 <a href="../../README.md">English</a> · <a href="./README.zh_cn.md">简体中文</a> · <a href="./README.zh_tw.md">繁體中文</a> · <a href="./README.ja_jp.md">日本語</a> · <a href="./README.ko_kr.md">한국어</a> · <a href="./README.de_de.md">Deutsch</a> · <a href="./README.fr_fr.md">Français</a> · <a href="./README.es_es.md">Español</a> · <a href="./README.pt_br.md">Português (Brasil)</a> · <a href="./README.ru_ru.md">Русский</a> · <a href="./README.tr_tr.md"><strong>Türkçe</strong></a> · <a href="./README.pl_pl.md">Polski</a>
   </p>
@@ -17,7 +16,7 @@
 
 ## Bu nedir
 
-Conic Launcher modern bir masaüstü Minecraft başlatıcısıdır: çekirdek mantığı Rust ile uygulanmış, arayüz ise yerel bir UI araç takımı olan [Slint](https://slint.dev) ile oluşturulmuştur. Küçük kurulum boyutu, hızlı başlangıç ve düşük kaynak tüketimi ile karbon emisyonlarını azaltmaya bile yardımcı olur.
+Conic Launcher küçük, hızlı ve çevik bir masaüstü Minecraft başlatıcısıdır: çekirdek mantığı Rust ile uygulanmış, arayüz ise yerel bir UI araç takımı olan [Slint](https://slint.dev) ile oluşturulmuştur. Küçük kurulum boyutu, hızlı başlangıç ve düşük kaynak tüketimi ile karbon emisyonlarını azaltmaya bile yardımcı olur.
 
 Instance oluşturma ve loader kurulumundan, mod aramaya ve arkadaşları birlikte oynamaya davet etmeye, oyunu başlatmaya ve oyun süresini takip etmeye kadar — tüm iş akışı tek bir uygulamada tamamlanabilir.
 
@@ -86,19 +85,21 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## İndirme
 
-Platformunuz için yükleyiciyi [GitHub Releases](https://github.com/conic-apps/launcher/releases)'den indirin:
+Platformunuz için yükleyiciyi [GitHub Releases](https://github.com/conic-apps/launcher/releases)'den veya [resmi web sitesinden](https://conicmc.app) indirin:
 
 | Platform | Mimari                | Formatlar                              |
 | -------- | --------------------- | -------------------------------------- |
-| Windows  | x64 · arm64           | MSI · NSIS yükleyici · taşınabilir exe |
+| Windows  | x64 · arm64           | MSI · taşınabilir exe                  |
 | macOS    | Apple Silicon · Intel | DMG                                    |
 | Linux    | x64 · arm64           | deb · rpm · AppImage                   |
 
 Uygulama dahili otomatik güncelleme içerir — kurulumdan sonra manuel yükseltme gerekmez.
 
+> Bağımsız Windows `.exe` tek bir dosyadır, ancak `VCRUNTIME140.dll` dosyasını içe aktarır: Visual C++ Redistributable yüklü olmayan bir makinede (Office veya .NET olanların çoğunda zaten vardır) başlamaz. `.msi` aynı yürütülebilir dosyayı kurar.
+
 ## Kaynak kodundan derleme
 
-[Rust 1.88+](https://rustup.rs/) kurulu olduğundan emin olun; Linux'ta [derleme bağımlılıklarını](../../AGENTS.md#linux-build-dependencies) da kurun.
+[Rust 1.88+](https://rustup.rs/) kurulu olduğundan emin olun; Linux'ta [derleme bağımlılıklarını](../../CONTRIBUTING.md#linux-build-dependencies) da kurun.
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -109,22 +110,13 @@ cargo build --release  # Üretim derlemesi
 
 ## Katkıda bulunma
 
-[Issue'lar](https://github.com/conic-apps/launcher/issues/new/choose) ve Pull Request'ler (`dev` dalını hedefleyenler) hošgeldiniz. Göndermeden önce lütfen şunu çalıştırın:
-
-```bash
-cargo fmt --all -- --check
-cargo check
-cargo clippy --all-targets --release -- -D warnings
-cargo test
-```
+Katkılar memnuniyetle karşılanır! Başlama, geliştirme ortamınızı kurma ve pull request gönderme yönergeleri için lütfen [CONTRIBUTING.md](../../CONTRIBUTING.md) dosyasını okuyun.
 
 ## Mimari
 
-<div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Mimari diyagramı: Slint arayüzü doğrudan alanlara ayrılmış Rust crates'e bağlı">
-</div>
-
 Arayüz [Slint](https://slint.dev) ile oluşturulmuş ve doğrudan alan crates'ine bağlanmıştır — IPC katmanı yoktur. `app/` ikili dosyayı ve `.slint` ağacını barındırır; her yetenek kendi `crates/*` çalışma alanı modülünde yer alır, böylece bağımsız olarak gelişir ve gerektiğinde birleşir.
+
+Depolama kökleri, uygulama katmanları, UI bucket düzeni ve crate haritası dahil tam resim için [ARCHITECTURE.md](../../ARCHITECTURE.md) dosyasına bakın.
 
 ## Lisans
 

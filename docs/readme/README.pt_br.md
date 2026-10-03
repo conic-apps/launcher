@@ -6,8 +6,7 @@
     <a href="../../LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
   </p>
-  <p><strong>Um launcher de Minecraft pequeno, rápido e ágil</strong><br>
-  Gerenciamento de múltiplas instâncias · Marketplace de mods e pacotes de recursos · Multijogador cross-LAN · Suporte a múltiplos temas</p>
+  <p><strong>Um launcher de Minecraft pequeno, rápido e ágil</strong></p>
   <p>
     🌐 <a href="../../README.md">English</a> · <a href="./README.zh_cn.md">简体中文</a> · <a href="./README.zh_tw.md">繁體中文</a> · <a href="./README.ja_jp.md">日本語</a> · <a href="./README.ko_kr.md">한국어</a> · <a href="./README.de_de.md">Deutsch</a> · <a href="./README.fr_fr.md">Français</a> · <a href="./README.es_es.md">Español</a> · <a href="./README.pt_br.md"><strong>Português (Brasil)</strong></a> · <a href="./README.ru_ru.md">Русский</a> · <a href="./README.tr_tr.md">Türkçe</a> · <a href="./README.pl_pl.md">Polski</a>
   </p>
@@ -17,7 +16,7 @@
 
 ## O que é isso
 
-Conic Launcher é um launcher de Minecraft moderno para desktop: a lógica principal é implementada em Rust e a interface é construída com [Slint](https://slint.dev), um toolkit de UI nativo. Possui uma pequena pegada de instalação, inicialização rápida e baixo consumo de recursos, até ajudando a reduzir as emissões de carbono.
+Conic Launcher é um launcher de Minecraft pequeno, rápido e ágil para desktop: a lógica principal é implementada em Rust e a interface é construída com [Slint](https://slint.dev), um toolkit de UI nativo. Possui uma pequena pegada de instalação, inicialização rápida e baixo consumo de recursos, até ajudando a reduzir as emissões de carbono.
 
 Desde criar instâncias e instalar loaders até pesquisar mods e convidar amigos para jogar juntos, iniciar o jogo e rastrear o tempo de jogo — todo o fluxo de trabalho pode ser concluído em um único aplicativo.
 
@@ -86,19 +85,21 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## Download
 
-Baixe o instalador para sua plataforma no [GitHub Releases](https://github.com/conic-apps/launcher/releases):
+Baixe o instalador para sua plataforma no [GitHub Releases](https://github.com/conic-apps/launcher/releases) ou no [site oficial](https://conicmc.app):
 
 | Plataforma | Arquitetura           | Formatos                             |
 | ---------- | --------------------- | ------------------------------------ |
-| Windows    | x64 · arm64           | MSI · instalador NSIS · exe portátil |
+| Windows    | x64 · arm64           | MSI · exe portátil                   |
 | macOS      | Apple Silicon · Intel | DMG                                  |
 | Linux      | x64 · arm64           | deb · rpm · AppImage                 |
 
 O aplicativo inclui atualizações automáticas — não são necessárias atualizações manuais após a instalação.
 
+> O `.exe` autônomo do Windows é um único arquivo, mas importa `VCRUNTIME140.dll`: uma máquina sem o Visual C++ Redistributable (a maioria com Office ou .NET já o tem) não conseguirá iniciá-lo. O `.msi` instala o mesmo executável.
+
 ## Compilar a partir do código-fonte
 
-Certifique-se de ter o [Rust 1.88+](https://rustup.rs/) instalado; no Linux, instale também as [dependências de compilação](../../AGENTS.md#linux-build-dependencies).
+Certifique-se de ter o [Rust 1.88+](https://rustup.rs/) instalado; no Linux, instale também as [dependências de compilação](../../CONTRIBUTING.md#linux-build-dependencies).
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -109,22 +110,13 @@ cargo build --release  # Build de produção
 
 ## Contribuir
 
-Issues e Pull Requests (direcionados à branch `dev`) são bem-vindos. Antes de enviar, por favor execute:
-
-```bash
-cargo fmt --all -- --check
-cargo check
-cargo clippy --all-targets --release -- -D warnings
-cargo test
-```
+Contribuições são bem-vindas! Leia o [CONTRIBUTING.md](../../CONTRIBUTING.md) para diretrizes sobre como começar, configurar seu ambiente de desenvolvimento e enviar um pull request.
 
 ## Arquitetura
 
-<div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Diagrama de arquitetura: a interface Slint conectada diretamente aos crates Rust separados por domínio">
-</div>
-
 A interface é construída com [Slint](https://slint.dev) e conectada diretamente aos crates de domínio — não há camada IPC. `app/` contém o binário e a árvore `.slint`; cada capacidade reside em seu próprio módulo `crates/*` do workspace, então evoluem independentemente e se combinam conforme necessário.
+
+Para o panorama completo — raízes de armazenamento, camadas do app, a organização da UI e o mapa de crates — consulte o [ARCHITECTURE.md](../../ARCHITECTURE.md).
 
 ## Licença
 

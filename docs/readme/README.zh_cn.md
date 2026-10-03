@@ -1,13 +1,12 @@
 <div align="center">
-  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher —— 现代、跨平台的 Minecraft 启动器，图中以四种 Catppuccin 主题展示主界面">
+  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher — 现代、跨平台的 Minecraft 启动器，图中以四种 Catppuccin 主题展示主界面">
   <p>
     <a href="https://github.com/conic-apps/launcher/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/conic-apps/launcher/build.yml?label=build&logo=github" alt="Build status"></a>
     <a href="https://github.com/conic-apps/launcher/releases"><img src="https://img.shields.io/github/v/release/conic-apps/launcher?include_prereleases&label=release" alt="Release"></a>
     <a href="../../LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
   </p>
-  <p><strong>一款小快灵的 Minecraft 启动器</strong><br>
-  多实例管理 · 模组与资源包市场 · 跨局域网联机 · 多主题支持</p>
+  <p><strong>一款小快灵的 Minecraft 启动器</strong></p>
   <p>
     🌐 <a href="../../README.md">English</a> · <strong>简体中文</strong> · <a href="./README.zh_tw.md">繁體中文</a> · <a href="./README.ja_jp.md">日本語</a> · <a href="./README.ko_kr.md">한국어</a> · <a href="./README.de_de.md">Deutsch</a> · <a href="./README.fr_fr.md">Français</a> · <a href="./README.es_es.md">Español</a> · <a href="./README.pt_br.md">Português (Brasil)</a> · <a href="./README.ru_ru.md">Русский</a> · <a href="./README.tr_tr.md">Türkçe</a> · <a href="./README.pl_pl.md">Polski</a>
   </p>
@@ -17,9 +16,9 @@
 
 ## 这是什么
 
-Conic Launcher 是一个现代的桌面版 Minecraft 启动器：核心逻辑由 Rust 实现，界面基于 [Slint](https://slint.dev) 这一原生 UI 工具包构建。安装包小、启动快、资源占用低，甚至有助于减少碳排放。
+Conic Launcher 是一款小快灵的桌面版 Minecraft 启动器：核心逻辑由 Rust 实现，界面基于 [Slint](https://slint.dev) 这一原生 UI 工具包构建。安装包小、启动快、资源占用低，甚至有助于减少碳排放。
 
-从创建实例、安装加载器，到搜索模组、邀请好友联机，再到启动游戏与统计游戏时长——整个流程都可以在一个应用里完成。
+从创建实例、安装加载器，到搜索模组、邀请好友联机，再到启动游戏与统计游戏时长—整个流程都可以在一个应用里完成。
 
 > 项目目前处于早期 Alpha 阶段，功能与界面仍在快速迭代，欢迎试用并反馈问题。
 
@@ -59,7 +58,7 @@ https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
 自动扫描本机 Java，也可以自动下载合适的运行时；内存自动分配（含 32 位 Java 上限保护）。启动过程全程可视化：下载游戏文件、安装加载器、补全依赖库、等待进程启动。
 
-高级玩家也没有被遗忘——JVM 垃圾回收器、JVM 参数、游戏参数、类路径、包装命令、启动前后执行命令均可自定义。
+高级玩家也没有被遗忘—JVM 垃圾回收器、JVM 参数、游戏参数、类路径、包装命令、启动前后执行命令均可自定义。
 
 https://github.com/user-attachments/assets/1a6943f9-4e35-4391-9984-799cf42ee49d
 
@@ -86,19 +85,21 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## 下载
 
-前往 [GitHub Releases](https://github.com/conic-apps/launcher/releases) 下载对应平台的安装包：
+前往 [GitHub Releases](https://github.com/conic-apps/launcher/releases) 或[官方网站](https://conicmc.app)下载对应平台的安装包：
 
 | 平台    | 架构                  | 格式                           |
 | ------- | --------------------- | ------------------------------ |
-| Windows | x64 · arm64           | MSI · NSIS 安装器 · 便携版 exe |
+| Windows | x64 · arm64           | MSI · 便携版 exe               |
 | macOS   | Apple Silicon · Intel | DMG                            |
 | Linux   | x64 · arm64           | deb · rpm · AppImage           |
 
 应用内置自动更新，安装后无需手动升级。
 
+> 独立的 Windows `.exe` 虽是单个文件，但它导入了 `VCRUNTIME140.dll`：未安装 Visual C++ Redistributable 的机器（装有 Office 或 .NET 的机器通常已有）将无法启动它。`.msi` 安装的是同一个可执行文件。
+
 ## 从源码构建
 
-确保已安装 [Rust 1.88+](https://rustup.rs/)；在 Linux 上，还需安装[构建依赖](../../AGENTS.md#linux-build-dependencies)。
+确保已安装 [Rust 1.88+](https://rustup.rs/)；在 Linux 上，还需安装[构建依赖](../../CONTRIBUTING.md#linux-build-dependencies)。
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -109,22 +110,13 @@ cargo build --release  # 构建生产版本
 
 ## 参与贡献
 
-欢迎提交 [Issue](https://github.com/conic-apps/launcher/issues/new/choose) 与 Pull Request（请指向 `dev` 分支）。提交前请运行检查：
-
-```bash
-cargo fmt --all -- --check
-cargo check
-cargo clippy --all-targets --release -- -D warnings
-cargo test
-```
+欢迎参与贡献！请阅读 [CONTRIBUTING.md](../../CONTRIBUTING.md) 了解如何开始、配置开发环境以及提交 Pull Request。
 
 ## 架构
 
-<div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="架构图：Slint 界面直接连接按领域划分的 Rust crates">
-</div>
+界面使用 [Slint](https://slint.dev) 构建，并直接连接各领域 crates—没有 IPC 层。`app/` 存放二进制与 `.slint` 界面树；每项能力各自位于独立的 `crates/*` 工作区模块中，独立演进、按需组合。
 
-界面使用 [Slint](https://slint.dev) 构建，并直接连接各领域 crates——没有 IPC 层。`app/` 存放二进制与 `.slint` 界面树；每项能力各自位于独立的 `crates/*` 工作区模块中，独立演进、按需组合。
+完整内容—存储位置、应用分层、UI 分桶结构与 crate 一览—请见 [ARCHITECTURE.md](../../ARCHITECTURE.md)。
 
 ## 许可证
 
