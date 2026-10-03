@@ -135,6 +135,38 @@ export component App inherits Window {
         root.quitting = true;
     }
 
+    // The page-swap lifecycle. `navigate`/`back` set `transition-stage` to
+    // "starting" on the same beat as `current-page`; these two timers advance
+    // it. One 16ms beat holds a view at its start values so the renderer has
+    // seen them before its animation retargets them — Slint has no timeline, and
+    // a property only moves while something reads it.
+    page-settle-timer := Timer {
+        interval: 16ms;
+        running: Navigation.transition-stage == "starting";
+        triggered => { Navigation.transition-stage = "running"; }
+    }
+
+    // The swap is at most the 250ms any view's exit is allowed. When it is over
+    // `leaving-page` clears, so a kept-mounted view (the wizard) unmounts.
+    page-run-timer := Timer {
+        interval: 250ms;
+        running: Navigation.transition-stage == "running";
+        triggered => {
+            Navigation.transition-stage = "idle";
+            Navigation.leaving-page = "";
+        }
+    }
+
+    // The first page's view can animate in too: the wizard reads "starting" as
+    // its entrance. `init` runs before the event loop, so the stage outlives
+    // Rust's `set_current_page("setup")` and the settle timer starts on the
+    // first frame.
+    init => {
+        if Navigation.transition-stage == "idle" {
+            Navigation.transition-stage = "starting";
+        }
+    }
+
     callback toggle-music();
     callback maximize-or-fullscreen();
     callback minimize-window();
@@ -249,15 +281,20 @@ export component App inherits Window {
                 // Page stack. "accounts" is the one page with no screen yet: it is
                 // being redesigned, so it lands on `TodoPlaceholder` — see that
                 // component for why.
+                //
+                // Animated at the view, not here: a page that plays its own exit
+                // keeps being mounted while `leaving-page` is set, so its elements
+                // can run their `leave` phase. Pages without an exit swap on
+                // `current-page` alone, instantly.
                 page-stack := Rectangle {
                     width: 100%;
                     vertical-stretch: 1;
                     clip: true;
 
-                    if Navigation.current-page == "settings" : SettingsView { }
-                    if Navigation.current-page == "game" : GameView { }
+                    if Navigation.current-page == "settings" || Navigation.leaving-page == "settings" : SettingsView { }
+                    if Navigation.current-page == "game" || Navigation.leaving-page == "game" : GameView { }
                     if Navigation.current-page == "launch" : LaunchView { }
-                    if Navigation.current-page == "setup" : SetupView { }
+                    if Navigation.current-page == "setup" || Navigation.leaving-page == "setup" : SetupView { }
                     if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "setup" : TodoPlaceholder { }
                 }
             }

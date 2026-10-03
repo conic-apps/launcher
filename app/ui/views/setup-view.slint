@@ -8,6 +8,8 @@ import { ScrollView } from "../components/containers/scroll-view.slint";
 import { SlideTransition } from "../components/containers/slide-transition.slint";
 import { FocusManager } from "../globals/focus.slint";
 import { Navigation } from "../globals/navigation.slint";
+import { PageMotion } from "../globals/page-motion.slint";
+import { AccountAddState } from "../globals/dialogs.slint";
 import { SetupWizardState } from "../globals/setup.slint";
 import { SetupLanguage } from "setup/setup-language.slint";
 import { SetupStorage } from "setup/setup-storage.slint";
@@ -82,6 +84,8 @@ component FooterButton inherits Rectangle {
 // A column of three bands: the mauve header, the translucent card that holds
 // the step, and the translucent button bar pinned to the bottom of the window.
 // The header and the bar slide in from above and below, and the card fades up.
+// The page swap drives both directions: the entrance plays on "enter", and the
+// exit — defined on its own, not the entrance run backwards — on "leave".
 //
 // The step swap plays the outgoing screen out and then the incoming one in, the
 // same state machine the add-account dialog runs (see `AccountAdd`).
@@ -89,6 +93,10 @@ export component SetupView inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
+
+    // The wizard's entrance and exit, driven by the app-wide page swap. The
+    // header, card and bar read it; "shown" is at rest.
+    private property <string> motion: PageMotion.phase("setup");
 
     // The header band is 100px narrower than the window and the card 186px,
     // both centred.
@@ -102,14 +110,21 @@ export component SetupView inherits Rectangle {
     // The wrapper carries 8px of plain `base` below the mauve header.
     header-wrapper := Rectangle {
         x: (root.width - self.width) / 2;
-        y: root.intro-played ? 0px : -118px;
+        y: root.motion == "shown" ? 0px : -118px;
         width: root.width - root.header-inset;
         height: header.height + 8px;
         background: Theme.base;
         border-bottom-left-radius: 12px;
         border-bottom-right-radius: 12px;
-        // Easing out over 0.33s, the first thing on the timeline.
-        animate y { duration: 330ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
+        // Entrance: down over 0.33s, the first thing on the timeline, no delay.
+        // Exit: back up over 0.15s, last of the three, mirroring the entrance's
+        // order. The exit is defined on its own (not the entrance reversed) so it
+        // can be tuned by itself.
+        animate y {
+            duration: root.motion == "leave" ? 150ms : 330ms;
+            delay: root.motion == "leave" ? 90ms : 0ms;
+            easing: cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
 
         header := Rectangle {
             width: 100%;
@@ -163,6 +178,7 @@ export component SetupView inherits Rectangle {
                 close-touch := TouchArea {
                     clicked => {
                         FocusManager.clear();
+                        root.close-add-account-host();
                         // Closing the wizard means skipping it: Rust keeps the
                         // default storage and marks the wizard done.
                         SetupWizardState.skip();
@@ -185,12 +201,13 @@ export component SetupView inherits Rectangle {
         background: Theme.base.with-alpha(0.9);
         border-radius: 12px;
         clip: true;
-        // Fades and scales up 0.06s after the header, over 0.33s.
-        opacity: root.intro-played ? 1.0 : 0.0;
-        transform-scale: root.intro-played ? 100% : 90%;
+        // Entrance: fades and scales up 0.06s after the header, over 0.33s.
+        // Exit: back down over 0.15s, 0.03s in — the middle of the reverse order.
+        opacity: root.motion == "shown" ? 1.0 : 0.0;
+        transform-scale: root.motion == "shown" ? 100% : 90%;
         animate opacity, transform-scale {
-            delay: 60ms;
-            duration: 330ms;
+            duration: root.motion == "leave" ? 150ms : 330ms;
+            delay: root.motion == "leave" ? 30ms : 60ms;
             easing: cubic-bezier(0.215, 0.61, 0.355, 1);
         }
 
@@ -327,10 +344,29 @@ export component SetupView inherits Rectangle {
         }
     }
 
+    /// Tears down what the add-account step embeds, if it is the one on show.
+    ///
+    /// The step mounts the add-account dialog body, and that body is torn down
+    /// by unmounting it — Slint has no unmount hook. In the dialog the body's
+    /// "Cancel" button does this teardown, but the wizard hides that button,
+    /// so leaving the step (or closing the wizard from it) is the only moment
+    /// left. Without it the browser flow's loopback listener would outlive the
+    /// screen for its ten-minute timeout, and a later visit to the step would
+    /// find `prepare-auth-code-flow` a no-op over the stale listener and the
+    /// login link empty again. `close` is the dialog's own teardown — cancel
+    /// the login, free the listener — and its `account-add-visible` write is a
+    /// no-op here. See `AccountAddState.close`.
+    function close-add-account-host() {
+        if root.shown == "add-account" {
+            AccountAddState.close();
+        }
+    }
+
     function goto-step(index: int, towards-left: bool) {
         if index < 0 || index >= root.phases.length || index == root.wanted {
             return;
         }
+        root.close-add-account-host();
         // The direction follows the way the index moves.
         root.direction = towards-left ? "left" : "right";
         root.wanted = index;
@@ -343,29 +379,23 @@ export component SetupView inherits Rectangle {
         leave-timer.restart();
     }
 
-    // The header, card and button bar begin at 0ms, 60ms and 90ms.
-    private property <bool> intro-played: false;
-
-    intro-timer := Timer {
-        interval: 16ms;
-        running: true;
-        triggered => {
-            root.intro-played = true;
-            intro-timer.running = false;
-        }
-    }
-
     // The bar has no backdrop blur, so the content scrolling under it shows
     // through unblurred (Slint 1.18 has no backdrop blur, like the game view's
     // toolbar and footer). It is pinned to the bottom of the *window*; the
     // wizard fills everything below the title bar, so that is the same place.
     footer := Rectangle {
         x: 0px;
-        y: root.intro-played ? root.height - self.height : root.height - self.height + 100px;
+        y: root.motion == "shown" ? root.height - self.height : root.height - self.height + 100px;
         width: 100%;
         height: 48px;
         background: Theme.surface-0.with-alpha(0.6);
-        animate y { delay: 90ms; duration: 330ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
+        // Entrance: up 0.09s in, after the header and card. Exit: back down
+        // first of the three, over 0.15s — the reverse order.
+        animate y {
+            duration: root.motion == "leave" ? 150ms : 330ms;
+            delay: root.motion == "leave" ? 0ms : 90ms;
+            easing: cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
 
         // The buttons are 40px tall in a 16px-tall content box, pulled up 24px,
         // so they sit 8px above the bar and stop 16px short of its bottom edge.

@@ -112,7 +112,7 @@ the bucket — not the feature — is what decides where a file goes:
   with `dialogs/dialog.slint` as the shared modal shell, and the content browser
   is `content/`.
 - **`globals/`** — one singleton per domain (`Navigation`, `AppConfig`,
-  `ContentState`, …). Slint components are only reachable from Rust through a
+  `ContentState`, `PageMotion`, …). Slint components are only reachable from Rust through a
   global, and a global is also how cross-screen state is shared without prop
   drilling; the owning `app/src/ui/…` surface wires each one, and the ones no
   single surface owns (`scroll`) live in `app/src/ui/services/`.
