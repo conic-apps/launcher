@@ -1,13 +1,12 @@
 <div align="center">
-  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher —— 現代、跨平台的 Minecraft 啟動器，圖中以四種 Catppuccin 主題展示主介面">
+  <img src="../../docs/screenshots/hero.png" width="100%" alt="Conic Launcher — 現代、跨平台的 Minecraft 啟動器，圖中以四種 Catppuccin 主題展示主介面">
   <p>
     <a href="https://github.com/conic-apps/launcher/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/conic-apps/launcher/build.yml?label=build&logo=github" alt="Build status"></a>
     <a href="https://github.com/conic-apps/launcher/releases"><img src="https://img.shields.io/github/v/release/conic-apps/launcher?include_prereleases&label=release" alt="Release"></a>
     <a href="../../LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
-    <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
+    <a href="https://discord.gg/xWKY5NMuf7"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   </p>
-  <p><strong>一款小快靈的 Minecraft 啟動器</strong><br>
-  多實例管理 · 模組與資源包市場 · 跨區域網路連線 · 多主題支援</p>
+  <p><strong>一款小快靈的 Minecraft 啟動器</strong></p>
   <p>
     🌐 <a href="../../README.md">English</a> · <a href="./README.zh_cn.md">简体中文</a> · <a href="./README.zh_tw.md"><strong>繁體中文</strong></a> · <a href="./README.ja_jp.md">日本語</a> · <a href="./README.ko_kr.md">한국어</a> · <a href="./README.de_de.md">Deutsch</a> · <a href="./README.fr_fr.md">Français</a> · <a href="./README.es_es.md">Español</a> · <a href="./README.pt_br.md">Português (Brasil)</a> · <a href="./README.ru_ru.md">Русский</a> · <a href="./README.tr_tr.md">Türkçe</a> · <a href="./README.pl_pl.md">Polski</a>
   </p>
@@ -17,9 +16,9 @@
 
 ## 這是什麼
 
-Conic Launcher 是一個現代的桌面版 Minecraft 啟動器：核心邏輯由 Rust 實現，介面基於 [Slint](https://slint.dev) 這一原生 UI 工具包建構。安裝包小、啟動快、資源佔用低，甚至有助於減少碳排放。
+Conic Launcher 是一款小快靈的桌面版 Minecraft 啟動器：核心邏輯由 Rust 實現，介面基於 [Slint](https://slint.dev) 這一原生 UI 工具包建構。安裝包小、啟動快、資源佔用低，甚至有助於減少碳排放。
 
-從建立實例、安裝載入器，到搜尋模組、邀請好友連線，再到啟動遊戲與統計遊戲時長——整個流程都可以在一個應用裡完成。
+從建立實例、安裝載入器，到搜尋模組、邀請好友連線，再到啟動遊戲與統計遊戲時長—整個流程都可以在一個應用裡完成。
 
 > 專案目前處於早期 Alpha 階段，功能與介面仍在快速迭代，歡迎試用並回饋問題。
 
@@ -59,7 +58,7 @@ https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
 自動掃描本機 Java，也可以自動下載合適的運行時；記憶體自動分配（含 32 位元 Java 上限保護）。啟動過程全程可視化：下載遊戲檔案、安裝載入器、補全依賴庫、等待行程啟動。
 
-進階玩家也沒有被遺忘——JVM 垃圾回收器、JVM 參數、遊戲參數、類別路徑、包裝命令、啟動前後執行命令均可自訂。
+進階玩家也沒有被遺忘—JVM 垃圾回收器、JVM 參數、遊戲參數、類別路徑、包裝命令、啟動前後執行命令均可自訂。
 
 https://github.com/user-attachments/assets/1a6943f9-4e35-4391-9984-799cf42ee49d
 
@@ -86,19 +85,21 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## 下載
 
-前往 [GitHub Releases](https://github.com/conic-apps/launcher/releases) 下載對應平台的安裝包：
+前往 [GitHub Releases](https://github.com/conic-apps/launcher/releases) 或[官方網站](https://conicmc.app)下載對應平台的安裝包：
 
 | 平台    | 架構                  | 格式                           |
 | ------- | --------------------- | ------------------------------ |
-| Windows | x64 · arm64           | MSI · NSIS 安裝器 · 便攜版 exe |
+| Windows | x64 · arm64           | MSI · 便攜版 exe               |
 | macOS   | Apple Silicon · Intel | DMG                            |
 | Linux   | x64 · arm64           | deb · rpm · AppImage           |
 
 應用內建自動更新，安裝後無需手動升級。
 
+> 獨立的 Windows `.exe` 雖是單一檔案，但它匯入了 `VCRUNTIME140.dll`：未安裝 Visual C++ Redistributable 的機器（裝有 Office 或 .NET 的機器通常已有）將無法啟動它。`.msi` 安裝的是同一個執行檔。
+
 ## 從原始碼建構
 
-請確保已安裝 [Rust 1.88+](https://rustup.rs/)；在 Linux 上，還需安裝[建構相依套件](../../AGENTS.md#linux-build-dependencies)。
+請確保已安裝 [Rust 1.88+](https://rustup.rs/)；在 Linux 上，還需安裝[建構相依套件](../../CONTRIBUTING.md#linux-build-dependencies)。
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -109,22 +110,13 @@ cargo build --release  # 建構正式版本
 
 ## 參與貢獻
 
-歡迎提交 [Issue](https://github.com/conic-apps/launcher/issues/new/choose) 與 Pull Request（請指向 `dev` 分支）。提交前請執行檢查：
-
-```bash
-cargo fmt --all -- --check
-cargo check
-cargo clippy --all-targets --release -- -D warnings
-cargo test
-```
+歡迎參與貢獻！請閱讀 [CONTRIBUTING.md](../../CONTRIBUTING.md) 了解如何開始、設定開發環境以及提交 Pull Request。
 
 ## 架構
 
-<div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="架構圖：Slint 介面直接連接按領域劃分的 Rust crates">
-</div>
+介面使用 [Slint](https://slint.dev) 建構，並直接連接各領域 crates—沒有 IPC 層。`app/` 存放二進位檔與 `.slint` 介面樹；每項能力各自位於獨立的 `crates/*` 工作區模組中，獨立演進、按需組合。
 
-介面使用 [Slint](https://slint.dev) 建構，並直接連接各領域 crates——沒有 IPC 層。`app/` 存放二進位檔與 `.slint` 介面樹；每項能力各自位於獨立的 `crates/*` 工作區模組中，獨立演進、按需組合。
+完整內容—儲存位置、應用分層、UI 分桶結構與 crate 一覽—請見 [ARCHITECTURE.md](../../ARCHITECTURE.md)。
 
 ## 授權條款
 

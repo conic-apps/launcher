@@ -4,10 +4,9 @@
     <a href="https://github.com/conic-apps/launcher/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/conic-apps/launcher/build.yml?label=build&logo=github" alt="Build status"></a>
     <a href="https://github.com/conic-apps/launcher/releases"><img src="https://img.shields.io/github/v/release/conic-apps/launcher?include_prereleases&label=release" alt="Release"></a>
     <a href="../../LICENSE"><img src="https://img.shields.io/github/license/conic-apps/launcher?label=license" alt="License"></a>
-    <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-89b4fa" alt="Windows · macOS · Linux">
+    <a href="https://discord.gg/xWKY5NMuf7"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   </p>
-  <p><strong>Un lanzador de Minecraft pequeño, rápido y ágil</strong><br>
-  Gestión de múltiples instancias · Marketplace de mods y paquetes de recursos · Multijugador cross-LAN · Soporte multi-tema</p>
+  <p><strong>Un lanzador de Minecraft pequeño, rápido y ágil</strong></p>
   <p>
     🌐 <a href="../../README.md">English</a> · <a href="./README.zh_cn.md">简体中文</a> · <a href="./README.zh_tw.md">繁體中文</a> · <a href="./README.ja_jp.md">日本語</a> · <a href="./README.ko_kr.md">한국어</a> · <a href="./README.de_de.md">Deutsch</a> · <a href="./README.fr_fr.md">Français</a> · <a href="./README.es_es.md"><strong>Español</strong></a> · <a href="./README.pt_br.md">Português (Brasil)</a> · <a href="./README.ru_ru.md">Русский</a> · <a href="./README.tr_tr.md">Türkçe</a> · <a href="./README.pl_pl.md">Polski</a>
   </p>
@@ -17,7 +16,7 @@
 
 ## Qué es esto
 
-Conic Launcher es un lanzador de Minecraft moderno para escritorio: la lógica principal está implementada en Rust y la interfaz está construida con [Slint](https://slint.dev), un toolkit de UI nativo. Tiene una huella de instalación pequeña, inicio rápido y bajo consumo de recursos, incluso ayudando a reducir las emisiones de carbono.
+Conic Launcher es un lanzador de Minecraft pequeño, rápido y ágil para escritorio: la lógica principal está implementada en Rust y la interfaz está construida con [Slint](https://slint.dev), un toolkit de UI nativo. Tiene una huella de instalación pequeña, inicio rápido y bajo consumo de recursos, incluso ayudando a reducir las emisiones de carbono.
 
 Desde crear instancias e instaladores, hasta buscar mods e invitar a amigos para jugar juntos, lanzar el juego y rastrear el tiempo de juego — todo el flujo de trabajo se puede completar en una sola aplicación.
 
@@ -86,19 +85,21 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## Descarga
 
-Descarga el instalador para tu plataforma desde [GitHub Releases](https://github.com/conic-apps/launcher/releases):
+Descarga el instalador para tu plataforma desde [GitHub Releases](https://github.com/conic-apps/launcher/releases) o el [sitio web oficial](https://conicmc.app):
 
 | Plataforma | Arquitectura          | Formatos                             |
 | ---------- | --------------------- | ------------------------------------ |
-| Windows    | x64 · arm64           | MSI · instalador NSIS · exe portátil |
+| Windows    | x64 · arm64           | MSI · exe portátil                   |
 | macOS      | Apple Silicon · Intel | DMG                                  |
 | Linux      | x64 · arm64           | deb · rpm · AppImage                 |
 
 La aplicación incluye actualizaciones automáticas — no se necesitan actualizaciones manuales después de la instalación.
 
+> El `.exe` independiente de Windows es un solo archivo, pero importa `VCRUNTIME140.dll`: una máquina sin el Visual C++ Redistributable (la mayoría con Office o .NET ya lo tienen) no podrá iniciarlo. El `.msi` instala el mismo ejecutable.
+
 ## Compilar desde el código fuente
 
-Asegúrate de tener [Rust 1.88+](https://rustup.rs/) instalado; en Linux, instala también las [dependencias de compilación](../../AGENTS.md#linux-build-dependencies).
+Asegúrate de tener [Rust 1.88+](https://rustup.rs/) instalado; en Linux, instala también las [dependencias de compilación](../../CONTRIBUTING.md#linux-build-dependencies).
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -109,22 +110,13 @@ cargo build --release  # Build de producción
 
 ## Contribuir
 
-Los Issues y Pull Requests (dirigidos a la rama `dev`) son bienvenidos. Antes de enviar, por favor ejecuta:
-
-```bash
-cargo fmt --all -- --check
-cargo check
-cargo clippy --all-targets --release -- -D warnings
-cargo test
-```
+¡Las contribuciones son bienvenidas! Lee [CONTRIBUTING.md](../../CONTRIBUTING.md) para obtener pautas sobre cómo empezar, configurar tu entorno de desarrollo y enviar un pull request.
 
 ## Arquitectura
 
-<div align="center">
-  <img src="../../docs/screenshots/architecture.png" width="100%" alt="Diagrama de arquitectura: la interfaz Slint conectada directamente a los crates Rust separados por dominio">
-</div>
-
 La interfaz está construida con [Slint](https://slint.dev) y conectada directamente a los crates de dominio — no hay capa IPC. `app/` contiene el binario y el árbol `.slint`; cada capacidad reside en su propio módulo `crates/*` del workspace, por lo que evolucionan de forma independiente y se combinan según sea necesario.
+
+Para ver el panorama completo — ubicaciones de almacenamiento, capas de la app, la organización de la UI y el mapa de crates — consulta [ARCHITECTURE.md](../../ARCHITECTURE.md).
 
 ## Licencia
 
