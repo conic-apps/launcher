@@ -1,0 +1,30 @@
+[package]
+name = "update"
+description = "Launcher self-update: update manifest, signature verification, download and apply"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+shared.workspace = true
+storage.workspace = true
+
+flate2.workspace = true
+log.workspace = true
+minisign-verify.workspace = true
+reqwest.workspace = true
+semver.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tar.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+url.workspace = true
+
+[dev-dependencies]
+# Signing side of the round-trip test: proves the format the release pipeline
+# writes is exactly what `minisign-verify` (the app's side) accepts when
+# streaming.
+minisign = "0.10"
