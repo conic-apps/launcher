@@ -110,7 +110,6 @@ export component InstanceSettings inherits Rectangle {
                     minecraft-version: InstanceSettingsState.minecraft-version;
                     has-background: InstanceSettingsState.has-background;
                     card-background: InstanceSettingsState.background;
-                    backdrop: Theme.base;
                     name-clicked => { InstanceSettingsState.name-editing = true; }
                     name-edited => { InstanceSettingsState.changed(); }
                 }

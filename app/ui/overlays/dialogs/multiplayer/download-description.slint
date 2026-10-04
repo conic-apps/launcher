@@ -6,17 +6,9 @@ import { Theme } from "../../../theme.slint";
 import { Button } from "../../../components/controls/button.slint";
 import { MultiplayerState } from "../../../globals/multiplayer.slint";
 
-// The "download the Conic Nexus extension" screen: the title, the three
-// paragraphs and the Cancel / Start download pair.
-//
-// The title's 16px and the buttons' 16px do not stack, so the gap before the
-// buttons is 16px — the spacers below spell that out.
+// The "download the Conic Nexus extension" screen.
 export component MultiplayerDownloadDescription inherits VerticalLayout {
     width: 100%;
-    // The 16px title gap and the 16px button gap are both 16px, so one `spacing`
-    // carries the two. The 8px gaps are a different value and are kept as
-    // spacers.
-    spacing: 16px;
     alignment: start;
 
     Text {
@@ -27,6 +19,11 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
         color: Theme.default-text-color.transparentize(0.1);
     }
 
+    Rectangle {
+        height: 8px;
+        background: transparent;
+    }
+
     Text {
         text: @tr("Multiplayer" => "The Conic Nexus extension is built on EasyTier and implements the Scaffolding protocol, so it can play together with many other launchers, HMCL included.");
         font-size: 14px;
@@ -35,7 +32,10 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
         color: Theme.default-text-color.transparentize(0.1);
     }
 
-    Rectangle { height: 8px; background: transparent; }
+    Rectangle {
+        height: 8px;
+        background: transparent;
+    }
 
     Text {
         text: @tr("Multiplayer" => "Conic Nexus only uses P2P connections. Once the room is up, its members connect to each other directly; no third-party server relays your traffic. How well it works depends on the network conditions of everyone taking part.");
@@ -45,7 +45,10 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
         color: Theme.default-text-color.transparentize(0.1);
     }
 
-    Rectangle { height: 8px; background: transparent; }
+    Rectangle {
+        height: 8px;
+        background: transparent;
+    }
 
     // The paragraph is measured by its wrap width rather than by a nested
     // layout: a `Text` one layout level away from the column that owns its width
@@ -72,8 +75,12 @@ export component MultiplayerDownloadDescription inherits VerticalLayout {
         }
     }
 
+    Rectangle {
+        height: 8px;
+        background: transparent;
+    }
+
     // A bare row of two buttons with a 12px gap.
-    // The default `stretch`, not `alignment: start` — see `overlays/dialogs/create-instance/create-instance.slint`.
     HorizontalLayout {
         spacing: 12px;
 

@@ -367,8 +367,28 @@ pub fn get_background_path(id: &str) -> PathBuf {
 
 /// Copies `path` over the instance's background image.
 pub async fn add_background_image(path: &std::path::Path, id: &str) -> Result<()> {
-    tokio::fs::copy(path, get_background_path(id)).await?;
+    let dest = get_background_path(id);
+    tokio::fs::copy(path, &dest).await?;
+    stamp_now(&dest);
     Ok(())
+}
+
+/// Sets `path`'s modified time to now.
+///
+/// `fs::copy` carries the *source* file's timestamp over on macOS, so replacing
+/// the background with an image that shares its mtime leaves the file looking
+/// unchanged — and the background loader tells a replacement from a re-read by
+/// that timestamp, so the new picture would not appear until a restart. Stamping
+/// now makes every replacement a distinct revision.
+fn stamp_now(path: &std::path::Path) {
+    if let Err(error) = std::fs::File::options()
+        .write(true)
+        .open(path)
+        .and_then(|file| file.set_modified(std::time::SystemTime::now()))
+    {
+        // Not fatal: the picture is in place, only its freshness cannot be told.
+        log::debug!("could not stamp '{}': {error}", path.display());
+    }
 }
 
 /// Removes an instance's background image.

@@ -6,9 +6,490 @@ import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
 import { Dropdown } from "../../globals/dropdown.slint";
 import { FocusManager } from "../../globals/focus.slint";
-import { GameState, GameIntro, GameTime } from "../../globals/game.slint";
+import {
+    GameRow,
+    GameState,
+    GameIntro,
+    GameTime,
+} from "../../globals/game.slint";
 import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 import { InstancesListToolBar } from "instances-list-tool-bar.slint";
+
+// One instance card of the list: the two stacked rounded cards (an outer card
+// carrying the state colour, and the content card offset to the right) with the
+// loader tag and the last-played line. `InstancesListContent` computes the
+// resting x from its rail; the component owns the 20px nudge the current card
+// carries.
+component InstanceListCard inherits Rectangle {
+    in property <GameRow> item;
+    in property <length> base-x: 0px;
+    /// The loader tag's colour, from `InstanceListContent.accent`.
+    in property <color> accent;
+    callback clicked();
+
+    // The current card is pulled 20px further left, over 200ms.
+    private property <length> current-shift: root.item.current ? -20px : 0px;
+    animate current-shift {
+        duration: 200ms;
+        easing: ease;
+    }
+
+    x: root.base-x + self.current-shift;
+    y: 2px;
+    width: 480px;
+    height: 56px;
+    // The outer card is a single path: an 8px rounded rectangle with the content
+    // card's 6px rounded rectangle punched out. The two subpaths wind in
+    // opposite directions, so the default nonzero fill rule leaves a hole: the
+    // state colour paints only the exposed left strip and thin frame, and the
+    // area the content card covers stays transparent. (Slint 1.18's renderer
+    // ignores `fill-rule: evenodd` here, hence the reversed inner winding.) The
+    // geometry has to match the content card below — 8px/6px radii, 16px left
+    // and 3px right / 1px top and bottom insets.
+    background: transparent;
+    transform-origin: { x: self.width / 2, y: self.height / 2 };
+    transform-scale-x: card-touch.pressed && !root.item.current ? 0.99 : root.item.current ? 1.03 : 1.0;
+    transform-scale-y: card-touch.pressed && !root.item.current ? 0.99 : root.item.current ? 1.03 : 1.0;
+    animate transform-scale-x { duration: 100ms; }
+    animate transform-scale-y { duration: 100ms; }
+
+    Path {
+        width: 100%;
+        height: 100%;
+        fill: root.item.current
+            ? Theme.lavender.with-alpha(0.85)
+            : Theme.surface-1.with-alpha(0.85);
+
+        // The outer card, clockwise.
+        MoveTo { x: 8; y: 0; }
+        LineTo { x: 472; y: 0; }
+        ArcTo { radius-x: 8; radius-y: 8; x: 480; y: 8; sweep: true; }
+        LineTo { x: 480; y: 48; }
+        ArcTo { radius-x: 8; radius-y: 8; x: 472; y: 56; sweep: true; }
+        LineTo { x: 8; y: 56; }
+        ArcTo { radius-x: 8; radius-y: 8; x: 0; y: 48; sweep: true; }
+        LineTo { x: 0; y: 8; }
+        ArcTo { radius-x: 8; radius-y: 8; x: 8; y: 0; sweep: true; }
+        Close { }
+
+        // The content card, counter-clockwise, so the nonzero fill rule leaves
+        // it as a hole.
+        MoveTo { x: 22; y: 1; }
+        ArcTo { radius-x: 6; radius-y: 6; x: 16; y: 7; sweep: false; }
+        LineTo { x: 16; y: 49; }
+        ArcTo { radius-x: 6; radius-y: 6; x: 22; y: 55; sweep: false; }
+        LineTo { x: 471; y: 55; }
+        ArcTo { radius-x: 6; radius-y: 6; x: 477; y: 49; sweep: false; }
+        LineTo { x: 477; y: 7; }
+        ArcTo { radius-x: 6; radius-y: 6; x: 471; y: 1; sweep: false; }
+        LineTo { x: 22; y: 1; }
+        Close { }
+    }
+
+    // The content card: a second rounded card offset to the right. With the
+    // outer's overlap punched out it keeps its translucency — it shows the
+    // backdrop, not the state colour. It clips so an instance background image
+    // stays inside its rounded corners.
+    Rectangle {
+        x: 16px;
+        y: 1px;
+        width: parent.width - 16px - 3px;
+        height: parent.height - 2px;
+        border-radius: 6px;
+        clip: true;
+        background: card-touch.pressed && !root.item.current ? Theme.surface-0
+            : card-touch.has-hover && !root.item.current ? Theme.surface-0.with-alpha(0.8)
+            : Theme.surface-0.with-alpha(0.4);
+
+        // The instance's custom background, pinned to the content card's right.
+        // It starts 100px in, which keeps the 16px colour strip and the name
+        // clear, and its left edge is already faded to transparent in the pixels
+        // (`load_background`) so it dissolves into the card instead of ending in
+        // a flat colour band.
+        if root.item.has-background && root.item.background.width > 0 : Image {
+            x: 100px;
+            y: 0;
+            width: parent.width - 100px;
+            height: 100%;
+            source: root.item.background;
+            image-fit: cover;
+        }
+    }
+
+    // The 8px/16px padding starts *after* the 16px colour strip, so the card's
+    // text sits 32px in.
+    Text {
+        text: root.item.name;
+        font-size: 15.2px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.default-text-color.transparentize(0.1);
+        x: 16px + 16px;
+        y: 8px;
+    }
+
+    details := HorizontalLayout {
+        x: 16px + 16px;
+        y: 27px;
+        width: parent.width - 48px;
+        height: 14px;
+        spacing: 8px;
+        alignment: start;
+        cross-axis-alignment: center;
+
+        tag := Rectangle {
+            width: tag-text.preferred-width + 12px;
+            height: 13px;
+            border-radius: 100px;
+            background: root.accent;
+            vertical-stretch: 0;
+
+            tag-text := Text {
+                text: root.item.loader;
+                font-size: 10px;
+                font-weight: 700;
+                color: Theme.text-inverse;
+            }
+        }
+
+        HorizontalLayout {
+            // No `spacing`: the only separator between the label and the value is
+            // the single collapsed whitespace character, which is the label's own
+            // trailing string.
+            cross-axis-alignment: center;
+
+            Text {
+                text: @tr("Last played: ");
+                font-size: 10px;
+                font-weight: 300;
+                color: Theme.default-text-color.with-alpha(0.509);
+            }
+
+            Text {
+                text: GameTime.last-played(
+                    root.item.last-played-kind,
+                    root.item.last-played-hours,
+                    root.item.last-played-month,
+                    root.item.last-played-day,
+                    root.item.last-played-year,
+                );
+                font-size: 10px;
+                font-weight: 500;
+                color: Theme.default-text-color.with-alpha(0.9);
+            }
+        }
+    }
+
+    card-touch := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A group header of the list: the accent bar, the collapse chevron, the title
+// and the count badge. `InstancesListContent` computes the resting x from its
+// rail; the component is otherwise self-contained.
+component InstanceGroupRow inherits Rectangle {
+    in property <GameRow> item;
+    in property <length> base-x: 0px;
+    /// The group's key colour, from `InstanceListContent.accent`.
+    in property <color> accent;
+    callback clicked();
+
+    x: root.base-x;
+    y: 2px;
+    width: 480px;
+    height: 40px;
+    // The same layered treatment as `InstanceListCard`: an 8px rounded outer path
+    // with the 6px content card punched out (the inner subpath wound the other
+    // way under the default nonzero fill rule), so the group colour shows as a
+    // left strip and frame. The geometry matches the content card below — 20px
+    // left, 3px right, 1px top and bottom.
+    background: transparent;
+
+    Path {
+        width: 100%;
+        height: 100%;
+        fill: root.accent.with-alpha(0.8);
+        commands: "M 8 0 L 472 0 A 8 8 0 0 1 480 8 L 480 32 A 8 8 0 0 1 472 40 L 8 40 A 8 8 0 0 1 0 32 L 0 8 A 8 8 0 0 1 8 0 Z M 26 1 A 6 6 0 0 0 20 7 L 20 33 A 6 6 0 0 0 26 39 L 471 39 A 6 6 0 0 0 477 33 L 477 7 A 6 6 0 0 0 471 1 L 26 1 Z";
+    }
+
+    // The content card, offset past the 20px colour strip.
+    Rectangle {
+        x: 20px;
+        y: 1px;
+        width: parent.width - 20px - 3px;
+        height: parent.height - 2px;
+        border-radius: 6px;
+        background: group-touch.has-hover
+            ? Theme.surface-0.with-alpha(0.8)
+            : Theme.surface-0.with-alpha(0.4);
+        animate background { duration: 200ms; }
+    }
+
+    // 4px inside the 20px colour strip.
+    AppIcon {
+        name: "chevron-forward";
+        size: 14px;
+        icon-color: Theme.text-inverse;
+        x: 4px;
+        transform-origin: { x: self.width / 2, y: self.height / 2 };
+        transform-rotation: root.item.collapsed ? 0deg : 90deg;
+        animate transform-rotation {
+            duration: 200ms;
+            easing: ease;
+        }
+    }
+
+    // The 8px/16px padding starts *after* the 20px colour strip, so the title
+    // sits 36px in.
+    HorizontalLayout {
+        x: 20px + 16px;
+        height: 14px;
+        spacing: 8px;
+        alignment: start;
+        cross-axis-alignment: center;
+
+        Text {
+            text: root.item.title-kind == "favorites" ? @tr("Favorites")
+                : root.item.title-kind == "all" ? @tr("All instances")
+                : root.item.title-literal;
+            font-size: 14px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color.transparentize(0.1);
+        }
+
+        count-badge := Rectangle {
+            width: count-text.preferred-width + 12px;
+            height: 13px;
+            border-radius: 100px;
+            background: root.accent;
+
+            count-text := Text {
+                text: "\{root.item.count}";
+                font-size: 10px;
+                font-weight: 500;
+                color: Theme.text-inverse;
+            }
+        }
+    }
+
+    group-touch := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// The scrolling content: every row laid out absolutely (Rust writes the
+// `row-y`/`height` in the model) and animated along the rail. It is pure layout
+// and rendering — `InstancesList`'s wrapping `TouchArea` owns the wheel and
+// trackpad input, and the row clicks are reported back as callbacks so the list
+// keeps the collapse lock and the centring a selection needs.
+//
+// The rail
+// ========
+// Cards glide along a parabola: `rail-x` pulls a row `rail-offset` to the left
+// at the vertical centre of the viewport and eases it part-way back towards its
+// resting x as it nears the top and bottom. It is a pure function of the row's
+// *current* y, so while a row animates to a new slot (collapse/expand, sort,
+// grouping) its x follows the same curve that the wheel draws.
+component InstanceListContent inherits Rectangle {
+    /// The list's smoothed scroll offset.
+    in property <length> scroll-y: 0px;
+    /// The viewport height, which the rail and the intro stagger are measured
+    /// against (this element's own height is the whole content).
+    in property <length> viewport-height: 0px;
+    /// A group header was clicked, with its key.
+    callback group-clicked(string);
+    /// An instance card was clicked, with its id.
+    callback card-clicked(string);
+
+    // The card content starts 200px in; the group box rests 40px to the left of
+    // that, at 160px.
+    private property <length> card-left: 200px;
+    private property <length> group-left: 160px;
+    // `parallaxX`: `-maxOffset * (1 - t²)` with `maxOffset = 160`.
+    private property <length> rail-offset: 160px;
+    // Half the group row's 42px height — the rail is sampled at the row
+    // *wrapper*'s centre.
+    private property <length> group-half-height: 21px;
+
+    // `InstancesList` starts the list 50ms in and its cards 115ms after that;
+    // each card is staggered 30ms further along the row pitch the stagger counts
+    // in, i.e. one card row (`CARD_HEIGHT` in `GameController::build_rows`).
+    private property <duration> intro-card-delay: 165ms;
+    private property <duration> intro-stagger: 30ms;
+    private property <length> intro-row-pitch: 58px;
+    /// How many steps the entrance has, one per card row the viewport holds. The
+    /// entrance staggers every card the viewport can see, so a window that fits
+    /// more rows has to spread over more steps — otherwise the cards past the
+    /// cap would all share the last one.
+    private property <float> intro-steps: max(1, root.viewport-height / root.intro-row-pitch);
+    /// Where the list sat when the entrance started. The stagger counts from the
+    /// first row *on screen* (the list opens centred on the current instance),
+    /// not from the first row of the list — and it is captured rather than read
+    /// live so that scrolling mid-entrance cannot reshuffle the order.
+    private property <length> intro-top: 0px;
+
+    /// Called by `InstancesList` once the list has settled on the current
+    /// instance and just before it plays the entrance. Everything the entrance
+    /// is ordered against — the layout, the offset — is only final at that point.
+    public function begin-intro() {
+        self.intro-top = root.scroll-y;
+    }
+
+    /// The rail.
+    /// `viewport-center-y` is the row's centre as it appears on screen, i.e. its
+    /// content position minus the scroll offset — callers subtract `scroll-y`,
+    /// so the sign of the scroll can only be got wrong in one place.
+    pure function rail-x(viewport-center-y: length) -> length {
+        if root.viewport-height <= 0px {
+            return 0px;
+        }
+        return -root.rail-offset * (1 - squared(clamp(
+            (viewport-center-y - root.viewport-height / 2) / root.viewport-height,
+            -1,
+            1,
+        )));
+    }
+
+    pure function squared(value: float) -> float {
+        return value * value;
+    }
+
+    pure function accent(key: string) -> color {
+        if key == "starred" {
+            return Theme.yellow;
+        }
+        if key == "quilt" {
+            return Theme.mauve;
+        }
+        if key == "fabric" {
+            return Theme.yellow;
+        }
+        if key == "neoforge" {
+            return Theme.peach;
+        }
+        if key == "forge" {
+            return Theme.blue;
+        }
+        if key == "vanilla" {
+            return Theme.green;
+        }
+        return Theme.lavender;
+    }
+
+    x: 0;
+    y: -root.scroll-y;
+    width: 100%;
+    height: GameState.list-content-height;
+    background: transparent;
+
+    // Row heights are laid out in Rust (`row-y`/`height`), so the view positions
+    // the rows absolutely: that is what lets a row animate to its new slot
+    // without the model being rebuilt.
+    for row[i] in GameState.rows: row-box := Rectangle {
+        y: row.row-y;
+        width: parent.width;
+        height: row.height;
+        background: transparent;
+
+        // The intro slides cards in from +40px along the rail, staggered by
+        // 0.03s; a row that appears later (search, sort, grouping, starring)
+        // slides in from +24px instead. Both are offsets on top of the rail, so
+        // the card enters *along* the curve rather than merely fading.
+        //
+        // The stagger counts the card rows between the top of the window and this
+        // one, which is the order the entrance has to follow. It is deliberately
+        // not the `for` index: the index runs over the whole model, so it both
+        // saturates (a list opened on its last instance gave every row on screen
+        // the same step, and they all arrived in the same frame) and, after a
+        // sort change, no longer matches the visual order at all — `sync_rows`
+        // keeps the model's order and moves the rows by their `row-y`.
+        private property <float> intro-rank: clamp(
+            (row.row-y - root.intro-top) / root.intro-row-pitch,
+            0,
+            root.intro-steps,
+        );
+        private property <duration> intro-delay: root.intro-card-delay
+            + self.intro-rank * root.intro-stagger;
+        private property <length> intro-dx: GameIntro.played ? 0px : 40px;
+        private property <length> appear-dx: row.appear ? 0px : 24px;
+        private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
+        private property <float> appear-alpha: row.appear ? 1.0 : 0.0;
+        /// The collapse fade: a card of a collapsed group goes to 0 where it
+        /// stands, while the rows below close the gap.
+        private property <float> row-alpha: row.opacity;
+
+        x: self.intro-dx + self.appear-dx;
+        // `opacity` itself must stay unanimated: it is the product of these
+        // three, and an `animate` here would chase the moving product with a
+        // second easing, so the row's fade would lag behind its slide instead of
+        // running with it.
+        opacity: self.intro-alpha * self.appear-alpha * self.row-alpha;
+        // A fading row (a collapsed group's cards) must not take clicks from what
+        // it is covering.
+        visible: self.opacity > 0.01;
+
+        animate intro-dx {
+            duration: 300ms;
+            delay: self.intro-delay;
+            easing: ease-out-quart;
+        }
+        animate appear-dx {
+            duration: 300ms;
+            easing: ease-out-quint;
+        }
+        animate intro-alpha {
+            duration: 300ms;
+            delay: self.intro-delay;
+            easing: ease-out-quart;
+        }
+        animate appear-alpha {
+            duration: 300ms;
+            easing: ease-out-quint;
+        }
+        animate row-alpha {
+            duration: 300ms;
+            easing: cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        // The FLIP: when the slot changes the row glides there, and because its
+        // x is a pure function of its y the row travels along the rail at the
+        // same eased progress. A reorder or a re-open travels on the FLIP curve
+        // (400ms); a group collapse on the cubic curve (300ms).
+        animate y {
+            duration: row.flip ? 400ms : 300ms;
+            easing: row.flip
+                ? ease-out-quint
+                : cubic-bezier(0.33, 1, 0.68, 1);
+        }
+
+        if row.kind == "group": InstanceGroupRow {
+            base-x: root.group-left + root.rail-x(
+                row-box.y + root.group-half-height - root.scroll-y);
+            item: row;
+            accent: root.accent(row.key);
+            clicked => {
+                root.group-clicked(row.key);
+            }
+        }
+
+        if row.kind == "instance": InstanceListCard {
+            base-x: root.card-left + root.rail-x(
+                row-box.y + row.height / 2 - root.scroll-y);
+            item: row;
+            accent: root.accent(row.loader-key);
+            clicked => {
+                root.card-clicked(row.key);
+            }
+        }
+    }
+}
 
 // Grouped instance list.
 //
@@ -33,28 +514,11 @@ import { InstancesListToolBar } from "instances-list-tool-bar.slint";
 // are applied as they arrive (see `globals/scroll.slint`), because macOS
 // derives that momentum from the velocity the gesture ended at: easing it would
 // stall the list on release and ramp back up.
-//
-// The rail
-// ========
-// Cards glide along a parabola: `rail-x` pulls a row `rail-offset` to the left
-// at the vertical centre of the viewport and eases it part-way back towards its
-// resting x as it nears the top and bottom. It is a pure function of the row's
-// *current* y, so while a row animates to a new slot (collapse/expand, sort,
-// grouping) its x follows the same curve that the wheel draws.
 export component InstancesList inherits Rectangle {
     width: 680px;
     height: 100%;
     background: transparent;
 
-    // The card content starts 200px in; the group box rests 40px to the left of
-    // that, at 160px.
-    private property <length> card-left: 200px;
-    private property <length> group-left: 160px;
-    // `parallaxX`: `-maxOffset * (1 - t²)` with `maxOffset = 160`.
-    private property <length> rail-offset: 160px;
-    // Half the group row's 42px height — the rail is sampled at the row
-    // *wrapper*'s centre.
-    private property <length> group-half-height: 21px;
     // The scrollbar is pinned against the *window*: 8px from its right edge,
     // 6px wide, spanning from 126px below the title bar (below the toolbar) to
     // 60px above the bottom.
@@ -174,25 +638,6 @@ export component InstancesList inherits Rectangle {
         }
     }
 
-    /// The rail.
-    /// `viewport-center-y` is the row's centre as it appears on screen, i.e. its
-    /// content position minus the scroll offset — callers subtract `scroll-y`, so
-    /// the sign of the scroll can only be got wrong in one place.
-    pure function rail-x(viewport-center-y: length) -> length {
-        if root.height <= 0px {
-            return 0px;
-        }
-        return -root.rail-offset * (1 - squared(clamp(
-            (viewport-center-y - root.height / 2) / root.height,
-            -1,
-            1,
-        )));
-    }
-
-    pure function squared(value: float) -> float {
-        return value * value;
-    }
-
     /// Centres the current instance. `smooth` glides there along the rail and is
     /// used after every card selection; `!smooth` moves the offset with the
     /// target and is used to open on the selected instance.
@@ -212,27 +657,12 @@ export component InstancesList inherits Rectangle {
     // `GameView` plays the list 0.05s after the footer and the summary, and the
     // list's own intro starts the cards 0.115s in.
     private property <duration> intro-list-delay: 50ms;
-    private property <duration> intro-card-delay: 165ms;
-    private property <duration> intro-stagger: 30ms;
-    /// The row pitch the stagger counts in: one card row, i.e. `CARD_HEIGHT` in
-    /// `GameController::build_rows`, so neighbouring cards are one step apart.
-    private property <length> intro-row-pitch: 58px;
-    /// How many steps the entrance has, one per card row the viewport holds.
-    /// The entrance staggers every card the viewport can see, so a window that
-    /// fits more rows has to spread over more steps — otherwise the cards past
-    /// the cap would all share the last one.
-    private property <float> intro-steps: max(1, root.height / root.intro-row-pitch);
-    /// Where the list sat when the entrance started. The stagger counts from the
-    /// first row *on screen* (the list opens centred on the current instance),
-    /// not from the first row of the list — and it is captured rather than read
-    /// live so that scrolling mid-entrance cannot reshuffle the order.
-    private property <length> intro-top: 0px;
 
     /// Called by `GameView` once the list has settled on the current instance
     /// and just before it plays the entrance. Everything the entrance is ordered
     /// against — the layout, the offset — is only final at that point.
     public function begin-intro() {
-        root.intro-top = root.scroll-y;
+        content.begin-intro();
     }
 
     // The toolbar keeps its own size and is positioned relative to the list's
@@ -290,285 +720,23 @@ export component InstancesList inherits Rectangle {
                 reject
             }
 
-            content := Rectangle {
-                x: 0;
-                y: -root.scroll-y;
-                width: parent.width;
-                height: GameState.list-content-height;
-                background: transparent;
-
-                // Row heights are laid out in Rust (`row-y`/`height`), so the view
-                // positions the rows absolutely: that is what lets a row animate to
-                // its new slot without the model being rebuilt.
-                for row[i] in GameState.rows : row-box := Rectangle {
-                    y: row.row-y;
-                    width: root.width;
-                    height: row.height;
-                    background: transparent;
-
-                    // The intro slides cards in from +40px along the rail,
-                    // staggered by 0.03s; a row that appears later (search, sort,
-                    // grouping, starring) slides in from +24px instead. Both are
-                    // offsets on top of the rail, so the card enters *along* the
-                    // curve rather than merely fading.
-                    //
-                    // The stagger counts the card rows between the top of the
-                    // window and this one, which is the order the entrance has to
-                    // follow. It is deliberately not the `for` index: the index
-                    // runs over the whole model, so it both saturates (a list
-                    // opened on its last instance gave every row on screen the
-                    // same step, and they all arrived in the same frame) and,
-                    // after a sort change, no longer matches the visual order at
-                    // all — `sync_rows` keeps the model's order and moves the rows
-                    // by their `row-y`.
-                    private property <float> intro-rank: clamp(
-                        (row.row-y - root.intro-top) / root.intro-row-pitch,
-                        0,
-                        root.intro-steps,
-                    );
-                    private property <duration> intro-delay: root.intro-card-delay
-                        + self.intro-rank * root.intro-stagger;
-                    private property <length> intro-dx: GameIntro.played ? 0px : 40px;
-                    private property <length> appear-dx: row.appear ? 0px : 24px;
-                    private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
-                    private property <float> appear-alpha: row.appear ? 1.0 : 0.0;
-                    /// The collapse fade: a card of a collapsed group goes to 0
-                    /// where it stands, while the rows below close the gap.
-                    private property <float> row-alpha: row.opacity;
-
-                    x: self.intro-dx + self.appear-dx;
-                    // `opacity` itself must stay unanimated: it is the product of
-                    // these three, and an `animate` here would chase the moving
-                    // product with a second easing, so the row's fade would lag
-                    // behind its slide instead of running with it.
-                    opacity: self.intro-alpha * self.appear-alpha * self.row-alpha;
-                    // A fading row (a collapsed group's cards) must not take clicks
-                    // from what it is covering.
-                    visible: self.opacity > 0.01;
-
-                    animate intro-dx {
-                        duration: 300ms;
-                        delay: self.intro-delay;
-                        easing: ease-out-quart;
+            content := InstanceListContent {
+                scroll-y: root.scroll-y;
+                viewport-height: root.height;
+                group-clicked(key) => {
+                    // `toggle-locked`: a second click while the rail transition
+                    // is still running would collapse cards that are mid-flight.
+                    if !root.toggle-locked {
+                        root.settling = true;
+                        root.toggle-locked = true;
+                        GameState.toggle-group(key);
                     }
-                    animate appear-dx { duration: 300ms; easing: ease-out-quint; }
-                    animate intro-alpha {
-                        duration: 300ms;
-                        delay: self.intro-delay;
-                        easing: ease-out-quart;
-                    }
-                    animate appear-alpha { duration: 300ms; easing: ease-out-quint; }
-                    animate row-alpha {
-                        duration: 300ms;
-                        easing: cubic-bezier(0.33, 1, 0.68, 1);
-                    }
-                    // The FLIP: when the slot changes the row glides there, and
-                    // because its x is a pure function of its y the row travels
-                    // along the rail at the same eased progress. A reorder or a
-                    // re-open travels on the FLIP curve (400ms); a group collapse
-                    // on the cubic curve (300ms).
-                    animate y {
-                        duration: row.flip ? 400ms : 300ms;
-                        easing: row.flip
-                            ? ease-out-quint
-                            : cubic-bezier(0.33, 1, 0.68, 1);
-                    }
-
-                    if row.kind == "group" : group := Rectangle {
-                        x: root.group-left + root.rail-x(
-                            row-box.y + root.group-half-height - root.scroll-y);
-                        y: 2px;
-                        width: 480px;
-                        height: 40px;
-                        border-width: 1px;
-                        border-color: root.accent(row.key).with-alpha(0.8);
-                        border-radius: 8px;
-                        background: group-touch.has-hover
-                            ? Theme.surface-0.with-alpha(0.8)
-                            : Theme.surface-0.with-alpha(0.4);
-                        animate background { duration: 200ms; }
-
-                        // Thick left border, 20px.
-                        Rectangle {
-                            x: 0;
-                            y: 0;
-                            width: 20px;
-                            height: parent.height;
-                            background: root.accent(row.key).with-alpha(0.8);
-                            border-top-left-radius: 8px;
-                            border-bottom-left-radius: 8px;
-                        }
-
-                        // 4px inside the 20px accent bar.
-                        AppIcon {
-                            name: "chevron-forward";
-                            size: 14px;
-                            icon-color: Theme.text-inverse;
-                            x: 4px;
-                            transform-origin: { x: self.width / 2, y: self.height / 2 };
-                            transform-rotation: row.collapsed ? 0deg : 90deg;
-                            animate transform-rotation { duration: 200ms; easing: ease; }
-                        }
-
-                        // The 8px/16px padding starts *after* the 20px accent bar,
-                        // so the title sits 36px in.
-                        HorizontalLayout {
-                            x: 20px + 16px;
-                            height: 14px;
-                            spacing: 8px;
-                            alignment: start;
-                            cross-axis-alignment: center;
-
-                            Text {
-                                text: row.title-kind == "favorites" ? @tr("Favorites")
-                                    : row.title-kind == "all" ? @tr("All instances")
-                                    : row.title-literal;
-                                font-size: 14px;
-                                font-weight: Theme.font-weight-normal;
-                                color: Theme.default-text-color.transparentize(0.1);
-                            }
-
-                            count-badge := Rectangle {
-                                width: count-text.preferred-width + 12px;
-                                height: 13px;
-                                border-radius: 100px;
-                                background: root.accent(row.key);
-
-                                count-text := Text {
-                                    text: "\{row.count}";
-                                    font-size: 10px;
-                                    font-weight: 500;
-                                    color: Theme.text-inverse;
-                                }
-                            }
-                        }
-
-                        group-touch := TouchArea {
-                            width: parent.width;
-                            height: parent.height;
-                            clicked => {
-                                // `toggleLocked`: a second click while the rail
-                                // transition is still running would collapse cards
-                                // that are mid-flight.
-                                if !root.toggle-locked {
-                                    root.settling = true;
-                                    root.toggle-locked = true;
-                                    GameState.toggle-group(row.key);
-                                }
-                            }
-                        }
-                    }
-
-                    if row.kind == "instance" : card := Rectangle {
-                        // The current card is pulled 20px further left, over
-                        // 200ms.
-                        private property <length> current-shift: row.current ? -20px : 0px;
-                        animate current-shift { duration: 200ms; easing: ease; }
-
-                        x: root.card-left + root.rail-x(
-                            row-box.y + row.height / 2 - root.scroll-y) + self.current-shift;
-                        y: 2px;
-                        width: 480px;
-                        height: 56px;
-                        border-radius: 8px;
-                        background: card-touch.pressed && !row.current ? Theme.surface-0
-                            : card-touch.has-hover && !row.current ? Theme.surface-0.with-alpha(0.8)
-                            : Theme.surface-0.with-alpha(0.4);
-                        border-width: 1px;
-                        border-color: Theme.surface-1.with-alpha(0.8);
-                        transform-origin: { x: self.width / 2, y: self.height / 2 };
-                        transform-scale-x: card-touch.pressed && !row.current ? 0.99 : row.current ? 1.03 : 1.0;
-                        transform-scale-y: card-touch.pressed && !row.current ? 0.99 : row.current ? 1.03 : 1.0;
-                        animate transform-scale-x { duration: 100ms; }
-                        animate transform-scale-y { duration: 100ms; }
-
-                        // Thick left border (16px), colored by state.
-                        Rectangle {
-                            x: 0;
-                            y: 0;
-                            width: 16px;
-                            height: parent.height;
-                            background: row.current
-                                ? Theme.lavender.with-alpha(0.8)
-                                : Theme.surface-1.with-alpha(0.8);
-                            border-top-left-radius: 8px;
-                            border-bottom-left-radius: 8px;
-                        }
-
-                        // The 8px/16px padding starts *after* the 16px accent bar,
-                        // so the card's text sits 32px in.
-                        Text {
-                            text: row.name;
-                            font-size: 15.2px;
-                            font-weight: Theme.font-weight-normal;
-                            color: Theme.default-text-color.transparentize(0.1);
-                            x: 16px + 16px;
-                            y: 8px;
-                        }
-
-                        details := HorizontalLayout {
-                            x: 16px + 16px;
-                            y: 27px;
-                            width: parent.width - 48px;
-                            height: 14px;
-                            spacing: 8px;
-                            alignment: start;
-                            cross-axis-alignment: center;
-
-                            tag := Rectangle {
-                                width: tag-text.preferred-width + 12px;
-                                height: 13px;
-                                border-radius: 100px;
-                                background: root.accent(row.loader-key);
-                                vertical-stretch: 0;
-
-                                tag-text := Text {
-                                    text: row.loader;
-                                    font-size: 10px;
-                                    font-weight: 700;
-                                    color: Theme.text-inverse;
-                                }
-                            }
-
-                            HorizontalLayout {
-                                // No `spacing`: the only separator between the
-                                // label and the value is the single collapsed
-                                // whitespace character, which is the label's own
-                                // trailing string.
-                                cross-axis-alignment: center;
-
-                                Text {
-                                    text: @tr("Last played: ");
-                                    font-size: 10px;
-                                    font-weight: 300;
-                                    color: Theme.default-text-color.with-alpha(0.509);
-                                }
-                                Text {
-                                    text: GameTime.last-played(
-                                        row.last-played-kind,
-                                        row.last-played-hours,
-                                        row.last-played-month,
-                                        row.last-played-day,
-                                        row.last-played-year,
-                                    );
-                                    font-size: 10px;
-                                    font-weight: 500;
-                                    color: Theme.default-text-color.with-alpha(0.9);
-                                }
-                            }
-                        }
-
-                        card-touch := TouchArea {
-                            width: parent.width;
-                            height: parent.height;
-                            clicked => {
-                                GameState.select-instance(row.key);
-                                // The selection is centred, even when the card was
-                                // already the current one.
-                                root.scroll-to-current(true);
-                            }
-                        }
-                    }
+                }
+                card-clicked(key) => {
+                    GameState.select-instance(key);
+                    // The selection is centred, even when the card was already
+                    // the current one.
+                    root.scroll-to-current(true);
                 }
             }
         }
@@ -577,7 +745,7 @@ export component InstancesList inherits Rectangle {
     // The placeholder fades and scales in over 350ms with
     // `cubic-bezier(0.34, 1.56, 0.64, 1)` (Slint's `ease-out-back`); the `if`
     // removes it directly, so there is no leave animation.
-    if GameState.show-placeholder : placeholder := Rectangle {
+    if GameState.show-placeholder: placeholder := Rectangle {
         x: root.width - 320px - self.width;
         y: root.height / 2 - self.height / 2;
         width: 380px;
@@ -588,7 +756,10 @@ export component InstancesList inherits Rectangle {
         transform-origin: { x: self.width / 2, y: self.height / 2 };
         transform-scale-x: 0.9 + self.enter * 0.1;
         transform-scale-y: 0.9 + self.enter * 0.1;
-        animate enter { duration: 350ms; easing: ease-out-back; }
+        animate enter {
+            duration: 350ms;
+            easing: ease-out-back;
+        }
 
         placeholder-layout := VerticalLayout {
             alignment: center;
@@ -605,7 +776,11 @@ export component InstancesList inherits Rectangle {
                 }
             }
 
-            Rectangle { width: parent.width; height: 12px; background: transparent; }
+            Rectangle {
+                width: parent.width;
+                height: 12px;
+                background: transparent;
+            }
 
             Text {
                 text: @tr("No matching instances");
@@ -616,7 +791,11 @@ export component InstancesList inherits Rectangle {
                 width: parent.width;
             }
 
-            Rectangle { width: parent.width; height: 8px; background: transparent; }
+            Rectangle {
+                width: parent.width;
+                height: 8px;
+                background: transparent;
+            }
 
             Text {
                 text: @tr("Consider creating a new instance");
@@ -649,8 +828,16 @@ export component InstancesList inherits Rectangle {
         opacity: self.intro-alpha;
         z: 500;
 
-        animate intro-dx { duration: 300ms; delay: root.intro-list-delay; easing: ease-out-quart; }
-        animate intro-alpha { duration: 300ms; delay: root.intro-list-delay; easing: ease-out-quart; }
+        animate intro-dx {
+            duration: 300ms;
+            delay: root.intro-list-delay;
+            easing: ease-out-quart;
+        }
+        animate intro-alpha {
+            duration: 300ms;
+            delay: root.intro-list-delay;
+            easing: ease-out-quart;
+        }
 
         private property <length> thumb-track: self.height - thumb.height;
         private property <length> track-height: self.height;
@@ -661,7 +848,7 @@ export component InstancesList inherits Rectangle {
             // At least 32px, or the track height scaled by the visible fraction.
             height: root.max-scroll > 0px
                 ? max(32px, parent.track-height * root.height
-                    / max(GameState.list-content-height, root.height))
+                / max(GameState.list-content-height, root.height))
                 : parent.track-height;
             y: parent.thumb-track > 0px
                 ? clamp(root.scroll-y / root.max-scroll, 0, 1) * parent.thumb-track
@@ -734,15 +921,5 @@ export component InstancesList inherits Rectangle {
             1,
         ) * root.max-scroll;
         root.scroll-y = root.target-y;
-    }
-
-    pure function accent(key: string) -> color {
-        if key == "starred" { return Theme.yellow; }
-        if key == "quilt" { return Theme.mauve; }
-        if key == "fabric" { return Theme.yellow; }
-        if key == "neoforge" { return Theme.peach; }
-        if key == "forge" { return Theme.blue; }
-        if key == "vanilla" { return Theme.green; }
-        return Theme.lavender;
     }
 }

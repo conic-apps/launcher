@@ -11,14 +11,14 @@ import { FocusManager } from "../../globals/focus.slint";
 //
 // Geometry:
 //
-//   the content box starts at  x = 16 (the left bar) + 16 (the title inset)
-//                        and   y =  1 (the 1px hairline)   +  8 (the top inset),
+//   the content box starts at  x = 16 (the colour strip) + 16 (the title inset)
+//                        and   y =  1 (the 1px frame)    +  8 (the top inset),
 //   so the title row sits at (32, 9) and the details 6px under it.
 //
-// The background image is a child of the card, so its `x`/`y` are measured from
-// the card's own corner. It starts at x = 116, clear of the 16px left bar, and
-// is inset 1px on the top, right and bottom — so its right edge lands 1px inside
-// the card and the 1px hairline the border rectangle draws stays visible.
+// The card is two stacked rounded cards — the lavender frame, and the inset
+// content card inside it. The background image is a child of the content card,
+// so it starts at the content card's own x = 100 (clear of the strip and the
+// title inset) and runs flush to its right edge.
 export component InstanceCard inherits Rectangle {
     /// The instance's name; two-way, because the card is where it is edited.
     in-out property <string> name: "";
@@ -44,10 +44,6 @@ export component InstanceCard inherits Rectangle {
     /// dialog's copy of the card always shows it; the settings view's hides it
     /// at the default.
     in property <bool> version-always: false;
-    /// The colour behind the card, which the background image's fade has to be
-    /// mixed with: the overlay's panel is `Theme.base`, the create-instance
-    /// dialog's `Theme.dialog-background`.
-    in property <color> backdrop: Theme.base;
 
     /// The title row was clicked while it was not being edited.
     callback name-clicked();
@@ -65,51 +61,65 @@ export component InstanceCard inherits Rectangle {
 
     width: 100%;
     height: 60px;
-    border-radius: 8px;
-    clip: true;
-    background: Theme.surface-0.with-alpha(0.4);
+    background: transparent;
 
-    Rectangle {
-        border-width: 1px;
-        border-color: Theme.surface-1.with-alpha(0.8);
-        background: transparent;
+    // Two stacked rounded cards, the same pair `InstanceListCard` draws: an 8px
+    // rounded frame carrying the lavender, with the content card's 6px rounded
+    // rectangle punched out (the inner subpath wound the other way under the
+    // default nonzero fill rule). That fills the 16px left strip *and* the thin
+    // frame behind the content card's rounded corners — a border + strip left
+    // those corners showing the panel through. The width is `100%` here (the
+    // list card's is a fixed 480px), so the path is bound to `root.width / 1px`
+    // rather than a constant command string.
+    Path {
+        width: 100%;
+        height: 100%;
+        fill: Theme.lavender.with-alpha(0.8);
+
+        MoveTo { x: 8; y: 0; }
+        LineTo { x: root.width / 1px - 8; y: 0; }
+        ArcTo { radius-x: 8; radius-y: 8; x: root.width / 1px; y: 8; sweep: true; }
+        LineTo { x: root.width / 1px; y: 52; }
+        ArcTo { radius-x: 8; radius-y: 8; x: root.width / 1px - 8; y: 60; sweep: true; }
+        LineTo { x: 8; y: 60; }
+        ArcTo { radius-x: 8; radius-y: 8; x: 0; y: 52; sweep: true; }
+        LineTo { x: 0; y: 8; }
+        ArcTo { radius-x: 8; radius-y: 8; x: 8; y: 0; sweep: true; }
+        Close { }
+
+        MoveTo { x: 22; y: 1; }
+        ArcTo { radius-x: 6; radius-y: 6; x: 16; y: 7; sweep: false; }
+        LineTo { x: 16; y: 53; }
+        ArcTo { radius-x: 6; radius-y: 6; x: 22; y: 59; sweep: false; }
+        LineTo { x: root.width / 1px - 7; y: 59; }
+        ArcTo { radius-x: 6; radius-y: 6; x: root.width / 1px - 1; y: 53; sweep: false; }
+        LineTo { x: root.width / 1px - 1; y: 7; }
+        ArcTo { radius-x: 6; radius-y: 6; x: root.width / 1px - 7; y: 1; sweep: false; }
+        LineTo { x: 22; y: 1; }
+        Close { }
     }
 
-    /// The lavender left bar, drawn over the hairline: Slint has one
-    /// `border-width` for the whole box.
+    // The content card, filling the frame's hole.
     Rectangle {
-        x: 0;
-        y: 0;
-        width: 16px;
-        height: parent.height;
-        background: Theme.lavender.with-alpha(0.8);
-    }
-
-    // The background image is pinned to the card's top right, cover-fit, and
-    // faded out towards the left.
-    if root.has-background && root.card-background.width > 0 : Rectangle {
-        x: 116px;
+        x: 16px;
         y: 1px;
-        width: parent.width - 116px - 1px;
+        width: parent.width - 16px - 1px;
         height: parent.height - 2px;
-        background: transparent;
+        border-radius: 6px;
+        clip: true;
+        background: Theme.surface-0.with-alpha(0.4);
 
-        Image {
-            width: 100%;
+        // The background image is pinned to the content card's top right,
+        // cover-fit, and flush with its right edge. Its left edge is already
+        // faded to transparent in the pixels (`load_background`), so no overlay
+        // is drawn: an overlay could only replace the picture with a flat colour.
+        if root.has-background && root.card-background.width > 0 : Image {
+            x: 100px;
+            y: 0;
+            width: parent.width - 100px;
             height: 100%;
             source: root.card-background;
             image-fit: cover;
-        }
-
-        // The image is faded out to the left with a gradient over it instead of
-        // a mask: at the image's left edge the overlay is the card fill over the
-        // backdrop — an opaque 40/60 mix of the two — and `mix` weights its
-        // *receiver*, so the backdrop is named first.
-        Rectangle {
-            background: @linear-gradient(
-                90deg,
-                root.backdrop.mix(Theme.surface-0, 0.6) 0%,
-                transparent 100%);
         }
     }
 

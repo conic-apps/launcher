@@ -79,6 +79,12 @@ RECONTEXT = {
     (None, "Open music folder"): ["MusicPlayerOverlay"],
     (None, "Playlist"): ["MusicPlayerOverlay"],
     (None, "Nothing here"): ["MusicPlayerOverlay"],
+    # `instances-list.slint`'s rows were split into `InstanceGroupRow` and
+    # `InstanceListCard`, so their sentences now resolve under the new
+    # components rather than the whole list.
+    ("InstancesList", "Favorites"): ["InstanceGroupRow"],
+    ("InstancesList", "All instances"): ["InstanceGroupRow"],
+    ("InstancesList", "Last played: "): ["InstanceListCard"],
 }
 
 # Sentences to drop: a component that no longer exists at all.
