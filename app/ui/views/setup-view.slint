@@ -5,7 +5,9 @@
 import { Theme } from "../theme.slint";
 import { AppIcon } from "../components/display/app-icon.slint";
 import { ScrollView } from "../components/containers/scroll-view.slint";
-import { SlideTransition } from "../components/containers/slide-transition.slint";
+import {
+    SlideTransition,
+} from "../components/containers/slide-transition.slint";
 import { FocusManager } from "../globals/focus.slint";
 import { Navigation } from "../globals/navigation.slint";
 import { PageMotion } from "../globals/page-motion.slint";
@@ -44,7 +46,10 @@ component FooterButton inherits Rectangle {
         height: 100%;
         border-radius: 8px;
         background: touch.pressed ? #ffffff6f : touch.has-hover ? #ffffff2f : #ffffff00;
-        animate background { duration: 100ms; easing: ease; }
+        animate background {
+            duration: 100ms;
+            easing: ease;
+        }
     }
 
     HorizontalLayout {
@@ -54,7 +59,7 @@ component FooterButton inherits Rectangle {
         cross-axis-alignment: center;
         spacing: 4px;
 
-        if root.show-icon : AppIcon {
+        if root.show-icon: AppIcon {
             name: "chevron-back";
             size: 20px;
             // The icon is a stroked path, so the label colour is the stroke
@@ -165,7 +170,10 @@ export component SetupView inherits Rectangle {
                 background: close-touch.pressed ? Theme.mauve.with-alpha(0.5)
                     : close-touch.has-hover ? Theme.mauve.with-alpha(0.4)
                     : #ffffff00;
-                animate background { duration: 100ms; easing: ease; }
+                animate background {
+                    duration: 100ms;
+                    easing: ease;
+                }
 
                 AppIcon {
                     x: 2px;
@@ -219,43 +227,43 @@ export component SetupView inherits Rectangle {
                 padding-right: 36px;
                 alignment: start;
 
-                if root.shown == "language" : SlideTransition {
+                if root.shown == "language": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
                     SetupLanguage { }
                 }
 
-                if root.shown == "storage" : SlideTransition {
+                if root.shown == "storage": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
                     SetupStorage { }
                 }
 
-                if root.shown == "palette" : SlideTransition {
+                if root.shown == "palette": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
                     SetupPalette { }
                 }
 
-                if root.shown == "add-account" : SlideTransition {
+                if root.shown == "add-account": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
                     SetupAddAccount { }
                 }
 
-                if root.shown == "java-settings" : SlideTransition {
+                if root.shown == "java-settings": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
                     SetupJavaSettings { }
                 }
 
-                if root.shown == "launch-options" : SlideTransition {
+                if root.shown == "launch-options": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
                     SetupLaunchOptions { }
                 }
 
-                if root.shown == "import-instances" : SlideTransition {
+                if root.shown == "import-instances": SlideTransition {
                     phase: root.leaving ? "leave" : root.arrive-phase;
                     direction: root.direction;
                     SetupImportInstances { }
@@ -269,22 +277,22 @@ export component SetupView inherits Rectangle {
     private property <[string]> phases:
         SetupWizardState.storage-configured
         ? [
-            "language",
-            "palette",
-            "add-account",
-            "java-settings",
-            "launch-options",
-            "import-instances",
-        ]
+        "language",
+        "palette",
+        "add-account",
+        "java-settings",
+        "launch-options",
+        "import-instances",
+    ]
         : [
-            "language",
-            "storage",
-            "palette",
-            "add-account",
-            "java-settings",
-            "launch-options",
-            "import-instances",
-        ];
+        "language",
+        "storage",
+        "palette",
+        "add-account",
+        "java-settings",
+        "launch-options",
+        "import-instances",
+    ];
 
     /// The step the user asked for, written by `goto-step` and read by the
     /// swap and by the button labels.

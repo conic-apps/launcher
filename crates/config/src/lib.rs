@@ -13,7 +13,7 @@
 //! Everything is synchronous: the app loads the config before building the UI
 //! and writes it back from a debounced timer.
 
-use std::{collections::BTreeMap, path::Path};
+use std::{collections::BTreeMap, fs::File, path::Path, time::SystemTime};
 
 use account::Account;
 use log::{debug, error, info};
@@ -89,7 +89,26 @@ pub fn set_background_image(path: &Path) -> Result<String> {
         std::fs::create_dir_all(parent)?;
     }
     std::fs::copy(path, &dest)?;
+    stamp_now(&dest);
     Ok("background_image".to_string())
+}
+
+/// Sets `path`'s modified time to now.
+///
+/// `fs::copy` carries the *source* file's timestamp over on macOS, so replacing
+/// the stored background with an image that happens to share its mtime leaves
+/// the file looking unchanged — and the background loader tells a replacement
+/// from a re-read by that timestamp, so the new wallpaper would not appear until
+/// a restart. Stamping now makes every replacement a distinct revision.
+fn stamp_now(path: &Path) {
+    if let Err(error) = File::options()
+        .write(true)
+        .open(path)
+        .and_then(|file| file.set_modified(SystemTime::now()))
+    {
+        // Not fatal: the picture is in place, only its freshness cannot be told.
+        debug!("could not stamp '{}': {error}", path.display());
+    }
 }
 
 /// Removes the stored custom background image, if any.
@@ -329,6 +348,38 @@ mod tests {
         assert_eq!(parse("Weekly"), UpdateChannel::Nightly);
         assert_eq!(parse("Release"), UpdateChannel::Stable);
         assert_eq!(parse("Snapshot"), UpdateChannel::Beta);
+    }
+
+    /// `fs::copy` carries the source's timestamp over on macOS, so replacing
+    /// the stored background with an image that shares its mtime could leave the
+    /// file looking unchanged — and a new wallpaper then only appeared after a
+    /// restart. `stamp_now` is what makes every replacement a fresh revision.
+    #[test]
+    fn stamp_now_makes_a_replaced_file_look_new() {
+        let dir = std::env::temp_dir().join(format!("conic-stamp-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("a temp dir");
+        let file = dir.join("background_image");
+        std::fs::write(&file, b"one").expect("a file");
+        File::options()
+            .write(true)
+            .open(&file)
+            .expect("open")
+            .set_modified(SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1_000))
+            .expect("an old mtime");
+        let before = std::fs::metadata(&file)
+            .expect("metadata")
+            .modified()
+            .expect("mtime");
+        stamp_now(&file);
+        let after = std::fs::metadata(&file)
+            .expect("metadata")
+            .modified()
+            .expect("mtime");
+        assert!(
+            after > before,
+            "the replacement was not given a new revision"
+        );
+        std::fs::remove_dir_all(&dir).ok();
     }
 
     #[test]

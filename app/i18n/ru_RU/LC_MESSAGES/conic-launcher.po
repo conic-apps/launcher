@@ -664,17 +664,17 @@ msgid "{} hr"
 msgstr "{} ч"
 
 #: ui
-msgctxt "InstancesList"
+msgctxt "InstanceGroupRow"
 msgid "Favorites"
 msgstr "Избранное"
 
 #: ui
-msgctxt "InstancesList"
+msgctxt "InstanceGroupRow"
 msgid "All instances"
 msgstr "Все сборки"
 
 #: ui
-msgctxt "InstancesList"
+msgctxt "InstanceListCard"
 msgid "Last played: "
 msgstr "Последний запуск: "
 

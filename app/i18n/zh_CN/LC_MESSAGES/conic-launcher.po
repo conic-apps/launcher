@@ -664,17 +664,17 @@ msgid "{} hr"
 msgstr "{} 小时"
 
 #: ui
-msgctxt "InstancesList"
+msgctxt "InstanceGroupRow"
 msgid "Favorites"
 msgstr "收藏夹"
 
 #: ui
-msgctxt "InstancesList"
+msgctxt "InstanceGroupRow"
 msgid "All instances"
 msgstr "全部实例"
 
 #: ui
-msgctxt "InstancesList"
+msgctxt "InstanceListCard"
 msgid "Last played: "
 msgstr "上次运行："
 
