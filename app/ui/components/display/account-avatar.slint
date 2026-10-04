@@ -7,9 +7,17 @@ import { Theme } from "../../theme.slint";
 // Player head avatar.
 //
 // The head image comes from Rust (`app/src/ui/components/account_avatar.rs`), which crops the
-// 8x8 face out of the profile's skin and stretches the 8x8 hat layer over it,
-// falling back to one of the bundled default skins. `skin` carries that image;
+// 8x8 face out of the profile's skin, stretches the 8x8 hat layer over it and cuts the square
+// down to a circle, falling back to one of the bundled default skins. `skin` carries that image;
 // the placeholder disc with the per-account-type ring is drawn while it is empty.
+//
+// There is deliberately no `clip: true` here. A clipped box with a `border-radius` is clipped
+// *rectangularly* by Slint's software renderer (`i-slint-renderer-software`'s `combine_clip`
+// ignores the radius), and the winit backend silently falls back to that renderer when femtovg's
+// OpenGL context cannot be created — a VM, an RDP session, a disabled or outdated GPU driver —
+// with no log. A rounded fill is what every renderer draws, and Slint's `Rectangle` takes no
+// `background-image`, so the round goes in the pixels. The head is inset 4px anyway, which means
+// the box clip would only ever have hidden the overflow it cannot fix.
 export component AccountAvatar inherits Rectangle {
     in property <length> size: 56px;
     in property <image> skin;
@@ -32,7 +40,6 @@ export component AccountAvatar inherits Rectangle {
         background: root.unlogged ? Theme.overlay-0.with-alpha(0.4) : Theme.surface-0;
         border-width: 2px;
         border-color: root.ring-color;
-        clip: true;
 
         if root.skin.width > 0 : Image {
             x: 4px;
