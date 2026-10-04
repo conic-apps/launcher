@@ -134,8 +134,11 @@ jobs:
       # `appimagetool`, then leaves everything in `target/package/`.
       - name: Build the packages
         env:
-          # The app has no self-update, so there is nothing to sign and
-          # no `.sig` artifact to upload.
+          # Signs the AppImage and the portable tarball with the same minisign
+          # key the app verifies against (`crates/update`). Unset just leaves
+          # the bundles unsigned, which the updater then refuses.
+          CONIC_UPDATE_SIGNING_KEY: ${{ secrets.CONIC_UPDATE_SIGNING_KEY }}
+          CONIC_UPDATE_SIGNING_KEY_PASSWORD: ${{ secrets.CONIC_UPDATE_SIGNING_KEY_PASSWORD }}
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
         run: |
           # `APPIMAGE_EXTRACT_AND_RUN=1` because a runner cannot mount a squashfs
@@ -177,11 +180,17 @@ jobs:
           name: RPM bundle(${{ matrix.rpm }})
           path: ${{ github.workspace }}/target/package/*.rpm
 
+      # The AppImage is the self-updatable Linux bundle; its `.sig` and the
+      # portable tarball beside it are what the update server indexes.
       - name: Upload appimage bundle
         uses: actions/upload-artifact@v7
         with:
           name: AppImage bundle(${{ matrix.appimage }})
-          path: ${{ github.workspace }}/target/package/*.AppImage
+          path: |
+            ${{ github.workspace }}/target/package/*.AppImage
+            ${{ github.workspace }}/target/package/*.AppImage.sig
+            ${{ github.workspace }}/target/package/*.tar.gz
+            ${{ github.workspace }}/target/package/*.tar.gz.sig
 
   # One job per architecture, each building natively on its own runner.
   #
@@ -233,6 +242,8 @@ jobs:
       # jobs produce `…-arm64.dmg` and `…-x86_64.dmg`.
       - name: Build the .app and the .dmg
         env:
+          CONIC_UPDATE_SIGNING_KEY: ${{ secrets.CONIC_UPDATE_SIGNING_KEY }}
+          CONIC_UPDATE_SIGNING_KEY_PASSWORD: ${{ secrets.CONIC_UPDATE_SIGNING_KEY_PASSWORD }}
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
         run: tools/package-macos.sh
 
@@ -274,6 +285,16 @@ jobs:
         with:
           name: macOS disk image(${{ matrix.arch }})
           path: ${{ github.workspace }}/target/package/*.dmg
+
+      # The tarball of the bundle, which is what the self-updater downloads and
+      # unpacks, plus its minisign signature.
+      - name: Upload the updater bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: macOS updater bundle(${{ matrix.arch }})
+          path: |
+            ${{ github.workspace }}/target/package/*.app.tar.gz
+            ${{ github.workspace }}/target/package/*.app.tar.gz.sig
 
   # One job per architecture, each building natively on its own runner, and for
   # the same reasons `build-macos` gives: a `--target` build compiles for the guest
@@ -351,6 +372,9 @@ jobs:
           # Read at compile time by `crates/curseforge/build.rs`; unset just means
           # the official CurseForge API is unauthenticated.
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+          # Signs the portable exe and the MSI for the self-updater.
+          CONIC_UPDATE_SIGNING_KEY: ${{ secrets.CONIC_UPDATE_SIGNING_KEY }}
+          CONIC_UPDATE_SIGNING_KEY_PASSWORD: ${{ secrets.CONIC_UPDATE_SIGNING_KEY_PASSWORD }}
         run: tools/package-windows.ps1
 
       - name: Inspect the msi
@@ -455,25 +479,20 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: Windows installer(${{ matrix.arch }})
-          path: ${{ github.workspace }}/target/package/*.msi
+          path: |
+            ${{ github.workspace }}/target/package/*.msi
+            ${{ github.workspace }}/target/package/*.msi.sig
           if-no-files-found: error
 
-      # `archive: false` because the artifact *is* the executable: unzipping a
-      # `.exe` to get an `.exe` helps nobody, and the release upload then has the
-      # real file rather than a zip of one.
-      #
-      # No `name:` here, which is the tool's doing rather than an omission: an
-      # unarchived upload takes the *file's* name as the artifact's name, because
-      # there is no archive to name after. It has to match exactly one file either
-      # way, which the glob does. So the artifact turns up in a run's own list as
-      # `conic-launcher-0.1.0-alpha.2-x64.exe` -- its own name, which is the point,
-      # and the reason this is not `Windows executable(${{ matrix.arch }})` the way
-      # the `.msi` above is.
+      # The portable executable and its signature, archived together because the
+      # download step extracts them under their own names either way.
       - name: Upload the exe
         uses: actions/upload-artifact@v7
         with:
-          path: ${{ github.workspace }}/target/package/*.exe
-          archive: false
+          name: Windows portable(${{ matrix.arch }})
+          path: |
+            ${{ github.workspace }}/target/package/*.exe
+            ${{ github.workspace }}/target/package/*.exe.sig
           if-no-files-found: error
 
   release:

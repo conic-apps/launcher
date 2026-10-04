@@ -2872,3 +2872,8 @@ msgstr "Instances and game data"
 msgctxt "AccountAdd"
 msgid "Sign in"
 msgstr "Sign in"
+
+#: ui
+msgctxt "SettingsGeneral"
+msgid "Updates are provided by your package manager"
+msgstr "Updates are provided by your package manager"
