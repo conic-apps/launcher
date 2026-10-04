@@ -11,6 +11,15 @@
 //! shows. This reproduces that in a pixel buffer, including the source-over
 //! blend where the hat is opaque.
 //!
+//! The square is then cut down to a circle, here rather than in `.slint`. A
+//! `clip: true` box with a `border-radius` is clipped **rectangularly** by
+//! Slint's software renderer (`i-slint-renderer-software`'s `combine_clip`
+//! ignores the radius), and the winit backend falls back to that renderer
+//! without a word when femtovg's OpenGL context cannot be created — a VM, an
+//! RDP session, a disabled or outdated GPU driver. Slint's `Rectangle` takes
+//! no `background-image`, so a rounded *fill* cannot stand in for a rounded
+//! *image* either: the alpha is the only mask a software renderer will honour.
+//!
 //! It lives in the app rather than in `account` because it produces a Slint
 //! `Image` and reads the app's bundled assets; `filter_neoforge_version_list`
 //! lives in `app/src` for the same reason.
@@ -287,7 +296,9 @@ fn decode(bytes: &[u8]) -> Option<image::RgbaImage> {
 /// Draws the head of `skin` into a `size`x`size` buffer.
 ///
 /// The face is inset by `round(size / 18)` on every side, then the hat is
-/// stretched over the whole square and blended on top.
+/// stretched over the whole square and blended on top, and the square is cut
+/// down to the circle the avatar is framed in (see the module doc for why that
+/// has to happen in the pixels).
 fn head(skin: &image::RgbaImage, size: u32) -> Image {
     let size = size.max(1);
     // An HD skin crops the same face: the texture is scaled from its 64px width.
@@ -322,11 +333,47 @@ fn head(skin: &image::RgbaImage, size: u32) -> Image {
             if let Some(sample) = hat.sample(skin, scale, x, y) {
                 pixel = over(to_float(sample), pixel);
             }
+            // The circle, before the pixel leaves for the buffer: coverage
+            // belongs to the alpha, and the premultiply below carries it into
+            // the colour with it.
+            pixel[3] *= circle_coverage(size, x, y);
             let index = ((y * size + x) * 4) as usize;
-            pixels[index..index + 4].copy_from_slice(&to_bytes(pixel));
+            pixels[index..index + 4].copy_from_slice(&to_bytes(premultiply(pixel)));
         }
     }
     Image::from_rgba8(SharedPixelBuffer::clone_from_slice(&pixels, size, size))
+}
+
+/// How much of the pixel at (`x`, `y`) the circle inscribed in a `size`x`size`
+/// square covers, from 0 to 1.
+///
+/// Inscribed rather than outset, so the head touches the edge of its square
+/// mid-side and meets the ring Slint draws around it without a seam. The half
+/// pixel of slack is what makes the rim a one pixel ramp instead of a hard cut,
+/// matching the antialiasing of the rounded fill it is drawn on top of.
+fn circle_coverage(size: u32, x: u32, y: u32) -> f32 {
+    let radius = size as f32 / 2.0;
+    let center = size as f32 / 2.0;
+    let dx = x as f32 + 0.5 - center;
+    let dy = y as f32 + 0.5 - center;
+    (radius - dx.hypot(dy) + 0.5).clamp(0.0, 1.0)
+}
+
+/// The straight-alpha pixel the layers were composed into, made premultiplied.
+///
+/// `SharedPixelBuffer` is premultiplied and every renderer reads it that way
+/// (`TexturePixelFormat::RgbaPremultiplied`), so this is what the channel
+/// convention asks for. It is the identity on the head's opaque interior — the
+/// hat layer over the face leaves nothing translucent — so it only shows at the
+/// circle's rim, where a straight colour read as premultiplied comes out too
+/// bright and the head would wear a halo.
+fn premultiply(pixel: [f32; 4]) -> [f32; 4] {
+    [
+        pixel[0] * pixel[3],
+        pixel[1] * pixel[3],
+        pixel[2] * pixel[3],
+        pixel[3],
+    ]
 }
 
 /// One draw layer: the source region in skin pixels, and where the destination
@@ -401,4 +448,58 @@ fn uuid_hash_code(uuid: &str) -> Option<i32> {
     let least_significant = u64::from_str_radix(&hex[16..], 16).ok()?;
     let hilo = most_significant ^ least_significant;
     Some(((hilo >> 32) as u32 ^ hilo as u32) as i32)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Opaque everywhere, so every drawn pixel is opaque and what comes back
+    /// out is the circle mask alone.
+    fn opaque_skin() -> image::RgbaImage {
+        image::RgbaImage::from_pixel(64, 64, image::Rgba([255, 0, 0, 255]))
+    }
+
+    #[test]
+    fn head_is_an_antialiased_circle() {
+        const SIZE: u32 = 56;
+        let buffer = head(&opaque_skin(), SIZE)
+            .to_rgba8()
+            .expect("the head is an rgba8 buffer");
+        let at = |x: u32, y: u32| buffer.as_slice()[(y * SIZE + x) as usize];
+
+        assert_eq!(at(SIZE / 2, SIZE / 2).a, 255, "the centre is inside");
+        assert_eq!(at(0, 0).a, 0, "the corner is outside");
+
+        let rim = (0..SIZE * SIZE)
+            .map(|index| buffer.as_slice()[index as usize])
+            .filter(|pixel| pixel.a > 0 && pixel.a < 255)
+            .count();
+        assert!(rim > 0, "the rim is a ramp rather than a hard cut");
+        // The skin is opaque red, so a premultiplied pixel's red channel is its
+        // alpha — which is what keeps the rim from reading too bright.
+        assert!(
+            (0..SIZE * SIZE).all(|index| {
+                let pixel = buffer.as_slice()[index as usize];
+                pixel.r == pixel.a
+            }),
+            "the buffer is premultiplied"
+        );
+    }
+
+    #[test]
+    fn circle_coverage_is_inscribed_and_symmetric() {
+        // The outermost pixel of an edge sits on the ramp, so it is short of
+        // full: a pixel whose centre is on the circle is half covered, which is
+        // what an antialiased rounded fill does at the very same edge.
+        let edge = circle_coverage(56, 0, 28);
+        assert!(
+            edge > 0.9 && edge < 1.0,
+            "the mid-side pixel is on the rim, got {edge}"
+        );
+        assert_eq!(edge, circle_coverage(56, 55, 28), "the rim is symmetric");
+        assert_eq!(circle_coverage(56, 28, 28), 1.0, "the centre is solid");
+        assert_eq!(circle_coverage(56, 0, 0), 0.0, "the corner is empty");
+        assert_eq!(circle_coverage(1, 0, 0), 1.0, "a 1px head is solid");
+    }
 }

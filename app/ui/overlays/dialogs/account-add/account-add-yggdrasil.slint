@@ -275,7 +275,10 @@ export component AccountAddYggdrasil inherits VerticalLayout {
                         }
 
                         // A bare 28px avatar image — no disc and no ring, unlike
-                        // the account pills elsewhere.
+                        // the account pills elsewhere. The head is round either
+                        // way: `account_avatar::head` cuts the circle into the
+                        // pixels, because a rounded `clip` is a no-op on the
+                        // software renderer.
                         Rectangle {
                             x: 38px;
                             width: 28px;
