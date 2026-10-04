@@ -2877,3 +2877,8 @@ msgstr "Sign in"
 msgctxt "SettingsGeneral"
 msgid "Updates are provided by your package manager"
 msgstr "Updates are provided by your package manager"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Background image darkness"
+msgstr "Background image darkness"

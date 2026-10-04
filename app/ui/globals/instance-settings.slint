@@ -30,6 +30,10 @@ export global InstanceSettingsState {
     /// read a runtime path through Rust; a file it could not decode reports a
     /// zero width.
     in-out property <image> background;
+    /// How much the instance's background is darkened when it is the launcher
+    /// background, as a percentage. The window's global background has its own
+    /// setting; this one only applies while this instance is showing.
+    in-out property <int> background-darkness: 0;
 
     in-out property <bool> use-as-launcher-background: false;
     in-out property <bool> enable-specific: false;

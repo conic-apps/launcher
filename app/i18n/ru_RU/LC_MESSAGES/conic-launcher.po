@@ -2872,3 +2872,8 @@ msgstr "Сборки и игровые данные"
 msgctxt "AccountAdd"
 msgid "Sign in"
 msgstr "Войти"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Background image darkness"
+msgstr "Затемнение фонового изображения"
