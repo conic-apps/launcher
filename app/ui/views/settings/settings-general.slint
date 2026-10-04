@@ -65,7 +65,12 @@ export component SettingsGeneral inherits VerticalLayout {
 
         SettingItem {
             title: @tr("Auto update");
-            description: @tr("Automatically download and install updates when available");
+            // A package-manager install (deb, rpm, Arch) is updated by the
+            // package manager, so the switch is greyed out and says so.
+            description: AppConfig.update-self-updating
+                ? @tr("Automatically download and install updates when available")
+                : @tr("Updates are provided by your package manager");
+            item-disabled: !AppConfig.update-self-updating;
 
             Switch {
                 checked <=> AppConfig.auto-update;
@@ -76,7 +81,7 @@ export component SettingsGeneral inherits VerticalLayout {
         SettingItem {
             title: @tr("Update channel");
             description: @tr("Controls how frequently the launcher receives updates");
-            item-disabled: !AppConfig.auto-update;
+            item-disabled: !AppConfig.auto-update || !AppConfig.update-self-updating;
 
             Select {
                 options: ["stable", "beta"];

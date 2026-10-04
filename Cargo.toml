@@ -34,6 +34,7 @@ single-instance = { path = "./crates/single-instance", version = "0.0.0" }
 multiplayer = { path = "./crates/multiplayer", version = "0.0.0" }
 music = { path = "./crates/music", version = "0.0.0" }
 tilemap = { path = "./crates/tilemap", version = "0.0.0" }
+update = { path = "./crates/update", version = "0.0.0" }
 
 # ----- non-local crates -----
 slint = { version = "1.18", default-features = true }
@@ -99,6 +100,12 @@ serde_json = "1"
 serde_with = "3"
 sha1_smol = "1"
 sha2 = { version = "0.10", default-features = false }
+semver = "1"
+# The launcher's self-updater verifies minisign signatures over the downloaded
+# bundle in a streaming pass, so the whole AppImage never has to be held in
+# memory. Pure Rust, no external dependencies (the `minisign` crate that also
+# *signs* is only pulled in on the release machine, not by the app).
+minisign-verify = "0.3"
 sys-locale = "0.3"
 thiserror = "2"
 toml = "1"
@@ -108,6 +115,8 @@ zip = { version = "4", default-features = false, features = ["deflate"]}
 libloader = "0.1"
 tokio = { version = "1", features = ["macros", "rt", "time", "fs"]}
 flate2 = "1"
+# Unpacking the `.app.tar.gz` / Linux portable `.tar.gz` update bundles (crates/update).
+tar = "0.4"
 fastnbt = "2"
 png = "0.18"
 sysinfo = "0.38"

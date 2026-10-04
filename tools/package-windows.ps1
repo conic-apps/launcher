@@ -253,16 +253,17 @@ function Note-Destination([string]$Path) {
     }
 }
 
-# `$Crate-$Version-$Arch`, which is the same name the `.exe` and the `.msi` get and
-# the same shape `package-macos.sh` gives its `.dmg`. The version is the Cargo one
-# verbatim: the `.msi` inside says `0.1.0`, and the file it is in says
-# `0.1.0-alpha.2`, so the pre-release is visible in the one place a user looks
-# before running it.
-$Artifact = "$Crate-$Version-$Arch"
+# The names the update server's asset table matches: the portable executable is
+# `<crate>_<version>_<arch>.exe` and the installer `<crate>_<version>_<arch>_en-US.msi`.
+# The version is the Cargo one verbatim: the `.msi` inside says `0.1.0`, and the
+# file it is in says `0.1.0-alpha.2`, so the pre-release is visible in the one
+# place a user looks before running it.
+$ExeName = "${Crate}_${Version}_${Arch}.exe"
+$MsiName = "${Crate}_${Version}_${Arch}_en-US.msi"
 
 if (Wants 'exe') {
     Step 'Copying the executable'
-    Copy-Item $Bin (Join-Path $Out "$Artifact.exe") -Force
+    Copy-Item $Bin (Join-Path $Out $ExeName) -Force
     # One file, with nothing of ours beside it: Slint's Skia and `cpal`'s audio
     # stack are statically linked, so this is the whole app. That is also why there
     # is no zip around it.
@@ -273,11 +274,19 @@ if (Wants 'exe') {
     # any other Rust/VC++ app has it, and a bare one does not. See
     # `packaging/windows/README.md` for the three ways out of that and why this
     # script does not pick one.
-    Get-ChildItem (Join-Path $Out "$Artifact.exe") |
+    Get-ChildItem (Join-Path $Out $ExeName) |
         ForEach-Object { Note ("{0}  {1:N1} MiB" -f $_.Name, ($_.Length / 1MB)) }
+    if ($env:CONIC_UPDATE_SIGNING_KEY) {
+        Step 'Signing the portable executable'
+        & cargo run --release --locked -p update-sign -- (Join-Path $Out $ExeName)
+        if ($LASTEXITCODE -ne 0) { Die 'failed to sign the portable executable' }
+    }
 }
 
 if (-not (Wants 'msi')) {
+    if (-not $env:CONIC_UPDATE_SIGNING_KEY) {
+        Note 'CONIC_UPDATE_SIGNING_KEY is unset; the update bundles are unsigned.'
+    }
     Step 'Done'
     Note-Destination $Out
     exit 0
@@ -317,17 +326,25 @@ $WixArgs = @(
     '-d', "ExeFile=$Bin",
     '-d', "LicenseFile=$License",
     '-d', "IconFile=$Icon",
-    '-o', (Join-Path $Out "$Artifact.msi")
+    '-o', (Join-Path $Out $MsiName)
 )
 
 & wix @WixArgs
 if ($LASTEXITCODE -ne 0) { Die "wix build failed ($LASTEXITCODE)" }
 
-$Msi = Join-Path $Out "$Artifact.msi"
+$Msi = Join-Path $Out $MsiName
 if (-not (Test-Path $Msi)) { Die "$Msi was not produced" }
 Note "ProductVersion $ProductVersion (from $Version)"
 Note "ProductCode    $ProductCode"
 Get-ChildItem $Msi | ForEach-Object { Note ("{0}  {1:N1} MiB" -f $_.Name, ($_.Length / 1MB)) }
+
+if ($env:CONIC_UPDATE_SIGNING_KEY) {
+    Step 'Signing the Windows installer'
+    & cargo run --release --locked -p update-sign -- $Msi
+    if ($LASTEXITCODE -ne 0) { Die 'failed to sign the Windows installer' }
+} else {
+    Note 'CONIC_UPDATE_SIGNING_KEY is unset; the update bundles are unsigned.'
+}
 
 Step 'Done'
 Note-Destination $Out

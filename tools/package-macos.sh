@@ -203,6 +203,9 @@ mkdir -p "$MACOS_DIR" "$RESOURCES"
 install -m755 "$BINARY" "$MACOS_DIR/$CRATE"
 install -m644 "$ICONS" "$RESOURCES/$CRATE.icns"
 install -m644 "$ROOT/LICENSE" "$RESOURCES/LICENSE"
+# The self-updater's marker: this copy is a `.app` that replaces itself, so the
+# settings page leaves the update toggle live. Sealed by `codesign` below.
+printf 'app\n' > "$RESOURCES/update-policy"
 
 # Fill in the two version keys. The template carries literal `@VERSION@`
 # placeholders, and they are substituted with `PlistBuddy`'s own string handling
@@ -306,6 +309,35 @@ step "Signing (ad-hoc)"
 codesign --force --sign - --timestamp=none "$STAGE/$APP"
 codesign --verify --deep --strict --verbose=2 "$STAGE/$APP" 2>&1 | sed 's/^/    /'
 codesign -dv "$STAGE/$APP" 2>&1 | grep -E "Identifier|Format|Signature|Sealed Resources" | sed 's/^/    /'
+
+# ---------------------------------------------------------------------------
+# Updater bundle
+# ---------------------------------------------------------------------------
+
+# The self-updater downloads a tarred bundle rather than the `.dmg`: a disk
+# image has to be mounted and the app copied out of it, which cannot happen
+# while the app it is replacing is still running. The name is the one the update
+# server indexes (`_aarch64`/`_x64`), not the `.dmg`'s vocabulary.
+if [[ "$UNIVERSAL" -eq 1 ]]; then
+    UPDATER_ARCH=universal2
+elif [[ "$HOST" == x86_64-apple-darwin ]]; then
+    UPDATER_ARCH=x64
+else
+    UPDATER_ARCH=aarch64
+fi
+readonly UPDATER_BUNDLE="$STAGE/${CRATE}_${VERSION}_${UPDATER_ARCH}.app.tar.gz"
+step "Packaging the updater bundle"
+rm -f "$UPDATER_BUNDLE"
+tar -C "$STAGE" -czf "$UPDATER_BUNDLE" "$APP"
+ls -lh "$UPDATER_BUNDLE" | sed 's/^/    /'
+
+if [[ -n "${CONIC_UPDATE_SIGNING_KEY:-}" ]]; then
+    step "Signing the updater bundle"
+    (cd "$ROOT" && cargo run --release --locked -p update-sign -- "$UPDATER_BUNDLE") ||
+        die "failed to sign the updater bundle"
+else
+    note "CONIC_UPDATE_SIGNING_KEY is unset; the updater bundle is unsigned."
+fi
 
 # ---------------------------------------------------------------------------
 # .dmg

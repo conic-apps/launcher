@@ -86,6 +86,8 @@ comrak.workspace = true
 parley.workspace = true
 fontique.workspace = true
 music.workspace = true
+# The self-updater: protocol, signature verification and the exit-time swap.
+update.workspace = true
 
 glow.workspace = true
 bytemuck.workspace = true
@@ -229,6 +231,9 @@ assets = [
   ["../packaging/linux/icons/256x256.png", "usr/share/icons/hicolor/256x256/apps/conic-launcher.png", "644"],
   ["../packaging/linux/icons/512x512.png", "usr/share/icons/hicolor/512x512/apps/conic-launcher.png", "644"],
   ["../packaging/linux/icons/scalable.svg", "usr/share/icons/hicolor/scalable/apps/conic-launcher.svg", "644"],
+  # Tells the self-updater this is a package-manager install, so its settings
+  # toggle is greyed out rather than offering an update the package owns.
+  ["../packaging/linux/update-policy", "usr/share/conic-launcher/update-policy", "644"],
 ]
 
 # `cargo rpm` reads its extra files from the `.rpm/` directory next to *this*
@@ -260,3 +265,4 @@ path = "/usr/bin/conic-launcher"
 "usr/share/icons/hicolor/512x512/apps/conic-launcher.png" = { path = "/usr/share/icons/hicolor/512x512/apps/conic-launcher.png" }
 "usr/share/icons/hicolor/scalable/apps/conic-launcher.svg" = { path = "/usr/share/icons/hicolor/scalable/apps/conic-launcher.svg" }
 "usr/share/licenses/conic-launcher/LICENSE" = { path = "/usr/share/licenses/conic-launcher/LICENSE" }
+"usr/share/conic-launcher/update-policy" = { path = "/usr/share/conic-launcher/update-policy" }

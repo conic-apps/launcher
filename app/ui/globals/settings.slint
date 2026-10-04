@@ -76,6 +76,11 @@ export global AppConfig {
 
     in-out property <string> app-version: "0.0.0";
 
+    // Whether this install updates itself. Set by Rust from the detected
+    // install form; a package-manager install (deb/rpm/Arch) is greyed out in
+    // Settings → General. Updates themselves are applied silently on exit.
+    in-out property <bool> update-self-updating: true;
+
     // The resolved storage roots, shown in Settings → Data storage. They are
     // chosen through the bootstrap file rather than `config.toml`, so Rust only
     // ever writes them here and the pages only read them.

@@ -222,6 +222,10 @@ if wants rpm; then
     # built. The spec is committed; only `usr/` below it is staged.
     rm -rf "$STAGE/usr"
     stage_payload "$STAGE"
+    # An rpm install is updated through the package manager, so its update
+    # toggle is greyed out (see the deb's `assets` for the same marker).
+    install -Dm644 "$PAYLOAD/update-policy" \
+        "$STAGE/usr/share/conic-launcher/update-policy"
 
     # Run from `app/`, and there is no `-p`: cargo-rpm has no crate selector, it
     # reads the `Cargo.toml` in the *current directory* and needs a `[package]`
@@ -269,6 +273,9 @@ if wants appimage; then
     stage_payload "$APPDIR"
 
     install -Dm755 "$BIN" "$APPDIR/usr/bin/$CRATE"
+    # The self-updater's marker beside the executable: this copy is an AppImage
+    # and replaces its own image file (`$APPIMAGE` is the fallback).
+    printf 'appimage\n' > "$APPDIR/usr/bin/update-policy"
     install -Dm644 "$PAYLOAD/conic-launcher.desktop" "$APPDIR/$CRATE.desktop"
 
     # Two icon files at the AppDir root, and the difference matters:
@@ -306,14 +313,48 @@ APPRUN
     export ARCH="$(uname -m)"
     export VERSION
 
+    # The update server indexes the AppImage by its own arch vocabulary, which is
+    # `amd64`/`aarch64`, not `uname -m`'s `x86_64`. The file name is what the
+    # server's asset pattern matches, so it has to use it.
+    case "$ARCH" in
+    x86_64) UPDATER_ARCH=amd64 ;;
+    aarch64) UPDATER_ARCH=aarch64 ;;
+    *) die "no update-bundle name for architecture '$ARCH'" ;;
+    esac
+
     # `APPIMAGE_EXTRACT_AND_RUN=1` because `appimagetool` is *itself* an AppImage,
     # and a container or CI runner has no FUSE to mount it with — without this it
     # exits with "dlopen(): error loading libfuse.so.2". It applies to the tool
     # only: the artifact is a normal squashfs image and mounts as one on a
     # desktop. Set it here rather than in the workflow so a local container run
     # and CI behave identically.
-    APPIMAGE_EXTRACT_AND_RUN=1 appimagetool "$APPDIR" "$OUT/${CRATE}-${VERSION}-${ARCH}.AppImage"
-    ls -lh "$OUT"/*.AppImage
+    readonly APPIMAGE="$OUT/${CRATE}_${VERSION}_${UPDATER_ARCH}.AppImage"
+    APPIMAGE_EXTRACT_AND_RUN=1 appimagetool "$APPDIR" "$APPIMAGE"
+    ls -lh "$APPIMAGE"
+
+    # The portable tarball: the same executable plus its `update-policy`, unpacked
+    # wherever the user likes. The updater replaces the executable in place.
+    step "Building the portable tarball"
+    readonly PORTABLE_DIR="$OUT/.portable"
+    readonly PORTABLE_TARBALL="$OUT/${CRATE}_${VERSION}_${UPDATER_ARCH}.tar.gz"
+    rm -rf "$PORTABLE_DIR"
+    mkdir -p "$PORTABLE_DIR"
+    install -m755 "$BIN" "$PORTABLE_DIR/$CRATE"
+    printf 'portable\n' > "$PORTABLE_DIR/update-policy"
+    install -m644 "$ROOT/LICENSE" "$PORTABLE_DIR/LICENSE"
+    rm -f "$PORTABLE_TARBALL"
+    tar -C "$PORTABLE_DIR" -czf "$PORTABLE_TARBALL" "$CRATE" update-policy LICENSE
+    rm -rf "$PORTABLE_DIR"
+    ls -lh "$PORTABLE_TARBALL"
+
+    if [[ -n "${CONIC_UPDATE_SIGNING_KEY:-}" ]]; then
+        step "Signing the Linux update bundles"
+        (cd "$ROOT" && cargo run --release --locked -p update-sign -- \
+            "$APPIMAGE" "$PORTABLE_TARBALL") ||
+            die "failed to sign the Linux update bundles"
+    else
+        note "CONIC_UPDATE_SIGNING_KEY is unset; the update bundles are unsigned."
+    fi
 fi
 
 step "Done"

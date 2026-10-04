@@ -141,6 +141,19 @@ fn main() {
     // shortcut, which the app-level key scope in `app.slint` binds.
     ui::overlays::command_palette::setup(&ui);
 
+    // Self-update, run silently. The install form (AppImage / .app / MSI /
+    // portable / package manager) is detected once and decides whether the
+    // settings rows are live; a package-manager install is never checked.
+    // Everything else checks in the background and only *stages* — the swap
+    // happens after `ui.run` returns, and every step goes to the log.
+    {
+        ui.global::<AppConfig>()
+            .set_update_self_updating(usecases::update::is_self_updating());
+        if shared.borrow().auto_update && usecases::update::is_self_updating() {
+            spawn_update(&shared);
+        }
+    }
+
     let window = WindowService::new(ui.clone_strong());
 
     // Everything the platform has to do differently: the AppKit traffic lights
@@ -243,11 +256,28 @@ fn main() {
 
     ui.run().expect("failed to run the shell event loop");
 
+    // The updater swaps in the staged bundle once the event loop has returned:
+    // the window is gone and nothing will read the running executable again.
+    match update::apply_pending() {
+        Ok(true) => log::info!("a staged update was applied; it takes effect next launch"),
+        Ok(false) => {}
+        Err(error) => log::error!("failed to apply the staged update: {error}"),
+    }
+
     // On exit the multiplayer poll thread is joined and the Conic Nexus session
     // destroyed.
     ui::overlays::dialogs::multiplayer::shutdown();
 
     cleanup_temp_folder();
+}
+
+/// Starts one background update check + staging download.
+///
+/// It is silent: the use case logs what it does, and the staged bundle is
+/// applied as the process exits. Nothing here touches the interface.
+fn spawn_update(shared: &Rc<RefCell<config::Config>>) {
+    let channel = shared.borrow().update_channel.clone();
+    crate::support::runtime::spawn(usecases::update::run(channel));
 }
 
 /// Removes the per-run scratch directory [`storage::LOCATIONS`] creates.
