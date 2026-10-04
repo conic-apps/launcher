@@ -9,7 +9,7 @@ use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
     rc::Rc,
-    time::Duration,
+    time::{Duration, SystemTime},
 };
 
 use chrono::{Datelike, Local, TimeZone};
@@ -57,6 +57,13 @@ pub(crate) struct RelativeTime {
     pub(crate) year: i32,
 }
 
+/// A list row's decoded instance background, with the file revision it was
+/// decoded from so a replaced or removed image is picked up on the next apply.
+pub(crate) struct CachedBackground {
+    modified: Option<SystemTime>,
+    image: Image,
+}
+
 pub(crate) struct GameController {
     config: Rc<RefCell<config::Config>>,
     instances: Vec<Instance>,
@@ -72,6 +79,10 @@ pub(crate) struct GameController {
     /// Memoised because a skin is a base64 PNG (or a bundled webp) that has to
     /// be decoded and cropped, and `apply` runs on every list change.
     avatars: HashMap<String, Image>,
+    /// The instance backgrounds the list cards draw, by instance id. Memoised
+    /// because the card needs a decoded image and `apply` runs on every list
+    /// change; the background file's modified time is the invalidation key.
+    backgrounds: RefCell<HashMap<String, CachedBackground>>,
     /// The instance list. It is kept across applies and reconciled in place (see
     /// `sync_rows`), so the view's row items survive a relayout and can animate
     /// along the rail to their new slot instead of being recreated in place.

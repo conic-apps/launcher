@@ -63,6 +63,11 @@ export struct GameRow {
     /// `cubic-bezier(0.22,1,0.36,1)` a reordered list travels with, rather than
     /// the 300ms `cubic-bezier(0.33,1,0.68,1)` of a group collapse.
     flip: bool,
+    /// Whether the instance has a custom background (instance rows only).
+    has-background: bool,
+    /// The instance's decoded custom background, drawn on the card's right half
+    /// (instance rows only). Empty for a group row or an instance without one.
+    background: image,
 }
 
 /// One account entry of the footer account dropdown.

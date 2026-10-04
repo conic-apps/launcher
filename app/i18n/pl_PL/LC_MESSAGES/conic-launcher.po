@@ -664,17 +664,17 @@ msgid "{} hr"
 msgstr "{} godz."
 
 #: ui
-msgctxt "InstancesList"
+msgctxt "InstanceGroupRow"
 msgid "Favorites"
 msgstr "Ulubione"
 
 #: ui
-msgctxt "InstancesList"
+msgctxt "InstanceGroupRow"
 msgid "All instances"
 msgstr "Wszystkie instancje"
 
 #: ui
-msgctxt "InstancesList"
+msgctxt "InstanceListCard"
 msgid "Last played: "
 msgstr "Ostatnio grano: "
 

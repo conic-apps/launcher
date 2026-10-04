@@ -8,15 +8,12 @@ import { Button } from "../../../components/controls/button.slint";
 import { Progress } from "../../../components/controls/progress.slint";
 import { MultiplayerState } from "../../../globals/multiplayer.slint";
 
-// The Conic Nexus library download screen: the download glyph, the phase / byte
-// counter pair and the progress bar beside it, then the red-outlined "Stop
-// download" button.
+// The Conic Nexus library download screen.
 export component MultiplayerDownloadProgress inherits VerticalLayout {
     width: 100%;
     spacing: 0px;
     alignment: start;
 
-    // The screen mounts when the description's "Start download" swaps it in.
     init => { MultiplayerState.start-download(); }
 
     // `display: flex; align-items: center` — the icon is the taller of the two,
@@ -52,7 +49,7 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
                 }
 
                 // Shown while the byte counter has a value and a maximum.
-                if MultiplayerState.show-download-bytes : Text {
+                if MultiplayerState.show-download-bytes: Text {
                     text: MultiplayerState.download-value-text + " / " + MultiplayerState.download-max-text;
                     font-size: 14px;
                     line-height-factor: 1;
@@ -60,7 +57,10 @@ export component MultiplayerDownloadProgress inherits VerticalLayout {
                 }
             }
 
-            Rectangle { height: 16px; background: transparent; }
+            Rectangle {
+                height: 16px;
+                background: transparent;
+            }
 
             Progress {
                 loading: MultiplayerState.download-loading;

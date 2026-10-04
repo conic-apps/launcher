@@ -7,6 +7,8 @@
 
 use super::*;
 
+use crate::ui::overlays::instance_settings::load_background;
+
 impl GameController {
     pub(crate) fn new(config: Rc<RefCell<config::Config>>) -> Self {
         let rows_model = Rc::new(VecModel::<GameRow>::default());
@@ -53,6 +55,7 @@ impl GameController {
             playtime: HashMap::new(),
             content: HashMap::new(),
             avatars: HashMap::new(),
+            backgrounds: RefCell::new(HashMap::new()),
             rows_model,
             reveal_timer,
             synced: false,
@@ -287,6 +290,8 @@ impl GameController {
                 opacity: 1.0,
                 appear: true,
                 flip: self.flip,
+                has_background: false,
+                background: Image::default(),
             });
             row_y += GROUP_HEIGHT;
 
@@ -348,7 +353,39 @@ impl GameController {
             opacity,
             appear: true,
             flip: self.flip,
+            has_background: instance.has_background,
+            background: self.instance_background(instance),
         }
+    }
+
+    /// The instance's decoded background for its list card, memoised by the
+    /// background file's modified time so a relayout does not re-read and
+    /// re-decode every instance's image. `load_background` reads the file again
+    /// on a miss; a cache hit clones the shared pixel buffer.
+    fn instance_background(&self, instance: &Instance) -> Image {
+        if !instance.has_background {
+            // The picture may have just been removed: drop the cached decode.
+            self.backgrounds.borrow_mut().remove(&instance.id);
+            return Image::default();
+        }
+        let path = instance::get_background_path(&instance.id);
+        let modified = std::fs::metadata(&path)
+            .and_then(|meta| meta.modified())
+            .ok();
+        if let Some(cached) = self.backgrounds.borrow().get(&instance.id)
+            && cached.modified == modified
+        {
+            return cached.image.clone();
+        }
+        let image = load_background(instance);
+        self.backgrounds.borrow_mut().insert(
+            instance.id.clone(),
+            CachedBackground {
+                modified,
+                image: image.clone(),
+            },
+        );
+        image
     }
 
     /// Merges the freshly laid-out rows into the model the view is rendering.
@@ -424,6 +461,14 @@ impl GameController {
         // The motion kind has been baked into those rows; reset the flag so the
         // next layout defaults to the FLIP.
         self.flip = true;
+        // Drop the decodes of instances that no longer exist, so their images
+        // do not linger for the rest of the session.
+        {
+            let live: HashSet<&str> = self.instances.iter().map(|it| it.id.as_str()).collect();
+            self.backgrounds
+                .borrow_mut()
+                .retain(|id, _| live.contains(id.as_str()));
+        }
 
         // Content counts + summary need the current instance; compute them
         // before borrowing the global mutably.
