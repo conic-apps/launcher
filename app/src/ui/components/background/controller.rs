@@ -116,7 +116,8 @@ thread_local! {
 enum Source {
     World,
     /// A custom background image. `global` marks the one from Settings →
-    /// Appearance, the only one the darkness setting dims.
+    /// Appearance, which picks whether the global or the current instance's
+    /// darkness percentage dims it.
     Image {
         path: PathBuf,
         global: bool,
@@ -382,8 +383,9 @@ impl SkyCache {
 
 pub struct Controller {
     config: Rc<RefCell<config::Config>>,
-    /// The current instance, as `(id, use_as_launcher_background, has_background)`.
-    instance: Option<(String, bool, bool)>,
+    /// The current instance, as
+    /// `(id, use_as_launcher_background, has_background, background_darkness)`.
+    instance: Option<(String, bool, bool, u8)>,
     /// What the app's state resolves to, and what is fully on screen.
     target: Source,
     settled: Source,
@@ -475,7 +477,7 @@ impl Controller {
 
     /// Which of the three sources the app is asking for.
     fn resolve(&self) -> Source {
-        if let Some((id, use_as_launcher, has_background)) = &self.instance
+        if let Some((id, use_as_launcher, has_background, _)) = &self.instance
             && *use_as_launcher
             && *has_background
             && let Some(source) = image_source(instance::get_background_path(id), false)
@@ -1132,21 +1134,43 @@ impl Controller {
         self.write_alpha(ui, slot);
     }
 
-    /// Only the *global* custom background is dimmed, at the user's percentage
-    /// — an instance background and the world are never dimmed. It follows the
-    /// layer's *displayed* opacity, so the dim eases in and out with it, and
-    /// the two slots are combined as they are composited (`1 - (1-a)(1-b)`),
-    /// so replacing one global image with another does not lighten in the
-    /// middle of the cross-fade.
+    /// A custom background is dimmed at the percentage of whoever owns it: the
+    /// global image at `appearance.background_darkness`, an instance background
+    /// at that instance's `background_darkness`. The world is never dimmed.
+    ///
+    /// It follows each layer's *displayed* opacity, so the dim eases in and out
+    /// with it, and the two slots are combined as they are composited: a slot's
+    /// darkness is weighted by the part of the picture it actually covers — the
+    /// later-drawn slot at its own opacity, the one under it scaled by what is
+    /// left showing — so replacing one image with another, or cross-fading
+    /// between two different percentages, does not lighten in the middle.
     fn update_dim(&self, ui: &App) {
-        let darkness = f32::from(self.config.borrow().appearance.background_darkness) / 100.0;
-        let uncovered = self
-            .slots
-            .iter()
-            .filter(|slot| matches!(&slot.source, Some(Source::Image { global: true, .. })))
-            .fold(1.0f32, |uncovered, slot| uncovered * (1.0 - slot.opacity));
-        ui.global::<Background>()
-            .set_dim_alpha(darkness * (1.0 - uncovered));
+        let global_darkness =
+            f32::from(self.config.borrow().appearance.background_darkness) / 100.0;
+        let instance_darkness = self
+            .instance
+            .as_ref()
+            .map(|(_, _, _, darkness)| f32::from(*darkness) / 100.0)
+            .unwrap_or(0.0);
+
+        // Slots are drawn in order, `custom-a` then `custom-b` over it, so the
+        // walk runs from the top slot down: what a slot covers is its opacity
+        // times the share the slots above it left.
+        let mut remaining = 1.0f32;
+        let mut dim = 0.0f32;
+        for slot in self.slots.iter().rev() {
+            let Some(Source::Image { global, .. }) = &slot.source else {
+                continue;
+            };
+            let darkness = if *global {
+                global_darkness
+            } else {
+                instance_darkness
+            };
+            dim += darkness * slot.opacity * remaining;
+            remaining *= 1.0 - slot.opacity;
+        }
+        ui.global::<Background>().set_dim_alpha(dim);
     }
 
     /// Keeps the tick running only while there is something to do.
@@ -1301,11 +1325,11 @@ pub fn setup(ui: &App, config: Rc<RefCell<config::Config>>) {
 }
 
 /// Reports the current instance's background facts, from `game.rs`'s refresh.
-pub fn set_instance(ui: &App, current: Option<(&str, bool, bool)>) {
+pub fn set_instance(ui: &App, current: Option<(&str, bool, bool, u8)>) {
     let controller = CONTROLLER.with(|slot| slot.borrow().clone());
     let Some(controller) = controller else { return };
-    let current = current.map(|(id, use_as_launcher, has_background)| {
-        (id.to_string(), use_as_launcher, has_background)
+    let current = current.map(|(id, use_as_launcher, has_background, darkness)| {
+        (id.to_string(), use_as_launcher, has_background, darkness)
     });
     let mut controller = controller.borrow_mut();
     // It refreshes even when the tuple did not move: an instance's background
@@ -1581,5 +1605,42 @@ mod tests {
         assert!(!background.get_world_shown());
         controller.ticking.store(false, Ordering::Relaxed);
         std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// An instance background is dimmed at the instance's own percentage, while
+    /// the global image keeps using the global one. The two never share a
+    /// setting, which is the point of the instance-level slider.
+    #[test]
+    fn a_background_is_dimmed_at_its_owners_percentage() {
+        i_slint_backend_testing::init_no_event_loop();
+        let ui = App::new().expect("the app");
+        let config = Rc::new(RefCell::new(config::Config::default()));
+        config.borrow_mut().appearance.background_darkness = 40;
+        let mut controller = Controller::new(&ui, Rc::clone(&config));
+        let background = ui.global::<Background>();
+
+        let image = |name: &str, global: bool| Source::Image {
+            path: PathBuf::from(name),
+            global,
+            modified: mtime(1),
+        };
+
+        // An instance background, fully on screen at 80%.
+        controller.instance = Some(("id".to_string(), true, true, 80));
+        controller.slots[0].source = Some(image("/tmp/conic-instance", false));
+        controller.slots[0].opacity = 1.0;
+        controller.update_dim(&ui);
+        let dim = background.get_dim_alpha();
+        assert!(
+            (dim - 0.8).abs() < 1e-6,
+            "instance darkness not used: {dim}"
+        );
+
+        // The global image at the same opacity uses the global 40% instead.
+        controller.instance = None;
+        controller.slots[0].source = Some(image("/tmp/conic-global", true));
+        controller.update_dim(&ui);
+        let dim = background.get_dim_alpha();
+        assert!((dim - 0.4).abs() < 1e-6, "global darkness not used: {dim}");
     }
 }

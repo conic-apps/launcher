@@ -134,6 +134,13 @@ pub struct InstanceConfig {
     /// Whether to use this instance's background image as the launcher background
     #[serde(default)]
     pub use_as_launcher_background: bool,
+
+    /// How much this instance's background image is darkened, as a percentage,
+    /// when it is the launcher background. The global background has its own
+    /// `appearance.background_darkness`; an instance background is dimmed at
+    /// this value instead, so the two never share a setting.
+    #[serde(default)]
+    pub background_darkness: u8,
 }
 
 impl InstanceConfig {
@@ -151,6 +158,7 @@ impl InstanceConfig {
             group: None,
             launch_config: InstanceLaunchConfig::default(),
             use_as_launcher_background: false,
+            background_darkness: 0,
         }
     }
 }

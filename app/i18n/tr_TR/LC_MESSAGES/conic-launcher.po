@@ -2872,3 +2872,8 @@ msgstr "Örnekler ve oyun verileri"
 msgctxt "AccountAdd"
 msgid "Sign in"
 msgstr "Giriş yap"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Background image darkness"
+msgstr "Arka plan resmini karartma"

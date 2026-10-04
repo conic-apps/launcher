@@ -58,6 +58,7 @@ pub(crate) fn apply(state: &InstanceSettingsState, instance: &Instance) {
     state.set_loader(loader_name(instance).into());
     state.set_minecraft_version(instance.config.runtime.minecraft.clone().into());
     state.set_has_background(instance.has_background);
+    state.set_background_darkness(i32::from(instance.config.background_darkness));
     state.set_name_editing(false);
     apply_launch(state, &instance.config);
 }
@@ -141,6 +142,11 @@ pub(crate) fn parse_number(value: &str, previous: Option<usize>) -> Option<usize
 pub(crate) fn collect(state: &InstanceSettingsState, mut config: InstanceConfig) -> InstanceConfig {
     config.name = state.get_name().to_string();
     config.use_as_launcher_background = state.get_use_as_launcher_background();
+    // The slider is 0..=100, so the conversion only fails on a value the UI
+    // cannot produce; keeping the stored one is the safe answer then, the way
+    // the settings screen keeps an unparseable number.
+    config.background_darkness =
+        u8::try_from(state.get_background_darkness()).unwrap_or(config.background_darkness);
     let gc = state.get_gc();
     // Taken rather than borrowed, so the fields the overlay does not show can be
     // moved out of it and into the replacement below.
@@ -180,12 +186,14 @@ pub(crate) fn collect(state: &InstanceSettingsState, mut config: InstanceConfig)
 }
 
 /// Whether the game view shows something an edit changed: the instance's name
-/// (the summary's title and its list card) and `use_as_launcher_background`, the
-/// flag the window background resolves on. Everything else the overlay edits is
-/// read when the game is launched.
+/// (the summary's title and its list card), `use_as_launcher_background`, the
+/// flag the window background resolves on, and `background_darkness`, which the
+/// window background reads through that resolution. Everything else the overlay
+/// edits is read when the game is launched.
 pub(crate) fn touches_game_view(before: &InstanceConfig, after: &InstanceConfig) -> bool {
     before.name != after.name
         || before.use_as_launcher_background != after.use_as_launcher_background
+        || before.background_darkness != after.background_darkness
 }
 
 /// Schedules the write of an edited instance config.

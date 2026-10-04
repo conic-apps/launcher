@@ -490,6 +490,7 @@ impl GameController {
                 instance.id.clone(),
                 instance.config.use_as_launcher_background,
                 instance.has_background,
+                instance.config.background_darkness,
             )
         });
 
@@ -664,11 +665,11 @@ fn apply_account(state: &GameState<'_>, account: Option<&Account>, avatar: Image
 
 /// Hands the current instance to the background controller: its own image when
 /// it asks to be the launcher's, the global one, or the 3D world.
-fn apply_background(ui: &App, instance: Option<&(String, bool, bool)>) {
+fn apply_background(ui: &App, instance: Option<&(String, bool, bool, u8)>) {
     crate::ui::components::background::controller::set_instance(
         ui,
-        instance.map(|(id, use_as_launcher, has_background)| {
-            (id.as_str(), *use_as_launcher, *has_background)
+        instance.map(|(id, use_as_launcher, has_background, darkness)| {
+            (id.as_str(), *use_as_launcher, *has_background, *darkness)
         }),
     );
 }

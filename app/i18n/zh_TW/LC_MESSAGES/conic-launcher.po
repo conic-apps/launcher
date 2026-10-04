@@ -2872,3 +2872,8 @@ msgstr "實例與遊戲資料"
 msgctxt "AccountAdd"
 msgid "Sign in"
 msgstr "登入"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Background image darkness"
+msgstr "背景圖片變暗"

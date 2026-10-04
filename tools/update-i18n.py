@@ -410,6 +410,23 @@ SAVE_TAGS = {
             "pl_PL": "Rozważ utworzenie nowej instancji",
         },
     },
+    # The instance background's darkness slider, the same sentence as the
+    # global one in Settings → Appearance.
+    "InstanceSettings": {
+        "Background image darkness": {
+            "zh_CN": "背景图像变暗",
+            "zh_TW": "背景圖片變暗",
+            "ja_JP": "背景画像の暗さ",
+            "ko_KR": "배경 이미지 어둡게",
+            "de_DE": "Abdunkeln des Hintergrundbilds",
+            "fr_FR": "Assombrissement de l'image de fond",
+            "es_ES": "Oscurecer imagen de fondo",
+            "pt_BR": "Escurecer imagem de fundo",
+            "ru_RU": "Затемнение фонового изображения",
+            "tr_TR": "Arka plan resmini karartma",
+            "pl_PL": "Przyciemnienie obrazu tła",
+        },
+    },
     # The four launch error dialogs, catalogued with their Chinese source
     # sentences; `ConfirmDeleteInstance` is catalogued the same way.
     "LaunchDialogs": {
