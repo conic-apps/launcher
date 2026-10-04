@@ -2872,3 +2872,8 @@ msgstr "Instancias y datos del juego"
 msgctxt "AccountAdd"
 msgid "Sign in"
 msgstr "Iniciar sesión"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Background image darkness"
+msgstr "Oscurecer imagen de fondo"

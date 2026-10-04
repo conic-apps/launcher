@@ -2872,3 +2872,8 @@ msgstr "インスタンスとゲームデータ"
 msgctxt "AccountAdd"
 msgid "Sign in"
 msgstr "ログイン"
+
+#: ui
+msgctxt "InstanceSettings"
+msgid "Background image darkness"
+msgstr "背景画像の暗さ"

@@ -11,6 +11,7 @@ import { SettingCollapse } from "../components/settings/setting-collapse.slint";
 import { Button } from "../components/controls/button.slint";
 import { Input } from "../components/controls/input.slint";
 import { Select } from "../components/controls/select.slint";
+import { SliderBar } from "../components/controls/slider-bar.slint";
 import { Switch } from "../components/controls/switch.slint";
 import { InstanceCard } from "../components/display/instance-card.slint";
 import { InstanceSettingsState } from "../globals/instance-settings.slint";
@@ -149,6 +150,21 @@ export component InstanceSettings inherits Rectangle {
                             text: @tr("InstanceSettings" => "Remove image");
                             text-color: Theme.red;
                             clicked => { InstanceSettingsState.remove-background(); }
+                        }
+                    }
+
+                    SettingItem {
+                        title: @tr("InstanceSettings" => "Background image darkness");
+                        description: InstanceSettingsState.background-darkness + "%";
+                        item-disabled: !InstanceSettingsState.has-background;
+
+                        SliderBar {
+                            max: 100;
+                            min: 0;
+                            step: 5;
+                            slider-enabled: InstanceSettingsState.has-background;
+                            value <=> InstanceSettingsState.background-darkness;
+                            edited => { InstanceSettingsState.changed(); }
                         }
                     }
 
