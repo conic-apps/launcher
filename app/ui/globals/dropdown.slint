@@ -15,6 +15,9 @@ export global Dropdown {
     in-out property <[DropdownOption]> options: [];
     in-out property <[AccountItem]> accounts: [];
     in-out property <bool> account-mode: false;
+    /// Adds a trailing "Add account" row to the account-mode panel. The row
+    /// reports the sentinel key below through the dropdown's own selection.
+    in-out property <bool> include-add-account: false;
     in-out property <string> current: "";
     in-out property <string> owner: "";
 

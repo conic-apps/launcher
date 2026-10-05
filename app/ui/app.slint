@@ -29,7 +29,8 @@ export { Navigation } from "globals/navigation.slint";
 export { GameState, GameRow, AccountItem } from "globals/game.slint";
 export { LaunchState } from "globals/launch.slint";
 export { ScrollInput, ScrollSource } from "globals/scroll.slint";
-export { Dialogs, CreateInstanceState, MinecraftVersionItem, AccountAddState, YggdrasilProfileItem, DeleteInstanceState, DeleteSaveState } from "globals/dialogs.slint";
+export { AvatarMask } from "globals/avatar.slint";
+export { Dialogs, CreateInstanceState, MinecraftVersionItem, AccountAddState, YggdrasilProfileItem, DeleteInstanceState, DeleteSaveState, DeleteAccountState } from "globals/dialogs.slint";
 export { WindowDrag } from "globals/window-drag.slint";
 export { MultiplayerState, MultiplayerPlayer, MultiplayerPeer } from "globals/multiplayer.slint";
 export { WindowControl } from "components/title-bar.slint";
@@ -38,6 +39,7 @@ export { ContentState, ContentSearch, ContentCard, CardTag, FilterChip, FilterRo
 export { MusicState, MusicTrack } from "globals/music.slint";
 export { CommandPaletteState, PaletteItem } from "globals/command-palette.slint";
 export { InstanceSettingsState } from "globals/instance-settings.slint";
+export { AccountViewState, AccountDay, AccountMonthLabel, AccountActivity } from "globals/account-view.slint";
 export { SetupWizardState } from "globals/setup.slint";
 export { WorldMapState, WorldSource, WorldTile } from "globals/worldmap.slint";
 
@@ -278,9 +280,9 @@ export component App inherits Window {
                     }
                 }
 
-                // Page stack. "accounts" is the one page with no screen yet: it is
-                // being redesigned, so it lands on `TodoPlaceholder` — see that
-                // component for why.
+                // Page stack. The account view is an overlay on the game screen
+                // now, so `"accounts"` no longer names a page; the fallback
+                // catches any page value with no screen of its own.
                 //
                 // Animated at the view, not here: a page that plays its own exit
                 // keeps being mounted while `leaving-page` is set, so its elements

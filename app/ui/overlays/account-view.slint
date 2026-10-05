@@ -1,0 +1,854 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { AppIcon } from "../components/display/app-icon.slint";
+import { ScrollView } from "../components/containers/scroll-view.slint";
+import {
+    ScrollViewHorizontal,
+} from "../components/containers/scroll-view-horizontal.slint";
+import { SettingGroup } from "../components/settings/setting-group.slint";
+import { SettingItem } from "../components/settings/setting-item.slint";
+import { Button } from "../components/controls/button.slint";
+import { Loading } from "../components/controls/loading.slint";
+import { ContentOverlay } from "content/content-overlay.slint";
+import { GameState, GameTime } from "../globals/game.slint";
+import { AccountViewState } from "../globals/account-view.slint";
+import { AvatarMask } from "../globals/avatar.slint";
+import { Dropdown } from "../globals/dropdown.slint";
+import { FocusManager } from "../globals/focus.slint";
+
+// One icon + label pair of the details row.
+//
+// `flexible` lets a pair take the leftover width and elide; the others keep
+// their natural width and are never clipped.
+component DetailItem inherits HorizontalLayout {
+    in property <string> icon;
+    in property <string> label;
+    in property <bool> flexible: false;
+    spacing: 6px;
+    cross-axis-alignment: center;
+    horizontal-stretch: root.flexible ? 1 : 0;
+
+    AppIcon {
+        name: root.icon;
+        size: 16px;
+        icon-color: Theme.default-text-color.with-alpha(0.509);
+    }
+
+    Text {
+        text: root.label;
+        font-size: 12px;
+        font-weight: Theme.font-weight-normal;
+        color: Theme.default-text-color.with-alpha(0.65);
+        overflow: root.flexible ? elide : clip;
+        wrap: no-wrap;
+        vertical-alignment: center;
+    }
+}
+
+// The account view overlay: the player's head, the auth details, the launch
+// contribution graph, recent activity, the cape list and the danger zone. It
+// slides in on the shared `ContentOverlay` shell, like the instance settings it
+// mirrors.
+//
+// The top band — the title bar, the account summary and the launch graph — runs
+// full width on the `mantle` fill with no gap between its parts: it is not a
+// card. The sections below it are rounded boxes, re-inset and spaced by the run
+// that holds them.
+export component AccountView inherits Rectangle {
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+    /// The graph cells' side and the gap between them.
+    private property <length> cell: 11px;
+
+    // The header head and its CSS-style drop shadow. The shadow is a bitmap
+    // (`AvatarMask.drop-shadow`), grown by `avatar-shadow-pad` on every side so
+    // the blur is not clipped; the head is drawn over it at the box itself.
+    private property <length> avatar-size: 64px;
+    private property <length> avatar-shadow-blur: 10px;
+    private property <length> avatar-shadow-offset-y: 3px;
+    private property <length> avatar-shadow-pad: self.avatar-shadow-blur * 1.5
+        + self.avatar-shadow-offset-y + 1px;
+
+    // The account dropdown the header button opens reports its pick through
+    // `Dropdown.choose-serial`; this mirrors that into a change the view can
+    // react to (the same wiring `AccountListDropdown` does for the footer).
+    private property <int> switch-serial: Dropdown.choose-serial;
+    changed switch-serial => {
+        if Dropdown.choose-owner == "account-view-switch" {
+            if Dropdown.chosen == "__add_account__" {
+                AccountViewState.add-account();
+            } else {
+                AccountViewState.select-account(Dropdown.chosen);
+            }
+        }
+    }
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    pure function auth-icon() -> string {
+        if AccountViewState.kind == "Microsoft" {
+            return "logo-microsoft";
+        }
+        if AccountViewState.kind == "Yggdrasil" {
+            return "server";
+        }
+        return "cloud-offline-outline";
+    }
+
+    pure function auth-text() -> string {
+        if AccountViewState.kind == "Microsoft" {
+            return @tr("AccountView" => "Microsoft (auth service)");
+        }
+        if AccountViewState.kind == "Yggdrasil" {
+            return @tr(
+                "AccountView" => "{} (third-party Yggdrasil)",
+                AccountViewState.auth-server);
+        }
+        return @tr("AccountView" => "No auth service (offline account)");
+    }
+
+    pure function refresh-text() -> string {
+        if AccountViewState.refresh-kind == "year-month-day" {
+            return GameTime.year-month-day(
+                AccountViewState.refresh-month,
+                AccountViewState.refresh-day,
+                AccountViewState.refresh-year);
+        }
+        return @tr("AccountView" => "Never");
+    }
+
+    pure function month-label(month: int) -> string {
+        return @tr("AccountView" => "{}月", month);
+    }
+
+    /// The short weekday that opens the graph's grid `row` (0 = Sunday). Only
+    /// rows 1, 3 and 5 are labelled, the way GitHub's graph does.
+    pure function weekday-label(row: int) -> string {
+        if row == 1 {
+            return @tr("AccountView" => "Mon");
+        }
+        if row == 3 {
+            return @tr("AccountView" => "Wed");
+        }
+        if row == 5 {
+            return @tr("AccountView" => "Fri");
+        }
+        return "";
+    }
+
+    pure function level-color(level: int) -> color {
+        if level <= 0 {
+            return Theme.overlay-0.with-alpha(0.2);
+        }
+        if level == 1 {
+            return Theme.green.with-alpha(0.25);
+        }
+        if level == 2 {
+            return Theme.green.with-alpha(0.45);
+        }
+        if level == 3 {
+            return Theme.green.with-alpha(0.7);
+        }
+        return Theme.green;
+    }
+
+    ScrollView {
+        // The top band. The 52px title bar is the first row; the account summary
+        // and the launch graph continue it on the same `mantle`, edge to edge
+        // with no gap, unlike the cards below.
+        top-band := VerticalLayout {
+            width: 100%;
+            spacing: 0px;
+
+            // The same 52px bar the instance settings panel uses, so the two
+            // overlays read as one family. It is tinted lavender — the account's
+            // colour, carried down through the header below. It scrolls away
+            // with the content.
+            title-bar := Rectangle {
+                width: 100%;
+                height: 52px;
+                background: Theme.mantle.mix(Theme.lavender, 0.82);
+
+                HorizontalLayout {
+                    padding-left: 32px;
+                    padding-right: 32px;
+                    spacing: 8px;
+                    cross-axis-alignment: center;
+
+                    AppIcon {
+                        name: "person-circle-outline";
+                        size: 20px;
+                    }
+
+                    Text {
+                        text: @tr("AccountView" => "Account details");
+                        font-size: 16px;
+                        color: Theme.default-text-color.transparentize(0.1);
+                    }
+                }
+            }
+
+            if AccountViewState.has-account: VerticalLayout {
+                width: 100%;
+                spacing: 0px;
+
+                // The header. Square, full width and on the band rather than a
+                // rounded card, so it reads as the title bar's continuation.
+                //
+                // Its fill is the band's `mantle` with a whisper of `lavender`
+                // mixed in. Catppuccin's accents are too light to fill a whole
+                // section with — the text would sit on a washed-out pastel — but
+                // mixed into the dark neutral this far they only shift its hue,
+                // and the account's block reads as its own tone beside the
+                // green-washed graph below.
+                Rectangle {
+                    width: 100%;
+                    height: 108px;
+                    background: Theme.mantle.mix(Theme.lavender, 0.93);
+
+                    HorizontalLayout {
+                        width: 100%;
+                        height: 100%;
+                        padding-left: 32px;
+                        padding-right: 32px;
+                        padding-top: 18px;
+                        padding-bottom: 18px;
+                        spacing: 18px;
+                        cross-axis-alignment: center;
+
+                        // A square head with a drop shadow, the way the Vue
+                        // build drew it, so `AccountViewState.avatar` is
+                        // deliberately not passed through `AvatarMask.rounded`
+                        // — the pills round their heads, this one does not.
+                        //
+                        // The shadow follows the head's own alpha
+                        // (`AvatarMask.drop-shadow`), so it traces the hat's
+                        // silhouette instead of the box's square, and the corners
+                        // stay see-through. A `drop-shadow-*` would follow the box
+                        // and cast a square.
+                        avatar-box := Rectangle {
+                            width: root.avatar-size;
+                            height: root.avatar-size;
+                            background: transparent;
+
+                            Image {
+                                x: -root.avatar-shadow-pad;
+                                y: -root.avatar-shadow-pad;
+                                width: root.avatar-size + 2 * root.avatar-shadow-pad;
+                                height: root.avatar-size + 2 * root.avatar-shadow-pad;
+                                source: AvatarMask.drop-shadow(
+                                    AccountViewState.avatar,
+                                    root.avatar-shadow-blur,
+                                    root.avatar-shadow-offset-y,
+                                    root.avatar-shadow-pad,
+                                    #00000066);
+                                image-fit: fill;
+                            }
+
+                            Image {
+                                width: 100%;
+                                height: 100%;
+                                source: AccountViewState.avatar;
+                                image-rendering: pixelated;
+                            }
+                        }
+
+                        info := VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 10px;
+                            alignment: center;
+
+                            // The name and its switch button sit together on the
+                            // left, a fixed 8px apart.
+                            HorizontalLayout {
+                                alignment: start;
+                                spacing: 8px;
+                                cross-axis-alignment: center;
+
+                                Text {
+                                    text: AccountViewState.name;
+                                    font-size: 20px;
+                                    font-weight: Theme.font-weight-bold;
+                                    color: Theme.default-text-color.transparentize(0.05);
+                                    overflow: elide;
+                                    wrap: no-wrap;
+                                    vertical-alignment: center;
+                                }
+
+                                // A bare 36x30 hit area: no fill and no
+                                // outline, just the swap glyph. Hover tints it
+                                // lavender and a press shrinks it. The shared
+                                // `Button` is not used because it always paints
+                                // its controller fill and border (`transparent`
+                                // there means "keep the default", not "none").
+                                // Clicking opens the account dropdown below.
+                                switch-account := Rectangle {
+                                    width: 36px;
+                                    height: 30px;
+                                    background: transparent;
+
+                                    AppIcon {
+                                        name: "swap-horizontal-outline";
+                                        size: 16px;
+                                        x: (parent.width - self.width) / 2;
+                                        y: (parent.height - self.height) / 2;
+                                        icon-color: switch-touch.has-hover || switch-touch.pressed
+                                            ? Theme.lavender
+                                            : Theme.default-text-color.transparentize(0.1);
+                                        transform-origin: { x: self.width / 2, y: self.height / 2 };
+                                        transform-scale: switch-touch.pressed ? 90% : 100%;
+                                        animate icon-color { duration: 120ms; easing: ease; }
+                                        animate transform-scale { duration: 120ms; easing: ease; }
+                                    }
+
+                                    switch-touch := TouchArea {
+                                        width: 100%;
+                                        height: 100%;
+
+                                        clicked => {
+                                            FocusManager.clear();
+                                            if Dropdown.open
+                                                && Dropdown.owner == "account-view-switch" {
+                                                Dropdown.open = false;
+                                            } else {
+                                                Dropdown.options = [];
+                                                Dropdown.accounts = GameState.accounts;
+                                                Dropdown.account-mode = true;
+                                                Dropdown.include-add-account = true;
+                                                Dropdown.current = AccountViewState.viewed-key;
+                                                Dropdown.owner = "account-view-switch";
+                                                Dropdown.anchor-x = switch-account.absolute-position.x;
+                                                Dropdown.anchor-width = 240px;
+                                                Dropdown.anchor-y = switch-account.absolute-position.y
+                                                    + switch-account.height + 4px;
+                                                Dropdown.expand-upwards = false;
+                                                Dropdown.open = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Auth service first, then the last refresh, then the
+                            // UUID, which is the one that may be squeezed down to
+                            // an ellipsis.
+                            //
+                            // TODO(account-view): the UUID may be elided here with
+                            // no way to read it in full. Add a hover tooltip
+                            // (DescriptionTooltip) and a click-to-copy action.
+                            HorizontalLayout {
+                                spacing: 18px;
+                                cross-axis-alignment: center;
+
+                                DetailItem {
+                                    icon: auth-icon();
+                                    label: auth-text();
+                                }
+
+                                DetailItem {
+                                    icon: "time";
+                                    label: refresh-text();
+                                }
+
+                                DetailItem {
+                                    flexible: true;
+                                    icon: "finger-print";
+                                    label: AccountViewState.uuid;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // The contribution graph. Also on the band, with no seam and no
+                // heading of its own: the year's total moved down beside the
+                // legend.
+                Rectangle {
+                    width: 100%;
+                    height: stats-inner.preferred-height;
+                    // The header's tint trick, in the graph's own green: the
+                    // statistic's total sits on the legend row below, so there
+                    // is no heading to name the section.
+                    background: Theme.base.mix(Theme.lavender, 0.93);
+
+                    stats-inner := VerticalLayout {
+                        width: 100%;
+                        padding-left: 32px;
+                        padding-right: 32px;
+                        padding-top: 16px;
+                        padding-bottom: 16px;
+                        spacing: 4px;
+                        alignment: start;
+
+                        // The weekday labels sit in a fixed gutter left of the
+                        // scrolling weeks, one per weekday grid row they name:
+                        // Mon/Wed/Fri at rows 1/3/5 — the 2nd, 4th and 6th rows,
+                        // because the grid starts on Sunday.
+                        HorizontalLayout {
+                            width: 100%;
+                            height: 112px;
+                            spacing: 4px;
+
+                            weekday-gutter := Rectangle {
+                                width: 26px;
+                                height: 112px;
+                                background: transparent;
+
+                                for row in [1, 3, 5]: Text {
+                                    x: 0;
+                                    y: 16px + row * 13px;
+                                    width: parent.width;
+                                    height: 11px;
+                                    text: weekday-label(row);
+                                    font-size: 10px;
+                                    color: Theme.default-text-color.with-alpha(0.45);
+                                    horizontal-alignment: right;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            graph-column := VerticalLayout {
+                                horizontal-stretch: 1;
+                                height: 112px;
+                                alignment: start;
+
+                                graph-scroll := ScrollViewHorizontal {
+                                    width: 100%;
+                                    height: 112px;
+
+                                    graph-content := Rectangle {
+                                        // 13px per column (11px cell + 2px
+                                        // gap): the graph's own pitch, matching
+                                        // the cells. Measured against the
+                                        // *viewport*, not the panel: the
+                                        // viewport is narrower by this
+                                        // section's insets, so using the panel
+                                        // left a strip of scrollable blank
+                                        // whenever the graph fit the window.
+                                        width: max(
+                                            graph-scroll.width,
+                                            AccountViewState.column-count * 13px);
+                                        height: 112px;
+                                        background: transparent;
+
+                                        for label in AccountViewState.months: Text {
+                                            x: label.column * 13px;
+                                            y: 0px;
+                                            text: month-label(label.month);
+                                            font-size: 10px;
+                                            color: Theme.default-text-color.with-alpha(0.45);
+                                        }
+
+                                        for day in AccountViewState.days: Rectangle {
+                                            x: day.column * 13px;
+                                            y: 16px + day.row * 13px;
+                                            width: root.cell;
+                                            height: root.cell;
+                                            border-radius: 2px;
+                                            background: root.level-color(day.level);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 100%;
+                            height: 12px;
+                            background: transparent;
+                        }
+
+                        HorizontalLayout {
+                            width: 100%;
+                            spacing: 4px;
+                            cross-axis-alignment: center;
+
+                            // The year's total, left-aligned. Its stretch fills
+                            // the row, which pushes the "Less / More" legend to
+                            // the right edge.
+                            Text {
+                                text: @tr(
+                                    "AccountView" => "Launched this account {} times in the past year",
+                                    AccountViewState.total-launches);
+                                horizontal-stretch: 1;
+                                horizontal-alignment: left;
+                                vertical-alignment: center;
+                                overflow: elide;
+                                wrap: no-wrap;
+                                font-size: 12px;
+                                color: Theme.default-text-color.with-alpha(0.65);
+                            }
+
+                            Text {
+                                text: @tr("AccountView" => "Less");
+                                font-size: 10px;
+                                color: Theme.default-text-color.with-alpha(0.45);
+                            }
+
+                            for level in [0, 1, 2, 3, 4]: Rectangle {
+                                width: 10px;
+                                height: 10px;
+                                border-radius: 2px;
+                                background: root.level-color(level);
+                            }
+
+                            Text {
+                                text: @tr("AccountView" => "More");
+                                font-size: 10px;
+                                color: Theme.default-text-color.with-alpha(0.45);
+                            }
+                        }
+                    }
+                }
+
+                // The cards, re-inset and spaced below the band. The top padding
+                // is the seam the band deliberately does not have.
+                VerticalLayout {
+                    width: 100%;
+                    spacing: 16px;
+                    alignment: start;
+                    padding-left: 24px;
+                    padding-right: 24px;
+                    padding-top: 16px;
+
+                    // Recent activity: a hand-written rounded box rather than a
+                    // `SettingGroup`, filled with the account's lavender mixed
+                    // into the card colour. Each row is one line — icon, the
+                    // account that launched, the instance, then the time.
+                    VerticalLayout {
+                        width: 100%;
+                        spacing: 10px;
+                        alignment: start;
+
+                        Text {
+                            text: @tr("AccountView" => "Recent activity");
+                            font-size: 13.5px;
+                            color: Theme.default-text-color.transparentize(0.1);
+                        }
+
+                        Rectangle {
+                            width: 100%;
+                            height: activity-inner.preferred-height;
+                            background: Theme.setting-item-background.mix(Theme.lavender, 0.9);
+                            border-radius: 8px;
+
+                            activity-inner := VerticalLayout {
+                                width: 100%;
+                                padding-left: 16px;
+                                padding-right: 16px;
+                                padding-top: 12px;
+                                padding-bottom: 12px;
+                                spacing: 0px;
+                                alignment: start;
+
+                                if AccountViewState.activities-empty: Text {
+                                    text: @tr("AccountView" => "No launches recorded yet");
+                                    font-size: 12px;
+                                    color: Theme.default-text-color.with-alpha(0.509);
+                                    vertical-alignment: center;
+                                }
+
+                                for activity in AccountViewState.activities: HorizontalLayout {
+                                    height: 32px;
+                                    spacing: 6px;
+                                    cross-axis-alignment: center;
+
+                                    AppIcon {
+                                        name: "play-circle-outline";
+                                        size: 16px;
+                                        icon-color: Theme.green;
+                                    }
+
+                                    Text {
+                                        text: AccountViewState.name;
+                                        font-size: 13px;
+                                        color: Theme.lavender;
+                                        overflow: elide;
+                                        wrap: no-wrap;
+                                    }
+
+                                    Text {
+                                        text: @tr("AccountView" => "launched");
+                                        font-size: 13px;
+                                        color: Theme.default-text-color.with-alpha(0.7);
+                                        wrap: no-wrap;
+                                    }
+
+                                    // Takes the slack and elides, so the time
+                                    // stays against the right edge.
+                                    Text {
+                                        text: activity.name;
+                                        horizontal-stretch: 1;
+                                        font-size: 13px;
+                                        color: Theme.lavender;
+                                        overflow: elide;
+                                        wrap: no-wrap;
+                                    }
+
+                                    Text {
+                                        text: GameTime.last-played(
+                                            activity.kind,
+                                            activity.hours,
+                                            activity.month,
+                                            activity.day,
+                                            activity.year);
+                                        font-size: 11px;
+                                        color: Theme.default-text-color.with-alpha(0.45);
+                                        wrap: no-wrap;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Select cape: the same hand-written box, with every cape the
+                    // account owns in a row, led by a "no cape" entry. The active
+                    // one carries a 2px Catppuccin-blue border; the capes are
+                    // rounded in the pixels by `AvatarMask.rounded`, because a
+                    // rounded `clip` is a no-op on the software renderer. While a
+                    // change is in flight the row dims and a small crust badge
+                    // with a spinner covers it.
+                    VerticalLayout {
+                        width: 100%;
+                        spacing: 10px;
+                        alignment: start;
+
+                        Text {
+                            text: @tr("AccountView" => "Select cape");
+                            font-size: 13.5px;
+                            color: Theme.default-text-color.transparentize(0.1);
+                        }
+
+                        Rectangle {
+                            width: 100%;
+                            height: cape-inner.preferred-height;
+                            background: Theme.setting-item-background.mix(Theme.lavender, 0.9);
+                            border-radius: 8px;
+
+                            // An account can own a lot of capes, so the row
+                            // scrolls sideways when they do not fit. The track
+                            // sits in the box's own 16px bottom padding.
+                            cape-scroll := ScrollViewHorizontal {
+                                width: 100%;
+                                height: 100%;
+                                scrollbar-left: 16px;
+                                scrollbar-right: 16px;
+
+                                cape-inner := HorizontalLayout {
+                                    padding: 16px;
+                                    spacing: 12px;
+                                    alignment: start;
+                                    cross-axis-alignment: center;
+
+                                    if AccountViewState.capes.length == 0: Text {
+                                        text: @tr("AccountView" => "No capes available");
+                                        font-size: 12px;
+                                        color: Theme.default-text-color.with-alpha(0.509);
+                                    }
+
+                                    for cape[index] in AccountViewState.capes: Rectangle {
+                                        width: 44px;
+                                        height: 72px;
+                                        border-radius: 8px;
+                                        border-width: cape.selected ? 2px : 0px;
+                                        border-color: Theme.blue;
+                                        background: transparent;
+                                        // Dim every entry while the change is on its way.
+                                        opacity: AccountViewState.cape-loading ? 0.4 : 1.0;
+                                        animate opacity { duration: 120ms; easing: ease; }
+
+                                        // The "no cape" entry's idle ring: a dashed
+                                        // outline in the glyph's own colour, shown
+                                        // until it is chosen (a cape's unselected tile
+                                        // stays bare). Slint's `Rectangle` has no
+                                        // dashed border, so the dashes are one `Path`
+                                        // of short segments around the rounded tile.
+                                        if cape.none && !cape.selected : Path {
+                                            x: 0;
+                                            y: 0;
+                                            width: 44px;
+                                            height: 72px;
+                                            viewbox-x: 0;
+                                            viewbox-y: 0;
+                                            viewbox-width: 44;
+                                            viewbox-height: 72;
+                                            fill: transparent;
+                                            stroke-width: 2px;
+                                            stroke: Theme.default-text-color.with-alpha(0.509);
+                                            commands: "M8.0 1.0L12.0 1.0M16.0 1.0L20.0 1.0M24.0 1.0L28.0 1.0M32.0 1.0L36.0 1.0M39.8 2.1L42.4 5.1M43.0 9.0L43.0 13.0M43.0 17.0L43.0 21.0M43.0 25.0L43.0 29.0M43.0 33.0L43.0 37.0M43.0 41.0L43.0 45.0M43.0 49.0L43.0 53.0M43.0 57.0L43.0 61.0M42.9 65.0L41.3 68.6M37.9 70.7L34.0 71.0M30.0 71.0L26.0 71.0M22.0 71.0L18.0 71.0M14.0 71.0L10.0 71.0M6.0 70.7L2.7 68.5M1.1 64.9L1.0 61.0M1.0 57.0L1.0 53.0M1.0 49.0L1.0 45.0M1.0 41.0L1.0 37.0M1.0 33.0L1.0 29.0M1.0 25.0L1.0 21.0M1.0 17.0L1.0 13.0M1.0 9.0L1.7 5.1M4.3 2.1L8.0 1.0";
+                                        }
+
+                                        // The "no cape" entry: a ban glyph in place of
+                                        // a texture, tinted blue once wearing nothing is
+                                        // the active choice.
+                                        if cape.none : AppIcon {
+                                            name: "ban";
+                                            size: 26px;
+                                            x: (parent.width - self.width) / 2;
+                                            y: (parent.height - self.height) / 2;
+                                            icon-color: cape.selected ? Theme.blue
+                                                : Theme.default-text-color.with-alpha(0.509);
+                                        }
+
+                                        // Inset 2px, which is the selected border;
+                                        // when unselected the ring is transparent.
+                                        if !cape.none : Image {
+                                            x: 2px;
+                                            y: 2px;
+                                            width: 40px;
+                                            height: 68px;
+                                            source: AvatarMask.rounded(cape.image, 6px, 40px);
+                                            image-fit: fill;
+                                            image-rendering: pixelated;
+                                        }
+
+                                        TouchArea {
+                                            width: 100%;
+                                            height: 100%;
+                                            enabled: !AccountViewState.cape-loading;
+                                            clicked => { AccountViewState.select-cape(index); }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // The in-flight badge, centred on the box: a small
+                            // crust square wrapping the spinner. It stays in the
+                            // tree and slides/fades in and out rather than being
+                            // toggled with `if`, which would pop it into place
+                            // with no transition. The show overshoots
+                            // (`ease-out-back`); the hide eases out like GSAP's
+                            // `power3.out` (`ease-out-quart`).
+                            Rectangle {
+                                width: 40px;
+                                height: 40px;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                                border-radius: 10px;
+                                background: Theme.crust;
+                                opacity: AccountViewState.cape-loading ? 1.0 : 0.0;
+                                transform-origin: { x: self.width / 2, y: self.height / 2 };
+                                transform-scale: AccountViewState.cape-loading ? 1.0 : 0.6;
+
+                                animate opacity {
+                                    duration: AccountViewState.cape-loading ? 220ms : 160ms;
+                                    easing: AccountViewState.cape-loading
+                                        ? ease-out-back
+                                        : ease-out-quart;
+                                }
+                                animate transform-scale {
+                                    duration: AccountViewState.cape-loading ? 220ms : 160ms;
+                                    easing: AccountViewState.cape-loading
+                                        ? ease-out-back
+                                        : ease-out-quart;
+                                }
+
+                                Loading {
+                                    size: 18px;
+                                    stroke-width: 4;
+                                    gap: 6;
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                    icon-color: Theme.text;
+                                }
+                            }
+                        }
+                    }
+
+                    // The danger zone.
+                    SettingGroup {
+                        danger: true;
+                        title: @tr("AccountView" => "Delete account");
+
+                        SettingItem {
+                            group-first: true;
+                            group-last: true;
+                            title: @tr("AccountView" => "Delete from Conic Launcher");
+                            description: @tr(
+                                "AccountView" => "Removes the locally stored credentials. The account itself is not affected");
+                            icon: "trash";
+                            navigable: true;
+                            clicked => { AccountViewState.delete-account(); }
+                        }
+                    }
+                }
+            }
+        }
+
+        // The empty state, when no account is selected.
+        if !AccountViewState.has-account: VerticalLayout {
+            width: 100%;
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-top: 16px;
+
+            SettingGroup {
+                empty-box := Rectangle {
+                    width: 100%;
+                    height: 220px;
+                    background: Theme.setting-item-background;
+                    border-radius: 8px;
+
+                    VerticalLayout {
+                        width: 100%;
+                        height: 100%;
+                        alignment: center;
+                        spacing: 12px;
+
+                        AppIcon {
+                            name: "person-circle-outline";
+                            size: 48px;
+                            icon-color: Theme.default-text-color.with-alpha(0.4);
+                        }
+
+                        Text {
+                            text: @tr("AccountView" => "No account selected");
+                            font-size: 15px;
+                            color: Theme.default-text-color.transparentize(0.2);
+                        }
+
+                        Button {
+                            text: @tr("Add account");
+                            button-width: 160px;
+                            clicked => { AccountViewState.add-account(); }
+                        }
+                    }
+                }
+            }
+        }
+
+        // A trailing 16px spacer, the way the instance settings panel has one:
+        // `spacing` does not account for the last group.
+        Rectangle {
+            width: 100%;
+            height: 16px;
+            background: transparent;
+        }
+    }
+}
+
+// The overlay layer's mount point: the shared shell with this overlay's
+// narrower container, and the panel itself inside it.
+export component AccountViewRoot inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    overlay := ContentOverlay {
+        overlay-visible: AccountViewState.visible;
+        panel-inset: 200px;
+        // Lavender, the title bar's colour, at the body's weaker ratio.
+        panel-background: Theme.base.mix(Theme.lavender, 0.9);
+        closed => { AccountViewState.close(); }
+
+        AccountView {
+            panel-width: overlay.panel-width;
+            panel-height: overlay.panel-height;
+        }
+    }
+}

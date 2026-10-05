@@ -42,8 +42,9 @@ export component ContentOverlay inherits Rectangle {
     in property <length> panel-inset: 150px;
     /// False for the screenshots viewer, which has no sliding container.
     in property <bool> slide: true;
-    /// The container's fill.
-    in property <color> panel-background: Theme.base;
+    /// The container's fill. A colour, or a mixed brush (the panels tint it with
+    /// their accent at a weaker ratio than their title bar).
+    in property <brush> panel-background: Theme.base;
 
     /// Size of the container. Elements written between the braces are laid out
     /// in it, but their `parent` is the element they are written *in* — the

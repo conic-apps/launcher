@@ -1,0 +1,26 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The pixel-level corner rounding and drop shadow of avatar heads.
+//
+// Slint cannot round an `Image`: `Image` has no `border-radius`, a `Rectangle`
+// takes no `background-image`, and `clip: true` with a `border-radius` is clipped
+// rectangularly by the software renderer (see `app/src/ui/components/account_avatar.rs`).
+// So the round goes in the pixels, and this is the one place a caller asks for it.
+//
+// `head()` in Rust returns the square head; `rounded` cuts it to `radius` as it
+// is drawn. `draw-size` is the width the caller draws the image at, so a radius
+// is measured on screen rather than in the (possibly larger) source pixels. A
+// radius of half the shorter side or more is the inscribed pill — the circle
+// `AccountAvatar`'s `10000px` corner default resolves to, and the capes' corners.
+//
+// `drop-shadow` is CSS `filter: drop-shadow(0 <offset-y> <blur> <color>)`: Slint's
+// own `drop-shadow-*` follows an element's box, so the shadow of a head with
+// transparent corners would be a square. This blurs the image's own alpha
+// instead, and returns it on a canvas grown by `pad` on every side so the blur
+// can spill past the head. The caller draws it behind the head at `-pad`.
+export global AvatarMask {
+    pure callback rounded(image, length, length) -> image;
+    pure callback drop-shadow(image, length, length, length, color) -> image;
+}

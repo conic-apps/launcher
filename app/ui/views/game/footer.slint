@@ -134,8 +134,12 @@ export component GameFooterBar inherits Rectangle {
                 kind: GameState.current-account-kind;
                 players: GameState.accounts;
                 current-key: GameState.current-account-key;
+                include-add-account: true;
                 opacity: self.intro-alpha;
                 select(key) => { GameState.select-account(key); }
+                add-account => { GameState.open-add-account(); }
+                // The name opens the account details too, just like the avatar.
+                name-clicked => { GameState.open-accounts(); }
 
                 private property <length> intro-dy: GameIntro.played ? 0px : 10px;
                 private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
@@ -230,6 +234,12 @@ export component GameFooterBar inherits Rectangle {
             private property <float> intro-alpha: GameIntro.played ? 1.0 : 0.0;
             animate intro-dy { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
             animate intro-alpha { duration: root.item-duration; delay: 100ms; easing: ease-out-quart; }
+
+            // Hover grows the head, a press shrinks it; the scale is centred on
+            // the box so the circle stays put.
+            transform-origin: { x: self.width / 2, y: self.height / 2 };
+            transform-scale: avatar-touch.pressed ? 92% : avatar-touch.has-hover ? 104% : 100%;
+            animate transform-scale { duration: 160ms; easing: ease-out-quart; }
 
             AccountAvatar {
                 width: 100%;

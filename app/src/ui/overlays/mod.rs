@@ -4,6 +4,7 @@
 
 //! Everything drawn above a page, mirroring `app/ui/overlays/`.
 
+pub(crate) mod account_view;
 pub(crate) mod command_palette;
 pub(crate) mod content;
 pub(crate) mod dialogs;

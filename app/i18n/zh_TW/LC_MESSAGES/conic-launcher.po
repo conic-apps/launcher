@@ -2877,3 +2877,163 @@ msgstr "登入"
 msgctxt "InstanceSettings"
 msgid "Background image darkness"
 msgstr "背景圖片變暗"
+
+#: ui
+msgctxt "AccountView"
+msgid "Account details"
+msgstr "帳戶詳情"
+
+#: ui
+msgctxt "AccountView"
+msgid "Add account"
+msgstr "新增帳戶"
+
+#: ui
+msgctxt "AccountView"
+msgid "Clear skin"
+msgstr "清除皮膚"
+
+#: ui
+msgctxt "AccountView"
+msgid "Delete account"
+msgstr "刪除檔案"
+
+#: ui
+msgctxt "AccountView"
+msgid "Delete from Conic Launcher"
+msgstr "從 Conic Launcher 中刪除檔案"
+
+#: ui
+msgctxt "AccountView"
+msgid "Launched this account {} times in the past year"
+msgstr "過去一年使用此帳戶啟動 {} 次遊戲"
+
+#: ui
+msgctxt "AccountView"
+msgid "Less"
+msgstr "少"
+
+#: ui
+msgctxt "AccountView"
+msgid "Launch activity"
+msgstr "啟動統計"
+
+#: ui
+msgctxt "AccountView"
+msgid "Microsoft (auth service)"
+msgstr "微軟（認證服務）"
+
+#: ui
+msgctxt "AccountView"
+msgid "More"
+msgstr "多"
+
+#: ui
+msgctxt "AccountView"
+msgid "Never"
+msgstr "從未"
+
+#: ui
+msgctxt "AccountView"
+msgid "No account selected"
+msgstr "未選擇帳戶"
+
+#: ui
+msgctxt "AccountView"
+msgid "No auth service (offline account)"
+msgstr "無認證服務（離線帳戶）"
+
+#: ui
+msgctxt "AccountView"
+msgid "No launches recorded yet"
+msgstr "暫無啟動記錄"
+
+#: ui
+msgctxt "AccountView"
+msgid "Recent activity"
+msgstr "最近活動"
+
+#: ui
+msgctxt "AccountView"
+msgid "Restart Minecraft after changing your skin to see it in game"
+msgstr "更換皮膚後，請重啟 Minecraft 以便在遊戲中看到新皮膚"
+
+#: ui
+msgctxt "AccountView"
+msgid "Save my Minecraft character skin"
+msgstr "儲存我的 Minecraft 角色皮膚"
+
+#: ui
+msgctxt "AccountView"
+msgid "Set offline skin"
+msgstr "設定離線皮膚"
+
+#: ui
+msgctxt "AccountView"
+msgid "Skin and cape"
+msgstr "皮膚與披風"
+
+#: ui
+msgctxt "AccountView"
+msgid "{} (third-party Yggdrasil)"
+msgstr "{}（第三方 Yggdrasil）"
+
+#: ui
+msgctxt "AccountView"
+msgid "{}月"
+msgstr "{}月"
+
+#: ui
+msgctxt "ConfirmDeleteAccount"
+msgid "Confirm delete"
+msgstr "確認刪除"
+
+#: ui
+msgctxt "ConfirmDeleteAccount"
+msgid "Delete the account「{}」?"
+msgstr "是否確認刪除檔案「{}」？"
+
+#: ui
+msgctxt "ConfirmDeleteAccount"
+msgid "Wait a moment…"
+msgstr "稍等一下…"
+
+#: ui
+msgctxt "ConfirmDeleteAccount"
+msgid "The locally stored credentials will be removed. The account itself is not affected"
+msgstr "此操作將移除本地儲存的帳戶憑證，但不會影響該帳戶本身"
+
+#: ui
+msgctxt "DropdownOverlay"
+msgid "Add account"
+msgstr "新增帳戶"
+
+#: ui
+msgctxt "AccountView"
+msgid "launched"
+msgstr "啟動了"
+
+#: ui
+msgctxt "AccountView"
+msgid "No capes available"
+msgstr "沒有可用的披風"
+
+#: ui
+msgctxt "AccountView"
+msgid "Select cape"
+msgstr "選擇披風"
+
+#: ui
+msgctxt "AccountView"
+msgid "Mon"
+msgstr "週一"
+
+#: ui
+msgctxt "AccountView"
+msgid "Wed"
+msgstr "週三"
+
+#: ui
+msgctxt "AccountView"
+msgid "Fri"
+msgstr "週五"
