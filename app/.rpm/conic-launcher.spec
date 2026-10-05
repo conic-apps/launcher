@@ -114,3 +114,8 @@ rm -rf %{buildroot}
 # tags.
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 %{_datadir}/icons/hicolor/scalable/apps/%{name}.svg
+# The self-updater's marker, which tells the app this install is owned by the
+# package manager rather than the updater (see the deb's `assets` for the same
+# file). `tools/package-linux.sh` stages it beside the payload, so a `%files`
+# that forgets it fails the build on an unpackaged file.
+%{_datadir}/conic-launcher/update-policy

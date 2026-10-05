@@ -55,7 +55,7 @@ macOS bundle, and it is why that key is split from `CFBundleVersion` there.
 
 The pre-release suffix is not lost, it is just not *in* the installer:
 
-- the file name carries it — `conic-launcher-0.1.0-alpha.2-x64.msi`;
+- the file name carries it — `conic-launcher_0.1.0-alpha.2_x64_en-US.msi`;
 - the `ProductCode` carries it, being derived from the full Cargo version, so
   `alpha.2` and `alpha.3` are different products to Windows Installer even
   though both report `0.1.0`.

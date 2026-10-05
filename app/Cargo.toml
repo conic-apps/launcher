@@ -2,7 +2,7 @@
 name = "conic-launcher"
 default-run = "conic-launcher"
 description = "A small, fast, and nimble Minecraft launcher"
-version = "0.1.0-alpha.2"
+version = "0.1.0-alpha.3"
 edition.workspace = true
 license = "GPL-3.0-only"
 repository.workspace = true
