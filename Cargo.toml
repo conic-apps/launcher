@@ -135,6 +135,13 @@ fontique = "0.11"
 [profile.dev]
 incremental = true
 
+[profile.dev.build-override]
+opt-level = 2
+debug = false
+
+[profile.dev.package.conic-launcher]
+debug = "line-tables-only"
+
 # A custom background is decoded at full size and then scaled down on the UI's
 # worker thread. That work — `DynamicImage::thumbnail_exact` and the codec it
 # calls — is hot enough that an unoptimised debug build takes seconds on a 4K
