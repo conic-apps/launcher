@@ -126,6 +126,38 @@ pub async fn refresh_account(uuid: Uuid, force_refresh: bool) -> Result<Microsof
     Ok(refreshed_account)
 }
 
+/// Makes `cape_id` the account's active cape on Mojang's side, then re-reads
+/// and stores the profile so its `capes[].state` reflects the change.
+///
+/// The account is refreshed first when its token is close to expiry, so the
+/// call does not ride an expired access token. Only a Microsoft account has
+/// capes: a Yggdrasil profile's textures are its server's to change, not this
+/// endpoint's, and the UI is expected to offer this for Microsoft accounts only.
+pub async fn set_active_cape(uuid: Uuid, cape_id: &str) -> Result<MicrosoftAccount> {
+    let account = refresh_account(uuid, false).await?;
+    minecraft_profile_step::set_active_cape(&account.minecraft_access_token, cape_id).await?;
+    reload_profile(&account).await
+}
+
+/// Clears the account's active cape on Mojang's side and stores the reloaded
+/// profile. The account keeps owning every cape.
+pub async fn clear_active_cape(uuid: Uuid) -> Result<MicrosoftAccount> {
+    let account = refresh_account(uuid, false).await?;
+    minecraft_profile_step::clear_active_cape(&account.minecraft_access_token).await?;
+    reload_profile(&account).await
+}
+
+/// Re-reads the game profile and writes it back, so a cape change's new `state`
+/// values reach the account file (and, later, the UI that reads it).
+async fn reload_profile(account: &MicrosoftAccount) -> Result<MicrosoftAccount> {
+    let response =
+        minecraft_profile_step::get_game_profile(&account.minecraft_access_token).await?;
+    let mut updated = account.clone();
+    updated.profile = account_profile_step::generate_account_profile(response).await?;
+    update_account(updated.profile.uuid, &updated).await?;
+    Ok(updated)
+}
+
 async fn save_accounts(accounts: &[MicrosoftAccount]) -> Result<()> {
     let accounts_list_file = LOCATIONS.launcher.accounts.join("microsoft.json");
     let serialized_accounts_list = serde_json::to_string_pretty(accounts)?;

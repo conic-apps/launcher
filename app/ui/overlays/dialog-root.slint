@@ -8,6 +8,7 @@ import { LaunchErrorDialogs } from "dialogs/launch-errors.slint";
 import { MultiplayerExtension } from "dialogs/multiplayer/multiplayer-extension.slint";
 import { ConfirmDeleteInstance } from "dialogs/confirm-delete-instance.slint";
 import { ConfirmDeleteSave } from "dialogs/confirm-delete-save.slint";
+import { ConfirmDeleteAccount } from "dialogs/confirm-delete-account.slint";
 import { ConfirmQuitApp } from "dialogs/confirm-quit-app.slint";
 import { RestartRequired } from "dialogs/restart-required.slint";
 
@@ -44,6 +45,8 @@ export component DialogRoot inherits Rectangle {
     // delete or a quit is the thing the user reached the app for, so it is asked
     // over whatever else is open.
     ConfirmDeleteSave { }
+    // The account view's danger row.
+    ConfirmDeleteAccount { }
     ConfirmQuitApp {
         confirm => { root.confirm-quit(); }
     }

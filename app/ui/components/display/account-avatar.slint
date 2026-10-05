@@ -3,26 +3,38 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
+import { AvatarMask } from "../../globals/avatar.slint";
 
 // Player head avatar.
 //
-// The head image comes from Rust (`app/src/ui/components/account_avatar.rs`), which crops the
-// 8x8 face out of the profile's skin, stretches the 8x8 hat layer over it and cuts the square
-// down to a circle, falling back to one of the bundled default skins. `skin` carries that image;
-// the placeholder disc with the per-account-type ring is drawn while it is empty.
+// The head image comes from Rust (`app/src/ui/components/account_avatar.rs`),
+// which crops the 8x8 face out of the profile's skin, stretches the 8x8 hat
+// layer over it and leaves it square, falling back to one of the bundled default
+// skins. `skin` carries that square image; the placeholder disc with the
+// per-account-type ring is drawn while it is empty.
 //
-// There is deliberately no `clip: true` here. A clipped box with a `border-radius` is clipped
-// *rectangularly* by Slint's software renderer (`i-slint-renderer-software`'s `combine_clip`
-// ignores the radius), and the winit backend silently falls back to that renderer when femtovg's
-// OpenGL context cannot be created — a VM, an RDP session, a disabled or outdated GPU driver —
-// with no log. A rounded fill is what every renderer draws, and Slint's `Rectangle` takes no
-// `background-image`, so the round goes in the pixels. The head is inset 4px anyway, which means
-// the box clip would only ever have hidden the overflow it cannot fix.
+// The corners are cut in the pixels, not by a `clip`. A clipped box with a
+// `border-radius` is clipped *rectangularly* by Slint's software renderer
+// (`i-slint-renderer-software`'s `combine_clip` ignores the radius), and the
+// winit backend silently falls back to that renderer when femtovg's OpenGL
+// context cannot be created — a VM, an RDP session, a disabled or outdated GPU
+// driver — with no log. Slint's `Rectangle` takes no `background-image` and
+// `Image` takes no `border-radius`, so `AvatarMask.rounded` masks the square
+// in Rust instead, and `corner-radius` is what it rounds to: `10000px` (the
+// default) is the inscribed circle every pill avatar uses, `0px` leaves the head
+// square. The head is inset 4px anyway, which means a box clip could only ever
+// have hidden overflow it cannot fix.
 export component AccountAvatar inherits Rectangle {
     in property <length> size: 56px;
     in property <image> skin;
     in property <string> kind: "";
     in property <bool> unlogged: false;
+    /// The head's corner radius, in the component's own coordinates. See the
+    /// comment above for the two values callers actually use.
+    in property <length> corner-radius: 10000px;
+    /// The width of the per-kind ring. The dropdown's 18px rows ask for 1px,
+    /// where the ring is a large share of the head.
+    in property <length> ring-width: 2px;
 
     width: size;
     height: size;
@@ -36,9 +48,9 @@ export component AccountAvatar inherits Rectangle {
     Rectangle {
         width: 100%;
         height: 100%;
-        border-radius: 10000px;
+        border-radius: root.corner-radius;
         background: root.unlogged ? Theme.overlay-0.with-alpha(0.4) : Theme.surface-0;
-        border-width: 2px;
+        border-width: root.ring-width;
         border-color: root.ring-color;
 
         if root.skin.width > 0 : Image {
@@ -46,7 +58,7 @@ export component AccountAvatar inherits Rectangle {
             y: 4px;
             width: root.width - 8px;
             height: root.height - 8px;
-            source: root.skin;
+            source: AvatarMask.rounded(root.skin, root.corner-radius, root.width - 8px);
             image-fit: cover;
             image-rendering: pixelated;
         }
@@ -56,7 +68,7 @@ export component AccountAvatar inherits Rectangle {
             y: 4px;
             width: root.width - 8px;
             height: root.height - 8px;
-            border-radius: 10000px;
+            border-radius: root.corner-radius;
             background: Theme.surface-1;
         }
     }

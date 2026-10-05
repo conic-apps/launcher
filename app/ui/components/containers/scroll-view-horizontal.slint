@@ -8,16 +8,22 @@ import { ScrollInput, ScrollSource } from "../../globals/scroll.slint";
 
 // Horizontal scroll container with a slim custom scrollbar on its bottom edge.
 //
-// This is `ScrollView` turned on its side: the same eased lerp, the same
-// trackpad-passes-straight-through rule, the same thumb. The differences are all
-// in the details panel's gallery, which is the one place it is used:
+// This is `ScrollView` turned on its side: the same eased lerp, the same thumb,
+// and the same rule that the vertical wheel belongs to the page. Two rules keep
+// the strip from stealing a gesture meant for the vertical scroller around it:
 //
-//   * The track sits at the *bottom* rather than the right, and is inset from
-//     the left and right edges by the caller's padding rather than by a fixed
-//     8px.
-//   * The wheel is read as `delta-x`, falling back to `delta-y`. A plain
-//     vertical wheel reports no `delta-x` at all, so reading only that would
-//     make the strip unscrollable with a mouse, which is the one input it has.
+//   * A trackpad (or its momentum) turns the strip only with its *horizontal*
+//     component. A vertical two-finger swipe is left to bubble to the page.
+//   * A notched wheel turns the strip only while Ctrl is held — the
+//     wheel-rotated-sideways convention. Without Ctrl the event bubbles up to
+//     the vertical `ScrollView`, so a plain wheel over the strip scrolls the
+//     page, and Ctrl+wheel scrolls the strip. A wheel that *reports* a
+//     horizontal axis (`delta-x`) is taken as horizontal regardless.
+//
+// The differences from `ScrollView` are in the details panel's gallery, which
+// is the one other place it is used: the track sits at the *bottom* rather than
+// the right, inset from the left and right edges by the caller's padding rather
+// than by a fixed 8px.
 //
 // There is no scroll-to-centre here. Centring took a live element to measure;
 // here the items are written into a `@children` slot, and Slint has no way to
@@ -133,28 +139,43 @@ export component ScrollViewHorizontal inherits Rectangle {
             clicked => { FocusManager.clear(); }
 
             scroll-event(event) => {
-                // Consumed whether or not there is anything to scroll, so a
-                // wheel over the gallery never reaches the detail panel's own
-                // scroller.
+                let source = ScrollInput.source();
+                let horizontal = abs(event.delta-x) > abs(event.delta-y);
+
+                // A vertical gesture is the page's, not the strip's — unless a
+                // wheel is being rotated sideways with Ctrl. Either way it is
+                // rejected so it bubbles to the vertical scroller around us.
+                if !horizontal {
+                    if source != ScrollSource.wheel {
+                        return reject;
+                    }
+                    // On macOS Slint maps ⌘ to `control` and the physical
+                    // Control key to `meta`, so both are taken: the "Ctrl" the
+                    // user presses is whichever of the two the platform reports.
+                    if !event.modifiers.control && !event.modifiers.meta {
+                        return reject;
+                    }
+                }
+
+                // A horizontal gesture is ours even with nothing to scroll, so
+                // it never chains to the page.
                 if root.max-scroll <= 0px {
                     return accept;
                 }
-                // A trackpad swiped *sideways* reports `delta-x`; a wheel has
-                // none, and a trackpad swiped the other way reports a `delta-y`
-                // too. Taking whichever is larger is what makes one gesture path
-                // serve both.
-                let delta = abs(event.delta-x) >= abs(event.delta-y)
-                    ? event.delta-x
-                    : event.delta-y;
-                if ScrollInput.source() == ScrollSource.wheel {
+                if source == ScrollSource.wheel {
+                    // Ctrl+wheel: a notch is a distance, eased towards.
+                    let delta = horizontal
+                        ? event.delta-x
+                        : event.delta-y;
                     root.target-x = clamp(
                         root.target-x - delta * root.wheel-step,
                         0px,
                         root.max-scroll,
                     );
                 } else {
-                    // Fingers down or coasting: the deltas *are* the motion.
-                    root.jump-to(root.scroll-x - delta);
+                    // A trackpad swipe, fingers down or coasting: the horizontal
+                    // deltas *are* the motion.
+                    root.jump-to(root.scroll-x - event.delta-x);
                 }
                 return accept;
             }

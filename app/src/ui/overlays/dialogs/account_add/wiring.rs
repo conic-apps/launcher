@@ -13,10 +13,52 @@ use super::*;
 /// account and persists the choice.
 pub fn setup(ui: &App) {
     setup_shell(ui);
+    setup_reset(ui);
     setup_offline_screen(ui);
     setup_microsoft_screen(ui);
     setup_yggdrasil_form(ui);
     setup_yggdrasil_login(ui);
+}
+
+/// Puts the dialog back to its first screen.
+///
+/// The dialog calls this as it opens. Without it a session that ended in the
+/// "saving account" state — or on an error, or a device code — was still
+/// mounted the next time it opened.
+pub(crate) fn setup_reset(ui: &App) {
+    let state = ui.global::<AccountAddState>();
+    let weak = ui.as_weak();
+    state.on_reset(move || {
+        let Some(ui) = weak.upgrade() else { return };
+        // Only the screen state is cleared here. The running flow is the close
+        // path's to cancel: releasing it here would race the browser screen,
+        // which binds its listener on the same open notification.
+        let state = ui.global::<AccountAddState>();
+        state.set_auth_service("microsoft".into());
+        state.set_offline_username("".into());
+        state.set_offline_advanced(false);
+        state.set_offline_uuid(get_uuid_from_username("").to_string().into());
+        state.set_offline_uuid_invalid(false);
+        refresh_offline_submit(&state);
+
+        state.set_ms_view("auth-code".into());
+        state.set_ms_progress("".into());
+        state.set_ms_error("".into());
+        state.set_ms_user_code("".into());
+        state.set_ms_verification_uri("".into());
+        state.set_ms_expires_in(0);
+        state.set_ms_copied(false);
+        state.set_ms_copied_code(false);
+
+        state.set_yggdrasil_view("form".into());
+        state.set_yggdrasil_api_root("".into());
+        state.set_yggdrasil_username("".into());
+        state.set_yggdrasil_password("".into());
+        state.set_yggdrasil_server_name("".into());
+        state.set_yggdrasil_error("".into());
+        state.set_yggdrasil_has_selection(false);
+        refresh_yggdrasil_submit(&state);
+    });
 }
 
 /// The shell every screen shares: the auth-service switch, dismissal, and the

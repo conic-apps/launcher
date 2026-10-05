@@ -8,20 +8,46 @@ import { AccountItem } from "../../globals/game.slint";
 import { Dropdown } from "../../globals/dropdown.slint";
 import { FocusManager } from "../../globals/focus.slint";
 
+// The account switcher shared by the footer and the account view.
+//
+// It is the pill itself — a name (or, with `show-label: false`, just the
+// chevron) whose right-hand button opens the shared `Dropdown` panel in account
+// mode. The footer expands it *upwards* because it sits on the bottom edge; the
+// account view expands it downwards. Both add the panel's "Add account" row.
 export component AccountListDropdown inherits Rectangle {
     in property <string> name: "";
     in property <string> kind: "";
     in property <[AccountItem]> players: [];
     in property <string> current-key: "";
     in property <string> dropdown-id: "account-switcher";
+    /// Hides the name (and the avatar padding), leaving an icon-only button.
+    in property <bool> show-label: true;
+    /// Opens the panel above the button rather than below it.
+    in property <bool> expand-upwards: true;
+    /// The glyph on the button. The footer uses the chevron, which flips on
+    /// open; the account view uses `swap-horizontal-outline` and no flip.
+    in property <string> button-icon: "chevron-up";
+    /// Whether the glyph flips when the panel opens (a chevron). False keeps it
+    /// upright.
+    in property <bool> flip-icon: true;
+    /// Adds the panel's "Add account" row, which reports through `add-account`
+    /// instead of `select`.
+    in property <bool> include-add-account: false;
+    /// The panel's width when it is wider than the button (the icon-only form).
+    in property <length> panel-width: 0px;
     callback select(string);
+    callback add-account();
+    /// The name was clicked, as opposed to the switch button. The footer opens
+    /// the account details from it.
+    callback name-clicked();
 
     out property <bool> opened: root.is-open;
 
     height: 36px;
     // 32px of left padding on the pill for the avatar, a 16px gap between the
-    // name and the chevron, and the 36px button itself.
-    width: 32px + name-text.preferred-width + 16px + 36px;
+    // name and the chevron, and the 36px button itself. The icon-only form is
+    // just the button.
+    width: root.show-label ? 32px + name-text.preferred-width + 16px + 36px : 36px;
     background: Theme.surface-0;
     border-radius: 8px;
     drop-shadow-color: #00000033;
@@ -33,21 +59,46 @@ export component AccountListDropdown inherits Rectangle {
 
     // The panel's 8px padding around rows of 26px with 4px between them:
     // `8 + 26n + 4(n-1) + 8`, a 16px constant.
-    private property <length> panel-height: root.players.length * 26px
-        + max(0, root.players.length - 1) * 4px + 16px;
+    private property <int> rows: root.players.length + (root.include-add-account ? 1 : 0);
+    private property <length> panel-height: root.rows * 26px
+        + max(0, root.rows - 1) * 4px + 16px;
     private property <int> serial: Dropdown.choose-serial;
     changed serial => {
         if Dropdown.choose-owner == root.dropdown-id {
-            root.select(Dropdown.chosen);
+            if Dropdown.chosen == "__add_account__" {
+                root.add-account();
+            } else {
+                root.select(Dropdown.chosen);
+            }
         }
     }
 
-    name-text := Text {
-        text: root.name;
-        font-size: 14px;
-        font-weight: Theme.font-weight-normal;
-        color: Theme.default-text-color.transparentize(0.1);
-        x: 32px;
+    // The name is a button of its own: hovering tints it Catppuccin yellow, and
+    // it reports its own click (which the footer uses to open the account
+    // details). No transition, so the tint is instant, and the background stays
+    // the pill's. The icon-only form has no name and is unaffected.
+    name-area := Rectangle {
+        x: 0;
+        y: 0;
+        width: parent.width - 36px;
+        height: parent.height;
+        visible: root.show-label;
+        background: transparent;
+
+        name-text := Text {
+            text: root.name;
+            font-size: 14px;
+            font-weight: Theme.font-weight-normal;
+            color: name-touch.has-hover ? Theme.yellow
+                : Theme.default-text-color.transparentize(0.1);
+            x: 32px;
+        }
+
+        name-touch := TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => { root.name-clicked(); }
+        }
     }
 
     switch-btn := Rectangle {
@@ -60,13 +111,21 @@ export component AccountListDropdown inherits Rectangle {
             : Theme.surface-1;
         border-top-right-radius: 8px;
         border-bottom-right-radius: 8px;
+        // The icon-only form is a lone rounded button, not the right half of a
+        // pill.
+        border-top-left-radius: root.show-label ? 0px : 8px;
+        border-bottom-left-radius: root.show-label ? 0px : 8px;
 
         AppIcon {
-            name: "chevron-up";
+            name: root.button-icon;
             size: 16px;
             icon-color: Theme.default-text-color.transparentize(0.1);
-            transform-scale-y: (1.0 - 2.0 * root.chevron-flip) * 100%;
-            opacity: 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip));
+            transform-scale-y: root.flip-icon
+                ? (1.0 - 2.0 * root.chevron-flip) * 100%
+                : 100%;
+            opacity: root.flip-icon
+                ? 1.0 - 0.3 * (1.0 - abs(1.0 - 2.0 * root.chevron-flip))
+                : 1.0;
         }
 
         switch-touch := TouchArea {
@@ -80,12 +139,19 @@ export component AccountListDropdown inherits Rectangle {
                     Dropdown.options = [];
                     Dropdown.accounts = root.players;
                     Dropdown.account-mode = true;
+                    Dropdown.include-add-account = root.include-add-account;
                     Dropdown.current = root.current-key;
                     Dropdown.owner = root.dropdown-id;
                     Dropdown.anchor-x = root.absolute-position.x;
-                    Dropdown.anchor-y = root.absolute-position.y - root.panel-height - 4px;
-                    Dropdown.anchor-width = root.width;
-                    Dropdown.expand-upwards = true;
+                    Dropdown.anchor-width = root.panel-width > 0px
+                        ? root.panel-width
+                        : root.width;
+                    if (root.expand-upwards) {
+                        Dropdown.anchor-y = root.absolute-position.y - root.panel-height - 4px;
+                    } else {
+                        Dropdown.anchor-y = root.absolute-position.y + root.height + 4px;
+                    }
+                    Dropdown.expand-upwards = root.expand-upwards;
                     Dropdown.open = true;
                 }
             }

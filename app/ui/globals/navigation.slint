@@ -8,8 +8,9 @@
 // `Navigation.navigate(page)` without prop drilling, which is what lets the
 // title bar, the main view stack and any overlay drive navigation.
 //
-// `Page` values are "setup" | "game" | "launch" | "settings" | "accounts".
-// Only the one-level `previous-page` is tracked, which is all `back()` needs.
+// `Page` values are "setup" | "game" | "launch" | "settings". The account view
+// is an overlay on the game screen, not a page. Only the one-level
+// `previous-page` is tracked, which is all `back()` needs.
 export global Navigation {
     in-out property <string> current-page: "game";
     in-out property <string> previous-page: "";
