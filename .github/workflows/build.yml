@@ -388,7 +388,10 @@ jobs:
           # the shortcut points into.
           $msi = @(Get-ChildItem target/package/*.msi)
           if ($msi.Count -ne 1) { throw "expected one .msi, found $($msi.Count)" }
-          if ($msi.Name -notlike "*-${{ matrix.arch }}.msi") {
+          # The name `package-windows.ps1` builds: `conic-launcher_<version>_<arch>_en-US.msi`,
+          # with the architecture and the locale the update server's asset table
+          # matches. It is not the `.dmg`'s `-<arch>` tail.
+          if ($msi.Name -notlike "*_${{ matrix.arch }}_en-US.msi") {
             throw "$($msi.Name) is not named for ${{ matrix.arch }}"
           }
           Write-Host "### $($msi.Name) ($('{0:N1} MiB' -f ($msi.Length / 1MB)))"
