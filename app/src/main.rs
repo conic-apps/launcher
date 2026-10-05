@@ -111,9 +111,14 @@ fn main() {
     // instance to it as it is set up, and that report has to land somewhere.
     ui::components::background::controller::setup(&ui, Rc::clone(&shared));
 
+    // The avatar's corner mask. It has to be in place before any account is
+    // drawn, so it is wired with the other components rather than a view.
+    ui::components::account_avatar::setup(&ui);
+
     // Settings + game view + overlay "scripts".
     ui::views::settings::wire(&ui, Rc::clone(&shared), Rc::clone(&save_timer));
     ui::views::game::setup(&ui, Rc::clone(&shared));
+    ui::overlays::account_view::setup(&ui, Rc::clone(&shared));
     ui::overlays::instance_settings::setup(&ui, Rc::clone(&shared));
     ui::overlays::content::setup(&ui);
     ui::views::launch::setup(&ui, Rc::clone(&shared));

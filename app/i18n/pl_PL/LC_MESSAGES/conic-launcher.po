@@ -2877,3 +2877,163 @@ msgstr "Zaloguj się"
 msgctxt "InstanceSettings"
 msgid "Background image darkness"
 msgstr "Przyciemnienie obrazu tła"
+
+#: ui
+msgctxt "AccountView"
+msgid "Account details"
+msgstr "Szczegóły konta"
+
+#: ui
+msgctxt "AccountView"
+msgid "Add account"
+msgstr "Dodaj konto"
+
+#: ui
+msgctxt "AccountView"
+msgid "Clear skin"
+msgstr "Wyczyść skin"
+
+#: ui
+msgctxt "AccountView"
+msgid "Delete account"
+msgstr "Usuń konto"
+
+#: ui
+msgctxt "AccountView"
+msgid "Delete from Conic Launcher"
+msgstr "Usuń z Conic Launcher"
+
+#: ui
+msgctxt "AccountView"
+msgid "Launched this account {} times in the past year"
+msgstr "To konto uruchomiono {} razy w ciągu roku"
+
+#: ui
+msgctxt "AccountView"
+msgid "Less"
+msgstr "Mniej"
+
+#: ui
+msgctxt "AccountView"
+msgid "Launch activity"
+msgstr "Aktywność uruchomień"
+
+#: ui
+msgctxt "AccountView"
+msgid "Microsoft (auth service)"
+msgstr "Microsoft (usługa uwierzytelniania)"
+
+#: ui
+msgctxt "AccountView"
+msgid "More"
+msgstr "Więcej"
+
+#: ui
+msgctxt "AccountView"
+msgid "Never"
+msgstr "Nigdy"
+
+#: ui
+msgctxt "AccountView"
+msgid "No account selected"
+msgstr "Nie wybrano konta"
+
+#: ui
+msgctxt "AccountView"
+msgid "No auth service (offline account)"
+msgstr "Brak usługi uwierzytelniania (konto offline)"
+
+#: ui
+msgctxt "AccountView"
+msgid "No launches recorded yet"
+msgstr "Brak zarejestrowanych uruchomień"
+
+#: ui
+msgctxt "AccountView"
+msgid "Recent activity"
+msgstr "Ostatnia aktywność"
+
+#: ui
+msgctxt "AccountView"
+msgid "Restart Minecraft after changing your skin to see it in game"
+msgstr "Uruchom ponownie Minecraft po zmianie skina, aby zobaczyć go w grze"
+
+#: ui
+msgctxt "AccountView"
+msgid "Save my Minecraft character skin"
+msgstr "Zapisz skina postaci Minecraft"
+
+#: ui
+msgctxt "AccountView"
+msgid "Set offline skin"
+msgstr "Ustaw skin offline"
+
+#: ui
+msgctxt "AccountView"
+msgid "Skin and cape"
+msgstr "Skin i peleryna"
+
+#: ui
+msgctxt "AccountView"
+msgid "{} (third-party Yggdrasil)"
+msgstr "{} (Yggdrasil innej firmy)"
+
+#: ui
+msgctxt "AccountView"
+msgid "{}月"
+msgstr "{}"
+
+#: ui
+msgctxt "ConfirmDeleteAccount"
+msgid "Confirm delete"
+msgstr "Potwierdź usunięcie"
+
+#: ui
+msgctxt "ConfirmDeleteAccount"
+msgid "Delete the account「{}」?"
+msgstr "Usunąć konto「{}」?"
+
+#: ui
+msgctxt "ConfirmDeleteAccount"
+msgid "Wait a moment…"
+msgstr "Chwileczkę…"
+
+#: ui
+msgctxt "ConfirmDeleteAccount"
+msgid "The locally stored credentials will be removed. The account itself is not affected"
+msgstr "Lokalnie zapisane dane logowania zostaną usunięte. Samo konto nie zostanie zmienione"
+
+#: ui
+msgctxt "DropdownOverlay"
+msgid "Add account"
+msgstr "Dodaj konto"
+
+#: ui
+msgctxt "AccountView"
+msgid "launched"
+msgstr "uruchomił"
+
+#: ui
+msgctxt "AccountView"
+msgid "No capes available"
+msgstr "Brak dostępnych peleryn"
+
+#: ui
+msgctxt "AccountView"
+msgid "Select cape"
+msgstr "Wybierz pelerynę"
+
+#: ui
+msgctxt "AccountView"
+msgid "Mon"
+msgstr "Pon"
+
+#: ui
+msgctxt "AccountView"
+msgid "Wed"
+msgstr "Śr"
+
+#: ui
+msgctxt "AccountView"
+msgid "Fri"
+msgstr "Pt"

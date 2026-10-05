@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Dialog } from "../dialog.slint";
-import { Dialogs } from "../../../globals/dialogs.slint";
+import { Dialogs, AccountAddState } from "../../../globals/dialogs.slint";
 import { AccountAdd } from "account-add.slint";
 
 // The add-account dialog: the `AccountAdd` view's body inside a plain modal.
@@ -22,6 +22,21 @@ export component AccountAddDialog inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
+
+    // Reset the form when the dialog opens. `changed` does not fire for the
+    // value a component is created with, so an `init` covers the (unlikely)
+    // first frame of a dialog that starts open.
+    private property <bool> dialog-open: Dialogs.account-add-visible;
+    changed dialog-open => {
+        if (root.dialog-open) {
+            AccountAddState.reset();
+        }
+    }
+    init => {
+        if (root.dialog-open) {
+            AccountAddState.reset();
+        }
+    }
 
     dialog := Dialog {
         dialog-visible: Dialogs.account-add-visible;

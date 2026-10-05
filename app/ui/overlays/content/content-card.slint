@@ -33,8 +33,8 @@ import { GameState, GameTime } from "../../globals/game.slint";
 //   * The image's rounded left corners need a `clip`, and a rounded `clip` is a
 //     no-op on the software renderer (see the README's Windows note) — the one
 //     place a card can come out square. The avatar had the same problem and was
-//     fixed by putting the round in the pixels (`account_avatar::head`); a card
-//     image comes from the content service as a bitmap, so there is no such
+//     fixed by putting the round in the pixels (`account_avatar::round_image`); a
+//     card image comes from the content service as a bitmap, so there is no such
 //     place to put it.
 //
 // One tag of the info block; its kind picks the fill.

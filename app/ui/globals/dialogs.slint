@@ -107,6 +107,8 @@ export global Dialogs {
     // Settings → Data storage, after a location changed: the launcher has to be
     // restarted before the new root is used.
     in-out property <bool> restart-required-visible: false;
+    // The account view's "Delete from Conic Launcher" row.
+    in-out property <bool> confirm-delete-account-visible: false;
 }
 
 // The "delete instance" dialog.
@@ -159,6 +161,24 @@ export global DeleteSaveState {
     callback cancel();
     /// The "Confirm delete" button. Rust deletes the save, reloads the saves
     /// grid and closes the dialog.
+    callback confirm();
+}
+
+// The "delete account" dialog.
+//
+// The account view's danger row sets `key`/`name` from the account it is
+// showing and raises `Dialogs.confirm-delete-account-visible`.
+export global DeleteAccountState {
+    /// The account's stable key (`microsoft-<uuid>` etc.), which is what gets
+    /// deleted.
+    in-out property <string> key: "";
+    /// The profile name the dialog names.
+    in-out property <string> name: "";
+    /// A delete is running: the confirm button is disabled.
+    in-out property <bool> deleting: false;
+    callback cancel();
+    /// Rust deletes the account, refreshes the account list and closes both the
+    /// dialog and, if the account was the last one, the account view.
     callback confirm();
 }
 
@@ -350,6 +370,10 @@ export global AccountAddState {
     callback select-auth-service(string);
     /// A "Cancel" button.
     callback close();
+    /// Puts every field back to its initial state and cancels any running flow.
+    /// The dialog calls it as it opens, so a previous session — including one
+    /// that ended in the "saving" state — does not bleed into the next.
+    callback reset();
     /// Copies `text` to the system clipboard.
     callback copy-text(string);
     /// Opens a URL with the platform's default handler.

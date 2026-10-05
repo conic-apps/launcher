@@ -1,0 +1,39 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Dialog } from "dialog.slint";
+import { ConfirmWarningBody } from "confirm-warning.slint";
+import { DeleteAccountState, Dialogs } from "../../globals/dialogs.slint";
+
+// The dialog the account view's danger row opens.
+//
+// Deleting removes the locally stored credentials and cannot be undone, so the
+// one click that reaches it is asked about first. The layout is the same
+// measuring arrangement `ConfirmDeleteSave` uses.
+export component ConfirmDeleteAccount inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    dialog := Dialog {
+        dialog-visible: Dialogs.confirm-delete-account-visible;
+        dialog-width: 500px;
+        // `fit-content`: `Dialog` keeps 32px of its own.
+        dialog-height: body.preferred-height + 32px;
+
+        body := ConfirmWarningBody {
+            content-width: dialog.content-width;
+            title-text: @tr(
+                "ConfirmDeleteAccount" => "Delete the account「{}」?",
+                DeleteAccountState.name);
+            detail-text: @tr(
+                "ConfirmDeleteAccount" => "The locally stored credentials will be removed. The account itself is not affected");
+            cancel-text: @tr("ConfirmDeleteAccount" => "Wait a moment…");
+            confirm-text: @tr("ConfirmDeleteAccount" => "Confirm delete");
+            confirm-enabled: !DeleteAccountState.deleting;
+            cancel => { DeleteAccountState.cancel(); }
+            confirm => { DeleteAccountState.confirm(); }
+        }
+    }
+}
