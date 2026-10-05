@@ -2,8 +2,8 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! Process-wide helpers: the shared crate's version constant (`APP_VERSION`),
-//! the shared HTTP client and its proxy preference, a disk cache for the images
+//! Process-wide helpers: the running app's version ([`set_app_version`]), the
+//! shared HTTP client and its proxy preference, a disk cache for the images
 //! the UI fetches, and the `Url` extension the API clients use.
 //!
 //! The crate exists on its own — rather than as a module inlined into each
@@ -29,7 +29,28 @@ use once_cell::sync::{Lazy, OnceCell};
 use thiserror::Error;
 use url::Url;
 
-pub static APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+/// The running app's version, recorded once by the app through
+/// [`set_app_version`].
+///
+/// Deliberately a runtime cell rather than `env!("CARGO_PKG_VERSION")`: this
+/// crate's own manifest version is the placeholder `0.0.0`, so reading it here
+/// would stamp `0.0.0` onto the HTTP User-Agent, the JVM's `launcher_version`
+/// and the self-update check. Only the app knows the version it was built as,
+/// and it compiles that in from its own manifest.
+static APP_VERSION: OnceCell<&'static str> = OnceCell::new();
+
+/// Records the app version. Must run before the first request, like
+/// [`set_system_proxy`], because [`HTTP_CLIENT`] bakes it into its User-Agent
+/// when it is built on first use.
+pub fn set_app_version(version: &'static str) {
+    let _ = APP_VERSION.set(version);
+}
+
+/// The app version, or the placeholder when [`set_app_version`] has not run —
+/// which happens only in a crate's own tests, where nothing starts the app.
+pub fn app_version() -> &'static str {
+    APP_VERSION.get().copied().unwrap_or("0.0.0")
+}
 
 /// The callback through which a crate reports a task's state to whoever owns
 /// the interface.
@@ -123,7 +144,7 @@ pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
     let mut builder = reqwest::ClientBuilder::new()
         .pool_idle_timeout(Duration::from_secs(60))
         .pool_max_idle_per_host(200)
-        .user_agent(format!("ConicApps/{}", APP_VERSION))
+        .user_agent(format!("ConicApps/{}", app_version()))
         .use_rustls_tls();
     if !should_use_system_proxy {
         builder = builder.no_proxy();

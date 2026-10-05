@@ -81,6 +81,13 @@ fn main() {
     // so one call reaches every crate that uses it.
     shared::set_system_proxy(config.download.use_system_proxy);
 
+    // The version this build was made as, for the User-Agent, the JVM's
+    // `launcher_version` and the self-update check. `shared` cannot read it
+    // itself — its own manifest version is the placeholder `0.0.0` — so the app
+    // hands its compiled-in version over here, in the same before-the-first-
+    // request window as the proxy preference above.
+    shared::set_app_version(env!("CARGO_PKG_VERSION"));
+
     // Same one-call, before-the-first-request shape as the proxy preference
     // above, and for the same reason: the cache is settled once and has to be
     // pointed somewhere before anything is fetched through it. It is a directory

@@ -47,12 +47,13 @@ pub(crate) async fn run(configured_channel: config::UpdateChannel) {
     log::info!(
         "checking for updates on the {} channel (running {})",
         channel(&configured_channel).as_str(),
-        shared::APP_VERSION
+        shared::app_version()
     );
-    let info = match update::check(channel(&configured_channel), kind, shared::APP_VERSION).await {
+    let info = match update::check(channel(&configured_channel), kind, shared::app_version()).await
+    {
         Ok(Some(info)) => info,
         Ok(None) => {
-            log::info!("no update available (running {})", shared::APP_VERSION);
+            log::info!("no update available (running {})", shared::app_version());
             return;
         }
         Err(error) => {
