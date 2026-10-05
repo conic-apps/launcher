@@ -4,6 +4,7 @@
 
 import { SettingGroup } from "../../components/settings/setting-group.slint";
 import { SettingItem } from "../../components/settings/setting-item.slint";
+import { SettingReveal } from "../../components/settings/setting-reveal.slint";
 import { Switch } from "../../components/controls/switch.slint";
 import { SliderBar } from "../../components/controls/slider-bar.slint";
 import { AppConfig } from "../../globals/settings.slint";
@@ -20,6 +21,10 @@ export component SettingsAudio inherits VerticalLayout {
 
         SettingItem {
             group-first: true;
+            // The rows below round the group's bottom while they are revealed;
+            // while they are hidden this row is the group's last, so it takes
+            // the bottom corners then.
+            group-last: !AppConfig.music-enabled;
             title: @tr("Enable background music");
             description: @tr("Play background music in the launcher.");
 
@@ -29,42 +34,48 @@ export component SettingsAudio inherits VerticalLayout {
             }
         }
 
-        SettingItem {
-            title: @tr("Resume on start");
-            description: @tr("Resume the last track and its progress when the application starts.");
+        // The four options that only mean anything while background music is on,
+        // so they are hidden — and take no space — otherwise.
+        SettingReveal {
+            shown: AppConfig.music-enabled;
 
-            Switch {
-                checked <=> AppConfig.resume-on-startup;
-                toggled => { AppConfig.changed(); }
+            SettingItem {
+                title: @tr("Resume on start");
+                description: @tr("Resume the last track and its progress when the application starts.");
+
+                Switch {
+                    checked <=> AppConfig.resume-on-startup;
+                    toggled => { AppConfig.changed(); }
+                }
             }
-        }
 
-        SettingItem {
-            title: @tr("Audio visualizer");
-            description: @tr("Show audio visualization at the bottom of the game page.");
+            SettingItem {
+                title: @tr("Audio visualizer");
+                description: @tr("Show audio visualization at the bottom of the game page.");
 
-            Switch {
-                checked <=> AppConfig.show-visualizer;
-                toggled => { AppConfig.changed(); }
+                Switch {
+                    checked <=> AppConfig.show-visualizer;
+                    toggled => { AppConfig.changed(); }
+                }
             }
-        }
 
-        SettingItem {
-            title: @tr("Pause on game launch");
-            description: @tr("Automatically pause background music when the game finishes launching.");
+            SettingItem {
+                title: @tr("Pause on game launch");
+                description: @tr("Automatically pause background music when the game finishes launching.");
 
-            Switch {
-                checked <=> AppConfig.pause-on-launch;
-                toggled => { AppConfig.changed(); }
+                Switch {
+                    checked <=> AppConfig.pause-on-launch;
+                    toggled => { AppConfig.changed(); }
+                }
             }
-        }
 
-        SettingItem {
-            group-last: true;
-            title: @tr("Open music folder");
-            description: @tr("Place the music you want to play in this folder.");
-            navigable: true;
-            clicked => { AppConfig.open-path("music"); }
+            SettingItem {
+                group-last: true;
+                title: @tr("Open music folder");
+                description: @tr("Place the music you want to play in this folder.");
+                navigable: true;
+                clicked => { AppConfig.open-path("music"); }
+            }
         }
     }
 

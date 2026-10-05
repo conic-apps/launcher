@@ -1,0 +1,58 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// A group of settings rows revealed by an external switch.
+//
+// Unlike `SettingCollapse`, which owns its open/closed state and is toggled from
+// its own header, this one is a bare container: the boolean comes from the
+// caller (`shown`), so a row elsewhere in the group — usually a `Switch` — is
+// what reveals the rows in the slot. It draws no header of its own.
+//
+// The obvious implementations are both wrong. `@children` cannot appear inside
+// an `if` — the Slint reference forbids a slot in a conditional element, because
+// the slot's contents are injected by the caller and a conditional element may
+// be repeated. And `visible: false` is not enough either: an invisible element
+// still occupies its layout cell, so the rows below it never move up. The
+// content is therefore always instantiated, and the collapse is a `clip: true`
+// wrapper whose height animates between the content's natural height and zero.
+// That natural height is read from a separate inner element
+// (`content.preferred-height`) so the wrapper's `height` binding does not
+// reference itself, which Slint rejects as a loop. It stays visible while the
+// height animates back to zero, so closing is animated instead of snapping shut.
+//
+// As in `SettingGroup` and `SettingCollapse`, the corners belong to the rows and
+// nothing is clipped to a radius — a rounded `clip` is what Slint's software
+// renderer drops. Slint cannot reach into a `@children` slot to round the last
+// row, so a caller whose content ends in the group's bottom row passes
+// `group-last` on the last item itself.
+export component SettingReveal inherits VerticalLayout {
+    /// Drives the reveal. Bind it to the setting the group is about; it may
+    /// change at any time, and the height animates between the two states.
+    in property <bool> shown: true;
+
+    width: 100%;
+    spacing: 0px;
+
+    content-wrapper := Rectangle {
+        width: 100%;
+        height: root.shown ? content.preferred-height : 0px;
+        visible: root.shown || self.height > 0.5px;
+        opacity: root.shown ? 1.0 : 0.0;
+        clip: true;
+        background: transparent;
+
+        animate height { duration: 200ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
+        animate opacity { duration: 200ms; easing: cubic-bezier(0.215, 0.61, 0.355, 1); }
+
+        content := Rectangle {
+            width: 100%;
+            background: transparent;
+
+            VerticalLayout {
+                spacing: 1px;
+                @children
+            }
+        }
+    }
+}
