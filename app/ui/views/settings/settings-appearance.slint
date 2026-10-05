@@ -5,6 +5,7 @@
 import { Theme } from "../../theme.slint";
 import { SettingGroup } from "../../components/settings/setting-group.slint";
 import { SettingItem } from "../../components/settings/setting-item.slint";
+import { SettingReveal } from "../../components/settings/setting-reveal.slint";
 import { Switch } from "../../components/controls/switch.slint";
 import { Button } from "../../components/controls/button.slint";
 import { SliderBar } from "../../components/controls/slider-bar.slint";
@@ -77,18 +78,22 @@ export component SettingsAppearance inherits VerticalLayout {
             }
         }
 
-        SettingItem {
-            title: @tr("Background image darkness");
-            description: AppConfig.background-darkness + "%";
-            item-disabled: AppConfig.background-image == "";
+        // Darkness only means anything for an image that is actually drawn, so
+        // the row is revealed rather than greyed out while none is set.
+        SettingReveal {
+            shown: AppConfig.background-image != "";
 
-            SliderBar {
-                max: 100;
-                min: 0;
-                step: 5;
-                slider-enabled: AppConfig.background-image != "";
-                value <=> AppConfig.background-darkness;
-                edited => { AppConfig.changed(); }
+            SettingItem {
+                title: @tr("Background image darkness");
+                description: AppConfig.background-darkness + "%";
+
+                SliderBar {
+                    max: 100;
+                    min: 0;
+                    step: 5;
+                    value <=> AppConfig.background-darkness;
+                    edited => { AppConfig.changed(); }
+                }
             }
         }
 
