@@ -10,11 +10,17 @@
 //! launch starts the new version, which is why the user is never interrupted by
 //! an install.
 
+// `Path`/`PathBuf` and `extract_tar_gz` are only reached from the Linux and
+// macOS branches below; on Windows the same work is handed to a script, so the
+// imports would be unused there.
+#[cfg(not(windows))]
 use std::path::{Path, PathBuf};
 
 use crate::error::{Error, Result};
 use crate::install::InstallKind;
-use crate::staged::{Staged, clear_pending, extract_tar_gz, read_pending, updates_dir};
+#[cfg(not(windows))]
+use crate::staged::extract_tar_gz;
+use crate::staged::{Staged, clear_pending, read_pending, updates_dir};
 
 /// Applies the pending bundle, if any. Returns whether something was applied.
 pub fn apply_pending() -> Result<bool> {
