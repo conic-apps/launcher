@@ -96,7 +96,8 @@ the bucket — not the feature — is what decides where a file goes:
     `ScrollViewHorizontal`, `SlideTransition`, `ZoomTransition`.
   - `display/` — presentational: `AppIcon`, `AccountAvatar`, `InstanceCard`,
     `PaletteRow`, `WindowBackground`.
-  - `settings/` — `SettingItem`, `SettingGroup`, `SettingCollapse`.
+  - `settings/` — `SettingItem`, `SettingGroup`, `SettingCollapse`,
+    `SettingReveal`.
   - `markdown/` — the `.slint` half of `app/src/ui/components/markdown/`.
   - `title-bar.slint` plus a `title-bar/` folder of its private children
     (`navigation-button`, `title-bar-action-button`, `search-bar`). A component
