@@ -4,6 +4,8 @@
 
 //! The detail panel's Markdown/HTML body and its layout.
 
+use futures::StreamExt;
+
 use super::*;
 
 thread_local! {
@@ -15,6 +17,22 @@ thread_local! {
     /// throwing it away per panel would re-read every font file on every open.
     static BODY: RefCell<Option<BodyRenderer>> = const { RefCell::new(None) };
 }
+
+/// How many of a document's images are fetched at once.
+///
+/// Half the icon grids' figure: a README's images are not the grid's — they come
+/// from wherever the author pointed them, so they are slower and less uniform,
+/// and this is a background task with nothing else waiting on it.
+const BODY_IMAGE_CONCURRENCY: usize = 8;
+
+/// How many images one document is allowed to have fetched.
+///
+/// The images are written by whoever published the mod, and a CurseForge
+/// description in particular is arbitrary HTML — which is also how tracking
+/// pixels arrive. A cap means such a document costs a fixed number of requests
+/// rather than however many it cares to name. Every README in normal use has
+/// well under this.
+const BODY_IMAGE_LIMIT: usize = 32;
 
 pub(crate) struct BodyRenderer {
     renderer: crate::ui::components::markdown::Renderer,
@@ -639,13 +657,19 @@ pub(crate) fn forget_body_document() {
     });
 }
 
-/// Fetches whatever the body is still missing, then lays it out again.
+/// Fetches whatever the body is still missing, dropping each image in as it
+/// arrives.
 ///
 /// An image changes a document's height, because the engine reserves a box from
-/// the bitmap's own size, so a body whose images arrive late is re-laid out once
-/// per batch. The fetches are the same `fetch_icon` path the project icons take,
-/// including its cache, so a logo and a README that show the same image decode it
-/// once.
+/// the bitmap's own size — so a body whose images arrive late is re-laid out.
+/// That is done per image rather than per batch, because a README is written by
+/// whoever published the mod and its images come from wherever they please: a
+/// batch would hold the document's height still for as long as the slowest of
+/// them, which is the whole reason this used to look broken.
+///
+/// The fetches are the same `fetch_icon` path the project icons take, including
+/// the shared cache, so a logo and a README that show the same image download it
+/// once and decode it once.
 pub(crate) fn fetch_body_images(ui: &App) {
     let wanted = BODY.with(|slot| {
         let slot = slot.borrow();
@@ -656,48 +680,59 @@ pub(crate) fn fetch_body_images(ui: &App) {
             .referenced_images()
             .into_iter()
             .filter(|url| !body.renderer.images().contains(url))
+            .take(BODY_IMAGE_LIMIT)
             .collect::<Vec<_>>()
     });
     if wanted.is_empty() {
         return;
     }
     let weak = ui.as_weak();
-    crate::support::runtime::spawn_blocking(move || {
-        let fetched = wanted
-            .iter()
-            .filter_map(|url| fetch_icon(url).map(|image| (url.clone(), image)))
-            .collect::<Vec<_>>();
-        if fetched.is_empty() {
-            return;
-        }
-        crate::ui::services::report::report(&weak, move |ui| {
-            let mut changed = false;
-            for (url, image) in &fetched {
-                changed |= BODY.with(|slot| {
-                    let mut slot = slot.borrow_mut();
-                    match slot.as_mut() {
-                        // The engine is not `Send` and the bitmap is not either, so
-                        // the `Image` is built on this side of the hop, from the
-                        // buffer that did cross.
-                        Some(body) => body.renderer.set_image(
-                            url,
-                            Image::from_rgba8(SharedPixelBuffer::clone_from_slice(
-                                &image.rgba,
-                                image.width,
-                                image.height,
-                            )),
-                            image.width,
-                            image.height,
-                        ),
-                        None => false,
-                    }
+    crate::support::runtime::spawn(async move {
+        let fetches = futures::stream::iter(wanted).map(|url| {
+            let weak = weak.clone();
+            async move {
+                // `fetch_icon` blocks on the fetch and the decode; inside a task
+                // that parks one worker rather than the runtime, the same trade
+                // the icon grids make.
+                let image = fetch_icon(&url);
+                crate::ui::services::report::report(&weak, move |ui| {
+                    set_body_image(&ui, &url, image);
                 });
             }
-            if changed {
-                push_detail_body(&ui);
-            }
         });
+        fetches
+            .buffer_unordered(BODY_IMAGE_CONCURRENCY)
+            .for_each(|()| async {})
+            .await;
     });
+}
+
+/// Puts one image into the open body, if that is still the body that asked for
+/// it — the panel may have moved on to another project by now.
+fn set_body_image(ui: &App, url: &str, image: Option<PendingImage>) {
+    let Some(image) = image else {
+        return;
+    };
+    // The engine is not `Send` and the bitmap is not either, so the `Image` is
+    // built on this side of the hop, from the buffer that did cross.
+    let changed = BODY.with(|slot| {
+        let mut slot = slot.borrow_mut();
+        slot.as_mut().is_some_and(|body| {
+            body.renderer.set_image(
+                url,
+                Image::from_rgba8(SharedPixelBuffer::clone_from_slice(
+                    &image.rgba,
+                    image.width,
+                    image.height,
+                )),
+                image.width,
+                image.height,
+            )
+        })
+    });
+    if changed {
+        push_detail_body(ui);
+    }
 }
 
 /// `owner/repo`, when the URL is a GitHub one. Only the real host is tested,

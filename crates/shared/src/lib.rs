@@ -3,14 +3,21 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 //! Process-wide helpers: the shared crate's version constant (`APP_VERSION`),
-//! the shared HTTP client and its proxy preference, and the `Url` extension the
-//! API clients use.
+//! the shared HTTP client and its proxy preference, a disk cache for the images
+//! the UI fetches, and the `Url` extension the API clients use.
 //!
 //! The crate exists on its own — rather than as a module inlined into each
 //! consumer — so every crate that makes requests shares one client: `account`,
 //! `curseforge`, `download`, `install` and `modrinth` all take [`HTTP_CLIENT`]
 //! from here, and the app sets the proxy preference once through
 //! [`set_system_proxy`].
+//!
+//! [`http_cache`] sits beside the client rather than inside it because it caches
+//! something the client knows nothing about: those requests want a stored copy,
+//! a second one behind the same URL refused, and never a peer on the user's own
+//! network. The client is left as the plain transport the API crates expect.
+
+pub mod http_cache;
 
 use std::{
     sync::{Arc, Mutex},

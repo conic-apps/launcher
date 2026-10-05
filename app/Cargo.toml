@@ -51,6 +51,7 @@ url.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 once_cell.workspace = true
+futures.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "net", "time"] }
 log.workspace = true
 env_logger.workspace = true

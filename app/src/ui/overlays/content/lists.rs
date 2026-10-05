@@ -195,7 +195,10 @@ pub(crate) fn local_mod_card(mod_info: &ResolvedMod) -> PendingCard {
         tags,
         // A local icon is a base64 data URL and an online one is a plain URL,
         // which is what `merge_remote` leaves behind; both load the same way.
-        icon: mod_info.icon.as_deref().and_then(fetch_icon),
+        // Neither is fetched here — `set_cards` fetches them after the grid is
+        // on screen, so the list appears while its icons are still arriving.
+        icon: None,
+        icon_url: mod_info.icon.clone(),
         action_kind: "file",
         mod_disabled: mod_info.disabled,
         ..Default::default()
