@@ -277,7 +277,11 @@ async fn spawn_minecraft_process(
     std::fs::write(&script_path, commands)?;
     info!("The startup script is written to {}", script_path.display());
     let mut minecraft_process = match PLATFORM_INFO.os_family {
-        OsFamily::Windows => std::process::Command::new(script_path),
+        OsFamily::Windows => {
+            let mut command = std::process::Command::new(script_path);
+            command.creation_flags(0x08000000);
+            command
+        }
         _ => {
             info!("Running chmod +x {}", script_path.display());
             let mut chmod = Command::new("chmod");
