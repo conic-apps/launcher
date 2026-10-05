@@ -22,8 +22,6 @@ export component SettingsAccessibility inherits VerticalLayout {
             group-first: true;
             title: @tr("Release update reminder");
             description: @tr("Show a reminder dialog when a Minecraft release is published");
-            icon: "bell";
-            icon-outline: true;
 
             Switch {
                 checked <=> AppConfig.release-reminder;
@@ -34,8 +32,6 @@ export component SettingsAccessibility inherits VerticalLayout {
         SettingItem {
             title: @tr("Snapshot update reminder");
             description: @tr("Show a reminder dialog when a Minecraft snapshot is published");
-            icon: "bell";
-            icon-outline: true;
 
             Switch {
                 checked <=> AppConfig.snapshot-reminder;
@@ -47,7 +43,6 @@ export component SettingsAccessibility inherits VerticalLayout {
             group-last: true;
             title: @tr("Auto-change game language");
             description: @tr("Set the game language to your launcher language on first launch");
-            icon: "language";
 
             Switch {
                 checked <=> AppConfig.auto-game-lang;

@@ -2,6 +2,7 @@ name: Check license headers
 
 on:
   push:
+    branches: ["dev"]
     paths:
       - ".github/workflows/check-license-header.yml"
       - "licenserc.toml"
