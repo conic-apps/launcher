@@ -57,6 +57,7 @@ log.workspace = true
 env_logger.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+rfd.workspace = true
 
 i-slint-backend-winit = "1.18"
 winit = "0.30"
@@ -126,11 +127,10 @@ $auto, ca-certificates, xdg-utils, \
 libegl1, libgl1, libx11-6, libxcb1, libxcursor1, libxi6, \
 libxkbcommon-x11-0, libxkbcommon0, libxrender1, \
 libwayland-client0, libwayland-egl1"""
-# Both are optional by construction: `reveal_in_dir` falls back to opening the
-# parent directory when there is no `FileManager1` service, and the image picker
-# (`zenity`) has no fallback but only backs one button in the background
-# setting.
-recommends = "dbus, zenity"
+# `dbus` is the session bus: `reveal_in_dir`'s `dbus-send` fallback and rfd's
+# XDG desktop portal file chooser both go through it. `reveal_in_dir` falls back
+# to opening the parent directory when there is no `FileManager1` service.
+recommends = "dbus, xdg-desktop-portal"
 assets = [
   # NOTE: the literal `target/release/` prefix is cargo-deb's convention for "the
   # binary cargo built" -- it is how the subcommand finds the real target dir

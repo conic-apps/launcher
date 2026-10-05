@@ -107,6 +107,10 @@ semver = "1"
 # *signs* is only pulled in on the release machine, not by the app).
 minisign-verify = "0.3"
 sys-locale = "0.3"
+# Native file/folder pickers. The default features (no `gtk3`) mean AppKit on
+# macOS, the common file dialog on Windows and the XDG desktop portal on Linux,
+# so the app no longer drives `osascript`/`zenity`/PowerShell itself.
+rfd = "0.17"
 thiserror = "2"
 toml = "1"
 url = "2"

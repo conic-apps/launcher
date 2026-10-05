@@ -201,5 +201,6 @@ pkg-config  libfontconfig1-dev  libasound2-dev  libudev-dev
 (fontconfig via `fontique`, ALSA via `cpal`, libudev via
 `i-slint-backend-linuxkms`). GL, xkbcommon and X11 are `dlopen`ed by glutin,
 winit and Skia — runtime dependencies of the package, not build dependencies of
-the crate. At runtime the app also shells out to `xdg-open`, `dbus-send` and
-(only for the background picker) `zenity`.
+the crate. At runtime the app also shells out to `xdg-open` and `dbus-send`;
+file and folder pickers go through the XDG desktop portal (`rfd`), whose file
+chooser `xdg-desktop-portal` implements.

@@ -393,7 +393,7 @@ pub fn reveal_in_dir(path: &str) -> std::io::Result<()> {
 /// Slint 1.18 has no application-level clipboard API — `Platform::set_clipboard_text`
 /// is only reachable from inside a backend, which the app is not — so the
 /// app's "copy" buttons go to the platform directly, the way `open_external`
-/// above and `pick_image_file_named` below already do. The strings copied
+/// above already does. The strings copied
 /// (device codes, login URLs, room codes) are ASCII, which is why the Windows
 /// path can go through `clip`'s OEM code page.
 pub fn copy_to_clipboard(text: &str) -> std::io::Result<()> {
@@ -467,7 +467,13 @@ fn write_to_process(program: &str, args: &[&str], text: &str) -> std::io::Result
     child.wait().map(|_| ())
 }
 
-/// Native "choose an image file" dialog (no extra dependency).
+/// The image extensions the pickers filter on, without the leading dot: `rfd`
+/// wants bare extensions and builds each platform's own pattern list from them.
+const IMAGE_EXTENSIONS: [&str; 9] = [
+    "png", "jpg", "jpeg", "webp", "gif", "bmp", "avif", "svg", "ico",
+];
+
+/// Native "choose an image file" dialog.
 pub fn pick_image_file() -> Option<PathBuf> {
     pick_image_file_named("Select an image")
 }
@@ -477,200 +483,27 @@ pub fn pick_image_file() -> Option<PathBuf> {
 /// create-instance dialog, for example), and the file types match the filter it
 /// uses.
 pub fn pick_image_file_named(name: &str) -> Option<PathBuf> {
-    /// The file types the filter offers. macOS takes only the prompt, so the
-    /// pattern list is unused there.
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
-    const EXTENSIONS: &str = "*.png *.jpg *.jpeg *.webp *.gif *.bmp *.avif *.svg *.ico";
-    #[cfg(target_os = "macos")]
-    {
-        // The label becomes the dialog's prompt: AppleScript strings need their
-        // quotes and backslashes escaped.
-        let prompt = name.replace('\\', "\\\\").replace('"', "\\\"");
-        let output = std::process::Command::new("osascript")
-            .args([
-                "-e",
-                &format!("POSIX path of (choose file with prompt \"{prompt}\")"),
-            ])
-            .output()
-            .ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        return (!path.is_empty()).then(|| PathBuf::from(path));
-    }
-    #[cfg(target_os = "linux")]
-    {
-        let output = std::process::Command::new("zenity")
-            .args([
-                "--file-selection",
-                &format!("--file-filter={name} | {EXTENSIONS}"),
-            ])
-            .output()
-            .ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        return (!path.is_empty()).then(|| PathBuf::from(path));
-    }
-    #[cfg(target_os = "windows")]
-    {
-        // The filter string separates the label from the patterns with a `|`.
-        let filter = format!("{}|{}", name, EXTENSIONS.replace(' ', ";"));
-        let script = format!(
-            "Add-Type -AssemblyName System.Windows.Forms; \
-            $f = New-Object System.Windows.Forms.OpenFileDialog; \
-            $f.Filter = '{filter}'; \
-            if ($f.ShowDialog() -eq 'OK') {{ $f.FileName }}"
-        );
-        let output = std::process::Command::new("powershell")
-            .args(["-NoProfile", "-Command", &script])
-            .output()
-            .ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        return (!path.is_empty()).then(|| PathBuf::from(path));
-    }
-    #[allow(unreachable_code)]
-    None
+    rfd::FileDialog::new()
+        .add_filter(name, &IMAGE_EXTENSIONS)
+        .pick_file()
 }
 
-/// Native "save a file as" dialog (no extra dependency).
+/// Native "save a file as" dialog.
 ///
-/// The account view's "save my skin" is the one caller; there is no dependency
-/// free save dialog in the tree, so this reproduces the three platform pickers
-/// the way `pick_image_file_named` does.
+/// The account view's "save my skin" is the one caller.
 pub fn save_file_named(prompt: &str, default_name: &str) -> Option<PathBuf> {
-    #[cfg(target_os = "macos")]
-    {
-        // AppleScript strings need their quotes and backslashes escaped.
-        let prompt = prompt.replace('\\', "\\\\").replace('"', "\\\"");
-        let default_name = default_name.replace('\\', "\\\\").replace('"', "\\\"");
-        let script = format!(
-            "POSIX path of (choose file name with prompt \"{prompt}\" default name \"{default_name}\")"
-        );
-        let output = std::process::Command::new("osascript")
-            .args(["-e", &script])
-            .output()
-            .ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        return (!path.is_empty()).then(|| PathBuf::from(path));
-    }
-    #[cfg(target_os = "linux")]
-    {
-        let output = std::process::Command::new("zenity")
-            .args([
-                "--file-selection",
-                "--save",
-                "--confirm-overwrite",
-                &format!("--title={prompt}"),
-                &format!("--filename={default_name}"),
-            ])
-            .output()
-            .ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        return (!path.is_empty()).then(|| PathBuf::from(path));
-    }
-    #[cfg(target_os = "windows")]
-    {
-        // A single-quoted PowerShell string, so only the apostrophe is escaped.
-        let prompt = prompt.replace('\'', "''");
-        let default_name = default_name.replace('\'', "''");
-        let script = format!(
-            "Add-Type -AssemblyName System.Windows.Forms; \
-             $d = New-Object System.Windows.Forms.SaveFileDialog; \
-             $d.Title = '{prompt}'; \
-             $d.FileName = '{default_name}'; \
-             if ($d.ShowDialog() -eq 'OK') {{ $d.FileName }}"
-        );
-        let output = std::process::Command::new("powershell")
-            .args(["-NoProfile", "-Command", &script])
-            .output()
-            .ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        return (!path.is_empty()).then(|| PathBuf::from(path));
-    }
-    #[allow(unreachable_code)]
-    None
+    rfd::FileDialog::new()
+        .set_title(prompt)
+        .set_file_name(default_name)
+        .save_file()
 }
 
-/// Native "choose a folder" dialog (no extra dependency), opened at `current`.
+/// Native "choose a folder" dialog, opened at `current`.
 pub fn pick_directory(prompt: &str, current: &Path) -> Option<PathBuf> {
-    #[cfg(target_os = "macos")]
-    {
-        // AppleScript strings need their quotes and backslashes escaped; the
-        // starting directory is handed over as a `POSIX file`.
-        let prompt = prompt.replace('\\', "\\\\").replace('"', "\\\"");
-        let start = current
-            .to_string_lossy()
-            .replace('\\', "\\\\")
-            .replace('"', "\\\"");
-        let script = format!(
-            "POSIX path of (choose folder with prompt \"{prompt}\" \
-             default location POSIX file \"{start}\")"
-        );
-        let output = std::process::Command::new("osascript")
-            .args(["-e", &script])
-            .output()
-            .ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        return (!path.is_empty()).then(|| PathBuf::from(path));
-    }
-    #[cfg(target_os = "linux")]
-    {
-        let output = std::process::Command::new("zenity")
-            .args([
-                "--file-selection",
-                "--directory",
-                &format!("--title={prompt}"),
-                &format!("--filename={}/", current.display()),
-            ])
-            .output()
-            .ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        return (!path.is_empty()).then(|| PathBuf::from(path));
-    }
-    #[cfg(target_os = "windows")]
-    {
-        // A single-quoted PowerShell string, so only the apostrophe is escaped.
-        let current = current.to_string_lossy().replace('\'', "''");
-        let script = format!(
-            "Add-Type -AssemblyName System.Windows.Forms; \
-             $d = New-Object System.Windows.Forms.FolderBrowserDialog; \
-             $d.Description = '{prompt}'; \
-             $d.SelectedPath = '{current}'; \
-             if ($d.ShowDialog() -eq 'OK') {{ $d.SelectedPath }}"
-        );
-        let output = std::process::Command::new("powershell")
-            .args(["-NoProfile", "-Command", &script])
-            .output()
-            .ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        return (!path.is_empty()).then(|| PathBuf::from(path));
-    }
-    #[allow(unreachable_code)]
-    None
+    rfd::FileDialog::new()
+        .set_title(prompt)
+        .set_directory(current)
+        .pick_folder()
 }
 
 /// Re-executes the launcher so a changed storage location takes effect.
