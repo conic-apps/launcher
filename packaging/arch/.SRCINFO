@@ -1,6 +1,6 @@
 pkgbase = conic-launcher
 	pkgdesc = A small, fast, and nimble Minecraft launcher
-	pkgver = 0.1.0alpha.2
+	pkgver = 0.1.0alpha.3
 	pkgrel = 1
 	url = https://github.com/conic-apps/launcher
 	arch = x86_64
@@ -31,7 +31,7 @@ pkgbase = conic-launcher
 	optdepends = zenity: pick a custom background image
 	options = !lto
 	options = !debug
-	source = conic-launcher-0.1.0-alpha.2.tar.gz::https://github.com/conic-apps/launcher/archive/refs/tags/v0.1.0-alpha.2.tar.gz
+	source = conic-launcher-0.1.0-alpha.3.tar.gz::https://github.com/conic-apps/launcher/archive/refs/tags/v0.1.0-alpha.3.tar.gz
 	sha256sums = 20f8b7a52e9ff5162eb0d175dab0b7c08b729b8ac137d8cd07261de59bc10f26
 
 pkgname = conic-launcher
