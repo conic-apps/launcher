@@ -53,7 +53,32 @@ pub(crate) fn grid_card_height(grid: Grid) -> i32 {
 ///
 /// Runs on the UI thread — the cards become Slint structs here, because a model
 /// cannot be made anywhere else.
+///
+/// The icons are not waited for: whatever a card's icon is still being fetched
+/// from goes out with a spinner, and [`load_icons`] fills the rows in as the
+/// bytes land. A url an earlier list already decoded is left out — [`finish_card`]
+/// picks it up from `ICONS`, so re-showing a list costs nothing.
 pub(crate) fn set_cards(ui: &App, grid: Grid, pending: Vec<PendingCard>) {
+    // A card that already carries a decoded buffer has nothing to fetch, and
+    // neither has one whose url an earlier list decoded — `finish_card` picks
+    // that one up from `ICONS`, which is what makes re-showing a list free.
+    //
+    // Folded by url: a page can show the same default icon on several rows, and
+    // one download of it serves all of them.
+    let mut icons: Vec<PendingIcon> = Vec::new();
+    for (index, card) in pending.iter().enumerate() {
+        let Some(url) = card.icon_url.as_deref().filter(|url| !url.is_empty()) else {
+            continue;
+        };
+        if card.icon.is_some() || cached_icon(url).is_some() {
+            continue;
+        }
+        let id = card.id.clone();
+        match icons.iter_mut().find(|(existing, _)| existing == url) {
+            Some((_, rows)) => rows.push((index, id)),
+            None => icons.push((url.to_string(), vec![(index, id)])),
+        }
+    }
     let (width, panel_height, model) = {
         let state = controller();
         let mut state = state.borrow_mut();
@@ -77,6 +102,7 @@ pub(crate) fn set_cards(ui: &App, grid: Grid, pending: Vec<PendingCard>) {
             model.set_row_data(index, card);
         }
     }
+    load_icons(ui, grid, icons);
 }
 
 /// Makes `grid` the one on screen: it becomes the grid a resize re-lays out,

@@ -71,6 +71,12 @@ export struct ContentCard {
     tags: [CardTag],
     /// The decoded icon. Rust falls back to the bundled unknown-server texture.
     icon: image,
+    /// Whether the icon is still being fetched, in which case the card draws a
+    /// spinner in its place instead of the fallback texture. Rust delivers the
+    /// cards first and fills their icons in as the bytes arrive, because a page
+    /// of remote results is all `https:` URLs and fetching them before the first
+    /// one is drawn is what makes a list look dead while it loads.
+    icon-loading: bool,
     /// Which trailing action column the card draws: "" | "favorite" (heart +
     /// link) | "file" (folder + trash). The two buttons fade and scale in on
     /// hover.

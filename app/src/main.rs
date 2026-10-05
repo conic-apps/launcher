@@ -81,6 +81,13 @@ fn main() {
     // so one call reaches every crate that uses it.
     shared::set_system_proxy(config.download.use_system_proxy);
 
+    // Same one-call, before-the-first-request shape as the proxy preference
+    // above, and for the same reason: the cache is settled once and has to be
+    // pointed somewhere before anything is fetched through it. It is a directory
+    // rather than a setting because nothing about it is a preference — there is
+    // only one place it could sensibly go.
+    shared::http_cache::set_dir(storage::LOCATIONS.launcher.cache.join("http"));
+
     // Pick the bundled translation. Must run after a component exists (that's
     // what installs the translation bundle).
     ui::services::app_config::select_locale(config.language.as_deref());

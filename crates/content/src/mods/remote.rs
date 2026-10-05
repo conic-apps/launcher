@@ -4,7 +4,8 @@
 
 //! Online mod metadata lookup with a persistent on-disk cache.
 //!
-//! Four cache files live under [`storage::LOCATIONS`]'s cache directory:
+//! Four JSON files live under [`storage::LOCATIONS`]'s cache directory, plus a
+//! directory of icons beside them:
 //!
 //! - `modrinth.json` and `curseforge.json` cache the result of each platform's
 //!   file-feature lookup, keyed by the file's SHA-512 checksum. Entries expire
@@ -14,6 +15,14 @@
 //! - `identity.json` maps each file's SHA-512 checksum to the project/mod ids
 //!   it is known on either platform. It never expires and only stores the
 //!   platform ids, not the lookup details.
+//! - `local-icons/<sha512>.png` is one file's own icon, named after the same
+//!   checksum. The icon used to sit in `local.json` as a `data:` URL, which made
+//!   it the bulk of that file — and nearly all of it was thrown away, because
+//!   `merge_remote` swaps a local icon for the platform's own URL whenever the
+//!   lookup matched, which is the common case. Only a mod neither platform knows
+//!   reads its icon back at all, so the bytes sit beside the JSON rather than in
+//!   it: raw instead of base64, and read one file at a time instead of
+//!   inflating every parse with the whole set.
 //!
 //! The platform lookups for a file are classified by its identity entry:
 //!
@@ -24,12 +33,33 @@
 //!   written to the caches. A platform that failed or has no data for the file
 //!   records `null` for its id in the identity entry.
 //!
-//! Cache files are shared between concurrent parse requests, so every
-//! read-merge-write goes through `CACHE_WRITE_LOCK` and re-reads the current
-//! on-disk state before merging, so two parses never overwrite each other's
-//! entries. Online info takes priority over the local parse result; local data
+//! Online info takes priority over the local parse result; local data
 //! supplements whatever the platform does not provide. Icons found online are
-//! passed through as URLs.
+//! passed through as URLs. An embedded (jar-in-jar) mod is a different mod that
+//! happens to ship inside the same file, so it keeps its own name, version and
+//! icon instead of taking the outer jar's.
+//!
+//! # Writing
+//!
+//! The files are shared between concurrent parse requests — the frontend
+//! switching instances mid-parse is enough to start two — so every write is a
+//! read-merge-write behind `CACHE_WRITE_LOCK` that re-reads the current
+//! on-disk state before merging, and two parses never overwrite each other's
+//! entries. Reads take no lock: one that races a concurrent write merely misses
+//! that entry, and the merge re-reads the file under the lock regardless, so
+//! locking the read path would only add contention to folder parsing for nothing.
+//!
+//! `merge_and_save` is the only place the lock is taken, and that is what keeps
+//! it deadlock-free. Three invariants hold it together:
+//!
+//! 1. One acquisition, never nested. A `tokio::sync::Mutex` is not reentrant, so
+//!    the helper calls only `load_cache` and `save_cache`, which take no lock
+//!    of their own — no cycle is reachable.
+//! 2. Nothing but disk I/O and serde runs under the lock. No `.await` there
+//!    reaches back into this module; every platform query happens before the
+//!    saves.
+//! 3. The synchronous hashing of a folder (`sha512_file`) runs outside the
+//!    lock, before anything is saved.
 
 use std::{
     collections::HashMap,
@@ -41,12 +71,15 @@ use std::{
 
 use futures::{FutureExt, select};
 use log::warn;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
 use sha2::{Digest, Sha512};
 
 use crate::error::Result;
-use crate::mods::{ModLoader, ResolvedAuthorInfo, ResolvedMod, is_disabled_file, parse_mod};
+use crate::mods::{
+    ModLoader, ResolvedAuthorInfo, ResolvedMod, decode_icon_data_url, encode_icon,
+    is_disabled_file, parse_mod,
+};
 
 /// The platform an online mod lookup was resolved from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -124,7 +157,8 @@ type IdentityCache = HashMap<String, IdentityEntry>;
 
 /// Serializes the read-merge-write of the shared cache files so concurrent
 /// parse requests (e.g. the frontend switching instances mid-parse) never
-/// overwrite each other's entries.
+/// overwrite each other's entries. See the module docs for the invariants that
+/// keep taking it deadlock-free.
 static CACHE_WRITE_LOCK: OnceLock<tokio::sync::Mutex<()>> = OnceLock::new();
 
 async fn cache_write_lock() -> tokio::sync::MutexGuard<'static, ()> {
@@ -145,15 +179,21 @@ fn cache_dir() -> std::path::PathBuf {
     storage::LOCATIONS.launcher.cache.join("mods")
 }
 
-async fn load_remote_cache(name: &str) -> RemoteCache {
-    let path = cache_dir().join(name);
-    match tokio::fs::read(&path).await {
+/// The icon of the file with this checksum, stored beside the JSON caches. Named
+/// after the content, so a replaced jar simply gets a new name and nothing has
+/// to notice that the old one is now stale.
+fn icon_path(hash: &str) -> PathBuf {
+    cache_dir().join("local-icons").join(format!("{hash}.png"))
+}
+
+async fn load_cache<T: DeserializeOwned>(name: &str) -> HashMap<String, T> {
+    match tokio::fs::read(cache_dir().join(name)).await {
         Ok(bytes) => serde_json::from_slice(&bytes).unwrap_or_default(),
-        Err(_) => RemoteCache::default(),
+        Err(_) => HashMap::default(),
     }
 }
 
-async fn save_remote_cache(name: &str, cache: &RemoteCache) {
+async fn save_cache<T: Serialize>(name: &str, cache: &HashMap<String, T>) {
     let Ok(bytes) = serde_json::to_vec(cache) else {
         warn!("Failed to serialize mod cache {name}");
         return;
@@ -163,61 +203,42 @@ async fn save_remote_cache(name: &str, cache: &RemoteCache) {
     }
 }
 
-async fn load_local_cache() -> LocalCache {
-    let path = cache_dir().join(LOCAL_CACHE);
-    match tokio::fs::read(&path).await {
-        Ok(bytes) => serde_json::from_slice(&bytes).unwrap_or_default(),
-        Err(_) => LocalCache::default(),
-    }
-}
-
-async fn save_local_cache(cache: &LocalCache) {
-    let Ok(bytes) = serde_json::to_vec(cache) else {
-        warn!("Failed to serialize local mod cache");
-        return;
-    };
-    if let Err(error) = tokio::fs::write(cache_dir().join(LOCAL_CACHE), bytes).await {
-        warn!("Failed to save local mod cache: {error}");
-    }
-}
-
-/// Merge the given entries into the named platform cache and write it back.
-/// The current on-disk state is re-read inside [`CACHE_WRITE_LOCK`] so entries
-/// written by a concurrent parse are kept.
-async fn merge_and_save_remote_cache(name: &str, entries: &RemoteCache) {
-    if entries.is_empty() {
+/// Merge the given entries into the named cache and write it back.
+///
+/// The current on-disk state is re-read inside `CACHE_WRITE_LOCK` so entries
+/// written by a concurrent parse are kept. This is the only place the lock is
+/// taken — see the module docs.
+async fn merge_and_save<T>(name: &str, updates: &HashMap<String, T>)
+where
+    T: Clone + Serialize + DeserializeOwned,
+{
+    if updates.is_empty() {
         return;
     }
     let _guard = cache_write_lock().await;
-    let mut cache = load_remote_cache(name).await;
-    for (hash, entry) in entries {
+    let mut cache = load_cache(name).await;
+    for (hash, entry) in updates {
         cache.insert(hash.clone(), entry.clone());
     }
-    save_remote_cache(name, &cache).await;
+    save_cache(name, &cache).await;
 }
 
 async fn load_identity_cache() -> IdentityCache {
-    let path = cache_dir().join(IDENTITY_CACHE);
-    match tokio::fs::read(&path).await {
-        Ok(bytes) => serde_json::from_slice(&bytes).unwrap_or_default(),
-        Err(_) => IdentityCache::default(),
-    }
+    load_cache(IDENTITY_CACHE).await
 }
 
 async fn save_identity_cache(cache: &IdentityCache) {
-    let Ok(bytes) = serde_json::to_vec(cache) else {
-        warn!("Failed to serialize identity cache");
-        return;
-    };
-    if let Err(error) = tokio::fs::write(cache_dir().join(IDENTITY_CACHE), bytes).await {
-        warn!("Failed to save identity cache: {error}");
-    }
+    save_cache(IDENTITY_CACHE, cache).await;
 }
 
 /// Merge the per-platform lookup outcomes (hash → `Some(id)` on success,
 /// `None` on failure) into the identity cache field-wise and write it back.
 /// `None` only overwrites the platform it belongs to, so two concurrent parses
 /// discovering the same file on different platforms do not lose each other's id.
+///
+/// The merge is field-wise rather than entry-wise because of that, which is why
+/// it does not go through `merge_and_save` like the other three caches: there
+/// the entry *is* the value, and here only one of its two fields is.
 async fn merge_and_save_identity(
     modrinth: HashMap<String, Option<String>>,
     curseforge: HashMap<String, Option<String>>,
@@ -261,14 +282,17 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
         return Vec::new();
     }
 
-    let mut local_cache = load_local_cache().await;
+    let local_cache = load_cache::<LocalCacheEntry>(LOCAL_CACHE).await;
     let timestamp = now();
     // One entry per file, so files that share the same content (and therefore
     // the same cache key) still show up individually with their own `disabled`
     // flag.
     let mut files_with_mods: Vec<(String, PathBuf, Vec<ResolvedMod>)> = Vec::new();
     let mut files_by_hash: HashMap<String, PathBuf> = HashMap::new();
-    let mut local_cache_dirty = false;
+    // Only what this parse produced. `local_cache` is whatever is on disk, and
+    // the merge re-reads it under the lock, so passing the whole map would
+    // rewrite every entry to write the few that are new.
+    let mut new_local_entries: LocalCache = HashMap::new();
 
     for path in files {
         let hash = match sha512_file(&path) {
@@ -293,14 +317,19 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
         if parsed.is_empty() {
             continue;
         }
-        if !local_cache.contains_key(&hash) {
-            local_cache.insert(
+        // An entry is written when it is new, or when the cached copy still
+        // carries an icon inline. The second case is the migration: the icon
+        // moves to its own file and the JSON is rewritten without it. Both stop
+        // repeating on the next parse, so each entry costs one rewrite ever —
+        // without it a cache written before the split would keep its megabytes
+        // of base64 forever, since nothing else ever invalidates a valid entry.
+        if !local_cache.contains_key(&hash) || own_icon(&parsed).is_some() {
+            new_local_entries.insert(
                 hash.clone(),
                 LocalCacheEntry {
                     mods: parsed.clone(),
                 },
             );
-            local_cache_dirty = true;
         }
         // `disabled` is a property of the file name, not the content, so it
         // must be derived from the current file even when the parse result
@@ -315,12 +344,13 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
         files_with_mods.push((hash, path, parsed));
     }
 
-    if local_cache_dirty {
-        save_local_cache(&local_cache).await;
-    }
+    // The icons go out before the JSON, because they come off the same entries:
+    // once `merge_and_save` writes, this parse's mods are on disk without them.
+    write_icons(&new_local_entries).await;
+    merge_and_save(LOCAL_CACHE, &new_local_entries).await;
 
-    let mut modrinth_cache = load_remote_cache(MODRINTH_CACHE).await;
-    let mut curseforge_cache = load_remote_cache(CURSEFORGE_CACHE).await;
+    let mut modrinth_cache = load_cache::<RemoteCacheEntry>(MODRINTH_CACHE).await;
+    let mut curseforge_cache = load_cache::<RemoteCacheEntry>(CURSEFORGE_CACHE).await;
     let identity_cache = load_identity_cache().await;
 
     // Classify every hash by its identity: hashes known on both platforms take
@@ -445,10 +475,10 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
     }
 
     if modrinth_dirty {
-        merge_and_save_remote_cache(MODRINTH_CACHE, &modrinth_cache).await;
+        merge_and_save(MODRINTH_CACHE, &modrinth_cache).await;
     }
     if curseforge_dirty {
-        merge_and_save_remote_cache(CURSEFORGE_CACHE, &curseforge_cache).await;
+        merge_and_save(CURSEFORGE_CACHE, &curseforge_cache).await;
     }
     merge_and_save_identity(modrinth_identity, curseforge_identity).await;
 
@@ -456,14 +486,81 @@ pub async fn parse_folder_with_remote<S: AsRef<Path> + ?Sized>(folder: &S) -> Ve
     // the same hash (identical content), so the entry is kept for the rest.
     let mut result = Vec::new();
     for (hash, _, mut mods) in files_with_mods {
-        if let Some(remote) = remote_by_hash.get(&hash) {
-            for mod_info in &mut mods {
+        let remote = remote_by_hash.get(&hash);
+        // The platform's icon wins wherever there is one, so the file beside the
+        // caches is read only for a mod neither platform knows. A `None` icon on
+        // a mod that came from `local.json` says exactly that — the cache no
+        // longer carries icons, they live in that file now.
+        let local_icon = if remote
+            .is_none_or(|remote| remote.icon_url.as_deref().unwrap_or_default().is_empty())
+        {
+            read_icon_file(&hash).await
+        } else {
+            None
+        };
+        for mod_info in &mut mods {
+            // An embedded mod is a different mod that happens to ship inside this
+            // file. It has its own name, version and icon, and the file's sidecar
+            // icon is the outer jar's — so neither the online info nor that icon
+            // is applied to it. Skipped rather than merged-and-patched because
+            // there is nothing to merge from.
+            if mod_info.embedded {
+                continue;
+            }
+            if mod_info.icon.is_none() {
+                mod_info.icon = local_icon.clone();
+            }
+            if let Some(remote) = remote {
                 merge_remote(mod_info, remote);
             }
         }
         result.extend(mods);
     }
     result
+}
+
+/// Writes a newly parsed file's icon beside the JSON caches.
+///
+/// One icon per file, named after its checksum — the first mod the file declares.
+/// Every loader that bundles jars pushes the file's own metadata before them, so
+/// that is the file's own icon; a `mods.toml` may declare several mods of its own,
+/// and the rest go without, because they share the file's checksum and so its
+/// online lookup, whose icon covers them anyway.
+async fn write_icons(entries: &LocalCache) {
+    if entries.is_empty() {
+        return;
+    }
+    if let Err(error) = tokio::fs::create_dir_all(cache_dir().join("local-icons")).await {
+        warn!("Failed to create the mod icon cache directory: {error}");
+        return;
+    }
+    for (hash, entry) in entries {
+        let Some(bytes) = own_icon(&entry.mods).and_then(decode_icon_data_url) else {
+            continue;
+        };
+        if let Err(error) = tokio::fs::write(icon_path(hash), bytes).await {
+            warn!("Failed to save the cached icon of {hash}: {error}");
+        }
+    }
+}
+
+/// The icon [`write_icons`] stores for these mods: the first one the file declares
+/// rather than embeds.
+///
+/// The caller uses this too, to tell an entry that still has an icon to migrate
+/// from one that has none left. They have to agree on it — an entry whose icon
+/// this does not find would be rewritten on every parse forever, since the JSON
+/// never loses the icons that were already in it.
+fn own_icon(mods: &[ResolvedMod]) -> Option<&str> {
+    mods.iter()
+        .find(|mod_info| !mod_info.embedded)
+        .and_then(|mod_info| mod_info.icon.as_deref())
+}
+
+/// The icon stored beside the JSON caches for the file with this checksum.
+async fn read_icon_file(hash: &str) -> Option<String> {
+    let bytes = tokio::fs::read(icon_path(hash)).await.ok()?;
+    Some(encode_icon(bytes))
 }
 
 /// Query Modrinth for a batch of SHA-512 hashes and store the fresh results
@@ -893,8 +990,8 @@ pub async fn check_mod_installed(
     }
 
     // Re-parse the matched files and resolve them from the requested platform.
-    let mut modrinth_cache = load_remote_cache(MODRINTH_CACHE).await;
-    let mut curseforge_cache = load_remote_cache(CURSEFORGE_CACHE).await;
+    let mut modrinth_cache = load_cache::<RemoteCacheEntry>(MODRINTH_CACHE).await;
+    let mut curseforge_cache = load_cache::<RemoteCacheEntry>(CURSEFORGE_CACHE).await;
     let mut modrinth_identity: HashMap<String, Option<String>> = HashMap::new();
     let mut curseforge_identity: HashMap<String, Option<String>> = HashMap::new();
     let mut files_by_hash: HashMap<String, PathBuf> = HashMap::new();
@@ -943,10 +1040,10 @@ pub async fn check_mod_installed(
     }
 
     if modrinth_dirty {
-        merge_and_save_remote_cache(MODRINTH_CACHE, &modrinth_cache).await;
+        merge_and_save(MODRINTH_CACHE, &modrinth_cache).await;
     }
     if curseforge_dirty {
-        merge_and_save_remote_cache(CURSEFORGE_CACHE, &curseforge_cache).await;
+        merge_and_save(CURSEFORGE_CACHE, &curseforge_cache).await;
     }
     merge_and_save_identity(modrinth_identity, curseforge_identity).await;
 

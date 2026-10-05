@@ -124,6 +124,17 @@ pub(crate) const CARD_HEIGHT_SAVES: i32 = 64;
 /// the only place a model may be made.
 pub(crate) fn finish_card(card: PendingCard) -> ContentCard {
     let tags: Vec<CardTag> = card.tags.into_iter().map(finish_tag).collect();
+    // Three sources, in order: the buffer this pass decoded, an earlier list's
+    // decode of the same url, and — only once nothing is coming — the bundled
+    // fallback. A card still waiting keeps an empty box instead, because the
+    // fallback texture under the spinner would be a card claiming to have an
+    // icon it does not have yet.
+    let decoded = card.icon.is_some();
+    let icon = card
+        .icon
+        .and_then(resolve_icon)
+        .or_else(|| card.icon_url.as_deref().and_then(cached_icon));
+    let icon_loading = !decoded && card.icon_url.is_some() && icon.is_none();
     ContentCard {
         id: SharedString::from(card.id),
         link: SharedString::from(card.link),
@@ -132,11 +143,12 @@ pub(crate) fn finish_card(card: PendingCard) -> ContentCard {
         has_subtitle: card.has_subtitle,
         description: SharedString::from(card.description),
         tags: ModelRc::from(Rc::new(VecModel::from(tags))),
-        icon: card
-            .icon
-            .and_then(resolve_icon)
-            .or_else(unknown_icon)
-            .unwrap_or_default(),
+        icon: if icon_loading {
+            Image::default()
+        } else {
+            icon.or_else(unknown_icon).unwrap_or_default()
+        },
+        icon_loading,
         action_kind: SharedString::from(card.action_kind),
         shows_play: card.shows_play,
         mod_disabled: card.mod_disabled,
@@ -261,9 +273,20 @@ impl ContentController {
         if self.instance_id != id {
             self.instance_id = id;
             self.targets.clear();
-            // The caches are keyed by URL and path, and a different instance
-            // has its own.
-            ICONS.with(|icons| icons.borrow_mut().clear());
+            // Only the entries that belong to an instance go. A remote icon is
+            // keyed by a `cdn.modrinth.com` URL and belongs to no instance at
+            // all, so clearing those meant that switching instances and back
+            // re-downloaded every project icon on screen — which is what the disk
+            // cache in `shared::http_cache` exists to stop, and it is undone here
+            // the moment this runs. A `data:` URL is a save's or a pack's own
+            // image and is read out of the instance, so those do go.
+            ICONS.with(|icons| {
+                icons
+                    .borrow_mut()
+                    .retain(|url, _| !url.starts_with("data:"))
+            });
+            // Screenshots are read off the instance's own directory, so all of
+            // them go.
             SCREENSHOTS.with(|shots| shots.borrow_mut().clear());
         }
     }

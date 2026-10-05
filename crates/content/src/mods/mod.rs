@@ -94,6 +94,15 @@ pub struct ResolvedMod {
     pub license: Option<Vec<String>>,
     /// The mod icon encoded as a `data:image/png;base64,` data URL, or the icon
     /// URL returned by an online lookup.
+    ///
+    /// Never serialized. A data URL is a third larger than the PNG it encodes,
+    /// and the online lookup replaces it for nearly every mod that either
+    /// platform knows — persisting it made `local.json` mostly icon. The bytes
+    /// live in a file of their own keyed by the jar's checksum instead; see
+    /// [`remote`]. `default` keeps a cache written before that readable, so the
+    /// icons such a cache still carries are converted on the next parse instead
+    /// of being lost.
+    #[serde(skip_serializing, default)]
     pub icon: Option<String>,
     pub loader: ModLoader,
     /// Whether the mod is disabled, i.e. its file name carries the
@@ -254,12 +263,30 @@ pub(crate) fn read_icon<R: Read + Seek>(archive: &mut ZipArchive<R>, path: &str)
     if let Ok(mut file) = archive.by_name(path)
         && file.read_to_end(&mut buf).is_ok()
     {
-        return Some(format!(
-            "data:image/png;base64,{}",
-            general_purpose::STANDARD_NO_PAD.encode(buf)
-        ));
+        return Some(encode_icon(buf));
     }
     None
+}
+
+/// `data:image/png;base64,…` — the form an icon takes inside a [`ResolvedMod`].
+pub(crate) fn encode_icon(bytes: Vec<u8>) -> String {
+    format!(
+        "data:image/png;base64,{}",
+        general_purpose::STANDARD_NO_PAD.encode(bytes)
+    )
+}
+
+/// The bytes behind an icon data URL, the inverse of [`encode_icon`].
+///
+/// What the remote lookup stores beside its JSON caches rather than in them,
+/// which is the only place this runs: a mod that came from `local.json` has no
+/// icon to decode until the file is read back.
+pub(crate) fn decode_icon_data_url(url: &str) -> Option<Vec<u8>> {
+    let (meta, payload) = url.split_once(',')?;
+    if !meta.contains("base64") {
+        return None;
+    }
+    general_purpose::STANDARD_NO_PAD.decode(payload).ok()
 }
 
 /// Read a whole entry from the archive as bytes. Used to open nested jars.

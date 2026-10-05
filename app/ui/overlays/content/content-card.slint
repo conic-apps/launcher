@@ -4,6 +4,7 @@
 
 import { Theme } from "../../theme.slint";
 import { AppIcon } from "../../components/display/app-icon.slint";
+import { Loading } from "../../components/controls/loading.slint";
 import { WorldMap } from "world-map.slint";
 import { WorldMapState } from "../../globals/worldmap.slint";
 import { CardTag, ContentCard as CardData, ContentText } from "../../globals/content.slint";
@@ -265,6 +266,20 @@ export component ContentCard inherits Rectangle {
             && hover-area.mouse-x >= 20px && hover-area.mouse-x <= 38px
             && hover-area.mouse-y >= root.play-top && hover-area.mouse-y <= root.play-top + 18px;
 
+    /// How far the loading spinner is still showing, 1 while the icon is on its
+    /// way and 0 once it has arrived.
+    ///
+    /// A float of its own rather than the two elements reading `card.icon-loading`
+    /// directly, for two reasons that are both about what cannot be animated
+    /// rather than about how the flag reaches this file. `visible` is a `bool`
+    /// and cannot be animated at all, so a spinner that has to fade out needs a
+    /// float to fade and to derive `visible` from. And one element takes one
+    /// `animate` per property — the image's opacity is already spent on the
+    /// saves' hover dim — so the cross-fade cannot be two independent animations
+    /// on one value without the two halves being able to disagree about how far
+    /// along they are.
+    private property <float> loading-fade: root.card.icon-loading ? 1.0 : 0.0;
+
     // The hover-revealed action column: two buttons pushed to its ends. Neither
     // takes clicks — the card's own area routes them here by position.
     if root.column-shown : Rectangle {
@@ -308,18 +323,69 @@ export component ContentCard inherits Rectangle {
         border-bottom-left-radius: 8px;
         clip: true;
 
-        Image {
+        // The icon, on a wrapper of its own so the wrapper can carry the fade.
+        // One element gets one `animate` per property, and this image's opacity
+        // is already spent on the saves' hover dim below — so the cross-fade
+        // cannot live here and has to live one level out.
+        //
+        // It is the *complement* of the spinner's fade rather than its own
+        // animation, so the two cannot drift out of step: one value drives both,
+        // in opposite directions.
+        icon-image := Rectangle {
             x: 2px;
             y: 2px;
             width: parent.width - 4px;
             height: parent.height - 4px;
-            source: root.card.icon;
-            image-fit: ImageFit.fill;
-            // The *saves* cards dim their world icon while the info block opens
-            // up; the mods cards do not. The saves are the only cards whose
-            // second line is a folder name (and the only ones with a play
-            // button), which is what this keys off.
-            opacity: root.hovered && root.subtitle-style == "folder" ? 0.4 : 1.0;
+            background: transparent;
+            // Fully transparent while the spinner is up, which is also the state
+            // in which the source is empty — Rust sends no image at all until one
+            // has been fetched — so there is nothing here to fade from either
+            // way.
+            opacity: 1.0 - root.loading-fade;
+            animate opacity {
+                duration: 200ms;
+                easing: ease-out;
+            }
+
+            Image {
+                width: 100%;
+                height: 100%;
+                source: root.card.icon;
+                image-fit: ImageFit.fill;
+                // The *saves* cards dim their world icon while the info block
+                // opens up; the mods cards do not. The saves are the only cards
+                // whose second line is a folder name (and the only ones with a
+                // play button), which is what this keys off.
+                opacity: root.hovered && root.subtitle-style == "folder" ? 0.4 : 1.0;
+                animate opacity {
+                    duration: 200ms;
+                    easing: ease-out;
+                }
+            }
+        }
+
+        // The icon is on its way: a spinner where it goes, centred in the same
+        // inner box the image fills, so nothing is stretched while it arrives.
+        // Declared after the image, which paints it over the empty source.
+        //
+        // Not behind an `if`. A conditional element is taken away the moment its
+        // condition flips, which would drop the spinner before it could fade
+        // out; and `visible` cannot be animated, being a `bool`. The opacity is a
+        // float so it can be, and `visible` follows it.
+        //
+        // At 24px in a 72px box it is a third of the width — the 32px of
+        // `content-not-found.slint` is for a 64px box it fills, which would be
+        // too much here. The stroke and gap are unchanged, so the ring keeps the
+        // proportions it has everywhere else.
+        spinner := Loading {
+            x: 2px + (parent.width - 4px - self.width) / 2;
+            y: 2px + (parent.height - 4px - self.height) / 2;
+            size: 24px;
+            stroke-width: 4;
+            gap: 8;
+            opacity: root.loading-fade;
+            // Nothing to draw once it has faded all the way out.
+            visible: root.loading-fade > 0.0;
             animate opacity {
                 duration: 200ms;
                 easing: ease-out;

@@ -789,10 +789,11 @@ pub(crate) fn modrinth_card(hit: &Value, kind: RemoteKind) -> Option<BuiltCard> 
             has_subtitle: true,
             description: crate::support::json::string(hit, "description"),
             tags: modrinth_loader_tags(hit, kind),
-            icon: hit
+            icon: None,
+            icon_url: hit
                 .get("icon_url")
                 .and_then(Value::as_str)
-                .and_then(fetch_icon),
+                .map(str::to_string),
             action_kind: "favorite",
             ..Default::default()
         },
@@ -925,10 +926,11 @@ pub(crate) fn curseforge_card(entry: &Value) -> Option<BuiltCard> {
             has_subtitle: true,
             description: crate::support::json::string(entry, "summary"),
             tags,
-            icon: entry
+            icon: None,
+            icon_url: entry
                 .pointer("/logo/url")
                 .and_then(Value::as_str)
-                .and_then(fetch_icon),
+                .map(str::to_string),
             action_kind: "favorite",
             ..Default::default()
         },

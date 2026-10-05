@@ -106,6 +106,13 @@ impl Platform {
 /// built cards therefore travel as plain data and become `ContentCard`s inside
 /// the closure, on the UI thread. An icon travels as a [`PendingImage`] — a
 /// plain RGBA buffer — because Slint's `Image` itself is not `Send` either.
+///
+/// [`PendingCard::icon`] is therefore almost always `None` and
+/// [`PendingCard::icon_url`] carries where the icon will come from instead. The
+/// cards go to the model first and their icons are filled in as the bytes arrive
+/// (see `content::icon::load_icons`): a page of remote results is all `https:`
+/// URLs, and fetching them before the first card is drawn is what leaves a list
+/// looking dead for as long as the slowest of them takes.
 #[derive(Clone, Default)]
 pub(crate) struct PendingCard {
     pub(crate) id: String,
@@ -115,7 +122,14 @@ pub(crate) struct PendingCard {
     pub(crate) has_subtitle: bool,
     pub(crate) description: String,
     pub(crate) tags: Vec<PendingTag>,
+    /// The icon, when it is already decoded — a `data:` URL, which costs nothing
+    /// to decode, or an image this same background pass produced.
     pub(crate) icon: Option<PendingImage>,
+    /// Where the icon comes from, when it has not been decoded yet: a local
+    /// `data:` URL or a remote `https:` one. It doubles as the card's loading
+    /// state — a card with no icon at all shows the unknown-server texture right
+    /// away, while this one shows a spinner until the fetch lands or fails.
+    pub(crate) icon_url: Option<String>,
     /// "" | "favorite" | "file"
     pub(crate) action_kind: &'static str,
     pub(crate) shows_play: bool,

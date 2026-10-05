@@ -4,7 +4,99 @@
 
 //! The project icon cache and codec.
 
+use futures::{StreamExt, stream};
+
 use super::*;
+
+/// How many icons are fetched at once.
+///
+/// They are small images from a CDN, so the cap is about the CDN rather than the
+/// app: sixteen keeps a page's worth in flight without looking like an attack.
+/// The point of the cap is that they overlap at all — one at a time is what made
+/// a page of twenty results look dead for twenty round-trips.
+const ICON_FETCH_CONCURRENCY: usize = 16;
+
+/// How many decoded images one of these maps holds.
+///
+/// An entry is a decoded bitmap at the source's own resolution — a Modrinth icon
+/// is 128×128, so 64 kB of RGBA plus whatever the driver keeps alongside it.
+/// A browsing session that pages through thousands of projects would otherwise
+/// grow this without bound; five hundred is well past what a person scrolls
+/// past in one sitting and around 25 MB at that per-icon size.
+const DECODED_IMAGE_LIMIT: usize = 500;
+
+/// One icon on its way to the cards: where it comes from, and every
+/// (row, card id) that wants it. Folded by url because a page can show the same
+/// default icon on several rows, and one download serves all of them.
+pub(crate) type PendingIcon = (String, Vec<(usize, String)>);
+
+/// Fetches the icons a freshly delivered grid is still missing and drops each one
+/// in as it arrives.
+///
+/// Called by [`set_cards`] right after the cards go to the model, so a grid is on
+/// screen before a single icon has been fetched. Every fetch is reported on its
+/// own rather than in one batch at the end, because the last icon of a slow page
+/// would otherwise hold back the sixty that are already there.
+///
+/// A card whose row has since been replaced is skipped: the row's `id` is
+/// checked against the ones recorded here, which covers an instance switch,
+/// another list landing in the same model, and the same list reloaded. It is more
+/// precise than a generation counter for this — a card's id *is* its identity,
+/// so a match means the row still wants this icon.
+pub(crate) fn load_icons(ui: &App, grid: Grid, icons: Vec<PendingIcon>) {
+    if icons.is_empty() {
+        return;
+    }
+    let weak = ui.as_weak();
+    crate::support::runtime::spawn(async move {
+        let fetches = stream::iter(icons).map(|(url, rows)| {
+            let weak = weak.clone();
+            async move {
+                let image = fetch_icon(&url);
+                (rows, weak, image)
+            }
+        });
+        fetches
+            .buffer_unordered(ICON_FETCH_CONCURRENCY)
+            .for_each(|(rows, weak, image)| async move {
+                crate::ui::services::report::report(&weak, move |ui| {
+                    set_card_icon(&ui, grid, &rows, image);
+                });
+            })
+            .await;
+    });
+}
+
+/// Puts one icon into every row that asked for it, if those rows are still the
+/// cards that asked.
+///
+/// A failed fetch is not a special case: the cards simply end up with no icon,
+/// which is what a card with no icon to begin with draws.
+fn set_card_icon(ui: &App, grid: Grid, rows: &[(usize, String)], image: Option<PendingImage>) {
+    // The same grid a resize is allowed to re-lay out; a different one means the
+    // panel moved on and these rows belong to something else now.
+    if controller().borrow().open_grid != Some(grid) {
+        return;
+    }
+    let model = grid_model(ui, grid);
+    // Resolved once and cloned per row: `resolve_icon` memoises by url, so a
+    // second row carrying the same icon would get the same `Image` back anyway.
+    let icon = image
+        .and_then(resolve_icon)
+        .or_else(unknown_icon)
+        .unwrap_or_default();
+    for (index, id) in rows {
+        let Some(mut card) = model.row_data(*index) else {
+            continue;
+        };
+        if card.id != *id {
+            continue;
+        }
+        card.icon = icon.clone();
+        card.icon_loading = false;
+        model.set_row_data(*index, card);
+    }
+}
 
 /// Fetches and decodes a card icon, on the background thread.
 ///
@@ -13,6 +105,14 @@ use super::*;
 /// `https:` one. Blocking, which is what `crate::support::runtime::block_on` is for.
 pub(crate) fn fetch_icon(url: &str) -> Option<PendingImage> {
     let bytes = crate::support::runtime::block_on(fetch_icon_bytes(url))?;
+    if let Some(image) = decode_icon(url, bytes) {
+        return Some(image);
+    }
+    // The bytes did not decode. If they came off disk that may be the cache's
+    // fault rather than the host's — a truncated write, or an entry left by a
+    // version that stored something else — and re-reading it would only produce
+    // the same bytes again. Ask the server once, and give up if that fails too.
+    let bytes = crate::support::runtime::block_on(force_fetch_icon_bytes(url))?;
     decode_icon(url, bytes)
 }
 
@@ -22,19 +122,30 @@ pub(crate) fn fetch_icon(url: &str) -> Option<PendingImage> {
 /// at once can *await* the network and leave only the decode to a blocking
 /// thread. Downloading twenty of them one after another on one thread is what
 /// makes a list of remote results look dead while its images arrive.
+///
+/// A `data:` URL is decoded here rather than by [`shared::http_cache`]: it is a
+/// payload the caller already holds, not something fetched, and only the caller
+/// knows which base64 padding to expect. Everything else goes through the cache,
+/// which is where the disk copy, the request timeout, the status check and the
+/// refusal to fetch a host on the user's own network all come from.
 pub(crate) async fn fetch_icon_bytes(url: &str) -> Option<Vec<u8>> {
     if url.is_empty() {
         return None;
     }
-    // Already decoded for an earlier list: nothing to fetch.
-    if ICONS.with(|cache| cache.borrow().contains_key(url)) {
+    match url.strip_prefix("data:") {
+        Some(data) => decode_base64(data),
+        None => shared::http_cache::fetch(url).await,
+    }
+}
+
+/// [`fetch_icon_bytes`] for a `data:` URL, which there is nothing to refetch
+/// for — the payload is in the URL. Only the `https:` half reaches the cache's
+/// reload path, so a local icon that fails to decode just fails.
+async fn force_fetch_icon_bytes(url: &str) -> Option<Vec<u8>> {
+    if url.starts_with("data:") {
         return None;
     }
-    if let Some(data) = url.strip_prefix("data:") {
-        return decode_base64(data);
-    }
-    let response = shared::HTTP_CLIENT.get(url).send().await.ok()?;
-    Some(response.bytes().await.ok()?.to_vec())
+    shared::http_cache::force_fetch(url).await
 }
 
 /// Decodes what [`fetch_icon_bytes`] brought back. A local icon and a remote
@@ -120,7 +231,16 @@ pub(crate) fn resolve_image(
         image.height,
     ));
     cache.with(|cache| {
-        cache.borrow_mut().insert(image.key, built.clone());
+        let mut cache = cache.borrow_mut();
+        if cache.len() >= DECODED_IMAGE_LIMIT {
+            // A flush rather than a selective eviction: a `HashMap` has no order
+            // to evict from the back of, and guessing wrong would blank an icon
+            // that is on screen. The disk cache is what makes throwing them away
+            // cheap — the next card built for one reads a local file instead of
+            // asking a CDN — so this costs a re-decode, not a round-trip.
+            cache.clear();
+        }
+        cache.insert(image.key, built.clone());
     });
     Some(built)
 }
