@@ -19,7 +19,7 @@ use install::vanilla::LOF4J2_CONFIGURATION;
 use instance::Instance;
 use platform::PLATFORM_INFO;
 use platform::{DELIMITER, OsFamily};
-use shared::APP_VERSION;
+use shared::app_version;
 use storage::LOCATIONS;
 use storage::MinecraftLocation;
 use version::{ResolvedLibrary, ResolvedVersion};
@@ -139,7 +139,7 @@ pub async fn generate_command_arguments(
             .to_string(),
     );
     jvm_options.insert("launcher_name", launch_options.launcher_name.clone());
-    jvm_options.insert("launcher_version", APP_VERSION.to_string());
+    jvm_options.insert("launcher_version", app_version().to_string());
     jvm_options.insert(
         "classpath",
         resolve_classpath(
