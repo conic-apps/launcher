@@ -22,7 +22,6 @@ export component SettingsDownload inherits VerticalLayout {
             group-first: true;
             title: @tr("Max connections");
             description: @tr("Limit the number of simultaneous connections to servers. Only applies to downloads during installation. Setting too high may reduce speed!");
-            icon: "link";
 
             Input {
                 input-width: 100px;
@@ -35,7 +34,6 @@ export component SettingsDownload inherits VerticalLayout {
         SettingItem {
             title: @tr("Max download speed (B/s)");
             description: @tr("Limit download speed. Only applies to downloads during installation. Must be greater than 1024 to take effect. Set to 0 to disable");
-            icon: "speedometer";
 
             Input {
                 input-width: 100px;
@@ -49,8 +47,6 @@ export component SettingsDownload inherits VerticalLayout {
             group-last: true;
             title: @tr("Mirror servers");
             description: @tr("Download game files from alternative sources");
-            icon: "server";
-            icon-outline: true;
             navigable: true;
         }
     }
@@ -63,7 +59,6 @@ export component SettingsDownload inherits VerticalLayout {
             group-last: true;
             title: @tr("Use system proxy (requires app restart)");
             description: @tr("Currently only proxy via environment variables is supported");
-            icon: "globe";
 
             Switch {
                 checked <=> AppConfig.use-system-proxy;
