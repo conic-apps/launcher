@@ -277,11 +277,16 @@ async fn spawn_minecraft_process(
     std::fs::write(&script_path, commands)?;
     info!("The startup script is written to {}", script_path.display());
 
-    let mut minecraft_process = if cfg!(target_os = "windows") {
+    #[cfg(target_os = "windows")]
+    let mut minecraft_process = {
         let mut command = std::process::Command::new(script_path);
         command.creation_flags(0x08000000);
         command
-    } else {
+    }
+    .stdout(Stdio::piped())
+    .spawn()?;
+    #[cfg(not(target_os = "windows"))]
+    let mut minecraft_process = {
         info!("Running chmod +x {}", script_path.display());
         let mut chmod = Command::new("chmod");
         chmod.args(["+x", script_path.to_string_lossy().to_string().as_ref()]);
@@ -360,16 +365,16 @@ async fn spawn_minecraft_process(
         }
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
-    if cfg!(target_os = "windows") {
-        let _ = Command::new("cmd")
-            .args(["/C", &launch_options.execute_after_launch])
-            .creation_flags(0x08000000)
-            .spawn();
-    } else {
-        let _ = Command::new("sh")
-            .args(["-c", &launch_options.execute_after_launch])
-            .spawn();
-    }
+    #[cfg(target_os = "windows")]
+    let _ = Command::new("cmd")
+        .args(["/C", &launch_options.execute_after_launch])
+        .creation_flags(0x08000000)
+        .spawn();
+    #[cfg(not(target_os = "windows"))]
+    let _ = Command::new("sh")
+        .args(["-c", &launch_options.execute_after_launch])
+        .spawn();
+
     let statistics_profile = match launch_options.selected_account {
         Account::Microsoft(account) => StatisticsProfile::Microsoft(account.profile.uuid),
         Account::Offline(account) => StatisticsProfile::Offline(account.uuid),
