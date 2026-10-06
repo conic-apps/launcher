@@ -59,6 +59,7 @@ serde.workspace = true
 serde_json.workspace = true
 rfd.workspace = true
 arboard.workspace = true
+open.workspace = true
 
 i-slint-backend-winit = "1.18"
 winit = "0.30"
@@ -121,8 +122,9 @@ runtime is located on the system or downloaded on demand."""
 # library at all:
 #   ca-certificates — `rustls-platform-verifier` reads the system trust store, so
 #                     without it every HTTPS request fails, version list included.
-#   xdg-utils       — the executable `xdg-open` (`config_bridge::open_external`),
-#                     which opens the login browser and every link in a panel.
+#   xdg-utils       — the executable `xdg-open`, the first launcher the `open`
+#                     crate tries (`app_config::open_external`); it opens the
+#                     login browser and every link in a panel.
 depends = """\
 $auto, ca-certificates, xdg-utils, \
 libegl1, libgl1, libx11-6, libxcb1, libxcursor1, libxi6, \

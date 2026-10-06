@@ -73,10 +73,6 @@ fn make_executable(path: &Path) -> Result<()> {
     Ok(())
 }
 
-// ---------------------------------------------------------------------------
-// AppImage
-// ---------------------------------------------------------------------------
-
 fn apply_appimage(staged: &Staged) -> Result<()> {
     #[cfg(target_os = "linux")]
     {
@@ -100,10 +96,6 @@ fn apply_appimage(staged: &Staged) -> Result<()> {
         Err(Error::Unsupported("an AppImage update on a non-Linux host"))
     }
 }
-
-// ---------------------------------------------------------------------------
-// macOS .app
-// ---------------------------------------------------------------------------
 
 fn apply_mac_app(staged: &Staged) -> Result<()> {
     #[cfg(target_os = "macos")]
@@ -157,10 +149,6 @@ fn top_level_app(root: &Path) -> Option<PathBuf> {
         .map(|entry| entry.path())
         .find(|path| path.extension().and_then(|e| e.to_str()) == Some("app"))
 }
-
-// ---------------------------------------------------------------------------
-// Linux portable tarball / Windows portable executable
-// ---------------------------------------------------------------------------
 
 fn apply_portable(staged: &Staged) -> Result<()> {
     #[cfg(target_os = "linux")]
@@ -237,10 +225,6 @@ fn find_named(root: &Path, name: &str) -> Option<PathBuf> {
         .map(|entry| entry.path())
         .find(|path| path.file_name().and_then(|n| n.to_str()) == Some(name))
 }
-
-// ---------------------------------------------------------------------------
-// Windows installers
-// ---------------------------------------------------------------------------
 
 fn apply_msi(staged: &Staged) -> Result<()> {
     #[cfg(windows)]

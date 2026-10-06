@@ -323,19 +323,7 @@ pub(crate) fn gc_from_str(value: &str) -> config::launch::GC {
 
 /// Opens a URL or a local path with the platform's default handler.
 pub fn open_external(target: &str) -> std::io::Result<()> {
-    #[cfg(target_os = "macos")]
-    let mut command = std::process::Command::new("open");
-    #[cfg(target_os = "windows")]
-    let mut command = {
-        let mut command = std::process::Command::new("cmd");
-        command.args(["/C", "start", ""]);
-        command
-    };
-    #[cfg(all(unix, not(target_os = "macos")))]
-    let mut command = std::process::Command::new("xdg-open");
-
-    command.arg(target);
-    command.spawn().map(|_| ())
+    open::that_detached(target)
 }
 
 /// Opens the file manager with `path` selected.
