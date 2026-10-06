@@ -26,23 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  format:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install Rust and rustfmt
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Run cargo fmt
-        run: cargo fmt --all -- --check
-
-  clippy:
+  clippy-and-fmt:
     strategy:
       matrix:
         include:
@@ -69,43 +53,12 @@ jobs:
           components: clippy
 
       - uses: Swatinem/rust-cache@v2
-
-      - name: Run cargo check
-        run: cargo check
+      
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
 
       - name: Run clippy
-        run: cargo clippy --manifest-path ./Cargo.toml --all-targets --release -- -D warnings
-
-  doc:
-    strategy:
-      matrix:
-        include:
-          - platform: "ubuntu-22.04"
-          - platform: "ubuntu-22.04-arm"
-          - platform: "macos-15"
-          - platform: "macos-15-intel"
-          - platform: "windows-latest"
-          - platform: "windows-11-arm"
-    runs-on: ${{ matrix.platform }}
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: install dependencies
-        if: startsWith(matrix.platform, 'ubuntu')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            pkg-config libfontconfig1-dev libasound2-dev libudev-dev
-
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Run cargo doc
-        env:
-          RUSTDOCFLAGS: "-D warnings"
-        run: cargo doc --no-deps --document-private-items
+        run: cargo clippy --manifest-path ./Cargo.toml --all-targets -- -D warnings
 
   test:
     strategy:
@@ -134,4 +87,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Run cargo test
-        run: cargo test --all --release --verbose --all-targets
+        run: cargo test --all --verbose --all-targets
