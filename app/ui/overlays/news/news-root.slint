@@ -1,0 +1,45 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { NewsState } from "../../globals/news.slint";
+import { ContentOverlay } from "../content/content-overlay.slint";
+import { NewsListPanel } from "news-panel.slint";
+import { NewsDetailPanel } from "news-detail.slint";
+
+// The news overlay layer.
+//
+// Two `ContentOverlay`s on the shared shell: the list, and the changelog detail
+// drawn *after* it so the detail covers the list it was opened from. Both slide
+// up and fade their scrim exactly as the content, account and instance-settings
+// panels do; closing the detail leaves the list untouched underneath.
+export component NewsRoot inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    list-overlay := ContentOverlay {
+        overlay-visible: NewsState.visible;
+        panel-inset: 150px;
+        closed => { NewsState.close(); }
+
+        NewsListPanel {
+            panel-width: list-overlay.panel-width;
+            panel-height: list-overlay.panel-height;
+        }
+    }
+
+    // Declared last: a detail covers the list.
+    detail-overlay := ContentOverlay {
+        overlay-visible: NewsState.detail-visible;
+        panel-inset: 150px;
+        panel-background: Theme.base;
+        closed => { NewsState.close-detail(); }
+
+        NewsDetailPanel {
+            panel-width: detail-overlay.panel-width;
+            panel-height: detail-overlay.panel-height;
+        }
+    }
+}

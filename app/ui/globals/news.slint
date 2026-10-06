@@ -1,0 +1,197 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// The news overlay's state.
+//
+// The panel is a single vertical flow over two feeds the launcher-content crate
+// fetches once: the Mojang news entries and the Java Edition changelogs. The
+// first filter row picks between them, the second and third narrow by year and
+// month, and the search box matches the title.
+//
+// Rust owns the feed data and the filtering; the view writes back only what is
+// pure UI — the query and the three selected chips — exactly as the content
+// browser splits `ContentState` and `ContentSearch`.
+
+// The body's display-list types, shared with the content detail panels: there
+// is one Markdown engine in the app, and both surfaces draw what it produced.
+import { MdItem, MarkdownImage, MdChunk } from "../components/markdown/markdown-view.slint";
+
+/// One card of the news flow.
+///
+/// `kind` picks the card's shape rather than just its tags: a news entry is a
+/// wide 772×350 banner and stacks as a picture-over-copy card, an entry of the
+/// changelog index is a 540×540 square and sits as a picture-beside-copy row.
+/// The height is computed by Rust from the panel's width and the image's own
+/// aspect ratio — the flow is a plain `VerticalLayout`, so a definite height is
+/// what keeps the column from having to measure a repeated element.
+export struct NewsCard {
+    /// Where the card sits inside the flow, measured from its top. Rust stacks
+    /// them, because the flow culls: a card outside the scroll window is not
+    /// drawn and its image is not fetched.
+    y: length,
+    height: length,
+    /// Whether the card is near enough to the scroll window to be drawn.
+    in-view: bool,
+    /// "news" | "changelog".
+    kind: string,
+    id: string,
+    title: string,
+    /// The news entry's category, or the changelog's version.
+    subtitle: string,
+    /// The changelog's "release" | "snapshot", resolved to a label by
+    /// `NewsText.kind-label`. Empty for a news entry.
+    tag: string,
+    /// The entry's date, already formatted by Rust for the reader.
+    date-text: string,
+    description: string,
+    image: image,
+    image-ratio: float,
+    /// Whether the image is still being fetched: the card draws its box empty
+    /// until the bitmap arrives.
+    image-loading: bool,
+    /// The article a news card opens in the browser. Empty for a changelog,
+    /// which opens in the panel instead.
+    link: string,
+}
+
+/// One filter chip: a type, a year or a month. A year's and a month's `text` is
+/// the label; the type row resolves its label from `value` through
+/// `NewsText.type-label`, because that label is translated and a string Rust
+/// pushed would not follow a language change.
+export struct NewsChip {
+    value: string,
+    text: string,
+    selected: bool,
+}
+
+/// The news overlay's state and callbacks.
+export global NewsState {
+    /// The list overlay is open.
+    in-out property <bool> visible: false;
+    /// The first response is still on its way.
+    in-out property <bool> loading: true;
+    /// The cards the flow draws, filtered and sorted by Rust.
+    in-out property <[NewsCard]> cards: [];
+    /// The flow's total height, Rust's sum of the cards and their gaps. Given
+    /// rather than measured: the cards are positioned absolutely, so they
+    /// contribute nothing to the containing box.
+    in-out property <length> list-height: 0px;
+
+    /// The changelog detail overlay is open, covering the list.
+    in-out property <bool> detail-visible: false;
+    in-out property <bool> detail-loading: false;
+    in-out property <string> detail-title: "";
+    in-out property <string> detail-subtitle: "";
+    in-out property <string> detail-date: "";
+    in-out property <image> detail-image;
+
+    // The changelog body, in the engine's runs. The same three properties the
+    // content detail panels carry, but owned here so the two surfaces never
+    // write over one another.
+    in-out property <[MdChunk]> body-chunks: [];
+    in-out property <[bool]> body-section-open: [];
+    in-out property <length> body-height: 0px;
+    /// The monospace family the engine measured code with, for the view to draw
+    /// with (see `markdown-body.slint`).
+    in-out property <string> body-mono-family: "";
+    /// The link the pointer is inside, cleared when the body scrolls under it.
+    in-out property <string> body-hovered: "";
+
+    /// The panel reported the size the search rows have to wrap inside. Rust
+    /// turns it into the rows' heights and the cards' geometry.
+    callback list-resized(length, length);
+    /// The list scrolled: `offset` is the distance from the flow's top to the
+    /// top of the viewport, `viewport` how tall the viewport is. Rust draws and
+    /// fetches the cards the window touches.
+    callback list-scrolled(length, length);
+    /// Closes the list (the scrim click and Escape).
+    callback close();
+    /// Closes the changelog detail, leaving the list underneath open.
+    callback close-detail();
+    /// A card was clicked: opens the article, or the changelog's detail.
+    callback open-card(string);
+    /// A link in the body, or a news card's article, opens in the browser.
+    callback open-url(string);
+    /// The body view reported its width; the document is laid out for it.
+    callback body-resized(length);
+}
+
+/// The news browser's own filter state.
+export global NewsSearch {
+    in-out property <string> query: "";
+    in-out property <[NewsChip]> type-chips: [];
+    in-out property <[NewsChip]> year-chips: [];
+    in-out property <[NewsChip]> month-chips: [];
+    /// Each row's height, computed in Rust from the widths the chips report: a
+    /// wrapping `FlexboxLayout` measures itself at its own preferred width, so
+    /// the number cannot come from the layout (the same reason the content
+    /// search panel computes its rows).
+    in-out property <length> type-row-height: 20px;
+    in-out property <length> year-row-height: 20px;
+    in-out property <length> month-row-height: 20px;
+
+    callback search();
+    /// `row` is "type" | "year" | "month" and `value` is the chip itself.
+    callback chip-clicked(string, string);
+    /// A chip reports the width it measured, for its row's height.
+    callback chip-measured(string, string, length);
+}
+
+/// The news surface's translated strings.
+///
+/// Resolved here rather than composed in Rust for the reason `ContentText` is:
+/// a string Rust pushed into a model is fixed at that moment and would not
+/// follow a language change, where an `@tr` binding re-evaluates.
+export global NewsText {
+    /// A filter row's label. The rows are identified by key so the label stays
+    /// translatable.
+    public pure function row-label(key: string) -> string {
+        if key == "type" { return @tr("NewsText" => "Type"); }
+        if key == "year" { return @tr("NewsText" => "Year"); }
+        return @tr("NewsText" => "Month");
+    }
+
+    /// A type chip's label.
+    public pure function type-label(value: string) -> string {
+        if value == "changelog" { return @tr("NewsText" => "Java changelog"); }
+        return @tr("NewsText" => "Mojang news");
+    }
+
+    /// A month chip's label. `value` is the month number ("1".."12"); the label
+    /// is the month's short name in the active language — "1月" in Chinese,
+    /// "Jan" in English — so it is resolved here rather than composed in Rust,
+    /// where the name would be frozen at the moment it was pushed.
+    public pure function month-label(value: string) -> string {
+        if value == "1" { return @tr("NewsText" => "Jan"); }
+        if value == "2" { return @tr("NewsText" => "Feb"); }
+        if value == "3" { return @tr("NewsText" => "Mar"); }
+        if value == "4" { return @tr("NewsText" => "Apr"); }
+        if value == "5" { return @tr("NewsText" => "May"); }
+        if value == "6" { return @tr("NewsText" => "Jun"); }
+        if value == "7" { return @tr("NewsText" => "Jul"); }
+        if value == "8" { return @tr("NewsText" => "Aug"); }
+        if value == "9" { return @tr("NewsText" => "Sep"); }
+        if value == "10" { return @tr("NewsText" => "Oct"); }
+        if value == "11" { return @tr("NewsText" => "Nov"); }
+        if value == "12" { return @tr("NewsText" => "Dec"); }
+        return value;
+    }
+
+    /// A changelog card's and detail's kind tag.
+    public pure function kind-label(value: string) -> string {
+        if value == "release" { return @tr("NewsText" => "Release"); }
+        if value == "snapshot" { return @tr("NewsText" => "Snapshot"); }
+        return "";
+    }
+
+    /// The search field's placeholder.
+    public pure function search-placeholder() -> string {
+        return @tr("NewsText" => "Search news...");
+    }
+
+    /// The year and month rows' leading "any" chip.
+    public pure function all-label() -> string {
+        return @tr("NewsText" => "All");
+    }
+}

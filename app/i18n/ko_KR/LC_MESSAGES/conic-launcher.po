@@ -3032,3 +3032,123 @@ msgstr "수"
 msgctxt "AccountView"
 msgid "Fri"
 msgstr "금"
+
+#: ui
+msgctxt "TitleBar"
+msgid "News"
+msgstr "뉴스"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "News"
+msgstr "뉴스"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "Try adjusting the filters or search again"
+msgstr "필터를 조정하거나 다시 검색해 보세요"
+
+#: ui
+msgctxt "NewsText"
+msgid "Type"
+msgstr "종류"
+
+#: ui
+msgctxt "NewsText"
+msgid "Year"
+msgstr "연도"
+
+#: ui
+msgctxt "NewsText"
+msgid "Month"
+msgstr "월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mojang news"
+msgstr "Mojang 뉴스"
+
+#: ui
+msgctxt "NewsText"
+msgid "Java changelog"
+msgstr "Java 판 변경 로그"
+
+#: ui
+msgctxt "NewsText"
+msgid "Release"
+msgstr "정식 버전"
+
+#: ui
+msgctxt "NewsText"
+msgid "Snapshot"
+msgstr "스냅샷"
+
+#: ui
+msgctxt "NewsText"
+msgid "Search news..."
+msgstr "뉴스 검색..."
+
+#: ui
+msgctxt "NewsText"
+msgid "All"
+msgstr "전체"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jan"
+msgstr "1월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Feb"
+msgstr "2월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mar"
+msgstr "3월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Apr"
+msgstr "4월"
+
+#: ui
+msgctxt "NewsText"
+msgid "May"
+msgstr "5월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jun"
+msgstr "6월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jul"
+msgstr "7월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Aug"
+msgstr "8월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Sep"
+msgstr "9월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Oct"
+msgstr "10월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Nov"
+msgstr "11월"
+
+#: ui
+msgctxt "NewsText"
+msgid "Dec"
+msgstr "12월"

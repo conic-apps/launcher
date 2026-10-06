@@ -112,8 +112,9 @@ the bucket — not the feature — is what decides where a file goes:
   (`dialog-root`, `dropdown-overlay`, `description-tooltip`, `command-palette`,
   `music-player`, `instance-settings`) sit here; a dialog *flow* gets a folder
   (`dialogs/account-add/`, `dialogs/create-instance/`, `dialogs/multiplayer/`)
-  with `dialogs/dialog.slint` as the shared modal shell, and the content browser
-  is `content/`.
+  with `dialogs/dialog.slint` as the shared modal shell, the content browser is
+  `content/`, and the news browser — a list flow over the Mojang news feed and
+  the Java changelogs, with an in-panel changelog reader — is `news/`.
 - **`globals/`** — one singleton per domain (`Navigation`, `AppConfig`,
   `ContentState`, `PageMotion`, …). Slint components are only reachable from Rust through a
   global, and a global is also how cross-screen state is shared without prop
@@ -162,6 +163,7 @@ and is what catches a missed one.
 | `modrinth`        | Modrinth API client                                        |
 | `multiplayer`     | Conic Nexus cross-LAN multiplayer                          |
 | `music`           | Local music files + playback                               |
+| `news`            | Mojang launcher-content client: the news feed and the Java changelogs |
 | `platform`        | OS detection                                               |
 | `shared`          | Common types/utilities (the shared `HTTP_CLIENT`)          |
 | `single-instance` | One instance per machine                                   |

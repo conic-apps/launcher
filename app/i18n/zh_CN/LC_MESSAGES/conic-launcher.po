@@ -3032,3 +3032,123 @@ msgstr "周三"
 msgctxt "AccountView"
 msgid "Fri"
 msgstr "周五"
+
+#: ui
+msgctxt "TitleBar"
+msgid "News"
+msgstr "新闻"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "News"
+msgstr "新闻"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "Try adjusting the filters or search again"
+msgstr "尝试调整筛选条件或重新搜索"
+
+#: ui
+msgctxt "NewsText"
+msgid "Type"
+msgstr "类型"
+
+#: ui
+msgctxt "NewsText"
+msgid "Year"
+msgstr "年份"
+
+#: ui
+msgctxt "NewsText"
+msgid "Month"
+msgstr "月份"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mojang news"
+msgstr "Mojang 新闻"
+
+#: ui
+msgctxt "NewsText"
+msgid "Java changelog"
+msgstr "Java 版更新日志"
+
+#: ui
+msgctxt "NewsText"
+msgid "Release"
+msgstr "正式版"
+
+#: ui
+msgctxt "NewsText"
+msgid "Snapshot"
+msgstr "快照"
+
+#: ui
+msgctxt "NewsText"
+msgid "Search news..."
+msgstr "搜索新闻..."
+
+#: ui
+msgctxt "NewsText"
+msgid "All"
+msgstr "全部"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jan"
+msgstr "1月"
+
+#: ui
+msgctxt "NewsText"
+msgid "Feb"
+msgstr "2月"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mar"
+msgstr "3月"
+
+#: ui
+msgctxt "NewsText"
+msgid "Apr"
+msgstr "4月"
+
+#: ui
+msgctxt "NewsText"
+msgid "May"
+msgstr "5月"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jun"
+msgstr "6月"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jul"
+msgstr "7月"
+
+#: ui
+msgctxt "NewsText"
+msgid "Aug"
+msgstr "8月"
+
+#: ui
+msgctxt "NewsText"
+msgid "Sep"
+msgstr "9月"
+
+#: ui
+msgctxt "NewsText"
+msgid "Oct"
+msgstr "10月"
+
+#: ui
+msgctxt "NewsText"
+msgid "Nov"
+msgstr "11月"
+
+#: ui
+msgctxt "NewsText"
+msgid "Dec"
+msgstr "12月"

@@ -1,0 +1,225 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { AppIcon } from "../../components/display/app-icon.slint";
+import { NewsChip, NewsSearch, NewsText } from "../../globals/news.slint";
+
+// The news browser's search header.
+//
+// The same shape as the content browser's: a translucent crust panel with a
+// 36px search field and a button beside it, then one row per filter — a 52px
+// label and a run of pill chips. The news rows are fixed — type, year, month —
+// rather than the content panel's data-driven set, because the news feed knows
+// exactly which three it has.
+//
+// The rows wrap, so their height cannot come from the layout: a wrapping
+// `FlexboxLayout` measures itself at its own deliberately "roughly square"
+// preferred width (`i-slint-core/layout.rs`), not at the width the row is
+// given. Each chip therefore *reports* the width it measured and Rust computes
+// the row's height, the same arrangement as the content panel's filter rows.
+
+// A filter pill. Its label is the chip's own text, except on the type row,
+// where the value names a translated label.
+component NewsChipView inherits Rectangle {
+    in property <NewsChip> chip;
+    /// Which row this chip belongs to: "type" | "year" | "month". It is what
+    /// the click and the measurement are filed under.
+    in property <string> row-key: "";
+    callback measured(length);
+
+    height: 20px;
+    width: label.preferred-width + 16px;
+    border-radius: 999px;
+    background: !root.chip.selected
+        ? (touch.pressed ? Theme.surface-2 : touch.has-hover ? Theme.surface-1 : transparent)
+        : Theme.lavender;
+
+    // The *leave* eases and the enter does not, which is what `duration` bound
+    // to the hover state says; a pressed or selected chip eases either way.
+    animate background {
+        duration: touch.has-hover && !touch.pressed && !root.chip.selected ? 0ms : 120ms;
+        easing: ease-out;
+    }
+
+    label := Text {
+        width: self.preferred-width;
+        // The value is keyed on the row: an empty value is the "all" chip, the
+        // type row names a feed, the month row names a month, and the year row
+        // is its own digit string.
+        text: root.chip.value == "" ? NewsText.all-label()
+            : root.row-key == "type" ? NewsText.type-label(root.chip.value)
+            : root.row-key == "month" ? NewsText.month-label(root.chip.value)
+            : root.chip.text;
+        font-size: 12px;
+        x: 8px;
+        color: root.chip.selected
+            ? Theme.text-inverse
+            : Theme.default-text-color.transparentize(0.1);
+        vertical-alignment: center;
+        height: parent.height;
+    }
+
+    touch := TouchArea {
+        clicked => { NewsSearch.chip-clicked(root.row-key, root.chip.value); }
+    }
+
+    // `changed` does not fire for the value an element is created with, hence
+    // both.
+    init => { root.measured(root.width); }
+    changed width => { root.measured(root.width); }
+}
+
+// One filter row: a 52px label and a wrapping run of chips. The row's height is
+// Rust's, from the chips' reported widths.
+component NewsFilterRow inherits Rectangle {
+    in property <string> row-key: "";
+    in property <string> label: "";
+    in property <[NewsChip]> chips: [];
+    in property <length> row-height: 20px;
+
+    width: 100%;
+    height: root.row-height;
+    background: transparent;
+
+    HorizontalLayout {
+        spacing: 10px;
+        // The cross axis is left at its default (`stretch`) deliberately: the
+        // wrapping `FlexboxLayout` is given the row's own height, which Rust
+        // computed from the chips' measured widths.
+        Text {
+            text: root.label;
+            font-size: 12px;
+            color: Theme.subtext-0;
+            min-width: 52px;
+            horizontal-alignment: left;
+            // The 20px line box centres the 12px text.
+            vertical-alignment: center;
+            height: 20px;
+        }
+
+        FlexboxLayout {
+            horizontal-stretch: 1;
+            flex-wrap: wrap;
+            spacing: 6px;
+
+            for chip in root.chips : NewsChipView {
+                chip: chip;
+                row-key: root.row-key;
+                measured(width) => { NewsSearch.chip-measured(root.row-key, chip.value, width); }
+            }
+        }
+    }
+}
+
+export component NewsSearchPanel inherits Rectangle {
+    width: 100%;
+    // A layout has no margin, so the box is the content plus the bottom 16px.
+    height: panel-content.preferred-height + 16px;
+    background: Colors.transparent;
+
+    panel := Rectangle {
+        // Pinned to the top: without a `y` the crust is centred in the box that
+        // is 16px taller than its content, which leaves an equal gap above and
+        // below it. The 16px belongs below, against the cards.
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: panel-content.preferred-height;
+        // `backdrop-filter: blur(4px)` has no Slint equivalent, so the panel
+        // stays translucent without the blur.
+        background: Theme.crust.with-alpha(0.92);
+
+        panel-content := VerticalLayout {
+            padding: 24px;
+            spacing: 16px;
+
+            HorizontalLayout {
+                height: 36px;
+                spacing: 8px;
+
+                search-field := Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border-radius: 8px;
+                    background: field-touch.has-hover ? Theme.surface-1 : Theme.surface-0;
+
+                    input := TextInput {
+                        x: 12px;
+                        y: 0;
+                        width: parent.width - 24px;
+                        height: parent.height;
+                        text <=> NewsSearch.query;
+                        font-size: 13px;
+                        color: Theme.default-text-color.transparentize(0.1);
+                        selection-background-color: Theme.default-text-color.with-alpha(0.3);
+                        selection-foreground-color: Theme.default-text-color;
+                        single-line: true;
+                        vertical-alignment: center;
+                        accepted => { NewsSearch.search(); }
+                    }
+
+                    if NewsSearch.query == "" : Text {
+                        text: NewsText.search-placeholder();
+                        font-size: 13px;
+                        color: Theme.subtext-0;
+                        x: 12px;
+                    }
+
+                    field-touch := TouchArea {
+                        // The area sits over the input, so it hands the focus
+                        // over explicitly.
+                        clicked => { input.focus(); }
+                    }
+                }
+
+                search-button := Rectangle {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 8px;
+                    background: button-touch.pressed ? Theme.lavender
+                        : button-touch.has-hover ? Theme.surface-1
+                        : Theme.surface-0;
+
+                    AppIcon {
+                        name: "search";
+                        size: 16px;
+                        icon-color: button-touch.pressed
+                            ? Theme.text-inverse
+                            : Theme.default-text-color.transparentize(0.1);
+                    }
+
+                    button-touch := TouchArea {
+                        clicked => { NewsSearch.search(); }
+                    }
+                }
+            }
+
+            VerticalLayout {
+                spacing: 8px;
+
+                NewsFilterRow {
+                    row-key: "type";
+                    label: NewsText.row-label("type");
+                    chips: NewsSearch.type-chips;
+                    row-height: NewsSearch.type-row-height;
+                }
+
+                NewsFilterRow {
+                    row-key: "year";
+                    label: NewsText.row-label("year");
+                    chips: NewsSearch.year-chips;
+                    row-height: NewsSearch.year-row-height;
+                }
+
+                NewsFilterRow {
+                    row-key: "month";
+                    label: NewsText.row-label("month");
+                    chips: NewsSearch.month-chips;
+                    row-height: NewsSearch.month-row-height;
+                }
+            }
+        }
+    }
+}

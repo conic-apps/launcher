@@ -152,6 +152,9 @@ fn main() {
     // The background-music player: it runs for the whole session rather than
     // per page.
     ui::overlays::music_player::setup(&ui);
+    // The news browser: the title bar's newspaper button opens it, and it
+    // fetches the feeds itself the first time it does.
+    ui::overlays::news::setup(&ui);
     // The command palette, mounted on the same layer — it opens from the title
     // bar's search field and from the `Ctrl`/`⌘` + `/` shortcut, so it is up for
     // the whole session too. Its two openers are wired in the view, the way the
