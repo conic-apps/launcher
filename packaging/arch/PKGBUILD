@@ -1,9 +1,9 @@
 # Maintainer: ConicMC developers <dev@conicmc.app>
 
 pkgname=conic-launcher
-pkgver=0.1.0alpha.3
+pkgver=0.1.0alpha.4
 pkgrel=1
-_version=0.1.0-alpha.3
+_version=0.1.0-alpha.4
 pkgdesc='A small, fast, and nimble Minecraft launcher'
 arch=('x86_64' 'aarch64')
 url='https://github.com/conic-apps/launcher'

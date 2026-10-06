@@ -1073,7 +1073,7 @@ dependencies = [
 
 [[package]]
 name = "conic-launcher"
-version = "0.1.0-alpha.3"
+version = "0.1.0-alpha.4"
 dependencies = [
  "account",
  "arboard",
