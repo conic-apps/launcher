@@ -111,6 +111,13 @@ sys-locale = "0.3"
 # macOS, the common file dialog on Windows and the XDG desktop portal on Linux,
 # so the app no longer drives `osascript`/`zenity`/PowerShell itself.
 rfd = "0.17"
+# The system clipboard. The app only ever copies short strings (device codes,
+# login URLs, room codes), so the `image-data` default is off and the macOS /
+# Windows image machinery it would pull in stays out of the build.
+# `wayland-data-control` is on so a Wayland session uses the data-control
+# protocol; without it `arboard` only speaks X11, which a Wayland session has no
+# native answer for outside XWayland.
+arboard = { version = "3", default-features = false, features = ["wayland-data-control"] }
 thiserror = "2"
 toml = "1"
 url = "2"
