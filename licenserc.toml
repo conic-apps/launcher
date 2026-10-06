@@ -1,7 +1,3 @@
-# Conic Launcher
-# Copyright 2022-2026 ConicMC developers. All rights reserved.
-# SPDX-License-Identifier: GPL-3.0-only
-
 # HawkEye configuration for the source-file SPDX headers. CI runs
 # `hawkeye check`, and `hawkeye format` writes any missing header, so the two
 # never drift. Only the extensions below carry a header: the manifests, the
@@ -22,7 +18,7 @@ SPDX-License-Identifier: GPL-3.0-only
 
 [files]
 root = "{{ config_dir }}"
-includes = ["**/*.rs", "**/*.slint", "**/*.py", "**/*.sh"]
+includes = ["**/*.rs", "**/*.slint", "**/*.py", "**/*.sh"] # NOTE: .ps1 file is unsupported.
 excludes = ["target/**"]
 
 # `.slint` is not in HawkEye's built-in extension table, so without this rule
