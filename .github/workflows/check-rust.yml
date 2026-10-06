@@ -74,7 +74,7 @@ jobs:
         run: cargo check
 
       - name: Run clippy
-        run: cargo clippy --manifest-path ./Cargo.toml --all-targets --release -- -D warnings
+        run: cargo clippy --manifest-path ./Cargo.toml --all-targets -- -D warnings
 
   test:
     strategy:
@@ -103,4 +103,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Run cargo test
-        run: cargo test --all --release --verbose --all-targets
+        run: cargo test --all --verbose --all-targets
