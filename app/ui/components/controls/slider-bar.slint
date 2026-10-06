@@ -5,13 +5,14 @@
 import { Theme } from "../../theme.slint";
 import { FocusManager } from "../../globals/focus.slint";
 import { ScrollInput } from "../../globals/scroll.slint";
+import { TooltipArea } from "./tooltip-area.slint";
 
 // Range slider.
 //
 // 300px wide; 3.5px rounded track, lavender fill and a 12px thumb, which grows
 // and shrinks as a uniform scale on hover and while dragging (see the thumb
-// below). The value tooltip appears above the thumb while dragging, naturally
-// sized.
+// below). The value is shown by the generic pointer tooltip under the cursor
+// while dragging (see `TooltipArea` below).
 //
 // # Dragging
 //
@@ -85,8 +86,8 @@ export component SliderBar inherits Rectangle {
     private property <float> glide-percent: 0;
     private property <float> last-tick-ms: 0;
 
-    /// Where the thumb, the fill and the tooltip are drawn: the step the value
-    /// is on, on its way there.
+    /// Where the thumb and the fill are drawn: the step the value is on, on its
+    /// way there.
     private property <float> shown-percent: root.gliding ? root.glide-percent : root.percent;
 
     /// Sets the timer going from wherever the drawn position is now, so that
@@ -173,31 +174,17 @@ export component SliderBar inherits Rectangle {
         animate transform-scale-x, transform-scale-y { duration: 200ms; easing: ease; }
     }
 
-    if root.dragging : tooltip := Rectangle {
-        height: 22px;
-        width: tooltip-label.preferred-width + 14px;
-        border-radius: 6px;
-        border-width: 1px;
-        border-color: Theme.overlay-0;
-        background: Theme.base;
-        // Strictly centred on the thumb, which sits at
-        // `shown-percent * root.width - 6px` (its own half-width subtracted).
-        //
-        // A nudge that walked the tooltip from one side to the other would pull
-        // it off the thumb by up to half a digit at either end, and it reads as
-        // the tooltip's track being a different length from the slider's.
-        // Nothing in the design wants it: same centre as the thumb, whatever the
-        // value.
-        x: root.shown-percent * root.width - self.width / 2;
-        y: -32px;
-
-        tooltip-label := Text {
-            // The value, not the drawn position: the number is what is set.
-            text: round(root.percent * 100) + "%";
-            font-size: 12px;
-            font-weight: Theme.font-weight-normal;
-            color: Theme.default-text-color.transparentize(0.1);
-        }
+    // The value, under the cursor: the generic pointer tooltip
+    // (`components/controls/tooltip-area.slint`) replaces the old panel that sat
+    // centred above the thumb. It shows on hover and stays up through a drag
+    // (`pressed: root.dragging`), so the value is readable before a drag starts
+    // and keeps following the pointer while one is in progress. The pointer's
+    // own position is the Rust tracker's job, not this component's.
+    TooltipArea {
+        text: round(root.percent * 100) + "%";
+        hovered: thumb-touch.has-hover;
+        pressed: root.dragging;
+        wrap: false;
     }
 
     thumb-touch := TouchArea {

@@ -1045,16 +1045,6 @@ msgstr "Нажатие «Войти» откроет браузер. Вы так
 
 #: ui
 msgctxt "AccountAddMicrosoft"
-msgid "copy the link"
-msgstr "скопировать ссылку"
-
-#: ui
-msgctxt "AccountAddMicrosoft"
-msgid " and paste it into the browser. To finish signing in on another device, "
-msgstr " и вставить её в браузер. Чтобы завершить вход на другом устройстве, "
-
-#: ui
-msgctxt "AccountAddMicrosoft"
 msgid "use a device code"
 msgstr "используйте код устройства"
 
@@ -3152,3 +3142,23 @@ msgstr "ноя"
 msgctxt "NewsText"
 msgid "Dec"
 msgstr "дек"
+
+#: ui
+msgctxt "NewsBannerCard"
+msgid "View in browser"
+msgstr "Открыть в браузере"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "click to copy the link below"
+msgstr "нажать, чтобы скопировать ссылку ниже"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ". To finish signing in on another device, "
+msgstr ". Чтобы завершить вход на другом устройстве, "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click to copy"
+msgstr "Нажмите, чтобы скопировать"

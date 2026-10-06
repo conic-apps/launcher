@@ -1045,16 +1045,6 @@ msgstr "點擊「登入」將開啟瀏覽器以登入，你也可以 "
 
 #: ui
 msgctxt "AccountAddMicrosoft"
-msgid "copy the link"
-msgstr "複製連結"
-
-#: ui
-msgctxt "AccountAddMicrosoft"
-msgid " and paste it into the browser. To finish signing in on another device, "
-msgstr "並在瀏覽器貼上以登入。若要在其他裝置上完成登入步驟，請 "
-
-#: ui
-msgctxt "AccountAddMicrosoft"
 msgid "use a device code"
 msgstr "使用裝置代碼"
 
@@ -3152,3 +3142,23 @@ msgstr "11月"
 msgctxt "NewsText"
 msgid "Dec"
 msgstr "12月"
+
+#: ui
+msgctxt "NewsBannerCard"
+msgid "View in browser"
+msgstr "在瀏覽器中檢視"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "click to copy the link below"
+msgstr "點擊複製下面的連結"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ". To finish signing in on another device, "
+msgstr "。若要在其他裝置上完成登入步驟，請 "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click to copy"
+msgstr "點擊複製"

@@ -1045,16 +1045,6 @@ msgstr "Kliknięcie „Zaloguj się” otworzy przeglądarkę. Możesz też "
 
 #: ui
 msgctxt "AccountAddMicrosoft"
-msgid "copy the link"
-msgstr "skopiować link"
-
-#: ui
-msgctxt "AccountAddMicrosoft"
-msgid " and paste it into the browser. To finish signing in on another device, "
-msgstr " i wkleić go w przeglądarce. Aby dokończyć logowanie na innym urządzeniu, "
-
-#: ui
-msgctxt "AccountAddMicrosoft"
 msgid "use a device code"
 msgstr "użyj kodu urządzenia"
 
@@ -3152,3 +3142,23 @@ msgstr "lis"
 msgctxt "NewsText"
 msgid "Dec"
 msgstr "gru"
+
+#: ui
+msgctxt "NewsBannerCard"
+msgid "View in browser"
+msgstr "Otwórz w przeglądarce"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "click to copy the link below"
+msgstr "kliknąć, aby skopiować link poniżej"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ". To finish signing in on another device, "
+msgstr ". Aby dokończyć logowanie na innym urządzeniu, "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click to copy"
+msgstr "Kliknij, aby skopiować"

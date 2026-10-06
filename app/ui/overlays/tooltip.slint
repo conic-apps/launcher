@@ -1,0 +1,132 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../theme.slint";
+import { TooltipState } from "../globals/tooltip.slint";
+
+// The generic pointer tooltip.
+//
+// Mounted at the application root (`app.slint`) for the same reason every other
+// overlay is: the trigger sits wherever its control does, and the containers
+// between it and the window — a collapse, a scroll area, a card — all clip. A
+// panel drawn inside one of them would be cut off, so the trigger only writes
+// the text and the panel is drawn here, above everything.
+//
+// It follows the pointer rather than the trigger: the position comes from
+// `TooltipState.pointer-x/y`, which the Rust service writes from winit's cursor
+// events (`ui/services/tooltip.rs`). The panel is placed to the pointer's
+// lower-right and flips to the upper-left when the window runs out of room, so
+// it never overflows the window at an edge.
+//
+// The reveal is the `Dialog`'s phase machine, for its reason: an `animate` only
+// advances while its property is read, and an element that is not painted for a
+// frame is first asked for the value it is meant to *reach* — so the panel is
+// held at its start values for one frame before the targets move. It fades in
+// and out over `ease`.
+export component TooltipOverlay inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+
+    /// Distance from the pointer's tip to the panel, and the room left at the
+    /// window edge before the panel flips to the other side.
+    private property <length> offset-x: 14px;
+    private property <length> offset-y: 20px;
+    private property <length> edge-margin: 8px;
+    private property <length> padding-h: 10px;
+    private property <length> padding-v: 7px;
+
+    // "closed" | "starting" | "shown" | "leaving".
+    private property <string> phase: "closed";
+    visible: root.phase != "closed";
+
+    // `changed` follows this element's own property, not a global's, so the
+    // global is mirrored into one.
+    private property <bool> wanted: TooltipState.wanted;
+    changed wanted => {
+        if root.wanted {
+            if root.phase == "closed" {
+                root.phase = "starting";
+                start-timer.restart();
+            } else {
+                // Wanted again while it was leaving: play the enter from
+                // wherever the leave had got to.
+                root.phase = "shown";
+            }
+        } else if root.phase != "closed" && root.phase != "leaving" {
+            root.phase = "leaving";
+        }
+    }
+
+    init => {
+        if root.wanted {
+            root.phase = "shown";
+        }
+    }
+
+    // One frame at the start values is enough for the renderer to see them.
+    start-timer := Timer {
+        interval: 16ms;
+        running: root.phase == "starting";
+        triggered => { root.phase = "shown"; }
+    }
+
+    // The leave's fade (120ms) plus a margin.
+    leave-timer := Timer {
+        interval: 160ms;
+        running: root.phase == "leaving";
+        triggered => { root.phase = "closed"; }
+    }
+
+    // The panel's own size, from the text it holds.
+    private property <length> panel-width: label.preferred-width + 2 * root.padding-h;
+    private property <length> panel-height: label.preferred-height + 2 * root.padding-v;
+
+    // Which side of the pointer the panel has room for.
+    private property <bool> flip-x:
+        TooltipState.pointer-x + root.offset-x + root.panel-width > root.width - root.edge-margin;
+    private property <bool> flip-y:
+        TooltipState.pointer-y + root.offset-y + root.panel-height > root.height - root.edge-margin;
+
+    private property <float> panel-alpha: root.phase == "shown" ? 1.0 : 0.0;
+    animate panel-alpha {
+        duration: root.phase == "shown" ? 160ms : 120ms;
+        easing: ease;
+    }
+
+    // A plain drawing element: it carries no `TouchArea`, so it never takes a
+    // click meant for the control under the pointer.
+    panel := Rectangle {
+        x: clamp(
+            root.flip-x
+                ? TooltipState.pointer-x - root.offset-x - root.panel-width
+                : TooltipState.pointer-x + root.offset-x,
+            root.edge-margin,
+            max(root.edge-margin, root.width - root.panel-width - root.edge-margin),
+        );
+        y: clamp(
+            root.flip-y
+                ? TooltipState.pointer-y - root.offset-y - root.panel-height
+                : TooltipState.pointer-y + root.offset-y,
+            root.edge-margin,
+            max(root.edge-margin, root.height - root.panel-height - root.edge-margin),
+        );
+        width: root.panel-width;
+        height: root.panel-height;
+        opacity: root.panel-alpha;
+        border-radius: 8px;
+        background: Theme.surface-2.with-alpha(0.8);
+        drop-shadow-color: #00000059;
+        drop-shadow-blur: 12px;
+
+        label := Text {
+            x: root.padding-h;
+            y: root.padding-v;
+            text: TooltipState.text;
+            font-size: 12px;
+            font-weight: Theme.font-weight-normal;
+            color: Theme.default-text-color;
+        }
+    }
+}

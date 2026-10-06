@@ -1045,16 +1045,6 @@ msgstr "Ein Klick auf „Anmelden“ öffnet deinen Browser. Du kannst auch "
 
 #: ui
 msgctxt "AccountAddMicrosoft"
-msgid "copy the link"
-msgstr "den Link kopieren"
-
-#: ui
-msgctxt "AccountAddMicrosoft"
-msgid " and paste it into the browser. To finish signing in on another device, "
-msgstr " und ihn im Browser einfügen. Um die Anmeldung auf einem anderen Gerät abzuschließen, "
-
-#: ui
-msgctxt "AccountAddMicrosoft"
 msgid "use a device code"
 msgstr "verwende einen Gerätecode"
 
@@ -3152,3 +3142,23 @@ msgstr "Nov"
 msgctxt "NewsText"
 msgid "Dec"
 msgstr "Dez"
+
+#: ui
+msgctxt "NewsBannerCard"
+msgid "View in browser"
+msgstr "Im Browser öffnen"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "click to copy the link below"
+msgstr "den Link unten anklicken, um ihn zu kopieren"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ". To finish signing in on another device, "
+msgstr ". Um die Anmeldung auf einem anderen Gerät abzuschließen, "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click to copy"
+msgstr "Zum Kopieren klicken"
