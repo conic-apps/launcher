@@ -26,6 +26,14 @@ readonly APP="$CRATE.app"
 readonly PAYLOAD="$ROOT/packaging/macos"
 readonly TEMPLATE="$PAYLOAD/Info.plist"
 readonly ICONS="$PAYLOAD/$CRATE.icns"
+# The Finder window background, committed rather than rendered here: a build
+# machine has no SVG rasterizer and no copy of the launcher's font.
+readonly DMG_BACKGROUND="$PAYLOAD/dmg/background.png"
+# The volume name, which is the one thing `dmg-ds-store.py` cannot check for
+# itself: Finder resolves the background picture through an alias that names the
+# volume, and a mismatch here is a window with no background and nothing to say
+# why. It is a variable rather than a literal at both uses so the two cannot drift.
+readonly VOLUME="Conic Launcher"
 
 cd "$ROOT"
 
@@ -104,9 +112,19 @@ for tool in codesign hdiutil plutil lipo; do
         die "$tool is missing (it ships with macOS; install the Xcode command line tools)"
 done
 
+# `python3` is in the Xcode command line tools rather than in `/usr/bin`, and it
+# is only on the critical path for the disk image's window layout. `Pillow` is
+# that script's one dependency, and it is only imported by its `--check` path:
+# writing the layout needs nothing but the standard library, so a machine without
+# it still gets a usable `.dmg`.
+command -v python3 > /dev/null 2>&1 ||
+    die "python3 is missing (it ships with the Xcode command line tools)"
+
 [[ -f "$TEMPLATE" ]] || die "$TEMPLATE is missing"
 [[ -f "$ICONS" ]] ||
     die "$ICONS is missing; regenerate it with tools/generate-icns.py"
+[[ -f "$DMG_BACKGROUND" ]] ||
+    die "$DMG_BACKGROUND is missing; regenerate it with tools/render-dmg-background.py"
 
 # ---------------------------------------------------------------------------
 # Build the executable(s)
@@ -365,7 +383,8 @@ readonly DMG="$STAGE/$CRATE-$VERSION-$DMG_ARCH.dmg"
 readonly MOUNT_DIR="$(mktemp -d)"
 
 # `hdiutil create -srcfolder` on a staging directory: the layout it produces
-# (app + Applications symlink) is a handful of lines of shell.
+# (app + Applications symlink + the Finder layout) is a handful of lines of
+# shell.
 # `WORK` rather than a second scratch directory: it is already inside `$STAGE`,
 # it is already emptied above, and reusing it keeps the number of places this
 # script can leave something behind down to one.
@@ -376,6 +395,15 @@ cp -R "$STAGE/$APP" "$STAGE_DMG/"
 # gesture is a *move* into it, and a real `/Applications` is where that has to
 # land.
 ln -s /Applications "$STAGE_DMG/Applications"
+
+# The window the image opens with: a background, the two icons either side of its
+# middle and an arrow between them, rather than a list of two names stacked in the
+# corner. `dmg-ds-store.py` writes the `.DS_Store` and copies in the `.background`
+# picture, and reads the window's size and the icon placement out of
+# `packaging/macos/dmg/background.svg` so the artwork and the placement cannot
+# disagree.
+python3 "$ROOT/tools/dmg-ds-store.py" --volume "$VOLUME" "$STAGE_DMG" ||
+    die "could not write the disk image's Finder layout"
 
 rm -f "$DMG"
 # `-srcfolder` builds the image in one step from the staged directory, with no
@@ -390,12 +418,8 @@ rm -f "$DMG"
 #
 # `UDZO` is the compressed read-only format, i.e. a normal `.dmg`.
 #
-# No Finder window layout: that needs a `.DS_Store`, which is a Finder-private
-# format written by Finder itself, not by a shell script. `create-dmg` had the
-# same constraint and shipped a binary to work around it. A window that opens with
-# both icons in the top-left corner is cosmetic and fine.
 hdiutil create \
-    -volname "Conic Launcher" \
+    -volname "$VOLUME" \
     -srcfolder "$STAGE_DMG" \
     -ov -format UDZO \
     "$DMG" 2> >(grep -v "is deprecated" >&2 || true)
@@ -413,6 +437,20 @@ else
     hdiutil detach "$MOUNT_DIR" -quiet || true
     die "the .dmg mounted but $APP/Contents/MacOS/$CRATE is not in it"
 fi
+
+# The window layout has to have survived the image as well. `-srcfolder` is not
+# supposed to drop a dotfile, and the whole point of the two files is that they
+# are read from the mounted volume, so their absence there is the difference
+# between a laid-out window and a list of two names with nothing to say so.
+for layout_file in .DS_Store .background.png; do
+    if [[ -f "$MOUNT_DIR/$layout_file" ]]; then
+        note "  mounted and carries $layout_file"
+    else
+        hdiutil detach "$MOUNT_DIR" -quiet || true
+        die "the .dmg mounted but $layout_file is not in it, so its window will have no layout"
+    fi
+done
+
 hdiutil detach "$MOUNT_DIR" -quiet
 # The image is built from `$STAGE_DMG`, which sits inside `$WORK`, and the
 # executable came from `$WORK` too — so both are removed *after* the image is

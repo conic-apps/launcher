@@ -37,6 +37,8 @@ Python tooling in `tools/` is not part of any CI gate:
 | `check-icon-names.py`                    | every `AppIcon`/`icon:` name in a `.slint` has an SVG      |
 | `update-i18n.py`                         | re-keys the `.po` catalogues against `slint-tr-extractor`  |
 | `merge-digit-font.py`, `verify_merge.py` | build and verify the merged font                           |
+| `render-dmg-background.py`               | renders `packaging/macos/dmg/background.png` from its `.svg` (committed) |
+| `dmg-ds-store.py`                        | writes the disk image's `.DS_Store`; runs inside `package-macos.sh` |
 
 ## Directory
 

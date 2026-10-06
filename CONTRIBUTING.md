@@ -111,7 +111,8 @@ The `README.md` in each documents its contents and what is easy to break there:
 
 - `packaging/linux/` — the desktop entry and hicolor icon set, the only copy the
   deb, rpm, AppImage and Arch package install.
-- `packaging/macos/` — the `.icns` and the `Info.plist` template.
+- `packaging/macos/` — the `.icns`, the `Info.plist` template and the disk
+  image's window background.
 - `packaging/windows/` — the `.wxs` and the `.ico`.
 - `packaging/arch/` — the `PKGBUILD` and its `.SRCINFO`.
 
@@ -135,7 +136,7 @@ pwsh tools/package-windows.ps1 msi  # a subset
 | `.deb`        | `[package.metadata.deb]` in `app/Cargo.toml`                          |
 | `.rpm`        | `[package.metadata.rpm]` + the spec at `app/.rpm/conic-launcher.spec` |
 | `.AppImage`   | the AppDir `tools/package-linux.sh` assembles, then `appimagetool`    |
-| `.app`/`.dmg` | the bundle `tools/package-macos.sh` assembles, then `hdiutil`         |
+| `.app`/`.dmg` | the bundle `tools/package-macos.sh` assembles, then `hdiutil`, with the window layout from `tools/dmg-ds-store.py` |
 | Arch          | `packaging/arch/PKGBUILD` — `makepkg -si`                             |
 
 One rule spans every format: **each spells the version differently.**
@@ -177,9 +178,19 @@ few decisions the payload README does not:
 ### macOS
 
 `tools/package-macos.sh` assembles the `.app` and `.dmg` itself out of
-`codesign`, `hdiutil` and `lipo`; `packaging/macos/README.md` covers the payload,
-the native-runner build and the signing gap. One thing worth knowing before
-touching the script:
+`codesign`, `hdiutil`, `lipo` and `python3`; `packaging/macos/README.md` covers
+the payload, the native-runner build and the signing gap. Two things worth
+knowing before touching the script:
+
+- **The window layout is written, not scripted.** Finder cannot be told to lay out
+  a folder that does not exist yet without an Automation grant and a window on
+  screen, so `tools/dmg-ds-store.py` writes the `.DS_Store` and copies in the
+  background picture directly — the Buddy allocator and the Carbon Alias record
+  are implemented against the standard library rather than pulled in as
+  `dmgbuild` or `ds_store`, because this script's contract is that a build machine
+  needs nothing beyond macOS. It reads the window's size and the icon placement
+  out of `packaging/macos/dmg/background.svg`, so the artwork and the placement
+  cannot disagree; `python3 tools/dmg-ds-store.py --check` prints what it derived.
 
 - **`x86_64-apple-darwin` needs care here.** `objc-sys` types an Objective-C
   `BOOL` as `bool` on arm64 (where C's `BOOL` is `_Bool`) and as `i8` on x86_64
