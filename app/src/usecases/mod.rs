@@ -14,5 +14,6 @@ pub(crate) mod game;
 pub(crate) mod generation;
 pub(crate) mod launch;
 pub(crate) mod multiplayer;
+pub(crate) mod news;
 pub(crate) mod update;
 pub(crate) mod worldmap;

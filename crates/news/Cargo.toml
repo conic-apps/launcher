@@ -1,0 +1,15 @@
+[package]
+name = "news"
+description = "Mojang launcher content client: the news feed and the Java changelogs"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+shared.workspace = true
+
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

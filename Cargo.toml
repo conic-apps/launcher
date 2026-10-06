@@ -33,6 +33,7 @@ statistics = { path = "./crates/statistics", version = "0.0.0" }
 single-instance = { path = "./crates/single-instance", version = "0.0.0" }
 multiplayer = { path = "./crates/multiplayer", version = "0.0.0" }
 music = { path = "./crates/music", version = "0.0.0" }
+news = { path = "./crates/news", version = "0.0.0" }
 tilemap = { path = "./crates/tilemap", version = "0.0.0" }
 update = { path = "./crates/update", version = "0.0.0" }
 

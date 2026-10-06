@@ -3032,3 +3032,123 @@ msgstr "Çar"
 msgctxt "AccountView"
 msgid "Fri"
 msgstr "Cum"
+
+#: ui
+msgctxt "TitleBar"
+msgid "News"
+msgstr "Haberler"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "News"
+msgstr "Haberler"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "Try adjusting the filters or search again"
+msgstr "Filtreleri ayarlamayı veya yeniden aramayı deneyin"
+
+#: ui
+msgctxt "NewsText"
+msgid "Type"
+msgstr "Tür"
+
+#: ui
+msgctxt "NewsText"
+msgid "Year"
+msgstr "Yıl"
+
+#: ui
+msgctxt "NewsText"
+msgid "Month"
+msgstr "Ay"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mojang news"
+msgstr "Mojang haberleri"
+
+#: ui
+msgctxt "NewsText"
+msgid "Java changelog"
+msgstr "Java değişiklik günlüğü"
+
+#: ui
+msgctxt "NewsText"
+msgid "Release"
+msgstr "Sürüm"
+
+#: ui
+msgctxt "NewsText"
+msgid "Snapshot"
+msgstr "Snapshot"
+
+#: ui
+msgctxt "NewsText"
+msgid "Search news..."
+msgstr "Haberlerde ara..."
+
+#: ui
+msgctxt "NewsText"
+msgid "All"
+msgstr "Tümü"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jan"
+msgstr "Oca"
+
+#: ui
+msgctxt "NewsText"
+msgid "Feb"
+msgstr "Şub"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mar"
+msgstr "Mar"
+
+#: ui
+msgctxt "NewsText"
+msgid "Apr"
+msgstr "Nis"
+
+#: ui
+msgctxt "NewsText"
+msgid "May"
+msgstr "May"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jun"
+msgstr "Haz"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jul"
+msgstr "Tem"
+
+#: ui
+msgctxt "NewsText"
+msgid "Aug"
+msgstr "Ağu"
+
+#: ui
+msgctxt "NewsText"
+msgid "Sep"
+msgstr "Eyl"
+
+#: ui
+msgctxt "NewsText"
+msgid "Oct"
+msgstr "Eki"
+
+#: ui
+msgctxt "NewsText"
+msgid "Nov"
+msgstr "Kas"
+
+#: ui
+msgctxt "NewsText"
+msgid "Dec"
+msgstr "Ara"
