@@ -3,67 +3,20 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../theme.slint";
-import { AppIcon } from "../../components/display/app-icon.slint";
 import { Loading } from "../../components/controls/loading.slint";
 import { ScrollView } from "../../components/containers/scroll-view.slint";
+import { GameTime } from "../../globals/game.slint";
 import { NewsState, NewsText } from "../../globals/news.slint";
+import { ContentTitleBar } from "../content/content-title-bar.slint";
 import { NewsBody } from "news-body.slint";
-
-// The 52px header of the changelog detail: a back button, the newspaper glyph
-// and the entry's title. It replaces `ContentTitleBar` because that component
-// has no back affordance, and the detail is closed by returning to the list it
-// came from.
-component DetailHeader inherits Rectangle {
-    in property <string> title: "";
-    callback back;
-
-    width: 100%;
-    height: 52px;
-    background: Theme.mantle;
-
-    HorizontalLayout {
-        padding-left: 16px;
-        padding-right: 32px;
-        spacing: 8px;
-        cross-axis-alignment: center;
-
-        back-button := Rectangle {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            background: back-touch.pressed ? Theme.overlay-0.transparentize(0.3)
-                : back-touch.has-hover ? Theme.surface-2.transparentize(0.3)
-                : transparent;
-            animate background { duration: 120ms; easing: Easing.ease; }
-
-            AppIcon {
-                name: "chevron-back";
-                size: 20px;
-                icon-color: Theme.default-text-color.transparentize(0.1);
-            }
-
-            back-touch := TouchArea {
-                clicked => { root.back(); }
-            }
-        }
-
-        AppIcon {
-            name: "newspaper";
-            size: 20px;
-        }
-
-        Text {
-            text: root.title;
-            font-size: 16px;
-            color: Theme.default-text-color.transparentize(0.1);
-            overflow: elide;
-            vertical-alignment: center;
-        }
-    }
-}
 
 // The changelog detail panel: the entry's header and hero, then the full body
 // the launcher-content crate fetched.
+//
+// It uses the content panels' own title bar rather than a bespoke header with a
+// back button: a detail is dismissed by its scrim (or Escape) exactly as the
+// content details are, so the back affordance was the one thing that set it
+// apart.
 export component NewsDetailPanel inherits Rectangle {
     /// The overlay container's size, passed in rather than read off `parent`.
     in property <length> panel-width: 0px;
@@ -75,9 +28,9 @@ export component NewsDetailPanel inherits Rectangle {
 
     scroller := ScrollView {
         details-column := VerticalLayout {
-            DetailHeader {
+            ContentTitleBar {
+                icon: "newspaper";
                 title: NewsState.detail-title;
-                back => { NewsState.close-detail(); }
             }
 
             if NewsState.detail-loading : Rectangle {
@@ -125,7 +78,7 @@ export component NewsDetailPanel inherits Rectangle {
                             }
                         }
 
-                        // The title and the three metadata entries, centred in
+                        // The title and the two metadata entries, centred in
                         // the 96px the image gives the header.
                         VerticalLayout {
                             horizontal-stretch: 1;
@@ -164,7 +117,13 @@ export component NewsDetailPanel inherits Rectangle {
                                 }
 
                                 Text {
-                                    text: NewsState.detail-date;
+                                    // The app's localized absolute date; see
+                                    // `GameTime.year-month-day`.
+                                    text: GameTime.year-month-day(
+                                        NewsState.detail-month,
+                                        NewsState.detail-day,
+                                        NewsState.detail-year,
+                                    );
                                     font-size: 13px;
                                     color: Theme.subtext-0;
                                     vertical-alignment: center;

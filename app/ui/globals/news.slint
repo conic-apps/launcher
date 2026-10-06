@@ -42,8 +42,11 @@ export struct NewsCard {
     /// The changelog's "release" | "snapshot", resolved to a label by
     /// `NewsText.kind-label`. Empty for a news entry.
     tag: string,
-    /// The entry's date, already formatted by Rust for the reader.
-    date-text: string,
+    /// The entry's date, as parts. The view formats them with `GameTime`, so
+    /// the date follows the active language rather than a fixed `YYYY-MM-DD`.
+    date-year: int,
+    date-month: int,
+    date-day: int,
     description: string,
     image: image,
     image-ratio: float,
@@ -83,7 +86,9 @@ export global NewsState {
     in-out property <bool> detail-loading: false;
     in-out property <string> detail-title: "";
     in-out property <string> detail-subtitle: "";
-    in-out property <string> detail-date: "";
+    in-out property <int> detail-year: 0;
+    in-out property <int> detail-month: 0;
+    in-out property <int> detail-day: 0;
     in-out property <image> detail-image;
 
     // The changelog body, in the engine's runs. The same three properties the

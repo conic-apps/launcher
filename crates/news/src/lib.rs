@@ -58,9 +58,11 @@ pub struct NewsItem {
     pub news_type: Vec<String>,
     /// The feed's `YYYY-MM-DD`.
     pub date: String,
-    /// `date` split out, because the year and month filters are built from it.
+    /// `date` split out: the year and month drive the filters, and all three
+    /// let the app format the date for the reader's locale.
     pub year: u16,
     pub month: u8,
+    pub day: u8,
     /// The one-line blurb.
     pub text: String,
     /// The 772×350 wide banner, absolute.
@@ -114,6 +116,7 @@ pub struct ChangelogEntry {
     /// `date` split out, for the same reason as [`NewsItem`].
     pub year: u16,
     pub month: u8,
+    pub day: u8,
     /// The square (540×540, or 240×240 for the oldest) image, absolute.
     pub image_url: String,
     /// The image's own dimensions. The changelog index carries none, so these
@@ -210,16 +213,17 @@ fn absolute_url(url: &str) -> String {
     }
 }
 
-/// `YYYY-MM-DD` or an ISO timestamp into `(year, month)`.
+/// `YYYY-MM-DD` or an ISO timestamp into `(year, month, day)`.
 ///
-/// Deliberately a split rather than a date parser: both feeds put the year and
-/// month first and zero-padded, so this cannot fail or drift with a locale, and
-/// the crate needs no calendar dependency.
-fn year_month(date: &str) -> (u16, u8) {
+/// Deliberately a split rather than a date parser: both feeds put the date
+/// first and zero-padded, so this cannot fail or drift with a locale, and the
+/// crate needs no calendar dependency.
+fn date_parts(date: &str) -> (u16, u8, u8) {
     let mut parts = date.split(['-', 'T']);
     let year = parts.next().and_then(|part| part.parse().ok()).unwrap_or(0);
     let month = parts.next().and_then(|part| part.parse().ok()).unwrap_or(0);
-    (year, month)
+    let day = parts.next().and_then(|part| part.parse().ok()).unwrap_or(0);
+    (year, month, day)
 }
 
 /// The latest 100 news entries, newest first.
@@ -236,7 +240,7 @@ pub async fn fetch_news() -> Result<Vec<NewsItem>> {
         .entries
         .into_iter()
         .map(|raw| {
-            let (year, month) = year_month(&raw.date);
+            let (year, month, day) = date_parts(&raw.date);
             let (image_width, image_height) = dimensions(&raw.news_page_image, NEWS_IMAGE);
             NewsItem {
                 id: raw.id,
@@ -246,6 +250,7 @@ pub async fn fetch_news() -> Result<Vec<NewsItem>> {
                 date: raw.date,
                 year,
                 month,
+                day,
                 text: raw.text,
                 image_url: absolute_url(&raw.news_page_image.url),
                 image_width,
@@ -275,7 +280,7 @@ pub async fn fetch_changelogs() -> Result<Vec<ChangelogEntry>> {
         .entries
         .into_iter()
         .map(|raw| {
-            let (year, month) = year_month(&raw.date);
+            let (year, month, day) = date_parts(&raw.date);
             let (image_width, image_height) = dimensions(&raw.image, CHANGELOG_IMAGE);
             ChangelogEntry {
                 id: raw.id,
@@ -285,6 +290,7 @@ pub async fn fetch_changelogs() -> Result<Vec<ChangelogEntry>> {
                 date: raw.date,
                 year,
                 month,
+                day,
                 image_url: absolute_url(&raw.image.url),
                 image_width,
                 image_height,
@@ -349,7 +355,7 @@ mod tests {
             (772, 350),
             "the feed's own dimensions win"
         );
-        assert_eq!(year_month(&raw.date), (2026, 9));
+        assert_eq!(date_parts(&raw.date), (2026, 9, 28));
     }
 
     #[test]
@@ -389,7 +395,7 @@ mod tests {
         assert_eq!(raw.kind, "snapshot");
         assert_eq!(ChangelogKind::from_raw(&raw.kind), ChangelogKind::Snapshot);
         assert_eq!(ChangelogKind::Release.key(), "release");
-        assert_eq!(year_month(&raw.date), (2026, 9));
+        assert_eq!(date_parts(&raw.date), (2026, 9, 29));
         assert_eq!(raw.content_path, "javaPatchNotes/26-4-snapshot-2.json");
     }
 
@@ -401,7 +407,7 @@ mod tests {
 
     #[test]
     fn a_malformed_date_yields_no_year_rather_than_a_panic() {
-        assert_eq!(year_month(""), (0, 0));
-        assert_eq!(year_month("soon"), (0, 0));
+        assert_eq!(date_parts(""), (0, 0, 0));
+        assert_eq!(date_parts("soon"), (0, 0, 0));
     }
 }

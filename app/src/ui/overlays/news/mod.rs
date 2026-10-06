@@ -325,7 +325,9 @@ fn banner_card(item: &news::NewsItem) -> BuiltCard {
             title: SharedString::from(item.title.as_str()),
             subtitle: SharedString::from(item.category.as_str()),
             tag: SharedString::default(),
-            date_text: SharedString::from(item.date.as_str()),
+            date_year: item.year as i32,
+            date_month: item.month as i32,
+            date_day: item.day as i32,
             description: SharedString::from(item.text.as_str()),
             image: Image::default(),
             image_ratio: ratio,
@@ -350,7 +352,9 @@ fn changelog_card(entry: &news::ChangelogEntry) -> BuiltCard {
             title: SharedString::from(entry.title.as_str()),
             subtitle: SharedString::from(entry.version.as_str()),
             tag: SharedString::from(entry.kind.key()),
-            date_text: SharedString::from(date_only(&entry.date)),
+            date_year: entry.year as i32,
+            date_month: entry.month as i32,
+            date_day: entry.day as i32,
             description: SharedString::from(entry.short_text.as_str()),
             image: Image::default(),
             image_ratio: ratio,
@@ -370,11 +374,6 @@ const MIN_VIEWPORT: f32 = 600.0;
 /// square rather than as a division by zero.
 fn image_ratio(width: u32, height: u32) -> f32 {
     width as f32 / height.max(1) as f32
-}
-
-/// The date part of a feed timestamp: `YYYY-MM-DD`.
-fn date_only(date: &str) -> &str {
-    date.get(..10).unwrap_or(date)
 }
 
 /// The images a freshly built flow still has to fetch, folded by URL so a
@@ -477,7 +476,9 @@ fn open_detail(ui: &App, entry: &news::ChangelogEntry) {
     state.set_detail_loading(true);
     state.set_detail_title(SharedString::from(entry.title.as_str()));
     state.set_detail_subtitle(SharedString::from(entry.kind.key()));
-    state.set_detail_date(SharedString::from(date_only(&entry.date)));
+    state.set_detail_year(entry.year as i32);
+    state.set_detail_month(entry.month as i32);
+    state.set_detail_day(entry.day as i32);
     state.set_detail_image(Image::default());
     {
         let ctrl = controller();
