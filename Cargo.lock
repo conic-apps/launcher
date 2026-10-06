@@ -1076,6 +1076,7 @@ name = "conic-launcher"
 version = "0.1.0-alpha.3"
 dependencies = [
  "account",
+ "arboard",
  "base64 0.22.1",
  "block2 0.5.1",
  "bytemuck",

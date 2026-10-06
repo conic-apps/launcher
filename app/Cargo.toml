@@ -58,6 +58,7 @@ env_logger.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 rfd.workspace = true
+arboard.workspace = true
 
 i-slint-backend-winit = "1.18"
 winit = "0.30"

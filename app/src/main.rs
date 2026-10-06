@@ -287,6 +287,11 @@ fn main() {
     // destroyed.
     ui::overlays::dialogs::multiplayer::shutdown();
 
+    // The clipboard handle has to be dropped before the process exits
+    // (`arboard` keeps a background thread that serves the selection); the
+    // event loop has already returned, so this is the drop point.
+    ui::services::app_config::drop_clipboard();
+
     cleanup_temp_folder();
 }
 
