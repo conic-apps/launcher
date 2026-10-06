@@ -305,13 +305,14 @@ export global AccountAddState {
     in-out property <string> ms-verification-uri: "";
     /// Seconds left on the device code, counted down by the screen.
     in-out property <int> ms-expires-in: 0;
-    /// The two "copied!" hints, each on its own timer: the link box and the
-    /// device code box.
+    /// The two "copied!" hints, one per copy target: the link box and the device
+    /// code box.
     ///
-    /// The third — the "已复制！" bubble on the "copy the link" span inside the
-    /// description paragraph — has nowhere to live: it is anchored mid-`<p>` in
-    /// a browser, and the paragraph is one `StyledText` here, which takes no
-    /// children. `AccountAddMicrosoft.slint` says so where the link is.
+    /// Each is set on a click and cleared when the pointer leaves the box it
+    /// belongs to, so the tooltip reads "Click to copy" again the next time it
+    /// is hovered. The screen does that from the box's own `changed has-hover`;
+    /// the third hint that used to exist — a "已复制！" bubble on the "copy the
+    /// link" span inside the description paragraph — is gone with that span.
     in-out property <bool> ms-copied: false;
     in-out property <bool> ms-copied-code: false;
     /// The URL the browser flow opens.
