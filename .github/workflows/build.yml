@@ -9,7 +9,9 @@ on:
       - "app/Cargo.toml"
       - "packaging/**"
       - "tools/package-linux.sh"
+      - "tools/package-macos.sh"
       - "tools/package-windows.ps1"
+      - "tools/dmg-ds-store.py"
       - "tools/generate-icons.py"
       - "tools/generate-ico.py"
   push:

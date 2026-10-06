@@ -1,18 +1,20 @@
 # macOS packaging payload
 
-The `.icns` and the `Info.plist` template the `.app` bundle is assembled from, by
-`tools/package-macos.sh`. Both are **committed**: `iconutil` exists only on
-macOS, and the bundle is built from files in this directory.
+The `.icns`, the `Info.plist` template and the disk image's window background
+that the `.app` bundle and its `.dmg` are assembled from, by
+`tools/package-macos.sh`. All of them are **committed**: `iconutil` exists only
+on macOS, a build machine has no SVG rasterizer and no copy of the launcher's
+font, and the bundle is built from files in this directory.
 
-| Consumer                     | Reads                                 |
-| ---------------------------- | ------------------------------------- |
-| `tools/package-macos.sh`     | both                                  |
-| the `.app` inside the `.dmg` | a copy of the same assembled bundle   |
+| Consumer                     | Reads                                            |
+| ---------------------------- | ------------------------------------------------ |
+| `tools/package-macos.sh`     | the `.icns`, the plist template, `dmg/background.png` |
+| the `.app` inside the `.dmg` | a copy of the same assembled bundle              |
 
-Nothing here is per-architecture: one `.icns` and one `Info.plist` serve every
-build, because the bundle describes the app rather than the slice inside it. CI
-produces two thin images (one per native runner) rather than one universal one;
-see "Builds and signing" below for why.
+Nothing here is per-architecture: one `.icns`, one `Info.plist` and one
+background serve every build, because they describe the app rather than the slice
+inside it. CI produces two thin images (one per native runner) rather than one
+universal one; see "Builds and signing" below for why.
 
 ## `conic-launcher.icns`
 
@@ -47,6 +49,51 @@ one. The one to check before editing anything else:
   notification identity, and whether two installed copies count as "the same app"
   from it. Changing it orphans the existing single-instance socket and any
   permissions the user has already granted.
+
+## `dmg/`
+
+What the disk image's Finder window looks like when a user opens it: a
+Catppuccin backdrop with the two icons either side of the middle, an arrow
+between them, and a dashed frame around `Applications`.
+
+- `background.svg` — the design, and the file to edit. It is the conicmc.app page
+  backdrop (a Catppuccin grid over six hyperbolas sharing one vertex) with the
+  disk image's own furniture on top.
+- `background.png` — what the image actually carries, at 144 dpi so the grid
+  rules and the gradient-filled heading stay sharp on a Retina display. Finder
+  paints a folder background from a raster image and cannot paint from an `.svg`
+  at all, which is why there are two files.
+
+Regenerate the PNG with `python3 tools/render-dmg-background.py`, which needs
+`fontTools`, an SVG rasterizer (`rsvg-convert` or `resvg`) and `Pillow`. The
+render is committed so that none of those are a build dependency.
+
+**The text becomes outlines at render time.** The `.svg` asks for `"Comfortaa
+Nunito"`, which `tools/merge-digit-font.py` bakes out of Comfortaa and a Nunito
+digit subset and which is embedded in the launcher *binary* — it is not installed
+anywhere a rasterizer would look. A rasterizer handed a family it cannot resolve
+substitutes what it has and reports nothing, so the script lays the glyphs out
+itself, instancing the `wght` axis per `font-weight` and applying the GPOS
+`kern` pairs, and hands over `<path>`.
+
+**Two things about the window are Finder's and cannot be set.** The name Finder
+draws under each icon has no colour key anywhere in the format — `backgroundColor*`
+in `icvp` only tints a solid fill — so over this backdrop it comes out near-black,
+and the only lever is its size. `tools/dmg-ds-store.py` sets that to 10pt, which
+is the smallest Finder accepts: at 9 or below it discards the whole `icvp`
+silently, and the window opens with no background and nothing to say why. The
+second is the window's own position, which `WindowBounds` states from the bottom
+of a screen whose height nothing at build time knows.
+
+**The window's size and the icon placement live in the `.svg`, not in the
+script.** `tools/dmg-ds-store.py` reads `width`, `height` and the
+`#applications-icon-cell` rectangle out of `background.svg` to write the
+`.DS_Store`, because Finder paints the background 1:1 from the content view's
+top-left corner: a window the wrong size shows a misaligned background, and a
+picture the wrong size shows scrollbars. Move the marker and both icons follow,
+which is the only way the artwork and the placement stay in step. Run
+`python3 tools/dmg-ds-store.py --check` to see what it derived and to catch a
+rendered PNG that no longer matches the `.svg`.
 
 ## Builds and signing
 
