@@ -1,0 +1,85 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+// A changelog's HTML body.
+//
+// The same engine and the same view the content detail panels draw with, but
+// bound to `NewsState` rather than `ContentState`: the two surfaces are mounted
+// at once in the tree (the news overlay above every page, the content panels
+// inside the game view), and a body pushed into one must not repaint the other.
+// The engine itself — parsing, measuring, the display list — is shared; only the
+// three properties it lands in are the news surface's own.
+
+import { Theme } from "../../theme.slint";
+import { Icons } from "../../icons.slint";
+import { NewsState } from "../../globals/news.slint";
+import { MarkdownView } from "../../components/markdown/markdown-view.slint";
+
+export component NewsBody inherits Rectangle {
+    /// The scroll offset of the scroller this box lives in, in the shared
+    /// `ScrollView` sign: negative scrolled down.
+    in property <length> scroll-y: 0px;
+    /// Where this box sits inside that scrolled content, so the view's culling
+    /// window is measured from its own top rather than the document's.
+    in property <length> top-in-scroll: 0px;
+    /// How tall the scroller is.
+    in property <length> viewport-height: 0px;
+    /// 16px of padding, stated once.
+    private property <length> inset: 16px;
+
+    width: 100%;
+    // The box is the document's height plus the padding on both sides — the
+    // engine lays out the content, the padding is applied here.
+    height: view.shown-height + 2 * root.inset;
+    background: Theme.surface-0;
+    border-radius: 8px;
+
+    // A link that scrolled out from under a stationary pointer keeps its rule
+    // until the pointer moves again, so the hover is cleared on a scroll.
+    changed scroll-y => { NewsState.body-hovered = ""; }
+
+    view := MarkdownView {
+        x: root.inset;
+        y: root.inset;
+        width: parent.width - 2 * root.inset;
+        height: parent.height - 2 * root.inset;
+        chunks: NewsState.body-chunks;
+        section-open: NewsState.body-section-open;
+        marker-icon: {
+            commands: Icons.stroke-commands("chevron-forward"),
+            viewbox: Icons.viewbox("chevron-forward"),
+            stroke-width: Icons.stroke-width("chevron-forward"),
+        };
+        family: Theme.font-family;
+        mono-family: NewsState.body-mono-family;
+        viewport-y: root.scroll-y - root.top-in-scroll;
+        viewport-height: root.viewport-height;
+        cull: true;
+        hovered-link <=> NewsState.body-hovered;
+        link-clicked(url) => { NewsState.open-url(url); }
+        resized(width) => { NewsState.body-resized(width); }
+        palette: {
+            text: Theme.text,
+            heading: Theme.text,
+            link: Theme.blue,
+            code-text: Theme.text,
+            code-background: Theme.surface-1,
+            code-block-text: Theme.text,
+            code-block-background: Theme.mantle,
+            quote-text: Theme.overlay-2,
+            quote-bar: Theme.surface-1,
+            table-border: Theme.surface-1,
+            table-head-text: Theme.text,
+            table-head-background: Theme.mantle,
+            rule: Theme.surface-1,
+            strike: Theme.text,
+            marker: Theme.text,
+            placeholder: Theme.text,
+            details-head: Theme.setting-item-background,
+            details-head-hover: Theme.setting-item-background-hover,
+            details-head-active: Theme.setting-item-background-active,
+            details-marker: Theme.default-text-color.transparentize(0.1),
+        };
+    }
+}

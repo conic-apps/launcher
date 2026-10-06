@@ -166,6 +166,7 @@ export component TitleBar inherits Rectangle {
     callback open-home();
     callback open-settings();
     callback open-search();
+    callback open-news();
     callback toggle-music();
     callback maximize-or-fullscreen();
     callback minimize-window();
@@ -314,19 +315,35 @@ export component TitleBar inherits Rectangle {
             }
         }
 
-        // Right-side actions (music). The window controls take the far right on
-        // the platforms that have them there; macOS traffic lights remain on the
-        // left.
-        if root.music-enabled : Rectangle {
-            width: 28px;
+        // Right-side actions (news, then music). The window controls take the
+        // far right on the platforms that have them there; macOS traffic lights
+        // remain on the left.
+        //
+        // One container rather than two absolutely-placed buttons, so the news
+        // button keeps its place to the left of the music one whether music is
+        // enabled or not: the container's own width shrinks by the music button
+        // and its 8px gap when the setting is off.
+        Rectangle {
+            width: 28px + (root.music-enabled ? 8px + 28px : 0px);
             height: 28px;
             x: root.width - self.width - root.controls-inset;
 
-            TitleBarActionButton {
-                icon-commands: Icons.stroke-commands("musical-notes");
-                icon-stroke-width: root.stroked-icon-width;
-                accessible-label: @tr("Music");
-                clicked => { root.toggle-music(); }
+            HorizontalLayout {
+                spacing: 8px;
+
+                TitleBarActionButton {
+                    icon-commands: Icons.stroke-commands("newspaper");
+                    icon-stroke-width: root.stroked-icon-width;
+                    accessible-label: @tr("News");
+                    clicked => { root.open-news(); }
+                }
+
+                if root.music-enabled : TitleBarActionButton {
+                    icon-commands: Icons.stroke-commands("musical-notes");
+                    icon-stroke-width: root.stroked-icon-width;
+                    accessible-label: @tr("Music");
+                    clicked => { root.toggle-music(); }
+                }
             }
         }
     }

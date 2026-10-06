@@ -6,7 +6,7 @@
 //! answers its callbacks.
 //!
 //! The overlay is opened from the footer's avatar (`game`), which only calls
-//! [`open`]; everything the panel shows — the head, the auth details, the launch
+//! [`open()`]; everything the panel shows — the head, the auth details, the launch
 //! contribution graph, the recent activity and the skin / cape preview — is
 //! assembled here from the account files and `statistics.json`.
 //!

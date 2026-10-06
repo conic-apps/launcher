@@ -231,6 +231,12 @@ export component ContentSearchPanel inherits Rectangle {
     background: Colors.transparent;
 
     panel := Rectangle {
+        // Pinned to the top: without a `y` the panel is centred in the box the
+        // 16px above the content box, which put half that gap over the panel's
+        // own top edge — a band of the panel behind it between the title bar and
+        // the search field. The 16px belongs below, against the grid.
+        x: 0;
+        y: 0;
         width: 100%;
         height: panel-content.preferred-height;
         // `backdrop-filter: blur(4px)` has no Slint equivalent, so the panel

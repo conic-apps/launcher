@@ -3032,3 +3032,123 @@ msgstr "Qua"
 msgctxt "AccountView"
 msgid "Fri"
 msgstr "Sex"
+
+#: ui
+msgctxt "TitleBar"
+msgid "News"
+msgstr "Notícias"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "News"
+msgstr "Notícias"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "Try adjusting the filters or search again"
+msgstr "Tente ajustar os filtros ou pesquisar novamente"
+
+#: ui
+msgctxt "NewsText"
+msgid "Type"
+msgstr "Tipo"
+
+#: ui
+msgctxt "NewsText"
+msgid "Year"
+msgstr "Ano"
+
+#: ui
+msgctxt "NewsText"
+msgid "Month"
+msgstr "Mês"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mojang news"
+msgstr "Notícias da Mojang"
+
+#: ui
+msgctxt "NewsText"
+msgid "Java changelog"
+msgstr "Registro de alterações do Java"
+
+#: ui
+msgctxt "NewsText"
+msgid "Release"
+msgstr "Versão estável"
+
+#: ui
+msgctxt "NewsText"
+msgid "Snapshot"
+msgstr "Snapshot"
+
+#: ui
+msgctxt "NewsText"
+msgid "Search news..."
+msgstr "Pesquisar notícias..."
+
+#: ui
+msgctxt "NewsText"
+msgid "All"
+msgstr "Todos"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jan"
+msgstr "jan"
+
+#: ui
+msgctxt "NewsText"
+msgid "Feb"
+msgstr "fev"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mar"
+msgstr "mar"
+
+#: ui
+msgctxt "NewsText"
+msgid "Apr"
+msgstr "abr"
+
+#: ui
+msgctxt "NewsText"
+msgid "May"
+msgstr "mai"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jun"
+msgstr "jun"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jul"
+msgstr "jul"
+
+#: ui
+msgctxt "NewsText"
+msgid "Aug"
+msgstr "ago"
+
+#: ui
+msgctxt "NewsText"
+msgid "Sep"
+msgstr "set"
+
+#: ui
+msgctxt "NewsText"
+msgid "Oct"
+msgstr "out"
+
+#: ui
+msgctxt "NewsText"
+msgid "Nov"
+msgstr "nov"
+
+#: ui
+msgctxt "NewsText"
+msgid "Dec"
+msgstr "dez"

@@ -3032,3 +3032,123 @@ msgstr "Ср"
 msgctxt "AccountView"
 msgid "Fri"
 msgstr "Пт"
+
+#: ui
+msgctxt "TitleBar"
+msgid "News"
+msgstr "Новости"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "News"
+msgstr "Новости"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "Try adjusting the filters or search again"
+msgstr "Попробуйте изменить фильтры или выполнить поиск ещё раз"
+
+#: ui
+msgctxt "NewsText"
+msgid "Type"
+msgstr "Тип"
+
+#: ui
+msgctxt "NewsText"
+msgid "Year"
+msgstr "Год"
+
+#: ui
+msgctxt "NewsText"
+msgid "Month"
+msgstr "Месяц"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mojang news"
+msgstr "Новости Mojang"
+
+#: ui
+msgctxt "NewsText"
+msgid "Java changelog"
+msgstr "Журнал изменений Java"
+
+#: ui
+msgctxt "NewsText"
+msgid "Release"
+msgstr "Релиз"
+
+#: ui
+msgctxt "NewsText"
+msgid "Snapshot"
+msgstr "Снимок"
+
+#: ui
+msgctxt "NewsText"
+msgid "Search news..."
+msgstr "Поиск новостей..."
+
+#: ui
+msgctxt "NewsText"
+msgid "All"
+msgstr "Все"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jan"
+msgstr "янв"
+
+#: ui
+msgctxt "NewsText"
+msgid "Feb"
+msgstr "фев"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mar"
+msgstr "мар"
+
+#: ui
+msgctxt "NewsText"
+msgid "Apr"
+msgstr "апр"
+
+#: ui
+msgctxt "NewsText"
+msgid "May"
+msgstr "май"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jun"
+msgstr "июн"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jul"
+msgstr "июл"
+
+#: ui
+msgctxt "NewsText"
+msgid "Aug"
+msgstr "авг"
+
+#: ui
+msgctxt "NewsText"
+msgid "Sep"
+msgstr "сен"
+
+#: ui
+msgctxt "NewsText"
+msgid "Oct"
+msgstr "окт"
+
+#: ui
+msgctxt "NewsText"
+msgid "Nov"
+msgstr "ноя"
+
+#: ui
+msgctxt "NewsText"
+msgid "Dec"
+msgstr "дек"

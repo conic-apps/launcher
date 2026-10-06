@@ -3037,3 +3037,123 @@ msgstr "Wed"
 msgctxt "AccountView"
 msgid "Fri"
 msgstr "Fri"
+
+#: ui
+msgctxt "TitleBar"
+msgid "News"
+msgstr "News"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "News"
+msgstr "News"
+
+#: ui
+msgctxt "NewsListPanel"
+msgid "Try adjusting the filters or search again"
+msgstr "Try adjusting the filters or search again"
+
+#: ui
+msgctxt "NewsText"
+msgid "Type"
+msgstr "Type"
+
+#: ui
+msgctxt "NewsText"
+msgid "Year"
+msgstr "Year"
+
+#: ui
+msgctxt "NewsText"
+msgid "Month"
+msgstr "Month"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mojang news"
+msgstr "Mojang news"
+
+#: ui
+msgctxt "NewsText"
+msgid "Java changelog"
+msgstr "Java changelog"
+
+#: ui
+msgctxt "NewsText"
+msgid "Release"
+msgstr "Release"
+
+#: ui
+msgctxt "NewsText"
+msgid "Snapshot"
+msgstr "Snapshot"
+
+#: ui
+msgctxt "NewsText"
+msgid "Search news..."
+msgstr "Search news..."
+
+#: ui
+msgctxt "NewsText"
+msgid "All"
+msgstr "All"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jan"
+msgstr "Jan"
+
+#: ui
+msgctxt "NewsText"
+msgid "Feb"
+msgstr "Feb"
+
+#: ui
+msgctxt "NewsText"
+msgid "Mar"
+msgstr "Mar"
+
+#: ui
+msgctxt "NewsText"
+msgid "Apr"
+msgstr "Apr"
+
+#: ui
+msgctxt "NewsText"
+msgid "May"
+msgstr "May"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jun"
+msgstr "Jun"
+
+#: ui
+msgctxt "NewsText"
+msgid "Jul"
+msgstr "Jul"
+
+#: ui
+msgctxt "NewsText"
+msgid "Aug"
+msgstr "Aug"
+
+#: ui
+msgctxt "NewsText"
+msgid "Sep"
+msgstr "Sep"
+
+#: ui
+msgctxt "NewsText"
+msgid "Oct"
+msgstr "Oct"
+
+#: ui
+msgctxt "NewsText"
+msgid "Nov"
+msgstr "Nov"
+
+#: ui
+msgctxt "NewsText"
+msgid "Dec"
+msgstr "Dec"

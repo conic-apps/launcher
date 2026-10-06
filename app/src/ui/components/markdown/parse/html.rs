@@ -514,6 +514,16 @@ impl Parser {
     /// Block-level content up to a closing tag in `stop`, or to the end of the
     /// input. Runs of inline content become paragraphs.
     fn blocks(&mut self, stop: &[&str]) -> Vec<Block> {
+        self.blocks_until(stop, &[])
+    }
+
+    /// [`Self::blocks`], with a second stop set that only a *close* tag matches.
+    ///
+    /// A list item needs this: `blocks(["li"])` must stop at the next `<li>`
+    /// (open) but must *not* stop at a nested `<ul>` (open) — yet it does have
+    /// to stop at the enclosing `</ul>` (close), or it swallows that tag as a
+    /// stray close and nests everything that follows the list inside the item.
+    fn blocks_until(&mut self, stop: &[&str], closes: &[&str]) -> Vec<Block> {
         let mut out: Vec<Block> = Vec::new();
         let mut pending: Inlines = Vec::new();
         let context = InlineContext::default();
@@ -527,7 +537,7 @@ impl Parser {
                     }
                 }
                 Token::Close(name) => {
-                    if stop.contains(&name.as_str()) {
+                    if stop.contains(&name.as_str()) || closes.contains(&name.as_str()) {
                         break;
                     }
                     // A stray close tag: the input is a fragment, so drop it.
@@ -679,10 +689,19 @@ impl Parser {
                     self.pos += 1;
                     items.push(ListItem {
                         task: None,
-                        blocks: self.blocks(&["li"]),
+                        // The item ends at the next `<li>` and at its list's
+                        // own close; a nested `<ul>` inside it is a nested list,
+                        // not the end of the item.
+                        blocks: self.blocks_until(&["li"], stop),
                     });
                 }
-                Token::Close(name) if stop.contains(&name.as_str()) => break,
+                Token::Close(name) if stop.contains(&name.as_str()) => {
+                    // Consume the list's own close rather than leaving it for
+                    // the caller: a nested list's `</ul>` left behind would be
+                    // read as the close of the outer list and cut it short.
+                    self.pos += 1;
+                    break;
+                }
                 // Whitespace and the `</li>` of the item just read are not part
                 // of the list; anything else that is not an `li` of this list
                 // is dropped rather than allowed to nest the walk.
@@ -1014,5 +1033,37 @@ mod tests {
         assert!(matches!(tokens[1], Token::Open { ref name, .. } if name == "b"));
         assert!(matches!(tokens[2], Token::Text(ref t) if t == "c"));
         assert!(matches!(tokens[3], Token::Close(ref name) if name == "b"));
+    }
+
+    #[test]
+    fn a_block_after_a_list_is_not_nested_in_its_last_item() {
+        // The Java changelog HTML closes neither its `<li>`s nor its lists. A
+        // list item's blocks stopped only on `<li>`, swallowed the `</ul>` as a
+        // stray close and then took every following block into the item — so
+        // each heading and list came out a little further right than the last.
+        let blocks = parse("<ul><li>one<li>two</ul><h2>After</h2><p>tail</p>");
+        assert_eq!(blocks.len(), 3, "a list, a heading and a paragraph");
+        match &blocks[0] {
+            Block::List { items, .. } => assert_eq!(items.len(), 2),
+            _ => panic!("the first block is the list"),
+        }
+        assert!(matches!(blocks[1], Block::Heading { level: 1, .. }));
+        assert!(matches!(blocks[2], Block::Paragraph { .. }));
+    }
+
+    #[test]
+    fn a_nested_list_stays_in_its_item_and_the_outer_list_continues() {
+        let blocks = parse("<ul><li>a<ul><li>b</ul><li>c</ul>");
+        let Block::List { items, .. } = &blocks[0] else {
+            panic!("the first block is the list");
+        };
+        assert_eq!(items.len(), 2, "the outer list keeps both of its items");
+        assert!(
+            items[0]
+                .blocks
+                .iter()
+                .any(|block| matches!(block, Block::List { .. })),
+            "the nested list is inside the first item"
+        );
     }
 }

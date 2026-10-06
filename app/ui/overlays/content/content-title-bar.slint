@@ -71,6 +71,12 @@ export component ContentTitleBar inherits Rectangle {
     background: transparent;
 
     bar := Rectangle {
+        // Pinned to the top on purpose: without a `y` a child is centred, which
+        // split `title-gap` into an equal gap above and below the bar — a band
+        // of the panel's `base` over the header and a shorter gap under it. The
+        // gap is meant to be *below* the bar, between it and what follows.
+        x: 0;
+        y: 0;
         width: parent.width;
         height: 52px;
         background: Theme.mantle;

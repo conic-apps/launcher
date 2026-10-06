@@ -13,6 +13,7 @@ import { DescriptionTooltipOverlay } from "overlays/description-tooltip.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
 import { CommandPaletteOverlay } from "overlays/command-palette.slint";
 import { MusicPlayerOverlay } from "overlays/music-player.slint";
+import { NewsRoot } from "overlays/news/news-root.slint";
 import { WindowDrag } from "globals/window-drag.slint";
 import { WindowBackground } from "components/display/window-background.slint";
 import { SettingsView } from "views/settings-view.slint";
@@ -37,6 +38,7 @@ export { WindowControl } from "components/title-bar.slint";
 export { Background } from "globals/background.slint";
 export { ContentState, ContentSearch, ContentCard, CardTag, FilterChip, FilterRow, PageButton } from "globals/content.slint";
 export { MusicState, MusicTrack } from "globals/music.slint";
+export { NewsState, NewsSearch, NewsCard, NewsChip, NewsText } from "globals/news.slint";
 export { CommandPaletteState, PaletteItem } from "globals/command-palette.slint";
 export { InstanceSettingsState } from "globals/instance-settings.slint";
 export { AccountViewState, AccountDay, AccountMonthLabel, AccountActivity } from "globals/account-view.slint";
@@ -170,6 +172,7 @@ export component App inherits Window {
     }
 
     callback toggle-music();
+    callback open-news();
     callback maximize-or-fullscreen();
     callback minimize-window();
     callback close-window();
@@ -266,6 +269,7 @@ export component App inherits Window {
                     open-home => { Navigation.navigate("game"); }
                     open-settings => { Navigation.navigate("settings"); }
                     open-search => { CommandPaletteState.open(); }
+                    open-news => { root.open-news(); }
                     toggle-music => { root.toggle-music(); }
                     maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
                     minimize-window => { root.minimize-window(); }
@@ -324,6 +328,14 @@ export component App inherits Window {
             // tooltip but before the dialogs. Its `top: 44px` is applied here,
             // where the title bar's height is known.
             MusicPlayerOverlay {
+                y: root.title-bar-height;
+                height: root.height - root.title-bar-height;
+            }
+
+            // The news browser: a full overlay above the pages, below the
+            // command palette and the dialogs. It opens from the title bar's
+            // newspaper button and covers everything but the title bar itself.
+            NewsRoot {
                 y: root.title-bar-height;
                 height: root.height - root.title-bar-height;
             }

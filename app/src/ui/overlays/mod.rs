@@ -10,3 +10,4 @@ pub(crate) mod content;
 pub(crate) mod dialogs;
 pub(crate) mod instance_settings;
 pub(crate) mod music_player;
+pub(crate) mod news;

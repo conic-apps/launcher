@@ -1,0 +1,149 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { Theme } from "../../theme.slint";
+import { Loading } from "../../components/controls/loading.slint";
+import { ScrollView } from "../../components/containers/scroll-view.slint";
+import { GameTime } from "../../globals/game.slint";
+import { NewsState, NewsText } from "../../globals/news.slint";
+import { ContentTitleBar } from "../content/content-title-bar.slint";
+import { NewsBody } from "news-body.slint";
+
+// The changelog detail panel: the entry's header and hero, then the full body
+// the launcher-content crate fetched.
+//
+// It uses the content panels' own title bar rather than a bespoke header with a
+// back button: a detail is dismissed by its scrim (or Escape) exactly as the
+// content details are, so the back affordance was the one thing that set it
+// apart.
+export component NewsDetailPanel inherits Rectangle {
+    /// The overlay container's size, passed in rather than read off `parent`.
+    in property <length> panel-width: 0px;
+    in property <length> panel-height: 0px;
+
+    width: panel-width;
+    height: panel-height;
+    background: transparent;
+
+    scroller := ScrollView {
+        details-column := VerticalLayout {
+            ContentTitleBar {
+                icon: "newspaper";
+                title: NewsState.detail-title;
+            }
+
+            if NewsState.detail-loading : Rectangle {
+                width: 100%;
+                height: 112px;
+                background: transparent;
+
+                Loading {
+                    y: 40px;
+                    size: 32px;
+                    stroke-width: 4;
+                    gap: 8;
+                }
+            }
+
+            if !NewsState.detail-loading : Rectangle {
+                width: 100%;
+                height: self.preferred-height;
+                background: transparent;
+
+                details-inner := VerticalLayout {
+                    padding-left: 24px;
+                    padding-right: 24px;
+                    padding-top: 8px;
+                    padding-bottom: 8px;
+                    spacing: 16px;
+
+                    HorizontalLayout {
+                        height: self.preferred-height;
+                        spacing: 16px;
+
+                        // A 96px rounded square, the image's own proportions.
+                        Rectangle {
+                            width: 96px;
+                            height: 96px;
+                            border-radius: 12px;
+                            clip: true;
+                            background: Theme.surface-0;
+
+                            Image {
+                                width: parent.width;
+                                height: parent.height;
+                                source: NewsState.detail-image;
+                                image-fit: cover;
+                            }
+                        }
+
+                        // The title and the two metadata entries, centred in
+                        // the 96px the image gives the header.
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 8px;
+                            alignment: center;
+
+                            Text {
+                                text: NewsState.detail-title;
+                                font-size: 24px;
+                                font-weight: 600;
+                                color: Theme.default-text-color.transparentize(0.1);
+                                wrap: word-wrap;
+                            }
+
+                            HorizontalLayout {
+                                height: 20px;
+                                spacing: 10px;
+                                alignment: start;
+                                cross-axis-alignment: center;
+
+                                // The release / snapshot pill.
+                                Rectangle {
+                                    height: 20px;
+                                    width: kind-label.preferred-width + 16px;
+                                    border-radius: 999px;
+                                    background: NewsState.detail-subtitle == "release"
+                                        ? Theme.green : Theme.yellow;
+
+                                    kind-label := Text {
+                                        text: NewsText.kind-label(NewsState.detail-subtitle);
+                                        font-size: 11px;
+                                        font-weight: 500;
+                                        color: Theme.text-inverse;
+                                        vertical-alignment: center;
+                                    }
+                                }
+
+                                Text {
+                                    // The app's localized absolute date; see
+                                    // `GameTime.year-month-day`.
+                                    text: GameTime.year-month-day(
+                                        NewsState.detail-month,
+                                        NewsState.detail-day,
+                                        NewsState.detail-year,
+                                    );
+                                    font-size: 13px;
+                                    color: Theme.subtext-0;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+
+                    body := NewsBody {
+                        scroll-y: scroller.content-y;
+                        viewport-height: scroller.height;
+                        // The scroller's offset is not enough on its own: the
+                        // view culls from its own top, so the two layout steps
+                        // above it are added back.
+                        top-in-scroll: details-column.y
+                            + details-inner.y
+                            + body.y;
+                    }
+                }
+            }
+        }
+    }
+}
