@@ -129,7 +129,7 @@ Bu proje [GPL-3.0](../../LICENSE) altında, GPLv3 Bölüm 7'deki ek koşullarla 
 ## Teşekkürler
 
 - [Catppuccin](https://catppuccin.com) — Güzel pastel renk paleti temaları
-- [BMCLAPI](https://bmclapi2.bangbang93.com/) ve bangbang93 tarafından [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) — İndirme hızlandırma ve Forge kurulum önyükleyici
+- bangbang93 tarafından [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) — Forge kurulum önyükleyici
 - [MCIM](https://mod.mcimirror.top) — CurseForge çeviri özetleri ve ayna önbellekleme
 - Öneri ve geri bildirim sağlayan tüm oyuncular
 

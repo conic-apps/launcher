@@ -129,7 +129,7 @@ cargo build --release  # 构建生产版本
 ## 致谢
 
 - [Catppuccin](https://catppuccin.com) — 柔和好看的主题配色
-- [BMCLAPI](https://bmclapi2.bangbang93.com/) 与 [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) by bangbang93 — 安装加速与 Forge 安装引导
+- [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) by bangbang93 — Forge 安装引导
 - [MCIM](https://mod.mcimirror.top) — CurseForge 中文摘要翻译与镜像缓存
 - 所有为项目提出建议与反馈的玩家
 

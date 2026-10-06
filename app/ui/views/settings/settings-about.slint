@@ -57,21 +57,12 @@ export component SettingsAbout inherits VerticalLayout {
         }
 
         SettingItem {
+            group-last: true;
             title: "Catppuccin";
             description: @tr("The four built-in color schemes of Conic Launcher come from Catppuccin");
             custom-icon: @image-url("../../assets/images/catppuccin-circle.png");
             navigable: true;
             clicked => { AppConfig.open-url("https://catppuccin.com"); }
-        }
-
-        SettingItem {
-            group-last: true;
-            title: "BMCLAPI";
-            description: @tr("The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources");
-            custom-icon: @image-url("../../assets/images/bangbang93-avatar.png");
-            custom-icon-rounded: true;
-            navigable: true;
-            clicked => { AppConfig.open-url("https://bmclapidoc.bangbang93.com"); }
         }
     }
 

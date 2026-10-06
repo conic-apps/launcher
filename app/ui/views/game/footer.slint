@@ -25,9 +25,9 @@ component FooterButton inherits Rectangle {
     private property <length> label-width: root.show-label ? label.preferred-width : 0px;
     height: 36px;
     border-radius: 8px;
-    background: button-touch.pressed ? Theme.surface-1
-        : button-touch.has-hover ? Theme.surface-1.transparentize(0.2)
-        : Theme.surface-0;
+    background: button-touch.pressed ? Theme.surface-2
+        : button-touch.has-hover ? Theme.surface-2.transparentize(0.2)
+        : Theme.surface-1;
     drop-shadow-color: #00000033;
     drop-shadow-blur: 10px;
 
@@ -98,7 +98,7 @@ export component GameFooterBar inherits Rectangle {
         y: root.intro-dy;
         width: root.width;
         height: root.height;
-        background: Theme.surface-0.transparentize(0.4);
+        background: Theme.surface-0.transparentize(0.2);
 
         // Declared first: it is the layer under every sibling.
         //

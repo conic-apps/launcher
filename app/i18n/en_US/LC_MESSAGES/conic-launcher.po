@@ -125,11 +125,6 @@ msgstr "The four built-in color schemes of Conic Launcher come from Catppuccin"
 
 #: ui
 msgctxt "SettingsAbout"
-msgid "The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources"
-msgstr "The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources"
-
-#: ui
-msgctxt "SettingsAbout"
 msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios "
 msgstr "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios "
 

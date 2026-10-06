@@ -129,7 +129,7 @@ cargo build --release  # Продакшн-сборка
 ## Благодарности
 
 - [Catppuccin](https://catppuccin.com) — Красивая пастельная палитра тем
-- [BMCLAPI](https://bmclapi2.bangbang93.com/) и [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) от bangbang93 — Ускорение загрузок и загрузчик установки Forge
+- [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) от bangbang93 — Загрузчик установки Forge
 - [MCIM](https://mod.mcimirror.top) — Переведённые описания CurseForge и зеркальное кэширование
 - Все игроки, которые предлагали идеи и обратную связь
 

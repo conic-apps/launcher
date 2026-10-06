@@ -125,11 +125,6 @@ msgstr "Conic Launcher 的四種內建配色方案來自 Catppuccin"
 
 #: ui
 msgctxt "SettingsAbout"
-msgid "The default mirror configuration of Conic Launcher includes BMCLAPI provided by bangbang93 as a download acceleration source for some Minecraft resources"
-msgstr "Conic Launcher 鏡像站列表的預設設定包含 bangbang93 提供的 BMCLAPI 作為部分 Minecraft 資源的下載加速來源"
-
-#: ui
-msgctxt "SettingsAbout"
 msgid "Conic Launcher is not an official Minecraft product and is not approved or associated with Mojang Studios. \"Minecraft\" is a trademark of Mojang AB. Any use of the Minecraft brand in this project complies with the Mojang Studios "
 msgstr "Conic Launcher 不是官方的 Minecraft 產品，也未獲得 Mojang Studios 的批准或關聯。「Minecraft」是 Mojang AB 的商標，本專案對 Minecraft 品牌的任何使用均符合 Mojang Studios 的"
 

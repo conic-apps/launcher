@@ -129,7 +129,7 @@ cargo build --release  # 프로덕션 빌드
 ## 감사의 글
 
 - [Catppuccin](https://catppuccin.com) — 아름다운 파스텔 테마 팔레트
-- bangbang93의 [BMCLAPI](https://bmclapi2.bangbang93.com/)와 [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) — 다운로드 가속화 및 Forge 설치 부트스트래핑
+- bangbang93의 [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) — Forge 설치 부트스트래핑
 - [MCIM](https://mod.mcimirror.top) — CurseForge 번역 요약 및 미러 캐싱
 - 제안과 피드백을 제공해 준 모든 플레이어 여러분
 

@@ -129,7 +129,7 @@ Dieses Projekt wird unter [GPL-3.0](../../LICENSE) mit zusätzlichen Bedingungen
 ## Danksagungen
 
 - [Catppuccin](https://catppuccin.com) — Wunderschöne Pastell-Farbpalette
-- [BMCLAPI](https://bmclapi2.bangbang93.com/) und [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) von bangbang93 — Download-Beschleunigung und Forge-Installations-Bootstrapping
+- [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) von bangbang93 — Forge-Installations-Bootstrapping
 - [MCIM](https://mod.mcimirror.top) — CurseForge-Übersetzungen und Mirror-Caching
 - Alle Spieler, die Vorschläge und Feedback gegeben haben
 
