@@ -129,7 +129,7 @@ Ten projekt jest dystrybuowany na licencji [GPL-3.0](../../LICENSE) z dodatkowym
 ## Podziękowania
 
 - [Catppuccin](https://catppuccin.com) — Piękna paleta pastelowych motywów
-- [BMCLAPI](https://bmclapi2.bangbang93.com/) i [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) autorstwa bangbang93 — Przyspieszanie pobierania i bootstrapping instalacji Forge
+- [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) autorstwa bangbang93 — Bootstrapping instalacji Forge
 - [MCIM](https://mod.mcimirror.top) — Przetłumaczone opisy CurseForge i cache lustrzany
 - Wszyscy gracze, którzy zgłaszali sugestie i informacje zwrotne
 

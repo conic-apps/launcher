@@ -129,7 +129,7 @@ cargo build --release  # 本番ビルド
 ## 謝辞
 
 - [Catppuccin](https://catppuccin.com) — 美しいパステルカラーテーマ
-- [BMCLAPI](https://bmclapi2.bangbang93.com/) と bangbang93 による [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) — ダウンロード加速と Forge インストールブートストラップ
+- bangbang93 による [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) — Forge インストールブートストラップ
 - [MCIM](https://mod.mcimirror.top) — CurseForge 翻訳概要とミラーキャッシング
 - 提案やフィードバックをしていただいたすべてのプレイヤーの皆さん
 
