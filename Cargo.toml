@@ -118,6 +118,13 @@ rfd = "0.17"
 # protocol; without it `arboard` only speaks X11, which a Wayland session has no
 # native answer for outside XWayland.
 arboard = { version = "3", default-features = false, features = ["wayland-data-control"] }
+# Opening URLs and local paths with the platform's default handler. The app used
+# to drive `open`, `cmd /c start` and `xdg-open` itself; the crate selects the
+# right launcher per platform and detaches it, and with
+# `shellexecute-on-windows` goes through `ShellExecuteExW` on Windows instead of
+# a shell command line, so a target with spaces, quotes or shell metacharacters
+# cannot be split or interpreted as syntax.
+open = { version = "5", features = ["shellexecute-on-windows"] }
 thiserror = "2"
 toml = "1"
 url = "2"
