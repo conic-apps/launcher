@@ -1045,16 +1045,6 @@ msgstr "Clicar em “Entrar” abre o seu navegador. Você também pode "
 
 #: ui
 msgctxt "AccountAddMicrosoft"
-msgid "copy the link"
-msgstr "copiar o link"
-
-#: ui
-msgctxt "AccountAddMicrosoft"
-msgid " and paste it into the browser. To finish signing in on another device, "
-msgstr " e colá-lo no navegador. Para concluir o login em outro dispositivo, "
-
-#: ui
-msgctxt "AccountAddMicrosoft"
 msgid "use a device code"
 msgstr "usar um código de dispositivo"
 
@@ -3152,3 +3142,23 @@ msgstr "nov"
 msgctxt "NewsText"
 msgid "Dec"
 msgstr "dez"
+
+#: ui
+msgctxt "NewsBannerCard"
+msgid "View in browser"
+msgstr "Abrir no navegador"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "click to copy the link below"
+msgstr "clicar para copiar o link abaixo"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ". To finish signing in on another device, "
+msgstr ". Para concluir o login em outro dispositivo, "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click to copy"
+msgstr "Clique para copiar"

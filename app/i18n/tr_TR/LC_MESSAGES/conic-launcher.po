@@ -1045,16 +1045,6 @@ msgstr "\"Oturum aç\"a tıklamak tarayıcınızı açar. Ayrıca bağlantıyı 
 
 #: ui
 msgctxt "AccountAddMicrosoft"
-msgid "copy the link"
-msgstr "kopyalayıp"
-
-#: ui
-msgctxt "AccountAddMicrosoft"
-msgid " and paste it into the browser. To finish signing in on another device, "
-msgstr " tarayıcıya yapıştırarak da oturum açabilirsiniz. Başka bir cihazda tamamlamak için "
-
-#: ui
-msgctxt "AccountAddMicrosoft"
 msgid "use a device code"
 msgstr "cihaz kodu kullanın"
 
@@ -3152,3 +3142,23 @@ msgstr "Kas"
 msgctxt "NewsText"
 msgid "Dec"
 msgstr "Ara"
+
+#: ui
+msgctxt "NewsBannerCard"
+msgid "View in browser"
+msgstr "Tarayıcıda aç"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "click to copy the link below"
+msgstr "kopyalamak için tıklayın"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ". To finish signing in on another device, "
+msgstr ". Başka bir cihazda tamamlamak için "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click to copy"
+msgstr "Kopyalamak için tıklayın"

@@ -1045,16 +1045,6 @@ msgstr "「ログイン」をクリックするとブラウザーが開きます
 
 #: ui
 msgctxt "AccountAddMicrosoft"
-msgid "copy the link"
-msgstr "リンクをコピー"
-
-#: ui
-msgctxt "AccountAddMicrosoft"
-msgid " and paste it into the browser. To finish signing in on another device, "
-msgstr "してブラウザーに貼り付けてサインインすることもできます。別のデバイスで完了するには、"
-
-#: ui
-msgctxt "AccountAddMicrosoft"
 msgid "use a device code"
 msgstr "デバイスコードを使用"
 
@@ -3152,3 +3142,23 @@ msgstr "11月"
 msgctxt "NewsText"
 msgid "Dec"
 msgstr "12月"
+
+#: ui
+msgctxt "NewsBannerCard"
+msgid "View in browser"
+msgstr "ブラウザで開く"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "click to copy the link below"
+msgstr "以下のリンクをクリックしてコピー"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ". To finish signing in on another device, "
+msgstr "することもできます。別のデバイスで完了するには、"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click to copy"
+msgstr "クリックしてコピー"

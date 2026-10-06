@@ -145,6 +145,9 @@ fn main() {
     ui::overlays::dialogs::multiplayer::setup(&ui);
     // The clock and the wheel/trackpad classification the scroll containers use.
     ui::services::scroll::setup(&ui);
+    // The generic tooltip's pointer position: Slint has no global cursor
+    // accessor, so the window's own `CursorMoved` events feed `TooltipState`.
+    ui::services::tooltip::setup(&ui);
     // The saves panel's world map. It reads the clock above for its tile fades,
     // and its own component reports the world and the visible range, so it is
     // wired after both.

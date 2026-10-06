@@ -1,0 +1,141 @@
+// Conic Launcher
+// Copyright 2022-2026 ConicMC developers. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { TooltipState } from "../../globals/tooltip.slint";
+
+// The trigger for the generic pointer tooltip.
+//
+// Wrap any control in this and give it `text`; the panel itself is drawn at the
+// application root (`overlays/tooltip.slint`) because the containers between a
+// control and the window all clip. The pointer's position is filled in by the
+// Rust cursor tracker, not by this component, so nothing here has to know where
+// the pointer is.
+//
+// Two ways to drive it, because "hover" is not one signal in Slint:
+//
+// - `wrap: true` (the default) covers the content with a `TouchArea` behind the
+//   `@children`, which raises the tooltip when the pointer is anywhere over the
+//   content that does not itself take input — the plain case: an icon, a label,
+//   a card. It is declared *behind* the children, so a child that has its own
+//   `TouchArea` keeps it: Slint hit-tests the last-declared element first, and a
+//   child that grabs the press prevents this area's grab.
+//
+// - Bind `hovered`/`pressed` from the control's own `TouchArea` for the rest.
+//   An area that does take input (a button, a field) stops the one behind it
+//   from ever seeing the hover, so its owner has to say so itself:
+//   `hovered: self-touch.has-hover` and `pressed: self-touch.pressed`. Set
+//   `wrap: false` when doing this so the hidden area does not swallow a press
+//   meant for a control *outside* this one.
+//
+// `show-on-press` shows the panel immediately on a press, before the hover delay
+// has run out; releasing keeps it up for as long as the pointer is still there.
+export component TooltipArea inherits Rectangle {
+    /// The label. Wire it through `@tr()` like any other user-visible string.
+    in property <string> text: "";
+    /// Hover/press state for a control whose own `TouchArea` hides the built-in
+    /// one (see the component comment).
+    in property <bool> hovered: false;
+    in property <bool> pressed: false;
+    /// Show at once while pressed, instead of after `hover-delay`.
+    in property <bool> show-on-press: true;
+    /// How long the pointer must rest on the control before the panel appears.
+    in property <duration> hover-delay: 400ms;
+    /// Use the built-in `TouchArea` for plain content. Turn it off when binding
+    /// `hovered`/`pressed` from the control's own area.
+    in property <bool> wrap: true;
+
+    background: transparent;
+
+    // Behind the children: over plain content it is what the hit test lands on,
+    // and over a child that takes input the child grabs first and this never
+    // sees the event.
+    touch := TouchArea {
+        width: 100%;
+        height: 100%;
+        enabled: root.wrap;
+    }
+
+    @children
+
+    /// Whether the pointer is on the control, and whether a button is down on it.
+    private property <bool> over: root.hovered || (root.wrap && touch.has-hover);
+    private property <bool> down: root.pressed || (root.wrap && touch.pressed);
+    /// Whether a press should show the panel at once.
+    private property <bool> immediate: root.show-on-press && root.down;
+    /// Whether the panel is wanted at all: either a hover or an immediate press.
+    private property <bool> active: root.over || root.immediate;
+
+    /// This trigger's number in `TooltipState`'s ownership, taken when it opens
+    /// the panel. `0` means it is not holding one.
+    private property <int> owner-seq: 0;
+    /// Whether the panel on screen is this trigger's — see `TooltipState.owner`.
+    private property <bool> owns: root.owner-seq != 0
+        && root.owner-seq == TooltipState.owner;
+
+    // The hover path: rest on the control for `hover-delay`, then show. Stopped
+    // once this trigger owns the panel; the press path below takes over from
+    // there and calls `claim` itself.
+    hover-timer := Timer {
+        interval: root.hover-delay;
+        running: root.over && !root.immediate && !root.owns;
+        triggered => { root.claim(); }
+    }
+
+    // A press that arrives while the hover delay is still running has to show the
+    // panel now rather than wait it out. It cannot go under `changed active`:
+    // pressing on an already-hovered control does not change `active`, only
+    // `immediate`.
+    changed immediate => {
+        if root.immediate && root.text != "" {
+            root.claim();
+        }
+    }
+
+    // When nothing wants the panel any more — the hover left, or a press-only
+    // trigger released — this trigger puts it away, if it still owns it. Watched
+    // through `active` rather than `over` so a press-only control (a slider
+    // drag, say), which never sets `over`, still closes.
+    changed active => {
+        if !root.active && root.owns {
+            root.release();
+        }
+    }
+
+    // A label that changes while its panel is up — a mode that renames itself —
+    // follows the new text.
+    changed text => {
+        if root.owns {
+            TooltipState.text = root.text;
+        }
+    }
+
+    /// Takes the panel over and hands it this trigger's text.
+    function claim() {
+        if root.text == "" {
+            return;
+        }
+        root.owner-seq = TooltipState.next-owner + 1;
+        TooltipState.next-owner = root.owner-seq;
+        TooltipState.owner = root.owner-seq;
+        TooltipState.text = root.text;
+        TooltipState.wanted = true;
+    }
+
+    /// Puts the panel away, but only if it is still this trigger's: moving from
+    /// one control to the next must not have the first close the second's panel.
+    ///
+    /// Only `wanted` is lowered. The text is deliberately left behind: the
+    /// overlay keeps it while the panel fades out, so the leave is the label
+    /// disappearing rather than an empty box. Clearing it here would empty the
+    /// panel on the first frame of the fade. The next trigger to claim the panel
+    /// writes its own text before raising `wanted`, so the stale value is never
+    /// seen.
+    function release() {
+        if !root.owns {
+            return;
+        }
+        TooltipState.wanted = false;
+        root.owner-seq = 0;
+    }
+}

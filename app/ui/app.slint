@@ -10,6 +10,7 @@ import { Navigation } from "globals/navigation.slint";
 import { Dialogs } from "globals/dialogs.slint";
 import { DropdownOverlay } from "overlays/dropdown-overlay.slint";
 import { DescriptionTooltipOverlay } from "overlays/description-tooltip.slint";
+import { TooltipOverlay } from "overlays/tooltip.slint";
 import { DialogRoot } from "overlays/dialog-root.slint";
 import { CommandPaletteOverlay } from "overlays/command-palette.slint";
 import { MusicPlayerOverlay } from "overlays/music-player.slint";
@@ -44,6 +45,7 @@ export { InstanceSettingsState } from "globals/instance-settings.slint";
 export { AccountViewState, AccountDay, AccountMonthLabel, AccountActivity } from "globals/account-view.slint";
 export { SetupWizardState } from "globals/setup.slint";
 export { WorldMapState, WorldSource, WorldTile } from "globals/worldmap.slint";
+export { TooltipState } from "globals/tooltip.slint";
 
 // Application root window. macOS keeps the native traffic lights, Linux draws
 // the window controls itself, and Windows draws the platform's own over the
@@ -352,6 +354,13 @@ export component App inherits Window {
                 z: 2000;
                 confirm-quit => { root.quit(); }
                 restart-app => { root.restart-app(); }
+            }
+
+            // The generic pointer tooltip, above everything — including the
+            // dialogs, since a dialog's own controls carry tooltips too. It is
+            // pure drawing with no `TouchArea`, so it never takes a click.
+            TooltipOverlay {
+                z: 3000;
             }
         }
     }

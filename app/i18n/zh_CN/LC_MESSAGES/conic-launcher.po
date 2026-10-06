@@ -1045,16 +1045,6 @@ msgstr "点击「登录」将打开浏览器以登录，你也可以 "
 
 #: ui
 msgctxt "AccountAddMicrosoft"
-msgid "copy the link"
-msgstr "复制链接"
-
-#: ui
-msgctxt "AccountAddMicrosoft"
-msgid " and paste it into the browser. To finish signing in on another device, "
-msgstr "并在浏览器粘贴以登录。若要在其他设备上完成登录步骤，请 "
-
-#: ui
-msgctxt "AccountAddMicrosoft"
 msgid "use a device code"
 msgstr "通过设备代码"
 
@@ -3152,3 +3142,23 @@ msgstr "11月"
 msgctxt "NewsText"
 msgid "Dec"
 msgstr "12月"
+
+#: ui
+msgctxt "NewsBannerCard"
+msgid "View in browser"
+msgstr "在浏览器中查看"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "click to copy the link below"
+msgstr "点击复制下面的链接"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ". To finish signing in on another device, "
+msgstr "。若要在其他设备上完成登录步骤，请 "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click to copy"
+msgstr "点击复制"

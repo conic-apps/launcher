@@ -2,17 +2,23 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-// State of the description tooltip: the full text of a `SettingItem` description
-// that the row pinned to a fixed number of lines, shown on hover.
+// State of the two tooltips the app has.
 //
-// The panel itself is drawn by `DescriptionTooltipOverlay` at the application
-// root, the same reason `DropdownOverlay` draws the dropdown lists there: the
-// panel is several lines tall and starts on the description line, so it covers
-// the rows below it, and both the settings collapse (`SettingCollapse`'s
-// `clip: true` height) and the settings scroll area clip everything inside
-// them. The row fills in the anchor — the description's own position in the
-// window — so the panel is placed relative to the description line and not to
-// the pointer.
+// `DescriptionTooltip` is the full text of a `SettingItem` description that the
+// row pinned to a fixed number of lines, shown on hover. The panel itself is
+// drawn by `DescriptionTooltipOverlay` at the application root, the same reason
+// `DropdownOverlay` draws the dropdown lists there: the panel is several lines
+// tall and starts on the description line, so it covers the rows below it, and
+// both the settings collapse (`SettingCollapse`'s `clip: true` height) and the
+// settings scroll area clip everything inside them. The row fills in the anchor
+// — the description's own position in the window — so the panel is placed
+// relative to the description line and not to the pointer.
+//
+// `TooltipState` is the generic pointer tooltip: any control can show a short
+// label under the cursor through `TooltipArea` (`components/controls/`), and
+// `TooltipOverlay` (`overlays/tooltip.slint`) draws the one panel at the
+// application root. It is anchored to the pointer, so it is never clipped by the
+// container the trigger sits in — the same reason both tooltips live at the root.
 export global DescriptionTooltip {
     /// The full text, written by the row on hover.
     in-out property <string> text: "";
@@ -38,4 +44,33 @@ export global DescriptionTooltip {
     /// last push of the tick would win.
     in-out property <int> anchor-seq: 0;
     in-out property <int> next-anchor-seq: 0;
+}
+
+// State of the generic pointer tooltip.
+//
+// A trigger (`TooltipArea`) writes `text` and raises `wanted`; the overlay owns
+// the reveal and reads `wanted` only as the target it animates towards. The
+// pointer position is *not* filled in by the trigger: Slint has no global cursor
+// accessor, so the window has to say where the pointer is — the Rust service
+// `ui/services/tooltip.rs` watches winit's `CursorMoved` and writes both
+// coordinates here, continuously, for as long as the app runs.
+export global TooltipState {
+    /// The text to show. Written by the trigger that raised `wanted`.
+    in-out property <string> text: "";
+    /// Whether the panel is wanted. The overlay animates towards it, so this is a
+    /// request and not the panel's visibility.
+    in-out property <bool> wanted: false;
+    /// The pointer's position within the window, in logical units, written by the
+    /// Rust cursor tracker. The overlay places the panel beside it.
+    in-out property <length> pointer-x: 0px;
+    in-out property <length> pointer-y: 0px;
+    /// Which trigger opened the panel, and the counter the triggers take their
+    /// numbers from. A trigger that loses its hover may only clear `wanted` when
+    /// it still owns it — moving from one control to the next would otherwise
+    /// have the first clear the second's panel. A number rather than a flag for
+    /// the reason `DescriptionTooltip.anchor-seq` is: a global flag would let
+    /// every trigger think it owns the panel, and the last write of the tick
+    /// would win.
+    in-out property <int> owner: 0;
+    in-out property <int> next-owner: 0;
 }

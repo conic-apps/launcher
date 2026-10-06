@@ -3,42 +3,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Theme } from "../../../theme.slint";
-import { AppIcon } from "../../../components/display/app-icon.slint";
 import { Button } from "../../../components/controls/button.slint";
 import { Loading } from "../../../components/controls/loading.slint";
+import { TooltipArea } from "../../../components/controls/tooltip-area.slint";
 import { SlideTransition } from "../../../components/containers/slide-transition.slint";
 import { Dialogs, AccountAddState } from "../../../globals/dialogs.slint";
-
-// The "copied!" bubble: 12px text in a card-coloured box with a hairline,
-// floating 8px above whatever it is anchored to.
-//
-// It is a component of its own because it is only ever placed by its bottom
-// edge, so the anchor does the positioning and both call sites share it.
-component CopiedTooltip inherits Rectangle {
-    width: row.preferred-width;
-    height: row.preferred-height;
-    background: Theme.card-background;
-    border-width: 1px;
-    border-color: Theme.overlay-2.with-alpha(0.5);
-    border-radius: 4px;
-
-    // The box measures its content rather than the content plus the padding
-    // twice.
-    row := HorizontalLayout {
-        padding-top: 4px;
-        padding-bottom: 4px;
-        padding-left: 10px;
-        padding-right: 10px;
-        cross-axis-alignment: center;
-
-        Text {
-            text: @tr("AccountAddMicrosoft" => "Copied!");
-            font-size: 12px;
-            // Full opacity, unlike the `rgba(…, 0.9)` the body text carries.
-            color: Theme.default-text-color;
-        }
-    }
-}
 
 // "Sign in with Microsoft" — the first screen of the add-account dialog.
 //
@@ -150,18 +119,6 @@ export component AccountAddMicrosoft inherits VerticalLayout {
         interval: 1000ms;
         running: root.shown == "device-code" && AccountAddState.ms-expires-in > 0;
         triggered => { AccountAddState.ms-expires-in -= 1; }
-    }
-
-    // The "copied!" hints, each cleared 1.5s after it was set.
-    copied-timer := Timer {
-        interval: 1500ms;
-        running: AccountAddState.ms-copied;
-        triggered => { AccountAddState.ms-copied = false; }
-    }
-    copied-code-timer := Timer {
-        interval: 1500ms;
-        running: AccountAddState.ms-copied-code;
-        triggered => { AccountAddState.ms-copied-code = false; }
     }
 
     // The URL on this screen is only meaningful while something is serving
@@ -333,38 +290,20 @@ export component AccountAddMicrosoft inherits VerticalLayout {
 
                 code-text := Text {
                     y: 0;
-                    // The code steps aside as the checkmark arrives. Slint has no
-                    // translation transform, so the text moves with its `x`.
-                    x: (parent.width - self.width) / 2 + (AccountAddState.ms-copied-code ? -8px : 0px);
+                    // Centred in the 20ch box. The code used to step aside for a
+                    // checkmark that arrived on copy; that checkmark is gone, so
+                    // the text stays put and only its tooltip reports the copy.
+                    x: (parent.width - self.width) / 2;
                     height: parent.height;
                     text: AccountAddState.ms-user-code;
                     font-size: 20px;
+                    // Bolder than the body: the code is the thing to read and
+                    // retype, not part of the prose around it.
+                    font-weight: 700;
                     letter-spacing: 4px;
                     horizontal-alignment: center;
                     vertical-alignment: center;
                     color: Theme.default-text-color.transparentize(0.1);
-                    animate x { duration: 300ms; easing: ease; }
-                }
-
-                // Faded and scaled in with the tooltip it carries.
-                Rectangle {
-                    x: parent.width - self.width - 8px;
-                    width: checkmark.width;
-                    height: checkmark.height;
-                    background: transparent;
-                    opacity: AccountAddState.ms-copied-code ? 1.0 : 0.0;
-                    transform-scale: AccountAddState.ms-copied-code ? 100% : 0%;
-                    animate opacity, transform-scale { duration: 300ms; easing: ease; }
-
-                    checkmark := AppIcon {
-                        name: "checkmark-outline";
-                        size: 20px;
-                        icon-color: Theme.green;
-                    }
-
-                    CopiedTooltip {
-                        y: -self.height - 8px;
-                    }
                 }
 
                 code-touch := TouchArea {
@@ -374,6 +313,23 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                         AccountAddState.copy-text(AccountAddState.ms-user-code);
                         AccountAddState.ms-copied-code = true;
                     }
+                    // The "Copied!" hint lasts exactly as long as the hover it
+                    // was made in, so the next time the pointer arrives the
+                    // tooltip reads "Click to copy" again. The timer that used to
+                    // clear it could not do this: it would flip the text back
+                    // while the pointer was still on the code.
+                    changed has-hover => {
+                        if !self.has-hover {
+                            AccountAddState.ms-copied-code = false;
+                        }
+                    }
+                }
+
+                TooltipArea {
+                    text: AccountAddState.ms-copied-code ? @tr("Copied!") : @tr("Click to copy");
+                    hovered: code-touch.has-hover;
+                    wrap: false;
+                    show-on-press: false;
                 }
             }
         }
@@ -400,7 +356,7 @@ export component AccountAddMicrosoft inherits VerticalLayout {
 
         StyledText {
             width: 100%;
-            text: @markdown("\{@tr("Clicking \"Log in\" opens your browser to sign in. You can also ")}[\{@tr("copy the link")}](conic:copy-link)\{@tr(" and paste it into the browser. To finish signing in on another device, ")}[\{@tr("use a device code")}](conic:device-code)\{@tr(" instead.")}");
+            text: @markdown("\{@tr("Clicking \"Log in\" opens your browser to sign in. You can also ")}[\{@tr("click to copy the link below")}](conic:copy-link)\{@tr(". To finish signing in on another device, ")}[\{@tr("use a device code")}](conic:device-code)\{@tr(" instead.")}");
             default-font-size: 14px;
             default-color: Theme.default-text-color.transparentize(0.1);
             link-color: Theme.blue;
@@ -408,9 +364,10 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                 if link == "conic:device-code" {
                     AccountAddState.use-device-code-flow();
                 } else {
-                    // No bubble here: this paragraph is a `StyledText`, which
-                    // has nowhere to put one. The link box below has the same
-                    // hint and is a plain element, so it can carry the tooltip.
+                    // No tooltip here: this paragraph is a `StyledText`, which is
+                    // one element with no children to hang one on. The link box
+                    // below has the same hint and is a plain element, so it
+                    // carries the tooltip instead.
                     AccountAddState.copy-text(AccountAddState.auth-code-login-url);
                 }
             }
@@ -443,34 +400,14 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                     x: 8px;
                     y: 0;
                     height: parent.height;
-                    // The text takes the rest of the row, less the checkmark's
-                    // 6px margin beside it.
-                    width: parent.width - 16px - 6px - check-wrapper.width;
+                    // The text takes the rest of the row, less its own 8px of
+                    // padding on each side.
+                    width: parent.width - 16px;
                     text: AccountAddState.auth-code-login-url;
                     vertical-alignment: center;
                     overflow: elide;
                     font-size: 12.5px;
                     color: Theme.default-text-color.transparentize(0.1);
-                }
-
-                check-wrapper := Rectangle {
-                    x: parent.width - self.width - 8px;
-                    width: check-mark.width;
-                    height: check-mark.height;
-                    background: transparent;
-                    opacity: AccountAddState.ms-copied ? 1.0 : 0.0;
-                    transform-scale: AccountAddState.ms-copied ? 100% : 0%;
-                    animate opacity, transform-scale { duration: 300ms; easing: ease; }
-
-                    check-mark := AppIcon {
-                        name: "checkmark-outline";
-                        size: 16px;
-                        icon-color: Theme.green;
-                    }
-
-                    CopiedTooltip {
-                        y: -self.height - 8px;
-                    }
                 }
 
                 link-touch := TouchArea {
@@ -480,6 +417,23 @@ export component AccountAddMicrosoft inherits VerticalLayout {
                         AccountAddState.copy-text(AccountAddState.auth-code-login-url);
                         AccountAddState.ms-copied = true;
                     }
+                    // The "Copied!" hint lasts exactly as long as the hover it
+                    // was made in, so the next time the pointer arrives the
+                    // tooltip reads "Click to copy" again. The timer that used to
+                    // clear it could not do this: it would flip the text back
+                    // while the pointer was still on the link.
+                    changed has-hover => {
+                        if !self.has-hover {
+                            AccountAddState.ms-copied = false;
+                        }
+                    }
+                }
+
+                TooltipArea {
+                    text: AccountAddState.ms-copied ? @tr("Copied!") : @tr("Click to copy");
+                    hovered: link-touch.has-hover;
+                    wrap: false;
+                    show-on-press: false;
                 }
             }
         }

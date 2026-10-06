@@ -99,6 +99,14 @@ DROP = {
     ("SetupStorage", "Instances"),
     # The add-account dialog's title shortened from a sentence to "Sign in".
     ("AccountAdd", "Choose an auth service and add an account"),
+    # The browser flow's copy-link instruction was reworded: the paragraph now
+    # tells the reader to click the link box below instead of copying and
+    # pasting by hand, so the old two spans are gone.
+    ("AccountAddMicrosoft", "copy the link"),
+    (
+        "AccountAddMicrosoft",
+        " and paste it into the browser. To finish signing in on another device, ",
+    ),
 }
 
 # ---------------------------------------------------------------------------
@@ -121,6 +129,50 @@ SAVE_TAGS = {
             "ru_RU": "Войти",
             "tr_TR": "Giriş yap",
             "pl_PL": "Zaloguj się",
+        },
+    },
+    # The browser flow's paragraphs and the two copy hints. "Copied!" is already
+    # catalogued under this context by hand; only the strings this change
+    # introduces are listed.
+    "AccountAddMicrosoft": {
+        "click to copy the link below": {
+            "zh_CN": "点击复制下面的链接",
+            "zh_TW": "點擊複製下面的連結",
+            "ja_JP": "以下のリンクをクリックしてコピー",
+            "ko_KR": "아래 링크를 클릭하여 복사",
+            "de_DE": "den Link unten anklicken, um ihn zu kopieren",
+            "fr_FR": "cliquer pour copier le lien ci-dessous",
+            "es_ES": "hacer clic para copiar el enlace de abajo",
+            "pt_BR": "clicar para copiar o link abaixo",
+            "ru_RU": "нажать, чтобы скопировать ссылку ниже",
+            "tr_TR": "kopyalamak için tıklayın",
+            "pl_PL": "kliknąć, aby skopiować link poniżej",
+        },
+        ". To finish signing in on another device, ": {
+            "zh_CN": "。若要在其他设备上完成登录步骤，请 ",
+            "zh_TW": "。若要在其他裝置上完成登入步驟，請 ",
+            "ja_JP": "することもできます。別のデバイスで完了するには、",
+            "ko_KR": "할 수도 있습니다. 다른 기기에서 마치려면 ",
+            "de_DE": ". Um die Anmeldung auf einem anderen Gerät abzuschließen, ",
+            "fr_FR": ". Pour terminer la connexion sur un autre appareil, ",
+            "es_ES": ". Para terminar de iniciar sesión en otro dispositivo, ",
+            "pt_BR": ". Para concluir o login em outro dispositivo, ",
+            "ru_RU": ". Чтобы завершить вход на другом устройстве, ",
+            "tr_TR": ". Başka bir cihazda tamamlamak için ",
+            "pl_PL": ". Aby dokończyć logowanie na innym urządzeniu, ",
+        },
+        "Click to copy": {
+            "zh_CN": "点击复制",
+            "zh_TW": "點擊複製",
+            "ja_JP": "クリックしてコピー",
+            "ko_KR": "클릭하여 복사",
+            "de_DE": "Zum Kopieren klicken",
+            "fr_FR": "Cliquer pour copier",
+            "es_ES": "Haz clic para copiar",
+            "pt_BR": "Clique para copiar",
+            "ru_RU": "Нажмите, чтобы скопировать",
+            "tr_TR": "Kopyalamak için tıklayın",
+            "pl_PL": "Kliknij, aby skopiować",
         },
     },
     # The wizard's storage step, and the label on the button that leaves it.
@@ -1088,6 +1140,22 @@ SAVE_TAGS = {
             "ru_RU": "Попробуйте изменить фильтры или выполнить поиск ещё раз",
             "tr_TR": "Filtreleri ayarlamayı veya yeniden aramayı deneyin",
             "pl_PL": "Spróbuj dostosować filtry lub wyszukać ponownie",
+        },
+    },
+    # The hint on a Mojang news card, whose article opens in the browser.
+    "NewsBannerCard": {
+        "View in browser": {
+            "zh_CN": "在浏览器中查看",
+            "zh_TW": "在瀏覽器中檢視",
+            "ja_JP": "ブラウザで開く",
+            "ko_KR": "브라우저에서 열기",
+            "de_DE": "Im Browser öffnen",
+            "fr_FR": "Ouvrir dans le navigateur",
+            "es_ES": "Abrir en el navegador",
+            "pt_BR": "Abrir no navegador",
+            "ru_RU": "Открыть в браузере",
+            "tr_TR": "Tarayıcıda aç",
+            "pl_PL": "Otwórz w przeglądarce",
         },
     },
     # The news browser's own resolved labels (see `NewsText` in

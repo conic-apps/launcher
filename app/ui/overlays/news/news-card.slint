@@ -4,6 +4,7 @@
 
 import { Theme } from "../../theme.slint";
 import { Loading } from "../../components/controls/loading.slint";
+import { TooltipArea } from "../../components/controls/tooltip-area.slint";
 import { GameTime } from "../../globals/game.slint";
 import { NewsCard as CardData, NewsText } from "../../globals/news.slint";
 
@@ -158,6 +159,16 @@ export component NewsBannerCard inherits Rectangle {
 
     card-touch := TouchArea {
         clicked => { root.clicked(); }
+    }
+
+    // A news card opens its article in the system browser (a changelog opens in
+    // the panel instead, so only this shape carries the hint). The card owns its
+    // own `touch`, so the hover comes from there and the built-in area is off.
+    TooltipArea {
+        text: @tr("View in browser");
+        hovered: card-touch.has-hover;
+        wrap: false;
+        show-on-press: false;
     }
 }
 

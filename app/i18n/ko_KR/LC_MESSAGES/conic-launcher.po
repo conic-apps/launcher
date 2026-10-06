@@ -1045,16 +1045,6 @@ msgstr "\"로그인\"을 클릭하면 브라우저가 열립니다."
 
 #: ui
 msgctxt "AccountAddMicrosoft"
-msgid "copy the link"
-msgstr "링크를 복사"
-
-#: ui
-msgctxt "AccountAddMicrosoft"
-msgid " and paste it into the browser. To finish signing in on another device, "
-msgstr "해 브라우저에 붙여넣어 로그인할 수도 있습니다. 다른 기기에서 마치려면 "
-
-#: ui
-msgctxt "AccountAddMicrosoft"
 msgid "use a device code"
 msgstr "디바이스 코드 사용"
 
@@ -3152,3 +3142,23 @@ msgstr "11월"
 msgctxt "NewsText"
 msgid "Dec"
 msgstr "12월"
+
+#: ui
+msgctxt "NewsBannerCard"
+msgid "View in browser"
+msgstr "브라우저에서 열기"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "click to copy the link below"
+msgstr "아래 링크를 클릭하여 복사"
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid ". To finish signing in on another device, "
+msgstr "할 수도 있습니다. 다른 기기에서 마치려면 "
+
+#: ui
+msgctxt "AccountAddMicrosoft"
+msgid "Click to copy"
+msgstr "클릭하여 복사"
