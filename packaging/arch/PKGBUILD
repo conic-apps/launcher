@@ -78,7 +78,7 @@ build() {
   # with. `$CARCH` is the host on a native build, so this is not cross-compiling
   # -- it just names the target so the binary lands in a predictable directory.
   export CARGO_TARGET_DIR="$srcdir/target"
-  cargo build --release --locked --target "$CARCH-unknown-linux-gnu"
+  cargo build --release --verbose --locked --target "$CARCH-unknown-linux-gnu"
 }
 
 check() {

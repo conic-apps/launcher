@@ -158,7 +158,7 @@ else
     step "Building $CRATE $VERSION (native: $HOST)"
 fi
 for target in "${TARGETS[@]}"; do
-    cargo build --release --locked -p "$CRATE" --target "$target"
+    cargo build --release --verbose --locked -p "$CRATE" --target "$target"
 done
 
 # `CURSEFORGE_API_KEY` is read by `crates/curseforge/build.rs` at compile time.

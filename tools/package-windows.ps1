@@ -222,7 +222,7 @@ $ProductCode = (New-DeterministicGuid $Namespace "$Crate|$Version|$Arch").ToUppe
 # reproducible from a commit, and a packaging run that silently updated
 # `Cargo.lock` would not be.
 Step "Building $Crate $Version (release, $Arch)"
-cargo build --release --locked -p $Crate
+cargo build --release --verbose --locked -p $Crate
 if ($LASTEXITCODE -ne 0) { Die 'cargo build failed' }
 
 $Bin = Join-Path $TargetDir "release/$Crate.exe"
