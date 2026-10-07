@@ -153,7 +153,7 @@ readonly APPDIR="$OUT/$CRATE.AppDir"
 # `--locked` everywhere: the release pipeline has to be reproducible from a
 # commit, and a packaging run that silently updated `Cargo.lock` would not be.
 step "Building $CRATE $VERSION (release)"
-cargo build --release --locked -p "$CRATE"
+cargo build --release --verbose --locked -p "$CRATE"
 
 readonly BIN="$TARGET_DIR/release/$CRATE"
 [[ -f "$BIN" ]] || die "$BIN was not produced"
