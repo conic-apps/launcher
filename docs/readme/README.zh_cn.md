@@ -95,6 +95,8 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 应用内置自动更新，安装后无需手动升级。
 
+> 需要 macOS 11.0（Big Sur）或更高版本。
+
 > 独立的 Windows `.exe` 虽是单个文件，但它导入了 `VCRUNTIME140.dll`：未安装 Visual C++ Redistributable 的机器（装有 Office 或 .NET 的机器通常已有）将无法启动它。`.msi` 安装的是同一个可执行文件。
 
 ## 从源码构建

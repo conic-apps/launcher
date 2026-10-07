@@ -52,6 +52,25 @@ pub fn apply_pending() -> Result<bool> {
     Ok(true)
 }
 
+/// Removes the staged bundle now that it has been applied.
+///
+/// [`clear_pending`] deliberately drops only the record: on Windows the bundle
+/// has to outlive this process, because a detached script is what consumes it.
+/// On the platforms that apply in-process the artifact is dead weight the moment
+/// the swap succeeds, and leaving it behind is what made a used `updates/`
+/// directory keep one tarball per update.
+#[cfg(not(windows))]
+fn discard_artifact(staged: &Staged) {
+    if let Err(error) = std::fs::remove_file(&staged.artifact)
+        && error.kind() != std::io::ErrorKind::NotFound
+    {
+        log::warn!(
+            "could not remove the applied update {}: {error}",
+            staged.artifact.display()
+        );
+    }
+}
+
 /// Replaces `target` with `source` through a scratch file in the same
 /// directory, so the swap is a directory-entry rename rather than an in-place
 /// overwrite of the file the running process may still hold open.
@@ -88,6 +107,7 @@ fn apply_appimage(staged: &Staged) -> Result<()> {
         make_executable(&scratch)?;
         std::fs::rename(&scratch, &image)?;
         clear_pending()?;
+        discard_artifact(staged);
         Ok(())
     }
     #[cfg(not(target_os = "linux"))]
@@ -132,6 +152,7 @@ fn apply_mac_app(staged: &Staged) -> Result<()> {
         let _ = std::fs::remove_dir_all(&backup);
         let _ = std::fs::remove_dir_all(&work);
         clear_pending()?;
+        discard_artifact(staged);
         Ok(())
     }
     #[cfg(not(target_os = "macos"))]
@@ -169,6 +190,7 @@ fn apply_portable(staged: &Staged) -> Result<()> {
         }
         let _ = std::fs::remove_dir_all(&work);
         clear_pending()?;
+        discard_artifact(staged);
         Ok(())
     }
     #[cfg(windows)]
@@ -242,6 +264,7 @@ fn apply_msi(staged: &Staged) -> Result<()> {
              \x20 goto wait\r\n\
              )\r\n\
              start \"\" /WAIT msiexec /i \"{msi}\" /passive /norestart\r\n\
+             del \"{msi}\" >NUL 2>NUL\r\n\
              del \"%~f0\"\r\n",
             pid = std::process::id(),
             msi = staged.artifact.display(),
@@ -270,6 +293,7 @@ fn apply_nsis(staged: &Staged) -> Result<()> {
              \x20 goto wait\r\n\
              )\r\n\
              start \"\" /WAIT \"{setup}\" /S\r\n\
+             del \"{setup}\" >NUL 2>NUL\r\n\
              del \"%~f0\"\r\n",
             pid = std::process::id(),
             setup = staged.artifact.display(),

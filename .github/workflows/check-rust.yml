@@ -32,8 +32,8 @@ jobs:
         include:
           - platform: "ubuntu-22.04"
           - platform: "ubuntu-22.04-arm"
-          - platform: "macos-15"
-          - platform: "macos-15-intel"
+          - platform: "macos-26"
+          - platform: "macos-26-intel"
           - platform: "windows-latest"
           - platform: "windows-11-arm"
     runs-on: ${{ matrix.platform }}
@@ -66,8 +66,8 @@ jobs:
         include:
           - platform: "ubuntu-22.04"
           - platform: "ubuntu-22.04-arm"
-          - platform: "macos-15"
-          - platform: "macos-15-intel"
+          - platform: "macos-26"
+          - platform: "macos-26-intel"
           - platform: "windows-latest"
           - platform: "windows-11-arm"
     runs-on: ${{ matrix.platform }}

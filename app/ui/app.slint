@@ -141,6 +141,15 @@ export component App inherits Window {
         root.quitting = true;
     }
 
+    /// Runs the same close flow as `⌘W` and the title bar's button, for callers
+    /// outside the UI. The macOS terminate hook
+    /// (`app/src/support/native/macos/terminate.rs`) invokes this when AppKit
+    /// receives `⌘Q`, the menu's Quit or a system logout. AppKit is where those
+    /// are answered, so no `⌘Q` `KeyBinding` is registered for them.
+    public function request-close() {
+        root.close();
+    }
+
     // The page-swap lifecycle. `navigate`/`back` set `transition-stage` to
     // "starting" on the same beat as `current-page`; these two timers advance
     // it. One 16ms beat holds a view at its start values so the renderer has
@@ -212,6 +221,16 @@ export component App inherits Window {
             activated => { CommandPaletteState.toggle(); }
         }
 
+        // `⌘W` (`Control` + `W`) is the platform's close-window shortcut. The
+        // default app menu the backend installs on macOS has no Close item, so
+        // the key reaches the window and is caught here; on Windows and Linux
+        // the key is unconsumed for the same reason. `App.close()` runs the
+        // window's close-requested callback, so the launch page asks first.
+        KeyBinding {
+            keys: @keys(Control + W);
+            activated => { root.close(); }
+        }
+
         // The focus goes to the palette's search field while it is open and comes
         // back here when it closes, so the bindings above keep working: a window
         // with nothing focused discards its key events entirely.
@@ -275,15 +294,10 @@ export component App inherits Window {
                     toggle-music => { root.toggle-music(); }
                     maximize-or-fullscreen => { root.maximize-or-fullscreen(); }
                     minimize-window => { root.minimize-window(); }
-                    // The launch page is the one where closing abandons a running
-                    // task, so it asks first.
-                    close-window => {
-                        if Navigation.current-page == "launch" {
-                            Dialogs.confirm-quit-app-visible = true;
-                        } else {
-                            root.close();
-                        }
-                    }
+                    // `App.close()` runs the window's close-requested callback,
+                    // where the launch-page confirm lives. `⌘W` above and the
+                    // macOS `⌘Q` (`native/macos/quit.rs`) do the same.
+                    close-window => { root.close(); }
                 }
 
                 // Page stack. The account view is an overlay on the game screen

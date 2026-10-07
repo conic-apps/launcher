@@ -95,6 +95,8 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 앱에 자동 업데이트가 내장되어 있어, 설치 후 수동 업그레이드가 필요 없습니다.
 
+> macOS 11.0(Big Sur) 이상이 필요합니다.
+
 > 독립 실행형 Windows `.exe`는 단일 파일이지만 `VCRUNTIME140.dll`을 가져옵니다. Visual C++ 재배포 가능 패키지가 없는 컴퓨터(Office나 .NET이 있는 대부분의 컴퓨터에는 이미 있음)에서는 실행되지 않습니다. `.msi`도 동일한 실행 파일을 설치합니다.
 
 ## 소스에서 빌드

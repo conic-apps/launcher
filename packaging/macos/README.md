@@ -97,8 +97,8 @@ rendered PNG that no longer matches the `.svg`.
 
 ## Builds and signing
 
-**CI builds each macOS architecture on a native runner** (`macos-15` and
-`macos-15-intel`), not one runner cross-compiling the other. A `--target` build
+**CI builds each macOS architecture on a native runner** (`macos-26` and
+`macos-26-intel`), not one runner cross-compiling the other. A `--target` build
 compiles for the guest while running every build script on the host, so a
 host-only mistake in a `-sys` crate passes and a real Intel build fails — and
 Skia and `aws-lc-rs` are both built through `cc`. Two thin `.dmg`s beat one

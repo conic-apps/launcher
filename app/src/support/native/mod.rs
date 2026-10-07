@@ -31,6 +31,28 @@ pub(crate) fn install_backend() {
     windows::install_backend();
 }
 
+/// Registers the platform's terminate handling.
+///
+/// On macOS `⌘Q`, the menu's Quit and a system logout terminate the process
+/// through AppKit, not through a window close. The platform's own Quit is
+/// intercepted where AppKit asks (`applicationShouldTerminate:`) and replayed
+/// as `request_close`, so it confirms first exactly like `⌘W`; `run_exit_work`
+/// stays the fallback for the terminates that really do end the process.
+/// Elsewhere there is no such path the app has to cover — the window close is
+/// the only exit — so this does nothing.
+pub(crate) fn install_terminate_handler(
+    request_close: impl Fn() + 'static,
+    run_exit_work: impl Fn() + 'static,
+) {
+    #[cfg(target_os = "macos")]
+    macos::install_terminate_handler(request_close, run_exit_work);
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (request_close, run_exit_work);
+    }
+}
+
 /// Applies the platform-specific window integration that needs the app
 /// component. Run once, after `App::new` and before the event loop.
 pub(crate) fn install(ui: &App) {

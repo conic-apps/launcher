@@ -209,6 +209,10 @@ fn main() {
     // too, which is what makes it the "already answered" test below as well as
     // the dialog's own: `App.close()` at the end of the exit animation comes back
     // through here, and the only close that must not be re-asked about is that one.
+    //
+    // `⌘W` (`Control`+`W`, bound in `app.slint`) and the macOS `⌘Q`
+    // (`native/macos/quit.rs`) both reach this too — they call `App.close()`,
+    // which runs this same callback.
     window.window().on_close_requested({
         let weak = ui.as_weak();
         move || {
@@ -279,7 +283,45 @@ fn main() {
             .set_current_page("setup".into());
     }
 
+    // The platform's own terminate requests — macOS `⌘Q`, the menu's Quit and a
+    // system logout — have to run the same close flow as `⌘W`, because the
+    // launch-page confirm lives in the window's close-requested callback. `⌘W`
+    // and the title bar's button bound `root.close()` in `app.slint`; the same is
+    // exposed as `request-close` for AppKit's terminate hook, which asks on the
+    // main thread but outside Slint's own dispatch — hence the hop through the
+    // event loop. `run_exit_work` stays the fallback for a terminate that really
+    // does end the process.
+    let request_close = {
+        let weak = ui.as_weak();
+        move || {
+            let _ = weak.upgrade_in_event_loop(|ui| {
+                ui.invoke_request_close();
+            });
+        }
+    };
+    support::native::install_terminate_handler(request_close, run_exit_work);
+
     ui.run().expect("failed to run the shell event loop");
+
+    run_exit_work();
+}
+
+/// The work that has to happen as the process goes away, whichever way it was
+/// asked to.
+///
+/// It runs once. A window close returns from `ui.run` and calls it here; the
+/// platform's terminate requests reach it the same way, since the macOS hook
+/// replays them as a close. A terminate that still ends the process out of
+/// AppKit reaches it through [`support::native::install_terminate_handler`]. The
+/// exit-time update apply must not run twice, so an already-shut gate is what
+/// the second caller finds.
+fn run_exit_work() {
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    static DONE: AtomicBool = AtomicBool::new(false);
+    if DONE.swap(true, Ordering::SeqCst) {
+        return;
+    }
 
     // The updater swaps in the staged bundle once the event loop has returned:
     // the window is gone and nothing will read the running executable again.
