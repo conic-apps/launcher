@@ -77,8 +77,7 @@ export component NewsBannerCard inherits Rectangle {
         height: root.media-height;
         source: root.card.image;
         loading: root.card.image-loading;
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
+        border-radius: 8px;
     }
 
     // The date, as a translucent crust capsule over the banner's top-right
@@ -196,8 +195,7 @@ export component NewsRowCard inherits Rectangle {
         height: parent.height;
         source: root.card.image;
         loading: root.card.image-loading;
-        border-top-left-radius: 8px;
-        border-bottom-left-radius: 8px;
+        border-radius: 8px;
     }
 
     info := Rectangle {

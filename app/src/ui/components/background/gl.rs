@@ -143,6 +143,19 @@ pub fn install(ui: &App, shared: Handle) -> bool {
             let Some(ui) = weak.upgrade() else { return };
             match state {
                 RenderingState::RenderingSetup => {
+                    // A borrowed texture from a previous context is dead now, so
+                    // the layer goes back to the sky until the first draw below
+                    // hands over a fresh one. It is cleared here rather than in
+                    // `RenderingTeardown` on purpose: femtovg fires teardown from
+                    // inside the winit adapter's `suspend()`, which holds the
+                    // adapter's window `RefCell` mutably. Setting a Slint property
+                    // there marks the window dirty and calls `request_redraw`,
+                    // which re-borrows that same cell and panics with
+                    // "RefCell already mutably borrowed" — the crash on `⌘W`. Setup
+                    // runs from `draw()`, with no borrow held, and always precedes
+                    // the first frame of the new context, so nothing ever samples
+                    // the stale texture.
+                    ui.global::<Background>().set_world_image(Image::default());
                     let size = target_size(&ui);
                     match Renderer::new(api, size) {
                         Ok(renderer) => {
@@ -173,11 +186,9 @@ pub fn install(ui: &App, shared: Handle) -> bool {
                 }
                 RenderingState::RenderingTeardown => {
                     RENDERER.with(|slot| *slot.borrow_mut() = None);
-                    // The texture this borrowed dies with the context. Slint
-                    // would still try to sample it, so the layer goes back to
-                    // the sky until the next `RenderingSetup` hands over a new
-                    // one.
-                    ui.global::<Background>().set_world_image(Image::default());
+                    // The image property is not touched here: this state is
+                    // delivered from inside the adapter's `suspend()` and any
+                    // write would panic. `RenderingSetup` clears it instead.
                 }
                 _ => {}
             }

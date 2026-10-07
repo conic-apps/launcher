@@ -95,6 +95,8 @@ Pobierz instalator dla swojej platformy z [GitHub Releases](https://github.com/c
 
 Aplikacja zawiera wbudowane automatyczne aktualizacje — po instalacji nie jest wymagana ręczna aktualizacja.
 
+> Wymaga systemu macOS 11.0 (Big Sur) lub nowszego.
+
 > Samodzielny plik `.exe` dla Windows to jeden plik, ale importuje `VCRUNTIME140.dll`: komputer bez Visual C++ Redistributable (większość z Office lub .NET już go ma) go nie uruchomi. Plik `.msi` instaluje ten sam plik wykonywalny.
 
 ## Budowanie ze źródeł

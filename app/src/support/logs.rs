@@ -2,11 +2,15 @@
 // Copyright 2022-2026 ConicMC developers. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-only
 
-//! The log file.
+//! The log sink.
 //!
-//! Lines go to a file in the data directory's `logs` folder, rotating at 50 kB
-//! and keeping ten files. `Settings → About → "View launcher logs"` opens that
-//! folder, so an app that writes nothing to it opens an empty directory.
+//! A debug build writes to stdout, with the level coloured when stdout is a
+//! terminal, so a line is readable while the app is being worked on. A release
+//! build writes to a file in the data directory's `logs` folder, rotating at
+//! 50 kB and keeping ten files, in the plain format earlier installs wrote: a
+//! log read later with a text editor must not carry escape codes.
+//! `Settings → About → "View launcher logs"` opens that folder, so an app that
+//! writes nothing to it opens an empty directory.
 //!
 //! The file name and the archive naming match what earlier installs wrote, so a
 //! folder shared across versions looks the same.
@@ -167,28 +171,33 @@ impl io::Write for FileLog {
 /// `[date][time][target][LEVEL] message` — the format earlier installs wrote, so
 /// lines read the same in a shared file.
 ///
-/// `env_logger` formats every target with one formatter, so this is also what
-/// stderr prints. One format beats a per-target pair.
+/// `env_logger` formats every sink with one formatter, so this is also what
+/// stdout prints. One format beats a per-sink pair.
 fn format_record(buffer: &mut Formatter, record: &Record) -> std::io::Result<()> {
     let now = Local::now();
+    // The level carries the colour. `default_level_style` is already empty for
+    // `WriteStyle::Never`, which the file and a redirected stdout both use, so
+    // the same format serves a terminal and a log file: no bracket needs to know
+    // which one it is going to.
+    let style = buffer.default_level_style(record.level());
     // `Formatter` is an `io::Write`, not a `fmt::Write`, so this is
-    // `write_fmt` and not the `write!` macro. The brackets are written plain:
-    // there is nothing to colour here.
+    // `write_fmt` and not the `write!` macro. `{style:#}` writes the reset that
+    // closes the level's colour; both sides of a `Style` render as nothing when
+    // the style is empty.
     //
     // The trailing newline is this function's to write: `env_logger`'s own
     // default formatter is what normally ends a record, and this replaces it.
     buffer.write_fmt(format_args!(
-        "[{}][{}][{}][{}] {}\n",
-        now.format("%Y-%m-%d"),
-        now.format("%H:%M:%S"),
+        "[{}] [{}/{style}{}{style:#}]: {}\n",
+        now.to_rfc3339(),
         record.target(),
         record.level(),
         record.args()
     ))
 }
 
-/// Installs the logger: the log file, with stderr as the fallback when the file
-/// cannot be opened.
+/// Installs the logger, choosing the sink by build: stdout for a debug build,
+/// the rotating file for a release build.
 ///
 /// The level is `info`, and `RUST_LOG` overrides it. That default goes through
 /// `default_filter_or("info")` rather than a `builder.filter_level(Info)`: the
@@ -199,6 +208,32 @@ fn format_record(buffer: &mut Formatter, record: &Record) -> std::io::Result<()>
 /// this app does emit are about the window chrome and the background, and a
 /// launch log that has to be read by hand is a launch log that is not.
 pub fn init() {
+    // `cfg!` rather than two `#[cfg]`-gated statements: it keeps both arms
+    // compiled, so the release-only file machinery is still checked by a debug
+    // `cargo check` instead of quietly rotting.
+    if cfg!(debug_assertions) {
+        init_stdout();
+    } else {
+        init_file();
+    }
+}
+
+/// A debug build's logger: stdout, with the level coloured when stdout is a
+/// terminal.
+fn init_stdout() {
+    let mut builder =
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug"));
+    builder.format(format_record);
+    // `Auto` colours a terminal and leaves a redirected stdout plain, which is
+    // what both a pipe and `NO_COLOR` expect.
+    builder.write_style(env_logger::WriteStyle::Auto);
+    builder.target(env_logger::Target::Stdout);
+    let _ = builder.try_init();
+}
+
+/// A release build's logger: the log file, with stderr as the fallback when the
+/// file cannot be opened.
+fn init_file() {
     let directory = LOCATIONS.launcher.logs.clone();
     let rotating = match fs::create_dir_all(&directory).and_then(|()| Rotating::open(&directory)) {
         Ok(rotating) => rotating,
@@ -220,7 +255,6 @@ pub fn init() {
     // colour. The escape codes would be the first thing in the file nobody
     // wants.
     builder.write_style(env_logger::WriteStyle::Never);
-    builder.target(env_logger::Target::Stderr);
     builder.target(env_logger::Target::Pipe(Box::new(FileLog {
         inner: rotating,
     })));
@@ -231,6 +265,7 @@ fn init_stderr() {
     let mut builder =
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"));
     builder.format(format_record);
+    builder.write_style(env_logger::WriteStyle::Never);
     builder.target(env_logger::Target::Stderr);
     let _ = builder.try_init();
 }

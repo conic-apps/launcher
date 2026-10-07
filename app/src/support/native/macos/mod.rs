@@ -7,9 +7,11 @@
 //! The Chrome-style window (a native titled window with a transparent,
 //! title-less titlebar, created by the winit hook in [`install_backend`]), the
 //! traffic lights kept in step with the custom title bar ([`traffic_lights`]),
-//! and the Dock icon ([`dock_icon`]).
+//! the Dock icon ([`dock_icon`]), and AppKit's terminate requests
+//! ([`terminate`]).
 
 mod dock_icon;
+mod terminate;
 mod traffic_lights;
 
 use crate::slint_backend::App;
@@ -45,4 +47,14 @@ pub(crate) fn install(ui: &App) {
 
     // The Dock icon draws from NSApplication, not the window.
     dock_icon::install();
+}
+
+/// Routes AppKit's terminate requests (`⌘Q`, the menu's Quit, a system logout)
+/// through the same close flow as `⌘W`, and runs `run_exit_work` if AppKit does
+/// end up terminating.
+pub(crate) fn install_terminate_handler(
+    request_close: impl Fn() + 'static,
+    run_exit_work: impl Fn() + 'static,
+) {
+    terminate::install(request_close, run_exit_work);
 }

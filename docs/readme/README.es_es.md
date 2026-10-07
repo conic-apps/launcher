@@ -95,6 +95,8 @@ Descarga el instalador para tu plataforma desde [GitHub Releases](https://github
 
 La aplicación incluye actualizaciones automáticas — no se necesitan actualizaciones manuales después de la instalación.
 
+> Requiere macOS 11.0 (Big Sur) o posterior.
+
 > El `.exe` independiente de Windows es un solo archivo, pero importa `VCRUNTIME140.dll`: una máquina sin el Visual C++ Redistributable (la mayoría con Office o .NET ya lo tienen) no podrá iniciarlo. El `.msi` instala el mismo ejecutable.
 
 ## Compilar desde el código fuente

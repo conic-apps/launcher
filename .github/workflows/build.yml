@@ -208,9 +208,6 @@ jobs:
   #     is built from source through `cc`, and `aws-lc-rs` likewise; a
   #     host-arch `cc` in a `--target` build produces a subtly wrong binary
   #     rather than an error. Native runners cannot get that wrong.
-  #   * `macos-15-intel` exists and is the last x86_64 image GitHub will offer
-  #     (retiring after the macOS 15 image, in Fall 2027), so this is the window
-  #     in which native Intel builds are available at all.
   #
   # Two thin images, each of which was built *on* the architecture it runs on.
   # `--universal` is still available locally for a hand-built single image.
@@ -222,9 +219,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: "macos-15"
+          - platform: "macos-26"
             arch: "arm64"
-          - platform: "macos-15-intel"
+          - platform: "macos-26-intel"
             arch: "x86_64"
     runs-on: ${{ matrix.platform }}
     steps:

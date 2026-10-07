@@ -77,7 +77,7 @@ pub fn save_config_to(path: &Path, config: &Config) -> Result<()> {
     }
     let data = toml::to_string_pretty(config)?;
     std::fs::write(path, data)?;
-    debug!("Saved config to file");
+    info!("Saved config");
     Ok(())
 }
 

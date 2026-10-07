@@ -95,6 +95,8 @@ Platformunuz için yükleyiciyi [GitHub Releases](https://github.com/conic-apps/
 
 Uygulama dahili otomatik güncelleme içerir — kurulumdan sonra manuel yükseltme gerekmez.
 
+> macOS 11.0 (Big Sur) veya üzeri gerekir.
+
 > Bağımsız Windows `.exe` tek bir dosyadır, ancak `VCRUNTIME140.dll` dosyasını içe aktarır: Visual C++ Redistributable yüklü olmayan bir makinede (Office veya .NET olanların çoğunda zaten vardır) başlamaz. `.msi` aynı yürütülebilir dosyayı kurar.
 
 ## Kaynak kodundan derleme
