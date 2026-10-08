@@ -146,8 +146,9 @@ pub(crate) fn prepare_auth_code_flow(ui: &App) {
 pub(crate) fn release_auth_code_flow(ui: &App) {
     let released = MICROSOFT.with(|flow| flow.borrow_mut().callback.take());
     let Some(waiter) = released else { return };
-    // Aborting the task drops the `AuthCallback` with it, sockets and all, so
-    // the port is free the moment this returns.
+    // Aborting the task drops the `wait` future with it, and the future's
+    // accept-loop guard aborts the loops that own the listeners, so the port
+    // is free the moment this returns.
     waiter.abort();
     ui.global::<AccountAddState>()
         .set_auth_code_login_url("".into());
