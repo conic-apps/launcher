@@ -4,6 +4,7 @@
 
 import { Theme } from "../theme.slint";
 import { LaunchState } from "../globals/launch.slint";
+import { Navigation } from "../globals/navigation.slint";
 import { AccountAvatar } from "../components/display/account-avatar.slint";
 import { Progress } from "../components/controls/progress.slint";
 
@@ -14,15 +15,167 @@ import { Progress } from "../components/controls/progress.slint";
 // A centred column carrying a negative top margin: the margin pulls the content
 // up by half of it, so the column's `y` is
 // `(height - self.height) / 2 - 16px`.
+//
+// The screen plays a two-beat entrance, and where it was entered from decides
+// the first beat:
+//
+//   * from the game screen, the account avatar detaches from its footer slot in
+//     the bottom-left and flies to the centre of the page, shrinking as it goes;
+//   * from any other screen, the avatar simply grows into view at the centre,
+//     from a shrunken, fully transparent state.
+//
+// That first beat runs on an ease equivalent to GSAP's `power2.out`
+// (`cubic-bezier(0.215, 0.61, 0.355, 1)`).
+//
+// After that first beat settles, the second one waits 0.17s and then runs three
+// moves at once, each 0.3s on an ease equivalent to GSAP's `power3.out`
+// (`cubic-bezier(0.165, 0.84, 0.44, 1)`): the avatar rises into the column's
+// own avatar slot, the progress panel, version line and instance name rise into
+// place while fading in, and the account summary and cancel button sink into
+// place while fading in.
+//
+// The `y` the elements animate is an offset held on a wrapper, not the element's
+// own `y`: the column is a `VerticalLayout`, and a layout already owns its
+// children's `x`/`y`, so binding them there is a compile error. Each animated
+// element therefore sits inside a transparent slot that keeps the exact layout
+// box (the slot's width is the element's preferred width, so the column centres
+// it as before) and carries the offset on the element inside.
+//
+// The avatar is drawn by a single hero instance pinned to the page, outside the
+// column, because it has to travel from the footer — far below and to the left
+// of where the layout would let it be. Its destination is read from the empty
+// avatar slot's `absolute-position`, so the landing is exact no matter how the
+// column is centred.
 export component LaunchView inherits Rectangle {
     width: 100%;
     height: 100%;
     background: transparent;
 
+    // Where the page came from decides beat one. `previous-page` is written
+    // synchronously by `Navigation.navigate` before this view is mounted, so it
+    // is already set by the first frame. The wizard never launches, but were it
+    // to, `previous-page` would read "setup" and take the grow-in branch.
+    private property <bool> from-game: Navigation.previous-page == "game";
+
+    // The arrival's two beats. "0" is the first frame, held one tick so the
+    // renderer sees the start values before the animation retargets them (Slint
+    // has no timeline). "1" is the avatar parked at the page's centre, waiting
+    // out the 0.17s hold. "2" is every move of the second beat in flight.
+    private property <int> intro-stage: 0;
+
+    // Beat one's duration is the same 0.3s as beat two's, which lets a single
+    // `animate` on each hero property cover both. The hold between them is the
+    // 0.17s the second beat waits, so its timer measures 0.3s + 0.17s from the
+    // moment the first beat starts.
+    private property <duration> entrance-duration: 300ms;
+    private property <duration> beat-two-delay: 470ms;
+
+    // How far the second beat's elements travel: the progress block rises into
+    // place from below, the summary and cancel button sink into place from
+    // above. Equal distances either way, and both ease to 0, where the wrapper
+    // puts them on the element.
+    private property <length> entry-rise: root.intro-stage >= 2 ? 0px : 24px;
+    private property <length> entry-sink: root.intro-stage >= 2 ? 0px : -24px;
+    private property <float> entry-opacity: root.intro-stage >= 2 ? 1.0 : 0.0;
+
+    // The hero avatar: a size and a centre rather than an `x`/`y` and a width,
+    // so shrinking it about its centre is a single interpolation and the
+    // rendered head never drifts while it scales. `x`/`y`/`width` below are
+    // derived from these.
+    //
+    // A footer avatar head is the 56px `AccountAvatar` box at the footer's
+    // (28, height − 74) slot, i.e. centred on (56, height − 46); the launch
+    // avatar head is the 48px box at the column's slot. From another screen the
+    // hero starts at 8px and transparent at the centre, so it reads as growing
+    // out of nothing.
+    //
+    // The first beat and the second beat's rise want different easings, but a
+    // property can carry only one `animate`. The hero is therefore two boxes:
+    // the outer carries beat one (`hero-first-*`, `power2.out`) and the inner
+    // carries the rise as an offset from it (`hero-rise-*`, `power3.out`).
+    //
+    // The rise lives on the *inner* box rather than being a second centre the
+    // outer switches to, because Slint only evaluates a binding that is read: a
+    // second centre used only under `intro-stage >= 2` would first be evaluated
+    // at that stage, with the target as its value and nothing to animate from,
+    // and the rise would snap. The inner box's `x`/`y` are read on every frame,
+    // so its offset is tracked from zero and animates when it retargets.
+    private property <length> hero-size: root.intro-stage == 0
+        ? (root.from-game ? 56px : 8px)
+        : 48px;
+    private property <length> hero-first-cx: root.intro-stage == 0
+        ? (root.from-game ? 56px : root.width / 2)
+        : root.width / 2;
+    private property <length> hero-first-cy: root.intro-stage == 0
+        ? (root.from-game ? root.height - 46px : root.height / 2)
+        : root.height / 2;
+    // Where the avatar slot is relative to the page centre the flight parks at,
+    // so the inner box's offset is zero at rest through beat one and only grows
+    // when the second beat starts.
+    private property <length> hero-rise-dx: root.intro-stage >= 2
+        ? root.avatar-target-x - root.width / 2
+        : 0px;
+    private property <length> hero-rise-dy: root.intro-stage >= 2
+        ? root.avatar-target-y - root.height / 2
+        : 0px;
+    // The avatar is already the footer's, so it stays opaque on the way over;
+    // the grow-in case fades it up with the scale.
+    private property <float> hero-opacity: root.from-game
+        ? 1.0
+        : (root.intro-stage == 0 ? 0.0 : 1.0);
+
+    // The centre of the column's empty avatar slot, in this page's coordinates.
+    // `avatar` is a placeholder box of exactly the avatar's old 52px size, so the
+    // layout keeps the slot the avatar used to fill, and the hero lands the head
+    // at its centre. The two `absolute-position`s are subtracted so the answer
+    // does not depend on where the page stack sits in the window.
+    private property <length> avatar-target-x:
+        avatar.absolute-position.x - root.absolute-position.x + avatar.width / 2;
+    private property <length> avatar-target-y:
+        avatar.absolute-position.y - root.absolute-position.y + avatar.height / 2;
+
+    // Beat one, the hero's flight: GSAP's `power2.out`
+    // (`cubic-bezier(0.215, 0.61, 0.355, 1)`).
+    animate hero-size, hero-first-cx, hero-first-cy, hero-opacity {
+        duration: root.entrance-duration;
+        easing: cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+    // Beat two's hero rise, on the second beat's `power3.out`.
+    animate hero-rise-dx, hero-rise-dy {
+        duration: root.entrance-duration;
+        easing: cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+    animate entry-rise, entry-sink, entry-opacity {
+        duration: root.entrance-duration;
+        easing: cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
     // The page stack recreates this component on every navigation to "launch",
     // so `init` is where the launch starts.
     init => {
         LaunchState.start();
+    }
+
+    // Beat one: one frame at the start values, then advance to the centre.
+    //
+    // It waits for `has-instance`, which the launch flow seeds asynchronously
+    // (`app/src/ui/views/launch/`): until then the whole column and the hero are
+    // invisible, so an intro played on mount would run where nothing can be seen
+    // and the view would then pop in already at rest. Starting on the seeded
+    // state is what makes the entrance unconditional. `has-instance` is already
+    // true on every later visit, so the timer still fires on the first frame
+    // then, as before.
+    intro-start-timer := Timer {
+        interval: 50ms;
+        running: LaunchState.has-instance && root.intro-stage == 0;
+        triggered => { root.intro-stage = 1; }
+    }
+
+    // Beat two: outlast the first beat's 0.3s and then wait the 0.17s hold.
+    intro-second-timer := Timer {
+        interval: root.beat-two-delay;
+        running: root.intro-stage == 1;
+        triggered => { root.intro-stage = 2; }
     }
 
     container := VerticalLayout {
@@ -39,180 +192,239 @@ export component LaunchView inherits Rectangle {
         y: (parent.height - self.height) / 2 - 16px;
         cross-axis-alignment: center;
 
-        // The avatar box is the 48px head plus a 2px inset on each side, so it
-        // measures 52px.
+        // The avatar is the hero, pinned to the page (below). This 52px box is
+        // only the slot it lands in: it keeps the layout height the avatar used
+        // to take and is where the hero reads its destination from.
         avatar := Rectangle {
             width: 52px;
             height: 52px;
             background: transparent;
+        }
+        Rectangle { height: 16px; }
 
-            AccountAvatar {
-                x: 2px;
-                y: 2px;
-                size: 48px;
-                skin: LaunchState.account-avatar;
-                kind: LaunchState.account-kind;
-                unlogged: !LaunchState.has-account;
+        // The instance name. The slot keeps the layout box; the offset lives on
+        // the text.
+        name-slot := Rectangle {
+            width: name-text.preferred-width;
+            height: name-text.height;
+            opacity: root.entry-opacity;
+            name-text := Text {
+                y: root.entry-rise;
+                height: 32px;
+                text: LaunchState.instance-name;
+                font-size: 32px;
+                color: Theme.default-text-color.transparentize(0.1);
+                vertical-alignment: center;
             }
         }
         Rectangle { height: 16px; }
 
-        Text {
-            height: 32px;
-            text: LaunchState.instance-name;
-            font-size: 32px;
-            color: Theme.default-text-color.transparentize(0.1);
-            vertical-alignment: center;
-        }
-        Rectangle { height: 16px; }
-
-        HorizontalLayout {
-            alignment: center;
-            spacing: 16px;
-            Text {
-                height: 16px;
-                text: "Minecraft " + LaunchState.minecraft-version;
-                font-size: 16px;
-                color: Theme.default-text-color.transparentize(0.1);
-                vertical-alignment: center;
-            }
-            if LaunchState.has-loader : Text {
-                height: 16px;
-                text: LaunchState.loader-type + " " + LaunchState.loader-version;
-                font-size: 16px;
-                color: Theme.default-text-color.transparentize(0.1);
-                vertical-alignment: center;
+        // The version / loader line.
+        info-slot := Rectangle {
+            width: info-layout.preferred-width;
+            height: info-layout.preferred-height;
+            opacity: root.entry-opacity;
+            info-layout := HorizontalLayout {
+                y: root.entry-rise;
+                width: self.preferred-width;
+                height: self.preferred-height;
+                alignment: center;
+                spacing: 16px;
+                Text {
+                    height: 16px;
+                    text: "Minecraft " + LaunchState.minecraft-version;
+                    font-size: 16px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    vertical-alignment: center;
+                }
+                if LaunchState.has-loader : Text {
+                    height: 16px;
+                    text: LaunchState.loader-type + " " + LaunchState.loader-version;
+                    font-size: 16px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    vertical-alignment: center;
+                }
             }
         }
         Rectangle { height: 16px; }
 
         // The panel animates between two heights: 58px, or 50px with the 2px
         // error border.
-        progress-container := Rectangle {
-            width: 340px;
-            height: LaunchState.error ? 50px : 58px;
-            border-radius: 8px;
-            background: Theme.overlay-2.with-alpha(0.16);
-            border-width: LaunchState.error ? 2px : 0px;
-            border-color: Theme.red;
-            clip: true;
-            animate height { duration: 300ms; easing: ease; }
+        progress-slot := Rectangle {
+            width: progress-container.width;
+            height: progress-container.height;
+            opacity: root.entry-opacity;
+            progress-container := Rectangle {
+                y: root.entry-rise;
+                width: 340px;
+                height: LaunchState.error ? 50px : 58px;
+                border-radius: 8px;
+                background: Theme.overlay-2.with-alpha(0.16);
+                border-width: LaunchState.error ? 2px : 0px;
+                border-color: Theme.red;
+                clip: true;
+                animate height { duration: 300ms; easing: ease; }
 
-            VerticalLayout {
-                width: 100%;
-                height: 100%;
-                padding-top: 16px;
-                padding-bottom: 16px;
-                padding-left: 32px;
-                padding-right: 32px;
-                alignment: center;
+                VerticalLayout {
+                    width: 100%;
+                    height: 100%;
+                    padding-top: 16px;
+                    padding-bottom: 16px;
+                    padding-left: 32px;
+                    padding-right: 32px;
+                    alignment: center;
 
-                // The description and the error message swap in place; Slint
-                // has no transition groups to fade between them.
-                Text {
-                    height: 14px;
-                    width: 100%;
-                    // Both the progress line and the error message are centred.
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    color: LaunchState.error ? Theme.red : Theme.default-text-color.transparentize(0.1);
-                    font-size: 14px;
-                    wrap: no-wrap;
-                    overflow: elide;
-                    // `description()` renders the "Error: {…}" wrapper in the
-                    // error state, so the translation stays in the UI.
-                    text: LaunchState.description();
-                }
-                if !LaunchState.error : Rectangle { height: 10px; }
-                if !LaunchState.error : Progress {
-                    width: 100%;
-                    loading: LaunchState.progress-loading;
-                    value: LaunchState.progress-value;
-                    max: LaunchState.progress-max;
+                    // The description and the error message swap in place; Slint
+                    // has no transition groups to fade between them.
+                    Text {
+                        height: 14px;
+                        width: 100%;
+                        // Both the progress line and the error message are centred.
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        color: LaunchState.error ? Theme.red : Theme.default-text-color.transparentize(0.1);
+                        font-size: 14px;
+                        wrap: no-wrap;
+                        overflow: elide;
+                        // `description()` renders the "Error: {…}" wrapper in the
+                        // error state, so the translation stays in the UI.
+                        text: LaunchState.description();
+                    }
+                    if !LaunchState.error : Rectangle { height: 10px; }
+                    if !LaunchState.error : Progress {
+                        width: 100%;
+                        loading: LaunchState.progress-loading;
+                        value: LaunchState.progress-value;
+                        max: LaunchState.progress-max;
+                    }
                 }
             }
         }
         Rectangle { height: 40px; }
 
-        GridLayout {
-            spacing-horizontal: 12px;
-            spacing-vertical: 6px;
-            // Two rows of `label | value`. Without explicit rows every child
-            // auto-places into row 0, which put all four cells on one line. The
-            // columns size to their content by themselves, and the labels' right
-            // alignment lines them up against the 12px gap before the values.
-            Text {
-                row: 0;
-                col: 0;
-                height: 13px;
-                horizontal-alignment: right;
-                vertical-alignment: center;
-                opacity: 0.8;
-                font-size: 13px;
-                color: Theme.default-text-color.transparentize(0.1);
-                text: @tr("LaunchView" => "Auth service");
-            }
-            Text {
-                row: 0;
-                col: 1;
-                height: 13px;
-                vertical-alignment: center;
-                font-size: 13px;
-                color: Theme.default-text-color.transparentize(0.1);
-                text: LaunchState.account-kind;
-            }
-            Text {
-                row: 1;
-                col: 0;
-                height: 13px;
-                horizontal-alignment: right;
-                vertical-alignment: center;
-                opacity: 0.8;
-                font-size: 13px;
-                color: Theme.default-text-color.transparentize(0.1);
-                text: @tr("LaunchView" => "Profile name");
-            }
-            Text {
-                row: 1;
-                col: 1;
-                height: 13px;
-                vertical-alignment: center;
-                font-size: 13px;
-                color: Theme.default-text-color.transparentize(0.1);
-                text: LaunchState.profile-name;
+        login-slot := Rectangle {
+            width: login-grid.preferred-width;
+            height: login-grid.preferred-height;
+            opacity: root.entry-opacity;
+            login-grid := GridLayout {
+                y: root.entry-sink;
+                width: self.preferred-width;
+                height: self.preferred-height;
+                spacing-horizontal: 12px;
+                spacing-vertical: 6px;
+                // Two rows of `label | value`. Without explicit rows every child
+                // auto-places into row 0, which put all four cells on one line. The
+                // columns size to their content by themselves, and the labels' right
+                // alignment lines them up against the 12px gap before the values.
+                Text {
+                    row: 0;
+                    col: 0;
+                    height: 13px;
+                    horizontal-alignment: right;
+                    vertical-alignment: center;
+                    opacity: 0.8;
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    text: @tr("LaunchView" => "Auth service");
+                }
+                Text {
+                    row: 0;
+                    col: 1;
+                    height: 13px;
+                    vertical-alignment: center;
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    text: LaunchState.account-kind;
+                }
+                Text {
+                    row: 1;
+                    col: 0;
+                    height: 13px;
+                    horizontal-alignment: right;
+                    vertical-alignment: center;
+                    opacity: 0.8;
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    text: @tr("LaunchView" => "Profile name");
+                }
+                Text {
+                    row: 1;
+                    col: 1;
+                    height: 13px;
+                    vertical-alignment: center;
+                    font-size: 13px;
+                    color: Theme.default-text-color.transparentize(0.1);
+                    text: LaunchState.profile-name;
+                }
             }
         }
         Rectangle { height: 36px; }
 
-        back-button := Rectangle {
-            width: 240px;
-            height: 30px;
-            border-radius: Theme.controllers-border-radius;
-            border-width: 1px;
-            border-color: Theme.red;
-            background: back-touch.has-hover && !LaunchState.back-disabled
-                ? Theme.red
-                : Theme.surface-0;
-            transform-scale: back-touch.pressed ? 98% : 100%;
-            opacity: LaunchState.back-disabled ? 0.5 : 1.0;
-            animate background, transform-scale { duration: 200ms; easing: ease; }
+        back-slot := Rectangle {
+            width: back-button.width;
+            height: back-button.height;
+            opacity: root.entry-opacity;
+            back-button := Rectangle {
+                y: root.entry-sink;
+                width: 240px;
+                height: 30px;
+                border-radius: Theme.controllers-border-radius;
+                border-width: 1px;
+                border-color: Theme.red;
+                background: back-touch.has-hover && !LaunchState.back-disabled
+                    ? Theme.red
+                    : Theme.surface-0;
+                transform-scale: back-touch.pressed ? 98% : 100%;
+                opacity: LaunchState.back-disabled ? 0.5 : 1.0;
+                animate background, transform-scale { duration: 200ms; easing: ease; }
 
-            Text {
-                text: @tr("LaunchView" => "Cancel launch");
-                font-size: 11px;
-                color: back-touch.has-hover && !LaunchState.back-disabled
-                    ? Theme.text-inverse
-                    : Theme.red;
-                animate color { duration: 200ms; easing: ease; }
+                Text {
+                    text: @tr("LaunchView" => "Cancel launch");
+                    font-size: 11px;
+                    color: back-touch.has-hover && !LaunchState.back-disabled
+                        ? Theme.text-inverse
+                        : Theme.red;
+                    animate color { duration: 200ms; easing: ease; }
+                }
+
+                back-touch := TouchArea {
+                    width: 100%;
+                    height: 100%;
+                    enabled: !LaunchState.back-disabled;
+                    clicked => {
+                        LaunchState.cancel();
+                    }
+                }
             }
+        }
+    }
 
-            back-touch := TouchArea {
+    // The hero avatar, over the column. It is a bare `Rectangle`, which takes no
+    // pointer events, so it never shadows the cancel button or the panel.
+    //
+    // The outer box is beat one's flight, parked at the centre; the inner one
+    // carries beat two's rise as an offset, so each beat keeps its own easing.
+    hero := Rectangle {
+        visible: LaunchState.has-instance;
+        x: root.hero-first-cx - root.hero-size / 2;
+        y: root.hero-first-cy - root.hero-size / 2;
+        width: root.hero-size;
+        height: root.hero-size;
+        opacity: root.hero-opacity;
+
+        // Read every frame, so its offset is tracked before it changes.
+        hero-rise := Rectangle {
+            x: root.hero-rise-dx;
+            y: root.hero-rise-dy;
+            width: 100%;
+            height: 100%;
+
+            AccountAvatar {
                 width: 100%;
                 height: 100%;
-                enabled: !LaunchState.back-disabled;
-                clicked => {
-                    LaunchState.cancel();
-                }
+                skin: LaunchState.account-avatar;
+                kind: LaunchState.account-kind;
+                unlogged: !LaunchState.has-account;
             }
         }
     }

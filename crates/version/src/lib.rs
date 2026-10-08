@@ -253,7 +253,7 @@ impl ResolvedVersion {
 ///
 /// Pass an empty `enabled_features` when the result is not used to launch the
 /// game.
-pub async fn resolve_version(
+pub fn resolve_version(
     version: &Version,
     minecraft: &MinecraftLocation,
     enabled_features: &[String],

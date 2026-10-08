@@ -102,8 +102,7 @@ async fn complete_assets_files(
         &Version::from_str(&raw_version_json)?,
         minecraft_location,
         &[],
-    )
-    .await?;
+    )?;
     if let Some(asset_index) = resolved_version.asset_index {
         let assets_downloads = generate_assets_downloads(minecraft_location, &asset_index).await?;
         download::download_concurrent(assets_downloads, &progress, config).await?;
@@ -124,8 +123,7 @@ async fn complete_libraries_files(
         &Version::from_str(&raw_version_json)?,
         minecraft_location,
         &[],
-    )
-    .await?;
+    )?;
     let library_downloads =
         generate_libraries_downloads(minecraft_location, &resolved_version.libraries);
     download::download_concurrent(library_downloads, &progress, config).await?;
