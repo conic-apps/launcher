@@ -29,18 +29,24 @@ component PlayerButton inherits Rectangle {
     height: root.size;
     border-radius: 10px;
     background: touch.pressed
-    ? Theme.overlay-0.transparentize(0.3)
-    : touch.has-hover
-    ? Theme.surface-2.transparentize(0.3)
-    : Colors.transparent;
-    animate background { duration: 120ms; easing: Easing.ease; }
+        ? Theme.overlay-0.transparentize(0.3)
+        : touch.has-hover
+        ? Theme.surface-2.transparentize(0.3)
+        : Colors.transparent;
+    animate background {
+        duration: 120ms;
+        easing: Easing.ease;
+    }
 
     /// The icon ink: `mauve` while the button is *on* or is the primary play
     /// button, otherwise text with a lighter hover step.
     private property <color> ink: root.primary || root.on
-    ? Theme.mauve
-    : touch.has-hover ? Theme.text : Theme.subtext-0;
-    animate ink { duration: 120ms; easing: Easing.ease; }
+        ? Theme.mauve
+        : touch.has-hover ? Theme.text : Theme.subtext-0;
+    animate ink {
+        duration: 120ms;
+        easing: Easing.ease;
+    }
 
     accessible-role: button;
     accessible-label: root.label;
@@ -68,9 +74,12 @@ component PlaylistItem inherits Rectangle {
     height: 26px;
     border-radius: 8px;
     background: touch.has-hover
-    ? Theme.surface-1.transparentize(0.3)
-    : Colors.transparent;
-    animate background { duration: 120ms; easing: Easing.ease; }
+        ? Theme.surface-1.transparentize(0.3)
+        : Colors.transparent;
+    animate background {
+        duration: 120ms;
+        easing: Easing.ease;
+    }
 
     accessible-role: button;
     accessible-label: root.name;
@@ -89,8 +98,8 @@ component PlaylistItem inherits Rectangle {
             font-size: 12px;
             font-weight: Theme.font-weight-normal;
             color: root.playing
-            ? Theme.blue
-            : touch.has-hover ? Theme.text : Theme.subtext-0;
+                ? Theme.blue
+                : touch.has-hover ? Theme.text : Theme.subtext-0;
             overflow: elide;
         }
     }
@@ -136,7 +145,7 @@ export component MusicPlayerOverlay inherits Rectangle {
             if root.phase == "closed" {
                 root.phase = "starting";
                 start-timer.restart();
-                } else {
+            } else {
                 // Reopened while it was leaving: play the enter from wherever the
                 // leave had got to.
                 root.phase = "shown";
@@ -149,7 +158,7 @@ export component MusicPlayerOverlay inherits Rectangle {
                 root.playlist-phase = "starting";
                 playlist-start.restart();
             }
-            } else if root.phase != "closed" && root.phase != "leaving" {
+        } else if root.phase != "closed" && root.phase != "leaving" {
             // The playlist does *not* leave here: it is inside the overlay's own
             // subtree, so it fades out with it. It is dropped when the overlay's
             // leave is over (see `leave-timer`).
@@ -196,20 +205,26 @@ export component MusicPlayerOverlay inherits Rectangle {
     private property <string> playlist-phase: "closed";
     private property <float> playlist-alpha: root.playlist-phase == "shown" ? 1.0 : 0.0;
     private property <length> playlist-dy: root.playlist-phase == "shown" ? 0px : -4px;
-    animate playlist-alpha { duration: 120ms; easing: Easing.ease; }
-    animate playlist-dy { duration: 120ms; easing: Easing.ease; }
+    animate playlist-alpha {
+        duration: 120ms;
+        easing: Easing.ease;
+    }
+    animate playlist-dy {
+        duration: 120ms;
+        easing: Easing.ease;
+    }
 
     changed playlist-open => {
         if root.playlist-open {
             if root.playlist-phase == "closed" {
                 root.playlist-phase = "starting";
                 playlist-start.restart();
-                } else {
+            } else {
                 // Reopened while it was leaving: play the enter from wherever the
                 // leave had got to.
                 root.playlist-phase = "shown";
             }
-            } else if root.playlist-phase != "closed" && root.playlist-phase != "leaving" {
+        } else if root.playlist-phase != "closed" && root.playlist-phase != "leaving" {
             root.playlist-phase = "leaving";
         }
     }
@@ -227,11 +242,20 @@ export component MusicPlayerOverlay inherits Rectangle {
     }
 
     private property <float> scrim-alpha: root.phase == "shown" ? 1.0 : 0.0;
-    animate scrim-alpha { duration: 150ms; easing: Easing.ease; }
+    animate scrim-alpha {
+        duration: 150ms;
+        easing: Easing.ease;
+    }
     private property <float> card-alpha: root.phase == "shown" ? 1.0 : 0.0;
     private property <length> card-dy: root.phase == "shown" ? 0px : -8px;
-    animate card-alpha { duration: 150ms; easing: Easing.ease; }
-    animate card-dy { duration: 150ms; easing: Easing.ease; }
+    animate card-alpha {
+        duration: 150ms;
+        easing: Easing.ease;
+    }
+    animate card-dy {
+        duration: 150ms;
+        easing: Easing.ease;
+    }
 
     // Whether the progress bar is being dragged, so a move only seeks while it
     // is.
@@ -275,10 +299,10 @@ export component MusicPlayerOverlay inherits Rectangle {
     private property <length> playlist-row-height: 26px;
     private property <length> playlist-empty-height: 36px;
     private property <length> playlist-items-height: 4px
-    + (MusicState.tracks.length > 0
-    ? playlist-row-height * MusicState.tracks.length
-    : playlist-empty-height)
-    + 8px;
+        + (MusicState.tracks.length > 0
+        ? playlist-row-height * MusicState.tracks.length
+        : playlist-empty-height)
+        + 8px;
 
     // The column has 16px of padding and a 12px gap, and its height is the
     // window's less the 44px title bar — 488px at the 532px minimum window
@@ -358,8 +382,8 @@ export component MusicPlayerOverlay inherits Rectangle {
                         Text {
                             height: 16px;
                             text: MusicState.current-name != ""
-                            ? MusicState.current-name
-                            : @tr("No music");
+                                ? MusicState.current-name
+                                : @tr("No music");
                             font-size: 16px;
                             // The `bold` token is 700, so the literal 600 is used
                             // instead, as elsewhere in the app where the weight is 600.
@@ -466,15 +490,13 @@ export component MusicPlayerOverlay inherits Rectangle {
                                 }
                                 pointer-event(event) => {
                                     if event.kind == PointerEventKind.down
-                                    && event.button == PointerEventButton.left
-                                    {
+                                        && event.button == PointerEventButton.left {
                                         root.begin-drag();
                                         self.seek();
                                     } else if event.kind == PointerEventKind.up
-                                    || event.kind == PointerEventKind.cancel
-                                    {
+                                        || event.kind == PointerEventKind.cancel {
                                         root.end-drag();
-                                        } else if event.kind == PointerEventKind.move && root.dragging {
+                                    } else if event.kind == PointerEventKind.move && root.dragging {
                                         self.seek();
                                     }
                                 }
@@ -532,7 +554,9 @@ export component MusicPlayerOverlay inherits Rectangle {
                             clicked => { MusicState.cycle-repeat(); }
                         }
 
-                        Rectangle { horizontal-stretch: 1; }
+                        Rectangle {
+                            horizontal-stretch: 1;
+                        }
 
                         previous-button := PlayerButton {
                             icon: "play-skip-back";
@@ -554,7 +578,9 @@ export component MusicPlayerOverlay inherits Rectangle {
                             clicked => { MusicState.next(); }
                         }
 
-                        Rectangle { horizontal-stretch: 1; }
+                        Rectangle {
+                            horizontal-stretch: 1;
+                        }
 
                         folder-button := PlayerButton {
                             icon: "folder";
@@ -585,7 +611,7 @@ export component MusicPlayerOverlay inherits Rectangle {
         //
         // It stays mounted for as long as its *phase* is not "closed" rather than
         // while `playlist-open` is true, so the leave has something to animate.
-        if root.playlist-phase != "closed" : playlist-cell := Rectangle {
+        if root.playlist-phase != "closed": playlist-cell := Rectangle {
             width: 340px;
             height: min(root.playlist-max-height, 16px + root.playlist-items-height);
             background: Colors.transparent;
@@ -619,13 +645,13 @@ export component MusicPlayerOverlay inherits Rectangle {
                             padding-top: 4px;
                             padding-bottom: 8px;
 
-                            for track[index] in MusicState.tracks : PlaylistItem {
+                            for track[index] in MusicState.tracks: PlaylistItem {
                                 name: track.name;
                                 playing: index == MusicState.current-index;
                                 clicked => { MusicState.play-index(index); }
                             }
 
-                            if MusicState.tracks.length == 0 : Text {
+                            if MusicState.tracks.length == 0: Text {
                                 height: root.playlist-empty-height;
                                 text: @tr("Nothing here");
                                 font-size: 12px;
