@@ -2,9 +2,9 @@
 
 ## Supported Versions
 
-Conic Launcher is in early Alpha, so only the latest release is supported; fixes
-land on the newest build rather than on older ones. Please confirm the issue
-reproduces on the current release before reporting it.
+Conic Launcher is in early Alpha, so only the latest release is supported; fixes land on the newest
+build rather than on older ones. Please confirm the issue reproduces on the current release before
+reporting it.
 
 | Version        | Supported          |
 | -------------- | ------------------ |
@@ -13,27 +13,24 @@ reproduces on the current release before reporting it.
 
 ## Reporting a Vulnerability
 
-If you have found a potential security threat, vulnerability or exploit in Conic
-Launcher or one of its upstream dependencies, please DON'T create a pull-request,
-DON'T file an issue on GitHub, DON'T mention it on Discord and DON'T create a
-forum thread.
+If you have found a potential security threat, vulnerability or exploit in Conic Launcher or one of
+its upstream dependencies, please DON'T create a pull-request, DON'T file an issue on GitHub, DON'T
+mention it on Discord and DON'T create a forum thread.
 
 Please submit your report through GitHub's private vulnerability reporting:
 <https://github.com/conic-apps/launcher/security/advisories/new>
 
-Our team will triage your report and keep you informed about the progress.
-We may ask questions or request further guidance on reproduction of the
-vulnerability in the comments of the advisory, which will be publicized.
+Our team will triage your report and keep you informed about the progress. We may ask questions or
+request further guidance on reproduction of the vulnerability in the comments of the advisory, which
+will be publicized.
 
-Additionally, we may ask you to independently verify our patch, which will be
-available in the private advisory branch. Please do not publish your
-vulnerability during the process or before coordinated public disclosure from our
-side. We try to adhere to common standards of publication within 90 days of
-disclosure.
+Additionally, we may ask you to independently verify our patch, which will be available in the
+private advisory branch. Please do not publish your vulnerability during the process or before
+coordinated public disclosure from our side. We try to adhere to common standards of publication
+within 90 days of disclosure.
 
-Depending on your decision to accept or deny credit for the vulnerability, you
-will be publicly attributed to the vulnerability and may be mentioned in our
-announcements.
+Depending on your decision to accept or deny credit for the vulnerability, you will be publicly
+attributed to the vulnerability and may be mentioned in our announcements.
 
-At the current time we do not have the financial ability to reward bounties,
-but in extreme cases will at our discretion consider a reward.
+At the current time we do not have the financial ability to reward bounties, but in extreme cases
+will at our discretion consider a reward.

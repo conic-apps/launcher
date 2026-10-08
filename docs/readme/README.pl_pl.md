@@ -16,61 +16,83 @@
 
 ## Co to jest
 
-Conic Launcher to mały, szybki i zwinny launcher Minecraft na komputery: logika główna jest zaimplementowana w Rust, a interfejs zbudowany z użyciem [Slint](https://slint.dev), natywnego zestawu narzędzi UI. Wyróżnia się małą instalacją, szybkim uruchamianiem i niskim zużyciem zasobów, nawet pomagając zmniejszyć emisję dwutlenku węgla.
+Conic Launcher to mały, szybki i zwinny launcher Minecraft na komputery: logika główna jest
+zaimplementowana w Rust, a interfejs zbudowany z użyciem [Slint](https://slint.dev), natywnego
+zestawu narzędzi UI. Wyróżnia się małą instalacją, szybkim uruchamianiem i niskim zużyciem zasobów,
+nawet pomagając zmniejszyć emisję dwutlenku węgla.
 
-Od tworzenia instancji i instalowania loaderów, przez wyszukiwanie modów i zapraszanie znajomych do wspólnej gry, po uruchamianie gry i śledzenie czasu gry — cały przepływ pracy można ukończyć w jednej aplikacji.
+Od tworzenia instancji i instalowania loaderów, przez wyszukiwanie modów i zapraszanie znajomych do
+wspólnej gry, po uruchamianie gry i śledzenie czasu gry — cały przepływ pracy można ukończyć w
+jednej aplikacji.
 
-> Projekt jest obecnie we wczesnej fazie alfa. Funkcjonalność i interfejs szybko ewoluują — wypróbuj go i zgłoś problemy.
+> Projekt jest obecnie we wczesnej fazie alfa. Funkcjonalność i interfejs szybko ewoluują — wypróbuj
+> go i zgłoś problemy.
 
 ## Funkcjonalności
 
 ### Zarządzanie wieloma instancjami
 
-Przeglądaj instancje pogrupowane według loadera modów, z sortowaniem, wyszukiwaniem i ulubionymi. Każda instancja ma własne ustawienia, niestandardowe tło, śledzenie czasu gry i znacznik czasu ostatniego uruchomienia.
+Przeglądaj instancje pogrupowane według loadera modów, z sortowaniem, wyszukiwaniem i ulubionymi.
+Każda instancja ma własne ustawienia, niestandardowe tło, śledzenie czasu gry i znacznik czasu
+ostatniego uruchomienia.
 
 https://github.com/user-attachments/assets/ad4678ee-8462-4e55-89f6-99aea41107cb
 
 ### Wsparcie dla wszystkich głównych loaderów
 
-Wybierz wersję Minecraft i wersję loadera — launcher zajmie się resztą. Obsługiwane są Vanilla, Forge, NeoForge, Fabric i Quilt, z postępem instalacji w czasie rzeczywistym.
+Wybierz wersję Minecraft i wersję loadera — launcher zajmie się resztą. Obsługiwane są Vanilla,
+Forge, NeoForge, Fabric i Quilt, z postępem instalacji w czasie rzeczywistym.
 
 https://github.com/user-attachments/assets/73d28bc7-e743-4d16-b126-7b997eae797e
 
 ### Rynek modów i paczek zasobów
 
-Wbudowane wyszukiwanie Modrinth i CurseForge: przeglądaj szczegóły projektów i zależności, czytaj przetłumaczone opisy i instaluj mody lub paczki zasobów do swoich instancji jednym kliknięciem. Możesz również zarządzać lokalnie zainstalowanymi modami bezpośrednio.
+Wbudowane wyszukiwanie Modrinth i CurseForge: przeglądaj szczegóły projektów i zależności, czytaj
+przetłumaczone opisy i instaluj mody lub paczki zasobów do swoich instancji jednym kliknięciem.
+Możesz również zarządzać lokalnie zainstalowanymi modami bezpośrednio.
 
 https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
 ### Rozgrywka sieciowa Conic Nexus
 
-Nie są potrzebne żadne dodatkowe narzędzia: utwórz grupę, udostępnij kod zaproszenia znajomym i dołącz do tego samego świata razem. Launcher wykrywa środowisko sieciowe (typ NAT) i sugeruje ulepszenia.
+Nie są potrzebne żadne dodatkowe narzędzia: utwórz grupę, udostępnij kod zaproszenia znajomym i
+dołącz do tego samego świata razem. Launcher wykrywa środowisko sieciowe (typ NAT) i sugeruje
+ulepszenia.
 
 <img width="840" height="533" alt="Conic Nexus" src="https://github.com/user-attachments/assets/e689a0ed-ee06-4495-b963-22eb7371671b" />
 
 ### Wiele metod logowania
 
-Obsługuje logowanie kontem Microsoft (przepływ kodu urządzenia), logowanie offline i dowolny zewnętrzny serwer uwierzytelniania Authlib-Injector / Yggdrasil. Konta oferują podgląd 3D skórek, wyświetlanie peleryn i przesyłanie skórek.
+Obsługuje logowanie kontem Microsoft (przepływ kodu urządzenia), logowanie offline i dowolny
+zewnętrzny serwer uwierzytelniania Authlib-Injector / Yggdrasil. Konta oferują podgląd 3D skórek,
+wyświetlanie peleryn i przesyłanie skórek.
 
 <img width="840" height="533" alt="Zrzut ekranu 2026-08-24 16 30 02" src="https://github.com/user-attachments/assets/1bbcba1a-1c9b-4cd0-9984-b4acbb8e3a5d" />
 
 ### Beztroskie uruchamianie
 
-Automatyczne skanowanie Java w systemie lub automatyczne pobieranie odpowiedniego runtime. Pamięć jest automatycznie przydzielana (z ochroną limitu 32-bitowej Java). Proces uruchamiania jest w pełni wizualizowany: pobieranie plików gry, instalacja loaderów, rozwiązywanie zależności i oczekiwanie na uruchomienie procesu.
+Automatyczne skanowanie Java w systemie lub automatyczne pobieranie odpowiedniego runtime. Pamięć
+jest automatycznie przydzielana (z ochroną limitu 32-bitowej Java). Proces uruchamiania jest w pełni
+wizualizowany: pobieranie plików gry, instalacja loaderów, rozwiązywanie zależności i oczekiwanie na
+uruchomienie procesu.
 
-Zaawansowani użytkownicy nie są pomijani — garbage collector JVM, argumenty JVM, argumenty gry, classpath, polecenie opakowujące i polecenia przed/po uruchomieniu — wszystko jest konfigurowalne.
+Zaawansowani użytkownicy nie są pomijani — garbage collector JVM, argumenty JVM, argumenty gry,
+classpath, polecenie opakowujące i polecenia przed/po uruchomieniu — wszystko jest konfigurowalne.
 
 https://github.com/user-attachments/assets/1a6943f9-4e35-4391-9984-799cf42ee49d
 
 ### Zapisy i dane gry
 
-Przeglądaj mapy świata zapisów, zarządzaj pakietami danych i paczkami zasobów oraz przeglądaj zrzuty ekranu gry — wszystko bezpośrednio w launcherze.
+Przeglądaj mapy świata zapisów, zarządzaj pakietami danych i paczkami zasobów oraz przeglądaj zrzuty
+ekranu gry — wszystko bezpośrednio w launcherze.
 
 https://github.com/user-attachments/assets/195afb69-8c9f-4d83-aa40-50e7b4d61788
 
 ### Interfejs i personalizacja
 
-Cztery motywy Catppuccin (Mocha · Macchiato · Frappé · Latte) oraz warianty o wysokim kontraście, z automatycznym przełączaniem jasny/ciemny zgodnie z ustawieniami systemu. Obsługiwane niestandardowe tła launchera. Wbudowany odtwarzacz muzyki z odtwarzaniem lokalnej muzyki i wizualizacją spektrum.
+Cztery motywy Catppuccin (Mocha · Macchiato · Frappé · Latte) oraz warianty o wysokim kontraście, z
+automatycznym przełączaniem jasny/ciemny zgodnie z ustawieniami systemu. Obsługiwane niestandardowe
+tła launchera. Wbudowany odtwarzacz muzyki z odtwarzaniem lokalnej muzyki i wizualizacją spektrum.
 
 https://github.com/user-attachments/assets/5a262ff9-2ba8-45d4-b326-38f5d3911a80
 
@@ -79,29 +101,36 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 ### I więcej
 
 - Wbudowane automatyczne aktualizacje i powiadomienia o aktualizacjach wersji gry
-- Pobieranie wielowątkowe z konfigurowalnymi limitami połączeń i ograniczeniem prędkości; obsługa serwerów lustrzanych i proxy systemowego
+- Pobieranie wielowątkowe z konfigurowalnymi limitami połączeń i ograniczeniem prędkości; obsługa
+  serwerów lustrzanych i proxy systemowego
 - Wyszukiwanie globalne (`/`) i paleta poleceń (`;`)
 - Śledzenie czasu gry i kalendarz aktywności
 
 ## Pobieranie
 
-Pobierz instalator dla swojej platformy z [GitHub Releases](https://github.com/conic-apps/launcher/releases) lub z [oficjalnej strony internetowej](https://conicmc.app):
+Pobierz instalator dla swojej platformy z
+[GitHub Releases](https://github.com/conic-apps/launcher/releases) lub z
+[oficjalnej strony internetowej](https://conicmc.app):
 
-| Platforma | Architektura          | Formaty                               |
-| --------- | --------------------- | ------------------------------------- |
-| Windows   | x64 · arm64           | MSI · przenośny exe                   |
-| macOS     | Apple Silicon · Intel | DMG                                   |
-| Linux     | x64 · arm64           | deb · rpm · AppImage                  |
+| Platforma | Architektura          | Formaty              |
+| --------- | --------------------- | -------------------- |
+| Windows   | x64 · arm64           | MSI · przenośny exe  |
+| macOS     | Apple Silicon · Intel | DMG                  |
+| Linux     | x64 · arm64           | deb · rpm · AppImage |
 
-Aplikacja zawiera wbudowane automatyczne aktualizacje — po instalacji nie jest wymagana ręczna aktualizacja.
+Aplikacja zawiera wbudowane automatyczne aktualizacje — po instalacji nie jest wymagana ręczna
+aktualizacja.
 
 > Wymaga systemu macOS 11.0 (Big Sur) lub nowszego.
 
-> Samodzielny plik `.exe` dla Windows to jeden plik, ale importuje `VCRUNTIME140.dll`: komputer bez Visual C++ Redistributable (większość z Office lub .NET już go ma) go nie uruchomi. Plik `.msi` instaluje ten sam plik wykonywalny.
+> Samodzielny plik `.exe` dla Windows to jeden plik, ale importuje `VCRUNTIME140.dll`: komputer bez
+> Visual C++ Redistributable (większość z Office lub .NET już go ma) go nie uruchomi. Plik `.msi`
+> instaluje ten sam plik wykonywalny.
 
 ## Budowanie ze źródeł
 
-Upewnij się, że masz zainstalowany [Rust 1.88+](https://rustup.rs/); w systemie Linux zainstaluj także [zależności budowania](../../CONTRIBUTING.md#linux-build-dependencies).
+Upewnij się, że masz zainstalowany [Rust 1.88+](https://rustup.rs/); w systemie Linux zainstaluj
+także [zależności budowania](../../CONTRIBUTING.md#linux-build-dependencies).
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -112,29 +141,45 @@ cargo build --release  # Build produkcyjny
 
 ## Wkład
 
-Wkład jest mile widziany! Przeczytaj [CONTRIBUTING.md](../../CONTRIBUTING.md), aby zapoznać się z wytycznymi dotyczącymi rozpoczęcia pracy, konfiguracji środowiska programistycznego i przesyłania pull requesta.
+Wkład jest mile widziany! Przeczytaj [CONTRIBUTING.md](../../CONTRIBUTING.md), aby zapoznać się z
+wytycznymi dotyczącymi rozpoczęcia pracy, konfiguracji środowiska programistycznego i przesyłania
+pull requesta.
 
 ## Architektura
 
-Interfejs jest zbudowany z użyciem [Slint](https://slint.dev) i połączony bezpośrednio z crate'ami domenowymi — nie ma warstwy IPC. `app/` zawiera plik binarny i drzewo `.slint`; każda możliwość znajduje się we własnym module `crates/*` workspace'u, dzięki czemu ewoluują niezależnie i łączą się w razie potrzeby.
+Interfejs jest zbudowany z użyciem [Slint](https://slint.dev) i połączony bezpośrednio z crate'ami
+domenowymi — nie ma warstwy IPC. `app/` zawiera plik binarny i drzewo `.slint`; każda możliwość
+znajduje się we własnym module `crates/*` workspace'u, dzięki czemu ewoluują niezależnie i łączą się
+w razie potrzeby.
 
-Pełny obraz — lokalizacje danych, warstwy aplikacji, układ bucketów UI i mapa crate'ów — znajdziesz w [ARCHITECTURE.md](../../ARCHITECTURE.md).
+Pełny obraz — lokalizacje danych, warstwy aplikacji, układ bucketów UI i mapa crate'ów — znajdziesz
+w [ARCHITECTURE.md](../../ARCHITECTURE.md).
 
 ## Licencja
 
-Ten projekt jest dystrybuowany na licencji [GPL-3.0](../../LICENSE) z dodatkowymi warunkami na mocy sekcji 7 GPLv3:
+Ten projekt jest dystrybuowany na licencji [GPL-3.0](../../LICENSE) z dodatkowymi warunkami na mocy
+sekcji 7 GPLv3:
 
-1. Dystrybuując zmodyfikowane wersje, musisz rozsądnie zmienić nazwę oprogramowania lub numer wersji, aby odróżnić ją od oryginału (zgodnie z [GPL-3.0 §7(c)](../../LICENSE)); musisz zastąpić wszystkie odniesienia do nazwy projektu w kodzie źródłowym.
-2. Nie możesz usuwać powiadomień o prawach autorskich wyświetlanych w oprogramowaniu (zgodnie z [GPL-3.0 §7(b)](../../LICENSE)).
-3. Jeśli ktoś wejdzie w warunki umowne z odbiorcami i przejmie odpowiedzialność, licencjodawca i autorzy nie ponoszą odpowiedzialności solidarnej (zgodnie z [GPL-3.0 §7(b)](../../LICENSE)).
+1. Dystrybuując zmodyfikowane wersje, musisz rozsądnie zmienić nazwę oprogramowania lub numer
+   wersji, aby odróżnić ją od oryginału (zgodnie z [GPL-3.0 §7(c)](../../LICENSE)); musisz zastąpić
+   wszystkie odniesienia do nazwy projektu w kodzie źródłowym.
+2. Nie możesz usuwać powiadomień o prawach autorskich wyświetlanych w oprogramowaniu (zgodnie z
+   [GPL-3.0 §7(b)](../../LICENSE)).
+3. Jeśli ktoś wejdzie w warunki umowne z odbiorcami i przejmie odpowiedzialność, licencjodawca i
+   autorzy nie ponoszą odpowiedzialności solidarnej (zgodnie z [GPL-3.0 §7(b)](../../LICENSE)).
 
 ## Podziękowania
 
 - [Catppuccin](https://catppuccin.com) — Piękna paleta pastelowych motywów
-- [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) autorstwa bangbang93 — Bootstrapping instalacji Forge
+- [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) autorstwa
+  bangbang93 — Bootstrapping instalacji Forge
 - [MCIM](https://mod.mcimirror.top) — Przetłumaczone opisy CurseForge i cache lustrzany
 - Wszyscy gracze, którzy zgłaszali sugestie i informacje zwrotne
 
 ## Zastrzeżenie
 
-Conic Launcher nie jest oficjalnym produktem Minecraft ani nie jest zatwierdzony lub powiązany z Mojang Studios. "Minecraft" jest znakiem towarowym Mojang AB. Jakiekolwiek użycie marki Minecraft w tym projekcie jest zgodne z <a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">Wytycznymi dotyczącymi marki i zasobów</a> Mojang Studios.
+Conic Launcher nie jest oficjalnym produktem Minecraft ani nie jest zatwierdzony lub powiązany z
+Mojang Studios. "Minecraft" jest znakiem towarowym Mojang AB. Jakiekolwiek użycie marki Minecraft w
+tym projekcie jest zgodne z
+<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">Wytycznymi dotyczącymi marki
+i zasobów</a> Mojang Studios.

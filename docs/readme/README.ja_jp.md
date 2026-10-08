@@ -16,7 +16,10 @@
 
 ## これは何
 
-Conic Launcher は小さく、速く、軽いデスクトップ Minecraft ランチャーです。コアロジックは Rust で実装され、UI はネイティブ UI ツールキットの [Slint](https://slint.dev) で構築されています。インストールサイズが小さく、起動が高速で、リソース消費が少なく、炭素排出の削減にも貢献します。
+Conic
+Launcher は小さく、速く、軽いデスクトップ Minecraft ランチャーです。コアロジックは Rust で実装され、UI はネイティブ UI ツールキットの
+[Slint](https://slint.dev)
+で構築されています。インストールサイズが小さく、起動が高速で、リソース消費が少なく、炭素排出の削減にも貢献します。
 
 インスタンスの作成、ローダーのインストール、Mod の検索、フレンドを招待して一緒にプレイ、ゲームの起動とプレイ時間の統計まで—すべてのワークフローを一つのアプリで完結できます。
 
@@ -50,7 +53,8 @@ https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
 ### 複数のログイン方法
 
-Microsoft アカウントログイン（デバイスコードフロー）、オフラインログイン、Authlib-Injector / Yggdrasil 外部認証サーバーに対応。アカウントには3D スキンプレビューやケープ表示、スキンアップロード機能があります。
+Microsoft アカウントログイン（デバイスコードフロー）、オフラインログイン、Authlib-Injector /
+Yggdrasil 外部認証サーバーに対応。アカウントには3D スキンプレビューやケープ表示、スキンアップロード機能があります。
 
 <img width="840" height="533" alt="スクリーンショット 2026-08-24 16 30 02" src="https://github.com/user-attachments/assets/1bbcba1a-1c9b-4cd0-9984-b4acbb8e3a5d" />
 
@@ -70,7 +74,8 @@ https://github.com/user-attachments/assets/195afb69-8c9f-4d83-aa40-50e7b4d61788
 
 ### UIとカスタマイズ
 
-4つの Catppuccin テーマ（Mocha · Macchiato · Frappé · Latte）、ハイコントラストバリアント、システム設定に連動したライト/ダークモード自動切り替え。カスタムランチャー背景にも対応。ローカルミュージック再生とスペクトラム可視化機能を備えた音楽プレイヤー内蔵。
+4つの Catppuccin テーマ（Mocha · Macchiato · Frappé ·
+Latte）、ハイコントラストバリアント、システム設定に連動したライト/ダークモード自動切り替え。カスタムランチャー背景にも対応。ローカルミュージック再生とスペクトラム可視化機能を備えた音楽プレイヤー内蔵。
 
 https://github.com/user-attachments/assets/5a262ff9-2ba8-45d4-b326-38f5d3911a80
 
@@ -85,23 +90,29 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## ダウンロード
 
-[GitHub Releases](https://github.com/conic-apps/launcher/releases) または [公式サイト](https://conicmc.app) からお使いのプラットフォームに対応するインストーラーをダウンロード：
+[GitHub Releases](https://github.com/conic-apps/launcher/releases) または
+[公式サイト](https://conicmc.app)
+からお使いのプラットフォームに対応するインストーラーをダウンロード：
 
-| プラットフォーム | アーキテクチャ        | フォーマット                               |
-| ---------------- | --------------------- | ------------------------------------------ |
-| Windows          | x64 · arm64           | MSI · ポータブル exe                       |
-| macOS            | Apple Silicon · Intel | DMG                                        |
-| Linux            | x64 · arm64           | deb · rpm · AppImage                       |
+| プラットフォーム | アーキテクチャ        | フォーマット         |
+| ---------------- | --------------------- | -------------------- |
+| Windows          | x64 · arm64           | MSI · ポータブル exe |
+| macOS            | Apple Silicon · Intel | DMG                  |
+| Linux            | x64 · arm64           | deb · rpm · AppImage |
 
 アプリには自動更新機能が組み込まれており、インストール後の手動アップグレードは不要です。
 
 > macOS 11.0（Big Sur）以降が必要です。
 
-> 単体の Windows 用 `.exe` は 1 ファイルですが、`VCRUNTIME140.dll` をインポートします。Visual C++ 再頒布可能パッケージが入っていないマシン（Office や .NET のあるマシンにはほぼ入っています）では起動しません。`.msi` も同じ実行ファイルをインストールします。
+> 単体の Windows 用 `.exe` は 1 ファイルですが、`VCRUNTIME140.dll` をインポートします。Visual
+> C++ 再頒布可能パッケージが入っていないマシン（Office や .NET のあるマシンにはほぼ入っています）では起動しません。`.msi`
+> も同じ実行ファイルをインストールします。
 
 ## ソースからビルド
 
-[Rust 1.88+](https://rustup.rs/) がインストールされていることを確認してください。Linux では、[ビルド依存関係](../../CONTRIBUTING.md#linux-build-dependencies) もインストールしてください。
+[Rust 1.88+](https://rustup.rs/)
+がインストールされていることを確認してください。Linux では、[ビルド依存関係](../../CONTRIBUTING.md#linux-build-dependencies)
+もインストールしてください。
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -112,29 +123,42 @@ cargo build --release  # 本番ビルド
 
 ## コントリビュート
 
-コントリビュートを歓迎します！始め方、開発環境のセットアップ、Pull Request の提出方法については [CONTRIBUTING.md](../../CONTRIBUTING.md) をお読みください。
+コントリビュートを歓迎します！始め方、開発環境のセットアップ、Pull Request の提出方法については
+[CONTRIBUTING.md](../../CONTRIBUTING.md) をお読みください。
 
 ## アーキテクチャ
 
-インターフェースは [Slint](https://slint.dev) で構築され、ドメイン crates に直接接続されています—IPC 層はありません。`app/` はバイナリと `.slint` ツリーを保持し、各機能はそれぞれの `crates/*` ワークスペースモジュールに存在するため、独立して進化し、必要に応じて組み合わせられます。
+インターフェースは [Slint](https://slint.dev)
+で構築され、ドメイン crates に直接接続されています—IPC 層はありません。`app/` はバイナリと `.slint`
+ツリーを保持し、各機能はそれぞれの `crates/*`
+ワークスペースモジュールに存在するため、独立して進化し、必要に応じて組み合わせられます。
 
-ストレージのルート、アプリのレイヤー構成、UI のバケット分け、crate 一覧などの全体像は [ARCHITECTURE.md](../../ARCHITECTURE.md) を参照してください。
+ストレージのルート、アプリのレイヤー構成、UI のバケット分け、crate 一覧などの全体像は
+[ARCHITECTURE.md](../../ARCHITECTURE.md) を参照してください。
 
 ## ライセンス
 
 本プロジェクトは [GPL-3.0](../../LICENSE) で配布され、GPLv3 第7条の追加条項が適用されます：
 
-1. 変更版を配布する場合、元のバージョンと区別できるよう、合理的にソフトウェア名またはバージョン番号を変更する必要があります（[GPL-3.0 §7(c)](../../LICENSE) に対応）。ソースコード内のプロジェクト名に関連するすべての参照を置換する必要があります。
-2. ソフトウェアに表示されている著作権表示を削除してはなりません（[GPL-3.0 §7(b)](../../LICENSE) に対応）。
-3. 誰かが受容者と契約上の条件を締結して責任を負った場合、ライセンサーと著者は連帯責任を負いません（[GPL-3.0 §7(b)](../../LICENSE) に対応）。
+1. 変更版を配布する場合、元のバージョンと区別できるよう、合理的にソフトウェア名またはバージョン番号を変更する必要があります（[GPL-3.0 §7(c)](../../LICENSE)
+   に対応）。ソースコード内のプロジェクト名に関連するすべての参照を置換する必要があります。
+2. ソフトウェアに表示されている著作権表示を削除してはなりません（[GPL-3.0 §7(b)](../../LICENSE)
+   に対応）。
+3. 誰かが受容者と契約上の条件を締結して責任を負った場合、ライセンサーと著者は連帯責任を負いません（[GPL-3.0 §7(b)](../../LICENSE)
+   に対応）。
 
 ## 謝辞
 
 - [Catppuccin](https://catppuccin.com) — 美しいパステルカラーテーマ
-- bangbang93 による [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) — Forge インストールブートストラップ
+- bangbang93 による
+  [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) —
+  Forge インストールブートストラップ
 - [MCIM](https://mod.mcimirror.top) — CurseForge 翻訳概要とミラーキャッシング
 - 提案やフィードバックをしていただいたすべてのプレイヤーの皆さん
 
 ## 免責事項
 
-Conic Launcher は Minecraft の公式製品ではなく、Mojang Studios によって承認または関連付けられたものではありません。「Minecraft」は Mojang AB の商標であり、本プロジェクトにおける Minecraft ブランドの使用はすべて Mojang Studios の<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">ブランドとアセットガイドライン</a>に準拠しています。
+Conic Launcher は Minecraft の公式製品ではなく、Mojang
+Studios によって承認または関連付けられたものではありません。「Minecraft」は Mojang
+AB の商標であり、本プロジェクトにおける Minecraft ブランドの使用はすべて Mojang
+Studios の<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">ブランドとアセットガイドライン</a>に準拠しています。

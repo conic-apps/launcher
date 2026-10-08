@@ -16,7 +16,9 @@
 
 ## 這是什麼
 
-Conic Launcher 是一款小快靈的桌面版 Minecraft 啟動器：核心邏輯由 Rust 實現，介面基於 [Slint](https://slint.dev) 這一原生 UI 工具包建構。安裝包小、啟動快、資源佔用低，甚至有助於減少碳排放。
+Conic Launcher 是一款小快靈的桌面版 Minecraft 啟動器：核心邏輯由 Rust 實現，介面基於
+[Slint](https://slint.dev)
+這一原生 UI 工具包建構。安裝包小、啟動快、資源佔用低，甚至有助於減少碳排放。
 
 從建立實例、安裝載入器，到搜尋模組、邀請好友連線，再到啟動遊戲與統計遊戲時長—整個流程都可以在一個應用裡完成。
 
@@ -50,7 +52,8 @@ https://github.com/user-attachments/assets/78f9e850-473e-4587-92b4-c9bed78afb17
 
 ### 多種登入方式
 
-支援微軟正版登入（裝置碼流程）、離線登入，以及任意 Authlib-Injector / Yggdrasil 外部認證伺服器。帳戶支援 3D 鬥篷展示與皮膚上傳。
+支援微軟正版登入（裝置碼流程）、離線登入，以及任意 Authlib-Injector /
+Yggdrasil 外部認證伺服器。帳戶支援 3D 鬥篷展示與皮膚上傳。
 
 <img width="840" height="533" alt="截圖2026-08-24 16 30 02" src="https://github.com/user-attachments/assets/1bbcba1a-1c9b-4cd0-9984-b4acbb8e3a5d" />
 
@@ -70,7 +73,8 @@ https://github.com/user-attachments/assets/195afb69-8c9f-4d83-aa40-50e7b4d61788
 
 ### 介面與個人化
 
-四種 Catppuccin 主題（Mocha · Macchiato · Frappé · Latte），另有高對比度變體，可跟隨系統深淺色自動切換；支援自訂啟動器背景。內建音樂播放器，播放本地音樂並附帶頻譜視覺化。
+四種 Catppuccin 主題（Mocha · Macchiato · Frappé ·
+Latte），另有高對比度變體，可跟隨系統深淺色自動切換；支援自訂啟動器背景。內建音樂播放器，播放本地音樂並附帶頻譜視覺化。
 
 https://github.com/user-attachments/assets/5a262ff9-2ba8-45d4-b326-38f5d3911a80
 
@@ -85,23 +89,27 @@ https://github.com/user-attachments/assets/2847ea70-35e0-4ecc-9055-777f7545a260
 
 ## 下載
 
-前往 [GitHub Releases](https://github.com/conic-apps/launcher/releases) 或[官方網站](https://conicmc.app)下載對應平台的安裝包：
+前往 [GitHub Releases](https://github.com/conic-apps/launcher/releases)
+或[官方網站](https://conicmc.app)下載對應平台的安裝包：
 
-| 平台    | 架構                  | 格式                           |
-| ------- | --------------------- | ------------------------------ |
-| Windows | x64 · arm64           | MSI · 便攜版 exe               |
-| macOS   | Apple Silicon · Intel | DMG                            |
-| Linux   | x64 · arm64           | deb · rpm · AppImage           |
+| 平台    | 架構                  | 格式                 |
+| ------- | --------------------- | -------------------- |
+| Windows | x64 · arm64           | MSI · 便攜版 exe     |
+| macOS   | Apple Silicon · Intel | DMG                  |
+| Linux   | x64 · arm64           | deb · rpm · AppImage |
 
 應用內建自動更新，安裝後無需手動升級。
 
 > 需要 macOS 11.0（Big Sur）或以上版本。
 
-> 獨立的 Windows `.exe` 雖是單一檔案，但它匯入了 `VCRUNTIME140.dll`：未安裝 Visual C++ Redistributable 的機器（裝有 Office 或 .NET 的機器通常已有）將無法啟動它。`.msi` 安裝的是同一個執行檔。
+> 獨立的 Windows `.exe` 雖是單一檔案，但它匯入了 `VCRUNTIME140.dll`：未安裝 Visual C++
+> Redistributable 的機器（裝有 Office 或 .NET 的機器通常已有）將無法啟動它。`.msi`
+> 安裝的是同一個執行檔。
 
 ## 從原始碼建構
 
-請確保已安裝 [Rust 1.88+](https://rustup.rs/)；在 Linux 上，還需安裝[建構相依套件](../../CONTRIBUTING.md#linux-build-dependencies)。
+請確保已安裝
+[Rust 1.88+](https://rustup.rs/)；在 Linux 上，還需安裝[建構相依套件](../../CONTRIBUTING.md#linux-build-dependencies)。
 
 ```bash
 git clone https://github.com/conic-apps/launcher.git
@@ -112,29 +120,39 @@ cargo build --release  # 建構正式版本
 
 ## 參與貢獻
 
-歡迎參與貢獻！請閱讀 [CONTRIBUTING.md](../../CONTRIBUTING.md) 了解如何開始、設定開發環境以及提交 Pull Request。
+歡迎參與貢獻！請閱讀 [CONTRIBUTING.md](../../CONTRIBUTING.md)
+了解如何開始、設定開發環境以及提交 Pull Request。
 
 ## 架構
 
-介面使用 [Slint](https://slint.dev) 建構，並直接連接各領域 crates—沒有 IPC 層。`app/` 存放二進位檔與 `.slint` 介面樹；每項能力各自位於獨立的 `crates/*` 工作區模組中，獨立演進、按需組合。
+介面使用 [Slint](https://slint.dev) 建構，並直接連接各領域 crates—沒有 IPC 層。`app/` 存放二進位檔與
+`.slint` 介面樹；每項能力各自位於獨立的 `crates/*` 工作區模組中，獨立演進、按需組合。
 
-完整內容—儲存位置、應用分層、UI 分桶結構與 crate 一覽—請見 [ARCHITECTURE.md](../../ARCHITECTURE.md)。
+完整內容—儲存位置、應用分層、UI 分桶結構與 crate 一覽—請見
+[ARCHITECTURE.md](../../ARCHITECTURE.md)。
 
 ## 授權條款
 
 本專案基於 [GPL-3.0](../../LICENSE) 分發，並附帶 GPLv3 第 7 條下的附加條款：
 
-1. 分發本軟體的修改版本時，必須以合理方式更改軟體名稱或版本號，以與原始版本區分（對應 [GPL-3.0 §7(c)](../../LICENSE)）；你需要替換原始碼中所有與本專案名稱相關的字樣。
+1. 分發本軟體的修改版本時，必須以合理方式更改軟體名稱或版本號，以與原始版本區分（對應
+   [GPL-3.0 §7(c)](../../LICENSE)）；你需要替換原始碼中所有與本專案名稱相關的字樣。
 2. 不得移除軟體內展示的版權聲明（對應 [GPL-3.0 §7(b)](../../LICENSE)）。
-3. 若任何人與接受者簽訂具有合約性質的條款並作出責任承諾，由其自行承擔責任，許可人與作者不承擔連帶責任（對應 [GPL-3.0 §7(b)](../../LICENSE)）。
+3. 若任何人與接受者簽訂具有合約性質的條款並作出責任承諾，由其自行承擔責任，許可人與作者不承擔連帶責任（對應
+   [GPL-3.0 §7(b)](../../LICENSE)）。
 
 ## 致謝
 
 - [Catppuccin](https://catppuccin.com) — 柔和好看的主題配色
-- bangbang93 的 [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) — Forge 安裝引導
+- bangbang93 的
+  [forge-install-bootstrapper](https://github.com/bangbang93/forge-install-bootstrapper) —
+  Forge 安裝引導
 - [MCIM](https://mod.mcimirror.top) — CurseForge 翻譯摘要與鏡像快取
 - 所有為專案提出建議與回饋的玩家
 
 ## 免責聲明
 
-Conic Launcher 不是官方的 Minecraft 產品，也未獲得 Mojang Studios 的批准或關聯。「Minecraft」是 Mojang AB 的商標，本專案對 Minecraft 品牌的任何使用均符合 Mojang Studios 的<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">品牌與資產指南</a>。
+Conic Launcher 不是官方的 Minecraft 產品，也未獲得 Mojang
+Studios 的批准或關聯。「Minecraft」是 Mojang
+AB 的商標，本專案對 Minecraft 品牌的任何使用均符合 Mojang
+Studios 的<a href="https://www.minecraft.net/en-us/terms#terms-brand_guidelines">品牌與資產指南</a>。
