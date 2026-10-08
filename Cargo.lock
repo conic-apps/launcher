@@ -1065,6 +1065,7 @@ dependencies = [
  "account",
  "log",
  "serde",
+ "shared",
  "storage",
  "sys-locale",
  "thiserror 2.0.19",
