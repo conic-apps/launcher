@@ -400,8 +400,12 @@ async fn spawn_minecraft_process(
 
 #[cfg(test)]
 mod tests {
+    // Every test here exercises the Unix shell quoting, so on Windows the
+    // helpers are unused.
+    #[cfg(not(target_os = "windows"))]
     use std::path::PathBuf;
 
+    #[cfg(not(target_os = "windows"))]
     use super::{build_launch_command, quote_shell_arg};
 
     #[cfg(not(target_os = "windows"))]
