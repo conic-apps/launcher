@@ -3162,3 +3162,18 @@ msgstr "할 수도 있습니다. 다른 기기에서 마치려면 "
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "클릭하여 복사"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "게임이 충돌했습니다"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "닫기"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "가능성 있는 모드:"

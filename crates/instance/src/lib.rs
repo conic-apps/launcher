@@ -102,6 +102,7 @@ pub async fn list_instances(sort_by: SortBy) -> Result<Vec<Instance>> {
                 .await
                 .is_ok(),
             last_played: get_launch_script_timestamp(&instance_id),
+            last_exit_abnormal: last_exit_abnormal(&instance_id),
             id: instance_id,
             has_background: path.join("background").is_file(),
         };
@@ -321,8 +322,9 @@ pub async fn get_instance_by_id(id: &str) -> Option<Instance> {
             installed: tokio::fs::metadata(instance_root.join(".install.lock"))
                 .await
                 .is_ok(),
-            id: id.to_string(),
             last_played: get_launch_script_timestamp(id),
+            last_exit_abnormal: last_exit_abnormal(id),
+            id: id.to_string(),
             has_background: instance_root.join("background").is_file(),
         })
     } else {
@@ -358,6 +360,41 @@ pub async fn remove_install_lock(id: &str) -> Result<()> {
         return Err(err.into());
     }
     Ok(())
+}
+
+/// The marker file whose presence means the instance's last run exited
+/// abnormally.
+///
+/// A file rather than a field in `instance.toml`, for the same reason
+/// `.install.lock` is one: it is runtime state, not user configuration, so a
+/// hand-edited config cannot clear it and an interrupted run cannot corrupt it.
+fn crash_marker(id: &str) -> PathBuf {
+    LOCATIONS
+        .instances
+        .get_instance_root(id)
+        .join(".last-exit-crash")
+}
+
+/// Records that the instance's last run exited abnormally.
+pub fn mark_last_exit_abnormal(id: &str) -> Result<()> {
+    std::fs::write(crash_marker(id), b"")?;
+    Ok(())
+}
+
+/// Clears the abnormal-exit marker, after a clean exit.
+///
+/// Idempotent: an instance with no marker is already "not crashed".
+pub fn clear_last_exit_abnormal(id: &str) -> Result<()> {
+    match std::fs::remove_file(crash_marker(id)) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error.into()),
+    }
+}
+
+/// Whether the instance's last run exited abnormally.
+pub fn last_exit_abnormal(id: &str) -> bool {
+    crash_marker(id).is_file()
 }
 
 /// The path of an instance's background image.
@@ -409,6 +446,10 @@ pub struct Instance {
     pub id: String,
     pub last_played: Option<u64>,
     pub has_background: bool,
+    /// Whether the instance's last run exited abnormally. Derived from a marker
+    /// file (see [`mark_last_exit_abnormal`]), not persisted in `instance.toml`.
+    #[serde(default)]
+    pub last_exit_abnormal: bool,
 }
 
 impl Instance {

@@ -18,6 +18,7 @@ mod usecases;
 
 use std::{cell::RefCell, rc::Rc};
 
+use log::info;
 use slint::{ComponentHandle, Timer, Weak};
 
 use slint_backend::{App, AppConfig};
@@ -48,6 +49,11 @@ fn main() {
     // logger writes into it.
     storage::LOCATIONS.init();
     support::logs::init();
+
+    info!("Conic Launcher is starting up");
+    info!(
+        "Conic Launcher is open source, You can view the source code on Github: https://github.com/conic-apps/launcher"
+    );
 
     // Claim the single-instance role before anything else: a second launch of
     // the app is not a second window, it is this window coming forward. The
@@ -137,6 +143,9 @@ fn main() {
     ui::overlays::instance_settings::setup(&ui, Rc::clone(&shared));
     ui::overlays::content::setup(&ui);
     ui::views::launch::setup(&ui, Rc::clone(&shared));
+    // The crash page: it subscribes to the launch crate's session events for
+    // the whole app, so it has to be wired before a game can ever be launched.
+    ui::views::crash::setup(&ui);
     ui::overlays::dialogs::create_instance::setup(&ui, Rc::clone(&shared));
     ui::overlays::dialogs::account_add::setup(&ui);
     // The first-run wizard: the import-instances screen's two "create a blank

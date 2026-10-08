@@ -9,19 +9,23 @@
 //! Java selection, authlib-injector setup, the argument list and the generated
 //! launch script with its stdout log watcher — and reports progress through the
 //! [`LaunchSink`] the caller hands in. The crate samples its own download
-//! counters; the caller never sees one. The app owns the process: it spawns the
-//! launch task and aborts the task to cancel.
+//! counters; the caller never sees one.
+//!
+//! The process outlives the call: [`launch`] returns once the game is up, and
+//! the process is registered in [`running`]. The app can then list and
+//! terminate running sessions, and each process's stdout watcher cleans the
+//! entry up when it exits. The app still cancels a *launch in progress* by
+//! aborting the task that awaits [`launch`]; stopping an already-running game
+//! goes through [`running::terminate`].
 
 use std::{
-    io::BufRead,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     str::FromStr,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
     },
-    thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
@@ -49,8 +53,10 @@ use version::{Version, resolve_version};
 
 mod arguments;
 mod complete;
+pub mod crash;
 pub mod error;
 mod options;
+pub mod running;
 
 pub use error::*;
 
@@ -199,6 +205,55 @@ fn print_instance_info(instance: &Instance) {
     };
 }
 
+/// Quotes one argument for the shell the generated launch script runs under.
+///
+/// The Unix script is `sh`/`bash`, so POSIX single-quoting is used: the value
+/// is wrapped in `'…'` and an inner `'` is closed and reopened around
+/// (`'\''`). That leaves every byte literal — spaces, `$`, backticks, double
+/// quotes — which is what keeps a data path with spaces (the macOS default,
+/// `…/Application Support/…`) in one piece. A Windows batch file understands
+/// only `"…"`, and an argument with no space or tab is left bare; the launch
+/// arguments never contain a `"`.
+fn quote_shell_arg(argument: &str) -> String {
+    #[cfg(target_os = "windows")]
+    {
+        if argument.contains(' ') || argument.contains('\t') {
+            format!("\"{argument}\"")
+        } else {
+            argument.to_string()
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        format!("'{}'", argument.replace('\'', "'\\''"))
+    }
+}
+
+/// Builds the `java …` command line for the launch script.
+///
+/// Every argument is shell-quoted, and an empty one is dropped. The drop
+/// matters: once quoting wraps each argument, an empty `extra_jvm_args` becomes
+/// an explicit empty word, and `java` reads the first non-option word as the
+/// main class — so it used to fail with `Could not find or load main class` and
+/// no name, and a non-zero exit the crash screen would blame on the game.
+fn build_launch_command(java_path: &Path, command_arguments: &[String]) -> String {
+    let mut command = match PLATFORM_INFO.os_family {
+        OsFamily::Windows => String::new(),
+        _ => "exec ".to_string(),
+    };
+    command.push_str(&quote_shell_arg(
+        &strip_unc_prefix(java_path.to_path_buf()).to_string_lossy(),
+    ));
+    for argument in command_arguments {
+        if argument.is_empty() {
+            continue;
+        }
+        command.push(' ');
+        command.push_str(&quote_shell_arg(argument));
+    }
+    command
+}
+
 /// Spawns the Minecraft process by generating and executing a launch script,
 /// customized per operating system and instance configuration.
 ///
@@ -243,29 +298,16 @@ async fn spawn_minecraft_process(
     commands.push_str(&format!(
         "{comment_prefix} NOTE: Don't use this file to launch game.\n\n"
     ));
-    commands.push_str(&format!("cd \"{}\"\n", instance_root.to_string_lossy()));
+    commands.push_str(&format!(
+        "cd {}\n",
+        quote_shell_arg(&instance_root.to_string_lossy())
+    ));
     commands.push_str(&format!("{}\n", launch_options.execute_before_launch));
     if !launch_options.wrap_command.trim().is_empty() {
         commands.push_str(&format!("{} ", launch_options.wrap_command));
     }
     // todo(after java exec): add -Dfile.encoding=encoding.name() and other
-    let mut launch_command = match PLATFORM_INFO.os_family {
-        OsFamily::Windows => String::new(),
-        _ => "exec ".to_string(),
-    };
-    launch_command.push_str(&format!(
-        "\"{}\"",
-        strip_unc_prefix(java_path).to_string_lossy()
-    ));
-    for arg in command_arguments.clone() {
-        let arg = if arg.contains(" ") {
-            format!("\"{arg}\"")
-        } else {
-            arg
-        };
-        launch_command.push_str(&format!(" {arg}"));
-    }
-    commands.push_str(&launch_command);
+    commands.push_str(&build_launch_command(&java_path, &command_arguments));
     let script_path = match PLATFORM_INFO.os_family {
         OsFamily::Windows => instance_root.join(".cache").join("conic-launch.bat"),
         _ => instance_root.join(".cache").join("conic-launch.sh"),
@@ -277,15 +319,16 @@ async fn spawn_minecraft_process(
     info!("The startup script is written to {}", script_path.display());
 
     #[cfg(target_os = "windows")]
-    let mut minecraft_process = {
+    let minecraft_process = {
         let mut command = std::process::Command::new(script_path);
         command.creation_flags(0x08000000);
         command
     }
     .stdout(Stdio::piped())
+    .stderr(Stdio::piped())
     .spawn()?;
     #[cfg(not(target_os = "windows"))]
-    let mut minecraft_process = {
+    let minecraft_process = {
         info!("Running chmod +x {}", script_path.display());
         let mut chmod = Command::new("chmod");
         chmod.args(["+x", script_path.to_string_lossy().to_string().as_ref()]);
@@ -295,66 +338,38 @@ async fn spawn_minecraft_process(
         command
     }
     .stdout(Stdio::piped())
+    .stderr(Stdio::piped())
     .spawn()?;
     reporter.report(LaunchProgress::WaitForLaunch);
     info!("Spawning minecraft process");
-    let out = minecraft_process
-        .stdout
-        .take()
-        .ok_or(Error::TakeMinecraftStdoutFailed)?;
-    let mut out = std::io::BufReader::new(out);
     let pid = minecraft_process.id();
-    let reporter_thread = Arc::clone(&reporter);
-    // Latched by the stdout thread on any of the three markers the wait below
+    // Latched by the stdout watcher on any of the three markers the wait below
     // breaks on, so the launch task does not read the reporter's own last value.
     let game_up = Arc::new(AtomicBool::new(false));
-    let game_up_thread = Arc::clone(&game_up);
-    let mut buf = String::new();
-    thread::spawn(move || {
-        loop {
-            buf.clear();
-            let size = match out.read_line(&mut buf) {
-                Ok(size) => size,
-                Err(_) => break,
-            };
-            if size == 0 {
-                break;
-            }
-            let line = buf.trim();
-            debug!("[{pid}] {line}");
-            if line.contains("Setting user:") {
-                reporter_thread.report(LaunchProgress::LogSettingUser);
-            }
-            if line.to_lowercase().contains("lwjgl version") {
-                info!("Found LWJGL version, the game seems to have started successfully.");
-                reporter_thread.report(LaunchProgress::LogLwjglVersion);
-                game_up_thread.store(true, Ordering::SeqCst);
-            }
-            if line.contains("OpenAL initialized") {
-                reporter_thread.report(LaunchProgress::LogOpenALLoaded);
-                game_up_thread.store(true, Ordering::SeqCst);
-            }
-            if (line.contains("Created") && line.contains("textures") && line.contains("-atlas"))
-                || line.contains("Found animation info")
-            {
-                reporter_thread.report(LaunchProgress::LogTextureLoaded);
-                game_up_thread.store(true, Ordering::SeqCst);
-            }
+    let watcher_reporter = Arc::clone(&reporter);
+    let watcher_game_up = Arc::clone(&game_up);
+    // The process outlives this call. `running::register` owns it from here:
+    // it takes the stdout and stderr pipes, watches them to EOF, and reaps and
+    // forgets the session on exit.
+    running::register(instance.clone(), minecraft_process, move |line| {
+        debug!("[{pid}] {line}");
+        if line.contains("Setting user:") {
+            watcher_reporter.report(LaunchProgress::LogSettingUser);
         }
-
-        let output = match minecraft_process.wait_with_output() {
-            Ok(output) => output,
-            Err(_) => {
-                error!("Could not get Minecrafr exit code");
-                return;
-            }
-        };
-        if !output.status.success() {
-            // TODO: log analysis and remove libraries lock file
-            // WARN: On failure the caller should stop all "launching" animations.
-            error!("Minecraft exits with error code {}", output.status);
-        } else {
-            info!("Minecraft exits with error code {}", output.status);
+        if line.to_lowercase().contains("lwjgl version") {
+            info!("Found LWJGL version, the game seems to have started successfully.");
+            watcher_reporter.report(LaunchProgress::LogLwjglVersion);
+            watcher_game_up.store(true, Ordering::SeqCst);
+        }
+        if line.contains("OpenAL initialized") {
+            watcher_reporter.report(LaunchProgress::LogOpenALLoaded);
+            watcher_game_up.store(true, Ordering::SeqCst);
+        }
+        if (line.contains("Created") && line.contains("textures") && line.contains("-atlas"))
+            || line.contains("Found animation info")
+        {
+            watcher_reporter.report(LaunchProgress::LogTextureLoaded);
+            watcher_game_up.store(true, Ordering::SeqCst);
         }
     });
     let start = Instant::now();
@@ -381,4 +396,38 @@ async fn spawn_minecraft_process(
     };
     log_launch(statistics_profile, instance.id).await.unwrap();
     Ok(pid)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::{build_launch_command, quote_shell_arg};
+
+    #[cfg(not(target_os = "windows"))]
+    #[test]
+    fn an_empty_argument_is_dropped_from_the_launch_command() {
+        // An empty `extra_jvm_args` must not become an explicit empty word, or
+        // `java` reads it as the (missing) main class.
+        let command = build_launch_command(
+            &PathBuf::from("/usr/bin/java"),
+            &["-Xmx2G".to_string(), String::new(), "-jar".to_string()],
+        );
+        assert_eq!(command, "exec '/usr/bin/java' '-Xmx2G' '-jar'");
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    #[test]
+    fn an_argument_with_spaces_survives_shell_quoting() {
+        assert_eq!(
+            quote_shell_arg("-Xdock:icon=/a b/minecraft.icns"),
+            "'-Xdock:icon=/a b/minecraft.icns'"
+        );
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    #[test]
+    fn a_single_quote_is_closed_and_reopened() {
+        assert_eq!(quote_shell_arg("a'b"), "'a'\\''b'");
+    }
 }

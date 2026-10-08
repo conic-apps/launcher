@@ -3162,3 +3162,18 @@ msgstr ". Чтобы завершить вход на другом устрой�
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "Нажмите, чтобы скопировать"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "Игра завершилась сбоем"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "Закрыть"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "Возможные моды:"

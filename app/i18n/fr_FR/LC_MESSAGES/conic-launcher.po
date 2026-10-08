@@ -3162,3 +3162,18 @@ msgstr ". Pour terminer la connexion sur un autre appareil, "
 msgctxt "AccountAddMicrosoft"
 msgid "Click to copy"
 msgstr "Cliquer pour copier"
+
+#: ui
+msgctxt "CrashView"
+msgid "Game crashed"
+msgstr "Le jeu a planté"
+
+#: ui
+msgctxt "CrashView"
+msgid "Close"
+msgstr "Fermer"
+
+#: ui
+msgctxt "CrashView"
+msgid "Possible mods:"
+msgstr "Mods possibles :"

@@ -20,6 +20,7 @@ import { WindowBackground } from "components/display/window-background.slint";
 import { SettingsView } from "views/settings-view.slint";
 import { GameView } from "views/game-view.slint";
 import { LaunchView } from "views/launch-view.slint";
+import { CrashView } from "views/crash-view.slint";
 import { SetupView } from "views/setup-view.slint";
 import { TodoPlaceholder } from "views/todo-placeholder.slint";
 
@@ -30,6 +31,7 @@ export { AppConfig, JavaRuntime } from "globals/settings.slint";
 export { Navigation } from "globals/navigation.slint";
 export { GameState, GameRow, AccountItem } from "globals/game.slint";
 export { LaunchState } from "globals/launch.slint";
+export { CrashState } from "globals/crash.slint";
 export { ScrollInput, ScrollSource } from "globals/scroll.slint";
 export { AvatarMask } from "globals/avatar.slint";
 export { Dialogs, CreateInstanceState, MinecraftVersionItem, AccountAddState, YggdrasilProfileItem, DeleteInstanceState, DeleteSaveState, DeleteAccountState } from "globals/dialogs.slint";
@@ -316,8 +318,9 @@ export component App inherits Window {
                     if Navigation.current-page == "settings" || Navigation.leaving-page == "settings" : SettingsView { }
                     if Navigation.current-page == "game" || Navigation.leaving-page == "game" : GameView { }
                     if Navigation.current-page == "launch" : LaunchView { }
+                    if Navigation.current-page == "crash" : CrashView { }
                     if Navigation.current-page == "setup" || Navigation.leaving-page == "setup" : SetupView { }
-                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "setup" : TodoPlaceholder { }
+                    if Navigation.current-page != "settings" && Navigation.current-page != "game" && Navigation.current-page != "launch" && Navigation.current-page != "crash" && Navigation.current-page != "setup" : TodoPlaceholder { }
                 }
             }
 
